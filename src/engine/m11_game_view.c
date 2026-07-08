@@ -1301,6 +1301,9 @@ static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
 static void m11_theron_boot_runtime_startup_snapshot(
     const M11_GameViewState *state,
     Theron_V1_BootRuntimeStartupSnapshot *out_snapshot);
+static int m11_theron_boot_runtime_startup_view_model(
+    const M11_GameViewState *state,
+    Theron_V1_BootStartupViewModel *out_view_model);
 
 static void m11_theron_render_v2_hud(const M11_GameViewState* state,
                                      const Theron_V1_World* world,
@@ -11369,30 +11372,31 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
-        Theron_V1_BootRuntimeStartupSnapshot snapshot;
+        Theron_V1_BootStartupViewModel view_model;
         out->levelLoaded = state->theronState.level_loaded;
-        out->mapIndex = state->theronWorld
-            ? ((Theron_V1_World*)state->theronWorld)->current_level
-            : -1;
         out->partyX = state->theronState.party_x;
         out->partyY = state->theronState.party_y;
         out->partyDir = state->theronState.party_dir;
-        out->championCount = state->theronWorld
-            ? ((Theron_V1_World*)state->theronWorld)->party.champion_count
-            : -1;
         out->runtimeTick = state->theronState.tick_count;
-        m11_theron_boot_runtime_startup_snapshot(state, &snapshot);
-        (void)theron_v1_boot_startup_presentation_receipt_from_snapshot(
-            &snapshot,
-            out->startupPhase,
-            (int)sizeof(out->startupPhase),
-            &out->startupActive,
-            out->startupAnimation,
-            (int)sizeof(out->startupAnimation),
-            &out->startupAnimationActive,
-            &out->startupTitleFrame,
-            &out->startupTitleFrameMax,
-            &out->startupTitleReady);
+        out->mapIndex = -1;
+        out->championCount = -1;
+        if (m11_theron_boot_runtime_startup_view_model(state, &view_model)) {
+            out->mapIndex = view_model.runtime_level;
+            out->championCount = view_model.runtime_champion_count;
+            snprintf(out->startupPhase,
+                     sizeof(out->startupPhase),
+                     "%s",
+                     view_model.phase);
+            out->startupActive = view_model.startup_active;
+            snprintf(out->startupAnimation,
+                     sizeof(out->startupAnimation),
+                     "%s",
+                     view_model.animation);
+            out->startupAnimationActive = view_model.animation_active;
+            out->startupTitleFrame = view_model.title_frame;
+            out->startupTitleFrameMax = view_model.title_frame_max;
+            out->startupTitleReady = view_model.title_ready;
+        }
         return 1;
     }
 

@@ -295,6 +295,8 @@ typedef struct Theron_V1_BootStartupViewModel {
     int title_frame;
     int title_frame_max;
     int title_ready;
+    int runtime_level;
+    int runtime_champion_count;
 } Theron_V1_BootStartupViewModel;
 
 int theron_v1_boot_prepare_startup_profile(
