@@ -1005,6 +1005,55 @@ int csb_v1_boot_startup_launch_detach_runtime_pc34(
     return 1;
 }
 
+int csb_v1_boot_startup_host_facts_from_runtime_state_pc34(
+    CSB_V1_StartupHostFacts_PC34 *facts,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    return csb_v1_startup_host_facts_from_runtime_state_pc34(
+        facts,
+        title_active,
+        title_frame,
+        title_source_step,
+        entrance_active,
+        entrance_source_step,
+        entrance_dismissed,
+        credits_active,
+        credits_remaining_ticks,
+        opening_active,
+        opening_delay_ticks,
+        opening_step,
+        pending_command,
+        entrance_frame,
+        utility_overlay_active,
+        utility_selected_action_index,
+        utility_imported_champion_count,
+        utility_preview_active,
+        utility_prompt,
+        resume_available,
+        resume_path,
+        boot_profile);
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {
