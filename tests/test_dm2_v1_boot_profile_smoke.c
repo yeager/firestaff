@@ -263,6 +263,50 @@ static void test_startup_launch_alloc_missing_data(void)
     dm2_v1_boot_startup_launch_cleanup(&launch);
 }
 
+static void test_startup_launch_detach_runtime_receipt(void)
+{
+    DM2_V1_BootStartupLaunch launch;
+    DM2_V1_BootStartupRuntimeReceipt receipt;
+
+    memset(&launch, 0, sizeof(launch));
+    memset(&receipt, 0xff, sizeof(receipt));
+    CHECK(dm2_v1_boot_startup_launch_detach_runtime(NULL, &receipt) == 0 &&
+              receipt.profile == NULL &&
+              receipt.dm2_state == NULL,
+          "startup runtime detach rejects NULL launch and clears receipt");
+
+    launch.profile = (DM2_V1_BootProfile *)calloc(1, sizeof(*launch.profile));
+    CHECK(launch.profile != NULL,
+          "startup runtime detach fixture allocates profile");
+    if (!launch.profile) {
+        return;
+    }
+    dm2_v1_boot_profile_init(launch.profile);
+    launch.profile->dm2_state = (void *)0x1234;
+    snprintf(launch.profile->graphics_md5,
+             sizeof(launch.profile->graphics_md5),
+             "25247ede4dab4c8aa2c293241f8f909e");
+    snprintf(launch.profile->dungeon_path,
+             sizeof(launch.profile->dungeon_path),
+             "/tmp/firestaff_dm2_DUNGEON.DAT");
+
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(dm2_v1_boot_startup_launch_detach_runtime(&launch,
+                                                    &receipt) == 1 &&
+              receipt.profile != NULL &&
+              receipt.dm2_state == (void *)0x1234 &&
+              strcmp(receipt.boot_asset_md5,
+                     "25247ede4dab4c8aa2c293241f8f909e") == 0 &&
+              strcmp(receipt.dungeon_path,
+                     "/tmp/firestaff_dm2_DUNGEON.DAT") == 0 &&
+              launch.profile == NULL,
+          "startup runtime detach transfers DM2 profile and M11 identity");
+
+    receipt.profile->dm2_state = NULL;
+    dm2_v1_boot_cleanup(receipt.profile);
+    free(receipt.profile);
+}
+
 static void test_startup_launch_alloc_real_assets_when_available(void)
 {
     DM2_V1_BootStartupLaunch launch;
@@ -381,6 +425,8 @@ int main(void)
 /* ── startup launch helper --─ */
     printf("\n--- test_startup_launch_alloc_missing_data ---\n");
     test_startup_launch_alloc_missing_data();
+    printf("\n--- test_startup_launch_detach_runtime_receipt ---\n");
+    test_startup_launch_detach_runtime_receipt();
     printf("\n--- test_startup_launch_alloc_real_assets_when_available ---\n");
     test_startup_launch_alloc_real_assets_when_available();
     printf("\n--- test_startup_host_facts_from_boot_profile ---\n");

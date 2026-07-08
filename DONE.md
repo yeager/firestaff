@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 boot runtime detach receipt: DM2 boot now owns startup runtime ownership transfer for profile, live dm2_state pointer, dungeon path, and graphics MD5. M11 applies the runtime receipt instead of reading launch profile fields or nulling launch ownership pointers. Verification: strict compiles for `dm2_v1_boot.c` and `m11_game_view.c`, DM2 boot profile smoke passed 57/57, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB boot runtime detach receipt: CSB boot now owns startup runtime ownership transfer for the boot profile and graphics/dungeon/MD5 identity. M11 applies the runtime receipt instead of reading launch profile fields or nulling launch ownership pointers. Verification: strict compiles for `csb_v1_boot.c` and `m11_game_view.c`, CSB detach smoke passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron boot runtime detach receipt: Theron boot now owns startup runtime ownership transfer for profile/world/viewport/assets and launch identity strings. M11 applies the runtime receipt instead of reading launch profile fields or nulling launch ownership pointers. Verification: strict compiles for `theron_v1_boot.c` and `m11_game_view.c`, Theron startup save/resume smoke passed 120/120 with direct linkage, Phase A passed 24/24, and `git diff --check` passed.

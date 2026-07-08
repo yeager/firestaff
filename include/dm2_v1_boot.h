@@ -121,6 +121,13 @@ typedef struct {
     const char *failure_status;
 } DM2_V1_BootStartupLaunch;
 
+typedef struct {
+    DM2_V1_BootProfile *profile;
+    void *dm2_state;
+    char boot_asset_md5[33];
+    char dungeon_path[512];
+} DM2_V1_BootStartupRuntimeReceipt;
+
 /* ── Boot API ──────────────────────────────────────────────────────── */
 
 /* Initialize a boot profile with defaults.
@@ -161,6 +168,10 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile);
 int dm2_v1_boot_startup_launch_alloc(
     const char *data_dir,
     DM2_V1_BootStartupLaunch *out_launch);
+
+int dm2_v1_boot_startup_launch_detach_runtime(
+    DM2_V1_BootStartupLaunch *launch,
+    DM2_V1_BootStartupRuntimeReceipt *out_receipt);
 
 void dm2_v1_boot_startup_launch_cleanup(
     DM2_V1_BootStartupLaunch *launch);
