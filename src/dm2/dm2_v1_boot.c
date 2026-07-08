@@ -447,29 +447,85 @@ static int resolve_dm2_asset_path(const char *base,
     return 0;
 }
 
-static int apply_known_hash_asset(const char *base,
-                                  const char *const hashes[],
-                                  char resolved_path[512],
-                                  size_t *out_size,
-                                  char out_md5[33]) {
-    int matchIndex = -1;
-    char found[ASSET_PATH_MAX];
-    if (!base || !hashes || !resolved_path || !out_md5) return 0;
-    found[0] = '\0';
-    if (!asset_find_by_md5_list(base, hashes, found, (int)sizeof(found),
-                                &matchIndex, 8)) {
+static int dm2_try_hash_scan_root(const char *root,
+                                  char graphics_path[512],
+                                  size_t *graphics_size,
+                                  char graphics_md5[33],
+                                  char dungeon_path[512],
+                                  size_t *dungeon_size,
+                                  char dungeon_md5[33]) {
+    const char *hashes[8];
+    char paths[8][ASSET_PATH_MAX];
+    int matched[8];
+    int hash_count = 0;
+    int graphics_index = -1;
+    int dungeon_index = -1;
+    int i;
+
+    if (!root || !root[0]) return 0;
+    for (i = 0; g_dm2_graphics_hashes[i] && hash_count < 7; ++i) {
+        hashes[hash_count++] = g_dm2_graphics_hashes[i];
+    }
+    dungeon_index = hash_count;
+    for (i = 0; g_dm2_dungeon_hashes[i] && hash_count < 7; ++i) {
+        hashes[hash_count++] = g_dm2_dungeon_hashes[i];
+    }
+    hashes[hash_count] = NULL;
+    memset(paths, 0, sizeof(paths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list(root, hashes, paths, matched,
+                                   hash_count, 8) <= 0) {
         return 0;
     }
-    strncpy(resolved_path, found, 511);
-    resolved_path[511] = '\0';
-    if (out_size) *out_size = file_size(found);
-    if (matchIndex >= 0 && hashes[matchIndex]) {
-        strncpy(out_md5, hashes[matchIndex], 32);
-        out_md5[32] = '\0';
-    } else if (!path_md5_hex(found, out_md5)) {
-        out_md5[0] = '\0';
+    for (i = 0; g_dm2_graphics_hashes[i]; ++i) {
+        if (matched[i]) {
+            graphics_index = i;
+            break;
+        }
     }
-    return 1;
+    if (graphics_index >= 0 && !graphics_path[0]) {
+        strncpy(graphics_path, paths[graphics_index], 511);
+        graphics_path[511] = '\0';
+        if (graphics_size) *graphics_size = file_size(graphics_path);
+        strncpy(graphics_md5, hashes[graphics_index], 32);
+        graphics_md5[32] = '\0';
+    }
+    if (dungeon_index >= 0 && matched[dungeon_index] && !dungeon_path[0]) {
+        strncpy(dungeon_path, paths[dungeon_index], 511);
+        dungeon_path[511] = '\0';
+        if (dungeon_size) *dungeon_size = file_size(dungeon_path);
+        strncpy(dungeon_md5, hashes[dungeon_index], 32);
+        dungeon_md5[32] = '\0';
+    }
+    return graphics_path[0] && dungeon_path[0];
+}
+
+static int dm2_scan_known_hash_assets(const char *base,
+                                      char graphics_path[512],
+                                      size_t *graphics_size,
+                                      char graphics_md5[33],
+                                      char dungeon_path[512],
+                                      size_t *dungeon_size,
+                                      char dungeon_md5[33]) {
+    char subroot[512];
+    const char *subdirs[] = {"dm2", "data", NULL};
+    int i;
+
+    if (!base || !base[0]) return 0;
+    for (i = 0; subdirs[i]; ++i) {
+        if (snprintf(subroot, sizeof(subroot), "%s%c%s",
+                     base, DM2_PATH_SEP, subdirs[i]) >= (int)sizeof(subroot)) {
+            continue;
+        }
+        if (dm2_try_hash_scan_root(subroot,
+                                   graphics_path, graphics_size, graphics_md5,
+                                   dungeon_path, dungeon_size, dungeon_md5)) {
+            return 1;
+        }
+    }
+    return dm2_try_hash_scan_root(base,
+                                  graphics_path, graphics_size, graphics_md5,
+                                  dungeon_path, dungeon_size, dungeon_md5);
 }
 
 static void copy_parent_dir(char dst[512], const char *path) {
@@ -518,14 +574,13 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     /* Source-lock: SKULL.ASM T560 owns the DM2 data load. Firestaff
      * discovers user-supplied files by hash first so launch does not
      * depend on PC install names or directory layout. */
-    (void)apply_known_hash_asset(base, g_dm2_graphics_hashes,
-                                 profile->graphics_path,
-                                 &profile->graphics_size,
-                                 profile->graphics_md5);
-    (void)apply_known_hash_asset(base, g_dm2_dungeon_hashes,
-                                 profile->dungeon_path,
-                                 &profile->dungeon_size,
-                                 profile->dungeon_md5);
+    (void)dm2_scan_known_hash_assets(base,
+                                     profile->graphics_path,
+                                     &profile->graphics_size,
+                                     profile->graphics_md5,
+                                     profile->dungeon_path,
+                                     &profile->dungeon_size,
+                                     profile->dungeon_md5);
 
     /* Legacy fallback for incomplete/synthetic developer fixtures. */
     if (!profile->graphics_path[0]) {
