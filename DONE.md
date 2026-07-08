@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0231 melee damage-resolver entrypoint: DM1 melee compat now owns the champion-to-creature F0231 damage resolver entrypoint used by M10, with a regression that proves output/RNG/luck mutation still mirrors the source-locked shared F0735 arithmetic. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), and Phase A 24/24 passed.
+
 - ✅ 2026-07-09 DM1 F0231 melee aftermath ownership: DM1 melee compat now owns F0231 group aftermath routing for death smoke attack/cell, possession drops, killed-some state/fear gate, killed-all unlink gate, raw group writeback, kill notify, and reaction scheduling. M10 now applies the DM1 receipt after F0738 damage. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0231 melee side-effect ownership: DM1 melee compat now owns the F0231 hit/miss side-effect plan for damage XP, stamina random modulus/base cost, final stamina cost, stamina clamp, and stamina-underflow HP damage. M10 now draws RNG from the DM1-requested range and applies the receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

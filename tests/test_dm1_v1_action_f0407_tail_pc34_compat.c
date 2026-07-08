@@ -1402,6 +1402,64 @@ static void test_melee_f0231_aftermath_plan(void) {
     CHECK_EQ(out.shouldScheduleReaction, 1, "F0231 miss reaction");
 }
 
+static void test_melee_f0231_damage_resolver_entrypoint(void) {
+    struct CombatantChampionSnapshot_Compat attackerA;
+    struct CombatantChampionSnapshot_Compat attackerB;
+    struct CombatantCreatureSnapshot_Compat defender;
+    struct WeaponProfile_Compat weapon;
+    struct CombatResult_Compat outA;
+    struct CombatResult_Compat outB;
+    struct RngState_Compat rngA;
+    struct RngState_Compat rngB;
+
+    memset(&attackerA, 0, sizeof(attackerA));
+    memset(&attackerB, 0, sizeof(attackerB));
+    memset(&defender, 0, sizeof(defender));
+    memset(&weapon, 0, sizeof(weapon));
+    memset(&outA, 0, sizeof(outA));
+    memset(&outB, 0, sizeof(outB));
+
+    attackerA.championIndex = 0;
+    attackerA.currentHealth = 100;
+    attackerA.dexterity = 255;
+    attackerA.strengthActionHand = 120;
+    attackerA.skillLevelAction = 0;
+    attackerA.statisticLuck = 40;
+    attackerA.statisticLuckMax = 100;
+    attackerA.statisticLuckMin = 0;
+    attackerB = attackerA;
+
+    defender.creatureType = CREATURE_TYPE_GIANT_SCORPION;
+    defender.defense = 0;
+    defender.dexterity = 0;
+    defender.attributes = 0;
+    defender.doubledMapDifficulty = 0;
+    defender.healthBefore = 200;
+
+    weapon.hitProbability = 0;
+    weapon.damageFactor = 32;
+
+    CHECK_EQ(F0730_COMBAT_RngInit_Compat(&rngA, 0x630u), 1,
+             "DM1 F0231 resolver rng A init");
+    CHECK_EQ(F0730_COMBAT_RngInit_Compat(&rngB, 0x630u), 1,
+             "DM1 F0231 resolver rng B init");
+    CHECK_EQ(dm1_v1_melee_resolve_damage_f0231_pc34(
+                 &attackerA, &weapon, &defender, &rngA, &outA), 1,
+             "DM1 F0231 damage resolver entrypoint builds");
+    CHECK_EQ(F0735_COMBAT_ResolveChampionMelee_Compat(
+                 &attackerB, &weapon, &defender, &rngB, &outB), 1,
+             "shared F0735 resolver builds");
+    CHECK_EQ(outA.outcome, outB.outcome, "DM1 F0231 outcome mirrors F0735");
+    CHECK_EQ(outA.damageApplied, outB.damageApplied,
+             "DM1 F0231 damage mirrors F0735");
+    CHECK_EQ(outA.hitLanded, outB.hitLanded,
+             "DM1 F0231 hit flag mirrors F0735");
+    CHECK_EQ(outA.rngCallCount, outB.rngCallCount,
+             "DM1 F0231 RNG count mirrors F0735");
+    CHECK_EQ(attackerA.statisticLuck, attackerB.statisticLuck,
+             "DM1 F0231 luck mutation mirrors F0735");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -1436,6 +1494,7 @@ int main(void) {
     test_melee_weapon_profile_plan();
     test_melee_f0231_side_effect_plan();
     test_melee_f0231_aftermath_plan();
+    test_melee_f0231_damage_resolver_entrypoint();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",
