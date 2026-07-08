@@ -2105,6 +2105,157 @@ int csb_v1_boot_runtime_tick_pc34(
     return result;
 }
 
+int csb_v1_boot_runtime_object_icon_index_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short thing)
+{
+    if (!profile) {
+        return -1;
+    }
+    /* ReDMCSB OBJECT.C F0031/F0033 object identity stays inside the
+     * CSB runtime profile loaded by boot. M11 only asks for the result. */
+    return csb_v1_runtime_object_icon_index_from_boot_profile_pc34(
+        profile,
+        thing);
+}
+
+int csb_v1_boot_runtime_object_action_set_index_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short thing)
+{
+    if (!profile) {
+        return -1;
+    }
+    return csb_v1_runtime_object_action_set_index_from_boot_profile_pc34(
+        profile,
+        thing);
+}
+
+uint16_t csb_v1_boot_runtime_object_allowed_slots_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short thing)
+{
+    if (!profile) {
+        return 0U;
+    }
+    /* ReDMCSB DATA.C G0311/CHAMPION.C inventory placement uses source
+     * object-info masks owned by the CSB runtime. */
+    return csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(
+        profile,
+        thing);
+}
+
+int csb_v1_boot_runtime_object_name_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short thing,
+    char *out,
+    size_t out_size)
+{
+    if (!profile) {
+        if (out && out_size > 0U) {
+            out[0] = '\0';
+        }
+        return 0;
+    }
+    return csb_v1_runtime_object_name_from_boot_profile_pc34(
+        profile,
+        thing,
+        out,
+        out_size);
+}
+
+int csb_v1_boot_runtime_read_container_slots_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short container_thing,
+    unsigned short out_slots[8])
+{
+    if (!profile) {
+        return -1;
+    }
+    /* ReDMCSB CHEST.C F0333/F0334 traverses and rewrites container thing
+     * chains in the live dungeon tables; boot owns that runtime handle. */
+    return csb_v1_runtime_read_container_slots_from_boot_profile_pc34(
+        profile,
+        container_thing,
+        out_slots);
+}
+
+int csb_v1_boot_runtime_write_container_slots_pc34(
+    CSB_V1_BootProfile *profile,
+    unsigned short container_thing,
+    const unsigned short slots[8])
+{
+    if (!profile) {
+        return 0;
+    }
+    return csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
+        profile,
+        container_thing,
+        slots);
+}
+
+int csb_v1_boot_runtime_set_thing_next_pc34(
+    CSB_V1_BootProfile *profile,
+    unsigned short thing,
+    unsigned short next_thing)
+{
+    if (!profile) {
+        return 0;
+    }
+    return csb_v1_runtime_set_thing_next_from_boot_profile_pc34(
+        profile,
+        thing,
+        next_thing);
+}
+
+int csb_v1_boot_runtime_write_inventory_slot_pc34(
+    CSB_V1_BootProfile *profile,
+    int champion_index,
+    int csb_slot,
+    unsigned short thing)
+{
+    if (!profile) {
+        return 0;
+    }
+    /* ReDMCSB CHAMPION.C F0302 mutates champion slots in the runtime
+     * party tables. Keep M11 writes behind the boot/runtime boundary. */
+    return csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+        profile,
+        champion_index,
+        csb_slot,
+        thing);
+}
+
+int csb_v1_boot_runtime_write_leader_hand_pc34(
+    CSB_V1_BootProfile *profile,
+    unsigned short thing)
+{
+    if (!profile) {
+        return 0;
+    }
+    return csb_v1_runtime_write_leader_hand_from_boot_profile_pc34(
+        profile,
+        thing);
+}
+
+int csb_v1_boot_runtime_write_champion_vitals_pc34(
+    CSB_V1_BootProfile *profile,
+    int champion_index,
+    int current_health,
+    int current_stamina,
+    int current_mana)
+{
+    if (!profile) {
+        return 0;
+    }
+    return csb_v1_runtime_write_champion_vitals_from_boot_profile_pc34(
+        profile,
+        champion_index,
+        current_health,
+        current_stamina,
+        current_mana);
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {
