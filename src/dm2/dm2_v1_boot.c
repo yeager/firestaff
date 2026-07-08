@@ -1389,6 +1389,85 @@ int dm2_v1_boot_startup_execute_launch_save_path_with_host_receipt(
     return 1;
 }
 
+static void dm2_v1_boot_runtime_receipt_clear(
+    DM2_V1_BootRuntimeReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->operation_result = -1;
+    }
+}
+
+int dm2_v1_boot_runtime_capture(DM2_V1_BootProfile *profile,
+                                DM2_V1_BootRuntimeReceipt *out_receipt)
+{
+    DM2_V1_GameState *game;
+    dm2_v1_boot_runtime_receipt_clear(out_receipt);
+    if (!profile || !profile->dm2_state || !out_receipt) {
+        return 0;
+    }
+    game = (DM2_V1_GameState *)profile->dm2_state;
+    out_receipt->runtime_ready = 1;
+    out_receipt->current_level = game->current_level;
+    out_receipt->party_x = dm2_v1_runtime_get_party_x();
+    out_receipt->party_y = dm2_v1_runtime_get_party_y();
+    out_receipt->party_dir = dm2_v1_runtime_get_party_dir();
+    out_receipt->tick_count = dm2_v1_runtime_get_tick_count();
+    out_receipt->leader_hand_object = dm2_v1_runtime_get_leader_hand_object();
+    return 1;
+}
+
+int dm2_v1_boot_runtime_tick(DM2_V1_BootProfile *profile,
+                             DM2_V1_BootRuntimeReceipt *out_receipt)
+{
+    if (!profile || !profile->dm2_state) {
+        dm2_v1_boot_runtime_receipt_clear(out_receipt);
+        return 0;
+    }
+    dm2_v1_runtime_tick();
+    if (!dm2_v1_boot_runtime_capture(profile, out_receipt)) {
+        return 0;
+    }
+    if (out_receipt) {
+        out_receipt->operation_result = 0;
+    }
+    return 1;
+}
+
+int dm2_v1_boot_runtime_turn(DM2_V1_BootProfile *profile,
+                             int delta,
+                             DM2_V1_BootRuntimeReceipt *out_receipt)
+{
+    int result;
+    if (!profile || !profile->dm2_state) {
+        dm2_v1_boot_runtime_receipt_clear(out_receipt);
+        return 0;
+    }
+    result = dm2_v1_runtime_turn(delta);
+    (void)dm2_v1_boot_runtime_capture(profile, out_receipt);
+    if (out_receipt) {
+        out_receipt->operation_result = result;
+    }
+    return result == 0;
+}
+
+int dm2_v1_boot_runtime_move(DM2_V1_BootProfile *profile,
+                             int direction,
+                             DM2_V1_BootRuntimeReceipt *out_receipt)
+{
+    int result;
+    if (!profile || !profile->dm2_state) {
+        dm2_v1_boot_runtime_receipt_clear(out_receipt);
+        return 0;
+    }
+    result = dm2_v1_runtime_move(direction);
+    (void)dm2_v1_boot_runtime_capture(profile, out_receipt);
+    if (out_receipt) {
+        out_receipt->operation_result = result;
+    }
+    return 1;
+}
+
 static const char *dm2_v1_boot_startup_prepare_host_status(
     DM2_V1_BootStartupPrepareResult result)
 {
