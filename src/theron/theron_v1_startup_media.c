@@ -8,6 +8,7 @@ void theron_v1_startup_media_init(Theron_StartupMedia *media) {
         return;
     }
     memset(media, 0, sizeof(*media));
+    media->track02_variant = (int)THERON_TRACK02_VARIANT_UNKNOWN;
     media->startup_roster_name_status =
         (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
     media->startup_text_prompt_status =
@@ -20,6 +21,7 @@ void theron_v1_startup_media_state_receipt_init(
         return;
     }
     memset(receipt, 0, sizeof(*receipt));
+    receipt->track02_variant = (int)THERON_TRACK02_VARIANT_UNKNOWN;
     receipt->startup_roster_name_status =
         (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
     receipt->startup_text_prompt_status =
@@ -108,6 +110,13 @@ void theron_v1_startup_media_capture_track02(
         return;
     }
 
+    out_media->track02_variant =
+        (int)theron_v1_track02_variant_for_md5(md5_hex);
+    snprintf(out_media->track02_md5,
+             sizeof(out_media->track02_md5),
+             "%s",
+             md5_hex);
+    out_media->track02_size = hucard_rom_size;
     theron_v1_startup_media_capture_roster(hucard_rom,
                                            hucard_rom_size,
                                            md5_hex,
@@ -116,6 +125,10 @@ void theron_v1_startup_media_capture_track02(
                                          hucard_rom_size,
                                          md5_hex,
                                          out_media);
+    out_media->startup_media_ready =
+        out_media->track02_variant != THERON_TRACK02_VARIANT_UNKNOWN &&
+        (out_media->startup_roster_name_status == THERON_TRACK02_SIGNAL_OK ||
+         out_media->startup_text_prompt_status == THERON_TRACK02_SIGNAL_OK);
 }
 
 void theron_v1_startup_media_capture_track02_state_receipt(
@@ -135,6 +148,13 @@ void theron_v1_startup_media_capture_track02_state_receipt(
                                             hucard_rom_size,
                                             md5_hex,
                                             &media);
+    out_receipt->track02_variant = media.track02_variant;
+    snprintf(out_receipt->track02_md5,
+             sizeof(out_receipt->track02_md5),
+             "%s",
+             media.track02_md5);
+    out_receipt->track02_size = media.track02_size;
+    out_receipt->startup_media_ready = media.startup_media_ready;
     out_receipt->startup_roster_name_status =
         media.startup_roster_name_status;
     out_receipt->startup_text_prompt_status =

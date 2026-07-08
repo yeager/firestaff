@@ -11412,6 +11412,16 @@ static void m11_theron_apply_startup_media_state_receipt(
         return;
     }
     state->theronState.startup_roster_name_count = 0;
+    state->theronState.startup_media_ready =
+        receipt->startup_media_ready;
+    state->theronState.startup_media_track02_variant =
+        receipt->track02_variant;
+    state->theronState.startup_media_track02_size =
+        receipt->track02_size;
+    snprintf(state->theronState.startup_media_track02_md5,
+             sizeof(state->theronState.startup_media_track02_md5),
+             "%s",
+             receipt->track02_md5);
     state->theronState.startup_roster_name_status =
         receipt->startup_roster_name_status;
     memset(state->theronState.startup_roster_names,

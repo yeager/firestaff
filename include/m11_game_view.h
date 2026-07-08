@@ -597,6 +597,10 @@ typedef struct {
         char save_resume_srm_root[512];
         int startup_roster_name_count;
         int startup_roster_name_status;
+        int startup_media_ready;
+        int startup_media_track02_variant;
+        char startup_media_track02_md5[33];
+        size_t startup_media_track02_size;
         char startup_roster_names[8][16];
         char startup_roster_titles[8][32];
         int startup_text_prompt_count;
