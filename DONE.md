@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 V2 boot startup adapter: Added `dm1_v2_boot_pc34` so DM1 V2 boot owns V22 manifest/receipt path setup, presentation-mode resolve, phase-gate receipt decisions, and optional V22 in-place cache startup. M11 now calls the DM1 V2 boot adapter instead of setting V2 mode/cache directly. Verification: strict compiles for `dm1_v2_boot_pc34.c` and `m11_game_view.c`; Phase A passed 24/24; `git diff --check` passed. Note: local CMake build targets hung in `cmake_check_build_system` after auto-reconfigure and were stopped.
+
 - ✅ 2026-07-08 DM2/CSB/Nexus boot facade cleanup: DM2 boot now owns the M11 direct save-path resume executor, CSB boot owns default startup render-plan construction, and Nexus launcher owns startup presentation, resume-status, and boot-status receipt wrappers. M11 no longer calls those startup helpers directly. Verification: strict compiles for `dm2_v1_boot.c`, `csb_v1_boot.c`, `nexus_v1_launcher.c`, and `m11_game_view.c`; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB boot startup render-helper wrappers: CSB boot now owns M11-facing primitive command execution, asset command execution, closed-door asset execution, title-empty fallback detection, and opening-composite execution wrappers. M11 no longer calls those CSB startup-sequence render helpers directly. Verification: strict compiles for `csb_v1_boot.c` and `m11_game_view.c`; Phase A passed 24/24; `git diff --check` passed. Note: local build tree did not contain the CSB boot handoff test binary.
