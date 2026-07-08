@@ -26952,74 +26952,6 @@ static int m11_find_projectile_collision_peer(
     return -1;
 }
 
-/* Short DM1-style projectile subtype name for log cues. */
-static const char* m11_projectile_subtype_name(int subtype) {
-    switch (subtype) {
-        case PROJECTILE_SUBTYPE_FIREBALL:          return "FIREBALL";
-        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:    return "LIGHTNING BOLT";
-        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL: return "DISPELL";
-        case PROJECTILE_SUBTYPE_POISON_BOLT:       return "POISON BOLT";
-        case PROJECTILE_SUBTYPE_POISON_CLOUD:      return "POISON CLOUD";
-        case PROJECTILE_SUBTYPE_OPEN_DOOR:         return "MAGIC";
-        case PROJECTILE_SUBTYPE_SLIME:             return "SLIME";
-        case PROJECTILE_SUBTYPE_KINETIC_ARROW:     return "MISSILE";
-        default:                                   return "PROJECTILE";
-    }
-}
-
-static int m11_projectile_impact_source_sound_index(
-    const struct ProjectileInstance_Compat* p,
-    const struct ProjectileTickResult_Compat* r) {
-    if (!p || !r) return -1;
-    switch (r->resultKind) {
-        case PROJECTILE_RESULT_HIT_WALL:
-        case PROJECTILE_RESULT_HIT_DOOR:
-        case PROJECTILE_RESULT_HIT_CHAMPION:
-        case PROJECTILE_RESULT_HIT_CREATURE:
-        case PROJECTILE_RESULT_HIT_OTHER_PROJECTILE:
-            break;
-        default:
-            return -1;
-    }
-
-    if (r->emittedExplosion) {
-        switch (r->outExplosion.explosionType) {
-            case C000_EXPLOSION_FIREBALL:
-            case C001_EXPLOSION_SLIME:
-            case C002_EXPLOSION_LIGHTNING_BOLT:
-                return (r->outExplosion.attack > 80) ? 5 : 6;
-            case C040_EXPLOSION_SMOKE:
-                return -1;
-            default:
-                return 16;
-        }
-    }
-
-    /* ReDMCSB PROJEXPL.C F0217 lines 574-584 jumps directly to the
-     * projectile-delete tail when Lightning / 2 or Poison Bolt / 4 becomes
-     * zero.  That skips both explosion creation and the non-explosion thud
-     * branch, so M11 must not synthesize a fallback impact sound here. */
-    if (p->projectileCategory == PROJECTILE_CATEGORY_MAGICAL) {
-        if (p->projectileSubtype == PROJECTILE_SUBTYPE_LIGHTNING_BOLT &&
-            (p->kineticEnergy >> 1) == 0) {
-            return -1;
-        }
-        if (p->projectileSubtype == PROJECTILE_SUBTYPE_POISON_BOLT &&
-            (p->kineticEnergy >> 2) == 0) {
-            return -1;
-        }
-    }
-
-    if (p->projectileSubtype == PROJECTILE_SUBTYPE_POISON_BOLT) {
-        return 16;
-    }
-    if (p->projectileCategory == PROJECTILE_CATEGORY_KINETIC &&
-        p->projectileSubtype == PROJECTILE_SUBTYPE_KINETIC_ARROW) {
-        return 0;
-    }
-    return 4;
-}
-
 static void m11_schedule_open_door_spell_toggle(
     M11_GameViewState* state,
     const struct ProjectileTickResult_Compat* r) {
@@ -27068,14 +27000,6 @@ static void m11_schedule_projectile_door_destruction(
                                          &r->outNextTick);
 }
 
-static int m11_weapon_type_is_thrown_sharp_kept_by_creature(int weaponType) {
-    return weaponType == 8   ||  /* C08_WEAPON_DAGGER */
-           weaponType == 27  ||  /* C27_WEAPON_ARROW */
-           weaponType == 28  ||  /* C28_WEAPON_SLAYER */
-           weaponType == 31  ||  /* C31_WEAPON_POISON_DART */
-           weaponType == 32;     /* C32_WEAPON_THROWING_STAR */
-}
-
 static int m11_maybe_attach_thrown_sharp_weapon_to_group(
     M11_GameViewState* state,
     struct DungeonGroup_Compat* group,
@@ -27107,7 +27031,7 @@ static int m11_maybe_attach_thrown_sharp_weapon_to_group(
         return 0;
     }
     weaponType = (int)state->world.things->weapons[weaponIndex].type;
-    if (!m11_weapon_type_is_thrown_sharp_kept_by_creature(weaponType)) {
+    if (!dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(weaponType)) {
         return 0;
     }
 
@@ -27779,8 +27703,10 @@ static void m11_projectile_apply_impact(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* p,
     const struct ProjectileTickResult_Compat* r) {
-    const char* name = m11_projectile_subtype_name(p->projectileSubtype);
-    int sourceSoundIndex = m11_projectile_impact_source_sound_index(p, r);
+    const char* name = dm1_v1_projectile_subtype_name_pc34(
+        p->projectileSubtype);
+    int sourceSoundIndex =
+        dm1_v1_projectile_impact_source_sound_index_pc34(p, r);
     int associatedThingMovedToGroup = 0;
     if (sourceSoundIndex >= 0) {
         m11_audio_emit_source_sound(state, sourceSoundIndex,
