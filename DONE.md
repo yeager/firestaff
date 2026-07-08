@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup tick receipt application: M11 now applies CSB startup tick receipts through one helper instead of setting the entrance frame and command-state receipt separately during idle startup animation ticks. Verification: CSB startup entrance pointer contract passed 140/140, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB startup init/host receipt application: M11 now applies CSB startup init receipts and host receipts through shared helpers, removing duplicated StartCSB init field copies and entrance-result switch blocks. Verification: CSB startup entrance pointer contract passed 140/140, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup session receipt application: M11 now applies CSB runtime startup-session state receipts through one helper instead of copying entrance-resume and import-utility fields inline during StartCSB. Verification: CSB boot runtime handoff passed 275/275, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

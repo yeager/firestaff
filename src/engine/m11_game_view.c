@@ -3097,6 +3097,17 @@ static M11_GameInputResult m11_csb_startup_apply_host_receipt(
     }
 }
 
+static void m11_csb_startup_tick_receipt_to_m11(
+    M11_GameViewState *state,
+    const CSB_V1_StartupTickReceipt_PC34 *receipt)
+{
+    if (!state || !receipt) {
+        return;
+    }
+    state->csbState.startup_entrance_frame = receipt->entrance_frame;
+    m11_csb_startup_command_state_receipt_to_m11(state, &receipt->state);
+}
+
 static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
 {
     CSB_V1_StartupCommandStateReceipt_PC34 receipt;
@@ -12786,11 +12797,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 state->csbState.startup_entrance_pending_command,
                 (int)ENTRANCE_Compat_GetDoorAnimationStepCount(),
                 &startup_receipt);
-            state->csbState.startup_entrance_frame =
-                startup_receipt.entrance_frame;
-            m11_csb_startup_command_state_receipt_to_m11(
-                state,
-                &startup_receipt.state);
+            m11_csb_startup_tick_receipt_to_m11(state,
+                                                &startup_receipt);
             if (startup_receipt.tick_result.title_finished ||
                 startup_receipt.tick_result.reached_entrance_wait ||
                 startup_receipt.tick_result.credits_finished) {
