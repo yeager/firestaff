@@ -3051,6 +3051,99 @@ int csb_v1_startup_receipt_phase_from_facts_pc34(
         out_startup_frame);
 }
 
+int csb_v1_startup_receipt_presentation_from_facts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready)
+{
+    int title_max;
+
+    if (!csb_v1_startup_receipt_phase_from_facts_pc34(
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            entrance_frame,
+            out_phase,
+            out_phase_size,
+            out_startup_active,
+            out_startup_frame)) {
+        return 0;
+    }
+
+    title_max = csb_v1_startup_title_total_ticks_pc34();
+    if (out_title_frame_max) {
+        *out_title_frame_max = title_max;
+    }
+    if (out_animation_active) {
+        *out_animation_active = 0;
+    }
+    if (out_title_frame) {
+        *out_title_frame = title_max;
+    }
+    if (out_title_ready) {
+        *out_title_ready = 1;
+    }
+    if (!out_animation || out_animation_size <= 0) {
+        return 1;
+    }
+
+    if (title_active) {
+        snprintf(out_animation, (size_t)out_animation_size, "%s",
+                 "csb-title");
+        if (out_animation_active) {
+            *out_animation_active = 1;
+        }
+        if (out_title_frame) {
+            *out_title_frame = title_frame;
+        }
+        if (out_title_ready) {
+            *out_title_ready = 0;
+        }
+    } else if (opening_active) {
+        snprintf(out_animation, (size_t)out_animation_size, "%s",
+                 "csb-entrance-opening");
+        if (out_animation_active) {
+            *out_animation_active = 1;
+        }
+    } else if (entrance_active) {
+        snprintf(out_animation, (size_t)out_animation_size, "%s",
+                 "csb-entrance");
+    } else {
+        snprintf(out_animation, (size_t)out_animation_size, "%s",
+                 "csb-runtime");
+    }
+    return 1;
+}
+
 int csb_v1_startup_sequence_source_order_valid_pc34(void)
 {
     /* ReDMCSB startup source order:

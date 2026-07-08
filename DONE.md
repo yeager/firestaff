@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup boot-receipt presentation: CSB startup-sequence now derives boot-receipt phase, animation id, animation-active flag, title frame, title-frame max, and title-ready state from raw startup facts. M11 consumes that CSB-owned summary instead of branching locally. Verification: CSB startup entrance pointer contract passed 142/142, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB startup render host facts: CSB startup-sequence now builds startup render plans from host facts plus the opaque CSB boot profile, including runtime start coordinates and direction. M11 no longer unpacks the CSB boot profile before startup presentation planning. Verification: CSB startup entrance pointer contract passed 141/141, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup render/layout session receipts: Theron startup-flow now derives Continue availability from save/resume session facts for layout elements, render rows, and render plans. M11 no longer computes TQSV/SRM Continue flags for startup presentation. Verification: Theron M11 direct-launch passed, Phase A passed 24/24, RA unit test passed, and `git diff --check` passed.
