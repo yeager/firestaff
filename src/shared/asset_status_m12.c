@@ -851,7 +851,19 @@ static int m12_game_uses_flat_dat_runtime(const char* gameId) {
     return gameId &&
            (strcmp(gameId, "dm1") == 0 ||
             strcmp(gameId, "csb") == 0 ||
-            strcmp(gameId, "dm2") == 0);
+            strcmp(gameId, "dm2") == 0 ||
+            strcmp(gameId, "theron") == 0);
+}
+
+static const char* m12_required_runtime_cache_leaf(
+    const char* gameId,
+    const M12_AssetRequiredFileStatus* fileStatus) {
+    if (gameId && fileStatus && fileStatus->roleId &&
+        strcmp(gameId, "theron") == 0 &&
+        strcmp(fileStatus->roleId, "track02") == 0) {
+        return "track02.bin";
+    }
+    return fileStatus ? fileStatus->label : NULL;
 }
 
 static int m12_materialize_required_file(const M12_AssetRequiredFileStatus* fileStatus,
@@ -1054,18 +1066,26 @@ static int m12_required_file_needs_runtime_cache(const M12_AssetStatus* status,
     char gameLeaf[M12_ASSET_DATA_DIR_CAPACITY];
     const char* gameId;
     const char* runtimeRoot;
+    const char* cacheLeaf;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         !fileStatus || !fileStatus->matched || !fileStatus->label ||
         fileStatus->matchedPath[0] == '\0') {
         return 0;
     }
+    gameId = g_games[gameIndex].gameId;
+    cacheLeaf = m12_required_runtime_cache_leaf(gameId, fileStatus);
+    if (!cacheLeaf || cacheLeaf[0] == '\0') {
+        return 1;
+    }
     if (m12_path_is_virtual_asset(fileStatus->matchedPath)) {
         return 1;
     }
-    if (!m12_path_tail_equals(fileStatus->matchedPath, fileStatus->label)) {
+    if (strcmp(gameId, "theron") == 0) {
+        return 0;
+    }
+    if (!m12_path_tail_equals(fileStatus->matchedPath, cacheLeaf)) {
         return 1;
     }
-    gameId = g_games[gameIndex].gameId;
     runtimeRoot = status->runtimeDataDirs[gameIndex][0] != '\0'
         ? status->runtimeDataDirs[gameIndex]
         : status->dataDir;
@@ -1073,12 +1093,12 @@ static int m12_required_file_needs_runtime_cache(const M12_AssetStatus* status,
         return 1;
     }
     if (FSP_JoinPath(directPath, sizeof(directPath),
-                     runtimeRoot, fileStatus->label) &&
+                     runtimeRoot, cacheLeaf) &&
         m12_same_path(directPath, fileStatus->matchedPath)) {
         return 0;
     }
     if (FSP_JoinPath(gamePath, sizeof(gamePath), runtimeRoot, gameId) &&
-        FSP_JoinPath(gameLeaf, sizeof(gameLeaf), gamePath, fileStatus->label) &&
+        FSP_JoinPath(gameLeaf, sizeof(gameLeaf), gamePath, cacheLeaf) &&
         m12_same_path(gameLeaf, fileStatus->matchedPath)) {
         return 0;
     }
@@ -2161,17 +2181,37 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         M12_AssetRequiredFileStatus* fileStatus = &status->requiredFiles[gameIndex][i];
         char outPath[M12_ASSET_DATA_DIR_CAPACITY];
+        char oldMatchedPath[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* cacheLeaf = m12_required_runtime_cache_leaf(gameId, fileStatus);
+        size_t versionIndex;
         if (!fileStatus->matched || !fileStatus->label ||
-            !FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, fileStatus->label)) {
+            !cacheLeaf ||
+            !FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, cacheLeaf)) {
             return 0;
         }
         if (optionalSeedPath[0] == '\0' && fileStatus->matchedPath[0] != '\0') {
             m12_copy_string(optionalSeedPath, sizeof(optionalSeedPath), fileStatus->matchedPath);
         }
+        m12_copy_string(oldMatchedPath, sizeof(oldMatchedPath), fileStatus->matchedPath);
         if (!m12_materialize_required_file(fileStatus, outPath)) {
             return 0;
         }
         m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), outPath);
+        for (versionIndex = 0U;
+             versionIndex < g_games[gameIndex].versionCount &&
+             versionIndex < M12_ASSET_MAX_VERSIONS_PER_GAME;
+             ++versionIndex) {
+            M12_AssetVersionStatus* version =
+                &status->versions[gameIndex][versionIndex];
+            if (version->matched &&
+                strcmp(version->matchedPath, oldMatchedPath) == 0 &&
+                version->matchedMd5[0] != '\0' &&
+                strcmp(version->matchedMd5, fileStatus->matchedHash) == 0) {
+                m12_copy_string(version->matchedPath,
+                                sizeof(version->matchedPath),
+                                outPath);
+            }
+        }
     }
     if (strcmp(gameId, "dm1") == 0 && optionalSeedPath[0] != '\0') {
         /* ReDMCSB boot order needs SWOOSH.C -> TITLE.C before ENTRANCE.C.
@@ -2317,8 +2357,13 @@ static int m12_publish_direct_theron_match(
         }
     }
     m12_apply_required_game_availability(status, theronIndex, requiredMatched);
+    if (!m12_materialize_runtime_cache_for_game(status, theronIndex)) {
+        m12_apply_required_game_availability(status, theronIndex, 0);
+        return 0;
+    }
     m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
-    m12_classify_theron_media_path(status, matchedPath);
+    m12_classify_theron_media_path(status,
+                                   status->versions[theronIndex][versionIndex].matchedPath);
     m12_refresh_v22_modern_asset_status(status);
     return 1;
 }
