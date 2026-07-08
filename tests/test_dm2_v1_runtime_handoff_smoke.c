@@ -410,8 +410,31 @@ static void test_first_tick_after_boot_profile_handoff(void)
 
     CHECK(dm2_v1_runtime_bind_boot_profile(NULL) == 0,
           "runtime boot-profile bind rejects NULL");
+    {
+        DM2_V1_StartupHostReceipt bind_receipt;
+        CHECK(dm2_v1_runtime_bind_boot_profile_with_receipt(
+                  NULL,
+                  &bind_receipt) == 0 &&
+                  bind_receipt.status_scope &&
+                  strcmp(bind_receipt.status_scope, "BOOT") == 0 &&
+                  bind_receipt.status &&
+                  strcmp(bind_receipt.status,
+                         "DM2 RUNTIME BIND FAILED") == 0,
+              "runtime boot-profile bind receipt reports M11-ready failure");
+    }
     CHECK(dm2_v1_runtime_bind_boot_profile(&profile) == 1,
           "runtime boot-profile bind initializes runtime state");
+    {
+        DM2_V1_StartupHostReceipt bind_receipt;
+        CHECK(dm2_v1_runtime_bind_boot_profile_with_receipt(
+                  &profile,
+                  &bind_receipt) == 1 &&
+                  bind_receipt.status_scope &&
+                  strcmp(bind_receipt.status_scope, "BOOT") == 0 &&
+                  bind_receipt.status &&
+                  strcmp(bind_receipt.status, "DM2 RUNTIME READY") == 0,
+              "runtime boot-profile bind receipt reports M11-ready success");
+    }
     CHECK(dm2_v1_runtime_get_tick_count() == 0,
           "runtime tick counter starts at zero after handoff bind");
     CHECK(dm2_v1_runtime_has_dungeon_data() == 1,
