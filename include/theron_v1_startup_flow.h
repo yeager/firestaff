@@ -998,6 +998,17 @@ int theron_v1_startup_receipt_phase(
     char *out_phase,
     int out_phase_size,
     int *out_startup_active);
+int theron_v1_startup_presentation_receipt(
+    Theron_StartupPhase phase,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready);
 
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase);
 const char *theron_v1_startup_result_name(Theron_StartupResult result);
