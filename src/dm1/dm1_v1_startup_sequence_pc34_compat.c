@@ -515,6 +515,55 @@ int dm1_v1_startup_boot_probe_receipt_pc34(int level_loaded,
     return 1;
 }
 
+int dm1_v1_startup_boot_probe_receipt_from_facts_pc34(
+    const DM1_V1_StartupBootProbeFacts_PC34* facts,
+    DM1_V1_StartupBootProbeReceipt_PC34* out_receipt) {
+    DM1_V1_StartupBootProbeReceipt_PC34 receipt;
+    int intro_bypassed;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(facts->source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    intro_bypassed = dm1_v1_startup_intro_bypass_applies_to_source_pc34(
+        facts->source_id,
+        facts->intro_bypassed);
+    receipt.handled = 1;
+    snprintf(receipt.source_id,
+             sizeof(receipt.source_id),
+             "%s",
+             facts->source_id ? facts->source_id : "");
+    receipt.dm1_startup_intro_bypassed = intro_bypassed;
+    receipt.level_loaded = facts->level_loaded;
+    receipt.map_index = facts->map_index;
+    receipt.party_x = facts->party_x;
+    receipt.party_y = facts->party_y;
+    receipt.party_dir = facts->party_dir;
+    receipt.champion_count = facts->champion_count;
+    receipt.runtime_tick = facts->runtime_tick;
+    receipt.world_tick = facts->world_tick;
+    if (!dm1_v1_startup_boot_probe_receipt_pc34(
+            facts->level_loaded,
+            intro_bypassed,
+            receipt.startup_phase,
+            (int)sizeof(receipt.startup_phase),
+            &receipt.startup_active,
+            receipt.startup_animation,
+            (int)sizeof(receipt.startup_animation),
+            &receipt.startup_animation_active,
+            &receipt.startup_title_frame,
+            &receipt.startup_title_frame_max,
+            &receipt.startup_title_ready)) {
+        return 0;
+    }
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_sequence_source_order_valid_pc34(void) {
     /* ReDMCSB startup source order:
      * SWSH.C:39-47 runs START.PRG after the FTL palette program;
