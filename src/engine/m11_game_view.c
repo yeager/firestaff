@@ -12679,20 +12679,25 @@ static int m11_apply_tick(M11_GameViewState* state,
     return m11_apply_tick_with_attack_action(state, command, actionLabel, -1);
 }
 
-static int m11_last_attack_tick_emitted_damage(const M11_GameViewState* state) {
+static int m11_last_attack_tick_observed_damage(
+        const M11_GameViewState* state,
+        int* outDamage,
+        int* outCombatOutcome) {
     int i;
     if (!state) return 0;
+    if (outDamage) *outDamage = 0;
+    if (outCombatOutcome) *outCombatOutcome = COMBAT_OUTCOME_INVALID;
     for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
         if (state->lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
-            DM1_MeleeDamageEmissionInputPc34 in;
-            DM1_MeleeDamageEmissionPlanPc34 plan;
-            memset(&in, 0, sizeof(in));
-            memset(&plan, 0, sizeof(plan));
-            in.damage = (int)state->lastTickResult.emissions[i].payload[2];
-            in.combatOutcome =
-                (int)state->lastTickResult.emissions[i].payload[3];
-            return dm1_v1_melee_damage_emission_plan_f0231_pc34(&in, &plan) &&
-                   plan.performed;
+            if (outDamage) {
+                *outDamage =
+                    (int)state->lastTickResult.emissions[i].payload[2];
+            }
+            if (outCombatOutcome) {
+                *outCombatOutcome =
+                    (int)state->lastTickResult.emissions[i].payload[3];
+            }
+            return 1;
         }
     }
     return 0;
@@ -29811,17 +29816,28 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     if (beginPlan.isMeleeContact) {
         unsigned char disabledTicks = (unsigned char)beginPlan.disabledTicks;
         unsigned char closedDoorDisabledTicks = 0u;
+        DM1_MeleeRuntimeOutcomeInputPc34 meleeOutcomeIn;
+        DM1_MeleeRuntimeOutcomePlanPc34 meleeOutcomePlan;
+        int observedDamage = 0;
+        int observedCombatOutcome = COMBAT_OUTCOME_INVALID;
         int timelineCountBeforeAttack = state->world.timeline.count;
         if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+            memset(&meleeOutcomeIn, 0, sizeof(meleeOutcomeIn));
+            memset(&meleeOutcomePlan, 0, sizeof(meleeOutcomePlan));
             performed = m11_perform_csb_melee_action(
                 state, championIndex, chosen);
-            if (!performed) {
+            meleeOutcomeIn.actionIndex = (int)chosen;
+            meleeOutcomeIn.defaultDisabledTicks = (int)disabledTicks;
+            meleeOutcomeIn.combatOutcome =
+                performed ? COMBAT_OUTCOME_MISS : COMBAT_OUTCOME_INVALID;
+            if (dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
+                    &meleeOutcomeIn, &meleeOutcomePlan) &&
+                meleeOutcomePlan.valid) {
+                performed = meleeOutcomePlan.performed;
+                disabledTicks = (unsigned char)meleeOutcomePlan.disabledTicks;
                 (void)m11_apply_action_completion_plan_f0407(
-                    state, championIndex, chosen, performed, 0, 1,
-                    &actionExperienceGain, disabledTicks);
-            } else {
-                (void)m11_apply_action_completion_plan_f0407(
-                    state, championIndex, chosen, performed, 0, 0,
+                    state, championIndex, chosen, performed, 0,
+                    meleeOutcomePlan.meleeFailureTail,
                     &actionExperienceGain, disabledTicks);
             }
             goto action_tail_award_and_clear;
@@ -29831,21 +29847,33 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
          * selection through its ReDMCSB F0177/F0229 auto-target bridge. */
         (void)m11_apply_tick_with_attack_action(
             state, CMD_ATTACK, "ATTACK", (int)chosen);
-        performed = m11_last_attack_tick_emitted_damage(state);
-        if (!performed) {
-            /* ReDMCSB MENU.C F0407 lines 1308-1317 treats the closed-door
-             * BASH/HACK/BERZERK/KICK/SWING/CHOP branch as performed before
-             * F0402.  F0232 may schedule only door state/sound work, so no
-             * EMIT_DAMAGE_DEALT is expected on this route. */
-            performed = m11_last_attack_tick_performed_closed_door_f0407(
+        (void)m11_last_attack_tick_observed_damage(
+            state, &observedDamage, &observedCombatOutcome);
+        /* ReDMCSB MENU.C F0407 lines 1308-1317 treats the closed-door
+         * BASH/HACK/BERZERK/KICK/SWING/CHOP branch as performed before
+         * F0402.  F0232 may schedule only door state/sound work, so no
+         * EMIT_DAMAGE_DEALT is expected on this route. */
+        memset(&meleeOutcomeIn, 0, sizeof(meleeOutcomeIn));
+        memset(&meleeOutcomePlan, 0, sizeof(meleeOutcomePlan));
+        meleeOutcomeIn.actionIndex = (int)chosen;
+        meleeOutcomeIn.defaultDisabledTicks = (int)disabledTicks;
+        meleeOutcomeIn.observedAttackDamage = observedDamage;
+        meleeOutcomeIn.combatOutcome = observedCombatOutcome;
+        meleeOutcomeIn.closedDoorBranchPerformed =
+            m11_last_attack_tick_performed_closed_door_f0407(
                 state, chosen, timelineCountBeforeAttack,
                 &closedDoorDisabledTicks);
-            if (performed && closedDoorDisabledTicks > 0u) {
-                disabledTicks = closedDoorDisabledTicks;
-            }
+        meleeOutcomeIn.closedDoorDisabledTicks =
+            (int)closedDoorDisabledTicks;
+        if (dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
+                &meleeOutcomeIn, &meleeOutcomePlan) &&
+            meleeOutcomePlan.valid) {
+            performed = meleeOutcomePlan.performed;
+            disabledTicks = (unsigned char)meleeOutcomePlan.disabledTicks;
         }
         (void)m11_apply_action_completion_plan_f0407(
-            state, championIndex, chosen, performed, 0, !performed,
+            state, championIndex, chosen, performed, 0,
+            meleeOutcomePlan.meleeFailureTail,
             &actionExperienceGain, disabledTicks);
     } else {
         unsigned char disabledTicks = (unsigned char)beginPlan.disabledTicks;
@@ -29957,10 +29985,27 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
         (void)m11_apply_tick(state, CMD_NONE, "ACTION");
     }
     {
+        DM1_MeleeRuntimeOutcomeInputPc34 meleeOutcomeIn;
+        DM1_MeleeRuntimeOutcomePlanPc34 meleeOutcomePlan;
+        int meleeFailureTail =
+            dispatchPlan.allowsParryEmptyFrontRegression && !performed;
+        memset(&meleeOutcomeIn, 0, sizeof(meleeOutcomeIn));
+        memset(&meleeOutcomePlan, 0, sizeof(meleeOutcomePlan));
+        meleeOutcomeIn.actionIndex = actionIndex;
+        meleeOutcomeIn.defaultDisabledTicks = beginPlan.disabledTicks;
+        meleeOutcomeIn.combatOutcome =
+            performed ? COMBAT_OUTCOME_MISS : COMBAT_OUTCOME_INVALID;
+        meleeOutcomeIn.directParryEmptyFront =
+            dispatchPlan.allowsParryEmptyFrontRegression && performed;
+        if (dispatchPlan.allowsParryEmptyFrontRegression &&
+            dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
+                &meleeOutcomeIn, &meleeOutcomePlan) &&
+            meleeOutcomePlan.valid) {
+            meleeFailureTail = meleeOutcomePlan.meleeFailureTail;
+        }
         (void)m11_apply_action_completion_plan_f0407(
             state, championIndex, (unsigned char)actionIndex, performed,
-            cancelActionDisable,
-            dispatchPlan.allowsParryEmptyFrontRegression && !performed,
+            cancelActionDisable, meleeFailureTail,
             &actionExperienceGain,
             (unsigned char)beginPlan.disabledTicks);
     }

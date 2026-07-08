@@ -1000,6 +1000,8 @@ static void test_melee_action_tick_plan(void) {
 static void test_melee_damage_emission_plan(void) {
     DM1_MeleeDamageEmissionInputPc34 in;
     DM1_MeleeDamageEmissionPlanPc34 out;
+    DM1_MeleeRuntimeOutcomeInputPc34 runtimeIn;
+    DM1_MeleeRuntimeOutcomePlanPc34 runtimeOut;
 
     memset(&in, 0, sizeof(in));
     in.damage = 0;
@@ -1025,6 +1027,62 @@ static void test_melee_damage_emission_plan(void) {
              "invalid emission plan builds");
     CHECK_EQ(out.performed, 0, "invalid outcome not performed");
     CHECK_EQ(out.showDamageFeedback, 0, "invalid outcome no feedback");
+
+    memset(&runtimeIn, 0, sizeof(runtimeIn));
+    runtimeIn.actionIndex = DM1_ACTION_CHOP;
+    runtimeIn.defaultDisabledTicks = 8;
+    runtimeIn.observedAttackDamage = 13;
+    runtimeIn.combatOutcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+    CHECK_EQ(dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
+                 &runtimeIn, &runtimeOut), 1,
+             "melee runtime damage outcome builds");
+    CHECK_EQ(runtimeOut.performed, 1, "melee runtime damage performed");
+    CHECK_EQ(runtimeOut.meleeFailureTail, 0,
+             "melee runtime damage no failure tail");
+    CHECK_EQ(runtimeOut.showDamageFeedback, 1,
+             "melee runtime positive damage feedback");
+    CHECK_EQ(runtimeOut.damage, 13, "melee runtime damage copied");
+    CHECK_EQ(runtimeOut.disabledTicks, 8,
+             "melee runtime damage keeps disabled ticks");
+
+    runtimeIn.observedAttackDamage = 0;
+    runtimeIn.combatOutcome = COMBAT_OUTCOME_MISS;
+    CHECK_EQ(dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
+                 &runtimeIn, &runtimeOut), 1,
+             "melee runtime miss outcome builds");
+    CHECK_EQ(runtimeOut.performed, 1, "melee runtime miss performed");
+    CHECK_EQ(runtimeOut.showDamageFeedback, 0,
+             "melee runtime miss hides damage");
+    CHECK_EQ(runtimeOut.meleeFailureTail, 0,
+             "melee runtime miss no failure tail");
+
+    memset(&runtimeIn, 0, sizeof(runtimeIn));
+    runtimeIn.actionIndex = DM1_ACTION_BASH;
+    runtimeIn.defaultDisabledTicks = 9;
+    runtimeIn.combatOutcome = COMBAT_OUTCOME_INVALID;
+    runtimeIn.closedDoorBranchPerformed = 1;
+    runtimeIn.closedDoorDisabledTicks = 6;
+    CHECK_EQ(dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
+                 &runtimeIn, &runtimeOut), 1,
+             "melee runtime closed-door outcome builds");
+    CHECK_EQ(runtimeOut.performed, 1, "closed-door branch performed");
+    CHECK_EQ(runtimeOut.disabledTicks, 6,
+             "closed-door branch overrides disabled ticks");
+    CHECK_EQ(runtimeOut.meleeFailureTail, 0,
+             "closed-door branch no failure tail");
+
+    memset(&runtimeIn, 0, sizeof(runtimeIn));
+    runtimeIn.actionIndex = DM1_ACTION_PARRY;
+    runtimeIn.defaultDisabledTicks = 5;
+    runtimeIn.combatOutcome = COMBAT_OUTCOME_INVALID;
+    CHECK_EQ(dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
+                 &runtimeIn, &runtimeOut), 1,
+             "melee runtime failure outcome builds");
+    CHECK_EQ(runtimeOut.performed, 0, "empty-front parry not performed");
+    CHECK_EQ(runtimeOut.meleeFailureTail, 1,
+             "empty-front parry uses failure tail");
+    CHECK_EQ(runtimeOut.disabledTicks, 5,
+             "failure outcome keeps base ticks before tail adjustment");
 }
 
 static void test_invalid_action(void) {
