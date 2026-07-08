@@ -10616,10 +10616,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * hand-off owns a world pointer but the runtime accessors still see
          * no booted DM2 state. Source: dm2_v1_runtime.c
          * dm2_v1_runtime_init(), SKULL.ASM T520/T560 boot boundary. */
-        dm2_v1_runtime_init(profile);
-        if (profile->graphics_dat) {
-            dm2_v1_runtime_set_viewport_asset_provider(
-                dm2_v1_boot_viewport_asset_fetch, profile);
+        if (!dm2_v1_runtime_bind_boot_profile(profile)) {
+            m11_set_status(state, "BOOT", "DM2 RUNTIME BIND FAILED");
+            m11_log_event(state, M11_COLOR_RED,
+                          "T0: DM2 RUNTIME BIND FAILED");
+            dm2_v1_boot_startup_launch_cleanup(&launch);
+            return 0;
         }
         if (spec->savePath && spec->savePath[0] != '\0') {
             if (!m11_dm2_resume_from_save_path(state, profile, spec->savePath)) {
