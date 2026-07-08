@@ -24618,8 +24618,8 @@ static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
                                                  int championIndex,
                                                  int cost) {
     struct ChampionState_Compat* champ;
-    int staminaAfter;
-    int hpDamage;
+    DM1_ActionF0325StaminaInputPc34 in;
+    DM1_ActionF0325StaminaPlanPc34 plan;
 
     if (!state) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
@@ -24628,22 +24628,20 @@ static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
     champ = &state->world.party.champions[championIndex];
     if (!champ->present || champ->hp.current == 0) return 0;
 
-    staminaAfter = (int)champ->stamina.current - cost;
-    if (staminaAfter <= 0) {
-        champ->stamina.current = 0;
-        hpDamage = (-staminaAfter) >> 1;
-        if (hpDamage > 0) {
-            if ((int)champ->hp.current > hpDamage) {
-                champ->hp.current = (unsigned short)((int)champ->hp.current - hpDamage);
-            } else {
-                champ->hp.current = 0;
-            }
-            M11_GameView_NotifyDamageFlash(state, -1);
-        }
-    } else if (staminaAfter > (int)champ->stamina.maximum) {
-        champ->stamina.current = champ->stamina.maximum;
-    } else {
-        champ->stamina.current = (unsigned short)staminaAfter;
+    memset(&in, 0, sizeof(in));
+    in.currentStamina = (int)champ->stamina.current;
+    in.maximumStamina = (int)champ->stamina.maximum;
+    in.currentHealth = (int)champ->hp.current;
+    in.decrement = cost;
+    if (!dm1_v1_action_stamina_apply_plan_f0325_pc34(&in, &plan) ||
+        !plan.valid || !plan.applied) {
+        return 0;
+    }
+
+    champ->stamina.current = (unsigned short)plan.currentStaminaAfter;
+    champ->hp.current = (unsigned short)plan.currentHealthAfter;
+    if (plan.shouldDamageFlash) {
+        M11_GameView_NotifyDamageFlash(state, -1);
     }
     return cost;
 }

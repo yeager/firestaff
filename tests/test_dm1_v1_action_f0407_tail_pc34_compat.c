@@ -36,6 +36,8 @@ static void test_stamina_and_special_flags(void) {
     DM1_ActionF0407TailPc34 tail;
     DM1_ActionF0407PreludeInputPc34 preludeIn;
     DM1_ActionF0407PreludePlanPc34 preludeOut;
+    DM1_ActionF0325StaminaInputPc34 staminaIn;
+    DM1_ActionF0325StaminaPlanPc34 staminaOut;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(DM1_ACTION_CHOP, &tail), 1,
              "chop tail builds");
     CHECK_EQ(tail.staminaBase, 10, "chop stamina base");
@@ -83,6 +85,53 @@ static void test_stamina_and_special_flags(void) {
     CHECK_EQ(dm1_v1_action_prelude_plan_f0407_pc34(
                  &preludeIn, &preludeOut), 0,
              "invalid prelude rejected");
+
+    memset(&staminaIn, 0, sizeof(staminaIn));
+    staminaIn.currentStamina = 30;
+    staminaIn.maximumStamina = 70;
+    staminaIn.currentHealth = 40;
+    staminaIn.decrement = 11;
+    CHECK_EQ(dm1_v1_action_stamina_apply_plan_f0325_pc34(
+                 &staminaIn, &staminaOut), 1,
+             "F0325 normal stamina plan builds");
+    CHECK_EQ(staminaOut.valid, 1, "F0325 normal valid");
+    CHECK_EQ(staminaOut.applied, 1, "F0325 normal applied");
+    CHECK_EQ(staminaOut.currentStaminaAfter, 19,
+             "F0325 normal stamina decrement");
+    CHECK_EQ(staminaOut.currentHealthAfter, 40,
+             "F0325 normal health unchanged");
+    CHECK_EQ(staminaOut.pendingHealthDamage, 0,
+             "F0325 normal no underflow damage");
+
+    staminaIn.currentStamina = 7;
+    staminaIn.maximumStamina = 70;
+    staminaIn.currentHealth = 40;
+    staminaIn.decrement = 18;
+    CHECK_EQ(dm1_v1_action_stamina_apply_plan_f0325_pc34(
+                 &staminaIn, &staminaOut), 1,
+             "F0325 underflow stamina plan builds");
+    CHECK_EQ(staminaOut.currentStaminaAfter, 0,
+             "F0325 underflow clamps stamina");
+    CHECK_EQ(staminaOut.pendingHealthDamage, 5,
+             "F0325 underflow damage is half deficit");
+    CHECK_EQ(staminaOut.currentHealthAfter, 35,
+             "F0325 underflow applies health delta");
+    CHECK_EQ(staminaOut.shouldDamageFlash, 1,
+             "F0325 underflow requests damage flash");
+    CHECK_EQ(staminaOut.appliedAttributeMask, 0x0300,
+             "F0325 marks load/statistics attributes");
+
+    staminaIn.currentStamina = 90;
+    staminaIn.maximumStamina = 70;
+    staminaIn.currentHealth = 40;
+    staminaIn.decrement = 5;
+    CHECK_EQ(dm1_v1_action_stamina_apply_plan_f0325_pc34(
+                 &staminaIn, &staminaOut), 1,
+             "F0325 max clamp plan builds");
+    CHECK_EQ(staminaOut.currentStaminaAfter, 70,
+             "F0325 clamps stamina at maximum");
+    CHECK_EQ(staminaOut.currentHealthAfter, 40,
+             "F0325 max clamp keeps health");
 }
 
 static void test_tail_adjustments(void) {

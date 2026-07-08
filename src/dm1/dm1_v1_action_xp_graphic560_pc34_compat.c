@@ -28,6 +28,7 @@
 #define DM1_IMMUNE_TO_FEAR_PC34 15
 #define DM1_DOOR_BASH_DISABLED_TICKS_PC34 6
 #define DM1_DOOR_BASH_DESTRUCTION_DELAY_TICKS_PC34 2
+#define DM1_F0325_ATTR_LOAD_STATISTICS_PC34 0x0300
 
 static int dm1_step_east_for_dir(int direction) {
     switch (direction & 3) {
@@ -300,6 +301,52 @@ int dm1_v1_action_completion_plan_f0407_pc34(
     out->actionDisabledIndex = disableOut.actionDisabledIndex;
     out->actionEnableSlotOrdinal = disableOut.actionEnableSlotOrdinal;
     out->shouldRefillReadyHandNow = disableOut.shouldRefillReadyHandNow;
+    return 1;
+}
+
+int dm1_v1_action_stamina_apply_plan_f0325_pc34(
+    const DM1_ActionF0325StaminaInputPc34* in,
+    DM1_ActionF0325StaminaPlanPc34* out) {
+    int staminaAfter;
+    int healthAfter;
+    int pendingDamage;
+    if (!in || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (in->currentStamina < 0 || in->maximumStamina < 0 ||
+        in->currentHealth < 0) {
+        return 0;
+    }
+    out->valid = 1;
+    out->currentStaminaAfter = in->currentStamina;
+    out->currentHealthAfter = in->currentHealth;
+    if (in->decrement <= 0) {
+        return 1;
+    }
+
+    /* ReDMCSB CHAMPION.C F0325 lines 2025-2049: subtract stamina, clamp at
+     * zero/max, convert underflow to pending normal damage, then mark LOAD
+     * and STATISTICS dirty. M11 applies the planned immediate HP delta. */
+    out->applied = 1;
+    out->appliedAttributeMask = DM1_F0325_ATTR_LOAD_STATISTICS_PC34;
+    staminaAfter = in->currentStamina - in->decrement;
+    if (staminaAfter <= 0) {
+        out->currentStaminaAfter = 0;
+        pendingDamage = (-staminaAfter) >> 1;
+        out->pendingHealthDamage = pendingDamage;
+        if (pendingDamage > 0) {
+            healthAfter = in->currentHealth - pendingDamage;
+            out->currentHealthAfter = healthAfter > 0 ? healthAfter : 0;
+            out->shouldDamageFlash = 1;
+        }
+        return 1;
+    }
+
+    if (staminaAfter > in->maximumStamina) {
+        out->currentStaminaAfter = in->maximumStamina;
+        return 1;
+    }
+
+    out->currentStaminaAfter = staminaAfter;
     return 1;
 }
 
