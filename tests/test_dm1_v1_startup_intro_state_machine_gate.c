@@ -438,6 +438,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHostApplyResult_PC34 apply_result;
     DM1_V1_StartupSelectedLaunchCallbacks_PC34 launch_callbacks;
     DM1_V1_StartupSelectedLaunchResult_PC34 launch_result;
+    DM1_V1_StartupLaunchPathFacts_PC34 launch_facts;
+    DM1_V1_StartupLaunchPathReceipt_PC34 launch_receipt;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -498,6 +500,42 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("CSB selected-entry receipt ignores DM1 intro bypass policy",
              dm1_v1_startup_selected_entry_receipt_valid_pc34("csb", 1),
              1);
+
+    memset(&launch_facts, 0, sizeof(launch_facts));
+    memset(&launch_receipt, 0, sizeof(launch_receipt));
+    launch_facts.source_id = "dm1";
+    launch_facts.launch_path = DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34;
+    expect_i("DM1 launcher launch-path receipt succeeds",
+             dm1_v1_startup_launch_path_receipt_pc34(&launch_facts,
+                                                     &launch_receipt),
+             1);
+    expect_i("DM1 launcher launch-path receipt handled",
+             launch_receipt.handled,
+             1);
+    expect_i("DM1 launcher launch-path receipt does not bypass",
+             launch_receipt.intro_bypassed,
+             0);
+    expect_i("DM1 launcher launch-path selected receipt valid",
+             launch_receipt.selected_entry_receipt_valid,
+             1);
+    launch_facts.launch_path =
+        DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34;
+    expect_i("DM1 direct-view launch-path receipt bypasses",
+             dm1_v1_startup_launch_path_receipt_pc34(&launch_facts,
+                                                     &launch_receipt) &&
+                 launch_receipt.intro_bypassed == 1 &&
+                 launch_receipt.selected_entry_receipt_valid == 0,
+             1);
+    launch_facts.source_id = "csb";
+    expect_i("non-DM1 launch-path receipt no-op",
+             dm1_v1_startup_launch_path_receipt_pc34(&launch_facts,
+                                                     &launch_receipt) &&
+                 launch_receipt.handled == 0,
+             1);
+    expect_i("NULL launch-path facts rejected",
+             dm1_v1_startup_launch_path_receipt_pc34(NULL,
+                                                     &launch_receipt),
+             0);
     expect_i("DM1 handoff prelude plan builds",
              dm1_v1_startup_handoff_prelude_plan_pc34("dm1", &prelude),
              1);

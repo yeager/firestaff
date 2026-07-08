@@ -1520,6 +1520,28 @@ static int m11_is_stock_dm1_hall_map0(const M11_GameViewState* state)
            state->world.party.mapIndex == 0;
 }
 
+static int m11_apply_dm1_startup_launch_path_receipt(
+    M11_GameViewState* state,
+    DM1_V1_StartupLaunchPath_PC34 launch_path) {
+    DM1_V1_StartupLaunchPathFacts_PC34 facts;
+    DM1_V1_StartupLaunchPathReceipt_PC34 receipt;
+
+    if (!state) {
+        return 0;
+    }
+    memset(&facts, 0, sizeof(facts));
+    memset(&receipt, 0, sizeof(receipt));
+    facts.source_id = state->sourceId;
+    facts.launch_path = launch_path;
+    if (!dm1_v1_startup_launch_path_receipt_pc34(&facts, &receipt)) {
+        return 0;
+    }
+    if (receipt.handled) {
+        state->dm1StartupIntroBypassed = receipt.intro_bypassed;
+    }
+    return 1;
+}
+
 static int m11_seed_dm1_v2_visible_effects_from_viewport(
     const M11_GameViewState* state,
     int seedDynamicLights);
@@ -10866,9 +10888,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     snprintf(state->sourceId, sizeof(state->sourceId), "%s",
              spec->sourceId ? spec->sourceId : "launcher");
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
-        state->dm1StartupIntroBypassed =
-            dm1_v1_startup_launch_path_bypasses_intro_pc34(
-                DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34);
+        (void)m11_apply_dm1_startup_launch_path_receipt(
+            state,
+            DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34);
     }
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", dungeonPath);
 
@@ -11045,9 +11067,9 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     {
         int ok = M11_GameView_Start(state, &spec);
         if (ok && entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
-            state->dm1StartupIntroBypassed =
-                dm1_v1_startup_launch_path_bypasses_intro_pc34(
-                    DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34);
+            (void)m11_apply_dm1_startup_launch_path_receipt(
+                state,
+                DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34);
         }
         return ok;
     }
@@ -11067,9 +11089,9 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
         int ok = M11_GameView_Start(state, &spec);
         if (ok) {
             state->startedFromLauncher = 0;
-            state->dm1StartupIntroBypassed =
-                dm1_v1_startup_launch_path_bypasses_intro_pc34(
-                    DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34);
+            (void)m11_apply_dm1_startup_launch_path_receipt(
+                state,
+                DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34);
         }
         return ok;
     }

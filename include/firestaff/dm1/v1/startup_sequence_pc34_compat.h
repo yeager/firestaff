@@ -111,6 +111,17 @@ typedef struct DM1_V1_StartupSelectedLaunchResult_PC34 {
     DM1_V1_StartupHostApplyResult_PC34 host_apply_result;
 } DM1_V1_StartupSelectedLaunchResult_PC34;
 
+typedef struct DM1_V1_StartupLaunchPathFacts_PC34 {
+    const char* source_id;
+    DM1_V1_StartupLaunchPath_PC34 launch_path;
+} DM1_V1_StartupLaunchPathFacts_PC34;
+
+typedef struct DM1_V1_StartupLaunchPathReceipt_PC34 {
+    int handled;
+    int intro_bypassed;
+    int selected_entry_receipt_valid;
+} DM1_V1_StartupLaunchPathReceipt_PC34;
+
 enum {
     DM1_V1_STARTUP_BOOT_PROBE_SOURCE_ID_CAPACITY_PC34 = 32,
     DM1_V1_STARTUP_BOOT_PROBE_PHASE_CAPACITY_PC34 = 48,
@@ -162,6 +173,9 @@ int dm1_v1_startup_intro_bypass_applies_to_source_pc34(const char* sourceId,
                                                        int bypassed);
 int dm1_v1_startup_selected_entry_receipt_valid_pc34(const char* game_id,
                                                      int intro_bypassed);
+int dm1_v1_startup_launch_path_receipt_pc34(
+    const DM1_V1_StartupLaunchPathFacts_PC34* facts,
+    DM1_V1_StartupLaunchPathReceipt_PC34* out_receipt);
 int dm1_v1_startup_handoff_prelude_plan_pc34(
     const char* game_id,
     DM1_V1_StartupHandoffPreludePlan_PC34* out_plan);
