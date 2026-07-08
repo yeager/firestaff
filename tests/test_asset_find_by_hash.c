@@ -422,6 +422,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/archive.zip");
     remove("asset_find_by_hash_test_tmp/archive.apk");
+    remove("asset_find_by_hash_test_tmp/archive_as_bin.bin");
     remove("asset_find_by_hash_test_tmp/renamed_zip.payload");
     remove("asset_find_by_hash_test_tmp/archive.tar");
     remove("asset_find_by_hash_test_tmp/archive.tbz2");
@@ -436,6 +437,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/disc.iso");
     remove("asset_find_by_hash_test_tmp/disc.img");
     remove("asset_find_by_hash_test_tmp/disc.raw");
+    remove("asset_find_by_hash_test_tmp/disc_as_zip.zip");
     remove("asset_find_by_hash_test_tmp/renamed_iso.payload");
     remove("asset_find_by_hash_test_tmp/cue_a.payload");
     remove("asset_find_by_hash_test_tmp/cue_b.payload");
@@ -598,6 +600,28 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/archive.apk");
+
+    if (!write_stored_zip_fixture("asset_find_by_hash_test_tmp/archive_as_bin.bin")) {
+        cleanup_fixture();
+        fprintf(stderr, "ZIP-as-BIN fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_name(outPath, "archive_as_bin.bin", "dm2/RENAMED.BIN")) {
+        cleanup_fixture();
+        fprintf(stderr, "ZIP magic should override BIN/ISO suffix: %s\n", outPath);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "virtual ZIP-as-BIN extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/archive_as_bin.bin");
 
     if (!write_stored_zip_fixture("asset_find_by_hash_test_tmp/renamed_zip.payload")) {
         cleanup_fixture();
@@ -1030,6 +1054,28 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/disc.raw");
+
+    if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc_as_zip.zip")) {
+        cleanup_fixture();
+        fprintf(stderr, "ISO-as-ZIP fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_name(outPath, "disc_as_zip.zip", "DUNGEON.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "ISO magic should override ZIP suffix: %s\n", outPath);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "virtual ISO-as-ZIP extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/disc_as_zip.zip");
 
     if (!write_iso_fixture("asset_find_by_hash_test_tmp/renamed_iso.payload")) {
         cleanup_fixture();

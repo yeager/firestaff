@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 archive scanner content-first detection: shared game-data scanner now lets strong ZIP/TAR/ISO/LHA/CHD signatures override misleading suffixes, so ZIP data inside `.bin` and ISO data inside `.zip` still scan/materialize correctly. Extra common archive/disc suffixes and signatures were added for external-tool fallback coverage. Verification: `test_asset_find_by_hash` passed with and without zlib; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB runtime graphics bind receipt: CSB boot runtime detach now carries M11 graphics/font bind decisions with the verified graphics path. M11 executes the shared asset-loader/font calls only when the detached CSB receipt requests them. Verification: strict compiles for `csb_v1_boot.c`, `m11_game_view.c`, and CSB handoff test object; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB runtime detach launch identity: CSB boot runtime detach now transfers M11-ready title and source-id alongside profile, startup receipts, graphics path, dungeon path, and MD5. M11 consumes the detached CSB runtime receipt instead of deciding those identity strings locally. Verification: strict compiles for `csb_v1_boot.c`, `m11_game_view.c`, and the CSB boot handoff test object; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
