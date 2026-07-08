@@ -107,3 +107,32 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
     out->meleeFailureTail = !out->performed;
     return 1;
 }
+
+int dm1_v1_melee_kill_notify_plan_f0231_pc34(
+    const DM1_MeleeKillNotifyInputPc34* in,
+    DM1_MeleeKillNotifyPlanPc34* out) {
+    int xp;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1531-1536 already performs the
+     * source XP/stamina side effects before any UI kill notification reaches
+     * M11.  Firestaff's legacy kill bonus is kept behind this receipt so the
+     * presentation path no longer owns gameplay arithmetic inline. */
+    out->valid = 1;
+    out->shouldLogDefeated = 1;
+    out->creatureType = in->creatureType;
+    if (in->activeChampionIndex < 0 ||
+        in->activeChampionIndex >= CHAMPION_MAX_PARTY ||
+        !in->activeChampionPresent) {
+        return 1;
+    }
+
+    xp = in->creatureBaseHealth > 0 ? in->creatureBaseHealth / 2 : 10;
+    if (xp < 5) xp = 5;
+    out->shouldAwardKillXp = 1;
+    out->championIndex = in->activeChampionIndex;
+    out->xpBonus = xp;
+    return 1;
+}

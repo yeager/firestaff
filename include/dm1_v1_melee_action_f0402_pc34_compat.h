@@ -56,6 +56,22 @@ typedef struct {
     int damage;
 } DM1_MeleeRuntimeOutcomePlanPc34;
 
+typedef struct {
+    int creatureType;
+    int creatureBaseHealth;
+    int activeChampionIndex;
+    int activeChampionPresent;
+} DM1_MeleeKillNotifyInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldLogDefeated;
+    int shouldAwardKillXp;
+    int championIndex;
+    int creatureType;
+    int xpBonus;
+} DM1_MeleeKillNotifyPlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -65,6 +81,9 @@ int dm1_v1_melee_damage_emission_plan_f0231_pc34(
 int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
     const DM1_MeleeRuntimeOutcomeInputPc34* in,
     DM1_MeleeRuntimeOutcomePlanPc34* out);
+int dm1_v1_melee_kill_notify_plan_f0231_pc34(
+    const DM1_MeleeKillNotifyInputPc34* in,
+    DM1_MeleeKillNotifyPlanPc34* out);
 
 #ifdef __cplusplus
 }

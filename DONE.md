@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0231 kill-notify receipt ownership: DM1 melee compat now owns kill-notify defeated logging and legacy kill-XP receipt construction. M11 now gathers creature/profile facts and applies the DM1 receipt for both tick emissions and group-death cleanup. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed. Broader `test_m11_action_stamina_runtime_pc34_compat` still has unrelated THROW/mask failures.
+
 - ✅ 2026-07-09 DM1 F0402/F0231 melee runtime outcome ownership: DM1 melee compat now owns the combined action outcome receipt for damage/miss, closed-door performed branch, empty-front PARRY failure-tail, damage feedback, and disabled-tick override. M11 observes emissions/timeline facts and applies the DM1 receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0328 accepted-throw launch ownership: DM1 throw/shoot compat now owns accepted-throw launch direction, projectile movement-disable receipt, and thrown-potion subtype/power transport. M11 no longer has a separate thrown-potion projectile-shape helper. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

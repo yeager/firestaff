@@ -8783,7 +8783,13 @@ static int m11_creature_try_move(
  * thing list.  ReDMCSB GROUP.C F0209_GROUP_RemoveCreature drops
  * possessions via F0164_DUNGEON_UnlinkThingFromList.
  * Returns 1 if the group was killed and removed. */
-static void m11_award_kill_xp(M11_GameViewState* state, int creatureType);
+static int m11_dm1_kill_notify_plan(
+    const M11_GameViewState* state,
+    int creatureType,
+    DM1_MeleeKillNotifyPlanPc34* outPlan);
+static void m11_apply_kill_notify_plan(
+    M11_GameViewState* state,
+    const DM1_MeleeKillNotifyPlanPc34* plan);
 
 static int m11_check_group_death_and_drop(
     M11_GameViewState* state,
@@ -8854,12 +8860,13 @@ static int m11_check_group_death_and_drop(
         }
     }
 
-    /* Log the kill */
-    m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                  "T%u: %s DEFEATED",
-                  (unsigned int)state->world.gameTick,
-                  m11_creature_name((int)g->creatureType));
-    m11_award_kill_xp(state, (int)g->creatureType);
+    {
+        DM1_MeleeKillNotifyPlanPc34 killPlan;
+        if (m11_dm1_kill_notify_plan(state, (int)g->creatureType,
+                                     &killPlan)) {
+            m11_apply_kill_notify_plan(state, &killPlan);
+        }
+    }
 
     /* Remove the group from the square's thing list and return its slot
      * to the fixed source pool, matching GROUP.C F0189:759-761. */
@@ -9520,42 +9527,50 @@ static void m11_award_magic_xp(M11_GameViewState* state,
     }
 }
 
-/* ================================================================
- * Kill XP bonus
- *
- * When a creature is killed (EMIT_KILL_NOTIFY), the active champion
- * receives a bonus XP award proportional to the slain creature's
- * baseHealth.  This rewards actually defeating enemies, not just
- * scratching them.
- * ================================================================ */
-static void m11_award_kill_xp(M11_GameViewState* state,
-                              int creatureType) {
+static int m11_dm1_kill_notify_plan(
+    const M11_GameViewState* state,
+    int creatureType,
+    DM1_MeleeKillNotifyPlanPc34* outPlan) {
     const struct CreatureBehaviorProfile_Compat* profile;
+    DM1_MeleeKillNotifyInputPc34 in;
     int champIdx;
-    int xpBonus;
 
-    if (!state) return;
+    if (!state || !outPlan) return 0;
     profile = CREATURE_GetProfile_Compat(creatureType);
     champIdx = state->world.party.activeChampionIndex;
-    if (champIdx < 0 || champIdx >= CHAMPION_MAX_PARTY) return;
-    if (!state->world.party.champions[champIdx].present) return;
+    memset(&in, 0, sizeof(in));
+    in.creatureType = creatureType;
+    in.creatureBaseHealth = profile ? profile->baseHealth : 0;
+    in.activeChampionIndex = champIdx;
+    in.activeChampionPresent =
+        champIdx >= 0 && champIdx < CHAMPION_MAX_PARTY &&
+        state->world.party.champions[champIdx].present;
+    return dm1_v1_melee_kill_notify_plan_f0231_pc34(&in, outPlan);
+}
 
-    /* XP bonus = baseHealth / 2, minimum 5 */
-    xpBonus = profile ? profile->baseHealth / 2 : 10;
-    if (xpBonus < 5) xpBonus = 5;
-
-    m11_award_combat_xp(state, champIdx, xpBonus);
-
-    {
+static void m11_apply_kill_notify_plan(
+    M11_GameViewState* state,
+    const DM1_MeleeKillNotifyPlanPc34* plan) {
+    if (!state || !plan || !plan->valid) return;
+    if (plan->shouldLogDefeated) {
+        m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                      "T%u: %s DEFEATED",
+                      (unsigned int)state->world.gameTick,
+                      (plan->creatureType >= 0 && plan->creatureType < 27)
+                          ? m11_creature_name(plan->creatureType)
+                          : "ENEMY");
+    }
+    if (plan->shouldAwardKillXp) {
         char name[16];
+        m11_award_combat_xp(state, plan->championIndex, plan->xpBonus);
         m11_format_champion_name(
-            state->world.party.champions[champIdx].name,
+            state->world.party.champions[plan->championIndex].name,
             name, sizeof(name));
         m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                       "T%u: %s EARNS %d KILL XP (%s)",
                       (unsigned int)state->world.gameTick,
-                      name, xpBonus,
-                      m11_creature_name(creatureType));
+                      name, plan->xpBonus,
+                      m11_creature_name(plan->creatureType));
     }
 }
 
@@ -9964,14 +9979,11 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
             case EMIT_KILL_NOTIFY: {
                 /* payload[0] = creature type (if available), else -1 */
                 int cType = (int)e->payload[0];
-                m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                              "T%u: %s DEFEATED",
-                              (unsigned int)state->world.gameTick,
-                              (cType >= 0 && cType < 27)
-                                  ? m11_creature_name(cType)
-                                  : "ENEMY");
-                /* Award kill XP bonus */
-                m11_award_kill_xp(state, cType >= 0 ? cType : 0);
+                DM1_MeleeKillNotifyPlanPc34 killPlan;
+                if (m11_dm1_kill_notify_plan(
+                        state, cType >= 0 ? cType : 0, &killPlan)) {
+                    m11_apply_kill_notify_plan(state, &killPlan);
+                }
                 break;
             }
             case EMIT_XP_AWARD:

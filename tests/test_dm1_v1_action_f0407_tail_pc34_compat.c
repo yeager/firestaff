@@ -1002,6 +1002,8 @@ static void test_melee_damage_emission_plan(void) {
     DM1_MeleeDamageEmissionPlanPc34 out;
     DM1_MeleeRuntimeOutcomeInputPc34 runtimeIn;
     DM1_MeleeRuntimeOutcomePlanPc34 runtimeOut;
+    DM1_MeleeKillNotifyInputPc34 killIn;
+    DM1_MeleeKillNotifyPlanPc34 killOut;
 
     memset(&in, 0, sizeof(in));
     in.damage = 0;
@@ -1083,6 +1085,36 @@ static void test_melee_damage_emission_plan(void) {
              "empty-front parry uses failure tail");
     CHECK_EQ(runtimeOut.disabledTicks, 5,
              "failure outcome keeps base ticks before tail adjustment");
+
+    memset(&killIn, 0, sizeof(killIn));
+    killIn.creatureType = 6;
+    killIn.creatureBaseHealth = 30;
+    killIn.activeChampionIndex = 2;
+    killIn.activeChampionPresent = 1;
+    CHECK_EQ(dm1_v1_melee_kill_notify_plan_f0231_pc34(
+                 &killIn, &killOut), 1,
+             "kill notify plan builds");
+    CHECK_EQ(killOut.valid, 1, "kill notify valid");
+    CHECK_EQ(killOut.shouldLogDefeated, 1, "kill notify logs defeated");
+    CHECK_EQ(killOut.shouldAwardKillXp, 1, "kill notify awards legacy xp");
+    CHECK_EQ(killOut.championIndex, 2, "kill notify champion");
+    CHECK_EQ(killOut.creatureType, 6, "kill notify creature");
+    CHECK_EQ(killOut.xpBonus, 15, "kill notify base health xp");
+
+    killIn.creatureBaseHealth = 3;
+    CHECK_EQ(dm1_v1_melee_kill_notify_plan_f0231_pc34(
+                 &killIn, &killOut), 1,
+             "kill notify minimum xp builds");
+    CHECK_EQ(killOut.xpBonus, 5, "kill notify minimum xp");
+
+    killIn.activeChampionPresent = 0;
+    CHECK_EQ(dm1_v1_melee_kill_notify_plan_f0231_pc34(
+                 &killIn, &killOut), 1,
+             "kill notify missing champion builds");
+    CHECK_EQ(killOut.shouldLogDefeated, 1,
+             "kill notify missing champion still logs");
+    CHECK_EQ(killOut.shouldAwardKillXp, 0,
+             "kill notify missing champion no xp");
 }
 
 static void test_invalid_action(void) {
