@@ -2744,21 +2744,6 @@ static int orch_cmd_attack_disrupt_material_blocked_f0407_compat(
            plan.valid && plan.blocked;
 }
 
-static int orch_cmd_attack_action_can_hit_door_f0407_compat(int actionIndex)
-{
-    switch (actionIndex) {
-    case DM1_ACTION_CHOP:
-    case DM1_ACTION_KICK:
-    case DM1_ACTION_SWING:
-    case DM1_ACTION_HACK:
-    case DM1_ACTION_BERZERK:
-    case DM1_ACTION_BASH:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
 static int orch_cmd_attack_resolve_target_compat(
     const struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
@@ -3004,12 +2989,20 @@ static int orch_cmd_attack_f0407_closed_door_compat(
     int squareByte;
     int doorIndex = -1;
     int attack;
+    DM1_ActionClosedDoorMeleeInputPc34 doorPlanIn;
+    DM1_ActionClosedDoorMeleePlanPc34 doorPlan;
 
     if (!world || !input || !weaponInfo || !world->dungeon ||
         !world->dungeon->tiles || !world->dungeon->maps) {
         return 0;
     }
-    if (!orch_cmd_attack_action_can_hit_door_f0407_compat(actionIndex)) {
+    memset(&doorPlanIn, 0, sizeof(doorPlanIn));
+    memset(&doorPlan, 0, sizeof(doorPlan));
+    doorPlanIn.actionIndex = actionIndex;
+    if (!dm1_v1_action_closed_door_melee_plan_f0407_pc34(
+            &doorPlanIn, &doorPlan) ||
+        !doorPlan.valid ||
+        !doorPlan.isClosedDoorMeleeAction) {
         return 0;
     }
 
@@ -3049,10 +3042,13 @@ static int orch_cmd_attack_f0407_closed_door_compat(
         return 1;
     }
 
+    doorPlanIn.observedWoodenThudSound = 1;
+    (void)dm1_v1_action_closed_door_melee_plan_f0407_pc34(
+        &doorPlanIn, &doorPlan);
+
     /* ReDMCSB MENU.C F0407 lines 1268-1275 handles closed-door melee
-     * before F0402/F0231 creature melee.  It calls F0312(action hand) and
-     * GROUP.C/PROJEXPL.C F0232, then requests C04 wooden-thud one tick
-     * later even when F0232 does not destroy the door. */
+     * before F0402/F0231 creature melee.  DM1 owns the branch action/delay
+     * plan; M10 keeps live door lookup, F0312 strength, and event scheduling. */
     {
         struct TimelineEvent_Compat thud;
         memset(&thud, 0, sizeof(thud));
@@ -3079,7 +3075,8 @@ static int orch_cmd_attack_f0407_closed_door_compat(
         struct TimelineEvent_Compat destruction;
         memset(&destruction, 0, sizeof(destruction));
         destruction.kind = TIMELINE_EVENT_DOOR_DESTRUCTION;
-        destruction.fireAtTick = world->gameTick + 2u;
+        destruction.fireAtTick =
+            world->gameTick + (unsigned int)doorPlan.destructionDelayTicks;
         destruction.mapIndex = mapIndex;
         destruction.mapX = mapX;
         destruction.mapY = mapY;

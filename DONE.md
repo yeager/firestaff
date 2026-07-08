@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0407 closed-door melee branch ownership cleanup: M10 no longer duplicates the BASH/HACK/BERZERK/KICK/SWING/CHOP closed-door action switch or hard-coded F0232 destruction delay. The live closed-door path now consumes the existing DM1 F0407 closed-door branch receipt and keeps only live door lookup, F0312 strength, and timeline scheduling in M10. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0402 command decode ownership: DM1 melee compat now owns CMD_ATTACK reserved2 decode for live action index fallback, target direction fallback, legacy marker bit, and G0496 action-skill routing. M10 now consumes one DM1 receipt for closed-door, target, preflight, and legacy-marker branches. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0190 timeline cleanup ownership: DM1 melee compat now owns the killed-some C33-C36 aspect and C38-C41 behavior event cleanup rule after group compaction. M10 now only loops timeline entries and applies the DM1 keep/delete/type-shift receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
