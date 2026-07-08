@@ -1805,6 +1805,7 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     struct CombatResult_Compat resultB;
     struct DungeonGroup_Compat groupA;
     struct DungeonGroup_Compat groupB;
+    DM1_MeleeF0190GroupDamageApplyPlanPc34 applyPlan;
     int outcomeA = -1;
     int outcomeB = -1;
 
@@ -2082,11 +2083,22 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     resultB = resultA;
     memset(&groupA, 0, sizeof(groupA));
     groupA.count = 1;
+    groupA.cells = 0x09;
     groupA.health[0] = 100;
     groupB = groupA;
-    CHECK_EQ(dm1_v1_melee_apply_group_damage_f0190_pc34(
-                 &resultA, &groupA, 0, &outcomeA), 1,
-             "DM1 F0190 group damage entrypoint builds");
+    CHECK_EQ(dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
+                 &resultA, &groupA, 0, &applyPlan), 1,
+             "DM1 F0190 group damage receipt builds");
+    CHECK_EQ(applyPlan.valid, 1, "DM1 F0190 group damage receipt valid");
+    CHECK_EQ(applyPlan.shouldApplyDamage, 1,
+             "DM1 F0190 group damage receipt applies");
+    CHECK_EQ(applyPlan.originalGroupCount, 1,
+             "DM1 F0190 group damage original count");
+    CHECK_EQ(applyPlan.killedCell, 1,
+             "DM1 F0190 group damage killed cell");
+    CHECK_EQ(applyPlan.damageApplied, 30,
+             "DM1 F0190 group damage amount");
+    outcomeA = applyPlan.outcome;
     CHECK_EQ(F0738_COMBAT_ApplyDamageToGroup_Compat(
                  &resultB, &groupB, 0, &outcomeB), 1,
              "shared F0738 group damage builds");
@@ -2096,6 +2108,17 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "DM1 F0190 group damage mirrors count");
     CHECK_EQ(outcomeA, outcomeB,
              "DM1 F0190 group damage mirrors outcome");
+
+    memset(&resultA, 0, sizeof(resultA));
+    resultA.outcome = COMBAT_OUTCOME_MISS;
+    groupA = groupB;
+    CHECK_EQ(dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
+                 &resultA, &groupA, 0, &applyPlan), 1,
+             "DM1 F0190 zero-damage receipt builds");
+    CHECK_EQ(applyPlan.shouldApplyDamage, 0,
+             "DM1 F0190 zero-damage receipt skips apply");
+    CHECK_EQ(applyPlan.outcome, COMBAT_OUTCOME_MISS,
+             "DM1 F0190 zero-damage keeps fallback outcome");
 }
 
 static void test_melee_f0231_damage_resolver_entrypoint(void) {

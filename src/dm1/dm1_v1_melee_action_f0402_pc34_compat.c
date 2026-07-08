@@ -13,6 +13,14 @@ enum {
     DM1_MELEE_CREATURE_ATTR_NON_MATERIAL_PC34 = 0x0040
 };
 
+static int dm1_v1_group_creature_cell_f0190_pc34(
+    const struct DungeonGroup_Compat* group,
+    int creatureIndex) {
+    if (!group) return EXPLOSION_CELL_CENTERED;
+    if (group->cells == 0xFFu) return EXPLOSION_CELL_CENTERED;
+    return (group->cells >> (creatureIndex << 1)) & 0x03;
+}
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out) {
@@ -909,12 +917,54 @@ int dm1_v1_melee_apply_group_damage_f0190_pc34(
     struct DungeonGroup_Compat* group,
     int creatureIndex,
     int* outOutcome) {
+    DM1_MeleeF0190GroupDamageApplyPlanPc34 plan;
+    if (!dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
+            result, group, creatureIndex, &plan) ||
+        !plan.valid) {
+        return 0;
+    }
+    if (outOutcome) *outOutcome = plan.outcome;
+    return plan.shouldApplyDamage;
+}
+
+int dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
+    const struct CombatResult_Compat* result,
+    struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    DM1_MeleeF0190GroupDamageApplyPlanPc34* out) {
+    int outcome = COMBAT_OUTCOME_INVALID;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->killedCell = EXPLOSION_CELL_CENTERED;
+    out->outcome = COMBAT_OUTCOME_INVALID;
+    if (!result || !group || creatureIndex < 0 || creatureIndex > (int)group->count) {
+        return 0;
+    }
+    out->valid = 1;
+    out->originalGroupCount = (int)group->count;
+    out->killedCell =
+        dm1_v1_group_creature_cell_f0190_pc34(group, creatureIndex);
+    out->damageApplied = result->damageApplied;
+    if (result->damageApplied <= 0) {
+        out->outcome = result->outcome;
+        return 1;
+    }
+
     /* ReDMCSB: PROJEXPL.C F0231 line 1533 applies final damage through
-     * GROUP.C F0190.  Firestaff's shared F0738 keeps the compact group-slot
-     * mutation used by DM1/CSB; this DM1 entrypoint makes F0231 ownership
-     * explicit while preserving the shared tested arithmetic. */
-    return F0738_COMBAT_ApplyDamageToGroup_Compat(
-        result, group, creatureIndex, outOutcome);
+     * GROUP.C F0190.  GROUP.C F0190 lines 787-917 reads the original group
+     * count/cell before mutating health, compacting survivors, dropping death
+     * smoke/possessions, and returning the killed-some/killed-all outcome.
+     * Firestaff still uses the shared compact group-slot mutator for DM1/CSB,
+     * but this DM1 receipt owns the F0231->F0190 apply gate and facts M10 must
+     * consume after mutation. */
+    if (!F0738_COMBAT_ApplyDamageToGroup_Compat(
+            result, group, creatureIndex, &outcome)) {
+        out->outcome = COMBAT_OUTCOME_INVALID;
+        return 0;
+    }
+    out->shouldApplyDamage = 1;
+    out->outcome = outcome;
+    return 1;
 }
 
 int dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(

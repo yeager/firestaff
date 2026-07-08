@@ -6638,6 +6638,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             int killedCell = EXPLOSION_CELL_CENTERED;
             int originalGroupCount = -1;
             int fearTriggered = 0;
+            DM1_MeleeF0190GroupDamageApplyPlanPc34 damageApplyPlan;
             DM1_MeleeF0231AftermathInputPc34 aftermathIn;
             DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
             int targetDirection = decodePlan.targetDirection;
@@ -6769,13 +6770,13 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         &aftermathIn, &aftermathPlan);
                     if (combatResult.damageApplied > 0 &&
                         groupIndex >= 0 && groupIndex < world->things->groupCount) {
-                        originalGroupCount =
-                            (int)world->things->groups[groupIndex].count;
-                        killedCell = orch_group_creature_cell_compat(
-                            &world->things->groups[groupIndex], creatureIndex);
-                        (void)dm1_v1_melee_apply_group_damage_f0190_pc34(
+                        memset(&damageApplyPlan, 0, sizeof(damageApplyPlan));
+                        (void)dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
                             &combatResult, &world->things->groups[groupIndex],
-                            creatureIndex, &applyOutcome);
+                            creatureIndex, &damageApplyPlan);
+                        originalGroupCount = damageApplyPlan.originalGroupCount;
+                        killedCell = damageApplyPlan.killedCell;
+                        applyOutcome = damageApplyPlan.outcome;
                         aftermathIn.killedCell = killedCell;
                         aftermathIn.damageOutcome = applyOutcome;
                         (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
