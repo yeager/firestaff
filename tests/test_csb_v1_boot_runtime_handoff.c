@@ -1664,6 +1664,10 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                                  "CHAOS STRIKES BACK") == 0 &&
                           strcmp(runtime_receipt.source_id,
                                  "csb") == 0 &&
+                          runtime_receipt.bind_graphics_to_m11_asset_loader ==
+                              1 &&
+                          runtime_receipt.load_original_font_from_graphics ==
+                              1 &&
                           strcmp(runtime_receipt.graphics_path,
                                  "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
                           strcmp(runtime_receipt.dungeon_path,

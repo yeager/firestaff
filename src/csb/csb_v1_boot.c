@@ -987,6 +987,10 @@ int csb_v1_boot_startup_launch_detach_runtime_pc34(
     snprintf(out_receipt->source_id,
              sizeof(out_receipt->source_id),
              "csb");
+    out_receipt->bind_graphics_to_m11_asset_loader =
+        launch->profile->graphics_path[0] != '\0';
+    out_receipt->load_original_font_from_graphics =
+        out_receipt->bind_graphics_to_m11_asset_loader;
     snprintf(out_receipt->graphics_path,
              sizeof(out_receipt->graphics_path),
              "%s",

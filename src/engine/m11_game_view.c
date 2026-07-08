@@ -10515,15 +10515,19 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * chrome/object/font draw paths are still asset-loader based, so bind
          * them to the verified CSB GRAPHICS.DAT instead of leaving CSB on the
          * no-assets fallback path. */
-        if (runtime_receipt.graphics_path[0] != '\0' &&
+        if (runtime_receipt.bind_graphics_to_m11_asset_loader &&
+            runtime_receipt.graphics_path[0] != '\0' &&
             M11_AssetLoader_Init(&state->assetLoader,
                                  runtime_receipt.graphics_path)) {
             state->assetsAvailable = 1;
-            M11_Font_Init(&state->originalFont);
-            if (M11_Font_LoadFromGraphicsDat(&state->originalFont,
-                                             state->assetLoader.fileState,
-                                             state->assetLoader.runtimeState)) {
-                state->originalFontAvailable = 1;
+            if (runtime_receipt.load_original_font_from_graphics) {
+                M11_Font_Init(&state->originalFont);
+                if (M11_Font_LoadFromGraphicsDat(
+                        &state->originalFont,
+                        state->assetLoader.fileState,
+                        state->assetLoader.runtimeState)) {
+                    state->originalFontAvailable = 1;
+                }
             }
         }
         state->csbBootProfile = runtime_receipt.profile;

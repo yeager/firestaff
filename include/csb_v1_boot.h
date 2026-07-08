@@ -89,6 +89,8 @@ typedef struct CSB_V1_BootStartupRuntimeReceipt_PC34 {
     char boot_asset_md5[33];
     char title[64];
     char source_id[32];
+    int bind_graphics_to_m11_asset_loader;
+    int load_original_font_from_graphics;
     char graphics_path[512];
     char dungeon_path[512];
 } CSB_V1_BootStartupRuntimeReceipt_PC34;
