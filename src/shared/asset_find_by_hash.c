@@ -28,6 +28,8 @@
 
 #define ASSET_SCAN_MAX_FILE_BYTES (32LL * 1024LL * 1024LL)
 #define ASSET_ZIP_MAX_ENTRY_BYTES (16U * 1024U * 1024U)
+#define ASSET_TAR_MAX_ENTRY_BYTES (32U * 1024U * 1024U)
+#define ASSET_GZIP_TAR_MAX_BYTES (128U * 1024U * 1024U)
 #define ASSET_ISO_SECTOR_SIZE 2048U
 #define ASSET_ISO_RAW_SECTOR_SIZE 2352U
 #define ASSET_ISO_RAW_DATA_OFFSET 16U
@@ -294,6 +296,19 @@ static int is_iso_path(const char *path) {
 
 static int is_cue_path(const char *path) {
     return has_case_suffix(path, ".cue");
+}
+
+static int is_tar_path(const char *path) {
+    return has_case_suffix(path, ".tar");
+}
+
+static int is_tgz_path(const char *path) {
+    return has_case_suffix(path, ".tgz") || has_case_suffix(path, ".tar.gz");
+}
+
+static int is_supported_container_path(const char *path) {
+    return is_zip_path(path) || is_iso_path(path) || is_cue_path(path) ||
+           is_tar_path(path) || is_tgz_path(path);
 }
 
 static int is_known_large_whole_file_hash(const char *expectedMd5) {
@@ -1407,6 +1422,484 @@ static int scan_cue_by_md5_list(const char *cuePath,
     return foundCount;
 }
 
+static int tar_block_is_zero(const unsigned char *hdr) {
+    int i;
+    if (!hdr) return 1;
+    for (i = 0; i < 512; ++i) {
+        if (hdr[i] != 0U) return 0;
+    }
+    return 1;
+}
+
+static int tar_parse_octal(const unsigned char *field, size_t fieldSize,
+                           uint32_t *outValue) {
+    uint64_t value = 0U;
+    size_t i;
+    int seen = 0;
+    if (!field || fieldSize == 0U || !outValue) return 0;
+    for (i = 0U; i < fieldSize; ++i) {
+        unsigned char c = field[i];
+        if (c == '\0' || c == ' ') {
+            if (seen) break;
+            continue;
+        }
+        if (c < '0' || c > '7') return 0;
+        seen = 1;
+        value = (value << 3U) + (uint64_t)(c - '0');
+        if (value > UINT32_MAX) return 0;
+    }
+    if (!seen) return 0;
+    *outValue = (uint32_t)value;
+    return 1;
+}
+
+static int tar_entry_name(const unsigned char *hdr, char *out, size_t outSize) {
+    char name[101];
+    char prefix[156];
+    size_t nameLen;
+    size_t prefixLen;
+    if (!hdr || !out || outSize == 0U) return 0;
+    memcpy(name, hdr, 100U);
+    name[100] = '\0';
+    memcpy(prefix, hdr + 345, 155U);
+    prefix[155] = '\0';
+    nameLen = strlen(name);
+    prefixLen = strlen(prefix);
+    if (nameLen == 0U) return 0;
+    if (prefixLen > 0U) {
+        return snprintf(out, outSize, "%s/%s", prefix, name) < (int)outSize;
+    }
+    return snprintf(out, outSize, "%s", name) < (int)outSize;
+}
+
+#ifdef FIRESTAFF_HAS_ZLIB
+static int memory_range_md5(const unsigned char *data, uint32_t size,
+                            char outHex[33]) {
+    AssetMd5Ctx ctx;
+    if (!data || !outHex) return 0;
+    md5_init(&ctx);
+    md5_update(&ctx, data, size);
+    md5_final(&ctx, outHex);
+    return 1;
+}
+
+static int copy_memory_range_to_path(const unsigned char *data, uint32_t size,
+                                     const char *outFilePath) {
+    FILE *out;
+    if (!data || !outFilePath) return 0;
+    out = fopen(outFilePath, "wb");
+    if (!out) return 0;
+    if (fwrite(data, 1U, size, out) != size) {
+        fclose(out);
+        return 0;
+    }
+    return fclose(out) == 0;
+}
+#endif
+
+static int tar_scan_file_by_md5(const char *tarPath, const char *expectedMd5,
+                                char *outPath, int outPathLen) {
+    FILE *fp;
+    long pos = 0;
+    char bestName[ASSET_PATH_MAX];
+    int hasMatch = 0;
+    if (!tarPath || !expectedMd5 || !outPath || outPathLen <= 0) return 0;
+    fp = fopen(tarPath, "rb");
+    if (!fp) return 0;
+    bestName[0] = '\0';
+    for (;;) {
+        unsigned char hdr[512];
+        uint32_t size;
+        uint32_t dataOffset;
+        char name[ASSET_PATH_MAX];
+        char hex[33];
+        char typeflag;
+        long nextPos;
+        if (fseek(fp, pos, SEEK_SET) != 0 ||
+            fread(hdr, 1U, sizeof(hdr), fp) != sizeof(hdr)) {
+            break;
+        }
+        if (tar_block_is_zero(hdr)) break;
+        if (!tar_parse_octal(hdr + 124, 12U, &size)) break;
+        typeflag = (char)hdr[156];
+        dataOffset = (uint32_t)(pos + 512L);
+        nextPos = pos + 512L + (long)(((size + 511U) / 512U) * 512U);
+        if ((typeflag == '\0' || typeflag == '0') &&
+            size <= ASSET_TAR_MAX_ENTRY_BYTES &&
+            tar_entry_name(hdr, name, sizeof(name)) &&
+            file_range_md5(fp, (long)dataOffset, size, hex) &&
+            strcmp(hex, expectedMd5) == 0 &&
+            is_better_zip_entry(name, hasMatch ? bestName : NULL)) {
+            strcpy(bestName, name);
+            hasMatch = 1;
+        }
+        pos = nextPos;
+    }
+    fclose(fp);
+    return hasMatch ? copy_virtual_match_path(tarPath, bestName, outPath, outPathLen) : 0;
+}
+
+static int tar_scan_file_by_md5_list(const char *tarPath,
+                                     const char *const *md5List,
+                                     int md5Count,
+                                     char outPaths[][ASSET_PATH_MAX],
+                                     int matched[]) {
+    FILE *fp;
+    long pos = 0;
+    char bestNames[64][ASSET_PATH_MAX];
+    int hasBest[64];
+    int foundCount = 0;
+    int i;
+    if (!tarPath || !md5List || md5Count <= 0 || md5Count > 64 ||
+        !outPaths || !matched) {
+        return 0;
+    }
+    memset(bestNames, 0, sizeof(bestNames));
+    memset(hasBest, 0, sizeof(hasBest));
+    fp = fopen(tarPath, "rb");
+    if (!fp) return 0;
+    for (;;) {
+        unsigned char hdr[512];
+        uint32_t size;
+        uint32_t dataOffset;
+        char name[ASSET_PATH_MAX];
+        char hex[33];
+        char typeflag;
+        int matchIndex;
+        long nextPos;
+        if (fseek(fp, pos, SEEK_SET) != 0 ||
+            fread(hdr, 1U, sizeof(hdr), fp) != sizeof(hdr)) {
+            break;
+        }
+        if (tar_block_is_zero(hdr)) break;
+        if (!tar_parse_octal(hdr + 124, 12U, &size)) break;
+        typeflag = (char)hdr[156];
+        dataOffset = (uint32_t)(pos + 512L);
+        nextPos = pos + 512L + (long)(((size + 511U) / 512U) * 512U);
+        if ((typeflag == '\0' || typeflag == '0') &&
+            size <= ASSET_TAR_MAX_ENTRY_BYTES &&
+            tar_entry_name(hdr, name, sizeof(name)) &&
+            file_range_md5(fp, (long)dataOffset, size, hex)) {
+            matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
+            if (matchIndex >= 0 &&
+                is_better_zip_entry(name, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
+                strcpy(bestNames[matchIndex], name);
+                hasBest[matchIndex] = 1;
+            }
+        }
+        pos = nextPos;
+    }
+    fclose(fp);
+    for (i = 0; i < md5Count; ++i) {
+        if (!hasBest[i] || matched[i]) continue;
+        if (copy_virtual_match_path(tarPath, bestNames[i], outPaths[i], ASSET_PATH_MAX)) {
+            matched[i] = 1;
+            ++foundCount;
+        }
+    }
+    return foundCount;
+}
+
+static int tar_extract_file_entry(const char *tarPath, const char *entryName,
+                                  const char *outFilePath) {
+    FILE *fp;
+    long pos = 0;
+    if (!tarPath || !entryName || !outFilePath) return 0;
+    fp = fopen(tarPath, "rb");
+    if (!fp) return 0;
+    for (;;) {
+        unsigned char hdr[512];
+        uint32_t size;
+        uint32_t dataOffset;
+        char name[ASSET_PATH_MAX];
+        char typeflag;
+        long nextPos;
+        if (fseek(fp, pos, SEEK_SET) != 0 ||
+            fread(hdr, 1U, sizeof(hdr), fp) != sizeof(hdr)) {
+            break;
+        }
+        if (tar_block_is_zero(hdr)) break;
+        if (!tar_parse_octal(hdr + 124, 12U, &size)) break;
+        typeflag = (char)hdr[156];
+        dataOffset = (uint32_t)(pos + 512L);
+        nextPos = pos + 512L + (long)(((size + 511U) / 512U) * 512U);
+        if ((typeflag == '\0' || typeflag == '0') &&
+            size <= ASSET_TAR_MAX_ENTRY_BYTES &&
+            tar_entry_name(hdr, name, sizeof(name)) &&
+            strcmp(name, entryName) == 0) {
+            int ok = copy_file_range_to_path(fp, dataOffset, size, outFilePath);
+            fclose(fp);
+            return ok;
+        }
+        pos = nextPos;
+    }
+    fclose(fp);
+    return 0;
+}
+
+#ifdef FIRESTAFF_HAS_ZLIB
+static int inflate_gzip_file_to_memory(const char *path,
+                                       unsigned char **outData,
+                                       uint32_t *outSize) {
+    unsigned char inBuf[8192];
+    unsigned char outBuf[8192];
+    unsigned char *data = NULL;
+    size_t dataSize = 0U;
+    size_t dataCap = 0U;
+    FILE *fp;
+    z_stream zs;
+    int ret = Z_OK;
+    if (!path || !outData || !outSize) return 0;
+    *outData = NULL;
+    *outSize = 0U;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    memset(&zs, 0, sizeof(zs));
+    if (inflateInit2(&zs, 16 + MAX_WBITS) != Z_OK) {
+        fclose(fp);
+        return 0;
+    }
+    do {
+        size_t got = fread(inBuf, 1U, sizeof(inBuf), fp);
+        if (got == 0U && ferror(fp)) {
+            inflateEnd(&zs);
+            fclose(fp);
+            free(data);
+            return 0;
+        }
+        zs.next_in = inBuf;
+        zs.avail_in = (uInt)got;
+        do {
+            size_t produced;
+            zs.next_out = outBuf;
+            zs.avail_out = (uInt)sizeof(outBuf);
+            ret = inflate(&zs, feof(fp) ? Z_FINISH : Z_NO_FLUSH);
+            if (ret != Z_OK && ret != Z_STREAM_END && ret != Z_BUF_ERROR) {
+                inflateEnd(&zs);
+                fclose(fp);
+                free(data);
+                return 0;
+            }
+            produced = sizeof(outBuf) - zs.avail_out;
+            if (produced > 0U) {
+                if (dataSize + produced > ASSET_GZIP_TAR_MAX_BYTES) {
+                    inflateEnd(&zs);
+                    fclose(fp);
+                    free(data);
+                    return 0;
+                }
+                if (dataSize + produced > dataCap) {
+                    size_t newCap = dataCap ? dataCap * 2U : 65536U;
+                    unsigned char *grown;
+                    while (newCap < dataSize + produced) newCap *= 2U;
+                    if (newCap > ASSET_GZIP_TAR_MAX_BYTES) newCap = ASSET_GZIP_TAR_MAX_BYTES;
+                    grown = (unsigned char*)realloc(data, newCap);
+                    if (!grown) {
+                        inflateEnd(&zs);
+                        fclose(fp);
+                        free(data);
+                        return 0;
+                    }
+                    data = grown;
+                    dataCap = newCap;
+                }
+                memcpy(data + dataSize, outBuf, produced);
+                dataSize += produced;
+            }
+        } while (zs.avail_out == 0U);
+    } while (ret != Z_STREAM_END && !feof(fp));
+    inflateEnd(&zs);
+    fclose(fp);
+    if (ret != Z_STREAM_END || dataSize > UINT32_MAX) {
+        free(data);
+        return 0;
+    }
+    *outData = data;
+    *outSize = (uint32_t)dataSize;
+    return 1;
+}
+#endif
+
+#ifdef FIRESTAFF_HAS_ZLIB
+static int tar_scan_memory_by_md5(const unsigned char *tarData,
+                                  uint32_t tarSize,
+                                  const char *containerPath,
+                                  const char *expectedMd5,
+                                  char *outPath,
+                                  int outPathLen) {
+    uint32_t pos = 0U;
+    char bestName[ASSET_PATH_MAX];
+    int hasMatch = 0;
+    if (!tarData || !containerPath || !expectedMd5 || !outPath || outPathLen <= 0) return 0;
+    bestName[0] = '\0';
+    while (pos + 512U <= tarSize) {
+        const unsigned char *hdr = tarData + pos;
+        uint32_t size;
+        uint32_t dataOffset;
+        uint32_t paddedSize;
+        char name[ASSET_PATH_MAX];
+        char hex[33];
+        char typeflag;
+        if (tar_block_is_zero(hdr)) break;
+        if (!tar_parse_octal(hdr + 124, 12U, &size)) break;
+        typeflag = (char)hdr[156];
+        dataOffset = pos + 512U;
+        paddedSize = ((size + 511U) / 512U) * 512U;
+        if (dataOffset > tarSize || paddedSize > tarSize - dataOffset) break;
+        if ((typeflag == '\0' || typeflag == '0') &&
+            size <= ASSET_TAR_MAX_ENTRY_BYTES &&
+            tar_entry_name(hdr, name, sizeof(name)) &&
+            memory_range_md5(tarData + dataOffset, size, hex) &&
+            strcmp(hex, expectedMd5) == 0 &&
+            is_better_zip_entry(name, hasMatch ? bestName : NULL)) {
+            strcpy(bestName, name);
+            hasMatch = 1;
+        }
+        pos = dataOffset + paddedSize;
+    }
+    return hasMatch ? copy_virtual_match_path(containerPath, bestName, outPath, outPathLen) : 0;
+}
+
+static int tar_scan_memory_by_md5_list(const unsigned char *tarData,
+                                       uint32_t tarSize,
+                                       const char *containerPath,
+                                       const char *const *md5List,
+                                       int md5Count,
+                                       char outPaths[][ASSET_PATH_MAX],
+                                       int matched[]) {
+    uint32_t pos = 0U;
+    char bestNames[64][ASSET_PATH_MAX];
+    int hasBest[64];
+    int foundCount = 0;
+    int i;
+    if (!tarData || !containerPath || !md5List || md5Count <= 0 ||
+        md5Count > 64 || !outPaths || !matched) {
+        return 0;
+    }
+    memset(bestNames, 0, sizeof(bestNames));
+    memset(hasBest, 0, sizeof(hasBest));
+    while (pos + 512U <= tarSize) {
+        const unsigned char *hdr = tarData + pos;
+        uint32_t size;
+        uint32_t dataOffset;
+        uint32_t paddedSize;
+        char name[ASSET_PATH_MAX];
+        char hex[33];
+        char typeflag;
+        int matchIndex;
+        if (tar_block_is_zero(hdr)) break;
+        if (!tar_parse_octal(hdr + 124, 12U, &size)) break;
+        typeflag = (char)hdr[156];
+        dataOffset = pos + 512U;
+        paddedSize = ((size + 511U) / 512U) * 512U;
+        if (dataOffset > tarSize || paddedSize > tarSize - dataOffset) break;
+        if ((typeflag == '\0' || typeflag == '0') &&
+            size <= ASSET_TAR_MAX_ENTRY_BYTES &&
+            tar_entry_name(hdr, name, sizeof(name)) &&
+            memory_range_md5(tarData + dataOffset, size, hex)) {
+            matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
+            if (matchIndex >= 0 &&
+                is_better_zip_entry(name, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
+                strcpy(bestNames[matchIndex], name);
+                hasBest[matchIndex] = 1;
+            }
+        }
+        pos = dataOffset + paddedSize;
+    }
+    for (i = 0; i < md5Count; ++i) {
+        if (!hasBest[i] || matched[i]) continue;
+        if (copy_virtual_match_path(containerPath, bestNames[i], outPaths[i], ASSET_PATH_MAX)) {
+            matched[i] = 1;
+            ++foundCount;
+        }
+    }
+    return foundCount;
+}
+
+static int tar_extract_memory_entry(const unsigned char *tarData,
+                                    uint32_t tarSize,
+                                    const char *entryName,
+                                    const char *outFilePath) {
+    uint32_t pos = 0U;
+    if (!tarData || !entryName || !outFilePath) return 0;
+    while (pos + 512U <= tarSize) {
+        const unsigned char *hdr = tarData + pos;
+        uint32_t size;
+        uint32_t dataOffset;
+        uint32_t paddedSize;
+        char name[ASSET_PATH_MAX];
+        char typeflag;
+        if (tar_block_is_zero(hdr)) break;
+        if (!tar_parse_octal(hdr + 124, 12U, &size)) break;
+        typeflag = (char)hdr[156];
+        dataOffset = pos + 512U;
+        paddedSize = ((size + 511U) / 512U) * 512U;
+        if (dataOffset > tarSize || paddedSize > tarSize - dataOffset) break;
+        if ((typeflag == '\0' || typeflag == '0') &&
+            size <= ASSET_TAR_MAX_ENTRY_BYTES &&
+            tar_entry_name(hdr, name, sizeof(name)) &&
+            strcmp(name, entryName) == 0) {
+            return copy_memory_range_to_path(tarData + dataOffset, size, outFilePath);
+        }
+        pos = dataOffset + paddedSize;
+    }
+    return 0;
+}
+#endif
+
+static int scan_tgz_by_md5(const char *tgzPath, const char *expectedMd5,
+                           char *outPath, int outPathLen) {
+#ifdef FIRESTAFF_HAS_ZLIB
+    unsigned char *tarData = NULL;
+    uint32_t tarSize = 0U;
+    int ok;
+    if (!inflate_gzip_file_to_memory(tgzPath, &tarData, &tarSize)) return 0;
+    ok = tar_scan_memory_by_md5(tarData, tarSize, tgzPath, expectedMd5,
+                                outPath, outPathLen);
+    free(tarData);
+    return ok;
+#else
+    (void)tgzPath; (void)expectedMd5; (void)outPath; (void)outPathLen;
+    return 0;
+#endif
+}
+
+static int scan_tgz_by_md5_list(const char *tgzPath,
+                                const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX],
+                                int matched[]) {
+#ifdef FIRESTAFF_HAS_ZLIB
+    unsigned char *tarData = NULL;
+    uint32_t tarSize = 0U;
+    int foundCount;
+    if (!inflate_gzip_file_to_memory(tgzPath, &tarData, &tarSize)) return 0;
+    foundCount = tar_scan_memory_by_md5_list(tarData, tarSize, tgzPath,
+                                             md5List, md5Count, outPaths, matched);
+    free(tarData);
+    return foundCount;
+#else
+    (void)tgzPath; (void)md5List; (void)md5Count; (void)outPaths; (void)matched;
+    return 0;
+#endif
+}
+
+static int tgz_extract_entry_to_path(const char *tgzPath, const char *entryName,
+                                     const char *outFilePath) {
+#ifdef FIRESTAFF_HAS_ZLIB
+    unsigned char *tarData = NULL;
+    uint32_t tarSize = 0U;
+    int ok;
+    if (!inflate_gzip_file_to_memory(tgzPath, &tarData, &tarSize)) return 0;
+    ok = tar_extract_memory_entry(tarData, tarSize, entryName, outFilePath);
+    free(tarData);
+    return ok;
+#else
+    (void)tgzPath; (void)entryName; (void)outFilePath;
+    return 0;
+#endif
+}
+
 static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
     if (is_zip_path(path)) {
@@ -1417,6 +1910,12 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     }
     if (is_cue_path(path)) {
         return scan_cue_by_md5(path, expectedMd5, outPath, outPathLen);
+    }
+    if (is_tar_path(path)) {
+        return tar_scan_file_by_md5(path, expectedMd5, outPath, outPathLen);
+    }
+    if (is_tgz_path(path)) {
+        return scan_tgz_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     return 0;
 }
@@ -1433,6 +1932,12 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
     }
     if (is_cue_path(path)) {
         return scan_cue_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    if (is_tar_path(path)) {
+        return tar_scan_file_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    if (is_tgz_path(path)) {
+        return scan_tgz_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     return 0;
 }
@@ -1466,7 +1971,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
 
         if (S_ISREG(st.st_mode)) {
             int matchIndex;
-            if (is_zip_path(path) || is_iso_path(path) || is_cue_path(path)) {
+            if (is_supported_container_path(path)) {
                 foundCount += scan_container_by_md5_list(path, md5List, md5Count,
                                                          outPaths, matched);
                 if (foundCount >= md5Count) {
@@ -1523,7 +2028,7 @@ static int scan_dir(const char *dir, const char *expectedMd5,
         if (stat(path, &st) != 0) continue;
 
         if (S_ISREG(st.st_mode)) {
-            if ((is_zip_path(path) || is_iso_path(path) || is_cue_path(path)) &&
+            if (is_supported_container_path(path) &&
                 scan_container_by_md5(path, expectedMd5, outPath, outPathLen)) {
                 closedir(d);
                 return 1;
@@ -1585,7 +2090,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
             int matchIndex;
             sz.LowPart = fd.nFileSizeLow;
             sz.HighPart = fd.nFileSizeHigh;
-            if (is_zip_path(path) || is_iso_path(path) || is_cue_path(path)) {
+            if (is_supported_container_path(path)) {
                 foundCount += scan_container_by_md5_list(path, md5List, md5Count,
                                                          outPaths, matched);
                 if (foundCount >= md5Count) {
@@ -1633,7 +2138,7 @@ static int scan_dir(const char *dir, const char *expectedMd5,
             }
         } else {
             LARGE_INTEGER sz; sz.LowPart = fd.nFileSizeLow; sz.HighPart = fd.nFileSizeHigh;
-            if ((is_zip_path(path) || is_iso_path(path) || is_cue_path(path)) &&
+            if (is_supported_container_path(path) &&
                 scan_container_by_md5(path, expectedMd5, outPath, outPathLen)) {
                 FindClose(h);
                 return 1;
@@ -1768,6 +2273,12 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     if (entry[0] == '\0') return 0;
     if (is_zip_path(container)) {
         return zip_extract_entry_to_path(container, entry, outFilePath);
+    }
+    if (is_tar_path(container)) {
+        return tar_extract_file_entry(container, entry, outFilePath);
+    }
+    if (is_tgz_path(container)) {
+        return tgz_extract_entry_to_path(container, entry, outFilePath);
     }
     /* CUE sheets may reference a data image with no .iso/.bin suffix.
      * Virtual paths are produced only after the scanner has already walked

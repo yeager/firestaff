@@ -15,6 +15,7 @@
 #ifndef FIRESTAFF_SWSH_INTRO_PATHFINDER_M11_H
 #include "swsh_intro_pathfinder_m11.h"
 #endif
+#include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 #include "swsh_frontend_pc34_compat.h"
@@ -33,6 +34,17 @@
 enum {
     M11_SWSH_RECURSIVE_SCAN_MAX_DEPTH = 8,
     M11_SWSH_RECURSIVE_SCAN_MAX_FILES = 4096
+};
+
+static const char* const g_m11_swsh_known_md5s[] = {
+    "28d406007e99b0ae8da0c6f7fc7f183b", /* ReDMCSB Reference/Original/A20ED/swoosh */
+    "a66b607f3850e604b6703e90bbfb5189", /* ReDMCSB Reference/Original/I34E/SWOOSH */
+    "a0ffbcc7ae8cecac03128ddb32887ef4", /* ReDMCSB Reference/Original/A20E/swoosh */
+    "658db79c6bb87f3ab09eb7005cd91313", /* ReDMCSB Reference/Original/A21E/swoosh */
+    "04adf67816f9794cc8352b41b1cb96a2", /* ReDMCSB Reference/Original/P20JB/SWOOSH */
+    "4717e0f74fd326627a78ffcf3ab80127", /* ReDMCSB Reference/Original/X30J/SWOOSH */
+    "1038138978975415571a878bb08f54be", /* ReDMCSB Reference/Original/A20F/swoosh */
+    NULL
 };
 
 int M11_SWSH_Intro_PayloadLooksValid(const char* path) {
@@ -67,6 +79,31 @@ int M11_SWSH_Intro_PayloadLooksValid(const char* path) {
     SWSH_Compat_ReleaseLogoImagePayload(&payload);
     free(data);
     return ok;
+}
+
+static int m11_swsh_intro_find_known_hash(const char* dir,
+                                          char* outPath,
+                                          size_t outPathBytes) {
+    char found[FSP_PATH_MAX];
+    int matchIndex = -1;
+    if (!dir || dir[0] == '\0' || !outPath || outPathBytes == 0U) {
+        return 0;
+    }
+    found[0] = '\0';
+    if (!asset_find_by_md5_list(dir,
+                                g_m11_swsh_known_md5s,
+                                found,
+                                (int)sizeof(found),
+                                &matchIndex,
+                                M11_SWSH_RECURSIVE_SCAN_MAX_DEPTH)) {
+        return 0;
+    }
+    (void)matchIndex;
+    if (strstr(found, "::") != NULL || !M11_SWSH_Intro_PayloadLooksValid(found)) {
+        return 0;
+    }
+    snprintf(outPath, outPathBytes, "%s", found);
+    return 1;
 }
 
 static int m11_swsh_intro_scan_tree_for_payload(const char* dir,
@@ -203,7 +240,19 @@ static int m11_swsh_intro_find_logo_path_for_suffixes(
         }
     }
 
-    /* 2. Asset-catalog matched path for the selected game. */
+    effectiveDataDir = (menuState && menuState->assetStatus.dataDir[0] != '\0')
+                           ? menuState->assetStatus.dataDir
+                           : dataDir;
+    if (!effectiveDataDir || effectiveDataDir[0] == '\0') {
+        effectiveDataDir = ".";
+    }
+
+    /* 2. Known original SWOOSH hashes under the selected data root. */
+    if (m11_swsh_intro_find_known_hash(effectiveDataDir, outPath, outPathBytes)) {
+        return 1;
+    }
+
+    /* 3. Asset-catalog matched path for the selected game. */
     if (menuState) {
         for (i = 0U; i < M12_AssetStatus_GetVersionCount(gameId); ++i) {
             const M12_AssetVersionStatus* version =
@@ -240,12 +289,6 @@ static int m11_swsh_intro_find_logo_path_for_suffixes(
         }
     }
 
-    effectiveDataDir = (menuState && menuState->assetStatus.dataDir[0] != '\0')
-                           ? menuState->assetStatus.dataDir
-                           : dataDir;
-    if (!effectiveDataDir || effectiveDataDir[0] == '\0') {
-        effectiveDataDir = ".";
-    }
     for (i = 0U; i < dataDirSuffixCount; ++i) {
         if (FSP_JoinPath(cand, sizeof(cand), effectiveDataDir, dataDirSuffixes[i]) &&
             M11_SWSH_Intro_PayloadLooksValid(cand)) {
