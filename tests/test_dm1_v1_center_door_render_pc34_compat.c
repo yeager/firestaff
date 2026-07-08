@@ -77,6 +77,7 @@ int main(void)
     expect_int("plan.d3c.closed.graphic", plan.closedPanel.graphicIndex, 246);
 
     expect_blit("d1c.closed", 0, 4, 1, 0, 0, 0, 64, 16, 96, 86);
+    expect_blit("d1c.vertical.opening", 0, 2, 1, 0, 0, 43, 64, 15, 96, 45);
     expect_blit("d2c.vertical.opening", 1, 2, 1, 0, 0, 29, 80, 24, 64, 32);
     expect_blit("d3c.horizontal.left", 2, 1, 0, 0, 18, 0, 88, 28, 6, 40);
     expect_blit("d3c.horizontal.right", 2, 1, 0, 1, 24, 0, 130, 28, 6, 40);

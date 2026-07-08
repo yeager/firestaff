@@ -1,6 +1,8 @@
 # Firestaff DONE - Completed Work
 
-- ✅ 2026-07-09 DM1 F0231 kill-notify receipt ownership: DM1 melee compat now owns kill-notify defeated logging and legacy kill-XP receipt construction. M11 now gathers creature/profile facts and applies the DM1 receipt for both tick emissions and group-death cleanup. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed. Broader `test_m11_action_stamina_runtime_pc34_compat` still has unrelated THROW/mask failures.
+- ✅ 2026-07-09 DM1 THROW/D1C runtime gate cleanup: F0407 THROW now preserves the Firestaff internal `CHAMPION_SLOT_ACTION_HAND` enable-slot receipt, fixing the action-row and full-projectile-list THROW runtime failures. DM1 center-door rendering now owns the D1C vertical half-open panel y-shift used by the thieves-eye mask path. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_dm1_v1_center_door_render_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
+- ✅ 2026-07-09 DM1 F0231 kill-notify receipt ownership: DM1 melee compat now owns kill-notify defeated logging and legacy kill-XP receipt construction. M11 now gathers creature/profile facts and applies the DM1 receipt for both tick emissions and group-death cleanup. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0402/F0231 melee runtime outcome ownership: DM1 melee compat now owns the combined action outcome receipt for damage/miss, closed-door performed branch, empty-front PARRY failure-tail, damage feedback, and disabled-tick override. M11 observes emissions/timeline facts and applies the DM1 receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 

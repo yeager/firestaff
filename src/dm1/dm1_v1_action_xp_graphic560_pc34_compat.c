@@ -1119,7 +1119,7 @@ int dm1_v1_action_throw_plan_f0407_pc34(
          * 2138-2190 has already removed/spawned the thrown object. */
         out->performed = 1;
         out->shouldClearActionHand = 1;
-        out->actionEnableSlotOrdinal = 1;
+        out->actionEnableSlotOrdinal = CHAMPION_SLOT_ACTION_HAND;
     }
     return 1;
 }
