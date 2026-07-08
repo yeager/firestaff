@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 RetroAchievements ONLINE settings tab: tabbed start-menu settings now expose a dedicated ONLINE tab and route RetroAchievements enable, hardcore, username, and API-token rows there while preserving the existing modern visible rows, token masking, and text-edit behavior. Verification: M12 targeted library build passed, M11 targeted library build passed, and `git diff --check` passed. The local CMake test target is still absent/stale in the current build tree.
+
 - ✅ 2026-07-08 CSB viewport boot-profile render adapter: CSB boot now owns the viewport render-frame adapter from boot profile to viewport config, runtime overlays, custom backgrounds, CSBGRAPHICS post-pass, party pose, and draw counts. M11 now supplies only framebuffer plus sprite callbacks. Verification: CSB boot viewport render gate passed 54/54 by direct compile/run, M11 targeted library build passed, Phase A passed 24/24, and `git diff --check` passed. The stale CMake target invocation hung in the current build tree and was stopped.
 
 - ✅ 2026-07-08 CSB object/container boot-profile adapters: CSB runtime/startup bridge now owns opaque boot-profile adapters for object icon/action/allowed-slot/name and container read/write queries. M11 no longer reaches through `CSB_V1_BootProfile.runtime` for those object/container helper paths. Verification: CSB object icon resolver passed, M11 targeted library build passed, Phase A passed 24/24, and `git diff --check` passed.

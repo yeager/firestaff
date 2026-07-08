@@ -34,7 +34,7 @@ typedef enum {
     M12_HIT_SETTINGS_ROW,
     /* Settings view: row cycle button (left/right arrow area, delta +1 or -1) */
     M12_HIT_SETTINGS_CYCLE,
-    /* Settings view: tab strip click 0..M12_SETTINGS_TAB_COUNT-1 (CONTROLS/AUDIO/ACCESSIBILITY) */
+    /* Settings view: tab strip click 0..M12_SETTINGS_TAB_COUNT-1. */
     M12_HIT_SETTINGS_TAB,
     /* Settings language popup: language index */
     M12_HIT_LANGUAGE_POPUP_ITEM,
