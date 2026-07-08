@@ -14320,7 +14320,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             !state->theronState.level_loaded) {
             Theron_V1StartupContinueAvailability continue_availability;
             Theron_StartupAction action;
-            Theron_StartupResult action_result;
+            Theron_StartupInputReceipt input_receipt;
             int has_tqsv_continue = 0;
             int tqsv_slot = -1;
             int has_srm_continue = 0;
@@ -14333,7 +14333,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 has_srm_continue = continue_availability.has_srm_continue;
                 srm_slot = continue_availability.srm_slot;
             }
-            action_result = theron_v1_startup_handle_input_from_facts(
+            if (!theron_v1_startup_handle_input_from_facts_with_receipt(
                 (Theron_StartupPhase)state->theronState.startup_phase,
                 state->theronState.selected_dungeon,
                 (const Theron_V1_BootProfile*)state->theronBootProfile,
@@ -14352,10 +14352,15 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 state->theronState.selected_mirror_order,
                 THERON_STARTUP_MAX_COMPANIONS,
                 theron_v1_startup_input_from_firestaff_menu_code((int)input),
-                &action);
-            if (action_result != THERON_STARTUP_OK) {
-                m11_set_status(state, "STARTUP",
-                               theron_v1_startup_result_name(action_result));
+                &action,
+                &input_receipt)) {
+                m11_set_status(state,
+                               input_receipt.status_scope
+                                   ? input_receipt.status_scope
+                                   : "STARTUP",
+                               input_receipt.status
+                                   ? input_receipt.status
+                                   : "STARTUP INPUT ERROR");
                 return M11_GAME_INPUT_REDRAW;
             }
             return m11_theron_startup_apply_action(state, &action);
