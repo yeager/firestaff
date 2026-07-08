@@ -962,6 +962,8 @@ static void test_closed_door_melee_plan(void) {
 static void test_melee_action_tick_plan(void) {
     DM1_MeleeActionTickInputPc34 in;
     DM1_MeleeActionTickPlanPc34 out;
+    DM1_MeleeF0402CommandDecodeInputPc34 decodeIn;
+    DM1_MeleeF0402CommandDecodePlanPc34 decodeOut;
 
     memset(&in, 0, sizeof(in));
     in.championIndex = 2;
@@ -999,6 +1001,54 @@ static void test_melee_action_tick_plan(void) {
     in.championPresent = 0;
     CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 0,
              "missing champion rejected");
+
+    memset(&decodeIn, 0, sizeof(decodeIn));
+    decodeIn.partyDirection = 2;
+    decodeIn.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+                         (unsigned int)DM1_ACTION_CHOP |
+                         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
+                         (3u << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
+    CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
+                 &decodeIn, &decodeOut), 1,
+             "F0402 command decode builds");
+    CHECK_EQ(decodeOut.valid, 1, "F0402 command decode valid");
+    CHECK_EQ(decodeOut.hasLiveActionIndex, 1,
+             "F0402 command decode live action bit");
+    CHECK_EQ(decodeOut.actionIndex, DM1_ACTION_CHOP,
+             "F0402 command decode action");
+    CHECK_EQ(decodeOut.actionSkillIndex, 6,
+             "F0402 command decode skill route");
+    CHECK_EQ(decodeOut.hasTargetDirection, 1,
+             "F0402 command decode direction bit");
+    CHECK_EQ(decodeOut.targetDirection, 3,
+             "F0402 command decode target direction");
+
+    decodeIn.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+                         (unsigned int)DM1_GRAPHIC560_ACTION_COUNT |
+                         CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID;
+    CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
+                 &decodeIn, &decodeOut), 1,
+             "F0402 invalid action decode builds");
+    CHECK_EQ(decodeOut.actionIndex, CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34,
+             "F0402 invalid action defaults to MELEE");
+    CHECK_EQ(decodeOut.hasLiveActionIndex, 1,
+             "F0402 invalid action keeps live bit");
+    CHECK_EQ(decodeOut.hasLegacyMarker, 1,
+             "F0402 legacy marker bit");
+    CHECK_EQ(decodeOut.targetDirection, 2,
+             "F0402 missing direction falls back to party");
+
+    decodeIn.reserved2 = 0u;
+    decodeIn.partyDirection = 7;
+    CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
+                 &decodeIn, &decodeOut), 1,
+             "F0402 default command decode builds");
+    CHECK_EQ(decodeOut.hasLiveActionIndex, 0,
+             "F0402 default command no live action");
+    CHECK_EQ(decodeOut.actionIndex, CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34,
+             "F0402 default command action");
+    CHECK_EQ(decodeOut.targetDirection, 3,
+             "F0402 default command party direction masked");
 }
 
 static void test_melee_damage_emission_plan(void) {
