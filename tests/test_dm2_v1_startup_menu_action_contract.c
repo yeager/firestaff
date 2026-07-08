@@ -44,6 +44,7 @@ int main(void)
     DM2_V1_StartupHostActionReceipt host_action_receipt;
     DM2_V1_StartupIdleReceipt idle_receipt;
     DM2_V1_StartupLaunchReceipt launch_receipt;
+    DM2_V1_StartupDirectResumeReceipt direct_resume_receipt;
     DM2_V1_StartupHostFacts host_facts;
     DM2_V1_StartupMenuStateReceipt state_receipt;
     DM2_V1_StartupHit hit;
@@ -154,6 +155,35 @@ int main(void)
               host_receipt.log_line &&
               strcmp(host_receipt.log_line, "T0: DM2 RESUMED") == 0,
           "direct resume host receipt owns resumed redraw status, inspect, and log");
+    memset(save_root, 0, sizeof(save_root));
+    check(dm2_v1_startup_execute_save_path_with_host_receipt(
+              "/tmp/firestaff-dm2-startup-missing/Other.dat",
+              test_apply_session,
+              NULL,
+              &execution,
+              &direct_resume_receipt) &&
+              !direct_resume_receipt.session_ready &&
+              !direct_resume_receipt.session_applied &&
+              !direct_resume_receipt.save_root_valid &&
+              strcmp(direct_resume_receipt.host_receipt.status_scope, "BOOT") == 0 &&
+              strcmp(direct_resume_receipt.host_receipt.status,
+                     "DM2 RESUME PATH INVALID") == 0,
+          "direct resume wrapper owns invalid-path host receipt");
+    check(dm2_v1_startup_execute_save_path_with_host_receipt(
+              "/tmp/firestaff-dm2-startup-missing/SKSave03.dat",
+              test_apply_session,
+              NULL,
+              &execution,
+              &direct_resume_receipt) &&
+              !direct_resume_receipt.session_ready &&
+              !direct_resume_receipt.session_applied &&
+              direct_resume_receipt.save_root_valid &&
+              strcmp(direct_resume_receipt.save_root,
+                     "/tmp/firestaff-dm2-startup-missing") == 0 &&
+              strcmp(direct_resume_receipt.host_receipt.status_scope, "BOOT") == 0 &&
+              strcmp(direct_resume_receipt.host_receipt.status,
+                     "DM2 RESUME FAILED") == 0,
+          "direct resume wrapper owns missing-slot host receipt and parsed save root");
 
     dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-startup");
     check(dm2_v1_startup_menu_refresh(&menu, 1, (1u << 2)) &&
