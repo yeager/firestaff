@@ -5367,6 +5367,8 @@ static void orch_cmd_attack_apply_f0190_possession_drops_compat(
     int targetDirection,
     int outcome)
 {
+    DM1_MeleeF0190PossessionDropInputPc34 dropIn;
+    DM1_MeleeF0190PossessionDropPlanPc34 dropPlan;
     int mapIndex;
     int mapX;
     int mapY;
@@ -5379,23 +5381,32 @@ static void orch_cmd_attack_apply_f0190_possession_drops_compat(
 
     orch_cmd_attack_target_square_compat(
         world, targetDirection, &mapIndex, &mapX, &mapY);
-    if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
-        /* ReDMCSB: GROUP.C F0190 lines ~824-829 calls F0188 before
-         * F0189 for a not-moving single-creature group. F0188 drops
-         * fixed possessions first, then the group's Slot chain. */
-        (void)orch_drop_group_fixed_possessions_compat(
-            world, group, mapIndex, mapX, mapY);
-        (void)orch_drop_group_slot_possessions_compat(
-            world, group, mapIndex, mapX, mapY);
+    memset(&dropIn, 0, sizeof(dropIn));
+    memset(&dropPlan, 0, sizeof(dropPlan));
+    dropIn.outcome = outcome;
+    dropIn.creatureType = creature->creatureType;
+    dropIn.creatureAttributes = creature->attributes;
+    dropIn.killedCell = killedCell;
+    dropIn.mapIndex = mapIndex;
+    dropIn.mapX = mapX;
+    dropIn.mapY = mapY;
+    if (!dm1_v1_melee_possession_drop_plan_f0190_pc34(
+            &dropIn, &dropPlan) ||
+        !dropPlan.valid) {
         return;
     }
-
-    if (creature->attributes & DM1_ATTR_DROP_FIXED_POSS) {
-        /* ReDMCSB: GROUP.C F0190 lines ~831-847 drops the killed
-         * creature's fixed possessions immediately when the damaged group
-         * is not moving; moving groups record the cell for F0187 instead. */
+    if (dropPlan.shouldDropGroupFixedPossessions) {
+        (void)orch_drop_group_fixed_possessions_compat(
+            world, group, dropPlan.mapIndex, dropPlan.mapX, dropPlan.mapY);
+    }
+    if (dropPlan.shouldDropGroupSlotPossessions) {
+        (void)orch_drop_group_slot_possessions_compat(
+            world, group, dropPlan.mapIndex, dropPlan.mapX, dropPlan.mapY);
+    }
+    if (dropPlan.shouldDropCreatureFixedPossessions) {
         (void)orch_drop_creature_fixed_possessions_compat(
-            world, creature->creatureType, killedCell, mapIndex, mapX, mapY);
+            world, dropPlan.creatureType, dropPlan.creatureCell,
+            dropPlan.mapIndex, dropPlan.mapX, dropPlan.mapY);
     }
 }
 

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0190 possession-drop policy ownership: DM1 melee compat now owns the killed-all/killed-some possession drop policy after F0231/F0190, including group fixed drops, group Slot drops, per-creature fixed drops, and killed-cell normalization. M10 now only materializes the planned thing-chain drops. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0190 death-smoke create ownership: DM1 melee compat now owns the F0190 death-smoke explosion-create input for killed creatures, including attack, cell, coordinates, tick, and champion ownership fields. M10 now only allocates/schedules the live explosion. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0231 group damage/reaction ownership: DM1 melee compat now owns the F0190 group-damage entrypoint consumed after F0231 and the physical C31 reaction-event plan. M10 now supplies live coordinates/state and consumes the DM1 receipts. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

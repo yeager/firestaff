@@ -645,6 +645,36 @@ int dm1_v1_melee_death_smoke_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_possession_drop_plan_f0190_pc34(
+    const DM1_MeleeF0190PossessionDropInputPc34* in,
+    DM1_MeleeF0190PossessionDropPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    out->valid = 1;
+    out->creatureType = in->creatureType;
+    out->creatureCell = (in->killedCell == EXPLOSION_CELL_CENTERED)
+        ? EXPLOSION_CELL_CENTERED
+        : (in->killedCell & 3);
+    out->mapIndex = in->mapIndex;
+    out->mapX = in->mapX;
+    out->mapY = in->mapY;
+    if (in->outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        out->shouldDropGroupFixedPossessions = 1;
+        out->shouldDropGroupSlotPossessions = 1;
+    } else if (in->outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES &&
+               (in->creatureAttributes & DM1_ATTR_DROP_FIXED_POSS) != 0) {
+        out->shouldDropCreatureFixedPossessions = 1;
+    }
+
+    /* ReDMCSB: GROUP.C F0190 lines 824-847 drops all group possessions
+     * when the group dies, or the killed creature fixed possessions when a
+     * multi-creature group loses one not-moving creature.  M10 materializes
+     * the thing chains; DM1 owns this source branch policy. */
+    return 1;
+}
+
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,

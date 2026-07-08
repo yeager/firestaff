@@ -325,6 +325,28 @@ typedef struct {
     struct ExplosionCreateInput_Compat createInput;
 } DM1_MeleeF0190DeathSmokePlanPc34;
 
+typedef struct {
+    int outcome;
+    int creatureType;
+    int creatureAttributes;
+    int killedCell;
+    int mapIndex;
+    int mapX;
+    int mapY;
+} DM1_MeleeF0190PossessionDropInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldDropGroupFixedPossessions;
+    int shouldDropGroupSlotPossessions;
+    int shouldDropCreatureFixedPossessions;
+    int creatureType;
+    int creatureCell;
+    int mapIndex;
+    int mapX;
+    int mapY;
+} DM1_MeleeF0190PossessionDropPlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -373,6 +395,9 @@ int dm1_v1_melee_reaction_plan_f0231_pc34(
 int dm1_v1_melee_death_smoke_plan_f0190_pc34(
     const DM1_MeleeF0190DeathSmokeInputPc34* in,
     DM1_MeleeF0190DeathSmokePlanPc34* out);
+int dm1_v1_melee_possession_drop_plan_f0190_pc34(
+    const DM1_MeleeF0190PossessionDropInputPc34* in,
+    DM1_MeleeF0190PossessionDropPlanPc34* out);
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
