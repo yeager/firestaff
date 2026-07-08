@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 legacy asset pipeline hash scan: `fs_assets_load_game()` now asks the shared M12 hash scanner for DM1/CSB/DM2 graphics and dungeon paths before using filename fallback, so CLI/legacy game-loop asset loading no longer requires `GRAPHICS.DAT` / `DUNGEON.DAT` names. A new regression test proves DM1, CSB, and DM2 load renamed required files by hash. The same pass fixed the asset-language enum so Swedish no longer maps to French in this loader.
+
 - ✅ 2026-07-08 DM2 V1 hash-first boot scan: `dm2_v1_boot_scan_assets()` and `dm2_v1_boot_probe_available()` now search recursively by known DM2 graphics/dungeon MD5 before legacy filename fallback, and verification now requires both graphics and dungeon hashes. A regression test copies real DM2 files under arbitrary names when available. Verification: DM2 boot smoke test passed 40/40 with renamed real files.
 
 - ✅ 2026-07-08 Theron Track 02 hash-first boot scan: `theron_v1_boot_scan_assets()` now searches the data root recursively by the four known Track 02 MD5s before using legacy filename candidates, and verified JP/US/version identity comes from MD5 instead of filename. Verification: Theron availability test passed, Theron direct-launch test passed, boot syntax check passed, Phase A passed 24/24, and `git diff --check` passed. Full CMake target rebuild was stopped because the local build tree still hangs in regeneration.
