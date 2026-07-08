@@ -1,6 +1,35 @@
 
 # Unreleased
 
+# Firestaff v3.0.66
+
+Firestaff v3.0.66 packages the current `main` after the all-game boot/startup
+ownership passes landed after `v3.0.65` was tagged.
+
+## Highlights since v3.0.65
+
+- **Theron's Quest startup ownership**: startup action dispatch now runs from
+  Theron session facts and returns M11-ready state/host receipts for flow
+  actions, Continue, forcefield entry and launcher return.
+- **CSB startup ownership**: entrance commands now return one host-action
+  receipt covering pure entrance actions, runtime handoff plans, command state,
+  status, bonus flags and profile-sync intent.
+- **DM2 and Nexus startup handoff**: startup action paths now use host-facts
+  receipts more consistently, including DM2 failed-load save rescan handling.
+- **Launcher settings**: the start menu ONLINE tab includes persisted
+  RetroAchievements enable, hardcore, username, API-token and server settings.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.66`.
+
+## Verification
+
+- Local release verification covers focused Theron, CSB, DM2 and
+  RetroAchievements startup/settings gates, the Phase A probe, syntax checks
+  and `git diff --check` before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.66` release run.
+
 # Firestaff v3.0.65
 
 Firestaff v3.0.65 packages the current `main` after the DM1 and CSB startup
