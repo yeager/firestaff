@@ -23,6 +23,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_save_load.h"
+#include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "asset_find_by_hash.h"
 #include <stdio.h>
@@ -843,6 +844,29 @@ const char *dm2_v1_boot_startup_prepare_result_name(
     default:
         return "UNKNOWN";
     }
+}
+
+int dm2_v1_boot_startup_host_facts_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    DM2_V1_StartupHostFacts *out_facts)
+{
+    if (!out_facts) {
+        return 0;
+    }
+    memset(out_facts, 0, sizeof(*out_facts));
+    out_facts->startup_menu_active = startup_menu_active ? 1 : 0;
+    out_facts->save_root = startup_save_root ? startup_save_root : "";
+    out_facts->fallback_save_root = profile ? profile->save_root : NULL;
+    out_facts->resume_available = resume_available ? 1 : 0;
+    out_facts->slot_mask = slot_mask;
+    out_facts->selected_row = selected_row;
+    out_facts->scan_save_root = profile ? profile->save_root : NULL;
+    return 1;
 }
 
 static const char *dm2_v1_boot_startup_prepare_host_status(

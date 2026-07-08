@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
+
 /* ══════════════════════════════════════════════════════════════════════
  * DM2 V1 Boot Profile — Phase 1: Runtime Profile Split
  *
@@ -165,6 +167,18 @@ void dm2_v1_boot_startup_launch_cleanup(
 
 const char *dm2_v1_boot_startup_prepare_result_name(
     DM2_V1_BootStartupPrepareResult result);
+
+/* Build M11-facing startup facts from boot-owned profile state plus the
+ * host's current startup menu snapshot. Keeps save-root fallback/scan roots
+ * owned by the DM2 boot layer instead of M11 unpacking the profile. */
+int dm2_v1_boot_startup_host_facts_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    DM2_V1_StartupHostFacts *out_facts);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

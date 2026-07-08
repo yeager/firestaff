@@ -1,4 +1,5 @@
 #include "dm2_v1_boot.h"
+#include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -302,6 +303,46 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     dm2_v1_boot_startup_launch_cleanup(&launch);
 }
 
+static void test_startup_host_facts_from_boot_profile(void)
+{
+    DM2_V1_BootProfile profile;
+    DM2_V1_StartupHostFacts facts;
+
+    dm2_v1_boot_profile_init(&profile);
+    dm2_v1_boot_set_save_root(&profile, "/tmp/firestaff-dm2-profile-saves");
+
+    CHECK(dm2_v1_boot_startup_host_facts_from_runtime_state(
+              &profile,
+              1,
+              "/tmp/firestaff-dm2-menu-saves",
+              1,
+              (1u << 2),
+              2,
+              &facts) == 1,
+          "DM2 boot builds startup host facts from profile plus runtime state");
+    CHECK(facts.startup_menu_active == 1 &&
+              strcmp(facts.save_root, "/tmp/firestaff-dm2-menu-saves") == 0 &&
+              strcmp(facts.fallback_save_root,
+                     "/tmp/firestaff-dm2-profile-saves") == 0 &&
+              facts.resume_available == 1 &&
+              facts.slot_mask == (1u << 2) &&
+              facts.selected_row == 2 &&
+              strcmp(facts.scan_save_root,
+                     "/tmp/firestaff-dm2-profile-saves") == 0,
+          "DM2 boot owns save-root fallback and scan-root facts");
+    CHECK(dm2_v1_boot_startup_host_facts_from_runtime_state(
+              NULL, 0, NULL, 0, 0u, 0, &facts) == 1 &&
+              facts.startup_menu_active == 0 &&
+              facts.save_root &&
+              facts.save_root[0] == '\0' &&
+              facts.fallback_save_root == NULL &&
+              facts.scan_save_root == NULL,
+          "DM2 boot host facts tolerate missing optional profile");
+    CHECK(dm2_v1_boot_startup_host_facts_from_runtime_state(
+              &profile, 1, "", 0, 0u, 0, NULL) == 0,
+          "DM2 boot host facts reject NULL output");
+}
+
 static void test_source_evidence(void)
 {
     const char *e = dm2_v1_boot_source_evidence();
@@ -342,6 +383,8 @@ int main(void)
     test_startup_launch_alloc_missing_data();
     printf("\n--- test_startup_launch_alloc_real_assets_when_available ---\n");
     test_startup_launch_alloc_real_assets_when_available();
+    printf("\n--- test_startup_host_facts_from_boot_profile ---\n");
+    test_startup_host_facts_from_boot_profile();
 /* ── source evidence --─ */
     printf("\n--- test_source_evidence ---\n");
     test_source_evidence();

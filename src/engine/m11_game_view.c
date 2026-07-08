@@ -557,20 +557,17 @@ static void m11_dm2_startup_host_facts(
     const DM2_V1_BootProfile *profile,
     DM2_V1_StartupHostFacts *facts)
 {
-    if (!facts) {
+    if (!state || !facts) {
         return;
     }
-    memset(facts, 0, sizeof(*facts));
-    if (!state) {
-        return;
-    }
-    facts->startup_menu_active = state->dm2State.startup_menu_active;
-    facts->save_root = state->dm2State.startup_save_root;
-    facts->fallback_save_root = profile ? profile->save_root : NULL;
-    facts->resume_available = state->dm2State.startup_resume_available;
-    facts->slot_mask = state->dm2State.startup_slot_mask;
-    facts->selected_row = state->dm2State.startup_menu_selected_row;
-    facts->scan_save_root = profile ? profile->save_root : NULL;
+    (void)dm2_v1_boot_startup_host_facts_from_runtime_state(
+        profile,
+        state->dm2State.startup_menu_active,
+        state->dm2State.startup_save_root,
+        state->dm2State.startup_resume_available,
+        state->dm2State.startup_slot_mask,
+        state->dm2State.startup_menu_selected_row,
+        facts);
 }
 
 _Static_assert(M12_MENU_INPUT_NONE == 0,
