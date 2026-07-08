@@ -560,6 +560,44 @@ static void test_flip_and_direction_plans(void) {
     CHECK_EQ(dirOut.throwSide, 0, "throw no side for left cell");
 }
 
+static void test_closed_door_melee_plan(void) {
+    DM1_ActionClosedDoorMeleeInputPc34 in;
+    DM1_ActionClosedDoorMeleePlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_CHOP;
+    CHECK_EQ(dm1_v1_action_closed_door_melee_plan_f0407_pc34(&in, &out), 1,
+             "closed-door chop plan builds");
+    CHECK_EQ(out.isClosedDoorMeleeAction, 1,
+             "chop is closed-door melee action");
+    CHECK_EQ(out.performed, 0, "chop no observed door effect not performed");
+    CHECK_EQ(out.disabledTicksOverride, 0, "chop no override without branch");
+
+    in.observedWoodenThudSound = 1;
+    CHECK_EQ(dm1_v1_action_closed_door_melee_plan_f0407_pc34(&in, &out), 1,
+             "closed-door chop thud plan builds");
+    CHECK_EQ(out.performed, 1, "chop thud makes branch performed");
+    CHECK_EQ(out.disabledTicksOverride, 6, "closed-door branch overrides ticks");
+    CHECK_EQ(out.destructionDelayTicks, 2, "closed-door branch f0232 delay");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_BASH;
+    in.observedDoorDestructionEvent = 1;
+    CHECK_EQ(dm1_v1_action_closed_door_melee_plan_f0407_pc34(&in, &out), 1,
+             "closed-door bash event plan builds");
+    CHECK_EQ(out.performed, 1, "bash event makes branch performed");
+    CHECK_EQ(out.disabledTicksOverride, 6, "bash event ticks override");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_PARRY;
+    in.observedWoodenThudSound = 1;
+    CHECK_EQ(dm1_v1_action_closed_door_melee_plan_f0407_pc34(&in, &out), 1,
+             "parry closed-door plan builds");
+    CHECK_EQ(out.isClosedDoorMeleeAction, 0,
+             "parry is not closed-door branch action");
+    CHECK_EQ(out.performed, 0, "parry thud ignored by closed-door plan");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -585,6 +623,7 @@ int main(void) {
     test_projectile_spell_plan();
     test_climb_down_plan();
     test_flip_and_direction_plans();
+    test_closed_door_melee_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

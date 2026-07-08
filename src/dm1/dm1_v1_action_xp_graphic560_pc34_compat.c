@@ -23,6 +23,8 @@
 #define DM1_STATUS_SPELL_SHIELD 77
 #define DM1_STATUS_FIRE_SHIELD 78
 #define DM1_IMMUNE_TO_FEAR_PC34 15
+#define DM1_DOOR_BASH_DISABLED_TICKS_PC34 6
+#define DM1_DOOR_BASH_DESTRUCTION_DELAY_TICKS_PC34 2
 
 static int dm1_step_east_for_dir(int direction) {
     switch (direction & 3) {
@@ -701,6 +703,41 @@ int dm1_v1_action_direction_plan_f0407_pc34(
     out->performed = 1;
     out->targetMapX = in->partyMapX + dm1_step_east_for_dir(dir);
     out->targetMapY = in->partyMapY + dm1_step_north_for_dir(dir);
+    return 1;
+}
+
+int dm1_v1_action_closed_door_melee_plan_f0407_pc34(
+    const DM1_ActionClosedDoorMeleeInputPc34* in,
+    DM1_ActionClosedDoorMeleePlanPc34* out) {
+    if (!in || !out) return 0;
+    out->valid = 1;
+    out->isClosedDoorMeleeAction = 0;
+    out->performed = 0;
+    out->disabledTicksOverride = 0;
+    out->destructionDelayTicks = 0;
+    /* ReDMCSB: MENU.C F0407 lines 1306-1317 routes only BASH, HACK,
+     * BERZERK, KICK, SWING, and CHOP through the closed-door branch before
+     * F0402.  That branch sets ActionDisabledTicks=6 and calls F0232 with
+     * delay 2, then emits the wooden thud even when F0232 does not destroy
+     * the door. */
+    switch (in->actionIndex) {
+        case DM1_ACTION_BASH:
+        case DM1_ACTION_HACK:
+        case DM1_ACTION_BERZERK:
+        case DM1_ACTION_KICK:
+        case DM1_ACTION_SWING:
+        case DM1_ACTION_CHOP:
+            out->isClosedDoorMeleeAction = 1;
+            break;
+        default:
+            return 1;
+    }
+    if (in->observedDoorDestructionEvent || in->observedWoodenThudSound) {
+        out->performed = 1;
+        out->disabledTicksOverride = DM1_DOOR_BASH_DISABLED_TICKS_PC34;
+        out->destructionDelayTicks =
+            DM1_DOOR_BASH_DESTRUCTION_DELAY_TICKS_PC34;
+    }
     return 1;
 }
 

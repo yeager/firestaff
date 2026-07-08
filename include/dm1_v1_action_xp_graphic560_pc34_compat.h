@@ -297,6 +297,20 @@ typedef struct {
     int throwSide;
 } DM1_ActionDirectionPlanPc34;
 
+typedef struct {
+    int actionIndex;
+    int observedDoorDestructionEvent;
+    int observedWoodenThudSound;
+} DM1_ActionClosedDoorMeleeInputPc34;
+
+typedef struct {
+    int valid;
+    int isClosedDoorMeleeAction;
+    int performed;
+    int disabledTicksOverride;
+    int destructionDelayTicks;
+} DM1_ActionClosedDoorMeleePlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -351,6 +365,9 @@ int dm1_v1_action_flip_plan_f0407_pc34(
 int dm1_v1_action_direction_plan_f0407_pc34(
     const DM1_ActionDirectionInputPc34* in,
     DM1_ActionDirectionPlanPc34* out);
+int dm1_v1_action_closed_door_melee_plan_f0407_pc34(
+    const DM1_ActionClosedDoorMeleeInputPc34* in,
+    DM1_ActionClosedDoorMeleePlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);

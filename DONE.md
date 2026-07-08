@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 F0407 closed-door melee branch ownership: DM1 action-XP compat now owns the BASH/HACK/BERZERK/KICK/SWING/CHOP closed-door branch plan, observed F0232/wooden-thud performed detection, and the ReDMCSB `ActionDisabledTicks=6` override. M11 keeps timeline observation and live tick dispatch. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 grouped F0407 special-action plan ownership: DM1 action-XP compat now owns FLIP heads/tails planning plus FLUXCAGE, FUSE, and THROW direction/target/throw-side plans. M11 keeps RNG draw, live mutation, projectile spawn, and endgame handling. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 CLIMB DOWN action-plan ownership: DM1 action-XP compat now owns the F0407 CLIMB DOWN decision plan for no-pit, group-over-pit, move-attempt, move-success, and BUG0_79 action-disable cancellation. M11 keeps only actual movement and post-move state application. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
