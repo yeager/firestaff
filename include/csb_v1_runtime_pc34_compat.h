@@ -1009,6 +1009,17 @@ typedef struct {
     int valid;
     struct PartyState_Compat party;
 } CSB_V1_RuntimePartyMirrorReceipt_PC34;
+typedef struct {
+    int entrance_resume_available;
+    char entrance_resume_path[CSB_V1_STARTUP_PATH_CAP_PC34];
+    int import_available;
+    int import_champion_count;
+    int import_selected_action_index;
+    int import_preview_active;
+    int import_utility_state;
+    char import_dm1_save_path[CSB_V1_STARTUP_PATH_CAP_PC34];
+    char import_utility_prompt[CSB_V1_STARTUP_PROMPT_CAP_PC34];
+} CSB_V1_RuntimeStartupSessionStateReceipt_PC34;
 void csb_v1_runtime_startup_handoff_receipt_init_pc34(
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 *receipt);
 int csb_v1_runtime_apply_startup_handoff_pc34(
@@ -1022,6 +1033,17 @@ int csb_v1_runtime_build_startup_session_options_pc34(
     const char *import_dm1_save_path,
     const char *entrance_resume_save_path,
     CSB_V1_StartupSessionOptions_PC34 *out_options);
+void csb_v1_runtime_startup_session_state_receipt_init_pc34(
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 *receipt);
+int csb_v1_runtime_startup_session_state_receipt_from_options_pc34(
+    const CSB_V1_StartupSessionOptions_PC34 *options,
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 *out_receipt);
+int csb_v1_runtime_build_startup_session_state_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeStartupHandoffReceipt_PC34 *handoff,
+    const char *import_dm1_save_path,
+    const char *entrance_resume_save_path,
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 *out_receipt);
 void csb_v1_runtime_startup_runtime_plan_receipt_init_pc34(
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *receipt);
 int csb_v1_runtime_apply_startup_runtime_plan_pc34(

@@ -10573,7 +10573,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         char resolvedDataDir[FSP_PATH_MAX];
         char scanDir[512];
         CSB_V1_BootProfile *profile = NULL;
-        CSB_V1_StartupSessionOptions_PC34 session_options;
+        CSB_V1_RuntimeStartupSessionStateReceipt_PC34 session_receipt;
         CSB_V1_RuntimeStartupHandoffReceipt_PC34 startup_handoff;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
@@ -10676,36 +10676,36 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_last_command =
             M11_ENTRANCE_RUNTIME_COMMAND_NONE;
         state->csbState.startup_entrance_bonus_requested = 0;
-        (void)csb_v1_runtime_build_startup_session_options_pc34(
+        (void)csb_v1_runtime_build_startup_session_state_receipt_pc34(
             &profile->runtime,
             &startup_handoff,
             spec->csbImportDm1SavePath,
             spec->entranceResumeSavePath,
-            &session_options);
+            &session_receipt);
         state->csbState.startup_entrance_resume_available =
-            session_options.entrance_resume_available;
+            session_receipt.entrance_resume_available;
         snprintf(state->csbState.startup_entrance_resume_path,
                  sizeof(state->csbState.startup_entrance_resume_path),
                  "%s",
-                 session_options.entrance_resume_path);
+                 session_receipt.entrance_resume_path);
         state->csbState.startup_import_available =
-            session_options.import_available;
+            session_receipt.import_available;
         state->csbState.startup_import_champion_count =
-            session_options.import_champion_count;
+            session_receipt.import_champion_count;
         state->csbState.startup_import_selected_action_index =
-            session_options.import_selected_action_index;
+            session_receipt.import_selected_action_index;
         state->csbState.startup_import_preview_active =
-            session_options.import_preview_active;
+            session_receipt.import_preview_active;
         state->csbState.startup_import_utility_state =
-            session_options.import_utility_state;
+            session_receipt.import_utility_state;
         snprintf(state->csbState.startup_import_dm1_save_path,
                  sizeof(state->csbState.startup_import_dm1_save_path),
                  "%s",
-                 session_options.import_dm1_save_path);
+                 session_receipt.import_dm1_save_path);
         snprintf(state->csbState.startup_import_utility_prompt,
                  sizeof(state->csbState.startup_import_utility_prompt),
                  "%s",
-                 session_options.import_utility_prompt);
+                 session_receipt.import_utility_prompt);
         m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')
