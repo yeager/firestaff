@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 broader archive/media hash scan: shared game-data scanner now recognizes `.zipx`, compressed tar variants, cpio/ar/deb/rpm/xar, bzip2/xz/zstd/lzma suffixes, and bzip2/xz/zstd/ar/cpio signatures. Compressed tar archives prefer bsdtar for entry-level hash scan/materialization. Verification: `test_asset_find_by_hash` passed with and without `FIRESTAFF_HAS_ZLIB`, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB startup host-facts wrapper: CSB startup-sequence now owns startup host-facts construction from runtime state, including entrance door-step count. M11 no longer manually fills every CSB startup host-facts field.
 
 - ✅ 2026-07-08 DM2 direct resume wrapper: DM2 startup now owns direct save-path resume execution through session apply and host receipt generation. M11 no longer interprets DM2 resume execution/status strings or emits a separate resumed receipt.
