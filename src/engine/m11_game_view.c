@@ -11175,7 +11175,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             ? state->nexusEngine->champions.party_count
             : -1;
         out->runtimeTick = state->nexusState.tick_count;
-        (void)nexus_v1_startup_receipt_phase(
+        (void)nexus_v1_startup_presentation_receipt(
             state->nexusState.title_active,
             state->nexusState.startup_save_select_active,
             state->nexusState.champion_select_active,
@@ -11183,24 +11183,13 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
-            &out->startupFrame);
-        snprintf(out->startupAnimation,
-                 sizeof(out->startupAnimation),
-                 "%s",
-                 state->nexusState.title_active
-                     ? "nexus-title"
-                     : (state->nexusState.champion_select_active
-                            ? "nexus-champion-select"
-                            : "nexus-runtime"));
-        out->startupAnimationActive =
-            state->nexusState.title_active ? 1 : 0;
-        out->startupTitleFrame = state->nexusState.title_active
-            ? state->nexusState.title_frame
-            : -1;
-        out->startupTitleFrameMax = nexus_v1_boot_start_ready_frames();
-        out->startupTitleReady =
-            !state->nexusState.title_active ||
-            state->nexusState.title_frame >= nexus_v1_boot_start_ready_frames();
+            &out->startupFrame,
+            out->startupAnimation,
+            (int)sizeof(out->startupAnimation),
+            &out->startupAnimationActive,
+            &out->startupTitleFrame,
+            &out->startupTitleFrameMax,
+            &out->startupTitleReady);
         return 1;
     }
 
