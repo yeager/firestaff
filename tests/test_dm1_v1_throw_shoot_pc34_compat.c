@@ -40,6 +40,8 @@ static void test_throw_weight_and_stamina(void) {
 }
 
 static void test_throw_runtime_math(void) {
+    DM1_ThrowF0328ProjectileInputPc34 throwIn;
+    DM1_ThrowF0328ProjectilePlanPc34 throwOut;
     ASSERT_EQ(dm1_v1_throw_xp_for_object_pc34(0, 0, 0, 0), 8,
               "non-weapon throw xp");
     ASSERT_EQ(dm1_v1_throw_xp_for_object_pc34(1, 0, 0, 0), 12,
@@ -61,6 +63,45 @@ static void test_throw_runtime_math(void) {
               "throw attack lower clamp");
     ASSERT_EQ(dm1_v1_throw_attack_pc34(25, 31), 200,
               "throw attack upper clamp");
+
+    memset(&throwIn, 0, sizeof(throwIn));
+    throwIn.objectWeight = 20;
+    throwIn.championStrength = 30;
+    throwIn.championMaxLoad = 340;
+    throwIn.championCurrentStamina = 100;
+    throwIn.championMaximumStamina = 100;
+    throwIn.isWeapon = 1;
+    throwIn.hasWeaponInfo = 1;
+    throwIn.weaponClass = 10;
+    throwIn.weaponStrength = 7;
+    throwIn.weaponKineticEnergy = 20;
+    throwIn.f0312SkillBonus = 2;
+    throwIn.throwSkillLevel = 3;
+    throwIn.rngStrength16 = 5;
+    throwIn.rngKinetic16 = 5;
+    throwIn.rngAttack32 = 31;
+    ASSERT_EQ(dm1_v1_throw_projectile_plan_f0328_pc34(
+                  &throwIn, &throwOut), 1,
+              "F0328 throw projectile plan builds");
+    ASSERT_EQ(throwOut.valid, 1, "F0328 plan valid");
+    ASSERT_EQ(throwOut.staminaCost, 10, "F0328 stamina cost");
+    ASSERT_EQ(throwOut.throwExperience, 17, "F0328 throw xp");
+    ASSERT_EQ(throwOut.throwStrength, 27, "F0312 throw strength");
+    ASSERT_EQ(throwOut.kineticEnergy, 78, "F0328 kinetic energy");
+    ASSERT_EQ(throwOut.attack, 55, "F0328 attack");
+    ASSERT_EQ(throwOut.stepEnergy, 8, "F0328 step energy");
+    ASSERT_EQ(throwOut.actionDisableTicks, 4, "F0328 disable ticks");
+    ASSERT_EQ(throwOut.combatSoundIndex, 13, "F0328 combat sound");
+
+    throwIn.championCurrentStamina = 20;
+    throwIn.actionHandWounded = 1;
+    ASSERT_EQ(dm1_v1_throw_projectile_plan_f0328_pc34(
+                  &throwIn, &throwOut), 1,
+              "F0328 wounded low-stamina plan builds");
+    ASSERT_EQ(throwOut.throwStrength, 9,
+              "F0312 low stamina and wound reduce strength");
+    ASSERT_EQ(throwOut.kineticEnergy, 51,
+              "F0328 kinetic uses reduced strength");
 }
 
 static void test_projectile_shapes_and_launch(void) {

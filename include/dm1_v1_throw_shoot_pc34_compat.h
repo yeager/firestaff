@@ -124,6 +124,37 @@ typedef struct {
     int logKind;
 } DM1_ProjectileImpactLogPlanPc34;
 
+typedef struct {
+    int objectWeight;
+    int championStrength;
+    int championMaxLoad;
+    int championCurrentStamina;
+    int championMaximumStamina;
+    int actionHandWounded;
+    int isWeapon;
+    int hasWeaponInfo;
+    int weaponClass;
+    int weaponStrength;
+    int weaponKineticEnergy;
+    int f0312SkillBonus;
+    int throwSkillLevel;
+    int rngStrength16;
+    int rngKinetic16;
+    int rngAttack32;
+} DM1_ThrowF0328ProjectileInputPc34;
+
+typedef struct {
+    int valid;
+    int staminaCost;
+    int throwExperience;
+    int throwStrength;
+    int kineticEnergy;
+    int attack;
+    int stepEnergy;
+    int actionDisableTicks;
+    int combatSoundIndex;
+} DM1_ThrowF0328ProjectilePlanPc34;
+
 int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight);
 int dm1_v1_throw_armour_weight_f0140_pc34(int armourType);
 int dm1_v1_throw_junk_base_weight_f0140_pc34(int junkType);
@@ -141,6 +172,9 @@ int dm1_v1_throw_kinetic_energy_pc34(int baseStrength,
                                      int rng16);
 int dm1_v1_throw_attack_pc34(int throwSkillLevel, int rng32);
 int dm1_v1_throw_step_energy_pc34(int throwSkillLevel);
+int dm1_v1_throw_projectile_plan_f0328_pc34(
+    const DM1_ThrowF0328ProjectileInputPc34* in,
+    DM1_ThrowF0328ProjectilePlanPc34* out);
 int dm1_v1_thrown_potion_projectile_subtype_pc34(int potionType,
                                                  int* outSubtype);
 int dm1_v1_shoot_step_energy_pc34(int actionClass, int* outStepEnergy);
