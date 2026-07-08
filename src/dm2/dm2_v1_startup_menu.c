@@ -1196,6 +1196,10 @@ int dm2_v1_startup_launch_from_host_facts_with_receipt(
         dm2_v1_startup_launch_receipt_clear(out_receipt);
     }
     if (!facts || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->host_receipt.status_scope = "BOOT";
+            out_receipt->host_receipt.status = "DM2 START MENU FAILED";
+        }
         return 0;
     }
     dm2_v1_session_new(&out_receipt->session);

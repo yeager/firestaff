@@ -249,6 +249,15 @@ int main(void)
                   DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
               strcmp(launch_receipt.host_receipt.status, "DM2 START MENU") == 0,
           "launch receipt owns DM2 startup session, save scan, and active menu");
+    check(!dm2_v1_startup_launch_from_host_facts_with_receipt(
+              NULL,
+              &launch_receipt) &&
+              launch_receipt.host_receipt.status_scope &&
+              strcmp(launch_receipt.host_receipt.status_scope, "BOOT") == 0 &&
+              launch_receipt.host_receipt.status &&
+              strcmp(launch_receipt.host_receipt.status,
+                     "DM2 START MENU FAILED") == 0,
+          "launch receipt owns DM2 startup menu failure status");
     row_count = dm2_v1_startup_menu_build_render_rows(
         &menu,
         rows,

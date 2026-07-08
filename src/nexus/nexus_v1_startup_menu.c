@@ -177,6 +177,10 @@ int nexus_v1_startup_launch_from_host_facts_with_receipt(
         nexus_v1_startup_launch_receipt_clear(out_receipt);
     }
     if (!facts || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->host_receipt.status_scope = "BOOT";
+            out_receipt->host_receipt.status = "NEXUS STARTUP FAILED";
+        }
         return 0;
     }
     if (nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_host_facts(
