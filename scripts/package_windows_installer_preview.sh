@@ -6,7 +6,7 @@ VERSION="${VERSION:-0.2.9-preview}"
 ZIP_STAGE="$ROOT/release/windows-stage/Firestaff-${VERSION}-windows"
 OUT_DIR="$ROOT/release"
 INSTALLER_PATH="$OUT_DIR/Firestaff-${VERSION}-windows-installer.exe"
-NSI_PATH="$OUT_DIR/Firestaff-${VERSION}.nsi"
+ISS_PATH="$OUT_DIR/Firestaff-${VERSION}.iss"
 
 if [[ ! -d "$ZIP_STAGE" ]]; then
   echo "Missing Windows stage directory: $ZIP_STAGE" >&2
@@ -14,48 +14,55 @@ if [[ ! -d "$ZIP_STAGE" ]]; then
   exit 1
 fi
 
-MAKENSIS="${MAKENSIS:-}"
-if [[ -z "$MAKENSIS" ]]; then
+ISCC="${ISCC:-}"
+if [[ -z "$ISCC" ]]; then
   for candidate in \
-    makensis \
-    "/c/Program Files (x86)/NSIS/makensis.exe" \
-    "/c/Program Files/NSIS/makensis.exe"; do
+    iscc \
+    ISCC.exe \
+    "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" \
+    "/c/Program Files/Inno Setup 6/ISCC.exe"; do
     if command -v "$candidate" >/dev/null 2>&1 || [[ -x "$candidate" ]]; then
-      MAKENSIS="$candidate"
+      ISCC="$candidate"
       break
     fi
   done
 fi
-if [[ -z "$MAKENSIS" ]]; then
-  echo "Could not locate makensis. Install NSIS first." >&2
+if [[ -z "$ISCC" ]]; then
+  echo "Could not locate ISCC.exe. Install Inno Setup first." >&2
   exit 1
 fi
 
 mkdir -p "$OUT_DIR"
-cat > "$NSI_PATH" <<NSI
-Unicode true
-Name "Firestaff Preview"
-OutFile "$(cygpath -w "$INSTALLER_PATH" 2>/dev/null || echo "$INSTALLER_PATH")"
-InstallDir "\$LOCALAPPDATA\\Firestaff Preview"
-RequestExecutionLevel user
+ZIP_STAGE_WIN="$(cygpath -w "$ZIP_STAGE" 2>/dev/null || echo "$ZIP_STAGE")"
+OUT_DIR_WIN="$(cygpath -w "$OUT_DIR" 2>/dev/null || echo "$OUT_DIR")"
+cat > "$ISS_PATH" <<ISS
+#define FirestaffVersion "$VERSION"
+#define FirestaffSource "$ZIP_STAGE_WIN"
 
-Page directory
-Page instfiles
-UninstPage uninstConfirm
-UninstPage instfiles
+[Setup]
+AppId={{4DF59FE5-0100-4F99-9771-7914E3F03069}}
+AppName=Firestaff Preview
+AppVersion={#FirestaffVersion}
+AppPublisher=Firestaff
+DefaultDirName={localappdata}\\Firestaff Preview
+DefaultGroupName=Firestaff Preview
+DisableProgramGroupPage=yes
+OutputDir=$OUT_DIR_WIN
+OutputBaseFilename=Firestaff-{#FirestaffVersion}-windows-installer
+Compression=lzma2
+SolidCompression=yes
+PrivilegesRequired=lowest
+SetupLogging=yes
+UninstallDisplayIcon={app}\\firestaff.exe
 
-Section "Firestaff" SEC01
-  SetOutPath "\$INSTDIR"
-  File /r "$(cygpath -w "$ZIP_STAGE" 2>/dev/null || echo "$ZIP_STAGE")\\*"
-  CreateShortcut "\$DESKTOP\\Firestaff Preview.lnk" "\$INSTDIR\\firestaff.exe"
-  WriteUninstaller "\$INSTDIR\\Uninstall.exe"
-SectionEnd
+[Files]
+Source: "{#FirestaffSource}\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-Section "Uninstall"
-  Delete "\$DESKTOP\\Firestaff Preview.lnk"
-  RMDir /r "\$INSTDIR"
-SectionEnd
-NSI
+[Icons]
+Name: "{autodesktop}\\Firestaff Preview"; Filename: "{app}\\firestaff.exe"
+Name: "{group}\\Firestaff Preview"; Filename: "{app}\\firestaff.exe"
+Name: "{group}\\Uninstall Firestaff Preview"; Filename: "{uninstallexe}"
+ISS
 
-"$MAKENSIS" "$NSI_PATH"
+"$ISCC" "$ISS_PATH"
 ls -lh "$INSTALLER_PATH"
