@@ -180,6 +180,30 @@ typedef struct {
 
 typedef struct {
     int actionIndex;
+    int experienceGain;
+} DM1_ActionXpAwardInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldAward;
+    int skillIndex;
+    int baseSkillIndex;
+    int experienceGain;
+} DM1_ActionXpAwardPlanPc34;
+
+typedef struct {
+    int actionIndex;
+} DM1_ActionDirectDispatchInputPc34;
+
+typedef struct {
+    int valid;
+    int mayDispatchDirect;
+    int isMeleeContact;
+    int allowsParryEmptyFrontRegression;
+} DM1_ActionDirectDispatchPlanPc34;
+
+typedef struct {
+    int actionIndex;
 } DM1_ActionDefenseInputPc34;
 
 typedef struct {
@@ -458,6 +482,12 @@ int dm1_v1_action_completion_plan_f0407_pc34(
 int dm1_v1_action_stamina_apply_plan_f0325_pc34(
     const DM1_ActionF0325StaminaInputPc34* in,
     DM1_ActionF0325StaminaPlanPc34* out);
+int dm1_v1_action_xp_award_plan_f0407_pc34(
+    const DM1_ActionXpAwardInputPc34* in,
+    DM1_ActionXpAwardPlanPc34* out);
+int dm1_v1_action_direct_dispatch_plan_f0407_pc34(
+    const DM1_ActionDirectDispatchInputPc34* in,
+    DM1_ActionDirectDispatchPlanPc34* out);
 int dm1_v1_action_defense_apply_plan_f0407_pc34(
     const DM1_ActionDefenseInputPc34* in,
     DM1_ActionDefensePlanPc34* out);

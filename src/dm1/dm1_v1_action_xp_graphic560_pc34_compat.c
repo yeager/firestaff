@@ -350,6 +350,53 @@ int dm1_v1_action_stamina_apply_plan_f0325_pc34(
     return 1;
 }
 
+int dm1_v1_action_xp_award_plan_f0407_pc34(
+    const DM1_ActionXpAwardInputPc34* in,
+    DM1_ActionXpAwardPlanPc34* out) {
+    DM1_ActionXpRoute route;
+    if (!in || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+    if (!dm1_v1_action_xp_route(in->actionIndex, &route) || !route.valid) {
+        return 0;
+    }
+    /* ReDMCSB MENU.C F0407 lines 1267-1275 loads G0496/G0497 for the
+     * action, then lines 1626-1628 award nonzero XP through F0304. */
+    out->valid = 1;
+    out->skillIndex = route.skillIndex;
+    out->baseSkillIndex = route.baseSkillIndex;
+    out->experienceGain = in->experienceGain > 0 ? in->experienceGain : 0;
+    out->shouldAward = out->experienceGain > 0;
+    return 1;
+}
+
+int dm1_v1_action_direct_dispatch_plan_f0407_pc34(
+    const DM1_ActionDirectDispatchInputPc34* in,
+    DM1_ActionDirectDispatchPlanPc34* out) {
+    int isMelee;
+    if (!in || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+    /* Firestaff's direct helper is not a ReDMCSB entry point; preserve its
+     * regression boundary by rejecting F0402 contact actions except PARRY,
+     * whose empty-front failure tail is source-locked to MENU.C F0407 lines
+     * 1308-1342 and covered by direct runtime tests. */
+    isMelee = dm1_v1_action_is_melee_contact_f0407_pc34(in->actionIndex);
+    out->valid = 1;
+    out->isMeleeContact = isMelee;
+    out->allowsParryEmptyFrontRegression =
+        in->actionIndex == DM1_ACTION_PARRY;
+    out->mayDispatchDirect =
+        !isMelee || out->allowsParryEmptyFrontRegression;
+    return 1;
+}
+
 int dm1_v1_action_defense_apply_plan_f0407_pc34(
     const DM1_ActionDefenseInputPc34* in,
     DM1_ActionDefensePlanPc34* out) {
