@@ -22289,24 +22289,17 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 }
 
-static unsigned int m11_dm1_center_depth_mask(const M11_ViewportCell cells[3][3],
-                                              int requireOpen) {
-    DM1_ViewportCenterLaneMasksPc34 masks = m11_dm1_center_lane_masks(cells);
-    return requireOpen ? masks.open_depth_mask : masks.valid_depth_mask;
-}
-
 static int m11_dm1_center_line_clear_before_depth(const M11_ViewportCell cells[3][3],
                                                   int depthIndex) {
-    return dm1_viewport_3d_center_line_clear_before_depth_pc34(
-        depthIndex,
-        m11_dm1_center_depth_mask(cells, 1));
+    DM1_ViewportLaneVisibilityReceiptPc34 visibility =
+        m11_dm1_lane_visibility(cells);
+    return dm1_viewport_3d_center_line_clear_from_visibility_pc34(
+        &visibility,
+        depthIndex);
 }
 
 static int m11_dm1_center_content_visible_depth_mask(const M11_ViewportCell cells[3][3]) {
-    DM1_ViewportCenterLaneMasksPc34 masks = m11_dm1_center_lane_masks(cells);
-    return dm1_viewport_3d_center_visible_depth_mask_pc34(
-        masks.valid_depth_mask,
-        masks.open_depth_mask);
+    return m11_dm1_lane_visibility(cells).center_visible_depth_mask;
 }
 
 static void m11_draw_dm1_side_contents(const M11_GameViewState* state,

@@ -552,6 +552,7 @@ typedef struct DM1_ViewportLaneVisibilityReceiptPc34 {
     int max_visible_forward;
     int nearest_blocking_center_depth_index;
     int nearest_blocking_center_door_depth;
+    int center_visible_depth_mask;
 } DM1_ViewportLaneVisibilityReceiptPc34;
 
 DM1_ViewportCenterLaneMasksPc34 dm1_viewport_3d_center_lane_masks_from_cells_pc34(
@@ -568,6 +569,9 @@ int dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
     const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
     int rel_forward,
     int rel_side);
+int dm1_viewport_3d_center_line_clear_from_visibility_pc34(
+    const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
+    int depth_index);
 int dm1_viewport_3d_center_line_clear_before_depth_pc34(
     int depth_index,
     unsigned int open_depth_mask);

@@ -3808,6 +3808,8 @@ static void test_side_lane_clear_contract(void)
                   visibility.nearest_blocking_center_door_depth, 1);
         check_int("F0128.lane_visibility.max_visible",
                   visibility.max_visible_forward, 2);
+        check_int("F0128.lane_visibility.center_visible_mask",
+                  visibility.center_visible_depth_mask, 0x1);
         check_int("F0128.lane_visibility.left_mask",
                   (int)visibility.left_open_depth_mask, 0x3);
         check_int("F0128.lane_visibility.right_mask",
@@ -3821,6 +3823,15 @@ static void test_side_lane_clear_contract(void)
         check_int("F0128.lane_visibility.center_clear",
                   dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
                       &visibility, 3, 0), 1);
+        check_int("F0128.lane_visibility.center_line_d1_clear",
+                  dm1_viewport_3d_center_line_clear_from_visibility_pc34(
+                      &visibility, 0), 1);
+        check_int("F0128.lane_visibility.center_line_d3_blocked",
+                  dm1_viewport_3d_center_line_clear_from_visibility_pc34(
+                      &visibility, 2), 0);
+        check_int("F0128.lane_visibility.center_line_null_blocked",
+                  dm1_viewport_3d_center_line_clear_from_visibility_pc34(
+                      NULL, 2), 0);
         check_int("F0128.lane_visibility.null_blocked",
                   dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
                       NULL, 3, 1), 0);
