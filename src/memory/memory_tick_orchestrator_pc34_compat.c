@@ -6591,21 +6591,24 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
          * data. */
         DM1_WeaponInfo weaponInfo;
         int weaponClass;
+        DM1_MeleeF0402WeaponAvailabilityInputPc34 availabilityIn;
+        DM1_MeleeF0402WeaponAvailabilityPlanPc34 availabilityPlan;
         int hasWeaponInfo = F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
             world, (int)input->commandArg1, &weaponInfo) > 0;
-        int emptyHandLiveAction =
-            !hasWeaponInfo &&
-            orch_cmd_attack_has_live_action_index_compat(input) &&
+        memset(&availabilityIn, 0, sizeof(availabilityIn));
+        memset(&availabilityPlan, 0, sizeof(availabilityPlan));
+        availabilityIn.hasWeaponInfo = hasWeaponInfo;
+        availabilityIn.hasLiveActionIndex =
+            orch_cmd_attack_has_live_action_index_compat(input);
+        availabilityIn.actionHandEmpty =
             orch_cmd_attack_action_hand_is_empty_compat(
                 world, (int)input->commandArg1);
-        if (emptyHandLiveAction) {
-            /* ReDMCSB MENU.C F0389 lines 717-718 opens action set 2
-             * (PUNCH/KICK/WAR CRY) when the action hand is empty.  F0231
-             * still uses F0312 champion strength for C01_SLOT_ACTION_HAND,
-             * but there is no WEAPON_INFO strength/class addition. */
+        (void)dm1_v1_melee_weapon_availability_plan_f0402_pc34(
+            &availabilityIn, &availabilityPlan);
+        if (availabilityPlan.useEmptyHandWeaponInfo) {
             orch_cmd_attack_empty_hand_weapon_info_compat(&weaponInfo);
         }
-        if (hasWeaponInfo || emptyHandLiveAction) {
+        if (availabilityPlan.hasUsableF0231WeaponInfo) {
             struct CombatantChampionSnapshot_Compat championSnapshot;
             struct CombatantCreatureSnapshot_Compat creatureSnapshot;
             struct WeaponProfile_Compat weaponProfile;
@@ -6625,6 +6628,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             int targetDirection =
                 orch_cmd_attack_target_direction_compat(world, input);
             int targetResolved;
+            int reachBlocked = 0;
+            int disruptBlocked = 0;
             int championSnapshotReady = 0;
             int creatureSnapshotReady = 0;
             if (hasWeaponInfo) {
@@ -6641,45 +6646,46 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             }
             targetResolved = orch_cmd_attack_resolve_target_compat(
                 world, input, &groupIndex, &creatureIndex);
-            if (!targetResolved &&
-                input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34) {
-                /* ReDMCSB MENU.C F0402 lines 1021-1057 returns false before
-                 * F0231 when no melee target creature ordinal exists.  Keep
-                 * legacy direct group-index callers on the marker fallback,
-                 * but do not synthesize random damage for live auto-target
-                 * attacks against an empty front square. */
-                return 1;
+            if (targetResolved) {
+                reachBlocked =
+                    orch_cmd_attack_champion_reach_blocked_f0407_compat(
+                        world, (int)input->commandArg1, targetDirection);
+                disruptBlocked =
+                    orch_cmd_attack_disrupt_material_blocked_f0407_compat(
+                        world, actionIndex, groupIndex);
             }
-            if (!targetResolved &&
-                orch_cmd_attack_has_live_action_index_compat(input)) {
-                /* ReDMCSB MENU.C F0402 lines 1021-1057 only reaches F0231
-                 * after a concrete G0517 action-target group and melee
-                 * creature ordinal exist.  A direct compatibility call that
-                 * already carries an F0407 action index is live melee data,
-                 * not the older weapon-class marker path. */
-                return 1;
-            }
-            if (!targetResolved &&
-                orch_cmd_attack_has_live_group_table_compat(world)) {
-                /* Direct group-index callers against a live THING group table
-                 * are runtime melee data too: if the group/creature cannot be
-                 * resolved, mirror F0402's early false return instead of
-                 * reinterpreting commandArg2 as the legacy weapon-class marker. */
-                return 1;
-            }
-            if (targetResolved &&
-                orch_cmd_attack_champion_reach_blocked_f0407_compat(
-                    world, (int)input->commandArg1, targetDirection)) {
-                emit(result, EMIT_DAMAGE_DEALT,
-                     input->commandArg1, groupIndex, 0, COMBAT_OUTCOME_INVALID);
-                return 1;
-            }
-            if (targetResolved &&
-                orch_cmd_attack_disrupt_material_blocked_f0407_compat(
-                    world, actionIndex, groupIndex)) {
-                emit(result, EMIT_DAMAGE_DEALT,
-                     input->commandArg1, groupIndex, 0, COMBAT_OUTCOME_INVALID);
-                return 1;
+            {
+                DM1_MeleeF0402PreflightInputPc34 preflightIn;
+                DM1_MeleeF0402PreflightPlanPc34 preflightPlan;
+                memset(&preflightIn, 0, sizeof(preflightIn));
+                memset(&preflightPlan, 0, sizeof(preflightPlan));
+                preflightIn.requestedAutoTarget =
+                    input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+                preflightIn.hasLiveActionIndex =
+                    orch_cmd_attack_has_live_action_index_compat(input);
+                preflightIn.hasLiveGroupTable =
+                    orch_cmd_attack_has_live_group_table_compat(world);
+                preflightIn.targetResolved = targetResolved;
+                preflightIn.reachBlocked = reachBlocked;
+                preflightIn.disruptBlocked = disruptBlocked;
+                preflightIn.championSnapshotReady = targetResolved;
+                preflightIn.creatureSnapshotReady = targetResolved;
+                (void)dm1_v1_melee_preflight_plan_f0402_pc34(
+                    &preflightIn, &preflightPlan);
+                if (preflightPlan.shouldEmitDamageDealt) {
+                    emit(result, EMIT_DAMAGE_DEALT,
+                         input->commandArg1, groupIndex, 0,
+                         preflightPlan.emitOutcome);
+                }
+                if (preflightPlan.shouldReturnHandled) {
+                    return 1;
+                }
+                if (!targetResolved && preflightPlan.canUseLegacyMarker) {
+                    goto cmd_attack_legacy_marker;
+                }
+                if (!targetResolved) {
+                    return 1;
+                }
             }
             if (targetResolved) {
                 creatureSnapshotReady =
@@ -6687,27 +6693,40 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         world, groupIndex, creatureIndex,
                         orch_cmd_attack_doubled_map_difficulty_compat(world),
                         &creatureSnapshot);
-                if (creatureSnapshotReady &&
-                    creatureSnapshot.isCandidateInvulnerable) {
-                    /* Candidate-panel attacks must remain true NO_ACTION:
-                     * reject before F0312 consumes RANDOM(16). */
-                    return 1;
-                }
                 championSnapshotReady =
                     orch_build_cmd_attack_champion_snapshot_compat(
                         world, (int)input->commandArg1, &weaponInfo, weaponType,
                         hasWeaponInfo, actionSkillIndex, &championSnapshot);
             }
-            if (targetResolved && (!championSnapshotReady || !creatureSnapshotReady)) {
-                /* ReDMCSB MENU.C F0402 enters F0231 only after a concrete
-                 * target creature ordinal exists, and PROJEXPL.C F0231
-                 * returns before damage when the champion is invalid/dead.
-                 * Do not let a resolved live target fall through to the
-                 * compatibility marker path when either live snapshot is
-                 * unavailable. */
-                return 1;
+            {
+                DM1_MeleeF0402PreflightInputPc34 preflightIn;
+                DM1_MeleeF0402PreflightPlanPc34 preflightPlan;
+                memset(&preflightIn, 0, sizeof(preflightIn));
+                memset(&preflightPlan, 0, sizeof(preflightPlan));
+                preflightIn.requestedAutoTarget =
+                    input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+                preflightIn.hasLiveActionIndex =
+                    orch_cmd_attack_has_live_action_index_compat(input);
+                preflightIn.hasLiveGroupTable =
+                    orch_cmd_attack_has_live_group_table_compat(world);
+                preflightIn.targetResolved = targetResolved;
+                preflightIn.reachBlocked = reachBlocked;
+                preflightIn.disruptBlocked = disruptBlocked;
+                preflightIn.candidateInvulnerable =
+                    creatureSnapshotReady &&
+                    creatureSnapshot.isCandidateInvulnerable;
+                preflightIn.championSnapshotReady = championSnapshotReady;
+                preflightIn.creatureSnapshotReady = creatureSnapshotReady;
+                (void)dm1_v1_melee_preflight_plan_f0402_pc34(
+                    &preflightIn, &preflightPlan);
+                if (preflightPlan.shouldReturnHandled) {
+                    return 1;
+                }
+                if (!preflightPlan.canResolveDamage) {
+                    return 1;
+                }
             }
-            if (targetResolved && championSnapshotReady && creatureSnapshotReady) {
+            {
                 if (orch_build_cmd_attack_weapon_profile_compat(
                         &weaponInfo, weaponType, actionIndex, actionSkillIndex,
                         &weaponProfile) &&
@@ -6820,6 +6839,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             }
             weaponClass = (int)input->commandArg2;
         }
+cmd_attack_legacy_marker:
         if (!orch_cmd_attack_has_legacy_marker_compat(input)) {
             /* Marker damage is a synthetic M10 compatibility snapshot, not a
              * ReDMCSB F0402/F0231 live melee path.  Require an explicit marker

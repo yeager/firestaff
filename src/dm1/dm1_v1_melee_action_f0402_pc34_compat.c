@@ -304,6 +304,78 @@ int dm1_v1_melee_side_effect_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_weapon_availability_plan_f0402_pc34(
+    const DM1_MeleeF0402WeaponAvailabilityInputPc34* in,
+    DM1_MeleeF0402WeaponAvailabilityPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->weaponClass = -1;
+    if (!in) return 0;
+
+    out->valid = 1;
+    if (in->hasWeaponInfo) {
+        out->useActionHandWeaponInfo = 1;
+        out->hasUsableF0231WeaponInfo = 1;
+        return 1;
+    }
+    if (in->hasLiveActionIndex && in->actionHandEmpty) {
+        /* ReDMCSB: MENU.C F0389 lines 717-718 opens action set 2
+         * (PUNCH/KICK/WAR CRY) when the action hand is empty.  MENU.C F0402
+         * then still reaches F0231 with F0312(action hand), but without
+         * WEAPON_INFO strength/class additions. */
+        out->useEmptyHandWeaponInfo = 1;
+        out->hasUsableF0231WeaponInfo = 1;
+        out->weaponClass = 255;
+    }
+    return 1;
+}
+
+int dm1_v1_melee_preflight_plan_f0402_pc34(
+    const DM1_MeleeF0402PreflightInputPc34* in,
+    DM1_MeleeF0402PreflightPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->emitOutcome = COMBAT_OUTCOME_INVALID;
+    if (!in) return 0;
+
+    out->valid = 1;
+    if (!in->targetResolved) {
+        if (in->requestedAutoTarget ||
+            in->hasLiveActionIndex ||
+            in->hasLiveGroupTable) {
+            /* ReDMCSB: MENU.C F0402 lines 1021-1057 reaches F0231 only
+             * after a concrete G0517 action-target group and creature
+             * ordinal exist.  Live runtime calls without that target are
+             * handled no-ops, not synthetic marker damage. */
+            out->shouldReturnHandled = 1;
+            return 1;
+        }
+        out->canUseLegacyMarker = 1;
+        return 1;
+    }
+
+    if (in->reachBlocked || in->disruptBlocked) {
+        out->shouldReturnHandled = 1;
+        out->shouldEmitDamageDealt = 1;
+        out->emitOutcome = COMBAT_OUTCOME_INVALID;
+        return 1;
+    }
+    if (in->candidateInvulnerable) {
+        out->shouldReturnHandled = 1;
+        return 1;
+    }
+    if (!in->championSnapshotReady || !in->creatureSnapshotReady) {
+        /* ReDMCSB: F0402 enters F0231 only after a target creature ordinal
+         * exists; PROJEXPL.C F0231 then returns before side effects when the
+         * champion snapshot is invalid or dead. */
+        out->shouldReturnHandled = 1;
+        return 1;
+    }
+
+    out->canResolveDamage = 1;
+    return 1;
+}
+
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out) {
