@@ -164,6 +164,28 @@ typedef struct {
     int actionExperienceGain;
 } DM1_ActionHealPlanPc34;
 
+typedef struct {
+    int valid;
+    int magicalLightAmountDelta;
+    int eventLightPower;
+    int eventDelayTicks;
+    int decrementsActionHandCharges;
+} DM1_ActionLightPlanPc34;
+
+typedef struct {
+    int earthSkillLevel;
+    int randomDraw;
+} DM1_ActionWindowInputPc34;
+
+typedef struct {
+    int valid;
+    int randomRange;
+    int durationTicks;
+    int statusEventType;
+    int incrementsThievesEyeCount;
+    int decrementsActionHandCharges;
+} DM1_ActionWindowPlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -193,6 +215,11 @@ int dm1_v1_action_freeze_life_plan_f0407_pc34(
 int dm1_v1_action_heal_plan_f0407_pc34(
     const DM1_ActionHealInputPc34* in,
     DM1_ActionHealPlanPc34* out);
+int dm1_v1_action_light_plan_f0407_pc34(DM1_ActionLightPlanPc34* out);
+int dm1_v1_action_window_random_range_f0407_pc34(int earthSkillLevel);
+int dm1_v1_action_window_plan_f0407_pc34(
+    const DM1_ActionWindowInputPc34* in,
+    DM1_ActionWindowPlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);
