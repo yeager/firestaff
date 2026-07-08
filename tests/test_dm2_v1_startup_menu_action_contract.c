@@ -41,6 +41,7 @@ int main(void)
     DM2_V1_StartupInputOutcome outcome;
     DM2_V1_StartupApplyReceipt receipt;
     DM2_V1_StartupHostReceipt host_receipt;
+    DM2_V1_StartupHostActionReceipt host_action_receipt;
     DM2_V1_StartupHostFacts host_facts;
     DM2_V1_StartupMenuStateReceipt state_receipt;
     DM2_V1_StartupHit hit;
@@ -305,6 +306,27 @@ int main(void)
               host_receipt.rescan_saves == 1 &&
               !host_receipt.mode_update.set_startup_menu_active,
           "failed Continue host receipt owns M11 result and rescan policy");
+    memset(&host_facts, 0, sizeof(host_facts));
+    host_facts.save_root = "/tmp/firestaff-dm2-startup-missing";
+    host_facts.fallback_save_root = "/tmp/firestaff-dm2-startup-missing";
+    host_facts.resume_available = 1;
+    host_facts.slot_mask = (1u << 2);
+    host_facts.selected_row = 0;
+    host_facts.scan_save_root = "/tmp/firestaff-dm2-startup-missing";
+    check(dm2_v1_startup_execute_action_from_host_facts_with_receipt(
+              &action,
+              &host_facts,
+              test_apply_session,
+              NULL,
+              &execution,
+              &host_action_receipt) &&
+              host_action_receipt.host_receipt.input_result ==
+                  DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
+              host_action_receipt.host_receipt.rescan_saves == 1 &&
+              host_action_receipt.menu_state_receipt_valid &&
+              host_action_receipt.menu_state_receipt.row_count == 1 &&
+              host_action_receipt.menu_state_receipt.selected_row == 0,
+          "host action receipt owns failed Continue rescan state for M11");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
