@@ -32917,25 +32917,34 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     int gotActions;
     int visibleRows = 3;
     int row;
-    DM1_V1_ActionMenuRenderPlanPc34 renderPlan;
+    DM1_V1_ActionMenuStatePc34 menuState;
+    DM1_V1_ActionMenuReceiptPc34 receipt;
+    const DM1_V1_ActionMenuRenderPlanPc34* renderPlan;
     char nameBuf[16];
     const struct ChampionState_Compat* champ;
     if (!state) return 0;
-    if (state->actingChampionOrdinal == 0) return 0;
-    actingIndex = (int)state->actingChampionOrdinal - 1;
-    if (actingIndex < 0 || actingIndex >= CHAMPION_MAX_PARTY) return 0;
-    if (actingIndex >= state->world.party.championCount) return 0;
-    champ = &state->world.party.champions[actingIndex];
-    if (!champ->present) return 0;
+    actingIndex = state->actingChampionOrdinal > 0
+                      ? (int)state->actingChampionOrdinal - 1
+                      : -1;
+    champ = (actingIndex >= 0 && actingIndex < CHAMPION_MAX_PARTY)
+                ? &state->world.party.champions[actingIndex]
+                : NULL;
 
     gotActions = M11_GameView_GetActingActionIndices(state, actions);
     if (gotActions) {
         visibleRows = m11_count_source_action_menu_rows(actions);
         if (visibleRows <= 0) return 0;
     }
-    if (!dm1_v1_action_menu_build_render_plan_pc34(visibleRows, &renderPlan)) {
-        return 0;
-    }
+    menuState.acting_champion_ordinal = (int)state->actingChampionOrdinal;
+    menuState.champion_count = state->world.party.championCount;
+    menuState.acting_champion_present = champ && champ->present;
+    menuState.action_row_count = visibleRows;
+    receipt = dm1_v1_action_menu_build_receipt_pc34(&menuState);
+    if (!receipt.accepted) return 0;
+    actingIndex = receipt.acting_champion_index;
+    champ = &state->world.party.champions[actingIndex];
+    visibleRows = receipt.visible_row_count;
+    renderPlan = &receipt.render_plan;
 
     /* F0387 always fills the full action area with black before
      * blitting the source menu sub-graphic selected by the number
@@ -32947,37 +32956,37 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
      * icon-cell overpaint from an earlier frame. */
     {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      renderPlan.clear_rect.x,
-                      renderPlan.clear_rect.y,
-                      renderPlan.clear_rect.w,
-                      renderPlan.clear_rect.h,
-                      (unsigned char)renderPlan.clear_color);
+                      renderPlan->clear_rect.x,
+                      renderPlan->clear_rect.y,
+                      renderPlan->clear_rect.w,
+                      renderPlan->clear_rect.h,
+                      (unsigned char)renderPlan->clear_color);
         {
             const M11_AssetSlot* slot = NULL;
             if (state->assetsAvailable) {
                 slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                            (unsigned int)renderPlan.graphic_id);
+                                            (unsigned int)renderPlan->graphic_id);
             }
             if (slot && slot->loaded && slot->pixels &&
-                (int)slot->width == renderPlan.clear_rect.w &&
-                (int)slot->height == renderPlan.clear_rect.h) {
+                (int)slot->width == renderPlan->clear_rect.w &&
+                (int)slot->height == renderPlan->clear_rect.h) {
                 M11_AssetLoader_BlitRegion(slot, 0, 0,
-                                           renderPlan.graphic_rect.w,
-                                           renderPlan.graphic_rect.h,
+                                           renderPlan->graphic_rect.w,
+                                           renderPlan->graphic_rect.h,
                                            framebuffer,
                                            framebufferWidth,
                                            framebufferHeight,
-                                           renderPlan.graphic_rect.x,
-                                           renderPlan.graphic_rect.y,
+                                           renderPlan->graphic_rect.x,
+                                           renderPlan->graphic_rect.y,
                                            -1);
             } else {
                 (void)m11_blit_panel_asset_native(state,
                     framebuffer, framebufferWidth, framebufferHeight,
-                    renderPlan.graphic_id,
-                    renderPlan.clear_rect.w,
-                    renderPlan.clear_rect.h,
-                    renderPlan.clear_rect.x,
-                    renderPlan.clear_rect.y);
+                    renderPlan->graphic_id,
+                    renderPlan->clear_rect.w,
+                    renderPlan->clear_rect.h,
+                    renderPlan->clear_rect.x,
+                    renderPlan->clear_rect.y);
             }
         }
     }
@@ -32991,18 +33000,18 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
          * inscription/font advance. */
         m11_draw_dm1_ui_text_trailing_spaces(
             framebuffer, framebufferWidth, framebufferHeight,
-            renderPlan.header_text.x,
-            renderPlan.header_text.y,
-            nameBuf, 7,
-            (unsigned char)renderPlan.header_text_color,
-            (unsigned char)renderPlan.header_fill_color);
+            renderPlan->header_text.x,
+            renderPlan->header_text.y,
+            nameBuf, DM1_V1_ACTION_MENU_HEADER_TEXT_LEN_PC34,
+            (unsigned char)renderPlan->header_text_color,
+            (unsigned char)renderPlan->header_fill_color);
     }
 
     /* Action rows: pull the 3-tuple from the champion's action-hand
      * ActionSet.  F0387 prints every row through
      * F0041_TEXT_PrintWithTrailingSpaces with C012 length; NONE
      * therefore becomes a 12-character black trailing-space field. */
-    for (row = 0; row < renderPlan.row_count; ++row) {
+    for (row = 0; row < renderPlan->row_count; ++row) {
         const char* name;
         name = (gotActions && row < visibleRows)
                    ? M11_GameView_GetActionName(actions[row])
@@ -33010,11 +33019,12 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
         {
             m11_draw_dm1_ui_text_trailing_spaces(
                 framebuffer, framebufferWidth, framebufferHeight,
-                renderPlan.row_text[row].x,
-                renderPlan.row_text[row].y,
-                name ? name : "", 12,
-                (unsigned char)renderPlan.row_text_color,
-                (unsigned char)renderPlan.row_fill_color);
+                renderPlan->row_text[row].x,
+                renderPlan->row_text[row].y,
+                name ? name : "",
+                DM1_V1_ACTION_MENU_ROW_TEXT_LEN_PC34,
+                (unsigned char)renderPlan->row_text_color,
+                (unsigned char)renderPlan->row_fill_color);
         }
     }
     return 1;
@@ -33039,8 +33049,9 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
     int slot;
     if (!state) return 0;
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        DM1_V1_ActionIconStatePc34 iconState;
+        DM1_V1_ActionIconReceiptPc34 iconReceipt;
         int cellX, cellY, cellW, cellH;
-        int isDead;
         int innerX, innerY, innerW, innerH;
         int drewSprite = 0;
         const struct ChampionState_Compat* champ;
@@ -33048,20 +33059,28 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
 
         if (slot >= state->world.party.championCount) break;
         champ = &state->world.party.champions[slot];
-        if (!champ->present) continue;
-        if (!M11_GameView_GetV1ActionIconCellZone(
-                slot, &cellX, &cellY, &cellW, &cellH) ||
-            !M11_GameView_GetV1ActionIconInnerZone(
-                slot, &innerX, &innerY, &innerW, &innerH)) {
-            continue;
-        }
-        isDead = (champ->hp.current == 0);
+        iconState.champion_slot = slot;
+        iconState.champion_count = state->world.party.championCount;
+        iconState.champion_present = champ->present;
+        iconState.champion_dead = champ->hp.current == 0;
+        iconState.global_hatch =
+            M11_GameView_ShouldHatchV1ActionIconCells(state);
+        iconReceipt = dm1_v1_action_icon_build_receipt_pc34(&iconState);
+        if (!iconReceipt.accepted) continue;
+        cellX = iconReceipt.cell_rect.x;
+        cellY = iconReceipt.cell_rect.y;
+        cellW = iconReceipt.cell_rect.w;
+        cellH = iconReceipt.cell_rect.h;
+        innerX = iconReceipt.inner_rect.x;
+        innerY = iconReceipt.inner_rect.y;
+        innerW = iconReceipt.inner_rect.w;
+        innerH = iconReceipt.inner_rect.h;
 
-        if (isDead) {
+        if (iconReceipt.draw_dead_only) {
             /* DM1: FillBox BLACK then return — no icon for dead. */
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           cellX, cellY, cellW, cellH,
-                          (unsigned char)M11_GameView_GetV1ActionIconCellBackdropColor(state, slot));
+                          (unsigned char)iconReceipt.cell_fill_color);
             ++drawn;
             continue;
         }
@@ -33069,7 +33088,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         /* Living champion: cyan cell backdrop. */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       cellX, cellY, cellW, cellH,
-                      (unsigned char)M11_GameView_GetV1ActionIconCellBackdropColor(state, slot));
+                      (unsigned char)iconReceipt.cell_fill_color);
 
         /* Inner icon backdrop: DM1 fills the 16×16 bitmap with
          * C04_COLOR_CYAN when the hand has an object without an
@@ -33078,7 +33097,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
          * non-weapon items both read as the authentic cyan cell. */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       innerX, innerY, innerW, innerH,
-                      M11_COLOR_CYAN);
+                      (unsigned char)iconReceipt.inner_fill_color);
 
         handThing = m11_get_action_hand_thing(champ);
         if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
@@ -33117,7 +33136,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
          * yet carry the source MASK0x0008_DISABLE_ACTION bitfield for
          * per-champion cooldown, but the two global gates are present
          * in GameView state and should visibly match DM1. */
-        if (M11_GameView_ShouldHatchV1ActionIconCells(state)) {
+        if (iconReceipt.hatch) {
             m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
                            cellX, cellY, cellW, cellH);
         }

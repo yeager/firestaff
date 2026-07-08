@@ -157,6 +157,87 @@ static void test_action_area_render_contract(void)
     CHECK(dm1_v1_action_icon_cell_zone_id_pc34(4) == 0);
 }
 
+static void test_action_menu_receipts(void)
+{
+    DM1_V1_ActionMenuStatePc34 state;
+    DM1_V1_ActionMenuReceiptPc34 receipt;
+
+    memset(&state, 0, sizeof(state));
+    state.acting_champion_ordinal = 2;
+    state.champion_count = 4;
+    state.acting_champion_present = 1;
+    state.action_row_count = 2;
+    receipt = dm1_v1_action_menu_build_receipt_pc34(&state);
+    CHECK(receipt.accepted == 1);
+    CHECK(receipt.acting_champion_index == 1);
+    CHECK(receipt.visible_row_count == 2);
+    CHECK(receipt.render_plan.graphic_zone_id == 77);
+    CHECK(receipt.render_plan.graphic_rect.h == 33);
+    CHECK(DM1_V1_ACTION_MENU_HEADER_TEXT_LEN_PC34 == 7);
+    CHECK(DM1_V1_ACTION_MENU_ROW_TEXT_LEN_PC34 == 12);
+
+    state.action_row_count = 9;
+    receipt = dm1_v1_action_menu_build_receipt_pc34(&state);
+    CHECK(receipt.accepted == 1);
+    CHECK(receipt.visible_row_count == 3);
+    CHECK(receipt.render_plan.graphic_zone_id == 11);
+
+    state.acting_champion_ordinal = 0;
+    CHECK(dm1_v1_action_menu_build_receipt_pc34(&state).accepted == 0);
+    state.acting_champion_ordinal = 5;
+    CHECK(dm1_v1_action_menu_build_receipt_pc34(&state).accepted == 0);
+    state.acting_champion_ordinal = 2;
+    state.champion_count = 1;
+    CHECK(dm1_v1_action_menu_build_receipt_pc34(&state).accepted == 0);
+    state.champion_count = 4;
+    state.acting_champion_present = 0;
+    CHECK(dm1_v1_action_menu_build_receipt_pc34(&state).accepted == 0);
+    state.acting_champion_present = 1;
+    state.action_row_count = 0;
+    CHECK(dm1_v1_action_menu_build_receipt_pc34(&state).accepted == 0);
+}
+
+static void test_action_icon_receipts(void)
+{
+    DM1_V1_ActionIconStatePc34 state;
+    DM1_V1_ActionIconReceiptPc34 receipt;
+
+    memset(&state, 0, sizeof(state));
+    state.champion_slot = 1;
+    state.champion_count = 4;
+    state.champion_present = 1;
+    receipt = dm1_v1_action_icon_build_receipt_pc34(&state);
+    CHECK(receipt.accepted == 1);
+    CHECK(receipt.champion_slot == 1);
+    CHECK(receipt.draw_dead_only == 0);
+    CHECK(receipt.hatch == 0);
+    CHECK(receipt.cell_fill_color == DM1_V1_ACTION_AREA_CYAN_PC34);
+    CHECK(receipt.inner_fill_color == DM1_V1_ACTION_AREA_CYAN_PC34);
+    CHECK(receipt.cell_rect.x == 255);
+    CHECK(receipt.cell_rect.y == 86);
+    CHECK(receipt.inner_rect.x == 257);
+    CHECK(receipt.inner_rect.y == 95);
+
+    state.champion_dead = 1;
+    state.global_hatch = 1;
+    receipt = dm1_v1_action_icon_build_receipt_pc34(&state);
+    CHECK(receipt.accepted == 1);
+    CHECK(receipt.draw_dead_only == 1);
+    CHECK(receipt.hatch == 1);
+    CHECK(receipt.cell_fill_color == DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34);
+
+    state.champion_slot = -1;
+    CHECK(dm1_v1_action_icon_build_receipt_pc34(&state).accepted == 0);
+    state.champion_slot = 4;
+    CHECK(dm1_v1_action_icon_build_receipt_pc34(&state).accepted == 0);
+    state.champion_slot = 3;
+    state.champion_count = 2;
+    CHECK(dm1_v1_action_icon_build_receipt_pc34(&state).accepted == 0);
+    state.champion_count = 4;
+    state.champion_present = 0;
+    CHECK(dm1_v1_action_icon_build_receipt_pc34(&state).accepted == 0);
+}
+
 int main(void)
 {
     test_table_values();
@@ -165,6 +246,8 @@ int main(void)
     test_components_non_negative();
     test_run_accepted();
     test_action_area_render_contract();
+    test_action_menu_receipts();
+    test_action_icon_receipts();
     printf("dm1_v1_box_action_area: "
            "%d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
