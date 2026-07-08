@@ -3788,6 +3788,43 @@ static void test_side_lane_clear_contract(void)
               dm1_viewport_3d_side_lane_clear_for_rel_pc34(3, 1, 0x3u), 1);
     check_int("F0128.side_lane.d3_blocks_on_d2_door",
               dm1_viewport_3d_side_lane_clear_for_rel_pc34(3, 1, 0x1u), 0);
+    {
+        const int center_valid[3] = {1, 1, 1};
+        const int center_open[3] = {1, 0, 1};
+        const int center_door[3] = {0, 1, 0};
+        const int left_open[3] = {1, 1, 0};
+        const int right_open[3] = {1, 0, 1};
+        DM1_ViewportLaneVisibilityReceiptPc34 visibility =
+            dm1_viewport_3d_lane_visibility_from_cells_pc34(center_valid,
+                                                            center_open,
+                                                            center_door,
+                                                            left_open,
+                                                            right_open);
+        check_int("F0128.lane_visibility.center_blocking",
+                  (int)visibility.center.blocking_depth_mask, 0x2);
+        check_int("F0128.lane_visibility.nearest_center",
+                  visibility.nearest_blocking_center_depth_index, 1);
+        check_int("F0128.lane_visibility.nearest_door",
+                  visibility.nearest_blocking_center_door_depth, 1);
+        check_int("F0128.lane_visibility.max_visible",
+                  visibility.max_visible_forward, 2);
+        check_int("F0128.lane_visibility.left_mask",
+                  (int)visibility.left_open_depth_mask, 0x3);
+        check_int("F0128.lane_visibility.right_mask",
+                  (int)visibility.right_open_depth_mask, 0x5);
+        check_int("F0128.lane_visibility.left_d3_clear",
+                  dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+                      &visibility, 3, -1), 1);
+        check_int("F0128.lane_visibility.right_d3_blocked",
+                  dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+                      &visibility, 3, 1), 0);
+        check_int("F0128.lane_visibility.center_clear",
+                  dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+                      &visibility, 3, 0), 1);
+        check_int("F0128.lane_visibility.null_blocked",
+                  dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+                      NULL, 3, 1), 0);
+    }
 }
 
 static void test_center_line_clear_contract(void)

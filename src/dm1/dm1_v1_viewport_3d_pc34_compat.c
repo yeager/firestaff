@@ -323,6 +323,56 @@ DM1_ViewportCenterLaneMasksPc34 dm1_viewport_3d_center_lane_masks_from_cells_pc3
     return masks;
 }
 
+DM1_ViewportLaneVisibilityReceiptPc34 dm1_viewport_3d_lane_visibility_from_cells_pc34(
+    const int center_valid_by_depth[3],
+    const int center_open_by_depth[3],
+    const int center_door_by_depth[3],
+    const int left_open_by_depth[3],
+    const int right_open_by_depth[3])
+{
+    DM1_ViewportLaneVisibilityReceiptPc34 receipt;
+    receipt.center =
+        dm1_viewport_3d_center_lane_masks_from_cells_pc34(
+            center_valid_by_depth,
+            center_open_by_depth,
+            center_door_by_depth);
+    receipt.left_open_depth_mask =
+        dm1_viewport_3d_open_depth_mask_from_cells_pc34(left_open_by_depth);
+    receipt.right_open_depth_mask =
+        dm1_viewport_3d_open_depth_mask_from_cells_pc34(right_open_by_depth);
+    receipt.max_visible_forward =
+        dm1_viewport_3d_max_visible_forward_from_center_pc34(
+            receipt.center.blocking_depth_mask);
+    receipt.nearest_blocking_center_depth_index =
+        dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
+            receipt.center.blocking_depth_mask);
+    receipt.nearest_blocking_center_door_depth =
+        dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(
+            receipt.center.blocking_depth_mask,
+            receipt.center.blocking_door_depth_mask);
+    return receipt;
+}
+
+int dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+    const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
+    int rel_forward,
+    int rel_side)
+{
+    unsigned int mask;
+    if (!visibility) {
+        return 0;
+    }
+    if (rel_side == 0) {
+        return 1;
+    }
+    mask = rel_side < 0
+        ? visibility->left_open_depth_mask
+        : visibility->right_open_depth_mask;
+    return dm1_viewport_3d_side_lane_clear_for_rel_pc34(rel_forward,
+                                                        rel_side,
+                                                        mask);
+}
+
 int dm1_viewport_3d_center_line_clear_before_depth_pc34(
     int depth_index,
     unsigned int open_depth_mask)
