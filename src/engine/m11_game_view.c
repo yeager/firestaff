@@ -11748,44 +11748,27 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* verifiedPath,
                                     const char* verifiedMd5,
                                     const char* savePath) {
-    Theron_V1_BootProfile* profile = NULL;
-    Theron_V1_World* world = NULL;
-    Theron_V1_Viewport* viewport = NULL;
-    TrAssetBundle* assets = NULL;
+    Theron_V1_BootStartupLaunch launch;
     int savedDebugHUD;
-    Theron_V1BootStartupPrepareResult prepareResult;
     Theron_StartupFlow startupFlow;
     Theron_StartupStateReceipt startupStateReceipt;
     Theron_StartupStateReceipt saveResumeStateReceipt;
-    Theron_V1StartupSaveResume saveResume;
-    int saveResumeReady = 0;
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
     }
+    memset(&launch, 0, sizeof(launch));
     savedDebugHUD = state->showDebugHUD;
     M11_GameView_Shutdown(state);
     M11_GameView_Init(state);
     state->showDebugHUD = savedDebugHUD;
 
-    profile = (Theron_V1_BootProfile*)calloc(1, sizeof(*profile));
-    world = (Theron_V1_World*)calloc(1, sizeof(*world));
-    viewport = (Theron_V1_Viewport*)calloc(1, sizeof(*viewport));
-    assets = (TrAssetBundle*)calloc(1, sizeof(*assets));
-    if (!profile || !world || !viewport || !assets) {
-        goto fail;
-    }
-
-    if (!theron_v1_boot_prepare_startup_profile(profile,
-                                                dataDir,
-                                                verifiedPath,
-                                                verifiedMd5,
-                                                savePath,
-                                                assets,
-                                                &saveResume,
-                                                &saveResumeReady,
-                                                &prepareResult)) {
-        switch (prepareResult) {
+    if (!theron_v1_boot_startup_launch_alloc(dataDir,
+                                             verifiedPath,
+                                             verifiedMd5,
+                                             savePath,
+                                             &launch)) {
+        switch (launch.prepare_result) {
             case THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED:
             m11_set_status(state, "BOOT", "THERON TRACK 02 VERIFY FAILED");
                 break;
@@ -11799,39 +11782,18 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                 m11_set_status(state,
                                "BOOT",
                                theron_v1_boot_startup_prepare_result_name(
-                                   prepareResult));
+                                   launch.prepare_result));
                 break;
         }
         goto fail;
     }
 
-    theron_v1_world_init(world);
-    if (!theron_vp_init(viewport)) {
-        m11_set_status(state, "BOOT", "THERON VIEWPORT FAILED");
-        goto fail;
-    }
-
-    state->active = 1;
-    state->startedFromLauncher = 1;
-    state->sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
-    snprintf(state->bootAssetMd5,
-             sizeof(state->bootAssetMd5),
-             "%s",
-             profile->graphics_md5);
-    snprintf(state->title, sizeof(state->title), "THERON'S QUEST");
-    snprintf(state->sourceId, sizeof(state->sourceId), "theron");
-    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
-             profile->graphics_path);
-    state->theronBootProfile = profile;
-    state->theronWorld = world;
-    state->theronViewport = viewport;
-    state->theronAssets = assets;
     /* THQUEST.ASM T400 startup handoff: a fresh Track 02 boot stops at the
      * title gate. The startup-flow module seeds the selected chapter for the
      * title/chapter label; Accept then advances to the visible stage-select
      * screen, and only the next explicit input opens the Soul Room. */
     if (!theron_v1_startup_initial_title_state_receipt(
-            world,
+            launch.world,
             &startupFlow,
             &startupStateReceipt)) {
         m11_set_status(state, "BOOT", "THERON STARTUP STATE FAILED");
@@ -11839,25 +11801,50 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     }
     m11_theron_apply_startup_state_receipt(state, &startupStateReceipt);
     if (!theron_v1_startup_save_resume_state_receipt(
-            &saveResume,
-            saveResumeReady,
+            &launch.save_resume,
+            launch.save_resume_ready,
             &saveResumeStateReceipt)) {
         m11_set_status(state, "BOOT", "THERON SAVE STATE FAILED");
         goto fail;
     }
     m11_theron_apply_startup_state_receipt(state, &saveResumeStateReceipt);
     m11_theron_capture_track02_startup_media(state,
-                                             assets,
-                                             profile->graphics_md5);
+                                             launch.assets,
+                                             launch.profile->graphics_md5);
+    state->active = 1;
+    state->startedFromLauncher = 1;
+    state->sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+    snprintf(state->bootAssetMd5,
+             sizeof(state->bootAssetMd5),
+             "%s",
+             launch.profile->graphics_md5);
+    snprintf(state->title, sizeof(state->title), "THERON'S QUEST");
+    snprintf(state->sourceId, sizeof(state->sourceId), "theron");
+    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
+             launch.profile->graphics_path);
+    state->theronBootProfile = launch.profile;
+    state->theronWorld = launch.world;
+    state->theronViewport = launch.viewport;
+    state->theronAssets = launch.assets;
+    launch.profile = NULL;
+    launch.world = NULL;
+    launch.viewport = NULL;
+    launch.assets = NULL;
     m11_set_status(state, "BOOT", "THERON STARTUP");
     {
         char inspect[256];
         snprintf(inspect,
                  sizeof(inspect),
                  "THERON TRACK 02 VERIFIED; SAVE %s tqsv=%d srm=%d; roster_names=%d status=%s text_prompts=%d text_status=%s; CHOOSE A STAGE",
-                 saveResumeReady ? saveResume.resume_claim_name : "UNKNOWN",
-                 saveResumeReady ? saveResume.tqsv_valid_slots : 0,
-                 saveResumeReady ? saveResume.srm_recognized_slots : 0,
+                 launch.save_resume_ready
+                     ? launch.save_resume.resume_claim_name
+                     : "UNKNOWN",
+                 launch.save_resume_ready
+                     ? launch.save_resume.tqsv_valid_slots
+                     : 0,
+                 launch.save_resume_ready
+                     ? launch.save_resume.srm_recognized_slots
+                     : 0,
                  state->theronState.startup_roster_name_count,
                  theron_v1_track02_signal_status_name(
                      (Theron_Track02SignalStatus)
@@ -11872,21 +11859,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     return 1;
 
 fail:
-    if (viewport) {
-        theron_vp_free(viewport);
-        free(viewport);
-    }
-    if (assets) {
-        tr_asset_free(assets);
-        free(assets);
-    }
-    if (world) {
-        free(world);
-    }
-    if (profile) {
-        theron_v1_boot_cleanup(profile);
-        free(profile);
-    }
+    theron_v1_boot_startup_launch_cleanup(&launch);
     return 0;
 }
 

@@ -707,6 +707,7 @@ static void test_boot_prepare_startup_profile_missing_track02(void) {
     Theron_V1_BootProfile profile;
     TrAssetBundle assets;
     Theron_V1StartupSaveResume snap;
+    Theron_V1_BootStartupLaunch launch;
     Theron_V1BootStartupPrepareResult result =
         THERON_V1_BOOT_STARTUP_PREPARE_OK;
     int ready = 99;
@@ -734,6 +735,21 @@ static void test_boot_prepare_startup_profile_missing_track02(void) {
     expect_true(strcmp(theron_v1_boot_startup_prepare_result_name(result),
                        "MISSING_TRACK02") == 0,
                 "boot prepare result name is stable");
+    memset(&launch, 0xff, sizeof(launch));
+    expect_true(!theron_v1_boot_startup_launch_alloc(
+                    TST_BAD_ROOT,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &launch) &&
+                    launch.prepare_result ==
+                        THERON_V1_BOOT_STARTUP_PREPARE_MISSING_TRACK02 &&
+                    launch.profile == NULL &&
+                    launch.world == NULL &&
+                    launch.viewport == NULL &&
+                    launch.assets == NULL,
+                "boot startup launch allocation reports missing Track 02 and cleans owned pointers");
+    theron_v1_boot_startup_launch_cleanup(&launch);
     cleanup_srm_root(TST_BAD_ROOT);
 }
 
