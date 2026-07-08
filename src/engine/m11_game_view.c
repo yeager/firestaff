@@ -11149,23 +11149,17 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->dm2State.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->dm2State.tick_count;
-        (void)dm2_v1_startup_receipt_phase(
+        (void)dm2_v1_startup_presentation_receipt(
             state->dm2State.startup_menu_active,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
-            &out->startupActive);
-        snprintf(out->startupAnimation,
-                 sizeof(out->startupAnimation),
-                 "%s",
-                 state->dm2State.startup_menu_active
-                     ? "dm2-startup-menu"
-                     : "dm2-runtime");
-        out->startupAnimationActive =
-            state->dm2State.startup_menu_active ? 1 : 0;
-        out->startupTitleFrame = 0;
-        out->startupTitleFrameMax = 0;
-        out->startupTitleReady =
-            state->dm2State.startup_menu_active ? 0 : 1;
+            &out->startupActive,
+            out->startupAnimation,
+            (int)sizeof(out->startupAnimation),
+            &out->startupAnimationActive,
+            &out->startupTitleFrame,
+            &out->startupTitleFrameMax,
+            &out->startupTitleReady);
         return 1;
     }
 

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 boot receipt presentation: DM2 startup presentation now emits the boot-probe phase, animation id, animation-active flag, title frame, title max, and title-ready summary. M11 consumes that DM2-owned presentation receipt instead of deriving DM2 startup animation fields locally. Verification: DM2 startup action contract passed 69/69, DM2 M11 startup/profile gate passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron boot receipt presentation: Theron startup-flow now emits the boot-probe phase, animation id, animation-active flag, title frame, title max, and title-ready summary. M11 consumes that Theron-owned presentation receipt instead of deriving Theron startup animation fields locally. Verification: Theron startup-flow probe passed 567/567, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup entrance host-action receipt: CSB runtime/startup bridge now executes startup entrance commands from host facts and returns one M11-ready receipt covering pure entrance commands, runtime handoff plans, command state, host status, bonus flag changes, import-preview clearing, and profile-sync intent. M11 no longer chains those CSB command/runtime/state/host receipts locally. Verification: CSB startup entrance test passed 151/151 by direct compile/run, M11/CSB syntax checks passed, Phase A passed 24/24, and `git diff --check` passed.

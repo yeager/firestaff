@@ -290,6 +290,47 @@ int dm2_v1_startup_presentation_build_from_host_facts(
         max_commands);
 }
 
+int dm2_v1_startup_presentation_receipt(int startup_menu_active,
+                                        char *out_phase,
+                                        int out_phase_size,
+                                        int *out_startup_active,
+                                        char *out_animation,
+                                        int out_animation_size,
+                                        int *out_animation_active,
+                                        int *out_title_frame,
+                                        int *out_title_frame_max,
+                                        int *out_title_ready)
+{
+    const int active = startup_menu_active ? 1 : 0;
+    const char *animation = active
+        ? "dm2-startup-menu"
+        : "dm2-runtime";
+
+    if (!dm2_v1_startup_receipt_phase(startup_menu_active,
+                                      out_phase,
+                                      out_phase_size,
+                                      out_startup_active)) {
+        return 0;
+    }
+    if (!out_animation || out_animation_size <= 0) {
+        return 0;
+    }
+    snprintf(out_animation, (size_t)out_animation_size, "%s", animation);
+    if (out_animation_active) {
+        *out_animation_active = active;
+    }
+    if (out_title_frame) {
+        *out_title_frame = 0;
+    }
+    if (out_title_frame_max) {
+        *out_title_frame_max = 0;
+    }
+    if (out_title_ready) {
+        *out_title_ready = active ? 0 : 1;
+    }
+    return 1;
+}
+
 int dm2_v1_startup_execute_draw_commands(
     const DM2_V1_StartupDrawCommand *commands,
     int command_count,
