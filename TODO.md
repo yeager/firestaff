@@ -2,7 +2,7 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
-- 🔧 2026-07-08 boot-data discovery follow-up: Continue replacing optional boot/intro filename assumptions with hash/signature scans beyond SWSH and DM1 TITLE.
+- 🔧 2026-07-08 boot-data discovery follow-up: Continue replacing optional boot/intro filename assumptions with hash/signature scans beyond SWSH, DM1 TITLE, and the CLI data validator.
 
 - 🔧 2026-07-07 RetroAchievements follow-up: Firestaff now has a shared RetroAchievements runtime/config/event adapter, CLI activation flags, and persisted launcher settings for enable, hardcore mode, username, and API-token status. Remaining work is the real `rcheevos rc_client` backend, HTTP request bridge, login validation, badge/overlay rendering, and per-game achievement memory/event mapping.
   - 2026-07-07 update: the modern start-menu settings panel now lets users edit RA username and API token directly, with token masking in visible UI. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
