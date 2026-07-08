@@ -34434,9 +34434,9 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
 
     /* Normal V1 spell entry belongs to the source right-column spell
      * area, not to Firestaff's old large modal workbench panel.  ReDMCSB
-     * CASTER.C F0394 draws C009 in {224,319,42,74}; MENU.C F0392/F0397
-     * pre-increments to print the 6 available symbols at x=239+14*i,y=58;
-     * MENU.C F0398 prints selected symbols at x=241+9*i,y=70. */
+     * CASTER.C F0394 draws C009 in {224,319,42,74}; MENUDRAW.C
+     * F0397 lines 67-75 pre-increment to x=239+14*i,y=58 and F0398
+     * lines 101-116 prints selected symbols at x=241+9*i,y=70. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
     (void)m11_blit_panel_asset_native(state,
@@ -34454,8 +34454,8 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
             text[0] = (char)m11_encode_rune(row, i);
             text[1] = '\0';
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          spellX + 1 + 14 * (i + 1),
-                          spellY + 16,
+                          239 + 14 * i,
+                          58,
                           text, &symbolStyle);
         }
     }
@@ -34464,8 +34464,8 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         text[0] = (char)state->spellBuffer.runes[i];
         text[1] = '\0';
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      spellX + 8 + 9 * (i + 1),
-                      spellY + 28,
+                      241 + 9 * i,
+                      70,
                       text, &symbolStyle);
     }
 }

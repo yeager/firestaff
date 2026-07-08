@@ -97,10 +97,10 @@ static void test_spell_area_boxes_stay_source_locked(void)
     int x, y, w, h;
     check_int("spell area zone id", M11_GameView_GetV1SpellAreaZoneId(), 13);
     check_true("spell area", M11_GameView_GetV1SpellAreaZone(&x, &y, &w, &h));
-    check_int("spell area x", x, 233);
+    check_int("spell area x", x, 224);
     check_int("spell area y", y, 42);
-    check_int("spell area w", w, 87);
-    check_int("spell area h", h, 25);
+    check_int("spell area w", w, 96);
+    check_int("spell area h", h, 33);
     check_int("spell bg graphic", M11_GameView_GetV1SpellAreaBackgroundGraphicId(), 9);
     check_int("spell lines graphic", M11_GameView_GetV1SpellAreaLinesGraphicId(), 11);
 
