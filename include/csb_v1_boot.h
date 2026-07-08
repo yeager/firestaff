@@ -83,6 +83,13 @@ typedef struct CSB_V1_BootStartupLaunch_PC34 {
     CSB_V1_StartupHostReceipt_PC34 failure_host_receipt;
 } CSB_V1_BootStartupLaunch_PC34;
 
+typedef struct CSB_V1_BootStartupRuntimeReceipt_PC34 {
+    CSB_V1_BootProfile *profile;
+    char boot_asset_md5[33];
+    char graphics_path[512];
+    char dungeon_path[512];
+} CSB_V1_BootStartupRuntimeReceipt_PC34;
+
 void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir);
 int csb_v1_boot_probe_available(const char *data_dir);
@@ -133,6 +140,9 @@ int csb_v1_boot_startup_launch_alloc_pc34(
     const char *import_dm1_save_path,
     const char *resume_save_path,
     CSB_V1_BootStartupLaunch_PC34 *out_launch);
+int csb_v1_boot_startup_launch_detach_runtime_pc34(
+    CSB_V1_BootStartupLaunch_PC34 *launch,
+    CSB_V1_BootStartupRuntimeReceipt_PC34 *out_receipt);
 void csb_v1_boot_startup_launch_cleanup_pc34(
     CSB_V1_BootStartupLaunch_PC34 *launch);
 

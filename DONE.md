@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB boot runtime detach receipt: CSB boot now owns startup runtime ownership transfer for the boot profile and graphics/dungeon/MD5 identity. M11 applies the runtime receipt instead of reading launch profile fields or nulling launch ownership pointers. Verification: strict compiles for `csb_v1_boot.c` and `m11_game_view.c`, CSB detach smoke passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron boot runtime detach receipt: Theron boot now owns startup runtime ownership transfer for profile/world/viewport/assets and launch identity strings. M11 applies the runtime receipt instead of reading launch profile fields or nulling launch ownership pointers. Verification: strict compiles for `theron_v1_boot.c` and `m11_game_view.c`, Theron startup save/resume smoke passed 120/120 with direct linkage, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CHD and batched archive hash scan: shared game-data scanner now recognizes CHD CD images by suffix/signature, scans/materializes CHD data tracks via local `chdman` when available, and routes `asset_find_by_md5_list()` through one batched recursive archive scan. Verification: `test_asset_find_by_hash` passed with and without `FIRESTAFF_HAS_ZLIB`, Phase A passed 24/24, and `git diff --check` passed.

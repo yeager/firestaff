@@ -10460,7 +10460,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         const char *dd = spec->dataDir;
         char resolvedDataDir[FSP_PATH_MAX];
         CSB_V1_BootStartupLaunch_PC34 launch;
-        CSB_V1_BootProfile *profile = NULL;
+        CSB_V1_BootStartupRuntimeReceipt_PC34 runtime_receipt;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
             if (FSP_ResolveDataDir(resolvedDataDir,
@@ -10484,14 +10484,19 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;
         }
-        profile = launch.profile;
+        if (!csb_v1_boot_startup_launch_detach_runtime_pc34(
+                &launch,
+                &runtime_receipt)) {
+            csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+            return 0;
+        }
         state->active = 1;
         state->startedFromLauncher = 1;
         state->sourceKind = M11_GAME_SOURCE_CSB_BOOT;
         snprintf(state->bootAssetMd5,
                  sizeof(state->bootAssetMd5),
                  "%s",
-                 profile->graphics_md5);
+                 runtime_receipt.boot_asset_md5);
         state->presentationMode = spec->presentationMode;
         state->presentationWidth = spec->presentationWidth;
         state->presentationHeight = spec->presentationHeight;
@@ -10500,14 +10505,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         snprintf(state->sourceId, sizeof(state->sourceId), "%s",
                  spec->sourceId ? spec->sourceId : "csb");
         snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
-                 profile->dungeon_path[0] ? profile->dungeon_path : "DUNGEON.DAT");
+                 runtime_receipt.dungeon_path);
         /* ReDMCSB ENTRANCE.C F0806 hands both dungeon and graphics globals to
          * the CSB runtime before the first dungeon frame.  M11's shared V1
          * chrome/object/font draw paths are still asset-loader based, so bind
          * them to the verified CSB GRAPHICS.DAT instead of leaving CSB on the
          * no-assets fallback path. */
-        if (profile->graphics_path[0] != '\0' &&
-            M11_AssetLoader_Init(&state->assetLoader, profile->graphics_path)) {
+        if (runtime_receipt.graphics_path[0] != '\0' &&
+            M11_AssetLoader_Init(&state->assetLoader,
+                                 runtime_receipt.graphics_path)) {
             state->assetsAvailable = 1;
             M11_Font_Init(&state->originalFont);
             if (M11_Font_LoadFromGraphicsDat(&state->originalFont,
@@ -10516,8 +10522,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 state->originalFontAvailable = 1;
             }
         }
-        state->csbBootProfile = profile;
-        launch.profile = NULL;
+        state->csbBootProfile = runtime_receipt.profile;
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         m11_csb_startup_init_state_receipt_to_m11(
             state,
