@@ -426,6 +426,8 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/archive.tar");
     remove("asset_find_by_hash_test_tmp/archive.lzh");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
+    remove("asset_find_by_hash_test_tmp/archive.7z");
+    remove("asset_find_by_hash_test_tmp/packed_payload.bin");
     remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
     remove("asset_find_by_hash_test_tmp/disc.iso");
     remove("asset_find_by_hash_test_tmp/disc.img");
@@ -800,6 +802,42 @@ int main(void) {
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
 #endif
+
+    if (write_fixture("asset_find_by_hash_test_tmp/packed_payload.bin") &&
+        system("command -v 7zz >/dev/null 2>&1 && "
+               "(cd asset_find_by_hash_test_tmp && "
+               "7zz a -t7z archive.7z packed_payload.bin >/dev/null 2>&1)") == 0) {
+        remove("asset_find_by_hash_test_tmp/packed_payload.bin");
+        memset(outPath, 0, sizeof(outPath));
+        if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                               outPath, (int)sizeof(outPath), 2) ||
+            !path_has_virtual_entry(outPath, "archive.7z", "packed_payload.bin")) {
+            cleanup_fixture();
+            fprintf(stderr, "7z external archive lookup failed: %s\n", outPath);
+            return 1;
+        }
+        memset(outPaths, 0, sizeof(outPaths));
+        memset(matched, 0, sizeof(matched));
+        if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                       outPaths, matched, 2, 2) != 1 ||
+            matched[0] ||
+            !matched[1] ||
+            !path_has_virtual_entry(outPaths[1], "archive.7z", "packed_payload.bin")) {
+            cleanup_fixture();
+            fprintf(stderr, "7z all-list lookup failed: matched=%d,%d path=%s\n",
+                    matched[0], matched[1], outPaths[1]);
+            return 1;
+        }
+        if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+            !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+            cleanup_fixture();
+            fprintf(stderr, "virtual 7z extraction failed: %s\n", outPath);
+            return 1;
+        }
+        remove("asset_find_by_hash_test_tmp/extracted.dat");
+    }
+    remove("asset_find_by_hash_test_tmp/archive.7z");
+    remove("asset_find_by_hash_test_tmp/packed_payload.bin");
 
     if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc.iso")) {
         cleanup_fixture();

@@ -11554,39 +11554,32 @@ static void m11_theron_startup_session_facts(
     if (!session) {
         return;
     }
-    memset(session, 0, sizeof(*session));
+    theron_v1_startup_session_facts_init(session);
     if (!state) {
         return;
     }
-    session->phase = (Theron_StartupPhase)state->theronState.startup_phase;
-    session->selected_dungeon = state->theronState.selected_dungeon;
-    session->boot_profile = state->theronBootProfile;
-    session->world = (const Theron_V1_World*)state->theronWorld;
-    session->soul_cursor = state->theronState.startup_cursor;
-    session->continue_focus = state->theronState.save_resume_continue_focus;
-    session->resume_claim = state->theronState.save_resume_claim;
-    session->tqsv_slot = state->theronState.save_resume_active_slot;
-    session->srm_slot = state->theronState.save_resume_srm_active_slot;
-    session->srm_import_status =
-        state->theronState.save_resume_srm_import_status;
-    session->srm_root = state->theronState.save_resume_srm_root;
-    if (state->theronAssets) {
-        const TrAssetBundle* assets =
-            (const TrAssetBundle*)state->theronAssets;
-        session->hucard_rom = assets->hucard_rom;
-        session->hucard_rom_size = assets->hucard_rom_size;
-    }
-    session->startup_text_prompt = state->theronState.startup_text_prompt;
-    session->startup_roster_names = state->theronState.startup_roster_names;
-    session->startup_roster_titles = state->theronState.startup_roster_titles;
-    session->startup_roster_name_count =
-        state->theronState.startup_roster_name_count;
-    session->selected_mirrors_mask =
-        state->theronState.selected_mirrors_mask;
-    session->companion_count = state->theronState.companion_count;
-    session->selected_mirror_order =
-        state->theronState.selected_mirror_order;
-    session->selected_mirror_order_count = THERON_STARTUP_MAX_COMPANIONS;
+    theron_v1_startup_session_facts_from_runtime(
+        session,
+        (Theron_StartupPhase)state->theronState.startup_phase,
+        state->theronState.selected_dungeon,
+        state->theronBootProfile,
+        (const Theron_V1_World*)state->theronWorld,
+        state->theronAssets,
+        state->theronState.startup_cursor,
+        state->theronState.save_resume_continue_focus,
+        state->theronState.save_resume_claim,
+        state->theronState.save_resume_active_slot,
+        state->theronState.save_resume_srm_active_slot,
+        state->theronState.save_resume_srm_import_status,
+        state->theronState.save_resume_srm_root,
+        state->theronState.startup_text_prompt,
+        state->theronState.startup_roster_names,
+        state->theronState.startup_roster_titles,
+        state->theronState.startup_roster_name_count,
+        state->theronState.selected_mirrors_mask,
+        state->theronState.companion_count,
+        state->theronState.selected_mirror_order,
+        THERON_STARTUP_MAX_COMPANIONS);
 }
 
 static M11_GameInputResult m11_theron_apply_startup_host_receipt(

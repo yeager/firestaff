@@ -2,6 +2,7 @@
 #include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_startup_save_resume.h"
+#include "src/theron/theron_v1_asset_loader.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -51,6 +52,69 @@ const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index) 
         return NULL;
     }
     return &g_tqr_mirror_meta[mirror_index];
+}
+
+void theron_v1_startup_session_facts_init(
+    Theron_StartupSessionFacts *session)
+{
+    if (!session) {
+        return;
+    }
+    memset(session, 0, sizeof(*session));
+}
+
+void theron_v1_startup_session_facts_from_runtime(
+    Theron_StartupSessionFacts *session,
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int soul_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count)
+{
+    const TrAssetBundle *bundle;
+    theron_v1_startup_session_facts_init(session);
+    if (!session) {
+        return;
+    }
+    session->phase = phase;
+    session->selected_dungeon = selected_dungeon;
+    session->boot_profile = boot_profile;
+    session->world = world;
+    session->soul_cursor = soul_cursor;
+    session->continue_focus = continue_focus;
+    session->resume_claim = resume_claim;
+    session->tqsv_slot = tqsv_slot;
+    session->srm_slot = srm_slot;
+    session->srm_import_status = srm_import_status;
+    session->srm_root = srm_root;
+    bundle = (const TrAssetBundle *)assets;
+    if (bundle) {
+        session->hucard_rom = bundle->hucard_rom;
+        session->hucard_rom_size = bundle->hucard_rom_size;
+    }
+    session->startup_text_prompt = startup_text_prompt;
+    session->startup_roster_names = startup_roster_names;
+    session->startup_roster_titles = startup_roster_titles;
+    session->startup_roster_name_count = startup_roster_name_count;
+    session->selected_mirrors_mask = selected_mirrors_mask;
+    session->companion_count = companion_count;
+    session->selected_mirror_order = selected_mirror_order;
+    session->selected_mirror_order_count = selected_mirror_order_count;
 }
 
 Theron_StartupInput theron_v1_startup_input_from_firestaff_menu_code(
