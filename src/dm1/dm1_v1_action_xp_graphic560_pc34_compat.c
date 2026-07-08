@@ -15,6 +15,8 @@
 #include "firestaff/dm1/v1/G0494_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 
+#include <string.h>
+
 #define DM1_THING_TYPE_WEAPON 5
 #define DM1_THING_TYPE_ARMOUR 6
 #define DM1_THING_TYPE_JUNK 10
@@ -327,6 +329,54 @@ int dm1_v1_action_freeze_life_plan_f0407_pc34(
     out->addTicks = addTicks;
     out->newFreezeLifeTicks = current + addTicks;
     if (out->newFreezeLifeTicks > 200) out->newFreezeLifeTicks = 200;
+    return 1;
+}
+
+int dm1_v1_action_freeze_life_object_plan_f0407_pc34(
+    const DM1_ActionFreezeLifeObjectInputPc34* in,
+    DM1_ActionFreezeLifeObjectPlanPc34* out) {
+    DM1_ActionFreezeLifeInputPc34 freezeIn;
+    DM1_ActionFreezeLifePlanPc34 freezePlan;
+    DM1_ActionF0405ChargeInputPc34 chargeIn;
+    DM1_ActionF0405ChargePlanPc34 chargePlan;
+
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->addTicks = 0;
+    out->newFreezeLifeTicks = 0;
+    out->shouldRemoveActionHandObject = 0;
+    out->shouldDecrementActionHandCharges = 0;
+    out->targetThingType = in->actionHandThingType;
+    out->targetThingIndex = in->actionHandThingIndex;
+
+    memset(&freezeIn, 0, sizeof(freezeIn));
+    freezeIn.currentFreezeLifeTicks = in->currentFreezeLifeTicks;
+    freezeIn.actionHandJunkType = in->actionHandJunkType;
+    if (!dm1_v1_action_freeze_life_plan_f0407_pc34(
+            &freezeIn, &freezePlan) || !freezePlan.valid) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->addTicks = freezePlan.addTicks;
+    out->newFreezeLifeTicks = freezePlan.newFreezeLifeTicks;
+    out->shouldRemoveActionHandObject = freezePlan.consumesActionHandObject;
+    if (!freezePlan.decrementsActionHandCharges) {
+        return 1;
+    }
+
+    memset(&chargeIn, 0, sizeof(chargeIn));
+    chargeIn.thingType = in->actionHandThingType;
+    chargeIn.thingIndex = in->actionHandThingIndex;
+    chargeIn.currentChargeCount = in->actionHandChargeCount;
+    /* ReDMCSB: MENU.C F0407 lines 1567-1605 selects box consume vs F0405,
+     * and F0405 lines 1143-1181 decrements only charged weapon/armour/junk. */
+    if (dm1_v1_action_f0405_charge_plan_pc34(&chargeIn, &chargePlan) &&
+        chargePlan.valid && chargePlan.shouldDecrement) {
+        out->shouldDecrementActionHandCharges = 1;
+        out->targetThingType = chargePlan.thingType;
+        out->targetThingIndex = chargePlan.thingIndex;
+    }
     return 1;
 }
 

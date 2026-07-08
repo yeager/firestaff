@@ -175,6 +175,24 @@ typedef struct {
 } DM1_ActionFreezeLifePlanPc34;
 
 typedef struct {
+    int currentFreezeLifeTicks;
+    int actionHandThingType;
+    int actionHandThingIndex;
+    int actionHandChargeCount;
+    int actionHandJunkType;
+} DM1_ActionFreezeLifeObjectInputPc34;
+
+typedef struct {
+    int valid;
+    int addTicks;
+    int newFreezeLifeTicks;
+    int shouldRemoveActionHandObject;
+    int shouldDecrementActionHandCharges;
+    int targetThingType;
+    int targetThingIndex;
+} DM1_ActionFreezeLifeObjectPlanPc34;
+
+typedef struct {
     int currentHealth;
     int maximumHealth;
     int currentMana;
@@ -370,6 +388,9 @@ int dm1_v1_action_f0405_charge_plan_pc34(
 int dm1_v1_action_freeze_life_plan_f0407_pc34(
     const DM1_ActionFreezeLifeInputPc34* in,
     DM1_ActionFreezeLifePlanPc34* out);
+int dm1_v1_action_freeze_life_object_plan_f0407_pc34(
+    const DM1_ActionFreezeLifeObjectInputPc34* in,
+    DM1_ActionFreezeLifeObjectPlanPc34* out);
 int dm1_v1_action_heal_plan_f0407_pc34(
     const DM1_ActionHealInputPc34* in,
     DM1_ActionHealPlanPc34* out);

@@ -26412,27 +26412,57 @@ static void m11_decrement_action_hand_charges_f0405(M11_GameViewState* state,
     }
 }
 
-static int m11_action_hand_junk_type_f0407(
+static int m11_build_freeze_life_object_input_f0407(
     const M11_GameViewState* state,
-    const struct ChampionState_Compat* champion)
-{
+    const struct ChampionState_Compat* champion,
+    int currentFreezeLifeTicks,
+    DM1_ActionFreezeLifeObjectInputPc34* out) {
     unsigned short thing;
+    int thingType;
     int thingIndex;
 
-    if (!state || !champion || !state->world.things ||
-        !state->world.things->junks) {
-        return -1;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->currentFreezeLifeTicks = currentFreezeLifeTicks;
+    out->actionHandThingType = -1;
+    out->actionHandThingIndex = -1;
+    out->actionHandChargeCount = 0;
+    out->actionHandJunkType = -1;
+    if (!state || !champion || !state->world.things) {
+        return 1;
     }
     thing = champion->inventory[CHAMPION_SLOT_ACTION_HAND];
-    if (thing == THING_NONE || thing == THING_ENDOFLIST ||
-        THING_GET_TYPE(thing) != THING_TYPE_JUNK) {
-        return -1;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return 1;
     }
+    thingType = (int)THING_GET_TYPE(thing);
     thingIndex = (int)THING_GET_INDEX(thing);
-    if (thingIndex < 0 || thingIndex >= state->world.things->junkCount) {
-        return -1;
+    out->actionHandThingType = thingType;
+    out->actionHandThingIndex = thingIndex;
+    if (thingType == THING_TYPE_WEAPON) {
+        if (!state->world.things->weapons ||
+            thingIndex < 0 || thingIndex >= state->world.things->weaponCount) {
+            return 1;
+        }
+        out->actionHandChargeCount =
+            state->world.things->weapons[thingIndex].chargeCount;
+    } else if (thingType == THING_TYPE_ARMOUR) {
+        if (!state->world.things->armours ||
+            thingIndex < 0 || thingIndex >= state->world.things->armourCount) {
+            return 1;
+        }
+        out->actionHandChargeCount =
+            state->world.things->armours[thingIndex].chargeCount;
+    } else if (thingType == THING_TYPE_JUNK) {
+        if (!state->world.things->junks ||
+            thingIndex < 0 || thingIndex >= state->world.things->junkCount) {
+            return 1;
+        }
+        out->actionHandChargeCount =
+            state->world.things->junks[thingIndex].chargeCount;
+        out->actionHandJunkType = (int)state->world.things->junks[thingIndex].type;
     }
-    return (int)state->world.things->junks[thingIndex].type;
+    return 1;
 }
 
 static void m11_remove_action_hand_object_f0300(
@@ -29190,14 +29220,14 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * magical box adds 125 ticks and is consumed, otherwise the
              * common branch adds 70 ticks and decrements charges through
              * F0405.  Capped at 200 as in F0407. */
-            DM1_ActionFreezeLifeInputPc34 freezeIn;
-            DM1_ActionFreezeLifePlanPc34 freezePlan;
+            DM1_ActionFreezeLifeObjectInputPc34 freezeIn;
+            DM1_ActionFreezeLifeObjectPlanPc34 freezePlan;
             int32_t prev = state->world.freezeLifeTicks;
-            int junkType = m11_action_hand_junk_type_f0407(state, champ);
-            memset(&freezeIn, 0, sizeof(freezeIn));
-            freezeIn.currentFreezeLifeTicks = (int)prev;
-            freezeIn.actionHandJunkType = junkType;
-            if (!dm1_v1_action_freeze_life_plan_f0407_pc34(
+            if (!m11_build_freeze_life_object_input_f0407(
+                    state, champ, (int)prev, &freezeIn)) {
+                return 0;
+            }
+            if (!dm1_v1_action_freeze_life_object_plan_f0407_pc34(
                     &freezeIn, &freezePlan) || !freezePlan.valid) {
                 return 0;
             }
@@ -29205,9 +29235,9 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             /* Mirror into MagicState.freezeLifeTicks so the light
              * / creature-ai sides observe the freeze consistently. */
             state->world.magic.freezeLifeTicks = freezePlan.newFreezeLifeTicks;
-            if (freezePlan.consumesActionHandObject) {
+            if (freezePlan.shouldRemoveActionHandObject) {
                 m11_remove_action_hand_object_f0300(state, champ);
-            } else if (freezePlan.decrementsActionHandCharges) {
+            } else if (freezePlan.shouldDecrementActionHandCharges) {
                 m11_decrement_action_hand_charges_f0405(state, championIndex);
             }
             m11_log_event(state, M11_COLOR_LIGHT_BLUE,

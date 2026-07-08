@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0407 FREEZE LIFE object-plan ownership: DM1 action-XP compat now owns the combined magical-box consume vs F0405 charge-decrement mutation plan. M11 reads the live action-hand object and applies the DM1 receipt instead of deciding junk-type consume/decrement branches inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0407 action-state plan ownership: DM1 action-XP compat now owns action-defense apply/remove plans and final action-disable slot/refill plans. M11 applies those receipts instead of deriving G0495 defense removal, action index clearing, disable index, and zero-tick SHOOT refill timing inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0231 melee emission-plan ownership: DM1 V1 melee compat now owns performed/feedback decisions for melee damage emissions, including zero-damage performed hits, positive damage feedback, and invalid outcomes. M11 now consumes that receipt for both action-tail performed detection and visible damage feedback. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
