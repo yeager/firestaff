@@ -408,7 +408,10 @@ static void test_first_tick_after_boot_profile_handoff(void)
           state->party_dir == 0 && state->current_level == 0,
           "boot handoff starts at the documented DM2 V1 party snapshot");
 
-    dm2_v1_runtime_init(&profile);
+    CHECK(dm2_v1_runtime_bind_boot_profile(NULL) == 0,
+          "runtime boot-profile bind rejects NULL");
+    CHECK(dm2_v1_runtime_bind_boot_profile(&profile) == 1,
+          "runtime boot-profile bind initializes runtime state");
     CHECK(dm2_v1_runtime_get_tick_count() == 0,
           "runtime tick counter starts at zero after handoff bind");
     CHECK(dm2_v1_runtime_has_dungeon_data() == 1,

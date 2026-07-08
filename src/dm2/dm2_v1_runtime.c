@@ -590,6 +590,16 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     dm2_runtime_refresh_map_wall_gfx_list(&g_dm2_runtime);
 }
 
+int dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile) {
+    if (!boot_profile || !boot_profile->dm2_state) return 0;
+    dm2_v1_runtime_init(boot_profile);
+    if (boot_profile->graphics_dat) {
+        dm2_v1_runtime_set_viewport_asset_provider(
+            dm2_v1_boot_viewport_asset_fetch, boot_profile);
+    }
+    return 1;
+}
+
 int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;

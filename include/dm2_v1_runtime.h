@@ -38,6 +38,7 @@ extern "C" {
 /* ── Core movement ──────────────────────────────────────────────── */
 
 void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile);
+int  dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile);
 int  dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session);
 void dm2_v1_runtime_tick(void);
 int  dm2_v1_runtime_get_tick_count(void);
