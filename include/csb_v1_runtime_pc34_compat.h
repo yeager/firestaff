@@ -1154,6 +1154,17 @@ int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts
     int preview_active,
     CSB_V1_UtilApplyReceipt *out_receipt,
     CSB_V1_UtilStateReceipt *out_state_receipt);
+int csb_v1_runtime_save_game_to_path_from_boot_profile_pc34(
+    const void *boot_profile,
+    const char *path,
+    uint32_t *out_game_time);
+int csb_v1_runtime_load_game_from_path_from_boot_profile_pc34(
+    void *boot_profile,
+    const char *path,
+    uint32_t *out_game_time);
+int csb_v1_runtime_tick_from_boot_profile_pc34(
+    void *boot_profile,
+    uint32_t *out_game_time);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);

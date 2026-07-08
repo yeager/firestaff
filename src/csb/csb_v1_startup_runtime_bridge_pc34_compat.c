@@ -221,3 +221,66 @@ int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts
         out_receipt,
         out_state_receipt);
 }
+
+int csb_v1_runtime_save_game_to_path_from_boot_profile_pc34(
+    const void *boot_profile,
+    const char *path,
+    uint32_t *out_game_time)
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+    int result;
+
+    if (out_game_time) {
+        *out_game_time = 0U;
+    }
+    if (!profile || !path) {
+        return -1;
+    }
+    result = csb_v1_runtime_save_game_to_path(&profile->runtime, path);
+    if (out_game_time) {
+        *out_game_time = profile->runtime.game_time;
+    }
+    return result;
+}
+
+int csb_v1_runtime_load_game_from_path_from_boot_profile_pc34(
+    void *boot_profile,
+    const char *path,
+    uint32_t *out_game_time)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+    int result;
+
+    if (out_game_time) {
+        *out_game_time = 0U;
+    }
+    if (!profile || !path) {
+        return -1;
+    }
+    result = csb_v1_runtime_load_game_from_path(&profile->runtime, path);
+    if (out_game_time) {
+        *out_game_time = profile->runtime.game_time;
+    }
+    return result;
+}
+
+int csb_v1_runtime_tick_from_boot_profile_pc34(
+    void *boot_profile,
+    uint32_t *out_game_time)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+    int result;
+
+    if (out_game_time) {
+        *out_game_time = 0U;
+    }
+    if (!profile) {
+        return 0;
+    }
+    result = csb_v1_runtime_tick_v1(&profile->runtime);
+    if (out_game_time) {
+        *out_game_time = profile->runtime.game_time;
+    }
+    return result;
+}

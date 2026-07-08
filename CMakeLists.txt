@@ -8012,6 +8012,8 @@ if(BUILD_TESTING)
         tests/test_csb_v1_boot_runtime_handoff.c
         src/csb/csb_v1_boot.c
         src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_startup_runtime_bridge_pc34_compat.c
+        src/csb/csb_v1_startup_sequence_pc34_compat.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/csb/csb_v1_character_pc34_compat.c
         src/csb/csb_v1_utility_flow_pc34.c
