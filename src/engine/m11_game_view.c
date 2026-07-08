@@ -742,6 +742,54 @@ static M11_GameInputResult m11_dm2_startup_apply_launch_receipt(
         &launch_receipt->host_receipt);
 }
 
+static int m11_dm2_apply_boot_runtime_receipt(
+    M11_GameViewState *state,
+    const M11_GameLaunchSpec *spec,
+    const DM2_V1_BootStartupRuntimeReceipt *receipt)
+{
+    if (!state || !spec || !receipt || !receipt->profile ||
+        !receipt->dm2_state) {
+        return 0;
+    }
+    /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
+    if (receipt->initialize_v2_runtime) {
+        dm2_v2_runtime_init(2);
+    }
+    if (receipt->initialize_hud_runtime) {
+        dm2_v2_hud_runtime_init();
+    }
+    if (receipt->initialize_touch_runtime) {
+        dm2_v2_touch_runtime_init();
+    }
+    state->active = 1;
+    state->startedFromLauncher = 1;
+    state->sourceKind = M11_GAME_SOURCE_DM2_BOOT;
+    snprintf(state->bootAssetMd5,
+             sizeof(state->bootAssetMd5),
+             "%s",
+             receipt->boot_asset_md5);
+    state->presentationMode = spec->presentationMode;
+    state->presentationWidth = spec->presentationWidth;
+    state->presentationHeight = spec->presentationHeight;
+    snprintf(state->title,
+             sizeof(state->title),
+             "%s",
+             spec->title ? spec->title : receipt->title);
+    snprintf(state->sourceId,
+             sizeof(state->sourceId),
+             "%s",
+             spec->sourceId ? spec->sourceId : receipt->source_id);
+    snprintf(state->dungeonPath,
+             sizeof(state->dungeonPath),
+             "%s",
+             receipt->dungeon_path);
+    state->dm2BootProfile = receipt->profile;
+    state->dm2World = receipt->dm2_state;
+    state->dm2State.level_loaded = 1;
+    m11_sync_dm2_state_from_runtime(state);
+    return 1;
+}
+
 static void m11_dm2_boot_runtime_startup_snapshot(
     const M11_GameViewState *state,
     DM2_V1_BootRuntimeStartupSnapshot *out_snapshot)
@@ -10842,36 +10890,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             dm2_v1_boot_startup_launch_cleanup(&launch);
             return 0;
         }
-        /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
-        if (runtime_receipt.initialize_v2_runtime) {
-            dm2_v2_runtime_init(2);
+        if (!m11_dm2_apply_boot_runtime_receipt(state,
+                                                spec,
+                                                &runtime_receipt)) {
+            dm2_v1_boot_startup_launch_cleanup(&launch);
+            return 0;
         }
-        if (runtime_receipt.initialize_hud_runtime) {
-            dm2_v2_hud_runtime_init();
-        }
-        if (runtime_receipt.initialize_touch_runtime) {
-            dm2_v2_touch_runtime_init();
-        }
-        state->active = 1;
-        state->startedFromLauncher = 1;
-        state->sourceKind = M11_GAME_SOURCE_DM2_BOOT;
-        snprintf(state->bootAssetMd5,
-                 sizeof(state->bootAssetMd5),
-                 "%s",
-                 runtime_receipt.boot_asset_md5);
-        state->presentationMode = spec->presentationMode;
-        state->presentationWidth = spec->presentationWidth;
-        state->presentationHeight = spec->presentationHeight;
-        snprintf(state->title, sizeof(state->title), "%s",
-                 spec->title ? spec->title : runtime_receipt.title);
-        snprintf(state->sourceId, sizeof(state->sourceId), "%s",
-                 spec->sourceId ? spec->sourceId : runtime_receipt.source_id);
-        snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
-                 runtime_receipt.dungeon_path);
-        state->dm2BootProfile = runtime_receipt.profile;
-        state->dm2World = runtime_receipt.dm2_state;
-        state->dm2State.level_loaded = 1;
-        m11_sync_dm2_state_from_runtime(state);
         /* Tier 1 launch smoke: keep the DM2 direct-launch milestone
          * observable to headless probes, matching the CSB stderr-pipe above.
          * The boot itself stays owned by the DM2 V1 branch documented in
