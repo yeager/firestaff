@@ -95,6 +95,7 @@
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
+#include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
@@ -1421,13 +1422,7 @@ enum {
 };
 
 enum {
-    M11_V1_ARROW_VIS_TURN_LEFT    = 1 << 0, /* C068 */
-    M11_V1_ARROW_VIS_TURN_RIGHT   = 1 << 1, /* C069 */
-    M11_V1_ARROW_VIS_FORWARD      = 1 << 2, /* C070 */
-    M11_V1_ARROW_VIS_RIGHT        = 1 << 3, /* C071 */
-    M11_V1_ARROW_VIS_BACKWARD     = 1 << 4, /* C072 */
-    M11_V1_ARROW_VIS_LEFT         = 1 << 5, /* C073 */
-    M11_V1_ARROW_VIS_TICKS        = 4
+    M11_V1_ARROW_VIS_TICKS = DM1_V1_MOVEMENT_ARROW_VIS_TICKS_PC34
 };
 
 /*
@@ -13546,24 +13541,32 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
                                                           M12_MenuInput input);
 
 static int m11_v1_movement_arrow_visual_mask_for_input(M12_MenuInput input) {
+    int command = 0;
     switch (input) {
         case M12_MENU_INPUT_LEFT:
         case M12_MENU_INPUT_TURN_LEFT:
-            return M11_V1_ARROW_VIS_TURN_LEFT;
+            command = DM1_V1_MOVEMENT_ARROW_COMMAND_TURN_LEFT_PC34;
+            break;
         case M12_MENU_INPUT_RIGHT:
         case M12_MENU_INPUT_TURN_RIGHT:
-            return M11_V1_ARROW_VIS_TURN_RIGHT;
+            command = DM1_V1_MOVEMENT_ARROW_COMMAND_TURN_RIGHT_PC34;
+            break;
         case M12_MENU_INPUT_UP:
-            return M11_V1_ARROW_VIS_FORWARD;
+            command = DM1_V1_MOVEMENT_ARROW_COMMAND_FORWARD_PC34;
+            break;
         case M12_MENU_INPUT_DOWN:
-            return M11_V1_ARROW_VIS_BACKWARD;
+            command = DM1_V1_MOVEMENT_ARROW_COMMAND_BACKWARD_PC34;
+            break;
         case M12_MENU_INPUT_STRAFE_LEFT:
-            return M11_V1_ARROW_VIS_LEFT;
+            command = DM1_V1_MOVEMENT_ARROW_COMMAND_LEFT_PC34;
+            break;
         case M12_MENU_INPUT_STRAFE_RIGHT:
-            return M11_V1_ARROW_VIS_RIGHT;
+            command = DM1_V1_MOVEMENT_ARROW_COMMAND_RIGHT_PC34;
+            break;
         default:
             return 0;
     }
+    return dm1_v1_movement_arrow_visual_mask_for_command_pc34(command);
 }
 
 static void m11_mark_v1_movement_arrow_visual(M11_GameViewState* state,
@@ -23019,22 +23022,22 @@ static void m11_draw_control_strip(unsigned char* framebuffer,
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             18, 167, 15, 10, "", DIR_WEST,
                             M11_COLOR_YELLOW,
-                            (mask & M11_V1_ARROW_VIS_LEFT)
+                            (mask & DM1_V1_MOVEMENT_ARROW_VIS_LEFT_PC34)
                                 ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             35, 167, 15, 10, "", DIR_NORTH,
                             M11_COLOR_LIGHT_CYAN,
-                            (mask & M11_V1_ARROW_VIS_FORWARD)
+                            (mask & DM1_V1_MOVEMENT_ARROW_VIS_FORWARD_PC34)
                                 ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             52, 167, 15, 10, "", DIR_EAST,
                             M11_COLOR_YELLOW,
-                            (mask & M11_V1_ARROW_VIS_RIGHT)
+                            (mask & DM1_V1_MOVEMENT_ARROW_VIS_RIGHT_PC34)
                                 ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             69, 167, 15, 10, "", DIR_SOUTH,
                             M11_COLOR_LIGHT_CYAN,
-                            (mask & M11_V1_ARROW_VIS_BACKWARD)
+                            (mask & DM1_V1_MOVEMENT_ARROW_VIS_BACKWARD_PC34)
                                 ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             86, 167, 12, 10, "", -1,
@@ -23302,14 +23305,6 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
 #define M11_DM_ACTION_AREA_Y     77
 #define M11_DM_ACTION_AREA_W     87
 #define M11_DM_ACTION_AREA_H     45
-#define M11_DM_MOVEMENT_ARROWS_OUTER_X 224
-#define M11_DM_MOVEMENT_ARROWS_OUTER_Y 124
-#define M11_DM_MOVEMENT_ARROWS_OUTER_W  96
-#define M11_DM_MOVEMENT_ARROWS_OUTER_H  45
-#define M11_DM_MOVEMENT_ARROWS_X 233
-#define M11_DM_MOVEMENT_ARROWS_Y 124
-#define M11_DM_MOVEMENT_ARROWS_W  87
-#define M11_DM_MOVEMENT_ARROWS_H  45
 
 /* Try to blit GRAPHICS.DAT graphic `gfxIdx` at its native size anchored
  * at (x,y).  Returns 1 on success, 0 if the asset was unavailable or
@@ -30369,24 +30364,23 @@ int M11_GameView_ProbeF0407FuseImmediate(M11_GameViewState* state,
 #define M11_DM_ACTION_MENU_ROW_TEXT_Y0    93
 
 int M11_GameView_GetV1MovementArrowsZoneId(void) {
-    /* Source layout-696 C009_ZONE_MOVEMENT_ARROWS. */
-    return 9;
+    return dm1_v1_movement_arrows_zone_id_pc34();
 }
 
 int M11_GameView_GetV1MovementArrowsGraphicId(void) {
-    /* ReDMCSB MENUDRAW.C F0395 blits C013_GRAPHIC_MOVEMENT_ARROWS here. */
-    return M11_GFX_MOVEMENT_ARROWS;
+    return dm1_v1_movement_arrows_graphic_id_pc34();
 }
 
 int M11_GameView_GetV1MovementArrowsOuterBox(int* outX,
                                               int* outY,
                                               int* outW,
                                               int* outH) {
-    if (!M11_GameView_GetV1MovementArrowsZoneId()) return 0;
-    if (outX) *outX = M11_DM_MOVEMENT_ARROWS_OUTER_X;
-    if (outY) *outY = M11_DM_MOVEMENT_ARROWS_OUTER_Y;
-    if (outW) *outW = M11_DM_MOVEMENT_ARROWS_OUTER_W;
-    if (outH) *outH = M11_DM_MOVEMENT_ARROWS_OUTER_H;
+    DM1_V1_MovementArrowRectPc34 rect;
+    if (!dm1_v1_movement_arrows_outer_rect_pc34(&rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -30394,21 +30388,17 @@ int M11_GameView_GetV1MovementArrowsZone(int* outX,
                                           int* outY,
                                           int* outW,
                                           int* outH) {
-    if (!M11_GameView_GetV1MovementArrowsZoneId()) return 0;
-    if (outX) *outX = M11_DM_MOVEMENT_ARROWS_X;
-    if (outY) *outY = M11_DM_MOVEMENT_ARROWS_Y;
-    if (outW) *outW = M11_DM_MOVEMENT_ARROWS_W;
-    if (outH) *outH = M11_DM_MOVEMENT_ARROWS_H;
+    DM1_V1_MovementArrowRectPc34 rect;
+    if (!dm1_v1_movement_arrows_graphic_rect_pc34(&rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1MovementArrowZoneId(int arrowIndex) {
-    static const int kArrowZones[6] = { 68, 69, 70, 71, 72, 73 };
-    if (!M11_GameView_GetV1MovementArrowsZoneId() ||
-        arrowIndex < 0 || arrowIndex >= 6) {
-        return 0;
-    }
-    return kArrowZones[arrowIndex];
+    return dm1_v1_movement_arrow_zone_id_pc34(arrowIndex);
 }
 
 int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
@@ -30416,14 +30406,12 @@ int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
                                          int* outY,
                                          int* outW,
                                          int* outH) {
-    static const int kX[6] = { 234, 291, 263, 291, 263, 234 };
-    static const int kY[6] = { 125, 125, 125, 147, 147, 147 };
-    static const int kW[6] = { 19, 19, 27, 28, 27, 28 };
-    if (!M11_GameView_GetV1MovementArrowZoneId(arrowIndex)) return 0;
-    if (outX) *outX = kX[arrowIndex];
-    if (outY) *outY = kY[arrowIndex];
-    if (outW) *outW = kW[arrowIndex];
-    if (outH) *outH = 21;
+    DM1_V1_MovementArrowRectPc34 rect;
+    if (!dm1_v1_movement_arrow_rect_pc34(arrowIndex, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -30432,14 +30420,6 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
     unsigned char* framebuffer,
     int framebufferWidth,
     int framebufferHeight) {
-    static const int kArrowMasks[6] = {
-        M11_V1_ARROW_VIS_TURN_LEFT,
-        M11_V1_ARROW_VIS_TURN_RIGHT,
-        M11_V1_ARROW_VIS_FORWARD,
-        M11_V1_ARROW_VIS_RIGHT,
-        M11_V1_ARROW_VIS_BACKWARD,
-        M11_V1_ARROW_VIS_LEFT
-    };
     int i;
     if (!state || !framebuffer ||
         state->v1MovementArrowVisualTicks <= 0 ||
@@ -30452,22 +30432,27 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
      * Home/End/Q/E through the same M12_MENU_INPUT_* tokens as mouse
      * clicks, then this presentation bridge echoes the active source
      * zone without changing the command pipeline. */
-    for (i = 0; i < 6; ++i) {
-        int x = 0, y = 0, w = 0, h = 0;
+    for (i = 0; i < DM1_V1_MOVEMENT_ARROW_COUNT_PC34; ++i) {
+        DM1_V1_MovementArrowVisualReceiptPc34 receipt;
+        int x, y, w, h;
         unsigned char cueColor;
-        if ((state->v1MovementArrowVisualMask & kArrowMasks[i]) == 0) {
+        if (!dm1_v1_movement_arrow_visual_receipt_pc34(
+                state->v1MovementArrowVisualMask, i, &receipt)) {
             continue;
         }
-        if (!M11_GameView_GetV1MovementArrowZone(i, &x, &y, &w, &h)) {
-            continue;
-        }
+        x = receipt.rect.x;
+        y = receipt.rect.y;
+        w = receipt.rect.w;
+        h = receipt.rect.h;
         /* This visual echo is a Firestaff keyboard/controller affordance
          * over ReDMCSB's MENUDRAW.C F0395 native movement panel.  Keep it
          * source-shaped and subdued: the previous full white rectangle read
          * as an invented square button around C068/C069 turn zones. */
         m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
                        x, y, w, h);
-        cueColor = (i == 0 || i == 1) ? M11_COLOR_YELLOW : M11_COLOR_LIGHT_CYAN;
+        cueColor = receipt.cueColorKind == 1
+            ? M11_COLOR_YELLOW
+            : M11_COLOR_LIGHT_CYAN;
         if (w > 8 && h > 8) {
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                            x + 1, x + 5, y + 1, cueColor);
