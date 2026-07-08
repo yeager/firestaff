@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.69  (2026-07-08)",
+    "  - Packages current main after the all-game boot adapter cleanup and DM1 HoC mirror source-route fix landed after v3.0.68.",
+    "  - CSB and DM1 V2 startup paths now keep more boot policy inside game-owned adapters before M11 draws or dispatches runtime handoff.",
+    "",
     "V3.0.68  (2026-07-08)",
     "  - Packages current main after DM2 and Nexus boot presentation receipt ownership landed after v3.0.67.",
     "  - DM2 and Nexus startup probe reporting now comes from game-owned presentation receipt helpers instead of M11-local policy.",
@@ -516,5 +520,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.68";
+    return "3.0.69";
 }

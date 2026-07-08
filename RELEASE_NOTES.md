@@ -1,6 +1,28 @@
 
 # Unreleased
 
+# Firestaff v3.0.69
+
+Firestaff v3.0.69 packages the current `main` after the all-game boot adapter
+cleanup and DM1 HoC mirror source-route fix landed after `v3.0.68` was tagged.
+
+## Highlights since v3.0.68
+
+- **DM1 HoC rendering**: Front-cell champion mirrors now route through the
+  sampled wall-aspect result before falling back to raw dungeon-cell metadata.
+- **Boot/startup ownership**: CSB, DM1 V2 and related startup paths keep more
+  render and handoff policy inside game-owned boot adapters.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.69`.
+
+## Verification
+
+- Local release verification covers version synchronization, the Phase A probe
+  and `git diff --check` before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.69` release run.
+
 # Firestaff v3.0.68
 
 Firestaff v3.0.68 packages the current `main` after the DM2 and Nexus boot
