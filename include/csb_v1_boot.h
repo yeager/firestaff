@@ -96,6 +96,17 @@ int csb_v1_boot_render_viewport_frame_pc34(
     int framebuffer_height,
     const CSB_V1_ViewportRuntimeDrawerBinding *drawer_binding,
     CSB_V1_ViewportRuntimeDrawCounts *out_counts);
+int csb_v1_boot_apply_startup_handoff_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    CSB_V1_RuntimeStartupHandoffReceipt_PC34 *out_receipt);
+int csb_v1_boot_build_startup_session_state_receipt_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_RuntimeStartupHandoffReceipt_PC34 *handoff,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 *out_receipt);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *

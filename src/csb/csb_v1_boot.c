@@ -788,6 +788,36 @@ int csb_v1_boot_render_viewport_frame_pc34(
     return 1;
 }
 
+int csb_v1_boot_apply_startup_handoff_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    CSB_V1_RuntimeStartupHandoffReceipt_PC34 *out_receipt)
+{
+    return profile ? csb_v1_runtime_apply_startup_handoff_pc34(
+                         &profile->runtime,
+                         save_path,
+                         import_dm1_save_path,
+                         out_receipt)
+                   : 0;
+}
+
+int csb_v1_boot_build_startup_session_state_receipt_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_RuntimeStartupHandoffReceipt_PC34 *handoff,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 *out_receipt)
+{
+    return profile ? csb_v1_runtime_build_startup_session_state_receipt_pc34(
+                         &profile->runtime,
+                         handoff,
+                         import_dm1_save_path,
+                         resume_save_path,
+                         out_receipt)
+                   : 0;
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {
