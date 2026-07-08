@@ -176,7 +176,8 @@ enum {
  * menu_hit_m12.c can reference M12_SETTINGS_TAB_COUNT. */
 
 static const char *m12_settings_tab_labels[M12_SETTINGS_TAB_COUNT] = {
-    _("GAME"), _("GRAPHICS"), _("CONTROLS"), _("AUDIO"), _("ACCESSIBILITY")
+    _("GAME"), _("GRAPHICS"), _("CONTROLS"), _("AUDIO"), _("ACCESSIBILITY"),
+    _("ONLINE")
 };
 
 /* ── Extended settings rows per tab ───────────────────────────────── */
@@ -251,10 +252,11 @@ static M12_ExtSettingsRow m12_ext_settings[] = {
     {"Screenshot Key",      "F12",          0, M12_SETTINGS_TAB_ACCESSIBILITY},  /* V2.2 */
     {"Message Log",         "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Tooltip",             "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
-    {"RetroAchievements",   "Off",       1, M12_SETTINGS_TAB_GAME},
-    {"RA Hardcore",         "On",        1, M12_SETTINGS_TAB_GAME},
-    {"RA Username",         "Not Set",   1, M12_SETTINGS_TAB_GAME},
-    {"RA API Token",        "Not Set",   1, M12_SETTINGS_TAB_GAME},
+    /* ── ONLINE tab ── */
+    {"RetroAchievements",   "Off",       1, M12_SETTINGS_TAB_ONLINE},
+    {"RA Hardcore",         "On",        1, M12_SETTINGS_TAB_ONLINE},
+    {"RA Username",         "Not Set",   1, M12_SETTINGS_TAB_ONLINE},
+    {"RA API Token",        "Not Set",   1, M12_SETTINGS_TAB_ONLINE},
     {"Stat Tracker",        "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Pathfinding Overlay", "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Inventory Sort",      "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */

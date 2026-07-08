@@ -3,7 +3,7 @@
  *
  * M12 settings tab strip mouse hit-test gate.  The settings
  * view in m12_draw_tabbed_settings_view draws a tab strip at
- * y=52 with M12_SETTINGS_TAB_COUNT (5) equally-sized tabs.
+ * y=52 with M12_SETTINGS_TAB_COUNT equally-sized tabs.
  * Before the fix in d2c5e7f8 clicking the tab strip fell
  * through to M12_HIT_NONE; this test verifies the new
  * M12_HIT_SETTINGS_TAB kind is produced by
@@ -89,13 +89,19 @@ int main(void) {
     CHECK(state.settingsTabIndex == 0,
           "M12_HIT_SETTINGS_TAB(0) routes to settingsTabIndex=0");
 
-    /* Clicking tab 4 (last tab, M12_SETTINGS_TAB_ACCESSIBILITY)
-     * sets settingsTabIndex=4. */
+    /* Clicking accessibility and online tabs should route to their
+     * public enum values. */
     (void)M12_ModernMenu_ApplyHit(&state,
         (M12_MouseHit){ M12_HIT_SETTINGS_TAB,
                         M12_SETTINGS_TAB_ACCESSIBILITY, 0 });
     CHECK(state.settingsTabIndex == M12_SETTINGS_TAB_ACCESSIBILITY,
-          "M12_HIT_SETTINGS_TAB(ACCESSIBILITY) sets tab to 4");
+          "M12_HIT_SETTINGS_TAB(ACCESSIBILITY) sets accessibility tab");
+
+    (void)M12_ModernMenu_ApplyHit(&state,
+        (M12_MouseHit){ M12_HIT_SETTINGS_TAB,
+                        M12_SETTINGS_TAB_ONLINE, 0 });
+    CHECK(state.settingsTabIndex == M12_SETTINGS_TAB_ONLINE,
+          "M12_HIT_SETTINGS_TAB(ONLINE) sets RetroAchievements settings tab");
 
     memset(&state, 0, sizeof(state));
     state.view = M12_MENU_VIEW_SETTINGS;

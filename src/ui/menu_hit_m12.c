@@ -33,12 +33,12 @@
 #define M12_HIT_GAMEOPT_PANEL_H_V2  780
 #define M12_HIT_ROW_INDENT     36
 
-/* --- Settings view: tab strip (CONTROLS / AUDIO / ACCESSIBILITY) ---
+/* --- Settings view: tab strip (GAME / GRAPHICS / CONTROLS / AUDIO / ACCESSIBILITY / ONLINE) ---
  * These coords mirror m12_draw_tabbed_settings_view in
  * menu_startup_m12.c.  The strip sits above the panel (which
  * starts at M12_HIT_PANEL_Y=260) and is 22 px tall, starting
  * at y=52 with a margin offset of fw/30.  Tab width is the
- * available width divided by M12_SETTINGS_TAB_COUNT (3). */
+ * available width divided by M12_SETTINGS_TAB_COUNT. */
 #define M12_HIT_SETTINGS_TAB_MARGIN (M12_HIT_CANVAS_W / 30)
 #define M12_HIT_SETTINGS_TAB_Y      52
 #define M12_HIT_SETTINGS_TAB_H      22
