@@ -2115,48 +2115,54 @@ static int orch_build_cmd_attack_champion_snapshot_compat(
     struct CombatantChampionSnapshot_Compat* outChampion)
 {
     const struct ChampionState_Compat* champion;
+    DM1_MeleeF0231ChampionSnapshotInputPc34 in;
+    DM1_MeleeF0231ChampionSnapshotPlanPc34 plan;
+    int normalizedActionSkillIndex;
 
     if (!outChampion || !world || !weaponInfo) return 0;
     memset(outChampion, 0, sizeof(*outChampion));
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     champion = &world->party.champions[championIndex];
-    if (!champion->present || champion->hp.current == 0) return 0;
 
-    if (actionSkillIndex < 0 || actionSkillIndex >= DM1_TOTAL_SKILL_COUNT) {
-        if (weaponInfo->weaponClass >= DM1_WEAPON_CLASS_FIRST_BOW &&
-            weaponInfo->weaponClass < DM1_WEAPON_CLASS_FIRST_MAGIC_WEAPON) {
-            actionSkillIndex = DM1_SKILL_IDX_SHOOT;
-        } else if (weaponInfo->weaponClass == 0) {
-            actionSkillIndex = DM1_SKILL_IDX_SWING;
-        } else {
-            actionSkillIndex = DM1_SKILL_IDX_THROW;
-        }
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.championIndex = championIndex;
+    in.championPresent = champion->present;
+    in.currentHealth = champion->hp.current;
+    in.actionSkillIndex = actionSkillIndex;
+    in.weaponClass = weaponInfo->weaponClass;
+    if (!dm1_v1_melee_champion_snapshot_plan_f0231_pc34(&in, &plan)) {
+        return 0;
     }
+    normalizedActionSkillIndex = plan.normalizedActionSkillIndex;
 
-    outChampion->championIndex = championIndex;
-    outChampion->currentHealth = champion->hp.current;
-    outChampion->dexterity = champion->attributes[CHAMPION_ATTR_DEXTERITY];
-    outChampion->strengthActionHand =
+    in.dexterity = champion->attributes[CHAMPION_ATTR_DEXTERITY];
+    in.strengthActionHand =
         orch_cmd_attack_f0312_strength_action_hand_compat(
             world, champion, championIndex, weaponInfo, hasActionHandWeapon);
-    outChampion->skillLevelParry = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+    in.skillLevelParry = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
         world, championIndex, DM1_SKILL_IDX_PARRY);
-    outChampion->skillLevelAction = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
-        world, championIndex, actionSkillIndex);
-    outChampion->statisticVitality = champion->attributes[CHAMPION_ATTR_VITALITY];
-    outChampion->statisticAntifire = champion->attributes[CHAMPION_ATTR_ANTIFIRE];
-    outChampion->statisticAntimagic = champion->attributes[CHAMPION_ATTR_ANTIMAGIC];
-    outChampion->statisticWisdom = champion->attributes[CHAMPION_ATTR_WISDOM];
-    outChampion->statisticLuck = (int)world->lifecycle.champions[championIndex]
+    in.skillLevelAction = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+        world, championIndex, normalizedActionSkillIndex);
+    in.statisticVitality = champion->attributes[CHAMPION_ATTR_VITALITY];
+    in.statisticAntifire = champion->attributes[CHAMPION_ATTR_ANTIFIRE];
+    in.statisticAntimagic = champion->attributes[CHAMPION_ATTR_ANTIMAGIC];
+    in.statisticWisdom = champion->attributes[CHAMPION_ATTR_WISDOM];
+    in.statisticLuck = (int)world->lifecycle.champions[championIndex]
         .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_CURRENT];
-    outChampion->statisticLuckMax = (int)world->lifecycle.champions[championIndex]
+    in.statisticLuckMax = (int)world->lifecycle.champions[championIndex]
         .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_MAXIMUM];
-    outChampion->statisticLuckMin = (int)world->lifecycle.champions[championIndex]
+    in.statisticLuckMin = (int)world->lifecycle.champions[championIndex]
         .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_MINIMUM];
-    outChampion->actionHandIcon = weaponType;
-    outChampion->wounds = champion->wounds;
-    outChampion->isResting = world->partyIsResting || world->lifecycle.rest.isResting;
-    outChampion->partyShieldDefense = champion->actionDefense;
+    in.actionHandIcon = weaponType;
+    in.wounds = champion->wounds;
+    in.isResting = world->partyIsResting || world->lifecycle.rest.isResting;
+    in.partyShieldDefense = champion->actionDefense;
+    if (!dm1_v1_melee_champion_snapshot_plan_f0231_pc34(&in, &plan) ||
+        !plan.valid) {
+        return 0;
+    }
+    *outChampion = plan.snapshot;
     return 1;
 }
 

@@ -4,6 +4,7 @@
 
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 
@@ -440,6 +441,60 @@ int dm1_v1_melee_strength_plan_f0312_pc34(
      * plus current Strength, applies held-object weight/max-load pressure,
      * weapon strength, F0303 skill bonus << 1, F0306 stamina adjustment,
      * action-hand wound halving, then returns bounded strength >> 1. */
+    return 1;
+}
+
+int dm1_v1_melee_champion_snapshot_plan_f0231_pc34(
+    const DM1_MeleeF0231ChampionSnapshotInputPc34* in,
+    DM1_MeleeF0231ChampionSnapshotPlanPc34* out) {
+    int actionSkillIndex;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->normalizedActionSkillIndex = -1;
+    if (!in) return 0;
+    if (in->championIndex < 0 || in->championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    if (!in->championPresent || in->currentHealth == 0) {
+        return 0;
+    }
+
+    actionSkillIndex = in->actionSkillIndex;
+    if (actionSkillIndex < 0 || actionSkillIndex >= DM1_TOTAL_SKILL_COUNT) {
+        if (in->weaponClass >= DM1_WEAPON_CLASS_FIRST_BOW &&
+            in->weaponClass < DM1_WEAPON_CLASS_FIRST_MAGIC_WEAPON) {
+            actionSkillIndex = DM1_SKILL_IDX_SHOOT;
+        } else if (in->weaponClass == 0) {
+            actionSkillIndex = DM1_SKILL_IDX_SWING;
+        } else {
+            actionSkillIndex = DM1_SKILL_IDX_THROW;
+        }
+    }
+
+    out->valid = 1;
+    out->normalizedActionSkillIndex = actionSkillIndex;
+    out->snapshot.championIndex = in->championIndex;
+    out->snapshot.currentHealth = in->currentHealth;
+    out->snapshot.dexterity = in->dexterity;
+    out->snapshot.strengthActionHand = in->strengthActionHand;
+    out->snapshot.skillLevelParry = in->skillLevelParry;
+    out->snapshot.skillLevelAction = in->skillLevelAction;
+    out->snapshot.statisticVitality = in->statisticVitality;
+    out->snapshot.statisticAntifire = in->statisticAntifire;
+    out->snapshot.statisticAntimagic = in->statisticAntimagic;
+    out->snapshot.statisticWisdom = in->statisticWisdom;
+    out->snapshot.statisticLuck = in->statisticLuck;
+    out->snapshot.statisticLuckMax = in->statisticLuckMax;
+    out->snapshot.statisticLuckMin = in->statisticLuckMin;
+    out->snapshot.actionHandIcon = in->actionHandIcon;
+    out->snapshot.wounds = in->wounds;
+    out->snapshot.isResting = in->isResting;
+    out->snapshot.partyShieldDefense = in->partyShieldDefense;
+
+    /* ReDMCSB: MENU.C F0402 passes the live champion and action skill into
+     * PROJEXPL.C F0231.  Firestaff snapshots only the immutable facts F0231
+     * consumes, including F0312 strength, F0303 parry/action skill levels,
+     * current Luck for F0308, and action-hand icon special cases. */
     return 1;
 }
 

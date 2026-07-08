@@ -208,6 +208,35 @@ typedef struct {
 } DM1_MeleeF0312StrengthPlanPc34;
 
 typedef struct {
+    int championIndex;
+    int championPresent;
+    int currentHealth;
+    int dexterity;
+    int strengthActionHand;
+    int actionSkillIndex;
+    int weaponClass;
+    int skillLevelParry;
+    int skillLevelAction;
+    int statisticVitality;
+    int statisticAntifire;
+    int statisticAntimagic;
+    int statisticWisdom;
+    int statisticLuck;
+    int statisticLuckMax;
+    int statisticLuckMin;
+    int actionHandIcon;
+    int wounds;
+    int isResting;
+    int partyShieldDefense;
+} DM1_MeleeF0231ChampionSnapshotInputPc34;
+
+typedef struct {
+    int valid;
+    int normalizedActionSkillIndex;
+    struct CombatantChampionSnapshot_Compat snapshot;
+} DM1_MeleeF0231ChampionSnapshotPlanPc34;
+
+typedef struct {
     int groupIndex;
     int creatureType;
     int creatureAttributes;
@@ -265,6 +294,9 @@ int dm1_v1_melee_preflight_plan_f0402_pc34(
 int dm1_v1_melee_strength_plan_f0312_pc34(
     const DM1_MeleeF0312StrengthInputPc34* in,
     DM1_MeleeF0312StrengthPlanPc34* out);
+int dm1_v1_melee_champion_snapshot_plan_f0231_pc34(
+    const DM1_MeleeF0231ChampionSnapshotInputPc34* in,
+    DM1_MeleeF0231ChampionSnapshotPlanPc34* out);
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out);
