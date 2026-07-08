@@ -1749,6 +1749,7 @@ int main(void)
 
     {
         Nexus_V1_LauncherBootReceipt boot_receipt;
+        Nexus_V1_LauncherRuntimeReceipt runtime_receipt;
         char missing_dir[512];
         snprintf(missing_dir,
                  sizeof(missing_dir),
@@ -1771,6 +1772,21 @@ int main(void)
                "Nexus launcher boot receipt owns missing-data status");
         expect(nexus_v1_launcher_get_engine() == NULL,
                "Nexus launcher missing-data boot leaves no active engine");
+        nexus_v1_launcher_runtime_receipt_clear(&runtime_receipt);
+        expect(!nexus_v1_launcher_boot_level0_runtime_startup(
+                   missing_dir,
+                   NULL,
+                   &runtime_receipt),
+               "Nexus launcher runtime receipt rejects missing data");
+        expect(runtime_receipt.engine == NULL &&
+                   strcmp(runtime_receipt.title,
+                          NEXUS_V1_GAME_LABEL) == 0 &&
+                   strcmp(runtime_receipt.source_id,
+                          NEXUS_V1_GAME_ID) == 0 &&
+                   runtime_receipt.startup_receipt.host_receipt.status &&
+                   strcmp(runtime_receipt.startup_receipt.host_receipt.status,
+                          "NEXUS DATA ERROR") == 0,
+               "Nexus launcher runtime receipt owns M11 identity and failure status");
     }
 
     snprintf(path, sizeof(path), "%s/nexus_save_03.dat", save_dir);

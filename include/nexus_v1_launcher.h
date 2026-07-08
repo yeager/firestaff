@@ -23,6 +23,7 @@
  */
 
 #include "nexus_v1_engine.h"
+#include "firestaff_nexus_v1_boot_profile.h"
 #include "nexus_v1_startup_menu.h"
 #include "nexus_v1_title.h"
 
@@ -62,8 +63,28 @@ typedef struct {
     Nexus_V1_StartupLaunchReceipt startup_receipt;
 } Nexus_V1_LauncherBootReceipt;
 
+typedef struct {
+    Nexus_V1_Engine *engine;
+    Nexus_TitleScreen *title_screen;
+    int title_screen_keep;
+    int level_loaded;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int tick_count;
+    int title_loaded;
+    char title[64];
+    char source_id[32];
+    char dungeon_path[512];
+    Nexus_V1_StartupLaunchReceipt startup_receipt;
+    Nexus_V1_StartupHostReceipt boot_status_receipt;
+    const char *boot_log_line;
+} Nexus_V1_LauncherRuntimeReceipt;
+
 void nexus_v1_launcher_boot_receipt_clear(
     Nexus_V1_LauncherBootReceipt *receipt);
+void nexus_v1_launcher_runtime_receipt_clear(
+    Nexus_V1_LauncherRuntimeReceipt *receipt);
 
 typedef struct {
     int title_active;
@@ -224,6 +245,10 @@ int nexus_v1_launcher_boot_level0_startup(
     const char *data_dir,
     Nexus_TitleScreen *title,
     Nexus_V1_LauncherBootReceipt *out_receipt);
+int nexus_v1_launcher_boot_level0_runtime_startup(
+    const char *data_dir,
+    Nexus_TitleScreen *title,
+    Nexus_V1_LauncherRuntimeReceipt *out_receipt);
 
 /* Shutdown the launcher and free the engine singleton.
  * Safe to call multiple times. */
