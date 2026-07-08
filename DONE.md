@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 quicksave runtime receipt: DM2 runtime now owns quicksave export, save-root creation, SKSave.dat last-session write, and M11-ready save receipts. M11 applies the receipt instead of writing DM2 saves directly. Verification: strict compiles for `dm2_v1_runtime.c` and `m11_game_view.c`, direct DM2 runtime handoff smoke passed 101/101, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 broader archive/media hash scan: shared game-data scanner now recognizes `.zipx`, compressed tar variants, cpio/ar/deb/rpm/xar, bzip2/xz/zstd/lzma suffixes, and bzip2/xz/zstd/ar/cpio signatures. Compressed tar archives prefer bsdtar for entry-level hash scan/materialization. Verification: `test_asset_find_by_hash` passed with and without `FIRESTAFF_HAS_ZLIB`, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup host-facts wrapper: CSB startup-sequence now owns startup host-facts construction from runtime state, including entrance door-step count. M11 no longer manually fills every CSB startup host-facts field.

@@ -29,6 +29,7 @@
 #include "dm2_v1_timeline.h"
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
+#include "fs_portable_compat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -1503,6 +1504,77 @@ int dm2_v1_runtime_export_session(DM2_V1_SessionState *session) {
     }
     g_dm2_runtime.session_snapshot = *session;
     return 0;
+}
+
+static void dm2_v1_quicksave_receipt_init(
+    DM2_V1_QuicksaveReceipt *receipt,
+    DM2_V1_QuicksaveResult result,
+    const char *status)
+{
+    if (!receipt) return;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->result = result;
+    receipt->status_scope = "SAVE";
+    receipt->status = status;
+}
+
+int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_QuicksaveReceipt *out_receipt)
+{
+    DM2_V1_QuicksaveReceipt local;
+    DM2_V1_QuicksaveReceipt *receipt = out_receipt ? out_receipt : &local;
+
+    dm2_v1_quicksave_receipt_init(receipt,
+                                  DM2_V1_QUICKSAVE_PROFILE_MISSING,
+                                  "DM2 PROFILE MISSING");
+    if (!profile) {
+        return 0;
+    }
+    if (!profile->save_root[0]) {
+        dm2_v1_boot_set_save_root(profile, NULL);
+    }
+    snprintf(receipt->save_root, sizeof(receipt->save_root),
+             "%s", profile->save_root);
+    if (!FSP_CreateDirectoryRecursive(profile->save_root)) {
+        dm2_v1_quicksave_receipt_init(receipt,
+                                      DM2_V1_QUICKSAVE_SAVE_DIR_FAILED,
+                                      "DM2 SAVE DIR FAILED");
+        snprintf(receipt->save_root, sizeof(receipt->save_root),
+                 "%s", profile->save_root);
+        return 0;
+    }
+    memset(&receipt->session, 0, sizeof(receipt->session));
+    if (dm2_v1_runtime_export_session(&receipt->session) != 0) {
+        dm2_v1_quicksave_receipt_init(receipt,
+                                      DM2_V1_QUICKSAVE_EXPORT_FAILED,
+                                      "DM2 EXPORT FAILED");
+        snprintf(receipt->save_root, sizeof(receipt->save_root),
+                 "%s", profile->save_root);
+        return 0;
+    }
+    /* skproject/SkWin save flow writes the current live runtime session to
+     * SKSave.dat as the direct resume target. Firestaff keeps M11 outside
+     * the SKSave write path; runtime owns export + last-session rotation. */
+    if (dm2_v1_session_save_last_session(profile->save_root,
+                                         "Firestaff DM2",
+                                         &receipt->session) != 0) {
+        dm2_v1_quicksave_receipt_init(receipt,
+                                      DM2_V1_QUICKSAVE_WRITE_FAILED,
+                                      "DM2 WRITE FAILED");
+        snprintf(receipt->save_root, sizeof(receipt->save_root),
+                 "%s", profile->save_root);
+        return 0;
+    }
+    if (!FSP_JoinPath(receipt->save_path, sizeof(receipt->save_path),
+                      profile->save_root, "SKSave.dat")) {
+        receipt->save_path[0] = '\0';
+    }
+    receipt->result = DM2_V1_QUICKSAVE_OK;
+    receipt->status_scope = "SAVE";
+    receipt->status = "DM2 SKSAVE WRITTEN";
+    receipt->session_valid = 1;
+    return 1;
 }
 
 uint8_t dm2_v1_runtime_get_minion_count(void) {

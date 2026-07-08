@@ -118,6 +118,29 @@ int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
                                                  uint32_t object);
 int dm2_v1_runtime_export_inventory_to_session(DM2_V1_SessionState *session);
 int dm2_v1_runtime_export_session(DM2_V1_SessionState *session);
+
+typedef enum DM2_V1_QuicksaveResult {
+    DM2_V1_QUICKSAVE_OK = 0,
+    DM2_V1_QUICKSAVE_PROFILE_MISSING,
+    DM2_V1_QUICKSAVE_SAVE_DIR_FAILED,
+    DM2_V1_QUICKSAVE_EXPORT_FAILED,
+    DM2_V1_QUICKSAVE_WRITE_FAILED
+} DM2_V1_QuicksaveResult;
+
+typedef struct DM2_V1_QuicksaveReceipt {
+    DM2_V1_QuicksaveResult result;
+    const char *status_scope;
+    const char *status;
+    char save_root[512];
+    char save_path[512];
+    DM2_V1_SessionState session;
+    int session_valid;
+} DM2_V1_QuicksaveReceipt;
+
+int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_QuicksaveReceipt *out_receipt);
+
 uint8_t dm2_v1_runtime_get_minion_count(void);
 int dm2_v1_runtime_get_minion_assoc(uint8_t index, DM2_MinionAssoc *out_assoc);
 uint32_t dm2_v1_runtime_get_weather_seed(void);
