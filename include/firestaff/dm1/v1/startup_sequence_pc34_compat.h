@@ -123,6 +123,49 @@ typedef struct DM1_V1_StartupLaunchPathReceipt_PC34 {
 } DM1_V1_StartupLaunchPathReceipt_PC34;
 
 enum {
+    DM1_V1_STARTUP_RUNTIME_TITLE_CAPACITY_PC34 = 64,
+    DM1_V1_STARTUP_RUNTIME_SOURCE_ID_CAPACITY_PC34 = 32,
+    DM1_V1_STARTUP_RUNTIME_MD5_CAPACITY_PC34 = 33,
+    DM1_V1_STARTUP_RUNTIME_PATH_CAPACITY_PC34 = 512,
+    DM1_V1_STARTUP_RUNTIME_STATUS_CAPACITY_PC34 = 32,
+    DM1_V1_STARTUP_RUNTIME_INSPECT_CAPACITY_PC34 = 128
+};
+
+typedef struct DM1_V1_StartupRuntimeStartFacts_PC34 {
+    const char* game_id;
+    const char* source_id;
+    const char* title;
+    const char* verified_asset_md5;
+    const char* dungeon_path;
+    int source_kind;
+    int presentation_mode;
+    int presentation_width;
+    int presentation_height;
+    int font_scale;
+    DM1_V1_StartupLaunchPath_PC34 launch_path;
+} DM1_V1_StartupRuntimeStartFacts_PC34;
+
+typedef struct DM1_V1_StartupRuntimeStartReceipt_PC34 {
+    int handled;
+    int active;
+    int started_from_launcher;
+    int source_kind;
+    char boot_asset_md5[DM1_V1_STARTUP_RUNTIME_MD5_CAPACITY_PC34];
+    int presentation_mode;
+    int presentation_width;
+    int presentation_height;
+    int font_scale;
+    char title[DM1_V1_STARTUP_RUNTIME_TITLE_CAPACITY_PC34];
+    char source_id[DM1_V1_STARTUP_RUNTIME_SOURCE_ID_CAPACITY_PC34];
+    char dungeon_path[DM1_V1_STARTUP_RUNTIME_PATH_CAPACITY_PC34];
+    DM1_V1_StartupLaunchPathReceipt_PC34 launch_path_receipt;
+    char status_title[DM1_V1_STARTUP_RUNTIME_STATUS_CAPACITY_PC34];
+    char status_detail[DM1_V1_STARTUP_RUNTIME_STATUS_CAPACITY_PC34];
+    char inspect_title[DM1_V1_STARTUP_RUNTIME_STATUS_CAPACITY_PC34];
+    char inspect_detail[DM1_V1_STARTUP_RUNTIME_INSPECT_CAPACITY_PC34];
+} DM1_V1_StartupRuntimeStartReceipt_PC34;
+
+enum {
     DM1_V1_STARTUP_BOOT_PROBE_SOURCE_ID_CAPACITY_PC34 = 32,
     DM1_V1_STARTUP_BOOT_PROBE_PHASE_CAPACITY_PC34 = 48,
     DM1_V1_STARTUP_BOOT_PROBE_ANIMATION_CAPACITY_PC34 = 48
@@ -176,6 +219,9 @@ int dm1_v1_startup_selected_entry_receipt_valid_pc34(const char* game_id,
 int dm1_v1_startup_launch_path_receipt_pc34(
     const DM1_V1_StartupLaunchPathFacts_PC34* facts,
     DM1_V1_StartupLaunchPathReceipt_PC34* out_receipt);
+int dm1_v1_startup_runtime_start_receipt_pc34(
+    const DM1_V1_StartupRuntimeStartFacts_PC34* facts,
+    DM1_V1_StartupRuntimeStartReceipt_PC34* out_receipt);
 int dm1_v1_startup_handoff_prelude_plan_pc34(
     const char* game_id,
     DM1_V1_StartupHandoffPreludePlan_PC34* out_plan);
