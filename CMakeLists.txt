@@ -19331,6 +19331,32 @@ endif()
 # the rest of firestaff_theron which has pre-existing cross-file errors
 # tracked in the Theron V1 Phase 2+ work backlog.
 if(BUILD_TESTING)
+    add_executable(test_firestaff_data_validator_hash_scan
+        tests/test_firestaff_data_validator_hash_scan.c
+        src/engine/firestaff_data_validator.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
+        src/shared/firestaff_theron_media_classify.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+    )
+    target_link_libraries(test_firestaff_data_validator_hash_scan PRIVATE firestaff_v2)
+    target_include_directories(test_firestaff_data_validator_hash_scan PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_firestaff_data_validator_hash_scan PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    firestaff_link_zlib(test_firestaff_data_validator_hash_scan PRIVATE)
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_data_validator_hash_scan PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_data_validator_hash_scan
+        COMMAND test_firestaff_data_validator_hash_scan
+    )
+
     add_executable(test_theron_v1_availability
         tests/theron_v1_availability_test.c
         src/engine/firestaff_data_validator.c

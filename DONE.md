@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 data validator hash scan: `fs_validate_data_dir()` now consumes the shared launcher asset scanner instead of checking `dm1/GRAPHICS.DAT`, `csb/DUNGEON.DAT`, etc. by filename/size. A regression test proves DM1/CSB/DM2 validate from renamed files with matching hashes. Verification: validator hash-scan test passed, validator syntax check passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 TITLE hash-scan pathfinder: DM1 TITLE fallback lookup now validates candidates by canonical PC 3.4 hash/manifest and recursively scans the selected data root, so a renamed TITLE payload can still be found. Verification: TITLE pathfinder test passed, M11/title syntax checks passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 SWSH payload scan without filename dependency: The FTL/SWSH intro pathfinder now scans the selected data root recursively for a valid SWSH logo payload by bytes, after exact CSB/DM1 candidates. CSB can therefore find a shared DM1 PC34 SWSH intro even when the file is renamed or stored under extras instead of `csb/SWOOSH`. Verification: SWSH pathfinder test passed, Phase A passed 24/24, and `git diff --check` passed.
