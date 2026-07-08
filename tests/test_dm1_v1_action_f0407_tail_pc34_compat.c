@@ -1,6 +1,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
+#include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 
@@ -1491,6 +1492,80 @@ static void test_melee_f0312_strength_plan(void) {
              "F0312 heavy penalty clamps negative strength");
 }
 
+static void test_melee_f0231_champion_snapshot_plan(void) {
+    DM1_MeleeF0231ChampionSnapshotInputPc34 in;
+    DM1_MeleeF0231ChampionSnapshotPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.championIndex = 2;
+    in.championPresent = 1;
+    in.currentHealth = 44;
+    in.actionSkillIndex = -1;
+    in.weaponClass = DM1_WEAPON_CLASS_FIRST_BOW;
+    CHECK_EQ(dm1_v1_melee_champion_snapshot_plan_f0231_pc34(&in, &out), 1,
+             "F0231 bow fallback snapshot plan builds");
+    CHECK_EQ(out.valid, 1, "F0231 snapshot valid");
+    CHECK_EQ(out.normalizedActionSkillIndex, DM1_SKILL_IDX_SHOOT,
+             "F0231 bow fallback skill");
+
+    in.weaponClass = 0;
+    CHECK_EQ(dm1_v1_melee_champion_snapshot_plan_f0231_pc34(&in, &out), 1,
+             "F0231 swing fallback snapshot plan builds");
+    CHECK_EQ(out.normalizedActionSkillIndex, DM1_SKILL_IDX_SWING,
+             "F0231 swing fallback skill");
+
+    in.weaponClass = 2;
+    CHECK_EQ(dm1_v1_melee_champion_snapshot_plan_f0231_pc34(&in, &out), 1,
+             "F0231 throw fallback snapshot plan builds");
+    CHECK_EQ(out.normalizedActionSkillIndex, DM1_SKILL_IDX_THROW,
+             "F0231 throw fallback skill");
+
+    memset(&in, 0, sizeof(in));
+    in.championIndex = 1;
+    in.championPresent = 1;
+    in.currentHealth = 77;
+    in.dexterity = 66;
+    in.strengthActionHand = 55;
+    in.actionSkillIndex = 6;
+    in.weaponClass = 3;
+    in.skillLevelParry = 4;
+    in.skillLevelAction = 5;
+    in.statisticVitality = 40;
+    in.statisticAntifire = 41;
+    in.statisticAntimagic = 42;
+    in.statisticWisdom = 43;
+    in.statisticLuck = 44;
+    in.statisticLuckMax = 99;
+    in.statisticLuckMin = 3;
+    in.actionHandIcon = 12;
+    in.wounds = 0x22;
+    in.isResting = 1;
+    in.partyShieldDefense = 9;
+    CHECK_EQ(dm1_v1_melee_champion_snapshot_plan_f0231_pc34(&in, &out), 1,
+             "F0231 full champion snapshot plan builds");
+    CHECK_EQ(out.normalizedActionSkillIndex, 6,
+             "F0231 explicit action skill retained");
+    CHECK_EQ(out.snapshot.championIndex, 1, "F0231 snapshot champion");
+    CHECK_EQ(out.snapshot.currentHealth, 77, "F0231 snapshot health");
+    CHECK_EQ(out.snapshot.dexterity, 66, "F0231 snapshot dexterity");
+    CHECK_EQ(out.snapshot.strengthActionHand, 55,
+             "F0231 snapshot strength");
+    CHECK_EQ(out.snapshot.skillLevelParry, 4, "F0231 snapshot parry");
+    CHECK_EQ(out.snapshot.skillLevelAction, 5, "F0231 snapshot action skill");
+    CHECK_EQ(out.snapshot.statisticLuck, 44, "F0231 snapshot luck");
+    CHECK_EQ(out.snapshot.statisticLuckMax, 99, "F0231 snapshot luck max");
+    CHECK_EQ(out.snapshot.statisticLuckMin, 3, "F0231 snapshot luck min");
+    CHECK_EQ(out.snapshot.actionHandIcon, 12, "F0231 snapshot hand icon");
+    CHECK_EQ(out.snapshot.wounds, 0x22, "F0231 snapshot wounds");
+    CHECK_EQ(out.snapshot.isResting, 1, "F0231 snapshot resting");
+    CHECK_EQ(out.snapshot.partyShieldDefense, 9,
+             "F0231 snapshot shield defense");
+
+    in.currentHealth = 0;
+    CHECK_EQ(dm1_v1_melee_champion_snapshot_plan_f0231_pc34(&in, &out), 0,
+             "F0231 dead champion snapshot rejected");
+}
+
 static void test_melee_f0231_aftermath_plan(void) {
     DM1_MeleeF0231AftermathInputPc34 in;
     DM1_MeleeF0231AftermathPlanPc34 out;
@@ -1668,6 +1743,7 @@ int main(void) {
     test_melee_f0231_side_effect_plan();
     test_melee_f0402_weapon_availability_and_preflight();
     test_melee_f0312_strength_plan();
+    test_melee_f0231_champion_snapshot_plan();
     test_melee_f0231_aftermath_plan();
     test_melee_f0231_damage_resolver_entrypoint();
     test_invalid_action();
