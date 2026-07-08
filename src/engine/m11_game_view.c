@@ -54,6 +54,7 @@
 #include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
 #include "m11_high_contrast_overlay_pc34_compat.h"
+#include "champion_status_slotbox_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
@@ -33134,8 +33135,7 @@ static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compa
 }
 
 int M11_GameView_GetV1StatusBoxZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    return 151 + championSlot;
+    return CHAMPION_Compat_StatusBoxZoneId(championSlot);
 }
 
 int M11_GameView_GetV1StatusBoxZone(int championSlot,
@@ -33143,34 +33143,26 @@ int M11_GameView_GetV1StatusBoxZone(int championSlot,
                                     int* outY,
                                     int* outW,
                                     int* outH) {
-    int zoneId = M11_GameView_GetV1StatusBoxZoneId(championSlot);
-    if (!zoneId) {
-        return 0;
-    }
-    if (outX) *outX = M11_V1_PARTY_PANEL_X + (zoneId - 151) * m11_party_slot_step();
-    if (outY) *outY = M11_PARTY_PANEL_Y;
-    if (outW) *outW = M11_V1_PARTY_SLOT_W;
-    if (outH) *outH = 29;
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_StatusBoxZone(championSlot, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1StatusBarGraphZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    return 187 + championSlot;
+    return CHAMPION_Compat_StatusBarGraphZoneId(championSlot);
 }
 
 int M11_GameView_GetV1StatusBarZoneId(int statIndex) {
-    if (statIndex < 0 || statIndex > 2) return 0;
-    return 195 + statIndex * 4;
+    return CHAMPION_Compat_StatusBarZoneId(statIndex);
 }
 
 int M11_GameView_GetV1StatusBarValueZoneId(int championSlot,
                                            int statIndex) {
-    if (!M11_GameView_GetV1StatusBarGraphZoneId(championSlot) ||
-        statIndex < 0 || statIndex > 2) {
-        return 0;
-    }
-    return M11_GameView_GetV1StatusBarZoneId(statIndex) + championSlot;
+    return CHAMPION_Compat_StatusBarValueZoneId(championSlot, statIndex);
 }
 
 int M11_GameView_GetV1StatusBarZone(int championSlot,
@@ -33179,33 +33171,24 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int* outY,
                                     int* outW,
                                     int* outH) {
-    int relX;
-    int zoneId = M11_GameView_GetV1StatusBarValueZoneId(championSlot, statIndex);
-    if (!zoneId) {
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_StatusBarZone(championSlot, statIndex, &rect)) {
         return 0;
     }
-    championSlot = (zoneId - 195) % CHAMPION_MAX_PARTY;
-    relX = m11_v1_bar_graph_x(statIndex);
-    if (relX < 0) return 0;
-    if (outX) *outX = M11_V1_PARTY_PANEL_X + championSlot * m11_party_slot_step() + relX;
-    if (outY) *outY = M11_PARTY_PANEL_Y + m11_v1_bar_graph_y_top();
-    if (outW) *outW = M11_V1_BAR_CONTAINER_W;
-    if (outH) *outH = M11_V1_BAR_CONTAINER_H;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1StatusHandParentZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    return 207 + championSlot;
+    return CHAMPION_Compat_StatusHandParentZoneId(championSlot);
 }
 
 int M11_GameView_GetV1StatusHandZoneId(int championSlot,
                                        int handIndex) {
-    if (!M11_GameView_GetV1StatusHandParentZoneId(championSlot) ||
-        handIndex < 0 || handIndex > 1) {
-        return 0;
-    }
-    return 211 + championSlot * 2 + handIndex;
+    return CHAMPION_Compat_StatusHandZoneId(championSlot, handIndex);
 }
 
 int M11_GameView_GetV1StatusHandZone(int championSlot,
@@ -33214,17 +33197,14 @@ int M11_GameView_GetV1StatusHandZone(int championSlot,
                                      int* outY,
                                      int* outW,
                                      int* outH) {
-    int zoneId = M11_GameView_GetV1StatusHandZoneId(championSlot, handIndex);
-    int sourceSlot;
-    int sourceHand;
-    if (zoneId == 0) return 0;
-    sourceSlot = (zoneId - 211) / 2;
-    sourceHand = (zoneId - 211) % 2;
-    if (outX) *outX = M11_V1_PARTY_PANEL_X + sourceSlot * m11_party_slot_step() +
-                      m11_v1_status_hand_x(sourceHand);
-    if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_HAND_Y;
-    if (outW) *outW = M11_V1_STATUS_HAND_ZONE_W;
-    if (outH) *outH = M11_V1_STATUS_HAND_ZONE_H;
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_StatusHandZone(championSlot, handIndex, &rect)) {
+        return 0;
+    }
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -33234,16 +33214,14 @@ int M11_GameView_GetV1StatusHandIconZone(int championSlot,
                                          int* outY,
                                          int* outW,
                                          int* outH) {
-    int handX, handY;
-    if (!M11_GameView_GetV1StatusHandZone(championSlot, handIndex,
-                                          &handX, &handY,
-                                          NULL, NULL)) {
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_StatusHandIconZone(championSlot, handIndex, &rect)) {
         return 0;
     }
-    if (outX) *outX = handX + 1;
-    if (outY) *outY = handY + 1;
-    if (outW) *outW = 16;
-    if (outH) *outH = 16;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -33253,21 +33231,15 @@ int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
                                             int* outY,
                                             int* outW,
                                             int* outH) {
-    int handX, handY;
-    if (!M11_GameView_GetV1StatusHandZone(championSlot, handIndex,
-                                          &handX, &handY,
-                                          NULL, NULL)) {
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_StatusHandSlotBoxZone(championSlot, handIndex,
+                                               &rect)) {
         return 0;
     }
-    /* CHAMDRAW.C F0291 draws the C033/C034/C035 hand-slot box
-     * bitmap at the hand-zone origin.  Those source bitmaps are
-     * 18x18, deliberately overhanging the 16x16 layout-696 parent
-     * zone by one pixel on the right/bottom; the 16x16 object icon
-     * is then drawn at +1,+1 inside the box. */
-    if (outX) *outX = handX;
-    if (outY) *outY = handY;
-    if (outW) *outW = 18;
-    if (outH) *outH = 18;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -33338,13 +33310,11 @@ int M11_GameView_GetV1StatusBoxFillColor(void) {
 }
 
 int M11_GameView_GetV1StatusNameClearZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    return 159 + championSlot;
+    return CHAMPION_Compat_StatusNameClearZoneId(championSlot);
 }
 
 int M11_GameView_GetV1StatusNameTextZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    return 163 + championSlot;
+    return CHAMPION_Compat_StatusNameTextZoneId(championSlot);
 }
 
 int M11_GameView_GetV1StatusNameZone(int championSlot,
@@ -33352,12 +33322,12 @@ int M11_GameView_GetV1StatusNameZone(int championSlot,
                                      int* outY,
                                      int* outW,
                                      int* outH) {
-    if (!M11_GameView_GetV1StatusNameClearZoneId(championSlot)) return 0;
-    if (outX) *outX = M11_V1_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
-                      M11_V1_STATUS_NAME_CLEAR_X;
-    if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_NAME_CLEAR_Y;
-    if (outW) *outW = M11_V1_STATUS_NAME_CLEAR_W;
-    if (outH) *outH = M11_V1_STATUS_NAME_CLEAR_H;
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_StatusNameZone(championSlot, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -33366,12 +33336,12 @@ int M11_GameView_GetV1StatusNameTextZone(int championSlot,
                                          int* outY,
                                          int* outW,
                                          int* outH) {
-    if (!M11_GameView_GetV1StatusNameTextZoneId(championSlot)) return 0;
-    if (outX) *outX = M11_V1_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
-                      M11_V1_STATUS_NAME_TEXT_X;
-    if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_NAME_TEXT_Y;
-    if (outW) *outW = M11_V1_STATUS_NAME_TEXT_W;
-    if (outH) *outH = M11_V1_STATUS_NAME_TEXT_H;
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_StatusNameTextZone(championSlot, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 champion-status zone facade: status box, bar graph, hand slot/icon/slot-box, and name clear/text zones now come from `champion_status_slotbox_pc34_compat` instead of M11-local math. Verification: `test_champion_status_slotbox_pc34_compat_integration` passed; `test_m11_v1_action_area_geometry_pc34_compat` passed 114/114; Phase A passed 24/24.
+
 - ✅ 2026-07-08 DM1 action-area getter ownership: action area, action result, PASS, action-menu rows/text/colors, and action-icon zone getters now delegate to DM1 V1 action-area helpers instead of M11-local constants. Verification: `test_dm1_v1_box_action_area_pc34_compat` passed 156/156; `test_m11_v1_action_area_geometry_pc34_compat` passed 76/76; Phase A passed 24/24.
 
 - ✅ 2026-07-08 DM1 movement-arrow ownership: C009/C013 movement-arrow panel geometry, C068..C073 hit zones, command masks, and keyboard visual-feedback receipts now come from DM1 V1 movement-arrow compat code. M11 consumes those receipts instead of owning local arrow tables. Verification: `test_dm1_v1_box_movement_arrows_pc34_compat` passed 127/127; `test_m11_overlay_command_queue_block` passed 450/450; Phase A passed 24/24.

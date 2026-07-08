@@ -142,6 +142,53 @@ static void test_spell_area_boxes_stay_source_locked(void)
     check_int("spell recant zone", M11_GameView_GetV1SpellRecantZoneId(), 254);
 }
 
+static void test_status_boxes_stay_source_locked(void)
+{
+    int x, y, w, h;
+    check_int("status box 0 zone", M11_GameView_GetV1StatusBoxZoneId(0), 151);
+    check_int("status box 3 zone", M11_GameView_GetV1StatusBoxZoneId(3), 154);
+    check_int("status box bad zone", M11_GameView_GetV1StatusBoxZoneId(4), 0);
+    check_true("status box 3", M11_GameView_GetV1StatusBoxZone(3, &x, &y, &w, &h));
+    check_int("status box 3 x", x, 207);
+    check_int("status box 3 y", y, 0);
+    check_int("status box 3 w", w, 67);
+    check_int("status box 3 h", h, 29);
+
+    check_int("bar graph 3 zone", M11_GameView_GetV1StatusBarGraphZoneId(3), 190);
+    check_int("bar hp zone", M11_GameView_GetV1StatusBarZoneId(0), 195);
+    check_int("bar stamina zone", M11_GameView_GetV1StatusBarZoneId(1), 199);
+    check_int("bar mana value zone champ2", M11_GameView_GetV1StatusBarValueZoneId(2, 2), 205);
+    check_true("bar champ2 stamina", M11_GameView_GetV1StatusBarZone(2, 1, &x, &y, &w, &h));
+    check_int("bar champ2 stamina x", x, 191);
+    check_int("bar champ2 stamina y", y, 0);
+    check_int("bar champ2 stamina w", w, 4);
+    check_int("bar champ2 stamina h", h, 25);
+
+    check_int("hand parent champ3", M11_GameView_GetV1StatusHandParentZoneId(3), 210);
+    check_int("hand zone champ3 action", M11_GameView_GetV1StatusHandZoneId(3, 1), 218);
+    check_true("hand champ3 action", M11_GameView_GetV1StatusHandZone(3, 1, &x, &y, &w, &h));
+    check_int("hand champ3 action x", x, 231);
+    check_int("hand champ3 action y", y, 10);
+    check_int("hand champ3 action w", w, 16);
+    check_int("hand champ3 action h", h, 16);
+    check_true("hand icon champ3 action", M11_GameView_GetV1StatusHandIconZone(3, 1, &x, &y, &w, &h));
+    check_int("hand icon champ3 action x", x, 232);
+    check_int("hand icon champ3 action y", y, 11);
+    check_true("hand slot box champ3 action",
+               M11_GameView_GetV1StatusHandSlotBoxZone(3, 1, &x, &y, &w, &h));
+    check_int("hand slot box champ3 action w", w, 18);
+    check_int("hand slot box champ3 action h", h, 18);
+
+    check_int("name clear champ3", M11_GameView_GetV1StatusNameClearZoneId(3), 162);
+    check_int("name text champ3", M11_GameView_GetV1StatusNameTextZoneId(3), 166);
+    check_true("name clear zone champ3", M11_GameView_GetV1StatusNameZone(3, &x, &y, &w, &h));
+    check_int("name clear x", x, 207);
+    check_int("name clear w", w, 43);
+    check_true("name text zone champ3", M11_GameView_GetV1StatusNameTextZone(3, &x, &y, &w, &h));
+    check_int("name text x", x, 208);
+    check_int("name text w", w, 42);
+}
+
 int main(void)
 {
     test_action_area_box();
@@ -149,6 +196,7 @@ int main(void)
     test_action_row_and_icon_cells_stay_source_locked();
     test_action_result_and_pass_zones();
     test_spell_area_boxes_stay_source_locked();
+    test_status_boxes_stay_source_locked();
     printf("test_m11_v1_action_area_geometry_pc34_compat: %d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
     return g_failures == 0 ? 0 : 1;
