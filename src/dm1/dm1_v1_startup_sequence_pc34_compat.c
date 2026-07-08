@@ -53,6 +53,18 @@ int dm1_v1_startup_launch_path_bypasses_intro_pc34(
     return 1;
 }
 
+static int dm1_v1_startup_launch_path_started_from_launcher_pc34(
+    DM1_V1_StartupLaunchPath_PC34 path) {
+    switch (path) {
+        case DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34:
+        case DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_CLI_PC34:
+            return 1;
+        case DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34:
+            return 0;
+    }
+    return 0;
+}
+
 int dm1_v1_startup_source_visible_handoff_required_pc34(const char* game_id) {
     return game_id && strcmp(game_id, "dm1") == 0 ? 1 : 0;
 }
@@ -88,6 +100,9 @@ int dm1_v1_startup_launch_path_receipt_pc34(
     receipt.handled = 1;
     receipt.intro_bypassed =
         dm1_v1_startup_launch_path_bypasses_intro_pc34(
+            facts->launch_path);
+    receipt.started_from_launcher =
+        dm1_v1_startup_launch_path_started_from_launcher_pc34(
             facts->launch_path);
     receipt.selected_entry_receipt_valid =
         dm1_v1_startup_selected_entry_receipt_valid_pc34(
@@ -127,7 +142,8 @@ int dm1_v1_startup_runtime_start_receipt_pc34(
      * marks gameplay active after that load succeeds. */
     receipt.handled = 1;
     receipt.active = 1;
-    receipt.started_from_launcher = 1;
+    receipt.started_from_launcher =
+        receipt.launch_path_receipt.started_from_launcher;
     receipt.source_kind = facts->source_kind;
     snprintf(receipt.boot_asset_md5,
              sizeof(receipt.boot_asset_md5),
