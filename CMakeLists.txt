@@ -18723,10 +18723,13 @@ if(BUILD_TESTING)
     add_executable(test_nexus_v1_boot_profile_smoke
         tests/nexus_v1_boot_profile_smoke.c
         src/nexus/nexus_v1_boot_profile.c
+        src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_boot_profile_smoke PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
+    firestaff_link_zlib(test_nexus_v1_boot_profile_smoke PRIVATE)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_boot_profile_smoke PRIVATE -Wall -Wextra -O2)
     endif()

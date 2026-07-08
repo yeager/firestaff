@@ -2,7 +2,7 @@
 #include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_startup_save_resume.h"
-#include "src/theron/theron_v1_asset_loader.h"
+#include "theron/theron_v1_asset_loader.h"
 
 #include <stdio.h>
 #include <string.h>

@@ -36,7 +36,7 @@
 #include "dm2_v2_runtime.h"
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v2_touch_runtime.h"
-#include "src/theron/theron_v1_asset_loader.h"
+#include "theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
