@@ -35987,7 +35987,6 @@ static M11_GameInputResult m11_csb_toggle_champion_inventory(M11_GameViewState* 
 static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* state,
                                                           M12_MenuInput input) {
     int championIndex = -1;
-    CSB_V1_BootProfile *profile;
     CSB_V1_InputCommandBridgeResult bridge;
 
     if (!m11_source_is_csb(state)) {
@@ -36044,8 +36043,7 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        profile = (CSB_V1_BootProfile*)state->csbBootProfile;
-        if (!profile) {
+        if (!state->csbBootProfile) {
             return M11_GAME_INPUT_IGNORED;
         }
 
@@ -36057,8 +36055,8 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
          * reported by the bridge until the dungeon-aware movement boundary
          * is widened separately. */
         memset(&bridge, 0, sizeof(bridge));
-        if (CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat(
-                &profile->runtime,
+        if (CSB_V1_InputCommandBridge_ProcessMenuInputFromBootProfilePc34Compat(
+                state->csbBootProfile,
                 input,
                 0,
                 0,
