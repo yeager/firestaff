@@ -19979,27 +19979,13 @@ static int m11_decode_visible_wall_text(const M11_GameViewState* state,
     return 0;
 }
 
-static int m11_dm1_decoded_inscription_line_count(const char* decoded) {
-    int lines = 1;
-    const char* p;
-    if (!decoded || !decoded[0]) {
-        return 0;
-    }
-    for (p = decoded; *p && lines < 4; ++p) {
-        if (*p == '\n') {
-            ++lines;
-        }
-    }
-    return lines;
-}
-
 static int m11_dm1_visible_wall_text_line_count(const M11_GameViewState* state,
                                                 const M11_ViewportCell* cell) {
     char decoded[128];
     if (!m11_decode_visible_wall_text(state, cell, decoded, sizeof(decoded))) {
         return 0;
     }
-    return m11_dm1_decoded_inscription_line_count(decoded);
+    return DM1_V1_InscriptionDecodedLineCountPc34(decoded);
 }
 
 static int m11_dm1_decode_inscription_raw_glyphs_at_offset(
@@ -20085,7 +20071,6 @@ static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs(const M11_G
                                                                      const unsigned char* glyphs,
                                                                      int glyphCount) {
     const M11_AssetSlot* fontSlot;
-    int i;
     if (!state || !glyphs || glyphCount <= 0) {
         return NULL;
     }
@@ -20095,16 +20080,12 @@ static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs(const M11_G
     fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                     DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
     if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
-        fontSlot->width < DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
-        fontSlot->height < DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
+        !DM1_V1_InscriptionRawGlyphLineSupportedByFontPc34(
+            glyphs,
+            glyphCount,
+            (int)fontSlot->width,
+            (int)fontSlot->height)) {
         return NULL;
-    }
-    for (i = 0; i < glyphCount; ++i) {
-        int glyph = DM1_V1_InscriptionGlyphIndexFromSourceByte(glyphs[i]);
-        if (glyph < 0 ||
-            (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH > fontSlot->width) {
-            return NULL;
-        }
     }
     return fontSlot;
 }
