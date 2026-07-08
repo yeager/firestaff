@@ -22,6 +22,7 @@
 #include "dm1_v1_minimap_pc34_compat.h"
 #include "dm1_v1_automap_pc34_compat.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
+#include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "asset_status_m12.h"
@@ -2250,7 +2251,9 @@ static int m11_game_view_is_csb(const M11_GameViewState* gameView) {
 }
 
 static int m11_game_view_is_dm1(const M11_GameViewState* gameView) {
-    return gameView && gameView->active && strcmp(gameView->sourceId, "dm1") == 0;
+    return gameView &&
+           DM1_V1_InputSourceIsActivePc34Compat(gameView->active,
+                                                gameView->sourceId);
 }
 
 static int m11_csb_sdl_key_to_menu_input(int key, int ctrlDown, M12_MenuInput* outInput) {
@@ -2557,15 +2560,7 @@ static M12_MenuInput m11_dm1_v1_fixed_turn_input_from_scancode(SDL_Scancode scan
 }
 
 static int m11_dm1_v1_input_is_immediate_turn(M12_MenuInput input) {
-    /* ReDMCSB: CLIKMENU.C F0365 lines 142-180 sets G0321 true as soon
-     * as C001/C002 turn is dispatched; COMMAND.C F0380 lines 2095-2100
-     * only holds C003..C006 movement while G0310/G0311 cooldowns are
-     * active.  Keep Q/E/Home/End/KP turn taps out of the delayed VBlank
-     * pending queue so single taps rotate immediately like the source. */
-    return input == M12_MENU_INPUT_TURN_LEFT ||
-           input == M12_MENU_INPUT_TURN_RIGHT ||
-           input == M12_MENU_INPUT_LEFT ||
-           input == M12_MENU_INPUT_RIGHT;
+    return DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat((int)input);
 }
 
 static M12_MenuInput m11_motion_input_from_scancode(SDL_Scancode scancode) {

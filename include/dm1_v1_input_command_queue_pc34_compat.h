@@ -109,6 +109,8 @@ struct Dm1V1InputQueueProcessResultPc34Compat DM1_V1_InputCommandQueue_ProcessOn
 int DM1_V1_InputCommandQueue_PeekPc34Compat(
     const struct Dm1V1InputCommandQueuePc34Compat* queue,
     struct Dm1V1QueuedCommandPc34Compat* outCommand);
+int DM1_V1_InputSourceIsActivePc34Compat(int active, const char* sourceId);
+int DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(int menuInput);
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void);
 
 #ifdef __cplusplus
