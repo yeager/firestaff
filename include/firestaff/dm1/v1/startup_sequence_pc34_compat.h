@@ -31,6 +31,17 @@ int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,
                                       int out_phase_size);
+int dm1_v1_startup_boot_probe_receipt_pc34(int level_loaded,
+                                           int intro_bypassed,
+                                           char* out_phase,
+                                           int out_phase_size,
+                                           int* out_startup_active,
+                                           char* out_animation,
+                                           int out_animation_size,
+                                           int* out_animation_active,
+                                           int* out_title_frame,
+                                           int* out_title_frame_max,
+                                           int* out_title_ready);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);

@@ -11233,21 +11233,18 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->championCount = state->world.party.championCount;
     out->runtimeTick = (int)state->world.gameTick;
     if (strcmp(state->sourceId, "dm1") == 0) {
-        (void)dm1_v1_startup_receipt_phase_pc34(
+        (void)dm1_v1_startup_boot_probe_receipt_pc34(
             out->levelLoaded,
             out->dm1StartupIntroBypassed,
             out->startupPhase,
-            (int)sizeof(out->startupPhase));
-        snprintf(out->startupAnimation,
-                 sizeof(out->startupAnimation),
-                 "%s",
-                 out->dm1StartupIntroBypassed
-                     ? "dm1-title-bypassed"
-                     : "dm1-title");
-        out->startupAnimationActive = 0;
-        out->startupTitleFrame = V1_TITLE_DAT_FRAME_MAX;
-        out->startupTitleFrameMax = V1_TITLE_DAT_FRAME_MAX;
-        out->startupTitleReady = 1;
+            (int)sizeof(out->startupPhase),
+            &out->startupActive,
+            out->startupAnimation,
+            (int)sizeof(out->startupAnimation),
+            &out->startupAnimationActive,
+            &out->startupTitleFrame,
+            &out->startupTitleFrameMax,
+            &out->startupTitleReady);
     } else {
         snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
                  out->levelLoaded ? "runtime" : "loading");
