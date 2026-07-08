@@ -11920,32 +11920,28 @@ static M11_GameInputResult m11_theron_startup_apply_action(
     case THERON_STARTUP_PLAN_CHOOSE_STAGE:
     case THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR:
     case THERON_STARTUP_PLAN_TOGGLE_MIRROR: {
-        Theron_StartupFlow flow;
         Theron_StartupApplyReceipt applyReceipt;
         Theron_StartupStateReceipt stateReceipt;
         char receipt[96];
 
         receipt[0] = '\0';
-        if (plan.kind == THERON_STARTUP_PLAN_SHOW_STAGE_SELECT) {
-            theron_v1_startup_flow_init(&flow);
-        } else if (!m11_theron_rebuild_startup_flow(state,
-                                                    &world->progression,
-                                                    &flow,
-                                                    receipt,
-                                                    sizeof(receipt))) {
-            m11_set_status(state, "STARTUP",
-                           receipt[0] ? receipt :
-                           (plan.failure_status ? plan.failure_status
-                                                : "STARTUP ERROR"));
-            return M11_GAME_INPUT_REDRAW;
-        }
-        if (!theron_v1_startup_execute_flow_plan_with_receipts(
+        if (!theron_v1_startup_execute_flow_plan_from_facts_with_receipts(
                 &plan,
+                (Theron_StartupPhase)state->theronState.startup_phase,
+                state->theronState.selected_dungeon,
+                state->theronState.selected_mirrors_mask,
+                state->theronState.companion_count,
+                state->theronState.selected_mirror_order,
+                THERON_STARTUP_MAX_COMPANIONS,
                 &world->progression,
-                &flow,
+                NULL,
                 &execution,
                 &applyReceipt,
                 &stateReceipt)) {
+            snprintf(receipt,
+                     sizeof(receipt),
+                     "startup-flow action failed: %s",
+                     theron_v1_startup_result_name(execution.result));
             m11_set_status(state, "STARTUP",
                            execution.result != THERON_STARTUP_OK
                                ? theron_v1_startup_result_name(

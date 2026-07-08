@@ -1600,6 +1600,27 @@ int main(void) {
                 check_int("exec stage-select combined cursor",
                           state_receipt.startup_cursor,
                           1);
+                check_int("exec stage-select facts rc",
+                          theron_v1_startup_execute_flow_plan_from_facts_with_receipts(
+                              &plan,
+                              THERON_STARTUP_PHASE_TITLE,
+                              THERON_DUNGEON_1_HALL_OF_RECORDS,
+                              0,
+                              0,
+                              NULL,
+                              0,
+                              &progression,
+                              &exec_flow,
+                              &execution,
+                              &receipt,
+                              &state_receipt),
+                          1);
+                check_int("exec stage-select facts phase",
+                          state_receipt.flow.phase,
+                          THERON_STARTUP_PHASE_STAGE_SELECT);
+                check_int("exec stage-select facts cursor",
+                          state_receipt.startup_cursor,
+                          1);
 
                 theron_v1_startup_action_init(&action);
                 action.kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
@@ -1624,6 +1645,27 @@ int main(void) {
                 check_int("exec choose-stage cursor reset",
                           execution.cursor,
                           0);
+                check_int("exec choose-stage facts rc",
+                          theron_v1_startup_execute_flow_plan_from_facts_with_receipts(
+                              &plan,
+                              THERON_STARTUP_PHASE_STAGE_SELECT,
+                              THERON_DUNGEON_1_HALL_OF_RECORDS,
+                              0,
+                              0,
+                              NULL,
+                              0,
+                              &progression,
+                              &exec_flow,
+                              &execution,
+                              &receipt,
+                              &state_receipt),
+                          1);
+                check_int("exec choose-stage facts phase",
+                          state_receipt.flow.phase,
+                          THERON_STARTUP_PHASE_SOUL_ROOM);
+                check_int("exec choose-stage facts result",
+                          execution.result,
+                          THERON_STARTUP_OK);
 
                 theron_v1_startup_action_init(&action);
                 action.kind = THERON_STARTUP_ACTION_TOGGLE_MIRROR;
