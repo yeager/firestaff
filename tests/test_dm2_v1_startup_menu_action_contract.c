@@ -40,6 +40,7 @@ int main(void)
     DM2_V1_StartupModeUpdate mode_update;
     DM2_V1_StartupInputOutcome outcome;
     DM2_V1_StartupApplyReceipt receipt;
+    DM2_V1_StartupHostReceipt host_receipt;
     DM2_V1_StartupMenuStateReceipt state_receipt;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupRect panel_rect;
@@ -281,6 +282,13 @@ int main(void)
               receipt.outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               receipt.outcome.rescan_saves == 1,
           "failed Continue receipt owns redraw and rescan policy");
+    check(dm2_v1_startup_host_receipt_from_apply_receipt(
+              &receipt, &host_receipt) &&
+              host_receipt.input_result ==
+                  DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
+              host_receipt.rescan_saves == 1 &&
+              !host_receipt.mode_update.set_startup_menu_active,
+          "failed Continue host receipt owns M11 result and rescan policy");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 startup host receipt boundary: DM2 startup menu now emits a host receipt from apply receipts, owning mode/status/result/rescan policy before M11 maps it to engine input results. Verification: DM2 startup action contract passed 64/64, DM2 M11 startup/profile gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB entrance apply-result ownership: CSB startup-sequence now maps pure entrance apply results to startup input results, and M11 consumes that generic result instead of switching directly on CSB pure-apply enum values. Verification: CSB startup entrance pointer contract passed 138/138, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB runtime/startup sequence receipt wrapper: CSB runtime/startup bridge now owns the combined startup-sequence runtime-plan execution plus startup command-state/apply receipt generation. M11 uses the combined wrapper instead of manually chaining runtime-plan execution and startup-state apply receipt generation. Verification: CSB boot runtime handoff passed 272/272, CSB startup entrance pointer contract passed 137/137, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
