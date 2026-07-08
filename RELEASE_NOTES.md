@@ -1,6 +1,27 @@
 
 # Unreleased
 
+# Firestaff v3.0.67
+
+Firestaff v3.0.67 packages the current `main` after the Theron's Quest boot
+presentation ownership pass landed after `v3.0.66` was tagged.
+
+## Highlights since v3.0.66
+
+- **Theron's Quest startup ownership**: M11 now consumes the Theron-owned
+  startup presentation receipt for boot phase, animation and title readiness.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.67`.
+
+## Verification
+
+- Local release verification covers version synchronization, the Theron startup
+  flow probe, the Phase A probe and `git diff --check` before GitHub Actions
+  packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.67` release run.
+
 # Firestaff v3.0.66
 
 Firestaff v3.0.66 packages the current `main` after the all-game boot/startup
