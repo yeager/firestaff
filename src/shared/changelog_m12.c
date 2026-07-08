@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.68  (2026-07-08)",
+    "  - Packages current main after DM2 and Nexus boot presentation receipt ownership landed after v3.0.67.",
+    "  - DM2 and Nexus startup probe reporting now comes from game-owned presentation receipt helpers instead of M11-local policy.",
+    "",
     "V3.0.66  (2026-07-08)",
     "  - Packages current main after the all-game boot/startup ownership passes landed after v3.0.65.",
     "  - Theron, CSB, DM2 and Nexus startup paths now return more M11-ready host receipts, reducing launcher-owned boot policy before runtime handoff.",
@@ -512,5 +516,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.67";
+    return "3.0.68";
 }
