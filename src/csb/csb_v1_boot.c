@@ -1054,6 +1054,298 @@ int csb_v1_boot_startup_host_facts_from_runtime_state_pc34(
         boot_profile);
 }
 
+static int csb_v1_boot_startup_runtime_facts_pc34(
+    CSB_V1_StartupHostFacts_PC34 *facts,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    return csb_v1_boot_startup_host_facts_from_runtime_state_pc34(
+        facts,
+        title_active,
+        title_frame,
+        title_source_step,
+        entrance_active,
+        entrance_source_step,
+        entrance_dismissed,
+        credits_active,
+        credits_remaining_ticks,
+        opening_active,
+        opening_delay_ticks,
+        opening_step,
+        pending_command,
+        entrance_frame,
+        utility_overlay_active,
+        utility_selected_action_index,
+        utility_imported_champion_count,
+        utility_preview_active,
+        utility_prompt,
+        resume_available,
+        resume_path,
+        boot_profile);
+}
+
+int csb_v1_boot_startup_build_render_plan_from_runtime_state_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *out_plan,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_runtime_facts_pc34(
+            &facts,
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            entrance_frame,
+            utility_overlay_active,
+            utility_selected_action_index,
+            utility_imported_champion_count,
+            utility_preview_active,
+            utility_prompt,
+            resume_available,
+            resume_path,
+            boot_profile)) {
+        return csb_v1_startup_build_render_plan_from_request_pc34(
+            NULL,
+            out_plan);
+    }
+    return csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
+        &facts,
+        out_plan);
+}
+
+int csb_v1_boot_startup_advance_idle_from_runtime_state_pc34(
+    CSB_V1_StartupIdleReceipt_PC34 *out_receipt,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_runtime_facts_pc34(
+            &facts,
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            entrance_frame,
+            utility_overlay_active,
+            utility_selected_action_index,
+            utility_imported_champion_count,
+            utility_preview_active,
+            utility_prompt,
+            resume_available,
+            resume_path,
+            boot_profile)) {
+        csb_v1_startup_idle_receipt_init_pc34(out_receipt);
+        return 0;
+    }
+    return csb_v1_startup_advance_idle_from_host_facts_with_receipt_pc34(
+        &facts,
+        out_receipt);
+}
+
+int csb_v1_boot_startup_entrance_accepts_input_from_runtime_state_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_runtime_facts_pc34(
+            &facts,
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            entrance_frame,
+            utility_overlay_active,
+            utility_selected_action_index,
+            utility_imported_champion_count,
+            utility_preview_active,
+            utility_prompt,
+            resume_available,
+            resume_path,
+            boot_profile)) {
+        return 0;
+    }
+    return csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
+        &facts);
+}
+
+int csb_v1_boot_startup_presentation_receipt_from_runtime_state_pc34(
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_runtime_facts_pc34(
+            &facts,
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            entrance_frame,
+            utility_overlay_active,
+            utility_selected_action_index,
+            utility_imported_champion_count,
+            utility_preview_active,
+            utility_prompt,
+            resume_available,
+            resume_path,
+            boot_profile)) {
+        return 0;
+    }
+    return csb_v1_startup_receipt_presentation_from_host_facts_pc34(
+        &facts,
+        out_phase,
+        out_phase_size,
+        out_startup_active,
+        out_startup_frame,
+        out_animation,
+        out_animation_size,
+        out_animation_active,
+        out_title_frame,
+        out_title_frame_max,
+        out_title_ready);
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {
