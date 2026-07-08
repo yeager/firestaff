@@ -1,5 +1,6 @@
 #include "nexus_v1_startup_menu.h"
 #include "nexus_v1_champions.h"
+#include "nexus_v1_launcher.h"
 #include "nexus_v1_title_sequence.h"
 #include "nexus_v1_world.h"
 
@@ -1745,6 +1746,32 @@ int main(void)
     expect(nexus_v1_startup_menu_move_selected(&menu, -5) &&
                menu.selected_row == 0,
            "startup menu move selected clamps at first row");
+
+    {
+        Nexus_V1_LauncherBootReceipt boot_receipt;
+        char missing_dir[512];
+        snprintf(missing_dir,
+                 sizeof(missing_dir),
+                 "%s/missing-nexus-data",
+                 root);
+        nexus_v1_launcher_boot_receipt_clear(&boot_receipt);
+        expect(!nexus_v1_launcher_boot_level0_startup(
+                   missing_dir,
+                   NULL,
+                   &boot_receipt),
+               "Nexus launcher boot receipt rejects missing data");
+        expect(boot_receipt.engine == NULL &&
+                   !boot_receipt.level_loaded &&
+                   boot_receipt.startup_receipt.host_receipt.status_scope &&
+                   strcmp(boot_receipt.startup_receipt.host_receipt.status_scope,
+                          "BOOT") == 0 &&
+                   boot_receipt.startup_receipt.host_receipt.status &&
+                   strcmp(boot_receipt.startup_receipt.host_receipt.status,
+                          "NEXUS DATA ERROR") == 0,
+               "Nexus launcher boot receipt owns missing-data status");
+        expect(nexus_v1_launcher_get_engine() == NULL,
+               "Nexus launcher missing-data boot leaves no active engine");
+    }
 
     snprintf(path, sizeof(path), "%s/nexus_save_03.dat", save_dir);
     TST_UNLINK(path);

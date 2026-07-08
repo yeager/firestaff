@@ -23,6 +23,8 @@
  */
 
 #include "nexus_v1_engine.h"
+#include "nexus_v1_startup_menu.h"
+#include "nexus_v1_title.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,6 +49,26 @@ int nexus_v1_launcher_load_level(int level);
  * Returns NULL if launcher not initialized.
  * The returned pointer is owned by the launcher — do not free it. */
 Nexus_V1_Engine *nexus_v1_launcher_get_engine(void);
+
+typedef struct {
+    Nexus_V1_Engine *engine;
+    int level_loaded;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int tick_count;
+    int title_loaded;
+    char dungeon_path[512];
+    Nexus_V1_StartupLaunchReceipt startup_receipt;
+} Nexus_V1_LauncherBootReceipt;
+
+void nexus_v1_launcher_boot_receipt_clear(
+    Nexus_V1_LauncherBootReceipt *receipt);
+
+int nexus_v1_launcher_boot_level0_startup(
+    const char *data_dir,
+    Nexus_TitleScreen *title,
+    Nexus_V1_LauncherBootReceipt *out_receipt);
 
 /* Shutdown the launcher and free the engine singleton.
  * Safe to call multiple times. */
