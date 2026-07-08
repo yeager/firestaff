@@ -10337,22 +10337,17 @@ static M11_GameInputResult m11_nexus_startup_apply_save_action(
     const Nexus_V1_StartupAction *action)
 {
     Nexus_V1_StartupSaveExecution execution;
-    Nexus_V1_StartupApplyReceipt receipt;
     Nexus_V1_StartupHostReceipt host_receipt;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_execute_save_action_with_receipt(
+    if (!nexus_v1_startup_execute_save_action_with_host_receipt(
             action,
             m11_nexus_startup_load_save_callback,
             state,
             &execution,
-            &receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!nexus_v1_startup_host_receipt_from_apply_receipt(&receipt,
-                                                          &host_receipt)) {
+            &host_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
     return m11_nexus_apply_startup_receipt(state, &host_receipt);
@@ -10363,19 +10358,15 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
     const Nexus_V1_StartupAction *action)
 {
     Nexus_V1_StartupTitleExecution execution;
-    Nexus_V1_StartupApplyReceipt receipt;
     Nexus_V1_StartupHostReceipt host_receipt;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_execute_title_action_with_receipt(action,
-                                                            &execution,
-                                                            &receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!nexus_v1_startup_host_receipt_from_apply_receipt(&receipt,
-                                                          &host_receipt)) {
+    if (!nexus_v1_startup_execute_title_action_with_host_receipt(
+            action,
+            &execution,
+            &host_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
     return m11_nexus_apply_startup_receipt(state, &host_receipt);
@@ -10411,21 +10402,16 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
     const Nexus_V1_StartupAction *action)
 {
     Nexus_V1_StartupChampionExecution execution;
-    Nexus_V1_StartupApplyReceipt receipt;
     Nexus_V1_StartupHostReceipt host_receipt;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_execute_champion_action_with_receipt(
+    if (!nexus_v1_startup_execute_champion_action_with_host_receipt(
             action,
             state->nexusState.startup_save_row_count,
             &execution,
-            &receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!nexus_v1_startup_host_receipt_from_apply_receipt(&receipt,
-                                                          &host_receipt)) {
+            &host_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
     return m11_nexus_apply_startup_receipt(state, &host_receipt);

@@ -1232,6 +1232,34 @@ int nexus_v1_startup_execute_save_action_with_receipt(
         out_receipt);
 }
 
+int nexus_v1_startup_execute_save_action_with_host_receipt(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostReceipt *out_host_receipt)
+{
+    Nexus_V1_StartupApplyReceipt apply_receipt;
+
+    nexus_v1_startup_apply_receipt_clear(&apply_receipt);
+    if (out_host_receipt) {
+        nexus_v1_startup_host_receipt_clear(out_host_receipt);
+    }
+    if (!nexus_v1_startup_execute_save_action_with_receipt(action,
+                                                           load_save,
+                                                           load_userdata,
+                                                           out_execution,
+                                                           &apply_receipt)) {
+        return 0;
+    }
+    if (out_host_receipt &&
+        !nexus_v1_startup_host_receipt_from_apply_receipt(&apply_receipt,
+                                                          out_host_receipt)) {
+        return 0;
+    }
+    return 1;
+}
+
 int nexus_v1_startup_apply_receipt_from_title_execution(
     const Nexus_V1_StartupTitleExecution *execution,
     Nexus_V1_StartupApplyReceipt *out_receipt)
@@ -1283,6 +1311,30 @@ int nexus_v1_startup_execute_title_action_with_receipt(
     return nexus_v1_startup_apply_receipt_from_title_execution(
         execution,
         out_receipt);
+}
+
+int nexus_v1_startup_execute_title_action_with_host_receipt(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostReceipt *out_host_receipt)
+{
+    Nexus_V1_StartupApplyReceipt apply_receipt;
+
+    nexus_v1_startup_apply_receipt_clear(&apply_receipt);
+    if (out_host_receipt) {
+        nexus_v1_startup_host_receipt_clear(out_host_receipt);
+    }
+    if (!nexus_v1_startup_execute_title_action_with_receipt(action,
+                                                            out_execution,
+                                                            &apply_receipt)) {
+        return 0;
+    }
+    if (out_host_receipt &&
+        !nexus_v1_startup_host_receipt_from_apply_receipt(&apply_receipt,
+                                                          out_host_receipt)) {
+        return 0;
+    }
+    return 1;
 }
 
 int nexus_v1_startup_champion_execution_mode_update(
@@ -1390,6 +1442,33 @@ int nexus_v1_startup_execute_champion_action_with_receipt(
         execution,
         save_row_count,
         out_receipt);
+}
+
+int nexus_v1_startup_execute_champion_action_with_host_receipt(
+    const Nexus_V1_StartupAction *action,
+    int save_row_count,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostReceipt *out_host_receipt)
+{
+    Nexus_V1_StartupApplyReceipt apply_receipt;
+
+    nexus_v1_startup_apply_receipt_clear(&apply_receipt);
+    if (out_host_receipt) {
+        nexus_v1_startup_host_receipt_clear(out_host_receipt);
+    }
+    if (!nexus_v1_startup_execute_champion_action_with_receipt(
+            action,
+            save_row_count,
+            out_execution,
+            &apply_receipt)) {
+        return 0;
+    }
+    if (out_host_receipt &&
+        !nexus_v1_startup_host_receipt_from_apply_receipt(&apply_receipt,
+                                                          out_host_receipt)) {
+        return 0;
+    }
+    return 1;
 }
 
 int nexus_v1_startup_menu_build_save_render_rows(

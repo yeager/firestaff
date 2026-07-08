@@ -415,6 +415,12 @@ int nexus_v1_startup_execute_save_action_with_receipt(
     void *load_userdata,
     Nexus_V1_StartupSaveExecution *out_execution,
     Nexus_V1_StartupApplyReceipt *out_receipt);
+int nexus_v1_startup_execute_save_action_with_host_receipt(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostReceipt *out_host_receipt);
 int nexus_v1_startup_execute_champion_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupChampionExecution *out_execution);
@@ -428,6 +434,10 @@ int nexus_v1_startup_execute_title_action_with_receipt(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupTitleExecution *out_execution,
     Nexus_V1_StartupApplyReceipt *out_receipt);
+int nexus_v1_startup_execute_title_action_with_host_receipt(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostReceipt *out_host_receipt);
 int nexus_v1_startup_champion_execution_mode_update(
     const Nexus_V1_StartupChampionExecution *execution,
     int save_row_count,
@@ -441,6 +451,11 @@ int nexus_v1_startup_execute_champion_action_with_receipt(
     int save_row_count,
     Nexus_V1_StartupChampionExecution *out_execution,
     Nexus_V1_StartupApplyReceipt *out_receipt);
+int nexus_v1_startup_execute_champion_action_with_host_receipt(
+    const Nexus_V1_StartupAction *action,
+    int save_row_count,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostReceipt *out_host_receipt);
 int nexus_v1_startup_menu_build_save_render_rows(
     const Nexus_V1_StartupMenu *menu,
     Nexus_V1_StartupSaveRenderRow *rows,
