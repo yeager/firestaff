@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Linux manual page refresh: Expanded `docs/linux/firestaff.1` into a full user manual with primary CLI options, RetroAchievements flags, hash-scanned game-data behavior, archives/disc images, saves/config paths, controls, boot-probe options, environment variables, examples, and exit codes. Verification: `mandoc -Tlint`, rendered man output, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB boot utility/entrance runtime-state wrappers: CSB boot now owns utility render, utility pointer/keyboard, and entrance pointer/keyboard host-action wrappers from runtime state. M11 no longer constructs CSB startup host facts anywhere in `m11_game_view.c`. Verification: strict compiles for `csb_v1_boot.c` and `m11_game_view.c`; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB boot runtime-state startup wrappers: CSB boot now owns startup render-plan construction, idle advancement, entrance input-wait gating, and presentation receipt wrappers from runtime state. M11 no longer builds CSB host facts for those paths. Verification: strict compiles for `csb_v1_boot.c` and `m11_game_view.c`; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
