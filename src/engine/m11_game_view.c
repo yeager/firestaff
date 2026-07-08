@@ -11222,30 +11222,17 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             ? ((Theron_V1_World*)state->theronWorld)->party.champion_count
             : -1;
         out->runtimeTick = state->theronState.tick_count;
-        (void)theron_v1_startup_receipt_phase(
+        (void)theron_v1_startup_presentation_receipt(
             (Theron_StartupPhase)state->theronState.startup_phase,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
-            &out->startupActive);
-        snprintf(out->startupAnimation,
-                 sizeof(out->startupAnimation),
-                 "%s",
-                 state->theronState.startup_phase ==
-                         THERON_STARTUP_PHASE_TITLE
-                     ? "theron-title"
-                     : (state->theronState.startup_phase ==
-                                THERON_STARTUP_PHASE_IN_DUNGEON
-                            ? "theron-runtime"
-                            : "theron-startup"));
-        out->startupAnimationActive =
-            state->theronState.startup_phase !=
-                    THERON_STARTUP_PHASE_IN_DUNGEON
-                ? 1
-                : 0;
-        out->startupTitleFrame = 0;
-        out->startupTitleFrameMax = 0;
-        out->startupTitleReady =
-            state->theronState.startup_phase != THERON_STARTUP_PHASE_TITLE;
+            &out->startupActive,
+            out->startupAnimation,
+            (int)sizeof(out->startupAnimation),
+            &out->startupAnimationActive,
+            &out->startupTitleFrame,
+            &out->startupTitleFrameMax,
+            &out->startupTitleReady);
         return 1;
     }
 

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron boot receipt presentation: Theron startup-flow now emits the boot-probe phase, animation id, animation-active flag, title frame, title max, and title-ready summary. M11 consumes that Theron-owned presentation receipt instead of deriving Theron startup animation fields locally. Verification: Theron startup-flow probe passed 567/567, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB startup entrance host-action receipt: CSB runtime/startup bridge now executes startup entrance commands from host facts and returns one M11-ready receipt covering pure entrance commands, runtime handoff plans, command state, host status, bonus flag changes, import-preview clearing, and profile-sync intent. M11 no longer chains those CSB command/runtime/state/host receipts locally. Verification: CSB startup entrance test passed 151/151 by direct compile/run, M11/CSB syntax checks passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup action dispatch: Theron startup-flow now executes startup actions directly from session facts and returns an M11-ready action host receipt, including return-to-launcher, Continue, forcefield entry, and normal flow actions. M11 now gathers one session snapshot and applies returned state/host receipts instead of switching on Theron startup plan kinds. Verification: Theron startup save/resume test passed 108/108 by direct compile/run, M11/Theron syntax checks passed, Phase A passed 24/24, and `git diff --check` passed.

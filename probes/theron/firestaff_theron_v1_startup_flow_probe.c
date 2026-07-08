@@ -201,7 +201,12 @@ int main(void) {
     Theron_V1_World world;
     Theron_StartupResult result;
     char phase_label[64];
+    char animation_label[64];
     int startup_active = -1;
+    int animation_active = -1;
+    int title_frame = -1;
+    int title_frame_max = -1;
+    int title_ready = -1;
 
     printf("=== Theron V1 startup flow probe ===\n");
     printf("source: %s\n", theron_v1_startup_flow_source_evidence());
@@ -2834,6 +2839,42 @@ int main(void) {
               1);
     check_contains("receipt runtime phase", phase_label, "theron-runtime");
     check_int("receipt runtime active", startup_active, 0);
+    check_int("presentation title rc",
+              theron_v1_startup_presentation_receipt(
+                  THERON_STARTUP_PHASE_TITLE,
+                  phase_label,
+                  sizeof(phase_label),
+                  &startup_active,
+                  animation_label,
+                  sizeof(animation_label),
+                  &animation_active,
+                  &title_frame,
+                  &title_frame_max,
+                  &title_ready),
+              1);
+    check_contains("presentation title animation", animation_label, "theron-title");
+    check_int("presentation title active", startup_active, 1);
+    check_int("presentation title animation active", animation_active, 1);
+    check_int("presentation title frame", title_frame, 0);
+    check_int("presentation title frame max", title_frame_max, 0);
+    check_int("presentation title ready", title_ready, 0);
+    check_int("presentation runtime rc",
+              theron_v1_startup_presentation_receipt(
+                  THERON_STARTUP_PHASE_IN_DUNGEON,
+                  phase_label,
+                  sizeof(phase_label),
+                  &startup_active,
+                  animation_label,
+                  sizeof(animation_label),
+                  &animation_active,
+                  &title_frame,
+                  &title_frame_max,
+                  &title_ready),
+              1);
+    check_contains("presentation runtime animation", animation_label, "theron-runtime");
+    check_int("presentation runtime active", startup_active, 0);
+    check_int("presentation runtime animation active", animation_active, 0);
+    check_int("presentation runtime title ready", title_ready, 1);
 
     printf("# total=%d passed=%d failed=%d\n", g_pass + g_fail, g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;

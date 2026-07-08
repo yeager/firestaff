@@ -4048,6 +4048,59 @@ int theron_v1_startup_receipt_phase(
     return 1;
 }
 
+int theron_v1_startup_presentation_receipt(
+    Theron_StartupPhase phase,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready) {
+
+    int startup_active = 0;
+    const char *animation;
+
+    if (!theron_v1_startup_receipt_phase(phase,
+                                         out_phase,
+                                         out_phase_size,
+                                         &startup_active)) {
+        return 0;
+    }
+
+    if (phase == THERON_STARTUP_PHASE_TITLE) {
+        animation = "theron-title";
+    } else if (phase == THERON_STARTUP_PHASE_IN_DUNGEON) {
+        animation = "theron-runtime";
+    } else {
+        animation = "theron-startup";
+    }
+
+    if (out_animation && out_animation_size > 0) {
+        snprintf(out_animation, (size_t)out_animation_size, "%s", animation);
+    }
+    if (out_startup_active) {
+        *out_startup_active = startup_active;
+    }
+    if (out_animation_active) {
+        *out_animation_active =
+            phase != THERON_STARTUP_PHASE_IN_DUNGEON ? 1 : 0;
+    }
+    if (out_title_frame) {
+        *out_title_frame = 0;
+    }
+    if (out_title_frame_max) {
+        *out_title_frame_max = 0;
+    }
+    if (out_title_ready) {
+        *out_title_ready =
+            phase != THERON_STARTUP_PHASE_TITLE ? 1 : 0;
+    }
+    return 1;
+}
+
 const char *theron_v1_startup_result_name(Theron_StartupResult result) {
     switch (result) {
     case THERON_STARTUP_OK: return "ok";
