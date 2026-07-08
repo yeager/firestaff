@@ -1218,6 +1218,57 @@ int theron_v1_boot_startup_render_plan_from_snapshot(
         out_plan);
 }
 
+void theron_v1_boot_startup_view_model_clear(
+    Theron_V1_BootStartupViewModel *view_model)
+{
+    if (!view_model) {
+        return;
+    }
+    memset(view_model, 0, sizeof(*view_model));
+}
+
+int theron_v1_boot_startup_view_model_from_snapshot(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    Theron_V1_BootStartupViewModel *out_view_model)
+{
+    Theron_StartupSessionFacts session;
+
+    if (!out_view_model) {
+        return 0;
+    }
+    theron_v1_boot_startup_view_model_clear(out_view_model);
+    if (!theron_v1_boot_startup_session_from_snapshot(&session, snapshot)) {
+        return 0;
+    }
+
+    out_view_model->layout_count =
+        theron_v1_startup_layout_build_from_session(
+            &session,
+            out_view_model->layout,
+            THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP);
+    out_view_model->row_count =
+        theron_v1_startup_render_rows_build_from_session(
+            &session,
+            out_view_model->rows,
+            THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP);
+    out_view_model->render_plan_valid =
+        theron_v1_startup_render_plan_build_from_session(
+            &session,
+            &out_view_model->render_plan);
+    (void)theron_v1_startup_presentation_receipt(
+        (Theron_StartupPhase)session.phase,
+        out_view_model->phase,
+        (int)sizeof(out_view_model->phase),
+        &out_view_model->startup_active,
+        out_view_model->animation,
+        (int)sizeof(out_view_model->animation),
+        &out_view_model->animation_active,
+        &out_view_model->title_frame,
+        &out_view_model->title_frame_max,
+        &out_view_model->title_ready);
+    return 1;
+}
+
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,

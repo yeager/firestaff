@@ -272,6 +272,31 @@ typedef struct Theron_V1_BootRuntimeStartupSnapshot {
     int selected_mirror_order_count;
 } Theron_V1_BootRuntimeStartupSnapshot;
 
+enum {
+    THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP = 16,
+    THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP = 16,
+    THERON_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP = 32,
+    THERON_V1_BOOT_STARTUP_VIEW_MODEL_ANIMATION_CAP = 32
+};
+
+typedef struct Theron_V1_BootStartupViewModel {
+    Theron_StartupLayoutElement
+        layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
+    int layout_count;
+    char rows[THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP]
+        [THERON_STARTUP_RENDER_ROW_CAPACITY];
+    int row_count;
+    Theron_StartupRenderPlan render_plan;
+    int render_plan_valid;
+    char phase[THERON_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP];
+    int startup_active;
+    char animation[THERON_V1_BOOT_STARTUP_VIEW_MODEL_ANIMATION_CAP];
+    int animation_active;
+    int title_frame;
+    int title_frame_max;
+    int title_ready;
+} Theron_V1_BootStartupViewModel;
+
 int theron_v1_boot_prepare_startup_profile(
     Theron_V1_BootProfile *profile,
     const char *data_dir,
@@ -452,6 +477,11 @@ int theron_v1_boot_startup_render_plan_from_runtime_state(
 int theron_v1_boot_startup_render_plan_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     Theron_StartupRenderPlan *out_plan);
+void theron_v1_boot_startup_view_model_clear(
+    Theron_V1_BootStartupViewModel *view_model);
+int theron_v1_boot_startup_view_model_from_snapshot(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    Theron_V1_BootStartupViewModel *out_view_model);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
