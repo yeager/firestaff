@@ -1173,6 +1173,43 @@ static void test_boot_runtime_render_frame_facade(void) {
     theron_vp_free(&viewport);
 }
 
+static void test_boot_runtime_release_facade(void) {
+    Theron_V1_BootProfile *profile =
+        (Theron_V1_BootProfile*)calloc(1, sizeof(*profile));
+    Theron_V1_World *world =
+        (Theron_V1_World*)calloc(1, sizeof(*world));
+    Theron_V1_Viewport *viewport =
+        (Theron_V1_Viewport*)calloc(1, sizeof(*viewport));
+    TrAssetBundle *assets =
+        (TrAssetBundle*)calloc(1, sizeof(*assets));
+
+    expect_true(profile && world && viewport && assets,
+                "boot runtime release fixture allocates ownership bundle");
+    if (!profile || !world || !viewport || !assets) {
+        free(profile);
+        free(world);
+        free(viewport);
+        free(assets);
+        return;
+    }
+    theron_v1_boot_profile_init(profile);
+    theron_v1_world_init(world);
+    expect_true(theron_vp_init(viewport) == 1,
+                "boot runtime release fixture initializes viewport");
+    theron_v1_boot_runtime_release(&profile, &world, &viewport, &assets);
+    expect_true(profile == NULL &&
+                    world == NULL &&
+                    viewport == NULL &&
+                    assets == NULL,
+                "boot runtime release facade clears all runtime owners");
+    theron_v1_boot_runtime_release(&profile, &world, &viewport, &assets);
+    expect_true(profile == NULL &&
+                    world == NULL &&
+                    viewport == NULL &&
+                    assets == NULL,
+                "boot runtime release facade is idempotent");
+}
+
 int main(void) {
     printf("\n=== Theron V1 Startup Save/Resume Smoke Gate Unit Tests ===\n\n");
     test_clean_host_skip_safe_no_save_root();
@@ -1191,6 +1228,7 @@ int main(void) {
     test_boot_startup_launch_detach_runtime_receipt();
     test_boot_forcefield_pointer_snapshot_enters_runtime();
     test_boot_runtime_render_frame_facade();
+    test_boot_runtime_release_facade();
     test_startup_session_facts_wrappers();
 
     printf("=====================================================\n");

@@ -322,6 +322,11 @@ int theron_v1_boot_startup_launch_detach_runtime(
     Theron_V1_BootStartupRuntimeReceipt *out_receipt);
 void theron_v1_boot_startup_launch_cleanup(
     Theron_V1_BootStartupLaunch *launch);
+void theron_v1_boot_runtime_release(
+    Theron_V1_BootProfile **profile,
+    Theron_V1_World **world,
+    Theron_V1_Viewport **viewport,
+    TrAssetBundle **assets);
 int theron_v1_boot_startup_session_facts_from_runtime_state(
     Theron_StartupSessionFacts *session,
     int startup_phase,
