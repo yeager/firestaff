@@ -1381,6 +1381,27 @@ int main(void)
               command_state.opening_step,
               command_state.pending_command),
           "startup entrance gate facts helper accepts wait-loop input");
+    {
+        CSB_V1_StartupCommandStateRequest_PC34 request;
+
+        memset(&request, 0, sizeof(request));
+        request.title_active = command_state.title_active;
+        request.title_frame = command_state.title_frame;
+        request.title_source_step = command_state.title_source_step;
+        request.entrance_active = command_state.entrance_active;
+        request.entrance_source_step = command_state.entrance_source_step;
+        request.entrance_dismissed = command_state.entrance_dismissed;
+        request.credits_active = command_state.credits_active;
+        request.credits_remaining_ticks =
+            command_state.credits_remaining_ticks;
+        request.opening_active = command_state.opening_active;
+        request.opening_delay_ticks = command_state.opening_delay_ticks;
+        request.opening_step = command_state.opening_step;
+        request.pending_command = command_state.pending_command;
+        check(csb_v1_startup_entrance_accepts_input_from_request_pc34(
+                  &request),
+              "startup entrance gate request helper accepts wait-loop input");
+    }
 
     command_state.opening_active = 1;
     check(!csb_v1_startup_entrance_accepts_input_pc34(&command_state),

@@ -1909,22 +1909,31 @@ int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
     int opening_step,
     int pending_command)
 {
+    CSB_V1_StartupCommandStateRequest_PC34 request;
+
+    memset(&request, 0, sizeof(request));
+    request.title_active = title_active;
+    request.title_frame = title_frame;
+    request.title_source_step = title_source_step;
+    request.entrance_active = entrance_active;
+    request.entrance_source_step = entrance_source_step;
+    request.entrance_dismissed = entrance_dismissed;
+    request.credits_active = credits_active;
+    request.credits_remaining_ticks = credits_remaining_ticks;
+    request.opening_active = opening_active;
+    request.opening_delay_ticks = opening_delay_ticks;
+    request.opening_step = opening_step;
+    request.pending_command = pending_command;
+    return csb_v1_startup_entrance_accepts_input_from_request_pc34(
+        &request);
+}
+
+int csb_v1_startup_entrance_accepts_input_from_request_pc34(
+    const CSB_V1_StartupCommandStateRequest_PC34 *request)
+{
     CSB_V1_StartupCommandState_PC34 state;
 
-    if (!csb_v1_startup_command_state_from_facts_pc34(
-            title_active,
-            title_frame,
-            title_source_step,
-            entrance_active,
-            entrance_source_step,
-            entrance_dismissed,
-            credits_active,
-            credits_remaining_ticks,
-            opening_active,
-            opening_delay_ticks,
-            opening_step,
-            pending_command,
-            &state)) {
+    if (!csb_v1_startup_command_state_from_request_pc34(request, &state)) {
         return 0;
     }
     return csb_v1_startup_entrance_accepts_input_pc34(&state);
