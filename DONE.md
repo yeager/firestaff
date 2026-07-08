@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron V2 HUD startup adapter: Theron V2 HUD launch-mode now owns the M11 startup gate/default-resolution path through `theron_v2_hud_launch_mode_apply_m11_startup()`. M11 no longer constructs `THERON_V2_PhaseGateConfig` or resolves Theron HUD launch modes inline. Verification: `test_theron_v2_hud_launch_mode_pc34` passed 93/93; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM2 runtime receipt handoff apply: M11 DM2 direct-start now applies the detached boot runtime receipt through one helper for V2/HUD/touch init, source identity, boot profile/world handoff, level-loaded state, and first runtime sync. Verification: `test_dm2_v1_boot_profile_smoke` passed 63/63; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
 
 - ✅ 2026-07-08 Nexus runtime receipt handoff apply: M11 Nexus direct-start now applies the launcher runtime receipt through one helper for engine/source identity, light runtime, party pose, title-screen ownership, startup launch receipt, and boot status/log. Verification: `test_nexus_v1_startup_menu_pc34_compat` passed; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.

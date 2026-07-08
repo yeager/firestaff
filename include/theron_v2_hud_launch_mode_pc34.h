@@ -255,6 +255,12 @@ void theron_v2_hud_launch_mode_set_modern_pack_available(int available);
  * When V1_FAITHFUL is active the launcher-mode is locked to OFF. */
 void theron_v2_hud_launch_mode_set_v1_faithful(int v1FaithfulActive);
 
+/* Apply the complete M11 launch intent for Theron's Quest V2 HUD chrome.
+ * This keeps the phase-gate/default-resolution contract inside the Theron
+ * presentation module instead of duplicating it in M11 startup code. */
+void theron_v2_hud_launch_mode_apply_m11_startup(int v1FaithfulActive,
+                                                 int m11HudLaunchMode);
+
 /* ── Getters ───────────────────────────────────────────────────────── */
 
 Theron_V2_HudLaunchMode theron_v2_hud_launch_mode_get(void);

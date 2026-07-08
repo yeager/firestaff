@@ -220,6 +220,31 @@ int main(void)
               (int)theron_v2_hud_launch_mode_from_m11(-7),
               (int)THERON_V2_HUD_LAUNCH_MODE_OFF);
 
+    /* ── 5b. M11 startup adapter owns gate/default resolution ─────── */
+    theron_v2_hud_launch_mode_reset();
+    theron_v2_hud_launch_mode_set_modern_pack_available(1);
+    theron_v2_hud_launch_mode_apply_m11_startup(0, 2);
+    check_int("m11_startup.V2 TOUCH",
+              (int)theron_v2_hud_launch_mode_get(),
+              (int)THERON_V2_HUD_LAUNCH_MODE_TOUCH);
+    check_int("m11_startup.V2 gate on",
+              theron_v2_hud_launch_mode_state()->v2PresentationEnabled,
+              1);
+    check_int("m11_startup.persist on",
+              theron_v2_hud_launch_mode_state()->configPersistenceEnabled,
+              1);
+
+    theron_v2_hud_launch_mode_apply_m11_startup(1, 3);
+    check_int("m11_startup.V1 locks controller off",
+              (int)theron_v2_hud_launch_mode_get(),
+              (int)THERON_V2_HUD_LAUNCH_MODE_OFF);
+    check_int("m11_startup.V1 gate off",
+              theron_v2_hud_launch_mode_state()->v2PresentationEnabled,
+              0);
+    check_int("m11_startup.V1 faithful active",
+              theron_v2_hud_launch_mode_state()->v1FaithfulActive,
+              1);
+
     /* ── 6. Touch hit-test (geometry + gating) ────────────────────── */
     Theron_V2_HudLaunchTouchResult r;
     theron_v2_hud_launch_mode_reset();
