@@ -297,6 +297,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     char animation[64];
     DM1_V1_StartupHandoffPreludePlan_PC34 prelude;
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 post;
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     int title_played = 0;
@@ -431,6 +432,19 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 post-launch executor keeps entrance timeout",
              fake.entrance_timeout_ms,
              1200);
+    memset(&outcome, 0, sizeof(outcome));
+    expect_i("DM1 post-launch outcome executor succeeds",
+             dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
+                 "dm1",
+                 &callbacks,
+                 &outcome),
+             1);
+    expect_i("DM1 post-launch outcome reports title",
+             outcome.title_played,
+             1);
+    expect_i("DM1 post-launch outcome maps resume action",
+             (int)outcome.action,
+             (int)DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34);
 
     memset(&fake, 0, sizeof(fake));
     callbacks = fake_callbacks(&fake);
@@ -447,6 +461,15 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  fake.order[0] == '\0' &&
                  title_played == 0 &&
                  entrance_command == 0,
+             1);
+    expect_i("CSB post-launch outcome executor remains no-op",
+             dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
+                 "csb",
+                 &callbacks,
+                 &outcome) &&
+                 outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34 &&
+                 outcome.title_played == 0 &&
+                 outcome.entrance_command == 0,
              1);
     expect_i("NULL prelude executor callbacks reject",
              dm1_v1_startup_execute_handoff_prelude_pc34("dm1", NULL),
@@ -471,6 +494,30 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  &callbacks,
                  &title_played,
                  &entrance_command),
+             0);
+    expect_i("DM1 outcome maps enter command",
+             dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(1,
+                                                                       &outcome) &&
+                 outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34,
+             1);
+    expect_i("DM1 outcome maps resume command",
+             dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(2,
+                                                                       &outcome) &&
+                 outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34,
+             1);
+    expect_i("DM1 outcome maps quit command",
+             dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(-1,
+                                                                       &outcome) &&
+                 outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34,
+             1);
+    expect_i("DM1 outcome maps skipped entrance as nonfatal",
+             dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(0,
+                                                                       &outcome) &&
+                 outcome.action ==
+                     DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34,
+             1);
+    expect_i("NULL outcome rejects missing output",
+             dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(1, NULL),
              0);
 
     expect_i("receipt unloaded rc",

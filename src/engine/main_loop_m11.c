@@ -1424,13 +1424,13 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
                                      const char* dataDir) {
-    int titleIntroPlayed = 0;
-    int dm1EntranceCommand = 0;
+    DM1_V1_StartupHandoffOutcome_PC34 dm1HandoffOutcome;
     M11_DM1StartupHandoffContext dm1HandoffContext;
     DM1_V1_StartupHandoffCallbacks_PC34 dm1HandoffCallbacks;
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
+    memset(&dm1HandoffOutcome, 0, sizeof(dm1HandoffOutcome));
     memset(&dm1HandoffContext, 0, sizeof(dm1HandoffContext));
     memset(&dm1HandoffCallbacks, 0, sizeof(dm1HandoffCallbacks));
     dm1HandoffContext.menuState = menuState;
@@ -1487,17 +1487,19 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
         }
-        (void)dm1_v1_startup_execute_handoff_post_launch_pc34(
+        (void)dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
             gameView->sourceId,
             &dm1HandoffCallbacks,
-            &titleIntroPlayed,
-            &dm1EntranceCommand);
-        if (dm1EntranceCommand) {
-            if (dm1EntranceCommand == M11_ENTRANCE_COMMAND_QUIT) {
+            &dm1HandoffOutcome);
+        if (dm1HandoffOutcome.action !=
+            DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34) {
+            if (dm1HandoffOutcome.action ==
+                DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34) {
                 gameView->active = 0;
                 return 1;
             }
-            if (dm1EntranceCommand == M11_ENTRANCE_COMMAND_RESUME) {
+            if (dm1HandoffOutcome.action ==
+                DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34) {
                 /* ReDMCSB COMMAND.C M566: RESUME loads the saved game.
                  * Prefer the launcher's already validated DM1 quick-resume
                  * path, then fall back to Firestaff's historical source-id
@@ -1519,7 +1521,8 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                     fprintf(stderr, "RESUME: no save found at %s, starting new game\n",
                             savePath[0] ? savePath : "(unresolved)");
                 }
-            } else if (!dm1EntranceCommand) {
+            } else if (dm1HandoffOutcome.action ==
+                       DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34) {
                 /* Non-fatal: skip entrance animation but continue to game.
                  * Previously this aborted back to menu, causing the black
                  * viewport bug when TITLE.DAT decode failed. */
