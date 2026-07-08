@@ -595,6 +595,19 @@ int theron_v1_startup_execute_flow_plan_with_receipts(
     Theron_StartupExecution *out_execution,
     Theron_StartupApplyReceipt *out_apply_receipt,
     Theron_StartupStateReceipt *out_state_receipt);
+int theron_v1_startup_execute_flow_plan_from_facts_with_receipts(
+    const Theron_StartupActionPlan *plan,
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *out_flow,
+    Theron_StartupExecution *out_execution,
+    Theron_StartupApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt);
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,

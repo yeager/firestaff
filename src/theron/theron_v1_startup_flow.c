@@ -1390,6 +1390,69 @@ int theron_v1_startup_execute_flow_plan_with_receipts(
     return 1;
 }
 
+int theron_v1_startup_execute_flow_plan_from_facts_with_receipts(
+    const Theron_StartupActionPlan *plan,
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *out_flow,
+    Theron_StartupExecution *out_execution,
+    Theron_StartupApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt)
+{
+    Theron_StartupFlow local_flow;
+    Theron_StartupFlow *flow = out_flow ? out_flow : &local_flow;
+    Theron_StartupResult rebuild_result;
+
+    if (out_execution) {
+        theron_v1_startup_execution_init(out_execution);
+    }
+    if (out_apply_receipt) {
+        theron_v1_startup_apply_receipt_init(out_apply_receipt);
+    }
+    if (out_state_receipt) {
+        theron_v1_startup_state_receipt_init(out_state_receipt);
+    }
+    if (!plan || !progression) {
+        if (out_execution) {
+            out_execution->result = THERON_STARTUP_ERR_NULL;
+        }
+        return 0;
+    }
+
+    if (plan->kind == THERON_STARTUP_PLAN_SHOW_STAGE_SELECT) {
+        theron_v1_startup_flow_init(flow);
+    } else {
+        rebuild_result = theron_v1_startup_flow_rebuild_from_facts(
+            phase,
+            selected_dungeon,
+            selected_mirrors_mask,
+            companion_count,
+            selected_mirror_order,
+            selected_mirror_order_count,
+            progression,
+            flow);
+        if (rebuild_result != THERON_STARTUP_OK) {
+            if (out_execution) {
+                out_execution->result = rebuild_result;
+            }
+            return 0;
+        }
+    }
+
+    return theron_v1_startup_execute_flow_plan_with_receipts(
+        plan,
+        progression,
+        flow,
+        out_execution,
+        out_apply_receipt,
+        out_state_receipt);
+}
+
 static void tqr_startup_render_plan_reset(Theron_StartupRenderPlan *plan)
 {
     if (!plan) {
