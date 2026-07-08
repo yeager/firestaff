@@ -10105,17 +10105,41 @@ static void m11_nexus_startup_snapshot_to_state(
     M11_GameViewState *state,
     const Nexus_V1_StartupMenuStateReceipt *receipt);
 
+static void m11_nexus_startup_host_facts(
+    const M11_GameViewState *state,
+    Nexus_V1_StartupHostFacts *facts)
+{
+    if (!facts) {
+        return;
+    }
+    memset(facts, 0, sizeof(*facts));
+    if (!state) {
+        return;
+    }
+    facts->save_dir = state->nexusState.startup_save_dir;
+    facts->slot_mask = state->nexusState.startup_save_slot_mask;
+    facts->save_selected_row = state->nexusState.startup_save_selected_row;
+    facts->save_row_count = state->nexusState.startup_save_row_count;
+    if (state->nexusEngine) {
+        facts->champion_pool =
+            (Nexus_V1_ChampionPool *)&state->nexusEngine->champions;
+    }
+    facts->champion_cursor = state->nexusState.champion_cursor;
+    facts->champion_frame = state->nexusState.champion_select_frame;
+}
+
 static void m11_nexus_startup_scan_saves(M11_GameViewState *state)
 {
+    Nexus_V1_StartupHostFacts facts;
     Nexus_V1_StartupMenuStateReceipt receipt;
 
     if (!state) {
         return;
     }
-    if (!nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_facts(
+    m11_nexus_startup_host_facts(state, &facts);
+    if (!nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_host_facts(
             &receipt,
-            state->nexusState.startup_save_dir,
-            state->nexusState.startup_save_selected_row)) {
+            &facts)) {
         return;
     }
     m11_nexus_startup_snapshot_to_state(state, &receipt);
@@ -10362,17 +10386,17 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
+    Nexus_V1_StartupHostFacts facts;
     Nexus_V1_StartupMenuStateReceipt receipt;
     Nexus_V1_StartupAction action;
 
     if (!state || !state->nexusState.startup_save_select_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
+    m11_nexus_startup_host_facts(state, &facts);
+    if (!nexus_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
             &receipt,
-            state->nexusState.startup_save_dir,
-            state->nexusState.startup_save_slot_mask,
-            state->nexusState.startup_save_selected_row,
+            &facts,
             (int)input,
             &action)) {
         return input == M12_MENU_INPUT_NONE
@@ -14140,15 +14164,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return m11_nexus_startup_handle_save_input(state, input);
         }
         if (state->nexusState.champion_select_active) {
-            Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
+            Nexus_V1_StartupHostFacts facts;
             Nexus_V1_StartupChampionStateReceipt receipt;
             Nexus_V1_StartupAction action;
-            if (!nexus_v1_startup_champion_handle_firestaff_input_from_facts_with_receipt(
-                    pool,
+            m11_nexus_startup_host_facts(state, &facts);
+            if (!nexus_v1_startup_champion_handle_firestaff_input_from_host_facts_with_receipt(
                     &receipt,
-                    state->nexusState.startup_save_slot_mask,
-                    state->nexusState.champion_cursor,
-                    state->nexusState.champion_select_frame,
+                    &facts,
                     (int)input,
                     &action)) {
                 return M11_GAME_INPUT_IGNORED;
@@ -14860,14 +14882,13 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return m11_nexus_startup_apply_title_action(state, &action);
     }
     if (state->nexusState.startup_save_select_active) {
+        Nexus_V1_StartupHostFacts facts;
         Nexus_V1_StartupMenuStateReceipt receipt;
         Nexus_V1_StartupAction action;
-        if (!nexus_v1_startup_menu_handle_pointer_from_facts_with_receipt(
+        m11_nexus_startup_host_facts(state, &facts);
+        if (!nexus_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
                 &receipt,
-                state->nexusState.startup_save_dir,
-                state->nexusState.startup_save_slot_mask,
-                state->nexusState.startup_save_selected_row,
-                state->nexusState.startup_save_row_count,
+                &facts,
                 x,
                 y,
                 &action)) {
@@ -14877,15 +14898,13 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return m11_nexus_startup_apply_save_action(state, &action);
     }
     if (state->nexusState.champion_select_active) {
-        Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
+        Nexus_V1_StartupHostFacts facts;
         Nexus_V1_StartupChampionStateReceipt receipt;
         Nexus_V1_StartupAction action;
-        if (!nexus_v1_startup_champion_handle_pointer_from_facts_with_receipt(
-                pool,
+        m11_nexus_startup_host_facts(state, &facts);
+        if (!nexus_v1_startup_champion_handle_pointer_from_host_facts_with_receipt(
                 &receipt,
-                state->nexusState.startup_save_slot_mask,
-                state->nexusState.champion_cursor,
-                state->nexusState.champion_select_frame,
+                &facts,
                 x,
                 y,
                 &action)) {
@@ -38406,13 +38425,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                             commands,
                                             command_count);
         } else if (state->nexusState.startup_save_select_active) {
+            Nexus_V1_StartupHostFacts facts;
             Nexus_V1_StartupDrawCommand commands[48];
             int command_count;
             directDraw = 1;
-            command_count = nexus_v1_startup_presentation_build_save_from_facts(
-                state->nexusState.startup_save_dir,
-                state->nexusState.startup_save_slot_mask,
-                state->nexusState.startup_save_selected_row,
+            m11_nexus_startup_host_facts(state, &facts);
+            command_count = nexus_v1_startup_presentation_build_save_from_host_facts(
+                &facts,
                 commands,
                 (int)(sizeof(commands) / sizeof(commands[0])));
             m11_draw_nexus_startup_commands(state,
@@ -38423,15 +38442,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                             command_count);
         } else if (state->nexusState.champion_select_active &&
                    state->nexusEngine) {
-            const Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
+            Nexus_V1_StartupHostFacts facts;
             Nexus_V1_StartupDrawCommand commands[80];
             int command_count;
             directDraw = 1;
-            command_count = nexus_v1_startup_presentation_build_champion_from_facts(
-                pool,
-                state->nexusState.startup_save_slot_mask,
-                state->nexusState.champion_cursor,
-                state->nexusState.champion_select_frame,
+            m11_nexus_startup_host_facts(state, &facts);
+            command_count = nexus_v1_startup_presentation_build_champion_from_host_facts(
+                &facts,
                 commands,
                 (int)(sizeof(commands) / sizeof(commands[0])));
             m11_draw_nexus_startup_commands(state,

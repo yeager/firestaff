@@ -775,6 +775,20 @@ int nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_facts(
                                                              out_receipt);
 }
 
+int nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_host_facts(
+    Nexus_V1_StartupMenuStateReceipt *out_receipt,
+    const Nexus_V1_StartupHostFacts *facts)
+{
+    if (!facts) {
+        nexus_v1_startup_menu_state_receipt_init(out_receipt);
+        return 0;
+    }
+    return nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_facts(
+        out_receipt,
+        facts->save_dir,
+        facts->save_selected_row);
+}
+
 int nexus_v1_startup_menu_snapshot_row_at(
     const Nexus_V1_StartupMenuSnapshot *snapshot,
     int row,
@@ -853,6 +867,26 @@ int nexus_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
                                                              out_receipt);
 }
 
+int nexus_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
+    Nexus_V1_StartupMenuStateReceipt *out_receipt,
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupAction *out_action)
+{
+    if (!facts) {
+        nexus_v1_startup_menu_state_receipt_init(out_receipt);
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return nexus_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
+        out_receipt,
+        facts->save_dir,
+        facts->slot_mask,
+        facts->save_selected_row,
+        menu_input,
+        out_action);
+}
+
 int nexus_v1_startup_menu_snapshot_handle_hit(
     Nexus_V1_StartupMenuSnapshot *snapshot,
     const Nexus_V1_StartupHit *hit,
@@ -924,6 +958,29 @@ int nexus_v1_startup_menu_handle_pointer_from_facts_with_receipt(
     }
     return nexus_v1_startup_menu_state_receipt_from_snapshot(&snapshot,
                                                              out_receipt);
+}
+
+int nexus_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
+    Nexus_V1_StartupMenuStateReceipt *out_receipt,
+    const Nexus_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    Nexus_V1_StartupAction *out_action)
+{
+    if (!facts) {
+        nexus_v1_startup_menu_state_receipt_init(out_receipt);
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return nexus_v1_startup_menu_handle_pointer_from_facts_with_receipt(
+        out_receipt,
+        facts->save_dir,
+        facts->slot_mask,
+        facts->save_selected_row,
+        facts->save_row_count,
+        x,
+        y,
+        out_action);
 }
 
 int nexus_v1_startup_execute_save_action(
@@ -1837,6 +1894,27 @@ int nexus_v1_startup_champion_handle_firestaff_input_from_facts_with_receipt(
         out_receipt);
 }
 
+int nexus_v1_startup_champion_handle_firestaff_input_from_host_facts_with_receipt(
+    Nexus_V1_StartupChampionStateReceipt *out_receipt,
+    const Nexus_V1_StartupHostFacts *facts,
+    int firestaff_input,
+    Nexus_V1_StartupAction *out_action)
+{
+    if (!facts) {
+        nexus_v1_startup_champion_state_receipt_init(out_receipt);
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return nexus_v1_startup_champion_handle_firestaff_input_from_facts_with_receipt(
+        facts->champion_pool,
+        out_receipt,
+        facts->slot_mask,
+        facts->champion_cursor,
+        facts->champion_frame,
+        firestaff_input,
+        out_action);
+}
+
 int nexus_v1_startup_champion_snapshot_handle_hit(
     Nexus_V1_ChampionPool *pool,
     Nexus_V1_StartupChampionSnapshot *snapshot,
@@ -1923,6 +2001,29 @@ int nexus_v1_startup_champion_handle_pointer_from_facts_with_receipt(
     return nexus_v1_startup_champion_state_receipt_from_snapshot(
         &snapshot,
         out_receipt);
+}
+
+int nexus_v1_startup_champion_handle_pointer_from_host_facts_with_receipt(
+    Nexus_V1_StartupChampionStateReceipt *out_receipt,
+    const Nexus_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    Nexus_V1_StartupAction *out_action)
+{
+    if (!facts) {
+        nexus_v1_startup_champion_state_receipt_init(out_receipt);
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return nexus_v1_startup_champion_handle_pointer_from_facts_with_receipt(
+        facts->champion_pool,
+        out_receipt,
+        facts->slot_mask,
+        facts->champion_cursor,
+        facts->champion_frame,
+        x,
+        y,
+        out_action);
 }
 
 int nexus_v1_startup_champion_snapshot_build_render_rows(
@@ -2054,6 +2155,27 @@ int nexus_v1_startup_presentation_build_save_from_facts(
     return nexus_v1_startup_presentation_build_save(&snapshot,
                                                     out_commands,
                                                     max_commands);
+}
+
+int nexus_v1_startup_presentation_build_save_from_host_facts(
+    const Nexus_V1_StartupHostFacts *facts,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    if (!facts) {
+        if (out_commands && max_commands > 0) {
+            memset(out_commands,
+                   0,
+                   (size_t)max_commands * sizeof(out_commands[0]));
+        }
+        return 0;
+    }
+    return nexus_v1_startup_presentation_build_save_from_facts(
+        facts->save_dir,
+        facts->slot_mask,
+        facts->save_selected_row,
+        out_commands,
+        max_commands);
 }
 
 int nexus_v1_startup_presentation_build_title(
@@ -2220,6 +2342,28 @@ int nexus_v1_startup_presentation_build_champion_from_facts(
                                                         &snapshot,
                                                         out_commands,
                                                         max_commands);
+}
+
+int nexus_v1_startup_presentation_build_champion_from_host_facts(
+    const Nexus_V1_StartupHostFacts *facts,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    if (!facts) {
+        if (out_commands && max_commands > 0) {
+            memset(out_commands,
+                   0,
+                   (size_t)max_commands * sizeof(out_commands[0]));
+        }
+        return 0;
+    }
+    return nexus_v1_startup_presentation_build_champion_from_facts(
+        facts->champion_pool,
+        facts->slot_mask,
+        facts->champion_cursor,
+        facts->champion_frame,
+        out_commands,
+        max_commands);
 }
 
 int nexus_v1_startup_presentation_execute(
