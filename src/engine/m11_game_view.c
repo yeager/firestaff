@@ -30949,7 +30949,7 @@ unsigned short M11_GameView_GetV1OpenChestThing(const M11_GameViewState* state) 
 }
 
 int M11_GameView_GetV1ActionAreaZoneId(void) {
-    return DM1_V1_ACTION_AREA_ZONE_ID_PC34;
+    return dm1_v1_action_area_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ActionAreaZone(int* outX,
@@ -30957,7 +30957,7 @@ int M11_GameView_GetV1ActionAreaZone(int* outX,
                                         int* outW,
                                         int* outH) {
     DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_area_rect_pc34();
-    if (!M11_GameView_GetV1ActionAreaZoneId()) return 0;
+    if (!dm1_v1_action_area_zone_id_pc34()) return 0;
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     if (outW) *outW = rect.w;
@@ -30995,7 +30995,7 @@ static int m11_get_v1_spell_area_click_zone(int* outX,
 }
 
 int M11_GameView_GetV1ActionAreaGraphicId(void) {
-    return DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34;
+    return dm1_v1_action_area_graphic_id_pc34();
 }
 
 int M11_GameView_GetV1ActionMenuGraphicZoneId(int actionRowCount) {
@@ -31020,42 +31020,40 @@ int M11_GameView_GetV1ActionMenuGraphicZone(int actionRowCount,
 }
 
 int M11_GameView_GetV1ActionAreaClearColor(void) {
-    /* F0387 clears the action area to black before drawing menu/icon state. */
-    return DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
+    return dm1_v1_action_area_clear_color_pc34();
 }
 
 int M11_GameView_GetV1ActionResultZoneId(void) {
-    /* Source layout-696 C075_ZONE_ACTION_RESULT covers the action result area. */
-    return 75;
+    return dm1_v1_action_result_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ActionResultZone(int* outX,
                                        int* outY,
                                        int* outW,
                                        int* outH) {
-    if (!M11_GameView_GetV1ActionResultZoneId()) return 0;
-    return M11_GameView_GetV1ActionAreaZone(outX, outY, outW, outH);
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_result_rect_pc34();
+    if (!dm1_v1_action_result_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
 }
 
 int M11_GameView_GetV1ActionPassZoneId(void) {
-    /* Source layout-696 C098_ZONE_ACTION_AREA_PASS, under the C097 35x7 text area. */
-    return 98;
+    return dm1_v1_action_pass_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ActionPassZone(int* outX,
                                      int* outY,
                                      int* outW,
                                      int* outH) {
-    int actionX, actionY;
-    if (!M11_GameView_GetV1ActionPassZoneId() ||
-        !M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, NULL, NULL)) {
-        return 0;
-    }
-    (void)actionX;
-    if (outX) *outX = 285;
-    if (outY) *outY = actionY;
-    if (outW) *outW = 34;
-    if (outH) *outH = 7;
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_pass_rect_pc34();
+    if (!dm1_v1_action_pass_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -32798,8 +32796,7 @@ int M11_GameView_GetV1FoodWaterPanelZone(int* outX,
 }
 
 int M11_GameView_GetV1ActionMenuHeaderZoneId(void) {
-    /* F0387 prints the acting champion name through zone 80. */
-    return DM1_V1_ACTION_MENU_HEADER_ZONE_ID_PC34;
+    return dm1_v1_action_menu_header_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
@@ -32807,7 +32804,7 @@ int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outW,
                                                int* outH) {
     DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_menu_header_rect_pc34();
-    (void)M11_GameView_GetV1ActionMenuHeaderZoneId();
+    if (!dm1_v1_action_menu_header_zone_id_pc34()) return 0;
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     if (outW) *outW = rect.w;
@@ -32816,20 +32813,15 @@ int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
 }
 
 int M11_GameView_GetV1ActionMenuRowCount(void) {
-    /* F0387 prints exactly three action rows for the selected ActionSet. */
-    return DM1_V1_ACTION_MENU_ROW_COUNT_PC34;
+    return dm1_v1_action_menu_row_count_pc34();
 }
 
 int M11_GameView_GetV1ActionMenuRowBaseZoneId(int rowIndex) {
-    if (rowIndex < 0 || rowIndex >= M11_GameView_GetV1ActionMenuRowCount()) return 0;
-    /* Source action-row parent zones are C082, C083, and C084. */
-    return DM1_V1_ACTION_MENU_ROW_BASE_ZONE_ID_PC34 + rowIndex;
+    return dm1_v1_action_menu_row_base_zone_id_pc34(rowIndex);
 }
 
 int M11_GameView_GetV1ActionMenuRowZoneId(int rowIndex) {
-    if (!M11_GameView_GetV1ActionMenuRowBaseZoneId(rowIndex)) return 0;
-    /* F0387 prints action names through zones 85, 86, and 87. */
-    return DM1_V1_ACTION_MENU_ROW_ZONE_ID_BASE_PC34 + rowIndex;
+    return dm1_v1_action_menu_row_zone_id_pc34(rowIndex);
 }
 
 int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
@@ -32849,8 +32841,10 @@ int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
 
 int M11_GameView_GetV1ActionMenuTextInset(int* outX,
                                            int* outY) {
-    if (outX) *outX = 2;
-    if (outY) *outY = 6;
+    DM1_V1_ActionAreaTextOriginPc34 inset =
+        dm1_v1_action_menu_text_inset_pc34();
+    if (outX) *outX = inset.x;
+    if (outY) *outY = inset.y;
     return 1;
 }
 
@@ -32878,19 +32872,19 @@ int M11_GameView_GetV1ActionMenuTextOrigin(int rowIndex,
 }
 
 int M11_GameView_GetV1ActionMenuHeaderFillColor(void) {
-    return DM1_V1_ACTION_AREA_CYAN_PC34;
+    return dm1_v1_action_menu_header_fill_color_pc34();
 }
 
 int M11_GameView_GetV1ActionMenuHeaderTextColor(void) {
-    return DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
+    return dm1_v1_action_menu_header_text_color_pc34();
 }
 
 int M11_GameView_GetV1ActionMenuRowFillColor(void) {
-    return DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
+    return dm1_v1_action_menu_row_fill_color_pc34();
 }
 
 int M11_GameView_GetV1ActionMenuRowTextColor(void) {
-    return DM1_V1_ACTION_AREA_CYAN_PC34;
+    return dm1_v1_action_menu_row_text_color_pc34();
 }
 
 static int m11_draw_dm_action_menu(const M11_GameViewState* state,
@@ -33382,14 +33376,10 @@ int M11_GameView_GetV1StatusNameTextZone(int championSlot,
 }
 
 int M11_GameView_GetV1ActionIconParentZoneId(void) {
-    /* Source action-hand icon template/root zone is C088 under C011. */
-    return DM1_V1_ACTION_ICON_PARENT_ZONE_ID_PC34;
+    return dm1_v1_action_icon_parent_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ActionIconCellZoneId(int championSlot) {
-    if (!M11_GameView_GetV1ActionIconParentZoneId() ||
-        championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    /* Source action-hand icon cell parent zones are C089..C092. */
     return dm1_v1_action_icon_cell_zone_id_pc34(championSlot);
 }
 
@@ -33409,8 +33399,6 @@ int M11_GameView_GetV1ActionIconCellZone(int championSlot,
 }
 
 int M11_GameView_GetV1ActionIconInnerZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    /* Source inner icon zones are C093..C096. */
     return dm1_v1_action_icon_inner_zone_id_pc34(championSlot);
 }
 

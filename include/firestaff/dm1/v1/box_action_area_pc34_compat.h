@@ -115,12 +115,16 @@ typedef struct DM1_V1_ActionIconReceiptPc34 {
  * G0001_ai_Graphic562_Box_ActionArea then blits C010 through
  * G0499/G0500/G0501 and prints the header/action rows. F0386 lines
  * ~218-300 owns the action-hand icon cell and inner 16x16 icon boxes.
+ * ACTIDRAW.C lines ~110-195 prints/blits C075_ZONE_ACTION_RESULT.
+ * DEFS.H:3775 defines C098_ZONE_ACTION_AREA_PASS.
  */
 enum {
     DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 = 10,
     DM1_V1_ACTION_AREA_ZONE_ID_PC34 = 11,
     DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34 = 0,
     DM1_V1_ACTION_AREA_CYAN_PC34 = 4,
+    DM1_V1_ACTION_RESULT_ZONE_ID_PC34 = 75,
+    DM1_V1_ACTION_PASS_ZONE_ID_PC34 = 98,
 
     DM1_V1_ACTION_MENU_HEADER_ZONE_ID_PC34 = 80,
     DM1_V1_ACTION_MENU_ROW_ZONE_ID_BASE_PC34 = 85,
@@ -140,6 +144,116 @@ dm1_v1_action_area_rect_pc34(void)
 {
     DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 45 };
     return r;
+}
+
+static inline int
+dm1_v1_action_area_zone_id_pc34(void)
+{
+    return DM1_V1_ACTION_AREA_ZONE_ID_PC34;
+}
+
+static inline int
+dm1_v1_action_area_graphic_id_pc34(void)
+{
+    return DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34;
+}
+
+static inline int
+dm1_v1_action_area_clear_color_pc34(void)
+{
+    return DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
+}
+
+static inline int
+dm1_v1_action_result_zone_id_pc34(void)
+{
+    return DM1_V1_ACTION_RESULT_ZONE_ID_PC34;
+}
+
+static inline DM1_V1_ActionAreaRectPc34
+dm1_v1_action_result_rect_pc34(void)
+{
+    return dm1_v1_action_area_rect_pc34();
+}
+
+static inline int
+dm1_v1_action_pass_zone_id_pc34(void)
+{
+    return DM1_V1_ACTION_PASS_ZONE_ID_PC34;
+}
+
+static inline DM1_V1_ActionAreaRectPc34
+dm1_v1_action_pass_rect_pc34(void)
+{
+    DM1_V1_ActionAreaRectPc34 r = { 285, 77, 34, 7 };
+    return r;
+}
+
+static inline int
+dm1_v1_action_menu_header_zone_id_pc34(void)
+{
+    return DM1_V1_ACTION_MENU_HEADER_ZONE_ID_PC34;
+}
+
+static inline int
+dm1_v1_action_menu_row_count_pc34(void)
+{
+    return DM1_V1_ACTION_MENU_ROW_COUNT_PC34;
+}
+
+static inline int
+dm1_v1_action_menu_row_base_zone_id_pc34(int row_index)
+{
+    if (row_index < 0 || row_index >= DM1_V1_ACTION_MENU_ROW_COUNT_PC34) {
+        return 0;
+    }
+    return DM1_V1_ACTION_MENU_ROW_BASE_ZONE_ID_PC34 + row_index;
+}
+
+static inline int
+dm1_v1_action_menu_row_zone_id_pc34(int row_index)
+{
+    if (!dm1_v1_action_menu_row_base_zone_id_pc34(row_index)) {
+        return 0;
+    }
+    return DM1_V1_ACTION_MENU_ROW_ZONE_ID_BASE_PC34 + row_index;
+}
+
+static inline DM1_V1_ActionAreaTextOriginPc34
+dm1_v1_action_menu_text_inset_pc34(void)
+{
+    DM1_V1_ActionAreaTextOriginPc34 o = { 2, 6 };
+    return o;
+}
+
+static inline int
+dm1_v1_action_menu_header_fill_color_pc34(void)
+{
+    return DM1_V1_ACTION_AREA_CYAN_PC34;
+}
+
+static inline int
+dm1_v1_action_menu_header_text_color_pc34(void)
+{
+    return DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
+}
+
+static inline int
+dm1_v1_action_menu_row_fill_color_pc34(void)
+{
+    return DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
+}
+
+static inline int
+dm1_v1_action_menu_row_text_color_pc34(void)
+{
+    return DM1_V1_ACTION_AREA_CYAN_PC34;
+}
+
+static inline int
+dm1_v1_action_icon_parent_zone_id_pc34(void)
+{
+    return DM1_V1_ACTION_ICON_PARENT_ZONE_ID_PC34;
 }
 
 static inline int

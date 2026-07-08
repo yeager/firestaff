@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 action-area getter ownership: action area, action result, PASS, action-menu rows/text/colors, and action-icon zone getters now delegate to DM1 V1 action-area helpers instead of M11-local constants. Verification: `test_dm1_v1_box_action_area_pc34_compat` passed 156/156; `test_m11_v1_action_area_geometry_pc34_compat` passed 76/76; Phase A passed 24/24.
+
 - ✅ 2026-07-08 DM1 movement-arrow ownership: C009/C013 movement-arrow panel geometry, C068..C073 hit zones, command masks, and keyboard visual-feedback receipts now come from DM1 V1 movement-arrow compat code. M11 consumes those receipts instead of owning local arrow tables. Verification: `test_dm1_v1_box_movement_arrows_pc34_compat` passed 127/127; `test_m11_overlay_command_queue_block` passed 450/450; Phase A passed 24/24.
 
 - ✅ 2026-07-08 DM1 action-menu/icon receipt ownership: action-menu render eligibility, visible-row clamp, text lengths, and action-icon cell/dead/hatch fill decisions now come from DM1 V1 action-area receipts. M11 applies those receipts for rendering instead of owning the menu/icon state rules. Verification: `test_dm1_v1_box_action_area_pc34_compat` passed 128/128; Phase A passed 24/24.

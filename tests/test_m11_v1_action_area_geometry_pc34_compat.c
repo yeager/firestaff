@@ -74,6 +74,23 @@ static void test_action_row_and_icon_cells_stay_source_locked(void)
     check_int("icon3 x", x, 299);
 }
 
+static void test_action_result_and_pass_zones(void)
+{
+    int x, y, w, h;
+    check_int("action result zone id", M11_GameView_GetV1ActionResultZoneId(), 75);
+    check_true("action result", M11_GameView_GetV1ActionResultZone(&x, &y, &w, &h));
+    check_int("action result x", x, 224);
+    check_int("action result y", y, 77);
+    check_int("action result w", w, 96);
+    check_int("action result h", h, 45);
+    check_int("action pass zone id", M11_GameView_GetV1ActionPassZoneId(), 98);
+    check_true("action pass", M11_GameView_GetV1ActionPassZone(&x, &y, &w, &h));
+    check_int("action pass x", x, 285);
+    check_int("action pass y", y, 77);
+    check_int("action pass w", w, 34);
+    check_int("action pass h", h, 7);
+}
+
 static void test_spell_area_boxes_stay_source_locked(void)
 {
     int x, y, w, h;
@@ -130,6 +147,7 @@ int main(void)
     test_action_area_box();
     test_action_menu_graphic_boxes();
     test_action_row_and_icon_cells_stay_source_locked();
+    test_action_result_and_pass_zones();
     test_spell_area_boxes_stay_source_locked();
     printf("test_m11_v1_action_area_geometry_pc34_compat: %d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
