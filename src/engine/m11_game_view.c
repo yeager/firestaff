@@ -11655,35 +11655,6 @@ static M11_GameInputResult m11_theron_apply_startup_action_host_receipt(
         receipt->runtime_receipt);
 }
 
-static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state,
-                                                        char* receipt,
-                                                        size_t receipt_cap) {
-    Theron_V1_World* world;
-    Theron_StartupStateReceipt stateReceipt;
-
-    if (receipt && receipt_cap > 0u) {
-        receipt[0] = '\0';
-    }
-    if (!state) {
-        return 0;
-    }
-    world = (Theron_V1_World*)state->theronWorld;
-    if (!world) {
-        return 0;
-    }
-
-    if (!theron_v1_startup_return_to_stage_select_after_exit_state_receipt(
-        world,
-        &stateReceipt,
-        receipt,
-        receipt_cap)) {
-        return 0;
-    }
-
-    m11_theron_apply_startup_state_receipt(state, &stateReceipt);
-    return 1;
-}
-
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
@@ -13869,17 +13840,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
              * path gets post-move effects instead of mutating coordinates. */
             moveResult = theron_v1_move_party(world, dir);
             if (moveResult == THERON_MOVE_EXIT) {
-                char receipt[128];
-                if (m11_theron_return_to_stage_select_after_exit(state,
-                                                                 receipt,
-                                                                 sizeof(receipt))) {
-                    m11_set_status(state, "STARTUP", receipt);
-                    m11_theron_set_chapter_inspect(state, receipt);
-                    return M11_GAME_INPUT_REDRAW;
-                }
-                m11_set_status(state, "MOVE",
-                               receipt[0] ? receipt : "EXIT BLOCKED");
-                return M11_GAME_INPUT_REDRAW;
+                Theron_StartupActionHostReceipt receipt;
+                (void)theron_v1_startup_return_to_stage_select_after_exit_host_receipt(
+                    world,
+                    &receipt);
+                return m11_theron_apply_startup_action_host_receipt(
+                    state,
+                    &receipt);
             }
             moved = (moveResult != THERON_MOVE_BLOCKED);
             m11_set_status(state, "MOVE",
@@ -13889,17 +13856,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             int dir = (oldDir + 2) & 3;
             int moveResult = theron_v1_move_party(world, dir);
             if (moveResult == THERON_MOVE_EXIT) {
-                char receipt[128];
-                if (m11_theron_return_to_stage_select_after_exit(state,
-                                                                 receipt,
-                                                                 sizeof(receipt))) {
-                    m11_set_status(state, "STARTUP", receipt);
-                    m11_theron_set_chapter_inspect(state, receipt);
-                    return M11_GAME_INPUT_REDRAW;
-                }
-                m11_set_status(state, "MOVE",
-                               receipt[0] ? receipt : "EXIT BLOCKED");
-                return M11_GAME_INPUT_REDRAW;
+                Theron_StartupActionHostReceipt receipt;
+                (void)theron_v1_startup_return_to_stage_select_after_exit_host_receipt(
+                    world,
+                    &receipt);
+                return m11_theron_apply_startup_action_host_receipt(
+                    state,
+                    &receipt);
             }
             moved = (moveResult != THERON_MOVE_BLOCKED);
             if (moved) {

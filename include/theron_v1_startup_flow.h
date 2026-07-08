@@ -585,6 +585,9 @@ int theron_v1_startup_return_to_stage_select_after_exit_state_receipt(
     Theron_StartupStateReceipt *out_state_receipt,
     char *receipt,
     size_t receipt_cap);
+int theron_v1_startup_return_to_stage_select_after_exit_host_receipt(
+    Theron_V1_World *world,
+    Theron_StartupActionHostReceipt *out_receipt);
 int theron_v1_startup_stage_available(
     const Theron_DungeonProgression *progression,
     Theron_DungeonID dungeon_id);

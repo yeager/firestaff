@@ -896,6 +896,36 @@ static void test_startup_session_facts_wrappers(void) {
                     state_receipt.tick_count == 42 &&
                     strstr(exit_receipt, "dungeon complete") != NULL,
                 "startup exit wrapper emits state receipt without M11 flow ownership");
+    world.progression.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world.progression.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] =
+        THERON_DUNGEON_STATE_COMPLETE;
+    world.progression.dungeon_states[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] =
+        THERON_DUNGEON_STATE_LOCKED;
+    world.progression.quest_items_collected =
+        THERON_QUEST_ITEM_MASK_FROM_DUNGEON(
+            THERON_DUNGEON_1_HALL_OF_RECORDS);
+    world.party.champion_count = 3;
+    world.party.leader_x = 4;
+    world.party.leader_y = 5;
+    world.party.leader_dir = 2;
+    world.world_tick = 43;
+    {
+        Theron_StartupActionHostReceipt host_receipt;
+        expect_true(
+            theron_v1_startup_return_to_stage_select_after_exit_host_receipt(
+                &world,
+                &host_receipt) &&
+                host_receipt.state_receipt_valid &&
+                host_receipt.state_receipt.flow.phase ==
+                    THERON_STARTUP_PHASE_STAGE_SELECT &&
+                host_receipt.host_receipt.input_result ==
+                    THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                strcmp(host_receipt.host_receipt.status_scope,
+                       "STARTUP") == 0 &&
+                strcmp(host_receipt.host_receipt.status,
+                       "DUNGEON COMPLETE") == 0,
+            "startup exit host receipt owns M11 status and redraw result");
+    }
 }
 
 int main(void) {
