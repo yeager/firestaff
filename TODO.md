@@ -1105,4 +1105,4 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 2026-07-08 Nexus follow-up: extracted level/menu helpers still have some canonical DGN/DMDF filename diagnostics; runtime boot marker and startup surfaces are hash-first now, but broader Nexus asset-family discovery should continue moving to hash/signature-first.
 - 🔧 2026-07-08 Nexus follow-up: level DGN runtime load is hash-first now; continue moving SLEV/SNDLEV/MNS/DMDF supplementary startup/runtime asset helpers to hash/signature-first.
 - 🔧 2026-07-08 Nexus follow-up: `DM.BIN` and `LEV00.DGN` startup detection are hash-first now; remaining Nexus work is supplementary `SLEV`/`SNDLEV`/`.MNS`/`.DMDF` asset-family discovery and ISO-internal runtime handoff.
-- 🔧 2026-07-08 DM2 follow-up: M11 tick/move/turn and ACTION/front-cell now route through DM2 boot runtime receipts. Remaining DM2 boot cleanup is the later render-frame facade and inventory write facades.
+- 🔧 2026-07-08 DM2 follow-up: M11 tick/move/turn, ACTION/front-cell, and inventory slot swap now route through DM2 boot runtime receipts. Remaining DM2 boot cleanup is the later render-frame facade.

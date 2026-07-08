@@ -32636,8 +32636,7 @@ static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
                                                     int sourceSlotBoxIndex) {
     int championIndex;
     int championSlot;
-    uint32_t slotObject;
-    uint32_t leaderObject;
+    DM2_V1_BootRuntimeInventoryReceipt receipt;
 
     if (!state || !state->inventoryPanelActive ||
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT) {
@@ -32649,38 +32648,25 @@ static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
         sourceSlotBoxIndex);
     if (championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) return 0;
 
-    slotObject = state->dm2State.champion_inventory_objects[championIndex]
-                                                         [championSlot];
-    leaderObject = state->dm2State.leader_hand_object;
-    if (slotObject == 0u && leaderObject == 0u) {
-        return 0;
-    }
-
     /* DM2 startup inventory uses full ObjectID values from SKSave/DB,
      * not DM1/CSB THING cells.  Source analogue: SKULL.ASM keeps the
      * leader hand as the DB object handle while inventory clicks swap
      * handles between the champion slot and hand. */
-    state->dm2State.champion_inventory_objects[championIndex][championSlot] =
-        leaderObject;
-    state->dm2State.leader_hand_object = slotObject;
-    if (dm2_v1_runtime_set_champion_inventory_object(
-            (uint8_t)championIndex,
-            (uint8_t)championSlot,
-            leaderObject) != 0) {
-        state->dm2State.champion_inventory_objects[championIndex]
-                                                     [championSlot] =
-            slotObject;
-        state->dm2State.leader_hand_object = leaderObject;
+    if (!dm2_v1_boot_runtime_swap_inventory_slot(
+            (DM2_V1_BootProfile *)state->dm2BootProfile,
+            championIndex,
+            championSlot,
+            &receipt)) {
         return 0;
     }
-    dm2_v1_runtime_set_leader_hand_object(state->dm2State.leader_hand_object);
-
-    if (state->dm2State.leader_hand_object != 0u && leaderObject != 0u) {
-        m11_set_status(state, "INVENTORY", "DM2 SWAP");
-    } else if (state->dm2State.leader_hand_object != 0u) {
-        m11_set_status(state, "INVENTORY", "DM2 PICKUP");
-    } else {
-        m11_set_status(state, "INVENTORY", "DM2 PLACE");
+    state->dm2State.champion_inventory_objects[championIndex][championSlot] =
+        receipt.slot_object_after;
+    state->dm2State.leader_hand_object = receipt.leader_hand_after;
+    m11_sync_dm2_state_from_runtime(state);
+    state->dm2State.champion_inventory_objects[championIndex][championSlot] =
+        receipt.slot_object_after;
+    if (receipt.status_scope && receipt.status) {
+        m11_set_status(state, receipt.status_scope, receipt.status);
     }
     return 1;
 }
