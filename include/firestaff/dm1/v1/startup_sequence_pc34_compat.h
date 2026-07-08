@@ -119,6 +119,7 @@ typedef struct DM1_V1_StartupLaunchPathFacts_PC34 {
 typedef struct DM1_V1_StartupLaunchPathReceipt_PC34 {
     int handled;
     int intro_bypassed;
+    int started_from_launcher;
     int selected_entry_receipt_valid;
 } DM1_V1_StartupLaunchPathReceipt_PC34;
 

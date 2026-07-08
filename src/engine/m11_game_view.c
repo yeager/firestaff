@@ -1538,6 +1538,7 @@ static int m11_apply_dm1_startup_launch_path_receipt(
     }
     if (receipt.handled) {
         state->dm1StartupIntroBypassed = receipt.intro_bypassed;
+        state->startedFromLauncher = receipt.started_from_launcher;
     }
     return 1;
 }
@@ -11174,7 +11175,6 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
     {
         int ok = M11_GameView_Start(state, &spec);
         if (ok) {
-            state->startedFromLauncher = 0;
             (void)m11_apply_dm1_startup_launch_path_receipt(
                 state,
                 DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34);

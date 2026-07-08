@@ -517,6 +517,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 launcher launch-path receipt does not bypass",
              launch_receipt.intro_bypassed,
              0);
+    expect_i("DM1 launcher launch-path marks launcher start",
+             launch_receipt.started_from_launcher,
+             1);
     expect_i("DM1 launcher launch-path selected receipt valid",
              launch_receipt.selected_entry_receipt_valid,
              1);
@@ -526,6 +529,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
              dm1_v1_startup_launch_path_receipt_pc34(&launch_facts,
                                                      &launch_receipt) &&
                  launch_receipt.intro_bypassed == 1 &&
+                 launch_receipt.started_from_launcher == 0 &&
                  launch_receipt.selected_entry_receipt_valid == 0,
              1);
     launch_facts.source_id = "csb";
@@ -562,6 +566,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 runtime start receipt activates gameplay",
              runtime_receipt.active,
              1);
+    expect_i("DM1 runtime direct start receipt is not launcher-started",
+             runtime_receipt.started_from_launcher,
+             0);
     expect_i("DM1 runtime start defaults source id",
              strcmp(runtime_receipt.source_id, "launcher") == 0,
              1);
@@ -588,6 +595,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
              dm1_v1_startup_runtime_start_receipt_pc34(&runtime_facts,
                                                        &runtime_receipt) &&
                  runtime_receipt.font_scale == 2 &&
+                 runtime_receipt.started_from_launcher == 1 &&
                  runtime_receipt.launch_path_receipt.intro_bypassed == 0,
              1);
     runtime_facts.game_id = "csb";
