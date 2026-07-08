@@ -10451,8 +10451,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
         const char *dd = spec->dataDir;
         char resolvedDataDir[FSP_PATH_MAX];
+        CSB_V1_BootStartupLaunch_PC34 launch;
         CSB_V1_BootProfile *profile = NULL;
-        CSB_V1_BootStartupLaunchReceipts_PC34 startup_receipts;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
             if (FSP_ResolveDataDir(resolvedDataDir,
@@ -10464,48 +10464,26 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Shutdown(state);
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
-        profile = (CSB_V1_BootProfile *)calloc(1, sizeof(*profile));
-        if (!profile) {
-            m11_set_status(state, "BOOT", "CSB OOM");
-            m11_log_event(state, M11_COLOR_RED, "T0: CSB BOOT OOM");
-            return 0;
-        }
-        csb_v1_boot_profile_init(profile);
-        if (csb_v1_boot_scan_assets(profile, dd) != 0) {
-            m11_set_status(state, "BOOT", "CSB ASSETS MISSING");
-            m11_log_event(state, M11_COLOR_RED, "T0: CSB SCAN FAILED");
-            free(profile);
-            return 0;
-        }
-        if (csb_v1_boot_enter_game(profile) != 0) {
-            m11_set_status(state, "BOOT", "CSB ENTER GAME FAILED");
-            m11_log_event(state, M11_COLOR_RED, "T0: CSB BOOT ENTER FAILED");
-            csb_v1_boot_cleanup(profile);
-            free(profile);
-            return 0;
-        }
-        if (!csb_v1_boot_build_startup_launch_receipts_pc34(
-                profile,
+        if (!csb_v1_boot_startup_launch_alloc_pc34(
+                dd,
                 spec->savePath,
                 spec->csbImportDm1SavePath,
                 spec->entranceResumeSavePath,
-                &startup_receipts)) {
+                &launch)) {
+            const char *failureStatus =
+                launch.failure_host_receipt.status
+                    ? launch.failure_host_receipt.status
+                    : "CSB STARTUP FAILED";
             m11_set_status(state,
-                           startup_receipts.handoff.status_scope
-                               ? startup_receipts.handoff.status_scope
+                           launch.failure_host_receipt.status_scope
+                               ? launch.failure_host_receipt.status_scope
                                : "BOOT",
-                           startup_receipts.handoff.status
-                               ? startup_receipts.handoff.status
-                               : "CSB STARTUP FAILED");
-            m11_log_event(state, M11_COLOR_RED,
-                          "T0: %s",
-                          startup_receipts.handoff.status
-                              ? startup_receipts.handoff.status
-                              : "CSB STARTUP FAILED");
-            csb_v1_boot_cleanup(profile);
-            free(profile);
+                           failureStatus);
+            m11_log_event(state, M11_COLOR_RED, "T0: %s", failureStatus);
+            csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;
         }
+        profile = launch.profile;
         state->active = 1;
         state->startedFromLauncher = 1;
         state->sourceKind = M11_GAME_SOURCE_CSB_BOOT;
@@ -10538,23 +10516,25 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
         }
         state->csbBootProfile = profile;
+        launch.profile = NULL;
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         m11_csb_startup_init_state_receipt_to_m11(
             state,
-            &startup_receipts.init_state);
+            &launch.receipts.init_state);
         m11_apply_csb_runtime_startup_session_state_receipt(
             state,
-            &startup_receipts.session_state);
+            &launch.receipts.session_state);
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         (void)m11_csb_startup_apply_host_receipt(
             state,
-            &startup_receipts.launch_host_receipt);
+            &launch.receipts.launch_host_receipt);
         m11_log_event(state,
                       M11_COLOR_YELLOW,
                       "T0: %s",
-                      startup_receipts.launch_host_receipt.status
-                          ? startup_receipts.launch_host_receipt.status
+                      launch.receipts.launch_host_receipt.status
+                          ? launch.receipts.launch_host_receipt.status
                           : "CSB LOADED");
+        csb_v1_boot_startup_launch_cleanup_pc34(&launch);
         /* Tier 4: CSB launcher stderr-pipe — surface the boot milestone to
          * stderr so `firestaff_tier1_strict_boot_probe` and CI can detect
          * a successful CSB direct launch via `--game csb --data-dir`. The

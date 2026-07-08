@@ -1619,6 +1619,24 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                   "boot profile owns combined M11 startup launch receipts and host status");
             csb_v1_boot_cleanup(&boot2);
         }
+        {
+            CSB_V1_BootStartupLaunch_PC34 launch;
+            CHECK(csb_v1_boot_startup_launch_alloc_pc34(
+                      "/__firestaff_missing_csb_data__",
+                      NULL,
+                      NULL,
+                      NULL,
+                      &launch) == 0 &&
+                      launch.profile == NULL &&
+                      launch.failure_host_receipt.status_scope &&
+                      strcmp(launch.failure_host_receipt.status_scope,
+                             "BOOT") == 0 &&
+                      launch.failure_host_receipt.status &&
+                      strcmp(launch.failure_host_receipt.status,
+                             "CSB ASSETS MISSING") == 0,
+                  "boot launch allocation owns missing-asset host failure");
+            csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+        }
         csb_v1_boot_cleanup(&boot);
         receipt.direct_resume_loaded = 1;
         CHECK(csb_v1_runtime_build_startup_session_options_pc34(
