@@ -902,6 +902,23 @@ int dm2_v1_boot_startup_launch_from_runtime_state(
         out_receipt);
 }
 
+int dm2_v1_boot_startup_launch_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_StartupLaunchReceipt *out_receipt)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_launch_from_runtime_state(
+        snapshot->profile,
+        snapshot->startup_menu_active,
+        snapshot->startup_save_root,
+        snapshot->resume_available,
+        snapshot->slot_mask,
+        snapshot->selected_row,
+        out_receipt);
+}
+
 int dm2_v1_boot_startup_advance_idle_from_runtime_state(
     const DM2_V1_BootProfile *profile,
     int startup_menu_active,
@@ -928,6 +945,25 @@ int dm2_v1_boot_startup_advance_idle_from_runtime_state(
     }
     return dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
         &facts,
+        mouth_redraw,
+        out_receipt);
+}
+
+int dm2_v1_boot_startup_advance_idle_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    int mouth_redraw,
+    DM2_V1_StartupIdleReceipt *out_receipt)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_advance_idle_from_runtime_state(
+        snapshot->profile,
+        snapshot->startup_menu_active,
+        snapshot->startup_save_root,
+        snapshot->resume_available,
+        snapshot->slot_mask,
+        snapshot->selected_row,
         mouth_redraw,
         out_receipt);
 }
@@ -961,6 +997,31 @@ int dm2_v1_boot_startup_execute_firestaff_input_from_runtime_state(
     }
     return dm2_v1_startup_execute_firestaff_input_from_host_facts_with_receipt(
         &facts,
+        menu_input,
+        apply_session,
+        apply_userdata,
+        out_execution,
+        out_receipt);
+}
+
+int dm2_v1_boot_startup_execute_firestaff_input_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    int (*apply_session)(void *userdata, const DM2_V1_SessionState *session),
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_execute_firestaff_input_from_runtime_state(
+        snapshot->profile,
+        snapshot->startup_menu_active,
+        snapshot->startup_save_root,
+        snapshot->resume_available,
+        snapshot->slot_mask,
+        snapshot->selected_row,
         menu_input,
         apply_session,
         apply_userdata,
@@ -1006,6 +1067,33 @@ int dm2_v1_boot_startup_execute_pointer_from_runtime_state(
         out_receipt);
 }
 
+int dm2_v1_boot_startup_execute_pointer_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    int x,
+    int y,
+    int (*apply_session)(void *userdata, const DM2_V1_SessionState *session),
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_execute_pointer_from_runtime_state(
+        snapshot->profile,
+        snapshot->startup_menu_active,
+        snapshot->startup_save_root,
+        snapshot->resume_available,
+        snapshot->slot_mask,
+        snapshot->selected_row,
+        x,
+        y,
+        apply_session,
+        apply_userdata,
+        out_execution,
+        out_receipt);
+}
+
 int dm2_v1_boot_startup_presentation_build_from_runtime_state(
     const DM2_V1_BootProfile *profile,
     int startup_menu_active,
@@ -1036,6 +1124,25 @@ int dm2_v1_boot_startup_presentation_build_from_runtime_state(
         max_commands);
 }
 
+int dm2_v1_boot_startup_presentation_build_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_presentation_build_from_runtime_state(
+        snapshot->profile,
+        snapshot->startup_menu_active,
+        snapshot->startup_save_root,
+        snapshot->resume_available,
+        snapshot->slot_mask,
+        snapshot->selected_row,
+        out_commands,
+        max_commands);
+}
+
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,
@@ -1050,6 +1157,34 @@ int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
 {
     return dm2_v1_startup_presentation_receipt(
         startup_menu_active,
+        out_phase,
+        out_phase_size,
+        out_startup_active,
+        out_animation,
+        out_animation_size,
+        out_animation_active,
+        out_title_frame,
+        out_title_frame_max,
+        out_title_ready);
+}
+
+int dm2_v1_boot_startup_presentation_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
+        snapshot->startup_menu_active,
         out_phase,
         out_phase_size,
         out_startup_active,

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2/Theron boot startup snapshots: DM2 boot now owns snapshot wrappers for startup launch, idle, keyboard input, pointer input, presentation build, and presentation receipt. Theron boot now also exposes presentation receipts from its runtime startup snapshot. M11 no longer calls Theron/DM2 long runtime-state startup wrappers directly. Verification: `git diff --check` passed; strict direct compiles for `dm2_v1_boot.c`, `theron_v1_boot.c`, and `m11_game_view.c` passed; Phase A passed 24/24.
+
 - ✅ 2026-07-08 Theron boot snapshot startup wrappers: Theron boot now owns snapshot-based startup input, pointer, layout, render rows, and render-plan wrappers. M11 fills one Theron startup snapshot instead of passing repeated raw state fields through five startup calls. Verification: `git diff --check` passed; strict direct compiles for `theron_v1_boot.c` and `m11_game_view.c` passed.
 
 - ✅ 2026-07-08 CSB boot snapshot render/presentation wrappers: CSB boot now owns snapshot-based startup render-plan, idle-advance, and presentation-receipt wrappers. M11 no longer calls the long runtime-state CSB startup wrappers directly for those paths. Verification: `git diff --check` passed; strict direct compiles for `csb_v1_boot.c` and `m11_game_view.c` passed. Note: local CMake target builds hung in `cmake_check_build_system` and were stopped.
