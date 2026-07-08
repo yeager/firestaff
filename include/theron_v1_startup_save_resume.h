@@ -193,6 +193,10 @@ int theron_v1_startup_save_resume_apply_explicit_path(
     Theron_V1StartupSaveResume *snapshot,
     const char *save_path,
     const char *tqsv_root);
+int theron_v1_startup_save_resume_state_receipt(
+    const Theron_V1StartupSaveResume *snapshot,
+    int snapshot_ready,
+    Theron_StartupStateReceipt *out_receipt);
 
 /* Apply an explicit startup Continue request into a Theron world.
  * These helpers own the save/SRM decode and between-dungeon world reset;

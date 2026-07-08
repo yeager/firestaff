@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron save/resume startup state receipt: Theron startup save/resume now emits an M11-ready `Theron_StartupStateReceipt` for resume verdict, claim, TQSV/SRM slots, SRM import status, Continue focus, and SRM root. Initial Theron launch now applies that receipt instead of manually copying the save/resume snapshot in M11. Verification: Theron targeted library build passed, M11 targeted library build passed, Theron startup save/resume test passed 100/100 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup boot-profile adapters: Theron startup runtime-entry now resolves Track 02 graphics MD5 from the opaque boot profile, and Continue now resolves the TQSV save root from the opaque boot profile. M11 no longer reads `graphics_md5` or `save_root` for those startup paths. Verification: Theron targeted library build passed, M11 targeted library build passed, Theron startup save/resume test passed 100/100 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 RetroAchievements modern ONLINE settings: the modern start menu now renders GAME/GRAPHICS/CONTROLS/AUDIO/ACCESSIBILITY/ONLINE tabs and scopes visible rows, hit-testing, and keyboard navigation per tab. RetroAchievements enable, hardcore, username, and API-token edit rows now live under ONLINE. Verification: M12 targeted library build passed, settings tab hit-test passed 52/52 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.

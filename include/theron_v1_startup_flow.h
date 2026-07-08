@@ -94,6 +94,18 @@ typedef struct {
     int party_dir;
     int set_tick_count;
     int tick_count;
+    int set_save_resume;
+    int save_resume_verdict;
+    int save_resume_claim;
+    int save_resume_active_slot;
+    int save_resume_srm_active_slot;
+    int save_resume_srm_import_status;
+    int save_resume_srm_current_dungeon;
+    int save_resume_srm_current_level;
+    int save_resume_srm_quest_mask;
+    int save_resume_tqsv_slots;
+    int save_resume_srm_slots;
+    char save_resume_srm_root[512];
 } Theron_StartupStateReceipt;
 
 typedef struct {
