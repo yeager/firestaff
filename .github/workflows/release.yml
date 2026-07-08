@@ -117,6 +117,7 @@ jobs:
       FIRESTAFF_VERSION: ${{ needs.preflight.outputs.version }}
       FIRESTAFF_RELEASE_NOTES: ${{ needs.preflight.outputs.release_notes }}
       FIRESTAFF_ARCH: ${{ matrix.arch }}
+      HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
     steps:
       - uses: actions/checkout@v4
 
