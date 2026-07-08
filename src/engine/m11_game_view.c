@@ -11572,26 +11572,10 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                              verifiedMd5,
                                              savePath,
                                              &launch)) {
-        switch (launch.prepare_result) {
-            case THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED:
-            m11_set_status(state, "BOOT", "THERON TRACK 02 VERIFY FAILED");
-                break;
-            case THERON_V1_BOOT_STARTUP_PREPARE_MISSING_TRACK02:
-                m11_set_status(state, "BOOT", "THERON TRACK 02 MISSING");
-                break;
-            case THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED:
-                m11_set_status(state, "BOOT", "THERON ASSET LOAD FAILED");
-                break;
-            case THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED:
-                m11_set_status(state, "BOOT", "THERON STARTUP STATE FAILED");
-                break;
-            default:
-                m11_set_status(state,
-                               "BOOT",
-                               theron_v1_boot_startup_prepare_result_name(
-                                   launch.prepare_result));
-                break;
-        }
+        (void)m11_theron_apply_startup_host_receipt(
+            state,
+            &launch.launch_host_receipt,
+            NULL);
         goto fail;
     }
 
