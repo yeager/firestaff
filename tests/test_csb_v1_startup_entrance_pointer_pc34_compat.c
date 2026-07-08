@@ -723,9 +723,13 @@ int main(void)
     }
 
     check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
-              csb_v1_startup_title_total_ticks_pc34() == 82 &&
+              csb_v1_startup_title_total_ticks_pc34() == 103 &&
               csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
-              csb_v1_startup_title_source_step_for_frame_pc34(60) == 2,
+              csb_v1_startup_title_source_step_for_frame_pc34(60) == 2 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(79) == 21 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(99) == 21 &&
+              csb_v1_startup_title_stage_for_frame_pc34(100) ==
+                  CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
           "startup title timing preserves CSB PRESENTS hold before CHAOS zoom");
 
     render_state.title_frame =
@@ -734,10 +738,10 @@ int main(void)
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-              plan.title_source_x == 136 &&
-              plan.title_source_y == 74 &&
-              plan.title_source_w == 48 &&
-              plan.title_source_h == 12 &&
+              plan.title_source_x == 152 &&
+              plan.title_source_y == 78 &&
+              plan.title_source_w == 16 &&
+              plan.title_source_h == 4 &&
               plan.title_blit_kind ==
                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 &&
               plan.title_transparent_color == -1 &&
