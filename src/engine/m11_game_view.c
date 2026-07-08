@@ -10054,6 +10054,10 @@ static void m11_nexus_startup_host_facts(
     if (!state) {
         return;
     }
+    facts->title_active = state->nexusState.title_active;
+    facts->title_frame = state->nexusState.title_frame;
+    facts->save_select_active = state->nexusState.startup_save_select_active;
+    facts->champion_select_active = state->nexusState.champion_select_active;
     facts->save_dir = state->nexusState.startup_save_dir;
     facts->slot_mask = state->nexusState.startup_save_slot_mask;
     facts->save_selected_row = state->nexusState.startup_save_selected_row;
@@ -12324,16 +12328,27 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             /* Engine not available — do not tick. */
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
-        if (state->nexusState.title_active) {
-            ++state->nexusState.title_frame;
-            return M11_GAME_INPUT_REDRAW;
-        }
-        if (state->nexusState.startup_save_select_active) {
-            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
-        }
-        if (state->nexusState.champion_select_active) {
-            ++state->nexusState.champion_select_frame;
-            return M11_GAME_INPUT_REDRAW;
+        if (state->nexusState.title_active ||
+            state->nexusState.startup_save_select_active ||
+            state->nexusState.champion_select_active) {
+            Nexus_V1_StartupHostFacts facts;
+            Nexus_V1_StartupIdleReceipt receipt;
+            M11_GameInputResult result;
+
+            m11_nexus_startup_host_facts(state, &facts);
+            if (!nexus_v1_startup_advance_idle_from_host_facts_with_receipt(
+                    &facts,
+                    &receipt)) {
+                return mouthRedraw ? M11_GAME_INPUT_REDRAW
+                                   : M11_GAME_INPUT_IGNORED;
+            }
+            result = m11_nexus_apply_startup_receipt(
+                state,
+                &receipt.host_receipt);
+            return result == M11_GAME_INPUT_IGNORED
+                       ? (mouthRedraw ? M11_GAME_INPUT_REDRAW
+                                      : M11_GAME_INPUT_IGNORED)
+                       : result;
         }
         nexus_v1_tick(state->nexusEngine);
         if (state->nexusEngine->mechanics) {

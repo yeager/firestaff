@@ -89,6 +89,7 @@ int main(void)
     Nexus_V1_StartupApplyReceipt receipt;
     Nexus_V1_StartupHostReceipt host_receipt;
     Nexus_V1_StartupHostActionReceipt host_action_receipt;
+    Nexus_V1_StartupIdleReceipt idle_receipt;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupSaveRenderRow save_rows[4];
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
@@ -558,7 +559,7 @@ int main(void)
                    "Nexus champion host facts pointer helper owns M11 pointer state");
             nexus_v1_champions_init(&host_pool);
             host_facts.champion_pool = &host_pool;
-            expect(nexus_v1_startup_execute_champion_pointer_from_host_facts_with_receipt(
+        expect(nexus_v1_startup_execute_champion_pointer_from_host_facts_with_receipt(
                        &host_facts,
                        20,
                        38,
@@ -574,6 +575,37 @@ int main(void)
                        host_pool.party_count == 1,
                    "Nexus champion pointer wrapper returns M11-ready state and action receipt");
         }
+        memset(&host_facts, 0, sizeof(host_facts));
+        host_facts.title_active = 1;
+        host_facts.title_frame = 41;
+        expect(nexus_v1_startup_advance_idle_from_host_facts_with_receipt(
+                   &host_facts,
+                   &idle_receipt) &&
+                   idle_receipt.host_receipt.input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   idle_receipt.host_receipt.mode_update.set_title_frame &&
+                   idle_receipt.host_receipt.mode_update.title_frame == 42,
+               "Nexus idle receipt owns title frame advance");
+        memset(&host_facts, 0, sizeof(host_facts));
+        host_facts.save_select_active = 1;
+        expect(nexus_v1_startup_advance_idle_from_host_facts_with_receipt(
+                   &host_facts,
+                   &idle_receipt) &&
+                   idle_receipt.host_receipt.input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_IGNORED,
+               "Nexus idle receipt owns save-select idle no-op");
+        memset(&host_facts, 0, sizeof(host_facts));
+        host_facts.champion_select_active = 1;
+        host_facts.champion_frame = 12;
+        expect(nexus_v1_startup_advance_idle_from_host_facts_with_receipt(
+                   &host_facts,
+                   &idle_receipt) &&
+                   idle_receipt.host_receipt.input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   idle_receipt.host_receipt.mode_update
+                       .set_champion_frame &&
+                   idle_receipt.host_receipt.mode_update.champion_frame == 13,
+               "Nexus idle receipt owns champion cursor blink frame advance");
         {
             Nexus_V1_StartupDrawCommand commands[80];
             int command_count =
