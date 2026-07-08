@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus startup host receipt execution: Nexus startup menu now emits M11-ready host receipts directly from save/title/champion action execution. M11 no longer converts Nexus apply receipts locally before applying startup mode/status/input outcome. Verification: Nexus startup menu test passed, M11 Nexus startup gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 RetroAchievements start-menu label polish: visible modern settings, generic settings labels, and the accessibility/state manifest now spell out the RetroAchievements hardcore, username, and API-token rows instead of using short `RA` labels. Verification: settings hit-test passed 49/49, DM1 V2 settings passed, RA unit test passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 startup host receipt execution: DM2 startup menu now emits M11-ready host receipts directly from combined action execution/session-apply. M11 no longer converts DM2 apply receipts locally before applying startup mode/status/input outcome. Verification: DM2 startup action contract passed 65/65, DM2 M11 startup/profile gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

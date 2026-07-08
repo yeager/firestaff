@@ -569,6 +569,19 @@ int main(void)
                receipt.mode_update.champion_cursor == 2 &&
                strcmp(receipt.status, "NEXUS CHAMPION CURSOR") == 0,
            "Nexus champion action helper owns execution and receipt");
+    expect(nexus_v1_startup_execute_champion_action_with_host_receipt(
+               &action,
+               2,
+               &champion_execution,
+               &host_receipt) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR &&
+               host_receipt.input_result ==
+                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+               host_receipt.mode_update.set_champion_cursor &&
+               host_receipt.mode_update.champion_cursor == 2 &&
+               strcmp(host_receipt.status, "NEXUS CHAMPION CURSOR") == 0,
+           "Nexus champion action helper can return M11-ready host receipt directly");
     hit.kind = NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER;
     hit.row = -1;
     expect(nexus_v1_startup_champion_handle_hit(
@@ -919,6 +932,18 @@ int main(void)
                receipt.mode_update.save_select_active == 1 &&
                strcmp(receipt.status, "NEXUS LOAD GAME") == 0,
            "startup title action helper owns execution and receipt");
+    expect(nexus_v1_startup_execute_title_action_with_host_receipt(
+               &action,
+               &title_execution,
+               &host_receipt) &&
+               title_execution.kind ==
+                   NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_SAVE_SELECT &&
+               host_receipt.input_result ==
+                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+               host_receipt.mode_update.set_save_select_active &&
+               host_receipt.mode_update.save_select_active == 1 &&
+               strcmp(host_receipt.status, "NEXUS LOAD GAME") == 0,
+           "startup title action helper can return M11-ready host receipt directly");
     expect(nexus_v1_startup_title_handle_hit(
                54,
                menu.slot_mask,
@@ -1095,6 +1120,21 @@ int main(void)
                strcmp(receipt.status_scope, "BOOT") == 0 &&
                strcmp(receipt.status, "NEXUS RESUMED") == 0,
            "startup save action helper owns execution, load callback, and receipt");
+    load_calls = 0;
+    expect(nexus_v1_startup_execute_save_action_with_host_receipt(
+               &action,
+               startup_load_success,
+               &load_calls,
+               &execution,
+               &host_receipt) &&
+               load_calls == 1 &&
+               host_receipt.input_result ==
+                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+               host_receipt.mode_update.set_save_select_active &&
+               host_receipt.mode_update.save_select_active == 0 &&
+               strcmp(host_receipt.status_scope, "BOOT") == 0 &&
+               strcmp(host_receipt.status, "NEXUS RESUMED") == 0,
+           "startup save action helper can return M11-ready host receipt directly");
     expect(nexus_v1_startup_apply_receipt_from_save_execution(
                &execution,
                0,
