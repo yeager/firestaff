@@ -444,6 +444,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupRuntimeStartReceipt_PC34 runtime_receipt;
     DM1_V1_StartupDungeonPathFacts_PC34 dungeon_facts;
     DM1_V1_StartupDungeonPathReceipt_PC34 dungeon_receipt;
+    DM1_V1_StartupGraphicsBindFacts_PC34 graphics_facts;
+    DM1_V1_StartupGraphicsBindReceipt_PC34 graphics_receipt;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -664,6 +666,41 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("NULL dungeon path facts rejected",
              dm1_v1_startup_dungeon_path_receipt_pc34(NULL,
                                                       &dungeon_receipt),
+             0);
+
+    memset(&graphics_facts, 0, sizeof(graphics_facts));
+    memset(&graphics_receipt, 0, sizeof(graphics_receipt));
+    graphics_facts.game_id = "dm1";
+    graphics_facts.dungeon_path = "/tmp/firestaff/DATA/DUNGEON.DAT";
+    expect_i("DM1 graphics bind receipt builds",
+             dm1_v1_startup_graphics_bind_receipt_pc34(&graphics_facts,
+                                                       &graphics_receipt),
+             1);
+    expect_i("DM1 graphics bind receipt handled",
+             graphics_receipt.handled,
+             1);
+    expect_i("DM1 graphics bind points at sibling GRAPHICS.DAT",
+             graphics_receipt.bind_graphics_dat == 1 &&
+                 strcmp(graphics_receipt.graphics_dat_path,
+                        "/tmp/firestaff/DATA/GRAPHICS.DAT") == 0,
+             1);
+    graphics_facts.dungeon_path = "DUNGEON.DAT";
+    expect_i("DM1 graphics bind needs a parent path",
+             dm1_v1_startup_graphics_bind_receipt_pc34(&graphics_facts,
+                                                       &graphics_receipt) &&
+                 graphics_receipt.handled == 1 &&
+                 graphics_receipt.bind_graphics_dat == 0,
+             1);
+    graphics_facts.game_id = "csb";
+    graphics_facts.dungeon_path = "/tmp/csb/DUNGEON.DAT";
+    expect_i("non-DM1 graphics bind receipt no-op",
+             dm1_v1_startup_graphics_bind_receipt_pc34(&graphics_facts,
+                                                       &graphics_receipt) &&
+                 graphics_receipt.handled == 0,
+             1);
+    expect_i("NULL graphics bind facts rejected",
+             dm1_v1_startup_graphics_bind_receipt_pc34(NULL,
+                                                       &graphics_receipt),
              0);
     expect_i("DM1 handoff prelude plan builds",
              dm1_v1_startup_handoff_prelude_plan_pc34("dm1", &prelude),

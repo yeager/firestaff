@@ -227,6 +227,49 @@ int dm1_v1_startup_dungeon_path_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_graphics_bind_receipt_pc34(
+    const DM1_V1_StartupGraphicsBindFacts_PC34* facts,
+    DM1_V1_StartupGraphicsBindReceipt_PC34* out_receipt) {
+    DM1_V1_StartupGraphicsBindReceipt_PC34 receipt;
+    size_t dungeon_len;
+    size_t slash_pos;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->game_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    receipt.handled = 1;
+    if (!facts->dungeon_path || facts->dungeon_path[0] == '\0') {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    dungeon_len = strlen(facts->dungeon_path);
+    slash_pos = dungeon_len;
+    while (slash_pos > 0 &&
+           facts->dungeon_path[slash_pos - 1] != '/' &&
+           facts->dungeon_path[slash_pos - 1] != '\\') {
+        --slash_pos;
+    }
+    if (slash_pos > 0 &&
+        slash_pos + 13 < sizeof(receipt.graphics_dat_path)) {
+        memcpy(receipt.graphics_dat_path,
+               facts->dungeon_path,
+               slash_pos);
+        memcpy(receipt.graphics_dat_path + slash_pos,
+               "GRAPHICS.DAT",
+               13);
+        receipt.bind_graphics_dat = 1;
+    }
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_handoff_prelude_plan_pc34(
     const char* game_id,
     DM1_V1_StartupHandoffPreludePlan_PC34* out_plan) {

@@ -11012,14 +11012,36 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     /* Try to open GRAPHICS.DAT from the same directory as the dungeon file */
     {
         char graphicsDatPath[M11_GAME_VIEW_PATH_CAPACITY];
-        size_t dungeonLen = strlen(dungeonPath);
-        size_t slashPos = dungeonLen;
-        while (slashPos > 0 && dungeonPath[slashPos - 1] != '/' && dungeonPath[slashPos - 1] != '\\') {
-            --slashPos;
+        int bindGraphicsDat = 0;
+        if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
+            DM1_V1_StartupGraphicsBindFacts_PC34 facts;
+            DM1_V1_StartupGraphicsBindReceipt_PC34 receipt;
+            memset(&facts, 0, sizeof(facts));
+            memset(&receipt, 0, sizeof(receipt));
+            facts.game_id = spec->gameId;
+            facts.dungeon_path = dungeonPath;
+            if (dm1_v1_startup_graphics_bind_receipt_pc34(&facts, &receipt) &&
+                receipt.handled &&
+                receipt.bind_graphics_dat) {
+                snprintf(graphicsDatPath,
+                         sizeof(graphicsDatPath),
+                         "%s",
+                         receipt.graphics_dat_path);
+                bindGraphicsDat = 1;
+            }
+        } else {
+            size_t dungeonLen = strlen(dungeonPath);
+            size_t slashPos = dungeonLen;
+            while (slashPos > 0 && dungeonPath[slashPos - 1] != '/' && dungeonPath[slashPos - 1] != '\\') {
+                --slashPos;
+            }
+            if (slashPos > 0 && slashPos + 13 < sizeof(graphicsDatPath)) {
+                memcpy(graphicsDatPath, dungeonPath, slashPos);
+                memcpy(graphicsDatPath + slashPos, "GRAPHICS.DAT", 13);
+                bindGraphicsDat = 1;
+            }
         }
-        if (slashPos > 0 && slashPos + 13 < sizeof(graphicsDatPath)) {
-            memcpy(graphicsDatPath, dungeonPath, slashPos);
-            memcpy(graphicsDatPath + slashPos, "GRAPHICS.DAT", 13);
+        if (bindGraphicsDat) {
             if (M11_AssetLoader_Init(&state->assetLoader, graphicsDatPath)) {
                 state->assetsAvailable = 1;
                 /* Try to load the original DM1 font from GRAPHICS.DAT */
