@@ -1807,6 +1807,8 @@ int F0888_ORCH_GetCreatureSnapshot_Compat(
 {
     const struct DungeonGroup_Compat* group;
     const struct CreatureBehaviorProfile_Compat* profile;
+    DM1_MeleeF0231CreatureSnapshotInputPc34 in;
+    DM1_MeleeF0231CreatureSnapshotPlanPc34 plan;
 
     if (outSnapshot) {
         memset(outSnapshot, 0, sizeof(*outSnapshot));
@@ -1822,26 +1824,33 @@ int F0888_ORCH_GetCreatureSnapshot_Compat(
     profile = CREATURE_GetProfile_Compat(group->creatureType);
     if (!profile) return 0;
 
-    /* ReDMCSB: live group health comes from the active DUNGEON.C group slot,
-     * while immutable creature stats come from the G0243-style creature
-     * profile table already mirrored by memory_creature_ai_pc34_compat. */
-    outSnapshot->creatureType = group->creatureType;
-    outSnapshot->attack = profile->baseAttack;
-    outSnapshot->defense = profile->baseDefense;
-    outSnapshot->dexterity = profile->dexterity;
-    outSnapshot->baseHealth = profile->baseHealth;
-    outSnapshot->poisonAttack = profile->poisonAttack;
-    outSnapshot->attackType = profile->attackType;
-    outSnapshot->attributes = profile->attributes;
-    outSnapshot->woundProbabilities = profile->woundProbabilities;
-    outSnapshot->properties = profile->properties;
-    outSnapshot->doubledMapDifficulty = doubledMapDifficulty;
-    outSnapshot->creatureIndex = creatureIndex;
-    outSnapshot->healthBefore = group->health[creatureIndex];
-    outSnapshot->isCandidateInvulnerable =
-        world->candidateAttackInvulnerableEnabled &&
-        world->candidateAttackInvulnerableGroupIndex == groupIndex &&
-        world->candidateAttackInvulnerableCreatureIndex == creatureIndex;
+    memset(&in, 0, sizeof(in));
+    in.groupIndex = groupIndex;
+    in.groupCount = group->count;
+    in.groupCreatureType = group->creatureType;
+    in.creatureIndex = creatureIndex;
+    in.creatureHealth = group->health[creatureIndex];
+    in.profileAttack = profile->baseAttack;
+    in.profileDefense = profile->baseDefense;
+    in.profileDexterity = profile->dexterity;
+    in.profileBaseHealth = profile->baseHealth;
+    in.profilePoisonAttack = profile->poisonAttack;
+    in.profileAttackType = profile->attackType;
+    in.profileAttributes = profile->attributes;
+    in.profileWoundProbabilities = profile->woundProbabilities;
+    in.profileProperties = profile->properties;
+    in.doubledMapDifficulty = doubledMapDifficulty;
+    in.candidateInvulnerableEnabled =
+        world->candidateAttackInvulnerableEnabled;
+    in.candidateInvulnerableGroupIndex =
+        world->candidateAttackInvulnerableGroupIndex;
+    in.candidateInvulnerableCreatureIndex =
+        world->candidateAttackInvulnerableCreatureIndex;
+    if (!dm1_v1_melee_creature_snapshot_plan_f0231_pc34(&in, &plan) ||
+        !plan.valid) {
+        return 0;
+    }
+    *outSnapshot = plan.snapshot;
     return 1;
 }
 
