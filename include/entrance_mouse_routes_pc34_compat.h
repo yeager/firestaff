@@ -22,6 +22,7 @@ typedef struct EntranceMouseRouteCompat {
 unsigned int ENTRANCE_Compat_GetMouseRouteCount(void);
 int ENTRANCE_Compat_GetMouseRoute(unsigned int ordinal, EntranceMouseRouteCompat* outRoute);
 int ENTRANCE_Compat_HitTestMouseRoute(int screenX, int screenY, unsigned int buttonMask, EntranceMouseRouteCompat* outRoute);
+int ENTRANCE_Compat_DispatchMouseRouteCommand(int screenX, int screenY, unsigned int buttonMask);
 const char* ENTRANCE_Compat_GetMouseRouteEvidence(void);
 
 #endif

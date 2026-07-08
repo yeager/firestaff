@@ -598,11 +598,9 @@ static int m11_boot_probe_expected_source_kind(const char* gameId,
 int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
                                                     int framebufferY,
                                                     unsigned int buttonMask) {
-    EntranceMouseRouteCompat route;
-    if (!ENTRANCE_Compat_HitTestMouseRoute(framebufferX, framebufferY, buttonMask, &route)) {
-        return M11_ENTRANCE_RUNTIME_COMMAND_NONE;
-    }
-    return (int)route.commandId;
+    return ENTRANCE_Compat_DispatchMouseRouteCommand(framebufferX,
+                                                     framebufferY,
+                                                     buttonMask);
 }
 
 static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
@@ -772,8 +770,9 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
 static M11_EntranceCommand m11_entrance_route_framebuffer_pointer(int fbX,
                                                                   int fbY,
                                                                   unsigned int buttonMask) {
-    return m11_entrance_command_path_from_source_command(
-        M11_Entrance_DispatchSourceLockedPointerCommand(fbX, fbY, buttonMask));
+    return (M11_EntranceCommand)ENTRANCE_Compat_CommandPathFromPointerCommand(fbX,
+                                                                              fbY,
+                                                                              buttonMask);
 }
 
 static M11_EntranceCommand m11_entrance_route_window_pointer(int windowX,
@@ -793,17 +792,14 @@ static M11_EntranceCommand m11_entrance_route_normalized_touch(float normalizedX
     int windowH = M11_Render_GetWindowHeight();
     int windowX;
     int windowY;
-    if (windowW <= 0 || windowH <= 0) {
+    if (!ENTRANCE_Compat_NormalizedTouchToWindowPoint(windowW,
+                                                      windowH,
+                                                      normalizedX,
+                                                      normalizedY,
+                                                      &windowX,
+                                                      &windowY)) {
         return M11_ENTRANCE_COMMAND_NONE;
     }
-    if (normalizedX < 0.0f || normalizedX > 1.0f ||
-        normalizedY < 0.0f || normalizedY > 1.0f) {
-        return M11_ENTRANCE_COMMAND_NONE;
-    }
-    windowX = (int)(normalizedX * (float)windowW);
-    windowY = (int)(normalizedY * (float)windowH);
-    if (windowX >= windowW) windowX = windowW - 1;
-    if (windowY >= windowH) windowY = windowH - 1;
     return m11_entrance_route_window_pointer(windowX,
                                              windowY,
                                              ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT);
