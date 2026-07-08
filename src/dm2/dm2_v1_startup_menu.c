@@ -1215,6 +1215,10 @@ int dm2_v1_startup_launch_from_host_facts_with_receipt(
         DM2_V1_STARTUP_HOST_INPUT_REDRAW;
     out_receipt->host_receipt.status_scope = "BOOT";
     out_receipt->host_receipt.status = "DM2 START MENU";
+    out_receipt->host_receipt.inspect_scope = "READY";
+    out_receipt->host_receipt.inspect_detail =
+        "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE";
+    out_receipt->host_receipt.log_line = "T0: DM2 START MENU";
     return 1;
 }
 
@@ -1424,6 +1428,10 @@ int dm2_v1_startup_resume_status_host_receipt(
         break;
     case DM2_V1_STARTUP_RESUME_STATUS_RESUMED:
         out_receipt->status = "DM2 RESUMED";
+        out_receipt->inspect_scope = "READY";
+        out_receipt->inspect_detail =
+            "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE";
+        out_receipt->log_line = "T0: DM2 RESUMED";
         out_receipt->input_result = DM2_V1_STARTUP_HOST_INPUT_REDRAW;
         break;
     default:

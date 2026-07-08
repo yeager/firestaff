@@ -143,6 +143,13 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
 static void m11_set_status(M11_GameViewState* state,
                            const char* title,
                            const char* detail);
+static void m11_set_inspect_readout(M11_GameViewState* state,
+                                    const char* title,
+                                    const char* detail);
+static void m11_log_event(M11_GameViewState* state,
+                          unsigned char color,
+                          const char* fmt,
+                          ...);
 static void m11_format_champion_name(const unsigned char* raw,
                                      char* out,
                                      size_t outSize);
@@ -715,6 +722,16 @@ static M11_GameInputResult m11_dm2_startup_apply_host_receipt(
                            ? host_receipt->status_scope
                            : "STARTUP",
                        host_receipt->status ? host_receipt->status : "");
+    }
+    if (host_receipt->inspect_scope) {
+        m11_set_inspect_readout(state,
+                                host_receipt->inspect_scope,
+                                host_receipt->inspect_detail
+                                    ? host_receipt->inspect_detail
+                                    : "");
+    }
+    if (host_receipt->log_line) {
+        m11_log_event(state, 11U, "%s", host_receipt->log_line);
     }
     if (host_receipt->input_result == DM2_V1_STARTUP_HOST_INPUT_REDRAW) {
         return M11_GAME_INPUT_REDRAW;
@@ -10697,20 +10714,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 DM2_V1_STARTUP_RESUME_STATUS_RESUMED,
                 &resumeReceipt);
             (void)m11_dm2_startup_apply_host_receipt(state, &resumeReceipt);
-        } else {
-            m11_set_status(state, "BOOT",
-                           state->dm2State.startup_menu_active
-                               ? "DM2 START MENU"
-                               : "DM2 READY");
         }
-        m11_set_inspect_readout(state, "READY",
-                                "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE");
-        m11_log_event(state, M11_COLOR_YELLOW,
-                      (spec->savePath && spec->savePath[0] != '\0')
-                          ? "T0: DM2 RESUMED"
-                          : (state->dm2State.startup_menu_active
-                                 ? "T0: DM2 START MENU"
-                                 : "T0: DM2 LOADED"));
         /* Tier 1 launch smoke: keep the DM2 direct-launch milestone
          * observable to headless probes, matching the CSB stderr-pipe above.
          * The boot itself stays owned by the DM2 V1 branch documented in
