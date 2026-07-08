@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 selected boot-probe source-kind ownership: DM1 V1 startup now owns the selected-entry boot-probe source-kind receipt requiring DM1 direct/launcher boot probes to resolve to the built-in catalog source kind. M11 keeps only enum transport and the generic fallback for other games. Verification: `test_dm1_v1_startup_intro_state_machine_gate` passed; `test_dm1_v1_m11_launcher_handoff_boundary` passed 88/88; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 pending motion queue ownership: DM1 V1 input now owns the bounded pending motion queue used while source VBlank/tick gating waits. M11 no longer owns capacity, head/tail wrap, overflow, pop, or reset logic. Verification: `test_dm1_v1_input_command_queue_pc34_compat` passed; `test_dm1_v1_m11_launcher_handoff_boundary` passed 88/88; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 resurrection rename host-input ownership: DM1 V1 rename UI gate now owns active-panel gating, ASCII text-byte acceptance, and host keydown decisions for backspace/escape/return/keypad return. M11 maps SDL keys to abstract host keys and applies DM1 decisions only. Verification: `test_dm1_v1_resurrection_rename_ui_gate_pc34_compat` passed 89/89; `test_m11_overlay_command_queue_block` passed 450/450; `test_dm1_v1_m11_launcher_handoff_boundary` passed 88/88; Phase A passed 24/24; `git diff --check` passed.

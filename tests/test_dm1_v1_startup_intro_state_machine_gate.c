@@ -466,6 +466,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupBootProbeReceipt_PC34 boot_receipt;
     DM1_V1_StartupSelectedBootProbeFacts_PC34 selected_boot_facts;
     DM1_V1_StartupSelectedBootProbeReceipt_PC34 selected_boot_receipt;
+    DM1_V1_StartupSelectedBootProbeSourceKindFacts_PC34 selected_kind_facts;
+    DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34 selected_kind_receipt;
 
     expect_i("launcher launch path does not bypass intro",
              dm1_v1_startup_launch_path_bypasses_intro_pc34(
@@ -585,6 +587,43 @@ static void check_dm1_launch_path_bypass_contract(void) {
              dm1_v1_startup_selected_boot_probe_receipt_pc34(
                  NULL,
                  &selected_boot_receipt),
+             0);
+
+    memset(&selected_kind_facts, 0, sizeof(selected_kind_facts));
+    memset(&selected_kind_receipt, 0, sizeof(selected_kind_receipt));
+    selected_kind_facts.expected_game_id = "dm1";
+    selected_kind_facts.actual_source_kind = 0;
+    selected_kind_facts.dm1_builtin_source_kind = 0;
+    expect_i("DM1 selected boot-probe source kind accepts builtin catalog",
+             dm1_v1_startup_selected_boot_probe_source_kind_receipt_pc34(
+                 &selected_kind_facts,
+                 &selected_kind_receipt) &&
+                 selected_kind_receipt.handled == 1 &&
+                 selected_kind_receipt.valid == 1 &&
+                 selected_kind_receipt.expected_source_kind == 0,
+             1);
+    selected_kind_facts.actual_source_kind = 2;
+    expect_i("DM1 selected boot-probe source kind rejects non-builtin",
+             dm1_v1_startup_selected_boot_probe_source_kind_receipt_pc34(
+                 &selected_kind_facts,
+                 &selected_kind_receipt) &&
+                 selected_kind_receipt.handled == 1 &&
+                 selected_kind_receipt.valid == 0 &&
+                 selected_kind_receipt.expected_source_kind == 0 &&
+                 selected_kind_receipt.actual_source_kind == 2,
+             1);
+    selected_kind_facts.expected_game_id = "csb";
+    expect_i("CSB selected boot-probe source kind stays generic-valid",
+             dm1_v1_startup_selected_boot_probe_source_kind_receipt_pc34(
+                 &selected_kind_facts,
+                 &selected_kind_receipt) &&
+                 selected_kind_receipt.handled == 0 &&
+                 selected_kind_receipt.valid == 1,
+             1);
+    expect_i("NULL selected boot-probe source kind facts rejected",
+             dm1_v1_startup_selected_boot_probe_source_kind_receipt_pc34(
+                 NULL,
+                 &selected_kind_receipt),
              0);
 
     memset(&launch_facts, 0, sizeof(launch_facts));

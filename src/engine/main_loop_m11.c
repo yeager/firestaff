@@ -3896,6 +3896,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             M11_BootProbeReceipt receipt;
             DM1_V1_StartupSelectedBootProbeFacts_PC34 selectedFacts;
             DM1_V1_StartupSelectedBootProbeReceipt_PC34 selectedReceipt;
+            DM1_V1_StartupSelectedBootProbeSourceKindFacts_PC34 selectedKindFacts;
+            DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34 selectedKindReceipt;
             M11_GameSourceKind expectedSourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
             m11_phase_a_advance_boot_probe_frames(&gameView, frames);
             scriptInputs = m11_phase_a_apply_boot_probe_script(&gameView,
@@ -3911,6 +3913,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             memset(&receipt, 0, sizeof(receipt));
             memset(&selectedFacts, 0, sizeof(selectedFacts));
             memset(&selectedReceipt, 0, sizeof(selectedReceipt));
+            memset(&selectedKindFacts, 0, sizeof(selectedKindFacts));
+            memset(&selectedKindReceipt, 0, sizeof(selectedKindReceipt));
             if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
                 (selectedFacts.expected_game_id = o->gameId,
                  selectedFacts.actual_source_id = receipt.sourceId,
@@ -3923,8 +3927,23 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                      &selectedFacts,
                      &selectedReceipt)) ||
                 !selectedReceipt.valid ||
-                !m11_boot_probe_expected_source_kind(o->gameId, &expectedSourceKind) ||
-                receipt.sourceKind != expectedSourceKind) {
+                (selectedKindFacts.expected_game_id = o->gameId,
+                 selectedKindFacts.actual_source_kind = (int)receipt.sourceKind,
+                 selectedKindFacts.dm1_builtin_source_kind =
+                     (int)M11_GAME_SOURCE_BUILTIN_CATALOG,
+                 !dm1_v1_startup_selected_boot_probe_source_kind_receipt_pc34(
+                     &selectedKindFacts,
+                     &selectedKindReceipt)) ||
+                (selectedKindReceipt.handled &&
+                 !selectedKindReceipt.valid) ||
+                (!selectedKindReceipt.handled &&
+                 (!m11_boot_probe_expected_source_kind(o->gameId,
+                                                       &expectedSourceKind) ||
+                  receipt.sourceKind != expectedSourceKind))) {
+                if (selectedKindReceipt.handled) {
+                    expectedSourceKind =
+                        (M11_GameSourceKind)selectedKindReceipt.expected_source_kind;
+                }
                 fprintf(stderr,
                         "firestaff: boot-probe expected selected-entry source '%s' kind=%d but got active=%d sourceId='%s' kind=%d startedFromLauncher=%d introBypassed=%d\n",
                         o->gameId ? o->gameId : "",

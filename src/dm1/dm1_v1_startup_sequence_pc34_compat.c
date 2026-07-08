@@ -894,6 +894,35 @@ int dm1_v1_startup_selected_boot_probe_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_selected_boot_probe_source_kind_receipt_pc34(
+    const DM1_V1_StartupSelectedBootProbeSourceKindFacts_PC34* facts,
+    DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34* out_receipt) {
+    DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34 receipt;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.actual_source_kind = facts->actual_source_kind;
+    receipt.expected_source_kind = facts->dm1_builtin_source_kind;
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->expected_game_id)) {
+        receipt.valid = 1;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB: TITLE.C F0437 and ENTRANCE.C F0441 are part of the DM1
+     * built-in source startup path. Firestaff keeps M11's enum private, but
+     * DM1 owns the receipt requiring selected boot probes to come from the
+     * built-in catalog source kind. */
+    receipt.handled = 1;
+    receipt.valid =
+        facts->actual_source_kind == facts->dm1_builtin_source_kind;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_sequence_source_order_valid_pc34(void) {
     /* ReDMCSB startup source order:
      * SWSH.C:39-47 runs START.PRG after the FTL palette program;

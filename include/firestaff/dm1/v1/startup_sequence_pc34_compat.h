@@ -291,6 +291,19 @@ typedef struct DM1_V1_StartupSelectedBootProbeReceipt_PC34 {
     int started_from_launcher;
 } DM1_V1_StartupSelectedBootProbeReceipt_PC34;
 
+typedef struct DM1_V1_StartupSelectedBootProbeSourceKindFacts_PC34 {
+    const char* expected_game_id;
+    int actual_source_kind;
+    int dm1_builtin_source_kind;
+} DM1_V1_StartupSelectedBootProbeSourceKindFacts_PC34;
+
+typedef struct DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34 {
+    int handled;
+    int valid;
+    int expected_source_kind;
+    int actual_source_kind;
+} DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34;
+
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage);
 int dm1_v1_startup_stage_after_pc34(DM1_V1_StartupStage_PC34 later,
                                     DM1_V1_StartupStage_PC34 earlier);
@@ -379,6 +392,9 @@ int dm1_v1_startup_boot_probe_receipt_from_facts_pc34(
 int dm1_v1_startup_selected_boot_probe_receipt_pc34(
     const DM1_V1_StartupSelectedBootProbeFacts_PC34* facts,
     DM1_V1_StartupSelectedBootProbeReceipt_PC34* out_receipt);
+int dm1_v1_startup_selected_boot_probe_source_kind_receipt_pc34(
+    const DM1_V1_StartupSelectedBootProbeSourceKindFacts_PC34* facts,
+    DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34* out_receipt);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);
