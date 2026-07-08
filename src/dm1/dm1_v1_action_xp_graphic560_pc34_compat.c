@@ -240,6 +240,69 @@ int dm1_v1_action_adjust_f0407_tail_pc34(
     return 1;
 }
 
+int dm1_v1_action_completion_plan_f0407_pc34(
+    const DM1_ActionF0407CompletionInputPc34* in,
+    DM1_ActionF0407CompletionPlanPc34* out) {
+    DM1_ActionF0407TailAdjustInputPc34 adjustIn;
+    DM1_ActionF0407TailAdjustPc34 adjustOut;
+    DM1_ActionDisableInputPc34 disableIn;
+    DM1_ActionDisablePlanPc34 disableOut;
+    if (!in || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->actionDisabledIndex = 0xFF;
+    out->actionEnableSlotOrdinal = 0xFF;
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+
+    memset(&adjustIn, 0, sizeof(adjustIn));
+    adjustIn.actionIndex = in->actionIndex;
+    adjustIn.performed = in->performed;
+    adjustIn.actionExperienceGain = in->actionExperienceGain;
+    adjustIn.disabledTicks = in->disabledTicks;
+    adjustIn.cancelActionDisable = in->cancelActionDisable;
+    adjustIn.meleeFailureTail = in->meleeFailureTail;
+    if (!dm1_v1_action_adjust_f0407_tail_pc34(&adjustIn, &adjustOut) ||
+        !adjustOut.valid) {
+        return 0;
+    }
+
+    memset(&disableIn, 0, sizeof(disableIn));
+    disableIn.actionIndex = in->actionIndex;
+    disableIn.disabledTicks = adjustOut.disabledTicks;
+    disableIn.pendingShootReadyHandRefill = in->pendingShootReadyHandRefill;
+    disableIn.pendingActionEnableSlotOrdinal =
+        in->pendingActionEnableSlotOrdinal;
+    if (!dm1_v1_action_disable_plan_f0407_pc34(&disableIn, &disableOut) ||
+        !disableOut.valid) {
+        return 0;
+    }
+
+    /* ReDMCSB: MENU.C F0407 lines 1620-1628 runs final disable/stamina/XP
+     * after the action-specific branch has adjusted ActionPerformed,
+     * ActionDisabledTicks, and G0497 XP. */
+    out->valid = 1;
+    out->actionExperienceGain = adjustOut.actionExperienceGain;
+    if (in->actionIndex == DM1_ACTION_THROW && in->performed &&
+        adjustOut.disabledTicks == 0) {
+        /* ReDMCSB: CHAMPION.C F0328 line 2168 calls F0330(4) internally,
+         * then MENU.C F0407 lines 1613-1617 stores the action-hand slot
+         * ordinal on that existing enable-action event. G0491's THROW entry
+         * is zero, so the common F0407 tail must not replace F0328's disable. */
+        out->preservesExistingActionDisable = 1;
+        out->actionEnableSlotOrdinal = in->pendingActionEnableSlotOrdinal > 0
+                                           ? in->pendingActionEnableSlotOrdinal
+                                           : 0xFF;
+        return 1;
+    }
+    out->disabledTicks = disableOut.disabledTicks;
+    out->actionDisabledIndex = disableOut.actionDisabledIndex;
+    out->actionEnableSlotOrdinal = disableOut.actionEnableSlotOrdinal;
+    out->shouldRefillReadyHandNow = disableOut.shouldRefillReadyHandNow;
+    return 1;
+}
+
 int dm1_v1_action_defense_apply_plan_f0407_pc34(
     const DM1_ActionDefenseInputPc34* in,
     DM1_ActionDefensePlanPc34* out) {

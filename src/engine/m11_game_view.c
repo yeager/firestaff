@@ -5885,39 +5885,6 @@ static void m11_apply_champion_action_defense_before_action(
         (unsigned char)plan.resultingActionIndex;
 }
 
-static void m11_disable_champion_action_after_action_ticks(
-        M11_GameViewState* state,
-        int championIndex,
-        unsigned char actionIndex,
-        unsigned char ticks) {
-    DM1_ActionDisableInputPc34 in;
-    DM1_ActionDisablePlanPc34 plan;
-    if (!state) return;
-    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
-    memset(&in, 0, sizeof(in));
-    memset(&plan, 0, sizeof(plan));
-    in.actionIndex = (int)actionIndex;
-    in.disabledTicks = (int)ticks;
-    in.pendingShootReadyHandRefill =
-        state->pendingShootReadyHandRefill[championIndex] != 0u;
-    in.pendingActionEnableSlotOrdinal =
-        (int)state->actionEnableSlotOrdinal[championIndex];
-    if (!dm1_v1_action_disable_plan_f0407_pc34(&in, &plan) ||
-        !plan.valid) {
-        return;
-    }
-    state->actionDisabledTicks[championIndex] =
-        (unsigned char)plan.disabledTicks;
-    state->actionDisabledIndex[championIndex] =
-        (unsigned char)plan.actionDisabledIndex;
-    state->actionEnableSlotOrdinal[championIndex] =
-        (unsigned char)plan.actionEnableSlotOrdinal;
-    if (plan.shouldRefillReadyHandNow) {
-        state->pendingShootReadyHandRefill[championIndex] = 0u;
-        (void)m11_refill_ready_hand_after_shoot(state, championIndex);
-    }
-}
-
 static void m11_disable_champion_action_after_spell_f0412(
         M11_GameViewState* state,
         int championIndex,
@@ -24647,29 +24614,6 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
     return dm1_v1_action_is_melee_contact_f0407_pc34((int)actionIndex);
 }
 
-static void m11_adjust_action_tail_f0407(unsigned char actionIndex,
-                                         int performed,
-                                         int cancelActionDisable,
-                                         int meleeFailureTail,
-                                         int* actionExperienceGain,
-                                         unsigned char* disabledTicks) {
-    DM1_ActionF0407TailAdjustInputPc34 adjustIn;
-    DM1_ActionF0407TailAdjustPc34 adjustOut;
-    if (!actionExperienceGain || !disabledTicks) return;
-    memset(&adjustIn, 0, sizeof(adjustIn));
-    adjustIn.actionIndex = (int)actionIndex;
-    adjustIn.performed = performed;
-    adjustIn.actionExperienceGain = *actionExperienceGain;
-    adjustIn.disabledTicks = (int)*disabledTicks;
-    adjustIn.cancelActionDisable = cancelActionDisable;
-    adjustIn.meleeFailureTail = meleeFailureTail;
-    if (dm1_v1_action_adjust_f0407_tail_pc34(&adjustIn, &adjustOut) &&
-        adjustOut.valid) {
-        *actionExperienceGain = adjustOut.actionExperienceGain;
-        *disabledTicks = (unsigned char)adjustOut.disabledTicks;
-    }
-}
-
 static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
                                                  int championIndex,
                                                  int cost) {
@@ -24712,6 +24656,56 @@ static int m11_apply_planned_action_stamina_cost(M11_GameViewState* state,
     if (championIndex >= state->world.party.championCount) return 0;
     if (cost <= 0) return 0;
     return m11_apply_champion_stamina_cost_f0325(state, championIndex, cost);
+}
+
+static int m11_apply_action_completion_plan_f0407(
+        M11_GameViewState* state,
+        int championIndex,
+        unsigned char actionIndex,
+        int performed,
+        int cancelActionDisable,
+        int meleeFailureTail,
+        int* actionExperienceGain,
+        unsigned char disabledTicks) {
+    DM1_ActionF0407CompletionInputPc34 in;
+    DM1_ActionF0407CompletionPlanPc34 plan;
+    if (!state || !actionExperienceGain) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = (int)actionIndex;
+    in.performed = performed;
+    in.actionExperienceGain = *actionExperienceGain;
+    in.disabledTicks = (int)disabledTicks;
+    in.cancelActionDisable = cancelActionDisable;
+    in.meleeFailureTail = meleeFailureTail;
+    in.pendingShootReadyHandRefill =
+        state->pendingShootReadyHandRefill[championIndex] != 0u;
+    in.pendingActionEnableSlotOrdinal =
+        (int)state->actionEnableSlotOrdinal[championIndex];
+    if (!dm1_v1_action_completion_plan_f0407_pc34(&in, &plan) ||
+        !plan.valid) {
+        return 0;
+    }
+    *actionExperienceGain = plan.actionExperienceGain;
+    if (plan.preservesExistingActionDisable) {
+        if (plan.actionEnableSlotOrdinal >= 0 &&
+            plan.actionEnableSlotOrdinal <= 255) {
+            state->actionEnableSlotOrdinal[championIndex] =
+                (unsigned char)plan.actionEnableSlotOrdinal;
+        }
+        return 1;
+    }
+    state->actionDisabledTicks[championIndex] =
+        (unsigned char)plan.disabledTicks;
+    state->actionDisabledIndex[championIndex] =
+        (unsigned char)plan.actionDisabledIndex;
+    state->actionEnableSlotOrdinal[championIndex] =
+        (unsigned char)plan.actionEnableSlotOrdinal;
+    if (plan.shouldRefillReadyHandNow) {
+        state->pendingShootReadyHandRefill[championIndex] = 0u;
+        (void)m11_refill_ready_hand_after_shoot(state, championIndex);
+    }
+    return 1;
 }
 
 static int m11_dm1_thing_weapon_info(const M11_GameViewState* state,
@@ -29927,11 +29921,14 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
             performed = m11_perform_csb_melee_action(
                 state, championIndex, chosen);
             if (!performed) {
-                disabledTicks >>= 1;
-                actionExperienceGain >>= 1;
+                (void)m11_apply_action_completion_plan_f0407(
+                    state, championIndex, chosen, performed, 0, 1,
+                    &actionExperienceGain, disabledTicks);
+            } else {
+                (void)m11_apply_action_completion_plan_f0407(
+                    state, championIndex, chosen, performed, 0, 0,
+                    &actionExperienceGain, disabledTicks);
             }
-            m11_disable_champion_action_after_action_ticks(
-                state, championIndex, chosen, disabledTicks);
             goto action_tail_award_and_clear;
         }
         /* Advance one tick with CMD_ATTACK while preserving F0391's chosen
@@ -29952,16 +29949,9 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                 disabledTicks = closedDoorDisabledTicks;
             }
         }
-        if (!performed) {
-            m11_adjust_action_tail_f0407(
-                chosen, performed, 0, 1,
-                &actionExperienceGain, &disabledTicks);
-        }
-        if (!(chosen == DM1_ACTION_THROW && performed &&
-              disabledTicks == 0u)) {
-            m11_disable_champion_action_after_action_ticks(
-                state, championIndex, chosen, disabledTicks);
-        }
+        (void)m11_apply_action_completion_plan_f0407(
+            state, championIndex, chosen, performed, 0, !performed,
+            &actionExperienceGain, disabledTicks);
     } else {
         unsigned char disabledTicks = (unsigned char)preludePlan.disabledTicks;
         /* Non-melee: apply bounded effect (if any), then advance
@@ -29982,11 +29972,9 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         if (!state->gameWon) {
             (void)m11_apply_tick(state, CMD_NONE, "ACTION");
         }
-        m11_adjust_action_tail_f0407(
-            chosen, performed, cancelActionDisable, 0,
-            &actionExperienceGain, &disabledTicks);
-        m11_disable_champion_action_after_action_ticks(
-            state, championIndex, chosen, disabledTicks);
+        (void)m11_apply_action_completion_plan_f0407(
+            state, championIndex, chosen, performed, cancelActionDisable, 0,
+            &actionExperienceGain, disabledTicks);
     }
 action_tail_award_and_clear:
     m11_award_action_xp_f0407(
@@ -30082,18 +30070,12 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
         (void)m11_apply_tick(state, CMD_NONE, "ACTION");
     }
     {
-        unsigned char disabledTicks =
-            (unsigned char)preludePlan.disabledTicks;
-        m11_adjust_action_tail_f0407(
-            (unsigned char)actionIndex, performed, cancelActionDisable,
+        (void)m11_apply_action_completion_plan_f0407(
+            state, championIndex, (unsigned char)actionIndex, performed,
+            cancelActionDisable,
             actionIndex == DM1_ACTION_PARRY && !performed,
-            &actionExperienceGain, &disabledTicks);
-        if (!(actionIndex == DM1_ACTION_THROW && performed &&
-              disabledTicks == 0u)) {
-            m11_disable_champion_action_after_action_ticks(
-                state, championIndex, (unsigned char)actionIndex,
-                disabledTicks);
-        }
+            &actionExperienceGain,
+            (unsigned char)preludePlan.disabledTicks);
     }
     m11_award_action_xp_f0407(
         state, championIndex, (unsigned char)actionIndex, actionExperienceGain);

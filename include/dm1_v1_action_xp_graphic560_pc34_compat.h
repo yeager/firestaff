@@ -142,6 +142,27 @@ typedef struct {
 
 typedef struct {
     int actionIndex;
+    int performed;
+    int actionExperienceGain;
+    int disabledTicks;
+    int cancelActionDisable;
+    int meleeFailureTail;
+    int pendingShootReadyHandRefill;
+    int pendingActionEnableSlotOrdinal;
+} DM1_ActionF0407CompletionInputPc34;
+
+typedef struct {
+    int valid;
+    int actionExperienceGain;
+    int disabledTicks;
+    int actionDisabledIndex;
+    int actionEnableSlotOrdinal;
+    int preservesExistingActionDisable;
+    int shouldRefillReadyHandNow;
+} DM1_ActionF0407CompletionPlanPc34;
+
+typedef struct {
+    int actionIndex;
 } DM1_ActionDefenseInputPc34;
 
 typedef struct {
@@ -414,6 +435,9 @@ int dm1_v1_action_disabled_ticks_f0407_pc34(int actionIndex);
 int dm1_v1_action_adjust_f0407_tail_pc34(
     const DM1_ActionF0407TailAdjustInputPc34* in,
     DM1_ActionF0407TailAdjustPc34* out);
+int dm1_v1_action_completion_plan_f0407_pc34(
+    const DM1_ActionF0407CompletionInputPc34* in,
+    DM1_ActionF0407CompletionPlanPc34* out);
 int dm1_v1_action_defense_apply_plan_f0407_pc34(
     const DM1_ActionDefenseInputPc34* in,
     DM1_ActionDefensePlanPc34* out);
