@@ -30997,7 +30997,7 @@ int M11_GameView_GetV1ChampionPortraitGraphicId(void) {
 }
 
 int M11_GameView_GetV1ChampionIconGraphicId(void) {
-    return M11_GFX_CHAMPION_ICONS;
+    return DM1_GFX_CHAMPION_ICONS;
 }
 
 int M11_GameView_GetV1ChampionIconZoneId(int championSlot) {
@@ -31019,8 +31019,8 @@ int M11_GameView_GetV1ChampionIconZone(int championSlot,
     /* ReDMCSB: CHAMDRAW.C F0622 lines 41-58 prepares a full
      * G2080_C19_ChampionIconWidth x G2081_C14_ChampionIconHeight
      * temporary bitmap before blitting it to C113..C116. */
-    if (outW) *outW = M11_CHAMPION_ICON_W;
-    if (outH) *outH = 14;
+    if (outW) *outW = DM1_CHAMPION_ICON_WIDTH;
+    if (outH) *outH = DM1_CHAMPION_ICON_HEIGHT;
     return 1;
 }
 
@@ -31041,7 +31041,18 @@ int M11_GameView_GetV1ChampionIconSourceIndex(const M11_GameViewState* state,
      * the champion's stored direction against G0308_i_PartyDirection. */
     championDirection = (int)champ->direction & 0x03;
     partyDirection = state->world.party.direction & 0x03;
-    return (championDirection - partyDirection) & 0x03;
+    {
+        DM1_ChampionPanel_IconBitmapModel iconModel;
+        if (!DM1_ChampionPanel_BuildIconBitmapModel(
+                championSlot,
+                championDirection,
+                partyDirection,
+                (int)state->world.magic.event71CountInvisibility,
+                &iconModel)) {
+            return -1;
+        }
+        return iconModel.sourceX / DM1_CHAMPION_ICON_WIDTH;
+    }
 }
 
 int M11_GameView_GetV1InventoryPanelGraphicId(void) {
@@ -35243,8 +35254,6 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
      * pass exposed as hit zones but did not yet draw. */
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
         int x, y, w, h;
-        int sourceIndex;
-        unsigned char baseColor;
         if (!M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h)) {
             continue;
         }
@@ -35254,29 +35263,39 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
             !state->world.party.champions[slot].present) {
             continue;
         }
-        baseColor = (state->world.magic.event71CountInvisibility > 0)
-            ? (unsigned char)M11_COLOR_GRAY
-            : (unsigned char)M11_GameView_GetV1ChampionBarColor(slot);
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      x, y, w, h, baseColor);
-        sourceIndex = M11_GameView_GetV1ChampionIconSourceIndex(state, slot);
-        if (iconStrip && iconStrip->loaded && iconStrip->pixels &&
-            iconStrip->width == M11_CHAMPION_ICON_W * 4 &&
-            iconStrip->height == M11_CHAMPION_ICON_H &&
-            sourceIndex >= 0 && sourceIndex < 4) {
-            M11_AssetLoader_BlitRegion(iconStrip,
-                sourceIndex * M11_CHAMPION_ICON_W,
-                0,
-                w < M11_CHAMPION_ICON_W ? w : M11_CHAMPION_ICON_W,
-                h < M11_CHAMPION_ICON_H ? h : M11_CHAMPION_ICON_H,
-                framebuffer, framebufferWidth, framebufferHeight,
-                x, y, M11_COLOR_DARK_GRAY);
-        }
-        if (state->world.magic.event71CountInvisibility > 0) {
-            m11_apply_v1_champion_icon_invisibility_remap(framebuffer,
-                                                          framebufferWidth,
-                                                          framebufferHeight,
-                                                          x, y, w, h);
+        {
+            const struct ChampionState_Compat* champ =
+                &state->world.party.champions[slot];
+            DM1_ChampionPanel_IconBitmapModel iconModel;
+            if (!DM1_ChampionPanel_BuildIconBitmapModel(
+                    slot,
+                    (int)champ->direction & 0x03,
+                    state->world.party.direction & 0x03,
+                    (int)state->world.magic.event71CountInvisibility,
+                    &iconModel)) {
+                continue;
+            }
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x, y, w, h, (unsigned char)iconModel.fillColor);
+            if (iconStrip && iconStrip->loaded && iconStrip->pixels &&
+                iconStrip->width == iconModel.width * 4 &&
+                iconStrip->height == iconModel.height &&
+                iconModel.sourceX >= 0 &&
+                iconModel.sourceX + iconModel.width <= iconStrip->width) {
+                M11_AssetLoader_BlitRegion(iconStrip,
+                    iconModel.sourceX,
+                    iconModel.sourceY,
+                    w < iconModel.width ? w : iconModel.width,
+                    h < iconModel.height ? h : iconModel.height,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    x, y, iconModel.transparentColor);
+            }
+            if (iconModel.applyInvisibilityPalette) {
+                m11_apply_v1_champion_icon_invisibility_remap(framebuffer,
+                                                              framebufferWidth,
+                                                              framebufferHeight,
+                                                              x, y, w, h);
+            }
         }
     }
 }
