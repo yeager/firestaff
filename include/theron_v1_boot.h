@@ -480,6 +480,10 @@ int theron_v1_boot_startup_execute_graphics_plan(
 int theron_v1_boot_startup_return_to_stage_select_after_exit_host_receipt(
     Theron_StartupActionHostReceipt *out_receipt,
     Theron_V1_World *world);
+int theron_v1_boot_startup_return_to_stage_select_after_exit_profile_host_receipt(
+    Theron_StartupActionHostReceipt *out_receipt,
+    const void *boot_profile,
+    Theron_V1_World *world);
 
 /* theron_v1_boot_verified_path_is_stale — decide whether a previously
  * verified Track 02 path/MD5 pair still matches the bytes on disk.
