@@ -270,6 +270,35 @@ int dm1_v1_startup_graphics_bind_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_dungeon_load_receipt_pc34(
+    const DM1_V1_StartupDungeonLoadFacts_PC34* facts,
+    DM1_V1_StartupDungeonLoadReceipt_PC34* out_receipt) {
+    DM1_V1_StartupDungeonLoadReceipt_PC34 receipt;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->game_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    receipt.handled = 1;
+    receipt.load_succeeded = facts->load_succeeded ? 1 : 0;
+    snprintf(receipt.status_title,
+             sizeof(receipt.status_title),
+             "%s",
+             "BOOT");
+    snprintf(receipt.status_detail,
+             sizeof(receipt.status_detail),
+             "%s",
+             receipt.load_succeeded ? "GAME DATA LOADED"
+                                    : "FAILED TO LOAD DUNGEON.DAT");
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_handoff_prelude_plan_pc34(
     const char* game_id,
     DM1_V1_StartupHandoffPreludePlan_PC34* out_plan) {

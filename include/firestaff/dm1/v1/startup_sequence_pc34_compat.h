@@ -198,6 +198,18 @@ typedef struct DM1_V1_StartupGraphicsBindReceipt_PC34 {
     char graphics_dat_path[DM1_V1_STARTUP_RUNTIME_PATH_CAPACITY_PC34];
 } DM1_V1_StartupGraphicsBindReceipt_PC34;
 
+typedef struct DM1_V1_StartupDungeonLoadFacts_PC34 {
+    const char* game_id;
+    int load_succeeded;
+} DM1_V1_StartupDungeonLoadFacts_PC34;
+
+typedef struct DM1_V1_StartupDungeonLoadReceipt_PC34 {
+    int handled;
+    int load_succeeded;
+    char status_title[DM1_V1_STARTUP_RUNTIME_STATUS_CAPACITY_PC34];
+    char status_detail[DM1_V1_STARTUP_RUNTIME_STATUS_CAPACITY_PC34];
+} DM1_V1_StartupDungeonLoadReceipt_PC34;
+
 enum {
     DM1_V1_STARTUP_BOOT_PROBE_SOURCE_ID_CAPACITY_PC34 = 32,
     DM1_V1_STARTUP_BOOT_PROBE_PHASE_CAPACITY_PC34 = 48,
@@ -261,6 +273,9 @@ int dm1_v1_startup_dungeon_path_receipt_pc34(
 int dm1_v1_startup_graphics_bind_receipt_pc34(
     const DM1_V1_StartupGraphicsBindFacts_PC34* facts,
     DM1_V1_StartupGraphicsBindReceipt_PC34* out_receipt);
+int dm1_v1_startup_dungeon_load_receipt_pc34(
+    const DM1_V1_StartupDungeonLoadFacts_PC34* facts,
+    DM1_V1_StartupDungeonLoadReceipt_PC34* out_receipt);
 int dm1_v1_startup_handoff_prelude_plan_pc34(
     const char* game_id,
     DM1_V1_StartupHandoffPreludePlan_PC34* out_plan);
