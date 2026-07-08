@@ -20,6 +20,8 @@
 #define DM1_JUNK_MAGICAL_BOX_BLUE 42
 #define DM1_JUNK_MAGICAL_BOX_GREEN 43
 #define DM1_STATUS_THIEVES_EYE 73
+#define DM1_STATUS_SPELL_SHIELD 77
+#define DM1_STATUS_FIRE_SHIELD 78
 
 /* ReDMCSB CHAMPION.C F0304 line ~874: base skill = (sub - 4) >> 2.
  * For base skills (0..3) the mapping is identity. */
@@ -316,6 +318,63 @@ int dm1_v1_action_window_plan_f0407_pc34(
     out->statusEventType = DM1_STATUS_THIEVES_EYE;
     out->incrementsThievesEyeCount = 1;
     out->decrementsActionHandCharges = 1;
+    return 1;
+}
+
+int dm1_v1_action_shield_plan_f0403_pc34(
+    const DM1_ActionShieldInputPc34* in,
+    DM1_ActionShieldPlanPc34* out) {
+    int ticks;
+    int defense;
+    int mana;
+    int currentDefense;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->successful = 0;
+    out->manaCost = 0;
+    out->remainingMana = in->currentMana;
+    out->statusEventType = 0;
+    out->eventDelayTicks = 0;
+    out->defenseDelta = 0;
+    out->newShieldDefense = in->currentShieldDefense;
+    out->decrementsActionHandChargesOnSuccess = 0;
+    if (in->baseTicks <= 0) return 0;
+    ticks = in->baseTicks;
+    mana = in->currentMana;
+    if (mana < 0) mana = 0;
+    currentDefense = in->currentShieldDefense;
+    if (currentDefense < 0) currentDefense = 0;
+    out->valid = 1;
+    out->successful = 1;
+    out->remainingMana = mana;
+    out->newShieldDefense = currentDefense;
+    out->decrementsActionHandChargesOnSuccess = 1;
+    /* ReDMCSB: MENU.C F0403 lines 1080-1122. Mana 0 returns before an event;
+     * mana 1..3 halves ticks, drains mana, still schedules defense, and returns
+     * false so F0407 can quarter XP and halve disabled ticks. */
+    if (in->useMana) {
+        if (mana == 0) {
+            out->successful = 0;
+            out->decrementsActionHandChargesOnSuccess = 0;
+            return 1;
+        }
+        if (mana < 4) {
+            ticks >>= 1;
+            out->manaCost = mana;
+            out->remainingMana = 0;
+            out->successful = 0;
+        } else {
+            out->manaCost = 4;
+            out->remainingMana = mana - 4;
+        }
+    }
+    defense = ticks >> 5;
+    if (currentDefense > 50) defense >>= 2;
+    out->statusEventType =
+        in->isSpellShield ? DM1_STATUS_SPELL_SHIELD : DM1_STATUS_FIRE_SHIELD;
+    out->eventDelayTicks = ticks;
+    out->defenseDelta = defense;
+    out->newShieldDefense = currentDefense + defense;
     return 1;
 }
 

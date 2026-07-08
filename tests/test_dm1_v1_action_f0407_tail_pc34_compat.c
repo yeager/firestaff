@@ -275,6 +275,67 @@ static void test_light_and_window_plans(void) {
     CHECK_EQ(out.durationTicks, 6, "window clamped duration");
 }
 
+static void test_shield_plan(void) {
+    DM1_ActionShieldInputPc34 in;
+    DM1_ActionShieldPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.isSpellShield = 1;
+    in.useMana = 1;
+    in.currentMana = 10;
+    in.baseTicks = 280;
+    CHECK_EQ(dm1_v1_action_shield_plan_f0403_pc34(&in, &out), 1,
+             "spell shield plan builds");
+    CHECK_EQ(out.successful, 1, "spell shield succeeds");
+    CHECK_EQ(out.manaCost, 4, "spell shield mana cost");
+    CHECK_EQ(out.remainingMana, 6, "spell shield remaining mana");
+    CHECK_EQ(out.statusEventType, 77, "spell shield event type");
+    CHECK_EQ(out.eventDelayTicks, 280, "spell shield event delay");
+    CHECK_EQ(out.defenseDelta, 8, "spell shield defense");
+    CHECK_EQ(out.newShieldDefense, 8, "spell shield new defense");
+    CHECK_EQ(out.decrementsActionHandChargesOnSuccess, 1,
+             "spell shield decrements charges");
+
+    memset(&in, 0, sizeof(in));
+    in.isSpellShield = 0;
+    in.useMana = 1;
+    in.currentMana = 3;
+    in.baseTicks = 280;
+    CHECK_EQ(dm1_v1_action_shield_plan_f0403_pc34(&in, &out), 1,
+             "low mana fire shield plan builds");
+    CHECK_EQ(out.successful, 0, "low mana fire shield fails tail");
+    CHECK_EQ(out.manaCost, 3, "low mana fire shield drains mana");
+    CHECK_EQ(out.remainingMana, 0, "low mana fire shield remaining mana");
+    CHECK_EQ(out.statusEventType, 78, "fire shield event type");
+    CHECK_EQ(out.eventDelayTicks, 140, "low mana fire shield half delay");
+    CHECK_EQ(out.defenseDelta, 4, "low mana fire shield defense");
+    CHECK_EQ(out.newShieldDefense, 4, "low mana fire shield new defense");
+
+    memset(&in, 0, sizeof(in));
+    in.isSpellShield = 1;
+    in.useMana = 1;
+    in.currentMana = 8;
+    in.baseTicks = 280;
+    in.currentShieldDefense = 64;
+    CHECK_EQ(dm1_v1_action_shield_plan_f0403_pc34(&in, &out), 1,
+             "high existing shield plan builds");
+    CHECK_EQ(out.defenseDelta, 2, "high shield quarters defense");
+    CHECK_EQ(out.newShieldDefense, 66, "high shield new defense");
+
+    memset(&in, 0, sizeof(in));
+    in.isSpellShield = 1;
+    in.useMana = 1;
+    in.currentMana = 0;
+    in.baseTicks = 280;
+    CHECK_EQ(dm1_v1_action_shield_plan_f0403_pc34(&in, &out), 1,
+             "zero mana shield plan builds");
+    CHECK_EQ(out.successful, 0, "zero mana shield fails");
+    CHECK_EQ(out.eventDelayTicks, 0, "zero mana shield no event");
+    CHECK_EQ(out.defenseDelta, 0, "zero mana shield no defense");
+    CHECK_EQ(out.decrementsActionHandChargesOnSuccess, 0,
+             "zero mana shield no charge decrement");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -295,6 +356,7 @@ int main(void) {
     test_freeze_life_plan();
     test_heal_plan();
     test_light_and_window_plans();
+    test_shield_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

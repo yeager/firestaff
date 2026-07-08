@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 F0403 shield action-effect ownership: DM1 action-XP compat now owns SPELLSHIELD/FIRESHIELD mana, low-mana partial cast, defense delta, status event, and charge-success planning from ReDMCSB F0403. M11 applies the returned mutation plan only. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 F0407 LIGHT/WINDOW action-effect ownership: DM1 action-XP compat now owns M11-facing LIGHT magical-light/event/charge planning and WINDOW random-range/duration/thieves-eye/charge planning. M11 keeps RNG draw and timeline mutation only. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 F0407 HEAL action-effect ownership: DM1 action-XP compat now owns M11-facing HEAL HP/mana/XP planning for PC34/I34E cycle healing, including full-health and no-mana performed no-effect paths. M11 applies the returned mutation plan only. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

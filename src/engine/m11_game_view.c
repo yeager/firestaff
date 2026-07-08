@@ -26459,58 +26459,46 @@ static int m11_apply_party_shield_f0403(M11_GameViewState* state,
                                         int useMana) {
     struct ChampionState_Compat* champion;
     struct TimelineEvent_Compat expiryEvent;
-    int successful = 1;
-    int defense;
+    DM1_ActionShieldInputPc34 input;
+    DM1_ActionShieldPlanPc34 plan;
+    int* shieldDefense;
 
     if (!state) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     if (championIndex >= state->world.party.championCount) return 0;
     champion = &state->world.party.champions[championIndex];
     if (!champion->present) return 0;
-
-    if (useMana) {
-        if (champion->mana.current == 0) {
-            return 0;
-        }
-        if (champion->mana.current < 4) {
-            ticks >>= 1;
-            champion->mana.current = 0;
-            successful = 0;
-        } else {
-            champion->mana.current =
-                (unsigned short)(champion->mana.current - 4);
-        }
+    shieldDefense = spellShield ? &state->world.magic.spellShieldDefense
+                                : &state->world.magic.fireShieldDefense;
+    memset(&input, 0, sizeof(input));
+    input.isSpellShield = spellShield;
+    input.useMana = useMana;
+    input.currentMana = champion->mana.current;
+    input.baseTicks = ticks;
+    input.currentShieldDefense = *shieldDefense;
+    if (!dm1_v1_action_shield_plan_f0403_pc34(&input, &plan) || !plan.valid) {
+        return 0;
     }
-
-    defense = ticks >> 5;
-    if (spellShield) {
-        if (state->world.magic.spellShieldDefense > 50) {
-            defense >>= 2;
-        }
-        state->world.magic.spellShieldDefense += defense;
-    } else {
-        if (state->world.magic.fireShieldDefense > 50) {
-            defense >>= 2;
-        }
-        state->world.magic.fireShieldDefense += defense;
+    champion->mana.current = (unsigned short)plan.remainingMana;
+    if (plan.eventDelayTicks <= 0) {
+        return plan.successful;
     }
+    *shieldDefense = plan.newShieldDefense;
     memset(&expiryEvent, 0, sizeof(expiryEvent));
     expiryEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
-    expiryEvent.fireAtTick = state->world.gameTick + (uint32_t)ticks;
+    expiryEvent.fireAtTick = state->world.gameTick + (uint32_t)plan.eventDelayTicks;
     expiryEvent.mapIndex = state->world.party.mapIndex;
     expiryEvent.mapX = state->world.party.mapX;
     expiryEvent.mapY = state->world.party.mapY;
     expiryEvent.cell = -1;
-    expiryEvent.aux0 = spellShield
-        ? LIFECYCLE_STATUS_SPELL_SHIELD
-        : LIFECYCLE_STATUS_FIRE_SHIELD;
-    expiryEvent.aux1 = defense;
+    expiryEvent.aux0 = plan.statusEventType;
+    expiryEvent.aux1 = plan.defenseDelta;
     expiryEvent.aux2 = championIndex;
     /* ReDMCSB MENU.C F0403 lines 1099-1115 stores the shield defense in
      * the event and schedules C77/C78 at GameTime + adjusted ticks; the
      * TIMELINE.C C77/C78 handler later subtracts the same defense value. */
     (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &expiryEvent);
-    return successful;
+    return plan.successful;
 }
 
 static int m11_add_influence_experience(M11_GameViewState* state,
