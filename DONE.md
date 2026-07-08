@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB boot utility/entrance runtime-state wrappers: CSB boot now owns utility render, utility pointer/keyboard, and entrance pointer/keyboard host-action wrappers from runtime state. M11 no longer constructs CSB startup host facts anywhere in `m11_game_view.c`. Verification: strict compiles for `csb_v1_boot.c` and `m11_game_view.c`; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB boot runtime-state startup wrappers: CSB boot now owns startup render-plan construction, idle advancement, entrance input-wait gating, and presentation receipt wrappers from runtime state. M11 no longer builds CSB host facts for those paths. Verification: strict compiles for `csb_v1_boot.c` and `m11_game_view.c`; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron boot runtime-state startup wrappers: Theron boot now owns startup keyboard input, pointer input, layout inspection, render rows, and render-plan wrappers from runtime state. M11 no longer builds a local Theron startup session before those paths. Verification: strict compiles for `theron_v1_boot.c` and `m11_game_view.c`; direct Theron M11 launch test passed; Phase A passed 24/24; `git diff --check` passed. Note: broad `ctest -R theron...` and `cmake --build build ...` hung locally and were stopped.
