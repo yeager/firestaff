@@ -11610,6 +11610,32 @@ static void m11_theron_apply_startup_state_receipt(
     if (receipt->set_tick_count) {
         state->theronState.tick_count = receipt->tick_count;
     }
+    if (receipt->set_save_resume) {
+        state->theronState.save_resume_verdict =
+            receipt->save_resume_verdict;
+        state->theronState.save_resume_claim =
+            receipt->save_resume_claim;
+        state->theronState.save_resume_active_slot =
+            receipt->save_resume_active_slot;
+        state->theronState.save_resume_srm_active_slot =
+            receipt->save_resume_srm_active_slot;
+        state->theronState.save_resume_srm_import_status =
+            receipt->save_resume_srm_import_status;
+        state->theronState.save_resume_srm_current_dungeon =
+            receipt->save_resume_srm_current_dungeon;
+        state->theronState.save_resume_srm_current_level =
+            receipt->save_resume_srm_current_level;
+        state->theronState.save_resume_srm_quest_mask =
+            receipt->save_resume_srm_quest_mask;
+        state->theronState.save_resume_tqsv_slots =
+            receipt->save_resume_tqsv_slots;
+        state->theronState.save_resume_srm_slots =
+            receipt->save_resume_srm_slots;
+        snprintf(state->theronState.save_resume_srm_root,
+                 sizeof(state->theronState.save_resume_srm_root),
+                 "%s",
+                 receipt->save_resume_srm_root);
+    }
 }
 
 static int m11_theron_rebuild_startup_flow(M11_GameViewState* state,
@@ -11999,6 +12025,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     TrAssetResult assetResult;
     Theron_StartupFlow startupFlow;
     Theron_StartupStateReceipt startupStateReceipt;
+    Theron_StartupStateReceipt saveResumeStateReceipt;
     Theron_V1StartupSaveResume saveResume;
     int saveResumeReady = 0;
 
@@ -12105,37 +12132,14 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         goto fail;
     }
     m11_theron_apply_startup_state_receipt(state, &startupStateReceipt);
-    state->theronState.save_resume_verdict =
-        saveResumeReady ? (int)saveResume.verdict : -1;
-    state->theronState.save_resume_claim =
-        saveResumeReady ? (int)saveResume.resume_claim : -1;
-    state->theronState.save_resume_active_slot =
-        saveResumeReady ? saveResume.tqsv_active_slot : -1;
-    state->theronState.save_resume_srm_active_slot =
-        saveResumeReady ? saveResume.srm_first_recognized_slot : -1;
-    state->theronState.save_resume_srm_import_status =
-        saveResumeReady ? (int)saveResume.srm_progress_import_status
-                        : (int)THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
-    state->theronState.save_resume_srm_current_dungeon =
-        saveResumeReady ? saveResume.srm_progress_current_dungeon : -1;
-    state->theronState.save_resume_srm_current_level =
-        saveResumeReady ? saveResume.srm_progress_current_level : -1;
-    state->theronState.save_resume_srm_quest_mask =
-        saveResumeReady ? saveResume.srm_progress_quest_mask : -1;
-    state->theronState.save_resume_continue_focus = 0;
-    state->theronState.save_resume_tqsv_slots =
-        saveResumeReady ? saveResume.tqsv_valid_slots : 0;
-    state->theronState.save_resume_srm_slots =
-        saveResumeReady ? saveResume.srm_recognized_slots : 0;
-    if (saveResumeReady && saveResume.srm_first_recognized_slot >= 0 &&
-        saveResume.srm_root[0] != '\0') {
-        snprintf(state->theronState.save_resume_srm_root,
-                 sizeof(state->theronState.save_resume_srm_root),
-                 "%s",
-                 saveResume.srm_root);
-    } else {
-        state->theronState.save_resume_srm_root[0] = '\0';
+    if (!theron_v1_startup_save_resume_state_receipt(
+            &saveResume,
+            saveResumeReady,
+            &saveResumeStateReceipt)) {
+        m11_set_status(state, "BOOT", "THERON SAVE STATE FAILED");
+        goto fail;
     }
+    m11_theron_apply_startup_state_receipt(state, &saveResumeStateReceipt);
     m11_theron_capture_track02_startup_media(state,
                                              assets,
                                              profile->graphics_md5);

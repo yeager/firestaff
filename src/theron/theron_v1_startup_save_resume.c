@@ -514,6 +514,54 @@ int theron_v1_startup_save_resume_apply_explicit_path(
     return 0;
 }
 
+int theron_v1_startup_save_resume_state_receipt(
+    const Theron_V1StartupSaveResume *snapshot,
+    int snapshot_ready,
+    Theron_StartupStateReceipt *out_receipt) {
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_state_receipt_init(out_receipt);
+    out_receipt->set_save_resume = 1;
+    out_receipt->save_resume_verdict =
+        (snapshot_ready && snapshot) ? (int)snapshot->verdict : -1;
+    out_receipt->save_resume_claim =
+        (snapshot_ready && snapshot) ? (int)snapshot->resume_claim : -1;
+    out_receipt->save_resume_active_slot =
+        (snapshot_ready && snapshot) ? snapshot->tqsv_active_slot : -1;
+    out_receipt->save_resume_srm_active_slot =
+        (snapshot_ready && snapshot) ? snapshot->srm_first_recognized_slot : -1;
+    out_receipt->save_resume_srm_import_status =
+        (snapshot_ready && snapshot)
+            ? (int)snapshot->srm_progress_import_status
+            : (int)THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    out_receipt->save_resume_srm_current_dungeon =
+        (snapshot_ready && snapshot) ? snapshot->srm_progress_current_dungeon : -1;
+    out_receipt->save_resume_srm_current_level =
+        (snapshot_ready && snapshot) ? snapshot->srm_progress_current_level : -1;
+    out_receipt->save_resume_srm_quest_mask =
+        (snapshot_ready && snapshot) ? snapshot->srm_progress_quest_mask : -1;
+    out_receipt->set_continue_focus = 1;
+    out_receipt->continue_focus = 0;
+    out_receipt->save_resume_tqsv_slots =
+        (snapshot_ready && snapshot) ? snapshot->tqsv_valid_slots : 0;
+    out_receipt->save_resume_srm_slots =
+        (snapshot_ready && snapshot) ? snapshot->srm_recognized_slots : 0;
+    if (snapshot_ready &&
+        snapshot &&
+        snapshot->srm_first_recognized_slot >= 0 &&
+        snapshot->srm_root[0] != '\0') {
+        snprintf(out_receipt->save_resume_srm_root,
+                 sizeof(out_receipt->save_resume_srm_root),
+                 "%s",
+                 snapshot->srm_root);
+    } else {
+        out_receipt->save_resume_srm_root[0] = '\0';
+    }
+    return 1;
+}
+
 static void theron_v1_startup_continue_reset_world_runtime(
     Theron_V1_World *world) {
 
