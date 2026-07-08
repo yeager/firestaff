@@ -2611,9 +2611,6 @@ static int m11_execute_csb_startup_closed_door_asset_commands(
         &context);
 }
 
-static int m11_csb_startup_entrance_waiting_for_input(
-    const M11_GameViewState *state);
-
 static void m11_csb_startup_command_state_receipt_to_m11(
     M11_GameViewState *state,
     const CSB_V1_StartupCommandStateReceipt_PC34 *receipt);
@@ -2732,6 +2729,52 @@ static int m11_csb_startup_build_render_plan(
     return csb_v1_boot_startup_build_render_plan_from_snapshot_pc34(
         &snapshot,
         out_plan);
+}
+
+static int m11_csb_boot_runtime_startup_presentation_receipt(
+    const M11_GameViewState *state,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    if (!state) {
+        return 0;
+    }
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
+        &snapshot,
+        out_phase,
+        out_phase_size,
+        out_startup_active,
+        out_startup_frame,
+        out_animation,
+        out_animation_size,
+        out_animation_active,
+        out_title_frame,
+        out_title_frame_max,
+        out_title_ready);
+}
+
+static int m11_csb_boot_runtime_startup_idle(
+    const M11_GameViewState *state,
+    CSB_V1_StartupIdleReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_startup_advance_idle_from_snapshot_pc34(
+        &snapshot,
+        out_receipt);
 }
 
 int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
@@ -3156,18 +3199,6 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     (void)csb_v1_boot_startup_execute_render_plan_pc34(&plan, &executor);
 }
 
-static int m11_csb_startup_entrance_waiting_for_input(
-    const M11_GameViewState *state)
-{
-    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
-        return 0;
-    }
-    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
-    return csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
-        &snapshot);
-}
-
 static void m11_csb_startup_command_state_receipt_to_m11(
     M11_GameViewState *state,
     const CSB_V1_StartupCommandStateReceipt_PC34 *receipt)
@@ -3442,9 +3473,6 @@ static M11_GameInputResult m11_csb_startup_handle_pointer(
         !state->csbState.startup_entrance_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!m11_csb_startup_entrance_waiting_for_input(state)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
     if (!m11_csb_boot_runtime_startup_pointer(
             state,
             x,
@@ -3464,9 +3492,6 @@ static M11_GameInputResult m11_csb_startup_handle_keyboard(
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!m11_csb_startup_entrance_waiting_for_input(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (!m11_csb_boot_runtime_startup_keyboard(
@@ -11173,7 +11198,6 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->dm1WorldTick = state->world.gameTick;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
         out->levelLoaded = state->csbState.level_loaded;
         out->mapIndex = state->csbState.current_level;
         out->partyX = state->csbState.party_x;
@@ -11181,9 +11205,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->csbState.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->csbState.tick_count;
-        m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
-        (void)csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
-            &snapshot,
+        (void)m11_csb_boot_runtime_startup_presentation_receipt(
+            state,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
@@ -12189,12 +12212,10 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (state->csbState.startup_entrance_active) {
-            CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
             CSB_V1_StartupIdleReceipt_PC34 startup_receipt;
             M11_GameInputResult idle_result;
-            m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
-            (void)csb_v1_boot_startup_advance_idle_from_snapshot_pc34(
-                &snapshot,
+            (void)m11_csb_boot_runtime_startup_idle(
+                state,
                 &startup_receipt);
             idle_result = m11_csb_startup_apply_idle_receipt(
                 state,

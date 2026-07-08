@@ -1487,8 +1487,13 @@ int csb_v1_startup_advance_tick_pc34(
     }
     if (state->title_active) {
         state->title_frame++;
+        /* ReDMCSB TITLE.C F0437 advances the PC title through source
+         * animation steps after the current PRESENTS frame has been drawn.
+         * Keep the runtime state on the drawn source step for this tick; the
+         * render plan computes the next blit rectangle from title_frame. */
         state->title_source_step =
-            csb_v1_startup_title_stage_for_frame_pc34(state->title_frame);
+            (int)csb_v1_startup_title_source_step_for_frame_pc34(
+                state->title_frame - 1);
         if (state->title_frame >= csb_v1_startup_title_total_ticks_pc34()) {
             state->title_active = 0;
             state->title_source_step = 0;
