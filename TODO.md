@@ -61,6 +61,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: DM1 F0231 melee compat now also owns creature combat snapshot construction for F0231, including live group health, G0243 profile fields, map difficulty, and candidate-panel invulnerability. Remaining runtime coding work is moving more F0231 damage internals and state mutation adapters behind DM1-owned receipts.
   - 2026-07-09 update: DM1 F0231 melee compat now also owns the group-damage entrypoint and physical reaction-event plan after F0231. Remaining runtime coding work is moving lower-level F0190 group mutation side effects and F0231 damage internals behind DM1-owned receipts.
   - 2026-07-09 update: DM1 F0190 melee aftermath compat now owns death-smoke explosion-create input for killed creatures. Remaining runtime coding work is moving possession drops, group unlink/writeback policy, and deeper F0231 damage internals behind DM1-owned receipts.
+  - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns killed-all/killed-some possession drop branch policy. Remaining runtime coding work is moving group unlink/writeback policy, event cleanup/fear side effects, and deeper F0231 damage internals behind DM1-owned receipts.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 

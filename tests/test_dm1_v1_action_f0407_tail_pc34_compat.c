@@ -1710,6 +1710,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0231ReactionPlanPc34 reactionOut;
     DM1_MeleeF0190DeathSmokeInputPc34 smokeIn;
     DM1_MeleeF0190DeathSmokePlanPc34 smokeOut;
+    DM1_MeleeF0190PossessionDropInputPc34 dropIn;
+    DM1_MeleeF0190PossessionDropPlanPc34 dropOut;
     struct CombatResult_Compat resultA;
     struct CombatResult_Compat resultB;
     struct DungeonGroup_Compat groupA;
@@ -1788,6 +1790,51 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
                  &smokeIn, &smokeOut), 1,
              "F0190 no-smoke plan builds");
     CHECK_EQ(smokeOut.shouldCreate, 0, "F0190 no-smoke suppresses create");
+
+    memset(&dropIn, 0, sizeof(dropIn));
+    dropIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    dropIn.creatureType = 12;
+    dropIn.creatureAttributes = DM1_ATTR_DROP_FIXED_POSS;
+    dropIn.killedCell = EXPLOSION_CELL_CENTERED;
+    dropIn.mapIndex = 4;
+    dropIn.mapX = 5;
+    dropIn.mapY = 6;
+    CHECK_EQ(dm1_v1_melee_possession_drop_plan_f0190_pc34(
+                 &dropIn, &dropOut), 1,
+             "F0190 killed-all drop plan builds");
+    CHECK_EQ(dropOut.valid, 1, "F0190 killed-all drop valid");
+    CHECK_EQ(dropOut.shouldDropGroupFixedPossessions, 1,
+             "F0190 killed-all drops group fixed");
+    CHECK_EQ(dropOut.shouldDropGroupSlotPossessions, 1,
+             "F0190 killed-all drops group slot");
+    CHECK_EQ(dropOut.shouldDropCreatureFixedPossessions, 0,
+             "F0190 killed-all skips per-creature fixed branch");
+    CHECK_EQ(dropOut.creatureCell, EXPLOSION_CELL_CENTERED,
+             "F0190 killed-all centered cell");
+    CHECK_EQ(dropOut.mapIndex, 4, "F0190 drop map");
+    CHECK_EQ(dropOut.mapX, 5, "F0190 drop x");
+    CHECK_EQ(dropOut.mapY, 6, "F0190 drop y");
+
+    dropIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    dropIn.killedCell = 7;
+    CHECK_EQ(dm1_v1_melee_possession_drop_plan_f0190_pc34(
+                 &dropIn, &dropOut), 1,
+             "F0190 killed-some drop plan builds");
+    CHECK_EQ(dropOut.shouldDropGroupFixedPossessions, 0,
+             "F0190 killed-some no group fixed");
+    CHECK_EQ(dropOut.shouldDropGroupSlotPossessions, 0,
+             "F0190 killed-some no group slot");
+    CHECK_EQ(dropOut.shouldDropCreatureFixedPossessions, 1,
+             "F0190 killed-some drops creature fixed");
+    CHECK_EQ(dropOut.creatureType, 12, "F0190 killed-some creature type");
+    CHECK_EQ(dropOut.creatureCell, 3, "F0190 killed-some cell mask");
+
+    dropIn.creatureAttributes = 0;
+    CHECK_EQ(dm1_v1_melee_possession_drop_plan_f0190_pc34(
+                 &dropIn, &dropOut), 1,
+             "F0190 killed-some no-fixed plan builds");
+    CHECK_EQ(dropOut.shouldDropCreatureFixedPossessions, 0,
+             "F0190 killed-some no fixed attr suppresses drop");
 
     memset(&resultA, 0, sizeof(resultA));
     resultA.damageApplied = 30;
