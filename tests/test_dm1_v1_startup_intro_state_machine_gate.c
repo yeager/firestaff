@@ -440,6 +440,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupSelectedLaunchResult_PC34 launch_result;
     DM1_V1_StartupLaunchPathFacts_PC34 launch_facts;
     DM1_V1_StartupLaunchPathReceipt_PC34 launch_receipt;
+    DM1_V1_StartupRuntimeStartFacts_PC34 runtime_facts;
+    DM1_V1_StartupRuntimeStartReceipt_PC34 runtime_receipt;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -535,6 +537,68 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("NULL launch-path facts rejected",
              dm1_v1_startup_launch_path_receipt_pc34(NULL,
                                                      &launch_receipt),
+             0);
+
+    memset(&runtime_facts, 0, sizeof(runtime_facts));
+    memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+    runtime_facts.game_id = "dm1";
+    runtime_facts.source_id = NULL;
+    runtime_facts.title = "Dungeon Master";
+    runtime_facts.verified_asset_md5 = "0123456789abcdef0123456789abcdef";
+    runtime_facts.dungeon_path = "/tmp/DUNGEON.DAT";
+    runtime_facts.source_kind = 2;
+    runtime_facts.presentation_mode = 1;
+    runtime_facts.presentation_width = 320;
+    runtime_facts.presentation_height = 200;
+    runtime_facts.font_scale = 4;
+    runtime_facts.launch_path = DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34;
+    expect_i("DM1 runtime start receipt builds",
+             dm1_v1_startup_runtime_start_receipt_pc34(&runtime_facts,
+                                                       &runtime_receipt),
+             1);
+    expect_i("DM1 runtime start receipt handled",
+             runtime_receipt.handled,
+             1);
+    expect_i("DM1 runtime start receipt activates gameplay",
+             runtime_receipt.active,
+             1);
+    expect_i("DM1 runtime start defaults source id",
+             strcmp(runtime_receipt.source_id, "launcher") == 0,
+             1);
+    expect_i("DM1 runtime start clamps invalid font scale",
+             runtime_receipt.font_scale,
+             0);
+    expect_i("DM1 runtime start preserves boot md5",
+             strcmp(runtime_receipt.boot_asset_md5,
+                    "0123456789abcdef0123456789abcdef") == 0,
+             1);
+    expect_i("DM1 runtime start direct view bypasses intro",
+             runtime_receipt.launch_path_receipt.intro_bypassed,
+             1);
+    expect_i("DM1 runtime start has boot ready status",
+             strcmp(runtime_receipt.status_title, "BOOT") == 0 &&
+                 strcmp(runtime_receipt.status_detail,
+                        "GAME DATA LOADED") == 0 &&
+                 strcmp(runtime_receipt.inspect_title, "READY") == 0,
+             1);
+    runtime_facts.font_scale = 2;
+    runtime_facts.source_id = "dm1";
+    runtime_facts.launch_path = DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34;
+    expect_i("DM1 runtime start accepts valid font scale",
+             dm1_v1_startup_runtime_start_receipt_pc34(&runtime_facts,
+                                                       &runtime_receipt) &&
+                 runtime_receipt.font_scale == 2 &&
+                 runtime_receipt.launch_path_receipt.intro_bypassed == 0,
+             1);
+    runtime_facts.game_id = "csb";
+    expect_i("non-DM1 runtime start receipt no-op",
+             dm1_v1_startup_runtime_start_receipt_pc34(&runtime_facts,
+                                                       &runtime_receipt) &&
+                 runtime_receipt.handled == 0,
+             1);
+    expect_i("NULL runtime start facts rejected",
+             dm1_v1_startup_runtime_start_receipt_pc34(NULL,
+                                                       &runtime_receipt),
              0);
     expect_i("DM1 handoff prelude plan builds",
              dm1_v1_startup_handoff_prelude_plan_pc34("dm1", &prelude),

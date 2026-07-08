@@ -97,6 +97,81 @@ int dm1_v1_startup_launch_path_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_runtime_start_receipt_pc34(
+    const DM1_V1_StartupRuntimeStartFacts_PC34* facts,
+    DM1_V1_StartupRuntimeStartReceipt_PC34* out_receipt) {
+    DM1_V1_StartupRuntimeStartReceipt_PC34 receipt;
+    DM1_V1_StartupLaunchPathFacts_PC34 launch_facts;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->game_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    memset(&launch_facts, 0, sizeof(launch_facts));
+    launch_facts.source_id = facts->game_id;
+    launch_facts.launch_path = facts->launch_path;
+    if (!dm1_v1_startup_launch_path_receipt_pc34(
+            &launch_facts,
+            &receipt.launch_path_receipt)) {
+        return 0;
+    }
+
+    /* ReDMCSB: ENTRANCE.C hands off to the loaded dungeon only after the
+     * source-visible startup path. Firestaff keeps the host-owned dungeon
+     * allocation in M11, but the DM1 module owns the launch receipt that
+     * marks gameplay active after that load succeeds. */
+    receipt.handled = 1;
+    receipt.active = 1;
+    receipt.started_from_launcher = 1;
+    receipt.source_kind = facts->source_kind;
+    snprintf(receipt.boot_asset_md5,
+             sizeof(receipt.boot_asset_md5),
+             "%s",
+             facts->verified_asset_md5 ? facts->verified_asset_md5 : "");
+    receipt.presentation_mode = facts->presentation_mode;
+    receipt.presentation_width = facts->presentation_width;
+    receipt.presentation_height = facts->presentation_height;
+    receipt.font_scale =
+        (facts->font_scale >= 1 && facts->font_scale <= 3)
+            ? facts->font_scale
+            : 0;
+    snprintf(receipt.title,
+             sizeof(receipt.title),
+             "%s",
+             facts->title ? facts->title : "DUNGEON MASTER");
+    snprintf(receipt.source_id,
+             sizeof(receipt.source_id),
+             "%s",
+             facts->source_id ? facts->source_id : "launcher");
+    snprintf(receipt.dungeon_path,
+             sizeof(receipt.dungeon_path),
+             "%s",
+             facts->dungeon_path ? facts->dungeon_path : "");
+    snprintf(receipt.status_title,
+             sizeof(receipt.status_title),
+             "%s",
+             "BOOT");
+    snprintf(receipt.status_detail,
+             sizeof(receipt.status_detail),
+             "%s",
+             "GAME DATA LOADED");
+    snprintf(receipt.inspect_title,
+             sizeof(receipt.inspect_title),
+             "%s",
+             "READY");
+    snprintf(receipt.inspect_detail,
+             sizeof(receipt.inspect_detail),
+             "%s",
+             "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION");
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_handoff_prelude_plan_pc34(
     const char* game_id,
     DM1_V1_StartupHandoffPreludePlan_PC34* out_plan) {

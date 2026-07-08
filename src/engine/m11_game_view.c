@@ -1542,6 +1542,43 @@ static int m11_apply_dm1_startup_launch_path_receipt(
     return 1;
 }
 
+static int m11_apply_dm1_startup_runtime_start_receipt(
+    M11_GameViewState* state,
+    const DM1_V1_StartupRuntimeStartReceipt_PC34* receipt) {
+    if (!state || !receipt || !receipt->handled) {
+        return 0;
+    }
+    state->active = receipt->active;
+    state->startedFromLauncher = receipt->started_from_launcher;
+    state->sourceKind = (M11_GameSourceKind)receipt->source_kind;
+    snprintf(state->bootAssetMd5,
+             sizeof(state->bootAssetMd5),
+             "%s",
+             receipt->boot_asset_md5);
+    state->presentationMode = receipt->presentation_mode;
+    state->presentationWidth = receipt->presentation_width;
+    state->presentationHeight = receipt->presentation_height;
+    state->fontScale = receipt->font_scale;
+    snprintf(state->title, sizeof(state->title), "%s", receipt->title);
+    snprintf(state->sourceId,
+             sizeof(state->sourceId),
+             "%s",
+             receipt->source_id);
+    if (receipt->launch_path_receipt.handled) {
+        state->dm1StartupIntroBypassed =
+            receipt->launch_path_receipt.intro_bypassed;
+    }
+    snprintf(state->dungeonPath,
+             sizeof(state->dungeonPath),
+             "%s",
+             receipt->dungeon_path);
+    m11_set_status(state, receipt->status_title, receipt->status_detail);
+    m11_set_inspect_readout(state,
+                            receipt->inspect_title,
+                            receipt->inspect_detail);
+    return 1;
+}
+
 static int m11_seed_dm1_v2_visible_effects_from_viewport(
     const M11_GameViewState* state,
     int seedDynamicLights);
@@ -10873,26 +10910,52 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                                  &state->mirrorCatalog) > 0) {
         state->mirrorCatalogAvailable = 1;
     }
-    state->active = 1;
-    state->startedFromLauncher = 1;
-    state->sourceKind = spec->sourceKind;
-    snprintf(state->bootAssetMd5,
-             sizeof(state->bootAssetMd5),
-             "%s",
-             spec->verifiedAssetMd5 ? spec->verifiedAssetMd5 : "");
-    state->presentationMode = spec->presentationMode;
-    state->presentationWidth = spec->presentationWidth;
-    state->presentationHeight = spec->presentationHeight;
-    state->fontScale = (spec->fontScale >= 1 && spec->fontScale <= 3) ? spec->fontScale : 0;
-    snprintf(state->title, sizeof(state->title), "%s", spec->title);
-    snprintf(state->sourceId, sizeof(state->sourceId), "%s",
-             spec->sourceId ? spec->sourceId : "launcher");
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
-        (void)m11_apply_dm1_startup_launch_path_receipt(
-            state,
-            DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34);
+        DM1_V1_StartupRuntimeStartFacts_PC34 facts;
+        DM1_V1_StartupRuntimeStartReceipt_PC34 receipt;
+        memset(&facts, 0, sizeof(facts));
+        memset(&receipt, 0, sizeof(receipt));
+        facts.game_id = spec->gameId;
+        facts.source_id = spec->sourceId;
+        facts.title = spec->title;
+        facts.verified_asset_md5 = spec->verifiedAssetMd5;
+        facts.dungeon_path = dungeonPath;
+        facts.source_kind = (int)spec->sourceKind;
+        facts.presentation_mode = spec->presentationMode;
+        facts.presentation_width = spec->presentationWidth;
+        facts.presentation_height = spec->presentationHeight;
+        facts.font_scale = spec->fontScale;
+        facts.launch_path = DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34;
+        if (!dm1_v1_startup_runtime_start_receipt_pc34(&facts, &receipt) ||
+            !m11_apply_dm1_startup_runtime_start_receipt(state, &receipt)) {
+            return 0;
+        }
+    } else {
+        state->active = 1;
+        state->startedFromLauncher = 1;
+        state->sourceKind = spec->sourceKind;
+        snprintf(state->bootAssetMd5,
+                 sizeof(state->bootAssetMd5),
+                 "%s",
+                 spec->verifiedAssetMd5 ? spec->verifiedAssetMd5 : "");
+        state->presentationMode = spec->presentationMode;
+        state->presentationWidth = spec->presentationWidth;
+        state->presentationHeight = spec->presentationHeight;
+        state->fontScale =
+            (spec->fontScale >= 1 && spec->fontScale <= 3)
+                ? spec->fontScale
+                : 0;
+        snprintf(state->title, sizeof(state->title), "%s", spec->title);
+        snprintf(state->sourceId,
+                 sizeof(state->sourceId),
+                 "%s",
+                 spec->sourceId ? spec->sourceId : "launcher");
+        snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", dungeonPath);
+        m11_set_status(state, "BOOT", "GAME DATA LOADED");
+        m11_set_inspect_readout(state,
+                                "READY",
+                                "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION");
     }
-    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", dungeonPath);
 
     /* Try to open GRAPHICS.DAT from the same directory as the dungeon file */
     {
@@ -10922,8 +10985,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     m11_refresh_hash(state);
     m11_mark_explored(state);
     m11_log_event(state, M11_COLOR_YELLOW, "T0: %s LOADED", spec->title);
-    m11_set_status(state, "BOOT", "GAME DATA LOADED");
-    m11_set_inspect_readout(state, "READY", "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION");
     if (spec->savePath && spec->savePath[0] != '\0') {
         if (!m11_game_view_load_quicksave_path(state, spec->savePath)) {
             return 0;

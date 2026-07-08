@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts, especially direct dungeon/save-resume edges that still touch source identity locally.
+
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
 - 🔧 2026-07-08 boot-data discovery follow-up: Continue replacing optional boot/intro filename assumptions with hash/signature scans beyond SWSH, DM1 TITLE, Nexus boot surfaces, the CLI data validator, legacy asset pipeline, DM2 V1 boot scan, and Theron Track 02 boot scan.
