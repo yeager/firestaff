@@ -31,7 +31,7 @@ int main(void) {
     int tabW = (1920 - 2 * (1920 / 30)) / M12_SETTINGS_TAB_COUNT;
     const int settingsRowXRight = 96 + 36 + (1920 - 2 * 96 - 2 * 36) - 20;
     const int settingsRowY0 = 260 + 36;
-    const int settingsRowYOffset[] = { 0, 70, 140, 210 };
+    const int settingsRowYOffset[] = { 0, 70, 140, 210, 280 };
 
     printf("=== M12 settings tab hit-test (v2.7.15) ===\n");
 
@@ -200,6 +200,25 @@ int main(void) {
           "RA Token cancel succeeds");
     CHECK(strlen(state.settings.retroAchievementsToken) == 127,
           "RA Token cancel leaves previous token unchanged");
+
+    state.settings.retroAchievementsEndpoint[0] = '\0';
+    hit = M12_ModernMenu_HitTest(&state,
+                                 settingsRowXRight,
+                                 settingsRowY0 + settingsRowYOffset[4] + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
+          "RA Endpoint visible row -> cycle hit");
+    CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT,
+          "RA Endpoint visible row maps to M12_SETTINGS_ROW_RA_ENDPOINT");
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(M12_StartupMenu_TextEditActive(&state),
+          "RA Endpoint click starts text edit");
+    CHECK(M12_StartupMenu_ConsumeTextInput(&state, "https://retroachievements.org") == 1,
+          "RA Endpoint accepts URL input");
+    CHECK(M12_StartupMenu_TextEditCommit(&state) == 1,
+          "RA Endpoint commit succeeds");
+    CHECK(strcmp(state.settings.retroAchievementsEndpoint,
+                 "https://retroachievements.org") == 0,
+          "RA Endpoint stored in menu settings");
 
     state.settingsTabIndex = M12_SETTINGS_TAB_GAME;
     hit = M12_ModernMenu_HitTest(&state,

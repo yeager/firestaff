@@ -3733,6 +3733,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                          : (menuState.settings.retroAchievementsToken[0]
                                                 ? menuState.settings.retroAchievementsToken
                                                 : getenv("FIRESTAFF_RA_TOKEN")));
+        snprintf(raConfig.endpoint,
+                 sizeof(raConfig.endpoint),
+                 "%s",
+                 o->retroAchievementsEndpoint
+                     ? o->retroAchievementsEndpoint
+                     : (menuState.settings.retroAchievementsEndpoint[0]
+                            ? menuState.settings.retroAchievementsEndpoint
+                            : "https://retroachievements.org"));
         raRuntime.backend_available = 1;
         firestaff_ra_runtime_apply_config(&raRuntime, &raConfig);
         firestaff_ra_redact_token(raConfig.api_token,

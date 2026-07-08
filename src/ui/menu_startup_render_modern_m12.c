@@ -1540,7 +1540,8 @@ static const int* modern_settings_rows_for_tab(int tab, int* outCount) {
         M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
         M12_STARTUP_SETTINGS_ROW_RA_HARDCORE,
         M12_STARTUP_SETTINGS_ROW_RA_USERNAME,
-        M12_STARTUP_SETTINGS_ROW_RA_TOKEN
+        M12_STARTUP_SETTINGS_ROW_RA_TOKEN,
+        M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT
     };
     const int* rows = gameRows;
     int count = (int)(sizeof(gameRows) / sizeof(gameRows[0]));
@@ -1622,6 +1623,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                                   ? state->settings.retroAchievementsUsername
                                   : "NOT SET";
     const char* raTokenValue = M12_StartupMenu_GetRetroAchievementsTokenValue(state);
+    const char* raEndpointValue = M12_StartupMenu_GetRetroAchievementsEndpointValue(state);
     if (li < 0) li = 0;
     if (li >= M12_StartupMenu_GetLanguageCount()) li = 0;
     if (gi < 0) gi = 0;
@@ -1647,6 +1649,8 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
             raUserValue = state->textEditBuffer[0] ? state->textEditBuffer : "EDITING";
         } else if (state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_TOKEN) {
             raTokenValue = "EDITING";
+        } else if (state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT) {
+            raEndpointValue = state->textEditBuffer[0] ? state->textEditBuffer : "EDITING";
         }
     }
 
@@ -1694,6 +1698,10 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
         } else if (row == M12_STARTUP_SETTINGS_ROW_RA_TOKEN) {
             draw_setting_row(c, rowX, y, rowW, "RETROACHIEVEMENTS API TOKEN",
                              raTokenValue,
+                             state->settingsSelectedIndex == row);
+        } else if (row == M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT) {
+            draw_setting_row(c, rowX, y, rowW, "RETROACHIEVEMENTS SERVER",
+                             raEndpointValue,
                              state->settingsSelectedIndex == row);
         } else if (row == M12_STARTUP_SETTINGS_ROW_SESSION_TIMER) {
             draw_setting_row(c, rowX, y, rowW, "SESSION TIMER", sessionTimer,

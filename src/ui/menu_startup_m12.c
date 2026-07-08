@@ -115,6 +115,7 @@ enum {
     M12_SETTINGS_ROW_RA_HARDCORE,
     M12_SETTINGS_ROW_RA_USERNAME,
     M12_SETTINGS_ROW_RA_TOKEN,
+    M12_SETTINGS_ROW_RA_ENDPOINT,
     M12_SETTINGS_ROW_SAVE_BROWSER,
     M12_SETTINGS_ROW_SESSION_TIMER,
     M12_SETTINGS_ROW_MINIMAP,
@@ -155,6 +156,8 @@ _Static_assert(M12_STARTUP_SETTINGS_ROW_RA_USERNAME == M12_SETTINGS_ROW_RA_USERN
                "settings row contract: RA username");
 _Static_assert(M12_STARTUP_SETTINGS_ROW_RA_TOKEN == M12_SETTINGS_ROW_RA_TOKEN,
                "settings row contract: RA token");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT == M12_SETTINGS_ROW_RA_ENDPOINT,
+               "settings row contract: RA endpoint");
 _Static_assert(M12_STARTUP_SETTINGS_ROW_SESSION_TIMER == M12_SETTINGS_ROW_SESSION_TIMER,
                "settings row contract: session timer");
 _Static_assert(M12_STARTUP_SETTINGS_ROW_EXPORT == M12_SETTINGS_ROW_EXPORT,
@@ -257,6 +260,7 @@ static M12_ExtSettingsRow m12_ext_settings[] = {
     {"RetroAchievements Hardcore", "On",      1, M12_SETTINGS_TAB_ONLINE},
     {"RetroAchievements Username", "Not Set", 1, M12_SETTINGS_TAB_ONLINE},
     {"RetroAchievements API Token","Not Set", 1, M12_SETTINGS_TAB_ONLINE},
+    {"RetroAchievements Endpoint", "retroachievements.org", 1, M12_SETTINGS_TAB_ONLINE},
     {"Stat Tracker",        "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Pathfinding Overlay", "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Inventory Sort",      "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
@@ -1007,7 +1011,8 @@ static const int* m12_visible_settings_rows_for_tab(int tab, int* outCount) {
         M12_SETTINGS_ROW_RETROACHIEVEMENTS,
         M12_SETTINGS_ROW_RA_HARDCORE,
         M12_SETTINGS_ROW_RA_USERNAME,
-        M12_SETTINGS_ROW_RA_TOKEN
+        M12_SETTINGS_ROW_RA_TOKEN,
+        M12_SETTINGS_ROW_RA_ENDPOINT
     };
     const int* rows = gameRows;
     int count = (int)(sizeof(gameRows) / sizeof(gameRows[0]));
@@ -2787,6 +2792,10 @@ static void m12_save_config(const M12_StartupMenuState* state) {
              sizeof(config.retroAchievementsToken),
              "%s",
              state->settings.retroAchievementsToken);
+    snprintf(config.retroAchievementsEndpoint,
+             sizeof(config.retroAchievementsEndpoint),
+             "%s",
+             state->settings.retroAchievementsEndpoint);
     config.sessionTimerIndex = state->settings.sessionTimerIndex;
     config.minimapEnabled = state->settings.minimapEnabled;
     config.minimapSize = state->settings.minimapSize;
@@ -3018,6 +3027,10 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
              sizeof(state->settings.retroAchievementsToken),
              "%s",
              config.retroAchievementsToken);
+    snprintf(state->settings.retroAchievementsEndpoint,
+             sizeof(state->settings.retroAchievementsEndpoint),
+             "%s",
+             config.retroAchievementsEndpoint);
     state->settings.sessionTimerIndex = m12_clamp_index(config.sessionTimerIndex, 5);
     state->settings.minimapEnabled = config.minimapEnabled ? 1 : 0;
     state->settings.minimapSize = config.minimapSize;
@@ -3305,6 +3318,7 @@ static int m12_ra_text_row_capacity(int row) {
         case M12_SETTINGS_ROW_RA_USERNAME:
             return 63;
         case M12_SETTINGS_ROW_RA_TOKEN:
+        case M12_SETTINGS_ROW_RA_ENDPOINT:
             return 127;
         default:
             return 0;
@@ -3316,9 +3330,16 @@ static void m12_begin_ra_text_edit(M12_StartupMenuState* state, int row) {
     if (!state || m12_ra_text_row_capacity(row) <= 0) {
         return;
     }
-    current = (row == M12_SETTINGS_ROW_RA_USERNAME)
-                  ? state->settings.retroAchievementsUsername
-                  : state->settings.retroAchievementsToken;
+    if (row == M12_SETTINGS_ROW_RA_USERNAME) {
+        current = state->settings.retroAchievementsUsername;
+    } else if (row == M12_SETTINGS_ROW_RA_TOKEN) {
+        current = state->settings.retroAchievementsToken;
+    } else if (strcmp(state->settings.retroAchievementsEndpoint,
+                      "https://retroachievements.org") == 0) {
+        current = "";
+    } else {
+        current = state->settings.retroAchievementsEndpoint;
+    }
     state->languagePopupOpen = 0;
     state->textEditActive = 1;
     state->textEditRow = row;
@@ -3375,6 +3396,11 @@ int M12_StartupMenu_TextEditCommit(M12_StartupMenuState* state) {
     } else if (state->textEditRow == M12_SETTINGS_ROW_RA_TOKEN) {
         snprintf(state->settings.retroAchievementsToken,
                  sizeof(state->settings.retroAchievementsToken),
+                 "%s",
+                 state->textEditBuffer);
+    } else if (state->textEditRow == M12_SETTINGS_ROW_RA_ENDPOINT) {
+        snprintf(state->settings.retroAchievementsEndpoint,
+                 sizeof(state->settings.retroAchievementsEndpoint),
                  "%s",
                  state->textEditBuffer);
     } else {
@@ -3594,6 +3620,10 @@ static const char* m12_settings_value_ra_status(const M12_StartupMenuState* stat
                  sizeof(config.api_token),
                  "%s",
                  state->settings.retroAchievementsToken);
+        snprintf(config.endpoint,
+                 sizeof(config.endpoint),
+                 "%s",
+                 state->settings.retroAchievementsEndpoint);
     }
 
     firestaff_ra_runtime_init(&runtime);
@@ -3636,6 +3666,18 @@ const char* M12_StartupMenu_GetRetroAchievementsStatusValue(
 const char* M12_StartupMenu_GetRetroAchievementsTokenValue(
     const M12_StartupMenuState* state) {
     return m12_settings_value_ra_token(state);
+}
+
+const char* M12_StartupMenu_GetRetroAchievementsEndpointValue(
+    const M12_StartupMenuState* state) {
+    if (state && state->textEditActive &&
+        state->textEditRow == M12_SETTINGS_ROW_RA_ENDPOINT) {
+        return state->textEditBuffer[0] ? state->textEditBuffer : m12_tr(state, "EDITING");
+    }
+    if (!state || state->settings.retroAchievementsEndpoint[0] == '\0') {
+        return "https://retroachievements.org";
+    }
+    return state->settings.retroAchievementsEndpoint;
 }
 
 static const char* m12_settings_value_session_timer(const M12_StartupMenuState* state) {
@@ -3736,6 +3778,7 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_RA_HARDCORE: return m12_tr(state, "RETROACHIEVEMENTS HARDCORE");
         case M12_SETTINGS_ROW_RA_USERNAME: return m12_tr(state, "RETROACHIEVEMENTS USER");
         case M12_SETTINGS_ROW_RA_TOKEN: return m12_tr(state, "RETROACHIEVEMENTS API TOKEN");
+        case M12_SETTINGS_ROW_RA_ENDPOINT: return m12_tr(state, "RETROACHIEVEMENTS SERVER");
         case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "SAVE BROWSER");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_tr(state, "SESSION TIMER");
         case M12_SETTINGS_ROW_MINIMAP: return m12_tr(state, "MINIMAP");
@@ -3806,6 +3849,8 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
                        : m12_tr(state, "NOT SET");
         case M12_SETTINGS_ROW_RA_TOKEN:
             return m12_settings_value_ra_token(state);
+        case M12_SETTINGS_ROW_RA_ENDPOINT:
+            return M12_StartupMenu_GetRetroAchievementsEndpointValue(state);
         case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "OPEN...");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_settings_value_session_timer(state);
         case M12_SETTINGS_ROW_MINIMAP: return m12_settings_value_minimap(state);
@@ -3858,7 +3903,7 @@ static const char* m12_settings_group_label(const M12_StartupMenuState* state, i
     if (row <= M12_SETTINGS_ROW_AUTO_PAUSE) {
         return m12_tr(state, "ACCESSIBILITY");
     }
-    if (row <= M12_SETTINGS_ROW_RA_TOKEN) {
+    if (row <= M12_SETTINGS_ROW_RA_ENDPOINT) {
         return m12_tr(state, "ONLINE");
     }
     return m12_tr(state, "APPEARANCE");
@@ -4020,6 +4065,13 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
         state->settings.retroAchievementsHardcore ? 1 : 0;
     state->settings.retroAchievementsUsername[sizeof(state->settings.retroAchievementsUsername) - 1] = '\0';
     state->settings.retroAchievementsToken[sizeof(state->settings.retroAchievementsToken) - 1] = '\0';
+    state->settings.retroAchievementsEndpoint[sizeof(state->settings.retroAchievementsEndpoint) - 1] = '\0';
+    if (state->settings.retroAchievementsEndpoint[0] == '\0') {
+        snprintf(state->settings.retroAchievementsEndpoint,
+                 sizeof(state->settings.retroAchievementsEndpoint),
+                 "%s",
+                 "https://retroachievements.org");
+    }
     state->settings.sessionTimerIndex = m12_clamp_index(state->settings.sessionTimerIndex, 5);
     state->settings.minimapEnabled = state->settings.minimapEnabled ? 1 : 0;
     state->settings.autoMapEnabled = state->settings.autoMapEnabled ? 1 : 0;
@@ -4392,6 +4444,7 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
             break;
         case M12_SETTINGS_ROW_RA_USERNAME:
         case M12_SETTINGS_ROW_RA_TOKEN:
+        case M12_SETTINGS_ROW_RA_ENDPOINT:
             m12_begin_ra_text_edit(state, state->settingsSelectedIndex);
             break;
         case M12_SETTINGS_ROW_SAVE_BROWSER:
@@ -6776,6 +6829,9 @@ static const char* m12_ext_settings_value_for_row(
         strcmp(row->label, "RA API Token") == 0) {
         return m12_settings_value(state, M12_SETTINGS_ROW_RA_TOKEN);
     }
+    if (strcmp(row->label, "RetroAchievements Endpoint") == 0) {
+        return m12_settings_value(state, M12_SETTINGS_ROW_RA_ENDPOINT);
+    }
     return m12_tr(state, row->value);
 }
 
@@ -6965,8 +7021,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                 else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
                 else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
                 else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
-                else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_TOKEN) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
-                else if (row > M12_SETTINGS_ROW_RA_TOKEN) groupId = M12_SETTINGS_ROW_THEME;
+                else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_ENDPOINT) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
+                else if (row > M12_SETTINGS_ROW_RA_ENDPOINT) groupId = M12_SETTINGS_ROW_THEME;
                 if (groupId != lastGroup) {
                     m12_draw_text(framebuffer,
                                   framebufferWidth,
@@ -8326,8 +8382,8 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
             else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
             else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
             else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
-            else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_TOKEN) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
-            else if (row > M12_SETTINGS_ROW_RA_TOKEN) groupId = M12_SETTINGS_ROW_THEME;
+            else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_ENDPOINT) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
+            else if (row > M12_SETTINGS_ROW_RA_ENDPOINT) groupId = M12_SETTINGS_ROW_THEME;
             if (groupId != lastGroup) {
                 m12_draw_text(framebuffer,
                               framebufferWidth,
