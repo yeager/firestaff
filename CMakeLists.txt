@@ -155,6 +155,8 @@ add_library(firestaff_m10 STATIC
     src/shared/asset_find_by_hash.c
     src/shared/firestaff_cmp_decode.c
     src/engine/m11_game_text_latin_extended_glyphs.c
+    src/frontend/title_dat_loader_v1.c
+    src/frontend/title_frontend_v1.c
     src/shared/image_backend_pc34_compat_globals.c
     src/csb/csb_v1_csbgraphics_dat_classify.c
     src/csb/csb_v1_csbgraphics_dat_real_scan.c
