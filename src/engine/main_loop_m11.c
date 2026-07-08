@@ -1584,25 +1584,18 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         m11_dm1_selected_launch_mark_failed;
     launchEntry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
     if (launchEntry && launchEntry->gameId &&
-        dm1_v1_startup_execute_selected_launch_transaction_pc34(
-            launchEntry->gameId,
-            &dm1SelectedLaunchCallbacks,
-            &dm1SelectedLaunchResult) &&
-        dm1SelectedLaunchResult.handled) {
+        dm1_v1_startup_source_visible_handoff_required_pc34(
+            launchEntry->gameId)) {
+        if (!dm1_v1_startup_execute_selected_launch_transaction_pc34(
+                launchEntry->gameId,
+                &dm1SelectedLaunchCallbacks,
+                &dm1SelectedLaunchResult)) {
+            m11_set_launch_failed_message(menuState);
+            return 0;
+        }
         return dm1SelectedLaunchResult.opened ? 1 : 0;
     }
     {
-        /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle() before
-         * F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher front door, so
-         * the original TITLE animation and title-song/swoosh cue must run at the
-         * launcher->DM1 handoff, before the game view opens and before the entrance
-         * transition.
-         * This is a DM1 source-order rule, not a V1-only renderer feature:
-         * Entrance is mandatory for every DM1 presentation mode, and TITLE must
-         * be the visible handoff immediately before it.  CSB/DM2/Nexus keep
-         * their own intro paths. */
-
-
         /* CSB has its own title/entrance sequence after the common FTL/SWSH
          * prelude.  ReDMCSB SWSH.C runs the FTL logo before the started
          * program hands off to TITLE/ENTRANCE; Firestaff keeps CSB title and
