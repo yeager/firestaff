@@ -1251,6 +1251,87 @@ int theron_v1_startup_handle_pointer_from_facts(
         out_action);
 }
 
+int theron_v1_startup_handle_pointer_from_facts_with_receipt(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    int soul_cursor,
+    int continue_focus,
+    int has_tqsv_continue,
+    int tqsv_slot,
+    int has_srm_continue,
+    int srm_slot,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    int x,
+    int y,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt)
+{
+    Theron_StartupResult result = THERON_STARTUP_OK;
+    int handled;
+
+    if (out_receipt) {
+        tqr_startup_input_receipt_init(out_receipt);
+    }
+    if (!out_action) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->status_scope = "STARTUP";
+            out_receipt->status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        return 0;
+    }
+
+    handled = theron_v1_startup_handle_pointer_from_facts(
+        phase,
+        selected_dungeon,
+        boot_profile,
+        world,
+        soul_cursor,
+        continue_focus,
+        has_tqsv_continue,
+        tqsv_slot,
+        has_srm_continue,
+        srm_slot,
+        startup_text_prompt,
+        startup_roster_names,
+        startup_roster_titles,
+        startup_roster_name_count,
+        selected_mirrors_mask,
+        selected_mirror_order,
+        selected_mirror_order_count,
+        x,
+        y,
+        &result,
+        out_action);
+
+    if (out_receipt) {
+        out_receipt->result = result;
+        if (!handled) {
+            out_receipt->input_result =
+                (result == THERON_STARTUP_OK)
+                    ? THERON_STARTUP_INPUT_RESULT_IGNORED
+                    : THERON_STARTUP_INPUT_RESULT_REDRAW;
+        } else if (result != THERON_STARTUP_OK) {
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->status_scope = "STARTUP";
+            out_receipt->status = theron_v1_startup_result_name(result);
+        } else {
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+        }
+    }
+    return handled && result == THERON_STARTUP_OK;
+}
+
 static int tqr_startup_render_add_row(
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows,

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup pointer receipt: Theron startup-flow now emits pointer input receipts from raw startup facts, matching the keyboard receipt path. M11 consumes the receipt for ignored/redraw/status handling instead of interpreting pointer result values locally. Verification: Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB leader-hand mirror receipt: CSB runtime's combined M11 mirror receipt now also carries transient leader-hand/object-in-hand state, icon index, and resolved object name, so M11 no longer uses a separate CSBWin leader-hand sync helper. Verification: CSB boot runtime handoff passed 274/274, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB runtime M11 mirror receipt: CSB runtime now emits one combined M11 mirror receipt for scalar view state plus party/champion mirror data, and M11 consumes that combined receipt instead of requesting separate view and party receipts during boot/resume sync. Verification: CSB boot runtime handoff passed 274/274, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

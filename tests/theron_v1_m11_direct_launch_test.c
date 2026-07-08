@@ -463,6 +463,38 @@ int main(void) {
                     "M11 Theron startup layout exposes machine-readable stage state");
     }
 
+    {
+        Theron_StartupAction pointer_action;
+        Theron_StartupInputReceipt pointer_receipt;
+        expect_true(theron_v1_startup_handle_pointer_from_facts_with_receipt(
+                        (Theron_StartupPhase)view.theronState.startup_phase,
+                        view.theronState.selected_dungeon,
+                        (const Theron_V1_BootProfile*)view.theronBootProfile,
+                        (const Theron_V1_World*)view.theronWorld,
+                        view.theronState.startup_cursor,
+                        view.theronState.save_resume_continue_focus,
+                        1,
+                        5,
+                        0,
+                        -1,
+                        view.theronState.startup_text_prompt,
+                        view.theronState.startup_roster_names,
+                        view.theronState.startup_roster_titles,
+                        view.theronState.startup_roster_name_count,
+                        view.theronState.selected_mirrors_mask,
+                        view.theronState.selected_mirror_order,
+                        THERON_STARTUP_MAX_COMPANIONS,
+                        36,
+                        24,
+                        &pointer_action,
+                        &pointer_receipt) == 1 &&
+                        pointer_receipt.result == THERON_STARTUP_OK &&
+                        pointer_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        pointer_action.kind == THERON_STARTUP_ACTION_NONE,
+                    "Theron startup pointer receipt consumes panel hits without action");
+    }
+
     expect_true(M11_GameView_HandlePointer(&view, 36, 24, 1) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron startup panel consumes non-action pointer hits");
