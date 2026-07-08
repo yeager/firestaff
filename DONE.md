@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus resume host receipts: Nexus startup now owns M11 host receipts for resume failure, bad level, bad direction, level-load failure, engine-lost, and resumed states. M11 applies those receipts instead of setting Nexus resume boot status strings directly.
+
 - ✅ 2026-07-08 archive scanner suffix broadening: the shared game-data hash scanner now treats common ZIP-compatible containers (`.apk`, `.ipa`, `.xpi`, `.whl`, `.wsz`, `.kmz`) and raw-ish disc image suffixes (`.raw`, `.mdf`) as scan containers. Regression coverage added for `.apk` and `.raw` virtual-path scan/extract.
 
 - ✅ 2026-07-08 Nexus boot status host receipts: Nexus startup now exposes boot host receipts for data error, level error, title loaded, and title fallback. M11 applies those receipts instead of setting Nexus boot status strings directly. Verification: strict compile checks passed for `nexus_v1_startup_menu.c`, `m11_game_view.c`, and `test_nexus_v1_startup_menu_pc34_compat.c`; Phase A passed 24/24; `git diff --check` passed.

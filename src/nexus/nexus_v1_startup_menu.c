@@ -164,6 +164,42 @@ int nexus_v1_startup_boot_status_host_receipt(
     return 1;
 }
 
+int nexus_v1_startup_resume_status_host_receipt(
+    Nexus_V1_StartupResumeStatus status,
+    Nexus_V1_StartupHostReceipt *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    nexus_v1_startup_host_receipt_clear(out_receipt);
+    out_receipt->status_scope = "BOOT";
+    switch (status) {
+    case NEXUS_V1_STARTUP_RESUME_STATUS_FAILED:
+        out_receipt->status = "NEXUS RESUME FAILED";
+        break;
+    case NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_INVALID:
+        out_receipt->status = "NEXUS RESUME LEVEL INVALID";
+        break;
+    case NEXUS_V1_STARTUP_RESUME_STATUS_DIR_INVALID:
+        out_receipt->status = "NEXUS RESUME DIR INVALID";
+        break;
+    case NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR:
+        out_receipt->status = "NEXUS RESUME LEVEL ERROR";
+        break;
+    case NEXUS_V1_STARTUP_RESUME_STATUS_ENGINE_LOST:
+        out_receipt->status = "NEXUS RESUME ENGINE LOST";
+        break;
+    case NEXUS_V1_STARTUP_RESUME_STATUS_RESUMED:
+        out_receipt->status = "NEXUS RESUMED";
+        out_receipt->input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+        break;
+    default:
+        out_receipt->status = "NEXUS RESUME FAILED";
+        break;
+    }
+    return 1;
+}
+
 void nexus_v1_startup_host_action_receipt_clear(
     Nexus_V1_StartupHostActionReceipt *receipt)
 {

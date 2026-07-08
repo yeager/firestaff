@@ -144,6 +144,15 @@ typedef enum {
     NEXUS_V1_STARTUP_BOOT_STATUS_LEVEL_ERROR = 3
 } Nexus_V1_StartupBootStatus;
 
+typedef enum {
+    NEXUS_V1_STARTUP_RESUME_STATUS_FAILED = 0,
+    NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_INVALID = 1,
+    NEXUS_V1_STARTUP_RESUME_STATUS_DIR_INVALID = 2,
+    NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR = 3,
+    NEXUS_V1_STARTUP_RESUME_STATUS_ENGINE_LOST = 4,
+    NEXUS_V1_STARTUP_RESUME_STATUS_RESUMED = 5
+} Nexus_V1_StartupResumeStatus;
+
 typedef struct {
     Nexus_V1_StartupModeUpdate mode_update;
     Nexus_V1_StartupHostInputResult input_result;
@@ -461,6 +470,9 @@ void nexus_v1_startup_host_receipt_clear(
     Nexus_V1_StartupHostReceipt *receipt);
 int nexus_v1_startup_boot_status_host_receipt(
     Nexus_V1_StartupBootStatus status,
+    Nexus_V1_StartupHostReceipt *out_receipt);
+int nexus_v1_startup_resume_status_host_receipt(
+    Nexus_V1_StartupResumeStatus status,
     Nexus_V1_StartupHostReceipt *out_receipt);
 int nexus_v1_startup_host_receipt_from_apply_receipt(
     const Nexus_V1_StartupApplyReceipt *apply_receipt,
