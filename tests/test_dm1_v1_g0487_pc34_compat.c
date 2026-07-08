@@ -138,6 +138,73 @@ static void test_runtime_spell_tables_match_g0487(void)
     CHECK(F0752b_MAGIC_LookupSpellByTableIndex_Compat(DM1_SPELL_COUNT, 0) == 0);
 }
 
+static void test_all_dm1_spells_produce_runtime_effects(void)
+{
+    struct MagicState_Compat magic;
+    int spell;
+    int potionCount = 0;
+    int projectileCount = 0;
+    int otherCount = 0;
+
+    memset(&magic, 0, sizeof(magic));
+
+    for (spell = 0; spell < DM1_SPELL_COUNT; ++spell) {
+        struct SpellDefinition_Compat m10;
+        struct SpellEffect_Compat effect;
+        struct RngState_Compat rng;
+        int rc = 0;
+
+        rng.seed = (uint32_t)(0xD4100000u | (uint32_t)spell);
+        CHECK(F0752b_MAGIC_LookupSpellByTableIndex_Compat(spell, &m10) == 1);
+
+        /* ReDMCSB MENU.C F0412:1845-2031 dispatches the same G0487 row
+         * through potion, projectile, other, or magic-map effect bodies.
+         * DM1 PC34 has no magic-map rows in its 25-entry G0487 table. */
+        switch (m10.kind) {
+            case C1_SPELL_KIND_POTION_COMPAT:
+                ++potionCount;
+                rc = F0758_MAGIC_ProducePotionEffect_Compat(
+                    &m10, 3, 1, &rng, &effect);
+                CHECK(rc == 1);
+                CHECK(effect.castResult == SPELL_CAST_SUCCESS);
+                CHECK(effect.spellKind == C1_SPELL_KIND_POTION_COMPAT);
+                CHECK(effect.spellType == m10.type);
+                CHECK(effect.kineticEnergy >= 120);
+                CHECK(effect.kineticEnergy <= 135);
+                break;
+            case C2_SPELL_KIND_PROJECTILE_COMPAT:
+                ++projectileCount;
+                rc = F0756_MAGIC_ProduceProjectileEffect_Compat(
+                    &m10, 3, 9, &rng, &effect);
+                CHECK(rc == 1);
+                CHECK(effect.castResult == SPELL_CAST_SUCCESS);
+                CHECK(effect.spellKind == C2_SPELL_KIND_PROJECTILE_COMPAT);
+                CHECK(effect.spellType == m10.type);
+                CHECK(effect.followupEventKind == TIMELINE_EVENT_PROJECTILE_MOVE);
+                CHECK(effect.followupEventAux0 == 0xFF80 + m10.type);
+                CHECK(effect.kineticEnergy == 90);
+                break;
+            case C3_SPELL_KIND_OTHER_COMPAT:
+                ++otherCount;
+                rc = F0757_MAGIC_ProduceOtherEffect_Compat(
+                    &m10, 3, &magic, &effect);
+                CHECK(rc == 1);
+                CHECK(effect.castResult == SPELL_CAST_SUCCESS);
+                CHECK(effect.spellKind == C3_SPELL_KIND_OTHER_COMPAT);
+                CHECK(effect.spellType == m10.type);
+                break;
+            default:
+                CHECK(m10.kind != C4_SPELL_KIND_MAGIC_MAP_COMPAT);
+                CHECK(0);
+                break;
+        }
+    }
+
+    CHECK(potionCount == 10);
+    CHECK(projectileCount == 6);
+    CHECK(otherCount == 9);
+}
+
 int main(void)
 {
     test_table_values();
@@ -145,6 +212,7 @@ int main(void)
     test_first_last_specific();
     test_run_accepted();
     test_runtime_spell_tables_match_g0487();
+    test_all_dm1_spells_produce_runtime_effects();
     printf("dm1_v1_g0487: %d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
     return g_failures == 0 ? 0 : 1;
