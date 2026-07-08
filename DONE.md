@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 action-menu/icon receipt ownership: action-menu render eligibility, visible-row clamp, text lengths, and action-icon cell/dead/hatch fill decisions now come from DM1 V1 action-area receipts. M11 applies those receipts for rendering instead of owning the menu/icon state rules. Verification: `test_dm1_v1_box_action_area_pc34_compat` passed 128/128; Phase A passed 24/24.
+
 - ✅ 2026-07-08 DM1 spell-panel state ownership: open, close, recant/clear, rune append, four-rune clamp, and live C040 candidate-panel blocking now return DM1 V1 spell-area receipts. M11 applies those receipts instead of owning the spell-menu state rules. Verification: `test_dm1_v1_box_spell_area_pc34_compat` passed 170/170; Phase A passed 24/24.
 
 - ✅ 2026-07-08 DM1 spell-menu rune ownership: rune value encoding, rune names/abbreviations, and C011 label-cell source zones now live in the DM1 V1 spell-area compat layer instead of M11-local tables. M11 consumes those DM1 helpers for spell input and V1 spell-panel rendering. Verification: `test_dm1_v1_box_spell_area_pc34_compat` passed 133/133; Phase A passed 24/24.

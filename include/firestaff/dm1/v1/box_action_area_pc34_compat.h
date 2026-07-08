@@ -77,6 +77,39 @@ typedef struct DM1_V1_ActionMenuRenderPlanPc34 {
     int row_count;
 } DM1_V1_ActionMenuRenderPlanPc34;
 
+typedef struct DM1_V1_ActionMenuStatePc34 {
+    int acting_champion_ordinal;
+    int champion_count;
+    int acting_champion_present;
+    int action_row_count;
+} DM1_V1_ActionMenuStatePc34;
+
+typedef struct DM1_V1_ActionMenuReceiptPc34 {
+    int accepted;
+    int acting_champion_index;
+    int visible_row_count;
+    DM1_V1_ActionMenuRenderPlanPc34 render_plan;
+} DM1_V1_ActionMenuReceiptPc34;
+
+typedef struct DM1_V1_ActionIconStatePc34 {
+    int champion_slot;
+    int champion_count;
+    int champion_present;
+    int champion_dead;
+    int global_hatch;
+} DM1_V1_ActionIconStatePc34;
+
+typedef struct DM1_V1_ActionIconReceiptPc34 {
+    int accepted;
+    int champion_slot;
+    int draw_dead_only;
+    int hatch;
+    int cell_fill_color;
+    int inner_fill_color;
+    DM1_V1_ActionAreaRectPc34 cell_rect;
+    DM1_V1_ActionAreaRectPc34 inner_rect;
+} DM1_V1_ActionIconReceiptPc34;
+
 /*
  * ReDMCSB: ACTIDRAW.C F0387 lines ~320-382 fills
  * G0001_ai_Graphic562_Box_ActionArea then blits C010 through
@@ -96,7 +129,10 @@ enum {
 
     DM1_V1_ACTION_ICON_PARENT_ZONE_ID_PC34 = 88,
     DM1_V1_ACTION_ICON_CELL_ZONE_ID_BASE_PC34 = 89,
-    DM1_V1_ACTION_ICON_INNER_ZONE_ID_BASE_PC34 = 93
+    DM1_V1_ACTION_ICON_INNER_ZONE_ID_BASE_PC34 = 93,
+
+    DM1_V1_ACTION_MENU_HEADER_TEXT_LEN_PC34 = 7,
+    DM1_V1_ACTION_MENU_ROW_TEXT_LEN_PC34 = 12
 };
 
 static inline DM1_V1_ActionAreaRectPc34
@@ -191,6 +227,67 @@ dm1_v1_action_menu_build_render_plan_pc34(
     return 1;
 }
 
+static inline DM1_V1_ActionMenuReceiptPc34
+dm1_v1_action_menu_reject_pc34(void)
+{
+    DM1_V1_ActionMenuReceiptPc34 receipt;
+    int i;
+    receipt.accepted = 0;
+    receipt.acting_champion_index = -1;
+    receipt.visible_row_count = 0;
+    receipt.render_plan.clear_rect.x = 0;
+    receipt.render_plan.clear_rect.y = 0;
+    receipt.render_plan.clear_rect.w = 0;
+    receipt.render_plan.clear_rect.h = 0;
+    receipt.render_plan.graphic_rect = receipt.render_plan.clear_rect;
+    receipt.render_plan.header_rect = receipt.render_plan.clear_rect;
+    receipt.render_plan.header_text.x = 0;
+    receipt.render_plan.header_text.y = 0;
+    for (i = 0; i < 3; ++i) {
+        receipt.render_plan.row_rects[i] = receipt.render_plan.clear_rect;
+        receipt.render_plan.row_text[i].x = 0;
+        receipt.render_plan.row_text[i].y = 0;
+    }
+    receipt.render_plan.graphic_zone_id = 0;
+    receipt.render_plan.graphic_id = 0;
+    receipt.render_plan.clear_color = 0;
+    receipt.render_plan.header_fill_color = 0;
+    receipt.render_plan.header_text_color = 0;
+    receipt.render_plan.row_fill_color = 0;
+    receipt.render_plan.row_text_color = 0;
+    receipt.render_plan.row_count = 0;
+    return receipt;
+}
+
+static inline DM1_V1_ActionMenuReceiptPc34
+dm1_v1_action_menu_build_receipt_pc34(
+    const DM1_V1_ActionMenuStatePc34 *state)
+{
+    DM1_V1_ActionMenuReceiptPc34 receipt =
+        dm1_v1_action_menu_reject_pc34();
+    int acting_index;
+    int visible_rows;
+    if (!state) return receipt;
+    if (state->acting_champion_ordinal <= 0) return receipt;
+    acting_index = state->acting_champion_ordinal - 1;
+    if (acting_index < 0 || acting_index >= 4) return receipt;
+    if (acting_index >= state->champion_count) return receipt;
+    if (!state->acting_champion_present) return receipt;
+    visible_rows = state->action_row_count;
+    if (visible_rows <= 0) return receipt;
+    if (visible_rows > DM1_V1_ACTION_MENU_ROW_COUNT_PC34) {
+        visible_rows = DM1_V1_ACTION_MENU_ROW_COUNT_PC34;
+    }
+    if (!dm1_v1_action_menu_build_render_plan_pc34(
+            visible_rows, &receipt.render_plan)) {
+        return receipt;
+    }
+    receipt.accepted = 1;
+    receipt.acting_champion_index = acting_index;
+    receipt.visible_row_count = visible_rows;
+    return receipt;
+}
+
 static inline int
 dm1_v1_action_icon_cell_zone_id_pc34(int champion_slot)
 {
@@ -225,6 +322,52 @@ dm1_v1_action_icon_inner_rect_pc34(int champion_slot)
         r.x = r.y = r.w = r.h = 0;
     }
     return r;
+}
+
+static inline DM1_V1_ActionIconReceiptPc34
+dm1_v1_action_icon_reject_pc34(void)
+{
+    DM1_V1_ActionIconReceiptPc34 receipt;
+    receipt.accepted = 0;
+    receipt.champion_slot = -1;
+    receipt.draw_dead_only = 0;
+    receipt.hatch = 0;
+    receipt.cell_fill_color = DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
+    receipt.inner_fill_color = DM1_V1_ACTION_AREA_CYAN_PC34;
+    receipt.cell_rect.x = 0;
+    receipt.cell_rect.y = 0;
+    receipt.cell_rect.w = 0;
+    receipt.cell_rect.h = 0;
+    receipt.inner_rect = receipt.cell_rect;
+    return receipt;
+}
+
+static inline DM1_V1_ActionIconReceiptPc34
+dm1_v1_action_icon_build_receipt_pc34(
+    const DM1_V1_ActionIconStatePc34 *state)
+{
+    DM1_V1_ActionIconReceiptPc34 receipt =
+        dm1_v1_action_icon_reject_pc34();
+    if (!state) return receipt;
+    if (state->champion_slot < 0 || state->champion_slot >= 4) {
+        return receipt;
+    }
+    if (state->champion_slot >= state->champion_count) return receipt;
+    if (!state->champion_present) return receipt;
+
+    receipt.accepted = 1;
+    receipt.champion_slot = state->champion_slot;
+    receipt.draw_dead_only = state->champion_dead ? 1 : 0;
+    receipt.hatch = state->global_hatch ? 1 : 0;
+    receipt.cell_fill_color = state->champion_dead
+                                  ? DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34
+                                  : DM1_V1_ACTION_AREA_CYAN_PC34;
+    receipt.inner_fill_color = DM1_V1_ACTION_AREA_CYAN_PC34;
+    receipt.cell_rect =
+        dm1_v1_action_icon_cell_rect_pc34(state->champion_slot);
+    receipt.inner_rect =
+        dm1_v1_action_icon_inner_rect_pc34(state->champion_slot);
+    return receipt;
 }
 
 const int *
