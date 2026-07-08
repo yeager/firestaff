@@ -269,6 +269,34 @@ typedef struct {
     int cancelActionDisable;
 } DM1_ActionClimbDownPlanPc34;
 
+typedef struct {
+    int randomDraw;
+} DM1_ActionFlipInputPc34;
+
+typedef struct {
+    int valid;
+    int performed;
+    int comesUpHeads;
+} DM1_ActionFlipPlanPc34;
+
+typedef struct {
+    int actionIndex;
+    int partyMapX;
+    int partyMapY;
+    int partyDirection;
+    int championDirection;
+    int championCell;
+} DM1_ActionDirectionInputPc34;
+
+typedef struct {
+    int valid;
+    int performed;
+    int setChampionDirectionToParty;
+    int targetMapX;
+    int targetMapY;
+    int throwSide;
+} DM1_ActionDirectionPlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -317,6 +345,12 @@ int dm1_v1_action_projectile_spell_plan_f0407_pc34(
 int dm1_v1_action_climb_down_plan_f0407_pc34(
     const DM1_ActionClimbDownInputPc34* in,
     DM1_ActionClimbDownPlanPc34* out);
+int dm1_v1_action_flip_plan_f0407_pc34(
+    const DM1_ActionFlipInputPc34* in,
+    DM1_ActionFlipPlanPc34* out);
+int dm1_v1_action_direction_plan_f0407_pc34(
+    const DM1_ActionDirectionInputPc34* in,
+    DM1_ActionDirectionPlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);

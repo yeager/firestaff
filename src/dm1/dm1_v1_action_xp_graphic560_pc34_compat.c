@@ -24,6 +24,22 @@
 #define DM1_STATUS_FIRE_SHIELD 78
 #define DM1_IMMUNE_TO_FEAR_PC34 15
 
+static int dm1_step_east_for_dir(int direction) {
+    switch (direction & 3) {
+        case 1: return 1;
+        case 3: return -1;
+        default: return 0;
+    }
+}
+
+static int dm1_step_north_for_dir(int direction) {
+    switch (direction & 3) {
+        case 0: return -1;
+        case 2: return 1;
+        default: return 0;
+    }
+}
+
 /* ReDMCSB CHAMPION.C F0304 line ~874: base skill = (sub - 4) >> 2.
  * For base skills (0..3) the mapping is identity. */
 static int sub_skill_base_index(int skillIndex) {
@@ -624,6 +640,67 @@ int dm1_v1_action_climb_down_plan_f0407_pc34(
     } else {
         out->cancelActionDisable = 1;
     }
+    return 1;
+}
+
+int dm1_v1_action_flip_plan_f0407_pc34(
+    const DM1_ActionFlipInputPc34* in,
+    DM1_ActionFlipPlanPc34* out) {
+    int draw;
+    if (!in || !out) return 0;
+    draw = in->randomDraw;
+    if (draw < 0) draw = 0;
+    out->valid = 1;
+    out->performed = 1;
+    /* ReDMCSB: MENU.C F0407 C005_ACTION_FLIP lines 1398-1440 prints HEADS
+     * when M005_RANDOM(2) is nonzero and TAILS when it is zero. */
+    out->comesUpHeads = (draw & 1) ? 1 : 0;
+    return 1;
+}
+
+int dm1_v1_action_direction_plan_f0407_pc34(
+    const DM1_ActionDirectionInputPc34* in,
+    DM1_ActionDirectionPlanPc34* out) {
+    int dir;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->performed = 0;
+    out->setChampionDirectionToParty = 0;
+    out->targetMapX = in->partyMapX;
+    out->targetMapY = in->partyMapY;
+    out->throwSide = 0;
+    switch (in->actionIndex) {
+        case DM1_ACTION_FLUXCAGE:
+            /* ReDMCSB: MENU.C F0407 lines 1262-1266 compute L1251/L1252
+             * from Champion.Direction before C035 calls F0406 at lines
+             * 1494-1497. */
+            dir = in->championDirection;
+            out->setChampionDirectionToParty = 1;
+            break;
+        case DM1_ACTION_FUSE:
+            /* ReDMCSB: MENU.C F0407 lines 1498-1504 calls F0406, then
+             * recomputes the target from G0308_i_PartyDirection. */
+            dir = in->partyDirection;
+            out->setChampionDirectionToParty = 1;
+            break;
+        case DM1_ACTION_THROW:
+            /* ReDMCSB: MENU.C F0407 lines 1613-1617 calls F0406 and passes
+             * side=TRUE to F0328 when Champion.Cell is NEXT(partyDir) or
+             * OPPOSITE(partyDir). */
+            dir = in->partyDirection;
+            out->setChampionDirectionToParty = 1;
+            if (((in->partyDirection + 1) & 3) == (in->championCell & 3) ||
+                ((in->partyDirection + 2) & 3) == (in->championCell & 3)) {
+                out->throwSide = 1;
+            }
+            break;
+        default:
+            return 0;
+    }
+    out->valid = 1;
+    out->performed = 1;
+    out->targetMapX = in->partyMapX + dm1_step_east_for_dir(dir);
+    out->targetMapY = in->partyMapY + dm1_step_north_for_dir(dir);
     return 1;
 }
 
