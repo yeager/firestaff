@@ -1631,22 +1631,38 @@ void theron_v1_boot_startup_launch_cleanup(
     if (!launch) {
         return;
     }
-    if (launch->viewport) {
-        theron_vp_free(launch->viewport);
-        free(launch->viewport);
-    }
-    if (launch->assets) {
-        tr_asset_free(launch->assets);
-        free(launch->assets);
-    }
-    if (launch->world) {
-        free(launch->world);
-    }
-    if (launch->profile) {
-        theron_v1_boot_cleanup(launch->profile);
-        free(launch->profile);
-    }
+    theron_v1_boot_runtime_release(&launch->profile,
+                                   &launch->world,
+                                   &launch->viewport,
+                                   &launch->assets);
     memset(launch, 0, sizeof(*launch));
+}
+
+void theron_v1_boot_runtime_release(
+    Theron_V1_BootProfile **profile,
+    Theron_V1_World **world,
+    Theron_V1_Viewport **viewport,
+    TrAssetBundle **assets)
+{
+    if (viewport && *viewport) {
+        theron_vp_free(*viewport);
+        free(*viewport);
+        *viewport = NULL;
+    }
+    if (assets && *assets) {
+        tr_asset_free(*assets);
+        free(*assets);
+        *assets = NULL;
+    }
+    if (world && *world) {
+        free(*world);
+        *world = NULL;
+    }
+    if (profile && *profile) {
+        theron_v1_boot_cleanup(*profile);
+        free(*profile);
+        *profile = NULL;
+    }
 }
 
 int theron_v1_boot_startup_launch_alloc(

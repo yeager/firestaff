@@ -10333,26 +10333,25 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         return;
     }
     m11_nexus_release_title(state);
-    if (state->theronViewport) {
-        theron_vp_free((Theron_V1_Viewport*)state->theronViewport);
-        free(state->theronViewport);
-        state->theronViewport = NULL;
-    }
-    if (state->theronAssets) {
-        tr_asset_free((TrAssetBundle*)state->theronAssets);
-        free(state->theronAssets);
-        state->theronAssets = NULL;
+    {
+        Theron_V1_BootProfile *theronProfile =
+            (Theron_V1_BootProfile*)state->theronBootProfile;
+        Theron_V1_World *theronWorld =
+            (Theron_V1_World*)state->theronWorld;
+        Theron_V1_Viewport *theronViewport =
+            (Theron_V1_Viewport*)state->theronViewport;
+        TrAssetBundle *theronAssets =
+            (TrAssetBundle*)state->theronAssets;
+        theron_v1_boot_runtime_release(&theronProfile,
+                                       &theronWorld,
+                                       &theronViewport,
+                                       &theronAssets);
+        state->theronBootProfile = theronProfile;
+        state->theronWorld = theronWorld;
+        state->theronViewport = theronViewport;
+        state->theronAssets = theronAssets;
     }
     m11_v22_inplace_draw_shutdown();
-    if (state->theronWorld) {
-        free(state->theronWorld);
-        state->theronWorld = NULL;
-    }
-    if (state->theronBootProfile) {
-        theron_v1_boot_cleanup((Theron_V1_BootProfile*)state->theronBootProfile);
-        free(state->theronBootProfile);
-        state->theronBootProfile = NULL;
-    }
     if (state->csbBootProfile) {
         csb_v1_boot_cleanup((CSB_V1_BootProfile*)state->csbBootProfile);
         free(state->csbBootProfile);

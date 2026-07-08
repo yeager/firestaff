@@ -1048,6 +1048,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Startup presentation hardening: stage/Soul Room render rows, enriched startup layout labels, and Track 02 descriptor-role receipt summaries are now test-visible; remaining work is real Track 02 startup art/audio decoding and pixel evidence instead of fallback text presentation.
 - 🔧 2026-07-08 follow-up: Theron boot owns runtime tick/turn/move wrappers for M11 idle and in-dungeon input. Remaining boot cleanup is to move the next render/session adapter calls out of M11 and into Theron-owned facades.
   - 2026-07-08 update: Theron boot now owns the runtime dungeon/UI/V2-HUD/present render frame facade. M11 no longer calls `theron_vp_render_dungeon`, `theron_vp_render_ui`, V2 HUD render, or `theron_vp_present` directly in the Track 02 runtime path.
+  - 2026-07-08 update: Theron boot now owns runtime ownership release for profile/world/viewport/assets, and M11 shutdown no longer frees those Track 02 objects directly.
 - 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, shop price-table regressions, and data-free cross-slot export/import are green. Remaining work is a real Track 02 save artifact import/export pass when such a save is available.
 ### Theron V2.0 / V2.1 / V2.2
 
