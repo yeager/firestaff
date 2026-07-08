@@ -1315,8 +1315,8 @@ static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
     if (!state || !boot_profile) {
         return;
     }
-    if (csb_v1_runtime_m11_mirror_receipt_from_boot_profile_pc34(
-            boot_profile,
+    if (csb_v1_boot_runtime_m11_mirror_receipt_pc34(
+            (const CSB_V1_BootProfile*)boot_profile,
             &receipt)) {
         m11_apply_csb_runtime_m11_mirror_receipt(state, &receipt);
     }
@@ -17401,8 +17401,8 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
      * click on C05/front-wall ornament enters the CSB wall-square
      * sensor path, not the DM1 M11 world thing-list path. */
     queued =
-        csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
-            state->csbBootProfile,
+        csb_v1_boot_runtime_trigger_front_wall_ornament_click_pc34(
+            (CSB_V1_BootProfile*)state->csbBootProfile,
             M11_GameView_GetV1LeaderHandThing(state),
             &leaderHand);
     if (queued <= 0) {

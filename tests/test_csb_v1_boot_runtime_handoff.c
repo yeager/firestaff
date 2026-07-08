@@ -927,6 +927,19 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
               mirror_receipt.leader_hand_present &&
               mirror_receipt.leader_hand_thing == 0x1234u,
           "combined M11 mirror receipt carries view state, party mirror and leader hand");
+    memset(&mirror_receipt, 0, sizeof(mirror_receipt));
+    CHECK(csb_v1_boot_runtime_m11_mirror_receipt_pc34(
+              &p,
+              &mirror_receipt) == 1 && mirror_receipt.valid &&
+              mirror_receipt.view.level_loaded == 1 &&
+              mirror_receipt.party.party.championCount == 2 &&
+              mirror_receipt.leader_hand_thing == 0x1234u,
+          "boot runtime owns the M11 mirror receipt facade");
+    CHECK(csb_v1_boot_runtime_trigger_front_wall_ornament_click_pc34(
+              NULL,
+              0x1234u,
+              NULL) == 0,
+          "boot front-wall ornament facade rejects NULL profile safely");
 
     CHECK(csb_v1_runtime_set_leader(&p.runtime, 1) == 0,
           "runtime leader switch to second imported champion succeeds");

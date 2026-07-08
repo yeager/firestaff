@@ -565,6 +565,13 @@ int csb_v1_boot_runtime_write_champion_vitals_pc34(
     int current_health,
     int current_stamina,
     int current_mana);
+int csb_v1_boot_runtime_m11_mirror_receipt_pc34(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt);
+int csb_v1_boot_runtime_trigger_front_wall_ornament_click_pc34(
+    CSB_V1_BootProfile *profile,
+    unsigned short leader_hand_thing,
+    unsigned short *out_leader_hand_thing);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *

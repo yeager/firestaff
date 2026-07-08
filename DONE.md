@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB mirror/ornament boot wrappers: CSB boot now owns the M11 mirror sync receipt and front-wall ornament sensor-click facade. M11 no longer calls those CSB runtime boot-profile facades directly. Verification: `test_csb_v1_boot_runtime_handoff` passed 314/314; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB inventory/container boot wrappers: CSB boot now owns M11-facing object metadata, container-slot read/write, thing-chain mutation, inventory slot writes, leader-hand writes, and champion-vitals writes. M11 no longer calls those CSB runtime boot-profile facades directly. Verification: `test_csb_v1_boot_runtime_handoff` passed 312/312; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 HoC C127 front-mirror ownership: moved the ReDMCSB DUNGEON.C F0172 / MOVESENS.C / REVIVE.C C127 front-mirror ordinal gate into the DM1 compat layer and made M11 consume it for HoC front mirror selection. Verification: `test_dm1_v1_viewport_floor_ceiling_items_pc34_compat` passed 176/176; `test_dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat` found all 24 visible HoC mirror ordinals with real DM1 data; `test_dm1_v1_mirror_candidate_click_cancel_pc34_compat` passed 68/68; Phase A passed 24/24.

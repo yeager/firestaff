@@ -2256,6 +2256,40 @@ int csb_v1_boot_runtime_write_champion_vitals_pc34(
         current_mana);
 }
 
+int csb_v1_boot_runtime_m11_mirror_receipt_pc34(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt)
+{
+    if (!profile) {
+        csb_v1_runtime_m11_mirror_receipt_init_pc34(out_receipt);
+        return 0;
+    }
+    /* ReDMCSB LOADSAVE.C F0435/CHAMPION.C globals are runtime-owned after
+     * boot handoff. M11 should consume one boot-issued mirror receipt. */
+    return csb_v1_runtime_m11_mirror_receipt_from_boot_profile_pc34(
+        profile,
+        out_receipt);
+}
+
+int csb_v1_boot_runtime_trigger_front_wall_ornament_click_pc34(
+    CSB_V1_BootProfile *profile,
+    unsigned short leader_hand_thing,
+    unsigned short *out_leader_hand_thing)
+{
+    if (!profile) {
+        if (out_leader_hand_thing) {
+            *out_leader_hand_thing = leader_hand_thing;
+        }
+        return 0;
+    }
+    /* ReDMCSB MOVESENS.C F0276 lines 1737-1785: front-wall ornament clicks
+     * enter the live CSB sensor path, so boot owns the runtime mutation. */
+    return csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
+        profile,
+        leader_hand_thing,
+        out_leader_hand_thing);
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {
