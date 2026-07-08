@@ -61,6 +61,11 @@ typedef struct FakeDm1StartupCallbacks {
     int log_loaded;
     int log_missing;
     int log_skipped;
+    int open_ok;
+    int after_open;
+    int draw_opened;
+    int mark_failed;
+    char opened_source_id[64];
     char resolved_path[512];
 } FakeDm1StartupCallbacks;
 
@@ -205,6 +210,60 @@ static DM1_V1_StartupHostCallbacks_PC34 fake_host_callbacks(
     callbacks.log_resume_loaded = fake_log_resume_loaded;
     callbacks.log_resume_missing = fake_log_resume_missing;
     callbacks.log_entrance_skipped = fake_log_entrance_skipped;
+    return callbacks;
+}
+
+static int fake_open_selected_entry(void* user,
+                                    char* out_source_id,
+                                    int out_source_id_size) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    fake_append(fake, 'O');
+    if (!fake->open_ok) {
+        return 0;
+    }
+    if (out_source_id && out_source_id_size > 0) {
+        snprintf(out_source_id,
+                 (size_t)out_source_id_size,
+                 "%s",
+                 fake->opened_source_id[0] ? fake->opened_source_id : "dm1");
+    }
+    return 1;
+}
+
+static int fake_after_open(void* user) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    fake_append(fake, 'A');
+    fake->after_open = 1;
+    return 1;
+}
+
+static int fake_draw_opened(void* user) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    fake_append(fake, 'G');
+    fake->draw_opened = 1;
+    return 1;
+}
+
+static int fake_mark_launch_failed(void* user) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    fake_append(fake, 'M');
+    fake->mark_failed = 1;
+    return 1;
+}
+
+static DM1_V1_StartupSelectedLaunchCallbacks_PC34 fake_selected_launch_callbacks(
+    FakeDm1StartupCallbacks* fake,
+    const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
+    const DM1_V1_StartupHostCallbacks_PC34* host_callbacks) {
+    DM1_V1_StartupSelectedLaunchCallbacks_PC34 callbacks;
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.user = fake;
+    callbacks.handoff_callbacks = handoff_callbacks;
+    callbacks.host_callbacks = host_callbacks;
+    callbacks.open_selected_entry = fake_open_selected_entry;
+    callbacks.after_open = fake_after_open;
+    callbacks.draw_opened = fake_draw_opened;
+    callbacks.mark_launch_failed = fake_mark_launch_failed;
     return callbacks;
 }
 
@@ -377,6 +436,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 post;
     DM1_V1_StartupHandoffOutcome_PC34 outcome;
     DM1_V1_StartupHostApplyResult_PC34 apply_result;
+    DM1_V1_StartupSelectedLaunchCallbacks_PC34 launch_callbacks;
+    DM1_V1_StartupSelectedLaunchResult_PC34 launch_result;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -742,6 +803,98 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  &host_callbacks,
                  &outcome,
                  NULL),
+             0);
+
+    memset(&fake, 0, sizeof(fake));
+    fake.open_ok = 1;
+    fake.entrance_command = 1;
+    callbacks = fake_callbacks(&fake);
+    host_callbacks = fake_host_callbacks(&fake);
+    launch_callbacks = fake_selected_launch_callbacks(&fake,
+                                                      &callbacks,
+                                                      &host_callbacks);
+    expect_i("DM1 selected launch transaction succeeds",
+             dm1_v1_startup_execute_selected_launch_transaction_pc34(
+                 "dm1",
+                 &launch_callbacks,
+                 &launch_result),
+             1);
+    expect_i("DM1 selected launch transaction is handled",
+             launch_result.handled,
+             1);
+    expect_i("DM1 selected launch transaction opens",
+             launch_result.opened,
+             1);
+    expect_i("DM1 selected launch transaction owns full order",
+             strcmp(fake.order, "RSDOARTEG"),
+             0);
+    expect_i("DM1 selected launch transaction draws enter path",
+             fake.draw_opened,
+             1);
+
+    memset(&fake, 0, sizeof(fake));
+    fake.open_ok = 1;
+    fake.entrance_command = -1;
+    callbacks = fake_callbacks(&fake);
+    host_callbacks = fake_host_callbacks(&fake);
+    launch_callbacks = fake_selected_launch_callbacks(&fake,
+                                                      &callbacks,
+                                                      &host_callbacks);
+    expect_i("DM1 selected launch transaction handles quit",
+             dm1_v1_startup_execute_selected_launch_transaction_pc34(
+                 "dm1",
+                 &launch_callbacks,
+                 &launch_result) &&
+                 launch_result.host_apply_result.quit_requested &&
+                 fake.draw_opened == 0,
+             1);
+
+    memset(&fake, 0, sizeof(fake));
+    fake.open_ok = 0;
+    callbacks = fake_callbacks(&fake);
+    host_callbacks = fake_host_callbacks(&fake);
+    launch_callbacks = fake_selected_launch_callbacks(&fake,
+                                                      &callbacks,
+                                                      &host_callbacks);
+    expect_i("DM1 selected launch transaction reports open failure",
+             dm1_v1_startup_execute_selected_launch_transaction_pc34(
+                 "dm1",
+                 &launch_callbacks,
+                 &launch_result) &&
+                 launch_result.handled &&
+                 launch_result.launch_failed &&
+                 fake.mark_failed,
+             1);
+    expect_i("DM1 selected launch open failure order",
+             strcmp(fake.order, "RSDOM"),
+             0);
+
+    memset(&fake, 0, sizeof(fake));
+    callbacks = fake_callbacks(&fake);
+    host_callbacks = fake_host_callbacks(&fake);
+    launch_callbacks = fake_selected_launch_callbacks(&fake,
+                                                      &callbacks,
+                                                      &host_callbacks);
+    expect_i("CSB selected launch transaction is no-op",
+             dm1_v1_startup_execute_selected_launch_transaction_pc34(
+                 "csb",
+                 &launch_callbacks,
+                 &launch_result) &&
+                 launch_result.handled == 0 &&
+                 fake.order[0] == '\0',
+             1);
+    expect_i("NULL selected launch transaction rejects result",
+             dm1_v1_startup_execute_selected_launch_transaction_pc34(
+                 "dm1",
+                 &launch_callbacks,
+                 NULL),
+             0);
+    launch_callbacks.open_selected_entry = NULL;
+    expect_i("DM1 selected launch transaction rejects missing open callback",
+             dm1_v1_startup_execute_selected_launch_transaction_pc34(
+                 "dm1",
+                 &launch_callbacks,
+                 &launch_result),
              0);
     expect_i("NULL host apply rejects missing outcome",
              dm1_v1_startup_apply_handoff_outcome_pc34(NULL,

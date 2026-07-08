@@ -1351,8 +1351,9 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
 }
 
 typedef struct M11_DM1StartupHandoffContext {
-    const M12_StartupMenuState* menuState;
+    M12_StartupMenuState* menuState;
     M11_GameViewState* gameView;
+    uint32_t* idleAccumulatorMs;
     const char* dataDir;
 } M11_DM1StartupHandoffContext;
 
@@ -1480,26 +1481,81 @@ static int m11_dm1_host_log_entrance_skipped(void* user) {
     return 1;
 }
 
+static int m11_dm1_selected_launch_open(void* user,
+                                        char* out_source_id,
+                                        int out_source_id_size) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !ctx->gameView || !ctx->menuState) {
+        return 0;
+    }
+    if (!M11_GameView_OpenSelectedMenuEntry(ctx->gameView, ctx->menuState)) {
+        return 0;
+    }
+    if (out_source_id && out_source_id_size > 0) {
+        snprintf(out_source_id,
+                 (size_t)out_source_id_size,
+                 "%s",
+                 ctx->gameView->sourceId);
+    }
+    return 1;
+}
+
+static int m11_dm1_selected_launch_after_open(void* user) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !ctx->menuState) {
+        return 0;
+    }
+    ctx->menuState->launchRequested = 0;
+    (void)M11_Render_SetPaletteLevel(0);
+    if (ctx->idleAccumulatorMs) {
+        *ctx->idleAccumulatorMs = 0;
+    }
+    return 1;
+}
+
+static int m11_dm1_selected_launch_draw_opened(void* user) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !ctx->gameView) {
+        return 0;
+    }
+    M11_GameView_Draw(ctx->gameView,
+                      M11_Render_GetFramebuffer(),
+                      M11_FB_WIDTH,
+                      M11_FB_HEIGHT);
+    return 1;
+}
+
+static int m11_dm1_selected_launch_mark_failed(void* user) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !ctx->menuState) {
+        return 0;
+    }
+    m11_set_launch_failed_message(ctx->menuState);
+    return 1;
+}
+
 static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
                                      const char* dataDir) {
-    DM1_V1_StartupHandoffOutcome_PC34 dm1HandoffOutcome;
-    DM1_V1_StartupHostApplyResult_PC34 dm1HostApplyResult;
     M11_DM1StartupHandoffContext dm1HandoffContext;
     DM1_V1_StartupHandoffCallbacks_PC34 dm1HandoffCallbacks;
     DM1_V1_StartupHostCallbacks_PC34 dm1HostCallbacks;
+    DM1_V1_StartupSelectedLaunchCallbacks_PC34 dm1SelectedLaunchCallbacks;
+    DM1_V1_StartupSelectedLaunchResult_PC34 dm1SelectedLaunchResult;
+    const M12_MenuEntry* launchEntry;
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
-    memset(&dm1HandoffOutcome, 0, sizeof(dm1HandoffOutcome));
-    memset(&dm1HostApplyResult, 0, sizeof(dm1HostApplyResult));
     memset(&dm1HandoffContext, 0, sizeof(dm1HandoffContext));
     memset(&dm1HandoffCallbacks, 0, sizeof(dm1HandoffCallbacks));
     memset(&dm1HostCallbacks, 0, sizeof(dm1HostCallbacks));
+    memset(&dm1SelectedLaunchCallbacks, 0, sizeof(dm1SelectedLaunchCallbacks));
+    memset(&dm1SelectedLaunchResult, 0, sizeof(dm1SelectedLaunchResult));
     dm1HandoffContext.menuState = menuState;
     dm1HandoffContext.gameView = gameView;
     dm1HandoffContext.dataDir = dataDir;
+    dm1HandoffContext.idleAccumulatorMs = idleAccumulatorMs;
     dm1HandoffCallbacks.user = &dm1HandoffContext;
     dm1HandoffCallbacks.report_source_order_failure =
         m11_dm1_handoff_report_source_order_failure;
@@ -1518,6 +1574,23 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     dm1HostCallbacks.log_resume_loaded = m11_dm1_host_log_resume_loaded;
     dm1HostCallbacks.log_resume_missing = m11_dm1_host_log_resume_missing;
     dm1HostCallbacks.log_entrance_skipped = m11_dm1_host_log_entrance_skipped;
+    dm1SelectedLaunchCallbacks.user = &dm1HandoffContext;
+    dm1SelectedLaunchCallbacks.handoff_callbacks = &dm1HandoffCallbacks;
+    dm1SelectedLaunchCallbacks.host_callbacks = &dm1HostCallbacks;
+    dm1SelectedLaunchCallbacks.open_selected_entry = m11_dm1_selected_launch_open;
+    dm1SelectedLaunchCallbacks.after_open = m11_dm1_selected_launch_after_open;
+    dm1SelectedLaunchCallbacks.draw_opened = m11_dm1_selected_launch_draw_opened;
+    dm1SelectedLaunchCallbacks.mark_launch_failed =
+        m11_dm1_selected_launch_mark_failed;
+    launchEntry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
+    if (launchEntry && launchEntry->gameId &&
+        dm1_v1_startup_execute_selected_launch_transaction_pc34(
+            launchEntry->gameId,
+            &dm1SelectedLaunchCallbacks,
+            &dm1SelectedLaunchResult) &&
+        dm1SelectedLaunchResult.handled) {
+        return dm1SelectedLaunchResult.opened ? 1 : 0;
+    }
     {
         /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle() before
          * F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher front door, so
@@ -1530,21 +1603,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
          * their own intro paths. */
 
 
-        const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(
-            menuState, menuState->activatedIndex);
-        if (launchEntry && launchEntry->gameId &&
-            dm1_v1_startup_source_visible_handoff_required_pc34(
-                launchEntry->gameId)) {
-            (void)dm1_v1_startup_execute_handoff_prelude_pc34(
-                launchEntry->gameId,
-                &dm1HandoffCallbacks);
-        }
         /* CSB has its own title/entrance sequence after the common FTL/SWSH
          * prelude.  ReDMCSB SWSH.C runs the FTL logo before the started
          * program hands off to TITLE/ENTRANCE; Firestaff keeps CSB title and
          * entrance in M11 but still needs the SWSH prelude. */
-        else if (launchEntry && launchEntry->gameId &&
-                 strcmp(launchEntry->gameId, "csb") == 0) {
+        if (launchEntry && launchEntry->gameId &&
+            strcmp(launchEntry->gameId, "csb") == 0) {
             M11_Render_RaiseWindow();
             m11_play_ftl_swoosh_for_game_if_available(menuState,
                                                        dataDir,
@@ -1559,15 +1623,6 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         (void)M11_Render_SetPaletteLevel(0);
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
-        }
-        (void)dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
-            gameView->sourceId,
-            &dm1HandoffCallbacks,
-            &dm1HostCallbacks,
-            &dm1HandoffOutcome,
-            &dm1HostApplyResult);
-        if (dm1HostApplyResult.quit_requested) {
-            return 1;
         }
         M11_GameView_Draw(gameView,
                           M11_Render_GetFramebuffer(),
