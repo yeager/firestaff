@@ -95,6 +95,30 @@ typedef struct CSB_V1_BootStartupRuntimeReceipt_PC34 {
     char dungeon_path[512];
 } CSB_V1_BootStartupRuntimeReceipt_PC34;
 
+typedef struct CSB_V1_BootRuntimeStartupSnapshot_PC34 {
+    int title_active;
+    int title_frame;
+    int title_source_step;
+    int entrance_active;
+    int entrance_source_step;
+    int entrance_dismissed;
+    int credits_active;
+    int credits_remaining_ticks;
+    int opening_active;
+    int opening_delay_ticks;
+    int opening_step;
+    int pending_command;
+    int entrance_frame;
+    int utility_overlay_active;
+    int utility_selected_action_index;
+    int utility_imported_champion_count;
+    int utility_preview_active;
+    const char *utility_prompt;
+    int resume_available;
+    const char *resume_path;
+    const CSB_V1_BootProfile *boot_profile;
+} CSB_V1_BootRuntimeStartupSnapshot_PC34;
+
 void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir);
 int csb_v1_boot_probe_available(const char *data_dir);
@@ -243,6 +267,8 @@ int csb_v1_boot_startup_entrance_accepts_input_from_runtime_state_pc34(
     int resume_available,
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile);
+int csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot);
 int csb_v1_boot_startup_presentation_receipt_from_runtime_state_pc34(
     char *out_phase,
     int out_phase_size,
@@ -298,6 +324,9 @@ int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     int resume_available,
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile);
+int csb_v1_boot_runtime_util_render_plan_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_UtilRenderPlan *out_plan);
 int csb_v1_boot_startup_execute_render_plan_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     const CSB_V1_StartupRenderExecutor_PC34 *executor);
@@ -349,6 +378,11 @@ int csb_v1_boot_runtime_util_apply_pointer_from_runtime_state_pc34(
     const CSB_V1_BootProfile *boot_profile,
     int x,
     int y);
+int csb_v1_boot_runtime_util_apply_pointer_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_util_apply_firestaff_input_from_runtime_state_pc34(
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt,
     int title_active,
@@ -373,6 +407,10 @@ int csb_v1_boot_runtime_util_apply_firestaff_input_from_runtime_state_pc34(
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile,
     int menu_input);
+int csb_v1_boot_runtime_util_apply_firestaff_input_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_runtime_state_pc34(
     CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt,
     int title_active,
@@ -397,6 +435,10 @@ int csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_runtime_st
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile,
     int menu_input);
+int csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_execute_startup_entrance_pointer_from_runtime_state_pc34(
     CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt,
     int title_active,
@@ -423,6 +465,12 @@ int csb_v1_boot_runtime_execute_startup_entrance_pointer_from_runtime_state_pc34
     int x,
     int y,
     unsigned int button_mask);
+int csb_v1_boot_runtime_execute_startup_entrance_pointer_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *
