@@ -10580,8 +10580,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             free(profile);
             return 0;
         }
-        if (!csb_v1_runtime_apply_startup_handoff_pc34(
-                &profile->runtime,
+        if (!csb_v1_boot_apply_startup_handoff_pc34(
+                profile,
                 spec->savePath,
                 spec->csbImportDm1SavePath,
                 &startup_handoff)) {
@@ -10643,8 +10643,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                                           &receipt);
             }
         }
-        (void)csb_v1_runtime_build_startup_session_state_receipt_pc34(
-            &profile->runtime,
+        (void)csb_v1_boot_build_startup_session_state_receipt_pc34(
+            profile,
             &startup_handoff,
             spec->csbImportDm1SavePath,
             spec->entranceResumeSavePath,

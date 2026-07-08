@@ -1529,6 +1529,7 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
               strstr(receipt.import_utility_prompt, "READY") != NULL,
           "runtime startup handoff receipt carries utility state");
     {
+        CSB_V1_BootProfile boot;
         CSB_V1_StartupSessionOptions_PC34 options;
         CSB_V1_RuntimeStartupSessionStateReceipt_PC34 state_receipt;
         csb_v1_runtime_startup_session_state_receipt_init_pc34(&state_receipt);
@@ -1553,21 +1554,44 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
 	                  strcmp(options.import_dm1_save_path, path) == 0 &&
 	                  strstr(options.import_utility_prompt, "READY") != NULL,
 	              "runtime session options publish imported DM1 party");
-	        CHECK(csb_v1_runtime_build_startup_session_state_receipt_pc34(
-	                  &runtime,
-	                  &receipt,
-	                  path,
-	                  NULL,
-	                  &state_receipt) == 1 &&
-	                  state_receipt.import_available &&
-	                  state_receipt.import_champion_count == 2 &&
-	                  state_receipt.import_selected_action_index == 0 &&
-	                  state_receipt.import_preview_active == 0 &&
-	                  state_receipt.import_utility_state ==
-	                      (int)CSB_V1_UTIL_FLOW_DONE &&
-	                  strcmp(state_receipt.import_dm1_save_path, path) == 0 &&
-	                  strstr(state_receipt.import_utility_prompt, "READY") != NULL,
-	              "runtime session state receipt mirrors M11 startup import fields");
+        CHECK(csb_v1_runtime_build_startup_session_state_receipt_pc34(
+                  &runtime,
+                  &receipt,
+                  path,
+                  NULL,
+                  &state_receipt) == 1 &&
+                  state_receipt.import_available &&
+                  state_receipt.import_champion_count == 2 &&
+                  state_receipt.import_selected_action_index == 0 &&
+                  state_receipt.import_preview_active == 0 &&
+                  state_receipt.import_utility_state ==
+                      (int)CSB_V1_UTIL_FLOW_DONE &&
+                  strcmp(state_receipt.import_dm1_save_path, path) == 0 &&
+                  strstr(state_receipt.import_utility_prompt, "READY") != NULL,
+              "runtime session state receipt mirrors M11 startup import fields");
+        csb_v1_boot_profile_init(&boot);
+        CHECK(csb_v1_boot_apply_startup_handoff_pc34(
+                  &boot,
+                  NULL,
+                  path,
+                  &receipt) == 1,
+              "boot profile owns startup handoff adapter");
+        CHECK(receipt.kind ==
+                  CSB_V1_RUNTIME_STARTUP_HANDOFF_IMPORT_DM1_PC34 &&
+                  receipt.import_succeeded &&
+                  receipt.import_champion_count == 2,
+              "boot startup handoff receipt reports import result");
+        CHECK(csb_v1_boot_build_startup_session_state_receipt_pc34(
+                  &boot,
+                  &receipt,
+                  path,
+                  NULL,
+                  &state_receipt) == 1 &&
+                  state_receipt.import_available &&
+                  state_receipt.import_champion_count == 2 &&
+                  strcmp(state_receipt.import_dm1_save_path, path) == 0,
+              "boot profile owns startup session state receipt adapter");
+        csb_v1_boot_cleanup(&boot);
         receipt.direct_resume_loaded = 1;
         CHECK(csb_v1_runtime_build_startup_session_options_pc34(
                   &runtime,
