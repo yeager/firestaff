@@ -88,7 +88,14 @@ enum {
     CHAMPION_STATUS_COMPAT_BAR_MANA_CX = 19,
     CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SHIELD = 37,
     CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_FIRESHIELD = 38,
-    CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SPELLSHIELD = 39
+    CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SPELLSHIELD = 39,
+    CHAMPION_STATUS_COMPAT_GFX_STATUS_BOX = 7,
+    CHAMPION_STATUS_COMPAT_GFX_STATUS_BOX_DEAD = 8,
+    CHAMPION_STATUS_COMPAT_COLOR_DARK_GRAY_CLEAR = 1,
+    CHAMPION_STATUS_COMPAT_COLOR_GOLD = 9,
+    CHAMPION_STATUS_COMPAT_COLOR_YELLOW = 11,
+    CHAMPION_STATUS_COMPAT_COLOR_DARKEST_GRAY = 12,
+    CHAMPION_STATUS_COMPAT_COLOR_LIGHTEST_GRAY = 13
 };
 
 static inline int CHAMPION_Compat_StatusBoxZoneId(int championSlot) {
@@ -391,6 +398,43 @@ static inline int CHAMPION_Compat_StatusShieldBorderGraphics(
         }
     }
     return appendCount;
+}
+
+static inline int CHAMPION_Compat_StatusNameColor(int present,
+                                                  int currentHealth,
+                                                  int leader) {
+    if (!present) return -1;
+    /* ReDMCSB CHAMDRAW.C F0292: dead names use C13 lightest gray;
+     * living leader uses C11 yellow; other living champions use C09 gold. */
+    if (currentHealth == 0) {
+        return CHAMPION_STATUS_COMPAT_COLOR_LIGHTEST_GRAY;
+    }
+    return leader ? CHAMPION_STATUS_COMPAT_COLOR_YELLOW
+                  : CHAMPION_STATUS_COMPAT_COLOR_GOLD;
+}
+
+static inline int CHAMPION_Compat_StatusNameClearColor(void) {
+    return CHAMPION_STATUS_COMPAT_COLOR_DARK_GRAY_CLEAR;
+}
+
+static inline int CHAMPION_Compat_StatusBoxFillColor(void) {
+    return CHAMPION_STATUS_COMPAT_COLOR_DARKEST_GRAY;
+}
+
+static inline int CHAMPION_Compat_StatusBoxGraphicId(void) {
+    return CHAMPION_STATUS_COMPAT_GFX_STATUS_BOX;
+}
+
+static inline int CHAMPION_Compat_DeadStatusBoxGraphicId(void) {
+    return CHAMPION_STATUS_COMPAT_GFX_STATUS_BOX_DEAD;
+}
+
+static inline int CHAMPION_Compat_StatusBoxBaseGraphic(int present,
+                                                       int currentHealth) {
+    if (!present) return 0;
+    return currentHealth == 0
+        ? CHAMPION_Compat_DeadStatusBoxGraphicId()
+        : 0;
 }
 
 unsigned int CHAMPION_Compat_GetStatusSlotBoxCount(void);
