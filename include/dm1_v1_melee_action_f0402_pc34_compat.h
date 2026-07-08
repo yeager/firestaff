@@ -381,6 +381,26 @@ typedef struct {
     struct DM1GroupBehaviorContext_Compat fearContext;
 } DM1_MeleeF0190KilledSomeStatePlanPc34;
 
+typedef struct {
+    int outcome;
+    int groupIndex;
+    int targetMapIndex;
+    int targetMapX;
+    int targetMapY;
+} DM1_MeleeF0190KilledAllStateInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldUnlinkGroupFromSquare;
+    int shouldClearGroupNext;
+    int shouldRemoveActiveGroupState;
+    int shouldWriteRawGroup;
+    int groupIndex;
+    int mapIndex;
+    int mapX;
+    int mapY;
+} DM1_MeleeF0190KilledAllStatePlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -440,6 +460,9 @@ int dm1_v1_melee_killed_some_fear_apply_plan_f0190_pc34(
     int shouldFlee,
     int fleeDelay,
     DM1_MeleeF0190KilledSomeStatePlanPc34* out);
+int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledAllStateInputPc34* in,
+    DM1_MeleeF0190KilledAllStatePlanPc34* out);
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,

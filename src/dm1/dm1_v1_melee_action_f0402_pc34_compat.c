@@ -737,6 +737,33 @@ int dm1_v1_melee_killed_some_fear_apply_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledAllStateInputPc34* in,
+    DM1_MeleeF0190KilledAllStatePlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    out->valid = 1;
+    out->groupIndex = in->groupIndex;
+    out->mapIndex = in->targetMapIndex;
+    out->mapX = in->targetMapX;
+    out->mapY = in->targetMapY;
+    if (in->outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) return 1;
+    if (in->groupIndex < 0) return 1;
+
+    out->shouldUnlinkGroupFromSquare = 1;
+    out->shouldClearGroupNext = 1;
+    out->shouldRemoveActiveGroupState = 1;
+    out->shouldWriteRawGroup = 1;
+
+    /* ReDMCSB: GROUP.C F0190 lines 824-829 drops possessions and calls
+     * F0189_GROUP_Delete when the last creature dies.  Firestaff keeps the
+     * live unlink/raw-write operations in M10, but DM1 owns the branch
+     * policy and target square. */
+    return 1;
+}
+
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
