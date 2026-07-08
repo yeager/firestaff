@@ -148,8 +148,12 @@ int main(void)
               DM2_V1_STARTUP_RESUME_STATUS_RESUMED,
               &host_receipt) &&
               host_receipt.input_result == DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
-              strcmp(host_receipt.status, "DM2 RESUMED") == 0,
-          "direct resume host receipt owns resumed redraw status");
+              strcmp(host_receipt.status, "DM2 RESUMED") == 0 &&
+              host_receipt.inspect_scope &&
+              strcmp(host_receipt.inspect_scope, "READY") == 0 &&
+              host_receipt.log_line &&
+              strcmp(host_receipt.log_line, "T0: DM2 RESUMED") == 0,
+          "direct resume host receipt owns resumed redraw status, inspect, and log");
 
     dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-startup");
     check(dm2_v1_startup_menu_refresh(&menu, 1, (1u << 2)) &&
@@ -265,8 +269,16 @@ int main(void)
               launch_receipt.host_receipt.mode_update.startup_menu_active == 1 &&
               launch_receipt.host_receipt.input_result ==
                   DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
-              strcmp(launch_receipt.host_receipt.status, "DM2 START MENU") == 0,
-          "launch receipt owns DM2 startup session, save scan, and active menu");
+              strcmp(launch_receipt.host_receipt.status, "DM2 START MENU") == 0 &&
+              launch_receipt.host_receipt.inspect_scope &&
+              strcmp(launch_receipt.host_receipt.inspect_scope, "READY") == 0 &&
+              launch_receipt.host_receipt.inspect_detail &&
+              strstr(launch_receipt.host_receipt.inspect_detail,
+                     "DM2 V1 ASSETS VERIFIED") != NULL &&
+              launch_receipt.host_receipt.log_line &&
+              strcmp(launch_receipt.host_receipt.log_line,
+                     "T0: DM2 START MENU") == 0,
+          "launch receipt owns DM2 startup session, save scan, active menu, inspect, and log");
     check(!dm2_v1_startup_launch_from_host_facts_with_receipt(
               NULL,
               &launch_receipt) &&

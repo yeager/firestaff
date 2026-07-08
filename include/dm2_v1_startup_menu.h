@@ -106,6 +106,9 @@ typedef struct {
     int rescan_saves;
     const char *status_scope;
     const char *status;
+    const char *inspect_scope;
+    const char *inspect_detail;
+    const char *log_line;
 } DM2_V1_StartupHostReceipt;
 
 typedef enum {
