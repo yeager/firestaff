@@ -1478,6 +1478,30 @@ int main(void)
                        boot_receipt.status &&
                        strcmp(boot_receipt.status, "NEXUS TITLE") == 0,
                    "Nexus boot status receipt owns title status");
+            expect(nexus_v1_startup_resume_status_host_receipt(
+                       NEXUS_V1_STARTUP_RESUME_STATUS_FAILED,
+                       &boot_receipt) &&
+                       boot_receipt.status_scope &&
+                       strcmp(boot_receipt.status_scope, "BOOT") == 0 &&
+                       boot_receipt.status &&
+                       strcmp(boot_receipt.status,
+                              "NEXUS RESUME FAILED") == 0,
+                   "Nexus resume receipt owns load failure status");
+            expect(nexus_v1_startup_resume_status_host_receipt(
+                       NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_INVALID,
+                       &boot_receipt) &&
+                       boot_receipt.status &&
+                       strcmp(boot_receipt.status,
+                              "NEXUS RESUME LEVEL INVALID") == 0,
+                   "Nexus resume receipt owns bad-level status");
+            expect(nexus_v1_startup_resume_status_host_receipt(
+                       NEXUS_V1_STARTUP_RESUME_STATUS_RESUMED,
+                       &boot_receipt) &&
+                       boot_receipt.input_result ==
+                           NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                       boot_receipt.status &&
+                       strcmp(boot_receipt.status, "NEXUS RESUMED") == 0,
+                   "Nexus resume receipt owns resumed redraw status");
         }
         expect(nexus_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
                    &state_receipt,

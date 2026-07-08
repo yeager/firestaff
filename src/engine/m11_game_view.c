@@ -11175,7 +11175,11 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
         diagnostic,
         sizeof(diagnostic));
     if (result != NEXUS_SAVE_OK) {
-        m11_set_status(state, "BOOT", "NEXUS RESUME FAILED");
+        Nexus_V1_StartupHostReceipt receipt;
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_FAILED,
+            &receipt);
+        (void)m11_nexus_apply_startup_receipt(state, &receipt);
         m11_log_event(state, M11_COLOR_RED,
                       "T0: NEXUS RESUME FAILED: %s",
                       diagnostic[0] ? diagnostic : nexus_v1_save_strerror(result));
@@ -11187,20 +11191,32 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
         level = header.current_level;
     }
     if (level < 0 || level > 15) {
-        m11_set_status(state, "BOOT", "NEXUS RESUME LEVEL INVALID");
+        Nexus_V1_StartupHostReceipt receipt;
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_INVALID,
+            &receipt);
+        (void)m11_nexus_apply_startup_receipt(state, &receipt);
         m11_log_event(state, M11_COLOR_RED,
                       "T0: NEXUS RESUME BAD LEVEL %d", level);
         return 0;
     }
     if (world.party_dir < 0 || world.party_dir > 3) {
-        m11_set_status(state, "BOOT", "NEXUS RESUME DIR INVALID");
+        Nexus_V1_StartupHostReceipt receipt;
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_DIR_INVALID,
+            &receipt);
+        (void)m11_nexus_apply_startup_receipt(state, &receipt);
         m11_log_event(state, M11_COLOR_RED,
                       "T0: NEXUS RESUME BAD DIR %d", world.party_dir);
         return 0;
     }
 
     if (nexus_v1_launcher_load_level(level) != 0) {
-        m11_set_status(state, "BOOT", "NEXUS RESUME LEVEL ERROR");
+        Nexus_V1_StartupHostReceipt receipt;
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR,
+            &receipt);
+        (void)m11_nexus_apply_startup_receipt(state, &receipt);
         m11_log_event(state, M11_COLOR_RED,
                       "T0: NEXUS RESUME LEV%02d LOAD FAILED", level);
         return 0;
@@ -11208,7 +11224,11 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 
     engine = nexus_v1_launcher_get_engine();
     if (!engine) {
-        m11_set_status(state, "BOOT", "NEXUS RESUME ENGINE LOST");
+        Nexus_V1_StartupHostReceipt receipt;
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_ENGINE_LOST,
+            &receipt);
+        (void)m11_nexus_apply_startup_receipt(state, &receipt);
         return 0;
     }
 
@@ -11240,7 +11260,13 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
     state->nexusState.tick_count = engine->game.tick_count;
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s/LEV%02d.DGN",
              engine->data_dir, level);
-    m11_set_status(state, "BOOT", "NEXUS RESUMED");
+    {
+        Nexus_V1_StartupHostReceipt receipt;
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_RESUMED,
+            &receipt);
+        (void)m11_nexus_apply_startup_receipt(state, &receipt);
+    }
     m11_log_event(state, M11_COLOR_YELLOW,
                   ngltDecoded ? "T0: NEXUS RESUMED + LIGHT RUNTIME"
                               : "T0: NEXUS RESUMED");
