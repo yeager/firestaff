@@ -92,6 +92,17 @@ int main(void) {
             rect.x != 226 || rect.y != 5) ok = 0;
         if (!CHAMPION_Compat_DamageNumberOriginPc34(3, 77, 1, &rect) ||
             rect.x != 225 || rect.y != 16) ok = 0;
+        {
+            int gfx[3] = {0, 0, 0};
+            if (CHAMPION_Compat_StatusShieldBorderGraphics(0, 0, 0, gfx) != 0 ||
+                gfx[0] != 0 || gfx[1] != 0 || gfx[2] != 0) ok = 0;
+            if (CHAMPION_Compat_StatusShieldBorderGraphics(7, 5, 3, gfx) != 3 ||
+                gfx[0] != CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SHIELD ||
+                gfx[1] != CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SPELLSHIELD ||
+                gfx[2] != CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_FIRESHIELD) ok = 0;
+            if (CHAMPION_Compat_StatusShieldBorderGraphics(0, 5, 0, gfx) != 1 ||
+                gfx[0] != CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SPELLSHIELD) ok = 0;
+        }
     }
 
     if (CHAMPION_Compat_GetStatusNameBoxCount() != 4u) ok = 0;
