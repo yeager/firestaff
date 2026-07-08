@@ -10501,9 +10501,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->presentationWidth = spec->presentationWidth;
         state->presentationHeight = spec->presentationHeight;
         snprintf(state->title, sizeof(state->title), "%s",
-                 spec->title ? spec->title : "CHAOS STRIKES BACK");
+                 runtime_receipt.title[0]
+                     ? runtime_receipt.title
+                     : (spec->title ? spec->title : "CHAOS STRIKES BACK"));
         snprintf(state->sourceId, sizeof(state->sourceId), "%s",
-                 spec->sourceId ? spec->sourceId : "csb");
+                 runtime_receipt.source_id[0]
+                     ? runtime_receipt.source_id
+                     : (spec->sourceId ? spec->sourceId : "csb"));
         snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
                  runtime_receipt.dungeon_path);
         /* ReDMCSB ENTRANCE.C F0806 hands both dungeon and graphics globals to
