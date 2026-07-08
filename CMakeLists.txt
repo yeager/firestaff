@@ -14835,6 +14835,19 @@ if(BUILD_TESTING)
         COMMAND test_entrance_door_opening_composite_pc34_compat
     )
 
+    add_executable(test_entrance_frontend_pc34_compat_integration
+        tests/test_entrance_frontend_pc34_compat_integration.c
+        src/frontend/entrance_frontend_pc34_compat.c
+    )
+    target_link_libraries(test_entrance_frontend_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_entrance_frontend_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME entrance_frontend_pc34_compat
+        COMMAND test_entrance_frontend_pc34_compat_integration
+    )
+
     add_executable(test_entrance_runtime_dispatch_source_lock
         tests/test_entrance_runtime_dispatch_source_lock.c
     )

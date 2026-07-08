@@ -59,13 +59,13 @@ int main(void) {
     ok &= ENTRANCE_Compat_GetClosedDoorBlit(2u, &closedRight);
     if (closedLeft.assetId != 2u || closedLeft.width != 105u ||
         closedLeft.height != 161u || closedLeft.dstX != 0u ||
-        closedLeft.dstY != 28u || closedLeft.transparentColor != -1) {
+        closedLeft.dstY != 30u || closedLeft.transparentColor != -1) {
         fprintf(stderr, "closed left blit mismatch\n");
         ok = 0;
     }
     if (closedRight.assetId != 3u || closedRight.width != 127u ||
         closedRight.height != 161u || closedRight.dstX != 105u ||
-        closedRight.dstY != 28u || closedRight.transparentColor != -1) {
+        closedRight.dstY != 30u || closedRight.transparentColor != -1) {
         fprintf(stderr, "closed right blit mismatch\n");
         ok = 0;
     }
@@ -100,22 +100,22 @@ int main(void) {
         ok = 0;
     }
     if (pixel_at(framebuffer, FB_W, 10u, 50u) !=
-        pixel_at(leftDoor, DOOR_W, door.leftSourceX + 10u, 22u)) {
+        pixel_at(leftDoor, DOOR_W, door.leftSourceX + 10u, 20u)) {
         fprintf(stderr, "left door strip mismatch\n");
         ok = 0;
     }
     if (pixel_at(framebuffer, FB_W, 180u, 50u) !=
-        pixel_at(rightDoor, DOOR_W, door.rightSourceX + (180u - door.rightBoxX), 22u)) {
+        pixel_at(rightDoor, DOOR_W, door.rightSourceX + (180u - door.rightBoxX), 20u)) {
         fprintf(stderr, "right door strip mismatch\n");
         ok = 0;
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));
     ok &= ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer, FB_W, FB_H);
-    if (pixel_at(framebuffer, FB_W, 0u, 28u) != 13u ||
-        pixel_at(framebuffer, FB_W, 100u, 188u) != 0u ||
-        pixel_at(framebuffer, FB_W, 110u, 29u) != 5u ||
-        pixel_at(framebuffer, FB_W, 231u, 188u) != 0u) {
+    if (pixel_at(framebuffer, FB_W, 0u, 30u) != 13u ||
+        pixel_at(framebuffer, FB_W, 100u, 190u) != 0u ||
+        pixel_at(framebuffer, FB_W, 110u, 31u) != 5u ||
+        pixel_at(framebuffer, FB_W, 231u, 190u) != 0u) {
         fprintf(stderr, "fallback closed-door pixels mismatch\n");
         ok = 0;
     }
@@ -126,12 +126,12 @@ int main(void) {
                                                        FB_H,
                                                        &door);
     if (door.leftBoxW > 0u &&
-        pixel_at(framebuffer, FB_W, door.leftBoxX, 28u + door.leftBoxY) != 13u) {
+        pixel_at(framebuffer, FB_W, door.leftBoxX, 30u + door.leftBoxY) != 13u) {
         fprintf(stderr, "fallback opening left edge mismatch\n");
         ok = 0;
     }
     if (door.rightBoxW > 0u &&
-        pixel_at(framebuffer, FB_W, door.rightBoxX, 28u + door.rightBoxY) != 13u) {
+        pixel_at(framebuffer, FB_W, door.rightBoxX, 30u + door.rightBoxY) != 13u) {
         fprintf(stderr, "fallback opening right edge mismatch\n");
         ok = 0;
     }

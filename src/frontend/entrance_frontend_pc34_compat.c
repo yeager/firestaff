@@ -4,11 +4,11 @@
 
 #define ENTRANCE_COMPAT_SCREEN_WIDTH 320u
 #define ENTRANCE_COMPAT_SCREEN_HEIGHT 200u
-#define ENTRANCE_COMPAT_DOOR_SCREEN_Y 28u
+#define ENTRANCE_COMPAT_DOOR_SCREEN_Y 30u
 #define ENTRANCE_COMPAT_RUNTIME_VIEWPORT_SOURCE_X 0u
 #define ENTRANCE_COMPAT_RUNTIME_VIEWPORT_SOURCE_Y 33u
 #define ENTRANCE_COMPAT_DUNGEON_VIEW_X 0u
-#define ENTRANCE_COMPAT_DUNGEON_VIEW_Y 31u
+#define ENTRANCE_COMPAT_DUNGEON_VIEW_Y 33u
 #define ENTRANCE_COMPAT_DUNGEON_VIEW_WIDTH 224u
 #define ENTRANCE_COMPAT_DUNGEON_VIEW_HEIGHT 136u
 #define ENTRANCE_COMPAT_VBLANK_DELAY_MS 20u
@@ -157,7 +157,7 @@ int ENTRANCE_Compat_GetClosedDoorBlit(unsigned int ordinal,
     blit.dstX = ordinal == 1u ? 0u : 105u;
     blit.dstY = ENTRANCE_COMPAT_DOOR_SCREEN_Y;
     blit.transparentColor = -1;
-    blit.sourceLineEvidence = "ENTRANCE.C:574-579 blits C002/C003 closed entrance doors over C004; DATA.C closed boxes left {0,104,28,188}, right {105,231,28,188}";
+    blit.sourceLineEvidence = "ENTRANCE.C:574-579 blits C002/C003 closed entrance doors over C004; DATA.C PC/I34 closed boxes left {0,104,30,190}, right {105,231,30,190}";
     *outBlit = blit;
     return 1;
 }
@@ -215,7 +215,7 @@ int ENTRANCE_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
         (void)ENTRANCE_Compat_GetDoorAnimationStep(sourceStepOrdinal - 6u, &door);
         step.kind = ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP;
         step.vblankLoopCount = 1u;
-        step.x = 0u; step.y = 28u; step.width = 228u; step.height = 161u;
+        step.x = 0u; step.y = 30u; step.width = 232u; step.height = 161u;
     } else {
         step.kind = ENTRANCE_COMPAT_SOURCE_EVENT_FINAL_DUNGEON_VIEW;
         step.x = 0u; step.y = 33u; step.width = 224u; step.height = 136u;
@@ -351,7 +351,7 @@ int ENTRANCE_Compat_CompositeDoorOpeningFrame(unsigned char* framebuffer,
      * the doors, and lines 189-231 overlay moving door strips.  Firestaff's
      * runtime dungeon frame is a full 320x200 image, so this source-locked
      * composite extracts just the 224x136 viewport from y=33 into the entrance
-     * door aperture at y=28+3. */
+     * door aperture at y=30+3 for the PC/I34 path. */
     if (!entrance_copy_rect(framebuffer,
                             framebufferWidth,
                             framebufferHeight,
