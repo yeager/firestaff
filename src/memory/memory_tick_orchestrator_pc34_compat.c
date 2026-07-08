@@ -2079,52 +2079,30 @@ static int orch_cmd_attack_f0312_strength_action_hand_compat(
     const DM1_WeaponInfo* weaponInfo,
     int hasActionHandWeapon)
 {
-    int strength;
-    int objectWeight;
-    int oneSixteenthMaximumLoad;
-    int loadThreshold;
-    int maxLoad;
+    DM1_MeleeF0312StrengthInputPc34 in;
+    DM1_MeleeF0312StrengthPlanPc34 plan;
 
     if (!world || !champion || !weaponInfo) return 0;
 
-    /* ReDMCSB CHAMPION.C F0312 lines 1264-1299: action-hand melee strength
-     * starts with RANDOM(16)+Strength, applies object-weight/load pressure,
-     * then weapon strength, class skill bonus, stamina adjustment, wound
-     * penalty and final bounded (strength >> 1). */
-    strength = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 16) +
-        (int)champion->attributes[CHAMPION_ATTR_STRENGTH];
-    objectWeight = hasActionHandWeapon ? weaponInfo->weight : 0;
-    maxLoad = (int)champion->maxLoad;
-    if (maxLoad <= 0) {
-        maxLoad = ((int)champion->attributes[CHAMPION_ATTR_STRENGTH] << 3) + 100;
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.championStrength = (int)champion->attributes[CHAMPION_ATTR_STRENGTH];
+    in.currentStamina = (int)champion->stamina.current;
+    in.maximumStamina = (int)champion->stamina.maximum;
+    in.maximumLoad = (int)champion->maxLoad;
+    in.random16 = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 16);
+    in.objectWeight = weaponInfo->weight;
+    in.hasActionHandWeapon = hasActionHandWeapon;
+    in.weaponStrength = weaponInfo->strength;
+    in.weaponSkillBonus = F0888_ORCH_GetChampionF0312SkillBonus_Compat(
+        world, championIndex, weaponInfo->weaponClass);
+    in.actionHandWounded =
+        (champion->wounds & COMBAT_WOUND_ACTION_HAND) != 0;
+    if (!dm1_v1_melee_strength_plan_f0312_pc34(&in, &plan) ||
+        !plan.valid) {
+        return 0;
     }
-    oneSixteenthMaximumLoad = maxLoad >> 4;
-    if (objectWeight <= oneSixteenthMaximumLoad) {
-        strength += objectWeight - 12;
-    } else {
-        loadThreshold = oneSixteenthMaximumLoad +
-            ((oneSixteenthMaximumLoad - 12) >> 1);
-        if (objectWeight <= loadThreshold) {
-            strength += (objectWeight - oneSixteenthMaximumLoad) >> 1;
-        } else {
-            strength -= (objectWeight - loadThreshold) << 1;
-        }
-    }
-
-    if (hasActionHandWeapon) {
-        strength += weaponInfo->strength;
-        strength += F0888_ORCH_GetChampionF0312SkillBonus_Compat(
-            world, championIndex, weaponInfo->weaponClass) << 1;
-    }
-
-    strength = orch_f0312_stamina_adjusted_value_compat(champion, strength);
-    if ((champion->wounds & COMBAT_WOUND_ACTION_HAND) != 0) {
-        strength >>= 1;
-    }
-    strength >>= 1;
-    if (strength < 0) strength = 0;
-    if (strength > 100) strength = 100;
-    return strength;
+    return plan.strengthActionHand;
 }
 
 static int orch_build_cmd_attack_champion_snapshot_compat(

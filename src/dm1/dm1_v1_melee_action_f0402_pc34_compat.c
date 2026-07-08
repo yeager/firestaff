@@ -376,6 +376,73 @@ int dm1_v1_melee_preflight_plan_f0402_pc34(
     return 1;
 }
 
+int dm1_v1_melee_strength_plan_f0312_pc34(
+    const DM1_MeleeF0312StrengthInputPc34* in,
+    DM1_MeleeF0312StrengthPlanPc34* out) {
+    int strength;
+    int maxLoad;
+    int oneSixteenthMaximumLoad;
+    int objectWeight;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    out->valid = 1;
+    strength = (in->random16 & 15) + in->championStrength;
+    maxLoad = in->maximumLoad;
+    if (maxLoad <= 0) {
+        maxLoad = (in->championStrength << 3) + 100;
+    }
+    oneSixteenthMaximumLoad = maxLoad >> 4;
+    out->oneSixteenthMaximumLoad = oneSixteenthMaximumLoad;
+    objectWeight = in->hasActionHandWeapon ? in->objectWeight : 0;
+    if (objectWeight <= oneSixteenthMaximumLoad) {
+        strength += objectWeight - 12;
+    } else {
+        int loadThreshold =
+            oneSixteenthMaximumLoad + ((oneSixteenthMaximumLoad - 12) >> 1);
+        out->loadThreshold = loadThreshold;
+        if (objectWeight <= loadThreshold) {
+            strength += (objectWeight - oneSixteenthMaximumLoad) >> 1;
+        } else {
+            strength -= (objectWeight - loadThreshold) << 1;
+        }
+    }
+
+    if (in->hasActionHandWeapon) {
+        strength += in->weaponStrength;
+        strength += in->weaponSkillBonus << 1;
+    }
+    out->strengthBeforeStamina = strength;
+
+    if (in->maximumStamina > 0 &&
+        in->currentStamina < (in->maximumStamina >> 1)) {
+        int halfValue = strength >> 1;
+        int halfMaximumStamina = in->maximumStamina >> 1;
+        if (halfMaximumStamina > 0) {
+            strength = halfValue +
+                (int)(((long)halfValue * (long)in->currentStamina) /
+                      (long)halfMaximumStamina);
+        }
+    }
+    out->strengthAfterStamina = strength;
+
+    if (in->actionHandWounded) {
+        strength >>= 1;
+    }
+    out->strengthAfterWound = strength;
+    strength >>= 1;
+    if (strength < 0) strength = 0;
+    if (strength > 100) strength = 100;
+    out->strengthActionHand = strength;
+
+    /* ReDMCSB: CHAMPION.C F0312 lines 1264-1306 starts with RANDOM(16)
+     * plus current Strength, applies held-object weight/max-load pressure,
+     * weapon strength, F0303 skill bonus << 1, F0306 stamina adjustment,
+     * action-hand wound halving, then returns bounded strength >> 1. */
+    return 1;
+}
+
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out) {

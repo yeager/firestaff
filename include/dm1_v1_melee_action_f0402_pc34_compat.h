@@ -185,6 +185,29 @@ typedef struct {
 } DM1_MeleeF0402PreflightPlanPc34;
 
 typedef struct {
+    int championStrength;
+    int currentStamina;
+    int maximumStamina;
+    int maximumLoad;
+    int random16;
+    int objectWeight;
+    int hasActionHandWeapon;
+    int weaponStrength;
+    int weaponSkillBonus;
+    int actionHandWounded;
+} DM1_MeleeF0312StrengthInputPc34;
+
+typedef struct {
+    int valid;
+    int oneSixteenthMaximumLoad;
+    int loadThreshold;
+    int strengthBeforeStamina;
+    int strengthAfterStamina;
+    int strengthAfterWound;
+    int strengthActionHand;
+} DM1_MeleeF0312StrengthPlanPc34;
+
+typedef struct {
     int groupIndex;
     int creatureType;
     int creatureAttributes;
@@ -239,6 +262,9 @@ int dm1_v1_melee_weapon_availability_plan_f0402_pc34(
 int dm1_v1_melee_preflight_plan_f0402_pc34(
     const DM1_MeleeF0402PreflightInputPc34* in,
     DM1_MeleeF0402PreflightPlanPc34* out);
+int dm1_v1_melee_strength_plan_f0312_pc34(
+    const DM1_MeleeF0312StrengthInputPc34* in,
+    DM1_MeleeF0312StrengthPlanPc34* out);
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out);

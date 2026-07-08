@@ -1427,6 +1427,70 @@ static void test_melee_f0402_weapon_availability_and_preflight(void) {
              "F0402 ready target can resolve F0231 damage");
 }
 
+static void test_melee_f0312_strength_plan(void) {
+    DM1_MeleeF0312StrengthInputPc34 in;
+    DM1_MeleeF0312StrengthPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.championStrength = 50;
+    in.currentStamina = 80;
+    in.maximumStamina = 100;
+    in.maximumLoad = 400;
+    in.random16 = 7;
+    in.objectWeight = 30;
+    in.hasActionHandWeapon = 1;
+    in.weaponStrength = 12;
+    in.weaponSkillBonus = 2;
+    CHECK_EQ(dm1_v1_melee_strength_plan_f0312_pc34(&in, &out), 1,
+             "F0312 action-hand strength plan builds");
+    CHECK_EQ(out.valid, 1, "F0312 strength plan valid");
+    CHECK_EQ(out.oneSixteenthMaximumLoad, 25,
+             "F0312 one-sixteenth max load");
+    CHECK_EQ(out.loadThreshold, 31, "F0312 load threshold");
+    CHECK_EQ(out.strengthBeforeStamina, 75,
+             "F0312 strength before stamina");
+    CHECK_EQ(out.strengthAfterStamina, 75,
+             "F0312 full stamina unchanged");
+    CHECK_EQ(out.strengthAfterWound, 75,
+             "F0312 no wound unchanged");
+    CHECK_EQ(out.strengthActionHand, 37,
+             "F0312 final bounded strength");
+
+    memset(&in, 0, sizeof(in));
+    in.championStrength = 40;
+    in.currentStamina = 20;
+    in.maximumStamina = 100;
+    in.maximumLoad = 0;
+    in.random16 = 0;
+    in.hasActionHandWeapon = 0;
+    in.actionHandWounded = 1;
+    CHECK_EQ(dm1_v1_melee_strength_plan_f0312_pc34(&in, &out), 1,
+             "F0312 empty-hand low-stamina plan builds");
+    CHECK_EQ(out.oneSixteenthMaximumLoad, 26,
+             "F0312 fallback max load from strength");
+    CHECK_EQ(out.strengthBeforeStamina, 28,
+             "F0312 empty hand object weight zero penalty");
+    CHECK_EQ(out.strengthAfterStamina, 19,
+             "F0312 stamina adjustment uses halved operand");
+    CHECK_EQ(out.strengthAfterWound, 9,
+             "F0312 action-hand wound halves strength");
+    CHECK_EQ(out.strengthActionHand, 4,
+             "F0312 wounded low-stamina final strength");
+
+    memset(&in, 0, sizeof(in));
+    in.championStrength = 5;
+    in.currentStamina = 100;
+    in.maximumStamina = 100;
+    in.maximumLoad = 80;
+    in.random16 = 0;
+    in.objectWeight = 80;
+    in.hasActionHandWeapon = 1;
+    CHECK_EQ(dm1_v1_melee_strength_plan_f0312_pc34(&in, &out), 1,
+             "F0312 heavy object penalty plan builds");
+    CHECK_EQ(out.strengthActionHand, 0,
+             "F0312 heavy penalty clamps negative strength");
+}
+
 static void test_melee_f0231_aftermath_plan(void) {
     DM1_MeleeF0231AftermathInputPc34 in;
     DM1_MeleeF0231AftermathPlanPc34 out;
@@ -1603,6 +1667,7 @@ int main(void) {
     test_melee_weapon_profile_plan();
     test_melee_f0231_side_effect_plan();
     test_melee_f0402_weapon_availability_and_preflight();
+    test_melee_f0312_strength_plan();
     test_melee_f0231_aftermath_plan();
     test_melee_f0231_damage_resolver_entrypoint();
     test_invalid_action();

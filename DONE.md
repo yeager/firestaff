@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0312 action-hand strength ownership: DM1 melee compat now owns the F0312 action-hand strength plan for random strength, held-object load pressure, weapon strength, skill bonus, stamina adjustment, action-hand wound halving, and final clamp. M10 now supplies live facts and RNG only. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), and Phase A 24/24 passed.
+
 - ✅ 2026-07-09 DM1 F0402 melee preflight ownership: DM1 melee compat now owns weapon availability and preflight routing for empty-hand live actions, live no-target no-ops, reach/DISRUPT invalid emissions, candidate-panel no-action, snapshot readiness, and legacy-marker fallback. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), and Phase A 24/24 passed.
 
 - ✅ 2026-07-09 DM1 F0231 melee damage-resolver entrypoint: DM1 melee compat now owns the champion-to-creature F0231 damage resolver entrypoint used by M10, with a regression that proves output/RNG/luck mutation still mirrors the source-locked shared F0735 arithmetic. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), and Phase A 24/24 passed.
