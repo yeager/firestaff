@@ -11710,29 +11710,20 @@ static M11_GameInputResult m11_theron_apply_startup_host_receipt(
     return M11_GAME_INPUT_IGNORED;
 }
 
-static M11_GameInputResult m11_theron_startup_apply_action(
-    M11_GameViewState* state,
-    const Theron_StartupAction* action) {
-    Theron_StartupSessionFacts session;
-    Theron_StartupActionHostReceipt receipt;
-
-    if (!state || !action) {
+static M11_GameInputResult m11_theron_apply_startup_action_host_receipt(
+    M11_GameViewState *state,
+    const Theron_StartupActionHostReceipt *receipt)
+{
+    if (!state || !receipt) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_theron_startup_session_facts(state, &session);
-    if (!theron_v1_startup_execute_action_from_session_with_host_receipt(
-            action,
-            &session,
-            &receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (receipt.state_receipt_valid) {
-        m11_theron_apply_startup_state_receipt(state, &receipt.state_receipt);
+    if (receipt->state_receipt_valid) {
+        m11_theron_apply_startup_state_receipt(state, &receipt->state_receipt);
     }
     return m11_theron_apply_startup_host_receipt(
         state,
-        &receipt.host_receipt,
-        receipt.runtime_receipt);
+        &receipt->host_receipt,
+        receipt->runtime_receipt);
 }
 
 static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state,
@@ -13887,26 +13878,21 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
             !state->theronState.level_loaded) {
-            Theron_StartupAction action;
-            Theron_StartupInputReceipt input_receipt;
+            Theron_StartupActionHostReceipt receipt;
             Theron_StartupSessionFacts session;
 
             m11_theron_startup_session_facts(state, &session);
-            if (!theron_v1_startup_handle_input_from_session_with_receipt(
+            if (!theron_v1_startup_execute_input_from_session_with_host_receipt(
                 &session,
                 theron_v1_startup_input_from_firestaff_menu_code((int)input),
-                &action,
-                &input_receipt)) {
-                m11_set_status(state,
-                               input_receipt.status_scope
-                                   ? input_receipt.status_scope
-                                   : "STARTUP",
-                               input_receipt.status
-                                   ? input_receipt.status
-                                   : "STARTUP INPUT ERROR");
-                return M11_GAME_INPUT_REDRAW;
+                &receipt)) {
+                return m11_theron_apply_startup_action_host_receipt(
+                    state,
+                    &receipt);
             }
-            return m11_theron_startup_apply_action(state, &action);
+            return m11_theron_apply_startup_action_host_receipt(
+                state,
+                &receipt);
         }
         /* v2.8.x: arrow Left/Right now mean strafe (matches original
          * DM1 PC 3.4 convention).  TURN_LEFT/RIGHT comes from Home /
@@ -14474,8 +14460,7 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     M11_GameViewState* state,
     int x,
     int y) {
-    Theron_StartupAction action;
-    Theron_StartupInputReceipt input_receipt;
+    Theron_StartupActionHostReceipt receipt;
     Theron_StartupSessionFacts session;
 
     if (!state ||
@@ -14486,28 +14471,14 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     }
 
     m11_theron_startup_session_facts(state, &session);
-    if (!theron_v1_startup_handle_pointer_from_session_with_receipt(
+    if (!theron_v1_startup_execute_pointer_from_session_with_host_receipt(
         &session,
         x,
         y,
-        &action,
-        &input_receipt)) {
-        if (input_receipt.input_result == THERON_STARTUP_INPUT_RESULT_IGNORED) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        m11_set_status(state,
-                       input_receipt.status_scope
-                           ? input_receipt.status_scope
-                           : "STARTUP",
-                       input_receipt.status
-                           ? input_receipt.status
-                           : "STARTUP POINTER ERROR");
-        return M11_GAME_INPUT_REDRAW;
+        &receipt)) {
+        return m11_theron_apply_startup_action_host_receipt(state, &receipt);
     }
-    if (action.kind == THERON_STARTUP_ACTION_NONE) {
-        return M11_GAME_INPUT_REDRAW;
-    }
-    return m11_theron_startup_apply_action(state, &action);
+    return m11_theron_apply_startup_action_host_receipt(state, &receipt);
 }
 
 static M11_GameInputResult m11_nexus_handle_startup_pointer(

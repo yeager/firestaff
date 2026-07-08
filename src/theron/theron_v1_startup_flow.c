@@ -2077,6 +2077,107 @@ int theron_v1_startup_execute_action_from_session_with_host_receipt(
     }
 }
 
+static void theron_v1_startup_input_receipt_to_action_host_receipt(
+    const Theron_StartupInputReceipt *input_receipt,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    if (!out_receipt) {
+        return;
+    }
+    theron_v1_startup_action_host_receipt_init(out_receipt);
+    if (!input_receipt) {
+        out_receipt->result = THERON_STARTUP_ERR_NULL;
+        out_receipt->host_receipt.input_result =
+            THERON_STARTUP_INPUT_RESULT_REDRAW;
+        out_receipt->host_receipt.status_scope = "STARTUP";
+        out_receipt->host_receipt.status = theron_v1_startup_result_name(
+            THERON_STARTUP_ERR_NULL);
+        return;
+    }
+    out_receipt->result = input_receipt->result;
+    out_receipt->host_receipt.input_result = input_receipt->input_result;
+    out_receipt->host_receipt.status_scope = input_receipt->status_scope;
+    out_receipt->host_receipt.status = input_receipt->status;
+}
+
+int theron_v1_startup_execute_input_from_session_with_host_receipt(
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupInput input,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    Theron_StartupAction action;
+    Theron_StartupInputReceipt input_receipt;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!session || !out_receipt) {
+        theron_v1_startup_input_receipt_to_action_host_receipt(
+            NULL,
+            out_receipt);
+        return 0;
+    }
+    if (!theron_v1_startup_handle_input_from_session_with_receipt(
+            session,
+            input,
+            &action,
+            &input_receipt)) {
+        theron_v1_startup_input_receipt_to_action_host_receipt(
+            &input_receipt,
+            out_receipt);
+        return 0;
+    }
+    return theron_v1_startup_execute_action_from_session_with_host_receipt(
+        &action,
+        session,
+        out_receipt);
+}
+
+int theron_v1_startup_execute_pointer_from_session_with_host_receipt(
+    const Theron_StartupSessionFacts *session,
+    int x,
+    int y,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    Theron_StartupAction action;
+    Theron_StartupInputReceipt input_receipt;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!session || !out_receipt) {
+        theron_v1_startup_input_receipt_to_action_host_receipt(
+            NULL,
+            out_receipt);
+        return 0;
+    }
+    if (!theron_v1_startup_handle_pointer_from_session_with_receipt(
+            session,
+            x,
+            y,
+            &action,
+            &input_receipt)) {
+        theron_v1_startup_input_receipt_to_action_host_receipt(
+            &input_receipt,
+            out_receipt);
+        return 0;
+    }
+    if (action.kind == THERON_STARTUP_ACTION_NONE) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+        out_receipt->result = input_receipt.result;
+        out_receipt->host_receipt.input_result =
+            THERON_STARTUP_INPUT_RESULT_REDRAW;
+        out_receipt->host_receipt.status_scope =
+            input_receipt.status_scope;
+        out_receipt->host_receipt.status = input_receipt.status;
+        return 1;
+    }
+    return theron_v1_startup_execute_action_from_session_with_host_receipt(
+        &action,
+        session,
+        out_receipt);
+}
+
 static void tqr_startup_render_plan_reset(Theron_StartupRenderPlan *plan)
 {
     if (!plan) {

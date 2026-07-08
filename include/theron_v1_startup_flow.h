@@ -763,6 +763,15 @@ int theron_v1_startup_execute_action_from_session_with_host_receipt(
     const Theron_StartupAction *action,
     const Theron_StartupSessionFacts *session,
     Theron_StartupActionHostReceipt *out_receipt);
+int theron_v1_startup_execute_input_from_session_with_host_receipt(
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupInput input,
+    Theron_StartupActionHostReceipt *out_receipt);
+int theron_v1_startup_execute_pointer_from_session_with_host_receipt(
+    const Theron_StartupSessionFacts *session,
+    int x,
+    int y,
+    Theron_StartupActionHostReceipt *out_receipt);
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,
