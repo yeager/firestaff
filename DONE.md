@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB runtime detach launch receipts: CSB boot runtime detach now transfers the complete startup launch receipts with the profile and launch identity. M11 applies detached CSB runtime receipts instead of reading `launch.receipts` after ownership transfer. Verification: strict compiles for `csb_v1_boot.c`, `m11_game_view.c`, and the CSB boot handoff test object; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 Nexus level-0 boot receipt: Nexus launcher now owns selected-entry level-0 bootstrap, new-game reset, champion/mechanics reset, title-load status, startup launch receipt, and missing-data boot status. M11 now applies the launcher boot receipt instead of running those Nexus startup steps inline. Verification: strict compiles for `nexus_v1_launcher.c`, `m11_game_view.c`, and the Nexus startup test; direct Nexus startup test passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 broader game-data archive image scan: shared scanner now sends common disk/archive image suffixes (`.adf`, `.adz`, `.st`, `.stx`, `.msa`, `.ipf`, `.hfe`, `.hdm`, `.dsk`, `.ima`) through the external archive backend when available, and LHA/LZH/LZS falls back to 7zz/7z/bsdtar if the built-in stored-entry path does not match. Verification: strict compile, `test_asset_find_by_hash` with and without zlib, Phase A 24/24, and `git diff --check` passed.

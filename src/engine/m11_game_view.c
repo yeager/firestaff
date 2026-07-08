@@ -10526,14 +10526,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         m11_csb_startup_init_state_receipt_to_m11(
             state,
-            &launch.receipts.init_state);
+            &runtime_receipt.receipts.init_state);
         m11_apply_csb_runtime_startup_session_state_receipt(
             state,
-            &launch.receipts.session_state);
+            &runtime_receipt.receipts.session_state);
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         (void)m11_csb_startup_apply_host_receipt(
             state,
-            &launch.receipts.launch_host_receipt);
+            &runtime_receipt.receipts.launch_host_receipt);
         csb_v1_boot_startup_launch_cleanup_pc34(&launch);
         /* Tier 4: CSB launcher stderr-pipe — surface the boot milestone to
          * stderr so `firestaff_tier1_strict_boot_probe` and CI can detect
