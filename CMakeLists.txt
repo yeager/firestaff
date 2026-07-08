@@ -15167,6 +15167,9 @@ endif()
 
 # ── Install rules ────────────────────────────────────────────────────
 install(TARGETS firestaff RUNTIME DESTINATION bin)
+if(UNIX AND NOT APPLE)
+    install(FILES docs/linux/firestaff.1 DESTINATION share/man/man1)
+endif()
 
 
 # ── DM1 V1 Champion Needs source-lock gate ───────────────────────────

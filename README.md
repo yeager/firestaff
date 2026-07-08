@@ -192,6 +192,9 @@ in the start menu.
 
 ## Command-Line Options
 
+Linux users can also read the full manual page source at
+[`docs/linux/firestaff.1`](docs/linux/firestaff.1).
+
 ```text
 firestaff [options]
   --duration <ms>       Run for a fixed duration (-1 = run until exit)
