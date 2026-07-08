@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup host-facts adapter: CSB startup now exposes one `CSB_V1_StartupHostFacts_PC34` snapshot and host-facts wrappers for render-plan building, entrance input gating, entrance command apply, door-finish, and startup tick receipts. M11 now builds that snapshot instead of passing repeated raw startup fields across those boot paths. Verification: M10 targeted library build passed, M11 targeted library build passed, CSB startup entrance test passed 149/149 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup session-facts adapter: M11 now builds one `Theron_StartupSessionFacts` snapshot for Theron startup input, pointer, layout, render rows, and render plan calls. Theron owns the wrapper APIs, removing five long raw M11 argument lists from the boot/startup path. Verification: Theron targeted library build passed, M11 targeted library build passed, Theron startup save/resume test passed 103/103 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 RetroAchievements start-menu settings labels: legacy/shared settings rows now show full RetroAchievements Hardcore, Username, and API Token labels while preserving the modern ONLINE tab, toggles, text editing, persistence, and token masking. Verification: M12 targeted library build passed, settings tab hit-test passed 52/52 by direct compile/run, RetroAchievements unit test passed, DM1 V2 settings persistence passed, and `git diff --check` passed.

@@ -516,6 +516,25 @@ typedef struct CSB_V1_StartupRenderPlanRequest_PC34 {
     int runtime_start_dir;
 } CSB_V1_StartupRenderPlanRequest_PC34;
 
+typedef struct CSB_V1_StartupHostFacts_PC34 {
+    int title_active;
+    int title_frame;
+    int title_source_step;
+    int entrance_active;
+    int entrance_source_step;
+    int entrance_dismissed;
+    int credits_active;
+    int credits_remaining_ticks;
+    int opening_active;
+    int opening_delay_ticks;
+    int opening_step;
+    int pending_command;
+    int entrance_frame;
+    int utility_overlay_active;
+    int door_step_count;
+    const void *boot_profile;
+} CSB_V1_StartupHostFacts_PC34;
+
 #define CSB_V1_STARTUP_PATH_CAP_PC34 512
 #define CSB_V1_STARTUP_PROMPT_CAP_PC34 192
 
@@ -585,6 +604,9 @@ int csb_v1_startup_advance_tick_from_facts_with_receipt_pc34(
     int pending_command,
     int door_step_count,
     CSB_V1_StartupTickReceipt_PC34 *out_receipt);
+int csb_v1_startup_advance_tick_from_host_facts_with_receipt_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    CSB_V1_StartupTickReceipt_PC34 *out_receipt);
 int csb_v1_startup_build_render_plan_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
@@ -636,6 +658,9 @@ int csb_v1_startup_build_render_plan_from_host_facts_pc34(
     int entrance_frame,
     int utility_overlay_active,
     const void *boot_profile,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan);
+int csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
 int csb_v1_startup_execute_primitive_commands_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
@@ -722,6 +747,8 @@ int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
     int pending_command);
 int csb_v1_startup_entrance_accepts_input_from_request_pc34(
     const CSB_V1_StartupCommandStateRequest_PC34 *request);
+int csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts);
 int csb_v1_startup_init_command_state_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int skip_startup);
@@ -759,6 +786,11 @@ int csb_v1_startup_apply_entrance_command_from_facts_with_receipts_pc34(
     int opening_delay_ticks,
     int opening_step,
     int pending_command,
+    int command_id,
+    CSB_V1_StartupEntranceCommandReceipt_PC34 *out_command_receipt,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_state_receipt);
+int csb_v1_startup_apply_entrance_command_from_host_facts_with_receipts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
     int command_id,
     CSB_V1_StartupEntranceCommandReceipt_PC34 *out_command_receipt,
     CSB_V1_StartupCommandStateReceipt_PC34 *out_state_receipt);
@@ -841,6 +873,9 @@ int csb_v1_startup_finish_door_opening_from_facts_with_receipt_pc34(
     int opening_delay_ticks,
     int opening_step,
     int pending_command,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_receipt);
+int csb_v1_startup_finish_door_opening_from_host_facts_with_receipt_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_StartupCommandStateReceipt_PC34 *out_receipt);
 int csb_v1_startup_begin_credits_pc34(
     CSB_V1_StartupCommandState_PC34 *state);
