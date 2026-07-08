@@ -562,6 +562,138 @@ void theron_v1_boot_set_save_root(Theron_V1_BootProfile *profile,
     }
 }
 
+static int theron_v1_boot_save_root_from_save_path(const char *save_path,
+                                                   char *out_root,
+                                                   size_t out_root_cap) {
+    const char *slash;
+    size_t len;
+
+    if (!out_root || out_root_cap == 0u) {
+        return 0;
+    }
+    out_root[0] = '\0';
+    if (!save_path || save_path[0] == '\0') {
+        return 0;
+    }
+    slash = strrchr(save_path, '/');
+#if defined(_WIN32)
+    {
+        const char *backslash = strrchr(save_path, '\\');
+        if (!slash || (backslash && backslash > slash)) {
+            slash = backslash;
+        }
+    }
+#endif
+    if (!slash || slash <= save_path) {
+        return 0;
+    }
+    len = (size_t)(slash - save_path);
+    if (len >= out_root_cap) {
+        len = out_root_cap - 1u;
+    }
+    memcpy(out_root, save_path, len);
+    out_root[len] = '\0';
+    return out_root[0] != '\0';
+}
+
+int theron_v1_boot_prepare_startup_profile(
+    Theron_V1_BootProfile *profile,
+    const char *data_dir,
+    const char *verified_path,
+    const char *verified_md5,
+    const char *save_path,
+    TrAssetBundle *assets,
+    Theron_V1StartupSaveResume *out_save_resume,
+    int *out_save_resume_ready,
+    Theron_V1BootStartupPrepareResult *out_result) {
+
+    Theron_V1BootStartupPrepareResult result =
+        THERON_V1_BOOT_STARTUP_PREPARE_OK;
+    char save_root[512];
+
+    if (out_save_resume_ready) {
+        *out_save_resume_ready = 0;
+    }
+    if (out_result) {
+        *out_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+    }
+    if (!profile || !data_dir || data_dir[0] == '\0' || !assets ||
+        !out_save_resume) {
+        return 0;
+    }
+
+    theron_v1_boot_profile_init(profile);
+    if (verified_path && verified_path[0] != '\0' &&
+        verified_md5 && verified_md5[0] != '\0') {
+        if (theron_v1_boot_load_verified_path(profile,
+                                              verified_path,
+                                              verified_md5) != 0) {
+            result = THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED;
+            goto fail;
+        }
+    } else if (theron_v1_boot_scan_assets(profile, data_dir) != 0 ||
+               !profile->assets_verified) {
+        result = THERON_V1_BOOT_STARTUP_PREPARE_MISSING_TRACK02;
+        goto fail;
+    }
+
+    if (theron_v1_boot_save_root_from_save_path(save_path,
+                                                save_root,
+                                                sizeof(save_root))) {
+        theron_v1_boot_set_save_root(profile, save_root);
+    } else {
+        theron_v1_boot_set_save_root(profile, NULL);
+    }
+
+    memset(out_save_resume, 0, sizeof(*out_save_resume));
+    if (out_save_resume_ready) {
+        *out_save_resume_ready =
+            theron_v1_boot_startup_save_resume(profile, out_save_resume);
+    }
+    if (theron_v1_startup_save_resume_apply_explicit_path(
+            out_save_resume,
+            save_path,
+            profile->save_root)) {
+        if (out_save_resume_ready) {
+            *out_save_resume_ready = 1;
+        }
+    }
+
+    if (tr_asset_load(profile->graphics_path, assets) != TR_ASSET_OK) {
+        result = THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED;
+        goto fail;
+    }
+
+    if (out_result) {
+        *out_result = result;
+    }
+    return 1;
+
+fail:
+    if (out_result) {
+        *out_result = result;
+    }
+    return 0;
+}
+
+const char *theron_v1_boot_startup_prepare_result_name(
+    Theron_V1BootStartupPrepareResult result) {
+    switch (result) {
+        case THERON_V1_BOOT_STARTUP_PREPARE_OK:
+            return "OK";
+        case THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT:
+            return "BAD_INPUT";
+        case THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED:
+            return "VERIFY_FAILED";
+        case THERON_V1_BOOT_STARTUP_PREPARE_MISSING_TRACK02:
+            return "MISSING_TRACK02";
+        case THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED:
+            return "ASSET_LOAD_FAILED";
+        default:
+            return "UNKNOWN";
+    }
+}
+
 int theron_v1_boot_startup_save_resume(
     const Theron_V1_BootProfile *profile,
     Theron_V1StartupSaveResume *out_snapshot) {

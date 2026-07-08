@@ -12022,7 +12022,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     Theron_V1_Viewport* viewport = NULL;
     TrAssetBundle* assets = NULL;
     int savedDebugHUD;
-    TrAssetResult assetResult;
+    Theron_V1BootStartupPrepareResult prepareResult;
     Theron_StartupFlow startupFlow;
     Theron_StartupStateReceipt startupStateReceipt;
     Theron_StartupStateReceipt saveResumeStateReceipt;
@@ -12045,57 +12045,32 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         goto fail;
     }
 
-    theron_v1_boot_profile_init(profile);
-    if (verifiedPath && verifiedPath[0] != '\0' &&
-        verifiedMd5 && verifiedMd5[0] != '\0') {
-        if (theron_v1_boot_load_verified_path(profile,
-                                              verifiedPath,
-                                              verifiedMd5) != 0) {
+    if (!theron_v1_boot_prepare_startup_profile(profile,
+                                                dataDir,
+                                                verifiedPath,
+                                                verifiedMd5,
+                                                savePath,
+                                                assets,
+                                                &saveResume,
+                                                &saveResumeReady,
+                                                &prepareResult)) {
+        switch (prepareResult) {
+            case THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED:
             m11_set_status(state, "BOOT", "THERON TRACK 02 VERIFY FAILED");
-            goto fail;
+                break;
+            case THERON_V1_BOOT_STARTUP_PREPARE_MISSING_TRACK02:
+                m11_set_status(state, "BOOT", "THERON TRACK 02 MISSING");
+                break;
+            case THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED:
+                m11_set_status(state, "BOOT", "THERON ASSET LOAD FAILED");
+                break;
+            default:
+                m11_set_status(state,
+                               "BOOT",
+                               theron_v1_boot_startup_prepare_result_name(
+                                   prepareResult));
+                break;
         }
-    } else if (theron_v1_boot_scan_assets(profile, dataDir) != 0 ||
-               !profile->assets_verified) {
-        m11_set_status(state, "BOOT", "THERON TRACK 02 MISSING");
-        goto fail;
-    }
-    if (savePath && savePath[0] != '\0') {
-        char saveRoot[512];
-        const char* slash = strrchr(savePath, '/');
-#ifdef _WIN32
-        {
-            const char* backslash = strrchr(savePath, '\\');
-            if (!slash || (backslash && backslash > slash)) {
-                slash = backslash;
-            }
-        }
-#endif
-        if (slash && slash > savePath) {
-            size_t len = (size_t)(slash - savePath);
-            if (len >= sizeof(saveRoot)) {
-                len = sizeof(saveRoot) - 1u;
-            }
-            memcpy(saveRoot, savePath, len);
-            saveRoot[len] = '\0';
-            theron_v1_boot_set_save_root(profile, saveRoot);
-        } else {
-            theron_v1_boot_set_save_root(profile, NULL);
-        }
-    } else {
-        theron_v1_boot_set_save_root(profile, NULL);
-    }
-    memset(&saveResume, 0, sizeof(saveResume));
-    saveResumeReady = theron_v1_boot_startup_save_resume(profile, &saveResume);
-    if (theron_v1_startup_save_resume_apply_explicit_path(
-            &saveResume,
-            savePath,
-            profile->save_root)) {
-        saveResumeReady = 1;
-    }
-
-    assetResult = tr_asset_load(profile->graphics_path, assets);
-    if (assetResult != TR_ASSET_OK) {
-        m11_set_status(state, "BOOT", "THERON ASSET LOAD FAILED");
         goto fail;
     }
 

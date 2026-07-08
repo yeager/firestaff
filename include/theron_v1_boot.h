@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include "asset_status_m12.h"
 #include "theron_v1_startup_save_resume.h"
+#include "theron/theron_v1_asset_loader.h"
 
 /* ══════════════════════════════════════════════════════════════════════
  * Theron's Quest V1 Boot Profile — Phase 1: Runtime Profile Split
@@ -202,6 +203,27 @@ int theron_v1_boot_probe_available(const char *data_dir);
 int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
                                        const char *track02_path,
                                        const char *expected_md5);
+
+typedef enum {
+    THERON_V1_BOOT_STARTUP_PREPARE_OK = 0,
+    THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT = -1,
+    THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED = -2,
+    THERON_V1_BOOT_STARTUP_PREPARE_MISSING_TRACK02 = -3,
+    THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED = -4
+} Theron_V1BootStartupPrepareResult;
+
+int theron_v1_boot_prepare_startup_profile(
+    Theron_V1_BootProfile *profile,
+    const char *data_dir,
+    const char *verified_path,
+    const char *verified_md5,
+    const char *save_path,
+    TrAssetBundle *assets,
+    Theron_V1StartupSaveResume *out_save_resume,
+    int *out_save_resume_ready,
+    Theron_V1BootStartupPrepareResult *out_result);
+const char *theron_v1_boot_startup_prepare_result_name(
+    Theron_V1BootStartupPrepareResult result);
 
 /* theron_v1_boot_verified_path_is_stale — decide whether a previously
  * verified Track 02 path/MD5 pair still matches the bytes on disk.
