@@ -79,16 +79,35 @@ typedef struct {
     int champion_frame;
 } Nexus_V1_StartupRuntimeState;
 
+typedef struct {
+    Nexus_V1_StartupRuntimeState runtime;
+} Nexus_V1_LauncherRuntimeStartupSnapshot;
+
 void nexus_v1_launcher_startup_runtime_state_clear(
     Nexus_V1_StartupRuntimeState *state);
+void nexus_v1_launcher_runtime_startup_snapshot_clear(
+    Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot);
 int nexus_v1_launcher_startup_host_facts_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupHostFacts *out_facts);
+int nexus_v1_launcher_startup_host_facts_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     Nexus_V1_StartupHostFacts *out_facts);
 int nexus_v1_launcher_startup_advance_idle_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupIdleReceipt *out_receipt);
+int nexus_v1_launcher_startup_advance_idle_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    Nexus_V1_StartupIdleReceipt *out_receipt);
 int nexus_v1_launcher_startup_execute_save_firestaff_input_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_launcher_startup_execute_save_firestaff_input_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     int menu_input,
     Nexus_V1_StartupLoadSaveFn load_save,
     void *load_userdata,
@@ -102,8 +121,21 @@ int nexus_v1_launcher_startup_execute_save_pointer_from_runtime_state(
     void *load_userdata,
     Nexus_V1_StartupSaveExecution *out_execution,
     Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_launcher_startup_execute_save_pointer_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int x,
+    int y,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
 int nexus_v1_launcher_startup_execute_title_firestaff_input_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_launcher_startup_execute_title_firestaff_input_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     int menu_input,
     Nexus_V1_StartupTitleExecution *out_execution,
     Nexus_V1_StartupHostActionReceipt *out_receipt);
@@ -111,8 +143,17 @@ int nexus_v1_launcher_startup_execute_title_pointer_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupTitleExecution *out_execution,
     Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_launcher_startup_execute_title_pointer_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
 int nexus_v1_launcher_startup_execute_champion_firestaff_input_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_launcher_startup_execute_champion_firestaff_input_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     int menu_input,
     Nexus_V1_StartupChampionExecution *out_execution,
     Nexus_V1_StartupHostActionReceipt *out_receipt);
@@ -122,12 +163,26 @@ int nexus_v1_launcher_startup_execute_champion_pointer_from_runtime_state(
     int y,
     Nexus_V1_StartupChampionExecution *out_execution,
     Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_launcher_startup_execute_champion_pointer_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int x,
+    int y,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
 int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int nexus_v1_launcher_startup_presentation_build_save_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands);
 int nexus_v1_launcher_startup_presentation_build_champion_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands);
+int nexus_v1_launcher_startup_presentation_build_champion_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands);
 int nexus_v1_launcher_startup_presentation_execute(
@@ -136,6 +191,18 @@ int nexus_v1_launcher_startup_presentation_execute(
     const Nexus_V1_StartupDrawExecutor *executor);
 int nexus_v1_launcher_startup_presentation_receipt_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready);
+int nexus_v1_launcher_startup_presentation_receipt_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     char *out_phase,
     int out_phase_size,
     int *out_startup_active,
