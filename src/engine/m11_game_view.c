@@ -11878,22 +11878,6 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
     return 1;
 }
 
-static int m11_theron_continue_availability(
-    const M11_GameViewState* state,
-    Theron_V1StartupContinueAvailability* availability) {
-
-    if (!state || !availability) {
-        return 0;
-    }
-    return theron_v1_startup_continue_availability_from_state(
-        (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
-        state->theronState.save_resume_active_slot,
-        state->theronState.save_resume_srm_active_slot,
-        (Theron_V1SrmProgressImportStatus)
-            state->theronState.save_resume_srm_import_status,
-        availability);
-}
-
 static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
                                            const char* prefix) {
     Theron_StartupChapterInspectReceipt receipt;
@@ -38183,12 +38167,7 @@ int M11_GameView_GetTheronStartupLayout(
     const M11_GameViewState* state,
     M11_TheronStartupElement* elements,
     int maxElements) {
-    Theron_V1StartupContinueAvailability continue_availability;
     Theron_StartupLayoutElement theron_elements[16];
-    int has_tqsv_continue = 0;
-    int tqsv_slot = -1;
-    int has_srm_continue = 0;
-    int srm_slot = -1;
     int count;
     int i;
 
@@ -38204,24 +38183,18 @@ int M11_GameView_GetTheronStartupLayout(
         elements[i].primaryClass = -1;
     }
 
-    if (m11_theron_continue_availability(state, &continue_availability)) {
-        has_tqsv_continue = continue_availability.has_tqsv_continue;
-        tqsv_slot = continue_availability.tqsv_slot;
-        has_srm_continue = continue_availability.has_srm_continue;
-        srm_slot = continue_availability.srm_slot;
-    }
-
-    count = theron_v1_startup_layout_build_from_facts(
+    count = theron_v1_startup_layout_build_from_session_facts(
         (Theron_StartupPhase)state->theronState.startup_phase,
         state->theronState.selected_dungeon,
         (const Theron_V1_BootProfile*)state->theronBootProfile,
         (const Theron_V1_World*)state->theronWorld,
         state->theronState.startup_cursor,
         state->theronState.save_resume_continue_focus,
-        has_tqsv_continue,
-        tqsv_slot,
-        has_srm_continue,
-        srm_slot,
+        (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
+        state->theronState.save_resume_active_slot,
+        state->theronState.save_resume_srm_active_slot,
+        (Theron_V1SrmProgressImportStatus)
+            state->theronState.save_resume_srm_import_status,
         state->theronState.startup_text_prompt,
         state->theronState.startup_roster_names,
         state->theronState.startup_roster_titles,
@@ -38268,12 +38241,7 @@ int M11_GameView_GetTheronStartupRenderRows(
     const M11_GameViewState* state,
     char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
     int maxRows) {
-    Theron_V1StartupContinueAvailability continue_availability;
     char theron_rows[16][THERON_STARTUP_RENDER_ROW_CAPACITY];
-    int has_tqsv_continue = 0;
-    int tqsv_slot = -1;
-    int has_srm_continue = 0;
-    int srm_slot = -1;
     int row_count;
     int i;
 
@@ -38284,23 +38252,18 @@ int M11_GameView_GetTheronStartupRenderRows(
         return 0;
     }
 
-    if (m11_theron_continue_availability(state, &continue_availability)) {
-        has_tqsv_continue = continue_availability.has_tqsv_continue;
-        tqsv_slot = continue_availability.tqsv_slot;
-        has_srm_continue = continue_availability.has_srm_continue;
-        srm_slot = continue_availability.srm_slot;
-    }
-    row_count = theron_v1_startup_render_rows_build_from_facts(
+    row_count = theron_v1_startup_render_rows_build_from_session_facts(
         (Theron_StartupPhase)state->theronState.startup_phase,
         state->theronState.selected_dungeon,
         (const Theron_V1_BootProfile*)state->theronBootProfile,
         (const Theron_V1_World*)state->theronWorld,
         state->theronState.startup_cursor,
         state->theronState.save_resume_continue_focus,
-        has_tqsv_continue,
-        tqsv_slot,
-        has_srm_continue,
-        srm_slot,
+        (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
+        state->theronState.save_resume_active_slot,
+        state->theronState.save_resume_srm_active_slot,
+        (Theron_V1SrmProgressImportStatus)
+            state->theronState.save_resume_srm_import_status,
         state->theronState.startup_text_prompt,
         state->theronState.startup_roster_names,
         state->theronState.startup_roster_titles,
@@ -38450,12 +38413,7 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                            int framebufferWidth,
                                            int framebufferHeight) {
     int i;
-    Theron_V1StartupContinueAvailability continue_availability;
     Theron_StartupRenderPlan plan;
-    int has_tqsv_continue = 0;
-    int tqsv_slot = -1;
-    int has_srm_continue = 0;
-    int srm_slot = -1;
 
     (void)world;
 
@@ -38463,23 +38421,18 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         return;
     }
 
-    if (m11_theron_continue_availability(state, &continue_availability)) {
-        has_tqsv_continue = continue_availability.has_tqsv_continue;
-        tqsv_slot = continue_availability.tqsv_slot;
-        has_srm_continue = continue_availability.has_srm_continue;
-        srm_slot = continue_availability.srm_slot;
-    }
-    if (!theron_v1_startup_render_plan_build_from_facts(
+    if (!theron_v1_startup_render_plan_build_from_session_facts(
             (Theron_StartupPhase)state->theronState.startup_phase,
             state->theronState.selected_dungeon,
             (const Theron_V1_BootProfile*)state->theronBootProfile,
             (const Theron_V1_World*)state->theronWorld,
             state->theronState.startup_cursor,
             state->theronState.save_resume_continue_focus,
-            has_tqsv_continue,
-            tqsv_slot,
-            has_srm_continue,
-            srm_slot,
+            (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
+            state->theronState.save_resume_active_slot,
+            state->theronState.save_resume_srm_active_slot,
+            (Theron_V1SrmProgressImportStatus)
+                state->theronState.save_resume_srm_import_status,
             state->theronState.startup_text_prompt,
             state->theronState.startup_roster_names,
             state->theronState.startup_roster_titles,
