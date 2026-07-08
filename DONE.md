@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup runtime boot-profile bridge: CSB runtime/startup bridge now applies startup dungeon-entry/resume runtime plans from the opaque CSB boot profile, so M11 no longer reaches into `CSB_V1_BootProfile.runtime` for that path. Verification: M10 and M11 targeted library builds passed, CSB startup entrance pointer contract passed 142/142, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB startup boot-receipt presentation: CSB startup-sequence now derives boot-receipt phase, animation id, animation-active flag, title frame, title-frame max, and title-ready state from raw startup facts. M11 consumes that CSB-owned summary instead of branching locally. Verification: CSB startup entrance pointer contract passed 142/142, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup render host facts: CSB startup-sequence now builds startup render plans from host facts plus the opaque CSB boot profile, including runtime start coordinates and direction. M11 no longer unpacks the CSB boot profile before startup presentation planning. Verification: CSB startup entrance pointer contract passed 141/141, Phase A passed 24/24, and `git diff --check` passed.
