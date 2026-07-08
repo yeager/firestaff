@@ -339,7 +339,9 @@ static int is_lha_path(const char *path) {
 static int is_external_archive_path(const char *path) {
     return has_case_suffix(path, ".7z") || has_case_suffix(path, ".rar") ||
            has_case_suffix(path, ".arj") || has_case_suffix(path, ".arc") ||
-           has_case_suffix(path, ".cab");
+           has_case_suffix(path, ".cab") || has_case_suffix(path, ".zoo") ||
+           has_case_suffix(path, ".ace") || has_case_suffix(path, ".sit") ||
+           has_case_suffix(path, ".sitx") || has_case_suffix(path, ".dms");
 }
 
 static AssetContainerKind asset_container_kind_from_suffix(const char *path) {
@@ -2367,6 +2369,63 @@ static const char *external_archive_tool(void) {
     return NULL;
 }
 
+static int external_entry_command(char *cmd,
+                                  size_t cmdSize,
+                                  const char *tool,
+                                  const char *archivePath,
+                                  const char *entryName) {
+    if (!cmd || cmdSize == 0U || !tool || !archivePath || !entryName) {
+        return 0;
+    }
+    if (strcmp(tool, "bsdtar") == 0) {
+        if (snprintf(cmd, cmdSize, "%s -xOf ", tool) >= (int)cmdSize) {
+            return 0;
+        }
+        if (!shell_append_quoted(cmd, cmdSize, archivePath)) return 0;
+        if (strlen(cmd) + 2U >= cmdSize) return 0;
+        strcat(cmd, " ");
+        if (!shell_append_quoted(cmd, cmdSize, entryName)) return 0;
+        if (strlen(cmd) + 13U >= cmdSize) return 0;
+        strcat(cmd, " 2>/dev/null");
+        return 1;
+    }
+    if (snprintf(cmd, cmdSize, "%s x -so -- ", tool) >= (int)cmdSize) {
+        return 0;
+    }
+    if (!shell_append_quoted(cmd, cmdSize, archivePath)) return 0;
+    if (strlen(cmd) + 2U >= cmdSize) return 0;
+    strcat(cmd, " ");
+    if (!shell_append_quoted(cmd, cmdSize, entryName)) return 0;
+    if (strlen(cmd) + 13U >= cmdSize) return 0;
+    strcat(cmd, " 2>/dev/null");
+    return 1;
+}
+
+static int external_list_command(char *cmd,
+                                 size_t cmdSize,
+                                 const char *tool,
+                                 const char *archivePath) {
+    if (!cmd || cmdSize == 0U || !tool || !archivePath) {
+        return 0;
+    }
+    if (strcmp(tool, "bsdtar") == 0) {
+        if (snprintf(cmd, cmdSize, "%s -tf ", tool) >= (int)cmdSize) {
+            return 0;
+        }
+        if (!shell_append_quoted(cmd, cmdSize, archivePath)) return 0;
+        if (strlen(cmd) + 13U >= cmdSize) return 0;
+        strcat(cmd, " 2>/dev/null");
+        return 1;
+    }
+    if (snprintf(cmd, cmdSize, "%s l -slt -- ", tool) >= (int)cmdSize) {
+        return 0;
+    }
+    if (!shell_append_quoted(cmd, cmdSize, archivePath)) return 0;
+    if (strlen(cmd) + 13U >= cmdSize) return 0;
+    strcat(cmd, " 2>/dev/null");
+    return 1;
+}
+
 static int external_entry_md5(const char *archivePath, const char *entryName,
                               char outHex[33]) {
     char cmd[ASSET_PATH_MAX * 4];
@@ -2378,18 +2437,10 @@ static int external_entry_md5(const char *archivePath, const char *entryName,
     int ok = 1;
     if (!archivePath || !entryName || !outHex) return 0;
     tool = external_archive_tool();
-    if (!tool || strcmp(tool, "bsdtar") == 0) {
+    if (!tool) {
         return 0;
     }
-    if (snprintf(cmd, sizeof(cmd), "%s x -so -- ", tool) >= (int)sizeof(cmd)) {
-        return 0;
-    }
-    if (!shell_append_quoted(cmd, sizeof(cmd), archivePath)) return 0;
-    if (strlen(cmd) + 2U >= sizeof(cmd)) return 0;
-    strcat(cmd, " ");
-    if (!shell_append_quoted(cmd, sizeof(cmd), entryName)) return 0;
-    if (strlen(cmd) + 13U >= sizeof(cmd)) return 0;
-    strcat(cmd, " 2>/dev/null");
+    if (!external_entry_command(cmd, sizeof(cmd), tool, archivePath, entryName)) return 0;
     pipe = popen(cmd, "r");
     if (!pipe) return 0;
     md5_init(&ctx);
@@ -2415,18 +2466,10 @@ static int external_extract_entry_to_path(const char *archivePath,
     int ok = 1;
     if (!archivePath || !entryName || !outFilePath) return 0;
     tool = external_archive_tool();
-    if (!tool || strcmp(tool, "bsdtar") == 0) {
+    if (!tool) {
         return 0;
     }
-    if (snprintf(cmd, sizeof(cmd), "%s x -so -- ", tool) >= (int)sizeof(cmd)) {
-        return 0;
-    }
-    if (!shell_append_quoted(cmd, sizeof(cmd), archivePath)) return 0;
-    if (strlen(cmd) + 2U >= sizeof(cmd)) return 0;
-    strcat(cmd, " ");
-    if (!shell_append_quoted(cmd, sizeof(cmd), entryName)) return 0;
-    if (strlen(cmd) + 13U >= sizeof(cmd)) return 0;
-    strcat(cmd, " 2>/dev/null");
+    if (!external_entry_command(cmd, sizeof(cmd), tool, archivePath, entryName)) return 0;
     pipe = popen(cmd, "r");
     if (!pipe) return 0;
     out = fopen(outFilePath, "wb");
@@ -2452,7 +2495,9 @@ static int external_archive_commit_entry(const char *archivePath,
     char hex[33];
     if (!archivePath || !expectedMd5 || !entryName || !bestName || !hasMatch) return 0;
     if (entryName[0] == '\0' || strcmp(entryName, archivePath) == 0 ||
-        entrySize < 16U || entrySize > ASSET_TAR_MAX_ENTRY_BYTES) {
+        entryName[strlen(entryName) - 1U] == '/' ||
+        (entrySize != UINT32_MAX &&
+         (entrySize < 16U || entrySize > ASSET_TAR_MAX_ENTRY_BYTES))) {
         return 0;
     }
     if (external_entry_md5(archivePath, entryName, hex) &&
@@ -2478,16 +2523,10 @@ static int scan_external_archive_by_md5(const char *archivePath,
     int hasMatch = 0;
     FILE *pipe;
     const char *tool = external_archive_tool();
-    if (!tool || strcmp(tool, "bsdtar") == 0 ||
-        !archivePath || !expectedMd5 || !outPath || outPathLen <= 0) {
+    if (!tool || !archivePath || !expectedMd5 || !outPath || outPathLen <= 0) {
         return 0;
     }
-    if (snprintf(cmd, sizeof(cmd), "%s l -slt -- ", tool) >= (int)sizeof(cmd)) {
-        return 0;
-    }
-    if (!shell_append_quoted(cmd, sizeof(cmd), archivePath)) return 0;
-    if (strlen(cmd) + 13U >= sizeof(cmd)) return 0;
-    strcat(cmd, " 2>/dev/null");
+    if (!external_list_command(cmd, sizeof(cmd), tool, archivePath)) return 0;
     pipe = popen(cmd, "r");
     if (!pipe) return 0;
     entryName[0] = '\0';
@@ -2495,6 +2534,14 @@ static int scan_external_archive_by_md5(const char *archivePath,
     while (fgets(line, sizeof(line), pipe)) {
         char *value;
         line[strcspn(line, "\r\n")] = '\0';
+        if (strcmp(tool, "bsdtar") == 0) {
+            if (line[0] != '\0') {
+                (void)external_archive_commit_entry(archivePath, expectedMd5,
+                                                    line, UINT32_MAX,
+                                                    bestName, &hasMatch);
+            }
+            continue;
+        }
         if (strncmp(line, "Path = ", 7) == 0) {
             if (hasEntry && !isFolder) {
                 (void)external_archive_commit_entry(archivePath, expectedMd5,
@@ -2541,16 +2588,11 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
     int i;
     FILE *pipe;
     const char *tool = external_archive_tool();
-    if (!tool || strcmp(tool, "bsdtar") == 0 || !archivePath || !md5List ||
+    if (!tool || !archivePath || !md5List ||
         md5Count <= 0 || md5Count > 64 || !outPaths || !matched) {
         return 0;
     }
-    if (snprintf(cmd, sizeof(cmd), "%s l -slt -- ", tool) >= (int)sizeof(cmd)) {
-        return 0;
-    }
-    if (!shell_append_quoted(cmd, sizeof(cmd), archivePath)) return 0;
-    if (strlen(cmd) + 13U >= sizeof(cmd)) return 0;
-    strcat(cmd, " 2>/dev/null");
+    if (!external_list_command(cmd, sizeof(cmd), tool, archivePath)) return 0;
     memset(bestNames, 0, sizeof(bestNames));
     memset(hasBest, 0, sizeof(hasBest));
     pipe = popen(cmd, "r");
@@ -2559,6 +2601,22 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
     while (fgets(line, sizeof(line), pipe)) {
         int commit = 0;
         line[strcspn(line, "\r\n")] = '\0';
+        if (strcmp(tool, "bsdtar") == 0) {
+            if (line[0] != '\0' && line[strlen(line) - 1U] != '/') {
+                char hex[33];
+                int matchIndex;
+                if (external_entry_md5(archivePath, line, hex)) {
+                    matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
+                    if (matchIndex >= 0 &&
+                        is_better_zip_entry(line,
+                                            hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
+                        strcpy(bestNames[matchIndex], line);
+                        hasBest[matchIndex] = 1;
+                    }
+                }
+            }
+            continue;
+        }
         if (strncmp(line, "Path = ", 7) == 0) {
             commit = hasEntry && !isFolder;
         }
