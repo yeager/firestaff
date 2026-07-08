@@ -429,6 +429,63 @@ static void subtest_settings_view(void)
                  "settings: view does not fall through to main game cards");
 }
 
+/* Subtest C2: RetroAchievements settings are first-class start-menu rows.
+ * They must expose status, hardcore mode, username, and a redacted token
+ * in the same settings view that pointer/keyboard users operate. */
+static void subtest_settings_retroachievements_rows(void)
+{
+    char buf[16384];
+    int n;
+    M12_StartupMenuState state;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_RA_USERNAME;
+    state.settings.retroAchievementsEnabled = 1;
+    state.settings.retroAchievementsHardcore = 1;
+    snprintf(state.settings.retroAchievementsUsername,
+             sizeof(state.settings.retroAchievementsUsername),
+             "%s", "yeager");
+    snprintf(state.settings.retroAchievementsToken,
+             sizeof(state.settings.retroAchievementsToken),
+             "%s", "abcdef123456");
+
+    fs_ax_begin_frame(480, 270, "launcher_settings_ra");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+
+    probe_record("INV_LAX_29_ra_enabled_row",
+                 strstr(buf, "\"id\":\"ROW_RETROACHIEVEMENTS\"") != NULL,
+                 "settings RA: RetroAchievements row is emitted");
+    probe_record("INV_LAX_29_ra_status_backend_pending",
+                 strstr(buf, "\"id\":\"ROW_RETROACHIEVEMENTS\"") != NULL
+                     && strstr(buf, "BACKEND PENDING") != NULL,
+                 "settings RA: enabled credentials report backend pending until rc_client exists");
+    probe_record("INV_LAX_29_ra_hardcore_row",
+                 strstr(buf, "\"id\":\"ROW_RA_HARDCORE\"") != NULL
+                     && strstr(buf, "\"value\":\"ON\"") != NULL,
+                 "settings RA: hardcore row is emitted with ON value");
+    probe_record("INV_LAX_29_ra_username_row",
+                 strstr(buf, "\"id\":\"ROW_RA_USERNAME\"") != NULL
+                     && strstr(buf, "selected | yeager") != NULL,
+                 "settings RA: username row is emitted and selectable");
+    probe_record("INV_LAX_29_ra_token_row",
+                 strstr(buf, "\"id\":\"ROW_RA_TOKEN\"") != NULL
+                     && strstr(buf, "****3456") != NULL,
+                 "settings RA: token row is emitted with redacted suffix");
+    probe_record("INV_LAX_29_ra_no_raw_token",
+                 strstr(buf, "abcdef123456") == NULL,
+                 "settings RA: manifest never leaks raw API token");
+}
+
 /* Subtest D: message view emits popup + popup_ok and surfaces the
  * popup's three message lines so a screen reader can announce them. */
 static void subtest_message_view_popup(void)
@@ -1319,6 +1376,9 @@ int main(void)
 
     printf("\n[C] settings view: tabs + rows\n");
     subtest_settings_view();
+
+    printf("\n[C2] settings view: RetroAchievements rows\n");
+    subtest_settings_retroachievements_rows();
 
     printf("\n[D] message view: popup + OK button\n");
     subtest_message_view_popup();

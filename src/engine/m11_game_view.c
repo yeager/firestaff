@@ -3041,6 +3041,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 runtime_exec_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
+    CSB_V1_StartupHostReceipt_PC34 host_receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
@@ -3070,16 +3071,18 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         command_receipt.command_id;
     if (command_receipt.pure_apply_result !=
         CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34) {
-        CSB_V1_StartupEntranceInputResult_PC34 input_result =
-            csb_v1_startup_input_result_for_entrance_apply_pc34(
-                command_receipt.pure_apply_result);
-        m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
-        if (command_receipt.outcome.status) {
-            m11_set_status(state,
-                           command_receipt.outcome.status_scope,
-                           command_receipt.outcome.status);
+        if (!csb_v1_startup_host_receipt_from_pure_entrance_pc34(
+                &command_receipt,
+                &host_receipt)) {
+            return M11_GAME_INPUT_IGNORED;
         }
-        switch (input_result) {
+        m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
+        if (host_receipt.status) {
+            m11_set_status(state,
+                           host_receipt.status_scope,
+                           host_receipt.status);
+        }
+        switch (host_receipt.input_result) {
             case CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34:
                 return M11_GAME_INPUT_REDRAW;
             case CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34:
@@ -3128,21 +3131,30 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         }
     }
     m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
-    if (runtime_receipt.clear_import_preview) {
+    if (!csb_v1_startup_host_receipt_from_runtime_apply_pc34(
+            &runtime_receipt,
+            &outcome,
+            &host_receipt)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (host_receipt.clear_import_preview) {
         state->csbState.startup_import_preview_active = 0;
     }
-    if (outcome.status) {
-        m11_set_status(state, outcome.status_scope, outcome.status);
+    if (host_receipt.status) {
+        m11_set_status(state,
+                       host_receipt.status_scope,
+                       host_receipt.status);
     }
-    if (runtime_receipt.bonus_requested_changed) {
+    if (host_receipt.bonus_requested_changed) {
         state->csbState.startup_entrance_bonus_requested =
-            runtime_receipt.bonus_requested ? 1 : 0;
+            host_receipt.bonus_requested ? 1 : 0;
     }
-    switch (runtime_receipt.result) {
-        case CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34:
+    switch (host_receipt.input_result) {
+        case CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34:
             return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_RUNTIME_APPLY_IGNORED_PC34:
-        case CSB_V1_STARTUP_RUNTIME_APPLY_NOT_HANDLED_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34:
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        case CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34:
         default:
             return M11_GAME_INPUT_IGNORED;
     }

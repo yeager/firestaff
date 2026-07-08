@@ -2591,6 +2591,67 @@ void csb_v1_startup_runtime_apply_receipt_init_pc34(
     receipt->result = CSB_V1_STARTUP_RUNTIME_APPLY_NOT_HANDLED_PC34;
 }
 
+void csb_v1_startup_host_receipt_init_pc34(
+    CSB_V1_StartupHostReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->input_result = CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34;
+}
+
+int csb_v1_startup_host_receipt_from_pure_entrance_pc34(
+    const CSB_V1_StartupEntranceCommandReceipt_PC34 *command_receipt,
+    CSB_V1_StartupHostReceipt_PC34 *out_receipt)
+{
+    if (!command_receipt || !out_receipt ||
+        command_receipt->pure_apply_result ==
+            CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34) {
+        return 0;
+    }
+    csb_v1_startup_host_receipt_init_pc34(out_receipt);
+    out_receipt->input_result =
+        csb_v1_startup_input_result_for_entrance_apply_pc34(
+            command_receipt->pure_apply_result);
+    out_receipt->status_scope = command_receipt->outcome.status_scope;
+    out_receipt->status = command_receipt->outcome.status;
+    return 1;
+}
+
+int csb_v1_startup_host_receipt_from_runtime_apply_pc34(
+    const CSB_V1_StartupRuntimeApplyReceipt_PC34 *runtime_receipt,
+    const CSB_V1_StartupEntranceInputOutcome_PC34 *outcome,
+    CSB_V1_StartupHostReceipt_PC34 *out_receipt)
+{
+    if (!runtime_receipt || !out_receipt ||
+        runtime_receipt->result ==
+            CSB_V1_STARTUP_RUNTIME_APPLY_NOT_HANDLED_PC34) {
+        return 0;
+    }
+    csb_v1_startup_host_receipt_init_pc34(out_receipt);
+    out_receipt->status_scope = outcome ? outcome->status_scope : NULL;
+    out_receipt->status = outcome ? outcome->status : NULL;
+    out_receipt->clear_import_preview =
+        runtime_receipt->clear_import_preview ? 1 : 0;
+    out_receipt->bonus_requested_changed =
+        runtime_receipt->bonus_requested_changed ? 1 : 0;
+    out_receipt->bonus_requested = runtime_receipt->bonus_requested ? 1 : 0;
+    switch (runtime_receipt->result) {
+        case CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34:
+            out_receipt->input_result =
+                CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34;
+            break;
+        case CSB_V1_STARTUP_RUNTIME_APPLY_IGNORED_PC34:
+        case CSB_V1_STARTUP_RUNTIME_APPLY_NOT_HANDLED_PC34:
+        default:
+            out_receipt->input_result =
+                CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34;
+            break;
+    }
+    return 1;
+}
+
 int csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     const CSB_V1_StartupRuntimePlan_PC34 *runtime_plan,

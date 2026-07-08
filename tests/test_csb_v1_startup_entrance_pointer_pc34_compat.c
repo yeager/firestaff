@@ -274,6 +274,7 @@ int main(void)
     CSB_V1_StartupEntranceCommandReceipt_PC34 command_receipt;
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
+    CSB_V1_StartupHostReceipt_PC34 host_receipt;
     CSB_V1_StartupSessionOptionsInput_PC34 session_input;
     CSB_V1_StartupSessionOptions_PC34 session_options;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
@@ -1718,6 +1719,13 @@ int main(void)
               command_receipt.outcome.status &&
               strcmp(command_receipt.outcome.status, "CSB ENTRANCE") == 0,
           "startup entrance command facts helper owns pure command receipt");
+    check(csb_v1_startup_host_receipt_from_pure_entrance_pc34(
+              &command_receipt,
+              &host_receipt) &&
+              host_receipt.input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              strcmp(host_receipt.status, "CSB ENTRANCE") == 0,
+          "startup pure entrance host receipt owns M11 input/status result");
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
@@ -1772,7 +1780,6 @@ int main(void)
                   CSB_V1_STARTUP_ENTRANCE_APPLY_IGNORED_PC34) ==
                   CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34,
           "startup entrance apply result maps to input result in CSB module");
-
     memset(&init_state_receipt, 0xff, sizeof(init_state_receipt));
     check(csb_v1_startup_init_state_receipt_pc34(
               0,
@@ -1891,6 +1898,17 @@ int main(void)
               runtime_receipt.bonus_requested == 0 &&
               command_state.opening_active,
           "startup runtime receipt owns normal dungeon redraw state");
+    check(csb_v1_startup_host_receipt_from_runtime_apply_pc34(
+              &runtime_receipt,
+              &outcome,
+              &host_receipt) &&
+              host_receipt.input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              host_receipt.clear_import_preview &&
+              host_receipt.bonus_requested_changed &&
+              host_receipt.bonus_requested == 0 &&
+              strcmp(host_receipt.status, "CSB DOORS") == 0,
+          "startup runtime host receipt owns M11 redraw/status state");
 
     memset(&command_state_receipt, 0, sizeof(command_state_receipt));
     check(csb_v1_startup_apply_runtime_plan_from_facts_with_receipts_pc34(
