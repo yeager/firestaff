@@ -495,6 +495,13 @@ static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
 
 static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
                                          DM2_V1_BootProfile *profile,
+                                         const char *save_path);
+static M11_GameInputResult m11_dm2_startup_apply_host_receipt(
+    M11_GameViewState *state,
+    const DM2_V1_StartupHostReceipt *host_receipt);
+
+static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
+                                         DM2_V1_BootProfile *profile,
                                          const char *save_path)
 {
     char save_root[M11_GAME_VIEW_PATH_CAPACITY];
@@ -514,14 +521,22 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
         dm2_v1_boot_set_save_root(profile, save_root);
     }
     if (execution.kind != DM2_V1_STARTUP_EXEC_SESSION_READY) {
-        m11_set_status(state,
-                       "BOOT",
-                       execution.status ? execution.status
-                                        : "DM2 RESUME FAILED");
+        DM2_V1_StartupHostReceipt receipt;
+        DM2_V1_StartupResumeStatus status =
+            execution.status &&
+                    strcmp(execution.status, "DM2 RESUME PATH INVALID") == 0
+                ? DM2_V1_STARTUP_RESUME_STATUS_PATH_INVALID
+                : DM2_V1_STARTUP_RESUME_STATUS_FAILED;
+        (void)dm2_v1_startup_resume_status_host_receipt(status, &receipt);
+        (void)m11_dm2_startup_apply_host_receipt(state, &receipt);
         return 0;
     }
     if (dm2_v1_runtime_apply_session(&execution.session) != 0) {
-        m11_set_status(state, "BOOT", "DM2 RESUME FAILED");
+        DM2_V1_StartupHostReceipt receipt;
+        (void)dm2_v1_startup_resume_status_host_receipt(
+            DM2_V1_STARTUP_RESUME_STATUS_FAILED,
+            &receipt);
+        (void)m11_dm2_startup_apply_host_receipt(state, &receipt);
         return 0;
     }
     m11_dm2_mirror_session_party(state, &execution.session);
@@ -10676,12 +10691,18 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->dm2World = profile->dm2_state;
         state->dm2State.level_loaded = 1;
         m11_sync_dm2_state_from_runtime(state);
-        m11_set_status(state, "BOOT",
-                       (spec->savePath && spec->savePath[0] != '\0')
-                           ? "DM2 RESUMED"
-                           : (state->dm2State.startup_menu_active
-                                  ? "DM2 START MENU"
-                                  : "DM2 READY"));
+        if (spec->savePath && spec->savePath[0] != '\0') {
+            DM2_V1_StartupHostReceipt resumeReceipt;
+            (void)dm2_v1_startup_resume_status_host_receipt(
+                DM2_V1_STARTUP_RESUME_STATUS_RESUMED,
+                &resumeReceipt);
+            (void)m11_dm2_startup_apply_host_receipt(state, &resumeReceipt);
+        } else {
+            m11_set_status(state, "BOOT",
+                           state->dm2State.startup_menu_active
+                               ? "DM2 START MENU"
+                               : "DM2 READY");
+        }
         m11_set_inspect_readout(state, "READY",
                                 "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE");
         m11_log_event(state, M11_COLOR_YELLOW,

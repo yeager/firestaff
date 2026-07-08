@@ -1406,6 +1406,33 @@ int dm2_v1_startup_host_receipt_from_apply_receipt(
     }
 }
 
+int dm2_v1_startup_resume_status_host_receipt(
+    DM2_V1_StartupResumeStatus status,
+    DM2_V1_StartupHostReceipt *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    dm2_v1_startup_host_receipt_clear(out_receipt);
+    out_receipt->status_scope = "BOOT";
+    switch (status) {
+    case DM2_V1_STARTUP_RESUME_STATUS_PATH_INVALID:
+        out_receipt->status = "DM2 RESUME PATH INVALID";
+        break;
+    case DM2_V1_STARTUP_RESUME_STATUS_FAILED:
+        out_receipt->status = "DM2 RESUME FAILED";
+        break;
+    case DM2_V1_STARTUP_RESUME_STATUS_RESUMED:
+        out_receipt->status = "DM2 RESUMED";
+        out_receipt->input_result = DM2_V1_STARTUP_HOST_INPUT_REDRAW;
+        break;
+    default:
+        out_receipt->status = "DM2 RESUME FAILED";
+        break;
+    }
+    return 1;
+}
+
 int dm2_v1_startup_execute_save_path(
     const char *save_path,
     char *out_save_root,

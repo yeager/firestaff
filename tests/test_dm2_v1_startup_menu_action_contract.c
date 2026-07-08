@@ -132,6 +132,24 @@ int main(void)
               strcmp(execution.status, "DM2 RESUME FAILED") == 0 &&
               strcmp(save_root, "/tmp/firestaff-dm2-startup-missing") == 0,
           "direct resume path execution reports missing parsed slot");
+    check(dm2_v1_startup_resume_status_host_receipt(
+              DM2_V1_STARTUP_RESUME_STATUS_PATH_INVALID,
+              &host_receipt) &&
+              strcmp(host_receipt.status_scope, "BOOT") == 0 &&
+              strcmp(host_receipt.status, "DM2 RESUME PATH INVALID") == 0,
+          "direct resume host receipt owns invalid-path status");
+    check(dm2_v1_startup_resume_status_host_receipt(
+              DM2_V1_STARTUP_RESUME_STATUS_FAILED,
+              &host_receipt) &&
+              strcmp(host_receipt.status_scope, "BOOT") == 0 &&
+              strcmp(host_receipt.status, "DM2 RESUME FAILED") == 0,
+          "direct resume host receipt owns failed status");
+    check(dm2_v1_startup_resume_status_host_receipt(
+              DM2_V1_STARTUP_RESUME_STATUS_RESUMED,
+              &host_receipt) &&
+              host_receipt.input_result == DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
+              strcmp(host_receipt.status, "DM2 RESUMED") == 0,
+          "direct resume host receipt owns resumed redraw status");
 
     dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-startup");
     check(dm2_v1_startup_menu_refresh(&menu, 1, (1u << 2)) &&
