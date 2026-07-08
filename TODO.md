@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
+
 - 🔧 2026-07-08 boot-data discovery follow-up: Continue replacing optional boot/intro filename assumptions with hash/signature scans beyond SWSH, DM1 TITLE, Nexus boot surfaces, the CLI data validator, legacy asset pipeline, DM2 V1 boot scan, and Theron Track 02 boot scan.
   - 2026-07-08 update: shared hash scanner now scans ZIP-compatible archives (`.zip`, `.cbz`, `.pk3`, `.pk4`, `.jar`, `.apk`, `.ipa`, `.xpi`, `.whl`, `.wsz`, `.kmz`, `.nupkg`), ISO/BIN/IMG/CDR/TOAST/RAW/MDF, CUE, TAR, TGZ, GZ, and stored LHA/LZH/LZS entries. ZIP/ISO/TAR/GZ/LHA are also detected by file signature when renamed. Remaining archive work is compressed LHA methods and true 7z/RAR/CHD support via a portable decoder.
   - 2026-07-08 update: shared hash scanner now also recognizes 7z/RAR/ARJ/ARC/CAB suffixes plus 7z/RAR signatures and can hash-scan/materialize their entries through local 7zz/7z when available. Remaining archive work is compressed LHA methods, CHD, and replacing the external-tool fallback with a portable decoder.

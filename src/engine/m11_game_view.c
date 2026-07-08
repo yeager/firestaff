@@ -17778,6 +17778,18 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
     }
     visibleWallCell = (state->world.party.direction + 2) & 3;
 
+    if (m11_viewport_cell_is_wall_like(&frontCell) &&
+        frontCell.championPortraitOrdinal >= 0 &&
+        frontCell.championPortraitOrdinal < state->mirrorCatalog.count) {
+        /* ReDMCSB DUNGEON.C F0172 lines 2591-2612 computes the visible
+         * wall side and stores C127 sensorData in G0289 only for
+         * M552_FRONT_WALL_ORNAMENT_ORDINAL.  m11_sample_viewport_cell()
+         * already mirrors that source-aspect pass, so use its result first;
+         * a second raw-chain lookup can miss the source-selected wall route
+         * and leave HoC mirrors invisible. */
+        return frontCell.championPortraitOrdinal;
+    }
+
     /* ReDMCSB DUNGEON.C:2573 / MOVESENS.C:1501-1503 / REVIVE.C F0280:
      * a C127 sensor on the front square carries the champion-portrait
      * ordinal in its sensorData.  DUNGEON.C:2608-2612 stores that
@@ -17811,8 +17823,7 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
                 thing = m11_raw_next_thing(state->world.things, thing);
                 continue;
             }
-            if (!m11_viewport_cell_is_wall_like(&frontCell) &&
-                state->world.party.mapIndex != 0) {
+            if (!m11_viewport_cell_is_wall_like(&frontCell)) {
                 thing = m11_raw_next_thing(state->world.things, thing);
                 continue;
             }
@@ -17827,22 +17838,6 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
                 return sensorData;
             }
             return -1;
-        } else if (thingType == THING_TYPE_TEXTSTRING &&
-                   state->world.party.mapIndex == 0 &&
-                   state->world.things->textStrings &&
-                   thingIndex >= 0 &&
-                   thingIndex < state->world.things->textStringCount) {
-            int ord = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                &state->mirrorCatalog, thingIndex);
-            if (ord >= 0) {
-                /* ReDMCSB DUNGEON.C lines 2570-2584 builds the HoC champion
-                 * TextString catalog next to the C127 portrait route.  Some
-                 * PC34 mirror carrier squares expose the TextString in the
-                 * front cell while the C127 sensor is on the paired wall
-                 * carrier; keep this source catalog fallback after the C127
-                 * sensor path so all HoC mirrors remain selectable. */
-                return ord;
-            }
         }
         thing = m11_raw_next_thing(state->world.things, thing);
     }
