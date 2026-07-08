@@ -14,6 +14,12 @@
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0494_pc34_compat.h"
 
+#define DM1_THING_TYPE_WEAPON 5
+#define DM1_THING_TYPE_ARMOUR 6
+#define DM1_THING_TYPE_JUNK 10
+#define DM1_JUNK_MAGICAL_BOX_BLUE 42
+#define DM1_JUNK_MAGICAL_BOX_GREEN 43
+
 /* ReDMCSB CHAMPION.C F0304 line ~874: base skill = (sub - 4) >> 2.
  * For base skills (0..3) the mapping is identity. */
 static int sub_skill_base_index(int skillIndex) {
@@ -152,6 +158,61 @@ int dm1_v1_action_adjust_f0407_tail_pc34(
     out->valid = 1;
     out->actionExperienceGain = xp;
     out->disabledTicks = ticks;
+    return 1;
+}
+
+int dm1_v1_action_f0405_charge_plan_pc34(
+    const DM1_ActionF0405ChargeInputPc34* in,
+    DM1_ActionF0405ChargePlanPc34* out) {
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->shouldDecrement = 0;
+    out->thingType = in->thingType;
+    out->thingIndex = in->thingIndex;
+    if (in->thingIndex < 0) return 0;
+    /* ReDMCSB: MENU.C F0405 lines 1143-1181 decrements ChargeCount only for
+     * action-hand weapon, armour, or junk records whose ChargeCount is nonzero. */
+    switch (in->thingType) {
+        case DM1_THING_TYPE_WEAPON:
+        case DM1_THING_TYPE_ARMOUR:
+        case DM1_THING_TYPE_JUNK:
+            out->valid = 1;
+            out->shouldDecrement = in->currentChargeCount > 0;
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int dm1_v1_action_freeze_life_plan_f0407_pc34(
+    const DM1_ActionFreezeLifeInputPc34* in,
+    DM1_ActionFreezeLifePlanPc34* out) {
+    int addTicks = 70;
+    int current;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->addTicks = 0;
+    out->newFreezeLifeTicks = 0;
+    out->consumesActionHandObject = 0;
+    out->decrementsActionHandCharges = 0;
+    current = in->currentFreezeLifeTicks;
+    if (current < 0) current = 0;
+    /* ReDMCSB: MENU.C F0407 lines 1567-1601.  Blue magical box adds 30 and is
+     * removed, green adds 125 and is removed, otherwise add 70 and run F0405.
+     * The resulting FreezeLifeTicks is capped at 200. */
+    if (in->actionHandJunkType == DM1_JUNK_MAGICAL_BOX_BLUE) {
+        addTicks = 30;
+        out->consumesActionHandObject = 1;
+    } else if (in->actionHandJunkType == DM1_JUNK_MAGICAL_BOX_GREEN) {
+        addTicks = 125;
+        out->consumesActionHandObject = 1;
+    } else {
+        out->decrementsActionHandCharges = 1;
+    }
+    out->valid = 1;
+    out->addTicks = addTicks;
+    out->newFreezeLifeTicks = current + addTicks;
+    if (out->newFreezeLifeTicks > 200) out->newFreezeLifeTicks = 200;
     return 1;
 }
 

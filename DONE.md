@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 F0405/FREEZE LIFE action-effect ownership: DM1 action-XP compat now owns M11-facing F0405 action-hand charge-decrement plans and F0407 FREEZE LIFE magical-box/freeze-tick plans. M11 now resolves the live action-hand object and applies only the planned mutation. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 F0407 common-tail adjustment ownership: DM1 action-XP compat now owns M11-facing F0407 tail adjustment for G0491 disabled ticks plus melee failure, SPELLSHIELD/FIRESHIELD failure, F0327 projectile failure, SHOOT no-ammunition, and failed CLIMB DOWN routes. Both M11 action dispatch paths now consume the same receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 F0407 action-tail ownership: DM1 action-XP compat now owns M11-facing F0407 action-tail decisions for G0492 melee contact including the BLOCK exception, G0494 stamina base/cost, party-shield action classification, and F0327 failure XP-halving. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

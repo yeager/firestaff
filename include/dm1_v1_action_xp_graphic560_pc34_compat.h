@@ -121,6 +121,32 @@ typedef struct {
     int disabledTicks;
 } DM1_ActionF0407TailAdjustPc34;
 
+typedef struct {
+    int thingType;
+    int thingIndex;
+    int currentChargeCount;
+} DM1_ActionF0405ChargeInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldDecrement;
+    int thingType;
+    int thingIndex;
+} DM1_ActionF0405ChargePlanPc34;
+
+typedef struct {
+    int currentFreezeLifeTicks;
+    int actionHandJunkType;
+} DM1_ActionFreezeLifeInputPc34;
+
+typedef struct {
+    int valid;
+    int addTicks;
+    int newFreezeLifeTicks;
+    int consumesActionHandObject;
+    int decrementsActionHandCharges;
+} DM1_ActionFreezeLifePlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -141,6 +167,12 @@ int dm1_v1_action_disabled_ticks_f0407_pc34(int actionIndex);
 int dm1_v1_action_adjust_f0407_tail_pc34(
     const DM1_ActionF0407TailAdjustInputPc34* in,
     DM1_ActionF0407TailAdjustPc34* out);
+int dm1_v1_action_f0405_charge_plan_pc34(
+    const DM1_ActionF0405ChargeInputPc34* in,
+    DM1_ActionF0405ChargePlanPc34* out);
+int dm1_v1_action_freeze_life_plan_f0407_pc34(
+    const DM1_ActionFreezeLifeInputPc34* in,
+    DM1_ActionFreezeLifePlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);
