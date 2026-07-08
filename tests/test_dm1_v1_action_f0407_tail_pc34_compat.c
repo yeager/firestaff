@@ -913,7 +913,7 @@ static void test_flip_and_direction_plans(void) {
              "throw post-spawn plan builds");
     CHECK_EQ(throwOut.performed, 1, "throw post-spawn performed");
     CHECK_EQ(throwOut.shouldClearActionHand, 1, "throw clears action hand");
-    CHECK_EQ(throwOut.actionEnableSlotOrdinal, 1,
+    CHECK_EQ(throwOut.actionEnableSlotOrdinal, CHAMPION_SLOT_ACTION_HAND,
              "throw requests action-hand enable slot");
 }
 

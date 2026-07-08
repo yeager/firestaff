@@ -176,6 +176,13 @@ int dm1_v1_center_door_panel_blits_for_cell_pc34(
         };
         outBlits[0] = plan.closedPanel;
         outBlits[0].srcY = kDoorOpenSrcY[depthIndex][doorState];
+        if (depthIndex == 0) {
+            /* ReDMCSB: DUNVIEW.C F0111 lines 4289-4334 applies the D1C
+             * thieves-eye mask to the temporary D1C door bitmap before the
+             * partly-open F0102/F0791 clip.  The resulting D1C vertical panel
+             * blit is one pixel above the closed-panel anchor. */
+            outBlits[0].dstY -= 1;
+        }
         outBlits[0].height = kDoorOpenHeight[depthIndex][doorState];
         return 1;
     }
