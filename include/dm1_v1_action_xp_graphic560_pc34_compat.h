@@ -186,6 +186,26 @@ typedef struct {
     int decrementsActionHandCharges;
 } DM1_ActionWindowPlanPc34;
 
+typedef struct {
+    int isSpellShield;
+    int useMana;
+    int currentMana;
+    int baseTicks;
+    int currentShieldDefense;
+} DM1_ActionShieldInputPc34;
+
+typedef struct {
+    int valid;
+    int successful;
+    int manaCost;
+    int remainingMana;
+    int statusEventType;
+    int eventDelayTicks;
+    int defenseDelta;
+    int newShieldDefense;
+    int decrementsActionHandChargesOnSuccess;
+} DM1_ActionShieldPlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -220,6 +240,9 @@ int dm1_v1_action_window_random_range_f0407_pc34(int earthSkillLevel);
 int dm1_v1_action_window_plan_f0407_pc34(
     const DM1_ActionWindowInputPc34* in,
     DM1_ActionWindowPlanPc34* out);
+int dm1_v1_action_shield_plan_f0403_pc34(
+    const DM1_ActionShieldInputPc34* in,
+    DM1_ActionShieldPlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);
