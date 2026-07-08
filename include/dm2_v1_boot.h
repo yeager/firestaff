@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
+typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
 
 /* ══════════════════════════════════════════════════════════════════════
  * DM2 V1 Boot Profile — Phase 1: Runtime Profile Split
@@ -126,6 +127,11 @@ typedef struct {
     void *dm2_state;
     char boot_asset_md5[33];
     char dungeon_path[512];
+    char title[64];
+    char source_id[16];
+    int initialize_v2_runtime;
+    int initialize_hud_runtime;
+    int initialize_touch_runtime;
 } DM2_V1_BootStartupRuntimeReceipt;
 
 /* ── Boot API ──────────────────────────────────────────────────────── */
@@ -190,6 +196,15 @@ int dm2_v1_boot_startup_host_facts_from_runtime_state(
     unsigned int slot_mask,
     int selected_row,
     DM2_V1_StartupHostFacts *out_facts);
+
+int dm2_v1_boot_startup_launch_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    DM2_V1_StartupLaunchReceipt *out_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

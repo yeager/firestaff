@@ -165,7 +165,7 @@ typedef struct DM2_V1_StartupHostFacts {
     const char *scan_save_root;
 } DM2_V1_StartupHostFacts;
 
-typedef struct {
+typedef struct DM2_V1_StartupLaunchReceipt {
     DM2_V1_StartupHostReceipt host_receipt;
     int menu_state_receipt_valid;
     DM2_V1_StartupMenuStateReceipt menu_state_receipt;

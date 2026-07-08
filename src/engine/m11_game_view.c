@@ -10642,11 +10642,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 return 0;
             }
         } else {
-            DM2_V1_StartupHostFacts facts;
             DM2_V1_StartupLaunchReceipt receipt;
-            m11_dm2_startup_host_facts(state, profile, &facts);
-            if (!dm2_v1_startup_launch_from_host_facts_with_receipt(
-                    &facts,
+            if (!dm2_v1_boot_startup_launch_from_runtime_state(
+                    profile,
+                    state->dm2State.startup_menu_active,
+                    state->dm2State.startup_save_root,
+                    state->dm2State.startup_resume_available,
+                    state->dm2State.startup_slot_mask,
+                    state->dm2State.startup_menu_selected_row,
                     &receipt)) {
                 (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
                 m11_log_event(state,
@@ -10668,9 +10671,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         profile = runtime_receipt.profile;
         /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
-        dm2_v2_runtime_init(2);
-        dm2_v2_hud_runtime_init();
-        dm2_v2_touch_runtime_init();
+        if (runtime_receipt.initialize_v2_runtime) {
+            dm2_v2_runtime_init(2);
+        }
+        if (runtime_receipt.initialize_hud_runtime) {
+            dm2_v2_hud_runtime_init();
+        }
+        if (runtime_receipt.initialize_touch_runtime) {
+            dm2_v2_touch_runtime_init();
+        }
         state->active = 1;
         state->startedFromLauncher = 1;
         state->sourceKind = M11_GAME_SOURCE_DM2_BOOT;
@@ -10682,9 +10691,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->presentationWidth = spec->presentationWidth;
         state->presentationHeight = spec->presentationHeight;
         snprintf(state->title, sizeof(state->title), "%s",
-                 spec->title ? spec->title : "DUNGEON MASTER II: SKULLKEEP");
+                 spec->title ? spec->title : runtime_receipt.title);
         snprintf(state->sourceId, sizeof(state->sourceId), "%s",
-                 spec->sourceId ? spec->sourceId : "dm2");
+                 spec->sourceId ? spec->sourceId : runtime_receipt.source_id);
         snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
                  runtime_receipt.dungeon_path);
         state->dm2BootProfile = runtime_receipt.profile;

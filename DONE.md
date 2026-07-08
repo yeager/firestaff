@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 boot startup launch/runtime receipts: DM2 boot now owns startup launch receipt construction from runtime state and carries M11-ready title/source/runtime-init flags in the detached runtime receipt. M11 direct-start no longer builds DM2 startup host facts locally and only executes the boot-owned runtime init plan. Verification: strict compiles for `dm2_v1_boot.c`, `m11_game_view.c`, and DM2 boot smoke object; direct DM2 boot profile smoke passed 59/59; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 Linux user manual page: Added `docs/linux/firestaff.1` with CLI options, game-data locations, scan behavior, save locations, environment variables, boot-probe options, examples, and Linux install integration through CMake `share/man/man1`. Verification: `mandoc -Tlint` passed and rendered text output.
 
 - ✅ 2026-07-08 archive scanner content-first detection: shared game-data scanner now lets strong ZIP/TAR/ISO/LHA/CHD signatures override misleading suffixes, so ZIP data inside `.bin` and ISO data inside `.zip` still scan/materialize correctly. Extra common archive/disc suffixes and signatures were added for external-tool fallback coverage. Verification: `test_asset_find_by_hash` passed with and without zlib; Phase A passed 24/24; `git diff --check` passed.

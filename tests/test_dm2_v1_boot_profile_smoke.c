@@ -299,6 +299,12 @@ static void test_startup_launch_detach_runtime_receipt(void)
                      "25247ede4dab4c8aa2c293241f8f909e") == 0 &&
               strcmp(receipt.dungeon_path,
                      "/tmp/firestaff_dm2_DUNGEON.DAT") == 0 &&
+              strcmp(receipt.title,
+                     "DUNGEON MASTER II: SKULLKEEP") == 0 &&
+              strcmp(receipt.source_id, "dm2") == 0 &&
+              receipt.initialize_v2_runtime == 1 &&
+              receipt.initialize_hud_runtime == 1 &&
+              receipt.initialize_touch_runtime == 1 &&
               launch.profile == NULL,
           "startup runtime detach transfers DM2 profile and M11 identity");
 
@@ -351,6 +357,7 @@ static void test_startup_host_facts_from_boot_profile(void)
 {
     DM2_V1_BootProfile profile;
     DM2_V1_StartupHostFacts facts;
+    DM2_V1_StartupLaunchReceipt launch_receipt;
 
     dm2_v1_boot_profile_init(&profile);
     dm2_v1_boot_set_save_root(&profile, "/tmp/firestaff-dm2-profile-saves");
@@ -385,6 +392,20 @@ static void test_startup_host_facts_from_boot_profile(void)
     CHECK(dm2_v1_boot_startup_host_facts_from_runtime_state(
               &profile, 1, "", 0, 0u, 0, NULL) == 0,
           "DM2 boot host facts reject NULL output");
+    CHECK(dm2_v1_boot_startup_launch_from_runtime_state(
+              &profile,
+              0,
+              "/tmp/firestaff-dm2-menu-saves",
+              0,
+              0u,
+              0,
+              &launch_receipt) == 1 &&
+              launch_receipt.menu_state_receipt_valid &&
+              launch_receipt.host_receipt.status != NULL,
+          "DM2 boot builds startup launch receipt from runtime state");
+    CHECK(dm2_v1_boot_startup_launch_from_runtime_state(
+              &profile, 0, NULL, 0, 0u, 0, NULL) == 0,
+          "DM2 boot startup launch wrapper rejects NULL receipt");
 }
 
 static void test_source_evidence(void)
