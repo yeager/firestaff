@@ -75,6 +75,28 @@ typedef struct {
     int keepSharpWeaponInGroup;
 } DM1_ProjectileCreatureImpactAftermathPc34;
 
+typedef struct {
+    int handled;
+    int championPresent;
+    int championIndex;
+    int impactMapIndex;
+    int impactMapX;
+    int impactMapY;
+    int impactCell;
+    int attackTypeCode;
+    int rawAttackValue;
+    int allowedWounds;
+} DM1_ProjectileChampionImpactPlanPc34;
+
+typedef struct {
+    int shouldApply;
+    int championIndex;
+    int poisonDamage;
+    int newPoisonDose;
+    int nextAttack;
+    int scheduleDelayTicks;
+} DM1_ProjectileChampionPoisonPlanPc34;
+
 int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight);
 int dm1_v1_throw_armour_weight_f0140_pc34(int armourType);
 int dm1_v1_throw_junk_base_weight_f0140_pc34(int junkType);
@@ -137,6 +159,22 @@ int dm1_v1_projectile_creature_impact_aftermath_pc34(
     int damageOutcome,
     int associatedWeaponType,
     DM1_ProjectileCreatureImpactAftermathPc34* outAftermath);
+int dm1_v1_projectile_champion_impact_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    int championPresent,
+    DM1_ProjectileChampionImpactPlanPc34* outPlan);
+int dm1_v1_projectile_champion_poison_plan_pc34(
+    const DM1_ProjectileChampionImpactPlanPc34* impactPlan,
+    const struct ProjectileInstance_Compat* projectile,
+    int appliedDamage,
+    int championCurrentHealth,
+    int championPoisonDose,
+    int rng2,
+    DM1_ProjectileChampionPoisonPlanPc34* outPlan);
+int dm1_v1_projectile_champion_party_death_check_pc34(
+    int combatKilledFlag,
+    int championCurrentHealth);
 
 #ifdef __cplusplus
 }
