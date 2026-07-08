@@ -71,6 +71,32 @@ int dm1_v1_startup_selected_entry_receipt_valid_pc34(const char* game_id,
     return intro_bypassed ? 0 : 1;
 }
 
+int dm1_v1_startup_launch_path_receipt_pc34(
+    const DM1_V1_StartupLaunchPathFacts_PC34* facts,
+    DM1_V1_StartupLaunchPathReceipt_PC34* out_receipt) {
+    DM1_V1_StartupLaunchPathReceipt_PC34 receipt;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    receipt.handled = 1;
+    receipt.intro_bypassed =
+        dm1_v1_startup_launch_path_bypasses_intro_pc34(
+            facts->launch_path);
+    receipt.selected_entry_receipt_valid =
+        dm1_v1_startup_selected_entry_receipt_valid_pc34(
+            facts->source_id,
+            receipt.intro_bypassed);
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_handoff_prelude_plan_pc34(
     const char* game_id,
     DM1_V1_StartupHandoffPreludePlan_PC34* out_plan) {
