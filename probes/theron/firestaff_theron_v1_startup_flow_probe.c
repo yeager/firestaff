@@ -590,6 +590,39 @@ int main(void) {
             check_int("input facts helper returns continue",
                       pointer_action.kind,
                       THERON_STARTUP_ACTION_CONTINUE_SAVE);
+            {
+                Theron_StartupInputReceipt input_receipt;
+                theron_v1_startup_action_init(&pointer_action);
+                check_int("input facts receipt helper builds action",
+                          theron_v1_startup_handle_input_from_facts_with_receipt(
+                              THERON_STARTUP_PHASE_STAGE_SELECT,
+                              THERON_DUNGEON_COUNT + 99,
+                              &profile,
+                              &world,
+                              7,
+                              1,
+                              1,
+                              3,
+                              0,
+                              -1,
+                              "READY",
+                              fact_names,
+                              fact_titles,
+                              THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1,
+                              0x45,
+                              order,
+                              THERON_STARTUP_MAX_COMPANIONS + 1,
+                              THERON_STARTUP_INPUT_ACCEPT,
+                              &pointer_action,
+                              &input_receipt),
+                          1);
+                check_int("input facts receipt returns continue",
+                          pointer_action.kind,
+                          THERON_STARTUP_ACTION_CONTINUE_SAVE);
+                check_int("input facts receipt requests redraw",
+                          input_receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
+            }
             handled = theron_v1_startup_handle_pointer_from_facts(
                 THERON_STARTUP_PHASE_STAGE_SELECT,
                 THERON_DUNGEON_COUNT + 99,
