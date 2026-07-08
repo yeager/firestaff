@@ -153,6 +153,13 @@ static void test_action_state_plans(void) {
     CHECK_EQ(disableOut.shouldRefillReadyHandNow, 0,
              "nonzero disable does not refill now");
 
+    disableIn.pendingActionEnableSlotOrdinal = 1;
+    CHECK_EQ(dm1_v1_action_disable_plan_f0407_pc34(
+                 &disableIn, &disableOut), 1,
+             "disable preserves pending slot ordinal");
+    CHECK_EQ(disableOut.actionEnableSlotOrdinal, 1,
+             "disable keeps action-hand slot ordinal");
+
     disableIn.disabledTicks = 0;
     disableIn.pendingShootReadyHandRefill = 1;
     CHECK_EQ(dm1_v1_action_disable_plan_f0407_pc34(
@@ -610,6 +617,8 @@ static void test_flip_and_direction_plans(void) {
     DM1_ActionFlipPlanPc34 flipOut;
     DM1_ActionDirectionInputPc34 dirIn;
     DM1_ActionDirectionPlanPc34 dirOut;
+    DM1_ActionThrowInputPc34 throwIn;
+    DM1_ActionThrowPlanPc34 throwOut;
 
     memset(&flipIn, 0, sizeof(flipIn));
     flipIn.randomDraw = 0;
@@ -663,6 +672,34 @@ static void test_flip_and_direction_plans(void) {
     CHECK_EQ(dm1_v1_action_direction_plan_f0407_pc34(&dirIn, &dirOut), 1,
              "throw non-side plan builds");
     CHECK_EQ(dirOut.throwSide, 0, "throw no side for left cell");
+
+    memset(&throwIn, 0, sizeof(throwIn));
+    throwIn.partyDirection = 0;
+    throwIn.championCell = 1;
+    throwIn.actionHandPresent = 0;
+    CHECK_EQ(dm1_v1_action_throw_plan_f0407_pc34(&throwIn, &throwOut), 1,
+             "throw no-object plan builds");
+    CHECK_EQ(throwOut.setChampionDirectionToParty, 1,
+             "throw no-object still syncs direction");
+    CHECK_EQ(throwOut.noActionHandObject, 1, "throw no-object flagged");
+    CHECK_EQ(throwOut.shouldSpawnProjectile, 0,
+             "throw no-object does not spawn");
+
+    throwIn.actionHandPresent = 1;
+    throwIn.projectileSpawned = 0;
+    CHECK_EQ(dm1_v1_action_throw_plan_f0407_pc34(&throwIn, &throwOut), 1,
+             "throw pre-spawn plan builds");
+    CHECK_EQ(throwOut.shouldSpawnProjectile, 1, "throw tries spawn");
+    CHECK_EQ(throwOut.performed, 0, "throw pre-spawn not performed yet");
+    CHECK_EQ(throwOut.throwSide, 1, "throw side carried");
+
+    throwIn.projectileSpawned = 1;
+    CHECK_EQ(dm1_v1_action_throw_plan_f0407_pc34(&throwIn, &throwOut), 1,
+             "throw post-spawn plan builds");
+    CHECK_EQ(throwOut.performed, 1, "throw post-spawn performed");
+    CHECK_EQ(throwOut.shouldClearActionHand, 1, "throw clears action hand");
+    CHECK_EQ(throwOut.actionEnableSlotOrdinal, 1,
+             "throw requests action-hand enable slot");
 }
 
 static void test_closed_door_melee_plan(void) {
