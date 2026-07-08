@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "dm1_v1_champion_needs_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 
@@ -245,6 +246,60 @@ int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
     out->weaponProfile.damageFactor = damageFactor;
     out->weaponProfile.skillIndex = in->actionSkillIndex;
     out->weaponProfile.attributes = in->weaponAttributes;
+    return 1;
+}
+
+int dm1_v1_melee_side_effect_plan_f0231_pc34(
+    const DM1_MeleeF0231SideEffectInputPc34* in,
+    DM1_MeleeF0231SideEffectPlanPc34* out) {
+    int16_t stamina;
+    int pendingDamage;
+    int randomValue;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+    if (in->championIndex < 0 || in->championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->currentStaminaAfter = in->currentStamina;
+    out->currentHealthAfter = in->currentHealth;
+    if (in->damageApplied > 0) {
+        int creatureExperience = (in->creatureProperties >> 8) & 0x000F;
+        out->shouldAwardXp = in->actionSkillIndex >= 0;
+        out->skillIndex = in->actionSkillIndex;
+        out->experienceGain =
+            ((in->damageApplied * creatureExperience) >> 4) + 3;
+        out->staminaRandomModulus = 4;
+        out->staminaBaseCost = 4;
+    } else {
+        out->skillIndex = in->actionSkillIndex;
+        out->staminaRandomModulus = 2;
+        out->staminaBaseCost = 2;
+    }
+
+    randomValue = in->staminaRandomValue;
+    if (out->staminaRandomModulus > 0) {
+        randomValue %= out->staminaRandomModulus;
+        if (randomValue < 0) randomValue += out->staminaRandomModulus;
+    } else {
+        randomValue = 0;
+    }
+    out->staminaCost = randomValue + out->staminaBaseCost;
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1534-1539 awards damage XP, then
+     * decrements stamina by M004_RANDOM(4)+4 on damage, or
+     * M005_RANDOM(2)+2 on the miss/no-damage tail. */
+    stamina = (int16_t)in->currentStamina;
+    pendingDamage = dm1_needs_decrement_stamina(
+        &stamina, (int16_t)in->maximumStamina, (int16_t)out->staminaCost);
+    out->currentStaminaAfter = (int)stamina;
+    out->pendingHealthDamage = pendingDamage;
+    if (pendingDamage > 0) {
+        int health = in->currentHealth - pendingDamage;
+        out->currentHealthAfter = health > 0 ? health : 0;
+    }
     return 1;
 }
 

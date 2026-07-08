@@ -2384,13 +2384,6 @@ static int orch_cmd_attack_doubled_map_difficulty_compat(
     return difficulty << 1;
 }
 
-static int orch_cmd_attack_creature_experience_compat(
-    const struct CombatantCreatureSnapshot_Compat* creature)
-{
-    if (!creature) return 0;
-    return (creature->properties >> 8) & 0x000F;
-}
-
 static int orch_unlink_thing_from_square_compat(
     struct GameWorld_Compat* world,
     int mapIndex,
@@ -2417,47 +2410,46 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
     int damageApplied)
 {
     struct ChampionState_Compat* champion;
-    int staminaCost;
-    int pendingDamage;
-    int16_t currentStamina;
+    DM1_MeleeF0231SideEffectInputPc34 in;
+    DM1_MeleeF0231SideEffectPlanPc34 plan;
 
     if (!world) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
     champion = &world->party.champions[championIndex];
     if (!champion->present || champion->hp.current <= 0) return;
 
-    if (damageApplied > 0) {
-        int creatureExperience = orch_cmd_attack_creature_experience_compat(creature);
-        int experience = ((damageApplied * creatureExperience) >> 4) + 3;
-        if (actionSkillIndex >= 0) {
-            /* ReDMCSB: PROJEXPL.C F0231 lines ~1512-1514 awards
-             * F0304 skill XP after damage, using M058_EXPERIENCE(Properties).
-             * F0304 owns map difficulty and recent-combat modifiers. */
-            (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
-                &world->lifecycle.champions[championIndex],
-                actionSkillIndex,
-                experience,
-                orch_cmd_attack_map_difficulty_compat(world),
-                world->gameTick,
-                world->lifecycle.lastCreatureAttackTime,
-                0,
-                0);
-        }
-        staminaCost = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4) + 4;
-    } else {
-        staminaCost = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2) + 2;
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.championIndex = championIndex;
+    in.actionSkillIndex = actionSkillIndex;
+    in.damageApplied = damageApplied;
+    in.creatureProperties = creature ? creature->properties : 0;
+    in.currentStamina = champion->stamina.current;
+    in.maximumStamina = champion->stamina.maximum;
+    in.currentHealth = champion->hp.current;
+    if (!dm1_v1_melee_side_effect_plan_f0231_pc34(&in, &plan) ||
+        !plan.valid) {
+        return;
     }
-
-    currentStamina = (int16_t)champion->stamina.current;
-    pendingDamage = dm1_needs_decrement_stamina(
-        &currentStamina,
-        champion->stamina.maximum,
-        (int16_t)staminaCost);
-    champion->stamina.current = (unsigned short)currentStamina;
-    if (pendingDamage > 0) {
-        int hp = (int)champion->hp.current - pendingDamage;
-        champion->hp.current = (int16_t)((hp > 0) ? hp : 0);
+    in.staminaRandomValue = (int)F0732_COMBAT_RngRandom_Compat(
+        &world->masterRng, plan.staminaRandomModulus);
+    if (!dm1_v1_melee_side_effect_plan_f0231_pc34(&in, &plan) ||
+        !plan.valid) {
+        return;
     }
+    if (plan.shouldAwardXp) {
+        (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+            &world->lifecycle.champions[championIndex],
+            plan.skillIndex,
+            plan.experienceGain,
+            orch_cmd_attack_map_difficulty_compat(world),
+            world->gameTick,
+            world->lifecycle.lastCreatureAttackTime,
+            0,
+            0);
+    }
+    champion->stamina.current = (unsigned short)plan.currentStaminaAfter;
+    champion->hp.current = (int16_t)plan.currentHealthAfter;
 }
 
 static void orch_cmd_attack_target_square_compat(

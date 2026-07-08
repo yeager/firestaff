@@ -1266,6 +1266,57 @@ static void test_melee_weapon_profile_plan(void) {
              "fallback damage factor");
 }
 
+static void test_melee_f0231_side_effect_plan(void) {
+    DM1_MeleeF0231SideEffectInputPc34 in;
+    DM1_MeleeF0231SideEffectPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.championIndex = 1;
+    in.actionSkillIndex = 6;
+    in.damageApplied = 32;
+    in.creatureProperties = 0x0500;
+    in.currentStamina = 100;
+    in.maximumStamina = 200;
+    in.currentHealth = 50;
+    in.staminaRandomValue = 3;
+    CHECK_EQ(dm1_v1_melee_side_effect_plan_f0231_pc34(&in, &out), 1,
+             "F0231 damage side-effect plan builds");
+    CHECK_EQ(out.valid, 1, "F0231 damage side-effect valid");
+    CHECK_EQ(out.shouldAwardXp, 1, "F0231 damage awards XP");
+    CHECK_EQ(out.skillIndex, 6, "F0231 XP skill index");
+    CHECK_EQ(out.experienceGain, 13, "F0231 XP formula");
+    CHECK_EQ(out.staminaRandomModulus, 4, "F0231 damage random modulus");
+    CHECK_EQ(out.staminaBaseCost, 4, "F0231 damage stamina base");
+    CHECK_EQ(out.staminaCost, 7, "F0231 damage stamina cost");
+    CHECK_EQ(out.currentStaminaAfter, 93, "F0231 damage stamina after");
+    CHECK_EQ(out.currentHealthAfter, 50, "F0231 damage health unchanged");
+
+    in.damageApplied = 0;
+    in.actionSkillIndex = -1;
+    in.currentStamina = 5;
+    in.maximumStamina = 200;
+    in.currentHealth = 9;
+    in.staminaRandomValue = 5;
+    CHECK_EQ(dm1_v1_melee_side_effect_plan_f0231_pc34(&in, &out), 1,
+             "F0231 miss side-effect plan builds");
+    CHECK_EQ(out.shouldAwardXp, 0, "F0231 miss no XP");
+    CHECK_EQ(out.staminaRandomModulus, 2, "F0231 miss random modulus");
+    CHECK_EQ(out.staminaBaseCost, 2, "F0231 miss stamina base");
+    CHECK_EQ(out.staminaCost, 3, "F0231 miss stamina random clamps");
+    CHECK_EQ(out.currentStaminaAfter, 2, "F0231 miss stamina after");
+    CHECK_EQ(out.currentHealthAfter, 9, "F0231 miss health unchanged");
+
+    in.currentStamina = 1;
+    in.currentHealth = 2;
+    in.staminaRandomValue = 1;
+    CHECK_EQ(dm1_v1_melee_side_effect_plan_f0231_pc34(&in, &out), 1,
+             "F0231 miss underflow plan builds");
+    CHECK_EQ(out.staminaCost, 3, "F0231 underflow stamina cost");
+    CHECK_EQ(out.currentStaminaAfter, 0, "F0231 underflow stamina clamps");
+    CHECK_EQ(out.pendingHealthDamage, 1, "F0231 underflow health damage");
+    CHECK_EQ(out.currentHealthAfter, 1, "F0231 underflow health after");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -1298,6 +1349,7 @@ int main(void) {
     test_melee_damage_emission_plan();
     test_melee_pre_f0231_gates();
     test_melee_weapon_profile_plan();
+    test_melee_f0231_side_effect_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",
