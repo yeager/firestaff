@@ -199,6 +199,41 @@ static int write_tar_fixture(const char* path) {
     return fclose(fp) == 0;
 }
 
+static int write_lha_fixture(const char* path) {
+    static const char payload[] = "Firestaff hash identity fixture v1\n";
+    static const char name[] = "dm1/GRAPHICS.DAT";
+    FILE* fp = fopen(path, "wb");
+    unsigned char header[256] = {0};
+    unsigned int payloadSize = (unsigned int)(sizeof(payload) - 1U);
+    unsigned int nameLen = (unsigned int)(sizeof(name) - 1U);
+    unsigned int headerSize = 22U + nameLen + 2U;
+    unsigned int checksum = 0U;
+    unsigned int i;
+    if (!fp || headerSize > 255U) {
+        if (fp) fclose(fp);
+        return 0;
+    }
+    header[0] = (unsigned char)headerSize;
+    memcpy(header + 2, "-lh0-", 5U);
+    put32(header + 7, payloadSize);
+    put32(header + 11, payloadSize);
+    header[19] = 0x20U;
+    header[20] = 0U;
+    header[21] = (unsigned char)nameLen;
+    memcpy(header + 22, name, nameLen);
+    for (i = 2U; i <= headerSize; ++i) {
+        checksum += header[i];
+    }
+    header[1] = (unsigned char)(checksum & 0xffU);
+    if (fwrite(header, 1U, 1U + headerSize, fp) != 1U + headerSize ||
+        fwrite(payload, 1U, payloadSize, fp) != payloadSize ||
+        fputc(0, fp) == EOF) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 #ifdef FIRESTAFF_HAS_ZLIB
 static unsigned int fixture_crc32(const unsigned char* data, size_t size) {
     unsigned int crc = 0xffffffffU;
@@ -387,6 +422,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/archive.zip");
     remove("asset_find_by_hash_test_tmp/archive.tar");
+    remove("asset_find_by_hash_test_tmp/archive.lzh");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
     remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
     remove("asset_find_by_hash_test_tmp/disc.iso");
@@ -579,6 +615,40 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/archive.tar");
+
+    if (!write_lha_fixture("asset_find_by_hash_test_tmp/archive.lzh")) {
+        cleanup_fixture();
+        fprintf(stderr, "LZH fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_entry(outPath, "archive.lzh", "dm1/GRAPHICS.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "LZH entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                   outPaths, matched, 2, 2) != 1 ||
+        matched[0] ||
+        !matched[1] ||
+        !path_has_virtual_entry(outPaths[1], "archive.lzh", "dm1/GRAPHICS.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "LZH all-list lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "virtual LZH extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/archive.lzh");
 
 #ifdef FIRESTAFF_HAS_ZLIB
     if (!write_tgz_fixture("asset_find_by_hash_test_tmp/archive.tgz")) {
