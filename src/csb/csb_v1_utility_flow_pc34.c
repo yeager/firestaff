@@ -455,6 +455,37 @@ void csb_v1_util_flow_apply_receipt_init(
     receipt->result = CSB_V1_UTIL_APPLY_IGNORED;
 }
 
+void csb_v1_util_flow_state_receipt_init(
+    CSB_V1_UtilStateReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+}
+
+int csb_v1_util_flow_state_receipt_from_apply_receipt(
+    const CSB_V1_UtilApplyReceipt *apply_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt)
+{
+    if (!out_state_receipt) {
+        return 0;
+    }
+    csb_v1_util_flow_state_receipt_init(out_state_receipt);
+    if (!apply_receipt) {
+        return 0;
+    }
+    out_state_receipt->selected_action_index_changed =
+        apply_receipt->selected_action_index_changed ? 1 : 0;
+    out_state_receipt->selected_action_index =
+        apply_receipt->selected_action_index;
+    out_state_receipt->preview_active_changed =
+        apply_receipt->preview_active_changed ? 1 : 0;
+    out_state_receipt->preview_active =
+        apply_receipt->preview_active ? 1 : 0;
+    return 1;
+}
+
 int csb_v1_util_flow_plan_for_action(CSB_V1_UtilFlowAction action,
                                      CSB_V1_UtilActionPlan *out_plan)
 {
@@ -724,6 +755,42 @@ int csb_v1_util_flow_apply_firestaff_input_from_runtime_profile_facts(
         out_receipt);
 }
 
+int csb_v1_util_flow_apply_firestaff_input_with_state_from_runtime_profile_facts(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *runtime_profile,
+    int menu_input,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt)
+{
+    CSB_V1_UtilApplyReceipt local_receipt;
+    CSB_V1_UtilApplyReceipt *receipt =
+        out_receipt ? out_receipt : &local_receipt;
+
+    if (!csb_v1_util_flow_apply_firestaff_input_from_runtime_profile_facts(
+            selected_action_index,
+            imported_champion_count,
+            runtime_profile,
+            menu_input,
+            import_available,
+            credits_active,
+            opening_active,
+            preview_active,
+            receipt)) {
+        if (out_state_receipt) {
+            csb_v1_util_flow_state_receipt_init(out_state_receipt);
+        }
+        return 0;
+    }
+    return csb_v1_util_flow_state_receipt_from_apply_receipt(
+        receipt,
+        out_state_receipt);
+}
+
 int csb_v1_util_flow_handle_point_if_active(
     CSB_V1_UtilFlowContext *ctx,
     int x,
@@ -813,6 +880,44 @@ int csb_v1_util_flow_apply_point_from_runtime_profile_facts(
                                                   opening_active,
                                                   preview_active,
                                                   out_receipt);
+}
+
+int csb_v1_util_flow_apply_point_with_state_from_runtime_profile_facts(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *runtime_profile,
+    int x,
+    int y,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt)
+{
+    CSB_V1_UtilApplyReceipt local_receipt;
+    CSB_V1_UtilApplyReceipt *receipt =
+        out_receipt ? out_receipt : &local_receipt;
+
+    if (!csb_v1_util_flow_apply_point_from_runtime_profile_facts(
+            selected_action_index,
+            imported_champion_count,
+            runtime_profile,
+            x,
+            y,
+            import_available,
+            credits_active,
+            opening_active,
+            preview_active,
+            receipt)) {
+        if (out_state_receipt) {
+            csb_v1_util_flow_state_receipt_init(out_state_receipt);
+        }
+        return 0;
+    }
+    return csb_v1_util_flow_state_receipt_from_apply_receipt(
+        receipt,
+        out_state_receipt);
 }
 
 int csb_v1_util_flow_overlay_accepts_input(int import_available,
