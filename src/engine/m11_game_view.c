@@ -11919,7 +11919,7 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
          * Firestaff's CSB runtime snapshot is the current bounded owner of
          * that state; asset paths and loaded DUNGEON.DAT stay in the boot
          * profile and are reconstructed before load. */
-        if (csb_v1_runtime_save_game_to_path_from_boot_profile_pc34(
+        if (csb_v1_boot_runtime_save_game_to_path_pc34(
                 state->csbBootProfile,
                 path,
                 &game_time) != CSB_V1_SAVE_OK) {
@@ -12160,7 +12160,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
          * file after the dungeon/profile is available.  M11 already owns
          * the verified CSB boot profile here, so direct F9 can reload the
          * runtime snapshot in place without touching the DM1 world loader. */
-        if (csb_v1_runtime_load_game_from_path_from_boot_profile_pc34(
+        if (csb_v1_boot_runtime_load_game_from_path_pc34(
                 state->csbBootProfile,
                 path,
                 &game_time) != CSB_V1_LOAD_OK) {
@@ -12362,7 +12362,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                        ? M11_GAME_INPUT_REDRAW
                        : idle_result;
         }
-        if (csb_v1_runtime_tick_from_boot_profile_pc34(
+        if (csb_v1_boot_runtime_tick_pc34(
                 state->csbBootProfile,
                 NULL) <= 0) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
