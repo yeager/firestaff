@@ -34,6 +34,7 @@
  */
 
 #include "theron_v1_boot.h"
+#include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -104,6 +105,16 @@ static const char *const g_theron_dungeon_fallback[] = {
     NULL
 };
 
+/* Recognised Track 02 MD5s for Theron's Quest.  Mirrors the four hashes
+ * in asset_status_m12.c::g_theronVersions. */
+static const char *const g_theron_known_md5s[] = {
+    "b7afb338ad31be1025b53f9aff12d73a", /* JP Track 02 BIN */
+    "f23601102138f87c33025877767ebf76", /* US Track 02 BIN */
+    "397039af02d50d15c70b74088eb8a1cb", /* JP Rev 1 ISO */
+    "3d8b78571dcd0e6eb8eb4b01eeb7fbba", /* US ISO */
+    NULL
+};
+
 /* ── Probe: file exists and non-empty ─────────────────────────────── */
 
 /* Process-local counter of stat() / file-probe calls performed by the
@@ -167,6 +178,36 @@ static const char *const g_platform_labels[THERON_PLATFORM_COUNT] = {
     [THERON_PLATFORM_PCE_US] = "TurboGrafx-16 HuCard (US)",
 };
 
+static void theron_v1_boot_apply_known_md5_identity(
+    Theron_V1_BootProfile *profile,
+    const char *md5)
+{
+    if (!profile || !md5) {
+        return;
+    }
+    if (strcmp(md5, "b7afb338ad31be1025b53f9aff12d73a") == 0 ||
+        strcmp(md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
+        profile->platform = THERON_PLATFORM_PCE_JP;
+        strncpy(profile->platform_label,
+                g_platform_labels[THERON_PLATFORM_PCE_JP],
+                sizeof(profile->platform_label) - 1);
+        strncpy(profile->version_id, "pce-jp", sizeof(profile->version_id) - 1);
+    } else {
+        profile->platform = THERON_PLATFORM_PCE_US;
+        strncpy(profile->platform_label,
+                g_platform_labels[THERON_PLATFORM_PCE_US],
+                sizeof(profile->platform_label) - 1);
+        strncpy(profile->version_id, "pce-en", sizeof(profile->version_id) - 1);
+    }
+    if (strcmp(md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
+        strncpy(profile->version_id, "pce-jp-rev1-iso",
+                sizeof(profile->version_id) - 1);
+    } else if (strcmp(md5, "3d8b78571dcd0e6eb8eb4b01eeb7fbba") == 0) {
+        strncpy(profile->version_id, "pce-en-iso",
+                sizeof(profile->version_id) - 1);
+    }
+}
+
 /* ── Init defaults ────────────────────────────────────────────────── */
 
 void theron_v1_boot_profile_init(Theron_V1_BootProfile *profile) {
@@ -212,9 +253,37 @@ void theron_v1_boot_profile_init(Theron_V1_BootProfile *profile) {
 int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
                                 const char *data_dir) {
     const char *base = data_dir && data_dir[0] ? data_dir : ".";
+    int match_index = -1;
 
-    /* Resolve Track 02 BIN (primary CD-ROM data track) */
-    if (resolve_asset(base, "theron", g_theron_track02_candidates,
+    if (!profile) {
+        return -1;
+    }
+
+    /* Primary path: find Track 02 by MD5 anywhere under the data root.
+     * THQUEST.ASM T400 cares about the verified data track bytes, not
+     * whether the host file is named track02.bin. */
+    if (asset_find_by_md5_list(base,
+                               g_theron_known_md5s,
+                               profile->graphics_path,
+                               (int)sizeof(profile->graphics_path),
+                               &match_index,
+                               8)) {
+        strncpy(profile->dungeon_path, profile->graphics_path,
+                sizeof(profile->dungeon_path) - 1);
+        profile->dungeon_path[sizeof(profile->dungeon_path) - 1] = '\0';
+        profile->graphics_size = file_size_of(profile->graphics_path);
+        profile->dungeon_size = profile->graphics_size;
+        strncpy(profile->graphics_md5,
+                g_theron_known_md5s[match_index],
+                sizeof(profile->graphics_md5) - 1);
+        strncpy(profile->dungeon_md5,
+                g_theron_known_md5s[match_index],
+                sizeof(profile->dungeon_md5) - 1);
+        profile->assets_verified = 1;
+        theron_v1_boot_apply_known_md5_identity(
+            profile,
+            g_theron_known_md5s[match_index]);
+    } else if (resolve_asset(base, "theron", g_theron_track02_candidates,
                        profile->graphics_path,
                        &profile->graphics_size)) {
         /* Track 02 found — same file for graphics + dungeon */
@@ -280,6 +349,7 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
                 profile->graphics_md5[32] = '\0';
                 strncpy(profile->dungeon_md5, md5hex, 32);
                 profile->dungeon_md5[32] = '\0';
+                theron_v1_boot_apply_known_md5_identity(profile, md5hex);
             } else {
                 profile->assets_verified = 0;
             }
@@ -290,23 +360,26 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
         profile->assets_verified = 0;
     }
 
-    /* Platform detection from filename heuristics */
-    if (strstr(profile->graphics_path, "Japan") ||
-        strstr(profile->graphics_path, "TQJP") ||
-        strstr(profile->graphics_path, "pce-jp")) {
-        profile->platform = THERON_PLATFORM_PCE_JP;
-        strncpy(profile->platform_label,
-                g_platform_labels[THERON_PLATFORM_PCE_JP],
-                sizeof(profile->platform_label) - 1);
-        strncpy(profile->version_id, "pce-jp", sizeof(profile->version_id) - 1);
-    } else if (strstr(profile->graphics_path, "US") ||
-               strstr(profile->graphics_path, "TQUS") ||
-               strstr(profile->graphics_path, "pce-en")) {
-        profile->platform = THERON_PLATFORM_PCE_US;
-        strncpy(profile->platform_label,
-                g_platform_labels[THERON_PLATFORM_PCE_US],
-                sizeof(profile->platform_label) - 1);
-        strncpy(profile->version_id, "pce-en", sizeof(profile->version_id) - 1);
+    /* Filename heuristics are only diagnostic for unverified legacy
+     * candidates. Hash-verified Track 02 identity above is authoritative. */
+    if (!profile->assets_verified) {
+        if (strstr(profile->graphics_path, "Japan") ||
+            strstr(profile->graphics_path, "TQJP") ||
+            strstr(profile->graphics_path, "pce-jp")) {
+            profile->platform = THERON_PLATFORM_PCE_JP;
+            strncpy(profile->platform_label,
+                    g_platform_labels[THERON_PLATFORM_PCE_JP],
+                    sizeof(profile->platform_label) - 1);
+            strncpy(profile->version_id, "pce-jp", sizeof(profile->version_id) - 1);
+        } else if (strstr(profile->graphics_path, "US") ||
+                   strstr(profile->graphics_path, "TQUS") ||
+                   strstr(profile->graphics_path, "pce-en")) {
+            profile->platform = THERON_PLATFORM_PCE_US;
+            strncpy(profile->platform_label,
+                    g_platform_labels[THERON_PLATFORM_PCE_US],
+                    sizeof(profile->platform_label) - 1);
+            strncpy(profile->version_id, "pce-en", sizeof(profile->version_id) - 1);
+        }
     }
 
     /* Require both graphics and dungeon before returning success */
@@ -330,21 +403,6 @@ int theron_v1_boot_probe_available(const char *data_dir) {
 }
 
 /* ── Direct launch (verified path) ────────────────────────────────── */
-
-/* Recognised Track 02 MD5s for Theron's Quest.  Mirrors the four hashes
- * in asset_status_m12.c::g_theronVersions.  The list is small (4
- * entries) and tightens the direct-launch contract: only known-good
- * Track 02 binaries are accepted, even when the caller says "I already
- * hashed this".  This keeps the boot profile consistent with the M12
- * asset catalog and avoids silently launching against an unrelated
- * HuCard / ISO. */
-static const char *const g_theron_known_md5s[] = {
-    "b7afb338ad31be1025b53f9aff12d73a", /* JP Track 02 BIN */
-    "f23601102138f87c33025877767ebf76", /* US Track 02 BIN */
-    "397039af02d50d15c70b74088eb8a1cb", /* JP Rev 1 ISO */
-    "3d8b78571dcd0e6eb8eb4b01eeb7fbba", /* US ISO */
-    NULL
-};
 
 static int theron_md5_is_known(const char *md5) {
     size_t i;
@@ -510,36 +568,7 @@ int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
     snprintf(profile->asset_root, sizeof(profile->asset_root), "%s",
              base);
 
-    /* Platform / version id from filename heuristic (same rules as
-     * theron_v1_boot_scan_assets).  Keeping the rules centralised in
-     * a static helper lets the scan and direct-launch paths agree. */
-    if (strstr(profile->graphics_path, "Japan") ||
-        strstr(profile->graphics_path, "TQJP") ||
-        strstr(profile->graphics_path, "pce-jp") ||
-        strstr(profile->graphics_path, "jp") ||
-        strcmp(expected_md5, "b7afb338ad31be1025b53f9aff12d73a") == 0 ||
-        strcmp(expected_md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
-        profile->platform = THERON_PLATFORM_PCE_JP;
-        strncpy(profile->platform_label,
-                g_platform_labels[THERON_PLATFORM_PCE_JP],
-                sizeof(profile->platform_label) - 1);
-        strncpy(profile->version_id, "pce-jp", sizeof(profile->version_id) - 1);
-    } else {
-        profile->platform = THERON_PLATFORM_PCE_US;
-        strncpy(profile->platform_label,
-                g_platform_labels[THERON_PLATFORM_PCE_US],
-                sizeof(profile->platform_label) - 1);
-        strncpy(profile->version_id, "pce-en", sizeof(profile->version_id) - 1);
-    }
-    /* Specific ISO version ids take precedence over the JP/US BIN ids
-     * so the menu / version selector surfaces the right label. */
-    if (strcmp(expected_md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
-        strncpy(profile->version_id, "pce-jp-rev1-iso",
-                sizeof(profile->version_id) - 1);
-    } else if (strcmp(expected_md5, "3d8b78571dcd0e6eb8eb4b01eeb7fbba") == 0) {
-        strncpy(profile->version_id, "pce-en-iso",
-                sizeof(profile->version_id) - 1);
-    }
+    theron_v1_boot_apply_known_md5_identity(profile, expected_md5);
 
     return 0;
 }

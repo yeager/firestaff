@@ -54,6 +54,30 @@ static int write_file(const char *path, const char *text) {
     return 1;
 }
 
+static int copy_file_bytes(const char *src, const char *dst) {
+    FILE *in;
+    FILE *out;
+    unsigned char buf[8192];
+    size_t n;
+    in = fopen(src, "rb");
+    if (!in) return 0;
+    out = fopen(dst, "wb");
+    if (!out) {
+        fclose(in);
+        return 0;
+    }
+    while ((n = fread(buf, 1, sizeof(buf), in)) > 0U) {
+        if (fwrite(buf, 1, n, out) != n) {
+            fclose(in);
+            fclose(out);
+            return 0;
+        }
+    }
+    fclose(in);
+    fclose(out);
+    return 1;
+}
+
 static int write_synthetic_iso_pvd(const char *path) {
     static const unsigned char pvd[6] = {0x01, 'C', 'D', '0', '0', '1'};
     FILE *fp = fopen(path, "wb");
@@ -86,6 +110,50 @@ static int make_temp_dir(char out[512]) {
     snprintf(out, 512, "/tmp/firestaff_theron_avail_XXXXXX");
     return mkdtemp(out) != NULL;
 #endif
+}
+
+static void check_real_theron_boot_scan_accepts_renamed_track02(
+    const char *source_path,
+    const char *source_md5)
+{
+    char temp_dir[512];
+    char nested_dir[512];
+    char renamed_path[512];
+    Theron_V1_BootProfile profile;
+
+    if (!source_path || !source_path[0] || !source_md5 || !source_md5[0]) {
+        return;
+    }
+    if (strstr(source_path, "::") != NULL) {
+        return;
+    }
+
+    expect_true(make_temp_dir(temp_dir), "temporary renamed Theron data dir created");
+    snprintf(nested_dir, sizeof(nested_dir), "%s%s%s", temp_dir, PATH_SEP, "renamed");
+    expect_true(make_dir_checked(nested_dir), "renamed Theron nested dir created");
+    snprintf(renamed_path,
+             sizeof(renamed_path),
+             "%s%s%s",
+             nested_dir,
+             PATH_SEP,
+             "track02.payload");
+    expect_true(copy_file_bytes(source_path, renamed_path),
+                "real Track 02 copied to arbitrary filename");
+
+    theron_v1_boot_profile_init(&profile);
+    expect_true(theron_v1_boot_scan_assets(&profile, temp_dir) == 0,
+                "Theron boot scan finds renamed Track 02 by MD5");
+    expect_true(profile.assets_verified == 1,
+                "renamed Track 02 scan is verified");
+    expect_str_eq(profile.graphics_path,
+                  renamed_path,
+                  "renamed Track 02 path is selected");
+    expect_str_eq(profile.dungeon_path,
+                  renamed_path,
+                  "renamed Track 02 maps dungeon to same file");
+    expect_str_eq(profile.graphics_md5,
+                  source_md5,
+                  "renamed Track 02 keeps source MD5 identity");
 }
 
 static void check_real_theron_launch_marker_presence(const char *real_data) {
@@ -170,6 +238,9 @@ static void check_real_theron_launch_marker_presence(const char *real_data) {
                               "pce-en-iso",
                               "real US ISO selects ISO version id");
             }
+            check_real_theron_boot_scan_accepts_renamed_track02(
+                matched_version->matchedPath,
+                matched_version->matchedMd5);
         }
     }
 }
