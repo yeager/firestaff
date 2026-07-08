@@ -338,6 +338,15 @@ typedef struct {
 } DM1_MeleeF0231ReactionPlanPc34;
 
 typedef struct {
+    int valid;
+    int shouldApplyDamage;
+    int originalGroupCount;
+    int killedCell;
+    int outcome;
+    int damageApplied;
+} DM1_MeleeF0190GroupDamageApplyPlanPc34;
+
+typedef struct {
     int shouldCreate;
     int smokeAttack;
     int smokeCell;
@@ -521,6 +530,11 @@ int dm1_v1_melee_resolve_damage_f0231_pc34(
     const struct CombatantCreatureSnapshot_Compat* defender,
     struct RngState_Compat* rng,
     struct CombatResult_Compat* out);
+int dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
+    const struct CombatResult_Compat* result,
+    struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    DM1_MeleeF0190GroupDamageApplyPlanPc34* out);
 int dm1_v1_melee_apply_group_damage_f0190_pc34(
     const struct CombatResult_Compat* result,
     struct DungeonGroup_Compat* group,
