@@ -48,6 +48,88 @@ static void expect_stage_after(const char* label,
     }
 }
 
+typedef struct FakeDm1StartupCallbacks {
+    char order[128];
+    unsigned int order_len;
+    int title_played;
+    int entrance_command;
+    int entrance_timeout_ms;
+} FakeDm1StartupCallbacks;
+
+static void fake_append(FakeDm1StartupCallbacks* fake, char token) {
+    if (!fake || fake->order_len + 1U >= sizeof(fake->order)) {
+        return;
+    }
+    fake->order[fake->order_len++] = token;
+    fake->order[fake->order_len] = '\0';
+}
+
+static int fake_report_source_order_failure(void* user, const char* evidence) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    (void)evidence;
+    fake_append(fake, 'F');
+    return 1;
+}
+
+static int fake_raise_window(void* user) {
+    fake_append((FakeDm1StartupCallbacks*)user, 'R');
+    return 1;
+}
+
+static int fake_play_swsh(void* user, const char* game_id, int preserve_audio) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    (void)game_id;
+    (void)preserve_audio;
+    fake_append(fake, 'S');
+    return 1;
+}
+
+static int fake_discard_presentation(void* user) {
+    fake_append((FakeDm1StartupCallbacks*)user, 'D');
+    return 1;
+}
+
+static int fake_play_title(void* user,
+                           const char* source_id,
+                           int* out_played_any_frame) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    (void)source_id;
+    fake_append(fake, 'T');
+    fake->title_played = 1;
+    if (out_played_any_frame) {
+        *out_played_any_frame = 1;
+    }
+    return 1;
+}
+
+static int fake_play_entrance(void* user,
+                              const char* source_id,
+                              int auto_enter_after_ms,
+                              int* out_entrance_command) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    (void)source_id;
+    fake_append(fake, 'E');
+    fake->entrance_timeout_ms = auto_enter_after_ms;
+    if (out_entrance_command) {
+        *out_entrance_command = fake->entrance_command;
+    }
+    return 1;
+}
+
+static DM1_V1_StartupHandoffCallbacks_PC34 fake_callbacks(
+    FakeDm1StartupCallbacks* fake) {
+    DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.user = fake;
+    callbacks.report_source_order_failure = fake_report_source_order_failure;
+    callbacks.raise_window = fake_raise_window;
+    callbacks.play_swsh = fake_play_swsh;
+    callbacks.discard_presentation_texture = fake_discard_presentation;
+    callbacks.play_title = fake_play_title;
+    callbacks.play_entrance = fake_play_entrance;
+    return callbacks;
+}
+
 static void check_swsh_to_title_boundary(void) {
     SWSH_CompatSourceTiming swshTiming = SWSH_Compat_GetSourceTimingEvidence();
     SWSH_CompatSourceAnimationStep first;
@@ -215,6 +297,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
     char animation[64];
     DM1_V1_StartupHandoffPreludePlan_PC34 prelude;
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 post;
+    FakeDm1StartupCallbacks fake;
+    DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
+    int title_played = 0;
+    int entrance_command = 0;
     int startup_active = -1;
     int animation_active = -1;
     int title_frame = -1;
@@ -311,6 +397,80 @@ static void check_dm1_launch_path_bypass_contract(void) {
              1);
     expect_i("NULL post-launch plan rejects missing output",
              dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", NULL),
+             0);
+
+    memset(&fake, 0, sizeof(fake));
+    fake.entrance_command = 2;
+    callbacks = fake_callbacks(&fake);
+    expect_i("DM1 prelude executor succeeds",
+             dm1_v1_startup_execute_handoff_prelude_pc34("dm1", &callbacks),
+             1);
+    expect_i("DM1 prelude executor owns SWSH order",
+             strcmp(fake.order, "RSD"),
+             0);
+
+    memset(&fake, 0, sizeof(fake));
+    fake.entrance_command = 2;
+    callbacks = fake_callbacks(&fake);
+    expect_i("DM1 post-launch executor succeeds",
+             dm1_v1_startup_execute_handoff_post_launch_pc34(
+                 "dm1",
+                 &callbacks,
+                 &title_played,
+                 &entrance_command),
+             1);
+    expect_i("DM1 post-launch executor owns TITLE then ENTRANCE order",
+             strcmp(fake.order, "RTE"),
+             0);
+    expect_i("DM1 post-launch executor reports title played",
+             title_played,
+             1);
+    expect_i("DM1 post-launch executor returns entrance command",
+             entrance_command,
+             2);
+    expect_i("DM1 post-launch executor keeps entrance timeout",
+             fake.entrance_timeout_ms,
+             1200);
+
+    memset(&fake, 0, sizeof(fake));
+    callbacks = fake_callbacks(&fake);
+    expect_i("CSB prelude executor is a no-op for DM1 facade",
+             dm1_v1_startup_execute_handoff_prelude_pc34("csb", &callbacks) &&
+                 fake.order[0] == '\0',
+             1);
+    expect_i("CSB post-launch executor is a no-op for DM1 facade",
+             dm1_v1_startup_execute_handoff_post_launch_pc34(
+                 "csb",
+                 &callbacks,
+                 &title_played,
+                 &entrance_command) &&
+                 fake.order[0] == '\0' &&
+                 title_played == 0 &&
+                 entrance_command == 0,
+             1);
+    expect_i("NULL prelude executor callbacks reject",
+             dm1_v1_startup_execute_handoff_prelude_pc34("dm1", NULL),
+             0);
+    expect_i("NULL post-launch executor callbacks reject",
+             dm1_v1_startup_execute_handoff_post_launch_pc34(
+                 "dm1",
+                 NULL,
+                 &title_played,
+                 &entrance_command),
+             0);
+    callbacks = fake_callbacks(&fake);
+    callbacks.play_swsh = NULL;
+    expect_i("DM1 prelude executor rejects missing required SWSH callback",
+             dm1_v1_startup_execute_handoff_prelude_pc34("dm1", &callbacks),
+             0);
+    callbacks = fake_callbacks(&fake);
+    callbacks.play_entrance = NULL;
+    expect_i("DM1 post-launch executor rejects missing required entrance callback",
+             dm1_v1_startup_execute_handoff_post_launch_pc34(
+                 "dm1",
+                 &callbacks,
+                 &title_played,
+                 &entrance_command),
              0);
 
     expect_i("receipt unloaded rc",

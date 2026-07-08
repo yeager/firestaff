@@ -1350,18 +1350,101 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     free(indexedScreen);
 }
 
+typedef struct M11_DM1StartupHandoffContext {
+    const M12_StartupMenuState* menuState;
+    M11_GameViewState* gameView;
+    const char* dataDir;
+} M11_DM1StartupHandoffContext;
+
+static int m11_dm1_handoff_report_source_order_failure(void* user,
+                                                       const char* evidence) {
+    (void)user;
+    fprintf(stderr,
+            "DM1 startup source-order guard failed: %s\n",
+            evidence ? evidence : "");
+    return 1;
+}
+
+static int m11_dm1_handoff_raise_window(void* user) {
+    (void)user;
+    M11_Render_RaiseWindow();
+    return 1;
+}
+
+static int m11_dm1_handoff_play_swsh(void* user,
+                                     const char* game_id,
+                                     int preserve_audio) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    (void)game_id;
+    m11_play_ftl_swoosh_if_available(ctx ? ctx->menuState : NULL,
+                                     ctx ? ctx->dataDir : NULL,
+                                     preserve_audio);
+    return 1;
+}
+
+static int m11_dm1_handoff_discard_presentation_texture(void* user) {
+    (void)user;
+    M11_Render_DiscardPresentationTexture();
+    return 1;
+}
+
+static int m11_dm1_handoff_play_title(void* user,
+                                      const char* source_id,
+                                      int* out_played_any_frame) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    (void)source_id;
+    if (!ctx) {
+        return 0;
+    }
+    m11_play_redmcsb_title_intro_if_available(ctx->menuState,
+                                              ctx->gameView,
+                                              out_played_any_frame);
+    return 1;
+}
+
+static int m11_dm1_handoff_play_entrance(void* user,
+                                         const char* source_id,
+                                         int auto_enter_after_ms,
+                                         int* out_entrance_command) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    int command;
+    (void)source_id;
+    if (!ctx || !ctx->gameView) {
+        return 0;
+    }
+    command = m11_play_redmcsb_entrance_transition(ctx->gameView,
+                                                   auto_enter_after_ms);
+    if (out_entrance_command) {
+        *out_entrance_command = command;
+    }
+    return 1;
+}
+
 static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
                                      const char* dataDir) {
     int titleIntroPlayed = 0;
-    DM1_V1_StartupHandoffPreludePlan_PC34 dm1PreludePlan;
-    DM1_V1_StartupHandoffPostLaunchPlan_PC34 dm1PostLaunchPlan;
+    int dm1EntranceCommand = 0;
+    M11_DM1StartupHandoffContext dm1HandoffContext;
+    DM1_V1_StartupHandoffCallbacks_PC34 dm1HandoffCallbacks;
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
-    memset(&dm1PreludePlan, 0, sizeof(dm1PreludePlan));
-    memset(&dm1PostLaunchPlan, 0, sizeof(dm1PostLaunchPlan));
+    memset(&dm1HandoffContext, 0, sizeof(dm1HandoffContext));
+    memset(&dm1HandoffCallbacks, 0, sizeof(dm1HandoffCallbacks));
+    dm1HandoffContext.menuState = menuState;
+    dm1HandoffContext.gameView = gameView;
+    dm1HandoffContext.dataDir = dataDir;
+    dm1HandoffCallbacks.user = &dm1HandoffContext;
+    dm1HandoffCallbacks.report_source_order_failure =
+        m11_dm1_handoff_report_source_order_failure;
+    dm1HandoffCallbacks.raise_window = m11_dm1_handoff_raise_window;
+    dm1HandoffCallbacks.play_swsh = m11_dm1_handoff_play_swsh;
+    dm1HandoffCallbacks.discard_presentation_texture =
+        m11_dm1_handoff_discard_presentation_texture;
+    dm1HandoffCallbacks.play_title = m11_dm1_handoff_play_title;
+    dm1HandoffCallbacks.play_entrance = m11_dm1_handoff_play_entrance;
     {
         /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle() before
          * F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher front door, so
@@ -1376,37 +1459,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
 
         const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(
             menuState, menuState->activatedIndex);
-        if (launchEntry && launchEntry->gameId) {
-            (void)dm1_v1_startup_handoff_prelude_plan_pc34(
+        if (launchEntry && launchEntry->gameId &&
+            dm1_v1_startup_source_visible_handoff_required_pc34(
+                launchEntry->gameId)) {
+            (void)dm1_v1_startup_execute_handoff_prelude_pc34(
                 launchEntry->gameId,
-                &dm1PreludePlan);
-        }
-        if (dm1PreludePlan.required) {
-            if (!dm1PreludePlan.source_order_valid) {
-                fprintf(stderr,
-                        "DM1 startup source-order guard failed: %s\n",
-                        dm1PreludePlan.failure_evidence
-                            ? dm1PreludePlan.failure_evidence
-                            : "");
-            }
-            /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order.
-             * Pass the menu state so the FTL/SWSH finder can locate SWOOSH next
-             * to the matched GRAPHICS.DAT, the user-supplied data dir, or the
-             * canonical $HOME OpenClaw original-games anchors. */
-            if (dm1PreludePlan.play_swsh) {
-                M11_Render_RaiseWindow();
-                m11_play_ftl_swoosh_if_available(menuState, dataDir, 0);
-            }
-            /* ReDMCSB source order is SWSH.C -> STARTUP1.C:143 ->
-             * TITLE.C F0437.  The SWSH path presents caller-owned RGBA
-             * frames, while TITLE.C presents indexed C001 pixels through the
-             * C12/C13/C14 VGA palette tables.  Recreate the SDL streaming
-             * texture at this one-time handoff so SDL3/Metal does not carry
-             * stale true-colour texture state into the indexed title
-             * animation on Apple Silicon. */
-            if (dm1PreludePlan.discard_presentation_after_swsh) {
-                M11_Render_DiscardPresentationTexture();
-            }
+                &dm1HandoffCallbacks);
         }
         /* CSB has its own title/entrance sequence after the common FTL/SWSH
          * prelude.  ReDMCSB SWSH.C runs the FTL logo before the started
@@ -1429,32 +1487,17 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
         }
-        (void)dm1_v1_startup_handoff_post_launch_plan_pc34(
+        (void)dm1_v1_startup_execute_handoff_post_launch_pc34(
             gameView->sourceId,
-            &dm1PostLaunchPlan);
-        if (!titleIntroPlayed && dm1PostLaunchPlan.play_title) {
-            /* ReDMCSB STARTEND still orders F0437_STARTEND_DrawTitle before
-             * F0441_STARTEND_ProcessEntrance.  Play it after the launch spec
-             * has resolved so GRAPHICS.DAT C001 is available, but still
-             * before entrance/gameplay is shown. */
-            M11_Render_RaiseWindow();
-            m11_play_redmcsb_title_intro_if_available(menuState, gameView, &titleIntroPlayed);
-        }
-        /* ReDMCSB: the entrance screen always plays for DM1 regardless
-         * of presentation mode. F0441_STARTEND_ProcessEntrance is the
-         * mandatory gate between title and gameplay. Other games keep
-         * their own handoff paths; Theron's Quest starts directly from
-         * its Track 02 runtime image. */
-        if (dm1PostLaunchPlan.play_entrance) {
-            int entranceResult =
-                m11_play_redmcsb_entrance_transition(
-                    gameView,
-                    dm1PostLaunchPlan.entrance_auto_enter_ms);
-            if (entranceResult == M11_ENTRANCE_COMMAND_QUIT) {
+            &dm1HandoffCallbacks,
+            &titleIntroPlayed,
+            &dm1EntranceCommand);
+        if (dm1EntranceCommand) {
+            if (dm1EntranceCommand == M11_ENTRANCE_COMMAND_QUIT) {
                 gameView->active = 0;
                 return 1;
             }
-            if (entranceResult == M11_ENTRANCE_COMMAND_RESUME) {
+            if (dm1EntranceCommand == M11_ENTRANCE_COMMAND_RESUME) {
                 /* ReDMCSB COMMAND.C M566: RESUME loads the saved game.
                  * Prefer the launcher's already validated DM1 quick-resume
                  * path, then fall back to Firestaff's historical source-id
@@ -1476,7 +1519,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                     fprintf(stderr, "RESUME: no save found at %s, starting new game\n",
                             savePath[0] ? savePath : "(unresolved)");
                 }
-            } else if (!entranceResult) {
+            } else if (!dm1EntranceCommand) {
                 /* Non-fatal: skip entrance animation but continue to game.
                  * Previously this aborted back to menu, causing the black
                  * viewport bug when TITLE.DAT decode failed. */
