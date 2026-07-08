@@ -42,6 +42,7 @@
  */
 
 #include "csb_v1_input_command_bridge_pc34_compat.h"
+#include "csb_v1_boot.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -335,6 +336,37 @@ static void test_forward_move_applies_open_step(void)
              "input command queue is empty after the forward dispatch");
 }
 
+static void test_boot_profile_bridge_turn_right(void)
+{
+    CSB_V1_BootProfile boot;
+    CSB_V1_InputCommandBridgeResult result;
+    int rc;
+
+    memset(&boot, 0, sizeof(boot));
+    init_runtime_with_party(&boot.runtime);
+    memset(&result, 0, sizeof(result));
+    rc = CSB_V1_InputCommandBridge_ProcessMenuInputFromBootProfilePc34Compat(
+        &boot,
+        M12_MENU_INPUT_TURN_RIGHT,
+        0,
+        0,
+        0,
+        0,
+        0,
+        &result);
+    CHECK_EQ(rc, 1,
+             "boot-profile TURN_RIGHT bridge returns one dequeued command");
+    CHECK_EQ(result.mapped, 1,
+             "boot-profile TURN_RIGHT bridge marks the input as mapped");
+    CHECK_EQ(result.queue_result.command, DM1_V1_COMMAND_TURN_RIGHT,
+             "boot-profile bridge dequeues C002 turn-right");
+    CHECK_EQ(boot.runtime.party_dir, CSB_V1_DIR_EAST,
+             "boot-profile bridge mutates the owned runtime party_dir");
+    CHECK_EQ(boot.runtime.party_state.PartyDirection, CSB_V1_DIR_EAST,
+             "boot-profile bridge mirrors party direction into party state");
+    csb_v1_runtime_cleanup(&boot.runtime);
+}
+
 static void test_unmapped_menu_input_returns_zero(void)
 {
     /* An unmapped menu input (e.g. ACCEPT) is intentionally not a
@@ -384,6 +416,7 @@ int main(void)
     test_turn_right_reaches_csb_runtime_state();
     test_turn_left_round_trip();
     test_forward_move_applies_open_step();
+    test_boot_profile_bridge_turn_right();
     test_unmapped_menu_input_returns_zero();
     test_null_arguments_return_error();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

@@ -1,4 +1,5 @@
 #include "csb_v1_input_command_bridge_pc34_compat.h"
+#include "csb_v1_boot.h"
 
 #include <string.h>
 
@@ -172,4 +173,33 @@ int CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat(
 
     if (outResult) *outResult = local;
     return dispatched;
+}
+
+int CSB_V1_InputCommandBridge_ProcessMenuInputFromBootProfilePc34Compat(
+    void* bootProfile,
+    M12_MenuInput menuInput,
+    int x,
+    int y,
+    int disabledMovementTicks,
+    int projectileDisabledMovementTicks,
+    int lastProjectileDisabledMovementDirection,
+    CSB_V1_InputCommandBridgeResult* outResult)
+{
+    CSB_V1_BootProfile* profile = (CSB_V1_BootProfile*)bootProfile;
+
+    if (!profile) {
+        if (outResult) {
+            memset(outResult, 0, sizeof(*outResult));
+        }
+        return -1;
+    }
+    return CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat(
+        &profile->runtime,
+        menuInput,
+        x,
+        y,
+        disabledMovementTicks,
+        projectileDisabledMovementTicks,
+        lastProjectileDisabledMovementDirection,
+        outResult);
 }

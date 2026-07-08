@@ -121,6 +121,15 @@ int CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat(
     int projectileDisabledMovementTicks,
     int lastProjectileDisabledMovementDirection,
     CSB_V1_InputCommandBridgeResult* outResult);
+int CSB_V1_InputCommandBridge_ProcessMenuInputFromBootProfilePc34Compat(
+    void* bootProfile,
+    M12_MenuInput menuInput,
+    int x,
+    int y,
+    int disabledMovementTicks,
+    int projectileDisabledMovementTicks,
+    int lastProjectileDisabledMovementDirection,
+    CSB_V1_InputCommandBridgeResult* outResult);
 
 /* Source-evidence citation string for the bridge.  Matches the
  * citation style used by sibling CSB V1 source-locked modules so

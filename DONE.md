@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB keyboard input boot-profile adapter: CSB input-command bridge now owns an opaque boot-profile adapter for post-boot movement/turn keyboard input. M11 no longer reaches through `CSB_V1_BootProfile.runtime` for that keyboard route. Verification: CSB input command bridge passed 85/85, M11 targeted library build passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB runtime quicksave/load/tick boot-profile adapters: CSB runtime/startup bridge now owns opaque boot-profile adapters for quicksave, quickload, and idle runtime ticks. M11 no longer reaches through `CSB_V1_BootProfile.runtime` for those booted runtime paths. Verification: CSB boot runtime handoff passed 278/278, M10 and M11 targeted library builds passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup entrance input gate request: CSB startup-sequence now exposes a request-based entrance input gate, and M11 consumes that request helper instead of passing the long raw startup-field list. Verification: CSB startup entrance pointer contract passed 143/143, M11 targeted library build passed, Phase A passed 24/24, and `git diff --check` passed.
