@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron dungeon-exit host receipt: Theron startup-flow now returns one action-host receipt for dungeon-exit back to stage-select, including state receipt, redraw result, status, inspect text, and log intent. M11 no longer builds a local exit receipt/status path after Theron movement exits a dungeon. Verification: Theron exit-host receipt unit passed, Theron startup-flow/M11 compile checks passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Nexus startup launch receipt: Nexus startup menu now owns initial launch title activation/frame reset, boot status, and save-menu scan receipt. M11 applies one launch receipt instead of running a separate Nexus save scan helper during `StartNexus`. Verification: Nexus launch-receipt unit passed, M11 syntax compile passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup media launch receipt: Theron boot launch now owns Track 02 startup media capture for roster names/titles and prompt text. M11 applies the boot-owned media receipt instead of reading Track 02 asset bytes directly during `StartTheron`. Verification: Theron boot/M11/media compile checks passed, Phase A passed 24/24, and `git diff --check` passed.

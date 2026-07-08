@@ -4148,6 +4148,52 @@ int theron_v1_startup_return_to_stage_select_after_exit_state_receipt(
     return 1;
 }
 
+int theron_v1_startup_return_to_stage_select_after_exit_host_receipt(
+    Theron_V1_World *world,
+    Theron_StartupActionHostReceipt *out_receipt) {
+
+    char exit_receipt[128];
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!world || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "MOVE";
+            out_receipt->host_receipt.status = "EXIT BLOCKED";
+        }
+        return 0;
+    }
+    if (!theron_v1_startup_return_to_stage_select_after_exit_state_receipt(
+            world,
+            &out_receipt->state_receipt,
+            exit_receipt,
+            sizeof(exit_receipt))) {
+        out_receipt->host_receipt.input_result =
+            THERON_STARTUP_INPUT_RESULT_REDRAW;
+        out_receipt->host_receipt.status_scope = "MOVE";
+        out_receipt->host_receipt.status =
+            exit_receipt[0] ? "EXIT BLOCKED" : "EXIT BLOCKED";
+        return 0;
+    }
+    out_receipt->state_receipt_valid = 1;
+    out_receipt->host_receipt.input_result =
+        THERON_STARTUP_INPUT_RESULT_REDRAW;
+    out_receipt->host_receipt.status_scope = "STARTUP";
+    out_receipt->host_receipt.status = "DUNGEON COMPLETE";
+    out_receipt->host_receipt.inspect_scope = "DUNGEON COMPLETE";
+    snprintf(out_receipt->host_receipt.inspect_detail,
+             sizeof(out_receipt->host_receipt.inspect_detail),
+             "%s",
+             theron_v1_startup_phase_name(
+                 out_receipt->state_receipt.flow.phase));
+    out_receipt->host_receipt.log_first_line =
+        exit_receipt[0] ? "TQ DUNGEON EXIT" : NULL;
+    return 1;
+}
+
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase) {
     switch (phase) {
     case THERON_STARTUP_PHASE_TITLE: return "title";
