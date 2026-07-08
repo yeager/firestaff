@@ -1659,6 +1659,44 @@ static void test_runtime_view_state_receipt_owns_scalar_handoff(void)
     csb_v1_runtime_cleanup(&runtime);
 }
 
+static void test_runtime_utility_startup_host_facts_wrappers(void)
+{
+    CSB_V1_BootProfile boot;
+    CSB_V1_StartupHostFacts_PC34 facts;
+    CSB_V1_UtilApplyReceipt receipt;
+    CSB_V1_UtilStateReceipt state_receipt;
+
+    csb_v1_boot_profile_init(&boot);
+    memset(&facts, 0, sizeof(facts));
+    facts.boot_profile = &boot;
+    facts.utility_overlay_active = 1;
+    facts.utility_selected_action_index = 0;
+    facts.utility_imported_champion_count = 2;
+    facts.utility_preview_active = 0;
+
+    CHECK(csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
+              &facts,
+              2,
+              &receipt,
+              &state_receipt) == 1,
+          "runtime utility keyboard wrapper accepts startup host facts");
+    CHECK(state_receipt.selected_action_index == 1 &&
+              receipt.result == CSB_V1_UTIL_APPLY_REDRAW,
+          "runtime utility keyboard wrapper owns M11 utility facts");
+
+    CHECK(csb_v1_runtime_util_apply_point_from_startup_host_facts_pc34(
+              &facts,
+              72,
+              126,
+              &receipt,
+              &state_receipt) == 1,
+          "runtime utility pointer wrapper accepts startup host facts");
+    CHECK(state_receipt.selected_action_index >= 0,
+          "runtime utility pointer wrapper owns M11 utility facts");
+
+    csb_v1_boot_cleanup(&boot);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
@@ -1667,6 +1705,7 @@ int main(void)
     test_enter_game_preserves_imported_party_and_switches_leader();
     test_runtime_import_dm1_party_path_owns_utility_handoff();
     test_runtime_view_state_receipt_owns_scalar_handoff();
+    test_runtime_utility_startup_host_facts_wrappers();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();

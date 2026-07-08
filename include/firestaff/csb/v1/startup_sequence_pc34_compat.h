@@ -546,6 +546,9 @@ typedef struct CSB_V1_StartupHostFacts_PC34 {
     int pending_command;
     int entrance_frame;
     int utility_overlay_active;
+    int utility_selected_action_index;
+    int utility_imported_champion_count;
+    int utility_preview_active;
     int door_step_count;
     int resume_available;
     const char *resume_path;
