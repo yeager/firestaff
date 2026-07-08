@@ -598,6 +598,35 @@ int dm1_v1_action_projectile_spell_plan_f0407_pc34(
     return 1;
 }
 
+int dm1_v1_action_climb_down_plan_f0407_pc34(
+    const DM1_ActionClimbDownInputPc34* in,
+    DM1_ActionClimbDownPlanPc34* out) {
+    if (!in || !out) return 0;
+    out->valid = 1;
+    out->performed = 1;
+    out->shouldAttemptMove = 0;
+    out->shouldApplyMove = 0;
+    out->cancelActionDisable = 0;
+    /* ReDMCSB: MENU.C F0407 lines 1548-1565. CLIMB DOWN starts with
+     * ActionPerformed TRUE. If the party-facing square is not a pit, or the
+     * later PC34 group-over-pit guard blocks it, only ActionDisabledTicks is
+     * cleared (BUG0_79); stamina and G0497 XP remain in the common tail. */
+    if (!in->frontSquareIsPit || in->frontSquareHasGroup) {
+        out->cancelActionDisable = 1;
+        return 1;
+    }
+    if (!in->movementAttempted) {
+        out->shouldAttemptMove = 1;
+        return 1;
+    }
+    if (in->movementSucceeded) {
+        out->shouldApplyMove = 1;
+    } else {
+        out->cancelActionDisable = 1;
+    }
+    return 1;
+}
+
 int dm1_v1_action_f0407_tail_pc34(int actionIndex,
                                   DM1_ActionF0407TailPc34* out) {
     int damageFactor;
