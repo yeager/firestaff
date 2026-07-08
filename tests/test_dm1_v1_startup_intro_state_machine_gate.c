@@ -896,6 +896,24 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  &launch_callbacks,
                  &launch_result),
              0);
+    launch_callbacks = fake_selected_launch_callbacks(&fake,
+                                                      NULL,
+                                                      &host_callbacks);
+    expect_i("DM1 selected launch transaction rejects missing handoff callbacks",
+             dm1_v1_startup_execute_selected_launch_transaction_pc34(
+                 "dm1",
+                 &launch_callbacks,
+                 &launch_result),
+             0);
+    launch_callbacks = fake_selected_launch_callbacks(&fake,
+                                                      &callbacks,
+                                                      NULL);
+    expect_i("DM1 selected launch transaction rejects missing host callbacks",
+             dm1_v1_startup_execute_selected_launch_transaction_pc34(
+                 "dm1",
+                 &launch_callbacks,
+                 &launch_result),
+             0);
     expect_i("NULL host apply rejects missing outcome",
              dm1_v1_startup_apply_handoff_outcome_pc34(NULL,
                                                        "dm1",
