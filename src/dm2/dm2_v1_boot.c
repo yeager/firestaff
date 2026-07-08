@@ -22,6 +22,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_runtime.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -841,6 +842,8 @@ const char *dm2_v1_boot_startup_prepare_result_name(
         return "UNVERIFIED_ASSETS";
     case DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED:
         return "ENTER_GAME_FAILED";
+    case DM2_V1_BOOT_STARTUP_PREPARE_RUNTIME_BIND_FAILED:
+        return "RUNTIME_BIND_FAILED";
     default:
         return "UNKNOWN";
     }
@@ -912,6 +915,8 @@ static const char *dm2_v1_boot_startup_prepare_host_status(
         return "DM2 ASSETS UNVERIFIED";
     case DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED:
         return "DM2 ENTER GAME FAILED";
+    case DM2_V1_BOOT_STARTUP_PREPARE_RUNTIME_BIND_FAILED:
+        return "DM2 RUNTIME BIND FAILED";
     default:
         return dm2_v1_boot_startup_prepare_result_name(result);
     }
@@ -975,8 +980,21 @@ int dm2_v1_boot_startup_launch_alloc(
         free(profile);
         return 0;
     }
+    /* SKULL.ASM T520/T560: the verified boot profile owns the V1 game
+     * state, so bind the runtime singleton here before M11 applies resume
+     * or startup-session state. */
+    if (!dm2_v1_runtime_bind_boot_profile(profile)) {
+        out_launch->prepare_result =
+            DM2_V1_BOOT_STARTUP_PREPARE_RUNTIME_BIND_FAILED;
+        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                               out_launch);
+        dm2_v1_boot_cleanup(profile);
+        free(profile);
+        return 0;
+    }
     out_launch->profile = profile;
     out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OK;
+    out_launch->runtime_bound = 1;
     return 1;
 }
 

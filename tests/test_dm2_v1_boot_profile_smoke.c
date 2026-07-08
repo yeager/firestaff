@@ -348,6 +348,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
           "startup launch reports OK for real verified DM2 assets");
     CHECK(launch.profile != NULL && launch.profile->dm2_state != NULL,
           "startup launch enters DM2 game state");
+    CHECK(launch.runtime_bound == 1,
+          "startup launch binds the V1 runtime singleton");
     CHECK(launch.profile != NULL && launch.profile->graphics_dat != NULL,
           "startup launch loads DM2 graphics handle");
     dm2_v1_boot_startup_launch_cleanup(&launch);

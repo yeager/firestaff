@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 boot runtime bind ownership: DM2 boot startup allocation now binds the verified boot profile into the V1 runtime singleton and reports bind failure as a boot prepare result. M11 direct-start no longer calls the runtime bind path. Verification: strict compiles for `dm2_v1_boot.c`, `dm2_v1_runtime.c`, `dm2_v1_startup_menu.c`, `m11_game_view.c`, and the DM2 boot smoke object; direct DM2 boot profile smoke passed 60/60; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM2 boot startup launch/runtime receipts: DM2 boot now owns startup launch receipt construction from runtime state and carries M11-ready title/source/runtime-init flags in the detached runtime receipt. M11 direct-start no longer builds DM2 startup host facts locally and only executes the boot-owned runtime init plan. Verification: strict compiles for `dm2_v1_boot.c`, `m11_game_view.c`, and DM2 boot smoke object; direct DM2 boot profile smoke passed 59/59; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 Linux user manual page: Added `docs/linux/firestaff.1` with CLI options, game-data locations, scan behavior, save locations, environment variables, boot-probe options, examples, and Linux install integration through CMake `share/man/man1`. Verification: `mandoc -Tlint` passed and rendered text output.
