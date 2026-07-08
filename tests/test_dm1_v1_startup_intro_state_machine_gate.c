@@ -248,6 +248,24 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("non-DM1 source ignores intro bypass flag",
              dm1_v1_startup_intro_bypass_applies_to_source_pc34("csb", 1),
              0);
+    expect_i("DM1 handoff requires source-visible intro",
+             dm1_v1_startup_source_visible_handoff_required_pc34("dm1"),
+             1);
+    expect_i("CSB handoff does not use DM1 source-visible intro policy",
+             dm1_v1_startup_source_visible_handoff_required_pc34("csb"),
+             0);
+    expect_i("NULL handoff does not use DM1 source-visible intro policy",
+             dm1_v1_startup_source_visible_handoff_required_pc34(NULL),
+             0);
+    expect_i("DM1 selected-entry receipt rejects intro bypass",
+             dm1_v1_startup_selected_entry_receipt_valid_pc34("dm1", 1),
+             0);
+    expect_i("DM1 selected-entry receipt accepts source-visible intro",
+             dm1_v1_startup_selected_entry_receipt_valid_pc34("dm1", 0),
+             1);
+    expect_i("CSB selected-entry receipt ignores DM1 intro bypass policy",
+             dm1_v1_startup_selected_entry_receipt_valid_pc34("csb", 1),
+             1);
 
     expect_i("receipt unloaded rc",
              dm1_v1_startup_receipt_phase_pc34(0, 0, phase, sizeof(phase)),

@@ -1373,7 +1373,8 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(
             menuState, menuState->activatedIndex);
         if (launchEntry && launchEntry->gameId &&
-            strcmp(launchEntry->gameId, "dm1") == 0) {
+            dm1_v1_startup_source_visible_handoff_required_pc34(
+                launchEntry->gameId)) {
             if (!dm1_v1_startup_sequence_source_order_valid_pc34()) {
                 fprintf(stderr,
                         "DM1 startup source-order guard failed: %s\n",
@@ -1415,7 +1416,9 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
         }
-        if (!titleIntroPlayed && strcmp(gameView->sourceId, "dm1") == 0) {
+        if (!titleIntroPlayed &&
+            dm1_v1_startup_source_visible_handoff_required_pc34(
+                gameView->sourceId)) {
             /* ReDMCSB STARTEND still orders F0437_STARTEND_DrawTitle before
              * F0441_STARTEND_ProcessEntrance.  Play it after the launch spec
              * has resolved so GRAPHICS.DAT C001 is available, but still
@@ -1428,7 +1431,8 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
          * mandatory gate between title and gameplay. Other games keep
          * their own handoff paths; Theron's Quest starts directly from
          * its Track 02 runtime image. */
-        if (strcmp(gameView->sourceId, "dm1") == 0) {
+        if (dm1_v1_startup_source_visible_handoff_required_pc34(
+                gameView->sourceId)) {
             int entranceResult = m11_play_redmcsb_entrance_transition(gameView, 1200);
             if (entranceResult == M11_ENTRANCE_COMMAND_QUIT) {
                 gameView->active = 0;
@@ -3748,8 +3752,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 !receipt.active ||
                 strcmp(receipt.sourceId, o->gameId) != 0 ||
                 !receipt.startedFromLauncher ||
-                (strcmp(o->gameId, "dm1") == 0 &&
-                 receipt.dm1StartupIntroBypassed) ||
+                !dm1_v1_startup_selected_entry_receipt_valid_pc34(
+                    o->gameId,
+                    receipt.dm1StartupIntroBypassed) ||
                 !m11_boot_probe_expected_source_kind(o->gameId, &expectedSourceKind) ||
                 receipt.sourceKind != expectedSourceKind) {
                 fprintf(stderr,

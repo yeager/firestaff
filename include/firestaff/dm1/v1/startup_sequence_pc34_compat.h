@@ -25,8 +25,11 @@ int dm1_v1_startup_stage_after_pc34(DM1_V1_StartupStage_PC34 later,
                                     DM1_V1_StartupStage_PC34 earlier);
 int dm1_v1_startup_launch_path_bypasses_intro_pc34(
     DM1_V1_StartupLaunchPath_PC34 path);
+int dm1_v1_startup_source_visible_handoff_required_pc34(const char* game_id);
 int dm1_v1_startup_intro_bypass_applies_to_source_pc34(const char* sourceId,
                                                        int bypassed);
+int dm1_v1_startup_selected_entry_receipt_valid_pc34(const char* game_id,
+                                                     int intro_bypassed);
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,
