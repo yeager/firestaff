@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
@@ -328,6 +329,56 @@ int dm1_v1_melee_weapon_availability_plan_f0402_pc34(
         out->hasUsableF0231WeaponInfo = 1;
         out->weaponClass = 255;
     }
+    return 1;
+}
+
+int dm1_v1_melee_command_decode_plan_f0402_pc34(
+    const DM1_MeleeF0402CommandDecodeInputPc34* in,
+    DM1_MeleeF0402CommandDecodePlanPc34* out) {
+    DM1_ActionXpRoute route;
+    int actionIndex;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+    out->actionSkillIndex = -1;
+    if (!in) return 0;
+
+    out->valid = 1;
+    out->targetDirection = in->partyDirection & 3;
+    out->hasLiveActionIndex =
+        (in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) != 0u;
+    out->hasLegacyMarker =
+        (in->reserved2 & CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID) != 0u;
+    out->hasTargetDirection =
+        (in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID) != 0u;
+    if (out->hasTargetDirection) {
+        out->targetDirection =
+            (int)((in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
+                  CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) & 3;
+    }
+
+    actionIndex = out->hasLiveActionIndex
+        ? (int)(in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK)
+        : CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+    if (dm1_v1_graphic560_action_damage_factor_get_pc34(actionIndex) < 0 ||
+        dm1_v1_graphic560_action_hit_probability_get_pc34(actionIndex) < 0) {
+        actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+    }
+    out->actionIndex = actionIndex;
+
+    if (!dm1_v1_action_xp_route(actionIndex, &route) || !route.valid) {
+        if (!dm1_v1_action_xp_route(
+                CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34, &route) ||
+            !route.valid) {
+            return 1;
+        }
+    }
+    out->actionSkillIndex = route.skillIndex;
+
+    /* ReDMCSB: MENU.C F0407 lines 1266-1272 selects target direction,
+     * G0496 skill route, and G0492/G0493 action tables before F0402.  The
+     * Firestaff CMD_ATTACK transport stores those source facts in reserved2;
+     * DM1 owns the decode/default policy, M10 only supplies the raw tick. */
     return 1;
 }
 

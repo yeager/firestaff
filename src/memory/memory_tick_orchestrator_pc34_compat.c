@@ -2264,54 +2264,11 @@ static int orch_build_cmd_attack_weapon_profile_compat(
     return 1;
 }
 
-static int orch_cmd_attack_action_index_compat(const struct TickInput_Compat* input)
-{
-    int actionIndex;
-    if (!input) return CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
-    if ((input->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) == 0u) {
-        return CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
-    }
-    actionIndex = (int)(input->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK);
-    if (dm1_v1_graphic560_action_damage_factor_get_pc34(actionIndex) < 0 ||
-        dm1_v1_graphic560_action_hit_probability_get_pc34(actionIndex) < 0) {
-        return CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
-    }
-    return actionIndex;
-}
-
-static int orch_cmd_attack_has_live_action_index_compat(
-    const struct TickInput_Compat* input)
-{
-    return input &&
-        ((input->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) != 0u);
-}
-
 static int orch_cmd_attack_has_live_group_table_compat(
     const struct GameWorld_Compat* world)
 {
     return world && world->things && world->things->groups &&
         world->things->groupCount > 0;
-}
-
-static int orch_cmd_attack_has_legacy_marker_compat(
-    const struct TickInput_Compat* input)
-{
-    return input &&
-        ((input->reserved2 & CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID) != 0u);
-}
-
-static int orch_cmd_attack_target_direction_compat(
-    const struct GameWorld_Compat* world,
-    const struct TickInput_Compat* input)
-{
-    int direction = world ? (world->party.direction & 3) : 0;
-    if (input &&
-        ((input->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID) != 0u)) {
-        direction = (int)((input->reserved2 &
-                           CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
-                          CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) & 3;
-    }
-    return direction;
 }
 
 static int orch_cmd_attack_action_hand_is_empty_compat(
@@ -2333,19 +2290,6 @@ static void orch_cmd_attack_empty_hand_weapon_info_compat(
     if (!outInfo) return;
     memset(outInfo, 0, sizeof(*outInfo));
     outInfo->weaponClass = 255;
-}
-
-static int orch_cmd_attack_action_skill_index_compat(int actionIndex)
-{
-    DM1_ActionXpRoute route;
-    if (!dm1_v1_action_xp_route(actionIndex, &route) || !route.valid) {
-        if (!dm1_v1_action_xp_route(
-                CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34, &route) ||
-            !route.valid) {
-            return -1;
-        }
-    }
-    return route.skillIndex;
 }
 
 static int orch_cmd_attack_map_difficulty_compat(
@@ -2818,6 +2762,7 @@ static int orch_cmd_attack_action_can_hit_door_f0407_compat(int actionIndex)
 static int orch_cmd_attack_resolve_target_compat(
     const struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
+    int targetDirection,
     int* outGroupIndex,
     int* outCreatureIndex)
 {
@@ -2835,7 +2780,6 @@ static int orch_cmd_attack_resolve_target_compat(
         int dy = 0;
         int targetMapX;
         int targetMapY;
-        int targetDirection = orch_cmd_attack_target_direction_compat(world, input);
         F0701_MOVEMENT_GetStepDelta_Compat(
             targetDirection, MOVE_FORWARD, &dx, &dy);
         targetMapX = world->party.mapX + dx;
@@ -2854,7 +2798,7 @@ static int orch_cmd_attack_resolve_target_compat(
     if (input->reserved == CMD_ATTACK_CREATURE_AUTO_PC34) {
         creatureIndex = orch_cmd_attack_f0177_creature_slot_compat(
             world, (int)input->commandArg1, groupIndex,
-            orch_cmd_attack_target_direction_compat(world, input));
+            targetDirection);
         if (creatureIndex < 0 ||
             creatureIndex > (int)world->things->groups[groupIndex].count) {
             creatureIndex = orch_cmd_attack_first_living_creature_compat(
@@ -3046,6 +2990,7 @@ static int orch_cmd_attack_f0407_closed_door_compat(
     const DM1_WeaponInfo* weaponInfo,
     int hasActionHandWeapon,
     int actionIndex,
+    int targetDirection,
     struct TickResult_Compat* result)
 {
     const struct DungeonMapDesc_Compat* map;
@@ -3059,7 +3004,6 @@ static int orch_cmd_attack_f0407_closed_door_compat(
     int squareByte;
     int doorIndex = -1;
     int attack;
-    int targetDirection;
 
     if (!world || !input || !weaponInfo || !world->dungeon ||
         !world->dungeon->tiles || !world->dungeon->maps) {
@@ -3069,7 +3013,6 @@ static int orch_cmd_attack_f0407_closed_door_compat(
         return 0;
     }
 
-    targetDirection = orch_cmd_attack_target_direction_compat(world, input);
     orch_cmd_attack_target_square_compat(
         world, targetDirection, &mapIndex, &mapX, &mapY);
     if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
@@ -6653,16 +6596,23 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
          * only for explicit legacy-marker callers without live group-table
          * data. */
         DM1_WeaponInfo weaponInfo;
+        DM1_MeleeF0402CommandDecodeInputPc34 decodeIn;
+        DM1_MeleeF0402CommandDecodePlanPc34 decodePlan;
         int weaponClass;
         DM1_MeleeF0402WeaponAvailabilityInputPc34 availabilityIn;
         DM1_MeleeF0402WeaponAvailabilityPlanPc34 availabilityPlan;
         int hasWeaponInfo = F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
             world, (int)input->commandArg1, &weaponInfo) > 0;
+        memset(&decodeIn, 0, sizeof(decodeIn));
+        memset(&decodePlan, 0, sizeof(decodePlan));
+        decodeIn.reserved2 = input->reserved2;
+        decodeIn.partyDirection = world ? world->party.direction : 0;
+        (void)dm1_v1_melee_command_decode_plan_f0402_pc34(
+            &decodeIn, &decodePlan);
         memset(&availabilityIn, 0, sizeof(availabilityIn));
         memset(&availabilityPlan, 0, sizeof(availabilityPlan));
         availabilityIn.hasWeaponInfo = hasWeaponInfo;
-        availabilityIn.hasLiveActionIndex =
-            orch_cmd_attack_has_live_action_index_compat(input);
+        availabilityIn.hasLiveActionIndex = decodePlan.hasLiveActionIndex;
         availabilityIn.actionHandEmpty =
             orch_cmd_attack_action_hand_is_empty_compat(
                 world, (int)input->commandArg1);
@@ -6680,16 +6630,14 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             int creatureIndex = -1;
             int applyOutcome = COMBAT_OUTCOME_INVALID;
             int weaponType = -1;
-            int actionIndex = orch_cmd_attack_action_index_compat(input);
-            int actionSkillIndex =
-                orch_cmd_attack_action_skill_index_compat(actionIndex);
+            int actionIndex = decodePlan.actionIndex;
+            int actionSkillIndex = decodePlan.actionSkillIndex;
             int killedCell = EXPLOSION_CELL_CENTERED;
             int originalGroupCount = -1;
             int fearTriggered = 0;
             DM1_MeleeF0231AftermathInputPc34 aftermathIn;
             DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
-            int targetDirection =
-                orch_cmd_attack_target_direction_compat(world, input);
+            int targetDirection = decodePlan.targetDirection;
             int targetResolved;
             int reachBlocked = 0;
             int disruptBlocked = 0;
@@ -6704,11 +6652,11 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             weaponClass = weaponInfo.weaponClass;
             if (orch_cmd_attack_f0407_closed_door_compat(
                     world, input, &weaponInfo, hasWeaponInfo, actionIndex,
-                    result)) {
+                    targetDirection, result)) {
                 return 1;
             }
             targetResolved = orch_cmd_attack_resolve_target_compat(
-                world, input, &groupIndex, &creatureIndex);
+                world, input, targetDirection, &groupIndex, &creatureIndex);
             if (targetResolved) {
                 reachBlocked =
                     orch_cmd_attack_champion_reach_blocked_f0407_compat(
@@ -6724,8 +6672,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 memset(&preflightPlan, 0, sizeof(preflightPlan));
                 preflightIn.requestedAutoTarget =
                     input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
-                preflightIn.hasLiveActionIndex =
-                    orch_cmd_attack_has_live_action_index_compat(input);
+                preflightIn.hasLiveActionIndex = decodePlan.hasLiveActionIndex;
                 preflightIn.hasLiveGroupTable =
                     orch_cmd_attack_has_live_group_table_compat(world);
                 preflightIn.targetResolved = targetResolved;
@@ -6768,8 +6715,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 memset(&preflightPlan, 0, sizeof(preflightPlan));
                 preflightIn.requestedAutoTarget =
                     input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
-                preflightIn.hasLiveActionIndex =
-                    orch_cmd_attack_has_live_action_index_compat(input);
+                preflightIn.hasLiveActionIndex = decodePlan.hasLiveActionIndex;
                 preflightIn.hasLiveGroupTable =
                     orch_cmd_attack_has_live_group_table_compat(world);
                 preflightIn.targetResolved = targetResolved;
@@ -6903,7 +6849,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             weaponClass = (int)input->commandArg2;
         }
 cmd_attack_legacy_marker:
-        if (!orch_cmd_attack_has_legacy_marker_compat(input)) {
+        if (!decodePlan.hasLegacyMarker) {
             /* Marker damage is a synthetic M10 compatibility snapshot, not a
              * ReDMCSB F0402/F0231 live melee path.  Require an explicit marker
              * so unresolved or partially populated runtime calls cannot

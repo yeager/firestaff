@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0402 command decode ownership: DM1 melee compat now owns CMD_ATTACK reserved2 decode for live action index fallback, target direction fallback, legacy marker bit, and G0496 action-skill routing. M10 now consumes one DM1 receipt for closed-door, target, preflight, and legacy-marker branches. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0190 timeline cleanup ownership: DM1 melee compat now owns the killed-some C33-C36 aspect and C38-C41 behavior event cleanup rule after group compaction. M10 now only loops timeline entries and applies the DM1 keep/delete/type-shift receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0190 killed-all unlink policy ownership: DM1 melee compat now owns the killed-all group unlink, group next clear, active-group removal, and raw-write policy after F0231/F0190. M10 now only applies the live square unlink/state mutations from the DM1 receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

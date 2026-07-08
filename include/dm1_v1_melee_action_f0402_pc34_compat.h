@@ -165,6 +165,21 @@ typedef struct {
 } DM1_MeleeF0402WeaponAvailabilityPlanPc34;
 
 typedef struct {
+    unsigned int reserved2;
+    int partyDirection;
+} DM1_MeleeF0402CommandDecodeInputPc34;
+
+typedef struct {
+    int valid;
+    int actionIndex;
+    int actionSkillIndex;
+    int hasLiveActionIndex;
+    int hasLegacyMarker;
+    int hasTargetDirection;
+    int targetDirection;
+} DM1_MeleeF0402CommandDecodePlanPc34;
+
+typedef struct {
     int requestedAutoTarget;
     int hasLiveActionIndex;
     int hasLiveGroupTable;
@@ -447,6 +462,9 @@ int dm1_v1_melee_side_effect_plan_f0231_pc34(
 int dm1_v1_melee_weapon_availability_plan_f0402_pc34(
     const DM1_MeleeF0402WeaponAvailabilityInputPc34* in,
     DM1_MeleeF0402WeaponAvailabilityPlanPc34* out);
+int dm1_v1_melee_command_decode_plan_f0402_pc34(
+    const DM1_MeleeF0402CommandDecodeInputPc34* in,
+    DM1_MeleeF0402CommandDecodePlanPc34* out);
 int dm1_v1_melee_preflight_plan_f0402_pc34(
     const DM1_MeleeF0402PreflightInputPc34* in,
     DM1_MeleeF0402PreflightPlanPc34* out);
