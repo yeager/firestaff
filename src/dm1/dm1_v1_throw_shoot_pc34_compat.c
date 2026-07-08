@@ -314,6 +314,70 @@ int dm1_v1_projectile_impact_source_sound_index_pc34(
     return 4;
 }
 
+int dm1_v1_projectile_explosion_create_input_pc34(
+    const struct ProjectileTickResult_Compat* result,
+    int currentTick,
+    struct ExplosionCreateInput_Compat* outInput) {
+    if (!result || !outInput || !result->emittedExplosion) return 0;
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 574-602 decides whether projectile
+     * impact creates an explosion; F0213 lines 107-188 consumes the same
+     * map/cell/type/attack tuple when scheduling the explosion thing. */
+    memset(outInput, 0, sizeof(*outInput));
+    outInput->explosionType = result->outExplosion.explosionType;
+    outInput->attack = result->outExplosion.attack;
+    outInput->mapIndex = result->outExplosion.mapIndex;
+    outInput->mapX = result->outExplosion.mapX;
+    outInput->mapY = result->outExplosion.mapY;
+    outInput->cell = result->outExplosion.cell;
+    outInput->centered = result->outExplosion.centered;
+    outInput->poisonAttack = result->outExplosion.poisonAttack;
+    outInput->currentTick = currentTick;
+    outInput->ownerKind = result->outExplosion.ownerKind;
+    outInput->ownerIndex = result->outExplosion.ownerIndex;
+    outInput->creatorProjectileSlot =
+        result->outExplosion.creatorProjectileSlot;
+    return 1;
+}
+
+int dm1_v1_projectile_impact_log_plan_pc34(
+    const struct ProjectileTickResult_Compat* result,
+    DM1_ProjectileImpactLogPlanPc34* outPlan) {
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->logKind = DM1_PROJECTILE_IMPACT_LOG_NONE_PC34;
+    if (!result) return 0;
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 470-610 is the source impact
+     * classifier.  Firestaff keeps UI wording in M11, but the generic
+     * non-creature/non-champion impact classes belong to DM1. */
+    switch (result->resultKind) {
+        case PROJECTILE_RESULT_HIT_WALL:
+            outPlan->logKind = DM1_PROJECTILE_IMPACT_LOG_HIT_WALL_PC34;
+            break;
+        case PROJECTILE_RESULT_HIT_DOOR:
+            outPlan->logKind = DM1_PROJECTILE_IMPACT_LOG_HIT_DOOR_PC34;
+            break;
+        case PROJECTILE_RESULT_HIT_FLUXCAGE:
+            outPlan->logKind = DM1_PROJECTILE_IMPACT_LOG_HIT_FLUXCAGE_PC34;
+            break;
+        case PROJECTILE_RESULT_HIT_OTHER_PROJECTILE:
+            outPlan->logKind =
+                DM1_PROJECTILE_IMPACT_LOG_HIT_OTHER_PROJECTILE_PC34;
+            break;
+        case PROJECTILE_RESULT_DESPAWN_ENERGY:
+            outPlan->logKind = DM1_PROJECTILE_IMPACT_LOG_DESPAWN_ENERGY_PC34;
+            break;
+        case PROJECTILE_RESULT_DESPAWN_BOUNDS:
+            outPlan->logKind = DM1_PROJECTILE_IMPACT_LOG_DESPAWN_BOUNDS_PC34;
+            break;
+        default:
+            return 1;
+    }
+    outPlan->handled = 1;
+    return 1;
+}
+
 int dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(int weaponType) {
     /* ReDMCSB: PROJEXPL.C F0217 lines 540-553 sharp thrown weapon list. */
     return weaponType == 8   ||  /* C08_WEAPON_DAGGER */

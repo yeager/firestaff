@@ -109,6 +109,21 @@ typedef struct {
     int scheduleDelayTicks;
 } DM1_ProjectileChampionPoisonPlanPc34;
 
+enum {
+    DM1_PROJECTILE_IMPACT_LOG_NONE_PC34 = 0,
+    DM1_PROJECTILE_IMPACT_LOG_HIT_WALL_PC34,
+    DM1_PROJECTILE_IMPACT_LOG_HIT_DOOR_PC34,
+    DM1_PROJECTILE_IMPACT_LOG_HIT_FLUXCAGE_PC34,
+    DM1_PROJECTILE_IMPACT_LOG_HIT_OTHER_PROJECTILE_PC34,
+    DM1_PROJECTILE_IMPACT_LOG_DESPAWN_ENERGY_PC34,
+    DM1_PROJECTILE_IMPACT_LOG_DESPAWN_BOUNDS_PC34
+};
+
+typedef struct {
+    int handled;
+    int logKind;
+} DM1_ProjectileImpactLogPlanPc34;
+
 int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight);
 int dm1_v1_throw_armour_weight_f0140_pc34(int armourType);
 int dm1_v1_throw_junk_base_weight_f0140_pc34(int junkType);
@@ -141,6 +156,13 @@ const char* dm1_v1_projectile_subtype_name_pc34(int subtype);
 int dm1_v1_projectile_impact_source_sound_index_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result);
+int dm1_v1_projectile_explosion_create_input_pc34(
+    const struct ProjectileTickResult_Compat* result,
+    int currentTick,
+    struct ExplosionCreateInput_Compat* outInput);
+int dm1_v1_projectile_impact_log_plan_pc34(
+    const struct ProjectileTickResult_Compat* result,
+    DM1_ProjectileImpactLogPlanPc34* outPlan);
 int dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(int weaponType);
 int dm1_v1_projectile_associated_thing_disposition_pc34(
     const struct ProjectileInstance_Compat* projectile,
