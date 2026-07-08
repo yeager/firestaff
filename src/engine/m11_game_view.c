@@ -18564,9 +18564,6 @@ enum {
 
     /* Food / water / poisoned labels.
      * Ref: DEFS.H lines 2190-2192. */
-    M11_GFX_FOOD_LABEL           = 30, /* C030_GRAPHIC_FOOD_LABEL (34×9) */
-    M11_GFX_WATER_LABEL          = 31, /* C031_GRAPHIC_WATER_LABEL (46×9) */
-    M11_GFX_POISONED_LABEL       = 32, /* C032_GRAPHIC_POISONED_LABEL (96×15) */
 
     /* Party shield border overlays (67×29 each in GRAPHICS.DAT).
      * Drawn on top of champion status box when party effect is active.
@@ -32613,11 +32610,11 @@ int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
 }
 
 int M11_GameView_GetV1FoodLabelGraphicId(void) {
-    return M11_GFX_FOOD_LABEL;
+    return DM1_GFX_FOOD_LABEL;
 }
 
 int M11_GameView_GetV1WaterLabelGraphicId(void) {
-    return M11_GFX_WATER_LABEL;
+    return DM1_GFX_WATER_LABEL;
 }
 
 int M11_GameView_GetV1FoodBarZoneId(void) {
@@ -33318,7 +33315,7 @@ int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) 
 }
 
 int M11_GameView_GetV1PoisonLabelGraphicId(void) {
-    return M11_GFX_POISONED_LABEL;
+    return DM1_GFX_POISONED_LABEL;
 }
 
 int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {

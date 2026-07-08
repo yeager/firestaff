@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 food/water/poison label graphic ownership: M11 V1 food, water, and poison label graphic getters now consume `dm1_v1_champion_panel_hud_pc34_compat` constants instead of M11-local C030/C031/C032 duplicates. Verification: `test_dm1_v1_champion_panel_hud_pc34_compat` passed; `test_m11_v1_action_area_geometry_pc34_compat` passed; Phase A passed 24/24.
+
 - ✅ 2026-07-08 DM1 status-hand slot rendering ownership: M11 now uses `DM1_ChampionPanel_SlotBoxGraphic` and `DM1_ChampionPanel_EmptyHandIconIndex` for V1 ready/action hand slot graphics and empty-hand icons instead of local F0291 logic. Verification: `test_dm1_v1_champion_panel_hud_pc34_compat` passed; `test_m11_v1_action_area_geometry_pc34_compat` passed; Phase A passed 24/24.
 
 - ✅ 2026-07-08 DM1 champion-icon rendering ownership: M11 V1 champion icon graphic/source/fill/transparent/invisibility decisions now route through `DM1_ChampionPanel_BuildIconBitmapModel` instead of local direction/color logic. Verification: `test_dm1_v1_champion_panel_hud_pc34_compat` passed; `test_m11_v1_action_area_geometry_pc34_compat` passed; Phase A passed 24/24.
