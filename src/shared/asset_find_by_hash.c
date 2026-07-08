@@ -288,13 +288,17 @@ static int is_better_iso_entry(const char *candidate, const char *current) {
 
 static int is_zip_path(const char *path) {
     return has_case_suffix(path, ".zip") || has_case_suffix(path, ".cbz") ||
-           has_case_suffix(path, ".pk3") || has_case_suffix(path, ".jar");
+           has_case_suffix(path, ".pk3") || has_case_suffix(path, ".jar") ||
+           has_case_suffix(path, ".apk") || has_case_suffix(path, ".ipa") ||
+           has_case_suffix(path, ".xpi") || has_case_suffix(path, ".whl") ||
+           has_case_suffix(path, ".wsz") || has_case_suffix(path, ".kmz");
 }
 
 static int is_iso_path(const char *path) {
     return has_case_suffix(path, ".iso") || has_case_suffix(path, ".bin") ||
            has_case_suffix(path, ".img") || has_case_suffix(path, ".cdr") ||
-           has_case_suffix(path, ".toast");
+           has_case_suffix(path, ".toast") || has_case_suffix(path, ".raw") ||
+           has_case_suffix(path, ".mdf");
 }
 
 static int is_cue_path(const char *path) {

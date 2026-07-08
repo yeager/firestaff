@@ -421,12 +421,14 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/nested/renamed.asset");
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/archive.zip");
+    remove("asset_find_by_hash_test_tmp/archive.apk");
     remove("asset_find_by_hash_test_tmp/archive.tar");
     remove("asset_find_by_hash_test_tmp/archive.lzh");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
     remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
     remove("asset_find_by_hash_test_tmp/disc.iso");
     remove("asset_find_by_hash_test_tmp/disc.img");
+    remove("asset_find_by_hash_test_tmp/disc.raw");
     remove("asset_find_by_hash_test_tmp/cue_a.payload");
     remove("asset_find_by_hash_test_tmp/cue_b.payload");
     remove("asset_find_by_hash_test_tmp/split.cue");
@@ -567,6 +569,28 @@ int main(void) {
     remove("asset_find_by_hash_test_tmp/extracted.dat");
 
     remove("asset_find_by_hash_test_tmp/archive.zip");
+    if (!write_stored_zip_fixture("asset_find_by_hash_test_tmp/archive.apk")) {
+        cleanup_fixture();
+        fprintf(stderr, "APK/ZIP-compatible fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_name(outPath, "archive.apk", "dm2/RENAMED.BIN")) {
+        cleanup_fixture();
+        fprintf(stderr, "APK/ZIP-compatible entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "virtual APK/ZIP-compatible extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/archive.apk");
+
     if (!write_stored_zip_duplicate_hash_fixture("asset_find_by_hash_test_tmp/archive.zip")) {
         cleanup_fixture();
         fprintf(stderr, "duplicate ZIP fixture setup failed\n");
@@ -808,6 +832,28 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/disc.img");
+
+    if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc.raw")) {
+        cleanup_fixture();
+        fprintf(stderr, "RAW ISO fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_name(outPath, "disc.raw", "DUNGEON.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "RAW ISO entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "virtual RAW ISO extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/disc.raw");
 
     if (!write_iso_fixture_payload("asset_find_by_hash_test_tmp/cue_a.payload",
                                    "Firestaff non-matching CUE payload v1\n",
