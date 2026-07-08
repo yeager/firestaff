@@ -1266,6 +1266,12 @@ int theron_v1_boot_startup_view_model_from_snapshot(
         &out_view_model->title_frame,
         &out_view_model->title_frame_max,
         &out_view_model->title_ready);
+    out_view_model->runtime_level =
+        snapshot && snapshot->world ? snapshot->world->current_level : -1;
+    out_view_model->runtime_champion_count =
+        snapshot && snapshot->world
+            ? snapshot->world->party.champion_count
+            : -1;
     return 1;
 }
 
