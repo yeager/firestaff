@@ -34,6 +34,8 @@ static void test_melee_contact_gate(void) {
 
 static void test_stamina_and_special_flags(void) {
     DM1_ActionF0407TailPc34 tail;
+    DM1_ActionF0407PreludeInputPc34 preludeIn;
+    DM1_ActionF0407PreludePlanPc34 preludeOut;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(DM1_ACTION_CHOP, &tail), 1,
              "chop tail builds");
     CHECK_EQ(tail.staminaBase, 10, "chop stamina base");
@@ -56,6 +58,31 @@ static void test_stamina_and_special_flags(void) {
              1, "spit f0327 xp halving");
     CHECK_EQ(dm1_v1_action_halves_xp_on_f0327_failure_pc34(DM1_ACTION_SHOOT),
              0, "shoot no f0327 xp halving");
+
+    memset(&preludeIn, 0, sizeof(preludeIn));
+    preludeIn.actionIndex = DM1_ACTION_CHOP;
+    preludeIn.championIndex = 1;
+    preludeIn.gameTick = 100u;
+    CHECK_EQ(dm1_v1_action_prelude_plan_f0407_pc34(
+                 &preludeIn, &preludeOut), 1,
+             "chop prelude builds");
+    CHECK_EQ(preludeOut.valid, 1, "chop prelude valid");
+    CHECK_EQ(preludeOut.actionExperienceGain, 10, "chop prelude xp");
+    CHECK_EQ(preludeOut.disabledTicks, 8, "chop prelude disabled");
+    CHECK_EQ(preludeOut.staminaCost, 11, "chop prelude stamina");
+    CHECK_EQ(preludeOut.isMeleeContact, 1, "chop prelude melee");
+
+    preludeIn.actionIndex = DM1_ACTION_BLOCK;
+    CHECK_EQ(dm1_v1_action_prelude_plan_f0407_pc34(
+                 &preludeIn, &preludeOut), 1,
+             "block prelude builds");
+    CHECK_EQ(preludeOut.isMeleeContact, 0, "block prelude not melee");
+    CHECK_EQ(preludeOut.disabledTicks, 6, "block prelude disabled");
+
+    preludeIn.actionIndex = 99;
+    CHECK_EQ(dm1_v1_action_prelude_plan_f0407_pc34(
+                 &preludeIn, &preludeOut), 0,
+             "invalid prelude rejected");
 }
 
 static void test_tail_adjustments(void) {

@@ -100,6 +100,22 @@ typedef struct {
 } DM1_ActionXpRoute;
 
 typedef struct {
+    int actionIndex;
+    int championIndex;
+    unsigned int gameTick;
+} DM1_ActionF0407PreludeInputPc34;
+
+typedef struct {
+    int valid;
+    int skillIndex;
+    int baseSkillIndex;
+    int actionExperienceGain;
+    int disabledTicks;
+    int staminaCost;
+    int isMeleeContact;
+} DM1_ActionF0407PreludePlanPc34;
+
+typedef struct {
     int valid;
     int damageFactor;
     int staminaBase;
@@ -388,6 +404,9 @@ typedef struct {
 int dm1_v1_action_xp_route(int actionIndex, DM1_ActionXpRoute* out);
 int dm1_v1_action_f0407_tail_pc34(int actionIndex,
                                   DM1_ActionF0407TailPc34* out);
+int dm1_v1_action_prelude_plan_f0407_pc34(
+    const DM1_ActionF0407PreludeInputPc34* in,
+    DM1_ActionF0407PreludePlanPc34* out);
 int dm1_v1_action_stamina_cost_f0407_pc34(int actionIndex,
                                           int championIndex,
                                           unsigned int gameTick);
