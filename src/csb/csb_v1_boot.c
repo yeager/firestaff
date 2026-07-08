@@ -697,6 +697,97 @@ csb_v1_boot_csbgraphics_skin_def_words(const CSB_V1_BootProfile *profile,
     return profile->csbgraphics_skin_def_words;
 }
 
+int csb_v1_boot_render_viewport_frame_pc34(
+    void *boot_profile,
+    unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    const CSB_V1_ViewportRuntimeDrawerBinding *drawer_binding,
+    CSB_V1_ViewportRuntimeDrawCounts *out_counts)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+    CSB_V1_ViewportConfig cfg;
+    uint8_t dungeon_grid[32 * 32];
+    uint8_t custom_background_cell_skins[32 * 32];
+    uint32_t i;
+
+    if (out_counts) {
+        csb_v1_viewport_runtime_draw_counts_reset(out_counts);
+    }
+    if (!profile || !framebuffer || framebuffer_width < 320 ||
+        framebuffer_height < 200 || !profile->runtime.dungeon_handle) {
+        return 0;
+    }
+
+    (void)csb_v1_viewport_build_dungeon_grid(
+        profile->runtime.dungeon_handle,
+        profile->runtime.current_level,
+        dungeon_grid);
+
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = framebuffer;
+    cfg.viewport_stride = framebuffer_width;
+    cfg.dungeon_grid = dungeon_grid;
+    cfg.dungeon_width = 32;
+    cfg.dungeon_height = 32;
+    cfg.wall_set_index = 0;
+    cfg.runtime_profile = &profile->runtime;
+    cfg.runtime_projectiles = &profile->runtime.projectiles;
+    cfg.runtime_explosions = &profile->runtime.explosions;
+    if (drawer_binding) {
+        csb_v1_viewport_apply_runtime_drawer_binding(&cfg, drawer_binding);
+    }
+    cfg.csbgraphics_plan = csb_v1_boot_csbgraphics_m11_plan(profile);
+    cfg.csbgraphics_cache = csb_v1_boot_csbgraphics_cache(profile);
+    cfg.custom_background_skin_def_words =
+        csb_v1_boot_csbgraphics_skin_def_words(
+            profile,
+            &cfg.custom_background_skin_def_word_count);
+
+    if (csb_v1_runtime_custom_background_skin_grid(
+            &profile->runtime,
+            custom_background_cell_skins,
+            (int)sizeof(custom_background_cell_skins),
+            &cfg.custom_background_cell_skin_width,
+            &cfg.custom_background_cell_skin_height,
+            &cfg.custom_background_loaded_level,
+            &cfg.custom_background_default_skin)) {
+        cfg.custom_background_cell_skins = custom_background_cell_skins;
+    }
+
+    /* Source-lock: ReDMCSB DUNVIEW.C F0128 is the CSB viewport draw
+     * boundary; CSBWin Viewport.cpp keeps the same party pose contract.
+     * The boot profile owns the runtime pose and CSBGRAPHICS state. */
+    csb_v1_viewport_render_frame(&cfg,
+                                 profile->runtime.party_dir,
+                                 profile->runtime.party_x,
+                                 profile->runtime.party_y);
+    if (out_counts) {
+        csb_v1_viewport_runtime_draw_counts_from_config(&cfg, out_counts);
+    }
+
+    if (profile->csbgraphics_m11_plan.ready &&
+        profile->csbgraphics_cache.loaded) {
+        for (i = 0u; i < profile->csbgraphics_m11_plan.planned_count; ++i) {
+            CSB_V1_CSBGraphicsM11Binding binding;
+            if (profile->csbgraphics_m11_plan.entries[i]
+                    .deferred_masked_composite) {
+                continue;
+            }
+            (void)csb_v1_csbgraphics_m11_runtime_plan_apply_entry(
+                &profile->csbgraphics_m11_plan,
+                &profile->csbgraphics_cache,
+                profile->csbgraphics_m11_plan.entries[i].entry_index,
+                framebuffer,
+                framebuffer_width,
+                framebuffer_height,
+                framebuffer_width,
+                &binding);
+        }
+    }
+    return 1;
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {

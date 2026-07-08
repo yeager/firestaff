@@ -691,12 +691,92 @@ static void test_m11_viewport_render_region_and_handoff_thing_data(void)
     }
 }
 
+static void test_boot_profile_viewport_render_adapter(void)
+{
+    CSB_V1_BootProfile p;
+    char dungeon_path[ASSET_PATH_MAX];
+    char graphics_path[ASSET_PATH_MAX];
+    const char *tmp_dir = "/tmp/firestaff-csb-v1-boot-render-adapter";
+    const uint8_t MARKER = 7;
+    static uint8_t framebuffer_a[320 * 200];
+    static uint8_t framebuffer_b[320 * 200];
+    CSB_V1_ViewportRuntimeDrawerBinding binding;
+    CSB_V1_ViewportRuntimeDrawCounts counts_a;
+    CSB_V1_ViewportRuntimeDrawCounts counts_b;
+    size_t i;
+    int pixel_bytes_match = 1;
+
+    memset(&p, 0, sizeof(p));
+    memset(&binding, 0, sizeof(binding));
+    memset(framebuffer_a, 0xAB, sizeof(framebuffer_a));
+    memset(framebuffer_b, 0xAB, sizeof(framebuffer_b));
+    (void)TEST_MKDIR(tmp_dir);
+
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+    snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+    CHECK(write_synthetic_dungeon(dungeon_path, MARKER, 0) == 0,
+          "synthetic DUNGEON.DAT written for boot-profile viewport adapter");
+
+    csb_v1_boot_profile_init(&p);
+    snprintf(p.asset_root, sizeof(p.asset_root), "%s", tmp_dir);
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", dungeon_path);
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", graphics_path);
+    snprintf(p.dungeon_md5, sizeof(p.dungeon_md5),
+             "6695d2acebce49f95db1d8f3a5c733de");
+    p.dungeon_verified = 1;
+    p.graphics_verified = 1;
+    p.assets_verified = 1;
+    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+
+    CHECK(csb_v1_boot_enter_game(&p) == 0,
+          "enter_game() succeeds before boot-profile viewport adapter render");
+
+    CHECK(csb_v1_boot_render_viewport_frame_pc34(&p,
+                                                  framebuffer_a,
+                                                  320,
+                                                  200,
+                                                  &binding,
+                                                  &counts_a) == 1,
+          "boot-profile viewport adapter renders one frame without M11 "
+          "packing runtime_profile/projectile/explosion pointers");
+    CHECK(csb_v1_boot_render_viewport_frame_pc34(&p,
+                                                  framebuffer_b,
+                                                  320,
+                                                  200,
+                                                  &binding,
+                                                  &counts_b) == 1,
+          "boot-profile viewport adapter renders a second deterministic frame");
+
+    for (i = 0; i < sizeof(framebuffer_a); i++) {
+        if (framebuffer_a[i] != framebuffer_b[i]) {
+            pixel_bytes_match = 0;
+            break;
+        }
+    }
+    CHECK(pixel_bytes_match,
+          "boot-profile viewport adapter output is byte-identical across "
+          "two calls with the same handoff state");
+    CHECK(memcmp(&counts_a, &counts_b, sizeof(counts_a)) == 0,
+          "boot-profile viewport adapter draw counts are deterministic");
+    CHECK(csb_v1_boot_render_viewport_frame_pc34(NULL,
+                                                  framebuffer_a,
+                                                  320,
+                                                  200,
+                                                  &binding,
+                                                  &counts_a) == 0,
+          "boot-profile viewport adapter rejects a NULL boot profile");
+
+    csb_v1_boot_cleanup(&p);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot → Runtime → M11/Viewport Render Gate ===\n\n");
     test_boot_runtime_handoff_exposes_m11_state();
     test_m11_viewport_render_boundary_is_deterministic();
     test_m11_viewport_render_region_and_handoff_thing_data();
+    test_boot_profile_viewport_render_adapter();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: CSB V1 verified boot handoff exposes the dungeon handle, "

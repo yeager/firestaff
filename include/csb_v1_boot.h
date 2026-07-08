@@ -6,6 +6,7 @@
 
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_viewport_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,6 +89,13 @@ csb_v1_boot_csbgraphics_cache(const CSB_V1_BootProfile *profile);
 const uint16_t *
 csb_v1_boot_csbgraphics_skin_def_words(const CSB_V1_BootProfile *profile,
                                        size_t *out_word_count);
+int csb_v1_boot_render_viewport_frame_pc34(
+    void *boot_profile,
+    unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    const CSB_V1_ViewportRuntimeDrawerBinding *drawer_binding,
+    CSB_V1_ViewportRuntimeDrawCounts *out_counts);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *
