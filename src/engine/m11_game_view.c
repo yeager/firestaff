@@ -12313,11 +12313,12 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             !state->theronState.level_loaded) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
-        theron_v1_world_tick(world);
-        state->theronState.party_x = world->party.leader_x;
-        state->theronState.party_y = world->party.leader_y;
-        state->theronState.party_dir = world->party.leader_dir;
-        state->theronState.tick_count = (int)world->world_tick;
+        (void)theron_v1_boot_runtime_tick_world(
+            world,
+            &state->theronState.party_x,
+            &state->theronState.party_y,
+            &state->theronState.party_dir,
+            &state->theronState.tick_count);
         return M11_GAME_INPUT_REDRAW;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
@@ -13878,11 +13879,23 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
          * who only pressed arrow keys will see strafe become a no-op
          * (no harm) and turn is still reachable via Q/E/Home/End. */
         if (input == M12_MENU_INPUT_TURN_LEFT) {
-            (void)theron_v1_turn_party(world, -1);
+            (void)theron_v1_boot_runtime_turn_party(
+                world,
+                -1,
+                &state->theronState.party_x,
+                &state->theronState.party_y,
+                &state->theronState.party_dir,
+                &state->theronState.tick_count);
             moved = 1;
             m11_set_status(state, "TURN", "LEFT");
         } else if (input == M12_MENU_INPUT_TURN_RIGHT) {
-            (void)theron_v1_turn_party(world, 1);
+            (void)theron_v1_boot_runtime_turn_party(
+                world,
+                1,
+                &state->theronState.party_x,
+                &state->theronState.party_y,
+                &state->theronState.party_dir,
+                &state->theronState.tick_count);
             moved = 1;
             m11_set_status(state, "TURN", "RIGHT");
         } else if (input == M12_MENU_INPUT_LEFT ||
@@ -13898,7 +13911,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
              * then MOVESENS.C F0267 resolves movement/sensors.  Theron uses
              * its source-locked THQUEST.ASM T600/T700 adapter here so the M11
              * path gets post-move effects instead of mutating coordinates. */
-            moveResult = theron_v1_move_party(world, dir);
+            moveResult = theron_v1_boot_runtime_move_party(
+                world,
+                dir,
+                -1,
+                &state->theronState.party_x,
+                &state->theronState.party_y,
+                &state->theronState.party_dir,
+                &state->theronState.tick_count);
             if (moveResult == THERON_MOVE_EXIT) {
                 Theron_StartupActionHostReceipt receipt;
                 (void)theron_v1_boot_startup_return_to_stage_select_after_exit_profile_host_receipt(
@@ -13915,7 +13935,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         } else if (input == M12_MENU_INPUT_DOWN) {
             int oldDir = world->party.leader_dir & 3;
             int dir = (oldDir + 2) & 3;
-            int moveResult = theron_v1_move_party(world, dir);
+            int moveResult = theron_v1_boot_runtime_move_party(
+                world,
+                dir,
+                oldDir,
+                &state->theronState.party_x,
+                &state->theronState.party_y,
+                &state->theronState.party_dir,
+                &state->theronState.tick_count);
             if (moveResult == THERON_MOVE_EXIT) {
                 Theron_StartupActionHostReceipt receipt;
                 (void)theron_v1_boot_startup_return_to_stage_select_after_exit_profile_host_receipt(
@@ -13927,24 +13954,22 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     &receipt);
             }
             moved = (moveResult != THERON_MOVE_BLOCKED);
-            if (moved) {
-                world->party.leader_dir = (int8_t)oldDir;
-            }
             m11_set_status(state, "MOVE",
                            moved ? "THERON STEPPED BACK" : "BLOCKED");
         } else if (input == M12_MENU_INPUT_ACCEPT ||
                    input == M12_MENU_INPUT_ACTION) {
-            theron_v1_world_tick(world);
+            (void)theron_v1_boot_runtime_tick_world(
+                world,
+                &state->theronState.party_x,
+                &state->theronState.party_y,
+                &state->theronState.party_dir,
+                &state->theronState.tick_count);
             moved = 1;
             m11_set_status(state, "WAIT", "THERON TICK");
         }
         if (!moved) {
             return M11_GAME_INPUT_IGNORED;
         }
-        state->theronState.party_x = world->party.leader_x;
-        state->theronState.party_y = world->party.leader_y;
-        state->theronState.party_dir = world->party.leader_dir;
-        state->theronState.tick_count = (int)world->world_tick;
         return M11_GAME_INPUT_REDRAW;
     }
 

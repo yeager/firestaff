@@ -516,6 +516,24 @@ int theron_v1_boot_startup_return_to_stage_select_after_exit_profile_host_receip
     Theron_StartupActionHostReceipt *out_receipt,
     const void *boot_profile,
     Theron_V1_World *world);
+int theron_v1_boot_runtime_tick_world(Theron_V1_World *world,
+                                      int *out_x,
+                                      int *out_y,
+                                      int *out_dir,
+                                      int *out_tick);
+int theron_v1_boot_runtime_turn_party(Theron_V1_World *world,
+                                      int turn,
+                                      int *out_x,
+                                      int *out_y,
+                                      int *out_dir,
+                                      int *out_tick);
+int theron_v1_boot_runtime_move_party(Theron_V1_World *world,
+                                      int direction,
+                                      int restore_direction,
+                                      int *out_x,
+                                      int *out_y,
+                                      int *out_dir,
+                                      int *out_tick);
 
 /* theron_v1_boot_verified_path_is_stale — decide whether a previously
  * verified Track 02 path/MD5 pair still matches the bytes on disk.
