@@ -2400,14 +2400,23 @@ static void orch_cmd_attack_target_square_compat(
     int mapX = 0;
     int mapY = 0;
     if (world) {
-        mapIndex = world->party.mapIndex;
-        mapX = world->party.mapX;
-        mapY = world->party.mapY;
-        switch (direction & 3) {
-            case DIR_NORTH: mapY--; break;
-            case DIR_EAST:  mapX++; break;
-            case DIR_SOUTH: mapY++; break;
-            case DIR_WEST:  mapX--; break;
+        DM1_MeleeF0402CommandDecodeInputPc34 in;
+        DM1_MeleeF0402CommandDecodePlanPc34 plan;
+        memset(&in, 0, sizeof(in));
+        memset(&plan, 0, sizeof(plan));
+        in.reserved2 = CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
+            (((unsigned int)(direction & 3)
+              << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) &
+             CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK);
+        in.partyMapIndex = world->party.mapIndex;
+        in.partyMapX = world->party.mapX;
+        in.partyMapY = world->party.mapY;
+        in.partyDirection = world->party.direction;
+        if (dm1_v1_melee_command_decode_plan_f0402_pc34(&in, &plan) &&
+            plan.valid) {
+            mapIndex = plan.targetMapIndex;
+            mapX = plan.targetMapX;
+            mapY = plan.targetMapY;
         }
     }
     if (outMapIndex) *outMapIndex = mapIndex;
@@ -2747,7 +2756,7 @@ static int orch_cmd_attack_disrupt_material_blocked_f0407_compat(
 static int orch_cmd_attack_resolve_target_compat(
     const struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
-    int targetDirection,
+    const DM1_MeleeF0402CommandDecodePlanPc34* decodePlan,
     int* outGroupIndex,
     int* outCreatureIndex)
 {
@@ -2756,22 +2765,14 @@ static int orch_cmd_attack_resolve_target_compat(
 
     if (outGroupIndex) *outGroupIndex = -1;
     if (outCreatureIndex) *outCreatureIndex = -1;
-    if (!world || !input || !world->things) return 0;
+    if (!world || !input || !decodePlan || !world->things) return 0;
 
-    groupIndex = (int)input->commandArg2;
-    creatureIndex = (int)input->reserved;
-    if (input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34) {
-        int dx = 0;
-        int dy = 0;
-        int targetMapX;
-        int targetMapY;
-        F0701_MOVEMENT_GetStepDelta_Compat(
-            targetDirection, MOVE_FORWARD, &dx, &dy);
-        targetMapX = world->party.mapX + dx;
-        targetMapY = world->party.mapY + dy;
+    groupIndex = decodePlan->directGroupIndex;
+    creatureIndex = decodePlan->directCreatureIndex;
+    if (decodePlan->requestedAutoTarget) {
         if (!orch_cmd_attack_find_group_on_square_compat(
-                world, world->party.mapIndex, targetMapX, targetMapY,
-                &groupIndex)) {
+                world, decodePlan->targetMapIndex, decodePlan->targetMapX,
+                decodePlan->targetMapY, &groupIndex)) {
             return 0;
         }
     }
@@ -2780,10 +2781,10 @@ static int orch_cmd_attack_resolve_target_compat(
         !world->things->groups) {
         return 0;
     }
-    if (input->reserved == CMD_ATTACK_CREATURE_AUTO_PC34) {
+    if (decodePlan->requestedAutoCreature) {
         creatureIndex = orch_cmd_attack_f0177_creature_slot_compat(
             world, (int)input->commandArg1, groupIndex,
-            targetDirection);
+            decodePlan->targetDirection);
         if (creatureIndex < 0 ||
             creatureIndex > (int)world->things->groups[groupIndex].count) {
             creatureIndex = orch_cmd_attack_first_living_creature_compat(
@@ -6602,7 +6603,12 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             world, (int)input->commandArg1, &weaponInfo) > 0;
         memset(&decodeIn, 0, sizeof(decodeIn));
         memset(&decodePlan, 0, sizeof(decodePlan));
+        decodeIn.commandArg2 = input->commandArg2;
+        decodeIn.reserved = input->reserved;
         decodeIn.reserved2 = input->reserved2;
+        decodeIn.partyMapIndex = world ? world->party.mapIndex : 0;
+        decodeIn.partyMapX = world ? world->party.mapX : 0;
+        decodeIn.partyMapY = world ? world->party.mapY : 0;
         decodeIn.partyDirection = world ? world->party.direction : 0;
         (void)dm1_v1_melee_command_decode_plan_f0402_pc34(
             &decodeIn, &decodePlan);
@@ -6653,7 +6659,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 return 1;
             }
             targetResolved = orch_cmd_attack_resolve_target_compat(
-                world, input, targetDirection, &groupIndex, &creatureIndex);
+                world, input, &decodePlan, &groupIndex, &creatureIndex);
             if (targetResolved) {
                 reachBlocked =
                     orch_cmd_attack_champion_reach_blocked_f0407_compat(
@@ -6667,8 +6673,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 DM1_MeleeF0402PreflightPlanPc34 preflightPlan;
                 memset(&preflightIn, 0, sizeof(preflightIn));
                 memset(&preflightPlan, 0, sizeof(preflightPlan));
-                preflightIn.requestedAutoTarget =
-                    input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+                preflightIn.requestedAutoTarget = decodePlan.requestedAutoTarget;
                 preflightIn.hasLiveActionIndex = decodePlan.hasLiveActionIndex;
                 preflightIn.hasLiveGroupTable =
                     orch_cmd_attack_has_live_group_table_compat(world);
@@ -6710,8 +6715,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 DM1_MeleeF0402PreflightPlanPc34 preflightPlan;
                 memset(&preflightIn, 0, sizeof(preflightIn));
                 memset(&preflightPlan, 0, sizeof(preflightPlan));
-                preflightIn.requestedAutoTarget =
-                    input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+                preflightIn.requestedAutoTarget = decodePlan.requestedAutoTarget;
                 preflightIn.hasLiveActionIndex = decodePlan.hasLiveActionIndex;
                 preflightIn.hasLiveGroupTable =
                     orch_cmd_attack_has_live_group_table_compat(world);
@@ -6830,7 +6834,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 }
             }
         } else {
-            if (input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34) {
+            if (decodePlan.requestedAutoTarget) {
                 /* ReDMCSB PROJEXPL.C F0231 lines 1464-1468 rejects invalid
                  * champion ordinals and champions with no current health
                  * before damage/stamina side effects.  Live auto-target

@@ -341,10 +341,15 @@ int dm1_v1_melee_command_decode_plan_f0402_pc34(
     memset(out, 0, sizeof(*out));
     out->actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
     out->actionSkillIndex = -1;
+    out->directGroupIndex = -1;
+    out->directCreatureIndex = -1;
     if (!in) return 0;
 
     out->valid = 1;
     out->targetDirection = in->partyDirection & 3;
+    out->targetMapIndex = in->partyMapIndex;
+    out->targetMapX = in->partyMapX;
+    out->targetMapY = in->partyMapY;
     out->hasLiveActionIndex =
         (in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) != 0u;
     out->hasLegacyMarker =
@@ -355,6 +360,23 @@ int dm1_v1_melee_command_decode_plan_f0402_pc34(
         out->targetDirection =
             (int)((in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
                   CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) & 3;
+    }
+    switch (out->targetDirection & 3) {
+    case DIR_NORTH: out->targetMapY--; break;
+    case DIR_EAST:  out->targetMapX++; break;
+    case DIR_SOUTH: out->targetMapY++; break;
+    case DIR_WEST:  out->targetMapX--; break;
+    }
+
+    out->requestedAutoTarget =
+        in->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+    out->requestedAutoCreature =
+        in->reserved == CMD_ATTACK_CREATURE_AUTO_PC34;
+    if (!out->requestedAutoTarget) {
+        out->directGroupIndex = (int)in->commandArg2;
+    }
+    if (!out->requestedAutoCreature) {
+        out->directCreatureIndex = (int)in->reserved;
     }
 
     actionIndex = out->hasLiveActionIndex
@@ -375,10 +397,11 @@ int dm1_v1_melee_command_decode_plan_f0402_pc34(
     }
     out->actionSkillIndex = route.skillIndex;
 
-    /* ReDMCSB: MENU.C F0407 lines 1266-1272 selects target direction,
+    /* ReDMCSB: MENU.C F0407 lines 1266-1272 selects target square/direction,
      * G0496 skill route, and G0492/G0493 action tables before F0402.  The
-     * Firestaff CMD_ATTACK transport stores those source facts in reserved2;
-     * DM1 owns the decode/default policy, M10 only supplies the raw tick. */
+     * Firestaff CMD_ATTACK transport stores those source facts in arg/reserved2
+     * fields; DM1 owns the decode/default policy, M10 supplies the raw tick and
+     * later resolves live thing-list data. */
     return 1;
 }
 
