@@ -1059,6 +1059,50 @@ int main(void)
                host_receipt.mode_update.save_select_active == 1 &&
                strcmp(host_receipt.status, "NEXUS LOAD GAME") == 0,
            "startup title action helper can return M11-ready host receipt directly");
+    {
+        Nexus_V1_StartupHostFacts title_facts;
+        Nexus_V1_StartupHostActionReceipt title_action_receipt;
+
+        memset(&title_facts, 0, sizeof(title_facts));
+        title_facts.title_active = 1;
+        title_facts.title_frame = nexus_v1_boot_start_ready_frames();
+        title_facts.slot_mask = menu.slot_mask;
+        expect(nexus_v1_startup_execute_title_firestaff_input_from_host_facts_with_receipt(
+                   &title_facts,
+                   9,
+                   &title_execution,
+                   &title_action_receipt) &&
+                   !title_action_receipt.save_state_receipt_valid &&
+                   !title_action_receipt.champion_state_receipt_valid &&
+                   title_action_receipt.host_receipt.input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   title_action_receipt.host_receipt.mode_update
+                       .set_save_select_active &&
+                   strcmp(title_action_receipt.host_receipt.status,
+                          "NEXUS LOAD GAME") == 0,
+               "startup title keyboard wrapper returns one M11-ready action receipt");
+        title_facts.title_frame = 30;
+        expect(nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
+                   &title_facts,
+                   &title_execution,
+                   &title_action_receipt) &&
+                   title_execution.kind ==
+                       NEXUS_V1_STARTUP_TITLE_EXEC_HOLD_TITLE &&
+                   title_action_receipt.host_receipt.input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   !title_action_receipt.host_receipt.mode_update
+                        .set_save_select_active &&
+                   strcmp(title_action_receipt.host_receipt.status,
+                          "NEXUS TITLE") == 0,
+               "startup title pointer wrapper preserves boot hold gate");
+        title_facts.title_active = 0;
+        expect(!nexus_v1_startup_execute_title_firestaff_input_from_host_facts_with_receipt(
+                   &title_facts,
+                   9,
+                   &title_execution,
+                   &title_action_receipt),
+               "startup title keyboard wrapper rejects inactive host facts");
+    }
     expect(nexus_v1_startup_title_handle_hit(
                54,
                menu.slot_mask,
