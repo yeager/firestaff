@@ -57,6 +57,18 @@ typedef struct {
 
 typedef struct {
     int handled;
+    int shouldConsumePotion;
+    int shouldMaterialize;
+    unsigned short associatedThing;
+    unsigned short droppedThing;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int cell;
+} DM1_ProjectileMaterializationPlanPc34;
+
+typedef struct {
+    int handled;
     int shouldApplyDamage;
     int slotIndex;
     int damageApplied;
@@ -136,6 +148,12 @@ int dm1_v1_projectile_associated_thing_disposition_pc34(
     int associatedThingMovedToGroup,
     int potionCount,
     DM1_ProjectileAssociatedThingDispositionPc34* outDisposition);
+int dm1_v1_projectile_materialization_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    int associatedThingMovedToGroup,
+    int potionCount,
+    DM1_ProjectileMaterializationPlanPc34* outPlan);
 int dm1_v1_group_creature_index_for_cell_pc34(
     const struct DungeonGroup_Compat* group,
     int targetCell);

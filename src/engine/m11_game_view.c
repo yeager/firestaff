@@ -27041,15 +27041,15 @@ static int m11_maybe_consume_thrown_potion_on_impact(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result) {
-    DM1_ProjectileAssociatedThingDispositionPc34 disposition;
+    DM1_ProjectileMaterializationPlanPc34 plan;
     int potionCount;
     if (!state || !projectile || !result || !state->world.things) return 0;
     potionCount = state->world.things->potions
                       ? state->world.things->potionCount
                       : 0;
-    if (!dm1_v1_projectile_associated_thing_disposition_pc34(
-            projectile, result, 0, potionCount, &disposition) ||
-        !disposition.shouldConsumePotion) {
+    if (!dm1_v1_projectile_materialization_plan_pc34(
+            projectile, result, 0, potionCount, &plan) ||
+        !plan.shouldConsumePotion) {
         return 0;
     }
     /* ReDMCSB PROJEXPL.C F0217 lines 444-455 records thrown Ven/Ful
@@ -27057,7 +27057,7 @@ static int m11_maybe_consume_thrown_potion_on_impact(
      * thing, so the associated potion object must leave any live object
      * chain instead of remaining recoverable after the explosion. */
     m11_set_object_drop_next(state->world.things,
-                             disposition.associatedThing, THING_NONE);
+                             plan.associatedThing, THING_NONE);
     return 1;
 }
 
@@ -27124,33 +27124,32 @@ static int m11_link_projectile_thing_to_square_tail(
 static int m11_materialize_projectile_associated_thing(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
     int associatedThingMovedToGroup) {
-    DM1_ProjectileAssociatedThingDispositionPc34 disposition;
+    DM1_ProjectileMaterializationPlanPc34 plan;
     if (!state || !projectile || associatedThingMovedToGroup) return 1;
     if (!state->world.things || !state->world.dungeon) return 1;
-    if (!dm1_v1_projectile_associated_thing_disposition_pc34(
-            projectile, NULL, associatedThingMovedToGroup,
+    if (!dm1_v1_projectile_materialization_plan_pc34(
+            projectile, result, associatedThingMovedToGroup,
             state->world.things->potions ? state->world.things->potionCount : 0,
-            &disposition)) {
+            &plan)) {
         return 0;
     }
-    if (!disposition.shouldMaterialize) {
+    if (!plan.shouldMaterialize) {
         return 1;
     }
 
-    /* ReDMCSB PROJEXPL.C F0215 lines 248-259 materializes
-     * Projectile.Slot on the projectile's stored square when F0217 does not
-     * delete a potion or pass GROUP.Slot for kept sharp weapons.  F0219
-     * lines 717-725 resolves wall/door blockers before committing the
-     * destination move, so use the projectile source square and cell. */
+    /* ReDMCSB PROJEXPL.C F0215 lines 248-259 materializes Projectile.Slot
+     * on the DM1-selected square/cell when F0217 does not delete a potion
+     * or pass GROUP.Slot for kept sharp weapons. */
     if (!m11_link_projectile_thing_to_square_tail(
-            &state->world, projectile->mapIndex, projectile->mapX,
-            projectile->mapY, disposition.droppedThing)) {
+            &state->world, plan.mapIndex, plan.mapX,
+            plan.mapY, plan.droppedThing)) {
         return 0;
     }
-    m11_set_object_drop_next(state->world.things, disposition.associatedThing,
+    m11_set_object_drop_next(state->world.things, plan.associatedThing,
                              THING_ENDOFLIST);
-    m11_set_next_thing(state->world.things, disposition.associatedThing,
+    m11_set_next_thing(state->world.things, plan.associatedThing,
                        THING_ENDOFLIST);
     return 1;
 }
@@ -27786,31 +27785,26 @@ static void m11_projectile_apply_impact(
                     state, groupThing, impactMap, impactX, impactY);
                 m11_write_raw_group_record(state->world.things, gIdx);
                 (void)m11_materialize_projectile_associated_thing(
-                    state, p, associatedThingMovedToGroup);
+                    state, p, r, associatedThingMovedToGroup);
                 return;
             }
         }
         m11_log_event(state, M11_COLOR_LIGHT_RED,
                       "T%u: %s STRIKES CREATURE",
                       (unsigned int)state->world.gameTick, name);
-        (void)m11_materialize_projectile_associated_thing(state, p, 0);
+        (void)m11_materialize_projectile_associated_thing(state, p, r, 0);
         return;
     }
 
     if (r->resultKind == PROJECTILE_RESULT_HIT_CHAMPION
             && r->emittedCombatAction) {
         DM1_ProjectileChampionImpactPlanPc34 impactPlan;
-        struct ProjectileInstance_Compat impactProjectile = *p;
         int ci = r->outAction.defenderSlotOrCreatureIndex;
         int championPresent = (ci >= 0 && ci < CHAMPION_MAX_PARTY &&
                                state->world.party.champions[ci].present);
         memset(&impactPlan, 0, sizeof(impactPlan));
         (void)dm1_v1_projectile_champion_impact_plan_pc34(
             p, r, championPresent, &impactPlan);
-        impactProjectile.mapIndex = impactPlan.impactMapIndex;
-        impactProjectile.mapX = impactPlan.impactMapX;
-        impactProjectile.mapY = impactPlan.impactMapY;
-        impactProjectile.cell = impactPlan.impactCell;
         if (impactPlan.handled && impactPlan.championPresent &&
             impactPlan.championIndex >= 0 &&
             impactPlan.championIndex < CHAMPION_MAX_PARTY) {
@@ -27881,7 +27875,7 @@ static void m11_projectile_apply_impact(
         /* ReDMCSB PROJEXPL.C:F0219 commits a cross-cell champion hit to
          * the resolved projectile square before F0217 reaches F0215. */
         (void)m11_materialize_projectile_associated_thing(
-            state, &impactProjectile, 0);
+            state, p, r, 0);
         return;
     }
 
@@ -27919,7 +27913,7 @@ static void m11_projectile_apply_impact(
         default:
             break;
     }
-    (void)m11_materialize_projectile_associated_thing(state, p, 0);
+    (void)m11_materialize_projectile_associated_thing(state, p, r, 0);
 }
 
 /* Public per-tick advance: iterate live projectiles, drive F0811
@@ -27979,7 +27973,7 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state) {
                      * annihilation order-independent: both live projectile
                      * slots are consumed. */
                     (void)m11_materialize_projectile_associated_thing(
-                        state, other, 0);
+                        state, other, &result, 0);
                     (void)F0813_PROJECTILE_Despawn_Compat(
                         &state->world.projectiles, otherIndex);
                 }
