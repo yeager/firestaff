@@ -2493,7 +2493,7 @@ static void m11_csb_startup_host_facts(
     if (!state) {
         return;
     }
-    (void)csb_v1_startup_host_facts_from_runtime_state_pc34(
+    (void)csb_v1_boot_startup_host_facts_from_runtime_state_pc34(
         facts,
         state->csbState.startup_title_active,
         state->csbState.startup_title_frame,

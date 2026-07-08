@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB boot startup host-facts adapter: CSB boot now owns the public runtime-state-to-startup-host-facts wrapper. M11 no longer calls `csb_v1_startup_host_facts_from_runtime_state_pc34()` directly. Verification: strict compiles for `csb_v1_boot.c`, `m11_game_view.c`, and CSB handoff test object; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron boot startup session-facts adapter: Theron boot now owns the public runtime-state-to-startup-session-facts wrapper. M11 no longer calls `theron_v1_startup_session_facts_from_runtime()` directly. Verification: strict compiles for `theron_v1_boot.c` and `m11_game_view.c`; direct Theron startup-flow probe passed 567/567; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 startup runtime-state wrappers: DM2 boot now owns startup idle, keyboard input, pointer input, and presentation command wrappers from runtime state. M11 no longer has a local DM2 startup host-facts adapter. Verification: strict compiles for `dm2_v1_boot.c`, `dm2_v1_runtime.c`, `dm2_v1_startup_menu.c`, `m11_game_view.c`, and the DM2 boot smoke object; direct DM2 boot profile smoke passed 60/60; Phase A passed 24/24; `git diff --check` passed.
