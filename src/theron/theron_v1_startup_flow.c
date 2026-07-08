@@ -1,5 +1,7 @@
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_chapter_marker.h"
+#include "theron_v1_startup_runtime_entry.h"
+#include "theron_v1_startup_save_resume.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -1893,6 +1895,186 @@ int theron_v1_startup_execute_flow_plan_from_session_with_host_receipts(
         out_execution,
         out_host_receipt,
         out_state_receipt);
+}
+
+void theron_v1_startup_action_host_receipt_init(
+    Theron_StartupActionHostReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->result = THERON_STARTUP_OK;
+    theron_v1_startup_execution_init(&receipt->flow_execution);
+    theron_v1_startup_host_receipt_init(&receipt->host_receipt);
+    theron_v1_startup_state_receipt_init(&receipt->state_receipt);
+}
+
+int theron_v1_startup_execute_action_from_session_with_host_receipt(
+    const Theron_StartupAction *action,
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    Theron_StartupActionPlan plan;
+    Theron_StartupFlow flow;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!action || !session || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+        }
+        return 0;
+    }
+    if (!theron_v1_startup_plan_for_action(action, &plan)) {
+        out_receipt->result = THERON_STARTUP_ERR_NULL;
+        return 0;
+    }
+
+    switch (plan.kind) {
+    case THERON_STARTUP_PLAN_SHOW_STAGE_SELECT:
+    case THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR:
+    case THERON_STARTUP_PLAN_CHOOSE_STAGE:
+    case THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR:
+    case THERON_STARTUP_PLAN_TOGGLE_MIRROR:
+        if (!theron_v1_startup_execute_flow_plan_from_session_with_host_receipts(
+                &plan,
+                session,
+                &flow,
+                &out_receipt->flow_execution,
+                &out_receipt->host_receipt,
+                &out_receipt->state_receipt)) {
+            out_receipt->result = out_receipt->flow_execution.result;
+            if (!out_receipt->host_receipt.status) {
+                out_receipt->host_receipt.input_result =
+                    THERON_STARTUP_INPUT_RESULT_REDRAW;
+                out_receipt->host_receipt.status_scope = "STARTUP";
+                out_receipt->host_receipt.status =
+                    out_receipt->result != THERON_STARTUP_OK
+                        ? theron_v1_startup_result_name(out_receipt->result)
+                        : (plan.failure_status ? plan.failure_status
+                                               : "STARTUP ERROR");
+            }
+            return 1;
+        }
+        out_receipt->result = out_receipt->flow_execution.result;
+        out_receipt->state_receipt_valid = 1;
+        return 1;
+
+    case THERON_STARTUP_PLAN_RETURN_TO_LAUNCHER:
+        out_receipt->host_receipt.input_result =
+            THERON_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER;
+        out_receipt->host_receipt.status_scope =
+            plan.status_scope ? plan.status_scope : "RETURN";
+        out_receipt->host_receipt.status =
+            plan.status ? plan.status : "BACK TO LAUNCHER";
+        return 1;
+
+    case THERON_STARTUP_PLAN_CONTINUE_SAVE:
+        if (!session->world || !session->boot_profile) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status =
+                plan.failure_status ? plan.failure_status : "CONTINUE FAILED";
+            return 1;
+        }
+        if (!theron_v1_startup_continue_apply_boot_profile_with_host_receipts(
+                (Theron_V1_World *)session->world,
+                (Theron_V1StartupResumeClaim)session->resume_claim,
+                session->tqsv_slot,
+                session->boot_profile,
+                session->srm_slot,
+                (Theron_V1SrmProgressImportStatus)session->srm_import_status,
+                session->srm_root,
+                &plan,
+                NULL,
+                &out_receipt->host_receipt,
+                &out_receipt->state_receipt,
+                out_receipt->runtime_receipt,
+                sizeof(out_receipt->runtime_receipt))) {
+            out_receipt->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
+            if (!out_receipt->host_receipt.status) {
+                out_receipt->host_receipt.input_result =
+                    THERON_STARTUP_INPUT_RESULT_REDRAW;
+                out_receipt->host_receipt.status_scope = "STARTUP";
+                out_receipt->host_receipt.status =
+                    out_receipt->runtime_receipt[0]
+                        ? out_receipt->runtime_receipt
+                        : (plan.failure_status ? plan.failure_status
+                                               : "CONTINUE FAILED");
+            }
+            return 1;
+        }
+        out_receipt->state_receipt_valid = 1;
+        return 1;
+
+    case THERON_STARTUP_PLAN_ENTER_FORCEFIELD:
+        if (!session->world || !session->boot_profile) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status =
+                plan.failure_status ? plan.failure_status : "FORCEFIELD FAILED";
+            return 1;
+        }
+        if (!theron_v1_startup_flow_rebuild_from_session_with_receipt(
+                session,
+                &flow,
+                &out_receipt->state_receipt)) {
+            snprintf(out_receipt->runtime_receipt,
+                     sizeof(out_receipt->runtime_receipt),
+                     "startup-flow rebuild failed");
+            out_receipt->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status =
+                out_receipt->runtime_receipt[0]
+                    ? out_receipt->runtime_receipt
+                    : (plan.failure_status ? plan.failure_status
+                                           : "FORCEFIELD FAILED");
+            return 1;
+        }
+        if (!theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_receipts(
+                &flow,
+                (Theron_V1_World *)session->world,
+                session->hucard_rom,
+                session->hucard_rom_size,
+                session->boot_profile,
+                session->startup_roster_names,
+                session->startup_roster_name_count,
+                &plan,
+                NULL,
+                &out_receipt->host_receipt,
+                &out_receipt->state_receipt,
+                out_receipt->runtime_receipt,
+                sizeof(out_receipt->runtime_receipt))) {
+            out_receipt->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
+            if (!out_receipt->host_receipt.status) {
+                out_receipt->host_receipt.input_result =
+                    THERON_STARTUP_INPUT_RESULT_REDRAW;
+                out_receipt->host_receipt.status_scope = "STARTUP";
+                out_receipt->host_receipt.status =
+                    out_receipt->runtime_receipt[0]
+                        ? out_receipt->runtime_receipt
+                        : (plan.failure_status ? plan.failure_status
+                                               : "FORCEFIELD FAILED");
+            }
+            return 1;
+        }
+        out_receipt->state_receipt_valid = 1;
+        return 1;
+
+    case THERON_STARTUP_PLAN_IGNORE:
+    default:
+        out_receipt->host_receipt.input_result =
+            THERON_STARTUP_INPUT_RESULT_IGNORED;
+        return 1;
+    }
 }
 
 static void tqr_startup_render_plan_reset(Theron_StartupRenderPlan *plan)
