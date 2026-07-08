@@ -678,11 +678,6 @@ int csb_v1_runtime_detect_variant(const char *gfx_path,
 /*
  * Search for CSB DUNGEON.DAT by hash.
  * ReDMCSB: DUNGEON.C F0237_DUNGEON_DungeonLoad (hash-gated open).
- *
- * Search order:
- *   data_dir/csb/       (canonical per-game subdirectory)
- *   data_dir/           (shared DM1/CSB/DM2 fallback)
- *   data_dir/csb/csb/   (nested double-drop, rare)
  */
 const char *csb_v1_runtime_find_dungeon(const char *data_dir,
                                          CSB_V1_AssetResult *out_result)
@@ -693,7 +688,7 @@ const char *csb_v1_runtime_find_dungeon(const char *data_dir,
     memset(out_result, 0, sizeof(*out_result));
 
     if (!asset_find_by_md5_list(data_dir, g_csb_dungeon_hashes,
-                                 found_path, sizeof(found_path), NULL, 4)) {
+                                 found_path, sizeof(found_path), NULL, 8)) {
         return NULL;
     }
 
@@ -734,13 +729,12 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
     if (!data_dir || !out_result) return NULL;
     memset(out_result, 0, sizeof(*out_result));
 
-    /* 2026-06-20: prefer MD5-hash search so files in arbitrary
-     * subdirs (Meynaf FR hard-disk layouts, CSB expansion sets) are
-     * discovered. Falls back to filname search if no hash match. */
+    /* Prefer MD5-hash search so files in arbitrary subdirs and renamed
+     * user layouts are discovered before any legacy filename fallback. */
     int matchIndex = -1;
     if (asset_find_by_md5_list(data_dir, g_csb_graphics_hashes,
                                  found_path, sizeof(found_path),
-                                 &matchIndex, 4)) {
+                                 &matchIndex, 8)) {
         /* Determine archive kind from the matched hash + extension */
         CSB_V1_AssetGfxArchiveType kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
         const char *base = strrchr(found_path, '/');

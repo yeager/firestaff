@@ -433,7 +433,6 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
         char resolvedDataDir[FSP_PATH_MAX];
         const char* scanRoot = state->config.data_dir;
         dm2_v1_boot_profile_init(&s_dm2_boot);
-        /* Scan assets in data_dir/dm2/ */
         if (!scanRoot || !scanRoot[0]) {
             if (FSP_ResolveDataDir(resolvedDataDir,
                                    sizeof(resolvedDataDir),
@@ -442,11 +441,7 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
             }
         }
         if (scanRoot && scanRoot[0]) {
-            char scan_dir[512];
-            snprintf(scan_dir, sizeof(scan_dir), "%s/dm2", scanRoot);
-            if (dm2_v1_boot_scan_assets(&s_dm2_boot, scan_dir) != 0) {
-                (void)dm2_v1_boot_scan_assets(&s_dm2_boot, scanRoot);
-            }
+            (void)dm2_v1_boot_scan_assets(&s_dm2_boot, scanRoot);
         }
         /* Set save root */
         if (state->config.save_dir) {
