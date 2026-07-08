@@ -17851,14 +17851,12 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
     M11_ViewportCell frontCell;
     unsigned short thing;
-    int visibleWallCell;
 
     if (!state || !state->active || !state->mirrorCatalogAvailable ||
         !m11_get_front_cell(state, &frontCell) || !frontCell.valid ||
         !state->world.things || !state->world.things->sensors) {
         return -1;
     }
-    visibleWallCell = (state->world.party.direction + 2) & 3;
 
     if (m11_viewport_cell_is_wall_like(&frontCell) &&
         frontCell.championPortraitOrdinal >= 0 &&
@@ -17900,15 +17898,8 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
         if (thingType == THING_TYPE_SENSOR &&
             thingIndex >= 0 && thingIndex < state->world.things->sensorCount &&
             state->world.things->sensors[thingIndex].sensorType == 127) {
-            int sensorData = (int)state->world.things->sensors[thingIndex].sensorData;
-            if ((int)THING_GET_CELL(thing) != visibleWallCell) {
-                thing = m11_raw_next_thing(state->world.things, thing);
-                continue;
-            }
-            if (!m11_viewport_cell_is_wall_like(&frontCell)) {
-                thing = m11_raw_next_thing(state->world.things, thing);
-                continue;
-            }
+            int sensorData;
+            int ordinal;
             /* ReDMCSB stores SquareFirstThings as a compact table keyed by
              * MASK0x0010_THING_LIST_PRESENT squares.  Use the same source
              * lookup as the HoC viewport path; dense map indexing can miss
@@ -17916,10 +17907,18 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
             /* sensorData is a 0-based portrait ordinal within the C026
              * graphic (24 portraits, 8 cols x 3 rows).  Clamp to a
              * valid catalog range. */
-            if (sensorData >= 0 && sensorData < state->mirrorCatalog.count) {
-                return sensorData;
+            sensorData = (int)state->world.things->sensors[thingIndex].sensorData;
+            ordinal = dm1_v1_front_mirror_c127_ordinal_pc34(
+                state->world.party.mapIndex,
+                state->world.party.direction,
+                (int)THING_GET_CELL(thing),
+                (int)state->world.things->sensors[thingIndex].sensorType,
+                sensorData,
+                state->mirrorCatalog.count,
+                m11_viewport_cell_is_wall_like(&frontCell));
+            if (ordinal >= 0) {
+                return ordinal;
             }
-            return -1;
         }
         thing = m11_raw_next_thing(state->world.things, thing);
     }

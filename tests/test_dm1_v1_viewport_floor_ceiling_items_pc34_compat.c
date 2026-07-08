@@ -252,6 +252,26 @@ static void test_item_sprite_metadata_ownership(void)
     expect_int("hoc.payload.sensor.map1",
                dm1_v1_hall_candidate_payload_control_thing_pc34(1, 3, -1), 0,
                "payload hiding is Hall of Champions map-0 scoped");
+    expect_int("hoc.c127.front.wall",
+               dm1_v1_front_mirror_c127_ordinal_pc34(0, 0, 2, 127, 13, 24, 1),
+               13,
+               "DUNGEON.C F0172 C127 front wall stores G0289");
+    expect_int("hoc.c127.front.map0_carrier",
+               dm1_v1_front_mirror_c127_ordinal_pc34(0, 1, 3, 127, 7, 24, 0),
+               7,
+               "MOVESENS.C C127 HoC carrier still reaches REVIVE.C F0280");
+    expect_int("hoc.c127.side_rejected",
+               dm1_v1_front_mirror_c127_ordinal_pc34(0, 0, 1, 127, 13, 24, 1),
+               -1,
+               "DUNGEON.C F0172 only front wall side sets G0289");
+    expect_int("hoc.c127.non_hoc_corridor_rejected",
+               dm1_v1_front_mirror_c127_ordinal_pc34(1, 0, 2, 127, 13, 24, 0),
+               -1,
+               "non-HoC corridor C127 does not draw floating portraits");
+    expect_int("hoc.c127.ordinal_rejected",
+               dm1_v1_front_mirror_c127_ordinal_pc34(0, 0, 2, 127, 24, 24, 1),
+               -1,
+               "C026 portrait ordinal is clamped to catalog count");
 
     expect_int("object.aspect.info.0", (int)dm1_object_aspect_graphic_info(0), 0x11,
                "DUNVIEW.C G0209 object aspect GraphicInfo");
