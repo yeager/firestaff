@@ -10832,12 +10832,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 return 0;
             }
         } else {
-            DM2_V1_BootRuntimeStartupSnapshot snapshot;
             DM2_V1_StartupLaunchReceipt receipt;
-            m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-            if (!dm2_v1_boot_startup_launch_from_launch_snapshot(
+            if (!dm2_v1_boot_startup_launch_from_launch(
                     &launch,
-                    &snapshot,
                     &receipt)) {
                 (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
                 m11_log_event(state,

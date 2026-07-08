@@ -937,6 +937,26 @@ int dm2_v1_boot_startup_launch_from_launch_snapshot(
                                                     out_receipt);
 }
 
+int dm2_v1_boot_startup_launch_from_launch(
+    const DM2_V1_BootStartupLaunch *launch,
+    DM2_V1_StartupLaunchReceipt *out_receipt)
+{
+    if (!launch || !launch->profile) {
+        if (out_receipt) {
+            dm2_v1_startup_launch_receipt_clear(out_receipt);
+        }
+        return 0;
+    }
+    return dm2_v1_boot_startup_launch_from_runtime_state(
+        launch->profile,
+        0,
+        NULL,
+        0,
+        0u,
+        0,
+        out_receipt);
+}
+
 int dm2_v1_boot_startup_advance_idle_from_runtime_state(
     const DM2_V1_BootProfile *profile,
     int startup_menu_active,

@@ -430,12 +430,22 @@ static void test_startup_host_facts_from_boot_profile(void)
               &launch_receipt) == 1 &&
               launch_receipt.host_receipt.status != NULL,
           "DM2 boot builds startup launch receipt from launch-owned profile");
+    CHECK(dm2_v1_boot_startup_launch_from_launch(
+              &launch,
+              &launch_receipt) == 1 &&
+              launch_receipt.menu_state_receipt_valid &&
+              launch_receipt.host_receipt.status != NULL,
+          "DM2 boot builds initial startup launch receipt without M11 snapshot");
     launch.profile = NULL;
     CHECK(dm2_v1_boot_startup_launch_from_launch_snapshot(
               &launch,
               &snapshot,
               &launch_receipt) == 0,
           "DM2 boot launch-owned wrapper rejects missing profile");
+    CHECK(dm2_v1_boot_startup_launch_from_launch(
+              &launch,
+              &launch_receipt) == 0,
+          "DM2 boot initial launch wrapper rejects missing profile");
     CHECK(dm2_v1_boot_startup_launch_from_runtime_state(
               &profile, 0, NULL, 0, 0u, 0, NULL) == 0,
           "DM2 boot startup launch wrapper rejects NULL receipt");
