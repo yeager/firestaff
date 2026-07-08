@@ -369,7 +369,12 @@ static int is_external_archive_path(const char *path) {
            has_case_suffix(path, ".ar") || has_case_suffix(path, ".deb") ||
            has_case_suffix(path, ".rpm") || has_case_suffix(path, ".xar") ||
            has_case_suffix(path, ".bz2") || has_case_suffix(path, ".xz") ||
-           has_case_suffix(path, ".zst") || has_case_suffix(path, ".lzma");
+           has_case_suffix(path, ".zst") || has_case_suffix(path, ".lzma") ||
+           has_case_suffix(path, ".adf") || has_case_suffix(path, ".adz") ||
+           has_case_suffix(path, ".st") || has_case_suffix(path, ".stx") ||
+           has_case_suffix(path, ".msa") || has_case_suffix(path, ".ipf") ||
+           has_case_suffix(path, ".hfe") || has_case_suffix(path, ".hdm") ||
+           has_case_suffix(path, ".dsk") || has_case_suffix(path, ".ima");
 }
 
 static AssetContainerKind asset_container_kind_from_suffix(const char *path) {
@@ -3032,7 +3037,10 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
         return scan_gzip_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     if (kind == ASSET_CONTAINER_LHA) {
-        return scan_lha_by_md5(path, expectedMd5, outPath, outPathLen);
+        if (scan_lha_by_md5(path, expectedMd5, outPath, outPathLen)) {
+            return 1;
+        }
+        return scan_external_archive_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     if (kind == ASSET_CONTAINER_CHD) {
         return scan_chd_by_md5(path, expectedMd5, outPath, outPathLen);
@@ -3067,7 +3075,10 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
         return scan_gzip_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     if (kind == ASSET_CONTAINER_LHA) {
-        return scan_lha_by_md5_list(path, md5List, md5Count, outPaths, matched);
+        int found = scan_lha_by_md5_list(path, md5List, md5Count, outPaths, matched);
+        if (found >= md5Count) return found;
+        return found + scan_external_archive_by_md5_list(path, md5List, md5Count,
+                                                         outPaths, matched);
     }
     if (kind == ASSET_CONTAINER_CHD) {
         return scan_chd_by_md5_list(path, md5List, md5Count, outPaths, matched);
@@ -3468,7 +3479,10 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
         return gzip_extract_entry_to_path(container, entry, outFilePath);
     }
     if (kind == ASSET_CONTAINER_LHA) {
-        return lha_extract_entry_to_path(container, entry, outFilePath);
+        if (lha_extract_entry_to_path(container, entry, outFilePath)) {
+            return 1;
+        }
+        return external_extract_entry_to_path(container, entry, outFilePath);
     }
     if (kind == ASSET_CONTAINER_CHD) {
         return chd_extract_entry_to_path(container, entry, outFilePath);

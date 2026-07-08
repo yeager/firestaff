@@ -881,6 +881,30 @@ int main(void) {
     remove("asset_find_by_hash_test_tmp/archive.7z");
     remove("asset_find_by_hash_test_tmp/packed_payload.bin");
 
+    if (write_fixture("asset_find_by_hash_test_tmp/GRAPHICS.DAT") &&
+        system("command -v 7zz >/dev/null 2>&1 && "
+               "(cd asset_find_by_hash_test_tmp && "
+               "7zz a -tzip amiga_disk.adf GRAPHICS.DAT >/dev/null 2>&1)") == 0) {
+        remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT");
+        memset(outPath, 0, sizeof(outPath));
+        if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                               outPath, (int)sizeof(outPath), 2) ||
+            !path_has_virtual_entry(outPath, "amiga_disk.adf", "GRAPHICS.DAT")) {
+            cleanup_fixture();
+            fprintf(stderr, "ADF external-container lookup failed: %s\n", outPath);
+            return 1;
+        }
+        if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+            !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+            cleanup_fixture();
+            fprintf(stderr, "virtual ADF external-container extraction failed: %s\n", outPath);
+            return 1;
+        }
+        remove("asset_find_by_hash_test_tmp/extracted.dat");
+    }
+    remove("asset_find_by_hash_test_tmp/amiga_disk.adf");
+    remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT");
+
     if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc.iso")) {
         cleanup_fixture();
         fprintf(stderr, "ISO fixture setup failed\n");
