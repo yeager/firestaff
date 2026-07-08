@@ -88,6 +88,8 @@ static void test_stamina_and_special_flags(void) {
 static void test_tail_adjustments(void) {
     DM1_ActionF0407TailAdjustInputPc34 in;
     DM1_ActionF0407TailAdjustPc34 out;
+    DM1_ActionF0407CompletionInputPc34 completionIn;
+    DM1_ActionF0407CompletionPlanPc34 completionOut;
 
     memset(&in, 0, sizeof(in));
     in.actionIndex = DM1_ACTION_SPELLSHIELD;
@@ -140,6 +142,56 @@ static void test_tail_adjustments(void) {
              "parry melee failure adjust builds");
     CHECK_EQ(out.actionExperienceGain, 3, "parry melee failure halves xp");
     CHECK_EQ(out.disabledTicks, 2, "parry melee failure halves ticks");
+
+    memset(&completionIn, 0, sizeof(completionIn));
+    completionIn.actionIndex = DM1_ACTION_PARRY;
+    completionIn.performed = 0;
+    completionIn.actionExperienceGain = 6;
+    completionIn.disabledTicks = 5;
+    completionIn.meleeFailureTail = 1;
+    CHECK_EQ(dm1_v1_action_completion_plan_f0407_pc34(
+                 &completionIn, &completionOut), 1,
+             "parry completion plan builds");
+    CHECK_EQ(completionOut.actionExperienceGain, 3,
+             "parry completion halves xp");
+    CHECK_EQ(completionOut.disabledTicks, 2,
+             "parry completion halves ticks");
+    CHECK_EQ(completionOut.actionDisabledIndex, DM1_ACTION_PARRY,
+             "parry completion stores action index");
+
+    memset(&completionIn, 0, sizeof(completionIn));
+    completionIn.actionIndex = DM1_ACTION_THROW;
+    completionIn.performed = 1;
+    completionIn.actionExperienceGain = 0;
+    completionIn.disabledTicks = 4;
+    completionIn.pendingActionEnableSlotOrdinal = 1;
+    CHECK_EQ(dm1_v1_action_completion_plan_f0407_pc34(
+                 &completionIn, &completionOut), 1,
+             "throw completion plan builds");
+    CHECK_EQ(completionOut.actionEnableSlotOrdinal, 1,
+             "throw completion keeps action-hand slot");
+
+    completionIn.disabledTicks = 0;
+    CHECK_EQ(dm1_v1_action_completion_plan_f0407_pc34(
+                 &completionIn, &completionOut), 1,
+             "throw f0328-owned completion plan builds");
+    CHECK_EQ(completionOut.preservesExistingActionDisable, 1,
+             "throw preserves f0328 action disable");
+    CHECK_EQ(completionOut.actionEnableSlotOrdinal, 1,
+             "throw f0328 completion keeps action-hand slot");
+
+    memset(&completionIn, 0, sizeof(completionIn));
+    completionIn.actionIndex = DM1_ACTION_SHOOT;
+    completionIn.performed = 1;
+    completionIn.disabledTicks = 0;
+    completionIn.pendingShootReadyHandRefill = 1;
+    CHECK_EQ(dm1_v1_action_completion_plan_f0407_pc34(
+                 &completionIn, &completionOut), 1,
+             "shoot zero completion plan builds");
+    CHECK_EQ(completionOut.actionDisabledIndex, 0xFF,
+             "shoot zero completion no disabled action");
+    CHECK_EQ(completionOut.shouldRefillReadyHandNow, 1,
+             "shoot zero completion refills now");
 }
 
 static void test_action_state_plans(void) {
