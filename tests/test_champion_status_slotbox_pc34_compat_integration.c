@@ -39,6 +39,44 @@ int main(void) {
     }
     if (CHAMPION_Compat_GetStatusSlotBox(8u, &b)) ok = 0;
 
+    {
+        ChampionStatusRectCompat rect;
+        if (CHAMPION_Compat_StatusBoxZoneId(0) != 151 ||
+            CHAMPION_Compat_StatusBoxZoneId(3) != 154 ||
+            CHAMPION_Compat_StatusBoxZoneId(4) != 0) ok = 0;
+        if (!CHAMPION_Compat_StatusBoxZone(3, &rect) ||
+            rect.x != 207 || rect.y != 0 || rect.w != 67 ||
+            rect.h != 29) ok = 0;
+        if (CHAMPION_Compat_StatusBarGraphZoneId(0) != 187 ||
+            CHAMPION_Compat_StatusBarGraphZoneId(3) != 190) ok = 0;
+        if (CHAMPION_Compat_StatusBarZoneId(0) != 195 ||
+            CHAMPION_Compat_StatusBarZoneId(1) != 199 ||
+            CHAMPION_Compat_StatusBarZoneId(2) != 203 ||
+            CHAMPION_Compat_StatusBarZoneId(3) != 0) ok = 0;
+        if (!CHAMPION_Compat_StatusBarZone(2, 1, &rect) ||
+            rect.x != 191 || rect.y != 0 || rect.w != 4 ||
+            rect.h != 25) ok = 0;
+        if (CHAMPION_Compat_StatusHandParentZoneId(3) != 210 ||
+            CHAMPION_Compat_StatusHandZoneId(3, 1) != 218) ok = 0;
+        if (!CHAMPION_Compat_StatusHandZone(3, 1, &rect) ||
+            rect.x != 231 || rect.y != 10 || rect.w != 16 ||
+            rect.h != 16) ok = 0;
+        if (!CHAMPION_Compat_StatusHandIconZone(3, 1, &rect) ||
+            rect.x != 232 || rect.y != 11 || rect.w != 16 ||
+            rect.h != 16) ok = 0;
+        if (!CHAMPION_Compat_StatusHandSlotBoxZone(3, 1, &rect) ||
+            rect.x != 231 || rect.y != 10 || rect.w != 18 ||
+            rect.h != 18) ok = 0;
+        if (CHAMPION_Compat_StatusNameClearZoneId(3) != 162 ||
+            CHAMPION_Compat_StatusNameTextZoneId(3) != 166) ok = 0;
+        if (!CHAMPION_Compat_StatusNameZone(3, &rect) ||
+            rect.x != 207 || rect.y != 0 || rect.w != 43 ||
+            rect.h != 7) ok = 0;
+        if (!CHAMPION_Compat_StatusNameTextZone(3, &rect) ||
+            rect.x != 208 || rect.y != 0 || rect.w != 42 ||
+            rect.h != 7) ok = 0;
+    }
+
     if (CHAMPION_Compat_GetStatusNameBoxCount() != 4u) ok = 0;
     for (i = 0; i < 4; i++) {
         if (!CHAMPION_Compat_GetStatusNameBox(i, &n)) { ok = 0; continue; }
