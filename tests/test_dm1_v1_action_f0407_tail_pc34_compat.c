@@ -1003,6 +1003,11 @@ static void test_melee_action_tick_plan(void) {
              "missing champion rejected");
 
     memset(&decodeIn, 0, sizeof(decodeIn));
+    decodeIn.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+    decodeIn.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
+    decodeIn.partyMapIndex = 4;
+    decodeIn.partyMapX = 10;
+    decodeIn.partyMapY = 20;
     decodeIn.partyDirection = 2;
     decodeIn.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
                          (unsigned int)DM1_ACTION_CHOP |
@@ -1022,7 +1027,19 @@ static void test_melee_action_tick_plan(void) {
              "F0402 command decode direction bit");
     CHECK_EQ(decodeOut.targetDirection, 3,
              "F0402 command decode target direction");
+    CHECK_EQ(decodeOut.requestedAutoTarget, 1,
+             "F0402 command decode auto target");
+    CHECK_EQ(decodeOut.requestedAutoCreature, 1,
+             "F0402 command decode auto creature");
+    CHECK_EQ(decodeOut.targetMapIndex, 4,
+             "F0402 command decode target map");
+    CHECK_EQ(decodeOut.targetMapX, 9,
+             "F0402 command decode west target x");
+    CHECK_EQ(decodeOut.targetMapY, 20,
+             "F0402 command decode west target y");
 
+    decodeIn.commandArg2 = 7;
+    decodeIn.reserved = 2;
     decodeIn.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
                          (unsigned int)DM1_GRAPHIC560_ACTION_COUNT |
                          CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID;
@@ -1037,7 +1054,21 @@ static void test_melee_action_tick_plan(void) {
              "F0402 legacy marker bit");
     CHECK_EQ(decodeOut.targetDirection, 2,
              "F0402 missing direction falls back to party");
+    CHECK_EQ(decodeOut.requestedAutoTarget, 0,
+             "F0402 direct target flag");
+    CHECK_EQ(decodeOut.directGroupIndex, 7,
+             "F0402 direct group index");
+    CHECK_EQ(decodeOut.requestedAutoCreature, 0,
+             "F0402 direct creature flag");
+    CHECK_EQ(decodeOut.directCreatureIndex, 2,
+             "F0402 direct creature index");
+    CHECK_EQ(decodeOut.targetMapX, 10,
+             "F0402 south target x");
+    CHECK_EQ(decodeOut.targetMapY, 21,
+             "F0402 south target y");
 
+    decodeIn.commandArg2 = 0;
+    decodeIn.reserved = 0;
     decodeIn.reserved2 = 0u;
     decodeIn.partyDirection = 7;
     CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
@@ -1049,6 +1080,8 @@ static void test_melee_action_tick_plan(void) {
              "F0402 default command action");
     CHECK_EQ(decodeOut.targetDirection, 3,
              "F0402 default command party direction masked");
+    CHECK_EQ(decodeOut.targetMapX, 9,
+             "F0402 default command west target x");
 }
 
 static void test_melee_damage_emission_plan(void) {

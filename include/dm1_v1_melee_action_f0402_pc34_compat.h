@@ -165,7 +165,12 @@ typedef struct {
 } DM1_MeleeF0402WeaponAvailabilityPlanPc34;
 
 typedef struct {
+    unsigned char commandArg2;
+    unsigned char reserved;
     unsigned int reserved2;
+    int partyMapIndex;
+    int partyMapX;
+    int partyMapY;
     int partyDirection;
 } DM1_MeleeF0402CommandDecodeInputPc34;
 
@@ -177,6 +182,13 @@ typedef struct {
     int hasLegacyMarker;
     int hasTargetDirection;
     int targetDirection;
+    int requestedAutoTarget;
+    int requestedAutoCreature;
+    int directGroupIndex;
+    int directCreatureIndex;
+    int targetMapIndex;
+    int targetMapX;
+    int targetMapY;
 } DM1_MeleeF0402CommandDecodePlanPc34;
 
 typedef struct {
