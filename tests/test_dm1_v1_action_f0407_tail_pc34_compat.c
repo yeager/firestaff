@@ -1712,6 +1712,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190DeathSmokePlanPc34 smokeOut;
     DM1_MeleeF0190PossessionDropInputPc34 dropIn;
     DM1_MeleeF0190PossessionDropPlanPc34 dropOut;
+    DM1_MeleeF0190KilledSomeStateInputPc34 stateIn;
+    DM1_MeleeF0190KilledSomeStatePlanPc34 stateOut;
     struct CombatResult_Compat resultA;
     struct CombatResult_Compat resultB;
     struct DungeonGroup_Compat groupA;
@@ -1835,6 +1837,66 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 killed-some no-fixed plan builds");
     CHECK_EQ(dropOut.shouldDropCreatureFixedPossessions, 0,
              "F0190 killed-some no fixed attr suppresses drop");
+
+    memset(&stateIn, 0, sizeof(stateIn));
+    stateIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    stateIn.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    stateIn.groupIndex = 3;
+    stateIn.killedCreatureIndex = 2;
+    stateIn.originalGroupCount = 3;
+    stateIn.mapIndex = 1;
+    stateIn.mapX = 10;
+    stateIn.mapY = 11;
+    stateIn.partyMapIndex = 1;
+    stateIn.partyMapX = 9;
+    stateIn.partyMapY = 11;
+    stateIn.creatureType = 12;
+    stateIn.creatureProperties = 0x0230;
+    CHECK_EQ(dm1_v1_melee_killed_some_state_plan_f0190_pc34(
+                 &stateIn, &stateOut), 1,
+             "F0190 killed-some state plan builds");
+    CHECK_EQ(stateOut.valid, 1, "F0190 killed-some state valid");
+    CHECK_EQ(stateOut.shouldCleanupCreatureEvents, 1,
+             "F0190 killed-some cleans creature events");
+    CHECK_EQ(stateOut.shouldEvaluateFear, 1,
+             "F0190 killed-some evaluates fear on party map");
+    CHECK_EQ(stateOut.killedCreatureIndex, 2,
+             "F0190 killed-some killed creature index");
+    CHECK_EQ(stateOut.fearContext.creatureType, 12,
+             "F0190 killed-some fear creature type");
+    CHECK_EQ(stateOut.fearContext.creatureInfo.properties, 0x0230,
+             "F0190 killed-some fear properties");
+    CHECK_EQ(stateOut.fearContext.creatureCount, 3,
+             "F0190 killed-some fear creature count");
+
+    CHECK_EQ(dm1_v1_melee_killed_some_fear_apply_plan_f0190_pc34(
+                 &stateIn, 1, 44, &stateOut), 1,
+             "F0190 killed-some fear apply plan builds");
+    CHECK_EQ(stateOut.shouldApplyFear, 1, "F0190 fear applies");
+    CHECK_EQ(stateOut.newGroupBehavior, DM1_BEHAVIOR_FLEE,
+             "F0190 fear behavior");
+    CHECK_EQ(stateOut.newAiStateKind, AI_STATE_FLEE,
+             "F0190 fear ai state");
+    CHECK_EQ(stateOut.fearCounter, 44, "F0190 fear delay");
+
+    stateIn.partyMapIndex = 2;
+    CHECK_EQ(dm1_v1_melee_killed_some_state_plan_f0190_pc34(
+                 &stateIn, &stateOut), 1,
+             "F0190 off-party-map state plan builds");
+    CHECK_EQ(stateOut.shouldCleanupCreatureEvents, 1,
+             "F0190 off-party-map still cleans events");
+    CHECK_EQ(stateOut.shouldEvaluateFear, 0,
+             "F0190 off-party-map skips fear");
+
+    stateIn.partyMapIndex = 1;
+    stateIn.groupBehavior = DM1_BEHAVIOR_APPROACH;
+    CHECK_EQ(dm1_v1_melee_killed_some_state_plan_f0190_pc34(
+                 &stateIn, &stateOut), 1,
+             "F0190 non-attack state plan builds");
+    CHECK_EQ(stateOut.shouldCleanupCreatureEvents, 0,
+             "F0190 non-attack skips cleanup");
+    CHECK_EQ(stateOut.shouldEvaluateFear, 0,
+             "F0190 non-attack skips fear");
 
     memset(&resultA, 0, sizeof(resultA));
     resultA.damageApplied = 30;
