@@ -96,6 +96,15 @@ typedef struct {
     int      experienceGain; /* G0497_auc_Graphic560_ActionExperienceGain[action] */
 } DM1_ActionXpRoute;
 
+typedef struct {
+    int valid;
+    int damageFactor;
+    int staminaBase;
+    int isMeleeContact;
+    int isPartyShield;
+    int halvesXpOnF0327Failure;
+} DM1_ActionF0407TailPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -107,6 +116,14 @@ typedef struct {
  * (skill-4)>>2 for hidden skills and identity for base skills 0..3.
  */
 int dm1_v1_action_xp_route(int actionIndex, DM1_ActionXpRoute* out);
+int dm1_v1_action_f0407_tail_pc34(int actionIndex,
+                                  DM1_ActionF0407TailPc34* out);
+int dm1_v1_action_stamina_cost_f0407_pc34(int actionIndex,
+                                          int championIndex,
+                                          unsigned int gameTick);
+int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
+int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
+int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);
 
 /**
  * The special-case War Cry "fright" routing (MENU.C:947-987, line 949

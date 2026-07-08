@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 F0407 action-tail ownership: DM1 action-XP compat now owns M11-facing F0407 action-tail decisions for G0492 melee contact including the BLOCK exception, G0494 stamina base/cost, party-shield action classification, and F0327 failure XP-halving. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 projectile materialization-plan ownership: DM1 V1 throw/shoot compat now owns M11-facing Projectile.Slot materialization plans for thrown-potion consumption, ordinary source-square drops, and resolved champion-impact drops after F0219 commits the impact cell. M11 keeps only thing-chain mutation. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 projectile champion-impact receipt ownership: DM1 V1 throw/shoot compat now owns M11-facing champion-impact receipts for resolved impact position, target champion, F0321 damage inputs, F0322 poison damage/dose/schedule plan, and party-death check. M11 keeps combat RNG calls, HP/timeline mutation, and logging. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
