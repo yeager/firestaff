@@ -70,6 +70,46 @@ int dm1_v1_startup_selected_entry_receipt_valid_pc34(const char* game_id,
     return intro_bypassed ? 0 : 1;
 }
 
+int dm1_v1_startup_handoff_prelude_plan_pc34(
+    const char* game_id,
+    DM1_V1_StartupHandoffPreludePlan_PC34* out_plan) {
+    int required;
+    int source_order_valid;
+
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    required = dm1_v1_startup_source_visible_handoff_required_pc34(game_id);
+    source_order_valid = dm1_v1_startup_sequence_source_order_valid_pc34();
+    out_plan->required = required;
+    out_plan->source_order_valid = source_order_valid;
+    out_plan->play_swsh = required ? 1 : 0;
+    out_plan->discard_presentation_after_swsh = required ? 1 : 0;
+    out_plan->game_id = game_id;
+    out_plan->failure_evidence =
+        source_order_valid ? "" : dm1_v1_startup_sequence_source_evidence_pc34();
+    return 1;
+}
+
+int dm1_v1_startup_handoff_post_launch_plan_pc34(
+    const char* source_id,
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34* out_plan) {
+    int required;
+
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    required = dm1_v1_startup_source_visible_handoff_required_pc34(source_id);
+    out_plan->required = required;
+    out_plan->play_title = required ? 1 : 0;
+    out_plan->play_entrance = required ? 1 : 0;
+    out_plan->entrance_auto_enter_ms = required ? 1200 : 0;
+    out_plan->source_id = source_id;
+    return 1;
+}
+
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,

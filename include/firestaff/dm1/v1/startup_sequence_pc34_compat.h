@@ -20,6 +20,23 @@ typedef enum DM1_V1_StartupLaunchPath_PC34 {
     DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34 = 3
 } DM1_V1_StartupLaunchPath_PC34;
 
+typedef struct DM1_V1_StartupHandoffPreludePlan_PC34 {
+    int required;
+    int source_order_valid;
+    int play_swsh;
+    int discard_presentation_after_swsh;
+    const char* game_id;
+    const char* failure_evidence;
+} DM1_V1_StartupHandoffPreludePlan_PC34;
+
+typedef struct DM1_V1_StartupHandoffPostLaunchPlan_PC34 {
+    int required;
+    int play_title;
+    int play_entrance;
+    int entrance_auto_enter_ms;
+    const char* source_id;
+} DM1_V1_StartupHandoffPostLaunchPlan_PC34;
+
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage);
 int dm1_v1_startup_stage_after_pc34(DM1_V1_StartupStage_PC34 later,
                                     DM1_V1_StartupStage_PC34 earlier);
@@ -30,6 +47,12 @@ int dm1_v1_startup_intro_bypass_applies_to_source_pc34(const char* sourceId,
                                                        int bypassed);
 int dm1_v1_startup_selected_entry_receipt_valid_pc34(const char* game_id,
                                                      int intro_bypassed);
+int dm1_v1_startup_handoff_prelude_plan_pc34(
+    const char* game_id,
+    DM1_V1_StartupHandoffPreludePlan_PC34* out_plan);
+int dm1_v1_startup_handoff_post_launch_plan_pc34(
+    const char* source_id,
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34* out_plan);
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,

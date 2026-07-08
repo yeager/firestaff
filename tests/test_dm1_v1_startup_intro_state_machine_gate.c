@@ -213,6 +213,8 @@ static void check_menu_to_entrance_wait_boundary(void) {
 static void check_dm1_launch_path_bypass_contract(void) {
     char phase[64];
     char animation[64];
+    DM1_V1_StartupHandoffPreludePlan_PC34 prelude;
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 post;
     int startup_active = -1;
     int animation_active = -1;
     int title_frame = -1;
@@ -266,6 +268,50 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("CSB selected-entry receipt ignores DM1 intro bypass policy",
              dm1_v1_startup_selected_entry_receipt_valid_pc34("csb", 1),
              1);
+    expect_i("DM1 handoff prelude plan builds",
+             dm1_v1_startup_handoff_prelude_plan_pc34("dm1", &prelude),
+             1);
+    expect_i("DM1 handoff prelude is required",
+             prelude.required,
+             1);
+    expect_i("DM1 handoff prelude plays SWSH",
+             prelude.play_swsh,
+             1);
+    expect_i("DM1 handoff prelude discards post-SWSH texture",
+             prelude.discard_presentation_after_swsh,
+             1);
+    expect_i("DM1 handoff prelude source order valid",
+             prelude.source_order_valid,
+             1);
+    expect_i("CSB handoff prelude plan builds",
+             dm1_v1_startup_handoff_prelude_plan_pc34("csb", &prelude),
+             1);
+    expect_i("CSB handoff prelude is not DM1-required",
+             prelude.required,
+             0);
+    expect_i("NULL handoff prelude rejects missing output",
+             dm1_v1_startup_handoff_prelude_plan_pc34("dm1", NULL),
+             0);
+    expect_i("DM1 post-launch plan builds",
+             dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &post),
+             1);
+    expect_i("DM1 post-launch plan plays title",
+             post.play_title,
+             1);
+    expect_i("DM1 post-launch plan plays entrance",
+             post.play_entrance,
+             1);
+    expect_i("DM1 post-launch plan keeps entrance timeout",
+             post.entrance_auto_enter_ms,
+             1200);
+    expect_i("CSB post-launch plan does not use DM1 title",
+             dm1_v1_startup_handoff_post_launch_plan_pc34("csb", &post) &&
+                 post.play_title == 0 &&
+                 post.play_entrance == 0,
+             1);
+    expect_i("NULL post-launch plan rejects missing output",
+             dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", NULL),
+             0);
 
     expect_i("receipt unloaded rc",
              dm1_v1_startup_receipt_phase_pc34(0, 0, phase, sizeof(phase)),
