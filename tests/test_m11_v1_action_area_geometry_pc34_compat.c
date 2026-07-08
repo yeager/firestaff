@@ -145,7 +145,19 @@ static void test_spell_area_boxes_stay_source_locked(void)
 
 static void test_status_boxes_stay_source_locked(void)
 {
+    M11_GameViewState state;
     int x, y, w, h;
+    int i;
+    memset(&state, 0, sizeof(state));
+    state.world.party.championCount = 4;
+    state.world.party.champions[3].present = 1;
+    state.world.party.champions[3].hp.current = 10;
+    state.world.party.champions[3].wounds = 0x0002u;
+    for (i = 0; i < 30; ++i) {
+        state.world.party.champions[3].inventory[i] = 0xFFFFu;
+    }
+    state.actingChampionOrdinal = 4;
+
     check_int("status box 0 zone", M11_GameView_GetV1StatusBoxZoneId(0), 151);
     check_int("status box 3 zone", M11_GameView_GetV1StatusBoxZoneId(3), 154);
     check_int("status box bad zone", M11_GameView_GetV1StatusBoxZoneId(4), 0);
@@ -179,6 +191,16 @@ static void test_status_boxes_stay_source_locked(void)
                M11_GameView_GetV1StatusHandSlotBoxZone(3, 1, &x, &y, &w, &h));
     check_int("hand slot box champ3 action w", w, 18);
     check_int("hand slot box champ3 action h", h, 18);
+    check_int("slot box normal", M11_GameView_GetV1SlotBoxNormalGraphicId(), 33);
+    check_int("slot box wounded", M11_GameView_GetV1SlotBoxWoundedGraphicId(), 34);
+    check_int("slot box acting", M11_GameView_GetV1SlotBoxActingHandGraphicId(), 35);
+    check_int("status action acting graphic",
+              M11_GameView_GetV1StatusHandSlotGraphic(&state, 3, 1), 35);
+    check_int("status action wounded empty icon",
+              M11_GameView_GetV1StatusHandIconIndex(&state, 3, 1), 215);
+    state.actingChampionOrdinal = 0;
+    check_int("status action wounded graphic",
+              M11_GameView_GetV1StatusHandSlotGraphic(&state, 3, 1), 34);
 
     check_int("name clear champ3", M11_GameView_GetV1StatusNameClearZoneId(3), 162);
     check_int("name text champ3", M11_GameView_GetV1StatusNameTextZoneId(3), 166);

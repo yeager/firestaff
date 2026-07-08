@@ -264,6 +264,17 @@ int DM1_ChampionPanel_SlotBoxGraphic(int slotIndex, uint16_t wounds,
     return DM1_GFX_SLOT_NORMAL;
 }
 
+int DM1_ChampionPanel_EmptyHandIconIndex(int slotIndex, uint16_t wounds)
+{
+    if (slotIndex < DM1_SLOT_READY_HAND || slotIndex > DM1_SLOT_ACTION_HAND) {
+        return -1;
+    }
+    /* ReDMCSB CHAMDRAW.C F0291 lines 597-601 / DEFS.H C212:
+     * empty body slots use C212 + (slot << 1), plus one for wounds. */
+    return DM1_ICON_READY_HAND + (slotIndex << 1) +
+           ((wounds & (uint16_t)(1u << slotIndex)) ? 1 : 0);
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Portrait screen X — CHAMDRAW.C F0354_INVENTORY_DrawStatusBoxPortrait
  *

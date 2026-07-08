@@ -195,6 +195,18 @@ int main(void)
         fprintf(stderr, "FAIL: F0291 acting champion overrode head wound\n");
         failures++;
     }
+    if (DM1_ChampionPanel_EmptyHandIconIndex(DM1_SLOT_READY_HAND, 0) !=
+        DM1_ICON_READY_HAND ||
+        DM1_ChampionPanel_EmptyHandIconIndex(DM1_SLOT_READY_HAND, 0x0001u) !=
+        DM1_ICON_READY_HAND + 1 ||
+        DM1_ChampionPanel_EmptyHandIconIndex(DM1_SLOT_ACTION_HAND, 0) !=
+        DM1_ICON_READY_HAND + 2 ||
+        DM1_ChampionPanel_EmptyHandIconIndex(DM1_SLOT_ACTION_HAND, 0x0002u) !=
+        DM1_ICON_READY_HAND + 3 ||
+        DM1_ChampionPanel_EmptyHandIconIndex(DM1_SLOT_HEAD, 0) != -1) {
+        fprintf(stderr, "FAIL: F0291 empty hand icon index contract\n");
+        failures++;
+    }
 
     /*
      * CHAMDRAW.C:F0292 inventory mouth/eye warning-border source lock:
