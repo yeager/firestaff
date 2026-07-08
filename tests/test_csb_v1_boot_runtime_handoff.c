@@ -1503,6 +1503,14 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
     {
         CSB_V1_StartupSessionOptions_PC34 options;
         CSB_V1_RuntimeStartupSessionStateReceipt_PC34 state_receipt;
+        csb_v1_runtime_startup_session_state_receipt_init_pc34(&state_receipt);
+        CHECK(!state_receipt.entrance_resume_available &&
+                  !state_receipt.import_available &&
+                  state_receipt.import_utility_state ==
+                      (int)CSB_V1_UTIL_FLOW_INIT &&
+                  state_receipt.entrance_resume_path[0] == '\0' &&
+                  state_receipt.import_dm1_save_path[0] == '\0',
+              "runtime session state receipt has safe startup defaults");
         CHECK(csb_v1_runtime_build_startup_session_options_pc34(
                   &runtime,
                   &receipt,
