@@ -10564,6 +10564,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         const char *dd = spec->dataDir;
         char resolvedDataDir[FSP_PATH_MAX];
         DM2_V1_BootStartupLaunch launch;
+        DM2_V1_BootStartupRuntimeReceipt runtime_receipt;
         DM2_V1_BootProfile *profile = NULL;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
@@ -10651,6 +10652,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
             (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
         }
+        if (!dm2_v1_boot_startup_launch_detach_runtime(
+                &launch,
+                &runtime_receipt)) {
+            dm2_v1_boot_startup_launch_cleanup(&launch);
+            return 0;
+        }
+        profile = runtime_receipt.profile;
         /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
         dm2_v2_runtime_init(2);
         dm2_v2_hud_runtime_init();
@@ -10661,7 +10669,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         snprintf(state->bootAssetMd5,
                  sizeof(state->bootAssetMd5),
                  "%s",
-                 profile->graphics_md5);
+                 runtime_receipt.boot_asset_md5);
         state->presentationMode = spec->presentationMode;
         state->presentationWidth = spec->presentationWidth;
         state->presentationHeight = spec->presentationHeight;
@@ -10670,10 +10678,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         snprintf(state->sourceId, sizeof(state->sourceId), "%s",
                  spec->sourceId ? spec->sourceId : "dm2");
         snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
-                 profile->dungeon_path[0] ? profile->dungeon_path : "DUNGEON.DAT");
-        state->dm2BootProfile = profile;
-        launch.profile = NULL;
-        state->dm2World = profile->dm2_state;
+                 runtime_receipt.dungeon_path);
+        state->dm2BootProfile = runtime_receipt.profile;
+        state->dm2World = runtime_receipt.dm2_state;
         state->dm2State.level_loaded = 1;
         m11_sync_dm2_state_from_runtime(state);
         /* Tier 1 launch smoke: keep the DM2 direct-launch milestone

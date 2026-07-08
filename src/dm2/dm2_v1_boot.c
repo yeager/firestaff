@@ -951,6 +951,33 @@ int dm2_v1_boot_startup_launch_alloc(
     return 1;
 }
 
+int dm2_v1_boot_startup_launch_detach_runtime(
+    DM2_V1_BootStartupLaunch *launch,
+    DM2_V1_BootStartupRuntimeReceipt *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!launch || !launch->profile) {
+        return 0;
+    }
+    out_receipt->profile = launch->profile;
+    out_receipt->dm2_state = launch->profile->dm2_state;
+    snprintf(out_receipt->boot_asset_md5,
+             sizeof(out_receipt->boot_asset_md5),
+             "%s",
+             launch->profile->graphics_md5);
+    snprintf(out_receipt->dungeon_path,
+             sizeof(out_receipt->dungeon_path),
+             "%s",
+             launch->profile->dungeon_path[0]
+                 ? launch->profile->dungeon_path
+                 : "DUNGEON.DAT");
+    launch->profile = NULL;
+    return 1;
+}
+
 void dm2_v1_boot_startup_launch_cleanup(
     DM2_V1_BootStartupLaunch *launch) {
     if (!launch) return;
