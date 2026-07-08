@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup boot-profile adapters: Theron startup runtime-entry now resolves Track 02 graphics MD5 from the opaque boot profile, and Continue now resolves the TQSV save root from the opaque boot profile. M11 no longer reads `graphics_md5` or `save_root` for those startup paths. Verification: Theron targeted library build passed, M11 targeted library build passed, Theron startup save/resume test passed 100/100 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 RetroAchievements modern ONLINE settings: the modern start menu now renders GAME/GRAPHICS/CONTROLS/AUDIO/ACCESSIBILITY/ONLINE tabs and scopes visible rows, hit-testing, and keyboard navigation per tab. RetroAchievements enable, hardcore, username, and API-token edit rows now live under ONLINE. Verification: M12 targeted library build passed, settings tab hit-test passed 52/52 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup handoff boot wrappers: CSB boot now owns startup-handoff and startup-session receipt wrappers for direct resume and DM1 import setup. M11 launch no longer passes `&profile->runtime` for those startup paths. Verification: CSB boot-runtime handoff passed 281/281 by direct compile/run, M10 targeted library build passed, M11 targeted library build passed, Phase A passed 24/24, and `git diff --check` passed.
