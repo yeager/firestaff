@@ -10500,6 +10500,51 @@ static M11_GameInputResult m11_nexus_apply_startup_launch_receipt(
     return m11_nexus_apply_startup_receipt(state, &receipt->host_receipt);
 }
 
+static int m11_nexus_apply_launcher_runtime_receipt(
+    M11_GameViewState *state,
+    const Nexus_V1_LauncherRuntimeReceipt *receipt,
+    Nexus_TitleScreen *allocated_title)
+{
+    if (!state || !receipt || !receipt->engine) {
+        return 0;
+    }
+    state->nexusEngine = receipt->engine;
+    state->active = 1;
+    state->startedFromLauncher = 1;
+    state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
+    snprintf(state->title, sizeof(state->title), "%s", receipt->title);
+    snprintf(state->sourceId,
+             sizeof(state->sourceId),
+             "%s",
+             receipt->source_id);
+    snprintf(state->dungeonPath,
+             sizeof(state->dungeonPath),
+             "%s",
+             receipt->dungeon_path);
+    nexus_v1_light_runtime_init(&state->nexusLightRuntime, /*guard_rejects=*/0);
+    state->nexusLightRuntimeReady = 1;
+    state->nexusState.level_loaded = receipt->level_loaded;
+    state->nexusState.party_x = receipt->party_x;
+    state->nexusState.party_y = receipt->party_y;
+    state->nexusState.party_dir = receipt->party_dir;
+    state->nexusState.tick_count = receipt->tick_count;
+    state->nexusState.title_loaded = receipt->title_loaded;
+    state->nexusTitleScreen = receipt->title_screen;
+    if (!receipt->title_screen_keep && allocated_title) {
+        nexus_title_free(allocated_title);
+        free(allocated_title);
+        state->nexusTitleScreen = NULL;
+    }
+    (void)m11_nexus_apply_startup_launch_receipt(state,
+                                                 &receipt->startup_receipt);
+    (void)m11_nexus_apply_startup_receipt(state,
+                                          &receipt->boot_status_receipt);
+    if (receipt->boot_log_line) {
+        m11_log_event(state, M11_COLOR_YELLOW, receipt->boot_log_line);
+    }
+    return 1;
+}
+
 static int m11_nexus_startup_load_save_callback(
     void *userdata,
     const char *save_path)
@@ -11449,37 +11494,15 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
         return 0;
     }
 
-    state->nexusEngine = runtime_receipt.engine;
-    state->active = 1;
-    state->startedFromLauncher = 1;
-    state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
-    snprintf(state->title, sizeof(state->title), "%s",
-             runtime_receipt.title);
-    snprintf(state->sourceId, sizeof(state->sourceId), "%s",
-             runtime_receipt.source_id);
-    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
-             runtime_receipt.dungeon_path);
-    nexus_v1_light_runtime_init(&state->nexusLightRuntime, /*guard_rejects=*/0);
-    state->nexusLightRuntimeReady = 1;
-    state->nexusState.level_loaded = runtime_receipt.level_loaded;
-    state->nexusState.party_x = runtime_receipt.party_x;
-    state->nexusState.party_y = runtime_receipt.party_y;
-    state->nexusState.party_dir = runtime_receipt.party_dir;
-    state->nexusState.tick_count = runtime_receipt.tick_count;
-    state->nexusState.title_loaded = runtime_receipt.title_loaded;
-    state->nexusTitleScreen = runtime_receipt.title_screen;
-    if (!runtime_receipt.title_screen_keep && title) {
-        nexus_title_free(title);
-        free(title);
-        state->nexusTitleScreen = NULL;
-    }
-    (void)m11_nexus_apply_startup_launch_receipt(state,
-                                                 &runtime_receipt.startup_receipt);
-    (void)m11_nexus_apply_startup_receipt(
-        state,
-        &runtime_receipt.boot_status_receipt);
-    if (runtime_receipt.boot_log_line) {
-        m11_log_event(state, M11_COLOR_YELLOW, runtime_receipt.boot_log_line);
+    if (!m11_nexus_apply_launcher_runtime_receipt(state,
+                                                  &runtime_receipt,
+                                                  title)) {
+        if (title) {
+            nexus_title_free(title);
+            free(title);
+        }
+        nexus_v1_launcher_shutdown();
+        return 0;
     }
     fprintf(stderr, "NEXUS READY: gameId=nexus dataDir=%s\n", dataDir);
     return 1;
