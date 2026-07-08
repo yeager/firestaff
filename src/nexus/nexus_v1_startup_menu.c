@@ -1542,6 +1542,65 @@ int nexus_v1_startup_execute_title_action_with_host_receipt(
     return 1;
 }
 
+int nexus_v1_startup_execute_title_firestaff_input_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupAction action;
+
+    if (out_execution) {
+        nexus_v1_startup_title_execution_clear(out_execution);
+    }
+    if (out_receipt) {
+        nexus_v1_startup_host_action_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt || !facts->title_active) {
+        nexus_v1_startup_action_clear(&action);
+        return 0;
+    }
+    if (!nexus_v1_startup_boot_handle_input(
+            facts->title_frame,
+            facts->slot_mask,
+            nexus_v1_startup_input_from_firestaff_menu_code(menu_input),
+            &action)) {
+        return 0;
+    }
+    return nexus_v1_startup_execute_title_action_with_host_receipt(
+        &action,
+        out_execution,
+        &out_receipt->host_receipt);
+}
+
+int nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupAction action;
+
+    if (out_execution) {
+        nexus_v1_startup_title_execution_clear(out_execution);
+    }
+    if (out_receipt) {
+        nexus_v1_startup_host_action_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt || !facts->title_active) {
+        nexus_v1_startup_action_clear(&action);
+        return 0;
+    }
+    if (!nexus_v1_startup_title_handle_hit(facts->title_frame,
+                                           facts->slot_mask,
+                                           &action)) {
+        return 0;
+    }
+    return nexus_v1_startup_execute_title_action_with_host_receipt(
+        &action,
+        out_execution,
+        &out_receipt->host_receipt);
+}
+
 int nexus_v1_startup_champion_execution_mode_update(
     const Nexus_V1_StartupChampionExecution *execution,
     int save_row_count,

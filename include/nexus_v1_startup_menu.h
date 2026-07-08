@@ -500,6 +500,15 @@ int nexus_v1_startup_execute_title_action_with_host_receipt(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupTitleExecution *out_execution,
     Nexus_V1_StartupHostReceipt *out_host_receipt);
+int nexus_v1_startup_execute_title_firestaff_input_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
 int nexus_v1_startup_champion_execution_mode_update(
     const Nexus_V1_StartupChampionExecution *execution,
     int save_row_count,
