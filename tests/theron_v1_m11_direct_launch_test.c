@@ -101,6 +101,11 @@ static void expect_startup_media_receipt_for_fake_track02(void) {
                 receipt.startup_text_prompt_count == 1 &&
                 strcmp(receipt.startup_text_prompt, prompt) == 0,
                 "Theron startup media receipt captures Track 02 prompt");
+    expect_true(receipt.track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
+                strcmp(receipt.track02_md5, THERON_TRACK02_MD5_US_BIN) == 0 &&
+                receipt.track02_size == sizeof(sector) &&
+                receipt.startup_media_ready == 1,
+                "Theron startup media receipt carries Track 02 identity");
     expect_true(receipt.startup_roster_name_status ==
                     THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT &&
                 receipt.startup_roster_name_count == 0,
@@ -355,6 +360,13 @@ int main(void) {
                 strcmp(view.theronState.startup_text_prompt,
                        "GO AWAY AND RESURRECT THERON") == 0,
                 "M11 Theron startup captures byte-backed US Soul Room prompt");
+    expect_true(view.theronState.startup_media_track02_variant ==
+                    THERON_TRACK02_VARIANT_US_BIN &&
+                strcmp(view.theronState.startup_media_track02_md5,
+                       THERON_TRACK02_MD5_US_BIN) == 0 &&
+                view.theronState.startup_media_track02_size == 2352u &&
+                view.theronState.startup_media_ready == 1,
+                "M11 Theron startup keeps byte-backed media identity");
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, FB_W, FB_H);

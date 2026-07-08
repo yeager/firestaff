@@ -1352,7 +1352,15 @@ static void theron_v1_boot_startup_launch_build_host_receipt(
     receipt->log_first_line = "T0: THERON STARTUP READY";
     snprintf(prefix,
              sizeof(prefix),
-             "THERON TRACK 02 VERIFIED; SAVE %s tqsv=%d srm=%d; roster_names=%d status=%s text_prompts=%d text_status=%s; CHOOSE A STAGE",
+             "THERON TRACK 02 VERIFIED; variant=%s bytes=%lu media_ready=%d md5=%s; SAVE %s tqsv=%d srm=%d; roster_names=%d status=%s text_prompts=%d text_status=%s; CHOOSE A STAGE",
+             theron_v1_track02_variant_name(
+                 (Theron_Track02Variant)
+                     launch->startup_media_state_receipt.track02_variant),
+             (unsigned long)launch->startup_media_state_receipt.track02_size,
+             launch->startup_media_state_receipt.startup_media_ready,
+             launch->startup_media_state_receipt.track02_md5[0]
+                 ? launch->startup_media_state_receipt.track02_md5
+                 : "UNKNOWN",
              launch->save_resume_ready
                  ? launch->save_resume.resume_claim_name
                  : "UNKNOWN",

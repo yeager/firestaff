@@ -14,6 +14,10 @@ extern "C" {
 #define THERON_STARTUP_MEDIA_PROMPT_CAPACITY 40u
 
 typedef struct {
+    int track02_variant;
+    char track02_md5[33];
+    size_t track02_size;
+    int startup_media_ready;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
@@ -26,6 +30,10 @@ typedef struct {
 } Theron_StartupMedia;
 
 typedef struct {
+    int track02_variant;
+    char track02_md5[33];
+    size_t track02_size;
+    int startup_media_ready;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]

@@ -1002,6 +1002,14 @@ static void test_boot_startup_launch_detach_runtime_receipt(void) {
     launch.save_resume_state_receipt.save_resume_claim =
         THERON_V1_STARTUP_RESUME_TQSV;
     launch.startup_media_state_receipt.startup_roster_name_count = 1;
+    launch.startup_media_state_receipt.track02_variant =
+        THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(launch.startup_media_state_receipt.track02_md5,
+             sizeof(launch.startup_media_state_receipt.track02_md5),
+             "%s",
+             THERON_TRACK02_MD5_US_BIN);
+    launch.startup_media_state_receipt.track02_size = 2352u;
+    launch.startup_media_state_receipt.startup_media_ready = 1;
     snprintf(launch.startup_media_state_receipt.startup_roster_names[0],
              sizeof(launch.startup_media_state_receipt.startup_roster_names[0]),
              "ALEX");
@@ -1029,6 +1037,12 @@ static void test_boot_startup_launch_detach_runtime_receipt(void) {
                         THERON_V1_STARTUP_RESUME_TQSV &&
                     receipt.startup_media_state_receipt.
                             startup_roster_name_count == 1 &&
+                    receipt.startup_media_state_receipt.track02_variant ==
+                        THERON_TRACK02_VARIANT_US_BIN &&
+                    strcmp(receipt.startup_media_state_receipt.track02_md5,
+                           THERON_TRACK02_MD5_US_BIN) == 0 &&
+                    receipt.startup_media_state_receipt.track02_size == 2352u &&
+                    receipt.startup_media_state_receipt.startup_media_ready == 1 &&
                     strcmp(receipt.startup_media_state_receipt.
                                startup_roster_names[0],
                            "ALEX") == 0 &&
