@@ -10631,10 +10631,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             if (!dm2_v1_startup_launch_from_host_facts_with_receipt(
                     &facts,
                     &receipt)) {
-                m11_set_status(state, "BOOT", "DM2 START MENU FAILED");
+                (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
                 m11_log_event(state,
                               M11_COLOR_RED,
-                              "T0: DM2 START MENU FAILED");
+                              "T0: %s",
+                              receipt.host_receipt.status
+                                  ? receipt.host_receipt.status
+                                  : "DM2 START MENU FAILED");
                 dm2_v1_boot_startup_launch_cleanup(&launch);
                 return 0;
             }
@@ -11317,10 +11320,13 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
             if (!nexus_v1_startup_launch_from_host_facts_with_receipt(
                     &facts,
                     &receipt)) {
-                m11_set_status(state, "BOOT", "NEXUS STARTUP FAILED");
+                (void)m11_nexus_apply_startup_launch_receipt(state, &receipt);
                 m11_log_event(state,
                               M11_COLOR_RED,
-                              "T0: NEXUS STARTUP FAILED");
+                              "T0: %s",
+                              receipt.host_receipt.status
+                                  ? receipt.host_receipt.status
+                                  : "NEXUS STARTUP FAILED");
                 nexus_v1_launcher_shutdown();
                 state->active = 0;
                 state->startedFromLauncher = 0;

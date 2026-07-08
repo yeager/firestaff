@@ -1445,6 +1445,16 @@ int main(void)
                        strcmp(launch_receipt.host_receipt.status,
                               "NEXUS TITLE") == 0,
                    "Nexus launch receipt owns initial title and save scan state");
+            expect(!nexus_v1_startup_launch_from_host_facts_with_receipt(
+                       NULL,
+                       &launch_receipt) &&
+                       launch_receipt.host_receipt.status_scope &&
+                       strcmp(launch_receipt.host_receipt.status_scope,
+                              "BOOT") == 0 &&
+                       launch_receipt.host_receipt.status &&
+                       strcmp(launch_receipt.host_receipt.status,
+                              "NEXUS STARTUP FAILED") == 0,
+                   "Nexus launch receipt owns startup failure status");
         }
         expect(nexus_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
                    &state_receipt,
