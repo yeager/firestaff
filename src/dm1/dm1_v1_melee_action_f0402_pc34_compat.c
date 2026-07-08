@@ -354,6 +354,21 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_resolve_damage_f0231_pc34(
+    struct CombatantChampionSnapshot_Compat* attacker,
+    const struct WeaponProfile_Compat* weapon,
+    const struct CombatantCreatureSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    struct CombatResult_Compat* out) {
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1416-1546 owns the champion melee
+     * hit gate, damage RNG, weak-damage recovery, Vorpal/non-material
+     * handling, skill critical bonus, and final damage value before F0190.
+     * Keep the entry point DM1-owned while the shared M10 resolver still
+     * carries the source-locked arithmetic used by DM1 and CSB. */
+    return F0735_COMBAT_ResolveChampionMelee_Compat(
+        attacker, weapon, defender, rng, out);
+}
+
 int dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(
     const DM1_MeleeDisruptMaterialGateInputPc34* in,
     DM1_MeleeDisruptMaterialGatePlanPc34* out) {

@@ -6711,7 +6711,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 if (orch_build_cmd_attack_weapon_profile_compat(
                         &weaponInfo, weaponType, actionIndex, actionSkillIndex,
                         &weaponProfile) &&
-                    F0735_COMBAT_ResolveChampionMelee_Compat(
+                    dm1_v1_melee_resolve_damage_f0231_pc34(
                         &championSnapshot, &weaponProfile, &creatureSnapshot,
                         &world->masterRng, &combatResult)) {
                     if (combatResult.outcome == COMBAT_OUTCOME_NO_ACTION) {

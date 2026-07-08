@@ -201,6 +201,12 @@ int dm1_v1_melee_side_effect_plan_f0231_pc34(
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out);
+int dm1_v1_melee_resolve_damage_f0231_pc34(
+    struct CombatantChampionSnapshot_Compat* attacker,
+    const struct WeaponProfile_Compat* weapon,
+    const struct CombatantCreatureSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    struct CombatResult_Compat* out);
 
 #ifdef __cplusplus
 }
