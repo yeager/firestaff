@@ -233,6 +233,9 @@ int dm2_v1_boot_startup_launch_from_launch_snapshot(
     const DM2_V1_BootStartupLaunch *launch,
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_StartupLaunchReceipt *out_receipt);
+int dm2_v1_boot_startup_launch_from_launch(
+    const DM2_V1_BootStartupLaunch *launch,
+    DM2_V1_StartupLaunchReceipt *out_receipt);
 
 int dm2_v1_boot_startup_advance_idle_from_runtime_state(
     const DM2_V1_BootProfile *profile,

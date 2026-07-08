@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 initial startup launch receipt: DM2 boot now builds the direct-start startup launch receipt from the boot-owned launch object with no M11-created empty startup snapshot. Verification: `test_dm2_v1_boot_profile_smoke` passed; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron V2 HUD startup adapter: Theron V2 HUD launch-mode now owns the M11 startup gate/default-resolution path through `theron_v2_hud_launch_mode_apply_m11_startup()`. M11 no longer constructs `THERON_V2_PhaseGateConfig` or resolves Theron HUD launch modes inline. Verification: `test_theron_v2_hud_launch_mode_pc34` passed 93/93; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 runtime receipt handoff apply: M11 DM2 direct-start now applies the detached boot runtime receipt through one helper for V2/HUD/touch init, source identity, boot profile/world handoff, level-loaded state, and first runtime sync. Verification: `test_dm2_v1_boot_profile_smoke` passed 63/63; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
