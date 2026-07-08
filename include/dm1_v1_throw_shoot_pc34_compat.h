@@ -1,6 +1,9 @@
 #ifndef FIRESTAFF_DM1_V1_THROW_SHOOT_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_THROW_SHOOT_PC34_COMPAT_H
 
+#include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_projectile_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,6 +20,27 @@ enum {
     DM1_POTION_VEN_PC34 = 3,
     DM1_POTION_FUL_BOMB_PC34 = 19
 };
+
+typedef struct {
+    int championIndex;
+    int championCell;
+    int partyMapIndex;
+    int partyMapX;
+    int partyMapY;
+    int partyDirection;
+    int gameTick;
+    int subtype;
+    int category;
+    int kineticEnergy;
+    int impactAttack;
+    int attackTypeCode;
+    int launchCell;
+    int launchDirection;
+    int stepEnergy;
+    int launcherStrength;
+    unsigned short carriedThing;
+    int potionPower;
+} DM1_ProjectileCreateRequestPc34;
 
 int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight);
 int dm1_v1_throw_armour_weight_f0140_pc34(int armourType);
@@ -43,6 +67,9 @@ int dm1_v1_shoot_ammunition_matches_pc34(int actionWeaponClass,
 int dm1_v1_projectile_launch_cell_pc34(int championCell, int direction);
 int dm1_v1_shoot_attack_pc34(int weaponShootAttack, int shootSkillLevel);
 int dm1_v1_legacy_throw_attack_probe_pc34(int baseAttack, int throwSkillLevel);
+int dm1_v1_build_projectile_create_input_pc34(
+    const DM1_ProjectileCreateRequestPc34* req,
+    struct ProjectileCreateInput_Compat* outInput);
 
 #ifdef __cplusplus
 }

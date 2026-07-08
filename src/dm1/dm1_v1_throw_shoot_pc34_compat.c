@@ -3,6 +3,8 @@
 #include "dm1_v1_combat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
+#include <string.h>
+
 static const unsigned char DM1_ARMOUR_WEIGHT_F0140_PC34[58] = {
       3,   4,   3,   6,  16,   4,   4,   3,   3,   4,
       2,   4,   5,   3,   3,   4,   6,   8,  14,   6,
@@ -190,4 +192,58 @@ int dm1_v1_shoot_attack_pc34(int weaponShootAttack, int shootSkillLevel) {
 int dm1_v1_legacy_throw_attack_probe_pc34(int baseAttack, int throwSkillLevel) {
     int attack = (baseAttack + throwSkillLevel) << 1;
     return attack > 255 ? 255 : attack;
+}
+
+int dm1_v1_build_projectile_create_input_pc34(
+    const DM1_ProjectileCreateRequestPc34* req,
+    struct ProjectileCreateInput_Compat* outInput) {
+    int direction;
+    int cell;
+    if (!req || !outInput) return 0;
+    if (req->championIndex < 0) return 0;
+
+    /* ReDMCSB: CHAMPION.C F0326/F0328 and PROJEXPL.C F0212.  M11 supplies
+     * host state; DM1 owns the source-shaped F0810 create input. */
+    memset(outInput, 0, sizeof(*outInput));
+    direction = req->launchDirection >= 0
+                    ? (req->launchDirection & 3)
+                    : (req->partyDirection & 3);
+    cell = req->launchCell >= 0
+               ? (req->launchCell & 3)
+               : dm1_v1_projectile_launch_cell_pc34(
+                     req->championCell, direction);
+
+    outInput->category = req->category;
+    outInput->subtype = req->subtype;
+    outInput->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    outInput->ownerIndex = req->championIndex;
+    outInput->mapIndex = req->partyMapIndex;
+    outInput->mapX = req->partyMapX;
+    outInput->mapY = req->partyMapY;
+    outInput->cell = cell;
+    outInput->direction = direction;
+    outInput->kineticEnergy = req->kineticEnergy;
+    outInput->attack = req->impactAttack;
+    outInput->launcherStrength = req->launcherStrength;
+    outInput->stepEnergy = req->stepEnergy > 0 ? req->stepEnergy : 1;
+    outInput->currentTick = req->gameTick;
+    if (req->subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
+        req->subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) {
+        if (req->carriedThing != THING_NONE &&
+            req->carriedThing != THING_ENDOFLIST &&
+            THING_GET_TYPE(req->carriedThing) == THING_TYPE_POTION) {
+            outInput->poisonAttack = req->potionPower;
+        } else {
+            outInput->poisonAttack = req->impactAttack;
+        }
+    }
+    outInput->attackTypeCode = req->attackTypeCode;
+    outInput->potionPower = req->potionPower;
+    outInput->associatedThing =
+        (req->carriedThing != THING_NONE &&
+         req->carriedThing != THING_ENDOFLIST)
+            ? (int)req->carriedThing
+            : (int)THING_NONE;
+    outInput->firstMoveGraceFlag = 1;
+    return 1;
 }
