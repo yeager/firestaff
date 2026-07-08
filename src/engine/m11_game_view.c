@@ -11703,6 +11703,20 @@ static void m11_theron_boot_runtime_startup_snapshot(
         THERON_STARTUP_MAX_COMPANIONS;
 }
 
+static int m11_theron_boot_runtime_startup_view_model(
+    const M11_GameViewState *state,
+    Theron_V1_BootStartupViewModel *out_view_model)
+{
+    Theron_V1_BootRuntimeStartupSnapshot snapshot;
+    if (!state || !out_view_model) {
+        return 0;
+    }
+    m11_theron_boot_runtime_startup_snapshot(state, &snapshot);
+    return theron_v1_boot_startup_view_model_from_snapshot(
+        &snapshot,
+        out_view_model);
+}
+
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
@@ -37412,8 +37426,7 @@ int M11_GameView_GetTheronStartupLayout(
     const M11_GameViewState* state,
     M11_TheronStartupElement* elements,
     int maxElements) {
-    Theron_V1_BootRuntimeStartupSnapshot snapshot;
-    Theron_StartupLayoutElement theron_elements[16];
+    Theron_V1_BootStartupViewModel view_model;
     int count;
     int i;
 
@@ -37429,16 +37442,15 @@ int M11_GameView_GetTheronStartupLayout(
         elements[i].primaryClass = -1;
     }
 
-    m11_theron_boot_runtime_startup_snapshot(state, &snapshot);
-    count = theron_v1_boot_startup_layout_build_from_snapshot(
-        &snapshot,
-        theron_elements,
-        (int)(sizeof(theron_elements) / sizeof(theron_elements[0])));
+    if (!m11_theron_boot_runtime_startup_view_model(state, &view_model)) {
+        return 0;
+    }
+    count = view_model.layout_count;
     if (count > maxElements) {
         count = maxElements;
     }
     for (i = 0; i < count; ++i) {
-        const Theron_StartupLayoutElement* src = &theron_elements[i];
+        const Theron_StartupLayoutElement* src = &view_model.layout[i];
         elements[i].kind =
             m11_theron_startup_element_kind_from_layout(src->kind);
         elements[i].phase = (int)src->phase;
@@ -37471,8 +37483,7 @@ int M11_GameView_GetTheronStartupRenderRows(
     const M11_GameViewState* state,
     char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
     int maxRows) {
-    Theron_V1_BootRuntimeStartupSnapshot snapshot;
-    char theron_rows[16][THERON_STARTUP_RENDER_ROW_CAPACITY];
+    Theron_V1_BootStartupViewModel view_model;
     int row_count;
     int i;
 
@@ -37483,11 +37494,10 @@ int M11_GameView_GetTheronStartupRenderRows(
         return 0;
     }
 
-    m11_theron_boot_runtime_startup_snapshot(state, &snapshot);
-    row_count = theron_v1_boot_startup_render_rows_from_snapshot(
-        &snapshot,
-        theron_rows,
-        (int)(sizeof(theron_rows) / sizeof(theron_rows[0])));
+    if (!m11_theron_boot_runtime_startup_view_model(state, &view_model)) {
+        return 0;
+    }
+    row_count = view_model.row_count;
     if (row_count > maxRows) {
         row_count = maxRows;
     }
@@ -37497,7 +37507,7 @@ int M11_GameView_GetTheronStartupRenderRows(
         snprintf(rows[i],
                  M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
                  "%s",
-                 theron_rows[i]);
+                 view_model.rows[i]);
     }
     return row_count;
 }
@@ -37627,9 +37637,9 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
                                            int framebufferHeight) {
-    Theron_V1_BootRuntimeStartupSnapshot snapshot;
+    Theron_V1_BootStartupViewModel view_model;
     int i;
-    Theron_StartupRenderPlan plan;
+    const Theron_StartupRenderPlan *plan;
 
     (void)world;
 
@@ -37637,24 +37647,26 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         return;
     }
 
-    m11_theron_boot_runtime_startup_snapshot(state, &snapshot);
-    if (!theron_v1_boot_startup_render_plan_from_snapshot(&snapshot, &plan)) {
+    if (!m11_theron_boot_runtime_startup_view_model(state, &view_model) ||
+        !view_model.render_plan_valid) {
         return;
     }
+    plan = &view_model.render_plan;
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight,
-                  plan.background_color);
-    m11_theron_draw_startup_graphics(&plan,
+                  plan->background_color);
+    m11_theron_draw_startup_graphics(plan,
                                      framebuffer,
                                      framebufferWidth,
                                      framebufferHeight);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  plan.border_x, plan.border_y, plan.border_w, plan.border_h,
-                  plan.border_color);
-    for (i = 0; i < plan.text_count; ++i) {
+                  plan->border_x, plan->border_y,
+                  plan->border_w, plan->border_h,
+                  plan->border_color);
+    for (i = 0; i < plan->text_count; ++i) {
         M11_TextStyle scratch;
-        const Theron_StartupRenderTextCommand *command = &plan.text[i];
+        const Theron_StartupRenderTextCommand *command = &plan->text[i];
         const M11_TextStyle *style =
             m11_theron_startup_text_style(command->style, &scratch);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
