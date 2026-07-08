@@ -1466,15 +1466,15 @@ enum {
      * x=0: C151..C154 are children of the 67x29 C150 template at
      * offsets 0,69,138,207.  The legacy 12px inset remains the V2
      * vertical-slice HUD origin because those pre-baked assets were
-     * authored against it. */
-    M11_V1_PARTY_PANEL_X = 0,
+     * authored against it.  V1 now reads the source-owned values from
+     * champion_status_slotbox_pc34_compat.h. */
     /* Legacy / V2-mode dimensions.  V2's pre-baked four-slot HUD
      * sprite (m11_v2_party_hud_four_slot_base, 302x28) encodes
      * these values directly: 4 * 77 - 6 = 302 (= step 77 * 3 +
      * slot 71 + 13 padding), and the active overlay is 71x28.
      * In V1 original-faithful mode these are overridden at the
-     * use site by the M11_V1_PARTY_SLOT_* constants below.  See
-     * pass 41 (parity-evidence/pass41_status_box_stride.md). */
+     * use site by the champion_status_slotbox_pc34_compat values.
+     * See pass 41 (parity-evidence/pass41_status_box_stride.md). */
     M11_PARTY_SLOT_W = 71,
     M11_PARTY_SLOT_H = 28,
     M11_PARTY_SLOT_STEP = 77,
@@ -1483,11 +1483,10 @@ enum {
      * C69_CHAMPION_STATUS_BOX_SPACING (69).  W == graphic
      * C007_GRAPHIC_STATUS_BOX frame width (67, verified by the
      * M11 asset-loader probe invariant INV_GV_205 which asserts
-     * graphic 7 is 67x29).  Pass 41 landed these as the active
-     * V1 values via m11_party_slot_step() / m11_party_slot_w().
+     * graphic 7 is 67x29).  The active V1 values now live in
+     * champion_status_slotbox_pc34_compat.h and are consumed via
+     * m11_party_slot_step() / m11_party_slot_w().
      * Ref: V1_BLOCKERS.md §5 / PARITY_MATRIX_DM1_V1.md §1. */
-    M11_V1_PARTY_SLOT_W    = 67,
-    M11_V1_PARTY_SLOT_STEP = 69,
     /* DM1 PC 3.4 source-anchored champion status-box bar-graph
      * geometry for V1 original-faithful mode.  Derived from the
      * ZONES.H layout table recovered in pass 47 tooling
@@ -1522,29 +1521,6 @@ enum {
     M11_V1_BAR_HP_CX         = 5,   /* zone 195 d1 */
     M11_V1_BAR_STAMINA_CX    = 12,  /* zone 199 d1 */
     M11_V1_BAR_MANA_CX       = 19,  /* zone 203 d1 */
-    /* DM1 status-box hand slot zones from layout-696:
-     * C211/C213/C215/C217 ready hand  = parent champion box + (4,10)
-     * C212/C214/C216/C218 action hand = parent champion box + (24,10)
-     * Parent dimensions are 16x16; GRAPHICS.DAT slot-box bitmaps are
-     * 18x18 and intentionally overdraw the border like F0291. */
-    M11_V1_STATUS_READY_HAND_X = 4,
-    M11_V1_STATUS_ACTION_HAND_X = 24,
-    M11_V1_STATUS_HAND_Y = 10,
-    M11_V1_STATUS_HAND_ZONE_W = 16,
-    M11_V1_STATUS_HAND_ZONE_H = 16,
-    /* DM1 status-box name zones from layout-696:
-     * C159..C162 clear zones are 43x7 at status-box origin + (0,0).
-     * C163..C166 text zones are type-18 children at +1, clipped to
-     * 42x7.  F0292 clears C159+n to C01 dark gray and centers the
-     * champion name in C163+n. */
-    M11_V1_STATUS_NAME_CLEAR_X = 0,
-    M11_V1_STATUS_NAME_CLEAR_Y = 0,
-    M11_V1_STATUS_NAME_CLEAR_W = 43,
-    M11_V1_STATUS_NAME_CLEAR_H = 7,
-    M11_V1_STATUS_NAME_TEXT_X = 1,
-    M11_V1_STATUS_NAME_TEXT_Y = 0,
-    M11_V1_STATUS_NAME_TEXT_W = 42,
-    M11_V1_STATUS_NAME_TEXT_H = 7,
     M11_V1_BAR_BOTTOM_OFFSET = 26,  /* zones 195/199/203 d2 (bottom anchor) */
     M11_UTILITY_PANEL_X = 218,
     M11_UTILITY_PANEL_Y = 28,
@@ -6205,19 +6181,19 @@ static int m11_v1_chrome_mode_enabled(void) {
 static int m11_party_slot_step(void) {
     return m11_v2_vertical_slice_enabled()
         ? (int)M11_PARTY_SLOT_STEP
-        : (int)M11_V1_PARTY_SLOT_STEP;
+        : (int)CHAMPION_STATUS_COMPAT_SLOT_STEP;
 }
 
 static int m11_party_panel_x(void) {
     return m11_v2_vertical_slice_enabled()
         ? (int)M11_PARTY_PANEL_X
-        : (int)M11_V1_PARTY_PANEL_X;
+        : (int)CHAMPION_STATUS_COMPAT_SLOT_X_BASE;
 }
 
 static int m11_party_slot_w(void) {
     return m11_v2_vertical_slice_enabled()
         ? (int)M11_PARTY_SLOT_W
-        : (int)M11_V1_PARTY_SLOT_W;
+        : (int)CHAMPION_STATUS_COMPAT_SLOT_W;
 }
 
 /* Pass 43: DM1 PC 3.4 source-faithful bar-graph mode switch.
@@ -6333,12 +6309,6 @@ static int m11_v1_bar_graph_y_top(void) {
     return (int)M11_V1_BAR_GRAPH_REGION_Y +
            (int)M11_V1_BAR_GRAPH_REGION_H -
            (int)M11_V1_BAR_CONTAINER_H;
-}
-
-static int m11_v1_status_hand_x(int handIndex) {
-    return handIndex == 0
-        ? (int)M11_V1_STATUS_READY_HAND_X
-        : (int)M11_V1_STATUS_ACTION_HAND_X;
 }
 
 static void m11_blit_v2_slice_asset(const M11_V2SliceAsset* asset,
