@@ -14,6 +14,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: visible and accessibility settings labels now spell out the RetroAchievements username, API-token, and hardcore rows instead of using short `RA` labels. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
   - 2026-07-08 update: the modern start-menu renderer now consumes public RetroAchievements status/token getters instead of duplicating RA status logic, and the modern menu probe pins backend-pending status plus token redaction. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
   - 2026-07-08 update: the tabbed start-menu settings contract now has a dedicated ONLINE tab for RetroAchievements enable, hardcore, username, and API-token rows. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+  - 2026-07-08 update: the modern start-menu settings screen now visibly renders the ONLINE tab and scopes mouse/keyboard navigation so RetroAchievements settings live there. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
 
 - 🔧 2026-07-07 release follow-up: v3.0.65 packages the DM1 title/entrance and CSB startup ownership work after v3.0.64. Remaining release work is GitHub Actions packaging completion and asset publication proof.
 

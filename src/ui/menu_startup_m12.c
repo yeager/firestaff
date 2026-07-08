@@ -974,28 +974,96 @@ static int m12_clamp_index(int value, int count) {
     return value;
 }
 
-static int m12_cycle_visible_settings_row(int row, int delta) {
-    static const int visibleRows[] = {
+static const int* m12_visible_settings_rows_for_tab(int tab, int* outCount) {
+    static const int gameRows[] = {
         M12_SETTINGS_ROW_LANGUAGE,
-        M12_SETTINGS_ROW_GRAPHICS,
-        M12_SETTINGS_ROW_WINDOW_MODE,
-        M12_SETTINGS_ROW_SMOOTH_TURN_PAN,
         M12_SETTINGS_ROW_DATA_DIR,
         M12_SETTINGS_ROW_DATA_STATUS,
+        M12_SETTINGS_ROW_SESSION_TIMER
+    };
+    static const int graphicsRows[] = {
+        M12_SETTINGS_ROW_GRAPHICS,
+        M12_SETTINGS_ROW_WINDOW_MODE,
+        M12_SETTINGS_ROW_SMOOTH_TURN_PAN
+    };
+    static const int controlsRows[] = {
+        M12_SETTINGS_ROW_INPUT_MODE,
+        M12_SETTINGS_ROW_TOUCH_CONTROLS,
+        M12_SETTINGS_ROW_MOVEMENT_MODE
+    };
+    static const int audioRows[] = {
+        M12_SETTINGS_ROW_AUDIO_MASTER,
+        M12_SETTINGS_ROW_AUDIO_MUSIC,
+        M12_SETTINGS_ROW_AUDIO_SFX,
+        M12_SETTINGS_ROW_AUDIO_MUTED
+    };
+    static const int accessibilityRows[] = {
+        M12_SETTINGS_ROW_FONT_SCALE,
+        M12_SETTINGS_ROW_HIGH_CONTRAST,
+        M12_SETTINGS_ROW_COLORBLIND_MODE,
+        M12_SETTINGS_ROW_AUTO_PAUSE
+    };
+    static const int onlineRows[] = {
         M12_SETTINGS_ROW_RETROACHIEVEMENTS,
         M12_SETTINGS_ROW_RA_HARDCORE,
         M12_SETTINGS_ROW_RA_USERNAME,
-        M12_SETTINGS_ROW_RA_TOKEN,
-        M12_SETTINGS_ROW_SESSION_TIMER
+        M12_SETTINGS_ROW_RA_TOKEN
     };
-    const int count = (int)(sizeof(visibleRows) / sizeof(visibleRows[0]));
+    const int* rows = gameRows;
+    int count = (int)(sizeof(gameRows) / sizeof(gameRows[0]));
+    switch (tab) {
+        case M12_SETTINGS_TAB_GRAPHICS:
+            rows = graphicsRows;
+            count = (int)(sizeof(graphicsRows) / sizeof(graphicsRows[0]));
+            break;
+        case M12_SETTINGS_TAB_CONTROLS:
+            rows = controlsRows;
+            count = (int)(sizeof(controlsRows) / sizeof(controlsRows[0]));
+            break;
+        case M12_SETTINGS_TAB_AUDIO:
+            rows = audioRows;
+            count = (int)(sizeof(audioRows) / sizeof(audioRows[0]));
+            break;
+        case M12_SETTINGS_TAB_ACCESSIBILITY:
+            rows = accessibilityRows;
+            count = (int)(sizeof(accessibilityRows) / sizeof(accessibilityRows[0]));
+            break;
+        case M12_SETTINGS_TAB_ONLINE:
+            rows = onlineRows;
+            count = (int)(sizeof(onlineRows) / sizeof(onlineRows[0]));
+            break;
+        case M12_SETTINGS_TAB_GAME:
+        default:
+            break;
+    }
+    if (outCount) {
+        *outCount = count;
+    }
+    return rows;
+}
+
+static int m12_first_visible_settings_row_for_tab(int tab) {
+    int count = 0;
+    const int* rows = m12_visible_settings_rows_for_tab(tab, &count);
+    return (rows && count > 0) ? rows[0] : M12_SETTINGS_ROW_LANGUAGE;
+}
+
+static int m12_cycle_visible_settings_row(const M12_StartupMenuState* state, int row, int delta) {
+    int count = 0;
+    const int* visibleRows = m12_visible_settings_rows_for_tab(
+        state ? state->settingsTabIndex : M12_SETTINGS_TAB_GAME, &count);
     int i;
     int selected = 0;
+    int found = 0;
     for (i = 0; i < count; ++i) {
         if (visibleRows[i] == row) {
             selected = i;
+            found = 1;
             break;
         }
+    }
+    if (!found) {
+        return delta < 0 ? visibleRows[count - 1] : visibleRows[0];
     }
     selected = m12_cycle_index(selected, delta, count);
     return visibleRows[selected];
@@ -5063,12 +5131,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_UP:
                 state->languagePopupOpen = 0;
                 state->settingsSelectedIndex = m12_cycle_visible_settings_row(
+                    state,
                     state->settingsSelectedIndex,
                     -1);
                 break;
             case M12_MENU_INPUT_DOWN:
                 state->languagePopupOpen = 0;
                 state->settingsSelectedIndex = m12_cycle_visible_settings_row(
+                    state,
                     state->settingsSelectedIndex,
                     1);
                 break;
@@ -5083,7 +5153,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     state->settingsTabIndex,
                     -1,
                     M12_SETTINGS_TAB_COUNT);
-                state->settingsSelectedIndex = 0;
+                state->settingsSelectedIndex =
+                    m12_first_visible_settings_row_for_tab(state->settingsTabIndex);
                 break;
             case M12_MENU_INPUT_RIGHT:
                 state->languagePopupOpen = 0;
@@ -5091,7 +5162,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     state->settingsTabIndex,
                     1,
                     M12_SETTINGS_TAB_COUNT);
-                state->settingsSelectedIndex = 0;
+                state->settingsSelectedIndex =
+                    m12_first_visible_settings_row_for_tab(state->settingsTabIndex);
                 break;
             case M12_MENU_INPUT_VALUE_LEFT:
                 if (state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE) {
