@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 RetroAchievements modern ONLINE settings: the modern start menu now renders GAME/GRAPHICS/CONTROLS/AUDIO/ACCESSIBILITY/ONLINE tabs and scopes visible rows, hit-testing, and keyboard navigation per tab. RetroAchievements enable, hardcore, username, and API-token edit rows now live under ONLINE. Verification: M12 targeted library build passed, settings tab hit-test passed 52/52 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB startup handoff boot wrappers: CSB boot now owns startup-handoff and startup-session receipt wrappers for direct resume and DM1 import setup. M11 launch no longer passes `&profile->runtime` for those startup paths. Verification: CSB boot-runtime handoff passed 281/281 by direct compile/run, M10 targeted library build passed, M11 targeted library build passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB party/action boot-profile adapters: CSB runtime/startup bridge now owns opaque boot-profile adapters for inventory writes, leader-hand state, leader-hand throws, throw/shoot/melee/projectile actions, SHOOT refill, thing-next writes, champion vitals, and front-wall ornament clicks. M11 no longer uses a mutable CSB runtime helper for those paths. Verification: CSB object icon resolver boot-adapter gate passed by direct compile/run, M10 targeted library build passed, M11 targeted library build passed, Phase A passed 24/24, and `git diff --check` passed.

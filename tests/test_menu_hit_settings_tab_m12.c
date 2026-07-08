@@ -31,9 +31,7 @@ int main(void) {
     int tabW = (1920 - 2 * (1920 / 30)) / M12_SETTINGS_TAB_COUNT;
     const int settingsRowXRight = 96 + 36 + (1920 - 2 * 96 - 2 * 36) - 20;
     const int settingsRowY0 = 260 + 36;
-    const int settingsRowYOffset[] = {
-        0, 70, 140, 210, 280, 350, 392, 448, 504, 560, 616
-    };
+    const int settingsRowYOffset[] = { 0, 70, 140, 210 };
 
     printf("=== M12 settings tab hit-test (v2.7.15) ===\n");
 
@@ -105,10 +103,11 @@ int main(void) {
 
     memset(&state, 0, sizeof(state));
     state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsTabIndex = M12_SETTINGS_TAB_ONLINE;
 
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,
-                                 settingsRowY0 + settingsRowYOffset[6] + 25);
+                                 settingsRowY0 + settingsRowYOffset[0] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "RetroAchievements visible row -> cycle hit");
     CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
@@ -118,18 +117,19 @@ int main(void) {
           "RetroAchievements click toggles enabled setting");
 
     state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsTabIndex = M12_SETTINGS_TAB_ONLINE;
     state.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_DATA_STATUS;
     state.settings.retroAchievementsEnabled = 0;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     CHECK(state.settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
-          "settings keyboard DOWN skips hidden rows and reaches RetroAchievements");
+          "ONLINE settings keyboard DOWN reaches RetroAchievements");
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.settings.retroAchievementsEnabled == 1,
           "settings keyboard ACCEPT toggles RetroAchievements");
 
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,
-                                 settingsRowY0 + settingsRowYOffset[7] + 25);
+                                 settingsRowY0 + settingsRowYOffset[1] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "RA Hardcore visible row -> cycle hit");
     CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_RA_HARDCORE,
@@ -141,7 +141,7 @@ int main(void) {
 
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,
-                                 settingsRowY0 + settingsRowYOffset[8] + 25);
+                                 settingsRowY0 + settingsRowYOffset[2] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "RA Username visible row -> cycle hit");
     CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_RA_USERNAME,
@@ -158,7 +158,7 @@ int main(void) {
 
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,
-                                 settingsRowY0 + settingsRowYOffset[9] + 25);
+                                 settingsRowY0 + settingsRowYOffset[3] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "RA Token visible row -> cycle hit");
     CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_RA_TOKEN,
@@ -201,9 +201,10 @@ int main(void) {
     CHECK(strlen(state.settings.retroAchievementsToken) == 127,
           "RA Token cancel leaves previous token unchanged");
 
+    state.settingsTabIndex = M12_SETTINGS_TAB_GAME;
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,
-                                 settingsRowY0 + settingsRowYOffset[10] + 25);
+                                 settingsRowY0 + settingsRowYOffset[3] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "Session Timer visible row -> cycle hit");
     CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_SESSION_TIMER,
