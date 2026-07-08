@@ -11316,133 +11316,40 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
 
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
                                            const char* savePath) {
-    Nexus_V1_SaveHeader header;
-    Nexus_V1_ChampionPool champions;
-    Nexus_V1_World world;
-    Nexus_V1_Engine* engine;
-    char diagnostic[256];
-    char ngltDiagnostic[256];
-    int ngltDecoded = 0;
-    Nexus_SaveResult result;
-    int level;
+    Nexus_V1_LauncherResumeReceipt receipt;
 
     if (!state || !savePath || !savePath[0] || !state->nexusEngine) {
         return 0;
     }
 
-    memset(&header, 0, sizeof(header));
-    memset(&champions, 0, sizeof(champions));
-    memset(&world, 0, sizeof(world));
-    memset(diagnostic, 0, sizeof(diagnostic));
-    memset(ngltDiagnostic, 0, sizeof(ngltDiagnostic));
-
-    result = nexus_v1_load_full_from_path_with_runtime(
+    if (!nexus_v1_launcher_resume_from_save_path(
         savePath,
-        &header,
-        &champions,
-        &world,
         state->nexusLightRuntimeReady ? &state->nexusLightRuntime : NULL,
-        &ngltDecoded,
-        ngltDiagnostic,
-        sizeof(ngltDiagnostic),
-        diagnostic,
-        sizeof(diagnostic));
-    if (result != NEXUS_SAVE_OK) {
-        Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
-            NEXUS_V1_STARTUP_RESUME_STATUS_FAILED,
-            &receipt);
-        (void)m11_nexus_apply_startup_receipt(state, &receipt);
+        &receipt)) {
+        (void)m11_nexus_apply_startup_receipt(state,
+                                             &receipt.host_receipt);
         m11_log_event(state, M11_COLOR_RED,
                       "T0: NEXUS RESUME FAILED: %s",
-                      diagnostic[0] ? diagnostic : nexus_v1_save_strerror(result));
+                      receipt.diagnostic[0] ? receipt.diagnostic : savePath);
         return 0;
     }
 
-    level = world.party_level;
-    if (level < 0 || level > 15) {
-        level = header.current_level;
-    }
-    if (level < 0 || level > 15) {
-        Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
-            NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_INVALID,
-            &receipt);
-        (void)m11_nexus_apply_startup_receipt(state, &receipt);
-        m11_log_event(state, M11_COLOR_RED,
-                      "T0: NEXUS RESUME BAD LEVEL %d", level);
-        return 0;
-    }
-    if (world.party_dir < 0 || world.party_dir > 3) {
-        Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
-            NEXUS_V1_STARTUP_RESUME_STATUS_DIR_INVALID,
-            &receipt);
-        (void)m11_nexus_apply_startup_receipt(state, &receipt);
-        m11_log_event(state, M11_COLOR_RED,
-                      "T0: NEXUS RESUME BAD DIR %d", world.party_dir);
-        return 0;
-    }
-
-    if (nexus_v1_launcher_load_level(level) != 0) {
-        Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
-            NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR,
-            &receipt);
-        (void)m11_nexus_apply_startup_receipt(state, &receipt);
-        m11_log_event(state, M11_COLOR_RED,
-                      "T0: NEXUS RESUME LEV%02d LOAD FAILED", level);
-        return 0;
-    }
-
-    engine = nexus_v1_launcher_get_engine();
-    if (!engine) {
-        Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
-            NEXUS_V1_STARTUP_RESUME_STATUS_ENGINE_LOST,
-            &receipt);
-        (void)m11_nexus_apply_startup_receipt(state, &receipt);
-        return 0;
-    }
-
-    engine->champions = champions;
-    engine->game.current_level = level;
-    engine->game.party_x = world.party_x;
-    engine->game.party_y = world.party_y;
-    engine->game.party_dir = world.party_dir;
-    engine->game.tick_count = (int)header.game_time;
-    if (engine->mechanics) {
-        engine->mechanics->map_index = level;
-        engine->mechanics->party_x = world.party_x;
-        engine->mechanics->party_y = world.party_y;
-        engine->mechanics->party_dir = world.party_dir;
-        engine->mechanics->total_ticks = header.game_time;
-        engine->mechanics->pending_level_change = -1;
-        engine->mechanics->pending_teleport = 0;
-        engine->mechanics->input_head = 0;
-        engine->mechanics->input_tail = 0;
-        engine->mechanics->input_count = 0;
-    }
-
-    state->nexusEngine = engine;
+    state->nexusEngine = receipt.engine;
     m11_nexus_release_title(state);
-    state->nexusState.level_loaded = engine->level_loaded;
-    state->nexusState.party_x = engine->game.party_x;
-    state->nexusState.party_y = engine->game.party_y;
-    state->nexusState.party_dir = engine->game.party_dir;
-    state->nexusState.tick_count = engine->game.tick_count;
-    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s/LEV%02d.DGN",
-             engine->data_dir, level);
-    {
-        Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
-            NEXUS_V1_STARTUP_RESUME_STATUS_RESUMED,
-            &receipt);
-        (void)m11_nexus_apply_startup_receipt(state, &receipt);
-    }
-    m11_log_event(state, M11_COLOR_YELLOW,
-                  ngltDecoded ? "T0: NEXUS RESUMED + LIGHT RUNTIME"
-                              : "T0: NEXUS RESUMED");
+    state->nexusState.level_loaded = receipt.level_loaded;
+    state->nexusState.party_x = receipt.party_x;
+    state->nexusState.party_y = receipt.party_y;
+    state->nexusState.party_dir = receipt.party_dir;
+    state->nexusState.tick_count = receipt.tick_count;
+    snprintf(state->dungeonPath,
+             sizeof(state->dungeonPath),
+             "%s",
+             receipt.dungeon_path);
+    (void)m11_nexus_apply_startup_receipt(state, &receipt.host_receipt);
+    m11_log_event(state,
+                  M11_COLOR_YELLOW,
+                  "%s",
+                  receipt.log_line ? receipt.log_line : "T0: NEXUS RESUMED");
     return 1;
 }
 

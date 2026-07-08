@@ -24,6 +24,7 @@
 
 #include "nexus_v1_engine.h"
 #include "firestaff_nexus_v1_boot_profile.h"
+#include "nexus_v1_light_runtime.h"
 #include "nexus_v1_startup_menu.h"
 #include "nexus_v1_title.h"
 
@@ -80,6 +81,21 @@ typedef struct {
     Nexus_V1_StartupHostReceipt boot_status_receipt;
     const char *boot_log_line;
 } Nexus_V1_LauncherRuntimeReceipt;
+
+typedef struct {
+    Nexus_V1_Engine *engine;
+    Nexus_V1_StartupHostReceipt host_receipt;
+    int resumed;
+    int level_loaded;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int tick_count;
+    char dungeon_path[512];
+    int nglt_decoded;
+    char diagnostic[256];
+    const char *log_line;
+} Nexus_V1_LauncherResumeReceipt;
 
 void nexus_v1_launcher_boot_receipt_clear(
     Nexus_V1_LauncherBootReceipt *receipt);
@@ -249,6 +265,10 @@ int nexus_v1_launcher_boot_level0_runtime_startup(
     const char *data_dir,
     Nexus_TitleScreen *title,
     Nexus_V1_LauncherRuntimeReceipt *out_receipt);
+int nexus_v1_launcher_resume_from_save_path(
+    const char *save_path,
+    Nexus_V1_LightRuntime *light_runtime,
+    Nexus_V1_LauncherResumeReceipt *out_receipt);
 
 /* Shutdown the launcher and free the engine singleton.
  * Safe to call multiple times. */

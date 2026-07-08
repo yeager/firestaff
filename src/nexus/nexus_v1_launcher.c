@@ -13,6 +13,8 @@
 
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
+#include "nexus_v1_save.h"
+#include "nexus_v1_world.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -95,6 +97,16 @@ void nexus_v1_launcher_runtime_receipt_clear(
     memset(receipt, 0, sizeof(*receipt));
     nexus_v1_startup_launch_receipt_clear(&receipt->startup_receipt);
     nexus_v1_startup_host_receipt_clear(&receipt->boot_status_receipt);
+}
+
+static void nexus_v1_launcher_resume_receipt_clear(
+    Nexus_V1_LauncherResumeReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
 }
 
 void nexus_v1_launcher_startup_runtime_state_clear(
@@ -700,6 +712,140 @@ int nexus_v1_launcher_boot_level0_runtime_startup(
     out_receipt->boot_log_line = boot_receipt.title_loaded
         ? "T0: NEXUS TITLE LOADED"
         : "T0: NEXUS TITLE FALLBACK";
+    return 1;
+}
+
+int nexus_v1_launcher_resume_from_save_path(
+    const char *save_path,
+    Nexus_V1_LightRuntime *light_runtime,
+    Nexus_V1_LauncherResumeReceipt *out_receipt)
+{
+    Nexus_V1_SaveHeader header;
+    Nexus_V1_ChampionPool champions;
+    Nexus_V1_World world;
+    Nexus_V1_Engine *engine;
+    Nexus_SaveResult result;
+    char nglt_diagnostic[256];
+    int level;
+
+    nexus_v1_launcher_resume_receipt_clear(out_receipt);
+    if (!save_path || !save_path[0] || !out_receipt) {
+        return 0;
+    }
+
+    memset(&header, 0, sizeof(header));
+    memset(&champions, 0, sizeof(champions));
+    memset(&world, 0, sizeof(world));
+    memset(nglt_diagnostic, 0, sizeof(nglt_diagnostic));
+
+    result = nexus_v1_load_full_from_path_with_runtime(
+        save_path,
+        &header,
+        &champions,
+        &world,
+        light_runtime,
+        &out_receipt->nglt_decoded,
+        nglt_diagnostic,
+        sizeof(nglt_diagnostic),
+        out_receipt->diagnostic,
+        sizeof(out_receipt->diagnostic));
+    if (result != NEXUS_SAVE_OK) {
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_FAILED,
+            &out_receipt->host_receipt);
+        if (!out_receipt->diagnostic[0]) {
+            snprintf(out_receipt->diagnostic,
+                     sizeof(out_receipt->diagnostic),
+                     "%s",
+                     nexus_v1_save_strerror(result));
+        }
+        return 0;
+    }
+
+    level = world.party_level;
+    if (level < 0 || level > 15) {
+        level = header.current_level;
+    }
+    if (level < 0 || level > 15) {
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_INVALID,
+            &out_receipt->host_receipt);
+        snprintf(out_receipt->diagnostic,
+                 sizeof(out_receipt->diagnostic),
+                 "bad level %d",
+                 level);
+        return 0;
+    }
+    if (world.party_dir < 0 || world.party_dir > 3) {
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_DIR_INVALID,
+            &out_receipt->host_receipt);
+        snprintf(out_receipt->diagnostic,
+                 sizeof(out_receipt->diagnostic),
+                 "bad dir %d",
+                 world.party_dir);
+        return 0;
+    }
+
+    if (nexus_v1_launcher_load_level(level) != 0) {
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR,
+            &out_receipt->host_receipt);
+        snprintf(out_receipt->diagnostic,
+                 sizeof(out_receipt->diagnostic),
+                 "level %d load failed",
+                 level);
+        return 0;
+    }
+
+    engine = nexus_v1_launcher_get_engine();
+    if (!engine) {
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_ENGINE_LOST,
+            &out_receipt->host_receipt);
+        snprintf(out_receipt->diagnostic,
+                 sizeof(out_receipt->diagnostic),
+                 "engine lost");
+        return 0;
+    }
+
+    engine->champions = champions;
+    engine->game.current_level = level;
+    engine->game.party_x = world.party_x;
+    engine->game.party_y = world.party_y;
+    engine->game.party_dir = world.party_dir;
+    engine->game.tick_count = (int)header.game_time;
+    if (engine->mechanics) {
+        engine->mechanics->map_index = level;
+        engine->mechanics->party_x = world.party_x;
+        engine->mechanics->party_y = world.party_y;
+        engine->mechanics->party_dir = world.party_dir;
+        engine->mechanics->total_ticks = header.game_time;
+        engine->mechanics->pending_level_change = -1;
+        engine->mechanics->pending_teleport = 0;
+        engine->mechanics->input_head = 0;
+        engine->mechanics->input_tail = 0;
+        engine->mechanics->input_count = 0;
+    }
+
+    out_receipt->engine = engine;
+    out_receipt->resumed = 1;
+    out_receipt->level_loaded = engine->level_loaded;
+    out_receipt->party_x = engine->game.party_x;
+    out_receipt->party_y = engine->game.party_y;
+    out_receipt->party_dir = engine->game.party_dir;
+    out_receipt->tick_count = engine->game.tick_count;
+    snprintf(out_receipt->dungeon_path,
+             sizeof(out_receipt->dungeon_path),
+             "%s/LEV%02d.DGN",
+             engine->data_dir,
+             level);
+    (void)nexus_v1_startup_resume_status_host_receipt(
+        NEXUS_V1_STARTUP_RESUME_STATUS_RESUMED,
+        &out_receipt->host_receipt);
+    out_receipt->log_line = out_receipt->nglt_decoded
+        ? "T0: NEXUS RESUMED + LIGHT RUNTIME"
+        : "T0: NEXUS RESUMED";
     return 1;
 }
 
