@@ -149,6 +149,31 @@ typedef struct {
     int pendingHealthDamage;
 } DM1_MeleeF0231SideEffectPlanPc34;
 
+typedef struct {
+    int groupIndex;
+    int creatureType;
+    int creatureAttributes;
+    int killedCell;
+    int damageOutcome;
+    int fallbackCombatOutcome;
+    int fearTriggered;
+} DM1_MeleeF0231AftermathInputPc34;
+
+typedef struct {
+    int valid;
+    int outcome;
+    int shouldDropPossessions;
+    int shouldCreateDeathSmoke;
+    int smokeAttack;
+    int smokeCell;
+    int shouldApplyKilledSomeState;
+    int shouldApplyKilledAllSideEffects;
+    int shouldWriteRawGroup;
+    int shouldEmitKillNotify;
+    int shouldScheduleReaction;
+    int reactionEventKind;
+} DM1_MeleeF0231AftermathPlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -173,6 +198,9 @@ int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
 int dm1_v1_melee_side_effect_plan_f0231_pc34(
     const DM1_MeleeF0231SideEffectInputPc34* in,
     DM1_MeleeF0231SideEffectPlanPc34* out);
+int dm1_v1_melee_aftermath_plan_f0231_pc34(
+    const DM1_MeleeF0231AftermathInputPc34* in,
+    DM1_MeleeF0231AftermathPlanPc34* out);
 
 #ifdef __cplusplus
 }

@@ -2544,8 +2544,7 @@ static int orch_cmd_attack_f0190_smoke_attack_compat(
 
 static void orch_cmd_attack_create_f0190_death_smoke_compat(
     struct GameWorld_Compat* world,
-    const struct CombatantCreatureSnapshot_Compat* creature,
-    int killedCell,
+    const DM1_MeleeF0231AftermathPlanPc34* plan,
     int targetDirection,
     int outcome)
 {
@@ -2556,7 +2555,7 @@ static void orch_cmd_attack_create_f0190_death_smoke_compat(
     int mapX;
     int mapY;
 
-    if (!world) return;
+    if (!world || !plan) return;
     if (outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES &&
         outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
         return;
@@ -2566,12 +2565,11 @@ static void orch_cmd_attack_create_f0190_death_smoke_compat(
         world, targetDirection, &mapIndex, &mapX, &mapY);
     memset(&create, 0, sizeof(create));
     create.explosionType = C040_EXPLOSION_SMOKE;
-    create.attack = orch_cmd_attack_f0190_smoke_attack_compat(creature);
+    create.attack = plan->smokeAttack;
     create.mapIndex = mapIndex;
     create.mapX = mapX;
     create.mapY = mapY;
-    create.cell = (killedCell == EXPLOSION_CELL_CENTERED)
-        ? EXPLOSION_CELL_CENTERED : (killedCell & 3);
+    create.cell = plan->smokeCell;
     create.centered = (create.cell == EXPLOSION_CELL_CENTERED) ? 1 : 0;
     create.currentTick = (int)world->gameTick;
     create.ownerKind = PROJECTILE_OWNER_CHAMPION;
@@ -6622,6 +6620,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             int killedCell = EXPLOSION_CELL_CENTERED;
             int originalGroupCount = -1;
             int fearTriggered = 0;
+            DM1_MeleeF0231AftermathInputPc34 aftermathIn;
+            DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
             int targetDirection =
                 orch_cmd_attack_target_direction_compat(world, input);
             int targetResolved;
@@ -6728,6 +6728,16 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     orch_cmd_attack_apply_f0231_side_effects_compat(
                         world, (int)input->commandArg1, actionSkillIndex,
                         &creatureSnapshot, combatResult.damageApplied);
+                    memset(&aftermathIn, 0, sizeof(aftermathIn));
+                    aftermathIn.groupIndex = groupIndex;
+                    aftermathIn.creatureType = creatureSnapshot.creatureType;
+                    aftermathIn.creatureAttributes = creatureSnapshot.attributes;
+                    aftermathIn.killedCell = killedCell;
+                    aftermathIn.damageOutcome = applyOutcome;
+                    aftermathIn.fallbackCombatOutcome = combatResult.outcome;
+                    aftermathIn.fearTriggered = fearTriggered;
+                    (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
+                        &aftermathIn, &aftermathPlan);
                     if (combatResult.damageApplied > 0 &&
                         groupIndex >= 0 && groupIndex < world->things->groupCount) {
                         originalGroupCount =
@@ -6737,47 +6747,60 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         (void)F0738_COMBAT_ApplyDamageToGroup_Compat(
                             &combatResult, &world->things->groups[groupIndex],
                             creatureIndex, &applyOutcome);
-                        orch_cmd_attack_apply_f0190_possession_drops_compat(
-                            world, &world->things->groups[groupIndex],
-                            &creatureSnapshot, killedCell, targetDirection,
-                            applyOutcome);
-                        orch_cmd_attack_create_f0190_death_smoke_compat(
-                            world, &creatureSnapshot, killedCell,
-                            targetDirection, applyOutcome);
-                        fearTriggered =
-                            orch_cmd_attack_apply_f0190_killed_some_state_compat(
+                        aftermathIn.killedCell = killedCell;
+                        aftermathIn.damageOutcome = applyOutcome;
+                        (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
+                            &aftermathIn, &aftermathPlan);
+                        if (aftermathPlan.shouldDropPossessions) {
+                            orch_cmd_attack_apply_f0190_possession_drops_compat(
                                 world, &world->things->groups[groupIndex],
-                                &creatureSnapshot, groupIndex, creatureIndex,
-                                originalGroupCount, targetDirection,
+                                &creatureSnapshot, killedCell, targetDirection,
                                 applyOutcome);
-                        orch_cmd_attack_apply_group_kill_side_effects_compat(
-                            world, groupIndex, targetDirection, applyOutcome);
-                        /* ReDMCSB GROUP.C:F0190 lines 892-917 compacts or
-                         * unlinks the damaged group after F0231/F0738 melee
-                         * damage.  Keep the raw DUNGEON.DAT group record
-                         * synchronized with the decoded group state. */
-                        orch_write_raw_group_compat(world->things, groupIndex);
+                        }
+                        if (aftermathPlan.shouldCreateDeathSmoke) {
+                            orch_cmd_attack_create_f0190_death_smoke_compat(
+                                world, &aftermathPlan, targetDirection,
+                                applyOutcome);
+                        }
+                        if (aftermathPlan.shouldApplyKilledSomeState) {
+                            fearTriggered =
+                                orch_cmd_attack_apply_f0190_killed_some_state_compat(
+                                    world, &world->things->groups[groupIndex],
+                                    &creatureSnapshot, groupIndex, creatureIndex,
+                                    originalGroupCount, targetDirection,
+                                    applyOutcome);
+                        }
+                        if (aftermathPlan.shouldApplyKilledAllSideEffects) {
+                            orch_cmd_attack_apply_group_kill_side_effects_compat(
+                                world, groupIndex, targetDirection, applyOutcome);
+                        }
+                        if (aftermathPlan.shouldWriteRawGroup) {
+                            /* ReDMCSB GROUP.C:F0190 lines 892-917 compacts or
+                             * unlinks the damaged group after F0231/F0738 melee
+                             * damage.  Keep the raw DUNGEON.DAT group record
+                             * synchronized with the decoded group state. */
+                            orch_write_raw_group_compat(world->things, groupIndex);
+                        }
                     }
-                    if (applyOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES ||
-                        applyOutcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+                    aftermathIn.killedCell = killedCell;
+                    aftermathIn.damageOutcome = applyOutcome;
+                    aftermathIn.fearTriggered = fearTriggered;
+                    (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
+                        &aftermathIn, &aftermathPlan);
+                    if (aftermathPlan.shouldEmitKillNotify) {
                         emit(result, EMIT_KILL_NOTIFY,
                              groupIndex, creatureIndex,
-                             applyOutcome, creatureSnapshot.creatureType);
+                             aftermathPlan.outcome, creatureSnapshot.creatureType);
                     }
-                    if (!fearTriggered) {
+                    if (aftermathPlan.shouldScheduleReaction) {
                         orch_cmd_attack_schedule_f0231_reaction_compat(
                             world, groupIndex, &creatureSnapshot,
-                            targetDirection,
-                            (applyOutcome != COMBAT_OUTCOME_INVALID)
-                                ? applyOutcome
-                                : combatResult.outcome);
+                            targetDirection, aftermathPlan.outcome);
                     }
                     emit(result, EMIT_DAMAGE_DEALT,
                          input->commandArg1, groupIndex,
                          combatResult.damageApplied,
-                         (applyOutcome != COMBAT_OUTCOME_INVALID)
-                             ? applyOutcome
-                             : combatResult.outcome);
+                         aftermathPlan.outcome);
                     return 1;
                 }
             }
