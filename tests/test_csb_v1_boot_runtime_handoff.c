@@ -1760,6 +1760,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_UtilStateReceipt state_receipt;
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 action_receipt;
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupActionReceipt_PC34 boot_action_receipt;
 
     csb_v1_boot_profile_init(&boot);
     memset(&facts, 0, sizeof(facts));
@@ -1836,6 +1838,36 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "runtime entrance keyboard action wrapper handles accept input");
     CHECK(entrance_receipt.handled,
           "runtime entrance keyboard action wrapper chains command receipt");
+
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = 4;
+    snapshot.utility_overlay_active = 1;
+    snapshot.utility_selected_action_index = 0;
+    snapshot.utility_imported_champion_count = 2;
+    snapshot.utility_prompt = facts.utility_prompt;
+    snapshot.boot_profile = &boot;
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
+              &snapshot,
+              2,
+              &boot_action_receipt) == 1,
+          "boot startup action facade accepts utility keyboard input");
+    CHECK(boot_action_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34 &&
+              boot_action_receipt.utility_receipt.util_receipt.result ==
+                  CSB_V1_UTIL_APPLY_REDRAW,
+          "boot startup action facade keeps utility priority");
+
+    snapshot.utility_overlay_active = 0;
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
+              &snapshot,
+              9,
+              &boot_action_receipt) == 1,
+          "boot startup action facade falls back to entrance input");
+    CHECK(boot_action_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34 &&
+              boot_action_receipt.entrance_receipt.handled,
+          "boot startup action facade returns entrance receipt");
 
     csb_v1_boot_cleanup(&boot);
 }
