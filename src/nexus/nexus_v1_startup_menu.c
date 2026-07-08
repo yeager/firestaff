@@ -133,6 +133,37 @@ void nexus_v1_startup_host_receipt_clear(
     receipt->input_result = NEXUS_V1_STARTUP_HOST_INPUT_IGNORED;
 }
 
+int nexus_v1_startup_boot_status_host_receipt(
+    Nexus_V1_StartupBootStatus status,
+    Nexus_V1_StartupHostReceipt *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    nexus_v1_startup_host_receipt_clear(out_receipt);
+    out_receipt->status_scope = "BOOT";
+    switch (status) {
+    case NEXUS_V1_STARTUP_BOOT_STATUS_TITLE:
+        out_receipt->status = "NEXUS TITLE";
+        out_receipt->input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+        break;
+    case NEXUS_V1_STARTUP_BOOT_STATUS_TITLE_FALLBACK:
+        out_receipt->status = "NEXUS TITLE";
+        out_receipt->input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+        break;
+    case NEXUS_V1_STARTUP_BOOT_STATUS_DATA_ERROR:
+        out_receipt->status = "NEXUS DATA ERROR";
+        break;
+    case NEXUS_V1_STARTUP_BOOT_STATUS_LEVEL_ERROR:
+        out_receipt->status = "NEXUS LEVEL ERROR";
+        break;
+    default:
+        out_receipt->status = "NEXUS STARTUP FAILED";
+        break;
+    }
+    return 1;
+}
+
 void nexus_v1_startup_host_action_receipt_clear(
     Nexus_V1_StartupHostActionReceipt *receipt)
 {
