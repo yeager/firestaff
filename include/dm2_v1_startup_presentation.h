@@ -21,7 +21,7 @@ typedef enum {
     DM2_V1_STARTUP_STYLE_SELECTED_TEXT = 5
 } DM2_V1_StartupStyle;
 
-typedef struct {
+typedef struct DM2_V1_StartupDrawCommand {
     DM2_V1_StartupDrawKind kind;
     DM2_V1_StartupStyle style;
     DM2_V1_StartupRect rect;
