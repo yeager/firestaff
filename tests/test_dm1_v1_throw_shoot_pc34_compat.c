@@ -1,6 +1,7 @@
 #include "dm1_v1_throw_shoot_pc34_compat.h"
 
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 #include <stdio.h>
@@ -304,6 +305,88 @@ static void test_black_flame_heal_and_group_cell(void) {
               "non-fireball does not heal black flame");
 }
 
+static void test_projectile_creature_impact_plan(void) {
+    struct DungeonGroup_Compat group;
+    struct ProjectileInstance_Compat p;
+    struct ProjectileTickResult_Compat r;
+    DM1_ProjectileCreatureImpactPlanPc34 plan;
+    DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
+    unsigned short weaponThing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    memset(&group, 0, sizeof(group));
+    memset(&p, 0, sizeof(p));
+    memset(&r, 0, sizeof(r));
+    memset(&plan, 0, sizeof(plan));
+    memset(&aftermath, 0, sizeof(aftermath));
+
+    group.creatureType = 6;
+    group.count = 2;
+    group.cells = (1 << 0) | (3 << 2) | (0 << 4);
+    group.health[0] = 10;
+    group.health[1] = 20;
+    group.health[2] = 30;
+    p.projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    p.projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    p.reserved1 = weaponThing;
+    r.resultKind = PROJECTILE_RESULT_HIT_CREATURE;
+    r.emittedCombatAction = 1;
+    r.outAction.targetCell = 3;
+    r.outAction.rawAttackValue = 17;
+
+    ASSERT_EQ(dm1_v1_projectile_creature_impact_plan_pc34(
+                  &p, &r, &group, 0, &plan), 1,
+              "creature impact plan builds");
+    ASSERT_EQ(plan.handled, 1, "creature impact handled");
+    ASSERT_EQ(plan.shouldApplyDamage, 1, "creature impact applies damage");
+    ASSERT_EQ(plan.slotIndex, 1, "creature impact target slot");
+    ASSERT_EQ(plan.damageApplied, 17, "creature impact damage");
+    ASSERT_EQ(plan.originalCreatureType, 6, "creature impact type snapshot");
+    ASSERT_EQ(plan.originalGroupCount, 2, "creature impact count snapshot");
+    ASSERT_EQ(plan.killedCell, 3, "creature impact killed cell");
+
+    ASSERT_EQ(dm1_v1_projectile_creature_impact_aftermath_pc34(
+                  &plan, &p,
+                  DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34,
+                  DM1_BEHAVIOR_ATTACK,
+                  COMBAT_OUTCOME_KILLED_NO_CREATURES,
+                  27,
+                  &aftermath), 1,
+              "creature impact aftermath builds");
+    ASSERT_EQ(aftermath.scheduleReaction, 1, "surviving group reacts");
+    ASSERT_EQ(aftermath.keepSharpWeaponInGroup, 1,
+              "sharp weapon kept by creature");
+    ASSERT_EQ(aftermath.spawnDeathSmoke, 0, "no death smoke without kill");
+
+    ASSERT_EQ(dm1_v1_projectile_creature_impact_aftermath_pc34(
+                  &plan, &p,
+                  DM1_PROJECTILE_ATTR_DROP_FIXED_POSSESSION_PC34,
+                  DM1_BEHAVIOR_ATTACK,
+                  COMBAT_OUTCOME_KILLED_SOME_CREATURES,
+                  27,
+                  &aftermath), 1,
+              "partial kill aftermath builds");
+    ASSERT_EQ(aftermath.cleanupEventsAndFear, 1, "partial kill cleans attack events");
+    ASSERT_EQ(aftermath.dropFixedPossessions, 1, "partial kill drops fixed possessions");
+    ASSERT_EQ(aftermath.spawnDeathSmoke, 1, "partial kill smoke");
+    ASSERT_EQ(aftermath.keepSharpWeaponInGroup, 0,
+              "killing hit does not keep sharp weapon");
+
+    ASSERT_EQ(dm1_v1_projectile_creature_impact_plan_pc34(
+                  &p, &r, &group,
+                  DM1_PROJECTILE_ATTR_NON_MATERIAL_PC34, &plan), 1,
+              "non-material plan builds");
+    ASSERT_EQ(plan.blockedByNonMaterial, 1, "non-material blocks ordinary projectile");
+    ASSERT_EQ(plan.shouldApplyDamage, 0, "non-material no ordinary damage");
+
+    p.projectileSubtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+    ASSERT_EQ(dm1_v1_projectile_creature_impact_plan_pc34(
+                  &p, &r, &group,
+                  DM1_PROJECTILE_ATTR_NON_MATERIAL_PC34, &plan), 1,
+              "harm non-material plan builds");
+    ASSERT_EQ(plan.blockedByNonMaterial, 0, "harm non-material bypasses block");
+    ASSERT_EQ(plan.shouldApplyDamage, 1, "harm non-material damages");
+}
+
 int main(void) {
     test_throw_weight_and_stamina();
     test_throw_runtime_math();
@@ -313,6 +396,7 @@ int main(void) {
     test_projectile_impact_model();
     test_projectile_associated_thing_disposition();
     test_black_flame_heal_and_group_cell();
+    test_projectile_creature_impact_plan();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_throw_shoot_pc34_compat: %d failures\n",
                 g_failures);

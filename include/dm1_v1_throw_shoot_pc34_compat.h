@@ -21,7 +21,10 @@ enum {
     DM1_POTION_FUL_BOMB_PC34 = 19,
     DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34 = 11,
     DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34 = 0xFF,
-    DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34 = 1000
+    DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34 = 1000,
+    DM1_PROJECTILE_ATTR_NON_MATERIAL_PC34 = 0x0040,
+    DM1_PROJECTILE_ATTR_DROP_FIXED_POSSESSION_PC34 = 0x0200,
+    DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34 = 0x0400
 };
 
 typedef struct {
@@ -51,6 +54,26 @@ typedef struct {
     unsigned short associatedThing;
     unsigned short droppedThing;
 } DM1_ProjectileAssociatedThingDispositionPc34;
+
+typedef struct {
+    int handled;
+    int shouldApplyDamage;
+    int slotIndex;
+    int damageApplied;
+    int originalCreatureType;
+    int originalCells;
+    int originalGroupCount;
+    int killedCell;
+    int blockedByNonMaterial;
+} DM1_ProjectileCreatureImpactPlanPc34;
+
+typedef struct {
+    int scheduleReaction;
+    int cleanupEventsAndFear;
+    int dropFixedPossessions;
+    int spawnDeathSmoke;
+    int keepSharpWeaponInGroup;
+} DM1_ProjectileCreatureImpactAftermathPc34;
 
 int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight);
 int dm1_v1_throw_armour_weight_f0140_pc34(int armourType);
@@ -100,6 +123,20 @@ int dm1_v1_black_flame_fireball_heal_pc34(
     const struct DungeonGroup_Compat* group,
     int* outSlotIndex,
     int* outNewHealth);
+int dm1_v1_projectile_creature_impact_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    const struct DungeonGroup_Compat* group,
+    int creatureAttributes,
+    DM1_ProjectileCreatureImpactPlanPc34* outPlan);
+int dm1_v1_projectile_creature_impact_aftermath_pc34(
+    const DM1_ProjectileCreatureImpactPlanPc34* plan,
+    const struct ProjectileInstance_Compat* projectile,
+    int creatureAttributes,
+    int groupBehaviorAfterDamage,
+    int damageOutcome,
+    int associatedWeaponType,
+    DM1_ProjectileCreatureImpactAftermathPc34* outAftermath);
 
 #ifdef __cplusplus
 }

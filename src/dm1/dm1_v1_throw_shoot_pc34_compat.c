@@ -1,6 +1,7 @@
 #include "dm1_v1_throw_shoot_pc34_compat.h"
 
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 #include <string.h>
@@ -420,5 +421,94 @@ int dm1_v1_black_flame_fireball_heal_pc34(
     }
     if (outSlotIndex) *outSlotIndex = slotIndex;
     if (outNewHealth) *outNewHealth = healed;
+    return 1;
+}
+
+int dm1_v1_projectile_creature_impact_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    const struct DungeonGroup_Compat* group,
+    int creatureAttributes,
+    DM1_ProjectileCreatureImpactPlanPc34* outPlan) {
+    int slotIndex;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->slotIndex = -1;
+    outPlan->killedCell = EXPLOSION_CELL_CENTERED;
+    if (!projectile || !result || !group) return 0;
+    if (result->resultKind != PROJECTILE_RESULT_HIT_CREATURE ||
+        !result->emittedCombatAction) {
+        return 0;
+    }
+    outPlan->handled = 1;
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 532-533 lets non-material
+     * creatures ignore every projectile except Harm Non Material. */
+    if ((creatureAttributes & DM1_PROJECTILE_ATTR_NON_MATERIAL_PC34) &&
+        projectile->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL) {
+        outPlan->blockedByNonMaterial = 1;
+        return 1;
+    }
+
+    slotIndex = dm1_v1_group_creature_index_for_cell_pc34(
+        group, result->outAction.targetCell);
+    if (slotIndex < 0) return 1;
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 515-539 resolves the ordinal with
+     * F0176, records the original cell, then applies F0190 damage. */
+    outPlan->shouldApplyDamage = result->outAction.rawAttackValue > 0;
+    outPlan->slotIndex = slotIndex;
+    outPlan->damageApplied = result->outAction.rawAttackValue;
+    outPlan->originalCreatureType = (int)group->creatureType;
+    outPlan->originalCells = (int)group->cells;
+    outPlan->originalGroupCount = (int)group->count;
+    outPlan->killedCell =
+        (group->cells == DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34)
+            ? EXPLOSION_CELL_CENTERED
+            : (int)((group->cells >> (slotIndex * 2)) & 0x03u);
+    return 1;
+}
+
+int dm1_v1_projectile_creature_impact_aftermath_pc34(
+    const DM1_ProjectileCreatureImpactPlanPc34* plan,
+    const struct ProjectileInstance_Compat* projectile,
+    int creatureAttributes,
+    int groupBehaviorAfterDamage,
+    int damageOutcome,
+    int associatedWeaponType,
+    DM1_ProjectileCreatureImpactAftermathPc34* outAftermath) {
+    if (!outAftermath) return 0;
+    memset(outAftermath, 0, sizeof(*outAftermath));
+    if (!plan || !projectile || !plan->handled || !plan->shouldApplyDamage) {
+        return 0;
+    }
+
+    if (damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+        outAftermath->cleanupEventsAndFear =
+            groupBehaviorAfterDamage == DM1_BEHAVIOR_ATTACK;
+        outAftermath->dropFixedPossessions =
+            (creatureAttributes &
+             DM1_PROJECTILE_ATTR_DROP_FIXED_POSSESSION_PC34) != 0;
+    }
+    if (damageOutcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES ||
+        damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+        outAftermath->spawnDeathSmoke = 1;
+    }
+    if (plan->damageApplied > 0 &&
+        damageOutcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        /* ReDMCSB: PROJEXPL.C F0217 lines 535-537 schedules F0209 hit
+         * reaction for damaged groups that were not fully destroyed. */
+        outAftermath->scheduleReaction = 1;
+    }
+    if (damageOutcome == COMBAT_OUTCOME_KILLED_NO_CREATURES &&
+        projectile->projectileCategory == PROJECTILE_CATEGORY_KINETIC &&
+        (creatureAttributes &
+         DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34) &&
+        dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(
+            associatedWeaponType)) {
+        /* ReDMCSB: PROJEXPL.C F0217 lines 540-553 keeps selected sharp
+         * thrown weapons in GROUP.Slot only when no creature died. */
+        outAftermath->keepSharpWeaponInGroup = 1;
+    }
     return 1;
 }
