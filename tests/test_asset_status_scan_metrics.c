@@ -475,6 +475,69 @@ static void check_direct_theron_file_scan_avoids_root_rescan(const char* root) {
     M12_AssetStatus_TestSetTheronSyntheticHash(NULL);
 }
 
+static void check_theron_zip_track02_materializes(const char* root) {
+    static const char trackPayload[] =
+        "synthetic Theron Track 02 archive fixture for cache handoff\n";
+    char zipRoot[512];
+    char hashSourcePath[512];
+    char zipPath[512];
+    char trackMd5[M12_ASSET_MD5_CAPACITY];
+    char expectedCacheLeaf[512];
+    const char* runtimeDir;
+    const M12_AssetRequiredFileStatus* required;
+    const M12_AssetVersionStatus* version;
+    M12_AssetStatus status;
+
+    snprintf(zipRoot, sizeof(zipRoot), "%s/theron-zip-only", root);
+    check_int(make_dir_if_needed(zipRoot),
+              "synthetic Theron ZIP-only fixture directory should be created");
+    snprintf(hashSourcePath, sizeof(hashSourcePath), "%s/theron_hash_source.bin", zipRoot);
+    snprintf(zipPath, sizeof(zipPath), "%s/theron_track02.zip", zipRoot);
+    check_int(write_plain_file(hashSourcePath, trackPayload),
+              "synthetic Theron Track 02 hash source should be written");
+    check_int(m12_file_md5_hex(hashSourcePath, trackMd5),
+              "synthetic Theron Track 02 archive fixture should be hashable");
+    remove(hashSourcePath);
+#ifdef FIRESTAFF_HAS_ZLIB
+    check_int(write_deflated_zip_file(zipPath,
+                                      "renamed/media/anything.dat",
+                                      trackPayload),
+              "synthetic Theron Track 02 ZIP fixture should be written");
+#else
+    check_int(write_stored_zip_file(zipPath,
+                                    "renamed/media/anything.dat",
+                                    trackPayload),
+              "synthetic Theron Track 02 ZIP fixture should be written");
+#endif
+
+    M12_AssetStatus_TestSetTheronSyntheticHash(trackMd5);
+    M12_AssetStatus_Scan(&status, zipRoot);
+
+    check_int(M12_AssetStatus_GameAvailable(&status, "theron") == 1,
+              "ZIP-backed synthetic Theron Track 02 should be available");
+    runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, "theron");
+    required = M12_AssetStatus_GetRequiredFile(&status, "theron", 0U);
+    version = M12_AssetStatus_GetVersion(&status, "theron", 0U);
+    check_int(runtimeDir && strstr(runtimeDir, "asset-cache") != NULL,
+              "ZIP-backed Theron Track 02 should use the ordinary asset cache");
+    check_int(runtimeDir &&
+                  snprintf(expectedCacheLeaf, sizeof(expectedCacheLeaf),
+                           "%s/theron/track02.bin", runtimeDir) > 0,
+              "ZIP-backed Theron cache path should fit");
+    check_int(required && required->matched &&
+                  strcmp(required->matchedPath, expectedCacheLeaf) == 0 &&
+                  strstr(required->matchedPath, "::") == NULL,
+              "ZIP-backed Theron required Track 02 should materialize as track02.bin");
+    check_int(version && version->matched &&
+                  strcmp(version->matchedPath, expectedCacheLeaf) == 0 &&
+                  strcmp(version->matchedMd5, trackMd5) == 0,
+              "ZIP-backed Theron version path should follow the materialized Track 02");
+    check_int(required && file_matches_payload(required->matchedPath, trackPayload),
+              "materialized Theron Track 02 should match the ZIP payload");
+
+    M12_AssetStatus_TestSetTheronSyntheticHash(NULL);
+}
+
 int main(void) {
     enum {
         VERSION_SCAN_GROUPS = 5,
@@ -517,6 +580,7 @@ int main(void) {
     check_dm1_optional_boot_files_are_original_candidates(requestRoot);
     check_dm2_virtual_required_files_materialize(requestRoot);
     check_direct_theron_file_scan_avoids_root_rescan(requestRoot);
+    check_theron_zip_track02_materializes(requestRoot);
 
     (void)test_setenv("FIRESTAFF_DATA", NULL);
     if (failures) {
