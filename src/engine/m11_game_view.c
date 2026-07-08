@@ -1122,30 +1122,35 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     return 1;
 }
 
+static void m11_apply_csb_runtime_m11_mirror_receipt(
+    M11_GameViewState *state,
+    const CSB_V1_RuntimeM11MirrorReceipt_PC34 *receipt)
+{
+    if (!state || !receipt || !receipt->valid) {
+        return;
+    }
+    state->csbState.level_loaded = receipt->view.level_loaded;
+    state->csbState.current_level = receipt->view.current_level;
+    state->csbState.party_x = receipt->view.party_x;
+    state->csbState.party_y = receipt->view.party_y;
+    state->csbState.party_dir = receipt->view.party_dir;
+    state->csbState.tick_count = receipt->view.tick_count;
+    if (receipt->party.valid) {
+        state->world.party = receipt->party.party;
+    }
+}
+
 static void m11_sync_csb_state_from_profile(M11_GameViewState *state,
                                             const CSB_V1_BootProfile *profile)
 {
-    CSB_V1_RuntimeViewStateReceipt_PC34 receipt;
-    CSB_V1_RuntimePartyMirrorReceipt_PC34 party_receipt;
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 receipt;
     if (!state || !profile) {
         return;
     }
-    if (!csb_v1_runtime_view_state_receipt_from_profile_pc34(
+    if (csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
             &profile->runtime,
             &receipt)) {
-        return;
-    }
-    state->csbState.level_loaded = receipt.level_loaded;
-    state->csbState.current_level = receipt.current_level;
-    state->csbState.party_x = receipt.party_x;
-    state->csbState.party_y = receipt.party_y;
-    state->csbState.party_dir = receipt.party_dir;
-    state->csbState.tick_count = receipt.tick_count;
-    if (csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
-            &profile->runtime,
-            &party_receipt) &&
-        party_receipt.valid) {
-        state->world.party = party_receipt.party;
+        m11_apply_csb_runtime_m11_mirror_receipt(state, &receipt);
     }
 }
 

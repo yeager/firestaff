@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB runtime M11 mirror receipt: CSB runtime now emits one combined M11 mirror receipt for scalar view state plus party/champion mirror data, and M11 consumes that combined receipt instead of requesting separate view and party receipts during boot/resume sync. Verification: CSB boot runtime handoff passed 274/274, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 RetroAchievements start-menu settings manifest: start-menu accessibility/state manifest now exposes the same RA settings block as the visible settings UI: RetroAchievements status, hardcore mode, username, and masked API token, with a regression proving the raw token is never emitted. Verification: M12 launcher screen-reader manifest probe passed 181/181, settings hit-test passed 49/49, RA unit test passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup host receipt boundary: CSB startup-sequence now emits host receipts for pure entrance and runtime apply paths, owning status/result/preview/bonus fields before M11 maps them to engine input results. Verification: CSB startup entrance pointer contract passed 140/140, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

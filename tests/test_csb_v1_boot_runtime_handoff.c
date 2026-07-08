@@ -764,6 +764,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CSB_V1_PartyState imported;
     CSB_V1_PartyState runtime_party;
     CSB_V1_RuntimePartyMirrorReceipt_PC34 party_receipt;
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 mirror_receipt;
     uint8_t save_buf[1024];
     char dungeon_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-party";
@@ -849,6 +850,16 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CHECK(party_receipt.party.champions[0].portraitBitmapValid == 1 &&
               party_receipt.party.champions[0].portraitBitmap[0] == 0xabu,
           "party mirror receipt carries compatible imported portrait bytes");
+    CHECK(csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
+              &p.runtime,
+              &mirror_receipt) == 1 && mirror_receipt.valid,
+          "CSB runtime owns combined M11 mirror receipt");
+    CHECK(mirror_receipt.view.level_loaded == 1 &&
+              mirror_receipt.view.party_x == p.runtime.party_x &&
+              mirror_receipt.view.party_y == p.runtime.party_y &&
+              mirror_receipt.party.party.championCount == 2 &&
+              mirror_receipt.party.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == 0x1234u,
+          "combined M11 mirror receipt carries view state plus party mirror");
 
     CHECK(csb_v1_runtime_set_leader(&p.runtime, 1) == 0,
           "runtime leader switch to second imported champion succeeds");
