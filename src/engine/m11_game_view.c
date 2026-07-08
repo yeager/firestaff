@@ -318,6 +318,25 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.leader_hand_object = receipt.leader_hand_object;
 }
 
+static int m11_dm2_boot_v2_render_callback(int party_dir,
+                                           int party_x,
+                                           int party_y,
+                                           uint8_t *framebuffer,
+                                           int fb_stride,
+                                           int view_w,
+                                           int view_h,
+                                           void *userdata)
+{
+    (void)userdata;
+    return dm2_v2_runtime_render_frame(party_dir,
+                                       party_x,
+                                       party_y,
+                                       framebuffer,
+                                       fb_stride,
+                                       view_w,
+                                       view_h);
+}
+
 static void m11_dm2_copy_printable(unsigned char *dst,
                                    int dst_len,
                                    const char *src,
@@ -38059,24 +38078,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int rendered = -1;
         if (state->dm2World) {
-            rendered = dm2_v2_runtime_render_frame(
-                state->dm2State.party_dir,
-                state->dm2State.party_x,
-                state->dm2State.party_y,
+            DM2_V1_BootRuntimeRenderReceipt receipt;
+            (void)dm2_v1_boot_runtime_render_frame(
+                (DM2_V1_BootProfile *)state->dm2BootProfile,
                 framebuffer,
                 framebufferWidth,
                 framebufferWidth,
-                framebufferHeight);
-            if (rendered != 0) {
-                rendered = dm2_v1_runtime_render_frame(
-                    state->dm2State.party_dir,
-                    state->dm2State.party_x,
-                    state->dm2State.party_y,
-                    framebuffer,
-                    framebufferWidth,
-                    framebufferWidth,
-                    framebufferHeight);
-            }
+                framebufferHeight,
+                m11_dm2_boot_v2_render_callback,
+                NULL,
+                &receipt);
+            rendered = receipt.render_result;
         }
         if (rendered != 0) {
             const char *boot_status = state->lastOutcome[0]

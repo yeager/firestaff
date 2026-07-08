@@ -62,6 +62,29 @@ static int copy_file_bytes(const char *src, const char *dst)
     return 1;
 }
 
+static int test_dm2_v2_render_fallback_callback(int party_dir,
+                                                int party_x,
+                                                int party_y,
+                                                unsigned char *framebuffer,
+                                                int fb_stride,
+                                                int view_w,
+                                                int view_h,
+                                                void *userdata)
+{
+    int *called = (int *)userdata;
+    (void)party_dir;
+    (void)party_x;
+    (void)party_y;
+    (void)framebuffer;
+    (void)fb_stride;
+    (void)view_w;
+    (void)view_h;
+    if (called) {
+        *called += 1;
+    }
+    return -1;
+}
+
 static void test_defaults(void)
 {
     DM2_V1_BootProfile p;
@@ -331,6 +354,9 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     DM2_V1_BootRuntimeReceipt before;
     DM2_V1_BootRuntimeReceipt after;
     DM2_V1_BootRuntimeActionReceipt action;
+    DM2_V1_BootRuntimeRenderReceipt render_receipt;
+    unsigned char framebuffer[320 * 200];
+    int v2_callback_count = 0;
     const char *home = getenv("HOME");
     char root[512];
     FILE *g;
@@ -380,6 +406,23 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               after.tick_count >= before.tick_count &&
               after.operation_result == 0,
           "boot runtime tick owns DM2 receipt update");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&render_receipt, 0, sizeof(render_receipt));
+    CHECK(dm2_v1_boot_runtime_render_frame(
+              launch.profile,
+              framebuffer,
+              320,
+              320,
+              200,
+              test_dm2_v2_render_fallback_callback,
+              &v2_callback_count,
+              &render_receipt) == 1 &&
+              v2_callback_count == 1 &&
+              render_receipt.v2_attempted == 1 &&
+              render_receipt.v1_attempted == 1 &&
+              render_receipt.v1_succeeded == 1 &&
+              render_receipt.render_result == 0,
+          "boot runtime render owns V2 callback plus V1 fallback receipt");
     memset(&action, 0, sizeof(action));
     CHECK(dm2_v1_boot_runtime_action_front_cell(
               launch.profile,
