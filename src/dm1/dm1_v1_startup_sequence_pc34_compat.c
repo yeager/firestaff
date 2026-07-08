@@ -863,6 +863,37 @@ int dm1_v1_startup_boot_probe_receipt_from_facts_pc34(
     return 1;
 }
 
+int dm1_v1_startup_selected_boot_probe_receipt_pc34(
+    const DM1_V1_StartupSelectedBootProbeFacts_PC34* facts,
+    DM1_V1_StartupSelectedBootProbeReceipt_PC34* out_receipt) {
+    DM1_V1_StartupSelectedBootProbeReceipt_PC34 receipt;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.handled = 1;
+    receipt.active = facts->active ? 1 : 0;
+    receipt.started_from_launcher = facts->started_from_launcher ? 1 : 0;
+    receipt.source_matches =
+        (facts->expected_game_id &&
+         facts->actual_source_id &&
+         strcmp(facts->actual_source_id, facts->expected_game_id) == 0)
+            ? 1
+            : 0;
+    receipt.selected_entry_receipt_valid =
+        dm1_v1_startup_selected_entry_receipt_valid_pc34(
+            facts->expected_game_id,
+            facts->intro_bypassed);
+    receipt.valid =
+        receipt.active &&
+        receipt.source_matches &&
+        receipt.started_from_launcher &&
+        receipt.selected_entry_receipt_valid;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_sequence_source_order_valid_pc34(void) {
     /* ReDMCSB startup source order:
      * SWSH.C:39-47 runs START.PRG after the FTL palette program;
