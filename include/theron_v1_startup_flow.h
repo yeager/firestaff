@@ -330,6 +330,28 @@ typedef struct {
 } Theron_StartupChapterInspectRequest;
 
 typedef struct {
+    Theron_StartupPhase phase;
+    int selected_dungeon;
+    const void *boot_profile; /* Theron_V1_BootProfile*, kept opaque here. */
+    const Theron_V1_World *world;
+    int soul_cursor;
+    int continue_focus;
+    int resume_claim;
+    int tqsv_slot;
+    int srm_slot;
+    int srm_import_status;
+    const char *startup_text_prompt;
+    const char (*startup_roster_names)
+        [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
+    const char (*startup_roster_titles)
+        [THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
+    int startup_roster_name_count;
+    int selected_mirrors_mask;
+    const int *selected_mirror_order;
+    int selected_mirror_order_count;
+} Theron_StartupSessionFacts;
+
+typedef struct {
     char inspect_scope[16];
     char inspect_detail[320];
     char marker_line[192];
@@ -623,6 +645,11 @@ int theron_v1_startup_handle_input_from_session_facts_with_receipt(
     Theron_StartupInput input,
     Theron_StartupAction *out_action,
     Theron_StartupInputReceipt *out_receipt);
+int theron_v1_startup_handle_input_from_session_with_receipt(
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt);
 Theron_StartupResult theron_v1_startup_handle_hit(
     Theron_StartupPhase phase,
     Theron_DungeonID selected_dungeon,
@@ -741,6 +768,10 @@ int theron_v1_startup_layout_build_from_session_facts(
     int selected_mirror_order_count,
     Theron_StartupLayoutElement *elements,
     int max_elements);
+int theron_v1_startup_layout_build_from_session(
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupLayoutElement *elements,
+    int max_elements);
 int theron_v1_startup_layout_hit_at(
     Theron_StartupPhase phase,
     const Theron_StartupLayoutElement *elements,
@@ -823,6 +854,12 @@ int theron_v1_startup_handle_pointer_from_session_facts_with_receipt(
     int y,
     Theron_StartupAction *out_action,
     Theron_StartupInputReceipt *out_receipt);
+int theron_v1_startup_handle_pointer_from_session_with_receipt(
+    const Theron_StartupSessionFacts *session,
+    int x,
+    int y,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt);
 int theron_v1_startup_render_rows_build(
     const Theron_StartupLayoutState *state,
     const Theron_StartupLayoutElement *elements,
@@ -869,6 +906,10 @@ int theron_v1_startup_render_rows_build_from_session_facts(
     int selected_mirror_order_count,
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows);
+int theron_v1_startup_render_rows_build_from_session(
+    const Theron_StartupSessionFacts *session,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows);
 int theron_v1_startup_render_plan_build(
     const Theron_StartupLayoutState *state,
     const Theron_StartupLayoutElement *elements,
@@ -911,6 +952,9 @@ int theron_v1_startup_render_plan_build_from_session_facts(
     int selected_mirrors_mask,
     const int *selected_mirror_order,
     int selected_mirror_order_count,
+    Theron_StartupRenderPlan *out_plan);
+int theron_v1_startup_render_plan_build_from_session(
+    const Theron_StartupSessionFacts *session,
     Theron_StartupRenderPlan *out_plan);
 int theron_v1_startup_execute_graphics_plan(
     const Theron_StartupRenderPlan *plan,
