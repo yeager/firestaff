@@ -1714,6 +1714,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190PossessionDropPlanPc34 dropOut;
     DM1_MeleeF0190KilledSomeStateInputPc34 stateIn;
     DM1_MeleeF0190KilledSomeStatePlanPc34 stateOut;
+    DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
+    DM1_MeleeF0190KilledAllStatePlanPc34 killedAllOut;
     struct CombatResult_Compat resultA;
     struct CombatResult_Compat resultB;
     struct DungeonGroup_Compat groupA;
@@ -1897,6 +1899,36 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 non-attack skips cleanup");
     CHECK_EQ(stateOut.shouldEvaluateFear, 0,
              "F0190 non-attack skips fear");
+
+    memset(&killedAllIn, 0, sizeof(killedAllIn));
+    killedAllIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    killedAllIn.groupIndex = 9;
+    killedAllIn.targetMapIndex = 2;
+    killedAllIn.targetMapX = 13;
+    killedAllIn.targetMapY = 14;
+    CHECK_EQ(dm1_v1_melee_killed_all_state_plan_f0190_pc34(
+                 &killedAllIn, &killedAllOut), 1,
+             "F0190 killed-all state plan builds");
+    CHECK_EQ(killedAllOut.valid, 1, "F0190 killed-all state valid");
+    CHECK_EQ(killedAllOut.shouldUnlinkGroupFromSquare, 1,
+             "F0190 killed-all unlinks group");
+    CHECK_EQ(killedAllOut.shouldClearGroupNext, 1,
+             "F0190 killed-all clears next");
+    CHECK_EQ(killedAllOut.shouldRemoveActiveGroupState, 1,
+             "F0190 killed-all removes active state");
+    CHECK_EQ(killedAllOut.shouldWriteRawGroup, 1,
+             "F0190 killed-all writes raw group");
+    CHECK_EQ(killedAllOut.groupIndex, 9, "F0190 killed-all group");
+    CHECK_EQ(killedAllOut.mapIndex, 2, "F0190 killed-all map");
+    CHECK_EQ(killedAllOut.mapX, 13, "F0190 killed-all x");
+    CHECK_EQ(killedAllOut.mapY, 14, "F0190 killed-all y");
+
+    killedAllIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    CHECK_EQ(dm1_v1_melee_killed_all_state_plan_f0190_pc34(
+                 &killedAllIn, &killedAllOut), 1,
+             "F0190 killed-some killed-all state plan builds");
+    CHECK_EQ(killedAllOut.shouldUnlinkGroupFromSquare, 0,
+             "F0190 killed-some no unlink");
 
     memset(&resultA, 0, sizeof(resultA));
     resultA.damageApplied = 30;

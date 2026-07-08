@@ -2520,6 +2520,8 @@ static void orch_cmd_attack_apply_group_kill_side_effects_compat(
     int targetDirection,
     int outcome)
 {
+    DM1_MeleeF0190KilledAllStateInputPc34 in;
+    DM1_MeleeF0190KilledAllStatePlanPc34 plan;
     int mapIndex;
     int mapX;
     int mapY;
@@ -2529,13 +2531,29 @@ static void orch_cmd_attack_apply_group_kill_side_effects_compat(
 
     orch_cmd_attack_target_square_compat(
         world, targetDirection, &mapIndex, &mapX, &mapY);
-    (void)orch_unlink_thing_from_square_compat(
-        world, mapIndex, mapX, mapY,
-        orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
-    if (groupIndex < world->things->groupCount && world->things->groups) {
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.outcome = outcome;
+    in.groupIndex = groupIndex;
+    in.targetMapIndex = mapIndex;
+    in.targetMapX = mapX;
+    in.targetMapY = mapY;
+    if (!dm1_v1_melee_killed_all_state_plan_f0190_pc34(&in, &plan) ||
+        !plan.valid) {
+        return;
+    }
+    if (plan.shouldUnlinkGroupFromSquare) {
+        (void)orch_unlink_thing_from_square_compat(
+            world, plan.mapIndex, plan.mapX, plan.mapY,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, plan.groupIndex));
+    }
+    if (plan.shouldClearGroupNext &&
+        plan.groupIndex < world->things->groupCount && world->things->groups) {
         world->things->groups[groupIndex].next = THING_NONE;
     }
-    orch_remove_active_group_state_compat(world, groupIndex);
+    if (plan.shouldRemoveActiveGroupState) {
+        orch_remove_active_group_state_compat(world, plan.groupIndex);
+    }
 }
 
 static int orch_cmd_attack_f0190_smoke_attack_compat(
