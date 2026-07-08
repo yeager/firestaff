@@ -22,6 +22,7 @@
 
 #include "theron_v1_startup_save_resume.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_startup_flow.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -736,6 +737,60 @@ static void test_boot_prepare_startup_profile_missing_track02(void) {
     cleanup_srm_root(TST_BAD_ROOT);
 }
 
+static void test_startup_session_facts_wrappers(void) {
+    Theron_V1_World world;
+    Theron_StartupSessionFacts session;
+    Theron_StartupFlow flow;
+    Theron_StartupStateReceipt state_receipt;
+    Theron_StartupChapterInspectReceipt inspect_receipt;
+    Theron_StartupActionPlan plan;
+    Theron_StartupExecution execution;
+    Theron_StartupHostReceipt host_receipt;
+    int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
+
+    theron_v1_world_init(&world);
+    memset(&session, 0, sizeof(session));
+    session.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+    session.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    session.world = &world;
+    session.selected_mirrors_mask = 0x03;
+    session.companion_count = 2;
+    session.selected_mirror_order = order;
+    session.selected_mirror_order_count = THERON_STARTUP_MAX_COMPANIONS;
+
+    expect_true(theron_v1_startup_flow_rebuild_from_session_with_receipt(
+                    &session,
+                    &flow,
+                    &state_receipt) == THERON_STARTUP_OK &&
+                    state_receipt.flow_changed &&
+                    state_receipt.flow.phase ==
+                        THERON_STARTUP_PHASE_STAGE_SELECT,
+                "session facts rebuild wrapper emits flow state receipt");
+    expect_true(theron_v1_startup_chapter_inspect_receipt_from_session(
+                    &session,
+                    "STARTUP",
+                    &inspect_receipt) &&
+                    strcmp(inspect_receipt.inspect_scope, "STARTUP") == 0 &&
+                    strstr(inspect_receipt.inspect_detail, "STARTUP") != NULL,
+                "session facts chapter inspect wrapper emits inspect receipt");
+
+    theron_v1_startup_action_plan_init(&plan);
+    plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;
+    plan.cursor = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    expect_true(theron_v1_startup_execute_flow_plan_from_session_with_host_receipts(
+                    &plan,
+                    &session,
+                    NULL,
+                    &execution,
+                    &host_receipt,
+                    &state_receipt) &&
+                    execution.result == THERON_STARTUP_OK &&
+                    host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                    state_receipt.flow_changed,
+                "session facts flow-plan wrapper emits host and state receipts");
+}
+
 int main(void) {
     printf("\n=== Theron V1 Startup Save/Resume Smoke Gate Unit Tests ===\n\n");
     test_clean_host_skip_safe_no_save_root();
@@ -751,6 +806,7 @@ int main(void) {
     test_null_safety();
     test_snapshot_snapshot_is_deterministic();
     test_boot_prepare_startup_profile_missing_track02();
+    test_startup_session_facts_wrappers();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d)\n",

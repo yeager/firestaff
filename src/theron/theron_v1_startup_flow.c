@@ -413,6 +413,32 @@ Theron_StartupResult theron_v1_startup_flow_rebuild_from_facts_with_receipt(
     return THERON_STARTUP_OK;
 }
 
+Theron_StartupResult theron_v1_startup_flow_rebuild_from_session_with_receipt(
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupFlow *flow,
+    Theron_StartupStateReceipt *out_receipt) {
+
+    const Theron_DungeonProgression *progression;
+
+    if (!session || !session->world) {
+        if (out_receipt) {
+            theron_v1_startup_state_receipt_init(out_receipt);
+        }
+        return THERON_STARTUP_ERR_NULL;
+    }
+    progression = &session->world->progression;
+    return theron_v1_startup_flow_rebuild_from_facts_with_receipt(
+        session->phase,
+        session->selected_dungeon,
+        session->selected_mirrors_mask,
+        session->companion_count,
+        session->selected_mirror_order,
+        session->selected_mirror_order_count,
+        progression,
+        flow,
+        out_receipt);
+}
+
 void theron_v1_startup_action_init(Theron_StartupAction *action) {
     if (!action) {
         return;
@@ -580,6 +606,22 @@ int theron_v1_startup_chapter_inspect_receipt_from_facts(
     request.prefix = prefix;
     return theron_v1_startup_chapter_inspect_receipt_from_request(
         &request,
+        out_receipt);
+}
+
+int theron_v1_startup_chapter_inspect_receipt_from_session(
+    const Theron_StartupSessionFacts *session,
+    const char *prefix,
+    Theron_StartupChapterInspectReceipt *out_receipt) {
+
+    if (!session) {
+        theron_v1_startup_chapter_inspect_receipt_init(out_receipt);
+        return 0;
+    }
+    return theron_v1_startup_chapter_inspect_receipt_from_facts(
+        session->boot_profile,
+        session->world,
+        prefix,
         out_receipt);
 }
 
@@ -1815,6 +1857,42 @@ int theron_v1_startup_execute_flow_plan_from_facts_with_host_receipts(
         return 0;
     }
     return 1;
+}
+
+int theron_v1_startup_execute_flow_plan_from_session_with_host_receipts(
+    const Theron_StartupActionPlan *plan,
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupFlow *out_flow,
+    Theron_StartupExecution *out_execution,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt)
+{
+    if (!session || !session->world) {
+        if (out_execution) {
+            theron_v1_startup_execution_init(out_execution);
+            out_execution->result = THERON_STARTUP_ERR_NULL;
+        }
+        if (out_host_receipt) {
+            theron_v1_startup_host_receipt_init(out_host_receipt);
+        }
+        if (out_state_receipt) {
+            theron_v1_startup_state_receipt_init(out_state_receipt);
+        }
+        return 0;
+    }
+    return theron_v1_startup_execute_flow_plan_from_facts_with_host_receipts(
+        plan,
+        session->phase,
+        session->selected_dungeon,
+        session->selected_mirrors_mask,
+        session->companion_count,
+        session->selected_mirror_order,
+        session->selected_mirror_order_count,
+        &session->world->progression,
+        out_flow,
+        out_execution,
+        out_host_receipt,
+        out_state_receipt);
 }
 
 static void tqr_startup_render_plan_reset(Theron_StartupRenderPlan *plan)

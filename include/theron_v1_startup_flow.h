@@ -347,6 +347,7 @@ typedef struct {
         [THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
     int startup_roster_name_count;
     int selected_mirrors_mask;
+    int companion_count;
     const int *selected_mirror_order;
     int selected_mirror_order_count;
 } Theron_StartupSessionFacts;
@@ -477,6 +478,10 @@ Theron_StartupResult theron_v1_startup_flow_rebuild_from_facts_with_receipt(
     const Theron_DungeonProgression *progression,
     Theron_StartupFlow *flow,
     Theron_StartupStateReceipt *out_receipt);
+Theron_StartupResult theron_v1_startup_flow_rebuild_from_session_with_receipt(
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupFlow *flow,
+    Theron_StartupStateReceipt *out_receipt);
 void theron_v1_startup_action_init(Theron_StartupAction *action);
 void theron_v1_startup_action_plan_init(Theron_StartupActionPlan *plan);
 void theron_v1_startup_hit_init(Theron_StartupHit *hit);
@@ -511,6 +516,10 @@ int theron_v1_startup_chapter_inspect_receipt_from_request(
 int theron_v1_startup_chapter_inspect_receipt_from_facts(
     const void *boot_profile,
     const Theron_V1_World *world,
+    const char *prefix,
+    Theron_StartupChapterInspectReceipt *out_receipt);
+int theron_v1_startup_chapter_inspect_receipt_from_session(
+    const Theron_StartupSessionFacts *session,
     const char *prefix,
     Theron_StartupChapterInspectReceipt *out_receipt);
 Theron_StartupResult theron_v1_startup_choose_stage(
@@ -720,6 +729,13 @@ int theron_v1_startup_execute_flow_plan_from_facts_with_host_receipts(
     const int *selected_mirror_order,
     int selected_mirror_order_count,
     const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *out_flow,
+    Theron_StartupExecution *out_execution,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt);
+int theron_v1_startup_execute_flow_plan_from_session_with_host_receipts(
+    const Theron_StartupActionPlan *plan,
+    const Theron_StartupSessionFacts *session,
     Theron_StartupFlow *out_flow,
     Theron_StartupExecution *out_execution,
     Theron_StartupHostReceipt *out_host_receipt,
