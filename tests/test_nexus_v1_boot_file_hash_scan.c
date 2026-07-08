@@ -1,4 +1,5 @@
 #include "nexus_v1_engine.h"
+#include "firestaff_nexus_v1_boot_profile.h"
 #include "fs_portable_compat.h"
 
 #include <stdio.h>
@@ -69,7 +70,14 @@ int main(void) {
     char root[FSP_PATH_MAX];
     char src[FSP_PATH_MAX];
     char dst[FSP_PATH_MAX];
+    char dm_bin_src[FSP_PATH_MAX];
+    char dm_bin_dst[FSP_PATH_MAX];
+    char profile_root[FSP_PATH_MAX];
+    char profile_nexus_dir[FSP_PATH_MAX];
+    char profile_dm_bin_dst[FSP_PATH_MAX];
     Nexus_V1_Engine engine;
+    Nexus_V1_BootProfile profile;
+    Nexus_V1_Diagnostic diags[4];
     uint8_t* data;
     int size = 0;
 
@@ -96,7 +104,38 @@ int main(void) {
     check_int(size > 100000, "renamed Nexus TITLE.CG size is plausible");
     free(data);
 
+    if (FSP_JoinPath(dm_bin_src, sizeof(dm_bin_src), home, ".firestaff/data/nexus/DM.BIN") &&
+        local_file_exists(dm_bin_src) &&
+        FSP_JoinPath(dm_bin_dst, sizeof(dm_bin_dst), root, "renamed-saturn-data.payload") &&
+        copy_file_bytes(dm_bin_src, dm_bin_dst)) {
+        memset(&engine, 0, sizeof(engine));
+        check_int(nexus_v1_init(&engine, root) == 0,
+                  "Nexus init accepts renamed DM.BIN marker by hash");
+        check_int(engine.source == NEXUS_SRC_EXTRACTED,
+                  "renamed DM.BIN selects extracted Nexus source");
+        nexus_v1_shutdown(&engine);
+
+        check_int(FSP_JoinPath(profile_root, sizeof(profile_root), root, "profile-root") &&
+                  FSP_JoinPath(profile_nexus_dir, sizeof(profile_nexus_dir), profile_root, "nexus") &&
+                  FSP_CreateDirectoryRecursive(profile_nexus_dir) &&
+                  FSP_JoinPath(profile_dm_bin_dst,
+                               sizeof(profile_dm_bin_dst),
+                               profile_nexus_dir,
+                               "renamed-dm-bin.marker") &&
+                  copy_file_bytes(dm_bin_src, profile_dm_bin_dst),
+                  "renamed DM.BIN profile fixture written");
+        memset(&profile, 0, sizeof(profile));
+        memset(diags, 0, sizeof(diags));
+        check_int(Nexus_V1_BootProfile_Init(&profile, profile_root, profile_root, 0U) == 0,
+                  "Nexus boot profile initialized for renamed DM.BIN root");
+        (void)Nexus_V1_BootProfile_ValidateAssets(&profile, diags, 4U);
+        check_int(strstr(diags[0].detail, "DM.BIN") == NULL,
+                  "Nexus boot profile accepts renamed DM.BIN by hash");
+    } else {
+        puts("SKIP: local Nexus DM.BIN not present for init hash test");
+    }
+
     if (failures) return 1;
-    puts("ok: Nexus boot file resolver finds renamed TITLE.CG by hash");
+    puts("ok: Nexus boot file resolver finds renamed startup files by hash");
     return 0;
 }

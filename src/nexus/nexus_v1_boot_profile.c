@@ -19,6 +19,7 @@
  */
 
 #include "firestaff_nexus_v1_boot_profile.h"
+#include "asset_find_by_hash.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -101,6 +102,12 @@ static int  nexus_v1_boot_check_asset_file(const char *dir,
                                             Nexus_V1_DiagnosticCode okCode,
                                             Nexus_V1_Diagnostic *diags,
                                             size_t *outIndex);
+static int  nexus_v1_boot_check_asset_hash_or_file(const char *dir,
+                                                    const char *filename,
+                                                    const char *md5,
+                                                    Nexus_V1_DiagnosticCode okCode,
+                                                    Nexus_V1_Diagnostic *diags,
+                                                    size_t *outIndex);
 
 /* ── Public API ────────────────────────────────────────────────── */
 
@@ -157,8 +164,11 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
     }
 
     /* Check for DM.BIN (primary Saturn CD image / archive marker) */
-    if (nexus_v1_boot_check_asset_file(dataDir, "DM.BIN",
-                                      NEXUS_V1_DIAG_OK, diags, &diagCount) != 0
+    if (nexus_v1_boot_check_asset_hash_or_file(dataDir, "DM.BIN",
+                                              "e88d60859f65f08fa622e1992b02280f",
+                                              NEXUS_V1_DIAG_OK,
+                                              diags,
+                                              &diagCount) != 0
         && diagCount < maxDiags) {
         /* Missing DM.BIN is non-fatal if SEGADATA.BIN exists */
         (void)nexus_v1_boot_check_asset_file(dataDir, "SEGADATA.BIN",
@@ -306,10 +316,10 @@ static int nexus_v1_boot_resolve_paths(Nexus_V1_BootProfile *profile,
 }
 
 static int nexus_v1_boot_check_asset_file(const char *dir,
-                                            const char *filename,
-                                            Nexus_V1_DiagnosticCode okCode,
-                                            Nexus_V1_Diagnostic *diags,
-                                            size_t *outIndex) {
+                                           const char *filename,
+                                           Nexus_V1_DiagnosticCode okCode,
+                                           Nexus_V1_Diagnostic *diags,
+                                           size_t *outIndex) {
     char path[512];
     Nexus_V1_DiagnosticCode diagCode;
     int missing = 0;
@@ -348,4 +358,18 @@ static int nexus_v1_boot_check_asset_file(const char *dir,
     }
 
     return 0;  /* file found — no diagnostic needed */
+}
+
+static int nexus_v1_boot_check_asset_hash_or_file(const char *dir,
+                                                   const char *filename,
+                                                   const char *md5,
+                                                   Nexus_V1_DiagnosticCode okCode,
+                                                   Nexus_V1_Diagnostic *diags,
+                                                   size_t *outIndex) {
+    char matched[ASSET_PATH_MAX];
+    if (dir && md5 &&
+        asset_find_by_md5(dir, md5, matched, (int)sizeof(matched), 8)) {
+        return 0;
+    }
+    return nexus_v1_boot_check_asset_file(dir, filename, okCode, diags, outIndex);
 }

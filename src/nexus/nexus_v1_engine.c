@@ -21,6 +21,7 @@ typedef struct {
 } Nexus_V1_KnownFileHash;
 
 static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
+    {"DM.BIN", "e88d60859f65f08fa622e1992b02280f"},
     {"TITLE.CG", "80fa961fa95d7a0cb57e9a62f48786c8"},
     {"WARNING.BIN", "15c87a09af36e9579dfbd88a5af87477"},
     {"GAMEOVER.BIN", "0426cb045a495c151a138fd2c77370e2"},
@@ -178,6 +179,11 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
 static int has_extracted(const char *dir) {
     char path[512];
     struct stat st;
+    const char *dm_bin_md5 = nexus_known_boot_file_md5("DM.BIN");
+    if (dm_bin_md5 &&
+        asset_find_by_md5(dir, dm_bin_md5, path, (int)sizeof(path), 8)) {
+        return 1;
+    }
     snprintf(path, sizeof(path), "%s/DM.BIN", dir);
     if (stat(path, &st) == 0) return 1;
     snprintf(path, sizeof(path), "%s/LEV00.DGN", dir);
