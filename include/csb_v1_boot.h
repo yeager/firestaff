@@ -7,6 +7,7 @@
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,6 +70,12 @@ typedef struct {
     CSB_V1_RuntimeProfile runtime;
 } CSB_V1_BootProfile;
 
+typedef struct CSB_V1_BootStartupLaunchReceipts_PC34 {
+    CSB_V1_RuntimeStartupHandoffReceipt_PC34 handoff;
+    CSB_V1_StartupInitStateReceipt_PC34 init_state;
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 session_state;
+} CSB_V1_BootStartupLaunchReceipts_PC34;
+
 void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir);
 int csb_v1_boot_probe_available(const char *data_dir);
@@ -107,6 +114,12 @@ int csb_v1_boot_build_startup_session_state_receipt_pc34(
     const char *import_dm1_save_path,
     const char *resume_save_path,
     CSB_V1_RuntimeStartupSessionStateReceipt_PC34 *out_receipt);
+int csb_v1_boot_build_startup_launch_receipts_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    CSB_V1_BootStartupLaunchReceipts_PC34 *out_receipts);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *

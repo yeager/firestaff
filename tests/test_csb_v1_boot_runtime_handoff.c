@@ -1591,6 +1591,28 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                   state_receipt.import_champion_count == 2 &&
                   strcmp(state_receipt.import_dm1_save_path, path) == 0,
               "boot profile owns startup session state receipt adapter");
+        {
+            CSB_V1_BootProfile boot2;
+            CSB_V1_BootStartupLaunchReceipts_PC34 launch_receipts;
+            csb_v1_boot_profile_init(&boot2);
+            CHECK(csb_v1_boot_build_startup_launch_receipts_pc34(
+                      &boot2,
+                      NULL,
+                      path,
+                      NULL,
+                      &launch_receipts) == 1 &&
+                      launch_receipts.handoff.kind ==
+                          CSB_V1_RUNTIME_STARTUP_HANDOFF_IMPORT_DM1_PC34 &&
+                      launch_receipts.handoff.import_succeeded &&
+                      launch_receipts.init_state.command_state.entrance_active &&
+                      launch_receipts.init_state.command_state.title_active &&
+                      launch_receipts.session_state.import_available &&
+                      launch_receipts.session_state.import_champion_count == 2 &&
+                      strcmp(launch_receipts.session_state.import_dm1_save_path,
+                             path) == 0,
+                  "boot profile owns combined M11 startup launch receipts");
+            csb_v1_boot_cleanup(&boot2);
+        }
         csb_v1_boot_cleanup(&boot);
         receipt.direct_resume_loaded = 1;
         CHECK(csb_v1_runtime_build_startup_session_options_pc34(

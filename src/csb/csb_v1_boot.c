@@ -818,6 +818,48 @@ int csb_v1_boot_build_startup_session_state_receipt_pc34(
                    : 0;
 }
 
+int csb_v1_boot_build_startup_launch_receipts_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    CSB_V1_BootStartupLaunchReceipts_PC34 *out_receipts)
+{
+    int direct_resume;
+
+    if (!out_receipts) {
+        return 0;
+    }
+    memset(out_receipts, 0, sizeof(*out_receipts));
+    csb_v1_runtime_startup_handoff_receipt_init_pc34(
+        &out_receipts->handoff);
+    csb_v1_startup_init_state_receipt_init_pc34(
+        &out_receipts->init_state);
+    csb_v1_runtime_startup_session_state_receipt_init_pc34(
+        &out_receipts->session_state);
+    if (!profile) {
+        return 0;
+    }
+    if (!csb_v1_boot_apply_startup_handoff_pc34(profile,
+                                                save_path,
+                                                import_dm1_save_path,
+                                                &out_receipts->handoff)) {
+        return 0;
+    }
+    direct_resume = (save_path && save_path[0] != '\0') ? 1 : 0;
+    if (!csb_v1_startup_init_state_receipt_pc34(
+            direct_resume,
+            &out_receipts->init_state)) {
+        return 0;
+    }
+    return csb_v1_boot_build_startup_session_state_receipt_pc34(
+        profile,
+        &out_receipts->handoff,
+        import_dm1_save_path,
+        resume_save_path,
+        &out_receipts->session_state);
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {
