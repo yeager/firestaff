@@ -10473,7 +10473,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
         const char *dd = spec->dataDir;
         char resolvedDataDir[FSP_PATH_MAX];
-        char scanDir[512];
         CSB_V1_BootProfile *profile = NULL;
         CSB_V1_BootStartupLaunchReceipts_PC34 startup_receipts;
         int savedDebugHUD = state->showDebugHUD;
@@ -10494,14 +10493,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         csb_v1_boot_profile_init(profile);
-        snprintf(scanDir, sizeof(scanDir), "%s/csb", dd);
-        if (csb_v1_boot_scan_assets(profile, scanDir) != 0) {
-            if (csb_v1_boot_scan_assets(profile, dd) != 0) {
-                m11_set_status(state, "BOOT", "CSB ASSETS MISSING");
-                m11_log_event(state, M11_COLOR_RED, "T0: CSB SCAN FAILED");
-                free(profile);
-                return 0;
-            }
+        if (csb_v1_boot_scan_assets(profile, dd) != 0) {
+            m11_set_status(state, "BOOT", "CSB ASSETS MISSING");
+            m11_log_event(state, M11_COLOR_RED, "T0: CSB SCAN FAILED");
+            free(profile);
+            return 0;
         }
         if (csb_v1_boot_enter_game(profile) != 0) {
             m11_set_status(state, "BOOT", "CSB ENTER GAME FAILED");
@@ -10608,7 +10604,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (spec->gameId && strcmp(spec->gameId, "dm2") == 0) {
         const char *dd = spec->dataDir;
         char resolvedDataDir[FSP_PATH_MAX];
-        char scanDir[512];
         DM2_V1_BootProfile *profile = NULL;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
@@ -10634,17 +10629,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         dm2_v1_boot_profile_init(profile);
-        /* Scan assets in data_dir/dm2/ (per Firestaff AGENTS.md the
-         * scanner nests per-game subdirs under the data root). */
-        snprintf(scanDir, sizeof(scanDir), "%s/dm2", dd);
-        if (dm2_v1_boot_scan_assets(profile, scanDir) != 0) {
-            /* Try the data dir itself (some users stage DM2 at the root) */
-            if (dm2_v1_boot_scan_assets(profile, dd) != 0) {
-                m11_set_status(state, "BOOT", "DM2 ASSETS MISSING");
-                m11_log_event(state, M11_COLOR_RED, "T0: DM2 SCAN FAILED");
-                free(profile);
-                return 0;
-            }
+        if (dm2_v1_boot_scan_assets(profile, dd) != 0) {
+            m11_set_status(state, "BOOT", "DM2 ASSETS MISSING");
+            m11_log_event(state, M11_COLOR_RED, "T0: DM2 SCAN FAILED");
+            free(profile);
+            return 0;
         }
         if (!profile->assets_verified) {
             m11_set_status(state, "BOOT", "DM2 HASH UNKNOWN");

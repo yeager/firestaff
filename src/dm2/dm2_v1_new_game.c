@@ -1277,10 +1277,10 @@ DM2_FlowResult dm2_v1_new_game_flow(DM2_V1_SessionState *session,
         /* Try scanning assets if not done */
         DM2_V1_BootProfile tmp;
         dm2_v1_boot_profile_init(&tmp);
-        char scan_dir[512];
-        snprintf(scan_dir, sizeof(scan_dir), "%s/dm2",
-                 boot->asset_root[0] ? boot->asset_root : ".");
-        if (dm2_v1_boot_scan_assets(&tmp, scan_dir) != 0) {
+        if (dm2_v1_boot_scan_assets(&tmp,
+                                    boot->asset_root[0]
+                                        ? boot->asset_root
+                                        : ".") != 0) {
             return DM2_FLOW_NO_ASSETS;
         }
     }
