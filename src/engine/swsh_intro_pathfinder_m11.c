@@ -23,6 +23,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#endif
+
+enum {
+    M11_SWSH_RECURSIVE_SCAN_MAX_DEPTH = 8,
+    M11_SWSH_RECURSIVE_SCAN_MAX_FILES = 4096
+};
+
 int M11_SWSH_Intro_PayloadLooksValid(const char* path) {
     FILE* f;
     long fsize;
@@ -55,6 +67,108 @@ int M11_SWSH_Intro_PayloadLooksValid(const char* path) {
     SWSH_Compat_ReleaseLogoImagePayload(&payload);
     free(data);
     return ok;
+}
+
+static int m11_swsh_intro_scan_tree_for_payload(const char* dir,
+                                                int depth,
+                                                int* filesVisited,
+                                                char* outPath,
+                                                size_t outPathBytes) {
+#if defined(_WIN32)
+    char pattern[FSP_PATH_MAX];
+    WIN32_FIND_DATAA data;
+    HANDLE handle;
+    if (!dir || !outPath || outPathBytes == 0U || !filesVisited ||
+        depth > M11_SWSH_RECURSIVE_SCAN_MAX_DEPTH ||
+        *filesVisited >= M11_SWSH_RECURSIVE_SCAN_MAX_FILES) {
+        return 0;
+    }
+    if (!FSP_JoinPath(pattern, sizeof(pattern), dir, "*")) {
+        return 0;
+    }
+    handle = FindFirstFileA(pattern, &data);
+    if (handle == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+    do {
+        char child[FSP_PATH_MAX];
+        if (strcmp(data.cFileName, ".") == 0 ||
+            strcmp(data.cFileName, "..") == 0) {
+            continue;
+        }
+        if (!FSP_JoinPath(child, sizeof(child), dir, data.cFileName)) {
+            continue;
+        }
+        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            if (m11_swsh_intro_scan_tree_for_payload(child,
+                                                     depth + 1,
+                                                     filesVisited,
+                                                     outPath,
+                                                     outPathBytes)) {
+                FindClose(handle);
+                return 1;
+            }
+        } else {
+            ++(*filesVisited);
+            if (M11_SWSH_Intro_PayloadLooksValid(child)) {
+                snprintf(outPath, outPathBytes, "%s", child);
+                FindClose(handle);
+                return 1;
+            }
+            if (*filesVisited >= M11_SWSH_RECURSIVE_SCAN_MAX_FILES) {
+                break;
+            }
+        }
+    } while (FindNextFileA(handle, &data));
+    FindClose(handle);
+    return 0;
+#else
+    DIR* d;
+    struct dirent* ent;
+    if (!dir || !outPath || outPathBytes == 0U || !filesVisited ||
+        depth > M11_SWSH_RECURSIVE_SCAN_MAX_DEPTH ||
+        *filesVisited >= M11_SWSH_RECURSIVE_SCAN_MAX_FILES) {
+        return 0;
+    }
+    d = opendir(dir);
+    if (!d) {
+        return 0;
+    }
+    while ((ent = readdir(d)) != NULL) {
+        char child[FSP_PATH_MAX];
+        struct stat st;
+        if (strcmp(ent->d_name, ".") == 0 ||
+            strcmp(ent->d_name, "..") == 0) {
+            continue;
+        }
+        if (!FSP_JoinPath(child, sizeof(child), dir, ent->d_name) ||
+            stat(child, &st) != 0) {
+            continue;
+        }
+        if (S_ISDIR(st.st_mode)) {
+            if (m11_swsh_intro_scan_tree_for_payload(child,
+                                                     depth + 1,
+                                                     filesVisited,
+                                                     outPath,
+                                                     outPathBytes)) {
+                closedir(d);
+                return 1;
+            }
+        } else if (S_ISREG(st.st_mode)) {
+            ++(*filesVisited);
+            if (M11_SWSH_Intro_PayloadLooksValid(child)) {
+                snprintf(outPath, outPathBytes, "%s", child);
+                closedir(d);
+                return 1;
+            }
+            if (*filesVisited >= M11_SWSH_RECURSIVE_SCAN_MAX_FILES) {
+                break;
+            }
+        }
+    }
+    closedir(d);
+    return 0;
+#endif
 }
 
 static int m11_swsh_intro_find_logo_path_for_suffixes(
@@ -139,6 +253,16 @@ static int m11_swsh_intro_find_logo_path_for_suffixes(
             return 1;
         }
     }
+    {
+        int filesVisited = 0;
+        if (m11_swsh_intro_scan_tree_for_payload(effectiveDataDir,
+                                                 0,
+                                                 &filesVisited,
+                                                 outPath,
+                                                 outPathBytes)) {
+            return 1;
+        }
+    }
 
     home = getenv("HOME");
     if (home && home[0] != '\0') {
@@ -162,6 +286,16 @@ int M11_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
         "SWOOSH", "SWOOSH.DAT",
         "dm1/SWOOSH", "dm1/SWOOSH.DAT",
         "dm1-multilingual/SWOOSH", "dm1-multilingual/SWOOSH.DAT",
+        "dm1-extras/legacy-dos/DungeonMasterPC34/SWOOSH",
+        "dm1-extras/legacy-dos/DungeonMasterPC34/SWOOSH.DAT",
+        "dm1-extras/legacy-dos/DungeonMasterPC34Multilingual/SWOOSH",
+        "dm1-extras/legacy-dos/DungeonMasterPC34Multilingual/SWOOSH.DAT",
+        "dm1-extras/dmfiles-dos-en-v34/SWOOSH",
+        "dm1-extras/dmfiles-dos-en-v34/SWOOSH.DAT",
+        "dm1-extras/dmfiles-dos-en/dungeon-master/dmaster/SWOOSH",
+        "dm1-extras/dmfiles-dos-en/dungeon-master/dmaster/SWOOSH.DAT",
+        "dm1-extras/pc-3.4-multi-3.5in/DATA/SWOOSH",
+        "dm1-extras/pc-3.4-multi-3.5in/DATA/SWOOSH.DAT",
         "DungeonMasterPC34/SWOOSH", "DungeonMasterPC34/SWOOSH.DAT",
         "DungeonMasterPC34Multilingual/SWOOSH", "DungeonMasterPC34Multilingual/SWOOSH.DAT",
         "dm-pc34/DungeonMasterPC34/SWOOSH", "dm-pc34/DungeonMasterPC34/SWOOSH.DAT",
@@ -181,7 +315,23 @@ int M11_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
         "ChaosStrikesBackPC34/SWOOSH.DAT",
         "csb-atari-st-2x/SWOOSH",
         "csb-atari-st-2x/SWOOSH.DAT",
-        "SWOOSH", "SWOOSH.DAT"
+        "SWOOSH", "SWOOSH.DAT",
+        /* ReDMCSB SWSH.C is the shared FTL logo prelude.  CSB PC data sets
+         * commonly do not carry their own SWOOSH beside GRAPHICS/DUNGEON, so
+         * after CSB-specific candidates use the verified DM1 PC34 install
+         * layouts as a shared FTL-logo fallback. */
+        "dm1/SWOOSH", "dm1/SWOOSH.DAT",
+        "dm1-multilingual/SWOOSH", "dm1-multilingual/SWOOSH.DAT",
+        "dm1-extras/legacy-dos/DungeonMasterPC34/SWOOSH",
+        "dm1-extras/legacy-dos/DungeonMasterPC34/SWOOSH.DAT",
+        "dm1-extras/legacy-dos/DungeonMasterPC34Multilingual/SWOOSH",
+        "dm1-extras/legacy-dos/DungeonMasterPC34Multilingual/SWOOSH.DAT",
+        "dm1-extras/dmfiles-dos-en-v34/SWOOSH",
+        "dm1-extras/dmfiles-dos-en-v34/SWOOSH.DAT",
+        "dm1-extras/dmfiles-dos-en/dungeon-master/dmaster/SWOOSH",
+        "dm1-extras/dmfiles-dos-en/dungeon-master/dmaster/SWOOSH.DAT",
+        "dm1-extras/pc-3.4-multi-3.5in/DATA/SWOOSH",
+        "dm1-extras/pc-3.4-multi-3.5in/DATA/SWOOSH.DAT"
     };
     static const char* csbHomeSuffixes[] = {
         ".firestaff/data/csb/SWOOSH",

@@ -106,8 +106,15 @@ int main(void)
     char root[512];
     char dm1_dir[512];
     char csb_dir[512];
+    char extras_dir[512];
+    char extras_legacy_dir[512];
+    char extras_legacy_pc34_dir[512];
+    char scan_root[512];
+    char scan_nested_dir[512];
     char dm1_swsh[512];
     char csb_swsh[512];
+    char extras_swsh[512];
+    char arbitrary_swsh[512];
     char found[512];
 
     snprintf(root,
@@ -118,14 +125,50 @@ int main(void)
              (long)TEST_GETPID());
     snprintf(dm1_dir, sizeof(dm1_dir), "%s%sdm1", root, TEST_SEP);
     snprintf(csb_dir, sizeof(csb_dir), "%s%scsb", root, TEST_SEP);
+    snprintf(extras_dir, sizeof(extras_dir), "%s%sdm1-extras", root, TEST_SEP);
+    snprintf(extras_legacy_dir,
+             sizeof(extras_legacy_dir),
+             "%s%slegacy-dos",
+             extras_dir,
+             TEST_SEP);
+    snprintf(extras_legacy_pc34_dir,
+             sizeof(extras_legacy_pc34_dir),
+             "%s%sDungeonMasterPC34",
+             extras_legacy_dir,
+             TEST_SEP);
+    snprintf(scan_root, sizeof(scan_root), "%s%shash-scan-root", root, TEST_SEP);
+    snprintf(scan_nested_dir,
+             sizeof(scan_nested_dir),
+             "%s%srenamed-files",
+             scan_root,
+             TEST_SEP);
     snprintf(dm1_swsh, sizeof(dm1_swsh), "%s%sSWOOSH", dm1_dir, TEST_SEP);
     snprintf(csb_swsh, sizeof(csb_swsh), "%s%sSWOOSH", csb_dir, TEST_SEP);
+    snprintf(extras_swsh,
+             sizeof(extras_swsh),
+             "%s%sSWOOSH",
+             extras_legacy_pc34_dir,
+             TEST_SEP);
+    snprintf(arbitrary_swsh,
+             sizeof(arbitrary_swsh),
+             "%s%sftl-logo.payload",
+             scan_nested_dir,
+             TEST_SEP);
 
     expect_true(TEST_MKDIR(root) == 0, "temp root created");
     expect_true(TEST_MKDIR(dm1_dir) == 0, "dm1 dir created");
     expect_true(TEST_MKDIR(csb_dir) == 0, "csb dir created");
+    expect_true(TEST_MKDIR(extras_dir) == 0, "dm1-extras dir created");
+    expect_true(TEST_MKDIR(extras_legacy_dir) == 0,
+                "dm1-extras legacy dir created");
+    expect_true(TEST_MKDIR(extras_legacy_pc34_dir) == 0,
+                "dm1-extras PC34 dir created");
+    expect_true(TEST_MKDIR(scan_root) == 0, "scan root created");
+    expect_true(TEST_MKDIR(scan_nested_dir) == 0, "scan nested dir created");
     expect_true(write_swsh(dm1_swsh), "dm1 SWOOSH written");
     expect_true(write_swsh(csb_swsh), "csb SWOOSH written");
+    expect_true(write_swsh(extras_swsh), "dm1-extras SWOOSH written");
+    expect_true(write_swsh(arbitrary_swsh), "arbitrary named SWSH payload written");
 
     memset(found, 0, sizeof(found));
     expect_true(M11_SWSH_Intro_FindLogoPathForGame(NULL,
@@ -136,6 +179,29 @@ int main(void)
                 "csb SWOOSH found");
     expect_true(strcmp(found, csb_swsh) == 0,
                 "csb SWOOSH path is preferred");
+
+    expect_true(remove(csb_swsh) == 0, "csb SWOOSH removed for fallback test");
+    expect_true(remove(dm1_swsh) == 0, "dm1 primary SWOOSH removed for fallback test");
+    memset(found, 0, sizeof(found));
+    expect_true(M11_SWSH_Intro_FindLogoPathForGame(NULL,
+                                                   root,
+                                                   "csb",
+                                                   found,
+                                                   sizeof(found)) == 1,
+                "csb SWOOSH falls back to shared DM1 extras");
+    expect_true(strcmp(found, extras_swsh) == 0,
+                "csb fallback resolves DM1 extras SWOOSH");
+    expect_true(write_swsh(dm1_swsh), "dm1 SWOOSH restored");
+
+    memset(found, 0, sizeof(found));
+    expect_true(M11_SWSH_Intro_FindLogoPathForGame(NULL,
+                                                   scan_root,
+                                                   "csb",
+                                                   found,
+                                                   sizeof(found)) == 1,
+                "csb SWSH scan finds payload without filename dependency");
+    expect_true(strcmp(found, arbitrary_swsh) == 0,
+                "csb SWSH scan resolves arbitrary named payload by bytes");
 
     memset(found, 0, sizeof(found));
     expect_true(M11_SWSH_Intro_FindLogoPath(NULL,
