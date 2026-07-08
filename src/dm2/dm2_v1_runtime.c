@@ -600,6 +600,26 @@ int dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile) {
     return 1;
 }
 
+int dm2_v1_runtime_bind_boot_profile_with_receipt(
+    DM2_V1_BootProfile *boot_profile,
+    DM2_V1_StartupHostReceipt *out_receipt)
+{
+    if (out_receipt) {
+        dm2_v1_startup_host_receipt_clear(out_receipt);
+        out_receipt->status_scope = "BOOT";
+        out_receipt->status = "DM2 RUNTIME BIND FAILED";
+    }
+    if (!dm2_v1_runtime_bind_boot_profile(boot_profile)) {
+        return 0;
+    }
+    if (out_receipt) {
+        dm2_v1_startup_host_receipt_clear(out_receipt);
+        out_receipt->status_scope = "BOOT";
+        out_receipt->status = "DM2 RUNTIME READY";
+    }
+    return 1;
+}
+
 int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;

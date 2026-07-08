@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 runtime bind host receipt: `dm2_v1_runtime_bind_boot_profile_with_receipt()` now returns M11-ready host status for runtime bind success/failure. M11 applies that receipt instead of setting `DM2 RUNTIME BIND FAILED` locally. Verification: strict compile checks passed for `dm2_v1_runtime.c`, `m11_game_view.c`, and `test_dm2_v1_runtime_handoff_smoke.c` with `FIRESTAFF_DM2_PROJECTILE_TESTING=1`; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM2/Nexus startup launch failure receipts: DM2 and Nexus startup launch receipt builders now return boot-scoped failure status when launch facts are invalid. M11 applies those receipts instead of setting `DM2 START MENU FAILED` / `NEXUS STARTUP FAILED` locally. Verification: strict compile checks passed for changed DM2/Nexus startup modules, M11, and the DM2/Nexus startup tests; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 boot prepare-failure status: `dm2_v1_boot_startup_launch_alloc()` now returns boot-owned failure status for bad input, OOM, missing/unverified assets, and enter-game failure. M11 applies that status instead of mapping DM2 prepare enums locally. Verification: strict compile checks passed for `dm2_v1_boot.c`, `m11_game_view.c`, and `test_dm2_v1_boot_profile_smoke.c`; Phase A passed 24/24; `git diff --check` passed.
