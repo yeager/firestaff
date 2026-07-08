@@ -127,6 +127,12 @@ int dm1_v1_startup_apply_handoff_outcome_pc34(
     const char* source_id,
     const DM1_V1_StartupHostCallbacks_PC34* callbacks,
     DM1_V1_StartupHostApplyResult_PC34* out_result);
+int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
+    const DM1_V1_StartupHostCallbacks_PC34* host_callbacks,
+    DM1_V1_StartupHandoffOutcome_PC34* out_outcome,
+    DM1_V1_StartupHostApplyResult_PC34* out_result);
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,
