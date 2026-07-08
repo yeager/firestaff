@@ -54,6 +54,11 @@
 #define TSR_PROGRESSION_MAGIC_LEN 8u
 #define TSR_FSTQ_PROGRESSION_MAGIC "FSTQPRG1"
 
+static Theron_V1StartupSkipSafeVerdict compute_verdict(
+    const Theron_V1StartupSaveResume *snap);
+static Theron_V1StartupResumeClaim compute_claim(
+    const Theron_V1StartupSaveResume *snap);
+
 static void copy_name(char *dst, size_t dst_size, const char *src) {
     if (!dst || dst_size == 0u) return;
     if (!src) {
@@ -64,6 +69,80 @@ static void copy_name(char *dst, size_t dst_size, const char *src) {
     if (n >= dst_size) n = dst_size - 1u;
     memcpy(dst, src, n);
     dst[n] = '\0';
+}
+
+static const char *path_basename(const char *path) {
+    const char *slash;
+    const char *backslash;
+    if (!path || !path[0]) {
+        return NULL;
+    }
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    if (!slash || (backslash && backslash > slash)) {
+        slash = backslash;
+    }
+    return slash ? slash + 1 : path;
+}
+
+static int path_dirname(char out[THERON_V1_SRM_PATH_MAX],
+                        const char *path) {
+    const char *slash;
+    const char *backslash;
+    size_t len;
+    if (!out) {
+        return 0;
+    }
+    out[0] = '\0';
+    if (!path || !path[0]) {
+        return 0;
+    }
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    if (!slash || (backslash && backslash > slash)) {
+        slash = backslash;
+    }
+    if (!slash || slash <= path) {
+        copy_name(out, THERON_V1_SRM_PATH_MAX, ".");
+        return 1;
+    }
+    len = (size_t)(slash - path);
+    if (len >= THERON_V1_SRM_PATH_MAX) {
+        len = THERON_V1_SRM_PATH_MAX - 1u;
+    }
+    memcpy(out, path, len);
+    out[len] = '\0';
+    return 1;
+}
+
+static int parse_slot_file(const char *path,
+                           const char *suffix,
+                           int max_slots) {
+    const char *base = path_basename(path);
+    if (!base || !suffix || max_slots <= 0) {
+        return -1;
+    }
+    if (base[0] != 's' || base[1] != 'l' || base[2] != 'o' ||
+        base[3] != 't' || base[4] < '0' ||
+        base[4] >= (char)('0' + max_slots) ||
+        strcmp(base + 5, suffix) != 0) {
+        return -1;
+    }
+    return base[4] - '0';
+}
+
+static void recompute_verdict_and_claim(Theron_V1StartupSaveResume *snap) {
+    if (!snap) {
+        return;
+    }
+    snap->verdict = compute_verdict(snap);
+    snap->resume_claim = compute_claim(snap);
+    copy_name(snap->verdict_name,
+              sizeof(snap->verdict_name),
+              theron_v1_startup_save_resume_skip_safe_name(snap->verdict));
+    copy_name(snap->resume_claim_name,
+              sizeof(snap->resume_claim_name),
+              theron_v1_startup_save_resume_claim_name(snap->resume_claim));
 }
 
 /* ── Root resolution ──────────────────────────────────────────────── */
@@ -348,6 +427,89 @@ int theron_v1_startup_save_resume_evaluate(
                   out_snapshot->resume_claim));
 
     return 1;
+}
+
+int theron_v1_startup_save_resume_apply_explicit_path(
+    Theron_V1StartupSaveResume *snap,
+    const char *save_path,
+    const char *tqsv_root)
+{
+    int slot;
+    char root[THERON_V1_SRM_PATH_MAX];
+
+    if (!snap || !save_path || !save_path[0]) {
+        return 0;
+    }
+
+    slot = parse_slot_file(save_path, ".tqsv", THERON_SAVE_SLOT_COUNT);
+    if (slot >= 0) {
+        const char *root_to_use = tqsv_root;
+        if (!root_to_use || !root_to_use[0]) {
+            if (!path_dirname(root, save_path)) {
+                return 0;
+            }
+            root_to_use = root;
+        }
+        if (!theron_v1_save_verify_slot(root_to_use, slot)) {
+            return 0;
+        }
+        copy_name(snap->tqsv_root, sizeof(snap->tqsv_root), root_to_use);
+        snap->tqsv_total_slots = THERON_SAVE_SLOT_COUNT;
+        if (snap->tqsv_valid_slots <= 0) {
+            snap->tqsv_valid_slots = 1;
+        }
+        snap->tqsv_active_slot = slot;
+        recompute_verdict_and_claim(snap);
+        return 1;
+    }
+
+    slot = parse_slot_file(save_path,
+                           ".srm",
+                           THERON_V1_SRM_DISK_SLOT_COUNT);
+    if (slot >= 0) {
+        char srm_path[THERON_V1_SRM_PATH_MAX];
+        uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+        Theron_V1SrmEnvelopeReceipt envelope;
+        Theron_V1SrmEnvelopeKind kind;
+
+        if (!path_dirname(root, save_path) ||
+            !theron_v1_srm_slot_path(root, slot, srm_path)) {
+            return 0;
+        }
+        memset(scratch, 0, sizeof(scratch));
+        memset(&envelope, 0, sizeof(envelope));
+        kind = theron_v1_srm_decode_path(srm_path,
+                                          slot,
+                                          scratch,
+                                          sizeof(scratch),
+                                          &envelope);
+        if ((kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION &&
+             kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) ||
+            !envelope.progression.restored) {
+            return 0;
+        }
+        copy_name(snap->srm_root, sizeof(snap->srm_root), root);
+        snap->srm_total_slots = THERON_V1_SRM_DISK_SLOT_COUNT;
+        if (snap->srm_present_slots <= 0) {
+            snap->srm_present_slots = 1;
+        }
+        if (snap->srm_recognized_slots <= 0) {
+            snap->srm_recognized_slots = 1;
+        }
+        snap->srm_first_recognized_slot = slot;
+        snap->srm_progress_import_status = envelope.decode_status;
+        snap->srm_progress_import_ran = 1;
+        snap->srm_progress_current_dungeon =
+            (int)envelope.progression.current_dungeon;
+        snap->srm_progress_current_level =
+            (int)envelope.progression.current_level;
+        snap->srm_progress_quest_mask =
+            (int)envelope.progression.quest_items_bitmask;
+        recompute_verdict_and_claim(snap);
+        return 1;
+    }
+
+    return 0;
 }
 
 static void theron_v1_startup_continue_reset_world_runtime(

@@ -347,6 +347,23 @@ static void test_tqsv_only_resume_claim(void) {
                 "tqsv-only tqsv_active_slot == 2");
     expect_true(snap.srm_recognized_slots == 0,
                 "tqsv-only srm_recognized_slots == 0");
+    {
+        Theron_V1StartupSaveResume explicit_snap;
+        char slot_path[THERON_V1_SRM_PATH_MAX];
+        memset(&explicit_snap, 0, sizeof(explicit_snap));
+        theron_v1_save_slot_path(tqsv_root, 2, slot_path, sizeof(slot_path));
+        expect_true(theron_v1_startup_save_resume_apply_explicit_path(
+                        &explicit_snap,
+                        slot_path,
+                        tqsv_root) == 1,
+                    "explicit tqsv path applies to save-resume snapshot");
+        expect_true(explicit_snap.resume_claim ==
+                        THERON_V1_STARTUP_RESUME_TQSV,
+                    "explicit tqsv path sets TQSV resume claim");
+        expect_true(explicit_snap.tqsv_active_slot == 2 &&
+                        explicit_snap.tqsv_valid_slots == 1,
+                    "explicit tqsv path selects requested slot");
+    }
 
     cleanup_tqsv_root(tqsv_root);
     if (had) {
@@ -392,6 +409,23 @@ static void test_srm_only_resume_claim(void) {
                 "srm-only srm_first_recognized_slot == 1");
     expect_true(snap.srm_first_recognized_checksum32 != 0,
                 "srm-only srm_first_recognized_checksum32 non-zero");
+    {
+        Theron_V1StartupSaveResume explicit_snap;
+        memset(&explicit_snap, 0, sizeof(explicit_snap));
+        expect_true(theron_v1_startup_save_resume_apply_explicit_path(
+                        &explicit_snap,
+                        slot_path,
+                        NULL) == 1,
+                    "explicit srm path applies to save-resume snapshot");
+        expect_true(explicit_snap.resume_claim ==
+                        THERON_V1_STARTUP_RESUME_SRM,
+                    "explicit srm path sets SRM resume claim");
+        expect_true(explicit_snap.srm_first_recognized_slot == 1 &&
+                        explicit_snap.srm_recognized_slots == 1,
+                    "explicit srm path selects requested slot");
+        expect_true(strcmp(explicit_snap.srm_root, srm_root) == 0,
+                    "explicit srm path carries source root");
+    }
 
 #if FIRESTAFF_HAS_ZLIB
     expect_true(snap.srm_payload_probe_ran == 1,
