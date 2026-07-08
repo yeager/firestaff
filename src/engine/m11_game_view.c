@@ -5906,6 +5906,8 @@ static void m11_disable_champion_action_after_action_ticks(
     in.disabledTicks = (int)ticks;
     in.pendingShootReadyHandRefill =
         state->pendingShootReadyHandRefill[championIndex] != 0u;
+    in.pendingActionEnableSlotOrdinal =
+        (int)state->actionEnableSlotOrdinal[championIndex];
     if (!dm1_v1_action_disable_plan_f0407_pc34(&in, &plan) ||
         !plan.valid) {
         return;
@@ -29676,46 +29678,52 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * direction, owner=champion, then clear the action-hand slot
              * once Firestaff has accepted the projectile slot. */
             unsigned short handThing = m11_get_action_hand_thing(champ);
-            int throwSide;
             int spawned;
-            DM1_ActionDirectionInputPc34 dirIn;
-            DM1_ActionDirectionPlanPc34 dirPlan;
+            DM1_ActionThrowInputPc34 throwIn;
+            DM1_ActionThrowPlanPc34 throwPlan;
             if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
                 return m11_perform_csb_throw_action(
                     state, championIndex, champ, champName);
             }
-            memset(&dirIn, 0, sizeof(dirIn));
-            dirIn.actionIndex = chosen;
-            dirIn.partyMapX = state->world.party.mapX;
-            dirIn.partyMapY = state->world.party.mapY;
-            dirIn.partyDirection = state->world.party.direction;
-            dirIn.championDirection = champ->direction;
-            dirIn.championCell = champ->cell;
-            if (!dm1_v1_action_direction_plan_f0407_pc34(
-                    &dirIn, &dirPlan) || !dirPlan.valid) {
+            memset(&throwIn, 0, sizeof(throwIn));
+            throwIn.partyMapX = state->world.party.mapX;
+            throwIn.partyMapY = state->world.party.mapY;
+            throwIn.partyDirection = state->world.party.direction;
+            throwIn.championDirection = champ->direction;
+            throwIn.championCell = champ->cell;
+            throwIn.actionHandPresent =
+                handThing != THING_NONE && handThing != THING_ENDOFLIST;
+            if (!dm1_v1_action_throw_plan_f0407_pc34(
+                    &throwIn, &throwPlan) || !throwPlan.valid) {
                 return 0;
             }
-            if (dirPlan.setChampionDirectionToParty) {
+            if (throwPlan.setChampionDirectionToParty) {
                 m11_set_champion_direction_to_party_f0406(state, champ);
             }
-            if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
+            if (throwPlan.noActionHandObject) {
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s HAS NOTHING TO THROW",
                               (unsigned int)state->world.gameTick,
                               champName);
                 return 0;
             }
-            throwSide = dirPlan.throwSide;
             spawned = m11_dm1_f0328_spawn_thrown_thing(
-                state, championIndex, champ, handThing, throwSide);
-            if (spawned) {
+                state, championIndex, champ, handThing, throwPlan.throwSide);
+            throwIn.projectileSpawned = spawned;
+            if (!dm1_v1_action_throw_plan_f0407_pc34(
+                    &throwIn, &throwPlan) || !throwPlan.valid) {
+                return 0;
+            }
+            if (throwPlan.shouldClearActionHand) {
                 champ->inventory[CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
             }
+            state->actionEnableSlotOrdinal[championIndex] =
+                (unsigned char)throwPlan.actionEnableSlotOrdinal;
             m11_log_event(state, M11_COLOR_YELLOW,
                           "T%u: %s THROWS",
                           (unsigned int)state->world.gameTick,
                           champName);
-            return spawned;
+            return throwPlan.performed;
         }
         default:
             return 0;
@@ -29991,13 +29999,6 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
             &actionExperienceGain, &disabledTicks);
         m11_disable_champion_action_after_action_ticks(
             state, championIndex, chosen, disabledTicks);
-        if (chosen == DM1_ACTION_THROW && performed) {
-            /* ReDMCSB: MENU.C F0407 lines 1613-1617 stores
-             * C01_SLOT_ACTION_HAND in the champion enable-action event
-             * when F0328 accepts the thrown object. */
-            state->actionEnableSlotOrdinal[championIndex] =
-                CHAMPION_SLOT_ACTION_HAND;
-        }
     }
 action_tail_award_and_clear:
     m11_award_action_xp_f0407(
@@ -30099,13 +30100,6 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
             m11_disable_champion_action_after_action_ticks(
                 state, championIndex, (unsigned char)actionIndex,
                 disabledTicks);
-        }
-        if (actionIndex == DM1_ACTION_THROW && performed) {
-            /* ReDMCSB: MENU.C F0407 lines 1613-1617 stores
-             * C01_SLOT_ACTION_HAND in the champion enable-action event
-             * when F0328 accepts the thrown object. */
-            state->actionEnableSlotOrdinal[championIndex] =
-                CHAMPION_SLOT_ACTION_HAND;
         }
     }
     m11_award_action_xp_f0407(

@@ -271,7 +271,11 @@ int dm1_v1_action_disable_plan_f0407_pc34(
     out->valid = 1;
     out->disabledTicks = ticks;
     out->actionDisabledIndex = ticks > 0 ? in->actionIndex : 0xFF;
-    out->actionEnableSlotOrdinal = 0xFF;
+    out->actionEnableSlotOrdinal =
+        ticks > 0 && in->pendingActionEnableSlotOrdinal > 0 &&
+        in->pendingActionEnableSlotOrdinal <= 255
+            ? in->pendingActionEnableSlotOrdinal
+            : 0xFF;
     out->shouldRefillReadyHandNow =
         ticks == 0 && in->pendingShootReadyHandRefill;
     return 1;
@@ -820,6 +824,52 @@ int dm1_v1_action_direction_plan_f0407_pc34(
     out->performed = 1;
     out->targetMapX = in->partyMapX + dm1_step_east_for_dir(dir);
     out->targetMapY = in->partyMapY + dm1_step_north_for_dir(dir);
+    return 1;
+}
+
+int dm1_v1_action_throw_plan_f0407_pc34(
+    const DM1_ActionThrowInputPc34* in,
+    DM1_ActionThrowPlanPc34* out) {
+    DM1_ActionDirectionInputPc34 dirIn;
+    DM1_ActionDirectionPlanPc34 dirPlan;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->performed = 0;
+    out->noActionHandObject = 0;
+    out->setChampionDirectionToParty = 0;
+    out->shouldSpawnProjectile = 0;
+    out->shouldClearActionHand = 0;
+    out->actionEnableSlotOrdinal = 0xFF;
+    out->throwSide = 0;
+
+    memset(&dirIn, 0, sizeof(dirIn));
+    dirIn.actionIndex = DM1_ACTION_THROW;
+    dirIn.partyMapX = in->partyMapX;
+    dirIn.partyMapY = in->partyMapY;
+    dirIn.partyDirection = in->partyDirection;
+    dirIn.championDirection = in->championDirection;
+    dirIn.championCell = in->championCell;
+    if (!dm1_v1_action_direction_plan_f0407_pc34(&dirIn, &dirPlan) ||
+        !dirPlan.valid) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->setChampionDirectionToParty = dirPlan.setChampionDirectionToParty;
+    out->throwSide = dirPlan.throwSide;
+    if (!in->actionHandPresent) {
+        out->noActionHandObject = 1;
+        return 1;
+    }
+    out->shouldSpawnProjectile = 1;
+    if (in->projectileSpawned) {
+        /* ReDMCSB: MENU.C F0407 lines 1613-1617 stores action-hand slot
+         * ordinal after F0328 accepts the throw; CHAMPION.C F0328 lines
+         * 2138-2190 has already removed/spawned the thrown object. */
+        out->performed = 1;
+        out->shouldClearActionHand = 1;
+        out->actionEnableSlotOrdinal = 1;
+    }
     return 1;
 }
 

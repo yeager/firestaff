@@ -138,6 +138,7 @@ typedef struct {
     int actionIndex;
     int disabledTicks;
     int pendingShootReadyHandRefill;
+    int pendingActionEnableSlotOrdinal;
 } DM1_ActionDisableInputPc34;
 
 typedef struct {
@@ -340,6 +341,27 @@ typedef struct {
 } DM1_ActionDirectionPlanPc34;
 
 typedef struct {
+    int partyMapX;
+    int partyMapY;
+    int partyDirection;
+    int championDirection;
+    int championCell;
+    int actionHandPresent;
+    int projectileSpawned;
+} DM1_ActionThrowInputPc34;
+
+typedef struct {
+    int valid;
+    int performed;
+    int noActionHandObject;
+    int setChampionDirectionToParty;
+    int shouldSpawnProjectile;
+    int shouldClearActionHand;
+    int actionEnableSlotOrdinal;
+    int throwSide;
+} DM1_ActionThrowPlanPc34;
+
+typedef struct {
     int actionIndex;
     int observedDoorDestructionEvent;
     int observedWoodenThudSound;
@@ -419,6 +441,9 @@ int dm1_v1_action_flip_plan_f0407_pc34(
 int dm1_v1_action_direction_plan_f0407_pc34(
     const DM1_ActionDirectionInputPc34* in,
     DM1_ActionDirectionPlanPc34* out);
+int dm1_v1_action_throw_plan_f0407_pc34(
+    const DM1_ActionThrowInputPc34* in,
+    DM1_ActionThrowPlanPc34* out);
 int dm1_v1_action_closed_door_melee_plan_f0407_pc34(
     const DM1_ActionClosedDoorMeleeInputPc34* in,
     DM1_ActionClosedDoorMeleePlanPc34* out);
