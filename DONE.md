@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup rebuild receipt application: M11 now applies the Theron-owned state receipt returned by startup-flow rebuilds and no longer keeps the unused local flow-snapshot sync adapter. Verification: Theron startup-flow probe passed 534/534, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 RetroAchievements start-menu settings consistency: generic and legacy/tabbed start-menu settings now use the shared RA runtime status and masked-token value paths, matching the modern settings panel instead of showing stale `ON`/`SET` text. Verification: settings hit-test passed, Phase A passed, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup init-state receipt ownership: `csb_v1_startup_sequence_pc34_compat` now emits a StartCSB init-state receipt for command state plus neutral entrance frame, last-command, and bonus-requested fields. M11 consumes that receipt instead of seeding those fields manually. Verification: startup entrance pointer contract passed 137/137, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `firestaff --version` passed.

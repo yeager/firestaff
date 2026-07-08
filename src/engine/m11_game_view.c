@@ -11646,16 +11646,6 @@ static void m11_theron_apply_startup_flow_snapshot(
     M11_GameViewState *state,
     const Theron_StartupFlowSnapshot *snapshot);
 
-static void m11_theron_sync_startup_state(M11_GameViewState* state,
-                                          const Theron_StartupFlow* flow) {
-    Theron_StartupFlowSnapshot snapshot;
-    if (!state || !flow) {
-        return;
-    }
-    theron_v1_startup_flow_capture_snapshot(flow, &snapshot);
-    m11_theron_apply_startup_flow_snapshot(state, &snapshot);
-}
-
 static void m11_theron_apply_startup_flow_snapshot(
     M11_GameViewState *state,
     const Theron_StartupFlowSnapshot *snapshot)
@@ -11706,12 +11696,13 @@ static void m11_theron_apply_startup_state_receipt(
     }
 }
 
-static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
+static int m11_theron_rebuild_startup_flow(M11_GameViewState* state,
                                            const Theron_DungeonProgression* progression,
                                            Theron_StartupFlow* flow,
                                            char* receipt,
                                            size_t receipt_cap) {
     Theron_StartupResult result;
+    Theron_StartupStateReceipt stateReceipt;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -11729,7 +11720,7 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
         THERON_STARTUP_MAX_COMPANIONS,
         progression,
         flow,
-        NULL);
+        &stateReceipt);
     if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
@@ -11739,6 +11730,7 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
         }
         return 0;
     }
+    m11_theron_apply_startup_state_receipt(state, &stateReceipt);
     return 1;
 }
 
