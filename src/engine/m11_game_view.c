@@ -5885,14 +5885,17 @@ static void m11_disable_champion_action_after_spell_f0412(
 
 static void m11_disable_champion_action_f0328_throw(
         M11_GameViewState* state,
-        int championIndex) {
+        int championIndex,
+        int ticks) {
     if (!state) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if (ticks <= 0) return;
     /* ReDMCSB: CHAMPION.C F0328 line 2168 calls F0330 with 4 ticks.
      * F0330 initializes the enable-action event SlotOrdinal to 0; F0407
      * may later overwrite it with C01_SLOT_ACTION_HAND for action-row
      * THROW after F0328 succeeds. */
-    state->actionDisabledTicks[championIndex] = 4u;
+    state->actionDisabledTicks[championIndex] =
+        ticks > 255 ? 255u : (unsigned char)ticks;
     state->actionDisabledIndex[championIndex] = 0xFFu;
     state->actionEnableSlotOrdinal[championIndex] = 0u;
 }
@@ -24794,26 +24797,6 @@ static int m11_dm1_f0140_object_weight_for_throw(
     return m11_dm1_f0140_object_weight_for_throw_depth(state, thing, 0);
 }
 
-static int m11_dm1_f0328_throw_xp_for_thing(const M11_GameViewState* state,
-                                            unsigned short thing,
-                                            const DM1_WeaponInfo* info) {
-    int isWeapon = THING_GET_TYPE(thing) == THING_TYPE_WEAPON;
-    DM1_WeaponInfo localInfo;
-    const DM1_WeaponInfo* weaponInfo = info;
-
-    if (isWeapon && !weaponInfo) {
-        if (!m11_dm1_thing_weapon_info(state, thing, &localInfo)) {
-            return dm1_v1_throw_xp_for_object_pc34(1, 0, 0, 0);
-        }
-        weaponInfo = &localInfo;
-    }
-    return dm1_v1_throw_xp_for_object_pc34(
-        isWeapon,
-        weaponInfo ? 1 : 0,
-        weaponInfo ? weaponInfo->weaponClass : 0,
-        weaponInfo ? weaponInfo->kineticEnergy : 0);
-}
-
 static void m11_dm1_award_throw_xp(M11_GameViewState* state,
                                    int championIndex,
                                    int experience) {
@@ -24883,90 +24866,6 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
     }
 }
 
-static int m11_dm1_f0312_action_hand_strength_for_throw(
-        M11_GameViewState* state,
-        int championIndex,
-        const struct ChampionState_Compat* champ,
-        const DM1_WeaponInfo* weaponInfo,
-        int hasWeaponInfo,
-        int objectWeight) {
-    int strength;
-    int oneSixteenthMaximumLoad;
-    int loadThreshold;
-    int maxLoad;
-    int halfMaximumStamina;
-    int halfStrength;
-
-    if (!state || !champ) return 0;
-
-    /* ReDMCSB CHAMPION.C F0312 lines 1237-1299: action-hand strength
-     * starts with RANDOM(16)+Strength, applies weight/load pressure,
-     * then weapon strength/class skill, stamina, wound, and final clamp. */
-    strength = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16) +
-        (int)champ->attributes[CHAMPION_ATTR_STRENGTH];
-    maxLoad = (int)champ->maxLoad;
-    if (maxLoad <= 0) {
-        maxLoad = ((int)champ->attributes[CHAMPION_ATTR_STRENGTH] << 3) + 100;
-    }
-    oneSixteenthMaximumLoad = maxLoad >> 4;
-    if (objectWeight <= oneSixteenthMaximumLoad) {
-        strength += objectWeight - 12;
-    } else {
-        loadThreshold = oneSixteenthMaximumLoad +
-            ((oneSixteenthMaximumLoad - 12) >> 1);
-        if (objectWeight <= loadThreshold) {
-            strength += (objectWeight - oneSixteenthMaximumLoad) >> 1;
-        } else {
-            strength -= (objectWeight - loadThreshold) << 1;
-        }
-    }
-
-    if (hasWeaponInfo && weaponInfo) {
-        strength += weaponInfo->strength;
-        strength += F0888_ORCH_GetChampionF0312SkillBonus_Compat(
-            &state->world, championIndex, weaponInfo->weaponClass) << 1;
-    }
-
-    halfMaximumStamina = (int)champ->stamina.maximum >> 1;
-    if (halfMaximumStamina > 0 &&
-        (int)champ->stamina.current < halfMaximumStamina) {
-        halfStrength = strength >> 1;
-        strength = halfStrength +
-            (int)(((long)halfStrength * (long)champ->stamina.current) /
-                  (long)halfMaximumStamina);
-    }
-    if ((champ->wounds & COMBAT_WOUND_ACTION_HAND) != 0) {
-        strength >>= 1;
-    }
-    strength >>= 1;
-    if (strength < 0) strength = 0;
-    if (strength > 100) strength = 100;
-    return strength;
-}
-
-static int m11_dm1_f0328_throw_kinetic_energy(M11_GameViewState* state,
-                                              int baseStrength,
-                                              int throwSkillLevel,
-                                              const DM1_WeaponInfo* weaponInfo,
-                                              int hasWeaponInfo) {
-    int rng16 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16);
-    return dm1_v1_throw_kinetic_energy_pc34(
-        baseStrength, throwSkillLevel, hasWeaponInfo,
-        weaponInfo ? weaponInfo->weaponClass : 0,
-        weaponInfo ? weaponInfo->kineticEnergy : 0,
-        rng16);
-}
-
-static int m11_dm1_f0328_throw_attack(M11_GameViewState* state,
-                                      int throwSkillLevel) {
-    int rng32 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 32);
-    return dm1_v1_throw_attack_pc34(throwSkillLevel, rng32);
-}
-
-static int m11_dm1_f0328_throw_step_energy(int throwSkillLevel) {
-    return dm1_v1_throw_step_energy_pc34(throwSkillLevel);
-}
-
 static int m11_dm1_thrown_potion_projectile_shape(
     const M11_GameViewState* state,
     unsigned short thrownThing,
@@ -25002,60 +24901,85 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
                                             unsigned short thrownThing,
                                             int throwSide) {
     DM1_WeaponInfo weaponInfo;
+    DM1_ThrowF0328ProjectileInputPc34 throwIn;
+    DM1_ThrowF0328ProjectilePlanPc34 throwPlan;
     int hasWeaponInfo;
     int skillThrow;
-    int staminaCost;
-    int throwExperience;
-    int throwStrength;
-    int throwKineticEnergy;
-    int throwAttack;
-    int throwStepEnergy;
     int objectWeight;
+    int isWeapon;
     int projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
     int potionPower = 0;
     int spawned;
+    int rngStrength16;
+    int rngKinetic16;
+    int rngAttack32;
 
     if (!state || !champ) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     if (thrownThing == THING_NONE || thrownThing == THING_ENDOFLIST) return 0;
 
     hasWeaponInfo = m11_dm1_thing_weapon_info(state, thrownThing, &weaponInfo);
+    isWeapon = THING_GET_TYPE(thrownThing) == THING_TYPE_WEAPON;
     objectWeight = m11_dm1_f0140_object_weight_for_throw(state, thrownThing);
-    staminaCost = dm1_v1_throwing_stamina_cost_from_weight_pc34(
-        objectWeight);
-    throwExperience = m11_dm1_f0328_throw_xp_for_thing(
-        state, thrownThing, hasWeaponInfo ? &weaponInfo : 0);
-    throwStrength = m11_dm1_f0312_action_hand_strength_for_throw(
-        state, championIndex, champ,
-        hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo,
-        objectWeight);
+    rngStrength16 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16);
+    rngKinetic16 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16);
+    rngAttack32 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 32);
+    memset(&throwIn, 0, sizeof(throwIn));
+    throwIn.objectWeight = objectWeight;
+    throwIn.championStrength = (int)champ->attributes[CHAMPION_ATTR_STRENGTH];
+    throwIn.championMaxLoad = (int)champ->maxLoad;
+    throwIn.championCurrentStamina = (int)champ->stamina.current;
+    throwIn.championMaximumStamina = (int)champ->stamina.maximum;
+    throwIn.actionHandWounded =
+        (champ->wounds & COMBAT_WOUND_ACTION_HAND) != 0;
+    throwIn.isWeapon = isWeapon;
+    throwIn.hasWeaponInfo = hasWeaponInfo;
+    throwIn.weaponClass = hasWeaponInfo ? weaponInfo.weaponClass : 0;
+    throwIn.weaponStrength = hasWeaponInfo ? weaponInfo.strength : 0;
+    throwIn.weaponKineticEnergy =
+        hasWeaponInfo ? weaponInfo.kineticEnergy : 0;
+    throwIn.f0312SkillBonus =
+        hasWeaponInfo
+            ? F0888_ORCH_GetChampionF0312SkillBonus_Compat(
+                  &state->world, championIndex, weaponInfo.weaponClass)
+            : 0;
+    throwIn.throwSkillLevel = 0;
+    throwIn.rngStrength16 = rngStrength16;
+    throwIn.rngKinetic16 = rngKinetic16;
+    throwIn.rngAttack32 = rngAttack32;
+    if (!dm1_v1_throw_projectile_plan_f0328_pc34(&throwIn, &throwPlan) ||
+        !throwPlan.valid) {
+        return 0;
+    }
     /* ReDMCSB CHAMPION.C F0328 lines 2166-2194: accepted throws
      * request M563 combat sound, apply F0305 stamina and F0304 Throw
      * XP, then feed F0312 strength, F0303(THROW), object kinetic and
      * bounded attack/step energy to F0212_PROJECTILE_Create. */
-    m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
+    m11_audio_emit_source_sound(state, throwPlan.combatSoundIndex,
+                                M11_AUDIO_MARKER_COMBAT);
     (void)m11_apply_champion_stamina_cost_f0325(state, championIndex,
-                                                staminaCost);
-    m11_disable_champion_action_f0328_throw(state, championIndex);
-    m11_dm1_award_throw_xp(state, championIndex, throwExperience);
+                                                throwPlan.staminaCost);
+    m11_disable_champion_action_f0328_throw(
+        state, championIndex, throwPlan.actionDisableTicks);
+    m11_dm1_award_throw_xp(state, championIndex, throwPlan.throwExperience);
     skillThrow = m11_dm1_throw_skill_level(state, championIndex);
-    throwKineticEnergy = m11_dm1_f0328_throw_kinetic_energy(
-        state, throwStrength, skillThrow,
-        hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo);
-    throwAttack = m11_dm1_f0328_throw_attack(state, skillThrow);
-    throwStepEnergy = m11_dm1_f0328_throw_step_energy(skillThrow);
+    throwIn.throwSkillLevel = skillThrow;
+    if (!dm1_v1_throw_projectile_plan_f0328_pc34(&throwIn, &throwPlan) ||
+        !throwPlan.valid) {
+        return 0;
+    }
     (void)m11_dm1_thrown_potion_projectile_shape(
         state, thrownThing, &projectileSubtype, &potionPower);
     spawned = m11_spawn_action_projectile_ex(
         state, championIndex,
         projectileSubtype,
         PROJECTILE_CATEGORY_KINETIC,
-        throwKineticEnergy, throwAttack,
+        throwPlan.kineticEnergy, throwPlan.attack,
         COMBAT_ATTACK_NORMAL,
         (state->world.party.direction + (throwSide & 1)) & 3,
         state->world.party.direction,
-        throwStepEnergy,
-        throwAttack,
+        throwPlan.stepEnergy,
+        throwPlan.attack,
         thrownThing,
         potionPower);
     if (!spawned) {

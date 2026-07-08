@@ -129,6 +129,80 @@ int dm1_v1_throw_step_energy_pc34(int throwSkillLevel) {
                : stepEnergy;
 }
 
+int dm1_v1_throw_projectile_plan_f0328_pc34(
+    const DM1_ThrowF0328ProjectileInputPc34* in,
+    DM1_ThrowF0328ProjectilePlanPc34* out) {
+    int maxLoad;
+    int oneSixteenthMaximumLoad;
+    int loadThreshold;
+    int strength;
+    int halfMaximumStamina;
+    int halfStrength;
+    if (!in || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (in->objectWeight < 0 || in->championStrength < 0 ||
+        in->championCurrentStamina < 0 || in->championMaximumStamina < 0) {
+        return 0;
+    }
+
+    /* ReDMCSB CHAMPION.C F0312 lines 1237-1303 and F0328 lines 2166-2194:
+     * accepted throws play combat sound 13, spend F0305 stamina, disable
+     * action for 4 ticks, award Throw XP, then derive F0212 projectile
+     * strength/kinetic/attack/step from F0312, F0303 and two RNG draws. */
+    strength = (in->rngStrength16 & 15) + in->championStrength;
+    maxLoad = in->championMaxLoad;
+    if (maxLoad <= 0) {
+        maxLoad = (in->championStrength << 3) + 100;
+    }
+    oneSixteenthMaximumLoad = maxLoad >> 4;
+    if (in->objectWeight <= oneSixteenthMaximumLoad) {
+        strength += in->objectWeight - 12;
+    } else {
+        loadThreshold = oneSixteenthMaximumLoad +
+            ((oneSixteenthMaximumLoad - 12) >> 1);
+        if (in->objectWeight <= loadThreshold) {
+            strength += (in->objectWeight - oneSixteenthMaximumLoad) >> 1;
+        } else {
+            strength -= (in->objectWeight - loadThreshold) << 1;
+        }
+    }
+    if (in->hasWeaponInfo) {
+        strength += in->weaponStrength;
+        strength += in->f0312SkillBonus << 1;
+    }
+    halfMaximumStamina = in->championMaximumStamina >> 1;
+    if (halfMaximumStamina > 0 &&
+        in->championCurrentStamina < halfMaximumStamina) {
+        halfStrength = strength >> 1;
+        strength = halfStrength +
+            (int)(((long)halfStrength * (long)in->championCurrentStamina) /
+                  (long)halfMaximumStamina);
+    }
+    if (in->actionHandWounded) {
+        strength >>= 1;
+    }
+    strength >>= 1;
+    if (strength < 0) strength = 0;
+    if (strength > 100) strength = 100;
+
+    out->valid = 1;
+    out->staminaCost =
+        dm1_v1_throwing_stamina_cost_from_weight_pc34(in->objectWeight);
+    out->throwExperience = dm1_v1_throw_xp_for_object_pc34(
+        in->isWeapon, in->hasWeaponInfo, in->weaponClass,
+        in->weaponKineticEnergy);
+    out->throwStrength = strength;
+    out->kineticEnergy = dm1_v1_throw_kinetic_energy_pc34(
+        strength, in->throwSkillLevel, in->hasWeaponInfo,
+        in->weaponClass, in->weaponKineticEnergy, in->rngKinetic16);
+    out->attack = dm1_v1_throw_attack_pc34(
+        in->throwSkillLevel, in->rngAttack32);
+    out->stepEnergy = dm1_v1_throw_step_energy_pc34(in->throwSkillLevel);
+    out->actionDisableTicks = 4;
+    out->combatSoundIndex = 13;
+    return 1;
+}
+
 int dm1_v1_thrown_potion_projectile_subtype_pc34(int potionType,
                                                  int* outSubtype) {
     if (outSubtype) *outSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
