@@ -10952,7 +10952,24 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     }
     fprintf(stderr, "LOADING DUNGEON: [%s]\n", dungeonPath);
     if (F0882_WORLD_InitFromDungeonDat_Compat(dungeonPath, 0xF1A5U, &state->world) != 1) {
-        m11_set_status(state, "BOOT", "FAILED TO LOAD DUNGEON.DAT");
+        if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
+            DM1_V1_StartupDungeonLoadFacts_PC34 facts;
+            DM1_V1_StartupDungeonLoadReceipt_PC34 receipt;
+            memset(&facts, 0, sizeof(facts));
+            memset(&receipt, 0, sizeof(receipt));
+            facts.game_id = spec->gameId;
+            facts.load_succeeded = 0;
+            if (dm1_v1_startup_dungeon_load_receipt_pc34(&facts, &receipt) &&
+                receipt.handled) {
+                m11_set_status(state,
+                               receipt.status_title,
+                               receipt.status_detail);
+            } else {
+                m11_set_status(state, "BOOT", "FAILED TO LOAD DUNGEON.DAT");
+            }
+        } else {
+            m11_set_status(state, "BOOT", "FAILED TO LOAD DUNGEON.DAT");
+        }
         return 0;
     }
     state->mirrorCatalogAvailable = 0;

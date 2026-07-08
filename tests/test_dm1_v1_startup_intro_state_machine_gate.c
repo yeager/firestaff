@@ -446,6 +446,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupDungeonPathReceipt_PC34 dungeon_receipt;
     DM1_V1_StartupGraphicsBindFacts_PC34 graphics_facts;
     DM1_V1_StartupGraphicsBindReceipt_PC34 graphics_receipt;
+    DM1_V1_StartupDungeonLoadFacts_PC34 load_facts;
+    DM1_V1_StartupDungeonLoadReceipt_PC34 load_receipt;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -701,6 +703,42 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("NULL graphics bind facts rejected",
              dm1_v1_startup_graphics_bind_receipt_pc34(NULL,
                                                        &graphics_receipt),
+             0);
+
+    memset(&load_facts, 0, sizeof(load_facts));
+    memset(&load_receipt, 0, sizeof(load_receipt));
+    load_facts.game_id = "dm1";
+    load_facts.load_succeeded = 0;
+    expect_i("DM1 dungeon-load failure receipt builds",
+             dm1_v1_startup_dungeon_load_receipt_pc34(&load_facts,
+                                                      &load_receipt),
+             1);
+    expect_i("DM1 dungeon-load failure receipt handled",
+             load_receipt.handled,
+             1);
+    expect_i("DM1 dungeon-load failure receipt reports boot failure",
+             load_receipt.load_succeeded == 0 &&
+                 strcmp(load_receipt.status_title, "BOOT") == 0 &&
+                 strcmp(load_receipt.status_detail,
+                        "FAILED TO LOAD DUNGEON.DAT") == 0,
+             1);
+    load_facts.load_succeeded = 1;
+    expect_i("DM1 dungeon-load success receipt reports boot loaded",
+             dm1_v1_startup_dungeon_load_receipt_pc34(&load_facts,
+                                                      &load_receipt) &&
+                 load_receipt.load_succeeded == 1 &&
+                 strcmp(load_receipt.status_detail,
+                        "GAME DATA LOADED") == 0,
+             1);
+    load_facts.game_id = "csb";
+    expect_i("non-DM1 dungeon-load receipt no-op",
+             dm1_v1_startup_dungeon_load_receipt_pc34(&load_facts,
+                                                      &load_receipt) &&
+                 load_receipt.handled == 0,
+             1);
+    expect_i("NULL dungeon-load facts rejected",
+             dm1_v1_startup_dungeon_load_receipt_pc34(NULL,
+                                                      &load_receipt),
              0);
     expect_i("DM1 handoff prelude plan builds",
              dm1_v1_startup_handoff_prelude_plan_pc34("dm1", &prelude),
