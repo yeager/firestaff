@@ -52,9 +52,22 @@ int dm1_v1_startup_launch_path_bypasses_intro_pc34(
     return 1;
 }
 
+int dm1_v1_startup_source_visible_handoff_required_pc34(const char* game_id) {
+    return game_id && strcmp(game_id, "dm1") == 0 ? 1 : 0;
+}
+
 int dm1_v1_startup_intro_bypass_applies_to_source_pc34(const char* sourceId,
                                                        int bypassed) {
-    return sourceId && strcmp(sourceId, "dm1") == 0 && bypassed ? 1 : 0;
+    return dm1_v1_startup_source_visible_handoff_required_pc34(sourceId) &&
+           bypassed ? 1 : 0;
+}
+
+int dm1_v1_startup_selected_entry_receipt_valid_pc34(const char* game_id,
+                                                     int intro_bypassed) {
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(game_id)) {
+        return 1;
+    }
+    return intro_bypassed ? 0 : 1;
 }
 
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
