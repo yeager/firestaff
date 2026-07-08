@@ -11963,13 +11963,12 @@ static M11_GameInputResult m11_theron_startup_apply_action(
     case THERON_STARTUP_PLAN_CHOOSE_STAGE:
     case THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR:
     case THERON_STARTUP_PLAN_TOGGLE_MIRROR: {
-        Theron_StartupApplyReceipt applyReceipt;
         Theron_StartupHostReceipt hostReceipt;
         Theron_StartupStateReceipt stateReceipt;
         char receipt[96];
 
         receipt[0] = '\0';
-        if (!theron_v1_startup_execute_flow_plan_from_facts_with_receipts(
+        if (!theron_v1_startup_execute_flow_plan_from_facts_with_host_receipts(
                 &plan,
                 (Theron_StartupPhase)state->theronState.startup_phase,
                 state->theronState.selected_dungeon,
@@ -11980,7 +11979,7 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                 &world->progression,
                 NULL,
                 &execution,
-                &applyReceipt,
+                &hostReceipt,
                 &stateReceipt)) {
             snprintf(receipt,
                      sizeof(receipt),
@@ -12002,10 +12001,6 @@ static M11_GameInputResult m11_theron_startup_apply_action(
             stateReceipt.set_party_pose ||
             stateReceipt.set_tick_count) {
             m11_theron_apply_startup_state_receipt(state, &stateReceipt);
-        }
-        if (!theron_v1_startup_host_receipt_from_flow_apply(&applyReceipt,
-                                                            &hostReceipt)) {
-            return M11_GAME_INPUT_IGNORED;
         }
         return m11_theron_apply_startup_host_receipt(state,
                                                      &hostReceipt,
