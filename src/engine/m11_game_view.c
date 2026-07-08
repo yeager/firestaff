@@ -12272,9 +12272,9 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_BootProfile *profile =
-            (CSB_V1_BootProfile*)state->csbBootProfile;
-        if (!profile) {
+        uint32_t game_time = 0U;
+
+        if (!state->csbBootProfile) {
             m11_set_status(state, "SAVE", "CSB PROFILE MISSING");
             return 0;
         }
@@ -12283,19 +12283,21 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
          * Firestaff's CSB runtime snapshot is the current bounded owner of
          * that state; asset paths and loaded DUNGEON.DAT stay in the boot
          * profile and are reconstructed before load. */
-        if (csb_v1_runtime_save_game_to_path(&profile->runtime, path) !=
-            CSB_V1_SAVE_OK) {
+        if (csb_v1_runtime_save_game_to_path_from_boot_profile_pc34(
+                state->csbBootProfile,
+                path,
+                &game_time) != CSB_V1_SAVE_OK) {
             m11_set_status(state, "SAVE", "CSB WRITE FAILED");
             return 0;
         }
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-        state->lastSaveTick = profile->runtime.game_time;
+        state->lastSaveTick = game_time;
         m11_set_status(state, "SAVE", "CSB QUICKSAVE WRITTEN");
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),
                  "CSB SAVE SLOT READY");
         snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                  "RESUME TICK %u FROM %s",
-                 (unsigned int)profile->runtime.game_time,
+                 (unsigned int)game_time,
                  path);
         M12_Config_SetLastSavePath(path);
         return 1;
@@ -12526,9 +12528,9 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_BootProfile *profile =
-            (CSB_V1_BootProfile*)state->csbBootProfile;
-        if (!profile) {
+        uint32_t game_time = 0U;
+
+        if (!state->csbBootProfile) {
             m11_set_status(state, "LOAD", "CSB PROFILE MISSING");
             return 0;
         }
@@ -12536,20 +12538,22 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
          * file after the dungeon/profile is available.  M11 already owns
          * the verified CSB boot profile here, so direct F9 can reload the
          * runtime snapshot in place without touching the DM1 world loader. */
-        if (csb_v1_runtime_load_game_from_path(&profile->runtime, path) !=
-            CSB_V1_LOAD_OK) {
+        if (csb_v1_runtime_load_game_from_path_from_boot_profile_pc34(
+                state->csbBootProfile,
+                path,
+                &game_time) != CSB_V1_LOAD_OK) {
             m11_set_status(state, "LOAD", "CSB QUICKSAVE INVALID");
             return 0;
         }
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-        state->loadGameTick = profile->runtime.game_time;
-        state->lastSaveTick = profile->runtime.game_time;
+        state->loadGameTick = game_time;
+        state->lastSaveTick = game_time;
         m11_set_status(state, "LOAD", "CSB QUICKSAVE RESTORED");
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),
                  "CSB RESTORED");
         snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                  "TICK %u RELOADED FROM %s",
-                 (unsigned int)profile->runtime.game_time,
+                 (unsigned int)game_time,
                  path);
         return 1;
     }
@@ -12719,9 +12723,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         return M11_GAME_INPUT_REDRAW;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_BootProfile *profile =
-            (CSB_V1_BootProfile*)state->csbBootProfile;
-        if (!profile) {
+        if (!state->csbBootProfile) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (state->csbState.startup_entrance_active) {
@@ -12763,7 +12765,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             }
             return M11_GAME_INPUT_REDRAW;
         }
-        if (csb_v1_runtime_tick_v1(&profile->runtime) <= 0) {
+        if (csb_v1_runtime_tick_from_boot_profile_pc34(
+                state->csbBootProfile,
+                NULL) <= 0) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);

@@ -652,8 +652,10 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     struct DM1_TickDispatchResult_V1 dispatch;
     char dungeon_path[ASSET_PATH_MAX];
     char graphics_path[ASSET_PATH_MAX];
+    char save_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-test";
     int mkdir_ok = (TEST_MKDIR(tmp_dir) == 0) || 1; /* best-effort */
+    uint32_t adapter_game_time = 0U;
 
     memset(&p, 0, sizeof(p));
     (void)mkdir_ok;
@@ -745,6 +747,32 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
           "post-handoff timeline queue is empty after the single tick");
     CHECK(p.runtime.state == CSB_STATE_TITLE,
           "post-handoff tick does not claim a broader CSB gameplay state");
+
+    snprintf(save_path, sizeof(save_path), "%s/boot-profile-adapter.fsav",
+             tmp_dir);
+    CHECK(csb_v1_runtime_save_game_to_path_from_boot_profile_pc34(
+              &p,
+              save_path,
+              &adapter_game_time) == CSB_V1_SAVE_OK &&
+              adapter_game_time == p.runtime.game_time,
+          "boot-profile save adapter writes CSB runtime save and reports game time");
+    p.runtime.party_x = 3;
+    p.runtime.party_y = 4;
+    p.runtime.party_dir = CSB_V1_DIR_WEST;
+    CHECK(csb_v1_runtime_load_game_from_path_from_boot_profile_pc34(
+              &p,
+              save_path,
+              &adapter_game_time) == CSB_V1_LOAD_OK &&
+              adapter_game_time == p.runtime.game_time &&
+              p.runtime.party_x != 3 &&
+              p.runtime.party_y != 4 &&
+              p.runtime.party_dir != CSB_V1_DIR_WEST,
+          "boot-profile load adapter restores CSB runtime save and reports game time");
+    CHECK(csb_v1_runtime_tick_from_boot_profile_pc34(
+              &p,
+              &adapter_game_time) == 1 &&
+              adapter_game_time == p.runtime.game_time,
+          "boot-profile tick adapter advances CSB runtime and reports game time");
 
     /* Cleanup: the boot profile owns the handoff runtime and must clear the
      * global current-dungeon context that mirrors ReDMCSB's current map globals.
