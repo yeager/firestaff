@@ -8016,6 +8016,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_startup_runtime_bridge_pc34_compat.c
         src/csb/csb_v1_startup_sequence_pc34_compat.c
+        src/frontend/title_frontend_v1.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/csb/csb_v1_character_pc34_compat.c
         src/csb/csb_v1_utility_flow_pc34.c
