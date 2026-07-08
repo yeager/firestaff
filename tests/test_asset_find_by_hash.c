@@ -429,6 +429,8 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/archive.lzh");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
     remove("asset_find_by_hash_test_tmp/archive.7z");
+    remove("asset_find_by_hash_test_tmp/archive.dmg");
+    remove("asset_find_by_hash_test_tmp/renamed_tar.payload");
     remove("asset_find_by_hash_test_tmp/packed_payload.bin");
     remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
     remove("asset_find_by_hash_test_tmp/disc.iso");
@@ -880,6 +882,52 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/archive.7z");
     remove("asset_find_by_hash_test_tmp/packed_payload.bin");
+
+    if (write_fixture("asset_find_by_hash_test_tmp/packed_payload.bin") &&
+        system("command -v 7zz >/dev/null 2>&1 && "
+               "(cd asset_find_by_hash_test_tmp && "
+               "7zz a -tzip archive.dmg packed_payload.bin >/dev/null 2>&1)") == 0) {
+        remove("asset_find_by_hash_test_tmp/packed_payload.bin");
+        memset(outPath, 0, sizeof(outPath));
+        if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                               outPath, (int)sizeof(outPath), 2) ||
+            !path_has_virtual_entry(outPath, "archive.dmg", "packed_payload.bin")) {
+            cleanup_fixture();
+            fprintf(stderr, "DMG/external archive suffix lookup failed: %s\n", outPath);
+            return 1;
+        }
+        if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+            !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+            cleanup_fixture();
+            fprintf(stderr, "virtual DMG/external archive extraction failed: %s\n", outPath);
+            return 1;
+        }
+        remove("asset_find_by_hash_test_tmp/extracted.dat");
+    }
+    remove("asset_find_by_hash_test_tmp/archive.dmg");
+    remove("asset_find_by_hash_test_tmp/packed_payload.bin");
+
+    if (!write_tar_fixture("asset_find_by_hash_test_tmp/renamed_tar.payload")) {
+        cleanup_fixture();
+        fprintf(stderr, "renamed TAR fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_entry(outPath, "renamed_tar.payload", "dm1/weird-name.payload")) {
+        cleanup_fixture();
+        fprintf(stderr, "renamed TAR magic lookup failed: %s\n", outPath);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "renamed TAR extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/renamed_tar.payload");
 
     if (write_fixture("asset_find_by_hash_test_tmp/GRAPHICS.DAT") &&
         system("command -v 7zz >/dev/null 2>&1 && "
