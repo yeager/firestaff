@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus launcher resume receipt: Nexus launcher now owns FNXS load, level/dir validation, level load, champion/world application, mechanics reset, NGLT light-runtime resume, and M11-ready resume host receipts. M11 applies the launcher resume receipt instead of loading saves and mutating Nexus engine state directly. Verification: `test_m11_nexus_startup_gate` passed; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM2 initial startup launch receipt: DM2 boot now builds the direct-start startup launch receipt from the boot-owned launch object with no M11-created empty startup snapshot. Verification: `test_dm2_v1_boot_profile_smoke` passed; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron V2 HUD startup adapter: Theron V2 HUD launch-mode now owns the M11 startup gate/default-resolution path through `theron_v2_hud_launch_mode_apply_m11_startup()`. M11 no longer constructs `THERON_V2_PhaseGateConfig` or resolves Theron HUD launch modes inline. Verification: `test_theron_v2_hud_launch_mode_pc34` passed 93/93; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24; `git diff --check` passed.
