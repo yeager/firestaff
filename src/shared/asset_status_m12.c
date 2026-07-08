@@ -994,6 +994,7 @@ static void m12_materialize_dm1_startup_optional_cache(const char* seedPath,
 static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
                                                        const char* gameCacheDir) {
     static const char* const labels[] = {
+        "SWOOSH", "SWOOSH.DAT",
         "DUNGEONB.DAT", "HCSB.HTC", "HCSBF.HTC", "HCSBG.HTC",
         "CSBGAME.DAT", "CSB.DAT", "CSBGRAPH.DAT"
     };
