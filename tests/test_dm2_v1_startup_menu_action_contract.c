@@ -42,6 +42,7 @@ int main(void)
     DM2_V1_StartupApplyReceipt receipt;
     DM2_V1_StartupHostReceipt host_receipt;
     DM2_V1_StartupHostActionReceipt host_action_receipt;
+    DM2_V1_StartupIdleReceipt idle_receipt;
     DM2_V1_StartupHostFacts host_facts;
     DM2_V1_StartupMenuStateReceipt state_receipt;
     DM2_V1_StartupHit hit;
@@ -679,6 +680,22 @@ int main(void)
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");
+    host_facts.startup_menu_active = 1;
+    check(dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
+              &host_facts, 1, &idle_receipt) &&
+              idle_receipt.host_receipt.input_result ==
+                  DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
+              strcmp(idle_receipt.host_receipt.status, "DM2 STARTUP MENU") == 0,
+          "startup idle receipt owns DM2 menu redraw policy");
+    check(dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
+              &host_facts, 0, &idle_receipt) &&
+              idle_receipt.host_receipt.input_result ==
+                  DM2_V1_STARTUP_HOST_INPUT_IGNORED,
+          "startup idle receipt owns DM2 menu no-redraw policy");
+    host_facts.startup_menu_active = 0;
+    check(!dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
+              &host_facts, 1, &idle_receipt),
+          "startup idle receipt rejects inactive DM2 menu");
     check(dm2_v1_startup_receipt_phase(
               1, phase, sizeof(phase), &startup_active) &&
               strcmp(phase, "dm2-startup-menu") == 0 &&

@@ -1167,6 +1167,35 @@ void dm2_v1_startup_host_action_receipt_clear(
     dm2_v1_startup_menu_state_receipt_init(&receipt->menu_state_receipt);
 }
 
+void dm2_v1_startup_idle_receipt_clear(
+    DM2_V1_StartupIdleReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    dm2_v1_startup_host_receipt_clear(&receipt->host_receipt);
+}
+
+int dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
+    const DM2_V1_StartupHostFacts *facts,
+    int mouth_redraw,
+    DM2_V1_StartupIdleReceipt *out_receipt)
+{
+    if (out_receipt) {
+        dm2_v1_startup_idle_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt || !facts->startup_menu_active) {
+        return 0;
+    }
+    out_receipt->host_receipt.input_result =
+        mouth_redraw ? DM2_V1_STARTUP_HOST_INPUT_REDRAW
+                     : DM2_V1_STARTUP_HOST_INPUT_IGNORED;
+    out_receipt->host_receipt.status_scope = "STARTUP";
+    out_receipt->host_receipt.status = "DM2 STARTUP MENU";
+    return 1;
+}
+
 int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
     const DM2_V1_StartupAction *action,
     const DM2_V1_StartupHostFacts *facts,
