@@ -544,10 +544,30 @@ typedef struct DM1_ViewportCenterLaneMasksPc34 {
     unsigned int blocking_depth_mask;
     unsigned int blocking_door_depth_mask;
 } DM1_ViewportCenterLaneMasksPc34;
+
+typedef struct DM1_ViewportLaneVisibilityReceiptPc34 {
+    DM1_ViewportCenterLaneMasksPc34 center;
+    unsigned int left_open_depth_mask;
+    unsigned int right_open_depth_mask;
+    int max_visible_forward;
+    int nearest_blocking_center_depth_index;
+    int nearest_blocking_center_door_depth;
+} DM1_ViewportLaneVisibilityReceiptPc34;
+
 DM1_ViewportCenterLaneMasksPc34 dm1_viewport_3d_center_lane_masks_from_cells_pc34(
     const int valid_by_depth[3],
     const int open_by_depth[3],
     const int door_by_depth[3]);
+DM1_ViewportLaneVisibilityReceiptPc34 dm1_viewport_3d_lane_visibility_from_cells_pc34(
+    const int center_valid_by_depth[3],
+    const int center_open_by_depth[3],
+    const int center_door_by_depth[3],
+    const int left_open_by_depth[3],
+    const int right_open_by_depth[3]);
+int dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+    const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
+    int rel_forward,
+    int rel_side);
 int dm1_viewport_3d_center_line_clear_before_depth_pc34(
     int depth_index,
     unsigned int open_depth_mask);

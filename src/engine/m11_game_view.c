@@ -19625,48 +19625,53 @@ static void m11_draw_dm1_destroyed_door_mask_on_panel(const M11_GameViewState* s
                                9);
 }
 
-static DM1_ViewportCenterLaneMasksPc34 m11_dm1_center_lane_masks(
+static DM1_ViewportLaneVisibilityReceiptPc34 m11_dm1_lane_visibility(
     const M11_ViewportCell cells[3][3])
 {
-    int valid[3] = {0, 0, 0};
-    int open[3] = {0, 0, 0};
-    int door[3] = {0, 0, 0};
+    int centerValid[3] = {0, 0, 0};
+    int centerOpen[3] = {0, 0, 0};
+    int centerDoor[3] = {0, 0, 0};
+    int leftOpen[3] = {0, 0, 0};
+    int rightOpen[3] = {0, 0, 0};
     int depth;
     if (!cells) {
-        return dm1_viewport_3d_center_lane_masks_from_cells_pc34(NULL,
-                                                                 NULL,
-                                                                 NULL);
+        return dm1_viewport_3d_lane_visibility_from_cells_pc34(NULL,
+                                                               NULL,
+                                                               NULL,
+                                                               NULL,
+                                                               NULL);
     }
     for (depth = 0; depth < 3; ++depth) {
         const M11_ViewportCell* cell = &cells[depth][1];
-        valid[depth] = cell->valid ? 1 : 0;
-        open[depth] = m11_viewport_cell_is_open(cell) ? 1 : 0;
-        door[depth] = cell->elementType == DUNGEON_ELEMENT_DOOR ? 1 : 0;
+        centerValid[depth] = cell->valid ? 1 : 0;
+        centerOpen[depth] = m11_viewport_cell_is_open(cell) ? 1 : 0;
+        centerDoor[depth] = cell->elementType == DUNGEON_ELEMENT_DOOR ? 1 : 0;
+        leftOpen[depth] = m11_viewport_cell_is_open(&cells[depth][0]) ? 1 : 0;
+        rightOpen[depth] = m11_viewport_cell_is_open(&cells[depth][2]) ? 1 : 0;
     }
-    return dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid,
-                                                             open,
-                                                             door);
+    return dm1_viewport_3d_lane_visibility_from_cells_pc34(centerValid,
+                                                           centerOpen,
+                                                           centerDoor,
+                                                           leftOpen,
+                                                           rightOpen);
 }
 
-static unsigned int m11_dm1_center_blocking_depth_mask(const M11_ViewportCell cells[3][3]) {
-    return m11_dm1_center_lane_masks(cells).blocking_depth_mask;
+static DM1_ViewportCenterLaneMasksPc34 m11_dm1_center_lane_masks(
+    const M11_ViewportCell cells[3][3])
+{
+    return m11_dm1_lane_visibility(cells).center;
 }
 
 static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[3][3]) {
-    return dm1_viewport_3d_max_visible_forward_from_center_pc34(
-        m11_dm1_center_blocking_depth_mask(cells));
+    return m11_dm1_lane_visibility(cells).max_visible_forward;
 }
 
 static int m11_dm1_nearest_blocking_center_depth_index(const M11_ViewportCell cells[3][3]) {
-    return dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
-        m11_dm1_center_blocking_depth_mask(cells));
+    return m11_dm1_lane_visibility(cells).nearest_blocking_center_depth_index;
 }
 
 static int m11_dm1_nearest_blocking_center_door_depth(const M11_ViewportCell cells[3][3]) {
-    DM1_ViewportCenterLaneMasksPc34 masks = m11_dm1_center_lane_masks(cells);
-    return dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(
-        masks.blocking_depth_mask,
-        masks.blocking_door_depth_mask);
+    return m11_dm1_lane_visibility(cells).nearest_blocking_center_door_depth;
 }
 
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
@@ -19886,27 +19891,14 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
     }
 }
 
-static unsigned int m11_dm1_side_lane_open_depth_mask(const M11_ViewportCell cells[3][3],
-                                                      int sideIndex) {
-    int d;
-    int open[3] = {0, 0, 0};
-    if (!cells) return 0u;
-    if (sideIndex != 0 && sideIndex != 2) {
-        return 0x7u;
-    }
-    for (d = 0; d < 3; ++d) {
-        open[d] = m11_viewport_cell_is_open(&cells[d][sideIndex]) ? 1 : 0;
-    }
-    return dm1_viewport_3d_open_depth_mask_from_cells_pc34(open);
-}
-
 static int m11_dm1_side_lane_clear_for_rel(const M11_ViewportCell cells[3][3],
                                            int relForward,
                                            int relSide) {
-    return dm1_viewport_3d_side_lane_clear_for_rel_pc34(
-        relForward,
-        relSide,
-        m11_dm1_side_lane_open_depth_mask(cells, relSide < 0 ? 0 : 2));
+    DM1_ViewportLaneVisibilityReceiptPc34 visibility =
+        m11_dm1_lane_visibility(cells);
+    return dm1_viewport_3d_side_lane_clear_from_visibility_pc34(&visibility,
+                                                                relForward,
+                                                                relSide);
 }
 
 static int m11_decode_visible_wall_text(const M11_GameViewState* state,
