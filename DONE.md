@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB boot launch/failure log receipts: CSB startup host receipts now own launch/failure log text and color. M11 applies the CSB receipt for startup failure instead of building the failure status/log locally.
+
 - ✅ 2026-07-08 DM2 boot inspect/log receipts: DM2 startup host receipts now carry boot inspect/log details for start-menu and resume handoff. M11 applies those receipts instead of setting final DM2 boot readout/log lines locally.
 
 - ✅ 2026-07-08 signature-based game-data container scan: the shared hash scanner now detects ZIP, ISO/BIN, TAR, GZIP, and stored LHA containers by file signature when files have wrong or arbitrary suffixes. Added `.pk4`/`.nupkg` ZIP-compatible suffixes and regression coverage for renamed ZIP/ISO virtual scan/extract.

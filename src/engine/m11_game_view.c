@@ -3076,6 +3076,12 @@ static M11_GameInputResult m11_csb_startup_apply_host_receipt(
                        receipt->status_scope,
                        receipt->status);
     }
+    if (receipt->log_line) {
+        m11_log_event(state,
+                      receipt->log_color ? receipt->log_color : M11_COLOR_YELLOW,
+                      "T0: %s",
+                      receipt->log_line);
+    }
     if (receipt->bonus_requested_changed) {
         state->csbState.startup_entrance_bonus_requested =
             receipt->bonus_requested ? 1 : 0;
@@ -10502,16 +10508,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 spec->csbImportDm1SavePath,
                 spec->entranceResumeSavePath,
                 &launch)) {
-            const char *failureStatus =
-                launch.failure_host_receipt.status
-                    ? launch.failure_host_receipt.status
-                    : "CSB STARTUP FAILED";
-            m11_set_status(state,
-                           launch.failure_host_receipt.status_scope
-                               ? launch.failure_host_receipt.status_scope
-                               : "BOOT",
-                           failureStatus);
-            m11_log_event(state, M11_COLOR_RED, "T0: %s", failureStatus);
+            (void)m11_csb_startup_apply_host_receipt(
+                state,
+                &launch.failure_host_receipt);
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;
         }
@@ -10560,12 +10559,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         (void)m11_csb_startup_apply_host_receipt(
             state,
             &launch.receipts.launch_host_receipt);
-        m11_log_event(state,
-                      M11_COLOR_YELLOW,
-                      "T0: %s",
-                      launch.receipts.launch_host_receipt.status
-                          ? launch.receipts.launch_host_receipt.status
-                          : "CSB LOADED");
         csb_v1_boot_startup_launch_cleanup_pc34(&launch);
         /* Tier 4: CSB launcher stderr-pipe — surface the boot milestone to
          * stderr so `firestaff_tier1_strict_boot_probe` and CI can detect

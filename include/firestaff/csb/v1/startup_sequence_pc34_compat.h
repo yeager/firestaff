@@ -128,6 +128,8 @@ typedef struct CSB_V1_StartupHostReceipt_PC34 {
     CSB_V1_StartupEntranceInputResult_PC34 input_result;
     const char *status_scope;
     const char *status;
+    const char *log_line;
+    unsigned char log_color;
     int clear_import_preview;
     int bonus_requested_changed;
     int bonus_requested;

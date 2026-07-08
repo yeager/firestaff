@@ -867,6 +867,9 @@ int csb_v1_boot_build_startup_launch_receipts_pc34(
     out_receipts->launch_host_receipt.status_scope = "BOOT";
     out_receipts->launch_host_receipt.status =
         direct_resume ? "CSB RESUMED" : "CSB ENTRANCE";
+    out_receipts->launch_host_receipt.log_color = 11U;
+    out_receipts->launch_host_receipt.log_line =
+        out_receipts->launch_host_receipt.status;
     return 1;
 }
 
@@ -881,6 +884,8 @@ static void csb_v1_boot_startup_failure_host_receipt_pc34(
     receipt->input_result = CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34;
     receipt->status_scope = "BOOT";
     receipt->status = status ? status : "CSB STARTUP FAILED";
+    receipt->log_color = 8U;
+    receipt->log_line = receipt->status;
 }
 
 void csb_v1_boot_startup_launch_cleanup_pc34(
