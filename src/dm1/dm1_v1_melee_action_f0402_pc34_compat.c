@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 
@@ -300,6 +301,56 @@ int dm1_v1_melee_side_effect_plan_f0231_pc34(
         int health = in->currentHealth - pendingDamage;
         out->currentHealthAfter = health > 0 ? health : 0;
     }
+    return 1;
+}
+
+int dm1_v1_melee_aftermath_plan_f0231_pc34(
+    const DM1_MeleeF0231AftermathInputPc34* in,
+    DM1_MeleeF0231AftermathPlanPc34* out) {
+    int size;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->outcome = COMBAT_OUTCOME_INVALID;
+    out->smokeAttack = 110;
+    out->smokeCell = EXPLOSION_CELL_CENTERED;
+    out->reactionEventKind = DM1_EVENT_REACTION_PARTY_IS_ADJACENT;
+    if (!in) return 0;
+
+    out->valid = 1;
+    out->outcome = (in->damageOutcome != COMBAT_OUTCOME_INVALID)
+        ? in->damageOutcome
+        : in->fallbackCombatOutcome;
+    out->smokeCell = (in->killedCell == EXPLOSION_CELL_CENTERED)
+        ? EXPLOSION_CELL_CENTERED
+        : (in->killedCell & 3);
+    size = in->creatureAttributes & DM1_ATTR_SIZE_MASK;
+    if (size == DM1_SIZE_FULL_SQUARE) {
+        out->smokeAttack = 255;
+    } else if (size == DM1_SIZE_HALF_SQUARE) {
+        out->smokeAttack = 190;
+    }
+
+    if (in->damageOutcome != COMBAT_OUTCOME_INVALID) {
+        out->shouldWriteRawGroup = 1;
+        if (in->damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES ||
+            in->damageOutcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+            out->shouldDropPossessions = 1;
+            out->shouldCreateDeathSmoke = 1;
+            out->shouldEmitKillNotify = 1;
+        }
+        out->shouldApplyKilledSomeState =
+            in->damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+        out->shouldApplyKilledAllSideEffects =
+            in->damageOutcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1548-1549 schedules the physical
+     * attack reaction event after every melee action except killed-all.
+     * GROUP.C F0190 lines 814-917 owns the killed creature drops, group
+     * compaction/unlink outcome and smoke attack 110/190/255 by size. */
+    out->shouldScheduleReaction =
+        !in->fearTriggered &&
+        out->outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES;
     return 1;
 }
 

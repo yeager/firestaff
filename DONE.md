@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0231 melee aftermath ownership: DM1 melee compat now owns F0231 group aftermath routing for death smoke attack/cell, possession drops, killed-some state/fear gate, killed-all unlink gate, raw group writeback, kill notify, and reaction scheduling. M10 now applies the DM1 receipt after F0738 damage. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0231 melee side-effect ownership: DM1 melee compat now owns the F0231 hit/miss side-effect plan for damage XP, stamina random modulus/base cost, final stamina cost, stamina clamp, and stamina-underflow HP damage. M10 now draws RNG from the DM1-requested range and applies the receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0402/F0231 weapon-profile ownership: DM1 melee compat now owns the F0402 action weapon-profile plan from G0492/G0493, including Vorpal Blade and DISRUPT `MASK0x8000_HIT_NON_MATERIAL_CREATURES` flagging before F0231. M10 now only supplies live weapon facts and consumes the DM1 receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

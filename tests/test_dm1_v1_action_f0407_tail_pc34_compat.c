@@ -1,4 +1,5 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
@@ -1317,6 +1318,90 @@ static void test_melee_f0231_side_effect_plan(void) {
     CHECK_EQ(out.currentHealthAfter, 1, "F0231 underflow health after");
 }
 
+static void test_melee_f0231_aftermath_plan(void) {
+    DM1_MeleeF0231AftermathInputPc34 in;
+    DM1_MeleeF0231AftermathPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.groupIndex = 4;
+    in.creatureType = 6;
+    in.creatureAttributes = DM1_SIZE_FULL_SQUARE;
+    in.killedCell = EXPLOSION_CELL_CENTERED;
+    in.damageOutcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    in.fallbackCombatOutcome = COMBAT_OUTCOME_HIT_DAMAGE;
+    CHECK_EQ(dm1_v1_melee_aftermath_plan_f0231_pc34(&in, &out), 1,
+             "F0231 killed-all aftermath builds");
+    CHECK_EQ(out.valid, 1, "F0231 aftermath valid");
+    CHECK_EQ(out.outcome, COMBAT_OUTCOME_KILLED_ALL_CREATURES,
+             "F0231 killed-all outcome");
+    CHECK_EQ(out.shouldDropPossessions, 1, "F0231 killed-all drops");
+    CHECK_EQ(out.shouldCreateDeathSmoke, 1, "F0231 killed-all smoke");
+    CHECK_EQ(out.smokeAttack, 255, "F0231 full-square smoke attack");
+    CHECK_EQ(out.smokeCell, EXPLOSION_CELL_CENTERED,
+             "F0231 centered smoke cell");
+    CHECK_EQ(out.shouldApplyKilledSomeState, 0,
+             "F0231 killed-all skips killed-some state");
+    CHECK_EQ(out.shouldApplyKilledAllSideEffects, 1,
+             "F0231 killed-all unlinks group");
+    CHECK_EQ(out.shouldWriteRawGroup, 1, "F0231 killed-all writeback");
+    CHECK_EQ(out.shouldEmitKillNotify, 1, "F0231 killed-all notifies");
+    CHECK_EQ(out.shouldScheduleReaction, 0,
+             "F0231 killed-all suppresses reaction");
+
+    in.creatureAttributes = DM1_SIZE_HALF_SQUARE;
+    in.killedCell = 6;
+    in.damageOutcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    in.fearTriggered = 0;
+    CHECK_EQ(dm1_v1_melee_aftermath_plan_f0231_pc34(&in, &out), 1,
+             "F0231 killed-some aftermath builds");
+    CHECK_EQ(out.outcome, COMBAT_OUTCOME_KILLED_SOME_CREATURES,
+             "F0231 killed-some outcome");
+    CHECK_EQ(out.smokeAttack, 190, "F0231 half-square smoke attack");
+    CHECK_EQ(out.smokeCell, 2, "F0231 smoke cell masked");
+    CHECK_EQ(out.shouldDropPossessions, 1, "F0231 killed-some drops");
+    CHECK_EQ(out.shouldCreateDeathSmoke, 1, "F0231 killed-some smoke");
+    CHECK_EQ(out.shouldApplyKilledSomeState, 1,
+             "F0231 killed-some state/fear");
+    CHECK_EQ(out.shouldApplyKilledAllSideEffects, 0,
+             "F0231 killed-some keeps group linked");
+    CHECK_EQ(out.shouldScheduleReaction, 1,
+             "F0231 killed-some reaction without fear");
+    CHECK_EQ(out.reactionEventKind, DM1_EVENT_REACTION_PARTY_IS_ADJACENT,
+             "F0231 reaction event kind");
+
+    in.fearTriggered = 1;
+    CHECK_EQ(dm1_v1_melee_aftermath_plan_f0231_pc34(&in, &out), 1,
+             "F0231 fear aftermath builds");
+    CHECK_EQ(out.shouldScheduleReaction, 0,
+             "F0231 fear suppresses reaction");
+
+    in.creatureAttributes = 0;
+    in.damageOutcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+    in.fallbackCombatOutcome = COMBAT_OUTCOME_HIT_DAMAGE;
+    in.fearTriggered = 0;
+    CHECK_EQ(dm1_v1_melee_aftermath_plan_f0231_pc34(&in, &out), 1,
+             "F0231 no-kill aftermath builds");
+    CHECK_EQ(out.outcome, COMBAT_OUTCOME_KILLED_NO_CREATURES,
+             "F0231 no-kill outcome");
+    CHECK_EQ(out.smokeAttack, 110, "F0231 quarter/default smoke attack");
+    CHECK_EQ(out.shouldDropPossessions, 0, "F0231 no-kill no drops");
+    CHECK_EQ(out.shouldCreateDeathSmoke, 0, "F0231 no-kill no smoke");
+    CHECK_EQ(out.shouldWriteRawGroup, 1, "F0231 no-kill writeback");
+    CHECK_EQ(out.shouldEmitKillNotify, 0, "F0231 no-kill no notify");
+    CHECK_EQ(out.shouldScheduleReaction, 1, "F0231 no-kill reaction");
+
+    in.damageOutcome = COMBAT_OUTCOME_INVALID;
+    in.fallbackCombatOutcome = COMBAT_OUTCOME_MISS;
+    CHECK_EQ(dm1_v1_melee_aftermath_plan_f0231_pc34(&in, &out), 1,
+             "F0231 miss aftermath builds");
+    CHECK_EQ(out.outcome, COMBAT_OUTCOME_MISS, "F0231 miss fallback outcome");
+    CHECK_EQ(out.shouldDropPossessions, 0, "F0231 miss no drops");
+    CHECK_EQ(out.shouldCreateDeathSmoke, 0, "F0231 miss no smoke");
+    CHECK_EQ(out.shouldWriteRawGroup, 0, "F0231 miss no writeback");
+    CHECK_EQ(out.shouldEmitKillNotify, 0, "F0231 miss no notify");
+    CHECK_EQ(out.shouldScheduleReaction, 1, "F0231 miss reaction");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -1350,6 +1435,7 @@ int main(void) {
     test_melee_pre_f0231_gates();
     test_melee_weapon_profile_plan();
     test_melee_f0231_side_effect_plan();
+    test_melee_f0231_aftermath_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",
