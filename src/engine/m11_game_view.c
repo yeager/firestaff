@@ -2211,9 +2211,9 @@ static void m11_draw_csb_startup_fallback_text_rows(
     int framebufferWidth,
     int framebufferHeight,
     const CSB_V1_StartupRenderPlan_PC34 *plan);
-static void m11_csb_startup_host_facts(
+static int m11_csb_boot_runtime_util_render_plan(
     const M11_GameViewState *state,
-    CSB_V1_StartupHostFacts_PC34 *facts);
+    CSB_V1_UtilRenderPlan *out_plan);
 
 static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                                unsigned char *framebuffer,
@@ -2221,17 +2221,13 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                                int framebufferHeight)
 {
     CSB_V1_UtilRenderPlan plan;
-    CSB_V1_StartupHostFacts_PC34 facts;
     int i;
 
     if (!state || !state->csbState.startup_import_available) {
         return;
     }
 
-    m11_csb_startup_host_facts(state, &facts);
-    if (!csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
-            &facts,
-            &plan)) {
+    if (!m11_csb_boot_runtime_util_render_plan(state, &plan)) {
         return;
     }
     if (plan.panel.fill_visible) {
@@ -2482,19 +2478,15 @@ static void m11_csb_startup_command_state_receipt_to_m11(
     M11_GameViewState *state,
     const CSB_V1_StartupCommandStateReceipt_PC34 *receipt);
 
-static void m11_csb_startup_host_facts(
+static int m11_csb_boot_runtime_util_render_plan(
     const M11_GameViewState *state,
-    CSB_V1_StartupHostFacts_PC34 *facts)
+    CSB_V1_UtilRenderPlan *out_plan)
 {
-    if (!facts) {
-        return;
+    if (!state || !out_plan) {
+        return 0;
     }
-    csb_v1_startup_host_facts_init_pc34(facts);
-    if (!state) {
-        return;
-    }
-    (void)csb_v1_boot_startup_host_facts_from_runtime_state_pc34(
-        facts,
+    return csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
+        out_plan,
         state->csbState.startup_title_active,
         state->csbState.startup_title_frame,
         state->csbState.startup_title_source_step,
@@ -2516,6 +2508,148 @@ static void m11_csb_startup_host_facts(
         state->csbState.startup_entrance_resume_available,
         state->csbState.startup_entrance_resume_path,
         state->csbBootProfile);
+}
+
+static int m11_csb_boot_runtime_util_pointer(
+    const M11_GameViewState *state,
+    int x,
+    int y,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt)
+{
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    return csb_v1_boot_runtime_util_apply_pointer_from_runtime_state_pc34(
+        out_receipt,
+        state->csbState.startup_title_active,
+        state->csbState.startup_title_frame,
+        state->csbState.startup_title_source_step,
+        state->csbState.startup_entrance_active,
+        state->csbState.startup_entrance_source_step,
+        state->csbState.startup_entrance_dismissed,
+        state->csbState.startup_entrance_credits_active,
+        state->csbState.startup_entrance_credits_remaining_ticks,
+        state->csbState.startup_entrance_opening_active,
+        state->csbState.startup_entrance_opening_delay_ticks,
+        state->csbState.startup_entrance_opening_step,
+        state->csbState.startup_entrance_pending_command,
+        state->csbState.startup_entrance_frame,
+        state->csbState.startup_import_available,
+        state->csbState.startup_import_selected_action_index,
+        state->csbState.startup_import_champion_count,
+        state->csbState.startup_import_preview_active,
+        state->csbState.startup_import_utility_prompt,
+        state->csbState.startup_entrance_resume_available,
+        state->csbState.startup_entrance_resume_path,
+        state->csbBootProfile,
+        x,
+        y);
+}
+
+static int m11_csb_boot_runtime_util_keyboard(
+    const M11_GameViewState *state,
+    int menu_input,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt)
+{
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    return csb_v1_boot_runtime_util_apply_firestaff_input_from_runtime_state_pc34(
+        out_receipt,
+        state->csbState.startup_title_active,
+        state->csbState.startup_title_frame,
+        state->csbState.startup_title_source_step,
+        state->csbState.startup_entrance_active,
+        state->csbState.startup_entrance_source_step,
+        state->csbState.startup_entrance_dismissed,
+        state->csbState.startup_entrance_credits_active,
+        state->csbState.startup_entrance_credits_remaining_ticks,
+        state->csbState.startup_entrance_opening_active,
+        state->csbState.startup_entrance_opening_delay_ticks,
+        state->csbState.startup_entrance_opening_step,
+        state->csbState.startup_entrance_pending_command,
+        state->csbState.startup_entrance_frame,
+        state->csbState.startup_import_available,
+        state->csbState.startup_import_selected_action_index,
+        state->csbState.startup_import_champion_count,
+        state->csbState.startup_import_preview_active,
+        state->csbState.startup_import_utility_prompt,
+        state->csbState.startup_entrance_resume_available,
+        state->csbState.startup_entrance_resume_path,
+        state->csbBootProfile,
+        menu_input);
+}
+
+static int m11_csb_boot_runtime_entrance_keyboard(
+    const M11_GameViewState *state,
+    int menu_input,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
+{
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    return csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_runtime_state_pc34(
+        out_receipt,
+        state->csbState.startup_title_active,
+        state->csbState.startup_title_frame,
+        state->csbState.startup_title_source_step,
+        state->csbState.startup_entrance_active,
+        state->csbState.startup_entrance_source_step,
+        state->csbState.startup_entrance_dismissed,
+        state->csbState.startup_entrance_credits_active,
+        state->csbState.startup_entrance_credits_remaining_ticks,
+        state->csbState.startup_entrance_opening_active,
+        state->csbState.startup_entrance_opening_delay_ticks,
+        state->csbState.startup_entrance_opening_step,
+        state->csbState.startup_entrance_pending_command,
+        state->csbState.startup_entrance_frame,
+        state->csbState.startup_import_available,
+        state->csbState.startup_import_selected_action_index,
+        state->csbState.startup_import_champion_count,
+        state->csbState.startup_import_preview_active,
+        state->csbState.startup_import_utility_prompt,
+        state->csbState.startup_entrance_resume_available,
+        state->csbState.startup_entrance_resume_path,
+        state->csbBootProfile,
+        menu_input);
+}
+
+static int m11_csb_boot_runtime_entrance_pointer(
+    const M11_GameViewState *state,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
+{
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    return csb_v1_boot_runtime_execute_startup_entrance_pointer_from_runtime_state_pc34(
+        out_receipt,
+        state->csbState.startup_title_active,
+        state->csbState.startup_title_frame,
+        state->csbState.startup_title_source_step,
+        state->csbState.startup_entrance_active,
+        state->csbState.startup_entrance_source_step,
+        state->csbState.startup_entrance_dismissed,
+        state->csbState.startup_entrance_credits_active,
+        state->csbState.startup_entrance_credits_remaining_ticks,
+        state->csbState.startup_entrance_opening_active,
+        state->csbState.startup_entrance_opening_delay_ticks,
+        state->csbState.startup_entrance_opening_step,
+        state->csbState.startup_entrance_pending_command,
+        state->csbState.startup_entrance_frame,
+        state->csbState.startup_import_available,
+        state->csbState.startup_import_selected_action_index,
+        state->csbState.startup_import_champion_count,
+        state->csbState.startup_import_preview_active,
+        state->csbState.startup_import_utility_prompt,
+        state->csbState.startup_entrance_resume_available,
+        state->csbState.startup_entrance_resume_path,
+        state->csbBootProfile,
+        x,
+        y,
+        button_mask);
 }
 
 static int m11_csb_startup_build_render_plan(
@@ -3184,16 +3318,14 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     int y)
 {
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 receipt;
-    CSB_V1_StartupHostFacts_PC34 facts;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
         return M11_GAME_INPUT_IGNORED;
     }
 
-    m11_csb_startup_host_facts(state, &facts);
-    if (!csb_v1_runtime_util_apply_point_from_startup_host_facts_with_action_receipt_pc34(
-            &facts,
+    if (!m11_csb_boot_runtime_util_pointer(
+            state,
             x,
             y,
             &receipt)) {
@@ -3208,16 +3340,14 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     M12_MenuInput input)
 {
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 receipt;
-    CSB_V1_StartupHostFacts_PC34 facts;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
         return M11_GAME_INPUT_IGNORED;
     }
 
-    m11_csb_startup_host_facts(state, &facts);
-    if (!csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
-            &facts,
+    if (!m11_csb_boot_runtime_util_keyboard(
+            state,
             (int)input,
             &receipt)) {
         return M11_GAME_INPUT_IGNORED;
@@ -13525,10 +13655,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         {
             CSB_V1_StartupEntranceHostActionReceipt_PC34 receipt;
-            CSB_V1_StartupHostFacts_PC34 facts;
-            m11_csb_startup_host_facts(state, &facts);
-            if (!csb_v1_runtime_execute_startup_entrance_firestaff_input_from_host_facts_with_receipts_pc34(
-                    &facts,
+            if (!m11_csb_boot_runtime_entrance_keyboard(
+                    state,
                     (int)input,
                     &receipt)) {
                 return M11_GAME_INPUT_IGNORED;
@@ -14541,7 +14669,6 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
                        ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
         CSB_V1_StartupEntranceHostActionReceipt_PC34 receipt;
-        CSB_V1_StartupHostFacts_PC34 facts;
         if (!m11_csb_startup_entrance_waiting_for_input(state)) {
             return M11_GAME_INPUT_IGNORED;
         }
@@ -14552,9 +14679,8 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 return utilityResult;
             }
         }
-        m11_csb_startup_host_facts(state, &facts);
-        if (!csb_v1_runtime_execute_startup_entrance_pointer_from_host_facts_with_receipts_pc34(
-                &facts,
+        if (!m11_csb_boot_runtime_entrance_pointer(
+                state,
                 x,
                 y,
                 (unsigned int)buttonMask,
