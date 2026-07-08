@@ -764,6 +764,57 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     return 1;
 }
 
+static int dm1_v1_melee_event_creature_index_f0190_pc34(int eventType) {
+    if (eventType >= DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
+        eventType < DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
+        return eventType - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+    }
+    if (eventType >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+        eventType <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        return eventType - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    }
+    return -1;
+}
+
+int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+    const DM1_MeleeF0190TimelineCleanupInputPc34* in,
+    DM1_MeleeF0190TimelineCleanupPlanPc34* out) {
+    int eventCreatureIndex;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->shouldKeepEvent = 1;
+    out->newEventType = -1;
+    out->eventCreatureIndex = -1;
+    if (!in) return 0;
+    if (in->killedCreatureIndex < 0 || in->killedCreatureIndex > 3) return 0;
+
+    out->valid = 1;
+    out->newEventType = in->eventType;
+    if (in->eventKind != TIMELINE_EVENT_CREATURE_REACTION) return 1;
+    if (in->eventMapIndex != in->targetMapIndex ||
+        in->eventMapX != in->targetMapX ||
+        in->eventMapY != in->targetMapY) {
+        return 1;
+    }
+
+    eventCreatureIndex =
+        dm1_v1_melee_event_creature_index_f0190_pc34(in->eventType);
+    out->eventCreatureIndex = eventCreatureIndex;
+    if (eventCreatureIndex < 0) return 1;
+    if (eventCreatureIndex == in->killedCreatureIndex) {
+        out->shouldKeepEvent = 0;
+        return 1;
+    }
+    if (eventCreatureIndex > in->killedCreatureIndex) {
+        out->newEventType = in->eventType - 1;
+    }
+
+    /* ReDMCSB: GROUP.C F0190 lines 848-872 scans C33-C36 aspect and C38-C41
+     * behavior events on the killed group square, deletes the killed creature's
+     * event, and decrements later creature event types after group compaction. */
+    return 1;
+}
+
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
