@@ -3147,6 +3147,48 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     }
 }
 
+static void m11_csb_startup_apply_utility_state_receipt(
+    M11_GameViewState *state,
+    const CSB_V1_UtilStateReceipt *receipt)
+{
+    if (!state || !receipt) {
+        return;
+    }
+    if (receipt->selected_action_index_changed) {
+        state->csbState.startup_import_selected_action_index =
+            receipt->selected_action_index;
+    }
+    if (receipt->preview_active_changed) {
+        state->csbState.startup_import_preview_active =
+            receipt->preview_active;
+    }
+}
+
+static M11_GameInputResult m11_csb_startup_handle_utility_receipts(
+    M11_GameViewState *state,
+    const CSB_V1_UtilApplyReceipt *receipt,
+    const CSB_V1_UtilStateReceipt *state_receipt)
+{
+    if (!state || !receipt) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    m11_csb_startup_apply_utility_state_receipt(state, state_receipt);
+    if (receipt->status) {
+        m11_set_status(state,
+                       receipt->status_scope ? receipt->status_scope : "BOOT",
+                       receipt->status);
+    }
+    if (receipt->result == CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND) {
+        return m11_csb_startup_handle_entrance_command(
+            state,
+            receipt->entrance_command);
+    }
+    if (receipt->result == CSB_V1_UTIL_APPLY_REDRAW) {
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
 static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     M11_GameViewState *state,
     int x,
@@ -3176,28 +3218,9 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
             &state_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (state_receipt.selected_action_index_changed) {
-        state->csbState.startup_import_selected_action_index =
-            state_receipt.selected_action_index;
-    }
-    if (state_receipt.preview_active_changed) {
-        state->csbState.startup_import_preview_active =
-            state_receipt.preview_active;
-    }
-    if (receipt.status) {
-        m11_set_status(state,
-                       receipt.status_scope ? receipt.status_scope : "BOOT",
-                       receipt.status);
-    }
-    if (receipt.result == CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND) {
-        return m11_csb_startup_handle_entrance_command(
-            state,
-            receipt.entrance_command);
-    }
-    if (receipt.result == CSB_V1_UTIL_APPLY_REDRAW) {
-        return M11_GAME_INPUT_REDRAW;
-    }
-    return M11_GAME_INPUT_IGNORED;
+    return m11_csb_startup_handle_utility_receipts(state,
+                                                   &receipt,
+                                                   &state_receipt);
 }
 
 static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
@@ -3227,28 +3250,9 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
             &state_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (state_receipt.selected_action_index_changed) {
-        state->csbState.startup_import_selected_action_index =
-            state_receipt.selected_action_index;
-    }
-    if (state_receipt.preview_active_changed) {
-        state->csbState.startup_import_preview_active =
-            state_receipt.preview_active;
-    }
-    if (receipt.status) {
-        m11_set_status(state,
-                       receipt.status_scope ? receipt.status_scope : "BOOT",
-                       receipt.status);
-    }
-    if (receipt.result == CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND) {
-        return m11_csb_startup_handle_entrance_command(
-            state,
-            receipt.entrance_command);
-    }
-    if (receipt.result == CSB_V1_UTIL_APPLY_REDRAW) {
-        return M11_GAME_INPUT_REDRAW;
-    }
-    return M11_GAME_INPUT_IGNORED;
+    return m11_csb_startup_handle_utility_receipts(state,
+                                                   &receipt,
+                                                   &state_receipt);
 }
 
 static int m11_measure_text_pixels(const char* text,
