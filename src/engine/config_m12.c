@@ -369,6 +369,9 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->retroAchievementsHardcore = 1;
     config->retroAchievementsUsername[0] = '\0';
     config->retroAchievementsToken[0] = '\0';
+    m12_copy_string(config->retroAchievementsEndpoint,
+                    sizeof(config->retroAchievementsEndpoint),
+                    "https://retroachievements.org");
     config->sessionTimerIndex = 0;
     config->customDungeonPath[0] = '\0';
     config->screenshotPath[0] = '\0';
@@ -860,6 +863,13 @@ static void m12_parse_line(M12_Config* config, char* line) {
                         quoted);
         return;
     }
+    if (m12_string_equals(key, "retroachievements_endpoint") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->retroAchievementsEndpoint,
+                        sizeof(config->retroAchievementsEndpoint),
+                        quoted);
+        return;
+    }
     if (m12_string_equals(key, "session_timer_index")) {
         int val = m12_parse_int(value, config->sessionTimerIndex);
         if (val < 0) val = 0;
@@ -1025,6 +1035,9 @@ int M12_Config_Save(const M12_Config* config) {
     fputc('\n', fp);
     fputs("retroachievements_token = ", fp);
     m12_escape_and_write(fp, config->retroAchievementsToken);
+    fputc('\n', fp);
+    fputs("retroachievements_endpoint = ", fp);
+    m12_escape_and_write(fp, config->retroAchievementsEndpoint);
     fputc('\n', fp);
     fprintf(fp, "session_timer_index = %d\n", config->sessionTimerIndex);
     fputs("custom_dungeon_path = ", fp); m12_escape_and_write(fp, config->customDungeonPath); fputc('\n', fp);
@@ -1307,6 +1320,9 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     fprintf(fp, ",\n");
     fprintf(fp, "  \"retroachievements_token\": ");
     m12_json_write_string(fp, config->retroAchievementsToken);
+    fprintf(fp, ",\n");
+    fprintf(fp, "  \"retroachievements_endpoint\": ");
+    m12_json_write_string(fp, config->retroAchievementsEndpoint);
     fprintf(fp, ",\n");
     fprintf(fp, "  \"session_timer_index\": %d,\n", config->sessionTimerIndex);
     fprintf(fp, "  \"streamer_mode\": %d,\n", config->streamerMode ? 1 : 0);
@@ -1629,6 +1645,7 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_BOOL("retroachievements_hardcore", retroAchievementsHardcore)
         SET_STRING("retroachievements_username", retroAchievementsUsername, sizeof(config->retroAchievementsUsername))
         SET_STRING("retroachievements_token", retroAchievementsToken, sizeof(config->retroAchievementsToken))
+        SET_STRING("retroachievements_endpoint", retroAchievementsEndpoint, sizeof(config->retroAchievementsEndpoint))
         SET_INT("session_timer_index", sessionTimerIndex)
         SET_BOOL("streamer_mode", streamerMode)
         SET_BOOL("cloud_sync_enabled", cloudSyncEnabled)

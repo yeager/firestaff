@@ -145,6 +145,7 @@ typedef struct {
     int retroAchievementsHardcore;       /* 0 = softcore, 1 = hardcore */
     char retroAchievementsUsername[64];  /* Empty = not configured. */
     char retroAchievementsToken[128];    /* Empty = not configured; UI never displays it. */
+    char retroAchievementsEndpoint[128]; /* RetroAchievements server URL. */
 
     /* Launcher-owned session reminder timer. 0=off, 1=15m, 2=30m,
      * 3=60m, 4=120m. The launcher stores the preference; runtime

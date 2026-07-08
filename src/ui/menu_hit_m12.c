@@ -74,7 +74,8 @@ static const int* m12_hit_settings_rows_for_tab(int tab, int* outCount) {
         M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
         M12_STARTUP_SETTINGS_ROW_RA_HARDCORE,
         M12_STARTUP_SETTINGS_ROW_RA_USERNAME,
-        M12_STARTUP_SETTINGS_ROW_RA_TOKEN
+        M12_STARTUP_SETTINGS_ROW_RA_TOKEN,
+        M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT
     };
     const int* rows = gameRows;
     int count = (int)(sizeof(gameRows) / sizeof(gameRows[0]));

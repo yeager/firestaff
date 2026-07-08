@@ -118,17 +118,23 @@ int main(void) {
              sizeof(cfg.retroAchievementsToken),
              "%s",
              "secret-token");
+    snprintf(cfg.retroAchievementsEndpoint,
+             sizeof(cfg.retroAchievementsEndpoint),
+             "%s",
+             "https://retroachievements.org");
     CHECK(M12_Config_Save(&cfg) == 1);
     CHECK(file_contains(path, "retroachievements_enabled = 1"));
     CHECK(file_contains(path, "retroachievements_hardcore = 0"));
     CHECK(file_contains(path, "retroachievements_username = \"ra_user\""));
     CHECK(file_contains(path, "retroachievements_token = \"secret-token\""));
+    CHECK(file_contains(path, "retroachievements_endpoint = \"https://retroachievements.org\""));
 
     CHECK(M12_Config_Load(&loaded, NULL) == 1);
     CHECK(loaded.retroAchievementsEnabled == 1);
     CHECK(loaded.retroAchievementsHardcore == 0);
     CHECK(strcmp(loaded.retroAchievementsUsername, "ra_user") == 0);
     CHECK(strcmp(loaded.retroAchievementsToken, "secret-token") == 0);
+    CHECK(strcmp(loaded.retroAchievementsEndpoint, "https://retroachievements.org") == 0);
     dm1_v2_settings_from_m12_config(&roundtrip, &loaded);
     CHECK(roundtrip.scalePercent == 250);
     CHECK(roundtrip.smoothingEnabled == 0);

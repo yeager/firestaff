@@ -116,9 +116,10 @@ typedef enum {
     M12_STARTUP_SETTINGS_ROW_RA_HARDCORE = 31,
     M12_STARTUP_SETTINGS_ROW_RA_USERNAME = 32,
     M12_STARTUP_SETTINGS_ROW_RA_TOKEN = 33,
-    M12_STARTUP_SETTINGS_ROW_SESSION_TIMER = 35,
-    M12_STARTUP_SETTINGS_ROW_EXPORT = 47,
-    M12_STARTUP_SETTINGS_ROW_IMPORT = 48
+    M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT = 34,
+    M12_STARTUP_SETTINGS_ROW_SESSION_TIMER = 36,
+    M12_STARTUP_SETTINGS_ROW_EXPORT = 48,
+    M12_STARTUP_SETTINGS_ROW_IMPORT = 49
 } M12_StartupSettingsRow;
 
 typedef struct {
@@ -170,6 +171,7 @@ typedef struct {
     int retroAchievementsHardcore;
     char retroAchievementsUsername[64];
     char retroAchievementsToken[128];
+    char retroAchievementsEndpoint[128];
     int sessionTimerIndex;
     int windowWidth;
     int windowHeight;
@@ -519,6 +521,7 @@ const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state)
 const char* M12_StartupMenu_GetDataStatusValue(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRetroAchievementsStatusValue(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRetroAchievementsTokenValue(const M12_StartupMenuState* state);
+const char* M12_StartupMenu_GetRetroAchievementsEndpointValue(const M12_StartupMenuState* state);
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir);
 int M12_StartupMenu_ExportQuickResumeDM1PC34(M12_StartupMenuState* state,

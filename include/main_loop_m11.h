@@ -69,6 +69,7 @@ typedef struct {
     int retroAchievementsHardcore;
     const char* retroAchievementsUser;
     const char* retroAchievementsToken;
+    const char* retroAchievementsEndpoint;
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);
