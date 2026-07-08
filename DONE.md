@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron boot runtime-state startup wrappers: Theron boot now owns startup keyboard input, pointer input, layout inspection, render rows, and render-plan wrappers from runtime state. M11 no longer builds a local Theron startup session before those paths. Verification: strict compiles for `theron_v1_boot.c` and `m11_game_view.c`; direct Theron M11 launch test passed; Phase A passed 24/24; `git diff --check` passed. Note: broad `ctest -R theron...` and `cmake --build build ...` hung locally and were stopped.
+
 - ✅ 2026-07-08 CSB boot startup host-facts adapter: CSB boot now owns the public runtime-state-to-startup-host-facts wrapper. M11 no longer calls `csb_v1_startup_host_facts_from_runtime_state_pc34()` directly. Verification: strict compiles for `csb_v1_boot.c`, `m11_game_view.c`, and CSB handoff test object; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron boot startup session-facts adapter: Theron boot now owns the public runtime-state-to-startup-session-facts wrapper. M11 no longer calls `theron_v1_startup_session_facts_from_runtime()` directly. Verification: strict compiles for `theron_v1_boot.c` and `m11_game_view.c`; direct Theron startup-flow probe passed 567/567; Phase A passed 24/24; `git diff --check` passed.
