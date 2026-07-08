@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 combined post-launch handoff facade: DM1 V1 startup-sequence now exposes one M11-facing post-launch facade that runs TITLE/ENTRANCE, maps the outcome, and applies host actions. M11 no longer chains those DM1 startup calls locally. Verification: `test_dm1_v1_startup_intro_state_machine_gate` passed; `test_dm1_v1_m11_launcher_handoff_boundary` passed 88/88; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 startup host-apply ownership: DM1 V1 startup-sequence now applies post-entrance host actions through callbacks for quit, resume resolve/load/logging, and nonfatal entrance-skip logging. M11 no longer owns the inline DM1 resume branch after entrance. Verification: `test_dm1_v1_startup_intro_state_machine_gate` passed; `test_dm1_v1_m11_launcher_handoff_boundary` passed 88/88; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 post-entrance outcome ownership: DM1 V1 startup-sequence now maps entrance results to DM1 handoff actions for enter, resume, quit, and nonfatal skip, while non-DM1 sources remain no-op. M11 now consumes those DM1 actions instead of interpreting raw entrance command values. Verification: `test_dm1_v1_startup_intro_state_machine_gate` passed; `test_dm1_v1_m11_launcher_handoff_boundary` passed 88/88; Phase A passed 24/24; `git diff --check` passed.

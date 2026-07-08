@@ -687,6 +687,62 @@ static void check_dm1_launch_path_bypass_contract(void) {
                                                            &apply_result) &&
                  apply_result.handled == 0,
              1);
+
+    memset(&fake, 0, sizeof(fake));
+    fake.entrance_command = 2;
+    fake.resolve_ok = 1;
+    fake.load_ok = 1;
+    snprintf(fake.resolved_path, sizeof(fake.resolved_path), "%s", "/tmp/combined.sav");
+    callbacks = fake_callbacks(&fake);
+    host_callbacks = fake_host_callbacks(&fake);
+    expect_i("DM1 combined post-launch apply succeeds",
+             dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
+                 "dm1",
+                 &callbacks,
+                 &host_callbacks,
+                 &outcome,
+                 &apply_result),
+             1);
+    expect_i("DM1 combined post-launch apply owns render order",
+             strcmp(fake.order, "RTE"),
+             0);
+    expect_i("DM1 combined post-launch apply loads resume",
+             apply_result.resume_loaded,
+             1);
+    expect_i("DM1 combined post-launch apply maps resume action",
+             outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34,
+             1);
+
+    memset(&fake, 0, sizeof(fake));
+    callbacks = fake_callbacks(&fake);
+    host_callbacks = fake_host_callbacks(&fake);
+    expect_i("CSB combined post-launch apply stays no-op",
+             dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
+                 "csb",
+                 &callbacks,
+                 &host_callbacks,
+                 &outcome,
+                 &apply_result) &&
+                 fake.order[0] == '\0' &&
+                 outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34 &&
+                 apply_result.handled == 0,
+             1);
+    expect_i("NULL combined post-launch apply rejects missing outcome",
+             dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
+                 "dm1",
+                 &callbacks,
+                 &host_callbacks,
+                 NULL,
+                 &apply_result),
+             0);
+    expect_i("NULL combined post-launch apply rejects missing result",
+             dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
+                 "dm1",
+                 &callbacks,
+                 &host_callbacks,
+                 &outcome,
+                 NULL),
+             0);
     expect_i("NULL host apply rejects missing outcome",
              dm1_v1_startup_apply_handoff_outcome_pc34(NULL,
                                                        "dm1",

@@ -1560,14 +1560,11 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
         }
-        (void)dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
+        (void)dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
             gameView->sourceId,
             &dm1HandoffCallbacks,
-            &dm1HandoffOutcome);
-        (void)dm1_v1_startup_apply_handoff_outcome_pc34(
-            &dm1HandoffOutcome,
-            gameView->sourceId,
             &dm1HostCallbacks,
+            &dm1HandoffOutcome,
             &dm1HostApplyResult);
         if (dm1HostApplyResult.quit_requested) {
             return 1;

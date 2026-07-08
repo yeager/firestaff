@@ -359,6 +359,37 @@ int dm1_v1_startup_apply_handoff_outcome_pc34(
     return 1;
 }
 
+int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
+    const DM1_V1_StartupHostCallbacks_PC34* host_callbacks,
+    DM1_V1_StartupHandoffOutcome_PC34* out_outcome,
+    DM1_V1_StartupHostApplyResult_PC34* out_result) {
+    DM1_V1_StartupHandoffOutcome_PC34 local_outcome;
+    DM1_V1_StartupHostApplyResult_PC34 local_result;
+
+    if (!out_outcome || !out_result) {
+        return 0;
+    }
+    memset(&local_outcome, 0, sizeof(local_outcome));
+    memset(&local_result, 0, sizeof(local_result));
+    if (!dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
+            source_id,
+            handoff_callbacks,
+            &local_outcome)) {
+        return 0;
+    }
+    if (!dm1_v1_startup_apply_handoff_outcome_pc34(&local_outcome,
+                                                   source_id,
+                                                   host_callbacks,
+                                                   &local_result)) {
+        return 0;
+    }
+    *out_outcome = local_outcome;
+    *out_result = local_result;
+    return 1;
+}
+
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,
