@@ -53,6 +53,7 @@
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
 #include "csb_v1_skin_cache_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
+#include "csb_v1_utility_flow_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
@@ -1123,6 +1124,36 @@ int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
 int csb_v1_runtime_m11_mirror_receipt_from_boot_profile_pc34(
     const void *boot_profile,
     CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt);
+int csb_v1_runtime_util_render_plan_from_boot_profile_facts_pc34(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *boot_profile,
+    const char *prompt_override,
+    int preview_active,
+    CSB_V1_UtilRenderPlan *out_plan);
+int csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *boot_profile,
+    int x,
+    int y,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt);
+int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts_pc34(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *boot_profile,
+    int menu_input,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);

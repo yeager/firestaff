@@ -143,3 +143,81 @@ int csb_v1_runtime_m11_mirror_receipt_from_boot_profile_pc34(
         &profile->runtime,
         out_receipt);
 }
+
+int csb_v1_runtime_util_render_plan_from_boot_profile_facts_pc34(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *boot_profile,
+    const char *prompt_override,
+    int preview_active,
+    CSB_V1_UtilRenderPlan *out_plan)
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+
+    return csb_v1_util_flow_render_plan_from_runtime_profile_facts(
+        selected_action_index,
+        imported_champion_count,
+        profile ? &profile->runtime : NULL,
+        prompt_override,
+        preview_active,
+        out_plan);
+}
+
+int csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *boot_profile,
+    int x,
+    int y,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt)
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+
+    return csb_v1_util_flow_apply_point_with_state_from_runtime_profile_facts(
+        selected_action_index,
+        imported_champion_count,
+        profile ? &profile->runtime : NULL,
+        x,
+        y,
+        import_available,
+        credits_active,
+        opening_active,
+        preview_active,
+        out_receipt,
+        out_state_receipt);
+}
+
+int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts_pc34(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *boot_profile,
+    int menu_input,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt)
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+
+    return csb_v1_util_flow_apply_firestaff_input_with_state_from_runtime_profile_facts(
+        selected_action_index,
+        imported_champion_count,
+        profile ? &profile->runtime : NULL,
+        menu_input,
+        import_available,
+        credits_active,
+        opening_active,
+        preview_active,
+        out_receipt,
+        out_state_receipt);
+}

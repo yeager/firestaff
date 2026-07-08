@@ -2268,7 +2268,6 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                                int framebufferWidth,
                                                int framebufferHeight)
 {
-    const CSB_V1_BootProfile *profile;
     CSB_V1_UtilRenderPlan plan;
     int i;
 
@@ -2276,11 +2275,10 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
         return;
     }
 
-    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!csb_v1_util_flow_render_plan_from_runtime_profile_facts(
+    if (!csb_v1_runtime_util_render_plan_from_boot_profile_facts_pc34(
             state->csbState.startup_import_selected_action_index,
             state->csbState.startup_import_champion_count,
-            profile ? &profile->runtime : NULL,
+            state->csbBootProfile,
             state->csbState.startup_import_utility_prompt,
             state->csbState.startup_import_preview_active,
             &plan)) {
@@ -3253,7 +3251,6 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     int x,
     int y)
 {
-    const CSB_V1_BootProfile *profile;
     CSB_V1_UtilApplyReceipt receipt;
     CSB_V1_UtilStateReceipt state_receipt;
 
@@ -3262,11 +3259,10 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!csb_v1_util_flow_apply_point_with_state_from_runtime_profile_facts(
+    if (!csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
             state->csbState.startup_import_selected_action_index,
             state->csbState.startup_import_champion_count,
-            profile ? &profile->runtime : NULL,
+            state->csbBootProfile,
             x,
             y,
             state->csbState.startup_import_available,
@@ -3286,7 +3282,6 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    const CSB_V1_BootProfile *profile;
     CSB_V1_UtilApplyReceipt receipt;
     CSB_V1_UtilStateReceipt state_receipt;
 
@@ -3295,11 +3290,10 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!csb_v1_util_flow_apply_firestaff_input_with_state_from_runtime_profile_facts(
+    if (!csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts_pc34(
             state->csbState.startup_import_selected_action_index,
             state->csbState.startup_import_champion_count,
-            profile ? &profile->runtime : NULL,
+            state->csbBootProfile,
             (int)input,
             state->csbState.startup_import_available,
             state->csbState.startup_entrance_credits_active,
