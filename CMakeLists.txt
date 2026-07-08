@@ -19989,6 +19989,21 @@ if(NOT MSVC)
     )
 endif()
 
+add_executable(test_nexus_v1_boot_file_hash_scan
+    tests/test_nexus_v1_boot_file_hash_scan.c
+)
+target_link_libraries(test_nexus_v1_boot_file_hash_scan PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(test_nexus_v1_boot_file_hash_scan PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_boot_file_hash_scan PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip
@@ -20028,6 +20043,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_bpx_bpk_archive_boundary PROPERTIES
         LABELS "tier4;nexus;bpx_bpk;archive"
+    )
+
+    add_test(
+        NAME nexus_v1_boot_file_hash_scan
+        COMMAND test_nexus_v1_boot_file_hash_scan
+    )
+    set_tests_properties(nexus_v1_boot_file_hash_scan PROPERTIES
+        LABELS "tier1;nexus;boot;assets"
     )
 
     add_test(
