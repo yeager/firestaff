@@ -287,7 +287,8 @@ static int is_better_iso_entry(const char *candidate, const char *current) {
 }
 
 static int is_zip_path(const char *path) {
-    return has_case_suffix(path, ".zip");
+    return has_case_suffix(path, ".zip") || has_case_suffix(path, ".cbz") ||
+           has_case_suffix(path, ".pk3") || has_case_suffix(path, ".jar");
 }
 
 static int is_iso_path(const char *path) {
@@ -313,9 +314,15 @@ static int is_gzip_path(const char *path) {
            !is_tgz_path(path);
 }
 
+static int is_lha_path(const char *path) {
+    return has_case_suffix(path, ".lha") || has_case_suffix(path, ".lzh") ||
+           has_case_suffix(path, ".lzs");
+}
+
 static int is_supported_container_path(const char *path) {
     return is_zip_path(path) || is_iso_path(path) || is_cue_path(path) ||
-           is_tar_path(path) || is_tgz_path(path) || is_gzip_path(path);
+           is_tar_path(path) || is_tgz_path(path) || is_gzip_path(path) ||
+           is_lha_path(path);
 }
 
 static int is_known_large_whole_file_hash(const char *expectedMd5) {
@@ -2053,6 +2060,181 @@ static int gzip_extract_entry_to_path(const char *gzipPath, const char *entryNam
 #endif
 }
 
+static int lha_parse_header(FILE *fp, long pos, char method[6],
+                            uint32_t *outPackedSize,
+                            uint32_t *outOriginalSize,
+                            char *outName,
+                            size_t outNameSize,
+                            long *outDataOffset,
+                            long *outNextPos) {
+    unsigned char fixed[22];
+    uint8_t headerSize;
+    uint8_t level;
+    uint8_t nameLen;
+    long dataOffset;
+    if (!fp || !method || !outPackedSize || !outOriginalSize ||
+        !outName || outNameSize == 0U || !outDataOffset || !outNextPos) {
+        return 0;
+    }
+    if (fseek(fp, pos, SEEK_SET) != 0 ||
+        fread(&headerSize, 1U, 1U, fp) != 1U) {
+        return 0;
+    }
+    if (headerSize == 0U) return 0;
+    if (headerSize < 21U || headerSize > 255U) return 0;
+    if (fread(fixed, 1U, 21U, fp) != 21U) return 0;
+    memcpy(method, fixed + 1, 5U);
+    method[5] = '\0';
+    *outPackedSize = read_u32le(fixed + 6);
+    *outOriginalSize = read_u32le(fixed + 10);
+    level = fixed[19];
+    nameLen = fixed[20];
+    if ((level != 0U && level != 1U) ||
+        nameLen == 0U ||
+        21U + (uint32_t)nameLen > (uint32_t)headerSize ||
+        (size_t)nameLen >= outNameSize) {
+        return 0;
+    }
+    if (fread(outName, 1U, nameLen, fp) != nameLen) return 0;
+    outName[nameLen] = '\0';
+    dataOffset = pos + 1L + (long)headerSize;
+    if (*outPackedSize > ASSET_TAR_MAX_ENTRY_BYTES ||
+        *outOriginalSize > ASSET_TAR_MAX_ENTRY_BYTES) {
+        return 0;
+    }
+    *outDataOffset = dataOffset;
+    *outNextPos = dataOffset + (long)*outPackedSize;
+    return 1;
+}
+
+static int lha_entry_is_stored(const char *method,
+                               uint32_t packedSize,
+                               uint32_t originalSize) {
+    return method && strcmp(method, "-lh0-") == 0 && packedSize == originalSize;
+}
+
+static int scan_lha_by_md5(const char *lhaPath, const char *expectedMd5,
+                           char *outPath, int outPathLen) {
+    FILE *fp;
+    long pos = 0L;
+    char bestName[ASSET_PATH_MAX];
+    int hasMatch = 0;
+    if (!lhaPath || !expectedMd5 || !outPath || outPathLen <= 0) return 0;
+    fp = fopen(lhaPath, "rb");
+    if (!fp) return 0;
+    bestName[0] = '\0';
+    for (;;) {
+        char method[6];
+        char name[ASSET_PATH_MAX];
+        uint32_t packedSize;
+        uint32_t originalSize;
+        long dataOffset;
+        long nextPos;
+        char hex[33];
+        if (!lha_parse_header(fp, pos, method, &packedSize, &originalSize,
+                              name, sizeof(name), &dataOffset, &nextPos)) {
+            break;
+        }
+        if (lha_entry_is_stored(method, packedSize, originalSize) &&
+            originalSize >= 16U &&
+            file_range_md5(fp, dataOffset, originalSize, hex) &&
+            strcmp(hex, expectedMd5) == 0 &&
+            is_better_zip_entry(name, hasMatch ? bestName : NULL)) {
+            strcpy(bestName, name);
+            hasMatch = 1;
+        }
+        pos = nextPos;
+    }
+    fclose(fp);
+    return hasMatch ? copy_virtual_match_path(lhaPath, bestName, outPath, outPathLen) : 0;
+}
+
+static int scan_lha_by_md5_list(const char *lhaPath,
+                                const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX],
+                                int matched[]) {
+    FILE *fp;
+    long pos = 0L;
+    char bestNames[64][ASSET_PATH_MAX];
+    int hasBest[64];
+    int foundCount = 0;
+    int i;
+    if (!lhaPath || !md5List || md5Count <= 0 || md5Count > 64 ||
+        !outPaths || !matched) {
+        return 0;
+    }
+    memset(bestNames, 0, sizeof(bestNames));
+    memset(hasBest, 0, sizeof(hasBest));
+    fp = fopen(lhaPath, "rb");
+    if (!fp) return 0;
+    for (;;) {
+        char method[6];
+        char name[ASSET_PATH_MAX];
+        uint32_t packedSize;
+        uint32_t originalSize;
+        long dataOffset;
+        long nextPos;
+        char hex[33];
+        int matchIndex;
+        if (!lha_parse_header(fp, pos, method, &packedSize, &originalSize,
+                              name, sizeof(name), &dataOffset, &nextPos)) {
+            break;
+        }
+        if (lha_entry_is_stored(method, packedSize, originalSize) &&
+            originalSize >= 16U &&
+            file_range_md5(fp, dataOffset, originalSize, hex)) {
+            matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
+            if (matchIndex >= 0 &&
+                is_better_zip_entry(name, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
+                strcpy(bestNames[matchIndex], name);
+                hasBest[matchIndex] = 1;
+            }
+        }
+        pos = nextPos;
+    }
+    fclose(fp);
+    for (i = 0; i < md5Count; ++i) {
+        if (!hasBest[i] || matched[i]) continue;
+        if (copy_virtual_match_path(lhaPath, bestNames[i], outPaths[i], ASSET_PATH_MAX)) {
+            matched[i] = 1;
+            ++foundCount;
+        }
+    }
+    return foundCount;
+}
+
+static int lha_extract_entry_to_path(const char *lhaPath, const char *entryName,
+                                     const char *outFilePath) {
+    FILE *fp;
+    long pos = 0L;
+    if (!lhaPath || !entryName || !outFilePath) return 0;
+    fp = fopen(lhaPath, "rb");
+    if (!fp) return 0;
+    for (;;) {
+        char method[6];
+        char name[ASSET_PATH_MAX];
+        uint32_t packedSize;
+        uint32_t originalSize;
+        long dataOffset;
+        long nextPos;
+        if (!lha_parse_header(fp, pos, method, &packedSize, &originalSize,
+                              name, sizeof(name), &dataOffset, &nextPos)) {
+            break;
+        }
+        if (strcmp(name, entryName) == 0 &&
+            lha_entry_is_stored(method, packedSize, originalSize)) {
+            int ok = copy_file_range_to_path(fp, (uint32_t)dataOffset,
+                                             originalSize, outFilePath);
+            fclose(fp);
+            return ok;
+        }
+        pos = nextPos;
+    }
+    fclose(fp);
+    return 0;
+}
+
 static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
     if (is_zip_path(path)) {
@@ -2072,6 +2254,9 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     }
     if (is_gzip_path(path)) {
         return scan_gzip_by_md5(path, expectedMd5, outPath, outPathLen);
+    }
+    if (is_lha_path(path)) {
+        return scan_lha_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     return 0;
 }
@@ -2097,6 +2282,9 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
     }
     if (is_gzip_path(path)) {
         return scan_gzip_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    if (is_lha_path(path)) {
+        return scan_lha_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     return 0;
 }
@@ -2441,6 +2629,9 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     }
     if (is_gzip_path(container)) {
         return gzip_extract_entry_to_path(container, entry, outFilePath);
+    }
+    if (is_lha_path(container)) {
+        return lha_extract_entry_to_path(container, entry, outFilePath);
     }
     /* CUE sheets may reference a data image with no .iso/.bin suffix.
      * Virtual paths are produced only after the scanner has already walked

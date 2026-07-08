@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 game-data archive hash scanner: the shared scanner now treats ZIP-compatible archives (`.zip`, `.cbz`, `.pk3`, `.jar`), ISO/BIN/IMG/CDR/TOAST, CUE sheets, TAR, TGZ, GZ, and stored LHA/LZH/LZS archives as hash-scan containers. LHA/LZH virtual paths also materialize to ordinary cache files. Verification: `test_asset_find_by_hash` passed with and without `FIRESTAFF_HAS_ZLIB`, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Nexus boot-file hash fallback: extracted Nexus startup reads now resolve known boot/menu files (`TITLE.CG`, `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN`, `FACE.BIN`, `FONT256.S2D`, `MENU.BPK`) by MD5 when the exact filename is absent. A new skip-safe regression test proves a real `TITLE.CG` copied under an arbitrary name is still found by `nexus_v1_read_file()`.
 
 - ✅ 2026-07-08 legacy asset pipeline hash scan: `fs_assets_load_game()` now asks the shared M12 hash scanner for DM1/CSB/DM2 graphics and dungeon paths before using filename fallback, so CLI/legacy game-loop asset loading no longer requires `GRAPHICS.DAT` / `DUNGEON.DAT` names. A new regression test proves DM1, CSB, and DM2 load renamed required files by hash. The same pass fixed the asset-language enum so Swedish no longer maps to French in this loader.
