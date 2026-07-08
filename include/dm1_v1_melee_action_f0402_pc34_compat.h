@@ -309,6 +309,22 @@ typedef struct {
     int eventKind;
 } DM1_MeleeF0231ReactionPlanPc34;
 
+typedef struct {
+    int shouldCreate;
+    int smokeAttack;
+    int smokeCell;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int currentTick;
+} DM1_MeleeF0190DeathSmokeInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldCreate;
+    struct ExplosionCreateInput_Compat createInput;
+} DM1_MeleeF0190DeathSmokePlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -354,6 +370,9 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
 int dm1_v1_melee_reaction_plan_f0231_pc34(
     const DM1_MeleeF0231ReactionInputPc34* in,
     DM1_MeleeF0231ReactionPlanPc34* out);
+int dm1_v1_melee_death_smoke_plan_f0190_pc34(
+    const DM1_MeleeF0190DeathSmokeInputPc34* in,
+    DM1_MeleeF0190DeathSmokePlanPc34* out);
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,

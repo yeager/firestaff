@@ -612,6 +612,39 @@ int dm1_v1_melee_reaction_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_death_smoke_plan_f0190_pc34(
+    const DM1_MeleeF0190DeathSmokeInputPc34* in,
+    DM1_MeleeF0190DeathSmokePlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    out->valid = 1;
+    if (!in->shouldCreate) return 1;
+    out->shouldCreate = 1;
+    out->createInput.explosionType = C040_EXPLOSION_SMOKE;
+    out->createInput.attack = in->smokeAttack;
+    out->createInput.mapIndex = in->mapIndex;
+    out->createInput.mapX = in->mapX;
+    out->createInput.mapY = in->mapY;
+    out->createInput.cell =
+        (in->smokeCell == EXPLOSION_CELL_CENTERED)
+            ? EXPLOSION_CELL_CENTERED
+            : (in->smokeCell & 3);
+    out->createInput.centered =
+        out->createInput.cell == EXPLOSION_CELL_CENTERED;
+    out->createInput.currentTick = in->currentTick;
+    out->createInput.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    out->createInput.ownerIndex = -1;
+    out->createInput.creatorProjectileSlot = -1;
+
+    /* ReDMCSB: GROUP.C F0190 lines 907-917 creates smoke with the
+     * size-derived attack and killed cell; PROJEXPL.C F0213 then owns the
+     * explosion allocation/timeline.  DM1 owns the create input, M10 owns
+     * the live allocation. */
+    return 1;
+}
+
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
