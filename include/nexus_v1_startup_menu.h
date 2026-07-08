@@ -207,6 +207,12 @@ typedef struct {
     Nexus_V1_StartupHostReceipt host_receipt;
 } Nexus_V1_StartupIdleReceipt;
 
+typedef struct {
+    int save_state_receipt_valid;
+    Nexus_V1_StartupMenuStateReceipt save_state_receipt;
+    Nexus_V1_StartupHostReceipt host_receipt;
+} Nexus_V1_StartupLaunchReceipt;
+
 enum {
     NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY = 96,
     NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY = 96,
@@ -465,6 +471,11 @@ void nexus_v1_startup_host_action_receipt_clear(
     Nexus_V1_StartupHostActionReceipt *receipt);
 void nexus_v1_startup_idle_receipt_clear(
     Nexus_V1_StartupIdleReceipt *receipt);
+void nexus_v1_startup_launch_receipt_clear(
+    Nexus_V1_StartupLaunchReceipt *receipt);
+int nexus_v1_startup_launch_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    Nexus_V1_StartupLaunchReceipt *out_receipt);
 int nexus_v1_startup_advance_idle_from_host_facts_with_receipt(
     const Nexus_V1_StartupHostFacts *facts,
     Nexus_V1_StartupIdleReceipt *out_receipt);
