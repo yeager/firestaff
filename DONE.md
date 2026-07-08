@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Windows release installer moved to Inno Setup: the Windows release workflow now installs Inno Setup through Chocolatey instead of MSYS2 NSIS, and `package_windows_installer_preview.sh` now generates an Inno `.iss` script and builds `Firestaff-<version>-windows-installer.exe` via `ISCC.exe`. Verification: `bash -n scripts/package_windows_installer_preview.sh` passed and release/workflow searches show no remaining NSIS/makensis use in the Windows installer path.
+
 - ✅ 2026-07-08 Nexus startup snapshot wrappers: Nexus launcher now owns snapshot wrappers for startup host facts, idle, title/save/champion input, title/save/champion pointer routing, save/champion presentation build, and presentation receipt. M11 fills one Nexus startup snapshot and no longer calls the launcher runtime-state wrappers directly. Verification: `git diff --check` passed; strict direct compiles for `nexus_v1_launcher.c` and `m11_game_view.c` passed.
 
 - ✅ 2026-07-08 DM2/Theron boot startup snapshots: DM2 boot now owns snapshot wrappers for startup launch, idle, keyboard input, pointer input, presentation build, and presentation receipt. Theron boot now also exposes presentation receipts from its runtime startup snapshot. M11 no longer calls Theron/DM2 long runtime-state startup wrappers directly. Verification: `git diff --check` passed; strict direct compiles for `dm2_v1_boot.c`, `theron_v1_boot.c`, and `m11_game_view.c` passed; Phase A passed 24/24.
