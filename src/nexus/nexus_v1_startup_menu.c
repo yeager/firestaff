@@ -133,6 +133,20 @@ void nexus_v1_startup_host_receipt_clear(
     receipt->input_result = NEXUS_V1_STARTUP_HOST_INPUT_IGNORED;
 }
 
+void nexus_v1_startup_host_action_receipt_clear(
+    Nexus_V1_StartupHostActionReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    nexus_v1_startup_menu_state_receipt_init(
+        &receipt->save_state_receipt);
+    nexus_v1_startup_champion_state_receipt_init(
+        &receipt->champion_state_receipt);
+    nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
+}
+
 int nexus_v1_startup_host_receipt_from_apply_receipt(
     const Nexus_V1_StartupApplyReceipt *apply_receipt,
     Nexus_V1_StartupHostReceipt *out_receipt)
@@ -1317,6 +1331,90 @@ int nexus_v1_startup_execute_save_action_with_host_receipt(
     return 1;
 }
 
+int nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupAction action;
+    Nexus_V1_StartupMenuStateReceipt save_receipt;
+
+    if (out_execution) {
+        nexus_v1_startup_save_execution_clear(out_execution);
+    }
+    if (out_receipt) {
+        nexus_v1_startup_host_action_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        nexus_v1_startup_action_clear(&action);
+        return 0;
+    }
+    if (!nexus_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
+            &save_receipt,
+            facts,
+            menu_input,
+            &action)) {
+        return 0;
+    }
+    if (!nexus_v1_startup_execute_save_action_with_host_receipt(
+            &action,
+            load_save,
+            load_userdata,
+            out_execution,
+            &out_receipt->host_receipt)) {
+        return 0;
+    }
+    out_receipt->save_state_receipt = save_receipt;
+    out_receipt->save_state_receipt_valid = 1;
+    return 1;
+}
+
+int nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupAction action;
+    Nexus_V1_StartupMenuStateReceipt save_receipt;
+
+    if (out_execution) {
+        nexus_v1_startup_save_execution_clear(out_execution);
+    }
+    if (out_receipt) {
+        nexus_v1_startup_host_action_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        nexus_v1_startup_action_clear(&action);
+        return 0;
+    }
+    if (!nexus_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
+            &save_receipt,
+            facts,
+            x,
+            y,
+            &action)) {
+        return 0;
+    }
+    if (!nexus_v1_startup_execute_save_action_with_host_receipt(
+            &action,
+            load_save,
+            load_userdata,
+            out_execution,
+            &out_receipt->host_receipt)) {
+        return 0;
+    }
+    out_receipt->save_state_receipt = save_receipt;
+    out_receipt->save_state_receipt_valid = 1;
+    return 1;
+}
+
 int nexus_v1_startup_apply_receipt_from_title_execution(
     const Nexus_V1_StartupTitleExecution *execution,
     Nexus_V1_StartupApplyReceipt *out_receipt)
@@ -1525,6 +1623,84 @@ int nexus_v1_startup_execute_champion_action_with_host_receipt(
                                                           out_host_receipt)) {
         return 0;
     }
+    return 1;
+}
+
+int nexus_v1_startup_execute_champion_firestaff_input_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupAction action;
+    Nexus_V1_StartupChampionStateReceipt champion_receipt;
+
+    if (out_execution) {
+        nexus_v1_startup_champion_execution_clear(out_execution);
+    }
+    if (out_receipt) {
+        nexus_v1_startup_host_action_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        nexus_v1_startup_action_clear(&action);
+        return 0;
+    }
+    if (!nexus_v1_startup_champion_handle_firestaff_input_from_host_facts_with_receipt(
+            &champion_receipt,
+            facts,
+            menu_input,
+            &action)) {
+        return 0;
+    }
+    if (!nexus_v1_startup_execute_champion_action_with_host_receipt(
+            &action,
+            facts->save_row_count,
+            out_execution,
+            &out_receipt->host_receipt)) {
+        return 0;
+    }
+    out_receipt->champion_state_receipt = champion_receipt;
+    out_receipt->champion_state_receipt_valid = 1;
+    return 1;
+}
+
+int nexus_v1_startup_execute_champion_pointer_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupAction action;
+    Nexus_V1_StartupChampionStateReceipt champion_receipt;
+
+    if (out_execution) {
+        nexus_v1_startup_champion_execution_clear(out_execution);
+    }
+    if (out_receipt) {
+        nexus_v1_startup_host_action_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        nexus_v1_startup_action_clear(&action);
+        return 0;
+    }
+    if (!nexus_v1_startup_champion_handle_pointer_from_host_facts_with_receipt(
+            &champion_receipt,
+            facts,
+            x,
+            y,
+            &action)) {
+        return 0;
+    }
+    if (!nexus_v1_startup_execute_champion_action_with_host_receipt(
+            &action,
+            facts->save_row_count,
+            out_execution,
+            &out_receipt->host_receipt)) {
+        return 0;
+    }
+    out_receipt->champion_state_receipt = champion_receipt;
+    out_receipt->champion_state_receipt_valid = 1;
     return 1;
 }
 

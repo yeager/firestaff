@@ -191,6 +191,14 @@ typedef struct {
     int frame;
 } Nexus_V1_StartupChampionStateReceipt;
 
+typedef struct {
+    int save_state_receipt_valid;
+    Nexus_V1_StartupMenuStateReceipt save_state_receipt;
+    int champion_state_receipt_valid;
+    Nexus_V1_StartupChampionStateReceipt champion_state_receipt;
+    Nexus_V1_StartupHostReceipt host_receipt;
+} Nexus_V1_StartupHostActionReceipt;
+
 enum {
     NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY = 96,
     NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY = 96,
@@ -445,6 +453,23 @@ int nexus_v1_startup_execute_save_action_with_host_receipt(
     void *load_userdata,
     Nexus_V1_StartupSaveExecution *out_execution,
     Nexus_V1_StartupHostReceipt *out_host_receipt);
+void nexus_v1_startup_host_action_receipt_clear(
+    Nexus_V1_StartupHostActionReceipt *receipt);
+int nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
 int nexus_v1_startup_execute_champion_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupChampionExecution *out_execution);
@@ -480,6 +505,17 @@ int nexus_v1_startup_execute_champion_action_with_host_receipt(
     int save_row_count,
     Nexus_V1_StartupChampionExecution *out_execution,
     Nexus_V1_StartupHostReceipt *out_host_receipt);
+int nexus_v1_startup_execute_champion_firestaff_input_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_startup_execute_champion_pointer_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt);
 int nexus_v1_startup_menu_build_save_render_rows(
     const Nexus_V1_StartupMenu *menu,
     Nexus_V1_StartupSaveRenderRow *rows,
