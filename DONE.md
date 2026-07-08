@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 RetroAchievements start-menu settings manifest: start-menu accessibility/state manifest now exposes the same RA settings block as the visible settings UI: RetroAchievements status, hardcore mode, username, and masked API token, with a regression proving the raw token is never emitted. Verification: M12 launcher screen-reader manifest probe passed 181/181, settings hit-test passed 49/49, RA unit test passed, Phase A passed 24/24, and `git diff --check` passed.
+
+- ✅ 2026-07-08 CSB startup host receipt boundary: CSB startup-sequence now emits host receipts for pure entrance and runtime apply paths, owning status/result/preview/bonus fields before M11 maps them to engine input results. Verification: CSB startup entrance pointer contract passed 140/140, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup host receipt boundary: Theron startup now has one host receipt shape for normal flow actions, Continue, and forcefield runtime entry. M11 applies status, inspect text, logs, and input results through that boundary instead of interpreting three apply receipt structs directly. Verification: Theron startup-flow probe passed 555/555, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Nexus startup host receipt boundary: Nexus startup menu now emits host receipts from title/save/champion apply receipts, owning mode/status/result mapping before M11 turns them into engine input results. Verification: Nexus startup menu test passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

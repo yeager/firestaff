@@ -55,6 +55,7 @@
 #include "firestaff_accessibility.h"
 #include "bestiary_m12.h"
 #include "changelog_m12.h"
+#include "firestaff_retroachievements.h"
 #include "firestaff_item_encyclopedia.h"
 #include "manual_docs_m12.h"
 #include "screenshot_gallery_m12.h"
@@ -293,6 +294,63 @@ static const char* set_default(const char* path)
     return (path && path[0] != '\0') ? "SET" : "DEFAULT";
 }
 
+static const char* ra_status_value(const M12_MenuSettingsState* s,
+                                   char* out,
+                                   size_t outSize)
+{
+    Firestaff_RA_Config config;
+    Firestaff_RA_Runtime runtime;
+    if (!out || outSize == 0) {
+        return NULL;
+    }
+    firestaff_ra_config_init(&config);
+    if (s) {
+        config.enabled = s->retroAchievementsEnabled ? 1 : 0;
+        config.hardcore = s->retroAchievementsHardcore ? 1 : 0;
+        snprintf(config.username, sizeof(config.username), "%s",
+                 s->retroAchievementsUsername);
+        snprintf(config.api_token, sizeof(config.api_token), "%s",
+                 s->retroAchievementsToken);
+    }
+    firestaff_ra_runtime_init(&runtime);
+    firestaff_ra_runtime_apply_config(&runtime, &config);
+    switch (firestaff_ra_status(&runtime)) {
+    case FIRESTAFF_RA_STATUS_NEEDS_CREDENTIALS:
+        snprintf(out, outSize, "%s", "NEEDS LOGIN");
+        break;
+    case FIRESTAFF_RA_STATUS_READY:
+        snprintf(out, outSize, "%s", "READY");
+        break;
+    case FIRESTAFF_RA_STATUS_BACKEND_UNAVAILABLE:
+        snprintf(out, outSize, "%s", "BACKEND PENDING");
+        break;
+    case FIRESTAFF_RA_STATUS_DISABLED:
+    default:
+        snprintf(out, outSize, "%s", "OFF");
+        break;
+    }
+    return out;
+}
+
+static const char* ra_token_value(const M12_MenuSettingsState* s,
+                                  char* out,
+                                  size_t outSize)
+{
+    if (!out || outSize == 0) {
+        return NULL;
+    }
+    out[0] = '\0';
+    if (!s || s->retroAchievementsToken[0] == '\0') {
+        snprintf(out, outSize, "%s", "NOT SET");
+        return out;
+    }
+    firestaff_ra_redact_token(s->retroAchievementsToken, out, outSize);
+    if (out[0] == '\0') {
+        snprintf(out, outSize, "%s", "SET");
+    }
+    return out;
+}
+
 static const char* setting_row_value(const M12_StartupMenuState* state,
                                      int row,
                                      int includePaths,
@@ -397,7 +455,7 @@ static const char* setting_row_value(const M12_StartupMenuState* state,
         snprintf(out, outSize, "%s", on_off(s ? s->quickResumeEnabled : 0));
         break;
     case 30:
-        snprintf(out, outSize, "%s", on_off(s ? s->retroAchievementsEnabled : 0));
+        return ra_status_value(s, out, outSize);
         break;
     case 31:
         snprintf(out, outSize, "%s", on_off(s ? s->retroAchievementsHardcore : 0));
@@ -407,9 +465,7 @@ static const char* setting_row_value(const M12_StartupMenuState* state,
                  (s && s->retroAchievementsUsername[0]) ? s->retroAchievementsUsername : "NOT SET");
         break;
     case 33:
-        snprintf(out, outSize, "%s",
-                 (s && s->retroAchievementsToken[0]) ? "SET" : "NOT SET");
-        break;
+        return ra_token_value(s, out, outSize);
     case 35:
         snprintf(out, outSize, "INDEX %d", s ? s->sessionTimerIndex : 0);
         break;

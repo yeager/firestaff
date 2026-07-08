@@ -124,6 +124,15 @@ typedef struct CSB_V1_StartupRuntimeApplyReceipt_PC34 {
     int bonus_requested;
 } CSB_V1_StartupRuntimeApplyReceipt_PC34;
 
+typedef struct CSB_V1_StartupHostReceipt_PC34 {
+    CSB_V1_StartupEntranceInputResult_PC34 input_result;
+    const char *status_scope;
+    const char *status;
+    int clear_import_preview;
+    int bonus_requested_changed;
+    int bonus_requested;
+} CSB_V1_StartupHostReceipt_PC34;
+
 typedef struct CSB_V1_StartupTickState_PC34 {
     int entrance_frame;
     int title_active;
@@ -760,6 +769,15 @@ int csb_v1_startup_apply_runtime_plan_pc34(
     CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome);
 void csb_v1_startup_runtime_apply_receipt_init_pc34(
     CSB_V1_StartupRuntimeApplyReceipt_PC34 *receipt);
+void csb_v1_startup_host_receipt_init_pc34(
+    CSB_V1_StartupHostReceipt_PC34 *receipt);
+int csb_v1_startup_host_receipt_from_pure_entrance_pc34(
+    const CSB_V1_StartupEntranceCommandReceipt_PC34 *command_receipt,
+    CSB_V1_StartupHostReceipt_PC34 *out_receipt);
+int csb_v1_startup_host_receipt_from_runtime_apply_pc34(
+    const CSB_V1_StartupRuntimeApplyReceipt_PC34 *runtime_receipt,
+    const CSB_V1_StartupEntranceInputOutcome_PC34 *outcome,
+    CSB_V1_StartupHostReceipt_PC34 *out_receipt);
 int csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     const CSB_V1_StartupRuntimePlan_PC34 *runtime_plan,
