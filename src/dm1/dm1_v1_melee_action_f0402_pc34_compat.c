@@ -587,6 +587,31 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_reaction_plan_f0231_pc34(
+    const DM1_MeleeF0231ReactionInputPc34* in,
+    DM1_MeleeF0231ReactionPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->eventKind = DM1_EVENT_REACTION_PARTY_IS_ADJACENT;
+    if (!in) return 0;
+
+    out->valid = 1;
+    out->groupIndex = in->groupIndex;
+    out->creatureType = in->creatureType;
+    out->mapIndex = in->mapIndex;
+    out->mapX = in->mapX;
+    out->mapY = in->mapY;
+    out->fireAtTick = in->currentTick + 1u;
+    if (in->groupIndex < 0) return 1;
+    if (in->outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) return 1;
+    out->shouldSchedule = 1;
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1548-1549 queues
+     * CM1_EVENT_CREATE_REACTION_EVENT_31_PARTY_IS_ADJACENT after physical
+     * melee unless all creatures in the group were killed. */
+    return 1;
+}
+
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
@@ -600,6 +625,19 @@ int dm1_v1_melee_resolve_damage_f0231_pc34(
      * carries the source-locked arithmetic used by DM1 and CSB. */
     return F0735_COMBAT_ResolveChampionMelee_Compat(
         attacker, weapon, defender, rng, out);
+}
+
+int dm1_v1_melee_apply_group_damage_f0190_pc34(
+    const struct CombatResult_Compat* result,
+    struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    int* outOutcome) {
+    /* ReDMCSB: PROJEXPL.C F0231 line 1533 applies final damage through
+     * GROUP.C F0190.  Firestaff's shared F0738 keeps the compact group-slot
+     * mutation used by DM1/CSB; this DM1 entrypoint makes F0231 ownership
+     * explicit while preserving the shared tested arithmetic. */
+    return F0738_COMBAT_ApplyDamageToGroup_Compat(
+        result, group, creatureIndex, outOutcome);
 }
 
 int dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(

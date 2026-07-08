@@ -2479,24 +2479,38 @@ static void orch_cmd_attack_schedule_f0231_reaction_compat(
     int outcome)
 {
     struct TimelineEvent_Compat reaction;
+    DM1_MeleeF0231ReactionInputPc34 in;
+    DM1_MeleeF0231ReactionPlanPc34 plan;
     int mapIndex;
     int mapX;
     int mapY;
 
     if (!world || groupIndex < 0) return;
-    if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) return;
 
     orch_cmd_attack_target_square_compat(
         world, targetDirection, &mapIndex, &mapX, &mapY);
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.groupIndex = groupIndex;
+    in.creatureType = creature ? creature->creatureType : -1;
+    in.mapIndex = mapIndex;
+    in.mapX = mapX;
+    in.mapY = mapY;
+    in.currentTick = world->gameTick;
+    in.outcome = outcome;
+    if (!dm1_v1_melee_reaction_plan_f0231_pc34(&in, &plan) ||
+        !plan.valid || !plan.shouldSchedule) {
+        return;
+    }
     memset(&reaction, 0, sizeof(reaction));
     reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
-    reaction.fireAtTick = world->gameTick + 1u;
-    reaction.mapIndex = mapIndex;
-    reaction.mapX = mapX;
-    reaction.mapY = mapY;
-    reaction.aux0 = groupIndex;
-    reaction.aux1 = creature ? creature->creatureType : -1;
-    reaction.aux2 = DM1_EVENT_REACTION_PARTY_IS_ADJACENT;
+    reaction.fireAtTick = plan.fireAtTick;
+    reaction.mapIndex = plan.mapIndex;
+    reaction.mapX = plan.mapX;
+    reaction.mapY = plan.mapY;
+    reaction.aux0 = plan.groupIndex;
+    reaction.aux1 = plan.creatureType;
+    reaction.aux2 = plan.eventKind;
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &reaction);
 }
 
@@ -6756,7 +6770,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             (int)world->things->groups[groupIndex].count;
                         killedCell = orch_group_creature_cell_compat(
                             &world->things->groups[groupIndex], creatureIndex);
-                        (void)F0738_COMBAT_ApplyDamageToGroup_Compat(
+                        (void)dm1_v1_melee_apply_group_damage_f0190_pc34(
                             &combatResult, &world->things->groups[groupIndex],
                             creatureIndex, &applyOutcome);
                         aftermathIn.killedCell = killedCell;

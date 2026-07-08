@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0231 group damage/reaction ownership: DM1 melee compat now owns the F0190 group-damage entrypoint consumed after F0231 and the physical C31 reaction-event plan. M10 now supplies live coordinates/state and consumes the DM1 receipts. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0231 creature snapshot ownership: DM1 melee compat now owns creature combat snapshot construction for F0231, including live group health, G0243 profile fields, doubled map difficulty, and C040 candidate-panel invulnerability. M10 now gathers live facts and consumes the DM1 receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0231 champion snapshot ownership: DM1 melee compat now owns champion combat snapshot construction for F0231, including fallback action skill normalization and all F0231-facing champion fields. M10 now gathers live facts and consumes the DM1 receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), and Phase A 24/24 passed.

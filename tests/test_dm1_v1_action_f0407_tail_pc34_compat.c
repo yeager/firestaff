@@ -1705,6 +1705,66 @@ static void test_melee_f0231_aftermath_plan(void) {
     CHECK_EQ(out.shouldScheduleReaction, 1, "F0231 miss reaction");
 }
 
+static void test_melee_f0231_reaction_and_group_apply(void) {
+    DM1_MeleeF0231ReactionInputPc34 reactionIn;
+    DM1_MeleeF0231ReactionPlanPc34 reactionOut;
+    struct CombatResult_Compat resultA;
+    struct CombatResult_Compat resultB;
+    struct DungeonGroup_Compat groupA;
+    struct DungeonGroup_Compat groupB;
+    int outcomeA = -1;
+    int outcomeB = -1;
+
+    memset(&reactionIn, 0, sizeof(reactionIn));
+    reactionIn.groupIndex = 8;
+    reactionIn.creatureType = 12;
+    reactionIn.mapIndex = 2;
+    reactionIn.mapX = 4;
+    reactionIn.mapY = 5;
+    reactionIn.currentTick = 123u;
+    reactionIn.outcome = COMBAT_OUTCOME_HIT_DAMAGE;
+    CHECK_EQ(dm1_v1_melee_reaction_plan_f0231_pc34(
+                 &reactionIn, &reactionOut), 1,
+             "F0231 reaction plan builds");
+    CHECK_EQ(reactionOut.valid, 1, "F0231 reaction valid");
+    CHECK_EQ(reactionOut.shouldSchedule, 1, "F0231 reaction schedules");
+    CHECK_EQ((int)reactionOut.fireAtTick, 124, "F0231 reaction tick");
+    CHECK_EQ(reactionOut.mapIndex, 2, "F0231 reaction map");
+    CHECK_EQ(reactionOut.mapX, 4, "F0231 reaction x");
+    CHECK_EQ(reactionOut.mapY, 5, "F0231 reaction y");
+    CHECK_EQ(reactionOut.groupIndex, 8, "F0231 reaction group");
+    CHECK_EQ(reactionOut.creatureType, 12, "F0231 reaction creature");
+    CHECK_EQ(reactionOut.eventKind, DM1_EVENT_REACTION_PARTY_IS_ADJACENT,
+             "F0231 reaction event kind");
+
+    reactionIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    CHECK_EQ(dm1_v1_melee_reaction_plan_f0231_pc34(
+                 &reactionIn, &reactionOut), 1,
+             "F0231 killed-all reaction plan builds");
+    CHECK_EQ(reactionOut.shouldSchedule, 0,
+             "F0231 killed-all suppresses reaction");
+
+    memset(&resultA, 0, sizeof(resultA));
+    resultA.damageApplied = 30;
+    resultB = resultA;
+    memset(&groupA, 0, sizeof(groupA));
+    groupA.count = 1;
+    groupA.health[0] = 100;
+    groupB = groupA;
+    CHECK_EQ(dm1_v1_melee_apply_group_damage_f0190_pc34(
+                 &resultA, &groupA, 0, &outcomeA), 1,
+             "DM1 F0190 group damage entrypoint builds");
+    CHECK_EQ(F0738_COMBAT_ApplyDamageToGroup_Compat(
+                 &resultB, &groupB, 0, &outcomeB), 1,
+             "shared F0738 group damage builds");
+    CHECK_EQ(groupA.health[0], groupB.health[0],
+             "DM1 F0190 group damage mirrors health");
+    CHECK_EQ(groupA.count, groupB.count,
+             "DM1 F0190 group damage mirrors count");
+    CHECK_EQ(outcomeA, outcomeB,
+             "DM1 F0190 group damage mirrors outcome");
+}
+
 static void test_melee_f0231_damage_resolver_entrypoint(void) {
     struct CombatantChampionSnapshot_Compat attackerA;
     struct CombatantChampionSnapshot_Compat attackerB;
@@ -1801,6 +1861,7 @@ int main(void) {
     test_melee_f0231_champion_snapshot_plan();
     test_melee_f0231_creature_snapshot_plan();
     test_melee_f0231_aftermath_plan();
+    test_melee_f0231_reaction_and_group_apply();
     test_melee_f0231_damage_resolver_entrypoint();
     test_invalid_action();
     if (g_failures) {
