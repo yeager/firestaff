@@ -1667,6 +1667,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_UtilApplyReceipt receipt;
     CSB_V1_UtilStateReceipt state_receipt;
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 action_receipt;
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
 
     csb_v1_boot_profile_init(&boot);
     memset(&facts, 0, sizeof(facts));
@@ -1727,6 +1728,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
               action_receipt.entrance_receipt_valid,
           "runtime utility keyboard action wrapper chains entrance receipt");
+
+    CHECK(csb_v1_runtime_execute_startup_entrance_firestaff_input_from_host_facts_with_receipts_pc34(
+              &facts,
+              2,
+              &entrance_receipt) == 1,
+          "runtime entrance keyboard action wrapper accepts startup host facts");
+    CHECK(!entrance_receipt.handled,
+          "runtime entrance keyboard action wrapper ignores navigation input");
+
+    CHECK(csb_v1_runtime_execute_startup_entrance_firestaff_input_from_host_facts_with_receipts_pc34(
+              &facts,
+              9,
+              &entrance_receipt) == 1,
+          "runtime entrance keyboard action wrapper handles accept input");
+    CHECK(entrance_receipt.handled,
+          "runtime entrance keyboard action wrapper chains command receipt");
 
     csb_v1_boot_cleanup(&boot);
 }
