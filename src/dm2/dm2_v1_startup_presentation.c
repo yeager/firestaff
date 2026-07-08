@@ -272,6 +272,24 @@ int dm2_v1_startup_presentation_build_from_facts(
                                                            max_commands);
 }
 
+int dm2_v1_startup_presentation_build_from_host_facts(
+    const DM2_V1_StartupHostFacts *facts,
+    DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    if (!facts) {
+        return 0;
+    }
+    return dm2_v1_startup_presentation_build_from_facts(
+        facts->save_root,
+        facts->fallback_save_root,
+        facts->resume_available,
+        facts->slot_mask,
+        facts->selected_row,
+        out_commands,
+        max_commands);
+}
+
 int dm2_v1_startup_execute_draw_commands(
     const DM2_V1_StartupDrawCommand *commands,
     int command_count,

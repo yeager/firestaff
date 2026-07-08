@@ -41,6 +41,7 @@ int main(void)
     DM2_V1_StartupInputOutcome outcome;
     DM2_V1_StartupApplyReceipt receipt;
     DM2_V1_StartupHostReceipt host_receipt;
+    DM2_V1_StartupHostFacts host_facts;
     DM2_V1_StartupMenuStateReceipt state_receipt;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupRect panel_rect;
@@ -216,6 +217,21 @@ int main(void)
               state_receipt.row_count == 1 &&
               state_receipt.selected_row == 0,
           "state receipt scan helper owns M11 save scan copy contract");
+    memset(&host_facts, 0, sizeof(host_facts));
+    host_facts.save_root = "";
+    host_facts.fallback_save_root = "/tmp/firestaff-dm2-startup";
+    host_facts.resume_available = 1;
+    host_facts.slot_mask = (1u << 2);
+    host_facts.selected_row = 1;
+    host_facts.scan_save_root = "/tmp/firestaff-dm2-startup";
+    check(dm2_v1_startup_menu_state_receipt_scan_saves_from_host_facts(
+              &state_receipt,
+              &host_facts) &&
+              state_receipt.resume_available == 0 &&
+              state_receipt.slot_mask == 0u &&
+              state_receipt.row_count == 1 &&
+              state_receipt.selected_row == 0,
+          "state receipt host facts scan helper owns M11 save scan copy contract");
     row_count = dm2_v1_startup_menu_build_render_rows(
         &menu,
         rows,
@@ -328,6 +344,18 @@ int main(void)
               state_receipt.row_count == 3 &&
               state_receipt.selected_row == 1,
           "state receipt input helper owns M11 input state copy contract");
+    host_facts.resume_available = 1;
+    host_facts.slot_mask = (1u << 2);
+    host_facts.selected_row = 0;
+    check(dm2_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
+              &state_receipt,
+              &host_facts,
+              2,
+              &action) &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE &&
+              state_receipt.row_count == 3 &&
+              state_receipt.selected_row == 1,
+          "state receipt host facts input helper owns M11 input state copy contract");
     check(dm2_v1_startup_plan_for_action(&action, &plan) &&
               plan.kind == DM2_V1_STARTUP_PLAN_IGNORE &&
               plan.slot == -1 &&
@@ -568,6 +596,19 @@ int main(void)
               state_receipt.selected_row == 0 &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE,
           "state receipt pointer helper owns M11 pointer state copy contract");
+    host_facts.resume_available = 1;
+    host_facts.slot_mask = (1u << 2);
+    host_facts.selected_row = 0;
+    check(dm2_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
+              &state_receipt,
+              &host_facts,
+              panel_rect.x + 8,
+              panel_rect.y + 8,
+              &action) &&
+              state_receipt.row_count == 3 &&
+              state_receipt.selected_row == 0 &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE,
+          "state receipt host facts pointer helper owns M11 pointer state copy contract");
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");

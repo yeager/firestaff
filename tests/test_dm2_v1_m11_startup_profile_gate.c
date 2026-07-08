@@ -302,6 +302,7 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_StartupHit hit;
     DM2_V1_StartupMenu menu;
     DM2_V1_StartupMenuSnapshot snapshot;
+    DM2_V1_StartupHostFacts host_facts;
     DM2_V1_StartupMenu restored_menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupRowKind row_kind = DM2_V1_STARTUP_ROW_NONE;
@@ -440,6 +441,23 @@ static void expect_dm2_startup_layout_contract(void) {
                         DM2_V1_STARTUP_STYLE_SELECTED_TEXT &&
                     strcmp(commands[8].text, "NEW GAME") == 0,
                 "DM2 startup presentation builds directly from runtime facts");
+    memset(&host_facts, 0, sizeof(host_facts));
+    host_facts.save_root = "";
+    host_facts.fallback_save_root = "/tmp/firestaff-dm2-test-saves";
+    host_facts.resume_available = 1;
+    host_facts.slot_mask = (1u << 3);
+    host_facts.selected_row = 9;
+    command_count = dm2_v1_startup_presentation_build_from_host_facts(
+        &host_facts,
+        commands,
+        (int)(sizeof(commands) / sizeof(commands[0])));
+    expect_true(command_count == 10 &&
+                    commands[7].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[7].style ==
+                        DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
+                    commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    strcmp(commands[8].text, "NEW GAME") == 0,
+                "DM2 startup presentation builds from host facts");
     memset(&draw_probe, 0, sizeof(draw_probe));
     executor.userdata = &draw_probe;
     executor.draw_gdat_image = dm2_startup_probe_gdat;
