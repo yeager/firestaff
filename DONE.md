@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 startup idle receipt: DM2 startup menu now owns idle menu redraw/no-redraw receipts, so M11 no longer special-cases DM2 startup-menu idle policy before runtime ticks. Verification: DM2 startup action contract passed 74/74, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Nexus startup title input receipts: Nexus startup menu now owns title-screen keyboard/pointer routing through action execution and M11-ready host-action receipts. M11 applies one Nexus receipt instead of building title actions locally. Verification: Nexus startup menu test passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Nexus startup idle receipt: Nexus startup menu now owns idle-frame advancement for title and champion-select startup states through an M11-ready host receipt. M11 no longer increments Nexus startup title/champion frames directly. Verification: Nexus startup menu test passed, Phase A passed 24/24, and `git diff --check` passed.

@@ -557,6 +557,7 @@ static void m11_dm2_startup_host_facts(
     if (!state) {
         return;
     }
+    facts->startup_menu_active = state->dm2State.startup_menu_active;
     facts->save_root = state->dm2State.startup_save_root;
     facts->fallback_save_root = profile ? profile->save_root : NULL;
     facts->resume_available = state->dm2State.startup_resume_available;
@@ -703,22 +704,14 @@ static void m11_dm2_startup_apply_mode_update(
     }
 }
 
-static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
+static M11_GameInputResult m11_dm2_startup_apply_host_receipt(
     M11_GameViewState *state,
-    const DM2_V1_StartupHostActionReceipt *action_receipt)
+    const DM2_V1_StartupHostReceipt *host_receipt)
 {
-    const DM2_V1_StartupHostReceipt *host_receipt;
-
-    if (!state || !action_receipt) {
+    if (!state || !host_receipt) {
         return M11_GAME_INPUT_IGNORED;
     }
-    host_receipt = &action_receipt->host_receipt;
     m11_dm2_startup_apply_mode_update(state, &host_receipt->mode_update);
-    if (action_receipt->menu_state_receipt_valid) {
-        m11_dm2_startup_state_receipt_to_m11(
-            state,
-            &action_receipt->menu_state_receipt);
-    }
     if (host_receipt->status_scope || host_receipt->status) {
         m11_set_status(state,
                        host_receipt->status_scope
@@ -734,6 +727,23 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
         return M11_GAME_INPUT_RETURN_TO_MENU;
     }
     return M11_GAME_INPUT_IGNORED;
+}
+
+static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
+    M11_GameViewState *state,
+    const DM2_V1_StartupHostActionReceipt *action_receipt)
+{
+    if (!state || !action_receipt) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (action_receipt->menu_state_receipt_valid) {
+        m11_dm2_startup_state_receipt_to_m11(
+            state,
+            &action_receipt->menu_state_receipt);
+    }
+    return m11_dm2_startup_apply_host_receipt(
+        state,
+        &action_receipt->host_receipt);
 }
 
 static M11_GameInputResult m11_dm2_startup_handle_input(
@@ -12290,7 +12300,20 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (state->dm2State.startup_menu_active) {
-            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            const DM2_V1_BootProfile *profile =
+                (const DM2_V1_BootProfile *)state->dm2BootProfile;
+            DM2_V1_StartupHostFacts facts;
+            DM2_V1_StartupIdleReceipt receipt;
+            m11_dm2_startup_host_facts(state, profile, &facts);
+            if (dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
+                    &facts,
+                    mouthRedraw,
+                    &receipt)) {
+                return m11_dm2_startup_apply_host_receipt(
+                    state,
+                    &receipt.host_receipt);
+            }
+            return M11_GAME_INPUT_IGNORED;
         }
         dm2_v1_runtime_tick();
         m11_sync_dm2_state_from_runtime(state);

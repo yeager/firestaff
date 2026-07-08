@@ -143,6 +143,11 @@ typedef struct {
 } DM2_V1_StartupHostActionReceipt;
 
 typedef struct {
+    DM2_V1_StartupHostReceipt host_receipt;
+} DM2_V1_StartupIdleReceipt;
+
+typedef struct {
+    int startup_menu_active;
     const char *save_root;
     const char *fallback_save_root;
     int resume_available;
@@ -368,6 +373,12 @@ int dm2_v1_startup_execute_action_with_host_receipt(
     DM2_V1_StartupHostReceipt *out_host_receipt);
 void dm2_v1_startup_host_action_receipt_clear(
     DM2_V1_StartupHostActionReceipt *receipt);
+void dm2_v1_startup_idle_receipt_clear(
+    DM2_V1_StartupIdleReceipt *receipt);
+int dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
+    const DM2_V1_StartupHostFacts *facts,
+    int mouth_redraw,
+    DM2_V1_StartupIdleReceipt *out_receipt);
 int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
     const DM2_V1_StartupAction *action,
     const DM2_V1_StartupHostFacts *facts,
