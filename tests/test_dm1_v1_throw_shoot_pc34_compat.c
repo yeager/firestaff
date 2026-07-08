@@ -257,6 +257,63 @@ static void test_projectile_associated_thing_disposition(void) {
     ASSERT_EQ(d.shouldMaterialize, 0, "empty not materialized");
 }
 
+static void test_projectile_materialization_plan(void) {
+    struct ProjectileInstance_Compat p;
+    struct ProjectileTickResult_Compat r;
+    DM1_ProjectileMaterializationPlanPc34 plan;
+    unsigned short weaponThing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
+    memset(&p, 0, sizeof(p));
+    memset(&r, 0, sizeof(r));
+    memset(&plan, 0, sizeof(plan));
+
+    p.reserved1 = weaponThing;
+    p.mapIndex = 2;
+    p.mapX = 10;
+    p.mapY = 11;
+    p.cell = 1;
+    r.resultKind = PROJECTILE_RESULT_HIT_WALL;
+    r.despawn = 1;
+    ASSERT_EQ(dm1_v1_projectile_materialization_plan_pc34(
+                  &p, &r, 0, 0, &plan), 1,
+              "wall materialization plan builds");
+    ASSERT_EQ(plan.handled, 1, "wall materialization handled");
+    ASSERT_EQ(plan.shouldMaterialize, 1, "wall materializes weapon");
+    ASSERT_EQ(plan.mapIndex, 2, "wall materialize source map");
+    ASSERT_EQ(plan.mapX, 10, "wall materialize source x");
+    ASSERT_EQ(plan.mapY, 11, "wall materialize source y");
+    ASSERT_EQ(plan.cell, 1, "wall materialize source cell");
+    ASSERT_EQ(plan.droppedThing,
+              (unsigned short)(weaponThing | (unsigned short)(1u << 14)),
+              "wall materialize source-cell thing");
+
+    r.resultKind = PROJECTILE_RESULT_HIT_CHAMPION;
+    r.emittedCombatAction = 1;
+    r.newMapIndex = 3;
+    r.newMapX = 20;
+    r.newMapY = 21;
+    r.newCell = 2;
+    ASSERT_EQ(dm1_v1_projectile_materialization_plan_pc34(
+                  &p, &r, 0, 0, &plan), 1,
+              "champion materialization plan builds");
+    ASSERT_EQ(plan.mapIndex, 3, "champion materialize impact map");
+    ASSERT_EQ(plan.mapX, 20, "champion materialize impact x");
+    ASSERT_EQ(plan.mapY, 21, "champion materialize impact y");
+    ASSERT_EQ(plan.cell, 2, "champion materialize impact cell");
+    ASSERT_EQ(plan.droppedThing,
+              (unsigned short)(weaponThing | (unsigned short)(2u << 14)),
+              "champion materialize impact-cell thing");
+
+    p.flags = PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT;
+    p.reserved1 = (unsigned short)((THING_TYPE_POTION << 10) | 1);
+    r.despawn = 1;
+    ASSERT_EQ(dm1_v1_projectile_materialization_plan_pc34(
+                  &p, &r, 0, 4, &plan), 1,
+              "potion materialization plan builds");
+    ASSERT_EQ(plan.shouldConsumePotion, 1, "potion materialization consumes");
+    ASSERT_EQ(plan.shouldMaterialize, 0, "potion materialization blocked");
+}
+
 static void test_black_flame_heal_and_group_cell(void) {
     struct DungeonGroup_Compat group;
     struct ProjectileInstance_Compat p;
@@ -464,6 +521,7 @@ int main(void) {
     test_projectile_create_input_model();
     test_projectile_impact_model();
     test_projectile_associated_thing_disposition();
+    test_projectile_materialization_plan();
     test_black_flame_heal_and_group_cell();
     test_projectile_creature_impact_plan();
     test_projectile_champion_impact_plan();

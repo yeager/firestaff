@@ -371,6 +371,61 @@ int dm1_v1_projectile_associated_thing_disposition_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_materialization_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    int associatedThingMovedToGroup,
+    int potionCount,
+    DM1_ProjectileMaterializationPlanPc34* outPlan) {
+    DM1_ProjectileAssociatedThingDispositionPc34 disposition;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int cell;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->associatedThing = THING_NONE;
+    outPlan->droppedThing = THING_NONE;
+    outPlan->cell = -1;
+    if (!projectile) return 0;
+    if (!dm1_v1_projectile_associated_thing_disposition_pc34(
+            projectile, result, associatedThingMovedToGroup, potionCount,
+            &disposition)) {
+        return 0;
+    }
+
+    mapIndex = projectile->mapIndex;
+    mapX = projectile->mapX;
+    mapY = projectile->mapY;
+    cell = projectile->cell & 3;
+    if (result &&
+        result->resultKind == PROJECTILE_RESULT_HIT_CHAMPION &&
+        result->emittedCombatAction) {
+        /* ReDMCSB: PROJEXPL.C F0219 lines 687-697 commits same-square
+         * champion impacts, and lines 717-743 commit cross-cell champion
+         * impacts before F0217 reaches F0215 delete/materialization. */
+        mapIndex = result->newMapIndex;
+        mapX = result->newMapX;
+        mapY = result->newMapY;
+        cell = result->newCell & 3;
+    }
+
+    outPlan->handled = 1;
+    outPlan->shouldConsumePotion = disposition.shouldConsumePotion;
+    outPlan->shouldMaterialize = disposition.shouldMaterialize;
+    outPlan->associatedThing = disposition.associatedThing;
+    outPlan->mapIndex = mapIndex;
+    outPlan->mapX = mapX;
+    outPlan->mapY = mapY;
+    outPlan->cell = cell;
+    outPlan->droppedThing =
+        disposition.shouldMaterialize
+            ? (unsigned short)((disposition.associatedThing & 0x3FFFu) |
+                               (unsigned short)((cell & 0x03) << 14))
+            : disposition.droppedThing;
+    return 1;
+}
+
 int dm1_v1_group_creature_index_for_cell_pc34(
     const struct DungeonGroup_Compat* group,
     int targetCell) {
