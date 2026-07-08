@@ -1,5 +1,6 @@
 
 #include "nexus_v1_engine.h"
+#include "asset_find_by_hash.h"
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_squares.h"
 #include "nexus_v1_movement.h"
@@ -14,6 +15,33 @@
 #include <dirent.h>
 #endif
 
+typedef struct {
+    const char *name;
+    const char *md5;
+} Nexus_V1_KnownFileHash;
+
+static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
+    {"TITLE.CG", "80fa961fa95d7a0cb57e9a62f48786c8"},
+    {"WARNING.BIN", "15c87a09af36e9579dfbd88a5af87477"},
+    {"GAMEOVER.BIN", "0426cb045a495c151a138fd2c77370e2"},
+    {"STABG.BIN", "e77d4dd48dd280ec299cfc8ee8851114"},
+    {"FACE.BIN", "bd9ca16ea68043984e2804067b6cd66f"},
+    {"FONT256.S2D", "427735a9997e692d85f2d81158dba423"},
+    {"MENU.BPK", "c2776768ff25287c79013a1452253ca0"},
+    {NULL, NULL}
+};
+
+static const char *nexus_known_boot_file_md5(const char *name) {
+    int i;
+    if (!name) return NULL;
+    for (i = 0; g_nexus_known_boot_files[i].name; ++i) {
+        if (strcasecmp(g_nexus_known_boot_files[i].name, name) == 0) {
+            return g_nexus_known_boot_files[i].md5;
+        }
+    }
+    return NULL;
+}
+
 static int nexus_path_has_ext(const char *path, const char *ext) {
     size_t path_len;
     size_t ext_len;
@@ -27,6 +55,60 @@ static int nexus_path_has_ext(const char *path, const char *ext) {
 static int nexus_path_is_file(const char *path) {
     struct stat st;
     return path && stat(path, &st) == 0 && (st.st_mode & S_IFMT) != S_IFDIR;
+}
+
+static uint8_t *nexus_read_host_file(const char *path, int *out_size) {
+    uint8_t *buf = NULL;
+    FILE *fp;
+    long fsize;
+    size_t got;
+    if (!path || !path[0]) return NULL;
+    fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    fsize = ftell(fp);
+    if (fsize <= 0) {
+        fclose(fp);
+        return NULL;
+    }
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    buf = (uint8_t *)malloc((size_t)fsize);
+    if (!buf) {
+        fclose(fp);
+        return NULL;
+    }
+    got = fread(buf, 1, (size_t)fsize, fp);
+    fclose(fp);
+    if (got != (size_t)fsize) {
+        free(buf);
+        return NULL;
+    }
+    if (out_size) *out_size = (int)fsize;
+    return buf;
+}
+
+static uint8_t *nexus_v1_read_extracted_file(Nexus_V1_Engine *engine,
+                                             const char *name,
+                                             int *out_size) {
+    char path[512];
+    const char *md5;
+    if (!engine || !name) return NULL;
+    snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
+    if (nexus_path_is_file(path)) {
+        return nexus_read_host_file(path, out_size);
+    }
+    md5 = nexus_known_boot_file_md5(name);
+    if (md5 &&
+        asset_find_by_md5(engine->data_dir, md5, path, (int)sizeof(path), 8)) {
+        return nexus_read_host_file(path, out_size);
+    }
+    return NULL;
 }
 
 static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
@@ -273,21 +355,7 @@ uint8_t *nexus_v1_read_file(Nexus_V1_Engine *engine, const char *name, int *out_
             if (out_size) *out_size = (int)f->size;
         }
     } else if (engine->source == NEXUS_SRC_EXTRACTED) {
-        char path[512];
-        FILE *fp;
-        long fsize;
-        snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
-        fp = fopen(path, "rb");
-        if (!fp) return NULL;
-        fseek(fp, 0, SEEK_END);
-        fsize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        buf = (uint8_t *)malloc(fsize);
-        if (buf) {
-            fread(buf, 1, fsize, fp);
-            if (out_size) *out_size = (int)fsize;
-        }
-        fclose(fp);
+        buf = nexus_v1_read_extracted_file(engine, name, out_size);
     }
     return buf;
 }

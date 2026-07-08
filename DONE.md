@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus boot-file hash fallback: extracted Nexus startup reads now resolve known boot/menu files (`TITLE.CG`, `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN`, `FACE.BIN`, `FONT256.S2D`, `MENU.BPK`) by MD5 when the exact filename is absent. A new skip-safe regression test proves a real `TITLE.CG` copied under an arbitrary name is still found by `nexus_v1_read_file()`.
+
 - ✅ 2026-07-08 legacy asset pipeline hash scan: `fs_assets_load_game()` now asks the shared M12 hash scanner for DM1/CSB/DM2 graphics and dungeon paths before using filename fallback, so CLI/legacy game-loop asset loading no longer requires `GRAPHICS.DAT` / `DUNGEON.DAT` names. A new regression test proves DM1, CSB, and DM2 load renamed required files by hash. The same pass fixed the asset-language enum so Swedish no longer maps to French in this loader.
 
 - ✅ 2026-07-08 DM2 V1 hash-first boot scan: `dm2_v1_boot_scan_assets()` and `dm2_v1_boot_probe_available()` now search recursively by known DM2 graphics/dungeon MD5 before legacy filename fallback, and verification now requires both graphics and dungeon hashes. A regression test copies real DM2 files under arbitrary names when available. Verification: DM2 boot smoke test passed 40/40 with renamed real files.
