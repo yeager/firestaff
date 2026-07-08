@@ -735,6 +735,10 @@ static void test_boot_prepare_startup_profile_missing_track02(void) {
     expect_true(strcmp(theron_v1_boot_startup_prepare_result_name(result),
                        "MISSING_TRACK02") == 0,
                 "boot prepare result name is stable");
+    expect_true(strcmp(theron_v1_boot_startup_prepare_result_name(
+                           THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED),
+                       "STATE_FAILED") == 0,
+                "boot prepare startup-state failure name is stable");
     memset(&launch, 0xff, sizeof(launch));
     expect_true(!theron_v1_boot_startup_launch_alloc(
                     TST_BAD_ROOT,

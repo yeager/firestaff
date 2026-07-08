@@ -11750,9 +11750,6 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* savePath) {
     Theron_V1_BootStartupLaunch launch;
     int savedDebugHUD;
-    Theron_StartupFlow startupFlow;
-    Theron_StartupStateReceipt startupStateReceipt;
-    Theron_StartupStateReceipt saveResumeStateReceipt;
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
@@ -11778,6 +11775,9 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
             case THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED:
                 m11_set_status(state, "BOOT", "THERON ASSET LOAD FAILED");
                 break;
+            case THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED:
+                m11_set_status(state, "BOOT", "THERON STARTUP STATE FAILED");
+                break;
             default:
                 m11_set_status(state,
                                "BOOT",
@@ -11788,26 +11788,15 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         goto fail;
     }
 
-    /* THQUEST.ASM T400 startup handoff: a fresh Track 02 boot stops at the
-     * title gate. The startup-flow module seeds the selected chapter for the
-     * title/chapter label; Accept then advances to the visible stage-select
-     * screen, and only the next explicit input opens the Soul Room. */
-    if (!theron_v1_startup_initial_title_state_receipt(
-            launch.world,
-            &startupFlow,
-            &startupStateReceipt)) {
-        m11_set_status(state, "BOOT", "THERON STARTUP STATE FAILED");
-        goto fail;
-    }
-    m11_theron_apply_startup_state_receipt(state, &startupStateReceipt);
-    if (!theron_v1_startup_save_resume_state_receipt(
-            &launch.save_resume,
-            launch.save_resume_ready,
-            &saveResumeStateReceipt)) {
-        m11_set_status(state, "BOOT", "THERON SAVE STATE FAILED");
-        goto fail;
-    }
-    m11_theron_apply_startup_state_receipt(state, &saveResumeStateReceipt);
+    /* THQUEST.ASM T400 startup handoff: boot owns the fresh Track 02
+     * title-gate receipts before M11 takes runtime ownership. Accept then
+     * advances to stage-select; the next explicit input opens the Soul Room. */
+    m11_theron_apply_startup_state_receipt(
+        state,
+        &launch.initial_state_receipt);
+    m11_theron_apply_startup_state_receipt(
+        state,
+        &launch.save_resume_state_receipt);
     m11_theron_capture_track02_startup_media(state,
                                              launch.assets,
                                              launch.profile->graphics_md5);

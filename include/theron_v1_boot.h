@@ -211,7 +211,8 @@ typedef enum {
     THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT = -1,
     THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED = -2,
     THERON_V1_BOOT_STARTUP_PREPARE_MISSING_TRACK02 = -3,
-    THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED = -4
+    THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED = -4,
+    THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED = -5
 } Theron_V1BootStartupPrepareResult;
 
 typedef struct Theron_V1_BootStartupLaunch {
@@ -221,6 +222,9 @@ typedef struct Theron_V1_BootStartupLaunch {
     TrAssetBundle *assets;
     Theron_V1StartupSaveResume save_resume;
     int save_resume_ready;
+    Theron_StartupFlow startup_flow;
+    Theron_StartupStateReceipt initial_state_receipt;
+    Theron_StartupStateReceipt save_resume_state_receipt;
     Theron_V1BootStartupPrepareResult prepare_result;
 } Theron_V1_BootStartupLaunch;
 

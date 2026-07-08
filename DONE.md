@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup launch state receipts: Theron boot now owns the initial title-gate and save/resume startup-state receipts inside the startup launch bundle. M11 applies those boot-owned receipts during `StartTheron` instead of constructing them locally. Verification: Theron startup save/resume test passed 110/110, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup launch allocation: Theron boot now owns startup allocation and cleanup for the boot profile, world, viewport, Track 02 assets, save/resume snapshot, and viewport initialization. M11 consumes the boot-owned launch bundle during `StartTheron` instead of allocating and cleaning those objects locally. Verification: Theron startup save/resume test passed 109/109, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB combined startup-launch receipt: CSB boot now emits one M11-ready startup launch receipt containing runtime handoff, startup init state, and startup session state. M11 consumes that single boot-owned receipt during `StartCSB` instead of assembling handoff/init/session through separate CSB layers. Verification: CSB boot-runtime handoff passed 282/282, Phase A passed 24/24, and `git diff --check` passed.
