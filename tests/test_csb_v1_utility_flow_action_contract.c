@@ -25,6 +25,7 @@ int main(void)
     CSB_V1_UtilInputResult result;
     CSB_V1_UtilActionPlan action_plan;
     CSB_V1_UtilApplyReceipt apply_receipt;
+    CSB_V1_UtilStateReceipt state_receipt;
     CSB_V1_UtilPanelLayout panel;
     CSB_V1_UtilRuntimeSnapshot snapshot;
     CSB_V1_UtilRenderRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
@@ -167,12 +168,29 @@ int main(void)
               apply_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
               apply_receipt.selected_action_index_changed &&
               apply_receipt.selected_action_index == 1 &&
-              apply_receipt.preview_active_changed &&
-              apply_receipt.preview_active == 0,
-          "utility keyboard receipt builds from runtime profile facts");
-    check(csb_v1_util_flow_apply_point_from_runtime_profile_facts(
-              0,
-              1,
+	              apply_receipt.preview_active_changed &&
+	              apply_receipt.preview_active == 0,
+	          "utility keyboard receipt builds from runtime profile facts");
+	    check(csb_v1_util_flow_apply_firestaff_input_with_state_from_runtime_profile_facts(
+	              0,
+	              1,
+	              &runtime_profile,
+	              2,
+	              1,
+	              0,
+	              0,
+	              1,
+	              &apply_receipt,
+	              &state_receipt) &&
+	              apply_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
+	              state_receipt.selected_action_index_changed &&
+	              state_receipt.selected_action_index == 1 &&
+	              state_receipt.preview_active_changed &&
+	              state_receipt.preview_active == 0,
+	          "utility keyboard state receipt mirrors M11-owned mutable fields");
+	    check(csb_v1_util_flow_apply_point_from_runtime_profile_facts(
+	              0,
+	              1,
               &runtime_profile,
               render_plan.menu_rows[1].x + 1,
               render_plan.menu_rows[1].y + 1,
@@ -182,10 +200,28 @@ int main(void)
               1,
               &apply_receipt) &&
               apply_receipt.result == CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
-              apply_receipt.selected_action_index_changed &&
-              apply_receipt.selected_action_index == 1,
-          "utility pointer receipt builds from runtime profile facts");
-    csb_v1_runtime_cleanup(&runtime_profile);
+	              apply_receipt.selected_action_index_changed &&
+	              apply_receipt.selected_action_index == 1,
+	          "utility pointer receipt builds from runtime profile facts");
+	    check(csb_v1_util_flow_apply_point_with_state_from_runtime_profile_facts(
+	              0,
+	              1,
+	              &runtime_profile,
+	              render_plan.menu_rows[1].x + 1,
+	              render_plan.menu_rows[1].y + 1,
+	              1,
+	              0,
+	              0,
+	              1,
+	              &apply_receipt,
+	              &state_receipt) &&
+	              apply_receipt.result == CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+	              state_receipt.selected_action_index_changed &&
+	              state_receipt.selected_action_index == 1 &&
+	              state_receipt.preview_active_changed &&
+	              state_receipt.preview_active == 0,
+	          "utility pointer state receipt mirrors M11-owned mutable fields");
+	    csb_v1_runtime_cleanup(&runtime_profile);
     flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
     flow.selected_action_index = 2;
     flow.action = CSB_V1_UTIL_ACTION_NEW;

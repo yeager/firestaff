@@ -112,6 +112,13 @@ typedef struct {
 } CSB_V1_UtilApplyReceipt;
 
 typedef struct {
+    int selected_action_index_changed;
+    int selected_action_index;
+    int preview_active_changed;
+    int preview_active;
+} CSB_V1_UtilStateReceipt;
+
+typedef struct {
     CSB_V1_UtilFlowAction action;
     const char *label;
     int x;
@@ -272,6 +279,11 @@ int csb_v1_util_flow_plan_for_action(CSB_V1_UtilFlowAction action,
                                      CSB_V1_UtilActionPlan *out_plan);
 void csb_v1_util_flow_apply_receipt_init(
     CSB_V1_UtilApplyReceipt *receipt);
+void csb_v1_util_flow_state_receipt_init(
+    CSB_V1_UtilStateReceipt *receipt);
+int csb_v1_util_flow_state_receipt_from_apply_receipt(
+    const CSB_V1_UtilApplyReceipt *apply_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt);
 int csb_v1_util_flow_apply_receipt_from_action_plan(
     const CSB_V1_UtilActionPlan *plan,
     CSB_V1_UtilApplyReceipt *out_receipt);
@@ -308,6 +320,17 @@ int csb_v1_util_flow_apply_firestaff_input_from_runtime_profile_facts(
     int opening_active,
     int preview_active,
     CSB_V1_UtilApplyReceipt *out_receipt);
+int csb_v1_util_flow_apply_firestaff_input_with_state_from_runtime_profile_facts(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *runtime_profile,
+    int menu_input,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt);
 int csb_v1_util_flow_handle_point_if_active(
     CSB_V1_UtilFlowContext *ctx,
     int x,
@@ -337,6 +360,18 @@ int csb_v1_util_flow_apply_point_from_runtime_profile_facts(
     int opening_active,
     int preview_active,
     CSB_V1_UtilApplyReceipt *out_receipt);
+int csb_v1_util_flow_apply_point_with_state_from_runtime_profile_facts(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *runtime_profile,
+    int x,
+    int y,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt);
 int csb_v1_util_flow_overlay_accepts_input(int import_available,
                                            int credits_active,
                                            int opening_active);

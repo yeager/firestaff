@@ -3154,6 +3154,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
 {
     const CSB_V1_BootProfile *profile;
     CSB_V1_UtilApplyReceipt receipt;
+    CSB_V1_UtilStateReceipt state_receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
@@ -3161,7 +3162,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     }
 
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!csb_v1_util_flow_apply_point_from_runtime_profile_facts(
+    if (!csb_v1_util_flow_apply_point_with_state_from_runtime_profile_facts(
             state->csbState.startup_import_selected_action_index,
             state->csbState.startup_import_champion_count,
             profile ? &profile->runtime : NULL,
@@ -3171,16 +3172,17 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
             state->csbState.startup_entrance_credits_active,
             state->csbState.startup_entrance_opening_active,
             state->csbState.startup_import_preview_active,
-            &receipt)) {
+            &receipt,
+            &state_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (receipt.selected_action_index_changed) {
+    if (state_receipt.selected_action_index_changed) {
         state->csbState.startup_import_selected_action_index =
-            receipt.selected_action_index;
+            state_receipt.selected_action_index;
     }
-    if (receipt.preview_active_changed) {
+    if (state_receipt.preview_active_changed) {
         state->csbState.startup_import_preview_active =
-            receipt.preview_active;
+            state_receipt.preview_active;
     }
     if (receipt.status) {
         m11_set_status(state,
@@ -3204,6 +3206,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
 {
     const CSB_V1_BootProfile *profile;
     CSB_V1_UtilApplyReceipt receipt;
+    CSB_V1_UtilStateReceipt state_receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
@@ -3211,7 +3214,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     }
 
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!csb_v1_util_flow_apply_firestaff_input_from_runtime_profile_facts(
+    if (!csb_v1_util_flow_apply_firestaff_input_with_state_from_runtime_profile_facts(
             state->csbState.startup_import_selected_action_index,
             state->csbState.startup_import_champion_count,
             profile ? &profile->runtime : NULL,
@@ -3220,16 +3223,17 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
             state->csbState.startup_entrance_credits_active,
             state->csbState.startup_entrance_opening_active,
             state->csbState.startup_import_preview_active,
-            &receipt)) {
+            &receipt,
+            &state_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (receipt.selected_action_index_changed) {
+    if (state_receipt.selected_action_index_changed) {
         state->csbState.startup_import_selected_action_index =
-            receipt.selected_action_index;
+            state_receipt.selected_action_index;
     }
-    if (receipt.preview_active_changed) {
+    if (state_receipt.preview_active_changed) {
         state->csbState.startup_import_preview_active =
-            receipt.preview_active;
+            state_receipt.preview_active;
     }
     if (receipt.status) {
         m11_set_status(state,
