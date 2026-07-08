@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup session-facts adapter: M11 now builds one `Theron_StartupSessionFacts` snapshot for Theron startup input, pointer, layout, render rows, and render plan calls. Theron owns the wrapper APIs, removing five long raw M11 argument lists from the boot/startup path. Verification: Theron targeted library build passed, M11 targeted library build passed, Theron startup save/resume test passed 103/103 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 RetroAchievements start-menu settings labels: legacy/shared settings rows now show full RetroAchievements Hardcore, Username, and API Token labels while preserving the modern ONLINE tab, toggles, text editing, persistence, and token masking. Verification: M12 targeted library build passed, settings tab hit-test passed 52/52 by direct compile/run, RetroAchievements unit test passed, DM1 V2 settings persistence passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron boot startup profile prepare: Theron boot now owns startup profile preparation from verified Track 02 paths or data-dir scans, save-root derivation from explicit save paths, startup save/resume evaluation, and Track 02 asset loading. M11 now calls that single prepare API instead of performing those launch steps inline. Verification: Theron targeted library build passed, M11 targeted library build passed, Theron startup save/resume test passed 103/103 by direct compile/run, Phase A passed 24/24, and `git diff --check` passed.

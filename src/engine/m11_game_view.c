@@ -11676,6 +11676,40 @@ static int m11_theron_rebuild_startup_flow(M11_GameViewState* state,
     return 1;
 }
 
+static void m11_theron_startup_session_facts(
+    const M11_GameViewState *state,
+    Theron_StartupSessionFacts *session) {
+
+    if (!session) {
+        return;
+    }
+    memset(session, 0, sizeof(*session));
+    if (!state) {
+        return;
+    }
+    session->phase = (Theron_StartupPhase)state->theronState.startup_phase;
+    session->selected_dungeon = state->theronState.selected_dungeon;
+    session->boot_profile = state->theronBootProfile;
+    session->world = (const Theron_V1_World*)state->theronWorld;
+    session->soul_cursor = state->theronState.startup_cursor;
+    session->continue_focus = state->theronState.save_resume_continue_focus;
+    session->resume_claim = state->theronState.save_resume_claim;
+    session->tqsv_slot = state->theronState.save_resume_active_slot;
+    session->srm_slot = state->theronState.save_resume_srm_active_slot;
+    session->srm_import_status =
+        state->theronState.save_resume_srm_import_status;
+    session->startup_text_prompt = state->theronState.startup_text_prompt;
+    session->startup_roster_names = state->theronState.startup_roster_names;
+    session->startup_roster_titles = state->theronState.startup_roster_titles;
+    session->startup_roster_name_count =
+        state->theronState.startup_roster_name_count;
+    session->selected_mirrors_mask =
+        state->theronState.selected_mirrors_mask;
+    session->selected_mirror_order =
+        state->theronState.selected_mirror_order;
+    session->selected_mirror_order_count = THERON_STARTUP_MAX_COMPANIONS;
+}
+
 static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
                                                const Theron_StartupActionPlan* plan,
                                                Theron_V1StartupRuntimeEntryResult* out_result,
@@ -14187,27 +14221,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             !state->theronState.level_loaded) {
             Theron_StartupAction action;
             Theron_StartupInputReceipt input_receipt;
+            Theron_StartupSessionFacts session;
 
-            if (!theron_v1_startup_handle_input_from_session_facts_with_receipt(
-                (Theron_StartupPhase)state->theronState.startup_phase,
-                state->theronState.selected_dungeon,
-                (const Theron_V1_BootProfile*)state->theronBootProfile,
-                (const Theron_V1_World*)state->theronWorld,
-                state->theronState.startup_cursor,
-                state->theronState.save_resume_continue_focus,
-                (Theron_V1StartupResumeClaim)
-                    state->theronState.save_resume_claim,
-                state->theronState.save_resume_active_slot,
-                state->theronState.save_resume_srm_active_slot,
-                (Theron_V1SrmProgressImportStatus)
-                    state->theronState.save_resume_srm_import_status,
-                state->theronState.startup_text_prompt,
-                state->theronState.startup_roster_names,
-                state->theronState.startup_roster_titles,
-                state->theronState.startup_roster_name_count,
-                state->theronState.selected_mirrors_mask,
-                state->theronState.selected_mirror_order,
-                THERON_STARTUP_MAX_COMPANIONS,
+            m11_theron_startup_session_facts(state, &session);
+            if (!theron_v1_startup_handle_input_from_session_with_receipt(
+                &session,
                 theron_v1_startup_input_from_firestaff_menu_code((int)input),
                 &action,
                 &input_receipt)) {
@@ -14790,6 +14808,7 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     int y) {
     Theron_StartupAction action;
     Theron_StartupInputReceipt input_receipt;
+    Theron_StartupSessionFacts session;
 
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
@@ -14798,25 +14817,9 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    if (!theron_v1_startup_handle_pointer_from_session_facts_with_receipt(
-        (Theron_StartupPhase)state->theronState.startup_phase,
-        state->theronState.selected_dungeon,
-        (const Theron_V1_BootProfile*)state->theronBootProfile,
-        (const Theron_V1_World*)state->theronWorld,
-        state->theronState.startup_cursor,
-        state->theronState.save_resume_continue_focus,
-        (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
-        state->theronState.save_resume_active_slot,
-        state->theronState.save_resume_srm_active_slot,
-        (Theron_V1SrmProgressImportStatus)
-            state->theronState.save_resume_srm_import_status,
-        state->theronState.startup_text_prompt,
-        state->theronState.startup_roster_names,
-        state->theronState.startup_roster_titles,
-        state->theronState.startup_roster_name_count,
-        state->theronState.selected_mirrors_mask,
-        state->theronState.selected_mirror_order,
-        THERON_STARTUP_MAX_COMPANIONS,
+    m11_theron_startup_session_facts(state, &session);
+    if (!theron_v1_startup_handle_pointer_from_session_with_receipt(
+        &session,
         x,
         y,
         &action,
@@ -37964,6 +37967,7 @@ int M11_GameView_GetTheronStartupLayout(
     M11_TheronStartupElement* elements,
     int maxElements) {
     Theron_StartupLayoutElement theron_elements[16];
+    Theron_StartupSessionFacts session;
     int count;
     int i;
 
@@ -37979,25 +37983,9 @@ int M11_GameView_GetTheronStartupLayout(
         elements[i].primaryClass = -1;
     }
 
-    count = theron_v1_startup_layout_build_from_session_facts(
-        (Theron_StartupPhase)state->theronState.startup_phase,
-        state->theronState.selected_dungeon,
-        (const Theron_V1_BootProfile*)state->theronBootProfile,
-        (const Theron_V1_World*)state->theronWorld,
-        state->theronState.startup_cursor,
-        state->theronState.save_resume_continue_focus,
-        (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
-        state->theronState.save_resume_active_slot,
-        state->theronState.save_resume_srm_active_slot,
-        (Theron_V1SrmProgressImportStatus)
-            state->theronState.save_resume_srm_import_status,
-        state->theronState.startup_text_prompt,
-        state->theronState.startup_roster_names,
-        state->theronState.startup_roster_titles,
-        state->theronState.startup_roster_name_count,
-        state->theronState.selected_mirrors_mask,
-        state->theronState.selected_mirror_order,
-        THERON_STARTUP_MAX_COMPANIONS,
+    m11_theron_startup_session_facts(state, &session);
+    count = theron_v1_startup_layout_build_from_session(
+        &session,
         theron_elements,
         (int)(sizeof(theron_elements) / sizeof(theron_elements[0])));
     if (count > maxElements) {
@@ -38038,6 +38026,7 @@ int M11_GameView_GetTheronStartupRenderRows(
     char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
     int maxRows) {
     char theron_rows[16][THERON_STARTUP_RENDER_ROW_CAPACITY];
+    Theron_StartupSessionFacts session;
     int row_count;
     int i;
 
@@ -38048,25 +38037,9 @@ int M11_GameView_GetTheronStartupRenderRows(
         return 0;
     }
 
-    row_count = theron_v1_startup_render_rows_build_from_session_facts(
-        (Theron_StartupPhase)state->theronState.startup_phase,
-        state->theronState.selected_dungeon,
-        (const Theron_V1_BootProfile*)state->theronBootProfile,
-        (const Theron_V1_World*)state->theronWorld,
-        state->theronState.startup_cursor,
-        state->theronState.save_resume_continue_focus,
-        (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
-        state->theronState.save_resume_active_slot,
-        state->theronState.save_resume_srm_active_slot,
-        (Theron_V1SrmProgressImportStatus)
-            state->theronState.save_resume_srm_import_status,
-        state->theronState.startup_text_prompt,
-        state->theronState.startup_roster_names,
-        state->theronState.startup_roster_titles,
-        state->theronState.startup_roster_name_count,
-        state->theronState.selected_mirrors_mask,
-        state->theronState.selected_mirror_order,
-        THERON_STARTUP_MAX_COMPANIONS,
+    m11_theron_startup_session_facts(state, &session);
+    row_count = theron_v1_startup_render_rows_build_from_session(
+        &session,
         theron_rows,
         (int)(sizeof(theron_rows) / sizeof(theron_rows[0])));
     if (row_count > maxRows) {
@@ -38210,6 +38183,7 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                            int framebufferHeight) {
     int i;
     Theron_StartupRenderPlan plan;
+    Theron_StartupSessionFacts session;
 
     (void)world;
 
@@ -38217,26 +38191,8 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         return;
     }
 
-    if (!theron_v1_startup_render_plan_build_from_session_facts(
-            (Theron_StartupPhase)state->theronState.startup_phase,
-            state->theronState.selected_dungeon,
-            (const Theron_V1_BootProfile*)state->theronBootProfile,
-            (const Theron_V1_World*)state->theronWorld,
-            state->theronState.startup_cursor,
-            state->theronState.save_resume_continue_focus,
-            (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
-            state->theronState.save_resume_active_slot,
-            state->theronState.save_resume_srm_active_slot,
-            (Theron_V1SrmProgressImportStatus)
-                state->theronState.save_resume_srm_import_status,
-            state->theronState.startup_text_prompt,
-            state->theronState.startup_roster_names,
-            state->theronState.startup_roster_titles,
-            state->theronState.startup_roster_name_count,
-            state->theronState.selected_mirrors_mask,
-            state->theronState.selected_mirror_order,
-            THERON_STARTUP_MAX_COMPANIONS,
-            &plan)) {
+    m11_theron_startup_session_facts(state, &session);
+    if (!theron_v1_startup_render_plan_build_from_session(&session, &plan)) {
         return;
     }
 

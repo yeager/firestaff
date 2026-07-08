@@ -1113,6 +1113,39 @@ int theron_v1_startup_layout_build_from_session_facts(
         max_elements);
 }
 
+int theron_v1_startup_layout_build_from_session(
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupLayoutElement *elements,
+    int max_elements) {
+
+    if (!session) {
+        if (elements && max_elements > 0) {
+            memset(elements, 0, (size_t)max_elements * sizeof(elements[0]));
+        }
+        return 0;
+    }
+    return theron_v1_startup_layout_build_from_session_facts(
+        session->phase,
+        session->selected_dungeon,
+        session->boot_profile,
+        session->world,
+        session->soul_cursor,
+        session->continue_focus,
+        session->resume_claim,
+        session->tqsv_slot,
+        session->srm_slot,
+        session->srm_import_status,
+        session->startup_text_prompt,
+        session->startup_roster_names,
+        session->startup_roster_titles,
+        session->startup_roster_name_count,
+        session->selected_mirrors_mask,
+        session->selected_mirror_order,
+        session->selected_mirror_order_count,
+        elements,
+        max_elements);
+}
+
 static int tqr_startup_point_in_rect(
     int px,
     int py,
@@ -1452,6 +1485,51 @@ int theron_v1_startup_handle_pointer_from_session_facts_with_receipt(
         selected_mirrors_mask,
         selected_mirror_order,
         selected_mirror_order_count,
+        x,
+        y,
+        out_action,
+        out_receipt);
+}
+
+int theron_v1_startup_handle_pointer_from_session_with_receipt(
+    const Theron_StartupSessionFacts *session,
+    int x,
+    int y,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt) {
+
+    if (!session) {
+        if (out_action) {
+            theron_v1_startup_action_init(out_action);
+        }
+        if (out_receipt) {
+            tqr_startup_input_receipt_init(out_receipt);
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->status_scope = "STARTUP";
+            out_receipt->status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        return 0;
+    }
+    return theron_v1_startup_handle_pointer_from_session_facts_with_receipt(
+        session->phase,
+        session->selected_dungeon,
+        session->boot_profile,
+        session->world,
+        session->soul_cursor,
+        session->continue_focus,
+        session->resume_claim,
+        session->tqsv_slot,
+        session->srm_slot,
+        session->srm_import_status,
+        session->startup_text_prompt,
+        session->startup_roster_names,
+        session->startup_roster_titles,
+        session->startup_roster_name_count,
+        session->selected_mirrors_mask,
+        session->selected_mirror_order,
+        session->selected_mirror_order_count,
         x,
         y,
         out_action,
@@ -2219,6 +2297,37 @@ int theron_v1_startup_render_plan_build_from_session_facts(
         out_plan);
 }
 
+int theron_v1_startup_render_plan_build_from_session(
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupRenderPlan *out_plan) {
+
+    if (!session) {
+        if (out_plan) {
+            tqr_startup_render_plan_reset(out_plan);
+        }
+        return 0;
+    }
+    return theron_v1_startup_render_plan_build_from_session_facts(
+        session->phase,
+        session->selected_dungeon,
+        session->boot_profile,
+        session->world,
+        session->soul_cursor,
+        session->continue_focus,
+        session->resume_claim,
+        session->tqsv_slot,
+        session->srm_slot,
+        session->srm_import_status,
+        session->startup_text_prompt,
+        session->startup_roster_names,
+        session->startup_roster_titles,
+        session->startup_roster_name_count,
+        session->selected_mirrors_mask,
+        session->selected_mirror_order,
+        session->selected_mirror_order_count,
+        out_plan);
+}
+
 static void tqr_startup_exec_fill(
     const Theron_StartupGraphicExecutor *executor,
     int x,
@@ -2700,6 +2809,40 @@ int theron_v1_startup_render_rows_build_from_session_facts(
         max_rows);
 }
 
+int theron_v1_startup_render_rows_build_from_session(
+    const Theron_StartupSessionFacts *session,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows) {
+
+    if (!session) {
+        if (rows && max_rows > 0) {
+            memset(rows, 0,
+                   (size_t)max_rows * THERON_STARTUP_RENDER_ROW_CAPACITY);
+        }
+        return 0;
+    }
+    return theron_v1_startup_render_rows_build_from_session_facts(
+        session->phase,
+        session->selected_dungeon,
+        session->boot_profile,
+        session->world,
+        session->soul_cursor,
+        session->continue_focus,
+        session->resume_claim,
+        session->tqsv_slot,
+        session->srm_slot,
+        session->srm_import_status,
+        session->startup_text_prompt,
+        session->startup_roster_names,
+        session->startup_roster_titles,
+        session->startup_roster_name_count,
+        session->selected_mirrors_mask,
+        session->selected_mirror_order,
+        session->selected_mirror_order_count,
+        rows,
+        max_rows);
+}
+
 Theron_StartupResult theron_v1_startup_handle_input_with_progression(
     Theron_StartupPhase phase,
     Theron_DungeonID selected_dungeon,
@@ -3051,6 +3194,49 @@ int theron_v1_startup_handle_input_from_session_facts_with_receipt(
         selected_mirrors_mask,
         selected_mirror_order,
         selected_mirror_order_count,
+        input,
+        out_action,
+        out_receipt);
+}
+
+int theron_v1_startup_handle_input_from_session_with_receipt(
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt) {
+
+    if (!session) {
+        if (out_action) {
+            theron_v1_startup_action_init(out_action);
+        }
+        if (out_receipt) {
+            tqr_startup_input_receipt_init(out_receipt);
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->status_scope = "STARTUP";
+            out_receipt->status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        return 0;
+    }
+    return theron_v1_startup_handle_input_from_session_facts_with_receipt(
+        session->phase,
+        session->selected_dungeon,
+        session->boot_profile,
+        session->world,
+        session->soul_cursor,
+        session->continue_focus,
+        session->resume_claim,
+        session->tqsv_slot,
+        session->srm_slot,
+        session->srm_import_status,
+        session->startup_text_prompt,
+        session->startup_roster_names,
+        session->startup_roster_titles,
+        session->startup_roster_name_count,
+        session->selected_mirrors_mask,
+        session->selected_mirror_order,
+        session->selected_mirror_order_count,
         input,
         out_action,
         out_receipt);
