@@ -368,6 +368,33 @@ static void load_manifest_hashes(const char *data_dir,
     fclose(fp);
 }
 
+static void load_manifest_hashes_from_common_roots(
+    const char *data_dir,
+    CSBGraphicsResolvedHash *rows,
+    size_t *count)
+{
+    static const char *const subdirs[] = {
+        "csb",
+        "csb-atari-st-2x",
+        "csb-extras",
+        "csbwin-custom",
+        NULL
+    };
+    size_t i;
+    if (!data_dir || !rows || !count) {
+        return;
+    }
+    load_manifest_hashes(data_dir, rows, count);
+    for (i = 0u; subdirs[i] != NULL; ++i) {
+        char subdir[ASSET_PATH_MAX];
+        if (*count >= CSBGRAPHICS_HASH_MANIFEST_MAX_ROWS ||
+            !FSP_JoinPath(subdir, sizeof(subdir), data_dir, subdirs[i])) {
+            continue;
+        }
+        load_manifest_hashes(subdir, rows, count);
+    }
+}
+
 static size_t build_resolved_hashes(const char *data_dir,
                                     CSBGraphicsResolvedHash *rows)
 {
@@ -386,7 +413,7 @@ static size_t build_resolved_hashes(const char *data_dir,
                                    known[i].size_bytes,
                                    known[i].label);
     }
-    load_manifest_hashes(data_dir, rows, &count);
+    load_manifest_hashes_from_common_roots(data_dir, rows, &count);
     return count;
 }
 
