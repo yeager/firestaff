@@ -24,6 +24,7 @@
 #include <windows.h>
 #else
 #include <dirent.h>
+#include <unistd.h>
 #endif
 
 #define ASSET_SCAN_MAX_FILE_BYTES (32LL * 1024LL * 1024LL)
@@ -295,6 +296,7 @@ typedef enum {
     ASSET_CONTAINER_TGZ,
     ASSET_CONTAINER_GZIP,
     ASSET_CONTAINER_LHA,
+    ASSET_CONTAINER_CHD,
     ASSET_CONTAINER_EXTERNAL
 } AssetContainerKind;
 
@@ -352,6 +354,10 @@ static int is_lha_path(const char *path) {
            has_case_suffix(path, ".lzs");
 }
 
+static int is_chd_path(const char *path) {
+    return has_case_suffix(path, ".chd");
+}
+
 static int is_external_archive_path(const char *path) {
     return is_external_tar_archive_path(path) ||
            has_case_suffix(path, ".7z") || has_case_suffix(path, ".rar") ||
@@ -374,6 +380,7 @@ static AssetContainerKind asset_container_kind_from_suffix(const char *path) {
     if (is_tgz_path(path)) return ASSET_CONTAINER_TGZ;
     if (is_gzip_path(path)) return ASSET_CONTAINER_GZIP;
     if (is_lha_path(path)) return ASSET_CONTAINER_LHA;
+    if (is_chd_path(path)) return ASSET_CONTAINER_CHD;
     if (is_external_archive_path(path)) return ASSET_CONTAINER_EXTERNAL;
     return ASSET_CONTAINER_NONE;
 }
@@ -419,6 +426,10 @@ static AssetContainerKind asset_container_kind_from_magic(const char *path) {
         header[2] == '-' && header[3] == 'l' && header[4] == 'h') {
         fclose(fp);
         return ASSET_CONTAINER_LHA;
+    }
+    if (got >= 8U && memcmp(header, "MComprHD", 8U) == 0) {
+        fclose(fp);
+        return ASSET_CONTAINER_CHD;
     }
     if (got >= 6U && memcmp(header, "7z\xbc\xaf\x27\x1c", 6U) == 0) {
         fclose(fp);
@@ -2388,6 +2399,233 @@ static int shell_append_quoted(char *cmd, size_t cmdSize, const char *arg) {
     return 1;
 }
 
+static int shell_tool_exists(const char *tool) {
+    char cmd[128];
+    if (!tool || !*tool) return 0;
+    if (snprintf(cmd, sizeof(cmd), "command -v %s >/dev/null 2>&1", tool) >=
+        (int)sizeof(cmd)) {
+        return 0;
+    }
+    return system(cmd) == 0;
+}
+
+static int make_chd_temp_dir(char *outDir, size_t outDirSize) {
+    char tmpl[ASSET_PATH_MAX];
+    char *made;
+    if (!outDir || outDirSize == 0U) return 0;
+    if (snprintf(tmpl, sizeof(tmpl), "/tmp/firestaff-chd-scan-XXXXXX") >=
+        (int)sizeof(tmpl)) {
+        return 0;
+    }
+    made = mkdtemp(tmpl);
+    if (!made) return 0;
+    if (strlen(made) + 1U > outDirSize) {
+        rmdir(made);
+        return 0;
+    }
+    strcpy(outDir, made);
+    return 1;
+}
+
+static int chd_extractcd_to_cue(const char *chdPath,
+                                char *outCuePath,
+                                size_t outCuePathSize,
+                                char *outTempDir,
+                                size_t outTempDirSize) {
+    char cmd[ASSET_PATH_MAX * 3];
+    if (!chdPath || !outCuePath || outCuePathSize == 0U ||
+        !outTempDir || outTempDirSize == 0U || !shell_tool_exists("chdman")) {
+        return 0;
+    }
+    if (!make_chd_temp_dir(outTempDir, outTempDirSize)) return 0;
+    if (snprintf(outCuePath, outCuePathSize, "%s/disc.cue", outTempDir) >=
+        (int)outCuePathSize) {
+        rmdir(outTempDir);
+        outTempDir[0] = '\0';
+        return 0;
+    }
+    if (snprintf(cmd, sizeof(cmd), "chdman extractcd -f -i ") >= (int)sizeof(cmd) ||
+        !shell_append_quoted(cmd, sizeof(cmd), chdPath) ||
+        strlen(cmd) + 4U >= sizeof(cmd)) {
+        rmdir(outTempDir);
+        outTempDir[0] = '\0';
+        return 0;
+    }
+    strcat(cmd, " -o ");
+    if (!shell_append_quoted(cmd, sizeof(cmd), outCuePath) ||
+        strlen(cmd) + 23U >= sizeof(cmd)) {
+        rmdir(outTempDir);
+        outTempDir[0] = '\0';
+        return 0;
+    }
+    strcat(cmd, " >/dev/null 2>&1");
+    if (system(cmd) != 0) {
+        remove(outCuePath);
+        rmdir(outTempDir);
+        outTempDir[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
+static void cleanup_chd_temp(const char *tempDir, const char *cuePath) {
+    char binPath[ASSET_PATH_MAX];
+    char tocPath[ASSET_PATH_MAX];
+    if (cuePath && *cuePath) remove(cuePath);
+    if (tempDir && *tempDir) {
+        if (snprintf(binPath, sizeof(binPath), "%s/disc.bin", tempDir) < (int)sizeof(binPath)) {
+            remove(binPath);
+        }
+        if (snprintf(tocPath, sizeof(tocPath), "%s/disc.toc", tempDir) < (int)sizeof(tocPath)) {
+            remove(tocPath);
+        }
+        rmdir(tempDir);
+    }
+}
+
+static int chd_virtual_path_from_temp_match(const char *chdPath,
+                                            const char *tempMatchPath,
+                                            char *outPath,
+                                            int outPathLen) {
+    const char *sep;
+    if (!chdPath || !tempMatchPath || !outPath || outPathLen <= 0) return 0;
+    sep = strstr(tempMatchPath, "::");
+    if (sep && sep[2] != '\0') {
+        return copy_virtual_match_path(chdPath, sep + 2, outPath, outPathLen);
+    }
+    return copy_virtual_match_path(chdPath, "TRACK02.BIN", outPath, outPathLen);
+}
+
+static int scan_chd_by_md5(const char *chdPath, const char *expectedMd5,
+                           char *outPath, int outPathLen) {
+    char tempDir[ASSET_PATH_MAX];
+    char cuePath[ASSET_PATH_MAX];
+    char tempMatch[ASSET_PATH_MAX];
+    int ok = 0;
+    tempDir[0] = '\0';
+    cuePath[0] = '\0';
+    if (!chd_extractcd_to_cue(chdPath, cuePath, sizeof(cuePath),
+                              tempDir, sizeof(tempDir))) {
+        return 0;
+    }
+    tempMatch[0] = '\0';
+    if (scan_cue_by_md5(cuePath, expectedMd5, tempMatch, (int)sizeof(tempMatch))) {
+        ok = chd_virtual_path_from_temp_match(chdPath, tempMatch, outPath, outPathLen);
+    }
+    cleanup_chd_temp(tempDir, cuePath);
+    return ok;
+}
+
+static int scan_chd_by_md5_list(const char *chdPath,
+                                const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX],
+                                int matched[]) {
+    char tempDir[ASSET_PATH_MAX];
+    char cuePath[ASSET_PATH_MAX];
+    char tempPaths[64][ASSET_PATH_MAX];
+    int tempMatched[64];
+    int foundCount = 0;
+    int i;
+    tempDir[0] = '\0';
+    cuePath[0] = '\0';
+    if (!chdPath || !md5List || md5Count <= 0 || md5Count > 64 ||
+        !outPaths || !matched) {
+        return 0;
+    }
+    if (!chd_extractcd_to_cue(chdPath, cuePath, sizeof(cuePath),
+                              tempDir, sizeof(tempDir))) {
+        return 0;
+    }
+    memset(tempPaths, 0, sizeof(tempPaths));
+    memcpy(tempMatched, matched, (size_t)md5Count * sizeof(tempMatched[0]));
+    (void)scan_cue_by_md5_list(cuePath, md5List, md5Count, tempPaths, tempMatched);
+    for (i = 0; i < md5Count; ++i) {
+        if (matched[i] || !tempMatched[i]) continue;
+        if (chd_virtual_path_from_temp_match(chdPath, tempPaths[i],
+                                             outPaths[i], ASSET_PATH_MAX)) {
+            matched[i] = 1;
+            ++foundCount;
+        }
+    }
+    cleanup_chd_temp(tempDir, cuePath);
+    return foundCount;
+}
+
+static int cue_first_data_payload_path(const char *cuePath,
+                                       char *outPath,
+                                       size_t outPathSize) {
+    FILE *fp;
+    char line[1024];
+    char currentFile[ASSET_PATH_MAX];
+    currentFile[0] = '\0';
+    if (!cuePath || !outPath || outPathSize == 0U) return 0;
+    fp = fopen(cuePath, "rb");
+    if (!fp) return 0;
+    while (fgets(line, sizeof(line), fp)) {
+        char fileName[ASSET_PATH_MAX];
+        if (cue_extract_file_name(line, fileName, sizeof(fileName))) {
+            strcpy(currentFile, fileName);
+            continue;
+        }
+        if (cue_track_is_data(line) && currentFile[0] != '\0' &&
+            cue_resolve_payload_path(cuePath, currentFile, outPath, outPathSize)) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
+static int copy_whole_file_to_path(const char *inPath, const char *outFilePath) {
+    unsigned char buf[8192];
+    FILE *in;
+    FILE *out;
+    size_t n;
+    int ok = 1;
+    if (!inPath || !outFilePath) return 0;
+    in = fopen(inPath, "rb");
+    if (!in) return 0;
+    out = fopen(outFilePath, "wb");
+    if (!out) {
+        fclose(in);
+        return 0;
+    }
+    while ((n = fread(buf, 1U, sizeof(buf), in)) > 0U) {
+        if (fwrite(buf, 1U, n, out) != n) ok = 0;
+    }
+    if (ferror(in)) ok = 0;
+    if (fclose(in) != 0) ok = 0;
+    if (fclose(out) != 0) ok = 0;
+    return ok;
+}
+
+static int chd_extract_entry_to_path(const char *chdPath,
+                                     const char *entryName,
+                                     const char *outFilePath) {
+    char tempDir[ASSET_PATH_MAX];
+    char cuePath[ASSET_PATH_MAX];
+    char payloadPath[ASSET_PATH_MAX];
+    int ok = 0;
+    tempDir[0] = '\0';
+    cuePath[0] = '\0';
+    if (!chd_extractcd_to_cue(chdPath, cuePath, sizeof(cuePath),
+                              tempDir, sizeof(tempDir))) {
+        return 0;
+    }
+    if (entryName && strcmp(entryName, "TRACK02.BIN") == 0 &&
+        cue_first_data_payload_path(cuePath, payloadPath, sizeof(payloadPath))) {
+        ok = copy_whole_file_to_path(payloadPath, outFilePath);
+    } else {
+        if (cue_first_data_payload_path(cuePath, payloadPath, sizeof(payloadPath))) {
+            ok = iso_extract_entry_to_path(payloadPath, entryName, outFilePath);
+        }
+    }
+    cleanup_chd_temp(tempDir, cuePath);
+    return ok;
+}
+
 static const char *external_archive_tool_for_path(const char *archivePath) {
     static const char *const defaultTools[] = {"7zz", "7z", "bsdtar", NULL};
     static const char *const tarTools[] = {"bsdtar", "7zz", "7z", NULL};
@@ -2395,10 +2633,7 @@ static const char *external_archive_tool_for_path(const char *archivePath) {
         is_external_tar_archive_path(archivePath) ? tarTools : defaultTools;
     int i;
     for (i = 0; tools[i] != NULL; ++i) {
-        char cmd[64];
-        if (snprintf(cmd, sizeof(cmd), "command -v %s >/dev/null 2>&1", tools[i]) <
-                (int)sizeof(cmd) &&
-            system(cmd) == 0) {
+        if (shell_tool_exists(tools[i])) {
             return tools[i];
         }
     }
@@ -2710,6 +2945,37 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
     return foundCount;
 }
 #else
+static int scan_chd_by_md5(const char *chdPath, const char *expectedMd5,
+                           char *outPath, int outPathLen) {
+    (void)chdPath;
+    (void)expectedMd5;
+    (void)outPath;
+    (void)outPathLen;
+    return 0;
+}
+
+static int scan_chd_by_md5_list(const char *chdPath,
+                                const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX],
+                                int matched[]) {
+    (void)chdPath;
+    (void)md5List;
+    (void)md5Count;
+    (void)outPaths;
+    (void)matched;
+    return 0;
+}
+
+static int chd_extract_entry_to_path(const char *chdPath,
+                                     const char *entryName,
+                                     const char *outFilePath) {
+    (void)chdPath;
+    (void)entryName;
+    (void)outFilePath;
+    return 0;
+}
+
 static int scan_external_archive_by_md5(const char *archivePath,
                                         const char *expectedMd5,
                                         char *outPath,
@@ -2768,6 +3034,9 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     if (kind == ASSET_CONTAINER_LHA) {
         return scan_lha_by_md5(path, expectedMd5, outPath, outPathLen);
     }
+    if (kind == ASSET_CONTAINER_CHD) {
+        return scan_chd_by_md5(path, expectedMd5, outPath, outPathLen);
+    }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
         return scan_external_archive_by_md5(path, expectedMd5, outPath, outPathLen);
     }
@@ -2799,6 +3068,9 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
     }
     if (kind == ASSET_CONTAINER_LHA) {
         return scan_lha_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    if (kind == ASSET_CONTAINER_CHD) {
+        return scan_chd_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
         return scan_external_archive_by_md5_list(path, md5List, md5Count,
@@ -3041,16 +3313,61 @@ int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
 int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
                            char *outPath, int outPathLen,
                            int *outMatchIndex, int maxDepth) {
+    char (*normalized)[33];
+    const char **normalizedPtrs;
+    char (*foundPaths)[ASSET_PATH_MAX];
+    int *matched;
+    int *originalIndices;
+    int inputCount = 0;
+    int normalizedCount = 0;
+    int i;
     if (!searchDir || !md5List || !outPath || outPathLen <= 0) return 0;
     if (maxDepth < 0) maxDepth = 3;
-    for (int i = 0; md5List[i] != NULL; i++) {
-        char normalizedMd5[33];
-        if (!normalize_md5(md5List[i], normalizedMd5)) continue;
-        if (scan_dir(searchDir, normalizedMd5, outPath, outPathLen, 0, maxDepth)) {
-            if (outMatchIndex) *outMatchIndex = i;
-            return 1;
+    while (md5List[inputCount] != NULL) {
+        ++inputCount;
+    }
+    if (inputCount == 0) return 0;
+    normalized = (char (*)[33])calloc((size_t)inputCount, sizeof(*normalized));
+    normalizedPtrs = (const char**)calloc((size_t)inputCount + 1U, sizeof(*normalizedPtrs));
+    foundPaths = (char (*)[ASSET_PATH_MAX])calloc((size_t)inputCount, sizeof(*foundPaths));
+    matched = (int*)calloc((size_t)inputCount, sizeof(*matched));
+    originalIndices = (int*)calloc((size_t)inputCount, sizeof(*originalIndices));
+    if (!normalized || !normalizedPtrs || !foundPaths || !matched || !originalIndices) {
+        free(normalized);
+        free(normalizedPtrs);
+        free(foundPaths);
+        free(matched);
+        free(originalIndices);
+        return 0;
+    }
+    for (i = 0; i < inputCount; ++i) {
+        if (normalize_md5(md5List[i], normalized[normalizedCount])) {
+            normalizedPtrs[normalizedCount] = normalized[normalizedCount];
+            originalIndices[normalizedCount] = i;
+            ++normalizedCount;
         }
     }
+    if (normalizedCount > 0) {
+        (void)scan_dir_by_md5_list(searchDir, normalizedPtrs, normalizedCount,
+                                   foundPaths, matched, 0, maxDepth);
+        for (i = 0; i < normalizedCount; ++i) {
+            if (matched[i] &&
+                copy_match_path(foundPaths[i], outPath, outPathLen)) {
+                if (outMatchIndex) *outMatchIndex = originalIndices[i];
+                free(normalized);
+                free(normalizedPtrs);
+                free(foundPaths);
+                free(matched);
+                free(originalIndices);
+                return 1;
+            }
+        }
+    }
+    free(normalized);
+    free(normalizedPtrs);
+    free(foundPaths);
+    free(matched);
+    free(originalIndices);
     return 0;
 }
 
@@ -3152,6 +3469,9 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     }
     if (kind == ASSET_CONTAINER_LHA) {
         return lha_extract_entry_to_path(container, entry, outFilePath);
+    }
+    if (kind == ASSET_CONTAINER_CHD) {
+        return chd_extract_entry_to_path(container, entry, outFilePath);
     }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
         return external_extract_entry_to_path(container, entry, outFilePath);
