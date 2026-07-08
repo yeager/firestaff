@@ -205,6 +205,69 @@ static void test_title_specials_and_full_limit(void)
                   "REVIVE.C F0281:448-464");
 }
 
+static void test_host_input_decisions(void)
+{
+    DM1_V1_ResurrectionRenameUiGatePc34Compat state;
+    DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat decision;
+
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_host_active_pc34(1, 1, 1) == 1,
+                  "M11 host active gate mirrors live F0281 rename panel");
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_host_active_pc34(1, 0, 1) == 0,
+                  "M11 host active gate requires candidate panel");
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_host_text_byte_pc34('A') == 1,
+                  "SDL_TEXTINPUT ASCII byte accepted for F0281");
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_host_text_byte_pc34(0x80) == 0,
+                  "SDL_TEXTINPUT non-ASCII byte stays outside F0281");
+
+    dm1_v1_resurrection_rename_ui_gate_init_pc34(
+        &state, DM1_V1_RESURRECTION_RENAME_UI_COMMAND_REINCARNATE_PC34_COMPAT);
+    memset(&decision, 0, sizeof(decision));
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+                      &state,
+                      DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_BACKSPACE_PC34_COMPAT,
+                      &decision) == 1,
+                  "host backspace is consumed by F0281 rename");
+    CHECK_REDMCSB(decision.handled == 1 && decision.useCommand == 1 &&
+                      decision.command ==
+                          DM1_V1_RESURRECTION_RENAME_UI_COMMAND_BACKSPACE_PC34_COMPAT,
+                  "REVIVE.C F0281:549-567 backspace command");
+
+    memset(&decision, 0, sizeof(decision));
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+                      &state,
+                      DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_RETURN_PC34_COMPAT,
+                      &decision) == 1,
+                  "host return is consumed by F0281 rename");
+    CHECK_REDMCSB(decision.handled == 1 && decision.useAscii == 1 &&
+                      decision.ascii == '\r' && decision.useCommand == 0,
+                  "REVIVE.C F0281:535-545 return moves name to title");
+
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_apply_ascii_pc34(&state, 'A') == 1,
+                  "REVIVE.C F0281:515-529 append name before title");
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_apply_ascii_pc34(&state, '\r') == 1,
+                  "REVIVE.C F0281:535-545 enter title field");
+    memset(&decision, 0, sizeof(decision));
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+                      &state,
+                      DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_KEYPAD_RETURN_PC34_COMPAT,
+                      &decision) == 1,
+                  "host keypad return is consumed by F0281 rename");
+    CHECK_REDMCSB(decision.handled == 1 && decision.useCommand == 1 &&
+                      decision.command ==
+                          DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT,
+                  "REVIVE.C F0281:448-464 title-mode return confirms OK");
+
+    memset(&decision, 0, sizeof(decision));
+    CHECK_REDMCSB(dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+                      &state,
+                      DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_OTHER_PC34_COMPAT,
+                      &decision) == 1,
+                  "other keydown is consumed but has no F0281 action");
+    CHECK_REDMCSB(decision.handled == 1 && decision.useCommand == 0 &&
+                      decision.useAscii == 0,
+                  "printables remain owned by SDL_TEXTINPUT path");
+}
+
 static void test_source_evidence_and_self_test(void)
 {
     const char *evidence =
@@ -228,6 +291,7 @@ int main(void)
     test_name_gate_and_ok();
     test_name_to_title_and_backspace();
     test_title_specials_and_full_limit();
+    test_host_input_decisions();
     test_source_evidence_and_self_test();
 
     if (g_failures != 0) {
