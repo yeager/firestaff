@@ -690,7 +690,7 @@ static void check_incomplete_required_files_block_m11(const char* label,
     expect_true(view.sourceKind != M11_GAME_SOURCE_DM2_BOOT,
                 "M11 incomplete/unverified DM2 launch does not claim DM2 boot source");
     expect_true(strstr(view.lastOutcome, seed_graphics && seed_dungeon
-                                      ? "DM2 ENTER GAME FAILED"
+                                      ? "DM2 ASSETS UNVERIFIED"
                                       : "DM2 ASSETS MISSING") != NULL,
                 "M11 reports the expected DM2 launch blocker status");
     M11_GameView_Shutdown(&view);

@@ -813,23 +813,115 @@ static void m11_dm2_boot_runtime_startup_snapshot(
         state->dm2State.startup_menu_selected_row;
 }
 
+typedef struct M11_DM2BootStartupViewModel {
+    DM2_V1_StartupDrawCommand commands[DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP];
+    int command_count;
+    char phase[DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP];
+    int startup_active;
+    char animation[DM2_V1_BOOT_STARTUP_VIEW_MODEL_ANIMATION_CAP];
+    int animation_active;
+    int title_frame;
+    int title_frame_max;
+    int title_ready;
+} M11_DM2BootStartupViewModel;
+
+static int m11_dm2_boot_runtime_startup_view_model(
+    const M11_GameViewState *state,
+    M11_DM2BootStartupViewModel *out_view_model)
+{
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
+    if (!state || !out_view_model) {
+        return 0;
+    }
+    memset(out_view_model, 0, sizeof(*out_view_model));
+    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+    return dm2_v1_boot_startup_view_model_from_snapshot(
+        &snapshot,
+        out_view_model->commands,
+        (int)(sizeof(out_view_model->commands) / sizeof(out_view_model->commands[0])),
+        &out_view_model->command_count,
+        out_view_model->phase,
+        (int)sizeof(out_view_model->phase),
+        &out_view_model->startup_active,
+        out_view_model->animation,
+        (int)sizeof(out_view_model->animation),
+        &out_view_model->animation_active,
+        &out_view_model->title_frame,
+        &out_view_model->title_frame_max,
+        &out_view_model->title_ready);
+}
+
+static int m11_dm2_boot_runtime_startup_idle(
+    const M11_GameViewState *state,
+    int mouth_redraw,
+    DM2_V1_StartupIdleReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+    return dm2_v1_boot_startup_advance_idle_from_snapshot(
+        &snapshot,
+        mouth_redraw,
+        out_receipt);
+}
+
+static int m11_dm2_boot_runtime_startup_input(
+    M11_GameViewState *state,
+    M12_MenuInput input,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
+    if (!state || !out_execution || !out_receipt) {
+        return 0;
+    }
+    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+    return dm2_v1_boot_startup_execute_firestaff_input_from_snapshot(
+        &snapshot,
+        (int)input,
+        m11_dm2_startup_apply_session_callback,
+        state,
+        out_execution,
+        out_receipt);
+}
+
+static int m11_dm2_boot_runtime_startup_pointer(
+    M11_GameViewState *state,
+    int x,
+    int y,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
+    if (!state || !out_execution || !out_receipt) {
+        return 0;
+    }
+    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+    return dm2_v1_boot_startup_execute_pointer_from_snapshot(
+        &snapshot,
+        x,
+        y,
+        m11_dm2_startup_apply_session_callback,
+        state,
+        out_execution,
+        out_receipt);
+}
+
 static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    DM2_V1_BootRuntimeStartupSnapshot snapshot;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
 
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-    if (!dm2_v1_boot_startup_execute_firestaff_input_from_snapshot(
-            &snapshot,
-            (int)input,
-            m11_dm2_startup_apply_session_callback,
+    if (!m11_dm2_boot_runtime_startup_input(
             state,
+            input,
             &execution,
             &action_receipt)) {
         return input == M12_MENU_INPUT_NONE
@@ -11221,7 +11313,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-        DM2_V1_BootRuntimeStartupSnapshot snapshot;
+        M11_DM2BootStartupViewModel view_model;
         out->levelLoaded = state->dm2State.level_loaded;
         out->mapIndex = state->world.party.mapIndex;
         out->partyX = state->dm2State.party_x;
@@ -11229,18 +11321,21 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->dm2State.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->dm2State.tick_count;
-        m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-        (void)dm2_v1_boot_startup_presentation_receipt_from_snapshot(
-            &snapshot,
-            out->startupPhase,
-            (int)sizeof(out->startupPhase),
-            &out->startupActive,
-            out->startupAnimation,
-            (int)sizeof(out->startupAnimation),
-            &out->startupAnimationActive,
-            &out->startupTitleFrame,
-            &out->startupTitleFrameMax,
-            &out->startupTitleReady);
+        if (m11_dm2_boot_runtime_startup_view_model(state, &view_model)) {
+            snprintf(out->startupPhase,
+                     sizeof(out->startupPhase),
+                     "%s",
+                     view_model.phase);
+            out->startupActive = view_model.startup_active;
+            snprintf(out->startupAnimation,
+                     sizeof(out->startupAnimation),
+                     "%s",
+                     view_model.animation);
+            out->startupAnimationActive = view_model.animation_active;
+            out->startupTitleFrame = view_model.title_frame;
+            out->startupTitleFrameMax = view_model.title_frame_max;
+            out->startupTitleReady = view_model.title_ready;
+        }
         return 1;
     }
 
@@ -12261,11 +12356,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (state->dm2State.startup_menu_active) {
-            DM2_V1_BootRuntimeStartupSnapshot snapshot;
             DM2_V1_StartupIdleReceipt receipt;
-            m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-            if (dm2_v1_boot_startup_advance_idle_from_snapshot(
-                    &snapshot,
+            if (m11_dm2_boot_runtime_startup_idle(
+                    state,
                     mouthRedraw,
                     &receipt)) {
                 return m11_dm2_startup_apply_host_receipt(
@@ -14411,7 +14504,6 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     int x,
     int y)
 {
-    DM2_V1_BootRuntimeStartupSnapshot snapshot;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
 
@@ -14420,13 +14512,10 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-    if (!dm2_v1_boot_startup_execute_pointer_from_snapshot(
-            &snapshot,
+    if (!m11_dm2_boot_runtime_startup_pointer(
+            state,
             x,
             y,
-            m11_dm2_startup_apply_session_callback,
-            state,
             &execution,
             &action_receipt)) {
         return M11_GAME_INPUT_IGNORED;
@@ -34015,22 +34104,15 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                       int framebufferWidth,
                                       int framebufferHeight)
 {
-    DM2_V1_BootRuntimeStartupSnapshot snapshot;
-    DM2_V1_StartupDrawCommand commands[32];
+    M11_DM2BootStartupViewModel view_model;
     DM2_V1_StartupDrawExecutor executor;
     M11_DM2StartupDrawContext context;
-    int command_count;
 
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
         return;
     }
-    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-    command_count =
-        dm2_v1_boot_startup_presentation_build_from_snapshot(
-            &snapshot,
-            commands,
-            (int)(sizeof(commands) / sizeof(commands[0])));
-    if (command_count <= 0) {
+    if (!m11_dm2_boot_runtime_startup_view_model(state, &view_model) ||
+        view_model.command_count <= 0) {
         return;
     }
     context.state = state;
@@ -34043,8 +34125,8 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     executor.outline_rect = m11_dm2_startup_exec_outline_rect;
     executor.draw_text = m11_dm2_startup_exec_text;
     (void)dm2_v1_boot_startup_execute_draw_commands(
-        commands,
-        command_count,
+        view_model.commands,
+        view_model.command_count,
         &executor);
 }
 
