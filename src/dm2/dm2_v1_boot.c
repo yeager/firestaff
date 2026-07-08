@@ -1181,6 +1181,51 @@ int dm2_v1_boot_startup_presentation_build_from_snapshot(
         max_commands);
 }
 
+int dm2_v1_boot_startup_view_model_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    void *out_commands,
+    int max_commands,
+    int *out_command_count,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready)
+{
+    int command_count = 0;
+    if (out_command_count) {
+        *out_command_count = 0;
+    }
+    if (!snapshot) {
+        return 0;
+    }
+    if (out_commands && max_commands > 0) {
+        command_count = dm2_v1_boot_startup_presentation_build_from_snapshot(
+            snapshot,
+            (DM2_V1_StartupDrawCommand *)out_commands,
+            max_commands);
+        if (out_command_count) {
+            *out_command_count = command_count;
+        }
+    }
+    (void)dm2_v1_boot_startup_presentation_receipt_from_snapshot(
+        snapshot,
+        out_phase,
+        out_phase_size,
+        out_startup_active,
+        out_animation,
+        out_animation_size,
+        out_animation_active,
+        out_title_frame,
+        out_title_frame_max,
+        out_title_ready);
+    return 1;
+}
+
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,

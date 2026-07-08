@@ -6,12 +6,12 @@
 
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
 typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
+typedef struct DM2_V1_StartupDrawCommand DM2_V1_StartupDrawCommand;
 struct DM2_V1_StartupHostReceipt;
 struct DM2_V1_SessionState;
 struct DM2_V1_StartupExecution;
 struct DM2_V1_StartupHostActionReceipt;
 struct DM2_V1_StartupIdleReceipt;
-struct DM2_V1_StartupDrawCommand;
 
 /* ══════════════════════════════════════════════════════════════════════
  * DM2 V1 Boot Profile — Phase 1: Runtime Profile Split
@@ -150,6 +150,12 @@ typedef struct {
     int initialize_hud_runtime;
     int initialize_touch_runtime;
 } DM2_V1_BootStartupRuntimeReceipt;
+
+enum {
+    DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP = 32,
+    DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP = 32,
+    DM2_V1_BOOT_STARTUP_VIEW_MODEL_ANIMATION_CAP = 32
+};
 
 /* ── Boot API ──────────────────────────────────────────────────────── */
 
@@ -304,12 +310,26 @@ int dm2_v1_boot_startup_presentation_build_from_runtime_state(
     int resume_available,
     unsigned int slot_mask,
     int selected_row,
-    struct DM2_V1_StartupDrawCommand *out_commands,
+    DM2_V1_StartupDrawCommand *out_commands,
     int max_commands);
 int dm2_v1_boot_startup_presentation_build_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
-    struct DM2_V1_StartupDrawCommand *out_commands,
+    DM2_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int dm2_v1_boot_startup_view_model_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    void *out_commands,
+    int max_commands,
+    int *out_command_count,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,
@@ -333,7 +353,7 @@ int dm2_v1_boot_startup_presentation_receipt_from_snapshot(
     int *out_title_frame_max,
     int *out_title_ready);
 int dm2_v1_boot_startup_execute_draw_commands(
-    const struct DM2_V1_StartupDrawCommand *commands,
+    const DM2_V1_StartupDrawCommand *commands,
     int command_count,
     const void *executor);
 int dm2_v1_boot_startup_execute_save_path_with_host_receipt(
