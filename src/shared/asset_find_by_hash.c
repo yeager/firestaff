@@ -300,6 +300,7 @@ typedef enum {
 
 static int is_zip_path(const char *path) {
     return has_case_suffix(path, ".zip") || has_case_suffix(path, ".cbz") ||
+           has_case_suffix(path, ".zipx") ||
            has_case_suffix(path, ".pk3") || has_case_suffix(path, ".jar") ||
            has_case_suffix(path, ".apk") || has_case_suffix(path, ".ipa") ||
            has_case_suffix(path, ".xpi") || has_case_suffix(path, ".whl") ||
@@ -326,6 +327,21 @@ static int is_tgz_path(const char *path) {
     return has_case_suffix(path, ".tgz") || has_case_suffix(path, ".tar.gz");
 }
 
+static int is_external_tar_archive_path(const char *path) {
+    return has_case_suffix(path, ".tbz") ||
+           has_case_suffix(path, ".tbz2") ||
+           has_case_suffix(path, ".tar.bz2") ||
+           has_case_suffix(path, ".txz") ||
+           has_case_suffix(path, ".tar.xz") ||
+           has_case_suffix(path, ".tlz") ||
+           has_case_suffix(path, ".tar.lz") ||
+           has_case_suffix(path, ".tar.lzma") ||
+           has_case_suffix(path, ".tzst") ||
+           has_case_suffix(path, ".tar.zst") ||
+           has_case_suffix(path, ".taz") ||
+           has_case_suffix(path, ".tar.z");
+}
+
 static int is_gzip_path(const char *path) {
     return (has_case_suffix(path, ".gz") || has_case_suffix(path, ".gzip")) &&
            !is_tgz_path(path);
@@ -337,11 +353,17 @@ static int is_lha_path(const char *path) {
 }
 
 static int is_external_archive_path(const char *path) {
-    return has_case_suffix(path, ".7z") || has_case_suffix(path, ".rar") ||
+    return is_external_tar_archive_path(path) ||
+           has_case_suffix(path, ".7z") || has_case_suffix(path, ".rar") ||
            has_case_suffix(path, ".arj") || has_case_suffix(path, ".arc") ||
            has_case_suffix(path, ".cab") || has_case_suffix(path, ".zoo") ||
            has_case_suffix(path, ".ace") || has_case_suffix(path, ".sit") ||
-           has_case_suffix(path, ".sitx") || has_case_suffix(path, ".dms");
+           has_case_suffix(path, ".sitx") || has_case_suffix(path, ".dms") ||
+           has_case_suffix(path, ".lzx") || has_case_suffix(path, ".cpio") ||
+           has_case_suffix(path, ".ar") || has_case_suffix(path, ".deb") ||
+           has_case_suffix(path, ".rpm") || has_case_suffix(path, ".xar") ||
+           has_case_suffix(path, ".bz2") || has_case_suffix(path, ".xz") ||
+           has_case_suffix(path, ".zst") || has_case_suffix(path, ".lzma");
 }
 
 static AssetContainerKind asset_container_kind_from_suffix(const char *path) {
@@ -381,6 +403,17 @@ static AssetContainerKind asset_container_kind_from_magic(const char *path) {
     if (got >= 2U && header[0] == 0x1f && header[1] == 0x8b) {
         fclose(fp);
         return ASSET_CONTAINER_GZIP;
+    }
+    if ((got >= 3U && memcmp(header, "BZh", 3U) == 0) ||
+        (got >= 6U && memcmp(header, "\xfd" "7zXZ\0", 6U) == 0) ||
+        (got >= 4U && header[0] == 0x28 && header[1] == 0xb5 &&
+         header[2] == 0x2f && header[3] == 0xfd) ||
+        (got >= 8U && memcmp(header, "!<arch>\n", 8U) == 0) ||
+        (got >= 6U && (memcmp(header, "070701", 6U) == 0 ||
+                       memcmp(header, "070702", 6U) == 0 ||
+                       memcmp(header, "070707", 6U) == 0))) {
+        fclose(fp);
+        return ASSET_CONTAINER_EXTERNAL;
     }
     if (got >= 7U && header[0] > 0U &&
         header[2] == '-' && header[3] == 'l' && header[4] == 'h') {
@@ -2355,8 +2388,11 @@ static int shell_append_quoted(char *cmd, size_t cmdSize, const char *arg) {
     return 1;
 }
 
-static const char *external_archive_tool(void) {
-    static const char *const tools[] = {"7zz", "7z", "bsdtar", NULL};
+static const char *external_archive_tool_for_path(const char *archivePath) {
+    static const char *const defaultTools[] = {"7zz", "7z", "bsdtar", NULL};
+    static const char *const tarTools[] = {"bsdtar", "7zz", "7z", NULL};
+    const char *const *tools =
+        is_external_tar_archive_path(archivePath) ? tarTools : defaultTools;
     int i;
     for (i = 0; tools[i] != NULL; ++i) {
         char cmd[64];
@@ -2436,7 +2472,7 @@ static int external_entry_md5(const char *archivePath, const char *entryName,
     size_t n;
     int ok = 1;
     if (!archivePath || !entryName || !outHex) return 0;
-    tool = external_archive_tool();
+    tool = external_archive_tool_for_path(archivePath);
     if (!tool) {
         return 0;
     }
@@ -2465,7 +2501,7 @@ static int external_extract_entry_to_path(const char *archivePath,
     size_t n;
     int ok = 1;
     if (!archivePath || !entryName || !outFilePath) return 0;
-    tool = external_archive_tool();
+    tool = external_archive_tool_for_path(archivePath);
     if (!tool) {
         return 0;
     }
@@ -2522,7 +2558,7 @@ static int scan_external_archive_by_md5(const char *archivePath,
     char bestName[ASSET_PATH_MAX];
     int hasMatch = 0;
     FILE *pipe;
-    const char *tool = external_archive_tool();
+    const char *tool = external_archive_tool_for_path(archivePath);
     if (!tool || !archivePath || !expectedMd5 || !outPath || outPathLen <= 0) {
         return 0;
     }
@@ -2587,7 +2623,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
     int foundCount = 0;
     int i;
     FILE *pipe;
-    const char *tool = external_archive_tool();
+    const char *tool = external_archive_tool_for_path(archivePath);
     if (!tool || !archivePath || !md5List ||
         md5Count <= 0 || md5Count > 64 || !outPaths || !matched) {
         return 0;
