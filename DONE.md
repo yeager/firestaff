@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB runtime receipt handoff apply: M11 CSB direct-start now applies the detached boot runtime receipt through one helper that covers active/source identity, graphics/font binding, startup init state, startup session state, profile sync, and launch host receipt. Verification: `test_csb_v1_boot_runtime_handoff` passed 304/304; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
+
 - ✅ 2026-07-08 DM2 boot launch ownership cleanup: DM2 boot now emits M11-ready prepare-failure receipts and owns launch-profile use for snapshot startup/resume. M11 direct-start no longer reads `launch.profile`, `failure_status_scope`, or `failure_status` before runtime detach. Verification: `test_dm2_v1_boot_profile_smoke` passed 63/63; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
 
 - ✅ 2026-07-08 Nexus level-0 runtime receipt: Nexus launcher now emits an M11-ready runtime receipt for title/source identity, engine pointer, title-screen keep/free policy, dungeon path, party pose, title fallback status, boot log, and startup launch receipt. M11 consumes that receipt instead of reading raw boot receipt fields. Verification: `test_nexus_v1_startup_menu_pc34_compat` passed; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; `git diff --check` passed.

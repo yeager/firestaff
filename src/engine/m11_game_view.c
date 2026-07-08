@@ -3204,6 +3204,73 @@ static M11_GameInputResult m11_csb_startup_apply_host_receipt(
     }
 }
 
+static int m11_csb_apply_boot_runtime_receipt(
+    M11_GameViewState *state,
+    const M11_GameLaunchSpec *spec,
+    const CSB_V1_BootStartupRuntimeReceipt_PC34 *receipt)
+{
+    if (!state || !spec || !receipt || !receipt->profile) {
+        return 0;
+    }
+    state->active = 1;
+    state->startedFromLauncher = 1;
+    state->sourceKind = M11_GAME_SOURCE_CSB_BOOT;
+    snprintf(state->bootAssetMd5,
+             sizeof(state->bootAssetMd5),
+             "%s",
+             receipt->boot_asset_md5);
+    state->presentationMode = spec->presentationMode;
+    state->presentationWidth = spec->presentationWidth;
+    state->presentationHeight = spec->presentationHeight;
+    snprintf(state->title,
+             sizeof(state->title),
+             "%s",
+             receipt->title[0]
+                 ? receipt->title
+                 : (spec->title ? spec->title : "CHAOS STRIKES BACK"));
+    snprintf(state->sourceId,
+             sizeof(state->sourceId),
+             "%s",
+             receipt->source_id[0]
+                 ? receipt->source_id
+                 : (spec->sourceId ? spec->sourceId : "csb"));
+    snprintf(state->dungeonPath,
+             sizeof(state->dungeonPath),
+             "%s",
+             receipt->dungeon_path);
+    /* ReDMCSB ENTRANCE.C F0806 hands dungeon and graphics globals to the
+     * CSB runtime before the first dungeon frame. M11's shared V1 chrome and
+     * font paths still use the asset loader, so bind them from the verified
+     * CSB boot receipt. */
+    if (receipt->bind_graphics_to_m11_asset_loader &&
+        receipt->graphics_path[0] != '\0' &&
+        M11_AssetLoader_Init(&state->assetLoader, receipt->graphics_path)) {
+        state->assetsAvailable = 1;
+        if (receipt->load_original_font_from_graphics) {
+            M11_Font_Init(&state->originalFont);
+            if (M11_Font_LoadFromGraphicsDat(
+                    &state->originalFont,
+                    state->assetLoader.fileState,
+                    state->assetLoader.runtimeState)) {
+                state->originalFontAvailable = 1;
+            }
+        }
+    }
+    state->csbBootProfile = receipt->profile;
+    m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+    m11_csb_startup_init_state_receipt_to_m11(
+        state,
+        &receipt->receipts.init_state);
+    m11_apply_csb_runtime_startup_session_state_receipt(
+        state,
+        &receipt->receipts.session_state);
+    m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+    (void)m11_csb_startup_apply_host_receipt(
+        state,
+        &receipt->receipts.launch_host_receipt);
+    return 1;
+}
+
 static void m11_csb_startup_tick_receipt_to_m11(
     M11_GameViewState *state,
     const CSB_V1_StartupTickReceipt_PC34 *receipt)
@@ -10631,58 +10698,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;
         }
-        state->active = 1;
-        state->startedFromLauncher = 1;
-        state->sourceKind = M11_GAME_SOURCE_CSB_BOOT;
-        snprintf(state->bootAssetMd5,
-                 sizeof(state->bootAssetMd5),
-                 "%s",
-                 runtime_receipt.boot_asset_md5);
-        state->presentationMode = spec->presentationMode;
-        state->presentationWidth = spec->presentationWidth;
-        state->presentationHeight = spec->presentationHeight;
-        snprintf(state->title, sizeof(state->title), "%s",
-                 runtime_receipt.title[0]
-                     ? runtime_receipt.title
-                     : (spec->title ? spec->title : "CHAOS STRIKES BACK"));
-        snprintf(state->sourceId, sizeof(state->sourceId), "%s",
-                 runtime_receipt.source_id[0]
-                     ? runtime_receipt.source_id
-                     : (spec->sourceId ? spec->sourceId : "csb"));
-        snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
-                 runtime_receipt.dungeon_path);
-        /* ReDMCSB ENTRANCE.C F0806 hands both dungeon and graphics globals to
-         * the CSB runtime before the first dungeon frame.  M11's shared V1
-         * chrome/object/font draw paths are still asset-loader based, so bind
-         * them to the verified CSB GRAPHICS.DAT instead of leaving CSB on the
-         * no-assets fallback path. */
-        if (runtime_receipt.bind_graphics_to_m11_asset_loader &&
-            runtime_receipt.graphics_path[0] != '\0' &&
-            M11_AssetLoader_Init(&state->assetLoader,
-                                 runtime_receipt.graphics_path)) {
-            state->assetsAvailable = 1;
-            if (runtime_receipt.load_original_font_from_graphics) {
-                M11_Font_Init(&state->originalFont);
-                if (M11_Font_LoadFromGraphicsDat(
-                        &state->originalFont,
-                        state->assetLoader.fileState,
-                        state->assetLoader.runtimeState)) {
-                    state->originalFontAvailable = 1;
-                }
-            }
+        if (!m11_csb_apply_boot_runtime_receipt(state, spec, &runtime_receipt)) {
+            csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+            return 0;
         }
-        state->csbBootProfile = runtime_receipt.profile;
-        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-        m11_csb_startup_init_state_receipt_to_m11(
-            state,
-            &runtime_receipt.receipts.init_state);
-        m11_apply_csb_runtime_startup_session_state_receipt(
-            state,
-            &runtime_receipt.receipts.session_state);
-        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-        (void)m11_csb_startup_apply_host_receipt(
-            state,
-            &runtime_receipt.receipts.launch_host_receipt);
         csb_v1_boot_startup_launch_cleanup_pc34(&launch);
         /* Tier 4: CSB launcher stderr-pipe — surface the boot milestone to
          * stderr so `firestaff_tier1_strict_boot_probe` and CI can detect
