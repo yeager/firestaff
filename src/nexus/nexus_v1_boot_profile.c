@@ -188,22 +188,21 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
     }
 
     /* Check for DGN level directory — at least one level must exist */
-    {
-        char dgnPath[512];
-        snprintf(dgnPath, sizeof(dgnPath), "%s%sLEVEL1.DGN", dataDir, sep);
-        FILE *f = fopen(dgnPath, "rb");
-        if (!f && diagCount < maxDiags) {
+    if (nexus_v1_boot_check_asset_hash_or_file(dataDir, "LEV00.DGN",
+                                               "603ec9c531a92539babdda84ab09e78e",
+                                               NEXUS_V1_DIAG_OK,
+                                               diags,
+                                               &diagCount) != 0 &&
+        diagCount < maxDiags) {
             diags[diagCount].code = NEXUS_V1_DIAG_MISSING_DGN_LEVEL;
             snprintf(diags[diagCount].message, sizeof(diags[0].message),
                      "%s", g_diagStrings[NEXUS_V1_DIAG_MISSING_DGN_LEVEL]);
             snprintf(diags[diagCount].detail, sizeof(diags[0].detail),
-                     "Level file not found: %s", dgnPath);
+                     "Level file not found by hash or path: %s%sLEV00.DGN",
+                     dataDir, sep);
             snprintf(diags[diagCount].suggestion, sizeof(diags[0].suggestion),
-                     "Ensure Nexus CD image extracted to data directory.");
+                     "Ensure Nexus CD image extraction includes the LEV00.DGN payload.");
             diagCount++;
-        } else if (f) {
-            fclose(f);
-        }
     }
 
     /* Check for champion data directory */
