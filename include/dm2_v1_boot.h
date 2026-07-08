@@ -162,6 +162,29 @@ typedef struct {
     int operation_result;
 } DM2_V1_BootRuntimeReceipt;
 
+typedef enum {
+    DM2_V1_BOOT_ACTION_NO_TARGET = 0,
+    DM2_V1_BOOT_ACTION_SHOP,
+    DM2_V1_BOOT_ACTION_DOOR,
+    DM2_V1_BOOT_ACTION_NPC,
+    DM2_V1_BOOT_ACTION_ACTUATOR,
+    DM2_V1_BOOT_ACTION_NO_ACTION
+} DM2_V1_BootRuntimeActionKind;
+
+typedef struct {
+    DM2_V1_BootRuntimeReceipt runtime;
+    DM2_V1_BootRuntimeActionKind action_kind;
+    int target_level;
+    int target_x;
+    int target_y;
+    int target_square;
+    const char *status_scope;
+    const char *status;
+    const char *inspect_title;
+    const char *inspect_text;
+    int reset_shop_selection;
+} DM2_V1_BootRuntimeActionReceipt;
+
 enum {
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP = 32,
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP = 32,
@@ -393,6 +416,10 @@ int dm2_v1_boot_runtime_turn(DM2_V1_BootProfile *profile,
 int dm2_v1_boot_runtime_move(DM2_V1_BootProfile *profile,
                              int direction,
                              DM2_V1_BootRuntimeReceipt *out_receipt);
+int dm2_v1_boot_runtime_action_front_cell(
+    DM2_V1_BootProfile *profile,
+    int direction,
+    DM2_V1_BootRuntimeActionReceipt *out_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

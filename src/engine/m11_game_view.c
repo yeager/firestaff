@@ -14102,52 +14102,31 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (input == M12_MENU_INPUT_ACCEPT ||
             input == M12_MENU_INPUT_ACTION) {
-            DM2_V1_GameState *world = (DM2_V1_GameState *)state->dm2World;
-            static const int dx[4] = {0, 1, 0, -1};
-            static const int dy[4] = {-1, 0, 1, 0};
-            int level = world ? world->current_level : 0;
-            int fx = state->dm2State.party_x + dx[dir];
-            int fy = state->dm2State.party_y + dy[dir];
-            int square = dm2_v1_runtime_get_square_type(level, fx, fy);
-
-            if (dm2_v1_runtime_enter_shop(level, fx, fy) == 0) {
+            DM2_V1_BootRuntimeActionReceipt receipt;
+            if (!dm2_v1_boot_runtime_action_front_cell(
+                    (DM2_V1_BootProfile *)state->dm2BootProfile,
+                    dir,
+                    &receipt)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            if (receipt.reset_shop_selection) {
                 state->dm2ShopSelectedStockIndex = 0;
                 state->dm2ShopSelectedInventoryIndex = 0;
-                m11_set_status(state, "ACTION", "DM2 SHOP");
-                m11_sync_dm2_state_from_runtime(state);
-                return M11_GAME_INPUT_REDRAW;
-            } else if (square >= 0) {
-                if (square == 4 &&
-                           dm2_v1_runtime_door_action(level, fx, fy,
-                                                       dir, 0) == 0) {
-                    m11_set_status(state, "ACTION", "DM2 DOOR");
-                } else if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
-                    int npc_id = dm2_v1_runtime_get_last_npc_id();
-                    int npc_line_index =
-                        dm2_v1_runtime_get_last_npc_dialog_line();
-                    const char *npc_name =
-                        dm2_v1_npc_get_name(npc_id);
-                    const char *npc_line =
-                        dm2_v1_npc_get_dialog(npc_id, npc_line_index);
-                    m11_set_status(state, "ACTION", "DM2 INTERACT");
-                    m11_set_inspect_readout(state,
-                                            npc_name ? npc_name : "DM2 NPC",
-                                            npc_line ? npc_line :
-                                                       "WELCOME, TRAVELER.");
-                } else if (dm2_v1_runtime_invoke_square_actuators(
-                               level, fx, fy) > 0) {
-                    m11_set_status(state, "ACTION", "DM2 ACTUATOR");
-                } else if (dm2_v1_runtime_invoke_actuator(
-                               level, fx, fy,
-                               DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH, 0u) == 0) {
-                    m11_set_status(state, "ACTION", "DM2 ACTUATOR");
-                } else {
-                    m11_set_status(state, "ACTION", "DM2 NO ACTION");
-                }
-                m11_sync_dm2_state_from_runtime(state);
-                return M11_GAME_INPUT_REDRAW;
             }
-            m11_set_status(state, "ACTION", "DM2 NO TARGET");
+            m11_set_status(state,
+                           receipt.status_scope ? receipt.status_scope
+                                                : "ACTION",
+                           receipt.status ? receipt.status
+                                          : "DM2 NO TARGET");
+            if (receipt.inspect_title || receipt.inspect_text) {
+                m11_set_inspect_readout(
+                    state,
+                    receipt.inspect_title ? receipt.inspect_title
+                                          : "DM2",
+                    receipt.inspect_text ? receipt.inspect_text
+                                         : "");
+            }
+            m11_sync_dm2_state_from_runtime(state);
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;

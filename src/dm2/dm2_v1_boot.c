@@ -24,6 +24,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_save_load.h"
+#include "dm2_v1_shop.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -1465,6 +1466,97 @@ int dm2_v1_boot_runtime_move(DM2_V1_BootProfile *profile,
     if (out_receipt) {
         out_receipt->operation_result = result;
     }
+    return 1;
+}
+
+static void dm2_v1_boot_runtime_action_receipt_clear(
+    DM2_V1_BootRuntimeActionReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->action_kind = DM2_V1_BOOT_ACTION_NO_TARGET;
+        receipt->target_square = -1;
+        receipt->status_scope = "ACTION";
+        receipt->status = "DM2 NO TARGET";
+    }
+}
+
+int dm2_v1_boot_runtime_action_front_cell(
+    DM2_V1_BootProfile *profile,
+    int direction,
+    DM2_V1_BootRuntimeActionReceipt *out_receipt)
+{
+    DM2_V1_GameState *game;
+    DM2_V1_BootRuntimeReceipt runtime;
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    int dir = direction & 3;
+    int level;
+    int fx;
+    int fy;
+    int square;
+
+    dm2_v1_boot_runtime_action_receipt_clear(out_receipt);
+    if (!profile || !profile->dm2_state || !out_receipt) {
+        return 0;
+    }
+    game = (DM2_V1_GameState *)profile->dm2_state;
+    if (!dm2_v1_boot_runtime_capture(profile, &runtime)) {
+        return 0;
+    }
+    level = game->current_level;
+    fx = runtime.party_x + dx[dir];
+    fy = runtime.party_y + dy[dir];
+    square = dm2_v1_runtime_get_square_type(level, fx, fy);
+
+    out_receipt->runtime = runtime;
+    out_receipt->target_level = level;
+    out_receipt->target_x = fx;
+    out_receipt->target_y = fy;
+    out_receipt->target_square = square;
+    out_receipt->status_scope = "ACTION";
+
+    if (dm2_v1_runtime_enter_shop(level, fx, fy) == 0) {
+        out_receipt->action_kind = DM2_V1_BOOT_ACTION_SHOP;
+        out_receipt->status = "DM2 SHOP";
+        out_receipt->reset_shop_selection = 1;
+    } else if (square >= 0) {
+        if (square == 4 &&
+            dm2_v1_runtime_door_action(level, fx, fy, dir, 0) == 0) {
+            out_receipt->action_kind = DM2_V1_BOOT_ACTION_DOOR;
+            out_receipt->status = "DM2 DOOR";
+        } else if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
+            int npc_id = dm2_v1_runtime_get_last_npc_id();
+            int npc_line_index = dm2_v1_runtime_get_last_npc_dialog_line();
+            out_receipt->action_kind = DM2_V1_BOOT_ACTION_NPC;
+            out_receipt->status = "DM2 INTERACT";
+            out_receipt->inspect_title = dm2_v1_npc_get_name(npc_id);
+            out_receipt->inspect_text =
+                dm2_v1_npc_get_dialog(npc_id, npc_line_index);
+            if (!out_receipt->inspect_title) {
+                out_receipt->inspect_title = "DM2 NPC";
+            }
+            if (!out_receipt->inspect_text) {
+                out_receipt->inspect_text = "WELCOME, TRAVELER.";
+            }
+        } else if (dm2_v1_runtime_invoke_square_actuators(level, fx, fy) > 0 ||
+                   dm2_v1_runtime_invoke_actuator(
+                       level,
+                       fx,
+                       fy,
+                       DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH,
+                       0u) == 0) {
+            out_receipt->action_kind = DM2_V1_BOOT_ACTION_ACTUATOR;
+            out_receipt->status = "DM2 ACTUATOR";
+        } else {
+            out_receipt->action_kind = DM2_V1_BOOT_ACTION_NO_ACTION;
+            out_receipt->status = "DM2 NO ACTION";
+        }
+    } else {
+        out_receipt->action_kind = DM2_V1_BOOT_ACTION_NO_TARGET;
+        out_receipt->status = "DM2 NO TARGET";
+    }
+    (void)dm2_v1_boot_runtime_capture(profile, &out_receipt->runtime);
     return 1;
 }
 
