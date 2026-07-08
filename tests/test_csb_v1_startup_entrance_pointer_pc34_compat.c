@@ -1762,6 +1762,16 @@ int main(void)
               command_receipt.runtime_plan.bonus_dungeon &&
               command_state_receipt.entrance_active,
           "startup entrance command facts helper owns runtime handoff receipt");
+    check(csb_v1_startup_input_result_for_entrance_apply_pc34(
+              CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34) ==
+              CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              csb_v1_startup_input_result_for_entrance_apply_pc34(
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_RETURN_TO_LAUNCHER_PC34) ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34 &&
+              csb_v1_startup_input_result_for_entrance_apply_pc34(
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_IGNORED_PC34) ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34,
+          "startup entrance apply result maps to input result in CSB module");
 
     memset(&init_state_receipt, 0xff, sizeof(init_state_receipt));
     check(csb_v1_startup_init_state_receipt_pc34(

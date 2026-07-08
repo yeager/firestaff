@@ -734,6 +734,9 @@ int csb_v1_startup_apply_entrance_command_from_facts_with_receipts_pc34(
     int command_id,
     CSB_V1_StartupEntranceCommandReceipt_PC34 *out_command_receipt,
     CSB_V1_StartupCommandStateReceipt_PC34 *out_state_receipt);
+CSB_V1_StartupEntranceInputResult_PC34
+csb_v1_startup_input_result_for_entrance_apply_pc34(
+    CSB_V1_StartupEntranceApplyResult_PC34 apply_result);
 int csb_v1_startup_entrance_input_outcome_pc34(
     const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
     int resume_available,

@@ -2331,6 +2331,22 @@ int csb_v1_startup_apply_entrance_command_from_facts_with_receipts_pc34(
         out_state_receipt);
 }
 
+CSB_V1_StartupEntranceInputResult_PC34
+csb_v1_startup_input_result_for_entrance_apply_pc34(
+    CSB_V1_StartupEntranceApplyResult_PC34 apply_result)
+{
+    switch (apply_result) {
+        case CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34:
+            return CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34;
+        case CSB_V1_STARTUP_ENTRANCE_APPLY_RETURN_TO_LAUNCHER_PC34:
+            return CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34;
+        case CSB_V1_STARTUP_ENTRANCE_APPLY_IGNORED_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34:
+        default:
+            return CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34;
+    }
+}
+
 int csb_v1_startup_entrance_input_outcome_pc34(
     const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
     int resume_available,
