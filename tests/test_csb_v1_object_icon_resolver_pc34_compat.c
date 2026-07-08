@@ -180,6 +180,50 @@ int main(void)
                       &boot, dagger, name, sizeof(name)),
                   1);
         check_str("boot-profile dagger name", name, "DAGGER");
+        boot.runtime.party_state_valid = 1;
+        boot.runtime.party_state.ChampionCount = 1;
+        boot.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+            lit_torch;
+        boot.runtime.party_state.Champions[0].CurrentHealth = 10;
+        boot.runtime.party_state.Champions[0].CurrentStamina = 20;
+        boot.runtime.party_state.Champions[0].CurrentMana = 30;
+        boot.runtime.party_state.LeaderHandThing = THING_NONE;
+        check_int("boot-profile inventory slot write",
+                  csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                      &boot,
+                      0,
+                      CSB_V1_SLOT_ACTION_HAND,
+                      dagger),
+                  1);
+        check_int("boot-profile inventory slot stored",
+                  boot.runtime.party_state.Champions[0]
+                      .Slots[CSB_V1_SLOT_ACTION_HAND],
+                  dagger);
+        check_int("boot-profile leader hand write",
+                  csb_v1_runtime_write_leader_hand_from_boot_profile_pc34(
+                      &boot,
+                      lit_torch),
+                  1);
+        check_int("boot-profile leader hand stored",
+                  boot.runtime.party_state.LeaderHandThing,
+                  lit_torch);
+        check_int("boot-profile vitals write",
+                  csb_v1_runtime_write_champion_vitals_from_boot_profile_pc34(
+                      &boot,
+                      0,
+                      77,
+                      66,
+                      55),
+                  1);
+        check_int("boot-profile health stored",
+                  boot.runtime.party_state.Champions[0].CurrentHealth,
+                  77);
+        check_int("boot-profile stamina stored",
+                  boot.runtime.party_state.Champions[0].CurrentStamina,
+                  66);
+        check_int("boot-profile mana stored",
+                  boot.runtime.party_state.Champions[0].CurrentMana,
+                  55);
 
         memset(name, 0, sizeof(name));
         check_int("dagger has CSB-owned name",
