@@ -1205,6 +1205,96 @@ int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
     return 1;
 }
 
+int dm2_v1_startup_execute_firestaff_input_from_host_facts_with_receipt(
+    const DM2_V1_StartupHostFacts *facts,
+    int menu_input,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    DM2_V1_StartupAction action;
+    DM2_V1_StartupMenuStateReceipt menu_receipt;
+
+    if (out_execution) {
+        dm2_v1_startup_execution_clear(out_execution);
+    }
+    if (out_receipt) {
+        dm2_v1_startup_host_action_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        dm2_v1_startup_action_clear(&action);
+        return 0;
+    }
+    if (!dm2_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
+            &menu_receipt,
+            facts,
+            menu_input,
+            &action)) {
+        return 0;
+    }
+    if (!dm2_v1_startup_execute_action_from_host_facts_with_receipt(
+            &action,
+            facts,
+            apply_session,
+            apply_userdata,
+            out_execution,
+            out_receipt)) {
+        return 0;
+    }
+    if (!out_receipt->menu_state_receipt_valid) {
+        out_receipt->menu_state_receipt = menu_receipt;
+        out_receipt->menu_state_receipt_valid = 1;
+    }
+    return 1;
+}
+
+int dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
+    const DM2_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    DM2_V1_StartupAction action;
+    DM2_V1_StartupMenuStateReceipt menu_receipt;
+
+    if (out_execution) {
+        dm2_v1_startup_execution_clear(out_execution);
+    }
+    if (out_receipt) {
+        dm2_v1_startup_host_action_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        dm2_v1_startup_action_clear(&action);
+        return 0;
+    }
+    if (!dm2_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
+            &menu_receipt,
+            facts,
+            x,
+            y,
+            &action)) {
+        return 0;
+    }
+    if (!dm2_v1_startup_execute_action_from_host_facts_with_receipt(
+            &action,
+            facts,
+            apply_session,
+            apply_userdata,
+            out_execution,
+            out_receipt)) {
+        return 0;
+    }
+    if (!out_receipt->menu_state_receipt_valid) {
+        out_receipt->menu_state_receipt = menu_receipt;
+        out_receipt->menu_state_receipt_valid = 1;
+    }
+    return 1;
+}
+
 void dm2_v1_startup_host_receipt_clear(
     DM2_V1_StartupHostReceipt *receipt)
 {

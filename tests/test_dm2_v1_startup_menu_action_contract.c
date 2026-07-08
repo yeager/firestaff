@@ -46,6 +46,7 @@ int main(void)
     DM2_V1_StartupMenuStateReceipt state_receipt;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupRect panel_rect;
+    DM2_V1_StartupRect row_rect;
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupRowKind row_kind;
     DM2_V1_StartupRenderRow rows[4];
@@ -498,6 +499,28 @@ int main(void)
               host_receipt.mode_update.startup_menu_active == 0 &&
               strcmp(host_receipt.status, "DM2 NEW GAME") == 0,
           "combined action execution can return M11-ready host receipt directly");
+    host_facts.resume_available = 1;
+    host_facts.slot_mask = (1u << 2);
+    host_facts.selected_row = 2;
+    g_apply_calls = 0;
+    g_apply_result = 1;
+    memset(&g_applied_session, 0, sizeof(g_applied_session));
+    check(dm2_v1_startup_execute_firestaff_input_from_host_facts_with_receipt(
+              &host_facts,
+              9,
+              test_apply_session,
+              NULL,
+              &execution,
+              &host_action_receipt) &&
+              g_apply_calls == 1 &&
+              g_applied_session.champion_count == 4 &&
+              host_action_receipt.host_receipt.input_result ==
+                  DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
+              host_action_receipt.host_receipt.mode_update.set_startup_menu_active &&
+              host_action_receipt.host_receipt.mode_update.startup_menu_active == 0 &&
+              host_action_receipt.menu_state_receipt_valid &&
+              host_action_receipt.menu_state_receipt.selected_row == 2,
+          "host facts keyboard wrapper executes startup action and returns M11 receipt");
     check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               strcmp(outcome.status_scope, "STARTUP") == 0 &&
@@ -631,6 +654,28 @@ int main(void)
               state_receipt.selected_row == 0 &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE,
           "state receipt host facts pointer helper owns M11 pointer state copy contract");
+    host_facts.resume_available = 1;
+    host_facts.slot_mask = (1u << 2);
+    host_facts.selected_row = 0;
+    g_apply_calls = 0;
+    g_apply_result = 1;
+    memset(&g_applied_session, 0, sizeof(g_applied_session));
+    check(dm2_v1_startup_row_rect(2, &row_rect) &&
+              dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
+                  &host_facts,
+                  row_rect.x + 4,
+                  row_rect.y + 4,
+                  test_apply_session,
+                  NULL,
+                  &execution,
+                  &host_action_receipt) &&
+              g_apply_calls == 1 &&
+              host_action_receipt.host_receipt.input_result ==
+                  DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
+              host_action_receipt.host_receipt.mode_update.set_startup_menu_active &&
+              host_action_receipt.menu_state_receipt_valid &&
+              host_action_receipt.menu_state_receipt.selected_row == 2,
+          "host facts pointer wrapper executes startup action and returns M11 receipt");
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");
