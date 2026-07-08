@@ -641,6 +641,36 @@ static void test_melee_action_tick_plan(void) {
              "missing champion rejected");
 }
 
+static void test_melee_damage_emission_plan(void) {
+    DM1_MeleeDamageEmissionInputPc34 in;
+    DM1_MeleeDamageEmissionPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.damage = 0;
+    in.combatOutcome = COMBAT_OUTCOME_MISS;
+    CHECK_EQ(dm1_v1_melee_damage_emission_plan_f0231_pc34(&in, &out), 1,
+             "zero damage emission plan builds");
+    CHECK_EQ(out.valid, 1, "zero damage emission valid");
+    CHECK_EQ(out.performed, 1, "zero damage with outcome is performed");
+    CHECK_EQ(out.showDamageFeedback, 0, "zero damage hides feedback");
+    CHECK_EQ(out.damage, 0, "zero damage copied");
+
+    in.damage = 17;
+    in.combatOutcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+    CHECK_EQ(dm1_v1_melee_damage_emission_plan_f0231_pc34(&in, &out), 1,
+             "positive damage emission plan builds");
+    CHECK_EQ(out.performed, 1, "positive damage performed");
+    CHECK_EQ(out.showDamageFeedback, 1, "positive damage shows feedback");
+    CHECK_EQ(out.damage, 17, "positive damage copied");
+
+    in.damage = 0;
+    in.combatOutcome = COMBAT_OUTCOME_INVALID;
+    CHECK_EQ(dm1_v1_melee_damage_emission_plan_f0231_pc34(&in, &out), 1,
+             "invalid emission plan builds");
+    CHECK_EQ(out.performed, 0, "invalid outcome not performed");
+    CHECK_EQ(out.showDamageFeedback, 0, "invalid outcome no feedback");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -668,6 +698,7 @@ int main(void) {
     test_flip_and_direction_plans();
     test_closed_door_melee_plan();
     test_melee_action_tick_plan();
+    test_melee_damage_emission_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

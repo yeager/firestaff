@@ -40,3 +40,20 @@ int dm1_v1_melee_action_tick_plan_f0402_pc34(
                       CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK);
     return 1;
 }
+
+int dm1_v1_melee_damage_emission_plan_f0231_pc34(
+    const DM1_MeleeDamageEmissionInputPc34* in,
+    DM1_MeleeDamageEmissionPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    /* ReDMCSB: MENU.C F0402 lines 1053-1056 treats F0231 as performed once a
+     * target creature exists.  PROJEXPL.C F0231 lines 1514-1517 then may
+     * return zero damage; only positive G0513 damage is rendered as feedback. */
+    out->valid = 1;
+    out->damage = in->damage;
+    out->performed = in->combatOutcome != COMBAT_OUTCOME_INVALID;
+    out->showDamageFeedback = in->damage > 0;
+    return 1;
+}

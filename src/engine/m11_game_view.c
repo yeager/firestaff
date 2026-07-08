@@ -9962,28 +9962,27 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
         m11_audio_emit_for_emission(state, e);
         switch (e->kind) {
             case EMIT_DAMAGE_DEALT: {
-                int champIdx = state->world.party.activeChampionIndex;
-                int dmgDealt = (int)e->payload[2];
-                if (dmgDealt <= 0) {
-                    /* ReDMCSB: MENU.C F0402 lines 1053-1056 treats
-                     * F0231 as an action performed when a target exists even
-                     * if PROJEXPL.C F0231 lines 1514-1517 return zero damage.
-                     * Zero-damage F0231 emissions keep action timing/reaction
-                     * semantics, but they do not draw G0513 damage text,
-                     * award damage XP, or show C014 creature-hit feedback. */
+                DM1_MeleeDamageEmissionInputPc34 meleeEmissionIn;
+                DM1_MeleeDamageEmissionPlanPc34 meleeEmissionPlan;
+                memset(&meleeEmissionIn, 0, sizeof(meleeEmissionIn));
+                memset(&meleeEmissionPlan, 0, sizeof(meleeEmissionPlan));
+                meleeEmissionIn.damage = (int)e->payload[2];
+                meleeEmissionIn.combatOutcome = (int)e->payload[3];
+                if (!dm1_v1_melee_damage_emission_plan_f0231_pc34(
+                        &meleeEmissionIn, &meleeEmissionPlan) ||
+                    !meleeEmissionPlan.showDamageFeedback) {
                     break;
                 }
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: DAMAGE %d DEALT",
                               (unsigned int)state->world.gameTick,
-                              dmgDealt);
-                (void)champIdx;
+                              meleeEmissionPlan.damage);
                 /* ReDMCSB: PROJEXPL.C F0231 lines 1534-1536 awards
                  * damage XP/stamina at hit resolution, and MENU.C F0407
                  * lines 1620-1628 separately applies the action tail XP.
                  * M10 owns those source effects; M11 only presents the
                  * positive EMIT_DAMAGE_DEALT feedback. */
-                M11_GameView_NotifyCreatureHit(state, dmgDealt);
+                M11_GameView_NotifyCreatureHit(state, meleeEmissionPlan.damage);
                 break;
             }
             case EMIT_KILL_NOTIFY: {
@@ -12709,8 +12708,15 @@ static int m11_last_attack_tick_emitted_damage(const M11_GameViewState* state) {
     if (!state) return 0;
     for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
         if (state->lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
-            return state->lastTickResult.emissions[i].payload[3] !=
-                   COMBAT_OUTCOME_INVALID;
+            DM1_MeleeDamageEmissionInputPc34 in;
+            DM1_MeleeDamageEmissionPlanPc34 plan;
+            memset(&in, 0, sizeof(in));
+            memset(&plan, 0, sizeof(plan));
+            in.damage = (int)state->lastTickResult.emissions[i].payload[2];
+            in.combatOutcome =
+                (int)state->lastTickResult.emissions[i].payload[3];
+            return dm1_v1_melee_damage_emission_plan_f0231_pc34(&in, &plan) &&
+                   plan.performed;
         }
     }
     return 0;
