@@ -14,6 +14,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: DM1 viewport now owns combined center/side lane visibility receipts consumed by M11 wall/content gates. Remaining runtime coding work is deeper renderer ownership plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 inscription font now owns decoded line-count and raw glyph/font support checks consumed by M11 wall inscription rendering. Remaining runtime coding work is deeper renderer ownership plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 viewport lane-visibility receipts now also carry center visible-depth masks and center-line clear checks used by M11 side content/explosion gates. Remaining runtime coding work is deeper renderer ownership plus packaged full-graphics proof.
+  - 2026-07-08 update: DM1 throw/shoot compat now owns F0305/F0140/F0328/F0407 pure math for throw weights, stamina, XP, launch cells, potion projectile subtype, shoot ammo matching, step energy, and attack clamps. Remaining runtime coding work is stateful projectile/materialisation ownership plus packaged full-graphics proof.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 

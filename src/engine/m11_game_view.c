@@ -94,6 +94,7 @@
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "dm1_v1_throw_shoot_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
@@ -24708,39 +24709,6 @@ static int m11_dm1_thing_weapon_info(const M11_GameViewState* state,
     return dm1_weapon_info_pc34(weaponType, outInfo) > 0;
 }
 
-static int m11_dm1_f0305_throwing_stamina_cost_from_weight(int objectWeight) {
-    int weight;
-    int cost;
-
-    weight = objectWeight >> 1;
-    if (weight < 1) cost = 1;
-    else if (weight > 10) cost = 10;
-    else cost = weight;
-
-    while ((weight -= 10) > 0) {
-        cost += weight >> 1;
-    }
-    return cost;
-}
-
-static const unsigned char M11_DM1_ARMOUR_WEIGHT_F0140[58] = {
-      3,   4,   3,   6,  16,   4,   4,   3,   3,   4,
-      2,   4,   5,   3,   3,   4,   6,   8,  14,   6,
-      5,   5,   5,   4,   6,  11,  14,  15,  11,  10,
-     14,  21,  65,  53,  52,  41,  16,  16,  19, 120,
-     80,  28,  34,  17, 108,  72,  24,  30,  35, 141,
-     90,  31,  40,  14,  57,  81,   3,   2
-};
-
-static const unsigned char M11_DM1_JUNK_WEIGHT_F0140[53] = {
-      1,   3,   2,   2,   4,  15,   1,   1,   1,   2,
-      1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
-      1,   1,   1,   1,   1,  81,   2,   3,   2,   4,
-      4,   3,   8,   5,  11,   4,   6,   2,   3,   2,
-      2,   2,   6,   9,   3,  10,   1,   0,   1,   1,
-      2,   0,   8
-};
-
 static int m11_dm1_f0140_object_weight_for_throw_depth(
     const M11_GameViewState* state,
     unsigned short thing,
@@ -24763,26 +24731,16 @@ static int m11_dm1_f0140_object_weight_for_throw_depth(
         state->world.things && state->world.things->armours &&
         thingIndex >= 0 && thingIndex < state->world.things->armourCount) {
         int armourType = (int)state->world.things->armours[thingIndex].type;
-        if (armourType >= 0 &&
-            armourType < (int)(sizeof(M11_DM1_ARMOUR_WEIGHT_F0140) /
-                               sizeof(M11_DM1_ARMOUR_WEIGHT_F0140[0]))) {
-            return (int)M11_DM1_ARMOUR_WEIGHT_F0140[armourType];
-        }
+        int weight = dm1_v1_throw_armour_weight_f0140_pc34(armourType);
+        if (weight >= 0) return weight;
     }
     if (thingType == THING_TYPE_JUNK &&
         state->world.things && state->world.things->junks &&
         thingIndex >= 0 && thingIndex < state->world.things->junkCount) {
         int junkType = (int)state->world.things->junks[thingIndex].type;
-        if (junkType >= 0 &&
-            junkType < (int)(sizeof(M11_DM1_JUNK_WEIGHT_F0140) /
-                             sizeof(M11_DM1_JUNK_WEIGHT_F0140[0]))) {
-            int weight = (int)M11_DM1_JUNK_WEIGHT_F0140[junkType];
-            if (junkType == 1) { /* ReDMCSB C01_JUNK_WATERSKIN. */
-                weight += ((int)state->world.things->junks[thingIndex]
-                               .chargeCount) << 1;
-            }
-            return weight;
-        }
+        int weight = dm1_v1_throw_junk_weight_f0140_pc34(
+            junkType, (int)state->world.things->junks[thingIndex].chargeCount);
+        if (weight >= 0) return weight;
     }
     if (thingType == THING_TYPE_CONTAINER &&
         state->world.things && state->world.things->containers &&
@@ -24831,20 +24789,21 @@ static int m11_dm1_f0140_object_weight_for_throw(
 static int m11_dm1_f0328_throw_xp_for_thing(const M11_GameViewState* state,
                                             unsigned short thing,
                                             const DM1_WeaponInfo* info) {
-    int xp = 8;
+    int isWeapon = THING_GET_TYPE(thing) == THING_TYPE_WEAPON;
     DM1_WeaponInfo localInfo;
     const DM1_WeaponInfo* weaponInfo = info;
 
-    if (THING_GET_TYPE(thing) != THING_TYPE_WEAPON) return xp;
-    if (!weaponInfo) {
-        if (!m11_dm1_thing_weapon_info(state, thing, &localInfo)) return xp + 4;
+    if (isWeapon && !weaponInfo) {
+        if (!m11_dm1_thing_weapon_info(state, thing, &localInfo)) {
+            return dm1_v1_throw_xp_for_object_pc34(1, 0, 0, 0);
+        }
         weaponInfo = &localInfo;
     }
-    xp += 4;
-    if (weaponInfo->weaponClass <= 12) {
-        xp += weaponInfo->kineticEnergy >> 2;
-    }
-    return xp;
+    return dm1_v1_throw_xp_for_object_pc34(
+        isWeapon,
+        weaponInfo ? 1 : 0,
+        weaponInfo ? weaponInfo->weaponClass : 0,
+        weaponInfo ? weaponInfo->kineticEnergy : 0);
 }
 
 static void m11_dm1_award_throw_xp(M11_GameViewState* state,
@@ -24916,13 +24875,11 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
 
 static int m11_dm1_f0328_throw_side(const M11_GameViewState* state,
                                     const struct ChampionState_Compat* champ) {
-    int partyDir;
     if (!state || !champ) return 0;
-    partyDir = state->world.party.direction & 3;
     /* ReDMCSB MENU.C F0407 lines 1613-1615 passes side=TRUE when the
      * champion cell is NEXT(partyDir) or OPPOSITE(partyDir). */
-    return ((int)champ->cell == ((partyDir + 1) & 3) ||
-            (int)champ->cell == ((partyDir + 2) & 3)) ? 1 : 0;
+    return dm1_v1_throw_side_pc34((int)champ->cell,
+                                  state->world.party.direction);
 }
 
 static int m11_dm1_f0312_action_hand_strength_for_throw(
@@ -24991,29 +24948,22 @@ static int m11_dm1_f0328_throw_kinetic_energy(M11_GameViewState* state,
                                               int throwSkillLevel,
                                               const DM1_WeaponInfo* weaponInfo,
                                               int hasWeaponInfo) {
-    int weaponKineticEnergy = 1;
-    int kineticEnergy;
-    if (hasWeaponInfo && weaponInfo && weaponInfo->weaponClass <= 12) {
-        weaponKineticEnergy = weaponInfo->kineticEnergy;
-    }
-    kineticEnergy = baseStrength + weaponKineticEnergy;
-    return kineticEnergy +
-        F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16) +
-        (kineticEnergy >> 1) + throwSkillLevel;
+    int rng16 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16);
+    return dm1_v1_throw_kinetic_energy_pc34(
+        baseStrength, throwSkillLevel, hasWeaponInfo,
+        weaponInfo ? weaponInfo->weaponClass : 0,
+        weaponInfo ? weaponInfo->kineticEnergy : 0,
+        rng16);
 }
 
 static int m11_dm1_f0328_throw_attack(M11_GameViewState* state,
                                       int throwSkillLevel) {
-    int attack = (throwSkillLevel << 3) +
-        F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 32);
-    if (attack < 40) attack = 40;
-    if (attack > 200) attack = 200;
-    return attack;
+    int rng32 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 32);
+    return dm1_v1_throw_attack_pc34(throwSkillLevel, rng32);
 }
 
 static int m11_dm1_f0328_throw_step_energy(int throwSkillLevel) {
-    int stepEnergy = 11 - throwSkillLevel;
-    return stepEnergy < 5 ? 5 : stepEnergy;
+    return dm1_v1_throw_step_energy_pc34(throwSkillLevel);
 }
 
 static int m11_dm1_thrown_potion_projectile_shape(
@@ -25035,11 +24985,8 @@ static int m11_dm1_thrown_potion_projectile_shape(
         return 0;
     }
     potionType = (int)state->world.things->potions[potionIndex].type;
-    if (potionType == M11_POTION_VEN) {
-        if (outSubtype) *outSubtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
-    } else if (potionType == 19) { /* ReDMCSB C19_POTION_FUL_BOMB. */
-        if (outSubtype) *outSubtype = PROJECTILE_SUBTYPE_FIREBALL;
-    } else {
+    if (!dm1_v1_thrown_potion_projectile_subtype_pc34(
+            potionType, outSubtype)) {
         return 0;
     }
     if (outPotionPower) {
@@ -25073,7 +25020,7 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
 
     hasWeaponInfo = m11_dm1_thing_weapon_info(state, thrownThing, &weaponInfo);
     objectWeight = m11_dm1_f0140_object_weight_for_throw(state, thrownThing);
-    staminaCost = m11_dm1_f0305_throwing_stamina_cost_from_weight(
+    staminaCost = dm1_v1_throwing_stamina_cost_from_weight_pc34(
         objectWeight);
     throwExperience = m11_dm1_f0328_throw_xp_for_thing(
         state, thrownThing, hasWeaponInfo ? &weaponInfo : 0);
@@ -25272,16 +25219,7 @@ static const M11_DM1WeaponInfo* m11_dm1_weapon_info_for_thing(
 }
 
 static int m11_dm1_shoot_step_energy(int actionClass, int* outStepEnergy) {
-    if (!outStepEnergy) return 0;
-    if (actionClass >= 16 && actionClass <= 31) {
-        *outStepEnergy = actionClass - 16;
-        return 1;
-    }
-    if (actionClass >= 32 && actionClass <= 47) {
-        *outStepEnergy = actionClass - 32;
-        return 1;
-    }
-    return 0;
+    return dm1_v1_shoot_step_energy_pc34(actionClass, outStepEnergy);
 }
 
 static int m11_dm1_shoot_ammunition_matches(
@@ -25292,13 +25230,7 @@ static int m11_dm1_shoot_ammunition_matches(
     if (!actionInfo || !readyInfo) return 0;
     actionClass = actionInfo->weaponClass;
     readyClass = readyInfo->weaponClass;
-    if (actionClass >= 16 && actionClass <= 31) {
-        return readyClass == 10;
-    }
-    if (actionClass >= 32 && actionClass <= 47) {
-        return readyClass == 11;
-    }
-    return 0;
+    return dm1_v1_shoot_ammunition_matches_pc34(actionClass, readyClass);
 }
 
 static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
@@ -25371,9 +25303,7 @@ static int m11_refill_ready_hand_after_shoot(M11_GameViewState* state,
 
 static int m11_dm1_projectile_launch_cell(int championCell,
                                            int direction) {
-    championCell &= 3;
-    direction &= 3;
-    return (((((championCell - direction + 1) & 2) >> 1) + direction) & 3);
+    return dm1_v1_projectile_launch_cell_pc34(championCell, direction);
 }
 
 static int m11_dm1_shoot_skill_level(const M11_GameViewState* state,
@@ -25385,8 +25315,7 @@ static int m11_dm1_shoot_skill_level(const M11_GameViewState* state,
 
 static int m11_dm1_f0407_shoot_attack(int weaponShootAttack,
                                       int shootSkillLevel) {
-    int attack = (weaponShootAttack + shootSkillLevel) << 1;
-    return attack > 255 ? 255 : attack;
+    return dm1_v1_shoot_attack_pc34(weaponShootAttack, shootSkillLevel);
 }
 
 int M11_GameView_ProbeF0407ShootAttack(
@@ -25409,8 +25338,7 @@ static int m11_dm1_throw_skill_level(const M11_GameViewState* state,
 
 static int m11_dm1_f0328_throw_attack_probe_legacy(int baseAttack,
                                                   int throwSkillLevel) {
-    int attack = (baseAttack + throwSkillLevel) << 1;
-    return attack > 255 ? 255 : attack;
+    return dm1_v1_legacy_throw_attack_probe_pc34(baseAttack, throwSkillLevel);
 }
 
 int M11_GameView_ProbeF0328ThrowAttack(

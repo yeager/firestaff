@@ -169,6 +169,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_original_save_pc34_handoff.c
+    src/dm1/dm1_v1_throw_shoot_pc34_compat.c
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_sound.c
     src/dm2/dm2_v1_drops.c)
@@ -12655,6 +12656,17 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_projectile_explosion_render_source_lock
         COMMAND test_dm1_v1_projectile_explosion_render_pc34_compat
+    )
+    add_executable(test_dm1_v1_throw_shoot_pc34_compat
+        tests/test_dm1_v1_throw_shoot_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_throw_shoot_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_throw_shoot_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_throw_shoot_pc34_compat
+        COMMAND test_dm1_v1_throw_shoot_pc34_compat
     )
     add_executable(test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat
         tests/test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat.c
