@@ -286,12 +286,24 @@ static int is_better_iso_entry(const char *candidate, const char *current) {
     return asset_casecmp(candidate, current) < 0;
 }
 
+typedef enum {
+    ASSET_CONTAINER_NONE = 0,
+    ASSET_CONTAINER_ZIP,
+    ASSET_CONTAINER_ISO,
+    ASSET_CONTAINER_CUE,
+    ASSET_CONTAINER_TAR,
+    ASSET_CONTAINER_TGZ,
+    ASSET_CONTAINER_GZIP,
+    ASSET_CONTAINER_LHA
+} AssetContainerKind;
+
 static int is_zip_path(const char *path) {
     return has_case_suffix(path, ".zip") || has_case_suffix(path, ".cbz") ||
            has_case_suffix(path, ".pk3") || has_case_suffix(path, ".jar") ||
            has_case_suffix(path, ".apk") || has_case_suffix(path, ".ipa") ||
            has_case_suffix(path, ".xpi") || has_case_suffix(path, ".whl") ||
-           has_case_suffix(path, ".wsz") || has_case_suffix(path, ".kmz");
+           has_case_suffix(path, ".wsz") || has_case_suffix(path, ".kmz") ||
+           has_case_suffix(path, ".pk4") || has_case_suffix(path, ".nupkg");
 }
 
 static int is_iso_path(const char *path) {
@@ -323,10 +335,69 @@ static int is_lha_path(const char *path) {
            has_case_suffix(path, ".lzs");
 }
 
+static AssetContainerKind asset_container_kind_from_suffix(const char *path) {
+    if (is_zip_path(path)) return ASSET_CONTAINER_ZIP;
+    if (is_iso_path(path)) return ASSET_CONTAINER_ISO;
+    if (is_cue_path(path)) return ASSET_CONTAINER_CUE;
+    if (is_tar_path(path)) return ASSET_CONTAINER_TAR;
+    if (is_tgz_path(path)) return ASSET_CONTAINER_TGZ;
+    if (is_gzip_path(path)) return ASSET_CONTAINER_GZIP;
+    if (is_lha_path(path)) return ASSET_CONTAINER_LHA;
+    return ASSET_CONTAINER_NONE;
+}
+
+static int asset_magic_at(FILE *fp, long offset, const char *magic, size_t magicLen) {
+    unsigned char buf[8];
+    if (!fp || !magic || magicLen == 0U || magicLen > sizeof(buf)) return 0;
+    if (fseek(fp, offset, SEEK_SET) != 0) return 0;
+    if (fread(buf, 1U, magicLen, fp) != magicLen) return 0;
+    return memcmp(buf, magic, magicLen) == 0;
+}
+
+static AssetContainerKind asset_container_kind_from_magic(const char *path) {
+    FILE *fp;
+    unsigned char header[32];
+    size_t got;
+    if (!path) return ASSET_CONTAINER_NONE;
+    fp = fopen(path, "rb");
+    if (!fp) return ASSET_CONTAINER_NONE;
+    got = fread(header, 1U, sizeof(header), fp);
+    if (got >= 4U && header[0] == 0x50 && header[1] == 0x4b &&
+        (header[2] == 0x03 || header[2] == 0x05 || header[2] == 0x07) &&
+        (header[3] == 0x04 || header[3] == 0x06 || header[3] == 0x08)) {
+        fclose(fp);
+        return ASSET_CONTAINER_ZIP;
+    }
+    if (got >= 2U && header[0] == 0x1f && header[1] == 0x8b) {
+        fclose(fp);
+        return ASSET_CONTAINER_GZIP;
+    }
+    if (got >= 7U && header[0] > 0U &&
+        header[2] == '-' && header[3] == 'l' && header[4] == 'h') {
+        fclose(fp);
+        return ASSET_CONTAINER_LHA;
+    }
+    if (asset_magic_at(fp, 257L, "ustar", 5U)) {
+        fclose(fp);
+        return ASSET_CONTAINER_TAR;
+    }
+    if (asset_magic_at(fp, 16L * 2048L + 1L, "CD001", 5U) ||
+        asset_magic_at(fp, 16L * 2352L + 16L + 1L, "CD001", 5U)) {
+        fclose(fp);
+        return ASSET_CONTAINER_ISO;
+    }
+    fclose(fp);
+    return ASSET_CONTAINER_NONE;
+}
+
+static AssetContainerKind asset_container_kind_for_path(const char *path) {
+    AssetContainerKind kind = asset_container_kind_from_suffix(path);
+    if (kind != ASSET_CONTAINER_NONE) return kind;
+    return asset_container_kind_from_magic(path);
+}
+
 static int is_supported_container_path(const char *path) {
-    return is_zip_path(path) || is_iso_path(path) || is_cue_path(path) ||
-           is_tar_path(path) || is_tgz_path(path) || is_gzip_path(path) ||
-           is_lha_path(path);
+    return asset_container_kind_for_path(path) != ASSET_CONTAINER_NONE;
 }
 
 static int is_known_large_whole_file_hash(const char *expectedMd5) {
@@ -2241,25 +2312,26 @@ static int lha_extract_entry_to_path(const char *lhaPath, const char *entryName,
 
 static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
-    if (is_zip_path(path)) {
+    AssetContainerKind kind = asset_container_kind_for_path(path);
+    if (kind == ASSET_CONTAINER_ZIP) {
         return scan_zip_by_md5(path, expectedMd5, outPath, outPathLen);
     }
-    if (is_iso_path(path)) {
+    if (kind == ASSET_CONTAINER_ISO) {
         return scan_iso_by_md5(path, expectedMd5, outPath, outPathLen);
     }
-    if (is_cue_path(path)) {
+    if (kind == ASSET_CONTAINER_CUE) {
         return scan_cue_by_md5(path, expectedMd5, outPath, outPathLen);
     }
-    if (is_tar_path(path)) {
+    if (kind == ASSET_CONTAINER_TAR) {
         return tar_scan_file_by_md5(path, expectedMd5, outPath, outPathLen);
     }
-    if (is_tgz_path(path)) {
+    if (kind == ASSET_CONTAINER_TGZ) {
         return scan_tgz_by_md5(path, expectedMd5, outPath, outPathLen);
     }
-    if (is_gzip_path(path)) {
+    if (kind == ASSET_CONTAINER_GZIP) {
         return scan_gzip_by_md5(path, expectedMd5, outPath, outPathLen);
     }
-    if (is_lha_path(path)) {
+    if (kind == ASSET_CONTAINER_LHA) {
         return scan_lha_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     return 0;
@@ -2269,25 +2341,26 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
                                       int md5Count,
                                       char outPaths[][ASSET_PATH_MAX],
                                       int matched[]) {
-    if (is_zip_path(path)) {
+    AssetContainerKind kind = asset_container_kind_for_path(path);
+    if (kind == ASSET_CONTAINER_ZIP) {
         return scan_zip_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
-    if (is_iso_path(path)) {
+    if (kind == ASSET_CONTAINER_ISO) {
         return scan_iso_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
-    if (is_cue_path(path)) {
+    if (kind == ASSET_CONTAINER_CUE) {
         return scan_cue_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
-    if (is_tar_path(path)) {
+    if (kind == ASSET_CONTAINER_TAR) {
         return tar_scan_file_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
-    if (is_tgz_path(path)) {
+    if (kind == ASSET_CONTAINER_TGZ) {
         return scan_tgz_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
-    if (is_gzip_path(path)) {
+    if (kind == ASSET_CONTAINER_GZIP) {
         return scan_gzip_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
-    if (is_lha_path(path)) {
+    if (kind == ASSET_CONTAINER_LHA) {
         return scan_lha_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     return 0;
@@ -2613,6 +2686,7 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     char container[ASSET_PATH_MAX];
     const char *entry;
     size_t containerLen;
+    AssetContainerKind kind;
     if (!virtualPath || !outFilePath) return 0;
     sep = strstr(virtualPath, "::");
     if (!sep) return 0;
@@ -2622,19 +2696,20 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     container[containerLen] = '\0';
     entry = sep + 2;
     if (entry[0] == '\0') return 0;
-    if (is_zip_path(container)) {
+    kind = asset_container_kind_for_path(container);
+    if (kind == ASSET_CONTAINER_ZIP) {
         return zip_extract_entry_to_path(container, entry, outFilePath);
     }
-    if (is_tar_path(container)) {
+    if (kind == ASSET_CONTAINER_TAR) {
         return tar_extract_file_entry(container, entry, outFilePath);
     }
-    if (is_tgz_path(container)) {
+    if (kind == ASSET_CONTAINER_TGZ) {
         return tgz_extract_entry_to_path(container, entry, outFilePath);
     }
-    if (is_gzip_path(container)) {
+    if (kind == ASSET_CONTAINER_GZIP) {
         return gzip_extract_entry_to_path(container, entry, outFilePath);
     }
-    if (is_lha_path(container)) {
+    if (kind == ASSET_CONTAINER_LHA) {
         return lha_extract_entry_to_path(container, entry, outFilePath);
     }
     /* CUE sheets may reference a data image with no .iso/.bin suffix.

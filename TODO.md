@@ -3,7 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 boot-data discovery follow-up: Continue replacing optional boot/intro filename assumptions with hash/signature scans beyond SWSH, DM1 TITLE, Nexus boot surfaces, the CLI data validator, legacy asset pipeline, DM2 V1 boot scan, and Theron Track 02 boot scan.
-  - 2026-07-08 update: shared hash scanner now scans ZIP-compatible archives (`.zip`, `.cbz`, `.pk3`, `.jar`, `.apk`, `.ipa`, `.xpi`, `.whl`, `.wsz`, `.kmz`), ISO/BIN/IMG/CDR/TOAST/RAW/MDF, CUE, TAR, TGZ, GZ, and stored LHA/LZH/LZS entries. Remaining archive work is compressed LHA methods and true 7z/RAR/CHD support via a portable decoder.
+  - 2026-07-08 update: shared hash scanner now scans ZIP-compatible archives (`.zip`, `.cbz`, `.pk3`, `.pk4`, `.jar`, `.apk`, `.ipa`, `.xpi`, `.whl`, `.wsz`, `.kmz`, `.nupkg`), ISO/BIN/IMG/CDR/TOAST/RAW/MDF, CUE, TAR, TGZ, GZ, and stored LHA/LZH/LZS entries. ZIP/ISO/TAR/GZ/LHA are also detected by file signature when renamed. Remaining archive work is compressed LHA methods and true 7z/RAR/CHD support via a portable decoder.
 
 - 🔧 2026-07-07 RetroAchievements follow-up: Firestaff now has a shared RetroAchievements runtime/config/event adapter, CLI activation flags, and persisted launcher settings for enable, hardcore mode, username, and API-token status. Remaining work is the real `rcheevos rc_client` backend, HTTP request bridge, login validation, badge/overlay rendering, and per-game achievement memory/event mapping.
   - 2026-07-07 update: the modern start-menu settings panel now lets users edit RA username and API token directly, with token masking in visible UI. Remaining RA work is still backend/login/overlay/per-game achievement mapping.

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 signature-based game-data container scan: the shared hash scanner now detects ZIP, ISO/BIN, TAR, GZIP, and stored LHA containers by file signature when files have wrong or arbitrary suffixes. Added `.pk4`/`.nupkg` ZIP-compatible suffixes and regression coverage for renamed ZIP/ISO virtual scan/extract.
+
 - ✅ 2026-07-08 DM2 direct resume host receipts: DM2 startup now owns M11 host receipts for invalid resume path, resume load/apply failure, and resumed state. M11 applies those receipts instead of setting DM2 direct-resume boot status strings directly.
 
 - ✅ 2026-07-08 Nexus resume host receipts: Nexus startup now owns M11 host receipts for resume failure, bad level, bad direction, level-load failure, engine-lost, and resumed states. M11 applies those receipts instead of setting Nexus resume boot status strings directly.
