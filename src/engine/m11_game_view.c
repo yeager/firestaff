@@ -11191,7 +11191,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->dm2State.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->dm2State.tick_count;
-        (void)dm2_v1_startup_presentation_receipt(
+        (void)dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
             state->dm2State.startup_menu_active,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
@@ -11247,8 +11247,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             ? ((Theron_V1_World*)state->theronWorld)->party.champion_count
             : -1;
         out->runtimeTick = state->theronState.tick_count;
-        (void)theron_v1_startup_presentation_receipt(
-            (Theron_StartupPhase)state->theronState.startup_phase,
+        (void)theron_v1_boot_startup_presentation_receipt_from_runtime_state(
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
@@ -11257,7 +11256,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             &out->startupAnimationActive,
             &out->startupTitleFrame,
             &out->startupTitleFrameMax,
-            &out->startupTitleReady);
+            &out->startupTitleReady,
+            state->theronState.startup_phase);
         return 1;
     }
 
@@ -13856,9 +13856,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             moveResult = theron_v1_move_party(world, dir);
             if (moveResult == THERON_MOVE_EXIT) {
                 Theron_StartupActionHostReceipt receipt;
-                (void)theron_v1_startup_return_to_stage_select_after_exit_host_receipt(
-                    world,
-                    &receipt);
+                (void)theron_v1_boot_startup_return_to_stage_select_after_exit_host_receipt(
+                    &receipt,
+                    world);
                 return m11_theron_apply_startup_action_host_receipt(
                     state,
                     &receipt);
@@ -13872,9 +13872,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             int moveResult = theron_v1_move_party(world, dir);
             if (moveResult == THERON_MOVE_EXIT) {
                 Theron_StartupActionHostReceipt receipt;
-                (void)theron_v1_startup_return_to_stage_select_after_exit_host_receipt(
-                    world,
-                    &receipt);
+                (void)theron_v1_boot_startup_return_to_stage_select_after_exit_host_receipt(
+                    &receipt,
+                    world);
                 return m11_theron_apply_startup_action_host_receipt(
                     state,
                     &receipt);

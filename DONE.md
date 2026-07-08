@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron/DM2 boot presentation wrappers: Theron boot now owns M11-facing startup presentation receipts and dungeon-exit return-to-stage-select host receipts; DM2 boot now owns M11-facing startup presentation receipts. M11 no longer calls those Theron/DM2 startup helpers directly. Verification: strict compiles for `theron_v1_boot.c`, `dm2_v1_boot.c`, and `m11_game_view.c`; direct Theron M11 launch test passed; Phase A passed 24/24; `git diff --check` passed. Note: no DM2 boot test binary was present in the local build tree.
+
 - ✅ 2026-07-08 Linux manual page refresh: Expanded `docs/linux/firestaff.1` into a full user manual with primary CLI options, RetroAchievements flags, hash-scanned game-data behavior, archives/disc images, saves/config paths, controls, boot-probe options, environment variables, examples, and exit codes. Verification: `mandoc -Tlint`, rendered man output, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB boot utility/entrance runtime-state wrappers: CSB boot now owns utility render, utility pointer/keyboard, and entrance pointer/keyboard host-action wrappers from runtime state. M11 no longer constructs CSB startup host facts anywhere in `m11_game_view.c`. Verification: strict compiles for `csb_v1_boot.c` and `m11_game_view.c`; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.

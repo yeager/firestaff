@@ -1105,6 +1105,47 @@ int theron_v1_boot_startup_render_plan_from_runtime_state(
         out_plan);
 }
 
+int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready,
+    int startup_phase)
+{
+    return theron_v1_startup_presentation_receipt(
+        (Theron_StartupPhase)startup_phase,
+        out_phase,
+        out_phase_size,
+        out_startup_active,
+        out_animation,
+        out_animation_size,
+        out_animation_active,
+        out_title_frame,
+        out_title_frame_max,
+        out_title_ready);
+}
+
+int theron_v1_boot_startup_return_to_stage_select_after_exit_host_receipt(
+    Theron_StartupActionHostReceipt *out_receipt,
+    Theron_V1_World *world)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_action_host_receipt_init(out_receipt);
+    if (!world) {
+        return 0;
+    }
+    return theron_v1_startup_return_to_stage_select_after_exit_host_receipt(
+        world,
+        out_receipt);
+}
+
 static void theron_v1_boot_startup_launch_host_receipt_init(
     Theron_StartupHostReceipt *receipt) {
     if (!receipt) {
