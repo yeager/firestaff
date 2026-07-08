@@ -27000,40 +27000,34 @@ static void m11_schedule_projectile_door_destruction(
                                          &r->outNextTick);
 }
 
-static int m11_maybe_attach_thrown_sharp_weapon_to_group(
+static int m11_projectile_associated_weapon_type(
     M11_GameViewState* state,
-    struct DungeonGroup_Compat* group,
-    const struct ProjectileInstance_Compat* projectile,
-    int damageOutcome) {
+    const struct ProjectileInstance_Compat* projectile) {
     unsigned short associatedThing;
     int weaponIndex;
-    int weaponType;
-    const struct CreatureBehaviorProfile_Compat* profile;
-    if (!state || !group || !projectile || !state->world.things) return 0;
-    if (damageOutcome != COMBAT_OUTCOME_KILLED_NO_CREATURES) return 0;
-    if (projectile->projectileCategory != PROJECTILE_CATEGORY_KINETIC) return 0;
+    if (!state || !projectile || !state->world.things) return -1;
 
     associatedThing = (unsigned short)projectile->reserved1;
-    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return 0;
-    if (THING_GET_TYPE(associatedThing) != THING_TYPE_WEAPON) return 0;
-
-    profile = CREATURE_GetProfile_Compat((int)group->creatureType);
-    if (!profile ||
-            ((profile->attributes
-              & CREATURE_ATTR_MASK_KEEP_THROWN_SHARP_WEAPONS) == 0)) {
-        return 0;
-    }
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return -1;
+    if (THING_GET_TYPE(associatedThing) != THING_TYPE_WEAPON) return -1;
 
     weaponIndex = THING_GET_INDEX(associatedThing);
     if (!state->world.things->weapons ||
             weaponIndex < 0 ||
             weaponIndex >= state->world.things->weaponCount) {
-        return 0;
+        return -1;
     }
-    weaponType = (int)state->world.things->weapons[weaponIndex].type;
-    if (!dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(weaponType)) {
-        return 0;
-    }
+    return (int)state->world.things->weapons[weaponIndex].type;
+}
+
+static int m11_attach_projectile_associated_thing_to_group(
+    M11_GameViewState* state,
+    struct DungeonGroup_Compat* group,
+    const struct ProjectileInstance_Compat* projectile) {
+    unsigned short associatedThing;
+    if (!state || !group || !projectile || !state->world.things) return 0;
+    associatedThing = (unsigned short)projectile->reserved1;
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return 0;
 
     /* ReDMCSB PROJEXPL.C:F0217 lines 540-553 selects GROUP.Slot as the
      * projectile-delete target. F0215 lines 248-256 then delegates existing
@@ -27730,60 +27724,60 @@ static void m11_projectile_apply_impact(
             int gIdx = THING_GET_INDEX(groupThing);
             if (gIdx >= 0 && gIdx < state->world.things->groupCount) {
                 struct DungeonGroup_Compat* g = &state->world.things->groups[gIdx];
-                struct CombatResult_Compat res;
-                int outcome = 0;
-                int slotI;
-                memset(&res, 0, sizeof(res));
-                res.damageApplied = r->outAction.rawAttackValue;
-                slotI = dm1_v1_group_creature_index_for_cell_pc34(
-                    g, r->outAction.targetCell);
-                if (slotI >= 0) {
-                        int originalCreatureType = (int)g->creatureType;
-                        int originalCells = (int)g->cells;
-                        int originalGroupCount = (int)g->count;
-                        int killedCell =
-                            (originalCells == DM1_SINGLE_CENTERED_CREATURE_CELL)
-                                ? EXPLOSION_CELL_CENTERED
-                                : ((originalCells >> (slotI * 2)) & 0x03);
+                const struct CreatureBehaviorProfile_Compat* profile =
+                    CREATURE_GetProfile_Compat((int)g->creatureType);
+                int creatureAttributes = profile ? profile->attributes : 0;
+                DM1_ProjectileCreatureImpactPlanPc34 plan;
+                DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
+                memset(&plan, 0, sizeof(plan));
+                memset(&aftermath, 0, sizeof(aftermath));
+                if (dm1_v1_projectile_creature_impact_plan_pc34(
+                        p, r, g, creatureAttributes, &plan) &&
+                    plan.shouldApplyDamage) {
+                        struct CombatResult_Compat res;
+                        int outcome = 0;
+                        memset(&res, 0, sizeof(res));
+                        res.damageApplied = plan.damageApplied;
                         F0738_COMBAT_ApplyDamageToGroup_Compat(
-                            &res, g, slotI, &outcome);
-                        if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
-                            const struct CreatureBehaviorProfile_Compat* profile =
-                                CREATURE_GetProfile_Compat(originalCreatureType);
-                            if (g->behavior == DM1_BEHAVIOR_ATTACK) {
+                            &res, g, plan.slotIndex, &outcome);
+                        (void)dm1_v1_projectile_creature_impact_aftermath_pc34(
+                            &plan, p, creatureAttributes, (int)g->behavior,
+                            outcome,
+                            m11_projectile_associated_weapon_type(state, p),
+                            &aftermath);
+                        if (aftermath.cleanupEventsAndFear) {
                                 m11_cleanup_f0190_creature_events(
-                                    state, impactMap, impactX, impactY, slotI);
+                                    state, impactMap, impactX, impactY,
+                                    plan.slotIndex);
                                 (void)m11_apply_f0190_fear(
-                                    state, g, originalCreatureType, gIdx,
-                                    originalGroupCount, impactMap, impactX,
-                                    impactY);
-                            }
-                            if (profile &&
-                                (profile->attributes & DM1_ATTR_DROP_FIXED_POSS)) {
-                                /* ReDMCSB GROUP.C F0190 lines 842-847 calls
-                                 * F0186 for the killed member before group
-                                 * compaction side effects finish.  F0738 has
-                                 * already compacted the M11 group, so use the
-                                 * saved original cell. */
-                                (void)m11_materialize_creature_fixed_possession_drops(
-                                    state, originalCreatureType, killedCell,
-                                    impactMap, impactX, impactY);
-                            }
+                                    state, g, plan.originalCreatureType, gIdx,
+                                    plan.originalGroupCount, impactMap,
+                                    impactX, impactY);
                         }
-                        if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES ||
-                            outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+                        if (aftermath.dropFixedPossessions) {
+                            /* ReDMCSB GROUP.C F0190 lines 842-847 calls
+                             * F0186 for the killed member before group
+                             * compaction side effects finish.  F0738 has
+                             * already compacted the M11 group, so use the
+                             * saved original cell. */
+                            (void)m11_materialize_creature_fixed_possession_drops(
+                                state, plan.originalCreatureType,
+                                plan.killedCell, impactMap, impactX, impactY);
+                        }
+                        if (aftermath.spawnDeathSmoke) {
                             (void)m11_spawn_f0190_death_smoke(
-                                state, originalCreatureType, killedCell,
-                                impactMap, impactX, impactY);
+                                state, plan.originalCreatureType,
+                                plan.killedCell, impactMap, impactX, impactY);
                         }
-                        if (res.damageApplied > 0 &&
-                            outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+                        if (aftermath.scheduleReaction) {
                             m11_schedule_projectile_hit_creature_reaction(
                                 state, gIdx, g, impactMap, impactX, impactY);
                         }
-                        associatedThingMovedToGroup =
-                            m11_maybe_attach_thrown_sharp_weapon_to_group(
-                            state, g, p, outcome);
+                        if (aftermath.keepSharpWeaponInGroup) {
+                            associatedThingMovedToGroup =
+                                m11_attach_projectile_associated_thing_to_group(
+                                    state, g, p);
+                        }
                         /* ReDMCSB PROJEXPL.C:F0217 lines 515-539 reaches
                          * GROUP.C:F0190 for creature projectile damage. Keep
                          * M11's raw DUNGEON.DAT group record in step with
