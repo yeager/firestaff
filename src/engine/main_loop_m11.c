@@ -1355,9 +1355,13 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      uint32_t* idleAccumulatorMs,
                                      const char* dataDir) {
     int titleIntroPlayed = 0;
+    DM1_V1_StartupHandoffPreludePlan_PC34 dm1PreludePlan;
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 dm1PostLaunchPlan;
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
+    memset(&dm1PreludePlan, 0, sizeof(dm1PreludePlan));
+    memset(&dm1PostLaunchPlan, 0, sizeof(dm1PostLaunchPlan));
     {
         /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle() before
          * F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher front door, so
@@ -1372,20 +1376,27 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
 
         const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(
             menuState, menuState->activatedIndex);
-        if (launchEntry && launchEntry->gameId &&
-            dm1_v1_startup_source_visible_handoff_required_pc34(
-                launchEntry->gameId)) {
-            if (!dm1_v1_startup_sequence_source_order_valid_pc34()) {
+        if (launchEntry && launchEntry->gameId) {
+            (void)dm1_v1_startup_handoff_prelude_plan_pc34(
+                launchEntry->gameId,
+                &dm1PreludePlan);
+        }
+        if (dm1PreludePlan.required) {
+            if (!dm1PreludePlan.source_order_valid) {
                 fprintf(stderr,
                         "DM1 startup source-order guard failed: %s\n",
-                        dm1_v1_startup_sequence_source_evidence_pc34());
+                        dm1PreludePlan.failure_evidence
+                            ? dm1PreludePlan.failure_evidence
+                            : "");
             }
             /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order.
              * Pass the menu state so the FTL/SWSH finder can locate SWOOSH next
              * to the matched GRAPHICS.DAT, the user-supplied data dir, or the
              * canonical $HOME OpenClaw original-games anchors. */
-            M11_Render_RaiseWindow();
-            m11_play_ftl_swoosh_if_available(menuState, dataDir, 0);
+            if (dm1PreludePlan.play_swsh) {
+                M11_Render_RaiseWindow();
+                m11_play_ftl_swoosh_if_available(menuState, dataDir, 0);
+            }
             /* ReDMCSB source order is SWSH.C -> STARTUP1.C:143 ->
              * TITLE.C F0437.  The SWSH path presents caller-owned RGBA
              * frames, while TITLE.C presents indexed C001 pixels through the
@@ -1393,7 +1404,9 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
              * texture at this one-time handoff so SDL3/Metal does not carry
              * stale true-colour texture state into the indexed title
              * animation on Apple Silicon. */
-            M11_Render_DiscardPresentationTexture();
+            if (dm1PreludePlan.discard_presentation_after_swsh) {
+                M11_Render_DiscardPresentationTexture();
+            }
         }
         /* CSB has its own title/entrance sequence after the common FTL/SWSH
          * prelude.  ReDMCSB SWSH.C runs the FTL logo before the started
@@ -1416,9 +1429,10 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
         }
-        if (!titleIntroPlayed &&
-            dm1_v1_startup_source_visible_handoff_required_pc34(
-                gameView->sourceId)) {
+        (void)dm1_v1_startup_handoff_post_launch_plan_pc34(
+            gameView->sourceId,
+            &dm1PostLaunchPlan);
+        if (!titleIntroPlayed && dm1PostLaunchPlan.play_title) {
             /* ReDMCSB STARTEND still orders F0437_STARTEND_DrawTitle before
              * F0441_STARTEND_ProcessEntrance.  Play it after the launch spec
              * has resolved so GRAPHICS.DAT C001 is available, but still
@@ -1431,9 +1445,11 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
          * mandatory gate between title and gameplay. Other games keep
          * their own handoff paths; Theron's Quest starts directly from
          * its Track 02 runtime image. */
-        if (dm1_v1_startup_source_visible_handoff_required_pc34(
-                gameView->sourceId)) {
-            int entranceResult = m11_play_redmcsb_entrance_transition(gameView, 1200);
+        if (dm1PostLaunchPlan.play_entrance) {
+            int entranceResult =
+                m11_play_redmcsb_entrance_transition(
+                    gameView,
+                    dm1PostLaunchPlan.entrance_auto_enter_ms);
             if (entranceResult == M11_ENTRANCE_COMMAND_QUIT) {
                 gameView->active = 0;
                 return 1;
