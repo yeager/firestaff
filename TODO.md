@@ -27,6 +27,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: the tabbed start-menu settings contract now has a dedicated ONLINE tab for RetroAchievements enable, hardcore, username, and API-token rows. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
   - 2026-07-08 update: the modern start-menu settings screen now visibly renders the ONLINE tab and scopes mouse/keyboard navigation so RetroAchievements settings live there. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
   - 2026-07-08 update: the start menu now also exposes a persisted RetroAchievements server/endpoint row in the ONLINE tab, including modern rendering, hit-testing, accessibility state, config save/load/import/export, and runtime handoff. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+  - 2026-07-08 update: RetroAchievements now has a DuckStation-style event-to-notification overlay model, login/session status fields, pending-unlock/offline events, M11 in-game overlay rendering, and focused unit coverage. Remaining RA work is real `rcheevos rc_client` or HTTP login/game-data backend plus per-game achievement memory/event mapping.
 
 - 🔧 2026-07-07 release follow-up: v3.0.69 packages the current boot/startup work. Remaining release work is next manual release validation only; Windows installer packaging has been moved from NSIS to Inno Setup.
 
