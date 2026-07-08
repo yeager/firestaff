@@ -1628,13 +1628,13 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     draw_setting_row(c, rowX, rowY + 392, rowW, "RETROACHIEVEMENTS",
                      raEnabledValue,
                      state->settingsSelectedIndex == 30);
-    draw_setting_row(c, rowX, rowY + 448, rowW, "RA HARDCORE",
+    draw_setting_row(c, rowX, rowY + 448, rowW, "RETROACHIEVEMENTS HARDCORE",
                      state->settings.retroAchievementsHardcore ? "ON" : "OFF",
                      state->settingsSelectedIndex == 31);
-    draw_setting_row(c, rowX, rowY + 504, rowW, "RA USER",
+    draw_setting_row(c, rowX, rowY + 504, rowW, "RETROACHIEVEMENTS USER",
                      raUserValue,
                      state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_USERNAME);
-    draw_setting_row(c, rowX, rowY + 560, rowW, "RA API TOKEN",
+    draw_setting_row(c, rowX, rowY + 560, rowW, "RETROACHIEVEMENTS API TOKEN",
                      raTokenValue,
                      state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_TOKEN);
     draw_setting_row(c, rowX, rowY + 616, rowW, "SESSION TIMER", sessionTimer,
