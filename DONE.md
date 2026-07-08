@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 runtime receipt handoff apply: M11 DM2 direct-start now applies the detached boot runtime receipt through one helper for V2/HUD/touch init, source identity, boot profile/world handoff, level-loaded state, and first runtime sync. Verification: `test_dm2_v1_boot_profile_smoke` passed 63/63; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
+
 - ✅ 2026-07-08 Nexus runtime receipt handoff apply: M11 Nexus direct-start now applies the launcher runtime receipt through one helper for engine/source identity, light runtime, party pose, title-screen ownership, startup launch receipt, and boot status/log. Verification: `test_nexus_v1_startup_menu_pc34_compat` passed; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
 
 - ✅ 2026-07-08 Theron runtime receipt handoff apply: M11 Theron direct-start now applies the detached boot runtime receipt through one helper for source identity, profile/world/viewport/assets, initial title-gate state, save/resume state, startup-media state, and launch host receipt. Verification: `test_theron_v1_startup_save_resume_pc34` passed 120/120; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
