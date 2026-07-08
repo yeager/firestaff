@@ -1427,6 +1427,7 @@ int main(void)
                "Nexus save state receipt host facts scan helper owns M11 save scan");
         {
             Nexus_V1_StartupLaunchReceipt launch_receipt;
+            Nexus_V1_StartupHostReceipt boot_receipt;
             expect(nexus_v1_startup_launch_from_host_facts_with_receipt(
                        &host_facts,
                        &launch_receipt) &&
@@ -1455,6 +1456,28 @@ int main(void)
                        strcmp(launch_receipt.host_receipt.status,
                               "NEXUS STARTUP FAILED") == 0,
                    "Nexus launch receipt owns startup failure status");
+            expect(nexus_v1_startup_boot_status_host_receipt(
+                       NEXUS_V1_STARTUP_BOOT_STATUS_DATA_ERROR,
+                       &boot_receipt) &&
+                       boot_receipt.status_scope &&
+                       strcmp(boot_receipt.status_scope, "BOOT") == 0 &&
+                       boot_receipt.status &&
+                       strcmp(boot_receipt.status, "NEXUS DATA ERROR") == 0,
+                   "Nexus boot status receipt owns data-error status");
+            expect(nexus_v1_startup_boot_status_host_receipt(
+                       NEXUS_V1_STARTUP_BOOT_STATUS_LEVEL_ERROR,
+                       &boot_receipt) &&
+                       boot_receipt.status &&
+                       strcmp(boot_receipt.status, "NEXUS LEVEL ERROR") == 0,
+                   "Nexus boot status receipt owns level-error status");
+            expect(nexus_v1_startup_boot_status_host_receipt(
+                       NEXUS_V1_STARTUP_BOOT_STATUS_TITLE,
+                       &boot_receipt) &&
+                       boot_receipt.input_result ==
+                           NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                       boot_receipt.status &&
+                       strcmp(boot_receipt.status, "NEXUS TITLE") == 0,
+                   "Nexus boot status receipt owns title status");
         }
         expect(nexus_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
                    &state_receipt,

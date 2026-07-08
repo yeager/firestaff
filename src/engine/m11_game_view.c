@@ -11265,8 +11265,14 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
      * state->nexusEngine so the M11 render loop can access it.
      * Source: nexus_v1_launcher.c (launcher_init/load/get_engine). */
     if (nexus_v1_launcher_init(dataDir) != 0) {
-        m11_set_status(state, "BOOT", "NEXUS DATA ERROR");
-        m11_log_event(state, M11_COLOR_RED, "T0: NEXUS INIT FAILED");
+        Nexus_V1_StartupHostReceipt receipt;
+        (void)nexus_v1_startup_boot_status_host_receipt(
+            NEXUS_V1_STARTUP_BOOT_STATUS_DATA_ERROR,
+            &receipt);
+        (void)m11_nexus_apply_startup_receipt(state, &receipt);
+        m11_log_event(state, M11_COLOR_RED,
+                      "T0: %s",
+                      receipt.status ? receipt.status : "NEXUS DATA ERROR");
         state->active = 0;
         state->startedFromLauncher = 0;
         state->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
@@ -11274,8 +11280,14 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     }
     /* Load level 0 (entrance dungeon) as the default starting level */
     if (nexus_v1_launcher_load_level(0) != 0) {
-        m11_set_status(state, "BOOT", "NEXUS LEVEL ERROR");
-        m11_log_event(state, M11_COLOR_RED, "T0: NEXUS LEV00 LOAD FAILED");
+        Nexus_V1_StartupHostReceipt receipt;
+        (void)nexus_v1_startup_boot_status_host_receipt(
+            NEXUS_V1_STARTUP_BOOT_STATUS_LEVEL_ERROR,
+            &receipt);
+        (void)m11_nexus_apply_startup_receipt(state, &receipt);
+        m11_log_event(state, M11_COLOR_RED,
+                      "T0: %s",
+                      receipt.status ? receipt.status : "NEXUS LEVEL ERROR");
         nexus_v1_launcher_shutdown();
         state->active = 0;
         state->startedFromLauncher = 0;
@@ -11344,11 +11356,19 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
             (void)m11_nexus_apply_startup_launch_receipt(state, &receipt);
         }
     }
-    m11_set_status(state, "BOOT", "NEXUS TITLE");
-    m11_log_event(state, M11_COLOR_YELLOW,
-                  state->nexusState.title_loaded
-                      ? "T0: NEXUS TITLE LOADED"
-                      : "T0: NEXUS TITLE FALLBACK");
+    {
+        Nexus_V1_StartupHostReceipt receipt;
+        (void)nexus_v1_startup_boot_status_host_receipt(
+            state->nexusState.title_loaded
+                ? NEXUS_V1_STARTUP_BOOT_STATUS_TITLE
+                : NEXUS_V1_STARTUP_BOOT_STATUS_TITLE_FALLBACK,
+            &receipt);
+        (void)m11_nexus_apply_startup_receipt(state, &receipt);
+        m11_log_event(state, M11_COLOR_YELLOW,
+                      state->nexusState.title_loaded
+                          ? "T0: NEXUS TITLE LOADED"
+                          : "T0: NEXUS TITLE FALLBACK");
+    }
     fprintf(stderr, "NEXUS READY: gameId=nexus dataDir=%s\n", dataDir);
     return 1;
 }
