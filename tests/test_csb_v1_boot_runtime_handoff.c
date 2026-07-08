@@ -1608,9 +1608,15 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                       launch_receipts.init_state.command_state.title_active &&
                       launch_receipts.session_state.import_available &&
                       launch_receipts.session_state.import_champion_count == 2 &&
+                      launch_receipts.launch_host_receipt.status_scope &&
+                      strcmp(launch_receipts.launch_host_receipt.status_scope,
+                             "BOOT") == 0 &&
+                      launch_receipts.launch_host_receipt.status &&
+                      strcmp(launch_receipts.launch_host_receipt.status,
+                             "CSB ENTRANCE") == 0 &&
                       strcmp(launch_receipts.session_state.import_dm1_save_path,
                              path) == 0,
-                  "boot profile owns combined M11 startup launch receipts");
+                  "boot profile owns combined M11 startup launch receipts and host status");
             csb_v1_boot_cleanup(&boot2);
         }
         csb_v1_boot_cleanup(&boot);

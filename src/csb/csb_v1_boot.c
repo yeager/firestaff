@@ -837,6 +837,8 @@ int csb_v1_boot_build_startup_launch_receipts_pc34(
         &out_receipts->init_state);
     csb_v1_runtime_startup_session_state_receipt_init_pc34(
         &out_receipts->session_state);
+    csb_v1_startup_host_receipt_init_pc34(
+        &out_receipts->launch_host_receipt);
     if (!profile) {
         return 0;
     }
@@ -852,12 +854,20 @@ int csb_v1_boot_build_startup_launch_receipts_pc34(
             &out_receipts->init_state)) {
         return 0;
     }
-    return csb_v1_boot_build_startup_session_state_receipt_pc34(
-        profile,
-        &out_receipts->handoff,
-        import_dm1_save_path,
-        resume_save_path,
-        &out_receipts->session_state);
+    if (!csb_v1_boot_build_startup_session_state_receipt_pc34(
+            profile,
+            &out_receipts->handoff,
+            import_dm1_save_path,
+            resume_save_path,
+            &out_receipts->session_state)) {
+        return 0;
+    }
+    out_receipts->launch_host_receipt.input_result =
+        CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34;
+    out_receipts->launch_host_receipt.status_scope = "BOOT";
+    out_receipts->launch_host_receipt.status =
+        direct_resume ? "CSB RESUMED" : "CSB ENTRANCE";
+    return 1;
 }
 
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,

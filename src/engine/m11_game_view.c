@@ -10546,14 +10546,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             state,
             &startup_receipts.session_state);
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-        m11_set_status(state, "BOOT",
-                       (spec->savePath && spec->savePath[0] != '\0')
-                           ? "CSB RESUMED"
-                           : "CSB ENTRANCE");
-        m11_log_event(state, M11_COLOR_YELLOW,
-                      (spec->savePath && spec->savePath[0] != '\0')
-                          ? "T0: CSB RESUMED"
-                          : "T0: CSB LOADED");
+        (void)m11_csb_startup_apply_host_receipt(
+            state,
+            &startup_receipts.launch_host_receipt);
+        m11_log_event(state,
+                      M11_COLOR_YELLOW,
+                      "T0: %s",
+                      startup_receipts.launch_host_receipt.status
+                          ? startup_receipts.launch_host_receipt.status
+                          : "CSB LOADED");
         /* Tier 4: CSB launcher stderr-pipe — surface the boot milestone to
          * stderr so `firestaff_tier1_strict_boot_probe` and CI can detect
          * a successful CSB direct launch via `--game csb --data-dir`. The
