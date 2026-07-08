@@ -9,6 +9,7 @@
 
 #include "title_intro_pathfinder_m11.h"
 
+#include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 #include "title_dat_loader_v1.h"
@@ -29,10 +30,67 @@ enum {
     M11_TITLE_RECURSIVE_SCAN_MAX_FILES = 4096
 };
 
+static const char* const g_m11_title_known_md5s[] = {
+    "05c2ab94ce4dffe51b63985f7b0d1822", /* DM1 PC 3.4 TITLE, SHA256 in title_dat_loader_v1.h */
+    NULL
+};
+
 static int m11_title_intro_candidate_is_valid(const char* path) {
     char titleErr[160];
     titleErr[0] = '\0';
     return V1_Title_IsCanonicalPc34Title(path, titleErr, sizeof(titleErr));
+}
+
+static int m11_title_intro_cache_virtual_path(const char* virtualPath,
+                                              char* outPath,
+                                              size_t outPathBytes) {
+    char userData[FSP_PATH_MAX];
+    char cacheRoot[FSP_PATH_MAX];
+    char gameCache[FSP_PATH_MAX];
+    char cachedTitle[FSP_PATH_MAX];
+    if (!virtualPath || !outPath || outPathBytes == 0U ||
+        strstr(virtualPath, "::") == NULL) {
+        return 0;
+    }
+    if (!FSP_GetUserDataDir(userData, sizeof(userData)) ||
+        !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userData, "asset-cache") ||
+        !FSP_JoinPath(gameCache, sizeof(gameCache), cacheRoot, "dm1") ||
+        !FSP_CreateDirectoryRecursive(gameCache) ||
+        !FSP_JoinPath(cachedTitle, sizeof(cachedTitle), gameCache, "TITLE") ||
+        !asset_extract_virtual_path(virtualPath, cachedTitle) ||
+        !m11_title_intro_candidate_is_valid(cachedTitle)) {
+        return 0;
+    }
+    snprintf(outPath, outPathBytes, "%s", cachedTitle);
+    return 1;
+}
+
+static int m11_title_intro_find_known_hash(const char* dir,
+                                           char* outPath,
+                                           size_t outPathBytes) {
+    char found[FSP_PATH_MAX];
+    int matchIndex = -1;
+    if (!dir || dir[0] == '\0' || !outPath || outPathBytes == 0U) {
+        return 0;
+    }
+    found[0] = '\0';
+    if (!asset_find_by_md5_list(dir,
+                                g_m11_title_known_md5s,
+                                found,
+                                (int)sizeof(found),
+                                &matchIndex,
+                                M11_TITLE_RECURSIVE_SCAN_MAX_DEPTH)) {
+        return 0;
+    }
+    (void)matchIndex;
+    if (strstr(found, "::") != NULL) {
+        return m11_title_intro_cache_virtual_path(found, outPath, outPathBytes);
+    }
+    if (!m11_title_intro_candidate_is_valid(found)) {
+        return 0;
+    }
+    snprintf(outPath, outPathBytes, "%s", found);
+    return 1;
 }
 
 static int m11_title_intro_scan_tree_for_title(const char* dir,
@@ -192,6 +250,17 @@ int M11_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
         return 1;
     }
 
+    effectiveDataDir = (menuState && menuState->assetStatus.dataDir[0] != '\0')
+                           ? menuState->assetStatus.dataDir
+                           : dataDir;
+    if (!effectiveDataDir || effectiveDataDir[0] == '\0') {
+        effectiveDataDir = ".";
+    }
+
+    if (m11_title_intro_find_known_hash(effectiveDataDir, outPath, outPathBytes)) {
+        return 1;
+    }
+
     if (menuState) {
         for (i = 0U; i < M12_AssetStatus_GetVersionCount("dm1"); ++i) {
             dm1v = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1", i);
@@ -226,12 +295,6 @@ int M11_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
         }
     }
 
-    effectiveDataDir = (menuState && menuState->assetStatus.dataDir[0] != '\0')
-                           ? menuState->assetStatus.dataDir
-                           : dataDir;
-    if (!effectiveDataDir || effectiveDataDir[0] == '\0') {
-        effectiveDataDir = ".";
-    }
     for (i = 0U; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
         if (FSP_JoinPath(candidate, sizeof(candidate), effectiveDataDir, suffixes[i]) &&
             m11_title_intro_candidate_is_valid(candidate)) {

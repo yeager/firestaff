@@ -17064,6 +17064,7 @@ if(BUILD_TESTING)
         tests/test_title_intro_pathfinder_m11.c
         src/engine/title_intro_pathfinder_m11.c
         src/frontend/title_dat_loader_v1.c
+        src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
     )
     target_compile_definitions(test_title_intro_pathfinder_m11 PRIVATE
@@ -17075,6 +17076,7 @@ if(BUILD_TESTING)
     if(NOT MSVC)
         target_compile_options(test_title_intro_pathfinder_m11 PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
+    firestaff_link_zlib(test_title_intro_pathfinder_m11 PRIVATE)
     add_test(
         NAME title_intro_pathfinder_m11
         COMMAND test_title_intro_pathfinder_m11
