@@ -65,6 +65,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
+#include "dm1_v2_boot_pc34.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
@@ -10475,12 +10476,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     }
     /* V2 presentation-mode selection: push the launcher
      * M12_PRESENTATION_* enum into the per-game V2 presentation
-     * runtime. DM1 and CSB each own their own presentation-mode
-     * module; for V1 path, this is a no-op.
-     * Source-lock: ReDMCSB COMMAND.C F0359 LoadGameSettings -
-     * menu choice is the only path that may pick a V2 mode. */
+     * runtime. DM1 V2 boot owns the V22 asset-root and cache setup. */
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
-        dm1_v2_presentation_mode_set_m12(spec->presentationMode);
+        DM1_V2_BootStartupReceipt_PC34 receipt;
+        (void)dm1_v2_boot_startup_prepare_pc34(spec->gameId,
+                                               spec->dataDir,
+                                               spec->presentationMode,
+                                               &receipt);
     } else if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
         csb_v2_presentation_mode_set_m12(spec->presentationMode);
     } else if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
@@ -10520,21 +10522,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             mode = theron_v2_hud_launch_mode_from_m11(spec->hudLaunchMode);
             theron_v2_hud_launch_mode_set(mode);
         }
-    }
-    /* V2.2 shape runtime hint: when V22 is the active mode, the
-     * renderer can ask dm1_v2_shape_runtime_for_cell() to get a
-     * per-cell V2.2 shape override. This is the dispatch hook the
-     * GPU renderer reads from when filling the modern viewport. The
-     * runtime is a thin wrapper over m11_v22_shape_for_cell(), so
-     * the V22 active branch stays the single source of truth. */
-    if (dm1_v2_shape_runtime_v22_active() && spec->gameId
-        && strcmp(spec->gameId, "dm1") == 0) {
-        /* V22 path is live: initialize the optional in-place bitmap cache.
-         * Missing cache/assets are not fatal; the draw path falls back to the
-         * placeholder overlay so V1/V2 launch remains robust without private
-         * modern-art assets. */
-        (void)m11_v22_inplace_draw_init();
-        (void)dm1_v2_shape_runtime_for_cell;
     }
     /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
     if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
