@@ -75,7 +75,10 @@ int main(void) {
     char profile_root[FSP_PATH_MAX];
     char profile_nexus_dir[FSP_PATH_MAX];
     char profile_dm_bin_dst[FSP_PATH_MAX];
+    char level_src[FSP_PATH_MAX];
+    char level_dst[FSP_PATH_MAX];
     Nexus_V1_Engine engine;
+    Nexus_V1_GameState game;
     Nexus_V1_BootProfile profile;
     Nexus_V1_Diagnostic diags[4];
     uint8_t* data;
@@ -133,6 +136,19 @@ int main(void) {
                   "Nexus boot profile accepts renamed DM.BIN by hash");
     } else {
         puts("SKIP: local Nexus DM.BIN not present for init hash test");
+    }
+
+    if (FSP_JoinPath(level_src, sizeof(level_src), home, ".firestaff/data/nexus/LEV00.DGN") &&
+        local_file_exists(level_src) &&
+        FSP_JoinPath(level_dst, sizeof(level_dst), root, "renamed-level-zero.payload") &&
+        copy_file_bytes(level_src, level_dst)) {
+        nexus_v1_game_init(&game, root);
+        check_int(nexus_v1_game_load_level(&game, 0) == 0,
+                  "Nexus level loader accepts renamed LEV00.DGN by hash");
+        check_int(strstr(game.level_path, "renamed-level-zero.payload") != NULL,
+                  "Nexus level loader stores hash-resolved renamed path");
+    } else {
+        puts("SKIP: local Nexus LEV00.DGN not present for level hash test");
     }
 
     if (failures) return 1;

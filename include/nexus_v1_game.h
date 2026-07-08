@@ -12,6 +12,7 @@ typedef struct {
     int tick_count;        /* total game ticks since start */
     int game_started;
     const char *data_dir;
+    char level_path[512];
 } Nexus_V1_GameState;
 
 void nexus_v1_game_init(Nexus_V1_GameState *state, const char *data_dir);
@@ -21,4 +22,3 @@ int nexus_v1_game_load_level(Nexus_V1_GameState *state, int level);
 int nexus_v1_cd_track_for_level(int level);
 
 #endif
-
