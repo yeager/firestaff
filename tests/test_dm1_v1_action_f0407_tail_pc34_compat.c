@@ -114,6 +114,78 @@ static void test_tail_adjustments(void) {
     CHECK_EQ(out.disabledTicks, 2, "parry melee failure halves ticks");
 }
 
+static void test_f0405_charge_plan(void) {
+    DM1_ActionF0405ChargeInputPc34 in;
+    DM1_ActionF0405ChargePlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.thingType = 5;
+    in.thingIndex = 12;
+    in.currentChargeCount = 2;
+    CHECK_EQ(dm1_v1_action_f0405_charge_plan_pc34(&in, &out), 1,
+             "weapon charge plan builds");
+    CHECK_EQ(out.shouldDecrement, 1, "weapon charge decrements");
+    CHECK_EQ(out.thingIndex, 12, "weapon charge index preserved");
+
+    memset(&in, 0, sizeof(in));
+    in.thingType = 6;
+    in.thingIndex = 4;
+    in.currentChargeCount = 0;
+    CHECK_EQ(dm1_v1_action_f0405_charge_plan_pc34(&in, &out), 1,
+             "armour charge plan builds");
+    CHECK_EQ(out.shouldDecrement, 0, "zero charge does not decrement");
+
+    memset(&in, 0, sizeof(in));
+    in.thingType = 10;
+    in.thingIndex = 3;
+    in.currentChargeCount = 1;
+    CHECK_EQ(dm1_v1_action_f0405_charge_plan_pc34(&in, &out), 1,
+             "junk charge plan builds");
+    CHECK_EQ(out.shouldDecrement, 1, "junk charge decrements");
+
+    memset(&in, 0, sizeof(in));
+    in.thingType = 2;
+    in.thingIndex = 1;
+    in.currentChargeCount = 1;
+    CHECK_EQ(dm1_v1_action_f0405_charge_plan_pc34(&in, &out), 0,
+             "unsupported thing charge plan rejected");
+}
+
+static void test_freeze_life_plan(void) {
+    DM1_ActionFreezeLifeInputPc34 in;
+    DM1_ActionFreezeLifePlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.currentFreezeLifeTicks = 10;
+    in.actionHandJunkType = 42;
+    CHECK_EQ(dm1_v1_action_freeze_life_plan_f0407_pc34(&in, &out), 1,
+             "blue box freeze plan builds");
+    CHECK_EQ(out.addTicks, 30, "blue box adds 30");
+    CHECK_EQ(out.newFreezeLifeTicks, 40, "blue box total");
+    CHECK_EQ(out.consumesActionHandObject, 1, "blue box consumed");
+    CHECK_EQ(out.decrementsActionHandCharges, 0, "blue box no charge decrement");
+
+    memset(&in, 0, sizeof(in));
+    in.currentFreezeLifeTicks = 100;
+    in.actionHandJunkType = 43;
+    CHECK_EQ(dm1_v1_action_freeze_life_plan_f0407_pc34(&in, &out), 1,
+             "green box freeze plan builds");
+    CHECK_EQ(out.addTicks, 125, "green box adds 125");
+    CHECK_EQ(out.newFreezeLifeTicks, 200, "green box caps total");
+    CHECK_EQ(out.consumesActionHandObject, 1, "green box consumed");
+
+    memset(&in, 0, sizeof(in));
+    in.currentFreezeLifeTicks = 140;
+    in.actionHandJunkType = -1;
+    CHECK_EQ(dm1_v1_action_freeze_life_plan_f0407_pc34(&in, &out), 1,
+             "ordinary freeze plan builds");
+    CHECK_EQ(out.addTicks, 70, "ordinary freeze adds 70");
+    CHECK_EQ(out.newFreezeLifeTicks, 200, "ordinary freeze caps total");
+    CHECK_EQ(out.consumesActionHandObject, 0, "ordinary freeze no consume");
+    CHECK_EQ(out.decrementsActionHandCharges, 1,
+             "ordinary freeze decrements action charges");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -130,6 +202,8 @@ int main(void) {
     test_melee_contact_gate();
     test_stamina_and_special_flags();
     test_tail_adjustments();
+    test_f0405_charge_plan();
+    test_freeze_life_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

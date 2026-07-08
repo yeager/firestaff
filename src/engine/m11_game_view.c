@@ -26368,6 +26368,9 @@ static void m11_decrement_action_hand_charges_f0405(M11_GameViewState* state,
     unsigned short thing;
     int thingType;
     int thingIndex;
+    int chargeCount = 0;
+    DM1_ActionF0405ChargeInputPc34 chargeIn;
+    DM1_ActionF0405ChargePlanPc34 chargePlan;
 
     if (!state || !state->world.things) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
@@ -26377,33 +26380,37 @@ static void m11_decrement_action_hand_charges_f0405(M11_GameViewState* state,
 
     thingType = (int)THING_GET_TYPE(thing);
     thingIndex = (int)THING_GET_INDEX(thing);
-    /* ReDMCSB MENU.C F0405 lines 1143-1181: decrement ChargeCount on the
-     * action-hand weapon, armour, or junk object when the count is non-zero. */
     if (thingType == THING_TYPE_WEAPON) {
-        if (state->world.things->weapons &&
-            thingIndex >= 0 && thingIndex < state->world.things->weaponCount &&
-            state->world.things->weapons[thingIndex].chargeCount > 0) {
-            state->world.things->weapons[thingIndex].chargeCount--;
-        }
+        if (!state->world.things->weapons ||
+            thingIndex < 0 || thingIndex >= state->world.things->weaponCount) return;
+        chargeCount = state->world.things->weapons[thingIndex].chargeCount;
     } else if (thingType == THING_TYPE_ARMOUR) {
-        if (state->world.things->armours &&
-            thingIndex >= 0 && thingIndex < state->world.things->armourCount &&
-            state->world.things->armours[thingIndex].chargeCount > 0) {
-            state->world.things->armours[thingIndex].chargeCount--;
-        }
+        if (!state->world.things->armours ||
+            thingIndex < 0 || thingIndex >= state->world.things->armourCount) return;
+        chargeCount = state->world.things->armours[thingIndex].chargeCount;
     } else if (thingType == THING_TYPE_JUNK) {
-        if (state->world.things->junks &&
-            thingIndex >= 0 && thingIndex < state->world.things->junkCount &&
-            state->world.things->junks[thingIndex].chargeCount > 0) {
-            state->world.things->junks[thingIndex].chargeCount--;
-        }
+        if (!state->world.things->junks ||
+            thingIndex < 0 || thingIndex >= state->world.things->junkCount) return;
+        chargeCount = state->world.things->junks[thingIndex].chargeCount;
+    } else {
+        return;
+    }
+    memset(&chargeIn, 0, sizeof(chargeIn));
+    chargeIn.thingType = thingType;
+    chargeIn.thingIndex = thingIndex;
+    chargeIn.currentChargeCount = chargeCount;
+    if (!dm1_v1_action_f0405_charge_plan_pc34(&chargeIn, &chargePlan) ||
+        !chargePlan.valid || !chargePlan.shouldDecrement) {
+        return;
+    }
+    if (thingType == THING_TYPE_WEAPON) {
+        state->world.things->weapons[thingIndex].chargeCount--;
+    } else if (thingType == THING_TYPE_ARMOUR) {
+        state->world.things->armours[thingIndex].chargeCount--;
+    } else if (thingType == THING_TYPE_JUNK) {
+        state->world.things->junks[thingIndex].chargeCount--;
     }
 }
-
-enum {
-    M11_JUNK_MAGICAL_BOX_BLUE_F0407 = 42,
-    M11_JUNK_MAGICAL_BOX_GREEN_F0407 = 43
-};
 
 static int m11_action_hand_junk_type_f0407(
     const M11_GameViewState* state,
@@ -29187,33 +29194,30 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * magical box adds 125 ticks and is consumed, otherwise the
              * common branch adds 70 ticks and decrements charges through
              * F0405.  Capped at 200 as in F0407. */
+            DM1_ActionFreezeLifeInputPc34 freezeIn;
+            DM1_ActionFreezeLifePlanPc34 freezePlan;
             int32_t prev = state->world.freezeLifeTicks;
             int junkType = m11_action_hand_junk_type_f0407(state, champ);
-            int addTicks = 70;
-            int consumesBox = 0;
-            int32_t next;
-            if (junkType == M11_JUNK_MAGICAL_BOX_BLUE_F0407) {
-                addTicks = 30;
-                consumesBox = 1;
-            } else if (junkType == M11_JUNK_MAGICAL_BOX_GREEN_F0407) {
-                addTicks = 125;
-                consumesBox = 1;
+            memset(&freezeIn, 0, sizeof(freezeIn));
+            freezeIn.currentFreezeLifeTicks = (int)prev;
+            freezeIn.actionHandJunkType = junkType;
+            if (!dm1_v1_action_freeze_life_plan_f0407_pc34(
+                    &freezeIn, &freezePlan) || !freezePlan.valid) {
+                return 0;
             }
-            next = prev + addTicks;
-            if (next > 200) next = 200;
-            state->world.freezeLifeTicks = next;
+            state->world.freezeLifeTicks = freezePlan.newFreezeLifeTicks;
             /* Mirror into MagicState.freezeLifeTicks so the light
              * / creature-ai sides observe the freeze consistently. */
-            state->world.magic.freezeLifeTicks = next;
-            if (consumesBox) {
+            state->world.magic.freezeLifeTicks = freezePlan.newFreezeLifeTicks;
+            if (freezePlan.consumesActionHandObject) {
                 m11_remove_action_hand_object_f0300(state, champ);
-            } else {
+            } else if (freezePlan.decrementsActionHandCharges) {
                 m11_decrement_action_hand_charges_f0405(state, championIndex);
             }
             m11_log_event(state, M11_COLOR_LIGHT_BLUE,
                           "T%u: %s FREEZES TIME (%d TICKS)",
                           (unsigned int)state->world.gameTick,
-                          champName, next - prev);
+                          champName, freezePlan.newFreezeLifeTicks - prev);
             return 1;
         }
         case 10: { /* CLIMB DOWN */
