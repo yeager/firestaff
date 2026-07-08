@@ -254,9 +254,9 @@ static M12_ExtSettingsRow m12_ext_settings[] = {
     {"Tooltip",             "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     /* ── ONLINE tab ── */
     {"RetroAchievements",   "Off",       1, M12_SETTINGS_TAB_ONLINE},
-    {"RA Hardcore",         "On",        1, M12_SETTINGS_TAB_ONLINE},
-    {"RA Username",         "Not Set",   1, M12_SETTINGS_TAB_ONLINE},
-    {"RA API Token",        "Not Set",   1, M12_SETTINGS_TAB_ONLINE},
+    {"RetroAchievements Hardcore", "On",      1, M12_SETTINGS_TAB_ONLINE},
+    {"RetroAchievements Username", "Not Set", 1, M12_SETTINGS_TAB_ONLINE},
+    {"RetroAchievements API Token","Not Set", 1, M12_SETTINGS_TAB_ONLINE},
     {"Stat Tracker",        "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Pathfinding Overlay", "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Inventory Sort",      "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
@@ -6764,13 +6764,16 @@ static const char* m12_ext_settings_value_for_row(
     if (strcmp(row->label, "RetroAchievements") == 0) {
         return m12_settings_value(state, M12_SETTINGS_ROW_RETROACHIEVEMENTS);
     }
-    if (strcmp(row->label, "RA Hardcore") == 0) {
+    if (strcmp(row->label, "RetroAchievements Hardcore") == 0 ||
+        strcmp(row->label, "RA Hardcore") == 0) {
         return m12_settings_value(state, M12_SETTINGS_ROW_RA_HARDCORE);
     }
-    if (strcmp(row->label, "RA Username") == 0) {
+    if (strcmp(row->label, "RetroAchievements Username") == 0 ||
+        strcmp(row->label, "RA Username") == 0) {
         return m12_settings_value(state, M12_SETTINGS_ROW_RA_USERNAME);
     }
-    if (strcmp(row->label, "RA API Token") == 0) {
+    if (strcmp(row->label, "RetroAchievements API Token") == 0 ||
+        strcmp(row->label, "RA API Token") == 0) {
         return m12_settings_value(state, M12_SETTINGS_ROW_RA_TOKEN);
     }
     return m12_tr(state, row->value);
