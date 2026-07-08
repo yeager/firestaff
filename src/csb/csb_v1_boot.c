@@ -1103,6 +1103,39 @@ static int csb_v1_boot_startup_runtime_facts_pc34(
         boot_profile);
 }
 
+static int csb_v1_boot_startup_facts_from_snapshot_pc34(
+    CSB_V1_StartupHostFacts_PC34 *facts,
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot)
+{
+    if (!snapshot) {
+        csb_v1_startup_host_facts_init_pc34(facts);
+        return 0;
+    }
+    return csb_v1_boot_startup_runtime_facts_pc34(
+        facts,
+        snapshot->title_active,
+        snapshot->title_frame,
+        snapshot->title_source_step,
+        snapshot->entrance_active,
+        snapshot->entrance_source_step,
+        snapshot->entrance_dismissed,
+        snapshot->credits_active,
+        snapshot->credits_remaining_ticks,
+        snapshot->opening_active,
+        snapshot->opening_delay_ticks,
+        snapshot->opening_step,
+        snapshot->pending_command,
+        snapshot->entrance_frame,
+        snapshot->utility_overlay_active,
+        snapshot->utility_selected_action_index,
+        snapshot->utility_imported_champion_count,
+        snapshot->utility_preview_active,
+        snapshot->utility_prompt,
+        snapshot->resume_available,
+        snapshot->resume_path,
+        snapshot->boot_profile);
+}
+
 int csb_v1_boot_startup_build_render_plan_from_runtime_state_pc34(
     CSB_V1_StartupRenderPlan_PC34 *out_plan,
     int title_active,
@@ -1279,6 +1312,18 @@ int csb_v1_boot_startup_entrance_accepts_input_from_runtime_state_pc34(
         &facts);
 }
 
+int csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
+        return 0;
+    }
+    return csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
+        &facts);
+}
+
 int csb_v1_boot_startup_presentation_receipt_from_runtime_state_pc34(
     char *out_phase,
     int out_phase_size,
@@ -1402,6 +1447,20 @@ int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
             resume_available,
             resume_path,
             boot_profile)) {
+        return 0;
+    }
+    return csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
+        &facts,
+        out_plan);
+}
+
+int csb_v1_boot_runtime_util_render_plan_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_UtilRenderPlan *out_plan)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
         return 0;
     }
     return csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
@@ -1599,6 +1658,44 @@ int csb_v1_boot_runtime_util_apply_firestaff_input_from_runtime_state_pc34(
         out_receipt);
 }
 
+int csb_v1_boot_runtime_util_apply_pointer_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
+        csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
+            out_receipt);
+        return 0;
+    }
+    return csb_v1_runtime_util_apply_point_from_startup_host_facts_with_action_receipt_pc34(
+        &facts,
+        x,
+        y,
+        out_receipt);
+}
+
+int csb_v1_boot_runtime_util_apply_firestaff_input_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
+        csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
+            out_receipt);
+        return 0;
+    }
+    return csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
+        &facts,
+        menu_input,
+        out_receipt);
+}
+
 int csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_runtime_state_pc34(
     CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt,
     int title_active,
@@ -1649,6 +1746,24 @@ int csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_runtime_st
             resume_available,
             resume_path,
             boot_profile)) {
+        csb_v1_startup_entrance_host_action_receipt_init_pc34(
+            out_receipt);
+        return 0;
+    }
+    return csb_v1_runtime_execute_startup_entrance_firestaff_input_from_host_facts_with_receipts_pc34(
+        &facts,
+        menu_input,
+        out_receipt);
+}
+
+int csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
         csb_v1_startup_entrance_host_action_receipt_init_pc34(
             out_receipt);
         return 0;
@@ -1711,6 +1826,28 @@ int csb_v1_boot_runtime_execute_startup_entrance_pointer_from_runtime_state_pc34
             resume_available,
             resume_path,
             boot_profile)) {
+        csb_v1_startup_entrance_host_action_receipt_init_pc34(
+            out_receipt);
+        return 0;
+    }
+    return csb_v1_runtime_execute_startup_entrance_pointer_from_host_facts_with_receipts_pc34(
+        &facts,
+        x,
+        y,
+        button_mask,
+        out_receipt);
+}
+
+int csb_v1_boot_runtime_execute_startup_entrance_pointer_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
         csb_v1_startup_entrance_host_action_receipt_init_pc34(
             out_receipt);
         return 0;

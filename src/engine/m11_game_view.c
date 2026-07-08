@@ -2479,36 +2479,70 @@ static void m11_csb_startup_command_state_receipt_to_m11(
     M11_GameViewState *state,
     const CSB_V1_StartupCommandStateReceipt_PC34 *receipt);
 
+static void m11_csb_boot_runtime_startup_snapshot(
+    const M11_GameViewState *state,
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 *out_snapshot)
+{
+    if (!out_snapshot) {
+        return;
+    }
+    memset(out_snapshot, 0, sizeof(*out_snapshot));
+    if (!state) {
+        return;
+    }
+    out_snapshot->title_active = state->csbState.startup_title_active;
+    out_snapshot->title_frame = state->csbState.startup_title_frame;
+    out_snapshot->title_source_step =
+        state->csbState.startup_title_source_step;
+    out_snapshot->entrance_active =
+        state->csbState.startup_entrance_active;
+    out_snapshot->entrance_source_step =
+        state->csbState.startup_entrance_source_step;
+    out_snapshot->entrance_dismissed =
+        state->csbState.startup_entrance_dismissed;
+    out_snapshot->credits_active =
+        state->csbState.startup_entrance_credits_active;
+    out_snapshot->credits_remaining_ticks =
+        state->csbState.startup_entrance_credits_remaining_ticks;
+    out_snapshot->opening_active =
+        state->csbState.startup_entrance_opening_active;
+    out_snapshot->opening_delay_ticks =
+        state->csbState.startup_entrance_opening_delay_ticks;
+    out_snapshot->opening_step =
+        state->csbState.startup_entrance_opening_step;
+    out_snapshot->pending_command =
+        state->csbState.startup_entrance_pending_command;
+    out_snapshot->entrance_frame =
+        state->csbState.startup_entrance_frame;
+    out_snapshot->utility_overlay_active =
+        state->csbState.startup_import_available;
+    out_snapshot->utility_selected_action_index =
+        state->csbState.startup_import_selected_action_index;
+    out_snapshot->utility_imported_champion_count =
+        state->csbState.startup_import_champion_count;
+    out_snapshot->utility_preview_active =
+        state->csbState.startup_import_preview_active;
+    out_snapshot->utility_prompt =
+        state->csbState.startup_import_utility_prompt;
+    out_snapshot->resume_available =
+        state->csbState.startup_entrance_resume_available;
+    out_snapshot->resume_path =
+        state->csbState.startup_entrance_resume_path;
+    out_snapshot->boot_profile = state->csbBootProfile;
+}
+
 static int m11_csb_boot_runtime_util_render_plan(
     const M11_GameViewState *state,
     CSB_V1_UtilRenderPlan *out_plan)
 {
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || !out_plan) {
         return 0;
     }
-    return csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
-        out_plan,
-        state->csbState.startup_title_active,
-        state->csbState.startup_title_frame,
-        state->csbState.startup_title_source_step,
-        state->csbState.startup_entrance_active,
-        state->csbState.startup_entrance_source_step,
-        state->csbState.startup_entrance_dismissed,
-        state->csbState.startup_entrance_credits_active,
-        state->csbState.startup_entrance_credits_remaining_ticks,
-        state->csbState.startup_entrance_opening_active,
-        state->csbState.startup_entrance_opening_delay_ticks,
-        state->csbState.startup_entrance_opening_step,
-        state->csbState.startup_entrance_pending_command,
-        state->csbState.startup_entrance_frame,
-        state->csbState.startup_import_available,
-        state->csbState.startup_import_selected_action_index,
-        state->csbState.startup_import_champion_count,
-        state->csbState.startup_import_preview_active,
-        state->csbState.startup_import_utility_prompt,
-        state->csbState.startup_entrance_resume_available,
-        state->csbState.startup_entrance_resume_path,
-        state->csbBootProfile);
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_runtime_util_render_plan_from_snapshot_pc34(
+        &snapshot,
+        out_plan);
 }
 
 static int m11_csb_boot_runtime_util_pointer(
@@ -2517,34 +2551,16 @@ static int m11_csb_boot_runtime_util_pointer(
     int y,
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt)
 {
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || !out_receipt) {
         return 0;
     }
-    return csb_v1_boot_runtime_util_apply_pointer_from_runtime_state_pc34(
-        out_receipt,
-        state->csbState.startup_title_active,
-        state->csbState.startup_title_frame,
-        state->csbState.startup_title_source_step,
-        state->csbState.startup_entrance_active,
-        state->csbState.startup_entrance_source_step,
-        state->csbState.startup_entrance_dismissed,
-        state->csbState.startup_entrance_credits_active,
-        state->csbState.startup_entrance_credits_remaining_ticks,
-        state->csbState.startup_entrance_opening_active,
-        state->csbState.startup_entrance_opening_delay_ticks,
-        state->csbState.startup_entrance_opening_step,
-        state->csbState.startup_entrance_pending_command,
-        state->csbState.startup_entrance_frame,
-        state->csbState.startup_import_available,
-        state->csbState.startup_import_selected_action_index,
-        state->csbState.startup_import_champion_count,
-        state->csbState.startup_import_preview_active,
-        state->csbState.startup_import_utility_prompt,
-        state->csbState.startup_entrance_resume_available,
-        state->csbState.startup_entrance_resume_path,
-        state->csbBootProfile,
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_runtime_util_apply_pointer_from_snapshot_pc34(
+        &snapshot,
         x,
-        y);
+        y,
+        out_receipt);
 }
 
 static int m11_csb_boot_runtime_util_keyboard(
@@ -2552,33 +2568,15 @@ static int m11_csb_boot_runtime_util_keyboard(
     int menu_input,
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt)
 {
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || !out_receipt) {
         return 0;
     }
-    return csb_v1_boot_runtime_util_apply_firestaff_input_from_runtime_state_pc34(
-        out_receipt,
-        state->csbState.startup_title_active,
-        state->csbState.startup_title_frame,
-        state->csbState.startup_title_source_step,
-        state->csbState.startup_entrance_active,
-        state->csbState.startup_entrance_source_step,
-        state->csbState.startup_entrance_dismissed,
-        state->csbState.startup_entrance_credits_active,
-        state->csbState.startup_entrance_credits_remaining_ticks,
-        state->csbState.startup_entrance_opening_active,
-        state->csbState.startup_entrance_opening_delay_ticks,
-        state->csbState.startup_entrance_opening_step,
-        state->csbState.startup_entrance_pending_command,
-        state->csbState.startup_entrance_frame,
-        state->csbState.startup_import_available,
-        state->csbState.startup_import_selected_action_index,
-        state->csbState.startup_import_champion_count,
-        state->csbState.startup_import_preview_active,
-        state->csbState.startup_import_utility_prompt,
-        state->csbState.startup_entrance_resume_available,
-        state->csbState.startup_entrance_resume_path,
-        state->csbBootProfile,
-        menu_input);
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_runtime_util_apply_firestaff_input_from_snapshot_pc34(
+        &snapshot,
+        menu_input,
+        out_receipt);
 }
 
 static int m11_csb_boot_runtime_entrance_keyboard(
@@ -2586,33 +2584,15 @@ static int m11_csb_boot_runtime_entrance_keyboard(
     int menu_input,
     CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
 {
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || !out_receipt) {
         return 0;
     }
-    return csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_runtime_state_pc34(
-        out_receipt,
-        state->csbState.startup_title_active,
-        state->csbState.startup_title_frame,
-        state->csbState.startup_title_source_step,
-        state->csbState.startup_entrance_active,
-        state->csbState.startup_entrance_source_step,
-        state->csbState.startup_entrance_dismissed,
-        state->csbState.startup_entrance_credits_active,
-        state->csbState.startup_entrance_credits_remaining_ticks,
-        state->csbState.startup_entrance_opening_active,
-        state->csbState.startup_entrance_opening_delay_ticks,
-        state->csbState.startup_entrance_opening_step,
-        state->csbState.startup_entrance_pending_command,
-        state->csbState.startup_entrance_frame,
-        state->csbState.startup_import_available,
-        state->csbState.startup_import_selected_action_index,
-        state->csbState.startup_import_champion_count,
-        state->csbState.startup_import_preview_active,
-        state->csbState.startup_import_utility_prompt,
-        state->csbState.startup_entrance_resume_available,
-        state->csbState.startup_entrance_resume_path,
-        state->csbBootProfile,
-        menu_input);
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_snapshot_pc34(
+        &snapshot,
+        menu_input,
+        out_receipt);
 }
 
 static int m11_csb_boot_runtime_entrance_pointer(
@@ -2622,35 +2602,17 @@ static int m11_csb_boot_runtime_entrance_pointer(
     unsigned int button_mask,
     CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
 {
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || !out_receipt) {
         return 0;
     }
-    return csb_v1_boot_runtime_execute_startup_entrance_pointer_from_runtime_state_pc34(
-        out_receipt,
-        state->csbState.startup_title_active,
-        state->csbState.startup_title_frame,
-        state->csbState.startup_title_source_step,
-        state->csbState.startup_entrance_active,
-        state->csbState.startup_entrance_source_step,
-        state->csbState.startup_entrance_dismissed,
-        state->csbState.startup_entrance_credits_active,
-        state->csbState.startup_entrance_credits_remaining_ticks,
-        state->csbState.startup_entrance_opening_active,
-        state->csbState.startup_entrance_opening_delay_ticks,
-        state->csbState.startup_entrance_opening_step,
-        state->csbState.startup_entrance_pending_command,
-        state->csbState.startup_entrance_frame,
-        state->csbState.startup_import_available,
-        state->csbState.startup_import_selected_action_index,
-        state->csbState.startup_import_champion_count,
-        state->csbState.startup_import_preview_active,
-        state->csbState.startup_import_utility_prompt,
-        state->csbState.startup_entrance_resume_available,
-        state->csbState.startup_entrance_resume_path,
-        state->csbBootProfile,
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_runtime_execute_startup_entrance_pointer_from_snapshot_pc34(
+        &snapshot,
         x,
         y,
-        button_mask);
+        button_mask,
+        out_receipt);
 }
 
 static int m11_csb_startup_build_render_plan(
@@ -3110,31 +3072,13 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state)
 {
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
-    return csb_v1_boot_startup_entrance_accepts_input_from_runtime_state_pc34(
-        state->csbState.startup_title_active,
-        state->csbState.startup_title_frame,
-        state->csbState.startup_title_source_step,
-        state->csbState.startup_entrance_active,
-        state->csbState.startup_entrance_source_step,
-        state->csbState.startup_entrance_dismissed,
-        state->csbState.startup_entrance_credits_active,
-        state->csbState.startup_entrance_credits_remaining_ticks,
-        state->csbState.startup_entrance_opening_active,
-        state->csbState.startup_entrance_opening_delay_ticks,
-        state->csbState.startup_entrance_opening_step,
-        state->csbState.startup_entrance_pending_command,
-        state->csbState.startup_entrance_frame,
-        state->csbState.startup_import_available,
-        state->csbState.startup_import_selected_action_index,
-        state->csbState.startup_import_champion_count,
-        state->csbState.startup_import_preview_active,
-        state->csbState.startup_import_utility_prompt,
-        state->csbState.startup_entrance_resume_available,
-        state->csbState.startup_entrance_resume_path,
-        state->csbBootProfile);
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
+        &snapshot);
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(
