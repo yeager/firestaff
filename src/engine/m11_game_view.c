@@ -11196,7 +11196,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->csbState.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->csbState.tick_count;
-        (void)csb_v1_startup_receipt_phase_from_facts_pc34(
+        (void)csb_v1_startup_receipt_presentation_from_facts_pc34(
             state->csbState.startup_title_active,
             state->csbState.startup_title_frame,
             state->csbState.startup_title_source_step,
@@ -11213,40 +11213,13 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
-            &out->startupFrame);
-        out->startupTitleFrameMax = csb_v1_startup_title_total_ticks_pc34();
-        if (state->csbState.startup_title_active) {
-            snprintf(out->startupAnimation,
-                     sizeof(out->startupAnimation),
-                     "%s",
-                     "csb-title");
-            out->startupAnimationActive = 1;
-            out->startupTitleFrame = state->csbState.startup_title_frame;
-            out->startupTitleReady = 0;
-        } else if (state->csbState.startup_entrance_opening_active) {
-            snprintf(out->startupAnimation,
-                     sizeof(out->startupAnimation),
-                     "%s",
-                     "csb-entrance-opening");
-            out->startupAnimationActive = 1;
-            out->startupTitleFrame = out->startupTitleFrameMax;
-            out->startupTitleReady = 1;
-        } else if (state->csbState.startup_entrance_active) {
-            snprintf(out->startupAnimation,
-                     sizeof(out->startupAnimation),
-                     "%s",
-                     "csb-entrance");
-            out->startupAnimationActive = 0;
-            out->startupTitleFrame = out->startupTitleFrameMax;
-            out->startupTitleReady = 1;
-        } else {
-            snprintf(out->startupAnimation,
-                     sizeof(out->startupAnimation),
-                     "%s",
-                     "csb-runtime");
-            out->startupTitleFrame = out->startupTitleFrameMax;
-            out->startupTitleReady = 1;
-        }
+            &out->startupFrame,
+            out->startupAnimation,
+            (int)sizeof(out->startupAnimation),
+            &out->startupAnimationActive,
+            &out->startupTitleFrame,
+            &out->startupTitleFrameMax,
+            &out->startupTitleReady);
         return 1;
     }
 

@@ -285,8 +285,13 @@ int main(void)
     RenderExecutorProbe render_probe;
     CSB_V1_StartupRenderExecutor_PC34 render_executor;
     char phase[64];
+    char animation[64];
     int startup_active;
     int startup_frame;
+    int animation_active;
+    int title_frame;
+    int title_frame_max;
+    int title_ready;
     int command;
     int i;
     unsigned char fb[320 * 200];
@@ -2186,6 +2191,41 @@ int main(void)
               startup_active == 1 &&
               startup_frame == 7,
           "startup receipt phase facts helper owns title phase");
+    memset(animation, 0, sizeof(animation));
+    animation_active = -1;
+    title_frame = -1;
+    title_frame_max = -1;
+    title_ready = -1;
+    check(csb_v1_startup_receipt_presentation_from_facts_pc34(
+              1,
+              7,
+              2,
+              1,
+              CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              44,
+              phase,
+              (int)sizeof(phase),
+              &startup_active,
+              &startup_frame,
+              animation,
+              (int)sizeof(animation),
+              &animation_active,
+              &title_frame,
+              &title_frame_max,
+              &title_ready) &&
+              strcmp(animation, "csb-title") == 0 &&
+              animation_active == 1 &&
+              title_frame == 7 &&
+              title_frame_max == csb_v1_startup_title_total_ticks_pc34() &&
+              title_ready == 0,
+          "startup presentation facts helper owns title animation receipt");
 
     command_state.title_active = 0;
     command_state.opening_active = 1;
