@@ -131,6 +131,23 @@ void theron_v2_hud_launch_mode_set_v1_faithful(int v1FaithfulActive)
     launch_mode_recompute();
 }
 
+void theron_v2_hud_launch_mode_apply_m11_startup(int v1FaithfulActive,
+                                                 int m11HudLaunchMode)
+{
+    THERON_V2_PhaseGateConfig gate_cfg;
+    Theron_V2_HudLaunchMode mode;
+
+    theron_v2_phase_gate_defaults(&gate_cfg);
+    gate_cfg.v2PresentationEnabled = v1FaithfulActive ? 0 : 1;
+    gate_cfg.v2ConfigPersistenceEnabled = 1;
+    theron_v2_hud_launch_mode_set_phase_gate(
+        gate_cfg.v2PresentationEnabled,
+        gate_cfg.v2ConfigPersistenceEnabled);
+    theron_v2_hud_launch_mode_set_v1_faithful(v1FaithfulActive);
+    mode = theron_v2_hud_launch_mode_from_m11(m11HudLaunchMode);
+    theron_v2_hud_launch_mode_set(mode);
+}
+
 Theron_V2_HudLaunchMode theron_v2_hud_launch_mode_get(void)
 {
     return g_state.mode;

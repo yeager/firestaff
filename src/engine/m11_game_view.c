@@ -125,7 +125,6 @@
 #include "theron_v2_settings_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
-#include "theron_v2_phase_gate_pc34.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -10656,41 +10655,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         csb_v2_presentation_mode_set_m12(spec->presentationMode);
     } else if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
         theron_v2_presentation_mode_set_m12(spec->presentationMode);
-        /* ── Theron V2 HUD launch-mode gate (presentation-only) ────
-         * Push the launcher's HUD launch-mode intent (OFF / OVERLAY /
-         * TOUCH / CONTROLLER) into the Theron V2 HUD launch-mode
-         * runtime. The runtime consults the V2 phase gate (v2Presentation
-         * Enabled + v2ConfigPersistenceEnabled) and the V22 modern-pack
-         * availability to resolve the requested mode to one of OFF /
-         * OVERLAY / TOUCH / CONTROLLER. Skip-safe by default: when the
-         * phase gate denies presentation or V22 assets are missing, the
-         * runtime downgrades to OFF / OVERLAY without mutating V1
-         * input / champion / world / save / Track 02 bank state.
-         * Source-lock: include/theron_v2_hud_launch_mode_pc34.h
-         * resolution table; THERON_V2_PHASE_DOMAIN_HUD_LAUNCH_MODE
-         * (V2-eligible domain, presentation-only contract). */
-        {
-            THERON_V2_PhaseGateConfig gate_cfg;
-            Theron_V2_HudLaunchMode mode;
-            theron_v2_phase_gate_defaults(&gate_cfg);
-            /* M12 currently does not surface v2PresentationEnabled/
-             * v2ConfigPersistenceEnabled as launcher-level toggles; the
-             * V2-on inference is taken from the launcher selecting any
-             * non-V1 presentation mode. The Theron V2 launch-mode
-             * runtime consults the gate but is itself the gate-aware
-             * dispatcher, so a presentationMode != V1_FAITHFUL is the
-             * source of truth here. */
-            gate_cfg.v2PresentationEnabled =
-                (spec->presentationMode != M12_PRESENTATION_V1_ORIGINAL) ? 1 : 0;
-            gate_cfg.v2ConfigPersistenceEnabled = 1; /* overlay/launch-mode are presentation-only; the gate configures the mode contract */
-            theron_v2_hud_launch_mode_set_phase_gate(
-                gate_cfg.v2PresentationEnabled,
-                gate_cfg.v2ConfigPersistenceEnabled);
-            theron_v2_hud_launch_mode_set_v1_faithful(
-                spec->presentationMode == M12_PRESENTATION_V1_ORIGINAL);
-            mode = theron_v2_hud_launch_mode_from_m11(spec->hudLaunchMode);
-            theron_v2_hud_launch_mode_set(mode);
-        }
+        theron_v2_hud_launch_mode_apply_m11_startup(
+            spec->presentationMode == M12_PRESENTATION_V1_ORIGINAL,
+            spec->hudLaunchMode);
     }
     /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
     if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
