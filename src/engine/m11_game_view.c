@@ -10534,8 +10534,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         char resolvedDataDir[FSP_PATH_MAX];
         char scanDir[512];
         CSB_V1_BootProfile *profile = NULL;
-        CSB_V1_RuntimeStartupSessionStateReceipt_PC34 session_receipt;
-        CSB_V1_RuntimeStartupHandoffReceipt_PC34 startup_handoff;
+        CSB_V1_BootStartupLaunchReceipts_PC34 startup_receipts;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
             if (FSP_ResolveDataDir(resolvedDataDir,
@@ -10570,22 +10569,23 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             free(profile);
             return 0;
         }
-        if (!csb_v1_boot_apply_startup_handoff_pc34(
+        if (!csb_v1_boot_build_startup_launch_receipts_pc34(
                 profile,
                 spec->savePath,
                 spec->csbImportDm1SavePath,
-                &startup_handoff)) {
+                spec->entranceResumeSavePath,
+                &startup_receipts)) {
             m11_set_status(state,
-                           startup_handoff.status_scope
-                               ? startup_handoff.status_scope
+                           startup_receipts.handoff.status_scope
+                               ? startup_receipts.handoff.status_scope
                                : "BOOT",
-                           startup_handoff.status
-                               ? startup_handoff.status
+                           startup_receipts.handoff.status
+                               ? startup_receipts.handoff.status
                                : "CSB STARTUP FAILED");
             m11_log_event(state, M11_COLOR_RED,
                           "T0: %s",
-                          startup_handoff.status
-                              ? startup_handoff.status
+                          startup_receipts.handoff.status
+                              ? startup_receipts.handoff.status
                               : "CSB STARTUP FAILED");
             csb_v1_boot_cleanup(profile);
             free(profile);
@@ -10624,24 +10624,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         state->csbBootProfile = profile;
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-        {
-            CSB_V1_StartupInitStateReceipt_PC34 receipt;
-            if (csb_v1_startup_init_state_receipt_pc34(
-                    spec->savePath && spec->savePath[0] != '\0',
-                    &receipt)) {
-                m11_csb_startup_init_state_receipt_to_m11(state,
-                                                          &receipt);
-            }
-        }
-        (void)csb_v1_boot_build_startup_session_state_receipt_pc34(
-            profile,
-            &startup_handoff,
-            spec->csbImportDm1SavePath,
-            spec->entranceResumeSavePath,
-            &session_receipt);
+        m11_csb_startup_init_state_receipt_to_m11(
+            state,
+            &startup_receipts.init_state);
         m11_apply_csb_runtime_startup_session_state_receipt(
             state,
-            &session_receipt);
+            &startup_receipts.session_state);
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')

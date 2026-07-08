@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB combined startup-launch receipt: CSB boot now emits one M11-ready startup launch receipt containing runtime handoff, startup init state, and startup session state. M11 consumes that single boot-owned receipt during `StartCSB` instead of assembling handoff/init/session through separate CSB layers. Verification: CSB boot-runtime handoff passed 282/282, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Nexus boot receipt presentation: Nexus startup menu now emits the boot-probe phase, animation id, animation-active flag, title frame, title max, and title-ready summary. M11 consumes that Nexus-owned presentation receipt instead of deriving Nexus startup animation fields locally. Verification: Nexus startup title/pointer contract passed 15/15, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 boot receipt presentation: DM2 startup presentation now emits the boot-probe phase, animation id, animation-active flag, title frame, title max, and title-ready summary. M11 consumes that DM2-owned presentation receipt instead of deriving DM2 startup animation fields locally. Verification: DM2 startup action contract passed 69/69, DM2 M11 startup/profile gate passed, Phase A passed 24/24, and `git diff --check` passed.
