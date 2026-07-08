@@ -62,7 +62,7 @@ typedef enum {
     DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER = 3
 } DM2_V1_StartupExecutionKind;
 
-typedef struct {
+typedef struct DM2_V1_StartupExecution {
     DM2_V1_StartupExecutionKind kind;
     int rescan_saves;
     const char *status;
@@ -145,13 +145,13 @@ typedef struct {
     int selected_row;
 } DM2_V1_StartupMenuStateReceipt;
 
-typedef struct {
+typedef struct DM2_V1_StartupHostActionReceipt {
     DM2_V1_StartupHostReceipt host_receipt;
     int menu_state_receipt_valid;
     DM2_V1_StartupMenuStateReceipt menu_state_receipt;
 } DM2_V1_StartupHostActionReceipt;
 
-typedef struct {
+typedef struct DM2_V1_StartupIdleReceipt {
     DM2_V1_StartupHostReceipt host_receipt;
 } DM2_V1_StartupIdleReceipt;
 

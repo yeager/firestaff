@@ -133,7 +133,7 @@ typedef enum {
 /* Session version marker — written in slot header extension */
 #define DM2_SESSION_VERSION   1
 
-typedef struct {
+typedef struct DM2_V1_SessionState {
     /* Game tick counter — SUPPRESS-encoded 4-byte field */
     uint32_t game_tick;
 

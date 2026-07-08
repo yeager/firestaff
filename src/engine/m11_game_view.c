@@ -552,24 +552,6 @@ static void m11_dm2_startup_state_receipt_to_m11(
     state->dm2State.startup_menu_selected_row = receipt->selected_row;
 }
 
-static void m11_dm2_startup_host_facts(
-    const M11_GameViewState *state,
-    const DM2_V1_BootProfile *profile,
-    DM2_V1_StartupHostFacts *facts)
-{
-    if (!state || !facts) {
-        return;
-    }
-    (void)dm2_v1_boot_startup_host_facts_from_runtime_state(
-        profile,
-        state->dm2State.startup_menu_active,
-        state->dm2State.startup_save_root,
-        state->dm2State.startup_resume_available,
-        state->dm2State.startup_slot_mask,
-        state->dm2State.startup_menu_selected_row,
-        facts);
-}
-
 _Static_assert(M12_MENU_INPUT_NONE == 0,
                "DM2 startup menu input code drift");
 _Static_assert(M12_MENU_INPUT_UP == 1,
@@ -767,7 +749,6 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     M12_MenuInput input)
 {
     const DM2_V1_BootProfile *profile;
-    DM2_V1_StartupHostFacts facts;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
 
@@ -775,9 +756,13 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
         return M11_GAME_INPUT_IGNORED;
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
-    m11_dm2_startup_host_facts(state, profile, &facts);
-    if (!dm2_v1_startup_execute_firestaff_input_from_host_facts_with_receipt(
-            &facts,
+    if (!dm2_v1_boot_startup_execute_firestaff_input_from_runtime_state(
+            profile,
+            state->dm2State.startup_menu_active,
+            state->dm2State.startup_save_root,
+            state->dm2State.startup_resume_available,
+            state->dm2State.startup_slot_mask,
+            state->dm2State.startup_menu_selected_row,
             (int)input,
             m11_dm2_startup_apply_session_callback,
             state,
@@ -12128,11 +12113,14 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (state->dm2State.startup_menu_active) {
             const DM2_V1_BootProfile *profile =
                 (const DM2_V1_BootProfile *)state->dm2BootProfile;
-            DM2_V1_StartupHostFacts facts;
             DM2_V1_StartupIdleReceipt receipt;
-            m11_dm2_startup_host_facts(state, profile, &facts);
-            if (dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
-                    &facts,
+            if (dm2_v1_boot_startup_advance_idle_from_runtime_state(
+                    profile,
+                    state->dm2State.startup_menu_active,
+                    state->dm2State.startup_save_root,
+                    state->dm2State.startup_resume_available,
+                    state->dm2State.startup_slot_mask,
+                    state->dm2State.startup_menu_selected_row,
                     mouthRedraw,
                     &receipt)) {
                 return m11_dm2_startup_apply_host_receipt(
@@ -14298,7 +14286,6 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     int y)
 {
     const DM2_V1_BootProfile *profile;
-    DM2_V1_StartupHostFacts facts;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
 
@@ -14308,9 +14295,13 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
-    m11_dm2_startup_host_facts(state, profile, &facts);
-    if (!dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
-            &facts,
+    if (!dm2_v1_boot_startup_execute_pointer_from_runtime_state(
+            profile,
+            state->dm2State.startup_menu_active,
+            state->dm2State.startup_save_root,
+            state->dm2State.startup_resume_available,
+            state->dm2State.startup_slot_mask,
+            state->dm2State.startup_menu_selected_row,
             x,
             y,
             m11_dm2_startup_apply_session_callback,
@@ -33927,7 +33918,6 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                       int framebufferHeight)
 {
     const DM2_V1_BootProfile *profile;
-    DM2_V1_StartupHostFacts facts;
     DM2_V1_StartupDrawCommand commands[32];
     DM2_V1_StartupDrawExecutor executor;
     M11_DM2StartupDrawContext context;
@@ -33937,10 +33927,14 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
         return;
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
-    m11_dm2_startup_host_facts(state, profile, &facts);
     command_count =
-        dm2_v1_startup_presentation_build_from_host_facts(
-            &facts,
+        dm2_v1_boot_startup_presentation_build_from_runtime_state(
+            profile,
+            state->dm2State.startup_menu_active,
+            state->dm2State.startup_save_root,
+            state->dm2State.startup_resume_available,
+            state->dm2State.startup_slot_mask,
+            state->dm2State.startup_menu_selected_row,
             commands,
             (int)(sizeof(commands) / sizeof(commands[0])));
     if (command_count <= 0) {

@@ -6,6 +6,11 @@
 
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
 typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
+struct DM2_V1_SessionState;
+struct DM2_V1_StartupExecution;
+struct DM2_V1_StartupHostActionReceipt;
+struct DM2_V1_StartupIdleReceipt;
+struct DM2_V1_StartupDrawCommand;
 
 /* ══════════════════════════════════════════════════════════════════════
  * DM2 V1 Boot Profile — Phase 1: Runtime Profile Split
@@ -207,6 +212,55 @@ int dm2_v1_boot_startup_launch_from_runtime_state(
     unsigned int slot_mask,
     int selected_row,
     DM2_V1_StartupLaunchReceipt *out_receipt);
+
+int dm2_v1_boot_startup_advance_idle_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int mouth_redraw,
+    struct DM2_V1_StartupIdleReceipt *out_receipt);
+
+int dm2_v1_boot_startup_execute_firestaff_input_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int menu_input,
+    int (*apply_session)(void *userdata,
+                         const struct DM2_V1_SessionState *session),
+    void *apply_userdata,
+    struct DM2_V1_StartupExecution *out_execution,
+    struct DM2_V1_StartupHostActionReceipt *out_receipt);
+
+int dm2_v1_boot_startup_execute_pointer_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int x,
+    int y,
+    int (*apply_session)(void *userdata,
+                         const struct DM2_V1_SessionState *session),
+    void *apply_userdata,
+    struct DM2_V1_StartupExecution *out_execution,
+    struct DM2_V1_StartupHostActionReceipt *out_receipt);
+
+int dm2_v1_boot_startup_presentation_build_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    struct DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

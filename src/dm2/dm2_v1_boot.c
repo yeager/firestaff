@@ -25,6 +25,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
+#include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "asset_find_by_hash.h"
 #include <stdio.h>
@@ -899,6 +900,140 @@ int dm2_v1_boot_startup_launch_from_runtime_state(
     return dm2_v1_startup_launch_from_host_facts_with_receipt(
         &facts,
         out_receipt);
+}
+
+int dm2_v1_boot_startup_advance_idle_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int mouth_redraw,
+    DM2_V1_StartupIdleReceipt *out_receipt)
+{
+    DM2_V1_StartupHostFacts facts;
+    if (!out_receipt) {
+        return 0;
+    }
+    if (!dm2_v1_boot_startup_host_facts_from_runtime_state(
+            profile,
+            startup_menu_active,
+            startup_save_root,
+            resume_available,
+            slot_mask,
+            selected_row,
+            &facts)) {
+        return 0;
+    }
+    return dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
+        &facts,
+        mouth_redraw,
+        out_receipt);
+}
+
+int dm2_v1_boot_startup_execute_firestaff_input_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int menu_input,
+    int (*apply_session)(void *userdata, const DM2_V1_SessionState *session),
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    DM2_V1_StartupHostFacts facts;
+    if (!out_receipt) {
+        return 0;
+    }
+    if (!dm2_v1_boot_startup_host_facts_from_runtime_state(
+            profile,
+            startup_menu_active,
+            startup_save_root,
+            resume_available,
+            slot_mask,
+            selected_row,
+            &facts)) {
+        return 0;
+    }
+    return dm2_v1_startup_execute_firestaff_input_from_host_facts_with_receipt(
+        &facts,
+        menu_input,
+        apply_session,
+        apply_userdata,
+        out_execution,
+        out_receipt);
+}
+
+int dm2_v1_boot_startup_execute_pointer_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int x,
+    int y,
+    int (*apply_session)(void *userdata, const DM2_V1_SessionState *session),
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    DM2_V1_StartupHostFacts facts;
+    if (!out_receipt) {
+        return 0;
+    }
+    if (!dm2_v1_boot_startup_host_facts_from_runtime_state(
+            profile,
+            startup_menu_active,
+            startup_save_root,
+            resume_available,
+            slot_mask,
+            selected_row,
+            &facts)) {
+        return 0;
+    }
+    return dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
+        &facts,
+        x,
+        y,
+        apply_session,
+        apply_userdata,
+        out_execution,
+        out_receipt);
+}
+
+int dm2_v1_boot_startup_presentation_build_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    DM2_V1_StartupHostFacts facts;
+    if (!out_commands || max_commands <= 0 || !startup_menu_active) {
+        return 0;
+    }
+    if (!dm2_v1_boot_startup_host_facts_from_runtime_state(
+            profile,
+            startup_menu_active,
+            startup_save_root,
+            resume_available,
+            slot_mask,
+            selected_row,
+            &facts)) {
+        return 0;
+    }
+    return dm2_v1_startup_presentation_build_from_host_facts(
+        &facts,
+        out_commands,
+        max_commands);
 }
 
 static const char *dm2_v1_boot_startup_prepare_host_status(
