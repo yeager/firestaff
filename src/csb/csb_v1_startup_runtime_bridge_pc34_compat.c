@@ -125,3 +125,21 @@ int csb_v1_runtime_apply_startup_sequence_plan_from_boot_profile_facts_with_rece
         out_runtime_apply_receipt,
         out_state_receipt);
 }
+
+int csb_v1_runtime_m11_mirror_receipt_from_boot_profile_pc34(
+    const void *boot_profile,
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+
+    if (!profile) {
+        if (out_receipt) {
+            csb_v1_runtime_m11_mirror_receipt_init_pc34(out_receipt);
+        }
+        return 0;
+    }
+    return csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
+        &profile->runtime,
+        out_receipt);
+}

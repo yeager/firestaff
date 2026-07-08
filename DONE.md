@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup M11 mirror boot-profile adapter: CSB runtime/startup bridge now returns the combined M11 mirror receipt from an opaque boot profile, so M11 no longer reaches through `CSB_V1_BootProfile.runtime` for CSB view, party, or leader-hand sync after startup/runtime transitions. Verification: M10 and M11 targeted library builds passed, CSB startup entrance pointer contract passed 142/142, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 RetroAchievements start-menu settings contract: the start menu now exposes public RetroAchievements status/token getters, the modern renderer uses the shared status/token contract, and the modern menu probe locks backend-pending status plus redacted API-token output. Verification: M12 targeted library build passed, settings hit-test passed 49/49, Phase A passed 24/24, and `git diff --check` passed. The modern render and accessibility probes were attempted but hung in the current build tree and were stopped.
 
 - ✅ 2026-07-08 CSB startup runtime boot-profile bridge: CSB runtime/startup bridge now applies startup dungeon-entry/resume runtime plans from the opaque CSB boot profile, so M11 no longer reaches into `CSB_V1_BootProfile.runtime` for that path. Verification: M10 and M11 targeted library builds passed, CSB startup entrance pointer contract passed 142/142, Phase A passed 24/24, and `git diff --check` passed.
