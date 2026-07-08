@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB SWOOSH pathfinder regression: Added a data-free test proving the SWSH pathfinder resolves `csb/SWOOSH` for CSB and still resolves `dm1/SWOOSH` through the legacy wrapper. Verification: new pathfinder test passed, `main_loop_m11.c` and `swsh_intro_pathfinder_m11.c` compile checks passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB FTL/SWSH startup prelude: CSB launcher handoff now runs the FTL/SWSH palette-logo prelude before CSB title/entrance, using a game-scoped SWOOSH path finder that searches CSB data first. The old M11 assumption that CSB needed no FTL swoosh was removed. Verification: `main_loop_m11.c` and `swsh_intro_pathfinder_m11.c` compile checks passed, Phase A passed 24/24, source grep confirms the old “no FTL swoosh” path is gone, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB entrance input host wrappers: CSB runtime/startup bridge now maps Firestaff keyboard input and entrance pointer hits from startup host facts into M11-ready entrance host-action receipts. M11 no longer calls the CSB input-to-command helpers or keeps a separate entrance-command handler for startup input. Verification: CSB bridge, pointer module, M11, and CSB handoff-test syntax compile checks passed, Phase A passed 24/24, and `git diff --check` passed. Full local CMake target rebuild was not counted because the local CMake build tree still hangs at build-system regeneration.

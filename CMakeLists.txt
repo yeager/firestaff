@@ -17038,6 +17038,26 @@ if(BUILD_TESTING)
         COMMAND test_swsh_frontend_pc34_compat_integration
     )
 
+    add_executable(test_swsh_intro_pathfinder_m11
+        tests/test_swsh_intro_pathfinder_m11.c
+        src/engine/swsh_intro_pathfinder_m11.c
+        src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/fs_portable_compat.c
+    )
+    target_compile_definitions(test_swsh_intro_pathfinder_m11 PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    if(NOT MSVC)
+        target_compile_options(test_swsh_intro_pathfinder_m11 PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME swsh_intro_pathfinder_m11
+        COMMAND test_swsh_intro_pathfinder_m11
+    )
+
     # -- DM1 V1 startup intro state-machine ordering gate -------------
     # Data-free composition of the source-locked SWSH logo, TITLE handoff,
     # and entrance wait helpers. Proves the intro can only order as
