@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB utility render host-facts wrapper: CSB runtime/startup bridge now builds utility render plans directly from startup host facts. M11 no longer passes separate utility prompt/action/champion/preview fields for rendering. Verification: CSB boot-runtime handoff passed 288/288, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB utility startup host-facts wrappers: CSB runtime/startup bridge now routes utility keyboard/pointer input directly from startup host facts. M11 no longer passes separate utility action/champion/overlay fields for that path. Verification: CSB boot-runtime handoff passed 286/286, CSB startup entrance passed 152/152, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 startup idle receipt: DM2 startup menu now owns idle menu redraw/no-redraw receipts, so M11 no longer special-cases DM2 startup-menu idle policy before runtime ticks. Verification: DM2 startup action contract passed 74/74, Phase A passed 24/24, and `git diff --check` passed.
