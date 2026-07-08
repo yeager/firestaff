@@ -10177,31 +10177,28 @@ static void m11_nexus_startup_snapshot_to_state(
     M11_GameViewState *state,
     const Nexus_V1_StartupMenuStateReceipt *receipt);
 
-static void m11_nexus_startup_host_facts(
+static void m11_nexus_startup_runtime_state(
     const M11_GameViewState *state,
-    Nexus_V1_StartupHostFacts *facts)
+    Nexus_V1_StartupRuntimeState *runtime)
 {
-    if (!facts) {
+    if (!runtime) {
         return;
     }
-    memset(facts, 0, sizeof(*facts));
+    nexus_v1_launcher_startup_runtime_state_clear(runtime);
     if (!state) {
         return;
     }
-    facts->title_active = state->nexusState.title_active;
-    facts->title_frame = state->nexusState.title_frame;
-    facts->save_select_active = state->nexusState.startup_save_select_active;
-    facts->champion_select_active = state->nexusState.champion_select_active;
-    facts->save_dir = state->nexusState.startup_save_dir;
-    facts->slot_mask = state->nexusState.startup_save_slot_mask;
-    facts->save_selected_row = state->nexusState.startup_save_selected_row;
-    facts->save_row_count = state->nexusState.startup_save_row_count;
-    if (state->nexusEngine) {
-        facts->champion_pool =
-            (Nexus_V1_ChampionPool *)&state->nexusEngine->champions;
-    }
-    facts->champion_cursor = state->nexusState.champion_cursor;
-    facts->champion_frame = state->nexusState.champion_select_frame;
+    runtime->title_active = state->nexusState.title_active;
+    runtime->title_frame = state->nexusState.title_frame;
+    runtime->save_select_active = state->nexusState.startup_save_select_active;
+    runtime->champion_select_active = state->nexusState.champion_select_active;
+    runtime->save_dir = state->nexusState.startup_save_dir;
+    runtime->slot_mask = state->nexusState.startup_save_slot_mask;
+    runtime->save_selected_row = state->nexusState.startup_save_selected_row;
+    runtime->save_row_count = state->nexusState.startup_save_row_count;
+    runtime->engine = state->nexusEngine;
+    runtime->champion_cursor = state->nexusState.champion_cursor;
+    runtime->champion_frame = state->nexusState.champion_select_frame;
 }
 
 static int m11_path_has_extension(const char* path, const char* ext) {
@@ -10440,16 +10437,16 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_StartupRuntimeState runtime;
     Nexus_V1_StartupSaveExecution execution;
     Nexus_V1_StartupHostActionReceipt receipt;
 
     if (!state || !state->nexusState.startup_save_select_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_nexus_startup_host_facts(state, &facts);
-    if (!nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
-            &facts,
+    m11_nexus_startup_runtime_state(state, &runtime);
+    if (!nexus_v1_launcher_startup_execute_save_firestaff_input_from_runtime_state(
+            &runtime,
             (int)input,
             m11_nexus_startup_load_save_callback,
             state,
@@ -12310,13 +12307,13 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (state->nexusState.title_active ||
             state->nexusState.startup_save_select_active ||
             state->nexusState.champion_select_active) {
-            Nexus_V1_StartupHostFacts facts;
+            Nexus_V1_StartupRuntimeState runtime;
             Nexus_V1_StartupIdleReceipt receipt;
             M11_GameInputResult result;
 
-            m11_nexus_startup_host_facts(state, &facts);
-            if (!nexus_v1_startup_advance_idle_from_host_facts_with_receipt(
-                    &facts,
+            m11_nexus_startup_runtime_state(state, &runtime);
+            if (!nexus_v1_launcher_startup_advance_idle_from_runtime_state(
+                    &runtime,
                     &receipt)) {
                 return mouthRedraw ? M11_GAME_INPUT_REDRAW
                                    : M11_GAME_INPUT_IGNORED;
@@ -13696,12 +13693,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (state->nexusState.title_active) {
-            Nexus_V1_StartupHostFacts facts;
+            Nexus_V1_StartupRuntimeState runtime;
             Nexus_V1_StartupTitleExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
-            m11_nexus_startup_host_facts(state, &facts);
-            if (!nexus_v1_startup_execute_title_firestaff_input_from_host_facts_with_receipt(
-                    &facts,
+            m11_nexus_startup_runtime_state(state, &runtime);
+            if (!nexus_v1_launcher_startup_execute_title_firestaff_input_from_runtime_state(
+                    &runtime,
                     (int)input,
                     &execution,
                     &receipt)) {
@@ -13713,12 +13710,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return m11_nexus_startup_handle_save_input(state, input);
         }
         if (state->nexusState.champion_select_active) {
-            Nexus_V1_StartupHostFacts facts;
+            Nexus_V1_StartupRuntimeState runtime;
             Nexus_V1_StartupChampionExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
-            m11_nexus_startup_host_facts(state, &facts);
-            if (!nexus_v1_startup_execute_champion_firestaff_input_from_host_facts_with_receipt(
-                    &facts,
+            m11_nexus_startup_runtime_state(state, &runtime);
+            if (!nexus_v1_launcher_startup_execute_champion_firestaff_input_from_runtime_state(
+                    &runtime,
                     (int)input,
                     &execution,
                     &receipt)) {
@@ -14426,12 +14423,12 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
     if (state->nexusState.title_active) {
-        Nexus_V1_StartupHostFacts facts;
+        Nexus_V1_StartupRuntimeState runtime;
         Nexus_V1_StartupTitleExecution execution;
         Nexus_V1_StartupHostActionReceipt receipt;
-        m11_nexus_startup_host_facts(state, &facts);
-        if (!nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
-                &facts,
+        m11_nexus_startup_runtime_state(state, &runtime);
+        if (!nexus_v1_launcher_startup_execute_title_pointer_from_runtime_state(
+                &runtime,
                 &execution,
                 &receipt)) {
             return M11_GAME_INPUT_IGNORED;
@@ -14439,12 +14436,12 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return m11_nexus_apply_startup_action_receipt(state, &receipt);
     }
     if (state->nexusState.startup_save_select_active) {
-        Nexus_V1_StartupHostFacts facts;
+        Nexus_V1_StartupRuntimeState runtime;
         Nexus_V1_StartupSaveExecution execution;
         Nexus_V1_StartupHostActionReceipt receipt;
-        m11_nexus_startup_host_facts(state, &facts);
-        if (!nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
-                &facts,
+        m11_nexus_startup_runtime_state(state, &runtime);
+        if (!nexus_v1_launcher_startup_execute_save_pointer_from_runtime_state(
+                &runtime,
                 x,
                 y,
                 m11_nexus_startup_load_save_callback,
@@ -14456,12 +14453,12 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return m11_nexus_apply_startup_action_receipt(state, &receipt);
     }
     if (state->nexusState.champion_select_active) {
-        Nexus_V1_StartupHostFacts facts;
+        Nexus_V1_StartupRuntimeState runtime;
         Nexus_V1_StartupChampionExecution execution;
         Nexus_V1_StartupHostActionReceipt receipt;
-        m11_nexus_startup_host_facts(state, &facts);
-        if (!nexus_v1_startup_execute_champion_pointer_from_host_facts_with_receipt(
-                &facts,
+        m11_nexus_startup_runtime_state(state, &runtime);
+        if (!nexus_v1_launcher_startup_execute_champion_pointer_from_runtime_state(
+                &runtime,
                 x,
                 y,
                 &execution,
@@ -34442,9 +34439,9 @@ static void m11_draw_nexus_startup_commands(
     executor.draw_boot_title_frame = m11_nexus_startup_exec_boot_title_frame;
     executor.draw_warning_background =
         m11_nexus_startup_exec_warning_background;
-    (void)nexus_v1_startup_presentation_execute(commands,
-                                                command_count,
-                                                &executor);
+    (void)nexus_v1_launcher_startup_presentation_execute(commands,
+                                                         command_count,
+                                                         &executor);
 }
 
 static void m11_draw_utility_panel(const M11_GameViewState* state,
@@ -38023,13 +38020,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                             commands,
                                             command_count);
         } else if (state->nexusState.startup_save_select_active) {
-            Nexus_V1_StartupHostFacts facts;
+            Nexus_V1_StartupRuntimeState runtime;
             Nexus_V1_StartupDrawCommand commands[48];
             int command_count;
             directDraw = 1;
-            m11_nexus_startup_host_facts(state, &facts);
-            command_count = nexus_v1_startup_presentation_build_save_from_host_facts(
-                &facts,
+            m11_nexus_startup_runtime_state(state, &runtime);
+            command_count = nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
+                &runtime,
                 commands,
                 (int)(sizeof(commands) / sizeof(commands[0])));
             m11_draw_nexus_startup_commands(state,
@@ -38040,13 +38037,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                             command_count);
         } else if (state->nexusState.champion_select_active &&
                    state->nexusEngine) {
-            Nexus_V1_StartupHostFacts facts;
+            Nexus_V1_StartupRuntimeState runtime;
             Nexus_V1_StartupDrawCommand commands[80];
             int command_count;
             directDraw = 1;
-            m11_nexus_startup_host_facts(state, &facts);
-            command_count = nexus_v1_startup_presentation_build_champion_from_host_facts(
-                &facts,
+            m11_nexus_startup_runtime_state(state, &runtime);
+            command_count = nexus_v1_launcher_startup_presentation_build_champion_from_runtime_state(
+                &runtime,
                 commands,
                 (int)(sizeof(commands) / sizeof(commands[0])));
             m11_draw_nexus_startup_commands(state,
