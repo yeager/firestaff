@@ -33106,15 +33106,15 @@ int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
 }
 
 int M11_GameView_GetV1SlotBoxNormalGraphicId(void) {
-    return M11_GFX_SLOT_BOX_NORMAL;
+    return DM1_GFX_SLOT_NORMAL;
 }
 
 int M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
-    return M11_GFX_SLOT_BOX_WOUNDED;
+    return DM1_GFX_SLOT_WOUNDED;
 }
 
 int M11_GameView_GetV1SlotBoxActingHandGraphicId(void) {
-    return M11_GFX_SLOT_BOX_ACTING_HAND;
+    return DM1_GFX_SLOT_ACTING;
 }
 
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
@@ -33128,16 +33128,11 @@ int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
     }
     champ = &state->world.party.champions[championSlot];
     if (!champ->present || champ->hp.current == 0) return 0;
-    if (handIndex == 1 &&
-        state->actingChampionOrdinal == (unsigned int)(championSlot + 1)) {
-        /* Source F0291 assigns wounded/normal first, then acting hand
-         * overrides it for C01_SLOT_ACTION_HAND. */
-        return M11_GameView_GetV1SlotBoxActingHandGraphicId();
-    }
-    if (champ->wounds & (handIndex == 0 ? 0x0001u : 0x0002u)) {
-        return M11_GameView_GetV1SlotBoxWoundedGraphicId();
-    }
-    return M11_GameView_GetV1SlotBoxNormalGraphicId();
+    return DM1_ChampionPanel_SlotBoxGraphic(
+        handIndex,
+        (uint16_t)champ->wounds,
+        (handIndex == DM1_SLOT_ACTION_HAND &&
+         state->actingChampionOrdinal == (unsigned int)(championSlot + 1)));
 }
 
 int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
@@ -33454,20 +33449,10 @@ int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
     if (thing != THING_NONE && thing != THING_ENDOFLIST) {
         return m11_object_icon_index_for_thing(state, state->world.things, thing);
     }
-
-    /* ReDMCSB CHAMDRAW.C F0291_CHAMPION_DrawSlot:
-     *   if empty and slot <= C05_SLOT_FEET:
-     *     IconIndex = C212_ICON_READY_HAND + (SlotIndex << 1);
-     *     if Wounds has (1 << SlotIndex), IconIndex++ and box=C034.
-     * For status boxes only C00_SLOT_READY_HAND and
-     * C01_SLOT_ACTION_HAND are drawn, so the exact empty-hand icons are:
-     *   ready normal/wounded  = 212/213
-     *   action normal/wounded = 214/215
-     * The later acting-champion override changes only the slot-box graphic
-     * (C035), not the selected empty-hand icon. */
     sourceSlotIndex = handIndex; /* C00_SLOT_READY_HAND / C01_SLOT_ACTION_HAND */
-    return 212 + (sourceSlotIndex << 1) +
-           ((champ->wounds & (1u << sourceSlotIndex)) ? 1 : 0);
+    return DM1_ChampionPanel_EmptyHandIconIndex(
+        sourceSlotIndex,
+        (uint16_t)champ->wounds);
 }
 
 static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,

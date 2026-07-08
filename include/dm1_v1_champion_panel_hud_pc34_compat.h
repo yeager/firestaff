@@ -122,6 +122,7 @@ extern const uint8_t DM1_ChampionColor[DM1_CHAMPION_COUNT];
 #define DM1_GFX_SLOT_NORMAL     33
 #define DM1_GFX_SLOT_WOUNDED    34
 #define DM1_GFX_SLOT_ACTING     35
+#define DM1_ICON_READY_HAND    212
 
 /* Food/Water/Poison label graphics — DEFS.H C030/C031/C032 */
 #define DM1_GFX_FOOD_LABEL     30
@@ -265,6 +266,7 @@ int DM1_ChampionPanel_BuildStatusHandSlotBoxModel(
 /* ── Slot box graphic — CHAMDRAW.C F0291 ── */
 int DM1_ChampionPanel_SlotBoxGraphic(int slotIndex, uint16_t wounds,
                                       int isActingChampion);
+int DM1_ChampionPanel_EmptyHandIconIndex(int slotIndex, uint16_t wounds);
 
 /* ── Portrait screen X — CHAMDRAW.C F0354 ── */
 int DM1_ChampionPanel_PortraitScreenX(int champIdx);
