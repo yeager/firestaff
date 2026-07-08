@@ -189,6 +189,10 @@ typedef struct {
 int theron_v1_startup_save_resume_evaluate(
     const char *boot_save_root,
     Theron_V1StartupSaveResume *out_snapshot);
+int theron_v1_startup_save_resume_apply_explicit_path(
+    Theron_V1StartupSaveResume *snapshot,
+    const char *save_path,
+    const char *tqsv_root);
 
 /* Apply an explicit startup Continue request into a Theron world.
  * These helpers own the save/SRM decode and between-dungeon world reset;

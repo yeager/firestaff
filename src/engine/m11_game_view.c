@@ -12131,17 +12131,10 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     Theron_StartupStateReceipt startupStateReceipt;
     Theron_V1StartupSaveResume saveResume;
     int saveResumeReady = 0;
-    int requestedSaveSlot = -1;
-    int requestedSrmSlot = -1;
-    int requestedSrmReady = 0;
-    char requestedSrmRoot[THERON_V1_SRM_PATH_MAX];
-    Theron_V1SrmEnvelopeReceipt requestedSrmEnvelope;
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
     }
-    requestedSrmRoot[0] = '\0';
-    memset(&requestedSrmEnvelope, 0, sizeof(requestedSrmEnvelope));
     savedDebugHUD = state->showDebugHUD;
     M11_GameView_Shutdown(state);
     M11_GameView_Init(state);
@@ -12172,7 +12165,6 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if (savePath && savePath[0] != '\0') {
         char saveRoot[512];
         const char* slash = strrchr(savePath, '/');
-        const char* base;
 #ifdef _WIN32
         {
             const char* backslash = strrchr(savePath, '\\');
@@ -12181,26 +12173,6 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
             }
         }
 #endif
-        base = slash ? slash + 1 : savePath;
-        if (base &&
-            base[0] == 's' &&
-            base[1] == 'l' &&
-            base[2] == 'o' &&
-            base[3] == 't' &&
-            base[4] >= '0' && base[4] <= '7' &&
-            strcmp(base + 5, ".tqsv") == 0) {
-            requestedSaveSlot = base[4] - '0';
-        }
-        if (base &&
-            base[0] == 's' &&
-            base[1] == 'l' &&
-            base[2] == 'o' &&
-            base[3] == 't' &&
-            base[4] >= '0' &&
-            base[4] < (char)('0' + THERON_V1_SRM_DISK_SLOT_COUNT) &&
-            strcmp(base + 5, ".srm") == 0) {
-            requestedSrmSlot = base[4] - '0';
-        }
         if (slash && slash > savePath) {
             size_t len = (size_t)(slash - savePath);
             if (len >= sizeof(saveRoot)) {
@@ -12208,17 +12180,8 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
             }
             memcpy(saveRoot, savePath, len);
             saveRoot[len] = '\0';
-            if (requestedSrmSlot >= 0) {
-                snprintf(requestedSrmRoot,
-                         sizeof(requestedSrmRoot),
-                         "%s",
-                         saveRoot);
-            }
             theron_v1_boot_set_save_root(profile, saveRoot);
         } else {
-            if (requestedSrmSlot >= 0) {
-                snprintf(requestedSrmRoot, sizeof(requestedSrmRoot), ".");
-            }
             theron_v1_boot_set_save_root(profile, NULL);
         }
     } else {
@@ -12226,69 +12189,11 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     }
     memset(&saveResume, 0, sizeof(saveResume));
     saveResumeReady = theron_v1_boot_startup_save_resume(profile, &saveResume);
-    if (requestedSaveSlot >= 0 &&
-        requestedSaveSlot < THERON_SAVE_SLOT_COUNT &&
-        theron_v1_save_verify_slot(profile->save_root, requestedSaveSlot)) {
-        saveResume.tqsv_active_slot = requestedSaveSlot;
-        if (saveResume.tqsv_valid_slots <= 0) {
-            saveResume.tqsv_valid_slots = 1;
-        }
-        if (saveResume.resume_claim == THERON_V1_STARTUP_RESUME_NONE) {
-            saveResume.resume_claim = THERON_V1_STARTUP_RESUME_TQSV;
-        } else if (saveResume.resume_claim == THERON_V1_STARTUP_RESUME_SRM) {
-            saveResume.resume_claim = THERON_V1_STARTUP_RESUME_DUAL;
-        }
-        snprintf(saveResume.resume_claim_name,
-                 sizeof(saveResume.resume_claim_name),
-                 "%s",
-                 theron_v1_startup_save_resume_claim_name(
-                     saveResume.resume_claim));
+    if (theron_v1_startup_save_resume_apply_explicit_path(
+            &saveResume,
+            savePath,
+            profile->save_root)) {
         saveResumeReady = 1;
-    }
-    if (requestedSrmSlot >= 0 &&
-        requestedSrmRoot[0] != '\0') {
-        char srmPath[THERON_V1_SRM_PATH_MAX];
-        uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
-        Theron_V1SrmEnvelopeKind srmKind;
-        memset(scratch, 0, sizeof(scratch));
-        if (theron_v1_srm_slot_path(requestedSrmRoot,
-                                    requestedSrmSlot,
-                                    srmPath) &&
-            (srmKind = theron_v1_srm_decode_path(
-                 srmPath,
-                 requestedSrmSlot,
-                 scratch,
-                 sizeof(scratch),
-                 &requestedSrmEnvelope)) !=
-                THERON_V1_SRM_ENVELOPE_KIND_NONE &&
-            (srmKind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
-             srmKind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) &&
-            requestedSrmEnvelope.progression.restored) {
-            requestedSrmReady = 1;
-            saveResume.srm_first_recognized_slot = requestedSrmSlot;
-            if (saveResume.srm_recognized_slots <= 0) {
-                saveResume.srm_recognized_slots = 1;
-            }
-            saveResume.srm_progress_import_status =
-                requestedSrmEnvelope.decode_status;
-            saveResume.srm_progress_current_dungeon =
-                (int)requestedSrmEnvelope.progression.current_dungeon;
-            saveResume.srm_progress_current_level =
-                (int)requestedSrmEnvelope.progression.current_level;
-            saveResume.srm_progress_quest_mask =
-                (int)requestedSrmEnvelope.progression.quest_items_bitmask;
-            if (saveResume.resume_claim == THERON_V1_STARTUP_RESUME_NONE) {
-                saveResume.resume_claim = THERON_V1_STARTUP_RESUME_SRM;
-            } else if (saveResume.resume_claim == THERON_V1_STARTUP_RESUME_TQSV) {
-                saveResume.resume_claim = THERON_V1_STARTUP_RESUME_DUAL;
-            }
-            snprintf(saveResume.resume_claim_name,
-                     sizeof(saveResume.resume_claim_name),
-                     "%s",
-                     theron_v1_startup_save_resume_claim_name(
-                         saveResume.resume_claim));
-            saveResumeReady = 1;
-        }
     }
 
     assetResult = tr_asset_load(profile->graphics_path, assets);
@@ -12352,11 +12257,12 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         saveResumeReady ? saveResume.tqsv_valid_slots : 0;
     state->theronState.save_resume_srm_slots =
         saveResumeReady ? saveResume.srm_recognized_slots : 0;
-    if (requestedSrmReady) {
+    if (saveResumeReady && saveResume.srm_first_recognized_slot >= 0 &&
+        saveResume.srm_root[0] != '\0') {
         snprintf(state->theronState.save_resume_srm_root,
                  sizeof(state->theronState.save_resume_srm_root),
                  "%s",
-                 requestedSrmRoot);
+                 saveResume.srm_root);
     } else {
         state->theronState.save_resume_srm_root[0] = '\0';
     }
