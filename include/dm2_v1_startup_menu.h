@@ -330,6 +330,13 @@ int dm2_v1_startup_execute_action_with_receipt(
     void *apply_userdata,
     DM2_V1_StartupExecution *out_execution,
     DM2_V1_StartupApplyReceipt *out_receipt);
+int dm2_v1_startup_execute_action_with_host_receipt(
+    const DM2_V1_StartupAction *action,
+    const char *save_root,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostReceipt *out_host_receipt);
 void dm2_v1_startup_host_receipt_clear(
     DM2_V1_StartupHostReceipt *receipt);
 int dm2_v1_startup_host_receipt_from_apply_receipt(

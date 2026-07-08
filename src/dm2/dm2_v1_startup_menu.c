@@ -1062,6 +1062,36 @@ int dm2_v1_startup_execute_action_with_receipt(
                                                        out_receipt);
 }
 
+int dm2_v1_startup_execute_action_with_host_receipt(
+    const DM2_V1_StartupAction *action,
+    const char *save_root,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostReceipt *out_host_receipt)
+{
+    DM2_V1_StartupApplyReceipt apply_receipt;
+
+    dm2_v1_startup_apply_receipt_clear(&apply_receipt);
+    if (out_host_receipt) {
+        dm2_v1_startup_host_receipt_clear(out_host_receipt);
+    }
+    if (!dm2_v1_startup_execute_action_with_receipt(action,
+                                                    save_root,
+                                                    apply_session,
+                                                    apply_userdata,
+                                                    out_execution,
+                                                    &apply_receipt)) {
+        return 0;
+    }
+    if (out_host_receipt &&
+        !dm2_v1_startup_host_receipt_from_apply_receipt(&apply_receipt,
+                                                        out_host_receipt)) {
+        return 0;
+    }
+    return 1;
+}
+
 void dm2_v1_startup_host_receipt_clear(
     DM2_V1_StartupHostReceipt *receipt)
 {
