@@ -10304,6 +10304,26 @@ static M11_GameInputResult m11_nexus_apply_startup_receipt(
     return M11_GAME_INPUT_IGNORED;
 }
 
+static M11_GameInputResult m11_nexus_apply_startup_action_receipt(
+    M11_GameViewState *state,
+    const Nexus_V1_StartupHostActionReceipt *receipt)
+{
+    if (!state || !receipt) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (receipt->save_state_receipt_valid) {
+        m11_nexus_startup_snapshot_to_state(
+            state,
+            &receipt->save_state_receipt);
+    }
+    if (receipt->champion_state_receipt_valid) {
+        m11_nexus_champion_snapshot_to_state(
+            state,
+            &receipt->champion_state_receipt);
+    }
+    return m11_nexus_apply_startup_receipt(state, &receipt->host_receipt);
+}
+
 static int m11_nexus_startup_load_save_callback(
     void *userdata,
     const char *save_path)
@@ -10358,24 +10378,25 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
     M12_MenuInput input)
 {
     Nexus_V1_StartupHostFacts facts;
-    Nexus_V1_StartupMenuStateReceipt receipt;
-    Nexus_V1_StartupAction action;
+    Nexus_V1_StartupSaveExecution execution;
+    Nexus_V1_StartupHostActionReceipt receipt;
 
     if (!state || !state->nexusState.startup_save_select_active) {
         return M11_GAME_INPUT_IGNORED;
     }
     m11_nexus_startup_host_facts(state, &facts);
-    if (!nexus_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
-            &receipt,
+    if (!nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
             &facts,
             (int)input,
-            &action)) {
+            m11_nexus_startup_load_save_callback,
+            state,
+            &execution,
+            &receipt)) {
         return input == M12_MENU_INPUT_NONE
                    ? M11_GAME_INPUT_IGNORED
                    : M11_GAME_INPUT_REDRAW;
     }
-    m11_nexus_startup_snapshot_to_state(state, &receipt);
-    return m11_nexus_startup_apply_save_action(state, &action);
+    return m11_nexus_apply_startup_action_receipt(state, &receipt);
 }
 
 static M11_GameInputResult m11_nexus_startup_apply_champion_action(
@@ -13793,18 +13814,17 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->nexusState.champion_select_active) {
             Nexus_V1_StartupHostFacts facts;
-            Nexus_V1_StartupChampionStateReceipt receipt;
-            Nexus_V1_StartupAction action;
+            Nexus_V1_StartupChampionExecution execution;
+            Nexus_V1_StartupHostActionReceipt receipt;
             m11_nexus_startup_host_facts(state, &facts);
-            if (!nexus_v1_startup_champion_handle_firestaff_input_from_host_facts_with_receipt(
-                    &receipt,
+            if (!nexus_v1_startup_execute_champion_firestaff_input_from_host_facts_with_receipt(
                     &facts,
                     (int)input,
-                    &action)) {
+                    &execution,
+                    &receipt)) {
                 return M11_GAME_INPUT_IGNORED;
             }
-            m11_nexus_champion_snapshot_to_state(state, &receipt);
-            return m11_nexus_startup_apply_champion_action(state, &action);
+            return m11_nexus_apply_startup_action_receipt(state, &receipt);
         }
         if (input == M12_MENU_INPUT_BACK) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
@@ -14511,35 +14531,35 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     }
     if (state->nexusState.startup_save_select_active) {
         Nexus_V1_StartupHostFacts facts;
-        Nexus_V1_StartupMenuStateReceipt receipt;
-        Nexus_V1_StartupAction action;
+        Nexus_V1_StartupSaveExecution execution;
+        Nexus_V1_StartupHostActionReceipt receipt;
         m11_nexus_startup_host_facts(state, &facts);
-        if (!nexus_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
-                &receipt,
+        if (!nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
                 &facts,
                 x,
                 y,
-                &action)) {
+                m11_nexus_startup_load_save_callback,
+                state,
+                &execution,
+                &receipt)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        m11_nexus_startup_snapshot_to_state(state, &receipt);
-        return m11_nexus_startup_apply_save_action(state, &action);
+        return m11_nexus_apply_startup_action_receipt(state, &receipt);
     }
     if (state->nexusState.champion_select_active) {
         Nexus_V1_StartupHostFacts facts;
-        Nexus_V1_StartupChampionStateReceipt receipt;
-        Nexus_V1_StartupAction action;
+        Nexus_V1_StartupChampionExecution execution;
+        Nexus_V1_StartupHostActionReceipt receipt;
         m11_nexus_startup_host_facts(state, &facts);
-        if (!nexus_v1_startup_champion_handle_pointer_from_host_facts_with_receipt(
-                &receipt,
+        if (!nexus_v1_startup_execute_champion_pointer_from_host_facts_with_receipt(
                 &facts,
                 x,
                 y,
-                &action)) {
+                &execution,
+                &receipt)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        m11_nexus_champion_snapshot_to_state(state, &receipt);
-        return m11_nexus_startup_apply_champion_action(state, &action);
+        return m11_nexus_apply_startup_action_receipt(state, &receipt);
     }
     return M11_GAME_INPUT_IGNORED;
 }

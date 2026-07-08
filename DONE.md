@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus startup combined input receipts: Nexus startup menu now owns combined save-menu and champion-select keyboard/pointer routing through action execution and M11-ready host-action receipts. M11 applies one Nexus receipt instead of chaining state receipts into separate save/champion action execution. Verification: Nexus startup menu test passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 DM2 startup combined input receipts: DM2 startup menu now owns combined keyboard/pointer routing through action execution and M11-ready host receipts. M11 applies one DM2 host-action receipt instead of chaining menu input/pointer receipts into a separate action execution call. Verification: DM2 startup action contract passed 71/71, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron dungeon-exit startup receipt: Theron startup-flow now owns return-to-stage-select receipt construction after dungeon exit. M11 applies the returned state receipt instead of creating a local startup flow or interpreting Theron startup result codes. Verification: Theron startup save/resume test passed 112/112, Phase A passed 24/24, and `git diff --check` passed.

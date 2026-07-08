@@ -88,6 +88,7 @@ int main(void)
     Nexus_V1_StartupModeUpdate mode_update;
     Nexus_V1_StartupApplyReceipt receipt;
     Nexus_V1_StartupHostReceipt host_receipt;
+    Nexus_V1_StartupHostActionReceipt host_action_receipt;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupSaveRenderRow save_rows[4];
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
@@ -464,6 +465,22 @@ int main(void)
                    champion_receipt.frame == 0 &&
                    action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR,
                "Nexus champion host facts input helper owns M11 keyboard state");
+        expect(nexus_v1_startup_execute_champion_firestaff_input_from_host_facts_with_receipt(
+                   &host_facts,
+                   2,
+                   &champion_execution,
+                   &host_action_receipt) &&
+                   host_action_receipt.champion_state_receipt_valid &&
+                   host_action_receipt.champion_state_receipt.cursor == 2 &&
+                   host_action_receipt.host_receipt.input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   host_action_receipt.host_receipt.mode_update
+                       .set_champion_cursor &&
+                   host_action_receipt.host_receipt.mode_update
+                       .champion_cursor == 2 &&
+                   champion_execution.kind ==
+                       NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR,
+               "Nexus champion input wrapper returns M11-ready state and action receipt");
         snapshot_row_count =
             nexus_v1_startup_champion_snapshot_build_render_rows(
                 &champions,
@@ -539,6 +556,23 @@ int main(void)
                        action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED &&
                        action.row == 12,
                    "Nexus champion host facts pointer helper owns M11 pointer state");
+            nexus_v1_champions_init(&host_pool);
+            host_facts.champion_pool = &host_pool;
+            expect(nexus_v1_startup_execute_champion_pointer_from_host_facts_with_receipt(
+                       &host_facts,
+                       20,
+                       38,
+                       &champion_execution,
+                       &host_action_receipt) &&
+                       host_action_receipt.champion_state_receipt_valid &&
+                       host_action_receipt.champion_state_receipt.cursor ==
+                           13 &&
+                       host_action_receipt.host_receipt.input_result ==
+                           NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                       champion_execution.kind ==
+                           NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW &&
+                       host_pool.party_count == 1,
+                   "Nexus champion pointer wrapper returns M11-ready state and action receipt");
         }
         {
             Nexus_V1_StartupDrawCommand commands[80];
@@ -1342,6 +1376,24 @@ int main(void)
                    state_receipt.selected_row == 1 &&
                    action.kind == NEXUS_V1_STARTUP_ACTION_NONE,
                "Nexus save host facts input helper owns M11 keyboard state");
+        load_calls = 0;
+        expect(nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
+                   &host_facts,
+                   2,
+                   startup_load_success,
+                   &load_calls,
+                   &execution,
+                   &host_action_receipt) &&
+                   host_action_receipt.save_state_receipt_valid &&
+                   host_action_receipt.save_state_receipt.selected_row == 1 &&
+                   host_action_receipt.host_receipt.input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   strcmp(host_action_receipt.host_receipt.status,
+                          "NEXUS SAVE SELECT") == 0 &&
+                   execution.kind ==
+                       NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW &&
+                   load_calls == 0,
+               "Nexus save input wrapper returns M11-ready state and action receipt");
         snapshot_row_count =
             nexus_v1_startup_menu_snapshot_build_save_render_rows(
                 &snapshot,
@@ -1443,6 +1495,27 @@ int main(void)
                    action.slot == 3 &&
                    strstr(action.path, "nexus_save_03.dat") != NULL,
                "Nexus save host facts pointer helper owns M11 pointer state");
+        load_calls = 0;
+        expect(nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
+                   &host_facts,
+                   20,
+                   44,
+                   startup_load_success,
+                   &load_calls,
+                   &execution,
+                   &host_action_receipt) &&
+                   host_action_receipt.save_state_receipt_valid &&
+                   host_action_receipt.save_state_receipt.selected_row == 0 &&
+                   host_action_receipt.host_receipt.input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   host_action_receipt.host_receipt.mode_update
+                       .set_save_select_active &&
+                   host_action_receipt.host_receipt.mode_update
+                       .save_select_active == 0 &&
+                   execution.kind ==
+                       NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT &&
+                   load_calls == 1,
+               "Nexus save pointer wrapper returns M11-ready state and action receipt");
     }
     memset(&hit, 0, sizeof(hit));
     hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_PANEL;
