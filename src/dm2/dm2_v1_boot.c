@@ -3,7 +3,7 @@
  *
  * Phase 1: Runtime profile split for Skullkeep/DM2.
  * Separates DM2 boot from DM1/CSB, including:
- *   - Asset discovery (DM2GRAPHICS.DAT / DM2DUNGEON.DAT)
+ *   - Asset discovery by known DM2 hashes, with legacy filename fallback
  *   - Menu launch routing
  *   - Save namespace (saves/dm2/)
  *   - Platform/version diagnostics
@@ -327,7 +327,7 @@ static const char *const g_dm2_graphics_hashes[] = {
     NULL
 };
 
-static const char *const __attribute__((unused)) g_dm2_dungeon_hashes [] = {
+static const char *const g_dm2_dungeon_hashes [] = {
     "6caccd7875009e82fe2e28e7f6d6adc0",  /* PC English + all variants */
     NULL
 };
@@ -444,6 +444,31 @@ static int resolve_dm2_asset_path(const char *base,
     return 0;
 }
 
+static int apply_known_hash_asset(const char *base,
+                                  const char *const hashes[],
+                                  char resolved_path[512],
+                                  size_t *out_size,
+                                  char out_md5[33]) {
+    int matchIndex = -1;
+    char found[ASSET_PATH_MAX];
+    if (!base || !hashes || !resolved_path || !out_md5) return 0;
+    found[0] = '\0';
+    if (!asset_find_by_md5_list(base, hashes, found, (int)sizeof(found),
+                                &matchIndex, 8)) {
+        return 0;
+    }
+    strncpy(resolved_path, found, 511);
+    resolved_path[511] = '\0';
+    if (out_size) *out_size = file_size(found);
+    if (matchIndex >= 0 && hashes[matchIndex]) {
+        strncpy(out_md5, hashes[matchIndex], 32);
+        out_md5[32] = '\0';
+    } else if (!path_md5_hex(found, out_md5)) {
+        out_md5[0] = '\0';
+    }
+    return 1;
+}
+
 static void copy_parent_dir(char dst[512], const char *path) {
     const char *slash;
     const char *backslash;
@@ -477,8 +502,30 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     (void)path;
     const char *base = data_dir ? data_dir : ".";
 
-    /* Resolve GRAPHICS.DAT or DM2GRAPHICS.DAT */
-    {
+    if (!profile) return -1;
+    profile->graphics_path[0] = '\0';
+    profile->dungeon_path[0] = '\0';
+    profile->graphics_md5[0] = '\0';
+    profile->dungeon_md5[0] = '\0';
+    profile->graphics_size = 0U;
+    profile->dungeon_size = 0U;
+    profile->assets_verified = 0;
+    profile->use_dm2_filenames = 0;
+
+    /* Source-lock: SKULL.ASM T560 owns the DM2 data load. Firestaff
+     * discovers user-supplied files by hash first so launch does not
+     * depend on PC install names or directory layout. */
+    (void)apply_known_hash_asset(base, g_dm2_graphics_hashes,
+                                 profile->graphics_path,
+                                 &profile->graphics_size,
+                                 profile->graphics_md5);
+    (void)apply_known_hash_asset(base, g_dm2_dungeon_hashes,
+                                 profile->dungeon_path,
+                                 &profile->dungeon_size,
+                                 profile->dungeon_md5);
+
+    /* Legacy fallback for incomplete/synthetic developer fixtures. */
+    if (!profile->graphics_path[0]) {
         const char *gfx_candidates[] = {
             "DM2GRAPHICS.DAT",
             "GRAPHICS.DAT",
@@ -492,8 +539,7 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                                profile->graphics_md5);
     }
 
-    /* Resolve DUNGEON.DAT or DM2DUNGEON.DAT */
-    {
+    if (!profile->dungeon_path[0]) {
         const char *dun_candidates[] = {
             "DM2DUNGEON.DAT",
             "DUNGEON.DAT",
@@ -520,7 +566,13 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         size_t i;
         for (i = 0; g_dm2_graphics_hashes[i]; i++) {
             if (md5_matches(profile->graphics_md5, g_dm2_graphics_hashes[i])) {
-                profile->assets_verified = 1;
+                size_t j;
+                for (j = 0; g_dm2_dungeon_hashes[j]; j++) {
+                    if (md5_matches(profile->dungeon_md5, g_dm2_dungeon_hashes[j])) {
+                        profile->assets_verified = 1;
+                        break;
+                    }
+                }
                 break;
             }
         }
@@ -598,25 +650,38 @@ void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile) {
 
 int dm2_v1_boot_probe_available(const char *data_dir) {
     char path[512];
+    char gfxPath[ASSET_PATH_MAX];
+    char dunPath[ASSET_PATH_MAX];
     const char *base = data_dir ? data_dir : ".";
-    /* Quick check: look for DM2DUNGEON.DAT or DUNGEON.DAT in dm2/,
-     * data/, or the root.  Extracted DOS installs use data/dungeon.dat. */
     struct stat st;
+    gfxPath[0] = '\0';
+    dunPath[0] = '\0';
+    if (asset_find_by_md5_list(base, g_dm2_graphics_hashes, gfxPath,
+                               (int)sizeof(gfxPath), NULL, 8) &&
+        asset_find_by_md5_list(base, g_dm2_dungeon_hashes, dunPath,
+                               (int)sizeof(dunPath), NULL, 8)) {
+        return 1;
+    }
+    /* Legacy quick check for incomplete/synthetic developer fixtures:
+     * look for DM2DUNGEON.DAT or DUNGEON.DAT in dm2/, data/, or root.
+     * Extracted DOS installs use data/dungeon.dat. */
+    int hasGfx = 0;
+    int hasDungeon = 0;
     snprintf(path, sizeof(path), "%s%cdm2%cDM2DUNGEON.DAT", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 1000) return 1;
+    if (stat(path, &st) == 0 && st.st_size > 1000) hasDungeon = 1;
     snprintf(path, sizeof(path), "%s%cdm2%cDUNGEON.DAT", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 1000) return 1;
+    if (stat(path, &st) == 0 && st.st_size > 1000) hasDungeon = 1;
     snprintf(path, sizeof(path), "%s%cdm2%cGRAPHICS.DAT", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 100000) return 1;
+    if (stat(path, &st) == 0 && st.st_size > 100000) hasGfx = 1;
     snprintf(path, sizeof(path), "%s%cdata%cdungeon.dat", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 1000) return 1;
+    if (stat(path, &st) == 0 && st.st_size > 1000) hasDungeon = 1;
     snprintf(path, sizeof(path), "%s%cdata%cgraphics.dat", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 100000) return 1;
+    if (stat(path, &st) == 0 && st.st_size > 100000) hasGfx = 1;
     snprintf(path, sizeof(path), "%s%cDUNGEON.DAT", base, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 1000) return 1;
+    if (stat(path, &st) == 0 && st.st_size > 1000) hasDungeon = 1;
     snprintf(path, sizeof(path), "%s%cGRAPHICS.DAT", base, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 100000) return 1;
-    return 0;
+    if (stat(path, &st) == 0 && st.st_size > 100000) hasGfx = 1;
+    return hasGfx && hasDungeon;
 }
 
 /* ── Save root ───────────────────────────────────────────────────────── */

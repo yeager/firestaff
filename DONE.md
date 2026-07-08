@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 V1 hash-first boot scan: `dm2_v1_boot_scan_assets()` and `dm2_v1_boot_probe_available()` now search recursively by known DM2 graphics/dungeon MD5 before legacy filename fallback, and verification now requires both graphics and dungeon hashes. A regression test copies real DM2 files under arbitrary names when available. Verification: DM2 boot smoke test passed 40/40 with renamed real files.
+
 - ✅ 2026-07-08 Theron Track 02 hash-first boot scan: `theron_v1_boot_scan_assets()` now searches the data root recursively by the four known Track 02 MD5s before using legacy filename candidates, and verified JP/US/version identity comes from MD5 instead of filename. Verification: Theron availability test passed, Theron direct-launch test passed, boot syntax check passed, Phase A passed 24/24, and `git diff --check` passed. Full CMake target rebuild was stopped because the local build tree still hangs in regeneration.
 
 - ✅ 2026-07-08 data validator hash scan: `fs_validate_data_dir()` now consumes the shared launcher asset scanner instead of checking `dm1/GRAPHICS.DAT`, `csb/DUNGEON.DAT`, etc. by filename/size. A regression test proves DM1/CSB/DM2 validate from renamed files with matching hashes. Verification: validator hash-scan test passed, validator syntax check passed, Phase A passed 24/24, and `git diff --check` passed.
