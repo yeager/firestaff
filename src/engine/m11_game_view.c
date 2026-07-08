@@ -2538,24 +2538,11 @@ static int m11_csb_startup_build_render_plan(
     const M11_GameViewState *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
-    int runtime_start_valid = 0;
-    int runtime_start_x = 0;
-    int runtime_start_y = 0;
-    int runtime_start_dir = 0;
-
     if (!state) {
         return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
                                                                   out_plan);
     }
-    if (state->csbBootProfile) {
-        const CSB_V1_BootProfile *profile =
-            (const CSB_V1_BootProfile *)state->csbBootProfile;
-        runtime_start_valid = 1;
-        runtime_start_x = profile->runtime.party_x;
-        runtime_start_y = profile->runtime.party_y;
-        runtime_start_dir = profile->runtime.party_dir;
-    }
-    return csb_v1_startup_build_render_plan_from_facts_pc34(
+    return csb_v1_startup_build_render_plan_from_host_facts_pc34(
         state->csbState.startup_title_active,
         state->csbState.startup_title_frame,
         state->csbState.startup_title_source_step,
@@ -2570,10 +2557,7 @@ static int m11_csb_startup_build_render_plan(
         state->csbState.startup_entrance_pending_command,
         state->csbState.startup_entrance_frame,
         state->csbState.startup_import_available,
-        runtime_start_valid,
-        runtime_start_x,
-        runtime_start_y,
-        runtime_start_dir,
+        state->csbBootProfile,
         out_plan);
 }
 

@@ -1248,6 +1248,28 @@ int main(void)
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
               plan.waiting_for_input == 0,
           "startup render plan facts helper owns M11 field adapter");
+    memset(&plan, 0, sizeof(plan));
+    check(csb_v1_startup_build_render_plan_from_host_facts_pc34(
+              command_state.title_active,
+              command_state.title_frame,
+              command_state.title_source_step,
+              command_state.entrance_active,
+              command_state.entrance_source_step,
+              command_state.entrance_dismissed,
+              command_state.credits_active,
+              command_state.credits_remaining_ticks,
+              command_state.opening_active,
+              command_state.opening_delay_ticks,
+              command_state.opening_step,
+              command_state.pending_command,
+              37,
+              1,
+              NULL,
+              &plan) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              plan.waiting_for_input == 0,
+          "startup render host facts helper owns profile adapter fallback");
 
     memset(&command_state, 0xff, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 1) &&
