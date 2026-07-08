@@ -291,7 +291,9 @@ static int is_zip_path(const char *path) {
 }
 
 static int is_iso_path(const char *path) {
-    return has_case_suffix(path, ".iso") || has_case_suffix(path, ".bin");
+    return has_case_suffix(path, ".iso") || has_case_suffix(path, ".bin") ||
+           has_case_suffix(path, ".img") || has_case_suffix(path, ".cdr") ||
+           has_case_suffix(path, ".toast");
 }
 
 static int is_cue_path(const char *path) {
@@ -306,9 +308,14 @@ static int is_tgz_path(const char *path) {
     return has_case_suffix(path, ".tgz") || has_case_suffix(path, ".tar.gz");
 }
 
+static int is_gzip_path(const char *path) {
+    return (has_case_suffix(path, ".gz") || has_case_suffix(path, ".gzip")) &&
+           !is_tgz_path(path);
+}
+
 static int is_supported_container_path(const char *path) {
     return is_zip_path(path) || is_iso_path(path) || is_cue_path(path) ||
-           is_tar_path(path) || is_tgz_path(path);
+           is_tar_path(path) || is_tgz_path(path) || is_gzip_path(path);
 }
 
 static int is_known_large_whole_file_hash(const char *expectedMd5) {
@@ -1641,8 +1648,11 @@ static int tar_extract_file_entry(const char *tarPath, const char *entryName,
 static int inflate_gzip_file_to_memory(const char *path,
                                        unsigned char **outData,
                                        uint32_t *outSize) {
-    unsigned char inBuf[8192];
     unsigned char outBuf[8192];
+    unsigned char *gzData = NULL;
+    size_t gzSize;
+    size_t deflateOffset;
+    size_t deflateSize;
     unsigned char *data = NULL;
     size_t dataSize = 0U;
     size_t dataCap = 0U;
@@ -1654,63 +1664,109 @@ static int inflate_gzip_file_to_memory(const char *path,
     *outSize = 0U;
     fp = fopen(path, "rb");
     if (!fp) return 0;
-    memset(&zs, 0, sizeof(zs));
-    if (inflateInit2(&zs, 16 + MAX_WBITS) != Z_OK) {
+    if (fseek(fp, 0, SEEK_END) != 0) {
         fclose(fp);
         return 0;
     }
-    do {
-        size_t got = fread(inBuf, 1U, sizeof(inBuf), fp);
-        if (got == 0U && ferror(fp)) {
-            inflateEnd(&zs);
+    {
+        long endPos = ftell(fp);
+        if (endPos < 18L || endPos > (long)ASSET_GZIP_TAR_MAX_BYTES) {
             fclose(fp);
+            return 0;
+        }
+        gzSize = (size_t)endPos;
+    }
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    gzData = (unsigned char*)malloc(gzSize);
+    if (!gzData) {
+        fclose(fp);
+        return 0;
+    }
+    if (fread(gzData, 1U, gzSize, fp) != gzSize) {
+        fclose(fp);
+        free(gzData);
+        return 0;
+    }
+    fclose(fp);
+    if (gzData[0] != 0x1fU || gzData[1] != 0x8bU || gzData[2] != 8U) {
+        free(gzData);
+        return 0;
+    }
+    deflateOffset = 10U;
+    if (gzData[3] & 0x04U) {
+        uint16_t extraLen;
+        if (deflateOffset + 2U > gzSize) {
+            free(gzData);
+            return 0;
+        }
+        extraLen = read_u16le(gzData + deflateOffset);
+        deflateOffset += 2U + (size_t)extraLen;
+    }
+    if (gzData[3] & 0x08U) {
+        while (deflateOffset < gzSize && gzData[deflateOffset++] != 0U) {}
+    }
+    if (gzData[3] & 0x10U) {
+        while (deflateOffset < gzSize && gzData[deflateOffset++] != 0U) {}
+    }
+    if (gzData[3] & 0x02U) {
+        deflateOffset += 2U;
+    }
+    if (deflateOffset >= gzSize || deflateOffset + 8U > gzSize) {
+        free(gzData);
+        return 0;
+    }
+    deflateSize = gzSize - deflateOffset - 8U;
+    memset(&zs, 0, sizeof(zs));
+    if (inflateInit2(&zs, -MAX_WBITS) != Z_OK) {
+        free(gzData);
+        return 0;
+    }
+    zs.next_in = gzData + deflateOffset;
+    zs.avail_in = (uInt)deflateSize;
+    do {
+        size_t produced;
+        zs.next_out = outBuf;
+        zs.avail_out = (uInt)sizeof(outBuf);
+        ret = inflate(&zs, Z_NO_FLUSH);
+        if (ret != Z_OK && ret != Z_STREAM_END && ret != Z_BUF_ERROR) {
+            inflateEnd(&zs);
+            free(gzData);
             free(data);
             return 0;
         }
-        zs.next_in = inBuf;
-        zs.avail_in = (uInt)got;
-        do {
-            size_t produced;
-            zs.next_out = outBuf;
-            zs.avail_out = (uInt)sizeof(outBuf);
-            ret = inflate(&zs, feof(fp) ? Z_FINISH : Z_NO_FLUSH);
-            if (ret != Z_OK && ret != Z_STREAM_END && ret != Z_BUF_ERROR) {
+        produced = sizeof(outBuf) - zs.avail_out;
+        if (produced > 0U) {
+            if (dataSize + produced > ASSET_GZIP_TAR_MAX_BYTES) {
                 inflateEnd(&zs);
-                fclose(fp);
+                free(gzData);
                 free(data);
                 return 0;
             }
-            produced = sizeof(outBuf) - zs.avail_out;
-            if (produced > 0U) {
-                if (dataSize + produced > ASSET_GZIP_TAR_MAX_BYTES) {
+            if (dataSize + produced > dataCap) {
+                size_t newCap = dataCap ? dataCap * 2U : 65536U;
+                unsigned char *grown;
+                while (newCap < dataSize + produced) newCap *= 2U;
+                if (newCap > ASSET_GZIP_TAR_MAX_BYTES) newCap = ASSET_GZIP_TAR_MAX_BYTES;
+                grown = (unsigned char*)realloc(data, newCap);
+                if (!grown) {
                     inflateEnd(&zs);
-                    fclose(fp);
+                    free(gzData);
                     free(data);
                     return 0;
                 }
-                if (dataSize + produced > dataCap) {
-                    size_t newCap = dataCap ? dataCap * 2U : 65536U;
-                    unsigned char *grown;
-                    while (newCap < dataSize + produced) newCap *= 2U;
-                    if (newCap > ASSET_GZIP_TAR_MAX_BYTES) newCap = ASSET_GZIP_TAR_MAX_BYTES;
-                    grown = (unsigned char*)realloc(data, newCap);
-                    if (!grown) {
-                        inflateEnd(&zs);
-                        fclose(fp);
-                        free(data);
-                        return 0;
-                    }
-                    data = grown;
-                    dataCap = newCap;
-                }
-                memcpy(data + dataSize, outBuf, produced);
-                dataSize += produced;
+                data = grown;
+                dataCap = newCap;
             }
-        } while (zs.avail_out == 0U);
-    } while (ret != Z_STREAM_END && !feof(fp));
+            memcpy(data + dataSize, outBuf, produced);
+            dataSize += produced;
+        }
+    } while (ret != Z_STREAM_END);
     inflateEnd(&zs);
-    fclose(fp);
-    if (ret != Z_STREAM_END || dataSize > UINT32_MAX) {
+    free(gzData);
+    if (dataSize > UINT32_MAX) {
         free(data);
         return 0;
     }
@@ -1900,6 +1956,103 @@ static int tgz_extract_entry_to_path(const char *tgzPath, const char *entryName,
 #endif
 }
 
+#ifdef FIRESTAFF_HAS_ZLIB
+static int gzip_entry_name(const char *gzipPath, char *out, size_t outSize) {
+    const char *base;
+    size_t len;
+    if (!gzipPath || !out || outSize == 0U) return 0;
+    base = strrchr(gzipPath, '/');
+    if (!base) base = strrchr(gzipPath, '\\');
+    base = base ? base + 1 : gzipPath;
+    len = strlen(base);
+    if (has_case_suffix(base, ".gzip")) {
+        len -= 5U;
+    } else if (has_case_suffix(base, ".gz")) {
+        len -= 3U;
+    } else {
+        return 0;
+    }
+    if (len == 0U || len >= outSize) return 0;
+    memcpy(out, base, len);
+    out[len] = '\0';
+    return 1;
+}
+#endif
+
+static int scan_gzip_by_md5(const char *gzipPath, const char *expectedMd5,
+                            char *outPath, int outPathLen) {
+#ifdef FIRESTAFF_HAS_ZLIB
+    unsigned char *data = NULL;
+    uint32_t size = 0U;
+    char hex[33];
+    char entryName[ASSET_PATH_MAX];
+    int ok = 0;
+    if (!inflate_gzip_file_to_memory(gzipPath, &data, &size)) return 0;
+    if (size >= 16U && memory_range_md5(data, size, hex) &&
+        strcmp(hex, expectedMd5) == 0 &&
+        gzip_entry_name(gzipPath, entryName, sizeof(entryName))) {
+        ok = copy_virtual_match_path(gzipPath, entryName, outPath, outPathLen);
+    }
+    free(data);
+    return ok;
+#else
+    (void)gzipPath; (void)expectedMd5; (void)outPath; (void)outPathLen;
+    return 0;
+#endif
+}
+
+static int scan_gzip_by_md5_list(const char *gzipPath,
+                                 const char *const *md5List,
+                                 int md5Count,
+                                 char outPaths[][ASSET_PATH_MAX],
+                                 int matched[]) {
+#ifdef FIRESTAFF_HAS_ZLIB
+    unsigned char *data = NULL;
+    uint32_t size = 0U;
+    char hex[33];
+    char entryName[ASSET_PATH_MAX];
+    int matchIndex;
+    int found = 0;
+    if (!inflate_gzip_file_to_memory(gzipPath, &data, &size)) return 0;
+    if (size >= 16U && memory_range_md5(data, size, hex) &&
+        gzip_entry_name(gzipPath, entryName, sizeof(entryName))) {
+        matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
+        if (matchIndex >= 0 &&
+            copy_virtual_match_path(gzipPath, entryName,
+                                    outPaths[matchIndex], ASSET_PATH_MAX)) {
+            matched[matchIndex] = 1;
+            found = 1;
+        }
+    }
+    free(data);
+    return found;
+#else
+    (void)gzipPath; (void)md5List; (void)md5Count; (void)outPaths; (void)matched;
+    return 0;
+#endif
+}
+
+static int gzip_extract_entry_to_path(const char *gzipPath, const char *entryName,
+                                      const char *outFilePath) {
+#ifdef FIRESTAFF_HAS_ZLIB
+    unsigned char *data = NULL;
+    uint32_t size = 0U;
+    char inferredName[ASSET_PATH_MAX];
+    int ok = 0;
+    if (!gzip_entry_name(gzipPath, inferredName, sizeof(inferredName)) ||
+        strcmp(inferredName, entryName) != 0) {
+        return 0;
+    }
+    if (!inflate_gzip_file_to_memory(gzipPath, &data, &size)) return 0;
+    ok = copy_memory_range_to_path(data, size, outFilePath);
+    free(data);
+    return ok;
+#else
+    (void)gzipPath; (void)entryName; (void)outFilePath;
+    return 0;
+#endif
+}
+
 static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
     if (is_zip_path(path)) {
@@ -1916,6 +2069,9 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     }
     if (is_tgz_path(path)) {
         return scan_tgz_by_md5(path, expectedMd5, outPath, outPathLen);
+    }
+    if (is_gzip_path(path)) {
+        return scan_gzip_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     return 0;
 }
@@ -1938,6 +2094,9 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
     }
     if (is_tgz_path(path)) {
         return scan_tgz_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    if (is_gzip_path(path)) {
+        return scan_gzip_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     return 0;
 }
@@ -2279,6 +2438,9 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     }
     if (is_tgz_path(container)) {
         return tgz_extract_entry_to_path(container, entry, outFilePath);
+    }
+    if (is_gzip_path(container)) {
+        return gzip_extract_entry_to_path(container, entry, outFilePath);
     }
     /* CUE sheets may reference a data image with no .iso/.bin suffix.
      * Virtual paths are produced only after the scanner has already walked
