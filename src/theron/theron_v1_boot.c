@@ -35,6 +35,7 @@
 
 #include "theron_v1_boot.h"
 #include "asset_find_by_hash.h"
+#include "theron_v1_mechanics.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -1326,6 +1327,83 @@ int theron_v1_boot_startup_presentation_receipt_from_snapshot(
         out_title_frame_max,
         out_title_ready,
         snapshot->startup_phase);
+}
+
+static void theron_v1_boot_runtime_world_receipt(
+    const Theron_V1_World *world,
+    int *out_x,
+    int *out_y,
+    int *out_dir,
+    int *out_tick)
+{
+    if (!world) {
+        return;
+    }
+    if (out_x) *out_x = world->party.leader_x;
+    if (out_y) *out_y = world->party.leader_y;
+    if (out_dir) *out_dir = world->party.leader_dir;
+    if (out_tick) *out_tick = (int)world->world_tick;
+}
+
+int theron_v1_boot_runtime_tick_world(Theron_V1_World *world,
+                                      int *out_x,
+                                      int *out_y,
+                                      int *out_dir,
+                                      int *out_tick)
+{
+    if (!world) {
+        return 0;
+    }
+    theron_v1_world_tick(world);
+    theron_v1_boot_runtime_world_receipt(world,
+                                         out_x,
+                                         out_y,
+                                         out_dir,
+                                         out_tick);
+    return 1;
+}
+
+int theron_v1_boot_runtime_turn_party(Theron_V1_World *world,
+                                      int turn,
+                                      int *out_x,
+                                      int *out_y,
+                                      int *out_dir,
+                                      int *out_tick)
+{
+    if (!world) {
+        return 0;
+    }
+    (void)theron_v1_turn_party(world, turn);
+    theron_v1_boot_runtime_world_receipt(world,
+                                         out_x,
+                                         out_y,
+                                         out_dir,
+                                         out_tick);
+    return 1;
+}
+
+int theron_v1_boot_runtime_move_party(Theron_V1_World *world,
+                                      int direction,
+                                      int restore_direction,
+                                      int *out_x,
+                                      int *out_y,
+                                      int *out_dir,
+                                      int *out_tick)
+{
+    int result;
+    if (!world) {
+        return THERON_MOVE_BLOCKED;
+    }
+    result = theron_v1_move_party(world, direction);
+    if (result != THERON_MOVE_BLOCKED && restore_direction >= 0) {
+        world->party.leader_dir = (int8_t)(restore_direction & 3);
+    }
+    theron_v1_boot_runtime_world_receipt(world,
+                                         out_x,
+                                         out_y,
+                                         out_dir,
+                                         out_tick);
+    return result;
 }
 
 int theron_v1_boot_startup_execute_graphics_plan(
