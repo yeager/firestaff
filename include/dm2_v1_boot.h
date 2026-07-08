@@ -261,6 +261,17 @@ int dm2_v1_boot_startup_presentation_build_from_runtime_state(
     int selected_row,
     struct DM2_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
+    int startup_menu_active,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

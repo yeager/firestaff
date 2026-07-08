@@ -407,6 +407,20 @@ int theron_v1_boot_startup_render_plan_from_runtime_state(
     int companion_count,
     const int *selected_mirror_order,
     int selected_mirror_order_count);
+int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready,
+    int startup_phase);
+int theron_v1_boot_startup_return_to_stage_select_after_exit_host_receipt(
+    Theron_StartupActionHostReceipt *out_receipt,
+    Theron_V1_World *world);
 
 /* theron_v1_boot_verified_path_is_stale — decide whether a previously
  * verified Track 02 path/MD5 pair still matches the bytes on disk.
