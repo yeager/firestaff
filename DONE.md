@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB utility receipt application boundary: M11 now applies CSB utility apply/state receipts through one shared startup utility receipt path for pointer and keyboard input, removing duplicated local selected-action/preview/status/result handling before the entrance-command handoff. Verification: CSB utility-flow action contract passed 57/57, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup input receipt boundary: keyboard startup input now has a Theron-owned facts+receipt API, M11 consumes that receipt instead of deriving startup input failure status locally, and the startup-flow probe covers the new receipt path. Verification: Theron startup-flow probe passed 543/543, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron Continue receipt status ownership: M11 now uses the Theron-owned Continue apply receipt for status and inspect output directly, removing the local successful-Continue result/fallback branch. Verification: Theron startup-flow probe passed 540/540, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
