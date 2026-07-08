@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB runtime graphics bind receipt: CSB boot runtime detach now carries M11 graphics/font bind decisions with the verified graphics path. M11 executes the shared asset-loader/font calls only when the detached CSB receipt requests them. Verification: strict compiles for `csb_v1_boot.c`, `m11_game_view.c`, and CSB handoff test object; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB runtime detach launch identity: CSB boot runtime detach now transfers M11-ready title and source-id alongside profile, startup receipts, graphics path, dungeon path, and MD5. M11 consumes the detached CSB runtime receipt instead of deciding those identity strings locally. Verification: strict compiles for `csb_v1_boot.c`, `m11_game_view.c`, and the CSB boot handoff test object; direct CSB boot handoff passed 300/300; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron runtime detach launch receipts: Theron boot runtime detach now transfers initial title, save/resume, startup-media, and launch-host receipts with the runtime ownership bundle. M11 applies detached Theron runtime receipts instead of reading `launch` receipts after ownership transfer. Verification: strict compiles for `theron_v1_boot.c`, `m11_game_view.c`, and the Theron save/resume test object; direct Theron save/resume smoke passed 120/120; Phase A passed 24/24; `git diff --check` passed.
