@@ -257,6 +257,30 @@ int csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
         out_state_receipt);
 }
 
+int csb_v1_runtime_util_apply_point_from_startup_host_facts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int x,
+    int y,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt)
+{
+    if (!facts) {
+        return 0;
+    }
+    return csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
+        facts->utility_selected_action_index,
+        facts->utility_imported_champion_count,
+        facts->boot_profile,
+        x,
+        y,
+        facts->utility_overlay_active,
+        facts->credits_active,
+        facts->opening_active,
+        facts->utility_preview_active,
+        out_receipt,
+        out_state_receipt);
+}
+
 int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts_pc34(
     int selected_action_index,
     int imported_champion_count,
@@ -281,6 +305,28 @@ int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts
         credits_active,
         opening_active,
         preview_active,
+        out_receipt,
+        out_state_receipt);
+}
+
+int csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int menu_input,
+    CSB_V1_UtilApplyReceipt *out_receipt,
+    CSB_V1_UtilStateReceipt *out_state_receipt)
+{
+    if (!facts) {
+        return 0;
+    }
+    return csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts_pc34(
+        facts->utility_selected_action_index,
+        facts->utility_imported_champion_count,
+        facts->boot_profile,
+        menu_input,
+        facts->utility_overlay_active,
+        facts->credits_active,
+        facts->opening_active,
+        facts->utility_preview_active,
         out_receipt,
         out_state_receipt);
 }

@@ -1328,13 +1328,15 @@ int main(void)
     host_facts.pending_command = command_state.pending_command;
     host_facts.entrance_frame = 37;
     host_facts.utility_overlay_active = 1;
+    host_facts.utility_selected_action_index = 0;
+    host_facts.utility_imported_champion_count = 2;
+    host_facts.utility_preview_active = 0;
     check(csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
               &host_facts,
               &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
           "startup render host facts struct owns M11 field adapter");
-
     memset(&command_state, 0xff, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 1) &&
               !command_state.title_active &&
