@@ -555,6 +555,23 @@ int main(void)
                   tick_receipt.tick_result.credits_finished &&
                   tick_receipt.tick_result.door_opening_finished,
               "startup tick host facts helper returns M11-ready receipt");
+        {
+            CSB_V1_StartupIdleReceipt_PC34 idle_receipt;
+            check(csb_v1_startup_advance_idle_from_host_facts_with_receipt_pc34(
+                      &host_facts,
+                      &idle_receipt) &&
+                      idle_receipt.tick_receipt.entrance_frame == 18 &&
+                      idle_receipt.tick_receipt.tick_result
+                          .door_opening_finished &&
+                      idle_receipt.finish_receipt_valid &&
+                      !idle_receipt.finish_receipt.entrance_active &&
+                      idle_receipt.finish_receipt.entrance_dismissed &&
+                      idle_receipt.host_receipt.input_result ==
+                          CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+                      strcmp(idle_receipt.host_receipt.status, "CSB READY") ==
+                          0,
+                  "startup idle helper owns tick plus door-finish receipt");
+        }
     }
 
     memset(&tick, 0, sizeof(tick));

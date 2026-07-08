@@ -1564,6 +1564,80 @@ int csb_v1_startup_advance_tick_from_host_facts_with_receipt_pc34(
         out_receipt);
 }
 
+void csb_v1_startup_idle_receipt_init_pc34(
+    CSB_V1_StartupIdleReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_startup_tick_receipt_init_pc34(&receipt->tick_receipt);
+    csb_v1_startup_command_state_receipt_init_pc34(
+        &receipt->finish_receipt);
+    csb_v1_startup_host_receipt_init_pc34(&receipt->host_receipt);
+}
+
+int csb_v1_startup_advance_idle_from_host_facts_with_receipt_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    CSB_V1_StartupIdleReceipt_PC34 *out_receipt)
+{
+    int pending_command;
+
+    if (out_receipt) {
+        csb_v1_startup_idle_receipt_init_pc34(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_startup_advance_tick_from_host_facts_with_receipt_pc34(
+            facts,
+            &out_receipt->tick_receipt)) {
+        return 0;
+    }
+    if (out_receipt->tick_receipt.tick_result.title_finished ||
+        out_receipt->tick_receipt.tick_result.reached_entrance_wait ||
+        out_receipt->tick_receipt.tick_result.credits_finished) {
+        out_receipt->host_receipt.input_result =
+            CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34;
+        out_receipt->host_receipt.status_scope = "BOOT";
+        out_receipt->host_receipt.status = "CSB ENTRANCE";
+    }
+    if (!out_receipt->tick_receipt.tick_result.door_opening_finished) {
+        return 1;
+    }
+    pending_command = out_receipt->tick_receipt.state.pending_command;
+    if (!csb_v1_startup_finish_door_opening_from_facts_with_receipt_pc34(
+            out_receipt->tick_receipt.state.title_active,
+            out_receipt->tick_receipt.state.title_frame,
+            out_receipt->tick_receipt.state.title_source_step,
+            out_receipt->tick_receipt.state.entrance_active,
+            out_receipt->tick_receipt.state.entrance_source_step,
+            out_receipt->tick_receipt.state.entrance_dismissed,
+            out_receipt->tick_receipt.state.credits_active,
+            out_receipt->tick_receipt.state.credits_remaining_ticks,
+            out_receipt->tick_receipt.state.opening_active,
+            out_receipt->tick_receipt.state.opening_delay_ticks,
+            out_receipt->tick_receipt.state.opening_step,
+            out_receipt->tick_receipt.state.pending_command,
+            &out_receipt->finish_receipt)) {
+        return 1;
+    }
+    out_receipt->finish_receipt_valid = 1;
+    out_receipt->host_receipt.input_result =
+        CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34;
+    out_receipt->host_receipt.status_scope = "BOOT";
+    if (pending_command ==
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_BONUS_DUNGEON_PC34) {
+        out_receipt->host_receipt.status = "CSB BONUS";
+    } else if (pending_command ==
+               CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34) {
+        out_receipt->host_receipt.status = "CSB RESUMED";
+    } else {
+        out_receipt->host_receipt.status = "CSB READY";
+    }
+    return 1;
+}
+
 int csb_v1_startup_render_state_from_command_state_pc34(
     const CSB_V1_StartupCommandState_PC34 *command_state,
     int entrance_frame,

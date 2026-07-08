@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup idle receipt: CSB startup-sequence now owns the combined idle tick plus door-finish receipt, including M11-ready status for entrance, bonus, resume, and ready states. M11 applies one CSB idle receipt instead of advancing ticks, interpreting tick flags, and finishing door opening separately. Verification: CSB startup entrance test passed 152/152, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup combined input receipts: Theron startup-flow now owns keyboard/pointer routing through action execution and M11-ready action-host receipts. M11 applies one Theron receipt for startup input instead of chaining input receipts into separate action execution. Verification: Theron startup save/resume test passed 114/114, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Nexus startup combined input receipts: Nexus startup menu now owns combined save-menu and champion-select keyboard/pointer routing through action execution and M11-ready host-action receipts. M11 applies one Nexus receipt instead of chaining state receipts into separate save/champion action execution. Verification: Nexus startup menu test passed, Phase A passed 24/24, and `git diff --check` passed.

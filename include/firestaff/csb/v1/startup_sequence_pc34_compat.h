@@ -486,6 +486,13 @@ typedef struct CSB_V1_StartupTickReceipt_PC34 {
     CSB_V1_StartupCommandStateReceipt_PC34 state;
 } CSB_V1_StartupTickReceipt_PC34;
 
+typedef struct CSB_V1_StartupIdleReceipt_PC34 {
+    CSB_V1_StartupTickReceipt_PC34 tick_receipt;
+    int finish_receipt_valid;
+    CSB_V1_StartupCommandStateReceipt_PC34 finish_receipt;
+    CSB_V1_StartupHostReceipt_PC34 host_receipt;
+} CSB_V1_StartupIdleReceipt_PC34;
+
 typedef struct CSB_V1_StartupEntranceCommandReceipt_PC34 {
     int command_id;
     int handled;
@@ -617,6 +624,11 @@ int csb_v1_startup_advance_tick_from_facts_with_receipt_pc34(
 int csb_v1_startup_advance_tick_from_host_facts_with_receipt_pc34(
     const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_StartupTickReceipt_PC34 *out_receipt);
+void csb_v1_startup_idle_receipt_init_pc34(
+    CSB_V1_StartupIdleReceipt_PC34 *receipt);
+int csb_v1_startup_advance_idle_from_host_facts_with_receipt_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    CSB_V1_StartupIdleReceipt_PC34 *out_receipt);
 int csb_v1_startup_build_render_plan_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);

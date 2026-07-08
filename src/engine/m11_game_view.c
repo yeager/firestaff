@@ -736,37 +736,6 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
     return M11_GAME_INPUT_IGNORED;
 }
 
-static M11_GameInputResult m11_dm2_startup_apply_action(
-    M11_GameViewState *state,
-    const DM2_V1_StartupAction *action);
-
-static M11_GameInputResult m11_dm2_startup_apply_action(
-    M11_GameViewState *state,
-    const DM2_V1_StartupAction *action)
-{
-    DM2_V1_BootProfile *profile;
-    DM2_V1_StartupExecution execution;
-    DM2_V1_StartupHostFacts facts;
-    DM2_V1_StartupHostActionReceipt action_receipt;
-
-    if (!state || !state->dm2State.startup_menu_active ||
-        !state->dm2BootProfile || !action) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-    m11_dm2_startup_host_facts(state, profile, &facts);
-    if (!dm2_v1_startup_execute_action_from_host_facts_with_receipt(
-            action,
-            &facts,
-            m11_dm2_startup_apply_session_callback,
-            state,
-            &execution,
-            &action_receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
-}
-
 static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
@@ -3081,22 +3050,20 @@ static void m11_csb_startup_tick_receipt_to_m11(
     m11_csb_startup_command_state_receipt_to_m11(state, &receipt->state);
 }
 
-static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
+static M11_GameInputResult m11_csb_startup_apply_idle_receipt(
+    M11_GameViewState *state,
+    const CSB_V1_StartupIdleReceipt_PC34 *receipt)
 {
-    CSB_V1_StartupCommandStateReceipt_PC34 receipt;
-    if (!state) {
-        return;
+    if (!state || !receipt) {
+        return M11_GAME_INPUT_IGNORED;
     }
-    {
-        CSB_V1_StartupHostFacts_PC34 facts;
-        m11_csb_startup_host_facts(state, &facts);
-        if (!csb_v1_startup_finish_door_opening_from_host_facts_with_receipt_pc34(
-            &facts,
-            &receipt)) {
-            return;
-        }
+    m11_csb_startup_tick_receipt_to_m11(state, &receipt->tick_receipt);
+    if (receipt->finish_receipt_valid) {
+        m11_csb_startup_command_state_receipt_to_m11(
+            state,
+            &receipt->finish_receipt);
     }
-    m11_csb_startup_command_state_receipt_to_m11(state, &receipt);
+    return m11_csb_startup_apply_host_receipt(state, &receipt->host_receipt);
 }
 
 static M11_GameInputResult m11_csb_startup_handle_entrance_command(
@@ -10333,27 +10300,6 @@ static int m11_nexus_startup_load_save_callback(
         save_path);
 }
 
-static M11_GameInputResult m11_nexus_startup_apply_save_action(
-    M11_GameViewState *state,
-    const Nexus_V1_StartupAction *action)
-{
-    Nexus_V1_StartupSaveExecution execution;
-    Nexus_V1_StartupHostReceipt host_receipt;
-
-    if (!state || !action) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!nexus_v1_startup_execute_save_action_with_host_receipt(
-            action,
-            m11_nexus_startup_load_save_callback,
-            state,
-            &execution,
-            &host_receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    return m11_nexus_apply_startup_receipt(state, &host_receipt);
-}
-
 static M11_GameInputResult m11_nexus_startup_apply_title_action(
     M11_GameViewState *state,
     const Nexus_V1_StartupAction *action)
@@ -10397,26 +10343,6 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
                    : M11_GAME_INPUT_REDRAW;
     }
     return m11_nexus_apply_startup_action_receipt(state, &receipt);
-}
-
-static M11_GameInputResult m11_nexus_startup_apply_champion_action(
-    M11_GameViewState *state,
-    const Nexus_V1_StartupAction *action)
-{
-    Nexus_V1_StartupChampionExecution execution;
-    Nexus_V1_StartupHostReceipt host_receipt;
-
-    if (!state || !action) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!nexus_v1_startup_execute_champion_action_with_host_receipt(
-            action,
-            state->nexusState.startup_save_row_count,
-            &execution,
-            &host_receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    return m11_nexus_apply_startup_receipt(state, &host_receipt);
 }
 
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
@@ -12342,34 +12268,19 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (state->csbState.startup_entrance_active) {
-            CSB_V1_StartupTickReceipt_PC34 startup_receipt;
+            CSB_V1_StartupIdleReceipt_PC34 startup_receipt;
             CSB_V1_StartupHostFacts_PC34 facts;
+            M11_GameInputResult idle_result;
             m11_csb_startup_host_facts(state, &facts);
-            (void)csb_v1_startup_advance_tick_from_host_facts_with_receipt_pc34(
+            (void)csb_v1_startup_advance_idle_from_host_facts_with_receipt_pc34(
                 &facts,
                 &startup_receipt);
-            m11_csb_startup_tick_receipt_to_m11(state,
-                                                &startup_receipt);
-            if (startup_receipt.tick_result.title_finished ||
-                startup_receipt.tick_result.reached_entrance_wait ||
-                startup_receipt.tick_result.credits_finished) {
-                m11_set_status(state, "BOOT", "CSB ENTRANCE");
-            }
-            if (startup_receipt.tick_result.door_opening_finished) {
-                int pending =
-                    state->csbState.startup_entrance_pending_command;
-                m11_csb_startup_finish_door_opening(state);
-                if (pending ==
-                    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON) {
-                    m11_set_status(state, "BOOT", "CSB BONUS");
-                } else if (pending ==
-                           M11_ENTRANCE_RUNTIME_COMMAND_RESUME) {
-                    m11_set_status(state, "BOOT", "CSB RESUMED");
-                } else {
-                    m11_set_status(state, "BOOT", "CSB READY");
-                }
-            }
-            return M11_GAME_INPUT_REDRAW;
+            idle_result = m11_csb_startup_apply_idle_receipt(
+                state,
+                &startup_receipt);
+            return idle_result == M11_GAME_INPUT_IGNORED
+                       ? M11_GAME_INPUT_REDRAW
+                       : idle_result;
         }
         if (csb_v1_runtime_tick_from_boot_profile_pc34(
                 state->csbBootProfile,
