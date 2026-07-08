@@ -197,6 +197,25 @@ typedef struct {
     const char *status;
 } DM2_V1_BootRuntimeInventoryReceipt;
 
+typedef int (*DM2_V1_BootRuntimeRenderCallback)(
+    int party_dir,
+    int party_x,
+    int party_y,
+    uint8_t *framebuffer,
+    int fb_stride,
+    int view_w,
+    int view_h,
+    void *userdata);
+
+typedef struct {
+    DM2_V1_BootRuntimeReceipt runtime;
+    int render_result;
+    int v2_attempted;
+    int v2_succeeded;
+    int v1_attempted;
+    int v1_succeeded;
+} DM2_V1_BootRuntimeRenderReceipt;
+
 enum {
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP = 32,
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP = 32,
@@ -437,6 +456,15 @@ int dm2_v1_boot_runtime_swap_inventory_slot(
     int champion_index,
     int champion_slot,
     DM2_V1_BootRuntimeInventoryReceipt *out_receipt);
+int dm2_v1_boot_runtime_render_frame(
+    DM2_V1_BootProfile *profile,
+    uint8_t *framebuffer,
+    int fb_stride,
+    int view_w,
+    int view_h,
+    DM2_V1_BootRuntimeRenderCallback v2_render,
+    void *v2_userdata,
+    DM2_V1_BootRuntimeRenderReceipt *out_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

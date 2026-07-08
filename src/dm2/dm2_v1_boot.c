@@ -1617,6 +1617,74 @@ int dm2_v1_boot_runtime_swap_inventory_slot(
     return 1;
 }
 
+static void dm2_v1_boot_runtime_render_receipt_clear(
+    DM2_V1_BootRuntimeRenderReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->render_result = -1;
+    }
+}
+
+int dm2_v1_boot_runtime_render_frame(
+    DM2_V1_BootProfile *profile,
+    uint8_t *framebuffer,
+    int fb_stride,
+    int view_w,
+    int view_h,
+    DM2_V1_BootRuntimeRenderCallback v2_render,
+    void *v2_userdata,
+    DM2_V1_BootRuntimeRenderReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeReceipt runtime;
+    int rendered = -1;
+    dm2_v1_boot_runtime_render_receipt_clear(out_receipt);
+    if (!profile || !profile->dm2_state || !framebuffer) {
+        return 0;
+    }
+    if (!dm2_v1_boot_runtime_capture(profile, &runtime)) {
+        return 0;
+    }
+    if (out_receipt) {
+        out_receipt->runtime = runtime;
+    }
+    if (v2_render) {
+        if (out_receipt) {
+            out_receipt->v2_attempted = 1;
+        }
+        rendered = v2_render(runtime.party_dir,
+                             runtime.party_x,
+                             runtime.party_y,
+                             framebuffer,
+                             fb_stride,
+                             view_w,
+                             view_h,
+                             v2_userdata);
+        if (out_receipt && rendered == 0) {
+            out_receipt->v2_succeeded = 1;
+        }
+    }
+    if (rendered != 0) {
+        if (out_receipt) {
+            out_receipt->v1_attempted = 1;
+        }
+        rendered = dm2_v1_runtime_render_frame(runtime.party_dir,
+                                               runtime.party_x,
+                                               runtime.party_y,
+                                               framebuffer,
+                                               fb_stride,
+                                               view_w,
+                                               view_h);
+        if (out_receipt && rendered == 0) {
+            out_receipt->v1_succeeded = 1;
+        }
+    }
+    if (out_receipt) {
+        out_receipt->render_result = rendered;
+    }
+    return rendered == 0;
+}
+
 static const char *dm2_v1_boot_startup_prepare_host_status(
     DM2_V1_BootStartupPrepareResult result)
 {
