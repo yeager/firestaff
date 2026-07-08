@@ -1,18 +1,24 @@
 .TH FIRESTAFF 1 "2026-07-08" "Firestaff" "User Commands"
 .SH NAME
-firestaff \- source-faithful Dungeon Master engine for modern hardware
+firestaff \- source-faithful Dungeon Master engine for modern Linux systems
 .SH SYNOPSIS
 .B firestaff
 [\fIOPTIONS\fR]
 [\fIGAME\fR]
 .SH DESCRIPTION
 .B Firestaff
-is a source-faithful engine for Dungeon Master, Chaos Strikes Back,
-Dungeon Master II: Skullkeep, Dungeon Master Nexus, and Theron's Quest.
+is a C11/SDL3 engine for the FTL dungeon crawler line:
+Dungeon Master, Chaos Strikes Back, Dungeon Master II: Skullkeep,
+Dungeon Master Nexus, and Theron's Quest.
 .PP
-Original game data is not included. Users must provide their own legally
-obtained game files. Firestaff scans game data recursively by content hash,
-so supported files do not need exact original filenames.
+The program does not include original copyrighted game data. Users must
+provide their own legally obtained files. Firestaff scans game data by
+content hash rather than by exact filename, so supported files can be renamed
+or kept in a custom directory layout.
+.PP
+On Linux the manual page is installed as
+.BR firestaff (1)
+when the CMake install target is used.
 .SH GAMES
 .TP
 .B dm1
@@ -30,36 +36,72 @@ Dungeon Master Nexus.
 .B theron
 Theron's Quest.
 .PP
-Games may be selected either positionally, for example
-.BR "firestaff dm1" ,
+Games may be selected positionally:
+.PP
+.RS
+.B firestaff dm1
+.RE
+.PP
 or with
 .BR "--game " .
-.SH OPTIONS
+.SH PRIMARY OPTIONS
+.TP
+.B --help
+.TQ
+.B -h
+Print command-line help and exit.
+.TP
+.B --version
+Print the Firestaff version and exit.
+.TP
+.BI "--game " id
+Start a game directly. Valid IDs are
+.BR dm1 ,
+.BR csb ,
+.BR dm2 ,
+.BR nexus ,
+and
+.BR theron .
+.TP
+.B --menu
+Show the startup menu even when a game was selected from the command line.
+.TP
+.BI "--data-dir " path
+Use
+.I path
+as the game-data root for scanning and launch.
+.TP
+.B --scan-data
+Scan game data and print found or missing required files, then exit.
+.TP
+.B --scan-game-data
+Alias for
+.BR --scan-data .
 .TP
 .BI "--duration " ms
-Run for the specified number of milliseconds. Use
+Run for the specified number of milliseconds.
 .B -1
-to run until exit, or
+runs until exit.
 .B 0
-for one frame.
+runs one frame. This is mainly useful for smoke tests.
 .TP
 .BI "--width " px
-Set window width.
+Set the initial window width. Default is 640.
 .TP
 .BI "--height " px
-Set window height.
+Set the initial window height. Default is 400.
 .TP
 .BI "--scale-mode " n
-Set graphics mode:
+Select presentation mode:
 .B 1
-for original/V1,
+for Original/V1,
 .B 2
 for enhanced/upscaled V2.1, or
 .B 3
 for modern V2.2 presentation.
 .TP
 .BI "--script " cmds
-Run a comma-separated input script. Supported public tokens are
+Run a comma-separated input script. Public tokens include
 .BR up ,
 .BR down ,
 .BR left ,
@@ -74,64 +116,151 @@ and
 .B wait:N
 frame waits.
 .TP
-.BI "--data-dir " path
-Use
-.I path
-as the game-data root.
-.TP
-.B --scan-data
-Scan game data and print found or missing required files, then exit.
-.TP
-.B --scan-game-data
-Alias for
-.BR --scan-data .
-.TP
-.BI "--game " id
-Start a game directly. Valid IDs are
-.BR dm1 ,
-.BR csb ,
-.BR dm2 ,
-.BR nexus ,
-and
-.BR theron .
-.TP
-.B --menu
-Show the startup menu even when a game was selected from the command line.
-.TP
 .B --fullscreen
-Request fullscreen mode. This option is accepted by the current launcher CLI;
-runtime wiring may vary by build.
+Request fullscreen mode. Current Linux builds accept this flag; exact runtime
+wiring may vary by build.
 .TP
 .B --no-vsync
-Disable vertical sync where supported. This option is accepted by the current
-launcher CLI; runtime wiring may vary by build.
+Disable vertical sync where supported. Current Linux builds accept this flag;
+exact runtime wiring may vary by build.
 .TP
 .B --fps
-Show FPS where supported. This option is accepted by the current launcher CLI;
-runtime wiring may vary by build.
+Show the FPS counter where supported. Current Linux builds accept this flag;
+exact runtime wiring may vary by build.
+.SH RETROACHIEVEMENTS OPTIONS
 .TP
 .B --retroachievements
-Enable the RetroAchievements runtime bridge.
+Enable the RetroAchievements runtime bridge for this run.
 .TP
 .BI "--ra-user " name
-Set RetroAchievements username for this run.
+Set the RetroAchievements username for this run.
 .TP
 .BI "--ra-token " token
-Set RetroAchievements API token for this run. Avoid placing tokens in shell
-history on shared systems.
+Set the RetroAchievements API token for this run. Avoid placing tokens in
+shell history on shared systems.
 .TP
 .BI "--ra-hardcore " "0|1"
 Set RetroAchievements hardcore mode for this run.
+.PP
+RetroAchievements settings can also be edited from the startup menu. The
+current bridge exposes configuration and status; backend/login/overlay
+coverage is still being expanded.
+.SH GAME DATA
+Default data root:
+.PP
+.RS
+.B ~/.firestaff/data/
+.RE
+.PP
+Recommended layout:
+.PP
+.RS
+.B ~/.firestaff/data/dm1/
+.br
+.B ~/.firestaff/data/csb/
+.br
+.B ~/.firestaff/data/dm2/
+.br
+.B ~/.firestaff/data/nexus/
+.br
+.B ~/.firestaff/data/theron/
+.RE
+.PP
+Firestaff scans recursively by hash. Required files block launch when missing;
+optional title, intro, logo, and other non-essential extras may be absent.
+.PP
+The scanner can inspect ordinary directories and common archive or disc-image
+containers. Supported paths include ZIP-compatible archives, ISO/BIN/IMG-style
+disc images, CUE sheets, TAR/TGZ/GZ, stored LHA/LZH/LZS entries, and CHD CD
+images when
+.B chdman
+is installed. Several other archive or disk-image formats can be scanned when
+local extractor tools such as
+.BR 7zz ,
+.BR 7z ,
+or
+.B bsdtar
+are available.
+.PP
+Matches inside containers are reported as virtual paths such as:
+.PP
+.RS
+.B archive.zip::GRAPHICS.DAT
+.br
+.B disc.iso::DUNGEON.DAT
+.RE
+.PP
+For DM1, CSB, and DM2, required files found inside supported containers are
+materialized into Firestaff's local asset cache before launch so the runtime
+can still open ordinary game-data paths.
+.SH SAVEGAMES AND CONFIGURATION
+Firestaff user data is normally kept under:
+.PP
+.RS
+.B ~/.firestaff/
+.RE
+.PP
+Game data and save data should be kept separate. The default tree may contain
+game data, saves, configuration, cached materialized assets, accessibility
+state, and runtime state.
+.PP
+The startup menu stores user-facing settings, including window size,
+presentation settings, game-data root, controller mapping, and
+RetroAchievements settings.
+.SH CONTROLS
 .TP
-.B --version
-Print Firestaff version and exit.
+.B Arrow keys
+Move forward/back and turn left/right.
 .TP
-.BR "--help" ", " "-h"
-Print command-line help and exit.
+.B W A S D
+Keyboard movement alternatives.
+.TP
+.B Q / E
+Turn left/right.
+.TP
+.B Home / End
+Additional turn controls in supported builds.
+.TP
+.B F5
+Quick save.
+.TP
+.B F9
+Quick load.
+.TP
+.B F7
+Toggle minimap overlay where supported.
+.TP
+.B F8
+Export the current auto-map level where supported.
+.TP
+.B F10
+Cycle scale/presentation mode.
+.TP
+.B F11
+Toggle fullscreen.
+.TP
+.B R
+Toggle rest where supported.
+.TP
+.B G / P
+Pick up or drop item where supported.
+.TP
+.B U
+Use selected item where supported.
+.TP
+.B 1..6
+Select spell runes where supported.
+.TP
+.B C / V
+Cast or clear spell where supported.
+.PP
+Mouse, touch, and gamepad support are exposed through the startup menu and
+runtime input mapper. Exact action availability depends on the selected game
+and runtime state.
 .SH BOOT PROBE OPTIONS
-Boot-probe options are mainly for tests and packaging verification. They start
-the selected game, inspect the boot receipt, and fail when expectations do not
-match.
+Boot-probe options are for automated tests and package verification. They
+start the selected game, inspect the boot receipt, and fail when expectations
+do not match.
 .TP
 .B --boot-probe
 Enable deterministic boot-probe mode. Requires
@@ -203,13 +332,14 @@ Fail unless the title frame boundary matches.
 .BI "--boot-probe-expect-title-ready " "0|1"
 Fail unless the title-ready flag matches.
 .SH LEGACY FRONTEND OPTIONS
-Some builds also contain a legacy frontend parser used by older tooling. It
+Some builds still include a legacy frontend parser used by older tooling. It
 accepts:
 .BR --v1 ,
 .BR --v2 ,
 .BR --v21 ,
 .BR --v22 ,
 .BR --windowed ,
+.BR --vsync ,
 .BR --scale ,
 .BR --lang ,
 .BR --data ,
@@ -223,49 +353,21 @@ accepts:
 and
 .BR "-V" .
 .PP
-Prefer the modern options above for normal Linux use.
-.SH GAME DATA
-Default data root:
-.PP
-.RS
-.B ~/.firestaff/data/
-.RE
-.PP
-Recommended layout:
-.PP
-.RS
-.B ~/.firestaff/data/dm1/
-.br
-.B ~/.firestaff/data/csb/
-.br
-.B ~/.firestaff/data/dm2/
-.br
-.B ~/.firestaff/data/nexus/
-.br
-.B ~/.firestaff/data/theron/
-.RE
-.PP
-Firestaff scans by hash and can find supported files in directories, ZIP-like
-archives, ISO/BIN/IMG-style disc images, CUE sheets, TAR/TGZ/GZ, stored
-LHA/LZH entries, CHD when
-.B chdman
-is installed, and several other archive or disk-image formats when suitable
-local extraction tools are available.
-.SH SAVEGAMES
-Savegames and configuration are kept under the Firestaff user directory,
-normally:
-.PP
-.RS
-.B ~/.firestaff/
-.RE
-.PP
-Game data and save data should be kept separate.
+Prefer the primary options above for normal Linux use.
 .SH ENVIRONMENT
 .TP
 .B FIRESTAFF_DATA
 Default game-data root when
 .B --data-dir
 is not supplied.
+.TP
+.B FIRESTAFF_RA_USER
+RetroAchievements username fallback when the CLI and saved settings do not
+provide one.
+.TP
+.B FIRESTAFF_RA_TOKEN
+RetroAchievements API-token fallback when the CLI and saved settings do not
+provide one.
 .TP
 .B FS_ACCESSIBILITY
 When set, enables the disk-backed accessibility/automation manifest at
@@ -275,22 +377,34 @@ When set, enables the disk-backed accessibility/automation manifest at
 Can be set to
 .B dummy
 for headless test runs.
+.TP
+.B FIRESTAFF_EXIT_AFTER_LAUNCH
+Testing variable. Exit after a launch attempt.
+.TP
+.B FIRESTAFF_FAIL_IF_NO_LAUNCH
+Testing variable. Treat a missing launch as a failure.
 .SH EXAMPLES
 .TP
-Scan game data:
+Scan the default game-data root:
 .B firestaff --scan-data
 .TP
-Start DM1 in original presentation:
-.B firestaff --game dm1 --scale-mode 1
-.TP
-Use a custom game-data root:
+Scan a custom game-data root:
 .B firestaff --data-dir ~/Games/FirestaffData --scan-data
+.TP
+Start DM1 in Original/V1 presentation:
+.B firestaff --game dm1 --scale-mode 1
 .TP
 Start CSB directly:
 .B firestaff csb
 .TP
-Run a short headless smoke:
+Run a short headless smoke test:
 .B SDL_VIDEODRIVER=dummy firestaff --duration 500 --game dm1
+.TP
+Run a one-frame launcher smoke:
+.B SDL_VIDEODRIVER=dummy firestaff --duration 0
+.TP
+Enable RetroAchievements for one run:
+.B firestaff --retroachievements --ra-user USER --ra-token TOKEN
 .SH FILES
 .TP
 .B ~/.firestaff/data/
@@ -299,6 +413,14 @@ Default game-data directory.
 .B ~/.firestaff/
 Default Firestaff user directory for saves, configuration, cache, and runtime
 state.
+.TP
+.B ~/.firestaff/accessibility.json
+Optional accessibility/automation manifest when
+.B FS_ACCESSIBILITY
+is set.
+.TP
+.B docs/linux/firestaff.1
+Manual page source in the Firestaff repository.
 .SH EXIT STATUS
 .TP
 .B 0
@@ -309,6 +431,12 @@ Runtime or launch failure.
 .TP
 .B 2
 Invalid command-line argument or missing required boot-probe option.
+.TP
+.B 3
+Direct launch failed after argument parsing.
+.TP
+.B 5
+Boot-probe script validation failed.
 .SH SEE ALSO
 .BR SDL3 (7)
 .PP
