@@ -215,6 +215,9 @@ void theron_v1_startup_continue_result_init(
     Theron_V1StartupContinueResult *result);
 void theron_v1_startup_continue_apply_receipt_init(
     Theron_V1StartupContinueApplyReceipt *receipt);
+int theron_v1_startup_host_receipt_from_continue_apply(
+    const Theron_V1StartupContinueApplyReceipt *apply_receipt,
+    Theron_StartupHostReceipt *out_receipt);
 void theron_v1_startup_continue_availability_init(
     Theron_V1StartupContinueAvailability *availability);
 int theron_v1_startup_continue_availability_from_state(

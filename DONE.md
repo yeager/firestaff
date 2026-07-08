@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup host receipt boundary: Theron startup now has one host receipt shape for normal flow actions, Continue, and forcefield runtime entry. M11 applies status, inspect text, logs, and input results through that boundary instead of interpreting three apply receipt structs directly. Verification: Theron startup-flow probe passed 555/555, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Nexus startup host receipt boundary: Nexus startup menu now emits host receipts from title/save/champion apply receipts, owning mode/status/result mapping before M11 turns them into engine input results. Verification: Nexus startup menu test passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 startup host receipt boundary: DM2 startup menu now emits a host receipt from apply receipts, owning mode/status/result/rescan policy before M11 maps it to engine input results. Verification: DM2 startup action contract passed 64/64, DM2 M11 startup/profile gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

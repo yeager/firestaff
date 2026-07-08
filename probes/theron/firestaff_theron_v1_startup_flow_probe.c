@@ -1275,6 +1275,7 @@ int main(void) {
                 Theron_V1StartupContinueApplyReceipt continue_receipt;
                 Theron_V1StartupContinueAvailability continue_availability;
                 Theron_StartupStateReceipt state_receipt;
+                Theron_StartupHostReceipt host_receipt;
 
                 theron_v1_startup_continue_result_init(&continue_result);
                 continue_result.source =
@@ -1307,6 +1308,20 @@ int main(void) {
                                "continued slot=2");
                 check_contains("continue receipt marker",
                                continue_receipt.inspect_detail,
+                               "chapter=1");
+                check_int("continue host receipt rc",
+                          theron_v1_startup_host_receipt_from_continue_apply(
+                              &continue_receipt,
+                              &host_receipt),
+                          1);
+                check_int("continue host receipt redraw",
+                          host_receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_str("continue host receipt inspect",
+                          host_receipt.inspect_scope,
+                          "STARTUP");
+                check_contains("continue host receipt detail",
+                               host_receipt.inspect_detail,
                                "chapter=1");
                 check_int("continue availability tqsv rc",
                           theron_v1_startup_continue_availability_from_state(
@@ -1478,6 +1493,7 @@ int main(void) {
             {
                 Theron_V1StartupRuntimeEntryResult runtime_result;
                 Theron_V1StartupRuntimeEntryApplyReceipt runtime_receipt;
+                Theron_StartupHostReceipt host_receipt;
                 Theron_StartupStateReceipt state_receipt;
                 Theron_StartupFlow runtime_flow;
 
@@ -1513,6 +1529,23 @@ int main(void) {
                 check_int("runtime receipt logs receipt",
                           runtime_receipt.log_receipt,
                           1);
+                check_int("runtime host receipt rc",
+                          theron_v1_startup_host_receipt_from_runtime_entry_apply(
+                              &runtime_receipt,
+                              &host_receipt),
+                          1);
+                check_int("runtime host receipt redraw",
+                          host_receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_str("runtime host receipt inspect",
+                          host_receipt.inspect_scope,
+                          "READY");
+                check_str("runtime host receipt log",
+                          host_receipt.log_first_line,
+                          "T0: THERON LOADED");
+                check_int("runtime host receipt logs receipt",
+                          host_receipt.log_receipt,
+                          1);
                 check_int("runtime state receipt rc",
                           theron_v1_startup_runtime_entry_state_receipt_from_result(
                               &runtime_flow,
@@ -1544,6 +1577,7 @@ int main(void) {
             {
                 Theron_StartupExecution execution;
                 Theron_StartupApplyReceipt receipt;
+                Theron_StartupHostReceipt host_receipt;
                 Theron_StartupStateReceipt state_receipt;
                 Theron_StartupFlow exec_flow;
 
@@ -1607,6 +1641,17 @@ int main(void) {
                           1);
                 check_str("exec stage-select receipt status",
                           receipt.status,
+                          "STAGE SELECT");
+                check_int("exec stage-select host receipt rc",
+                          theron_v1_startup_host_receipt_from_flow_apply(
+                              &receipt,
+                              &host_receipt),
+                          1);
+                check_int("exec stage-select host receipt redraw",
+                          host_receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_str("exec stage-select host receipt status",
+                          host_receipt.status,
                           "STAGE SELECT");
                 theron_v1_startup_flow_init(&exec_flow);
                 check_int("exec stage-select combined rc",

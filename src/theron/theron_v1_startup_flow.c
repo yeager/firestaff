@@ -457,6 +457,30 @@ void theron_v1_startup_apply_receipt_init(
     receipt->cursor = -1;
 }
 
+void theron_v1_startup_host_receipt_init(
+    Theron_StartupHostReceipt *receipt) {
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
+}
+
+int theron_v1_startup_host_receipt_from_flow_apply(
+    const Theron_StartupApplyReceipt *apply_receipt,
+    Theron_StartupHostReceipt *out_receipt) {
+
+    if (!apply_receipt || !out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_host_receipt_init(out_receipt);
+    out_receipt->input_result = apply_receipt->input_result;
+    out_receipt->status_scope = apply_receipt->status_scope;
+    out_receipt->status = apply_receipt->status;
+    return 1;
+}
+
 static void tqr_startup_input_receipt_init(
     Theron_StartupInputReceipt *receipt) {
 
