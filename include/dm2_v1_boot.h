@@ -276,6 +276,13 @@ int dm2_v1_boot_startup_execute_draw_commands(
     const struct DM2_V1_StartupDrawCommand *commands,
     int command_count,
     const void *executor);
+int dm2_v1_boot_startup_execute_save_path_with_host_receipt(
+    const char *save_path,
+    int (*apply_session)(void *userdata,
+                         const struct DM2_V1_SessionState *session),
+    void *apply_userdata,
+    struct DM2_V1_StartupExecution *out_execution,
+    void *out_direct_resume_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

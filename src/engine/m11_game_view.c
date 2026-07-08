@@ -520,7 +520,7 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
     if (!state || !profile || !save_path || !save_path[0]) {
         return 0;
     }
-    if (!dm2_v1_startup_execute_save_path_with_host_receipt(
+    if (!dm2_v1_boot_startup_execute_save_path_with_host_receipt(
             save_path,
             m11_dm2_startup_apply_session_callback,
             state,
@@ -2657,8 +2657,7 @@ static int m11_csb_startup_build_render_plan(
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
     if (!state) {
-        return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
-                                                                  out_plan);
+        return csb_v1_boot_startup_build_default_render_plan_pc34(out_plan);
     }
     return csb_v1_boot_startup_build_render_plan_from_runtime_state_pc34(
         out_plan,
@@ -11214,11 +11213,10 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             ? state->nexusEngine->champions.party_count
             : -1;
         out->runtimeTick = state->nexusState.tick_count;
-        (void)nexus_v1_startup_presentation_receipt(
-            state->nexusState.title_active,
-            state->nexusState.startup_save_select_active,
-            state->nexusState.champion_select_active,
-            state->nexusState.title_frame,
+        Nexus_V1_StartupRuntimeState runtime_state;
+        m11_nexus_startup_runtime_state(state, &runtime_state);
+        (void)nexus_v1_launcher_startup_presentation_receipt_from_runtime_state(
+            &runtime_state,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
@@ -11329,7 +11327,7 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
         sizeof(diagnostic));
     if (result != NEXUS_SAVE_OK) {
         Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_startup_resume_status_host_receipt(
+        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
             NEXUS_V1_STARTUP_RESUME_STATUS_FAILED,
             &receipt);
         (void)m11_nexus_apply_startup_receipt(state, &receipt);
@@ -11345,7 +11343,7 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
     }
     if (level < 0 || level > 15) {
         Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_startup_resume_status_host_receipt(
+        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
             NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_INVALID,
             &receipt);
         (void)m11_nexus_apply_startup_receipt(state, &receipt);
@@ -11355,7 +11353,7 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
     }
     if (world.party_dir < 0 || world.party_dir > 3) {
         Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_startup_resume_status_host_receipt(
+        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
             NEXUS_V1_STARTUP_RESUME_STATUS_DIR_INVALID,
             &receipt);
         (void)m11_nexus_apply_startup_receipt(state, &receipt);
@@ -11366,7 +11364,7 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 
     if (nexus_v1_launcher_load_level(level) != 0) {
         Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_startup_resume_status_host_receipt(
+        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
             NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR,
             &receipt);
         (void)m11_nexus_apply_startup_receipt(state, &receipt);
@@ -11378,7 +11376,7 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
     engine = nexus_v1_launcher_get_engine();
     if (!engine) {
         Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_startup_resume_status_host_receipt(
+        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
             NEXUS_V1_STARTUP_RESUME_STATUS_ENGINE_LOST,
             &receipt);
         (void)m11_nexus_apply_startup_receipt(state, &receipt);
@@ -11415,7 +11413,7 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
              engine->data_dir, level);
     {
         Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_startup_resume_status_host_receipt(
+        (void)nexus_v1_launcher_startup_resume_status_host_receipt(
             NEXUS_V1_STARTUP_RESUME_STATUS_RESUMED,
             &receipt);
         (void)m11_nexus_apply_startup_receipt(state, &receipt);
@@ -11484,7 +11482,7 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
                                                  &boot_receipt.startup_receipt);
     {
         Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_startup_boot_status_host_receipt(
+        (void)nexus_v1_launcher_startup_boot_status_host_receipt(
             state->nexusState.title_loaded
                 ? NEXUS_V1_STARTUP_BOOT_STATUS_TITLE
                 : NEXUS_V1_STARTUP_BOOT_STATUS_TITLE_FALLBACK,
