@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 TITLE hash-scan pathfinder: DM1 TITLE fallback lookup now validates candidates by canonical PC 3.4 hash/manifest and recursively scans the selected data root, so a renamed TITLE payload can still be found. Verification: TITLE pathfinder test passed, M11/title syntax checks passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 SWSH payload scan without filename dependency: The FTL/SWSH intro pathfinder now scans the selected data root recursively for a valid SWSH logo payload by bytes, after exact CSB/DM1 candidates. CSB can therefore find a shared DM1 PC34 SWSH intro even when the file is renamed or stored under extras instead of `csb/SWOOSH`. Verification: SWSH pathfinder test passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB title cadence parity: CSB startup title now uses the 23-step ReDMCSB `TITLE.C F0437` source cadence directly instead of Firestaff's extra 30-tick DM1 `TITLE.DAT` PRESENTS hold. This prevents CSB title/start animation from pausing on the wrong phase before zoom. Verification: CSB startup entrance test passed 152/152 by direct compile/run, CSB startup-sequence compile check passed, Phase A passed 24/24, and `git diff --check` passed.

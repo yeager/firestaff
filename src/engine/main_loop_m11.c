@@ -36,6 +36,7 @@
 #include "swsh_frontend_pc34_compat.h"
 #include "screenshot_m11.h"
 #include "swsh_intro_pathfinder_m11.h"
+#include "title_intro_pathfinder_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -380,117 +381,6 @@ static void m11_sync_and_save_window_size(M12_StartupMenuState* menuState) {
     M12_StartupMenu_SaveConfig(menuState);
 }
 
-
-static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
-                                        char* outPath,
-                                        size_t outPathBytes) {
-    const char* envPath;
-    const char* dataDir;
-    char candidate[FSP_PATH_MAX];
-    char parent[FSP_PATH_MAX];
-    const M12_AssetVersionStatus* dm1v;
-    size_t i;
-    static const char* suffixes[] = {
-        "TITLE",
-        "TITLE.DAT",
-        "dm1/TITLE",
-        "dm1/TITLE.DAT",
-        "DungeonMasterPC34/TITLE",
-        "DungeonMasterPC34/TITLE.DAT",
-        "DungeonMasterPC34Multilingual/TITLE",
-        "DungeonMasterPC34Multilingual/TITLE.DAT",
-        "dm-pc34/DungeonMasterPC34/TITLE",
-        "dm-pc34/DungeonMasterPC34/TITLE.DAT",
-        "dm-pc34/DungeonMasterPC34Multilingual/TITLE",
-        "dm-pc34/DungeonMasterPC34Multilingual/TITLE.DAT"
-    };
-    static const char* homeSuffixes[] = {
-        ".firestaff/data/TITLE",
-        ".firestaff/data/dm1/TITLE",
-        ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
-    };
-    char titleErr[160];
-
-    if (!outPath || outPathBytes == 0U) {
-        return 0;
-    }
-    outPath[0] = '\0';
-    titleErr[0] = '\0';
-
-    envPath = getenv("FIRESTAFF_TITLE_DAT");
-    if (envPath && envPath[0] != '\0' && V1_Title_IsCanonicalPc34Title(envPath, titleErr, sizeof(titleErr))) {
-        snprintf(outPath, outPathBytes, "%s", envPath);
-        return 1;
-    }
-
-    if (menuState) {
-        for (i = 0U; i < M12_AssetStatus_GetVersionCount("dm1"); ++i) {
-            dm1v = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1", i);
-            if (dm1v && dm1v->matched && FSP_ParentDir(parent, sizeof(parent), dm1v->matchedPath)) {
-                if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE") &&
-                    V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
-                    snprintf(outPath, outPathBytes, "%s", candidate);
-                    return 1;
-                }
-                if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE.DAT") &&
-                    V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
-                    snprintf(outPath, outPathBytes, "%s", candidate);
-                    return 1;
-                }
-                /* DM1 PC 3.4: TITLE lives beside DATA/, not inside it.
-                 * DUNGEON.DAT is in .../DungeonMasterPC34/DATA/DUNGEON.DAT
-                 * TITLE is at    .../DungeonMasterPC34/TITLE
-                 * So check the grandparent (parent of DATA/). */
-                {
-                    char grandparent[FSP_PATH_MAX];
-                    if (FSP_ParentDir(grandparent, sizeof(grandparent), parent)) {
-                        if (FSP_JoinPath(candidate, sizeof(candidate), grandparent, "TITLE") &&
-                            V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
-                            snprintf(outPath, outPathBytes, "%s", candidate);
-                            return 1;
-                        }
-                        if (FSP_JoinPath(candidate, sizeof(candidate), grandparent, "TITLE.DAT") &&
-                            V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
-                            snprintf(outPath, outPathBytes, "%s", candidate);
-                            return 1;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    dataDir = menuState ? M12_AssetStatus_GetDataDir(&menuState->assetStatus) : NULL;
-    if (!dataDir || dataDir[0] == '\0') {
-        dataDir = ".";
-    }
-    for (i = 0U; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
-        if (FSP_JoinPath(candidate, sizeof(candidate), dataDir, suffixes[i]) &&
-            V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
-            snprintf(outPath, outPathBytes, "%s", candidate);
-            return 1;
-        }
-    }
-
-    /* N2/Mac original-data fallback: V1 original mode must not silently skip
-     * the ReDMCSB TITLE path just because GRAPHICS.DAT/DUNGEON.DAT were found
-     * through the asset catalog while TITLE lives beside the canonical local
-     * DM1 anchors.  This mirrors the verified N2 layout and also works on a
-     * developer Mac if the same OpenClaw original-data tree is present. */
-    dataDir = getenv("HOME");
-    if (dataDir && dataDir[0] != '\0') {
-        for (i = 0U; i < sizeof(homeSuffixes) / sizeof(homeSuffixes[0]); ++i) {
-            if (FSP_JoinPath(candidate, sizeof(candidate), dataDir, homeSuffixes[i]) &&
-                V1_Title_IsCanonicalPc34Title(candidate, titleErr, sizeof(titleErr))) {
-                snprintf(outPath, outPathBytes, "%s", candidate);
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
 
 static void m11_fill_rect_indexed(unsigned char* framebuffer,
                                   int framebufferWidth,
@@ -1362,7 +1252,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     if (m11_play_redmcsb_title_graphic_intro_if_available(gameView, outPlayedAnyFrame)) {
         return;
     }
-    if (!m11_find_title_dat_for_intro(menuState, titlePath, sizeof(titlePath))) {
+    if (!M11_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
         fprintf(stderr,
                 "Firestaff V1 original TITLE intro skipped: no GRAPHICS.DAT C001 title graphic "
                 "or DM PC 3.4 TITLE fallback file found; set FIRESTAFF_TITLE_DAT or install "
