@@ -287,6 +287,28 @@ typedef struct {
     int reactionEventKind;
 } DM1_MeleeF0231AftermathPlanPc34;
 
+typedef struct {
+    int groupIndex;
+    int creatureType;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    unsigned int currentTick;
+    int outcome;
+} DM1_MeleeF0231ReactionInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldSchedule;
+    unsigned int fireAtTick;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int groupIndex;
+    int creatureType;
+    int eventKind;
+} DM1_MeleeF0231ReactionPlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -329,12 +351,20 @@ int dm1_v1_melee_creature_snapshot_plan_f0231_pc34(
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out);
+int dm1_v1_melee_reaction_plan_f0231_pc34(
+    const DM1_MeleeF0231ReactionInputPc34* in,
+    DM1_MeleeF0231ReactionPlanPc34* out);
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
     const struct CombatantCreatureSnapshot_Compat* defender,
     struct RngState_Compat* rng,
     struct CombatResult_Compat* out);
+int dm1_v1_melee_apply_group_damage_f0190_pc34(
+    const struct CombatResult_Compat* result,
+    struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    int* outOutcome);
 
 #ifdef __cplusplus
 }
