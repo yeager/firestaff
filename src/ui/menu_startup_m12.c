@@ -3558,6 +3558,16 @@ static const char* m12_settings_value_ra_token(const M12_StartupMenuState* state
     return redacted[0] ? redacted : m12_tr(state, "SET");
 }
 
+const char* M12_StartupMenu_GetRetroAchievementsStatusValue(
+    const M12_StartupMenuState* state) {
+    return m12_settings_value_ra_status(state);
+}
+
+const char* M12_StartupMenu_GetRetroAchievementsTokenValue(
+    const M12_StartupMenuState* state) {
+    return m12_settings_value_ra_token(state);
+}
+
 static const char* m12_settings_value_session_timer(const M12_StartupMenuState* state) {
     return m12_tr(state, m12_session_timer_label_for_index(state ? state->settings.sessionTimerIndex : 0));
 }

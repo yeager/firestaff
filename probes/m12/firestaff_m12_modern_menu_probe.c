@@ -234,14 +234,32 @@ int main(void) {
     /* ----- Render SETTINGS view ----- */
     M12_StartupMenuState state_s = state;
     state_s.view = M12_MENU_VIEW_SETTINGS;
-    state_s.settingsSelectedIndex = 1;
+    state_s.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_RA_USERNAME;
     state_s.settings.languageIndex = 1;
     state_s.settings.graphicsIndex = 1;
     state_s.settings.windowModeIndex = 1;
+    state_s.settings.retroAchievementsEnabled = 1;
+    state_s.settings.retroAchievementsHardcore = 1;
+    snprintf(state_s.settings.retroAchievementsUsername,
+             sizeof(state_s.settings.retroAchievementsUsername),
+             "%s",
+             "yeager");
+    snprintf(state_s.settings.retroAchievementsToken,
+             sizeof(state_s.settings.retroAchievementsToken),
+             "%s",
+             "abcdef123456");
     memset(buf, 0, rgbaBytes);
     M12_ModernMenu_Render(&state_s, buf, W, H);
     record(&t, "INV_MODERN_02B", count_nonblack(buf, W, H) > W * H / 4,
            "settings view renders substantial non-black content");
+    record(&t, "INV_MODERN_02B_RA_STATUS",
+           strcmp(M12_StartupMenu_GetRetroAchievementsStatusValue(&state_s),
+                  "BACKEND PENDING") == 0,
+           "settings exposes RetroAchievements backend-pending status");
+    record(&t, "INV_MODERN_02B_RA_TOKEN",
+           strcmp(M12_StartupMenu_GetRetroAchievementsTokenValue(&state_s),
+                  "****3456") == 0,
+           "settings exposes only a redacted RetroAchievements token");
     unsigned long sigSettings = checksum(buf, rgbaBytes);
     write_ppm("verification-m12/modern-menu/02_settings.ppm", buf, W, H);
 
