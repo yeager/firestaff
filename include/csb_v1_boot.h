@@ -296,6 +296,9 @@ int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     int resume_available,
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile);
+int csb_v1_boot_startup_execute_render_plan_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor);
 int csb_v1_boot_runtime_util_apply_pointer_from_runtime_state_pc34(
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt,
     int title_active,

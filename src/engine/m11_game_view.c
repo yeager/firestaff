@@ -3104,7 +3104,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         m11_csb_startup_executor_draw_fallback_text;
     executor.draw_utility_panel =
         m11_csb_startup_executor_draw_utility_panel;
-    (void)csb_v1_startup_execute_render_plan_pc34(&plan, &executor);
+    (void)csb_v1_boot_startup_execute_render_plan_pc34(&plan, &executor);
 }
 
 static int m11_csb_startup_entrance_waiting_for_input(
@@ -34140,7 +34140,7 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     executor.fill_rect = m11_dm2_startup_exec_fill_rect;
     executor.outline_rect = m11_dm2_startup_exec_outline_rect;
     executor.draw_text = m11_dm2_startup_exec_text;
-    (void)dm2_v1_startup_execute_draw_commands(
+    (void)dm2_v1_boot_startup_execute_draw_commands(
         commands,
         command_count,
         &executor);
@@ -37765,7 +37765,7 @@ static void m11_theron_draw_startup_graphics(
     executor.fill_rect = m11_theron_startup_exec_fill_rect;
     executor.draw_rect = m11_theron_startup_exec_draw_rect;
     executor.plot_pixel = m11_theron_startup_exec_plot_pixel;
-    (void)theron_v1_startup_execute_graphics_plan(plan, &executor);
+    (void)theron_v1_boot_startup_execute_graphics_plan(plan, &executor);
 }
 
 static void m11_theron_draw_startup_screen(const M11_GameViewState* state,

@@ -1061,6 +1061,17 @@ int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
         out_title_ready);
 }
 
+int dm2_v1_boot_startup_execute_draw_commands(
+    const DM2_V1_StartupDrawCommand *commands,
+    int command_count,
+    const void *executor)
+{
+    return dm2_v1_startup_execute_draw_commands(
+        commands,
+        command_count,
+        (const DM2_V1_StartupDrawExecutor *)executor);
+}
+
 static const char *dm2_v1_boot_startup_prepare_host_status(
     DM2_V1_BootStartupPrepareResult result)
 {
