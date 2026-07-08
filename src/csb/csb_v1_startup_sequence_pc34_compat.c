@@ -1812,6 +1812,34 @@ int csb_v1_startup_init_command_state_receipt_pc34(
         out_receipt);
 }
 
+void csb_v1_startup_init_state_receipt_init_pc34(
+    CSB_V1_StartupInitStateReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+}
+
+int csb_v1_startup_init_state_receipt_pc34(
+    int skip_startup,
+    CSB_V1_StartupInitStateReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_startup_init_state_receipt_init_pc34(out_receipt);
+    if (!csb_v1_startup_init_command_state_receipt_pc34(
+            skip_startup,
+            &out_receipt->command_state)) {
+        return 0;
+    }
+    out_receipt->entrance_frame = 0;
+    out_receipt->entrance_last_command = 0;
+    out_receipt->entrance_bonus_requested = 0;
+    return 1;
+}
+
 int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
     int title_active,
     int title_frame,

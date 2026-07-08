@@ -464,6 +464,13 @@ typedef struct CSB_V1_StartupCommandStateReceipt_PC34 {
     int pending_command;
 } CSB_V1_StartupCommandStateReceipt_PC34;
 
+typedef struct CSB_V1_StartupInitStateReceipt_PC34 {
+    CSB_V1_StartupCommandStateReceipt_PC34 command_state;
+    int entrance_frame;
+    int entrance_last_command;
+    int entrance_bonus_requested;
+} CSB_V1_StartupInitStateReceipt_PC34;
+
 typedef struct CSB_V1_StartupTickReceipt_PC34 {
     int entrance_frame;
     CSB_V1_StartupTickResult_PC34 tick_result;
@@ -669,6 +676,11 @@ int csb_v1_startup_command_state_receipt_from_facts_pc34(
 int csb_v1_startup_init_command_state_receipt_pc34(
     int skip_startup,
     CSB_V1_StartupCommandStateReceipt_PC34 *out_receipt);
+void csb_v1_startup_init_state_receipt_init_pc34(
+    CSB_V1_StartupInitStateReceipt_PC34 *receipt);
+int csb_v1_startup_init_state_receipt_pc34(
+    int skip_startup,
+    CSB_V1_StartupInitStateReceipt_PC34 *out_receipt);
 int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
     int title_active,
     int title_frame,
