@@ -1106,6 +1106,10 @@ int csb_v1_runtime_apply_startup_sequence_plan_from_boot_profile_facts_with_rece
     CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome,
     CSB_V1_StartupRuntimeApplyReceipt_PC34 *out_runtime_apply_receipt,
     CSB_V1_StartupCommandStateReceipt_PC34 *out_state_receipt);
+int csb_v1_runtime_execute_startup_entrance_command_from_host_facts_with_receipts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int command_id,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt);
 void csb_v1_runtime_view_state_receipt_init_pc34(
     CSB_V1_RuntimeViewStateReceipt_PC34 *receipt);
 int csb_v1_runtime_view_state_receipt_from_profile_pc34(

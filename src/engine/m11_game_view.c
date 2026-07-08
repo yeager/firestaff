@@ -2524,6 +2524,9 @@ static void m11_csb_startup_host_facts(
         state->csbState.startup_import_available;
     facts->door_step_count =
         (int)ENTRANCE_Compat_GetDoorAnimationStepCount();
+    facts->resume_available =
+        state->csbState.startup_entrance_resume_available ? 1 : 0;
+    facts->resume_path = state->csbState.startup_entrance_resume_path;
     facts->boot_profile = state->csbBootProfile;
 }
 
@@ -3088,12 +3091,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     M11_GameViewState *state,
     int commandId)
 {
-    CSB_V1_StartupEntranceCommandReceipt_PC34 command_receipt;
-    CSB_V1_StartupCommandStateReceipt_PC34 state_receipt;
-    CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
-    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 runtime_exec_receipt;
-    CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
-    CSB_V1_StartupHostReceipt_PC34 host_receipt;
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 receipt;
     CSB_V1_StartupHostFacts_PC34 facts;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -3101,67 +3099,22 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         return M11_GAME_INPUT_IGNORED;
     }
     m11_csb_startup_host_facts(state, &facts);
-    if (!csb_v1_startup_apply_entrance_command_from_host_facts_with_receipts_pc34(
+    if (!csb_v1_runtime_execute_startup_entrance_command_from_host_facts_with_receipts_pc34(
             &facts,
             commandId,
-            &command_receipt,
-            &state_receipt) ||
-        !command_receipt.handled) {
+            &receipt) ||
+        !receipt.handled) {
         return M11_GAME_INPUT_IGNORED;
     }
-
     state->csbState.startup_entrance_last_command =
-        command_receipt.command_id;
-    if (command_receipt.pure_apply_result !=
-        CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34) {
-        if (!csb_v1_startup_host_receipt_from_pure_entrance_pc34(
-                &command_receipt,
-                &host_receipt)) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
-        return m11_csb_startup_apply_host_receipt(state, &host_receipt);
-    }
-
-    if (!command_receipt.requires_runtime_plan) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-
-    if (!csb_v1_runtime_apply_startup_sequence_plan_from_boot_profile_facts_with_receipts_pc34(
-            state->csbBootProfile,
-            &command_receipt.runtime_plan,
-            state->csbState.startup_entrance_resume_available
-                ? state->csbState.startup_entrance_resume_path
-                : NULL,
-            facts.title_active,
-            facts.title_frame,
-            facts.title_source_step,
-            facts.entrance_active,
-            facts.entrance_source_step,
-            facts.entrance_dismissed,
-            facts.credits_active,
-            facts.credits_remaining_ticks,
-            facts.opening_active,
-            facts.opening_delay_ticks,
-            facts.opening_step,
-            facts.pending_command,
-            &runtime_exec_receipt,
-            &outcome,
-            &runtime_receipt,
-            &state_receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (runtime_exec_receipt.sync_profile_state) {
+        receipt.command_receipt.command_id;
+    if (receipt.sync_profile_state) {
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
     }
-    m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
-    if (!csb_v1_startup_host_receipt_from_runtime_apply_pc34(
-            &runtime_receipt,
-            &outcome,
-            &host_receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    return m11_csb_startup_apply_host_receipt(state, &host_receipt);
+    m11_csb_startup_command_state_receipt_to_m11(state,
+                                                 &receipt.state_receipt);
+    return m11_csb_startup_apply_host_receipt(state,
+                                             &receipt.host_receipt);
 }
 
 static void m11_csb_startup_apply_utility_state_receipt(

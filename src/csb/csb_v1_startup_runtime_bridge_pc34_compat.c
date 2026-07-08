@@ -126,6 +126,69 @@ int csb_v1_runtime_apply_startup_sequence_plan_from_boot_profile_facts_with_rece
         out_state_receipt);
 }
 
+int csb_v1_runtime_execute_startup_entrance_command_from_host_facts_with_receipts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int command_id,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 runtime_exec_receipt;
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_apply_receipt;
+    CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
+
+    if (out_receipt) {
+        csb_v1_startup_entrance_host_action_receipt_init_pc34(
+            out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_startup_execute_entrance_command_from_host_facts_with_receipts_pc34(
+            facts,
+            command_id,
+            out_receipt) ||
+        !out_receipt->handled) {
+        return 1;
+    }
+
+    if (out_receipt->command_receipt.pure_apply_result !=
+        CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34) {
+        return 1;
+    }
+
+    if (!out_receipt->command_receipt.requires_runtime_plan) {
+        return 1;
+    }
+    if (!csb_v1_runtime_apply_startup_sequence_plan_from_boot_profile_facts_with_receipts_pc34(
+            (void *)facts->boot_profile,
+            &out_receipt->command_receipt.runtime_plan,
+            facts->resume_available ? facts->resume_path : NULL,
+            facts->title_active,
+            facts->title_frame,
+            facts->title_source_step,
+            facts->entrance_active,
+            facts->entrance_source_step,
+            facts->entrance_dismissed,
+            facts->credits_active,
+            facts->credits_remaining_ticks,
+            facts->opening_active,
+            facts->opening_delay_ticks,
+            facts->opening_step,
+            facts->pending_command,
+            &runtime_exec_receipt,
+            &outcome,
+            &runtime_apply_receipt,
+            &out_receipt->state_receipt)) {
+        out_receipt->handled = 0;
+        return 0;
+    }
+    out_receipt->sync_profile_state =
+        runtime_exec_receipt.sync_profile_state ? 1 : 0;
+    return csb_v1_startup_host_receipt_from_runtime_apply_pc34(
+        &runtime_apply_receipt,
+        &outcome,
+        &out_receipt->host_receipt);
+}
+
 int csb_v1_runtime_m11_mirror_receipt_from_boot_profile_pc34(
     const void *boot_profile,
     CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt)
