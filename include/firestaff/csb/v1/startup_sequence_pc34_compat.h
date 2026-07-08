@@ -720,6 +720,8 @@ int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
     int opening_delay_ticks,
     int opening_step,
     int pending_command);
+int csb_v1_startup_entrance_accepts_input_from_request_pc34(
+    const CSB_V1_StartupCommandStateRequest_PC34 *request);
 int csb_v1_startup_init_command_state_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int skip_startup);
