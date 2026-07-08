@@ -1,5 +1,6 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_boot.h"
+#include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
 #include <string.h>
@@ -189,6 +190,62 @@ int csb_v1_runtime_execute_startup_entrance_command_from_host_facts_with_receipt
         &runtime_apply_receipt,
         &outcome,
         &out_receipt->host_receipt);
+}
+
+int csb_v1_runtime_execute_startup_entrance_firestaff_input_from_host_facts_with_receipts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int menu_input,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
+{
+    int command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+
+    if (out_receipt) {
+        csb_v1_startup_entrance_host_action_receipt_init_pc34(
+            out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_startup_entrance_command_for_firestaff_input_pc34(
+            facts->credits_active,
+            menu_input,
+            &command)) {
+        return 1;
+    }
+    return csb_v1_runtime_execute_startup_entrance_command_from_host_facts_with_receipts_pc34(
+        facts,
+        command,
+        out_receipt);
+}
+
+int csb_v1_runtime_execute_startup_entrance_pointer_from_host_facts_with_receipts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
+{
+    int command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+
+    if (out_receipt) {
+        csb_v1_startup_entrance_host_action_receipt_init_pc34(
+            out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_startup_entrance_command_for_pointer_pc34(
+            facts->credits_active,
+            x,
+            y,
+            button_mask,
+            &command)) {
+        return 1;
+    }
+    return csb_v1_runtime_execute_startup_entrance_command_from_host_facts_with_receipts_pc34(
+        facts,
+        command,
+        out_receipt);
 }
 
 int csb_v1_runtime_m11_mirror_receipt_from_boot_profile_pc34(

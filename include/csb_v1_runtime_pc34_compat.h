@@ -1110,6 +1110,16 @@ int csb_v1_runtime_execute_startup_entrance_command_from_host_facts_with_receipt
     const CSB_V1_StartupHostFacts_PC34 *facts,
     int command_id,
     CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt);
+int csb_v1_runtime_execute_startup_entrance_firestaff_input_from_host_facts_with_receipts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int menu_input,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt);
+int csb_v1_runtime_execute_startup_entrance_pointer_from_host_facts_with_receipts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt);
 void csb_v1_runtime_view_state_receipt_init_pc34(
     CSB_V1_RuntimeViewStateReceipt_PC34 *receipt);
 int csb_v1_runtime_view_state_receipt_from_profile_pc34(
