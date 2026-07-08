@@ -825,6 +825,78 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
     return 0;
 }
 
+const char *dm2_v1_boot_startup_prepare_result_name(
+    DM2_V1_BootStartupPrepareResult result) {
+    switch (result) {
+    case DM2_V1_BOOT_STARTUP_PREPARE_OK:
+        return "OK";
+    case DM2_V1_BOOT_STARTUP_PREPARE_BAD_INPUT:
+        return "BAD_INPUT";
+    case DM2_V1_BOOT_STARTUP_PREPARE_OOM:
+        return "OOM";
+    case DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED:
+        return "SCAN_FAILED";
+    case DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS:
+        return "UNVERIFIED_ASSETS";
+    case DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED:
+        return "ENTER_GAME_FAILED";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+int dm2_v1_boot_startup_launch_alloc(
+    const char *data_dir,
+    DM2_V1_BootStartupLaunch *out_launch) {
+    DM2_V1_BootProfile *profile;
+    if (!out_launch) return 0;
+    memset(out_launch, 0, sizeof(*out_launch));
+    if (!data_dir || data_dir[0] == '\0') {
+        out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        return 0;
+    }
+    profile = (DM2_V1_BootProfile *)calloc(1, sizeof(*profile));
+    if (!profile) {
+        out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OOM;
+        return 0;
+    }
+    dm2_v1_boot_profile_init(profile);
+    if (dm2_v1_boot_scan_assets(profile, data_dir) != 0) {
+        out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED;
+        free(profile);
+        return 0;
+    }
+    if (!profile->assets_verified) {
+        out_launch->prepare_result =
+            DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
+        dm2_v1_boot_cleanup(profile);
+        free(profile);
+        return 0;
+    }
+    dm2_v1_boot_set_save_root(profile, NULL);
+    dm2_v1_boot_print_summary(profile);
+    if (dm2_v1_boot_enter_game(profile) != 0) {
+        out_launch->prepare_result =
+            DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED;
+        dm2_v1_boot_cleanup(profile);
+        free(profile);
+        return 0;
+    }
+    out_launch->profile = profile;
+    out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OK;
+    return 1;
+}
+
+void dm2_v1_boot_startup_launch_cleanup(
+    DM2_V1_BootStartupLaunch *launch) {
+    if (!launch) return;
+    if (launch->profile) {
+        dm2_v1_boot_cleanup(launch->profile);
+        free(launch->profile);
+    }
+    memset(launch, 0, sizeof(*launch));
+}
+
 int dm2_v1_boot_viewport_asset_fetch(void *user,
                                      int gdat_index,
                                      const uint8_t **out_pixels,

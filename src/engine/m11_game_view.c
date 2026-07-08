@@ -10582,6 +10582,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (spec->gameId && strcmp(spec->gameId, "dm2") == 0) {
         const char *dd = spec->dataDir;
         char resolvedDataDir[FSP_PATH_MAX];
+        DM2_V1_BootStartupLaunch launch;
         DM2_V1_BootProfile *profile = NULL;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
@@ -10600,37 +10601,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Shutdown(state);
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
-        profile = (DM2_V1_BootProfile *)calloc(1, sizeof(*profile));
-        if (!profile) {
-            m11_set_status(state, "BOOT", "DM2 OOM");
-            m11_log_event(state, M11_COLOR_RED, "T0: DM2 BOOT OOM");
+        if (!dm2_v1_boot_startup_launch_alloc(dd, &launch)) {
+            const char *reason = dm2_v1_boot_startup_prepare_result_name(
+                launch.prepare_result);
+            m11_set_status(state, "BOOT", reason);
+            m11_log_event(state, M11_COLOR_RED,
+                          "T0: DM2 BOOT PREPARE FAILED: %s", reason);
             return 0;
         }
-        dm2_v1_boot_profile_init(profile);
-        if (dm2_v1_boot_scan_assets(profile, dd) != 0) {
-            m11_set_status(state, "BOOT", "DM2 ASSETS MISSING");
-            m11_log_event(state, M11_COLOR_RED, "T0: DM2 SCAN FAILED");
-            free(profile);
-            return 0;
-        }
-        if (!profile->assets_verified) {
-            m11_set_status(state, "BOOT", "DM2 HASH UNKNOWN");
-            m11_log_event(state, M11_COLOR_YELLOW,
-                          "T0: DM2 ASSETS UNVERIFIED (NOT IN CATALOG)");
-            /* Required DM2 files are launch-gated by hash.  Keep the
-             * diagnostic status visible here; dm2_v1_boot_enter_game()
-             * rejects unverified profiles before M11 can claim the DM2
-             * runtime boundary. */
-        }
-        dm2_v1_boot_set_save_root(profile, NULL);
-        dm2_v1_boot_print_summary(profile);
-        if (dm2_v1_boot_enter_game(profile) != 0) {
-            m11_set_status(state, "BOOT", "DM2 ENTER GAME FAILED");
-            m11_log_event(state, M11_COLOR_RED, "T0: DM2 BOOT ENTER FAILED");
-            dm2_v1_boot_cleanup(profile);
-            free(profile);
-            return 0;
-        }
+        profile = launch.profile;
         /* V1/V2 runtimes — same init sequence as firestaff_game_loop.c.
          * The V1 singleton must receive the verified boot profile before
          * M11 idle ticks call dm2_v1_runtime_tick(); otherwise the M11
@@ -10647,8 +10626,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 m11_log_event(state, M11_COLOR_RED,
                               "T0: DM2 RESUME FAILED: %s",
                               spec->savePath);
-                dm2_v1_boot_cleanup(profile);
-                free(profile);
+                dm2_v1_boot_startup_launch_cleanup(&launch);
                 return 0;
             }
         } else {
@@ -10662,8 +10640,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 m11_log_event(state,
                               M11_COLOR_RED,
                               "T0: DM2 START MENU FAILED");
-                dm2_v1_boot_cleanup(profile);
-                free(profile);
+                dm2_v1_boot_startup_launch_cleanup(&launch);
                 return 0;
             }
             (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
@@ -10689,6 +10666,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
                  profile->dungeon_path[0] ? profile->dungeon_path : "DUNGEON.DAT");
         state->dm2BootProfile = profile;
+        launch.profile = NULL;
         state->dm2World = profile->dm2_state;
         state->dm2State.level_loaded = 1;
         m11_sync_dm2_state_from_runtime(state);
