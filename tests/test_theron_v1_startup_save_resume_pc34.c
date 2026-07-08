@@ -784,14 +784,38 @@ static void test_startup_session_facts_wrappers(void) {
     int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
 
     theron_v1_world_init(&world);
-    memset(&session, 0, sizeof(session));
-    session.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-    session.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-    session.world = &world;
-    session.selected_mirrors_mask = 0x03;
-    session.companion_count = 2;
-    session.selected_mirror_order = order;
-    session.selected_mirror_order_count = THERON_STARTUP_MAX_COMPANIONS;
+    theron_v1_startup_session_facts_from_runtime(
+        &session,
+        THERON_STARTUP_PHASE_STAGE_SELECT,
+        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        NULL,
+        &world,
+        NULL,
+        1,
+        0,
+        0,
+        0,
+        -1,
+        0,
+        "",
+        "SELECT",
+        NULL,
+        NULL,
+        0,
+        0x03,
+        2,
+        order,
+        THERON_STARTUP_MAX_COMPANIONS);
+    expect_true(session.phase == THERON_STARTUP_PHASE_STAGE_SELECT &&
+                    session.selected_dungeon ==
+                        THERON_DUNGEON_1_HALL_OF_RECORDS &&
+                    session.world == &world &&
+                    session.selected_mirrors_mask == 0x03 &&
+                    session.companion_count == 2 &&
+                    session.selected_mirror_order == order &&
+                    session.selected_mirror_order_count ==
+                        THERON_STARTUP_MAX_COMPANIONS,
+                "Theron startup layer owns runtime session facts construction");
 
     expect_true(theron_v1_startup_flow_rebuild_from_session_with_receipt(
                     &session,

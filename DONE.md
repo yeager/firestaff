@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 external archive hash scan: shared game-data scanner now recognizes 7z/RAR/ARJ/ARC/CAB suffixes plus 7z/RAR signatures, hash-scans entries with local 7zz/7z when available, and materializes virtual `archive::entry` paths for runtime cache use. Regression coverage added for 7z scan/extract.
+
+- ✅ 2026-07-08 Theron startup session facts wrapper: Theron startup-flow now owns runtime session-facts construction from M11 state, including Track 02 ROM extraction from boot assets. M11 no longer casts Theron assets while building startup session facts.
+
 - ✅ 2026-07-08 CSB boot launch/failure log receipts: CSB startup host receipts now own launch/failure log text and color. M11 applies the CSB receipt for startup failure instead of building the failure status/log locally.
 
 - ✅ 2026-07-08 DM2 boot inspect/log receipts: DM2 startup host receipts now carry boot inspect/log details for start-menu and resume handoff. M11 applies those receipts instead of setting final DM2 boot readout/log lines locally.
