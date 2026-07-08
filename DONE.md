@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB object/container boot-profile adapters: CSB runtime/startup bridge now owns opaque boot-profile adapters for object icon/action/allowed-slot/name and container read/write queries. M11 no longer reaches through `CSB_V1_BootProfile.runtime` for those object/container helper paths. Verification: CSB object icon resolver passed, M11 targeted library build passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB keyboard input boot-profile adapter: CSB input-command bridge now owns an opaque boot-profile adapter for post-boot movement/turn keyboard input. M11 no longer reaches through `CSB_V1_BootProfile.runtime` for that keyboard route. Verification: CSB input command bridge passed 85/85, M11 targeted library build passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB runtime quicksave/load/tick boot-profile adapters: CSB runtime/startup bridge now owns opaque boot-profile adapters for quicksave, quickload, and idle runtime ticks. M11 no longer reaches through `CSB_V1_BootProfile.runtime` for those booted runtime paths. Verification: CSB boot runtime handoff passed 278/278, M10 and M11 targeted library builds passed, Phase A passed 24/24, and `git diff --check` passed.

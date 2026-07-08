@@ -1165,6 +1165,28 @@ int csb_v1_runtime_load_game_from_path_from_boot_profile_pc34(
 int csb_v1_runtime_tick_from_boot_profile_pc34(
     void *boot_profile,
     uint32_t *out_game_time);
+int csb_v1_runtime_object_icon_index_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short thing);
+int csb_v1_runtime_object_action_set_index_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short thing);
+uint16_t csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short thing);
+int csb_v1_runtime_object_name_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short thing,
+    char *out,
+    size_t out_size);
+int csb_v1_runtime_read_container_slots_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short container_thing,
+    unsigned short out_slots[8]);
+int csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
+    void *boot_profile,
+    unsigned short container_thing,
+    const unsigned short slots[8]);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);

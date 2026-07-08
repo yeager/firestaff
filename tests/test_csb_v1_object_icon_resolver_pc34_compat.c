@@ -8,6 +8,7 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_boot.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -156,7 +157,30 @@ int main(void)
               0);
 
     {
+        CSB_V1_BootProfile boot;
         char name[32];
+
+        memset(&boot, 0, sizeof(boot));
+        boot.runtime = profile;
+        check_int("boot-profile dagger icon",
+                  csb_v1_runtime_object_icon_index_from_boot_profile_pc34(
+                      &boot, dagger),
+                  32);
+        check_int("boot-profile dagger action set",
+                  csb_v1_runtime_object_action_set_index_from_boot_profile_pc34(
+                      &boot, dagger),
+                  12);
+        check_int("boot-profile dagger allowed slots",
+                  csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(
+                      &boot, dagger),
+                  0x05c0);
+        memset(name, 0, sizeof(name));
+        check_int("boot-profile dagger has CSB-owned name",
+                  csb_v1_runtime_object_name_from_boot_profile_pc34(
+                      &boot, dagger, name, sizeof(name)),
+                  1);
+        check_str("boot-profile dagger name", name, "DAGGER");
+
         memset(name, 0, sizeof(name));
         check_int("dagger has CSB-owned name",
                   csb_v1_runtime_object_name(&profile, dagger, name, sizeof(name)),

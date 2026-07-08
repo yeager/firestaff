@@ -24291,7 +24291,6 @@ static unsigned int m11_csb_action_set_index_for_thing(
     const M11_GameViewState* state,
     unsigned short thingId)
 {
-    const CSB_V1_BootProfile* profile;
     int setIdx;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -24299,9 +24298,8 @@ static unsigned int m11_csb_action_set_index_for_thing(
         thingId == THING_NONE || thingId == THING_ENDOFLIST) {
         return 0;
     }
-    profile = (const CSB_V1_BootProfile*)state->csbBootProfile;
-    setIdx = csb_v1_runtime_object_action_set_index(
-        &profile->runtime,
+    setIdx = csb_v1_runtime_object_action_set_index_from_boot_profile_pc34(
+        state->csbBootProfile,
         thingId);
     return setIdx > 0 ? (unsigned int)setIdx : 0U;
 }
@@ -24440,7 +24438,6 @@ static int m11_v1_open_chest_container_index(const M11_GameViewState* state) {
 
 static int m11_v1_open_chest_valid(const M11_GameViewState* state) {
     unsigned short slots[8];
-    const CSB_V1_BootProfile* profile;
     if (!state ||
         state->v1OpenChestThing == THING_NONE ||
         state->v1OpenChestThing == THING_ENDOFLIST ||
@@ -24449,9 +24446,8 @@ static int m11_v1_open_chest_valid(const M11_GameViewState* state) {
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         if (!state->csbBootProfile) return 0;
-        profile = (const CSB_V1_BootProfile*)state->csbBootProfile;
-        return csb_v1_runtime_read_container_slots(
-            &profile->runtime,
+        return csb_v1_runtime_read_container_slots_from_boot_profile_pc34(
+            state->csbBootProfile,
             state->v1OpenChestThing,
             slots) >= 0;
     }
@@ -24467,11 +24463,9 @@ static int m11_v1_read_open_chest_slots(const M11_GameViewState* state,
     if (!outSlots) return 0;
     for (i = 0; i < 8; ++i) outSlots[i] = THING_NONE;
     if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        const CSB_V1_BootProfile* profile;
         if (!state->csbBootProfile) return 0;
-        profile = (const CSB_V1_BootProfile*)state->csbBootProfile;
-        count = csb_v1_runtime_read_container_slots(
-            &profile->runtime,
+        count = csb_v1_runtime_read_container_slots_from_boot_profile_pc34(
+            state->csbBootProfile,
             state->v1OpenChestThing,
             outSlots);
         return count >= 0 ? count : 0;
@@ -24494,10 +24488,9 @@ static int m11_v1_write_open_chest_slots(M11_GameViewState* state,
     int i;
     if (!state || !slots) return 0;
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_RuntimeProfile* profile = m11_mutable_csb_runtime_profile(state);
-        if (!profile) return 0;
-        return csb_v1_runtime_write_container_slots(
-            profile,
+        if (!state->csbBootProfile) return 0;
+        return csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
+            state->csbBootProfile,
             state->v1OpenChestThing,
             slots);
     }
@@ -24564,15 +24557,13 @@ static unsigned int m11_csb_allowed_slots_for_thing(
     const M11_GameViewState* state,
     unsigned short thingId)
 {
-    const CSB_V1_BootProfile* profile;
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbBootProfile ||
         thingId == THING_NONE || thingId == THING_ENDOFLIST) {
         return 0;
     }
-    profile = (const CSB_V1_BootProfile*)state->csbBootProfile;
-    return (unsigned int)csb_v1_runtime_object_allowed_slots(
-        &profile->runtime,
+    return (unsigned int)csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(
+        state->csbBootProfile,
         thingId);
 }
 
@@ -24825,14 +24816,14 @@ static int m11_csb_runtime_object_icon_index_for_thing(
     const M11_GameViewState *state,
     unsigned short thingId)
 {
-    const CSB_V1_BootProfile *profile;
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbBootProfile ||
         thingId == THING_NONE || thingId == THING_ENDOFLIST) {
         return -1;
     }
-    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    return csb_v1_runtime_object_icon_index(&profile->runtime, thingId);
+    return csb_v1_runtime_object_icon_index_from_boot_profile_pc34(
+        state->csbBootProfile,
+        thingId);
 }
 
 static int m11_csb_runtime_object_name_for_thing(
@@ -24841,7 +24832,6 @@ static int m11_csb_runtime_object_name_for_thing(
     char *out,
     size_t out_size)
 {
-    const CSB_V1_BootProfile *profile;
     if (!out || out_size == 0u) {
         return 0;
     }
@@ -24851,8 +24841,11 @@ static int m11_csb_runtime_object_name_for_thing(
         thingId == THING_NONE || thingId == THING_ENDOFLIST) {
         return 0;
     }
-    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    return csb_v1_runtime_object_name(&profile->runtime, thingId, out, out_size);
+    return csb_v1_runtime_object_name_from_boot_profile_pc34(
+        state->csbBootProfile,
+        thingId,
+        out,
+        out_size);
 }
 
 static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
