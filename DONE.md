@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron Track 02 hash-first boot scan: `theron_v1_boot_scan_assets()` now searches the data root recursively by the four known Track 02 MD5s before using legacy filename candidates, and verified JP/US/version identity comes from MD5 instead of filename. Verification: Theron availability test passed, Theron direct-launch test passed, boot syntax check passed, Phase A passed 24/24, and `git diff --check` passed. Full CMake target rebuild was stopped because the local build tree still hangs in regeneration.
+
 - ✅ 2026-07-08 data validator hash scan: `fs_validate_data_dir()` now consumes the shared launcher asset scanner instead of checking `dm1/GRAPHICS.DAT`, `csb/DUNGEON.DAT`, etc. by filename/size. A regression test proves DM1/CSB/DM2 validate from renamed files with matching hashes. Verification: validator hash-scan test passed, validator syntax check passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 TITLE hash-scan pathfinder: DM1 TITLE fallback lookup now validates candidates by canonical PC 3.4 hash/manifest and recursively scans the selected data root, so a renamed TITLE payload can still be found. Verification: TITLE pathfinder test passed, M11/title syntax checks passed, Phase A passed 24/24, and `git diff --check` passed.
