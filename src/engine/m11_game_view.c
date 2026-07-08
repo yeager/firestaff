@@ -10901,7 +10901,33 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 spec->dataDir ? spec->dataDir : "(null)");
         return 1;
     }
-    if (spec->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON) {
+    if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
+        DM1_V1_StartupDungeonPathFacts_PC34 facts;
+        DM1_V1_StartupDungeonPathReceipt_PC34 receipt;
+        memset(&facts, 0, sizeof(facts));
+        memset(&receipt, 0, sizeof(receipt));
+        facts.game_id = spec->gameId;
+        facts.data_dir = spec->dataDir;
+        facts.explicit_dungeon_path = spec->dungeonPath;
+        facts.source_kind = (int)spec->sourceKind;
+        if (!dm1_v1_startup_dungeon_path_receipt_pc34(&facts, &receipt) ||
+            !receipt.handled) {
+            return 0;
+        }
+        if (receipt.use_explicit_path) {
+            snprintf(dungeonPath,
+                     sizeof(dungeonPath),
+                     "%s",
+                     receipt.explicit_dungeon_path);
+        } else if (!receipt.resolve_builtin_path ||
+                   !spec->dataDir || spec->dataDir[0] == '\0' ||
+                   !m11_resolve_builtin_dungeon_path(dungeonPath,
+                                                    sizeof(dungeonPath),
+                                                    spec->dataDir,
+                                                    spec->gameId)) {
+            return 0;
+        }
+    } else if (spec->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON) {
         if (!spec->dungeonPath || spec->dungeonPath[0] == '\0') {
             return 0;
         }

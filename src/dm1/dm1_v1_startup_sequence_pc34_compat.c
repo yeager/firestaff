@@ -188,6 +188,45 @@ int dm1_v1_startup_runtime_start_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_dungeon_path_receipt_pc34(
+    const DM1_V1_StartupDungeonPathFacts_PC34* facts,
+    DM1_V1_StartupDungeonPathReceipt_PC34* out_receipt) {
+    DM1_V1_StartupDungeonPathReceipt_PC34 receipt;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->game_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    if (facts->source_kind ==
+        DM1_V1_STARTUP_SOURCE_KIND_DIRECT_DUNGEON_PC34) {
+        receipt.explicit_path_required = 1;
+        if (!facts->explicit_dungeon_path ||
+            facts->explicit_dungeon_path[0] == '\0') {
+            *out_receipt = receipt;
+            return 1;
+        }
+    }
+    if (facts->explicit_dungeon_path &&
+        facts->explicit_dungeon_path[0] != '\0') {
+        receipt.use_explicit_path = 1;
+        snprintf(receipt.explicit_dungeon_path,
+                 sizeof(receipt.explicit_dungeon_path),
+                 "%s",
+                 facts->explicit_dungeon_path);
+    } else {
+        receipt.resolve_builtin_path = 1;
+    }
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_handoff_prelude_plan_pc34(
     const char* game_id,
     DM1_V1_StartupHandoffPreludePlan_PC34* out_plan) {
