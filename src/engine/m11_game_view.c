@@ -14953,13 +14953,12 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     int x,
     int y) {
     Theron_StartupAction action;
-    Theron_StartupResult result;
+    Theron_StartupInputReceipt input_receipt;
     Theron_V1StartupContinueAvailability continue_availability;
     int has_tqsv_continue = 0;
     int tqsv_slot = -1;
     int has_srm_continue = 0;
     int srm_slot = -1;
-    int handled;
 
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
@@ -14974,7 +14973,7 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
         has_srm_continue = continue_availability.has_srm_continue;
         srm_slot = continue_availability.srm_slot;
     }
-    handled = theron_v1_startup_handle_pointer_from_facts(
+    if (!theron_v1_startup_handle_pointer_from_facts_with_receipt(
         (Theron_StartupPhase)state->theronState.startup_phase,
         state->theronState.selected_dungeon,
         (const Theron_V1_BootProfile*)state->theronBootProfile,
@@ -14994,14 +14993,18 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
         THERON_STARTUP_MAX_COMPANIONS,
         x,
         y,
-        &result,
-        &action);
-    if (!handled) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (result != THERON_STARTUP_OK) {
-        m11_set_status(state, "STARTUP",
-                       theron_v1_startup_result_name(result));
+        &action,
+        &input_receipt)) {
+        if (input_receipt.input_result == THERON_STARTUP_INPUT_RESULT_IGNORED) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        m11_set_status(state,
+                       input_receipt.status_scope
+                           ? input_receipt.status_scope
+                           : "STARTUP",
+                       input_receipt.status
+                           ? input_receipt.status
+                           : "STARTUP POINTER ERROR");
         return M11_GAME_INPUT_REDRAW;
     }
     if (action.kind == THERON_STARTUP_ACTION_NONE) {
