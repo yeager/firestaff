@@ -3169,9 +3169,8 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    if (!state->csbBootProfile ||
-        !csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
-            &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime,
+    if (!csb_v1_runtime_apply_startup_sequence_plan_from_boot_profile_facts_with_receipts_pc34(
+            state->csbBootProfile,
             &command_receipt.runtime_plan,
             state->csbState.startup_entrance_resume_available
                 ? state->csbState.startup_entrance_resume_path
