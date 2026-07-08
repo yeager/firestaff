@@ -62,6 +62,27 @@ typedef struct DM1_V1_SpellLabelSourceZonePc34 {
     int h;
 } DM1_V1_SpellLabelSourceZonePc34;
 
+typedef struct DM1_V1_SpellPanelStatePc34 {
+    int active;
+    int party_dead;
+    int candidate_panel_active;
+    int panel_open;
+    int rune_row;
+    int rune_count;
+} DM1_V1_SpellPanelStatePc34;
+
+typedef struct DM1_V1_SpellPanelReceiptPc34 {
+    int accepted;
+    int panel_open;
+    int rune_row;
+    int rune_count;
+    int clear_runes;
+    int append_rune;
+    int rune_value;
+    int rune_symbol_index;
+    const char *rune_name;
+} DM1_V1_SpellPanelReceiptPc34;
+
 /*
  * ReDMCSB: CASTER.C F0394 draws C009 at the spell-area screen origin,
  * SPELDRAW.C F0393 owns the champion caster tab row, and DEFS.H exposes
@@ -212,6 +233,114 @@ dm1_v1_spell_label_source_zone_pc34(int selected_line)
         DM1_V1_SPELL_LABEL_CELL_H_PC34
     };
     return zone;
+}
+
+static inline int
+dm1_v1_spell_panel_command_allowed_pc34(
+    const DM1_V1_SpellPanelStatePc34 *state)
+{
+    /*
+     * ReDMCSB COMMAND.C:2302-2309, 2338, 2367 guards the C100 spell
+     * command family with !G0299_ui_CandidateChampionOrdinal. Firestaff's
+     * direct keyboard/API spell-panel paths share the same C040 boundary.
+     */
+    return state && state->active && !state->party_dead &&
+           !state->candidate_panel_active;
+}
+
+static inline DM1_V1_SpellPanelReceiptPc34
+dm1_v1_spell_panel_reject_pc34(const DM1_V1_SpellPanelStatePc34 *state)
+{
+    DM1_V1_SpellPanelReceiptPc34 receipt;
+    receipt.accepted = 0;
+    receipt.panel_open = state ? state->panel_open : 0;
+    receipt.rune_row = state ? state->rune_row : 0;
+    receipt.rune_count = state ? state->rune_count : 0;
+    receipt.clear_runes = 0;
+    receipt.append_rune = 0;
+    receipt.rune_value = -1;
+    receipt.rune_symbol_index = -1;
+    receipt.rune_name = 0;
+    return receipt;
+}
+
+static inline DM1_V1_SpellPanelReceiptPc34
+dm1_v1_spell_panel_open_pc34(const DM1_V1_SpellPanelStatePc34 *state)
+{
+    DM1_V1_SpellPanelReceiptPc34 receipt =
+        dm1_v1_spell_panel_reject_pc34(state);
+    if (!dm1_v1_spell_panel_command_allowed_pc34(state)) return receipt;
+    receipt.accepted = 1;
+    receipt.panel_open = 1;
+    receipt.rune_row = 0;
+    receipt.rune_count = 0;
+    receipt.clear_runes = 1;
+    return receipt;
+}
+
+static inline DM1_V1_SpellPanelReceiptPc34
+dm1_v1_spell_panel_close_pc34(const DM1_V1_SpellPanelStatePc34 *state)
+{
+    DM1_V1_SpellPanelReceiptPc34 receipt =
+        dm1_v1_spell_panel_reject_pc34(state);
+    if (!state || state->candidate_panel_active) return receipt;
+    receipt.accepted = 1;
+    receipt.panel_open = 0;
+    receipt.rune_row = 0;
+    receipt.rune_count = 0;
+    receipt.clear_runes = 1;
+    return receipt;
+}
+
+static inline DM1_V1_SpellPanelReceiptPc34
+dm1_v1_spell_panel_clear_pc34(const DM1_V1_SpellPanelStatePc34 *state)
+{
+    DM1_V1_SpellPanelReceiptPc34 receipt =
+        dm1_v1_spell_panel_reject_pc34(state);
+    if (!state || !state->active || state->candidate_panel_active) {
+        return receipt;
+    }
+    receipt.accepted = 1;
+    receipt.panel_open = state->panel_open;
+    receipt.rune_row = 0;
+    receipt.rune_count = 0;
+    receipt.clear_runes = 1;
+    return receipt;
+}
+
+static inline DM1_V1_SpellPanelReceiptPc34
+dm1_v1_spell_panel_enter_rune_pc34(
+    const DM1_V1_SpellPanelStatePc34 *state,
+    int symbol_index)
+{
+    DM1_V1_SpellPanelReceiptPc34 receipt =
+        dm1_v1_spell_panel_reject_pc34(state);
+    int rune_value;
+    if (!dm1_v1_spell_panel_command_allowed_pc34(state) ||
+        !state->panel_open ||
+        state->rune_count >= DM1_V1_SPELL_RUNE_SEQUENCE_MAX_PC34) {
+        return receipt;
+    }
+    rune_value = dm1_v1_spell_rune_value_pc34(state->rune_row, symbol_index);
+    if (rune_value < 0) return receipt;
+
+    /*
+     * ReDMCSB SYMBOL.C F0399 appends the rune, then advances SymbolStep
+     * modulo the four displayed spell rows.
+     */
+    receipt.accepted = 1;
+    receipt.panel_open = 1;
+    receipt.rune_row = state->rune_row + 1;
+    if (receipt.rune_row >= DM1_V1_SPELL_RUNE_ROW_COUNT_PC34) {
+        receipt.rune_row = DM1_V1_SPELL_RUNE_ROW_COUNT_PC34 - 1;
+    }
+    receipt.rune_count = state->rune_count + 1;
+    receipt.append_rune = 1;
+    receipt.rune_value = rune_value;
+    receipt.rune_symbol_index = symbol_index;
+    receipt.rune_name =
+        dm1_v1_spell_rune_name_pc34(state->rune_row, symbol_index);
+    return receipt;
 }
 
 const int *

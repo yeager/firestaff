@@ -7916,35 +7916,58 @@ static int m11_blit_spell_label_cell(const M11_GameViewState* state,
     return 1;
 }
 
-int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
-    if (!state || !state->active || state->partyDead) return 0;
-    if (state->candidateMirrorPanelActive) {
-        /* ReDMCSB COMMAND.C lines 2302-2306: C100 spell-area clicks
-         * are ignored while G0299_ui_CandidateChampionOrdinal owns the
-         * C040 resurrect/reincarnate panel.  Keep the direct M11 spell
-         * API on the same boundary as pointer/keyboard routing. */
-        return 0;
+static DM1_V1_SpellPanelStatePc34
+m11_dm1_spell_panel_state_pc34(const M11_GameViewState* state)
+{
+    DM1_V1_SpellPanelStatePc34 panel;
+    panel.active = state && state->active;
+    panel.party_dead = state ? state->partyDead : 1;
+    panel.candidate_panel_active =
+        state ? state->candidateMirrorPanelActive : 0;
+    panel.panel_open = state ? state->spellPanelOpen : 0;
+    panel.rune_row = state ? state->spellRuneRow : 0;
+    panel.rune_count = state ? state->spellBuffer.runeCount : 0;
+    return panel;
+}
+
+static void
+m11_apply_dm1_spell_panel_receipt(
+    M11_GameViewState* state,
+    const DM1_V1_SpellPanelReceiptPc34* receipt)
+{
+    if (!state || !receipt || !receipt->accepted) return;
+    state->spellPanelOpen = receipt->panel_open;
+    state->spellRuneRow = receipt->rune_row;
+    if (receipt->clear_runes) {
+        memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
     }
-    state->spellPanelOpen = 1;
-    state->spellRuneRow = 0;
-    memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+    if (receipt->append_rune &&
+        state->spellBuffer.runeCount < DM1_V1_SPELL_RUNE_SEQUENCE_MAX_PC34) {
+        state->spellBuffer.runes[state->spellBuffer.runeCount] =
+            receipt->rune_value;
+        state->spellBuffer.runeCount = receipt->rune_count;
+    }
+}
+
+int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
+    DM1_V1_SpellPanelStatePc34 panel =
+        m11_dm1_spell_panel_state_pc34(state);
+    DM1_V1_SpellPanelReceiptPc34 receipt =
+        dm1_v1_spell_panel_open_pc34(&panel);
+    if (!receipt.accepted) return 0;
+    m11_apply_dm1_spell_panel_receipt(state, &receipt);
     m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: SPELL PANEL OPENED",
                   (unsigned int)state->world.gameTick);
     return 1;
 }
 
 int M11_GameView_CloseSpellPanel(M11_GameViewState* state) {
-    if (!state) return 0;
-    if (state->candidateMirrorPanelActive) {
-        /* ReDMCSB COMMAND.C lines 2302-2306 guards C100 spell-area
-         * dispatch with !G0299_ui_CandidateChampionOrdinal.  Closing the
-         * direct Firestaff spell panel must preserve the same live C040
-         * boundary as open/rune/recant/cast. */
-        return 0;
-    }
-    state->spellPanelOpen = 0;
-    state->spellRuneRow = 0;
-    memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+    DM1_V1_SpellPanelStatePc34 panel =
+        m11_dm1_spell_panel_state_pc34(state);
+    DM1_V1_SpellPanelReceiptPc34 receipt =
+        dm1_v1_spell_panel_close_pc34(&panel);
+    if (!receipt.accepted) return 0;
+    m11_apply_dm1_spell_panel_receipt(state, &receipt);
     return 1;
 }
 
@@ -8031,41 +8054,23 @@ static int m11_action_hand_has_magic_map_f0802(
 }
 
 int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
-    int runeValue;
-    if (!state || !state->active || state->partyDead) return 0;
-    if (state->candidateMirrorPanelActive) {
-        /* ReDMCSB COMMAND.C lines 2302-2306 blocks C100 spell-area
-         * routing while the C040 candidate panel is live. */
-        return 0;
-    }
-    if (!state->spellPanelOpen) return 0;
-    if (symbolIndex < 0 || symbolIndex > 5) return 0;
-    if (state->spellBuffer.runeCount >= 4) return 0;
-
-    runeValue = m11_encode_rune(state->spellRuneRow, symbolIndex);
-    if (runeValue < 0) return 0;
-
-    state->spellBuffer.runes[state->spellBuffer.runeCount] = runeValue;
-    state->spellBuffer.runeCount++;
-    state->spellRuneRow++;
+    DM1_V1_SpellPanelStatePc34 panel =
+        m11_dm1_spell_panel_state_pc34(state);
+    DM1_V1_SpellPanelReceiptPc34 receipt =
+        dm1_v1_spell_panel_enter_rune_pc34(&panel, symbolIndex);
+    if (!receipt.accepted) return 0;
+    m11_apply_dm1_spell_panel_receipt(state, &receipt);
 
     m11_log_event(state, M11_COLOR_WHITE, "T%u: RUNE %s (%d)",
                   (unsigned int)state->world.gameTick,
-                  dm1_v1_spell_rune_name_pc34(
-                      state->spellRuneRow - 1, symbolIndex),
-                  runeValue);
+                  receipt.rune_name,
+                  receipt.rune_value);
 
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RUNE ENTERED");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
              "%s — %d OF 4 SYMBOLS",
-             dm1_v1_spell_rune_name_pc34(
-                 state->spellRuneRow - 1, symbolIndex),
+             receipt.rune_name,
              state->spellBuffer.runeCount);
-
-    /* Auto-close panel after 4 runes (full sequence) */
-    if (state->spellRuneRow >= 4) {
-        state->spellRuneRow = 3; /* clamp display row */
-    }
     return 1;
 }
 
@@ -8073,15 +8078,12 @@ int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
 /* Forward declaration for spell XP */
 static void m11_award_combat_xp(M11_GameViewState* state, int championIndex, int damage);
 int M11_GameView_ClearSpell(M11_GameViewState* state) {
-    if (!state || !state->active) return 0;
-    if (state->candidateMirrorPanelActive) {
-        /* ReDMCSB COMMAND.C lines 2302-2306: recant is part of the
-         * spell-area command set, so a live C040 candidate panel must
-         * preserve the current spell state instead of clearing it. */
-        return 0;
-    }
-    state->spellRuneRow = 0;
-    memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+    DM1_V1_SpellPanelStatePc34 panel =
+        m11_dm1_spell_panel_state_pc34(state);
+    DM1_V1_SpellPanelReceiptPc34 receipt =
+        dm1_v1_spell_panel_clear_pc34(&panel);
+    if (!receipt.accepted) return 0;
+    m11_apply_dm1_spell_panel_receipt(state, &receipt);
     if (state->spellPanelOpen) {
         m11_log_event(state, M11_COLOR_YELLOW, "T%u: SPELL CLEARED",
                       (unsigned int)state->world.gameTick);
@@ -8205,6 +8207,8 @@ static int m11_cast_nexus_light_spell(M11_GameViewState* state) {
 }
 
 int M11_GameView_CastSpell(M11_GameViewState* state) {
+    DM1_V1_SpellPanelStatePc34 panel =
+        m11_dm1_spell_panel_state_pc34(state);
     struct ChampionState_Compat* champ;
     struct SpellCastRequest_Compat req;
     struct SpellDefinition_Compat spell;
@@ -8217,10 +8221,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     int spellExperience = 0;
     char champName[16];
 
-    if (!state || !state->active || state->partyDead) return 0;
-    if (state->candidateMirrorPanelActive) {
-        /* ReDMCSB COMMAND.C lines 2302-2306 guards F0370 spell-area
-         * dispatch with !G0299_ui_CandidateChampionOrdinal. */
+    if (!dm1_v1_spell_panel_command_allowed_pc34(&panel)) {
         return 0;
     }
     if (state->spellBuffer.runeCount < 2) {
