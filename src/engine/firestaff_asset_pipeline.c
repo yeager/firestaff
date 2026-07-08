@@ -1,5 +1,7 @@
 
 #include "firestaff_asset_pipeline.h"
+#include "asset_status_m12.h"
+#include "firestaff_l10n.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,10 +34,82 @@ static int try_load_dat(const char *dir, const char *subdir, const char *name,
     return -1;
 }
 
+static const char *asset_pipeline_game_id(const char *game_subdir) {
+    if (!game_subdir) return NULL;
+    if (strcmp(game_subdir, "dm1") == 0 ||
+        strcmp(game_subdir, "csb") == 0 ||
+        strcmp(game_subdir, "dm2") == 0) {
+        return game_subdir;
+    }
+    return NULL;
+}
+
+static const M12_AssetRequiredFileStatus *find_required_role(
+    const M12_AssetStatus *status,
+    const char *game_id,
+    const char *role_id) {
+    size_t i;
+    size_t count;
+    if (!status || !game_id || !role_id) return NULL;
+    count = M12_AssetStatus_GetRequiredFileCount(status, game_id);
+    for (i = 0U; i < count; ++i) {
+        const M12_AssetRequiredFileStatus *file =
+            M12_AssetStatus_GetRequiredFile(status, game_id, i);
+        if (file && file->matched && file->roleId &&
+            strcmp(file->roleId, role_id) == 0) {
+            return file;
+        }
+    }
+    return NULL;
+}
+
+static int fs_assets_load_game_by_hash(FS_AssetBundle *bundle,
+                                       const char *data_dir,
+                                       const char *game_subdir) {
+    M12_AssetStatus status;
+    const char *game_id = asset_pipeline_game_id(game_subdir);
+    const M12_AssetRequiredFileStatus *graphics;
+    const M12_AssetRequiredFileStatus *dungeon;
+    if (!bundle || !data_dir || !game_id) return -1;
+
+    M12_AssetStatus_ScanGame(&status, data_dir, game_id);
+    if (!M12_AssetStatus_GameAvailable(&status, game_id)) {
+        return -1;
+    }
+    graphics = find_required_role(&status, game_id, "graphics");
+    dungeon = find_required_role(&status, game_id, "dungeon");
+    if (!graphics || !graphics->matchedPath[0]) {
+        return -1;
+    }
+    if (load_file(graphics->matchedPath,
+                  &bundle->graphics_data,
+                  &bundle->graphics_size) != 0) {
+        return -1;
+    }
+    if (dungeon && dungeon->matchedPath[0] &&
+        load_file(dungeon->matchedPath,
+                  &bundle->dungeon_data,
+                  &bundle->dungeon_size) != 0) {
+        free(bundle->graphics_data);
+        bundle->graphics_data = NULL;
+        bundle->graphics_size = 0;
+        return -1;
+    }
+    bundle->loaded = 1;
+    return 0;
+}
+
 int fs_assets_load_game(FS_AssetBundle *bundle, const char *data_dir, const char *game_subdir) {
     if (!bundle || !data_dir) return -1;
     memset(bundle, 0, sizeof(*bundle));
 
+    if (fs_assets_load_game_by_hash(bundle, data_dir, game_subdir) == 0) {
+        return 0;
+    }
+
+    /* Legacy fallback for old tests and custom development folders that are
+     * not in the hash catalog. Normal DM1/CSB/DM2 launch data is resolved by
+     * M12_AssetStatus above, independent of filenames or layout. */
     if (try_load_dat(data_dir, game_subdir, "GRAPHICS.DAT", &bundle->graphics_data, &bundle->graphics_size) < 0) {
         try_load_dat(data_dir, game_subdir, "graphics.dat", &bundle->graphics_data, &bundle->graphics_size);
     }
@@ -162,8 +236,9 @@ int fs_assets_load_dm1_multilang(FS_AssetBundle *bundle,
 /* Map Firestaff UI language to asset language */
 FS_AssetLanguage fs_assets_lang_from_l10n(int l10n_lang) {
     switch (l10n_lang) {
-        case 1: return FS_ASSET_LANG_FR; /* FS_LANG_FR = 3, but asset FR = 1 */
-        case 2: return FS_ASSET_LANG_DE; /* FS_LANG_DE = 2, asset DE = 2 */
+        case FS_LANG_SV: return FS_ASSET_LANG_SV;
+        case FS_LANG_DE: return FS_ASSET_LANG_DE;
+        case FS_LANG_FR: return FS_ASSET_LANG_FR;
         default: return FS_ASSET_LANG_EN;
     }
 }
@@ -180,6 +255,7 @@ static const FS_InGameStrings g_ingame_strings[FS_ASSET_LANG_COUNT] = {
     /* English */ {"WAKE UP",         "GAME FROZEN",      "REST IN PEACE",    "CONGRATULATIONS"},
     /* French  */ {"REVEILLEZ-VOUS",  "JEU BLOQUE",       "REPOSEZ EN PAIX",  "FELICITATIONS"},
     /* German  */ {"WECKEN",          "SPIEL ANGEHALTEN",  "RUHE IN FRIEDEN", "HERZLICHEN GLÜCKWUNSCH"},
+    /* Swedish */ {"VAKNA",           "SPELET PAUSAT",     "VILA I FRID",     "GRATTIS"},
 };
 
 const char *fs_assets_ingame_string(FS_AssetLanguage lang, int string_id) {

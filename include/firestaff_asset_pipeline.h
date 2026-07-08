@@ -36,6 +36,7 @@ typedef enum {
     FS_ASSET_LANG_EN = 0,
     FS_ASSET_LANG_FR,
     FS_ASSET_LANG_DE,
+    FS_ASSET_LANG_SV,
     FS_ASSET_LANG_COUNT
 } FS_AssetLanguage;
 
