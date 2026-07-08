@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0402 melee tick-plan ownership: added a DM1 V1 melee-action F0402 compat module that builds the M11-facing CMD_ATTACK tick transport for melee-contact actions, including action-index and acting-champion target-direction fields. M11 now consumes that receipt instead of assembling the F0402 attack input inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 projectile impact side-effect plan ownership: DM1 V1 throw/shoot compat now owns M11-facing explosion-create input and generic impact-log classification for projectile impacts. M11 keeps only live explosion allocation and UI text/color mapping. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 F0407 closed-door melee branch ownership: DM1 action-XP compat now owns the BASH/HACK/BERZERK/KICK/SWING/CHOP closed-door branch plan, observed F0232/wooden-thud performed detection, and the ReDMCSB `ActionDisabledTicks=6` override. M11 keeps timeline observation and live tick dispatch. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

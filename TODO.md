@@ -35,6 +35,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: DM1 action-XP compat now also owns grouped F0407 FLIP and direction/target plans for FLUXCAGE, FUSE, and THROW. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 action-XP compat now also owns the F0407 closed-door melee branch plan for BASH/HACK/BERZERK/KICK/SWING/CHOP, including observed F0232/thud branch success and the source 6-tick action-disable override. Remaining runtime coding work is deeper F0402/F0231 receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-09 update: DM1 throw/shoot compat now owns projectile impact explosion-create input and generic impact-log classification. Remaining runtime coding work is deeper F0402/F0231 receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 F0402 melee compat now owns the M11-facing CMD_ATTACK tick plan for melee-contact actions, including action-index and acting-champion target-direction transport. Remaining runtime coding work is deeper F0231 combat result receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
