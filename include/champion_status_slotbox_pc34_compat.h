@@ -57,6 +57,8 @@ enum {
     CHAMPION_STATUS_COMPAT_STATUS_NAME_TEXT_ZONE_ID_BASE = 163,
     CHAMPION_STATUS_COMPAT_BAR_GRAPH_ZONE_ID_BASE = 187,
     CHAMPION_STATUS_COMPAT_BAR_VALUE_ZONE_ID_BASE = 195,
+    CHAMPION_STATUS_COMPAT_DAMAGE_ZONE_ID_BASE = 167,
+    CHAMPION_STATUS_COMPAT_INVENTORY_DAMAGE_ZONE_ID_BASE = 179,
     CHAMPION_STATUS_COMPAT_HAND_PARENT_ZONE_ID_BASE = 207,
     CHAMPION_STATUS_COMPAT_HAND_ZONE_ID_BASE = 211,
     CHAMPION_STATUS_COMPAT_SLOT_X_BASE = 0,
@@ -77,6 +79,8 @@ enum {
     CHAMPION_STATUS_COMPAT_HAND_SLOT_BOX_W = 18,
     CHAMPION_STATUS_COMPAT_HAND_SLOT_BOX_H = 18,
     CHAMPION_STATUS_COMPAT_BAR_REGION_X = 43,
+    CHAMPION_STATUS_COMPAT_BAR_REGION_W = 24,
+    CHAMPION_STATUS_COMPAT_BAR_REGION_H = 29,
     CHAMPION_STATUS_COMPAT_BAR_CONTAINER_W = 4,
     CHAMPION_STATUS_COMPAT_BAR_CONTAINER_H = 25,
     CHAMPION_STATUS_COMPAT_BAR_HP_CX = 5,
@@ -106,6 +110,20 @@ static inline int CHAMPION_Compat_StatusBoxZone(int championSlot,
 static inline int CHAMPION_Compat_StatusBarGraphZoneId(int championSlot) {
     if (!CHAMPION_Compat_StatusBoxZoneId(championSlot)) return 0;
     return CHAMPION_STATUS_COMPAT_BAR_GRAPH_ZONE_ID_BASE + championSlot;
+}
+
+static inline int CHAMPION_Compat_StatusBarGraphRegionZone(
+    int championSlot,
+    ChampionStatusRectCompat* out) {
+    if (!out || !CHAMPION_Compat_StatusBarGraphZoneId(championSlot)) {
+        return 0;
+    }
+    out->x = championSlot * CHAMPION_STATUS_COMPAT_SLOT_STEP +
+             CHAMPION_STATUS_COMPAT_BAR_REGION_X;
+    out->y = CHAMPION_STATUS_COMPAT_SLOT_Y;
+    out->w = CHAMPION_STATUS_COMPAT_BAR_REGION_W;
+    out->h = CHAMPION_STATUS_COMPAT_BAR_REGION_H;
+    return 1;
 }
 
 static inline int CHAMPION_Compat_StatusBarZoneId(int statIndex) {
@@ -246,6 +264,97 @@ static inline int CHAMPION_Compat_StatusNameTextZone(
     out->y = CHAMPION_STATUS_COMPAT_SLOT_Y;
     out->w = CHAMPION_STATUS_COMPAT_NAME_TEXT_W;
     out->h = CHAMPION_STATUS_COMPAT_NAME_CLEAR_H;
+    return 1;
+}
+
+static inline int CHAMPION_Compat_DamageIndicatorZoneId(int championSlot) {
+    if (!CHAMPION_Compat_StatusBoxZoneId(championSlot)) return 0;
+    return CHAMPION_STATUS_COMPAT_DAMAGE_ZONE_ID_BASE + championSlot;
+}
+
+static inline int CHAMPION_Compat_DamageIndicatorZone(
+    int championSlot,
+    int indicatorW,
+    int indicatorH,
+    ChampionStatusRectCompat* out) {
+    ChampionStatusRectCompat box;
+    if (!out || indicatorW <= 0 || indicatorH <= 0 ||
+        !CHAMPION_Compat_DamageIndicatorZoneId(championSlot) ||
+        !CHAMPION_Compat_StatusBoxZone(championSlot, &box)) {
+        return 0;
+    }
+    out->x = box.x + (box.w - indicatorW) / 2;
+    out->y = box.y + (box.h - indicatorH) / 2;
+    out->w = indicatorW;
+    out->h = indicatorH;
+    return 1;
+}
+
+static inline int CHAMPION_Compat_InventoryDamageIndicatorZoneId(
+    int championSlot) {
+    if (!CHAMPION_Compat_StatusBoxZoneId(championSlot)) return 0;
+    return CHAMPION_STATUS_COMPAT_INVENTORY_DAMAGE_ZONE_ID_BASE +
+           championSlot;
+}
+
+static inline int CHAMPION_Compat_InventoryDamageIndicatorZone(
+    int championSlot,
+    int indicatorW,
+    int indicatorH,
+    ChampionStatusRectCompat* out) {
+    ChampionStatusRectCompat box;
+    if (!out || indicatorW <= 0 || indicatorH <= 0 ||
+        !CHAMPION_Compat_InventoryDamageIndicatorZoneId(championSlot) ||
+        !CHAMPION_Compat_StatusBoxZone(championSlot, &box)) {
+        return 0;
+    }
+    out->x = box.x + 7;
+    out->y = box.y;
+    out->w = indicatorW;
+    out->h = indicatorH;
+    return 1;
+}
+
+static inline int CHAMPION_Compat_DamageNumberOrigin(
+    int championSlot,
+    ChampionStatusRectCompat* out) {
+    ChampionStatusRectCompat box;
+    ChampionStatusRectCompat damage;
+    if (!out ||
+        !CHAMPION_Compat_StatusBoxZone(championSlot, &box) ||
+        !CHAMPION_Compat_DamageIndicatorZone(championSlot, 45, 7,
+                                             &damage)) {
+        return 0;
+    }
+    out->x = box.x + box.w / 2 - 4;
+    out->y = damage.y;
+    out->w = 0;
+    out->h = 0;
+    return 1;
+}
+
+static inline int CHAMPION_Compat_DamageNumberOriginPc34(
+    int championSlot,
+    int damageAmount,
+    int inventoryChampion,
+    ChampionStatusRectCompat* out) {
+    ChampionStatusRectCompat box;
+    int digitOffset;
+    if (!out || damageAmount <= 0 ||
+        !CHAMPION_Compat_StatusBoxZone(championSlot, &box)) {
+        return 0;
+    }
+    if (damageAmount < 10) {
+        digitOffset = inventoryChampion ? 21 : 19;
+    } else if (damageAmount < 100) {
+        digitOffset = inventoryChampion ? 18 : 16;
+    } else {
+        digitOffset = inventoryChampion ? 15 : 13;
+    }
+    out->x = box.x + digitOffset;
+    out->y = box.y + (inventoryChampion ? 16 : 5);
+    out->w = 0;
+    out->h = 0;
     return 1;
 }
 
