@@ -5840,10 +5840,19 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
             if (state->actionDisabledTicks[i] == 0) {
                 if (i < state->world.party.championCount &&
                     state->actionDisabledIndex[i] < 44) {
-                    state->world.party.champions[i].actionDefense -=
-                        dm1_v1_graphic560_action_defense_get_pc34(
-                            state->actionDisabledIndex[i]);
-                    state->world.party.champions[i].actionIndex = 0xFFu;
+                    DM1_ActionDefenseInputPc34 defenseIn;
+                    DM1_ActionDefensePlanPc34 defensePlan;
+                    memset(&defenseIn, 0, sizeof(defenseIn));
+                    memset(&defensePlan, 0, sizeof(defensePlan));
+                    defenseIn.actionIndex = (int)state->actionDisabledIndex[i];
+                    if (dm1_v1_action_defense_remove_plan_f0407_pc34(
+                            &defenseIn, &defensePlan) &&
+                        defensePlan.valid) {
+                        state->world.party.champions[i].actionDefense +=
+                            defensePlan.defenseDelta;
+                        state->world.party.champions[i].actionIndex =
+                            (unsigned char)defensePlan.resultingActionIndex;
+                    }
                 }
                 if (state->pendingShootReadyHandRefill[i]) {
                     /* ReDMCSB: TIMELINE.C C11 enable-action handling
@@ -5864,13 +5873,22 @@ static void m11_apply_champion_action_defense_before_action(
         M11_GameViewState* state,
         int championIndex,
         unsigned char actionIndex) {
+    DM1_ActionDefenseInputPc34 in;
+    DM1_ActionDefensePlanPc34 plan;
     if (!state) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
     if (championIndex >= state->world.party.championCount) return;
-    if (actionIndex >= 44) return;
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.actionIndex = (int)actionIndex;
+    if (!dm1_v1_action_defense_apply_plan_f0407_pc34(&in, &plan) ||
+        !plan.valid) {
+        return;
+    }
     state->world.party.champions[championIndex].actionDefense +=
-        dm1_v1_graphic560_action_defense_get_pc34(actionIndex);
-    state->world.party.champions[championIndex].actionIndex = actionIndex;
+        plan.defenseDelta;
+    state->world.party.champions[championIndex].actionIndex =
+        (unsigned char)plan.resultingActionIndex;
 }
 
 static void m11_disable_champion_action_after_action_ticks(
@@ -5878,13 +5896,27 @@ static void m11_disable_champion_action_after_action_ticks(
         int championIndex,
         unsigned char actionIndex,
         unsigned char ticks) {
+    DM1_ActionDisableInputPc34 in;
+    DM1_ActionDisablePlanPc34 plan;
     if (!state) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
-    if (actionIndex >= 44) return;
-    state->actionDisabledTicks[championIndex] = ticks;
-    state->actionDisabledIndex[championIndex] = ticks ? actionIndex : 0xFFu;
-    state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
-    if (ticks == 0u && state->pendingShootReadyHandRefill[championIndex]) {
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.actionIndex = (int)actionIndex;
+    in.disabledTicks = (int)ticks;
+    in.pendingShootReadyHandRefill =
+        state->pendingShootReadyHandRefill[championIndex] != 0u;
+    if (!dm1_v1_action_disable_plan_f0407_pc34(&in, &plan) ||
+        !plan.valid) {
+        return;
+    }
+    state->actionDisabledTicks[championIndex] =
+        (unsigned char)plan.disabledTicks;
+    state->actionDisabledIndex[championIndex] =
+        (unsigned char)plan.actionDisabledIndex;
+    state->actionEnableSlotOrdinal[championIndex] =
+        (unsigned char)plan.actionEnableSlotOrdinal;
+    if (plan.shouldRefillReadyHandNow) {
         state->pendingShootReadyHandRefill[championIndex] = 0u;
         (void)m11_refill_ready_hand_after_shoot(state, championIndex);
     }

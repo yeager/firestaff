@@ -125,6 +125,30 @@ typedef struct {
 } DM1_ActionF0407TailAdjustPc34;
 
 typedef struct {
+    int actionIndex;
+} DM1_ActionDefenseInputPc34;
+
+typedef struct {
+    int valid;
+    int defenseDelta;
+    int resultingActionIndex;
+} DM1_ActionDefensePlanPc34;
+
+typedef struct {
+    int actionIndex;
+    int disabledTicks;
+    int pendingShootReadyHandRefill;
+} DM1_ActionDisableInputPc34;
+
+typedef struct {
+    int valid;
+    int disabledTicks;
+    int actionDisabledIndex;
+    int actionEnableSlotOrdinal;
+    int shouldRefillReadyHandNow;
+} DM1_ActionDisablePlanPc34;
+
+typedef struct {
     int thingType;
     int thingIndex;
     int currentChargeCount;
@@ -331,6 +355,15 @@ int dm1_v1_action_disabled_ticks_f0407_pc34(int actionIndex);
 int dm1_v1_action_adjust_f0407_tail_pc34(
     const DM1_ActionF0407TailAdjustInputPc34* in,
     DM1_ActionF0407TailAdjustPc34* out);
+int dm1_v1_action_defense_apply_plan_f0407_pc34(
+    const DM1_ActionDefenseInputPc34* in,
+    DM1_ActionDefensePlanPc34* out);
+int dm1_v1_action_defense_remove_plan_f0407_pc34(
+    const DM1_ActionDefenseInputPc34* in,
+    DM1_ActionDefensePlanPc34* out);
+int dm1_v1_action_disable_plan_f0407_pc34(
+    const DM1_ActionDisableInputPc34* in,
+    DM1_ActionDisablePlanPc34* out);
 int dm1_v1_action_f0405_charge_plan_pc34(
     const DM1_ActionF0405ChargeInputPc34* in,
     DM1_ActionF0405ChargePlanPc34* out);

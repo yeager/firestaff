@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0407 action-state plan ownership: DM1 action-XP compat now owns action-defense apply/remove plans and final action-disable slot/refill plans. M11 applies those receipts instead of deriving G0495 defense removal, action index clearing, disable index, and zero-tick SHOOT refill timing inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0231 melee emission-plan ownership: DM1 V1 melee compat now owns performed/feedback decisions for melee damage emissions, including zero-damage performed hits, positive damage feedback, and invalid outcomes. M11 now consumes that receipt for both action-tail performed detection and visible damage feedback. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0402 melee tick-plan ownership: added a DM1 V1 melee-action F0402 compat module that builds the M11-facing CMD_ATTACK tick transport for melee-contact actions, including action-index and acting-champion target-direction fields. M11 now consumes that receipt instead of assembling the F0402 attack input inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

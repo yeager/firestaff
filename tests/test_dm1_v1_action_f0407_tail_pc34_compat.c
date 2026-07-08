@@ -115,6 +115,55 @@ static void test_tail_adjustments(void) {
     CHECK_EQ(out.disabledTicks, 2, "parry melee failure halves ticks");
 }
 
+static void test_action_state_plans(void) {
+    DM1_ActionDefenseInputPc34 defenseIn;
+    DM1_ActionDefensePlanPc34 defenseOut;
+    DM1_ActionDisableInputPc34 disableIn;
+    DM1_ActionDisablePlanPc34 disableOut;
+
+    memset(&defenseIn, 0, sizeof(defenseIn));
+    defenseIn.actionIndex = DM1_ACTION_BLOCK;
+    CHECK_EQ(dm1_v1_action_defense_apply_plan_f0407_pc34(
+                 &defenseIn, &defenseOut), 1,
+             "block defense apply builds");
+    CHECK_EQ(defenseOut.valid, 1, "block defense apply valid");
+    CHECK_EQ(defenseOut.defenseDelta, 36, "block defense delta");
+    CHECK_EQ(defenseOut.resultingActionIndex, DM1_ACTION_BLOCK,
+             "block defense sets action index");
+
+    CHECK_EQ(dm1_v1_action_defense_remove_plan_f0407_pc34(
+                 &defenseIn, &defenseOut), 1,
+             "block defense remove builds");
+    CHECK_EQ(defenseOut.defenseDelta, -36, "block defense removed");
+    CHECK_EQ(defenseOut.resultingActionIndex, 0xFF,
+             "defense remove clears action index");
+
+    memset(&disableIn, 0, sizeof(disableIn));
+    disableIn.actionIndex = DM1_ACTION_CHOP;
+    disableIn.disabledTicks = 8;
+    CHECK_EQ(dm1_v1_action_disable_plan_f0407_pc34(
+                 &disableIn, &disableOut), 1,
+             "disable plan builds");
+    CHECK_EQ(disableOut.valid, 1, "disable plan valid");
+    CHECK_EQ(disableOut.disabledTicks, 8, "disable ticks kept");
+    CHECK_EQ(disableOut.actionDisabledIndex, DM1_ACTION_CHOP,
+             "disable stores action index");
+    CHECK_EQ(disableOut.actionEnableSlotOrdinal, 0xFF,
+             "disable action slot ordinal");
+    CHECK_EQ(disableOut.shouldRefillReadyHandNow, 0,
+             "nonzero disable does not refill now");
+
+    disableIn.disabledTicks = 0;
+    disableIn.pendingShootReadyHandRefill = 1;
+    CHECK_EQ(dm1_v1_action_disable_plan_f0407_pc34(
+                 &disableIn, &disableOut), 1,
+             "zero disable plan builds");
+    CHECK_EQ(disableOut.actionDisabledIndex, 0xFF,
+             "zero disable clears action index");
+    CHECK_EQ(disableOut.shouldRefillReadyHandNow, 1,
+             "zero disable refills now");
+}
+
 static void test_f0405_charge_plan(void) {
     DM1_ActionF0405ChargeInputPc34 in;
     DM1_ActionF0405ChargePlanPc34 out;
@@ -687,6 +736,7 @@ int main(void) {
     test_melee_contact_gate();
     test_stamina_and_special_flags();
     test_tail_adjustments();
+    test_action_state_plans();
     test_f0405_charge_plan();
     test_freeze_life_plan();
     test_heal_plan();
