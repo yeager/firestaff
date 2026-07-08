@@ -25,9 +25,24 @@ typedef struct {
     int targetDirection;
 } DM1_MeleeActionTickPlanPc34;
 
+typedef struct {
+    int damage;
+    int combatOutcome;
+} DM1_MeleeDamageEmissionInputPc34;
+
+typedef struct {
+    int valid;
+    int performed;
+    int showDamageFeedback;
+    int damage;
+} DM1_MeleeDamageEmissionPlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
+int dm1_v1_melee_damage_emission_plan_f0231_pc34(
+    const DM1_MeleeDamageEmissionInputPc34* in,
+    DM1_MeleeDamageEmissionPlanPc34* out);
 
 #ifdef __cplusplus
 }
