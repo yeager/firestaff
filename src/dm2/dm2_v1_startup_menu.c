@@ -1156,6 +1156,55 @@ int dm2_v1_startup_execute_action_with_host_receipt(
     return 1;
 }
 
+void dm2_v1_startup_host_action_receipt_clear(
+    DM2_V1_StartupHostActionReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    dm2_v1_startup_host_receipt_clear(&receipt->host_receipt);
+    dm2_v1_startup_menu_state_receipt_init(&receipt->menu_state_receipt);
+}
+
+int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
+    const DM2_V1_StartupAction *action,
+    const DM2_V1_StartupHostFacts *facts,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    const char *save_root;
+
+    if (out_receipt) {
+        dm2_v1_startup_host_action_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+
+    save_root = facts->fallback_save_root && facts->fallback_save_root[0]
+                    ? facts->fallback_save_root
+                    : facts->save_root;
+    if (!dm2_v1_startup_execute_action_with_host_receipt(
+            action,
+            save_root,
+            apply_session,
+            apply_userdata,
+            out_execution,
+            &out_receipt->host_receipt)) {
+        return 0;
+    }
+    if (out_receipt->host_receipt.rescan_saves &&
+        dm2_v1_startup_menu_state_receipt_scan_saves_from_host_facts(
+            &out_receipt->menu_state_receipt,
+            facts)) {
+        out_receipt->menu_state_receipt_valid = 1;
+    }
+    return 1;
+}
+
 void dm2_v1_startup_host_receipt_clear(
     DM2_V1_StartupHostReceipt *receipt)
 {

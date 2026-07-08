@@ -713,37 +713,43 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
 {
     DM2_V1_BootProfile *profile;
     DM2_V1_StartupExecution execution;
-    DM2_V1_StartupHostReceipt host_receipt;
+    DM2_V1_StartupHostFacts facts;
+    DM2_V1_StartupHostActionReceipt action_receipt;
+    const DM2_V1_StartupHostReceipt *host_receipt;
 
     if (!state || !state->dm2State.startup_menu_active ||
         !state->dm2BootProfile || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
     profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-    if (!dm2_v1_startup_execute_action_with_host_receipt(
+    m11_dm2_startup_host_facts(state, profile, &facts);
+    if (!dm2_v1_startup_execute_action_from_host_facts_with_receipt(
             action,
-            profile->save_root,
+            &facts,
             m11_dm2_startup_apply_session_callback,
             state,
             &execution,
-            &host_receipt)) {
+            &action_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_dm2_startup_apply_mode_update(state, &host_receipt.mode_update);
-    if (host_receipt.status_scope || host_receipt.status) {
-        m11_set_status(state,
-                       host_receipt.status_scope
-                           ? host_receipt.status_scope
-                           : "STARTUP",
-                       host_receipt.status ? host_receipt.status : "");
+    host_receipt = &action_receipt.host_receipt;
+    m11_dm2_startup_apply_mode_update(state, &host_receipt->mode_update);
+    if (action_receipt.menu_state_receipt_valid) {
+        m11_dm2_startup_state_receipt_to_m11(
+            state,
+            &action_receipt.menu_state_receipt);
     }
-    if (host_receipt.input_result == DM2_V1_STARTUP_HOST_INPUT_REDRAW) {
-        if (host_receipt.rescan_saves) {
-            m11_dm2_startup_scan_saves(state, profile);
-        }
+    if (host_receipt->status_scope || host_receipt->status) {
+        m11_set_status(state,
+                       host_receipt->status_scope
+                           ? host_receipt->status_scope
+                           : "STARTUP",
+                       host_receipt->status ? host_receipt->status : "");
+    }
+    if (host_receipt->input_result == DM2_V1_STARTUP_HOST_INPUT_REDRAW) {
         return M11_GAME_INPUT_REDRAW;
     }
-    if (host_receipt.input_result ==
+    if (host_receipt->input_result ==
         DM2_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER) {
         return M11_GAME_INPUT_RETURN_TO_MENU;
     }
