@@ -1177,6 +1177,43 @@ void dm2_v1_startup_idle_receipt_clear(
     dm2_v1_startup_host_receipt_clear(&receipt->host_receipt);
 }
 
+void dm2_v1_startup_launch_receipt_clear(
+    DM2_V1_StartupLaunchReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    dm2_v1_startup_host_receipt_clear(&receipt->host_receipt);
+    dm2_v1_startup_menu_state_receipt_init(&receipt->menu_state_receipt);
+}
+
+int dm2_v1_startup_launch_from_host_facts_with_receipt(
+    const DM2_V1_StartupHostFacts *facts,
+    DM2_V1_StartupLaunchReceipt *out_receipt)
+{
+    if (out_receipt) {
+        dm2_v1_startup_launch_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    dm2_v1_session_new(&out_receipt->session);
+    out_receipt->session_valid = 1;
+    if (dm2_v1_startup_menu_state_receipt_scan_saves_from_host_facts(
+            &out_receipt->menu_state_receipt,
+            facts)) {
+        out_receipt->menu_state_receipt_valid = 1;
+    }
+    out_receipt->host_receipt.mode_update.set_startup_menu_active = 1;
+    out_receipt->host_receipt.mode_update.startup_menu_active = 1;
+    out_receipt->host_receipt.input_result =
+        DM2_V1_STARTUP_HOST_INPUT_REDRAW;
+    out_receipt->host_receipt.status_scope = "BOOT";
+    out_receipt->host_receipt.status = "DM2 START MENU";
+    return 1;
+}
+
 int dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
     const DM2_V1_StartupHostFacts *facts,
     int mouth_redraw,

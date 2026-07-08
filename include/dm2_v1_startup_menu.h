@@ -156,6 +156,14 @@ typedef struct {
     const char *scan_save_root;
 } DM2_V1_StartupHostFacts;
 
+typedef struct {
+    DM2_V1_StartupHostReceipt host_receipt;
+    int menu_state_receipt_valid;
+    DM2_V1_StartupMenuStateReceipt menu_state_receipt;
+    int session_valid;
+    DM2_V1_SessionState session;
+} DM2_V1_StartupLaunchReceipt;
+
 enum {
     DM2_V1_STARTUP_ROW_LABEL_CAPACITY = 48
 };
@@ -375,6 +383,11 @@ void dm2_v1_startup_host_action_receipt_clear(
     DM2_V1_StartupHostActionReceipt *receipt);
 void dm2_v1_startup_idle_receipt_clear(
     DM2_V1_StartupIdleReceipt *receipt);
+void dm2_v1_startup_launch_receipt_clear(
+    DM2_V1_StartupLaunchReceipt *receipt);
+int dm2_v1_startup_launch_from_host_facts_with_receipt(
+    const DM2_V1_StartupHostFacts *facts,
+    DM2_V1_StartupLaunchReceipt *out_receipt);
 int dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
     const DM2_V1_StartupHostFacts *facts,
     int mouth_redraw,

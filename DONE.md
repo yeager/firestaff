@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 startup launch receipt: DM2 startup menu now owns initial launch session creation, save scan, active-menu mode update, and boot status receipt. M11 consumes one launch receipt instead of creating the startup session and scanning saves inline. Verification: DM2 startup action contract passed 75/75 by direct compile/run, M11 syntax compile passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB utility render host-facts wrapper: CSB runtime/startup bridge now builds utility render plans directly from startup host facts. M11 no longer passes separate utility prompt/action/champion/preview fields for rendering. Verification: CSB boot-runtime handoff passed 288/288, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB utility startup host-facts wrappers: CSB runtime/startup bridge now routes utility keyboard/pointer input directly from startup host facts. M11 no longer passes separate utility action/champion/overlay fields for that path. Verification: CSB boot-runtime handoff passed 286/286, CSB startup entrance passed 152/152, Phase A passed 24/24, and `git diff --check` passed.

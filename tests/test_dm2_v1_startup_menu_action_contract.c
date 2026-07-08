@@ -43,6 +43,7 @@ int main(void)
     DM2_V1_StartupHostReceipt host_receipt;
     DM2_V1_StartupHostActionReceipt host_action_receipt;
     DM2_V1_StartupIdleReceipt idle_receipt;
+    DM2_V1_StartupLaunchReceipt launch_receipt;
     DM2_V1_StartupHostFacts host_facts;
     DM2_V1_StartupMenuStateReceipt state_receipt;
     DM2_V1_StartupHit hit;
@@ -235,6 +236,19 @@ int main(void)
               state_receipt.row_count == 1 &&
               state_receipt.selected_row == 0,
           "state receipt host facts scan helper owns M11 save scan copy contract");
+    check(dm2_v1_startup_launch_from_host_facts_with_receipt(
+              &host_facts,
+              &launch_receipt) &&
+              launch_receipt.session_valid &&
+              launch_receipt.session.champion_count == 4 &&
+              launch_receipt.menu_state_receipt_valid &&
+              launch_receipt.menu_state_receipt.row_count == 1 &&
+              launch_receipt.host_receipt.mode_update.set_startup_menu_active &&
+              launch_receipt.host_receipt.mode_update.startup_menu_active == 1 &&
+              launch_receipt.host_receipt.input_result ==
+                  DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
+              strcmp(launch_receipt.host_receipt.status, "DM2 START MENU") == 0,
+          "launch receipt owns DM2 startup session, save scan, and active menu");
     row_count = dm2_v1_startup_menu_build_render_rows(
         &menu,
         rows,

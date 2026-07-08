@@ -566,24 +566,6 @@ static void m11_dm2_startup_host_facts(
     facts->scan_save_root = profile ? profile->save_root : NULL;
 }
 
-static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
-                                       DM2_V1_BootProfile *profile)
-{
-    DM2_V1_StartupMenuStateReceipt receipt;
-    DM2_V1_StartupHostFacts facts;
-
-    if (!state || !profile) {
-        return;
-    }
-    m11_dm2_startup_host_facts(state, profile, &facts);
-    if (!dm2_v1_startup_menu_state_receipt_scan_saves_from_host_facts(
-            &receipt,
-            &facts)) {
-        return;
-    }
-    m11_dm2_startup_state_receipt_to_m11(state, &receipt);
-}
-
 _Static_assert(M12_MENU_INPUT_NONE == 0,
                "DM2 startup menu input code drift");
 _Static_assert(M12_MENU_INPUT_UP == 1,
@@ -744,6 +726,26 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
     return m11_dm2_startup_apply_host_receipt(
         state,
         &action_receipt->host_receipt);
+}
+
+static M11_GameInputResult m11_dm2_startup_apply_launch_receipt(
+    M11_GameViewState *state,
+    const DM2_V1_StartupLaunchReceipt *launch_receipt)
+{
+    if (!state || !launch_receipt) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (launch_receipt->menu_state_receipt_valid) {
+        m11_dm2_startup_state_receipt_to_m11(
+            state,
+            &launch_receipt->menu_state_receipt);
+    }
+    if (launch_receipt->session_valid) {
+        m11_dm2_mirror_session_party(state, &launch_receipt->session);
+    }
+    return m11_dm2_startup_apply_host_receipt(
+        state,
+        &launch_receipt->host_receipt);
 }
 
 static M11_GameInputResult m11_dm2_startup_handle_input(
@@ -10698,15 +10700,21 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 return 0;
             }
         } else {
-            DM2_V1_SessionState startup_session;
-            dm2_v1_session_new(&startup_session);
-            m11_dm2_mirror_session_party(state, &startup_session);
-            m11_dm2_startup_scan_saves(state, profile);
-            /* SKULL.ASM T520/T560 enters the game after the startup
-             * selection path. Keep the menu visible even when NEW GAME is
-             * the only available row so a no-save boot does not bypass the
-             * startup choice and fall straight into runtime input. */
-            state->dm2State.startup_menu_active = 1;
+            DM2_V1_StartupHostFacts facts;
+            DM2_V1_StartupLaunchReceipt receipt;
+            m11_dm2_startup_host_facts(state, profile, &facts);
+            if (!dm2_v1_startup_launch_from_host_facts_with_receipt(
+                    &facts,
+                    &receipt)) {
+                m11_set_status(state, "BOOT", "DM2 START MENU FAILED");
+                m11_log_event(state,
+                              M11_COLOR_RED,
+                              "T0: DM2 START MENU FAILED");
+                dm2_v1_boot_cleanup(profile);
+                free(profile);
+                return 0;
+            }
+            (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
         }
         /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
         dm2_v2_runtime_init(2);
