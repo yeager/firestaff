@@ -6,6 +6,7 @@
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
+#include "entrance_mouse_routes_pc34_compat.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -1921,6 +1922,121 @@ int csb_v1_boot_runtime_execute_startup_entrance_pointer_from_snapshot_pc34(
         y,
         button_mask,
         out_receipt);
+}
+
+void csb_v1_boot_startup_action_receipt_init_pc34(
+    CSB_V1_BootStartupActionReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
+        &receipt->utility_receipt);
+    csb_v1_startup_entrance_host_action_receipt_init_pc34(
+        &receipt->entrance_receipt);
+}
+
+static int csb_v1_boot_startup_utility_receipt_handled_pc34(
+    const CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return 0;
+    }
+    return receipt->entrance_receipt_valid ||
+           receipt->util_receipt.result != CSB_V1_UTIL_APPLY_IGNORED ||
+           receipt->util_state_receipt.selected_action_index_changed ||
+           receipt->util_state_receipt.preview_active_changed;
+}
+
+int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_BootStartupActionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 utility_receipt;
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
+
+    csb_v1_boot_startup_action_receipt_init_pc34(out_receipt);
+    if (!snapshot || !out_receipt || !snapshot->entrance_active) {
+        return 0;
+    }
+    if (csb_v1_boot_runtime_util_apply_firestaff_input_from_snapshot_pc34(
+            snapshot,
+            menu_input,
+            &utility_receipt) &&
+        csb_v1_boot_startup_utility_receipt_handled_pc34(
+            &utility_receipt)) {
+        out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34;
+        out_receipt->handled = 1;
+        out_receipt->utility_receipt = utility_receipt;
+        return 1;
+    }
+    if (!csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
+            snapshot)) {
+        return 0;
+    }
+    if (!csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_snapshot_pc34(
+            snapshot,
+            menu_input,
+            &entrance_receipt)) {
+        return 0;
+    }
+    if (!entrance_receipt.handled) {
+        return 0;
+    }
+    out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34;
+    out_receipt->handled = 1;
+    out_receipt->entrance_receipt = entrance_receipt;
+    return 1;
+}
+
+int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_BootStartupActionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 utility_receipt;
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
+
+    csb_v1_boot_startup_action_receipt_init_pc34(out_receipt);
+    if (!snapshot || !out_receipt || !snapshot->entrance_active) {
+        return 0;
+    }
+    if ((button_mask & ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT) &&
+        csb_v1_boot_runtime_util_apply_pointer_from_snapshot_pc34(
+            snapshot,
+            x,
+            y,
+            &utility_receipt) &&
+        csb_v1_boot_startup_utility_receipt_handled_pc34(
+            &utility_receipt)) {
+        out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34;
+        out_receipt->handled = 1;
+        out_receipt->utility_receipt = utility_receipt;
+        return 1;
+    }
+    if (!csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
+            snapshot)) {
+        return 0;
+    }
+    if (!csb_v1_boot_runtime_execute_startup_entrance_pointer_from_snapshot_pc34(
+            snapshot,
+            x,
+            y,
+            button_mask,
+            &entrance_receipt)) {
+        return 0;
+    }
+    if (!entrance_receipt.handled) {
+        return 0;
+    }
+    out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34;
+    out_receipt->handled = 1;
+    out_receipt->entrance_receipt = entrance_receipt;
+    return 1;
 }
 
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,

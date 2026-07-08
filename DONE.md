@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup action facade: CSB boot now owns combined utility/entrance keyboard and pointer routing through `CSB_V1_BootStartupActionReceipt_PC34`. M11 builds one startup snapshot and applies the returned receipt instead of selecting utility vs entrance locally. Verification: `/tmp/firestaff-csb-action-build/test_csb_v1_boot_runtime_handoff` passed 304/304; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; `git diff --check` passed.
+
 - ✅ 2026-07-08 RetroAchievements overlay/runtime slice: added login/session fields, backend kind, richer RA events, pending-unlock/offline/reconnect events, a DuckStation-style notification queue, render-command builder, M11 in-game overlay rendering, and main-loop event/tick handoff. Verification: `test_firestaff_retroachievements` passed by direct compile and CMake build; `/tmp/firestaff-ra-build` built `firestaff_m11`; `git diff --check` passed.
 
 - ✅ 2026-07-08 Windows release installer moved to Inno Setup: the Windows release workflow now installs Inno Setup through Chocolatey instead of MSYS2 NSIS, and `package_windows_installer_preview.sh` now generates an Inno `.iss` script and builds `Firestaff-<version>-windows-installer.exe` via `ISCC.exe`. Verification: `bash -n scripts/package_windows_installer_preview.sh` passed and release/workflow searches show no remaining NSIS/makensis use in the Windows installer path.
