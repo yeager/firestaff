@@ -442,6 +442,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupLaunchPathReceipt_PC34 launch_receipt;
     DM1_V1_StartupRuntimeStartFacts_PC34 runtime_facts;
     DM1_V1_StartupRuntimeStartReceipt_PC34 runtime_receipt;
+    DM1_V1_StartupDungeonPathFacts_PC34 dungeon_facts;
+    DM1_V1_StartupDungeonPathReceipt_PC34 dungeon_receipt;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -607,6 +609,61 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("NULL runtime start facts rejected",
              dm1_v1_startup_runtime_start_receipt_pc34(NULL,
                                                        &runtime_receipt),
+             0);
+
+    memset(&dungeon_facts, 0, sizeof(dungeon_facts));
+    memset(&dungeon_receipt, 0, sizeof(dungeon_receipt));
+    dungeon_facts.game_id = "dm1";
+    dungeon_facts.data_dir = "/tmp/dm1";
+    dungeon_facts.source_kind =
+        DM1_V1_STARTUP_SOURCE_KIND_BUILTIN_CATALOG_PC34;
+    expect_i("DM1 builtin dungeon path receipt builds",
+             dm1_v1_startup_dungeon_path_receipt_pc34(&dungeon_facts,
+                                                      &dungeon_receipt),
+             1);
+    expect_i("DM1 builtin dungeon path receipt handled",
+             dungeon_receipt.handled,
+             1);
+    expect_i("DM1 builtin dungeon path asks host to resolve",
+             dungeon_receipt.resolve_builtin_path == 1 &&
+                 dungeon_receipt.use_explicit_path == 0,
+             1);
+    dungeon_facts.source_kind =
+        DM1_V1_STARTUP_SOURCE_KIND_DIRECT_DUNGEON_PC34;
+    expect_i("DM1 direct dungeon requires explicit path",
+             dm1_v1_startup_dungeon_path_receipt_pc34(&dungeon_facts,
+                                                      &dungeon_receipt) &&
+                 dungeon_receipt.explicit_path_required == 1 &&
+                 dungeon_receipt.use_explicit_path == 0 &&
+                 dungeon_receipt.resolve_builtin_path == 0,
+             1);
+    dungeon_facts.explicit_dungeon_path = "/tmp/DUNGEON.DAT";
+    expect_i("DM1 direct dungeon accepts explicit path",
+             dm1_v1_startup_dungeon_path_receipt_pc34(&dungeon_facts,
+                                                      &dungeon_receipt) &&
+                 dungeon_receipt.use_explicit_path == 1 &&
+                 strcmp(dungeon_receipt.explicit_dungeon_path,
+                        "/tmp/DUNGEON.DAT") == 0,
+             1);
+    dungeon_facts.source_kind =
+        DM1_V1_STARTUP_SOURCE_KIND_CUSTOM_DUNGEON_PC34;
+    dungeon_facts.explicit_dungeon_path = "/tmp/CUSTOM.DAT";
+    expect_i("DM1 custom dungeon accepts explicit path",
+             dm1_v1_startup_dungeon_path_receipt_pc34(&dungeon_facts,
+                                                      &dungeon_receipt) &&
+                 dungeon_receipt.use_explicit_path == 1 &&
+                 strcmp(dungeon_receipt.explicit_dungeon_path,
+                        "/tmp/CUSTOM.DAT") == 0,
+             1);
+    dungeon_facts.game_id = "csb";
+    expect_i("non-DM1 dungeon path receipt no-op",
+             dm1_v1_startup_dungeon_path_receipt_pc34(&dungeon_facts,
+                                                      &dungeon_receipt) &&
+                 dungeon_receipt.handled == 0,
+             1);
+    expect_i("NULL dungeon path facts rejected",
+             dm1_v1_startup_dungeon_path_receipt_pc34(NULL,
+                                                      &dungeon_receipt),
              0);
     expect_i("DM1 handoff prelude plan builds",
              dm1_v1_startup_handoff_prelude_plan_pc34("dm1", &prelude),
