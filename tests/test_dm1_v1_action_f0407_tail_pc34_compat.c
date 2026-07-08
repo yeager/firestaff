@@ -204,6 +204,8 @@ static void test_f0405_charge_plan(void) {
 static void test_freeze_life_plan(void) {
     DM1_ActionFreezeLifeInputPc34 in;
     DM1_ActionFreezeLifePlanPc34 out;
+    DM1_ActionFreezeLifeObjectInputPc34 objectIn;
+    DM1_ActionFreezeLifeObjectPlanPc34 objectOut;
 
     memset(&in, 0, sizeof(in));
     in.currentFreezeLifeTicks = 10;
@@ -234,6 +236,59 @@ static void test_freeze_life_plan(void) {
     CHECK_EQ(out.consumesActionHandObject, 0, "ordinary freeze no consume");
     CHECK_EQ(out.decrementsActionHandCharges, 1,
              "ordinary freeze decrements action charges");
+
+    memset(&objectIn, 0, sizeof(objectIn));
+    objectIn.currentFreezeLifeTicks = 10;
+    objectIn.actionHandThingType = 10;
+    objectIn.actionHandThingIndex = 3;
+    objectIn.actionHandChargeCount = 2;
+    objectIn.actionHandJunkType = 42;
+    CHECK_EQ(dm1_v1_action_freeze_life_object_plan_f0407_pc34(
+                 &objectIn, &objectOut), 1,
+             "blue box object freeze plan builds");
+    CHECK_EQ(objectOut.newFreezeLifeTicks, 40, "blue object total");
+    CHECK_EQ(objectOut.shouldRemoveActionHandObject, 1,
+             "blue object remove action hand");
+    CHECK_EQ(objectOut.shouldDecrementActionHandCharges, 0,
+             "blue object no charge decrement");
+    CHECK_EQ(objectOut.targetThingIndex, 3, "blue object index preserved");
+
+    memset(&objectIn, 0, sizeof(objectIn));
+    objectIn.currentFreezeLifeTicks = 100;
+    objectIn.actionHandThingType = 10;
+    objectIn.actionHandThingIndex = 4;
+    objectIn.actionHandChargeCount = 1;
+    objectIn.actionHandJunkType = 43;
+    CHECK_EQ(dm1_v1_action_freeze_life_object_plan_f0407_pc34(
+                 &objectIn, &objectOut), 1,
+             "green box object freeze plan builds");
+    CHECK_EQ(objectOut.newFreezeLifeTicks, 200, "green object caps total");
+    CHECK_EQ(objectOut.shouldRemoveActionHandObject, 1,
+             "green object remove action hand");
+
+    memset(&objectIn, 0, sizeof(objectIn));
+    objectIn.currentFreezeLifeTicks = 140;
+    objectIn.actionHandThingType = 5;
+    objectIn.actionHandThingIndex = 12;
+    objectIn.actionHandChargeCount = 2;
+    objectIn.actionHandJunkType = -1;
+    CHECK_EQ(dm1_v1_action_freeze_life_object_plan_f0407_pc34(
+                 &objectIn, &objectOut), 1,
+             "weapon object freeze plan builds");
+    CHECK_EQ(objectOut.newFreezeLifeTicks, 200, "weapon object caps total");
+    CHECK_EQ(objectOut.shouldRemoveActionHandObject, 0,
+             "weapon object not removed");
+    CHECK_EQ(objectOut.shouldDecrementActionHandCharges, 1,
+             "weapon object decrements charge");
+    CHECK_EQ(objectOut.targetThingType, 5, "weapon object type preserved");
+    CHECK_EQ(objectOut.targetThingIndex, 12, "weapon object index preserved");
+
+    objectIn.actionHandChargeCount = 0;
+    CHECK_EQ(dm1_v1_action_freeze_life_object_plan_f0407_pc34(
+                 &objectIn, &objectOut), 1,
+             "zero-charge object freeze plan builds");
+    CHECK_EQ(objectOut.shouldDecrementActionHandCharges, 0,
+             "zero-charge object does not decrement");
 }
 
 static void test_heal_plan(void) {
