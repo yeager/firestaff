@@ -57,6 +57,11 @@ int main(void) {
                i, kind_name(step.kind), step.delayTicks, step.vblankLoopCount,
                step.x, step.y, step.width, step.height,
                step.sourceLineEvidence ? step.sourceLineEvidence : "");
+        if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP &&
+            (step.x != 0u || step.y != 30u ||
+             step.width != 232u || step.height != 161u)) {
+            ok = 0;
+        }
         if (i == 5u && ENTRANCE_Compat_GetRuntimeDelayMs(&step) != 0u) ok = 0;
         if (i == 6u && ENTRANCE_Compat_GetRuntimeDelayMs(&step) != 400u) ok = 0;
         if (i == 7u && ENTRANCE_Compat_GetRuntimeDelayMs(&step) != 20u) ok = 0;
