@@ -237,6 +237,65 @@ static void test_enter_requires_assets(void)
           "enter_game rejects unverified profile (no files found)");
 }
 
+static void test_startup_launch_alloc_missing_data(void)
+{
+    DM2_V1_BootStartupLaunch launch;
+    memset(&launch, 0, sizeof(launch));
+    CHECK(dm2_v1_boot_startup_launch_alloc(
+              "/tmp/firestaff-dm2-v1-no-assets", &launch) == 0,
+          "startup launch allocation rejects missing assets");
+    CHECK(launch.profile == NULL,
+          "startup launch leaves profile NULL on missing assets");
+    CHECK(launch.prepare_result ==
+              DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED,
+          "startup launch reports scan failure for missing data");
+    CHECK(strcmp(dm2_v1_boot_startup_prepare_result_name(
+                     launch.prepare_result),
+                 "SCAN_FAILED") == 0,
+          "startup launch failure has stable diagnostic name");
+    dm2_v1_boot_startup_launch_cleanup(&launch);
+}
+
+static void test_startup_launch_alloc_real_assets_when_available(void)
+{
+    DM2_V1_BootStartupLaunch launch;
+    const char *home = getenv("HOME");
+    char root[512];
+    FILE *g;
+    FILE *d;
+    if (!home || !home[0]) {
+        printf("  SKIP: HOME not set for optional real DM2 startup launch\n");
+        return;
+    }
+    snprintf(root, sizeof(root), "%s/.firestaff/data/dm2", home);
+    {
+        char graphics[600];
+        char dungeon[600];
+        snprintf(graphics, sizeof(graphics), "%s/GRAPHICS.DAT", root);
+        snprintf(dungeon, sizeof(dungeon), "%s/DUNGEON.DAT", root);
+        g = fopen(graphics, "rb");
+        d = fopen(dungeon, "rb");
+    }
+    if (!g || !d) {
+        if (g) fclose(g);
+        if (d) fclose(d);
+        printf("  SKIP: optional real DM2 files not present\n");
+        return;
+    }
+    fclose(g);
+    fclose(d);
+    memset(&launch, 0, sizeof(launch));
+    CHECK(dm2_v1_boot_startup_launch_alloc(root, &launch) == 1,
+          "startup launch allocates with real verified DM2 assets");
+    CHECK(launch.prepare_result == DM2_V1_BOOT_STARTUP_PREPARE_OK,
+          "startup launch reports OK for real verified DM2 assets");
+    CHECK(launch.profile != NULL && launch.profile->dm2_state != NULL,
+          "startup launch enters DM2 game state");
+    CHECK(launch.profile != NULL && launch.profile->graphics_dat != NULL,
+          "startup launch loads DM2 graphics handle");
+    dm2_v1_boot_startup_launch_cleanup(&launch);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = dm2_v1_boot_source_evidence();
@@ -272,6 +331,11 @@ int main(void)
 /* ── enter game guard --─ */
     printf("\n--- test_enter_requires_assets ---\n");
     test_enter_requires_assets();
+/* ── startup launch helper --─ */
+    printf("\n--- test_startup_launch_alloc_missing_data ---\n");
+    test_startup_launch_alloc_missing_data();
+    printf("\n--- test_startup_launch_alloc_real_assets_when_available ---\n");
+    test_startup_launch_alloc_real_assets_when_available();
 /* ── source evidence --─ */
     printf("\n--- test_source_evidence ---\n");
     test_source_evidence();

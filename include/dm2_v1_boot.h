@@ -103,6 +103,20 @@ typedef struct {
     void   *graphics_dat;      /* graphics data handle */
 } DM2_V1_BootProfile;
 
+typedef enum {
+    DM2_V1_BOOT_STARTUP_PREPARE_OK = 0,
+    DM2_V1_BOOT_STARTUP_PREPARE_BAD_INPUT,
+    DM2_V1_BOOT_STARTUP_PREPARE_OOM,
+    DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED,
+    DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS,
+    DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED
+} DM2_V1_BootStartupPrepareResult;
+
+typedef struct {
+    DM2_V1_BootProfile *profile;
+    DM2_V1_BootStartupPrepareResult prepare_result;
+} DM2_V1_BootStartupLaunch;
+
 /* ── Boot API ──────────────────────────────────────────────────────── */
 
 /* Initialize a boot profile with defaults.
@@ -136,6 +150,19 @@ void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
  * Sets profile->dm2_state and profile->dungeon_data.
  * Returns 0 on success. */
 int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile);
+
+/* Allocate and prepare a DM2 boot profile through the verified game-entry
+ * boundary. The caller still owns M11 startup menu/session receipts, but DM2
+ * owns profile allocation, asset scanning, save-root setup, and enter_game. */
+int dm2_v1_boot_startup_launch_alloc(
+    const char *data_dir,
+    DM2_V1_BootStartupLaunch *out_launch);
+
+void dm2_v1_boot_startup_launch_cleanup(
+    DM2_V1_BootStartupLaunch *launch);
+
+const char *dm2_v1_boot_startup_prepare_result_name(
+    DM2_V1_BootStartupPrepareResult result);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */
