@@ -1,5 +1,6 @@
 
 #include "firestaff_asset_pipeline.h"
+#include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
 #include "firestaff_l10n.h"
 #include <stdio.h>
@@ -192,6 +193,19 @@ static const char *g_dungeon_dat_names_lower[FS_ASSET_LANG_COUNT] = {
     "dungeon.dat",   /* Swedish: EN dungeon data */
 };
 
+static const char *fs_assets_dm1_multilang_dungeon_hash(FS_AssetLanguage lang) {
+    switch (lang) {
+        case FS_ASSET_LANG_FR:
+            return "82c7802122e9cfb2dc117bc9d197f457";
+        case FS_ASSET_LANG_DE:
+            return "b9487db563ff9e89605c77ee44d17d14";
+        case FS_ASSET_LANG_SV:
+        case FS_ASSET_LANG_EN:
+        default:
+            return "766450c940651fc021c92fe5d0d0b3a6";
+    }
+}
+
 int fs_assets_load_dm1_multilang(FS_AssetBundle *bundle,
     const char *data_dir, FS_AssetLanguage lang)
 {
@@ -201,6 +215,28 @@ int fs_assets_load_dm1_multilang(FS_AssetBundle *bundle,
     if (lang < 0 || lang >= FS_ASSET_LANG_COUNT) lang = FS_ASSET_LANG_EN;
 
     memset(bundle, 0, sizeof(*bundle));
+
+    /* Hash-first path for real DM1 multilingual media. Filenames are only a
+     * legacy/custom fallback; user-supplied data may be renamed. */
+    if (asset_find_by_md5(data_dir,
+                          "f934d97e43e1ba6e5159839acbcd0611",
+                          path,
+                          (int)sizeof(path),
+                          8) &&
+        load_file(path, &bundle->graphics_data, &bundle->graphics_size) == 0) {
+        if (asset_find_by_md5(data_dir,
+                              fs_assets_dm1_multilang_dungeon_hash(lang),
+                              path,
+                              (int)sizeof(path),
+                              8) &&
+            load_file(path, &bundle->dungeon_data, &bundle->dungeon_size) == 0) {
+            bundle->loaded = 1;
+            return 0;
+        }
+        free(bundle->graphics_data);
+        bundle->graphics_data = NULL;
+        bundle->graphics_size = 0;
+    }
 
     /* GRAPHICS.DAT is shared across all languages */
     snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", data_dir);
