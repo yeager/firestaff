@@ -514,6 +514,17 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     int y,
     unsigned int button_mask,
     CSB_V1_BootStartupActionReceipt_PC34 *out_receipt);
+int csb_v1_boot_runtime_save_game_to_path_pc34(
+    const CSB_V1_BootProfile *profile,
+    const char *path,
+    uint32_t *out_game_time);
+int csb_v1_boot_runtime_load_game_from_path_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *path,
+    uint32_t *out_game_time);
+int csb_v1_boot_runtime_tick_pc34(
+    CSB_V1_BootProfile *profile,
+    uint32_t *out_game_time);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *

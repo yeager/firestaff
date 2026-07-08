@@ -2039,6 +2039,72 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     return 1;
 }
 
+int csb_v1_boot_runtime_save_game_to_path_pc34(
+    const CSB_V1_BootProfile *profile,
+    const char *path,
+    uint32_t *out_game_time)
+{
+    int result;
+
+    if (out_game_time) {
+        *out_game_time = 0U;
+    }
+    if (!profile || !path) {
+        return -1;
+    }
+    /* ReDMCSB LOADSAVE.C F0433: save is part of the CSB boot/runtime
+     * lifecycle because GLOBAL_DATA and the loaded dungeon tables live
+     * behind the boot profile. */
+    result = csb_v1_runtime_save_game_to_path(&profile->runtime, path);
+    if (out_game_time) {
+        *out_game_time = profile->runtime.game_time;
+    }
+    return result;
+}
+
+int csb_v1_boot_runtime_load_game_from_path_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *path,
+    uint32_t *out_game_time)
+{
+    int result;
+
+    if (out_game_time) {
+        *out_game_time = 0U;
+    }
+    if (!profile || !path) {
+        return -1;
+    }
+    /* ReDMCSB LOADSAVE.C F0435: load resumes the already verified CSB
+     * boot profile rather than reconstructing state in the M11 host. */
+    result = csb_v1_runtime_load_game_from_path(&profile->runtime, path);
+    if (out_game_time) {
+        *out_game_time = profile->runtime.game_time;
+    }
+    return result;
+}
+
+int csb_v1_boot_runtime_tick_pc34(
+    CSB_V1_BootProfile *profile,
+    uint32_t *out_game_time)
+{
+    int result;
+
+    if (out_game_time) {
+        *out_game_time = 0U;
+    }
+    if (!profile) {
+        return 0;
+    }
+    /* ReDMCSB BASE.C/LOADSAVE.C keep the 55 ms CSB V1 tick under the
+     * live game profile. M11 should only ask boot to advance it. */
+    result = csb_v1_runtime_tick_v1(&profile->runtime);
+    if (out_game_time) {
+        *out_game_time = profile->runtime.game_time;
+    }
+    return result;
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {
