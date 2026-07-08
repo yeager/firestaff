@@ -2468,30 +2468,57 @@ static void m11_csb_startup_command_state_receipt_to_m11(
     M11_GameViewState *state,
     const CSB_V1_StartupCommandStateReceipt_PC34 *receipt);
 
+static void m11_csb_startup_host_facts(
+    const M11_GameViewState *state,
+    CSB_V1_StartupHostFacts_PC34 *facts)
+{
+    if (!facts) {
+        return;
+    }
+    memset(facts, 0, sizeof(*facts));
+    if (!state) {
+        return;
+    }
+    facts->title_active = state->csbState.startup_title_active;
+    facts->title_frame = state->csbState.startup_title_frame;
+    facts->title_source_step = state->csbState.startup_title_source_step;
+    facts->entrance_active = state->csbState.startup_entrance_active;
+    facts->entrance_source_step =
+        state->csbState.startup_entrance_source_step;
+    facts->entrance_dismissed =
+        state->csbState.startup_entrance_dismissed;
+    facts->credits_active =
+        state->csbState.startup_entrance_credits_active;
+    facts->credits_remaining_ticks =
+        state->csbState.startup_entrance_credits_remaining_ticks;
+    facts->opening_active =
+        state->csbState.startup_entrance_opening_active;
+    facts->opening_delay_ticks =
+        state->csbState.startup_entrance_opening_delay_ticks;
+    facts->opening_step = state->csbState.startup_entrance_opening_step;
+    facts->pending_command =
+        state->csbState.startup_entrance_pending_command;
+    facts->entrance_frame = state->csbState.startup_entrance_frame;
+    facts->utility_overlay_active =
+        state->csbState.startup_import_available;
+    facts->door_step_count =
+        (int)ENTRANCE_Compat_GetDoorAnimationStepCount();
+    facts->boot_profile = state->csbBootProfile;
+}
+
 static int m11_csb_startup_build_render_plan(
     const M11_GameViewState *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
+    CSB_V1_StartupHostFacts_PC34 facts;
+
     if (!state) {
         return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
                                                                   out_plan);
     }
-    return csb_v1_startup_build_render_plan_from_host_facts_pc34(
-        state->csbState.startup_title_active,
-        state->csbState.startup_title_frame,
-        state->csbState.startup_title_source_step,
-        state->csbState.startup_entrance_active,
-        state->csbState.startup_entrance_source_step,
-        state->csbState.startup_entrance_dismissed,
-        state->csbState.startup_entrance_credits_active,
-        state->csbState.startup_entrance_credits_remaining_ticks,
-        state->csbState.startup_entrance_opening_active,
-        state->csbState.startup_entrance_opening_delay_ticks,
-        state->csbState.startup_entrance_opening_step,
-        state->csbState.startup_entrance_pending_command,
-        state->csbState.startup_entrance_frame,
-        state->csbState.startup_import_available,
-        state->csbBootProfile,
+    m11_csb_startup_host_facts(state, &facts);
+    return csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
+        &facts,
         out_plan);
 }
 
@@ -2920,33 +2947,14 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state)
 {
-    CSB_V1_StartupCommandStateRequest_PC34 request;
+    CSB_V1_StartupHostFacts_PC34 facts;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
-    memset(&request, 0, sizeof(request));
-    request.title_active = state->csbState.startup_title_active;
-    request.title_frame = state->csbState.startup_title_frame;
-    request.title_source_step = state->csbState.startup_title_source_step;
-    request.entrance_active = state->csbState.startup_entrance_active;
-    request.entrance_source_step =
-        state->csbState.startup_entrance_source_step;
-    request.entrance_dismissed =
-        state->csbState.startup_entrance_dismissed;
-    request.credits_active =
-        state->csbState.startup_entrance_credits_active;
-    request.credits_remaining_ticks =
-        state->csbState.startup_entrance_credits_remaining_ticks;
-    request.opening_active =
-        state->csbState.startup_entrance_opening_active;
-    request.opening_delay_ticks =
-        state->csbState.startup_entrance_opening_delay_ticks;
-    request.opening_step = state->csbState.startup_entrance_opening_step;
-    request.pending_command =
-        state->csbState.startup_entrance_pending_command;
-    return csb_v1_startup_entrance_accepts_input_from_request_pc34(
-        &request);
+    m11_csb_startup_host_facts(state, &facts);
+    return csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
+        &facts);
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(
@@ -3043,21 +3051,14 @@ static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
     if (!state) {
         return;
     }
-    if (!csb_v1_startup_finish_door_opening_from_facts_with_receipt_pc34(
-            state->csbState.startup_title_active,
-            state->csbState.startup_title_frame,
-            state->csbState.startup_title_source_step,
-            state->csbState.startup_entrance_active,
-            state->csbState.startup_entrance_source_step,
-            state->csbState.startup_entrance_dismissed,
-            state->csbState.startup_entrance_credits_active,
-            state->csbState.startup_entrance_credits_remaining_ticks,
-            state->csbState.startup_entrance_opening_active,
-            state->csbState.startup_entrance_opening_delay_ticks,
-            state->csbState.startup_entrance_opening_step,
-            state->csbState.startup_entrance_pending_command,
+    {
+        CSB_V1_StartupHostFacts_PC34 facts;
+        m11_csb_startup_host_facts(state, &facts);
+        if (!csb_v1_startup_finish_door_opening_from_host_facts_with_receipt_pc34(
+            &facts,
             &receipt)) {
-        return;
+            return;
+        }
     }
     m11_csb_startup_command_state_receipt_to_m11(state, &receipt);
 }
@@ -3072,24 +3073,15 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 runtime_exec_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
     CSB_V1_StartupHostReceipt_PC34 host_receipt;
+    CSB_V1_StartupHostFacts_PC34 facts;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!csb_v1_startup_apply_entrance_command_from_facts_with_receipts_pc34(
-            state->csbState.startup_title_active,
-            state->csbState.startup_title_frame,
-            state->csbState.startup_title_source_step,
-            state->csbState.startup_entrance_active,
-            state->csbState.startup_entrance_source_step,
-            state->csbState.startup_entrance_dismissed,
-            state->csbState.startup_entrance_credits_active,
-            state->csbState.startup_entrance_credits_remaining_ticks,
-            state->csbState.startup_entrance_opening_active,
-            state->csbState.startup_entrance_opening_delay_ticks,
-            state->csbState.startup_entrance_opening_step,
-            state->csbState.startup_entrance_pending_command,
+    m11_csb_startup_host_facts(state, &facts);
+    if (!csb_v1_startup_apply_entrance_command_from_host_facts_with_receipts_pc34(
+            &facts,
             commandId,
             &command_receipt,
             &state_receipt) ||
@@ -3120,18 +3112,18 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             state->csbState.startup_entrance_resume_available
                 ? state->csbState.startup_entrance_resume_path
                 : NULL,
-            state->csbState.startup_title_active,
-            state->csbState.startup_title_frame,
-            state->csbState.startup_title_source_step,
-            state->csbState.startup_entrance_active,
-            state->csbState.startup_entrance_source_step,
-            state->csbState.startup_entrance_dismissed,
-            state->csbState.startup_entrance_credits_active,
-            state->csbState.startup_entrance_credits_remaining_ticks,
-            state->csbState.startup_entrance_opening_active,
-            state->csbState.startup_entrance_opening_delay_ticks,
-            state->csbState.startup_entrance_opening_step,
-            state->csbState.startup_entrance_pending_command,
+            facts.title_active,
+            facts.title_frame,
+            facts.title_source_step,
+            facts.entrance_active,
+            facts.entrance_source_step,
+            facts.entrance_dismissed,
+            facts.credits_active,
+            facts.credits_remaining_ticks,
+            facts.opening_active,
+            facts.opening_delay_ticks,
+            facts.opening_step,
+            facts.pending_command,
             &runtime_exec_receipt,
             &outcome,
             &runtime_receipt,
@@ -12672,19 +12664,10 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         if (state->csbState.startup_entrance_active) {
             CSB_V1_StartupTickReceipt_PC34 startup_receipt;
-            (void)csb_v1_startup_advance_tick_from_facts_with_receipt_pc34(
-                state->csbState.startup_entrance_frame,
-                state->csbState.startup_title_active,
-                state->csbState.startup_title_frame,
-                state->csbState.startup_title_source_step,
-                state->csbState.startup_entrance_source_step,
-                state->csbState.startup_entrance_credits_active,
-                state->csbState.startup_entrance_credits_remaining_ticks,
-                state->csbState.startup_entrance_opening_active,
-                state->csbState.startup_entrance_opening_delay_ticks,
-                state->csbState.startup_entrance_opening_step,
-                state->csbState.startup_entrance_pending_command,
-                (int)ENTRANCE_Compat_GetDoorAnimationStepCount(),
+            CSB_V1_StartupHostFacts_PC34 facts;
+            m11_csb_startup_host_facts(state, &facts);
+            (void)csb_v1_startup_advance_tick_from_host_facts_with_receipt_pc34(
+                &facts,
                 &startup_receipt);
             m11_csb_startup_tick_receipt_to_m11(state,
                                                 &startup_receipt);

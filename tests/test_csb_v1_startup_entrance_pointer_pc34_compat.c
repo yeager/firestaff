@@ -275,6 +275,7 @@ int main(void)
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
     CSB_V1_StartupHostReceipt_PC34 host_receipt;
+    CSB_V1_StartupHostFacts_PC34 host_facts;
     CSB_V1_StartupSessionOptionsInput_PC34 session_input;
     CSB_V1_StartupSessionOptions_PC34 session_options;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
@@ -535,6 +536,24 @@ int main(void)
         check(!csb_v1_startup_advance_tick_from_facts_with_receipt_pc34(
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL),
               "startup tick facts helper rejects NULL receipt");
+        memset(&host_facts, 0, sizeof(host_facts));
+        host_facts.entrance_frame = 17;
+        host_facts.entrance_source_step =
+            csb_v1_startup_entrance_wait_stage_pc34() - 1;
+        host_facts.credits_active = 1;
+        host_facts.credits_remaining_ticks = 1;
+        host_facts.opening_active = 1;
+        host_facts.opening_step = 3;
+        host_facts.pending_command =
+            CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+        host_facts.door_step_count = 3;
+        check(csb_v1_startup_advance_tick_from_host_facts_with_receipt_pc34(
+                  &host_facts,
+                  &tick_receipt) &&
+                  tick_receipt.entrance_frame == 18 &&
+                  tick_receipt.tick_result.credits_finished &&
+                  tick_receipt.tick_result.door_opening_finished,
+              "startup tick host facts helper returns M11-ready receipt");
     }
 
     memset(&tick, 0, sizeof(tick));
@@ -1275,6 +1294,28 @@ int main(void)
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
               plan.waiting_for_input == 0,
           "startup render host facts helper owns profile adapter fallback");
+    memset(&host_facts, 0, sizeof(host_facts));
+    host_facts.title_active = command_state.title_active;
+    host_facts.title_frame = command_state.title_frame;
+    host_facts.title_source_step = command_state.title_source_step;
+    host_facts.entrance_active = command_state.entrance_active;
+    host_facts.entrance_source_step = command_state.entrance_source_step;
+    host_facts.entrance_dismissed = command_state.entrance_dismissed;
+    host_facts.credits_active = command_state.credits_active;
+    host_facts.credits_remaining_ticks =
+        command_state.credits_remaining_ticks;
+    host_facts.opening_active = command_state.opening_active;
+    host_facts.opening_delay_ticks = command_state.opening_delay_ticks;
+    host_facts.opening_step = command_state.opening_step;
+    host_facts.pending_command = command_state.pending_command;
+    host_facts.entrance_frame = 37;
+    host_facts.utility_overlay_active = 1;
+    check(csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
+              &host_facts,
+              &plan) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
+          "startup render host facts struct owns M11 field adapter");
 
     memset(&command_state, 0xff, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 1) &&
@@ -1381,6 +1422,12 @@ int main(void)
               command_state.opening_step,
               command_state.pending_command),
           "startup entrance gate facts helper accepts wait-loop input");
+    memset(&host_facts, 0, sizeof(host_facts));
+    host_facts.entrance_active = command_state.entrance_active;
+    host_facts.entrance_source_step = command_state.entrance_source_step;
+    check(csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
+              &host_facts),
+          "startup entrance gate host facts helper accepts wait-loop input");
     {
         CSB_V1_StartupCommandStateRequest_PC34 request;
 
@@ -1455,6 +1502,21 @@ int main(void)
               command_state_receipt.entrance_dismissed &&
               command_state_receipt.pending_command == 0,
           "startup door finish facts helper returns command-state receipt");
+    memset(&host_facts, 0, sizeof(host_facts));
+    host_facts.entrance_active = 1;
+    host_facts.entrance_source_step =
+        CSB_V1_STARTUP_STAGE_ENTRANCE_DOOR_OPENING_PC34;
+    host_facts.opening_active = 1;
+    host_facts.opening_step = 3;
+    host_facts.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    check(csb_v1_startup_finish_door_opening_from_host_facts_with_receipt_pc34(
+              &host_facts,
+              &command_state_receipt) &&
+              !command_state_receipt.opening_active &&
+              !command_state_receipt.entrance_active &&
+              command_state_receipt.entrance_dismissed,
+          "startup door finish host facts helper returns command-state receipt");
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
@@ -1767,6 +1829,23 @@ int main(void)
               command_receipt.outcome.status &&
               strcmp(command_receipt.outcome.status, "CSB ENTRANCE") == 0,
           "startup entrance command facts helper owns pure command receipt");
+    memset(&host_facts, 0, sizeof(host_facts));
+    host_facts.entrance_active = 1;
+    host_facts.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    host_facts.credits_active = 1;
+    host_facts.credits_remaining_ticks = 99;
+    check(csb_v1_startup_apply_entrance_command_from_host_facts_with_receipts_pc34(
+              &host_facts,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34,
+              &command_receipt,
+              &command_state_receipt) &&
+              command_receipt.handled &&
+              !command_receipt.requires_runtime_plan &&
+              command_receipt.pure_apply_result ==
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34 &&
+              !command_state_receipt.credits_active,
+          "startup entrance command host facts helper owns pure command receipt");
     check(csb_v1_startup_host_receipt_from_pure_entrance_pc34(
               &command_receipt,
               &host_receipt) &&
@@ -1818,6 +1897,18 @@ int main(void)
               command_receipt.runtime_plan.bonus_dungeon &&
               command_state_receipt.entrance_active,
           "startup entrance command facts helper owns runtime handoff receipt");
+    host_facts.credits_active = 0;
+    host_facts.credits_remaining_ticks = 0;
+    check(csb_v1_startup_apply_entrance_command_from_host_facts_with_receipts_pc34(
+              &host_facts,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_BONUS_DUNGEON_PC34,
+              &command_receipt,
+              &command_state_receipt) &&
+              command_receipt.handled &&
+              command_receipt.requires_runtime_plan &&
+              command_receipt.runtime_plan.kind ==
+                  CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34,
+          "startup entrance command host facts helper owns runtime handoff receipt");
     check(csb_v1_startup_input_result_for_entrance_apply_pc34(
               CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34) ==
               CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
