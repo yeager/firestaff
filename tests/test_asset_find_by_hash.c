@@ -4,10 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef FIRESTAFF_HAS_ZLIB
-#include <zlib.h>
-#endif
-
 #ifdef _WIN32
 #include <direct.h>
 #define MKDIR(path) _mkdir(path)
@@ -204,35 +200,72 @@ static int write_tar_fixture(const char* path) {
 }
 
 #ifdef FIRESTAFF_HAS_ZLIB
-static int write_tgz_fixture(const char* path) {
-    unsigned char tarBytes[4096];
-    unsigned char outBytes[4096];
-    size_t tarSize = 0U;
-    z_stream zs;
-    FILE* fp;
-    size_t produced;
-    int ret;
-    if (!build_tar_fixture(tarBytes, sizeof(tarBytes), &tarSize)) return 0;
-    memset(&zs, 0, sizeof(zs));
-    if (deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
-                     16 + MAX_WBITS, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
-        return 0;
+static unsigned int fixture_crc32(const unsigned char* data, size_t size) {
+    unsigned int crc = 0xffffffffU;
+    size_t i;
+    for (i = 0U; i < size; ++i) {
+        int bit;
+        crc ^= (unsigned int)data[i];
+        for (bit = 0; bit < 8; ++bit) {
+            crc = (crc & 1U) ? ((crc >> 1U) ^ 0xedb88320U) : (crc >> 1U);
+        }
     }
-    zs.next_in = tarBytes;
-    zs.avail_in = (uInt)tarSize;
-    zs.next_out = outBytes;
-    zs.avail_out = (uInt)sizeof(outBytes);
-    ret = deflate(&zs, Z_FINISH);
-    produced = sizeof(outBytes) - zs.avail_out;
-    deflateEnd(&zs);
-    if (ret != Z_STREAM_END) return 0;
+    return crc ^ 0xffffffffU;
+}
+
+static int write_gzip_payload(const char* path,
+                              const unsigned char* payload,
+                              size_t payloadSize) {
+    static const unsigned char gzipHeader[10] = {
+        0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff
+    };
+    FILE* fp;
+    size_t offset = 0U;
+    unsigned int crc;
+    unsigned char trailer[8];
+    if (!path || !payload || payloadSize > 0xffffffffU) return 0;
     fp = fopen(path, "wb");
     if (!fp) return 0;
-    if (fwrite(outBytes, 1U, produced, fp) != produced) {
+    if (fwrite(gzipHeader, 1U, sizeof(gzipHeader), fp) != sizeof(gzipHeader)) {
+        fclose(fp);
+        return 0;
+    }
+    while (offset < payloadSize || (payloadSize == 0U && offset == 0U)) {
+        size_t chunk = payloadSize - offset;
+        unsigned int len;
+        unsigned char hdr[5];
+        int finalBlock;
+        if (chunk > 65535U) chunk = 65535U;
+        finalBlock = (offset + chunk >= payloadSize);
+        len = (unsigned int)chunk;
+        hdr[0] = finalBlock ? 0x01U : 0x00U;
+        hdr[1] = (unsigned char)(len & 0xffU);
+        hdr[2] = (unsigned char)((len >> 8U) & 0xffU);
+        hdr[3] = (unsigned char)((~len) & 0xffU);
+        hdr[4] = (unsigned char)(((~len) >> 8U) & 0xffU);
+        if (fwrite(hdr, 1U, sizeof(hdr), fp) != sizeof(hdr) ||
+            (chunk > 0U && fwrite(payload + offset, 1U, chunk, fp) != chunk)) {
+            fclose(fp);
+            return 0;
+        }
+        offset += chunk;
+        if (payloadSize == 0U) break;
+    }
+    crc = fixture_crc32(payload, payloadSize);
+    put32(trailer, crc);
+    put32(trailer + 4, (unsigned int)payloadSize);
+    if (fwrite(trailer, 1U, sizeof(trailer), fp) != sizeof(trailer)) {
         fclose(fp);
         return 0;
     }
     return fclose(fp) == 0;
+}
+
+static int write_tgz_fixture(const char* path) {
+    unsigned char tarBytes[4096];
+    size_t tarSize = 0U;
+    if (!build_tar_fixture(tarBytes, sizeof(tarBytes), &tarSize)) return 0;
+    return write_gzip_payload(path, tarBytes, tarSize);
 }
 #endif
 
@@ -355,7 +388,9 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/archive.zip");
     remove("asset_find_by_hash_test_tmp/archive.tar");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
+    remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
     remove("asset_find_by_hash_test_tmp/disc.iso");
+    remove("asset_find_by_hash_test_tmp/disc.img");
     remove("asset_find_by_hash_test_tmp/cue_a.payload");
     remove("asset_find_by_hash_test_tmp/cue_b.payload");
     remove("asset_find_by_hash_test_tmp/split.cue");
@@ -579,6 +614,73 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
+
+    if (!write_tgz_fixture("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz")) {
+        cleanup_fixture();
+        fprintf(stderr, "GZIP fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                          outPath, (int)sizeof(outPath), 2)) {
+        cleanup_fixture();
+        fprintf(stderr, "GZIP should not treat tar.gz bytes as a single payload: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
+
+    if (!write_fixture("asset_find_by_hash_test_tmp/nested/renamed.asset")) {
+        cleanup_fixture();
+        fprintf(stderr, "GZIP source fixture setup failed\n");
+        return 1;
+    }
+    {
+        unsigned char inBytes[128];
+        FILE* in = fopen("asset_find_by_hash_test_tmp/nested/renamed.asset", "rb");
+        size_t inSize;
+        if (!in) {
+            cleanup_fixture();
+            fprintf(stderr, "GZIP source open failed\n");
+            return 1;
+        }
+        inSize = fread(inBytes, 1U, sizeof(inBytes), in);
+        fclose(in);
+        if (!write_gzip_payload("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz",
+                                inBytes, inSize)) {
+            cleanup_fixture();
+            fprintf(stderr, "GZIP write failed\n");
+            return 1;
+        }
+    }
+    remove("asset_find_by_hash_test_tmp/nested/renamed.asset");
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_entry(outPath, "GRAPHICS.DAT.gz", "GRAPHICS.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "GZIP single-file lookup failed: %s\n", outPath);
+        return 1;
+    }
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                   outPaths, matched, 2, 2) != 1 ||
+        matched[0] ||
+        !matched[1] ||
+        !path_has_virtual_entry(outPaths[1], "GRAPHICS.DAT.gz", "GRAPHICS.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "GZIP all-list lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "virtual GZIP extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
 #endif
 
     if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc.iso")) {
@@ -614,6 +716,28 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/disc.iso");
+
+    if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc.img")) {
+        cleanup_fixture();
+        fprintf(stderr, "IMG ISO fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_name(outPath, "disc.img", "DUNGEON.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "IMG ISO entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "virtual IMG ISO extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/disc.img");
 
     if (!write_iso_fixture_payload("asset_find_by_hash_test_tmp/cue_a.payload",
                                    "Firestaff non-matching CUE payload v1\n",
