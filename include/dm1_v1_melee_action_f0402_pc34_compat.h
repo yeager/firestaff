@@ -238,6 +238,32 @@ typedef struct {
 
 typedef struct {
     int groupIndex;
+    int groupCount;
+    int groupCreatureType;
+    int creatureIndex;
+    int creatureHealth;
+    int profileAttack;
+    int profileDefense;
+    int profileDexterity;
+    int profileBaseHealth;
+    int profilePoisonAttack;
+    int profileAttackType;
+    int profileAttributes;
+    int profileWoundProbabilities;
+    int profileProperties;
+    int doubledMapDifficulty;
+    int candidateInvulnerableEnabled;
+    int candidateInvulnerableGroupIndex;
+    int candidateInvulnerableCreatureIndex;
+} DM1_MeleeF0231CreatureSnapshotInputPc34;
+
+typedef struct {
+    int valid;
+    struct CombatantCreatureSnapshot_Compat snapshot;
+} DM1_MeleeF0231CreatureSnapshotPlanPc34;
+
+typedef struct {
+    int groupIndex;
     int creatureType;
     int creatureAttributes;
     int killedCell;
@@ -297,6 +323,9 @@ int dm1_v1_melee_strength_plan_f0312_pc34(
 int dm1_v1_melee_champion_snapshot_plan_f0231_pc34(
     const DM1_MeleeF0231ChampionSnapshotInputPc34* in,
     DM1_MeleeF0231ChampionSnapshotPlanPc34* out);
+int dm1_v1_melee_creature_snapshot_plan_f0231_pc34(
+    const DM1_MeleeF0231CreatureSnapshotInputPc34* in,
+    DM1_MeleeF0231CreatureSnapshotPlanPc34* out);
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out);

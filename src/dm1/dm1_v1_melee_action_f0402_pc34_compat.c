@@ -498,6 +498,45 @@ int dm1_v1_melee_champion_snapshot_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_creature_snapshot_plan_f0231_pc34(
+    const DM1_MeleeF0231CreatureSnapshotInputPc34* in,
+    DM1_MeleeF0231CreatureSnapshotPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->snapshot.creatureType = -1;
+    out->snapshot.creatureIndex = -1;
+    if (!in) return 0;
+    if (in->groupIndex < 0) return 0;
+    if (in->creatureIndex < 0 || in->creatureIndex > 3) return 0;
+    if (in->creatureIndex > in->groupCount) return 0;
+    if (in->groupCreatureType < 0) return 0;
+
+    out->valid = 1;
+    out->snapshot.creatureType = in->groupCreatureType;
+    out->snapshot.attack = in->profileAttack;
+    out->snapshot.defense = in->profileDefense;
+    out->snapshot.dexterity = in->profileDexterity;
+    out->snapshot.baseHealth = in->profileBaseHealth;
+    out->snapshot.poisonAttack = in->profilePoisonAttack;
+    out->snapshot.attackType = in->profileAttackType;
+    out->snapshot.attributes = in->profileAttributes;
+    out->snapshot.woundProbabilities = in->profileWoundProbabilities;
+    out->snapshot.properties = in->profileProperties;
+    out->snapshot.doubledMapDifficulty = in->doubledMapDifficulty;
+    out->snapshot.creatureIndex = in->creatureIndex;
+    out->snapshot.healthBefore = in->creatureHealth;
+    out->snapshot.isCandidateInvulnerable =
+        in->candidateInvulnerableEnabled &&
+        in->candidateInvulnerableGroupIndex == in->groupIndex &&
+        in->candidateInvulnerableCreatureIndex == in->creatureIndex;
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1438-1457 reads the live GROUP slot
+     * and G0243 creature info before hit gating.  Firestaff keeps M10 as the
+     * live data reader, while DM1 owns the F0231-facing creature snapshot
+     * shape, including C040 candidate-panel invulnerability. */
+    return 1;
+}
+
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out) {

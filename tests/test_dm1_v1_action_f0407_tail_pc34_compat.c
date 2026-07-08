@@ -1566,6 +1566,61 @@ static void test_melee_f0231_champion_snapshot_plan(void) {
              "F0231 dead champion snapshot rejected");
 }
 
+static void test_melee_f0231_creature_snapshot_plan(void) {
+    DM1_MeleeF0231CreatureSnapshotInputPc34 in;
+    DM1_MeleeF0231CreatureSnapshotPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.groupIndex = 7;
+    in.groupCount = 2;
+    in.groupCreatureType = 12;
+    in.creatureIndex = 1;
+    in.creatureHealth = 88;
+    in.profileAttack = 11;
+    in.profileDefense = 22;
+    in.profileDexterity = 33;
+    in.profileBaseHealth = 44;
+    in.profilePoisonAttack = 55;
+    in.profileAttackType = 66;
+    in.profileAttributes = 0x40;
+    in.profileWoundProbabilities = 0x1234;
+    in.profileProperties = 0x5678;
+    in.doubledMapDifficulty = 6;
+    in.candidateInvulnerableEnabled = 1;
+    in.candidateInvulnerableGroupIndex = 7;
+    in.candidateInvulnerableCreatureIndex = 1;
+    CHECK_EQ(dm1_v1_melee_creature_snapshot_plan_f0231_pc34(&in, &out), 1,
+             "F0231 creature snapshot plan builds");
+    CHECK_EQ(out.valid, 1, "F0231 creature snapshot valid");
+    CHECK_EQ(out.snapshot.creatureType, 12, "F0231 creature type");
+    CHECK_EQ(out.snapshot.attack, 11, "F0231 creature attack");
+    CHECK_EQ(out.snapshot.defense, 22, "F0231 creature defense");
+    CHECK_EQ(out.snapshot.dexterity, 33, "F0231 creature dexterity");
+    CHECK_EQ(out.snapshot.baseHealth, 44, "F0231 creature base health");
+    CHECK_EQ(out.snapshot.poisonAttack, 55, "F0231 creature poison");
+    CHECK_EQ(out.snapshot.attackType, 66, "F0231 creature attack type");
+    CHECK_EQ(out.snapshot.attributes, 0x40, "F0231 creature attributes");
+    CHECK_EQ(out.snapshot.woundProbabilities, 0x1234,
+             "F0231 creature wounds");
+    CHECK_EQ(out.snapshot.properties, 0x5678, "F0231 creature properties");
+    CHECK_EQ(out.snapshot.doubledMapDifficulty, 6,
+             "F0231 creature difficulty");
+    CHECK_EQ(out.snapshot.creatureIndex, 1, "F0231 creature index");
+    CHECK_EQ(out.snapshot.healthBefore, 88, "F0231 creature health");
+    CHECK_EQ(out.snapshot.isCandidateInvulnerable, 1,
+             "F0231 creature candidate invulnerable");
+
+    in.candidateInvulnerableCreatureIndex = 2;
+    CHECK_EQ(dm1_v1_melee_creature_snapshot_plan_f0231_pc34(&in, &out), 1,
+             "F0231 creature snapshot noncandidate builds");
+    CHECK_EQ(out.snapshot.isCandidateInvulnerable, 0,
+             "F0231 creature noncandidate vulnerable");
+
+    in.creatureIndex = 3;
+    CHECK_EQ(dm1_v1_melee_creature_snapshot_plan_f0231_pc34(&in, &out), 0,
+             "F0231 creature snapshot rejects absent group slot");
+}
+
 static void test_melee_f0231_aftermath_plan(void) {
     DM1_MeleeF0231AftermathInputPc34 in;
     DM1_MeleeF0231AftermathPlanPc34 out;
@@ -1744,6 +1799,7 @@ int main(void) {
     test_melee_f0402_weapon_availability_and_preflight();
     test_melee_f0312_strength_plan();
     test_melee_f0231_champion_snapshot_plan();
+    test_melee_f0231_creature_snapshot_plan();
     test_melee_f0231_aftermath_plan();
     test_melee_f0231_damage_resolver_entrypoint();
     test_invalid_action();
