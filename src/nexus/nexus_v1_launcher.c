@@ -304,6 +304,53 @@ int nexus_v1_launcher_startup_presentation_execute(
         executor);
 }
 
+int nexus_v1_launcher_startup_presentation_receipt_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready)
+{
+    if (!state) {
+        return 0;
+    }
+    return nexus_v1_startup_presentation_receipt(
+        state->title_active,
+        state->save_select_active,
+        state->champion_select_active,
+        state->title_frame,
+        out_phase,
+        out_phase_size,
+        out_startup_active,
+        out_startup_frame,
+        out_animation,
+        out_animation_size,
+        out_animation_active,
+        out_title_frame,
+        out_title_frame_max,
+        out_title_ready);
+}
+
+int nexus_v1_launcher_startup_resume_status_host_receipt(
+    Nexus_V1_StartupResumeStatus status,
+    Nexus_V1_StartupHostReceipt *out_receipt)
+{
+    return nexus_v1_startup_resume_status_host_receipt(status, out_receipt);
+}
+
+int nexus_v1_launcher_startup_boot_status_host_receipt(
+    Nexus_V1_StartupBootStatus status,
+    Nexus_V1_StartupHostReceipt *out_receipt)
+{
+    return nexus_v1_startup_boot_status_host_receipt(status, out_receipt);
+}
+
 static void nexus_v1_launcher_fill_boot_receipt(
     const char *data_dir,
     Nexus_V1_Engine *engine,

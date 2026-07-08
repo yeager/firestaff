@@ -1161,6 +1161,13 @@ int csb_v1_boot_startup_build_render_plan_from_runtime_state_pc34(
         out_plan);
 }
 
+int csb_v1_boot_startup_build_default_render_plan_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
+                                                              out_plan);
+}
+
 int csb_v1_boot_startup_advance_idle_from_runtime_state_pc34(
     CSB_V1_StartupIdleReceipt_PC34 *out_receipt,
     int title_active,

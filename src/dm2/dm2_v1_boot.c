@@ -1072,6 +1072,22 @@ int dm2_v1_boot_startup_execute_draw_commands(
         (const DM2_V1_StartupDrawExecutor *)executor);
 }
 
+int dm2_v1_boot_startup_execute_save_path_with_host_receipt(
+    const char *save_path,
+    int (*apply_session)(void *userdata,
+                         const DM2_V1_SessionState *session),
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    void *out_direct_resume_receipt)
+{
+    return dm2_v1_startup_execute_save_path_with_host_receipt(
+        save_path,
+        apply_session,
+        apply_userdata,
+        out_execution,
+        (DM2_V1_StartupDirectResumeReceipt *)out_direct_resume_receipt);
+}
+
 static const char *dm2_v1_boot_startup_prepare_host_status(
     DM2_V1_BootStartupPrepareResult result)
 {
