@@ -131,6 +131,19 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupApplyReceipt;
 
+typedef enum {
+    NEXUS_V1_STARTUP_HOST_INPUT_IGNORED = 0,
+    NEXUS_V1_STARTUP_HOST_INPUT_REDRAW = 1,
+    NEXUS_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER = 2
+} Nexus_V1_StartupHostInputResult;
+
+typedef struct {
+    Nexus_V1_StartupModeUpdate mode_update;
+    Nexus_V1_StartupHostInputResult input_result;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupHostReceipt;
+
 typedef int (*Nexus_V1_StartupLoadSaveFn)(void *userdata,
                                           const char *save_path);
 
@@ -391,6 +404,11 @@ int nexus_v1_startup_apply_receipt_from_save_execution(
     const Nexus_V1_StartupSaveExecution *execution,
     int load_success,
     Nexus_V1_StartupApplyReceipt *out_receipt);
+void nexus_v1_startup_host_receipt_clear(
+    Nexus_V1_StartupHostReceipt *receipt);
+int nexus_v1_startup_host_receipt_from_apply_receipt(
+    const Nexus_V1_StartupApplyReceipt *apply_receipt,
+    Nexus_V1_StartupHostReceipt *out_receipt);
 int nexus_v1_startup_execute_save_action_with_receipt(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupLoadSaveFn load_save,

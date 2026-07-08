@@ -10315,7 +10315,7 @@ static void m11_nexus_apply_startup_mode_update(
 
 static M11_GameInputResult m11_nexus_apply_startup_receipt(
     M11_GameViewState *state,
-    const Nexus_V1_StartupApplyReceipt *receipt)
+    const Nexus_V1_StartupHostReceipt *receipt)
 {
     if (!state || !receipt) {
         return M11_GAME_INPUT_IGNORED;
@@ -10327,11 +10327,11 @@ static M11_GameInputResult m11_nexus_apply_startup_receipt(
                                              : "STARTUP",
                        receipt->status ? receipt->status : "");
     }
-    if (receipt->result == NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW) {
+    if (receipt->input_result == NEXUS_V1_STARTUP_HOST_INPUT_REDRAW) {
         return M11_GAME_INPUT_REDRAW;
     }
-    if (receipt->result ==
-        NEXUS_V1_STARTUP_APPLY_RESULT_RETURN_TO_LAUNCHER) {
+    if (receipt->input_result ==
+        NEXUS_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER) {
         return M11_GAME_INPUT_RETURN_TO_MENU;
     }
     return M11_GAME_INPUT_IGNORED;
@@ -10352,6 +10352,7 @@ static M11_GameInputResult m11_nexus_startup_apply_save_action(
 {
     Nexus_V1_StartupSaveExecution execution;
     Nexus_V1_StartupApplyReceipt receipt;
+    Nexus_V1_StartupHostReceipt host_receipt;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
@@ -10364,7 +10365,11 @@ static M11_GameInputResult m11_nexus_startup_apply_save_action(
             &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    return m11_nexus_apply_startup_receipt(state, &receipt);
+    if (!nexus_v1_startup_host_receipt_from_apply_receipt(&receipt,
+                                                          &host_receipt)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return m11_nexus_apply_startup_receipt(state, &host_receipt);
 }
 
 static M11_GameInputResult m11_nexus_startup_apply_title_action(
@@ -10373,6 +10378,7 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
 {
     Nexus_V1_StartupTitleExecution execution;
     Nexus_V1_StartupApplyReceipt receipt;
+    Nexus_V1_StartupHostReceipt host_receipt;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
@@ -10382,7 +10388,11 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
                                                             &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    return m11_nexus_apply_startup_receipt(state, &receipt);
+    if (!nexus_v1_startup_host_receipt_from_apply_receipt(&receipt,
+                                                          &host_receipt)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return m11_nexus_apply_startup_receipt(state, &host_receipt);
 }
 
 static M11_GameInputResult m11_nexus_startup_handle_save_input(
@@ -10416,6 +10426,7 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
 {
     Nexus_V1_StartupChampionExecution execution;
     Nexus_V1_StartupApplyReceipt receipt;
+    Nexus_V1_StartupHostReceipt host_receipt;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
@@ -10427,7 +10438,11 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
             &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    return m11_nexus_apply_startup_receipt(state, &receipt);
+    if (!nexus_v1_startup_host_receipt_from_apply_receipt(&receipt,
+                                                          &host_receipt)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return m11_nexus_apply_startup_receipt(state, &host_receipt);
 }
 
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {

@@ -87,6 +87,7 @@ int main(void)
     Nexus_V1_StartupChampionExecution champion_execution;
     Nexus_V1_StartupModeUpdate mode_update;
     Nexus_V1_StartupApplyReceipt receipt;
+    Nexus_V1_StartupHostReceipt host_receipt;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupSaveRenderRow save_rows[4];
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
@@ -547,6 +548,15 @@ int main(void)
                receipt.mode_update.champion_cursor == 2 &&
                strcmp(receipt.status, "NEXUS CHAMPION CURSOR") == 0,
            "Nexus champion apply receipt owns cursor redraw policy");
+    expect(nexus_v1_startup_host_receipt_from_apply_receipt(
+               &receipt,
+               &host_receipt) &&
+               host_receipt.input_result ==
+                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+               host_receipt.mode_update.set_champion_cursor &&
+               host_receipt.mode_update.champion_cursor == 2 &&
+               strcmp(host_receipt.status, "NEXUS CHAMPION CURSOR") == 0,
+           "Nexus champion host receipt owns M11 cursor contract");
     expect(nexus_v1_startup_execute_champion_action_with_receipt(
                &action,
                2,
@@ -889,6 +899,15 @@ int main(void)
                receipt.mode_update.save_select_active == 1 &&
                strcmp(receipt.status, "NEXUS LOAD GAME") == 0,
            "startup title apply receipt owns save-select redraw policy");
+    expect(nexus_v1_startup_host_receipt_from_apply_receipt(
+               &receipt,
+               &host_receipt) &&
+               host_receipt.input_result ==
+                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+               host_receipt.mode_update.set_save_select_active &&
+               host_receipt.mode_update.save_select_active == 1 &&
+               strcmp(host_receipt.status, "NEXUS LOAD GAME") == 0,
+           "startup title host receipt owns M11 redraw contract");
     expect(nexus_v1_startup_execute_title_action_with_receipt(
                &action,
                &title_execution,
@@ -1052,6 +1071,16 @@ int main(void)
                strcmp(receipt.status_scope, "BOOT") == 0 &&
                strcmp(receipt.status, "NEXUS RESUMED") == 0,
            "startup save apply receipt owns successful load policy");
+    expect(nexus_v1_startup_host_receipt_from_apply_receipt(
+               &receipt,
+               &host_receipt) &&
+               host_receipt.input_result ==
+                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+               host_receipt.mode_update.set_save_select_active &&
+               host_receipt.mode_update.save_select_active == 0 &&
+               strcmp(host_receipt.status_scope, "BOOT") == 0 &&
+               strcmp(host_receipt.status, "NEXUS RESUMED") == 0,
+           "startup save host receipt owns M11 resumed contract");
     load_calls = 0;
     expect(nexus_v1_startup_execute_save_action_with_receipt(
                &action,
