@@ -145,6 +145,73 @@ static void test_rune_contract_helpers(void)
     CHECK(selected.h == 13);
 }
 
+static void test_spell_panel_state_receipts(void)
+{
+    DM1_V1_SpellPanelStatePc34 state;
+    DM1_V1_SpellPanelReceiptPc34 receipt;
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+
+    CHECK(dm1_v1_spell_panel_command_allowed_pc34(&state) == 1);
+    receipt = dm1_v1_spell_panel_open_pc34(&state);
+    CHECK(receipt.accepted == 1);
+    CHECK(receipt.panel_open == 1);
+    CHECK(receipt.rune_row == 0);
+    CHECK(receipt.rune_count == 0);
+    CHECK(receipt.clear_runes == 1);
+    CHECK(receipt.append_rune == 0);
+
+    state.panel_open = 1;
+    receipt = dm1_v1_spell_panel_enter_rune_pc34(&state, 3);
+    CHECK(receipt.accepted == 1);
+    CHECK(receipt.panel_open == 1);
+    CHECK(receipt.rune_row == 1);
+    CHECK(receipt.rune_count == 1);
+    CHECK(receipt.append_rune == 1);
+    CHECK(receipt.rune_value == 0x63);
+    CHECK(receipt.rune_symbol_index == 3);
+    CHECK(strcmp(receipt.rune_name, "EE") == 0);
+
+    state.rune_row = 3;
+    state.rune_count = 3;
+    receipt = dm1_v1_spell_panel_enter_rune_pc34(&state, 5);
+    CHECK(receipt.accepted == 1);
+    CHECK(receipt.rune_row == 3);
+    CHECK(receipt.rune_count == 4);
+    CHECK(receipt.rune_value == 0x77);
+    CHECK(strcmp(receipt.rune_name, "SAR") == 0);
+
+    state.rune_count = 4;
+    receipt = dm1_v1_spell_panel_enter_rune_pc34(&state, 0);
+    CHECK(receipt.accepted == 0);
+    CHECK(receipt.append_rune == 0);
+
+    state.rune_count = 1;
+    receipt = dm1_v1_spell_panel_enter_rune_pc34(&state, 6);
+    CHECK(receipt.accepted == 0);
+    CHECK(receipt.rune_value == -1);
+
+    receipt = dm1_v1_spell_panel_clear_pc34(&state);
+    CHECK(receipt.accepted == 1);
+    CHECK(receipt.panel_open == 1);
+    CHECK(receipt.rune_row == 0);
+    CHECK(receipt.rune_count == 0);
+    CHECK(receipt.clear_runes == 1);
+
+    receipt = dm1_v1_spell_panel_close_pc34(&state);
+    CHECK(receipt.accepted == 1);
+    CHECK(receipt.panel_open == 0);
+    CHECK(receipt.clear_runes == 1);
+
+    state.candidate_panel_active = 1;
+    CHECK(dm1_v1_spell_panel_command_allowed_pc34(&state) == 0);
+    CHECK(dm1_v1_spell_panel_open_pc34(&state).accepted == 0);
+    CHECK(dm1_v1_spell_panel_enter_rune_pc34(&state, 0).accepted == 0);
+    CHECK(dm1_v1_spell_panel_clear_pc34(&state).accepted == 0);
+    CHECK(dm1_v1_spell_panel_close_pc34(&state).accepted == 0);
+}
+
 static void test_get_function(void)
 {
     int v;
@@ -215,6 +282,7 @@ int main(void)
     test_accessor_functions();
     test_screen_contract_helpers();
     test_rune_contract_helpers();
+    test_spell_panel_state_receipts();
     test_get_function();
     test_components_non_negative();
     test_run_accepted();
