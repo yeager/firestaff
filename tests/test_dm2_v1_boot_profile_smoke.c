@@ -241,6 +241,7 @@ static void test_enter_requires_assets(void)
 static void test_startup_launch_alloc_missing_data(void)
 {
     DM2_V1_BootStartupLaunch launch;
+    DM2_V1_StartupHostReceipt failure_receipt;
     memset(&launch, 0, sizeof(launch));
     CHECK(dm2_v1_boot_startup_launch_alloc(
               "/tmp/firestaff-dm2-v1-no-assets", &launch) == 0,
@@ -260,6 +261,17 @@ static void test_startup_launch_alloc_missing_data(void)
     CHECK(launch.failure_status != NULL &&
               strcmp(launch.failure_status, "DM2 ASSETS MISSING") == 0,
           "startup launch missing-data failure has host status");
+    memset(&failure_receipt, 0xff, sizeof(failure_receipt));
+    CHECK(dm2_v1_boot_startup_prepare_failure_host_receipt(
+              &launch,
+              &failure_receipt) == 1 &&
+              failure_receipt.input_result ==
+                  DM2_V1_STARTUP_HOST_INPUT_IGNORED &&
+              failure_receipt.status_scope != NULL &&
+              strcmp(failure_receipt.status_scope, "BOOT") == 0 &&
+              failure_receipt.status != NULL &&
+              strcmp(failure_receipt.status, "DM2 ASSETS MISSING") == 0,
+          "startup launch failure receipt is boot-owned and M11-ready");
     dm2_v1_boot_startup_launch_cleanup(&launch);
 }
 
@@ -358,11 +370,16 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
 static void test_startup_host_facts_from_boot_profile(void)
 {
     DM2_V1_BootProfile profile;
+    DM2_V1_BootStartupLaunch launch;
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
     DM2_V1_StartupHostFacts facts;
     DM2_V1_StartupLaunchReceipt launch_receipt;
 
     dm2_v1_boot_profile_init(&profile);
     dm2_v1_boot_set_save_root(&profile, "/tmp/firestaff-dm2-profile-saves");
+    memset(&launch, 0, sizeof(launch));
+    memset(&snapshot, 0, sizeof(snapshot));
+    launch.profile = &profile;
 
     CHECK(dm2_v1_boot_startup_host_facts_from_runtime_state(
               &profile,
@@ -405,6 +422,20 @@ static void test_startup_host_facts_from_boot_profile(void)
               launch_receipt.menu_state_receipt_valid &&
               launch_receipt.host_receipt.status != NULL,
           "DM2 boot builds startup launch receipt from runtime state");
+    snapshot.startup_menu_active = 0;
+    snapshot.startup_save_root = "/tmp/firestaff-dm2-menu-saves";
+    CHECK(dm2_v1_boot_startup_launch_from_launch_snapshot(
+              &launch,
+              &snapshot,
+              &launch_receipt) == 1 &&
+              launch_receipt.host_receipt.status != NULL,
+          "DM2 boot builds startup launch receipt from launch-owned profile");
+    launch.profile = NULL;
+    CHECK(dm2_v1_boot_startup_launch_from_launch_snapshot(
+              &launch,
+              &snapshot,
+              &launch_receipt) == 0,
+          "DM2 boot launch-owned wrapper rejects missing profile");
     CHECK(dm2_v1_boot_startup_launch_from_runtime_state(
               &profile, 0, NULL, 0, 0u, 0, NULL) == 0,
           "DM2 boot startup launch wrapper rejects NULL receipt");

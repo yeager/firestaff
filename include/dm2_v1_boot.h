@@ -6,6 +6,7 @@
 
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
 typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
+struct DM2_V1_StartupHostReceipt;
 struct DM2_V1_SessionState;
 struct DM2_V1_StartupExecution;
 struct DM2_V1_StartupHostActionReceipt;
@@ -201,6 +202,10 @@ void dm2_v1_boot_startup_launch_cleanup(
 const char *dm2_v1_boot_startup_prepare_result_name(
     DM2_V1_BootStartupPrepareResult result);
 
+int dm2_v1_boot_startup_prepare_failure_host_receipt(
+    const DM2_V1_BootStartupLaunch *launch,
+    struct DM2_V1_StartupHostReceipt *out_receipt);
+
 /* Build M11-facing startup facts from boot-owned profile state plus the
  * host's current startup menu snapshot. Keeps save-root fallback/scan roots
  * owned by the DM2 boot layer instead of M11 unpacking the profile. */
@@ -222,6 +227,10 @@ int dm2_v1_boot_startup_launch_from_runtime_state(
     int selected_row,
     DM2_V1_StartupLaunchReceipt *out_receipt);
 int dm2_v1_boot_startup_launch_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_StartupLaunchReceipt *out_receipt);
+int dm2_v1_boot_startup_launch_from_launch_snapshot(
+    const DM2_V1_BootStartupLaunch *launch,
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_StartupLaunchReceipt *out_receipt);
 
@@ -325,6 +334,14 @@ int dm2_v1_boot_startup_execute_draw_commands(
     int command_count,
     const void *executor);
 int dm2_v1_boot_startup_execute_save_path_with_host_receipt(
+    const char *save_path,
+    int (*apply_session)(void *userdata,
+                         const struct DM2_V1_SessionState *session),
+    void *apply_userdata,
+    struct DM2_V1_StartupExecution *out_execution,
+    void *out_direct_resume_receipt);
+int dm2_v1_boot_startup_execute_launch_save_path_with_host_receipt(
+    DM2_V1_BootStartupLaunch *launch,
     const char *save_path,
     int (*apply_session)(void *userdata,
                          const struct DM2_V1_SessionState *session),
