@@ -2,6 +2,9 @@
 
 #include <string.h>
 
+#include "firestaff/dm1/v1/G0492_pc34_compat.h"
+#include "firestaff/dm1/v1/G0493_pc34_compat.h"
+
 enum {
     DM1_MELEE_CREATURE_ATTR_NON_MATERIAL_PC34 = 0x0040
 };
@@ -191,6 +194,57 @@ int dm1_v1_melee_reach_gate_plan_f0402_pc34(
             return 1;
         }
     }
+    return 1;
+}
+
+int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
+    const DM1_MeleeWeaponProfileInputPc34* in,
+    DM1_MeleeWeaponProfilePlanPc34* out) {
+    int actionIndex;
+    int hitProbability;
+    int damageFactor;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    actionIndex = in->actionIndex;
+    hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
+        actionIndex);
+    damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
+        actionIndex);
+    if (hitProbability < 0 || damageFactor < 0) {
+        actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+        hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
+            actionIndex);
+        damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
+            actionIndex);
+    }
+    if (hitProbability < 0 || damageFactor < 0) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->normalizedActionIndex = actionIndex;
+    out->hitProbability = hitProbability;
+    out->damageFactor = damageFactor;
+    if (in->weaponType == COMBAT_ICON_VORPAL_BLADE ||
+        actionIndex == DM1_ACTION_DISRUPT) {
+        hitProbability |= 0x8000;
+        out->hitNonMaterialFlagSet = 1;
+    }
+
+    /* ReDMCSB: MENU.C F0402 lines 1045-1056 reads G0493 hit probability
+     * and G0492 damage factor, sets MASK0x8000_HIT_NON_MATERIAL_CREATURES
+     * for Vorpal Blade or DISRUPT, then calls PROJEXPL.C F0231 with those
+     * action parameters. */
+    out->weaponProfile.weaponType = in->weaponType;
+    out->weaponProfile.weaponClass = in->weaponClass;
+    out->weaponProfile.weaponStrength = in->weaponStrength;
+    out->weaponProfile.kineticEnergy = in->kineticEnergy;
+    out->weaponProfile.hitProbability = hitProbability;
+    out->weaponProfile.damageFactor = damageFactor;
+    out->weaponProfile.skillIndex = in->actionSkillIndex;
+    out->weaponProfile.attributes = in->weaponAttributes;
     return 1;
 }
 

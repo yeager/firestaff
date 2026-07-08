@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0402/F0231 weapon-profile ownership: DM1 melee compat now owns the F0402 action weapon-profile plan from G0492/G0493, including Vorpal Blade and DISRUPT `MASK0x8000_HIT_NON_MATERIAL_CREATURES` flagging before F0231. M10 now only supplies live weapon facts and consumes the DM1 receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0402 pre-F0231 gate ownership: DM1 melee compat now owns the back-row reach gate and DISRUPT-vs-material target gate before F0231. M10 consumes those receipts instead of carrying local F0402 gameplay decisions. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 THROW/D1C runtime gate cleanup: F0407 THROW now preserves the Firestaff internal `CHAMPION_SLOT_ACTION_HAND` enable-slot receipt, fixing the action-row and full-projectile-list THROW runtime failures. DM1 center-door rendering now owns the D1C vertical half-open panel y-shift used by the thieves-eye mask path. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_dm1_v1_center_door_render_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

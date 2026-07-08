@@ -1,5 +1,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
+#include "firestaff/dm1/v1/G0492_pc34_compat.h"
+#include "firestaff/dm1/v1/G0493_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -1181,6 +1183,89 @@ static void test_melee_pre_f0231_gates(void) {
     CHECK_EQ(disruptOut.blocked, 0, "non-DISRUPT action not blocked");
 }
 
+static void test_melee_weapon_profile_plan(void) {
+    DM1_MeleeWeaponProfileInputPc34 in;
+    DM1_MeleeWeaponProfilePlanPc34 out;
+    int chopHit = dm1_v1_graphic560_action_hit_probability_get_pc34(
+        DM1_ACTION_CHOP);
+    int chopDamage = dm1_v1_graphic560_action_damage_factor_get_pc34(
+        DM1_ACTION_CHOP);
+    int meleeHit = dm1_v1_graphic560_action_hit_probability_get_pc34(
+        DM1_ACTION_MELEE);
+    int meleeDamage = dm1_v1_graphic560_action_damage_factor_get_pc34(
+        DM1_ACTION_MELEE);
+    int disruptHit = dm1_v1_graphic560_action_hit_probability_get_pc34(
+        DM1_ACTION_DISRUPT);
+    int disruptDamage = dm1_v1_graphic560_action_damage_factor_get_pc34(
+        DM1_ACTION_DISRUPT);
+
+    memset(&in, 0, sizeof(in));
+    in.weaponType = 12;
+    in.weaponClass = 3;
+    in.weaponStrength = 24;
+    in.kineticEnergy = 18;
+    in.weaponAttributes = 0x55;
+    in.actionIndex = DM1_ACTION_CHOP;
+    in.actionSkillIndex = 6;
+    CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
+                 &in, &out), 1,
+             "CHOP weapon profile builds");
+    CHECK_EQ(out.valid, 1, "CHOP weapon profile valid");
+    CHECK_EQ(out.normalizedActionIndex, DM1_ACTION_CHOP,
+             "CHOP action stays normalized");
+    CHECK_EQ(out.hitProbability, chopHit,
+             "CHOP hit probability from G0493");
+    CHECK_EQ(out.damageFactor, chopDamage,
+             "CHOP damage factor from G0492");
+    CHECK_EQ(out.hitNonMaterialFlagSet, 0,
+             "normal weapon does not set non-material flag");
+    CHECK_EQ(out.weaponProfile.weaponType, 12, "weapon type copied");
+    CHECK_EQ(out.weaponProfile.weaponClass, 3, "weapon class copied");
+    CHECK_EQ(out.weaponProfile.weaponStrength, 24, "weapon strength copied");
+    CHECK_EQ(out.weaponProfile.kineticEnergy, 18, "kinetic energy copied");
+    CHECK_EQ(out.weaponProfile.hitProbability, chopHit,
+             "profile CHOP hit probability");
+    CHECK_EQ(out.weaponProfile.damageFactor, chopDamage,
+             "profile CHOP damage factor");
+    CHECK_EQ(out.weaponProfile.skillIndex, 6, "profile skill index");
+    CHECK_EQ(out.weaponProfile.attributes, 0x55, "profile attributes");
+
+    in.weaponType = COMBAT_ICON_VORPAL_BLADE;
+    CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
+                 &in, &out), 1,
+             "Vorpal weapon profile builds");
+    CHECK_EQ(out.hitNonMaterialFlagSet, 1, "Vorpal sets non-material flag");
+    CHECK_EQ(out.weaponProfile.hitProbability,
+             chopHit | 0x8000,
+             "Vorpal hit probability carries MASK0x8000");
+
+    in.weaponType = 12;
+    in.actionIndex = DM1_ACTION_DISRUPT;
+    CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
+                 &in, &out), 1,
+             "DISRUPT weapon profile builds");
+    CHECK_EQ(out.normalizedActionIndex, DM1_ACTION_DISRUPT,
+             "DISRUPT action normalized");
+    CHECK_EQ(out.hitNonMaterialFlagSet, 1,
+             "DISRUPT sets non-material flag");
+    CHECK_EQ(out.weaponProfile.hitProbability,
+             disruptHit | 0x8000,
+             "DISRUPT hit probability carries MASK0x8000");
+    CHECK_EQ(out.weaponProfile.damageFactor, disruptDamage,
+             "DISRUPT damage factor from G0492");
+
+    in.actionIndex = 999;
+    CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
+                 &in, &out), 1,
+             "invalid action profile falls back");
+    CHECK_EQ(out.normalizedActionIndex, DM1_ACTION_MELEE,
+             "invalid action falls back to MELEE");
+    CHECK_EQ(out.weaponProfile.hitProbability, meleeHit,
+             "fallback hit probability");
+    CHECK_EQ(out.weaponProfile.damageFactor, meleeDamage,
+             "fallback damage factor");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -1212,6 +1297,7 @@ int main(void) {
     test_melee_action_tick_plan();
     test_melee_damage_emission_plan();
     test_melee_pre_f0231_gates();
+    test_melee_weapon_profile_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",
