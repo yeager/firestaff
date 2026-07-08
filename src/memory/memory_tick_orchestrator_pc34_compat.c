@@ -2551,18 +2551,19 @@ static int orch_cmd_attack_f0190_smoke_attack_compat(
 
 static void orch_cmd_attack_create_f0190_death_smoke_compat(
     struct GameWorld_Compat* world,
-    const DM1_MeleeF0231AftermathPlanPc34* plan,
+    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
     int targetDirection,
     int outcome)
 {
-    struct ExplosionCreateInput_Compat create;
+    DM1_MeleeF0190DeathSmokeInputPc34 in;
+    DM1_MeleeF0190DeathSmokePlanPc34 smokePlan;
     struct TimelineEvent_Compat advance;
     int slotIndex = -1;
     int mapIndex;
     int mapX;
     int mapY;
 
-    if (!world || !plan) return;
+    if (!world || !aftermathPlan) return;
     if (outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES &&
         outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
         return;
@@ -2570,24 +2571,21 @@ static void orch_cmd_attack_create_f0190_death_smoke_compat(
 
     orch_cmd_attack_target_square_compat(
         world, targetDirection, &mapIndex, &mapX, &mapY);
-    memset(&create, 0, sizeof(create));
-    create.explosionType = C040_EXPLOSION_SMOKE;
-    create.attack = plan->smokeAttack;
-    create.mapIndex = mapIndex;
-    create.mapX = mapX;
-    create.mapY = mapY;
-    create.cell = plan->smokeCell;
-    create.centered = (create.cell == EXPLOSION_CELL_CENTERED) ? 1 : 0;
-    create.currentTick = (int)world->gameTick;
-    create.ownerKind = PROJECTILE_OWNER_CHAMPION;
-    create.ownerIndex = -1;
-    create.creatorProjectileSlot = -1;
-
-    /* ReDMCSB: GROUP.C F0190 lines ~897-909 creates
-     * C0xFFA8_THING_EXPLOSION_SMOKE with attack 110/190/255 from the
-     * killed creature size, then PROJEXPL.C F0213 schedules its advance. */
+    memset(&in, 0, sizeof(in));
+    memset(&smokePlan, 0, sizeof(smokePlan));
+    in.shouldCreate = 1;
+    in.smokeAttack = aftermathPlan->smokeAttack;
+    in.smokeCell = aftermathPlan->smokeCell;
+    in.mapIndex = mapIndex;
+    in.mapX = mapX;
+    in.mapY = mapY;
+    in.currentTick = (int)world->gameTick;
+    if (!dm1_v1_melee_death_smoke_plan_f0190_pc34(&in, &smokePlan) ||
+        !smokePlan.valid || !smokePlan.shouldCreate) {
+        return;
+    }
     if (F0821_EXPLOSION_Create_Compat(
-            &create, &world->explosions, &slotIndex, &advance)) {
+            &smokePlan.createInput, &world->explosions, &slotIndex, &advance)) {
         (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &advance);
     }
 }

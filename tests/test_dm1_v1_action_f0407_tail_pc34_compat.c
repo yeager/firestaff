@@ -1708,6 +1708,8 @@ static void test_melee_f0231_aftermath_plan(void) {
 static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0231ReactionInputPc34 reactionIn;
     DM1_MeleeF0231ReactionPlanPc34 reactionOut;
+    DM1_MeleeF0190DeathSmokeInputPc34 smokeIn;
+    DM1_MeleeF0190DeathSmokePlanPc34 smokeOut;
     struct CombatResult_Compat resultA;
     struct CombatResult_Compat resultB;
     struct DungeonGroup_Compat groupA;
@@ -1743,6 +1745,49 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0231 killed-all reaction plan builds");
     CHECK_EQ(reactionOut.shouldSchedule, 0,
              "F0231 killed-all suppresses reaction");
+
+    memset(&smokeIn, 0, sizeof(smokeIn));
+    smokeIn.shouldCreate = 1;
+    smokeIn.smokeAttack = 190;
+    smokeIn.smokeCell = 6;
+    smokeIn.mapIndex = 3;
+    smokeIn.mapX = 9;
+    smokeIn.mapY = 10;
+    smokeIn.currentTick = 222;
+    CHECK_EQ(dm1_v1_melee_death_smoke_plan_f0190_pc34(
+                 &smokeIn, &smokeOut), 1,
+             "F0190 death smoke plan builds");
+    CHECK_EQ(smokeOut.valid, 1, "F0190 death smoke valid");
+    CHECK_EQ(smokeOut.shouldCreate, 1, "F0190 death smoke creates");
+    CHECK_EQ(smokeOut.createInput.explosionType, C040_EXPLOSION_SMOKE,
+             "F0190 death smoke type");
+    CHECK_EQ(smokeOut.createInput.attack, 190, "F0190 death smoke attack");
+    CHECK_EQ(smokeOut.createInput.mapIndex, 3, "F0190 death smoke map");
+    CHECK_EQ(smokeOut.createInput.mapX, 9, "F0190 death smoke x");
+    CHECK_EQ(smokeOut.createInput.mapY, 10, "F0190 death smoke y");
+    CHECK_EQ(smokeOut.createInput.cell, 2, "F0190 death smoke cell mask");
+    CHECK_EQ(smokeOut.createInput.centered, 0, "F0190 death smoke side cell");
+    CHECK_EQ(smokeOut.createInput.currentTick, 222,
+             "F0190 death smoke tick");
+    CHECK_EQ(smokeOut.createInput.ownerKind, PROJECTILE_OWNER_CHAMPION,
+             "F0190 death smoke owner kind");
+    CHECK_EQ(smokeOut.createInput.ownerIndex, -1,
+             "F0190 death smoke owner index");
+
+    smokeIn.smokeCell = EXPLOSION_CELL_CENTERED;
+    CHECK_EQ(dm1_v1_melee_death_smoke_plan_f0190_pc34(
+                 &smokeIn, &smokeOut), 1,
+             "F0190 centered death smoke plan builds");
+    CHECK_EQ(smokeOut.createInput.cell, EXPLOSION_CELL_CENTERED,
+             "F0190 death smoke centered cell");
+    CHECK_EQ(smokeOut.createInput.centered, 1,
+             "F0190 death smoke centered flag");
+
+    smokeIn.shouldCreate = 0;
+    CHECK_EQ(dm1_v1_melee_death_smoke_plan_f0190_pc34(
+                 &smokeIn, &smokeOut), 1,
+             "F0190 no-smoke plan builds");
+    CHECK_EQ(smokeOut.shouldCreate, 0, "F0190 no-smoke suppresses create");
 
     memset(&resultA, 0, sizeof(resultA));
     resultA.damageApplied = 30;
