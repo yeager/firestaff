@@ -799,7 +799,6 @@ static int m11_csb_slot_for_m11_inventory_slot(int championSlot)
 
 typedef struct {
     const M11_GameViewState *state;
-    const CSB_V1_BootProfile *profile;
     int framebuffer_width;
     int framebuffer_height;
 } M11_CSB_RuntimeSpriteContext;
@@ -813,7 +812,7 @@ static int m11_csb_viewport_projectile_sprite_drawer(
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
 
-    if (!ctx || !ctx->state || !ctx->profile || !blit ||
+    if (!ctx || !ctx->state || !blit ||
         !screen_pixels || screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
@@ -1006,16 +1005,9 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                         int framebufferWidth,
                                         int framebufferHeight)
 {
-    CSB_V1_BootProfile *profile;
-    CSB_V1_ViewportConfig cfg;
     CSB_V1_ViewportRuntimeDrawerBinding drawer_binding;
     CSB_V1_ViewportRuntimeDrawCounts draw_counts;
-    const CSB_V1_CSBGraphicsM11RuntimePlan *plan;
-    const CSB_V1_CSBGraphicsDatRealCache *cache;
     M11_CSB_RuntimeSpriteContext runtime_sprite_context;
-    uint8_t dungeon_grid[32 * 32];
-    uint8_t custom_background_cell_skins[32 * 32];
-    uint32_t i;
 
     if (!state || !state->csbBootProfile || !framebuffer) {
         return 0;
@@ -1024,28 +1016,8 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
         return 0;
     }
 
-    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
-    if (!profile->runtime.dungeon_handle) {
-        return 0;
-    }
     m11_csb_runtime_overlay_stats_reset(state);
-
-    (void)csb_v1_viewport_build_dungeon_grid(
-        profile->runtime.dungeon_handle,
-        profile->runtime.current_level,
-        dungeon_grid);
-    csb_v1_viewport_init(&cfg);
-    cfg.viewport_pixels = framebuffer;
-    cfg.viewport_stride = framebufferWidth;
-    cfg.dungeon_grid = dungeon_grid;
-    cfg.dungeon_width = 32;
-    cfg.dungeon_height = 32;
-    cfg.wall_set_index = 0;
-    cfg.runtime_profile = &profile->runtime;
-    cfg.runtime_projectiles = &profile->runtime.projectiles;
-    cfg.runtime_explosions = &profile->runtime.explosions;
     runtime_sprite_context.state = state;
-    runtime_sprite_context.profile = profile;
     runtime_sprite_context.framebuffer_width = framebufferWidth;
     runtime_sprite_context.framebuffer_height = framebufferHeight;
     memset(&drawer_binding, 0, sizeof(drawer_binding));
@@ -1064,53 +1036,17 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     drawer_binding.group_sprite_drawer =
         m11_csb_viewport_group_sprite_drawer;
     drawer_binding.group_sprite_user = &runtime_sprite_context;
-    csb_v1_viewport_apply_runtime_drawer_binding(&cfg, &drawer_binding);
-    plan = csb_v1_boot_csbgraphics_m11_plan(profile);
-    cache = csb_v1_boot_csbgraphics_cache(profile);
-    cfg.csbgraphics_plan = plan;
-    cfg.csbgraphics_cache = cache;
-    cfg.custom_background_skin_def_words =
-        csb_v1_boot_csbgraphics_skin_def_words(
-            profile,
-            &cfg.custom_background_skin_def_word_count);
-    if (csb_v1_runtime_custom_background_skin_grid(
-            &profile->runtime,
-            custom_background_cell_skins,
-            (int)sizeof(custom_background_cell_skins),
-            &cfg.custom_background_cell_skin_width,
-            &cfg.custom_background_cell_skin_height,
-            &cfg.custom_background_loaded_level,
-            &cfg.custom_background_default_skin)) {
-        cfg.custom_background_cell_skins = custom_background_cell_skins;
-    }
 
-    /* Source-lock: ReDMCSB DUNVIEW.C F0128 is the CSB viewport draw
-     * boundary; CSBWin Viewport.cpp keeps the same party pose contract.
-     * The CSB adapter shares DM1's 320x200 indexed framebuffer layout,
-     * with the 224x136 view rectangle anchored at y=33. */
-    csb_v1_viewport_render_frame(&cfg,
-                                  profile->runtime.party_dir,
-                                  profile->runtime.party_x,
-                                  profile->runtime.party_y);
-    csb_v1_viewport_runtime_draw_counts_from_config(&cfg, &draw_counts);
-    m11_csb_runtime_overlay_stats_apply(state, &draw_counts);
-    if (plan && plan->ready && cache && cache->loaded) {
-        for (i = 0u; i < plan->planned_count; ++i) {
-            CSB_V1_CSBGraphicsM11Binding binding;
-            if (plan->entries[i].deferred_masked_composite) {
-                continue;
-            }
-            (void)csb_v1_csbgraphics_m11_runtime_plan_apply_entry(
-                plan,
-                cache,
-                plan->entries[i].entry_index,
-                framebuffer,
-                framebufferWidth,
-                framebufferHeight,
-                framebufferWidth,
-                &binding);
-        }
+    if (!csb_v1_boot_render_viewport_frame_pc34(
+            state->csbBootProfile,
+            framebuffer,
+            framebufferWidth,
+            framebufferHeight,
+            &drawer_binding,
+            &draw_counts)) {
+        return 0;
     }
+    m11_csb_runtime_overlay_stats_apply(state, &draw_counts);
     return 1;
 }
 
