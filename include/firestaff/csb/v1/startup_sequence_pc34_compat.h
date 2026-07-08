@@ -558,6 +558,32 @@ typedef struct CSB_V1_StartupHostFacts_PC34 {
     const void *boot_profile;
 } CSB_V1_StartupHostFacts_PC34;
 
+void csb_v1_startup_host_facts_init_pc34(
+    CSB_V1_StartupHostFacts_PC34 *facts);
+int csb_v1_startup_host_facts_from_runtime_state_pc34(
+    CSB_V1_StartupHostFacts_PC34 *facts,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const void *boot_profile);
+
 #define CSB_V1_STARTUP_PATH_CAP_PC34 512
 #define CSB_V1_STARTUP_PROMPT_CAP_PC34 192
 

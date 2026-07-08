@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup host-facts wrapper: CSB startup-sequence now owns startup host-facts construction from runtime state, including entrance door-step count. M11 no longer manually fills every CSB startup host-facts field.
+
 - ✅ 2026-07-08 DM2 direct resume wrapper: DM2 startup now owns direct save-path resume execution through session apply and host receipt generation. M11 no longer interprets DM2 resume execution/status strings or emits a separate resumed receipt.
 
 - ✅ 2026-07-08 external archive hash scan: shared game-data scanner now recognizes 7z/RAR/ARJ/ARC/CAB suffixes plus 7z/RAR signatures, hash-scans entries with local 7zz/7z when available, and materializes virtual `archive::entry` paths for runtime cache use. Regression coverage added for 7z scan/extract.

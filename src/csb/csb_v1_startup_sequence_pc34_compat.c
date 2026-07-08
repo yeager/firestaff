@@ -24,8 +24,71 @@ enum {
     CSB_V1_FALLBACK_BLACK_PC34 = 0,
     CSB_V1_FALLBACK_YELLOW_PC34 = 14,
     CSB_V1_FALLBACK_LIGHT_GRAY_PC34 = 2,
-    CSB_V1_FALLBACK_DARK_GRAY_PC34 = 12
+    CSB_V1_FALLBACK_DARK_GRAY_PC34 = 12,
+    CSB_V1_ENTRANCE_DOOR_STEP_COUNT_PC34 = 31
 };
+
+void csb_v1_startup_host_facts_init_pc34(
+    CSB_V1_StartupHostFacts_PC34 *facts)
+{
+    if (!facts) {
+        return;
+    }
+    memset(facts, 0, sizeof(*facts));
+}
+
+int csb_v1_startup_host_facts_from_runtime_state_pc34(
+    CSB_V1_StartupHostFacts_PC34 *facts,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const void *boot_profile)
+{
+    if (!facts) {
+        return 0;
+    }
+    csb_v1_startup_host_facts_init_pc34(facts);
+    facts->title_active = title_active;
+    facts->title_frame = title_frame;
+    facts->title_source_step = title_source_step;
+    facts->entrance_active = entrance_active;
+    facts->entrance_source_step = entrance_source_step;
+    facts->entrance_dismissed = entrance_dismissed;
+    facts->credits_active = credits_active;
+    facts->credits_remaining_ticks = credits_remaining_ticks;
+    facts->opening_active = opening_active;
+    facts->opening_delay_ticks = opening_delay_ticks;
+    facts->opening_step = opening_step;
+    facts->pending_command = pending_command;
+    facts->entrance_frame = entrance_frame;
+    facts->utility_overlay_active = utility_overlay_active;
+    facts->utility_selected_action_index = utility_selected_action_index;
+    facts->utility_imported_champion_count = utility_imported_champion_count;
+    facts->utility_preview_active = utility_preview_active;
+    facts->utility_prompt = utility_prompt;
+    facts->door_step_count = CSB_V1_ENTRANCE_DOOR_STEP_COUNT_PC34;
+    facts->resume_available = resume_available ? 1 : 0;
+    facts->resume_path = resume_path;
+    facts->boot_profile = boot_profile;
+    return 1;
+}
 
 const char* csb_v1_startup_stage_name_pc34(CSB_V1_StartupStage_PC34 stage)
 {

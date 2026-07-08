@@ -2374,12 +2374,48 @@ int main(void)
     {
         CSB_V1_StartupHostFacts_PC34 facts;
         memset(&facts, 0, sizeof(facts));
-        facts.title_active = 1;
-        facts.title_frame = 7;
-        facts.title_source_step = 2;
-        facts.entrance_active = 1;
-        facts.entrance_source_step =
-            CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34;
+        check(csb_v1_startup_host_facts_from_runtime_state_pc34(
+                  &facts,
+                  1,
+                  7,
+                  2,
+                  1,
+                  CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+                  3,
+                  1,
+                  2,
+                  4,
+                  1,
+                  "UTILITY",
+                  1,
+                  "/tmp/csb-save.dat",
+                  (const void *)0x1234) &&
+                  facts.title_active == 1 &&
+                  facts.title_frame == 7 &&
+                  facts.entrance_source_step ==
+                      CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34 &&
+                  facts.pending_command ==
+                      CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+                  facts.entrance_frame == 3 &&
+                  facts.utility_overlay_active == 1 &&
+                  facts.utility_selected_action_index == 2 &&
+                  facts.utility_imported_champion_count == 4 &&
+                  facts.utility_preview_active == 1 &&
+                  facts.utility_prompt &&
+                  strcmp(facts.utility_prompt, "UTILITY") == 0 &&
+                  facts.door_step_count > 0 &&
+                  facts.resume_available == 1 &&
+                  facts.resume_path &&
+                  strcmp(facts.resume_path, "/tmp/csb-save.dat") == 0 &&
+                  facts.boot_profile == (const void *)0x1234,
+              "startup host facts wrapper owns M11 runtime-state copy contract");
         memset(animation, 0, sizeof(animation));
         animation_active = -1;
         title_frame = -1;

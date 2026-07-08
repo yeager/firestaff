@@ -2507,45 +2507,33 @@ static void m11_csb_startup_host_facts(
     if (!facts) {
         return;
     }
-    memset(facts, 0, sizeof(*facts));
+    csb_v1_startup_host_facts_init_pc34(facts);
     if (!state) {
         return;
     }
-    facts->title_active = state->csbState.startup_title_active;
-    facts->title_frame = state->csbState.startup_title_frame;
-    facts->title_source_step = state->csbState.startup_title_source_step;
-    facts->entrance_active = state->csbState.startup_entrance_active;
-    facts->entrance_source_step =
-        state->csbState.startup_entrance_source_step;
-    facts->entrance_dismissed =
-        state->csbState.startup_entrance_dismissed;
-    facts->credits_active =
-        state->csbState.startup_entrance_credits_active;
-    facts->credits_remaining_ticks =
-        state->csbState.startup_entrance_credits_remaining_ticks;
-    facts->opening_active =
-        state->csbState.startup_entrance_opening_active;
-    facts->opening_delay_ticks =
-        state->csbState.startup_entrance_opening_delay_ticks;
-    facts->opening_step = state->csbState.startup_entrance_opening_step;
-    facts->pending_command =
-        state->csbState.startup_entrance_pending_command;
-    facts->entrance_frame = state->csbState.startup_entrance_frame;
-    facts->utility_overlay_active =
-        state->csbState.startup_import_available;
-    facts->utility_selected_action_index =
-        state->csbState.startup_import_selected_action_index;
-    facts->utility_imported_champion_count =
-        state->csbState.startup_import_champion_count;
-    facts->utility_preview_active =
-        state->csbState.startup_import_preview_active;
-    facts->utility_prompt = state->csbState.startup_import_utility_prompt;
-    facts->door_step_count =
-        (int)ENTRANCE_Compat_GetDoorAnimationStepCount();
-    facts->resume_available =
-        state->csbState.startup_entrance_resume_available ? 1 : 0;
-    facts->resume_path = state->csbState.startup_entrance_resume_path;
-    facts->boot_profile = state->csbBootProfile;
+    (void)csb_v1_startup_host_facts_from_runtime_state_pc34(
+        facts,
+        state->csbState.startup_title_active,
+        state->csbState.startup_title_frame,
+        state->csbState.startup_title_source_step,
+        state->csbState.startup_entrance_active,
+        state->csbState.startup_entrance_source_step,
+        state->csbState.startup_entrance_dismissed,
+        state->csbState.startup_entrance_credits_active,
+        state->csbState.startup_entrance_credits_remaining_ticks,
+        state->csbState.startup_entrance_opening_active,
+        state->csbState.startup_entrance_opening_delay_ticks,
+        state->csbState.startup_entrance_opening_step,
+        state->csbState.startup_entrance_pending_command,
+        state->csbState.startup_entrance_frame,
+        state->csbState.startup_import_available,
+        state->csbState.startup_import_selected_action_index,
+        state->csbState.startup_import_champion_count,
+        state->csbState.startup_import_preview_active,
+        state->csbState.startup_import_utility_prompt,
+        state->csbState.startup_entrance_resume_available,
+        state->csbState.startup_entrance_resume_path,
+        state->csbBootProfile);
 }
 
 static int m11_csb_startup_build_render_plan(
