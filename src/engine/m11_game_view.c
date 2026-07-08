@@ -24603,17 +24603,6 @@ static int m11_count_source_action_menu_rows(const unsigned char actions[3]) {
     return 3;
 }
 
-/* DM1 F0407 melee-contact action gate.  ReDMCSB dispatches the F0402/F0231
- * melee block for actions with G0492 damage factors, except BLOCK: BLOCK has
- * G0492=15 but no F0402 case and only runs the common F0407 tail.  PARRY does
- * enter F0402 and can fail/halve its common tail on an empty front square.
- *
- * Source anchors: ReDMCSB MENU.C G0492 lines 202-245 and F0407 lines
- * 1308-1342. */
-static int m11_action_is_melee_contact(unsigned char actionIndex) {
-    return dm1_v1_action_is_melee_contact_f0407_pc34((int)actionIndex);
-}
-
 static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
                                                  int championIndex,
                                                  int cost) {
@@ -24851,7 +24840,8 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
                                       int championIndex,
                                       unsigned char actionIndex,
                                       int experience) {
-    DM1_ActionXpRoute route;
+    DM1_ActionXpAwardInputPc34 in;
+    DM1_ActionXpAwardPlanPc34 plan;
     int levelBefore = 0;
     int levelAfter = 0;
     int baseIdx;
@@ -24860,25 +24850,26 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
     if (championIndex >= state->world.party.championCount) return;
     if (!state->world.party.champions[championIndex].present) return;
-    if (experience <= 0) return;
-    if (!dm1_v1_action_xp_route((int)actionIndex, &route) || !route.valid) {
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = (int)actionIndex;
+    in.experienceGain = experience;
+    if (!dm1_v1_action_xp_award_plan_f0407_pc34(&in, &plan) ||
+        !plan.valid || !plan.shouldAward) {
         return;
     }
-    if (route.skillIndex < 0 || route.skillIndex >= LIFECYCLE_SKILL_COUNT) {
-        return;
-    }
+    if (plan.skillIndex < 0 || plan.skillIndex >= LIFECYCLE_SKILL_COUNT) return;
 
     /* ReDMCSB MENU.C F0407 lines 1254-1255 and 1623-1624 award the
      * G0497 action XP to the G0496 skill through F0304 after the action
      * switch, with callers adjusting experience before the common tail. */
     if (F0849_LIFECYCLE_AddSkillExperience_Compat(
             &state->world.lifecycle.champions[championIndex],
-            route.skillIndex, experience,
+            plan.skillIndex, plan.experienceGain,
             state->world.party.mapIndex,
             state->world.gameTick,
             state->world.lifecycle.lastCreatureAttackTime,
             &levelBefore, &levelAfter)) {
-        baseIdx = route.baseSkillIndex;
+        baseIdx = plan.baseSkillIndex;
         if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT && levelAfter > 0) {
             state->world.party.champions[championIndex].skillLevels[baseIdx] =
                 (unsigned short)levelAfter;
@@ -30003,6 +29994,8 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     int cancelActionDisable = 0;
     DM1_ActionF0407PreludeInputPc34 preludeIn;
     DM1_ActionF0407PreludePlanPc34 preludePlan;
+    DM1_ActionDirectDispatchInputPc34 dispatchIn;
+    DM1_ActionDirectDispatchPlanPc34 dispatchPlan;
     if (!state || !state->active) return 0;
     if (state->candidateMirrorPanelActive) {
         /* ReDMCSB MENU.C F0390 lines 751-759: while
@@ -30019,12 +30012,11 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     if (!champ->present || champ->hp.current == 0) return 0;
     if (actionIndex < 0 || actionIndex >= 44) return 0;
     if (state->actionDisabledTicks[championIndex] > 0) return 0;
-    /* Melee-contact actions are handled through the CMD_ATTACK path via
-     * M11_GameView_TriggerActionRow.  PARRY is the direct-helper exception:
-     * ReDMCSB F0407 routes it through F0402, but the bounded helper needs the
-     * empty-front failure tail for source-lock regression coverage. */
-    if (m11_action_is_melee_contact((unsigned char)actionIndex) &&
-        actionIndex != DM1_ACTION_PARRY) {
+    memset(&dispatchIn, 0, sizeof(dispatchIn));
+    dispatchIn.actionIndex = actionIndex;
+    if (!dm1_v1_action_direct_dispatch_plan_f0407_pc34(
+            &dispatchIn, &dispatchPlan) ||
+        !dispatchPlan.valid || !dispatchPlan.mayDispatchDirect) {
         return 0;
     }
 
@@ -30071,7 +30063,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
         (void)m11_apply_action_completion_plan_f0407(
             state, championIndex, (unsigned char)actionIndex, performed,
             cancelActionDisable,
-            actionIndex == DM1_ACTION_PARRY && !performed,
+            dispatchPlan.allowsParryEmptyFrontRegression && !performed,
             &actionExperienceGain,
             (unsigned char)preludePlan.disabledTicks);
     }

@@ -134,6 +134,65 @@ static void test_stamina_and_special_flags(void) {
              "F0325 max clamp keeps health");
 }
 
+static void test_xp_award_and_direct_dispatch_plans(void) {
+    DM1_ActionXpAwardInputPc34 xpIn;
+    DM1_ActionXpAwardPlanPc34 xpOut;
+    DM1_ActionDirectDispatchInputPc34 dispatchIn;
+    DM1_ActionDirectDispatchPlanPc34 dispatchOut;
+
+    memset(&xpIn, 0, sizeof(xpIn));
+    xpIn.actionIndex = DM1_ACTION_CHOP;
+    xpIn.experienceGain = 10;
+    CHECK_EQ(dm1_v1_action_xp_award_plan_f0407_pc34(&xpIn, &xpOut), 1,
+             "CHOP XP award plan builds");
+    CHECK_EQ(xpOut.valid, 1, "CHOP XP award valid");
+    CHECK_EQ(xpOut.shouldAward, 1, "CHOP XP should award");
+    CHECK_EQ(xpOut.skillIndex, 6, "CHOP XP skill route");
+    CHECK_EQ(xpOut.baseSkillIndex, 0, "CHOP XP base skill");
+    CHECK_EQ(xpOut.experienceGain, 10, "CHOP XP copied");
+
+    xpIn.experienceGain = 0;
+    CHECK_EQ(dm1_v1_action_xp_award_plan_f0407_pc34(&xpIn, &xpOut), 1,
+             "zero XP award plan builds");
+    CHECK_EQ(xpOut.shouldAward, 0, "zero XP skips award");
+    CHECK_EQ(xpOut.experienceGain, 0, "zero XP clamped");
+
+    xpIn.actionIndex = DM1_GRAPHIC560_ACTION_COUNT;
+    xpIn.experienceGain = 10;
+    CHECK_EQ(dm1_v1_action_xp_award_plan_f0407_pc34(&xpIn, &xpOut), 0,
+             "invalid XP award action rejected");
+
+    memset(&dispatchIn, 0, sizeof(dispatchIn));
+    dispatchIn.actionIndex = DM1_ACTION_HEAL;
+    CHECK_EQ(dm1_v1_action_direct_dispatch_plan_f0407_pc34(
+                 &dispatchIn, &dispatchOut), 1,
+             "HEAL direct dispatch plan builds");
+    CHECK_EQ(dispatchOut.mayDispatchDirect, 1,
+             "HEAL may dispatch directly");
+    CHECK_EQ(dispatchOut.isMeleeContact, 0,
+             "HEAL not melee contact");
+
+    dispatchIn.actionIndex = DM1_ACTION_CHOP;
+    CHECK_EQ(dm1_v1_action_direct_dispatch_plan_f0407_pc34(
+                 &dispatchIn, &dispatchOut), 1,
+             "CHOP direct dispatch plan builds");
+    CHECK_EQ(dispatchOut.isMeleeContact, 1,
+             "CHOP is melee contact");
+    CHECK_EQ(dispatchOut.mayDispatchDirect, 0,
+             "CHOP direct dispatch rejected");
+
+    dispatchIn.actionIndex = DM1_ACTION_PARRY;
+    CHECK_EQ(dm1_v1_action_direct_dispatch_plan_f0407_pc34(
+                 &dispatchIn, &dispatchOut), 1,
+             "PARRY direct dispatch plan builds");
+    CHECK_EQ(dispatchOut.isMeleeContact, 1,
+             "PARRY is melee contact");
+    CHECK_EQ(dispatchOut.mayDispatchDirect, 1,
+             "PARRY direct dispatch kept for regression");
+    CHECK_EQ(dispatchOut.allowsParryEmptyFrontRegression, 1,
+             "PARRY empty-front regression allowed");
+}
+
 static void test_tail_adjustments(void) {
     DM1_ActionF0407TailAdjustInputPc34 in;
     DM1_ActionF0407TailAdjustPc34 out;
@@ -955,6 +1014,7 @@ static void test_invalid_action(void) {
 int main(void) {
     test_melee_contact_gate();
     test_stamina_and_special_flags();
+    test_xp_award_and_direct_dispatch_plans();
     test_tail_adjustments();
     test_action_state_plans();
     test_f0405_charge_plan();
