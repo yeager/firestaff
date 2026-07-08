@@ -375,6 +375,21 @@ int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
     void *apply_userdata,
     DM2_V1_StartupExecution *out_execution,
     DM2_V1_StartupHostActionReceipt *out_receipt);
+int dm2_v1_startup_execute_firestaff_input_from_host_facts_with_receipt(
+    const DM2_V1_StartupHostFacts *facts,
+    int menu_input,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt);
+int dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
+    const DM2_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt);
 void dm2_v1_startup_host_receipt_clear(
     DM2_V1_StartupHostReceipt *receipt);
 int dm2_v1_startup_host_receipt_from_apply_receipt(

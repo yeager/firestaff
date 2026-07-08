@@ -703,41 +703,21 @@ static void m11_dm2_startup_apply_mode_update(
     }
 }
 
-static M11_GameInputResult m11_dm2_startup_apply_action(
+static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
     M11_GameViewState *state,
-    const DM2_V1_StartupAction *action);
-
-static M11_GameInputResult m11_dm2_startup_apply_action(
-    M11_GameViewState *state,
-    const DM2_V1_StartupAction *action)
+    const DM2_V1_StartupHostActionReceipt *action_receipt)
 {
-    DM2_V1_BootProfile *profile;
-    DM2_V1_StartupExecution execution;
-    DM2_V1_StartupHostFacts facts;
-    DM2_V1_StartupHostActionReceipt action_receipt;
     const DM2_V1_StartupHostReceipt *host_receipt;
 
-    if (!state || !state->dm2State.startup_menu_active ||
-        !state->dm2BootProfile || !action) {
+    if (!state || !action_receipt) {
         return M11_GAME_INPUT_IGNORED;
     }
-    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-    m11_dm2_startup_host_facts(state, profile, &facts);
-    if (!dm2_v1_startup_execute_action_from_host_facts_with_receipt(
-            action,
-            &facts,
-            m11_dm2_startup_apply_session_callback,
-            state,
-            &execution,
-            &action_receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    host_receipt = &action_receipt.host_receipt;
+    host_receipt = &action_receipt->host_receipt;
     m11_dm2_startup_apply_mode_update(state, &host_receipt->mode_update);
-    if (action_receipt.menu_state_receipt_valid) {
+    if (action_receipt->menu_state_receipt_valid) {
         m11_dm2_startup_state_receipt_to_m11(
             state,
-            &action_receipt.menu_state_receipt);
+            &action_receipt->menu_state_receipt);
     }
     if (host_receipt->status_scope || host_receipt->status) {
         m11_set_status(state,
@@ -756,31 +736,63 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
     return M11_GAME_INPUT_IGNORED;
 }
 
+static M11_GameInputResult m11_dm2_startup_apply_action(
+    M11_GameViewState *state,
+    const DM2_V1_StartupAction *action);
+
+static M11_GameInputResult m11_dm2_startup_apply_action(
+    M11_GameViewState *state,
+    const DM2_V1_StartupAction *action)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_StartupExecution execution;
+    DM2_V1_StartupHostFacts facts;
+    DM2_V1_StartupHostActionReceipt action_receipt;
+
+    if (!state || !state->dm2State.startup_menu_active ||
+        !state->dm2BootProfile || !action) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
+    m11_dm2_startup_host_facts(state, profile, &facts);
+    if (!dm2_v1_startup_execute_action_from_host_facts_with_receipt(
+            action,
+            &facts,
+            m11_dm2_startup_apply_session_callback,
+            state,
+            &execution,
+            &action_receipt)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
+}
+
 static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
     const DM2_V1_BootProfile *profile;
     DM2_V1_StartupHostFacts facts;
-    DM2_V1_StartupMenuStateReceipt receipt;
-    DM2_V1_StartupAction action;
+    DM2_V1_StartupExecution execution;
+    DM2_V1_StartupHostActionReceipt action_receipt;
 
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
     m11_dm2_startup_host_facts(state, profile, &facts);
-    if (!dm2_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
-            &receipt,
+    if (!dm2_v1_startup_execute_firestaff_input_from_host_facts_with_receipt(
             &facts,
             (int)input,
-            &action)) {
+            m11_dm2_startup_apply_session_callback,
+            state,
+            &execution,
+            &action_receipt)) {
         return input == M12_MENU_INPUT_NONE
                    ? M11_GAME_INPUT_IGNORED
                    : M11_GAME_INPUT_REDRAW;
     }
-    m11_dm2_startup_state_receipt_to_m11(state, &receipt);
-    return m11_dm2_startup_apply_action(state, &action);
+    return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
 }
 
 static int m11_csb_mapped_inventory_slot(int csb_slot)
@@ -14539,8 +14551,8 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
 {
     const DM2_V1_BootProfile *profile;
     DM2_V1_StartupHostFacts facts;
-    DM2_V1_StartupMenuStateReceipt receipt;
-    DM2_V1_StartupAction action;
+    DM2_V1_StartupExecution execution;
+    DM2_V1_StartupHostActionReceipt action_receipt;
 
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
@@ -14549,16 +14561,17 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
     m11_dm2_startup_host_facts(state, profile, &facts);
-    if (!dm2_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
-            &receipt,
+    if (!dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
             &facts,
             x,
             y,
-            &action)) {
+            m11_dm2_startup_apply_session_callback,
+            state,
+            &execution,
+            &action_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_dm2_startup_state_receipt_to_m11(state, &receipt);
-    return m11_dm2_startup_apply_action(state, &action);
+    return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
 }
 
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state) {
