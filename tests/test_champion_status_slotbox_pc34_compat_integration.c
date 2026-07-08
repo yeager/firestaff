@@ -103,6 +103,25 @@ int main(void) {
             if (CHAMPION_Compat_StatusShieldBorderGraphics(0, 5, 0, gfx) != 1 ||
                 gfx[0] != CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SPELLSHIELD) ok = 0;
         }
+        if (CHAMPION_Compat_StatusNameColor(0, 10, 0) != -1) ok = 0;
+        if (CHAMPION_Compat_StatusNameColor(1, 0, 0) !=
+            CHAMPION_STATUS_COMPAT_COLOR_LIGHTEST_GRAY) ok = 0;
+        if (CHAMPION_Compat_StatusNameColor(1, 10, 1) !=
+            CHAMPION_STATUS_COMPAT_COLOR_YELLOW) ok = 0;
+        if (CHAMPION_Compat_StatusNameColor(1, 10, 0) !=
+            CHAMPION_STATUS_COMPAT_COLOR_GOLD) ok = 0;
+        if (CHAMPION_Compat_StatusNameClearColor() !=
+            CHAMPION_STATUS_COMPAT_COLOR_DARK_GRAY_CLEAR) ok = 0;
+        if (CHAMPION_Compat_StatusBoxFillColor() !=
+            CHAMPION_STATUS_COMPAT_COLOR_DARKEST_GRAY) ok = 0;
+        if (CHAMPION_Compat_StatusBoxGraphicId() !=
+            CHAMPION_STATUS_COMPAT_GFX_STATUS_BOX) ok = 0;
+        if (CHAMPION_Compat_DeadStatusBoxGraphicId() !=
+            CHAMPION_STATUS_COMPAT_GFX_STATUS_BOX_DEAD) ok = 0;
+        if (CHAMPION_Compat_StatusBoxBaseGraphic(0, 10) != 0) ok = 0;
+        if (CHAMPION_Compat_StatusBoxBaseGraphic(1, 10) != 0) ok = 0;
+        if (CHAMPION_Compat_StatusBoxBaseGraphic(1, 0) !=
+            CHAMPION_STATUS_COMPAT_GFX_STATUS_BOX_DEAD) ok = 0;
     }
 
     if (CHAMPION_Compat_GetStatusNameBoxCount() != 4u) ok = 0;

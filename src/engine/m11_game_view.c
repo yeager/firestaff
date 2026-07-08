@@ -33259,33 +33259,25 @@ int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
 
 int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
                                       int championSlot) {
+    const struct ChampionState_Compat* champ;
     if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
         championSlot >= state->world.party.championCount ||
         !state->world.party.champions[championSlot].present) {
         return -1;
     }
-    /* CHAMDRAW.C F0292: dead status boxes print the champion name in
-     * C13 lightest gray.  Living leader name is C11 yellow; other
-     * living champions are C09 gold. */
-    if (state->world.party.champions[championSlot].hp.current == 0) {
-        return M11_COLOR_SILVER;
-    }
-    return (championSlot == state->world.party.activeChampionIndex)
-        ? M11_COLOR_YELLOW
-        : M11_COLOR_ORANGE;
+    champ = &state->world.party.champions[championSlot];
+    return CHAMPION_Compat_StatusNameColor(
+        (int)champ->present,
+        (int)champ->hp.current,
+        championSlot == state->world.party.activeChampionIndex);
 }
 
 int M11_GameView_GetV1StatusNameClearColor(void) {
-    /* CHAMDRAW.C F0292 clears C159+n with C01_COLOR_DARK_GRAY before
-     * drawing the centered name into child zone C163+n.  In the DM PC
-     * VGA palette used by M11, C01 is the gray slot. */
-    return M11_COLOR_GRAY;
+    return CHAMPION_Compat_StatusNameClearColor();
 }
 
 int M11_GameView_GetV1StatusBoxFillColor(void) {
-    /* CHAMDRAW.C F0292 clears the live champion status box with
-     * C12_COLOR_DARKEST_GRAY before drawing name, bars, and hands. */
-    return M11_COLOR_DARK_GRAY;
+    return CHAMPION_Compat_StatusBoxFillColor();
 }
 
 int M11_GameView_GetV1StatusNameClearZoneId(int championSlot) {
@@ -33371,11 +33363,11 @@ int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
 }
 
 int M11_GameView_GetV1StatusBoxGraphicId(void) {
-    return M11_GFX_STATUS_BOX;
+    return CHAMPION_Compat_StatusBoxGraphicId();
 }
 
 int M11_GameView_GetV1DeadStatusBoxGraphicId(void) {
-    return M11_GFX_STATUS_BOX_DEAD;
+    return CHAMPION_Compat_DeadStatusBoxGraphicId();
 }
 
 int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
@@ -33386,8 +33378,9 @@ int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
         return 0;
     }
     champ = &state->world.party.champions[championSlot];
-    if (!champ->present) return 0;
-    return champ->hp.current == 0 ? M11_GameView_GetV1DeadStatusBoxGraphicId() : 0;
+    return CHAMPION_Compat_StatusBoxBaseGraphic(
+        (int)champ->present,
+        (int)champ->hp.current);
 }
 
 int M11_GameView_GetV1PartyShieldBorderGraphicId(void) {
