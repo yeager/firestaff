@@ -18,7 +18,10 @@ enum {
     DM1_THROW_WEAPON_XP_PC34 = 4,
     DM1_JUNK_WATERSKIN_PC34 = 1,
     DM1_POTION_VEN_PC34 = 3,
-    DM1_POTION_FUL_BOMB_PC34 = 19
+    DM1_POTION_FUL_BOMB_PC34 = 19,
+    DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34 = 11,
+    DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34 = 0xFF,
+    DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34 = 1000
 };
 
 typedef struct {
@@ -88,6 +91,15 @@ int dm1_v1_projectile_associated_thing_disposition_pc34(
     int associatedThingMovedToGroup,
     int potionCount,
     DM1_ProjectileAssociatedThingDispositionPc34* outDisposition);
+int dm1_v1_group_creature_index_for_cell_pc34(
+    const struct DungeonGroup_Compat* group,
+    int targetCell);
+int dm1_v1_black_flame_fireball_heal_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    const struct DungeonGroup_Compat* group,
+    int* outSlotIndex,
+    int* outNewHealth);
 
 #ifdef __cplusplus
 }

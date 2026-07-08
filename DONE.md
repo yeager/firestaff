@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 projectile group-cell and Black Flame heal ownership: DM1 V1 throw/shoot compat now owns projectile target-cell selection inside DungeonGroup cell masks and the Black Flame fireball-heal decision/cap. M11 keeps only group lookup, HP writeback, raw record sync, and logging. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 projectile associated-thing disposition ownership: DM1 V1 throw/shoot compat now owns the pure disposition model for projectile-associated things: thrown potion consumption, no-op transfer-to-group, no-op explosion/empty payloads, and Projectile.Slot materialisation with source cell bits. M11 keeps only object-chain mutation. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 projectile impact decision ownership: DM1 V1 throw/shoot compat now owns pure projectile-impact decisions for DM1 log names, source sound selection, silent spent lightning/poison bolts, explosion sound routing, and sharp thrown weapon types kept by creatures. M11 consumes those helpers while keeping scheduling/logging/state mutation local. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

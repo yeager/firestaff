@@ -27161,24 +27161,6 @@ static int m11_materialize_projectile_associated_thing(
     return 1;
 }
 
-static int m11_find_group_creature_index_for_cell(
-    const struct DungeonGroup_Compat* group,
-    int targetCell)
-{
-    int i;
-    if (!group) return -1;
-    if (group->count == 0 || group->cells == DM1_SINGLE_CENTERED_CREATURE_CELL) {
-        return group->health[0] ? 0 : -1;
-    }
-    for (i = 0; i <= (int)group->count && i < 4; ++i) {
-        int cell;
-        if (group->health[i] == 0) continue;
-        cell = (int)((group->cells >> (i * 2)) & 0x03u);
-        if (cell == (targetCell & 3)) return i;
-    }
-    return -1;
-}
-
 static int m11_maybe_heal_black_flame_from_fireball(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile,
@@ -27190,8 +27172,8 @@ static int m11_maybe_heal_black_flame_from_fireball(
     unsigned short groupThing;
     int groupIndex;
     struct DungeonGroup_Compat* group;
-    int slotIndex;
-    int healed;
+    int slotIndex = -1;
+    int healed = 0;
     if (!state || !projectile || !result || !state->world.things) return 0;
     if (result->resultKind != PROJECTILE_RESULT_HIT_CREATURE ||
         !result->emittedCombatAction) {
@@ -27210,17 +27192,10 @@ static int m11_maybe_heal_black_flame_from_fireball(
         return 0;
     }
     group = &state->world.things->groups[groupIndex];
-    if (group->creatureType != CREATURE_TYPE_BLACK_FLAME) return 0;
-
-    slotIndex = m11_find_group_creature_index_for_cell(
-        group, result->outAction.targetCell);
-    if (slotIndex < 0) return 0;
-
-    /* ReDMCSB PROJEXPL.C F0217 lines 529-531 heals Black Flame on
-     * fireball impact up to 1000 HP, then jumps directly to projectile
-     * deletion before normal damage/explosion handling. */
-    healed = (int)group->health[slotIndex] + result->outAction.rawAttackValue;
-    if (healed > 1000) healed = 1000;
+    if (!dm1_v1_black_flame_fireball_heal_pc34(
+            projectile, result, group, &slotIndex, &healed)) {
+        return 0;
+    }
     group->health[slotIndex] = (unsigned short)healed;
     m11_write_raw_group_record(state->world.things, groupIndex);
     m11_log_event(state, M11_COLOR_ORANGE,
@@ -27760,7 +27735,7 @@ static void m11_projectile_apply_impact(
                 int slotI;
                 memset(&res, 0, sizeof(res));
                 res.damageApplied = r->outAction.rawAttackValue;
-                slotI = m11_find_group_creature_index_for_cell(
+                slotI = dm1_v1_group_creature_index_for_cell_pc34(
                     g, r->outAction.targetCell);
                 if (slotI >= 0) {
                         int originalCreatureType = (int)g->creatureType;

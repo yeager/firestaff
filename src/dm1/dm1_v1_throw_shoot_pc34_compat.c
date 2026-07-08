@@ -369,3 +369,56 @@ int dm1_v1_projectile_associated_thing_disposition_pc34(
                          (unsigned short)((projectile->cell & 0x03) << 14));
     return 1;
 }
+
+int dm1_v1_group_creature_index_for_cell_pc34(
+    const struct DungeonGroup_Compat* group,
+    int targetCell) {
+    int i;
+    if (!group) return -1;
+    if (group->count == 0 ||
+        group->cells == DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34) {
+        return group->health[0] ? 0 : -1;
+    }
+    for (i = 0; i <= (int)group->count && i < 4; ++i) {
+        int cell;
+        if (group->health[i] == 0) continue;
+        cell = (int)((group->cells >> (i * 2)) & 0x03u);
+        if (cell == (targetCell & 3)) return i;
+    }
+    return -1;
+}
+
+int dm1_v1_black_flame_fireball_heal_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    const struct DungeonGroup_Compat* group,
+    int* outSlotIndex,
+    int* outNewHealth) {
+    int slotIndex;
+    int healed;
+    if (outSlotIndex) *outSlotIndex = -1;
+    if (outNewHealth) *outNewHealth = 0;
+    if (!projectile || !result || !group) return 0;
+    if (result->resultKind != PROJECTILE_RESULT_HIT_CREATURE ||
+        !result->emittedCombatAction) {
+        return 0;
+    }
+    if (projectile->projectileSubtype != PROJECTILE_SUBTYPE_FIREBALL) return 0;
+    if (group->creatureType != DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34) {
+        return 0;
+    }
+
+    slotIndex = dm1_v1_group_creature_index_for_cell_pc34(
+        group, result->outAction.targetCell);
+    if (slotIndex < 0) return 0;
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 529-531 heals Black Flame on
+     * fireball impact up to 1000 HP and skips normal damage/explosion. */
+    healed = (int)group->health[slotIndex] + result->outAction.rawAttackValue;
+    if (healed > DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34) {
+        healed = DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34;
+    }
+    if (outSlotIndex) *outSlotIndex = slotIndex;
+    if (outNewHealth) *outNewHealth = healed;
+    return 1;
+}
