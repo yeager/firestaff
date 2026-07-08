@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0402/F0231 melee runtime outcome ownership: DM1 melee compat now owns the combined action outcome receipt for damage/miss, closed-door performed branch, empty-front PARRY failure-tail, damage feedback, and disabled-tick override. M11 observes emissions/timeline facts and applies the DM1 receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0328 accepted-throw launch ownership: DM1 throw/shoot compat now owns accepted-throw launch direction, projectile movement-disable receipt, and thrown-potion subtype/power transport. M11 no longer has a separate thrown-potion projectile-shape helper. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0328 accepted-throw projectile-plan ownership: DM1 throw/shoot compat now owns the accepted THROW plan for F0305 stamina, Throw XP, F0312 action-hand strength, F0328 kinetic energy/attack/step energy, combat sound, and internal 4-tick action disable. M11 supplies live object facts/RNG and applies one DM1 receipt. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

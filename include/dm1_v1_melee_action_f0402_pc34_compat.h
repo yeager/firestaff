@@ -37,12 +37,34 @@ typedef struct {
     int damage;
 } DM1_MeleeDamageEmissionPlanPc34;
 
+typedef struct {
+    int actionIndex;
+    int defaultDisabledTicks;
+    int observedAttackDamage;
+    int combatOutcome;
+    int closedDoorBranchPerformed;
+    int closedDoorDisabledTicks;
+    int directParryEmptyFront;
+} DM1_MeleeRuntimeOutcomeInputPc34;
+
+typedef struct {
+    int valid;
+    int performed;
+    int meleeFailureTail;
+    int disabledTicks;
+    int showDamageFeedback;
+    int damage;
+} DM1_MeleeRuntimeOutcomePlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
 int dm1_v1_melee_damage_emission_plan_f0231_pc34(
     const DM1_MeleeDamageEmissionInputPc34* in,
     DM1_MeleeDamageEmissionPlanPc34* out);
+int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
+    const DM1_MeleeRuntimeOutcomeInputPc34* in,
+    DM1_MeleeRuntimeOutcomePlanPc34* out);
 
 #ifdef __cplusplus
 }

@@ -57,3 +57,53 @@ int dm1_v1_melee_damage_emission_plan_f0231_pc34(
     out->showDamageFeedback = in->damage > 0;
     return 1;
 }
+
+int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
+    const DM1_MeleeRuntimeOutcomeInputPc34* in,
+    DM1_MeleeRuntimeOutcomePlanPc34* out) {
+    DM1_MeleeDamageEmissionInputPc34 damageIn;
+    DM1_MeleeDamageEmissionPlanPc34 damagePlan;
+    int ticks;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+    if (!dm1_v1_action_is_melee_contact_f0407_pc34(in->actionIndex)) {
+        return 0;
+    }
+
+    ticks = in->defaultDisabledTicks;
+    if (ticks < 0) ticks = 0;
+    if (ticks > 255) ticks = 255;
+
+    memset(&damageIn, 0, sizeof(damageIn));
+    damageIn.damage = in->observedAttackDamage;
+    damageIn.combatOutcome = in->combatOutcome;
+    if (!dm1_v1_melee_damage_emission_plan_f0231_pc34(
+            &damageIn, &damagePlan) ||
+        !damagePlan.valid) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->performed = damagePlan.performed ||
+                     in->closedDoorBranchPerformed ||
+                     in->directParryEmptyFront;
+    out->showDamageFeedback = damagePlan.showDamageFeedback;
+    out->damage = damagePlan.damage;
+
+    /* ReDMCSB: MENU.C F0407 lines 1308-1342 treat the closed-door
+     * BASH/HACK/BERZERK/KICK/SWING/CHOP branch as performed before F0402 and
+     * override ActionDisabledTicks to 6.  Other failed F0402 melee actions
+     * enter the halved XP/tick tail at lines 1331-1337. */
+    if (in->closedDoorBranchPerformed && in->closedDoorDisabledTicks > 0) {
+        ticks = in->closedDoorDisabledTicks;
+        if (ticks > 255) ticks = 255;
+    }
+    out->disabledTicks = ticks;
+    out->meleeFailureTail = !out->performed;
+    return 1;
+}
