@@ -34,10 +34,10 @@
  *
  * F0397 emits 6 characters starting at ASCII 96 + 6*SymbolStep
  * (C00..C05 rune alphabet window), cyan on black, at
- * (225 + 14*i, 58) for i in 0..5.
+ * (239 + 14*i, 58) for i in 0..5.
  *
  * F0398 emits up to 4 characters from the new caster's Symbols[],
- * space-padding the tail. X = 232 + 9*i, y = 70, cyan on black.
+ * space-padding the tail. X = 241 + 9*i, y = 70, cyan on black.
  *
  * The 4 caster-tab x0 columns and the 11-wide Champion-0 column come
  * straight from SPELDRAW.C F0393.
@@ -137,9 +137,9 @@ static const char s_source_evidence[] =
     "F0393 only highlights champion n if Champion[n].CurrentHealth > 0 and "
     "G0305_ui_PartyChampionCount > n. MENUDRAW.C:47-80 F0397 emits 6 chars "
     "starting at ASCII 96 + 6*SymbolStep in C04_COLOR_CYAN on C00_COLOR_BLACK "
-    "at screen x = 225 + 14*i, y = 58. MENUDRAW.C:83-117 F0398 emits up to "
+    "at screen x = 239 + 14*i, y = 58. MENUDRAW.C:83-117 F0398 emits up to "
     "4 chars from Champion->Symbols[0..N-1] (N = strlen clamped to 4) with "
-    "space-pad tail, screen x = 232 + 9*i, y = 70, cyan on black. "
+    "space-pad tail, screen x = 241 + 9*i, y = 70, cyan on black. "
     "MENUDRAW.C:31-45 F0396 loads C011_GRAPHIC_MENU_SPELL_AREA_LINES into "
     "the 3-row stack bitmap used by F0392/F0394. DATA.C:119 pins the "
     "spell-area screen box {224, 319, 42, 74} and DATA.C:530-531 pins "

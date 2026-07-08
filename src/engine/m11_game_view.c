@@ -34423,6 +34423,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                                            int framebufferHeight) {
     int spellX, spellY, spellW, spellH;
     int i;
+    M11_TextStyle symbolStyle = g_text_small;
     if (!state || !state->spellPanelOpen || state->showDebugHUD ||
         !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
         return;
@@ -34433,11 +34434,9 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
 
     /* Normal V1 spell entry belongs to the source right-column spell
      * area, not to Firestaff's old large modal workbench panel.  ReDMCSB
-     * CASTER.C clears/draws C013_ZONE_SPELL_AREA, blits the native
-     * spell-area line graphic, then prints available and champion symbols
-     * via the C245..C264 zone family.  Until the exact per-symbol zone
-     * rectangles are fully reconstructed, keep the runtime bounded inside
-     * C013 and use the already source-backed C011 14x13 line cells. */
+     * CASTER.C F0394 draws C009 in {224,319,42,74}; MENU.C F0392/F0397
+     * pre-increments to print the 6 available symbols at x=239+14*i,y=58;
+     * MENU.C F0398 prints selected symbols at x=241+9*i,y=70. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
     (void)m11_blit_panel_asset_native(state,
@@ -34445,22 +34444,29 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         M11_GameView_GetV1SpellAreaBackgroundGraphicId(),
         spellW, spellH, spellX, spellY);
 
-    for (i = 0; i < state->spellBuffer.runeCount && i < 4; ++i) {
-        int cellX = spellX + 15 + i * M11_SPELL_LABEL_CELL_W;
-        int cellY = spellY + 1;
-        (void)m11_blit_spell_label_cell(state, framebuffer,
-                                        framebufferWidth, framebufferHeight,
-                                        cellX, cellY, 1);
-    }
+    symbolStyle.color = M11_COLOR_CYAN;
+    symbolStyle.shadowColor = M11_COLOR_BLACK;
+
     if (state->spellBuffer.runeCount < 4) {
-        int startX = spellX + 2;
-        int cellY = spellY + 12;
+        int row = state->spellRuneRow < 4 ? state->spellRuneRow : 3;
         for (i = 0; i < 6; ++i) {
-            int cellX = startX + i * M11_SPELL_LABEL_CELL_W;
-            (void)m11_blit_spell_label_cell(state, framebuffer,
-                                            framebufferWidth, framebufferHeight,
-                                            cellX, cellY, 0);
+            char text[2];
+            text[0] = (char)m11_encode_rune(row, i);
+            text[1] = '\0';
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          spellX + 1 + 14 * (i + 1),
+                          spellY + 16,
+                          text, &symbolStyle);
         }
+    }
+    for (i = 0; i < state->spellBuffer.runeCount && i < 4; ++i) {
+        char text[2];
+        text[0] = (char)state->spellBuffer.runes[i];
+        text[1] = '\0';
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      spellX + 8 + 9 * (i + 1),
+                      spellY + 28,
+                      text, &symbolStyle);
     }
 }
 
@@ -38000,10 +38006,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_v1_message_area(state, framebuffer, framebufferWidth, framebufferHeight);
 
-    /* Spell panel overlay */
+    /* Spell panel overlay.
+     * ReDMCSB CASTER.C F0394/MENU.C F0392 draws the DM1 spell/action
+     * controls in the fixed right-column spell area {224,319,42,74}.
+     * The larger Firestaff workbench is only a debug/custom-mode helper;
+     * classic V1 must not cover the dungeon viewport with it. */
     if (state->spellPanelOpen &&
-        (state->showDebugHUD || !m11_v1_chrome_mode_enabled() ||
-         m11_v2_vertical_slice_enabled())) {
+        (state->showDebugHUD || m11_v2_vertical_slice_enabled() ||
+         !m11_v1_chrome_mode_enabled())) {
         /* ── P4+P6 V1 Presentation: DM1-style rune-dominant spell panel
          * with GRAPHICS.DAT-backed spell area grid ── */
         int spI;

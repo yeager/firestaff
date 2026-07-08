@@ -111,16 +111,16 @@ static void test_contract(void)
               "MENUDRAW.C:67 96 + 6*SymbolStep base");
     check_int("contract.avalStep", c->available_symbol_step, 14,
               "MENUDRAW.C:73 x += 14 stride");
-    check_int("contract.avalX0", c->available_symbol_x0, 225,
-              "MENUDRAW.C:71 x starts at 225");
+    check_int("contract.avalX0", c->available_symbol_x0, 239,
+              "MENUDRAW.C:71 pre-increments x to 239");
     check_int("contract.avalY", c->available_symbol_y, 58,
               "MENUDRAW.C:73 y=58");
     check_int("contract.champMax", c->champion_symbol_max, 4,
               "MENUDRAW.C:96 max 4 champion symbols");
     check_int("contract.champStep", c->champion_symbol_step, 9,
               "MENUDRAW.C:104 x += 9 stride");
-    check_int("contract.champX0", c->champion_symbol_x0, 232,
-              "MENUDRAW.C:103 x starts at 232");
+    check_int("contract.champX0", c->champion_symbol_x0, 241,
+              "MENUDRAW.C:103 pre-increments x to 241");
     check_int("contract.champY", c->champion_symbol_y, 70,
               "MENUDRAW.C:106 y=70");
     check_int("contract.tab0X0", c->tab_champion_0_x0, 233,
@@ -406,15 +406,15 @@ static void test_first_caster_after_none(void)
         check_int(lbl, plan.line2[i].character, 96 + i,
                   "F0397 first window 96..101");
         snprintf(lbl, sizeof(lbl), "firstCaster.l2x%d", i);
-        check_int(lbl, plan.line2[i].screen_x, 225 + 14 * i,
+        check_int(lbl, plan.line2[i].screen_x, 239 + 14 * i,
                   "F0397 x stride 14");
         snprintf(lbl, sizeof(lbl), "firstCaster.l2y%d", i);
         check_int(lbl, plan.line2[i].screen_y, 58, "F0397 y=58");
     }
 
     /* Line 3 champion symbols. */
-    check_int("firstCaster.l3c0x", plan.line3[0].screen_x, 232,
-              "F0398 first slot x=232");
+    check_int("firstCaster.l3c0x", plan.line3[0].screen_x, 241,
+              "F0398 first slot x=241");
     check_int("firstCaster.l3c0char", plan.line3[0].drawn_character, 'A',
               "F0398 slot 0 from Symbols[0]");
     check_int("firstCaster.l3c0src", plan.line3[0].from_champion_symbols, 1,
@@ -427,7 +427,7 @@ static void test_first_caster_after_none(void)
               "F0398 slot 2 not from Symbols");
     check_int("firstCaster.l3c3char", plan.line3[3].drawn_character, ' ',
               "F0398 pads slot 3 with C20_SPACE");
-    check_int("firstCaster.l3c3x", plan.line3[3].screen_x, 232 + 9 * 3,
+    check_int("firstCaster.l3c3x", plan.line3[3].screen_x, 241 + 9 * 3,
               "F0398 slot 3 x stride");
     check_int("firstCaster.l3y", plan.line3[0].screen_y, 70, "F0398 y=70");
 }
@@ -475,9 +475,9 @@ static void test_caster_swap_with_step_window(void)
         check_int(lbl, plan.line2[i].character, 114 + i,
                   "F0397 step 3 = 114..119");
     }
-    check_int("swapStep.l2c0x", plan.line2[0].screen_x, 225,
-              "F0397 x origin at 225");
-    check_int("swapStep.l2c5x", plan.line2[5].screen_x, 225 + 14 * 5,
+    check_int("swapStep.l2c0x", plan.line2[0].screen_x, 239,
+              "F0397 first printed x at 239");
+    check_int("swapStep.l2c5x", plan.line2[5].screen_x, 239 + 14 * 5,
               "F0397 stride 14 to slot 5");
 
     /* F0398 line 3. */
@@ -562,7 +562,7 @@ static void test_full_symbols_no_padding(void)
               "F0398 slot 3 = 'Z'");
     check_int("fullSym.sym3src", plan.line3[3].from_champion_symbols, 1,
               "F0398 slot 3 from Symbols");
-    check_int("fullSym.symX", plan.line3[3].screen_x, 232 + 9 * 3,
+    check_int("fullSym.symX", plan.line3[3].screen_x, 241 + 9 * 3,
               "F0398 slot 3 x stride");
 }
 
