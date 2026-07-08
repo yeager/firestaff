@@ -1094,8 +1094,10 @@ static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
     return 0;
 }
 
-static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
+static void m11_play_ftl_swoosh_for_game_if_available(
+                                              const M12_StartupMenuState* menuState,
                                               const char* dataDir,
+                                              const char* gameId,
                                               int skipSwoosh) {
     char logoPath[FSP_PATH_MAX];
     unsigned char* logoImg = NULL;
@@ -1107,7 +1109,11 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
     unsigned char swshPalette[16][3];
     if (skipSwoosh) return;
     memset(&logoPayload, 0, sizeof(logoPayload));
-    if (!M11_SWSH_Intro_FindLogoPath(menuState, dataDir, logoPath, sizeof(logoPath))) return;
+    if (!M11_SWSH_Intro_FindLogoPathForGame(menuState,
+                                            dataDir,
+                                            gameId,
+                                            logoPath,
+                                            sizeof(logoPath))) return;
     f = fopen(logoPath, "rb"); if (!f) return;
     fseek(f, 0, SEEK_END); fsize = ftell(f); fseek(f, 0, SEEK_SET);
     logoImg = (unsigned char*)malloc((size_t)fsize);
@@ -1180,6 +1186,15 @@ cleanup:
     if (screenFbIndexed) free(screenFbIndexed);
     if (screenRgba) free(screenRgba);
     if (f) fclose(f);
+}
+
+static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
+                                              const char* dataDir,
+                                              int skipSwoosh) {
+    m11_play_ftl_swoosh_for_game_if_available(menuState,
+                                              dataDir,
+                                              "dm1",
+                                              skipSwoosh);
 }
 
 static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* gameView,
@@ -1489,15 +1504,18 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
              * animation on Apple Silicon. */
             M11_Render_DiscardPresentationTexture();
         }
-        /* CSB has its own title/entrance sequence.  ReDMCSB ENTRANCE.C
-         * F0806 builds the CSB entrance micro-dungeon with C28_ENTRANCE_CSB
-         * palette and switches to C001_MODE_LOAD_DUNGEON when the player
-         * dismisses the entrance.  CSB does not use the DM1 FTL swoosh.
-         * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441, 857-883. */
+        /* CSB has its own title/entrance sequence after the common FTL/SWSH
+         * prelude.  ReDMCSB SWSH.C runs the FTL logo before the started
+         * program hands off to TITLE/ENTRANCE; Firestaff keeps CSB title and
+         * entrance in M11 but still needs the SWSH prelude. */
         else if (launchEntry && launchEntry->gameId &&
                  strcmp(launchEntry->gameId, "csb") == 0) {
-            /* CSB title/entrance plays after M11_GameView_OpenSelectedMenuEntry
-             * below, using the CSB runtime boot state.  No FTL swoosh needed. */
+            M11_Render_RaiseWindow();
+            m11_play_ftl_swoosh_for_game_if_available(menuState,
+                                                       dataDir,
+                                                       "csb",
+                                                       0);
+            M11_Render_DiscardPresentationTexture();
         }
         /* Theron's Quest has no source -- no intro needed. */
     }
