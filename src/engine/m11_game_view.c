@@ -11585,18 +11585,6 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         goto fail;
     }
 
-    /* THQUEST.ASM T400 startup handoff: boot owns the fresh Track 02
-     * title-gate receipts before M11 takes runtime ownership. Accept then
-     * advances to stage-select; the next explicit input opens the Soul Room. */
-    m11_theron_apply_startup_state_receipt(
-        state,
-        &launch.initial_state_receipt);
-    m11_theron_apply_startup_state_receipt(
-        state,
-        &launch.save_resume_state_receipt);
-    m11_theron_apply_startup_media_state_receipt(
-        state,
-        &launch.startup_media_state_receipt);
     if (!theron_v1_boot_startup_launch_detach_runtime(
             &launch,
             &runtime_receipt)) {
@@ -11618,9 +11606,21 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     state->theronWorld = runtime_receipt.world;
     state->theronViewport = runtime_receipt.viewport;
     state->theronAssets = runtime_receipt.assets;
+    /* THQUEST.ASM T400 startup handoff: boot owns the fresh Track 02
+     * title-gate receipts through runtime detach. Accept then advances to
+     * stage-select; the next explicit input opens the Soul Room. */
+    m11_theron_apply_startup_state_receipt(
+        state,
+        &runtime_receipt.initial_state_receipt);
+    m11_theron_apply_startup_state_receipt(
+        state,
+        &runtime_receipt.save_resume_state_receipt);
+    m11_theron_apply_startup_media_state_receipt(
+        state,
+        &runtime_receipt.startup_media_state_receipt);
     (void)m11_theron_apply_startup_host_receipt(
         state,
-        &launch.launch_host_receipt,
+        &runtime_receipt.launch_host_receipt,
         NULL);
     return 1;
 

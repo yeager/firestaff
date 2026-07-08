@@ -996,6 +996,17 @@ static void test_boot_startup_launch_detach_runtime_receipt(void) {
     snprintf(launch.profile->graphics_path,
              sizeof(launch.profile->graphics_path),
              "/tmp/firestaff_theron_track02.bin");
+    launch.initial_state_receipt.flow_changed = 1;
+    launch.initial_state_receipt.flow.phase = THERON_STARTUP_PHASE_TITLE;
+    launch.save_resume_state_receipt.set_save_resume = 1;
+    launch.save_resume_state_receipt.save_resume_claim =
+        THERON_V1_STARTUP_RESUME_TQSV;
+    launch.startup_media_state_receipt.startup_roster_name_count = 1;
+    snprintf(launch.startup_media_state_receipt.startup_roster_names[0],
+             sizeof(launch.startup_media_state_receipt.startup_roster_names[0]),
+             "ALEX");
+    launch.launch_host_receipt.status_scope = "BOOT";
+    launch.launch_host_receipt.status = "THERON'S QUEST";
 
     memset(&receipt, 0, sizeof(receipt));
     expect_true(theron_v1_boot_startup_launch_detach_runtime(&launch,
@@ -1010,6 +1021,23 @@ static void test_boot_startup_launch_detach_runtime_receipt(void) {
                     strcmp(receipt.source_id, "theron") == 0 &&
                     strcmp(receipt.dungeon_path,
                            "/tmp/firestaff_theron_track02.bin") == 0 &&
+                    receipt.initial_state_receipt.flow_changed == 1 &&
+                    receipt.initial_state_receipt.flow.phase ==
+                        THERON_STARTUP_PHASE_TITLE &&
+                    receipt.save_resume_state_receipt.set_save_resume == 1 &&
+                    receipt.save_resume_state_receipt.save_resume_claim ==
+                        THERON_V1_STARTUP_RESUME_TQSV &&
+                    receipt.startup_media_state_receipt.
+                            startup_roster_name_count == 1 &&
+                    strcmp(receipt.startup_media_state_receipt.
+                               startup_roster_names[0],
+                           "ALEX") == 0 &&
+                    receipt.launch_host_receipt.status_scope &&
+                    strcmp(receipt.launch_host_receipt.status_scope,
+                           "BOOT") == 0 &&
+                    receipt.launch_host_receipt.status &&
+                    strcmp(receipt.launch_host_receipt.status,
+                           "THERON'S QUEST") == 0 &&
                     launch.profile == NULL &&
                     launch.world == NULL &&
                     launch.viewport == NULL &&

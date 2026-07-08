@@ -236,6 +236,10 @@ typedef struct Theron_V1_BootStartupRuntimeReceipt {
     Theron_V1_World *world;
     Theron_V1_Viewport *viewport;
     TrAssetBundle *assets;
+    Theron_StartupStateReceipt initial_state_receipt;
+    Theron_StartupStateReceipt save_resume_state_receipt;
+    Theron_StartupMediaStateReceipt startup_media_state_receipt;
+    Theron_StartupHostReceipt launch_host_receipt;
     char boot_asset_md5[33];
     char title[64];
     char source_id[32];

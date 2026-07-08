@@ -974,6 +974,11 @@ int theron_v1_boot_startup_launch_detach_runtime(
     out_receipt->world = launch->world;
     out_receipt->viewport = launch->viewport;
     out_receipt->assets = launch->assets;
+    out_receipt->initial_state_receipt = launch->initial_state_receipt;
+    out_receipt->save_resume_state_receipt = launch->save_resume_state_receipt;
+    out_receipt->startup_media_state_receipt =
+        launch->startup_media_state_receipt;
+    out_receipt->launch_host_receipt = launch->launch_host_receipt;
     snprintf(out_receipt->boot_asset_md5,
              sizeof(out_receipt->boot_asset_md5),
              "%s",
