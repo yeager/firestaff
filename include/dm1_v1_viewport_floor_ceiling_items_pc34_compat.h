@@ -121,6 +121,14 @@ int dm1_v1_hall_candidate_payload_control_thing_pc34(
     int mapIndex,
     int thingType,
     int mirrorTextStringOrdinal);
+int dm1_v1_front_mirror_c127_ordinal_pc34(
+    int mapIndex,
+    int partyDirection,
+    int thingCell,
+    int sensorType,
+    int sensorData,
+    int mirrorCatalogCount,
+    int squareIsWallLike);
 
 typedef struct DM1_ItemSpriteBlitPlan {
     unsigned int graphic_index;

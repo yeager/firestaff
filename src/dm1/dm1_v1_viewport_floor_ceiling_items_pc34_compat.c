@@ -157,6 +157,41 @@ int dm1_v1_hall_candidate_payload_control_thing_pc34(
     return 0;
 }
 
+int dm1_v1_front_mirror_c127_ordinal_pc34(
+    int mapIndex,
+    int partyDirection,
+    int thingCell,
+    int sensorType,
+    int sensorData,
+    int mirrorCatalogCount,
+    int squareIsWallLike)
+{
+    int visibleWallCell;
+
+    if (sensorType != 127 || mirrorCatalogCount <= 0) {
+        return -1;
+    }
+    if (sensorData < 0 || sensorData >= mirrorCatalogCount) {
+        return -1;
+    }
+    /* ReDMCSB DUNGEON.C F0172 lines 2573 and 2608-2612:
+     * C127 champion sensors become G0289 only when their thing cell is
+     * the D1C front wall side for the current party direction.
+     * MOVESENS.C lines 1501-1503 then sends the same sensorData to
+     * REVIVE.C F0280.  Stock DM1 HoC uses map 0 carrier data for these
+     * mirrors, so map 0 may still expose the source C127 route even when
+     * the sampled square byte is not wall-like; other maps must keep the
+     * stricter wall/fakewall gate to avoid floating portraits. */
+    visibleWallCell = (partyDirection + 2) & 3;
+    if ((thingCell & 3) != visibleWallCell) {
+        return -1;
+    }
+    if (!squareIsWallLike && mapIndex != 0) {
+        return -1;
+    }
+    return sensorData;
+}
+
 int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
                               int thingType,
                               int subtype,

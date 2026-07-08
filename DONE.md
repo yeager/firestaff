@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 HoC C127 front-mirror ownership: moved the ReDMCSB DUNGEON.C F0172 / MOVESENS.C / REVIVE.C C127 front-mirror ordinal gate into the DM1 compat layer and made M11 consume it for HoC front mirror selection. Verification: `test_dm1_v1_viewport_floor_ceiling_items_pc34_compat` passed 176/176; `test_dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat` found all 24 visible HoC mirror ordinals with real DM1 data; `test_dm1_v1_mirror_candidate_click_cancel_pc34_compat` passed 68/68; Phase A passed 24/24.
+
 - ✅ 2026-07-08 CSB save/load/tick boot wrappers: CSB boot now owns M11-facing quicksave, quickload, and V1 runtime tick wrappers. M11 no longer calls the CSB runtime lifecycle adapters directly for those paths. Verification: `test_csb_v1_m11_startup_resume_gate` passed; `test_csb_v1_boot_runtime_handoff` passed 304/304; `firestaff_csb_v1_first_viewport_frame_probe` passed 30/30 with real assets; Phase A passed 24/24.
 
 - ✅ 2026-07-08 Nexus launcher resume receipt: Nexus launcher now owns FNXS load, level/dir validation, level load, champion/world application, mechanics reset, NGLT light-runtime resume, and M11-ready resume host receipts. M11 applies the launcher resume receipt instead of loading saves and mutating Nexus engine state directly. Verification: `test_m11_nexus_startup_gate` passed; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24; `git diff --check` passed.
