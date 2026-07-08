@@ -964,6 +964,36 @@ int csb_v1_boot_startup_launch_alloc_pc34(
     return 1;
 }
 
+int csb_v1_boot_startup_launch_detach_runtime_pc34(
+    CSB_V1_BootStartupLaunch_PC34 *launch,
+    CSB_V1_BootStartupRuntimeReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!launch || !launch->profile) {
+        return 0;
+    }
+    out_receipt->profile = launch->profile;
+    snprintf(out_receipt->boot_asset_md5,
+             sizeof(out_receipt->boot_asset_md5),
+             "%s",
+             launch->profile->graphics_md5);
+    snprintf(out_receipt->graphics_path,
+             sizeof(out_receipt->graphics_path),
+             "%s",
+             launch->profile->graphics_path);
+    snprintf(out_receipt->dungeon_path,
+             sizeof(out_receipt->dungeon_path),
+             "%s",
+             launch->profile->dungeon_path[0]
+                 ? launch->profile->dungeon_path
+                 : "DUNGEON.DAT");
+    launch->profile = NULL;
+    return 1;
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {

@@ -1625,6 +1625,48 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
         }
         {
             CSB_V1_BootStartupLaunch_PC34 launch;
+            CSB_V1_BootStartupRuntimeReceipt_PC34 runtime_receipt;
+            memset(&launch, 0, sizeof(launch));
+            memset(&runtime_receipt, 0xff, sizeof(runtime_receipt));
+            CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(
+                      NULL,
+                      &runtime_receipt) == 0 &&
+                      runtime_receipt.profile == NULL,
+                  "boot runtime detach rejects NULL CSB launch and clears receipt");
+            launch.profile =
+                (CSB_V1_BootProfile *)calloc(1, sizeof(*launch.profile));
+            CHECK(launch.profile != NULL,
+                  "boot runtime detach fixture allocates CSB profile");
+            if (launch.profile) {
+                csb_v1_boot_profile_init(launch.profile);
+                snprintf(launch.profile->graphics_md5,
+                         sizeof(launch.profile->graphics_md5),
+                         "61fbfd56887c8bfe85ba4fb306fc2861");
+                snprintf(launch.profile->graphics_path,
+                         sizeof(launch.profile->graphics_path),
+                         "/tmp/firestaff_csb_GRAPHICS.DAT");
+                snprintf(launch.profile->dungeon_path,
+                         sizeof(launch.profile->dungeon_path),
+                         "/tmp/firestaff_csb_DUNGEON.DAT");
+                memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+                CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(
+                          &launch,
+                          &runtime_receipt) == 1 &&
+                          runtime_receipt.profile != NULL &&
+                          strcmp(runtime_receipt.boot_asset_md5,
+                                 "61fbfd56887c8bfe85ba4fb306fc2861") == 0 &&
+                          strcmp(runtime_receipt.graphics_path,
+                                 "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
+                          strcmp(runtime_receipt.dungeon_path,
+                                 "/tmp/firestaff_csb_DUNGEON.DAT") == 0 &&
+                          launch.profile == NULL,
+                      "boot runtime detach transfers CSB profile and M11 launch identity");
+                csb_v1_boot_cleanup(runtime_receipt.profile);
+                free(runtime_receipt.profile);
+            }
+        }
+        {
+            CSB_V1_BootStartupLaunch_PC34 launch;
             CHECK(csb_v1_boot_startup_launch_alloc_pc34(
                       "/__firestaff_missing_csb_data__",
                       NULL,
