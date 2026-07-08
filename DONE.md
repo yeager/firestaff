@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 startup host receipt execution: DM2 startup menu now emits M11-ready host receipts directly from combined action execution/session-apply. M11 no longer converts DM2 apply receipts locally before applying startup mode/status/input outcome. Verification: DM2 startup action contract passed 65/65, DM2 M11 startup/profile gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron flow-action host receipts: Theron startup-flow now emits host receipts directly from normal flow action execution facts. M11 consumes the host receipt for stage select, cursor, stage choice, Soul Room cursor, and mirror toggles instead of converting flow apply receipts locally. Verification: Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron Continue/forcefield host receipts: Theron startup save/resume and runtime-entry modules now emit host receipts directly from their combined facts paths. M11 consumes those host receipts for Continue and forcefield startup handoff instead of converting Continue/runtime apply receipts locally. Verification: Theron M11 direct-launch passed, Theron startup save/resume passed 100/100, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

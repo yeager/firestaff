@@ -696,7 +696,6 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
 {
     DM2_V1_BootProfile *profile;
     DM2_V1_StartupExecution execution;
-    DM2_V1_StartupApplyReceipt receipt;
     DM2_V1_StartupHostReceipt host_receipt;
 
     if (!state || !state->dm2State.startup_menu_active ||
@@ -704,17 +703,12 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
         return M11_GAME_INPUT_IGNORED;
     }
     profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-    if (!dm2_v1_startup_execute_action_with_receipt(
+    if (!dm2_v1_startup_execute_action_with_host_receipt(
             action,
             profile->save_root,
             m11_dm2_startup_apply_session_callback,
             state,
             &execution,
-            &receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!dm2_v1_startup_host_receipt_from_apply_receipt(
-            &receipt,
             &host_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }

@@ -430,6 +430,24 @@ int main(void)
               receipt.mode_update.startup_menu_active == 0 &&
               strcmp(receipt.outcome.status, "DM2 NEW GAME") == 0,
           "combined action execution applies session and returns close receipt");
+    g_apply_calls = 0;
+    g_apply_result = 1;
+    memset(&g_applied_session, 0, sizeof(g_applied_session));
+    check(dm2_v1_startup_execute_action_with_host_receipt(
+              &action,
+              "/tmp/firestaff-dm2-startup-missing",
+              test_apply_session,
+              NULL,
+              &execution,
+              &host_receipt) &&
+              g_apply_calls == 1 &&
+              g_applied_session.champion_count == 4 &&
+              host_receipt.input_result ==
+                  DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
+              host_receipt.mode_update.set_startup_menu_active &&
+              host_receipt.mode_update.startup_menu_active == 0 &&
+              strcmp(host_receipt.status, "DM2 NEW GAME") == 0,
+          "combined action execution can return M11-ready host receipt directly");
     check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               strcmp(outcome.status_scope, "STARTUP") == 0 &&
