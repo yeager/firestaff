@@ -8,8 +8,16 @@
 
 enum {
     CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 60,
+    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
+    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 20,
+    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
+    CSB_V1_TITLE_FINAL_DELAY_TICKS_PC34 = 2,
     CSB_V1_TITLE_TOTAL_TICKS_PC34 =
-        CSB_V1_TITLE_PRESENTS_TICKS_PC34 + 22,
+        CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
+        CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
+        CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 +
+        CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 +
+        CSB_V1_TITLE_FINAL_DELAY_TICKS_PC34,
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
@@ -132,28 +140,15 @@ int csb_v1_startup_title_presents_ticks_pc34(void)
 
 int csb_v1_startup_title_stage_for_frame_pc34(int frame)
 {
-    V1_TitleFrontendSourceAnimationStep step;
-    unsigned int sourceStep;
-
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
     }
-    sourceStep = csb_v1_startup_title_source_step_for_frame_pc34(frame);
-    if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
-        return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
+    if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
+                    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
+                    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34) {
+        return CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
     }
-    switch (step.kind) {
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS:
-            return CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT:
-            return CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT:
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK:
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK:
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE:
-        default:
-            return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
-    }
+    return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
 }
 
 unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
@@ -166,7 +161,16 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return 1u;
     }
-    return (unsigned int)(frame - CSB_V1_TITLE_PRESENTS_TICKS_PC34 + 2);
+    if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
+                    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34) {
+        return (unsigned int)(frame - CSB_V1_TITLE_PRESENTS_TICKS_PC34 + 2);
+    }
+    if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
+                    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
+                    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34) {
+        return 21u;
+    }
+    return 22u;
 }
 
 static void csb_v1_startup_clear_title_rect_pc34(
@@ -1271,7 +1275,9 @@ static void csb_v1_startup_set_opening_composite_pc34(
 static void csb_v1_startup_set_title_rect_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
-    V1_TitleFrontendSourceAnimationStep step;
+    int zoom_index;
+    int zoom_w;
+    int zoom_h;
 
     if (!plan) {
         return;
@@ -1316,18 +1322,23 @@ static void csb_v1_startup_set_title_rect_pc34(
         return;
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-        V1_TitleFrontend_GetSourceAnimationStep(
-            (unsigned int)plan->title_source_step,
-            &step) &&
-        step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
+        plan->title_source_step >= 2 &&
+        plan->title_source_step <= 21) {
         (void)V1_TitleFrontend_GetStepPalette(
-            step.kind,
+            V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
             &plan->title_special_palette);
         plan->special_palette = plan->title_special_palette;
-        plan->title_source_x = (int)step.x;
-        plan->title_source_y = (int)step.y;
-        plan->title_source_w = (int)step.width;
-        plan->title_source_h = (int)step.height;
+        /* ReDMCSB: TITLE.C F0437 lines 433-457 initializes
+         * CM59_NEGGRAPHIC_TITLE_CHAOS as a 320x80 source, creates 20
+         * shrinked bitmaps, then blits them in reverse order to
+         * C425_ZONE_TITLE_CHAOS. */
+        zoom_index = 21 - plan->title_source_step;
+        zoom_w = 320 - 16 * zoom_index;
+        zoom_h = 80 - 4 * zoom_index;
+        plan->title_source_x = (320 - zoom_w) >> 1;
+        plan->title_source_y = (160 - zoom_h) >> 1;
+        plan->title_source_w = zoom_w;
+        plan->title_source_h = zoom_h;
         plan->title_dest_x = 0;
         plan->title_dest_y = 0;
         plan->title_dest_w = 320;
