@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup title frontend link contract: `firestaff_m10` now carries the V1 title frontend/TITLE.DAT renderer objects used by CSB startup sequence code, so standalone CSB M10 probes no longer fail to link on Linux/macOS/Windows. Verification: the four CI-failing CSB probe targets built locally, CSB real-asset launch and quickplay CTests passed 2/2, Theron startup save/resume passed 110/110, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup launch state receipts: Theron boot now owns the initial title-gate and save/resume startup-state receipts inside the startup launch bundle. M11 applies those boot-owned receipts during `StartTheron` instead of constructing them locally. Verification: Theron startup save/resume test passed 110/110, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup launch allocation: Theron boot now owns startup allocation and cleanup for the boot profile, world, viewport, Track 02 assets, save/resume snapshot, and viewport initialization. M11 consumes the boot-owned launch bundle during `StartTheron` instead of allocating and cleaning those objects locally. Verification: Theron startup save/resume test passed 109/109, Phase A passed 24/24, and `git diff --check` passed.
