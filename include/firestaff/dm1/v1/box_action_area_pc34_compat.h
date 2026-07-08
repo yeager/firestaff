@@ -111,12 +111,10 @@ typedef struct DM1_V1_ActionIconReceiptPc34 {
 } DM1_V1_ActionIconReceiptPc34;
 
 /*
- * ReDMCSB: ACTIDRAW.C F0387 lines ~320-382 fills
- * G0001_ai_Graphic562_Box_ActionArea then blits C010 through
- * G0499/G0500/G0501 and prints the header/action rows. F0386 lines
- * ~218-300 owns the action-hand icon cell and inner 16x16 icon boxes.
- * ACTIDRAW.C lines ~110-195 prints/blits C075_ZONE_ACTION_RESULT.
- * DEFS.H:3775 defines C098_ZONE_ACTION_AREA_PASS.
+ * ReDMCSB PC34: ACTIDRAW.C F0387 fills G0001_ai_Graphic562_Box_ActionArea
+ * then blits C010 through C011/C077/C079 zones. The visible C011 screen
+ * graphic is 87 pixels wide at x=233..319; G0001 remains the older/full
+ * byte box used by clear/hatch paths.
  */
 enum {
     DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 = 10,
@@ -142,7 +140,7 @@ enum {
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_area_rect_pc34(void)
 {
-    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 45 };
+    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 45 };
     return r;
 }
 
@@ -267,7 +265,7 @@ dm1_v1_action_menu_graphic_zone_id_pc34(int action_row_count)
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_menu_graphic_rect_pc34(int action_row_count)
 {
-    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 45 };
+    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 45 };
     int zone_id = dm1_v1_action_menu_graphic_zone_id_pc34(action_row_count);
     if (zone_id == 79) {
         r.h = 21;

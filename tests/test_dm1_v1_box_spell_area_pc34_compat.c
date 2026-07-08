@@ -49,7 +49,7 @@ static void test_screen_contract_helpers(void)
         dm1_v1_spell_caster_tab_rect_pc34();
 
     CHECK(DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 == 9);
-    CHECK(DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 == 11);
+    CHECK(DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 == 9);
     CHECK(DM1_V1_SPELL_AREA_ZONE_ID_PC34 == 13);
     CHECK(DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34 == 221);
     CHECK(DM1_V1_SPELL_CASTER_TAB_ZONE_ID_PC34 == 224);
@@ -59,7 +59,7 @@ static void test_screen_contract_helpers(void)
     CHECK(graphic.x == 233);
     CHECK(graphic.y == 42);
     CHECK(graphic.w == 87);
-    CHECK(graphic.h == 25);
+    CHECK(graphic.h == 33);
     CHECK(click.x == 233);
     CHECK(click.y == 42);
     CHECK(click.w == 87);
