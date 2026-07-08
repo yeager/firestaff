@@ -6312,17 +6312,11 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_boot_profile_smoke
         tests/test_dm2_v1_boot_profile_smoke.c
-        src/dm2/dm2_v1_asset_loader.c
-        src/dm2/dm2_v1_boot.c
-        src/dm2/dm2_v1_game.c
-        src/dm2/dm2_v1_dungeon_loader.c
-        src/dm2/dm2_v1_save_load.c
-        src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_dm2_v1_boot_profile_smoke PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm2_v1_boot_profile_smoke PRIVATE firestaff_m10)
+    target_link_libraries(test_dm2_v1_boot_profile_smoke PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_boot_profile_smoke PRIVATE -Wall -Wextra -O2)
     endif()
@@ -6417,18 +6411,11 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_save_load
         tests/test_dm2_v1_save_load.c
-        src/dm2/dm2_v1_asset_loader.c
-        src/dm2/dm2_v1_save_load.c
-        src/dm2/dm2_v1_new_game.c
-        src/dm2/dm2_v1_boot.c
-        src/dm2/dm2_v1_game.c
-        src/dm2/dm2_v1_dungeon_loader.c
-        src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_dm2_v1_save_load PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm2_v1_save_load PRIVATE firestaff_m10)
+    target_link_libraries(test_dm2_v1_save_load PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_save_load PRIVATE -Wall -Wextra -O2)
     endif()
