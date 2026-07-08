@@ -31,6 +31,9 @@
 
 #include <stdint.h>
 
+#include "memory_combat_pc34_compat.h"
+#include "memory_projectile_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -225,6 +228,32 @@ typedef struct {
     int fleeDelayTicks;
 } DM1_ActionFrightPlanPc34;
 
+typedef struct {
+    int actionIndex;
+    int skillLevel;
+    int currentMana;
+    int maximumMana;
+    int invokeEnergyRoll;
+    int invokeFamilyRoll;
+} DM1_ActionProjectileSpellInputPc34;
+
+typedef struct {
+    int valid;
+    int actionSkillIndex;
+    int subtype;
+    int category;
+    int attackTypeCode;
+    int baseKineticEnergy;
+    int actualKineticEnergy;
+    int requiredMana;
+    int manaCost;
+    int remainingMana;
+    int stepEnergy;
+    int impactAttack;
+    int launcherStrength;
+    int decrementsActionHandCharges;
+} DM1_ActionProjectileSpellPlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -267,6 +296,9 @@ int dm1_v1_action_fright_random_range_f0401_pc34(int actionIndex,
 int dm1_v1_action_fright_plan_f0401_pc34(
     const DM1_ActionFrightInputPc34* in,
     DM1_ActionFrightPlanPc34* out);
+int dm1_v1_action_projectile_spell_plan_f0407_pc34(
+    const DM1_ActionProjectileSpellInputPc34* in,
+    DM1_ActionProjectileSpellPlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);

@@ -25322,47 +25322,6 @@ int M11_GameView_ProbeF0328ThrowAttack(
         m11_dm1_throw_skill_level(state, championIndex));
 }
 
-/* Compute projectile-spell parameters for the action-menu projectile
- * rows, mirroring F0407's per-case values and F0327's create path.
- *
- * F0407 layout (core amalgam lines ~9535..9555):
- *   LIGHTNING: kineticEnergy=180, explosion=LIGHTNING_BOLT
- *   DISPELL:   kineticEnergy=150, explosion=HARM_NON_MATERIAL
- *   FIREBALL:  kineticEnergy=150, explosion=FIREBALL
- *   SPIT:      kineticEnergy=250, explosion=FIREBALL
- *
- * Skill comes from the shared G0496 route for required mana. F0327 then
- * launches these action projectiles with attack 90 and step-energy derived
- * from MaximumMana. Spell-panel casts use the separate F0756 path. */
-static int m11_action_projectile_skill_index(unsigned char actionIndex) {
-    DM1_ActionXpRoute route;
-    /* ReDMCSB MENU.C F0407 lines 1272-1277 reads
-     * G0496_auc_Graphic560_ActionSkillIndex before computing required mana. */
-    if (dm1_v1_action_xp_route((int)actionIndex, &route) && route.valid) {
-        return route.skillIndex;
-    }
-    return DM1_SKILL_IDX_WIZARD;
-}
-
-static int m11_f0327_projectile_step_energy(const struct ChampionState_Compat* champ,
-                                            int* inOutKineticEnergy) {
-    int stepEnergy;
-    if (!champ || !inOutKineticEnergy) return 1;
-    /* ReDMCSB CHAMPION.C F0327 lines 2097-2102:
-     * StepEnergy = 10 - min(8, MaximumMana >> 3), with a small
-     * kinetic bump when the projectile would be too slow. */
-    stepEnergy = 10 - (((int)champ->mana.maximum >> 3) > 8
-                           ? 8
-                           : ((int)champ->mana.maximum >> 3));
-    if (stepEnergy < 1) stepEnergy = 1;
-    if (*inOutKineticEnergy < (stepEnergy << 2)) {
-        *inOutKineticEnergy += 3;
-        stepEnergy--;
-        if (stepEnergy < 1) stepEnergy = 1;
-    }
-    return stepEnergy;
-}
-
 static void m11_set_champion_direction_to_party_f0406(
     const M11_GameViewState* state,
     struct ChampionState_Compat* champ) {
@@ -29432,83 +29391,64 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * HARM_NON_MATERIAL -> 0x83.  Mana cost and skill path
              * mirror F0407's G0496 action-skill table:
              * FIREBALL/SPIT use Fire, DISPELL/LIGHTNING use Air. */
-            int subtype;
-            int kinetic;
-            int attackType;
             const char* verb;
-            int manaCost;
-            int skillIndex = m11_action_projectile_skill_index(chosen);
+            DM1_ActionProjectileSpellInputPc34 spellIn;
+            DM1_ActionProjectileSpellPlanPc34 spellPlan;
             int skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
-                                                        skillIndex);
-            int actualEnergy;
-            int stepEnergy;
+                                                        DM1_SKILL_IDX_WIZARD);
             int spawned;
-            if (skillLevel < 0) skillLevel = 0;
-            manaCost = 7 - (skillLevel > 6 ? 6 : skillLevel);
-            if (manaCost < 1) manaCost = 1;
             switch (chosen) {
                 case 20:
-                    subtype    = PROJECTILE_SUBTYPE_FIREBALL;
-                    kinetic    = 150;
-                    attackType = COMBAT_ATTACK_FIRE;
+                    skillLevel = M11_GameView_GetSkillLevel(
+                        state, championIndex, DM1_SKILL_IDX_FIRE);
                     verb       = "CASTS FIREBALL";
                     break;
                 case 21:
-                    subtype    = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
-                    kinetic    = 150;
-                    attackType = COMBAT_ATTACK_MAGIC;
+                    skillLevel = M11_GameView_GetSkillLevel(
+                        state, championIndex, DM1_SKILL_IDX_AIR);
                     verb       = "CASTS DISPELL";
                     break;
                 case 40:
-                    subtype    = PROJECTILE_SUBTYPE_FIREBALL;
-                    kinetic    = 250;
-                    attackType = COMBAT_ATTACK_FIRE;
+                    skillLevel = M11_GameView_GetSkillLevel(
+                        state, championIndex, DM1_SKILL_IDX_FIRE);
                     verb       = "SPITS FIRE";
                     break;
                 case 23:
                 default:
-                    subtype    = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
-                    kinetic    = 180;
-                    attackType = COMBAT_ATTACK_LIGHTNING;
+                    skillLevel = M11_GameView_GetSkillLevel(
+                        state, championIndex, DM1_SKILL_IDX_AIR);
                     verb       = "CASTS LIGHTNING";
                     break;
             }
+            if (skillLevel < 0) skillLevel = 0;
+            memset(&spellIn, 0, sizeof(spellIn));
+            spellIn.actionIndex = chosen;
+            spellIn.skillLevel = skillLevel;
+            spellIn.currentMana = champ->mana.current;
+            spellIn.maximumMana = champ->mana.maximum;
+            if (!dm1_v1_action_projectile_spell_plan_f0407_pc34(
+                    &spellIn, &spellPlan) || !spellPlan.valid) {
+                return 0;
+            }
             m11_set_champion_direction_to_party_f0406(state, champ);
-            /* F0407: if CurrentMana < RequiredMana, scale
-             * kineticEnergy down proportionally and cap cost at
-             * available mana (the "under-powered cast" path). */
-            if ((int)champ->mana.current < manaCost) {
-                if (manaCost > 0) {
-                    actualEnergy = (int)champ->mana.current * kinetic / manaCost;
-                } else {
-                    actualEnergy = kinetic;
-                }
-                if (actualEnergy < 2) actualEnergy = 2;
-                manaCost = (int)champ->mana.current;
-            } else {
-                actualEnergy = kinetic;
-            }
-            stepEnergy = m11_f0327_projectile_step_energy(champ, &actualEnergy);
-            if (manaCost > 0) {
-                if ((int)champ->mana.current >= manaCost) {
-                    champ->mana.current = (uint16_t)((int)champ->mana.current - manaCost);
-                } else {
-                    champ->mana.current = 0;
-                }
-            }
+            champ->mana.current = (uint16_t)spellPlan.remainingMana;
             if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
                 spawned = m11_spawn_csb_champion_projectile(
-                    state, championIndex, chosen, subtype,
-                    PROJECTILE_CATEGORY_MAGICAL, actualEnergy, 90,
-                    attackType, stepEnergy, THING_NONE, 0, 0);
+                    state, championIndex, chosen, spellPlan.subtype,
+                    spellPlan.category, spellPlan.actualKineticEnergy,
+                    spellPlan.impactAttack, spellPlan.attackTypeCode,
+                    spellPlan.stepEnergy, THING_NONE, 0, 0);
             } else {
                 spawned = m11_spawn_action_projectile_ex(
-                    state, championIndex, subtype, PROJECTILE_CATEGORY_MAGICAL,
-                    actualEnergy, 90, attackType, -1, -1, stepEnergy,
-                    90,
+                    state, championIndex, spellPlan.subtype, spellPlan.category,
+                    spellPlan.actualKineticEnergy, spellPlan.impactAttack,
+                    spellPlan.attackTypeCode, -1, -1, spellPlan.stepEnergy,
+                    spellPlan.launcherStrength,
                     THING_NONE, 0);
             }
-            m11_decrement_action_hand_charges_f0405(state, championIndex);
+            if (spellPlan.decrementsActionHandCharges) {
+                m11_decrement_action_hand_charges_f0405(state, championIndex);
+            }
             m11_log_event(state,
                           chosen == 23 ? M11_COLOR_LIGHT_CYAN :
                           chosen == 21 ? M11_COLOR_LIGHT_BLUE :
@@ -29553,88 +29493,69 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * the same mana/skill machinery as FIREBALL et al.
              * ReDMCSB MENU.C F0407 lines 1272-1277 reads G0496 before
              * the INVOKE case at lines 1480-1493. */
-            int subtype;
-            int attackType;
             int roll;
             int energyRoll;
-            int kinetic;
-            int manaCost;
-            int skillIndex = m11_action_projectile_skill_index(chosen);
+            DM1_ActionProjectileSpellInputPc34 spellIn;
+            DM1_ActionProjectileSpellPlanPc34 spellPlan;
             int skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
-                                                        skillIndex);
-            int actualEnergy;
-            int stepEnergy;
+                                                        DM1_SKILL_IDX_WIZARD);
             int spawned;
             const char* subtypeName;
             if (skillLevel < 0) skillLevel = 0;
-            manaCost = 7 - (skillLevel > 6 ? 6 : skillLevel);
-            if (manaCost < 1) manaCost = 1;
             /* ReDMCSB: MENU.C F0407 lines 1480-1482 draws
              * M003_RANDOM(128)+100 before the M002_RANDOM(6) projectile
              * family switch.  Preserve that RNG order so INVOKE stays
              * deterministic against the source command stream. */
             energyRoll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 128);
-            kinetic = energyRoll + 100;
             roll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 6);
             switch (roll) {
                 case 0:
-                    subtype = PROJECTILE_SUBTYPE_POISON_BOLT;
-                    attackType = COMBAT_ATTACK_NORMAL;
                     subtypeName = "POISON BOLT";
                     break;
                 case 1:
-                    subtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
-                    attackType = COMBAT_ATTACK_NORMAL;
                     subtypeName = "POISON CLOUD";
                     break;
                 case 2:
-                    subtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
-                    attackType = COMBAT_ATTACK_MAGIC;
                     subtypeName = "DISPELL";
                     break;
                 default:
-                    subtype = PROJECTILE_SUBTYPE_FIREBALL;
-                    attackType = COMBAT_ATTACK_FIRE;
                     subtypeName = "FIREBALL";
                     break;
             }
+            memset(&spellIn, 0, sizeof(spellIn));
+            spellIn.actionIndex = chosen;
+            spellIn.skillLevel = skillLevel;
+            spellIn.currentMana = champ->mana.current;
+            spellIn.maximumMana = champ->mana.maximum;
+            spellIn.invokeEnergyRoll = energyRoll;
+            spellIn.invokeFamilyRoll = roll;
+            if (!dm1_v1_action_projectile_spell_plan_f0407_pc34(
+                    &spellIn, &spellPlan) || !spellPlan.valid) {
+                return 0;
+            }
             m11_set_champion_direction_to_party_f0406(state, champ);
-            if ((int)champ->mana.current < manaCost) {
-                if (manaCost > 0) {
-                    actualEnergy = (int)champ->mana.current * kinetic / manaCost;
-                } else {
-                    actualEnergy = kinetic;
-                }
-                if (actualEnergy < 2) actualEnergy = 2;
-                manaCost = (int)champ->mana.current;
-            } else {
-                actualEnergy = kinetic;
-            }
-            stepEnergy = m11_f0327_projectile_step_energy(champ, &actualEnergy);
-            if (manaCost > 0) {
-                if ((int)champ->mana.current >= manaCost) {
-                    champ->mana.current = (uint16_t)((int)champ->mana.current - manaCost);
-                } else {
-                    champ->mana.current = 0;
-                }
-            }
+            champ->mana.current = (uint16_t)spellPlan.remainingMana;
             if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-                int poisonAttack = (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
-                                    subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
+                int poisonAttack = (spellPlan.subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
+                                    spellPlan.subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
                                        ? 90
                                        : 0;
                 spawned = m11_spawn_csb_champion_projectile(
-                    state, championIndex, chosen, subtype,
-                    PROJECTILE_CATEGORY_MAGICAL, actualEnergy, 90,
-                    attackType, stepEnergy, THING_NONE, poisonAttack, 0);
+                    state, championIndex, chosen, spellPlan.subtype,
+                    spellPlan.category, spellPlan.actualKineticEnergy,
+                    spellPlan.impactAttack, spellPlan.attackTypeCode,
+                    spellPlan.stepEnergy, THING_NONE, poisonAttack, 0);
             } else {
                 spawned = m11_spawn_action_projectile_ex(
-                    state, championIndex, subtype, PROJECTILE_CATEGORY_MAGICAL,
-                    actualEnergy, 90, attackType, -1, -1, stepEnergy,
-                    90,
+                    state, championIndex, spellPlan.subtype, spellPlan.category,
+                    spellPlan.actualKineticEnergy, spellPlan.impactAttack,
+                    spellPlan.attackTypeCode, -1, -1, spellPlan.stepEnergy,
+                    spellPlan.launcherStrength,
                     THING_NONE, 0);
             }
-            m11_decrement_action_hand_charges_f0405(state, championIndex);
+            if (spellPlan.decrementsActionHandCharges) {
+                m11_decrement_action_hand_charges_f0405(state, championIndex);
+            }
             m11_log_event(state, M11_COLOR_MAGENTA,
                           "T%u: %s INVOKES %s",
                           (unsigned int)state->world.gameTick,

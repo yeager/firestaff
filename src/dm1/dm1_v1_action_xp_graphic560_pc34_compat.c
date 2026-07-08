@@ -463,6 +463,141 @@ int dm1_v1_action_fright_plan_f0401_pc34(
     return 1;
 }
 
+static int f0407_projectile_base_for_action(int actionIndex,
+                                            int invokeEnergyRoll,
+                                            int invokeFamilyRoll,
+                                            int* outSubtype,
+                                            int* outAttackType,
+                                            int* outKinetic) {
+    int family;
+    if (!outSubtype || !outAttackType || !outKinetic) return 0;
+    switch (actionIndex) {
+        case DM1_ACTION_FIREBALL:
+            *outSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+            *outAttackType = COMBAT_ATTACK_FIRE;
+            *outKinetic = 150;
+            return 1;
+        case DM1_ACTION_DISPELL:
+            *outSubtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+            *outAttackType = COMBAT_ATTACK_MAGIC;
+            *outKinetic = 150;
+            return 1;
+        case DM1_ACTION_LIGHTNING:
+            *outSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+            *outAttackType = COMBAT_ATTACK_LIGHTNING;
+            *outKinetic = 180;
+            return 1;
+        case DM1_ACTION_SPIT:
+            *outSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+            *outAttackType = COMBAT_ATTACK_FIRE;
+            *outKinetic = 250;
+            return 1;
+        case DM1_ACTION_INVOKE:
+            family = invokeFamilyRoll;
+            if (family < 0) family = 0;
+            if (family >= 6) family %= 6;
+            *outKinetic = (invokeEnergyRoll < 0 ? 0 : invokeEnergyRoll) + 100;
+            switch (family) {
+                case 0:
+                    *outSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+                    *outAttackType = COMBAT_ATTACK_NORMAL;
+                    return 1;
+                case 1:
+                    *outSubtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
+                    *outAttackType = COMBAT_ATTACK_NORMAL;
+                    return 1;
+                case 2:
+                    *outSubtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+                    *outAttackType = COMBAT_ATTACK_MAGIC;
+                    return 1;
+                default:
+                    *outSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+                    *outAttackType = COMBAT_ATTACK_FIRE;
+                    return 1;
+            }
+        default:
+            return 0;
+    }
+}
+
+int dm1_v1_action_projectile_spell_plan_f0407_pc34(
+    const DM1_ActionProjectileSpellInputPc34* in,
+    DM1_ActionProjectileSpellPlanPc34* out) {
+    DM1_ActionXpRoute route;
+    int subtype;
+    int attackType;
+    int kinetic;
+    int requiredMana;
+    int actualEnergy;
+    int mana;
+    int maxMana;
+    int stepEnergy;
+    int skillLevel;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->actionSkillIndex = 0;
+    out->subtype = 0;
+    out->category = PROJECTILE_CATEGORY_MAGICAL;
+    out->attackTypeCode = 0;
+    out->baseKineticEnergy = 0;
+    out->actualKineticEnergy = 0;
+    out->requiredMana = 0;
+    out->manaCost = 0;
+    out->remainingMana = in->currentMana;
+    out->stepEnergy = 1;
+    out->impactAttack = 90;
+    out->launcherStrength = 90;
+    out->decrementsActionHandCharges = 0;
+    if (!dm1_v1_action_xp_route(in->actionIndex, &route) || !route.valid) {
+        return 0;
+    }
+    if (!f0407_projectile_base_for_action(
+            in->actionIndex, in->invokeEnergyRoll, in->invokeFamilyRoll,
+            &subtype, &attackType, &kinetic)) {
+        return 0;
+    }
+    skillLevel = in->skillLevel;
+    if (skillLevel < 0) skillLevel = 0;
+    requiredMana = 7 - (skillLevel > 6 ? 6 : skillLevel);
+    if (requiredMana < 1) requiredMana = 1;
+    mana = in->currentMana;
+    if (mana < 0) mana = 0;
+    actualEnergy = kinetic;
+    /* ReDMCSB: MENU.C F0407 lines 1276-1304 computes required mana from G0496,
+     * scales kinetic energy down when CurrentMana is too low, then calls F0327
+     * and decrements action-hand charges. INVOKE lines 1480-1493 use the same
+     * T0407014 path after choosing kinetic M003_RANDOM(128)+100 and family. */
+    if (mana < requiredMana) {
+        actualEnergy = (requiredMana > 0) ? (mana * kinetic / requiredMana) : kinetic;
+        if (actualEnergy < 2) actualEnergy = 2;
+        out->manaCost = mana;
+        out->remainingMana = 0;
+    } else {
+        out->manaCost = requiredMana;
+        out->remainingMana = mana - requiredMana;
+    }
+    maxMana = in->maximumMana;
+    if (maxMana < 0) maxMana = 0;
+    stepEnergy = 10 - (((maxMana >> 3) > 8) ? 8 : (maxMana >> 3));
+    if (stepEnergy < 1) stepEnergy = 1;
+    if (actualEnergy < (stepEnergy << 2)) {
+        actualEnergy += 3;
+        stepEnergy--;
+        if (stepEnergy < 1) stepEnergy = 1;
+    }
+    out->valid = 1;
+    out->actionSkillIndex = route.skillIndex;
+    out->subtype = subtype;
+    out->category = PROJECTILE_CATEGORY_MAGICAL;
+    out->attackTypeCode = attackType;
+    out->baseKineticEnergy = kinetic;
+    out->actualKineticEnergy = actualEnergy;
+    out->requiredMana = requiredMana;
+    out->stepEnergy = stepEnergy;
+    out->decrementsActionHandCharges = 1;
+    return 1;
+}
+
 int dm1_v1_action_f0407_tail_pc34(int actionIndex,
                                   DM1_ActionF0407TailPc34* out) {
     int damageFactor;

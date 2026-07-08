@@ -390,6 +390,74 @@ static void test_fright_plan(void) {
              "non fright action rejected");
 }
 
+static void test_projectile_spell_plan(void) {
+    DM1_ActionProjectileSpellInputPc34 in;
+    DM1_ActionProjectileSpellPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_FIREBALL;
+    in.skillLevel = 3;
+    in.currentMana = 10;
+    in.maximumMana = 64;
+    CHECK_EQ(dm1_v1_action_projectile_spell_plan_f0407_pc34(&in, &out), 1,
+             "fireball projectile plan builds");
+    CHECK_EQ(out.actionSkillIndex, 16, "fireball uses fire skill");
+    CHECK_EQ(out.subtype, PROJECTILE_SUBTYPE_FIREBALL, "fireball subtype");
+    CHECK_EQ(out.category, PROJECTILE_CATEGORY_MAGICAL, "fireball category");
+    CHECK_EQ(out.attackTypeCode, COMBAT_ATTACK_FIRE, "fireball attack type");
+    CHECK_EQ(out.baseKineticEnergy, 150, "fireball base kinetic");
+    CHECK_EQ(out.actualKineticEnergy, 150, "fireball actual kinetic");
+    CHECK_EQ(out.requiredMana, 4, "fireball required mana");
+    CHECK_EQ(out.manaCost, 4, "fireball mana cost");
+    CHECK_EQ(out.remainingMana, 6, "fireball remaining mana");
+    CHECK_EQ(out.stepEnergy, 2, "fireball step energy");
+    CHECK_EQ(out.impactAttack, 90, "fireball impact attack");
+    CHECK_EQ(out.decrementsActionHandCharges, 1,
+             "fireball decrements charges");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_SPIT;
+    in.skillLevel = 0;
+    in.currentMana = 2;
+    in.maximumMana = 16;
+    CHECK_EQ(dm1_v1_action_projectile_spell_plan_f0407_pc34(&in, &out), 1,
+             "low mana spit projectile plan builds");
+    CHECK_EQ(out.actionSkillIndex, 16, "spit uses fire skill");
+    CHECK_EQ(out.subtype, PROJECTILE_SUBTYPE_FIREBALL, "spit subtype");
+    CHECK_EQ(out.baseKineticEnergy, 250, "spit base kinetic");
+    CHECK_EQ(out.requiredMana, 7, "spit required mana");
+    CHECK_EQ(out.manaCost, 2, "spit spends available mana");
+    CHECK_EQ(out.remainingMana, 0, "spit remaining mana");
+    CHECK_EQ(out.actualKineticEnergy, 71, "spit low mana scales kinetic");
+    CHECK_EQ(out.stepEnergy, 8, "spit step energy from max mana");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_INVOKE;
+    in.skillLevel = 6;
+    in.currentMana = 5;
+    in.maximumMana = 80;
+    in.invokeEnergyRoll = 27;
+    in.invokeFamilyRoll = 1;
+    CHECK_EQ(dm1_v1_action_projectile_spell_plan_f0407_pc34(&in, &out), 1,
+             "invoke projectile plan builds");
+    CHECK_EQ(out.actionSkillIndex, 3, "invoke uses wizard skill");
+    CHECK_EQ(out.subtype, PROJECTILE_SUBTYPE_POISON_CLOUD,
+             "invoke family roll poison cloud");
+    CHECK_EQ(out.attackTypeCode, COMBAT_ATTACK_NORMAL,
+             "invoke poison keeps normal attack type");
+    CHECK_EQ(out.baseKineticEnergy, 127, "invoke base kinetic from roll");
+    CHECK_EQ(out.requiredMana, 1, "invoke skilled required mana");
+    CHECK_EQ(out.manaCost, 1, "invoke mana cost");
+    CHECK_EQ(out.remainingMana, 4, "invoke remaining mana");
+    CHECK_EQ(out.actualKineticEnergy, 127, "invoke actual kinetic");
+    CHECK_EQ(out.stepEnergy, 2, "invoke step energy max mana clamp");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_LIGHT;
+    CHECK_EQ(dm1_v1_action_projectile_spell_plan_f0407_pc34(&in, &out), 0,
+             "non projectile action rejected");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -412,6 +480,7 @@ int main(void) {
     test_light_and_window_plans();
     test_shield_plan();
     test_fright_plan();
+    test_projectile_spell_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

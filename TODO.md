@@ -29,6 +29,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: DM1 action-XP compat now also owns the F0407 LIGHT and WINDOW event/charge plans. Remaining runtime coding work is broader action effect receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 action-XP compat now also owns F0403 SPELLSHIELD/FIRESHIELD mana, defense, event, and charge-success planning. Remaining runtime coding work is fright/action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 action-XP compat now also owns F0401 fright-action planning for WAR CRY, BLOW HORN, CALM, BRANDISH, and CONFUSE. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+  - 2026-07-08 update: DM1 action-XP compat now also owns F0407/F0327 projectile-spell planning for FIREBALL, DISPELL, LIGHTNING, SPIT, and INVOKE. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
