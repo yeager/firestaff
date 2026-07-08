@@ -1,6 +1,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 
 #include <stdio.h>
+#include <string.h>
 
 static int g_failures = 0;
 
@@ -35,6 +36,7 @@ static void test_stamina_and_special_flags(void) {
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(DM1_ACTION_CHOP, &tail), 1,
              "chop tail builds");
     CHECK_EQ(tail.staminaBase, 10, "chop stamina base");
+    CHECK_EQ(tail.disabledTicks, 8, "chop disabled ticks");
     CHECK_EQ(dm1_v1_action_stamina_cost_f0407_pc34(
                  DM1_ACTION_CHOP, 1, 100u), 11,
              "chop stamina deterministic jitter");
@@ -55,6 +57,63 @@ static void test_stamina_and_special_flags(void) {
              0, "shoot no f0327 xp halving");
 }
 
+static void test_tail_adjustments(void) {
+    DM1_ActionF0407TailAdjustInputPc34 in;
+    DM1_ActionF0407TailAdjustPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_SPELLSHIELD;
+    in.performed = 0;
+    in.actionExperienceGain = 20;
+    in.disabledTicks = 8;
+    CHECK_EQ(dm1_v1_action_adjust_f0407_tail_pc34(&in, &out), 1,
+             "spellshield adjust builds");
+    CHECK_EQ(out.actionExperienceGain, 5, "spellshield failure quarters xp");
+    CHECK_EQ(out.disabledTicks, 4, "spellshield failure halves ticks");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_FIREBALL;
+    in.performed = 0;
+    in.actionExperienceGain = 7;
+    in.disabledTicks = 6;
+    CHECK_EQ(dm1_v1_action_adjust_f0407_tail_pc34(&in, &out), 1,
+             "fireball adjust builds");
+    CHECK_EQ(out.actionExperienceGain, 3, "fireball failure halves xp");
+    CHECK_EQ(out.disabledTicks, 6, "fireball failure keeps ticks");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_SHOOT;
+    in.performed = 0;
+    in.actionExperienceGain = 9;
+    in.disabledTicks = 4;
+    CHECK_EQ(dm1_v1_action_adjust_f0407_tail_pc34(&in, &out), 1,
+             "shoot adjust builds");
+    CHECK_EQ(out.actionExperienceGain, 0, "shoot failure clears xp");
+    CHECK_EQ(out.disabledTicks, 4, "shoot failure keeps ticks");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_CLIMB_DOWN;
+    in.performed = 1;
+    in.actionExperienceGain = 8;
+    in.disabledTicks = 6;
+    in.cancelActionDisable = 1;
+    CHECK_EQ(dm1_v1_action_adjust_f0407_tail_pc34(&in, &out), 1,
+             "climb down adjust builds");
+    CHECK_EQ(out.actionExperienceGain, 8, "climb down keeps xp");
+    CHECK_EQ(out.disabledTicks, 0, "climb down cancels ticks");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_PARRY;
+    in.performed = 0;
+    in.actionExperienceGain = 6;
+    in.disabledTicks = 5;
+    in.meleeFailureTail = 1;
+    CHECK_EQ(dm1_v1_action_adjust_f0407_tail_pc34(&in, &out), 1,
+             "parry melee failure adjust builds");
+    CHECK_EQ(out.actionExperienceGain, 3, "parry melee failure halves xp");
+    CHECK_EQ(out.disabledTicks, 2, "parry melee failure halves ticks");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -70,6 +129,7 @@ static void test_invalid_action(void) {
 int main(void) {
     test_melee_contact_gate();
     test_stamina_and_special_flags();
+    test_tail_adjustments();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

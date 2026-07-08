@@ -15791,6 +15791,7 @@ if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
         src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
         src/dm1/dm1_v1_g0497_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_damage_factor_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_stamina_pc34_compat.c
     )

@@ -100,9 +100,6 @@
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
-#include "firestaff/dm1/v1/G0492_pc34_compat.h"
-#include "firestaff/dm1/v1/G0491_pc34_compat.h"
-#include "firestaff/dm1/v1/G0494_pc34_compat.h"
 #include "firestaff/dm1/v1/G0179_pc34_compat.h"
 #include "firestaff/dm1/v1/G0181_pc34_compat.h"
 #include "firestaff/dm1/v1/G0182_pc34_compat.h"
@@ -5824,9 +5821,7 @@ static int m11_tick_v1_mouth_animation(M11_GameViewState* state);
 
 static unsigned char m11_action_disabled_ticks_f0407(unsigned char actionIndex) {
     int ticks;
-    /* ReDMCSB MENU.C G0491 lines 157-201.  Use the shared DM1 PC34
-     * source-lock table instead of keeping a second runtime copy. */
-    ticks = dm1_v1_graphic560_action_disabled_ticks_get_pc34(actionIndex);
+    ticks = dm1_v1_action_disabled_ticks_f0407_pc34((int)actionIndex);
     return ticks < 0 ? 0u : (unsigned char)ticks;
 }
 
@@ -24607,18 +24602,33 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
     return dm1_v1_action_is_melee_contact_f0407_pc34((int)actionIndex);
 }
 
-static int m11_action_is_party_shield(unsigned char actionIndex) {
-    return dm1_v1_action_is_party_shield_f0407_pc34((int)actionIndex);
-}
-
-static int m11_action_uses_f0327_failure_xp_halving(unsigned char actionIndex) {
-    return dm1_v1_action_halves_xp_on_f0327_failure_pc34((int)actionIndex);
-}
-
 static int m11_action_stamina_base_f0407(unsigned char actionIndex) {
     DM1_ActionF0407TailPc34 tail;
     if (!dm1_v1_action_f0407_tail_pc34((int)actionIndex, &tail)) return 0;
     return tail.staminaBase;
+}
+
+static void m11_adjust_action_tail_f0407(unsigned char actionIndex,
+                                         int performed,
+                                         int cancelActionDisable,
+                                         int meleeFailureTail,
+                                         int* actionExperienceGain,
+                                         unsigned char* disabledTicks) {
+    DM1_ActionF0407TailAdjustInputPc34 adjustIn;
+    DM1_ActionF0407TailAdjustPc34 adjustOut;
+    if (!actionExperienceGain || !disabledTicks) return;
+    memset(&adjustIn, 0, sizeof(adjustIn));
+    adjustIn.actionIndex = (int)actionIndex;
+    adjustIn.performed = performed;
+    adjustIn.actionExperienceGain = *actionExperienceGain;
+    adjustIn.disabledTicks = (int)*disabledTicks;
+    adjustIn.cancelActionDisable = cancelActionDisable;
+    adjustIn.meleeFailureTail = meleeFailureTail;
+    if (dm1_v1_action_adjust_f0407_tail_pc34(&adjustIn, &adjustOut) &&
+        adjustOut.valid) {
+        *actionExperienceGain = adjustOut.actionExperienceGain;
+        *disabledTicks = (unsigned char)adjustOut.disabledTicks;
+    }
 }
 
 static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
@@ -29903,11 +29913,9 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                 state, chosen, timelineCountBeforeAttack);
         }
         if (!performed) {
-            /* ReDMCSB MENU.C F0407 lines 1331-1337 halves the disabled-tick
-             * budget and G0497 experience when F0402 returns false before
-             * F0231.  Stamina is still spent later in F0407's common tail. */
-            disabledTicks >>= 1;
-            actionExperienceGain >>= 1;
+            m11_adjust_action_tail_f0407(
+                chosen, performed, 0, 1,
+                &actionExperienceGain, &disabledTicks);
         }
         if (!(chosen == DM1_ACTION_THROW && performed &&
               disabledTicks == 0u)) {
@@ -29934,30 +29942,9 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         if (!state->gameWon) {
             (void)m11_apply_tick(state, CMD_NONE, "ACTION");
         }
-        if (m11_action_is_party_shield(chosen) && !performed) {
-            /* ReDMCSB MENU.C F0407 lines 1456-1461 quarters G0497 XP
-             * and halves disabled ticks when F0403 returns false. */
-            actionExperienceGain >>= 2;
-            disabledTicks >>= 1;
-        } else if (m11_action_uses_f0327_failure_xp_halving(chosen) &&
-                   !performed) {
-            /* ReDMCSB MENU.C F0407 lines 1300-1303 halves G0497 XP when
-             * F0327_CHAMPION_IsProjectileSpellCast returns false. */
-            actionExperienceGain >>= 1;
-        } else if (chosen == DM1_ACTION_SHOOT && !performed) {
-            /* ReDMCSB MENU.C F0407 lines 1363-1387 routes the no-ammunition
-             * SHOOT failure to T0407032, sets ActionDamage to
-             * NO_AMMUNITION, clears G0497 action XP, and keeps the common
-             * stamina / action-disable tail. */
-            actionExperienceGain = 0;
-        } else if (chosen == DM1_ACTION_CLIMB_DOWN &&
-                   cancelActionDisable) {
-            /* ReDMCSB MENU.C F0407 lines 1548-1565 cancels the
-             * action-disabled icon when rope CLIMB DOWN is not possible,
-             * while preserving the common stamina and G0497 XP tail
-             * (BUG0_79). */
-            disabledTicks = 0;
-        }
+        m11_adjust_action_tail_f0407(
+            chosen, performed, cancelActionDisable, 0,
+            &actionExperienceGain, &disabledTicks);
         m11_disable_champion_action_after_action_ticks(
             state, championIndex, chosen, disabledTicks);
         if (chosen == DM1_ACTION_THROW && performed) {
@@ -30059,34 +30046,10 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     {
         unsigned char disabledTicks =
             m11_action_disabled_ticks_f0407((unsigned char)actionIndex);
-        if (m11_action_is_party_shield((unsigned char)actionIndex) &&
-            !performed) {
-            /* ReDMCSB MENU.C F0407 lines 1456-1461 quarters G0497 XP
-             * and halves disabled ticks when F0403 returns false. */
-            actionExperienceGain >>= 2;
-            disabledTicks >>= 1;
-        } else if (m11_action_uses_f0327_failure_xp_halving(
-                       (unsigned char)actionIndex) && !performed) {
-            /* ReDMCSB MENU.C F0407 lines 1300-1303 halves G0497 XP when
-             * F0327_CHAMPION_IsProjectileSpellCast returns false. */
-            actionExperienceGain >>= 1;
-        } else if (actionIndex == DM1_ACTION_SHOOT && !performed) {
-            /* ReDMCSB MENU.C F0407 lines 1363-1387 routes SHOOT without
-             * ammunition through T0407032, clearing G0497 XP while keeping
-             * the common stamina / action-disable tail. */
-            actionExperienceGain = 0;
-        } else if (actionIndex == DM1_ACTION_CLIMB_DOWN &&
-                   cancelActionDisable) {
-            /* ReDMCSB MENU.C F0407 lines 1548-1565 cancels the disabled
-             * action icon on failed rope CLIMB DOWN but preserves BUG0_79
-             * stamina and G0497 XP side effects. */
-            disabledTicks = 0;
-        } else if (actionIndex == DM1_ACTION_PARRY && !performed) {
-            /* ReDMCSB MENU.C F0402 returns FALSE when no melee target exists;
-             * F0407 lines 1331-1337 then halves G0497 XP and disabled ticks. */
-            actionExperienceGain >>= 1;
-            disabledTicks >>= 1;
-        }
+        m11_adjust_action_tail_f0407(
+            (unsigned char)actionIndex, performed, cancelActionDisable,
+            actionIndex == DM1_ACTION_PARRY && !performed,
+            &actionExperienceGain, &disabledTicks);
         if (!(actionIndex == DM1_ACTION_THROW && performed &&
               disabledTicks == 0u)) {
             m11_disable_champion_action_after_action_ticks(

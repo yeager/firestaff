@@ -100,10 +100,26 @@ typedef struct {
     int valid;
     int damageFactor;
     int staminaBase;
+    int disabledTicks;
     int isMeleeContact;
     int isPartyShield;
     int halvesXpOnF0327Failure;
 } DM1_ActionF0407TailPc34;
+
+typedef struct {
+    int actionIndex;
+    int performed;
+    int actionExperienceGain;
+    int disabledTicks;
+    int cancelActionDisable;
+    int meleeFailureTail;
+} DM1_ActionF0407TailAdjustInputPc34;
+
+typedef struct {
+    int valid;
+    int actionExperienceGain;
+    int disabledTicks;
+} DM1_ActionF0407TailAdjustPc34;
 
 /* ── Query API ─────────────────────────────────────────────────────── */
 
@@ -121,6 +137,10 @@ int dm1_v1_action_f0407_tail_pc34(int actionIndex,
 int dm1_v1_action_stamina_cost_f0407_pc34(int actionIndex,
                                           int championIndex,
                                           unsigned int gameTick);
+int dm1_v1_action_disabled_ticks_f0407_pc34(int actionIndex);
+int dm1_v1_action_adjust_f0407_tail_pc34(
+    const DM1_ActionF0407TailAdjustInputPc34* in,
+    DM1_ActionF0407TailAdjustPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);

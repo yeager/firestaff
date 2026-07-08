@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 F0407 common-tail adjustment ownership: DM1 action-XP compat now owns M11-facing F0407 tail adjustment for G0491 disabled ticks plus melee failure, SPELLSHIELD/FIRESHIELD failure, F0327 projectile failure, SHOOT no-ammunition, and failed CLIMB DOWN routes. Both M11 action dispatch paths now consume the same receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 F0407 action-tail ownership: DM1 action-XP compat now owns M11-facing F0407 action-tail decisions for G0492 melee contact including the BLOCK exception, G0494 stamina base/cost, party-shield action classification, and F0327 failure XP-halving. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 projectile materialization-plan ownership: DM1 V1 throw/shoot compat now owns M11-facing Projectile.Slot materialization plans for thrown-potion consumption, ordinary source-square drops, and resolved champion-impact drops after F0219 commits the impact cell. M11 keeps only thing-chain mutation. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
