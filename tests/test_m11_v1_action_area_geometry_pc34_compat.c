@@ -187,6 +187,26 @@ static void test_status_boxes_stay_source_locked(void)
     check_true("name text zone champ3", M11_GameView_GetV1StatusNameTextZone(3, &x, &y, &w, &h));
     check_int("name text x", x, 208);
     check_int("name text w", w, 42);
+
+    check_int("damage indicator zone champ3", M11_GameView_GetV1DamageIndicatorZoneId(3), 170);
+    check_true("damage indicator champ3",
+               M11_GameView_GetV1DamageIndicatorZone(3, 45, 7, &x, &y, &w, &h));
+    check_int("damage indicator champ3 x", x, 218);
+    check_int("damage indicator champ3 y", y, 11);
+    check_int("inventory damage zone champ3",
+              M11_GameView_GetV1InventoryDamageIndicatorZoneId(3), 182);
+    check_true("inventory damage champ3",
+               M11_GameView_GetV1InventoryDamageIndicatorZone(3, 32, 29, &x, &y, &w, &h));
+    check_int("inventory damage champ3 x", x, 214);
+    check_int("inventory damage champ3 y", y, 0);
+    check_true("damage number champ3",
+               M11_GameView_GetV1DamageNumberOrigin(3, &x, &y));
+    check_int("damage number champ3 x", x, 236);
+    check_int("damage number champ3 y", y, 11);
+    check_true("pc34 damage number champ3",
+               M11_GameView_GetV1DamageNumberOriginPc34(3, 77, 1, &x, &y));
+    check_int("pc34 damage number champ3 x", x, 225);
+    check_int("pc34 damage number champ3 y", y, 16);
 }
 
 int main(void)

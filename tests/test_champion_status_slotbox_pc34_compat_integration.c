@@ -49,6 +49,9 @@ int main(void) {
             rect.h != 29) ok = 0;
         if (CHAMPION_Compat_StatusBarGraphZoneId(0) != 187 ||
             CHAMPION_Compat_StatusBarGraphZoneId(3) != 190) ok = 0;
+        if (!CHAMPION_Compat_StatusBarGraphRegionZone(3, &rect) ||
+            rect.x != 250 || rect.y != 0 || rect.w != 24 ||
+            rect.h != 29) ok = 0;
         if (CHAMPION_Compat_StatusBarZoneId(0) != 195 ||
             CHAMPION_Compat_StatusBarZoneId(1) != 199 ||
             CHAMPION_Compat_StatusBarZoneId(2) != 203 ||
@@ -75,6 +78,20 @@ int main(void) {
         if (!CHAMPION_Compat_StatusNameTextZone(3, &rect) ||
             rect.x != 208 || rect.y != 0 || rect.w != 42 ||
             rect.h != 7) ok = 0;
+        if (CHAMPION_Compat_DamageIndicatorZoneId(3) != 170 ||
+            CHAMPION_Compat_InventoryDamageIndicatorZoneId(3) != 182) ok = 0;
+        if (!CHAMPION_Compat_DamageIndicatorZone(3, 45, 7, &rect) ||
+            rect.x != 218 || rect.y != 11 || rect.w != 45 ||
+            rect.h != 7) ok = 0;
+        if (!CHAMPION_Compat_InventoryDamageIndicatorZone(3, 32, 29, &rect) ||
+            rect.x != 214 || rect.y != 0 || rect.w != 32 ||
+            rect.h != 29) ok = 0;
+        if (!CHAMPION_Compat_DamageNumberOrigin(3, &rect) ||
+            rect.x != 236 || rect.y != 11) ok = 0;
+        if (!CHAMPION_Compat_DamageNumberOriginPc34(3, 7, 0, &rect) ||
+            rect.x != 226 || rect.y != 5) ok = 0;
+        if (!CHAMPION_Compat_DamageNumberOriginPc34(3, 77, 1, &rect) ||
+            rect.x != 225 || rect.y != 16) ok = 0;
     }
 
     if (CHAMPION_Compat_GetStatusNameBoxCount() != 4u) ok = 0;

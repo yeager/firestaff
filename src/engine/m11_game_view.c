@@ -31523,11 +31523,6 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
                                         int* outY,
                                         int* outW,
                                         int* outH) {
-    int slot;
-    int relX;
-    int relY;
-    int relW;
-    int relH;
     if (!route) return 0;
     switch (route->zoneId) {
         case 2:
@@ -31550,33 +31545,17 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
         const int slotBox = route->zoneId - 211;
         const int championSlot = slotBox >> 1;
         const int handSlot = slotBox & 1;
-        if (!M11_GameView_GetV1StatusBoxZone(championSlot,
-                                             &relX, &relY, &relW, &relH)) {
-            return 0;
-        }
-        /* ReDMCSB COMMAND.C G0455 lines 489-496 maps C020..C027 to
-         * C211..C218; DATA.C lines 978-985 declares the status hand
-         * slot zones.  Layout-696 places each 16x16 hand hit box inside
-         * the parent champion status box at x=4 ready / x=24 action,
-         * y=10. */
-        (void)relW;
-        (void)relH;
-        if (outX) *outX = relX + (handSlot ? M11_V1_STATUS_ACTION_HAND_X
-                                           : M11_V1_STATUS_READY_HAND_X);
-        if (outY) *outY = relY + M11_V1_STATUS_HAND_Y;
-        if (outW) *outW = M11_V1_STATUS_HAND_ZONE_W;
-        if (outH) *outH = M11_V1_STATUS_HAND_ZONE_H;
-        return 1;
+        return M11_GameView_GetV1StatusHandZone(championSlot, handSlot,
+                                                outX, outY, outW, outH);
     }
     if (route->zoneId >= 187 && route->zoneId <= 190) {
-        slot = route->zoneId - 187;
-        if (!M11_GameView_GetV1StatusBoxZone(slot, &relX, &relY, &relW, &relH)) {
-            return 0;
-        }
-        if (outX) *outX = relX + 43;
-        if (outY) *outY = relY;
-        if (outW) *outW = 24;
-        if (outH) *outH = 29;
+        ChampionStatusRectCompat rect;
+        if (!CHAMPION_Compat_StatusBarGraphRegionZone(route->zoneId - 187,
+                                                      &rect)) return 0;
+        if (outX) *outX = rect.x;
+        if (outY) *outY = rect.y;
+        if (outW) *outW = rect.w;
+        if (outH) *outH = rect.h;
         return 1;
     }
     if (route->zoneId >= 68 && route->zoneId <= 73) {
@@ -33534,8 +33513,7 @@ int M11_GameView_GetV1PoisonLabelZone(int championSlot,
 }
 
 int M11_GameView_GetV1DamageIndicatorZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    return 167 + championSlot;
+    return CHAMPION_Compat_DamageIndicatorZoneId(championSlot);
 }
 
 int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
@@ -33545,29 +33523,18 @@ int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
                                           int* outY,
                                           int* outW,
                                           int* outH) {
-    int boxX, boxY, boxW, boxH;
-    int zoneId = M11_GameView_GetV1DamageIndicatorZoneId(championSlot);
-    if (indicatorW <= 0 || indicatorH <= 0 || zoneId == 0) return 0;
-    /* Source layout-696 / ReDMCSB CHAMPION.C F0291 selects
-     * C167..C170 for the small damage-to-champion banner.  The
-     * decoded zone is the 45x7 C015 banner centered over the
-     * champion status box; derive the rectangle through the source
-     * zone id so future HUD placement drift is caught at the helper. */
-    championSlot = zoneId - 167;
-    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
-                                         &boxX, &boxY, &boxW, &boxH)) {
-        return 0;
-    }
-    if (outX) *outX = boxX + (boxW - indicatorW) / 2;
-    if (outY) *outY = boxY + (boxH - indicatorH) / 2;
-    if (outW) *outW = indicatorW;
-    if (outH) *outH = indicatorH;
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_DamageIndicatorZone(championSlot, indicatorW,
+                                             indicatorH, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1InventoryDamageIndicatorZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    return 179 + championSlot;
+    return CHAMPION_Compat_InventoryDamageIndicatorZoneId(championSlot);
 }
 
 int M11_GameView_GetV1InventoryDamageIndicatorZone(int championSlot,
@@ -33577,50 +33544,25 @@ int M11_GameView_GetV1InventoryDamageIndicatorZone(int championSlot,
                                                    int* outY,
                                                    int* outW,
                                                    int* outH) {
-    int boxX, boxY, boxW, boxH;
-    int zoneId = M11_GameView_GetV1InventoryDamageIndicatorZoneId(championSlot);
-    if (indicatorW <= 0 || indicatorH <= 0 || zoneId == 0) return 0;
-    /* ReDMCSB CHAMDRAW.C F0623:688-696 selects C179..C182 for the
-     * inventory champion's big C016 damage graphic, then adds the
-     * champion index before F0660_ blits with C10 transparency.  The
-     * layout is the 32x29 portrait lane at x=(slot*69)+7, y=0 inside
-     * the same C151..C154 status-box row that F0292 owns. */
-    championSlot = zoneId - 179;
-    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
-                                         &boxX, &boxY, &boxW, &boxH)) {
-        return 0;
-    }
-    (void)boxW;
-    (void)boxH;
-    if (outX) *outX = boxX + 7;
-    if (outY) *outY = boxY;
-    if (outW) *outW = indicatorW;
-    if (outH) *outH = indicatorH;
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_InventoryDamageIndicatorZone(championSlot,
+                                                      indicatorW,
+                                                      indicatorH,
+                                                      &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1DamageNumberOrigin(int championSlot,
                                          int* outX,
                                          int* outY) {
-    int boxX, boxY, boxW, boxH;
-    int dmgX, dmgY, dmgW, dmgH;
-    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
-                                         &boxX, &boxY, &boxW, &boxH)) {
-        return 0;
-    }
-    if (!M11_GameView_GetV1DamageIndicatorZone(championSlot,
-                                               45, 7,
-                                               &dmgX, &dmgY,
-                                               &dmgW, &dmgH)) {
-        return 0;
-    }
-    (void)boxY;
-    (void)boxH;
-    (void)dmgX;
-    (void)dmgW;
-    (void)dmgH;
-    if (outX) *outX = boxX + boxW / 2 - 4;
-    if (outY) *outY = dmgY;
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_DamageNumberOrigin(championSlot, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
     return 1;
 }
 
@@ -33629,28 +33571,13 @@ int M11_GameView_GetV1DamageNumberOriginPc34(int championSlot,
                                              int inventoryChampion,
                                              int* outX,
                                              int* outY) {
-    int boxX, boxY, boxW, boxH;
-    int digitOffset;
-    if (damageAmount <= 0) return 0;
-    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
-                                         &boxX, &boxY, &boxW, &boxH)) {
-        return 0;
-    }
-    (void)boxW;
-    (void)boxH;
-    if (damageAmount < 10) {
-        digitOffset = inventoryChampion ? 21 : 19;
-    } else if (damageAmount < 100) {
-        digitOffset = inventoryChampion ? 18 : 16;
-    } else {
-        digitOffset = inventoryChampion ? 15 : 13;
-    }
-    /* ReDMCSB: CHAMPION.C F0320 lines 1745-1775 (MEDIA009 PC path)
-     * prints the damage number at championIndex*69 plus fixed
-     * 1/2/3-digit strides.  F0623 later centers the text in a zone for
-     * other ports; DM1 PC34 keeps this direct logical-screen origin. */
-    if (outX) *outX = boxX + digitOffset;
-    if (outY) *outY = boxY + (inventoryChampion ? 16 : 5);
+    ChampionStatusRectCompat rect;
+    if (!CHAMPION_Compat_DamageNumberOriginPc34(championSlot,
+                                                damageAmount,
+                                                inventoryChampion,
+                                                &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
     return 1;
 }
 
