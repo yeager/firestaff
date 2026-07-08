@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 boot prepare-failure status: `dm2_v1_boot_startup_launch_alloc()` now returns boot-owned failure status for bad input, OOM, missing/unverified assets, and enter-game failure. M11 applies that status instead of mapping DM2 prepare enums locally. Verification: strict compile checks passed for `dm2_v1_boot.c`, `m11_game_view.c`, and `test_dm2_v1_boot_profile_smoke.c`; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron boot prepare-failure host receipt: `theron_v1_boot_startup_launch_alloc()` now returns an M11-ready host receipt for prepare failures including missing/invalid Track 02, asset load, and startup-state failures. M11 applies that receipt instead of switching on Theron prepare result enums. Verification: strict compile checks passed for `theron_v1_boot.c`, `m11_game_view.c`, and `test_theron_v1_startup_save_resume_pc34.c`; Phase A passed 24/24; `git diff --check` passed. The local build tree did not contain `build/test_theron_v1_startup_save_resume_pc34`.
 
 - ✅ 2026-07-08 CSB boot startup launch allocation: `csb_v1_boot_startup_launch_alloc_pc34()` now owns CSB profile allocation, hash asset scan, `enter_game`, launch receipts, cleanup, and M11-ready failure host status. M11 consumes the launch bundle instead of allocating/scanning/entering CSB profiles inline. Verification: strict compile checks passed for `csb_v1_boot.c`, `m11_game_view.c`, and `test_csb_v1_boot_runtime_handoff.c`; Phase A passed 24/24; `git diff --check` passed.

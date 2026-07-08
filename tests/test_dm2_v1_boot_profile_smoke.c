@@ -253,6 +253,12 @@ static void test_startup_launch_alloc_missing_data(void)
                      launch.prepare_result),
                  "SCAN_FAILED") == 0,
           "startup launch failure has stable diagnostic name");
+    CHECK(launch.failure_status_scope != NULL &&
+              strcmp(launch.failure_status_scope, "BOOT") == 0,
+          "startup launch missing-data failure has boot status scope");
+    CHECK(launch.failure_status != NULL &&
+              strcmp(launch.failure_status, "DM2 ASSETS MISSING") == 0,
+          "startup launch missing-data failure has host status");
     dm2_v1_boot_startup_launch_cleanup(&launch);
 }
 
