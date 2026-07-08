@@ -2522,16 +2522,33 @@ static int m11_csb_startup_build_render_plan(
     const M11_GameViewState *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
-    CSB_V1_StartupHostFacts_PC34 facts;
-
     if (!state) {
         return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
                                                                   out_plan);
     }
-    m11_csb_startup_host_facts(state, &facts);
-    return csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
-        &facts,
-        out_plan);
+    return csb_v1_boot_startup_build_render_plan_from_runtime_state_pc34(
+        out_plan,
+        state->csbState.startup_title_active,
+        state->csbState.startup_title_frame,
+        state->csbState.startup_title_source_step,
+        state->csbState.startup_entrance_active,
+        state->csbState.startup_entrance_source_step,
+        state->csbState.startup_entrance_dismissed,
+        state->csbState.startup_entrance_credits_active,
+        state->csbState.startup_entrance_credits_remaining_ticks,
+        state->csbState.startup_entrance_opening_active,
+        state->csbState.startup_entrance_opening_delay_ticks,
+        state->csbState.startup_entrance_opening_step,
+        state->csbState.startup_entrance_pending_command,
+        state->csbState.startup_entrance_frame,
+        state->csbState.startup_import_available,
+        state->csbState.startup_import_selected_action_index,
+        state->csbState.startup_import_champion_count,
+        state->csbState.startup_import_preview_active,
+        state->csbState.startup_import_utility_prompt,
+        state->csbState.startup_entrance_resume_available,
+        state->csbState.startup_entrance_resume_path,
+        state->csbBootProfile);
 }
 
 int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
@@ -2959,14 +2976,31 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state)
 {
-    CSB_V1_StartupHostFacts_PC34 facts;
-
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
-    m11_csb_startup_host_facts(state, &facts);
-    return csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
-        &facts);
+    return csb_v1_boot_startup_entrance_accepts_input_from_runtime_state_pc34(
+        state->csbState.startup_title_active,
+        state->csbState.startup_title_frame,
+        state->csbState.startup_title_source_step,
+        state->csbState.startup_entrance_active,
+        state->csbState.startup_entrance_source_step,
+        state->csbState.startup_entrance_dismissed,
+        state->csbState.startup_entrance_credits_active,
+        state->csbState.startup_entrance_credits_remaining_ticks,
+        state->csbState.startup_entrance_opening_active,
+        state->csbState.startup_entrance_opening_delay_ticks,
+        state->csbState.startup_entrance_opening_step,
+        state->csbState.startup_entrance_pending_command,
+        state->csbState.startup_entrance_frame,
+        state->csbState.startup_import_available,
+        state->csbState.startup_import_selected_action_index,
+        state->csbState.startup_import_champion_count,
+        state->csbState.startup_import_preview_active,
+        state->csbState.startup_import_utility_prompt,
+        state->csbState.startup_entrance_resume_available,
+        state->csbState.startup_entrance_resume_path,
+        state->csbBootProfile);
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(
@@ -10977,7 +11011,6 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->dm1WorldTick = state->world.gameTick;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_StartupHostFacts_PC34 facts;
         out->levelLoaded = state->csbState.level_loaded;
         out->mapIndex = state->csbState.current_level;
         out->partyX = state->csbState.party_x;
@@ -10985,9 +11018,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->csbState.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->csbState.tick_count;
-        m11_csb_startup_host_facts(state, &facts);
-        (void)csb_v1_startup_receipt_presentation_from_host_facts_pc34(
-            &facts,
+        (void)csb_v1_boot_startup_presentation_receipt_from_runtime_state_pc34(
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
@@ -10997,7 +11028,28 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             &out->startupAnimationActive,
             &out->startupTitleFrame,
             &out->startupTitleFrameMax,
-            &out->startupTitleReady);
+            &out->startupTitleReady,
+            state->csbState.startup_title_active,
+            state->csbState.startup_title_frame,
+            state->csbState.startup_title_source_step,
+            state->csbState.startup_entrance_active,
+            state->csbState.startup_entrance_source_step,
+            state->csbState.startup_entrance_dismissed,
+            state->csbState.startup_entrance_credits_active,
+            state->csbState.startup_entrance_credits_remaining_ticks,
+            state->csbState.startup_entrance_opening_active,
+            state->csbState.startup_entrance_opening_delay_ticks,
+            state->csbState.startup_entrance_opening_step,
+            state->csbState.startup_entrance_pending_command,
+            state->csbState.startup_entrance_frame,
+            state->csbState.startup_import_available,
+            state->csbState.startup_import_selected_action_index,
+            state->csbState.startup_import_champion_count,
+            state->csbState.startup_import_preview_active,
+            state->csbState.startup_import_utility_prompt,
+            state->csbState.startup_entrance_resume_available,
+            state->csbState.startup_entrance_resume_path,
+            state->csbBootProfile);
         return 1;
     }
 
@@ -12036,12 +12088,30 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         if (state->csbState.startup_entrance_active) {
             CSB_V1_StartupIdleReceipt_PC34 startup_receipt;
-            CSB_V1_StartupHostFacts_PC34 facts;
             M11_GameInputResult idle_result;
-            m11_csb_startup_host_facts(state, &facts);
-            (void)csb_v1_startup_advance_idle_from_host_facts_with_receipt_pc34(
-                &facts,
-                &startup_receipt);
+            (void)csb_v1_boot_startup_advance_idle_from_runtime_state_pc34(
+                &startup_receipt,
+                state->csbState.startup_title_active,
+                state->csbState.startup_title_frame,
+                state->csbState.startup_title_source_step,
+                state->csbState.startup_entrance_active,
+                state->csbState.startup_entrance_source_step,
+                state->csbState.startup_entrance_dismissed,
+                state->csbState.startup_entrance_credits_active,
+                state->csbState.startup_entrance_credits_remaining_ticks,
+                state->csbState.startup_entrance_opening_active,
+                state->csbState.startup_entrance_opening_delay_ticks,
+                state->csbState.startup_entrance_opening_step,
+                state->csbState.startup_entrance_pending_command,
+                state->csbState.startup_entrance_frame,
+                state->csbState.startup_import_available,
+                state->csbState.startup_import_selected_action_index,
+                state->csbState.startup_import_champion_count,
+                state->csbState.startup_import_preview_active,
+                state->csbState.startup_import_utility_prompt,
+                state->csbState.startup_entrance_resume_available,
+                state->csbState.startup_entrance_resume_path,
+                state->csbBootProfile);
             idle_result = m11_csb_startup_apply_idle_receipt(
                 state,
                 &startup_receipt);
