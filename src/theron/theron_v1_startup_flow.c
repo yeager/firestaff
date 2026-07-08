@@ -1332,6 +1332,75 @@ int theron_v1_startup_handle_pointer_from_facts_with_receipt(
     return handled && result == THERON_STARTUP_OK;
 }
 
+int theron_v1_startup_handle_pointer_from_session_facts_with_receipt(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    int soul_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    int x,
+    int y,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt) {
+
+    Theron_V1StartupContinueAvailability availability;
+
+    if (!theron_v1_startup_continue_availability_from_state(
+            (Theron_V1StartupResumeClaim)resume_claim,
+            tqsv_slot,
+            srm_slot,
+            (Theron_V1SrmProgressImportStatus)srm_import_status,
+            &availability)) {
+        if (out_receipt) {
+            tqr_startup_input_receipt_init(out_receipt);
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->status_scope = "STARTUP";
+            out_receipt->status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        if (out_action) {
+            theron_v1_startup_action_init(out_action);
+        }
+        return 0;
+    }
+
+    return theron_v1_startup_handle_pointer_from_facts_with_receipt(
+        phase,
+        selected_dungeon,
+        boot_profile,
+        world,
+        soul_cursor,
+        continue_focus,
+        availability.has_tqsv_continue,
+        availability.tqsv_slot,
+        availability.has_srm_continue,
+        availability.srm_slot,
+        startup_text_prompt,
+        startup_roster_names,
+        startup_roster_titles,
+        startup_roster_name_count,
+        selected_mirrors_mask,
+        selected_mirror_order,
+        selected_mirror_order_count,
+        x,
+        y,
+        out_action,
+        out_receipt);
+}
+
 static int tqr_startup_render_add_row(
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows,
@@ -2748,6 +2817,73 @@ int theron_v1_startup_handle_input_from_facts_with_receipt(
         }
     }
     return result == THERON_STARTUP_OK;
+}
+
+int theron_v1_startup_handle_input_from_session_facts_with_receipt(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    int soul_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt) {
+
+    Theron_V1StartupContinueAvailability availability;
+
+    if (!theron_v1_startup_continue_availability_from_state(
+            (Theron_V1StartupResumeClaim)resume_claim,
+            tqsv_slot,
+            srm_slot,
+            (Theron_V1SrmProgressImportStatus)srm_import_status,
+            &availability)) {
+        if (out_receipt) {
+            tqr_startup_input_receipt_init(out_receipt);
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->status_scope = "STARTUP";
+            out_receipt->status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        if (out_action) {
+            theron_v1_startup_action_init(out_action);
+        }
+        return 0;
+    }
+
+    return theron_v1_startup_handle_input_from_facts_with_receipt(
+        phase,
+        selected_dungeon,
+        boot_profile,
+        world,
+        soul_cursor,
+        continue_focus,
+        availability.has_tqsv_continue,
+        availability.tqsv_slot,
+        availability.has_srm_continue,
+        availability.srm_slot,
+        startup_text_prompt,
+        startup_roster_names,
+        startup_roster_titles,
+        startup_roster_name_count,
+        selected_mirrors_mask,
+        selected_mirror_order,
+        selected_mirror_order_count,
+        input,
+        out_action,
+        out_receipt);
 }
 
 Theron_StartupResult theron_v1_startup_handle_hit_with_progression(
