@@ -1067,6 +1067,70 @@ static void test_boot_startup_launch_detach_runtime_receipt(void) {
     free(receipt.assets);
 }
 
+static void test_boot_forcefield_pointer_snapshot_enters_runtime(void) {
+    static const unsigned char fake_track02[2352] = {0};
+    Theron_V1_BootProfile profile;
+    Theron_V1_World world;
+    TrAssetBundle assets;
+    Theron_V1_BootRuntimeStartupSnapshot snapshot;
+    Theron_StartupActionHostReceipt receipt;
+    int mirror_order[THERON_STARTUP_MAX_COMPANIONS] = {6, 0, 2};
+    char roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
+                     [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
+    char roster_titles[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
+                      [THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
+
+    memset(&profile, 0, sizeof(profile));
+    memset(&assets, 0, sizeof(assets));
+    memset(roster_names, 0, sizeof(roster_names));
+    memset(roster_titles, 0, sizeof(roster_titles));
+    theron_v1_world_init(&world);
+
+    snprintf(profile.graphics_md5,
+             sizeof(profile.graphics_md5),
+             "%s",
+             THERON_TRACK02_MD5_US_BIN);
+    assets.hucard_rom = fake_track02;
+    assets.hucard_rom_size = sizeof(fake_track02);
+    snprintf(roster_names[1], sizeof(roster_names[1]), "MARA");
+    snprintf(roster_names[3], sizeof(roster_names[3]), "HEXA");
+    snprintf(roster_names[7], sizeof(roster_names[7]), "PENTAI");
+
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.startup_phase = THERON_STARTUP_PHASE_READY;
+    snapshot.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    snapshot.boot_profile = &profile;
+    snapshot.world = &world;
+    snapshot.assets = &assets;
+    snapshot.startup_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
+    snapshot.startup_roster_names = roster_names;
+    snapshot.startup_roster_titles = roster_titles;
+    snapshot.startup_roster_name_count =
+        (int)THERON_STARTUP_MEDIA_ROSTER_CAPACITY;
+    snapshot.selected_mirrors_mask = (1 << 6) | (1 << 0) | (1 << 2);
+    snapshot.companion_count = 3;
+    snapshot.selected_mirror_order = mirror_order;
+    snapshot.selected_mirror_order_count = THERON_STARTUP_MAX_COMPANIONS;
+
+    {
+        int ok = theron_v1_boot_startup_execute_pointer_from_snapshot(
+                    &snapshot,
+                    46 + 77,
+                    160 + 5,
+                    &receipt);
+        expect_true(ok == 1 &&
+                        receipt.result == THERON_STARTUP_OK &&
+                        receipt.state_receipt_valid == 1 &&
+                        receipt.state_receipt.flow.phase ==
+                            THERON_STARTUP_PHASE_IN_DUNGEON &&
+                        receipt.state_receipt.set_level_loaded == 1 &&
+                        receipt.state_receipt.level_loaded == 1 &&
+                        world.level_loaded[0][0] == 1 &&
+                        world.party.champion_count == 4,
+                    "boot snapshot forcefield pointer enters Theron runtime");
+    }
+}
+
 int main(void) {
     printf("\n=== Theron V1 Startup Save/Resume Smoke Gate Unit Tests ===\n\n");
     test_clean_host_skip_safe_no_save_root();
@@ -1083,6 +1147,7 @@ int main(void) {
     test_snapshot_snapshot_is_deterministic();
     test_boot_prepare_startup_profile_missing_track02();
     test_boot_startup_launch_detach_runtime_receipt();
+    test_boot_forcefield_pointer_snapshot_enters_runtime();
     test_startup_session_facts_wrappers();
 
     printf("=====================================================\n");

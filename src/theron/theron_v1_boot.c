@@ -1294,6 +1294,42 @@ int theron_v1_boot_startup_return_to_stage_select_after_exit_host_receipt(
         out_receipt);
 }
 
+int theron_v1_boot_startup_return_to_stage_select_after_exit_profile_host_receipt(
+    Theron_StartupActionHostReceipt *out_receipt,
+    const void *boot_profile,
+    Theron_V1_World *world)
+{
+    Theron_StartupChapterInspectReceipt inspect;
+    char prefix[128];
+
+    if (!theron_v1_boot_startup_return_to_stage_select_after_exit_host_receipt(
+            out_receipt,
+            world)) {
+        return 0;
+    }
+    if (!out_receipt || !world) {
+        return 0;
+    }
+    snprintf(prefix,
+             sizeof(prefix),
+             "%s",
+             out_receipt->runtime_receipt[0]
+                 ? out_receipt->runtime_receipt
+                 : "dungeon complete");
+    if (theron_v1_startup_chapter_inspect_receipt_from_facts(
+            boot_profile,
+            world,
+            prefix,
+            &inspect)) {
+        out_receipt->host_receipt.inspect_scope = "DUNGEON COMPLETE";
+        snprintf(out_receipt->host_receipt.inspect_detail,
+                 sizeof(out_receipt->host_receipt.inspect_detail),
+                 "%s",
+                 inspect.inspect_detail);
+    }
+    return 1;
+}
+
 static void theron_v1_boot_startup_launch_host_receipt_init(
     Theron_StartupHostReceipt *receipt) {
     if (!receipt) {

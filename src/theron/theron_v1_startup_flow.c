@@ -362,9 +362,22 @@ Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(
         return THERON_STARTUP_OK;
     }
 
-    result = theron_v1_startup_choose_stage(flow, progression, selected);
-    if (result != THERON_STARTUP_OK) {
-        return result;
+    if (snapshot->phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
+        snapshot->phase == THERON_STARTUP_PHASE_READY) {
+        flow->selected_dungeon = selected;
+        flow->selected_mirrors_mask = 0;
+        flow->companion_count = 0;
+        for (slot = 0; slot < THERON_STARTUP_MAX_COMPANIONS; ++slot) {
+            flow->selected_mirror_order[slot] = 0xffu;
+        }
+        flow->theron_present = 1;
+        flow->forcefield_entered = 0;
+        flow->phase = THERON_STARTUP_PHASE_SOUL_ROOM;
+    } else {
+        result = theron_v1_startup_choose_stage(flow, progression, selected);
+        if (result != THERON_STARTUP_OK) {
+            return result;
+        }
     }
 
     for (slot = 0;
@@ -2085,13 +2098,17 @@ int theron_v1_startup_execute_action_from_session_with_host_receipt(
                 plan.failure_status ? plan.failure_status : "FORCEFIELD FAILED";
             return 1;
         }
-        if (!theron_v1_startup_flow_rebuild_from_session_with_receipt(
+        {
+            Theron_StartupResult rebuild_result =
+                theron_v1_startup_flow_rebuild_from_session_with_receipt(
                 session,
                 &flow,
-                &out_receipt->state_receipt)) {
+                &out_receipt->state_receipt);
+            if (rebuild_result != THERON_STARTUP_OK) {
             snprintf(out_receipt->runtime_receipt,
                      sizeof(out_receipt->runtime_receipt),
-                     "startup-flow rebuild failed");
+                         "startup-flow rebuild failed: %s",
+                         theron_v1_startup_result_name(rebuild_result));
             out_receipt->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
             out_receipt->host_receipt.input_result =
                 THERON_STARTUP_INPUT_RESULT_REDRAW;
@@ -2102,6 +2119,7 @@ int theron_v1_startup_execute_action_from_session_with_host_receipt(
                     : (plan.failure_status ? plan.failure_status
                                            : "FORCEFIELD FAILED");
             return 1;
+            }
         }
         if (!theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_receipts(
                 &flow,
@@ -4253,6 +4271,10 @@ int theron_v1_startup_return_to_stage_select_after_exit_host_receipt(
              "%s",
              theron_v1_startup_phase_name(
                  out_receipt->state_receipt.flow.phase));
+    snprintf(out_receipt->runtime_receipt,
+             sizeof(out_receipt->runtime_receipt),
+             "%s",
+             exit_receipt);
     out_receipt->host_receipt.log_first_line =
         exit_receipt[0] ? "TQ DUNGEON EXIT" : NULL;
     return 1;
