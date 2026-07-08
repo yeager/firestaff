@@ -247,3 +247,77 @@ int dm1_v1_build_projectile_create_input_pc34(
     outInput->firstMoveGraceFlag = 1;
     return 1;
 }
+
+const char* dm1_v1_projectile_subtype_name_pc34(int subtype) {
+    switch (subtype) {
+        case PROJECTILE_SUBTYPE_FIREBALL:          return "FIREBALL";
+        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:    return "LIGHTNING BOLT";
+        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL: return "DISPELL";
+        case PROJECTILE_SUBTYPE_POISON_BOLT:       return "POISON BOLT";
+        case PROJECTILE_SUBTYPE_POISON_CLOUD:      return "POISON CLOUD";
+        case PROJECTILE_SUBTYPE_OPEN_DOOR:         return "MAGIC";
+        case PROJECTILE_SUBTYPE_SLIME:             return "SLIME";
+        case PROJECTILE_SUBTYPE_KINETIC_ARROW:     return "MISSILE";
+        default:                                   return "PROJECTILE";
+    }
+}
+
+int dm1_v1_projectile_impact_source_sound_index_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result) {
+    if (!projectile || !result) return -1;
+    switch (result->resultKind) {
+        case PROJECTILE_RESULT_HIT_WALL:
+        case PROJECTILE_RESULT_HIT_DOOR:
+        case PROJECTILE_RESULT_HIT_CHAMPION:
+        case PROJECTILE_RESULT_HIT_CREATURE:
+        case PROJECTILE_RESULT_HIT_OTHER_PROJECTILE:
+            break;
+        default:
+            return -1;
+    }
+
+    if (result->emittedExplosion) {
+        switch (result->outExplosion.explosionType) {
+            case C000_EXPLOSION_FIREBALL:
+            case C001_EXPLOSION_SLIME:
+            case C002_EXPLOSION_LIGHTNING_BOLT:
+                return (result->outExplosion.attack > 80) ? 5 : 6;
+            case C040_EXPLOSION_SMOKE:
+                return -1;
+            default:
+                return 16;
+        }
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 574-584 deletes spent lightning and
+     * poison bolts without the non-explosion thud branch. */
+    if (projectile->projectileCategory == PROJECTILE_CATEGORY_MAGICAL) {
+        if (projectile->projectileSubtype == PROJECTILE_SUBTYPE_LIGHTNING_BOLT &&
+            (projectile->kineticEnergy >> 1) == 0) {
+            return -1;
+        }
+        if (projectile->projectileSubtype == PROJECTILE_SUBTYPE_POISON_BOLT &&
+            (projectile->kineticEnergy >> 2) == 0) {
+            return -1;
+        }
+    }
+
+    if (projectile->projectileSubtype == PROJECTILE_SUBTYPE_POISON_BOLT) {
+        return 16;
+    }
+    if (projectile->projectileCategory == PROJECTILE_CATEGORY_KINETIC &&
+        projectile->projectileSubtype == PROJECTILE_SUBTYPE_KINETIC_ARROW) {
+        return 0;
+    }
+    return 4;
+}
+
+int dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(int weaponType) {
+    /* ReDMCSB: PROJEXPL.C F0217 lines 540-553 sharp thrown weapon list. */
+    return weaponType == 8   ||  /* C08_WEAPON_DAGGER */
+           weaponType == 27  ||  /* C27_WEAPON_ARROW */
+           weaponType == 28  ||  /* C28_WEAPON_SLAYER */
+           weaponType == 31  ||  /* C31_WEAPON_POISON_DART */
+           weaponType == 32;     /* C32_WEAPON_THROWING_STAR */
+}

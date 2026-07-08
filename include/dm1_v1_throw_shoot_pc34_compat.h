@@ -70,6 +70,11 @@ int dm1_v1_legacy_throw_attack_probe_pc34(int baseAttack, int throwSkillLevel);
 int dm1_v1_build_projectile_create_input_pc34(
     const DM1_ProjectileCreateRequestPc34* req,
     struct ProjectileCreateInput_Compat* outInput);
+const char* dm1_v1_projectile_subtype_name_pc34(int subtype);
+int dm1_v1_projectile_impact_source_sound_index_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result);
+int dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(int weaponType);
 
 #ifdef __cplusplus
 }

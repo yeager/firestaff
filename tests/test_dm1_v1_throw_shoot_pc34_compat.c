@@ -162,12 +162,62 @@ static void test_projectile_create_input_model(void) {
     ASSERT_EQ(input.associatedThing, THING_NONE, "empty associated thing");
 }
 
+static void test_projectile_impact_model(void) {
+    struct ProjectileInstance_Compat p;
+    struct ProjectileTickResult_Compat r;
+    memset(&p, 0, sizeof(p));
+    memset(&r, 0, sizeof(r));
+    ASSERT_EQ(dm1_v1_projectile_subtype_name_pc34(PROJECTILE_SUBTYPE_FIREBALL)[0],
+              'F', "fireball name");
+    ASSERT_EQ(dm1_v1_projectile_subtype_name_pc34(12345)[0],
+              'P', "unknown projectile name");
+
+    p.projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    p.projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    r.resultKind = PROJECTILE_RESULT_FLEW;
+    ASSERT_EQ(dm1_v1_projectile_impact_source_sound_index_pc34(&p, &r), -1,
+              "no impact sound while flying");
+    r.resultKind = PROJECTILE_RESULT_HIT_WALL;
+    ASSERT_EQ(dm1_v1_projectile_impact_source_sound_index_pc34(&p, &r), 0,
+              "kinetic missile impact sound");
+    p.projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+    p.projectileSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+    p.kineticEnergy = 20;
+    ASSERT_EQ(dm1_v1_projectile_impact_source_sound_index_pc34(&p, &r), 16,
+              "poison bolt impact sound");
+    p.kineticEnergy = 3;
+    ASSERT_EQ(dm1_v1_projectile_impact_source_sound_index_pc34(&p, &r), -1,
+              "spent poison bolt silent");
+    p.projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+    p.kineticEnergy = 1;
+    ASSERT_EQ(dm1_v1_projectile_impact_source_sound_index_pc34(&p, &r), -1,
+              "spent lightning silent");
+    r.emittedExplosion = 1;
+    r.outExplosion.explosionType = C000_EXPLOSION_FIREBALL;
+    r.outExplosion.attack = 81;
+    ASSERT_EQ(dm1_v1_projectile_impact_source_sound_index_pc34(&p, &r), 5,
+              "large explosion sound");
+    r.outExplosion.attack = 80;
+    ASSERT_EQ(dm1_v1_projectile_impact_source_sound_index_pc34(&p, &r), 6,
+              "small explosion sound");
+    r.outExplosion.explosionType = C040_EXPLOSION_SMOKE;
+    ASSERT_EQ(dm1_v1_projectile_impact_source_sound_index_pc34(&p, &r), -1,
+              "smoke explosion silent");
+    ASSERT_EQ(dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(8), 1,
+              "dagger kept");
+    ASSERT_EQ(dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(32), 1,
+              "throwing star kept");
+    ASSERT_EQ(dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(9), 0,
+              "ordinary weapon not kept");
+}
+
 int main(void) {
     test_throw_weight_and_stamina();
     test_throw_runtime_math();
     test_projectile_shapes_and_launch();
     test_shoot_runtime_math();
     test_projectile_create_input_model();
+    test_projectile_impact_model();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_throw_shoot_pc34_compat: %d failures\n",
                 g_failures);

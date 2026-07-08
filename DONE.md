@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 projectile impact decision ownership: DM1 V1 throw/shoot compat now owns pure projectile-impact decisions for DM1 log names, source sound selection, silent spent lightning/poison bolts, explosion sound routing, and sharp thrown weapon types kept by creatures. M11 consumes those helpers while keeping scheduling/logging/state mutation local. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 action-projectile create-input ownership: DM1 V1 throw/shoot compat now builds the source-shaped F0212/F0810 projectile create input for M11 action projectiles, covering launch direction/cell fallback, owner, party location, attack/kinetic fields, poison potion handling, associated thing, step clamp, and first-move grace flag. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 throw/shoot math ownership: DM1 V1 throw/shoot compat now owns F0305/F0140/F0328/F0407 pure math for object throw stamina, armour/junk weights, throw XP/side/kinetic/attack/step, thrown-potion projectile subtype, shoot ammo matching, shoot step energy, launch cell, and shoot attack. M11 delegates those decisions while keeping state mutation and projectile allocation. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed. Note: broad `test_m11_action_stamina_runtime_pc34_compat` still has an unrelated half-open D1C mask failure.
