@@ -76,6 +76,15 @@ int main(void)
     check_int("unsupported.question",
               DM1_V1_InscriptionGlyphIndexForFontWidth('?', realAsciiWidth),
               -1);
+    check_int("decoded.lines.empty",
+              DM1_V1_InscriptionDecodedLineCountPc34(""),
+              0);
+    check_int("decoded.lines.one",
+              DM1_V1_InscriptionDecodedLineCountPc34("FUL YA"),
+              1);
+    check_int("decoded.lines.clamped",
+              DM1_V1_InscriptionDecodedLineCountPc34("A\nB\nC\nD\nE"),
+              DM1_V1_INSCRIPTION_MAX_LINES);
 
     textWords[0] = (unsigned short)((0 << 10) | (1 << 5) | 28);
     textWords[1] = (unsigned short)((29 << 10) | (2 << 5) | 31);
@@ -135,6 +144,29 @@ int main(void)
     check_int("line1.y", linePlan.textY, 52);
     check_int("line1.width", linePlan.textWidth, 32);
     check_int("line1.done", linePlan.done, 1);
+    check_int("font.supports.raw.line",
+              DM1_V1_InscriptionRawGlyphLineSupportedByFontPc34(
+                  glyphs,
+                  2,
+                  DM1_V1_INSCRIPTION_FONT_WIDTH_PC34,
+                  DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34),
+              1);
+    glyphs[0] = 36;
+    check_int("font.rejects.unsupported.raw.glyph",
+              DM1_V1_InscriptionRawGlyphLineSupportedByFontPc34(
+                  glyphs,
+                  1,
+                  DM1_V1_INSCRIPTION_FONT_WIDTH_PC34,
+                  DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34),
+              0);
+    glyphs[0] = 0;
+    check_int("font.rejects.short.width",
+              DM1_V1_InscriptionRawGlyphLineSupportedByFontPc34(
+                  glyphs,
+                  1,
+                  DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 - 1,
+                  DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34),
+              0);
 
     printf("DM1 V1 inscription font glyph gate: %d/%d passed\n",
            g_passed, g_tests);

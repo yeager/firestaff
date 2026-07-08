@@ -84,6 +84,41 @@ static inline int DM1_V1_InscriptionTextX(int characterCount) {
     return DM1_V1_INSCRIPTION_CENTER_X - (DM1_V1_InscriptionTextWidth(characterCount) / 2);
 }
 
+static inline int DM1_V1_InscriptionDecodedLineCountPc34(const char* decoded) {
+    int lines = 1;
+    const char* p;
+    if (!decoded || !decoded[0]) {
+        return 0;
+    }
+    for (p = decoded; *p && lines < DM1_V1_INSCRIPTION_MAX_LINES; ++p) {
+        if (*p == '\n') {
+            ++lines;
+        }
+    }
+    return lines;
+}
+
+static inline int DM1_V1_InscriptionRawGlyphLineSupportedByFontPc34(
+        const unsigned char* glyphs,
+        int glyphCount,
+        int fontWidth,
+        int fontHeight) {
+    int i;
+    if (!glyphs || glyphCount <= 0 ||
+        fontWidth < DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+        fontHeight < DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
+        return 0;
+    }
+    for (i = 0; i < glyphCount; ++i) {
+        int glyph = DM1_V1_InscriptionGlyphIndexFromSourceByte(glyphs[i]);
+        if (glyph < 0 ||
+            (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH > fontWidth) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static inline int DM1_V1_InscriptionAppendRawGlyphPc34(unsigned char* outGlyphs,
                                                        int outGlyphCapacity,
                                                        int* ioPos,
