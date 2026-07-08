@@ -180,8 +180,13 @@ static int has_extracted(const char *dir) {
     char path[512];
     struct stat st;
     const char *dm_bin_md5 = nexus_known_boot_file_md5("DM.BIN");
+    const char *lev00_md5 = nexus_known_boot_file_md5("LEV00.DGN");
     if (dm_bin_md5 &&
         asset_find_by_md5(dir, dm_bin_md5, path, (int)sizeof(path), 8)) {
+        return 1;
+    }
+    if (lev00_md5 &&
+        asset_find_by_md5(dir, lev00_md5, path, (int)sizeof(path), 8)) {
         return 1;
     }
     snprintf(path, sizeof(path), "%s/DM.BIN", dir);

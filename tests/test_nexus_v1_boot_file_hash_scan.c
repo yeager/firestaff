@@ -65,6 +65,19 @@ static int local_file_exists(const char* path) {
     return 1;
 }
 
+static int diag_details_contain(const Nexus_V1_Diagnostic* diags,
+                                size_t count,
+                                const char* needle) {
+    size_t i;
+    if (!diags || !needle) return 0;
+    for (i = 0U; i < count; ++i) {
+        if (strstr(diags[i].detail, needle) != NULL) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(void) {
     const char* home = getenv("HOME");
     char root[FSP_PATH_MAX];
@@ -77,6 +90,9 @@ int main(void) {
     char profile_dm_bin_dst[FSP_PATH_MAX];
     char level_src[FSP_PATH_MAX];
     char level_dst[FSP_PATH_MAX];
+    char profile_level_root[FSP_PATH_MAX];
+    char profile_level_nexus_dir[FSP_PATH_MAX];
+    char profile_level_dst[FSP_PATH_MAX];
     Nexus_V1_Engine engine;
     Nexus_V1_GameState game;
     Nexus_V1_BootProfile profile;
@@ -142,11 +158,35 @@ int main(void) {
         local_file_exists(level_src) &&
         FSP_JoinPath(level_dst, sizeof(level_dst), root, "renamed-level-zero.payload") &&
         copy_file_bytes(level_src, level_dst)) {
+        memset(&engine, 0, sizeof(engine));
+        check_int(nexus_v1_init(&engine, root) == 0,
+                  "Nexus init accepts renamed LEV00.DGN marker by hash");
+        check_int(engine.source == NEXUS_SRC_EXTRACTED,
+                  "renamed LEV00.DGN selects extracted Nexus source");
+        nexus_v1_shutdown(&engine);
+
         nexus_v1_game_init(&game, root);
         check_int(nexus_v1_game_load_level(&game, 0) == 0,
                   "Nexus level loader accepts renamed LEV00.DGN by hash");
         check_int(strstr(game.level_path, "renamed-level-zero.payload") != NULL,
                   "Nexus level loader stores hash-resolved renamed path");
+
+        check_int(FSP_JoinPath(profile_level_root, sizeof(profile_level_root), root, "profile-level-root") &&
+                  FSP_JoinPath(profile_level_nexus_dir, sizeof(profile_level_nexus_dir), profile_level_root, "nexus") &&
+                  FSP_CreateDirectoryRecursive(profile_level_nexus_dir) &&
+                  FSP_JoinPath(profile_level_dst,
+                               sizeof(profile_level_dst),
+                               profile_level_nexus_dir,
+                               "renamed-level-zero.marker") &&
+                  copy_file_bytes(level_src, profile_level_dst),
+                  "renamed LEV00.DGN profile fixture written");
+        memset(&profile, 0, sizeof(profile));
+        memset(diags, 0, sizeof(diags));
+        check_int(Nexus_V1_BootProfile_Init(&profile, profile_level_root, profile_level_root, 0U) == 0,
+                  "Nexus boot profile initialized for renamed LEV00.DGN root");
+        (void)Nexus_V1_BootProfile_ValidateAssets(&profile, diags, 4U);
+        check_int(!diag_details_contain(diags, 4U, "LEV00.DGN"),
+                  "Nexus boot profile accepts renamed LEV00.DGN by hash");
     } else {
         puts("SKIP: local Nexus LEV00.DGN not present for level hash test");
     }
