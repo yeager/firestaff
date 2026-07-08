@@ -1120,6 +1120,9 @@ void csb_v1_runtime_m11_mirror_receipt_init_pc34(
 int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt);
+int csb_v1_runtime_m11_mirror_receipt_from_boot_profile_pc34(
+    const void *boot_profile,
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);

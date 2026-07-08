@@ -1179,15 +1179,15 @@ static void m11_apply_csb_runtime_startup_session_state_receipt(
              receipt->import_utility_prompt);
 }
 
-static void m11_sync_csb_state_from_profile(M11_GameViewState *state,
-                                            const CSB_V1_BootProfile *profile)
+static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
+                                                 const void *boot_profile)
 {
     CSB_V1_RuntimeM11MirrorReceipt_PC34 receipt;
-    if (!state || !profile) {
+    if (!state || !boot_profile) {
         return;
     }
-    if (csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
-            &profile->runtime,
+    if (csb_v1_runtime_m11_mirror_receipt_from_boot_profile_pc34(
+            boot_profile,
             &receipt)) {
         m11_apply_csb_runtime_m11_mirror_receipt(state, &receipt);
     }
@@ -3194,9 +3194,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         return M11_GAME_INPUT_IGNORED;
     }
     if (runtime_exec_receipt.sync_profile_state) {
-        CSB_V1_BootProfile *profile =
-            (CSB_V1_BootProfile *)state->csbBootProfile;
-        m11_sync_csb_state_from_profile(state, profile);
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
     }
     m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
     if (!csb_v1_startup_host_receipt_from_runtime_apply_pc34(
@@ -10694,7 +10692,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
         }
         state->csbBootProfile = profile;
-        m11_sync_csb_state_from_profile(state, profile);
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         {
             CSB_V1_StartupInitStateReceipt_PC34 receipt;
             if (csb_v1_startup_init_state_receipt_pc34(
@@ -10713,7 +10711,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         m11_apply_csb_runtime_startup_session_state_receipt(
             state,
             &session_receipt);
-        m11_sync_csb_state_from_profile(state, profile);
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')
                            ? "CSB RESUMED"
@@ -12285,7 +12283,7 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
             m11_set_status(state, "SAVE", "CSB WRITE FAILED");
             return 0;
         }
-        m11_sync_csb_state_from_profile(state, profile);
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         state->lastSaveTick = profile->runtime.game_time;
         m11_set_status(state, "SAVE", "CSB QUICKSAVE WRITTEN");
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),
@@ -12538,7 +12536,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
             m11_set_status(state, "LOAD", "CSB QUICKSAVE INVALID");
             return 0;
         }
-        m11_sync_csb_state_from_profile(state, profile);
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         state->loadGameTick = profile->runtime.game_time;
         state->lastSaveTick = profile->runtime.game_time;
         m11_set_status(state, "LOAD", "CSB QUICKSAVE RESTORED");
@@ -12763,7 +12761,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (csb_v1_runtime_tick_v1(&profile->runtime) <= 0) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
-        m11_sync_csb_state_from_profile(state, profile);
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         return M11_GAME_INPUT_REDRAW;
     }
     /* DM2 V1: use the DM2 tick function instead of DM1's m11_apply_tick.
@@ -17845,7 +17843,7 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
             return M11_GAME_INPUT_IGNORED;
         }
         M11_GameView_ClearV1LeaderHandObject(state);
-        m11_sync_csb_state_from_profile(state, profile);
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         m11_set_status(state, "THROW",
                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
         /* ReDMCSB CLIKVIEW.C F0375 lines 243-285: accepted leader-hand
@@ -17892,7 +17890,7 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         (void)M11_GameView_SetV1LeaderHandObject(state, leaderHand);
     }
 
-    m11_sync_csb_state_from_profile(state, profile);
+    m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
     m11_set_status(state, "CSB", "WALL SENSOR");
     return M11_GAME_INPUT_REDRAW;
 }
@@ -36064,7 +36062,7 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
         }
         if (bridge.mapped) {
             m11_decrement_action_disabled_ticks(state);
-            m11_sync_csb_state_from_profile(state, profile);
+            m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
             if (bridge.is_turn && bridge.runtime_state_changed) {
                 m11_set_status(state, "CSB", "FACING UPDATED");
             } else if (bridge.queue_result.dispatchedMove) {
