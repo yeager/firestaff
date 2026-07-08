@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron boot launch host receipt: `theron_v1_boot_startup_launch_alloc()` now returns an M11-ready launch host receipt with boot status, startup inspect detail, chapter marker, and launch log. M11 applies that receipt instead of building Theron startup status/inspect strings locally. Verification: strict compile checks passed for `theron_v1_boot.c`, `m11_game_view.c`, and `test_theron_v1_startup_save_resume_pc34.c`; Phase A passed 24/24; `git diff --check` passed. Full CMake target rebuild still hangs in `cmake_check_build_system`.
+
 - ✅ 2026-07-08 game-data archive hash scanner: the shared scanner now treats ZIP-compatible archives (`.zip`, `.cbz`, `.pk3`, `.jar`), ISO/BIN/IMG/CDR/TOAST, CUE sheets, TAR, TGZ, GZ, and stored LHA/LZH/LZS archives as hash-scan containers. LHA/LZH virtual paths also materialize to ordinary cache files. Verification: `test_asset_find_by_hash` passed with and without `FIRESTAFF_HAS_ZLIB`, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Nexus boot-file hash fallback: extracted Nexus startup reads now resolve known boot/menu files (`TITLE.CG`, `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN`, `FACE.BIN`, `FONT256.S2D`, `MENU.BPK`) by MD5 when the exact filename is absent. A new skip-safe regression test proves a real `TITLE.CG` copied under an arbitrary name is still found by `nexus_v1_read_file()`.
