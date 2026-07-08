@@ -1056,6 +1056,26 @@ int csb_v1_runtime_apply_startup_sequence_plan_pc34(
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,
     const char *resume_path,
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt);
+int csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,
+    const char *resume_path,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_runtime_exec_receipt,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome,
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 *out_runtime_apply_receipt,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_state_receipt);
 void csb_v1_runtime_view_state_receipt_init_pc34(
     CSB_V1_RuntimeViewStateReceipt_PC34 *receipt);
 int csb_v1_runtime_view_state_receipt_from_profile_pc34(

@@ -3087,25 +3087,12 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     }
 
     if (!state->csbBootProfile ||
-        !csb_v1_runtime_apply_startup_sequence_plan_pc34(
+        !csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
             &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime,
             &command_receipt.runtime_plan,
             state->csbState.startup_entrance_resume_available
                 ? state->csbState.startup_entrance_resume_path
                 : NULL,
-            &runtime_exec_receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (runtime_exec_receipt.sync_profile_state) {
-        CSB_V1_BootProfile *profile =
-            (CSB_V1_BootProfile *)state->csbBootProfile;
-        m11_sync_csb_state_from_profile(state, profile);
-        if (runtime_exec_receipt.sync_leader_hand) {
-            m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
-        }
-    }
-
-    if (!csb_v1_startup_apply_runtime_plan_from_facts_with_receipts_pc34(
             state->csbState.startup_title_active,
             state->csbState.startup_title_frame,
             state->csbState.startup_title_source_step,
@@ -3118,13 +3105,19 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             state->csbState.startup_entrance_opening_delay_ticks,
             state->csbState.startup_entrance_opening_step,
             state->csbState.startup_entrance_pending_command,
-            &command_receipt.runtime_plan,
-            runtime_exec_receipt.resume_available,
-            runtime_exec_receipt.resume_loaded,
+            &runtime_exec_receipt,
             &outcome,
             &runtime_receipt,
             &state_receipt)) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    if (runtime_exec_receipt.sync_profile_state) {
+        CSB_V1_BootProfile *profile =
+            (CSB_V1_BootProfile *)state->csbBootProfile;
+        m11_sync_csb_state_from_profile(state, profile);
+        if (runtime_exec_receipt.sync_leader_hand) {
+            m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
+        }
     }
     m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
     if (runtime_receipt.clear_import_preview) {
