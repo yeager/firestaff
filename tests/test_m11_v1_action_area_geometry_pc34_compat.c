@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 
 #include <stdio.h>
+#include <string.h>
 
 static int g_failures = 0;
 static int g_assertions = 0;
@@ -209,6 +210,35 @@ static void test_status_boxes_stay_source_locked(void)
     check_int("pc34 damage number champ3 y", y, 16);
 }
 
+static void test_champion_icons_stay_source_locked(void)
+{
+    M11_GameViewState state;
+    int x, y, w, h;
+    memset(&state, 0, sizeof(state));
+    state.world.party.championCount = 2;
+    state.world.party.direction = 3;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].direction = 1;
+    state.world.party.champions[1].present = 1;
+    state.world.party.champions[1].direction = 0;
+
+    check_int("champion icon graphic", M11_GameView_GetV1ChampionIconGraphicId(), 28);
+    check_int("champion icon zone 0", M11_GameView_GetV1ChampionIconZoneId(0), 113);
+    check_int("champion icon zone 3", M11_GameView_GetV1ChampionIconZoneId(3), 116);
+    check_true("champion icon 2 rect",
+               M11_GameView_GetV1ChampionIconZone(2, &x, &y, &w, &h));
+    check_int("champion icon 2 x", x, 301);
+    check_int("champion icon 2 y", y, 15);
+    check_int("champion icon w", w, 19);
+    check_int("champion icon h", h, 14);
+    check_int("champion icon source 0",
+              M11_GameView_GetV1ChampionIconSourceIndex(&state, 0), 2);
+    check_int("champion icon source 1",
+              M11_GameView_GetV1ChampionIconSourceIndex(&state, 1), 1);
+    check_int("champion icon source absent",
+              M11_GameView_GetV1ChampionIconSourceIndex(&state, 2), -1);
+}
+
 int main(void)
 {
     test_action_area_box();
@@ -217,6 +247,7 @@ int main(void)
     test_action_result_and_pass_zones();
     test_spell_area_boxes_stay_source_locked();
     test_status_boxes_stay_source_locked();
+    test_champion_icons_stay_source_locked();
     printf("test_m11_v1_action_area_geometry_pc34_compat: %d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
     return g_failures == 0 ? 0 : 1;
