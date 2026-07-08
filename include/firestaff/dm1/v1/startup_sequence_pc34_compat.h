@@ -20,6 +20,14 @@ typedef enum DM1_V1_StartupLaunchPath_PC34 {
     DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34 = 3
 } DM1_V1_StartupLaunchPath_PC34;
 
+typedef enum DM1_V1_StartupHandoffAction_PC34 {
+    DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34 = 0,
+    DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34 = 1,
+    DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34 = 2,
+    DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34 = 3,
+    DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34 = 4
+} DM1_V1_StartupHandoffAction_PC34;
+
 typedef struct DM1_V1_StartupHandoffPreludePlan_PC34 {
     int required;
     int source_order_valid;
@@ -36,6 +44,13 @@ typedef struct DM1_V1_StartupHandoffPostLaunchPlan_PC34 {
     int entrance_auto_enter_ms;
     const char* source_id;
 } DM1_V1_StartupHandoffPostLaunchPlan_PC34;
+
+typedef struct DM1_V1_StartupHandoffOutcome_PC34 {
+    int title_played;
+    int entrance_command;
+    DM1_V1_StartupHandoffAction_PC34 action;
+    const char* status;
+} DM1_V1_StartupHandoffOutcome_PC34;
 
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
@@ -74,6 +89,13 @@ int dm1_v1_startup_execute_handoff_post_launch_pc34(
     const DM1_V1_StartupHandoffCallbacks_PC34* callbacks,
     int* out_title_played,
     int* out_entrance_command);
+int dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+    int entrance_command,
+    DM1_V1_StartupHandoffOutcome_PC34* out_outcome);
+int dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffCallbacks_PC34* callbacks,
+    DM1_V1_StartupHandoffOutcome_PC34* out_outcome);
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,

@@ -1,4 +1,5 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include "entrance_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include <stdio.h>
 #include <string.h>
@@ -205,6 +206,77 @@ int dm1_v1_startup_execute_handoff_post_launch_pc34(
     if (out_entrance_command) {
         *out_entrance_command = entrance_command;
     }
+    return 1;
+}
+
+int dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+    int entrance_command,
+    DM1_V1_StartupHandoffOutcome_PC34* out_outcome) {
+    if (!out_outcome) {
+        return 0;
+    }
+    memset(out_outcome, 0, sizeof(*out_outcome));
+    out_outcome->entrance_command = entrance_command;
+    switch (entrance_command) {
+        case ENTRANCE_COMPAT_COMMAND_PATH_ENTER:
+            out_outcome->action =
+                DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34;
+            out_outcome->status = "DM1 ENTER";
+            break;
+        case ENTRANCE_COMPAT_COMMAND_PATH_RESUME:
+            out_outcome->action =
+                DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34;
+            out_outcome->status = "DM1 RESUME";
+            break;
+        case ENTRANCE_COMPAT_COMMAND_PATH_QUIT:
+            out_outcome->action = DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34;
+            out_outcome->status = "DM1 QUIT";
+            break;
+        case ENTRANCE_COMPAT_COMMAND_PATH_NONE:
+            out_outcome->action =
+                DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34;
+            out_outcome->status = "DM1 ENTRANCE SKIPPED";
+            break;
+        default:
+            out_outcome->action = DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34;
+            out_outcome->status = "DM1 HANDOFF NONE";
+            break;
+    }
+    return 1;
+}
+
+int dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffCallbacks_PC34* callbacks,
+    DM1_V1_StartupHandoffOutcome_PC34* out_outcome) {
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 plan;
+    int title_played = 0;
+    int entrance_command = 0;
+
+    if (!out_outcome) {
+        return 0;
+    }
+    memset(out_outcome, 0, sizeof(*out_outcome));
+    if (!dm1_v1_startup_handoff_post_launch_plan_pc34(source_id, &plan)) {
+        return 0;
+    }
+    if (!plan.required) {
+        out_outcome->action = DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34;
+        out_outcome->status = "DM1 HANDOFF NONE";
+        return 1;
+    }
+    if (!dm1_v1_startup_execute_handoff_post_launch_pc34(source_id,
+                                                         callbacks,
+                                                         &title_played,
+                                                         &entrance_command)) {
+        return 0;
+    }
+    if (!dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            entrance_command,
+            out_outcome)) {
+        return 0;
+    }
+    out_outcome->title_played = title_played;
     return 1;
 }
 
