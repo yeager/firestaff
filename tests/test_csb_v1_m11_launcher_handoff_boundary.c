@@ -273,14 +273,14 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.startup_title_active == 1 &&
                     view.csbState.startup_title_source_step == 1 &&
                     view.csbState.startup_entrance_source_step == 0,
-                "M11 CSB launcher title prelude holds PRESENTS before entrance");
-    for (int i = 0; i < 30 && view.csbState.startup_title_active; ++i) {
+                "M11 CSB launcher title prelude starts on PRESENTS before entrance");
+    for (int i = 0; i < 1 && view.csbState.startup_title_active; ++i) {
         int tick_before_loop = view.csbState.tick_count;
         expect_true(M11_GameView_AdvanceIdleTick(&view) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 CSB launcher title prelude zoom warmup redraws");
+                    "M11 CSB launcher title prelude advances directly to zoom");
         expect_true(view.csbState.tick_count == tick_before_loop,
-                    "M11 CSB launcher title prelude zoom warmup blocks runtime ticks");
+                    "M11 CSB launcher title prelude blocks runtime ticks");
     }
     expect_true(view.csbState.startup_title_active == 1 &&
                     view.csbState.startup_title_source_step == 2 &&
