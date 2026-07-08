@@ -25187,10 +25187,6 @@ static const M11_DM1WeaponInfo* m11_dm1_weapon_info_for_thing(
     return &s_dm1WeaponInfo[weaponType];
 }
 
-static int m11_dm1_shoot_step_energy(int actionClass, int* outStepEnergy) {
-    return dm1_v1_shoot_step_energy_pc34(actionClass, outStepEnergy);
-}
-
 static int m11_dm1_shoot_ammunition_matches(
     const M11_DM1WeaponInfo* actionInfo,
     const M11_DM1WeaponInfo* readyInfo) {
@@ -25200,6 +25196,16 @@ static int m11_dm1_shoot_ammunition_matches(
     actionClass = actionInfo->weaponClass;
     readyClass = readyInfo->weaponClass;
     return dm1_v1_shoot_ammunition_matches_pc34(actionClass, readyClass);
+}
+
+static DM1_WeaponInfo m11_dm1_shoot_weapon_fact(const M11_DM1WeaponInfo* info) {
+    DM1_WeaponInfo fact;
+    memset(&fact, 0, sizeof(fact));
+    if (!info) return fact;
+    fact.weaponClass = (int)info->weaponClass;
+    fact.kineticEnergy = (int)info->kineticEnergy;
+    fact.attributes = (int)info->shootAttack & 0xFF;
+    return fact;
 }
 
 static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
@@ -29299,13 +29305,10 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 m11_dm1_weapon_info_for_thing(state, actionThing);
             const M11_DM1WeaponInfo* readyInfo =
                 m11_dm1_weapon_info_for_thing(state, readyThing);
-            int actionClass;
-            int stepEnergy;
+            DM1_WeaponInfo actionFact;
+            DM1_WeaponInfo readyFact;
+            DM1_RangedShootResult shootPlan;
             int skillShoot;
-            int shootAttack;
-            int kineticEnergy;
-            int direction;
-            int launchCell;
             int spawned;
 
             if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
@@ -29328,28 +29331,21 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             }
 
             if (!actionInfo || !readyInfo) goto shoot_no_ammunition;
-            actionClass = actionInfo->weaponClass;
-            if (!m11_dm1_shoot_ammunition_matches(actionInfo, readyInfo)) {
-                goto shoot_no_ammunition;
-            }
-            if (!m11_dm1_shoot_step_energy(actionClass, &stepEnergy)) {
-                goto shoot_no_ammunition;
-            }
-
             m11_set_champion_direction_to_party_f0406(state, champ);
-            direction = state->world.party.direction & 3;
             skillShoot = m11_dm1_shoot_skill_level(state, championIndex);
-            shootAttack = m11_dm1_f0407_shoot_attack(
-                (int)actionInfo->shootAttack, skillShoot);
-            kineticEnergy = (int)actionInfo->kineticEnergy +
-                            (int)readyInfo->kineticEnergy;
-            launchCell = m11_dm1_projectile_launch_cell(champ->cell,
-                                                        direction);
+            actionFact = m11_dm1_shoot_weapon_fact(actionInfo);
+            readyFact = m11_dm1_shoot_weapon_fact(readyInfo);
+            if (!dm1_ranged_shoot_resolve_pc34(
+                    &actionFact, &readyFact, readyThing,
+                    champ->cell, champ->direction, skillShoot, &shootPlan)) {
+                goto shoot_no_ammunition;
+            }
             spawned = m11_spawn_action_projectile_ex(
                 state, championIndex, PROJECTILE_SUBTYPE_KINETIC_ARROW,
-                PROJECTILE_CATEGORY_KINETIC, kineticEnergy, shootAttack,
-                COMBAT_ATTACK_NORMAL, launchCell, direction, stepEnergy,
-                shootAttack,
+                PROJECTILE_CATEGORY_KINETIC, shootPlan.kineticEnergy,
+                shootPlan.attack, COMBAT_ATTACK_NORMAL,
+                shootPlan.projectileCell, shootPlan.projectileDirection,
+                shootPlan.stepEnergy, shootPlan.attack,
                 readyThing, 0);
             if (spawned) {
                 champ->inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
