@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 direct resume host receipts: DM2 startup now owns M11 host receipts for invalid resume path, resume load/apply failure, and resumed state. M11 applies those receipts instead of setting DM2 direct-resume boot status strings directly.
+
 - ✅ 2026-07-08 Nexus resume host receipts: Nexus startup now owns M11 host receipts for resume failure, bad level, bad direction, level-load failure, engine-lost, and resumed states. M11 applies those receipts instead of setting Nexus resume boot status strings directly.
 
 - ✅ 2026-07-08 archive scanner suffix broadening: the shared game-data hash scanner now treats common ZIP-compatible containers (`.apk`, `.ipa`, `.xpi`, `.whl`, `.wsz`, `.kmz`) and raw-ish disc image suffixes (`.raw`, `.mdf`) as scan containers. Regression coverage added for `.apk` and `.raw` virtual-path scan/extract.

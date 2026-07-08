@@ -108,6 +108,12 @@ typedef struct {
     const char *status;
 } DM2_V1_StartupHostReceipt;
 
+typedef enum {
+    DM2_V1_STARTUP_RESUME_STATUS_PATH_INVALID = 0,
+    DM2_V1_STARTUP_RESUME_STATUS_FAILED = 1,
+    DM2_V1_STARTUP_RESUME_STATUS_RESUMED = 2
+} DM2_V1_StartupResumeStatus;
+
 typedef int (*DM2_V1_StartupSessionApplyFn)(
     void *userdata,
     const DM2_V1_SessionState *session);
@@ -418,6 +424,9 @@ void dm2_v1_startup_host_receipt_clear(
     DM2_V1_StartupHostReceipt *receipt);
 int dm2_v1_startup_host_receipt_from_apply_receipt(
     const DM2_V1_StartupApplyReceipt *apply_receipt,
+    DM2_V1_StartupHostReceipt *out_receipt);
+int dm2_v1_startup_resume_status_host_receipt(
+    DM2_V1_StartupResumeStatus status,
     DM2_V1_StartupHostReceipt *out_receipt);
 int dm2_v1_startup_execute_save_path(
     const char *save_path,
