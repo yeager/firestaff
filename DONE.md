@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup init/host receipt application: M11 now applies CSB startup init receipts and host receipts through shared helpers, removing duplicated StartCSB init field copies and entrance-result switch blocks. Verification: CSB startup entrance pointer contract passed 140/140, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB startup session receipt application: M11 now applies CSB runtime startup-session state receipts through one helper instead of copying entrance-resume and import-utility fields inline during StartCSB. Verification: CSB boot runtime handoff passed 275/275, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Nexus startup host receipt execution: Nexus startup menu now emits M11-ready host receipts directly from save/title/champion action execution. M11 no longer converts Nexus apply receipts locally before applying startup mode/status/input outcome. Verification: Nexus startup menu test passed, M11 Nexus startup gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
