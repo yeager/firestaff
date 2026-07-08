@@ -1614,9 +1614,13 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                       launch_receipts.launch_host_receipt.status &&
                       strcmp(launch_receipts.launch_host_receipt.status,
                              "CSB ENTRANCE") == 0 &&
+                      launch_receipts.launch_host_receipt.log_color == 11U &&
+                      launch_receipts.launch_host_receipt.log_line &&
+                      strcmp(launch_receipts.launch_host_receipt.log_line,
+                             "CSB ENTRANCE") == 0 &&
                       strcmp(launch_receipts.session_state.import_dm1_save_path,
                              path) == 0,
-                  "boot profile owns combined M11 startup launch receipts and host status");
+                  "boot profile owns combined M11 startup launch receipts, host status, and log");
             csb_v1_boot_cleanup(&boot2);
         }
         {
@@ -1633,8 +1637,12 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                              "BOOT") == 0 &&
                       launch.failure_host_receipt.status &&
                       strcmp(launch.failure_host_receipt.status,
+                             "CSB ASSETS MISSING") == 0 &&
+                      launch.failure_host_receipt.log_color == 8U &&
+                      launch.failure_host_receipt.log_line &&
+                      strcmp(launch.failure_host_receipt.log_line,
                              "CSB ASSETS MISSING") == 0,
-                  "boot launch allocation owns missing-asset host failure");
+                  "boot launch allocation owns missing-asset host failure and log");
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
         }
         csb_v1_boot_cleanup(&boot);
