@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus startup host receipt boundary: Nexus startup menu now emits host receipts from title/save/champion apply receipts, owning mode/status/result mapping before M11 turns them into engine input results. Verification: Nexus startup menu test passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 DM2 startup host receipt boundary: DM2 startup menu now emits a host receipt from apply receipts, owning mode/status/result/rescan policy before M11 maps it to engine input results. Verification: DM2 startup action contract passed 64/64, DM2 M11 startup/profile gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB entrance apply-result ownership: CSB startup-sequence now maps pure entrance apply results to startup input results, and M11 consumes that generic result instead of switching directly on CSB pure-apply enum values. Verification: CSB startup entrance pointer contract passed 138/138, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

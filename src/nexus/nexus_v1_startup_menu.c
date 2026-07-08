@@ -123,6 +123,44 @@ static void nexus_v1_startup_apply_receipt_clear(
     receipt->result = NEXUS_V1_STARTUP_APPLY_RESULT_IGNORE;
 }
 
+void nexus_v1_startup_host_receipt_clear(
+    Nexus_V1_StartupHostReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->input_result = NEXUS_V1_STARTUP_HOST_INPUT_IGNORED;
+}
+
+int nexus_v1_startup_host_receipt_from_apply_receipt(
+    const Nexus_V1_StartupApplyReceipt *apply_receipt,
+    Nexus_V1_StartupHostReceipt *out_receipt)
+{
+    if (!apply_receipt || !out_receipt) {
+        return 0;
+    }
+    nexus_v1_startup_host_receipt_clear(out_receipt);
+    out_receipt->mode_update = apply_receipt->mode_update;
+    out_receipt->status_scope = apply_receipt->status_scope;
+    out_receipt->status = apply_receipt->status;
+    switch (apply_receipt->result) {
+        case NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW:
+            out_receipt->input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+            break;
+        case NEXUS_V1_STARTUP_APPLY_RESULT_RETURN_TO_LAUNCHER:
+            out_receipt->input_result =
+                NEXUS_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER;
+            break;
+        case NEXUS_V1_STARTUP_APPLY_RESULT_IGNORE:
+        default:
+            out_receipt->input_result =
+                NEXUS_V1_STARTUP_HOST_INPUT_IGNORED;
+            break;
+    }
+    return 1;
+}
+
 void nexus_v1_startup_menu_state_receipt_init(
     Nexus_V1_StartupMenuStateReceipt *receipt)
 {
