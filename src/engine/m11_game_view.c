@@ -11518,26 +11518,6 @@ static void m11_theron_startup_session_facts(
     session->selected_mirror_order_count = THERON_STARTUP_MAX_COMPANIONS;
 }
 
-static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
-                                           const char* prefix) {
-    Theron_StartupSessionFacts session;
-    Theron_StartupChapterInspectReceipt receipt;
-
-    if (!state) {
-        return;
-    }
-    m11_theron_startup_session_facts(state, &session);
-    if (!theron_v1_startup_chapter_inspect_receipt_from_session(
-            &session,
-            prefix,
-            &receipt)) {
-        return;
-    }
-    m11_set_inspect_readout(state,
-                            receipt.inspect_scope,
-                            receipt.inspect_detail);
-}
-
 static M11_GameInputResult m11_theron_apply_startup_host_receipt(
     M11_GameViewState* state,
     const Theron_StartupHostReceipt* receipt,
@@ -11665,32 +11645,10 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     launch.world = NULL;
     launch.viewport = NULL;
     launch.assets = NULL;
-    m11_set_status(state, "BOOT", "THERON STARTUP");
-    {
-        char inspect[256];
-        snprintf(inspect,
-                 sizeof(inspect),
-                 "THERON TRACK 02 VERIFIED; SAVE %s tqsv=%d srm=%d; roster_names=%d status=%s text_prompts=%d text_status=%s; CHOOSE A STAGE",
-                 launch.save_resume_ready
-                     ? launch.save_resume.resume_claim_name
-                     : "UNKNOWN",
-                 launch.save_resume_ready
-                     ? launch.save_resume.tqsv_valid_slots
-                     : 0,
-                 launch.save_resume_ready
-                     ? launch.save_resume.srm_recognized_slots
-                     : 0,
-                 state->theronState.startup_roster_name_count,
-                 theron_v1_track02_signal_status_name(
-                     (Theron_Track02SignalStatus)
-                         state->theronState.startup_roster_name_status),
-                 state->theronState.startup_text_prompt_count,
-                 theron_v1_track02_signal_status_name(
-                     (Theron_Track02SignalStatus)
-                         state->theronState.startup_text_prompt_status));
-        m11_theron_set_chapter_inspect(state, inspect);
-    }
-    m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON STARTUP READY");
+    (void)m11_theron_apply_startup_host_receipt(
+        state,
+        &launch.launch_host_receipt,
+        NULL);
     return 1;
 
 fail:

@@ -227,6 +227,7 @@ typedef struct Theron_V1_BootStartupLaunch {
     Theron_StartupStateReceipt initial_state_receipt;
     Theron_StartupStateReceipt save_resume_state_receipt;
     Theron_StartupMediaStateReceipt startup_media_state_receipt;
+    Theron_StartupHostReceipt launch_host_receipt;
     Theron_V1BootStartupPrepareResult prepare_result;
 } Theron_V1_BootStartupLaunch;
 

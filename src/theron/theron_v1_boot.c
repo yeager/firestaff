@@ -725,6 +725,68 @@ const char *theron_v1_boot_startup_prepare_result_name(
     }
 }
 
+static void theron_v1_boot_startup_launch_host_receipt_init(
+    Theron_StartupHostReceipt *receipt) {
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+}
+
+static void theron_v1_boot_startup_launch_build_host_receipt(
+    Theron_V1_BootStartupLaunch *launch) {
+    Theron_StartupHostReceipt *receipt;
+    Theron_StartupChapterInspectReceipt inspect;
+    char prefix[256];
+    if (!launch) {
+        return;
+    }
+    receipt = &launch->launch_host_receipt;
+    theron_v1_boot_startup_launch_host_receipt_init(receipt);
+    receipt->status_scope = "BOOT";
+    receipt->status = "THERON STARTUP";
+    receipt->inspect_scope = "THERON STARTUP";
+    receipt->log_first_line = "T0: THERON STARTUP READY";
+    snprintf(prefix,
+             sizeof(prefix),
+             "THERON TRACK 02 VERIFIED; SAVE %s tqsv=%d srm=%d; roster_names=%d status=%s text_prompts=%d text_status=%s; CHOOSE A STAGE",
+             launch->save_resume_ready
+                 ? launch->save_resume.resume_claim_name
+                 : "UNKNOWN",
+             launch->save_resume_ready ? launch->save_resume.tqsv_valid_slots
+                                       : 0,
+             launch->save_resume_ready
+                 ? launch->save_resume.srm_recognized_slots
+                 : 0,
+             launch->startup_media_state_receipt.startup_roster_name_count,
+             theron_v1_track02_signal_status_name(
+                 (Theron_Track02SignalStatus)
+                     launch->startup_media_state_receipt.
+                         startup_roster_name_status),
+             launch->startup_media_state_receipt.startup_text_prompt_count,
+             theron_v1_track02_signal_status_name(
+                 (Theron_Track02SignalStatus)
+                     launch->startup_media_state_receipt.
+                         startup_text_prompt_status));
+    if (theron_v1_startup_chapter_inspect_receipt_from_facts(
+            launch->profile,
+            launch->world,
+            prefix,
+            &inspect)) {
+        snprintf(receipt->inspect_detail,
+                 sizeof(receipt->inspect_detail),
+                 "%s",
+                 inspect.inspect_detail);
+        receipt->inspect_scope = "STARTUP";
+    } else {
+        snprintf(receipt->inspect_detail,
+                 sizeof(receipt->inspect_detail),
+                 "%s",
+                 prefix);
+    }
+}
+
 void theron_v1_boot_startup_launch_cleanup(
     Theron_V1_BootStartupLaunch *launch) {
     if (!launch) {
@@ -830,6 +892,7 @@ int theron_v1_boot_startup_launch_alloc(
         out_launch->assets ? out_launch->assets->hucard_rom_size : 0u,
         out_launch->profile->graphics_md5,
         &out_launch->startup_media_state_receipt);
+    theron_v1_boot_startup_launch_build_host_receipt(out_launch);
     return 1;
 }
 

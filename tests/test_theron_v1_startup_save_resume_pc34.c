@@ -752,6 +752,8 @@ static void test_boot_prepare_startup_profile_missing_track02(void) {
                     launch.world == NULL &&
                     launch.viewport == NULL &&
                     launch.assets == NULL &&
+                    launch.launch_host_receipt.status_scope == NULL &&
+                    launch.launch_host_receipt.inspect_detail[0] == '\0' &&
                     launch.startup_media_state_receipt.
                         startup_roster_name_status == 0 &&
                     launch.startup_media_state_receipt.
