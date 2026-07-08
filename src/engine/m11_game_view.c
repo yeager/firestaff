@@ -11669,41 +11669,6 @@ static void m11_theron_startup_session_facts(
     const M11_GameViewState *state,
     Theron_StartupSessionFacts *session);
 
-static int m11_theron_rebuild_startup_flow(M11_GameViewState* state,
-                                           const Theron_DungeonProgression* progression,
-                                           Theron_StartupFlow* flow,
-                                           char* receipt,
-                                           size_t receipt_cap) {
-    Theron_StartupResult result;
-    Theron_StartupStateReceipt stateReceipt;
-    Theron_StartupSessionFacts session;
-
-    if (receipt && receipt_cap > 0u) {
-        receipt[0] = '\0';
-    }
-    if (!state || !progression || !flow) {
-        return 0;
-    }
-
-    (void)progression;
-    m11_theron_startup_session_facts(state, &session);
-    result = theron_v1_startup_flow_rebuild_from_session_with_receipt(
-        &session,
-        flow,
-        &stateReceipt);
-    if (result != THERON_STARTUP_OK) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "startup-flow rebuild failed: %s",
-                     theron_v1_startup_result_name(result));
-        }
-        return 0;
-    }
-    m11_theron_apply_startup_state_receipt(state, &stateReceipt);
-    return 1;
-}
-
 static void m11_theron_startup_session_facts(
     const M11_GameViewState *state,
     Theron_StartupSessionFacts *session) {
@@ -11726,6 +11691,13 @@ static void m11_theron_startup_session_facts(
     session->srm_slot = state->theronState.save_resume_srm_active_slot;
     session->srm_import_status =
         state->theronState.save_resume_srm_import_status;
+    session->srm_root = state->theronState.save_resume_srm_root;
+    if (state->theronAssets) {
+        const TrAssetBundle* assets =
+            (const TrAssetBundle*)state->theronAssets;
+        session->hucard_rom = assets->hucard_rom;
+        session->hucard_rom_size = assets->hucard_rom_size;
+    }
     session->startup_text_prompt = state->theronState.startup_text_prompt;
     session->startup_roster_names = state->theronState.startup_roster_names;
     session->startup_roster_titles = state->theronState.startup_roster_titles;
@@ -11737,124 +11709,6 @@ static void m11_theron_startup_session_facts(
     session->selected_mirror_order =
         state->theronState.selected_mirror_order;
     session->selected_mirror_order_count = THERON_STARTUP_MAX_COMPANIONS;
-}
-
-static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
-                                               const Theron_StartupActionPlan* plan,
-                                               Theron_V1StartupRuntimeEntryResult* out_result,
-                                               Theron_StartupHostReceipt* out_host_receipt,
-                                               char* receipt,
-                                               size_t receipt_cap) {
-    Theron_V1_World* world;
-    TrAssetBundle* assets;
-    Theron_StartupFlow flow;
-    Theron_V1StartupRuntimeEntryResult runtimeResult;
-    Theron_StartupHostReceipt hostReceipt;
-    Theron_StartupStateReceipt stateReceipt;
-    char flowReceipt[128];
-
-    if (receipt && receipt_cap > 0u) {
-        receipt[0] = '\0';
-    }
-    if (!state) {
-        return 0;
-    }
-    world = (Theron_V1_World*)state->theronWorld;
-    assets = (TrAssetBundle*)state->theronAssets;
-    if (!world) {
-        return 0;
-    }
-
-    flowReceipt[0] = '\0';
-    if (!m11_theron_rebuild_startup_flow(state,
-                                         &world->progression,
-                                         &flow,
-                                         flowReceipt,
-                                         sizeof(flowReceipt))) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "%s", flowReceipt);
-        }
-        return 0;
-    }
-
-    if (!theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_receipts(
-        &flow,
-        world,
-        assets ? assets->hucard_rom : NULL,
-        assets ? assets->hucard_rom_size : 0u,
-        state->theronBootProfile,
-        state->theronState.startup_roster_names,
-        state->theronState.startup_roster_name_count,
-        plan,
-        &runtimeResult,
-        &hostReceipt,
-        &stateReceipt,
-        receipt,
-        receipt_cap)) {
-        if (receipt && receipt_cap > 0u) {
-            if (receipt[0] == '\0') {
-                snprintf(receipt,
-                         receipt_cap,
-                         "startup-flow runtime entry failed: %s",
-                         theron_v1_startup_result_name(
-                             runtimeResult.result));
-            }
-        }
-        return 0;
-    }
-
-    if (out_result) {
-        *out_result = runtimeResult;
-    }
-    if (out_host_receipt) {
-        *out_host_receipt = hostReceipt;
-    }
-    m11_theron_apply_startup_state_receipt(state, &stateReceipt);
-    return 1;
-}
-
-static int m11_theron_continue_startup(M11_GameViewState* state,
-                                       const Theron_StartupActionPlan* plan,
-                                       Theron_StartupHostReceipt* out_host_receipt,
-                                       char* receipt,
-                                       size_t receipt_cap) {
-    Theron_V1_World* world;
-    Theron_V1StartupContinueResult result;
-    Theron_StartupHostReceipt hostReceipt;
-    Theron_StartupStateReceipt stateReceipt;
-
-    if (receipt && receipt_cap > 0u) {
-        receipt[0] = '\0';
-    }
-    if (!state) {
-        return 0;
-    }
-    world = (Theron_V1_World*)state->theronWorld;
-    if (!world || !state->theronBootProfile) {
-        return 0;
-    }
-    if (!theron_v1_startup_continue_apply_boot_profile_with_host_receipts(
-            world,
-            (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
-            state->theronState.save_resume_active_slot,
-            state->theronBootProfile,
-            state->theronState.save_resume_srm_active_slot,
-            (Theron_V1SrmProgressImportStatus)
-                state->theronState.save_resume_srm_import_status,
-            state->theronState.save_resume_srm_root,
-            plan,
-            &result,
-            &hostReceipt,
-            &stateReceipt,
-            receipt,
-            receipt_cap)) {
-        return 0;
-    }
-    m11_theron_apply_startup_state_receipt(state, &stateReceipt);
-    if (out_host_receipt) {
-        *out_host_receipt = hostReceipt;
-    }
-    return 1;
 }
 
 static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
@@ -11915,120 +11769,26 @@ static M11_GameInputResult m11_theron_apply_startup_host_receipt(
 static M11_GameInputResult m11_theron_startup_apply_action(
     M11_GameViewState* state,
     const Theron_StartupAction* action) {
-    Theron_V1_World* world;
-    Theron_StartupActionPlan plan;
-    Theron_StartupExecution execution;
+    Theron_StartupSessionFacts session;
+    Theron_StartupActionHostReceipt receipt;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
-    world = (Theron_V1_World*)state->theronWorld;
-    if (!world) {
+    m11_theron_startup_session_facts(state, &session);
+    if (!theron_v1_startup_execute_action_from_session_with_host_receipt(
+            action,
+            &session,
+            &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!theron_v1_startup_plan_for_action(action, &plan)) {
-        return M11_GAME_INPUT_IGNORED;
+    if (receipt.state_receipt_valid) {
+        m11_theron_apply_startup_state_receipt(state, &receipt.state_receipt);
     }
-
-    switch (plan.kind) {
-    case THERON_STARTUP_PLAN_SHOW_STAGE_SELECT:
-    case THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR:
-    case THERON_STARTUP_PLAN_CHOOSE_STAGE:
-    case THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR:
-    case THERON_STARTUP_PLAN_TOGGLE_MIRROR: {
-        Theron_StartupHostReceipt hostReceipt;
-        Theron_StartupStateReceipt stateReceipt;
-        Theron_StartupSessionFacts session;
-        char receipt[96];
-
-        receipt[0] = '\0';
-        m11_theron_startup_session_facts(state, &session);
-        if (!theron_v1_startup_execute_flow_plan_from_session_with_host_receipts(
-                &plan,
-                &session,
-                NULL,
-                &execution,
-                &hostReceipt,
-                &stateReceipt)) {
-            snprintf(receipt,
-                     sizeof(receipt),
-                     "startup-flow action failed: %s",
-                     theron_v1_startup_result_name(execution.result));
-            m11_set_status(state, "STARTUP",
-                           execution.result != THERON_STARTUP_OK
-                               ? theron_v1_startup_result_name(
-                                     execution.result)
-                               : (plan.failure_status
-                                      ? plan.failure_status
-                                      : "STARTUP ERROR"));
-            return M11_GAME_INPUT_REDRAW;
-        }
-        if (stateReceipt.flow_changed ||
-            stateReceipt.set_startup_cursor ||
-            stateReceipt.set_continue_focus ||
-            stateReceipt.set_level_loaded ||
-            stateReceipt.set_party_pose ||
-            stateReceipt.set_tick_count) {
-            m11_theron_apply_startup_state_receipt(state, &stateReceipt);
-        }
-        return m11_theron_apply_startup_host_receipt(state,
-                                                     &hostReceipt,
-                                                     NULL);
-    }
-
-    case THERON_STARTUP_PLAN_RETURN_TO_LAUNCHER:
-        m11_set_status(state,
-                       plan.status_scope ? plan.status_scope : "RETURN",
-                       plan.status ? plan.status : "BACK TO LAUNCHER");
-        return M11_GAME_INPUT_RETURN_TO_MENU;
-
-    case THERON_STARTUP_PLAN_CONTINUE_SAVE: {
-        char receipt[96];
-        Theron_StartupHostReceipt hostReceipt;
-        int continued = m11_theron_continue_startup(state,
-                                                    &plan,
-                                                    &hostReceipt,
-                                                    receipt,
-                                                    sizeof(receipt));
-        if (!continued) {
-            m11_set_status(state, "STARTUP",
-                           receipt[0] ? receipt :
-                           (plan.failure_status ? plan.failure_status
-                                                : "CONTINUE FAILED"));
-            return M11_GAME_INPUT_REDRAW;
-        }
-        return m11_theron_apply_startup_host_receipt(state,
-                                                     &hostReceipt,
-                                                     receipt);
-    }
-
-    case THERON_STARTUP_PLAN_ENTER_FORCEFIELD: {
-        char receipt[256];
-        Theron_V1StartupRuntimeEntryResult runtimeResult;
-        Theron_StartupHostReceipt hostReceipt;
-        if (!m11_theron_enter_startup_forcefield(state,
-                                                 &plan,
-                                                 &runtimeResult,
-                                                 &hostReceipt,
-                                                 receipt,
-                                                 sizeof(receipt))) {
-            m11_set_status(state, "STARTUP",
-                           receipt[0] ? receipt :
-                           (plan.failure_status ? plan.failure_status
-                                                : "FORCEFIELD FAILED"));
-            return M11_GAME_INPUT_REDRAW;
-        }
-        return m11_theron_apply_startup_host_receipt(state,
-                                                     &hostReceipt,
-                                                     receipt);
-    }
-
-    case THERON_STARTUP_PLAN_IGNORE:
-        return M11_GAME_INPUT_IGNORED;
-
-    default:
-        return M11_GAME_INPUT_IGNORED;
-    }
+    return m11_theron_apply_startup_host_receipt(
+        state,
+        &receipt.host_receipt,
+        receipt.runtime_receipt);
 }
 
 static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state,

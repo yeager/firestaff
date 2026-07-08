@@ -744,6 +744,8 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupStateReceipt state_receipt;
     Theron_StartupChapterInspectReceipt inspect_receipt;
     Theron_StartupActionPlan plan;
+    Theron_StartupAction action;
+    Theron_StartupActionHostReceipt action_receipt;
     Theron_StartupExecution execution;
     Theron_StartupHostReceipt host_receipt;
     int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
@@ -789,6 +791,34 @@ static void test_startup_session_facts_wrappers(void) {
                         THERON_STARTUP_INPUT_RESULT_REDRAW &&
                     state_receipt.flow_changed,
                 "session facts flow-plan wrapper emits host and state receipts");
+
+    theron_v1_startup_action_init(&action);
+    action.kind = THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER;
+    expect_true(theron_v1_startup_execute_action_from_session_with_host_receipt(
+                    &action,
+                    &session,
+                    &action_receipt) &&
+                    action_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER &&
+                    strcmp(action_receipt.host_receipt.status_scope,
+                           "RETURN") == 0,
+                "session facts action wrapper emits return-to-launcher receipt");
+
+    theron_v1_startup_action_init(&action);
+    action.kind = THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR;
+    action.selected_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    expect_true(theron_v1_startup_execute_action_from_session_with_host_receipt(
+                    &action,
+                    &session,
+                    &action_receipt) &&
+                    action_receipt.result == THERON_STARTUP_OK &&
+                    action_receipt.state_receipt_valid &&
+                    action_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                    action_receipt.state_receipt.flow_changed &&
+                    action_receipt.state_receipt.flow.selected_dungeon ==
+                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                "session facts action wrapper executes startup flow action");
 }
 
 int main(void) {

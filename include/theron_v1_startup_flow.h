@@ -334,12 +334,15 @@ typedef struct {
     int selected_dungeon;
     const void *boot_profile; /* Theron_V1_BootProfile*, kept opaque here. */
     const Theron_V1_World *world;
+    const uint8_t *hucard_rom;
+    size_t hucard_rom_size;
     int soul_cursor;
     int continue_focus;
     int resume_claim;
     int tqsv_slot;
     int srm_slot;
     int srm_import_status;
+    const char *srm_root;
     const char *startup_text_prompt;
     const char (*startup_roster_names)
         [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
@@ -357,6 +360,15 @@ typedef struct {
     char inspect_detail[320];
     char marker_line[192];
 } Theron_StartupChapterInspectReceipt;
+
+typedef struct {
+    Theron_StartupResult result;
+    Theron_StartupExecution flow_execution;
+    Theron_StartupHostReceipt host_receipt;
+    Theron_StartupStateReceipt state_receipt;
+    int state_receipt_valid;
+    char runtime_receipt[256];
+} Theron_StartupActionHostReceipt;
 
 typedef struct {
     int x;
@@ -740,6 +752,12 @@ int theron_v1_startup_execute_flow_plan_from_session_with_host_receipts(
     Theron_StartupExecution *out_execution,
     Theron_StartupHostReceipt *out_host_receipt,
     Theron_StartupStateReceipt *out_state_receipt);
+void theron_v1_startup_action_host_receipt_init(
+    Theron_StartupActionHostReceipt *receipt);
+int theron_v1_startup_execute_action_from_session_with_host_receipt(
+    const Theron_StartupAction *action,
+    const Theron_StartupSessionFacts *session,
+    Theron_StartupActionHostReceipt *out_receipt);
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,
