@@ -694,6 +694,87 @@ const char *theron_v1_boot_startup_prepare_result_name(
     }
 }
 
+void theron_v1_boot_startup_launch_cleanup(
+    Theron_V1_BootStartupLaunch *launch) {
+    if (!launch) {
+        return;
+    }
+    if (launch->viewport) {
+        theron_vp_free(launch->viewport);
+        free(launch->viewport);
+    }
+    if (launch->assets) {
+        tr_asset_free(launch->assets);
+        free(launch->assets);
+    }
+    if (launch->world) {
+        free(launch->world);
+    }
+    if (launch->profile) {
+        theron_v1_boot_cleanup(launch->profile);
+        free(launch->profile);
+    }
+    memset(launch, 0, sizeof(*launch));
+}
+
+int theron_v1_boot_startup_launch_alloc(
+    const char *data_dir,
+    const char *verified_path,
+    const char *verified_md5,
+    const char *save_path,
+    Theron_V1_BootStartupLaunch *out_launch) {
+
+    if (!out_launch) {
+        return 0;
+    }
+    memset(out_launch, 0, sizeof(*out_launch));
+    out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+    if (!data_dir || data_dir[0] == '\0') {
+        return 0;
+    }
+
+    out_launch->profile =
+        (Theron_V1_BootProfile*)calloc(1, sizeof(*out_launch->profile));
+    out_launch->world =
+        (Theron_V1_World*)calloc(1, sizeof(*out_launch->world));
+    out_launch->viewport =
+        (Theron_V1_Viewport*)calloc(1, sizeof(*out_launch->viewport));
+    out_launch->assets =
+        (TrAssetBundle*)calloc(1, sizeof(*out_launch->assets));
+    if (!out_launch->profile || !out_launch->world ||
+        !out_launch->viewport || !out_launch->assets) {
+        out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        theron_v1_boot_startup_launch_cleanup(out_launch);
+        out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        return 0;
+    }
+
+    if (!theron_v1_boot_prepare_startup_profile(
+            out_launch->profile,
+            data_dir,
+            verified_path,
+            verified_md5,
+            save_path,
+            out_launch->assets,
+            &out_launch->save_resume,
+            &out_launch->save_resume_ready,
+            &out_launch->prepare_result)) {
+        Theron_V1BootStartupPrepareResult result = out_launch->prepare_result;
+        theron_v1_boot_startup_launch_cleanup(out_launch);
+        out_launch->prepare_result = result;
+        return 0;
+    }
+
+    theron_v1_world_init(out_launch->world);
+    if (!theron_vp_init(out_launch->viewport)) {
+        out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        theron_v1_boot_startup_launch_cleanup(out_launch);
+        out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        return 0;
+    }
+    return 1;
+}
+
 int theron_v1_boot_startup_save_resume(
     const Theron_V1_BootProfile *profile,
     Theron_V1StartupSaveResume *out_snapshot) {

@@ -6,6 +6,8 @@
 #include "asset_status_m12.h"
 #include "theron_v1_startup_save_resume.h"
 #include "theron/theron_v1_asset_loader.h"
+#include "theron_v1_viewport.h"
+#include "theron_v1_world.h"
 
 /* ══════════════════════════════════════════════════════════════════════
  * Theron's Quest V1 Boot Profile — Phase 1: Runtime Profile Split
@@ -212,6 +214,16 @@ typedef enum {
     THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED = -4
 } Theron_V1BootStartupPrepareResult;
 
+typedef struct Theron_V1_BootStartupLaunch {
+    Theron_V1_BootProfile *profile;
+    Theron_V1_World *world;
+    Theron_V1_Viewport *viewport;
+    TrAssetBundle *assets;
+    Theron_V1StartupSaveResume save_resume;
+    int save_resume_ready;
+    Theron_V1BootStartupPrepareResult prepare_result;
+} Theron_V1_BootStartupLaunch;
+
 int theron_v1_boot_prepare_startup_profile(
     Theron_V1_BootProfile *profile,
     const char *data_dir,
@@ -224,6 +236,14 @@ int theron_v1_boot_prepare_startup_profile(
     Theron_V1BootStartupPrepareResult *out_result);
 const char *theron_v1_boot_startup_prepare_result_name(
     Theron_V1BootStartupPrepareResult result);
+int theron_v1_boot_startup_launch_alloc(
+    const char *data_dir,
+    const char *verified_path,
+    const char *verified_md5,
+    const char *save_path,
+    Theron_V1_BootStartupLaunch *out_launch);
+void theron_v1_boot_startup_launch_cleanup(
+    Theron_V1_BootStartupLaunch *launch);
 
 /* theron_v1_boot_verified_path_is_stale — decide whether a previously
  * verified Track 02 path/MD5 pair still matches the bytes on disk.
