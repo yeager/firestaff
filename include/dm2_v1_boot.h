@@ -130,6 +130,15 @@ typedef struct {
 } DM2_V1_BootStartupLaunch;
 
 typedef struct {
+    const DM2_V1_BootProfile *profile;
+    int startup_menu_active;
+    const char *startup_save_root;
+    int resume_available;
+    unsigned int slot_mask;
+    int selected_row;
+} DM2_V1_BootRuntimeStartupSnapshot;
+
+typedef struct {
     DM2_V1_BootProfile *profile;
     void *dm2_state;
     char boot_asset_md5[33];
@@ -212,6 +221,9 @@ int dm2_v1_boot_startup_launch_from_runtime_state(
     unsigned int slot_mask,
     int selected_row,
     DM2_V1_StartupLaunchReceipt *out_receipt);
+int dm2_v1_boot_startup_launch_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_StartupLaunchReceipt *out_receipt);
 
 int dm2_v1_boot_startup_advance_idle_from_runtime_state(
     const DM2_V1_BootProfile *profile,
@@ -222,6 +234,10 @@ int dm2_v1_boot_startup_advance_idle_from_runtime_state(
     int selected_row,
     int mouth_redraw,
     struct DM2_V1_StartupIdleReceipt *out_receipt);
+int dm2_v1_boot_startup_advance_idle_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    int mouth_redraw,
+    struct DM2_V1_StartupIdleReceipt *out_receipt);
 
 int dm2_v1_boot_startup_execute_firestaff_input_from_runtime_state(
     const DM2_V1_BootProfile *profile,
@@ -230,6 +246,14 @@ int dm2_v1_boot_startup_execute_firestaff_input_from_runtime_state(
     int resume_available,
     unsigned int slot_mask,
     int selected_row,
+    int menu_input,
+    int (*apply_session)(void *userdata,
+                         const struct DM2_V1_SessionState *session),
+    void *apply_userdata,
+    struct DM2_V1_StartupExecution *out_execution,
+    struct DM2_V1_StartupHostActionReceipt *out_receipt);
+int dm2_v1_boot_startup_execute_firestaff_input_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     int menu_input,
     int (*apply_session)(void *userdata,
                          const struct DM2_V1_SessionState *session),
@@ -251,6 +275,15 @@ int dm2_v1_boot_startup_execute_pointer_from_runtime_state(
     void *apply_userdata,
     struct DM2_V1_StartupExecution *out_execution,
     struct DM2_V1_StartupHostActionReceipt *out_receipt);
+int dm2_v1_boot_startup_execute_pointer_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    int x,
+    int y,
+    int (*apply_session)(void *userdata,
+                         const struct DM2_V1_SessionState *session),
+    void *apply_userdata,
+    struct DM2_V1_StartupExecution *out_execution,
+    struct DM2_V1_StartupHostActionReceipt *out_receipt);
 
 int dm2_v1_boot_startup_presentation_build_from_runtime_state(
     const DM2_V1_BootProfile *profile,
@@ -261,8 +294,23 @@ int dm2_v1_boot_startup_presentation_build_from_runtime_state(
     int selected_row,
     struct DM2_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int dm2_v1_boot_startup_presentation_build_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    struct DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready);
+int dm2_v1_boot_startup_presentation_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     char *out_phase,
     int out_phase_size,
     int *out_startup_active,

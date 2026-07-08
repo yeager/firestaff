@@ -13,7 +13,6 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_media.h"
-#include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
@@ -745,25 +744,44 @@ static M11_GameInputResult m11_dm2_startup_apply_launch_receipt(
         &launch_receipt->host_receipt);
 }
 
+static void m11_dm2_boot_runtime_startup_snapshot(
+    const M11_GameViewState *state,
+    DM2_V1_BootRuntimeStartupSnapshot *out_snapshot)
+{
+    if (!out_snapshot) {
+        return;
+    }
+    memset(out_snapshot, 0, sizeof(*out_snapshot));
+    if (!state) {
+        return;
+    }
+    out_snapshot->profile =
+        (const DM2_V1_BootProfile *)state->dm2BootProfile;
+    out_snapshot->startup_menu_active =
+        state->dm2State.startup_menu_active;
+    out_snapshot->startup_save_root =
+        state->dm2State.startup_save_root;
+    out_snapshot->resume_available =
+        state->dm2State.startup_resume_available;
+    out_snapshot->slot_mask = state->dm2State.startup_slot_mask;
+    out_snapshot->selected_row =
+        state->dm2State.startup_menu_selected_row;
+}
+
 static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    const DM2_V1_BootProfile *profile;
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
 
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
-    if (!dm2_v1_boot_startup_execute_firestaff_input_from_runtime_state(
-            profile,
-            state->dm2State.startup_menu_active,
-            state->dm2State.startup_save_root,
-            state->dm2State.startup_resume_available,
-            state->dm2State.startup_slot_mask,
-            state->dm2State.startup_menu_selected_row,
+    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+    if (!dm2_v1_boot_startup_execute_firestaff_input_from_snapshot(
+            &snapshot,
             (int)input,
             m11_dm2_startup_apply_session_callback,
             state,
@@ -1142,6 +1160,10 @@ static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
         m11_apply_csb_runtime_m11_mirror_receipt(state, &receipt);
     }
 }
+
+static void m11_theron_boot_runtime_startup_snapshot(
+    const M11_GameViewState *state,
+    Theron_V1_BootRuntimeStartupSnapshot *out_snapshot);
 
 static void m11_theron_render_v2_hud(const M11_GameViewState* state,
                                      const Theron_V1_World* world,
@@ -10679,14 +10701,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 return 0;
             }
         } else {
+            DM2_V1_BootRuntimeStartupSnapshot snapshot;
             DM2_V1_StartupLaunchReceipt receipt;
-            if (!dm2_v1_boot_startup_launch_from_runtime_state(
-                    profile,
-                    state->dm2State.startup_menu_active,
-                    state->dm2State.startup_save_root,
-                    state->dm2State.startup_resume_available,
-                    state->dm2State.startup_slot_mask,
-                    state->dm2State.startup_menu_selected_row,
+            m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+            snapshot.profile = profile;
+            if (!dm2_v1_boot_startup_launch_from_snapshot(
+                    &snapshot,
                     &receipt)) {
                 (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
                 m11_log_event(state,
@@ -11075,6 +11095,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        DM2_V1_BootRuntimeStartupSnapshot snapshot;
         out->levelLoaded = state->dm2State.level_loaded;
         out->mapIndex = state->world.party.mapIndex;
         out->partyX = state->dm2State.party_x;
@@ -11082,8 +11103,9 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->dm2State.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->dm2State.tick_count;
-        (void)dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
-            state->dm2State.startup_menu_active,
+        m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+        (void)dm2_v1_boot_startup_presentation_receipt_from_snapshot(
+            &snapshot,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
@@ -11126,6 +11148,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        Theron_V1_BootRuntimeStartupSnapshot snapshot;
         out->levelLoaded = state->theronState.level_loaded;
         out->mapIndex = state->theronWorld
             ? ((Theron_V1_World*)state->theronWorld)->current_level
@@ -11137,7 +11160,9 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             ? ((Theron_V1_World*)state->theronWorld)->party.champion_count
             : -1;
         out->runtimeTick = state->theronState.tick_count;
-        (void)theron_v1_boot_startup_presentation_receipt_from_runtime_state(
+        m11_theron_boot_runtime_startup_snapshot(state, &snapshot);
+        (void)theron_v1_boot_startup_presentation_receipt_from_snapshot(
+            &snapshot,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
@@ -11146,8 +11171,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             &out->startupAnimationActive,
             &out->startupTitleFrame,
             &out->startupTitleFrameMax,
-            &out->startupTitleReady,
-            state->theronState.startup_phase);
+            &out->startupTitleReady);
         return 1;
     }
 
@@ -12187,16 +12211,11 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (state->dm2State.startup_menu_active) {
-            const DM2_V1_BootProfile *profile =
-                (const DM2_V1_BootProfile *)state->dm2BootProfile;
+            DM2_V1_BootRuntimeStartupSnapshot snapshot;
             DM2_V1_StartupIdleReceipt receipt;
-            if (dm2_v1_boot_startup_advance_idle_from_runtime_state(
-                    profile,
-                    state->dm2State.startup_menu_active,
-                    state->dm2State.startup_save_root,
-                    state->dm2State.startup_resume_available,
-                    state->dm2State.startup_slot_mask,
-                    state->dm2State.startup_menu_selected_row,
+            m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+            if (dm2_v1_boot_startup_advance_idle_from_snapshot(
+                    &snapshot,
                     mouthRedraw,
                     &receipt)) {
                 return m11_dm2_startup_apply_host_receipt(
@@ -14359,7 +14378,7 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     int x,
     int y)
 {
-    const DM2_V1_BootProfile *profile;
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
 
@@ -14368,14 +14387,9 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
-    if (!dm2_v1_boot_startup_execute_pointer_from_runtime_state(
-            profile,
-            state->dm2State.startup_menu_active,
-            state->dm2State.startup_save_root,
-            state->dm2State.startup_resume_available,
-            state->dm2State.startup_slot_mask,
-            state->dm2State.startup_menu_selected_row,
+    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+    if (!dm2_v1_boot_startup_execute_pointer_from_snapshot(
+            &snapshot,
             x,
             y,
             m11_dm2_startup_apply_session_callback,
@@ -33984,7 +33998,7 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                       int framebufferWidth,
                                       int framebufferHeight)
 {
-    const DM2_V1_BootProfile *profile;
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
     DM2_V1_StartupDrawCommand commands[32];
     DM2_V1_StartupDrawExecutor executor;
     M11_DM2StartupDrawContext context;
@@ -33993,15 +34007,10 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
         return;
     }
-    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
+    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
     command_count =
-        dm2_v1_boot_startup_presentation_build_from_runtime_state(
-            profile,
-            state->dm2State.startup_menu_active,
-            state->dm2State.startup_save_root,
-            state->dm2State.startup_resume_available,
-            state->dm2State.startup_slot_mask,
-            state->dm2State.startup_menu_selected_row,
+        dm2_v1_boot_startup_presentation_build_from_snapshot(
+            &snapshot,
             commands,
             (int)(sizeof(commands) / sizeof(commands[0])));
     if (command_count <= 0) {

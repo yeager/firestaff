@@ -1243,6 +1243,34 @@ int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
         out_title_ready);
 }
 
+int theron_v1_boot_startup_presentation_receipt_from_snapshot(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    return theron_v1_boot_startup_presentation_receipt_from_runtime_state(
+        out_phase,
+        out_phase_size,
+        out_startup_active,
+        out_animation,
+        out_animation_size,
+        out_animation_active,
+        out_title_frame,
+        out_title_frame_max,
+        out_title_ready,
+        snapshot->startup_phase);
+}
+
 int theron_v1_boot_startup_execute_graphics_plan(
     const Theron_StartupRenderPlan *plan,
     const Theron_StartupGraphicExecutor *executor)
