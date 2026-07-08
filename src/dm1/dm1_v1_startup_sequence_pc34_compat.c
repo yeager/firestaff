@@ -390,6 +390,70 @@ int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     return 1;
 }
 
+int dm1_v1_startup_execute_selected_launch_transaction_pc34(
+    const char* selected_game_id,
+    const DM1_V1_StartupSelectedLaunchCallbacks_PC34* callbacks,
+    DM1_V1_StartupSelectedLaunchResult_PC34* out_result) {
+    DM1_V1_StartupSelectedLaunchResult_PC34 result;
+    char opened_source_id[64];
+
+    if (!out_result) {
+        return 0;
+    }
+    memset(&result, 0, sizeof(result));
+    memset(opened_source_id, 0, sizeof(opened_source_id));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(selected_game_id)) {
+        *out_result = result;
+        return 1;
+    }
+    if (!callbacks ||
+        !callbacks->handoff_callbacks ||
+        !callbacks->host_callbacks ||
+        !callbacks->open_selected_entry ||
+        !callbacks->after_open) {
+        return 0;
+    }
+    result.handled = 1;
+    /* ReDMCSB source handoff chain: SWSH.C runs START.PRG, STARTUP1.C enters
+     * TITLE.C F0437, then ENTRANCE.C F0441 handles the entrance command.  This
+     * transaction keeps that sequence on the DM1 side of the M11 boundary. */
+    if (!dm1_v1_startup_execute_handoff_prelude_pc34(
+            selected_game_id,
+            callbacks->handoff_callbacks)) {
+        return 0;
+    }
+    if (!callbacks->open_selected_entry(callbacks->user,
+                                        opened_source_id,
+                                        (int)sizeof(opened_source_id))) {
+        result.launch_failed = 1;
+        if (callbacks->mark_launch_failed &&
+            !callbacks->mark_launch_failed(callbacks->user)) {
+            return 0;
+        }
+        *out_result = result;
+        return 1;
+    }
+    result.opened = 1;
+    if (!callbacks->after_open(callbacks->user)) {
+        return 0;
+    }
+    if (!dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
+            opened_source_id,
+            callbacks->handoff_callbacks,
+            callbacks->host_callbacks,
+            &result.handoff_outcome,
+            &result.host_apply_result)) {
+        return 0;
+    }
+    if (!result.host_apply_result.quit_requested &&
+        callbacks->draw_opened &&
+        !callbacks->draw_opened(callbacks->user)) {
+        return 0;
+    }
+    *out_result = result;
+    return 1;
+}
+
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,

@@ -91,6 +91,26 @@ typedef struct DM1_V1_StartupHostCallbacks_PC34 {
     int (*log_entrance_skipped)(void* user);
 } DM1_V1_StartupHostCallbacks_PC34;
 
+typedef struct DM1_V1_StartupSelectedLaunchCallbacks_PC34 {
+    void* user;
+    const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks;
+    const DM1_V1_StartupHostCallbacks_PC34* host_callbacks;
+    int (*open_selected_entry)(void* user,
+                               char* out_source_id,
+                               int out_source_id_size);
+    int (*after_open)(void* user);
+    int (*draw_opened)(void* user);
+    int (*mark_launch_failed)(void* user);
+} DM1_V1_StartupSelectedLaunchCallbacks_PC34;
+
+typedef struct DM1_V1_StartupSelectedLaunchResult_PC34 {
+    int handled;
+    int opened;
+    int launch_failed;
+    DM1_V1_StartupHandoffOutcome_PC34 handoff_outcome;
+    DM1_V1_StartupHostApplyResult_PC34 host_apply_result;
+} DM1_V1_StartupSelectedLaunchResult_PC34;
+
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage);
 int dm1_v1_startup_stage_after_pc34(DM1_V1_StartupStage_PC34 later,
                                     DM1_V1_StartupStage_PC34 earlier);
@@ -133,6 +153,10 @@ int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const DM1_V1_StartupHostCallbacks_PC34* host_callbacks,
     DM1_V1_StartupHandoffOutcome_PC34* out_outcome,
     DM1_V1_StartupHostApplyResult_PC34* out_result);
+int dm1_v1_startup_execute_selected_launch_transaction_pc34(
+    const char* selected_game_id,
+    const DM1_V1_StartupSelectedLaunchCallbacks_PC34* callbacks,
+    DM1_V1_StartupSelectedLaunchResult_PC34* out_result);
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,
