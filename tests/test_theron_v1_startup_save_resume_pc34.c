@@ -702,6 +702,40 @@ static void test_snapshot_snapshot_is_deterministic(void) {
     }
 }
 
+static void test_boot_prepare_startup_profile_missing_track02(void) {
+    Theron_V1_BootProfile profile;
+    TrAssetBundle assets;
+    Theron_V1StartupSaveResume snap;
+    Theron_V1BootStartupPrepareResult result =
+        THERON_V1_BOOT_STARTUP_PREPARE_OK;
+    int ready = 99;
+
+    memset(&profile, 0, sizeof(profile));
+    memset(&assets, 0, sizeof(assets));
+    memset(&snap, 0xff, sizeof(snap));
+    cleanup_srm_root(TST_BAD_ROOT);
+    expect_true(test_mkdir(TST_BAD_ROOT) == 0,
+                "boot prepare test root created");
+    expect_true(!theron_v1_boot_prepare_startup_profile(
+                    &profile,
+                    TST_BAD_ROOT,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &assets,
+                    &snap,
+                    &ready,
+                    &result) &&
+                    result ==
+                        THERON_V1_BOOT_STARTUP_PREPARE_MISSING_TRACK02 &&
+                    ready == 0,
+                "boot prepare reports missing Track 02 before M11");
+    expect_true(strcmp(theron_v1_boot_startup_prepare_result_name(result),
+                       "MISSING_TRACK02") == 0,
+                "boot prepare result name is stable");
+    cleanup_srm_root(TST_BAD_ROOT);
+}
+
 int main(void) {
     printf("\n=== Theron V1 Startup Save/Resume Smoke Gate Unit Tests ===\n\n");
     test_clean_host_skip_safe_no_save_root();
@@ -716,6 +750,7 @@ int main(void) {
     test_format_helper();
     test_null_safety();
     test_snapshot_snapshot_is_deterministic();
+    test_boot_prepare_startup_profile_missing_track02();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d)\n",
