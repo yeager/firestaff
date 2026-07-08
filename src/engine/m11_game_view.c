@@ -25141,53 +25141,32 @@ static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
                                           unsigned short carriedThing,
                                           int potionPower) {
     struct ProjectileCreateInput_Compat input;
+    DM1_ProjectileCreateRequestPc34 req;
     struct TimelineEvent_Compat firstMove;
     int slot = -1;
-    int direction;
-    int cell;
     if (!state) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     if (championIndex >= state->world.party.championCount) return 0;
-    memset(&input, 0, sizeof(input));
-    direction = launchDirection >= 0 ? (launchDirection & 3)
-                                     : (state->world.party.direction & 3);
-    cell = launchCell >= 0
-               ? (launchCell & 3)
-               : m11_dm1_projectile_launch_cell(
-                     state->world.party.champions[championIndex].cell,
-                     direction);
-    input.category           = category;
-    input.subtype            = subtype;
-    input.ownerKind          = PROJECTILE_OWNER_CHAMPION;
-    input.ownerIndex         = championIndex;
-    input.mapIndex           = state->world.party.mapIndex;
-    input.mapX               = state->world.party.mapX;
-    input.mapY               = state->world.party.mapY;
-    input.cell               = cell;
-    input.direction          = direction;
-    input.kineticEnergy      = kineticEnergy;
-    input.attack             = impactAttack;
-    input.launcherStrength   = launcherStrength;
-    input.stepEnergy         = stepEnergy > 0 ? stepEnergy : 1;
-    input.currentTick        = (int)state->world.gameTick;
-    if (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
-        subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) {
-        if (carriedThing != THING_NONE &&
-            carriedThing != THING_ENDOFLIST &&
-            THING_GET_TYPE(carriedThing) == THING_TYPE_POTION) {
-            input.poisonAttack = potionPower;
-        } else {
-            input.poisonAttack = impactAttack;
-        }
-    } else {
-        input.poisonAttack = 0;
-    }
-    input.attackTypeCode     = attackTypeCode;
-    input.potionPower        = potionPower;
-    input.associatedThing    = (carriedThing != THING_NONE &&
-                                carriedThing != THING_ENDOFLIST)
-                               ? (int)carriedThing : (int)THING_NONE;
-    input.firstMoveGraceFlag = 1;
+    memset(&req, 0, sizeof(req));
+    req.championIndex = championIndex;
+    req.championCell = (int)state->world.party.champions[championIndex].cell;
+    req.partyMapIndex = state->world.party.mapIndex;
+    req.partyMapX = state->world.party.mapX;
+    req.partyMapY = state->world.party.mapY;
+    req.partyDirection = state->world.party.direction;
+    req.gameTick = (int)state->world.gameTick;
+    req.subtype = subtype;
+    req.category = category;
+    req.kineticEnergy = kineticEnergy;
+    req.impactAttack = impactAttack;
+    req.attackTypeCode = attackTypeCode;
+    req.launchCell = launchCell;
+    req.launchDirection = launchDirection;
+    req.stepEnergy = stepEnergy;
+    req.launcherStrength = launcherStrength;
+    req.carriedThing = carriedThing;
+    req.potionPower = potionPower;
+    if (!dm1_v1_build_projectile_create_input_pc34(&req, &input)) return 0;
     memset(&firstMove, 0, sizeof(firstMove));
     if (!F0810_PROJECTILE_Create_Compat(&input, &state->world.projectiles,
                                         &slot, &firstMove)) {
