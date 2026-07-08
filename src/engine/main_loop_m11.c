@@ -3733,10 +3733,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     uint32_t idleAccumulatorMs = 0;
     M12_GamepadMap gamepadMap;
     M12_GamepadStatus gamepadStatus;
-    enum { M11_DM1_V1_PENDING_MOTION_CAPACITY = 7 };
-    M12_MenuInput pendingDm1V1MotionInputs[M11_DM1_V1_PENDING_MOTION_CAPACITY];
-    int pendingDm1V1MotionHead = 0;
-    int pendingDm1V1MotionCount = 0;
+    struct Dm1V1PendingMotionQueuePc34Compat pendingDm1V1MotionQueue;
     Firestaff_RA_Runtime raRuntime;
 
     int rc = M11_Render_Init(o->windowWidth, o->windowHeight, o->scaleMode);
@@ -3791,6 +3788,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
     }
     M11_GameView_Init(&gameView);
+    DM1_V1_PendingMotionQueue_InitPc34Compat(&pendingDm1V1MotionQueue);
     M12_GamepadMap_SetDefaults(&gamepadMap);
     (void)M12_GamepadMap_Load(&gamepadMap);
     memset(&gamepadStatus, 0, sizeof(gamepadStatus));
@@ -4244,14 +4242,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (pointerResult == M11_GAME_INPUT_RETURN_TO_MENU) {
                 M11_GameView_Shutdown(&gameView);
                 M11_GameView_Init(&gameView);
-                pendingDm1V1MotionHead = 0;
-                pendingDm1V1MotionCount = 0;
+                DM1_V1_PendingMotionQueue_ClearPc34Compat(
+                    &pendingDm1V1MotionQueue);
                 idleAccumulatorMs = 0;
                 M11_ApplyStartupMenuRuntime(&menuState);
                 m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             } else if (pointerResult == M11_GAME_INPUT_RESTART_GAME) {
-                pendingDm1V1MotionHead = 0;
-                pendingDm1V1MotionCount = 0;
+                DM1_V1_PendingMotionQueue_ClearPc34Compat(
+                    &pendingDm1V1MotionQueue);
                 if (m11_restart_current_launch(&gameView,
                                                 &menuState,
                                                 &idleAccumulatorMs,
@@ -4281,18 +4279,20 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             pointerResult == M11_GAME_INPUT_IGNORED &&
             m11_game_view_is_dm1(&gameView) &&
             M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
-            if (pendingDm1V1MotionCount > 0) {
-                input = pendingDm1V1MotionInputs[pendingDm1V1MotionHead];
-                pendingDm1V1MotionHead =
-                    (pendingDm1V1MotionHead + 1) % M11_DM1_V1_PENDING_MOTION_CAPACITY;
-                pendingDm1V1MotionCount--;
-            } else {
-                input = m11_held_motion_input_from_keyboard(&gameView);
-                if (input == M12_MENU_INPUT_NONE) {
-                    input = m11_held_motion_input_from_gamepad(&gameView,
-                                                               &gamepadStatus,
-                                                               &gamepadMap);
+            {
+                int pendingInput = M12_MENU_INPUT_NONE;
+                if (DM1_V1_PendingMotionQueue_PopPc34Compat(
+                        &pendingDm1V1MotionQueue, &pendingInput)) {
+                    input = (M12_MenuInput)pendingInput;
                 }
+            }
+            if (input == M12_MENU_INPUT_NONE) {
+                input = m11_held_motion_input_from_keyboard(&gameView);
+            }
+            if (input == M12_MENU_INPUT_NONE) {
+                input = m11_held_motion_input_from_gamepad(&gameView,
+                                                           &gamepadStatus,
+                                                           &gamepadMap);
             }
         }
         if (input != M12_MENU_INPUT_NONE) {
@@ -4308,12 +4308,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                      * while reserving two queue slots; mirror that bounded
                      * pending shape here so quick Q/E/Home/End/keypad turn
                      * taps are not overwritten before the vblank gate opens. */
-                    if (pendingDm1V1MotionCount < M11_DM1_V1_PENDING_MOTION_CAPACITY) {
-                        int tail = (pendingDm1V1MotionHead + pendingDm1V1MotionCount) %
-                                   M11_DM1_V1_PENDING_MOTION_CAPACITY;
-                        pendingDm1V1MotionInputs[tail] = input;
-                        pendingDm1V1MotionCount++;
-                    }
+                    (void)DM1_V1_PendingMotionQueue_PushPc34Compat(
+                        &pendingDm1V1MotionQueue, (int)input);
                     input = M12_MENU_INPUT_NONE;
                 } else {
                     result = M11_GameView_HandleInput(&gameView, input);
@@ -4321,14 +4317,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 if (result == M11_GAME_INPUT_RETURN_TO_MENU) {
                     M11_GameView_Shutdown(&gameView);
                     M11_GameView_Init(&gameView);
-                    pendingDm1V1MotionHead = 0;
-                    pendingDm1V1MotionCount = 0;
+                    DM1_V1_PendingMotionQueue_ClearPc34Compat(
+                        &pendingDm1V1MotionQueue);
                     idleAccumulatorMs = 0;
                     M11_ApplyStartupMenuRuntime(&menuState);
                     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                 } else if (result == M11_GAME_INPUT_RESTART_GAME) {
-                    pendingDm1V1MotionHead = 0;
-                    pendingDm1V1MotionCount = 0;
+                    DM1_V1_PendingMotionQueue_ClearPc34Compat(
+                        &pendingDm1V1MotionQueue);
                     if (m11_restart_current_launch(&gameView,
                                                     &menuState,
                                                     &idleAccumulatorMs,

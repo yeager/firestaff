@@ -84,6 +84,15 @@ struct Dm1V1InputQueueProcessResultPc34Compat {
     int pendingReplayCount;
 };
 
+enum { DM1_V1_PENDING_MOTION_QUEUE_CAPACITY_PC34_COMPAT = 7 };
+
+struct Dm1V1PendingMotionQueuePc34Compat {
+    int inputs[DM1_V1_PENDING_MOTION_QUEUE_CAPACITY_PC34_COMPAT];
+    unsigned int head;
+    unsigned int count;
+    unsigned int droppedFullCount;
+};
+
 void DM1_V1_InputCommandQueue_InitPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue);
 void DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue);
 int DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
@@ -109,6 +118,18 @@ struct Dm1V1InputQueueProcessResultPc34Compat DM1_V1_InputCommandQueue_ProcessOn
 int DM1_V1_InputCommandQueue_PeekPc34Compat(
     const struct Dm1V1InputCommandQueuePc34Compat* queue,
     struct Dm1V1QueuedCommandPc34Compat* outCommand);
+void DM1_V1_PendingMotionQueue_InitPc34Compat(
+    struct Dm1V1PendingMotionQueuePc34Compat* queue);
+void DM1_V1_PendingMotionQueue_ClearPc34Compat(
+    struct Dm1V1PendingMotionQueuePc34Compat* queue);
+int DM1_V1_PendingMotionQueue_PushPc34Compat(
+    struct Dm1V1PendingMotionQueuePc34Compat* queue,
+    int menuInput);
+int DM1_V1_PendingMotionQueue_PopPc34Compat(
+    struct Dm1V1PendingMotionQueuePc34Compat* queue,
+    int* outMenuInput);
+unsigned int DM1_V1_PendingMotionQueue_CountPc34Compat(
+    const struct Dm1V1PendingMotionQueuePc34Compat* queue);
 int DM1_V1_InputSourceIsActivePc34Compat(int active, const char* sourceId);
 int DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(int menuInput);
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void);

@@ -41,6 +41,67 @@ int DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(int menuInput)
            menuInput == M12_MENU_INPUT_RIGHT;
 }
 
+void DM1_V1_PendingMotionQueue_InitPc34Compat(
+    struct Dm1V1PendingMotionQueuePc34Compat* queue)
+{
+    if (queue) {
+        memset(queue, 0, sizeof(*queue));
+    }
+}
+
+void DM1_V1_PendingMotionQueue_ClearPc34Compat(
+    struct Dm1V1PendingMotionQueuePc34Compat* queue)
+{
+    if (queue) {
+        queue->head = 0u;
+        queue->count = 0u;
+    }
+}
+
+int DM1_V1_PendingMotionQueue_PushPc34Compat(
+    struct Dm1V1PendingMotionQueuePc34Compat* queue,
+    int menuInput)
+{
+    unsigned int tail;
+    if (!queue) {
+        return 0;
+    }
+    if (queue->count >= DM1_V1_PENDING_MOTION_QUEUE_CAPACITY_PC34_COMPAT) {
+        queue->droppedFullCount++;
+        return 0;
+    }
+    tail = (queue->head + queue->count) %
+           DM1_V1_PENDING_MOTION_QUEUE_CAPACITY_PC34_COMPAT;
+    queue->inputs[tail] = menuInput;
+    queue->count++;
+    return 1;
+}
+
+int DM1_V1_PendingMotionQueue_PopPc34Compat(
+    struct Dm1V1PendingMotionQueuePc34Compat* queue,
+    int* outMenuInput)
+{
+    if (!queue || queue->count == 0u) {
+        return 0;
+    }
+    if (outMenuInput) {
+        *outMenuInput = queue->inputs[queue->head];
+    }
+    queue->head = (queue->head + 1u) %
+                  DM1_V1_PENDING_MOTION_QUEUE_CAPACITY_PC34_COMPAT;
+    queue->count--;
+    if (queue->count == 0u) {
+        queue->head = 0u;
+    }
+    return 1;
+}
+
+unsigned int DM1_V1_PendingMotionQueue_CountPc34Compat(
+    const struct Dm1V1PendingMotionQueuePc34Compat* queue)
+{
+    return queue ? queue->count : 0u;
+}
+
 static int normalize_dir(int value)
 {
     while (value < 0) {

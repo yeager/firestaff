@@ -9,6 +9,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: DM1 V1 input now owns active-source and immediate-turn token classification consumed by M11 held-input/VBlank pending gates. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
   - 2026-07-08 update: entrance compat now owns framebuffer pointer dispatch, command-path mapping, and normalized touch clamping used by the DM1 entrance wait loop. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 resurrection rename UI now owns active-panel gating, text-byte filtering, and host keydown decisions consumed by M11. Remaining startup/runtime coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-08 update: DM1 input now owns the pending motion FIFO used while VBlank/source-tick gating waits. Remaining runtime coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
