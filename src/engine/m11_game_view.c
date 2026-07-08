@@ -11602,6 +11602,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* verifiedMd5,
                                     const char* savePath) {
     Theron_V1_BootStartupLaunch launch;
+    Theron_V1_BootStartupRuntimeReceipt runtime_receipt;
     int savedDebugHUD;
 
     if (!state || !dataDir || !dataDir[0]) {
@@ -11637,25 +11638,27 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     m11_theron_apply_startup_media_state_receipt(
         state,
         &launch.startup_media_state_receipt);
+    if (!theron_v1_boot_startup_launch_detach_runtime(
+            &launch,
+            &runtime_receipt)) {
+        goto fail;
+    }
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
     snprintf(state->bootAssetMd5,
              sizeof(state->bootAssetMd5),
              "%s",
-             launch.profile->graphics_md5);
-    snprintf(state->title, sizeof(state->title), "THERON'S QUEST");
-    snprintf(state->sourceId, sizeof(state->sourceId), "theron");
+             runtime_receipt.boot_asset_md5);
+    snprintf(state->title, sizeof(state->title), "%s", runtime_receipt.title);
+    snprintf(state->sourceId, sizeof(state->sourceId), "%s",
+             runtime_receipt.source_id);
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
-             launch.profile->graphics_path);
-    state->theronBootProfile = launch.profile;
-    state->theronWorld = launch.world;
-    state->theronViewport = launch.viewport;
-    state->theronAssets = launch.assets;
-    launch.profile = NULL;
-    launch.world = NULL;
-    launch.viewport = NULL;
-    launch.assets = NULL;
+             runtime_receipt.dungeon_path);
+    state->theronBootProfile = runtime_receipt.profile;
+    state->theronWorld = runtime_receipt.world;
+    state->theronViewport = runtime_receipt.viewport;
+    state->theronAssets = runtime_receipt.assets;
     (void)m11_theron_apply_startup_host_receipt(
         state,
         &launch.launch_host_receipt,

@@ -957,6 +957,45 @@ int theron_v1_boot_startup_launch_alloc(
     return 1;
 }
 
+int theron_v1_boot_startup_launch_detach_runtime(
+    Theron_V1_BootStartupLaunch *launch,
+    Theron_V1_BootStartupRuntimeReceipt *out_receipt) {
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!launch || !launch->profile || !launch->world ||
+        !launch->viewport || !launch->assets) {
+        return 0;
+    }
+
+    out_receipt->profile = launch->profile;
+    out_receipt->world = launch->world;
+    out_receipt->viewport = launch->viewport;
+    out_receipt->assets = launch->assets;
+    snprintf(out_receipt->boot_asset_md5,
+             sizeof(out_receipt->boot_asset_md5),
+             "%s",
+             launch->profile->graphics_md5);
+    snprintf(out_receipt->title,
+             sizeof(out_receipt->title),
+             "THERON'S QUEST");
+    snprintf(out_receipt->source_id,
+             sizeof(out_receipt->source_id),
+             "theron");
+    snprintf(out_receipt->dungeon_path,
+             sizeof(out_receipt->dungeon_path),
+             "%s",
+             launch->profile->graphics_path);
+
+    launch->profile = NULL;
+    launch->world = NULL;
+    launch->viewport = NULL;
+    launch->assets = NULL;
+    return 1;
+}
+
 int theron_v1_boot_startup_save_resume(
     const Theron_V1_BootProfile *profile,
     Theron_V1StartupSaveResume *out_snapshot) {

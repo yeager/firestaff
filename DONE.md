@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron boot runtime detach receipt: Theron boot now owns startup runtime ownership transfer for profile/world/viewport/assets and launch identity strings. M11 applies the runtime receipt instead of reading launch profile fields or nulling launch ownership pointers. Verification: strict compiles for `theron_v1_boot.c` and `m11_game_view.c`, Theron startup save/resume smoke passed 120/120 with direct linkage, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CHD and batched archive hash scan: shared game-data scanner now recognizes CHD CD images by suffix/signature, scans/materializes CHD data tracks via local `chdman` when available, and routes `asset_find_by_md5_list()` through one batched recursive archive scan. Verification: `test_asset_find_by_hash` passed with and without `FIRESTAFF_HAS_ZLIB`, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 quicksave runtime receipt: DM2 runtime now owns quicksave export, save-root creation, SKSave.dat last-session write, and M11-ready save receipts. M11 applies the receipt instead of writing DM2 saves directly. Verification: strict compiles for `dm2_v1_runtime.c` and `m11_game_view.c`, direct DM2 runtime handoff smoke passed 101/101, Phase A passed 24/24, and `git diff --check` passed.
