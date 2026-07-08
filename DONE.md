@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron runtime receipt handoff apply: M11 Theron direct-start now applies the detached boot runtime receipt through one helper for source identity, profile/world/viewport/assets, initial title-gate state, save/resume state, startup-media state, and launch host receipt. Verification: `test_theron_v1_startup_save_resume_pc34` passed 120/120; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
+
 - ✅ 2026-07-08 CSB runtime receipt handoff apply: M11 CSB direct-start now applies the detached boot runtime receipt through one helper that covers active/source identity, graphics/font binding, startup init state, startup session state, profile sync, and launch host receipt. Verification: `test_csb_v1_boot_runtime_handoff` passed 304/304; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
 
 - ✅ 2026-07-08 DM2 boot launch ownership cleanup: DM2 boot now emits M11-ready prepare-failure receipts and owns launch-profile use for snapshot startup/resume. M11 direct-start no longer reads `launch.profile`, `failure_status_scope`, or `failure_status` before runtime detach. Verification: `test_dm2_v1_boot_profile_smoke` passed 63/63; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; Phase A passed 24/24.
