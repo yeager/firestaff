@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup render/layout session receipts: Theron startup-flow now derives Continue availability from save/resume session facts for layout elements, render rows, and render plans. M11 no longer computes TQSV/SRM Continue flags for startup presentation. Verification: Theron M11 direct-launch passed, Phase A passed 24/24, RA unit test passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup session input receipts: Theron startup-flow now derives Continue availability from save/resume session facts for keyboard and pointer routing. M11 no longer computes TQSV/SRM Continue flags before startup input dispatch. Verification: Theron M11 direct-launch passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup media receipt: Theron startup-media now emits an M11-ready state receipt for Track 02 roster names/titles and prompt text. M11 applies that receipt instead of copying media-capture fields inline during boot. Verification: Theron M11 direct-launch passed, Phase A passed 24/24, and `git diff --check` passed.

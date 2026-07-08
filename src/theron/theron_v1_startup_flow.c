@@ -1056,6 +1056,63 @@ int theron_v1_startup_layout_build_from_facts(
                                           max_elements);
 }
 
+int theron_v1_startup_layout_build_from_session_facts(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    int soul_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    Theron_StartupLayoutElement *elements,
+    int max_elements) {
+
+    Theron_V1StartupContinueAvailability availability;
+
+    if (!theron_v1_startup_continue_availability_from_state(
+            (Theron_V1StartupResumeClaim)resume_claim,
+            tqsv_slot,
+            srm_slot,
+            (Theron_V1SrmProgressImportStatus)srm_import_status,
+            &availability)) {
+        if (elements && max_elements > 0) {
+            memset(elements, 0, (size_t)max_elements * sizeof(elements[0]));
+        }
+        return 0;
+    }
+
+    return theron_v1_startup_layout_build_from_facts(
+        phase,
+        selected_dungeon,
+        boot_profile,
+        world,
+        soul_cursor,
+        continue_focus,
+        availability.has_tqsv_continue,
+        availability.tqsv_slot,
+        availability.has_srm_continue,
+        availability.srm_slot,
+        startup_text_prompt,
+        startup_roster_names,
+        startup_roster_titles,
+        startup_roster_name_count,
+        selected_mirrors_mask,
+        selected_mirror_order,
+        selected_mirror_order_count,
+        elements,
+        max_elements);
+}
+
 static int tqr_startup_point_in_rect(
     int px,
     int py,
@@ -2107,6 +2164,61 @@ int theron_v1_startup_render_plan_build_from_facts(
                                                out_plan);
 }
 
+int theron_v1_startup_render_plan_build_from_session_facts(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    int soul_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    Theron_StartupRenderPlan *out_plan) {
+
+    Theron_V1StartupContinueAvailability availability;
+
+    if (!theron_v1_startup_continue_availability_from_state(
+            (Theron_V1StartupResumeClaim)resume_claim,
+            tqsv_slot,
+            srm_slot,
+            (Theron_V1SrmProgressImportStatus)srm_import_status,
+            &availability)) {
+        if (out_plan) {
+            tqr_startup_render_plan_reset(out_plan);
+        }
+        return 0;
+    }
+
+    return theron_v1_startup_render_plan_build_from_facts(
+        phase,
+        selected_dungeon,
+        boot_profile,
+        world,
+        soul_cursor,
+        continue_focus,
+        availability.has_tqsv_continue,
+        availability.tqsv_slot,
+        availability.has_srm_continue,
+        availability.srm_slot,
+        startup_text_prompt,
+        startup_roster_names,
+        startup_roster_titles,
+        startup_roster_name_count,
+        selected_mirrors_mask,
+        selected_mirror_order,
+        selected_mirror_order_count,
+        out_plan);
+}
+
 static void tqr_startup_exec_fill(
     const Theron_StartupGraphicExecutor *executor,
     int x,
@@ -2528,6 +2640,64 @@ int theron_v1_startup_render_rows_build_from_facts(
                                                element_count,
                                                rows,
                                                max_rows);
+}
+
+int theron_v1_startup_render_rows_build_from_session_facts(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    int soul_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows) {
+
+    Theron_V1StartupContinueAvailability availability;
+
+    if (!theron_v1_startup_continue_availability_from_state(
+            (Theron_V1StartupResumeClaim)resume_claim,
+            tqsv_slot,
+            srm_slot,
+            (Theron_V1SrmProgressImportStatus)srm_import_status,
+            &availability)) {
+        if (rows && max_rows > 0) {
+            memset(rows, 0,
+                   (size_t)max_rows * THERON_STARTUP_RENDER_ROW_CAPACITY);
+        }
+        return 0;
+    }
+
+    return theron_v1_startup_render_rows_build_from_facts(
+        phase,
+        selected_dungeon,
+        boot_profile,
+        world,
+        soul_cursor,
+        continue_focus,
+        availability.has_tqsv_continue,
+        availability.tqsv_slot,
+        availability.has_srm_continue,
+        availability.srm_slot,
+        startup_text_prompt,
+        startup_roster_names,
+        startup_roster_titles,
+        startup_roster_name_count,
+        selected_mirrors_mask,
+        selected_mirror_order,
+        selected_mirror_order_count,
+        rows,
+        max_rows);
 }
 
 Theron_StartupResult theron_v1_startup_handle_input_with_progression(
