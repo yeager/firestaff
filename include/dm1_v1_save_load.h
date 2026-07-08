@@ -126,6 +126,34 @@ struct DM1SaveMenuContext {
     char statusMessage[128];
 };
 
+enum {
+    DM1_SAVE_RESUME_STATUS_CAPACITY = 32,
+    DM1_SAVE_RESUME_INSPECT_TITLE_CAPACITY = 32,
+    DM1_SAVE_RESUME_INSPECT_DETAIL_CAPACITY = 512
+};
+
+struct DM1SaveResumeRequest {
+    const char* sourceId;
+    const char* path;
+    uint32_t gameTick;
+    uint32_t worldHash;
+    int musicOn;
+    int usedBackup;
+};
+
+struct DM1SaveResumeReceipt {
+    int allowed;
+    int loadSucceeded;
+    int usedBackup;
+    uint32_t loadGameTick;
+    uint32_t lastSaveTick;
+    int musicOn;
+    char statusTitle[DM1_SAVE_RESUME_STATUS_CAPACITY];
+    char statusDetail[DM1_SAVE_RESUME_STATUS_CAPACITY];
+    char inspectTitle[DM1_SAVE_RESUME_INSPECT_TITLE_CAPACITY];
+    char inspectDetail[DM1_SAVE_RESUME_INSPECT_DETAIL_CAPACITY];
+};
+
 /* ── Core save/load functions ─────────────────────────────────── */
 
 /*
@@ -216,6 +244,10 @@ int DM1_GetSavePath(const char* sourceId,
                     char* outPath, int outSize);
 int DM1_GetBackupSavePath(const char* savePath,
                           char* outPath, int outSize);
+
+int DM1_SaveResumeSourceAllowed(const char* sourceId);
+int DM1_BuildSaveResumeReceipt(const struct DM1SaveResumeRequest* request,
+                               struct DM1SaveResumeReceipt* outReceipt);
 
 /* ── Error string ─────────────────────────────────────────────── */
 

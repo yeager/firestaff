@@ -786,6 +786,81 @@ static int expect_int_eq(const char* label, int got, int want) {
     return 1;
 }
 
+static int test_resume_receipt_contract(void) {
+    struct DM1SaveResumeRequest request;
+    struct DM1SaveResumeReceipt receipt;
+    int ok = 1;
+
+    memset(&request, 0, sizeof(request));
+    memset(&receipt, 0, sizeof(receipt));
+    request.sourceId = "dm1";
+    request.path = "/tmp/dm1-resume.sav";
+    request.gameTick = 12345u;
+    request.worldHash = 0xA1B2C3D4u;
+    request.musicOn = 1;
+    request.usedBackup = 1;
+
+    ok &= expect_int_eq("DM1 source resume allowed",
+                        DM1_SaveResumeSourceAllowed("dm1"),
+                        1);
+    ok &= expect_int_eq("empty source resume allowed",
+                        DM1_SaveResumeSourceAllowed(""),
+                        1);
+    ok &= expect_int_eq("CSB source resume rejected by DM1 helper",
+                        DM1_SaveResumeSourceAllowed("csb"),
+                        0);
+    ok &= expect_int_eq("resume receipt builds",
+                        DM1_BuildSaveResumeReceipt(&request, &receipt),
+                        1);
+    ok &= expect_int_eq("resume receipt allowed",
+                        receipt.allowed,
+                        1);
+    ok &= expect_int_eq("resume receipt load succeeded",
+                        receipt.loadSucceeded,
+                        1);
+    ok &= expect_int_eq("resume receipt backup flag",
+                        receipt.usedBackup,
+                        1);
+    ok &= expect_u32_eq("resume receipt load tick",
+                        receipt.loadGameTick,
+                        12345u);
+    ok &= expect_u32_eq("resume receipt last save tick",
+                        receipt.lastSaveTick,
+                        12345u);
+    ok &= expect_int_eq("resume receipt music flag",
+                        receipt.musicOn,
+                        1);
+    ok &= expect_int_eq("resume receipt backup status",
+                        strcmp(receipt.statusTitle, "LOAD") == 0 &&
+                            strcmp(receipt.statusDetail,
+                                   "DM1 SAVE BACKUP RESTORED") == 0 &&
+                            strcmp(receipt.inspectTitle, "RESTORED") == 0,
+                        1);
+    ok &= expect_int_eq("resume receipt inspect contains path",
+                        strstr(receipt.inspectDetail,
+                               "/tmp/dm1-resume.sav") != NULL,
+                        1);
+
+    request.sourceId = "csb";
+    memset(&receipt, 0, sizeof(receipt));
+    ok &= expect_int_eq("non-DM1 resume receipt no-op builds",
+                        DM1_BuildSaveResumeReceipt(&request, &receipt),
+                        1);
+    ok &= expect_int_eq("non-DM1 resume receipt not allowed",
+                        receipt.allowed,
+                        0);
+    ok &= expect_int_eq("non-DM1 resume receipt does not claim load",
+                        receipt.loadSucceeded,
+                        0);
+    ok &= expect_int_eq("NULL resume request rejected",
+                        DM1_BuildSaveResumeReceipt(NULL, &receipt),
+                        0);
+
+    if (!ok) return 0;
+    printf("  PASS: DM1 resume receipt contract\n");
+    return 1;
+}
+
 static int expect_u16_eq(const char* label,
                          unsigned short got,
                          unsigned short want) {
@@ -1242,6 +1317,7 @@ int main(void) {
     if (test_original_pc34_runtime_load_fallback()) pass++; else fail++;
     if (test_validate_corrupt()) pass++; else fail++;
     if (test_profile_hash_mismatch()) pass++; else fail++;
+    if (test_resume_receipt_contract()) pass++; else fail++;
     if (test_party_state_save_resume_gate()) pass++; else fail++;
     if (test_pc34_writeback_path()) pass++; else fail++;
 
