@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-08 update: DM1 runtime-ready startup now combines dungeon-load success, runtime-start state, and sibling `GRAPHICS.DAT` bind decisions into one DM1-owned receipt consumed by M11. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 

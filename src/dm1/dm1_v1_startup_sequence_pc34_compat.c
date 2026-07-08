@@ -299,6 +299,56 @@ int dm1_v1_startup_dungeon_load_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_runtime_ready_receipt_pc34(
+    const DM1_V1_StartupRuntimeReadyFacts_PC34* facts,
+    DM1_V1_StartupRuntimeReadyReceipt_PC34* out_receipt) {
+    DM1_V1_StartupRuntimeReadyReceipt_PC34 receipt;
+    DM1_V1_StartupDungeonLoadFacts_PC34 load_facts;
+    DM1_V1_StartupGraphicsBindFacts_PC34 graphics_facts;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->runtime_start.game_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    memset(&load_facts, 0, sizeof(load_facts));
+    load_facts.game_id = facts->runtime_start.game_id;
+    load_facts.load_succeeded = facts->load_succeeded;
+    if (!dm1_v1_startup_dungeon_load_receipt_pc34(
+            &load_facts,
+            &receipt.load_receipt) ||
+        !receipt.load_receipt.handled ||
+        !receipt.load_receipt.load_succeeded) {
+        return 0;
+    }
+
+    if (!dm1_v1_startup_runtime_start_receipt_pc34(
+            &facts->runtime_start,
+            &receipt.runtime_start_receipt) ||
+        !receipt.runtime_start_receipt.handled) {
+        return 0;
+    }
+
+    memset(&graphics_facts, 0, sizeof(graphics_facts));
+    graphics_facts.game_id = facts->runtime_start.game_id;
+    graphics_facts.dungeon_path = facts->runtime_start.dungeon_path;
+    if (!dm1_v1_startup_graphics_bind_receipt_pc34(
+            &graphics_facts,
+            &receipt.graphics_bind_receipt) ||
+        !receipt.graphics_bind_receipt.handled) {
+        return 0;
+    }
+
+    receipt.handled = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_handoff_prelude_plan_pc34(
     const char* game_id,
     DM1_V1_StartupHandoffPreludePlan_PC34* out_plan) {
