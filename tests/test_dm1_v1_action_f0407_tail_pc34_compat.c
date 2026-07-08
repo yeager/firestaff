@@ -1,4 +1,5 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_melee_action_f0402_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -598,6 +599,48 @@ static void test_closed_door_melee_plan(void) {
     CHECK_EQ(out.performed, 0, "parry thud ignored by closed-door plan");
 }
 
+static void test_melee_action_tick_plan(void) {
+    DM1_MeleeActionTickInputPc34 in;
+    DM1_MeleeActionTickPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.championIndex = 2;
+    in.actionIndex = DM1_ACTION_CHOP;
+    in.championPresent = 1;
+    in.championDirection = 5;
+    CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 1,
+             "melee tick plan builds");
+    CHECK_EQ(out.valid, 1, "melee tick plan valid");
+    CHECK_EQ(out.command, CMD_ATTACK, "melee tick command");
+    CHECK_EQ(out.commandArg1, 2, "melee tick champion arg");
+    CHECK_EQ(out.commandArg2, CMD_ATTACK_TARGET_AUTO_GROUP_PC34,
+             "melee tick auto group");
+    CHECK_EQ(out.reserved, CMD_ATTACK_CREATURE_AUTO_PC34,
+             "melee tick auto creature");
+    CHECK_EQ(out.hasTargetDirection, 1, "melee tick target direction flag");
+    CHECK_EQ(out.targetDirection, 1, "melee tick target direction normalized");
+    CHECK_EQ((out.reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) != 0u,
+             1, "melee tick action valid bit");
+    CHECK_EQ((int)(out.reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK),
+             DM1_ACTION_CHOP, "melee tick action index bits");
+    CHECK_EQ((out.reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID) != 0u,
+             1, "melee tick direction valid bit");
+    CHECK_EQ((int)((out.reserved2 &
+                    CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
+                   CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT),
+             1, "melee tick direction bits");
+
+    in.actionIndex = DM1_ACTION_BLOCK;
+    CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 0,
+             "block does not build melee F0402 tick");
+    CHECK_EQ(out.valid, 0, "block plan invalid");
+
+    in.actionIndex = DM1_ACTION_CHOP;
+    in.championPresent = 0;
+    CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 0,
+             "missing champion rejected");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -624,6 +667,7 @@ int main(void) {
     test_climb_down_plan();
     test_flip_and_direction_plans();
     test_closed_door_melee_plan();
+    test_melee_action_tick_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

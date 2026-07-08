@@ -1,0 +1,42 @@
+#include "dm1_v1_melee_action_f0402_pc34_compat.h"
+
+#include <string.h>
+
+int dm1_v1_melee_action_tick_plan_f0402_pc34(
+    const DM1_MeleeActionTickInputPc34* in,
+    DM1_MeleeActionTickPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+    if (!in->championPresent) return 0;
+    if (in->championIndex < 0 || in->championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+    if (!dm1_v1_action_is_melee_contact_f0407_pc34(in->actionIndex)) {
+        return 0;
+    }
+
+    /* ReDMCSB: MENU.C F0407 lines 1266-1269 computes the target square from
+     * the acting champion direction, then lines 1331-1334 dispatch F0402.
+     * M10 still resolves F0177/F0231; this receipt keeps M11 from assembling
+     * the source-shaped CMD_ATTACK transport inline. */
+    out->valid = 1;
+    out->command = CMD_ATTACK;
+    out->commandArg1 = (unsigned char)in->championIndex;
+    out->commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+    out->reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
+    out->targetDirection = in->championDirection & 3;
+    out->hasTargetDirection = 1;
+    out->reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+                     (unsigned int)(in->actionIndex &
+                                    CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK) |
+                     CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
+                     (((unsigned int)out->targetDirection
+                       << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) &
+                      CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK);
+    return 1;
+}

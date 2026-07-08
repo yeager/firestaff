@@ -62,6 +62,7 @@
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
+#include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
@@ -12803,26 +12804,34 @@ static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
     input.tick = state->world.gameTick;
     input.command = command;
     if (command == CMD_ATTACK) {
-        input.commandArg1 = (uint8_t)(state->world.party.activeChampionIndex >= 0
-                                          ? state->world.party.activeChampionIndex
-                                          : 0);
-        input.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
-        input.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
-        if (actionIndex >= 0 && actionIndex < 44) {
-            input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
-                              (uint32_t)actionIndex;
-            if (input.commandArg1 < CHAMPION_MAX_PARTY) {
-                /* ReDMCSB MENU.C F0407 lines 1266-1269 computes L1251/L1252
-                 * from the acting champion direction before F0402 melee
-                 * dispatch.  Preserve that target direction for the M10
-                 * auto-group bridge instead of falling back to party facing. */
-                input.reserved2 |=
-                    CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
-                    (((uint32_t)state->world.party.champions[input.commandArg1]
-                          .direction &
-                      3u)
-                     << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
-            }
+        DM1_MeleeActionTickInputPc34 meleeIn;
+        DM1_MeleeActionTickPlanPc34 meleePlan;
+        int championIndex =
+            state->world.party.activeChampionIndex >= 0
+                ? state->world.party.activeChampionIndex
+                : 0;
+        memset(&meleeIn, 0, sizeof(meleeIn));
+        memset(&meleePlan, 0, sizeof(meleePlan));
+        meleeIn.championIndex = championIndex;
+        meleeIn.actionIndex = actionIndex;
+        if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
+            meleeIn.championPresent =
+                state->world.party.champions[championIndex].present;
+            meleeIn.championDirection =
+                state->world.party.champions[championIndex].direction;
+        }
+        if (dm1_v1_melee_action_tick_plan_f0402_pc34(
+                &meleeIn, &meleePlan) &&
+            meleePlan.valid) {
+            input.command = meleePlan.command;
+            input.commandArg1 = meleePlan.commandArg1;
+            input.commandArg2 = meleePlan.commandArg2;
+            input.reserved = meleePlan.reserved;
+            input.reserved2 = meleePlan.reserved2;
+        } else {
+            input.commandArg1 = (uint8_t)championIndex;
+            input.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+            input.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
         }
         m11_set_candidate_attack_marker_for_tick(
             state,

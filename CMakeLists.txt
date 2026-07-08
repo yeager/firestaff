@@ -169,6 +169,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_original_save_pc34_handoff.c
+    src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
     src/dm1/dm1_v1_throw_shoot_pc34_compat.c
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_sound.c
@@ -15789,6 +15790,7 @@ if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
     add_executable(test_dm1_v1_action_f0407_tail_pc34_compat
         tests/test_dm1_v1_action_f0407_tail_pc34_compat.c
         src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
+        src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
         src/dm1/dm1_v1_g0497_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c
