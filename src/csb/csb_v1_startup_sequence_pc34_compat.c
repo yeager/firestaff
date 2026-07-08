@@ -3284,6 +3284,74 @@ int csb_v1_startup_receipt_presentation_from_facts_pc34(
     return 1;
 }
 
+int csb_v1_startup_receipt_presentation_from_host_facts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready)
+{
+    int title_max;
+    if (!facts) {
+        title_max = csb_v1_startup_title_total_ticks_pc34();
+        if (out_phase && out_phase_size > 0) {
+            out_phase[0] = '\0';
+        }
+        if (out_animation && out_animation_size > 0) {
+            out_animation[0] = '\0';
+        }
+        if (out_startup_active) {
+            *out_startup_active = 0;
+        }
+        if (out_startup_frame) {
+            *out_startup_frame = 0;
+        }
+        if (out_animation_active) {
+            *out_animation_active = 0;
+        }
+        if (out_title_frame) {
+            *out_title_frame = title_max;
+        }
+        if (out_title_frame_max) {
+            *out_title_frame_max = title_max;
+        }
+        if (out_title_ready) {
+            *out_title_ready = 1;
+        }
+        return 0;
+    }
+    return csb_v1_startup_receipt_presentation_from_facts_pc34(
+        facts->title_active,
+        facts->title_frame,
+        facts->title_source_step,
+        facts->entrance_active,
+        facts->entrance_source_step,
+        facts->entrance_dismissed,
+        facts->credits_active,
+        facts->credits_remaining_ticks,
+        facts->opening_active,
+        facts->opening_delay_ticks,
+        facts->opening_step,
+        facts->pending_command,
+        facts->entrance_frame,
+        out_phase,
+        out_phase_size,
+        out_startup_active,
+        out_startup_frame,
+        out_animation,
+        out_animation_size,
+        out_animation_active,
+        out_title_frame,
+        out_title_frame_max,
+        out_title_ready);
+}
+
 int csb_v1_startup_sequence_source_order_valid_pc34(void)
 {
     /* ReDMCSB startup source order:

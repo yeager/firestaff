@@ -11158,6 +11158,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->dm1WorldTick = state->world.gameTick;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_StartupHostFacts_PC34 facts;
         out->levelLoaded = state->csbState.level_loaded;
         out->mapIndex = state->csbState.current_level;
         out->partyX = state->csbState.party_x;
@@ -11165,20 +11166,9 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->csbState.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->csbState.tick_count;
-        (void)csb_v1_startup_receipt_presentation_from_facts_pc34(
-            state->csbState.startup_title_active,
-            state->csbState.startup_title_frame,
-            state->csbState.startup_title_source_step,
-            state->csbState.startup_entrance_active,
-            state->csbState.startup_entrance_source_step,
-            state->csbState.startup_entrance_dismissed,
-            state->csbState.startup_entrance_credits_active,
-            state->csbState.startup_entrance_credits_remaining_ticks,
-            state->csbState.startup_entrance_opening_active,
-            state->csbState.startup_entrance_opening_delay_ticks,
-            state->csbState.startup_entrance_opening_step,
-            state->csbState.startup_entrance_pending_command,
-            state->csbState.startup_entrance_frame,
+        m11_csb_startup_host_facts(state, &facts);
+        (void)csb_v1_startup_receipt_presentation_from_host_facts_pc34(
+            &facts,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
@@ -11669,6 +11659,10 @@ static void m11_theron_apply_startup_state_receipt(
     }
 }
 
+static void m11_theron_startup_session_facts(
+    const M11_GameViewState *state,
+    Theron_StartupSessionFacts *session);
+
 static int m11_theron_rebuild_startup_flow(M11_GameViewState* state,
                                            const Theron_DungeonProgression* progression,
                                            Theron_StartupFlow* flow,
@@ -11676,6 +11670,7 @@ static int m11_theron_rebuild_startup_flow(M11_GameViewState* state,
                                            size_t receipt_cap) {
     Theron_StartupResult result;
     Theron_StartupStateReceipt stateReceipt;
+    Theron_StartupSessionFacts session;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -11684,14 +11679,10 @@ static int m11_theron_rebuild_startup_flow(M11_GameViewState* state,
         return 0;
     }
 
-    result = theron_v1_startup_flow_rebuild_from_facts_with_receipt(
-        (Theron_StartupPhase)state->theronState.startup_phase,
-        state->theronState.selected_dungeon,
-        state->theronState.selected_mirrors_mask,
-        state->theronState.companion_count,
-        state->theronState.selected_mirror_order,
-        THERON_STARTUP_MAX_COMPANIONS,
-        progression,
+    (void)progression;
+    m11_theron_startup_session_facts(state, &session);
+    result = theron_v1_startup_flow_rebuild_from_session_with_receipt(
+        &session,
         flow,
         &stateReceipt);
     if (result != THERON_STARTUP_OK) {
@@ -11736,6 +11727,7 @@ static void m11_theron_startup_session_facts(
         state->theronState.startup_roster_name_count;
     session->selected_mirrors_mask =
         state->theronState.selected_mirrors_mask;
+    session->companion_count = state->theronState.companion_count;
     session->selected_mirror_order =
         state->theronState.selected_mirror_order;
     session->selected_mirror_order_count = THERON_STARTUP_MAX_COMPANIONS;
@@ -11861,14 +11853,15 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
 
 static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
                                            const char* prefix) {
+    Theron_StartupSessionFacts session;
     Theron_StartupChapterInspectReceipt receipt;
 
     if (!state) {
         return;
     }
-    if (!theron_v1_startup_chapter_inspect_receipt_from_facts(
-            state->theronBootProfile,
-            (const Theron_V1_World*)state->theronWorld,
+    m11_theron_startup_session_facts(state, &session);
+    if (!theron_v1_startup_chapter_inspect_receipt_from_session(
+            &session,
             prefix,
             &receipt)) {
         return;
@@ -11939,18 +11932,14 @@ static M11_GameInputResult m11_theron_startup_apply_action(
     case THERON_STARTUP_PLAN_TOGGLE_MIRROR: {
         Theron_StartupHostReceipt hostReceipt;
         Theron_StartupStateReceipt stateReceipt;
+        Theron_StartupSessionFacts session;
         char receipt[96];
 
         receipt[0] = '\0';
-        if (!theron_v1_startup_execute_flow_plan_from_facts_with_host_receipts(
+        m11_theron_startup_session_facts(state, &session);
+        if (!theron_v1_startup_execute_flow_plan_from_session_with_host_receipts(
                 &plan,
-                (Theron_StartupPhase)state->theronState.startup_phase,
-                state->theronState.selected_dungeon,
-                state->theronState.selected_mirrors_mask,
-                state->theronState.companion_count,
-                state->theronState.selected_mirror_order,
-                THERON_STARTUP_MAX_COMPANIONS,
-                &world->progression,
+                &session,
                 NULL,
                 &execution,
                 &hostReceipt,

@@ -932,6 +932,18 @@ int csb_v1_startup_receipt_presentation_from_facts_pc34(
     int *out_title_frame,
     int *out_title_frame_max,
     int *out_title_ready);
+int csb_v1_startup_receipt_presentation_from_host_facts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready);
 int csb_v1_startup_sequence_source_order_valid_pc34(void);
 const char* csb_v1_startup_sequence_source_evidence_pc34(void);
 

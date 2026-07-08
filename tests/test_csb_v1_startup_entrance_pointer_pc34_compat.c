@@ -2338,6 +2338,40 @@ int main(void)
               title_frame_max == csb_v1_startup_title_total_ticks_pc34() &&
               title_ready == 0,
           "startup presentation facts helper owns title animation receipt");
+    {
+        CSB_V1_StartupHostFacts_PC34 facts;
+        memset(&facts, 0, sizeof(facts));
+        facts.title_active = 1;
+        facts.title_frame = 7;
+        facts.title_source_step = 2;
+        facts.entrance_active = 1;
+        facts.entrance_source_step =
+            CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34;
+        memset(animation, 0, sizeof(animation));
+        animation_active = -1;
+        title_frame = -1;
+        title_frame_max = -1;
+        title_ready = -1;
+        check(csb_v1_startup_receipt_presentation_from_host_facts_pc34(
+                  &facts,
+                  phase,
+                  (int)sizeof(phase),
+                  &startup_active,
+                  &startup_frame,
+                  animation,
+                  (int)sizeof(animation),
+                  &animation_active,
+                  &title_frame,
+                  &title_frame_max,
+                  &title_ready) &&
+                  strcmp(animation, "csb-title") == 0 &&
+                  animation_active == 1 &&
+                  title_frame == 7 &&
+                  title_frame_max ==
+                      csb_v1_startup_title_total_ticks_pc34() &&
+                  title_ready == 0,
+              "startup presentation host facts helper owns title animation receipt");
+    }
 
     command_state.title_active = 0;
     command_state.opening_active = 1;
