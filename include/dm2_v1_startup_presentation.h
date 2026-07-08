@@ -75,6 +75,10 @@ int dm2_v1_startup_presentation_build_from_facts(
     int selected_row,
     DM2_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int dm2_v1_startup_presentation_build_from_host_facts(
+    const DM2_V1_StartupHostFacts *facts,
+    DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands);
 int dm2_v1_startup_execute_draw_commands(
     const DM2_V1_StartupDrawCommand *commands,
     int command_count,

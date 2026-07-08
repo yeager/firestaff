@@ -136,6 +136,15 @@ typedef struct {
     int selected_row;
 } DM2_V1_StartupMenuStateReceipt;
 
+typedef struct {
+    const char *save_root;
+    const char *fallback_save_root;
+    int resume_available;
+    unsigned int slot_mask;
+    int selected_row;
+    const char *scan_save_root;
+} DM2_V1_StartupHostFacts;
+
 enum {
     DM2_V1_STARTUP_ROW_LABEL_CAPACITY = 48
 };
@@ -219,6 +228,9 @@ int dm2_v1_startup_menu_state_receipt_scan_saves_from_facts(
     unsigned int slot_mask,
     int selected_row,
     const char *scan_save_root);
+int dm2_v1_startup_menu_state_receipt_scan_saves_from_host_facts(
+    DM2_V1_StartupMenuStateReceipt *out_receipt,
+    const DM2_V1_StartupHostFacts *facts);
 int dm2_v1_startup_menu_from_snapshot(
     const DM2_V1_StartupMenuSnapshot *snapshot,
     DM2_V1_StartupMenu *out_menu);
@@ -256,6 +268,11 @@ int dm2_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
     int selected_row,
     int menu_input,
     DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
+    DM2_V1_StartupMenuStateReceipt *out_receipt,
+    const DM2_V1_StartupHostFacts *facts,
+    int menu_input,
+    DM2_V1_StartupAction *out_action);
 int dm2_v1_startup_menu_snapshot_handle_hit(
     DM2_V1_StartupMenuSnapshot *snapshot,
     const DM2_V1_StartupHit *hit,
@@ -283,6 +300,12 @@ int dm2_v1_startup_menu_handle_pointer_from_facts_with_receipt(
     int resume_available,
     unsigned int slot_mask,
     int selected_row,
+    int x,
+    int y,
+    DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
+    DM2_V1_StartupMenuStateReceipt *out_receipt,
+    const DM2_V1_StartupHostFacts *facts,
     int x,
     int y,
     DM2_V1_StartupAction *out_action);
