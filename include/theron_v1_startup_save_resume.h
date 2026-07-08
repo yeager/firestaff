@@ -276,6 +276,21 @@ int theron_v1_startup_continue_apply_facts_with_inspect_receipts(
     Theron_StartupStateReceipt *out_state_receipt,
     char *receipt,
     size_t receipt_cap);
+int theron_v1_startup_continue_apply_facts_with_host_receipts(
+    Theron_V1_World *world,
+    Theron_V1StartupResumeClaim resume_claim,
+    int tqsv_slot_index,
+    const char *tqsv_root,
+    int srm_slot_index,
+    Theron_V1SrmProgressImportStatus srm_import_status,
+    const char *srm_root,
+    const Theron_StartupActionPlan *plan,
+    const void *boot_profile,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap);
 
 /* Pretty-printer. Writes a multi-line diagnostic to `buf` up to
  * `buf_size` bytes (always NUL-terminated).  Returns bytes written
