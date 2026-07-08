@@ -401,6 +401,25 @@ typedef struct {
     int mapY;
 } DM1_MeleeF0190KilledAllStatePlanPc34;
 
+typedef struct {
+    int eventKind;
+    int eventMapIndex;
+    int eventMapX;
+    int eventMapY;
+    int eventType;
+    int targetMapIndex;
+    int targetMapX;
+    int targetMapY;
+    int killedCreatureIndex;
+} DM1_MeleeF0190TimelineCleanupInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldKeepEvent;
+    int newEventType;
+    int eventCreatureIndex;
+} DM1_MeleeF0190TimelineCleanupPlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -463,6 +482,9 @@ int dm1_v1_melee_killed_some_fear_apply_plan_f0190_pc34(
 int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     const DM1_MeleeF0190KilledAllStateInputPc34* in,
     DM1_MeleeF0190KilledAllStatePlanPc34* out);
+int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+    const DM1_MeleeF0190TimelineCleanupInputPc34* in,
+    DM1_MeleeF0190TimelineCleanupPlanPc34* out);
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,

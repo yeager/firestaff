@@ -1716,6 +1716,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190KilledSomeStatePlanPc34 stateOut;
     DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
     DM1_MeleeF0190KilledAllStatePlanPc34 killedAllOut;
+    DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
+    DM1_MeleeF0190TimelineCleanupPlanPc34 cleanupOut;
     struct CombatResult_Compat resultA;
     struct CombatResult_Compat resultB;
     struct DungeonGroup_Compat groupA;
@@ -1899,6 +1901,68 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 non-attack skips cleanup");
     CHECK_EQ(stateOut.shouldEvaluateFear, 0,
              "F0190 non-attack skips fear");
+
+    memset(&cleanupIn, 0, sizeof(cleanupIn));
+    cleanupIn.eventKind = TIMELINE_EVENT_CREATURE_REACTION;
+    cleanupIn.eventMapIndex = 1;
+    cleanupIn.eventMapX = 10;
+    cleanupIn.eventMapY = 11;
+    cleanupIn.targetMapIndex = 1;
+    cleanupIn.targetMapX = 10;
+    cleanupIn.targetMapY = 11;
+    cleanupIn.killedCreatureIndex = 1;
+    cleanupIn.eventType = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 1;
+    CHECK_EQ(dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+                 &cleanupIn, &cleanupOut), 1,
+             "F0190 cleanup killed aspect event builds");
+    CHECK_EQ(cleanupOut.valid, 1, "F0190 cleanup killed aspect valid");
+    CHECK_EQ(cleanupOut.shouldKeepEvent, 0,
+             "F0190 cleanup deletes killed aspect event");
+    CHECK_EQ(cleanupOut.eventCreatureIndex, 1,
+             "F0190 cleanup aspect creature index");
+
+    cleanupIn.eventType = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 2;
+    CHECK_EQ(dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+                 &cleanupIn, &cleanupOut), 1,
+             "F0190 cleanup shifted aspect event builds");
+    CHECK_EQ(cleanupOut.shouldKeepEvent, 1,
+             "F0190 cleanup keeps later aspect event");
+    CHECK_EQ(cleanupOut.newEventType, DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 1,
+             "F0190 cleanup shifts later aspect event");
+
+    cleanupIn.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 1;
+    CHECK_EQ(dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+                 &cleanupIn, &cleanupOut), 1,
+             "F0190 cleanup killed behavior event builds");
+    CHECK_EQ(cleanupOut.shouldKeepEvent, 0,
+             "F0190 cleanup deletes killed behavior event");
+
+    cleanupIn.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 3;
+    CHECK_EQ(dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+                 &cleanupIn, &cleanupOut), 1,
+             "F0190 cleanup shifted behavior event builds");
+    CHECK_EQ(cleanupOut.shouldKeepEvent, 1,
+             "F0190 cleanup keeps later behavior event");
+    CHECK_EQ(cleanupOut.newEventType, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 2,
+             "F0190 cleanup shifts later behavior event");
+
+    cleanupIn.eventMapX = 99;
+    CHECK_EQ(dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+                 &cleanupIn, &cleanupOut), 1,
+             "F0190 cleanup other square builds");
+    CHECK_EQ(cleanupOut.shouldKeepEvent, 1,
+             "F0190 cleanup keeps other square");
+    CHECK_EQ(cleanupOut.newEventType, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 3,
+             "F0190 cleanup keeps other square type");
+
+    cleanupIn.eventMapX = 10;
+    cleanupIn.eventKind = 0;
+    cleanupIn.eventType = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 1;
+    CHECK_EQ(dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+                 &cleanupIn, &cleanupOut), 1,
+             "F0190 cleanup other kind builds");
+    CHECK_EQ(cleanupOut.shouldKeepEvent, 1,
+             "F0190 cleanup keeps other kind");
 
     memset(&killedAllIn, 0, sizeof(killedAllIn));
     killedAllIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;

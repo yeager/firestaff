@@ -64,6 +64,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns killed-all/killed-some possession drop branch policy. Remaining runtime coding work is moving group unlink/writeback policy, event cleanup/fear side effects, and deeper F0231 damage internals behind DM1-owned receipts.
   - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns killed-some event-cleanup and fear-apply policy. Remaining runtime coding work is moving group unlink/writeback policy and deeper F0231 damage internals behind DM1-owned receipts.
   - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns killed-all unlink/active-state/raw-write policy. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+  - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns the timeline C33-C36/C38-C41 event cleanup rule for killed-some group compaction. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
