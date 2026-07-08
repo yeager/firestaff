@@ -74,6 +74,7 @@ typedef struct CSB_V1_BootStartupLaunchReceipts_PC34 {
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 handoff;
     CSB_V1_StartupInitStateReceipt_PC34 init_state;
     CSB_V1_RuntimeStartupSessionStateReceipt_PC34 session_state;
+    CSB_V1_StartupHostReceipt_PC34 launch_host_receipt;
 } CSB_V1_BootStartupLaunchReceipts_PC34;
 
 void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
