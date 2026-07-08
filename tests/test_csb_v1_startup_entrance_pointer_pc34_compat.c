@@ -722,8 +722,14 @@ int main(void)
               "startup title policy ignores missing render plan");
     }
 
+    check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
+              csb_v1_startup_title_total_ticks_pc34() == 82 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(60) == 2,
+          "startup title timing preserves CSB PRESENTS hold before CHAOS zoom");
+
     render_state.title_frame =
-        csb_v1_startup_title_presents_ticks_pc34() + 1;
+        csb_v1_startup_title_presents_ticks_pc34();
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_stage ==

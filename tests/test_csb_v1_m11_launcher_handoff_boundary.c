@@ -274,11 +274,14 @@ static void run_real_launcher_handoff_if_available(void) {
                     view.csbState.startup_title_source_step == 1 &&
                     view.csbState.startup_entrance_source_step == 0,
                 "M11 CSB launcher title prelude starts on PRESENTS before entrance");
-    for (int i = 0; i < 1 && view.csbState.startup_title_active; ++i) {
+    for (int i = 0;
+         i < csb_v1_startup_title_presents_ticks_pc34() &&
+         view.csbState.startup_title_active;
+         ++i) {
         int tick_before_loop = view.csbState.tick_count;
         expect_true(M11_GameView_AdvanceIdleTick(&view) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 CSB launcher title prelude advances directly to zoom");
+                    "M11 CSB launcher title prelude holds PRESENTS before zoom");
         expect_true(view.csbState.tick_count == tick_before_loop,
                     "M11 CSB launcher title prelude blocks runtime ticks");
     }
@@ -321,7 +324,7 @@ int main(void) {
     expect_true(csb_v1_startup_title_stage_for_frame_pc34(0) ==
                     CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
                     csb_v1_startup_title_stage_for_frame_pc34(
-                        csb_v1_startup_title_presents_ticks_pc34() + 1) ==
+                        csb_v1_startup_title_presents_ticks_pc34()) ==
                         CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
                 "CSB launcher title helper matches M11 handoff stages");
 

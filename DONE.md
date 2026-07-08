@@ -196,7 +196,7 @@
 
 - ✅ 2026-07-08 SWSH payload scan without filename dependency: The FTL/SWSH intro pathfinder now scans the selected data root recursively for a valid SWSH logo payload by bytes, after exact CSB/DM1 candidates. CSB can therefore find a shared DM1 PC34 SWSH intro even when the file is renamed or stored under extras instead of `csb/SWOOSH`. Verification: SWSH pathfinder test passed, Phase A passed 24/24, and `git diff --check` passed.
 
-- ✅ 2026-07-08 CSB title cadence parity: CSB startup title now uses the 23-step ReDMCSB `TITLE.C F0437` source cadence directly instead of Firestaff's extra 30-tick DM1 `TITLE.DAT` PRESENTS hold. This prevents CSB title/start animation from pausing on the wrong phase before zoom. Verification: CSB startup entrance test passed 152/152 by direct compile/run, CSB startup-sequence compile check passed, Phase A passed 24/24, and `git diff --check` passed.
+- ✅ 2026-07-08 CSB post-swoosh title timing: CSB startup title now keeps the ReDMCSB `TITLE.C F0437` CSB PRESENTS hold (`G0317_i_WaitForInputVerticalBlankCount + 60`) before CHAOS zoom instead of advancing immediately after the FTL/SWSH prelude. This fixes the wrong/too-fast first CSB startup phase after swoosh. Verification: CSB startup entrance test passed 154/154, CSB M11 startup/resume gate passed, CSB M11 launcher handoff boundary passed 253/253, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB SWOOSH pathfinder regression: Added a data-free test proving the SWSH pathfinder resolves `csb/SWOOSH` for CSB and still resolves `dm1/SWOOSH` through the legacy wrapper. Verification: new pathfinder test passed, `main_loop_m11.c` and `swsh_intro_pathfinder_m11.c` compile checks passed, Phase A passed 24/24, and `git diff --check` passed.
 
