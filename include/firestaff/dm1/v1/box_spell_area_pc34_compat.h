@@ -55,6 +55,13 @@ typedef struct DM1_V1_SpellAreaRectPc34 {
     int h;
 } DM1_V1_SpellAreaRectPc34;
 
+typedef struct DM1_V1_SpellLabelSourceZonePc34 {
+    int x;
+    int y;
+    int w;
+    int h;
+} DM1_V1_SpellLabelSourceZonePc34;
+
 /*
  * ReDMCSB: CASTER.C F0394 draws C009 at the spell-area screen origin,
  * SPELDRAW.C F0393 owns the champion caster tab row, and DEFS.H exposes
@@ -73,7 +80,17 @@ enum {
     DM1_V1_SPELL_AREA_RECANT_ZONE_ID_PC34 = 254,
     DM1_V1_SPELL_AVAILABLE_SYMBOL_PARENT_ZONE_ID_BASE_PC34 = 245,
     DM1_V1_SPELL_AVAILABLE_SYMBOL_ZONE_ID_BASE_PC34 = 255,
-    DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34 = 261
+    DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34 = 261,
+
+    DM1_V1_SPELL_RUNE_ROW_COUNT_PC34 = 4,
+    DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34 = 6,
+    DM1_V1_SPELL_RUNE_SEQUENCE_MAX_PC34 = 4,
+    DM1_V1_SPELL_RUNE_VALUE_BASE_PC34 = 0x60,
+
+    DM1_V1_SPELL_LABEL_CELL_W_PC34 = 14,
+    DM1_V1_SPELL_LABEL_CELL_H_PC34 = 13,
+    DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34 = 13,
+    DM1_V1_SPELL_LABEL_SELECTED_Y_PC34 = 26
 };
 
 static inline DM1_V1_SpellAreaRectPc34
@@ -131,6 +148,70 @@ dm1_v1_spell_champion_symbol_zone_id_pc34(int symbol_index)
 {
     if (symbol_index < 0 || symbol_index >= 4) return 0;
     return DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34 + symbol_index;
+}
+
+static inline int
+dm1_v1_spell_rune_value_pc34(int row, int symbol_index)
+{
+    if (row < 0 || row >= DM1_V1_SPELL_RUNE_ROW_COUNT_PC34 ||
+        symbol_index < 0 ||
+        symbol_index >= DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34) {
+        return -1;
+    }
+    /*
+     * ReDMCSB: SYMBOL.C F0399 stores Symbols[SymbolStep] as
+     * 96 + (SymbolStep * 6) + SymbolIndex.
+     */
+    return DM1_V1_SPELL_RUNE_VALUE_BASE_PC34 +
+           (row * DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34) +
+           symbol_index;
+}
+
+static inline const char *
+dm1_v1_spell_rune_name_pc34(int row, int symbol_index)
+{
+    static const char *const names
+        [DM1_V1_SPELL_RUNE_ROW_COUNT_PC34]
+        [DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34] = {
+            { "LO",  "UM",  "ON",  "EE",   "PAL", "MON" },
+            { "YA",  "VI",  "OH",  "FUL",  "DES", "ZO"  },
+            { "VEN", "EW",  "KATH","IR",   "BRO", "GOR" },
+            { "KU",  "ROS", "DAIN","NETA", "RA",  "SAR" }
+        };
+    if (row < 0 || row >= DM1_V1_SPELL_RUNE_ROW_COUNT_PC34 ||
+        symbol_index < 0 ||
+        symbol_index >= DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34) {
+        return 0;
+    }
+    return names[row][symbol_index];
+}
+
+static inline int
+dm1_v1_spell_rune_abbrev_pc34(int row, int symbol_index, char out[3])
+{
+    const char *name;
+    if (!out) return 0;
+    out[0] = '?';
+    out[1] = '?';
+    out[2] = '\0';
+    name = dm1_v1_spell_rune_name_pc34(row, symbol_index);
+    if (!name || !name[0]) return 0;
+    out[0] = name[0];
+    out[1] = name[1] ? name[1] : ' ';
+    return 1;
+}
+
+static inline DM1_V1_SpellLabelSourceZonePc34
+dm1_v1_spell_label_source_zone_pc34(int selected_line)
+{
+    DM1_V1_SpellLabelSourceZonePc34 zone = {
+        0,
+        selected_line ? DM1_V1_SPELL_LABEL_SELECTED_Y_PC34
+                      : DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34,
+        DM1_V1_SPELL_LABEL_CELL_W_PC34,
+        DM1_V1_SPELL_LABEL_CELL_H_PC34
+    };
+    return zone;
 }
 
 const int *
