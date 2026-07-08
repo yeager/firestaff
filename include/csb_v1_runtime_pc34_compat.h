@@ -1187,6 +1187,65 @@ int csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
     void *boot_profile,
     unsigned short container_thing,
     const unsigned short slots[8]);
+int csb_v1_runtime_set_thing_next_from_boot_profile_pc34(
+    void *boot_profile,
+    unsigned short thing,
+    unsigned short next_thing);
+int csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int csb_slot,
+    unsigned short thing);
+int csb_v1_runtime_write_leader_hand_from_boot_profile_pc34(
+    void *boot_profile,
+    unsigned short thing);
+int csb_v1_runtime_throw_leader_hand_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    unsigned short leader_thing,
+    unsigned short *out_restored_action_hand,
+    int *out_projectile_slot);
+int csb_v1_runtime_write_champion_vitals_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int current_health,
+    int current_stamina,
+    int current_mana);
+int csb_v1_runtime_throw_action_hand_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int *out_projectile_slot);
+int csb_v1_runtime_shoot_ready_hand_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int *out_projectile_slot);
+int csb_v1_runtime_refill_ready_hand_after_shoot_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int *out_source_slot,
+    unsigned short *out_thing);
+int csb_v1_runtime_spawn_champion_projectile_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int action_index,
+    int projectile_subtype,
+    int projectile_category,
+    int kinetic_energy,
+    int attack,
+    int attack_type_code,
+    int step_energy,
+    unsigned short associated_thing,
+    int poison_attack,
+    int potion_power,
+    int *out_projectile_slot);
+int csb_v1_runtime_perform_melee_action_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int action_index);
+int csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
+    void *boot_profile,
+    unsigned short leader_hand_thing,
+    unsigned short *out_leader_hand_thing);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);

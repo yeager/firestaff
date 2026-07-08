@@ -17762,11 +17762,6 @@ static int m11_c080_drop_leader_hand(M11_GameViewState* state,
 static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* state,
                                                          int localX,
                                                          int localY) {
-    CSB_V1_BootProfile* profile;
-    int dx = 0;
-    int dy = 0;
-    int mapX;
-    int mapY;
     int queued;
     unsigned short leaderHand;
 
@@ -17774,7 +17769,6 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         !state->csbBootProfile) {
         return M11_GAME_INPUT_IGNORED;
     }
-    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
     if (M11_GameView_GetV1LeaderHandThing(state) != THING_NONE &&
         localY >= 14 && localY <= 69) {
         unsigned short throwThing = M11_GameView_GetV1LeaderHandThing(state);
@@ -17805,30 +17799,17 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         return M11_GAME_INPUT_IGNORED;
     }
 
-    switch (profile->runtime.party_dir & 3) {
-        case 0: dy = -1; break;
-        case 1: dx = 1; break;
-        case 2: dy = 1; break;
-        case 3: dx = -1; break;
-        default: break;
-    }
-    mapX = profile->runtime.party_x + dx;
-    mapY = profile->runtime.party_y + dy;
-
     /* ReDMCSB MOVESENS.C F0276 lines 1737-1785: a C080 viewport
      * click on C05/front-wall ornament enters the CSB wall-square
      * sensor path, not the DM1 M11 world thing-list path. */
-    profile->runtime.party_state.LeaderHandThing =
-        M11_GameView_GetV1LeaderHandThing(state);
-    queued = csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
-        &profile->runtime,
-        mapX,
-        mapY,
-        0);
+    queued =
+        csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
+            state->csbBootProfile,
+            M11_GameView_GetV1LeaderHandThing(state),
+            &leaderHand);
     if (queued <= 0) {
         return M11_GAME_INPUT_IGNORED;
     }
-    leaderHand = profile->runtime.party_state.LeaderHandThing;
     if (leaderHand == THING_NONE || leaderHand == THING_ENDOFLIST) {
         M11_GameView_ClearV1LeaderHandObject(state);
     } else {
@@ -24359,9 +24340,6 @@ static void m11_v1_set_thing_next(struct DungeonThings_Compat* things,
     }
 }
 
-static CSB_V1_RuntimeProfile* m11_mutable_csb_runtime_profile(
-    M11_GameViewState* state);
-
 static int m11_v1_open_chest_container_index(const M11_GameViewState* state) {
     unsigned short thing;
     int index;
@@ -24453,13 +24431,13 @@ static int m11_v1_write_open_chest_slots(M11_GameViewState* state,
 static int m11_v1_set_state_thing_next(M11_GameViewState* state,
                                        unsigned short thing,
                                        unsigned short next) {
-    CSB_V1_RuntimeProfile* profile;
     if (!state || thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        profile = m11_mutable_csb_runtime_profile(state);
-        return profile
-            ? csb_v1_runtime_set_thing_next(profile, thing, next)
-            : 0;
+        if (!state->csbBootProfile) return 0;
+        return csb_v1_runtime_set_thing_next_from_boot_profile_pc34(
+            state->csbBootProfile,
+            thing,
+            next);
     }
     m11_v1_set_thing_next(state->world.things, thing, next);
     return 1;
@@ -24514,54 +24492,33 @@ static unsigned int m11_allowed_slots_for_state_thing(
     return m11_allowed_slots_for_thing(state->world.things, thingId);
 }
 
-static CSB_V1_RuntimeProfile* m11_mutable_csb_runtime_profile(
-    M11_GameViewState* state)
-{
-    CSB_V1_BootProfile* profile;
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !state->csbBootProfile) {
-        return NULL;
-    }
-    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
-    return &profile->runtime;
-}
-
 static int m11_write_csb_runtime_inventory_slot(
     M11_GameViewState* state,
     int championIndex,
     int championSlot,
     unsigned short thing)
 {
-    CSB_V1_RuntimeProfile* runtime = m11_mutable_csb_runtime_profile(state);
     int csbSlot = m11_csb_slot_for_m11_inventory_slot(championSlot);
-    if (!runtime) return 1;
-    if (!runtime->party_state_valid) return 0;
-    if (championIndex < 0 ||
-        championIndex >= runtime->party_state.ChampionCount ||
-        championIndex >= CSB_V1_MAX_CHAMPIONS ||
-        csbSlot < 0 ||
-        csbSlot >= CSB_V1_SLOT_COUNT) {
-        return 0;
-    }
     /* ReDMCSB: CHAMPION.C F0302 mutates M516 champion slots directly.  CSB M11
      * keeps `world.party` as a mirror, so inventory clicks must write the same
      * THING value back into the CSB runtime party snapshot before any later
      * startup/resume/input sync can refresh the mirror. */
-    runtime->party_state.Champions[championIndex].Slots[csbSlot] = thing;
-    return 1;
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return 1;
+    return csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+        state->csbBootProfile,
+        championIndex,
+        csbSlot,
+        thing);
 }
 
 static void m11_write_csb_runtime_leader_hand(
     M11_GameViewState* state,
     unsigned short thing)
 {
-    CSB_V1_RuntimeProfile* runtime = m11_mutable_csb_runtime_profile(state);
-    if (!runtime || !runtime->party_state_valid) return;
-    if (thing == THING_ENDOFLIST) thing = THING_NONE;
-    runtime->party_state.LeaderHandThing = thing;
-    if (runtime->csbwin_gameblock2_summary_valid) {
-        runtime->csbwin_object_in_hand = thing;
-    }
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return;
+    (void)csb_v1_runtime_write_leader_hand_from_boot_profile_pc34(
+        state->csbBootProfile,
+        thing);
 }
 
 static int m11_csb_f0329_throw_leader_hand(
@@ -24569,9 +24526,7 @@ static int m11_csb_f0329_throw_leader_hand(
     int championIndex,
     unsigned short leaderThing)
 {
-    CSB_V1_RuntimeProfile* runtime;
-    CSB_V1_Champion* champion;
-    unsigned short savedActionHand;
+    unsigned short restoredActionHand = THING_NONE;
     int projectileSlot = -1;
 
     if (!state ||
@@ -24580,34 +24535,23 @@ static int m11_csb_f0329_throw_leader_hand(
         leaderThing == THING_ENDOFLIST) {
         return 0;
     }
-    runtime = m11_mutable_csb_runtime_profile(state);
-    if (!runtime || !runtime->party_state_valid) return 0;
-    if (championIndex < 0 ||
-        championIndex >= runtime->party_state.ChampionCount ||
-        championIndex >= CSB_V1_MAX_CHAMPIONS) {
-        return 0;
-    }
-    champion = &runtime->party_state.Champions[championIndex];
-
     /* ReDMCSB CHAMPION.C F0329 lines 2196-2208 temporarily routes the
      * transient leader-hand object through C01 action hand before calling
      * F0328, then restores the champion slot.  Keep CSB-owned runtime state
      * on that same boundary instead of sending CSB throws through DM1
      * GameWorld.projectiles/thing arrays. */
-    savedActionHand = champion->Slots[CSB_V1_SLOT_ACTION_HAND];
-    champion->Slots[CSB_V1_SLOT_ACTION_HAND] = leaderThing;
-    if (!csb_v1_runtime_throw_action_hand(
-            runtime,
+    if (!csb_v1_runtime_throw_leader_hand_from_boot_profile_pc34(
+            state->csbBootProfile,
             championIndex,
+            leaderThing,
+            &restoredActionHand,
             &projectileSlot)) {
-        champion->Slots[CSB_V1_SLOT_ACTION_HAND] = savedActionHand;
         return 0;
     }
-    champion->Slots[CSB_V1_SLOT_ACTION_HAND] = savedActionHand;
     if (championIndex < state->world.party.championCount &&
         championIndex < CHAMPION_MAX_PARTY) {
         state->world.party.champions[championIndex]
-            .inventory[CHAMPION_SLOT_ACTION_HAND] = savedActionHand;
+            .inventory[CHAMPION_SLOT_ACTION_HAND] = restoredActionHand;
     }
     (void)projectileSlot;
     return 1;
@@ -24617,22 +24561,21 @@ static void m11_write_csb_runtime_champion_vitals(
     M11_GameViewState* state,
     int championIndex)
 {
-    CSB_V1_RuntimeProfile* runtime = m11_mutable_csb_runtime_profile(state);
     const struct ChampionState_Compat* champ;
-    CSB_V1_Champion* csb_champ;
 
-    if (!runtime || !runtime->party_state_valid) return;
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return;
     if (championIndex < 0 ||
         championIndex >= state->world.party.championCount ||
-        championIndex >= runtime->party_state.ChampionCount ||
         championIndex >= CSB_V1_MAX_CHAMPIONS) {
         return;
     }
     champ = &state->world.party.champions[championIndex];
-    csb_champ = &runtime->party_state.Champions[championIndex];
-    csb_champ->CurrentHealth = (int16_t)champ->hp.current;
-    csb_champ->CurrentStamina = (int16_t)champ->stamina.current;
-    csb_champ->CurrentMana = (int16_t)champ->mana.current;
+    (void)csb_v1_runtime_write_champion_vitals_from_boot_profile_pc34(
+        state->csbBootProfile,
+        championIndex,
+        champ->hp.current,
+        champ->stamina.current,
+        champ->mana.current);
 }
 
 static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex) {
@@ -25829,13 +25772,12 @@ static int m11_refill_ready_hand_after_shoot(M11_GameViewState* state,
                                              int championIndex) {
     if (!state) return 0;
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_RuntimeProfile* runtime = m11_mutable_csb_runtime_profile(state);
         int sourceSlot = -1;
         uint16_t movedThing = THING_NONE;
         int m11SourceSlot;
 
-        if (!csb_v1_runtime_refill_ready_hand_after_shoot(
-                runtime,
+        if (!csb_v1_runtime_refill_ready_hand_after_shoot_from_boot_profile_pc34(
+                state->csbBootProfile,
                 championIndex,
                 &sourceSlot,
                 &movedThing)) {
@@ -29628,14 +29570,11 @@ static int m11_perform_csb_throw_action(M11_GameViewState* state,
                                         struct ChampionState_Compat* champ,
                                         const char* champName)
 {
-    CSB_V1_RuntimeProfile* runtime;
     unsigned short handThing;
     int projectileSlot = -1;
 
     if (!state || !champ) return 0;
     if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return 0;
-    runtime = m11_mutable_csb_runtime_profile(state);
-    if (!runtime) return 0;
 
     handThing = m11_get_action_hand_thing(champ);
     m11_set_champion_direction_to_party_f0406(state, champ);
@@ -29647,8 +29586,8 @@ static int m11_perform_csb_throw_action(M11_GameViewState* state,
         return 0;
     }
 
-    if (!csb_v1_runtime_throw_action_hand(
-            runtime,
+    if (!csb_v1_runtime_throw_action_hand_from_boot_profile_pc34(
+            state->csbBootProfile,
             championIndex,
             &projectileSlot)) {
         return 0;
@@ -29670,12 +29609,9 @@ static int m11_perform_csb_melee_action(M11_GameViewState* state,
                                         int championIndex,
                                         unsigned char chosen)
 {
-    CSB_V1_RuntimeProfile* runtime;
     struct ChampionState_Compat* champ;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return 0;
-    runtime = m11_mutable_csb_runtime_profile(state);
-    if (!runtime) return 0;
     if (championIndex < 0 ||
         championIndex >= state->world.party.championCount ||
         championIndex >= CHAMPION_MAX_PARTY) {
@@ -29685,11 +29621,10 @@ static int m11_perform_csb_melee_action(M11_GameViewState* state,
     if (!champ->present || champ->hp.current == 0) return 0;
 
     m11_set_champion_direction_to_party_f0406(state, champ);
-    if (!csb_v1_runtime_perform_melee_action(
-            runtime,
+    if (!csb_v1_runtime_perform_melee_action_from_boot_profile_pc34(
+            state->csbBootProfile,
             championIndex,
-            (int)chosen,
-            NULL)) {
+            (int)chosen)) {
         return 0;
     }
     m11_write_csb_runtime_champion_vitals(state, championIndex);
@@ -29710,14 +29645,11 @@ static int m11_spawn_csb_champion_projectile(
     int poisonAttack,
     int potionPower)
 {
-    CSB_V1_RuntimeProfile* runtime;
     int projectileSlot = -1;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return 0;
-    runtime = m11_mutable_csb_runtime_profile(state);
-    if (!runtime) return 0;
-    if (!csb_v1_runtime_spawn_champion_projectile(
-            runtime,
+    if (!csb_v1_runtime_spawn_champion_projectile_from_boot_profile_pc34(
+            state->csbBootProfile,
             championIndex,
             (int)actionIndex,
             projectileSubtype,
@@ -30084,8 +30016,8 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
 
             if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
                 int projectileSlot = -1;
-                spawned = csb_v1_runtime_shoot_ready_hand(
-                    m11_mutable_csb_runtime_profile(state),
+                spawned = csb_v1_runtime_shoot_ready_hand_from_boot_profile_pc34(
+                    state->csbBootProfile,
                     championIndex,
                     &projectileSlot);
                 if (!spawned) goto shoot_no_ammunition;

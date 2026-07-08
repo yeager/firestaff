@@ -368,3 +368,250 @@ int csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
                                                           slots)
                    : 0;
 }
+
+int csb_v1_runtime_set_thing_next_from_boot_profile_pc34(
+    void *boot_profile,
+    unsigned short thing,
+    unsigned short next_thing)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_set_thing_next(&profile->runtime,
+                                                   thing,
+                                                   next_thing)
+                   : 0;
+}
+
+int csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int csb_slot,
+    unsigned short thing)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+    CSB_V1_RuntimeProfile *runtime;
+
+    if (!profile) return 1;
+    runtime = &profile->runtime;
+    if (!runtime->party_state_valid) return 0;
+    if (champion_index < 0 ||
+        champion_index >= runtime->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        csb_slot < 0 ||
+        csb_slot >= CSB_V1_SLOT_COUNT) {
+        return 0;
+    }
+    runtime->party_state.Champions[champion_index].Slots[csb_slot] = thing;
+    return 1;
+}
+
+int csb_v1_runtime_write_leader_hand_from_boot_profile_pc34(
+    void *boot_profile,
+    unsigned short thing)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+    CSB_V1_RuntimeProfile *runtime;
+
+    if (!profile) return 1;
+    runtime = &profile->runtime;
+    if (!runtime->party_state_valid) return 0;
+    if (thing == 0xfffeu) thing = 0xffffu;
+    runtime->party_state.LeaderHandThing = thing;
+    if (runtime->csbwin_gameblock2_summary_valid) {
+        runtime->csbwin_object_in_hand = thing;
+    }
+    return 1;
+}
+
+int csb_v1_runtime_throw_leader_hand_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    unsigned short leader_thing,
+    unsigned short *out_restored_action_hand,
+    int *out_projectile_slot)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+    CSB_V1_RuntimeProfile *runtime;
+    CSB_V1_Champion *champion;
+    unsigned short saved_action_hand;
+
+    if (out_restored_action_hand) *out_restored_action_hand = 0xffffu;
+    if (!profile || leader_thing == 0xffffu || leader_thing == 0xfffeu) {
+        return 0;
+    }
+    runtime = &profile->runtime;
+    if (!runtime->party_state_valid) return 0;
+    if (champion_index < 0 ||
+        champion_index >= runtime->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+
+    champion = &runtime->party_state.Champions[champion_index];
+    saved_action_hand = champion->Slots[CSB_V1_SLOT_ACTION_HAND];
+    champion->Slots[CSB_V1_SLOT_ACTION_HAND] = leader_thing;
+    if (!csb_v1_runtime_throw_action_hand(runtime,
+                                          champion_index,
+                                          out_projectile_slot)) {
+        champion->Slots[CSB_V1_SLOT_ACTION_HAND] = saved_action_hand;
+        if (out_restored_action_hand) {
+            *out_restored_action_hand = saved_action_hand;
+        }
+        return 0;
+    }
+    champion->Slots[CSB_V1_SLOT_ACTION_HAND] = saved_action_hand;
+    if (out_restored_action_hand) {
+        *out_restored_action_hand = saved_action_hand;
+    }
+    return 1;
+}
+
+int csb_v1_runtime_write_champion_vitals_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int current_health,
+    int current_stamina,
+    int current_mana)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+    CSB_V1_RuntimeProfile *runtime;
+    CSB_V1_Champion *champion;
+
+    if (!profile) return 1;
+    runtime = &profile->runtime;
+    if (!runtime->party_state_valid) return 0;
+    if (champion_index < 0 ||
+        champion_index >= runtime->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    champion = &runtime->party_state.Champions[champion_index];
+    champion->CurrentHealth = (int16_t)current_health;
+    champion->CurrentStamina = (int16_t)current_stamina;
+    champion->CurrentMana = (int16_t)current_mana;
+    return 1;
+}
+
+int csb_v1_runtime_throw_action_hand_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int *out_projectile_slot)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_throw_action_hand(&profile->runtime,
+                                                      champion_index,
+                                                      out_projectile_slot)
+                   : 0;
+}
+
+int csb_v1_runtime_shoot_ready_hand_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int *out_projectile_slot)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_shoot_ready_hand(&profile->runtime,
+                                                     champion_index,
+                                                     out_projectile_slot)
+                   : 0;
+}
+
+int csb_v1_runtime_refill_ready_hand_after_shoot_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int *out_source_slot,
+    unsigned short *out_thing)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_refill_ready_hand_after_shoot(
+                         &profile->runtime,
+                         champion_index,
+                         out_source_slot,
+                         out_thing)
+                   : 0;
+}
+
+int csb_v1_runtime_spawn_champion_projectile_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int action_index,
+    int projectile_subtype,
+    int projectile_category,
+    int kinetic_energy,
+    int attack,
+    int attack_type_code,
+    int step_energy,
+    unsigned short associated_thing,
+    int poison_attack,
+    int potion_power,
+    int *out_projectile_slot)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_spawn_champion_projectile(
+                         &profile->runtime,
+                         champion_index,
+                         action_index,
+                         projectile_subtype,
+                         projectile_category,
+                         kinetic_energy,
+                         attack,
+                         attack_type_code,
+                         step_energy,
+                         associated_thing,
+                         poison_attack,
+                         potion_power,
+                         out_projectile_slot)
+                   : 0;
+}
+
+int csb_v1_runtime_perform_melee_action_from_boot_profile_pc34(
+    void *boot_profile,
+    int champion_index,
+    int action_index)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_perform_melee_action(&profile->runtime,
+                                                         champion_index,
+                                                         action_index,
+                                                         NULL)
+                   : 0;
+}
+
+int csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
+    void *boot_profile,
+    unsigned short leader_hand_thing,
+    unsigned short *out_leader_hand_thing)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+    CSB_V1_RuntimeProfile *runtime;
+    int dx = 0;
+    int dy = 0;
+    int queued;
+
+    if (out_leader_hand_thing) *out_leader_hand_thing = leader_hand_thing;
+    if (!profile) return 0;
+    runtime = &profile->runtime;
+    switch (runtime->party_dir & 3) {
+        case 0: dy = -1; break;
+        case 1: dx = 1; break;
+        case 2: dy = 1; break;
+        case 3: dx = -1; break;
+        default: break;
+    }
+    runtime->party_state.LeaderHandThing = leader_hand_thing;
+    queued = csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+        runtime,
+        runtime->party_x + dx,
+        runtime->party_y + dy,
+        0);
+    if (queued <= 0) return queued;
+    if (out_leader_hand_thing) {
+        *out_leader_hand_thing = runtime->party_state.LeaderHandThing;
+    }
+    return queued;
+}
