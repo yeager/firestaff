@@ -330,6 +330,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     DM2_V1_BootStartupLaunch launch;
     DM2_V1_BootRuntimeReceipt before;
     DM2_V1_BootRuntimeReceipt after;
+    DM2_V1_BootRuntimeActionReceipt action;
     const char *home = getenv("HOME");
     char root[512];
     FILE *g;
@@ -379,6 +380,18 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               after.tick_count >= before.tick_count &&
               after.operation_result == 0,
           "boot runtime tick owns DM2 receipt update");
+    memset(&action, 0, sizeof(action));
+    CHECK(dm2_v1_boot_runtime_action_front_cell(
+              launch.profile,
+              after.party_dir,
+              &action) == 1 &&
+              action.runtime.runtime_ready == 1 &&
+              action.status_scope != NULL &&
+              strcmp(action.status_scope, "ACTION") == 0 &&
+              action.status != NULL &&
+              action.target_x >= 0 &&
+              action.target_y >= 0,
+          "boot runtime action owns DM2 front-cell receipt");
     memset(&after, 0, sizeof(after));
     CHECK(dm2_v1_boot_runtime_turn(launch.profile, 1, &after) == 1 &&
               after.operation_result == 0 &&
