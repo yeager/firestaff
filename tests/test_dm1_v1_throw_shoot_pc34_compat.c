@@ -256,6 +256,54 @@ static void test_projectile_associated_thing_disposition(void) {
     ASSERT_EQ(d.shouldMaterialize, 0, "empty not materialized");
 }
 
+static void test_black_flame_heal_and_group_cell(void) {
+    struct DungeonGroup_Compat group;
+    struct ProjectileInstance_Compat p;
+    struct ProjectileTickResult_Compat r;
+    int slot = -1;
+    int newHealth = 0;
+    memset(&group, 0, sizeof(group));
+    memset(&p, 0, sizeof(p));
+    memset(&r, 0, sizeof(r));
+
+    group.count = 0;
+    group.cells = DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34;
+    group.health[0] = 900;
+    ASSERT_EQ(dm1_v1_group_creature_index_for_cell_pc34(&group, 2), 0,
+              "single centered group slot");
+
+    group.count = 2;
+    group.cells = (0 << 0) | (2 << 2) | (3 << 4);
+    group.health[0] = 10;
+    group.health[1] = 0;
+    group.health[2] = 30;
+    ASSERT_EQ(dm1_v1_group_creature_index_for_cell_pc34(&group, 2), -1,
+              "dead target cell ignored");
+    ASSERT_EQ(dm1_v1_group_creature_index_for_cell_pc34(&group, 3), 2,
+              "packed group live target cell");
+
+    group.creatureType = DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34;
+    group.count = 0;
+    group.cells = DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34;
+    group.health[0] = 990;
+    p.projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+    r.resultKind = PROJECTILE_RESULT_HIT_CREATURE;
+    r.emittedCombatAction = 1;
+    r.outAction.targetCell = 1;
+    r.outAction.rawAttackValue = 25;
+    ASSERT_EQ(dm1_v1_black_flame_fireball_heal_pc34(
+                  &p, &r, &group, &slot, &newHealth), 1,
+              "black flame fireball heals");
+    ASSERT_EQ(slot, 0, "black flame heal slot");
+    ASSERT_EQ(newHealth, DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34,
+              "black flame heal cap");
+
+    p.projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+    ASSERT_EQ(dm1_v1_black_flame_fireball_heal_pc34(
+                  &p, &r, &group, &slot, &newHealth), 0,
+              "non-fireball does not heal black flame");
+}
+
 int main(void) {
     test_throw_weight_and_stamina();
     test_throw_runtime_math();
@@ -264,6 +312,7 @@ int main(void) {
     test_projectile_create_input_model();
     test_projectile_impact_model();
     test_projectile_associated_thing_disposition();
+    test_black_flame_heal_and_group_cell();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_throw_shoot_pc34_compat: %d failures\n",
                 g_failures);
