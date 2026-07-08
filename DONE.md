@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 CLIMB DOWN action-plan ownership: DM1 action-XP compat now owns the F0407 CLIMB DOWN decision plan for no-pit, group-over-pit, move-attempt, move-success, and BUG0_79 action-disable cancellation. M11 keeps only actual movement and post-move state application. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 SHOOT action-effect resolver ownership: M11 now consumes `dm1_ranged_shoot_resolve_pc34` for the F0407 SHOOT ammunition gate, launch cell/direction, kinetic energy, attack, and step-energy plan. M11 keeps live inventory mutation, projectile spawn, delayed refill flag, log, and sound. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed. Note: broad `test_dm1_v1_combat_pc34_compat_integration` still has an unrelated `ordered_cells_to_attack_priority` failure after its SHOOT rows pass.
 
 - ✅ 2026-07-08 DM1 F0407 projectile-spell action-effect ownership: DM1 action-XP compat now owns FIREBALL, DISPELL, LIGHTNING, SPIT, and INVOKE subtype, attack type, kinetic energy, required mana, low-mana scaling, F0327 step energy, and charge-decrement planning from ReDMCSB F0407/F0327. M11 keeps RNG draw, spawn, log, and mutation. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

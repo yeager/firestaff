@@ -29611,6 +29611,8 @@ static int m11_perform_climb_down_f0407(M11_GameViewState* state,
     int frontX;
     int frontY;
     int i;
+    DM1_ActionClimbDownInputPc34 climbIn;
+    DM1_ActionClimbDownPlanPc34 climbPlan;
 
     if (outCancelDisable) *outCancelDisable = 0;
     if (!state || !state->world.dungeon) return 0;
@@ -29618,31 +29620,41 @@ static int m11_perform_climb_down_f0407(M11_GameViewState* state,
                                        MOVE_FORWARD, &dx, &dy);
     frontX = state->world.party.mapX + dx;
     frontY = state->world.party.mapY + dy;
-    if (!m11_get_square_byte(&state->world, state->world.party.mapIndex,
-                             frontX, frontY, &frontSquare) ||
-        ((frontSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
-            DUNGEON_ELEMENT_PIT) {
-        /* ReDMCSB MENU.C F0407 lines 1548-1565: CLIMB DOWN starts with
-         * ActionPerformed already TRUE.  When no rope move can happen, the
-         * source only clears ActionDisabledTicks (BUG0_79); stamina and
-         * G0497 XP still run through the common tail. */
-        if (outCancelDisable) *outCancelDisable = 1;
-        return 1;
+    memset(&climbIn, 0, sizeof(climbIn));
+    if (m11_get_square_byte(&state->world, state->world.party.mapIndex,
+                            frontX, frontY, &frontSquare)) {
+        climbIn.frontSquareIsPit =
+            ((frontSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5) ==
+            DUNGEON_ELEMENT_PIT;
     }
-    if (F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
+    climbIn.frontSquareHasGroup =
+        F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
             state->world.dungeon, state->world.things, &state->world.party,
-            MOVE_FORWARD)) {
-        /* Later PC34-compatible sources include the group-over-pit guard
-         * before F0267 and route it through the same BUG0_79 tail. */
-        if (outCancelDisable) *outCancelDisable = 1;
-        return 1;
+            MOVE_FORWARD);
+    if (!dm1_v1_action_climb_down_plan_f0407_pc34(&climbIn, &climbPlan) ||
+        !climbPlan.valid) {
+        return 0;
+    }
+    if (!climbPlan.shouldAttemptMove) {
+        if (outCancelDisable) *outCancelDisable = climbPlan.cancelActionDisable;
+        return climbPlan.performed;
     }
     if (!F0702_MOVEMENT_TryMove_Compat(state->world.dungeon,
                                        &state->world.party, MOVE_FORWARD,
                                        &move) ||
         move.resultCode != MOVE_OK) {
-        if (outCancelDisable) *outCancelDisable = 1;
-        return 1;
+        climbIn.movementAttempted = 1;
+        climbIn.movementSucceeded = 0;
+        (void)dm1_v1_action_climb_down_plan_f0407_pc34(&climbIn, &climbPlan);
+        if (outCancelDisable) *outCancelDisable = climbPlan.cancelActionDisable;
+        return climbPlan.performed;
+    }
+    climbIn.movementAttempted = 1;
+    climbIn.movementSucceeded = 1;
+    if (!dm1_v1_action_climb_down_plan_f0407_pc34(&climbIn, &climbPlan) ||
+        !climbPlan.valid || !climbPlan.shouldApplyMove) {
+        if (outCancelDisable) *outCancelDisable = climbPlan.cancelActionDisable;
+        return climbPlan.performed;
     }
 
     movedParty = state->world.party;

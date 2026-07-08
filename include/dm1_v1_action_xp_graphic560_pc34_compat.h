@@ -254,6 +254,21 @@ typedef struct {
     int decrementsActionHandCharges;
 } DM1_ActionProjectileSpellPlanPc34;
 
+typedef struct {
+    int frontSquareIsPit;
+    int frontSquareHasGroup;
+    int movementAttempted;
+    int movementSucceeded;
+} DM1_ActionClimbDownInputPc34;
+
+typedef struct {
+    int valid;
+    int performed;
+    int shouldAttemptMove;
+    int shouldApplyMove;
+    int cancelActionDisable;
+} DM1_ActionClimbDownPlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -299,6 +314,9 @@ int dm1_v1_action_fright_plan_f0401_pc34(
 int dm1_v1_action_projectile_spell_plan_f0407_pc34(
     const DM1_ActionProjectileSpellInputPc34* in,
     DM1_ActionProjectileSpellPlanPc34* out);
+int dm1_v1_action_climb_down_plan_f0407_pc34(
+    const DM1_ActionClimbDownInputPc34* in,
+    DM1_ActionClimbDownPlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);

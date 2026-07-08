@@ -458,6 +458,48 @@ static void test_projectile_spell_plan(void) {
              "non projectile action rejected");
 }
 
+static void test_climb_down_plan(void) {
+    DM1_ActionClimbDownInputPc34 in;
+    DM1_ActionClimbDownPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.frontSquareIsPit = 0;
+    CHECK_EQ(dm1_v1_action_climb_down_plan_f0407_pc34(&in, &out), 1,
+             "climb no pit plan builds");
+    CHECK_EQ(out.performed, 1, "climb no pit remains performed");
+    CHECK_EQ(out.cancelActionDisable, 1, "climb no pit cancels disable");
+    CHECK_EQ(out.shouldAttemptMove, 0, "climb no pit no move");
+
+    memset(&in, 0, sizeof(in));
+    in.frontSquareIsPit = 1;
+    in.frontSquareHasGroup = 1;
+    CHECK_EQ(dm1_v1_action_climb_down_plan_f0407_pc34(&in, &out), 1,
+             "climb group block plan builds");
+    CHECK_EQ(out.performed, 1, "climb group block remains performed");
+    CHECK_EQ(out.cancelActionDisable, 1, "climb group block cancels disable");
+    CHECK_EQ(out.shouldAttemptMove, 0, "climb group block no move");
+
+    memset(&in, 0, sizeof(in));
+    in.frontSquareIsPit = 1;
+    CHECK_EQ(dm1_v1_action_climb_down_plan_f0407_pc34(&in, &out), 1,
+             "climb open pit pre-move plan builds");
+    CHECK_EQ(out.shouldAttemptMove, 1, "climb open pit attempts move");
+    CHECK_EQ(out.cancelActionDisable, 0, "climb open pit keeps disable before move");
+
+    in.movementAttempted = 1;
+    in.movementSucceeded = 1;
+    CHECK_EQ(dm1_v1_action_climb_down_plan_f0407_pc34(&in, &out), 1,
+             "climb successful move plan builds");
+    CHECK_EQ(out.shouldApplyMove, 1, "climb successful move applies move");
+    CHECK_EQ(out.cancelActionDisable, 0, "climb successful move keeps disable");
+
+    in.movementSucceeded = 0;
+    CHECK_EQ(dm1_v1_action_climb_down_plan_f0407_pc34(&in, &out), 1,
+             "climb failed move plan builds");
+    CHECK_EQ(out.shouldApplyMove, 0, "climb failed move no apply");
+    CHECK_EQ(out.cancelActionDisable, 1, "climb failed move cancels disable");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -481,6 +523,7 @@ int main(void) {
     test_shield_plan();
     test_fright_plan();
     test_projectile_spell_plan();
+    test_climb_down_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",
