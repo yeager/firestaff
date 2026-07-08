@@ -675,6 +675,68 @@ int dm1_v1_melee_possession_drop_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_killed_some_state_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledSomeStateInputPc34* in,
+    DM1_MeleeF0190KilledSomeStatePlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->newGroupBehavior = -1;
+    out->newAiStateKind = -1;
+    if (!in) return 0;
+
+    out->valid = 1;
+    out->groupIndex = in->groupIndex;
+    out->killedCreatureIndex = in->killedCreatureIndex;
+    out->originalGroupCount = in->originalGroupCount;
+    out->mapIndex = in->mapIndex;
+    out->mapX = in->mapX;
+    out->mapY = in->mapY;
+    if (in->outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES) return 1;
+    if (in->groupBehavior != DM1_BEHAVIOR_ATTACK) return 1;
+    if (in->killedCreatureIndex < 0 || in->killedCreatureIndex > 3) return 1;
+
+    out->shouldCleanupCreatureEvents = 1;
+    if (in->mapIndex == in->partyMapIndex) {
+        out->shouldEvaluateFear = 1;
+        out->fearContext.currentMapIndex = in->mapIndex;
+        out->fearContext.currentGroupMapX = in->mapX;
+        out->fearContext.currentGroupMapY = in->mapY;
+        out->fearContext.partyMapIndex = in->partyMapIndex;
+        out->fearContext.partyMapX = in->partyMapX;
+        out->fearContext.partyMapY = in->partyMapY;
+        out->fearContext.creatureType = in->creatureType;
+        out->fearContext.creatureInfo.properties = in->creatureProperties;
+        out->fearContext.groupBehavior = in->groupBehavior;
+        out->fearContext.creatureCount = in->originalGroupCount;
+    }
+
+    /* ReDMCSB: GROUP.C F0190 lines 848-889 only cleans C33-C36/C38-C41
+     * events and evaluates fear on killed-some groups already in ATTACK.
+     * Fear is evaluated only on the party map. */
+    return 1;
+}
+
+int dm1_v1_melee_killed_some_fear_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledSomeStateInputPc34* in,
+    int shouldFlee,
+    int fleeDelay,
+    DM1_MeleeF0190KilledSomeStatePlanPc34* out) {
+    if (!dm1_v1_melee_killed_some_state_plan_f0190_pc34(in, out)) {
+        return 0;
+    }
+    if (!out->valid || !out->shouldEvaluateFear || !shouldFlee) return 1;
+
+    out->shouldApplyFear = 1;
+    out->newGroupBehavior = DM1_BEHAVIOR_FLEE;
+    out->newAiStateKind = AI_STATE_FLEE;
+    out->fearCounter = fleeDelay;
+
+    /* ReDMCSB: GROUP.C F0190 lines 887-889 stores
+     * DelayFleeingFromTarget and switches the group to C5 FLEE after a
+     * successful fear roll. */
+    return 1;
+}
+
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,

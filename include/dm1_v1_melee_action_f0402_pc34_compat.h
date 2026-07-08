@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_DM1_V1_MELEE_ACTION_F0402_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_MELEE_ACTION_F0402_PC34_COMPAT_H
 
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 
 #ifdef __cplusplus
@@ -347,6 +348,39 @@ typedef struct {
     int mapY;
 } DM1_MeleeF0190PossessionDropPlanPc34;
 
+typedef struct {
+    int outcome;
+    int groupBehavior;
+    int groupIndex;
+    int killedCreatureIndex;
+    int originalGroupCount;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int partyMapIndex;
+    int partyMapX;
+    int partyMapY;
+    int creatureType;
+    int creatureProperties;
+} DM1_MeleeF0190KilledSomeStateInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldCleanupCreatureEvents;
+    int shouldEvaluateFear;
+    int shouldApplyFear;
+    int newGroupBehavior;
+    int newAiStateKind;
+    int fearCounter;
+    int groupIndex;
+    int killedCreatureIndex;
+    int originalGroupCount;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    struct DM1GroupBehaviorContext_Compat fearContext;
+} DM1_MeleeF0190KilledSomeStatePlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -398,6 +432,14 @@ int dm1_v1_melee_death_smoke_plan_f0190_pc34(
 int dm1_v1_melee_possession_drop_plan_f0190_pc34(
     const DM1_MeleeF0190PossessionDropInputPc34* in,
     DM1_MeleeF0190PossessionDropPlanPc34* out);
+int dm1_v1_melee_killed_some_state_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledSomeStateInputPc34* in,
+    DM1_MeleeF0190KilledSomeStatePlanPc34* out);
+int dm1_v1_melee_killed_some_fear_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledSomeStateInputPc34* in,
+    int shouldFlee,
+    int fleeDelay,
+    DM1_MeleeF0190KilledSomeStatePlanPc34* out);
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
