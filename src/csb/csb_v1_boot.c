@@ -870,6 +870,95 @@ int csb_v1_boot_build_startup_launch_receipts_pc34(
     return 1;
 }
 
+static void csb_v1_boot_startup_failure_host_receipt_pc34(
+    CSB_V1_StartupHostReceipt_PC34 *receipt,
+    const char *status)
+{
+    if (!receipt) {
+        return;
+    }
+    csb_v1_startup_host_receipt_init_pc34(receipt);
+    receipt->input_result = CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34;
+    receipt->status_scope = "BOOT";
+    receipt->status = status ? status : "CSB STARTUP FAILED";
+}
+
+void csb_v1_boot_startup_launch_cleanup_pc34(
+    CSB_V1_BootStartupLaunch_PC34 *launch)
+{
+    if (!launch) {
+        return;
+    }
+    if (launch->profile) {
+        csb_v1_boot_cleanup(launch->profile);
+        free(launch->profile);
+    }
+    memset(launch, 0, sizeof(*launch));
+}
+
+int csb_v1_boot_startup_launch_alloc_pc34(
+    const char *data_dir,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    CSB_V1_BootStartupLaunch_PC34 *out_launch)
+{
+    CSB_V1_StartupHostReceipt_PC34 failure_receipt;
+
+    if (!out_launch) {
+        return 0;
+    }
+    memset(out_launch, 0, sizeof(*out_launch));
+    csb_v1_boot_startup_failure_host_receipt_pc34(
+        &out_launch->failure_host_receipt,
+        "CSB STARTUP FAILED");
+    out_launch->profile =
+        (CSB_V1_BootProfile *)calloc(1, sizeof(*out_launch->profile));
+    if (!out_launch->profile) {
+        csb_v1_boot_startup_failure_host_receipt_pc34(
+            &out_launch->failure_host_receipt,
+            "CSB OOM");
+        return 0;
+    }
+    csb_v1_boot_profile_init(out_launch->profile);
+    if (csb_v1_boot_scan_assets(out_launch->profile, data_dir) != 0) {
+        csb_v1_boot_startup_failure_host_receipt_pc34(
+            &failure_receipt,
+            "CSB ASSETS MISSING");
+        csb_v1_boot_startup_launch_cleanup_pc34(out_launch);
+        out_launch->failure_host_receipt = failure_receipt;
+        return 0;
+    }
+    if (csb_v1_boot_enter_game(out_launch->profile) != 0) {
+        csb_v1_boot_startup_failure_host_receipt_pc34(
+            &failure_receipt,
+            "CSB ENTER GAME FAILED");
+        csb_v1_boot_startup_launch_cleanup_pc34(out_launch);
+        out_launch->failure_host_receipt = failure_receipt;
+        return 0;
+    }
+    if (!csb_v1_boot_build_startup_launch_receipts_pc34(
+            out_launch->profile,
+            save_path,
+            import_dm1_save_path,
+            resume_save_path,
+            &out_launch->receipts)) {
+        csb_v1_boot_startup_failure_host_receipt_pc34(
+            &failure_receipt,
+            out_launch->receipts.handoff.status
+                ? out_launch->receipts.handoff.status
+                : "CSB STARTUP FAILED");
+        failure_receipt.status_scope =
+            out_launch->receipts.handoff.status_scope
+                ? out_launch->receipts.handoff.status_scope
+                : "BOOT";
+        csb_v1_boot_startup_launch_cleanup_pc34(out_launch);
+        out_launch->failure_host_receipt = failure_receipt;
+        return 0;
+    }
+    return 1;
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {
