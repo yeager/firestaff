@@ -185,6 +185,18 @@ typedef struct {
     int reset_shop_selection;
 } DM2_V1_BootRuntimeActionReceipt;
 
+typedef struct {
+    DM2_V1_BootRuntimeReceipt runtime;
+    int champion_index;
+    int champion_slot;
+    uint32_t slot_object_before;
+    uint32_t leader_hand_before;
+    uint32_t slot_object_after;
+    uint32_t leader_hand_after;
+    const char *status_scope;
+    const char *status;
+} DM2_V1_BootRuntimeInventoryReceipt;
+
 enum {
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP = 32,
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP = 32,
@@ -420,6 +432,11 @@ int dm2_v1_boot_runtime_action_front_cell(
     DM2_V1_BootProfile *profile,
     int direction,
     DM2_V1_BootRuntimeActionReceipt *out_receipt);
+int dm2_v1_boot_runtime_swap_inventory_slot(
+    DM2_V1_BootProfile *profile,
+    int champion_index,
+    int champion_slot,
+    DM2_V1_BootRuntimeInventoryReceipt *out_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

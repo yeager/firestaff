@@ -1560,6 +1560,63 @@ int dm2_v1_boot_runtime_action_front_cell(
     return 1;
 }
 
+static void dm2_v1_boot_runtime_inventory_receipt_clear(
+    DM2_V1_BootRuntimeInventoryReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->champion_index = -1;
+        receipt->champion_slot = -1;
+        receipt->status_scope = "INVENTORY";
+        receipt->status = "DM2 NO OBJECT";
+    }
+}
+
+int dm2_v1_boot_runtime_swap_inventory_slot(
+    DM2_V1_BootProfile *profile,
+    int champion_index,
+    int champion_slot,
+    DM2_V1_BootRuntimeInventoryReceipt *out_receipt)
+{
+    uint32_t slot_object;
+    uint32_t leader_object;
+    dm2_v1_boot_runtime_inventory_receipt_clear(out_receipt);
+    if (!profile || !profile->dm2_state || !out_receipt ||
+        champion_index < 0 || champion_index >= 4 ||
+        champion_slot < 0 || champion_slot >= 30) {
+        return 0;
+    }
+    slot_object = dm2_v1_runtime_get_champion_inventory_object(
+        (uint8_t)champion_index,
+        (uint8_t)champion_slot);
+    leader_object = dm2_v1_runtime_get_leader_hand_object();
+    out_receipt->champion_index = champion_index;
+    out_receipt->champion_slot = champion_slot;
+    out_receipt->slot_object_before = slot_object;
+    out_receipt->leader_hand_before = leader_object;
+    if (slot_object == 0u && leader_object == 0u) {
+        return 0;
+    }
+    if (dm2_v1_runtime_set_champion_inventory_object(
+            (uint8_t)champion_index,
+            (uint8_t)champion_slot,
+            leader_object) != 0) {
+        return 0;
+    }
+    dm2_v1_runtime_set_leader_hand_object(slot_object);
+    out_receipt->slot_object_after = leader_object;
+    out_receipt->leader_hand_after = slot_object;
+    if (out_receipt->leader_hand_after != 0u && leader_object != 0u) {
+        out_receipt->status = "DM2 SWAP";
+    } else if (out_receipt->leader_hand_after != 0u) {
+        out_receipt->status = "DM2 PICKUP";
+    } else {
+        out_receipt->status = "DM2 PLACE";
+    }
+    (void)dm2_v1_boot_runtime_capture(profile, &out_receipt->runtime);
+    return 1;
+}
+
 static const char *dm2_v1_boot_startup_prepare_host_status(
     DM2_V1_BootStartupPrepareResult result)
 {
