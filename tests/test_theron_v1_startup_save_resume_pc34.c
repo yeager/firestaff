@@ -960,6 +960,71 @@ static void test_startup_session_facts_wrappers(void) {
     }
 }
 
+static void test_boot_startup_launch_detach_runtime_receipt(void) {
+    Theron_V1_BootStartupLaunch launch;
+    Theron_V1_BootStartupRuntimeReceipt receipt;
+
+    memset(&launch, 0, sizeof(launch));
+    memset(&receipt, 0xff, sizeof(receipt));
+    expect_true(!theron_v1_boot_startup_launch_detach_runtime(NULL, &receipt) &&
+                    receipt.profile == NULL &&
+                    receipt.world == NULL &&
+                    receipt.viewport == NULL &&
+                    receipt.assets == NULL,
+                "boot runtime detach rejects NULL launch and clears receipt");
+
+    memset(&launch, 0, sizeof(launch));
+    memset(&receipt, 0xff, sizeof(receipt));
+    expect_true(!theron_v1_boot_startup_launch_detach_runtime(&launch,
+                                                              &receipt) &&
+                    receipt.profile == NULL,
+                "boot runtime detach rejects incomplete launch");
+
+    launch.profile = (Theron_V1_BootProfile*)calloc(1, sizeof(*launch.profile));
+    launch.world = (Theron_V1_World*)calloc(1, sizeof(*launch.world));
+    launch.viewport = (Theron_V1_Viewport*)calloc(1, sizeof(*launch.viewport));
+    launch.assets = (TrAssetBundle*)calloc(1, sizeof(*launch.assets));
+    expect_true(launch.profile && launch.world && launch.viewport && launch.assets,
+                "boot runtime detach fixture allocates owned objects");
+    if (!launch.profile || !launch.world || !launch.viewport || !launch.assets) {
+        theron_v1_boot_startup_launch_cleanup(&launch);
+        return;
+    }
+    snprintf(launch.profile->graphics_md5,
+             sizeof(launch.profile->graphics_md5),
+             "f23601102138f87c33025877767ebf76");
+    snprintf(launch.profile->graphics_path,
+             sizeof(launch.profile->graphics_path),
+             "/tmp/firestaff_theron_track02.bin");
+
+    memset(&receipt, 0, sizeof(receipt));
+    expect_true(theron_v1_boot_startup_launch_detach_runtime(&launch,
+                                                             &receipt) &&
+                    receipt.profile != NULL &&
+                    receipt.world != NULL &&
+                    receipt.viewport != NULL &&
+                    receipt.assets != NULL &&
+                    strcmp(receipt.boot_asset_md5,
+                           "f23601102138f87c33025877767ebf76") == 0 &&
+                    strcmp(receipt.title, "THERON'S QUEST") == 0 &&
+                    strcmp(receipt.source_id, "theron") == 0 &&
+                    strcmp(receipt.dungeon_path,
+                           "/tmp/firestaff_theron_track02.bin") == 0 &&
+                    launch.profile == NULL &&
+                    launch.world == NULL &&
+                    launch.viewport == NULL &&
+                    launch.assets == NULL,
+                "boot runtime detach transfers ownership and M11-ready launch identity");
+
+    theron_v1_boot_cleanup(receipt.profile);
+    free(receipt.profile);
+    free(receipt.world);
+    theron_vp_free(receipt.viewport);
+    free(receipt.viewport);
+    tr_asset_free(receipt.assets);
+    free(receipt.assets);
+}
+
 int main(void) {
     printf("\n=== Theron V1 Startup Save/Resume Smoke Gate Unit Tests ===\n\n");
     test_clean_host_skip_safe_no_save_root();
@@ -975,6 +1040,7 @@ int main(void) {
     test_null_safety();
     test_snapshot_snapshot_is_deterministic();
     test_boot_prepare_startup_profile_missing_track02();
+    test_boot_startup_launch_detach_runtime_receipt();
     test_startup_session_facts_wrappers();
 
     printf("=====================================================\n");

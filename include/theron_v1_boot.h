@@ -231,6 +231,17 @@ typedef struct Theron_V1_BootStartupLaunch {
     Theron_V1BootStartupPrepareResult prepare_result;
 } Theron_V1_BootStartupLaunch;
 
+typedef struct Theron_V1_BootStartupRuntimeReceipt {
+    Theron_V1_BootProfile *profile;
+    Theron_V1_World *world;
+    Theron_V1_Viewport *viewport;
+    TrAssetBundle *assets;
+    char boot_asset_md5[33];
+    char title[64];
+    char source_id[32];
+    char dungeon_path[512];
+} Theron_V1_BootStartupRuntimeReceipt;
+
 int theron_v1_boot_prepare_startup_profile(
     Theron_V1_BootProfile *profile,
     const char *data_dir,
@@ -249,6 +260,9 @@ int theron_v1_boot_startup_launch_alloc(
     const char *verified_md5,
     const char *save_path,
     Theron_V1_BootStartupLaunch *out_launch);
+int theron_v1_boot_startup_launch_detach_runtime(
+    Theron_V1_BootStartupLaunch *launch,
+    Theron_V1_BootStartupRuntimeReceipt *out_receipt);
 void theron_v1_boot_startup_launch_cleanup(
     Theron_V1_BootStartupLaunch *launch);
 
