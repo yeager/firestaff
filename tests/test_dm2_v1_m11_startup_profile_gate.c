@@ -311,7 +311,14 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2StartupDrawProbe draw_probe;
     int command_count;
     char label[64];
+    char phase[64];
+    char animation[64];
     char save_root[128];
+    int startup_active = -1;
+    int animation_active = -1;
+    int title_frame = -1;
+    int title_frame_max = -1;
+    int title_ready = -1;
     uint8_t save_slot = 99u;
     int last_session = 0;
     int slot = -1;
@@ -458,6 +465,44 @@ static void expect_dm2_startup_layout_contract(void) {
                     commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
                     strcmp(commands[8].text, "NEW GAME") == 0,
                 "DM2 startup presentation builds from host facts");
+    expect_true(dm2_v1_startup_presentation_receipt(
+                    1,
+                    phase,
+                    (int)sizeof(phase),
+                    &startup_active,
+                    animation,
+                    (int)sizeof(animation),
+                    &animation_active,
+                    &title_frame,
+                    &title_frame_max,
+                    &title_ready) &&
+                    strcmp(phase, "dm2-startup-menu") == 0 &&
+                    startup_active == 1 &&
+                    strcmp(animation, "dm2-startup-menu") == 0 &&
+                    animation_active == 1 &&
+                    title_frame == 0 &&
+                    title_frame_max == 0 &&
+                    title_ready == 0,
+                "DM2 startup presentation owns active boot receipt fields");
+    expect_true(dm2_v1_startup_presentation_receipt(
+                    0,
+                    phase,
+                    (int)sizeof(phase),
+                    &startup_active,
+                    animation,
+                    (int)sizeof(animation),
+                    &animation_active,
+                    &title_frame,
+                    &title_frame_max,
+                    &title_ready) &&
+                    strcmp(phase, "dm2-runtime") == 0 &&
+                    startup_active == 0 &&
+                    strcmp(animation, "dm2-runtime") == 0 &&
+                    animation_active == 0 &&
+                    title_frame == 0 &&
+                    title_frame_max == 0 &&
+                    title_ready == 1,
+                "DM2 startup presentation owns runtime boot receipt fields");
     memset(&draw_probe, 0, sizeof(draw_probe));
     executor.userdata = &draw_probe;
     executor.draw_gdat_image = dm2_startup_probe_gdat;

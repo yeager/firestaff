@@ -79,6 +79,16 @@ int dm2_v1_startup_presentation_build_from_host_facts(
     const DM2_V1_StartupHostFacts *facts,
     DM2_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int dm2_v1_startup_presentation_receipt(int startup_menu_active,
+                                        char *out_phase,
+                                        int out_phase_size,
+                                        int *out_startup_active,
+                                        char *out_animation,
+                                        int out_animation_size,
+                                        int *out_animation_active,
+                                        int *out_title_frame,
+                                        int *out_title_frame_max,
+                                        int *out_title_ready);
 int dm2_v1_startup_execute_draw_commands(
     const DM2_V1_StartupDrawCommand *commands,
     int command_count,
