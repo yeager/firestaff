@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.66  (2026-07-08)",
+    "  - Packages current main after the all-game boot/startup ownership passes landed after v3.0.65.",
+    "  - Theron, CSB, DM2 and Nexus startup paths now return more M11-ready host receipts, reducing launcher-owned boot policy before runtime handoff.",
+    "",
     "V3.0.65  (2026-07-07)",
     "  - Packages current main after DM1 title/entrance and CSB startup ownership work landed after v3.0.64.",
     "  - DM1 V1 owns title unpack/blit planning and entrance fallback/command policy; CSB owns startup render routing and pure entrance command application.",
@@ -508,5 +512,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.65";
+    return "3.0.66";
 }
