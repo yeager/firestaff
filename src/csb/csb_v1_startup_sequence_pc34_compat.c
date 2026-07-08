@@ -7,8 +7,8 @@
 #include <string.h>
 
 enum {
-    CSB_V1_TITLE_TOTAL_TICKS_PC34 = 53,
-    CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 30,
+    CSB_V1_TITLE_TOTAL_TICKS_PC34 = 23,
+    CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 0,
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
@@ -94,6 +94,10 @@ int csb_v1_startup_title_stage_for_frame_pc34(int frame)
 
 unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
 {
+    /* ReDMCSB: TITLE.C F0437 lines 319-409 runs the PC/F20 title from the
+     * C001 source steps directly: PRESENTS, 18 zoom waits/blits, two
+     * post-zoom waits, Strikes Back blit, and final guard wait.  CSB does
+     * not use Firestaff's extra DM1 TITLE.DAT fallback hold budget here. */
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return 1u;
     }

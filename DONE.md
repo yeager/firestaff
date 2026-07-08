@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB title cadence parity: CSB startup title now uses the 23-step ReDMCSB `TITLE.C F0437` source cadence directly instead of Firestaff's extra 30-tick DM1 `TITLE.DAT` PRESENTS hold. This prevents CSB title/start animation from pausing on the wrong phase before zoom. Verification: CSB startup entrance test passed 152/152 by direct compile/run, CSB startup-sequence compile check passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB SWOOSH pathfinder regression: Added a data-free test proving the SWSH pathfinder resolves `csb/SWOOSH` for CSB and still resolves `dm1/SWOOSH` through the legacy wrapper. Verification: new pathfinder test passed, `main_loop_m11.c` and `swsh_intro_pathfinder_m11.c` compile checks passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB FTL/SWSH startup prelude: CSB launcher handoff now runs the FTL/SWSH palette-logo prelude before CSB title/entrance, using a game-scoped SWOOSH path finder that searches CSB data first. The old M11 assumption that CSB needed no FTL swoosh was removed. Verification: `main_loop_m11.c` and `swsh_intro_pathfinder_m11.c` compile checks passed, Phase A passed 24/24, source grep confirms the old “no FTL swoosh” path is gone, and `git diff --check` passed.

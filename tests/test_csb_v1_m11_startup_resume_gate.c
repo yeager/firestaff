@@ -1101,10 +1101,10 @@ int main(void) {
                     strstr(csb_v1_startup_sequence_source_evidence_pc34(),
                            "ENTRANCE.C F0438") != NULL,
                 "CSB startup evidence names title and entrance sources");
-    expect_true(csb_v1_startup_title_total_ticks_pc34() == 53,
-                "CSB startup title timing keeps the bounded 53-tick prelude");
-    expect_true(csb_v1_startup_title_presents_ticks_pc34() == 30,
-                "CSB startup title timing keeps PRESENTS for 30 ticks");
+    expect_true(csb_v1_startup_title_total_ticks_pc34() == 23,
+                "CSB startup title timing keeps the ReDMCSB 23-step prelude");
+    expect_true(csb_v1_startup_title_presents_ticks_pc34() == 0,
+                "CSB startup title timing has no extra PRESENTS hold");
     expect_true(csb_v1_startup_title_stage_for_frame_pc34(0) ==
                     CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
                     csb_v1_startup_title_stage_for_frame_pc34(
@@ -1285,13 +1285,13 @@ int main(void) {
         expect_true(view.csbState.startup_title_active == 1 &&
                         view.csbState.startup_title_source_step == 1 &&
                         view.csbState.startup_entrance_source_step == 0,
-                    "M11 CSB title prelude holds PRESENTS before entrance");
-        for (int i = 0; i < 30 && view.csbState.startup_title_active; ++i) {
+                    "M11 CSB title prelude starts on PRESENTS before entrance");
+        for (int i = 0; i < 1 && view.csbState.startup_title_active; ++i) {
             expect_true(M11_GameView_AdvanceIdleTick(&view) ==
                             M11_GAME_INPUT_REDRAW,
-                        "M11 CSB title prelude zoom warmup redraws");
+                        "M11 CSB title prelude advances directly to zoom");
             expect_true(view.csbState.tick_count == tick_before,
-                        "M11 CSB title prelude zoom warmup blocks runtime ticks");
+                        "M11 CSB title prelude blocks runtime ticks");
         }
         expect_true(view.csbState.startup_title_active == 1 &&
                         view.csbState.startup_title_source_step == 2 &&
