@@ -2,6 +2,8 @@
 #include "csb_v1_boot.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
+#include <string.h>
+
 int csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
     CSB_V1_RuntimeProfile *profile,
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,
@@ -345,6 +347,102 @@ int csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
         facts->utility_preview_active,
         out_receipt,
         out_state_receipt);
+}
+
+void csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_util_flow_apply_receipt_init(&receipt->util_receipt);
+    csb_v1_util_flow_state_receipt_init(&receipt->util_state_receipt);
+    csb_v1_startup_entrance_host_action_receipt_init_pc34(
+        &receipt->entrance_receipt);
+}
+
+static int csb_v1_runtime_util_complete_startup_host_action_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupHostFacts_PC34 effective_facts;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (out_receipt->util_receipt.result !=
+        CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND) {
+        return 1;
+    }
+    effective_facts = *facts;
+    if (out_receipt->util_state_receipt.selected_action_index_changed) {
+        effective_facts.utility_selected_action_index =
+            out_receipt->util_state_receipt.selected_action_index;
+    }
+    if (out_receipt->util_state_receipt.preview_active_changed) {
+        effective_facts.utility_preview_active =
+            out_receipt->util_state_receipt.preview_active;
+    }
+    if (!csb_v1_runtime_execute_startup_entrance_command_from_host_facts_with_receipts_pc34(
+            &effective_facts,
+            out_receipt->util_receipt.entrance_command,
+            &out_receipt->entrance_receipt)) {
+        return 0;
+    }
+    out_receipt->entrance_receipt_valid =
+        out_receipt->entrance_receipt.handled ? 1 : 0;
+    return 1;
+}
+
+int csb_v1_runtime_util_apply_point_from_startup_host_facts_with_action_receipt_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int x,
+    int y,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt)
+{
+    if (out_receipt) {
+        csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
+            out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_runtime_util_apply_point_from_startup_host_facts_pc34(
+            facts,
+            x,
+            y,
+            &out_receipt->util_receipt,
+            &out_receipt->util_state_receipt)) {
+        return 0;
+    }
+    return csb_v1_runtime_util_complete_startup_host_action_pc34(
+        facts,
+        out_receipt);
+}
+
+int csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int menu_input,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt)
+{
+    if (out_receipt) {
+        csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
+            out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
+            facts,
+            menu_input,
+            &out_receipt->util_receipt,
+            &out_receipt->util_state_receipt)) {
+        return 0;
+    }
+    return csb_v1_runtime_util_complete_startup_host_action_pc34(
+        facts,
+        out_receipt);
 }
 
 int csb_v1_runtime_save_game_to_path_from_boot_profile_pc34(

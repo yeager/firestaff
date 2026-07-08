@@ -1666,6 +1666,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_UtilRenderPlan plan;
     CSB_V1_UtilApplyReceipt receipt;
     CSB_V1_UtilStateReceipt state_receipt;
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 action_receipt;
 
     csb_v1_boot_profile_init(&boot);
     memset(&facts, 0, sizeof(facts));
@@ -1704,6 +1705,28 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "runtime utility pointer wrapper accepts startup host facts");
     CHECK(state_receipt.selected_action_index >= 0,
           "runtime utility pointer wrapper owns M11 utility facts");
+
+    facts.utility_selected_action_index = 0;
+    CHECK(csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
+              &facts,
+              2,
+              &action_receipt) == 1,
+          "runtime utility keyboard action wrapper accepts startup host facts");
+    CHECK(action_receipt.util_state_receipt.selected_action_index == 1 &&
+              action_receipt.util_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
+              !action_receipt.entrance_receipt_valid,
+          "runtime utility keyboard action wrapper owns redraw receipt");
+
+    facts.utility_selected_action_index = 1;
+    CHECK(csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
+              &facts,
+              9,
+              &action_receipt) == 1,
+          "runtime utility keyboard action wrapper handles accept");
+    CHECK(action_receipt.util_receipt.result ==
+              CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+              action_receipt.entrance_receipt_valid,
+          "runtime utility keyboard action wrapper chains entrance receipt");
 
     csb_v1_boot_cleanup(&boot);
 }

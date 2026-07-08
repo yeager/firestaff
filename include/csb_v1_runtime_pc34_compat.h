@@ -1172,6 +1172,23 @@ int csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
     int menu_input,
     CSB_V1_UtilApplyReceipt *out_receipt,
     CSB_V1_UtilStateReceipt *out_state_receipt);
+typedef struct CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 {
+    CSB_V1_UtilApplyReceipt util_receipt;
+    CSB_V1_UtilStateReceipt util_state_receipt;
+    int entrance_receipt_valid;
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
+} CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34;
+void csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *receipt);
+int csb_v1_runtime_util_apply_point_from_startup_host_facts_with_action_receipt_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int x,
+    int y,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt);
+int csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int menu_input,
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt);
 int csb_v1_runtime_save_game_to_path_from_boot_profile_pc34(
     const void *boot_profile,
     const char *path,

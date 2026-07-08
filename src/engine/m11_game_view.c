@@ -3133,26 +3133,40 @@ static void m11_csb_startup_apply_utility_state_receipt(
     }
 }
 
-static M11_GameInputResult m11_csb_startup_handle_utility_receipts(
+static M11_GameInputResult
+m11_csb_startup_handle_utility_action_receipt(
     M11_GameViewState *state,
-    const CSB_V1_UtilApplyReceipt *receipt,
-    const CSB_V1_UtilStateReceipt *state_receipt)
+    const CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *receipt)
 {
     if (!state || !receipt) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_csb_startup_apply_utility_state_receipt(state, state_receipt);
-    if (receipt->status) {
-        m11_set_status(state,
-                       receipt->status_scope ? receipt->status_scope : "BOOT",
-                       receipt->status);
-    }
-    if (receipt->result == CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND) {
-        return m11_csb_startup_handle_entrance_command(
+    m11_csb_startup_apply_utility_state_receipt(
+        state,
+        &receipt->util_state_receipt);
+    if (receipt->util_receipt.status) {
+        m11_set_status(
             state,
-            receipt->entrance_command);
+            receipt->util_receipt.status_scope
+                ? receipt->util_receipt.status_scope
+                : "BOOT",
+            receipt->util_receipt.status);
     }
-    if (receipt->result == CSB_V1_UTIL_APPLY_REDRAW) {
+    if (receipt->entrance_receipt_valid) {
+        state->csbState.startup_entrance_last_command =
+            receipt->entrance_receipt.command_receipt.command_id;
+        if (receipt->entrance_receipt.sync_profile_state) {
+            m11_sync_csb_state_from_boot_profile(state,
+                                                 state->csbBootProfile);
+        }
+        m11_csb_startup_command_state_receipt_to_m11(
+            state,
+            &receipt->entrance_receipt.state_receipt);
+        return m11_csb_startup_apply_host_receipt(
+            state,
+            &receipt->entrance_receipt.host_receipt);
+    }
+    if (receipt->util_receipt.result == CSB_V1_UTIL_APPLY_REDRAW) {
         return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
@@ -3163,8 +3177,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     int x,
     int y)
 {
-    CSB_V1_UtilApplyReceipt receipt;
-    CSB_V1_UtilStateReceipt state_receipt;
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 receipt;
     CSB_V1_StartupHostFacts_PC34 facts;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -3173,25 +3186,22 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     }
 
     m11_csb_startup_host_facts(state, &facts);
-    if (!csb_v1_runtime_util_apply_point_from_startup_host_facts_pc34(
+    if (!csb_v1_runtime_util_apply_point_from_startup_host_facts_with_action_receipt_pc34(
             &facts,
             x,
             y,
-            &receipt,
-            &state_receipt)) {
+            &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    return m11_csb_startup_handle_utility_receipts(state,
-                                                   &receipt,
-                                                   &state_receipt);
+    return m11_csb_startup_handle_utility_action_receipt(state,
+                                                        &receipt);
 }
 
 static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    CSB_V1_UtilApplyReceipt receipt;
-    CSB_V1_UtilStateReceipt state_receipt;
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 receipt;
     CSB_V1_StartupHostFacts_PC34 facts;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -3200,16 +3210,14 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     }
 
     m11_csb_startup_host_facts(state, &facts);
-    if (!csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
+    if (!csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
             &facts,
             (int)input,
-            &receipt,
-            &state_receipt)) {
+            &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    return m11_csb_startup_handle_utility_receipts(state,
-                                                   &receipt,
-                                                   &state_receipt);
+    return m11_csb_startup_handle_utility_action_receipt(state,
+                                                        &receipt);
 }
 
 static int m11_measure_text_pixels(const char* text,
