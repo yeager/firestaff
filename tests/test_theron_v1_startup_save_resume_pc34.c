@@ -1131,6 +1131,48 @@ static void test_boot_forcefield_pointer_snapshot_enters_runtime(void) {
     }
 }
 
+static void test_boot_runtime_render_frame_facade(void) {
+    Theron_V1_World world;
+    Theron_V1_Viewport viewport;
+    unsigned char framebuffer[320 * 240];
+    size_t i;
+    int nonzero = 0;
+
+    memset(&world, 0, sizeof(world));
+    memset(&viewport, 0, sizeof(viewport));
+    memset(framebuffer, 0, sizeof(framebuffer));
+    theron_v1_world_init(&world);
+    expect_true(theron_vp_init(&viewport) == 1,
+                "theron viewport fixture initializes for boot render facade");
+    expect_true(theron_v1_boot_runtime_render_frame(NULL,
+                                                    &viewport,
+                                                    NULL,
+                                                    0,
+                                                    0,
+                                                    framebuffer,
+                                                    320,
+                                                    240) == 0,
+                "boot render facade rejects NULL world");
+    expect_true(theron_v1_boot_runtime_render_frame(&world,
+                                                    &viewport,
+                                                    NULL,
+                                                    0,
+                                                    0,
+                                                    framebuffer,
+                                                    320,
+                                                    240) == 1,
+                "boot render facade owns Theron dungeon/UI/present sequence");
+    for (i = 0; i < sizeof(framebuffer); ++i) {
+        if (framebuffer[i] != 0) {
+            nonzero = 1;
+            break;
+        }
+    }
+    expect_true(nonzero,
+                "boot render facade writes presented indexed framebuffer");
+    theron_vp_free(&viewport);
+}
+
 int main(void) {
     printf("\n=== Theron V1 Startup Save/Resume Smoke Gate Unit Tests ===\n\n");
     test_clean_host_skip_safe_no_save_root();
@@ -1148,6 +1190,7 @@ int main(void) {
     test_boot_prepare_startup_profile_missing_track02();
     test_boot_startup_launch_detach_runtime_receipt();
     test_boot_forcefield_pointer_snapshot_enters_runtime();
+    test_boot_runtime_render_frame_facade();
     test_startup_session_facts_wrappers();
 
     printf("=====================================================\n");

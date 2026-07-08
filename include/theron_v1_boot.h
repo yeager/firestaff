@@ -534,6 +534,14 @@ int theron_v1_boot_runtime_move_party(Theron_V1_World *world,
                                       int *out_y,
                                       int *out_dir,
                                       int *out_tick);
+int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
+                                        Theron_V1_Viewport *viewport,
+                                        const TrAssetBundle *assets,
+                                        int presentation_is_v2,
+                                        int hud_launch_mode,
+                                        unsigned char *framebuffer,
+                                        int framebuffer_width,
+                                        int framebuffer_height);
 
 /* theron_v1_boot_verified_path_is_stale — decide whether a previously
  * verified Track 02 path/MD5 pair still matches the bytes on disk.
