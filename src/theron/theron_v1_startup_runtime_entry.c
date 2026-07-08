@@ -354,6 +354,27 @@ void theron_v1_startup_runtime_entry_apply_receipt_init(
     receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
 }
 
+int theron_v1_startup_host_receipt_from_runtime_entry_apply(
+    const Theron_V1StartupRuntimeEntryApplyReceipt *apply_receipt,
+    Theron_StartupHostReceipt *out_receipt) {
+
+    if (!apply_receipt || !out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_host_receipt_init(out_receipt);
+    out_receipt->input_result = apply_receipt->input_result;
+    out_receipt->status_scope = apply_receipt->status_scope;
+    out_receipt->status = apply_receipt->status;
+    out_receipt->inspect_scope = apply_receipt->inspect_scope;
+    snprintf(out_receipt->inspect_detail,
+             sizeof(out_receipt->inspect_detail),
+             "%s",
+             apply_receipt->inspect_detail);
+    out_receipt->log_first_line = apply_receipt->log_first_line;
+    out_receipt->log_receipt = apply_receipt->log_receipt ? 1 : 0;
+    return 1;
+}
+
 static void theron_v1_startup_runtime_entry_capture_result(
     const Theron_V1_World *world,
     Theron_V1StartupRuntimeEntryResult *out_result) {

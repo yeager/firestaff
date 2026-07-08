@@ -55,6 +55,9 @@ void theron_v1_startup_runtime_entry_result_init(
     Theron_V1StartupRuntimeEntryResult *result);
 void theron_v1_startup_runtime_entry_apply_receipt_init(
     Theron_V1StartupRuntimeEntryApplyReceipt *receipt);
+int theron_v1_startup_host_receipt_from_runtime_entry_apply(
+    const Theron_V1StartupRuntimeEntryApplyReceipt *apply_receipt,
+    Theron_StartupHostReceipt *out_receipt);
 int theron_v1_startup_runtime_enter_from_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_World *world,

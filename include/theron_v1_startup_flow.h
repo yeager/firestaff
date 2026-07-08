@@ -189,6 +189,16 @@ typedef struct {
 } Theron_StartupApplyReceipt;
 
 typedef struct {
+    Theron_StartupInputResult input_result;
+    const char *status_scope;
+    const char *status;
+    const char *inspect_scope;
+    char inspect_detail[320];
+    const char *log_first_line;
+    int log_receipt;
+} Theron_StartupHostReceipt;
+
+typedef struct {
     Theron_StartupResult result;
     Theron_StartupInputResult input_result;
     const char *status_scope;
@@ -603,6 +613,11 @@ int theron_v1_startup_plan_for_action(
 void theron_v1_startup_execution_init(Theron_StartupExecution *execution);
 void theron_v1_startup_apply_receipt_init(
     Theron_StartupApplyReceipt *receipt);
+void theron_v1_startup_host_receipt_init(
+    Theron_StartupHostReceipt *receipt);
+int theron_v1_startup_host_receipt_from_flow_apply(
+    const Theron_StartupApplyReceipt *apply_receipt,
+    Theron_StartupHostReceipt *out_receipt);
 int theron_v1_startup_execute_flow_plan(
     const Theron_StartupActionPlan *plan,
     const Theron_DungeonProgression *progression,
