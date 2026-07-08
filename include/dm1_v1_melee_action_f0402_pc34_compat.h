@@ -150,6 +150,41 @@ typedef struct {
 } DM1_MeleeF0231SideEffectPlanPc34;
 
 typedef struct {
+    int hasWeaponInfo;
+    int hasLiveActionIndex;
+    int actionHandEmpty;
+} DM1_MeleeF0402WeaponAvailabilityInputPc34;
+
+typedef struct {
+    int valid;
+    int useActionHandWeaponInfo;
+    int useEmptyHandWeaponInfo;
+    int hasUsableF0231WeaponInfo;
+    int weaponClass;
+} DM1_MeleeF0402WeaponAvailabilityPlanPc34;
+
+typedef struct {
+    int requestedAutoTarget;
+    int hasLiveActionIndex;
+    int hasLiveGroupTable;
+    int targetResolved;
+    int reachBlocked;
+    int disruptBlocked;
+    int candidateInvulnerable;
+    int championSnapshotReady;
+    int creatureSnapshotReady;
+} DM1_MeleeF0402PreflightInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldReturnHandled;
+    int shouldEmitDamageDealt;
+    int emitOutcome;
+    int canResolveDamage;
+    int canUseLegacyMarker;
+} DM1_MeleeF0402PreflightPlanPc34;
+
+typedef struct {
     int groupIndex;
     int creatureType;
     int creatureAttributes;
@@ -198,6 +233,12 @@ int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
 int dm1_v1_melee_side_effect_plan_f0231_pc34(
     const DM1_MeleeF0231SideEffectInputPc34* in,
     DM1_MeleeF0231SideEffectPlanPc34* out);
+int dm1_v1_melee_weapon_availability_plan_f0402_pc34(
+    const DM1_MeleeF0402WeaponAvailabilityInputPc34* in,
+    DM1_MeleeF0402WeaponAvailabilityPlanPc34* out);
+int dm1_v1_melee_preflight_plan_f0402_pc34(
+    const DM1_MeleeF0402PreflightInputPc34* in,
+    DM1_MeleeF0402PreflightPlanPc34* out);
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out);

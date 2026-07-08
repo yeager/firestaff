@@ -1318,6 +1318,115 @@ static void test_melee_f0231_side_effect_plan(void) {
     CHECK_EQ(out.currentHealthAfter, 1, "F0231 underflow health after");
 }
 
+static void test_melee_f0402_weapon_availability_and_preflight(void) {
+    DM1_MeleeF0402WeaponAvailabilityInputPc34 availIn;
+    DM1_MeleeF0402WeaponAvailabilityPlanPc34 availOut;
+    DM1_MeleeF0402PreflightInputPc34 preIn;
+    DM1_MeleeF0402PreflightPlanPc34 preOut;
+
+    memset(&availIn, 0, sizeof(availIn));
+    availIn.hasWeaponInfo = 1;
+    CHECK_EQ(dm1_v1_melee_weapon_availability_plan_f0402_pc34(
+                 &availIn, &availOut), 1,
+             "F0402 weapon availability builds");
+    CHECK_EQ(availOut.valid, 1, "F0402 weapon availability valid");
+    CHECK_EQ(availOut.useActionHandWeaponInfo, 1,
+             "F0402 action-hand weapon info used");
+    CHECK_EQ(availOut.hasUsableF0231WeaponInfo, 1,
+             "F0402 action-hand weapon usable");
+    CHECK_EQ(availOut.weaponClass, -1,
+             "F0402 action-hand path leaves class to caller");
+
+    memset(&availIn, 0, sizeof(availIn));
+    availIn.hasLiveActionIndex = 1;
+    availIn.actionHandEmpty = 1;
+    CHECK_EQ(dm1_v1_melee_weapon_availability_plan_f0402_pc34(
+                 &availIn, &availOut), 1,
+             "F0402 empty-hand availability builds");
+    CHECK_EQ(availOut.useEmptyHandWeaponInfo, 1,
+             "F0402 empty hand uses unarmed weapon info");
+    CHECK_EQ(availOut.hasUsableF0231WeaponInfo, 1,
+             "F0402 empty hand usable");
+    CHECK_EQ(availOut.weaponClass, 255, "F0402 empty hand weapon class");
+
+    memset(&availIn, 0, sizeof(availIn));
+    availIn.hasLiveActionIndex = 1;
+    availIn.actionHandEmpty = 0;
+    CHECK_EQ(dm1_v1_melee_weapon_availability_plan_f0402_pc34(
+                 &availIn, &availOut), 1,
+             "F0402 unavailable hand builds");
+    CHECK_EQ(availOut.hasUsableF0231WeaponInfo, 0,
+             "F0402 no weapon and non-empty hand unusable");
+
+    memset(&preIn, 0, sizeof(preIn));
+    preIn.requestedAutoTarget = 1;
+    preIn.hasLiveActionIndex = 1;
+    preIn.targetResolved = 0;
+    CHECK_EQ(dm1_v1_melee_preflight_plan_f0402_pc34(&preIn, &preOut), 1,
+             "F0402 live no-target preflight builds");
+    CHECK_EQ(preOut.shouldReturnHandled, 1,
+             "F0402 live no-target handled no-op");
+    CHECK_EQ(preOut.canUseLegacyMarker, 0,
+             "F0402 live no-target does not use marker");
+
+    memset(&preIn, 0, sizeof(preIn));
+    preIn.targetResolved = 0;
+    CHECK_EQ(dm1_v1_melee_preflight_plan_f0402_pc34(&preIn, &preOut), 1,
+             "F0402 marker fallback preflight builds");
+    CHECK_EQ(preOut.shouldReturnHandled, 0,
+             "F0402 marker fallback not handled yet");
+    CHECK_EQ(preOut.canUseLegacyMarker, 1,
+             "F0402 marker fallback allowed");
+
+    memset(&preIn, 0, sizeof(preIn));
+    preIn.targetResolved = 1;
+    preIn.reachBlocked = 1;
+    CHECK_EQ(dm1_v1_melee_preflight_plan_f0402_pc34(&preIn, &preOut), 1,
+             "F0402 reach-block preflight builds");
+    CHECK_EQ(preOut.shouldReturnHandled, 1,
+             "F0402 reach-block handled");
+    CHECK_EQ(preOut.shouldEmitDamageDealt, 1,
+             "F0402 reach-block emits invalid damage marker");
+    CHECK_EQ(preOut.emitOutcome, COMBAT_OUTCOME_INVALID,
+             "F0402 reach-block invalid outcome");
+
+    memset(&preIn, 0, sizeof(preIn));
+    preIn.targetResolved = 1;
+    preIn.disruptBlocked = 1;
+    CHECK_EQ(dm1_v1_melee_preflight_plan_f0402_pc34(&preIn, &preOut), 1,
+             "F0402 disrupt-block preflight builds");
+    CHECK_EQ(preOut.shouldEmitDamageDealt, 1,
+             "F0402 disrupt-block emits invalid damage marker");
+
+    memset(&preIn, 0, sizeof(preIn));
+    preIn.targetResolved = 1;
+    preIn.candidateInvulnerable = 1;
+    CHECK_EQ(dm1_v1_melee_preflight_plan_f0402_pc34(&preIn, &preOut), 1,
+             "F0402 candidate preflight builds");
+    CHECK_EQ(preOut.shouldReturnHandled, 1,
+             "F0402 candidate panel handled before F0312");
+    CHECK_EQ(preOut.shouldEmitDamageDealt, 0,
+             "F0402 candidate panel emits nothing");
+
+    memset(&preIn, 0, sizeof(preIn));
+    preIn.targetResolved = 1;
+    preIn.creatureSnapshotReady = 1;
+    preIn.championSnapshotReady = 0;
+    CHECK_EQ(dm1_v1_melee_preflight_plan_f0402_pc34(&preIn, &preOut), 1,
+             "F0402 missing champion snapshot preflight builds");
+    CHECK_EQ(preOut.shouldReturnHandled, 1,
+             "F0402 missing champion snapshot handled");
+
+    memset(&preIn, 0, sizeof(preIn));
+    preIn.targetResolved = 1;
+    preIn.creatureSnapshotReady = 1;
+    preIn.championSnapshotReady = 1;
+    CHECK_EQ(dm1_v1_melee_preflight_plan_f0402_pc34(&preIn, &preOut), 1,
+             "F0402 ready preflight builds");
+    CHECK_EQ(preOut.canResolveDamage, 1,
+             "F0402 ready target can resolve F0231 damage");
+}
+
 static void test_melee_f0231_aftermath_plan(void) {
     DM1_MeleeF0231AftermathInputPc34 in;
     DM1_MeleeF0231AftermathPlanPc34 out;
@@ -1493,6 +1602,7 @@ int main(void) {
     test_melee_pre_f0231_gates();
     test_melee_weapon_profile_plan();
     test_melee_f0231_side_effect_plan();
+    test_melee_f0402_weapon_availability_and_preflight();
     test_melee_f0231_aftermath_plan();
     test_melee_f0231_damage_resolver_entrypoint();
     test_invalid_action();
