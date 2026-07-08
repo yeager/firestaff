@@ -123,7 +123,6 @@
 #include "csb_v2_settings_pc34.h"
 #include "theron_v2_presentation_mode_pc34.h"
 #include "theron_v2_settings_pc34.h"
-#include "theron_v2_hud_overlay_pc34.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 
 #include <ctype.h>
@@ -1328,49 +1327,6 @@ static void m11_theron_boot_runtime_startup_snapshot(
 static int m11_theron_boot_runtime_startup_view_model(
     const M11_GameViewState *state,
     Theron_V1_BootStartupViewModel *out_view_model);
-
-static void m11_theron_render_v2_hud(const M11_GameViewState* state,
-                                     const Theron_V1_World* world,
-                                     Theron_V1_Viewport* viewport)
-{
-    Theron_V2_HudOverlay hud;
-    Theron_V2_HudSeedGate gate;
-
-    if (!state || !world || !viewport || !viewport->fb.data) {
-        return;
-    }
-    if (viewport->fb.w <= 0 || viewport->fb.h <= 0) {
-        return;
-    }
-    /* HUD launch-mode gate: when the launcher selected OFF the V2
-     * HUD overlay stays V1-locked (V1 chrome preserved). The gate
-     * is consulted here in addition to the presentation-mode check
-     * so the launcher can pin the HUD to OFF even under V20/V21/
-     * V22 (e.g. accessibility setting, presentation-only default).
-     * Source-lock: include/theron_v2_hud_launch_mode_pc34.h
-     * resolution table; THERON_V2_PHASE_DOMAIN_HUD_LAUNCH_MODE. */
-    if (state->hudLaunchMode == THERON_V2_HUD_LAUNCH_MODE_OFF) {
-        return;
-    }
-
-    gate = theron_v2_hud_seed_from_v1_world(
-        &hud,
-        world,
-        state->presentationMode != M12_PRESENTATION_V1_ORIGINAL);
-    if (gate != THERON_V2_HUD_SEED_V2_READY) {
-        return;
-    }
-
-    /* Theron V2 Phase 3 is presentation-only: the V1 Track 02 world,
-     * party, and save state are already rendered by theron_vp_* above.
-     * This pass overlays the optional V2 HUD chrome into Theron's native
-     * 256x224 indexed framebuffer before M11 letterboxes it. Source anchors:
-     * THQUEST.ASM T600/T800/T900; sibling pattern: dm2_v2_hud_runtime.c. */
-    theron_v2_hud_render(&hud,
-                         viewport->fb.data,
-                         viewport->fb.w,
-                         viewport->fb.h);
-}
 
 enum {
     M11_DM1_V1_POTION_VI_PC34 = 14,
@@ -37937,16 +37893,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             g_m11_font_scale_override = 0;
             return;
         }
-        if (world && viewport) {
-            theron_vp_render_dungeon(viewport, world);
-            theron_vp_render_ui(viewport, world, TQR_UI_ALL);
-            m11_theron_render_v2_hud(state, world, viewport);
-            theron_vp_present(viewport,
-                              assets ? &assets->palette : NULL,
-                              framebuffer,
-                              framebufferWidth,
-                              framebufferHeight);
-        }
+        (void)theron_v1_boot_runtime_render_frame(
+            world,
+            viewport,
+            assets,
+            state->presentationMode != M12_PRESENTATION_V1_ORIGINAL,
+            state->hudLaunchMode,
+            framebuffer,
+            framebufferWidth,
+            framebufferHeight);
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                             framebufferHeight);
         g_drawState = NULL;

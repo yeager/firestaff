@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron runtime render boot facade: Theron boot now owns the Track 02 runtime dungeon/UI/V2-HUD/present sequence through `theron_v1_boot_runtime_render_frame()`. M11 no longer calls `theron_vp_render_dungeon`, `theron_vp_render_ui`, V2 HUD render, or `theron_vp_present` directly for Theron runtime rendering. Verification: `test_theron_v1_startup_save_resume_pc34` passed 125/125; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB mirror/ornament boot wrappers: CSB boot now owns the M11 mirror sync receipt and front-wall ornament sensor-click facade. M11 no longer calls those CSB runtime boot-profile facades directly. Verification: `test_csb_v1_boot_runtime_handoff` passed 314/314; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB inventory/container boot wrappers: CSB boot now owns M11-facing object metadata, container-slot read/write, thing-chain mutation, inventory slot writes, leader-hand writes, and champion-vitals writes. M11 no longer calls those CSB runtime boot-profile facades directly. Verification: `test_csb_v1_boot_runtime_handoff` passed 312/312; Phase A passed 24/24; `git diff --check` passed.

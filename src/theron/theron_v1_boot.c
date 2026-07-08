@@ -36,6 +36,8 @@
 #include "theron_v1_boot.h"
 #include "asset_find_by_hash.h"
 #include "theron_v1_mechanics.h"
+#include "theron_v2_hud_launch_mode_pc34.h"
+#include "theron_v2_hud_overlay_pc34.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -1404,6 +1406,62 @@ int theron_v1_boot_runtime_move_party(Theron_V1_World *world,
                                          out_dir,
                                          out_tick);
     return result;
+}
+
+static void theron_v1_boot_runtime_render_v2_hud(
+    const Theron_V1_World *world,
+    Theron_V1_Viewport *viewport,
+    int presentation_is_v2,
+    int hud_launch_mode)
+{
+    Theron_V2_HudOverlay hud;
+    Theron_V2_HudSeedGate gate;
+
+    if (!world || !viewport || !viewport->fb.data ||
+        viewport->fb.w <= 0 || viewport->fb.h <= 0) {
+        return;
+    }
+    if (!presentation_is_v2 ||
+        hud_launch_mode == THERON_V2_HUD_LAUNCH_MODE_OFF) {
+        return;
+    }
+    gate = theron_v2_hud_seed_from_v1_world(&hud, world, 1);
+    if (gate != THERON_V2_HUD_SEED_V2_READY) {
+        return;
+    }
+    theron_v2_hud_render(&hud,
+                         viewport->fb.data,
+                         viewport->fb.w,
+                         viewport->fb.h);
+}
+
+int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
+                                        Theron_V1_Viewport *viewport,
+                                        const TrAssetBundle *assets,
+                                        int presentation_is_v2,
+                                        int hud_launch_mode,
+                                        unsigned char *framebuffer,
+                                        int framebuffer_width,
+                                        int framebuffer_height)
+{
+    if (!world || !viewport || !framebuffer ||
+        framebuffer_width <= 0 || framebuffer_height <= 0) {
+        return 0;
+    }
+    /* THQUEST.ASM T560/T600/T800 runtime owns dungeon draw, UI draw, and
+     * optional V2 HUD overlay before M11 presents the indexed viewport. */
+    theron_vp_render_dungeon(viewport, world);
+    theron_vp_render_ui(viewport, world, TQR_UI_ALL);
+    theron_v1_boot_runtime_render_v2_hud(world,
+                                         viewport,
+                                         presentation_is_v2,
+                                         hud_launch_mode);
+    theron_vp_present(viewport,
+                      assets ? &assets->palette : NULL,
+                      framebuffer,
+                      framebuffer_width,
+                      framebuffer_height);
+    return 1;
 }
 
 int theron_v1_boot_startup_execute_graphics_plan(
