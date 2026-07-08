@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0325 action-stamina ownership: DM1 action-XP compat now owns the source-locked F0325 stamina decrement/apply plan for action costs, including stamina clamp, underflow HP damage, damage-flash request, and LOAD/STATISTICS dirty-mask output. M11 now only applies the receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0407 completion-plan ownership: DM1 action-XP compat now owns common tail XP/tick adjustment plus final action-disable state, action-hand enable-slot ordinal, and immediate zero-tick SHOOT refill decision. M11 applies the receipt for both action entry paths. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0407 prelude-plan ownership: DM1 action-XP compat now owns the common action prelude for G0496/G0497 XP route, G0491 disabled ticks, G0494 stamina cost, and F0402 melee-contact routing. Both M11 action entry paths consume the same DM1 receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

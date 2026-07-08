@@ -162,6 +162,23 @@ typedef struct {
 } DM1_ActionF0407CompletionPlanPc34;
 
 typedef struct {
+    int currentStamina;
+    int maximumStamina;
+    int currentHealth;
+    int decrement;
+} DM1_ActionF0325StaminaInputPc34;
+
+typedef struct {
+    int valid;
+    int applied;
+    int currentStaminaAfter;
+    int currentHealthAfter;
+    int pendingHealthDamage;
+    int shouldDamageFlash;
+    int appliedAttributeMask;
+} DM1_ActionF0325StaminaPlanPc34;
+
+typedef struct {
     int actionIndex;
 } DM1_ActionDefenseInputPc34;
 
@@ -438,6 +455,9 @@ int dm1_v1_action_adjust_f0407_tail_pc34(
 int dm1_v1_action_completion_plan_f0407_pc34(
     const DM1_ActionF0407CompletionInputPc34* in,
     DM1_ActionF0407CompletionPlanPc34* out);
+int dm1_v1_action_stamina_apply_plan_f0325_pc34(
+    const DM1_ActionF0325StaminaInputPc34* in,
+    DM1_ActionF0325StaminaPlanPc34* out);
 int dm1_v1_action_defense_apply_plan_f0407_pc34(
     const DM1_ActionDefenseInputPc34* in,
     DM1_ActionDefensePlanPc34* out);
