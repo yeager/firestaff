@@ -302,15 +302,20 @@ static const M11_GameViewState* g_drawState = NULL;
 
 static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
 {
+    DM2_V1_BootRuntimeReceipt receipt;
     if (!state) {
         return;
     }
-    state->dm2State.party_x = dm2_v1_runtime_get_party_x();
-    state->dm2State.party_y = dm2_v1_runtime_get_party_y();
-    state->dm2State.party_dir = dm2_v1_runtime_get_party_dir();
-    state->dm2State.tick_count = dm2_v1_runtime_get_tick_count();
-    state->dm2State.leader_hand_object =
-        dm2_v1_runtime_get_leader_hand_object();
+    if (!dm2_v1_boot_runtime_capture(
+            (DM2_V1_BootProfile *)state->dm2BootProfile,
+            &receipt)) {
+        return;
+    }
+    state->dm2State.party_x = receipt.party_x;
+    state->dm2State.party_y = receipt.party_y;
+    state->dm2State.party_dir = receipt.party_dir;
+    state->dm2State.tick_count = receipt.tick_count;
+    state->dm2State.leader_hand_object = receipt.leader_hand_object;
 }
 
 static void m11_dm2_copy_printable(unsigned char *dst,
@@ -12372,7 +12377,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             }
             return M11_GAME_INPUT_IGNORED;
         }
-        dm2_v1_runtime_tick();
+        (void)dm2_v1_boot_runtime_tick(
+            (DM2_V1_BootProfile *)state->dm2BootProfile,
+            NULL);
         m11_sync_dm2_state_from_runtime(state);
         return M11_GAME_INPUT_REDRAW;
     }
@@ -14015,10 +14022,15 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                        ? M11_GAME_INPUT_IGNORED
                        : M11_GAME_INPUT_REDRAW;
         }
-        dir = dm2_v1_runtime_get_party_dir() & 3;
+        m11_sync_dm2_state_from_runtime(state);
+        dir = state->dm2State.party_dir & 3;
         if (input == M12_MENU_INPUT_TURN_LEFT ||
             input == M12_MENU_INPUT_LEFT) {
-            result = dm2_v1_runtime_turn(-1);
+            DM2_V1_BootRuntimeReceipt receipt;
+            result = dm2_v1_boot_runtime_turn(
+                (DM2_V1_BootProfile *)state->dm2BootProfile,
+                -1,
+                &receipt) ? receipt.operation_result : -1;
             if (result == 0) {
                 m11_sync_dm2_state_from_runtime(state);
                 m11_set_status(state, "TURN", "DM2 LEFT");
@@ -14028,7 +14040,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (input == M12_MENU_INPUT_TURN_RIGHT ||
             input == M12_MENU_INPUT_RIGHT) {
-            result = dm2_v1_runtime_turn(1);
+            DM2_V1_BootRuntimeReceipt receipt;
+            result = dm2_v1_boot_runtime_turn(
+                (DM2_V1_BootProfile *)state->dm2BootProfile,
+                1,
+                &receipt) ? receipt.operation_result : -1;
             if (result == 0) {
                 m11_sync_dm2_state_from_runtime(state);
                 m11_set_status(state, "TURN", "DM2 RIGHT");
@@ -14037,28 +14053,48 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (input == M12_MENU_INPUT_UP) {
-            result = dm2_v1_runtime_move(dir);
+            DM2_V1_BootRuntimeReceipt receipt;
+            (void)dm2_v1_boot_runtime_move(
+                (DM2_V1_BootProfile *)state->dm2BootProfile,
+                dir,
+                &receipt);
+            result = receipt.operation_result;
             m11_sync_dm2_state_from_runtime(state);
             m11_set_status(state, "MOVE",
                            result == 0 ? "DM2 FORWARD" : "BLOCKED");
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_DOWN) {
-            result = dm2_v1_runtime_move((dir + 2) & 3);
+            DM2_V1_BootRuntimeReceipt receipt;
+            (void)dm2_v1_boot_runtime_move(
+                (DM2_V1_BootProfile *)state->dm2BootProfile,
+                (dir + 2) & 3,
+                &receipt);
+            result = receipt.operation_result;
             m11_sync_dm2_state_from_runtime(state);
             m11_set_status(state, "MOVE",
                            result == 0 ? "DM2 BACKSTEP" : "BLOCKED");
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_STRAFE_LEFT) {
-            result = dm2_v1_runtime_move((dir + 3) & 3);
+            DM2_V1_BootRuntimeReceipt receipt;
+            (void)dm2_v1_boot_runtime_move(
+                (DM2_V1_BootProfile *)state->dm2BootProfile,
+                (dir + 3) & 3,
+                &receipt);
+            result = receipt.operation_result;
             m11_sync_dm2_state_from_runtime(state);
             m11_set_status(state, "MOVE",
                            result == 0 ? "DM2 STRAFE LEFT" : "BLOCKED");
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_STRAFE_RIGHT) {
-            result = dm2_v1_runtime_move((dir + 1) & 3);
+            DM2_V1_BootRuntimeReceipt receipt;
+            (void)dm2_v1_boot_runtime_move(
+                (DM2_V1_BootProfile *)state->dm2BootProfile,
+                (dir + 1) & 3,
+                &receipt);
+            result = receipt.operation_result;
             m11_sync_dm2_state_from_runtime(state);
             m11_set_status(state, "MOVE",
                            result == 0 ? "DM2 STRAFE RIGHT" : "BLOCKED");
@@ -14070,8 +14106,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             static const int dx[4] = {0, 1, 0, -1};
             static const int dy[4] = {-1, 0, 1, 0};
             int level = world ? world->current_level : 0;
-            int fx = dm2_v1_runtime_get_party_x() + dx[dir];
-            int fy = dm2_v1_runtime_get_party_y() + dy[dir];
+            int fx = state->dm2State.party_x + dx[dir];
+            int fy = state->dm2State.party_y + dy[dir];
             int square = dm2_v1_runtime_get_square_type(level, fx, fy);
 
             if (dm2_v1_runtime_enter_shop(level, fx, fy) == 0) {

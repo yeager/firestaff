@@ -328,6 +328,8 @@ static void test_startup_launch_detach_runtime_receipt(void)
 static void test_startup_launch_alloc_real_assets_when_available(void)
 {
     DM2_V1_BootStartupLaunch launch;
+    DM2_V1_BootRuntimeReceipt before;
+    DM2_V1_BootRuntimeReceipt after;
     const char *home = getenv("HOME");
     char root[512];
     FILE *g;
@@ -364,6 +366,32 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
           "startup launch binds the V1 runtime singleton");
     CHECK(launch.profile != NULL && launch.profile->graphics_dat != NULL,
           "startup launch loads DM2 graphics handle");
+    memset(&before, 0, sizeof(before));
+    CHECK(dm2_v1_boot_runtime_capture(launch.profile, &before) == 1 &&
+              before.runtime_ready == 1 &&
+              before.party_x == 15 &&
+              before.party_y == 15 &&
+              before.party_dir == 0,
+          "boot runtime capture owns initial DM2 party receipt");
+    memset(&after, 0, sizeof(after));
+    CHECK(dm2_v1_boot_runtime_tick(launch.profile, &after) == 1 &&
+              after.runtime_ready == 1 &&
+              after.tick_count >= before.tick_count &&
+              after.operation_result == 0,
+          "boot runtime tick owns DM2 receipt update");
+    memset(&after, 0, sizeof(after));
+    CHECK(dm2_v1_boot_runtime_turn(launch.profile, 1, &after) == 1 &&
+              after.operation_result == 0 &&
+              after.party_dir == 1,
+          "boot runtime turn owns DM2 receipt update");
+    {
+        int move_dir = after.party_dir;
+        memset(&after, 0, sizeof(after));
+        CHECK(dm2_v1_boot_runtime_move(launch.profile, move_dir, &after) == 1 &&
+                  after.runtime_ready == 1 &&
+                  (after.operation_result == 0 || after.operation_result == -1),
+              "boot runtime move owns DM2 receipt update");
+    }
     dm2_v1_boot_startup_launch_cleanup(&launch);
 }
 

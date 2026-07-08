@@ -151,6 +151,17 @@ typedef struct {
     int initialize_touch_runtime;
 } DM2_V1_BootStartupRuntimeReceipt;
 
+typedef struct {
+    int runtime_ready;
+    int current_level;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int tick_count;
+    uint32_t leader_hand_object;
+    int operation_result;
+} DM2_V1_BootRuntimeReceipt;
+
 enum {
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP = 32,
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP = 32,
@@ -371,6 +382,17 @@ int dm2_v1_boot_startup_execute_launch_save_path_with_host_receipt(
     void *apply_userdata,
     struct DM2_V1_StartupExecution *out_execution,
     void *out_direct_resume_receipt);
+
+int dm2_v1_boot_runtime_capture(DM2_V1_BootProfile *profile,
+                                DM2_V1_BootRuntimeReceipt *out_receipt);
+int dm2_v1_boot_runtime_tick(DM2_V1_BootProfile *profile,
+                             DM2_V1_BootRuntimeReceipt *out_receipt);
+int dm2_v1_boot_runtime_turn(DM2_V1_BootProfile *profile,
+                             int delta,
+                             DM2_V1_BootRuntimeReceipt *out_receipt);
+int dm2_v1_boot_runtime_move(DM2_V1_BootProfile *profile,
+                             int direction,
+                             DM2_V1_BootRuntimeReceipt *out_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */
