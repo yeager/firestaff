@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 viewport center-content receipt ownership: DM1 V1 viewport lane-visibility receipts now also carry the center visible-depth mask and center-line clear helper used by M11 side-content and deferred-explosion gates. M11 no longer calls the lower-level center visible/clear helpers directly. Verification: `test_dm1_v1_viewport_3d_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 wall-inscription font gate ownership: DM1 V1 inscription font helpers now own decoded line-count and raw glyph/font support checks used by wall inscription rendering. M11 consumes those helpers instead of carrying local line counting and glyph support loops. Verification: `test_dm1_v1_inscription_font_pc34_compat` passed 53/53; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 viewport lane-visibility receipt ownership: DM1 V1 viewport now emits one combined lane-visibility receipt for center blocking, nearest blocking center door, max visible forward depth, and left/right side-lane open masks. M11 consumes the receipt instead of deriving those wall/content gates locally. Verification: `test_dm1_v1_viewport_3d_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

@@ -350,6 +350,10 @@ DM1_ViewportLaneVisibilityReceiptPc34 dm1_viewport_3d_lane_visibility_from_cells
         dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(
             receipt.center.blocking_depth_mask,
             receipt.center.blocking_door_depth_mask);
+    receipt.center_visible_depth_mask =
+        dm1_viewport_3d_center_visible_depth_mask_pc34(
+            receipt.center.valid_depth_mask,
+            receipt.center.open_depth_mask);
     return receipt;
 }
 
@@ -371,6 +375,18 @@ int dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
     return dm1_viewport_3d_side_lane_clear_for_rel_pc34(rel_forward,
                                                         rel_side,
                                                         mask);
+}
+
+int dm1_viewport_3d_center_line_clear_from_visibility_pc34(
+    const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
+    int depth_index)
+{
+    if (!visibility) {
+        return 0;
+    }
+    return dm1_viewport_3d_center_line_clear_before_depth_pc34(
+        depth_index,
+        visibility->center.open_depth_mask);
 }
 
 int dm1_viewport_3d_center_line_clear_before_depth_pc34(
