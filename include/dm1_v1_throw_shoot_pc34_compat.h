@@ -141,6 +141,12 @@ typedef struct {
     int rngStrength16;
     int rngKinetic16;
     int rngAttack32;
+    unsigned short thrownThing;
+    int thingType;
+    int potionType;
+    int potionPower;
+    int partyDirection;
+    int throwSide;
 } DM1_ThrowF0328ProjectileInputPc34;
 
 typedef struct {
@@ -153,6 +159,11 @@ typedef struct {
     int stepEnergy;
     int actionDisableTicks;
     int combatSoundIndex;
+    int projectileSubtype;
+    int projectilePotionPower;
+    int launchDirection;
+    int projectileDisabledMovementTicks;
+    int lastProjectileDisabledMovementDirection;
 } DM1_ThrowF0328ProjectilePlanPc34;
 
 int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight);

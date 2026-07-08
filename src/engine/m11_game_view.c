@@ -24866,35 +24866,6 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
     }
 }
 
-static int m11_dm1_thrown_potion_projectile_shape(
-    const M11_GameViewState* state,
-    unsigned short thrownThing,
-    int* outSubtype,
-    int* outPotionPower) {
-    int potionIndex;
-    int potionType;
-    if (outSubtype) *outSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
-    if (outPotionPower) *outPotionPower = 0;
-    if (!state || !state->world.things || !state->world.things->potions) {
-        return 0;
-    }
-    if (thrownThing == THING_NONE || thrownThing == THING_ENDOFLIST) return 0;
-    if (THING_GET_TYPE(thrownThing) != THING_TYPE_POTION) return 0;
-    potionIndex = THING_GET_INDEX(thrownThing);
-    if (potionIndex < 0 || potionIndex >= state->world.things->potionCount) {
-        return 0;
-    }
-    potionType = (int)state->world.things->potions[potionIndex].type;
-    if (!dm1_v1_thrown_potion_projectile_subtype_pc34(
-            potionType, outSubtype)) {
-        return 0;
-    }
-    if (outPotionPower) {
-        *outPotionPower = (int)state->world.things->potions[potionIndex].power;
-    }
-    return 1;
-}
-
 static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
                                             int championIndex,
                                             struct ChampionState_Compat* champ,
@@ -24907,19 +24878,21 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
     int skillThrow;
     int objectWeight;
     int isWeapon;
-    int projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
-    int potionPower = 0;
     int spawned;
     int rngStrength16;
     int rngKinetic16;
     int rngAttack32;
+    int thingType;
+    int thingIndex;
 
     if (!state || !champ) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     if (thrownThing == THING_NONE || thrownThing == THING_ENDOFLIST) return 0;
 
     hasWeaponInfo = m11_dm1_thing_weapon_info(state, thrownThing, &weaponInfo);
-    isWeapon = THING_GET_TYPE(thrownThing) == THING_TYPE_WEAPON;
+    thingType = THING_GET_TYPE(thrownThing);
+    thingIndex = THING_GET_INDEX(thrownThing);
+    isWeapon = thingType == THING_TYPE_WEAPON;
     objectWeight = m11_dm1_f0140_object_weight_for_throw(state, thrownThing);
     rngStrength16 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16);
     rngKinetic16 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16);
@@ -24947,6 +24920,18 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
     throwIn.rngStrength16 = rngStrength16;
     throwIn.rngKinetic16 = rngKinetic16;
     throwIn.rngAttack32 = rngAttack32;
+    throwIn.thrownThing = thrownThing;
+    throwIn.thingType = thingType;
+    if (thingType == THING_TYPE_POTION && state->world.things &&
+        state->world.things->potions && thingIndex >= 0 &&
+        thingIndex < state->world.things->potionCount) {
+        throwIn.potionType =
+            (int)state->world.things->potions[thingIndex].type;
+        throwIn.potionPower =
+            (int)state->world.things->potions[thingIndex].power;
+    }
+    throwIn.partyDirection = state->world.party.direction;
+    throwIn.throwSide = throwSide;
     if (!dm1_v1_throw_projectile_plan_f0328_pc34(&throwIn, &throwPlan) ||
         !throwPlan.valid) {
         return 0;
@@ -24968,20 +24953,18 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
         !throwPlan.valid) {
         return 0;
     }
-    (void)m11_dm1_thrown_potion_projectile_shape(
-        state, thrownThing, &projectileSubtype, &potionPower);
     spawned = m11_spawn_action_projectile_ex(
         state, championIndex,
-        projectileSubtype,
+        throwPlan.projectileSubtype,
         PROJECTILE_CATEGORY_KINETIC,
         throwPlan.kineticEnergy, throwPlan.attack,
         COMBAT_ATTACK_NORMAL,
-        (state->world.party.direction + (throwSide & 1)) & 3,
+        throwPlan.launchDirection,
         state->world.party.direction,
         throwPlan.stepEnergy,
         throwPlan.attack,
         thrownThing,
-        potionPower);
+        throwPlan.projectilePotionPower);
     if (!spawned) {
         /* ReDMCSB CHAMPION.C F0328 lines 2189-2193 does not check
          * F0212_PROJECTILE_Create before returning TRUE.  Firestaff's
@@ -24991,9 +24974,10 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
         return 1;
     }
 
-    state->world.projectileDisabledMovementTicks = 4;
+    state->world.projectileDisabledMovementTicks =
+        throwPlan.projectileDisabledMovementTicks;
     state->world.lastProjectileDisabledMovementDirection =
-        state->world.party.direction;
+        throwPlan.lastProjectileDisabledMovementDirection;
     return 1;
 }
 

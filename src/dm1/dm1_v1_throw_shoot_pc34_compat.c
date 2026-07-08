@@ -200,6 +200,16 @@ int dm1_v1_throw_projectile_plan_f0328_pc34(
     out->stepEnergy = dm1_v1_throw_step_energy_pc34(in->throwSkillLevel);
     out->actionDisableTicks = 4;
     out->combatSoundIndex = 13;
+    out->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    if (in->thingType == THING_TYPE_POTION) {
+        (void)dm1_v1_thrown_potion_projectile_subtype_pc34(
+            in->potionType, &out->projectileSubtype);
+        out->projectilePotionPower = in->potionPower;
+    }
+    out->launchDirection =
+        ((in->partyDirection & 3) + (in->throwSide & 1)) & 3;
+    out->projectileDisabledMovementTicks = 4;
+    out->lastProjectileDisabledMovementDirection = in->partyDirection & 3;
     return 1;
 }
 
