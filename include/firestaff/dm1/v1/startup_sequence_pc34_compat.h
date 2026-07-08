@@ -37,6 +37,19 @@ typedef struct DM1_V1_StartupHandoffPostLaunchPlan_PC34 {
     const char* source_id;
 } DM1_V1_StartupHandoffPostLaunchPlan_PC34;
 
+typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
+    void* user;
+    int (*report_source_order_failure)(void* user, const char* evidence);
+    int (*raise_window)(void* user);
+    int (*play_swsh)(void* user, const char* game_id, int preserve_audio);
+    int (*discard_presentation_texture)(void* user);
+    int (*play_title)(void* user, const char* source_id, int* out_played_any_frame);
+    int (*play_entrance)(void* user,
+                         const char* source_id,
+                         int auto_enter_after_ms,
+                         int* out_entrance_command);
+} DM1_V1_StartupHandoffCallbacks_PC34;
+
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage);
 int dm1_v1_startup_stage_after_pc34(DM1_V1_StartupStage_PC34 later,
                                     DM1_V1_StartupStage_PC34 earlier);
@@ -53,6 +66,14 @@ int dm1_v1_startup_handoff_prelude_plan_pc34(
 int dm1_v1_startup_handoff_post_launch_plan_pc34(
     const char* source_id,
     DM1_V1_StartupHandoffPostLaunchPlan_PC34* out_plan);
+int dm1_v1_startup_execute_handoff_prelude_pc34(
+    const char* game_id,
+    const DM1_V1_StartupHandoffCallbacks_PC34* callbacks);
+int dm1_v1_startup_execute_handoff_post_launch_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffCallbacks_PC34* callbacks,
+    int* out_title_played,
+    int* out_entrance_command);
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,

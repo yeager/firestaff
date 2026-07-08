@@ -110,6 +110,104 @@ int dm1_v1_startup_handoff_post_launch_plan_pc34(
     return 1;
 }
 
+int dm1_v1_startup_execute_handoff_prelude_pc34(
+    const char* game_id,
+    const DM1_V1_StartupHandoffCallbacks_PC34* callbacks) {
+    DM1_V1_StartupHandoffPreludePlan_PC34 plan;
+
+    if (!callbacks ||
+        !dm1_v1_startup_handoff_prelude_plan_pc34(game_id, &plan)) {
+        return 0;
+    }
+    if (!plan.required) {
+        return 1;
+    }
+    /* ReDMCSB: APPA.C loads SWSH before TITLE/APPB, and STARTUP2.C later
+     * calls F0437_STARTEND_DrawTitle before entrance processing.  Keep the
+     * host-side calls behind this DM1-owned execution facade so M11 cannot
+     * silently reorder the visible DM1 startup path. */
+    if (!plan.source_order_valid &&
+        callbacks->report_source_order_failure &&
+        !callbacks->report_source_order_failure(callbacks->user,
+                                                plan.failure_evidence)) {
+        return 0;
+    }
+    if (plan.play_swsh) {
+        if (!callbacks->raise_window || !callbacks->play_swsh) {
+            return 0;
+        }
+        if (!callbacks->raise_window(callbacks->user)) {
+            return 0;
+        }
+        if (!callbacks->play_swsh(callbacks->user, plan.game_id, 0)) {
+            return 0;
+        }
+    }
+    if (plan.discard_presentation_after_swsh &&
+        (!callbacks->discard_presentation_texture ||
+         !callbacks->discard_presentation_texture(callbacks->user))) {
+        return 0;
+    }
+    return 1;
+}
+
+int dm1_v1_startup_execute_handoff_post_launch_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffCallbacks_PC34* callbacks,
+    int* out_title_played,
+    int* out_entrance_command) {
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 plan;
+    int title_played = 0;
+    int entrance_command = 0;
+
+    if (out_title_played) {
+        *out_title_played = 0;
+    }
+    if (out_entrance_command) {
+        *out_entrance_command = 0;
+    }
+    if (!callbacks ||
+        !dm1_v1_startup_handoff_post_launch_plan_pc34(source_id, &plan)) {
+        return 0;
+    }
+    if (!plan.required) {
+        return 1;
+    }
+    /* ReDMCSB STARTUP2.C: F0437_STARTEND_DrawTitle precedes the later
+     * F0441_STARTEND_ProcessEntrance gate. */
+    if (plan.play_title) {
+        if (!callbacks->raise_window || !callbacks->play_title) {
+            return 0;
+        }
+        if (!callbacks->raise_window(callbacks->user)) {
+            return 0;
+        }
+        if (!callbacks->play_title(callbacks->user,
+                                   plan.source_id,
+                                   &title_played)) {
+            return 0;
+        }
+    }
+    if (plan.play_entrance) {
+        if (!callbacks->play_entrance) {
+            return 0;
+        }
+        if (!callbacks->play_entrance(callbacks->user,
+                                      plan.source_id,
+                                      plan.entrance_auto_enter_ms,
+                                      &entrance_command)) {
+            return 0;
+        }
+    }
+    if (out_title_played) {
+        *out_title_played = title_played;
+    }
+    if (out_entrance_command) {
+        *out_entrance_command = entrance_command;
+    }
+    return 1;
+}
+
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 startup executor ownership: DM1 V1 startup-sequence now owns the SWSH, texture discard, TITLE, ENTRANCE, and entrance-timeout execution order through an M11 callback facade, including required-callback validation. Verification: `test_dm1_v1_startup_intro_state_machine_gate` passed; `test_dm1_v1_m11_launcher_handoff_boundary` passed 88/88; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 startup handoff plan ownership: DM1 V1 startup-sequence now emits prelude/post-launch handoff plans consumed by M11 for SWSH, texture discard, TITLE, ENTRANCE, and entrance timeout. Verification: `test_dm1_v1_startup_intro_state_machine_gate` passed; `test_dm1_v1_m11_launcher_handoff_boundary` passed 88/88; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 PC34 spell/action panel geometry: V1 action and spell panels now blit the native PC34 C011/C013 87px zones at x=233, and spell lines use PC34 graphic 9 per ReDMCSB CASTER.C/F0387. Verification: `test_m11_v1_action_area_geometry_pc34_compat` passed; `test_dm1_v1_box_spell_area_pc34_compat` passed; Phase A passed 24/24.
