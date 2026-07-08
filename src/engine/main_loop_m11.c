@@ -2718,6 +2718,24 @@ static int m11_dm1_rename_consume_text_input(M11_GameViewState* gameView,
     return 1;
 }
 
+static int m11_drain_retroachievements_events(Firestaff_RA_Runtime* runtime,
+                                              M11_GameViewState* gameView) {
+    Firestaff_RA_Event event;
+    int pushed = 0;
+
+    if (!runtime || !gameView) {
+        return 0;
+    }
+    while (firestaff_ra_poll_event(runtime, &event)) {
+        if (firestaff_ra_overlay_push_event(&gameView->retroAchievementsOverlay,
+                                            runtime,
+                                            &event)) {
+            pushed = 1;
+        }
+    }
+    return pushed;
+}
+
 static M11_GameInputResult
 m11_dm1_rename_handle_keydown(M11_GameViewState* gameView,
                               int key,
@@ -3660,6 +3678,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 raConfig.username[0] ? raConfig.username : "(none)",
                 redactedToken[0] ? redactedToken : "(none)",
                 raConfig.hardcore);
+        (void)m11_drain_retroachievements_events(&raRuntime, &gameView);
     }
     {
         M12_Config qolCfg;
@@ -4000,6 +4019,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     M11_GameView_TickSessionTimer(&gameView,
                                                   (int)(loopDeltaMs / 1000));
                 (void)stEvent;
+            }
+            firestaff_ra_overlay_tick(&gameView.retroAchievementsOverlay,
+                                      (int)loopDeltaMs);
+            if (gameView.retroAchievementsOverlay.active_valid ||
+                gameView.retroAchievementsOverlay.queue_count > 0) {
+                gameFrameNeedsPresent = 1;
             }
         } else {
             idleAccumulatorMs = 0;

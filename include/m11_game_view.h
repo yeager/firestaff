@@ -14,6 +14,7 @@
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
+#include "firestaff_retroachievements.h"
 #include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 
@@ -686,6 +687,9 @@ typedef struct {
      * Used by m11_draw_glyph and m11_draw_text_original to scale text rendering.
      * 0 means "use built-in font's default scale from M11_TextStyle" (backward compat). */
     int fontScale;
+
+    /* RetroAchievements in-game notification overlay. */
+    Firestaff_RA_Overlay retroAchievementsOverlay;
 } M11_GameViewState;
 
 #ifdef __cplusplus

@@ -2163,6 +2163,78 @@ static void m11_draw_text(unsigned char* framebuffer,
     }
 }
 
+static unsigned char m11_ra_overlay_color(unsigned int rgba,
+                                          Firestaff_RA_OverlayCommandType type) {
+    if (type == FIRESTAFF_RA_OVERLAY_COMMAND_TEXT) {
+        if (rgba == 0xff4d4dffu) {
+            return M11_COLOR_LIGHT_RED;
+        }
+        if (rgba == 0xffa64dffu || rgba == 0xffd65affu) {
+            return M11_COLOR_YELLOW;
+        }
+        if (rgba == 0xcfd5e6ffu) {
+            return M11_COLOR_SILVER;
+        }
+        return M11_COLOR_WHITE;
+    }
+    if (rgba == 0xff4d4dffu) {
+        return M11_COLOR_RED;
+    }
+    if (rgba == 0xffa64dffu) {
+        return M11_COLOR_ORANGE;
+    }
+    if (rgba == 0xffd65affu) {
+        return M11_COLOR_YELLOW;
+    }
+    if (rgba == 0x5cc8ffffu) {
+        return M11_COLOR_LIGHT_CYAN;
+    }
+    return M11_COLOR_BLACK;
+}
+
+static void m11_draw_ra_overlay(const M11_GameViewState* state,
+                                unsigned char* framebuffer,
+                                int framebufferWidth,
+                                int framebufferHeight) {
+    Firestaff_RA_OverlayCommand commands[FIRESTAFF_RA_OVERLAY_COMMAND_MAX];
+    size_t count;
+    size_t i;
+    M11_TextStyle style;
+
+    if (!state || !framebuffer) {
+        return;
+    }
+    count = firestaff_ra_overlay_build_commands(
+        &state->retroAchievementsOverlay,
+        framebufferWidth,
+        framebufferHeight,
+        commands,
+        sizeof(commands) / sizeof(commands[0]));
+    for (i = 0; i < count; ++i) {
+        Firestaff_RA_OverlayCommand* cmd = &commands[i];
+        unsigned char color = m11_ra_overlay_color(cmd->rgba, cmd->type);
+        if (cmd->type == FIRESTAFF_RA_OVERLAY_COMMAND_RECT ||
+            cmd->type == FIRESTAFF_RA_OVERLAY_COMMAND_BADGE) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          cmd->x, cmd->y, cmd->w, cmd->h, color);
+            if (cmd->type == FIRESTAFF_RA_OVERLAY_COMMAND_BADGE) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              cmd->x + 2, cmd->y + 2,
+                              cmd->w - 4, cmd->h - 4, M11_COLOR_BLACK);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              cmd->x + 7, cmd->y + 13, "RA", &g_text_small);
+            }
+        } else if (cmd->type == FIRESTAFF_RA_OVERLAY_COMMAND_TEXT) {
+            style = g_text_small;
+            style.color = color;
+            style.shadowDx = 0;
+            style.shadowDy = 0;
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          cmd->x, cmd->y, cmd->text, &style);
+        }
+    }
+}
+
 static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
                                                  int framebufferWidth,
                                                  int framebufferHeight,
@@ -9970,6 +10042,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
         return;
     }
     memset(state, 0, sizeof(*state));
+    firestaff_ra_overlay_init(&state->retroAchievementsOverlay);
     (void)M11_Audio_Init(&state->audioState);
     /* V1 presentation: debug HUD off by default, opt-in via env */
     {
@@ -37764,11 +37837,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
     if (!state || !state->active) {
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 18, "NO GAME VIEW", &g_text_title);
+        m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                            framebufferHeight);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      18, 18, "NO GAME VIEW", &g_text_title);
         return;
     }
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
@@ -37783,6 +37858,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                            framebuffer,
                                            framebufferWidth,
                                            framebufferHeight);
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
             g_drawState = NULL;
             g_activeOriginalFont = NULL;
             g_m11_font_scale_override = 0;
@@ -37798,6 +37875,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                               framebufferWidth,
                               framebufferHeight);
         }
+        m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                            framebufferHeight);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
@@ -37810,6 +37889,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                           framebuffer,
                                           framebufferWidth,
                                           framebufferHeight);
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
             g_drawState = NULL;
             g_activeOriginalFont = NULL;
             g_m11_font_scale_override = 0;
@@ -37827,6 +37908,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           18, 36, boot_status, &g_text_shadow);
         }
+        m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                            framebufferHeight);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
@@ -37906,6 +37989,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           18, 36, "NEXUS RUNTIME NOT READY", &g_text_shadow);
         }
+        m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                            framebufferHeight);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
@@ -37963,6 +38048,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_draw_dm2_leader_hand_object_icon(state, framebuffer,
                                              framebufferWidth,
                                              framebufferHeight);
+        m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                            framebufferHeight);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
@@ -38923,6 +39010,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * ReDMCSB layout-696 / PANEL.C / ENDGAME.C citations. */
     m11_screen_reader_update_ex(state, framebufferWidth, framebufferHeight);
 
+    m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                        framebufferHeight);
     g_drawState = NULL;
     g_activeOriginalFont = NULL;
     g_m11_font_scale_override = 0;
