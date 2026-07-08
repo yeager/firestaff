@@ -11657,7 +11657,6 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
                                                char* receipt,
                                                size_t receipt_cap) {
     Theron_V1_World* world;
-    Theron_V1_BootProfile* profile;
     TrAssetBundle* assets;
     Theron_StartupFlow flow;
     Theron_V1StartupRuntimeEntryResult runtimeResult;
@@ -11672,7 +11671,6 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
     world = (Theron_V1_World*)state->theronWorld;
-    profile = (Theron_V1_BootProfile*)state->theronBootProfile;
     assets = (TrAssetBundle*)state->theronAssets;
     if (!world) {
         return 0;
@@ -11690,12 +11688,12 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
 
-    if (!theron_v1_startup_runtime_enter_from_forcefield_facts_with_host_receipts(
+    if (!theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_receipts(
         &flow,
         world,
         assets ? assets->hucard_rom : NULL,
         assets ? assets->hucard_rom_size : 0u,
-        profile ? profile->graphics_md5 : NULL,
+        state->theronBootProfile,
         state->theronState.startup_roster_names,
         state->theronState.startup_roster_name_count,
         plan,
@@ -11732,7 +11730,6 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
                                        char* receipt,
                                        size_t receipt_cap) {
     Theron_V1_World* world;
-    Theron_V1_BootProfile* profile;
     Theron_V1StartupContinueResult result;
     Theron_StartupHostReceipt hostReceipt;
     Theron_StartupStateReceipt stateReceipt;
@@ -11744,21 +11741,19 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
         return 0;
     }
     world = (Theron_V1_World*)state->theronWorld;
-    profile = (Theron_V1_BootProfile*)state->theronBootProfile;
-    if (!world || !profile) {
+    if (!world || !state->theronBootProfile) {
         return 0;
     }
-    if (!theron_v1_startup_continue_apply_facts_with_host_receipts(
+    if (!theron_v1_startup_continue_apply_boot_profile_with_host_receipts(
             world,
             (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
             state->theronState.save_resume_active_slot,
-            profile->save_root,
+            state->theronBootProfile,
             state->theronState.save_resume_srm_active_slot,
             (Theron_V1SrmProgressImportStatus)
                 state->theronState.save_resume_srm_import_status,
             state->theronState.save_resume_srm_root,
             plan,
-            state->theronBootProfile,
             &result,
             &hostReceipt,
             &stateReceipt,

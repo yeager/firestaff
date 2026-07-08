@@ -34,6 +34,8 @@
 
 #include "theron_v1_startup_save_resume.h"
 
+#include "theron_v1_boot.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1141,6 +1143,47 @@ int theron_v1_startup_continue_apply_facts_with_host_receipts(
         return 0;
     }
     return 1;
+}
+
+int theron_v1_startup_continue_apply_boot_profile_with_host_receipts(
+    Theron_V1_World *world,
+    Theron_V1StartupResumeClaim resume_claim,
+    int tqsv_slot_index,
+    const void *boot_profile,
+    int srm_slot_index,
+    Theron_V1SrmProgressImportStatus srm_import_status,
+    const char *srm_root,
+    const Theron_StartupActionPlan *plan,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    const Theron_V1_BootProfile *profile =
+        (const Theron_V1_BootProfile *)boot_profile;
+
+    if (!profile) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "missing Theron boot profile");
+        }
+        return 0;
+    }
+    return theron_v1_startup_continue_apply_facts_with_host_receipts(
+        world,
+        resume_claim,
+        tqsv_slot_index,
+        profile->save_root,
+        srm_slot_index,
+        srm_import_status,
+        srm_root,
+        plan,
+        boot_profile,
+        out_result,
+        out_host_receipt,
+        out_state_receipt,
+        receipt,
+        receipt_cap);
 }
 
 size_t theron_v1_startup_save_resume_format(

@@ -1,5 +1,6 @@
 #include "theron_v1_startup_runtime_entry.h"
 
+#include "theron_v1_boot.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -657,4 +658,40 @@ int theron_v1_startup_runtime_enter_from_forcefield_facts_with_host_receipts(
         return 0;
     }
     return 1;
+}
+
+int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_receipts(
+    Theron_StartupFlow *flow,
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const void *boot_profile,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    int startup_roster_name_count,
+    const Theron_StartupActionPlan *plan,
+    Theron_V1StartupRuntimeEntryResult *out_result,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    const Theron_V1_BootProfile *profile =
+        (const Theron_V1_BootProfile *)boot_profile;
+    const char *md5_hex =
+        (profile && profile->graphics_md5[0]) ? profile->graphics_md5 : NULL;
+
+    return theron_v1_startup_runtime_enter_from_forcefield_facts_with_host_receipts(
+        flow,
+        world,
+        hucard_rom,
+        hucard_rom_size,
+        md5_hex,
+        startup_roster_names,
+        startup_roster_name_count,
+        plan,
+        out_result,
+        out_host_receipt,
+        out_state_receipt,
+        receipt,
+        receipt_cap);
 }
