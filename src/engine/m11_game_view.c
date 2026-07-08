@@ -26349,19 +26349,6 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     return 1;
 }
 
-static int m11_f0401_fright_amount_for_action(unsigned char actionIndex,
-                                              int* outExperience) {
-    if (outExperience) *outExperience = 0;
-    switch (actionIndex) {
-        case 8:  if (outExperience) *outExperience = 12; return 3;
-        case 37: if (outExperience) *outExperience = 35; return 7;
-        case 41: if (outExperience) *outExperience = 30; return 6;
-        case 4:  if (outExperience) *outExperience = 20; return 6;
-        case 22: if (outExperience) *outExperience = 45; return 12;
-        default: return 0;
-    }
-}
-
 static void m11_decrement_action_hand_charges_f0405(M11_GameViewState* state,
                                                     int championIndex) {
     struct ChampionState_Compat* champion;
@@ -26548,11 +26535,12 @@ static int m11_perform_f0401_frighten_action(M11_GameViewState* state,
     int groupIndex;
     struct DungeonGroup_Compat* group;
     const struct CreatureBehaviorProfile_Compat* profile;
-    int experience = 0;
-    int frightAmount;
+    DM1_ActionFrightInputPc34 frightIn;
+    DM1_ActionFrightPlanPc34 frightPlan;
     int influenceLevel;
     int fearResistance;
-    int resisted = 0;
+    int randomRange;
+    int randomDraw;
     int activeIndex = -1;
 
     if (!state || !state->world.things || !state->world.things->groups) return 0;
@@ -26573,29 +26561,29 @@ static int m11_perform_f0401_frighten_action(M11_GameViewState* state,
     profile = CREATURE_GetProfile_Compat(group->creatureType);
     if (!profile) return 0;
 
-    /* ReDMCSB MENU.C F0401 lines 913-989 receives P0771/P0772 from
-     * F0407's L1251/L1252 target, which MENU.C lines 1262-1266 compute from
-     * Champion.Direction before the action switch.  The action-specific
-     * fright amount then adds F0303(INFLUENCE), resistance/immune halves XP,
-     * and success switches the group to FLEE with DelayFleeingFromTarget. */
-    frightAmount = m11_f0401_fright_amount_for_action(actionIndex, &experience);
     influenceLevel = M11_GameView_GetSkillLevel(
         state, championIndex, DM1_SKILL_IDX_INFLUENCE);
     if (influenceLevel < 0) influenceLevel = 0;
-    frightAmount += influenceLevel;
     fearResistance = DM1_FEAR_RESISTANCE(profile->properties);
-
-    if (fearResistance == DM1_IMMUNE_TO_FEAR) {
-        resisted = 1;
-    } else {
-        int roll = F0732_COMBAT_RngRandom_Compat(
-            &state->world.masterRng, frightAmount > 0 ? frightAmount : 1);
-        resisted = fearResistance > roll;
+    randomRange = dm1_v1_action_fright_random_range_f0401_pc34(
+        actionIndex, influenceLevel);
+    if (randomRange <= 0) return 0;
+    randomDraw = fearResistance == DM1_IMMUNE_TO_FEAR ? 0 :
+        F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, randomRange);
+    memset(&frightIn, 0, sizeof(frightIn));
+    frightIn.actionIndex = actionIndex;
+    frightIn.influenceSkillLevel = influenceLevel;
+    frightIn.fearResistance = fearResistance;
+    frightIn.randomDraw = randomDraw;
+    frightIn.movementTicks = profile->movementTicks;
+    if (!dm1_v1_action_fright_plan_f0401_pc34(&frightIn, &frightPlan) ||
+        !frightPlan.valid) {
+        return 0;
     }
 
-    if (resisted) {
-        experience >>= 1;
-        (void)m11_add_influence_experience(state, championIndex, experience);
+    if (frightPlan.resisted) {
+        (void)m11_add_influence_experience(
+            state, championIndex, frightPlan.influenceExperience);
         return 0;
     }
 
@@ -26604,13 +26592,12 @@ static int m11_perform_f0401_frighten_action(M11_GameViewState* state,
         activeIndex = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
     }
     if (activeIndex >= 0) {
-        int movementTicks = profile->movementTicks > 0 ? profile->movementTicks : 1;
         state->world.creatureAI[activeIndex].stateKind = AI_STATE_FLEE;
-        state->world.creatureAI[activeIndex].fearCounter =
-            ((16 - fearResistance) << 2) / movementTicks;
+        state->world.creatureAI[activeIndex].fearCounter = frightPlan.fleeDelayTicks;
     }
-    (void)m11_add_influence_experience(state, championIndex, experience);
-    return 1;
+    (void)m11_add_influence_experience(
+        state, championIndex, frightPlan.influenceExperience);
+    return frightPlan.frightened;
 }
 
 /* ---------------------------------------------------------------

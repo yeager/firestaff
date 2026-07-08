@@ -206,6 +206,25 @@ typedef struct {
     int decrementsActionHandChargesOnSuccess;
 } DM1_ActionShieldPlanPc34;
 
+typedef struct {
+    int actionIndex;
+    int influenceSkillLevel;
+    int fearResistance;
+    int randomDraw;
+    int movementTicks;
+} DM1_ActionFrightInputPc34;
+
+typedef struct {
+    int valid;
+    int baseFrightAmount;
+    int totalFrightAmount;
+    int randomRange;
+    int influenceExperience;
+    int resisted;
+    int frightened;
+    int fleeDelayTicks;
+} DM1_ActionFrightPlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -243,6 +262,11 @@ int dm1_v1_action_window_plan_f0407_pc34(
 int dm1_v1_action_shield_plan_f0403_pc34(
     const DM1_ActionShieldInputPc34* in,
     DM1_ActionShieldPlanPc34* out);
+int dm1_v1_action_fright_random_range_f0401_pc34(int actionIndex,
+                                                 int influenceSkillLevel);
+int dm1_v1_action_fright_plan_f0401_pc34(
+    const DM1_ActionFrightInputPc34* in,
+    DM1_ActionFrightPlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);

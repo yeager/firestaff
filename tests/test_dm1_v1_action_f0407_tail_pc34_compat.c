@@ -336,6 +336,60 @@ static void test_shield_plan(void) {
              "zero mana shield no charge decrement");
 }
 
+static void test_fright_plan(void) {
+    DM1_ActionFrightInputPc34 in;
+    DM1_ActionFrightPlanPc34 out;
+
+    CHECK_EQ(dm1_v1_action_fright_random_range_f0401_pc34(
+                 DM1_ACTION_WAR_CRY, 4), 7,
+             "war cry fright random range");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_WAR_CRY;
+    in.influenceSkillLevel = 4;
+    in.fearResistance = 2;
+    in.randomDraw = 2;
+    in.movementTicks = 4;
+    CHECK_EQ(dm1_v1_action_fright_plan_f0401_pc34(&in, &out), 1,
+             "war cry fright plan builds");
+    CHECK_EQ(out.baseFrightAmount, 3, "war cry base fright");
+    CHECK_EQ(out.totalFrightAmount, 7, "war cry total fright");
+    CHECK_EQ(out.influenceExperience, 12, "war cry influence xp");
+    CHECK_EQ(out.resisted, 0, "war cry not resisted on equal roll");
+    CHECK_EQ(out.frightened, 1, "war cry frightens");
+    CHECK_EQ(out.fleeDelayTicks, 14, "war cry flee delay");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_CONFUSE;
+    in.influenceSkillLevel = 3;
+    in.fearResistance = 8;
+    in.randomDraw = 2;
+    in.movementTicks = 6;
+    CHECK_EQ(dm1_v1_action_fright_plan_f0401_pc34(&in, &out), 1,
+             "confuse resisted plan builds");
+    CHECK_EQ(out.baseFrightAmount, 12, "confuse base fright");
+    CHECK_EQ(out.totalFrightAmount, 15, "confuse total fright");
+    CHECK_EQ(out.influenceExperience, 22, "confuse resisted halves xp");
+    CHECK_EQ(out.resisted, 1, "confuse resisted");
+    CHECK_EQ(out.frightened, 0, "confuse resisted no fright");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_BLOW_HORN;
+    in.influenceSkillLevel = 0;
+    in.fearResistance = 15;
+    in.randomDraw = 5;
+    in.movementTicks = 2;
+    CHECK_EQ(dm1_v1_action_fright_plan_f0401_pc34(&in, &out), 1,
+             "immune fear plan builds");
+    CHECK_EQ(out.influenceExperience, 10, "immune fear halves xp");
+    CHECK_EQ(out.resisted, 1, "immune fear resisted");
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = DM1_ACTION_LIGHT;
+    CHECK_EQ(dm1_v1_action_fright_plan_f0401_pc34(&in, &out), 0,
+             "non fright action rejected");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -357,6 +411,7 @@ int main(void) {
     test_heal_plan();
     test_light_and_window_plans();
     test_shield_plan();
+    test_fright_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",
