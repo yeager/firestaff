@@ -525,6 +525,46 @@ int csb_v1_boot_runtime_load_game_from_path_pc34(
 int csb_v1_boot_runtime_tick_pc34(
     CSB_V1_BootProfile *profile,
     uint32_t *out_game_time);
+int csb_v1_boot_runtime_object_icon_index_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short thing);
+int csb_v1_boot_runtime_object_action_set_index_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short thing);
+uint16_t csb_v1_boot_runtime_object_allowed_slots_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short thing);
+int csb_v1_boot_runtime_object_name_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short thing,
+    char *out,
+    size_t out_size);
+int csb_v1_boot_runtime_read_container_slots_pc34(
+    const CSB_V1_BootProfile *profile,
+    unsigned short container_thing,
+    unsigned short out_slots[8]);
+int csb_v1_boot_runtime_write_container_slots_pc34(
+    CSB_V1_BootProfile *profile,
+    unsigned short container_thing,
+    const unsigned short slots[8]);
+int csb_v1_boot_runtime_set_thing_next_pc34(
+    CSB_V1_BootProfile *profile,
+    unsigned short thing,
+    unsigned short next_thing);
+int csb_v1_boot_runtime_write_inventory_slot_pc34(
+    CSB_V1_BootProfile *profile,
+    int champion_index,
+    int csb_slot,
+    unsigned short thing);
+int csb_v1_boot_runtime_write_leader_hand_pc34(
+    CSB_V1_BootProfile *profile,
+    unsigned short thing);
+int csb_v1_boot_runtime_write_champion_vitals_pc34(
+    CSB_V1_BootProfile *profile,
+    int champion_index,
+    int current_health,
+    int current_stamina,
+    int current_mana);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *

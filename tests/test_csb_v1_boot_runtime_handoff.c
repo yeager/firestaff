@@ -750,7 +750,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
 
     snprintf(save_path, sizeof(save_path), "%s/boot-profile-adapter.fsav",
              tmp_dir);
-    CHECK(csb_v1_runtime_save_game_to_path_from_boot_profile_pc34(
+    CHECK(csb_v1_boot_runtime_save_game_to_path_pc34(
               &p,
               save_path,
               &adapter_game_time) == CSB_V1_SAVE_OK &&
@@ -759,7 +759,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     p.runtime.party_x = 3;
     p.runtime.party_y = 4;
     p.runtime.party_dir = CSB_V1_DIR_WEST;
-    CHECK(csb_v1_runtime_load_game_from_path_from_boot_profile_pc34(
+    CHECK(csb_v1_boot_runtime_load_game_from_path_pc34(
               &p,
               save_path,
               &adapter_game_time) == CSB_V1_LOAD_OK &&
@@ -768,7 +768,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               p.runtime.party_y != 4 &&
               p.runtime.party_dir != CSB_V1_DIR_WEST,
           "boot-profile load adapter restores CSB runtime save and reports game time");
-    CHECK(csb_v1_runtime_tick_from_boot_profile_pc34(
+    CHECK(csb_v1_boot_runtime_tick_pc34(
               &p,
               &adapter_game_time) == 1 &&
               adapter_game_time == p.runtime.game_time,
@@ -878,6 +878,41 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CHECK(party_receipt.party.champions[0].portraitBitmapValid == 1 &&
               party_receipt.party.champions[0].portraitBitmap[0] == 0xabu,
           "party mirror receipt carries compatible imported portrait bytes");
+    CHECK(csb_v1_boot_runtime_write_inventory_slot_pc34(
+              &p,
+              0,
+              CSB_V1_SLOT_ACTION_HAND,
+              0x3456u) == 1,
+          "boot runtime inventory facade writes champion action hand");
+    memset(&runtime_party, 0, sizeof(runtime_party));
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 2 &&
+              runtime_party.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] ==
+                  0x3456u,
+          "runtime party observes boot-owned inventory slot write");
+    CHECK(csb_v1_boot_runtime_write_champion_vitals_pc34(
+              &p,
+              0,
+              71,
+              52,
+              33) == 1,
+          "boot runtime vitals facade writes champion vitals");
+    memset(&runtime_party, 0, sizeof(runtime_party));
+    CHECK(csb_v1_runtime_get_party_state(&p.runtime, &runtime_party) == 2 &&
+              runtime_party.Champions[0].CurrentHealth == 71 &&
+              runtime_party.Champions[0].CurrentStamina == 52 &&
+              runtime_party.Champions[0].CurrentMana == 33,
+          "runtime party observes boot-owned champion vitals write");
+    CHECK(csb_v1_boot_runtime_write_leader_hand_pc34(&p, 0x4567u) == 1,
+          "boot runtime leader-hand facade writes transient leader hand");
+    CHECK(p.runtime.party_state.LeaderHandThing == 0x4567u,
+          "runtime party observes boot-owned leader-hand write");
+    CHECK(csb_v1_boot_runtime_read_container_slots_pc34(
+              &p,
+              THING_NONE,
+              NULL) < 0,
+          "boot runtime container facade rejects invalid container thing");
+    CHECK(csb_v1_boot_runtime_object_allowed_slots_pc34(&p, THING_NONE) == 0,
+          "boot runtime object-slot facade rejects invalid object thing");
     /* CSBWin stores transient object-in-hand separately from champion ready-hand slots. */
     p.runtime.party_state.LeaderHandThing = 0x1234u;
     CHECK(csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
