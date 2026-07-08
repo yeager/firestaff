@@ -7,7 +7,8 @@
  * Instead of hardcoding filenames, scan data directories recursively
  * and match files by their MD5 hash. This handles platform-specific
  * naming (DUNGEON.DAT vs Dungeon.DAT vs DM2DUNGEON.DAT) and
- * arbitrary directory layouts.
+ * arbitrary directory layouts. Supported archive/disc containers are
+ * scanned by entry hash and returned as virtual paths.
  */
 
 #define ASSET_PATH_MAX 512

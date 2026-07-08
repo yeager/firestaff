@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 archive scanner suffix broadening: the shared game-data hash scanner now treats common ZIP-compatible containers (`.apk`, `.ipa`, `.xpi`, `.whl`, `.wsz`, `.kmz`) and raw-ish disc image suffixes (`.raw`, `.mdf`) as scan containers. Regression coverage added for `.apk` and `.raw` virtual-path scan/extract.
+
 - ✅ 2026-07-08 Nexus boot status host receipts: Nexus startup now exposes boot host receipts for data error, level error, title loaded, and title fallback. M11 applies those receipts instead of setting Nexus boot status strings directly. Verification: strict compile checks passed for `nexus_v1_startup_menu.c`, `m11_game_view.c`, and `test_nexus_v1_startup_menu_pc34_compat.c`; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 runtime bind host receipt: `dm2_v1_runtime_bind_boot_profile_with_receipt()` now returns M11-ready host status for runtime bind success/failure. M11 applies that receipt instead of setting `DM2 RUNTIME BIND FAILED` locally. Verification: strict compile checks passed for `dm2_v1_runtime.c`, `m11_game_view.c`, and `test_dm2_v1_runtime_handoff_smoke.c` with `FIRESTAFF_DM2_PROJECTILE_TESTING=1`; Phase A passed 24/24; `git diff --check` passed.
