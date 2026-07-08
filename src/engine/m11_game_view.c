@@ -5820,12 +5820,6 @@ static int m11_start_v1_mouth_animation(M11_GameViewState* state,
                                         const DM1ConsumableResultPc34* result);
 static int m11_tick_v1_mouth_animation(M11_GameViewState* state);
 
-static unsigned char m11_action_disabled_ticks_f0407(unsigned char actionIndex) {
-    int ticks;
-    ticks = dm1_v1_action_disabled_ticks_f0407_pc34((int)actionIndex);
-    return ticks < 0 ? 0u : (unsigned char)ticks;
-}
-
 static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
                                                  int championIndex);
 static int m11_refill_ready_hand_after_shoot(M11_GameViewState* state,
@@ -24653,12 +24647,6 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
     return dm1_v1_action_is_melee_contact_f0407_pc34((int)actionIndex);
 }
 
-static int m11_action_stamina_base_f0407(unsigned char actionIndex) {
-    DM1_ActionF0407TailPc34 tail;
-    if (!dm1_v1_action_f0407_tail_pc34((int)actionIndex, &tail)) return 0;
-    return tail.staminaBase;
-}
-
 static void m11_adjust_action_tail_f0407(unsigned char actionIndex,
                                          int performed,
                                          int cancelActionDisable,
@@ -24716,20 +24704,12 @@ static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
     return cost;
 }
 
-static int m11_apply_action_stamina_cost(M11_GameViewState* state,
-                                         int championIndex,
-                                         unsigned char actionIndex) {
-    int base;
-    int cost;
+static int m11_apply_planned_action_stamina_cost(M11_GameViewState* state,
+                                                 int championIndex,
+                                                 int cost) {
     if (!state) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
-    if (actionIndex >= 44) return 0;
     if (championIndex >= state->world.party.championCount) return 0;
-
-    base = m11_action_stamina_base_f0407(actionIndex);
-    if (base < 0) return 0;
-    cost = dm1_v1_action_stamina_cost_f0407_pc34(
-        (int)actionIndex, championIndex, state->world.gameTick);
     if (cost <= 0) return 0;
     return m11_apply_champion_stamina_cost_f0325(state, championIndex, cost);
 }
@@ -29831,7 +29811,8 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     int performed = 0;
     int actionExperienceGain = 0;
     int cancelActionDisable = 0;
-    DM1_ActionXpRoute actionXpRoute;
+    DM1_ActionF0407PreludeInputPc34 preludeIn;
+    DM1_ActionF0407PreludePlanPc34 preludePlan;
 
     if (!state || !state->active) {
         return 0;
@@ -29925,14 +29906,21 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
      * acting champion while the action animation plays. */
     state->world.party.activeChampionIndex = championIndex;
     m11_apply_champion_action_defense_before_action(state, championIndex, chosen);
-    (void)m11_apply_action_stamina_cost(state, championIndex, chosen);
-    m11_write_csb_runtime_champion_vitals(state, championIndex);
-    if (dm1_v1_action_xp_route((int)chosen, &actionXpRoute) &&
-        actionXpRoute.valid) {
-        actionExperienceGain = actionXpRoute.experienceGain;
+    memset(&preludeIn, 0, sizeof(preludeIn));
+    preludeIn.actionIndex = (int)chosen;
+    preludeIn.championIndex = championIndex;
+    preludeIn.gameTick = state->world.gameTick;
+    if (!dm1_v1_action_prelude_plan_f0407_pc34(&preludeIn, &preludePlan) ||
+        !preludePlan.valid) {
+        M11_GameView_ClearActingChampion(state);
+        return 0;
     }
-    if (m11_action_is_melee_contact(chosen)) {
-        unsigned char disabledTicks = m11_action_disabled_ticks_f0407(chosen);
+    (void)m11_apply_planned_action_stamina_cost(
+        state, championIndex, preludePlan.staminaCost);
+    m11_write_csb_runtime_champion_vitals(state, championIndex);
+    actionExperienceGain = preludePlan.actionExperienceGain;
+    if (preludePlan.isMeleeContact) {
+        unsigned char disabledTicks = (unsigned char)preludePlan.disabledTicks;
         unsigned char closedDoorDisabledTicks = 0u;
         int timelineCountBeforeAttack = state->world.timeline.count;
         if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
@@ -29975,7 +29963,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                 state, championIndex, chosen, disabledTicks);
         }
     } else {
-        unsigned char disabledTicks = m11_action_disabled_ticks_f0407(chosen);
+        unsigned char disabledTicks = (unsigned char)preludePlan.disabledTicks;
         /* Non-melee: apply bounded effect (if any), then advance
          * a CMD_NONE tick so "time passes" semantics hold —
          * action stamina has drained, action-disabled ticks roll forward,
@@ -30025,9 +30013,10 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     const char* actionName;
     char champName[16];
     int actionExperienceGain = 0;
-    DM1_ActionXpRoute actionXpRoute;
     int performed;
     int cancelActionDisable = 0;
+    DM1_ActionF0407PreludeInputPc34 preludeIn;
+    DM1_ActionF0407PreludePlanPc34 preludePlan;
     if (!state || !state->active) return 0;
     if (state->candidateMirrorPanelActive) {
         /* ReDMCSB MENU.C F0390 lines 751-759: while
@@ -30066,17 +30055,21 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     state->world.party.activeChampionIndex = championIndex;
     m11_apply_champion_action_defense_before_action(
         state, championIndex, (unsigned char)actionIndex);
-    (void)m11_apply_action_stamina_cost(state, championIndex,
-                                        (unsigned char)actionIndex);
-    m11_write_csb_runtime_champion_vitals(state, championIndex);
-    if (dm1_v1_action_xp_route(actionIndex, &actionXpRoute) &&
-        actionXpRoute.valid) {
-        /* ReDMCSB MENU.C F0407 lines 1626-1628 applies the common
-         * G0497 action-XP tail for every action whose table entry is
-         * nonzero.  Callers adjust actionExperienceGain for the source
-         * failure tails before this value reaches F0304. */
-        actionExperienceGain = actionXpRoute.experienceGain;
+    memset(&preludeIn, 0, sizeof(preludeIn));
+    preludeIn.actionIndex = actionIndex;
+    preludeIn.championIndex = championIndex;
+    preludeIn.gameTick = state->world.gameTick;
+    if (!dm1_v1_action_prelude_plan_f0407_pc34(&preludeIn, &preludePlan) ||
+        !preludePlan.valid) {
+        M11_GameView_ClearActingChampion(state);
+        return 0;
     }
+    (void)m11_apply_planned_action_stamina_cost(
+        state, championIndex, preludePlan.staminaCost);
+    m11_write_csb_runtime_champion_vitals(state, championIndex);
+    /* ReDMCSB MENU.C F0407 lines 1626-1628 applies the common G0497
+     * action-XP tail for every action whose table entry is nonzero. */
+    actionExperienceGain = preludePlan.actionExperienceGain;
     performed = m11_perform_non_melee_action(state, championIndex,
                                              (unsigned char)actionIndex,
                                              champName,
@@ -30090,7 +30083,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     }
     {
         unsigned char disabledTicks =
-            m11_action_disabled_ticks_f0407((unsigned char)actionIndex);
+            (unsigned char)preludePlan.disabledTicks;
         m11_adjust_action_tail_f0407(
             (unsigned char)actionIndex, performed, cancelActionDisable,
             actionIndex == DM1_ACTION_PARRY && !performed,

@@ -161,6 +161,35 @@ int dm1_v1_action_disabled_ticks_f0407_pc34(int actionIndex) {
     return ticks < 0 ? 0 : ticks;
 }
 
+int dm1_v1_action_prelude_plan_f0407_pc34(
+    const DM1_ActionF0407PreludeInputPc34* in,
+    DM1_ActionF0407PreludePlanPc34* out) {
+    DM1_ActionXpRoute route;
+    if (!in || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+    if (!dm1_v1_action_xp_route(in->actionIndex, &route) || !route.valid) {
+        return 0;
+    }
+    /* ReDMCSB: MENU.C F0407 lines 1267-1275 pulls G0496/G0497, G0491,
+     * G0494+RANDOM(2), and the F0402 melee gate from the action index before
+     * dispatching the action-specific branch. */
+    out->valid = 1;
+    out->skillIndex = route.skillIndex;
+    out->baseSkillIndex = route.baseSkillIndex;
+    out->actionExperienceGain = route.experienceGain;
+    out->disabledTicks =
+        dm1_v1_action_disabled_ticks_f0407_pc34(in->actionIndex);
+    out->staminaCost = dm1_v1_action_stamina_cost_f0407_pc34(
+        in->actionIndex, in->championIndex, in->gameTick);
+    out->isMeleeContact =
+        dm1_v1_action_is_melee_contact_f0407_pc34(in->actionIndex);
+    return 1;
+}
+
 int dm1_v1_action_adjust_f0407_tail_pc34(
     const DM1_ActionF0407TailAdjustInputPc34* in,
     DM1_ActionF0407TailAdjustPc34* out) {
