@@ -2770,6 +2770,20 @@ void csb_v1_startup_host_receipt_init_pc34(
     receipt->input_result = CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34;
 }
 
+void csb_v1_startup_entrance_host_action_receipt_init_pc34(
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->command_receipt.pure_apply_result =
+        CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34;
+    csb_v1_startup_command_state_receipt_init_pc34(
+        &receipt->state_receipt);
+    csb_v1_startup_host_receipt_init_pc34(&receipt->host_receipt);
+}
+
 int csb_v1_startup_host_receipt_from_pure_entrance_pc34(
     const CSB_V1_StartupEntranceCommandReceipt_PC34 *command_receipt,
     CSB_V1_StartupHostReceipt_PC34 *out_receipt)
@@ -2785,6 +2799,37 @@ int csb_v1_startup_host_receipt_from_pure_entrance_pc34(
             command_receipt->pure_apply_result);
     out_receipt->status_scope = command_receipt->outcome.status_scope;
     out_receipt->status = command_receipt->outcome.status;
+    return 1;
+}
+
+int csb_v1_startup_execute_entrance_command_from_host_facts_with_receipts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    int command_id,
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 *out_receipt)
+{
+    if (out_receipt) {
+        csb_v1_startup_entrance_host_action_receipt_init_pc34(
+            out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_startup_apply_entrance_command_from_host_facts_with_receipts_pc34(
+            facts,
+            command_id,
+            &out_receipt->command_receipt,
+            &out_receipt->state_receipt) ||
+        !out_receipt->command_receipt.handled) {
+        return 1;
+    }
+
+    out_receipt->handled = 1;
+    if (out_receipt->command_receipt.pure_apply_result !=
+        CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34) {
+        return csb_v1_startup_host_receipt_from_pure_entrance_pc34(
+            &out_receipt->command_receipt,
+            &out_receipt->host_receipt);
+    }
     return 1;
 }
 

@@ -275,6 +275,7 @@ int main(void)
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
     CSB_V1_StartupHostReceipt_PC34 host_receipt;
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 host_action_receipt;
     CSB_V1_StartupHostFacts_PC34 host_facts;
     CSB_V1_StartupSessionOptionsInput_PC34 session_input;
     CSB_V1_StartupSessionOptions_PC34 session_options;
@@ -1853,6 +1854,19 @@ int main(void)
                   CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
               strcmp(host_receipt.status, "CSB ENTRANCE") == 0,
           "startup pure entrance host receipt owns M11 input/status result");
+    check(csb_v1_startup_execute_entrance_command_from_host_facts_with_receipts_pc34(
+              &host_facts,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34,
+              &host_action_receipt) &&
+              host_action_receipt.handled &&
+              host_action_receipt.command_receipt.handled &&
+              !host_action_receipt.command_receipt.requires_runtime_plan &&
+              host_action_receipt.host_receipt.input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              strcmp(host_action_receipt.host_receipt.status,
+                     "CSB ENTRANCE") == 0 &&
+              !host_action_receipt.state_receipt.credits_active,
+          "startup entrance host action receipt owns pure command result");
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
