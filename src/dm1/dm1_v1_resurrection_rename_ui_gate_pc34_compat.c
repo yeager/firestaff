@@ -250,9 +250,68 @@ dm1_v1_resurrection_rename_ui_gate_apply_command_pc34(
 }
 
 int
+dm1_v1_resurrection_rename_ui_gate_host_active_pc34(
+    int game_active,
+    int candidate_panel_active,
+    int rename_active)
+{
+    return game_active && candidate_panel_active && rename_active;
+}
+
+int
+dm1_v1_resurrection_rename_ui_gate_host_text_byte_pc34(int ch)
+{
+    return ch >= 0 && ch < 0x80;
+}
+
+int
+dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+    const DM1_V1_ResurrectionRenameUiGatePc34Compat *state,
+    int host_key,
+    DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat *out_decision)
+{
+    DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat decision;
+    memset(&decision, 0, sizeof(decision));
+    if (!out_decision) {
+        return 0;
+    }
+    decision.handled = 1;
+    if (!is_rename_live(state)) {
+        decision.handled = 0;
+        *out_decision = decision;
+        return 0;
+    }
+    switch (host_key) {
+    case DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_BACKSPACE_PC34_COMPAT:
+    case DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_ESCAPE_PC34_COMPAT:
+        decision.useCommand = 1;
+        decision.command =
+            DM1_V1_RESURRECTION_RENAME_UI_COMMAND_BACKSPACE_PC34_COMPAT;
+        break;
+    case DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_RETURN_PC34_COMPAT:
+    case DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_KEYPAD_RETURN_PC34_COMPAT:
+        if (state->fieldMode ==
+            DM1_V1_RESURRECTION_RENAME_UI_FIELD_NAME_PC34_COMPAT) {
+            decision.useAscii = 1;
+            decision.ascii = '\r';
+        } else {
+            decision.useCommand = 1;
+            decision.command =
+                DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT;
+        }
+        break;
+    default:
+        break;
+    }
+    *out_decision = decision;
+    return 1;
+}
+
+int
 dm1_v1_resurrection_rename_ui_gate_run_self_test_pc34(void)
 {
     DM1_V1_ResurrectionRenameUiGatePc34Compat state;
+    DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat decision;
     int i;
 
     dm1_v1_resurrection_rename_ui_gate_init_pc34(
@@ -316,7 +375,17 @@ dm1_v1_resurrection_rename_ui_gate_run_self_test_pc34(void)
             &state, DM1_V1_RESURRECTION_RENAME_UI_COMMAND_BACKSPACE_PC34_COMPAT) != 1 ||
         strcmp(state.name, "ABCDEF") != 0 ||
         state.fieldMode != DM1_V1_RESURRECTION_RENAME_UI_FIELD_NAME_PC34_COMPAT ||
-        state.characterIndex != 6) {
+            state.characterIndex != 6) {
+        return 0;
+    }
+    if (!dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+            &state,
+            DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_RETURN_PC34_COMPAT,
+            &decision) ||
+        !decision.handled ||
+        !decision.useAscii ||
+        decision.ascii != '\r' ||
+        decision.useCommand) {
         return 0;
     }
     return 1;

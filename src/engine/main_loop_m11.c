@@ -2833,9 +2833,11 @@ static int m11_map_window_to_launcher(int wx, int wy,
 }
 
 static int m11_dm1_rename_text_input_active(const M11_GameViewState* gameView) {
-    return gameView && gameView->active &&
-           gameView->candidateMirrorPanelActive &&
-           gameView->candidateMirrorRenameActive;
+    return gameView &&
+           dm1_v1_resurrection_rename_ui_gate_host_active_pc34(
+               gameView->active,
+               gameView->candidateMirrorPanelActive,
+               gameView->candidateMirrorRenameActive);
 }
 
 static M11_GameInputResult
@@ -2861,7 +2863,7 @@ static int m11_dm1_rename_consume_text_input(M11_GameViewState* gameView,
     }
     while (p && *p) {
         unsigned char ch = *p++;
-        if (ch < 0x80U &&
+        if (dm1_v1_resurrection_rename_ui_gate_host_text_byte_pc34((int)ch) &&
             m11_dm1_rename_apply_ascii(gameView, (int)ch) ==
                 M11_GAME_INPUT_REDRAW) {
             changed = 1;
@@ -2895,6 +2897,8 @@ static M11_GameInputResult
 m11_dm1_rename_handle_keydown(M11_GameViewState* gameView,
                               int key,
                               int keypadEnterKey) {
+    DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat decision;
+    int hostKey = DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_OTHER_PC34_COMPAT;
     if (!m11_dm1_rename_text_input_active(gameView)) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -2903,21 +2907,27 @@ m11_dm1_rename_handle_keydown(M11_GameViewState* gameView,
      * F0282:806-808 enters F0281 from C161.  Consume all other keydown
      * events here so SDL_TEXTINPUT, not the movement/shortcut mapper,
      * owns printable rename characters while the panel is active. */
-    if (key == SDLK_BACKSPACE || key == SDLK_ESCAPE) {
-        return M11_GameView_ApplyMirrorCandidateRenameCommand(
-                   gameView,
-                   DM1_V1_RESURRECTION_RENAME_UI_COMMAND_BACKSPACE_PC34_COMPAT)
-                   ? M11_GAME_INPUT_REDRAW
-                   : M11_GAME_INPUT_IGNORED;
+    if (key == SDLK_BACKSPACE) {
+        hostKey = DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_BACKSPACE_PC34_COMPAT;
+    } else if (key == SDLK_ESCAPE) {
+        hostKey = DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_ESCAPE_PC34_COMPAT;
+    } else if (key == SDLK_RETURN) {
+        hostKey = DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_RETURN_PC34_COMPAT;
+    } else if (key == keypadEnterKey) {
+        hostKey = DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_KEYPAD_RETURN_PC34_COMPAT;
     }
-    if (key == SDLK_RETURN || key == keypadEnterKey) {
-        if (gameView->candidateMirrorRename.fieldMode ==
-            DM1_V1_RESURRECTION_RENAME_UI_FIELD_NAME_PC34_COMPAT) {
-            return m11_dm1_rename_apply_ascii(gameView, '\r');
-        }
+    if (!dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+            &gameView->candidateMirrorRename,
+            hostKey,
+            &decision)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (decision.useAscii) {
+        return m11_dm1_rename_apply_ascii(gameView, decision.ascii);
+    }
+    if (decision.useCommand) {
         return M11_GameView_ApplyMirrorCandidateRenameCommand(
-                   gameView,
-                   DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT)
+                   gameView, decision.command)
                    ? M11_GAME_INPUT_REDRAW
                    : M11_GAME_INPUT_IGNORED;
     }

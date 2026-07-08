@@ -31,6 +31,12 @@ extern "C" {
 #define DM1_V1_RESURRECTION_RENAME_UI_PANEL_BOX_W_PC34_COMPAT 52
 #define DM1_V1_RESURRECTION_RENAME_UI_PANEL_BOX_H_PC34_COMPAT 124
 
+#define DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_OTHER_PC34_COMPAT 0
+#define DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_BACKSPACE_PC34_COMPAT 1
+#define DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_ESCAPE_PC34_COMPAT 2
+#define DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_RETURN_PC34_COMPAT 3
+#define DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_KEYPAD_RETURN_PC34_COMPAT 4
+
 typedef struct DM1_V1_ResurrectionRenameUiGatePc34Compat {
     int panelCommand;
     int f0281RenameCallCount;
@@ -50,6 +56,14 @@ typedef struct DM1_V1_ResurrectionRenameUiGatePc34Compat {
     char title[DM1_V1_RESURRECTION_RENAME_UI_TITLE_MAX_PC34_COMPAT + 1];
 } DM1_V1_ResurrectionRenameUiGatePc34Compat;
 
+typedef struct DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat {
+    int handled;
+    int useAscii;
+    int ascii;
+    int useCommand;
+    int command;
+} DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat;
+
 void
 dm1_v1_resurrection_rename_ui_gate_init_pc34(
     DM1_V1_ResurrectionRenameUiGatePc34Compat *state,
@@ -64,6 +78,22 @@ int
 dm1_v1_resurrection_rename_ui_gate_apply_command_pc34(
     DM1_V1_ResurrectionRenameUiGatePc34Compat *state,
     int command);
+
+int
+dm1_v1_resurrection_rename_ui_gate_host_active_pc34(
+    int game_active,
+    int candidate_panel_active,
+    int rename_active);
+
+int
+dm1_v1_resurrection_rename_ui_gate_host_text_byte_pc34(
+    int ch);
+
+int
+dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+    const DM1_V1_ResurrectionRenameUiGatePc34Compat *state,
+    int host_key,
+    DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat *out_decision);
 
 int
 dm1_v1_resurrection_rename_ui_gate_run_self_test_pc34(void);
