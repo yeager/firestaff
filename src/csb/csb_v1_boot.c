@@ -976,6 +976,7 @@ int csb_v1_boot_startup_launch_detach_runtime_pc34(
         return 0;
     }
     out_receipt->profile = launch->profile;
+    out_receipt->receipts = launch->receipts;
     snprintf(out_receipt->boot_asset_md5,
              sizeof(out_receipt->boot_asset_md5),
              "%s",

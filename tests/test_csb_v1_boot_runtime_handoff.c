@@ -1648,6 +1648,11 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                 snprintf(launch.profile->dungeon_path,
                          sizeof(launch.profile->dungeon_path),
                          "/tmp/firestaff_csb_DUNGEON.DAT");
+                launch.receipts.launch_host_receipt.status_scope = "BOOT";
+                launch.receipts.launch_host_receipt.status = "CSB ENTRANCE";
+                launch.receipts.launch_host_receipt.log_color = 11U;
+                launch.receipts.init_state.command_state.entrance_active = 1;
+                launch.receipts.session_state.entrance_resume_available = 1;
                 memset(&runtime_receipt, 0, sizeof(runtime_receipt));
                 CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(
                           &launch,
@@ -1659,8 +1664,13 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                                  "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
                           strcmp(runtime_receipt.dungeon_path,
                                  "/tmp/firestaff_csb_DUNGEON.DAT") == 0 &&
+                          runtime_receipt.receipts.init_state.command_state.entrance_active &&
+                          runtime_receipt.receipts.session_state.entrance_resume_available &&
+                          runtime_receipt.receipts.launch_host_receipt.status &&
+                          strcmp(runtime_receipt.receipts.launch_host_receipt.status,
+                                 "CSB ENTRANCE") == 0 &&
                           launch.profile == NULL,
-                      "boot runtime detach transfers CSB profile and M11 launch identity");
+                      "boot runtime detach transfers CSB profile, M11 identity, and launch receipts");
                 csb_v1_boot_cleanup(runtime_receipt.profile);
                 free(runtime_receipt.profile);
             }

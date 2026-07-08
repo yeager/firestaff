@@ -85,6 +85,7 @@ typedef struct CSB_V1_BootStartupLaunch_PC34 {
 
 typedef struct CSB_V1_BootStartupRuntimeReceipt_PC34 {
     CSB_V1_BootProfile *profile;
+    CSB_V1_BootStartupLaunchReceipts_PC34 receipts;
     char boot_asset_md5[33];
     char graphics_path[512];
     char dungeon_path[512];
