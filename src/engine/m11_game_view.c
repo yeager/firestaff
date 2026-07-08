@@ -11812,7 +11812,6 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
 
 static int m11_theron_continue_startup(M11_GameViewState* state,
                                        const Theron_StartupActionPlan* plan,
-                                       Theron_V1StartupContinueResult* out_result,
                                        Theron_V1StartupContinueApplyReceipt* out_apply_receipt,
                                        char* receipt,
                                        size_t receipt_cap) {
@@ -11852,9 +11851,6 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
         return 0;
     }
     m11_theron_apply_startup_state_receipt(state, &stateReceipt);
-    if (out_result) {
-        *out_result = result;
-    }
     if (out_apply_receipt) {
         *out_apply_receipt = applyReceipt;
     }
@@ -11980,11 +11976,9 @@ static M11_GameInputResult m11_theron_startup_apply_action(
 
     case THERON_STARTUP_PLAN_CONTINUE_SAVE: {
         char receipt[96];
-        Theron_V1StartupContinueResult continueResult;
         Theron_V1StartupContinueApplyReceipt applyReceipt;
         int continued = m11_theron_continue_startup(state,
                                                     &plan,
-                                                    &continueResult,
                                                     &applyReceipt,
                                                     receipt,
                                                     sizeof(receipt));
@@ -11995,22 +11989,15 @@ static M11_GameInputResult m11_theron_startup_apply_action(
 	                                                : "CONTINUE FAILED"));
             return M11_GAME_INPUT_REDRAW;
         }
-        if (applyReceipt.input_result == THERON_STARTUP_INPUT_RESULT_REDRAW) {
-            m11_set_status(state,
-                           applyReceipt.status_scope
-                               ? applyReceipt.status_scope
-                               : "STARTUP",
-                           applyReceipt.status ? applyReceipt.status : "");
-            if (applyReceipt.inspect_scope) {
-                m11_set_inspect_readout(state,
-                                        applyReceipt.inspect_scope,
-                                        applyReceipt.inspect_detail);
-            }
-        } else {
-            m11_set_status(state,
-                           plan.status_scope ? plan.status_scope : "STARTUP",
-                           plan.status ? plan.status : "CONTINUE LOADED");
-            m11_theron_set_chapter_inspect(state, receipt);
+        m11_set_status(state,
+                       applyReceipt.status_scope
+                           ? applyReceipt.status_scope
+                           : "STARTUP",
+                       applyReceipt.status ? applyReceipt.status : "");
+        if (applyReceipt.inspect_scope) {
+            m11_set_inspect_readout(state,
+                                    applyReceipt.inspect_scope,
+                                    applyReceipt.inspect_detail);
         }
         return M11_GAME_INPUT_REDRAW;
     }

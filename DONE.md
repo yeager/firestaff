@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron Continue receipt status ownership: M11 now uses the Theron-owned Continue apply receipt for status and inspect output directly, removing the local successful-Continue result/fallback branch. Verification: Theron startup-flow probe passed 540/540, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup flow-action facts execution: `theron_v1_startup_flow` now executes normal startup flow plans directly from raw M11 facts and emits apply/state receipts. M11 no longer branches locally between stage-select initialization and flow rebuild for stage/cursor/mirror actions. Verification: Theron startup-flow probe passed 540/540, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup rebuild receipt application: M11 now applies the Theron-owned state receipt returned by startup-flow rebuilds and no longer keeps the unused local flow-snapshot sync adapter. Verification: Theron startup-flow probe passed 534/534, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
