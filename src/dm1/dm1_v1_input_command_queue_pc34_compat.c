@@ -1,4 +1,5 @@
 #include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "menu_startup_m12.h"
 #include <string.h>
 
 /* Source lock (ReDMCSB WIP20210206, Toolchains/Common/Source):
@@ -23,6 +24,22 @@
 
 #define DM1_V1_QUEUE_MAX_REGULAR 5u
 #define DM1_V1_QUEUE_MAX_RESERVED 7u
+
+int DM1_V1_InputSourceIsActivePc34Compat(int active, const char* sourceId)
+{
+    return active && sourceId && strcmp(sourceId, "dm1") == 0;
+}
+
+int DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(int menuInput)
+{
+    /* ReDMCSB: CLIKMENU.C F0365 lines 142-180 dispatches C001/C002
+     * turns immediately; COMMAND.C F0380 lines 2095-2100 only holds
+     * C003..C006 movement while cooldowns are active. */
+    return menuInput == M12_MENU_INPUT_TURN_LEFT ||
+           menuInput == M12_MENU_INPUT_TURN_RIGHT ||
+           menuInput == M12_MENU_INPUT_LEFT ||
+           menuInput == M12_MENU_INPUT_RIGHT;
+}
 
 static int normalize_dir(int value)
 {

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "menu_startup_m12.h"
 
 static int expect_int(const char* label, int got, int want)
 {
@@ -19,6 +20,25 @@ int main(void)
 
     printf("probe=dm1_v1_input_command_queue_pc34_compat\n");
     printf("sourceEvidence=%s\n", DM1_V1_InputCommandQueue_SourceEvidencePc34Compat());
+
+    ok &= expect_int("active DM1 source accepted",
+        DM1_V1_InputSourceIsActivePc34Compat(1, "dm1"), 1);
+    ok &= expect_int("inactive DM1 source rejected",
+        DM1_V1_InputSourceIsActivePc34Compat(0, "dm1"), 0);
+    ok &= expect_int("CSB source rejected by DM1 active predicate",
+        DM1_V1_InputSourceIsActivePc34Compat(1, "csb"), 0);
+    ok &= expect_int("NULL source rejected by DM1 active predicate",
+        DM1_V1_InputSourceIsActivePc34Compat(1, NULL), 0);
+    ok &= expect_int("turn-left token is immediate",
+        DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(M12_MENU_INPUT_TURN_LEFT), 1);
+    ok &= expect_int("turn-right token is immediate",
+        DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(M12_MENU_INPUT_TURN_RIGHT), 1);
+    ok &= expect_int("legacy left token is immediate",
+        DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(M12_MENU_INPUT_LEFT), 1);
+    ok &= expect_int("legacy right token is immediate",
+        DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(M12_MENU_INPUT_RIGHT), 1);
+    ok &= expect_int("forward token is not immediate turn",
+        DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(M12_MENU_INPUT_UP), 0);
 
     /* Source lock: ReDMCSB COMMAND.C:579-610 is the active I34E/I34M
      * primary interface keyboard table. F0361 searches it before the
