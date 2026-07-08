@@ -981,6 +981,12 @@ int csb_v1_boot_startup_launch_detach_runtime_pc34(
              sizeof(out_receipt->boot_asset_md5),
              "%s",
              launch->profile->graphics_md5);
+    snprintf(out_receipt->title,
+             sizeof(out_receipt->title),
+             "CHAOS STRIKES BACK");
+    snprintf(out_receipt->source_id,
+             sizeof(out_receipt->source_id),
+             "csb");
     snprintf(out_receipt->graphics_path,
              sizeof(out_receipt->graphics_path),
              "%s",

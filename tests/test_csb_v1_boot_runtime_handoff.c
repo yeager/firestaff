@@ -1660,6 +1660,10 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                           runtime_receipt.profile != NULL &&
                           strcmp(runtime_receipt.boot_asset_md5,
                                  "61fbfd56887c8bfe85ba4fb306fc2861") == 0 &&
+                          strcmp(runtime_receipt.title,
+                                 "CHAOS STRIKES BACK") == 0 &&
+                          strcmp(runtime_receipt.source_id,
+                                 "csb") == 0 &&
                           strcmp(runtime_receipt.graphics_path,
                                  "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
                           strcmp(runtime_receipt.dungeon_path,
