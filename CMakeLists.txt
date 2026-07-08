@@ -13456,6 +13456,21 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat
     )
 
+    # DM1 V1 champion-panel SPELL-AREA overlay draw contract.
+    # Source-locked against CASTER.C F0394 + MENU.C F0392/F0397/F0398.
+    add_executable(test_dm1_v1_champion_panel_spell_area_overlay_pc34_compat
+        tests/test_dm1_v1_champion_panel_spell_area_overlay_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_spell_area_overlay_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_spell_area_overlay_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_spell_area_overlay_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_spell_area_overlay_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_spell_area_overlay_pc34_compat
+    )
+
     # DM1 V1 champion-panel HAND-SLOT REFRESH M11 geometry bridge.
     # Data-free Firestaff-side probe that cross-checks the source-locked
     # F0296 odd action-hand slotbox walk (1, 3, 5, 7) against the M11

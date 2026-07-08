@@ -20,12 +20,12 @@
  *     by Champion[n].CurrentHealth > 0 and PartyChampionCount > n.
  *   Line 2 (y=50..61): 6 available rune symbols drawn by
  *     F0397_MENUS_DrawAvailableSymbols. First char = 96 + 6*SymbolStep,
- *     6 chars in C04_COLOR_CYAN on C00_COLOR_BLACK, x = 225 + 14*i,
+ *     6 chars in C04_COLOR_CYAN on C00_COLOR_BLACK, x = 239 + 14*i,
  *     y = 58.
  *   Line 3 (y=62..73): up to 4 currently-typed champion symbols drawn by
  *     F0398_MENUS_DrawChampionSymbols. The first strlen(Symbols) chars
  *     are filled from Champion->Symbols[0..N-1], the rest are padded
- *     with C20_SPACE. x = 232 + 9*i, y = 70, cyan on black.
+ *     with C20_SPACE. x = 241 + 9*i, y = 70, cyan on black.
  *
  * The CASTER.C F0394 entry has two early-out / state-mutate paths the
  * test pins:
@@ -47,7 +47,7 @@
  * - MENUDRAW.C F0397_MENUS_DrawAvailableSymbols: 6-char SymbolStep
  *   window and x/y origin.
  * - MENUDRAW.C F0398_MENUS_DrawChampionSymbols: strlen(Symbols) fill +
- *   space-pad tail + x = 232 + 9*i and y = 70 origin.
+ *   space-pad tail + x = 241 + 9*i and y = 70 origin.
  * - MENUDRAW.C F0396_MENUS_LoadSpellAreaLinesBitmap: C011 graphic load
  *   into the 3-row stack (header + line 2 + line 3).
  * - DATA.C:119 G0000_ai_Graphic562_Box_SpellArea = {224,319,42,74}.
@@ -110,12 +110,12 @@ extern "C" {
 #define DM1_V1_CPSAO_AVAILABLE_SYMBOL_COUNT_PC34 6
 #define DM1_V1_CPSAO_AVAILABLE_SYMBOL_BASE_PC34 96
 #define DM1_V1_CPSAO_AVAILABLE_SYMBOL_STEP_PC34 14
-#define DM1_V1_CPSAO_AVAILABLE_SYMBOL_X0_PC34 225
+#define DM1_V1_CPSAO_AVAILABLE_SYMBOL_X0_PC34 239
 #define DM1_V1_CPSAO_AVAILABLE_SYMBOL_Y_PC34 58
 
 #define DM1_V1_CPSAO_CHAMPION_SYMBOL_MAX_PC34 4
 #define DM1_V1_CPSAO_CHAMPION_SYMBOL_STEP_PC34 9
-#define DM1_V1_CPSAO_CHAMPION_SYMBOL_X0_PC34 232
+#define DM1_V1_CPSAO_CHAMPION_SYMBOL_X0_PC34 241
 #define DM1_V1_CPSAO_CHAMPION_SYMBOL_Y_PC34 70
 
 /* F0393 champion-tab x0 columns from SPELDRAW.C (PC 3.4 path). */
