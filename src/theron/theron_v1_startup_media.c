@@ -14,6 +14,18 @@ void theron_v1_startup_media_init(Theron_StartupMedia *media) {
         (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
 }
 
+void theron_v1_startup_media_state_receipt_init(
+    Theron_StartupMediaStateReceipt *receipt) {
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->startup_roster_name_status =
+        (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
+    receipt->startup_text_prompt_status =
+        (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
+}
+
 static void theron_v1_startup_media_capture_roster(
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
@@ -104,4 +116,51 @@ void theron_v1_startup_media_capture_track02(
                                          hucard_rom_size,
                                          md5_hex,
                                          out_media);
+}
+
+void theron_v1_startup_media_capture_track02_state_receipt(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_StartupMediaStateReceipt *out_receipt) {
+    Theron_StartupMedia media;
+    size_t i;
+
+    theron_v1_startup_media_state_receipt_init(out_receipt);
+    if (!out_receipt) {
+        return;
+    }
+
+    theron_v1_startup_media_capture_track02(hucard_rom,
+                                            hucard_rom_size,
+                                            md5_hex,
+                                            &media);
+    out_receipt->startup_roster_name_status =
+        media.startup_roster_name_status;
+    out_receipt->startup_text_prompt_status =
+        media.startup_text_prompt_status;
+    out_receipt->startup_text_prompt_count =
+        media.startup_text_prompt_count;
+    snprintf(out_receipt->startup_text_prompt,
+             sizeof(out_receipt->startup_text_prompt),
+             "%s",
+             media.startup_text_prompt);
+    if (media.startup_roster_name_status != THERON_TRACK02_SIGNAL_OK) {
+        return;
+    }
+
+    for (i = 0u;
+         i < (size_t)media.startup_roster_name_count &&
+         i < THERON_STARTUP_MEDIA_ROSTER_CAPACITY;
+         ++i) {
+        snprintf(out_receipt->startup_roster_names[i],
+                 sizeof(out_receipt->startup_roster_names[i]),
+                 "%s",
+                 media.startup_roster_names[i]);
+        snprintf(out_receipt->startup_roster_titles[i],
+                 sizeof(out_receipt->startup_roster_titles[i]),
+                 "%s",
+                 media.startup_roster_titles[i]);
+    }
+    out_receipt->startup_roster_name_count = (int)i;
 }

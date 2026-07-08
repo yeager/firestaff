@@ -11603,64 +11603,64 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     return 1;
 }
 
-static void m11_theron_capture_track02_startup_media(
+static void m11_theron_apply_startup_media_state_receipt(
     M11_GameViewState* state,
-    const TrAssetBundle* assets,
-    const char* md5_hex) {
-    Theron_StartupMedia media;
+    const Theron_StartupMediaStateReceipt* receipt) {
     size_t i;
 
-    if (!state) {
+    if (!state || !receipt) {
         return;
     }
     state->theronState.startup_roster_name_count = 0;
     state->theronState.startup_roster_name_status =
-        (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
+        receipt->startup_roster_name_status;
     memset(state->theronState.startup_roster_names,
            0,
            sizeof(state->theronState.startup_roster_names));
     memset(state->theronState.startup_roster_titles,
            0,
            sizeof(state->theronState.startup_roster_titles));
-    state->theronState.startup_text_prompt_count = 0;
     state->theronState.startup_text_prompt_status =
-        (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
-    state->theronState.startup_text_prompt[0] = '\0';
-
-    theron_v1_startup_media_capture_track02(
-        assets ? assets->hucard_rom : NULL,
-        assets ? assets->hucard_rom_size : 0u,
-        md5_hex,
-        &media);
-    state->theronState.startup_roster_name_status =
-        media.startup_roster_name_status;
-    state->theronState.startup_text_prompt_status =
-        media.startup_text_prompt_status;
+        receipt->startup_text_prompt_status;
     state->theronState.startup_text_prompt_count =
-        media.startup_text_prompt_count;
+        receipt->startup_text_prompt_count;
     snprintf(state->theronState.startup_text_prompt,
              sizeof(state->theronState.startup_text_prompt),
              "%s",
-             media.startup_text_prompt);
-    if (media.startup_roster_name_status != THERON_TRACK02_SIGNAL_OK) {
+             receipt->startup_text_prompt);
+    if (receipt->startup_roster_name_status != THERON_TRACK02_SIGNAL_OK) {
         return;
     }
 
     for (i = 0u;
-         i < (size_t)media.startup_roster_name_count &&
+         i < (size_t)receipt->startup_roster_name_count &&
          i < sizeof(state->theronState.startup_roster_names) /
                  sizeof(state->theronState.startup_roster_names[0]);
          ++i) {
         snprintf(state->theronState.startup_roster_names[i],
                  sizeof(state->theronState.startup_roster_names[i]),
                  "%s",
-                 media.startup_roster_names[i]);
+                 receipt->startup_roster_names[i]);
         snprintf(state->theronState.startup_roster_titles[i],
                  sizeof(state->theronState.startup_roster_titles[i]),
                  "%s",
-                 media.startup_roster_titles[i]);
+                 receipt->startup_roster_titles[i]);
     }
     state->theronState.startup_roster_name_count = (int)i;
+}
+
+static void m11_theron_capture_track02_startup_media(
+    M11_GameViewState* state,
+    const TrAssetBundle* assets,
+    const char* md5_hex) {
+    Theron_StartupMediaStateReceipt receipt;
+
+    theron_v1_startup_media_capture_track02_state_receipt(
+        assets ? assets->hucard_rom : NULL,
+        assets ? assets->hucard_rom_size : 0u,
+        md5_hex,
+        &receipt);
+    m11_theron_apply_startup_media_state_receipt(state, &receipt);
 }
 
 static void m11_theron_apply_startup_flow_snapshot(

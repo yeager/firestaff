@@ -15,6 +15,7 @@
 #include "theron_v1_save_load.h"
 #include "theron_v1_srm_classifier.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_media.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
@@ -81,6 +82,29 @@ static int write_fake_us_track02_with_startup_prompt(const char* path) {
     memset(sector, 0, sizeof(sector));
     memcpy(sector + 0x10u, prompt, sizeof(prompt) - 1u);
     return write_bytes(path, sector, sizeof(sector));
+}
+
+static void expect_startup_media_receipt_for_fake_track02(void) {
+    static const char prompt[] = "GO AWAY AND RESURRECT THERON";
+    unsigned char sector[2352];
+    Theron_StartupMediaStateReceipt receipt;
+
+    memset(sector, 0, sizeof(sector));
+    memcpy(sector + 0x10u, prompt, sizeof(prompt) - 1u);
+    theron_v1_startup_media_capture_track02_state_receipt(
+        sector,
+        sizeof(sector),
+        THERON_TRACK02_MD5_US_BIN,
+        &receipt);
+    expect_true(receipt.startup_text_prompt_status ==
+                    THERON_TRACK02_SIGNAL_OK &&
+                receipt.startup_text_prompt_count == 1 &&
+                strcmp(receipt.startup_text_prompt, prompt) == 0,
+                "Theron startup media receipt captures Track 02 prompt");
+    expect_true(receipt.startup_roster_name_status ==
+                    THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT &&
+                receipt.startup_roster_name_count == 0,
+                "Theron startup media receipt preserves unsupported US roster status");
 }
 
 static int make_temp_dir(char out[512]) {
@@ -201,6 +225,7 @@ int main(void) {
     int startup_layout_count;
     int i;
 
+    expect_startup_media_receipt_for_fake_track02();
     expect_true(make_temp_dir(temp_dir), "temporary root created");
     snprintf(theron_dir, sizeof(theron_dir), "%s%stheron", temp_dir, PATH_SEP);
     expect_true(TEST_MKDIR(theron_dir) == 0, "theron subdir created");
