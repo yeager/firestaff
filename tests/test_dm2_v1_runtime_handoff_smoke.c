@@ -583,6 +583,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
     {
         char tmpdir[256];
         char slot_path[320];
+        DM2_V1_QuicksaveReceipt quicksave;
         DM2_V1_SessionState restored;
         snprintf(tmpdir, sizeof(tmpdir),
                  "/tmp/firestaff_dm2_runtime_inv_%d", FS_GETPID());
@@ -600,6 +601,22 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ((DM2_ChampionRecord *)restored.champion_data[0])->inventory[2] ==
                   0x0A000044u,
               "runtime inventory export survives DM2 slot save/load");
+        dm2_v1_boot_set_save_root(&profile, tmpdir);
+        memset(&quicksave, 0, sizeof(quicksave));
+        CHECK(dm2_v1_runtime_quicksave_boot_profile_with_receipt(
+                  &profile,
+                  &quicksave) == 1,
+              "runtime quicksave receipt writes DM2 last-session save");
+        CHECK(quicksave.result == DM2_V1_QUICKSAVE_OK &&
+              quicksave.session_valid &&
+              strstr(quicksave.save_path, "SKSave.dat") != NULL,
+              "runtime quicksave receipt reports SKSave.dat path and exported session");
+        memset(&restored, 0, sizeof(restored));
+        CHECK(dm2_v1_session_load_last_session(tmpdir, &restored) == 0 &&
+              restored.original_leader_hand_object == 0x0A000055u,
+              "runtime quicksave SKSave.dat reloads through DM2 last-session loader");
+        snprintf(slot_path, sizeof(slot_path), "%s/SKSave.dat", tmpdir);
+        (void)remove(slot_path);
         snprintf(slot_path, sizeof(slot_path), "%s/SKSave06.dat", tmpdir);
         (void)remove(slot_path);
         snprintf(slot_path, sizeof(slot_path), "%s/SKSave.bak", tmpdir);
