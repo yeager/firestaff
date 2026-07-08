@@ -768,6 +768,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupActionHostReceipt action_receipt;
     Theron_StartupExecution execution;
     Theron_StartupHostReceipt host_receipt;
+    char exit_receipt[128];
     int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
 
     theron_v1_world_init(&world);
@@ -839,6 +840,40 @@ static void test_startup_session_facts_wrappers(void) {
                     action_receipt.state_receipt.flow.selected_dungeon ==
                         THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
                 "session facts action wrapper executes startup flow action");
+
+    world.progression.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world.progression.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] =
+        THERON_DUNGEON_STATE_COMPLETE;
+    world.progression.quest_items_collected =
+        THERON_QUEST_ITEM_MASK_FROM_DUNGEON(
+            THERON_DUNGEON_1_HALL_OF_RECORDS);
+    expect_true(world.progression.dungeon_states[
+                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1] ==
+                    THERON_DUNGEON_STATE_COMPLETE,
+                "startup exit wrapper fixture marks dungeon complete");
+    world.party.champion_count = 3;
+    world.party.leader_x = 4;
+    world.party.leader_y = 5;
+    world.party.leader_dir = 2;
+    world.world_tick = 42;
+    memset(&state_receipt, 0, sizeof(state_receipt));
+    memset(exit_receipt, 0, sizeof(exit_receipt));
+    expect_true(theron_v1_startup_return_to_stage_select_after_exit_state_receipt(
+                    &world,
+                    &state_receipt,
+                    exit_receipt,
+                    sizeof(exit_receipt)) &&
+                    state_receipt.flow_changed &&
+                    state_receipt.flow.phase ==
+                        THERON_STARTUP_PHASE_STAGE_SELECT &&
+                    state_receipt.flow.selected_dungeon ==
+                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                    state_receipt.set_level_loaded &&
+                    state_receipt.level_loaded == 0 &&
+                    state_receipt.set_party_pose &&
+                    state_receipt.tick_count == 42 &&
+                    strstr(exit_receipt, "dungeon complete") != NULL,
+                "startup exit wrapper emits state receipt without M11 flow ownership");
 }
 
 int main(void) {
