@@ -18,6 +18,7 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
@@ -2742,36 +2743,30 @@ static int orch_cmd_attack_champion_reach_blocked_f0407_compat(
     int championIndex,
     int targetDirection)
 {
+    DM1_MeleeReachGateInputPc34 in;
+    DM1_MeleeReachGatePlanPc34 plan;
     const struct ChampionState_Compat* champion;
-    int relativeCell;
-    int blockingCell = -1;
     int i;
 
     if (!world) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     champion = &world->party.champions[championIndex];
-    if (!champion->present || champion->hp.current == 0) return 0;
-
-    relativeCell = ((int)(champion->cell & 3) + 4 - (targetDirection & 3)) & 3;
-    if (relativeCell == 2) {
-        blockingCell = ((int)(champion->cell & 3) + 3) & 3;
-    } else if (relativeCell == 3) {
-        blockingCell = ((int)(champion->cell & 3) + 1) & 3;
-    } else {
-        return 0;
-    }
-
-    /* ReDMCSB: MENU.C F0407 lines 1032-1041 rejects a back-row melee
-     * action when another champion occupies the source front cell. */
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.championIndex = championIndex;
+    in.championPresent = champion->present;
+    in.championCurrentHealth = champion->hp.current;
+    in.championCell = (int)champion->cell;
+    in.targetDirection = targetDirection;
+    in.partyChampionCount = CHAMPION_MAX_PARTY;
     for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
         const struct ChampionState_Compat* other = &world->party.champions[i];
-        if (i == championIndex) continue;
-        if (other->present && other->hp.current > 0 &&
-            ((int)(other->cell & 3) == blockingCell)) {
-            return 1;
-        }
+        in.otherChampionPresent[i] = other->present;
+        in.otherChampionCurrentHealth[i] = other->hp.current;
+        in.otherChampionCell[i] = (int)other->cell;
     }
-    return 0;
+    return dm1_v1_melee_reach_gate_plan_f0402_pc34(&in, &plan) &&
+           plan.valid && plan.blocked;
 }
 
 static int orch_cmd_attack_disrupt_material_blocked_f0407_compat(
@@ -2779,20 +2774,24 @@ static int orch_cmd_attack_disrupt_material_blocked_f0407_compat(
     int actionIndex,
     int groupIndex)
 {
+    DM1_MeleeDisruptMaterialGateInputPc34 in;
+    DM1_MeleeDisruptMaterialGatePlanPc34 plan;
     const struct CreatureBehaviorProfile_Compat* profile;
     int creatureType;
 
     if (!world || !world->things) return 0;
-    if (actionIndex != DM1_ACTION_DISRUPT) return 0;
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
 
     creatureType = world->things->groups[groupIndex].creatureType;
     profile = CREATURE_GetProfile_Compat(creatureType);
     if (!profile) return 0;
 
-    /* ReDMCSB: MENU.C F0407 lines 1042-1043 rejects DISRUPT before F0231
-     * unless the target creature carries MASK0x0040_NON_MATERIAL. */
-    return (profile->attributes & CREATURE_ATTR_MASK_NON_MATERIAL) == 0;
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.actionIndex = actionIndex;
+    in.targetCreatureAttributes = profile->attributes;
+    return dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(&in, &plan) &&
+           plan.valid && plan.blocked;
 }
 
 static int orch_cmd_attack_action_can_hit_door_f0407_compat(int actionIndex)

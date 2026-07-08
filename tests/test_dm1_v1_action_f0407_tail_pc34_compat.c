@@ -1117,6 +1117,70 @@ static void test_melee_damage_emission_plan(void) {
              "kill notify missing champion no xp");
 }
 
+static void test_melee_pre_f0231_gates(void) {
+    DM1_MeleeReachGateInputPc34 reachIn;
+    DM1_MeleeReachGatePlanPc34 reachOut;
+    DM1_MeleeDisruptMaterialGateInputPc34 disruptIn;
+    DM1_MeleeDisruptMaterialGatePlanPc34 disruptOut;
+
+    memset(&reachIn, 0, sizeof(reachIn));
+    reachIn.championIndex = 0;
+    reachIn.championPresent = 1;
+    reachIn.championCurrentHealth = 100;
+    reachIn.championCell = 2;
+    reachIn.targetDirection = 0;
+    reachIn.partyChampionCount = 4;
+    reachIn.otherChampionPresent[1] = 1;
+    reachIn.otherChampionCurrentHealth[1] = 100;
+    reachIn.otherChampionCell[1] = 1;
+    CHECK_EQ(dm1_v1_melee_reach_gate_plan_f0402_pc34(
+                 &reachIn, &reachOut), 1,
+             "back-row reach gate builds");
+    CHECK_EQ(reachOut.valid, 1, "back-row reach gate valid");
+    CHECK_EQ(reachOut.blocked, 1, "front champion blocks back-row melee");
+    CHECK_EQ(reachOut.relativeCell, 2, "back-right relative cell");
+    CHECK_EQ(reachOut.blockingCell, 1, "blocking front cell");
+    CHECK_EQ(reachOut.blockingChampionIndex, 1, "blocking champion index");
+    CHECK_EQ(reachOut.combatOutcome, COMBAT_OUTCOME_INVALID,
+             "blocked reach reports pre-F0231 invalid outcome");
+
+    reachIn.otherChampionPresent[1] = 0;
+    CHECK_EQ(dm1_v1_melee_reach_gate_plan_f0402_pc34(
+                 &reachIn, &reachOut), 1,
+             "unblocked back-row reach gate builds");
+    CHECK_EQ(reachOut.blocked, 0, "empty front cell allows F0231");
+
+    reachIn.championCell = 0;
+    CHECK_EQ(dm1_v1_melee_reach_gate_plan_f0402_pc34(
+                 &reachIn, &reachOut), 1,
+             "front-row reach gate builds");
+    CHECK_EQ(reachOut.blocked, 0, "front-row melee not reach-blocked");
+
+    memset(&disruptIn, 0, sizeof(disruptIn));
+    disruptIn.actionIndex = DM1_ACTION_DISRUPT;
+    disruptIn.targetCreatureAttributes = 0;
+    CHECK_EQ(dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(
+                 &disruptIn, &disruptOut), 1,
+             "material DISRUPT gate builds");
+    CHECK_EQ(disruptOut.valid, 1, "material DISRUPT gate valid");
+    CHECK_EQ(disruptOut.blocked, 1, "material creature blocks DISRUPT");
+    CHECK_EQ(disruptOut.combatOutcome, COMBAT_OUTCOME_INVALID,
+             "material DISRUPT reports pre-F0231 invalid outcome");
+
+    disruptIn.targetCreatureAttributes = 0x0040;
+    CHECK_EQ(dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(
+                 &disruptIn, &disruptOut), 1,
+             "non-material DISRUPT gate builds");
+    CHECK_EQ(disruptOut.blocked, 0, "non-material creature allows DISRUPT");
+
+    disruptIn.actionIndex = DM1_ACTION_CHOP;
+    disruptIn.targetCreatureAttributes = 0;
+    CHECK_EQ(dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(
+                 &disruptIn, &disruptOut), 1,
+             "non-DISRUPT gate builds");
+    CHECK_EQ(disruptOut.blocked, 0, "non-DISRUPT action not blocked");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -1147,6 +1211,7 @@ int main(void) {
     test_closed_door_melee_plan();
     test_melee_action_tick_plan();
     test_melee_damage_emission_plan();
+    test_melee_pre_f0231_gates();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

@@ -72,6 +72,40 @@ typedef struct {
     int xpBonus;
 } DM1_MeleeKillNotifyPlanPc34;
 
+typedef struct {
+    int championIndex;
+    int championPresent;
+    int championCurrentHealth;
+    int championCell;
+    int targetDirection;
+    int partyChampionCount;
+    int otherChampionPresent[4];
+    int otherChampionCurrentHealth[4];
+    int otherChampionCell[4];
+} DM1_MeleeReachGateInputPc34;
+
+typedef struct {
+    int valid;
+    int blocked;
+    int relativeCell;
+    int blockingCell;
+    int blockingChampionIndex;
+    int damage;
+    int combatOutcome;
+} DM1_MeleeReachGatePlanPc34;
+
+typedef struct {
+    int actionIndex;
+    int targetCreatureAttributes;
+} DM1_MeleeDisruptMaterialGateInputPc34;
+
+typedef struct {
+    int valid;
+    int blocked;
+    int damage;
+    int combatOutcome;
+} DM1_MeleeDisruptMaterialGatePlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -84,6 +118,12 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
 int dm1_v1_melee_kill_notify_plan_f0231_pc34(
     const DM1_MeleeKillNotifyInputPc34* in,
     DM1_MeleeKillNotifyPlanPc34* out);
+int dm1_v1_melee_reach_gate_plan_f0402_pc34(
+    const DM1_MeleeReachGateInputPc34* in,
+    DM1_MeleeReachGatePlanPc34* out);
+int dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(
+    const DM1_MeleeDisruptMaterialGateInputPc34* in,
+    DM1_MeleeDisruptMaterialGatePlanPc34* out);
 
 #ifdef __cplusplus
 }
