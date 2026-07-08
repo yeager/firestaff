@@ -364,17 +364,24 @@ static int is_external_archive_path(const char *path) {
            has_case_suffix(path, ".arj") || has_case_suffix(path, ".arc") ||
            has_case_suffix(path, ".cab") || has_case_suffix(path, ".zoo") ||
            has_case_suffix(path, ".ace") || has_case_suffix(path, ".sit") ||
-           has_case_suffix(path, ".sitx") || has_case_suffix(path, ".dms") ||
-           has_case_suffix(path, ".lzx") || has_case_suffix(path, ".cpio") ||
+           has_case_suffix(path, ".sitx") || has_case_suffix(path, ".dmg") ||
+           has_case_suffix(path, ".hqx") || has_case_suffix(path, ".sea") ||
+           has_case_suffix(path, ".dms") || has_case_suffix(path, ".lzx") ||
+           has_case_suffix(path, ".lha") || has_case_suffix(path, ".lbr") ||
+           has_case_suffix(path, ".cpio") ||
            has_case_suffix(path, ".ar") || has_case_suffix(path, ".deb") ||
            has_case_suffix(path, ".rpm") || has_case_suffix(path, ".xar") ||
            has_case_suffix(path, ".bz2") || has_case_suffix(path, ".xz") ||
            has_case_suffix(path, ".zst") || has_case_suffix(path, ".lzma") ||
+           has_case_suffix(path, ".lz") || has_case_suffix(path, ".z") ||
+           has_case_suffix(path, ".rz") ||
            has_case_suffix(path, ".adf") || has_case_suffix(path, ".adz") ||
            has_case_suffix(path, ".st") || has_case_suffix(path, ".stx") ||
            has_case_suffix(path, ".msa") || has_case_suffix(path, ".ipf") ||
            has_case_suffix(path, ".hfe") || has_case_suffix(path, ".hdm") ||
-           has_case_suffix(path, ".dsk") || has_case_suffix(path, ".ima");
+           has_case_suffix(path, ".dsk") || has_case_suffix(path, ".ima") ||
+           has_case_suffix(path, ".nrg") || has_case_suffix(path, ".cdi") ||
+           has_case_suffix(path, ".ccd") || has_case_suffix(path, ".sub");
 }
 
 static AssetContainerKind asset_container_kind_from_suffix(const char *path) {
@@ -420,6 +427,10 @@ static AssetContainerKind asset_container_kind_from_magic(const char *path) {
         (got >= 6U && memcmp(header, "\xfd" "7zXZ\0", 6U) == 0) ||
         (got >= 4U && header[0] == 0x28 && header[1] == 0xb5 &&
          header[2] == 0x2f && header[3] == 0xfd) ||
+        (got >= 4U && memcmp(header, "LZIP", 4U) == 0) ||
+        (got >= 4U && memcmp(header, "LRZI", 4U) == 0) ||
+        (got >= 2U && header[0] == 0x1f &&
+         (header[1] == 0x9d || header[1] == 0xa0)) ||
         (got >= 8U && memcmp(header, "!<arch>\n", 8U) == 0) ||
         (got >= 6U && (memcmp(header, "070701", 6U) == 0 ||
                        memcmp(header, "070702", 6U) == 0 ||
