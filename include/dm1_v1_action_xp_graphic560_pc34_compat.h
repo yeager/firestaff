@@ -180,6 +180,33 @@ typedef struct {
 
 typedef struct {
     int actionIndex;
+    int championIndex;
+    unsigned int gameTick;
+    int currentStamina;
+    int maximumStamina;
+    int currentHealth;
+} DM1_ActionF0407BeginInputPc34;
+
+typedef struct {
+    int valid;
+    int skillIndex;
+    int baseSkillIndex;
+    int actionExperienceGain;
+    int disabledTicks;
+    int staminaCost;
+    int isMeleeContact;
+    int defenseDelta;
+    int resultingActionIndex;
+    int staminaApplied;
+    int currentStaminaAfter;
+    int currentHealthAfter;
+    int pendingHealthDamage;
+    int shouldDamageFlash;
+    int appliedAttributeMask;
+} DM1_ActionF0407BeginPlanPc34;
+
+typedef struct {
+    int actionIndex;
     int experienceGain;
 } DM1_ActionXpAwardInputPc34;
 
@@ -482,6 +509,9 @@ int dm1_v1_action_completion_plan_f0407_pc34(
 int dm1_v1_action_stamina_apply_plan_f0325_pc34(
     const DM1_ActionF0325StaminaInputPc34* in,
     DM1_ActionF0325StaminaPlanPc34* out);
+int dm1_v1_action_begin_plan_f0407_pc34(
+    const DM1_ActionF0407BeginInputPc34* in,
+    DM1_ActionF0407BeginPlanPc34* out);
 int dm1_v1_action_xp_award_plan_f0407_pc34(
     const DM1_ActionXpAwardInputPc34* in,
     DM1_ActionXpAwardPlanPc34* out);

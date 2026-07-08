@@ -350,6 +350,71 @@ int dm1_v1_action_stamina_apply_plan_f0325_pc34(
     return 1;
 }
 
+int dm1_v1_action_begin_plan_f0407_pc34(
+    const DM1_ActionF0407BeginInputPc34* in,
+    DM1_ActionF0407BeginPlanPc34* out) {
+    DM1_ActionF0407PreludeInputPc34 preludeIn;
+    DM1_ActionF0407PreludePlanPc34 preludeOut;
+    DM1_ActionDefenseInputPc34 defenseIn;
+    DM1_ActionDefensePlanPc34 defenseOut;
+    DM1_ActionF0325StaminaInputPc34 staminaIn;
+    DM1_ActionF0325StaminaPlanPc34 staminaOut;
+    if (!in || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+
+    memset(&preludeIn, 0, sizeof(preludeIn));
+    preludeIn.actionIndex = in->actionIndex;
+    preludeIn.championIndex = in->championIndex;
+    preludeIn.gameTick = in->gameTick;
+    if (!dm1_v1_action_prelude_plan_f0407_pc34(&preludeIn, &preludeOut) ||
+        !preludeOut.valid) {
+        return 0;
+    }
+
+    memset(&defenseIn, 0, sizeof(defenseIn));
+    defenseIn.actionIndex = in->actionIndex;
+    if (!dm1_v1_action_defense_apply_plan_f0407_pc34(&defenseIn,
+                                                     &defenseOut) ||
+        !defenseOut.valid) {
+        return 0;
+    }
+
+    memset(&staminaIn, 0, sizeof(staminaIn));
+    staminaIn.currentStamina = in->currentStamina;
+    staminaIn.maximumStamina = in->maximumStamina;
+    staminaIn.currentHealth = in->currentHealth;
+    staminaIn.decrement = preludeOut.staminaCost;
+    if (!dm1_v1_action_stamina_apply_plan_f0325_pc34(&staminaIn,
+                                                     &staminaOut) ||
+        !staminaOut.valid) {
+        return 0;
+    }
+
+    /* ReDMCSB MENU.C F0407 lines 1267-1275 starts an action by applying
+     * G0495 defense/action-index, loading G0496/G0497/G0491/G0494, and later
+     * line 1624 routes the planned stamina cost through CHAMPION.C F0325. */
+    out->valid = 1;
+    out->skillIndex = preludeOut.skillIndex;
+    out->baseSkillIndex = preludeOut.baseSkillIndex;
+    out->actionExperienceGain = preludeOut.actionExperienceGain;
+    out->disabledTicks = preludeOut.disabledTicks;
+    out->staminaCost = preludeOut.staminaCost;
+    out->isMeleeContact = preludeOut.isMeleeContact;
+    out->defenseDelta = defenseOut.defenseDelta;
+    out->resultingActionIndex = defenseOut.resultingActionIndex;
+    out->staminaApplied = staminaOut.applied;
+    out->currentStaminaAfter = staminaOut.currentStaminaAfter;
+    out->currentHealthAfter = staminaOut.currentHealthAfter;
+    out->pendingHealthDamage = staminaOut.pendingHealthDamage;
+    out->shouldDamageFlash = staminaOut.shouldDamageFlash;
+    out->appliedAttributeMask = staminaOut.appliedAttributeMask;
+    return 1;
+}
+
 int dm1_v1_action_xp_award_plan_f0407_pc34(
     const DM1_ActionXpAwardInputPc34* in,
     DM1_ActionXpAwardPlanPc34* out) {

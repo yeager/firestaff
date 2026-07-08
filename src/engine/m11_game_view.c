@@ -5863,28 +5863,6 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
     }
 }
 
-static void m11_apply_champion_action_defense_before_action(
-        M11_GameViewState* state,
-        int championIndex,
-        unsigned char actionIndex) {
-    DM1_ActionDefenseInputPc34 in;
-    DM1_ActionDefensePlanPc34 plan;
-    if (!state) return;
-    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
-    if (championIndex >= state->world.party.championCount) return;
-    memset(&in, 0, sizeof(in));
-    memset(&plan, 0, sizeof(plan));
-    in.actionIndex = (int)actionIndex;
-    if (!dm1_v1_action_defense_apply_plan_f0407_pc34(&in, &plan) ||
-        !plan.valid) {
-        return;
-    }
-    state->world.party.champions[championIndex].actionDefense +=
-        plan.defenseDelta;
-    state->world.party.champions[championIndex].actionIndex =
-        (unsigned char)plan.resultingActionIndex;
-}
-
 static void m11_disable_champion_action_after_spell_f0412(
         M11_GameViewState* state,
         int championIndex,
@@ -24635,14 +24613,42 @@ static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
     return cost;
 }
 
-static int m11_apply_planned_action_stamina_cost(M11_GameViewState* state,
-                                                 int championIndex,
-                                                 int cost) {
-    if (!state) return 0;
+static int m11_apply_action_begin_plan_f0407(
+        M11_GameViewState* state,
+        int championIndex,
+        unsigned char actionIndex,
+        DM1_ActionF0407BeginPlanPc34* outPlan) {
+    struct ChampionState_Compat* champ;
+    DM1_ActionF0407BeginInputPc34 in;
+    DM1_ActionF0407BeginPlanPc34 plan;
+    if (!state || !outPlan) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     if (championIndex >= state->world.party.championCount) return 0;
-    if (cost <= 0) return 0;
-    return m11_apply_champion_stamina_cost_f0325(state, championIndex, cost);
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current == 0) return 0;
+
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = (int)actionIndex;
+    in.championIndex = championIndex;
+    in.gameTick = state->world.gameTick;
+    in.currentStamina = (int)champ->stamina.current;
+    in.maximumStamina = (int)champ->stamina.maximum;
+    in.currentHealth = (int)champ->hp.current;
+    if (!dm1_v1_action_begin_plan_f0407_pc34(&in, &plan) || !plan.valid) {
+        return 0;
+    }
+
+    champ->actionDefense += plan.defenseDelta;
+    champ->actionIndex = (unsigned char)plan.resultingActionIndex;
+    if (plan.staminaApplied) {
+        champ->stamina.current = (unsigned short)plan.currentStaminaAfter;
+        champ->hp.current = (unsigned short)plan.currentHealthAfter;
+        if (plan.shouldDamageFlash) {
+            M11_GameView_NotifyDamageFlash(state, -1);
+        }
+    }
+    *outPlan = plan;
+    return 1;
 }
 
 static int m11_apply_action_completion_plan_f0407(
@@ -29794,8 +29800,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     int performed = 0;
     int actionExperienceGain = 0;
     int cancelActionDisable = 0;
-    DM1_ActionF0407PreludeInputPc34 preludeIn;
-    DM1_ActionF0407PreludePlanPc34 preludePlan;
+    DM1_ActionF0407BeginPlanPc34 beginPlan;
 
     if (!state || !state->active) {
         return 0;
@@ -29888,22 +29893,15 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
      * the closing frame — DM1 updates the leader portrait to the
      * acting champion while the action animation plays. */
     state->world.party.activeChampionIndex = championIndex;
-    m11_apply_champion_action_defense_before_action(state, championIndex, chosen);
-    memset(&preludeIn, 0, sizeof(preludeIn));
-    preludeIn.actionIndex = (int)chosen;
-    preludeIn.championIndex = championIndex;
-    preludeIn.gameTick = state->world.gameTick;
-    if (!dm1_v1_action_prelude_plan_f0407_pc34(&preludeIn, &preludePlan) ||
-        !preludePlan.valid) {
+    if (!m11_apply_action_begin_plan_f0407(
+            state, championIndex, chosen, &beginPlan)) {
         M11_GameView_ClearActingChampion(state);
         return 0;
     }
-    (void)m11_apply_planned_action_stamina_cost(
-        state, championIndex, preludePlan.staminaCost);
     m11_write_csb_runtime_champion_vitals(state, championIndex);
-    actionExperienceGain = preludePlan.actionExperienceGain;
-    if (preludePlan.isMeleeContact) {
-        unsigned char disabledTicks = (unsigned char)preludePlan.disabledTicks;
+    actionExperienceGain = beginPlan.actionExperienceGain;
+    if (beginPlan.isMeleeContact) {
+        unsigned char disabledTicks = (unsigned char)beginPlan.disabledTicks;
         unsigned char closedDoorDisabledTicks = 0u;
         int timelineCountBeforeAttack = state->world.timeline.count;
         if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
@@ -29942,7 +29940,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
             state, championIndex, chosen, performed, 0, !performed,
             &actionExperienceGain, disabledTicks);
     } else {
-        unsigned char disabledTicks = (unsigned char)preludePlan.disabledTicks;
+        unsigned char disabledTicks = (unsigned char)beginPlan.disabledTicks;
         /* Non-melee: apply bounded effect (if any), then advance
          * a CMD_NONE tick so "time passes" semantics hold —
          * action stamina has drained, action-disabled ticks roll forward,
@@ -29992,8 +29990,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     int actionExperienceGain = 0;
     int performed;
     int cancelActionDisable = 0;
-    DM1_ActionF0407PreludeInputPc34 preludeIn;
-    DM1_ActionF0407PreludePlanPc34 preludePlan;
+    DM1_ActionF0407BeginPlanPc34 beginPlan;
     DM1_ActionDirectDispatchInputPc34 dispatchIn;
     DM1_ActionDirectDispatchPlanPc34 dispatchPlan;
     if (!state || !state->active) return 0;
@@ -30031,23 +30028,15 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     }
     state->actingChampionOrdinal = (unsigned int)(championIndex + 1);
     state->world.party.activeChampionIndex = championIndex;
-    m11_apply_champion_action_defense_before_action(
-        state, championIndex, (unsigned char)actionIndex);
-    memset(&preludeIn, 0, sizeof(preludeIn));
-    preludeIn.actionIndex = actionIndex;
-    preludeIn.championIndex = championIndex;
-    preludeIn.gameTick = state->world.gameTick;
-    if (!dm1_v1_action_prelude_plan_f0407_pc34(&preludeIn, &preludePlan) ||
-        !preludePlan.valid) {
+    if (!m11_apply_action_begin_plan_f0407(
+            state, championIndex, (unsigned char)actionIndex, &beginPlan)) {
         M11_GameView_ClearActingChampion(state);
         return 0;
     }
-    (void)m11_apply_planned_action_stamina_cost(
-        state, championIndex, preludePlan.staminaCost);
     m11_write_csb_runtime_champion_vitals(state, championIndex);
     /* ReDMCSB MENU.C F0407 lines 1626-1628 applies the common G0497
      * action-XP tail for every action whose table entry is nonzero. */
-    actionExperienceGain = preludePlan.actionExperienceGain;
+    actionExperienceGain = beginPlan.actionExperienceGain;
     performed = m11_perform_non_melee_action(state, championIndex,
                                              (unsigned char)actionIndex,
                                              champName,
@@ -30065,7 +30054,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
             cancelActionDisable,
             dispatchPlan.allowsParryEmptyFrontRegression && !performed,
             &actionExperienceGain,
-            (unsigned char)preludePlan.disabledTicks);
+            (unsigned char)beginPlan.disabledTicks);
     }
     m11_award_action_xp_f0407(
         state, championIndex, (unsigned char)actionIndex, actionExperienceGain);

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0407 begin-action ownership: DM1 action-XP compat now owns the combined begin-action receipt for G0495 defense/action-index, G0496/G0497/G0491/G0494 prelude, and F0325 stamina application. M11 action-row/direct entry paths now apply one DM1 receipt instead of chaining those decisions inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0407 XP/dispatch-plan ownership: DM1 action-XP compat now owns F0407 action-XP award route planning plus the direct-helper dispatch gate for non-melee actions and the PARRY empty-front regression path. M11 no longer routes XP or direct melee rejection inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0325 action-stamina ownership: DM1 action-XP compat now owns the source-locked F0325 stamina decrement/apply plan for action costs, including stamina clamp, underflow HP damage, damage-flash request, and LOAD/STATISTICS dirty-mask output. M11 now only applies the receipt. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

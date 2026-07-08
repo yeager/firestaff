@@ -36,6 +36,8 @@ static void test_stamina_and_special_flags(void) {
     DM1_ActionF0407TailPc34 tail;
     DM1_ActionF0407PreludeInputPc34 preludeIn;
     DM1_ActionF0407PreludePlanPc34 preludeOut;
+    DM1_ActionF0407BeginInputPc34 beginIn;
+    DM1_ActionF0407BeginPlanPc34 beginOut;
     DM1_ActionF0325StaminaInputPc34 staminaIn;
     DM1_ActionF0325StaminaPlanPc34 staminaOut;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(DM1_ACTION_CHOP, &tail), 1,
@@ -132,6 +134,32 @@ static void test_stamina_and_special_flags(void) {
              "F0325 clamps stamina at maximum");
     CHECK_EQ(staminaOut.currentHealthAfter, 40,
              "F0325 max clamp keeps health");
+
+    memset(&beginIn, 0, sizeof(beginIn));
+    beginIn.actionIndex = DM1_ACTION_CHOP;
+    beginIn.championIndex = 1;
+    beginIn.gameTick = 100u;
+    beginIn.currentStamina = 30;
+    beginIn.maximumStamina = 70;
+    beginIn.currentHealth = 40;
+    CHECK_EQ(dm1_v1_action_begin_plan_f0407_pc34(&beginIn, &beginOut), 1,
+             "CHOP begin plan builds");
+    CHECK_EQ(beginOut.valid, 1, "CHOP begin valid");
+    CHECK_EQ(beginOut.actionExperienceGain, 10, "CHOP begin xp");
+    CHECK_EQ(beginOut.disabledTicks, 8, "CHOP begin disabled ticks");
+    CHECK_EQ(beginOut.staminaCost, 11, "CHOP begin stamina cost");
+    CHECK_EQ(beginOut.currentStaminaAfter, 19,
+             "CHOP begin applies F0325 stamina");
+    CHECK_EQ(beginOut.currentHealthAfter, 40,
+             "CHOP begin keeps health");
+    CHECK_EQ(beginOut.defenseDelta, 0, "CHOP begin defense delta");
+    CHECK_EQ(beginOut.resultingActionIndex, DM1_ACTION_CHOP,
+             "CHOP begin action index");
+    CHECK_EQ(beginOut.isMeleeContact, 1, "CHOP begin melee contact");
+
+    beginIn.actionIndex = 99;
+    CHECK_EQ(dm1_v1_action_begin_plan_f0407_pc34(&beginIn, &beginOut), 0,
+             "invalid begin action rejected");
 }
 
 static void test_xp_award_and_direct_dispatch_plans(void) {
