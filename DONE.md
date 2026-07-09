@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 HoC host render plan receipt: added a DM1-owned first-frame host render plan helper that validates opened entrance frame, stale panel clear, and Hall mirror overlay command order so M11/M12 can consume one receipt instead of loose fields. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB full-start capture render executor: aggregate startup capture receipts now build and execute CSB-owned render plans for post-FTL title/PRESENTS, utility overlay, closed-door menu, and door-opening graphics. Verification: CSB boot runtime handoff, CSB startup entrance pointer test, three CSB real-asset startup probes, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus full-start startup/menu receipt: launcher now exposes a Nexus-owned receipt for boot warning art, title art, save/champion startup menus, MENU.BPK route readiness, Track 02 SFX handoff, full-start graphics, and no-fallback menu readiness. Verification: `test_nexus_v1_startup_menu_pc34_compat`, target rebuild, and `git diff --check` passed.

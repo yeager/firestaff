@@ -1050,6 +1050,71 @@ int dm1_v1_startup_hoc_first_frame_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_host_render_plan_from_first_frame_pc34(
+    const DM1_V1_StartupHoCFirstFrameReceipt_PC34* receipt,
+    DM1_V1_StartupHoCHostRenderPlan_PC34* out_plan) {
+    DM1_V1_StartupHoCHostRenderPlan_PC34 plan;
+    const DM1_V1_StartupHoCRenderCommand_PC34* entrance_command;
+    const DM1_V1_StartupHoCRenderCommand_PC34* clear_command;
+    const DM1_V1_StartupHoCRenderCommand_PC34* mirror_command;
+
+    if (!receipt || !out_plan) {
+        return 0;
+    }
+    memset(&plan, 0, sizeof(plan));
+    if (!receipt->handled) {
+        *out_plan = plan;
+        return 1;
+    }
+    plan.handled = 1;
+    plan.command_count = receipt->hoc_render_command_count;
+    plan.source_evidence =
+        "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    if (!receipt->runtime_first_frame_ready ||
+        receipt->hoc_render_command_count != 3) {
+        *out_plan = plan;
+        return 1;
+    }
+
+    entrance_command = &receipt->hoc_render_commands[0];
+    clear_command = &receipt->hoc_render_commands[1];
+    mirror_command = &receipt->hoc_render_commands[2];
+    /* ReDMCSB source order gives the host one legal first HoC frame:
+     * TITLE.C has released the title surface, ENTRANCE.C F0797 has drawn the
+     * opened C255 entrance view, and F0441 is waiting in the Hall before any
+     * mirror/C040 champion panel exists.  Collapse the DM1 render commands
+     * into a host-ready plan so M11/M12 do not infer from loose fields. */
+    if (!entrance_command->valid ||
+        entrance_command->kind !=
+            DM1_V1_STARTUP_HOC_RENDER_COMMAND_ENTRANCE_OPEN_FRAME_PC34 ||
+        !clear_command->valid ||
+        clear_command->kind !=
+            DM1_V1_STARTUP_HOC_RENDER_COMMAND_CLEAR_CHAMPION_PANEL_PC34 ||
+        !mirror_command->valid ||
+        mirror_command->kind !=
+            DM1_V1_STARTUP_HOC_RENDER_COMMAND_HALL_MIRRORS_PC34) {
+        *out_plan = plan;
+        return 1;
+    }
+
+    plan.ready = 1;
+    plan.consume_dm1_receipt_only = 1;
+    plan.draw_opened_entrance_frame = 1;
+    plan.entrance_map_index = entrance_command->map_index;
+    plan.entrance_door_frame_index = entrance_command->door_frame_index;
+    plan.clear_champion_panel = clear_command->clear_stale_panel_first;
+    plan.render_hall_mirror_overlay = 1;
+    plan.hall_mirror_overlay_kind = mirror_command->overlay_kind;
+    plan.suppress_host_fallback_visuals =
+        entrance_command->suppress_host_fallback_visuals &&
+        clear_command->suppress_host_fallback_visuals &&
+        mirror_command->suppress_host_fallback_visuals;
+    plan.block_enter_until_champion_selected =
+        mirror_command->block_enter_until_champion_selected;
+    *out_plan = plan;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
