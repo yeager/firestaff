@@ -122,6 +122,12 @@ int theron_v1_save_load_from_slot(const char *save_root,
                                    void *dungeon_progression,
                                    size_t dungeon_progression_size,
                                    Theron_SaveSlot *out_slot_info);
+int theron_v1_save_load_from_path(const char *save_path,
+                                  void *champion_data,
+                                  size_t champion_data_size,
+                                  void *dungeon_progression,
+                                  size_t dungeon_progression_size,
+                                  Theron_SaveSlot *out_slot_info);
 
 /* Delete a save slot. Returns 0 on success, -1 on error. */
 int theron_v1_save_delete_slot(const char *save_root, int slot_index);

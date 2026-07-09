@@ -223,6 +223,21 @@ int theron_v1_startup_continue_tqsv_apply_with_host_receipts(
     Theron_StartupStateReceipt *out_state_receipt,
     char *receipt,
     size_t receipt_cap);
+int theron_v1_startup_continue_tqsv_path_apply(
+    Theron_V1_World *world,
+    const char *save_path,
+    char *receipt,
+    size_t receipt_cap);
+int theron_v1_startup_continue_tqsv_path_apply_with_host_receipts(
+    Theron_V1_World *world,
+    const char *save_path,
+    const Theron_StartupActionPlan *plan,
+    const void *boot_profile,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap);
 int theron_v1_startup_continue_srm_apply(
     Theron_V1_World *world,
     const char *srm_root,

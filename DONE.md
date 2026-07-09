@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron external TQSV Continue interop: exported `.tqsv` paths can now be loaded directly into runtime state and emit host/state receipts, with missing-path failure receipts. Verification: `test_theron_v1_startup_save_resume_pc34` 159/159 and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron TQSV Continue receipts: direct `.tqsv` slot Continue now has host/state receipt coverage for success and host failure receipts for empty slots. Verification: `test_theron_v1_startup_save_resume_pc34` 156/156 and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron `.srm` slot Continue receipts: slot-based `.srm` Continue now has host/state receipt coverage for success and host failure receipts for unsupported/empty slots. Verification: `test_theron_v1_startup_save_resume_pc34` 152/152 and `git diff --check` passed.
