@@ -2539,6 +2539,14 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
                 render_route.render_plan_valid
             ? 1
             : 0;
+    out_receipt->track02_atlas_startup_graphics_ready =
+        out_receipt->real_bitmap_startup_graphics_ready &&
+                view_model->startup_media_state_receipt
+                    .startup_bitmap_atlas_ready &&
+                view_model->startup_media_state_receipt
+                    .startup_bitmap_atlas.route_count > 0u
+            ? 1
+            : 0;
     theron_v1_boot_startup_mark_bitmap_routes(
         view_model,
         &render_route.render_plan,
@@ -2551,7 +2559,8 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
         out_receipt);
     out_receipt->raw_graphics_plan_consumer_required =
         out_receipt->real_bitmap_startup_graphics_ready &&
-                out_receipt->required_bitmap_routes_ready
+                out_receipt->required_bitmap_routes_ready &&
+                out_receipt->track02_atlas_startup_graphics_ready
             ? 0
             : 1;
     return 1;
@@ -2658,6 +2667,158 @@ static void theron_v1_boot_startup_capture_track02_graphic_receipt(
     }
 }
 
+static unsigned int theron_v1_boot_startup_graphic_route_bit(
+    Theron_StartupRenderGraphicKind kind)
+{
+    switch (kind) {
+    case THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK:
+        return THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE;
+    case THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL:
+        return THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE;
+    case THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME:
+        return THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM;
+    case THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD:
+        return THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    default:
+        return 0u;
+    }
+}
+
+static const Theron_Track02StartupBitmapAtlasRoute *
+theron_v1_boot_startup_atlas_find_route(
+    const Theron_Track02StartupBitmapAtlas *atlas,
+    unsigned int route_bit)
+{
+    size_t i;
+
+    if (!atlas || route_bit == 0u) {
+        return NULL;
+    }
+    for (i = 0u; i < atlas->route_count; ++i) {
+        if (atlas->routes[i].route_bit == route_bit &&
+            atlas->routes[i].width > 0u &&
+            atlas->routes[i].height > 0u &&
+            atlas->routes[i].nonzero_pixel_count > 0u) {
+            return &atlas->routes[i];
+        }
+    }
+    return NULL;
+}
+
+static void theron_v1_boot_startup_draw_atlas_route(
+    const Theron_StartupRenderGraphicCommand *command,
+    const Theron_Track02StartupBitmapAtlasRoute *route,
+    const Theron_StartupGraphicExecutor *executor)
+{
+    int dx;
+    int dy;
+
+    if (!command || !route || !executor || !executor->plot_pixel ||
+        command->w <= 0 || command->h <= 0 ||
+        route->width == 0u || route->height == 0u) {
+        return;
+    }
+    if (executor->fill_rect) {
+        executor->fill_rect(executor->userdata,
+                            command->x,
+                            command->y,
+                            command->w,
+                            command->h,
+                            0);
+    }
+    for (dy = 0; dy < command->h; ++dy) {
+        size_t sy = ((size_t)dy * (size_t)route->height) /
+                    (size_t)command->h;
+        for (dx = 0; dx < command->w; ++dx) {
+            size_t sx = ((size_t)dx * (size_t)route->width) /
+                        (size_t)command->w;
+            uint8_t color =
+                route->pixels[sy *
+                              THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH +
+                              sx];
+            executor->plot_pixel(executor->userdata,
+                                 command->x + dx,
+                                 command->y + dy,
+                                 (int)(color & 0x0fu));
+        }
+    }
+    if (executor->draw_rect) {
+        executor->draw_rect(executor->userdata,
+                            command->x,
+                            command->y,
+                            command->w,
+                            command->h,
+                            command->cursor ? command->color2
+                                            : command->color);
+    }
+}
+
+static int theron_v1_boot_startup_execute_atlas_graphics_plan(
+    const Theron_StartupRenderPlan *plan,
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupGraphicsRouteReceipt *receipt)
+{
+    int i;
+    int executed = 0;
+
+    if (!plan || !media_receipt || !executor || !receipt ||
+        !media_receipt->startup_bitmap_atlas_ready ||
+        media_receipt->startup_bitmap_atlas.route_count == 0u) {
+        return 0;
+    }
+    for (i = 0; i < plan->graphic_count &&
+                i < THERON_STARTUP_RENDER_GRAPHIC_CAPACITY_MAX; ++i) {
+        const Theron_StartupRenderGraphicCommand *command =
+            &plan->graphics[i];
+        unsigned int route_bit =
+            theron_v1_boot_startup_graphic_route_bit(command->kind);
+        const Theron_Track02StartupBitmapAtlasRoute *route;
+
+        if (command->kind == THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT) {
+            if (executor->fill_rect) {
+                executor->fill_rect(executor->userdata,
+                                    command->x,
+                                    command->y,
+                                    command->w,
+                                    command->h,
+                                    command->color);
+            }
+            continue;
+        }
+        if (command->kind == THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT) {
+            if (executor->draw_rect) {
+                executor->draw_rect(executor->userdata,
+                                    command->x,
+                                    command->y,
+                                    command->w,
+                                    command->h,
+                                    command->color);
+            }
+            continue;
+        }
+        route = theron_v1_boot_startup_atlas_find_route(
+            &media_receipt->startup_bitmap_atlas,
+            route_bit);
+        if (!route) {
+            continue;
+        }
+        theron_v1_boot_startup_draw_atlas_route(command, route, executor);
+        if (!receipt->track02_startup_graphic_receipt_valid) {
+            receipt->track02_startup_graphic_receipt = *command;
+            receipt->track02_startup_graphic_receipt_valid = 1;
+        }
+        receipt->track02_atlas_graphics_route_mask |= route_bit;
+        ++receipt->track02_atlas_graphics_route_count;
+        receipt->track02_atlas_graphics_pixel_count +=
+            route->nonzero_pixel_count;
+        receipt->track02_atlas_graphics_checksum ^=
+            route->checksum + (uint32_t)(route_bit * 2654435761u);
+        executed = 1;
+    }
+    return executed;
+}
+
 int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
     const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupGraphicExecutor *executor,
@@ -2728,6 +2889,14 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
                     render_route.render_plan_valid
                 ? 1
                 : 0;
+        out_receipt->track02_atlas_startup_graphics_ready =
+            out_receipt->real_bitmap_startup_graphics_ready &&
+                    view_model->startup_media_state_receipt
+                        .startup_bitmap_atlas_ready &&
+                    view_model->startup_media_state_receipt
+                        .startup_bitmap_atlas.route_count > 0u
+                ? 1
+                : 0;
         theron_v1_boot_startup_mark_bitmap_routes(
             view_model,
             &render_route.render_plan,
@@ -2740,7 +2909,8 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
             out_receipt);
         out_receipt->raw_graphics_plan_consumer_required =
             out_receipt->real_bitmap_startup_graphics_ready &&
-                    out_receipt->required_bitmap_routes_ready
+                    out_receipt->required_bitmap_routes_ready &&
+                    out_receipt->track02_atlas_startup_graphics_ready
                 ? 0
                 : 1;
     }
@@ -2788,8 +2958,24 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status = "GRAPHICS ROUTE BLOCKED";
         return 0;
     }
-    out_receipt->graphics_executed =
-        theron_v1_boot_startup_execute_graphics_plan(&plan, executor) ? 1 : 0;
+    if (out_receipt->track02_atlas_startup_graphics_ready &&
+        out_receipt->required_bitmap_routes_ready) {
+        out_receipt->graphics_executed =
+            theron_v1_boot_startup_execute_atlas_graphics_plan(
+                &plan,
+                &view_model->startup_media_state_receipt,
+                executor,
+                out_receipt)
+                ? 1
+                : 0;
+        out_receipt->track02_atlas_startup_graphics_executed =
+            out_receipt->graphics_executed ? 1 : 0;
+    } else {
+        out_receipt->graphics_executed =
+            theron_v1_boot_startup_execute_graphics_plan(&plan, executor)
+                ? 1
+                : 0;
+    }
     out_receipt->track02_startup_graphics_executed =
         out_receipt->graphics_executed &&
                 out_receipt->real_bitmap_startup_graphics_ready &&
@@ -2807,6 +2993,9 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->graphics_blocked = 1;
         out_receipt->status_scope = "STARTUP";
         out_receipt->status = "GRAPHICS EXECUTOR BLOCKED";
+    } else if (out_receipt->track02_atlas_startup_graphics_executed) {
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "TRACK02 ATLAS GRAPHICS EXECUTED";
     }
     return out_receipt->graphics_executed;
 }
@@ -2942,6 +3131,18 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
             out_receipt->graphics_route.track02_real_media_ready;
         out_receipt->real_bitmap_startup_graphics_ready =
             out_receipt->graphics_route.real_bitmap_startup_graphics_ready;
+        out_receipt->track02_atlas_startup_graphics_ready =
+            out_receipt->graphics_route.track02_atlas_startup_graphics_ready;
+        out_receipt->track02_atlas_startup_graphics_executed =
+            out_receipt->graphics_route.track02_atlas_startup_graphics_executed;
+        out_receipt->track02_atlas_graphics_route_mask =
+            out_receipt->graphics_route.track02_atlas_graphics_route_mask;
+        out_receipt->track02_atlas_graphics_route_count =
+            out_receipt->graphics_route.track02_atlas_graphics_route_count;
+        out_receipt->track02_atlas_graphics_pixel_count =
+            out_receipt->graphics_route.track02_atlas_graphics_pixel_count;
+        out_receipt->track02_atlas_graphics_checksum =
+            out_receipt->graphics_route.track02_atlas_graphics_checksum;
         out_receipt->track02_startup_graphics_executed =
             out_receipt->graphics_route.track02_startup_graphics_executed;
         out_receipt->track02_startup_graphic_receipt_valid =
@@ -3367,6 +3568,18 @@ int theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
         receipt->track02_real_media_ready;
     out_receipt->real_bitmap_startup_graphics_ready =
         receipt->real_bitmap_startup_graphics_ready;
+    out_receipt->track02_atlas_startup_graphics_ready =
+        receipt->track02_atlas_startup_graphics_ready;
+    out_receipt->track02_atlas_startup_graphics_executed =
+        receipt->track02_atlas_startup_graphics_executed;
+    out_receipt->track02_atlas_graphics_route_mask =
+        receipt->track02_atlas_graphics_route_mask;
+    out_receipt->track02_atlas_graphics_route_count =
+        receipt->track02_atlas_graphics_route_count;
+    out_receipt->track02_atlas_graphics_pixel_count =
+        receipt->track02_atlas_graphics_pixel_count;
+    out_receipt->track02_atlas_graphics_checksum =
+        receipt->track02_atlas_graphics_checksum;
     out_receipt->track02_startup_graphics_executed =
         receipt->track02_startup_graphics_executed;
     out_receipt->track02_startup_graphic_receipt_valid =

@@ -33,6 +33,7 @@ typedef struct {
     size_t startup_bitmap_atlas_tile_count;
     size_t startup_bitmap_atlas_nonzero_pixel_count;
     uint32_t startup_bitmap_atlas_checksum;
+    Theron_Track02StartupBitmapAtlas startup_bitmap_atlas;
     int startup_bitmap_title_sample_count;
     int startup_bitmap_stage_sample_count;
     int startup_bitmap_soul_room_sample_count;
@@ -76,6 +77,7 @@ typedef struct {
     size_t startup_bitmap_atlas_tile_count;
     size_t startup_bitmap_atlas_nonzero_pixel_count;
     uint32_t startup_bitmap_atlas_checksum;
+    Theron_Track02StartupBitmapAtlas startup_bitmap_atlas;
     int startup_bitmap_title_sample_count;
     int startup_bitmap_stage_sample_count;
     int startup_bitmap_soul_room_sample_count;
