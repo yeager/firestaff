@@ -106,6 +106,8 @@ static DM2_AIDefinition g_ai_table[DM2_AI_TABLE_SIZE];
 static uint8_t g_ai_table_loaded[DM2_AI_TABLE_SIZE];
 static DM2_V1_CCMProgram g_ccm_programs[DM2_AI_TABLE_SIZE];
 static uint8_t g_ccm_program_loaded[DM2_AI_TABLE_SIZE];
+static int g_ccm_program_count = 0;
+static int g_ccm_program_field = -1;
 
 int dm2_v1_creature_ai_index_count(void) {
     return DM2_AI_TABLE_SIZE;
@@ -136,6 +138,8 @@ void dm2_v1_creature_reset_ai_table(void) {
 void dm2_v1_creature_reset_ccm_programs(void) {
     memset(g_ccm_programs, 0, sizeof(g_ccm_programs));
     memset(g_ccm_program_loaded, 0, sizeof(g_ccm_program_loaded));
+    g_ccm_program_count = 0;
+    g_ccm_program_field = -1;
 }
 
 static void dm2_v1_creature_decode_ai_spec(const uint8_t *raw,
@@ -216,7 +220,49 @@ int dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader
         ++loaded;
     }
 
+    g_ccm_program_count = loaded;
+    g_ccm_program_field = loaded > 0 ? field : -1;
     return loaded;
+}
+
+int dm2_v1_creature_load_ccm_programs_from_gdat_auto(
+    const DM2_V1_AssetLoader *loader,
+    int *out_field) {
+    static const int k_fields[] = {
+        1, 2, 3, 4, 5, 6, 7,
+        8, 9, 10, 11, 12, 13, 14, 15,
+        0x10, 0x11, 0x12, 0x18, 0x19, 0x1a, 0x20
+    };
+    int i;
+
+    if (out_field) *out_field = -1;
+    if (!loader || !loader->loaded) return -1;
+
+    /* skproject/SKWIN/SkWinCore.cpp EXTENDED_LOAD_AI_DEFINITION (~233-400)
+     * and QUERY_CREATURE_AI_SPEC_FROM_TYPE (~2995) bind CREATURE_AI GDAT rows
+     * to runtime AI state; SKULLWIN/c_creature.cpp DM2_PROCEED_CCM consumes
+     * the adjacent per-creature CCM stream. Different PC GDAT variants encode
+     * that stream in non-zero fields, so boot probes candidate fields and keeps
+     * the first byteprogram set that decodes cleanly. */
+    for (i = 0; i < (int)(sizeof(k_fields) / sizeof(k_fields[0])); ++i) {
+        int loaded = dm2_v1_creature_load_ccm_programs_from_gdat(
+            loader, k_fields[i]);
+        if (loaded > 0) {
+            if (out_field) *out_field = k_fields[i];
+            return loaded;
+        }
+    }
+
+    dm2_v1_creature_reset_ccm_programs();
+    return 0;
+}
+
+int dm2_v1_creature_loaded_ccm_program_count(void) {
+    return g_ccm_program_count;
+}
+
+int dm2_v1_creature_loaded_ccm_program_field(void) {
+    return g_ccm_program_field;
 }
 
 static int dm2_v1_creature_ai_has_gdat_spec(int ai_index) {

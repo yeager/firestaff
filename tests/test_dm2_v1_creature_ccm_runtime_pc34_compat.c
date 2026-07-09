@@ -145,6 +145,7 @@ static int test_gdat_imported_ccm_program_drives_ticks(void) {
     DM2_V1_GdatEntry entries[1];
     DM2_V1_AssetLoader loader;
     DM2_V1_CreatureCCMTickObserver obs;
+    int auto_field = -1;
     int slot;
 
     memset(entries, 0, sizeof(entries));
@@ -165,6 +166,8 @@ static int test_gdat_imported_ccm_program_drives_ticks(void) {
     install_mobile_melee_ai();
     dm2_v1_creature_reset_ccm_programs();
     CHECK("load imported ccm", dm2_v1_creature_load_ccm_programs_from_gdat(&loader, 1) == 1);
+    CHECK("import count", dm2_v1_creature_loaded_ccm_program_count() == 1);
+    CHECK("import field", dm2_v1_creature_loaded_ccm_program_field() == 1);
 
     slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 14, 15, 0, 2, 8);
     CHECK("spawn imported", slot >= 0);
@@ -190,6 +193,14 @@ static int test_gdat_imported_ccm_program_drives_ticks(void) {
                          obs.ccm_target_x == 5 &&
                          obs.ccm_target_y == 7);
 
+    dm2_v1_creature_reset_ccm_programs();
+    entries[0].cls4 = 2;
+    CHECK("auto load imported ccm",
+          dm2_v1_creature_load_ccm_programs_from_gdat_auto(&loader,
+                                                           &auto_field) == 1);
+    CHECK("auto load field", auto_field == 2);
+    CHECK("auto import count", dm2_v1_creature_loaded_ccm_program_count() == 1);
+    CHECK("auto import field", dm2_v1_creature_loaded_ccm_program_field() == 2);
     dm2_v1_creature_reset_ccm_programs();
     return 1;
 }
