@@ -57,6 +57,7 @@ int main(void)
     DM2_V1_StartupDrawCommand commands[16];
     DM2_V1_StartupRenderReceipt render_receipt;
     DM2_V1_StartupViewReceipt view_receipt;
+    DM2_V1_StartupRuntimeHandoffReceipt runtime_handoff;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -83,6 +84,24 @@ int main(void)
     check(dm2_v1_startup_input_from_firestaff_menu_code(999) ==
               DM2_V1_STARTUP_INPUT_NONE,
           "unknown Firestaff menu input maps to DM2 startup idle input");
+    check(dm2_v1_startup_runtime_handoff_receipt_from_state(
+              &runtime_handoff, 1, 1) &&
+              runtime_handoff.valid &&
+              runtime_handoff.startup_menu_active == 1 &&
+              strcmp(runtime_handoff.animation, "dm2-startup-menu") == 0 &&
+              runtime_handoff.runtime_menu_ready == 1 &&
+              runtime_handoff.runtime_action_ready == 0 &&
+              runtime_handoff.first_hud_frame_ready == 0,
+          "runtime handoff helper owns startup menu readiness");
+    check(dm2_v1_startup_runtime_handoff_receipt_from_state(
+              &runtime_handoff, 0, 1) &&
+              runtime_handoff.valid &&
+              runtime_handoff.startup_menu_active == 0 &&
+              strcmp(runtime_handoff.animation, "dm2-runtime") == 0 &&
+              runtime_handoff.runtime_menu_ready == 0 &&
+              runtime_handoff.runtime_action_ready == 1 &&
+              runtime_handoff.first_hud_frame_ready == 1,
+          "runtime handoff helper owns first HUD-frame readiness");
 
     save_path_result = dm2_v1_startup_load_session_from_save_path(
         "/tmp/firestaff-dm2-startup-missing/Other.dat",

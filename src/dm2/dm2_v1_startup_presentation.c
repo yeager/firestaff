@@ -384,26 +384,16 @@ int dm2_v1_startup_presentation_view_receipt_from_host_facts(
         return 0;
     }
 
-    active = facts->startup_menu_active ? 1 : 0;
-    out_receipt->runtime_handoff.valid = 1;
-    out_receipt->runtime_handoff.startup_menu_active = active;
-    out_receipt->runtime_handoff.animation_active = active;
-    snprintf(out_receipt->runtime_handoff.animation,
-             sizeof(out_receipt->runtime_handoff.animation),
-             "%s",
-             active ? "dm2-startup-menu" : "dm2-runtime");
-    out_receipt->runtime_handoff.title_frame = 0;
-    out_receipt->runtime_handoff.title_frame_max = 0;
-    out_receipt->runtime_handoff.title_ready = active ? 0 : 1;
     /* skproject/SKWIN SkWinCore presents DM2's title/menu before normal
      * dungeon HUD ownership; this receipt keeps that boundary in DM2 code. */
-    out_receipt->runtime_handoff.initialize_v2_runtime = 1;
-    out_receipt->runtime_handoff.initialize_hud_runtime = 1;
-    out_receipt->runtime_handoff.initialize_touch_runtime = 1;
-    out_receipt->runtime_handoff.hud_runtime_ready = hud_runtime_ready ? 1 : 0;
-    out_receipt->runtime_handoff.runtime_menu_ready = active;
-    out_receipt->runtime_handoff.runtime_action_ready = 0;
-    out_receipt->runtime_handoff.first_hud_frame_ready = active ? 0 : 1;
+    active = facts->startup_menu_active ? 1 : 0;
+    if (!dm2_v1_startup_runtime_handoff_receipt_from_state(
+            &out_receipt->runtime_handoff,
+            active,
+            hud_runtime_ready)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
     out_receipt->valid = 1;
     out_receipt->command_count = command_count;
     return 1;
