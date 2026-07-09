@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 entrance timing receipt handoff: DM1 full-graphics startup media receipts now carry entrance source-step count, door-step count, vblank timing, and pre-open delay, and M11 validates the active receipt before entrance transition. Verification: `firestaff_m10`, M11/test syntax checks, and `git diff --check` passed; full focused target is blocked by unrelated Nexus worktree edits.
+
 - ✅ 2026-07-09 CSB M11 startup decision consumption: M11 CSB startup input now consumes the CSB host decision receipt for status, redraw, bonus, and launcher-return while keeping CSB-owned utility/entrance state application. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 entrance callback receipt verification: M11 DM1 entrance handoff now requires the active post-launch receipt, validates the C255/5x5/south-facing entrance state before the transition, and the startup probe verifies TITLE/PRESENTS media plus entrance receipts through callbacks. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m10`, and `git diff --check` passed.

@@ -1570,7 +1570,13 @@ static int m11_dm1_handoff_play_entrance(void* user,
     }
     if (!ctx->activePostLaunchPlanValid ||
         !ctx->activePostLaunchPlan.entrance_full_start_receipt.valid ||
-        ctx->activePostLaunchPlan.entrance_auto_enter_ms != auto_enter_after_ms) {
+        ctx->activePostLaunchPlan.entrance_auto_enter_ms != auto_enter_after_ms ||
+        ctx->activePostLaunchPlan.media_receipt.entrance_source_animation_steps !=
+            ENTRANCE_Compat_GetSourceAnimationStepCount() ||
+        ctx->activePostLaunchPlan.media_receipt.entrance_door_step_count !=
+            ENTRANCE_Compat_GetDoorAnimationStepCount() ||
+        ctx->activePostLaunchPlan.media_receipt.entrance_vblank_ms !=
+            ENTRANCE_Compat_GetVblankDelayMs()) {
         return 0;
     }
     entrance = &ctx->activePostLaunchPlan.entrance_full_start_receipt;
