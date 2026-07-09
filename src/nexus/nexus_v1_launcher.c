@@ -2485,14 +2485,13 @@ int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands)
 {
-    Nexus_V1_StartupHostFacts facts;
-    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
-            state,
-            &facts)) {
+    if (!state) {
         return 0;
     }
-    return nexus_v1_startup_presentation_build_save_from_host_facts(
-        &facts,
+    return nexus_v1_startup_presentation_build_save_from_facts(
+        state->save_dir,
+        state->slot_mask,
+        state->save_selected_row,
         out_commands,
         max_commands);
 }
@@ -2595,14 +2594,14 @@ int nexus_v1_launcher_startup_presentation_build_champion_from_runtime_state(
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands)
 {
-    Nexus_V1_StartupHostFacts facts;
-    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
-            state,
-            &facts)) {
+    if (!state) {
         return 0;
     }
-    return nexus_v1_startup_presentation_build_champion_from_host_facts(
-        &facts,
+    return nexus_v1_startup_presentation_build_champion_from_facts(
+        state->engine ? &state->engine->champions : NULL,
+        state->slot_mask,
+        state->champion_cursor,
+        state->champion_frame,
         out_commands,
         max_commands);
 }
