@@ -4081,6 +4081,10 @@ int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
         out_receipt->hud_menu_draw_valid = 1;
         out_receipt->hud_menu_draw = *hud;
         out_receipt->hud_menu_kind = hud->kind;
+        out_receipt->readiness.hud_menu_kind = hud->kind;
+        out_receipt->readiness.hud_menu_ready = 1;
+        out_receipt->readiness.host_hud_blocked = 0;
+        out_receipt->readiness.host_startup_hud_ready = 1;
         out_receipt->hud_menu_option_count = hud->option_count;
         out_receipt->selected_command_id = hud->selected_command_id;
         out_receipt->selected_utility_action_index =

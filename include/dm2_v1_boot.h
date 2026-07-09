@@ -314,6 +314,11 @@ typedef struct {
     uint32_t title_raw_gdat_byte_count;
     uint32_t menu_raw_gdat_hash;
     uint32_t menu_raw_gdat_byte_count;
+    int title_menu_decoded_gdat_capture_ready;
+    uint32_t title_decoded_gdat_hash;
+    uint32_t title_decoded_gdat_pixel_count;
+    uint32_t menu_decoded_gdat_hash;
+    uint32_t menu_decoded_gdat_pixel_count;
     int title_cycle_ticks;
     int title_cycle_position_tick;
     int title_frame_start_tick;
@@ -384,6 +389,11 @@ typedef struct {
     uint32_t title_raw_gdat_byte_count;
     uint32_t menu_raw_gdat_hash;
     uint32_t menu_raw_gdat_byte_count;
+    int title_menu_decoded_gdat_capture_ready;
+    uint32_t title_decoded_gdat_hash;
+    uint32_t title_decoded_gdat_pixel_count;
+    uint32_t menu_decoded_gdat_hash;
+    uint32_t menu_decoded_gdat_pixel_count;
     int menu_row_count;
     int menu_text_count;
     int selectable_text_count;
@@ -450,6 +460,11 @@ typedef struct {
     uint32_t title_raw_gdat_byte_count;
     uint32_t menu_raw_gdat_hash;
     uint32_t menu_raw_gdat_byte_count;
+    int title_menu_decoded_gdat_capture_ready;
+    uint32_t title_decoded_gdat_hash;
+    uint32_t title_decoded_gdat_pixel_count;
+    uint32_t menu_decoded_gdat_hash;
+    uint32_t menu_decoded_gdat_pixel_count;
     int menu_row_count;
     int menu_text_count;
     int selectable_text_count;
