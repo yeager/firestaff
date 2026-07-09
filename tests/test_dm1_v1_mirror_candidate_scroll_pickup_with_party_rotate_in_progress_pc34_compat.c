@@ -62,7 +62,7 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_evidence(void)
 {
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_EvidencePc34Compat();
 
     check_true(e != NULL, "evidence accessor returns metadata", "metadata");
@@ -128,9 +128,9 @@ static void test_evidence(void)
 
 static void test_initial_and_manual_sequence(void)
 {
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat state;
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat before;
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat after;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat state;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat before;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat after;
     unsigned int hashBefore;
     unsigned int hashAfter;
 
@@ -318,10 +318,10 @@ static void test_initial_and_manual_sequence(void)
 
 static void test_run_result_and_hash(void)
 {
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat stateA;
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat stateB;
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat resultA;
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat resultB;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat stateA;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat stateB;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat resultA;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat resultB;
 
     check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_RunPc34Compat(&stateA, &resultA),
                "run helper returns success", "pass764");

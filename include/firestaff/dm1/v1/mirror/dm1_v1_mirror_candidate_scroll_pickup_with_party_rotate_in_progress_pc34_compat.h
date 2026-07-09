@@ -18,7 +18,7 @@ enum {
     DM1_V1_MCSPPR_C537_ZONE_CHEST_SLOT_1_PC34 = 537
 };
 
-typedef struct Dm1V1MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat {
     int contractOnly;
     const char *panelClickAnchor;
     const char *championPutAnchor;
@@ -35,9 +35,9 @@ typedef struct Dm1V1MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat
     const char *chamdrawChangedAnchor;
     const char *defsAnchor;
     const char *nonOverlapScope;
-} Dm1V1MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat;
+} DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat {
     int contractOnly;
     int partyChampionCount;
     int leaderIndex;
@@ -81,9 +81,9 @@ typedef struct Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat {
     int honoredPickupAfterRotationCount;
     int pickupAttemptCount;
     int rotationCompletedBeforePickup;
-} Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat;
+} DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat {
+typedef struct DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat {
     int candidateOrdinal;
     int candidateIndex;
     int candidateChain[DM1_V1_MCSPPR_CANDIDATE_CHAIN_CAPACITY_PC34];
@@ -95,10 +95,10 @@ typedef struct Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat
     unsigned int c040RedrawHash;
     int f0282DecisionCount;
     int candidateInternalRotationCount;
-} Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat;
+} DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat {
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat {
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat *evidence;
     int initialized;
     int openedCandidate;
     int queuedPartyTurn;
@@ -124,41 +124,50 @@ typedef struct Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat {
     unsigned int ignoredSnapshotHash;
     unsigned int finalHash;
     int ok;
-} Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat;
+} DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat
+    Dm1V1MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat
+    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat;
+typedef DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat
+    Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat;
+typedef DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat
+    Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat;
 
 void DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_InitPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
 
 void DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_SnapshotPc34Compat(
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat *snapshot);
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat *snapshot);
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_OpenCandidatePc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_QueueTurnPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
     int turnCommand);
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_BeginF0380PartyRotationPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_ClickScrollPickupPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_CompletePartyRotationPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_RunPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat *result);
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat *result);
 
-const Dm1V1MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat *
+const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat *
 DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_EvidencePc34Compat(void);
 
 unsigned int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_HashPc34Compat(
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat *result);
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat *result);
 
 #ifdef __cplusplus
 }

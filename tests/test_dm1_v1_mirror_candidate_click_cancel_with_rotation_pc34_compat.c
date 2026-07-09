@@ -50,7 +50,7 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_evidence(void)
 {
-    const Dm1V1MirrorCandidateClickCancelWithRotationEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34Compat *e =
         dm1_v1_mirror_candidate_click_cancel_with_rotation_evidence_pc34();
     const char *text =
         dm1_v1_mirror_candidate_click_cancel_with_rotation_source_evidence_pc34();
@@ -117,7 +117,7 @@ static void test_evidence(void)
 
 static void test_initial_state(void)
 {
-    Dm1V1MirrorCandidateClickCancelWithRotationStatePc34Compat state;
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat state;
     int i;
 
     dm1_v1_mirror_candidate_click_cancel_with_rotation_init_pc34(&state);
@@ -181,8 +181,8 @@ static void test_initial_state(void)
 
 static uint32_t test_run(void)
 {
-    Dm1V1MirrorCandidateClickCancelWithRotationStatePc34Compat state;
-    Dm1V1MirrorCandidateClickCancelWithRotationResultPc34Compat result;
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat state;
+    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34Compat result;
     uint32_t initialChainHash;
     int ok;
 
@@ -336,8 +336,8 @@ static uint32_t test_run(void)
 
 static void test_null_guards(void)
 {
-    Dm1V1MirrorCandidateClickCancelWithRotationStatePc34Compat state;
-    Dm1V1MirrorCandidateClickCancelWithRotationResultPc34Compat result;
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat state;
+    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34Compat result;
 
     dm1_v1_mirror_candidate_click_cancel_with_rotation_init_pc34(&state);
     check_int_eq(dm1_v1_mirror_candidate_click_cancel_with_rotation_run_pc34(
