@@ -2862,6 +2862,13 @@ static void m11_csb_boot_runtime_startup_snapshot(
     out_snapshot->resume_path =
         state->csbState.startup_entrance_resume_path;
     out_snapshot->boot_profile = state->csbBootProfile;
+    out_snapshot->runtime_level_loaded = state->csbState.level_loaded;
+    out_snapshot->runtime_map_index = state->csbState.current_level;
+    out_snapshot->runtime_party_x = state->csbState.party_x;
+    out_snapshot->runtime_party_y = state->csbState.party_y;
+    out_snapshot->runtime_party_dir = state->csbState.party_dir;
+    out_snapshot->runtime_champion_count = state->world.party.championCount;
+    out_snapshot->runtime_tick_count = state->csbState.tick_count;
 }
 
 static int m11_csb_boot_runtime_util_render_plan(
@@ -11291,6 +11298,16 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 readiness.selected_command_id;
             out->startupUtilitySelectedActionIndex =
                 readiness.selected_utility_action_index;
+            out->startupHudRuntimeReady = readiness.runtime_hud_ready;
+            if (readiness.runtime_handoff_ready) {
+                out->levelLoaded = readiness.runtime_level_loaded;
+                out->mapIndex = readiness.runtime_map_index;
+                out->partyX = readiness.runtime_party_x;
+                out->partyY = readiness.runtime_party_y;
+                out->partyDir = readiness.runtime_party_dir;
+                out->championCount = readiness.runtime_champion_count;
+                out->runtimeTick = readiness.runtime_tick_count;
+            }
         }
         return 1;
     }
@@ -37351,7 +37368,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        if (state->csbState.startup_entrance_active) {
+        CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
+        int startup_active = state->csbState.startup_entrance_active;
+        if (m11_csb_boot_runtime_startup_readiness_receipt(state,
+                                                           &readiness)) {
+            startup_active = readiness.startup_active;
+        }
+        if (startup_active) {
             m11_draw_csb_startup_entrance(state,
                                           framebuffer,
                                           framebufferWidth,

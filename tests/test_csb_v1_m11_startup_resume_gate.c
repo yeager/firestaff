@@ -1426,6 +1426,20 @@ int main(void) {
                     "M11 CSB entrance records the enter-dungeon command");
         expect_true(view.csbState.startup_entrance_bonus_requested == 0,
                     "M11 CSB normal enter does not mark bonus dungeon");
+        {
+            M11_BootProbeReceipt receipt;
+            expect_true(M11_GameView_GetBootProbeReceipt(&view, &receipt) == 1,
+                        "M11 CSB startup exports a runtime handoff receipt");
+            expect_true(receipt.startupActive == 0 &&
+                            receipt.startupTitleReady == 1 &&
+                            receipt.startupHudRuntimeReady == 1 &&
+                            receipt.levelLoaded == 1 &&
+                            receipt.mapIndex == view.csbState.current_level &&
+                            receipt.partyX == view.csbState.party_x &&
+                            receipt.partyY == view.csbState.party_y &&
+                            receipt.partyDir == view.csbState.party_dir,
+                        "M11 CSB boot receipt consumes CSB runtime HUD readiness");
+        }
     }
     M11_GameView_Shutdown(&view);
 

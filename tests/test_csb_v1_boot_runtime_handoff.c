@@ -2238,6 +2238,40 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               readiness_receipt.resume_available &&
               readiness_receipt.suppress_legacy_utility_fallback,
           "boot startup readiness receipt owns closed-door HUD/menu readiness");
+    snapshot.entrance_active = 0;
+    snapshot.entrance_source_step = 0;
+    snapshot.entrance_dismissed = 1;
+    snapshot.resume_available = 0;
+    snapshot.resume_path = NULL;
+    snapshot.runtime_level_loaded = 1;
+    snapshot.runtime_map_index = 6;
+    snapshot.runtime_party_x = 12;
+    snapshot.runtime_party_y = 13;
+    snapshot.runtime_party_dir = 2;
+    snapshot.runtime_champion_count = 4;
+    snapshot.runtime_tick_count = 77;
+    CHECK(csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
+              &snapshot,
+              &readiness_receipt) == 1 &&
+              readiness_receipt.valid &&
+              !readiness_receipt.startup_active &&
+              readiness_receipt.title_ready &&
+              readiness_receipt.runtime_handoff_ready &&
+              readiness_receipt.runtime_viewport_ready &&
+              readiness_receipt.runtime_hud_ready &&
+              readiness_receipt.runtime_level_loaded == 1 &&
+              readiness_receipt.runtime_map_index == 6 &&
+              readiness_receipt.runtime_party_x == 12 &&
+              readiness_receipt.runtime_party_y == 13 &&
+              readiness_receipt.runtime_party_dir == 2 &&
+              readiness_receipt.runtime_champion_count == 4 &&
+              readiness_receipt.runtime_tick_count == 77,
+          "boot startup readiness receipt owns runtime HUD handoff after title/menu chain");
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = 4;
+    snapshot.entrance_dismissed = 0;
+    snapshot.resume_available = 1;
+    snapshot.resume_path = resume_path;
     poisoned_view_receipt = view_receipt;
     poisoned_view_receipt.render_plan.waiting_for_input = 0;
     poisoned_view_receipt.render_plan.render_command_count = 1;
