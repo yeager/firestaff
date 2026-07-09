@@ -1601,6 +1601,16 @@ static void test_startup_session_facts_wrappers(void) {
     media_receipt.startup_bitmap_stage_route_ready = 1;
     media_receipt.startup_bitmap_soul_room_route_ready = 1;
     media_receipt.startup_bitmap_forcefield_route_ready = 1;
+    media_receipt.startup_bitmap_atlas_ready = 1;
+    media_receipt.startup_bitmap_atlas_route_count = 4;
+    media_receipt.startup_bitmap_atlas_route_mask =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    media_receipt.startup_bitmap_atlas_tile_count = 8u;
+    media_receipt.startup_bitmap_atlas_nonzero_pixel_count = 96u;
+    media_receipt.startup_bitmap_atlas_checksum = 0x9163u;
     media_receipt.startup_bitmap_title_sample_count = 3;
     media_receipt.startup_bitmap_stage_sample_count = 3;
     media_receipt.startup_bitmap_soul_room_sample_count = 1;
@@ -2947,6 +2957,10 @@ static void test_startup_session_facts_wrappers(void) {
         partial_media_receipt.startup_bitmap_forcefield_nonzero_pixel_count = 0u;
         partial_media_receipt.startup_bitmap_forcefield_checksum = 0u;
         partial_media_receipt.startup_bitmap_sample_count = 3;
+        partial_media_receipt.startup_bitmap_atlas_route_mask &=
+            ~THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+        partial_media_receipt.startup_bitmap_atlas_route_count = 3;
+        partial_media_receipt.startup_bitmap_atlas_tile_count = 3u;
         memset(&partial_media_view_model, 0, sizeof(partial_media_view_model));
         memset(&partial_graphics_receipt, 0, sizeof(partial_graphics_receipt));
         memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
@@ -3499,6 +3513,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
         THERON_TRACK02_RAW_SECTOR_BYTES;
     uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
     Theron_Track02StartupBitmapCatalog catalog;
+    Theron_Track02StartupBitmapAtlas atlas;
     Theron_StartupMediaStateReceipt receipt;
 
     expect_true(track02 != NULL,
@@ -3532,6 +3547,24 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     catalog.samples[0].nonzero_pixel_count > 0u &&
                     catalog.samples[0].checksum != 0u,
                 "Track02 startup bitmap catalog decodes real 4bpp samples from raw-sector graphics spans");
+    expect_true(theron_v1_track02_build_startup_bitmap_atlas(
+                    &catalog,
+                    &atlas) == THERON_TRACK02_SIGNAL_OK &&
+                    atlas.route_count == 4u &&
+                    atlas.total_tile_count == 12u &&
+                    atlas.route_mask ==
+                        (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                    atlas.routes[0].width == 16u &&
+                    atlas.routes[0].height == 8u &&
+                    atlas.routes[1].width == 16u &&
+                    atlas.routes[2].width == 32u &&
+                    atlas.routes[3].width == 32u &&
+                    atlas.total_nonzero_pixel_count > 0u &&
+                    atlas.checksum != 0u,
+                "Track02 startup bitmap atlas joins decoded tiles into per-route bitmaps");
 
     theron_v1_startup_media_capture_track02_state_receipt(
         track02,
@@ -3554,6 +3587,16 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     receipt.startup_bitmap_stage_route_ready &&
                     receipt.startup_bitmap_soul_room_route_ready &&
                     receipt.startup_bitmap_forcefield_route_ready &&
+                    receipt.startup_bitmap_atlas_ready &&
+                    receipt.startup_bitmap_atlas_route_count == 4 &&
+                    receipt.startup_bitmap_atlas_route_mask ==
+                        (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                    receipt.startup_bitmap_atlas_tile_count == 12u &&
+                    receipt.startup_bitmap_atlas_nonzero_pixel_count > 0u &&
+                    receipt.startup_bitmap_atlas_checksum != 0u &&
                     receipt.startup_bitmap_title_sample_count == 4 &&
                     receipt.startup_bitmap_stage_sample_count == 4 &&
                     receipt.startup_bitmap_soul_room_sample_count == 2 &&
@@ -3589,6 +3632,7 @@ static void test_track02_startup_bitmap_decode_iso_receipt(void) {
     const size_t track02_size = 0x3000u + sizeof(post_boundary_span);
     uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
     Theron_Track02StartupBitmapCatalog catalog;
+    Theron_Track02StartupBitmapAtlas atlas;
     Theron_StartupMediaStateReceipt receipt;
 
     expect_true(track02 != NULL,
@@ -3620,6 +3664,18 @@ static void test_track02_startup_bitmap_decode_iso_receipt(void) {
                     catalog.samples[0].nonzero_pixel_count > 0u &&
                     catalog.samples[1].checksum != 0u,
                 "Track02 startup bitmap catalog decodes bounded ISO startup bitmap samples");
+    expect_true(theron_v1_track02_build_startup_bitmap_atlas(
+                    &catalog,
+                    &atlas) == THERON_TRACK02_SIGNAL_OK &&
+                    atlas.route_count == 2u &&
+                    atlas.total_tile_count == 4u &&
+                    atlas.route_mask ==
+                        (THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                    atlas.routes[0].width == 16u &&
+                    atlas.routes[1].width == 16u &&
+                    atlas.total_nonzero_pixel_count > 0u,
+                "Track02 ISO startup bitmap atlas covers bounded visible routes");
 
     theron_v1_startup_media_capture_track02_state_receipt(
         track02,
@@ -3630,6 +3686,10 @@ static void test_track02_startup_bitmap_decode_iso_receipt(void) {
                     receipt.startup_bitmap_decode_status ==
                         THERON_TRACK02_SIGNAL_OK &&
                     receipt.startup_bitmap_sample_count == 4 &&
+                    receipt.startup_bitmap_atlas_ready &&
+                    receipt.startup_bitmap_atlas_route_count == 2 &&
+                    receipt.startup_bitmap_atlas_tile_count == 4u &&
+                    receipt.startup_bitmap_atlas_nonzero_pixel_count > 0u &&
                     (receipt.startup_bitmap_route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
                     (receipt.startup_bitmap_route_mask &

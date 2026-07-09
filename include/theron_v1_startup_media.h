@@ -27,6 +27,12 @@ typedef struct {
     int startup_bitmap_stage_route_ready;
     int startup_bitmap_soul_room_route_ready;
     int startup_bitmap_forcefield_route_ready;
+    int startup_bitmap_atlas_ready;
+    int startup_bitmap_atlas_route_count;
+    unsigned int startup_bitmap_atlas_route_mask;
+    size_t startup_bitmap_atlas_tile_count;
+    size_t startup_bitmap_atlas_nonzero_pixel_count;
+    uint32_t startup_bitmap_atlas_checksum;
     int startup_bitmap_title_sample_count;
     int startup_bitmap_stage_sample_count;
     int startup_bitmap_soul_room_sample_count;
@@ -64,6 +70,12 @@ typedef struct {
     int startup_bitmap_stage_route_ready;
     int startup_bitmap_soul_room_route_ready;
     int startup_bitmap_forcefield_route_ready;
+    int startup_bitmap_atlas_ready;
+    int startup_bitmap_atlas_route_count;
+    unsigned int startup_bitmap_atlas_route_mask;
+    size_t startup_bitmap_atlas_tile_count;
+    size_t startup_bitmap_atlas_nonzero_pixel_count;
+    uint32_t startup_bitmap_atlas_checksum;
     int startup_bitmap_title_sample_count;
     int startup_bitmap_stage_sample_count;
     int startup_bitmap_soul_room_sample_count;
