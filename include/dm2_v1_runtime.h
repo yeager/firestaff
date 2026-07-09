@@ -123,6 +123,10 @@ typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int frame_index;
     int direction;
     int hp_pct;
+    int ccm_primary_state;
+    int ccm_secondary_state;
+    int attack_cooldown;
+    int frame_source;      /* 0=walk/tick, 1=cooldown, 2=attack state */
     int map_x;
     int map_y;
     int screen_x;

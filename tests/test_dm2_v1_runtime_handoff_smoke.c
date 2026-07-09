@@ -777,6 +777,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         dm2_v1_runtime_set_position(0, 1, 1, 0);
         dm2_v1_runtime_set_outdoor(0);
         slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 1, 0, 0, 1, 8);
+        dm2_v1_runtime_tick();
         memset(s_creature_pixels, 10, sizeof(s_creature_pixels));
         memset(s_creature_wide_pixels, 10, sizeof(s_creature_wide_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
@@ -794,29 +795,33 @@ static void test_first_tick_after_boot_profile_handoff(void)
               receipt.creature_type == DM2_AI_CAVE_BAT &&
               receipt.source_kind == 1 &&
               receipt.thing_handle == -1 &&
-              receipt.frame_index == 0 &&
+              receipt.frame_index == 2 &&
               receipt.direction == 1 &&
               receipt.hp_pct == 100 &&
+              receipt.ccm_primary_state == DM2_CCM_CREATURE_ATTACKS_PARTY &&
+              receipt.ccm_secondary_state == 0 &&
+              receipt.attack_cooldown == 0 &&
+              receipt.frame_source == 2 &&
               receipt.map_x == 1 &&
               receipt.map_y == 0 &&
               receipt.screen_x == 112 &&
               receipt.screen_y == 98 &&
               receipt.depth == 0 &&
               receipt.gdat_index ==
-                  dm2_v1_viewport_creature_graphic_index(DM2_AI_CAVE_BAT, 0) &&
+                  dm2_v1_viewport_creature_graphic_index(DM2_AI_CAVE_BAT, 2) &&
               receipt.asset_blit_ready == 1 &&
               receipt.asset_src_w == 32 &&
               receipt.asset_src_h == 8 &&
               receipt.asset_src_stride == 32 &&
               receipt.asset_frame_count == 4 &&
-              receipt.requested_frame_index == 0 &&
+              receipt.requested_frame_index == 2 &&
               receipt.party_direction == 0 &&
               receipt.relative_direction == 3 &&
-              receipt.atlas_frame_index == 1 &&
-              receipt.atlas_frame_x == 8 &&
+              receipt.atlas_frame_index == 3 &&
+              receipt.atlas_frame_x == 24 &&
               receipt.atlas_frame_w == 8 &&
               receipt.atlas_frame_h == 8 &&
-              receipt.render_frame == 1 &&
+              receipt.render_frame == 3 &&
               receipt.asset_dst_rect.x == 108 &&
               receipt.asset_dst_rect.y == 94 &&
               receipt.asset_dst_rect.w == 8 &&
