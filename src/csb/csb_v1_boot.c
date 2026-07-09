@@ -1818,6 +1818,30 @@ void csb_v1_boot_startup_runtime_route_hardening_receipt_init_pc34(
         "CSBWin Viewport startup/HUD ownership";
 }
 
+void csb_v1_boot_startup_runtime_host_capture_gate_receipt_init_pc34(
+    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_boot_startup_runtime_visual_capture_receipt_init_pc34(
+        &receipt->runtime_visual);
+    csb_v1_boot_startup_runtime_route_hardening_receipt_init_pc34(
+        &receipt->title_route_hardening);
+    csb_v1_boot_startup_runtime_route_hardening_receipt_init_pc34(
+        &receipt->closed_door_route_hardening);
+    csb_v1_boot_startup_runtime_route_hardening_receipt_init_pc34(
+        &receipt->utility_route_hardening);
+    csb_v1_boot_startup_runtime_route_hardening_receipt_init_pc34(
+        &receipt->door_opening_route_hardening);
+    receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; "
+        "ENTRANCE.C F0441/F0806 lines 850-883; "
+        "ENTRANCE.C F0438/F0807 door-opening frames; "
+        "CSBWin startup host loop keeps title/HUD/opening on one route";
+}
+
 void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt)
 {
@@ -4019,6 +4043,232 @@ int csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
      * opening, and credits on the CSB startup route. This receipt hardens the
      * current host-owned draw against proving a route that was not part of
      * the full visual capture, or that still wants fallback text/door draws. */
+    return out_receipt->valid;
+}
+
+static int csb_v1_boot_startup_runtime_host_gate_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor,
+    const CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *visual_sequence,
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 *out_hardening,
+    uint32_t *gate_hash)
+{
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 ownership;
+    if (!snapshot || !executor || !visual_sequence || !out_hardening ||
+        !gate_hash) {
+        return 0;
+    }
+    if (!csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+            snapshot,
+            1,
+            CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
+            executor,
+            &ownership) ||
+        !ownership.valid ||
+        !csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+            visual_sequence,
+            &ownership,
+            out_hardening) ||
+        !out_hardening->valid) {
+        return 0;
+    }
+    *gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        *gate_hash ? *gate_hash : 2166136261u,
+        out_hardening->route_hardening_hash);
+    *gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        *gate_hash,
+        ownership.packaged_capture_hash);
+    return 1;
+}
+
+int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
+    const CSB_V1_BootProfile *boot_profile,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor,
+    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    uint32_t gate_hash = 2166136261u;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_runtime_host_capture_gate_receipt_init_pc34(
+        out_receipt);
+    if (!boot_profile || !executor) {
+        return 0;
+    }
+    if (!csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
+            boot_profile,
+            executor,
+            &out_receipt->runtime_visual) ||
+        !out_receipt->runtime_visual.valid ||
+        !out_receipt->runtime_visual.visual_sequence.valid) {
+        return 0;
+    }
+
+    out_receipt->runtime_visual_valid = 1;
+    out_receipt->visual_sequence_valid =
+        out_receipt->runtime_visual.visual_sequence_valid ? 1 : 0;
+    out_receipt->sequence_capture_hash =
+        out_receipt->runtime_visual.sequence_capture_hash;
+    out_receipt->runtime_capture_hash =
+        out_receipt->runtime_visual.runtime_capture_hash;
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.title_active = 1;
+    snapshot.title_frame = 0;
+    snapshot.title_source_step = 1;
+    if (!csb_v1_boot_startup_runtime_host_gate_snapshot_pc34(
+            &snapshot,
+            executor,
+            &out_receipt->runtime_visual.visual_sequence,
+            &out_receipt->title_route_hardening,
+            &gate_hash) ||
+        !out_receipt->title_route_hardening.title_route_covered) {
+        return 0;
+    }
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.utility_overlay_active = 0;
+    if (!csb_v1_boot_startup_runtime_host_gate_snapshot_pc34(
+            &snapshot,
+            executor,
+            &out_receipt->runtime_visual.visual_sequence,
+            &out_receipt->closed_door_route_hardening,
+            &gate_hash) ||
+        !out_receipt->closed_door_route_hardening.closed_door_hud_route_covered) {
+        return 0;
+    }
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.utility_overlay_active = 1;
+    snapshot.utility_selected_action_index = 0;
+    snapshot.utility_imported_champion_count = 2;
+    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
+    if (!csb_v1_boot_startup_runtime_host_gate_snapshot_pc34(
+            &snapshot,
+            executor,
+            &out_receipt->runtime_visual.visual_sequence,
+            &out_receipt->utility_route_hardening,
+            &gate_hash) ||
+        !out_receipt->utility_route_hardening.utility_hud_route_covered) {
+        return 0;
+    }
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 3;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    if (!csb_v1_boot_startup_runtime_host_gate_snapshot_pc34(
+            &snapshot,
+            executor,
+            &out_receipt->runtime_visual.visual_sequence,
+            &out_receipt->door_opening_route_hardening,
+            &gate_hash) ||
+        !out_receipt->door_opening_route_hardening.door_opening_route_covered) {
+        return 0;
+    }
+
+    out_receipt->route_hardening_valid =
+        out_receipt->title_route_hardening.valid &&
+                out_receipt->closed_door_route_hardening.valid &&
+                out_receipt->utility_route_hardening.valid &&
+                out_receipt->door_opening_route_hardening.valid
+            ? 1
+            : 0;
+    out_receipt->title_runtime_captured =
+        out_receipt->runtime_visual.title_runtime_consumed &&
+                out_receipt->runtime_visual.title_draw_consumed
+            ? 1
+            : 0;
+    out_receipt->closed_door_hud_runtime_captured =
+        out_receipt->runtime_visual.closed_door_hud_runtime_consumed &&
+                out_receipt->runtime_visual.closed_door_hud_draw_consumed
+            ? 1
+            : 0;
+    out_receipt->utility_hud_runtime_captured =
+        out_receipt->runtime_visual.utility_hud_runtime_consumed &&
+                out_receipt->runtime_visual.utility_hud_draw_consumed
+            ? 1
+            : 0;
+    out_receipt->door_opening_runtime_captured =
+        out_receipt->runtime_visual.door_opening_delay_runtime_consumed &&
+                out_receipt->runtime_visual
+                    .door_opening_frame_runtime_consumed &&
+                out_receipt->runtime_visual.door_opening_frame_draw_consumed
+            ? 1
+            : 0;
+    out_receipt->credits_runtime_captured =
+        out_receipt->runtime_visual.credits_runtime_consumed &&
+                out_receipt->runtime_visual.credits_surface_draw_consumed
+            ? 1
+            : 0;
+    out_receipt->all_runtime_routes_consumed =
+        out_receipt->title_runtime_captured &&
+                out_receipt->closed_door_hud_runtime_captured &&
+                out_receipt->utility_hud_runtime_captured &&
+                out_receipt->door_opening_runtime_captured &&
+                out_receipt->credits_runtime_captured
+            ? 1
+            : 0;
+    out_receipt->draw_consumes_receipt_only =
+        out_receipt->runtime_visual.draw_consumes_receipt_only &&
+                out_receipt->title_route_hardening.host_draw_consumes_receipt_only &&
+                out_receipt->closed_door_route_hardening.host_draw_consumes_receipt_only &&
+                out_receipt->utility_route_hardening.host_draw_consumes_receipt_only &&
+                out_receipt->door_opening_route_hardening.host_draw_consumes_receipt_only
+            ? 1
+            : 0;
+    out_receipt->input_consumes_receipt_only =
+        out_receipt->runtime_visual_valid &&
+                out_receipt->title_route_hardening.valid &&
+                out_receipt->closed_door_route_hardening.valid &&
+                out_receipt->utility_route_hardening.valid &&
+                out_receipt->door_opening_route_hardening.valid
+            ? 1
+            : 0;
+    out_receipt->no_fallback_callbacks =
+        out_receipt->runtime_visual.no_fallback_callbacks ? 1 : 0;
+    out_receipt->no_wrapper_fallback_routes =
+        out_receipt->runtime_visual.no_wrapper_fallback_routes &&
+                out_receipt->title_route_hardening.no_fallback_text_route &&
+                out_receipt->closed_door_route_hardening.no_fallback_text_route &&
+                out_receipt->utility_route_hardening.no_fallback_text_route &&
+                out_receipt->door_opening_route_hardening
+                    .no_legacy_door_fallback_route
+            ? 1
+            : 0;
+    out_receipt->route_hardening_hash = gate_hash ? gate_hash : 1u;
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        out_receipt->sequence_capture_hash);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        out_receipt->runtime_capture_hash);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        out_receipt->route_hardening_hash);
+    out_receipt->runtime_host_gate_hash = gate_hash ? gate_hash : 1u;
+    out_receipt->valid =
+        out_receipt->runtime_visual_valid &&
+                out_receipt->visual_sequence_valid &&
+                out_receipt->route_hardening_valid &&
+                out_receipt->all_runtime_routes_consumed &&
+                out_receipt->draw_consumes_receipt_only &&
+                out_receipt->input_consumes_receipt_only &&
+                out_receipt->no_fallback_callbacks &&
+                out_receipt->no_wrapper_fallback_routes &&
+                out_receipt->runtime_host_gate_hash != 0u
+            ? 1
+            : 0;
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806/F0438 execute title,
+     * HUD/menu, credits, and door-opening as one startup host path. This
+     * gate proves the same runtime draw executor consumed the full visual
+     * sequence and that each M11-facing route is also covered by route
+     * hardening, so older loose render-plan wrappers cannot satisfy startup
+     * proof on their own. */
     return out_receipt->valid;
 }
 

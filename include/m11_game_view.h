@@ -1021,7 +1021,9 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outOpeningFrameDrawReady,
     int* outFullVisualSequenceConsumed,
     int* outRuntimeRouteHardeningReady,
-    int* outRuntimeRouteHardeningHashReady);
+    int* outRuntimeRouteHardeningHashReady,
+    int* outRuntimeHostCaptureGateReady,
+    int* outRuntimeHostCaptureGateHashReady);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,
