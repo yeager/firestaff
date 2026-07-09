@@ -90,6 +90,21 @@ int dm2_v1_runtime_last_asset_door_button_count(void);
 int dm2_v1_runtime_last_fallback_door_count(void);
 int dm2_v1_runtime_last_asset_carried_item_count(void);
 int dm2_v1_runtime_last_fallback_carried_item_count(void);
+typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
+    int valid;
+    int instance_id;
+    int creature_type;
+    int frame_index;
+    int direction;
+    int hp_pct;
+    int map_x;
+    int map_y;
+    int screen_x;
+    int screen_y;
+    int depth;
+} DM2_V1_RuntimeCreatureRenderReceipt;
+int dm2_v1_runtime_last_creature_render_receipt(
+    DM2_V1_RuntimeCreatureRenderReceipt *out_receipt);
 int dm2_v1_runtime_last_asset_creature_count(void);
 int dm2_v1_runtime_last_fallback_creature_count(void);
 int dm2_v1_runtime_last_asset_creature_possession_item_count(void);
