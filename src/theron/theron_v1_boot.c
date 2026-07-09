@@ -1494,6 +1494,10 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
         effective_snapshot.runtime_track02_semantic_handoff ? 1 : 0;
     out_view_model->runtime_fallback_visuals_blocked =
         effective_snapshot.runtime_fallback_visuals_blocked ? 1 : 0;
+    out_view_model->runtime_structured_route =
+        effective_snapshot.runtime_structured_route ? 1 : 0;
+    out_view_model->runtime_receipt_text_route =
+        effective_snapshot.runtime_receipt_text_route ? 1 : 0;
     if (out_view_model->runtime_level_source ==
             THERON_V1_STARTUP_RUNTIME_LEVEL_NONE &&
         effective_snapshot.world) {
@@ -1728,6 +1732,10 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         view_model->runtime_track02_semantic_handoff;
     out_receipt->runtime_fallback_visuals_blocked =
         view_model->runtime_fallback_visuals_blocked;
+    out_receipt->runtime_structured_route =
+        view_model->runtime_structured_route;
+    out_receipt->runtime_receipt_text_route =
+        view_model->runtime_receipt_text_route;
     out_receipt->startup_menu_render_allowed =
         view_model->render_plan_valid ? 1 : 0;
     out_receipt->track02_title_menu_ready =
@@ -1961,6 +1969,10 @@ int theron_v1_boot_startup_state_receipt_from_view_model(
             view_model->runtime_track02_semantic_handoff;
         out_receipt->runtime_fallback_visuals_blocked =
             view_model->runtime_fallback_visuals_blocked;
+        out_receipt->runtime_structured_route =
+            view_model->runtime_structured_route;
+        out_receipt->runtime_receipt_text_route =
+            view_model->runtime_receipt_text_route;
         if (view_model->runtime_level_source !=
             THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED) {
             out_receipt->set_level_loaded = 1;

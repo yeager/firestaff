@@ -98,6 +98,8 @@ typedef struct {
     int runtime_level_source;
     int runtime_track02_semantic_handoff;
     int runtime_fallback_visuals_blocked;
+    int runtime_structured_route;
+    int runtime_receipt_text_route;
     int set_save_resume;
     int save_resume_verdict;
     int save_resume_claim;

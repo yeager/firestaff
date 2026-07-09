@@ -263,6 +263,8 @@ typedef struct Theron_V1_BootRuntimeStartupSnapshot {
     int runtime_level_source;
     int runtime_track02_semantic_handoff;
     int runtime_fallback_visuals_blocked;
+    int runtime_structured_route;
+    int runtime_receipt_text_route;
     const char *startup_text_prompt;
     const char (*startup_roster_names)
         [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
@@ -314,6 +316,8 @@ typedef struct Theron_V1_BootStartupViewModel {
     int runtime_level_source;
     int runtime_track02_semantic_handoff;
     int runtime_fallback_visuals_blocked;
+    int runtime_structured_route;
+    int runtime_receipt_text_route;
     int continue_focus;
     int resume_claim;
     int tqsv_slot;
@@ -348,6 +352,8 @@ typedef struct Theron_V1_BootStartupRenderRouteReceipt {
     int runtime_level_source;
     int runtime_track02_semantic_handoff;
     int runtime_fallback_visuals_blocked;
+    int runtime_structured_route;
+    int runtime_receipt_text_route;
     const char *status_scope;
     const char *status;
 } Theron_V1_BootStartupRenderRouteReceipt;

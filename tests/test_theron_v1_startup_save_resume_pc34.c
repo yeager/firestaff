@@ -1955,6 +1955,8 @@ static void test_startup_session_facts_wrappers(void) {
         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED;
     blocked_snapshot.runtime_track02_semantic_handoff = 0;
     blocked_snapshot.runtime_fallback_visuals_blocked = 1;
+    blocked_snapshot.runtime_structured_route = 1;
+    blocked_snapshot.runtime_receipt_text_route = 0;
     expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
                     &blocked_snapshot,
                     &media_receipt,
@@ -1972,6 +1974,8 @@ static void test_startup_session_facts_wrappers(void) {
                     state_receipt.runtime_level_source ==
                         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
                     state_receipt.runtime_fallback_visuals_blocked == 1 &&
+                    state_receipt.runtime_structured_route == 1 &&
+                    state_receipt.runtime_receipt_text_route == 0 &&
                     !state_receipt.set_level_loaded,
                 "boot startup state receipt blocks Track02 fallback visuals without marking a level loaded");
     expect_true(theron_v1_boot_startup_render_route_receipt_from_snapshot_with_media_receipt(
@@ -1984,6 +1988,8 @@ static void test_startup_session_facts_wrappers(void) {
                     render_route_receipt.runtime_level_source ==
                         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
                     render_route_receipt.runtime_fallback_visuals_blocked == 1 &&
+                    render_route_receipt.runtime_structured_route == 1 &&
+                    render_route_receipt.runtime_receipt_text_route == 0 &&
                     !render_route_receipt.runtime_level_render_allowed &&
                     !render_route_receipt.runtime_readiness_ready &&
                     !render_route_receipt.title_menu_runtime_handoff_ready &&
@@ -2007,6 +2013,8 @@ static void test_startup_session_facts_wrappers(void) {
         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
     semantic_snapshot.runtime_track02_semantic_handoff = 1;
     semantic_snapshot.runtime_fallback_visuals_blocked = 0;
+    semantic_snapshot.runtime_structured_route = 1;
+    semantic_snapshot.runtime_receipt_text_route = 0;
     expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
                     &semantic_snapshot,
                     &media_receipt,
@@ -2041,6 +2049,8 @@ static void test_startup_session_facts_wrappers(void) {
                     render_route_receipt.no_fallback_visuals_enforced &&
                     !render_route_receipt.fallback_visuals_allowed &&
                     render_route_receipt.runtime_track02_semantic_handoff == 1 &&
+                    render_route_receipt.runtime_structured_route == 1 &&
+                    render_route_receipt.runtime_receipt_text_route == 0 &&
                     strcmp(render_route_receipt.status,
                            "TRACK02 RUNTIME READY") == 0,
                 "boot startup render route receipt marks Track02 semantic first level HUD-ready without fallback visuals");
@@ -2556,7 +2566,9 @@ static void test_runtime_entry_structured_track02_routes(void) {
                     !apply_receipt.runtime_receipt_text_route &&
                     state_receipt.set_runtime_level_route &&
                     state_receipt.runtime_level_source ==
-                        THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM,
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM &&
+                    state_receipt.runtime_structured_route &&
+                    !state_receipt.runtime_receipt_text_route,
                 "runtime entry fallback route is structured without receipt text parsing");
 
     theron_v1_world_init(&world);

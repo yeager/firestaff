@@ -681,6 +681,10 @@ int theron_v1_startup_runtime_entry_state_receipt_from_result(
         result->track02_semantic_handoff;
     out_receipt->runtime_fallback_visuals_blocked =
         result->fallback_visuals_blocked;
+    out_receipt->runtime_structured_route =
+        result->structured_runtime_route;
+    out_receipt->runtime_receipt_text_route =
+        result->runtime_receipt_text_route;
     return 1;
 }
 
