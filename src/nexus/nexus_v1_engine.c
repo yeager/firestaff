@@ -353,6 +353,8 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
 
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
+    (void)nexus_sound_level_runtime_receipt(&engine->audio,
+                                            &engine->sfx_runtime_receipt);
     nexus_script_vm_init(&engine->script_vm);
     (void)nexus_script_vm_runtime_receipt(&engine->script_vm,
                                           &engine->script_runtime_receipt);
@@ -405,10 +407,16 @@ uint8_t *nexus_v1_read_file(Nexus_V1_Engine *engine, const char *name, int *out_
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     char name[32];
     char script_name[32];
+    char sal_name[32];
+    char map_name[32];
     int size = 0;
     int script_size = 0;
+    int sal_size = 0;
+    int map_size = 0;
     uint8_t *data;
     uint8_t *script_data;
+    uint8_t *sal_data;
+    uint8_t *map_data;
 
     if (!engine || level < 0 || level > 15) return -1;
     snprintf(name, sizeof(name), "LEV%02d.DGN", level);
@@ -436,10 +444,26 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
                                           &engine->script_runtime_receipt);
     free(script_data);
 
+    snprintf(sal_name, sizeof(sal_name), "SNDLEV%02d.SAL", level);
+    snprintf(map_name, sizeof(map_name), "SNDLEV%02d.MAP", level);
+    sal_data = nexus_v1_read_file(engine, sal_name, &sal_size);
+    map_data = nexus_v1_read_file(engine, map_name, &map_size);
+    (void)nexus_sound_load_level(&engine->audio,
+                                 level,
+                                 sal_data,
+                                 sal_size,
+                                 map_data,
+                                 map_size);
+    (void)nexus_sound_level_runtime_receipt(&engine->audio,
+                                            &engine->sfx_runtime_receipt);
+    free(sal_data);
+    free(map_data);
+
     /* Update CD audio track */
     int new_track = nexus_v1_cd_track_for_level(level);
     if (new_track != engine->current_cd_track && engine->audio_enabled) {
         engine->current_cd_track = new_track;
+        (void)nexus_sound_cd_track(&engine->audio, new_track);
         printf("Nexus: CD track %d for level %d\n", new_track, level);
         /* FUTURE: CD audio playback via SDL_mixer.
          * DM Nexus (Saturn) uses CD-DA tracks for music. */
@@ -719,5 +743,22 @@ int nexus_v1_current_level_script_runtime_receipt(
         return 0;
     }
     *out_receipt = engine->script_runtime_receipt;
+    return 0;
+}
+
+int nexus_v1_current_level_sfx_runtime_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_SfxRuntimeReceipt *out_receipt) {
+    if (!out_receipt) {
+        return -1;
+    }
+    if (!engine || !engine->level_loaded) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->status = NEXUS_SFX_RUNTIME_MISSING;
+        out_receipt->level_index = -1;
+        out_receipt->fallback_visuals_permitted = 0;
+        return 0;
+    }
+    *out_receipt = engine->sfx_runtime_receipt;
     return 0;
 }

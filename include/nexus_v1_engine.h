@@ -120,6 +120,7 @@ struct Nexus_V1_Engine {
 
     /* Audio */
     Nexus_SoundEngine audio;
+    Nexus_SfxRuntimeReceipt sfx_runtime_receipt;
     int current_cd_track;
     int audio_enabled;
 
@@ -179,5 +180,8 @@ int nexus_v1_current_level_dgn_renderer_handoff_receipt(
 int nexus_v1_current_level_script_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_ScriptRuntimeReceipt *out_receipt);
+int nexus_v1_current_level_sfx_runtime_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_SfxRuntimeReceipt *out_receipt);
 
 #endif /* NEXUS_V1_ENGINE_H */

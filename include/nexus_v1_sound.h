@@ -1,6 +1,7 @@
 #ifndef NEXUS_V1_SOUND_H
 #define NEXUS_V1_SOUND_H
 
+#include "nexus_v1_audio_receipt.h"
 #include <stdint.h>
 
 /* Nexus V1 sound system — SFX + CD audio.
@@ -62,6 +63,29 @@ typedef struct {
     int map_size;
 } Nexus_SoundEngine;
 
+typedef enum {
+    NEXUS_SFX_RUNTIME_MISSING = 0,
+    NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET = 1,
+    NEXUS_SFX_RUNTIME_BLOCKED_ASSET_MISMATCH = 2,
+    NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE = 3,
+    NEXUS_SFX_RUNTIME_READY_DECODED = 4
+} Nexus_SfxRuntimeStatus;
+
+typedef struct {
+    Nexus_SfxRuntimeStatus status;
+    int level_index;
+    int cd_track;
+    int sal_loaded;
+    int map_loaded;
+    int sal_decode_supported;
+    int map_decode_supported;
+    int playback_enabled;
+    int blocks_real_sfx_playback;
+    int fallback_visuals_permitted;
+    Nexus_V1_AudioReceipt sal_receipt;
+    Nexus_V1_AudioReceipt map_receipt;
+} Nexus_SfxRuntimeReceipt;
+
 /* Init sound system */
 int nexus_sound_init(Nexus_SoundEngine *eng);
 
@@ -73,6 +97,10 @@ void nexus_sound_shutdown(Nexus_SoundEngine *eng);
 int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
                             const uint8_t *sal_data, int sal_size,
                             const uint8_t *map_data, int map_size);
+int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
+                                      Nexus_SfxRuntimeReceipt *out_receipt);
+const char *nexus_sound_sfx_runtime_status_name(
+    Nexus_SfxRuntimeStatus status);
 
 /* Play a sound event by ID (from SNDLEV*.MAP mapping) */
 void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event);
