@@ -802,6 +802,12 @@ int main(void)
                       boot_real_visual_capture.runtime_hud_total_fallback_floor_ceiling_count == 0 &&
                       boot_real_visual_capture.runtime_hud_min_asset_wall_count > 0 &&
                       boot_real_visual_capture.runtime_hud_total_fallback_wall_count == 0 &&
+                      boot_real_visual_capture.runtime_hud_raw_gdat_capture_ready == 1 &&
+                      boot_real_visual_capture.runtime_hud_raw_portrait_count >= 4 &&
+                      boot_real_visual_capture.runtime_hud_raw_portrait_hash != 0u &&
+                      boot_real_visual_capture.runtime_hud_raw_portrait_byte_count > 0u &&
+                      boot_real_visual_capture.runtime_hud_raw_core_hash != 0u &&
+                      boot_real_visual_capture.runtime_hud_raw_core_byte_count > 0u &&
                       boot_real_visual_capture.runtime_hud_frame_hash != 0u &&
                       boot_real_visual_capture.runtime_hud_pixel_count == 4u * 320u * 200u &&
                       boot_real_visual_capture.real_gdat_capture_breadth_ready == 1 &&

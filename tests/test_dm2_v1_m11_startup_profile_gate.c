@@ -1445,6 +1445,12 @@ int main(void) {
                         real_visual_capture.runtime_hud_total_fallback_floor_ceiling_count == 0 &&
                         real_visual_capture.runtime_hud_min_asset_wall_count > 0 &&
                         real_visual_capture.runtime_hud_total_fallback_wall_count == 0 &&
+                        real_visual_capture.runtime_hud_raw_gdat_capture_ready == 1 &&
+                        real_visual_capture.runtime_hud_raw_portrait_count >= 4 &&
+                        real_visual_capture.runtime_hud_raw_portrait_hash != 0u &&
+                        real_visual_capture.runtime_hud_raw_portrait_byte_count > 0u &&
+                        real_visual_capture.runtime_hud_raw_core_hash != 0u &&
+                        real_visual_capture.runtime_hud_raw_core_byte_count > 0u &&
                         real_visual_capture.runtime_hud_frame_hash != 0u &&
                         real_visual_capture.runtime_hud_pixel_count == 4u * 320u * 200u &&
                         real_visual_capture.real_gdat_capture_breadth_ready == 1 &&
@@ -1544,6 +1550,12 @@ int main(void) {
                         runtime_hud_capture.min_asset_wall_count > 0 &&
                         runtime_hud_capture.total_fallback_floor_ceiling_count == 0 &&
                         runtime_hud_capture.total_fallback_wall_count == 0 &&
+                        runtime_hud_capture.raw_gdat_runtime_hud_capture_ready == 1 &&
+                        runtime_hud_capture.raw_gdat_runtime_portrait_count >= 4 &&
+                        runtime_hud_capture.raw_gdat_runtime_portrait_hash != 0u &&
+                        runtime_hud_capture.raw_gdat_runtime_portrait_byte_count > 0u &&
+                        runtime_hud_capture.raw_gdat_runtime_core_hash != 0u &&
+                        runtime_hud_capture.raw_gdat_runtime_core_byte_count > 0u &&
                         runtime_hud_capture.real_gdat_core_render_ready == 1,
                     "M11 DM2 runtime owns broad real GDAT HUD capture receipt");
         memset(framebuffer, 0, sizeof(framebuffer));
