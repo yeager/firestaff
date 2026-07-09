@@ -11716,6 +11716,14 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_consumer.host_capture_route_matches;
             out->dm1HoCReleaseCaptureOwnershipReady =
                 hoc_ownership.ready;
+            out->dm1HoCReceiptOnlyConsumerReady =
+                hoc_ownership.consume_dm1_receipts_only &&
+                hoc_ownership.consumed_runtime_apply_receipt &&
+                hoc_ownership.consumed_production_consumer_receipt &&
+                hoc_ownership.publish_packaged_full_graphics_proof;
+            out->dm1HoCLowerLevelHelpersReady =
+                hoc_ownership.lower_level_renderer_helper_owned &&
+                hoc_ownership.lower_level_audio_helper_owned;
             out->dm1HoCHoCAssetCapture =
                 hoc_consumer.hoc_asset_capture;
             out->dm1HoCHostWindowCapture =

@@ -209,6 +209,8 @@ typedef struct {
     int dm1HoCReleaseAppCapture;
     int dm1HoCHostCaptureRouteMatches;
     int dm1HoCReleaseCaptureOwnershipReady;
+    int dm1HoCReceiptOnlyConsumerReady;
+    int dm1HoCLowerLevelHelpersReady;
     int dm1HoCHoCAssetCapture;
     int dm1HoCHostWindowCapture;
     int dm1HoCOpenedEntranceFrame;
