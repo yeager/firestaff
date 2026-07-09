@@ -10294,6 +10294,16 @@ static void m11_nexus_apply_startup_host_caller_receipt(
         receipt->title_timing_frame_max;
     state->nexusState.startup_title_timing_ready =
         receipt->title_timing_ready ? 1 : 0;
+    state->nexusState.startup_package_capture_consumed =
+        receipt->package_capture_consumed_by_host ? 1 : 0;
+    state->nexusState.startup_single_saturn_owner_ready =
+        receipt->single_saturn_startup_owner_ready ? 1 : 0;
+    state->nexusState.startup_title_menu_capture_route_joined =
+        receipt->title_menu_capture_route_joined ? 1 : 0;
+    state->nexusState.startup_runtime_dgn_route_joined =
+        receipt->runtime_dgn_route_joined ? 1 : 0;
+    state->nexusState.startup_blocked_route_suppresses_all_draws =
+        receipt->blocked_route_suppresses_all_draws ? 1 : 0;
     state->nexusState.startup_copied_draw_command_count =
         receipt->copied_startup_command_count;
     state->nexusState.startup_copied_dgn_render_command_count =

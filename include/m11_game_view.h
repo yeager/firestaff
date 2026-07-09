@@ -617,6 +617,11 @@ typedef struct {
         int startup_title_timing_frame;
         int startup_title_timing_frame_max;
         int startup_title_timing_ready;
+        int startup_package_capture_consumed;
+        int startup_single_saturn_owner_ready;
+        int startup_title_menu_capture_route_joined;
+        int startup_runtime_dgn_route_joined;
+        int startup_blocked_route_suppresses_all_draws;
         int startup_copied_draw_command_count;
         int startup_copied_dgn_render_command_count;
     } nexusState;

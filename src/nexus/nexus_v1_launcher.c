@@ -3516,6 +3516,29 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         !package->fallback_visuals_permitted;
     receipt->full_start_package_consumed =
         package->full_start_package_receipt_ready;
+    receipt->package_capture_consumed_by_host =
+        package->full_start_package_receipt_ready &&
+        package->host_display_caller_expected &&
+        receipt->capture_receipt_owned;
+    receipt->title_menu_capture_route_joined =
+        receipt->package_capture_consumed_by_host &&
+        receipt->title_capture_uses_real_assets &&
+        (receipt->menu_capture_uses_real_assets ||
+         package->capture_route == NEXUS_V1_STARTUP_CAPTURE_TITLE);
+    receipt->bpk_menu_route_joined =
+        receipt->consumes_bpk_menu_handoff &&
+        asset_handoff->real_menu_asset_handoff_ready &&
+        !asset_handoff->menu_bpk_prs3_blocks_real_menu_route;
+    receipt->runtime_dgn_route_joined =
+        receipt->title_menu_capture_route_joined &&
+        receipt->bpk_menu_route_joined &&
+        receipt->runtime_dgn_handoff_ready &&
+        receipt->consumes_dgn_handoff;
+    receipt->first_host_draw_uses_package =
+        receipt->startup_bundle.copied_command_count > 0 &&
+        receipt->startup_bundle.first_draw_kind !=
+            NEXUS_V1_STARTUP_DRAW_NONE &&
+        receipt->package_capture_consumed_by_host;
     receipt->saturn_timing_exact = package->saturn_timing_exact;
     receipt->saturn_capture_frames_exact =
         package->saturn_capture_frames_exact;
@@ -3535,6 +3558,11 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->status = asset_handoff->status
             ? asset_handoff->status
             : package->status;
+        receipt->blocked_route_suppresses_startup_draws =
+            package->blocked_draw_suppressed &&
+            receipt->startup_bundle.copied_command_count == 0;
+        receipt->blocked_route_suppresses_dgn_draws =
+            receipt->dgn_draw_command_count == 0;
         return;
     }
 
@@ -3755,12 +3783,18 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.startup_bundle.timing_ready;
     out_receipt->full_start_package_consumed =
         out_receipt->ownership.full_start_package_consumed;
+    out_receipt->package_capture_consumed_by_host =
+        out_receipt->ownership.package_capture_consumed_by_host;
     out_receipt->startup_bundle_consumed =
         out_receipt->ownership.startup_bundle.package
             .full_start_package_receipt_ready;
     out_receipt->display_callers_use_package_receipt =
         out_receipt->full_start_package_consumed &&
         out_receipt->startup_bundle_consumed;
+    out_receipt->title_menu_capture_route_joined =
+        out_receipt->ownership.title_menu_capture_route_joined;
+    out_receipt->runtime_dgn_route_joined =
+        out_receipt->ownership.runtime_dgn_route_joined;
     out_receipt->saturn_warning_frame =
         out_receipt->ownership.startup_bundle.package.saturn_warning_frame;
     out_receipt->saturn_title_capture_frame =
@@ -3791,6 +3825,24 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->suppress_fallback_visuals &&
         out_receipt->host_runtime_dgn_ready &&
         out_receipt->copied_dgn_command_count > 0;
+    out_receipt->single_saturn_startup_owner_ready =
+        out_receipt->receipt_owner_is_nexus &&
+        out_receipt->package_capture_consumed_by_host &&
+        out_receipt->display_callers_use_package_receipt &&
+        out_receipt->title_menu_capture_route_joined &&
+        !out_receipt->ownership.fallback_visuals_permitted;
+    if (out_receipt->host_runtime_dgn_ready) {
+        out_receipt->single_saturn_startup_owner_ready =
+            out_receipt->single_saturn_startup_owner_ready &&
+            out_receipt->runtime_dgn_route_joined;
+    }
+    out_receipt->blocked_route_suppresses_all_draws =
+        out_receipt->ownership.route ==
+            NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS &&
+        out_receipt->ownership.blocked_route_suppresses_startup_draws &&
+        out_receipt->ownership.blocked_route_suppresses_dgn_draws &&
+        out_receipt->copied_startup_command_count == 0 &&
+        out_receipt->copied_dgn_command_count == 0;
     out_receipt->host_caller_ready =
         out_receipt->receipt_owner_is_nexus &&
         out_receipt->suppress_fallback_visuals &&

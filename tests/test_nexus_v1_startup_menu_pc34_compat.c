@@ -1240,6 +1240,11 @@ int main(void)
                real_asset_ownership_receipt.runtime_dgn_handoff_ready == 1 &&
                real_asset_ownership_receipt.menu_capture_uses_real_assets == 1 &&
                real_asset_ownership_receipt.full_start_package_consumed == 1 &&
+               real_asset_ownership_receipt.package_capture_consumed_by_host == 1 &&
+               real_asset_ownership_receipt.title_menu_capture_route_joined == 1 &&
+               real_asset_ownership_receipt.bpk_menu_route_joined == 1 &&
+               real_asset_ownership_receipt.runtime_dgn_route_joined == 1 &&
+               real_asset_ownership_receipt.first_host_draw_uses_package == 1 &&
                real_asset_ownership_receipt.saturn_timing_exact == 1 &&
                real_asset_ownership_receipt.saturn_capture_frames_exact == 1 &&
                real_asset_ownership_receipt.no_fallback_visuals_enforced == 1 &&
@@ -1280,8 +1285,12 @@ int main(void)
                host_caller_receipt.prs3_blocker_consumed == 0 &&
                host_caller_receipt.dgn_handoff_consumed == 1 &&
                host_caller_receipt.full_start_package_consumed == 1 &&
+               host_caller_receipt.package_capture_consumed_by_host == 1 &&
                host_caller_receipt.startup_bundle_consumed == 1 &&
                host_caller_receipt.display_callers_use_package_receipt == 1 &&
+               host_caller_receipt.single_saturn_startup_owner_ready == 1 &&
+               host_caller_receipt.title_menu_capture_route_joined == 1 &&
+               host_caller_receipt.runtime_dgn_route_joined == 1 &&
                host_caller_receipt.suppress_fallback_visuals == 1 &&
                host_caller_receipt.suppress_legacy_placeholder_visuals == 1 &&
                host_caller_receipt.no_fallback_visuals_enforced == 1 &&
@@ -2263,9 +2272,15 @@ int main(void)
                        .blocked_prs3_surfaces == 3 &&
                real_asset_ownership_receipt.runtime_dgn_handoff_ready == 0 &&
                real_asset_ownership_receipt.menu_capture_uses_real_assets == 0 &&
+               real_asset_ownership_receipt.package_capture_consumed_by_host == 0 &&
+               real_asset_ownership_receipt.title_menu_capture_route_joined == 0 &&
+               real_asset_ownership_receipt.bpk_menu_route_joined == 0 &&
+               real_asset_ownership_receipt.runtime_dgn_route_joined == 0 &&
                real_asset_ownership_receipt.no_fallback_visuals_enforced == 1 &&
                real_asset_ownership_receipt.fallback_visuals_permitted == 0 &&
                real_asset_ownership_receipt.blocked_draw_suppressed == 1 &&
+               real_asset_ownership_receipt.blocked_route_suppresses_startup_draws == 1 &&
+               real_asset_ownership_receipt.blocked_route_suppresses_dgn_draws == 1 &&
                real_asset_ownership_receipt.capture_route ==
                    NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
                real_asset_ownership_receipt.first_startup_draw_kind ==
@@ -2298,6 +2313,10 @@ int main(void)
                host_caller_receipt.bpk_handoff_consumed == 1 &&
                host_caller_receipt.prs3_blocker_consumed == 1 &&
                host_caller_receipt.dgn_handoff_consumed == 0 &&
+               host_caller_receipt.single_saturn_startup_owner_ready == 0 &&
+               host_caller_receipt.title_menu_capture_route_joined == 0 &&
+               host_caller_receipt.runtime_dgn_route_joined == 0 &&
+               host_caller_receipt.blocked_route_suppresses_all_draws == 1 &&
                host_caller_receipt.suppress_fallback_visuals == 1 &&
                host_caller_receipt.suppress_legacy_placeholder_visuals == 1 &&
                host_caller_receipt.no_fallback_visuals_enforced == 1 &&
