@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass900 Theron non-media render export cleanup: removed the older runtime/snapshot layout, row, and render-plan boot exports; tests now verify the same data through full-start host-render receipts, keeping render consumers off raw prompt/roster rebuild paths. Verification: `test_theron_v1_startup_save_resume_pc34`, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB public capture render-plan API retired: capture-level title/full render-plan accessors were removed from the public boot header; package/host-view internals still build the plans, and tests now prove title, utility, closed-door, and door-opening through host-view/package receipts. Verification: CSB startup tests and `git diff --check`.
 
 - ✅ 2026-07-09 pass912 Nexus card display package labels: Nexus M12 startup package receipts now also own the game id, card title, card subtitle, and timing summary labels, closing the remaining Nexus-owned launcher/status display text gap after pass911. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.

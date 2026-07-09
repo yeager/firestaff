@@ -1638,6 +1638,89 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+    const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
+    const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 receipt;
+
+    if (!first_frame || !thing_consumer || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.zone = -1;
+    receipt.row = -1;
+    receipt.view_cell = -1;
+    if (!first_frame->handled) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    receipt.consumed_hoc_first_frame_receipt = 1;
+    receipt.consumed_mirror_thing_layer_consumer = thing_consumer->valid ? 1 : 0;
+    receipt.source_evidence =
+        "ReDMCSB ENTRANCE.C:68-80/850-883; "
+        "DUNVIEW.C:3913-3928/4547-4581/5075/5668-5683";
+    if (!first_frame->runtime_first_frame_ready ||
+        !first_frame->render_hall_mirrors ||
+        !first_frame->clear_stale_champion_panel ||
+        !first_frame->suppress_host_fallback_visuals ||
+        first_frame->hoc_render_command_count != 3 ||
+        !thing_consumer->valid ||
+        !thing_consumer->thingLayerSafe ||
+        !thing_consumer->drawChampionPortraitAsWallOverlay ||
+        !thing_consumer->suppressMirrorAsFloorItem ||
+        !thing_consumer->suppressMirrorAsProjectile ||
+        !thing_consumer->suppressMirrorAsSpellEffect) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB ENTRANCE.C F0797/F0441 builds the opened HoC Hall frame before
+     * input; DUNVIEW.C lines 3913-3928 draw C026 portraits as wall overlays,
+     * while F0115 lines 4547-4581, 5075, and 5668-5683 separately consume
+     * runtime floor-object/projectile receipts.  This DM1 consumer packages
+     * those decisions so production callers do not run a fallback HoC scan. */
+    receipt.ready = 1;
+    receipt.consume_dm1_receipts_only = 1;
+    receipt.no_m11_fallback_scan = 1;
+    receipt.execute_before_hoc_input = 1;
+    receipt.draw_opened_entrance_frame =
+        first_frame->entrance_door_open_frame_ready;
+    receipt.clear_champion_panel = first_frame->clear_stale_champion_panel;
+    receipt.render_hall_mirror_overlay = first_frame->render_hall_mirrors;
+    receipt.draw_champion_mirror_wall_overlay =
+        thing_consumer->drawChampionPortraitAsWallOverlay;
+    receipt.draw_real_floor_object = thing_consumer->drawFloorObject;
+    receipt.draw_real_projectile = thing_consumer->drawRuntimeProjectile;
+    receipt.require_runtime_spell_effect_receipt =
+        thing_consumer->suppressMirrorAsSpellEffect;
+    receipt.suppress_mirror_floor_item_payload =
+        thing_consumer->suppressMirrorAsFloorItem;
+    receipt.suppress_mirror_projectile_payload =
+        thing_consumer->suppressMirrorAsProjectile;
+    receipt.suppress_mirror_spell_effect_payload =
+        thing_consumer->suppressMirrorAsSpellEffect;
+    receipt.suppress_materialized_item_payload =
+        thing_consumer->suppressMaterializedItemPayload;
+    receipt.suppress_host_fallback_visuals =
+        first_frame->suppress_host_fallback_visuals;
+    receipt.block_enter_until_champion_selected =
+        first_frame->block_enter_until_champion_selected;
+    receipt.map_index = first_frame->entrance_full_start_receipt.mapIndex;
+    receipt.entrance_door_frame_index =
+        first_frame->entrance_full_start_receipt.doorFrameIndex;
+    receipt.hall_overlay_kind =
+        first_frame->render_overlay_commands[0].kind;
+    receipt.render_command_count = first_frame->hoc_render_command_count;
+    receipt.zone = thing_consumer->zone;
+    receipt.row = thing_consumer->row;
+    receipt.view_cell = thing_consumer->viewCell;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
