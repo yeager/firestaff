@@ -530,6 +530,10 @@ typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     CSB_V1_BootStartupHudMenuKind_PC34 hud_menu_kind;
     int real_asset_matched;
     int suppress_legacy_utility_fallback;
+    int title_asset_draw_ready;
+    int closed_door_asset_draw_ready;
+    int opening_frame_draw_ready;
+    int fallback_text_suppressed;
     int consumed_host_view_only;
 } CSB_V1_BootStartupHostViewDrawReceipt_PC34;
 

@@ -612,6 +612,9 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
     int packagedVisualCaptureReady = 0;
     int inputConsumesReceiptOnly = 0;
     int utilityInputDispatchReady = 0;
+    int titleAssetDrawReady = 0;
+    int closedDoorFallbackSuppressed = 0;
+    int openingFrameDrawReady = 0;
 
     ASSERT_EQ(M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                   &titleReceiptReady,
@@ -629,7 +632,10 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
                   &suppressLegacyUtilityFallback,
                   &packagedVisualCaptureReady,
                   &inputConsumesReceiptOnly,
-                  &utilityInputDispatchReady),
+                  &utilityInputDispatchReady,
+                  &titleAssetDrawReady,
+                  &closedDoorFallbackSuppressed,
+                  &openingFrameDrawReady),
               1,
               "M11 exposes CSB startup host-view draw receipt");
     ASSERT_EQ(titleReceiptReady, 1,
@@ -642,7 +648,7 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
               "CSB closed-door receipt is ready");
     ASSERT_EQ(closedDoorDrawExecuted, 1,
               "CSB closed-door draw executes through host-view receipt");
-    ASSERT_EQ(closedDoorHudExecuted, 2,
+    ASSERT_EQ(closedDoorHudExecuted, 1,
               "CSB closed-door HUD/menu executes through receipt");
     ASSERT_EQ(utilityReceiptReady, 1,
               "CSB utility receipt is ready");
@@ -664,6 +670,12 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
               "M11 CSB startup input consumes dispatch receipt only");
     ASSERT_EQ(utilityInputDispatchReady, 1,
               "CSB utility input dispatch redraws HUD/menu through receipt");
+    ASSERT_EQ(titleAssetDrawReady, 1,
+              "CSB title uses real title asset path without fallback text");
+    ASSERT_EQ(closedDoorFallbackSuppressed, 1,
+              "CSB closed-door/menu receipt blocks fallback text path");
+    ASSERT_EQ(openingFrameDrawReady, 1,
+              "CSB door opening uses receipt-owned frame draw");
 }
 
 static void test_candidate_panel_blocks_direct_object_helpers(void)
