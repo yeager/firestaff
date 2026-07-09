@@ -1415,7 +1415,17 @@ int main(void) {
                         real_visual_capture.resume_menu_ready == 0 &&
                         real_visual_capture.new_game_menu_ready == 1 &&
                         real_visual_capture.exact_selected_highlight_ready == 1 &&
-                        real_visual_capture.startup_title_menu_hud_breadth_ready == 0 &&
+                        real_visual_capture.startup_title_menu_hud_breadth_ready == 1 &&
+                        real_visual_capture.sampled_title_timing_capture_count >= 3 &&
+                        real_visual_capture.sampled_title_pixel_capture_count >= 3 &&
+                        (real_visual_capture.sampled_title_frame_mask &
+                         ((1 << 0) | (1 << 2) | (1 << 7))) ==
+                            ((1 << 0) | (1 << 2) | (1 << 7)) &&
+                        real_visual_capture.sampled_menu_selection_capture_count >= 1 &&
+                        real_visual_capture.sampled_menu_composite_capture_count >= 1 &&
+                        (real_visual_capture.sampled_menu_selection_mask & 0x1) == 0x1 &&
+                        real_visual_capture.sampled_runtime_hud_handoff_capture_ready == 1 &&
+                        real_visual_capture.real_gdat_capture_breadth_ready == 1 &&
                         real_visual_capture.hud_handoff_capture_ready == 1 &&
                         real_visual_capture.hud_suppressed_capture_ready == 1 &&
                         real_visual_capture.title_menu_hud_visual_proof_ready == 1 &&
@@ -1440,6 +1450,9 @@ int main(void) {
             for (y = 0; y < menu_h && menu_x < 0; ++y) {
                 int x;
                 for (x = 0; x < menu_w; ++x) {
+                    if (x < 64 && y < 64) {
+                        continue;
+                    }
                     if (x >= 78 && x < 242 && y >= 50 && y < 140) {
                         continue;
                     }
