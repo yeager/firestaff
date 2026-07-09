@@ -796,7 +796,13 @@ void nexus_v1_launcher_m12_startup_package_receipt_clear(
     receipt->first_capture_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
     receipt->warning_capture_frame = 0;
     receipt->title_capture_frame = nexus_v1_boot_warning_frames();
+    receipt->save_capture_frame = -1;
+    receipt->champion_capture_frame = -1;
+    receipt->dungeon_capture_frame = -1;
     receipt->gameover_capture_frame = 0;
+    receipt->saturn_save_capture_frame = -1;
+    receipt->saturn_champion_capture_frame = -1;
+    receipt->saturn_dungeon_capture_frame = -1;
     receipt->game_id = "nexus";
     receipt->card_title_label = "DM Nexus";
     receipt->card_subtitle_label = "Saturn boot, title, save, champions";
@@ -1185,10 +1191,19 @@ int nexus_v1_launcher_m12_startup_package_from_full_start_package(
         package->gameover_capture_surface_ready;
     out_receipt->warning_capture_frame = package->warning_capture_frame;
     out_receipt->title_capture_frame = package->title_capture_frame;
+    out_receipt->save_capture_frame = package->save_capture_frame;
+    out_receipt->champion_capture_frame = package->champion_capture_frame;
+    out_receipt->dungeon_capture_frame = package->dungeon_capture_frame;
     out_receipt->gameover_capture_frame = package->gameover_capture_frame;
     out_receipt->saturn_warning_frame = package->saturn_warning_frame;
     out_receipt->saturn_title_capture_frame =
         package->saturn_title_capture_frame;
+    out_receipt->saturn_save_capture_frame =
+        package->saturn_save_capture_frame;
+    out_receipt->saturn_champion_capture_frame =
+        package->saturn_champion_capture_frame;
+    out_receipt->saturn_dungeon_capture_frame =
+        package->saturn_dungeon_capture_frame;
     out_receipt->saturn_title_ready_frame =
         package->saturn_title_ready_frame;
     out_receipt->saturn_gameover_capture_frame =

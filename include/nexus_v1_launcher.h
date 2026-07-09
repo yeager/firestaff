@@ -559,9 +559,15 @@ typedef struct {
     int gameover_capture_surface_ready;
     int warning_capture_frame;
     int title_capture_frame;
+    int save_capture_frame;
+    int champion_capture_frame;
+    int dungeon_capture_frame;
     int gameover_capture_frame;
     int saturn_warning_frame;
     int saturn_title_capture_frame;
+    int saturn_save_capture_frame;
+    int saturn_champion_capture_frame;
+    int saturn_dungeon_capture_frame;
     int saturn_title_ready_frame;
     int saturn_gameover_capture_frame;
     int saturn_timing_exact;
