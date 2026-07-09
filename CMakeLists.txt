@@ -8689,6 +8689,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_mouse_routes_pc34_compat
     )
 
+    add_executable(test_dm1_v1_layout_zones_pc34_compat
+        tests/test_dm1_v1_layout_zones_pc34_compat.c
+        src/dm1/dm1_v1_layout_zones_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_layout_zones_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_layout_zones_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_layout_zones_pc34_compat
+        COMMAND test_dm1_v1_layout_zones_pc34_compat
+    )
+
     add_test(
         NAME dm1_v1_inventory_status_hand_slot_route_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_inventory_status_hand_slot_route_source_lock.py

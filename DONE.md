@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 layout-zone ownership: DM1 now owns screen, viewport, message, dialog, champion-icon, inventory-panel, and object-description C002/C004/C005/C006/C007/C015/C017/C101/C113..C116/C503..C506/C556 geometry; M11 wrappers delegate to the DM1 layout module. Verification: layout zones 80/80, action-area geometry 148/148, inventory full panel 688/688, mouse routes 47/47, inventory panel mouse routes 299/299, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 mouse route ownership: DM1 now owns the G0447/G0448/G0449/G0456 route tables and generic hit-test loop; M11 supplies zone rectangles and viewport origin only. Verification: mouse routes 47/47, inventory panel mouse routes 299/299, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 inventory slotbox zone ownership: inventory slot placement now owns C507..C536 inventory/equipment/backpack and C537..C544 chest slotbox zone tables; M11 wrapper functions delegate to the DM1 contract. Verification: slot placement 147/147, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

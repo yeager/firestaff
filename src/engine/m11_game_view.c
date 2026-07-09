@@ -81,6 +81,7 @@
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
@@ -30254,59 +30255,58 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
 }
 
 int M11_GameView_GetV1ScreenZoneId(void) {
-    /* Source layout-696 C002_ZONE_SCREEN. */
-    return 2;
+    return dm1_v1_screen_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ScreenZone(int* outX,
                                   int* outY,
                                   int* outW,
                                   int* outH) {
-    if (!M11_GameView_GetV1ScreenZoneId()) return 0;
-    if (outX) *outX = 0;
-    if (outY) *outY = 0;
-    if (outW) *outW = 320;
-    if (outH) *outH = 200;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_screen_rect_pc34();
+    if (!dm1_v1_screen_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ScreenCenteredDialogZoneId(void) {
-    /* Source layout-696 C005_ZONE_SCREEN_CENTERED_DIALOG. */
-    return 5;
+    return dm1_v1_screen_centered_dialog_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ScreenCenteredDialogZone(int* outX,
                                                 int* outY,
                                                 int* outW,
                                                 int* outH) {
-    if (!M11_GameView_GetV1ScreenCenteredDialogZoneId()) return 0;
-    if (outX) *outX = 48;
-    if (outY) *outY = 32;
-    if (outW) *outW = 224;
-    if (outH) *outH = 136;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_screen_centered_dialog_rect_pc34();
+    if (!dm1_v1_screen_centered_dialog_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ExplosionPatternD0CZoneId(void) {
-    /* Source layout-696 C004_ZONE_EXPLOSION_PATTERN_D0C. */
-    return 4;
+    return dm1_v1_explosion_pattern_d0c_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ExplosionPatternD0CZone(int* outX,
                                               int* outY,
                                               int* outW,
                                               int* outH) {
-    if (!M11_GameView_GetV1ExplosionPatternD0CZoneId()) return 0;
-    if (outX) *outX = 0;
-    if (outY) *outY = 0;
-    if (outW) *outW = 32;
-    if (outH) *outH = 29;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_explosion_pattern_d0c_rect_pc34();
+    if (!dm1_v1_explosion_pattern_d0c_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ViewportCenteredTextZoneId(void) {
-    /* Source layout-696 C006_ZONE_VIEWPORT_CENTERED_TEXT. */
-    return 6;
+    return dm1_v1_viewport_centered_text_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ViewportCenteredTextZone(int contentW,
@@ -30315,62 +30315,66 @@ int M11_GameView_GetV1ViewportCenteredTextZone(int contentW,
                                                int* outY,
                                                int* outW,
                                                int* outH) {
-    if (!M11_GameView_GetV1ViewportCenteredTextZoneId() || contentW <= 0 || contentH <= 0) return 0;
-    if (outX) *outX = (224 - contentW) / 2;
-    if (outY) *outY = (136 - contentH) / 2;
-    if (outW) *outW = contentW;
-    if (outH) *outH = contentH;
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!dm1_v1_viewport_centered_text_zone_id_pc34() ||
+        !dm1_v1_viewport_centered_text_rect_pc34(contentW, contentH, &rect)) {
+        return 0;
+    }
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1MessageAreaZoneId(void) {
-    /* Source layout-696 C015_ZONE_MESSAGE_AREA. */
-    return 15;
+    return dm1_v1_message_area_zone_id_pc34();
 }
 
 int M11_GameView_GetV1MessageAreaZone(int* outX,
                                        int* outY,
                                        int* outW,
                                        int* outH) {
-    if (!M11_GameView_GetV1MessageAreaZoneId()) return 0;
-    if (outX) *outX = 0;
-    if (outY) *outY = 173;
-    if (outW) *outW = 320;
-    if (outH) *outH = 27;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_message_area_rect_pc34();
+    if (!dm1_v1_message_area_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ViewportZoneId(void) {
-    /* Source layout-696 C007_ZONE_VIEWPORT. */
-    return 7;
+    return dm1_v1_viewport_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ViewportZone(int* outX,
                                    int* outY,
                                    int* outW,
                                    int* outH) {
-    if (!M11_GameView_GetV1ViewportZoneId()) return 0;
-    if (outX) *outX = M11_VIEWPORT_X;
-    if (outY) *outY = M11_VIEWPORT_Y;
-    if (outW) *outW = M11_VIEWPORT_W;
-    if (outH) *outH = M11_VIEWPORT_H;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_viewport_rect_pc34();
+    if (!dm1_v1_viewport_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1LeaderHandObjectNameZoneId(void) {
-    /* Source layout-696 C017_ZONE_LEADER_HAND_OBJECT_NAME. */
-    return 17;
+    return dm1_v1_leader_hand_object_name_zone_id_pc34();
 }
 
 int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
                                                int* outY,
                                                int* outW,
                                                int* outH) {
-    if (!M11_GameView_GetV1LeaderHandObjectNameZoneId()) return 0;
-    if (outX) *outX = 233;
-    if (outY) *outY = 33;
-    if (outW) *outW = 87;
-    if (outH) *outH = 6;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_leader_hand_object_name_rect_pc34();
+    if (!dm1_v1_leader_hand_object_name_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -30915,9 +30919,7 @@ int M11_GameView_GetV1ChampionIconGraphicId(void) {
 }
 
 int M11_GameView_GetV1ChampionIconZoneId(int championSlot) {
-    /* Source layout-696 C113..C116 champion icon click zones. */
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    return 113 + championSlot;
+    return dm1_v1_champion_icon_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1ChampionIconZone(int championSlot,
@@ -30925,16 +30927,12 @@ int M11_GameView_GetV1ChampionIconZone(int championSlot,
                                         int* outY,
                                         int* outW,
                                         int* outH) {
-    static const int xs[CHAMPION_MAX_PARTY] = { 281, 301, 301, 281 };
-    static const int ys[CHAMPION_MAX_PARTY] = { 0, 0, 15, 15 };
-    if (!M11_GameView_GetV1ChampionIconZoneId(championSlot)) return 0;
-    if (outX) *outX = xs[championSlot];
-    if (outY) *outY = ys[championSlot];
-    /* ReDMCSB: CHAMDRAW.C F0622 lines 41-58 prepares a full
-     * G2080_C19_ChampionIconWidth x G2081_C14_ChampionIconHeight
-     * temporary bitmap before blitting it to C113..C116. */
-    if (outW) *outW = DM1_CHAMPION_ICON_WIDTH;
-    if (outH) *outH = DM1_CHAMPION_ICON_HEIGHT;
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!dm1_v1_champion_icon_rect_pc34(championSlot, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -30986,27 +30984,28 @@ int M11_GameView_GetV1InventoryBackdropZone(int* outX,
                                              int* outY,
                                              int* outW,
                                              int* outH) {
-    if (outX) *outX = M11_VIEWPORT_X;
-    if (outY) *outY = M11_VIEWPORT_Y;
-    if (outW) *outW = M11_VIEWPORT_W;
-    if (outH) *outH = M11_VIEWPORT_H;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_inventory_backdrop_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1InventoryPanelZoneId(void) {
-    /* Source layout-696 C101_ZONE_PANEL, centered at (152,89). */
-    return 101;
+    return dm1_v1_inventory_panel_zone_id_pc34();
 }
 
 int M11_GameView_GetV1InventoryPanelZone(int* outX,
                                           int* outY,
                                           int* outW,
                                           int* outH) {
-    if (!M11_GameView_GetV1InventoryPanelZoneId()) return 0;
-    if (outX) *outX = 80;
-    if (outY) *outY = 52;
-    if (outW) *outW = 144;
-    if (outH) *outH = 73;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_inventory_panel_rect_pc34();
+    if (!dm1_v1_inventory_panel_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -31020,53 +31019,50 @@ int M11_GameView_GetV1ObjectDescriptionCircleGraphicId(void) {
 }
 
 int M11_GameView_GetV1ObjectDescriptionCircleZoneId(void) {
-    return 504;
+    return dm1_v1_object_description_circle_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ObjectDescriptionCircleZone(int* outX,
                                                    int* outY,
                                                    int* outW,
                                                    int* outH) {
-    /* ReDMCSB PANEL.C:1143-1145 blits C029 to C504.
-     * layout-696 C504 resolves a 32x27 circle bitmap to x=103,y=53. */
-    if (outX) *outX = 103;
-    if (outY) *outY = 53;
-    if (outW) *outW = 32;
-    if (outH) *outH = 27;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_object_description_circle_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ObjectDescriptionIconZoneId(void) {
-    return 505;
+    return dm1_v1_object_description_icon_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ObjectDescriptionIconZone(int* outX,
                                                  int* outY,
                                                  int* outW,
                                                  int* outH) {
-    /* PANEL.C:1198-1200 draws the object icon into C505. */
-    if (outX) *outX = 111;
-    if (outY) *outY = 59;
-    if (outW) *outW = 16;
-    if (outH) *outH = 16;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_object_description_icon_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ArrowOrEyeZoneId(void) {
-    return 503;
+    return dm1_v1_arrow_or_eye_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ArrowOrEyeZone(int* outX,
                                       int* outY,
                                       int* outW,
                                       int* outH) {
-    /* ReDMCSB DATA.C line 315 G0033_ai_Graphic562_Box_ArrowOrEye
-     * and PANEL.C F0339 lines 505-514 draw C018/C019 at x=83..98,
-     * y=57..65 in viewport-relative coordinates. */
-    if (outX) *outX = 83;
-    if (outY) *outY = 57;
-    if (outW) *outW = 16;
-    if (outH) *outH = 9;
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_arrow_or_eye_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -31076,7 +31072,7 @@ int M11_GameView_GetV1ArrowOrEyeGraphicId(int pressingEye) {
 }
 
 int M11_GameView_GetV1ObjectDescriptionNameZoneId(void) {
-    return 506;
+    return dm1_v1_object_description_name_zone_id_pc34();
 }
 
 int M11_GameView_GetV1ObjectDescriptionNameZoneForText(int textPixelWidth,
@@ -31085,27 +31081,25 @@ int M11_GameView_GetV1ObjectDescriptionNameZoneForText(int textPixelWidth,
                                                         int* outY,
                                                         int* outW,
                                                         int* outH) {
-    if (textPixelWidth <= 0 || textPixelHeight <= 0) return 0;
-    /* COORD.C F0635 type-8 zone math for layout-696 C506 under C101:
-     * x=134, y=68-((textPixelHeight+1)/2), width/height clipped to the
-     * caller-measured text. TEXT.C F0648 then prints at the zone bottom. */
-    if (outX) *outX = 134;
-    if (outY) *outY = 68 - ((textPixelHeight + 1) / 2);
-    if (outW) *outW = textPixelWidth;
-    if (outH) *outH = textPixelHeight;
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!dm1_v1_object_description_name_rect_for_text_pc34(
+            textPixelWidth, textPixelHeight, &rect)) {
+        return 0;
+    }
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ObjectDescriptionContinuationOrigin(int* outX,
                                                            int* outY) {
-    /* F0335 form-feed path calls F0636 on C556 with a 1-pixel margin. */
-    if (outX) *outX = 108;
-    if (outY) *outY = 59;
-    return 1;
+    return dm1_v1_object_description_continuation_origin_pc34(outX, outY);
 }
 
 const char* M11_GameView_GetV1ObjectDescriptionLayoutEvidence(void) {
-    return "ReDMCSB source lock: PANEL.C:172-223 F0335 form-feed resets text origin through C556_ZONE_OBJECT_DESCRIPTION; PANEL.C:1136-1145 F0342 enters C03_PANEL_OBJECT_DESCRIPTION, blits C020 panel to C101 and C029 circle to C504; PANEL.C:1198-1200 prints object name in C506 and object icon in C505; TEXT.C:1937-1950 F0648 measures text and resolves C506 through COORD.C F0635; COORD.C:2052-2412 F0635 resolves layout records; COORD.C:2434-2448 F0636 adds the 1-pixel text margin; DEFS.H:3873-3875,3925 names C504/C505/C506/C556; DATA.C:316 and data/zones_h_reconstruction.json layout-696 records provide the panel/circle/icon/text geometry.";
+    return dm1_v1_layout_zones_source_evidence_pc34();
 }
 
 int M11_GameView_GetV1InventorySourceSlotBoxZoneCount(void) {
