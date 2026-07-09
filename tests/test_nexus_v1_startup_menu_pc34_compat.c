@@ -850,6 +850,12 @@ int main(void)
                runtime_handoff_receipt.dgn_render_ready == 1 &&
                runtime_handoff_receipt.hud_ready == 1 &&
                runtime_handoff_receipt.dgn_render_blocked == 0 &&
+               runtime_handoff_receipt.asset_handoff.route ==
+                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY &&
+               runtime_handoff_receipt.asset_handoff
+                       .menu_bpk_renderer_handoff.status ==
+                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
+               runtime_handoff_receipt.asset_handoff.real_asset_route_ready == 1 &&
                runtime_handoff_receipt.render_plan.plan_ready == 1 &&
                runtime_handoff_receipt.command_count > 0 &&
                runtime_handoff_receipt.fallback_visuals_permitted == 0 &&
@@ -964,6 +970,15 @@ int main(void)
                runtime_handoff_receipt.dgn_render_ready == 0 &&
                runtime_handoff_receipt.hud_ready == 0 &&
                runtime_handoff_receipt.dgn_render_blocked == 1 &&
+               runtime_handoff_receipt.asset_handoff.route ==
+                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED &&
+               runtime_handoff_receipt.asset_handoff
+                       .menu_bpk_prs3_blocks_real_menu_route == 1 &&
+               runtime_handoff_receipt.asset_handoff
+                       .menu_bpk_renderer_handoff.status ==
+                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
+               runtime_handoff_receipt.asset_handoff
+                       .menu_bpk_renderer_handoff.fallback_visuals_permitted == 0 &&
                strcmp(runtime_handoff_receipt.status,
                       "blocked-menu-bpk-prs3") == 0,
            "Nexus startup handoff blocks DGN route when Saturn menu assets are blocked");
