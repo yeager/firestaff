@@ -1071,6 +1071,24 @@ int main(void)
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
            "Nexus full-start package command helper owns champion draw route");
+    runtime_snapshot.runtime = runtime_state;
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               NULL,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+               full_start_package_receipt.capture_command_count > 3 &&
+               full_start_package_receipt.fallback_visuals_permitted == 0 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
+           "Nexus package snapshot helper owns M11 champion capture without runtime receipt");
     runtime_state.champion_select_active = 0;
     runtime_state.save_select_active = 1;
     expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
@@ -1157,6 +1175,23 @@ int main(void)
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
            "Nexus full-start package command helper owns save draw route");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               NULL,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+               full_start_package_receipt.capture_command_count > 3 &&
+               full_start_package_receipt.fallback_visuals_permitted == 0 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
+           "Nexus package snapshot helper owns M11 save capture without runtime receipt");
     runtime_state.save_select_active = 0;
     runtime_state.title_active = 1;
     runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
@@ -1278,6 +1313,22 @@ int main(void)
                full_start_package_receipt.capture_command_count > 0 &&
                draw_commands[0].kind != NEXUS_V1_STARTUP_DRAW_NONE,
            "Nexus full-start package command helper owns title draw route");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               NULL,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               full_start_package_receipt.capture_command_count > 0 &&
+               full_start_package_receipt.fallback_visuals_permitted == 0 &&
+               draw_commands[0].kind != NEXUS_V1_STARTUP_DRAW_NONE,
+           "Nexus package snapshot helper owns M11 title capture without runtime receipt");
     runtime_state.title_frame = 0;
     runtime_snapshot.runtime = runtime_state;
     expect(nexus_v1_launcher_startup_full_start_package_from_snapshot(
@@ -1316,6 +1367,24 @@ int main(void)
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND,
            "Nexus full-start package command helper owns warning draw route");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               NULL,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               full_start_package_receipt.warning_visible == 1 &&
+               full_start_package_receipt.capture_command_count == 1 &&
+               full_start_package_receipt.fallback_visuals_permitted == 0 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND,
+           "Nexus package snapshot helper owns M11 warning capture without runtime receipt");
     runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
     runtime_state.title_active = 0;
     runtime_state.champion_select_active = 1;

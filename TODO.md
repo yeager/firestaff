@@ -1,7 +1,7 @@
 # Firestaff TODO - Open Work
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
-- 🔧 2026-07-09 Nexus full-start follow-up: full-start receipts now cover boot/title/warning/save/champion menus, Track 02 SFX, real startup graphics gates, packaged capture routes, title/warning timing fields, presentation export, and draw-command helpers. Remaining work is swapping the dirty M11/M12 call sites to the new package helpers once concurrent engine edits settle.
+- 🔧 2026-07-09 Nexus full-start follow-up: full-start receipts now cover boot/title/warning/save/champion menus, Track 02 SFX, real startup graphics gates, packaged capture routes, title/warning timing fields, presentation export, and M11 draw-command consumers. Remaining work is moving any final M12 status/card consumers from loose Nexus startup facts to the package receipt.
 
 
 - 🔧 2026-07-09 Theron boot/title follow-up: Track 02 media receipts now feed prompt and roster fallback rows in startup view-model builders. Remaining work is wiring any final UI callers to stop passing duplicate media arrays once they already hold the receipt.
