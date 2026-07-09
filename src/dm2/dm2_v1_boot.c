@@ -122,6 +122,13 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     uint32_t *out_portrait_byte_count,
     uint32_t *out_core_hash,
     uint32_t *out_core_byte_count);
+static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
+    DM2_V1_BootProfile *profile,
+    int *out_portrait_count,
+    uint32_t *out_portrait_hash,
+    uint32_t *out_portrait_pixel_count,
+    uint32_t *out_core_hash,
+    uint32_t *out_core_pixel_count);
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
 
@@ -3292,6 +3299,128 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
            core_bytes > 0u;
 }
 
+static int dm2_v1_boot_runtime_decoded_gdat_hash_add(
+    DM2_V1_BootProfile *profile,
+    int category,
+    int index,
+    int field,
+    uint32_t *io_hash,
+    uint32_t *io_pixel_count)
+{
+    uint8_t *pixels = NULL;
+    int w = 0;
+    int h = 0;
+    int stride = 0;
+    uint32_t hash;
+    int y;
+
+    if (!io_hash || !io_pixel_count ||
+        dm2_v1_boot_gdat_image_asset_fetch(profile,
+                                           category,
+                                           index,
+                                           field,
+                                           &pixels,
+                                           &w,
+                                           &h,
+                                           &stride) != 0 ||
+        !pixels || w <= 0 || h <= 0 || stride < w) {
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+        return 0;
+    }
+    hash = *io_hash;
+    for (y = 0; y < h; ++y) {
+        const uint8_t *src = pixels + (size_t)y * (size_t)stride;
+        int x;
+        for (x = 0; x < w; ++x) {
+            hash = dm2_v1_boot_packaged_capture_hash_step(hash, src[x]);
+        }
+    }
+    *io_hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                                                      (uint32_t)category);
+    *io_hash = dm2_v1_boot_packaged_capture_hash_step(*io_hash,
+                                                      (uint32_t)index);
+    *io_hash = dm2_v1_boot_packaged_capture_hash_step(*io_hash,
+                                                      (uint32_t)field);
+    *io_hash = dm2_v1_boot_packaged_capture_hash_step(*io_hash,
+                                                      (uint32_t)w);
+    *io_hash = dm2_v1_boot_packaged_capture_hash_step(*io_hash,
+                                                      (uint32_t)h);
+    *io_pixel_count += (uint32_t)(w * h);
+    dm2_v1_boot_gdat_image_asset_free(pixels);
+    return 1;
+}
+
+static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
+    DM2_V1_BootProfile *profile,
+    int *out_portrait_count,
+    uint32_t *out_portrait_hash,
+    uint32_t *out_portrait_pixel_count,
+    uint32_t *out_core_hash,
+    uint32_t *out_core_pixel_count)
+{
+    int portrait_index;
+    int portrait_count = 0;
+    uint32_t portrait_hash = 0x32485044u;
+    uint32_t portrait_pixels = 0u;
+    uint32_t core_hash = 0x32484344u;
+    uint32_t core_pixels = 0u;
+
+    if (out_portrait_count) *out_portrait_count = 0;
+    if (out_portrait_hash) *out_portrait_hash = 0u;
+    if (out_portrait_pixel_count) *out_portrait_pixel_count = 0u;
+    if (out_core_hash) *out_core_hash = 0u;
+    if (out_core_pixel_count) *out_core_pixel_count = 0u;
+    if (!profile || !out_portrait_count || !out_portrait_hash ||
+        !out_portrait_pixel_count || !out_core_hash ||
+        !out_core_pixel_count) {
+        return 0;
+    }
+
+    /* skproject/SKWIN DRAW_CHAMPION_PICTURE consumes decoded CHAMPIONS
+     * GDAT images in the right HUD. Hash decoded pixels too, so a startup
+     * HUD bridge cannot pass with raw bytes alone. */
+    for (portrait_index = 0;
+         portrait_index < DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT;
+         ++portrait_index) {
+        if (dm2_v1_boot_runtime_decoded_gdat_hash_add(
+                profile,
+                DM2_GDAT_CATEGORY_CHAMPIONS,
+                portrait_index,
+                DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD,
+                &portrait_hash,
+                &portrait_pixels)) {
+            ++portrait_count;
+        }
+    }
+    if (!dm2_v1_boot_runtime_decoded_gdat_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_GRAPHICSSET,
+            0,
+            DM2_GDAT_GFXSET_FLOOR,
+            &core_hash,
+            &core_pixels) ||
+        !dm2_v1_boot_runtime_decoded_gdat_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_GRAPHICSSET,
+            0,
+            DM2_GDAT_GFXSET_CEIL,
+            &core_hash,
+            &core_pixels)) {
+        return 0;
+    }
+
+    *out_portrait_count = portrait_count;
+    *out_portrait_hash = portrait_hash;
+    *out_portrait_pixel_count = portrait_pixels;
+    *out_core_hash = core_hash;
+    *out_core_pixel_count = core_pixels;
+    return portrait_count >= 4 &&
+           portrait_hash != 0u &&
+           portrait_pixels > 0u &&
+           core_hash != 0u &&
+           core_pixels > 0u;
+}
+
 int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     DM2_V1_BootProfile *profile,
     int startup_menu_active,
@@ -3624,6 +3753,18 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
             runtime_hud.raw_gdat_runtime_core_hash;
         out_receipt->runtime_hud_raw_core_byte_count =
             runtime_hud.raw_gdat_runtime_core_byte_count;
+        out_receipt->runtime_hud_decoded_gdat_capture_ready =
+            runtime_hud.decoded_gdat_runtime_hud_capture_ready;
+        out_receipt->runtime_hud_decoded_portrait_count =
+            runtime_hud.decoded_gdat_runtime_portrait_count;
+        out_receipt->runtime_hud_decoded_portrait_hash =
+            runtime_hud.decoded_gdat_runtime_portrait_hash;
+        out_receipt->runtime_hud_decoded_portrait_pixel_count =
+            runtime_hud.decoded_gdat_runtime_portrait_pixel_count;
+        out_receipt->runtime_hud_decoded_core_hash =
+            runtime_hud.decoded_gdat_runtime_core_hash;
+        out_receipt->runtime_hud_decoded_core_pixel_count =
+            runtime_hud.decoded_gdat_runtime_core_pixel_count;
         out_receipt->runtime_hud_frame_hash =
             runtime_hud.combined_frame_hash;
         out_receipt->runtime_hud_pixel_count =
@@ -3706,6 +3847,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud_raw_core_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud_decoded_portrait_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud_decoded_portrait_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud_decoded_core_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud_frame_hash);
     out_receipt->packaged_visual_capture_hash = hash;
 
@@ -3742,6 +3889,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->runtime_hud_raw_portrait_byte_count > 0u &&
         out_receipt->runtime_hud_raw_core_hash != 0u &&
         out_receipt->runtime_hud_raw_core_byte_count > 0u &&
+        out_receipt->runtime_hud_decoded_gdat_capture_ready &&
+        out_receipt->runtime_hud_decoded_portrait_count >= 4 &&
+        out_receipt->runtime_hud_decoded_portrait_hash != 0u &&
+        out_receipt->runtime_hud_decoded_portrait_pixel_count > 0u &&
+        out_receipt->runtime_hud_decoded_core_hash != 0u &&
+        out_receipt->runtime_hud_decoded_core_pixel_count > 0u &&
         out_receipt->runtime_hud_frame_hash != 0u &&
         out_receipt->runtime_hud_pixel_count == 4u * 320u * 200u &&
         out_receipt->full_title_frame_capture_ready &&
@@ -4390,6 +4543,14 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->raw_gdat_runtime_portrait_byte_count,
             &out_receipt->raw_gdat_runtime_core_hash,
             &out_receipt->raw_gdat_runtime_core_byte_count);
+    out_receipt->decoded_gdat_runtime_hud_capture_ready =
+        dm2_v1_boot_runtime_decoded_gdat_hud_probe(
+            profile,
+            &out_receipt->decoded_gdat_runtime_portrait_count,
+            &out_receipt->decoded_gdat_runtime_portrait_hash,
+            &out_receipt->decoded_gdat_runtime_portrait_pixel_count,
+            &out_receipt->decoded_gdat_runtime_core_hash,
+            &out_receipt->decoded_gdat_runtime_core_pixel_count);
     out_receipt->real_gdat_runtime_hud_breadth_ready =
         out_receipt->render_sample_count == 4 &&
         out_receipt->render_success_count == 4 &&
@@ -4400,6 +4561,7 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->real_gdat_portrait_ready &&
         out_receipt->real_gdat_core_render_ready &&
         out_receipt->raw_gdat_runtime_hud_capture_ready &&
+        out_receipt->decoded_gdat_runtime_hud_capture_ready &&
         out_receipt->combined_frame_hash != 0u &&
         out_receipt->combined_pixel_count == 4u * 320u * 200u;
     out_receipt->valid =
