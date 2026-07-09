@@ -52,6 +52,8 @@ struct Dm1V1MovementCommandCoreResultPc34Compat {
     struct SensorEffectList_Compat enterEffects;
     int staminaCost[CHAMPION_MAX_PARTY];
     int staminaDamage[CHAMPION_MAX_PARTY];
+    int staminaDamageFlash[CHAMPION_MAX_PARTY];
+    int staminaAppliedAttributeMask[CHAMPION_MAX_PARTY];
     int staminaAffectedCount;
     int commandHandled;
     int turnApplied;

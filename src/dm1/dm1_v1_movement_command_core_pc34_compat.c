@@ -1,4 +1,5 @@
 #include "dm1_v1_movement_command_core_pc34_compat.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "memory_mov05_f0284_cell_rotation_pc34_compat.h"
 
 #include <string.h>
@@ -123,8 +124,9 @@ static void dm1_v1_apply_pre_step_stamina_cost(
 
     for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
         struct ChampionState_Compat* champion = &party->champions[i];
+        DM1_ActionF0325StaminaInputPc34 staminaIn;
+        DM1_ActionF0325StaminaPlanPc34 staminaPlan;
         int cost;
-        int staminaAfter;
 
         /* Source lock: CLIKMENU.C:237-255 applies F0325 only to living
          * champions before movement-arrow/blocker/stairs resolution.
@@ -134,24 +136,27 @@ static void dm1_v1_apply_pre_step_stamina_cost(
         }
 
         cost = dm1_v1_compute_step_stamina_cost(champion);
-        staminaAfter = (int)champion->stamina.current - cost;
+        memset(&staminaIn, 0, sizeof(staminaIn));
+        staminaIn.currentStamina = (int)champion->stamina.current;
+        staminaIn.maximumStamina = (int)champion->stamina.maximum;
+        staminaIn.currentHealth = (int)champion->hp.current;
+        staminaIn.decrement = cost;
+        if (!dm1_v1_action_stamina_apply_plan_f0325_pc34(
+                &staminaIn, &staminaPlan) ||
+            !staminaPlan.valid) {
+            continue;
+        }
+
         outResult->staminaCost[i] = cost;
+        outResult->staminaDamage[i] = staminaPlan.pendingHealthDamage;
+        outResult->staminaDamageFlash[i] = staminaPlan.shouldDamageFlash;
+        outResult->staminaAppliedAttributeMask[i] =
+            staminaPlan.appliedAttributeMask;
         outResult->staminaAffectedCount++;
 
-        if (staminaAfter <= 0) {
-            int damage = (-staminaAfter) >> 1;
-            champion->stamina.current = 0;
-            outResult->staminaDamage[i] = damage;
-            if (damage > 0) {
-                champion->hp.current = (champion->hp.current > damage)
-                    ? (unsigned short)(champion->hp.current - damage)
-                    : 0;
-            }
-        } else if (staminaAfter > (int)champion->stamina.maximum) {
-            champion->stamina.current = champion->stamina.maximum;
-        } else {
-            champion->stamina.current = (unsigned short)staminaAfter;
-        }
+        champion->stamina.current =
+            (unsigned short)staminaPlan.currentStaminaAfter;
+        champion->hp.current = (unsigned short)staminaPlan.currentHealthAfter;
     }
 }
 

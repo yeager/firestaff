@@ -243,6 +243,8 @@ int main(void)
     ok &= expect_int("stamina loop clamps to champion array window", result.staminaAffectedCount, CHAMPION_MAX_PARTY - 1);
     ok &= expect_int("stamina underflow clamps to zero", party.champions[0].stamina.current, 0);
     ok &= expect_int("stamina underflow records damage", result.staminaDamage[0], 1);
+    ok &= expect_int("stamina underflow requests damage flash", result.staminaDamageFlash[0], 1);
+    ok &= expect_int("stamina underflow records F0325 dirty mask", result.staminaAppliedAttributeMask[0], 0x0300);
     ok &= expect_int("stamina underflow applies damage", party.champions[0].hp.current, 9);
     ok &= expect_int("dead champion skipped by stamina window", party.champions[1].stamina.current, 50);
     ok &= expect_int("dead champion records no stamina cost", result.staminaCost[1], 0);
