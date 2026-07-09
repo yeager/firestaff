@@ -397,6 +397,10 @@ typedef struct {
     Nexus_V1_StartupHostReceipt host_receipt;
     int warning_art_loaded;
     int title_art_loaded;
+    int gameover_art_loaded;
+    int warning_capture_surface_ready;
+    int title_capture_surface_ready;
+    int gameover_capture_surface_ready;
     int title_status_ready;
     int warning_status_ready;
     int save_status_ready;
@@ -469,6 +473,15 @@ typedef struct {
     int title_reveal_y0;
     int title_reveal_y1;
     int title_reveal_h;
+    int warning_surface_loaded;
+    int title_surface_loaded;
+    int gameover_surface_loaded;
+    int warning_capture_surface_ready;
+    int title_capture_surface_ready;
+    int gameover_capture_surface_ready;
+    int warning_capture_frame;
+    int title_capture_frame;
+    int gameover_capture_frame;
     int route_ready;
     int m11_ready;
     int m12_ready;
@@ -519,6 +532,15 @@ typedef struct {
     int title_reveal_y0;
     int title_reveal_y1;
     int title_reveal_h;
+    int warning_surface_loaded;
+    int title_surface_loaded;
+    int gameover_surface_loaded;
+    int warning_capture_surface_ready;
+    int title_capture_surface_ready;
+    int gameover_capture_surface_ready;
+    int warning_capture_frame;
+    int title_capture_frame;
+    int gameover_capture_frame;
     int capture_command_count;
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupDrawKind first_capture_draw_kind;
@@ -569,6 +591,9 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
     int supported,
     int data_ready,
     int version_ready,
+    Nexus_V1_M12StartupPackageReceipt *out_receipt);
+int nexus_v1_launcher_m12_startup_package_from_full_start_package(
+    const Nexus_V1_StartupFullStartPackageReceipt *package,
     Nexus_V1_M12StartupPackageReceipt *out_receipt);
 int nexus_v1_launcher_startup_host_facts_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,

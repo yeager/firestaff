@@ -185,6 +185,15 @@ int main(void)
                m12_package_receipt.boot_start_ready_frames == 102 &&
                m12_package_receipt.title_frame_max == 102 &&
                m12_package_receipt.title_prompt_visible == 1 &&
+               m12_package_receipt.warning_surface_loaded == 1 &&
+               m12_package_receipt.title_surface_loaded == 1 &&
+               m12_package_receipt.gameover_surface_loaded == 1 &&
+               m12_package_receipt.warning_capture_surface_ready == 1 &&
+               m12_package_receipt.title_capture_surface_ready == 1 &&
+               m12_package_receipt.gameover_capture_surface_ready == 1 &&
+               m12_package_receipt.warning_capture_frame == 0 &&
+               m12_package_receipt.title_capture_frame == 48 &&
+               m12_package_receipt.gameover_capture_frame == 0 &&
                strcmp(m12_package_receipt.card_title_label,
                       "DM Nexus") == 0 &&
                strcmp(m12_package_receipt.card_subtitle_label,
@@ -839,6 +848,10 @@ int main(void)
         &synthetic_surface_pixel;
     synthetic_engine.ui.surfaces[NEXUS_SURFACE_WARNING].w = 320;
     synthetic_engine.ui.surfaces[NEXUS_SURFACE_WARNING].h = 200;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_GAMEOVER].data =
+        &synthetic_surface_pixel;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_GAMEOVER].w = 320;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_GAMEOVER].h = 200;
     synthetic_engine.ui_startup_surfaces_expected = 1;
     synthetic_engine.ui_startup_surfaces_loaded = 1;
     synthetic_engine.ui_faces_expected = NEXUS_MAX_CHAMPIONS;
@@ -1327,6 +1340,15 @@ int main(void)
                full_start_package_receipt.title_reveal_y0 == 0 &&
                full_start_package_receipt.title_reveal_y1 == NEXUS_FB_H &&
                full_start_package_receipt.title_reveal_h == NEXUS_FB_H &&
+               full_start_package_receipt.warning_surface_loaded == 1 &&
+               full_start_package_receipt.title_surface_loaded == 1 &&
+               full_start_package_receipt.gameover_surface_loaded == 1 &&
+               full_start_package_receipt.warning_capture_surface_ready == 1 &&
+               full_start_package_receipt.title_capture_surface_ready == 1 &&
+               full_start_package_receipt.gameover_capture_surface_ready == 1 &&
+               full_start_package_receipt.warning_capture_frame == 0 &&
+               full_start_package_receipt.title_capture_frame == 48 &&
+               full_start_package_receipt.gameover_capture_frame == 0 &&
                strcmp(full_start_package_receipt.consumer_route,
                       "title-warning") == 0 &&
                strcmp(full_start_package_receipt.animation,
@@ -1343,6 +1365,26 @@ int main(void)
                full_start_package_receipt.first_capture_draw_kind !=
                    NEXUS_V1_STARTUP_DRAW_NONE,
            "Nexus full-start package owns title startup capture proof");
+    expect(nexus_v1_launcher_m12_startup_package_from_full_start_package(
+               &full_start_package_receipt,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 1 &&
+               m12_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               m12_package_receipt.first_capture_draw_kind ==
+                   full_start_package_receipt.first_capture_draw_kind &&
+               m12_package_receipt.warning_surface_loaded == 1 &&
+               m12_package_receipt.title_surface_loaded == 1 &&
+               m12_package_receipt.gameover_surface_loaded == 1 &&
+               m12_package_receipt.warning_capture_surface_ready == 1 &&
+               m12_package_receipt.title_capture_surface_ready == 1 &&
+               m12_package_receipt.gameover_capture_surface_ready == 1 &&
+               m12_package_receipt.warning_capture_frame == 0 &&
+               m12_package_receipt.title_capture_frame == 48 &&
+               m12_package_receipt.gameover_capture_frame == 0 &&
+               m12_package_receipt.capture_command_count ==
+                   full_start_package_receipt.capture_command_count,
+           "Nexus M12 startup package consumes full-start TITLE/WARNING/GAMEOVER capture receipt");
     memset(package_phase, 0, sizeof(package_phase));
     memset(package_animation, 0, sizeof(package_animation));
     expect(nexus_v1_launcher_startup_full_start_package_export_presentation(
@@ -1417,11 +1459,27 @@ int main(void)
                full_start_package_receipt.boot_frame_in_phase == 0 &&
                full_start_package_receipt.title_frames_until_ready == 102 &&
                full_start_package_receipt.warning_visible == 1 &&
+               full_start_package_receipt.warning_capture_surface_ready == 1 &&
+               full_start_package_receipt.title_capture_surface_ready == 1 &&
+               full_start_package_receipt.gameover_capture_surface_ready == 1 &&
                full_start_package_receipt.first_capture_draw_kind ==
                    NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
                strcmp(full_start_package_receipt.animation,
                       "nexus-title") == 0,
            "Nexus full-start package owns warning startup capture proof");
+    expect(nexus_v1_launcher_m12_startup_package_from_full_start_package(
+               &full_start_package_receipt,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 1 &&
+               m12_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               m12_package_receipt.first_capture_draw_kind ==
+                   NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
+               m12_package_receipt.warning_capture_surface_ready == 1 &&
+               m12_package_receipt.title_capture_surface_ready == 1 &&
+               m12_package_receipt.gameover_capture_surface_ready == 1 &&
+               m12_package_receipt.title_frames_until_ready == 102,
+           "Nexus M12 startup package consumes WARNING frame capture receipt");
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
                &synthetic_runtime_receipt,
