@@ -99,6 +99,119 @@ void nexus_v1_launcher_runtime_receipt_clear(
     nexus_v1_startup_host_receipt_clear(&receipt->boot_status_receipt);
 }
 
+void nexus_v1_launcher_startup_launch_gate_receipt_clear(
+    Nexus_V1_StartupLaunchGateReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->route = NEXUS_V1_STARTUP_LAUNCH_GATE_INVALID;
+    nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
+}
+
+const char *nexus_v1_launcher_startup_launch_gate_route_name(
+    Nexus_V1_StartupLaunchGateRoute route)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_LAUNCH_GATE_INVALID: return "invalid";
+    case NEXUS_V1_STARTUP_LAUNCH_GATE_DATA_ERROR: return "data-error";
+    case NEXUS_V1_STARTUP_LAUNCH_GATE_TITLE_READY: return "title-ready";
+    case NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_ASSET_BLOCKED:
+        return "menu-asset-blocked";
+    case NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_READY: return "menu-ready";
+    default: return "unknown";
+    }
+}
+
+int nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    Nexus_V1_StartupLaunchGateReceipt *out_receipt)
+{
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets;
+
+    nexus_v1_launcher_startup_launch_gate_receipt_clear(out_receipt);
+    if (!runtime || !out_receipt) {
+        return 0;
+    }
+    assets = &runtime->startup_assets;
+    out_receipt->assets = *assets;
+    out_receipt->engine_ready = runtime->engine ? 1 : 0;
+    out_receipt->level_loaded = runtime->level_loaded ? 1 : 0;
+    out_receipt->title_ready = runtime->title_loaded ? 1 : 0;
+    out_receipt->title_draw_ready = assets->title_route_ready ? 1 : 0;
+    out_receipt->real_menu_ready =
+        assets->real_menu_surface_route_ready ? 1 : 0;
+    out_receipt->save_menu_ready = assets->save_menu_route_ready ? 1 : 0;
+    out_receipt->champion_menu_ready =
+        assets->champion_menu_route_ready ? 1 : 0;
+    out_receipt->fallback_visuals_permitted =
+        assets->menu_bpk_fallback_visuals_permitted ? 1 : 0;
+    out_receipt->asset_route = assets->startup_menu_asset_route;
+    out_receipt->asset_blocker = assets->real_menu_surface_blocker;
+    out_receipt->boot_log_line = runtime->boot_log_line;
+
+    if (!runtime->engine || !runtime->level_loaded) {
+        out_receipt->route = NEXUS_V1_STARTUP_LAUNCH_GATE_DATA_ERROR;
+        out_receipt->status_scope =
+            runtime->startup_receipt.host_receipt.status_scope
+                ? runtime->startup_receipt.host_receipt.status_scope
+                : "BOOT";
+        out_receipt->status =
+            runtime->startup_receipt.host_receipt.status
+                ? runtime->startup_receipt.host_receipt.status
+                : "NEXUS DATA ERROR";
+        out_receipt->host_receipt = runtime->startup_receipt.host_receipt;
+        if (!out_receipt->host_receipt.status) {
+            out_receipt->host_receipt.status_scope = out_receipt->status_scope;
+            out_receipt->host_receipt.status = out_receipt->status;
+        }
+        return 1;
+    }
+
+    if (!assets->title_route_ready) {
+        out_receipt->route = NEXUS_V1_STARTUP_LAUNCH_GATE_DATA_ERROR;
+        out_receipt->status_scope = "ASSETS";
+        out_receipt->status = assets->startup_menu_asset_route
+            ? assets->startup_menu_asset_route
+            : "blocked-title-assets";
+        out_receipt->host_receipt.input_result =
+            NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+        out_receipt->host_receipt.status_scope = out_receipt->status_scope;
+        out_receipt->host_receipt.status = out_receipt->status;
+        return 1;
+    }
+
+    if (!assets->real_menu_surface_route_ready) {
+        out_receipt->route =
+            NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_ASSET_BLOCKED;
+        out_receipt->status_scope = "ASSETS";
+        out_receipt->status = assets->startup_menu_asset_route
+            ? assets->startup_menu_asset_route
+            : "blocked-startup-assets";
+        out_receipt->host_receipt.input_result =
+            NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+        out_receipt->host_receipt.status_scope = out_receipt->status_scope;
+        out_receipt->host_receipt.status = out_receipt->status;
+        return 1;
+    }
+
+    out_receipt->route = assets->save_menu_route_ready &&
+                         assets->champion_menu_route_ready
+        ? NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_READY
+        : NEXUS_V1_STARTUP_LAUNCH_GATE_TITLE_READY;
+    out_receipt->status_scope = "STARTUP";
+    out_receipt->status = out_receipt->route ==
+        NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_READY
+            ? "NEXUS MENU READY"
+            : "NEXUS TITLE";
+    out_receipt->host_receipt.input_result =
+        NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+    out_receipt->host_receipt.status_scope = out_receipt->status_scope;
+    out_receipt->host_receipt.status = out_receipt->status;
+    return 1;
+}
+
 static void nexus_v1_launcher_resume_receipt_clear(
     Nexus_V1_LauncherResumeReceipt *receipt)
 {
