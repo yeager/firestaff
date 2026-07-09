@@ -1008,6 +1008,7 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     int* outHostWindowCapture,
     int* outHostCaptureRouteMatches,
     int* outReleaseCaptureOwnershipReady,
+    int* outOwnedHostDrawReady,
     int* outMapIndex,
     int* outRenderCommandCount);
 int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
