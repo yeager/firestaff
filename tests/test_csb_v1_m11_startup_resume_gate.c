@@ -1261,7 +1261,10 @@ int main(void) {
                             csb_v1_startup_title_total_ticks_pc34() &&
                         receipt.startupTitleReady == 0 &&
                         receipt.startupInputReady == 0 &&
-                        receipt.startupHudMenuReady == 0,
+                        receipt.startupHudMenuReady == 0 &&
+                        receipt.csbStartupFullVisualSequenceReady == 1 &&
+                        receipt.csbStartupNoFallbackRoutes == 1 &&
+                        receipt.csbStartupSequenceCaptureHash != 0,
                     "M11 CSB receipt exposes active title prelude boundary");
     }
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
@@ -1274,8 +1277,13 @@ int main(void) {
         unsigned char fb[320 * 200];
         memset(fb, 0, sizeof(fb));
         M11_GameView_Draw(&view, fb, 320, 200);
-        expect_true(count_nonzero_rect(fb, 320, 18, 18, 284, 164) > 0,
-                    "M11 CSB entrance draws a visible startup screen");
+        {
+            M11_BootProbeReceipt receipt;
+            expect_true(M11_GameView_GetBootProbeReceipt(&view, &receipt) == 1 &&
+                            receipt.csbStartupFullVisualSequenceReady == 1 &&
+                            receipt.csbStartupNoFallbackRoutes == 1,
+                        "M11 CSB entrance draw is gated by full visual sequence receipt");
+        }
         expect_true(count_color_rect(fb, 320, 18, 18, 284, 1, 11u) < 200,
                     "M11 CSB real entrance does not keep the synthetic debug frame");
         expect_true(M11_GameView_AdvanceIdleTick(&view) ==
@@ -1313,7 +1321,9 @@ int main(void) {
                                 csb_v1_startup_title_total_ticks_pc34() &&
                             receipt.startupTitleReady == 0 &&
                             receipt.startupInputReady == 0 &&
-                            receipt.startupHudMenuReady == 0,
+                            receipt.startupHudMenuReady == 0 &&
+                            receipt.csbStartupFullVisualSequenceReady == 1 &&
+                            receipt.csbStartupNoFallbackRoutes == 1,
                         "M11 CSB receipt keeps title boundary through CHAOS zoom");
         }
         expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
@@ -1345,6 +1355,8 @@ int main(void) {
                             receipt.startupHudMenuKind ==
                                 CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
                             receipt.startupHudMenuOptionCount == 4 &&
+                            receipt.csbStartupFullVisualSequenceReady == 1 &&
+                            receipt.csbStartupNoFallbackRoutes == 1 &&
                             receipt.startupSelectedCommandId ==
                                 CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
                         "M11 CSB boot receipt consumes CSB HUD/menu readiness");
@@ -1429,7 +1441,9 @@ int main(void) {
                         "M11 CSB startup exports a door-opening receipt");
             expect_true(receipt.startupActive == 1 &&
                             receipt.startupInputReady == 0 &&
-                            receipt.startupHudMenuReady == 0,
+                            receipt.startupHudMenuReady == 0 &&
+                            receipt.csbStartupFullVisualSequenceReady == 1 &&
+                            receipt.csbStartupNoFallbackRoutes == 1,
                         "M11 CSB boot receipt blocks input during door opening");
             expect_true(M11_GameView_HandlePointerButton(
                             &view,
@@ -1509,9 +1523,9 @@ int main(void) {
         view.assetsAvailable = 0;
         M11_GameView_Draw(&view, fb, 320, 200);
         expect_true(count_color_rect(fb, 320, 38, 80, 230, 64, 15u) > 20,
-                    "M11 CSB fallback entrance renders the utility import prompt");
+                    "M11 CSB assetless startup keeps utility HUD receipt visible");
         expect_true(count_color_rect(fb, 320, 36, 104, 244, 12, 12u) > 20,
-                    "M11 CSB fallback entrance renders the selected utility import row");
+                    "M11 CSB assetless startup keeps selected utility row receipt visible");
     }
     expect_true(view.csbState.startup_import_selected_action_index == 0,
                 "M11 CSB utility keyboard starts on the IMPORT row");
