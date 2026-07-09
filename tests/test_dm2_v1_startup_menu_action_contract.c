@@ -1,4 +1,5 @@
 #include "dm2_v1_startup_menu.h"
+#include "dm2_v1_startup_presentation.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -53,6 +54,8 @@ int main(void)
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupRowKind row_kind;
     DM2_V1_StartupRenderRow rows[4];
+    DM2_V1_StartupDrawCommand commands[16];
+    DM2_V1_StartupRenderReceipt render_receipt;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -355,6 +358,31 @@ int main(void)
               rows[2].rect.y == 104 &&
               rows[2].label[0] == 'N',
           "render rows expose New Game presentation");
+    row_count = dm2_v1_startup_presentation_build(
+        &menu,
+        commands,
+        (int)(sizeof(commands) / sizeof(commands[0])));
+    check(row_count > 0 &&
+              dm2_v1_startup_presentation_render_receipt(
+                  &menu, commands, row_count, 1, &render_receipt) &&
+              render_receipt.valid &&
+              render_receipt.command_count == row_count &&
+              render_receipt.row_count == 3 &&
+              render_receipt.selected_row == 0 &&
+              render_receipt.title_gdat_found &&
+              render_receipt.title_gdat_category == 0x05 &&
+              render_receipt.title_gdat_index == 0 &&
+              render_receipt.title_gdat_field == 1 &&
+              render_receipt.title_rect.w == 320 &&
+              render_receipt.title_rect.h == 200 &&
+              render_receipt.panel_rect.x == 78 &&
+              render_receipt.panel_rect.y == 50 &&
+              render_receipt.menu_text_count == 6 &&
+              render_receipt.selectable_text_count == 3 &&
+              render_receipt.selected_highlight_count == 1 &&
+              render_receipt.hud_runtime_ready == 1 &&
+              render_receipt.hud_overlay_suppressed == 1,
+          "startup render receipt exposes title/menu/HUD handoff");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&
