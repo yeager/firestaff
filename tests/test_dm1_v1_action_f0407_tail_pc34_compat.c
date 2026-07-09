@@ -2404,6 +2404,59 @@ static void test_melee_f0231_damage_resolver_entrypoint(void) {
     CHECK_EQ(attackerA.statisticLuck, attackerB.statisticLuck,
              "DM1 F0231 luck mutation mirrors F0735");
 
+    {
+        DM1_MeleeF0231ResolveRuntimeInputPc34 runtimeIn;
+        DM1_MeleeF0231ResolveRuntimePlanPc34 runtimeOut;
+        DM1_MeleeF0231RuntimeResultInputPc34 separateRuntimeIn;
+        DM1_MeleeF0231RuntimeResultPlanPc34 separateRuntimeOut;
+        struct CombatantChampionSnapshot_Compat attackerC = attackerB;
+        struct CombatResult_Compat separateResult;
+        struct RngState_Compat rngC;
+        struct RngState_Compat rngD;
+
+        memset(&runtimeIn, 0, sizeof(runtimeIn));
+        memset(&runtimeOut, 0, sizeof(runtimeOut));
+        memset(&separateRuntimeIn, 0, sizeof(separateRuntimeIn));
+        memset(&separateRuntimeOut, 0, sizeof(separateRuntimeOut));
+        memset(&separateResult, 0, sizeof(separateResult));
+        runtimeIn.groupIndex = 0;
+        runtimeIn.groupCount = 1;
+        CHECK_EQ(F0730_COMBAT_RngInit_Compat(&rngC, 0x630u), 1,
+                 "DM1 F0231 runtime entry rng C init");
+        CHECK_EQ(F0730_COMBAT_RngInit_Compat(&rngD, 0x630u), 1,
+                 "DM1 F0231 runtime entry rng D init");
+        CHECK_EQ(dm1_v1_melee_resolve_runtime_f0231_pc34(
+                     &attackerB, &weapon, &defender, &rngC,
+                     &runtimeIn, &runtimeOut), 1,
+                 "DM1 F0231 runtime entrypoint builds");
+        CHECK_EQ(dm1_v1_melee_resolve_damage_f0231_pc34(
+                     &attackerC, &weapon, &defender, &rngD,
+                     &separateResult), 1,
+                 "DM1 F0231 separate damage builds");
+        separateRuntimeIn.combatOutcome = separateResult.outcome;
+        separateRuntimeIn.damageApplied = separateResult.damageApplied;
+        separateRuntimeIn.groupIndex = runtimeIn.groupIndex;
+        separateRuntimeIn.groupCount = runtimeIn.groupCount;
+        CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(
+                     &separateRuntimeIn, &separateRuntimeOut), 1,
+                 "DM1 F0231 separate runtime plan builds");
+        CHECK_EQ(runtimeOut.valid, 1,
+                 "DM1 F0231 runtime entrypoint valid");
+        CHECK_EQ(runtimeOut.combatResult.outcome, separateResult.outcome,
+                 "DM1 F0231 runtime entry outcome mirrors separate path");
+        CHECK_EQ(runtimeOut.combatResult.damageApplied,
+                 separateResult.damageApplied,
+                 "DM1 F0231 runtime entry damage mirrors separate path");
+        CHECK_EQ(runtimeOut.runtimeResultPlan.shouldApplyGroupDamage,
+                 separateRuntimeOut.shouldApplyGroupDamage,
+                 "DM1 F0231 runtime entry group gate mirrors separate path");
+        CHECK_EQ(runtimeOut.runtimeResultPlan.shouldEmitDamageDealt,
+                 separateRuntimeOut.shouldEmitDamageDealt,
+                 "DM1 F0231 runtime entry emit gate mirrors separate path");
+        CHECK_EQ(attackerB.statisticLuck, attackerC.statisticLuck,
+                 "DM1 F0231 runtime entry luck mirrors separate path");
+    }
+
     for (unsigned int seed = 1; seed < 96; ++seed) {
         memset(&attackerA, 0, sizeof(attackerA));
         memset(&defender, 0, sizeof(defender));
