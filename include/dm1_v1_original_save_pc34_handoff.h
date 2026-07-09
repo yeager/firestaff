@@ -218,6 +218,23 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
     size_t *out_size,
     DM1OriginalSavePC34RoundtripReport *out_report);
 
+int dm1_v1_original_save_pc34_roundtrip_world_file(
+    const char *path,
+    uint32_t game_id,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size,
+    DM1OriginalSavePC34HandoffReport *import_report,
+    DM1OriginalSavePC34HandoffReport *verify_report);
+
+int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
+    const char *path,
+    uint32_t game_id,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size,
+    DM1OriginalSavePC34RoundtripReport *out_report);
+
 /* Builds a bounded ReDMCSB PC34-shaped original-save byte stream for
  * importer/export handoff verification. This is not a full user save
  * exporter: it writes a deterministic GLOBAL_DATA/ACTIVE_GROUP/PARTY/

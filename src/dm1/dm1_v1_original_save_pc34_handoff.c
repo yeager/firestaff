@@ -75,6 +75,59 @@ static int16_t read_i16_le(const uint8_t *p)
     return (int16_t)read_u16_le(p);
 }
 
+static int read_original_pc34_file_bytes(
+    const char *path,
+    uint8_t **out_bytes,
+    size_t *out_size)
+{
+    FILE *file;
+    long file_size;
+    uint8_t *bytes;
+    size_t read_count;
+
+    if (!path || !out_bytes || !out_size) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    *out_bytes = NULL;
+    *out_size = 0u;
+
+    file = fopen(path, "rb");
+    if (!file) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    if (fseek(file, 0L, SEEK_END) != 0) {
+        fclose(file);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    file_size = ftell(file);
+    if (file_size <= 0 ||
+        file_size > (long)SAVEGAME_PC34_MAX_FILE_SIZE ||
+        file_size > (long)((int)0x7fffffff)) {
+        fclose(file);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    if (fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+
+    bytes = (uint8_t *)malloc((size_t)file_size);
+    if (!bytes) {
+        fclose(file);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    read_count = fread(bytes, 1u, (size_t)file_size, file);
+    fclose(file);
+    if (read_count != (size_t)file_size) {
+        free(bytes);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+
+    *out_bytes = bytes;
+    *out_size = (size_t)file_size;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static uint16_t original_pc34_header_first_half_checksum(const uint8_t *header)
 {
     uint16_t acc = 0u;
@@ -1344,50 +1397,21 @@ int dm1_v1_original_save_pc34_handoff_file(
     struct SaveGame_Compat *out_state,
     DM1OriginalSavePC34HandoffReport *out_report)
 {
-    FILE *file;
-    long file_size;
     uint8_t *bytes;
-    size_t read_count;
+    size_t size;
     int result;
 
     if (!path || !out_state) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
 
-    file = fopen(path, "rb");
-    if (!file) {
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    if (fseek(file, 0L, SEEK_END) != 0) {
-        fclose(file);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    file_size = ftell(file);
-    if (file_size <= 0 ||
-        file_size > (long)SAVEGAME_PC34_MAX_FILE_SIZE ||
-        file_size > (long)((int)0x7fffffff)) {
-        fclose(file);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    if (fseek(file, 0L, SEEK_SET) != 0) {
-        fclose(file);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-
-    bytes = (uint8_t *)malloc((size_t)file_size);
-    if (!bytes) {
-        fclose(file);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    read_count = fread(bytes, 1u, (size_t)file_size, file);
-    fclose(file);
-    if (read_count != (size_t)file_size) {
-        free(bytes);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    result = read_original_pc34_file_bytes(path, &bytes, &size);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
     }
 
     result = dm1_v1_original_save_pc34_handoff_bytes(
-        bytes, (size_t)file_size, out_state, out_report);
+        bytes, size, out_state, out_report);
     free(bytes);
     return result;
 }
@@ -1521,50 +1545,21 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_file(
     struct DM1_EventQueue_V1 *event_queue,
     DM1OriginalSavePC34HandoffReport *out_report)
 {
-    FILE *file;
-    long file_size;
     uint8_t *bytes;
-    size_t read_count;
+    size_t size;
     int result;
 
     if (!path || !world) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
 
-    file = fopen(path, "rb");
-    if (!file) {
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    if (fseek(file, 0L, SEEK_END) != 0) {
-        fclose(file);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    file_size = ftell(file);
-    if (file_size <= 0 ||
-        file_size > (long)SAVEGAME_PC34_MAX_FILE_SIZE ||
-        file_size > (long)((int)0x7fffffff)) {
-        fclose(file);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    if (fseek(file, 0L, SEEK_SET) != 0) {
-        fclose(file);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-
-    bytes = (uint8_t *)malloc((size_t)file_size);
-    if (!bytes) {
-        fclose(file);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    read_count = fread(bytes, 1u, (size_t)file_size, file);
-    fclose(file);
-    if (read_count != (size_t)file_size) {
-        free(bytes);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    result = read_original_pc34_file_bytes(path, &bytes, &size);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
     }
 
     result = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
-        bytes, (size_t)file_size, world, event_queue, out_report);
+        bytes, size, world, event_queue, out_report);
     free(bytes);
     return result;
 }
@@ -1809,6 +1804,64 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
+int dm1_v1_original_save_pc34_roundtrip_world_file(
+    const char *path,
+    uint32_t game_id,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size,
+    DM1OriginalSavePC34HandoffReport *import_report,
+    DM1OriginalSavePC34HandoffReport *verify_report)
+{
+    uint8_t *bytes;
+    size_t size;
+    int result;
+
+    if (!path || !out_bytes || !out_size) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    result = read_original_pc34_file_bytes(path, &bytes, &size);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 reads original PC34 bytes from disk before
+     * materializing runtime GLOBAL_DATA/ACTIVE_GROUP/PARTY/EVENT state.
+     * This corpus-facing wrapper keeps Firestaff's file edge on the same
+     * bounded import-export verification path as the byte helper. */
+    result = dm1_v1_original_save_pc34_roundtrip_world_bytes(
+        bytes, size, game_id, out_bytes, out_capacity, out_size,
+        import_report, verify_report);
+    free(bytes);
+    return result;
+}
+
+int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
+    const char *path,
+    uint32_t game_id,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t *bytes;
+    size_t size;
+    int result;
+
+    if (!path || !out_bytes || !out_size) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    result = read_original_pc34_file_bytes(path, &bytes, &size);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
+    }
+
+    result = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, size, game_id, out_bytes, out_capacity, out_size, out_report);
+    free(bytes);
+    return result;
 }
 
 const char *dm1_v1_original_save_pc34_handoff_result_name(int result)

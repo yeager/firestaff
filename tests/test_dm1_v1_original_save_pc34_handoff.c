@@ -985,6 +985,8 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     unsigned char roundtrip[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char fixture_path[256];
+    FILE *fixture_file;
     size_t written = 0u;
     size_t roundtrip_written = 0u;
     DM1OriginalSavePC34FixtureSpec spec;
@@ -1014,6 +1016,15 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
         &spec, bytes, sizeof(bytes), &written);
     CHECK(rc == SAVEGAME_PC34_OK,
           "roundtrip helper fixture build succeeds");
+
+    snprintf(fixture_path, sizeof(fixture_path),
+             "/tmp/firestaff_dm1_original_save_roundtrip_%lu.dat",
+             (unsigned long)spec.game_id);
+    fixture_file = fopen(fixture_path, "wb");
+    CHECK(fixture_file != NULL, "roundtrip file fixture opens");
+    CHECK(fwrite(bytes, 1u, written, fixture_file) == written,
+          "roundtrip file fixture writes");
+    CHECK(fclose(fixture_file) == 0, "roundtrip file fixture closes");
 
     rc = dm1_v1_original_save_pc34_roundtrip_world_bytes(
         bytes, written, 0x52544d32u,
@@ -1108,6 +1119,38 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
           roundtrip_report.reloaded_active_group_count == 2,
           "roundtrip reload helper preserves active group count");
 
+    memset(roundtrip, 0, sizeof(roundtrip));
+    roundtrip_written = 0u;
+    memset(&import_report, 0, sizeof(import_report));
+    memset(&verify_report, 0, sizeof(verify_report));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_file(
+        fixture_path, 0x52544d34u,
+        roundtrip, sizeof(roundtrip), &roundtrip_written,
+        &import_report, &verify_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "roundtrip file helper import-export-verify succeeds");
+    CHECK(roundtrip_written > SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
+          "roundtrip file helper writes PC34 bytes");
+    CHECK(import_report.imported_map_index == 5,
+          "roundtrip file helper records source map index");
+    CHECK(verify_report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT,
+          "roundtrip file helper verifies all save parts");
+
+    memset(roundtrip, 0, sizeof(roundtrip));
+    roundtrip_written = 0u;
+    memset(&roundtrip_report, 0, sizeof(roundtrip_report));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_file(
+        fixture_path, 0x52544d35u,
+        roundtrip, sizeof(roundtrip), &roundtrip_written,
+        &roundtrip_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "roundtrip reload file helper succeeds");
+    CHECK(roundtrip_report.core_state_matches == 1,
+          "roundtrip reload file helper reports matching core state");
+    CHECK(roundtrip_report.reloaded_champion_count == 3 &&
+          roundtrip_report.reloaded_event_count == ORIGINAL_PC34_EVENT_COUNT,
+          "roundtrip reload file helper preserves runtime counts");
+
     rc = dm1_v1_original_save_pc34_roundtrip_world_bytes(
         NULL, 0u, 0u, roundtrip, sizeof(roundtrip), &roundtrip_written,
         &import_report, &verify_report);
@@ -1118,6 +1161,13 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
         &roundtrip_report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
           "roundtrip reload helper rejects null source bytes");
+    rc = dm1_v1_original_save_pc34_roundtrip_world_file(
+        "/tmp/firestaff_dm1_original_save_missing.dat", 0u,
+        roundtrip, sizeof(roundtrip), &roundtrip_written,
+        &import_report, &verify_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE,
+          "roundtrip file helper reports missing file");
+    remove(fixture_path);
 }
 
 static void test_strings(void)
