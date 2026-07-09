@@ -1692,6 +1692,90 @@ int theron_v1_boot_startup_render_plan_from_view_model(
     return 1;
 }
 
+void theron_v1_boot_startup_render_route_receipt_init(
+    Theron_V1_BootStartupRenderRouteReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->status_scope = "STARTUP";
+    receipt->status = "NO RENDER ROUTE";
+}
+
+int theron_v1_boot_startup_render_route_receipt_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_V1_BootStartupRenderRouteReceipt *out_receipt)
+{
+    Theron_StartupStateReceipt state_receipt;
+
+    if (out_receipt) {
+        theron_v1_boot_startup_render_route_receipt_init(out_receipt);
+    }
+    if (!view_model || !out_receipt) {
+        return 0;
+    }
+
+    out_receipt->runtime_level_source = view_model->runtime_level_source;
+    out_receipt->runtime_track02_semantic_handoff =
+        view_model->runtime_track02_semantic_handoff;
+    out_receipt->runtime_fallback_visuals_blocked =
+        view_model->runtime_fallback_visuals_blocked;
+    out_receipt->startup_menu_render_allowed =
+        view_model->render_plan_valid ? 1 : 0;
+    out_receipt->fallback_visuals_allowed =
+        view_model->runtime_fallback_visuals_blocked ? 0 : 1;
+    out_receipt->runtime_level_render_allowed =
+        view_model->runtime_level_source !=
+                THERON_V1_STARTUP_RUNTIME_LEVEL_NONE &&
+        view_model->runtime_level_source !=
+                THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED
+            ? 1
+            : 0;
+    out_receipt->status_scope = "STARTUP";
+    out_receipt->status =
+        view_model->runtime_fallback_visuals_blocked
+            ? "TRACK02 RUNTIME BLOCKED"
+            : (out_receipt->runtime_level_render_allowed
+                   ? "THERON RUNTIME READY"
+                   : "THERON STARTUP MENU");
+    if (theron_v1_boot_startup_render_plan_from_view_model(
+            view_model,
+            &out_receipt->render_plan)) {
+        out_receipt->render_plan_valid = 1;
+    }
+    if (theron_v1_boot_startup_state_receipt_from_view_model(
+            view_model,
+            &state_receipt)) {
+        out_receipt->state_receipt = state_receipt;
+        out_receipt->state_receipt_valid = 1;
+    }
+    return out_receipt->render_plan_valid ||
+           out_receipt->state_receipt_valid ||
+           out_receipt->runtime_fallback_visuals_blocked;
+}
+
+int theron_v1_boot_startup_render_route_receipt_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_V1_BootStartupRenderRouteReceipt *out_receipt)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        if (out_receipt) {
+            theron_v1_boot_startup_render_route_receipt_init(out_receipt);
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_render_route_receipt_from_view_model(
+        &view_model,
+        out_receipt);
+}
+
 int theron_v1_boot_startup_state_receipt_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_StartupStateReceipt *out_receipt)
