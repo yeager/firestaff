@@ -2494,9 +2494,17 @@ static int csb_v1_boot_startup_capture_render_plan_pc34(
     if (capture_receipt->render_view.route_receipt.route ==
         CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34) {
         *out_plan = capture_receipt->render_view.render_plan;
+        for (i = 0; i < out_plan->render_command_count &&
+                    i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
+            if (out_plan->render_commands[i].kind ==
+                CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34) {
+                out_plan->render_commands[i].kind =
+                    CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34;
+            }
+        }
         /* ReDMCSB ENTRANCE.C F0442 draws Graphic5 as a full-screen credits
          * page while startup input/HUD are blocked. Keep that surface on the
-         * packaged render path instead of treating it as a HUD/menu capture. */
+         * packaged render path instead of letting M11 fall back to text. */
         return 1;
     }
 
@@ -4370,7 +4378,7 @@ static void csb_v1_boot_startup_route_from_presentation_pc34(
             break;
         case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34:
             out_receipt->draw_surface = 1;
-            out_receipt->draw_fallback_text = 1;
+            out_receipt->draw_fallback_text = 0;
             break;
         case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34:
             out_receipt->draw_surface = 1;
