@@ -1405,6 +1405,14 @@ static void dm2_v1_boot_startup_full_start_receipt_clear(
     }
 }
 
+static void dm2_v1_boot_startup_host_view_receipt_clear(
+    DM2_V1_BootStartupHostViewReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+    }
+}
+
 static int dm2_v1_boot_startup_fill_full_start_receipt(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupViewModel *view_model)
@@ -1453,6 +1461,49 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
      * HUD suppression, and runtime handoff as one boot boundary. M11 can use
      * this receipt directly instead of combining command counts and flags. */
     (void)snapshot;
+    return 1;
+}
+
+static int dm2_v1_boot_startup_fill_host_view_receipt(
+    DM2_V1_BootStartupViewModel *view_model)
+{
+    DM2_V1_BootStartupHostViewReceipt *receipt;
+    const DM2_V1_BootStartupFullStartReceipt *full_start;
+
+    if (!view_model || !view_model->full_start_receipt.valid) {
+        return 0;
+    }
+    receipt = &view_model->host_view_receipt;
+    full_start = &view_model->full_start_receipt;
+    dm2_v1_boot_startup_host_view_receipt_clear(receipt);
+    receipt->valid = 1;
+    receipt->command_count = view_model->command_count;
+    receipt->selected_row = view_model->view_receipt.menu_state.selected_row;
+    receipt->title_timing_ready =
+        full_start->startup_menu_active &&
+        full_start->title_frame_max >= 0 &&
+        full_start->title_frame_duration_ticks > 0;
+    receipt->title_asset_ready =
+        full_start->full_start_real_asset_ready
+            ? 1
+            : full_start->title_backdrop_ready;
+    receipt->draw_startup_menu =
+        full_start->startup_menu_active &&
+        full_start->full_start_graphics_ready &&
+        full_start->hud_overlay_suppressed;
+    receipt->title_frame = full_start->title_frame;
+    receipt->title_frame_max = full_start->title_frame_max;
+    receipt->title_frame_duration_ticks =
+        full_start->title_frame_duration_ticks;
+    receipt->title_ready = full_start->title_ready;
+    receipt->hud_overlay_suppressed = full_start->hud_overlay_suppressed;
+    receipt->hud_runtime_ready = full_start->hud_runtime_ready;
+    receipt->runtime_menu_ready = full_start->runtime_menu_ready;
+    receipt->runtime_action_ready = full_start->runtime_action_ready;
+    receipt->first_hud_frame_ready = full_start->first_hud_frame_ready;
+    receipt->full_start = *full_start;
+    /* M11 host consumption contract: callers gate startup drawing and probe
+     * state on this receipt, not on ad-hoc command-count/HUD flag checks. */
     return 1;
 }
 
@@ -1542,6 +1593,8 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
         (void)dm2_v1_boot_startup_fill_full_start_receipt(
             snapshot,
             out_view_model);
+        (void)dm2_v1_boot_startup_fill_host_view_receipt(
+            out_view_model);
     }
     return ok;
 }
@@ -1563,6 +1616,26 @@ int dm2_v1_boot_startup_full_start_receipt_from_snapshot(
         return 0;
     }
     *out_receipt = view_model.full_start_receipt;
+    return 1;
+}
+
+int dm2_v1_boot_startup_host_view_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupHostViewReceipt *out_receipt)
+{
+    DM2_V1_BootStartupViewModel view_model;
+
+    if (out_receipt) {
+        dm2_v1_boot_startup_host_view_receipt_clear(out_receipt);
+    }
+    if (!snapshot || !out_receipt ||
+        !dm2_v1_boot_startup_view_model_receipt_from_snapshot(
+            snapshot,
+            &view_model) ||
+        !view_model.host_view_receipt.valid) {
+        return 0;
+    }
+    *out_receipt = view_model.host_view_receipt;
     return 1;
 }
 

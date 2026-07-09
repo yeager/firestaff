@@ -33,6 +33,7 @@ struct DM2_V1_BootStartupViewModel {
     int title_gdat_asset_stride;
     int full_start_real_asset_ready;
     DM2_V1_BootStartupFullStartReceipt full_start_receipt;
+    DM2_V1_BootStartupHostViewReceipt host_view_receipt;
 };
 
 #endif

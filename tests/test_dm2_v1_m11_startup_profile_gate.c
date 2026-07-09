@@ -307,6 +307,7 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_BootRuntimeStartupSnapshot boot_snapshot;
     DM2_V1_BootStartupViewModel boot_view_model;
     DM2_V1_BootStartupFullStartReceipt full_start_receipt;
+    DM2_V1_BootStartupHostViewReceipt host_view_receipt;
     DM2_V1_StartupMenu restored_menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupViewReceipt view_receipt;
@@ -543,6 +544,14 @@ static void expect_dm2_startup_layout_contract(void) {
                             .full_start_graphics_ready == 1 &&
                     boot_view_model.full_start_receipt
                             .full_start_real_asset_ready == 0 &&
+                    boot_view_model.host_view_receipt.valid &&
+                    boot_view_model.host_view_receipt.draw_startup_menu == 1 &&
+                    boot_view_model.host_view_receipt.title_timing_ready == 1 &&
+                    boot_view_model.host_view_receipt.title_asset_ready == 1 &&
+                    boot_view_model.host_view_receipt.hud_overlay_suppressed == 1 &&
+                    boot_view_model.host_view_receipt.runtime_menu_ready == 1 &&
+                    boot_view_model.host_view_receipt.runtime_action_ready == 0 &&
+                    boot_view_model.host_view_receipt.first_hud_frame_ready == 0 &&
                     strcmp(boot_view_model.phase, "dm2-startup-menu") == 0 &&
                     boot_view_model.startup_active == 1 &&
                     strcmp(boot_view_model.animation,
@@ -594,6 +603,24 @@ static void expect_dm2_startup_layout_contract(void) {
                     full_start_receipt.first_hud_frame_ready == 0 &&
                     full_start_receipt.full_start_graphics_ready == 1,
                 "DM2 boot full-start receipt joins title timing, GDAT command, HUD suppression, and runtime handoff");
+    expect_true(dm2_v1_boot_startup_host_view_receipt_from_snapshot(
+                    &boot_snapshot,
+                    &host_view_receipt) &&
+                    host_view_receipt.valid &&
+                    host_view_receipt.draw_startup_menu == 1 &&
+                    host_view_receipt.command_count == command_count &&
+                    host_view_receipt.selected_row == 2 &&
+                    host_view_receipt.title_timing_ready == 1 &&
+                    host_view_receipt.title_asset_ready == 1 &&
+                    host_view_receipt.title_frame == 0 &&
+                    host_view_receipt.title_frame_max == 7 &&
+                    host_view_receipt.title_frame_duration_ticks == 6 &&
+                    host_view_receipt.hud_overlay_suppressed == 1 &&
+                    host_view_receipt.hud_runtime_ready == 1 &&
+                    host_view_receipt.runtime_menu_ready == 1 &&
+                    host_view_receipt.runtime_action_ready == 0 &&
+                    host_view_receipt.first_hud_frame_ready == 0,
+                "DM2 boot host-view receipt lets M11 consume startup state without loose command-count gates");
     boot_snapshot.startup_menu_active = 1;
     expect_true(dm2_v1_startup_presentation_receipt(
                     1,
@@ -944,6 +971,7 @@ int main(void) {
     M11_GameViewState view;
     M11_BootProbeReceipt boot_receipt;
     DM2_V1_BootStartupFullStartReceipt full_start_receipt;
+    DM2_V1_BootStartupHostViewReceipt host_view_receipt;
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
@@ -1088,6 +1116,20 @@ int main(void) {
                         full_start_receipt.title_gdat_asset_h == 200 &&
                         full_start_receipt.full_start_real_asset_ready == 1,
                     "DM2 boot full-start receipt exposes real title asset readiness without command counts");
+        expect_true(dm2_v1_boot_startup_host_view_receipt_from_snapshot(
+                        &startup_snapshot,
+                        &host_view_receipt) &&
+                        host_view_receipt.valid &&
+                        host_view_receipt.draw_startup_menu == 1 &&
+                        host_view_receipt.title_timing_ready == 1 &&
+                        host_view_receipt.title_asset_ready == 1 &&
+                        host_view_receipt.hud_overlay_suppressed == 1 &&
+                        host_view_receipt.hud_runtime_ready == 1 &&
+                        host_view_receipt.full_start
+                                .title_gdat_asset_ready == 1 &&
+                        host_view_receipt.full_start
+                                .full_start_real_asset_ready == 1,
+                    "DM2 boot host-view receipt carries real title asset proof for M11");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,

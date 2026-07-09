@@ -246,6 +246,25 @@ typedef struct {
     int full_start_real_asset_ready;
 } DM2_V1_BootStartupFullStartReceipt;
 
+typedef struct {
+    int valid;
+    int draw_startup_menu;
+    int command_count;
+    int selected_row;
+    int title_timing_ready;
+    int title_asset_ready;
+    int title_frame;
+    int title_frame_max;
+    int title_frame_duration_ticks;
+    int title_ready;
+    int hud_overlay_suppressed;
+    int hud_runtime_ready;
+    int runtime_menu_ready;
+    int runtime_action_ready;
+    int first_hud_frame_ready;
+    DM2_V1_BootStartupFullStartReceipt full_start;
+} DM2_V1_BootStartupHostViewReceipt;
+
 enum {
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP = 32,
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP = 32,
@@ -436,6 +455,9 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
 int dm2_v1_boot_startup_full_start_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupFullStartReceipt *out_receipt);
+int dm2_v1_boot_startup_host_view_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupHostViewReceipt *out_receipt);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,
