@@ -1361,10 +1361,10 @@ static void draw_card(M12_ModernCanvas* c,
         if (boot.handled && boot.startupStepCount > 0) {
             char progress[96];
             const char* next = (hasGate && gate.handled)
-                                   ? (gate.canLaunch ? gate.boot.packagedCaptureLabel
+                                   ? (gate.canLaunch ? gate.boot.activeProofLabel
                                                      : gate.blockedDetail)
-                                   : (boot.fullStartGraphicsReady ? boot.startupPathLabel
-                                                                  : boot.nextStepLabel);
+                                   : (boot.activeProofLabel ? boot.activeProofLabel
+                                                            : boot.nextStepLabel);
             ModernTextStyle p = text_style_make(1, COLOR_TEXT_FAINT(), 0);
             snprintf(progress,
                      sizeof(progress),
