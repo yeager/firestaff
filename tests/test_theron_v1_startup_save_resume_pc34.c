@@ -1448,12 +1448,14 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootRuntimeStartupSnapshot media_snapshot;
     Theron_V1_BootRuntimeStartupSnapshot blocked_snapshot;
     Theron_V1_BootRuntimeStartupSnapshot semantic_snapshot;
+    Theron_V1_BootRuntimeStartupSnapshot semantic_level_snapshot;
     Theron_V1_BootRuntimeStartupSnapshot save_resume_snapshot;
     Theron_V1_BootStartupViewModel view_model;
     Theron_V1_BootStartupViewModel direct_view_model;
     Theron_V1_BootStartupViewModel media_view_model;
     Theron_V1_BootStartupViewModel blocked_view_model;
     Theron_V1_BootStartupViewModel semantic_view_model;
+    Theron_V1_BootStartupViewModel semantic_level_view_model;
     Theron_V1_BootStartupViewModel save_resume_view_model;
     Theron_StartupMediaStateReceipt media_receipt;
     Theron_StartupLayoutElement media_layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
@@ -2421,6 +2423,69 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(full_start_receipt.status,
                            "FORCEFIELD RUNTIME HANDOFF") == 0,
                 "boot full-start receipt hands Track02 forcefield route to runtime without fallback graphics");
+    world.current_level = 1;
+    world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][1] = 1;
+    semantic_level_snapshot = media_snapshot;
+    semantic_level_snapshot.runtime_level_source =
+        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
+    semantic_level_snapshot.runtime_track02_semantic_handoff = 1;
+    semantic_level_snapshot.runtime_fallback_visuals_blocked = 0;
+    semantic_level_snapshot.runtime_structured_route = 1;
+    semantic_level_snapshot.runtime_receipt_text_route = 0;
+    expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+                    &semantic_level_snapshot,
+                    &media_receipt,
+                    &semantic_level_view_model) &&
+                    semantic_level_view_model.runtime_level == 1 &&
+                    semantic_level_view_model.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
+                    semantic_level_view_model.runtime_track02_semantic_handoff,
+                "boot startup view model carries Track02 semantic nonzero level route");
+    expect_true(theron_v1_boot_startup_render_route_receipt_from_view_model(
+                    &semantic_level_view_model,
+                    &render_route_receipt) &&
+                    render_route_receipt.runtime_level_render_allowed &&
+                    !render_route_receipt.first_level_render_ready &&
+                    render_route_receipt.hud_ready &&
+                    render_route_receipt.hud_seed_gate ==
+                        THERON_V2_HUD_SEED_V2_READY &&
+                    render_route_receipt.runtime_readiness_ready &&
+                    render_route_receipt.title_menu_runtime_handoff_ready &&
+                    render_route_receipt.no_fallback_visuals_enforced &&
+                    !render_route_receipt.fallback_visuals_allowed &&
+                    render_route_receipt.runtime_track02_semantic_handoff &&
+                    render_route_receipt.runtime_structured_route &&
+                    !render_route_receipt.runtime_receipt_text_route,
+                "boot render route receipt covers Track02 semantic nonzero level without fallback visuals");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+                    &semantic_level_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &full_start_receipt) &&
+                    full_start_receipt.host_view_valid &&
+                    full_start_receipt.graphics_route_valid &&
+                    full_start_receipt.runtime_readiness_ready &&
+                    full_start_receipt.runtime_level_render_allowed &&
+                    full_start_receipt.runtime_level == 1 &&
+                    full_start_receipt.runtime_champion_count == 3 &&
+                    full_start_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
+                    full_start_receipt.runtime_track02_semantic_handoff &&
+                    full_start_receipt.runtime_structured_route &&
+                    !full_start_receipt.runtime_receipt_text_route &&
+                    full_start_receipt.hud_ready &&
+                    full_start_receipt.full_start_graphics_ready &&
+                    full_start_receipt.full_start_graphics_blocked &&
+                    full_start_receipt.no_fallback_visuals_enforced &&
+                    !full_start_receipt.fallback_visuals_allowed &&
+                    full_start_receipt.runtime_graphics_handoff &&
+                    full_start_receipt.track02_runtime_graphics_handoff &&
+                    media_graphics_counters.fill_count == 0 &&
+                    strcmp(full_start_receipt.status,
+                           "FORCEFIELD RUNTIME HANDOFF") == 0,
+                "boot full-start receipt exposes Track02 semantic nonzero level no-fallback proof");
+    world.current_level = 0;
     save_resume_snapshot = media_snapshot;
     save_resume_snapshot.runtime_level_source =
         THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME;

@@ -1880,7 +1880,7 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     hud_seed_gate = theron_v2_hud_seed_from_v1_world(
         &hud_overlay,
         view_model->world,
-        out_receipt->first_level_render_ready);
+        out_receipt->runtime_level_render_allowed);
     out_receipt->hud_seed_gate = (int)hud_seed_gate;
     out_receipt->hud_ready =
         hud_seed_gate == THERON_V2_HUD_SEED_V2_READY ? 1 : 0;
@@ -2914,6 +2914,24 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
             out_receipt->host_view.no_fallback_visuals_enforced;
         out_receipt->fallback_visuals_allowed =
             out_receipt->host_view.fallback_visuals_allowed;
+        out_receipt->runtime_readiness_ready =
+            out_receipt->host_view.runtime_readiness_ready;
+        out_receipt->runtime_level_render_allowed =
+            out_receipt->host_view.runtime_level_render_allowed;
+        out_receipt->runtime_level = view_model->runtime_level;
+        out_receipt->runtime_champion_count =
+            view_model->runtime_champion_count;
+        out_receipt->runtime_level_source =
+            out_receipt->host_view.runtime_level_source;
+        out_receipt->runtime_track02_semantic_handoff =
+            out_receipt->host_view.runtime_track02_semantic_handoff;
+        out_receipt->runtime_fallback_visuals_blocked =
+            out_receipt->host_view.runtime_fallback_visuals_blocked;
+        out_receipt->runtime_structured_route =
+            out_receipt->host_view.runtime_structured_route;
+        out_receipt->runtime_receipt_text_route =
+            out_receipt->host_view.runtime_receipt_text_route;
+        out_receipt->hud_ready = out_receipt->host_view.hud_ready;
         out_receipt->runtime_graphics_handoff =
             out_receipt->host_view.runtime_graphics_handoff;
         out_receipt->track02_runtime_graphics_handoff =
