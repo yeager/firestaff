@@ -41,7 +41,8 @@ enum {
     DM1_D3L2_DOOR_PASS1_ORDER = 0x0218, /* ReDMCSB DEFS.H:2669; DUNVIEW.C:6271 */
     DM1_D3R2_DOOR_PASS1_ORDER = 0x0128, /* ReDMCSB DEFS.H:2668; DUNVIEW.C:6338 */
     DM1_D3L2_DOOR_PASS2_ORDER = 0x0349, /* ReDMCSB DEFS.H:2672; DUNVIEW.C:6273 */
-    DM1_D3R2_DOOR_PASS2_ORDER = 0x0439  /* ReDMCSB DEFS.H:2675; DUNVIEW.C:6340 */
+    DM1_D3R2_DOOR_PASS2_ORDER = 0x0439, /* ReDMCSB DEFS.H:2675; DUNVIEW.C:6340 */
+    DM1_ALCOVE_CELL_ORDER = 0x0000      /* ReDMCSB DUNVIEW.C:6259/6326 */
 };
 
 static const char s_source_evidence[] =
@@ -595,6 +596,51 @@ int dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
         return 1;
     }
 
+    return 1;
+}
+
+int dm1_v1_viewport_d3l2_d3r2_wall_route_receipt_pc34(
+    const DM1_V1_D3L2D3R2F0115ThingPassPc34 *fixture,
+    int front_wall_ornament_is_alcove,
+    DM1_V1_D3L2D3R2WallRouteReceiptPc34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->valid = 1;
+    out_receipt->input_valid = fixture ? 1 : 0;
+    out_receipt->side = fixture ? fixture->side : 0;
+    out_receipt->wall_zone = fixture ? fixture->wall_zone : -1;
+    out_receipt->front_wall_ornament_is_alcove =
+        front_wall_ornament_is_alcove ? 1 : 0;
+    out_receipt->returns_before_f0115 = 1;
+    out_receipt->suppress_thing_layer = 1;
+    out_receipt->suppress_projectile_layer = 1;
+    out_receipt->clears_stale_mirror_payload = 1;
+    out_receipt->source_anchor =
+        "ReDMCSB DUNVIEW.C:6253-6264 F0676 wall route; "
+        "6320-6331 F0677 wall route";
+    if (!fixture) {
+        return 1;
+    }
+
+    /* ReDMCSB: DUNVIEW.C lines 6253-6264 and 6320-6331 draw the D3 side
+     * wall, test side/front wall ornaments through F0107, and return before
+     * F0115 unless the front ornament is an alcove. Keep that wall/alcove
+     * choice in a DM1 receipt so HoC mirror payloads cannot be reused by the
+     * thing/projectile layer when a plain wall blocks the side route. */
+    out_receipt->draws_wall_bitmap = 1;
+    out_receipt->calls_side_wall_ornament = 1;
+    out_receipt->calls_front_wall_ornament = 1;
+    out_receipt->consumes_wall_route = 1;
+    if (front_wall_ornament_is_alcove) {
+        out_receipt->returns_before_f0115 = 0;
+        out_receipt->calls_f0115_for_alcove = 1;
+        out_receipt->alcove_cell_order = DM1_ALCOVE_CELL_ORDER;
+        out_receipt->suppress_thing_layer = 0;
+        out_receipt->suppress_projectile_layer = 0;
+    }
     return 1;
 }
 
