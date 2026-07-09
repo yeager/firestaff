@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 mirror-candidate inventory-exit ownership names: panel redraw after inventory exit and auto mirror-candidate inventory-exit HUD restore APIs now expose DM1-owned type/function names; old names remain aliases. Verification: panel redraw 171/171, HUD restore 281/281, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 mirror-candidate C045/rotation ownership names: C045 food/water close, C045 close-after-non-candidate transition, click-cancel-with-rotation, and scroll-pickup party-rotation APIs now expose DM1-owned type/function names; old names remain aliases. Verification: C045 close 153/153, C045 transition 445/445, click-cancel rotation 152/152, scroll-pickup rotation 124/124, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 mirror-candidate C045/save-load ownership names: C045 dead-owner guard, C045 food/water cross-rotation, C040 resurrect rotation save/load, and reopen-after-save-load APIs now expose DM1-owned type/function names; old names remain aliases. Verification: C045 dead-owner 222/222, C045 cross-rotation 159/159, C040 save/load 83/83, reopen-after-save-load 110/110, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

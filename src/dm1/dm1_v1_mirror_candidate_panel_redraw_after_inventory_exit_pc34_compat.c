@@ -99,7 +99,7 @@ static const char s_source_evidence[] =
     "drop, save/load, teleporter, party-rotate, leader-rotation, "
     "portrait redraw, or F0354 box-variants gates.";
 
-static const Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34
+static const DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34
     s_evidence = {
         "PANEL.C F0334_INVENTORY_CloseChest (CHEST.C F0334) is the only "
         "close call F0355 issues on the close path",
@@ -138,14 +138,14 @@ static const Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34
         "on the close path, and the F0347->F0346 reroute on reopen"
     };
 
-const Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34 *
-dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_evidence_pc34(void)
+const DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34 *
+DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_EvidencePc34(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_source_evidence_pc34(
+DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_SourceEvidencePc34(
     void)
 {
     return s_source_evidence;
@@ -163,7 +163,7 @@ static uint32_t hash_step(uint32_t hash, unsigned int value)
 }
 
 static void mark_disjoint(
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitDisjointPc34 *d)
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitDisjointPc34 *d)
 {
     if (!d) {
         return;
@@ -250,7 +250,7 @@ static int in_range(int value, int low, int high)
 }
 
 static uint32_t compute_c030_chain_hash(
-    const Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
+    const DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
 {
     uint32_t hash;
     int i;
@@ -270,7 +270,7 @@ static uint32_t compute_c030_chain_hash(
 }
 
 static uint32_t compute_candidate_chain_hash(
-    const Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
+    const DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
 {
     uint32_t hash;
 
@@ -291,7 +291,7 @@ static uint32_t compute_candidate_chain_hash(
 }
 
 static uint32_t compute_chest_list_hash(
-    const Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
+    const DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
 {
     uint32_t hash;
     int i;
@@ -308,7 +308,7 @@ static uint32_t compute_chest_list_hash(
 }
 
 static uint32_t compute_panel_hash(
-    const Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
+    const DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
 {
     uint32_t hash;
 
@@ -327,8 +327,8 @@ static uint32_t compute_panel_hash(
     return hash;
 }
 
-void dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_init_pc34(
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *state)
+void DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_InitPc34(
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *state)
 {
     int i;
 
@@ -403,7 +403,7 @@ void dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_init_pc34(
 }
 
 static int run_exit_step(
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
 {
     if (!s) {
         return 0;
@@ -494,7 +494,7 @@ static int run_exit_step(
 }
 
 static int run_reopen_step(
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
 {
     if (!s) {
         return 0;
@@ -555,7 +555,7 @@ static int run_reopen_step(
 }
 
 static int run_post_step(
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *s)
 {
     if (!s) {
         return 0;
@@ -593,12 +593,12 @@ static int run_post_step(
     return 1;
 }
 
-int dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_run_pc34(
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *state,
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitResultPc34 *result)
+int DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_RunPc34(
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *state,
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitResultPc34 *result)
 {
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 live;
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 post;
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 live;
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 post;
     uint32_t liveC030ChainHash;
     uint32_t liveCandidateChainHash;
     uint32_t liveChestListHash;

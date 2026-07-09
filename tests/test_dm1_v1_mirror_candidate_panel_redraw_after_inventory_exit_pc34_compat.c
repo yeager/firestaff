@@ -81,10 +81,10 @@ static int g_failures = 0;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34 *e =
-        dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_evidence_pc34();
+    const DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34 *e =
+        DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_EvidencePc34();
     const char *source =
-        dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_source_evidence_pc34();
+        DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_SourceEvidencePc34();
 
     CHECK("evidence_not_null", e != NULL ? 1 : 0, 1,
           "metadata accessor returns non-NULL");
@@ -151,10 +151,10 @@ static void test_source_lock_metadata(void)
 
 static void test_initial_state(void)
 {
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 state;
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 state;
 
     memset(&state, 0, sizeof(state));
-    dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_init_pc34(&state);
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_InitPc34(&state);
 
     CHECK("init.party_champion_count", state.partyChampionCount, 4,
           "DEFS.H party champion count");
@@ -222,16 +222,16 @@ static void test_initial_state(void)
 
 static void test_close_inventory_with_c040_live(void)
 {
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 state;
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitResultPc34 result;
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 state;
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitResultPc34 result;
     int i;
 
     memset(&state, 0, sizeof(state));
     memset(&result, 0, sizeof(result));
-    dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_init_pc34(&state);
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_InitPc34(&state);
 
     CHECK("run.accepted",
-          dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_run_pc34(
+          DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_RunPc34(
               &state, &result),
           1, "close+reopen accepted");
     CHECK("run.reached_exit", result.reachedExit, 1,
@@ -570,12 +570,12 @@ static void test_close_inventory_with_c040_live(void)
 
 static void test_close_with_no_candidate_rejected(void)
 {
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 state;
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitResultPc34 result;
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 state;
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitResultPc34 result;
 
     memset(&state, 0, sizeof(state));
     memset(&result, 0, sizeof(result));
-    dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_init_pc34(&state);
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_InitPc34(&state);
 
     /* Drop the candidate. The gate's source requires G0299 to be
      * non-zero; with G0299 == 0 the run is rejected because the lane
@@ -591,7 +591,7 @@ static void test_close_with_no_candidate_rejected(void)
     state.mouthRouteCommand = 0;
 
     CHECK("no_candidate.rejected",
-          dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_run_pc34(
+          DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_RunPc34(
               &state, &result),
           0, "no-candidate path is rejected by the gate");
 }
