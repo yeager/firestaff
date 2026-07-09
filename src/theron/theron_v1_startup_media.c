@@ -103,6 +103,7 @@ static void theron_v1_startup_media_record_bitmap_route(
     Theron_StartupMedia *media,
     const Theron_Track02StartupBitmapSample *sample) {
     int *ready = NULL;
+    int *sample_count = NULL;
     size_t *nonzero = NULL;
     uint32_t *checksum = NULL;
 
@@ -112,21 +113,25 @@ static void theron_v1_startup_media_record_bitmap_route(
     switch (sample->route_bit) {
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE:
         ready = &media->startup_bitmap_title_route_ready;
+        sample_count = &media->startup_bitmap_title_sample_count;
         nonzero = &media->startup_bitmap_title_nonzero_pixel_count;
         checksum = &media->startup_bitmap_title_checksum;
         break;
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE:
         ready = &media->startup_bitmap_stage_route_ready;
+        sample_count = &media->startup_bitmap_stage_sample_count;
         nonzero = &media->startup_bitmap_stage_nonzero_pixel_count;
         checksum = &media->startup_bitmap_stage_checksum;
         break;
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM:
         ready = &media->startup_bitmap_soul_room_route_ready;
+        sample_count = &media->startup_bitmap_soul_room_sample_count;
         nonzero = &media->startup_bitmap_soul_room_nonzero_pixel_count;
         checksum = &media->startup_bitmap_soul_room_checksum;
         break;
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD:
         ready = &media->startup_bitmap_forcefield_route_ready;
+        sample_count = &media->startup_bitmap_forcefield_sample_count;
         nonzero = &media->startup_bitmap_forcefield_nonzero_pixel_count;
         checksum = &media->startup_bitmap_forcefield_checksum;
         break;
@@ -135,6 +140,7 @@ static void theron_v1_startup_media_record_bitmap_route(
     }
 
     *ready = 1;
+    ++(*sample_count);
     *nonzero += sample->nonzero_pixel_count;
     *checksum ^= sample->checksum;
 }
@@ -250,6 +256,14 @@ void theron_v1_startup_media_capture_track02_state_receipt(
         media.startup_bitmap_soul_room_route_ready;
     out_receipt->startup_bitmap_forcefield_route_ready =
         media.startup_bitmap_forcefield_route_ready;
+    out_receipt->startup_bitmap_title_sample_count =
+        media.startup_bitmap_title_sample_count;
+    out_receipt->startup_bitmap_stage_sample_count =
+        media.startup_bitmap_stage_sample_count;
+    out_receipt->startup_bitmap_soul_room_sample_count =
+        media.startup_bitmap_soul_room_sample_count;
+    out_receipt->startup_bitmap_forcefield_sample_count =
+        media.startup_bitmap_forcefield_sample_count;
     out_receipt->startup_bitmap_title_nonzero_pixel_count =
         media.startup_bitmap_title_nonzero_pixel_count;
     out_receipt->startup_bitmap_stage_nonzero_pixel_count =
@@ -309,7 +323,7 @@ int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
     }
     if (!receipt->startup_media_ready ||
         receipt->startup_bitmap_decode_status != THERON_TRACK02_SIGNAL_OK ||
-        receipt->startup_bitmap_sample_count < 4 ||
+        receipt->startup_bitmap_sample_count < 6 ||
         (receipt->startup_bitmap_route_mask & required_mask) !=
             required_mask ||
         receipt->startup_bitmap_nonzero_pixel_count == 0u ||
@@ -321,6 +335,10 @@ int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
            receipt->startup_bitmap_stage_route_ready &&
            receipt->startup_bitmap_soul_room_route_ready &&
            receipt->startup_bitmap_forcefield_route_ready &&
+           receipt->startup_bitmap_title_sample_count >= 2 &&
+           receipt->startup_bitmap_stage_sample_count >= 2 &&
+           receipt->startup_bitmap_soul_room_sample_count >= 1 &&
+           receipt->startup_bitmap_forcefield_sample_count >= 1 &&
            receipt->startup_bitmap_title_nonzero_pixel_count > 0u &&
            receipt->startup_bitmap_stage_nonzero_pixel_count > 0u &&
            receipt->startup_bitmap_soul_room_nonzero_pixel_count > 0u &&
