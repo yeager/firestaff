@@ -45,7 +45,7 @@
 static bool input_is_bash(const DM1_V1_DoorBashStaminaFeedbackChainInputPc34 *input)
 {
     return input &&
-           M11_GameView_DoorBashStaminaActionIsBashPc34(input->action_ordinal);
+           DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(input->action_ordinal);
 }
 
 static bool is_closed_door_target(const DM1_V1_DoorBashStaminaFeedbackChainInputPc34 *input)
@@ -107,7 +107,7 @@ static DM1_V1_DoorBashStaminaFeedbackChainOutcomePc34 map_outcome(
     }
 }
 
-bool M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(
+bool DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(
     const DM1_V1_DoorBashStaminaFeedbackChainInputPc34 *input,
     DM1_V1_DoorBashStaminaFeedbackChainResultPc34 *out)
 {
@@ -147,7 +147,7 @@ bool M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(
      * Step 1: run the stamina half first so we know the F0306-adjusted
      * strength and the F0026-clipped arg to F0232.
      */
-    stamina_ok = M11_GameView_DoorBashStaminaResolvePc34(&stamina_in,
+    stamina_ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(&stamina_in,
                                                         &out->stamina);
     if (!stamina_ok) {
         return false;
@@ -390,7 +390,7 @@ bool M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(
     return true;
 }
 
-const char *M11_GameView_DoorBashStaminaFeedbackChainSourceLockPc34(void)
+const char *DM1_V1_DoorBashStaminaFeedbackChain_SourceLockPc34Compat(void)
 {
     return
         "DM1 V1 door-bash stamina-feedback chained contract (source-locked to "

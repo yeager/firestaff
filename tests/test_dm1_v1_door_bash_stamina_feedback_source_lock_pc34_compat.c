@@ -142,38 +142,38 @@ static void test_action_ordinal_set(void)
     /* MENU.C:1311-1316 bash group is { C030 BASH, C018 HACK,
      * C019 BERZERK, C007 KICK, C013 SWING, C002 CHOP }. */
     expect_bool("action.c030_bash",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x30), true,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x30), true,
                 "MENU.C:1311 C030 BASH");
     expect_bool("action.c018_hack",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x18), true,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x18), true,
                 "MENU.C:1312 C018 HACK");
     expect_bool("action.c019_berzerk",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x13), true,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x13), true,
                 "MENU.C:1313 C019 BERZRK");
     expect_bool("action.c007_kick",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x07), true,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x07), true,
                 "MENU.C:1314 C007 KICK");
     expect_bool("action.c013_swing",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x0D), true,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x0D), true,
                 "MENU.C:1315 C013 SWING");
     expect_bool("action.c002_chop",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x02), true,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x02), true,
                 "MENU.C:1316 C002 CHOP");
     /* Non-bash melee and spell actions must be rejected. */
     expect_bool("action.c024_disrupt_rejected",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x18 + 0x0C), false,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x18 + 0x0C), false,
                 "MENU.C:1319 C024 ACTION_DISRUPT");
     expect_bool("action.c016_jab_rejected",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x10), false,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x10), false,
                 "MENU.C:1320 C016 JAB");
     expect_bool("action.c020_fireball_rejected",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x14), false,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x14), false,
                 "MENU.C:1322 C020 FIREBALL");
     expect_bool("action.zero_rejected",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0x00), false,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0x00), false,
                 "MENU.C:292-293 N action (index 0)");
     expect_bool("action.ff_rejected",
-                M11_GameView_DoorBashStaminaActionIsBashPc34(0xFF), false,
+                DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(0xFF), false,
                 "Out-of-range ordinal");
 }
 
@@ -185,36 +185,36 @@ static void test_action_stamina_table_costs(void)
     uint8_t rbit = 0;
     bool ok;
 
-    ok = M11_GameView_DoorBashStaminaActionCostPc34(0x30, &cost, &rbit);
+    ok = DM1_V1_DoorBashStamina_ActionCostPc34Compat(0x30, &cost, &rbit);
     expect_bool("cost.c030_bash.lookup", ok, true,
                 "MENU.C:1272 G0494[30] C030 BASH");
     expect_u8("cost.c030_bash", cost, 9, "MENU.C:322 BASH=9");
-    ok = M11_GameView_DoorBashStaminaActionCostPc34(0x18, &cost, &rbit);
+    ok = DM1_V1_DoorBashStamina_ActionCostPc34Compat(0x18, &cost, &rbit);
     expect_bool("cost.c018_hack.lookup", ok, true,
                 "MENU.C:1272 G0494[24] C018 HACK");
     expect_u8("cost.c018_hack", cost, 6, "MENU.C:312 HACK=6");
-    ok = M11_GameView_DoorBashStaminaActionCostPc34(0x13, &cost, &rbit);
+    ok = DM1_V1_DoorBashStamina_ActionCostPc34Compat(0x13, &cost, &rbit);
     expect_bool("cost.c019_berzerk.lookup", ok, true,
                 "MENU.C:1272 G0494[19] C019 BERZERK");
     expect_u8("cost.c019_berzerk", cost, 40, "MENU.C:313 BERZERK=40");
-    ok = M11_GameView_DoorBashStaminaActionCostPc34(0x07, &cost, &rbit);
+    ok = DM1_V1_DoorBashStamina_ActionCostPc34Compat(0x07, &cost, &rbit);
     expect_bool("cost.c007_kick.lookup", ok, true,
                 "MENU.C:1272 G0494[7] C007 KICK");
     expect_u8("cost.c007_kick", cost, 3, "MENU.C:301 KICK=3");
-    ok = M11_GameView_DoorBashStaminaActionCostPc34(0x0D, &cost, &rbit);
+    ok = DM1_V1_DoorBashStamina_ActionCostPc34Compat(0x0D, &cost, &rbit);
     expect_bool("cost.c013_swing.lookup", ok, true,
                 "MENU.C:1272 G0494[13] C013 SWING");
     expect_u8("cost.c013_swing", cost, 2, "MENU.C:307 SWING=2");
-    ok = M11_GameView_DoorBashStaminaActionCostPc34(0x02, &cost, &rbit);
+    ok = DM1_V1_DoorBashStamina_ActionCostPc34Compat(0x02, &cost, &rbit);
     expect_bool("cost.c002_chop.lookup", ok, true,
                 "MENU.C:1272 G0494[2] C002 CHOP");
     expect_u8("cost.c002_chop", cost, 10, "MENU.C:295 CHOP=10");
 
     /* Non-bash ordinals return false. */
-    ok = M11_GameView_DoorBashStaminaActionCostPc34(0x14, &cost, &rbit);
+    ok = DM1_V1_DoorBashStamina_ActionCostPc34Compat(0x14, &cost, &rbit);
     expect_bool("cost.c020_fireball.lookup_rejected", ok, false,
                 "MENU.C:1272 + G0494[20] C020 FIREBALL is not a bash");
-    ok = M11_GameView_DoorBashStaminaActionCostPc34(0xFF, &cost, &rbit);
+    ok = DM1_V1_DoorBashStamina_ActionCostPc34Compat(0xFF, &cost, &rbit);
     expect_bool("cost.ff.lookup_rejected", ok, false,
                 "Out-of-range ordinal");
 }
@@ -225,15 +225,15 @@ static void test_f0306_stamina_above_half(void)
      * F0306 result equals the input. */
     int16_t v;
 
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(100, 100, 80);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(100, 100, 80);
     expect_int("f0306.full_stamina.unchanged", v, 80,
                "CHAMPION.C:1100 current=100 halfMax=50 unchanged");
 
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(50, 100, 80);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(50, 100, 80);
     expect_int("f0306.exact_half.unchanged", v, 80,
                "CHAMPION.C:1094 boundary current=halfMax, unchanged");
 
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(99, 100, 100);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(99, 100, 100);
     expect_int("f0306.99_of_100.unchanged", v, 100,
                "CHAMPION.C:1100 just below max, unchanged");
 }
@@ -246,25 +246,25 @@ static void test_f0306_stamina_below_half(void)
 
     /* current = 25 of 100, base = 100, halfMax = 50
      * val/2 = 50, val/2 * 25 = 1250, / 50 = 25, + 50 = 75 */
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(25, 100, 100);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(25, 100, 100);
     expect_int("f0306.quarter_stamina.100", v, 75,
                "CHAMPION.C:1095 val=100 current=25 halfMax=50");
 
     /* current = 0 of 100, base = 100, halfMax = 50
      * val/2 = 50, val/2 * 0 = 0, / 50 = 0, + 50 = 50 */
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(0, 100, 100);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(0, 100, 100);
     expect_int("f0306.zero_stamina.100", v, 50,
                "CHAMPION.C:1095 val=100 current=0 halfMax=50");
 
     /* current = 1 of 100, base = 80, halfMax = 50
      * val/2 = 40, val/2 * 1 = 40, / 50 = 0, + 40 = 40 */
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(1, 100, 80);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(1, 100, 80);
     expect_int("f0306.1_stamina.80", v, 40,
                "CHAMPION.C:1095 val=80 current=1 halfMax=50");
 
     /* current = 25 of 100, base = 40, halfMax = 50
      * val/2 = 20, val/2 * 25 = 500, / 50 = 10, + 20 = 30 */
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(25, 100, 40);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(25, 100, 40);
     expect_int("f0306.quarter_stamina.40", v, 30,
                "CHAMPION.C:1095 val=40 current=25 halfMax=50");
 }
@@ -275,19 +275,19 @@ static void test_f0306_zero_and_negative_inputs(void)
      * maximum_stamina <= 0 returns the input unchanged. */
     int16_t v;
 
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(100, 100, 0);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(100, 100, 0);
     expect_int("f0306.base_zero_returns_zero", v, 0,
                "CHAMPION.C base_value=0 returns 0");
 
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(100, 100, -5);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(100, 100, -5);
     expect_int("f0306.base_negative_returns_zero", v, 0,
                "CHAMPION.C base_value<0 returns 0");
 
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(100, 0, 80);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(100, 0, 80);
     expect_int("f0306.max_zero_returns_unchanged", v, 80,
                "CHAMPION.C maximum_stamina<=0 returns val");
 
-    v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(100, 1, 80);
+    v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(100, 1, 80);
     expect_int("f0306.halfmax_one_returns_unchanged", v, 80,
                "CHAMPION.C halfMax<=0 returns val");
 }
@@ -308,7 +308,7 @@ static void test_f0325_decrement_below_current(void)
     in.random_bit = 0;        /* M005_RANDOM(2) */
     in.base_strength = 80;
 
-    ok = M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
     expect_bool("dec.below.resolve", ok, true,
                 "MENU.C:1272 + CHAMPION.C:2025 resolve");
     expect_u8("dec.below.table_cost", out.action_stamina_table_cost, 9,
@@ -357,7 +357,7 @@ static void test_f0325_decrement_exact(void)
     in.random_bit = 0;
     in.base_strength = 80;
 
-    ok = M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
     expect_bool("dec.exact.resolve", ok, true,
                 "MENU.C:1272 + CHAMPION.C:2025 resolve");
     expect_int("dec.exact.total", out.action_stamina_total, 9,
@@ -387,7 +387,7 @@ static void test_f0325_decrement_overflow(void)
     in.random_bit = 1;
     in.base_strength = 80;
 
-    ok = M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
     expect_bool("dec.overflow.resolve", ok, true,
                 "MENU.C:1272 + CHAMPION.C:2025 resolve");
     expect_int("dec.overflow.total", out.action_stamina_total, 10,
@@ -424,7 +424,7 @@ static void test_f0325_berzerk_large_overflow(void)
     in.random_bit = 1;
     in.base_strength = 80;
 
-    ok = M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
     expect_bool("dec.berzerk.resolve", ok, true,
                 "MENU.C:1272 + CHAMPION.C:2025 resolve");
     expect_int("dec.berzerk.total", out.action_stamina_total, 41,
@@ -456,7 +456,7 @@ static void test_f0325_f0306_strength_collapse(void)
     in.random_bit = 0;
     in.base_strength = 50;
 
-    ok = M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
     expect_bool("collapse.resolve", ok, true,
                 "MENU.C:1272 + CHAMPION.C:2025 resolve");
     /* (50/2) + (25 * 25) / 50 = 25 + 12 = 37 */
@@ -505,7 +505,7 @@ static void test_f0325_melee_cap_unchanged_at_full_stamina(void)
     in.random_bit = 0;
     in.base_strength = 250;
 
-    ok = M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
     expect_bool("cap.full.resolve", ok, true,
                 "MENU.C:1272 + CHAMPION.C:2025 resolve");
     expect_int("cap.full.f0306", out.strength_after_stamina, 250,
@@ -534,7 +534,7 @@ static void test_non_bash_action_short_circuits(void)
     in.random_bit = 1;
     in.base_strength = 80;
 
-    ok = M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
     expect_bool("nonbash.resolve", ok, true,
                 "MENU.C:1272 + CHAMPION.C:2025 resolve");
     expect_int("nonbash.outcome", (int)out.outcome,
@@ -551,7 +551,7 @@ static void test_non_bash_action_short_circuits(void)
     expect_int("nonbash.after", out.current_stamina_after, 0,
                "CHAMPION.C:2040 not mutated, stays at 0 from memset");
     expect_int("nonbash.f0306_still_computed", out.strength_after_stamina,
-               M11_GameView_DoorBashStaminaAdjustedStrengthPc34(50, 100, 80),
+               DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(50, 100, 80),
                "CHAMPION.C:1095 F0306 still runs as a passive read");
 }
 
@@ -563,10 +563,10 @@ static void test_null_inputs_rejected(void)
     bool ok;
 
     memset(&out, 0, sizeof(out));
-    ok = M11_GameView_DoorBashStaminaResolvePc34(NULL, &out);
+    ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(NULL, &out);
     expect_bool("null.input_rejected", ok, false,
                 "CHAMPION.C:2036 NULL input rejected");
-    ok = M11_GameView_DoorBashStaminaResolvePc34(
+    ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(
         (const DM1_V1_DoorBashStaminaInputPc34 *)0x100, NULL);
     expect_bool("null.output_rejected", ok, false,
                 "CHAMPION.C:2036 NULL output rejected");
@@ -604,7 +604,7 @@ static void test_per_action_stamina_table(void)
         in.random_bit = 0;
         in.base_strength = 80;
 
-        ok = M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+        ok = DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
         expect_bool("per_action.resolve", ok, true, rows[i].name);
         expect_u8("per_action.cost", out.action_stamina_table_cost,
                   rows[i].cost, rows[i].name);
@@ -632,7 +632,7 @@ static void test_deterministic_hash_stable(void)
     for (i = 0; i < 8; ++i) {
         int j;
         for (j = 0; j < 4; ++j) {
-            v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(
+            v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(
                 currents[i], 100, bases[j]);
             hash1 = fnv1a_i16(hash1, v);
         }
@@ -652,7 +652,7 @@ static void test_deterministic_hash_stable(void)
                 in.action_ordinal = actions[i];
                 in.random_bit = rbits[k];
                 memset(&out, 0, sizeof(out));
-                (void)M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+                (void)DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
                 hash1 = fnv1a_u8(hash1, out.action_stamina_table_cost);
                 hash1 = fnv1a_u8(hash1, out.action_stamina_random_bit);
                 hash1 = fnv1a_i16(hash1, out.action_stamina_total);
@@ -671,7 +671,7 @@ static void test_deterministic_hash_stable(void)
     for (i = 0; i < 8; ++i) {
         int j;
         for (j = 0; j < 4; ++j) {
-            v = M11_GameView_DoorBashStaminaAdjustedStrengthPc34(
+            v = DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(
                 currents[i], 100, bases[j]);
             hash2 = fnv1a_i16(hash2, v);
         }
@@ -689,7 +689,7 @@ static void test_deterministic_hash_stable(void)
                 in.action_ordinal = actions[i];
                 in.random_bit = rbits[k];
                 memset(&out, 0, sizeof(out));
-                (void)M11_GameView_DoorBashStaminaResolvePc34(&in, &out);
+                (void)DM1_V1_DoorBashStamina_ResolvePc34Compat(&in, &out);
                 hash2 = fnv1a_u8(hash2, out.action_stamina_table_cost);
                 hash2 = fnv1a_u8(hash2, out.action_stamina_random_bit);
                 hash2 = fnv1a_i16(hash2, out.action_stamina_total);
@@ -714,7 +714,7 @@ static void test_deterministic_hash_stable(void)
 static void test_source_evidence_mentions_required_anchors(void)
 {
     /* ReDMCSB source-anchor mentions. */
-    const char *evidence = M11_GameView_DoorBashStaminaSourceLockPc34();
+    const char *evidence = DM1_V1_DoorBashStamina_SourceLockPc34Compat();
 
     expect_contains("evidence.m1272", evidence, "MENU.C:1272-1273",
                     "MENU.C:1272-1273 L1253_i_ActionStamina anchor");

@@ -128,7 +128,7 @@ static void reject_with(
 }
 
 dm1_v1_champion_panel_action_hand_slot_priority_input_t
-M11_GameView_ChampionPanelActionHandSlotPriority_DefaultInput(void)
+DM1_V1_ChampionPanelActionHandSlotPriority_DefaultInputPc34Compat(void)
 {
     dm1_v1_champion_panel_action_hand_slot_priority_input_t input;
     int index;
@@ -156,7 +156,7 @@ M11_GameView_ChampionPanelActionHandSlotPriority_DefaultInput(void)
 }
 
 dm1_v1_champion_panel_action_hand_slot_priority_result_t
-M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(
+DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(
     const dm1_v1_champion_panel_action_hand_slot_priority_input_t *input)
 {
     dm1_v1_champion_panel_action_hand_slot_priority_result_t result;
@@ -184,7 +184,7 @@ M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(
     }
 
     if (!input) {
-        local_input = M11_GameView_ChampionPanelActionHandSlotPriority_DefaultInput();
+        local_input = DM1_V1_ChampionPanelActionHandSlotPriority_DefaultInputPc34Compat();
         input = &local_input;
         result.null_input_defaults_used = true;
     }
@@ -367,12 +367,12 @@ M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(
 }
 
 const dm1_v1_champion_panel_action_hand_slot_priority_evidence_t *
-M11_GameView_ChampionPanelActionHandSlotPriority_Evidence(void)
+DM1_V1_ChampionPanelActionHandSlotPriority_EvidencePc34Compat(void)
 {
     return &s_evidence;
 }
 
-const char *M11_GameView_ChampionPanelActionHandSlotPriority_SourceEvidence(void)
+const char *DM1_V1_ChampionPanelActionHandSlotPriority_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }

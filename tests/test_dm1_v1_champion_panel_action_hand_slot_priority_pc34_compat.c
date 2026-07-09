@@ -78,7 +78,7 @@ static void allow_thing(
 static dm1_v1_champion_panel_action_hand_slot_priority_input_t base_input(void)
 {
     dm1_v1_champion_panel_action_hand_slot_priority_input_t input =
-        M11_GameView_ChampionPanelActionHandSlotPriority_DefaultInput();
+        DM1_V1_ChampionPanelActionHandSlotPriority_DefaultInputPc34Compat();
     input.slot_box_index =
         DM1_V1_CHAMPION_PANEL_ACTION_HAND_SLOT_PRIORITY_C08_INVENTORY_FIRST_PC34 + 1u;
     input.inventory_champion_ordinal = 1;
@@ -95,11 +95,11 @@ static dm1_v1_champion_panel_action_hand_slot_priority_input_t base_input(void)
 static void test_evidence_and_invariants(void)
 {
     const dm1_v1_champion_panel_action_hand_slot_priority_evidence_t *evidence =
-        M11_GameView_ChampionPanelActionHandSlotPriority_Evidence();
+        DM1_V1_ChampionPanelActionHandSlotPriority_EvidencePc34Compat();
     dm1_v1_champion_panel_action_hand_slot_priority_result_t result =
-        M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(NULL);
+        DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(NULL);
     const char *source =
-        M11_GameView_ChampionPanelActionHandSlotPriority_SourceEvidence();
+        DM1_V1_ChampionPanelActionHandSlotPriority_SourceEvidencePc34Compat();
 
     expect_bool("invariant.contract_only", result.invariant.contract_only, true,
                 "CHAMPION.C F0302:662-714 contract-only dispatcher");
@@ -165,7 +165,7 @@ static void test_empty_hand_empty_slot_early_return(void)
         DM1_V1_CHAMPION_PANEL_ACTION_HAND_SLOT_PRIORITY_THING_NONE_PC34;
     input.slots[0][1] =
         DM1_V1_CHAMPION_PANEL_ACTION_HAND_SLOT_PRIORITY_THING_NONE_PC34;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&input);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&input);
 
     expect_bool("empty.accepted", result.accepted, false,
                 "CHAMPION.C F0302:696-698 empty hand and empty slot return");
@@ -192,7 +192,7 @@ static void test_put_leader_object_into_empty_action_slot(void)
     dm1_v1_champion_panel_action_hand_slot_priority_result_t result;
 
     input.leader_hand_thing = 0x0101u;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&input);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&input);
 
     expect_bool("put.accepted", result.accepted, true,
                 "CHAMPION.C F0302:699-713 accepted put");
@@ -242,7 +242,7 @@ static void test_swap_preserves_bug039_helper_order(void)
 
     input.leader_hand_thing = 0x0101u;
     input.slots[0][1] = 0x0202u;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&input);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&input);
 
     expect_bool("swap.accepted", result.accepted, true,
                 "CHAMPION.C F0302:702-713 accepted swap");
@@ -291,7 +291,7 @@ static void test_slot_mask_zero_rejects_leader_object(void)
 
     input.leader_hand_thing = 0x0101u;
     input.slot_masks[1] = 0x0000u;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&input);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&input);
 
     expect_bool("mask.accepted", result.accepted, false,
                 "CHAMPION.C F0302:699-701 mask reject");
@@ -316,7 +316,7 @@ static void test_status_slot_candidate_dead_inventory_guards(void)
 
     candidate.slot_box_index = 1;
     candidate.candidate_champion_ordinal = 2;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&candidate);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&candidate);
     expect_bool("candidate.status_route", result.status_slot_box_route, true,
                 "CHAMPION.C F0302:677 status route");
     expect_bool("candidate.accepted", result.accepted, false,
@@ -330,7 +330,7 @@ static void test_status_slot_candidate_dead_inventory_guards(void)
     dead.slot_box_index = 3;
     dead.inventory_champion_ordinal = 1;
     dead.current_health[1] = 0;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&dead);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&dead);
     expect_int("dead.target", result.target_champion_index, 1,
                "CHAMPION.C F0302:680 slotBoxIndex >> 1");
     expect_bool("dead.accepted", result.accepted, false,
@@ -343,7 +343,7 @@ static void test_status_slot_candidate_dead_inventory_guards(void)
 
     inventory.slot_box_index = 1;
     inventory.inventory_champion_ordinal = 1;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&inventory);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&inventory);
     expect_int("inventory.target", result.target_champion_index, 0,
                "CHAMPION.C F0302:680 slotBoxIndex >> 1");
     expect_bool("inventory.accepted", result.accepted, false,
@@ -366,7 +366,7 @@ static void test_chest_branch_uses_g0425_slots(void)
     input.leader_hand_thing = 0x0303u;
     input.chest_slots[0] =
         DM1_V1_CHAMPION_PANEL_ACTION_HAND_SLOT_PRIORITY_THING_NONE_PC34;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&input);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&input);
 
     expect_bool("chest.accepted", result.accepted, true,
                 "CHAMPION.C F0302:690-694 chest branch");
@@ -393,7 +393,7 @@ static void test_screen_update_brackets_order(void)
 
     input.leader_hand_thing = 0x0101u;
     input.slots[0][1] = 0x0202u;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&input);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&input);
 
     expect_int("bracket.enable_count", result.f0077_enable_screen_update_call_count, 1,
                "CHAMPION.C F0302:702 F0077");
@@ -425,7 +425,7 @@ static void test_follower_swap_suppresses_intermediate_target_draw(void)
     input.leader_champion_index = 0;
     input.leader_hand_thing = 0x0101u;
     input.slots[1][1] = 0x0202u;
-    result = M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(&input);
+    result = DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(&input);
 
     expect_bool("follower.accepted", result.accepted, true,
                 "CHAMPION.C F0302:677-713 follower status hand swap");

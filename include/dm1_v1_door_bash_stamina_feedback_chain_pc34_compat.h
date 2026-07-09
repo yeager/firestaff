@@ -263,11 +263,17 @@ typedef struct {
     DM1_V1_DoorBashStaminaFeedbackChainOutcomePc34 outcome;
 } DM1_V1_DoorBashStaminaFeedbackChainResultPc34;
 
-bool M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(
+bool DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(
     const DM1_V1_DoorBashStaminaFeedbackChainInputPc34 *input,
     DM1_V1_DoorBashStaminaFeedbackChainResultPc34 *out);
 
-const char *M11_GameView_DoorBashStaminaFeedbackChainSourceLockPc34(void);
+const char *DM1_V1_DoorBashStaminaFeedbackChain_SourceLockPc34Compat(void);
+
+/* Compatibility aliases for older M11 call sites. */
+#define M11_GameView_DoorBashStaminaFeedbackChainResolvePc34 \
+    DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat
+#define M11_GameView_DoorBashStaminaFeedbackChainSourceLockPc34 \
+    DM1_V1_DoorBashStaminaFeedbackChain_SourceLockPc34Compat
 
 #ifdef __cplusplus
 }

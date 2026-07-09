@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 action/inventory gate ownership names: door-bash stamina, door-bash feedback-chain, inventory hand-swap-with-chest, and champion-panel action-hand slot-priority APIs now expose DM1-owned names; old M11 names remain aliases. Verification: door-bash stamina 121/121, door-bash chain 210/210, champion-panel action-hand 106 assertions, hand-swap-with-chest 55 assertions, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 title/portrait/wall/light/text helper ownership names: title zoom state, portrait panel state, wall ornament definitions, legacy light wrappers, and legacy text wrappers now expose DM1-owned API names; old M11 names remain aliases. Verification: intro/title cleanup, light 22/22, text 96/96, wall ornament 106/106, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 presentation/runtime helper ownership names: game-over/title state, engine aggregate/tick API, menu render, field/teleporter effects, palette/font, combat-log types, and custom-dungeon loader now expose DM1-owned API names; old M11 names remain aliases. Verification: firestaff_m10/firestaff_m11 build, field teleporter 134/134, custom dungeon import, text message 96/96, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

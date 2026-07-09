@@ -184,7 +184,7 @@ static void test_closed_door_bash_chain_six_actions(void)
                                 100,
                                 /* random_bit=0 */
                                 0);
-        ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+        ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
         expect_bool("closed.resolve", ok, true,
                     "MENU.C:1311-1319 chain resolve");
         expect_bool("closed.chain_alignment_ok",
@@ -270,7 +270,7 @@ static void test_closed_door_wooden_bounce_chain(void)
                             /* strength 30 < wooden defense 42 → bounce */
                             30,
                             0);
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("bounce.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("bounce.chain_alignment_ok", out.chain_alignment_ok, true,
@@ -331,7 +331,7 @@ static void test_closed_door_iron_reject_chain(void)
                             50, 100,
                             250, /* melee cap 100 fires */
                             0);
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("iron.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("iron.chain_alignment_ok", out.chain_alignment_ok, true,
@@ -382,7 +382,7 @@ static void test_closed_door_portcullis_bounce_chain(void)
                             50, 100,
                             100, /* strength 100 < port defense 110 */
                             0);
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("port.bounce.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("port.bounce.chain_alignment_ok",
@@ -426,7 +426,7 @@ static void test_open_door_no_closed_branch_chain(void)
     /* Open door: state = 0 (C0_DOOR_STATE_OPEN). */
     in.door_state = 0;
 
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("open.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("open.chain_alignment_ok", out.chain_alignment_ok, true,
@@ -484,7 +484,7 @@ static void test_magic_attack_chain(void)
                             80, 0);
     in.magic_attack = true;
 
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("magic.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("magic.chain_alignment_ok", out.chain_alignment_ok, true,
@@ -532,7 +532,7 @@ static void test_non_bash_action_chain(void)
                             50, 100,
                             80, 0);
 
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("nonbash.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("nonbash.chain_alignment_ok", out.chain_alignment_ok, true,
@@ -581,7 +581,7 @@ static void test_non_door_target_chain(void)
     in.is_door_target = false;
     in.target_element = 0; /* C00_ELEMENT_FLOOR or similar */
 
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("nondoor.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("nondoor.chain_alignment_ok", out.chain_alignment_ok, true,
@@ -627,7 +627,7 @@ static void test_f0306_strength_collapse_chain(void)
                             25, 100,
                             50, 0);
 
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("collapse.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("collapse.chain_alignment_ok", out.chain_alignment_ok, true,
@@ -671,7 +671,7 @@ static void test_stamina_overflow_chain(void)
                             100,
                             80, 0);
 
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("overflow.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("overflow.chain_alignment_ok", out.chain_alignment_ok, true,
@@ -716,7 +716,7 @@ static void test_random_bit_chain(void)
                             50, 100,
                             80, 1 /* M005_RANDOM(2) == 1 */
     );
-    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
     expect_bool("random.resolve", ok, true,
                 "MENU.C:1311-1319 chain resolve");
     expect_bool("random.chain_alignment_ok", out.chain_alignment_ok, true,
@@ -778,7 +778,7 @@ static void test_deterministic_hash_stable(void)
                                             kDoors[k].base_strength,
                                             kRbits[j]);
                     in.is_door_target = (l == 0); /* half is_door, half not */
-                    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+                    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
                     hash1 = fnv1a_u8(hash1, ok ? 1u : 0u);
                     hash1 = fnv1a_u8(hash1, out.chain_alignment_ok ? 1u : 0u);
                     hash1 = fnv1a_u8(hash1, out.action_ordinal_match ? 1u : 0u);
@@ -821,7 +821,7 @@ static void test_deterministic_hash_stable(void)
                                             kDoors[k].base_strength,
                                             kRbits[j]);
                     in.is_door_target = (l == 0);
-                    ok = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, &out);
+                    ok = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, &out);
                     hash2 = fnv1a_u8(hash2, ok ? 1u : 0u);
                     hash2 = fnv1a_u8(hash2, out.chain_alignment_ok ? 1u : 0u);
                     hash2 = fnv1a_u8(hash2, out.action_ordinal_match ? 1u : 0u);
@@ -859,9 +859,9 @@ static void test_null_inputs_rejected(void)
 {
     DM1_V1_DoorBashStaminaFeedbackChainResultPc34 out;
     DM1_V1_DoorBashStaminaFeedbackChainInputPc34 in;
-    int rc1 = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(NULL, &out);
+    int rc1 = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(NULL, &out);
     memset(&in, 0, sizeof(in));
-    int rc2 = M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(&in, NULL);
+    int rc2 = DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(&in, NULL);
     expect_int("null.input_rejected", rc1 == 0 ? 1 : 0, 1,
                "NULL input rejected");
     expect_int("null.output_rejected", rc2 == 0 ? 1 : 0, 1,
@@ -871,7 +871,7 @@ static void test_null_inputs_rejected(void)
 static void test_source_evidence_mentions_required_anchors(void)
 {
     const char *evidence =
-        M11_GameView_DoorBashStaminaFeedbackChainSourceLockPc34();
+        DM1_V1_DoorBashStaminaFeedbackChain_SourceLockPc34Compat();
     expect_contains("evidence.m1311_1319", evidence, "MENU.C:1311-1319",
                     "MENU.C:1311-1319 closed-door bash anchor");
     expect_contains("evidence.m1618_1633", evidence, "MENU.C:1618-1633",
