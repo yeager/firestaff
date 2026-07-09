@@ -28927,6 +28927,36 @@ static int m11_spawn_csb_champion_projectile(
     return 1;
 }
 
+static const char* m11_dm1_projectile_action_verb_pc34(int verbKind)
+{
+    switch (verbKind) {
+        case DM1_ACTION_PROJECTILE_VERB_FIREBALL_PC34:
+            return "CASTS FIREBALL";
+        case DM1_ACTION_PROJECTILE_VERB_DISPELL_PC34:
+            return "CASTS DISPELL";
+        case DM1_ACTION_PROJECTILE_VERB_LIGHTNING_PC34:
+            return "CASTS LIGHTNING";
+        case DM1_ACTION_PROJECTILE_VERB_SPIT_PC34:
+            return "SPITS FIRE";
+        case DM1_ACTION_PROJECTILE_VERB_INVOKE_PC34:
+            return "INVOKES";
+        default:
+            return "";
+    }
+}
+
+static int m11_dm1_projectile_action_log_color_pc34(int verbKind)
+{
+    switch (verbKind) {
+        case DM1_ACTION_PROJECTILE_VERB_LIGHTNING_PC34:
+            return M11_COLOR_LIGHT_CYAN;
+        case DM1_ACTION_PROJECTILE_VERB_DISPELL_PC34:
+            return M11_COLOR_LIGHT_BLUE;
+        default:
+            return M11_COLOR_LIGHT_RED;
+    }
+}
+
 static int m11_perform_non_melee_action(M11_GameViewState* state,
                                         int championIndex,
                                         unsigned char chosen,
@@ -29361,35 +29391,19 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * mirror F0407's G0496 action-skill table:
              * FIREBALL/SPIT use Fire, DISPELL/LIGHTNING use Air. */
             const char* verb;
+            DM1_ActionProjectileSpellDescriptorPc34 descriptor;
             DM1_ActionProjectileSpellInputPc34 spellIn;
             DM1_ActionProjectileSpellPlanPc34 spellPlan;
-            int skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
-                                                        DM1_SKILL_IDX_WIZARD);
+            int skillLevel;
             int spawned;
-            switch (chosen) {
-                case 20:
-                    skillLevel = M11_GameView_GetSkillLevel(
-                        state, championIndex, DM1_SKILL_IDX_FIRE);
-                    verb       = "CASTS FIREBALL";
-                    break;
-                case 21:
-                    skillLevel = M11_GameView_GetSkillLevel(
-                        state, championIndex, DM1_SKILL_IDX_AIR);
-                    verb       = "CASTS DISPELL";
-                    break;
-                case 40:
-                    skillLevel = M11_GameView_GetSkillLevel(
-                        state, championIndex, DM1_SKILL_IDX_FIRE);
-                    verb       = "SPITS FIRE";
-                    break;
-                case 23:
-                default:
-                    skillLevel = M11_GameView_GetSkillLevel(
-                        state, championIndex, DM1_SKILL_IDX_AIR);
-                    verb       = "CASTS LIGHTNING";
-                    break;
+            if (!dm1_v1_action_projectile_spell_descriptor_f0407_pc34(
+                    (int)chosen, &descriptor) || !descriptor.valid) {
+                return 0;
             }
+            skillLevel = M11_GameView_GetSkillLevel(
+                state, championIndex, descriptor.actionSkillIndex);
             if (skillLevel < 0) skillLevel = 0;
+            verb = m11_dm1_projectile_action_verb_pc34(descriptor.verbKind);
             memset(&spellIn, 0, sizeof(spellIn));
             spellIn.actionIndex = chosen;
             spellIn.skillLevel = skillLevel;
@@ -29418,10 +29432,8 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             if (spellPlan.decrementsActionHandCharges) {
                 m11_decrement_action_hand_charges_f0405(state, championIndex);
             }
-            m11_log_event(state,
-                          chosen == 23 ? M11_COLOR_LIGHT_CYAN :
-                          chosen == 21 ? M11_COLOR_LIGHT_BLUE :
-                                         M11_COLOR_LIGHT_RED,
+            m11_log_event(state, m11_dm1_projectile_action_log_color_pc34(
+                              spellPlan.verbKind),
                           "T%u: %s %s",
                           (unsigned int)state->world.gameTick,
                           champName, verb);
@@ -29494,12 +29506,18 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * the INVOKE case at lines 1480-1493. */
             int roll;
             int energyRoll;
+            DM1_ActionProjectileSpellDescriptorPc34 descriptor;
             DM1_ActionProjectileSpellInputPc34 spellIn;
             DM1_ActionProjectileSpellPlanPc34 spellPlan;
-            int skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
-                                                        DM1_SKILL_IDX_WIZARD);
+            int skillLevel;
             int spawned;
             const char* subtypeName;
+            if (!dm1_v1_action_projectile_spell_descriptor_f0407_pc34(
+                    (int)chosen, &descriptor) || !descriptor.valid) {
+                return 0;
+            }
+            skillLevel = M11_GameView_GetSkillLevel(
+                state, championIndex, descriptor.actionSkillIndex);
             if (skillLevel < 0) skillLevel = 0;
             /* ReDMCSB: MENU.C F0407 lines 1480-1482 draws
              * M003_RANDOM(128)+100 before the M002_RANDOM(6) projectile
@@ -29535,15 +29553,12 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             m11_set_champion_direction_to_party_f0406(state, champ);
             champ->mana.current = (uint16_t)spellPlan.remainingMana;
             if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-                int poisonAttack = (spellPlan.subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
-                                    spellPlan.subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
-                                       ? 90
-                                       : 0;
                 spawned = m11_spawn_csb_champion_projectile(
                     state, championIndex, chosen, spellPlan.subtype,
                     spellPlan.category, spellPlan.actualKineticEnergy,
                     spellPlan.impactAttack, spellPlan.attackTypeCode,
-                    spellPlan.stepEnergy, THING_NONE, poisonAttack, 0);
+                    spellPlan.stepEnergy, THING_NONE,
+                    spellPlan.poisonAttack, 0);
             } else {
                 spawned = m11_spawn_action_projectile_ex(
                     state, championIndex, spellPlan.subtype, spellPlan.category,

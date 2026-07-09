@@ -910,10 +910,46 @@ static int f0407_projectile_base_for_action(int actionIndex,
     }
 }
 
+int dm1_v1_action_projectile_spell_descriptor_f0407_pc34(
+    int actionIndex,
+    DM1_ActionProjectileSpellDescriptorPc34* out) {
+    DM1_ActionXpRoute route;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!dm1_v1_action_xp_route(actionIndex, &route) || !route.valid) {
+        return 0;
+    }
+    out->actionSkillIndex = route.skillIndex;
+    switch (actionIndex) {
+        case DM1_ACTION_FIREBALL:
+            out->verbKind = DM1_ACTION_PROJECTILE_VERB_FIREBALL_PC34;
+            break;
+        case DM1_ACTION_DISPELL:
+            out->verbKind = DM1_ACTION_PROJECTILE_VERB_DISPELL_PC34;
+            break;
+        case DM1_ACTION_LIGHTNING:
+            out->verbKind = DM1_ACTION_PROJECTILE_VERB_LIGHTNING_PC34;
+            break;
+        case DM1_ACTION_SPIT:
+            out->verbKind = DM1_ACTION_PROJECTILE_VERB_SPIT_PC34;
+            break;
+        case DM1_ACTION_INVOKE:
+            out->verbKind = DM1_ACTION_PROJECTILE_VERB_INVOKE_PC34;
+            out->requiresInvokeRolls = 1;
+            break;
+        default:
+            return 0;
+    }
+    /* ReDMCSB: MENU.C F0407 lines 1272-1305 and 1480-1493 use the G0496
+     * action skill route before F0327 projectile creation. */
+    out->valid = 1;
+    return 1;
+}
+
 int dm1_v1_action_projectile_spell_plan_f0407_pc34(
     const DM1_ActionProjectileSpellInputPc34* in,
     DM1_ActionProjectileSpellPlanPc34* out) {
-    DM1_ActionXpRoute route;
+    DM1_ActionProjectileSpellDescriptorPc34 descriptor;
     int subtype;
     int attackType;
     int kinetic;
@@ -926,6 +962,7 @@ int dm1_v1_action_projectile_spell_plan_f0407_pc34(
     if (!in || !out) return 0;
     out->valid = 0;
     out->actionSkillIndex = 0;
+    out->verbKind = DM1_ACTION_PROJECTILE_VERB_NONE_PC34;
     out->subtype = 0;
     out->category = PROJECTILE_CATEGORY_MAGICAL;
     out->attackTypeCode = 0;
@@ -937,8 +974,10 @@ int dm1_v1_action_projectile_spell_plan_f0407_pc34(
     out->stepEnergy = 1;
     out->impactAttack = 90;
     out->launcherStrength = 90;
+    out->poisonAttack = 0;
     out->decrementsActionHandCharges = 0;
-    if (!dm1_v1_action_xp_route(in->actionIndex, &route) || !route.valid) {
+    if (!dm1_v1_action_projectile_spell_descriptor_f0407_pc34(
+            in->actionIndex, &descriptor) || !descriptor.valid) {
         return 0;
     }
     if (!f0407_projectile_base_for_action(
@@ -976,7 +1015,8 @@ int dm1_v1_action_projectile_spell_plan_f0407_pc34(
         if (stepEnergy < 1) stepEnergy = 1;
     }
     out->valid = 1;
-    out->actionSkillIndex = route.skillIndex;
+    out->actionSkillIndex = descriptor.actionSkillIndex;
+    out->verbKind = descriptor.verbKind;
     out->subtype = subtype;
     out->category = PROJECTILE_CATEGORY_MAGICAL;
     out->attackTypeCode = attackType;
@@ -984,6 +1024,10 @@ int dm1_v1_action_projectile_spell_plan_f0407_pc34(
     out->actualKineticEnergy = actualEnergy;
     out->requiredMana = requiredMana;
     out->stepEnergy = stepEnergy;
+    if (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
+        subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) {
+        out->poisonAttack = out->impactAttack;
+    }
     out->decrementsActionHandCharges = 1;
     return 1;
 }

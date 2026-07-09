@@ -385,9 +385,26 @@ typedef struct {
     int invokeFamilyRoll;
 } DM1_ActionProjectileSpellInputPc34;
 
+enum {
+    DM1_ACTION_PROJECTILE_VERB_NONE_PC34 = 0,
+    DM1_ACTION_PROJECTILE_VERB_FIREBALL_PC34,
+    DM1_ACTION_PROJECTILE_VERB_DISPELL_PC34,
+    DM1_ACTION_PROJECTILE_VERB_LIGHTNING_PC34,
+    DM1_ACTION_PROJECTILE_VERB_SPIT_PC34,
+    DM1_ACTION_PROJECTILE_VERB_INVOKE_PC34
+};
+
 typedef struct {
     int valid;
     int actionSkillIndex;
+    int verbKind;
+    int requiresInvokeRolls;
+} DM1_ActionProjectileSpellDescriptorPc34;
+
+typedef struct {
+    int valid;
+    int actionSkillIndex;
+    int verbKind;
     int subtype;
     int category;
     int attackTypeCode;
@@ -399,6 +416,7 @@ typedef struct {
     int stepEnergy;
     int impactAttack;
     int launcherStrength;
+    int poisonAttack;
     int decrementsActionHandCharges;
 } DM1_ActionProjectileSpellPlanPc34;
 
@@ -577,6 +595,9 @@ int dm1_v1_action_fright_plan_f0401_pc34(
 int dm1_v1_action_projectile_spell_plan_f0407_pc34(
     const DM1_ActionProjectileSpellInputPc34* in,
     DM1_ActionProjectileSpellPlanPc34* out);
+int dm1_v1_action_projectile_spell_descriptor_f0407_pc34(
+    int actionIndex,
+    DM1_ActionProjectileSpellDescriptorPc34* out);
 int dm1_v1_action_climb_down_plan_f0407_pc34(
     const DM1_ActionClimbDownInputPc34* in,
     DM1_ActionClimbDownPlanPc34* out);
