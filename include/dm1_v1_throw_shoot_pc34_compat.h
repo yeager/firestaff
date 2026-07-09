@@ -552,9 +552,9 @@ int dm1_v1_projectile_champion_poison_apply_pc34(
     int appliedDamage,
     int rng2,
     uint32_t gameTick,
-    int partyMapIndex,
-    int partyMapX,
-    int partyMapY,
+    int poisonEventMapIndex,
+    int poisonEventMapX,
+    int poisonEventMapY,
     struct ChampionState_Compat* champion,
     DM1_ProjectileChampionPoisonApplyPlanPc34* outPlan);
 int dm1_v1_projectile_champion_party_death_check_pc34(

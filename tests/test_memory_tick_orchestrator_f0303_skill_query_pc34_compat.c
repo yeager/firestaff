@@ -3522,7 +3522,7 @@ static void test_orch_projectile_champion_hit_applies_poison(void) {
     world.gameTick = 101;
     world.timeline.nowTick = 101;
     world.party.mapIndex = 0;
-    world.partyMapIndex = 0;
+    world.partyMapIndex = 7; /* stale legacy mirror must not tag poison event */
     world.party.mapX = 0;
     world.party.mapY = 0;
     world.party.direction = 1;

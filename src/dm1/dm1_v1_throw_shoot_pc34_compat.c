@@ -1624,9 +1624,9 @@ int dm1_v1_projectile_champion_poison_apply_pc34(
     int appliedDamage,
     int rng2,
     uint32_t gameTick,
-    int partyMapIndex,
-    int partyMapX,
-    int partyMapY,
+    int poisonEventMapIndex,
+    int poisonEventMapX,
+    int poisonEventMapY,
     struct ChampionState_Compat* champion,
     DM1_ProjectileChampionPoisonApplyPlanPc34* outPlan) {
     if (!outPlan) return 0;
@@ -1646,8 +1646,10 @@ int dm1_v1_projectile_champion_poison_apply_pc34(
     }
 
     /* ReDMCSB: PROJEXPL.C F0217 lines 557-558 enters CHAMPION.C F0322
-     * only after F0321 applied damage. F0322 applies immediate poison HP,
-     * updates poison dose, and creates the first C75 status event. */
+     * only after F0321 applied damage. CHAMPION.C F0322 lines 1954-1960
+     * schedules C75 using the current party map/time; the orchestrator passes
+     * the already resolved impact coordinates so stale party mirrors cannot
+     * place delayed poison status on another map. */
     outPlan->shouldApply = 1;
     champion->hp.current =
         (unsigned short)((int)champion->hp.current -
@@ -1660,9 +1662,9 @@ int dm1_v1_projectile_champion_poison_apply_pc34(
         outPlan->poisonEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
         outPlan->poisonEvent.fireAtTick =
             gameTick + (uint32_t)outPlan->poisonPlan.scheduleDelayTicks;
-        outPlan->poisonEvent.mapIndex = partyMapIndex;
-        outPlan->poisonEvent.mapX = partyMapX;
-        outPlan->poisonEvent.mapY = partyMapY;
+        outPlan->poisonEvent.mapIndex = poisonEventMapIndex;
+        outPlan->poisonEvent.mapX = poisonEventMapX;
+        outPlan->poisonEvent.mapY = poisonEventMapY;
         outPlan->poisonEvent.aux0 = LIFECYCLE_STATUS_POISON;
         outPlan->poisonEvent.aux1 = outPlan->poisonPlan.nextAttack;
         outPlan->poisonEvent.aux4 = outPlan->championIndex;
