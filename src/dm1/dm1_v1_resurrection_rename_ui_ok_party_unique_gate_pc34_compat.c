@@ -335,13 +335,12 @@ dm1_v1_rename_ui_ok_party_unique_gate_apply_command_pc34(
     case DM1_V1_RENAME_UI_OK_PARTY_BACKSPACE_COMMAND_PC34_COMPAT:
         return handle_backspace(state);
     case DM1_V1_RENAME_UI_OK_PARTY_OK_COMMAND_PC34_COMPAT:
-        if (state->fieldMode ==
+        if (state->fieldMode !=
                 DM1_V1_RENAME_UI_OK_PARTY_FIELD_TITLE_PC34_COMPAT &&
-            state->characterIndex == 0) {
-            /* F0281:425-428 — title field with character_index == 0,
-             * or NAME field with character_index <= 0, no commit. We
-             * mirror just the title-empty case here since the gate
-             * preconditions assume NAME was reachable. */
+            state->characterIndex <= 0) {
+            /* ReDMCSB REVIVE.C F0281:425-428: C166 proceeds when
+             * editing TITLE, or when NAME already has at least one
+             * character. Empty NAME remains live and does not commit. */
             state->titleModeRejectionCount++;
             return 0;
         }
@@ -412,9 +411,9 @@ dm1_v1_rename_ui_ok_party_unique_gate_apply_mouse_click_pc34(
         y >= DM1_V1_RENAME_UI_OK_PARTY_OK_BUTTON_Y_MIN_PC34_COMPAT &&
         y <= DM1_V1_RENAME_UI_OK_PARTY_OK_BUTTON_Y_MAX_PC34_COMPAT) {
         state->mouseOkClickCount++;
-        if (state->fieldMode ==
+        if (state->fieldMode !=
                 DM1_V1_RENAME_UI_OK_PARTY_FIELD_TITLE_PC34_COMPAT &&
-            state->characterIndex == 0) {
+            state->characterIndex <= 0) {
             state->titleModeRejectionCount++;
             return 0;
         }
