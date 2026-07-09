@@ -188,6 +188,12 @@ typedef struct {
     int startupTitleFrame;
     int startupTitleFrameMax;
     int startupTitleReady;
+    int startupInputReady;
+    int startupHudMenuReady;
+    int startupHudMenuKind;
+    int startupHudMenuOptionCount;
+    int startupSelectedCommandId;
+    int startupUtilitySelectedActionIndex;
     int startupInitializeV2Runtime;
     int startupInitializeHudRuntime;
     int startupInitializeTouchRuntime;

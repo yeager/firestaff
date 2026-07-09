@@ -1818,6 +1818,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupRenderViewReceipt_PC34 view_receipt;
     CSB_V1_BootStartupRenderViewReceipt_PC34 poisoned_view_receipt;
     CSB_V1_BootStartupRenderViewReceipt_PC34 runtime_view_receipt;
+    CSB_V1_BootStartupReadinessReceipt_PC34 readiness_receipt;
     CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
     CSB_V1_StartupRenderPlan_PC34 receipt_closed_door_plan;
     CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
@@ -1939,6 +1940,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               view_receipt.route_receipt.draw_title &&
               !view_receipt.hud_menu_receipt_ready,
           "boot startup render-view receipt owns post-swoosh CSB title route");
+    CHECK(csb_v1_boot_startup_readiness_receipt_from_view_pc34(
+              &view_receipt,
+              &readiness_receipt) == 1 &&
+              readiness_receipt.valid &&
+              readiness_receipt.startup_active &&
+              readiness_receipt.post_ftl_title_active &&
+              !readiness_receipt.title_ready &&
+              !readiness_receipt.input_ready &&
+              !readiness_receipt.hud_menu_ready &&
+              strcmp(readiness_receipt.animation, "csb-title") == 0 &&
+              readiness_receipt.title_presents_visible,
+          "boot startup readiness receipt owns post-FTL title-not-ready gate");
     CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
               &runtime_view_receipt,
               snapshot.title_active,
@@ -2148,6 +2161,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strstr(view_receipt.utility_prompt,
                      "CHAOS STRIKES BACK READY") != NULL,
           "boot startup render-view receipt owns utility HUD/menu route");
+    CHECK(csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
+              &snapshot,
+              &readiness_receipt) == 1 &&
+              readiness_receipt.valid &&
+              readiness_receipt.input_ready &&
+              readiness_receipt.hud_menu_ready &&
+              readiness_receipt.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              readiness_receipt.utility_menu_row_count ==
+                  CSB_V1_UTIL_MENU_ROW_COUNT &&
+              readiness_receipt.selected_utility_action_index == 0,
+          "boot startup readiness receipt owns utility HUD/menu readiness");
     poisoned_view_receipt = view_receipt;
     poisoned_view_receipt.route_receipt.utility_plan.menu_row_count = 1;
     poisoned_view_receipt.route_receipt.utility_plan.menu_rows[0].selected = 0;
@@ -2199,6 +2224,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strcmp(view_receipt.route_receipt.hud_menu_state.resume_path,
                      resume_path) == 0,
           "boot startup render-view receipt owns closed-door HUD/menu and utility fallback gate");
+    CHECK(csb_v1_boot_startup_readiness_receipt_from_view_pc34(
+              &view_receipt,
+              &readiness_receipt) == 1 &&
+              readiness_receipt.valid &&
+              readiness_receipt.input_ready &&
+              readiness_receipt.hud_menu_ready &&
+              readiness_receipt.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              readiness_receipt.hud_menu_option_count == 4 &&
+              readiness_receipt.selected_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              readiness_receipt.resume_available &&
+              readiness_receipt.suppress_legacy_utility_fallback,
+          "boot startup readiness receipt owns closed-door HUD/menu readiness");
     poisoned_view_receipt = view_receipt;
     poisoned_view_receipt.render_plan.waiting_for_input = 0;
     poisoned_view_receipt.render_plan.render_command_count = 1;
