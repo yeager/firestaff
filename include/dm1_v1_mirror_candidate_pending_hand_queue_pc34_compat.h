@@ -23,23 +23,23 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_PENDING_HAND_QUEUE_SLOT3_THING_PC34_COMPAT 0x0104
 #define DM1_V1_MIRROR_CANDIDATE_PENDING_HAND_QUEUE_SLOT4_THING_PC34_COMPAT 0x0105
 
-typedef struct Dm1V1MirrorCandidatePendingHandQueueEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidatePendingHandQueueEvidencePc34Compat {
     const char *chestAlreadyOpenGuardAnchor;
     const char *chestCloseHandSwapAnchor;
     const char *commandMirrorQueueDispatchAnchor;
     const char *reviveCandidateAliveGuardAnchor;
     const char *contractScope;
     const char *nonOverlapNote;
-} Dm1V1MirrorCandidatePendingHandQueueEvidencePc34Compat;
+} DM1_V1_MirrorCandidatePendingHandQueueEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidatePendingHandQueueEntryPc34Compat {
+typedef struct DM1_V1_MirrorCandidatePendingHandQueueEntryPc34Compat {
     int submissionOrdinal;
     int slotIndex;
     int command;
     int handThingAtSubmission;
-} Dm1V1MirrorCandidatePendingHandQueueEntryPc34Compat;
+} DM1_V1_MirrorCandidatePendingHandQueueEntryPc34Compat;
 
-typedef struct Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat {
     int panelContent;
     int c040PanelOpen;
     unsigned int candidateChampionOrdinal;
@@ -48,7 +48,7 @@ typedef struct Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat {
     int openChestThing;
     int containerHeadThing;
     int chestSlots[DM1_V1_MIRROR_CANDIDATE_PENDING_HAND_QUEUE_SLOT_COUNT_PC34_COMPAT];
-    Dm1V1MirrorCandidatePendingHandQueueEntryPc34Compat
+    DM1_V1_MirrorCandidatePendingHandQueueEntryPc34Compat
         pending[DM1_V1_MIRROR_CANDIDATE_PENDING_HAND_QUEUE_CAPACITY_PC34_COMPAT];
     int pendingHead;
     int pendingCount;
@@ -68,10 +68,10 @@ typedef struct Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat {
     int chestRelinkCount;
     int slotIndexLostCount;
     int orderViolationCount;
-} Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat;
+} DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat {
-    const Dm1V1MirrorCandidatePendingHandQueueEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat {
+    const DM1_V1_MirrorCandidatePendingHandQueueEvidencePc34Compat *evidence;
     int accepted;
     int ignored;
     int queueFull;
@@ -124,29 +124,38 @@ typedef struct Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat {
     int candidateAlivePreserved;
     int chestCloseRepackedSlots;
     int alreadyOpenPreservedQueue;
-} Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat;
+} DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidatePendingHandQueueEvidencePc34Compat
+    Dm1V1MirrorCandidatePendingHandQueueEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidatePendingHandQueueEntryPc34Compat
+    Dm1V1MirrorCandidatePendingHandQueueEntryPc34Compat;
+typedef DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat
+    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat;
+typedef DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat
+    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat;
 
 void DM1_V1_MirrorCandidatePendingHandQueue_InitPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state);
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidatePendingHandQueue_SubmitHandSwapPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
     int slotIndex,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidatePendingHandQueue_OpenAlreadyOpenChestPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidatePendingHandQueue_CloseChestPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidatePendingHandQueue_DrainNextPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidatePendingHandQueueEvidencePc34Compat *
+const DM1_V1_MirrorCandidatePendingHandQueueEvidencePc34Compat *
 DM1_V1_MirrorCandidatePendingHandQueue_EvidencePc34Compat(void);
 
 int dm1_v1_mirror_candidate_pending_hand_queue_run(

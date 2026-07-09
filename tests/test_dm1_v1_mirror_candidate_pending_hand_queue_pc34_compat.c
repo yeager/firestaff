@@ -23,7 +23,7 @@ static int gPasses;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidatePendingHandQueueEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidatePendingHandQueueEvidencePc34Compat *e =
         DM1_V1_MirrorCandidatePendingHandQueue_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,
@@ -56,7 +56,7 @@ static void test_source_lock_metadata(void)
 
 static void test_fixture_starts_with_open_chest_and_alive_candidate(void)
 {
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat state;
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat state;
 
     DM1_V1_MirrorCandidatePendingHandQueue_InitPc34Compat(&state);
 
@@ -118,9 +118,9 @@ static void test_fixture_starts_with_open_chest_and_alive_candidate(void)
 }
 
 static void submit_five_entries(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state)
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state)
 {
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat result;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat result;
     int i;
 
     for (i = 0; i < 5; ++i) {
@@ -158,8 +158,8 @@ static void submit_five_entries(
 
 static void test_already_open_guard_preserves_pending_queue(void)
 {
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat state;
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat result;
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat state;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat result;
     int accepted;
 
     DM1_V1_MirrorCandidatePendingHandQueue_InitPc34Compat(&state);
@@ -199,8 +199,8 @@ static void test_already_open_guard_preserves_pending_queue(void)
 
 static void test_chest_close_preserves_pending_slot_indices(void)
 {
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat state;
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat result;
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat state;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat result;
     int accepted;
     int i;
 
@@ -285,8 +285,8 @@ static void test_chest_close_preserves_pending_slot_indices(void)
 
 static void test_queue_drains_after_close_in_submission_order(void)
 {
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat state;
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat result;
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat state;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat result;
     int i;
 
     DM1_V1_MirrorCandidatePendingHandQueue_InitPc34Compat(&state);
@@ -370,8 +370,8 @@ static void test_queue_drains_after_close_in_submission_order(void)
 
 static void test_dead_candidate_guard_blocks_drain_without_mutating_queue(void)
 {
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat state;
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat result;
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat state;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat result;
     int accepted;
 
     DM1_V1_MirrorCandidatePendingHandQueue_InitPc34Compat(&state);
