@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass893 DM1 champion mirror thing-layer boundary receipt: C026 champion portraits now expose a DM1-owned receipt that keeps them in the D1C wall-overlay path while suppressing mirror payloads as floor items, projectiles, or spell effects without blocking real floor objects. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB capture-HUD executor retired: utility and closed-door HUD/menu tests now execute host-view HUD draw receipts plus readiness receipts directly instead of the older capture-level HUD draw helper. Verification: CSB startup tests and `git diff --check`.
 
 - ✅ 2026-07-09 M12 visible capture-proof label: start menu now exposes a public per-game capture-proof label and modern game-card progress uses the packaged proof label once launch-ready, so DM1 HoC, CSB title/HUD, DM2 timing, Nexus capture, and Theron Track02 proof are visible instead of hidden behind generic ready text. Verification: `test_m12_all_games_boot_readiness_receipt`, `test_nexus_v1_startup_menu_pc34_compat`, `firestaff_m11_phase_a_probe`, and `git diff --check` passed.
