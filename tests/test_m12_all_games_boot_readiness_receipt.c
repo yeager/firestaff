@@ -118,6 +118,8 @@ int main(void) {
                            expected[i].pathLabel) == 0,
                     "ready game launch detail label should name boot path")) return 1;
     }
+    if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "5 GAMES READY") == 0,
+                "scan feedback should count launch-gated full-start-ready games")) return 1;
 
     state.activatedIndex = 0;
     state.gameOptions[0].versionIndex = 1;
@@ -152,6 +154,13 @@ int main(void) {
         if (!expect(intent.valid == 1 && intent.options.versionIndex == 0,
                     "launch intent should use the auto-selected matched version")) return 1;
     }
+
+    state.settings.rendererBackendIndex = M12_RENDERER_BACKEND_OPENGL;
+    if (!expect(M12_StartupMenu_RendererBackendAvailable(
+                    state.settings.rendererBackendIndex) == 0,
+                "test renderer backend should be unavailable")) return 1;
+    if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "FILES FOUND") == 0,
+                "scan feedback should not call data-only games ready when launch gate blocks")) return 1;
 
     puts("ok: all game launcher boot-readiness receipts expose full-start progress and labels");
     return 0;

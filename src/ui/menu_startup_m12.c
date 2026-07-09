@@ -1589,8 +1589,10 @@ static int m12_ready_game_count(const M12_StartupMenuState* state) {
         return 0;
     }
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
-        const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, gi);
-        if (entry && entry->gameId && entry->available) {
+        M12_StartupLaunchGate gate;
+        if (M12_StartupMenu_GetLaunchGate(state, gi, &gate) &&
+            gate.handled &&
+            gate.canLaunch) {
             ready += 1;
         }
     }
@@ -8280,10 +8282,31 @@ static void m12_draw_game_card(const M12_StartupMenuState* state,
     unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
     unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
     unsigned char accent = entry && entry->available ? M12_COLOR_GREEN : M12_COLOR_LIGHT_RED;
+    unsigned char statusFill;
+    unsigned char statusText;
     unsigned char gameFill = entry ? m12_game_card_fill(entry->gameId) : M12_COLOR_DARK_GRAY;
     int artH = h * 55 / 100;
+    M12_StartupLaunchGate launchGate;
+    int hasLaunchGate = 0;
     if (artH < 30) {
         artH = 30;
+    }
+    if (entry && entry->kind == M12_MENU_ENTRY_GAME) {
+        hasLaunchGate = M12_StartupMenu_GetLaunchGate(state, entryIndex, &launchGate) &&
+                        launchGate.handled;
+        if (hasLaunchGate) {
+            accent = launchGate.canLaunch ? M12_COLOR_GREEN : M12_COLOR_LIGHT_RED;
+        }
+    }
+    if (hasLaunchGate && entry && entry->kind == M12_MENU_ENTRY_GAME) {
+        statusFill = launchGate.canLaunch
+                         ? (selected ? M12_COLOR_YELLOW : M12_COLOR_GREEN)
+                         : (selected ? M12_COLOR_LIGHT_RED : M12_COLOR_MAROON);
+        statusText = launchGate.canLaunch ? M12_COLOR_BLACK
+                                          : (selected ? M12_COLOR_BLACK : M12_COLOR_WHITE);
+    } else {
+        statusFill = m12_entry_status_fill(entry, selected);
+        statusText = m12_entry_status_text_color(entry, selected);
     }
     m12_draw_frame(framebuffer,
                    framebufferWidth,
@@ -8340,9 +8363,9 @@ static void m12_draw_game_card(const M12_StartupMenuState* state,
                                     ? M12_StartupMenu_GetEntryLaunchStatusLabel(
                                           state, entryIndex)
                                     : m12_entry_status_text(entry),
-                                m12_entry_status_fill(entry, selected),
+                                statusFill,
                                 M12_COLOR_BLACK,
-                                m12_entry_status_text_color(entry, selected));
+                                statusText);
     if (entry && entry->kind == M12_MENU_ENTRY_GAME && entryIndex >= 0 && entryIndex < M12_CONFIG_GAME_COUNT) {
         m12_draw_language_flag(framebuffer,
                                framebufferWidth,
