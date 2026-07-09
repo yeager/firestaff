@@ -515,6 +515,8 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int draw_opened_entrance_frame;
     int render_hall_mirror_overlay;
     int suppress_host_fallback_visuals;
+    int consumed_owned_host_draw_receipt;
+    int host_draw_uses_owned_receipt;
     int host_draw_consumes_backing_asset;
     int host_draw_rejects_backing_fallback;
     int lower_level_renderer_helper_owned;

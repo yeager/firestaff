@@ -171,6 +171,7 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.dm1HoCReceiptOnlyConsumerReady == 1);
     CHECK(boot.dm1HoCNoHostFallbackVisualsReady == 1);
     CHECK(boot.dm1HoCLowerLevelHelpersReady == 1);
+    CHECK(boot.dm1HoCHostDrawUsesOwnedReceiptReady == 1);
     CHECK(boot.dm1HoCHostDrawConsumesBackingAssetReady == 1);
     CHECK(boot.dm1HoCHostDrawRejectsBackingFallbackReady == 1);
     CHECK(boot.dm1HoCHoCAssetCaptureReady == 1);
