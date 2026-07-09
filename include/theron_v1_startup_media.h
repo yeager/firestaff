@@ -95,6 +95,9 @@ void theron_v1_startup_media_capture_track02_state_receipt(
     const char *md5_hex,
     Theron_StartupMediaStateReceipt *out_receipt);
 
+int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+    const Theron_StartupMediaStateReceipt *receipt);
+
 #ifdef __cplusplus
 }
 #endif
