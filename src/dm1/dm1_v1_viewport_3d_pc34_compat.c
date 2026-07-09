@@ -369,14 +369,10 @@ int dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
     if (rel_side == 0) {
         return 1;
     }
-    /* ReDMCSB DUNVIEW.C F0128: side squares are drawn in the same depth
-     * bucket as their center blocker (D3L/D3R before D3C, D2L/D2R before
-     * D2C, D1L/D1R before D1C).  Firestaff's split host renderer may ask
-     * about a side lane later, so carry the nearest center wall/door limit
-     * on this receipt as well as the side-lane openness mask. */
-    if (rel_forward > visibility->max_visible_forward) {
-        return 0;
-    }
+    /* ReDMCSB DUNVIEW.C F0128 draws side squares in their depth bucket
+     * before the center wall/door for that bucket. A center blocker limits
+     * the center corridor, but must not erase source-ordered side walls such
+     * as D2L/D2R beside a D1C wall. */
     mask = rel_side < 0
         ? visibility->left_open_depth_mask
         : visibility->right_open_depth_mask;
