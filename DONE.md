@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron generic Continue request host receipts: raw Continue request execution now has a direct M11-ready host/state receipt wrapper for success and host failure receipts for no-source requests. Verification: `test_theron_v1_startup_save_resume_pc34` 161/161 and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron external TQSV Continue interop: exported `.tqsv` paths can now be loaded directly into runtime state and emit host/state receipts, with missing-path failure receipts. Verification: `test_theron_v1_startup_save_resume_pc34` 159/159 and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron TQSV Continue receipts: direct `.tqsv` slot Continue now has host/state receipt coverage for success and host failure receipts for empty slots. Verification: `test_theron_v1_startup_save_resume_pc34` 156/156 and `git diff --check` passed.
@@ -35,6 +37,7 @@
 - ✅ 2026-07-09 pass825 DM1 F0190 mutation-dispatch ownership now carries one combined apply receipt for possession drops, killed-some cleanup/fear gate, and killed-all side effects, reducing M10 dispatch flag reads.
 - ✅ 2026-07-09 pass826 DM1 F0231 runtime-result ownership now carries post-resolve apply receipts for luck, side effects, group damage, and damage emission, reducing M10 runtime-result flag reads.
 - ✅ 2026-07-09 pass827 DM1 F0231 aftermath ownership now carries a combined apply receipt for death smoke, mutation dispatch, raw group writeback, kill notify, and reaction scheduling, reducing M10 aftermath flag reads.
+- ✅ 2026-07-09 pass828 M10 now applies F0190 mutation dispatch from the DM1 F0231 aftermath apply receipt instead of rebuilding the dispatch plan locally.
 
 - ✅ 2026-07-09 Theron SRM envelope startup receipt proof: Theron startup save/resume probe now asserts the decoded SRM envelope kind, so staged gzip SRM data proves the same typed progression handoff used by Continue. Verification: `theron_v1_startup_save_resume_probe`, `theron_v1_startup_save_resume_pc34`, and focused build passed.
 

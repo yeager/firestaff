@@ -404,6 +404,7 @@ static void test_tqsv_only_resume_claim(void) {
         Theron_StartupAction action;
         Theron_StartupActionPlan plan;
         Theron_V1StartupContinueResult continue_result;
+        Theron_V1StartupContinueRequest continue_request;
         Theron_StartupHostReceipt host_receipt;
         Theron_StartupStateReceipt state_receipt;
         Theron_V1_World world;
@@ -413,6 +414,54 @@ static void test_tqsv_only_resume_claim(void) {
         action.kind = THERON_STARTUP_ACTION_CONTINUE_SAVE;
         expect_true(theron_v1_startup_plan_for_action(&action, &plan) == 1,
                     "tqsv-only host plan");
+        theron_v1_startup_continue_request_init(&continue_request);
+        continue_request.resume_claim = THERON_V1_STARTUP_RESUME_TQSV;
+        continue_request.tqsv_slot_index = 2;
+        continue_request.tqsv_root = tqsv_root;
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(theron_v1_startup_continue_apply_request_with_host_receipts(
+                        &world,
+                        &continue_request,
+                        &plan,
+                        "chapter=2 level=0",
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) == 1 &&
+                        continue_result.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strcmp(host_receipt.status, "CONTINUE LOADED") == 0 &&
+                        strstr(host_receipt.inspect_detail,
+                               "chapter=2") != NULL &&
+                        state_receipt.flow.selected_dungeon ==
+                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    "tqsv-only request emits host and state receipts");
+        theron_v1_startup_continue_request_init(&continue_request);
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(!theron_v1_startup_continue_apply_request_with_host_receipts(
+                        &world,
+                        &continue_request,
+                        &plan,
+                        "chapter=2 level=0",
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strstr(host_receipt.status,
+                               "Continue requires") != NULL &&
+                        strstr(host_receipt.inspect_detail,
+                               "source=NONE") != NULL,
+                    "tqsv-only request no-source emits host failure receipt");
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
         expect_true(theron_v1_startup_continue_tqsv_apply_with_host_receipts(
