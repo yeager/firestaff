@@ -6,10 +6,10 @@
 #include "dm1_v1_dialog_scroll_pc34_compat.h"
 #include <string.h>
 
-void m11_dg_init(M11_DG_State* state) {
+void DM1_V1_Dialog_InitPc34Compat(DM1_V1_DialogStatePc34* state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_DG_State));
-    state->active_set = M11_DG_SET_VIEWPORT;
+    memset(state, 0, sizeof(DM1_V1_DialogStatePc34));
+    state->active_set = DM1_V1_DIALOG_SET_VIEWPORT_PC34;
     /* Default message bar at bottom of viewport (below 136px viewport area) */
     state->bar_x = 0;
     state->bar_y = 170;
@@ -17,7 +17,7 @@ void m11_dg_init(M11_DG_State* state) {
     state->bar_h = 10;
 }
 
-void m11_dg_set_bar_position(M11_DG_State* state, int16_t x, int16_t y,
+void DM1_V1_Dialog_SetBarPositionPc34Compat(DM1_V1_DialogStatePc34* state, int16_t x, int16_t y,
                               int16_t w, int16_t h) {
     if (!state) return;
     state->bar_x = x;
@@ -26,30 +26,30 @@ void m11_dg_set_bar_position(M11_DG_State* state, int16_t x, int16_t y,
     state->bar_h = h;
 }
 
-void m11_dg_set_active(M11_DG_State* state, M11_DG_DialogSet set) {
+void DM1_V1_Dialog_SetActivePc34Compat(DM1_V1_DialogStatePc34* state, DM1_V1_DialogSetPc34 set) {
     if (!state) return;
     state->active_set = set;
 }
 
-bool m11_dg_push_message(M11_DG_State* state, const char* text, uint8_t color) {
+bool DM1_V1_Dialog_PushMessagePc34Compat(DM1_V1_DialogStatePc34* state, const char* text, uint8_t color) {
     if (!state || !text) return false;
-    if (state->count >= DM1_DG_MSG_QUEUE_SIZE) return false;
+    if (state->count >= DM1_V1_DIALOG_MSG_QUEUE_SIZE_PC34) return false;
 
-    M11_DG_Message* msg = &state->queue[state->tail];
+    DM1_V1_DialogMessagePc34* msg = &state->queue[state->tail];
     size_t len = strlen(text);
-    if (len >= DM1_DG_MAX_MSG_LEN) len = DM1_DG_MAX_MSG_LEN - 1;
+    if (len >= DM1_V1_DIALOG_MAX_MSG_LEN_PC34) len = DM1_V1_DIALOG_MAX_MSG_LEN_PC34 - 1;
     memcpy(msg->text, text, len);
     msg->text[len] = '\0';
     msg->color = color;
-    msg->display_ticks = DM1_DG_DISPLAY_TICKS;
+    msg->display_ticks = DM1_V1_DIALOG_DISPLAY_TICKS_PC34;
     msg->active = true;
 
-    state->tail = (state->tail + 1) % DM1_DG_MSG_QUEUE_SIZE;
+    state->tail = (state->tail + 1) % DM1_V1_DIALOG_MSG_QUEUE_SIZE_PC34;
     state->count++;
     return true;
 }
 
-void m11_dg_tick(M11_DG_State* state) {
+void DM1_V1_Dialog_TickPc34Compat(DM1_V1_DialogStatePc34* state) {
     if (!state) return;
 
     /* Tick current message */
@@ -63,21 +63,21 @@ void m11_dg_tick(M11_DG_State* state) {
     /* If no current message, pop from queue */
     if (!state->current.active && state->count > 0) {
         state->current = state->queue[state->head];
-        state->head = (state->head + 1) % DM1_DG_MSG_QUEUE_SIZE;
+        state->head = (state->head + 1) % DM1_V1_DIALOG_MSG_QUEUE_SIZE_PC34;
         state->count--;
     }
 }
 
-bool m11_dg_has_message(const M11_DG_State* state) {
+bool DM1_V1_Dialog_HasMessagePc34Compat(const DM1_V1_DialogStatePc34* state) {
     return state && state->current.active;
 }
 
-const char* m11_dg_get_current_text(const M11_DG_State* state) {
+const char* DM1_V1_Dialog_GetCurrentTextPc34Compat(const DM1_V1_DialogStatePc34* state) {
     if (!state || !state->current.active) return NULL;
     return state->current.text;
 }
 
-uint8_t m11_dg_get_current_color(const M11_DG_State* state) {
+uint8_t DM1_V1_Dialog_GetCurrentColorPc34Compat(const DM1_V1_DialogStatePc34* state) {
     if (!state || !state->current.active) return 0;
     return state->current.color;
 }

@@ -102,7 +102,7 @@ typedef struct {
     DM1_V1_DungeonDataPc34                dungeonData;
     DM1_Viewport3DState               viewport3d;
     struct Dm1V1MovementPipelinePc34Compat movementPipeline;
-    M11_DG_State                      dialog;
+    DM1_V1_DialogStatePc34                      dialog;
     DM1_V1_ClickRoutingStatePc34                      clickRouting;
     DM1_V1_SaveLoadStatePc34                      saveLoad;
     M11_ScreenState                   screen;
