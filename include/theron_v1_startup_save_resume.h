@@ -120,6 +120,7 @@ typedef struct {
     int                             srm_payload_probe_ran; /* 1 if zlib ran */
     size_t                          srm_payload_size;     /* 0 if none */
     int                             srm_payload_hits_fstq_magic;
+    Theron_V1SrmEnvelopeKind         srm_envelope_kind;
 
     /* ── Bounded progression decode (FSTQPRG1 envelope) ── */
     Theron_V1SrmProgressImportStatus srm_progress_import_status;
@@ -127,6 +128,10 @@ typedef struct {
     int                              srm_progress_current_dungeon; /* -1 if none */
     int                              srm_progress_current_level;   /* -1 if none */
     int                              srm_progress_quest_mask;      /* -1 if none */
+    int                              srm_party_import_ran;
+    int                              srm_party_restored;
+    int                              srm_party_champion_count;
+    uint32_t                         srm_party_gold;
 
     /* ── Receipt marker ── */
     char verdict_name[40];
