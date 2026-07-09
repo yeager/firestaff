@@ -1,4 +1,5 @@
 #include "main_loop_m11.h"
+#include "entrance_frontend_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
@@ -381,6 +382,7 @@ static void check_title_to_menu_boundary(void) {
     DM1_V1_StartupTitleMenuEligibilityFacts_PC34 facts;
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    EntranceCompatSourceAnimationStep entranceStep;
     V1_TitleFrontendSourceTiming titleTiming = V1_TitleFrontend_GetSourceTimingEvidence();
     int expected_presents_palette = 0;
     int expected_title_palette = 0;
@@ -395,6 +397,7 @@ static void check_title_to_menu_boundary(void) {
 
     memset(&sourceStep, 0, sizeof(sourceStep));
     memset(&finalGuard, 0, sizeof(finalGuard));
+    memset(&entranceStep, 0, sizeof(entranceStep));
     memset(&media, 0, sizeof(media));
     (void)V1_TitleFrontend_GetStepPalette(
         V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
@@ -474,6 +477,22 @@ static void check_title_to_menu_boundary(void) {
     expect_i("DM1 full graphics media receipt title palette",
              media.title_zoom_palette,
              expected_title_palette);
+    expect_u("DM1 full graphics media receipt entrance source steps",
+             media.entrance_source_animation_steps,
+             ENTRANCE_Compat_GetSourceAnimationStepCount());
+    expect_u("DM1 full graphics media receipt entrance door steps",
+             media.entrance_door_step_count,
+             ENTRANCE_Compat_GetDoorAnimationStepCount());
+    expect_u("DM1 full graphics media receipt entrance vblank",
+             media.entrance_vblank_ms,
+             ENTRANCE_Compat_GetVblankDelayMs());
+    expect_i("DM1 full graphics media receipt entrance pre-open step exists",
+             ENTRANCE_Compat_GetSourceAnimationStep(6u, &entranceStep) &&
+                 entranceStep.kind == ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY,
+             1);
+    expect_u("DM1 full graphics media receipt entrance pre-open delay",
+             media.entrance_pre_open_delay_ms,
+             ENTRANCE_Compat_GetRuntimeDelayMs(&entranceStep));
     expect_i("DM1 full graphics media receipt blocks non-DM1",
              dm1_v1_startup_full_graphics_media_receipt_pc34("csb", &media) &&
                  media.handled == 0,
@@ -1092,6 +1111,14 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  post.media_receipt.title_menu_boundary_frame ==
                      (unsigned int)post.title_menu_boundary_frame,
              1);
+    expect_i("DM1 post-launch plan carries entrance timing receipt",
+             post.media_receipt.entrance_source_animation_steps ==
+                 ENTRANCE_Compat_GetSourceAnimationStepCount() &&
+                 post.media_receipt.entrance_door_step_count ==
+                     ENTRANCE_Compat_GetDoorAnimationStepCount() &&
+                 post.media_receipt.entrance_vblank_ms ==
+                     ENTRANCE_Compat_GetVblankDelayMs(),
+             1);
     expect_i("DM1 post-launch plan keeps entrance timeout",
              post.entrance_auto_enter_ms,
              1200);
@@ -1171,6 +1198,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  fake.post_entrance.mapIndex == DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
                  fake.post_entrance.partyDirection ==
                      DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34,
+             1);
+    expect_i("DM1 post-launch executor brackets entrance timing",
+             fake.post_media.entrance_source_animation_steps ==
+                 ENTRANCE_Compat_GetSourceAnimationStepCount() &&
+                 fake.post_media.entrance_door_step_count ==
+                     ENTRANCE_Compat_GetDoorAnimationStepCount(),
              1);
     expect_i("DM1 post-launch executor reports title played",
              title_played,

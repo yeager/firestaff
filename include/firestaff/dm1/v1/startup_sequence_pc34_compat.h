@@ -53,6 +53,10 @@ typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     int title_menu_eligible;
     int title_consume_pending_input;
     int entrance_auto_enter_ms;
+    unsigned int entrance_source_animation_steps;
+    unsigned int entrance_door_step_count;
+    unsigned int entrance_vblank_ms;
+    unsigned int entrance_pre_open_delay_ms;
     const char* source_evidence;
 } DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
 

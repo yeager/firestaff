@@ -1068,6 +1068,7 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt) {
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 receipt;
     V1_TitleFrontendSourceTiming title_timing;
+    EntranceCompatSourceAnimationStep entrance_pre_open_step;
     int presents_palette = 0;
     int title_palette = 0;
 
@@ -1122,6 +1123,18 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     receipt.title_menu_eligible = 1;
     receipt.title_consume_pending_input = 1;
     receipt.entrance_auto_enter_ms = 1200;
+    receipt.entrance_source_animation_steps =
+        ENTRANCE_Compat_GetSourceAnimationStepCount();
+    receipt.entrance_door_step_count =
+        ENTRANCE_Compat_GetDoorAnimationStepCount();
+    receipt.entrance_vblank_ms = ENTRANCE_Compat_GetVblankDelayMs();
+    memset(&entrance_pre_open_step, 0, sizeof(entrance_pre_open_step));
+    if (ENTRANCE_Compat_GetSourceAnimationStep(6u, &entrance_pre_open_step) &&
+        entrance_pre_open_step.kind ==
+            ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY) {
+        receipt.entrance_pre_open_delay_ms =
+            ENTRANCE_Compat_GetRuntimeDelayMs(&entrance_pre_open_step);
+    }
     /* ReDMCSB NECIO.C lines 3592-3609: SWSH sets black/normal curtain,
      * expands the FTL logo, waits F0022_MAIN_SwooshDelay(20), starts sound,
      * then applies palette waits. TITLE.C F0437:319-409 owns PRESENTS,
