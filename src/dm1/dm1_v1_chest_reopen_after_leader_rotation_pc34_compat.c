@@ -27,7 +27,7 @@ static const char* const s_case_names[
 };
 
 static void clear_case(
-    M11_GameView_ChestReopenAfterLeaderRotationCasePc34* out)
+    DM1_V1_ChestReopenAfterLeaderRotationCasePc34* out)
 {
     memset(out, 0, sizeof(*out));
 }
@@ -70,15 +70,15 @@ static int count_visible(const int* slots)
 }
 
 static void append_action(
-    M11_GameView_ChestReopenAfterLeaderRotationCasePc34* out,
-    M11_GameView_ChestReopenAfterLeaderRotationActionPc34 action,
+    DM1_V1_ChestReopenAfterLeaderRotationCasePc34* out,
+    DM1_V1_ChestReopenAfterLeaderRotationActionPc34 action,
     int chestThing,
     int openChestThing,
     int leaderOrdinal,
     int inventoryChampionOrdinal,
     int leaderHandThing)
 {
-    M11_GameView_ChestReopenAfterLeaderRotationLogEntryPc34* entry;
+    DM1_V1_ChestReopenAfterLeaderRotationLogEntryPc34* entry;
 
     if (out->actionLog.count >=
         DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_LOG_CAPACITY) {
@@ -94,7 +94,7 @@ static void append_action(
 }
 
 static void configure_common_context(
-    M11_GameView_ChestReopenAfterLeaderRotationCasePc34* out,
+    DM1_V1_ChestReopenAfterLeaderRotationCasePc34* out,
     int caseIndex,
     int leaderHandThing,
     int chestBFirstThing)
@@ -125,7 +125,7 @@ static void configure_common_context(
 }
 
 static void run_contract_trace(
-    M11_GameView_ChestReopenAfterLeaderRotationCasePc34* out,
+    DM1_V1_ChestReopenAfterLeaderRotationCasePc34* out,
     int rotateBackBeforeReopen,
     int rotateDuringChestBClose)
 {
@@ -135,14 +135,14 @@ static void run_contract_trace(
 
     /* ReDMCSB CHEST.C F0333:31-67 materializes chest A into G0425/G0426. */
     append_action(out,
-                  M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_A,
+                  DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_A,
                   out->context.chestAThing, out->context.chestAThing,
                   leaderOrdinal, inventoryOrdinal, handThing);
 
     /* ReDMCSB CHEST.C F0334:113-132 recompacts chest A visible slots. */
     append_action(
         out,
-        M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_A,
+        DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_A,
         out->context.chestAThing, DM1_REOPEN_ROTATION_OPEN_NONE,
         leaderOrdinal, inventoryOrdinal, handThing);
     out->expected.closeCountChestA =
@@ -155,14 +155,14 @@ static void run_contract_trace(
     out->expected.rotationCount = 1;
     append_action(
         out,
-        M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
+        DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
         DM1_REOPEN_ROTATION_OPEN_NONE, DM1_REOPEN_ROTATION_OPEN_NONE,
         leaderOrdinal, inventoryOrdinal, handThing);
     copy_slots(out->expected.slotsAfterRotation,
                out->context.chestBVisibleSlots);
 
     append_action(out,
-                  M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_B,
+                  DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_B,
                   out->context.chestBThing, out->context.chestBThing,
                   leaderOrdinal, inventoryOrdinal, handThing);
 
@@ -171,14 +171,14 @@ static void run_contract_trace(
         out->expected.rotationCount++;
         append_action(
             out,
-            M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
+            DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
             out->context.chestBThing, out->context.chestBThing,
             leaderOrdinal, inventoryOrdinal, handThing);
     }
 
     append_action(
         out,
-        M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_B,
+        DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_B,
         out->context.chestBThing, DM1_REOPEN_ROTATION_OPEN_NONE,
         leaderOrdinal, inventoryOrdinal, handThing);
 
@@ -187,14 +187,14 @@ static void run_contract_trace(
         out->expected.rotationCount++;
         append_action(
             out,
-            M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER_BACK,
+            DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER_BACK,
             DM1_REOPEN_ROTATION_OPEN_NONE, DM1_REOPEN_ROTATION_OPEN_NONE,
             leaderOrdinal, inventoryOrdinal, handThing);
     }
 
     append_action(
         out,
-        M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_REOPEN_CHEST_B,
+        DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_REOPEN_CHEST_B,
         out->context.chestBThing, out->context.chestBThing,
         leaderOrdinal, inventoryOrdinal, handThing);
 
@@ -228,12 +228,12 @@ static void run_contract_trace(
 }
 
 const char*
-M11_GameView_ChestReopenAfterLeaderRotationSourceEvidencePc34(void)
+DM1_V1_ChestReopenAfterLeaderRotationSourceEvidencePc34(void)
 {
     return s_source_evidence;
 }
 
-const char* M11_GameView_ChestReopenAfterLeaderRotationCaseNamePc34(
+const char* DM1_V1_ChestReopenAfterLeaderRotationCaseNamePc34(
     int caseIndex)
 {
     if (caseIndex < 0 ||
@@ -243,9 +243,9 @@ const char* M11_GameView_ChestReopenAfterLeaderRotationCaseNamePc34(
     return s_case_names[caseIndex];
 }
 
-int M11_GameView_ChestReopenAfterLeaderRotationBuildCasePc34(
+int DM1_V1_ChestReopenAfterLeaderRotationBuildCasePc34(
     int caseIndex,
-    M11_GameView_ChestReopenAfterLeaderRotationCasePc34* out)
+    DM1_V1_ChestReopenAfterLeaderRotationCasePc34* out)
 {
     if (!out || caseIndex < 0 ||
         caseIndex >= DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_CASE_COUNT) {
@@ -303,8 +303,8 @@ int M11_GameView_ChestReopenAfterLeaderRotationBuildCasePc34(
     return 1;
 }
 
-int M11_GameView_ChestReopenAfterLeaderRotationRunPc34(
-    M11_GameView_ChestReopenAfterLeaderRotationProbePc34* out)
+int DM1_V1_ChestReopenAfterLeaderRotationRunPc34(
+    DM1_V1_ChestReopenAfterLeaderRotationProbePc34* out)
 {
     int i;
 
@@ -324,7 +324,7 @@ int M11_GameView_ChestReopenAfterLeaderRotationRunPc34(
     for (i = 0;
          i < DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_CASE_COUNT;
          ++i) {
-        if (!M11_GameView_ChestReopenAfterLeaderRotationBuildCasePc34(
+        if (!DM1_V1_ChestReopenAfterLeaderRotationBuildCasePc34(
                 i, &out->cases[i])) {
             return 0;
         }

@@ -30,31 +30,31 @@ enum {
 };
 
 typedef enum {
-    M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_NONE = 0,
-    M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST,
-    M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP,
-    M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_PICKUP_A_HAND,
-    M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER,
-    M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_SWAP_WITH_B_HAND,
-    M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST,
-    M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST
-} M11_GameView_ChestCrossChampionHandSwapActionPc34;
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_NONE = 0,
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST,
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP,
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_PICKUP_A_HAND,
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER,
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_SWAP_WITH_B_HAND,
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST,
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST
+} DM1_V1_ChestCrossChampionHandSwapActionPc34;
 
 typedef struct {
-    M11_GameView_ChestCrossChampionHandSwapActionPc34 action;
+    DM1_V1_ChestCrossChampionHandSwapActionPc34 action;
     int openChestThing;
     int leaderOrdinal;
     int inventoryChampionOrdinal;
     int leaderHandThing;
     int championAHandThing;
     int championBHandThing;
-} M11_GameView_ChestCrossChampionHandSwapLogEntryPc34;
+} DM1_V1_ChestCrossChampionHandSwapLogEntryPc34;
 
 typedef struct {
     int count;
-    M11_GameView_ChestCrossChampionHandSwapLogEntryPc34
+    DM1_V1_ChestCrossChampionHandSwapLogEntryPc34
         entries[DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_LOG_CAPACITY];
-} M11_GameView_ChestCrossChampionHandSwapActionLogPc34;
+} DM1_V1_ChestCrossChampionHandSwapActionLogPc34;
 
 typedef struct {
     int caseIndex;
@@ -79,7 +79,7 @@ typedef struct {
     int championBInitialHandWeight;
     int sameOpenBeforeSwap;
     int rotateTwiceWhileOpen;
-} M11_GameView_ChestCrossChampionHandSwapContextPc34;
+} DM1_V1_ChestCrossChampionHandSwapContextPc34;
 
 typedef struct {
     int openResult;
@@ -145,13 +145,13 @@ typedef struct {
     int sameOpenNoopPreserved;
     int blitRoutingPresentationOnly;
     int c10ColorFleshKnown;
-} M11_GameView_ChestCrossChampionHandSwapExpectedPc34;
+} DM1_V1_ChestCrossChampionHandSwapExpectedPc34;
 
 typedef struct {
-    M11_GameView_ChestCrossChampionHandSwapContextPc34 context;
-    M11_GameView_ChestCrossChampionHandSwapActionLogPc34 actionLog;
-    M11_GameView_ChestCrossChampionHandSwapExpectedPc34 expected;
-} M11_GameView_ChestCrossChampionHandSwapCasePc34;
+    DM1_V1_ChestCrossChampionHandSwapContextPc34 context;
+    DM1_V1_ChestCrossChampionHandSwapActionLogPc34 actionLog;
+    DM1_V1_ChestCrossChampionHandSwapExpectedPc34 expected;
+} DM1_V1_ChestCrossChampionHandSwapCasePc34;
 
 typedef struct {
     int sourceLockedRuntimeGate;
@@ -162,19 +162,60 @@ typedef struct {
     int g0423InventoryChampionOrdinalStart;
     int g0305PartyChampionCount;
     int caseCount;
-    M11_GameView_ChestCrossChampionHandSwapCasePc34
+    DM1_V1_ChestCrossChampionHandSwapCasePc34
         cases[DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_CASE_COUNT];
-} M11_GameView_ChestCrossChampionHandSwapProbePc34;
+} DM1_V1_ChestCrossChampionHandSwapProbePc34;
 
 const char*
-M11_GameView_ChestCrossChampionHandSwapSourceEvidencePc34(void);
-const char* M11_GameView_ChestCrossChampionHandSwapCaseNamePc34(
+DM1_V1_ChestCrossChampionHandSwapSourceEvidencePc34(void);
+const char* DM1_V1_ChestCrossChampionHandSwapCaseNamePc34(
     int caseIndex);
-int M11_GameView_ChestCrossChampionHandSwapBuildCasePc34(
+int DM1_V1_ChestCrossChampionHandSwapBuildCasePc34(
     int caseIndex,
-    M11_GameView_ChestCrossChampionHandSwapCasePc34* out);
-int M11_GameView_ChestCrossChampionHandSwapRunPc34(
-    M11_GameView_ChestCrossChampionHandSwapProbePc34* out);
+    DM1_V1_ChestCrossChampionHandSwapCasePc34* out);
+int DM1_V1_ChestCrossChampionHandSwapRunPc34(
+    DM1_V1_ChestCrossChampionHandSwapProbePc34* out);
+
+typedef DM1_V1_ChestCrossChampionHandSwapActionPc34
+    M11_GameView_ChestCrossChampionHandSwapActionPc34;
+typedef DM1_V1_ChestCrossChampionHandSwapLogEntryPc34
+    M11_GameView_ChestCrossChampionHandSwapLogEntryPc34;
+typedef DM1_V1_ChestCrossChampionHandSwapActionLogPc34
+    M11_GameView_ChestCrossChampionHandSwapActionLogPc34;
+typedef DM1_V1_ChestCrossChampionHandSwapContextPc34
+    M11_GameView_ChestCrossChampionHandSwapContextPc34;
+typedef DM1_V1_ChestCrossChampionHandSwapExpectedPc34
+    M11_GameView_ChestCrossChampionHandSwapExpectedPc34;
+typedef DM1_V1_ChestCrossChampionHandSwapCasePc34
+    M11_GameView_ChestCrossChampionHandSwapCasePc34;
+typedef DM1_V1_ChestCrossChampionHandSwapProbePc34
+    M11_GameView_ChestCrossChampionHandSwapProbePc34;
+
+#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_NONE \
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_NONE
+#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST \
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST
+#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP \
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP
+#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_PICKUP_A_HAND \
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_PICKUP_A_HAND
+#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER \
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER
+#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_SWAP_WITH_B_HAND \
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_SWAP_WITH_B_HAND
+#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST \
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST
+#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST \
+    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST
+
+#define M11_GameView_ChestCrossChampionHandSwapSourceEvidencePc34 \
+    DM1_V1_ChestCrossChampionHandSwapSourceEvidencePc34
+#define M11_GameView_ChestCrossChampionHandSwapCaseNamePc34 \
+    DM1_V1_ChestCrossChampionHandSwapCaseNamePc34
+#define M11_GameView_ChestCrossChampionHandSwapBuildCasePc34 \
+    DM1_V1_ChestCrossChampionHandSwapBuildCasePc34
+#define M11_GameView_ChestCrossChampionHandSwapRunPc34 \
+    DM1_V1_ChestCrossChampionHandSwapRunPc34
 
 #ifdef __cplusplus
 }

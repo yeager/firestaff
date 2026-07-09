@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-static M11_GameView_ChestReopenAfterLeaderRotationProbePc34 g_probe;
+static DM1_V1_ChestReopenAfterLeaderRotationProbePc34 g_probe;
 static int g_assertions;
 static int g_failures;
 
@@ -87,13 +87,13 @@ static int test_probe_spec(void)
                      g_probe.chestSlotCount, DM1_PC34_CHEST_SLOT_COUNT, defs);
     ok &= expect_nonempty_string(
         "source evidence",
-        M11_GameView_ChestReopenAfterLeaderRotationSourceEvidencePc34(),
+        DM1_V1_ChestReopenAfterLeaderRotationSourceEvidencePc34(),
         chest);
     return ok;
 }
 
 static int test_common_case_contract(
-    const M11_GameView_ChestReopenAfterLeaderRotationCasePc34* c)
+    const DM1_V1_ChestReopenAfterLeaderRotationCasePc34* c)
 {
     const char* f0333 = "ReDMCSB CHEST.C F0333:31-67";
     const char* f0334 = "ReDMCSB CHEST.C F0334:113-132";
@@ -121,23 +121,23 @@ static int test_common_case_contract(
                      c->actionLog.count >= 6 ? 1 : 0, 1, f0359);
     ok &= expect_int("first action opens chest A",
                      c->actionLog.entries[0].action,
-                     M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_A,
+                     DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_A,
                      f0333);
     ok &= expect_int("second action closes chest A",
                      c->actionLog.entries[1].action,
-                     M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_A,
+                     DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_A,
                      f0334);
     ok &= expect_int("third action rotates leader",
                      c->actionLog.entries[2].action,
-                     M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
+                     DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
                      f0359);
     ok &= expect_int("fourth action opens chest B",
                      c->actionLog.entries[3].action,
-                     M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_B,
+                     DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_B,
                      f0333);
     ok &= expect_int("final action reopens chest B",
                      c->actionLog.entries[c->actionLog.count - 1].action,
-                     M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_REOPEN_CHEST_B,
+                     DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_REOPEN_CHEST_B,
                      f0333);
     ok &= expect_int("chest A close count",
                      c->expected.closeCountChestA,
@@ -182,7 +182,7 @@ static int test_common_case_contract(
 
 static int test_basic_rotation_reopen(void)
 {
-    const M11_GameView_ChestReopenAfterLeaderRotationCasePc34* c =
+    const DM1_V1_ChestReopenAfterLeaderRotationCasePc34* c =
         &g_probe.cases[
             DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_CASE_BASIC];
     int ok = test_common_case_contract(c);
@@ -205,7 +205,7 @@ static int test_basic_rotation_reopen(void)
 
 static int test_non_empty_leader_hand_rotation(void)
 {
-    const M11_GameView_ChestReopenAfterLeaderRotationCasePc34* c =
+    const DM1_V1_ChestReopenAfterLeaderRotationCasePc34* c =
         &g_probe.cases[
             DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_CASE_FULL_HAND];
     int ok = test_common_case_contract(c);
@@ -229,7 +229,7 @@ static int test_non_empty_leader_hand_rotation(void)
 
 static int test_double_rotation_before_reopen(void)
 {
-    const M11_GameView_ChestReopenAfterLeaderRotationCasePc34* c =
+    const DM1_V1_ChestReopenAfterLeaderRotationCasePc34* c =
         &g_probe.cases[
             DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_CASE_DOUBLE_ROTATE];
     int ok = test_common_case_contract(c);
@@ -239,7 +239,7 @@ static int test_double_rotation_before_reopen(void)
                      "ReDMCSB COMMAND.C F0359 M568/C040");
     ok &= expect_int("double rotate back action",
                      c->actionLog.entries[5].action,
-                     M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER_BACK,
+                     DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER_BACK,
                      "ReDMCSB COMMAND.C F0359 M568/C040");
     ok &= expect_int("double rotate count",
                      c->expected.rotationCount, 2,
@@ -253,7 +253,7 @@ static int test_double_rotation_before_reopen(void)
 
 static int test_hidden_tail_leader_hand_mid_close(void)
 {
-    const M11_GameView_ChestReopenAfterLeaderRotationCasePc34* c =
+    const DM1_V1_ChestReopenAfterLeaderRotationCasePc34* c =
         &g_probe.cases[
             DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_CASE_HIDDEN_TAIL_HAND];
     int ok = test_common_case_contract(c);
@@ -264,7 +264,7 @@ static int test_hidden_tail_leader_hand_mid_close(void)
                      "ReDMCSB CHAMPION.C F0297:243-298");
     ok &= expect_int("hidden tail mid-close rotate action",
                      c->actionLog.entries[4].action,
-                     M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
+                     DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
                      "ReDMCSB COMMAND.C F0359 M568/C040");
     ok &= expect_int("hidden tail final leader changed mid-close",
                      c->expected.finalLeaderOrdinal, 3,
@@ -293,7 +293,7 @@ static int test_hidden_tail_leader_hand_mid_close(void)
 
 static int test_close_with_full_leader_hand(void)
 {
-    const M11_GameView_ChestReopenAfterLeaderRotationCasePc34* c =
+    const DM1_V1_ChestReopenAfterLeaderRotationCasePc34* c =
         &g_probe.cases[
             DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_CASE_CLOSE_FULL_HAND];
     int ok = test_common_case_contract(c);
@@ -317,7 +317,7 @@ static int test_close_with_full_leader_hand(void)
 
 static int test_empty_slot_noop_rotation(void)
 {
-    const M11_GameView_ChestReopenAfterLeaderRotationCasePc34* c =
+    const DM1_V1_ChestReopenAfterLeaderRotationCasePc34* c =
         &g_probe.cases[
             DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_CASE_EMPTY_NOOP];
     int ok = test_common_case_contract(c);
@@ -345,11 +345,11 @@ int main(void)
 
     printf("probe=dm1_v1_chest_reopen_after_leader_rotation_pc34_compat\n");
     printf("sourceEvidence=%s\n",
-           M11_GameView_ChestReopenAfterLeaderRotationSourceEvidencePc34());
+           DM1_V1_ChestReopenAfterLeaderRotationSourceEvidencePc34());
 
     ok &= expect_int(
         "probe setup",
-        M11_GameView_ChestReopenAfterLeaderRotationRunPc34(&g_probe), 1,
+        DM1_V1_ChestReopenAfterLeaderRotationRunPc34(&g_probe), 1,
         "ReDMCSB CHEST.C F0333:31-67");
     if (!ok) {
         printf("assertionCount=%d failures=%d\n", g_assertions, g_failures);

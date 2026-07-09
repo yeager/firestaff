@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static M11_GameView_ChestCrossChampionHandSwapProbePc34 g_probe;
+static DM1_V1_ChestCrossChampionHandSwapProbePc34 g_probe;
 static int g_assertions;
 static int g_failures;
 
@@ -52,7 +52,7 @@ static int expect_contains(const char* label,
 static int expect_case_name(int caseIndex)
 {
     const char* name =
-        M11_GameView_ChestCrossChampionHandSwapCaseNamePc34(caseIndex);
+        DM1_V1_ChestCrossChampionHandSwapCaseNamePc34(caseIndex);
 
     ++g_assertions;
     if (!name || name[0] == '\0') {
@@ -110,7 +110,7 @@ static int expect_weight_arrays(const char* label,
 static int test_source_evidence(void)
 {
     const char* evidence =
-        M11_GameView_ChestCrossChampionHandSwapSourceEvidencePc34();
+        DM1_V1_ChestCrossChampionHandSwapSourceEvidencePc34();
     int ok = 1;
 
     ok &= expect_contains("evidence same open", evidence,
@@ -200,7 +200,7 @@ static int test_probe_spec(void)
 }
 
 static int test_common_case(
-    const M11_GameView_ChestCrossChampionHandSwapCasePc34* c)
+    const DM1_V1_ChestCrossChampionHandSwapCasePc34* c)
 {
     const char* f0333 =
         "ReDMCSB CHEST.C F0333 lines 30-32,43,53-67";
@@ -230,15 +230,15 @@ static int test_common_case(
 
     ok &= expect_int("action log starts with open",
                      c->actionLog.entries[0].action,
-                     M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST,
+                     DM1_V1_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST,
                      f0333);
     ok &= expect_int("action log has close",
                      c->actionLog.entries[c->actionLog.count - 2].action,
-                     M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST,
+                     DM1_V1_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST,
                      f0334);
     ok &= expect_int("action log ends with reopen",
                      c->actionLog.entries[c->actionLog.count - 1].action,
-                     M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST,
+                     DM1_V1_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST,
                      f0333);
     ok &= expect_int("open result", c->expected.openResult, 1, f0333);
     ok &= expect_int("open chest thing after open",
@@ -412,7 +412,7 @@ static int test_case_variants(void)
                      g_probe.cases[
                          DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_CASE_SAME_OPEN_NOOP]
                          .actionLog.entries[1].action,
-                     M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP,
+                     DM1_V1_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP,
                      f0333);
     ok &= expect_int("same-open result",
                      g_probe.cases[
@@ -449,11 +449,11 @@ int main(void)
 
     printf("probe=dm1_v1_chest_cross_champion_hand_swap_pc34_compat\n");
     printf("sourceEvidence=%s\n",
-           M11_GameView_ChestCrossChampionHandSwapSourceEvidencePc34());
+           DM1_V1_ChestCrossChampionHandSwapSourceEvidencePc34());
 
     ok &= expect_int(
         "probe run",
-        M11_GameView_ChestCrossChampionHandSwapRunPc34(&g_probe), 1,
+        DM1_V1_ChestCrossChampionHandSwapRunPc34(&g_probe), 1,
         "ReDMCSB CHEST.C F0333 lines 43,53-67");
     if (!ok) {
         printf("assertionCount=%d failures=%d\n", g_assertions, g_failures);

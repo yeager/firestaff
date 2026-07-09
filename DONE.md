@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 chest rotation/swap ownership names: reopen-after-leader-rotation and cross-champion-hand-swap actions, logs, cases, probes, and source-evidence helpers now expose DM1-owned API names; old M11 chest names remain aliases. Verification: cross-champion hand swap 678 assertions, reopen-after-leader-rotation 277 assertions, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 spell-effect render ownership names: spell render state, champion info, result, layout constants, init/caster/add/remove/clear/draw/symbol/evidence helpers now expose DM1-owned API names; old m11_spell_render names remain aliases. Verification: firestaff_m10/firestaff_m11 build, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 draw primitive ownership names: bitmap/rect types plus clear/pixel/line/rect/blit/transparent/scaled/flip/darken/source-evidence helpers now expose DM1-owned API names; old m11_draw names remain aliases. Verification: firestaff_m10/firestaff_m11 build, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
