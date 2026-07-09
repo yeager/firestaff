@@ -926,9 +926,6 @@ int csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
     int menu_input,
     const CSB_V1_StartupRenderExecutor_PC34 *executor,
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 *out_receipt);
-int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan);
 int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     CSB_V1_UtilRenderPlan *out_plan,
     int title_active,

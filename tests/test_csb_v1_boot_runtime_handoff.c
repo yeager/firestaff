@@ -2148,7 +2148,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     TestStartupRenderProbe capture_render_probe;
     CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
     CSB_V1_StartupRenderPlan_PC34 receipt_closed_door_plan;
-    CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
     CSB_V1_StartupRenderPlan_PC34 runtime_render_plan;
     int packaged_title_ok;
     int enter_menu_x = 244;
@@ -3353,13 +3352,12 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.draw_door_fallback_count == 0 &&
               capture_render_probe.draw_fallback_text_count == 0,
           "boot startup closed-door capture plan refuses fallback when surface assets fail");
-    CHECK(csb_v1_boot_startup_render_plan_from_snapshot_pc34(
-              &snapshot,
-              &snapshot_render_plan) == 1 &&
-              snapshot_render_plan.surface ==
+    CHECK(host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.render_plan_valid &&
+              host_view_receipt.render_draw.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
-              snapshot_render_plan.waiting_for_input,
-          "boot startup render-plan facade returns CSB-owned closed-door plan");
+              host_view_receipt.render_draw.render_plan.waiting_for_input,
+          "boot startup host-view receipt returns packaged closed-door render plan");
     CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
               &runtime_view_receipt,
               snapshot.title_active,
@@ -3410,10 +3408,11 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               snapshot.resume_available,
               snapshot.resume_path,
               snapshot.boot_profile) == 1 &&
-              runtime_render_plan.surface == snapshot_render_plan.surface &&
+              runtime_render_plan.surface ==
+                  host_view_receipt.render_draw.render_plan.surface &&
               runtime_render_plan.waiting_for_input ==
-                  snapshot_render_plan.waiting_for_input,
-          "boot startup runtime-state render-plan facade matches snapshot plan");
+                  host_view_receipt.render_draw.render_plan.waiting_for_input,
+          "boot startup runtime-state render-plan facade matches host-view packaged plan");
     snapshot.utility_overlay_active = 1;
     snapshot.opening_active = 1;
     snapshot.opening_delay_ticks = 0;
