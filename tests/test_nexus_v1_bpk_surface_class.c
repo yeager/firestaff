@@ -96,6 +96,54 @@ static void make_synthetic_4entry_bpk(uint8_t *data, size_t cap) {
     memset(data + payload_off, 0xa5, 64U);
 }
 
+static void make_synthetic_stored_bpk(uint8_t *data, size_t cap) {
+    const uint32_t entry0_off = 64U;
+    const uint32_t entry1_off = 96U;
+    const uint32_t entry2_off = 132U;
+    const uint32_t entry3_off = 216U;
+    if (cap < 256U) return;
+    memset(data, 0, cap);
+    memcpy(data + 0, "BPPK", 4);
+    wr32_be(data + 4, (uint32_t)cap);
+    memcpy(data + 12, "BMPD", 4);
+    wr32_be(data + 16, (uint32_t)cap - 20U);
+    wr32_be(data + 20, 4U);
+    wr32_be(data + 24, entry0_off);
+    wr32_be(data + 28, entry1_off);
+    wr32_be(data + 32, entry2_off);
+    wr32_be(data + 36, entry3_off);
+
+    data[entry0_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_TRAILER;
+
+    wr16_be(data + entry1_off + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 4U);
+    data[entry1_off + NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 4U;
+    data[entry1_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_8BPP;
+    for (uint32_t i = 0; i < 16U; ++i) {
+        data[entry1_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + i] =
+            (uint8_t)(0x10U + i);
+    }
+
+    wr16_be(data + entry2_off + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 8U);
+    data[entry2_off + NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 4U;
+    data[entry2_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_16BPP;
+    for (uint32_t i = 0; i < 64U; ++i) {
+        data[entry2_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + i] =
+            (uint8_t)(0x40U + i);
+    }
+
+    wr16_be(data + entry3_off + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 2U);
+    data[entry3_off + NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 3U;
+    data[entry3_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_24BPP;
+    for (uint32_t i = 0; i < 18U; ++i) {
+        data[entry3_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + i] =
+            (uint8_t)(0x80U + i);
+    }
+}
+
 /* ---- Surface-class lookup tests ---- */
 
 static void test_mode_to_surface_class(void) {
@@ -297,10 +345,7 @@ static void test_runtime_render_receipt_ready_for_stored_surfaces(void) {
     Nexus_V1_BpkRuntimeRenderReceipt receipt;
     int rc;
 
-    make_synthetic_4entry_bpk(data, sizeof(data));
-    memset(data + 96U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
-    memset(data + 128U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
-    memset(data + 160U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    make_synthetic_stored_bpk(data, sizeof(data));
 
     memset(&receipt, 0, sizeof(receipt));
     rc = nexus_v1_bpk_archive_runtime_render_receipt(
@@ -312,10 +357,88 @@ static void test_runtime_render_receipt_ready_for_stored_surfaces(void) {
     expect(receipt.raw_entries == 4U, "stored receipt: 4 raw entries");
     expect(receipt.stored_surface_entries == 3U,
            "stored receipt: 3 stored surfaces");
+    expect(receipt.stored_surface_bytes_available >= 98U,
+           "stored receipt: enough stored bytes are available");
+    expect(receipt.stored_surface_short_entries == 0U,
+           "stored receipt: 0 short stored surfaces");
+    expect(receipt.all_stored_surface_payloads_fit == 1,
+           "stored receipt: all stored payloads fit");
     expect(receipt.requires_prs3_decoder == 0,
            "stored receipt does not require PRS3 decoder");
     expect(receipt.fallback_visuals_permitted == 1,
            "stored receipt permits normal render path");
+}
+
+static void test_runtime_render_receipt_blocks_truncated_stored_surfaces(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkRuntimeRenderReceipt receipt;
+    int rc;
+
+    make_synthetic_4entry_bpk(data, sizeof(data));
+    memset(data + 96U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 128U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 160U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_v1_bpk_archive_runtime_render_receipt(
+        data, sizeof(data), &receipt);
+    expect(rc == 0, "truncated stored-surface receipt returns 0");
+    expect(receipt.route ==
+               NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_STORED_TRUNCATED,
+           "truncated stored surfaces block the runtime render route");
+    expect(strcmp(nexus_v1_bpk_runtime_render_route_name(receipt.route),
+                  "blocked-stored-truncated") == 0,
+           "runtime route name is blocked-stored-truncated");
+    expect(receipt.stored_surface_short_entries > 0U,
+           "truncated stored receipt reports short surface entries");
+    expect(receipt.all_stored_surface_payloads_fit == 0,
+           "truncated stored receipt reports payload-fit failure");
+    expect(receipt.fallback_visuals_permitted == 0,
+           "truncated stored receipt forbids fallback visuals");
+}
+
+static void test_extract_stored_surface_bytes(void) {
+    uint8_t data[256];
+    uint8_t out[128];
+    Nexus_V1_BpkSurfaceEntry surface;
+    size_t written = 0U;
+    int rc;
+
+    make_synthetic_stored_bpk(data, sizeof(data));
+    memset(out, 0, sizeof(out));
+    memset(&surface, 0, sizeof(surface));
+
+    rc = nexus_v1_bpk_archive_extract_stored_surface(
+        data, sizeof(data), 2U, out, sizeof(out), &surface, &written);
+    expect(rc == NEXUS_V1_BPK_EXTRACT_OK,
+           "stored RGB565 surface extraction returns OK");
+    expect(strcmp(nexus_v1_bpk_surface_extract_status_name(rc), "ok") == 0,
+           "stored RGB565 extraction status name is ok");
+    expect(written == 64U, "stored RGB565 extraction writes 64 bytes");
+    expect(surface.entry_index == 2U &&
+               surface.layout.surface_class == NEXUS_V1_BPK_SURFACE_RGB565 &&
+               surface.layout.rowstride == 16U &&
+               surface.layout.surface_bytes == 64U,
+           "stored RGB565 extraction returns surface metadata");
+    expect(out[0] == 0x40U && out[63] == 0x7FU,
+           "stored RGB565 extraction copies exact payload bytes");
+
+    rc = nexus_v1_bpk_archive_extract_stored_surface(
+        data, sizeof(data), 2U, out, 32U, &surface, &written);
+    expect(rc == NEXUS_V1_BPK_EXTRACT_ERR_OUTPUT_TOO_SMALL,
+           "stored extraction rejects too-small output buffer");
+
+    make_synthetic_4entry_bpk(data, sizeof(data));
+    rc = nexus_v1_bpk_archive_extract_stored_surface(
+        data, sizeof(data), 1U, out, sizeof(out), &surface, &written);
+    expect(rc == NEXUS_V1_BPK_EXTRACT_ERR_PRS3,
+           "stored extraction rejects PRS3-compressed entries");
+
+    make_synthetic_stored_bpk(data, sizeof(data));
+    rc = nexus_v1_bpk_archive_extract_stored_surface(
+        data, sizeof(data), 0U, out, sizeof(out), &surface, &written);
+    expect(rc == NEXUS_V1_BPK_EXTRACT_ERR_NOT_SURFACE,
+           "stored extraction rejects directory trailer entry");
 }
 
 /* ---- Synthetic BPX3 directory-trailer entry ---- */
@@ -629,6 +752,8 @@ int main(void) {
     test_surface_estimate_capacity_boundary();
     test_runtime_render_receipt_blocks_prs3();
     test_runtime_render_receipt_ready_for_stored_surfaces();
+    test_runtime_render_receipt_blocks_truncated_stored_surfaces();
+    test_extract_stored_surface_bytes();
     test_bpx3_trailer_entry();
     test_bpx3_trailer_rejections();
     test_bpx3_prs3_span_rejections();
