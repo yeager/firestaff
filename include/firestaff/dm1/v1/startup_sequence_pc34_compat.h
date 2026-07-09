@@ -300,6 +300,30 @@ typedef struct DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 {
     const char* reason;
 } DM1_V1_StartupTitleMenuEligibilityReceipt_PC34;
 
+typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
+    int handled;
+    int play_swsh;
+    int play_title;
+    int play_entrance;
+    unsigned int swsh_initial_logo_hold_ms;
+    unsigned int swsh_palette_wait_ms;
+    unsigned int swsh_sound_wait_ms;
+    unsigned int swsh_final_hold_ms;
+    unsigned int title_presents_hold_ms;
+    unsigned int title_zoom_frame_delay_ms;
+    unsigned int title_zoom_step_count;
+    unsigned int title_post_zoom_guard_ms;
+    unsigned int title_source_animation_steps;
+    unsigned int title_frame_bank_equivalent_steps;
+    unsigned int title_menu_boundary_frame;
+    int title_presents_palette;
+    int title_zoom_palette;
+    int title_menu_eligible;
+    int title_consume_pending_input;
+    int entrance_auto_enter_ms;
+    const char* source_evidence;
+} DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
+
 typedef struct DM1_V1_StartupSelectedBootProbeFacts_PC34 {
     const char* expected_game_id;
     const char* actual_source_id;
@@ -424,6 +448,9 @@ int dm1_v1_startup_selected_boot_probe_source_kind_receipt_pc34(
 int dm1_v1_startup_title_menu_eligibility_receipt_pc34(
     const DM1_V1_StartupTitleMenuEligibilityFacts_PC34* facts,
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34* out_receipt);
+int dm1_v1_startup_full_graphics_media_receipt_pc34(
+    const char* source_id,
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);

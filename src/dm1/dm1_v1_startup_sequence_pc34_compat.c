@@ -1,5 +1,6 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
+#include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include <stdio.h>
 #include <string.h>
@@ -997,6 +998,72 @@ int dm1_v1_startup_title_menu_eligibility_receipt_pc34(
     receipt.consume_pending_input = 1;
     receipt.next_stage = DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE_PC34;
     receipt.reason = "title-complete-menu-eligible";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm1_v1_startup_full_graphics_media_receipt_pc34(
+    const char* source_id,
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt) {
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 receipt;
+    V1_TitleFrontendSourceTiming title_timing;
+    int presents_palette = 0;
+    int title_palette = 0;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    title_timing = V1_TitleFrontend_GetSourceTimingEvidence();
+    (void)V1_TitleFrontend_GetStepPalette(
+        V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
+        &presents_palette);
+    (void)V1_TitleFrontend_GetStepPalette(
+        V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
+        &title_palette);
+
+    receipt.handled = 1;
+    receipt.play_swsh = 1;
+    receipt.play_title = 1;
+    receipt.play_entrance = 1;
+    receipt.swsh_initial_logo_hold_ms =
+        SWSH_Compat_GetRuntimeInitialLogoHoldMs();
+    receipt.swsh_palette_wait_ms =
+        SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+            SWSH_Compat_GetSourceTimingEvidence().paletteWaitVblankCount);
+    receipt.swsh_sound_wait_ms =
+        SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+            SWSH_Compat_GetSourceTimingEvidence().soundWaitVblankCount);
+    receipt.swsh_final_hold_ms = SWSH_Compat_GetRuntimeFinalHoldMs();
+    receipt.title_presents_hold_ms =
+        V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&title_timing);
+    receipt.title_zoom_frame_delay_ms =
+        V1_TitleFrontend_GetRuntimeFrameDelayMs(&title_timing);
+    receipt.title_zoom_step_count = title_timing.zoomStepCount;
+    receipt.title_post_zoom_guard_ms =
+        V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&title_timing);
+    receipt.title_source_animation_steps =
+        title_timing.sourceAnimationStepCount;
+    receipt.title_frame_bank_equivalent_steps =
+        title_timing.frameBankEquivalentStepCount;
+    receipt.title_menu_boundary_frame =
+        title_timing.firstMenuEligibleStep;
+    receipt.title_presents_palette = presents_palette;
+    receipt.title_zoom_palette = title_palette;
+    receipt.title_menu_eligible = 1;
+    receipt.title_consume_pending_input = 1;
+    receipt.entrance_auto_enter_ms = 1200;
+    /* ReDMCSB NECIO.C lines 3592-3609: SWSH sets black/normal curtain,
+     * expands the FTL logo, waits F0022_MAIN_SwooshDelay(20), starts sound,
+     * then applies palette waits. TITLE.C F0437:319-409 owns PRESENTS,
+     * zoom, STRIKES BACK, and final guard before ENTRANCE.C F0441. */
+    receipt.source_evidence =
+        "ReDMCSB NECIO.C:3592-3609; TITLE.C:319-409; ENTRANCE.C:850-883";
     *out_receipt = receipt;
     return 1;
 }
