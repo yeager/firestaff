@@ -567,7 +567,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     strcmp(animation, "dm2-startup-menu") == 0 &&
                     animation_active == 1 &&
                     title_frame == 0 &&
-                    title_frame_max == 0 &&
+                    title_frame_max == 7 &&
                     title_ready == 0,
                 "DM2 startup presentation owns active boot receipt fields");
     expect_true(dm2_v1_startup_presentation_receipt(

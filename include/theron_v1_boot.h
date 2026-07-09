@@ -327,6 +327,13 @@ typedef struct Theron_V1_BootStartupRenderRouteReceipt {
     int startup_menu_render_allowed;
     int track02_title_menu_ready;
     int title_menu_runtime_handoff_ready;
+    int save_resume_start_ready;
+    int save_resume_runtime_handoff_ready;
+    int save_resume_track02_no_fallback_ready;
+    int save_resume_claim;
+    int save_resume_tqsv_slot;
+    int save_resume_srm_slot;
+    int save_resume_srm_import_status;
     int runtime_readiness_ready;
     int runtime_level_render_allowed;
     int first_level_render_ready;

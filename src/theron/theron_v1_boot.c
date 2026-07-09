@@ -1753,6 +1753,16 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     out_receipt->title_menu_runtime_handoff_ready =
         out_receipt->track02_title_menu_ready &&
         out_receipt->runtime_readiness_ready ? 1 : 0;
+    out_receipt->save_resume_claim = view_model->resume_claim;
+    out_receipt->save_resume_tqsv_slot = view_model->tqsv_slot;
+    out_receipt->save_resume_srm_slot = view_model->srm_slot;
+    out_receipt->save_resume_srm_import_status =
+        view_model->srm_import_status;
+    out_receipt->save_resume_start_ready =
+        view_model->resume_claim != THERON_V1_STARTUP_RESUME_NONE ? 1 : 0;
+    out_receipt->save_resume_runtime_handoff_ready =
+        out_receipt->save_resume_start_ready &&
+        out_receipt->runtime_readiness_ready ? 1 : 0;
     out_receipt->no_fallback_visuals_enforced =
         view_model->runtime_fallback_visuals_blocked ||
                 view_model->runtime_level_source ==
@@ -1761,6 +1771,10 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
             : 0;
     out_receipt->fallback_visuals_allowed =
         out_receipt->no_fallback_visuals_enforced ? 0 : 1;
+    out_receipt->save_resume_track02_no_fallback_ready =
+        out_receipt->save_resume_runtime_handoff_ready &&
+        out_receipt->title_menu_runtime_handoff_ready &&
+        out_receipt->no_fallback_visuals_enforced ? 1 : 0;
     out_receipt->status_scope = "STARTUP";
     out_receipt->status =
         view_model->runtime_fallback_visuals_blocked

@@ -410,10 +410,7 @@ int dm2_v1_startup_presentation_receipt(int startup_menu_active,
                                         int *out_title_frame_max,
                                         int *out_title_ready)
 {
-    const int active = startup_menu_active ? 1 : 0;
-    const char *animation = active
-        ? "dm2-startup-menu"
-        : "dm2-runtime";
+    DM2_V1_StartupRuntimeHandoffReceipt handoff;
 
     if (!dm2_v1_startup_receipt_phase(startup_menu_active,
                                       out_phase,
@@ -421,21 +418,30 @@ int dm2_v1_startup_presentation_receipt(int startup_menu_active,
                                       out_startup_active)) {
         return 0;
     }
+    if (!dm2_v1_startup_runtime_handoff_receipt_from_state(
+            &handoff,
+            startup_menu_active,
+            1)) {
+        return 0;
+    }
     if (!out_animation || out_animation_size <= 0) {
         return 0;
     }
-    snprintf(out_animation, (size_t)out_animation_size, "%s", animation);
+    snprintf(out_animation,
+             (size_t)out_animation_size,
+             "%s",
+             handoff.animation);
     if (out_animation_active) {
-        *out_animation_active = active;
+        *out_animation_active = handoff.animation_active;
     }
     if (out_title_frame) {
-        *out_title_frame = 0;
+        *out_title_frame = handoff.title_frame;
     }
     if (out_title_frame_max) {
-        *out_title_frame_max = 0;
+        *out_title_frame_max = handoff.title_frame_max;
     }
     if (out_title_ready) {
-        *out_title_ready = active ? 0 : 1;
+        *out_title_ready = handoff.title_ready;
     }
     return 1;
 }

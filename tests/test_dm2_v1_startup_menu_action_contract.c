@@ -89,15 +89,32 @@ int main(void)
               runtime_handoff.valid &&
               runtime_handoff.startup_menu_active == 1 &&
               strcmp(runtime_handoff.animation, "dm2-startup-menu") == 0 &&
+              runtime_handoff.title_animation_tick == 0 &&
+              runtime_handoff.title_frame == 0 &&
+              runtime_handoff.title_frame_max == 7 &&
+              runtime_handoff.title_frame_duration_ticks == 6 &&
               runtime_handoff.runtime_menu_ready == 1 &&
               runtime_handoff.runtime_action_ready == 0 &&
               runtime_handoff.first_hud_frame_ready == 0,
           "runtime handoff helper owns startup menu readiness");
+    check(dm2_v1_startup_runtime_handoff_receipt_from_tick(
+              &runtime_handoff, 1, 1, 13) &&
+              runtime_handoff.valid &&
+              runtime_handoff.title_animation_tick == 13 &&
+              runtime_handoff.title_frame == 2 &&
+              runtime_handoff.title_frame_max == 7 &&
+              runtime_handoff.title_frame_duration_ticks == 6 &&
+              runtime_handoff.title_ready == 0,
+          "runtime handoff helper owns DM2 title animation frame timing");
     check(dm2_v1_startup_runtime_handoff_receipt_from_state(
               &runtime_handoff, 0, 1) &&
               runtime_handoff.valid &&
               runtime_handoff.startup_menu_active == 0 &&
               strcmp(runtime_handoff.animation, "dm2-runtime") == 0 &&
+              runtime_handoff.title_animation_tick == 0 &&
+              runtime_handoff.title_frame == 0 &&
+              runtime_handoff.title_frame_max == 0 &&
+              runtime_handoff.title_frame_duration_ticks == 0 &&
               runtime_handoff.runtime_menu_ready == 0 &&
               runtime_handoff.runtime_action_ready == 1 &&
               runtime_handoff.first_hud_frame_ready == 1,
@@ -337,7 +354,8 @@ int main(void)
               strcmp(launch_receipt.runtime_handoff.animation,
                      "dm2-startup-menu") == 0 &&
               launch_receipt.runtime_handoff.title_frame == 0 &&
-              launch_receipt.runtime_handoff.title_frame_max == 0 &&
+              launch_receipt.runtime_handoff.title_frame_max == 7 &&
+              launch_receipt.runtime_handoff.title_frame_duration_ticks == 6 &&
               launch_receipt.runtime_handoff.title_ready == 0 &&
               launch_receipt.runtime_handoff.initialize_v2_runtime == 1 &&
               launch_receipt.runtime_handoff.initialize_hud_runtime == 1 &&

@@ -1308,13 +1308,33 @@ int dm2_v1_startup_runtime_handoff_receipt_from_state(
     int startup_menu_active,
     int hud_runtime_ready)
 {
+    return dm2_v1_startup_runtime_handoff_receipt_from_tick(
+        out_receipt,
+        startup_menu_active,
+        hud_runtime_ready,
+        0);
+}
+
+int dm2_v1_startup_runtime_handoff_receipt_from_tick(
+    DM2_V1_StartupRuntimeHandoffReceipt *out_receipt,
+    int startup_menu_active,
+    int hud_runtime_ready,
+    int animation_tick)
+{
     int active;
+    int tick;
+
+    enum {
+        DM2_V1_STARTUP_TITLE_FRAME_COUNT = 8,
+        DM2_V1_STARTUP_TITLE_FRAME_TICKS = 6
+    };
 
     if (!out_receipt) {
         return 0;
     }
     memset(out_receipt, 0, sizeof(*out_receipt));
     active = startup_menu_active ? 1 : 0;
+    tick = animation_tick < 0 ? 0 : animation_tick;
     out_receipt->valid = 1;
     out_receipt->startup_menu_active = active;
     out_receipt->animation_active = active;
@@ -1322,8 +1342,15 @@ int dm2_v1_startup_runtime_handoff_receipt_from_state(
              sizeof(out_receipt->animation),
              "%s",
              active ? "dm2-startup-menu" : "dm2-runtime");
-    out_receipt->title_frame = 0;
-    out_receipt->title_frame_max = 0;
+    out_receipt->title_animation_tick = tick;
+    out_receipt->title_frame =
+        active ? (tick / DM2_V1_STARTUP_TITLE_FRAME_TICKS) %
+                     DM2_V1_STARTUP_TITLE_FRAME_COUNT
+               : 0;
+    out_receipt->title_frame_max =
+        active ? DM2_V1_STARTUP_TITLE_FRAME_COUNT - 1 : 0;
+    out_receipt->title_frame_duration_ticks =
+        active ? DM2_V1_STARTUP_TITLE_FRAME_TICKS : 0;
     out_receipt->title_ready = active ? 0 : 1;
     /* skproject/SKWIN SkWinCore startup keeps title/menu presentation and
      * HUD/game runtime as one boot handoff; Firestaff records the same
