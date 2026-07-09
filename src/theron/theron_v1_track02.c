@@ -1148,6 +1148,15 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
     const struct {
         unsigned int route_bit;
         size_t span_delta;
+    } raw_tail_sample_specs[] = {
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM, 16u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM, 20u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD, 24u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD, 28u }
+    };
+    const struct {
+        unsigned int route_bit;
+        size_t span_delta;
     } iso_extended_sample_specs[] = {
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM, 0u },
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM, 4u },
@@ -1238,6 +1247,23 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
             md5_hex,
             sample_specs[i].route_bit,
             raw_offset);
+    }
+    if (variant_is_raw_bin(variant) && signal.anchor_count > 0u) {
+        for (size_t i = 0u;
+             i < sizeof(raw_tail_sample_specs) /
+                     sizeof(raw_tail_sample_specs[0]);
+             ++i) {
+            size_t raw_offset =
+                signal.post_boundary_span_offsets[0] +
+                raw_tail_sample_specs[i].span_delta;
+            (void)catalog_add_startup_bitmap_sample_from_offset(
+                out_catalog,
+                track02_data,
+                track02_size,
+                md5_hex,
+                raw_tail_sample_specs[i].route_bit,
+                raw_offset);
+        }
     }
 
     if (variant == THERON_TRACK02_VARIANT_US_ISO &&
