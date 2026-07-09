@@ -240,6 +240,58 @@ int m11_plan_group_pit_fall_square_f0267(
     return 1;
 }
 
+int m11_plan_group_teleporter_destination_f0267(
+        int squareType,
+        int teleporterSquareType,
+        int teleporterOpen,
+        int teleporterFound,
+        int teleporterScope,
+        int teleporterAudible,
+        int targetMapIndex,
+        int targetMapX,
+        int targetMapY,
+        int sourceMapIndex,
+        int sourceMapX,
+        int sourceMapY,
+        int mapCount,
+        M11_GroupTeleporterDestinationPlan* outPlan) {
+    M11_GroupTeleporterDestinationPlan plan;
+
+    if (!outPlan) return 0;
+    memset(&plan, 0, sizeof(plan));
+    plan.valid = 1;
+    plan.targetMapIndex = sourceMapIndex;
+    plan.targetMapX = sourceMapX;
+    plan.targetMapY = sourceMapY;
+
+    if (squareType != teleporterSquareType || !teleporterOpen ||
+        !teleporterFound || !(teleporterScope & M11_TELEPORTER_SCOPE_CREATURES)) {
+        *outPlan = plan;
+        return 1;
+    }
+    if (targetMapIndex < 0 || targetMapIndex >= mapCount) {
+        *outPlan = plan;
+        return 1;
+    }
+
+    plan.shouldTeleport = 1;
+    plan.shouldEmitAudibleBuzz = teleporterAudible ? 1 : 0;
+    plan.shouldStopChain =
+        targetMapIndex == sourceMapIndex &&
+        targetMapX == sourceMapX &&
+        targetMapY == sourceMapY;
+    plan.targetMapIndex = targetMapIndex;
+    plan.targetMapX = targetMapX;
+    plan.targetMapY = targetMapY;
+
+    /* ReDMCSB MOVESENS.C F0267 lines 474-492: group teleporter
+     * chaining accepts only open creature-scope teleporters, switches to
+     * TargetMap/TargetX/TargetY, and stops on a self-targeting teleporter.
+     * Lines 520-524 request the target-square M560 buzz for audible hops. */
+    *outPlan = plan;
+    return 1;
+}
+
 int m11_plan_lord_chaos_adjacent_retry_f0252(
         int creatureType,
         int randomGate,

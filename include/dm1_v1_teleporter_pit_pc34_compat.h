@@ -49,6 +49,8 @@ extern "C" {
 #define M11_GROUP_MOVE_ROUTE_RETRY                  3
 #define M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT  4
 
+#define M11_TELEPORTER_SCOPE_CREATURES              0x01
+
 typedef struct {
     int x;
     int y;
@@ -89,6 +91,16 @@ typedef struct {
     int valid;
     int shouldFall;
 } M11_GroupPitFallSquarePlan;
+
+typedef struct {
+    int valid;
+    int shouldTeleport;
+    int shouldStopChain;
+    int shouldEmitAudibleBuzz;
+    int targetMapIndex;
+    int targetMapX;
+    int targetMapY;
+} M11_GroupTeleporterDestinationPlan;
 
 typedef struct {
     int valid;
@@ -139,6 +151,21 @@ int  m11_plan_group_pit_fall_square_f0267(
         int pitOpen,
         int pitImaginary,
         M11_GroupPitFallSquarePlan* outPlan);
+int  m11_plan_group_teleporter_destination_f0267(
+        int squareType,
+        int teleporterSquareType,
+        int teleporterOpen,
+        int teleporterFound,
+        int teleporterScope,
+        int teleporterAudible,
+        int targetMapIndex,
+        int targetMapX,
+        int targetMapY,
+        int sourceMapIndex,
+        int sourceMapX,
+        int sourceMapY,
+        int mapCount,
+        M11_GroupTeleporterDestinationPlan* outPlan);
 int  m11_plan_lord_chaos_adjacent_retry_f0252(
         int creatureType,
         int randomGate,
