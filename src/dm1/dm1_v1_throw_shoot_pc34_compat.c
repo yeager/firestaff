@@ -333,6 +333,91 @@ int dm1_v1_build_projectile_create_input_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_subtype_from_thing_pc34(int projectileThing,
+                                              int* outSubtype) {
+    int subtype;
+    switch (projectileThing) {
+        case DM1_PROJECTILE_THING_FIREBALL:
+            subtype = PROJECTILE_SUBTYPE_FIREBALL;
+            break;
+        case DM1_PROJECTILE_THING_SLIME:
+            subtype = PROJECTILE_SUBTYPE_SLIME;
+            break;
+        case DM1_PROJECTILE_THING_LIGHTNING_BOLT:
+            subtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+            break;
+        case DM1_PROJECTILE_THING_HARM_NON_MATERIAL:
+            subtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+            break;
+        case DM1_PROJECTILE_THING_OPEN_DOOR:
+            subtype = PROJECTILE_SUBTYPE_OPEN_DOOR;
+            break;
+        case DM1_PROJECTILE_THING_POISON_CLOUD:
+            subtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
+            break;
+        default:
+            if (outSubtype) *outSubtype = -1;
+            return 0;
+    }
+    if (outSubtype) *outSubtype = subtype;
+    return 1;
+}
+
+int dm1_v1_projectile_attack_type_for_subtype_pc34(int subtype) {
+    switch (subtype) {
+        case PROJECTILE_SUBTYPE_FIREBALL:
+            return COMBAT_ATTACK_FIRE;
+        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:
+            return COMBAT_ATTACK_LIGHTNING;
+        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
+        case PROJECTILE_SUBTYPE_OPEN_DOOR:
+            return COMBAT_ATTACK_MAGIC;
+        case PROJECTILE_SUBTYPE_SLIME:
+        case PROJECTILE_SUBTYPE_POISON_CLOUD:
+        default:
+            return COMBAT_ATTACK_NORMAL;
+    }
+}
+
+int dm1_v1_build_creature_projectile_create_input_pc34(
+    const DM1_CreatureProjectileCreateRequestPc34* req,
+    struct ProjectileCreateInput_Compat* outInput) {
+    int subtype;
+    if (!req || !outInput) return 0;
+    if (req->creatureGroupIndex < 0) return 0;
+    if (!dm1_v1_projectile_subtype_from_thing_pc34(
+            req->projectileThing, &subtype)) {
+        return 0;
+    }
+
+    /* ReDMCSB: GROUP.C F0207/F0209 choose the projectile EXPLOSION thing
+     * and PROJEXPL.C F0212 consumes it as a creature-owned projectile.
+     * DM1 owns the thing->subtype, attack type, poison attack, and F0810
+     * create-input shape; M11 supplies only live position/tick facts. */
+    memset(outInput, 0, sizeof(*outInput));
+    outInput->category = PROJECTILE_CATEGORY_MAGICAL;
+    outInput->subtype = subtype;
+    outInput->ownerKind = PROJECTILE_OWNER_CREATURE;
+    outInput->ownerIndex = req->creatureGroupIndex;
+    outInput->mapIndex = req->partyMapIndex;
+    outInput->mapX = req->groupMapX;
+    outInput->mapY = req->groupMapY;
+    outInput->cell = req->targetCell & 3;
+    outInput->direction = req->direction & 3;
+    outInput->kineticEnergy = req->kineticEnergy;
+    outInput->attack = req->attack;
+    outInput->launcherStrength = req->attack;
+    outInput->stepEnergy = req->stepEnergy > 0 ? req->stepEnergy : 1;
+    outInput->currentTick = req->gameTick;
+    outInput->poisonAttack =
+        (subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) ? req->attack : 0;
+    outInput->attackTypeCode =
+        dm1_v1_projectile_attack_type_for_subtype_pc34(subtype);
+    outInput->associatedThing = THING_NONE;
+    outInput->firstMoveGraceFlag = 1;
+    return 1;
+}
+
 const char* dm1_v1_projectile_subtype_name_pc34(int subtype) {
     switch (subtype) {
         case PROJECTILE_SUBTYPE_FIREBALL:          return "FIREBALL";

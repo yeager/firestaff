@@ -49,6 +49,20 @@ typedef struct {
 } DM1_ProjectileCreateRequestPc34;
 
 typedef struct {
+    int creatureGroupIndex;
+    int partyMapIndex;
+    int groupMapX;
+    int groupMapY;
+    int projectileThing;
+    int targetCell;
+    int direction;
+    int kineticEnergy;
+    int attack;
+    int stepEnergy;
+    int gameTick;
+} DM1_CreatureProjectileCreateRequestPc34;
+
+typedef struct {
     int shouldConsumePotion;
     int shouldMaterialize;
     unsigned short associatedThing;
@@ -241,6 +255,12 @@ int dm1_v1_shoot_attack_pc34(int weaponShootAttack, int shootSkillLevel);
 int dm1_v1_legacy_throw_attack_probe_pc34(int baseAttack, int throwSkillLevel);
 int dm1_v1_build_projectile_create_input_pc34(
     const DM1_ProjectileCreateRequestPc34* req,
+    struct ProjectileCreateInput_Compat* outInput);
+int dm1_v1_projectile_subtype_from_thing_pc34(int projectileThing,
+                                              int* outSubtype);
+int dm1_v1_projectile_attack_type_for_subtype_pc34(int subtype);
+int dm1_v1_build_creature_projectile_create_input_pc34(
+    const DM1_CreatureProjectileCreateRequestPc34* req,
     struct ProjectileCreateInput_Compat* outInput);
 const char* dm1_v1_projectile_subtype_name_pc34(int subtype);
 int dm1_v1_projectile_impact_source_sound_index_pc34(
