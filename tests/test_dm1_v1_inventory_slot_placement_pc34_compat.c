@@ -486,6 +486,93 @@ static int test_probe(void)
     return ok;
 }
 
+static int test_slotbox_zones(void)
+{
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    const char* coord =
+        "ReDMCSB DATA.C layout-696 / DEFS.H C507..C544 slot boxes";
+    int ok = 1;
+
+    ok &= expect_int("source slot zone count",
+                     dm1_v1_inventory_source_slot_box_zone_count_pc34(),
+                     30, coord);
+    ok &= expect_int("source slot C507 id",
+                     dm1_v1_inventory_source_slot_box_zone_id_pc34(8),
+                     507, coord);
+    ok &= expect_true("source slot C507 zone",
+                      dm1_v1_inventory_source_slot_box_zone_pc34(8, &zone),
+                      coord);
+    ok &= expect_int("source slot C507 x", zone.x, 6, coord);
+    ok &= expect_int("source slot C507 y", zone.y, 53, coord);
+    ok &= expect_int("source slot C507 w", zone.w, 16, coord);
+    ok &= expect_int("source slot C507 h", zone.h, 16, coord);
+    ok &= expect_int("source slot C536 id",
+                     dm1_v1_inventory_source_slot_box_zone_id_pc34(37),
+                     536, coord);
+    ok &= expect_true("source slot C536 zone",
+                      dm1_v1_inventory_source_slot_box_zone_pc34(37, &zone),
+                      coord);
+    ok &= expect_int("source slot C536 x", zone.x, 202, coord);
+    ok &= expect_int("source slot C536 y", zone.y, 33, coord);
+    ok &= expect_int("source negative rejects",
+                     dm1_v1_inventory_source_slot_box_zone_id_pc34(7),
+                     0, coord);
+    ok &= expect_int("source high rejects",
+                     dm1_v1_inventory_source_slot_box_zone_id_pc34(38),
+                     0, coord);
+
+    ok &= expect_int("equipment zone count",
+                     dm1_v1_inventory_equipment_slot_zone_count_pc34(),
+                     13, coord);
+    ok &= expect_int("equipment first id",
+                     dm1_v1_inventory_equipment_slot_zone_id_pc34(0),
+                     507, coord);
+    ok &= expect_int("equipment last id",
+                     dm1_v1_inventory_equipment_slot_zone_id_pc34(12),
+                     519, coord);
+    ok &= expect_true("equipment neck zone",
+                      dm1_v1_inventory_equipment_slot_zone_pc34(10, &zone),
+                      coord);
+    ok &= expect_int("equipment neck x", zone.x, 6, coord);
+    ok &= expect_int("equipment neck y", zone.y, 33, coord);
+
+    ok &= expect_int("backpack zone count",
+                     dm1_v1_inventory_backpack_slot_zone_count_pc34(),
+                     17, coord);
+    ok &= expect_int("backpack first id",
+                     dm1_v1_inventory_backpack_slot_zone_id_pc34(0),
+                     520, coord);
+    ok &= expect_int("backpack last id",
+                     dm1_v1_inventory_backpack_slot_zone_id_pc34(16),
+                     536, coord);
+    ok &= expect_true("backpack C528 zone",
+                      dm1_v1_inventory_backpack_slot_zone_pc34(8, &zone),
+                      coord);
+    ok &= expect_int("backpack C528 x", zone.x, 202, coord);
+    ok &= expect_int("backpack C528 y", zone.y, 16, coord);
+
+    ok &= expect_int("chest zone count",
+                     dm1_v1_inventory_chest_slot_box_zone_count_pc34(),
+                     8, coord);
+    ok &= expect_int("chest first id",
+                     dm1_v1_inventory_chest_slot_box_zone_id_pc34(0),
+                     537, coord);
+    ok &= expect_int("chest last id",
+                     dm1_v1_inventory_chest_slot_box_zone_id_pc34(7),
+                     544, coord);
+    ok &= expect_true("chest C537 zone",
+                      dm1_v1_inventory_chest_slot_box_zone_pc34(0, &zone),
+                      coord);
+    ok &= expect_int("chest C537 x", zone.x, 117, coord);
+    ok &= expect_int("chest C537 y", zone.y, 59, coord);
+    ok &= expect_true("chest C544 zone",
+                      dm1_v1_inventory_chest_slot_box_zone_pc34(7, &zone),
+                      coord);
+    ok &= expect_int("chest C544 x", zone.x, 196, coord);
+    ok &= expect_int("chest C544 y", zone.y, 105, coord);
+    return ok;
+}
+
 int main(void)
 {
     int ok = 1;
@@ -494,6 +581,7 @@ int main(void)
     ok &= test_rule_classifier();
     ok &= test_pick_helper();
     ok &= test_probe();
+    ok &= test_slotbox_zones();
     if (!ok) {
         printf("FAIL dm1_v1_inventory_slot_placement_pc34_compat "
                "%d/%d assertions\n", g_passes, g_assertions);

@@ -81,6 +81,7 @@
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
@@ -31106,82 +31107,12 @@ const char* M11_GameView_GetV1ObjectDescriptionLayoutEvidence(void) {
     return "ReDMCSB source lock: PANEL.C:172-223 F0335 form-feed resets text origin through C556_ZONE_OBJECT_DESCRIPTION; PANEL.C:1136-1145 F0342 enters C03_PANEL_OBJECT_DESCRIPTION, blits C020 panel to C101 and C029 circle to C504; PANEL.C:1198-1200 prints object name in C506 and object icon in C505; TEXT.C:1937-1950 F0648 measures text and resolves C506 through COORD.C F0635; COORD.C:2052-2412 F0635 resolves layout records; COORD.C:2434-2448 F0636 adds the 1-pixel text margin; DEFS.H:3873-3875,3925 names C504/C505/C506/C556; DATA.C:316 and data/zones_h_reconstruction.json layout-696 records provide the panel/circle/icon/text geometry.";
 }
 
-typedef struct M11_V1InventorySlotZone_ {
-    int zoneId;
-    int x;
-    int y;
-} M11_V1InventorySlotZone;
-
-static const M11_V1InventorySlotZone kV1InventorySourceSlotBoxZones[] = {
-    /* Source layout-696 C507..C536, matching DEFS.H
-     * C08_SLOT_BOX_INVENTORY_FIRST_SLOT through slot box 37.
-     * Coordinates are raw 16x16 zones parented to C105. */
-    { 507,   6, 53 }, /* 08 READY_HAND */
-    { 508,  62, 53 }, /* 09 ACTION_HAND */
-    { 509,  34, 26 }, /* 10 HEAD */
-    { 510,  34, 46 }, /* 11 TORSO */
-    { 511,  34, 66 }, /* 12 LEGS */
-    { 512,  34, 86 }, /* 13 FEET */
-    { 513,   6, 90 }, /* 14 POUCH_2 */
-    { 514,  79, 73 }, /* 15 QUIVER_LINE2_1 */
-    { 515,  62, 90 }, /* 16 QUIVER_LINE1_2 */
-    { 516,  79, 90 }, /* 17 QUIVER_LINE2_2 */
-    { 517,   6, 33 }, /* 18 NECK */
-    { 518,   6, 73 }, /* 19 POUCH_1 */
-    { 519,  62, 73 }, /* 20 QUIVER_LINE1_1 */
-    { 520,  66, 33 }, /* 21 BACKPACK_LINE1_1 */
-    { 521,  83, 16 }, { 522, 100, 16 }, { 523, 117, 16 },
-    { 524, 134, 16 }, { 525, 151, 16 }, { 526, 168, 16 },
-    { 527, 185, 16 }, { 528, 202, 16 },
-    { 529,  83, 33 }, { 530, 100, 33 }, { 531, 117, 33 },
-    { 532, 134, 33 }, { 533, 151, 33 }, { 534, 168, 33 },
-    { 535, 185, 33 }, { 536, 202, 33 }
-};
-
-static const M11_V1InventorySlotZone kV1InventoryEquipmentSlotZones[] = {
-    /* Non-backpack inventory slot boxes C507..C519. C520 is the first
-     * backpack box per DEFS.H, so it intentionally lives in the
-     * backpack helper below. */
-    { 507,   6, 53 }, { 508,  62, 53 }, { 509,  34, 26 },
-    { 510,  34, 46 }, { 511,  34, 66 }, { 512,  34, 86 },
-    { 513,   6, 90 }, { 514,  79, 73 }, { 515,  62, 90 },
-    { 516,  79, 90 }, { 517,   6, 33 }, { 518,   6, 73 },
-    { 519,  62, 73 }
-};
-
-static const M11_V1InventorySlotZone kV1InventoryBackpackSlotZones[] = {
-    /* Source layout-696 C520..C536: first backpack slot plus the
-     * 8x2 carried-object rows C521..C536. */
-    { 520,  66, 33 },
-    { 521,  83, 16 }, { 522, 100, 16 }, { 523, 117, 16 },
-    { 524, 134, 16 }, { 525, 151, 16 }, { 526, 168, 16 },
-    { 527, 185, 16 }, { 528, 202, 16 }, { 529,  83, 33 },
-    { 530, 100, 33 }, { 531, 117, 33 }, { 532, 134, 33 },
-    { 533, 151, 33 }, { 534, 168, 33 }, { 535, 185, 33 },
-    { 536, 202, 33 }
-};
-
-static const M11_V1InventorySlotZone kV1ChestSlotBoxZones[] = {
-    /* ReDMCSB COMMAND.C:498-507 G0456_as_Graphic561_MouseInput_PanelChest
-     * maps C058..C065 to viewport-relative C537..C544.  The coordinates
-     * are layout-696 chest panel C106 child zones. */
-    { 537, 117,  59 }, { 538, 106,  76 }, { 539, 111,  93 },
-    { 540, 128,  98 }, { 541, 145, 101 }, { 542, 162, 103 },
-    { 543, 179, 104 }, { 544, 196, 105 }
-};
-
 int M11_GameView_GetV1InventorySourceSlotBoxZoneCount(void) {
-    return (int)(sizeof(kV1InventorySourceSlotBoxZones) /
-                 sizeof(kV1InventorySourceSlotBoxZones[0]));
+    return dm1_v1_inventory_source_slot_box_zone_count_pc34();
 }
 
 int M11_GameView_GetV1InventorySourceSlotBoxZoneId(int sourceSlotBoxIndex) {
-    int ordinal = sourceSlotBoxIndex - 8;
-    if (ordinal < 0 ||
-        ordinal >= M11_GameView_GetV1InventorySourceSlotBoxZoneCount()) {
-        return 0;
-    }
-    return kV1InventorySourceSlotBoxZones[ordinal].zoneId;
+    return dm1_v1_inventory_source_slot_box_zone_id_pc34(sourceSlotBoxIndex);
 }
 
 int M11_GameView_GetV1InventorySourceSlotBoxZone(int sourceSlotBoxIndex,
@@ -31189,14 +31120,14 @@ int M11_GameView_GetV1InventorySourceSlotBoxZone(int sourceSlotBoxIndex,
                                                   int* outY,
                                                   int* outW,
                                                   int* outH) {
-    int ordinal = sourceSlotBoxIndex - 8;
-    if (!M11_GameView_GetV1InventorySourceSlotBoxZoneId(sourceSlotBoxIndex)) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!dm1_v1_inventory_source_slot_box_zone_pc34(sourceSlotBoxIndex, &zone)) {
         return 0;
     }
-    if (outX) *outX = kV1InventorySourceSlotBoxZones[ordinal].x;
-    if (outY) *outY = kV1InventorySourceSlotBoxZones[ordinal].y;
-    if (outW) *outW = 16;
-    if (outH) *outH = 16;
+    if (outX) *outX = zone.x;
+    if (outY) *outY = zone.y;
+    if (outW) *outW = zone.w;
+    if (outH) *outH = zone.h;
     return 1;
 }
 
@@ -31213,16 +31144,11 @@ int M11_GameView_GetV1InventorySourceSlotBoxGraphicId(int sourceSlotBoxIndex) {
 }
 
 int M11_GameView_GetV1InventoryEquipmentSlotZoneCount(void) {
-    return (int)(sizeof(kV1InventoryEquipmentSlotZones) /
-                 sizeof(kV1InventoryEquipmentSlotZones[0]));
+    return dm1_v1_inventory_equipment_slot_zone_count_pc34();
 }
 
 int M11_GameView_GetV1InventoryEquipmentSlotZoneId(int equipmentOrdinal) {
-    if (equipmentOrdinal < 0 ||
-        equipmentOrdinal >= M11_GameView_GetV1InventoryEquipmentSlotZoneCount()) {
-        return 0;
-    }
-    return kV1InventoryEquipmentSlotZones[equipmentOrdinal].zoneId;
+    return dm1_v1_inventory_equipment_slot_zone_id_pc34(equipmentOrdinal);
 }
 
 int M11_GameView_GetV1InventoryEquipmentSlotZone(int equipmentOrdinal,
@@ -31230,27 +31156,23 @@ int M11_GameView_GetV1InventoryEquipmentSlotZone(int equipmentOrdinal,
                                                   int* outY,
                                                   int* outW,
                                                   int* outH) {
-    if (!M11_GameView_GetV1InventoryEquipmentSlotZoneId(equipmentOrdinal)) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!dm1_v1_inventory_equipment_slot_zone_pc34(equipmentOrdinal, &zone)) {
         return 0;
     }
-    if (outX) *outX = kV1InventoryEquipmentSlotZones[equipmentOrdinal].x;
-    if (outY) *outY = kV1InventoryEquipmentSlotZones[equipmentOrdinal].y;
-    if (outW) *outW = 16;
-    if (outH) *outH = 16;
+    if (outX) *outX = zone.x;
+    if (outY) *outY = zone.y;
+    if (outW) *outW = zone.w;
+    if (outH) *outH = zone.h;
     return 1;
 }
 
 int M11_GameView_GetV1InventoryBackpackSlotZoneCount(void) {
-    return (int)(sizeof(kV1InventoryBackpackSlotZones) /
-                 sizeof(kV1InventoryBackpackSlotZones[0]));
+    return dm1_v1_inventory_backpack_slot_zone_count_pc34();
 }
 
 int M11_GameView_GetV1InventoryBackpackSlotZoneId(int backpackOrdinal) {
-    if (backpackOrdinal < 0 ||
-        backpackOrdinal >= M11_GameView_GetV1InventoryBackpackSlotZoneCount()) {
-        return 0;
-    }
-    return kV1InventoryBackpackSlotZones[backpackOrdinal].zoneId;
+    return dm1_v1_inventory_backpack_slot_zone_id_pc34(backpackOrdinal);
 }
 
 int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
@@ -31258,27 +31180,23 @@ int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
                                                  int* outY,
                                                  int* outW,
                                                  int* outH) {
-    if (!M11_GameView_GetV1InventoryBackpackSlotZoneId(backpackOrdinal)) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!dm1_v1_inventory_backpack_slot_zone_pc34(backpackOrdinal, &zone)) {
         return 0;
     }
-    if (outX) *outX = kV1InventoryBackpackSlotZones[backpackOrdinal].x;
-    if (outY) *outY = kV1InventoryBackpackSlotZones[backpackOrdinal].y;
-    if (outW) *outW = 16;
-    if (outH) *outH = 16;
+    if (outX) *outX = zone.x;
+    if (outY) *outY = zone.y;
+    if (outW) *outW = zone.w;
+    if (outH) *outH = zone.h;
     return 1;
 }
 
 int M11_GameView_GetV1ChestSlotBoxZoneCount(void) {
-    return (int)(sizeof(kV1ChestSlotBoxZones) /
-                 sizeof(kV1ChestSlotBoxZones[0]));
+    return dm1_v1_inventory_chest_slot_box_zone_count_pc34();
 }
 
 int M11_GameView_GetV1ChestSlotBoxZoneId(int chestOrdinal) {
-    if (chestOrdinal < 0 ||
-        chestOrdinal >= M11_GameView_GetV1ChestSlotBoxZoneCount()) {
-        return 0;
-    }
-    return kV1ChestSlotBoxZones[chestOrdinal].zoneId;
+    return dm1_v1_inventory_chest_slot_box_zone_id_pc34(chestOrdinal);
 }
 
 int M11_GameView_GetV1ChestSlotBoxZone(int chestOrdinal,
@@ -31286,13 +31204,14 @@ int M11_GameView_GetV1ChestSlotBoxZone(int chestOrdinal,
                                         int* outY,
                                         int* outW,
                                         int* outH) {
-    if (!M11_GameView_GetV1ChestSlotBoxZoneId(chestOrdinal)) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!dm1_v1_inventory_chest_slot_box_zone_pc34(chestOrdinal, &zone)) {
         return 0;
     }
-    if (outX) *outX = kV1ChestSlotBoxZones[chestOrdinal].x;
-    if (outY) *outY = kV1ChestSlotBoxZones[chestOrdinal].y;
-    if (outW) *outW = 16;
-    if (outH) *outH = 16;
+    if (outX) *outX = zone.x;
+    if (outY) *outY = zone.y;
+    if (outW) *outW = zone.w;
+    if (outH) *outH = zone.h;
     return 1;
 }
 

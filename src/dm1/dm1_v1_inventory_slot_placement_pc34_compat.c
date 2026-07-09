@@ -86,6 +86,66 @@ static const DM1_V1_InventorySlotPlacementSpecPc34 s_spec = {
         "backpack placement-rules gate. No real-asset runtime claim."
 };
 
+static const DM1_V1_InventorySlotBoxZonePc34 kInventorySourceSlotBoxZones[] = {
+    /* Source layout-696 C507..C536, parented to C105. */
+    { 507,   6, 53, 16, 16 }, { 508,  62, 53, 16, 16 },
+    { 509,  34, 26, 16, 16 }, { 510,  34, 46, 16, 16 },
+    { 511,  34, 66, 16, 16 }, { 512,  34, 86, 16, 16 },
+    { 513,   6, 90, 16, 16 }, { 514,  79, 73, 16, 16 },
+    { 515,  62, 90, 16, 16 }, { 516,  79, 90, 16, 16 },
+    { 517,   6, 33, 16, 16 }, { 518,   6, 73, 16, 16 },
+    { 519,  62, 73, 16, 16 }, { 520,  66, 33, 16, 16 },
+    { 521,  83, 16, 16, 16 }, { 522, 100, 16, 16, 16 },
+    { 523, 117, 16, 16, 16 }, { 524, 134, 16, 16, 16 },
+    { 525, 151, 16, 16, 16 }, { 526, 168, 16, 16, 16 },
+    { 527, 185, 16, 16, 16 }, { 528, 202, 16, 16, 16 },
+    { 529,  83, 33, 16, 16 }, { 530, 100, 33, 16, 16 },
+    { 531, 117, 33, 16, 16 }, { 532, 134, 33, 16, 16 },
+    { 533, 151, 33, 16, 16 }, { 534, 168, 33, 16, 16 },
+    { 535, 185, 33, 16, 16 }, { 536, 202, 33, 16, 16 }
+};
+
+static const DM1_V1_InventorySlotBoxZonePc34 kInventoryEquipmentSlotZones[] = {
+    /* C507..C519. C520 starts backpack. */
+    { 507,   6, 53, 16, 16 }, { 508,  62, 53, 16, 16 },
+    { 509,  34, 26, 16, 16 }, { 510,  34, 46, 16, 16 },
+    { 511,  34, 66, 16, 16 }, { 512,  34, 86, 16, 16 },
+    { 513,   6, 90, 16, 16 }, { 514,  79, 73, 16, 16 },
+    { 515,  62, 90, 16, 16 }, { 516,  79, 90, 16, 16 },
+    { 517,   6, 33, 16, 16 }, { 518,   6, 73, 16, 16 },
+    { 519,  62, 73, 16, 16 }
+};
+
+static const DM1_V1_InventorySlotBoxZonePc34 kInventoryBackpackSlotZones[] = {
+    /* C520..C536. */
+    { 520,  66, 33, 16, 16 }, { 521,  83, 16, 16, 16 },
+    { 522, 100, 16, 16, 16 }, { 523, 117, 16, 16, 16 },
+    { 524, 134, 16, 16, 16 }, { 525, 151, 16, 16, 16 },
+    { 526, 168, 16, 16, 16 }, { 527, 185, 16, 16, 16 },
+    { 528, 202, 16, 16, 16 }, { 529,  83, 33, 16, 16 },
+    { 530, 100, 33, 16, 16 }, { 531, 117, 33, 16, 16 },
+    { 532, 134, 33, 16, 16 }, { 533, 151, 33, 16, 16 },
+    { 534, 168, 33, 16, 16 }, { 535, 185, 33, 16, 16 },
+    { 536, 202, 33, 16, 16 }
+};
+
+static const DM1_V1_InventorySlotBoxZonePc34 kChestSlotBoxZones[] = {
+    /* COMMAND.C G0456 C058..C065 -> viewport-relative C537..C544. */
+    { 537, 117,  59, 16, 16 }, { 538, 106,  76, 16, 16 },
+    { 539, 111,  93, 16, 16 }, { 540, 128,  98, 16, 16 },
+    { 541, 145, 101, 16, 16 }, { 542, 162, 103, 16, 16 },
+    { 543, 179, 104, 16, 16 }, { 544, 196, 105, 16, 16 }
+};
+
+static int dm1_v1_inventory_copy_zone(const DM1_V1_InventorySlotBoxZonePc34* table,
+                                      int count,
+                                      int ordinal,
+                                      DM1_V1_InventorySlotBoxZonePc34* outZone) {
+    if (ordinal < 0 || ordinal >= count) return 0;
+    if (outZone) *outZone = table[ordinal];
+    return 1;
+}
+
 const DM1_V1_InventorySlotPlacementSpecPc34*
 dm1_v1_inventory_slot_placement_spec_pc34(void)
 {
@@ -107,6 +167,98 @@ dm1_v1_inventory_slot_placement_evidence_pc34(void)
         "      MASK0x0080_QUIVER_LINE2 / MASK0x0100_POUCH /\n"
         "      MASK0x0200_HANDS / MASK0x0400_CONTAINER /\n"
         "      MASK0xFFFF_ANY_SLOT";
+}
+
+int dm1_v1_inventory_source_slot_box_zone_count_pc34(void) {
+    return (int)(sizeof(kInventorySourceSlotBoxZones) /
+                 sizeof(kInventorySourceSlotBoxZones[0]));
+}
+
+int dm1_v1_inventory_source_slot_box_zone_id_pc34(int sourceSlotBoxIndex) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!dm1_v1_inventory_source_slot_box_zone_pc34(sourceSlotBoxIndex, &zone)) {
+        return 0;
+    }
+    return zone.zoneId;
+}
+
+int dm1_v1_inventory_source_slot_box_zone_pc34(
+    int sourceSlotBoxIndex,
+    DM1_V1_InventorySlotBoxZonePc34* outZone) {
+    return dm1_v1_inventory_copy_zone(
+        kInventorySourceSlotBoxZones,
+        dm1_v1_inventory_source_slot_box_zone_count_pc34(),
+        sourceSlotBoxIndex - 8,
+        outZone);
+}
+
+int dm1_v1_inventory_equipment_slot_zone_count_pc34(void) {
+    return (int)(sizeof(kInventoryEquipmentSlotZones) /
+                 sizeof(kInventoryEquipmentSlotZones[0]));
+}
+
+int dm1_v1_inventory_equipment_slot_zone_id_pc34(int equipmentOrdinal) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!dm1_v1_inventory_equipment_slot_zone_pc34(equipmentOrdinal, &zone)) {
+        return 0;
+    }
+    return zone.zoneId;
+}
+
+int dm1_v1_inventory_equipment_slot_zone_pc34(
+    int equipmentOrdinal,
+    DM1_V1_InventorySlotBoxZonePc34* outZone) {
+    return dm1_v1_inventory_copy_zone(
+        kInventoryEquipmentSlotZones,
+        dm1_v1_inventory_equipment_slot_zone_count_pc34(),
+        equipmentOrdinal,
+        outZone);
+}
+
+int dm1_v1_inventory_backpack_slot_zone_count_pc34(void) {
+    return (int)(sizeof(kInventoryBackpackSlotZones) /
+                 sizeof(kInventoryBackpackSlotZones[0]));
+}
+
+int dm1_v1_inventory_backpack_slot_zone_id_pc34(int backpackOrdinal) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!dm1_v1_inventory_backpack_slot_zone_pc34(backpackOrdinal, &zone)) {
+        return 0;
+    }
+    return zone.zoneId;
+}
+
+int dm1_v1_inventory_backpack_slot_zone_pc34(
+    int backpackOrdinal,
+    DM1_V1_InventorySlotBoxZonePc34* outZone) {
+    return dm1_v1_inventory_copy_zone(
+        kInventoryBackpackSlotZones,
+        dm1_v1_inventory_backpack_slot_zone_count_pc34(),
+        backpackOrdinal,
+        outZone);
+}
+
+int dm1_v1_inventory_chest_slot_box_zone_count_pc34(void) {
+    return (int)(sizeof(kChestSlotBoxZones) /
+                 sizeof(kChestSlotBoxZones[0]));
+}
+
+int dm1_v1_inventory_chest_slot_box_zone_id_pc34(int chestOrdinal) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!dm1_v1_inventory_chest_slot_box_zone_pc34(chestOrdinal, &zone)) {
+        return 0;
+    }
+    return zone.zoneId;
+}
+
+int dm1_v1_inventory_chest_slot_box_zone_pc34(
+    int chestOrdinal,
+    DM1_V1_InventorySlotBoxZonePc34* outZone) {
+    return dm1_v1_inventory_copy_zone(
+        kChestSlotBoxZones,
+        dm1_v1_inventory_chest_slot_box_zone_count_pc34(),
+        chestOrdinal,
+        outZone);
 }
 
 /* Rule classifier: which DM1 V1 placement rule owns the given
