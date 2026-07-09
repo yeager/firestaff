@@ -73,10 +73,10 @@ static int expected_trace(int index)
 }
 
 static void assert_source_metadata(
-    const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *e)
+    const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *e)
 {
     const char *source =
-        dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_source_evidence_pc34();
+        DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_SourceEvidencePc34();
 
     expect_contains("source F0359", source, "F0359:1452-1662",
                     e->commandQueueAnchor);
@@ -133,8 +133,8 @@ static void assert_source_metadata(
 }
 
 static void assert_runtime(
-    const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 *r,
-    const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *e)
+    const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 *r,
+    const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *e)
 {
     int i;
 
@@ -224,26 +224,26 @@ static void assert_runtime(
 
 int main(void)
 {
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 state;
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 rerunState;
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 result;
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 rerun;
-    const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *e =
-        dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_evidence_pc34();
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 state;
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 rerunState;
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 result;
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 rerun;
+    const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *e =
+        DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_EvidencePc34();
 
     assert_source_metadata(e);
-    dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_init_pc34(
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_InitPc34(
         &state, UINT32_C(0xf0435040));
     expect_int("run",
-               dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34(
+               DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_RunPc34(
                    &state, &result),
                1, e->contractMarker);
     assert_runtime(&result, e);
 
-    dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_init_pc34(
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_InitPc34(
         &rerunState, UINT32_C(0xf0435040));
     expect_int("rerun",
-               dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34(
+               DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_RunPc34(
                    &rerunState, &rerun),
                1, e->contractMarker);
     expect_u32_eq("stable deterministic hash", rerun.deterministicHash,

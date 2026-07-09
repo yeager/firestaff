@@ -50,10 +50,10 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_evidence(void)
 {
-    const Dm1V1MirrorCandidateC045AcceptDeadOwnerEvidencePc34 *e =
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_evidence_pc34();
+    const DM1_V1_MirrorCandidateC045AcceptDeadOwnerEvidencePc34 *e =
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_EvidencePc34();
     const char *text =
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_source_evidence_pc34();
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_SourceEvidencePc34();
     const char *siblings[] = {
         "c045_food_water_accept_cross_rotation",
         "c045_food_water_close_no_candidate",
@@ -161,10 +161,10 @@ static void test_evidence(void)
 
 static void test_initial_state(void)
 {
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 state;
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 state;
     int i;
 
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     check_int_eq(state.contractOnly, 1, "contract-only", "asset-free");
     check_int_eq(state.assetFree, 1, "asset-free", "no game data");
     check_int_eq(state.partyChampionCount, 3, "party champion count",
@@ -246,13 +246,13 @@ static void test_initial_state(void)
 
 static uint32_t test_run(void)
 {
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 state;
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerResultPc34 result;
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 state;
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerResultPc34 result;
     int ok;
     int i;
 
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
-    ok = dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(&state,
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
+    ok = DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(&state,
                                                                        &result);
     check_int_eq(ok, 1, "run accepted",
                  "c045_accept_dead_owner_guard");
@@ -426,74 +426,74 @@ static uint32_t test_run(void)
 
 static void test_rejects(void)
 {
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 state;
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerResultPc34 result;
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 state;
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerResultPc34 result;
 
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             NULL, &result),
         0, "null state rejected", "guard");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, NULL),
         0, "null result rejected", "guard");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     state.contractOnly = 0;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, &result),
         0, "non-contract rejected", "asset-free");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     state.candidateOwnerAlive = 1;
     state.champions[2].alive = 1;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, &result),
         0, "alive owner rejected", "REVIVE.C F0280");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     state.g0299CandidateOrdinal = 0;
     state.candidateChainOrdinals[0] = 0;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, &result),
         0, "null candidate rejected", "G0299");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     state.c040PanelOpen = 0;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, &result),
         0, "no C040 panel rejected", "C040");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     state.c045AcceptPathActive = 0;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, &result),
         0, "no C045 accept path rejected", "PANEL.C F0347");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     state.acceptCommand = 999;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, &result),
         0, "non-accept command rejected", "C160");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     state.leaderHandThing = 0x0001u;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, &result),
         0, "global leader hand thing rejected independently",
         "CHAMPION.C F0297/F0298");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     state.leaderHandEmpty = 0;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, &result),
         0, "leader hand empty flag mismatch rejected independently",
         "CHAMPION.C F0297/F0298");
-    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(&state);
     state.champions[0].handThing = 0x0001u;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+        DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
             &state, &result),
         0, "champion hand thing rejected independently",
         "CHAMPION.C F0297/F0298");
@@ -505,7 +505,7 @@ int main(void)
 
     printf("probe=dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_pc34_compat\n");
     printf("%s\n",
-           dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_source_evidence_pc34());
+           DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_SourceEvidencePc34());
     test_evidence();
     test_initial_state();
     hash = test_run();

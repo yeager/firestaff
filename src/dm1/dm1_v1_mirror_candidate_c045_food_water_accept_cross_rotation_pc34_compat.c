@@ -56,7 +56,7 @@ static const char s_source_evidence[] =
     "2200/2205 C040/C045, 2999-3008 M565/M568, 3906-3914 C537..C545, "
     "5694 G0299.";
 
-static const Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34
+static const DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34
     s_evidence = {
         "ReDMCSB REVIVE.C F0280:124-132 candidate publication gate",
         "ReDMCSB REVIVE.C F0282:744-806 accept/cancel clear path must finish first",
@@ -92,7 +92,7 @@ static void copy_ints(int dst[], const int src[], int count)
 }
 
 static uint32_t hash_state(
-    const Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34
+    const DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34
         *state)
 {
     uint32_t hash = UINT32_C(2166136261);
@@ -147,8 +147,8 @@ static int source_anchors_present(void)
            strstr(s_source_evidence, "5694 G0299") != NULL;
 }
 
-void dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_init_pc34(
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
+void DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_InitPc34(
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
 {
     int i;
 
@@ -201,7 +201,7 @@ void dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_init_pc34(
 }
 
 static int ready(
-    const Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34
+    const DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34
         *state)
 {
     return state && state->contractOnly && state->sameDrainWindow &&
@@ -224,7 +224,7 @@ static int ready(
 }
 
 static int queue_accept_and_rotation(
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
 {
     if (!ready(state)) {
         return 0;
@@ -239,7 +239,7 @@ static int queue_accept_and_rotation(
 }
 
 static void remove_candidate_from_chain(
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
 {
     int i;
 
@@ -251,7 +251,7 @@ static void remove_candidate_from_chain(
 }
 
 static int dispatch_accept_clear(
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
 {
     if (!state || state->commandQueueDepth != 2 ||
         state->trace[1] != kTraceQueueAccept ||
@@ -291,7 +291,7 @@ static int dispatch_accept_clear(
 }
 
 static int dispatch_leader_rotation(
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state)
 {
     int oldLeader;
 
@@ -320,12 +320,12 @@ static int dispatch_leader_rotation(
 }
 
 static int guard_rejects(
-    const Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *base,
+    const DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *base,
     int kind)
 {
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 probe =
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 probe =
         *base;
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34 result;
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34 result;
 
     if (kind == 0) {
         probe.c040PanelOpen = 1;
@@ -338,15 +338,15 @@ static int guard_rejects(
         probe.queuedLeaderIndex = kOldLeaderIndex;
         probe.queuedSetLeaderCommand = 16;
     }
-    return dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_run_pc34(
+    return DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_RunPc34(
                &probe, &result) == 0;
 }
 
-int dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_run_pc34(
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state,
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34 *result)
+int DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_RunPc34(
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state,
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34 *result)
 {
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 base;
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 base;
     int queued;
     int accepted;
     int rotated;
@@ -460,15 +460,15 @@ int dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_run_pc34(
     return result->accepted;
 }
 
-const Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34 *
-dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_evidence_pc34(
+const DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34 *
+DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_EvidencePc34(
     void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_source_evidence_pc34(
+DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_SourceEvidencePc34(
     void)
 {
     return s_source_evidence;

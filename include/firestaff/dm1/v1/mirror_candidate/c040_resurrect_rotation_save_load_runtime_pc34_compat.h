@@ -24,7 +24,7 @@ typedef struct {
     const char *defsAnchor;
     const char *nonOverlap;
     const char *contractMarker;
-} Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34;
+} DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34;
 
 typedef struct {
     int ordinal;
@@ -33,7 +33,7 @@ typedef struct {
     int currentHealth;
     int actionHandThing;
     uint32_t byteHash;
-} Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34;
+} DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34;
 
 typedef struct {
     int contractOnly;
@@ -68,9 +68,9 @@ typedef struct {
     int f0433SaveCount;
     int f0435LoadCount;
     int trace[DM1_V1_MC_C040_RRSL_TRACE_COUNT_PC34];
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34
         champions[DM1_V1_MC_C040_RRSL_PARTY_COUNT_PC34];
-} Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34;
+} DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34;
 
 typedef struct {
     int accepted;
@@ -121,22 +121,40 @@ typedef struct {
     uint32_t partyPoseHashAfterLoad;
     uint32_t rotationReplayHash;
     uint32_t deterministicHash;
-} Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadResultPc34;
+} DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadResultPc34;
 
-void dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_init_pc34(
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
+typedef DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34
+    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34;
+typedef DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34
+    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34;
+typedef DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34
+    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34;
+typedef DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadResultPc34
+    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadResultPc34;
+
+void DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_InitPc34(
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
     uint32_t seed);
 
-int dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34(
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 *result);
+int DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_RunPc34(
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 *result);
 
-const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *
-dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_evidence_pc34(void);
+const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *
+DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_EvidencePc34(void);
 
 const char *
-dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_source_evidence_pc34(
+DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_SourceEvidencePc34(
     void);
+
+#define dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_init_pc34 \
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_InitPc34
+#define dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34 \
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_RunPc34
+#define dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_evidence_pc34 \
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_EvidencePc34
+#define dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

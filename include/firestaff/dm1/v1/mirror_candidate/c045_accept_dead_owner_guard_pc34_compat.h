@@ -58,7 +58,7 @@ typedef struct {
     const char *leaderSetAnchor;
     const char *defsAnchor;
     const char *nonOverlap;
-} Dm1V1MirrorCandidateC045AcceptDeadOwnerEvidencePc34;
+} DM1_V1_MirrorCandidateC045AcceptDeadOwnerEvidencePc34;
 
 typedef struct {
     int ordinal;
@@ -70,7 +70,7 @@ typedef struct {
     int waterLevel;
     int currentHealth;
     int maximumHealth;
-} Dm1V1MirrorCandidateC045AcceptDeadOwnerChampionPc34;
+} DM1_V1_MirrorCandidateC045AcceptDeadOwnerChampionPc34;
 
 typedef struct {
     int contractOnly;
@@ -125,9 +125,9 @@ typedef struct {
     uint32_t beforeHash;
     uint32_t afterAcceptHash;
     uint32_t afterLeaderSettleHash;
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerChampionPc34
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerChampionPc34
         champions[DM1_V1_MC_C045_DEAD_OWNER_PARTY_COUNT_PC34];
-} Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34;
+} DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34;
 
 typedef struct {
     int accepted;
@@ -183,21 +183,39 @@ typedef struct {
     uint32_t afterAcceptHash;
     uint32_t afterLeaderSettleHash;
     uint32_t hash;
-} Dm1V1MirrorCandidateC045AcceptDeadOwnerResultPc34;
+} DM1_V1_MirrorCandidateC045AcceptDeadOwnerResultPc34;
 
-void dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state);
+typedef DM1_V1_MirrorCandidateC045AcceptDeadOwnerEvidencePc34
+    Dm1V1MirrorCandidateC045AcceptDeadOwnerEvidencePc34;
+typedef DM1_V1_MirrorCandidateC045AcceptDeadOwnerChampionPc34
+    Dm1V1MirrorCandidateC045AcceptDeadOwnerChampionPc34;
+typedef DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34
+    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34;
+typedef DM1_V1_MirrorCandidateC045AcceptDeadOwnerResultPc34
+    Dm1V1MirrorCandidateC045AcceptDeadOwnerResultPc34;
 
-int dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state,
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerResultPc34 *result);
+void DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *state);
 
-const Dm1V1MirrorCandidateC045AcceptDeadOwnerEvidencePc34 *
-dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_evidence_pc34(void);
+int DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *state,
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerResultPc34 *result);
+
+const DM1_V1_MirrorCandidateC045AcceptDeadOwnerEvidencePc34 *
+DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_EvidencePc34(void);
 
 const char *
-dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_source_evidence_pc34(
+DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_SourceEvidencePc34(
     void);
+
+#define dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34 \
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34
+#define dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34 \
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34
+#define dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_evidence_pc34 \
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_EvidencePc34
+#define dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

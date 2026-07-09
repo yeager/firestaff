@@ -123,7 +123,7 @@ static int test_source_metadata(
     const DM1_V1_MirrorCandidateReopenAfterSaveLoadSpecPc34* spec)
 {
     const char* evidence =
-        dm1_v1_mirror_candidate_reopen_after_save_load_source_evidence_pc34();
+        DM1_V1_MirrorCandidateReopenAfterSaveLoad_SourceEvidencePc34();
     int ok = 1;
 
     ok &= expect_contains("source F0433 save", evidence,
@@ -497,7 +497,7 @@ static int test_disjoint(
 int main(void)
 {
     const DM1_V1_MirrorCandidateReopenAfterSaveLoadSpecPc34* spec =
-        dm1_v1_mirror_candidate_reopen_after_save_load_spec_pc34();
+        DM1_V1_MirrorCandidateReopenAfterSaveLoad_SpecPc34();
     DM1_V1_MirrorCandidateReopenAfterSaveLoadProbePc34 probe;
     int ok = 1;
 
@@ -506,7 +506,7 @@ int main(void)
                       "LOADSAVE.C F0433:1502-1707");
     ok &= test_source_metadata(spec);
     ok &= expect_int("run accepted",
-                     dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
+                     DM1_V1_MirrorCandidateReopenAfterSaveLoad_RunPc34(
                          &probe),
                      1, spec->f0433SaveAnchor);
     ok &= test_probe_flags(&probe, spec);
@@ -517,7 +517,7 @@ int main(void)
     ok &= test_reopen(&probe, spec);
     ok &= test_disjoint(&probe, spec);
     ok &= expect_int("null run rejected",
-                     dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
+                     DM1_V1_MirrorCandidateReopenAfterSaveLoad_RunPc34(
                          NULL),
                      0, spec->contractMarker);
     ok &= expect_true("assertion floor", g_assertions >= 80,
