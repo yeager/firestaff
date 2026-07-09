@@ -912,6 +912,47 @@ static int m11_dm2_boot_runtime_startup_view_model(
         &out_view_model->title_ready);
 }
 
+static void m11_dm2_boot_probe_receipt_from_startup_view_model(
+    const M11_DM2BootStartupViewModel *view_model,
+    M11_BootProbeReceipt *out)
+{
+    const DM2_V1_StartupRuntimeHandoffReceipt *handoff;
+    if (!view_model || !out) {
+        return;
+    }
+    if (view_model->view_receipt.valid &&
+        view_model->view_receipt.runtime_handoff.valid) {
+        handoff = &view_model->view_receipt.runtime_handoff;
+        snprintf(out->startupPhase,
+                 sizeof(out->startupPhase),
+                 "%s",
+                 handoff->animation);
+        out->startupActive = handoff->startup_menu_active;
+        snprintf(out->startupAnimation,
+                 sizeof(out->startupAnimation),
+                 "%s",
+                 handoff->animation);
+        out->startupAnimationActive = handoff->animation_active;
+        out->startupTitleFrame = handoff->title_frame;
+        out->startupTitleFrameMax = handoff->title_frame_max;
+        out->startupTitleReady = handoff->title_ready;
+        return;
+    }
+    snprintf(out->startupPhase,
+             sizeof(out->startupPhase),
+             "%s",
+             view_model->phase);
+    out->startupActive = view_model->startup_active;
+    snprintf(out->startupAnimation,
+             sizeof(out->startupAnimation),
+             "%s",
+             view_model->animation);
+    out->startupAnimationActive = view_model->animation_active;
+    out->startupTitleFrame = view_model->title_frame;
+    out->startupTitleFrameMax = view_model->title_frame_max;
+    out->startupTitleReady = view_model->title_ready;
+}
+
 static int m11_dm2_boot_runtime_startup_idle(
     const M11_GameViewState *state,
     int mouth_redraw,
@@ -11205,19 +11246,9 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->dm2State.tick_count;
         if (m11_dm2_boot_runtime_startup_view_model(state, &view_model)) {
-            snprintf(out->startupPhase,
-                     sizeof(out->startupPhase),
-                     "%s",
-                     view_model.phase);
-            out->startupActive = view_model.startup_active;
-            snprintf(out->startupAnimation,
-                     sizeof(out->startupAnimation),
-                     "%s",
-                     view_model.animation);
-            out->startupAnimationActive = view_model.animation_active;
-            out->startupTitleFrame = view_model.title_frame;
-            out->startupTitleFrameMax = view_model.title_frame_max;
-            out->startupTitleReady = view_model.title_ready;
+            m11_dm2_boot_probe_receipt_from_startup_view_model(
+                &view_model,
+                out);
         }
         return 1;
     }

@@ -1310,17 +1310,50 @@ int dm2_v1_boot_startup_view_model_from_snapshot(
             *out_command_count = command_count;
         }
     }
-    (void)dm2_v1_boot_startup_presentation_receipt_from_snapshot(
-        snapshot,
-        out_phase,
-        out_phase_size,
-        out_startup_active,
-        out_animation,
-        out_animation_size,
-        out_animation_active,
-        out_title_frame,
-        out_title_frame_max,
-        out_title_ready);
+    if (out_view_receipt && out_view_receipt->valid) {
+        if (out_phase && out_phase_size > 0) {
+            snprintf(out_phase,
+                     (size_t)out_phase_size,
+                     "%s",
+                     out_view_receipt->runtime_handoff.animation);
+        }
+        if (out_startup_active) {
+            *out_startup_active =
+                out_view_receipt->runtime_handoff.startup_menu_active;
+        }
+        if (out_animation && out_animation_size > 0) {
+            snprintf(out_animation,
+                     (size_t)out_animation_size,
+                     "%s",
+                     out_view_receipt->runtime_handoff.animation);
+        }
+        if (out_animation_active) {
+            *out_animation_active =
+                out_view_receipt->runtime_handoff.animation_active;
+        }
+        if (out_title_frame) {
+            *out_title_frame = out_view_receipt->runtime_handoff.title_frame;
+        }
+        if (out_title_frame_max) {
+            *out_title_frame_max =
+                out_view_receipt->runtime_handoff.title_frame_max;
+        }
+        if (out_title_ready) {
+            *out_title_ready = out_view_receipt->runtime_handoff.title_ready;
+        }
+    } else {
+        (void)dm2_v1_boot_startup_presentation_receipt_from_snapshot(
+            snapshot,
+            out_phase,
+            out_phase_size,
+            out_startup_active,
+            out_animation,
+            out_animation_size,
+            out_animation_active,
+            out_title_frame,
+            out_title_frame_max,
+            out_title_ready);
+    }
     return 1;
 }
 

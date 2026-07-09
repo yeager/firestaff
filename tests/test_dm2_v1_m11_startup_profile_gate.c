@@ -848,6 +848,7 @@ int main(void) {
     DM2_V1_BootProfile preflight;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
+    M11_BootProbeReceipt boot_receipt;
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
@@ -918,6 +919,16 @@ int main(void) {
                 "M11 DM2 no-save launch shows the startup menu");
     expect_true(view.dm2State.startup_menu_row_count >= 1,
                 "M11 DM2 startup menu exposes at least NEW GAME");
+    memset(&boot_receipt, 0, sizeof(boot_receipt));
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
+                    boot_receipt.startupActive == 1 &&
+                    strcmp(boot_receipt.startupPhase,
+                           "dm2-startup-menu") == 0 &&
+                    strcmp(boot_receipt.startupAnimation,
+                           "dm2-startup-menu") == 0 &&
+                    boot_receipt.startupAnimationActive == 1 &&
+                    boot_receipt.startupTitleReady == 0,
+                "M11 DM2 boot probe consumes startup view receipt handoff");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_NONE) ==
                     M11_GAME_INPUT_IGNORED,
                 "M11 DM2 no-save startup menu ignores idle input");
