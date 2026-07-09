@@ -286,6 +286,7 @@ int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
         frontWallReceipt->championPortraitRenderIndex < 0) {
         outReceipt->suppressChampionPortrait = 1;
         outReceipt->suppressMaterializedItemPayload = 1;
+        outReceipt->clearStaleMaterializedItemPayload = 1;
         return 1;
     }
 
@@ -327,6 +328,31 @@ int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
     return 1;
 }
 
+int DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+    int wallSquareVisible,
+    const DM1_V1_ChampionMirrorFrontWallReceiptPc34 *frontWallReceipt,
+    DM1_V1_ChampionMirrorRenderReceiptPc34 *outReceipt)
+{
+    if (!DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
+            frontWallReceipt, outReceipt)) {
+        return 0;
+    }
+
+    outReceipt->consumedWallSquareReceipt = wallSquareVisible ? 1 : 0;
+    if (wallSquareVisible && !outReceipt->drawChampionPortrait) {
+        /* ReDMCSB: DUNGEON.C line 2558 resets G0289 when a wall square
+         * contributes to the dungeon view; DUNVIEW.C lines 3913-3928 then
+         * consumes only the current D1C front portrait ordinal. Keep that
+         * stale-clear decision in the DM1 receipt so HoC render hosts do not
+         * carry champion mirror payloads into normal item/projectile layers. */
+        outReceipt->clearStaleChampionPortraitOrdinal = 1;
+        outReceipt->clearStaleMaterializedItemPayload = 1;
+        outReceipt->suppressChampionPortrait = 1;
+        outReceipt->suppressMaterializedItemPayload = 1;
+    }
+    return 1;
+}
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
 {
     return "ReDMCSB COMMAND.C:484-488 G0455 maps C159..C162 champion-name "
@@ -338,5 +364,7 @@ const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
            "DUNGEON.C:2573,2608-2612 F0172/F0174 and COMPILE.H:1038 map "
            "C127 front-wall sensor data to the 1-based G0289 champion "
            "portrait ordinal; DUNVIEW.C:3913-3928 blits C026 champion "
-           "portraits through G0109 {96,127,35,63}.";
+           "portraits through G0109 {96,127,35,63}; DUNGEON.C:2558 resets "
+           "G0289 when a wall square is present, preventing stale mirror "
+           "payloads from leaking into later dungeon-view layers.";
 }

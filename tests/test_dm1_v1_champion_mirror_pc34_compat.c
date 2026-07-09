@@ -321,8 +321,33 @@ static void test_f0172_front_wall_sensor_receipt(void)
         "DUNGEON.C:2573; DUNVIEW.C:3913");
 
     CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+            1, &receipt, &render) == 1 &&
+            render.valid == 1 &&
+            render.consumedWallSquareReceipt == 1 &&
+            render.drawChampionPortrait == 0 &&
+            render.suppressChampionPortrait == 1 &&
+            render.clearStaleChampionPortraitOrdinal == 1 &&
+            render.clearStaleMaterializedItemPayload == 1,
+        "wall-square viewport receipt clears stale HoC mirror payload",
+        "DUNGEON.C:2558; DUNVIEW.C:3913-3928");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+            0, &receipt, &render) == 1 &&
+            render.consumedWallSquareReceipt == 0 &&
+            render.clearStaleChampionPortraitOrdinal == 0 &&
+            render.suppressChampionPortrait == 1,
+        "non-wall viewport receipt does not invent a G0289 clear",
+        "DUNGEON.C:2558 BUG0_75");
+
+    CHECK_ANCHOR(
         DM1_V1_ChampionMirror_BuildRenderReceiptPc34(NULL, &render) == 0 &&
-            DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&receipt, NULL) == 0,
+            DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&receipt, NULL) == 0 &&
+            DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+                1, NULL, &render) == 0 &&
+            DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+                1, &receipt, NULL) == 0,
         "render receipt rejects NULL inputs",
         "DM1 receipt guard");
 }

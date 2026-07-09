@@ -76,6 +76,9 @@ typedef struct DM1_V1_ChampionMirrorRenderReceiptPc34 {
     int drawChampionPortrait;
     int suppressChampionPortrait;
     int suppressMaterializedItemPayload;
+    int clearStaleChampionPortraitOrdinal;
+    int clearStaleMaterializedItemPayload;
+    int consumedWallSquareReceipt;
     int sourceOrdinal;
     int renderIndex;
     int graphicIndex;
@@ -141,6 +144,11 @@ int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
     const DM1_V1_ChampionMirrorFrontWallReceiptPc34 *frontWallReceipt,
     DM1_V1_ChampionMirrorRenderReceiptPc34 *outReceipt);
 
+int DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+    int wallSquareVisible,
+    const DM1_V1_ChampionMirrorFrontWallReceiptPc34 *frontWallReceipt,
+    DM1_V1_ChampionMirrorRenderReceiptPc34 *outReceipt);
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void);
 
 typedef DM1_V1_ChampionMirrorChampionPc34
@@ -170,6 +178,8 @@ typedef DM1_V1_ChampionMirrorRenderReceiptPc34
     DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34
 #define DM1_V1_ChampionMirror_BuildRenderReceiptPc34Compat \
     DM1_V1_ChampionMirror_BuildRenderReceiptPc34
+#define DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34Compat \
+    DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34
 #define DM1_V1_ChampionMirror_SourceEvidencePc34Compat \
     DM1_V1_ChampionMirror_SourceEvidencePc34
 
