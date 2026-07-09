@@ -8805,6 +8805,8 @@ static int m11_check_group_death_and_drop(
     int slotI;
     DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
     DM1_MeleeF0190KilledAllStatePlanPc34 killedAllPlan;
+    DM1_MeleeF0190PossessionDropInputPc34 dropIn;
+    DM1_MeleeF0190PossessionDropPlanPc34 dropPlan;
 
     if (!state || !state->world.things ||
         groupThing == THING_NONE || groupThing == THING_ENDOFLIST) {
@@ -8836,21 +8838,38 @@ static int m11_check_group_death_and_drop(
         !killedAllPlan.valid) {
         return 0;
     }
-
-    /* ReDMCSB GROUP.C:F0188:716-721 calls F0186 once for each
-     * creature slot before dropping the group possession chain. */
-    for (slotI = (int)g->count; slotI >= 0; --slotI) {
-        int sourceCell = (g->cells == DM1_SINGLE_CENTERED_CREATURE_CELL)
-            ? DM1_SINGLE_CENTERED_CREATURE_CELL
-            : ((int)g->cells >> (slotI * 2)) & 0x03;
-        (void)m11_materialize_creature_fixed_possession_drops(
-            state, (int)g->creatureType, sourceCell,
-            groupMapIndex, groupMapX, groupMapY);
+    memset(&dropIn, 0, sizeof(dropIn));
+    memset(&dropPlan, 0, sizeof(dropPlan));
+    dropIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    dropIn.creatureType = (int)g->creatureType;
+    dropIn.creatureAttributes = 0;
+    dropIn.killedCell = EXPLOSION_CELL_CENTERED;
+    dropIn.mapIndex = killedAllPlan.mapIndex;
+    dropIn.mapX = killedAllPlan.mapX;
+    dropIn.mapY = killedAllPlan.mapY;
+    if (!dm1_v1_melee_possession_drop_plan_f0190_pc34(&dropIn, &dropPlan) ||
+        !dropPlan.valid) {
+        return 0;
     }
 
-    /* Group is dead — drop possessions on the square.
-     * Walk the group's slot chain and place each thing on the floor. */
-    {
+    if (dropPlan.shouldDropGroupFixedPossessions) {
+        DM1_MeleeF0190FixedDropCellsPlanPc34 fixedCellsPlan;
+
+        memset(&fixedCellsPlan, 0, sizeof(fixedCellsPlan));
+        if (dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
+                g, &fixedCellsPlan) &&
+            fixedCellsPlan.valid) {
+            int cellI;
+            for (cellI = 0; cellI < fixedCellsPlan.dropCellCount; ++cellI) {
+                (void)m11_materialize_creature_fixed_possession_drops(
+                    state, (int)g->creatureType,
+                    fixedCellsPlan.dropCells[cellI],
+                    dropPlan.mapIndex, dropPlan.mapX, dropPlan.mapY);
+            }
+        }
+    }
+
+    if (dropPlan.shouldDropGroupSlotPossessions) {
         unsigned short possession = g->slot;
         int dropCount = 0;
         int safety = 0;
@@ -8861,7 +8880,9 @@ static int m11_check_group_death_and_drop(
             nextPossession = m11_get_raw_next_thing(state->world.things, possession);
             /* Place on floor */
             if (m11_prepend_thing_to_square(&state->world,
-                                           groupMapIndex, groupMapX, groupMapY,
+                                           dropPlan.mapIndex,
+                                           dropPlan.mapX,
+                                           dropPlan.mapY,
                                            possession)) {
                 dropCount++;
             }
