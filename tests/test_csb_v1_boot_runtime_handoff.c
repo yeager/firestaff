@@ -2330,17 +2330,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &capture_receipt,
               &host_view_receipt) == 1 &&
               host_view_receipt.valid &&
-              host_view_receipt.title_render_plan_valid &&
-              host_view_receipt.title_render_plan.surface ==
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.valid &&
+              host_view_receipt.render_draw.title_draw_ready &&
+              host_view_receipt.render_draw.real_asset_matched &&
+              host_view_receipt.render_draw.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
-              host_view_receipt.title_render_plan.title_stage ==
+              host_view_receipt.render_draw.render_plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
-              host_view_receipt.title_render_plan.asset_command_count == 1 &&
-              host_view_receipt.title_render_plan.asset_commands[0].kind ==
+              host_view_receipt.render_draw.render_plan.asset_command_count == 1 &&
+              host_view_receipt.render_draw.render_plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&
-              host_view_receipt.title_render_plan.render_command_count == 2 &&
-              host_view_receipt.title_render_plan.source_asset_id == 1,
-          "boot startup host-view receipt consumes real-asset title route");
+              host_view_receipt.render_draw.render_plan.render_command_count == 2 &&
+              host_view_receipt.render_draw.render_plan.source_asset_id == 1,
+          "boot startup host-view render-draw receipt consumes real-asset title route");
     CHECK(host_view_receipt.render_plan_valid &&
               host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
@@ -2412,10 +2415,11 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
               host_view_receipt.special_palette >= 0 &&
               host_view_receipt.render_plan_valid &&
-              host_view_receipt.title_render_plan_valid &&
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.title_draw_ready &&
               host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34,
-          "boot startup host-view receipt consumes title packaged capture proof");
+          "boot startup host-view receipt consumes title render-draw capture proof");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
@@ -2782,18 +2786,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               host_view_receipt.render_plan.waiting_for_input &&
               host_view_receipt.render_plan.menu_option_count == 4 &&
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.hud_menu_draw_ready &&
               host_view_receipt.hud_menu_draw_valid,
-          "boot startup snapshot host-view consumes utility base render plan");
+          "boot startup snapshot host-view consumes utility render-draw receipt");
     CHECK(csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
               &capture_receipt,
               &host_view_receipt) == 1 &&
               host_view_receipt.valid &&
               host_view_receipt.render_plan_valid &&
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.hud_menu_draw_ready &&
               host_view_receipt.hud_menu_draw_valid &&
               host_view_receipt.hud_menu_draw.draw_utility_panel &&
               host_view_receipt.hud_menu_draw.utility_render_plan_valid &&
               host_view_receipt.capture_proof.utility_menu_route,
-          "boot startup host-view receipt packages utility HUD render plan");
+          "boot startup host-view receipt packages utility HUD render-draw receipt");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
@@ -3136,8 +3144,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_plan.menu_option_count == 4 &&
               strstr(host_view_receipt.render_plan.fallback_prompt_text,
                      "PRESS ENTER") != NULL &&
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.hud_menu_draw_ready &&
               host_view_receipt.hud_menu_draw_valid,
-          "boot startup snapshot host-view consumes closed-door render plan");
+          "boot startup snapshot host-view consumes closed-door render-draw receipt");
     CHECK(csb_v1_boot_startup_readiness_receipt_from_view_pc34(
               &view_receipt,
               &readiness_receipt) == 1 &&
@@ -3222,6 +3232,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.selected_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
               host_view_receipt.render_plan_valid &&
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.hud_menu_draw_ready &&
               host_view_receipt.hud_menu_draw_valid &&
               host_view_receipt.hud_menu_draw.draw_closed_doors &&
               host_view_receipt.render_plan.surface ==
@@ -3349,6 +3361,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &host_view_receipt) == 1 &&
               host_view_receipt.valid &&
               host_view_receipt.render_plan_valid &&
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.opening_draw_ready &&
               host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
               host_view_receipt.render_plan.opening_step == 3 &&
@@ -3368,6 +3382,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &host_view_receipt) == 1 &&
               host_view_receipt.valid &&
               host_view_receipt.render_plan_valid &&
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.opening_draw_ready &&
               host_view_receipt.capture_proof.opening_door_route &&
               host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,

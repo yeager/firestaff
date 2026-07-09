@@ -467,6 +467,18 @@ typedef struct CSB_V1_BootStartupPackagedCaptureProof_PC34 {
     const char *source_evidence;
 } CSB_V1_BootStartupPackagedCaptureProof_PC34;
 
+typedef struct CSB_V1_BootStartupRenderDrawReceipt_PC34 {
+    int valid;
+    int route;
+    int surface;
+    int render_plan_valid;
+    int title_draw_ready;
+    int hud_menu_draw_ready;
+    int opening_draw_ready;
+    int real_asset_matched;
+    CSB_V1_StartupRenderPlan_PC34 render_plan;
+} CSB_V1_BootStartupRenderDrawReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
     int valid;
     int startup_active;
@@ -496,8 +508,8 @@ typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
     int runtime_tick_count;
     int render_plan_valid;
     CSB_V1_StartupRenderPlan_PC34 render_plan;
-    int title_render_plan_valid;
-    CSB_V1_StartupRenderPlan_PC34 title_render_plan;
+    int render_draw_valid;
+    CSB_V1_BootStartupRenderDrawReceipt_PC34 render_draw;
     int hud_menu_draw_valid;
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_menu_draw;
     int capture_proof_valid;
@@ -529,6 +541,8 @@ void csb_v1_boot_startup_capture_receipt_init_pc34(
     CSB_V1_BootStartupCaptureReceipt_PC34 *receipt);
 void csb_v1_boot_startup_packaged_capture_proof_init_pc34(
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof);
+void csb_v1_boot_startup_render_draw_receipt_init_pc34(
+    CSB_V1_BootStartupRenderDrawReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_view_receipt_init_pc34(
     CSB_V1_BootStartupHostViewReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_input_dispatch_receipt_init_pc34(
