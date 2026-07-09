@@ -104,7 +104,7 @@ typedef struct {
     struct Dm1V1MovementPipelinePc34Compat movementPipeline;
     M11_DG_State                      dialog;
     DM1_V1_ClickRoutingStatePc34                      clickRouting;
-    M11_SL_State                      saveLoad;
+    DM1_V1_SaveLoadStatePc34                      saveLoad;
     M11_ScreenState                   screen;
 
     /* ── Engine metadata ── */
@@ -177,7 +177,7 @@ M11_InputState *m11_engine_get_input(M11_Engine *engine);
 M11_ScreenState *m11_engine_get_screen(M11_Engine *engine);
 
 /* Get pointer to save/load state. */
-M11_SL_State *m11_engine_get_save_load(M11_Engine *engine);
+DM1_V1_SaveLoadStatePc34 *m11_engine_get_save_load(M11_Engine *engine);
 
 /* ── Engine actions (wrappers for common multi-subsystem ops) ────── */
 

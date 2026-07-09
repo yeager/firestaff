@@ -51,28 +51,28 @@ typedef struct {
     int x;
     int y;
     int level;
-} M11_WorldObject;
+} DM1_V1_WorldObjectPc34;
 
-#define M11_MAX_WORLD_OBJECTS 512
-#define M11_MAX_FLOOR_OBJECTS 64
+#define DM1_V1_MAX_WORLD_OBJECTS_PC34 512
+#define DM1_V1_MAX_FLOOR_OBJECTS_PC34 64
 
 typedef struct {
-    M11_WorldObject floorObjects[M11_MAX_FLOOR_OBJECTS];
+    DM1_V1_WorldObjectPc34 floorObjects[DM1_V1_MAX_FLOOR_OBJECTS_PC34];
     int floorCount;
-} M11_FloorCell;
+} DM1_V1_FloorCellPc34;
 
 typedef struct {
-    M11_WorldObject objects[M11_MAX_WORLD_OBJECTS];
+    DM1_V1_WorldObjectPc34 objects[DM1_V1_MAX_WORLD_OBJECTS_PC34];
     int objectCount;
-    M11_FloorCell floors[16][32][32];
-} M11_ObjectState;
+    DM1_V1_FloorCellPc34 floors[16][32][32];
+} DM1_V1_ObjectStatePc34;
 
-void m11_obj_init(M11_ObjectState* s);
-int m11_obj_spawn(M11_ObjectState* s, int type, int x, int y, int level, int weight);
-int m11_obj_pickup(M11_ObjectState* s, int objIdx, int* outWeight);
-int m11_obj_drop(M11_ObjectState* s, int objIdx, int x, int y, int level);
+void DM1_V1_Object_InitPc34Compat(DM1_V1_ObjectStatePc34* s);
+int DM1_V1_Object_SpawnPc34Compat(DM1_V1_ObjectStatePc34* s, int type, int x, int y, int level, int weight);
+int DM1_V1_Object_PickupPc34Compat(DM1_V1_ObjectStatePc34* s, int objIdx, int* outWeight);
+int DM1_V1_Object_DropPc34Compat(DM1_V1_ObjectStatePc34* s, int objIdx, int x, int y, int level);
 
-/* m11_obj_use — OBJECT.C F0349 use/consume delegation.
+/* DM1_V1_Object_UsePc34Compat — OBJECT.C F0349 use/consume delegation.
  * Delegates to dm1_v1_inventory_consumables_pc34_compat.c for
  * potions, food, and water/junk consumption. Equipment types
  * (weapon/armor/accessory) return 0 as they are handled by
@@ -80,17 +80,37 @@ int m11_obj_drop(M11_ObjectState* s, int objIdx, int x, int y, int level);
  * champData: DM1ConsumableChampionPc34* champion stats snapshot.
  * result: DM1ConsumableResultPc34* output, caller commits deltas.
  * Returns 1 on successful consumption, 0 if not consumable. */
-int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
+int DM1_V1_Object_UsePc34Compat(DM1_V1_ObjectStatePc34* s, int champIdx, int objIdx,
                 DM1ConsumableChampionPc34* champData,
                 DM1ConsumableResultPc34* result);
 
-int m11_obj_throw(M11_ObjectState* s, int objIdx, int dir, int force);
-int m11_obj_activate(M11_ObjectState* s, int objIdx);
-int m11_obj_examine(const M11_ObjectState* s, int objIdx, char* desc, int descLen);
-int m11_obj_get_at(const M11_ObjectState* s, int x, int y, int level, int* outIndices, int maxOut);
-int m11_obj_remove(M11_ObjectState* s, int objIdx);
-const char* m11_obj_type_name(int type);
-int m11_obj_is_valid(const M11_ObjectState* s, int objIdx);
+int DM1_V1_Object_ThrowPc34Compat(DM1_V1_ObjectStatePc34* s, int objIdx, int dir, int force);
+int DM1_V1_Object_ActivatePc34Compat(DM1_V1_ObjectStatePc34* s, int objIdx);
+int DM1_V1_Object_ExaminePc34Compat(const DM1_V1_ObjectStatePc34* s, int objIdx, char* desc, int descLen);
+int DM1_V1_Object_GetAtPc34Compat(const DM1_V1_ObjectStatePc34* s, int x, int y, int level, int* outIndices, int maxOut);
+int DM1_V1_Object_RemovePc34Compat(DM1_V1_ObjectStatePc34* s, int objIdx);
+const char* DM1_V1_Object_TypeNamePc34Compat(int type);
+int DM1_V1_Object_IsValidPc34Compat(const DM1_V1_ObjectStatePc34* s, int objIdx);
+
+typedef DM1_V1_WorldObjectPc34 M11_WorldObject;
+typedef DM1_V1_FloorCellPc34 M11_FloorCell;
+typedef DM1_V1_ObjectStatePc34 M11_ObjectState;
+
+#define M11_MAX_WORLD_OBJECTS DM1_V1_MAX_WORLD_OBJECTS_PC34
+#define M11_MAX_FLOOR_OBJECTS DM1_V1_MAX_FLOOR_OBJECTS_PC34
+
+#define m11_obj_init DM1_V1_Object_InitPc34Compat
+#define m11_obj_spawn DM1_V1_Object_SpawnPc34Compat
+#define m11_obj_pickup DM1_V1_Object_PickupPc34Compat
+#define m11_obj_drop DM1_V1_Object_DropPc34Compat
+#define m11_obj_use DM1_V1_Object_UsePc34Compat
+#define m11_obj_throw DM1_V1_Object_ThrowPc34Compat
+#define m11_obj_activate DM1_V1_Object_ActivatePc34Compat
+#define m11_obj_examine DM1_V1_Object_ExaminePc34Compat
+#define m11_obj_get_at DM1_V1_Object_GetAtPc34Compat
+#define m11_obj_remove DM1_V1_Object_RemovePc34Compat
+#define m11_obj_type_name DM1_V1_Object_TypeNamePc34Compat
+#define m11_obj_is_valid DM1_V1_Object_IsValidPc34Compat
 
 #ifdef __cplusplus
 }

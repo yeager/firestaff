@@ -32,14 +32,14 @@ static DM1ConsumableChampionPc34 base_consumable_champion(void) {
 
 static void test_spawn_and_pickup(void) {
     TEST("Spawn object and pick up");
-    M11_ObjectState* state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    DM1_V1_ObjectStatePc34* state = (DM1_V1_ObjectStatePc34*)calloc(1, sizeof(DM1_V1_ObjectStatePc34));
     assert(state);
-    m11_obj_init(state);
-    int idx __attribute__((unused)) = m11_obj_spawn(state, DM1_OBJTYPE_WEAPON, 5, 3, 0, 25);
+    DM1_V1_Object_InitPc34Compat(state);
+    int idx __attribute__((unused)) = DM1_V1_Object_SpawnPc34Compat(state, DM1_OBJTYPE_WEAPON, 5, 3, 0, 25);
     assert(idx >= 0);
-    assert(m11_obj_is_valid(state, idx));
+    assert(DM1_V1_Object_IsValidPc34Compat(state, idx));
     int w = 0;
-    int ok __attribute__((unused)) = m11_obj_pickup(state, idx, &w);
+    int ok __attribute__((unused)) = DM1_V1_Object_PickupPc34Compat(state, idx, &w);
     assert(ok == 0);
     assert(w == 25);
     free(state);
@@ -48,12 +48,12 @@ static void test_spawn_and_pickup(void) {
 
 static void test_drop_and_get_at(void) {
     TEST("Drop object and find at position");
-    M11_ObjectState* state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    DM1_V1_ObjectStatePc34* state = (DM1_V1_ObjectStatePc34*)calloc(1, sizeof(DM1_V1_ObjectStatePc34));
     assert(state);
-    m11_obj_init(state);
-    int idx __attribute__((unused)) = m11_obj_spawn(state, DM1_OBJTYPE_POTION, 2, 4, 0, 5);
+    DM1_V1_Object_InitPc34Compat(state);
+    int idx __attribute__((unused)) = DM1_V1_Object_SpawnPc34Compat(state, DM1_OBJTYPE_POTION, 2, 4, 0, 5);
     int found[8];
-    int n __attribute__((unused)) = m11_obj_get_at(state, 2, 4, 0, found, 8);
+    int n __attribute__((unused)) = DM1_V1_Object_GetAtPc34Compat(state, 2, 4, 0, found, 8);
     assert(n >= 1);
     free(state);
     PASS();
@@ -61,12 +61,12 @@ static void test_drop_and_get_at(void) {
 
 static void test_examine(void) {
     TEST("Examine object description");
-    M11_ObjectState* state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    DM1_V1_ObjectStatePc34* state = (DM1_V1_ObjectStatePc34*)calloc(1, sizeof(DM1_V1_ObjectStatePc34));
     assert(state);
-    m11_obj_init(state);
-    int idx __attribute__((unused)) = m11_obj_spawn(state, DM1_OBJTYPE_TORCH, 0, 0, 0, 10);
+    DM1_V1_Object_InitPc34Compat(state);
+    int idx __attribute__((unused)) = DM1_V1_Object_SpawnPc34Compat(state, DM1_OBJTYPE_TORCH, 0, 0, 0, 10);
     char desc[128];
-    int ok __attribute__((unused)) = m11_obj_examine(state, idx, desc, sizeof(desc));
+    int ok __attribute__((unused)) = DM1_V1_Object_ExaminePc34Compat(state, idx, desc, sizeof(desc));
     assert(ok == 0);
     assert(strlen(desc) > 0);
     free(state);
@@ -75,27 +75,27 @@ static void test_examine(void) {
 
 static void test_type_name(void) {
     TEST("Object type names");
-    assert(strcmp(m11_obj_type_name(DM1_OBJTYPE_WEAPON), "Weapon") == 0 ||
-           strcmp(m11_obj_type_name(DM1_OBJTYPE_WEAPON), "weapon") == 0);
+    assert(strcmp(DM1_V1_Object_TypeNamePc34Compat(DM1_OBJTYPE_WEAPON), "Weapon") == 0 ||
+           strcmp(DM1_V1_Object_TypeNamePc34Compat(DM1_OBJTYPE_WEAPON), "weapon") == 0);
     PASS();
 }
 
 static void test_use_delegates_to_consumables(void) {
-    M11_ObjectState* state;
+    DM1_V1_ObjectStatePc34* state;
     DM1ConsumableChampionPc34 champ;
     DM1ConsumableResultPc34 result;
     int idx;
 
     TEST("Use potion delegates to F0349 consumables");
-    state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    state = (DM1_V1_ObjectStatePc34*)calloc(1, sizeof(DM1_V1_ObjectStatePc34));
     assert(state);
-    m11_obj_init(state);
-    idx = m11_obj_spawn(state, DM1_OBJTYPE_POTION, 1, 1, 0, 80);
+    DM1_V1_Object_InitPc34Compat(state);
+    idx = DM1_V1_Object_SpawnPc34Compat(state, DM1_OBJTYPE_POTION, 1, 1, 0, 80);
     assert(idx >= 0);
     state->objects[idx].stackCount = 6; /* ROS potion */
     champ = base_consumable_champion();
     memset(&result, 0, sizeof(result));
-    assert(m11_obj_use(state, 0, idx, &champ, &result) == 1);
+    assert(DM1_V1_Object_UsePc34Compat(state, 0, idx, &champ, &result) == 1);
     assert(champ.statistic[DM1_CONSUMABLE_STAT_DEXTERITY] == 42);
     assert(result.kind == DM1_CONSUMABLE_RESULT_POTION);
     assert(result.potionTypeAfter == DM1_CONSUMABLE_POTION_EMPTY_FLASK_PC34);
@@ -103,14 +103,14 @@ static void test_use_delegates_to_consumables(void) {
     PASS();
 
     TEST("Use food delegates to F0349 consumables");
-    state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    state = (DM1_V1_ObjectStatePc34*)calloc(1, sizeof(DM1_V1_ObjectStatePc34));
     assert(state);
-    m11_obj_init(state);
-    idx = m11_obj_spawn(state, DM1_OBJTYPE_FOOD, 1, 1, 0, 171); /* cheese icon */
+    DM1_V1_Object_InitPc34Compat(state);
+    idx = DM1_V1_Object_SpawnPc34Compat(state, DM1_OBJTYPE_FOOD, 1, 1, 0, 171); /* cheese icon */
     assert(idx >= 0);
     champ = base_consumable_champion();
     memset(&result, 0, sizeof(result));
-    assert(m11_obj_use(state, 0, idx, &champ, &result) == 1);
+    assert(DM1_V1_Object_UsePc34Compat(state, 0, idx, &champ, &result) == 1);
     assert(champ.food == 1820);
     assert(result.kind == DM1_CONSUMABLE_RESULT_FOOD_JUNK);
     assert(result.removeLeaderHandObject == 1);
@@ -118,15 +118,15 @@ static void test_use_delegates_to_consumables(void) {
     PASS();
 
     TEST("Use water delegates to F0349 consumables");
-    state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    state = (DM1_V1_ObjectStatePc34*)calloc(1, sizeof(DM1_V1_ObjectStatePc34));
     assert(state);
-    m11_obj_init(state);
-    idx = m11_obj_spawn(state, DM1_OBJTYPE_WATER, 1, 1, 0, 9); /* waterskin icon */
+    DM1_V1_Object_InitPc34Compat(state);
+    idx = DM1_V1_Object_SpawnPc34Compat(state, DM1_OBJTYPE_WATER, 1, 1, 0, 9); /* waterskin icon */
     assert(idx >= 0);
     state->objects[idx].stackCount = 3;
     champ = base_consumable_champion();
     memset(&result, 0, sizeof(result));
-    assert(m11_obj_use(state, 0, idx, &champ, &result) == 1);
+    assert(DM1_V1_Object_UsePc34Compat(state, 0, idx, &champ, &result) == 1);
     assert(champ.water == 1800);
     assert(result.kind == DM1_CONSUMABLE_RESULT_WATER_JUNK);
     assert(result.chargeCountAfter == 2);
@@ -134,14 +134,14 @@ static void test_use_delegates_to_consumables(void) {
     PASS();
 
     TEST("Use equipment remains slot-system owned");
-    state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    state = (DM1_V1_ObjectStatePc34*)calloc(1, sizeof(DM1_V1_ObjectStatePc34));
     assert(state);
-    m11_obj_init(state);
-    idx = m11_obj_spawn(state, DM1_OBJTYPE_WEAPON, 1, 1, 0, 25);
+    DM1_V1_Object_InitPc34Compat(state);
+    idx = DM1_V1_Object_SpawnPc34Compat(state, DM1_OBJTYPE_WEAPON, 1, 1, 0, 25);
     assert(idx >= 0);
     champ = base_consumable_champion();
     memset(&result, 0, sizeof(result));
-    assert(m11_obj_use(state, 0, idx, &champ, &result) == 0);
+    assert(DM1_V1_Object_UsePc34Compat(state, 0, idx, &champ, &result) == 0);
     free(state);
     PASS();
 }

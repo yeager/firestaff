@@ -134,7 +134,7 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
     DM1_V1_ClickRouting_SetupDungeonZonesPc34Compat(&engine->clickRouting);
 
     /* 12. Save/load */
-    m11_sl_init(&engine->saveLoad,
+    DM1_V1_SaveLoad_InitPc34Compat(&engine->saveLoad,
                 config->save_dir ? config->save_dir : ".");
 
     engine->initialized = true;
@@ -235,7 +235,7 @@ M11_ScreenState *m11_engine_get_screen(M11_Engine *engine)
     return engine ? &engine->screen : NULL;
 }
 
-M11_SL_State *m11_engine_get_save_load(M11_Engine *engine)
+DM1_V1_SaveLoadStatePc34 *m11_engine_get_save_load(M11_Engine *engine)
 {
     return engine ? &engine->saveLoad : NULL;
 }
@@ -267,11 +267,11 @@ bool m11_engine_new_game(M11_Engine *engine)
 bool m11_engine_load_game(M11_Engine *engine, uint8_t slot)
 {
     if (!engine || !engine->initialized) return false;
-    if (!m11_sl_source_runtime_slot_supported(slot)) return false;
-    if (!m11_sl_slot_occupied(&engine->saveLoad, slot)) return false;
+    if (!DM1_V1_SaveLoad_SourceRuntimeSlotSupportedPc34Compat(slot)) return false;
+    if (!DM1_V1_SaveLoad_SlotOccupiedPc34Compat(&engine->saveLoad, slot)) return false;
 
-    M11_SL_SaveHeader header;
-    if (!m11_sl_load_header(&engine->saveLoad, slot, &header))
+    DM1_V1_SaveLoadHeaderPc34 header;
+    if (!DM1_V1_SaveLoad_LoadHeaderPc34Compat(&engine->saveLoad, slot, &header))
         return false;
 
     m11_game_state_load_game(&engine->stateMachine);
@@ -281,9 +281,9 @@ bool m11_engine_load_game(M11_Engine *engine, uint8_t slot)
 bool m11_engine_save_game(M11_Engine *engine, uint8_t slot)
 {
     if (!engine || !engine->initialized) return false;
-    if (!m11_sl_source_runtime_slot_supported(slot)) return false;
+    if (!DM1_V1_SaveLoad_SourceRuntimeSlotSupportedPc34Compat(slot)) return false;
 
-    M11_SL_SaveHeader header;
+    DM1_V1_SaveLoadHeaderPc34 header;
     memset(&header, 0, sizeof(header));
     header.magic = DM1_SL_SAVE_MAGIC;
     header.game_time = engine->dungeonData.gameTime;
@@ -293,7 +293,7 @@ bool m11_engine_save_game(M11_Engine *engine, uint8_t slot)
     header.party_facing = engine->dungeonData.party.facing;
 
     /* Actual data serialization is a future integration point */
-    return m11_sl_save(&engine->saveLoad, slot, &header, NULL, 0);
+    return DM1_V1_SaveLoad_SavePc34Compat(&engine->saveLoad, slot, &header, NULL, 0);
 }
 
 void m11_engine_request_exit(M11_Engine *engine)
