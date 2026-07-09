@@ -1266,10 +1266,20 @@ static void dm2_v1_startup_host_menu_route_set(
     route->rescan_saves = receipt->host_receipt.rescan_saves ? 1 : 0;
     route->selected_row_after =
         menu_receipt ? menu_receipt->selected_row : facts->selected_row;
+    route->runtime_menu_ready =
+        !route->return_to_launcher && !route->close_startup_menu;
+    route->runtime_action_ready =
+        execution->kind != DM2_V1_STARTUP_EXEC_IGNORE ? 1 : 0;
+    route->first_hud_frame_ready =
+        route->close_startup_menu &&
+        route->apply_session &&
+        receipt->host_receipt.input_result ==
+            DM2_V1_STARTUP_HOST_INPUT_REDRAW;
     route->status_scope = receipt->host_receipt.status_scope;
     route->status = receipt->host_receipt.status;
     /* DM2-owned M11/M12 route: callers can now use these flags directly
-     * instead of re-reading selected-row, status text, or execution kind. */
+     * instead of re-reading selected-row, status text, execution kind, or
+     * the first runtime HUD-frame boundary. */
 }
 
 void dm2_v1_startup_idle_receipt_clear(
