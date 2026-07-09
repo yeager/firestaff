@@ -25398,12 +25398,15 @@ static int m11_apply_f0190_fear(
     struct DungeonGroup_Compat* group,
     int creatureType,
     int groupIndex,
+    int killedCreatureIndex,
     int originalGroupCount,
     int mapIndex,
     int mapX,
     int mapY) {
     const struct CreatureBehaviorProfile_Compat* profile;
-    struct DM1GroupBehaviorContext_Compat ctx;
+    DM1_MeleeF0190KilledSomeStateInputPc34 stateIn;
+    DM1_MeleeF0190KilledSomeStatePlanPc34 statePlan;
+    DM1_MeleeF0190KilledSomeStatePlanPc34 applyPlan;
     int shouldFlee = 0;
     int fleeDelay = 0;
     int activeIndex;
@@ -25415,31 +25418,50 @@ static int m11_apply_f0190_fear(
     profile = CREATURE_GetProfile_Compat(creatureType);
     if (!profile) return 0;
 
-    memset(&ctx, 0, sizeof(ctx));
-    ctx.currentMapIndex = mapIndex;
-    ctx.currentGroupMapX = mapX;
-    ctx.currentGroupMapY = mapY;
-    ctx.partyMapIndex = state->world.party.mapIndex;
-    ctx.partyMapX = state->world.party.mapX;
-    ctx.partyMapY = state->world.party.mapY;
-    ctx.creatureType = creatureType;
-    ctx.creatureInfo.properties = profile->properties;
-    ctx.groupBehavior = group->behavior;
-    ctx.creatureCount = originalGroupCount;
+    memset(&stateIn, 0, sizeof(stateIn));
+    memset(&statePlan, 0, sizeof(statePlan));
+    memset(&applyPlan, 0, sizeof(applyPlan));
+    stateIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    stateIn.groupBehavior = group->behavior;
+    stateIn.groupIndex = groupIndex;
+    stateIn.killedCreatureIndex = killedCreatureIndex;
+    stateIn.originalGroupCount = originalGroupCount;
+    stateIn.mapIndex = mapIndex;
+    stateIn.mapX = mapX;
+    stateIn.mapY = mapY;
+    stateIn.partyMapIndex = state->world.party.mapIndex;
+    stateIn.partyMapX = state->world.party.mapX;
+    stateIn.partyMapY = state->world.party.mapY;
+    stateIn.creatureType = creatureType;
+    stateIn.creatureProperties = profile->properties;
+
+    if (!dm1_v1_melee_killed_some_state_plan_f0190_pc34(
+            &stateIn, &statePlan) ||
+        !statePlan.valid || !statePlan.shouldEvaluateFear) {
+        return 0;
+    }
 
     if (!F0821_DM1_GROUP_ShouldFrighten_Compat(
-            &ctx, originalGroupCount, &state->world.masterRng,
+            &statePlan.fearContext, originalGroupCount, &state->world.masterRng,
             &shouldFlee, &fleeDelay)) {
         return 0;
     }
-    if (!shouldFlee) return 0;
+    if (!dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
+            &statePlan, shouldFlee, fleeDelay, &applyPlan) ||
+        !applyPlan.valid || !applyPlan.shouldApplyFear) {
+        return 0;
+    }
 
-    group->behavior = DM1_BEHAVIOR_FLEE;
-    activeIndex = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
+    group->behavior = (unsigned char)applyPlan.newGroupBehavior;
+    activeIndex = m11_find_creature_ai_on_square(
+        state, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
     if (activeIndex >= 0) {
-        state->world.creatureAI[activeIndex].stateKind = AI_STATE_FLEE;
-        state->world.creatureAI[activeIndex].fearCounter = fleeDelay;
-        state->world.creatureAI[activeIndex].reserved0 = groupIndex;
+        state->world.creatureAI[activeIndex].stateKind =
+            applyPlan.newAiStateKind;
+        state->world.creatureAI[activeIndex].fearCounter =
+            applyPlan.fearCounter;
+        state->world.creatureAI[activeIndex].reserved0 =
+            applyPlan.groupIndex;
     }
     return 1;
 }
@@ -27669,8 +27691,9 @@ static void m11_projectile_apply_impact(
                                     actionPlan.slotIndex);
                                 (void)m11_apply_f0190_fear(
                                     state, g, actionPlan.originalCreatureType, gIdx,
-                                    actionPlan.originalGroupCount, impactMap,
-                                    impactX, impactY);
+                                    actionPlan.slotIndex,
+                                    actionPlan.originalGroupCount,
+                                    impactMap, impactX, impactY);
                         }
                         if (aftermath.dropFixedPossessions) {
                             /* ReDMCSB GROUP.C F0190 lines 842-847 calls
