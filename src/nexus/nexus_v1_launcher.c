@@ -1557,6 +1557,8 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
     out_receipt->menu_route_ready =
         assets.save_menu_route_ready && assets.champion_menu_route_ready;
     out_receipt->audio_ready = assets.startup_audio_handoff_ready ? 1 : 0;
+    out_receipt->title_menu_route_ready =
+        out_receipt->title_route_ready && out_receipt->menu_route_ready;
     out_receipt->fallback_visuals_permitted =
         assets.menu_bpk_fallback_visuals_permitted ||
         out_receipt->launch_gate.fallback_visuals_permitted;
@@ -1605,12 +1607,33 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
                 out_receipt->runtime_handoff.route);
         out_receipt->runtime_route_ready =
             out_receipt->runtime_handoff.runtime_ready;
+        out_receipt->menu_runtime_route_ready =
+            out_receipt->menu_route_ready &&
+            out_receipt->runtime_route_ready;
+        out_receipt->first_runtime_route_ready =
+            out_receipt->runtime_handoff.render_plan.plan_ready &&
+            out_receipt->runtime_handoff.command_count > 0 &&
+            !out_receipt->runtime_handoff.render_plan
+                 .blocks_real_dgn_mesh_render;
+        out_receipt->first_runtime_route =
+            out_receipt->first_runtime_route_ready
+                ? "first-dgn-render-state"
+                : out_receipt->runtime_route;
     }
 
     out_receipt->graphics_ready =
         assets.title_route_ready &&
         assets.real_menu_surface_route_ready &&
         (!execution || out_receipt->runtime_handoff.render_plan.plan_ready);
+    out_receipt->audio_runtime_route_ready =
+        out_receipt->audio_ready && out_receipt->first_runtime_route_ready;
+    out_receipt->full_startup_route_ready =
+        out_receipt->saturn_asset_boot_ready &&
+        out_receipt->title_menu_route_ready &&
+        out_receipt->menu_runtime_route_ready &&
+        out_receipt->first_runtime_route_ready &&
+        out_receipt->audio_runtime_route_ready &&
+        !out_receipt->fallback_visuals_permitted;
 
     if (out_receipt->runtime_route_ready) {
         out_receipt->route = NEXUS_V1_STARTUP_ROUTE_PROOF_RUNTIME_READY;

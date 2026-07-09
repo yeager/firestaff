@@ -838,6 +838,13 @@ int main(void)
                route_proof_receipt.runtime_route_ready == 1 &&
                route_proof_receipt.graphics_ready == 1 &&
                route_proof_receipt.audio_ready == 1 &&
+               route_proof_receipt.title_menu_route_ready == 1 &&
+               route_proof_receipt.menu_runtime_route_ready == 1 &&
+               route_proof_receipt.first_runtime_route_ready == 1 &&
+               route_proof_receipt.audio_runtime_route_ready == 1 &&
+               route_proof_receipt.full_startup_route_ready == 1 &&
+               strcmp(route_proof_receipt.first_runtime_route,
+                      "first-dgn-render-state") == 0 &&
                route_proof_receipt.fallback_visuals_permitted == 0 &&
                route_proof_receipt.runtime_handoff.command_count > 0,
            "Nexus startup route proof spans Saturn assets title menu and runtime");
@@ -921,6 +928,11 @@ int main(void)
                route_proof_receipt.runtime_route_ready == 0 &&
                route_proof_receipt.graphics_ready == 0 &&
                route_proof_receipt.audio_ready == 1 &&
+               route_proof_receipt.title_menu_route_ready == 0 &&
+               route_proof_receipt.menu_runtime_route_ready == 0 &&
+               route_proof_receipt.first_runtime_route_ready == 0 &&
+               route_proof_receipt.audio_runtime_route_ready == 0 &&
+               route_proof_receipt.full_startup_route_ready == 0 &&
                strcmp(route_proof_receipt.status,
                       "blocked-menu-bpk-prs3") == 0,
            "Nexus startup route proof exposes Saturn asset blocker before runtime");
