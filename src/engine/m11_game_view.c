@@ -81,6 +81,7 @@
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
+#include "dm1_v1_endgame_layout_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
@@ -32132,13 +32133,12 @@ int M11_GameView_GetV1EndgameTheEndZone(int* outX,
                                         int* outY,
                                         int* outW,
                                         int* outH) {
-    /* ReDMCSB ENDGAME.C:455-456 blits THE END through
-     * DATA.C:G0012_ai_Graphic562_Box_Endgame_TheEnd = {120,199,95,108}.
-     * Keep the runtime seam on the same top-left and 80x14 extent. */
-    if (outX) *outX = 120;
-    if (outY) *outY = 95;
-    if (outW) *outW = 80;
-    if (outH) *outH = 14;
+    DM1_V1_EndgameRectPc34 r;
+    if (!dm1_v1_endgame_the_end_rect_pc34(&r)) return 0;
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
     return 1;
 }
 
@@ -32147,9 +32147,7 @@ int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void) {
 }
 
 int M11_GameView_GetV1EndgameChampionMirrorZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    /* Source layout-696 C412..C415 champion mirror zones. */
-    return 412 + championSlot;
+    return dm1_v1_endgame_champion_mirror_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1EndgameChampionMirrorZone(int championSlot,
@@ -32157,18 +32155,17 @@ int M11_GameView_GetV1EndgameChampionMirrorZone(int championSlot,
                                                 int* outY,
                                                 int* outW,
                                                 int* outH) {
-    if (!M11_GameView_GetV1EndgameChampionMirrorZoneId(championSlot)) return 0;
-    if (outX) *outX = 19;
-    if (outY) *outY = 7 + championSlot * 48;
-    if (outW) *outW = 48;
-    if (outH) *outH = 43;
+    DM1_V1_EndgameRectPc34 r;
+    if (!dm1_v1_endgame_champion_mirror_rect_pc34(championSlot, &r)) return 0;
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
     return 1;
 }
 
 int M11_GameView_GetV1EndgameChampionPortraitZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    /* Source layout-696 C416..C419, parented to C412..C415 at +8,+6. */
-    return 416 + championSlot;
+    return dm1_v1_endgame_champion_portrait_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1EndgameChampionPortraitZone(int championSlot,
@@ -32176,34 +32173,33 @@ int M11_GameView_GetV1EndgameChampionPortraitZone(int championSlot,
                                                   int* outY,
                                                   int* outW,
                                                   int* outH) {
-    if (!M11_GameView_GetV1EndgameChampionPortraitZoneId(championSlot)) return 0;
-    if (outX) *outX = 27;
-    if (outY) *outY = 13 + championSlot * 48;
-    if (outW) *outW = M11_PORTRAIT_W;
-    if (outH) *outH = M11_PORTRAIT_H;
+    DM1_V1_EndgameRectPc34 r;
+    if (!dm1_v1_endgame_champion_portrait_rect_pc34(championSlot, &r)) {
+        return 0;
+    }
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
     return 1;
 }
 
 int M11_GameView_GetV1EndgameChampionNameOrigin(int championSlot,
                                                 int* outX,
                                                 int* outY) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
-    if (outX) *outX = 87;
-    if (outY) *outY = 14 + championSlot * 48;
-    return 1;
+    return dm1_v1_endgame_champion_name_origin_pc34(championSlot,
+                                                    outX,
+                                                    outY);
 }
 
 int M11_GameView_GetV1EndgameChampionSkillOrigin(int championSlot,
                                                  int skillLineIndex,
                                                  int* outX,
                                                  int* outY) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
-        skillLineIndex < 0 || skillLineIndex >= CHAMPION_SKILL_COUNT) {
-        return 0;
-    }
-    if (outX) *outX = 105;
-    if (outY) *outY = 23 + championSlot * 48 + skillLineIndex * 8;
-    return 1;
+    return dm1_v1_endgame_champion_skill_origin_pc34(championSlot,
+                                                     skillLineIndex,
+                                                     outX,
+                                                     outY);
 }
 
 int M11_GameView_GetV1EndgameRestartBox(int inner,
@@ -32211,10 +32207,12 @@ int M11_GameView_GetV1EndgameRestartBox(int inner,
                                         int* outY,
                                         int* outW,
                                         int* outH) {
-    if (outX) *outX = inner ? 105 : 103;
-    if (outY) *outY = inner ? 142 : 140;
-    if (outW) *outW = inner ? 111 : 115;
-    if (outH) *outH = inner ? 11 : 15;
+    DM1_V1_EndgameRectPc34 r;
+    if (!dm1_v1_endgame_restart_box_pc34(inner, &r)) return 0;
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
     return 1;
 }
 
@@ -32223,10 +32221,12 @@ int M11_GameView_GetV1EndgameQuitBox(int inner,
                                      int* outY,
                                      int* outW,
                                      int* outH) {
-    if (outX) *outX = inner ? 129 : 127;
-    if (outY) *outY = inner ? 167 : 165;
-    if (outW) *outW = inner ? 63 : 67;
-    if (outH) *outH = inner ? 11 : 15;
+    DM1_V1_EndgameRectPc34 r;
+    if (!dm1_v1_endgame_quit_box_pc34(inner, &r)) return 0;
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
     return 1;
 }
 

@@ -342,6 +342,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_dialog_scroll_pc34_compat.c
     src/dm1/dm1_v1_text_message_pc34_compat.c
     src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
+    src/dm1/dm1_v1_endgame_layout_pc34_compat.c
     src/dm1/dm1_v1_g0180_pc34_compat.c
     src/dm1/dm1_v1_g0179_pc34_compat.c
     src/dm1/dm1_v1_g0181_pc34_compat.c
@@ -8713,6 +8714,19 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_graphic_ids_pc34_compat
         COMMAND test_dm1_v1_graphic_ids_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_endgame_layout_pc34_compat
+        tests/test_dm1_v1_endgame_layout_pc34_compat.c
+        src/dm1/dm1_v1_endgame_layout_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_endgame_layout_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_endgame_layout_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_endgame_layout_pc34_compat
+        COMMAND test_dm1_v1_endgame_layout_pc34_compat
     )
 
     add_test(
