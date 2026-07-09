@@ -450,8 +450,23 @@ int main(void)
               host_action_receipt.host_receipt.rescan_saves == 1 &&
               host_action_receipt.menu_state_receipt_valid &&
               host_action_receipt.menu_state_receipt.row_count == 1 &&
-              host_action_receipt.menu_state_receipt.selected_row == 0,
-          "host action receipt owns failed Continue rescan state for M11");
+              host_action_receipt.menu_state_receipt.selected_row == 0 &&
+              host_action_receipt.save_menu_handoff.valid &&
+              host_action_receipt.save_menu_handoff.action_kind ==
+                  DM2_V1_STARTUP_ACTION_CONTINUE &&
+              host_action_receipt.save_menu_handoff.plan_kind ==
+                  DM2_V1_STARTUP_PLAN_CONTINUE &&
+              host_action_receipt.save_menu_handoff.execution_kind ==
+                  DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
+              host_action_receipt.save_menu_handoff.source_row == 0 &&
+              host_action_receipt.save_menu_handoff.source_slot == -1 &&
+              strcmp(host_action_receipt.save_menu_handoff.save_root,
+                     "/tmp/firestaff-dm2-startup-missing") == 0 &&
+              host_action_receipt.save_menu_handoff.rescan_saves == 1 &&
+              host_action_receipt.save_menu_handoff.session_ready == 0 &&
+              host_action_receipt.save_menu_handoff.menu_state_receipt_valid &&
+              host_action_receipt.save_menu_handoff.selected_row_after == 0,
+          "host action receipt owns failed Continue save-menu handoff for M11");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
@@ -643,8 +658,19 @@ int main(void)
               host_action_receipt.host_receipt.mode_update.set_startup_menu_active &&
               host_action_receipt.host_receipt.mode_update.startup_menu_active == 0 &&
               host_action_receipt.menu_state_receipt_valid &&
-              host_action_receipt.menu_state_receipt.selected_row == 2,
-          "host facts keyboard wrapper executes startup action and returns M11 receipt");
+              host_action_receipt.menu_state_receipt.selected_row == 2 &&
+              host_action_receipt.save_menu_handoff.valid &&
+              host_action_receipt.save_menu_handoff.action_kind ==
+                  DM2_V1_STARTUP_ACTION_NEW_GAME &&
+              host_action_receipt.save_menu_handoff.plan_kind ==
+                  DM2_V1_STARTUP_PLAN_NEW_GAME &&
+              host_action_receipt.save_menu_handoff.execution_kind ==
+                  DM2_V1_STARTUP_EXEC_SESSION_READY &&
+              host_action_receipt.save_menu_handoff.source_row == 2 &&
+              host_action_receipt.save_menu_handoff.session_ready == 1 &&
+              host_action_receipt.save_menu_handoff.return_to_launcher == 0 &&
+              host_action_receipt.save_menu_handoff.selected_row_after == 2,
+          "host facts keyboard wrapper executes startup action and returns M11 save-menu handoff");
     check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               strcmp(outcome.status_scope, "STARTUP") == 0 &&

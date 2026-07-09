@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM2 startup save-menu handoff receipt: host action receipts now carry the selected startup action, resolved plan, execution kind, save root, rescan policy, session-ready state, launcher-return flag, and post-action selected row so M11 can consume DM2-owned Continue/slot/New Game routing. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 post-launch title/entrance handoff receipt: DM1 startup post-launch plans now carry the title/menu eligibility boundary, consumed input flag, entrance wait stage, and C255 entrance full-start render receipt so M11/M12 can consume DM1-owned HoC startup facts instead of rebuilding them. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus save-menu route receipt: startup save-select now emits one route receipt for keyboard and pointer paths, carrying sanitized save state, draw-command count, selected slot, host input result, mode-update flags, and pointer-miss preservation for M11 handoff. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
