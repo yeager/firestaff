@@ -30,6 +30,7 @@
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_startup_real_asset_receipt.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "asset_find_by_hash.h"
@@ -1021,6 +1022,86 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
           "leader switch preserves imported champion 1 STR/WIS current stats");
 
     csb_v1_boot_cleanup(&p);
+}
+
+static void test_startup_real_asset_receipt_is_skip_safe_and_deterministic(void)
+{
+    CSB_V1_StartupRealReceipt receipt;
+    const char *tmp_dir = "/tmp/firestaff-csb-v1-startup-real-receipt";
+    const char *missing_dir = "/tmp/firestaff-csb-v1-startup-real-missing";
+    char expected_hash[CSB_V1_STARTUP_REAL_HASH_HEX_CAP];
+
+    (void)TEST_MKDIR(tmp_dir);
+    csb_v1_startup_real_receipt_init(&receipt);
+    CHECK(receipt.variant_id == CSB_V1_VARIANT_UNKNOWN &&
+              receipt.graphics_kind == CSB_V1_ASSET_GFX_ARCHIVE_NONE &&
+              !receipt.matched &&
+              receipt.receipt_hash == 0u,
+          "startup real-asset receipt initializes to skip-safe empty state");
+    CHECK(csb_v1_startup_real_scan_and_receipt(
+              NULL,
+              4,
+              &receipt) == CSB_V1_STARTUP_REAL_ERR_NO_DATA_DIR,
+          "startup real-asset receipt rejects missing data root");
+    CHECK(csb_v1_startup_real_scan_and_receipt(
+              missing_dir,
+              4,
+              &receipt) == CSB_V1_STARTUP_REAL_ERR_NO_DATA_DIR,
+          "startup real-asset receipt rejects absent data root");
+    CHECK(csb_v1_startup_real_scan_and_receipt(
+              tmp_dir,
+              7,
+              &receipt) == CSB_V1_STARTUP_REAL_OK &&
+              !receipt.matched &&
+              receipt.max_depth == 7 &&
+              strcmp(receipt.asset_root, tmp_dir) == 0 &&
+              receipt.receipt_hash == 0u &&
+              receipt.receipt_hash_hex[0] == '\0',
+          "startup real-asset receipt is skip-safe when no CSB pair is staged");
+
+    csb_v1_startup_real_receipt_init(&receipt);
+    snprintf(receipt.asset_root, sizeof(receipt.asset_root), "%s", tmp_dir);
+    snprintf(receipt.graphics_path,
+             sizeof(receipt.graphics_path),
+             "%s/GRAPHICS.DAT",
+             tmp_dir);
+    snprintf(receipt.dungeon_path,
+             sizeof(receipt.dungeon_path),
+             "%s/DUNGEON.DAT",
+             tmp_dir);
+    snprintf(receipt.graphics_md5,
+             sizeof(receipt.graphics_md5),
+             "%s",
+             "61fbfd56887c94adc26888a9491c6611");
+    snprintf(receipt.dungeon_md5,
+             sizeof(receipt.dungeon_md5),
+             "%s",
+             "6695d2acebce49f95db1d8f3a5c733de");
+    receipt.graphics_size_bytes = 123456u;
+    receipt.dungeon_size_bytes = 654321u;
+    receipt.variant_id = CSB_V1_VARIANT_PC34_EN;
+    receipt.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+    receipt.max_depth = 4;
+    receipt.assets_verified = 1;
+    receipt.graphics_verified = 1;
+    receipt.dungeon_verified = 1;
+    receipt.matched = 1;
+    CHECK(csb_v1_startup_real_receipt_recompute_hash(&receipt) == 1 &&
+              receipt.receipt_hash != 0u &&
+              strlen(receipt.receipt_hash_hex) == 16u,
+          "startup real-asset receipt packages deterministic capture hash");
+    snprintf(expected_hash, sizeof(expected_hash), "%s",
+             receipt.receipt_hash_hex);
+    CHECK(csb_v1_startup_real_receipt_recompute_hash(&receipt) == 1 &&
+              strcmp(receipt.receipt_hash_hex, expected_hash) == 0,
+          "startup real-asset receipt recompute validates packaged proof");
+    receipt.graphics_size_bytes++;
+    CHECK(csb_v1_startup_real_receipt_recompute_hash(&receipt) == 0,
+          "startup real-asset receipt detects changed packaged metadata");
+    CHECK(strcmp(csb_v1_startup_real_result_name(
+                     CSB_V1_STARTUP_REAL_ERR_BOOT_SCAN),
+                 "CSB_V1_STARTUP_REAL_ERR_BOOT_SCAN") == 0,
+          "startup real-asset receipt exposes stable result names");
 }
 
 static void test_enter_game_loads_m564_object_names_from_graphics_dat(void)
@@ -2933,6 +3014,7 @@ int main(void)
     test_runtime_import_dm1_party_path_owns_utility_handoff();
     test_runtime_view_state_receipt_owns_scalar_handoff();
     test_runtime_utility_startup_host_facts_wrappers();
+    test_startup_real_asset_receipt_is_skip_safe_and_deterministic();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();
