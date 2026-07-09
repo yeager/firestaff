@@ -71,6 +71,7 @@ typedef struct FakeDm1StartupCallbacks {
     int post_end_count;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 prelude_media;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 post_media;
+    DM1_V1_EntranceFullStartRenderReceiptPc34 post_entrance;
     char opened_source_id[64];
     char resolved_path[512];
 } FakeDm1StartupCallbacks;
@@ -138,6 +139,7 @@ static int fake_begin_post_launch_plan(
     }
     fake->post_begin_count++;
     fake->post_media = plan->media_receipt;
+    fake->post_entrance = plan->entrance_full_start_receipt;
     return 1;
 }
 
@@ -1164,6 +1166,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  fake.post_media.handled &&
                  fake.post_media.play_title,
              1);
+    expect_i("DM1 post-launch executor brackets entrance receipt",
+             fake.post_entrance.valid &&
+                 fake.post_entrance.mapIndex == DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 fake.post_entrance.partyDirection ==
+                     DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34,
+             1);
     expect_i("DM1 post-launch executor reports title played",
              title_played,
              1);
@@ -1435,6 +1443,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  fake.post_end_count == 1 &&
                  fake.prelude_media.handled &&
                  fake.post_media.handled,
+             1);
+    expect_i("DM1 selected launch transaction brackets entrance receipt",
+             fake.post_entrance.valid &&
+                 fake.post_entrance.corridorCount == 6,
              1);
     expect_i("DM1 selected launch transaction draws enter path",
              fake.draw_opened,
