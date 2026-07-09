@@ -3963,9 +3963,11 @@ static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
 static int orch_materialize_projectile_associated_thing_compat(
     struct GameWorld_Compat* world,
     const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* tickResult,
     int associatedThingMovedToGroup)
 {
     int sftIndex;
+    DM1_ProjectileMaterializationPlanPc34 targetPlan;
     DM1_ProjectileMaterializationReceiptPc34 receipt;
     unsigned short chainThings[64];
     unsigned short current;
@@ -3974,8 +3976,16 @@ static int orch_materialize_projectile_associated_thing_compat(
     if (!world || !projectile || associatedThingMovedToGroup) return 1;
     if (!world->things || !world->dungeon) return 1;
 
+    memset(&targetPlan, 0, sizeof(targetPlan));
+    if (!dm1_v1_projectile_materialization_plan_pc34(
+            projectile, tickResult, associatedThingMovedToGroup,
+            world->things->potionCount, &targetPlan) ||
+        !targetPlan.handled || !targetPlan.shouldMaterialize) {
+        return 1;
+    }
+
     sftIndex = orch_square_first_thing_list_index_compat(
-        world->dungeon, projectile->mapIndex, projectile->mapX, projectile->mapY);
+        world->dungeon, targetPlan.mapIndex, targetPlan.mapX, targetPlan.mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
         return 1;
     }
@@ -3993,7 +4003,7 @@ static int orch_materialize_projectile_associated_thing_compat(
 
     memset(&receipt, 0, sizeof(receipt));
     if (!dm1_v1_projectile_materialization_receipt_f0215_pc34(
-            projectile, NULL, associatedThingMovedToGroup,
+            projectile, tickResult, associatedThingMovedToGroup,
             world->things->potionCount,
             world->things->squareFirstThings[sftIndex],
             chainThings, chainCount, &receipt) ||
@@ -4003,9 +4013,11 @@ static int orch_materialize_projectile_associated_thing_compat(
 
     /* ReDMCSB PROJEXPL.C:F0215 lines 248-259 moves Projectile.Slot to
      * the projectile map square when F0217 does not pass a GROUP.Slot
-     * pointer.  DUNGEON.C:F0163 lines 1798-1837 owns the empty-square vs
-     * append-after-tail writeback; M10 now applies DM1's combined receipt
-     * instead of rebuilding the materialization and link decisions locally. */
+     * pointer.  F0219 lines 687-743 can retarget champion impacts before
+     * delete/materialization reaches F0215.  DUNGEON.C:F0163 lines
+     * 1798-1837 owns the empty-square vs append-after-tail writeback; M10
+     * now applies DM1's combined receipt instead of rebuilding link
+     * decisions locally. */
     if (receipt.squareAttach.chainOverflow ||
         !receipt.squareAttach.shouldSetDroppedNextEnd ||
         !orch_set_next_thing_compat(
@@ -4277,7 +4289,7 @@ static int orch_handle_projectile_move_event_compat(
                     }
                 }
                 (void)orch_materialize_projectile_associated_thing_compat(
-                    world, other, 0);
+                    world, other, &peerImpact, 0);
                 (void)orch_delete_projectile_move_events_compat(
                     world, otherIndex);
                 (void)F0813_PROJECTILE_Despawn_Compat(
@@ -4285,7 +4297,7 @@ static int orch_handle_projectile_move_event_compat(
             }
         }
         (void)orch_materialize_projectile_associated_thing_compat(
-            world, projectile, associatedThingMovedToGroup);
+            world, projectile, &tickResult, associatedThingMovedToGroup);
         F0813_PROJECTILE_Despawn_Compat(&world->projectiles, projectileIndex);
         return 1;
     }
