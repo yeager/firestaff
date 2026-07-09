@@ -5637,7 +5637,7 @@ static int m11_runtime_fluxcage_visible_in_viewport(
  * can pick them up.
  *
  * The player-facing filter is the same suppress-list used by the
- * existing v1 bottom-line scan (m11_v1_message_is_player_facing)
+ * DM1 V1 bottom-line scan (DM1_V1_TextMessage_IsPlayerFacingPc34Compat)
  * so no debug chatter leaks into the log.  To avoid duplicate
  * entries we track the last rerouted payload on the state and
  * skip the push when the new payload is byte-identical to the
@@ -5646,14 +5646,13 @@ static int m11_runtime_fluxcage_visible_in_viewport(
 /* Forward declarations for helpers defined later in this
  * translation unit that the Pass 42 chrome reroute needs. */
 static int m11_v1_chrome_mode_enabled(void);
-static int m11_v1_message_is_player_facing(const char* stripped);
 static const M11_LogEntry* m11_log_entry_at(const M11_MessageLog* log, int reverseIndex);
 
 static int m11_chrome_reroute_is_player_facing_pass42(const char* text) {
     if (!text || text[0] == '\0') {
         return 0;
     }
-    return m11_v1_message_is_player_facing(text);
+    return DM1_V1_TextMessage_IsPlayerFacingPc34Compat(text);
 }
 
 /* Pass 42: return 1 when any of the last N message-log entries
@@ -6150,7 +6149,7 @@ static int m11_v2_vertical_slice_enabled(void) {
  *   - Status-lozenge + inspect-readout writes (m11_set_status /
  *     m11_set_inspect_readout) are additionally rerouted into the
  *     rolling message log when the content is player-facing
- *     (m11_v1_message_is_player_facing).  The invented rendering
+ *     (DM1_V1_TextMessage_IsPlayerFacingPc34Compat).  The invented rendering
  *     surfaces for those strings (utility panel overlay, focus
  *     card) are already debug-only (showDebugHUD), so the reroute
  *     gives the notifications a visible path in V1 while the
@@ -6382,62 +6381,8 @@ static const M11_LogEntry* m11_log_entry_at(const M11_MessageLog* log, int rever
  * is suppressed in V1 so the screen reads like classic DM rather than
  * an event log. Matching is done on the raw log text AFTER tick-prefix
  * stripping. */
-static int m11_v1_message_is_player_facing(const char* stripped) {
-    static const char* const kSuppress[] = {
-        "DUNGEON MASTER LOADED",
-        "CHAOS STRIKES BACK LOADED",
-        "DUNGEON MASTER II LOADED",
-        "PARTY MOVED TO",
-        "PARTY MOVED",
-        "SPELL PANEL OPENED",
-        "SPELL CLEARED",
-        "RUNE ",                 /* "RUNE LO (96)" */
-        "DOOR STATE CHANGED",
-        "IDLE TICK",
-        "GAME VIEW NOT STARTED",
-        "GAME DATA LOADED",
-        "FACING UPDATED",
-        "TURN IGNORED",
-        "MOVEMENT BLOCKED",
-        "STRIKE COMMITTED",
-        "SPELL COMMITTED",
-        " FADES",
-        " OUT OF BOUNDS",
-        " COLLIDES IN FLIGHT",
-        " HIT BY ",
-        "LAUNCHES PROJECTILE",
-        "REACHES THE PARTY",
-        "CAST SPELL #",
-        NULL
-    };
-    int i;
-    if (!stripped || stripped[0] == '\0') {
-        return 0;
-    }
-    for (i = 0; kSuppress[i] != NULL; ++i) {
-        if (strstr(stripped, kSuppress[i]) != NULL) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
 static const char* m11_v1_strip_tick_prefix(const char* text) {
-    const char* p;
-    if (!text || text[0] != 'T') {
-        return text;
-    }
-    p = text + 1;
-    if (*p < '0' || *p > '9') {
-        return text;
-    }
-    while (*p >= '0' && *p <= '9') {
-        ++p;
-    }
-    if (p[0] == ':' && p[1] == ' ') {
-        return p + 2;
-    }
-    return text;
+    return DM1_V1_TextMessage_StripTickPrefixPc34Compat(text);
 }
 
 static void m11_log_event(M11_GameViewState* state, unsigned char color, const char* fmt, ...) {
@@ -37014,16 +36959,11 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int framebufferWidth,
                                      int framebufferHeight) {
-    enum {
-        M11_V1_MESSAGE_ROW_COUNT = 4,
-        M11_V1_MESSAGE_LINE_HEIGHT = 7,
-        M11_V1_MESSAGE_TEXT_TOP_ADJUST = 0,
-        M11_V1_MESSAGE_CHAR_WIDTH = 6
-    };
-    const M11_LogEntry* rows[M11_V1_MESSAGE_ROW_COUNT];
+    const char* texts[M11_MESSAGE_LOG_CAPACITY];
+    int colors[M11_MESSAGE_LOG_CAPACITY];
+    DM1_V1_MessageRenderPlanPc34Compat plan;
     int messageX, messageY, messageW, messageH;
     int reverseIndex;
-    int visibleCount = 0;
     int row;
     int savedFontScaleOverride;
 
@@ -37047,46 +36987,35 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
      * player-facing messages are drawn. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   messageX, messageY, messageW, messageH, M11_COLOR_BLACK);
-    memset(rows, 0, sizeof(rows));
 
-    for (reverseIndex = 0;
-         reverseIndex < state->messageLog.count && visibleCount < M11_V1_MESSAGE_ROW_COUNT;
-         ++reverseIndex) {
+    for (reverseIndex = 0; reverseIndex < state->messageLog.count; ++reverseIndex) {
         const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, reverseIndex);
-        const char* text = entry ? m11_v1_strip_tick_prefix(entry->text) : NULL;
-        if (!entry || !text || text[0] == '\0' || !m11_v1_message_is_player_facing(text)) {
-            continue;
-        }
-        rows[M11_V1_MESSAGE_ROW_COUNT - 1 - visibleCount] = entry;
-        ++visibleCount;
+        texts[reverseIndex] = entry ? entry->text : NULL;
+        colors[reverseIndex] = entry ? (int)entry->color : 0;
     }
+    DM1_V1_TextMessage_BuildLogRenderPlanPc34Compat(
+        texts, colors, state->messageLog.count, &plan);
 
     savedFontScaleOverride = g_m11_font_scale_override;
     g_m11_font_scale_override = 0;
-    for (row = 0; row < M11_V1_MESSAGE_ROW_COUNT; ++row) {
-        const M11_LogEntry* entry = rows[row];
-        const char* text;
+    for (row = 0; row < DM1_V1_MESSAGE_AREA_ROW_COUNT; ++row) {
+        const char* text = plan.rows[row].text;
         M11_TextStyle style;
         char clipped[M11_MESSAGE_MAX_LENGTH];
         size_t maxChars;
-        if (!entry) {
-            continue;
-        }
-        text = m11_v1_strip_tick_prefix(entry->text);
         if (!text || text[0] == '\0') {
             continue;
         }
-        maxChars = (size_t)(messageW / M11_V1_MESSAGE_CHAR_WIDTH);
+        maxChars = (size_t)(messageW / plan.characterWidth);
         if (maxChars >= sizeof(clipped)) {
             maxChars = sizeof(clipped) - 1U;
         }
         snprintf(clipped, maxChars + 1U, "%s", text);
         style = g_text_small;
-        style.color = entry->color;
+        style.color = (unsigned char)plan.rows[row].color;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       messageX,
-                      messageY + row * M11_V1_MESSAGE_LINE_HEIGHT +
-                          M11_V1_MESSAGE_TEXT_TOP_ADJUST,
+                      messageY + row * plan.lineHeight + plan.textTopAdjust,
                       clipped,
                       &style);
     }
