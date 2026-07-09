@@ -43,7 +43,7 @@ typedef enum {
     DM1_ZONE_MAP,
     DM1_ZONE_OPTIONS,
     DM1_ZONE_COUNT
-} M11_ClickZoneId;
+} DM1_V1_ClickZoneIdPc34;
 
 /* Viewport view cell — from CLIKVIEW.C */
 typedef enum {
@@ -52,31 +52,31 @@ typedef enum {
     DM1_VIEW_CELL_BACK_RIGHT = 2,
     DM1_VIEW_CELL_BACK_LEFT = 3,
     DM1_VIEW_CELL_COUNT
-} M11_ViewCell;
+} DM1_V1_ViewCellPc34;
 
 /* Click zone rectangle */
 typedef struct {
     int x, y, w, h;
-    M11_ClickZoneId zoneId;
+    DM1_V1_ClickZoneIdPc34 zoneId;
     int enabled;
-} M11_ClickZone;
+} DM1_V1_ClickZonePc34;
 
-#define M11_MAX_CLICK_ZONES 64
+#define DM1_V1_MAX_CLICK_ZONES_PC34 64
 
 /* Click routing state */
 typedef struct {
-    M11_ClickZone zones[M11_MAX_CLICK_ZONES];
+    DM1_V1_ClickZonePc34 zones[DM1_V1_MAX_CLICK_ZONES_PC34];
     int zoneCount;
     int lastClickX;
     int lastClickY;
-    M11_ClickZoneId lastClickZone;
+    DM1_V1_ClickZoneIdPc34 lastClickZone;
     int mouseDown;
     int mouseButton;        /* 1=right, 2=left (DM1 convention) */
-} M11_ClickState;
+} DM1_V1_ClickStatePc34;
 
 /* Viewport click result (from CLIKVIEW.C processing) */
 typedef struct {
-    M11_ViewCell viewCell;          /* which cell was clicked */
+    DM1_V1_ViewCellPc34 viewCell;          /* which cell was clicked */
     int wallSensorTriggered;        /* F0372: front wall sensor activated */
     int objectGrabbed;              /* F0373: picked up an object */
     int pileTopObjectId;            /* G0292_aT_PileTopObject[viewCell] */
@@ -85,46 +85,46 @@ typedef struct {
     int targetMapX;                 /* world coords of click target */
     int targetMapY;
     int stopWaitingForInput;        /* G0321 flag set */
-} M11_ViewportClickResult;
+} DM1_V1_ViewportClickResultPc34;
 
 typedef struct {
     uint8_t grabbableCellMask;
     int pileTopObjectId[DM1_VIEW_CELL_COUNT];
-} M11_ViewportGrabbableState;
+} DM1_V1_ViewportGrabbableStatePc34;
 
 /*
  * Initialize click routing state.
  */
-void m11_click_init(M11_ClickState *s);
+void DM1_V1_Click_InitPc34Compat(DM1_V1_ClickStatePc34 *s);
 
 /*
  * Add a click zone. Returns index or -1 if full.
  */
-int m11_click_add_zone(M11_ClickState *s, int x, int y, int w, int h,
-                       M11_ClickZoneId zoneId);
+int DM1_V1_Click_AddZonePc34Compat(DM1_V1_ClickStatePc34 *s, int x, int y, int w, int h,
+                       DM1_V1_ClickZoneIdPc34 zoneId);
 
 /*
  * Enable/disable a zone by ID.
  */
-void m11_click_enable_zone(M11_ClickState *s, M11_ClickZoneId zoneId,
+void DM1_V1_Click_EnableZonePc34Compat(DM1_V1_ClickStatePc34 *s, DM1_V1_ClickZoneIdPc34 zoneId,
                            int enabled);
 
 /*
  * Hit test: which zone does (mx, my) fall in?
  * Returns DM1_ZONE_NONE if no hit.
  */
-M11_ClickZoneId m11_click_hit_test(const M11_ClickState *s, int mx, int my);
+DM1_V1_ClickZoneIdPc34 DM1_V1_Click_HitTestPc34Compat(const DM1_V1_ClickStatePc34 *s, int mx, int my);
 
 /*
  * Process a mouse click. Returns the zone hit.
  */
-M11_ClickZoneId m11_click_mouse_down(M11_ClickState *s,
+DM1_V1_ClickZoneIdPc34 DM1_V1_Click_MouseDownPc34Compat(DM1_V1_ClickStatePc34 *s,
                                       int mx, int my, int button);
 
 /*
  * Process mouse release. Returns the zone where the click occurred.
  */
-M11_ClickZoneId m11_click_mouse_up(M11_ClickState *s, int mx, int my);
+DM1_V1_ClickZoneIdPc34 DM1_V1_Click_MouseUpPc34Compat(DM1_V1_ClickStatePc34 *s, int mx, int my);
 
 /*
  * Set up standard DM1 game screen zones.
@@ -134,17 +134,17 @@ M11_ClickZoneId m11_click_mouse_up(M11_ClickState *s, int mx, int my);
  * Action area: 233,72 85x50
  * Champion panels: 0,136 80x16 each
  */
-void m11_click_setup_game_zones(M11_ClickState *s);
+void DM1_V1_Click_SetupGameZonesPc34Compat(DM1_V1_ClickStatePc34 *s);
 
 /*
  * Set up inventory screen zones (slot grid).
  */
-void m11_click_setup_inventory_zones(M11_ClickState *s);
+void DM1_V1_Click_SetupInventoryZonesPc34Compat(DM1_V1_ClickStatePc34 *s);
 
 /*
  * Clear all zones.
  */
-void m11_click_clear_zones(M11_ClickState *s);
+void DM1_V1_Click_ClearZonesPc34Compat(DM1_V1_ClickStatePc34 *s);
 
 /*
  * Resolve a viewport click to a view cell (F0372-F0375).
@@ -154,36 +154,62 @@ void m11_click_clear_zones(M11_ClickState *s);
  * hasLeader: 1 if party has a leader.
  * leaderHandEmpty: 1 if leader's hand is empty.
  */
-M11_ViewportClickResult m11_viewport_resolve_click(
+DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickPc34Compat(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty);
 
-M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_mask(
+DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithGrabbableMaskPc34Compat(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty, uint8_t grabbableCellMask);
 
-M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_state(
+DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithGrabbableStatePc34Compat(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty,
-    const M11_ViewportGrabbableState *grabbableState);
+    const DM1_V1_ViewportGrabbableStatePc34 *grabbableState);
 
-void m11_viewport_grabbable_init(M11_ViewportGrabbableState *state);
-void m11_viewport_grabbable_clear(M11_ViewportGrabbableState *state);
-int m11_viewport_grabbable_set_pile_top(M11_ViewportGrabbableState *state,
-                                        M11_ViewCell cell,
+void DM1_V1_ViewportGrabbable_InitPc34Compat(DM1_V1_ViewportGrabbableStatePc34 *state);
+void DM1_V1_ViewportGrabbable_ClearPc34Compat(DM1_V1_ViewportGrabbableStatePc34 *state);
+int DM1_V1_ViewportGrabbable_SetPileTopPc34Compat(DM1_V1_ViewportGrabbableStatePc34 *state,
+                                        DM1_V1_ViewCellPc34 cell,
                                         int pileTopObjectId);
-int m11_viewport_grabbable_pile_top(
-    const M11_ViewportGrabbableState *state, M11_ViewCell cell);
+int DM1_V1_ViewportGrabbable_PileTopPc34Compat(
+    const DM1_V1_ViewportGrabbableStatePc34 *state, DM1_V1_ViewCellPc34 cell);
 
 /*
  * Source evidence string.
  */
-const char *m11_viewport_click_source_evidence(void);
+const char *DM1_V1_ViewportClick_SourceEvidencePc34Compat(void);
 
 #define DM1_VIEWPORT_GRABBABLE_CELL_MASK(cell) ((uint8_t)(1u << (cell)))
 #define DM1_VIEWPORT_GRABBABLE_NO_CELLS ((uint8_t)0x00u)
 #define DM1_VIEWPORT_GRABBABLE_ALL_CELLS ((uint8_t)0x0fu)
 #define DM1_VIEWPORT_NO_PILE_TOP_OBJECT (-1)
+
+typedef DM1_V1_ClickZoneIdPc34 M11_ClickZoneId;
+typedef DM1_V1_ViewCellPc34 M11_ViewCell;
+typedef DM1_V1_ClickZonePc34 M11_ClickZone;
+typedef DM1_V1_ClickStatePc34 M11_ClickState;
+typedef DM1_V1_ViewportClickResultPc34 M11_ViewportClickResult;
+typedef DM1_V1_ViewportGrabbableStatePc34 M11_ViewportGrabbableState;
+
+#define M11_MAX_CLICK_ZONES DM1_V1_MAX_CLICK_ZONES_PC34
+#define m11_click_init DM1_V1_Click_InitPc34Compat
+#define m11_click_add_zone DM1_V1_Click_AddZonePc34Compat
+#define m11_click_enable_zone DM1_V1_Click_EnableZonePc34Compat
+#define m11_click_hit_test DM1_V1_Click_HitTestPc34Compat
+#define m11_click_mouse_down DM1_V1_Click_MouseDownPc34Compat
+#define m11_click_mouse_up DM1_V1_Click_MouseUpPc34Compat
+#define m11_click_setup_game_zones DM1_V1_Click_SetupGameZonesPc34Compat
+#define m11_click_setup_inventory_zones DM1_V1_Click_SetupInventoryZonesPc34Compat
+#define m11_click_clear_zones DM1_V1_Click_ClearZonesPc34Compat
+#define m11_viewport_resolve_click DM1_V1_Viewport_ResolveClickPc34Compat
+#define m11_viewport_resolve_click_with_grabbable_mask DM1_V1_Viewport_ResolveClickWithGrabbableMaskPc34Compat
+#define m11_viewport_resolve_click_with_grabbable_state DM1_V1_Viewport_ResolveClickWithGrabbableStatePc34Compat
+#define m11_viewport_grabbable_init DM1_V1_ViewportGrabbable_InitPc34Compat
+#define m11_viewport_grabbable_clear DM1_V1_ViewportGrabbable_ClearPc34Compat
+#define m11_viewport_grabbable_set_pile_top DM1_V1_ViewportGrabbable_SetPileTopPc34Compat
+#define m11_viewport_grabbable_pile_top DM1_V1_ViewportGrabbable_PileTopPc34Compat
+#define m11_viewport_click_source_evidence DM1_V1_ViewportClick_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }
