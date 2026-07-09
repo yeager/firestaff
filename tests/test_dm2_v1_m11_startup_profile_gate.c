@@ -709,8 +709,12 @@ static void expect_dm2_startup_layout_contract(void) {
                     full_start_package.title_gdat_index == 0 &&
                     full_start_package.title_gdat_field == 1 &&
                     full_start_package.full_start.title_backdrop_ready == 1 &&
+                    full_start_package.title_ready == 0 &&
                     full_start_package.hud_overlay_suppressed == 1 &&
                     full_start_package.hud_runtime_ready == 1 &&
+                    full_start_package.runtime_menu_ready == 1 &&
+                    full_start_package.runtime_action_ready == 0 &&
+                    full_start_package.first_hud_frame_ready == 0 &&
                     full_start_package.full_start_graphics_ready == 1 &&
                     full_start_package.menu_capture_ready == 1 &&
                     full_start_package.hud_handoff_capture_ready == 1 &&
@@ -729,6 +733,13 @@ static void expect_dm2_startup_layout_contract(void) {
                         full_start_package.command_count &&
                     consumer_receipt.startup_title_frame == 0 &&
                     consumer_receipt.startup_title_frame_max == 7 &&
+                    consumer_receipt.startup_title_ready == 0 &&
+                    consumer_receipt.packaged_title_timing_consumed == 1 &&
+                    consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
+                    consumer_receipt.m11_startup_receipt_ready == 1 &&
+                    consumer_receipt.runtime_menu_ready == 1 &&
+                    consumer_receipt.runtime_action_ready == 0 &&
+                    consumer_receipt.first_hud_frame_ready == 0 &&
                     consumer_receipt.startup_draw_menu_capture_ready == 1 &&
                     consumer_receipt.startup_draw_hud_handoff_ready == 1 &&
                     strcmp(consumer_receipt.phase, "dm2-startup-menu") == 0,
@@ -1321,6 +1332,10 @@ int main(void) {
                         full_start_package.capture_proof.m11_consumer_ready == 1 &&
                         full_start_package.title_gdat_asset_w == 320 &&
                         full_start_package.title_gdat_asset_h == 200 &&
+                        full_start_package.title_ready == 0 &&
+                        full_start_package.runtime_menu_ready == 1 &&
+                        full_start_package.runtime_action_ready == 0 &&
+                        full_start_package.first_hud_frame_ready == 0 &&
                         full_start_package.packaged_full_start_hash != 0u,
                     "DM2 packaged full-start receipt binds real GDAT title/menu proof");
         expect_true(dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
@@ -1343,6 +1358,12 @@ int main(void) {
                         consumer_receipt.startup_title_frame == 2 &&
                         consumer_receipt.title_frame_start_tick == 12 &&
                         consumer_receipt.title_frame_elapsed_ticks == 1 &&
+                        consumer_receipt.packaged_title_timing_consumed == 1 &&
+                        consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
+                        consumer_receipt.m11_startup_receipt_ready == 1 &&
+                        consumer_receipt.runtime_menu_ready == 1 &&
+                        consumer_receipt.runtime_action_ready == 0 &&
+                        consumer_receipt.first_hud_frame_ready == 0 &&
                         consumer_receipt.startup_draw_ready == 1 &&
                         consumer_receipt.startup_draw_command_count ==
                             full_start_package.command_count &&

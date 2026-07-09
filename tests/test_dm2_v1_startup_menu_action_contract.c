@@ -518,8 +518,12 @@ int main(void)
               boot_full_start_package.title_next_frame_tick == 6 &&
               boot_full_start_package.title_frame_remaining_ticks == 6 &&
               boot_full_start_package.capture_proof.title_ready == 0 &&
+              boot_full_start_package.title_ready == 0 &&
               boot_full_start_package.menu_capture_ready == 1 &&
               boot_full_start_package.hud_handoff_capture_ready == 1 &&
+              boot_full_start_package.runtime_menu_ready == 1 &&
+              boot_full_start_package.runtime_action_ready == 0 &&
+              boot_full_start_package.first_hud_frame_ready == 0 &&
               boot_full_start_package.m11_consumer_ready == 1 &&
               boot_full_start_package.full_start.valid == 1 &&
               boot_full_start_package.capture_proof.valid == 1,
@@ -537,6 +541,12 @@ int main(void)
               boot_consumer_receipt.startup_title_frame_max == 7 &&
               boot_consumer_receipt.startup_title_ready == 0 &&
               boot_consumer_receipt.startup_hud_runtime_ready == 1 &&
+              boot_consumer_receipt.packaged_title_timing_consumed == 1 &&
+              boot_consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
+              boot_consumer_receipt.m11_startup_receipt_ready == 1 &&
+              boot_consumer_receipt.runtime_menu_ready == 1 &&
+              boot_consumer_receipt.runtime_action_ready == 0 &&
+              boot_consumer_receipt.first_hud_frame_ready == 0 &&
               boot_consumer_receipt.startup_draw_ready == 1 &&
               boot_consumer_receipt.startup_draw_command_count ==
                   boot_full_start_package.command_count &&
@@ -598,6 +608,9 @@ int main(void)
               boot_consumer_receipt.startup_title_frame == 2 &&
               boot_consumer_receipt.title_frame_start_tick == 12 &&
               boot_consumer_receipt.title_next_frame_tick == 18 &&
+              boot_consumer_receipt.packaged_title_timing_consumed == 1 &&
+              boot_consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
+              boot_consumer_receipt.m11_startup_receipt_ready == 1 &&
               boot_consumer_receipt.startup_draw_command_count ==
                   boot_full_start_package.command_count &&
               boot_consumer_receipt.startup_draw_ready == 1,

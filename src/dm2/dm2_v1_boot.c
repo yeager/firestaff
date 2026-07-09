@@ -1706,6 +1706,10 @@ int dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
     out_receipt->runtime_handoff_capture_ready =
         capture_proof.runtime_handoff_capture_ready;
     out_receipt->m11_consumer_ready = capture_proof.m11_consumer_ready;
+    out_receipt->title_ready = capture_proof.title_ready;
+    out_receipt->runtime_menu_ready = full_start->runtime_menu_ready;
+    out_receipt->runtime_action_ready = full_start->runtime_action_ready;
+    out_receipt->first_hud_frame_ready = full_start->first_hud_frame_ready;
     out_receipt->startup_menu_active = full_start->startup_menu_active;
     out_receipt->draw_startup_menu = capture_proof.draw_startup_menu;
     out_receipt->command_count = capture_proof.command_count;
@@ -1767,6 +1771,10 @@ int dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
         hash, (uint32_t)out_receipt->menu_capture_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->hud_handoff_capture_ready);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->first_hud_frame_ready);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_action_ready);
     out_receipt->packaged_full_start_hash = hash;
     out_receipt->valid =
         out_receipt->full_start_valid &&
@@ -2174,7 +2182,7 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
         package->hud_handoff_capture_ready;
     out_receipt->startup_title_frame = package->title_frame;
     out_receipt->startup_title_frame_max = package->title_frame_max;
-    out_receipt->startup_title_ready = package->capture_proof.title_ready;
+    out_receipt->startup_title_ready = package->title_ready;
     out_receipt->startup_hud_runtime_ready = package->hud_runtime_ready;
     out_receipt->startup_draw_ready = draw_ready;
     out_receipt->startup_draw_command_count = package->command_count;
@@ -2190,8 +2198,25 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
         package->runtime_handoff_capture_ready;
     out_receipt->exact_title_timing_ready =
         package->exact_title_timing_ready;
+    out_receipt->packaged_title_timing_consumed =
+        package->exact_title_timing_ready &&
+        package->title_frame_duration_ticks > 0 &&
+        package->title_cycle_ticks > 0 &&
+        package->title_next_frame_tick >
+            package->title_frame_start_tick &&
+        package->title_frame_remaining_ticks > 0;
+    out_receipt->packaged_first_hud_receipt_consumed =
+        package->hud_handoff_capture_ready ||
+        package->runtime_handoff_capture_ready;
+    out_receipt->m11_startup_receipt_ready =
+        package->m11_consumer_ready &&
+        out_receipt->packaged_title_timing_consumed &&
+        out_receipt->packaged_first_hud_receipt_consumed;
     out_receipt->full_start_real_asset_ready =
         package->full_start_real_asset_ready;
+    out_receipt->runtime_menu_ready = package->runtime_menu_ready;
+    out_receipt->runtime_action_ready = package->runtime_action_ready;
+    out_receipt->first_hud_frame_ready = package->first_hud_frame_ready;
     out_receipt->title_gdat_asset_ready = package->title_gdat_asset_ready;
     out_receipt->title_gdat_asset_w = package->title_gdat_asset_w;
     out_receipt->title_gdat_asset_h = package->title_gdat_asset_h;
@@ -2213,7 +2238,7 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
     out_receipt->status = package->status;
     out_receipt->valid =
         out_receipt->packaged_full_start_valid &&
-        package->m11_consumer_ready &&
+        out_receipt->m11_startup_receipt_ready &&
         out_receipt->packaged_full_start_hash != 0u;
     return out_receipt->valid;
 }

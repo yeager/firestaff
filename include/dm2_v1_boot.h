@@ -319,6 +319,10 @@ typedef struct {
     int hud_handoff_capture_ready;
     int runtime_handoff_capture_ready;
     int m11_consumer_ready;
+    int title_ready;
+    int runtime_menu_ready;
+    int runtime_action_ready;
+    int first_hud_frame_ready;
     int startup_menu_active;
     int draw_startup_menu;
     int command_count;
@@ -374,7 +378,13 @@ typedef struct {
     int hud_handoff_capture_ready;
     int runtime_handoff_capture_ready;
     int exact_title_timing_ready;
+    int packaged_title_timing_consumed;
+    int packaged_first_hud_receipt_consumed;
+    int m11_startup_receipt_ready;
     int full_start_real_asset_ready;
+    int runtime_menu_ready;
+    int runtime_action_ready;
+    int first_hud_frame_ready;
     int title_gdat_asset_ready;
     int title_gdat_asset_w;
     int title_gdat_asset_h;
