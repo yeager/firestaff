@@ -109,6 +109,90 @@ static void nexus_v1_launcher_resume_receipt_clear(
     nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
 }
 
+static int nexus_v1_surface_loaded(const Nexus_V1_Engine *engine,
+                                   Nexus_UISurfaceType surface)
+{
+    if (!engine || surface < 0 || surface >= NEXUS_SURFACE_COUNT) {
+        return 0;
+    }
+    return engine->ui.surfaces[surface].data &&
+           engine->ui.surfaces[surface].w > 0 &&
+           engine->ui.surfaces[surface].h > 0;
+}
+
+static void nexus_v1_launcher_fill_startup_assets_receipt(
+    const Nexus_V1_Engine *engine,
+    int title_loaded,
+    Nexus_V1_LauncherStartupAssetsReceipt *receipt)
+{
+    Nexus_V1_BpkRuntimeUploadReceipt bpk;
+    Nexus_SfxRuntimeReceipt sfx;
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->menu_bpk_upload_route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+    receipt->startup_sfx_status = NEXUS_SFX_RUNTIME_MISSING;
+    receipt->startup_sfx_level_index = -1;
+    receipt->startup_cd_track = -1;
+    if (!engine) {
+        return;
+    }
+
+    receipt->title_surface_loaded =
+        nexus_v1_surface_loaded(engine, NEXUS_SURFACE_TITLE);
+    receipt->warning_surface_loaded =
+        nexus_v1_surface_loaded(engine, NEXUS_SURFACE_WARNING);
+    receipt->gameover_surface_loaded =
+        nexus_v1_surface_loaded(engine, NEXUS_SURFACE_GAMEOVER);
+    receipt->status_bg_surface_loaded =
+        nexus_v1_surface_loaded(engine, NEXUS_SURFACE_STABG);
+    receipt->title_screen_loaded = title_loaded ? 1 : 0;
+    receipt->startup_surfaces_loaded =
+        nexus_v1_startup_surfaces_loaded_count(engine);
+    receipt->startup_surfaces_expected =
+        nexus_v1_startup_surfaces_expected_count(engine);
+    receipt->startup_surfaces_fallback =
+        nexus_v1_startup_surfaces_fallback_count(engine);
+    receipt->faces_loaded = nexus_v1_startup_faces_loaded_count(engine);
+    receipt->faces_expected = nexus_v1_startup_faces_expected_count(engine);
+    receipt->faces_fallback = nexus_v1_startup_faces_fallback_count(engine);
+
+    memset(&bpk, 0, sizeof(bpk));
+    if (nexus_v1_menu_bpk_upload_plan_receipt(engine, &bpk) == 0) {
+        receipt->menu_bpk_upload_receipt_valid = 1;
+        receipt->menu_bpk_upload_route = bpk.route;
+        receipt->menu_bpk_planned_rows = (int)bpk.planned_rows;
+        receipt->menu_bpk_blocked_prs3_uploads =
+            (int)bpk.blocked_prs3_uploads;
+        receipt->menu_bpk_blocks_real_menu_surface_render =
+            bpk.blocks_real_menu_surface_render;
+        receipt->menu_bpk_fallback_visuals_permitted =
+            bpk.fallback_visuals_permitted;
+    }
+
+    memset(&sfx, 0, sizeof(sfx));
+    if (nexus_v1_current_level_sfx_runtime_receipt(engine, &sfx) == 0) {
+        receipt->startup_sfx_status = sfx.status;
+        receipt->startup_sfx_level_index = sfx.level_index;
+        receipt->startup_cd_track = sfx.cd_track;
+        receipt->startup_sfx_blocks_real_playback =
+            sfx.blocks_real_sfx_playback;
+        receipt->startup_audio_handoff_ready =
+            sfx.level_index == 0 && sfx.cd_track == 2 ? 1 : 0;
+    }
+
+    receipt->startup_assets_ready =
+        receipt->title_screen_loaded &&
+        nexus_v1_startup_surfaces_ready(engine) &&
+        nexus_v1_startup_faces_ready(engine);
+    receipt->main_menu_route_ready =
+        engine->level_loaded &&
+        receipt->startup_assets_ready &&
+        receipt->startup_audio_handoff_ready;
+}
+
 void nexus_v1_launcher_startup_runtime_state_clear(
     Nexus_V1_StartupRuntimeState *state)
 {
@@ -591,6 +675,10 @@ static void nexus_v1_launcher_fill_boot_receipt(
              sizeof(receipt->dungeon_path),
              "%s/LEV00.DGN",
              data_dir ? data_dir : "");
+    nexus_v1_launcher_fill_startup_assets_receipt(
+        engine,
+        title_loaded,
+        &receipt->startup_assets);
 }
 
 int nexus_v1_launcher_boot_level0_startup(
@@ -703,6 +791,7 @@ int nexus_v1_launcher_boot_level0_runtime_startup(
              "%s",
              boot_receipt.dungeon_path);
     out_receipt->startup_receipt = boot_receipt.startup_receipt;
+    out_receipt->startup_assets = boot_receipt.startup_assets;
     boot_status = boot_receipt.title_loaded
         ? NEXUS_V1_STARTUP_BOOT_STATUS_TITLE
         : NEXUS_V1_STARTUP_BOOT_STATUS_TITLE_FALLBACK;
