@@ -8,6 +8,7 @@
  * See header for full provenance and citation table.
  */
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0496_pc34_compat.h"
 #include "firestaff/dm1/v1/G0497_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
@@ -1145,6 +1146,11 @@ int dm1_v1_action_throw_plan_f0407_pc34(
     out->shouldSpawnProjectile = 0;
     out->shouldClearActionHand = 0;
     out->actionEnableSlotOrdinal = 0xFF;
+    out->disableActionTicks = 0;
+    out->projectileDisabledMovementTicks = 0;
+    out->lastProjectileDisabledMovementDirection = -1;
+    out->throwExperienceGain = 0;
+    out->throwSkillIndex = -1;
     out->throwSide = 0;
 
     memset(&dirIn, 0, sizeof(dirIn));
@@ -1170,10 +1176,16 @@ int dm1_v1_action_throw_plan_f0407_pc34(
     if (in->projectileSpawned) {
         /* ReDMCSB: MENU.C F0407 lines 1613-1617 stores action-hand slot
          * ordinal after F0328 accepts the throw; CHAMPION.C F0328 lines
-         * 2138-2190 has already removed/spawned the thrown object. */
+         * 2167-2191 owns stamina cost, DisableAction(4), Throw XP, projectile
+         * movement-disable ticks and last projectile direction. */
         out->performed = 1;
         out->shouldClearActionHand = 1;
         out->actionEnableSlotOrdinal = CHAMPION_SLOT_ACTION_HAND;
+        out->disableActionTicks = 4;
+        out->projectileDisabledMovementTicks = 4;
+        out->lastProjectileDisabledMovementDirection = in->partyDirection & 3;
+        out->throwExperienceGain = 8;
+        out->throwSkillIndex = DM1_SKILL_IDX_THROW;
     }
     return 1;
 }
