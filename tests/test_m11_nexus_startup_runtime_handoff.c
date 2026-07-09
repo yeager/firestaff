@@ -151,6 +151,9 @@ int main(void)
                     view.nexusState.startup_saturn_capture_frames_exact == 1 &&
                     view.nexusState.startup_saturn_warning_frame == 0 &&
                     view.nexusState.startup_saturn_title_capture_frame == 48 &&
+                    view.nexusState.startup_saturn_champion_capture_frame == 102 &&
+                    view.nexusState.startup_saturn_save_capture_frame == -1 &&
+                    view.nexusState.startup_saturn_dungeon_capture_frame == 102 &&
                     view.nexusState.startup_saturn_title_ready_frame == 102 &&
                     view.nexusState.startup_saturn_gameover_capture_frame == 0 &&
                     view.nexusState.startup_title_timing_frame == -1 &&
@@ -164,6 +167,34 @@ int main(void)
                     view.nexusState.startup_copied_draw_command_count > 0 &&
                     view.nexusState.startup_copied_dgn_render_command_count > 0,
                 "M11 Nexus startup gate consumes host-caller receipt for capture and DGN handoff");
+
+    fill_ready_engine(&engine);
+    fill_view(&view, &engine);
+    view.nexusState.champion_select_active = 0;
+    view.nexusState.startup_save_select_active = 1;
+    view.nexusState.startup_save_row_count = 1;
+    view.nexusState.startup_save_selected_row = 0;
+    view.nexusState.startup_save_slot_mask = 0;
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN);
+    expect_true(result == M11_GAME_INPUT_REDRAW &&
+                    view.nexusState.startup_host_caller_ready == 1 &&
+                    view.nexusState.startup_host_execute_startup_draws == 1 &&
+                    view.nexusState.startup_saturn_save_capture_frame == 102 &&
+                    view.nexusState.startup_saturn_champion_capture_frame == -1 &&
+                    view.nexusState.startup_saturn_dungeon_capture_frame == -1 &&
+                    view.nexusState.startup_copied_draw_command_count > 0,
+                "M11 Nexus save startup route consumes Saturn save capture receipt");
+
+    fill_ready_engine(&engine);
+    fill_view(&view, &engine);
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_NONE);
+    expect_true(result == M11_GAME_INPUT_IGNORED &&
+                    view.nexusState.champion_select_active == 1,
+                "M11 Nexus idle champion route does not mutate selection");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) > 0,
+                "M11 Nexus champion draw consumes real startup presentation");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);

@@ -906,6 +906,36 @@ static int nexus_v1_launcher_saturn_capture_frames_exact(
            gameover_capture_frame == 0;
 }
 
+static int nexus_v1_launcher_saturn_full_start_capture_frames_exact(
+    int warning_capture_frame,
+    int title_capture_frame,
+    int save_capture_frame,
+    int champion_capture_frame,
+    int dungeon_capture_frame,
+    int gameover_capture_frame,
+    int boot_start_ready_frames)
+{
+    if (!nexus_v1_launcher_saturn_capture_frames_exact(
+            warning_capture_frame,
+            title_capture_frame,
+            gameover_capture_frame)) {
+        return 0;
+    }
+    if (save_capture_frame != -1 &&
+        save_capture_frame != boot_start_ready_frames) {
+        return 0;
+    }
+    if (champion_capture_frame != -1 &&
+        champion_capture_frame != boot_start_ready_frames) {
+        return 0;
+    }
+    if (dungeon_capture_frame != -1 &&
+        dungeon_capture_frame != boot_start_ready_frames) {
+        return 0;
+    }
+    return 1;
+}
+
 const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
     Nexus_V1_StartupRealAssetOwnershipRoute route)
 {
@@ -3041,10 +3071,14 @@ static void nexus_v1_launcher_finalize_full_start_package_saturn_receipt(
             receipt->boot_start_ready_frames,
             receipt->title_frame_max);
     receipt->saturn_capture_frames_exact =
-        nexus_v1_launcher_saturn_capture_frames_exact(
+        nexus_v1_launcher_saturn_full_start_capture_frames_exact(
             receipt->warning_capture_frame,
             receipt->title_capture_frame,
-            receipt->gameover_capture_frame);
+            receipt->save_capture_frame,
+            receipt->champion_capture_frame,
+            receipt->dungeon_capture_frame,
+            receipt->gameover_capture_frame,
+            receipt->boot_start_ready_frames);
     receipt->full_start_package_receipt_ready =
         receipt->m11_ready &&
         receipt->m12_ready &&
