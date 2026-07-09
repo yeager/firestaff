@@ -651,6 +651,9 @@ int csb_v1_startup_stage_after_pc34(CSB_V1_StartupStage_PC34 later,
                                     CSB_V1_StartupStage_PC34 earlier);
 int csb_v1_startup_title_total_ticks_pc34(void);
 int csb_v1_startup_title_presents_ticks_pc34(void);
+int csb_v1_startup_title_chaos_zoom_ticks_pc34(void);
+int csb_v1_startup_title_chaos_hold_ticks_pc34(void);
+int csb_v1_startup_title_strikes_back_ticks_pc34(void);
 int csb_v1_startup_title_stage_for_frame_pc34(int frame);
 unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame);
 int csb_v1_startup_entrance_wait_stage_pc34(void);

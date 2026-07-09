@@ -8,9 +8,9 @@
 
 enum {
     CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 60,
-    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
-    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 20,
-    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 2,
+    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 18,
+    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 2,
+    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
     CSB_V1_TITLE_TOTAL_TICKS_PC34 =
         CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
         CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
@@ -136,6 +136,21 @@ int csb_v1_startup_title_presents_ticks_pc34(void)
     return CSB_V1_TITLE_PRESENTS_TICKS_PC34;
 }
 
+int csb_v1_startup_title_chaos_zoom_ticks_pc34(void)
+{
+    return CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34;
+}
+
+int csb_v1_startup_title_chaos_hold_ticks_pc34(void)
+{
+    return CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34;
+}
+
+int csb_v1_startup_title_strikes_back_ticks_pc34(void)
+{
+    return CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34;
+}
+
 int csb_v1_startup_title_stage_for_frame_pc34(int frame)
 {
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
@@ -153,10 +168,9 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
 {
     /* ReDMCSB: TITLE.C F0437 lines 425-463 uses the CSB title path:
      * CM58 PRESENTS is blitted, then TITLE.C waits until
-     * G0317_i_WaitForInputVerticalBlankCount + 60 before the 20-frame
-     * CHAOS zoom, holds for F0022_MAIN_Delay(20), then draws STRIKES BACK
-     * for F0022_MAIN_Delay(2). Firestaff keeps those exact visible phases
-     * after the FTL swoosh instead of adding a synthetic extra title tick. */
+     * G0317_i_WaitForInputVerticalBlankCount + 60. The PC path builds 18
+     * shrinked CHAOS bitmaps, blits them in reverse order, waits two
+     * vertical blanks, then draws STRIKES BACK for one visible vblank. */
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return 1u;
     }
@@ -167,9 +181,9 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
                     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
                     CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34) {
-        return 21u;
+        return (unsigned int)(CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 + 1);
     }
-    return 22u;
+    return (unsigned int)(CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 + 2);
 }
 
 static void csb_v1_startup_clear_title_rect_pc34(
@@ -1095,6 +1109,12 @@ static void csb_v1_startup_rebuild_render_commands_pc34(
     }
     csb_v1_startup_clear_render_commands_pc34(plan);
     if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+        /* ReDMCSB TITLE.C F0437 lines 429, 453 clears the screen before
+         * PRESENTS and before the CHAOS zoom/hold transaction. Keep clear
+         * as an explicit CSB render command so host title drawing does not
+         * depend on stale FTL/previous-title framebuffer contents. */
+        csb_v1_startup_add_render_command_pc34(
+            plan, CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34);
         csb_v1_startup_add_render_command_pc34(
             plan, CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34);
         return;
@@ -1417,16 +1437,16 @@ static void csb_v1_startup_set_title_rect_pc34(
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
         plan->title_source_step >= 2 &&
-        plan->title_source_step <= 21) {
+        plan->title_source_step <= 19) {
         (void)V1_TitleFrontend_GetStepPalette(
             V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
             &plan->title_special_palette);
         plan->special_palette = plan->title_special_palette;
         /* ReDMCSB: TITLE.C F0437 lines 433-457 initializes
-         * CM59_NEGGRAPHIC_TITLE_CHAOS as a 320x80 source, creates 20
+         * CM59_NEGGRAPHIC_TITLE_CHAOS as a 320x80 source, creates 18
          * shrinked bitmaps, then blits them in reverse order to
          * C425_ZONE_TITLE_CHAOS. */
-        zoom_index = 21 - plan->title_source_step;
+        zoom_index = 19 - plan->title_source_step;
         zoom_w = 320 - 16 * zoom_index;
         zoom_h = 80 - 4 * zoom_index;
         plan->title_source_x = (320 - zoom_w) >> 1;
