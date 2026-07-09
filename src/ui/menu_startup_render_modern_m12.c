@@ -1314,7 +1314,7 @@ static void draw_card(M12_ModernCanvas* c,
     /* Game card: status line under title, then version list. */
     int slotIdx = slot_for_game_id(entry->gameId);
     const M12_AssetVersionStatus* status = pick_status(state, slotIdx);
-    M12_StartupBootReadiness boot;
+    M12_StartupBootReadiness boot = {0};
 
     M12_RGB statusColor;
     const char* statusLabel;
@@ -1347,6 +1347,19 @@ static void draw_card(M12_ModernCanvas* c,
         ModernTextStyle s = text_style_make(1, statusColor, 0);
         int tw = text_width_px(statusLabel, &s);
         draw_text(c, pillX + (pillW - tw) / 2, pillY + 8, statusLabel, &s);
+        if (boot.handled && boot.startupStepCount > 0) {
+            char progress[96];
+            const char* next = boot.fullStartGraphicsReady ? boot.startupPathLabel
+                                                           : boot.nextStepLabel;
+            ModernTextStyle p = text_style_make(1, COLOR_TEXT_FAINT(), 0);
+            snprintf(progress,
+                     sizeof(progress),
+                     "%d/%d %s",
+                     boot.startupStepReadyCount,
+                     boot.startupStepCount,
+                     next ? next : "BOOT");
+            draw_text(c, pillX + pillW + 14, pillY + 8, progress, &p);
+        }
     }
 
     /* Cover-first main cards: show the art large here. Version,

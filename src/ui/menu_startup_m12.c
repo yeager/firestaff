@@ -6649,6 +6649,50 @@ static const char* m12_full_start_ready_detail_label(const char* gameId) {
     return "VERIFIED DATA READY";
 }
 
+static int m12_full_start_stage_count(const char* gameId) {
+    if (!gameId) {
+        return 1;
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return 4; /* SWSH, TITLE, ENTRANCE, HOC */
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return 4; /* SWSH, TITLE, ENTRANCE, UTILITY */
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return 3; /* TITLE, SAVE MENU, FIRST HUD */
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        return 4; /* TITLE, WARNING, SAVE, CHAMPIONS */
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return 4; /* TRACK 02, TITLE, STAGE, SOUL ROOM */
+    }
+    return 1;
+}
+
+static const char* m12_full_start_path_label(const char* gameId) {
+    if (!gameId) {
+        return "BOOT PATH";
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return "DM1 FULL START";
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return "CSB BOOT PATH";
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return "DM2 START MENU";
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        return "NEXUS TITLE MENU";
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return "THERON TRACK 02";
+    }
+    return "BOOT PATH";
+}
+
 int M12_StartupMenu_GetBootReadiness(
     const M12_StartupMenuState* state,
     int entryIndex,
@@ -6664,6 +6708,8 @@ int M12_StartupMenu_GetBootReadiness(
     memset(&receipt, 0, sizeof(receipt));
     receipt.statusLabel = "OFFLINE";
     receipt.detailLabel = "OFFLINE";
+    receipt.nextStepLabel = "OFFLINE";
+    receipt.startupPathLabel = "BOOT PATH";
 
     entry = M12_StartupMenu_GetEntry(state, entryIndex);
     if (!state || !entry || entry->kind != M12_MENU_ENTRY_GAME) {
@@ -6681,24 +6727,41 @@ int M12_StartupMenu_GetBootReadiness(
         M12_AssetStatus_GameAvailable(&state->assetStatus, entry->gameId) ? 1 : 0;
     receipt.versionReady = (version && version->matched) ? 1 : 0;
     receipt.fullStartGraphicsExpected = receipt.supported;
+    receipt.startupStepCount = 2 + m12_full_start_stage_count(entry->gameId);
+    receipt.startupStepReadyCount = 0;
+    receipt.startupPathLabel = m12_full_start_path_label(entry->gameId);
+    if (receipt.dataReady) {
+        receipt.startupStepReadyCount++;
+    }
+    if (receipt.versionReady) {
+        receipt.startupStepReadyCount++;
+    }
     receipt.startupMenuReady = receipt.dataReady && receipt.versionReady;
     receipt.fullStartGraphicsReady =
         receipt.fullStartGraphicsExpected && receipt.startupMenuReady;
+    if (receipt.fullStartGraphicsReady) {
+        receipt.startupStepReadyCount = receipt.startupStepCount;
+    }
 
     if (!receipt.supported) {
         receipt.statusLabel = "UNSUPPORTED";
         receipt.detailLabel = "RUNTIME NOT WIRED";
+        receipt.nextStepLabel = "SUPPORTED RUNTIME";
+        receipt.startupStepReadyCount = 0;
     } else if (!receipt.dataReady) {
         receipt.statusLabel = "DATA MISSING";
         receipt.detailLabel = M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)
                                   ? "HASHED, BUT FILES ARE MISSING"
                                   : "KNOWN SLOT, HASH COVERAGE STILL GROWING";
+        receipt.nextStepLabel = "REQUIRED GAME DATA";
     } else if (!receipt.versionReady) {
         receipt.statusLabel = "VERSION MISSING";
         receipt.detailLabel = "SELECTED VERSION IS NOT VERIFIED";
+        receipt.nextStepLabel = "SELECTED VERSION";
     } else {
         receipt.statusLabel = m12_full_start_ready_status_label(entry->gameId);
         receipt.detailLabel = m12_full_start_ready_detail_label(entry->gameId);
+        receipt.nextStepLabel = "READY";
     }
 
     *outReadiness = receipt;

@@ -321,6 +321,10 @@ typedef struct {
     int fullStartGraphicsExpected;
     int fullStartGraphicsReady;
     int startupMenuReady;
+    int startupStepCount;
+    int startupStepReadyCount;
+    const char* nextStepLabel;
+    const char* startupPathLabel;
     const char* statusLabel;
     const char* detailLabel;
 } M12_StartupBootReadiness;
