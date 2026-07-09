@@ -94,6 +94,10 @@ int main(void) {
     char level_dst[FSP_PATH_MAX];
     char slev00_src[FSP_PATH_MAX];
     char slev00_dst[FSP_PATH_MAX];
+    char sal00_src[FSP_PATH_MAX];
+    char sal00_dst[FSP_PATH_MAX];
+    char map00_src[FSP_PATH_MAX];
+    char map00_dst[FSP_PATH_MAX];
     char profile_level_root[FSP_PATH_MAX];
     char profile_level_nexus_dir[FSP_PATH_MAX];
     char profile_level_dst[FSP_PATH_MAX];
@@ -105,10 +109,12 @@ int main(void) {
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_ScriptRuntimeReceipt script_receipt;
+    Nexus_SfxRuntimeReceipt sfx_receipt;
     uint8_t* data;
     int size = 0;
     int menu_bpk_copied = 0;
     int slev00_copied = 0;
+    int sndlev00_copied = 0;
 
     if (!home || !home[0]) {
         puts("SKIP: HOME unset");
@@ -214,6 +220,16 @@ int main(void) {
             copy_file_bytes(slev00_src, slev00_dst)) {
             slev00_copied = 1;
         }
+        if (FSP_JoinPath(sal00_src, sizeof(sal00_src), home, ".firestaff/data/nexus/SNDLEV00.SAL") &&
+            FSP_JoinPath(map00_src, sizeof(map00_src), home, ".firestaff/data/nexus/SNDLEV00.MAP") &&
+            local_file_exists(sal00_src) &&
+            local_file_exists(map00_src) &&
+            FSP_JoinPath(sal00_dst, sizeof(sal00_dst), root, "SNDLEV00.SAL") &&
+            FSP_JoinPath(map00_dst, sizeof(map00_dst), root, "SNDLEV00.MAP") &&
+            copy_file_bytes(sal00_src, sal00_dst) &&
+            copy_file_bytes(map00_src, map00_dst)) {
+            sndlev00_copied = 1;
+        }
 
         memset(&engine, 0, sizeof(engine));
         check_int(nexus_v1_init(&engine, root) == 0,
@@ -264,6 +280,34 @@ int main(void) {
                       "Nexus script receipt has stable blocked route name");
         } else {
             puts("SKIP: local Nexus SLEV00.BIN not present for script runtime receipt");
+        }
+        memset(&sfx_receipt, 0, sizeof(sfx_receipt));
+        check_int(nexus_v1_current_level_sfx_runtime_receipt(
+                      &engine,
+                      &sfx_receipt) == 0,
+                  "Nexus engine emits current-level SFX runtime receipt");
+        if (sndlev00_copied) {
+            check_int(sfx_receipt.sal_loaded == 1 &&
+                          sfx_receipt.map_loaded == 1,
+                      "Nexus SFX receipt sees real SNDLEV00 SAL/MAP bytes");
+            check_int(sfx_receipt.status ==
+                          NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE,
+                      "Nexus SFX receipt blocks real SAL/MAP decode gap");
+            check_int(sfx_receipt.sal_receipt.receipt_class ==
+                          NEXUS_V1_AUDIO_RECEIPT_SIZE_MATCH &&
+                          sfx_receipt.map_receipt.receipt_class ==
+                              NEXUS_V1_AUDIO_RECEIPT_SIZE_MATCH,
+                      "Nexus SFX receipt preserves SAL/MAP size receipts");
+            check_int(sfx_receipt.cd_track == 2 &&
+                          sfx_receipt.blocks_real_sfx_playback == 1 &&
+                          sfx_receipt.fallback_visuals_permitted == 0,
+                      "Nexus SFX receipt forbids fallback playback");
+            check_int(strcmp(nexus_sound_sfx_runtime_status_name(
+                                 sfx_receipt.status),
+                             "blocked-unsupported-decode") == 0,
+                      "Nexus SFX receipt has stable blocked route name");
+        } else {
+            puts("SKIP: local Nexus SNDLEV00.SAL/.MAP not present for SFX runtime receipt");
         }
         nexus_v1_shutdown(&engine);
 
