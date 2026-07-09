@@ -5476,7 +5476,7 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
     memset(&receipt, 0, sizeof(receipt));
     if (dm1_v1_f0115_thing_layer_receipt_pc34(
             thingRefs, thingRefCount, -1, 0, &receipt) && receipt.valid) {
-        summary.total = receipt.total;
+        summary.total = receipt.drawableTotal;
         summary.doors = receipt.doors;
         summary.teleporters = receipt.teleporters;
         summary.textStrings = receipt.textStrings;
@@ -16876,37 +16876,11 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
-    /* Extract first projectile graphic index from GRAPHICS.DAT.
-     * Source-backed spell/magic projectiles use M613=454 plus the
-     * F0142/G0210 projectile-aspect native offset. */
-    if (cell.summary.projectiles > 0 && state->world.things &&
-        state->world.things->projectiles) {
-        unsigned short scanThing = viewportStaticFirstThing;
-        int scanSafety = 0;
-        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
-            if (THING_GET_TYPE(scanThing) == THING_TYPE_PROJECTILE) {
-                int pIdx = THING_GET_INDEX(scanThing);
-                if (pIdx >= 0 && pIdx < state->world.things->projectileCount) {
-                    int slot = (int)state->world.things->projectiles[pIdx].slot;
-                    cell.firstProjectileSubtype = slot;
-                    cell.firstProjectileGfxIndex = dm1_v1_projectile_subtype_graphic_index(slot);
-                }
-                break;
-            }
-            scanThing = m11_raw_next_thing(state->world.things, scanThing);
-            ++scanSafety;
-        }
-    }
-
-    /* Runtime-only projectile fallback.  When the summary reports a
-     * projectile but the things-linked-list has no matching slot
-     * (because the projectile was spawned into world.projectiles via
-     * F0810 rather than written into the dungeon-things chain), pick
-     * the graphic index from the first runtime projectile at this
-     * cell.  Runtime subtypes are mapped through the same projectile
-     * aspect table path.  This is what actually lets the player see
-     * the projectile both when it first appears and at every tick of
-     * its travel. */
+    /* Runtime projectile render source. ReDMCSB DUNVIEW.C F0115 lines
+     * 5668-5683 draws concrete C14 projectiles, but Firestaff's DM1
+     * runtime owns those live effects through world.projectiles after
+     * F0219/F0811. Stale dungeon C14 refs in HoC payload chains must not
+     * override the live projectile's slot/aspect. */
     if (cell.summary.projectiles > 0 && cell.firstProjectileGfxIndex < 0) {
         int pi;
         for (pi = 0; pi < state->world.projectiles.count; ++pi) {
@@ -16966,37 +16940,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
-    /* Extract first explosion type */
-    if (cell.summary.explosions > 0 && state->world.things &&
-        state->world.things->explosions) {
-        unsigned short scanThing = viewportStaticFirstThing;
-        int scanSafety = 0;
-        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
-            if (THING_GET_TYPE(scanThing) == THING_TYPE_EXPLOSION) {
-                int eIdx = THING_GET_INDEX(scanThing);
-                if (eIdx >= 0 && eIdx < state->world.things->explosionCount) {
-                    cell.firstExplosionType = (int)state->world.things->explosions[eIdx].type;
-                    /* Dungeon-thing explosions do not carry a live frame
-                     * counter in M10's compact layout; seed the render
-                     * fields so the single-frame burst still draws. */
-                    cell.firstExplosionFrame     = 0;
-                    cell.firstExplosionMaxFrames = 1;
-                    cell.firstExplosionAttack    = -1;
-                }
-                break;
-            }
-            scanThing = m11_raw_next_thing(state->world.things, scanThing);
-            ++scanSafety;
-        }
-    }
-
-    /* Runtime-only explosion fallback.  An explosion spawned via the
-     * V1 projectile-impact path (F0821_EXPLOSION_Create_Compat) lives
-     * in world.explosions rather than the dungeon thing chain.  Pick
-     * the type from the first runtime explosion at this cell so the
-     * viewport's type-specific burst visual still lands, and pull
-     * currentFrame / maxFrames / attack so the burst renderer can
-     * bloom / fade across the classic DM1 multi-frame aftermath. */
+    /* Runtime explosion render source. ReDMCSB DUNVIEW.C F0115 lines
+     * 5916-5933 restarts the list for C15 explosions; Firestaff's DM1
+     * runtime gets the drawable type/frame/attack from world.explosions so
+     * stale static HoC C15 refs cannot become false spell effects. */
     if (cell.summary.explosions > 0 && cell.firstExplosionType < 0) {
         int ei;
         for (ei = 0; ei < state->world.explosions.count; ++ei) {

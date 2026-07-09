@@ -252,6 +252,7 @@ int dm1_v1_explosion_sprite_blit_plan(DM1_ExplosionSpriteBlitPlan *out_plan,
 typedef struct DM1_F0115ThingLayerReceiptPc34 {
     int valid;
     int total;
+    int drawableTotal;
     int doors;
     int teleporters;
     int textStrings;

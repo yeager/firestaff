@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: M11 DM1 projectile/explosion sprite selection now uses runtime projectile/explosion lists rather than stale static dungeon C14/C15 refs when rendering HoC/effect squares. Remaining viewport coding work is extending the same receipt ownership to champion mirror/materialized item render routes.
   - 2026-07-09 update: DM1 F0115 thing-layer receipt now separates real floor items from stale C14/C15 projectile/explosion refs. Remaining viewport coding work is wiring the receipt into the HoC runtime render path and replacing residual M11 thing-list filtering.
   - 2026-07-09 update: DM1 F0231 side-effect plans now carry XP call context toward M10 writeback. Remaining melee coding work is reducing the last M10 assembly/apply fragments around F0407/F0231 and broad runtime proof.
   - 2026-07-09 update: DM1 F0231 runtime-result plans now carry group-damage apply facts. Remaining melee coding work is reducing the last M10 aftermath/emission fragments around F0407/F0231 and broad runtime proof.
