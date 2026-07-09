@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 HoC mirror backing receipt consumer: champion mirror render receipts now carry C346 mirror-backing material plus C026 portrait geometry, and M11 D1C front-mirror drawing consumes that DM1 receipt instead of rebuilding a separate front-mirror plan. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, `test_m11_overlay_command_queue_block`, and `git diff --check` passed.
+
+- ✅ 2026-07-09 DM2 packaged M11 startup consumer receipt: packaged full-start receipts now carry title-ready/runtime-menu/runtime-action/first-HUD fields, and M11-facing consumer receipts explicitly mark title-timing and first-HUD handoff consumption from that package instead of recomputing loose startup state. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 pass913 DM2 packaged full-start consumer receipt: DM2 boot now exports a consumer receipt for startup draw/probe gates from the packaged full-start receipt, including exact title timing, GDAT title readiness, menu capture, HUD handoff, and command count so UI/M11 callers can avoid loose boot fields. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass899 DM1 HoC render production consumer: startup now exposes a DM1-owned HoC render consumer that combines first-frame render commands with champion mirror thing-layer receipts, returning wall-overlay, real floor-object/projectile, spell-effect suppression, and no-M11-fallback-scan decisions for production call sites. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `test_dm1_v1_champion_mirror_pc34_compat`, target rebuilds, and `git diff --check` passed.
