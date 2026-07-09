@@ -2992,6 +2992,8 @@ static int orch_cmd_attack_f0407_closed_door_compat(
     int attack;
     DM1_ActionClosedDoorMeleeInputPc34 doorPlanIn;
     DM1_ActionClosedDoorMeleePlanPc34 doorPlan;
+    DM1_ActionClosedDoorDestructionInputPc34 destructionIn;
+    DM1_ActionClosedDoorDestructionPlanPc34 destructionPlan;
 
     if (!world || !input || !weaponInfo || !world->dungeon ||
         !world->dungeon->tiles || !world->dungeon->maps) {
@@ -3062,26 +3064,32 @@ static int orch_cmd_attack_f0407_closed_door_compat(
         (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &thud);
     }
 
-    if (!door->meleeDestructible) {
-        return 1;
-    }
-
-    /* ReDMCSB PROJEXPL.C F0232 lines 1569-1593 destroys only a closed
-     * melee-destructible door whose attack reaches the active door-set
-     * defense. */
     attack = orch_cmd_attack_f0312_strength_action_hand_compat(
         world, champion, (int)input->commandArg1, weaponInfo,
         hasActionHandWeapon);
-    if (attack >= orch_cmd_attack_door_defense_pc34_compat(world, door)) {
+    memset(&destructionIn, 0, sizeof(destructionIn));
+    memset(&destructionPlan, 0, sizeof(destructionPlan));
+    destructionIn.closedDoorState = 1;
+    destructionIn.meleeDestructible = door->meleeDestructible;
+    destructionIn.attack = attack;
+    destructionIn.defense = orch_cmd_attack_door_defense_pc34_compat(world, door);
+    destructionIn.destructionDelayTicks = doorPlan.destructionDelayTicks;
+    destructionIn.currentTick = world->gameTick;
+    destructionIn.mapIndex = mapIndex;
+    destructionIn.mapX = mapX;
+    destructionIn.mapY = mapY;
+    if (dm1_v1_action_closed_door_destruction_plan_f0232_pc34(
+            &destructionIn, &destructionPlan) &&
+        destructionPlan.valid &&
+        destructionPlan.shouldScheduleDestruction) {
         struct TimelineEvent_Compat destruction;
         memset(&destruction, 0, sizeof(destruction));
         destruction.kind = TIMELINE_EVENT_DOOR_DESTRUCTION;
-        destruction.fireAtTick =
-            world->gameTick + (unsigned int)doorPlan.destructionDelayTicks;
-        destruction.mapIndex = mapIndex;
-        destruction.mapX = mapX;
-        destruction.mapY = mapY;
-        destruction.aux0 = 5;
+        destruction.fireAtTick = destructionPlan.fireAtTick;
+        destruction.mapIndex = destructionPlan.mapIndex;
+        destruction.mapX = destructionPlan.mapX;
+        destruction.mapY = destructionPlan.mapY;
+        destruction.aux0 = destructionPlan.destroyedDoorState;
         (void)F0721_TIMELINE_Schedule_Compat(
             &world->timeline, &destruction);
     }

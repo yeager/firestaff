@@ -924,6 +924,8 @@ static void test_flip_and_direction_plans(void) {
 static void test_closed_door_melee_plan(void) {
     DM1_ActionClosedDoorMeleeInputPc34 in;
     DM1_ActionClosedDoorMeleePlanPc34 out;
+    DM1_ActionClosedDoorDestructionInputPc34 destructionIn;
+    DM1_ActionClosedDoorDestructionPlanPc34 destructionOut;
 
     memset(&in, 0, sizeof(in));
     in.actionIndex = DM1_ACTION_CHOP;
@@ -957,6 +959,53 @@ static void test_closed_door_melee_plan(void) {
     CHECK_EQ(out.isClosedDoorMeleeAction, 0,
              "parry is not closed-door branch action");
     CHECK_EQ(out.performed, 0, "parry thud ignored by closed-door plan");
+
+    memset(&destructionIn, 0, sizeof(destructionIn));
+    destructionIn.closedDoorState = 1;
+    destructionIn.meleeDestructible = 1;
+    destructionIn.attack = 42;
+    destructionIn.defense = 42;
+    destructionIn.destructionDelayTicks = 2;
+    destructionIn.currentTick = 100u;
+    destructionIn.mapIndex = 3;
+    destructionIn.mapX = 4;
+    destructionIn.mapY = 5;
+    CHECK_EQ(dm1_v1_action_closed_door_destruction_plan_f0232_pc34(
+                 &destructionIn, &destructionOut), 1,
+             "F0232 closed-door destruction plan builds");
+    CHECK_EQ(destructionOut.valid, 1, "F0232 destruction plan valid");
+    CHECK_EQ(destructionOut.shouldScheduleDestruction, 1,
+             "F0232 attack reaches defense schedules destruction");
+    CHECK_EQ((int)destructionOut.fireAtTick, 102,
+             "F0232 destruction fire tick");
+    CHECK_EQ(destructionOut.mapIndex, 3, "F0232 destruction map");
+    CHECK_EQ(destructionOut.mapX, 4, "F0232 destruction x");
+    CHECK_EQ(destructionOut.mapY, 5, "F0232 destruction y");
+    CHECK_EQ(destructionOut.destroyedDoorState, 5,
+             "F0232 destroyed door state");
+
+    destructionIn.attack = 41;
+    CHECK_EQ(dm1_v1_action_closed_door_destruction_plan_f0232_pc34(
+                 &destructionIn, &destructionOut), 1,
+             "F0232 weak attack plan builds");
+    CHECK_EQ(destructionOut.shouldScheduleDestruction, 0,
+             "F0232 weak attack suppresses destruction");
+
+    destructionIn.attack = 42;
+    destructionIn.meleeDestructible = 0;
+    CHECK_EQ(dm1_v1_action_closed_door_destruction_plan_f0232_pc34(
+                 &destructionIn, &destructionOut), 1,
+             "F0232 indestructible door plan builds");
+    CHECK_EQ(destructionOut.shouldScheduleDestruction, 0,
+             "F0232 indestructible door suppresses destruction");
+
+    destructionIn.meleeDestructible = 1;
+    destructionIn.closedDoorState = 0;
+    CHECK_EQ(dm1_v1_action_closed_door_destruction_plan_f0232_pc34(
+                 &destructionIn, &destructionOut), 1,
+             "F0232 non-closed door plan builds");
+    CHECK_EQ(destructionOut.shouldScheduleDestruction, 0,
+             "F0232 non-closed door suppresses destruction");
 }
 
 static void test_melee_action_tick_plan(void) {

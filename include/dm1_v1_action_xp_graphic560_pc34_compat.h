@@ -480,6 +480,28 @@ typedef struct {
     int destructionDelayTicks;
 } DM1_ActionClosedDoorMeleePlanPc34;
 
+typedef struct {
+    int closedDoorState;
+    int meleeDestructible;
+    int attack;
+    int defense;
+    int destructionDelayTicks;
+    unsigned int currentTick;
+    int mapIndex;
+    int mapX;
+    int mapY;
+} DM1_ActionClosedDoorDestructionInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldScheduleDestruction;
+    unsigned int fireAtTick;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int destroyedDoorState;
+} DM1_ActionClosedDoorDestructionPlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -570,6 +592,9 @@ int dm1_v1_action_throw_plan_f0407_pc34(
 int dm1_v1_action_closed_door_melee_plan_f0407_pc34(
     const DM1_ActionClosedDoorMeleeInputPc34* in,
     DM1_ActionClosedDoorMeleePlanPc34* out);
+int dm1_v1_action_closed_door_destruction_plan_f0232_pc34(
+    const DM1_ActionClosedDoorDestructionInputPc34* in,
+    DM1_ActionClosedDoorDestructionPlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);

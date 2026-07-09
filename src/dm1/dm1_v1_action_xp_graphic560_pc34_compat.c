@@ -1159,6 +1159,30 @@ int dm1_v1_action_closed_door_melee_plan_f0407_pc34(
     return 1;
 }
 
+int dm1_v1_action_closed_door_destruction_plan_f0232_pc34(
+    const DM1_ActionClosedDoorDestructionInputPc34* in,
+    DM1_ActionClosedDoorDestructionPlanPc34* out) {
+    if (!in || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->valid = 1;
+    out->mapIndex = in->mapIndex;
+    out->mapX = in->mapX;
+    out->mapY = in->mapY;
+    out->destroyedDoorState = 5;
+    /* ReDMCSB: PROJEXPL.C F0232 lines 1569-1593 rejects non-destructible
+     * doors, then schedules C02 door destruction only when attack reaches the
+     * active door-set defense and the target door state is C4 closed.  The
+     * closed-door melee branch calls F0232 with delay 2. */
+    if (!in->closedDoorState) return 1;
+    if (!in->meleeDestructible) return 1;
+    if (in->attack < in->defense) return 1;
+    if (in->destructionDelayTicks <= 0) return 1;
+    out->shouldScheduleDestruction = 1;
+    out->fireAtTick =
+        in->currentTick + (unsigned int)in->destructionDelayTicks;
+    return 1;
+}
+
 int dm1_v1_action_f0407_tail_pc34(int actionIndex,
                                   DM1_ActionF0407TailPc34* out) {
     int damageFactor;
