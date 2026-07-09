@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 F0267 now owns C37 ordinary group move apply planning for source unlink, destination link, active-state writeback, projectile-kill removal, and event requeue fields consumed by M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
   - 2026-07-09 update: DM1 F0267 now owns ordinary creature tick move planning for direction, blocked retry, projectile-kill removal route, and next-tick scheduling consumed by M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
   - 2026-07-09 update: DM1 F0267 now owns group teleporter destination planning for open/scope/target/buzz/self-target chain stops consumed by M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
   - 2026-07-09 update: DM1 F0267/F0252 now owns open-pit fall gating and Lord Chaos adjacent retry candidate/accept planning consumed by M10. Remaining runtime coding work is deeper F0267 teleporter state receipts and full-graphics proof.

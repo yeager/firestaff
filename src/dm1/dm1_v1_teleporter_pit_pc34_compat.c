@@ -268,6 +268,54 @@ int m11_plan_ordinary_group_move_f0267(
     return 1;
 }
 
+int m11_plan_ordinary_group_move_apply_f0267(
+        const M11_OrdinaryGroupMovePlan* movePlan,
+        int sourceMapIndex,
+        int direction,
+        int groupCells,
+        uint32_t currentTick,
+        M11_OrdinaryGroupMoveApplyPlan* outPlan) {
+    M11_OrdinaryGroupMoveApplyPlan plan;
+
+    if (!movePlan || !outPlan || !movePlan->valid) return 0;
+    memset(&plan, 0, sizeof(plan));
+    plan.valid = 1;
+    plan.groupDirection = direction & 3;
+    plan.activeMapIndex = sourceMapIndex;
+    plan.activeMapX = movePlan->destinationMapX;
+    plan.activeMapY = movePlan->destinationMapY;
+    plan.activeCells = groupCells;
+    plan.nextFireAtTick = currentTick + 1u;
+    plan.nextEventMapX = movePlan->destinationMapX;
+    plan.nextEventMapY = movePlan->destinationMapY;
+
+    if (movePlan->route == M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE) {
+        plan.shouldUnlinkSource = 1;
+        plan.shouldRemoveActiveGroup = 1;
+        *outPlan = plan;
+        return 1;
+    }
+    if (movePlan->route == M11_GROUP_MOVE_ROUTE_INSERT) {
+        plan.shouldUnlinkSource = 1;
+        plan.shouldLinkDestination = 1;
+        plan.shouldRequeue = 1;
+        *outPlan = plan;
+        return 1;
+    }
+    if (movePlan->route == M11_GROUP_MOVE_ROUTE_RETRY) {
+        plan.shouldRequeue = 1;
+        plan.nextEventMapX = movePlan->destinationMapX;
+        plan.nextEventMapY = movePlan->destinationMapY;
+    }
+
+    /* ReDMCSB GROUP.C F0209 plus MOVESENS.C F0267: once an ordinary
+     * C37 group move survives the projectile precheck, the source group is
+     * unlinked, reinserted at the destination, active-group coordinates are
+     * advanced, and the next behavior event carries the destination square. */
+    *outPlan = plan;
+    return 1;
+}
+
 int m11_plan_group_pit_fall_square_f0267(
         int squareType,
         int pitSquareType,
