@@ -520,6 +520,7 @@ static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
     int renderHall = 0;
     int drawMirrorWall = 0;
     int walkSafe = 0;
+    int rejectBackingFallback = 0;
     int mapIndex = -1;
     int commandCount = 0;
 
@@ -544,6 +545,7 @@ static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
                   &renderHall,
                   &drawMirrorWall,
                   &walkSafe,
+                  &rejectBackingFallback,
                   &mapIndex,
                   &commandCount),
               1,
@@ -588,6 +590,8 @@ static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
               "DM1 full-graphics HoC draws mirror wall overlay");
     ASSERT_EQ(walkSafe, 1,
               "DM1 full-graphics HoC capture is walk-safe");
+    ASSERT_EQ(rejectBackingFallback, 1,
+              "M11 HoC mirror route rejects host backing fallback rect");
     ASSERT_EQ(mapIndex, DM1_V1_ENTRANCE_MAP_INDEX_PC34,
               "DM1 full-graphics HoC keeps entrance map");
     ASSERT_EQ(commandCount, 3,
