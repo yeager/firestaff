@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron Track02 no-fallback diagnostics: verified Track02 runtime startup now preserves the lower-level semantic/bank-signal failure detail inside loader and host receipts when fallback visuals are blocked, instead of replacing it with only the generic block reason. Verification: `firestaff_theron_v1_startup_flow_probe` and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup presentation receipt: CSB boot now emits one host-facts receipt carrying phase, animation, render plan, menu option count, render command count, and input readiness for title/entrance HUD/menu consumers. Verification: `csb_v1_startup_entrance_pointer_pc34_compat` and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0267 ordinary group move apply receipt now carries source-square mutation fields and owns retry scheduling, so M10 consumes one DM1 apply path for retry/kill/insert. Verification: `dm1_v1_group_move_removal_pc34_compat` and `git diff --check` passed.

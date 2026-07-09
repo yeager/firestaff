@@ -46,6 +46,12 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
     Theron_Track02SignalStatus signal_status;
     Theron_Track02UserDataWindowCatalog user_window_catalog;
     Theron_Track02StartupTextMarkerCatalog text_marker_catalog;
+    Theron_Track02LevelHandoffStatus last_semantic_status =
+        THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+    Theron_Track02SemanticBindingStatus last_seed_status =
+        THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    int last_user_data_offset_valid = 0;
+    size_t last_user_data_offset = 0u;
     size_t user_window_descriptor_count = 0u;
     size_t user_window_span_count = 0u;
     size_t user_window_initial_count = 0u;
@@ -152,6 +158,11 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
             &semantic_handoff,
             &semantic_level_handoff);
         ++tried;
+        last_semantic_status = semantic_status;
+        last_seed_status = semantic_handoff.seed_table_status;
+        last_user_data_offset_valid =
+            semantic_handoff.user_data_offset_valid;
+        last_user_data_offset = semantic_handoff.user_data_offset;
         if (semantic_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
             world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
             world->current_level = 0;
@@ -199,9 +210,15 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
     if (receipt && receipt_cap > 0u) {
         snprintf(receipt,
                  receipt_cap,
-                 "Track 02 semantic startup handoff scanned anchors=%zu attempts=%d user_windows=%zu user_desc=%zu user_span=%zu user_initial=%zu text_markers=%zu text_us=%zu text_jp=%zu; no semantic runtime level claim",
+                 "Track 02 semantic startup handoff scanned anchors=%zu attempts=%d last_status=%s last_seed_status=%s last_user_valid=%d last_user=0x%zx user_windows=%zu user_desc=%zu user_span=%zu user_initial=%zu text_markers=%zu text_us=%zu text_jp=%zu; no semantic runtime level claim",
                  signal.anchor_count,
                  tried,
+                 theron_v1_track02_level_handoff_status_name(
+                     last_semantic_status),
+                 theron_v1_track02_semantic_binding_status_name(
+                     last_seed_status),
+                 last_user_data_offset_valid,
+                 last_user_data_offset,
                  user_window_catalog.entry_count,
                  user_window_descriptor_count,
                  user_window_span_count,
@@ -264,9 +281,24 @@ int theron_v1_startup_runtime_load_initial_level(
             hucard_rom_size,
             md5_hex)) {
         if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track 02 verified profile present but no semantic runtime handoff; fallback visuals blocked");
+            char semantic_detail[256];
+            semantic_detail[0] = '\0';
+            if (receipt[0] != '\0') {
+                snprintf(semantic_detail,
+                         sizeof(semantic_detail),
+                         "%s",
+                         receipt);
+            }
+            if (semantic_detail[0] != '\0') {
+                snprintf(receipt,
+                         receipt_cap,
+                         "Track 02 verified profile present but no semantic runtime handoff; fallback visuals blocked; %s",
+                         semantic_detail);
+            } else {
+                snprintf(receipt,
+                         receipt_cap,
+                         "Track 02 verified profile present but no semantic runtime handoff; fallback visuals blocked");
+            }
         }
         return 0;
     }
