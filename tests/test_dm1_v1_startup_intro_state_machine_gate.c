@@ -704,6 +704,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34 hoc_full_graphics_proof;
     DM1_V1_StartupHoCProductionFullStartHook_PC34 hoc_production_hook;
     DM1_V1_StartupHoCFullStartProductionReceipt_PC34 hoc_production_receipt;
+    DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 hoc_capture_artifact;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1454,6 +1455,54 @@ static void check_dm1_launch_path_bypass_contract(void) {
                          .expected_hall_overlay_kind ==
                      DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34,
              1);
+    memset(&hoc_capture_artifact, 0, sizeof(hoc_capture_artifact));
+    expect_i("DM1 HoC capture artifact builds",
+             dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
+                 &hoc_production_receipt,
+                 &hoc_capture_artifact),
+             1);
+    expect_i("DM1 HoC capture artifact is ready",
+             hoc_capture_artifact.handled &&
+                 hoc_capture_artifact.ready &&
+                 hoc_capture_artifact.consume_full_start_production_receipt_only &&
+                 hoc_capture_artifact.capture_manifest_ready &&
+                 hoc_capture_artifact.capture_after_first_frame_render &&
+                 hoc_capture_artifact.publish_packaged_full_graphics_proof,
+             1);
+    expect_i("DM1 HoC capture artifact forbids stale surfaces",
+             hoc_capture_artifact.title_surface_forbidden &&
+                 hoc_capture_artifact.closed_door_frame_forbidden &&
+                 hoc_capture_artifact.host_fallback_visuals_forbidden &&
+                 hoc_capture_artifact.opened_entrance_frame_required &&
+                 hoc_capture_artifact.hall_mirror_overlay_required &&
+                 hoc_capture_artifact.clear_champion_panel_required,
+             1);
+    expect_i("DM1 HoC capture artifact carries manifest fields",
+             hoc_capture_artifact.expected_map_index ==
+                     DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_capture_artifact.expected_map_width ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 &&
+                 hoc_capture_artifact.expected_map_height ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 &&
+                 hoc_capture_artifact.expected_entrance_door_frame_index == 9 &&
+                 hoc_capture_artifact.expected_hall_overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 hoc_capture_artifact.expected_hoc_render_command_count == 3 &&
+                 hoc_capture_artifact.block_enter_until_champion_selected,
+             1);
+    hoc_production_receipt.packaged_proof.require_no_title_surface = 0;
+    expect_i("DM1 HoC capture artifact rejects corrupt production receipt",
+             dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
+                 &hoc_production_receipt,
+                 &hoc_capture_artifact) &&
+                 hoc_capture_artifact.handled &&
+                 !hoc_capture_artifact.ready,
+             1);
+    expect_i("DM1 HoC capture artifact rejects NULL input",
+             dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
+                 NULL,
+                 &hoc_capture_artifact),
+             0);
     expect_i("DM1 HoC full-start production receipt no-ops for CSB",
              dm1_v1_startup_hoc_full_start_production_receipt_pc34(
                  "csb",

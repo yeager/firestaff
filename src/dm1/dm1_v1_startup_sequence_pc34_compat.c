@@ -1283,6 +1283,75 @@ int dm1_v1_startup_hoc_full_start_production_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
+    const DM1_V1_StartupHoCFullStartProductionReceipt_PC34* receipt,
+    DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34* out_artifact) {
+    DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 artifact;
+
+    if (!receipt || !out_artifact) {
+        return 0;
+    }
+    memset(&artifact, 0, sizeof(artifact));
+    if (!receipt->handled) {
+        *out_artifact = artifact;
+        return 1;
+    }
+
+    artifact.handled = 1;
+    artifact.capture_phase = receipt->production_hook.capture_phase;
+    artifact.source_evidence =
+        "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    if (!receipt->ready ||
+        !receipt->title_surface_released ||
+        !receipt->entrance_wait_consumed ||
+        !receipt->first_frame_ready ||
+        !receipt->host_render_plan_ready ||
+        !receipt->packaged_full_graphics_proof_ready ||
+        !receipt->production_hook_ready ||
+        !receipt->production_hook.consume_dm1_startup_receipts_only ||
+        !receipt->production_hook.capture_after_first_frame_render ||
+        !receipt->production_hook.publish_packaged_full_graphics_proof ||
+        !receipt->packaged_proof.require_no_title_surface ||
+        !receipt->packaged_proof.require_no_closed_door_frame ||
+        !receipt->packaged_proof.require_no_host_fallback_visuals ||
+        receipt->first_frame.hoc_render_command_count != 3) {
+        *out_artifact = artifact;
+        return 1;
+    }
+
+    /* ReDMCSB TITLE.C F0437 completes the title surface before ENTRANCE.C
+     * F0797/F0441 draws and waits in Hall.  This artifact is the capture-side
+     * consumer: one DM1-owned manifest says what the packaged full-graphics
+     * proof must capture, and what stale host surfaces are forbidden. */
+    artifact.ready = 1;
+    artifact.consume_full_start_production_receipt_only = 1;
+    artifact.capture_manifest_ready = 1;
+    artifact.capture_after_first_frame_render = 1;
+    artifact.publish_packaged_full_graphics_proof = 1;
+    artifact.title_surface_forbidden = 1;
+    artifact.closed_door_frame_forbidden = 1;
+    artifact.host_fallback_visuals_forbidden = 1;
+    artifact.opened_entrance_frame_required =
+        receipt->production_hook.draw_opened_entrance_frame;
+    artifact.hall_mirror_overlay_required =
+        receipt->production_hook.render_hall_mirror_overlay;
+    artifact.clear_champion_panel_required =
+        receipt->production_hook.clear_champion_panel;
+    artifact.block_enter_until_champion_selected =
+        receipt->production_hook.block_enter_until_champion_selected;
+    artifact.expected_map_index = receipt->production_hook.expected_map_index;
+    artifact.expected_map_width = receipt->production_hook.expected_map_width;
+    artifact.expected_map_height = receipt->production_hook.expected_map_height;
+    artifact.expected_entrance_door_frame_index =
+        receipt->production_hook.expected_entrance_door_frame_index;
+    artifact.expected_hall_overlay_kind =
+        receipt->production_hook.expected_hall_overlay_kind;
+    artifact.expected_hoc_render_command_count =
+        receipt->first_frame.hoc_render_command_count;
+    *out_artifact = artifact;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
