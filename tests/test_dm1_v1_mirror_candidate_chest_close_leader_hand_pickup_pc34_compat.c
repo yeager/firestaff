@@ -26,8 +26,8 @@ static int gPasses;
 
 static void test_evidence_metadata(void)
 {
-    const Dm1V1MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat *e =
-        M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat();
+    const DM1_V1_MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat *e =
+        DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,
                   "evidence metadata is available",
@@ -73,9 +73,9 @@ static void test_evidence_metadata(void)
 
 static void test_default_context(void)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat context;
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat context;
 
-    M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat(
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat(
         &context);
 
     CHECK_REDMCSB(context.chestAOpenThing ==
@@ -134,12 +134,12 @@ static void test_default_context(void)
                   "CHEST.C F0334:113-132");
 }
 
-static Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat
+static DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat
 run_case(int caseId)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result;
     int accepted =
-        M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
+        DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
             caseId, &result);
 
     CHECK_REDMCSB(accepted == 1 && result.accepted == 1,
@@ -162,7 +162,7 @@ run_case(int caseId)
 
 static void test_pending_pickup_close(void)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
         run_case(
             DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_PENDING_PICKUP_CLOSE_PC34_COMPAT);
 
@@ -215,7 +215,7 @@ static void test_pending_pickup_close(void)
 
 static void test_confirm_before_close(void)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
         run_case(
             DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_CONFIRM_BEFORE_CLOSE_PC34_COMPAT);
 
@@ -260,7 +260,7 @@ static void test_confirm_before_close(void)
 
 static void test_confirm_after_close(void)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
         run_case(
             DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_CONFIRM_AFTER_CLOSE_PC34_COMPAT);
 
@@ -308,7 +308,7 @@ static void test_confirm_after_close(void)
 
 static void test_last_slot_guard(void)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
         run_case(
             DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_LAST_SLOT_GUARD_PC34_COMPAT);
 
@@ -356,7 +356,7 @@ static void test_last_slot_guard(void)
 
 static void test_occupied_hand_swap(void)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
         run_case(
             DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_OCCUPIED_HAND_SWAP_PC34_COMPAT);
 
@@ -403,7 +403,7 @@ static void test_occupied_hand_swap(void)
 
 static void test_empty_pickup_noop(void)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
         run_case(
             DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_EMPTY_PICKUP_NOOP_PC34_COMPAT);
 
@@ -453,7 +453,7 @@ static void test_empty_pickup_noop(void)
 
 static void test_rotated_inventory_owner(void)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result =
         run_case(
             DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_ROTATED_INVENTORY_OWNER_PC34_COMPAT);
 

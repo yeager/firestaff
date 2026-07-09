@@ -20,7 +20,7 @@ enum {
     kCandidateHealth = 87
 };
 
-static const Dm1V1MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat
+static const DM1_V1_MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat
     s_evidence = {
         "ReDMCSB CHEST.C F0333:31-67 open materialization into G0425",
         "ReDMCSB CHEST.C F0334:113-132 close clears G0426 and rewrites "
@@ -67,8 +67,8 @@ static void copy_slots(int dst[], const int src[], int count)
     }
 }
 
-void M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat(
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context)
+void DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat(
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context)
 {
     if (!context) {
         return;
@@ -113,22 +113,22 @@ void M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compa
 }
 
 static void open_chest_b(
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
 {
     log->chestBOpen = 1;
     ++log->f0333OpenCount;
 }
 
 static void draw_candidate_state(
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
 {
     ++log->f0292ChampionStateDrawCount;
     ++log->f0133BlitRouteCount;
 }
 
 static void clear_candidate_f0280(
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
 {
     if (context->candidateChampionOrdinal != 0u) {
         context->candidateChampionOrdinal = 0u;
@@ -139,8 +139,8 @@ static void clear_candidate_f0280(
 }
 
 static void clear_candidate_full_chain_f0282(
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
 {
     if (context->candidateChampionOrdinal != 0u) {
         context->candidateChampionOrdinal = 0u;
@@ -155,8 +155,8 @@ static void clear_candidate_full_chain_f0282(
 }
 
 static int pickup_from_g0425(
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log,
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log,
     int slotIndex,
     int *pickedThing,
     int *swappedInThing)
@@ -208,8 +208,8 @@ static int pickup_from_g0425(
 }
 
 static void close_chest_b_f0334(
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
 {
     int i;
 
@@ -240,8 +240,8 @@ static void close_chest_b_f0334(
 }
 
 static void reopen_chest_b_f0333(
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context,
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat *log)
 {
     int i;
 
@@ -257,9 +257,9 @@ static void reopen_chest_b_f0333(
 }
 
 static void complete_result(
-    const Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat
+    const DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat
         *context,
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat *result)
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat *result)
 {
     int i;
     int expectedOrderIndex;
@@ -320,7 +320,7 @@ static void complete_result(
 
 static void apply_case_fixture(
     int caseId,
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context)
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context)
 {
     if (caseId ==
         DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_LAST_SLOT_GUARD_PC34_COMPAT) {
@@ -354,19 +354,19 @@ static void apply_case_fixture(
     }
 }
 
-int M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
+int DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
     int caseId,
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result;
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat context;
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat context;
     int pickupSlotIndex;
     int reopenAfterClose;
 
     memset(&result, 0, sizeof(result));
     result.evidence = &s_evidence;
     result.caseId = caseId;
-    M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat(
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat(
         &context);
     apply_case_fixture(caseId, &context);
     result.before = context;
@@ -438,8 +438,8 @@ int M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
     return 1;
 }
 
-const Dm1V1MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat *
-M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat(void)
+const DM1_V1_MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat *
+DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat(void)
 {
     return &s_evidence;
 }
@@ -457,7 +457,7 @@ int dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat_run(
     int *passed,
     int *failed)
 {
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat result;
 
     if (!passed || !failed) {
         return 0;
@@ -465,7 +465,7 @@ int dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat_run(
     *passed = 0;
     *failed = 0;
 
-    (void)M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
+    (void)DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
         DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_PENDING_PICKUP_CLOSE_PC34_COMPAT,
         &result);
     self_check(result.log.pickupCompleted == 1, passed, failed);
@@ -475,7 +475,7 @@ int dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat_run(
                passed,
                failed);
 
-    (void)M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
+    (void)DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
         DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_CONFIRM_AFTER_CLOSE_PC34_COMPAT,
         &result);
     self_check(result.final.candidateCleared == 1, passed, failed);

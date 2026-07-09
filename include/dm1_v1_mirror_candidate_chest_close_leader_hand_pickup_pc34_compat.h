@@ -19,7 +19,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_SLOT4_THING_PC34_COMPAT 0x1104
 #define DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_SLOT7_THING_PC34_COMPAT 0x1107
 
-typedef enum Dm1V1MirrorCandidateChestCloseLeaderHandPickupCasePc34Compat {
+typedef enum DM1_V1_MirrorCandidateChestCloseLeaderHandPickupCasePc34Compat {
     DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_PENDING_PICKUP_CLOSE_PC34_COMPAT = 1,
     DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_CONFIRM_BEFORE_CLOSE_PC34_COMPAT = 2,
     DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_CONFIRM_AFTER_CLOSE_PC34_COMPAT = 3,
@@ -27,9 +27,9 @@ typedef enum Dm1V1MirrorCandidateChestCloseLeaderHandPickupCasePc34Compat {
     DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_OCCUPIED_HAND_SWAP_PC34_COMPAT = 5,
     DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_EMPTY_PICKUP_NOOP_PC34_COMPAT = 6,
     DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_CASE_ROTATED_INVENTORY_OWNER_PC34_COMPAT = 7
-} Dm1V1MirrorCandidateChestCloseLeaderHandPickupCasePc34Compat;
+} DM1_V1_MirrorCandidateChestCloseLeaderHandPickupCasePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat {
     const char *chestOpenAnchor;
     const char *chestCloseAnchor;
     const char *leaderHandPutAnchor;
@@ -42,9 +42,9 @@ typedef struct Dm1V1MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat 
     const char *defsAnchor;
     const char *blitRoutingAnchor;
     const char *contractScope;
-} Dm1V1MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat;
+} DM1_V1_MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat {
+typedef struct DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat {
     int chestAOpenThing;
     int chestBThing;
     int leaderHandThing;
@@ -61,9 +61,9 @@ typedef struct Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat {
         DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_SLOT_COUNT_PC34_COMPAT];
     int closeVisitOrder[
         DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_SLOT_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat;
+} DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat {
+typedef struct DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat {
     int chestBOpen;
     int leaderHandPickupFromG0425;
     int pickupSlotIndex;
@@ -91,9 +91,9 @@ typedef struct Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat
     int pickupCompleted;
     int closeVisitCount;
     int closeLinkCount;
-} Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat;
+} DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateChestCloseLeaderHandPickupFinalStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateChestCloseLeaderHandPickupFinalStatePc34Compat {
     int chestBLink[
         DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_LEADER_HAND_PICKUP_SLOT_COUNT_PC34_COMPAT];
     int chestBLinkCount;
@@ -114,29 +114,49 @@ typedef struct Dm1V1MirrorCandidateChestCloseLeaderHandPickupFinalStatePc34Compa
     int swapIdentityPreserved;
     int guardHonoredForInventoryCandidate;
     int noDoubleClear;
-} Dm1V1MirrorCandidateChestCloseLeaderHandPickupFinalStatePc34Compat;
+} DM1_V1_MirrorCandidateChestCloseLeaderHandPickupFinalStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat {
-    const Dm1V1MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat
+typedef struct DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat {
+    const DM1_V1_MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat
         *evidence;
     int caseId;
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat before;
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat log;
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupFinalStatePc34Compat final;
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat before;
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat log;
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupFinalStatePc34Compat final;
     int pickedThing;
     int swappedInThing;
     int accepted;
-} Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat;
+} DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat;
 
-void M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat(
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context);
+typedef DM1_V1_MirrorCandidateChestCloseLeaderHandPickupCasePc34Compat
+    Dm1V1MirrorCandidateChestCloseLeaderHandPickupCasePc34Compat;
+typedef DM1_V1_MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat
+    Dm1V1MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat
+    Dm1V1MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat;
+typedef DM1_V1_MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat
+    Dm1V1MirrorCandidateChestCloseLeaderHandPickupActionLogPc34Compat;
+typedef DM1_V1_MirrorCandidateChestCloseLeaderHandPickupFinalStatePc34Compat
+    Dm1V1MirrorCandidateChestCloseLeaderHandPickupFinalStatePc34Compat;
+typedef DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat
+    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat;
 
-int M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
+void DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat(
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupContextPc34Compat *context);
+
+int DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
     int caseId,
-    Dm1V1MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickupResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat *
-M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat(void);
+const DM1_V1_MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat *
+DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat(void);
+
+#define M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat \
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat
+#define M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat \
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat
+#define M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat \
+    DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat
 
 int dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat_run(
     int *passed,
