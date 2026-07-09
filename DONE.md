@@ -1,10 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass910 Nexus M12 packaged startup card receipt: Nexus now exposes an M12 full-start package receipt for title/warning timing, capture route, first draw kind, and card labels; M12 boot/status/card readiness consumes it for Nexus instead of generic loose manifest facts. Verification: Nexus startup test, M12 boot-readiness test, firestaff build, and `git diff --check` passed.
+
 - ✅ 2026-07-09 pass894 Theron host-render full-start receipt: boot now exposes a host-render receipt that packages layout, rows, render plan, render route, Track 02 bitmap-route masks/counts, and no-fallback flags from full-start receipts without raw prompt/roster arrays or raw graphics-plan consumer requirements. Verification: `test_theron_v1_startup_save_resume_pc34`, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass886 DM2 packaged full-start receipt: boot now exposes a packaged full-start receipt that joins exact title timing, full-start real-asset readiness, GDAT title/menu capture proof, HUD handoff, and host consumer readiness into one DM2-owned API. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass893 DM1 champion mirror thing-layer boundary receipt: C026 champion portraits now expose a DM1-owned receipt that keeps them in the D1C wall-overlay path while suppressing mirror payloads as floor items, projectiles, or spell effects without blocking real floor objects. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, target rebuild, and `git diff --check` passed.
+
+- ✅ 2026-07-09 M12 startup proof masks: boot-readiness receipts now expose expected/ready/blocked step masks plus an active proof label, and modern game cards consume that receipt instead of choosing between loose startup/capture labels. Verification: `test_m12_all_games_boot_readiness_receipt` and `git diff --check`.
 
 - ✅ 2026-07-09 CSB capture-HUD executor retired: utility and closed-door HUD/menu tests now execute host-view HUD draw receipts plus readiness receipts directly instead of the older capture-level HUD draw helper. Verification: CSB startup tests and `git diff --check`.
 
