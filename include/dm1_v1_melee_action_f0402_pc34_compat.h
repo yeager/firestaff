@@ -139,6 +139,8 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int shouldWriteChampionState;
+    int championIndex;
     int shouldAwardXp;
     int skillIndex;
     int experienceGain;

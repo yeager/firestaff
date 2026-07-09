@@ -2371,8 +2371,12 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
             0,
             0);
     }
-    champion->stamina.current = (unsigned short)plan.currentStaminaAfter;
-    champion->hp.current = (int16_t)plan.currentHealthAfter;
+    if (plan.shouldWriteChampionState) {
+        world->party.champions[plan.championIndex].stamina.current =
+            (unsigned short)plan.currentStaminaAfter;
+        world->party.champions[plan.championIndex].hp.current =
+            (int16_t)plan.currentHealthAfter;
+    }
 }
 
 static void orch_cmd_attack_target_square_compat(
