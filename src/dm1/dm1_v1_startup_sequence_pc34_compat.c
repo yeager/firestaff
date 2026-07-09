@@ -839,18 +839,174 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
              !receipt.champion_mirror_startup_route.canEnterDungeon)
                 ? 1
                 : 0;
+        receipt.champion_mirror_startup_overlay_command_count =
+            receipt.champion_mirror_startup_route.renderOverlayCommandCount;
+        if (receipt.champion_mirror_startup_overlay_command_count > 0 &&
+            receipt.champion_mirror_startup_overlay_command_count <=
+                DM1_V1_ENTRANCE_OVERLAY_COMMAND_MAX_PC34) {
+            int i;
+            for (i = 0; i < receipt.champion_mirror_startup_overlay_command_count;
+                 ++i) {
+                receipt.champion_mirror_startup_overlay_commands[i] =
+                    receipt.champion_mirror_startup_route.renderOverlayCommands[i];
+            }
+            receipt.champion_mirror_startup_overlay_commands_ready =
+                (receipt.champion_mirror_startup_overlay_commands[0].valid &&
+                 receipt.champion_mirror_startup_overlay_commands[0].kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 receipt.champion_mirror_startup_overlay_commands[0]
+                     .clearStalePanelFirst &&
+                 receipt.champion_mirror_startup_overlay_commands[0]
+                     .suppressThingPayloads &&
+                 receipt.champion_mirror_startup_overlay_commands[0]
+                     .blockEnterUntilChampionSelected)
+                    ? 1
+                    : 0;
+        }
     }
     receipt.hoc_first_frame_ready =
         receipt.hoc_runtime_ready &&
         receipt.champion_mirror_startup_handoff_ready &&
         receipt.champion_mirror_startup_input_ready &&
         receipt.champion_mirror_startup_panel_clear &&
-        receipt.champion_mirror_startup_blocks_enter;
+        receipt.champion_mirror_startup_blocks_enter &&
+        receipt.champion_mirror_startup_overlay_commands_ready;
     receipt.runtime_first_frame_ready =
         (receipt.hoc_first_frame_ready || receipt.resumed_runtime_ready) ? 1 : 0;
     receipt.draw_opened_runtime =
         receipt.runtime_first_frame_ready ? 1 : 0;
     receipt.suppress_draw_opened = receipt.draw_opened_runtime ? 0 : 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm1_v1_startup_hoc_first_frame_receipt_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffPostLaunchPlan_PC34* post_plan,
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34 receipt;
+    DM1_V1_EntranceCtxPc34 entrance_ctx;
+
+    if (!out_receipt || !post_plan || !outcome) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    receipt.full_graphics_required = 1;
+    receipt.title_surface_released =
+        (post_plan->required &&
+         post_plan->play_title &&
+         post_plan->title_menu_eligible &&
+         !post_plan->title_keep_surface &&
+         post_plan->title_consume_pending_input)
+            ? 1
+            : 0;
+    receipt.entrance_wait_consumed =
+        (post_plan->play_entrance &&
+         outcome->action == DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34)
+            ? 1
+            : 0;
+
+    DM1_V1_Entrance_InitPc34Compat(&entrance_ctx);
+    entrance_ctx.state = DM1_ENTRANCE_VIEWING;
+    entrance_ctx.doorAnim.complete = 1;
+    entrance_ctx.doorAnim.animationStep = entrance_ctx.doorAnim.totalSteps - 1;
+    if (!DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
+            &entrance_ctx,
+            &receipt.entrance_full_start_receipt) ||
+        !DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
+            &entrance_ctx,
+            &receipt.champion_select_route)) {
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437:319-409 releases the title surface only after
+     * PRESENTS/title/guard. ENTRANCE.C F0441:850-883 waits for a fresh
+     * entrance command, and F0797:68-80 builds the C255 5x5 entrance map.
+     * The first HoC frame is therefore the entrance VIEWING state with hall
+     * mirror UI, not a host fallback title/door frame. */
+    receipt.full_start_render_ready =
+        receipt.entrance_full_start_receipt.valid ? 1 : 0;
+    receipt.entrance_map_ready =
+        (receipt.entrance_full_start_receipt.mapIndex ==
+             DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+         receipt.entrance_full_start_receipt.width ==
+             DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 &&
+         receipt.entrance_full_start_receipt.height ==
+             DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 &&
+         receipt.entrance_full_start_receipt.corridorCount == 6)
+            ? 1
+            : 0;
+    receipt.entrance_music_requested =
+        receipt.entrance_full_start_receipt.entranceMusicRequested ? 1 : 0;
+    receipt.entrance_door_open_frame_ready =
+        (receipt.entrance_full_start_receipt.drawDoorFrame &&
+         receipt.entrance_full_start_receipt.doorFrameIndex ==
+             entrance_ctx.doorAnim.totalSteps - 1)
+            ? 1
+            : 0;
+    receipt.hoc_menu_route_ready =
+        (receipt.champion_select_route.handled &&
+         receipt.champion_select_route.route ==
+             DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34 &&
+         receipt.champion_select_route.state == DM1_ENTRANCE_VIEWING &&
+         receipt.champion_select_route.selectedMirrorIndex < 0)
+            ? 1
+            : 0;
+    receipt.champion_select_ui_ready =
+        (receipt.hoc_menu_route_ready &&
+         receipt.champion_select_route.showHall &&
+         receipt.champion_select_route.needsRedraw)
+            ? 1
+            : 0;
+    receipt.render_hall_mirrors =
+        receipt.champion_select_route.renderHallMirrorOverlay ? 1 : 0;
+    receipt.render_overlay_command_count =
+        receipt.champion_select_route.renderOverlayCommandCount;
+    if (receipt.render_overlay_command_count > 0 &&
+        receipt.render_overlay_command_count <=
+            DM1_V1_ENTRANCE_OVERLAY_COMMAND_MAX_PC34) {
+        int i;
+        for (i = 0; i < receipt.render_overlay_command_count; ++i) {
+            receipt.render_overlay_commands[i] =
+                receipt.champion_select_route.renderOverlayCommands[i];
+        }
+        receipt.render_overlay_commands_ready =
+            (receipt.render_overlay_commands[0].valid &&
+             receipt.render_overlay_commands[0].kind ==
+                 DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+             receipt.render_overlay_commands[0].clearStalePanelFirst &&
+             receipt.render_overlay_commands[0].suppressThingPayloads &&
+             receipt.render_overlay_commands[0].blockEnterUntilChampionSelected)
+                ? 1
+                : 0;
+    }
+    receipt.clear_stale_champion_panel =
+        receipt.champion_select_route.clearStaleChampionMirrorOverlay ? 1 : 0;
+    receipt.block_enter_until_champion_selected =
+        receipt.champion_select_route.blockEnterUntilChampionSelected ? 1 : 0;
+    receipt.runtime_first_frame_ready =
+        receipt.title_surface_released &&
+        receipt.entrance_wait_consumed &&
+        receipt.full_start_render_ready &&
+        receipt.entrance_map_ready &&
+        receipt.entrance_music_requested &&
+        receipt.entrance_door_open_frame_ready &&
+        receipt.champion_select_ui_ready &&
+        receipt.render_hall_mirrors &&
+        receipt.render_overlay_commands_ready &&
+        receipt.clear_stale_champion_panel &&
+        receipt.block_enter_until_champion_selected;
+    receipt.suppress_host_fallback_visuals =
+        receipt.runtime_first_frame_ready ? 1 : 0;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C:319-409; ENTRANCE.C:850-883; ENTRANCE.C:68-80";
     *out_receipt = receipt;
     return 1;
 }

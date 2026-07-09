@@ -134,6 +134,11 @@ typedef struct DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 {
     int champion_mirror_startup_input_ready;
     int champion_mirror_startup_panel_clear;
     int champion_mirror_startup_blocks_enter;
+    int champion_mirror_startup_overlay_commands_ready;
+    int champion_mirror_startup_overlay_command_count;
+    DM1_V1_EntranceRenderOverlayCommandPc34
+        champion_mirror_startup_overlay_commands[
+            DM1_V1_ENTRANCE_OVERLAY_COMMAND_MAX_PC34];
     int hoc_first_frame_ready;
     int runtime_first_frame_ready;
     int draw_opened_runtime;
@@ -144,6 +149,31 @@ typedef struct DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 {
     DM1_V1_EntranceMenuRouteReceiptPc34 champion_mirror_startup_route;
     const char* status;
 } DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34;
+
+typedef struct DM1_V1_StartupHoCFirstFrameReceipt_PC34 {
+    int handled;
+    int full_graphics_required;
+    int title_surface_released;
+    int entrance_wait_consumed;
+    int full_start_render_ready;
+    int entrance_map_ready;
+    int entrance_music_requested;
+    int entrance_door_open_frame_ready;
+    int hoc_menu_route_ready;
+    int champion_select_ui_ready;
+    int render_hall_mirrors;
+    int render_overlay_commands_ready;
+    int render_overlay_command_count;
+    DM1_V1_EntranceRenderOverlayCommandPc34
+        render_overlay_commands[DM1_V1_ENTRANCE_OVERLAY_COMMAND_MAX_PC34];
+    int clear_stale_champion_panel;
+    int block_enter_until_champion_selected;
+    int suppress_host_fallback_visuals;
+    int runtime_first_frame_ready;
+    DM1_V1_EntranceFullStartRenderReceiptPc34 entrance_full_start_receipt;
+    DM1_V1_EntranceMenuRouteReceiptPc34 champion_select_route;
+    const char* source_evidence;
+} DM1_V1_StartupHoCFirstFrameReceipt_PC34;
 
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
@@ -472,6 +502,11 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
     const DM1_V1_StartupHandoffOutcome_PC34* outcome,
     const DM1_V1_StartupHostApplyResult_PC34* host_result,
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_first_frame_receipt_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffPostLaunchPlan_PC34* post_plan,
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34* out_receipt);
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

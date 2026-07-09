@@ -699,6 +699,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupRuntimeReadyFacts_PC34 ready_facts;
     DM1_V1_StartupRuntimeReadyReceipt_PC34 ready_receipt;
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 runtime_handoff;
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34 hoc_first_frame;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1232,6 +1233,86 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 post-launch plan starts facing south at 2,0",
              post.entrance_full_start_receipt.partyDirection,
              DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34);
+    memset(&outcome, 0, sizeof(outcome));
+    expect_i("DM1 enter outcome builds for HoC first frame",
+             dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+                 ENTRANCE_COMPAT_COMMAND_PATH_ENTER,
+                 &outcome),
+             1);
+    memset(&hoc_first_frame, 0, sizeof(hoc_first_frame));
+    expect_i("DM1 HoC first-frame receipt builds",
+             dm1_v1_startup_hoc_first_frame_receipt_pc34(
+                 "dm1",
+                 &post,
+                 &outcome,
+                 &hoc_first_frame),
+             1);
+    expect_i("DM1 HoC first-frame releases title surface",
+             hoc_first_frame.title_surface_released,
+             1);
+    expect_i("DM1 HoC first-frame consumes entrance wait",
+             hoc_first_frame.entrance_wait_consumed,
+             1);
+    expect_i("DM1 HoC first-frame has C255 entrance map",
+             hoc_first_frame.entrance_map_ready &&
+                 hoc_first_frame.entrance_full_start_receipt.mapIndex ==
+                     DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_first_frame.entrance_full_start_receipt.partyDirection ==
+                     DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34,
+             1);
+    expect_i("DM1 HoC first-frame has opened entrance door",
+             hoc_first_frame.entrance_door_open_frame_ready &&
+                 hoc_first_frame.entrance_full_start_receipt.doorFrameIndex == 9,
+             1);
+    expect_i("DM1 HoC first-frame routes champion-select hall",
+             hoc_first_frame.hoc_menu_route_ready &&
+                 hoc_first_frame.champion_select_route.route ==
+                     DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34 &&
+                 hoc_first_frame.champion_select_route.state ==
+                     DM1_ENTRANCE_VIEWING,
+             1);
+    expect_i("DM1 HoC first-frame renders hall mirrors",
+             hoc_first_frame.render_hall_mirrors &&
+                 hoc_first_frame.render_overlay_commands_ready &&
+                 hoc_first_frame.render_overlay_command_count == 1 &&
+                 hoc_first_frame.render_overlay_commands[0].valid &&
+                 hoc_first_frame.render_overlay_commands[0].kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 hoc_first_frame.render_overlay_commands[0]
+                     .clearStalePanelFirst &&
+                 hoc_first_frame.render_overlay_commands[0]
+                     .suppressThingPayloads &&
+                 hoc_first_frame.render_overlay_commands[0]
+                     .blockEnterUntilChampionSelected &&
+                 hoc_first_frame.champion_select_route.renderOverlayCommandCount == 1 &&
+                 hoc_first_frame.champion_select_route.renderOverlayCommands[0].kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34,
+             1);
+    expect_i("DM1 HoC first-frame clears stale champion panel",
+             hoc_first_frame.clear_stale_champion_panel,
+             1);
+    expect_i("DM1 HoC first-frame blocks enter before champion",
+             hoc_first_frame.block_enter_until_champion_selected,
+             1);
+    expect_i("DM1 HoC first-frame suppresses host fallback visuals",
+             hoc_first_frame.runtime_first_frame_ready &&
+                 hoc_first_frame.suppress_host_fallback_visuals,
+             1);
+    expect_i("DM1 HoC first-frame no-op for CSB",
+             dm1_v1_startup_hoc_first_frame_receipt_pc34(
+                 "csb",
+                 &post,
+                 &outcome,
+                 &hoc_first_frame) &&
+                 hoc_first_frame.handled == 0,
+             1);
+    expect_i("DM1 HoC first-frame rejects missing plan",
+             dm1_v1_startup_hoc_first_frame_receipt_pc34(
+                 "dm1",
+                 NULL,
+                 &outcome,
+                 &hoc_first_frame),
+             0);
     expect_i("CSB post-launch plan does not use DM1 title",
              dm1_v1_startup_handoff_post_launch_plan_pc34("csb", &post) &&
                  post.play_title == 0 &&
@@ -1492,6 +1573,14 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  runtime_handoff.champion_mirror_startup_input_ready &&
                  runtime_handoff.champion_mirror_startup_panel_clear &&
                  runtime_handoff.champion_mirror_startup_blocks_enter &&
+                 runtime_handoff.champion_mirror_startup_overlay_commands_ready &&
+                 runtime_handoff.champion_mirror_startup_overlay_command_count == 1 &&
+                 runtime_handoff.champion_mirror_startup_overlay_commands[0]
+                     .valid &&
+                 runtime_handoff.champion_mirror_startup_overlay_commands[0]
+                     .kind == DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 runtime_handoff.champion_mirror_startup_overlay_commands[0]
+                     .suppressThingPayloads &&
                  runtime_handoff.champion_mirror_startup_route
                          .selectedMirrorIndex < 0 &&
                  !runtime_handoff.champion_mirror_startup_route
