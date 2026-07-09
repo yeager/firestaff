@@ -2589,12 +2589,56 @@ static int csb_v1_boot_startup_capture_render_plan_pc34(
     return 0;
 }
 
+static int csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
+    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
+    CSB_V1_BootStartupRenderDrawReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_render_draw_receipt_init_pc34(out_receipt);
+    if (!capture_receipt || !capture_receipt->valid ||
+        !capture_receipt->real_asset_receipt_valid ||
+        !capture_receipt->real_asset_receipt.matched) {
+        return 0;
+    }
+    if (!csb_v1_boot_startup_capture_render_plan_pc34(
+            capture_receipt,
+            &out_receipt->render_plan)) {
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->render_plan_valid = 1;
+    out_receipt->route = capture_receipt->render_route;
+    out_receipt->surface = out_receipt->render_plan.surface;
+    out_receipt->real_asset_matched = 1;
+    out_receipt->title_draw_ready =
+        capture_receipt->title_capture_ready ? 1 : 0;
+    out_receipt->hud_menu_draw_ready =
+        capture_receipt->hud_menu_capture_ready &&
+                capture_receipt->hud_menu_draw_valid
+            ? 1
+            : 0;
+    out_receipt->opening_draw_ready =
+        capture_receipt->render_view_valid &&
+                capture_receipt->render_view.opening_door_route
+            ? 1
+            : 0;
+    /* ReDMCSB TITLE.C F0437 lines 424-463 and ENTRANCE.C F0441/F0806
+     * lines 850-883 own CSB startup title/HUD/opening draws. This receipt
+     * is the M11-facing draw boundary: callers consume the CSB capture's
+     * real-asset-gated render receipt instead of a title-only planned copy. */
+    return 1;
+}
+
 int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
     const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view,
     const CSB_V1_StartupRenderExecutor_PC34 *executor)
 {
-    if (!host_view || !host_view->valid || !host_view->render_plan_valid ||
-        !executor) {
+    if (!host_view || !host_view->valid || !host_view->render_draw_valid ||
+        !host_view->render_draw.valid ||
+        !host_view->render_draw.render_plan_valid || !executor) {
         return 0;
     }
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep title,
@@ -2602,7 +2646,7 @@ int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
      * host loop. This lets host code consume the packaged host-view receipt
      * directly instead of rebuilding capture/render-view decisions. */
     return csb_v1_boot_startup_execute_render_plan_pc34(
-        &host_view->render_plan,
+        &host_view->render_draw.render_plan,
         executor);
 }
 
@@ -3212,10 +3256,10 @@ int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
         csb_v1_boot_startup_capture_render_plan_pc34(
             capture_receipt,
             &out_receipt->render_plan);
-    out_receipt->title_render_plan_valid =
-        csb_v1_boot_startup_capture_title_render_plan_pc34(
+    out_receipt->render_draw_valid =
+        csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
             capture_receipt,
-            &out_receipt->title_render_plan);
+            &out_receipt->render_draw);
     out_receipt->capture_proof_valid =
         csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
             capture_receipt,
@@ -3905,10 +3949,23 @@ void csb_v1_boot_startup_host_view_receipt_init_pc34(
     receipt->selected_command_id =
         CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
     receipt->selected_utility_action_index = -1;
+    csb_v1_boot_startup_render_draw_receipt_init_pc34(
+        &receipt->render_draw);
     csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
         &receipt->hud_menu_draw);
     csb_v1_boot_startup_packaged_capture_proof_init_pc34(
         &receipt->capture_proof);
+}
+
+void csb_v1_boot_startup_render_draw_receipt_init_pc34(
+    CSB_V1_BootStartupRenderDrawReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->route = CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+    receipt->surface = CSB_V1_STARTUP_RENDER_NONE_PC34;
 }
 
 void csb_v1_boot_startup_host_input_dispatch_receipt_init_pc34(
