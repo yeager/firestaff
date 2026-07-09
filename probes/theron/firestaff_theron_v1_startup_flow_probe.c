@@ -2504,6 +2504,79 @@ int main(void) {
             check_contains("runtime loader verified Track02 blocked receipt",
                            load_receipt,
                            "fallback visuals blocked");
+            {
+                Theron_StartupAction forcefield_action;
+                Theron_StartupActionPlan forcefield_plan;
+                Theron_V1StartupRuntimeEntryResult load_result;
+                Theron_StartupHostReceipt load_host_receipt;
+                Theron_StartupStateReceipt load_state_receipt;
+
+                theron_v1_startup_action_init(&forcefield_action);
+                forcefield_action.kind =
+                    THERON_STARTUP_ACTION_ENTER_FORCEFIELD;
+                check_int("runtime load host plan rc",
+                          theron_v1_startup_plan_for_action(
+                              &forcefield_action,
+                              &forcefield_plan),
+                          1);
+                theron_v1_world_init(&world);
+                load_receipt[0] = '\0';
+                check_int("runtime load host fallback rc",
+                          theron_v1_startup_runtime_load_initial_level_with_host_receipts(
+                              &world,
+                              NULL,
+                              0u,
+                              NULL,
+                              THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                              &forcefield_plan,
+                              &load_result,
+                              &load_host_receipt,
+                              &load_state_receipt,
+                              load_receipt,
+                              sizeof(load_receipt)),
+                          1);
+                check_int("runtime load host fallback source level",
+                          load_result.level_loaded,
+                          1);
+                check_int("runtime load host fallback state level",
+                          load_state_receipt.level_loaded,
+                          1);
+                check_int("runtime load host fallback state dungeon",
+                          load_state_receipt.flow.selected_dungeon,
+                          THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                check_contains("runtime load host fallback inspect",
+                               load_host_receipt.inspect_detail,
+                               "fallback room stage=2");
+                theron_v1_world_init(&world);
+                load_receipt[0] = '\0';
+                check_int("runtime load host verified Track02 blocked rc",
+                          theron_v1_startup_runtime_load_initial_level_with_host_receipts(
+                              &world,
+                              fake_verified_track02,
+                              sizeof(fake_verified_track02),
+                              THERON_TRACK02_MD5_US_BIN,
+                              THERON_DUNGEON_1_HALL_OF_RECORDS,
+                              &forcefield_plan,
+                              &load_result,
+                              &load_host_receipt,
+                              &load_state_receipt,
+                              load_receipt,
+                              sizeof(load_receipt)),
+                          0);
+                check_int("runtime load host verified Track02 result",
+                          load_result.result,
+                          THERON_STARTUP_ERR_LEVEL_LOAD);
+                check_contains("runtime load host verified Track02 status",
+                               load_host_receipt.status,
+                               "fallback visuals blocked");
+                check_contains("runtime load host verified Track02 inspect",
+                               load_host_receipt.inspect_detail,
+                               "fallback visuals blocked");
+                check_int("runtime load host verified Track02 no level",
+                          world.level_loaded[
+                              THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                          0);
+            }
         }
         {
             Theron_V1StartupRuntimeEntryRequest runtime_request;

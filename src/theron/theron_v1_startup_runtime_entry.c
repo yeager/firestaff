@@ -630,6 +630,82 @@ int theron_v1_startup_runtime_entry_state_receipt_from_result(
     return 1;
 }
 
+int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    const Theron_StartupActionPlan *plan,
+    Theron_V1StartupRuntimeEntryResult *out_result,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_V1StartupRuntimeEntryResult local_result;
+    Theron_V1StartupRuntimeEntryResult *result =
+        out_result ? out_result : &local_result;
+    Theron_V1StartupRuntimeEntryApplyReceipt apply_receipt;
+    Theron_StartupFlow flow;
+
+    theron_v1_startup_runtime_entry_result_init(result);
+    theron_v1_startup_runtime_entry_apply_receipt_init(&apply_receipt);
+    if (out_host_receipt) {
+        theron_v1_startup_host_receipt_init(out_host_receipt);
+    }
+    if (out_state_receipt) {
+        theron_v1_startup_state_receipt_init(out_state_receipt);
+    }
+
+    if (!theron_v1_startup_runtime_load_initial_level(world,
+                                                      hucard_rom,
+                                                      hucard_rom_size,
+                                                      md5_hex,
+                                                      dungeon_id,
+                                                      receipt,
+                                                      receipt_cap)) {
+        result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
+        theron_v1_startup_runtime_entry_failure_apply_receipt(
+            plan,
+            result,
+            receipt,
+            &apply_receipt);
+        if (out_host_receipt) {
+            theron_v1_startup_host_receipt_from_runtime_entry_apply(
+                &apply_receipt,
+                out_host_receipt);
+        }
+        return 0;
+    }
+
+    theron_v1_startup_runtime_entry_capture_result(world, result);
+    theron_v1_startup_flow_init(&flow);
+    flow.phase = THERON_STARTUP_PHASE_IN_DUNGEON;
+    flow.selected_dungeon = dungeon_id;
+    flow.forcefield_entered = 1;
+    if (out_state_receipt &&
+        !theron_v1_startup_runtime_entry_state_receipt_from_result(
+            &flow,
+            result,
+            out_state_receipt)) {
+        return 0;
+    }
+    if (!theron_v1_startup_runtime_entry_apply_receipt(plan,
+                                                       result,
+                                                       receipt,
+                                                       &apply_receipt)) {
+        return 0;
+    }
+    if (out_host_receipt &&
+        !theron_v1_startup_host_receipt_from_runtime_entry_apply(
+            &apply_receipt,
+            out_host_receipt)) {
+        return 0;
+    }
+    return 1;
+}
+
 int theron_v1_startup_runtime_enter_from_forcefield_with_receipts(
     Theron_StartupFlow *flow,
     Theron_V1_World *world,
