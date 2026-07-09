@@ -220,6 +220,54 @@ int m11_plan_deferred_group_move_route_f0267(
     return 1;
 }
 
+int m11_plan_ordinary_group_move_f0267(
+        int sourceMapX,
+        int sourceMapY,
+        int direction,
+        int destinationPassable,
+        int destinationBlocked,
+        int killedByProjectile,
+        uint32_t currentTick,
+        M11_OrdinaryGroupMovePlan* outPlan) {
+    M11_OrdinaryGroupMovePlan plan;
+
+    if (!outPlan) return 0;
+    memset(&plan, 0, sizeof(plan));
+    plan.valid = 1;
+    plan.destinationMapX = sourceMapX;
+    plan.destinationMapY = sourceMapY;
+
+    switch (direction & 3) {
+        case M11_DIRECTION_NORTH: plan.destinationMapY--; break;
+        case M11_DIRECTION_EAST:  plan.destinationMapX++; break;
+        case M11_DIRECTION_SOUTH: plan.destinationMapY++; break;
+        case M11_DIRECTION_WEST:  plan.destinationMapX--; break;
+    }
+
+    if (!destinationPassable || destinationBlocked) {
+        plan.route = M11_GROUP_MOVE_ROUTE_RETRY;
+        plan.retryFireAtTick = currentTick + 1u;
+        *outPlan = plan;
+        return 1;
+    }
+    if (killedByProjectile) {
+        plan.route = M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE;
+        *outPlan = plan;
+        return 1;
+    }
+
+    plan.route = M11_GROUP_MOVE_ROUTE_INSERT;
+    plan.retryFireAtTick = currentTick + 1u;
+
+    /* ReDMCSB GROUP.C F0209 lines 1928/2175 enters MOVESENS.C F0267
+     * from the creature's source square. MOVESENS.C F0267 lines 432-435
+     * runs the projectile precheck before a successful move, and blocked
+     * C37 movement is retried on the next tick in the Firestaff timeline
+     * adapter. */
+    *outPlan = plan;
+    return 1;
+}
+
 int m11_plan_group_pit_fall_square_f0267(
         int squareType,
         int pitSquareType,

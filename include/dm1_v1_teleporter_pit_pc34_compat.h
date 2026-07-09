@@ -48,8 +48,14 @@ extern "C" {
 #define M11_GROUP_MOVE_ROUTE_REMOVE                 2
 #define M11_GROUP_MOVE_ROUTE_RETRY                  3
 #define M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT  4
+#define M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE   5
 
 #define M11_TELEPORTER_SCOPE_CREATURES              0x01
+
+#define M11_DIRECTION_NORTH                         0
+#define M11_DIRECTION_EAST                          1
+#define M11_DIRECTION_SOUTH                         2
+#define M11_DIRECTION_WEST                          3
 
 typedef struct {
     int x;
@@ -86,6 +92,14 @@ typedef struct {
     int mapY;
     int removalReason;
 } M11_GroupMoveRoutePlan;
+
+typedef struct {
+    int valid;
+    int destinationMapX;
+    int destinationMapY;
+    int route;
+    uint32_t retryFireAtTick;
+} M11_OrdinaryGroupMovePlan;
 
 typedef struct {
     int valid;
@@ -145,6 +159,15 @@ int  m11_plan_deferred_group_move_route_f0267(
         int chaosAdjacentMapX,
         int chaosAdjacentMapY,
         M11_GroupMoveRoutePlan* outPlan);
+int  m11_plan_ordinary_group_move_f0267(
+        int sourceMapX,
+        int sourceMapY,
+        int direction,
+        int destinationPassable,
+        int destinationBlocked,
+        int killedByProjectile,
+        uint32_t currentTick,
+        M11_OrdinaryGroupMovePlan* outPlan);
 int  m11_plan_group_pit_fall_square_f0267(
         int squareType,
         int pitSquareType,

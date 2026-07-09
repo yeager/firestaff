@@ -6148,8 +6148,11 @@ static int orch_handle_creature_tick_group_move_compat(
     int destMapX;
     int destMapY;
     int killedByProjectile = 0;
+    int destinationPassable;
+    int destinationBlocked;
     struct DungeonGroup_Compat* group;
     struct TimelineEvent_Compat nextEvent;
+    M11_OrdinaryGroupMovePlan movePlan;
 
     (void)result;
     if (!world || !ev || !world->things || !world->dungeon) return 0;
@@ -6159,21 +6162,30 @@ static int orch_handle_creature_tick_group_move_compat(
     if (activeIndex < 0) return 1;
     group = &world->things->groups[groupIndex];
     direction = world->creatureAI[activeIndex].groupDirection & 3;
-    destMapX = ev->mapX;
-    destMapY = ev->mapY;
-    switch (direction) {
-        case DIR_NORTH: destMapY--; break;
-        case DIR_EAST:  destMapX++; break;
-        case DIR_SOUTH: destMapY++; break;
-        case DIR_WEST:  destMapX--; break;
+    memset(&movePlan, 0, sizeof(movePlan));
+    if (!m11_plan_ordinary_group_move_f0267(
+            ev->mapX, ev->mapY, direction, 1, 0, 0,
+            world->gameTick, &movePlan) ||
+        !movePlan.valid) {
+        return 0;
     }
+    destMapX = movePlan.destinationMapX;
+    destMapY = movePlan.destinationMapY;
 
-    if (!F0707_MOVEMENT_IsSquarePassableForContext_Compat(
-            world->dungeon, ev->mapIndex, destMapX, destMapY,
-            MOVEMENT_PASS_CTX_CREATURE) ||
-        orch_square_has_group_or_party_compat(world, ev->mapIndex, destMapX, destMapY)) {
+    destinationPassable = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+        world->dungeon, ev->mapIndex, destMapX, destMapY,
+        MOVEMENT_PASS_CTX_CREATURE);
+    destinationBlocked = orch_square_has_group_or_party_compat(
+        world, ev->mapIndex, destMapX, destMapY);
+    if (!m11_plan_ordinary_group_move_f0267(
+            ev->mapX, ev->mapY, direction, destinationPassable,
+            destinationBlocked, 0, world->gameTick, &movePlan) ||
+        !movePlan.valid) {
+        return 0;
+    }
+    if (movePlan.route == M11_GROUP_MOVE_ROUTE_RETRY) {
         nextEvent = *ev;
-        nextEvent.fireAtTick = world->gameTick + 1u;
+        nextEvent.fireAtTick = movePlan.retryFireAtTick;
         return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
     }
 
@@ -6182,7 +6194,14 @@ static int orch_handle_creature_tick_group_move_compat(
             destMapX, destMapY, &killedByProjectile)) {
         return 0;
     }
-    if (killedByProjectile) {
+    if (!m11_plan_ordinary_group_move_f0267(
+            ev->mapX, ev->mapY, direction, destinationPassable,
+            destinationBlocked, killedByProjectile, world->gameTick,
+            &movePlan) ||
+        !movePlan.valid) {
+        return 0;
+    }
+    if (movePlan.route == M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE) {
         (void)orch_unlink_thing_from_square_compat(
             world, ev->mapIndex, ev->mapX, ev->mapY,
             orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
@@ -6208,9 +6227,9 @@ static int orch_handle_creature_tick_group_move_compat(
     world->creatureAI[activeIndex].groupCells = group->cells;
 
     nextEvent = *ev;
-    nextEvent.fireAtTick = world->gameTick + 1u;
-    nextEvent.mapX = destMapX;
-    nextEvent.mapY = destMapY;
+    nextEvent.fireAtTick = movePlan.retryFireAtTick;
+    nextEvent.mapX = movePlan.destinationMapX;
+    nextEvent.mapY = movePlan.destinationMapY;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
 }
 

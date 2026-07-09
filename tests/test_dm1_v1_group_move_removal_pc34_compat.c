@@ -117,6 +117,41 @@ static void test_deferred_route_plan(void) {
     expect_int("route_chaos_y", plan.mapY, 10);
 }
 
+static void test_ordinary_group_move_plan(void) {
+    M11_OrdinaryGroupMovePlan plan;
+
+    expect_int("ordinary_east_ok",
+        m11_plan_ordinary_group_move_f0267(
+            4, 5, M11_DIRECTION_EAST, 1, 0, 0, 100u, &plan), 1);
+    expect_int("ordinary_east_route", plan.route, M11_GROUP_MOVE_ROUTE_INSERT);
+    expect_int("ordinary_east_x", plan.destinationMapX, 5);
+    expect_int("ordinary_east_y", plan.destinationMapY, 5);
+    expect_int("ordinary_east_next_tick", (int)plan.retryFireAtTick, 101);
+
+    expect_int("ordinary_blocked_ok",
+        m11_plan_ordinary_group_move_f0267(
+            4, 5, M11_DIRECTION_NORTH, 1, 1, 0, 200u, &plan), 1);
+    expect_int("ordinary_blocked_route", plan.route, M11_GROUP_MOVE_ROUTE_RETRY);
+    expect_int("ordinary_blocked_x", plan.destinationMapX, 4);
+    expect_int("ordinary_blocked_y", plan.destinationMapY, 4);
+    expect_int("ordinary_blocked_tick", (int)plan.retryFireAtTick, 201);
+
+    expect_int("ordinary_wall_ok",
+        m11_plan_ordinary_group_move_f0267(
+            4, 5, M11_DIRECTION_WEST, 0, 0, 0, 300u, &plan), 1);
+    expect_int("ordinary_wall_route", plan.route, M11_GROUP_MOVE_ROUTE_RETRY);
+    expect_int("ordinary_wall_x", plan.destinationMapX, 3);
+    expect_int("ordinary_wall_y", plan.destinationMapY, 5);
+
+    expect_int("ordinary_projectile_kill_ok",
+        m11_plan_ordinary_group_move_f0267(
+            4, 5, M11_DIRECTION_SOUTH, 1, 0, 1, 400u, &plan), 1);
+    expect_int("ordinary_projectile_kill_route", plan.route,
+        M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE);
+    expect_int("ordinary_projectile_kill_x", plan.destinationMapX, 4);
+    expect_int("ordinary_projectile_kill_y", plan.destinationMapY, 6);
+}
+
 static void test_pit_and_chaos_subplans(void) {
     M11_GroupPitFallSquarePlan pit;
     M11_LordChaosAdjacentRetryPlan chaos;
@@ -206,6 +241,7 @@ int main(void) {
     test_fall_killed_group_drops_and_deletes_source();
     test_not_allowed_group_drops_without_placement_delete();
     test_deferred_route_plan();
+    test_ordinary_group_move_plan();
     test_pit_and_chaos_subplans();
     test_group_teleporter_destination_plan();
     test_source_evidence();
