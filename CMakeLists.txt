@@ -171,6 +171,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_original_save_pc34_handoff.c
     src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
     src/dm1/dm1_v1_throw_shoot_pc34_compat.c
+    src/dm2/dm2_v1_ccm.c
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_sound.c
@@ -1649,6 +1650,7 @@ set_tests_properties(dm1_v2_v1_v2_side_by_side_seed_probe PROPERTIES
 # 11-slot table, sound query_entry/play/positional/music stubs.
 add_executable(firestaff_dm2_v1_creature_combat_probe
     probes/firestaff_dm2_v1_creature_combat_probe.c
+    src/dm2/dm2_v1_ccm.c
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_combat.c
     src/dm2/dm2_v1_drops.c
@@ -6821,6 +6823,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_projectile_pc34_compat
         tests/test_dm2_v1_projectile_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
         src/dm2/dm2_v1_drops.c
@@ -6851,6 +6854,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
         src/dm2/dm2_v1_drops.c
@@ -6881,6 +6885,7 @@ if(BUILD_TESTING)
         probes/dm2/firestaff_dm2_v1_projectile_creature_collision_probe.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
         src/dm2/dm2_v1_drops.c
@@ -6907,6 +6912,7 @@ if(BUILD_TESTING)
     # creature+combat integration).
     add_executable(test_dm2_v1_creature_death_drop_pc34_compat
         tests/test_dm2_v1_creature_death_drop_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
@@ -6928,6 +6934,7 @@ if(BUILD_TESTING)
     # ── DM2 V1 Phase 6: GDAT-backed creature AI definition import ──
     add_executable(test_dm2_v1_creature_gdat_ai_table
         tests/test_dm2_v1_creature_gdat_ai_table.c
+        src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
@@ -6951,6 +6958,7 @@ if(BUILD_TESTING)
     # the firestaff pool workers.
     add_executable(firestaff_dm2_v1_creature_death_drop_probe
         probes/firestaff_dm2_v1_creature_death_drop_probe.c
+        src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c)
@@ -7147,10 +7155,34 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_ccm_pc34_compat
     )
 
+    # ── DM2 V1 Phase 5: CCM runtime bridge through creature tick ──
+    add_executable(test_dm2_v1_creature_ccm_runtime_pc34_compat
+        tests/test_dm2_v1_creature_ccm_runtime_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+    )
+    target_include_directories(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE firestaff_m10 m)
+    target_compile_definitions(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE
+        FIRESTAFF_DM2_CREATURE_TESTING=1
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_ccm_runtime_pc34_compat
+        COMMAND test_dm2_v1_creature_ccm_runtime_pc34_compat
+    )
+
     # ── DM2 V1 Phase 5: Projectile drain to M11 (probe only) ──
     add_executable(firestaff_dm2_v1_projectile_drain_probe
         probes/dm2/firestaff_dm2_v1_projectile_drain_probe.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
         src/dm2/dm2_v1_drops.c
@@ -7180,6 +7212,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_projectile_step_pc34_compat.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
         src/dm2/dm2_v1_drops.c
@@ -7212,6 +7245,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_projectile_step_pc34_compat.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
         src/dm2/dm2_v1_drops.c

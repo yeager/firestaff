@@ -12,6 +12,7 @@
  */
 
 #include "dm2_v1_creature.h"
+#include "dm2_v1_ccm.h"
 #include "dm2_v1_drops.h"
 #include "dm2_v1_sound.h"
 #include <string.h>
@@ -271,6 +272,8 @@ int dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags) {
 
 static DM2_V1_CreatureInstance g_creature_pool[DM2_MAX_CREATURE_INSTANCES];
 static int g_next_instance_id = 0;
+static int g_tick_counter = 0;
+static DM2_V1_CreatureCCMTickObserver g_last_ccm_tick;
 
 /* ── Death/drop observer (Phase 5 followup, 2026-06-22) ────────────────
  * Captures the most recent death_check event so the CTest gate can assert
@@ -453,6 +456,106 @@ void dm2_v1_creature_reset_death_observer(void) {
     g_death_observer_count = 0;
 }
 
+int dm2_v1_creature_last_ccm_tick(DM2_V1_CreatureCCMTickObserver *out) {
+    if (!out) return 0;
+    if (!g_last_ccm_tick.valid) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    *out = g_last_ccm_tick;
+    return 1;
+}
+
+void dm2_v1_creature_reset_ccm_tick_observer(void) {
+    memset(&g_last_ccm_tick, 0, sizeof(g_last_ccm_tick));
+}
+
+static int dm2_v1_creature_ccm_argc(int opcode) {
+    const DM2_V1_CCMOpcodeDef *def = dm2_v1_ccm_get_opcode_def(opcode);
+    return def ? def->arg_count : 0;
+}
+
+static void dm2_v1_creature_make_ccm_args(const DM2_V1_CreatureInstance *c,
+                                          int opcode,
+                                          int args[DM2_CCM_MAX_PROGRAM_ARGS]) {
+    memset(args, 0, sizeof(int) * DM2_CCM_MAX_PROGRAM_ARGS);
+    if (!c) return;
+
+    /* skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM dispatches b_1a
+     * with operands taken from creature context registers. Firestaff still
+     * imports only b_1a/b_17 at runtime, so this bridge maps the available
+     * instance fields into the CCM interpreter until GDAT byteprogram
+     * streams are wired from real assets. */
+    switch (opcode) {
+        case DM2_CCM_OP_ATTACK_HANDLER:
+        case DM2_CCM_OP_STEAL_ITEM:
+        case DM2_CCM_OP_SPECIAL_ACTION:
+        case DM2_CCM_OP_MERCHANT_BEHAVIOR:
+        case DM2_CCM_OP_KILL_ON_TIMER_POS:
+        case DM2_CCM_OP_ROTATES_TARGET:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON:
+            args[0] = c->b_17;
+            break;
+        case DM2_CCM_OP_SHOOT_ITEM:
+            args[0] = c->b_17;
+            args[1] = c->direction;
+            break;
+        case DM2_CCM_OP_CAST_SPELL:
+            args[0] = c->b_17;
+            args[1] = c->target_x;
+            args[2] = c->target_y;
+            break;
+        default:
+            break;
+    }
+}
+
+static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
+                                         int slot) {
+    DM2_V1_CCMState state;
+    int args[DM2_CCM_MAX_PROGRAM_ARGS];
+    int opcode;
+    int argc;
+    int before_cooldown;
+    int rc;
+
+    if (!c) return;
+    opcode = (int)c->b_1a;
+    before_cooldown = c->attack_cooldown;
+    dm2_v1_ccm_init_state(&state);
+    state.target_id = c->instance_id;
+    state.target_x = c->target_x;
+    state.target_y = c->target_y;
+    state.target_level = c->map_index;
+    dm2_v1_creature_make_ccm_args(c, opcode, args);
+    argc = dm2_v1_creature_ccm_argc(opcode);
+    rc = dm2_v1_ccm_step(&state, opcode, args, argc, g_tick_counter);
+
+    memset(&g_last_ccm_tick, 0, sizeof(g_last_ccm_tick));
+    g_last_ccm_tick.valid = 1;
+    g_last_ccm_tick.instance_id = slot;
+    g_last_ccm_tick.ai_index = c->ai_index;
+    g_last_ccm_tick.before_b_1a = opcode;
+    g_last_ccm_tick.ccm_opcode = state.last_opcode;
+    g_last_ccm_tick.ccm_result = rc;
+    g_last_ccm_tick.ccm_flag_attack_party = state.flags[9];
+    g_last_ccm_tick.ccm_flag_walk = state.flags[0];
+    g_last_ccm_tick.attack_cooldown_before = before_cooldown;
+
+    if (rc == (int)DM2_CCM_RESULT_OK) {
+        if (state.flags[9]) {
+            c->b_1a = DM2_CCM_WALK_NOW;
+            c->attack_cooldown = 18;
+        } else if (state.flags[0] && before_cooldown == 0 &&
+                   dm2_v1_creature_attacks_party(c->ai_index, 1)) {
+            c->b_1a = DM2_CCM_CREATURE_ATTACKS_PARTY;
+        }
+    }
+
+    g_last_ccm_tick.after_b_1a = c->b_1a;
+    g_last_ccm_tick.attack_cooldown_after = c->attack_cooldown;
+}
+
 /* dm2_v1_creature_tick — advance all creature instances by one tick.
  * Source: SKULLWIN/c_ai.cpp: DM2_THINK_CREATURE, SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM
  *
@@ -479,6 +582,7 @@ void dm2_v1_creature_reset_death_observer(void) {
  * Stub: advance cooldowns, poison, proximity check for attack state.
  * Real CCM requires GDAT creature definitions + party world-position. */
 void dm2_v1_creature_tick(void) {
+    g_tick_counter++;
     for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {
         DM2_V1_CreatureInstance *c = &g_creature_pool[i];
         if (!c->alive) continue;
@@ -494,16 +598,7 @@ void dm2_v1_creature_tick(void) {
             }
         }
 
-        /* Stub CCM dispatch */
-        if (c->b_1a == DM2_CCM_WALK_NOW) {
-            if (c->attack_cooldown == 0
-                && dm2_v1_creature_attacks_party(c->ai_index, 1)) {
-                c->b_1a = DM2_CCM_CREATURE_ATTACKS_PARTY;
-            }
-        } else if (c->b_1a == DM2_CCM_CREATURE_ATTACKS_PARTY) {
-            c->b_1a = DM2_CCM_WALK_NOW;
-            c->attack_cooldown = 18;  /* ~1 second at 18.2 Hz tick */
-        }
+        dm2_v1_creature_run_ccm_tick(c, i);
 
         /* Only trigger death check for alive creatures whose HP just hit 0.
          * alive=1 && hp_current<=0 means HP reached 0 this tick — death not yet processed.

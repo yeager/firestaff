@@ -175,7 +175,7 @@ const char *dm2_v1_creature_source_evidence(void);
 #define DM2_MAX_ACTIVE_CREATURES    32   /* creatures with CCM state != IDLE */
 
 typedef struct {
-    int instance_id;        /* unique instance ID (0–63) */
+    int instance_id;        /* unique instance ID (0-63) */
     int ai_index;          /* AIDefinition table index (0–63) */
     int world_x;           /* world/map X coordinate */
     int world_y;           /* world/map Y coordinate */
@@ -193,6 +193,20 @@ typedef struct {
     int poison_ticks;      /* poison damage countdown */
 } DM2_V1_CreatureInstance;
 
+typedef struct {
+    int valid;
+    int instance_id;
+    int ai_index;
+    int before_b_1a;
+    int after_b_1a;
+    int ccm_opcode;
+    int ccm_result;
+    int ccm_flag_attack_party;
+    int ccm_flag_walk;
+    int attack_cooldown_before;
+    int attack_cooldown_after;
+} DM2_V1_CreatureCCMTickObserver;
+
 /* ── Creature instance API ───────────────────────────────────────────────── */
 
 /* dm2_v1_creature_spawn — spawn a creature instance.
@@ -206,6 +220,9 @@ int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
  * Updates CCM b_1a state, HP, attack cooldown, poison ticks.
  * Source: SKULLWIN/c_ai.cpp: DM2_THINK_CREATURE, SKULLWIN/c_creature.cpp */
 void dm2_v1_creature_tick(void);
+
+int dm2_v1_creature_last_ccm_tick(DM2_V1_CreatureCCMTickObserver *out_observer);
+void dm2_v1_creature_reset_ccm_tick_observer(void);
 
 /* dm2_v1_creature_count — return count of active (alive) creature instances */
 int dm2_v1_creature_count(void);
