@@ -148,6 +148,23 @@ static const uint8_t g_valid_gzip_srm[] = {
     0xc3, 0x2c, 0x00, 0x00, 0x00
 };
 
+static const uint8_t g_valid_party_gzip_srm[] = {
+    0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x73, 0x0b,
+    0x0e, 0x09, 0x0c, 0x08, 0x89, 0x34, 0x64, 0x64, 0x66, 0x66, 0xd4, 0x61,
+    0x64, 0x60, 0x60, 0x14, 0x60, 0x60, 0x60, 0x02, 0x62, 0x66, 0x20, 0x66,
+    0x01, 0x62, 0x56, 0x20, 0x66, 0x03, 0x62, 0x76, 0x20, 0xe6, 0x64, 0x66,
+    0x60, 0x08, 0xc9, 0x48, 0x2d, 0xca, 0xcf, 0x63, 0x40, 0x00, 0xc6, 0xa0,
+    0x20, 0x1f, 0x1f, 0x09, 0x09, 0x21, 0x41, 0x01, 0x7e, 0x16, 0x56, 0x66,
+    0x88, 0x98, 0x8d, 0x2d, 0x83, 0x63, 0x51, 0x26, 0x03, 0x32, 0x60, 0x64,
+    0xd4, 0xd5, 0x75, 0x73, 0xe3, 0xe0, 0x10, 0x06, 0x2a, 0x64, 0x61, 0x65,
+    0x80, 0x28, 0x34, 0x32, 0x66, 0xf0, 0xcd, 0x2c, 0x4a, 0x44, 0x56, 0xc7,
+    0xc4, 0x68, 0x62, 0x62, 0x65, 0xa5, 0xa0, 0x20, 0x02, 0x54, 0x08, 0x54,
+    0x07, 0x51, 0x68, 0x62, 0xca, 0x10, 0x9c, 0x9f, 0x83, 0x62, 0x1e, 0x33,
+    0xa3, 0x9a, 0x9a, 0x8e, 0x8e, 0xa1, 0xa1, 0x28, 0x50, 0x21, 0x48, 0x1d,
+    0x58, 0xa1, 0x99, 0x39, 0x03, 0x00, 0x61, 0x93, 0xfd, 0x41, 0xd0, 0x00,
+    0x00, 0x00
+};
+
 /* The matching inflate target.  The unit test does not validate the
  * inflated bytes directly (that contract is owned by
  * test_theron_v1_srm_classifier_pc34); here we only assert that the
@@ -456,6 +473,53 @@ static void test_srm_only_resume_claim(void) {
     } else {
         test_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
     }
+}
+
+static void test_srm_party_continue_restores_all_champions(void) {
+    char srm_root[THERON_V1_SRM_PATH_MAX];
+    char slot_path[THERON_V1_SRM_PATH_MAX];
+    Theron_V1_World world;
+    char receipt[256];
+
+    if (!make_temp_save_root(srm_root)) {
+        printf("SKIP: mkdtemp failed for srm party continue test\n");
+        return;
+    }
+    expect_true(theron_v1_srm_slot_path(srm_root, 2, slot_path) == 1,
+                "srm party slot 2 path constructs");
+    expect_true(write_bytes(slot_path,
+                            g_valid_party_gzip_srm,
+                            sizeof(g_valid_party_gzip_srm)) == 1,
+                "srm party slot 2 written");
+
+    theron_v1_world_init(&world);
+    world.party.champion_count = 1;
+    memset(receipt, 0, sizeof(receipt));
+    expect_true(theron_v1_startup_continue_srm_apply(&world,
+                                                     srm_root,
+                                                     2,
+                                                     receipt,
+                                                     sizeof(receipt)) == 1,
+                "srm party continue applies");
+    expect_true(world.progression.current_dungeon ==
+                    THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                "srm party continue restores progression dungeon");
+    expect_true(world.party.champion_count == THERON_MAX_CHAMPIONS,
+                "srm party continue keeps all imported champions");
+    expect_true(world.party.gold == 777u,
+                "srm party continue restores party gold");
+    expect_true(strcmp(world.party.champions[0].name, "Theron") == 0 &&
+                    world.party.champions[0].health == 82,
+                "srm party continue restores Theron body");
+    expect_true(strcmp(world.party.champions[1].name, "Ari") == 0 &&
+                    world.party.champions[1].primary_class ==
+                        THERON_CLASS_NINJA &&
+                    world.party.champions[1].stamina == 70,
+                "srm party continue restores companion body");
+    expect_true(strstr(receipt, "PROGRESSION_PARTY") != NULL,
+                "srm party continue receipt reports party envelope");
+
+    cleanup_srm_root(srm_root);
 }
 
 static void test_dual_resume_claim(void) {
@@ -1217,6 +1281,7 @@ int main(void) {
     test_staged_but_unrecognized_is_skip();
     test_tqsv_only_resume_claim();
     test_srm_only_resume_claim();
+    test_srm_party_continue_restores_all_champions();
     test_dual_resume_claim();
     test_boot_profile_handoff();
     test_status_name_contracts();
