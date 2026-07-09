@@ -1794,9 +1794,12 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
             ? 1
             : 0;
     out_receipt->opening_door_route =
-        route->route ==
-                    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34 &&
-                route->draw_opening_frame && !route->accepts_input
+        (route->route ==
+             CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_DELAY_PC34 ||
+         route->route ==
+             CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34) &&
+                (route->draw_closed_doors || route->draw_opening_frame) &&
+                !route->accepts_input
             ? 1
             : 0;
     out_receipt->hud_menu_receipt_ready =
@@ -2398,6 +2401,8 @@ void csb_v1_boot_startup_action_receipt_init_pc34(
     memset(receipt, 0, sizeof(*receipt));
     csb_v1_boot_startup_presentation_route_receipt_init_pc34(
         &receipt->pre_input_route);
+    csb_v1_boot_startup_render_view_receipt_init_pc34(
+        &receipt->post_input_render_view);
     csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
         &receipt->utility_receipt);
     csb_v1_startup_entrance_host_action_receipt_init_pc34(
@@ -2589,6 +2594,81 @@ static int csb_v1_boot_startup_action_capture_pre_input_route_pc34(
         &receipt->pre_input_route);
 }
 
+static void csb_v1_boot_startup_snapshot_apply_command_state_pc34(
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    const CSB_V1_StartupCommandStateReceipt_PC34 *state)
+{
+    if (!snapshot || !state) {
+        return;
+    }
+    snapshot->title_active = state->title_active;
+    snapshot->title_frame = state->title_frame;
+    snapshot->title_source_step = state->title_source_step;
+    snapshot->entrance_active = state->entrance_active;
+    snapshot->entrance_source_step = state->entrance_source_step;
+    snapshot->entrance_dismissed = state->entrance_dismissed;
+    snapshot->credits_active = state->credits_active;
+    snapshot->credits_remaining_ticks = state->credits_remaining_ticks;
+    snapshot->opening_active = state->opening_active;
+    snapshot->opening_delay_ticks = state->opening_delay_ticks;
+    snapshot->opening_step = state->opening_step;
+    snapshot->pending_command = state->pending_command;
+}
+
+static int csb_v1_boot_startup_action_capture_post_input_render_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupActionReceipt_PC34 *receipt)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 post_snapshot;
+    const CSB_V1_StartupEntranceHostActionReceipt_PC34 *entrance = NULL;
+    const CSB_V1_UtilStateReceipt *util_state = NULL;
+
+    if (!snapshot || !receipt || !receipt->handled) {
+        return 0;
+    }
+    post_snapshot = *snapshot;
+    if (receipt->kind == CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34) {
+        util_state = &receipt->utility_receipt.util_state_receipt;
+        if (util_state->selected_action_index_changed) {
+            post_snapshot.utility_selected_action_index =
+                util_state->selected_action_index;
+        }
+        if (util_state->preview_active_changed) {
+            post_snapshot.utility_preview_active = util_state->preview_active;
+        }
+        if (receipt->utility_receipt.entrance_receipt_valid) {
+            entrance = &receipt->utility_receipt.entrance_receipt;
+        }
+    } else if (receipt->kind == CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34) {
+        entrance = &receipt->entrance_receipt;
+    }
+    if (entrance && entrance->handled) {
+        csb_v1_boot_startup_snapshot_apply_command_state_pc34(
+            &post_snapshot,
+            &entrance->state_receipt);
+        if (entrance->host_receipt.input_result ==
+            CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34) {
+            receipt->input_requests_launcher_return = 1;
+            return 0;
+        }
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 routes keyboard/mouse
+     * input inside the same entrance loop that redraws the closed doors,
+     * credits, and opening sequence. CSBWin/Viewport.cpp keeps menu/HUD
+     * drawing coupled to that state. Capture the post-input render route here
+     * so M11 does not have to reinterpret utility or entrance receipts. */
+    receipt->post_input_render_view_valid =
+        csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+            &post_snapshot,
+            &receipt->post_input_render_view);
+    receipt->input_stays_on_startup =
+        receipt->post_input_render_view_valid &&
+                receipt->post_input_render_view.route_receipt.valid
+            ? 1
+            : 0;
+    return receipt->post_input_render_view_valid;
+}
+
 int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
@@ -2616,6 +2696,9 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
         out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34;
         out_receipt->handled = 1;
         out_receipt->utility_receipt = utility_receipt;
+        (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
+            snapshot,
+            out_receipt);
         return 1;
     }
     if (!csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
@@ -2634,6 +2717,9 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34;
     out_receipt->handled = 1;
     out_receipt->entrance_receipt = entrance_receipt;
+    (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
+        snapshot,
+        out_receipt);
     return 1;
 }
 
@@ -2668,6 +2754,9 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
         out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34;
         out_receipt->handled = 1;
         out_receipt->utility_receipt = utility_receipt;
+        (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
+            snapshot,
+            out_receipt);
         return 1;
     }
     if (!csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
@@ -2688,6 +2777,9 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34;
     out_receipt->handled = 1;
     out_receipt->entrance_receipt = entrance_receipt;
+    (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
+        snapshot,
+        out_receipt);
     return 1;
 }
 
