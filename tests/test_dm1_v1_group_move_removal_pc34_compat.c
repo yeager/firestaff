@@ -26,7 +26,7 @@ static void test_allowed_group_keeps_move(void) {
         DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
             0, 1, 4, 5, 7, 8, &plan), 1);
     expect_int("allowed_move_not_prevented", plan.movePrevented, 0);
-    expect_int("allowed_reason_none", plan.reason, M11_GROUP_MOVE_REMOVAL_REASON_NONE);
+    expect_int("allowed_reason_none", plan.reason, DM1_V1_GROUP_MOVE_REMOVAL_REASON_NONE_PC34);
     expect_int("allowed_no_fixed_drop", plan.dropMovingCreatureFixedPossessions, 0);
     expect_int("allowed_no_group_drop", plan.dropGroupPossessions, 0);
     expect_int("allowed_no_source_delete", plan.deleteSourceGroup, 0);
@@ -39,11 +39,11 @@ static void test_fall_killed_group_drops_and_deletes_source(void) {
         DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
             1, 1, 4, 5, 7, 8, &plan), 1);
     expect_int("fall_killed_move_prevented", plan.movePrevented, 1);
-    expect_int("fall_killed_reason", plan.reason, M11_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED);
+    expect_int("fall_killed_reason", plan.reason, DM1_V1_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED_PC34);
     expect_int("fall_killed_fixed_drop", plan.dropMovingCreatureFixedPossessions, 1);
     expect_int("fall_killed_group_drop", plan.dropGroupPossessions, 1);
     expect_int("fall_killed_drop_mode", plan.dropGroupPossessionsSoundMode,
-        M11_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER);
+        DM1_V1_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER_PC34);
     expect_int("fall_killed_drop_x", plan.dropMapX, 7);
     expect_int("fall_killed_drop_y", plan.dropMapY, 8);
     expect_int("fall_killed_delete_source", plan.deleteSourceGroup, 1);
@@ -58,18 +58,18 @@ static void test_not_allowed_group_drops_without_placement_delete(void) {
         DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
             0, 0, -1, 0, 3, 2, &plan), 1);
     expect_int("not_allowed_move_prevented", plan.movePrevented, 1);
-    expect_int("not_allowed_reason", plan.reason, M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED);
+    expect_int("not_allowed_reason", plan.reason, DM1_V1_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED_PC34);
     expect_int("not_allowed_fixed_drop", plan.dropMovingCreatureFixedPossessions, 1);
     expect_int("not_allowed_group_drop", plan.dropGroupPossessions, 1);
     expect_int("not_allowed_drop_mode", plan.dropGroupPossessionsSoundMode,
-        M11_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER);
+        DM1_V1_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER_PC34);
     expect_int("not_allowed_drop_x", plan.dropMapX, 3);
     expect_int("not_allowed_drop_y", plan.dropMapY, 2);
     expect_int("not_allowed_no_source_delete", plan.deleteSourceGroup, 0);
 }
 
 static void test_source_evidence(void) {
-    const char* evidence = m11_group_move_removal_source_evidence();
+    const char* evidence = DM1_V1_GroupMoveRemoval_SourceEvidencePc34Compat();
 
     expect_contains("evidence_f0267_damage", evidence, "MOVESENS.C F0267 lines 608-624");
     expect_contains("evidence_f0267_removal", evidence, "MOVESENS.C F0267 lines 656-663");
@@ -85,7 +85,7 @@ static void test_deferred_route_plan(void) {
     expect_int("route_insert_ok",
         DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
             0, 1, 0, 1, 0, 100u, 7, 8, 0, 0, &plan), 1);
-    expect_int("route_insert", plan.route, M11_GROUP_MOVE_ROUTE_INSERT);
+    expect_int("route_insert", plan.route, DM1_V1_GROUP_MOVE_ROUTE_INSERT_PC34);
     expect_int("route_insert_buzz", plan.shouldEmitAudibleBuzz, 1);
     expect_int("route_insert_x", plan.mapX, 7);
     expect_int("route_insert_y", plan.mapY, 8);
@@ -93,15 +93,15 @@ static void test_deferred_route_plan(void) {
     expect_int("route_remove_ok",
         DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
             0, 0, 0, 1, 0, 100u, 3, 4, 0, 0, &plan), 1);
-    expect_int("route_remove", plan.route, M11_GROUP_MOVE_ROUTE_REMOVE);
+    expect_int("route_remove", plan.route, DM1_V1_GROUP_MOVE_ROUTE_REMOVE_PC34);
     expect_int("route_remove_reason", plan.removalReason,
-        M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED);
+        DM1_V1_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED_PC34);
     expect_int("route_remove_buzz", plan.shouldEmitAudibleBuzz, 1);
 
     expect_int("route_retry_ok",
         DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
             0, 1, 1, 0, 0, 100u, 5, 6, 0, 0, &plan), 1);
-    expect_int("route_retry", plan.route, M11_GROUP_MOVE_ROUTE_RETRY);
+    expect_int("route_retry", plan.route, DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34);
     expect_int("route_retry_scheduled", plan.shouldScheduleRetry, 1);
     expect_int("route_retry_tick", (int)plan.retryFireAtTick, 105);
     expect_int("route_retry_x", plan.mapX, 5);
@@ -111,7 +111,7 @@ static void test_deferred_route_plan(void) {
         DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
             0, 1, 1, 1, 1, 100u, 5, 6, 9, 10, &plan), 1);
     expect_int("route_chaos", plan.route,
-        M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT);
+        DM1_V1_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT_PC34);
     expect_int("route_chaos_buzz", plan.shouldEmitAudibleBuzz, 1);
     expect_int("route_chaos_x", plan.mapX, 9);
     expect_int("route_chaos_y", plan.mapY, 10);
@@ -123,52 +123,52 @@ static void test_ordinary_group_move_plan(void) {
 
     expect_int("ordinary_east_ok",
         DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
-            4, 5, M11_DIRECTION_EAST, 1, 0, 0, 100u, &plan), 1);
-    expect_int("ordinary_east_route", plan.route, M11_GROUP_MOVE_ROUTE_INSERT);
+            4, 5, DM1_V1_DIRECTION_EAST_PC34, 1, 0, 0, 100u, &plan), 1);
+    expect_int("ordinary_east_route", plan.route, DM1_V1_GROUP_MOVE_ROUTE_INSERT_PC34);
     expect_int("ordinary_east_x", plan.destinationMapX, 5);
     expect_int("ordinary_east_y", plan.destinationMapY, 5);
     expect_int("ordinary_east_next_tick", (int)plan.retryFireAtTick, 101);
 
     expect_int("ordinary_blocked_ok",
         DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
-            4, 5, M11_DIRECTION_NORTH, 1, 1, 0, 200u, &plan), 1);
-    expect_int("ordinary_blocked_route", plan.route, M11_GROUP_MOVE_ROUTE_RETRY);
+            4, 5, DM1_V1_DIRECTION_NORTH_PC34, 1, 1, 0, 200u, &plan), 1);
+    expect_int("ordinary_blocked_route", plan.route, DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34);
     expect_int("ordinary_blocked_x", plan.destinationMapX, 4);
     expect_int("ordinary_blocked_y", plan.destinationMapY, 4);
     expect_int("ordinary_blocked_tick", (int)plan.retryFireAtTick, 201);
 
     expect_int("ordinary_wall_ok",
         DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
-            4, 5, M11_DIRECTION_WEST, 0, 0, 0, 300u, &plan), 1);
-    expect_int("ordinary_wall_route", plan.route, M11_GROUP_MOVE_ROUTE_RETRY);
+            4, 5, DM1_V1_DIRECTION_WEST_PC34, 0, 0, 0, 300u, &plan), 1);
+    expect_int("ordinary_wall_route", plan.route, DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34);
     expect_int("ordinary_wall_x", plan.destinationMapX, 3);
     expect_int("ordinary_wall_y", plan.destinationMapY, 5);
 
     expect_int("ordinary_projectile_kill_ok",
         DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
-            4, 5, M11_DIRECTION_SOUTH, 1, 0, 1, 400u, &plan), 1);
+            4, 5, DM1_V1_DIRECTION_SOUTH_PC34, 1, 0, 1, 400u, &plan), 1);
     expect_int("ordinary_projectile_kill_route", plan.route,
-        M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE);
+        DM1_V1_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE_PC34);
     expect_int("ordinary_projectile_kill_x", plan.destinationMapX, 4);
     expect_int("ordinary_projectile_kill_y", plan.destinationMapY, 6);
 
     expect_int("ordinary_apply_insert_ok",
         DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
-            &plan, 2, M11_DIRECTION_SOUTH, 0x44, 400u, &apply), 1);
+            &plan, 2, DM1_V1_DIRECTION_SOUTH_PC34, 0x44, 400u, &apply), 1);
     expect_int("ordinary_apply_kill_unlink", apply.shouldUnlinkSource, 1);
     expect_int("ordinary_apply_kill_remove", apply.shouldRemoveActiveGroup, 1);
     expect_int("ordinary_apply_kill_no_link", apply.shouldLinkDestination, 0);
 
     expect_int("ordinary_apply_move_plan_ok",
         DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
-            4, 5, M11_DIRECTION_EAST, 1, 0, 0, 500u, &plan), 1);
+            4, 5, DM1_V1_DIRECTION_EAST_PC34, 1, 0, 0, 500u, &plan), 1);
     expect_int("ordinary_apply_insert_plan_ok",
         DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
-            &plan, 3, M11_DIRECTION_EAST, 0x12, 500u, &apply), 1);
+            &plan, 3, DM1_V1_DIRECTION_EAST_PC34, 0x12, 500u, &apply), 1);
     expect_int("ordinary_apply_insert_unlink", apply.shouldUnlinkSource, 1);
     expect_int("ordinary_apply_insert_link", apply.shouldLinkDestination, 1);
     expect_int("ordinary_apply_insert_requeue", apply.shouldRequeue, 1);
-    expect_int("ordinary_apply_insert_dir", apply.groupDirection, M11_DIRECTION_EAST);
+    expect_int("ordinary_apply_insert_dir", apply.groupDirection, DM1_V1_DIRECTION_EAST_PC34);
     expect_int("ordinary_apply_insert_map", apply.activeMapIndex, 3);
     expect_int("ordinary_apply_insert_x", apply.activeMapX, 5);
     expect_int("ordinary_apply_insert_y", apply.activeMapY, 5);
@@ -227,7 +227,7 @@ static void test_group_teleporter_destination_plan(void) {
 
     expect_int("teleporter_open_scope_ok",
         DM1_V1_PlanGroupTeleporterDestinationF0267Pc34Compat(
-            3, 3, 1, 1, M11_TELEPORTER_SCOPE_CREATURES, 1,
+            3, 3, 1, 1, DM1_V1_TELEPORTER_SCOPE_CREATURES_PC34, 1,
             2, 7, 8, 1, 4, 5, 5, &plan), 1);
     expect_int("teleporter_open_scope_teleports", plan.shouldTeleport, 1);
     expect_int("teleporter_open_scope_buzz", plan.shouldEmitAudibleBuzz, 1);
@@ -238,7 +238,7 @@ static void test_group_teleporter_destination_plan(void) {
 
     expect_int("teleporter_self_ok",
         DM1_V1_PlanGroupTeleporterDestinationF0267Pc34Compat(
-            3, 3, 1, 1, M11_TELEPORTER_SCOPE_CREATURES, 0,
+            3, 3, 1, 1, DM1_V1_TELEPORTER_SCOPE_CREATURES_PC34, 0,
             1, 4, 5, 1, 4, 5, 5, &plan), 1);
     expect_int("teleporter_self_teleports", plan.shouldTeleport, 1);
     expect_int("teleporter_self_stop", plan.shouldStopChain, 1);
@@ -246,7 +246,7 @@ static void test_group_teleporter_destination_plan(void) {
 
     expect_int("teleporter_closed_ok",
         DM1_V1_PlanGroupTeleporterDestinationF0267Pc34Compat(
-            3, 3, 0, 1, M11_TELEPORTER_SCOPE_CREATURES, 1,
+            3, 3, 0, 1, DM1_V1_TELEPORTER_SCOPE_CREATURES_PC34, 1,
             2, 7, 8, 1, 4, 5, 5, &plan), 1);
     expect_int("teleporter_closed_no_move", plan.shouldTeleport, 0);
 
@@ -257,7 +257,7 @@ static void test_group_teleporter_destination_plan(void) {
 
     expect_int("teleporter_invalid_target_ok",
         DM1_V1_PlanGroupTeleporterDestinationF0267Pc34Compat(
-            3, 3, 1, 1, M11_TELEPORTER_SCOPE_CREATURES, 1,
+            3, 3, 1, 1, DM1_V1_TELEPORTER_SCOPE_CREATURES_PC34, 1,
             5, 7, 8, 1, 4, 5, 5, &plan), 1);
     expect_int("teleporter_invalid_target_no_move", plan.shouldTeleport, 0);
 }
@@ -267,16 +267,16 @@ static void test_generated_group_placement_plan(void) {
 
     expect_int("generated_party_map_ok",
         DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
-            2, 2, 7, 8, 4, 11, 0x55, M11_DIRECTION_WEST,
+            2, 2, 7, 8, 4, 11, 0x55, DM1_V1_DIRECTION_WEST_PC34,
             3, 16, 100u, &plan), 1);
     expect_int("generated_party_active", plan.shouldCreateActiveState, 1);
-    expect_int("generated_party_state", plan.activeStateKind, M11_AI_STATE_WANDER);
+    expect_int("generated_party_state", plan.activeStateKind, DM1_V1_AI_STATE_WANDER_PC34);
     expect_int("generated_party_creature", plan.activeCreatureType, 11);
     expect_int("generated_party_map", plan.activeMapIndex, 2);
     expect_int("generated_party_x", plan.activeMapX, 7);
     expect_int("generated_party_y", plan.activeMapY, 8);
     expect_int("generated_party_cells", plan.activeCells, 0x55);
-    expect_int("generated_party_dir", plan.activeDirection, M11_DIRECTION_WEST);
+    expect_int("generated_party_dir", plan.activeDirection, DM1_V1_DIRECTION_WEST_PC34);
     expect_int("generated_party_target", plan.activeTargetChampionIndex, -1);
     expect_int("generated_party_seen_x", plan.activeLastSeenPartyMapX, -1);
     expect_int("generated_party_seen_y", plan.activeLastSeenPartyMapY, -1);
@@ -285,18 +285,18 @@ static void test_generated_group_placement_plan(void) {
     expect_int("generated_party_wander", plan.shouldScheduleWanderEvent, 1);
     expect_int("generated_party_wander_tick", (int)plan.wanderFireAtTick, 101);
     expect_int("generated_party_wander_group", plan.wanderGroupIndex, 4);
-    expect_int("generated_party_wander_type", plan.wanderEventType, M11_AI_STATE_WANDER);
+    expect_int("generated_party_wander_type", plan.wanderEventType, DM1_V1_AI_STATE_WANDER_PC34);
 
     expect_int("generated_other_map_ok",
         DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
-            2, 1, 7, 8, 4, 11, 0x55, M11_DIRECTION_EAST,
+            2, 1, 7, 8, 4, 11, 0x55, DM1_V1_DIRECTION_EAST_PC34,
             3, 16, 100u, &plan), 1);
     expect_int("generated_other_no_active", plan.shouldCreateActiveState, 0);
     expect_int("generated_other_wander", plan.shouldScheduleWanderEvent, 1);
 
     expect_int("generated_capacity_blocks",
         DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
-            2, 2, 7, 8, 4, 11, 0x55, M11_DIRECTION_EAST,
+            2, 2, 7, 8, 4, 11, 0x55, DM1_V1_DIRECTION_EAST_PC34,
             16, 16, 100u, &plan), 0);
 }
 
