@@ -382,16 +382,19 @@ int nexus_v1_bpk_archive_runtime_render_receipt(
     uint32_t count;
     uint64_t expected_surface_bytes = 0U;
     uint64_t packed_payload_bytes = 0U;
+    uint64_t stored_surface_bytes_available = 0U;
     uint32_t prs3_entries = 0U;
     uint32_t raw_entries = 0U;
     uint32_t surface_entries = 0U;
     uint32_t prs3_surface_entries = 0U;
     uint32_t stored_surface_entries = 0U;
+    uint32_t stored_surface_short_entries = 0U;
     uint32_t trailer_entries = 0U;
     uint32_t unknown_mode_entries = 0U;
     int directory_trailer_found = 0;
     int all_prs3_versions_match = 1;
     int all_prs3_pixel_counts_match = 1;
+    int all_stored_surface_payloads_fit = 1;
 
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
@@ -451,7 +454,14 @@ int nexus_v1_bpk_archive_runtime_render_receipt(
         if (entry.has_prs3) {
             ++prs3_surface_entries;
         } else {
+            uint64_t payload_bytes = entry.payload_size;
             ++stored_surface_entries;
+            stored_surface_bytes_available += payload_bytes;
+            if (payload_bytes <
+                (uint64_t)prefix.width * (uint64_t)prefix.height * bpp) {
+                ++stored_surface_short_entries;
+                all_stored_surface_payloads_fit = 0;
+            }
         }
     }
 
@@ -465,15 +475,23 @@ int nexus_v1_bpk_archive_runtime_render_receipt(
     out_receipt->unknown_mode_entries = unknown_mode_entries;
     out_receipt->expected_surface_bytes = expected_surface_bytes;
     out_receipt->packed_payload_bytes = packed_payload_bytes;
+    out_receipt->stored_surface_bytes_available =
+        stored_surface_bytes_available;
+    out_receipt->stored_surface_short_entries = stored_surface_short_entries;
     out_receipt->directory_trailer_found = directory_trailer_found;
     out_receipt->all_prs3_versions_match = all_prs3_versions_match;
     out_receipt->all_prs3_pixel_counts_match = all_prs3_pixel_counts_match;
+    out_receipt->all_stored_surface_payloads_fit =
+        all_stored_surface_payloads_fit;
     out_receipt->requires_prs3_decoder = (prs3_surface_entries > 0U) ? 1 : 0;
 
     if (surface_entries == 0U) {
         out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_NO_SURFACES;
     } else if (prs3_surface_entries > 0U) {
         out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_PRS3;
+    } else if (!all_stored_surface_payloads_fit) {
+        out_receipt->route =
+            NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_STORED_TRUNCATED;
     } else {
         out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED;
     }
@@ -490,7 +508,94 @@ const char *nexus_v1_bpk_runtime_render_route_name(
     case NEXUS_V1_BPK_RUNTIME_ROUTE_NO_SURFACES:  return "no-surfaces";
     case NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_PRS3: return "blocked-prs3";
     case NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED: return "ready-stored";
+    case NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_STORED_TRUNCATED:
+        return "blocked-stored-truncated";
     default:                                      return "unknown";
+    }
+}
+
+int nexus_v1_bpk_archive_extract_stored_surface(
+    const uint8_t *data,
+    size_t data_size,
+    uint32_t index,
+    uint8_t *out,
+    size_t out_size,
+    Nexus_V1_BpkSurfaceEntry *out_surface,
+    size_t *out_written) {
+    Nexus_V1_BpkEntry entry;
+    Nexus_V1_BpkEntryPrefix prefix;
+    uint32_t bpp;
+    uint32_t rowstride;
+    uint32_t surface_bytes;
+
+    if (out_written) *out_written = 0U;
+    if (out_surface) memset(out_surface, 0, sizeof(*out_surface));
+    if (!data || !out || !out_written) {
+        return NEXUS_V1_BPK_EXTRACT_ERR_NULL;
+    }
+    if (nexus_v1_bpk_archive_get_entry(data, data_size, index,
+                                       &entry) != 0 ||
+        nexus_v1_bpk_archive_get_entry_prefix(data, data_size, index,
+                                              &prefix) != 0) {
+        return NEXUS_V1_BPK_EXTRACT_ERR_ARCHIVE;
+    }
+    if (entry.has_prs3) {
+        return NEXUS_V1_BPK_EXTRACT_ERR_PRS3;
+    }
+    if (!prefix.prefix_complete ||
+        prefix.mode == NEXUS_V1_BPK_MODE_TRAILER) {
+        return NEXUS_V1_BPK_EXTRACT_ERR_NOT_SURFACE;
+    }
+
+    bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+    if (bpp == 0U) {
+        return NEXUS_V1_BPK_EXTRACT_ERR_NOT_SURFACE;
+    }
+    {
+        uint64_t rowstride64 = (uint64_t)prefix.width * bpp;
+        uint64_t surface64 = rowstride64 * (uint64_t)prefix.height;
+        if (rowstride64 > UINT32_MAX || surface64 > UINT32_MAX) {
+            return NEXUS_V1_BPK_EXTRACT_ERR_ARCHIVE;
+        }
+        rowstride = (uint32_t)rowstride64;
+        surface_bytes = (uint32_t)surface64;
+    }
+    if ((uint64_t)entry.payload_size < (uint64_t)surface_bytes) {
+        return NEXUS_V1_BPK_EXTRACT_ERR_TRUNCATED;
+    }
+    if ((size_t)surface_bytes > out_size) {
+        return NEXUS_V1_BPK_EXTRACT_ERR_OUTPUT_TOO_SMALL;
+    }
+
+    memcpy(out, data + entry.payload_offset, surface_bytes);
+    if (out_surface) {
+        out_surface->entry_index = index;
+        out_surface->mode = prefix.mode;
+        out_surface->width = prefix.width;
+        out_surface->height = prefix.height;
+        out_surface->pixel_count =
+            (uint32_t)prefix.width * (uint32_t)prefix.height;
+        out_surface->layout.bpp = bpp;
+        out_surface->layout.rowstride = rowstride;
+        out_surface->layout.surface_bytes = surface_bytes;
+        out_surface->layout.surface_class =
+            nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+    }
+    *out_written = surface_bytes;
+    return NEXUS_V1_BPK_EXTRACT_OK;
+}
+
+const char *nexus_v1_bpk_surface_extract_status_name(int status) {
+    switch (status) {
+    case NEXUS_V1_BPK_EXTRACT_OK: return "ok";
+    case NEXUS_V1_BPK_EXTRACT_ERR_NULL: return "null";
+    case NEXUS_V1_BPK_EXTRACT_ERR_ARCHIVE: return "archive";
+    case NEXUS_V1_BPK_EXTRACT_ERR_PRS3: return "prs3";
+    case NEXUS_V1_BPK_EXTRACT_ERR_NOT_SURFACE: return "not-surface";
+    case NEXUS_V1_BPK_EXTRACT_ERR_OUTPUT_TOO_SMALL:
+        return "output-too-small";
+    case NEXUS_V1_BPK_EXTRACT_ERR_TRUNCATED: return "truncated";
+    default: return "unknown";
     }
 }
 

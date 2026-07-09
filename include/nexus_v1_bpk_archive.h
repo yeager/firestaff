@@ -151,7 +151,8 @@ typedef enum {
     NEXUS_V1_BPK_RUNTIME_ROUTE_INVALID = 0,
     NEXUS_V1_BPK_RUNTIME_ROUTE_NO_SURFACES = 1,
     NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_PRS3 = 2,
-    NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED = 3
+    NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED = 3,
+    NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_STORED_TRUNCATED = 4
 } Nexus_V1_BpkRuntimeRenderRoute;
 
 typedef struct {
@@ -165,13 +166,26 @@ typedef struct {
     uint32_t unknown_mode_entries;
     uint64_t expected_surface_bytes;
     uint64_t packed_payload_bytes;
+    uint64_t stored_surface_bytes_available;
+    uint32_t stored_surface_short_entries;
     int directory_trailer_found;
     int all_prs3_versions_match;
     int all_prs3_pixel_counts_match;
+    int all_stored_surface_payloads_fit;
     int requires_prs3_decoder;
     int fallback_visuals_permitted;
     Nexus_V1_BpkRuntimeRenderRoute route;
 } Nexus_V1_BpkRuntimeRenderReceipt;
+
+typedef enum {
+    NEXUS_V1_BPK_EXTRACT_OK = 0,
+    NEXUS_V1_BPK_EXTRACT_ERR_NULL = -1,
+    NEXUS_V1_BPK_EXTRACT_ERR_ARCHIVE = -2,
+    NEXUS_V1_BPK_EXTRACT_ERR_PRS3 = -3,
+    NEXUS_V1_BPK_EXTRACT_ERR_NOT_SURFACE = -4,
+    NEXUS_V1_BPK_EXTRACT_ERR_OUTPUT_TOO_SMALL = -5,
+    NEXUS_V1_BPK_EXTRACT_ERR_TRUNCATED = -6
+} Nexus_V1_BpkSurfaceExtractStatus;
 
 /* Map a 20-byte prefix mode tag to a surface class. Returns
  * NEXUS_V1_BPK_SURFACE_UNKNOWN for any byte value that is not one of the
@@ -209,6 +223,17 @@ int nexus_v1_bpk_archive_runtime_render_receipt(
 
 const char *nexus_v1_bpk_runtime_render_route_name(
     Nexus_V1_BpkRuntimeRenderRoute route);
+
+int nexus_v1_bpk_archive_extract_stored_surface(
+    const uint8_t *data,
+    size_t data_size,
+    uint32_t index,
+    uint8_t *out,
+    size_t out_size,
+    Nexus_V1_BpkSurfaceEntry *out_surface,
+    size_t *out_written);
+
+const char *nexus_v1_bpk_surface_extract_status_name(int status);
 
 /*
  * Parse the DM Nexus MENU.BPK BPPK/BMPD directory shape.
