@@ -762,6 +762,30 @@ static void test_first_tick_after_boot_profile_handoff(void)
     }
 
     {
+        uint8_t framebuffer[320 * 200];
+        int fetch_count = 0;
+        int slot;
+
+        clear_creature_pool_for_door_runtime_test();
+        dm2_v1_runtime_set_position(0, 1, 1, 0);
+        dm2_v1_runtime_set_outdoor(0);
+        slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 1, 0, 0, 0, 8);
+        memset(s_creature_pixels, 10, sizeof(s_creature_pixels));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_runtime_set_viewport_asset_provider(
+            synthetic_viewport_asset_fetch, &fetch_count);
+        CHECK(slot >= 0 &&
+              dm2_v1_runtime_render_frame(
+                  0, 1, 1, framebuffer, 320, 320, 200) == 0,
+              "runtime renders active CCM creature instance");
+        CHECK(dm2_v1_runtime_last_asset_creature_count() == 1 &&
+              dm2_v1_runtime_last_fallback_creature_count() == 0,
+              "runtime active creature instance uses GDAT creature map-chip receipt");
+        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+        clear_creature_pool_for_door_runtime_test();
+    }
+
+    {
         uint8_t fixture[144];
         size_t fixture_size = build_skproject_creature_possession_fixture(
             fixture, sizeof(fixture));
