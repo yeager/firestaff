@@ -987,6 +987,62 @@ int dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
     return 1;
 }
 
+int dm1_v1_melee_group_slot_drop_plan_f0188_pc34(
+    const DM1_MeleeF0188GroupSlotDropInputPc34* in,
+    DM1_MeleeF0188GroupSlotDropPlanPc34* out) {
+    unsigned short current;
+    int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    out->valid = 1;
+    if (in->slotHead == THING_NONE || in->slotHead == THING_ENDOFLIST) {
+        return 1;
+    }
+
+    out->shouldDrop = 1;
+    out->shouldClearGroupSlot = 1;
+    current = in->slotHead;
+    for (i = 0; i < in->chainEntryCount &&
+                i < DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34; ++i) {
+        int cell;
+        int thingType;
+        DM1_MeleeF0188GroupSlotDropStepPc34* step;
+
+        if (current == THING_NONE || current == THING_ENDOFLIST) break;
+        if (in->chain[i].thing != current) {
+            out->truncated = 1;
+            break;
+        }
+        cell = (i < in->randomCellCount) ? (in->randomCells[i] & 3) : 0;
+        thingType = (int)THING_GET_TYPE(current);
+        step = &out->steps[out->stepCount++];
+        step->sourceThing = current;
+        step->nextThing = in->chain[i].nextThing;
+        step->dropCell = cell;
+        step->thingType = thingType;
+        step->droppedThing =
+            (unsigned short)((current & 0x3FFFu) |
+                             (((unsigned short)cell & 3u) << 14));
+        if (thingType == THING_TYPE_WEAPON) {
+            out->weaponDropped = 1;
+        }
+        current = in->chain[i].nextThing;
+    }
+    if (current != THING_NONE && current != THING_ENDOFLIST) {
+        out->truncated = 1;
+    }
+    out->soundId = out->weaponDropped ? 0 : 4;
+
+    /* ReDMCSB: GROUP.C F0188 lines 724-736 walks GROUP.Slot in chain
+     * order, snapshots NextThing before M015_THING_WITH_NEW_CELL(random 4),
+     * records whether any dropped thing is C05 weapon for the thud sound,
+     * then materializes the dropped thing at the group square. */
+    return 1;
+}
+
 int dm1_v1_melee_killed_some_state_plan_f0190_pc34(
     const DM1_MeleeF0190KilledSomeStateInputPc34* in,
     DM1_MeleeF0190KilledSomeStatePlanPc34* out) {
@@ -1186,6 +1242,87 @@ int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
     /* ReDMCSB: GROUP.C F0190 lines 848-872 scans C33-C36 aspect and C38-C41
      * behavior events on the killed group square, deletes the killed creature's
      * event, and decrements later creature event types after group compaction. */
+    return 1;
+}
+
+int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
+    const DM1_MeleeF0190MutationDispatchInputPc34* in,
+    DM1_MeleeF0190MutationDispatchPlanPc34* out) {
+    DM1_MeleeF0190PossessionDropInputPc34 dropIn;
+    DM1_MeleeF0190KilledSomeStateInputPc34 killedSomeIn;
+    DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    out->valid = 1;
+    if (in->outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES &&
+        in->outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        return 1;
+    }
+
+    memset(&dropIn, 0, sizeof(dropIn));
+    dropIn.outcome = in->outcome;
+    dropIn.creatureType = in->creatureType;
+    dropIn.creatureAttributes = in->creatureAttributes;
+    dropIn.killedCell = in->killedCell;
+    dropIn.mapIndex = in->mapIndex;
+    dropIn.mapX = in->mapX;
+    dropIn.mapY = in->mapY;
+    if (!dm1_v1_melee_possession_drop_plan_f0190_pc34(
+            &dropIn, &out->possessionDropPlan)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    out->shouldDropPossessions =
+        out->possessionDropPlan.shouldDropGroupFixedPossessions ||
+        out->possessionDropPlan.shouldDropGroupSlotPossessions ||
+        out->possessionDropPlan.shouldDropCreatureFixedPossessions;
+
+    memset(&killedSomeIn, 0, sizeof(killedSomeIn));
+    killedSomeIn.outcome = in->outcome;
+    killedSomeIn.groupBehavior = in->groupBehavior;
+    killedSomeIn.groupIndex = in->groupIndex;
+    killedSomeIn.killedCreatureIndex = in->killedCreatureIndex;
+    killedSomeIn.originalGroupCount = in->originalGroupCount;
+    killedSomeIn.mapIndex = in->mapIndex;
+    killedSomeIn.mapX = in->mapX;
+    killedSomeIn.mapY = in->mapY;
+    killedSomeIn.partyMapIndex = in->partyMapIndex;
+    killedSomeIn.partyMapX = in->partyMapX;
+    killedSomeIn.partyMapY = in->partyMapY;
+    killedSomeIn.creatureType = in->creatureType;
+    killedSomeIn.creatureProperties = in->creatureProperties;
+    if (!dm1_v1_melee_killed_some_state_plan_f0190_pc34(
+            &killedSomeIn, &out->killedSomeStatePlan)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    out->shouldApplyKilledSomeState =
+        out->killedSomeStatePlan.shouldCleanupCreatureEvents ||
+        out->killedSomeStatePlan.shouldEvaluateFear;
+
+    memset(&killedAllIn, 0, sizeof(killedAllIn));
+    killedAllIn.outcome = in->outcome;
+    killedAllIn.groupIndex = in->groupIndex;
+    killedAllIn.targetMapIndex = in->mapIndex;
+    killedAllIn.targetMapX = in->mapX;
+    killedAllIn.targetMapY = in->mapY;
+    if (!dm1_v1_melee_killed_all_state_plan_f0190_pc34(
+            &killedAllIn, &out->killedAllStatePlan)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    out->shouldApplyKilledAllSideEffects =
+        out->killedAllStatePlan.shouldUnlinkGroupFromSquare ||
+        out->killedAllStatePlan.shouldClearGroupNext ||
+        out->killedAllStatePlan.shouldRemoveActiveGroupState;
+
+    /* ReDMCSB: GROUP.C F0190 lines 824-917 orders possession drops,
+     * killed-some event/fear cleanup, killed-all group deletion, and death
+     * smoke around the same damage outcome.  This receipt keeps branch
+     * dispatch in DM1 while M10 only materializes the requested mutations. */
     return 1;
 }
 

@@ -2009,6 +2009,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
     DM1_MeleeF0190TimelineCleanupPlanPc34 cleanupOut;
     DM1_MeleeF0190FixedDropCellsPlanPc34 fixedCellsOut;
+    DM1_MeleeF0188GroupSlotDropInputPc34 slotDropIn;
+    DM1_MeleeF0188GroupSlotDropPlanPc34 slotDropOut;
     struct DungeonGroup_Compat fixedGroup;
     unsigned char movingCells[4];
     struct CombatResult_Compat resultA;
@@ -2180,6 +2182,69 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0187 moving fixed cells consumed as stack first");
     CHECK_EQ(fixedCellsOut.dropCells[2], 1,
              "F0187 moving fixed cells consumed as stack last");
+
+    memset(&slotDropIn, 0, sizeof(slotDropIn));
+    slotDropIn.slotHead = (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
+    slotDropIn.chainEntryCount = 3;
+    slotDropIn.chain[0].thing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
+    slotDropIn.chain[0].nextThing =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 2);
+    slotDropIn.chain[1].thing =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 2);
+    slotDropIn.chain[1].nextThing =
+        (unsigned short)((THING_TYPE_ARMOUR << 10) | 5);
+    slotDropIn.chain[2].thing =
+        (unsigned short)((THING_TYPE_ARMOUR << 10) | 5);
+    slotDropIn.chain[2].nextThing = THING_ENDOFLIST;
+    slotDropIn.randomCellCount = 3;
+    slotDropIn.randomCells[0] = 3;
+    slotDropIn.randomCells[1] = 1;
+    slotDropIn.randomCells[2] = 2;
+    CHECK_EQ(dm1_v1_melee_group_slot_drop_plan_f0188_pc34(
+                 &slotDropIn, &slotDropOut), 1,
+             "F0188 group slot drop plan builds");
+    CHECK_EQ(slotDropOut.valid, 1, "F0188 group slot valid");
+    CHECK_EQ(slotDropOut.shouldDrop, 1, "F0188 group slot should drop");
+    CHECK_EQ(slotDropOut.stepCount, 3, "F0188 group slot step count");
+    CHECK_EQ(slotDropOut.truncated, 0, "F0188 group slot not truncated");
+    CHECK_EQ(slotDropOut.weaponDropped, 1,
+             "F0188 group slot records weapon thud");
+    CHECK_EQ(slotDropOut.soundId, 0, "F0188 group slot metallic sound");
+    CHECK_EQ(slotDropOut.steps[0].sourceThing, slotDropIn.chain[0].thing,
+             "F0188 group slot first source");
+    CHECK_EQ((int)THING_GET_CELL(slotDropOut.steps[0].droppedThing), 3,
+             "F0188 group slot first random cell");
+    CHECK_EQ(slotDropOut.steps[1].nextThing, slotDropIn.chain[2].thing,
+             "F0188 group slot snapshots next thing");
+    CHECK_EQ((int)THING_GET_CELL(slotDropOut.steps[2].droppedThing), 2,
+             "F0188 group slot third random cell");
+    CHECK_EQ(slotDropOut.shouldClearGroupSlot, 1,
+             "F0188 group slot clears source slot");
+
+    slotDropIn.slotHead = (unsigned short)((THING_TYPE_JUNK << 10) | 1);
+    slotDropIn.chainEntryCount = 1;
+    slotDropIn.chain[0].thing = slotDropIn.slotHead;
+    slotDropIn.chain[0].nextThing = THING_ENDOFLIST;
+    slotDropIn.randomCellCount = 1;
+    slotDropIn.randomCells[0] = 6;
+    CHECK_EQ(dm1_v1_melee_group_slot_drop_plan_f0188_pc34(
+                 &slotDropIn, &slotDropOut), 1,
+             "F0188 non-weapon group slot drop plan builds");
+    CHECK_EQ(slotDropOut.weaponDropped, 0,
+             "F0188 non-weapon group slot no metallic thud");
+    CHECK_EQ(slotDropOut.soundId, 4, "F0188 non-weapon wooden sound");
+    CHECK_EQ((int)THING_GET_CELL(slotDropOut.steps[0].droppedThing), 2,
+             "F0188 random cell masks to two bits");
+
+    slotDropIn.slotHead = (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    slotDropIn.chainEntryCount = 1;
+    slotDropIn.chain[0].thing = (unsigned short)((THING_TYPE_JUNK << 10) | 1);
+    CHECK_EQ(dm1_v1_melee_group_slot_drop_plan_f0188_pc34(
+                 &slotDropIn, &slotDropOut), 1,
+             "F0188 mismatched chain plan builds");
+    CHECK_EQ(slotDropOut.truncated, 1,
+             "F0188 mismatched chain reports truncation");
 
     memset(&stateIn, 0, sizeof(stateIn));
     stateIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;

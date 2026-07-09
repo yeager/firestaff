@@ -2447,6 +2447,10 @@ static void orch_cmd_attack_schedule_f0231_reaction_compat(
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &reaction);
 }
 
+static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
+    struct GameWorld_Compat* world,
+    const DM1_MeleeF0190KilledAllStatePlanPc34* plan);
+
 static void orch_cmd_attack_apply_group_kill_side_effects_at_square_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
@@ -2472,17 +2476,26 @@ static void orch_cmd_attack_apply_group_kill_side_effects_at_square_compat(
         !plan.valid) {
         return;
     }
-    if (plan.shouldUnlinkGroupFromSquare) {
+    orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
+        world, &plan);
+}
+
+static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
+    struct GameWorld_Compat* world,
+    const DM1_MeleeF0190KilledAllStatePlanPc34* plan)
+{
+    if (!world || !world->things || !plan || !plan->valid) return;
+    if (plan->shouldUnlinkGroupFromSquare) {
         (void)orch_unlink_thing_from_square_compat(
-            world, plan.mapIndex, plan.mapX, plan.mapY,
-            orch_make_thing_ref_compat(THING_TYPE_GROUP, plan.groupIndex));
+            world, plan->mapIndex, plan->mapX, plan->mapY,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, plan->groupIndex));
     }
-    if (plan.shouldClearGroupNext &&
-        plan.groupIndex < world->things->groupCount && world->things->groups) {
-        world->things->groups[groupIndex].next = THING_NONE;
+    if (plan->shouldClearGroupNext &&
+        plan->groupIndex < world->things->groupCount && world->things->groups) {
+        world->things->groups[plan->groupIndex].next = THING_NONE;
     }
-    if (plan.shouldRemoveActiveGroupState) {
-        orch_remove_active_group_state_compat(world, plan.groupIndex);
+    if (plan->shouldRemoveActiveGroupState) {
+        orch_remove_active_group_state_compat(world, plan->groupIndex);
     }
 }
 
@@ -5341,7 +5354,9 @@ static int orch_drop_group_slot_possessions_compat(
 {
     int sftIndex;
     unsigned short thing;
-    int safety = 0;
+    int i;
+    DM1_MeleeF0188GroupSlotDropInputPc34 in;
+    DM1_MeleeF0188GroupSlotDropPlanPc34 plan;
 
     if (!world || !group || !world->dungeon || !world->things) return 0;
     thing = group->slot;
@@ -5350,18 +5365,34 @@ static int orch_drop_group_slot_possessions_compat(
     sftIndex = orch_square_first_thing_list_index_compat(world->dungeon, mapIndex, mapX, mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
 
-    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
-        unsigned short nextThing = orch_next_thing_compat(world->things, thing);
-        unsigned short droppedThing = orch_thing_with_cell_compat(
-            thing, F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4));
-        if (!orch_link_thing_to_square_tail_compat(
-                world, mapIndex, mapX, mapY, droppedThing)) {
-            return 0;
-        }
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.slotHead = thing;
+    while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+           in.chainEntryCount < DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34) {
+        unsigned short nextThing;
+        nextThing = orch_next_thing_compat(world->things, thing);
+        in.chain[in.chainEntryCount].thing = thing;
+        in.chain[in.chainEntryCount].nextThing = nextThing;
+        in.randomCells[in.randomCellCount++] =
+            (unsigned char)F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4);
+        ++in.chainEntryCount;
         thing = nextThing;
     }
-    group->slot = THING_ENDOFLIST;
-    return safety < 64;
+    if (!dm1_v1_melee_group_slot_drop_plan_f0188_pc34(&in, &plan) ||
+        !plan.valid || !plan.shouldDrop || plan.truncated) {
+        return 0;
+    }
+    for (i = 0; i < plan.stepCount; ++i) {
+        if (!orch_link_thing_to_square_tail_compat(
+                world, mapIndex, mapX, mapY, plan.steps[i].droppedThing)) {
+            return 0;
+        }
+    }
+    if (plan.shouldClearGroupSlot) {
+        group->slot = THING_ENDOFLIST;
+    }
+    return 1;
 }
 
 static void orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
@@ -5409,6 +5440,27 @@ static void orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
         (void)orch_drop_creature_fixed_possessions_compat(
             world, dropPlan.creatureType, dropPlan.creatureCell,
             dropPlan.mapIndex, dropPlan.mapX, dropPlan.mapY);
+    }
+}
+
+static void orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const DM1_MeleeF0190PossessionDropPlanPc34* dropPlan)
+{
+    if (!world || !group || !dropPlan || !dropPlan->valid) return;
+    if (dropPlan->shouldDropGroupFixedPossessions) {
+        (void)orch_drop_group_fixed_possessions_compat(
+            world, group, dropPlan->mapIndex, dropPlan->mapX, dropPlan->mapY);
+    }
+    if (dropPlan->shouldDropGroupSlotPossessions) {
+        (void)orch_drop_group_slot_possessions_compat(
+            world, group, dropPlan->mapIndex, dropPlan->mapX, dropPlan->mapY);
+    }
+    if (dropPlan->shouldDropCreatureFixedPossessions) {
+        (void)orch_drop_creature_fixed_possessions_compat(
+            world, dropPlan->creatureType, dropPlan->creatureCell,
+            dropPlan->mapIndex, dropPlan->mapX, dropPlan->mapY);
     }
 }
 
@@ -5587,6 +5639,76 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_compat(
     return orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
         world, group, creature, groupIndex, killedCreatureIndex,
         originalGroupCount, mapIndex, mapX, mapY, outcome);
+}
+
+static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int groupIndex,
+    int killedCreatureIndex,
+    int originalGroupCount,
+    int killedCell,
+    int targetDirection,
+    int outcome)
+{
+    DM1_MeleeF0190MutationDispatchInputPc34 in;
+    DM1_MeleeF0190MutationDispatchPlanPc34 plan;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int fearTriggered = 0;
+
+    if (!world || !group || !creature) return 0;
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
+
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.outcome = outcome;
+    in.groupIndex = groupIndex;
+    in.groupBehavior = group->behavior;
+    in.killedCreatureIndex = killedCreatureIndex;
+    in.originalGroupCount = originalGroupCount;
+    in.creatureType = creature->creatureType;
+    in.creatureAttributes = creature->attributes;
+    in.creatureProperties = creature->properties;
+    in.killedCell = killedCell;
+    in.mapIndex = mapIndex;
+    in.mapX = mapX;
+    in.mapY = mapY;
+    in.partyMapIndex = world->partyMapIndex;
+    in.partyMapX = world->party.mapX;
+    in.partyMapY = world->party.mapY;
+
+    if (!dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(&in, &plan) ||
+        !plan.valid) {
+        return 0;
+    }
+    if (plan.shouldDropPossessions) {
+        orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
+            world, group, &plan.possessionDropPlan);
+    }
+    if (plan.shouldApplyKilledSomeState) {
+        if (plan.killedSomeStatePlan.shouldCleanupCreatureEvents) {
+            orch_cmd_attack_cleanup_f0190_creature_events_compat(
+                world, plan.killedSomeStatePlan.mapIndex,
+                plan.killedSomeStatePlan.mapX,
+                plan.killedSomeStatePlan.mapY,
+                plan.killedSomeStatePlan.killedCreatureIndex);
+        }
+        if (plan.killedSomeStatePlan.shouldEvaluateFear) {
+            fearTriggered =
+                orch_cmd_attack_apply_f0190_fear_compat(
+                    world, group, originalGroupCount,
+                    &plan.killedSomeStatePlan);
+        }
+    }
+    if (plan.shouldApplyKilledAllSideEffects) {
+        orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
+            world, &plan.killedAllStatePlan);
+    }
+    return fearTriggered;
 }
 
 static int orch_resolve_group_f0267_pit_destination_compat(
@@ -6913,28 +7035,20 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         aftermathIn.damageOutcome = applyOutcome;
                         (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
                             &aftermathIn, &aftermathPlan);
-                        if (aftermathPlan.shouldDropPossessions) {
-                            orch_cmd_attack_apply_f0190_possession_drops_compat(
-                                world, &world->things->groups[groupIndex],
-                                &creatureSnapshot, killedCell, targetDirection,
-                                applyOutcome);
-                        }
                         if (aftermathPlan.shouldCreateDeathSmoke) {
                             orch_cmd_attack_create_f0190_death_smoke_compat(
                                 world, &aftermathPlan, targetDirection,
                                 applyOutcome);
                         }
-                        if (aftermathPlan.shouldApplyKilledSomeState) {
+                        if (aftermathPlan.shouldDropPossessions ||
+                            aftermathPlan.shouldApplyKilledSomeState ||
+                            aftermathPlan.shouldApplyKilledAllSideEffects) {
                             fearTriggered =
-                                orch_cmd_attack_apply_f0190_killed_some_state_compat(
+                                orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
                                     world, &world->things->groups[groupIndex],
                                     &creatureSnapshot, groupIndex, creatureIndex,
-                                    originalGroupCount, targetDirection,
-                                    applyOutcome);
-                        }
-                        if (aftermathPlan.shouldApplyKilledAllSideEffects) {
-                            orch_cmd_attack_apply_group_kill_side_effects_compat(
-                                world, groupIndex, targetDirection, applyOutcome);
+                                    originalGroupCount, killedCell,
+                                    targetDirection, applyOutcome);
                         }
                         if (aftermathPlan.shouldWriteRawGroup) {
                             /* ReDMCSB GROUP.C:F0190 lines 892-917 compacts or
