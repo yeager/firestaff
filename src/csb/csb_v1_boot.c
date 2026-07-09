@@ -1936,6 +1936,76 @@ int csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
         snapshot->boot_profile);
 }
 
+int csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
+    const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    CSB_V1_StartupAssetCommand_PC34 *asset;
+    CSB_V1_StartupRenderCommand_PC34 *render;
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!receipt || !receipt->valid || !receipt->render_plan_valid ||
+        !receipt->title_after_swoosh_route ||
+        receipt->title_render_command_count <= 0 ||
+        receipt->title_source_w <= 0 || receipt->title_source_h <= 0 ||
+        receipt->title_dest_w <= 0 || receipt->title_dest_h <= 0 ||
+        receipt->render_plan.source_asset_id <= 0) {
+        return 0;
+    }
+
+    *out_plan = receipt->render_plan;
+    out_plan->surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
+    out_plan->title_stage = receipt->title_stage;
+    out_plan->title_source_step = receipt->title_source_step;
+    out_plan->title_blit_kind = receipt->title_blit_kind;
+    out_plan->title_transparent_color = receipt->title_transparent_color;
+    out_plan->title_special_palette = receipt->title_special_palette;
+    out_plan->special_palette = receipt->title_special_palette;
+    out_plan->title_source_x = receipt->title_source_x;
+    out_plan->title_source_y = receipt->title_source_y;
+    out_plan->title_source_w = receipt->title_source_w;
+    out_plan->title_source_h = receipt->title_source_h;
+    out_plan->title_dest_x = receipt->title_dest_x;
+    out_plan->title_dest_y = receipt->title_dest_y;
+    out_plan->title_dest_w = receipt->title_dest_w;
+    out_plan->title_dest_h = receipt->title_dest_h;
+    out_plan->asset_command_count = 0;
+    out_plan->render_command_count = 0;
+
+    if (receipt->title_blit_kind ==
+        CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34) {
+        asset = &out_plan->asset_commands[out_plan->asset_command_count++];
+        asset->kind = CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34;
+    } else if (receipt->title_blit_kind ==
+               CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34) {
+        asset = &out_plan->asset_commands[out_plan->asset_command_count++];
+        asset->kind = CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34;
+    } else {
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 lines 424-463 draws PRESENTS, CHAOS zoom,
+     * then STRIKES BACK. M11 consumes this receipt-built asset command so
+     * it no longer reconstructs post-FTL title rectangles from host state. */
+    asset->asset_id = out_plan->source_asset_id;
+    asset->source_x = receipt->title_source_x;
+    asset->source_y = receipt->title_source_y;
+    asset->source_w = receipt->title_source_w;
+    asset->source_h = receipt->title_source_h;
+    asset->dest_x = receipt->title_dest_x;
+    asset->dest_y = receipt->title_dest_y;
+    asset->dest_w = receipt->title_dest_w;
+    asset->dest_h = receipt->title_dest_h;
+    asset->transparent_color = receipt->title_transparent_color;
+    asset->visible = 1;
+
+    render = &out_plan->render_commands[out_plan->render_command_count++];
+    render->kind = CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34;
+    return 1;
+}
+
 int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)

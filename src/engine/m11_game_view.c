@@ -3175,6 +3175,7 @@ static int m11_execute_csb_entrance_opening_composite(
 typedef struct M11_CSBStartupRenderExecutorContext {
     const M11_GameViewState *state;
     const CSB_V1_BootStartupPresentationRouteReceipt_PC34 *route_receipt;
+    const CSB_V1_BootStartupRenderViewReceipt_PC34 *render_view_receipt;
     unsigned char *framebuffer;
     int framebufferWidth;
     int framebufferHeight;
@@ -3186,14 +3187,21 @@ static int m11_csb_startup_executor_draw_title(
 {
     M11_CSBStartupRenderExecutorContext *context =
         (M11_CSBStartupRenderExecutorContext *)user;
+    CSB_V1_StartupRenderPlan_PC34 receipt_plan;
+    const CSB_V1_StartupRenderPlan_PC34 *title_plan = plan;
     if (!context) {
         return 0;
+    }
+    if (csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
+            context->render_view_receipt,
+            &receipt_plan)) {
+        title_plan = &receipt_plan;
     }
     m11_draw_csb_startup_title(context->state,
                                context->framebuffer,
                                context->framebufferWidth,
                                context->framebufferHeight,
-                               plan);
+                               title_plan);
     return 1;
 }
 
@@ -3341,6 +3349,8 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           int framebufferHeight)
 {
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
+    CSB_V1_BootStartupRenderViewReceipt_PC34 render_view_receipt;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     const CSB_V1_StartupRenderPlan_PC34 *plan;
     M11_CSBStartupRenderExecutorContext context;
     CSB_V1_StartupRenderExecutor_PC34 executor;
@@ -3352,10 +3362,16 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     if (!m11_csb_startup_presentation_route_receipt(state, &route_receipt)) {
         return;
     }
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    (void)csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+        &snapshot,
+        &render_view_receipt);
     plan = &route_receipt.presentation.render_plan;
 
     context.state = state;
     context.route_receipt = &route_receipt;
+    context.render_view_receipt =
+        render_view_receipt.valid ? &render_view_receipt : NULL;
     context.framebuffer = framebuffer;
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;
