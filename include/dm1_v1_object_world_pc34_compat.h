@@ -20,20 +20,20 @@ typedef struct {
     uint16_t type;
     uint16_t weight;
     int16_t icon_index;
-} M11_OW_ObjectInfo;
+} DM1_V1_ObjectWorldObjectInfoPc34;
 
 typedef struct {
     uint16_t wclass;
     uint16_t strength;
     uint16_t kineticEnergy;
     int16_t range;
-} M11_OW_WeaponInfo;
+} DM1_V1_ObjectWorldWeaponInfoPc34;
 
 typedef struct {
     uint16_t aclass;
     uint16_t defense;
     uint16_t weight;
-} M11_OW_ArmourInfo;
+} DM1_V1_ObjectWorldArmourInfoPc34;
 
 typedef struct {
     uint16_t type;
@@ -43,33 +43,50 @@ typedef struct {
     uint16_t speed;
     uint8_t side_attack;
     uint8_t preferred_distance;
-} M11_OW_CreatureInfo;
+} DM1_V1_ObjectWorldCreatureInfoPc34;
 
 typedef struct {
     uint16_t type;
     uint16_t resistance;
     bool destroyable;
-} M11_OW_DoorInfo;
+} DM1_V1_ObjectWorldDoorInfoPc34;
 
 typedef struct {
     char* obj_names[DM1_OBJ_NAME_COUNT];
-    M11_OW_ObjectInfo obj_info[DM1_OBJ_INFO_COUNT];
-    M11_OW_WeaponInfo weapons[DM1_WEAPON_INFO_COUNT];
-    M11_OW_ArmourInfo armour[DM1_ARMOUR_INFO_COUNT];
-    M11_OW_CreatureInfo creatures[DM1_CREATURE_INFO_COUNT];
-    M11_OW_DoorInfo doors[DM1_DOOR_INFO_COUNT];
+    DM1_V1_ObjectWorldObjectInfoPc34 obj_info[DM1_OBJ_INFO_COUNT];
+    DM1_V1_ObjectWorldWeaponInfoPc34 weapons[DM1_WEAPON_INFO_COUNT];
+    DM1_V1_ObjectWorldArmourInfoPc34 armour[DM1_ARMOUR_INFO_COUNT];
+    DM1_V1_ObjectWorldCreatureInfoPc34 creatures[DM1_CREATURE_INFO_COUNT];
+    DM1_V1_ObjectWorldDoorInfoPc34 doors[DM1_DOOR_INFO_COUNT];
     bool loaded;
-} M11_OW_WorldState;
+} DM1_V1_ObjectWorldStatePc34;
 
-void m11_ow_init(M11_OW_WorldState* state);
-bool m11_ow_load_object_names(M11_OW_WorldState* state, const uint8_t* data, size_t size);
-const char* m11_ow_get_obj_name(const M11_OW_WorldState* state, uint16_t idx);
-const M11_OW_ObjectInfo* m11_ow_get_obj_info(const M11_OW_WorldState* state, uint16_t idx);
-const M11_OW_WeaponInfo* m11_ow_get_weapon(const M11_OW_WorldState* state, uint16_t idx);
-const M11_OW_ArmourInfo* m11_ow_get_armour(const M11_OW_WorldState* state, uint16_t idx);
-const M11_OW_CreatureInfo* m11_ow_get_creature(const M11_OW_WorldState* state, uint16_t idx);
-const M11_OW_DoorInfo* m11_ow_get_door(const M11_OW_WorldState* state, uint16_t idx);
-void m11_ow_cleanup(M11_OW_WorldState* state);
+void DM1_V1_ObjectWorld_InitPc34Compat(DM1_V1_ObjectWorldStatePc34* state);
+bool DM1_V1_ObjectWorld_LoadObjectNamesPc34Compat(DM1_V1_ObjectWorldStatePc34* state, const uint8_t* data, size_t size);
+const char* DM1_V1_ObjectWorld_GetObjectNamePc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx);
+const DM1_V1_ObjectWorldObjectInfoPc34* DM1_V1_ObjectWorld_GetObjectInfoPc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx);
+const DM1_V1_ObjectWorldWeaponInfoPc34* DM1_V1_ObjectWorld_GetWeaponPc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx);
+const DM1_V1_ObjectWorldArmourInfoPc34* DM1_V1_ObjectWorld_GetArmourPc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx);
+const DM1_V1_ObjectWorldCreatureInfoPc34* DM1_V1_ObjectWorld_GetCreaturePc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx);
+const DM1_V1_ObjectWorldDoorInfoPc34* DM1_V1_ObjectWorld_GetDoorPc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx);
+void DM1_V1_ObjectWorld_CleanupPc34Compat(DM1_V1_ObjectWorldStatePc34* state);
+
+typedef DM1_V1_ObjectWorldObjectInfoPc34 M11_OW_ObjectInfo;
+typedef DM1_V1_ObjectWorldWeaponInfoPc34 M11_OW_WeaponInfo;
+typedef DM1_V1_ObjectWorldArmourInfoPc34 M11_OW_ArmourInfo;
+typedef DM1_V1_ObjectWorldCreatureInfoPc34 M11_OW_CreatureInfo;
+typedef DM1_V1_ObjectWorldDoorInfoPc34 M11_OW_DoorInfo;
+typedef DM1_V1_ObjectWorldStatePc34 M11_OW_WorldState;
+
+#define m11_ow_init DM1_V1_ObjectWorld_InitPc34Compat
+#define m11_ow_load_object_names DM1_V1_ObjectWorld_LoadObjectNamesPc34Compat
+#define m11_ow_get_obj_name DM1_V1_ObjectWorld_GetObjectNamePc34Compat
+#define m11_ow_get_obj_info DM1_V1_ObjectWorld_GetObjectInfoPc34Compat
+#define m11_ow_get_weapon DM1_V1_ObjectWorld_GetWeaponPc34Compat
+#define m11_ow_get_armour DM1_V1_ObjectWorld_GetArmourPc34Compat
+#define m11_ow_get_creature DM1_V1_ObjectWorld_GetCreaturePc34Compat
+#define m11_ow_get_door DM1_V1_ObjectWorld_GetDoorPc34Compat
+#define m11_ow_cleanup DM1_V1_ObjectWorld_CleanupPc34Compat
 
 #ifdef __cplusplus
 }

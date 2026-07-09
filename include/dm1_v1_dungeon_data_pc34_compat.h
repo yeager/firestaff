@@ -91,7 +91,7 @@ typedef struct {
     struct DM1_EventQueue_V1     events;
 
     /* ─ Object tables (shared read-only after load) ─ */
-    M11_OW_WorldState                 objects;
+    DM1_V1_ObjectWorldStatePc34                 objects;
 
     /* ─ Global time ─ */
     uint32_t  gameTime;           /* G0310_ul_GameTime — ticks since start */
@@ -122,7 +122,7 @@ bool DM1_V1_DungeonData_LoadDungeonPc34Compat(DM1_V1_DungeonDataPc34 *dd, const 
 
 /*
  * Load object tables from GRAPHICS.DAT metadata.
- * (Delegates to m11_ow_init.)
+ * (Delegates to DM1_V1_ObjectWorld_InitPc34Compat.)
  */
 bool DM1_V1_DungeonData_LoadObjectsPc34Compat(DM1_V1_DungeonDataPc34 *dd, const char *graphics_dat_path);
 

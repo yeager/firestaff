@@ -25,7 +25,7 @@ void DM1_V1_DungeonData_InitPc34Compat(DM1_V1_DungeonDataPc34 *dd)
     memset(dd, 0, sizeof(*dd));
     DM1_V1_DungeonLoader_InitPc34Compat(&dd->dungeon);
     dm1v1_event_queue_init(&dd->events, 0);
-    m11_ow_init(&dd->objects);
+    DM1_V1_ObjectWorld_InitPc34Compat(&dd->objects);
     dd->currentMapIndex = -1;
     dd->party.mapIndex  = -1;
     dd->party.facing    = 0;
@@ -53,7 +53,7 @@ bool DM1_V1_DungeonData_LoadObjectsPc34Compat(DM1_V1_DungeonDataPc34 *dd,
      * For now, just init the state so it is safe to query. */
     (void)graphics_dat_path;
     if (!dd) return false;
-    m11_ow_init(&dd->objects);
+    DM1_V1_ObjectWorld_InitPc34Compat(&dd->objects);
     return true;
 }
 
