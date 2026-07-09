@@ -1721,6 +1721,110 @@ int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* production,
+    const DM1_V1_StartupHoCRenderConsumerReceipt_PC34* render,
+    DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 receipt;
+
+    if (!production || !render || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.zone = -1;
+    receipt.row = -1;
+    receipt.view_cell = -1;
+    if (!production->handled || !render->handled) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    receipt.consumed_production_consumer_receipt = 1;
+    receipt.consumed_render_consumer_receipt = 1;
+    receipt.capture_phase = production->capture_phase;
+    receipt.source_evidence =
+        "ReDMCSB ENTRANCE.C:68-80/850-883; "
+        "DUNVIEW.C:3913-3928/4547-4581/5668-5683";
+    if (!production->ready ||
+        !render->ready ||
+        !production->consume_dm1_receipts_only ||
+        !render->consume_dm1_receipts_only ||
+        !render->no_m11_fallback_scan ||
+        !production->suppress_host_fallback_visuals ||
+        !render->suppress_host_fallback_visuals ||
+        production->map_index != render->map_index ||
+        production->entrance_door_frame_index !=
+            render->entrance_door_frame_index ||
+        production->hall_overlay_kind != render->hall_overlay_kind ||
+        production->render_command_count != render->render_command_count ||
+        !production->suppress_false_item_payloads ||
+        !production->suppress_projectile_payloads ||
+        !production->suppress_spell_effect_payloads ||
+        !production->suppress_mirror_payload_things ||
+        !render->suppress_mirror_floor_item_payload ||
+        !render->suppress_mirror_projectile_payload ||
+        !render->suppress_mirror_spell_effect_payload) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB first draws the opened entrance Hall frame, then DUNVIEW owns
+     * wall-overlay mirrors and real thing lanes separately.  This receipt is
+     * the DM1-owned M11 draw-call boundary: production fallback visuals and
+     * mirror/thing payload suppression are resolved before the host touches
+     * HoC input or runs any fallback scan. */
+    receipt.ready = 1;
+    receipt.consume_dm1_receipts_only = 1;
+    receipt.no_m11_fallback_scan = 1;
+    receipt.execute_before_hoc_input =
+        production->execute_before_hoc_input && render->execute_before_hoc_input;
+    receipt.draw_opened_entrance_frame =
+        production->draw_opened_entrance_frame &&
+        render->draw_opened_entrance_frame;
+    receipt.clear_champion_panel =
+        production->clear_champion_panel && render->clear_champion_panel;
+    receipt.render_hall_mirror_overlay =
+        production->render_hall_mirror_overlay &&
+        render->render_hall_mirror_overlay;
+    receipt.draw_champion_mirror_wall_overlay =
+        render->draw_champion_mirror_wall_overlay;
+    receipt.draw_real_floor_object = render->draw_real_floor_object;
+    receipt.draw_real_projectile = render->draw_real_projectile;
+    receipt.require_runtime_spell_effect_receipt =
+        render->require_runtime_spell_effect_receipt;
+    receipt.suppress_title_surface = production->suppress_title_surface;
+    receipt.suppress_closed_door_frame =
+        production->suppress_closed_door_frame;
+    receipt.suppress_host_fallback_visuals = 1;
+    receipt.suppress_false_item_payloads =
+        production->suppress_false_item_payloads;
+    receipt.suppress_projectile_payloads =
+        production->suppress_projectile_payloads;
+    receipt.suppress_spell_effect_payloads =
+        production->suppress_spell_effect_payloads;
+    receipt.suppress_mirror_payload_things =
+        production->suppress_mirror_payload_things;
+    receipt.suppress_materialized_item_payload =
+        render->suppress_materialized_item_payload;
+    receipt.block_enter_until_champion_selected =
+        production->block_enter_until_champion_selected &&
+        render->block_enter_until_champion_selected;
+    receipt.map_index = production->map_index;
+    receipt.map_width = production->map_width;
+    receipt.map_height = production->map_height;
+    receipt.entrance_door_frame_index =
+        production->entrance_door_frame_index;
+    receipt.hall_overlay_kind = production->hall_overlay_kind;
+    receipt.render_command_count = production->render_command_count;
+    receipt.zone = render->zone;
+    receipt.row = render->row;
+    receipt.view_cell = render->view_cell;
+    receipt.walk_capture_safe = production->walk_capture_safe;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

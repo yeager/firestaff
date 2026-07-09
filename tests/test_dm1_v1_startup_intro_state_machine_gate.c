@@ -722,7 +722,11 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1V1D1LD1RF0115RuntimeThingReceiptPc34 hoc_projectile_thing;
     const DM1V1D1LD1RF0115LanePc34Data* hoc_lane;
     DM1_V1_StartupHoCRenderConsumerReceipt_PC34 hoc_render_consumer;
+    DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34
+        hoc_fallback_ownership;
     DM1_V1_StartupHoCFirstFrameReceipt_PC34 bad_hoc_first_frame;
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
+        bad_hoc_production_consumer;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1724,6 +1728,55 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_render_consumer.row == hoc_floor_thing.row &&
                  hoc_render_consumer.view_cell == hoc_floor_thing.view_cell,
              1);
+    memset(&hoc_fallback_ownership, 0, sizeof(hoc_fallback_ownership));
+    expect_i("DM1 HoC fallback draw ownership receipt builds",
+             dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
+                 &hoc_production_consumer,
+                 &hoc_render_consumer,
+                 &hoc_fallback_ownership),
+             1);
+    expect_i("DM1 HoC fallback draw ownership is M11 ready",
+             hoc_fallback_ownership.handled &&
+                 hoc_fallback_ownership.ready &&
+                 hoc_fallback_ownership.consumed_production_consumer_receipt &&
+                 hoc_fallback_ownership.consumed_render_consumer_receipt &&
+                 hoc_fallback_ownership.consume_dm1_receipts_only &&
+                 hoc_fallback_ownership.no_m11_fallback_scan &&
+                 hoc_fallback_ownership.execute_before_hoc_input,
+             1);
+    expect_i("DM1 HoC fallback draw ownership keeps draw calls DM1-owned",
+             hoc_fallback_ownership.draw_opened_entrance_frame &&
+                 hoc_fallback_ownership.clear_champion_panel &&
+                 hoc_fallback_ownership.render_hall_mirror_overlay &&
+                 hoc_fallback_ownership.draw_champion_mirror_wall_overlay &&
+                 hoc_fallback_ownership.draw_real_floor_object &&
+                 !hoc_fallback_ownership.draw_real_projectile,
+             1);
+    expect_i("DM1 HoC fallback draw ownership suppresses fallback payloads",
+             hoc_fallback_ownership.suppress_title_surface &&
+                 hoc_fallback_ownership.suppress_closed_door_frame &&
+                 hoc_fallback_ownership.suppress_host_fallback_visuals &&
+                 hoc_fallback_ownership.suppress_false_item_payloads &&
+                 hoc_fallback_ownership.suppress_projectile_payloads &&
+                 hoc_fallback_ownership.suppress_spell_effect_payloads &&
+                 hoc_fallback_ownership.suppress_mirror_payload_things &&
+                 hoc_fallback_ownership.suppress_materialized_item_payload,
+             1);
+    expect_i("DM1 HoC fallback draw ownership carries M11 geometry",
+             hoc_fallback_ownership.map_index ==
+                     DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_fallback_ownership.map_width ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 &&
+                 hoc_fallback_ownership.map_height ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 &&
+                 hoc_fallback_ownership.entrance_door_frame_index == 9 &&
+                 hoc_fallback_ownership.hall_overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 hoc_fallback_ownership.render_command_count == 3 &&
+                 hoc_fallback_ownership.zone == hoc_floor_thing.zone &&
+                 hoc_fallback_ownership.row == hoc_floor_thing.row &&
+                 hoc_fallback_ownership.view_cell == hoc_floor_thing.view_cell,
+             1);
     expect_i("DM1 HoC render consumer prepares projectile receipt",
              dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
                  hoc_lane, 14, 1, 1, 1, &hoc_projectile_thing) &&
@@ -1749,6 +1802,30 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_render_consumer.suppress_mirror_projectile_payload &&
                  hoc_render_consumer.suppress_mirror_spell_effect_payload,
              1);
+    memset(&hoc_fallback_ownership, 0, sizeof(hoc_fallback_ownership));
+    expect_i("DM1 HoC fallback ownership carries projectile draw decision",
+             dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
+                 &hoc_production_consumer,
+                 &hoc_render_consumer,
+                 &hoc_fallback_ownership) &&
+                 hoc_fallback_ownership.ready &&
+                 hoc_fallback_ownership.no_m11_fallback_scan &&
+                 hoc_fallback_ownership.draw_champion_mirror_wall_overlay &&
+                 !hoc_fallback_ownership.draw_real_floor_object &&
+                 hoc_fallback_ownership.draw_real_projectile &&
+                 hoc_fallback_ownership.require_runtime_spell_effect_receipt,
+             1);
+    bad_hoc_production_consumer = hoc_production_consumer;
+    bad_hoc_production_consumer.map_index = 12;
+    expect_i("DM1 HoC fallback ownership rejects production/render mismatch",
+             dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
+                 &bad_hoc_production_consumer,
+                 &hoc_render_consumer,
+                 &hoc_fallback_ownership) &&
+                 hoc_fallback_ownership.handled &&
+                 !hoc_fallback_ownership.ready &&
+                 !hoc_fallback_ownership.no_m11_fallback_scan,
+             1);
     bad_hoc_first_frame = hoc_first_frame;
     bad_hoc_first_frame.suppress_host_fallback_visuals = 0;
     expect_i("DM1 HoC render consumer rejects fallback-scan frame",
@@ -1759,6 +1836,15 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_render_consumer.handled &&
                  !hoc_render_consumer.ready &&
                  !hoc_render_consumer.no_m11_fallback_scan,
+             1);
+    expect_i("DM1 HoC fallback ownership rejects failed render consumer",
+             dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
+                 &hoc_production_consumer,
+                 &hoc_render_consumer,
+                 &hoc_fallback_ownership) &&
+                 hoc_fallback_ownership.handled &&
+                 !hoc_fallback_ownership.ready &&
+                 !hoc_fallback_ownership.no_m11_fallback_scan,
              1);
     expect_i("DM1 HoC thing suppression rejects projectile leak",
              (hoc_suppression_facts.observed_projectile_payload_count = 1,
@@ -1816,6 +1902,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  NULL,
                  &hoc_suppression_receipt,
                  &hoc_production_consumer),
+             0);
+    expect_i("DM1 HoC fallback ownership rejects NULL input",
+             dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
+                 NULL,
+                 &hoc_render_consumer,
+                 &hoc_fallback_ownership),
              0);
     expect_i("DM1 HoC capture proof rejects stale title surface",
              (hoc_capture_facts.saw_title_surface = 1,
