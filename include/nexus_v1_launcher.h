@@ -302,6 +302,7 @@ typedef enum {
 typedef struct {
     Nexus_V1_StartupRouteProofRoute route;
     Nexus_V1_StartupLaunchGateReceipt launch_gate;
+    Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_LauncherStartupAssetsReceipt assets;
     Nexus_V1_StartupTitleHandoffReceipt title_handoff;
     Nexus_V1_StartupMenuPresentationReceipt menu_presentation;

@@ -875,6 +875,14 @@ int main(void)
                route_proof_receipt.runtime_route_ready == 1 &&
                route_proof_receipt.graphics_ready == 1 &&
                route_proof_receipt.audio_ready == 1 &&
+               route_proof_receipt.asset_handoff.route ==
+                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY &&
+               route_proof_receipt.asset_handoff
+                       .menu_bpk_renderer_handoff_valid == 1 &&
+               route_proof_receipt.asset_handoff
+                       .menu_bpk_renderer_handoff.status ==
+                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
+               route_proof_receipt.asset_handoff.real_asset_route_ready == 1 &&
                route_proof_receipt.title_menu_route_ready == 1 &&
                route_proof_receipt.menu_runtime_route_ready == 1 &&
                route_proof_receipt.first_runtime_route_ready == 1 &&
@@ -934,6 +942,12 @@ int main(void)
         NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
     synthetic_engine.menu_bpk_upload_receipt.blocked_prs3_uploads = 3;
     synthetic_engine.menu_bpk_upload_receipt.blocks_real_menu_surface_render = 1;
+    synthetic_engine.menu_bpk_decode_receipt.route =
+        NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3;
+    synthetic_engine.menu_bpk_decode_receipt.blocked_prs3_surfaces = 3;
+    synthetic_engine.menu_bpk_decode_receipt.prs3_stream_plans = 3;
+    synthetic_engine.menu_bpk_decode_receipt.requires_prs3_decoder = 1;
+    synthetic_engine.menu_bpk_decode_receipt.decode_blocked = 1;
     expect(nexus_v1_launcher_startup_assets_receipt_from_runtime_state(
                &runtime_state,
                &synthetic_runtime_receipt.startup_assets),
@@ -968,6 +982,17 @@ int main(void)
                route_proof_receipt.runtime_route_ready == 0 &&
                route_proof_receipt.graphics_ready == 0 &&
                route_proof_receipt.audio_ready == 1 &&
+               route_proof_receipt.asset_handoff.route ==
+                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED &&
+               route_proof_receipt.asset_handoff
+                       .menu_bpk_prs3_blocks_real_menu_route == 1 &&
+               route_proof_receipt.asset_handoff
+                       .menu_bpk_renderer_handoff.status ==
+                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
+               route_proof_receipt.asset_handoff
+                       .menu_bpk_renderer_handoff.blocked_prs3_surfaces == 3 &&
+               route_proof_receipt.asset_handoff
+                       .menu_bpk_renderer_handoff.fallback_visuals_permitted == 0 &&
                route_proof_receipt.title_menu_route_ready == 0 &&
                route_proof_receipt.menu_runtime_route_ready == 0 &&
                route_proof_receipt.first_runtime_route_ready == 0 &&

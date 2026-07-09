@@ -681,6 +681,8 @@ void nexus_v1_launcher_startup_route_proof_receipt_clear(
     receipt->route = NEXUS_V1_STARTUP_ROUTE_PROOF_INVALID;
     nexus_v1_launcher_startup_launch_gate_receipt_clear(
         &receipt->launch_gate);
+    nexus_v1_launcher_startup_asset_handoff_receipt_clear(
+        &receipt->asset_handoff);
     nexus_v1_launcher_startup_title_handoff_receipt_clear(
         &receipt->title_handoff);
     nexus_v1_launcher_startup_menu_presentation_receipt_clear(
@@ -1669,6 +1671,9 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
         !nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
             runtime,
             &out_receipt->launch_gate) ||
+        !nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+            runtime,
+            &out_receipt->asset_handoff) ||
         !nexus_v1_launcher_startup_assets_from_runtime_state(state,
                                                              &assets)) {
         return 0;
@@ -1688,7 +1693,8 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
         out_receipt->title_route_ready && out_receipt->menu_route_ready;
     out_receipt->fallback_visuals_permitted =
         assets.menu_bpk_fallback_visuals_permitted ||
-        out_receipt->launch_gate.fallback_visuals_permitted;
+        out_receipt->launch_gate.fallback_visuals_permitted ||
+        out_receipt->asset_handoff.fallback_visuals_permitted;
     out_receipt->asset_route = assets.startup_menu_asset_route;
     out_receipt->status_scope = out_receipt->launch_gate.status_scope;
     out_receipt->status = out_receipt->launch_gate.status;
@@ -1770,13 +1776,19 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
                    NEXUS_V1_STARTUP_LAUNCH_GATE_DATA_ERROR ||
                out_receipt->launch_gate.route ==
                    NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_ASSET_BLOCKED ||
+               !out_receipt->asset_handoff.title_asset_handoff_ready ||
+               out_receipt->asset_handoff.blocks_main_menu_route ||
                !assets.title_route_ready ||
                assets.real_menu_surface_route_blocked) {
         out_receipt->route = NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED;
-        out_receipt->status_scope = out_receipt->launch_gate.status_scope
+        out_receipt->status_scope = out_receipt->asset_handoff.status_scope
+            ? out_receipt->asset_handoff.status_scope
+            : out_receipt->launch_gate.status_scope
             ? out_receipt->launch_gate.status_scope
             : "ASSETS";
-        out_receipt->status = out_receipt->launch_gate.status
+        out_receipt->status = out_receipt->asset_handoff.status
+            ? out_receipt->asset_handoff.status
+            : out_receipt->launch_gate.status
             ? out_receipt->launch_gate.status
             : (assets.startup_menu_asset_route
                    ? assets.startup_menu_asset_route
