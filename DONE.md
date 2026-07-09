@@ -3,6 +3,9 @@
 - ✅ 2026-07-09 DM2 startup launch runtime handoff: startup launch receipts now carry the boot/menu animation state, title readiness, and V2/HUD/touch runtime initialization flags so M11 can consume a DM2-owned startup/HUD boundary instead of inferring it from status text. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
 =======
 =======
+=======
+- ✅ 2026-07-09 CSB startup pointer action route receipt: startup action receipts now carry pointer coordinates, source left-button mask, pointer/keyboard route identity, and command ids from utility/entrance pointer paths alongside pre/post render-view receipts. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron startup view-model route/save receipt: boot startup view models now carry continue focus, TQSV/SRM slot/import facts, runtime level, champion count, and runtime level-route facts so title/menu callers can consume one Theron-owned startup model instead of re-reading world/save receipts. Verification: `test_theron_v1_startup_save_resume_pc34` 174/174 and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 startup save-menu handoff receipt: host action receipts now carry the selected startup action, resolved plan, execution kind, save root, rescan policy, session-ready state, launcher-return flag, and post-action selected row so M11 can consume DM2-owned Continue/slot/New Game routing. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
