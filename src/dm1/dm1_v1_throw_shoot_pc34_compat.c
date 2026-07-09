@@ -628,6 +628,73 @@ int dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_group_slot_attach_receipt_f0215_pc34(
+    unsigned short associatedThing,
+    unsigned short groupSlotHead,
+    const unsigned short* chainThings,
+    int chainCount,
+    DM1_ProjectileGroupSlotAttachReceiptPc34* outReceipt) {
+    DM1_ProjectileGroupSlotAttachPlanPc34 plan;
+    unsigned short tailThing = THING_NONE;
+    int i;
+
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->associatedThing = associatedThing;
+    outReceipt->groupSlotHead = groupSlotHead;
+    outReceipt->tailThing = THING_NONE;
+
+    if (!dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
+            associatedThing, groupSlotHead, THING_NONE, &plan) ||
+        !plan.valid ||
+        !plan.shouldSetAssociatedNextEnd) {
+        return 0;
+    }
+
+    outReceipt->valid = 1;
+    outReceipt->shouldSetAssociatedNextEnd = 1;
+    if (plan.shouldSetGroupSlotHead) {
+        outReceipt->shouldSetGroupSlotHead = 1;
+        return 1;
+    }
+
+    if (!chainThings || chainCount <= 0) {
+        return 1;
+    }
+    for (i = 0; i < chainCount; ++i) {
+        unsigned short thing = chainThings[i];
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+            break;
+        }
+        tailThing = thing;
+    }
+    if (i >= chainCount) {
+        outReceipt->chainOverflow = 1;
+        return 1;
+    }
+    if (tailThing == THING_NONE || tailThing == THING_ENDOFLIST) {
+        return 1;
+    }
+
+    memset(&plan, 0, sizeof(plan));
+    if (!dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
+            associatedThing, groupSlotHead, tailThing, &plan) ||
+        !plan.valid ||
+        !plan.shouldAppendAfterTail ||
+        !plan.shouldSetAssociatedNextEnd) {
+        return 1;
+    }
+    outReceipt->foundTail = 1;
+    outReceipt->shouldAppendAfterTail = 1;
+    outReceipt->tailThing = tailThing;
+
+    /* ReDMCSB: PROJEXPL.C F0215 lines 248-256 links Projectile.Slot into
+     * GROUP.Slot; DUNGEON.C F0163 lines 1798-1837 walks until end-of-list
+     * before appending. M10 supplies the observed chain, while this DM1
+     * receipt owns the empty-vs-tail append decision. */
+    return 1;
+}
+
 int dm1_v1_projectile_square_attach_plan_f0215_pc34(
     unsigned short droppedThing,
     unsigned short squareFirstThing,
