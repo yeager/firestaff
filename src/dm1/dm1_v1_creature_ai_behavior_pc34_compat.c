@@ -1607,3 +1607,67 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
     result->nextEventDelayTicks = max_val(1, ctx->movementTicks);
     return 1;
 }
+
+int F0810b_DM1_GROUP_PlanReactionApply_Compat(
+    const struct DM1BehaviorResult_Compat* behavior,
+    const struct DM1ActiveGroup_Compat* activeGroup,
+    int groupIndex,
+    int creatureType,
+    int eventMapIndex,
+    int eventMapX,
+    int eventMapY,
+    int groupCells,
+    int aiStateWander,
+    int aiStateAttack,
+    int aiStateApproach,
+    int aiStateFlee,
+    uint32_t currentTick,
+    struct DM1BehaviorReactionApplyPlan_Compat* out)
+{
+    if (!behavior || !activeGroup || !out) return 0;
+    memset(out, 0, sizeof(*out));
+
+    /* ReDMCSB GROUP.C F0209 writes the ACTIVE_GROUP target/current fields
+     * and schedules the next C29-C41 event after resolving the behavior
+     * branch.  Firestaff keeps the live writes in M10, but the writeback
+     * shape is still a DM1 F0209 decision. */
+    switch (behavior->newBehavior) {
+    case DM1_BEHAVIOR_ATTACK:
+        out->newAiStateKind = aiStateAttack;
+        break;
+    case DM1_BEHAVIOR_APPROACH:
+        out->newAiStateKind = aiStateApproach;
+        break;
+    case DM1_BEHAVIOR_FLEE:
+        out->newAiStateKind = aiStateFlee;
+        break;
+    case DM1_BEHAVIOR_WANDER:
+    default:
+        out->newAiStateKind = aiStateWander;
+        break;
+    }
+
+    out->valid = 1;
+    out->groupMapIndex = eventMapIndex;
+    out->groupMapX = eventMapX;
+    out->groupMapY = eventMapY;
+    out->groupCells = groupCells;
+    out->lastSeenPartyMapX = activeGroup->targetMapX;
+    out->lastSeenPartyMapY = activeGroup->targetMapY;
+    out->lastSeenPartyTick = (int)currentTick;
+    out->groupBehavior = behavior->newBehavior & 0xFF;
+
+    if (behavior->nextEventDelayTicks > 0 && behavior->nextEventType > 0) {
+        out->shouldScheduleNextEvent = 1;
+        out->nextEventFireAtTick =
+            currentTick + (uint32_t)behavior->nextEventDelayTicks;
+        out->nextEventMapIndex = eventMapIndex;
+        out->nextEventMapX = eventMapX;
+        out->nextEventMapY = eventMapY;
+        out->nextEventGroupIndex = groupIndex;
+        out->nextEventCreatureType = creatureType;
+        out->nextEventType = behavior->nextEventType;
+    }
+
+    return 1;
+}

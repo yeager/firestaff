@@ -341,6 +341,27 @@ struct DM1BehaviorResult_Compat {
     int archenemyDoubleMove;   /* GROUP.C F0204 two-square archenemy move */
 };
 
+struct DM1BehaviorReactionApplyPlan_Compat {
+    int valid;
+    int newAiStateKind;
+    int groupMapIndex;
+    int groupMapX;
+    int groupMapY;
+    int groupCells;
+    int lastSeenPartyMapX;
+    int lastSeenPartyMapY;
+    int lastSeenPartyTick;
+    int groupBehavior;
+    int shouldScheduleNextEvent;
+    uint32_t nextEventFireAtTick;
+    int nextEventMapIndex;
+    int nextEventMapX;
+    int nextEventMapY;
+    int nextEventGroupIndex;
+    int nextEventCreatureType;
+    int nextEventType;
+};
+
 /* ==========================================================
  *  API — Behavior Type Dispatch
  *
@@ -360,6 +381,22 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
     struct DM1ActiveGroup_Compat* activeGroup,
     struct RngState_Compat* rng,
     struct DM1BehaviorResult_Compat* result);
+
+int F0810b_DM1_GROUP_PlanReactionApply_Compat(
+    const struct DM1BehaviorResult_Compat* behavior,
+    const struct DM1ActiveGroup_Compat* activeGroup,
+    int groupIndex,
+    int creatureType,
+    int eventMapIndex,
+    int eventMapX,
+    int eventMapY,
+    int groupCells,
+    int aiStateWander,
+    int aiStateAttack,
+    int aiStateApproach,
+    int aiStateFlee,
+    uint32_t currentTick,
+    struct DM1BehaviorReactionApplyPlan_Compat* out);
 
 /* ==========================================================
  *  API — Movement Decision
