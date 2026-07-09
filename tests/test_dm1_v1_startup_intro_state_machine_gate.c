@@ -382,7 +382,9 @@ static void check_title_to_menu_boundary(void) {
     DM1_V1_StartupTitleMenuEligibilityFacts_PC34 facts;
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 badMedia;
     EntranceCompatSourceAnimationStep entranceStep;
+    EntranceCompatSourceAnimationStep doorStep;
     V1_TitleFrontendSourceTiming titleTiming = V1_TitleFrontend_GetSourceTimingEvidence();
     int expected_presents_palette = 0;
     int expected_title_palette = 0;
@@ -398,7 +400,9 @@ static void check_title_to_menu_boundary(void) {
     memset(&sourceStep, 0, sizeof(sourceStep));
     memset(&finalGuard, 0, sizeof(finalGuard));
     memset(&entranceStep, 0, sizeof(entranceStep));
+    memset(&doorStep, 0, sizeof(doorStep));
     memset(&media, 0, sizeof(media));
+    memset(&badMedia, 0, sizeof(badMedia));
     (void)V1_TitleFrontend_GetStepPalette(
         V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
         &expected_presents_palette);
@@ -493,6 +497,37 @@ static void check_title_to_menu_boundary(void) {
     expect_u("DM1 full graphics media receipt entrance pre-open delay",
              media.entrance_pre_open_delay_ms,
              ENTRANCE_Compat_GetRuntimeDelayMs(&entranceStep));
+    expect_i("DM1 full graphics media receipt entrance timing valid",
+             dm1_v1_startup_entrance_timing_receipt_valid_pc34(&media),
+             1);
+    expect_i("DM1 full graphics media receipt entrance door step exists",
+             ENTRANCE_Compat_GetSourceAnimationStep(7u, &doorStep) &&
+                 doorStep.kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP,
+             1);
+    expect_u("DM1 entrance receipt delay helper uses vblank timing",
+             dm1_v1_startup_entrance_step_delay_ms_pc34(
+                 &media,
+                 (int)doorStep.kind,
+                 doorStep.delayTicks,
+                 doorStep.vblankLoopCount),
+             media.entrance_vblank_ms);
+    expect_u("DM1 entrance receipt delay helper uses pre-open timing",
+             dm1_v1_startup_entrance_step_delay_ms_pc34(
+                 &media,
+                 (int)entranceStep.kind,
+                 entranceStep.delayTicks,
+                 entranceStep.vblankLoopCount),
+             media.entrance_pre_open_delay_ms);
+    badMedia = media;
+    badMedia.entrance_vblank_ms = 1u;
+    expect_i("DM1 entrance timing validator rejects too-fast vblank",
+             dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
+             0);
+    badMedia = media;
+    badMedia.entrance_pre_open_delay_ms = 1u;
+    expect_i("DM1 entrance timing validator rejects too-fast pre-open",
+             dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
+             0);
     expect_i("DM1 full graphics media receipt blocks non-DM1",
              dm1_v1_startup_full_graphics_media_receipt_pc34("csb", &media) &&
                  media.handled == 0,

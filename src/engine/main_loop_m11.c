@@ -653,7 +653,8 @@ int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
 static int m11_play_redmcsb_entrance_transition(
     M11_GameViewState* gameView,
     int autoEnterAfterMs,
-    const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt) {
+    const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt,
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt) {
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
@@ -765,7 +766,15 @@ static int m11_play_redmcsb_entrance_transition(
             }
         }
         {
-            unsigned int delayMs = ENTRANCE_Compat_GetRuntimeDelayMs(&step);
+            unsigned int delayMs =
+                dm1_v1_startup_entrance_step_delay_ms_pc34(
+                    mediaReceipt,
+                    (int)step.kind,
+                    step.delayTicks,
+                    step.vblankLoopCount);
+            if (delayMs == 0U) {
+                delayMs = ENTRANCE_Compat_GetRuntimeDelayMs(&step);
+            }
             if (delayMs > 0U) {
                 SDL_Delay(delayMs);
             }
@@ -1563,6 +1572,7 @@ static int m11_dm1_handoff_play_entrance(void* user,
                                          int* out_entrance_command) {
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
     const DM1_V1_EntranceFullStartRenderReceiptPc34* entrance = NULL;
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media = NULL;
     int command;
     (void)source_id;
     if (!ctx || !ctx->gameView) {
@@ -1571,18 +1581,16 @@ static int m11_dm1_handoff_play_entrance(void* user,
     if (!ctx->activePostLaunchPlanValid ||
         !ctx->activePostLaunchPlan.entrance_full_start_receipt.valid ||
         ctx->activePostLaunchPlan.entrance_auto_enter_ms != auto_enter_after_ms ||
-        ctx->activePostLaunchPlan.media_receipt.entrance_source_animation_steps !=
-            ENTRANCE_Compat_GetSourceAnimationStepCount() ||
-        ctx->activePostLaunchPlan.media_receipt.entrance_door_step_count !=
-            ENTRANCE_Compat_GetDoorAnimationStepCount() ||
-        ctx->activePostLaunchPlan.media_receipt.entrance_vblank_ms !=
-            ENTRANCE_Compat_GetVblankDelayMs()) {
+        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(
+            &ctx->activePostLaunchPlan.media_receipt)) {
         return 0;
     }
     entrance = &ctx->activePostLaunchPlan.entrance_full_start_receipt;
+    media = &ctx->activePostLaunchPlan.media_receipt;
     command = m11_play_redmcsb_entrance_transition(ctx->gameView,
                                                    auto_enter_after_ms,
-                                                   entrance);
+                                                   entrance,
+                                                   media);
     if (out_entrance_command) {
         *out_entrance_command = command;
     }
