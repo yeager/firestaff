@@ -20,7 +20,7 @@ static void check(int cond, const char *expr, const char *file, int line)
 static void test_source_evidence_is_pinned(void)
 {
     const char *evidence =
-        dm1_v1_mirror_candidate_first_interaction_focus_source_evidence_pc34();
+        DM1_V1_MirrorCandidateFirstInteractionFocus_SourceEvidencePc34();
     CHECK(evidence != 0);
     CHECK(strstr(evidence, "MOVESENS.C:1501-1503") != 0);
     CHECK(strstr(evidence, "F0280:124-132") != 0);
@@ -33,7 +33,7 @@ static void test_source_evidence_is_pinned(void)
 static void test_spec_is_stable(void)
 {
     const DM1_V1_MirrorCandidateFirstInteractionFocusSpecPc34 *spec =
-        dm1_v1_mirror_candidate_first_interaction_focus_spec_pc34();
+        DM1_V1_MirrorCandidateFirstInteractionFocus_SpecPc34();
     CHECK(spec != 0);
     CHECK(spec->candidatePanelContent == 568);
     CHECK(spec->candidatePanelGraphic == 40);
@@ -48,7 +48,7 @@ static void test_init_zero_party_focus_defaults(void)
 {
     DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 state;
     memset(&state, 0xab, sizeof(state));
-    dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(&state);
+    DM1_V1_MirrorCandidateFirstInteractionFocus_InitPc34(&state);
     CHECK(state.contractOnly == 1);
     CHECK(state.leaderHandEmpty == 1);
     CHECK(state.partyChampionCount == 0);
@@ -63,7 +63,7 @@ static void test_init_zero_party_focus_defaults(void)
 static void test_run_first_candidate_owns_focus(void)
 {
     DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 r;
-    int ok = dm1_v1_mirror_candidate_first_interaction_focus_run_pc34(&r);
+    int ok = DM1_V1_MirrorCandidateFirstInteractionFocus_RunPc34(&r);
     CHECK(ok == 1);
     CHECK(r.accepted == 1);
     CHECK(r.assertionCount == 21);
@@ -91,7 +91,7 @@ static void test_g0299_blocks_sibling_input_focus(void)
     DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 r;
     int ok;
     memset(&r, 0, sizeof(r));
-    ok = dm1_v1_mirror_candidate_first_interaction_focus_run_pc34(&r);
+    ok = DM1_V1_MirrorCandidateFirstInteractionFocus_RunPc34(&r);
     CHECK(ok == 1);
     CHECK(r.candidateOrdinalAfter == 1);
     CHECK(r.blockedStatusBoxCount == 1);
@@ -106,9 +106,9 @@ static void test_f0280_publication_guards_reject_unpublishable_state(void)
     DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 r;
     int ok;
 
-    dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(&state);
+    DM1_V1_MirrorCandidateFirstInteractionFocus_InitPc34(&state);
     state.leaderHandEmpty = 0;
-    ok = dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(&state,
+    ok = DM1_V1_MirrorCandidateFirstInteractionFocus_TryPc34(&state,
                                                                   &r);
     CHECK(ok == 0);
     CHECK(r.accepted == 0);
@@ -123,9 +123,9 @@ static void test_f0280_publication_guards_reject_unpublishable_state(void)
     CHECK(r.blockedStatusBoxCount == 0);
     CHECK(r.focusOwnedByCandidate == 0);
 
-    dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(&state);
+    DM1_V1_MirrorCandidateFirstInteractionFocus_InitPc34(&state);
     state.partyChampionCount = 4;
-    ok = dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(&state,
+    ok = DM1_V1_MirrorCandidateFirstInteractionFocus_TryPc34(&state,
                                                                   &r);
     CHECK(ok == 0);
     CHECK(r.accepted == 0);

@@ -20,7 +20,7 @@ static void check(int cond, const char *expr, const char *file, int line)
 static void test_source_evidence_is_pinned(void)
 {
     const char *evidence =
-        dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_source_evidence_pc34();
+        DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_SourceEvidencePc34();
     CHECK(evidence != 0);
     CHECK(strstr(evidence, "F0280:124-132") != 0);
     CHECK(strstr(evidence, "F0282:744-806") != 0);
@@ -34,7 +34,7 @@ static void test_source_evidence_is_pinned(void)
 static void test_spec_is_stable(void)
 {
     const DM1_V1_MirrorCandidateC040CancelThenReopenSameTickSpecPc34 *spec =
-        dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_spec_pc34();
+        DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_SpecPc34();
     CHECK(spec != 0);
     CHECK(spec->c040PanelContent == 568);
     CHECK(spec->c040PanelGraphic == 40);
@@ -51,7 +51,7 @@ static void test_init_clears_observability(void)
 {
     DM1_V1_MirrorCandidateC040CancelThenReopenSameTickStatePc34 state;
     memset(&state, 0xab, sizeof(state));
-    dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_init_pc34(
+    DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_InitPc34(
         &state);
     CHECK(state.contractOnly == 1);
     CHECK(state.f0282DispatchCount == 0);
@@ -70,7 +70,7 @@ static void test_init_clears_observability(void)
 static void test_run_accepted(void)
 {
     DM1_V1_MirrorCandidateC040CancelThenReopenSameTickResultPc34 r;
-    int ok = dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_run_pc34(
+    int ok = DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_RunPc34(
         &r);
     CHECK(ok == 1);
     CHECK(r.accepted == 1);
@@ -100,7 +100,7 @@ static void test_run_cancels_then_reopens_in_one_tick(void)
 {
     DM1_V1_MirrorCandidateC040CancelThenReopenSameTickResultPc34 r;
     int ok;
-    dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_run_pc34(&r);
+    DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_RunPc34(&r);
     ok = (r.f0282Dispatched && r.f0280Dispatched && r.sameTick &&
           r.panelContentMid == 0 && r.panelContentAfter == 568 &&
           r.candidateOrdinalMid == 0 && r.candidateOrdinalAfter == 4);

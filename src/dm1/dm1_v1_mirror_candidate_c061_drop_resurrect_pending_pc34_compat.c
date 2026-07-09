@@ -266,18 +266,18 @@ static int close_tail_count(const C061ResRuntimePc34* rt, int* tail)
 }
 
 const char*
-dm1_v1_mirror_candidate_c061_drop_resurrect_pending_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateC061DropResurrectPending_SourceEvidencePc34(void)
 {
     return s_source_evidence;
 }
 
 const DM1_V1_MirrorCandidateC061DropResurrectPendingSpecPc34*
-dm1_v1_mirror_candidate_c061_drop_resurrect_pending_spec_pc34(void)
+DM1_V1_MirrorCandidateC061DropResurrectPending_SpecPc34(void)
 {
     return &s_spec;
 }
 
-int dm1_v1_mirror_candidate_c061_drop_resurrect_pending_run_pc34(
+int DM1_V1_MirrorCandidateC061DropResurrectPending_RunPc34(
     DM1_V1_MirrorCandidateC061DropResurrectPendingProbePc34* out)
 {
     C061ResRuntimePc34 rt;

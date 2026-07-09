@@ -192,11 +192,18 @@ typedef struct {
 } DM1_V1_MirrorCandidateC061DropResurrectPendingProbePc34;
 
 const char*
-dm1_v1_mirror_candidate_c061_drop_resurrect_pending_source_evidence_pc34(void);
+DM1_V1_MirrorCandidateC061DropResurrectPending_SourceEvidencePc34(void);
 const DM1_V1_MirrorCandidateC061DropResurrectPendingSpecPc34*
-dm1_v1_mirror_candidate_c061_drop_resurrect_pending_spec_pc34(void);
-int dm1_v1_mirror_candidate_c061_drop_resurrect_pending_run_pc34(
+DM1_V1_MirrorCandidateC061DropResurrectPending_SpecPc34(void);
+int DM1_V1_MirrorCandidateC061DropResurrectPending_RunPc34(
     DM1_V1_MirrorCandidateC061DropResurrectPendingProbePc34* out);
+
+#define dm1_v1_mirror_candidate_c061_drop_resurrect_pending_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateC061DropResurrectPending_SourceEvidencePc34
+#define dm1_v1_mirror_candidate_c061_drop_resurrect_pending_spec_pc34 \
+    DM1_V1_MirrorCandidateC061DropResurrectPending_SpecPc34
+#define dm1_v1_mirror_candidate_c061_drop_resurrect_pending_run_pc34 \
+    DM1_V1_MirrorCandidateC061DropResurrectPending_RunPc34
 
 #ifdef __cplusplus
 }

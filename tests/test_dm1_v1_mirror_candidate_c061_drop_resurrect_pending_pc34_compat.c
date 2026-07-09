@@ -86,7 +86,7 @@ static int test_source_metadata(
     const DM1_V1_MirrorCandidateC061DropResurrectPendingSpecPc34* spec)
 {
     const char* evidence =
-        dm1_v1_mirror_candidate_c061_drop_resurrect_pending_source_evidence_pc34();
+        DM1_V1_MirrorCandidateC061DropResurrectPending_SourceEvidencePc34();
     int ok = 1;
 
     ok &= expect_contains("source F0333", evidence, "CHEST.C F0333:30-67",
@@ -437,7 +437,7 @@ static int test_guards(void)
     int ok = 1;
 
     ok &= expect_int("null probe rejected",
-                     dm1_v1_mirror_candidate_c061_drop_resurrect_pending_run_pc34(
+                     DM1_V1_MirrorCandidateC061DropResurrectPending_RunPc34(
                          NULL),
                      0, "guard");
     return ok;
@@ -450,14 +450,14 @@ int main(void)
     DM1_V1_MirrorCandidateC061DropResurrectPendingProbePc34 second;
     int ok = 1;
 
-    spec = dm1_v1_mirror_candidate_c061_drop_resurrect_pending_spec_pc34();
+    spec = DM1_V1_MirrorCandidateC061DropResurrectPending_SpecPc34();
     ok &= test_source_metadata(spec);
     ok &= expect_int("first run accepted",
-                     dm1_v1_mirror_candidate_c061_drop_resurrect_pending_run_pc34(
+                     DM1_V1_MirrorCandidateC061DropResurrectPending_RunPc34(
                          &first),
                      1, spec->contractMarker);
     ok &= expect_int("second run accepted",
-                     dm1_v1_mirror_candidate_c061_drop_resurrect_pending_run_pc34(
+                     DM1_V1_MirrorCandidateC061DropResurrectPending_RunPc34(
                          &second),
                      1, spec->contractMarker);
     ok &= test_flags_and_sequence(&first, spec);

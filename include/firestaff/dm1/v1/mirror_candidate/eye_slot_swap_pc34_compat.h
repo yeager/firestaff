@@ -146,7 +146,7 @@
  * parity claim. The state model is a synthetic
  * DM1_V1_InventoryStatePc34-shaped local struct with byte-level fields, and
  * the dispatch loop is the ReDMCSB-derived contract-only runtime
- * function `dm1_v1_mirror_candidate_eye_slot_swap_run_pc34`.
+ * function `DM1_V1_MirrorCandidateEyeSlotSwap_RunPc34`.
  */
 
 #define DM1_V1_MIRROR_CANDIDATE_EYE_SLOT_SWAP_CHEST_SLOT_COUNT_PC34 8
@@ -244,18 +244,29 @@ typedef struct DM1_V1_MirrorCandidateEyeSlotSwapSpecPc34 {
 } DM1_V1_MirrorCandidateEyeSlotSwapSpecPc34;
 
 const DM1_V1_MirrorCandidateEyeSlotSwapSpecPc34 *
-dm1_v1_mirror_candidate_eye_slot_swap_spec_pc34(void);
+DM1_V1_MirrorCandidateEyeSlotSwap_SpecPc34(void);
 
 const char *
-dm1_v1_mirror_candidate_eye_slot_swap_source_evidence_pc34(void);
+DM1_V1_MirrorCandidateEyeSlotSwap_SourceEvidencePc34(void);
 
 const char *
-dm1_v1_mirror_candidate_eye_slot_swap_non_overlap_pc34(void);
+DM1_V1_MirrorCandidateEyeSlotSwap_NonOverlapPc34(void);
 
-void dm1_v1_mirror_candidate_eye_slot_swap_init_pc34(
+void DM1_V1_MirrorCandidateEyeSlotSwap_InitPc34(
     DM1_V1_MirrorCandidateEyeSlotSwapStatePc34 *state);
 
-int dm1_v1_mirror_candidate_eye_slot_swap_run_pc34(
+int DM1_V1_MirrorCandidateEyeSlotSwap_RunPc34(
     DM1_V1_MirrorCandidateEyeSlotSwapResultPc34 *out);
+
+#define dm1_v1_mirror_candidate_eye_slot_swap_spec_pc34 \
+    DM1_V1_MirrorCandidateEyeSlotSwap_SpecPc34
+#define dm1_v1_mirror_candidate_eye_slot_swap_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateEyeSlotSwap_SourceEvidencePc34
+#define dm1_v1_mirror_candidate_eye_slot_swap_non_overlap_pc34 \
+    DM1_V1_MirrorCandidateEyeSlotSwap_NonOverlapPc34
+#define dm1_v1_mirror_candidate_eye_slot_swap_init_pc34 \
+    DM1_V1_MirrorCandidateEyeSlotSwap_InitPc34
+#define dm1_v1_mirror_candidate_eye_slot_swap_run_pc34 \
+    DM1_V1_MirrorCandidateEyeSlotSwap_RunPc34
 
 #endif

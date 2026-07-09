@@ -81,20 +81,31 @@ typedef struct DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 {
 } DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34;
 
 const DM1_V1_MirrorCandidateFirstInteractionFocusSpecPc34 *
-dm1_v1_mirror_candidate_first_interaction_focus_spec_pc34(void);
+DM1_V1_MirrorCandidateFirstInteractionFocus_SpecPc34(void);
 
 const char *
-dm1_v1_mirror_candidate_first_interaction_focus_source_evidence_pc34(void);
+DM1_V1_MirrorCandidateFirstInteractionFocus_SourceEvidencePc34(void);
 
-void dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(
+void DM1_V1_MirrorCandidateFirstInteractionFocus_InitPc34(
     DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 *state);
 
-int dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(
+int DM1_V1_MirrorCandidateFirstInteractionFocus_TryPc34(
     DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 *state,
     DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 *out);
 
-int dm1_v1_mirror_candidate_first_interaction_focus_run_pc34(
+int DM1_V1_MirrorCandidateFirstInteractionFocus_RunPc34(
     DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 *out);
+
+#define dm1_v1_mirror_candidate_first_interaction_focus_spec_pc34 \
+    DM1_V1_MirrorCandidateFirstInteractionFocus_SpecPc34
+#define dm1_v1_mirror_candidate_first_interaction_focus_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateFirstInteractionFocus_SourceEvidencePc34
+#define dm1_v1_mirror_candidate_first_interaction_focus_init_pc34 \
+    DM1_V1_MirrorCandidateFirstInteractionFocus_InitPc34
+#define dm1_v1_mirror_candidate_first_interaction_focus_try_pc34 \
+    DM1_V1_MirrorCandidateFirstInteractionFocus_TryPc34
+#define dm1_v1_mirror_candidate_first_interaction_focus_run_pc34 \
+    DM1_V1_MirrorCandidateFirstInteractionFocus_RunPc34
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 mirror-candidate interaction/drop ownership names: first interaction focus, C040 cancel/reopen same tick, eye-slot-swap, and C061 drop-resurrect-pending APIs now expose DM1-owned function names; old names remain aliases. Verification: first interaction 74/74, C040 cancel/reopen 53/53, eye-slot-swap 53/53, C061 drop-pending 164/164, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 mirror-candidate resurrect/chest close-order ownership names: resurrect chest-close-order, close-after-party-shuffle, and close-order-party-shuffle APIs now expose DM1-owned type and function names; old names remain aliases. Verification: resurrect chest-close-order 142/142, close-after-party-shuffle 140/140, close-order-party-shuffle 148/148, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 mirror-candidate resurrect pending/inventory ownership names: close-while-resurrect-pending inventory pickup and resurrect-confirm inventory interrupt APIs now expose DM1-owned type and function names; old names remain aliases. Verification: close-while-pending pickup 27/27 plus self 20/20, confirm-inventory-interrupt 29/29 plus self 36/36, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
