@@ -273,11 +273,17 @@ typedef struct {
     int runtime_route_ready;
     int graphics_ready;
     int audio_ready;
+    int title_menu_route_ready;
+    int menu_runtime_route_ready;
+    int first_runtime_route_ready;
+    int audio_runtime_route_ready;
+    int full_startup_route_ready;
     int fallback_visuals_permitted;
     const char *asset_route;
     const char *title_route;
     const char *menu_route;
     const char *runtime_route;
+    const char *first_runtime_route;
     const char *status_scope;
     const char *status;
 } Nexus_V1_StartupRouteProofReceipt;
