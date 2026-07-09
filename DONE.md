@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0209 reaction apply ownership: M10 creature C31 reaction handling now consumes a DM1-owned apply plan for behavior-to-AI-state mapping, active-group writeback, group behavior byte, and next C29-C41 event scheduling. Verification: `test_dm1_v1_creature_ai_behavior_pc34_compat` (233/233), `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m10_c006_generator_reenable_dispatch_pc34_compat`, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0183/F0180 generated group placement ownership: generated group linking now consumes a DM1-owned plan for party-map active-state fields and C37 wander-event scheduling. Verification: `test_dm1_v1_group_move_removal_pc34_compat`, `test_m10_c006_generator_reenable_dispatch_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0267 generated group route ownership: C006/F0185 generated group materialization now consumes the same DM1 route plan as deferred group insertion for fall/disallowed removal, blocked retry, and normal insertion. Verification: `test_dm1_v1_group_move_removal_pc34_compat`, `test_m10_c006_generator_reenable_dispatch_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, Phase A 24/24, and `git diff --check` passed.

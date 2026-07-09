@@ -1102,6 +1102,85 @@ static void test_batch3_per_type_dispatch_coverage(void) {
     }
 }
 
+/* --- Test 32: F0209 reaction apply plan owns behavior writeback --- */
+static void test_reaction_apply_plan_schedules_next_event(void) {
+    struct DM1BehaviorResult_Compat behavior;
+    struct DM1ActiveGroup_Compat ag;
+    struct DM1BehaviorReactionApplyPlan_Compat plan;
+    int ok;
+
+    memset(&behavior, 0, sizeof(behavior));
+    memset(&ag, 0, sizeof(ag));
+    memset(&plan, 0, sizeof(plan));
+    behavior.newBehavior = DM1_BEHAVIOR_APPROACH;
+    behavior.nextEventDelayTicks = 6;
+    behavior.nextEventType = DM1_EVENT_REACTION_PARTY_IS_ADJACENT;
+    ag.targetMapX = 12;
+    ag.targetMapY = 13;
+
+    ok = F0810b_DM1_GROUP_PlanReactionApply_Compat(
+        &behavior, &ag, 44, 7, 2, 8, 9, 0x5A,
+        101, 102, 103, 104, 2000u, &plan);
+
+    EXPECT_EQ(ok, 1, "reaction_apply: helper succeeds");
+    EXPECT_EQ(plan.valid, 1, "reaction_apply: plan valid");
+    EXPECT_EQ(plan.newAiStateKind, 103,
+              "reaction_apply: DM1 APPROACH maps to caller approach state");
+    EXPECT_EQ(plan.groupMapIndex, 2, "reaction_apply: map index from event");
+    EXPECT_EQ(plan.groupMapX, 8, "reaction_apply: map x from event");
+    EXPECT_EQ(plan.groupMapY, 9, "reaction_apply: map y from event");
+    EXPECT_EQ(plan.groupCells, 0x5A, "reaction_apply: group cells preserved");
+    EXPECT_EQ(plan.lastSeenPartyMapX, 12,
+              "reaction_apply: target x from active group");
+    EXPECT_EQ(plan.lastSeenPartyMapY, 13,
+              "reaction_apply: target y from active group");
+    EXPECT_EQ(plan.lastSeenPartyTick, 2000,
+              "reaction_apply: current tick writeback");
+    EXPECT_EQ(plan.groupBehavior, DM1_BEHAVIOR_APPROACH,
+              "reaction_apply: group behavior byte");
+    EXPECT_EQ(plan.shouldScheduleNextEvent, 1,
+              "reaction_apply: schedules positive delay/type");
+    EXPECT_EQ((int)plan.nextEventFireAtTick, 2006,
+              "reaction_apply: next tick adds delay");
+    EXPECT_EQ(plan.nextEventGroupIndex, 44,
+              "reaction_apply: next event group index");
+    EXPECT_EQ(plan.nextEventCreatureType, 7,
+              "reaction_apply: next event creature type");
+    EXPECT_EQ(plan.nextEventType, DM1_EVENT_REACTION_PARTY_IS_ADJACENT,
+              "reaction_apply: next event type");
+}
+
+static void test_reaction_apply_plan_no_event_and_wander_default(void) {
+    struct DM1BehaviorResult_Compat behavior;
+    struct DM1ActiveGroup_Compat ag;
+    struct DM1BehaviorReactionApplyPlan_Compat plan;
+
+    memset(&behavior, 0, sizeof(behavior));
+    memset(&ag, 0, sizeof(ag));
+    memset(&plan, 0, sizeof(plan));
+    behavior.newBehavior = DM1_BEHAVIOR_USELESS4;
+    behavior.nextEventDelayTicks = 0;
+    behavior.nextEventType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+
+    EXPECT_EQ(F0810b_DM1_GROUP_PlanReactionApply_Compat(
+                  &behavior, &ag, 1, 2, 3, 4, 5, 0,
+                  201, 202, 203, 204, 99u, &plan),
+              1, "reaction_apply_no_event: helper succeeds");
+    EXPECT_EQ(plan.newAiStateKind, 201,
+              "reaction_apply_no_event: unknown behavior maps to wander");
+    EXPECT_EQ(plan.shouldScheduleNextEvent, 0,
+              "reaction_apply_no_event: zero delay suppresses schedule");
+
+    behavior.nextEventDelayTicks = 5;
+    behavior.nextEventType = 0;
+    EXPECT_EQ(F0810b_DM1_GROUP_PlanReactionApply_Compat(
+                  &behavior, &ag, 1, 2, 3, 4, 5, 0,
+                  201, 202, 203, 204, 99u, &plan),
+              1, "reaction_apply_no_type: helper succeeds");
+    EXPECT_EQ(plan.shouldScheduleNextEvent, 0,
+              "reaction_apply_no_type: zero type suppresses schedule");
+}
+
 int main(void) {
     printf("DM1 V1 Creature AI Behavior CTest Gate\n");
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");
@@ -1141,6 +1220,8 @@ int main(void) {
     test_giant_wasp_promoted_to_full();
     test_oitu_promoted_to_full();
     test_batch3_per_type_dispatch_coverage();
+    test_reaction_apply_plan_schedules_next_event();
+    test_reaction_apply_plan_no_event_and_wander_default();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

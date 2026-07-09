@@ -6294,18 +6294,6 @@ static int orch_ai_state_to_dm1_behavior_compat(int stateKind)
     }
 }
 
-static int orch_dm1_behavior_to_ai_state_compat(int behavior)
-{
-    switch (behavior) {
-        case DM1_BEHAVIOR_ATTACK: return AI_STATE_ATTACK;
-        case DM1_BEHAVIOR_APPROACH: return AI_STATE_APPROACH;
-        case DM1_BEHAVIOR_FLEE: return AI_STATE_FLEE;
-        case DM1_BEHAVIOR_WANDER:
-        default:
-            return AI_STATE_WANDER;
-    }
-}
-
 static int orch_handle_creature_reaction_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -6318,6 +6306,7 @@ static int orch_handle_creature_reaction_event_compat(
     struct DM1GroupBehaviorContext_Compat ctx;
     struct DM1ActiveGroup_Compat activeGroup;
     struct DM1BehaviorResult_Compat behavior;
+    struct DM1BehaviorReactionApplyPlan_Compat applyPlan;
     struct TimelineEvent_Compat next;
 
     (void)result;
@@ -6339,6 +6328,7 @@ static int orch_handle_creature_reaction_event_compat(
     memset(&ctx, 0, sizeof(ctx));
     memset(&activeGroup, 0, sizeof(activeGroup));
     memset(&behavior, 0, sizeof(behavior));
+    memset(&applyPlan, 0, sizeof(applyPlan));
 
     ctx.currentGroupMapX = ev->mapX;
     ctx.currentGroupMapY = ev->mapY;
@@ -6374,26 +6364,35 @@ static int orch_handle_creature_reaction_event_compat(
         return 0;
     }
 
-    ai->stateKind = orch_dm1_behavior_to_ai_state_compat(behavior.newBehavior);
-    ai->groupMapIndex = ev->mapIndex;
-    ai->groupMapX = ev->mapX;
-    ai->groupMapY = ev->mapY;
-    ai->groupCells = group->cells;
-    ai->lastSeenPartyMapX = activeGroup.targetMapX;
-    ai->lastSeenPartyMapY = activeGroup.targetMapY;
-    ai->lastSeenPartyTick = (int)world->gameTick;
-    group->behavior = (unsigned char)(behavior.newBehavior & 0xFF);
+    if (!F0810b_DM1_GROUP_PlanReactionApply_Compat(
+            &behavior, &activeGroup, groupIndex, group->creatureType,
+            ev->mapIndex, ev->mapX, ev->mapY, group->cells,
+            AI_STATE_WANDER, AI_STATE_ATTACK, AI_STATE_APPROACH,
+            AI_STATE_FLEE, world->gameTick, &applyPlan) ||
+        !applyPlan.valid) {
+        return 0;
+    }
 
-    if (behavior.nextEventDelayTicks > 0 && behavior.nextEventType > 0) {
+    ai->stateKind = applyPlan.newAiStateKind;
+    ai->groupMapIndex = applyPlan.groupMapIndex;
+    ai->groupMapX = applyPlan.groupMapX;
+    ai->groupMapY = applyPlan.groupMapY;
+    ai->groupCells = applyPlan.groupCells;
+    ai->lastSeenPartyMapX = applyPlan.lastSeenPartyMapX;
+    ai->lastSeenPartyMapY = applyPlan.lastSeenPartyMapY;
+    ai->lastSeenPartyTick = applyPlan.lastSeenPartyTick;
+    group->behavior = (unsigned char)applyPlan.groupBehavior;
+
+    if (applyPlan.shouldScheduleNextEvent) {
         memset(&next, 0, sizeof(next));
         next.kind = TIMELINE_EVENT_CREATURE_REACTION;
-        next.fireAtTick = world->gameTick + (uint32_t)behavior.nextEventDelayTicks;
-        next.mapIndex = ev->mapIndex;
-        next.mapX = ev->mapX;
-        next.mapY = ev->mapY;
-        next.aux0 = groupIndex;
-        next.aux1 = group->creatureType;
-        next.aux2 = behavior.nextEventType;
+        next.fireAtTick = applyPlan.nextEventFireAtTick;
+        next.mapIndex = applyPlan.nextEventMapIndex;
+        next.mapX = applyPlan.nextEventMapX;
+        next.mapY = applyPlan.nextEventMapY;
+        next.aux0 = applyPlan.nextEventGroupIndex;
+        next.aux1 = applyPlan.nextEventCreatureType;
+        next.aux2 = applyPlan.nextEventType;
         (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &next);
     }
     return 1;
