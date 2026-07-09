@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM2 M11/M12 startup host route receipt: host action receipts now expose ready-made consume/redraw/close/return/apply-session/rescan route flags and post-action selected row, so host code can stop interpreting DM2 menu state and execution kinds. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus startup menu route asset gate: launcher save-slot and champion routes now consult startup asset gates before routing, returning explicit `asset-blocked`/ASSETS receipts when MENU.BPK PRS3, missing faces, or other real-menu blockers would require fallback visuals. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron Track02 title/menu media view-model handoff: boot startup view models can now carry the Track 02 startup media receipt, including variant, MD5, byte size, roster name/title status, prompt status, and decoded prompt text, so title/menu callers can consume one Theron-owned model without re-reading Track 02 media state. Verification: `test_theron_v1_startup_save_resume_pc34` 176/176 and `git diff --check` passed.
