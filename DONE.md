@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass879 DM1 HoC full-graphics runtime apply receipt: packaged HoC capture proof now gates a DM1-owned apply receipt for opened C255 entrance frame, stale champion-panel clear, Hall mirror overlay, title/closed-door/fallback suppression, and Enter blocking before HoC input. Verification: DM1 startup intro state-machine test, `firestaff_m10` target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 M12 launch gate full-start contract block: launch-gate receipts now expose full-start graphics and startup-contract readiness directly, and the launch button only proceeds through `canLaunch`, so future missing startup proof cannot fall through to a ready launch. Verification: `test_m12_all_games_boot_readiness_receipt`, `test_csb_v1_launch_blocker_m12`, `test_m12_dm1_v1_required_complete_launches`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB packaged startup capture proof: boot now emits a compact packaged capture proof tying real-asset receipt hash, title/HUD/runtime route, render-plan availability, HUD draw availability, and ReDMCSB title/entrance source evidence together for packaged startup validation. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.

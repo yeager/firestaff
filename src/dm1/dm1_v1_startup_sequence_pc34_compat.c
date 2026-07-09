@@ -1429,6 +1429,68 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34* artifact,
+    const DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34* proof,
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 receipt;
+
+    if (!artifact || !proof || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!artifact->handled || !proof->handled) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    receipt.consumed_capture_artifact = 1;
+    receipt.consumed_capture_proof = 1;
+    receipt.require_proof_passed = 1;
+    receipt.capture_phase = artifact->capture_phase;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    if (!artifact->ready ||
+        !proof->ready ||
+        !proof->proof_passed ||
+        !artifact->consume_full_start_production_receipt_only ||
+        !artifact->capture_manifest_ready ||
+        !artifact->publish_packaged_full_graphics_proof) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB TITLE.C F0437 has finished title/PRESENTS; ENTRANCE.C F0797
+     * and F0441 own the opened C255 Hall frame.  After DM1-owned capture
+     * proof passes, expose the exact runtime apply commands for M11/M12. */
+    receipt.ready = 1;
+    receipt.apply_before_hoc_input = 1;
+    receipt.apply_opened_entrance_frame =
+        artifact->opened_entrance_frame_required;
+    receipt.apply_clear_champion_panel =
+        artifact->clear_champion_panel_required;
+    receipt.apply_hall_mirror_overlay =
+        artifact->hall_mirror_overlay_required;
+    receipt.suppress_title_surface = artifact->title_surface_forbidden;
+    receipt.suppress_closed_door_frame = artifact->closed_door_frame_forbidden;
+    receipt.suppress_host_fallback_visuals =
+        artifact->host_fallback_visuals_forbidden;
+    receipt.publish_packaged_full_graphics_proof =
+        artifact->publish_packaged_full_graphics_proof;
+    receipt.block_enter_until_champion_selected =
+        artifact->block_enter_until_champion_selected;
+    receipt.map_index = artifact->expected_map_index;
+    receipt.map_width = artifact->expected_map_width;
+    receipt.map_height = artifact->expected_map_height;
+    receipt.entrance_door_frame_index =
+        artifact->expected_entrance_door_frame_index;
+    receipt.hall_overlay_kind = artifact->expected_hall_overlay_kind;
+    receipt.render_command_count = artifact->expected_hoc_render_command_count;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
