@@ -22,7 +22,7 @@ extern "C" {
 
 /* Maximum champions in DM1 — 4 party slots, 24 mirrors total */
 #define M11_MAX_CHAMPIONS          4
-#define M11_MAX_MIRROR_SLOTS      24
+#define DM1_V1_MAX_MIRROR_SLOTS_PC34      24
 
 /* Entrance states */
 typedef enum {
@@ -33,7 +33,7 @@ typedef enum {
     DM1_ENTRANCE_RESURRECTING,    /* Resurrect dialog active */
     DM1_ENTRANCE_REINCARNATING,   /* Reincarnate dialog active */
     DM1_ENTRANCE_DONE             /* All champions selected, entering dungeon */
-} M11_EntranceState;
+} DM1_V1_EntranceStatePc34;
 
 /* Mirror slot state */
 typedef struct {
@@ -44,7 +44,7 @@ typedef struct {
     int mapX;               /* mirror position X */
     int mapY;               /* mirror position Y */
     int facing;             /* direction mirror faces (0-3) */
-} M11_MirrorSlot;
+} DM1_V1_MirrorSlotPc34;
 
 /* Door animation state */
 typedef struct {
@@ -53,25 +53,25 @@ typedef struct {
     int frameDelayMs;       /* delay between frames */
     uint32_t lastFrameMs;   /* timestamp of last frame */
     int complete;           /* 1 when animation finished */
-} M11_DoorAnimation;
+} DM1_V1_DoorAnimationPc34;
 
 /* Entrance persistent state */
 typedef struct {
-    M11_EntranceState state;
-    M11_MirrorSlot mirrors[M11_MAX_MIRROR_SLOTS];
+    DM1_V1_EntranceStatePc34 state;
+    DM1_V1_MirrorSlotPc34 mirrors[DM1_V1_MAX_MIRROR_SLOTS_PC34];
     int mirrorCount;                    /* actual number of occupied mirrors */
     int selectedMirrorIndex;            /* currently viewed mirror, -1 if none */
     int partyChampionCount;             /* champions recruited so far */
     int partyChampionIndices[M11_MAX_CHAMPIONS]; /* recruited champion indices */
-    M11_DoorAnimation doorAnim;
+    DM1_V1_DoorAnimationPc34 doorAnim;
     int microDungeonBuilt;              /* F0797 micro dungeon constructed */
     uint32_t lastInteractionMs;
-} M11_EntranceCtx;
+} DM1_V1_EntranceCtxPc34;
 
 /* Result of an entrance tick */
 typedef struct {
     int stateChanged;                   /* entrance state transitioned */
-    M11_EntranceState newState;
+    DM1_V1_EntranceStatePc34 newState;
     int doorAnimationAdvanced;          /* door frame progressed */
     int doorAnimationComplete;
     int mirrorSelected;                 /* a mirror was clicked */
@@ -80,37 +80,37 @@ typedef struct {
     int championIndex;                  /* which champion */
     int needsRedraw;                    /* screen needs refresh */
     int entranceComplete;               /* all done, enter dungeon */
-} M11_EntranceTickResult;
+} DM1_V1_EntranceTickResultPc34;
 
 /*
  * Initialize entrance context. Call when entering the mirror hall.
  * mirrorData: array of mirror slot descriptions from dungeon data.
  */
-void m11_entrance_init(M11_EntranceCtx *ctx);
+void DM1_V1_Entrance_InitPc34Compat(DM1_V1_EntranceCtxPc34 *ctx);
 
 /*
  * Add a mirror slot (champion in a mirror).
  * Returns slot index or -1 if full.
  */
-int m11_entrance_add_mirror(M11_EntranceCtx *ctx, int championIndex,
+int DM1_V1_Entrance_AddMirrorPc34Compat(DM1_V1_EntranceCtxPc34 *ctx, int championIndex,
                             int mapX, int mapY, int facing, int isDead);
 
 /*
  * Start the door opening animation (F0438).
  */
-void m11_entrance_start_door_animation(M11_EntranceCtx *ctx, uint32_t nowMs);
+void DM1_V1_Entrance_StartDoorAnimationPc34Compat(DM1_V1_EntranceCtxPc34 *ctx, uint32_t nowMs);
 
 /*
  * Tick the door animation. Returns 1 if a new frame is ready.
  */
-int m11_entrance_tick_door_animation(M11_EntranceCtx *ctx, uint32_t nowMs);
+int DM1_V1_Entrance_TickDoorAnimationPc34Compat(DM1_V1_EntranceCtxPc34 *ctx, uint32_t nowMs);
 
 /*
  * Handle a click on a mirror (F0440/F0441).
  * mirrorIndex: which mirror was clicked.
  * Returns result with selection info.
  */
-M11_EntranceTickResult m11_entrance_click_mirror(M11_EntranceCtx *ctx,
+DM1_V1_EntranceTickResultPc34 DM1_V1_Entrance_ClickMirrorPc34Compat(DM1_V1_EntranceCtxPc34 *ctx,
                                                   int mirrorIndex,
                                                   uint32_t nowMs);
 
@@ -118,45 +118,66 @@ M11_EntranceTickResult m11_entrance_click_mirror(M11_EntranceCtx *ctx,
  * Recruit the currently selected champion to the party (F0280).
  * Returns 1 on success, 0 if party full or no champion selected.
  */
-int m11_entrance_recruit_champion(M11_EntranceCtx *ctx);
+int DM1_V1_Entrance_RecruitChampionPc34Compat(DM1_V1_EntranceCtxPc34 *ctx);
 
 /*
  * Attempt resurrection of the selected dead champion.
  * Returns 1 on success, 0 if not applicable.
  */
-int m11_entrance_resurrect(M11_EntranceCtx *ctx);
+int DM1_V1_Entrance_ResurrectPc34Compat(DM1_V1_EntranceCtxPc34 *ctx);
 
 /*
  * Attempt reincarnation of the selected dead champion.
  * Returns 1 on success, 0 if not applicable.
  */
-int m11_entrance_reincarnate(M11_EntranceCtx *ctx);
+int DM1_V1_Entrance_ReincarnatePc34Compat(DM1_V1_EntranceCtxPc34 *ctx);
 
 /*
  * Cancel current selection, return to viewing state.
  */
-void m11_entrance_cancel_selection(M11_EntranceCtx *ctx);
+void DM1_V1_Entrance_CancelSelectionPc34Compat(DM1_V1_EntranceCtxPc34 *ctx);
 
 /*
  * Finalize entrance — mark all done, transition to dungeon.
  * Call when player has selected champions and walks past the hall.
  */
-M11_EntranceTickResult m11_entrance_finalize(M11_EntranceCtx *ctx);
+DM1_V1_EntranceTickResultPc34 DM1_V1_Entrance_FinalizePc34Compat(DM1_V1_EntranceCtxPc34 *ctx);
 
 /*
  * Query: is entrance complete?
  */
-int m11_entrance_is_complete(const M11_EntranceCtx *ctx);
+int DM1_V1_Entrance_IsCompletePc34Compat(const DM1_V1_EntranceCtxPc34 *ctx);
 
 /*
  * Get current party count in entrance.
  */
-int m11_entrance_get_party_count(const M11_EntranceCtx *ctx);
+int DM1_V1_Entrance_GetPartyCountPc34Compat(const DM1_V1_EntranceCtxPc34 *ctx);
 
 /*
  * Source evidence string.
  */
-const char *m11_entrance_source_evidence(void);
+const char *DM1_V1_Entrance_SourceEvidencePc34Compat(void);
+
+typedef DM1_V1_EntranceStatePc34 M11_EntranceState;
+typedef DM1_V1_MirrorSlotPc34 M11_MirrorSlot;
+typedef DM1_V1_DoorAnimationPc34 M11_DoorAnimation;
+typedef DM1_V1_EntranceCtxPc34 M11_EntranceCtx;
+typedef DM1_V1_EntranceTickResultPc34 M11_EntranceTickResult;
+
+#define M11_MAX_MIRROR_SLOTS DM1_V1_MAX_MIRROR_SLOTS_PC34
+#define m11_entrance_init DM1_V1_Entrance_InitPc34Compat
+#define m11_entrance_add_mirror DM1_V1_Entrance_AddMirrorPc34Compat
+#define m11_entrance_start_door_animation DM1_V1_Entrance_StartDoorAnimationPc34Compat
+#define m11_entrance_tick_door_animation DM1_V1_Entrance_TickDoorAnimationPc34Compat
+#define m11_entrance_click_mirror DM1_V1_Entrance_ClickMirrorPc34Compat
+#define m11_entrance_recruit_champion DM1_V1_Entrance_RecruitChampionPc34Compat
+#define m11_entrance_resurrect DM1_V1_Entrance_ResurrectPc34Compat
+#define m11_entrance_reincarnate DM1_V1_Entrance_ReincarnatePc34Compat
+#define m11_entrance_cancel_selection DM1_V1_Entrance_CancelSelectionPc34Compat
+#define m11_entrance_finalize DM1_V1_Entrance_FinalizePc34Compat
+#define m11_entrance_is_complete DM1_V1_Entrance_IsCompletePc34Compat
+#define m11_entrance_get_party_count DM1_V1_Entrance_GetPartyCountPc34Compat
+#define m11_entrance_source_evidence DM1_V1_Entrance_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }
