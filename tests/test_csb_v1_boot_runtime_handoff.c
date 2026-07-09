@@ -1819,6 +1819,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupRenderViewReceipt_PC34 poisoned_view_receipt;
     CSB_V1_BootStartupRenderViewReceipt_PC34 runtime_view_receipt;
     CSB_V1_BootStartupReadinessReceipt_PC34 readiness_receipt;
+    CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_draw_receipt;
     CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
     CSB_V1_StartupRenderPlan_PC34 receipt_closed_door_plan;
     CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
@@ -2202,6 +2203,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                      "CHAOS STRIKES BACK READY") != NULL &&
               !receipt_utility_plan.preview_active,
           "boot startup utility HUD/menu plan consumes render-view receipt fields");
+    CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
+              &poisoned_view_receipt,
+              &hud_draw_receipt) == 1 &&
+              hud_draw_receipt.valid &&
+              hud_draw_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              hud_draw_receipt.utility_render_plan_valid &&
+              !hud_draw_receipt.startup_render_plan_valid &&
+              hud_draw_receipt.draw_utility_panel &&
+              hud_draw_receipt.option_count == CSB_V1_UTIL_MENU_ROW_COUNT &&
+              hud_draw_receipt.selected_utility_action_index == 0 &&
+              hud_draw_receipt.utility_render_plan.menu_rows[0].selected &&
+              !hud_draw_receipt.utility_render_plan.menu_rows[1].selected &&
+              strstr(hud_draw_receipt.prompt,
+                     "CHAOS STRIKES BACK READY") != NULL,
+          "boot startup HUD/menu draw receipt consumes utility render-view receipt");
     snapshot.utility_overlay_active = 0;
     CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
               &snapshot,
@@ -2318,6 +2335,27 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strstr(receipt_closed_door_plan.fallback_prompt_text,
                      "PRESS ENTER") != NULL,
           "boot startup closed-door HUD/menu plan consumes render-view receipt fields");
+    CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
+              &poisoned_view_receipt,
+              &hud_draw_receipt) == 1 &&
+              hud_draw_receipt.valid &&
+              hud_draw_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              hud_draw_receipt.startup_render_plan_valid &&
+              !hud_draw_receipt.utility_render_plan_valid &&
+              hud_draw_receipt.draw_closed_doors &&
+              hud_draw_receipt.draw_fallback_text &&
+              hud_draw_receipt.suppress_legacy_utility_fallback &&
+              hud_draw_receipt.option_count == 4 &&
+              hud_draw_receipt.selected_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              hud_draw_receipt.resume_enabled &&
+              hud_draw_receipt.resume_available &&
+              hud_draw_receipt.resume_option_visible &&
+              !hud_draw_receipt.resume_option_selected &&
+              hud_draw_receipt.startup_render_plan.menu_options[0].selected &&
+              strstr(hud_draw_receipt.prompt, "PRESS ENTER") != NULL,
+          "boot startup HUD/menu draw receipt consumes closed-door render-view receipt");
     CHECK(csb_v1_boot_startup_render_plan_from_snapshot_pc34(
               &snapshot,
               &snapshot_render_plan) == 1 &&
@@ -2501,6 +2539,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_decision.post_render_route ==
                   CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34,
           "boot startup host decision consumes utility redraw receipt");
+    CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_action_pc34(
+              &boot_action_receipt,
+              1,
+              &hud_draw_receipt) == 1 &&
+              hud_draw_receipt.valid &&
+              hud_draw_receipt.from_post_input_render_view &&
+              hud_draw_receipt.host_decision_valid &&
+              hud_draw_receipt.host_decision.redraw_startup &&
+              hud_draw_receipt.host_decision.routed_to_utility &&
+              hud_draw_receipt.host_decision.utility_selected_action_index == 1 &&
+              hud_draw_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              hud_draw_receipt.utility_render_plan_valid &&
+              hud_draw_receipt.selected_utility_action_index == 1 &&
+              hud_draw_receipt.utility_render_plan.menu_rows[1].selected,
+          "boot startup HUD/menu draw receipt consumes post-input host decision receipt");
     (void)csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
         &snapshot,
         72,

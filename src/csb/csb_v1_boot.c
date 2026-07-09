@@ -1743,6 +1743,22 @@ void csb_v1_boot_startup_host_decision_receipt_init_pc34(
         CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
 }
 
+void csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
+    CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->kind = CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34;
+    receipt->route = CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+    receipt->selected_command_id =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    receipt->selected_utility_action_index = -1;
+    csb_v1_boot_startup_host_decision_receipt_init_pc34(
+        &receipt->host_decision);
+}
+
 void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt)
 {
@@ -2317,6 +2333,127 @@ int csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
             i == receipt->utility_selected_action_index ? 1 : 0;
     }
     return 1;
+}
+
+int csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
+    const CSB_V1_BootStartupRenderViewReceipt_PC34 *view,
+    CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(out_receipt);
+    if (!view || !view->valid || !view->route_receipt.valid) {
+        return 0;
+    }
+
+    if (view->utility_menu_route) {
+        if (!csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
+                view,
+                &out_receipt->utility_render_plan)) {
+            return 0;
+        }
+        out_receipt->valid = 1;
+        out_receipt->kind = CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34;
+        out_receipt->route = view->route_receipt.route;
+        out_receipt->utility_render_plan_valid = 1;
+        out_receipt->draw_utility_panel = 1;
+        out_receipt->option_count = view->utility_menu_row_count;
+        out_receipt->selected_utility_action_index =
+            view->utility_selected_action_index;
+        snprintf(out_receipt->prompt,
+                 sizeof(out_receipt->prompt),
+                 "%s",
+                 view->utility_prompt);
+        /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 keeps the utility
+         * overlay inside the startup wait loop. Publish a draw-ready receipt
+         * so host render code can consume the CSB utility plan without
+         * reinterpreting utility rows, preview state, or prompt text. */
+        return 1;
+    }
+
+    if (view->closed_door_menu_route) {
+        if (!csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
+                view,
+                &out_receipt->startup_render_plan)) {
+            return 0;
+        }
+        out_receipt->valid = 1;
+        out_receipt->kind = CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34;
+        out_receipt->route = view->route_receipt.route;
+        out_receipt->startup_render_plan_valid = 1;
+        out_receipt->draw_closed_doors = 1;
+        out_receipt->draw_fallback_text =
+            view->route_receipt.draw_fallback_text ? 1 : 0;
+        out_receipt->suppress_legacy_utility_fallback =
+            view->suppress_legacy_utility_fallback ? 1 : 0;
+        out_receipt->option_count = view->closed_door_menu_option_count;
+        out_receipt->selected_command_id =
+            view->closed_door_selected_command_id;
+        out_receipt->resume_enabled =
+            view->closed_door_resume_enabled ? 1 : 0;
+        out_receipt->resume_available =
+            view->closed_door_resume_available ? 1 : 0;
+        out_receipt->resume_option_visible =
+            view->closed_door_resume_option_visible ? 1 : 0;
+        out_receipt->resume_option_selected =
+            view->closed_door_resume_option_selected ? 1 : 0;
+        snprintf(out_receipt->prompt,
+                 sizeof(out_receipt->prompt),
+                 "%s",
+                 view->closed_door_prompt);
+        /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns closed-door
+         * command rows, Resume gating, and the prompt. This draw receipt is
+         * the CSB-owned consumption boundary for the entrance HUD/menu. */
+        return 1;
+    }
+
+    return 0;
+}
+
+int csb_v1_boot_startup_hud_menu_draw_receipt_from_action_pc34(
+    const CSB_V1_BootStartupActionReceipt_PC34 *action,
+    int prefer_post_input_render_view,
+    CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_BootStartupRenderViewReceipt_PC34 *view = NULL;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(out_receipt);
+    if (!action) {
+        return 0;
+    }
+
+    if (prefer_post_input_render_view &&
+        action->post_input_render_view_valid) {
+        view = &action->post_input_render_view;
+        out_receipt->from_post_input_render_view = 1;
+    } else if (action->pre_input_render_view_valid) {
+        view = &action->pre_input_render_view;
+    } else if (action->post_input_render_view_valid) {
+        view = &action->post_input_render_view;
+        out_receipt->from_post_input_render_view = 1;
+    }
+    if (!view ||
+        !csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
+            view,
+            out_receipt)) {
+        return 0;
+    }
+    out_receipt->from_post_input_render_view =
+        view == &action->post_input_render_view ? 1 : 0;
+    if (csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
+            action,
+            &out_receipt->host_decision)) {
+        out_receipt->host_decision_valid = 1;
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 couples startup input
+     * results to the next visible HUD/menu surface. Consume the action's
+     * pre/post render-view receipt and flattened host decision together so
+     * a caller does not have to re-route utility vs entrance draw paths. */
+    return out_receipt->valid;
 }
 
 int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
