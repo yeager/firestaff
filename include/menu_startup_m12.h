@@ -323,8 +323,11 @@ typedef struct {
     int startupMenuReady;
     int startupStepCount;
     int startupStepReadyCount;
+    int startupContractExpected;
+    int startupContractReady;
     const char* nextStepLabel;
     const char* startupPathLabel;
+    const char* startupContractLabel;
     const char* statusLabel;
     const char* detailLabel;
 } M12_StartupBootReadiness;

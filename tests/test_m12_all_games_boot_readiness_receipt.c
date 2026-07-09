@@ -8,6 +8,7 @@ typedef struct {
     const char* statusLabel;
     const char* detailLabel;
     const char* pathLabel;
+    const char* contractLabel;
     int stepCount;
 } ExpectedBootReceipt;
 
@@ -46,11 +47,16 @@ static void mark_game_ready(M12_StartupMenuState* state, int slot, const char* g
 
 int main(void) {
     static const ExpectedBootReceipt expected[] = {
-        {"dm1", "FULL START READY", "SWSH, TITLE, ENTRANCE, HOC", "DM1 FULL START", 6},
-        {"csb", "BOOT READY", "SWSH, TITLE, ENTRANCE, UTILITY", "CSB BOOT PATH", 6},
-        {"dm2", "START MENU READY", "TITLE, SAVE MENU, FIRST HUD", "DM2 START MENU", 5},
-        {"nexus", "TITLE MENU READY", "TITLE, WARNING, SAVE, CHAMPIONS", "NEXUS TITLE MENU", 6},
-        {"theron", "TRACK 02 READY", "TRACK 02, TITLE, STAGE, SOUL ROOM", "THERON TRACK 02", 6},
+        {"dm1", "FULL START READY", "SWSH, TITLE, ENTRANCE, HOC", "DM1 FULL START",
+         "DM1 MEDIA + ENTRANCE + HOC RECEIPTS", 6},
+        {"csb", "BOOT READY", "SWSH, TITLE, ENTRANCE, UTILITY", "CSB BOOT PATH",
+         "CSB STARTUP CAPTURE RECEIPT", 6},
+        {"dm2", "START MENU READY", "TITLE, SAVE MENU, FIRST HUD", "DM2 START MENU",
+         "DM2 STARTUP HOST VIEW RECEIPT", 5},
+        {"nexus", "TITLE MENU READY", "TITLE, WARNING, SAVE, CHAMPIONS", "NEXUS TITLE MENU",
+         "NEXUS FULL START CONSUMER RECEIPT", 6},
+        {"theron", "TRACK 02 READY", "TRACK 02, TITLE, STAGE, SOUL ROOM", "THERON TRACK 02",
+         "THERON FULL START HOST VIEW RECEIPT", 6},
     };
     M12_StartupMenuState state;
     int i;
@@ -68,6 +74,10 @@ int main(void) {
         if (!expect(boot.dataReady == 1, "game data should be ready")) return 1;
         if (!expect(boot.versionReady == 1, "selected version should be ready")) return 1;
         if (!expect(boot.fullStartGraphicsReady == 1, "full-start graphics should be ready")) return 1;
+        if (!expect(boot.startupContractExpected == 1,
+                    "full-start contract should be expected")) return 1;
+        if (!expect(boot.startupContractReady == 1,
+                    "full-start contract should be ready with verified startup")) return 1;
         if (!expect(boot.startupStepCount == expected[i].stepCount,
                     "startup step count should match the game boot path")) return 1;
         if (!expect(boot.startupStepReadyCount == expected[i].stepCount,
@@ -77,6 +87,9 @@ int main(void) {
         if (!expect(boot.startupPathLabel &&
                     strcmp(boot.startupPathLabel, expected[i].pathLabel) == 0,
                     "boot path label should match game")) return 1;
+        if (!expect(boot.startupContractLabel &&
+                    strcmp(boot.startupContractLabel, expected[i].contractLabel) == 0,
+                    "startup contract label should match game-owned receipt")) return 1;
         if (!expect(boot.statusLabel &&
                     strcmp(boot.statusLabel, expected[i].statusLabel) == 0,
                     "status label should match game startup path")) return 1;

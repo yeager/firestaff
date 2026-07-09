@@ -112,6 +112,11 @@ int main(void) {
                 "CSB boot readiness receipt should build")) return 1;
     if (!expect(boot.fullStartGraphicsReady == 1,
                 "CSB boot readiness should report full startup ready")) return 1;
+    if (!expect(boot.startupContractExpected == 1 && boot.startupContractReady == 1,
+                "CSB boot readiness should expose ready startup receipt contract")) return 1;
+    if (!expect(boot.startupContractLabel &&
+                strcmp(boot.startupContractLabel, "CSB STARTUP CAPTURE RECEIPT") == 0,
+                "CSB boot readiness should name the startup receipt contract")) return 1;
     if (!expect(boot.startupStepCount == 6,
                 "CSB boot readiness should expose the full boot chain step count")) return 1;
     if (!expect(boot.startupStepReadyCount == 6,
@@ -166,6 +171,8 @@ int main(void) {
                 "CSB missing-data boot readiness receipt should build")) return 1;
     if (!expect(boot.fullStartGraphicsReady == 0,
                 "CSB missing-data boot readiness should not report full startup ready")) return 1;
+    if (!expect(boot.startupContractExpected == 1 && boot.startupContractReady == 0,
+                "CSB missing-data boot readiness should expect but not satisfy startup receipt contract")) return 1;
     if (!expect(boot.startupStepCount == 6,
                 "CSB missing-data boot readiness should retain full boot chain count")) return 1;
     if (!expect(boot.startupStepReadyCount == 1,
