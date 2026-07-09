@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron external SRM snapshot path interop: save-resume explicit-path import now accepts arbitrary external `.srm` files, decodes them through the same envelope/progression/party receipt path as `slotN.srm`, and records path-only SRM state with slot `-1` instead of dropping the runtime handoff. Verification: `test_theron_v1_startup_save_resume_pc34` 170/170, `firestaff_theron_v1_startup_save_resume_probe` 81/81, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup resume gate receipt: CSB closed-door startup HUD/menu receipts now carry resume option visibility, selection, availability, and save path, so host render/input code can consume a CSB-owned resume gate instead of inferring it from menu text. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 DB4 creature sprite handoff: runtime now scans visible dungeon thing chains for DB4 creatures, routes Creature::CreatureType into the existing GDAT creature map-chip renderer, and records asset/fallback creature draw receipts. Verification: `test_dm2_v1_runtime_handoff_smoke`, `test_dm2_v1_lighting_falloff_boundary`, and `git diff --check` passed.

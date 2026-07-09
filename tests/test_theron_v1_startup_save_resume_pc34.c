@@ -708,9 +708,13 @@ static void test_srm_party_continue_restores_all_champions(void) {
                     "srm party snapshot carries party body receipt");
         {
             Theron_V1StartupSaveResume explicit_snap;
+            Theron_V1StartupSaveResume external_snap;
             Theron_StartupStateReceipt explicit_state_receipt;
+            Theron_StartupStateReceipt external_state_receipt;
             memset(&explicit_snap, 0, sizeof(explicit_snap));
+            memset(&external_snap, 0, sizeof(external_snap));
             memset(&explicit_state_receipt, 0, sizeof(explicit_state_receipt));
+            memset(&external_state_receipt, 0, sizeof(external_state_receipt));
             expect_true(theron_v1_startup_save_resume_apply_explicit_path(
                             &explicit_snap,
                             slot_path,
@@ -737,6 +741,34 @@ static void test_srm_party_continue_restores_all_champions(void) {
                             explicit_state_receipt.save_resume_srm_party_gold ==
                                 777u,
                         "explicit srm party path state receipt carries party body");
+            expect_true(theron_v1_startup_save_resume_apply_explicit_path(
+                            &external_snap,
+                            custom_path,
+                            NULL) == 1,
+                        "external srm party path applies");
+            expect_true(external_snap.srm_first_recognized_slot == -1 &&
+                            external_snap.srm_recognized_slots == 1 &&
+                            external_snap.resume_claim ==
+                                THERON_V1_STARTUP_RESUME_SRM,
+                        "external srm party path is recognized without slot id");
+            expect_true(external_snap.srm_envelope_kind ==
+                            THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY &&
+                            external_snap.srm_party_champion_count ==
+                                THERON_MAX_CHAMPIONS &&
+                            external_snap.srm_party_gold == 777u,
+                        "external srm party path carries party body receipt");
+            expect_true(theron_v1_startup_save_resume_state_receipt(
+                            &external_snap,
+                            1,
+                            &external_state_receipt) == 1 &&
+                            external_state_receipt.save_resume_srm_active_slot ==
+                                -1 &&
+                            external_state_receipt
+                                    .save_resume_srm_party_champion_count ==
+                                THERON_MAX_CHAMPIONS &&
+                            external_state_receipt.save_resume_srm_party_gold ==
+                                777u,
+                        "external srm party state receipt carries party body");
         }
         memset(&snapshot_state_receipt, 0, sizeof(snapshot_state_receipt));
         expect_true(theron_v1_startup_save_resume_state_receipt(
