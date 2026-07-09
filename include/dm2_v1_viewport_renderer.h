@@ -533,6 +533,7 @@ typedef struct {
     int transparent_color;
     int flip_mirror;
     int render_frame;
+    int draw_order;
 } DM2_V1_ProjectileAssetBlit;
 
 typedef struct {
@@ -699,6 +700,14 @@ typedef struct {
     DM2_V1_ItemAssetBlit last_item_asset_blit;
     int asset_projectile_drawn_count;
     int fallback_projectile_drawn_count;
+    int last_projectile_render_valid;
+    int last_projectile_asset_blit_valid;
+    int last_projectile_draw_order;
+    int last_projectile_asset_src_w;
+    int last_projectile_asset_src_h;
+    int last_projectile_asset_src_stride;
+    DM2_V1_ProjectileRender last_projectile_render;
+    DM2_V1_ProjectileAssetBlit last_projectile_asset_blit;
     int asset_hud_portrait_drawn_count;
     int fallback_hud_portrait_drawn_count;
 } DM2_V1_ViewportState;

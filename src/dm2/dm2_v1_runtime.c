@@ -107,6 +107,7 @@ static int g_dm2_last_asset_carried_item_count = 0;
 static int g_dm2_last_fallback_carried_item_count = 0;
 static int g_dm2_last_asset_projectile_count = 0;
 static int g_dm2_last_fallback_projectile_count = 0;
+static DM2_V1_RuntimeProjectileRenderReceipt g_dm2_last_projectile_render;
 static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
 
@@ -1210,6 +1211,77 @@ static void dm2_runtime_finish_item_render_receipt(
     g_dm2_last_item_render.asset_dst_rect = blit->dst_rect;
 }
 
+static void dm2_runtime_finish_projectile_render_receipt(
+    const DM2_V1_ViewportState *viewport)
+{
+    const DM2_V1_ProjectileRender *render;
+    const DM2_V1_ProjectileAssetBlit *blit;
+
+    memset(&g_dm2_last_projectile_render, 0,
+           sizeof(g_dm2_last_projectile_render));
+    if (!viewport || !viewport->last_projectile_render_valid) {
+        return;
+    }
+
+    render = &viewport->last_projectile_render;
+    g_dm2_last_projectile_render.valid = 1;
+    g_dm2_last_projectile_render.projectile_index =
+        render->projectile_index;
+    g_dm2_last_projectile_render.projectile_category =
+        render->projectile_category;
+    g_dm2_last_projectile_render.projectile_type =
+        render->projectile_type;
+    g_dm2_last_projectile_render.frame_index = render->frame_index;
+    g_dm2_last_projectile_render.direction = render->direction;
+    g_dm2_last_projectile_render.object_direction =
+        render->object_direction;
+    g_dm2_last_projectile_render.frame_class = render->frame_class;
+    g_dm2_last_projectile_render.render_kind = render->render_kind;
+    g_dm2_last_projectile_render.depth = render->depth;
+    g_dm2_last_projectile_render.center_x = render->center_x;
+    g_dm2_last_projectile_render.center_y = render->center_y;
+    g_dm2_last_projectile_render.gdat_index = render->gdat_index;
+    g_dm2_last_projectile_render.draw_order =
+        viewport->last_projectile_draw_order;
+    g_dm2_last_projectile_render.flip_mirror = render->flip_mirror;
+    g_dm2_last_projectile_render.cloud_flip_from_seed =
+        render->cloud_flip_from_seed;
+    g_dm2_last_projectile_render.fallback_dx = render->fallback_dx;
+    g_dm2_last_projectile_render.fallback_dy = render->fallback_dy;
+    g_dm2_last_projectile_render.fallback_len = render->fallback_len;
+
+    if (!viewport->last_projectile_asset_blit_valid ||
+        viewport->last_projectile_asset_blit.draw_order !=
+            viewport->last_projectile_draw_order) {
+        /* skproject SKWIN/SkWinCore.cpp lines 10672-10750 route missiles
+         * and clouds through QUERY_DUNGEON_MAP_CHIP_PICT then
+         * DRAW_CHIP_OF_MAGIC_MAP. Keep the final asset/fallback decision
+         * in this DM2-owned receipt instead of host-side counter inference. */
+        g_dm2_last_projectile_render.fallback_drawn = 1;
+        return;
+    }
+
+    blit = &viewport->last_projectile_asset_blit;
+    g_dm2_last_projectile_render.asset_blit_ready = 1;
+    g_dm2_last_projectile_render.asset_src_w =
+        viewport->last_projectile_asset_src_w;
+    g_dm2_last_projectile_render.asset_src_h =
+        viewport->last_projectile_asset_src_h;
+    g_dm2_last_projectile_render.asset_src_stride =
+        viewport->last_projectile_asset_src_stride;
+    g_dm2_last_projectile_render.asset_frame_count =
+        dm2_v1_viewport_map_chip_frame_count(
+            viewport->last_projectile_asset_src_w,
+            viewport->last_projectile_asset_src_h);
+    g_dm2_last_projectile_render.render_frame = blit->render_frame;
+    g_dm2_last_projectile_render.flip_mirror = blit->flip_mirror;
+    g_dm2_last_projectile_render.atlas_frame_x = blit->frame_x;
+    g_dm2_last_projectile_render.atlas_frame_y = blit->frame_y;
+    g_dm2_last_projectile_render.atlas_frame_w = blit->frame_w;
+    g_dm2_last_projectile_render.atlas_frame_h = blit->frame_h;
+    g_dm2_last_projectile_render.asset_dst_rect = blit->dst_rect;
+}
+
 static void dm2_runtime_populate_active_creature_instances(
     const DM2_V1_RuntimeState *rt,
     DM2_V1_ViewportState *viewport,
@@ -1635,6 +1707,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
 
     memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
     memset(&g_dm2_last_item_render, 0, sizeof(g_dm2_last_item_render));
+    memset(&g_dm2_last_projectile_render, 0,
+           sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
     dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
     dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
@@ -1665,6 +1739,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_finish_door_render_receipt(&viewport);
     dm2_runtime_finish_creature_render_receipt(&viewport);
     dm2_runtime_finish_item_render_receipt(&viewport);
+    dm2_runtime_finish_projectile_render_receipt(&viewport);
     g_dm2_last_asset_floor_ceiling_count =
         viewport.asset_floor_ceiling_drawn_count;
     g_dm2_last_fallback_floor_ceiling_count =
@@ -1823,6 +1898,16 @@ int dm2_v1_runtime_last_asset_projectile_count(void) {
 
 int dm2_v1_runtime_last_fallback_projectile_count(void) {
     return g_dm2_last_fallback_projectile_count;
+}
+
+int dm2_v1_runtime_last_projectile_render_receipt(
+    DM2_V1_RuntimeProjectileRenderReceipt *out_receipt) {
+    if (!out_receipt || !g_dm2_last_projectile_render.valid) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    *out_receipt = g_dm2_last_projectile_render;
+    return 1;
 }
 
 int dm2_v1_runtime_last_asset_hud_portrait_count(void) {

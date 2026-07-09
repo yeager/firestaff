@@ -1475,6 +1475,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         DM2_V1_ItemAssetBlit direct_item_blit;
         DM2_V1_ProjectileRender direct_projectile;
         DM2_V1_ProjectileAssetBlit direct_blit;
+        DM2_V1_RuntimeProjectileRenderReceipt projectile_receipt;
         uint32_t direct_seed = 0x12345678u;
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
@@ -1653,6 +1654,30 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(dm2_v1_runtime_last_asset_projectile_count() == 1 &&
               dm2_v1_runtime_last_fallback_projectile_count() == 0,
               "runtime records asset-backed projectile draw");
+        CHECK(dm2_v1_runtime_last_projectile_render_receipt(
+                  &projectile_receipt) == 1 &&
+              projectile_receipt.projectile_category == 0x0d &&
+              projectile_receipt.projectile_type ==
+                  DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL &&
+              projectile_receipt.frame_class ==
+                  DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL &&
+              projectile_receipt.render_kind ==
+                  DM2_V1_PROJECTILE_RENDER_MISSILE &&
+              projectile_receipt.center_x == 112 &&
+              projectile_receipt.center_y == 84 &&
+              projectile_receipt.draw_order == 0 &&
+              projectile_receipt.asset_blit_ready == 1 &&
+              projectile_receipt.fallback_drawn == 0 &&
+              projectile_receipt.asset_src_w == 16 &&
+              projectile_receipt.asset_src_h == 8 &&
+              projectile_receipt.asset_frame_count == 2 &&
+              projectile_receipt.atlas_frame_w == 8 &&
+              projectile_receipt.atlas_frame_h == 8 &&
+              projectile_receipt.asset_dst_rect.x == 109 &&
+              projectile_receipt.asset_dst_rect.y == 81 &&
+              projectile_receipt.asset_dst_rect.w == 6 &&
+              projectile_receipt.asset_dst_rect.h == 6,
+              "runtime projectile receipt exposes GDAT missile map-chip blit");
         CHECK(framebuffer[(84 * 320) + 112] == 13,
               "runtime projects the projectile to the depth-1 first-person row");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
