@@ -1442,6 +1442,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupMediaStateReceipt media_receipt;
     Theron_StartupLayoutElement media_layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
     Theron_StartupRenderPlan media_plan;
+    Theron_V1_BootStartupRenderRouteReceipt render_route_receipt;
     Theron_StartupAction media_pointer_action;
     Theron_StartupInputReceipt media_pointer_receipt;
     Theron_StartupAction media_input_action;
@@ -1689,6 +1690,19 @@ static void test_startup_session_facts_wrappers(void) {
                     media_plan.text_count ==
                         media_view_model.render_plan.text_count,
                 "boot startup render-plan consumer uses view model receipt");
+    expect_true(theron_v1_boot_startup_render_route_receipt_from_view_model(
+                    &media_view_model,
+                    &render_route_receipt) &&
+                    render_route_receipt.startup_menu_render_allowed &&
+                    render_route_receipt.render_plan_valid &&
+                    render_route_receipt.render_plan.text_count ==
+                        media_view_model.render_plan.text_count &&
+                    render_route_receipt.state_receipt_valid &&
+                    render_route_receipt.runtime_level_render_allowed &&
+                    render_route_receipt.fallback_visuals_allowed &&
+                    strcmp(render_route_receipt.status,
+                           "THERON RUNTIME READY") == 0,
+                "boot startup render route receipt carries startup menu and runtime-ready facts");
     memset(&state_receipt, 0, sizeof(state_receipt));
     expect_true(theron_v1_boot_startup_state_receipt_from_view_model(
                     &media_view_model,
@@ -1750,6 +1764,22 @@ static void test_startup_session_facts_wrappers(void) {
                     state_receipt.runtime_fallback_visuals_blocked == 1 &&
                     !state_receipt.set_level_loaded,
                 "boot startup state receipt blocks Track02 fallback visuals without marking a level loaded");
+    expect_true(theron_v1_boot_startup_render_route_receipt_from_snapshot_with_media_receipt(
+                    &blocked_snapshot,
+                    &media_receipt,
+                    &render_route_receipt) &&
+                    render_route_receipt.startup_menu_render_allowed &&
+                    render_route_receipt.render_plan_valid &&
+                    render_route_receipt.state_receipt_valid &&
+                    render_route_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
+                    render_route_receipt.runtime_fallback_visuals_blocked == 1 &&
+                    !render_route_receipt.runtime_level_render_allowed &&
+                    !render_route_receipt.fallback_visuals_allowed &&
+                    !render_route_receipt.state_receipt.set_level_loaded &&
+                    strcmp(render_route_receipt.status,
+                           "TRACK02 RUNTIME BLOCKED") == 0,
+                "boot startup render route receipt blocks Track02 level fallback visuals");
     media_layout_roster_found = 0;
     expect_true(theron_v1_boot_startup_layout_build_from_view_model(
                     &media_view_model,

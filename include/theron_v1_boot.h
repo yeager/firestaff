@@ -323,6 +323,21 @@ typedef struct Theron_V1_BootStartupViewModel {
     Theron_StartupMediaStateReceipt startup_media_state_receipt;
 } Theron_V1_BootStartupViewModel;
 
+typedef struct Theron_V1_BootStartupRenderRouteReceipt {
+    int startup_menu_render_allowed;
+    int runtime_level_render_allowed;
+    int fallback_visuals_allowed;
+    int render_plan_valid;
+    Theron_StartupRenderPlan render_plan;
+    int state_receipt_valid;
+    Theron_StartupStateReceipt state_receipt;
+    int runtime_level_source;
+    int runtime_track02_semantic_handoff;
+    int runtime_fallback_visuals_blocked;
+    const char *status_scope;
+    const char *status;
+} Theron_V1_BootStartupRenderRouteReceipt;
+
 int theron_v1_boot_prepare_startup_profile(
     Theron_V1_BootProfile *profile,
     const char *data_dir,
@@ -598,6 +613,15 @@ int theron_v1_boot_startup_render_rows_from_view_model(
 int theron_v1_boot_startup_render_plan_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_StartupRenderPlan *out_plan);
+void theron_v1_boot_startup_render_route_receipt_init(
+    Theron_V1_BootStartupRenderRouteReceipt *receipt);
+int theron_v1_boot_startup_render_route_receipt_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_V1_BootStartupRenderRouteReceipt *out_receipt);
+int theron_v1_boot_startup_render_route_receipt_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_V1_BootStartupRenderRouteReceipt *out_receipt);
 int theron_v1_boot_startup_state_receipt_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_StartupStateReceipt *out_receipt);
