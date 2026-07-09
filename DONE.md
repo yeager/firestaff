@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+
+- ✅ 2026-07-09 DM2 DB0 door render receipt: runtime now exposes the first door render-plan row with view square, skproject cell, state/open percent, panel/ornate/destroyed-mask/frame/button GDAT indices, so DB0 door-table handoff is inspectable without reading framebuffer pixels. Verification: `test_dm2_v1_runtime_handoff_smoke`, `test_dm2_v1_lighting_falloff_boundary`, and `git diff --check` passed.
 - ✅ 2026-07-09 CSB title stage render receipt: CSB startup render-view receipts now expose post-FTL title stage, source step, frame bounds, and PRESENTS/CHAOS/STRIKES BACK visibility bits from the ReDMCSB title sequence. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron slot SRM apply/state receipt helper: regular `slotN.srm` Continue now exposes direct apply and state receipts with SRM source, slot index, import status, dungeon, quest, party count, gold, and runtime-reset proof while the host wrapper remains a thin adapter. Verification: `test_theron_v1_startup_save_resume_pc34` 173/173, `firestaff_theron_v1_startup_save_resume_probe` 103/103, and `git diff --check` passed.

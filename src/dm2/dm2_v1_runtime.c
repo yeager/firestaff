@@ -96,6 +96,7 @@ static int g_dm2_last_asset_door_overlay_count = 0;
 static int g_dm2_last_asset_door_frame_count = 0;
 static int g_dm2_last_asset_door_button_count = 0;
 static int g_dm2_last_fallback_door_count = 0;
+static DM2_V1_RuntimeDoorRenderReceipt g_dm2_last_door_render;
 static int g_dm2_last_asset_creature_count = 0;
 static int g_dm2_last_fallback_creature_count = 0;
 static DM2_V1_RuntimeCreatureRenderReceipt g_dm2_last_creature_render;
@@ -372,6 +373,39 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
                 rt->map_door_gfx_list, door);
         }
     }
+}
+
+static void dm2_runtime_capture_door_render_receipt(
+    const DM2_V1_ViewportState *viewport)
+{
+    DM2_V1_DoorRenderPlan plan;
+
+    memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
+    if (!viewport ||
+        !dm2_v1_viewport_build_door_render_plan(viewport, &plan) ||
+        plan.door_count <= 0) {
+        return;
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_TILE routes the populated
+     * center-cell DB0 door facts into panel, frame, button, ornate, and
+     * destroyed-mask GDAT lookups.  This receipt captures the first bounded
+     * render-row chosen by Firestaff immediately before the draw pass. */
+    g_dm2_last_door_render.valid = 1;
+    g_dm2_last_door_render.view_square = plan.doors[0].view_square;
+    g_dm2_last_door_render.skproject_cell = plan.doors[0].skproject_cell;
+    g_dm2_last_door_render.door_state = plan.doors[0].door_state;
+    g_dm2_last_door_render.door_open_pct = plan.doors[0].door_open_pct;
+    g_dm2_last_door_render.panel_gdat_index =
+        plan.doors[0].panel_gdat_index;
+    g_dm2_last_door_render.ornate_gdat_index =
+        plan.doors[0].ornate_gdat_index;
+    g_dm2_last_door_render.destroyed_mask_gdat_index =
+        plan.doors[0].destroyed_mask_gdat_index;
+    g_dm2_last_door_render.frame_gdat_index =
+        plan.doors[0].frame_gdat_index;
+    g_dm2_last_door_render.button_gdat_index =
+        plan.doors[0].button_gdat_index;
 }
 
 static int dm2_runtime_set_target_door_state(DM2_V1_RuntimeState *rt,
@@ -1339,6 +1373,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     }
 
     memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
+    memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
     dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
     dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
     dm2_v1_viewport_set_level(&viewport, rt->dungeon_level);
@@ -1362,6 +1397,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);
+    dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
     g_dm2_last_asset_floor_ceiling_count =
@@ -1460,6 +1496,16 @@ int dm2_v1_runtime_last_asset_door_button_count(void) {
 
 int dm2_v1_runtime_last_fallback_door_count(void) {
     return g_dm2_last_fallback_door_count;
+}
+
+int dm2_v1_runtime_last_door_render_receipt(
+    DM2_V1_RuntimeDoorRenderReceipt *out_receipt) {
+    if (!out_receipt || !g_dm2_last_door_render.valid) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    *out_receipt = g_dm2_last_door_render;
+    return 1;
 }
 
 int dm2_v1_runtime_last_asset_carried_item_count(void) {

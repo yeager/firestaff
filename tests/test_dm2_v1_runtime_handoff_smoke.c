@@ -980,6 +980,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                 dm2_v1_dungeon_load(replacement, fixture, (int)fixture_size) == 0) {
                 DM2_V1_DungeonData *old_dd =
                     (DM2_V1_DungeonData *)profile.dungeon_data;
+                DM2_V1_RuntimeDoorRenderReceipt door_receipt;
                 dm2_v1_dungeon_free(old_dd);
                 free(old_dd);
                 profile.dungeon_data = replacement;
@@ -1007,6 +1008,23 @@ static void test_first_tick_after_boot_profile_handoff(void)
                           dm2_v1_viewport_door_panel_graphic_index_for_record(
                               DM2_SQ_D0C, 7, 1),
                       "runtime DB0 door type selects level door-set GDAT panel");
+                CHECK(dm2_v1_runtime_last_door_render_receipt(&door_receipt) == 1 &&
+                      door_receipt.view_square == DM2_SQ_D0C &&
+                      door_receipt.skproject_cell == 0 &&
+                      door_receipt.door_state == 4 &&
+                      door_receipt.door_open_pct == 0 &&
+                      door_receipt.panel_gdat_index ==
+                          dm2_v1_viewport_door_panel_graphic_index_for_record(
+                              DM2_SQ_D0C, 7, 1) &&
+                      door_receipt.ornate_gdat_index ==
+                          dm2_v1_viewport_door_ornate_graphic_index(2, DM2_SQ_D0C) &&
+                      door_receipt.destroyed_mask_gdat_index == 0 &&
+                      door_receipt.frame_gdat_index ==
+                          dm2_v1_viewport_door_frame_graphic_index_for_square(
+                              DM2_SQ_D0C) &&
+                      door_receipt.button_gdat_index ==
+                          dm2_v1_viewport_door_button_graphic_index_for_state(1),
+                      "runtime DB0 closed door render receipt exposes GDAT table row");
                 CHECK(dm2_v1_runtime_last_asset_door_overlay_count() == 1,
                       "runtime DB0 ornate draws through door overlay asset");
                 CHECK(set_door_state_preserve_tile(
@@ -1095,6 +1113,15 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       dm2_v1_runtime_last_asset_door_overlay_count() == 2 &&
                       dm2_v1_runtime_last_asset_door_frame_count() == 1,
                       "runtime DB0 destroyed door skips panel and draws overlay masks");
+                CHECK(dm2_v1_runtime_last_door_render_receipt(&door_receipt) == 1 &&
+                      door_receipt.door_state == 5 &&
+                      door_receipt.door_open_pct == 100 &&
+                      door_receipt.ornate_gdat_index ==
+                          dm2_v1_viewport_door_ornate_graphic_index(2, DM2_SQ_D0C) &&
+                      door_receipt.destroyed_mask_gdat_index ==
+                          dm2_v1_viewport_door_destroyed_mask_graphic_index(
+                              7, DM2_SQ_D0C),
+                      "runtime DB0 destroyed door render receipt exposes mask row");
                 dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
             } else {
                 CHECK(0, "runtime door-record fixture loads");

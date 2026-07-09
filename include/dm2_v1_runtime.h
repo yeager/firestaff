@@ -88,6 +88,20 @@ int dm2_v1_runtime_last_asset_door_overlay_count(void);
 int dm2_v1_runtime_last_asset_door_frame_count(void);
 int dm2_v1_runtime_last_asset_door_button_count(void);
 int dm2_v1_runtime_last_fallback_door_count(void);
+typedef struct DM2_V1_RuntimeDoorRenderReceipt {
+    int valid;
+    int view_square;
+    int skproject_cell;
+    int door_state;
+    int door_open_pct;
+    int panel_gdat_index;
+    int ornate_gdat_index;
+    int destroyed_mask_gdat_index;
+    int frame_gdat_index;
+    int button_gdat_index;
+} DM2_V1_RuntimeDoorRenderReceipt;
+int dm2_v1_runtime_last_door_render_receipt(
+    DM2_V1_RuntimeDoorRenderReceipt *out_receipt);
 int dm2_v1_runtime_last_asset_carried_item_count(void);
 int dm2_v1_runtime_last_fallback_carried_item_count(void);
 typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
