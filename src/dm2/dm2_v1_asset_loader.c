@@ -688,8 +688,15 @@ int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
 
 const uint8_t *dm2_v1_asset_load(const DM2_V1_AssetLoader *loader,
                                    int category, int index, int field) {
+    return dm2_v1_asset_load_sized(loader, category, index, field, NULL);
+}
+
+const uint8_t *dm2_v1_asset_load_sized(const DM2_V1_AssetLoader *loader,
+                                        int category, int index, int field,
+                                        size_t *out_size) {
     uint16_t i;
 
+    if (out_size) *out_size = 0;
     if (!loader || !loader->loaded || !loader->entries ||
         !loader->raw_offsets || !loader->raw_sizes) {
         return NULL;
@@ -713,6 +720,7 @@ const uint8_t *dm2_v1_asset_load(const DM2_V1_AssetLoader *loader,
             loader->raw_sizes[raw_index] > loader->data_size) {
             return NULL;
         }
+        if (out_size) *out_size = loader->raw_sizes[raw_index];
         return loader->data + loader->raw_offsets[raw_index];
     }
     return NULL;
