@@ -62,6 +62,25 @@ typedef struct {
     const char *source_lines;
 } DM1_V1_D2L2D2R2F0115ThingPassPc34;
 
+typedef struct {
+    int valid;
+    int input_valid;
+    int side;
+    int view_square_index;
+    int thing_type;
+    int attempted_cell_order;
+    int rejected_borrowed_d2c_order;
+    int f0115_call_suppressed;
+    int suppress_item;
+    int suppress_projectile;
+    int suppress_creature;
+    int suppress_explosion;
+    int suppress_non_thing_payload;
+    int consumes_runtime_thing_layer;
+    int must_not_materialize_thing;
+    const char *source_anchor;
+} DM1_V1_D2L2D2R2F0115RuntimeSuppressReceiptPc34;
+
 void dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_init_pc34(void);
 
 size_t dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_count_pc34(void);
@@ -86,6 +105,12 @@ int dm1_v1_viewport_d2l2_d2r2_f0115_creature_zone_pc34(
 
 int dm1_v1_viewport_d2l2_d2r2_f0115_explosion_zone_pc34(
     const DM1_V1_D2L2D2R2F0115ThingPassPc34 *fixture);
+
+int dm1_v1_viewport_d2l2_d2r2_f0115_runtime_suppress_receipt_pc34(
+    const DM1_V1_D2L2D2R2F0115ThingPassPc34 *fixture,
+    int thing_type,
+    int attempted_cell_order,
+    DM1_V1_D2L2D2R2F0115RuntimeSuppressReceiptPc34 *out_receipt);
 
 const char *dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_source_evidence_pc34(void);
 
