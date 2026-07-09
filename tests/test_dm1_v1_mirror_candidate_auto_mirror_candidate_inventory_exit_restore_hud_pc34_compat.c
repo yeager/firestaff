@@ -97,10 +97,10 @@ static int g_failures = 0;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudEvidencePc34 *e =
-        dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_evidence_pc34();
+    const DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudEvidencePc34 *e =
+        DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_EvidencePc34();
     const char *source =
-        dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_source_evidence_pc34();
+        DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_SourceEvidencePc34();
 
     CHECK("evidence_not_null", e != NULL ? 1 : 0, 1,
           "metadata accessor returns non-NULL");
@@ -195,10 +195,10 @@ static void test_source_lock_metadata(void)
 
 static void test_initial_state(void)
 {
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
 
     memset(&state, 0, sizeof(state));
-    dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_init_pc34(&state);
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_InitPc34(&state);
 
     CHECK("init.party_champion_count", state.partyChampionCount, 4,
           "DEFS.H party champion count");
@@ -339,14 +339,14 @@ static void test_initial_state(void)
 
 static void test_run_through_all_steps(void)
 {
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
 
     memset(&state, 0, sizeof(state));
     memset(&result, 0, sizeof(result));
-    dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_init_pc34(&state);
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_InitPc34(&state);
 
-    CHECK("run.accepted", dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_run_pc34(&state, &result), 1,
+    CHECK("run.accepted", DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_RunPc34(&state, &result), 1,
           "run_pc34 accepts the live->exit->reopen->post transition");
 
     /* Step machine reached all three downstream steps. */
@@ -654,13 +654,13 @@ static void test_run_through_all_steps(void)
 
 static void test_disjoint_contract(void)
 {
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
 
     memset(&state, 0, sizeof(state));
     memset(&result, 0, sizeof(result));
-    dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_init_pc34(&state);
-    dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_run_pc34(&state, &result);
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_InitPc34(&state);
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_RunPc34(&state, &result);
 
     /* Disjoint from the existing panel_redraw_after_inventory_exit gate. */
     CHECK("disjoint.contract_only", result.disjoint.contractOnly, 1,
@@ -843,70 +843,70 @@ static void test_disjoint_contract(void)
 
 static void test_rejects_without_candidate(void)
 {
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
 
     memset(&state, 0, sizeof(state));
     memset(&result, 0, sizeof(result));
-    dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_init_pc34(&state);
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_InitPc34(&state);
 
     /* Drop the candidate. */
     state.g0299CandidateOrdinal = 0;
     state.c040PanelOpen = 0;
 
     CHECK("rejects.run_pc34_returns_zero",
-          dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_run_pc34(&state, &result), 0,
+          DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_RunPc34(&state, &result), 0,
           "without a live C040 candidate the close path is not the auto-mirror lane");
 }
 
 static void test_rejects_without_c040_panel_open(void)
 {
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
 
     memset(&state, 0, sizeof(state));
     memset(&result, 0, sizeof(result));
-    dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_init_pc34(&state);
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_InitPc34(&state);
 
     /* Close the C040 panel. */
     state.c040PanelOpen = 0;
 
     CHECK("rejects.no_c040_panel.run_pc34_returns_zero",
-          dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_run_pc34(&state, &result), 0,
+          DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_RunPc34(&state, &result), 0,
           "without a C040 panel open the lane is the food/water lane, not the auto-mirror lane");
 }
 
 static void test_rejects_with_invalid_inventory_champion(void)
 {
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
 
     memset(&state, 0, sizeof(state));
     memset(&result, 0, sizeof(result));
-    dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_init_pc34(&state);
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_InitPc34(&state);
 
     /* Drop the inventory champion ordinal to CM1_CHAMPION_NONE. */
     state.inventoryChampionOrdinal = DM1_V1_MC_AMCIERH_CHAMPION_NONE_PC34;
 
     CHECK("rejects.no_inventory_champion.run_pc34_returns_zero",
-          dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_run_pc34(&state, &result), 0,
+          DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_RunPc34(&state, &result), 0,
           "without an inventory champion the close path cannot fire F0334/F0292 in the right scope");
 }
 
 static void test_rejects_null_arguments(void)
 {
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 state;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 result;
 
     memset(&state, 0, sizeof(state));
     memset(&result, 0, sizeof(result));
-    dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_init_pc34(&state);
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_InitPc34(&state);
 
     CHECK("rejects.null_state",
-          dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_run_pc34(NULL, &result), 0,
+          DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_RunPc34(NULL, &result), 0,
           "null state must reject");
     CHECK("rejects.null_result",
-          dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_run_pc34(&state, NULL), 0,
+          DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_RunPc34(&state, NULL), 0,
           "null result must reject");
 }
 

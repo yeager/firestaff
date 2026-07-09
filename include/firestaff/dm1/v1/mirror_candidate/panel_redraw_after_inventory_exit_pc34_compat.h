@@ -123,7 +123,7 @@ typedef struct {
     const char *commandQueueAnchor;
     const char *defsAnchor;
     const char *contractScope;
-} Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34;
+} DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34;
 
 typedef struct {
     int contractOnly;
@@ -200,7 +200,7 @@ typedef struct {
     int disjointFromMirrorCandidateChestCloseLeaderHandPickup;
     int disjointFromMirrorCandidateChestOpenDuringPending;
     int disjointFromInventoryChampionSwitchHandCarry;
-} Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitDisjointPc34;
+} DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitDisjointPc34;
 
 typedef struct {
     /* Spec metadata. */
@@ -308,7 +308,7 @@ typedef struct {
     uint32_t stateHashAfterExit;
     uint32_t stateHashAfterReopen;
     uint32_t stateHashAfterPost;
-} Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34;
+} DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34;
 
 typedef struct {
     /* Step transition results. */
@@ -397,7 +397,7 @@ typedef struct {
     int noChestOpen;
 
     /* Disjoint contract. */
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitDisjointPc34 disjoint;
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitDisjointPc34 disjoint;
 
     /* Hashes. */
     uint32_t c030ChainHashLive;
@@ -414,22 +414,40 @@ typedef struct {
     uint32_t panelHashAfterReopen;
     uint32_t panelHashAfterPost;
     uint32_t deterministicHash;
-} Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitResultPc34;
+} DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitResultPc34;
 
-void dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_init_pc34(
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *state);
+void DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_InitPc34(
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *state);
 
-int dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_run_pc34(
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *state,
-    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitResultPc34 *result);
+int DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_RunPc34(
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34 *state,
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitResultPc34 *result);
 
-const Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34 *
-dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_evidence_pc34(
+const DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34 *
+DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_EvidencePc34(
     void);
 
 const char *
-dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_source_evidence_pc34(
+DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_SourceEvidencePc34(
     void);
+
+typedef DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34
+    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitEvidencePc34;
+typedef DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitDisjointPc34
+    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitDisjointPc34;
+typedef DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitStatePc34
+    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitStatePc34;
+typedef DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExitResultPc34
+    Dm1V1MirrorCandidatePanelRedrawAfterInventoryExitResultPc34;
+
+#define dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_init_pc34 \
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_InitPc34
+#define dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_run_pc34 \
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_RunPc34
+#define dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_evidence_pc34 \
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_EvidencePc34
+#define dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_source_evidence_pc34 \
+    DM1_V1_MirrorCandidatePanelRedrawAfterInventoryExit_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

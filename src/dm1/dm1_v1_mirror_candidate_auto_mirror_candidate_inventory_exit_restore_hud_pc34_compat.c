@@ -133,7 +133,7 @@ static const char s_source_evidence[] =
     "clock-tick / food-water-recompute / name-box-clip / dead-member-"
     "hand-refresh / spell-area-clear-on-inventory gates.";
 
-static const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudEvidencePc34
+static const DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudEvidencePc34
     s_evidence = {
         "DEFS.H:3793 C175_ZONE_FIRST_CHAMPION_STATUS_BOX; C151..C154 are "
         "the four champion status box zones; DEFS.H:2157 "
@@ -198,14 +198,14 @@ static const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudEvide
         "must remain byte-identical across the exit and the reopen"
     };
 
-const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudEvidencePc34 *
-dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_evidence_pc34(void)
+const DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudEvidencePc34 *
+DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_EvidencePc34(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_source_evidence_pc34(
+DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_SourceEvidencePc34(
     void)
 {
     return s_source_evidence;
@@ -223,7 +223,7 @@ static uint32_t hash_step(uint32_t hash, unsigned int value)
 }
 
 static void mark_disjoint(
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudDisjointPc34 *d)
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudDisjointPc34 *d)
 {
     if (!d) {
         return;
@@ -329,7 +329,7 @@ static int in_range(int value, int low, int high)
 }
 
 static uint32_t compute_c030_chain_hash(
-    const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+    const DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     uint32_t hash;
     int i;
@@ -367,7 +367,7 @@ static uint32_t compute_c030_chain_hash(
  * are stable, the hash is stable. This is the contract-only invariant
  * that the close path must preserve. */
 static uint32_t compute_hud_overlay_hash(
-    const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+    const DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     uint32_t hash;
     int i;
@@ -423,7 +423,7 @@ static uint32_t compute_hud_overlay_hash(
 }
 
 static uint32_t compute_candidate_chain_hash(
-    const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+    const DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     uint32_t hash;
 
@@ -444,7 +444,7 @@ static uint32_t compute_candidate_chain_hash(
 }
 
 static uint32_t compute_chest_list_hash(
-    const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+    const DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     uint32_t hash;
     int i;
@@ -461,7 +461,7 @@ static uint32_t compute_chest_list_hash(
 }
 
 static uint32_t compute_panel_hash(
-    const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+    const DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     uint32_t hash;
 
@@ -479,7 +479,7 @@ static uint32_t compute_panel_hash(
 }
 
 static uint32_t compute_deterministic_hash(
-    const Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s,
+    const DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s,
     uint32_t c030, uint32_t hud, uint32_t candidate, uint32_t chest, uint32_t panel)
 {
     uint32_t hash;
@@ -499,7 +499,7 @@ static uint32_t compute_deterministic_hash(
 }
 
 static void seed_default_hud_state(
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     int i;
 
@@ -534,8 +534,8 @@ static void seed_default_hud_state(
     s->eyePressed = 0;
 }
 
-void dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_init_pc34(
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+void DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_InitPc34(
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     if (!s) {
         return;
@@ -634,7 +634,7 @@ void dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_in
 }
 
 static int run_exit_step(
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     if (!s) {
         return 0;
@@ -722,7 +722,7 @@ static int run_exit_step(
 }
 
 static int run_reopen_step(
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     if (!s) {
         return 0;
@@ -782,7 +782,7 @@ static int run_reopen_step(
 }
 
 static int run_post_step(
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *s)
 {
     if (!s) {
         return 0;
@@ -815,11 +815,11 @@ static int run_post_step(
     return 1;
 }
 
-int dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_run_pc34(
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *state,
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 *result)
+int DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHud_RunPc34(
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 *state,
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudResultPc34 *result)
 {
-    Dm1V1MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 live;
+    DM1_V1_MirrorCandidateAutoMirrorCandidateInventoryExitRestoreHudStatePc34 live;
     uint32_t liveC030ChainHash;
     uint32_t liveHudOverlayHash;
     uint32_t liveCandidateChainHash;
