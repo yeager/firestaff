@@ -1,6 +1,8 @@
 #ifndef NEXUS_V1_UI_SURFACES_H
 #define NEXUS_V1_UI_SURFACES_H
 #include <stdint.h>
+#include <stddef.h>
+#include "nexus_v1_bpk_archive.h"
 
 /* Nexus V1 UI / Title Surface Renderer
  * ===================================
@@ -58,6 +60,27 @@ typedef struct {
     Nexus_UI_Surface surfaces[NEXUS_SURFACE_COUNT];
 } Nexus_UI_Manager;
 
+typedef enum {
+    NEXUS_UI_BPK_IMPORT_OK = 0,
+    NEXUS_UI_BPK_IMPORT_ERR_NULL = -1,
+    NEXUS_UI_BPK_IMPORT_ERR_NOT_READY = -2,
+    NEXUS_UI_BPK_IMPORT_ERR_EXTRACT = -3,
+    NEXUS_UI_BPK_IMPORT_ERR_LOAD = -4
+} Nexus_UI_BpkImportStatus;
+
+typedef struct {
+    int loaded;
+    int blocked_prs3;
+    int blocked_truncated;
+    int blocked_not_ready;
+    uint32_t entry_index;
+    uint32_t payload_offset;
+    uint32_t bytes_loaded;
+    int width;
+    int height;
+    Nexus_V1_BpkSurfaceClass surface_class;
+} Nexus_UI_BpkImportReceipt;
+
 typedef struct {
     int valid;
     int header_size;
@@ -96,6 +119,16 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     int w, int h,
     uint8_t pal_start, uint8_t pal_count,
     const char *source);
+
+int nexus_ui_load_bpk_runtime_surface(Nexus_UI_Manager *mgr,
+    Nexus_UISurfaceType which,
+    const uint8_t *archive_data, size_t archive_size,
+    const Nexus_V1_BpkRuntimeSurfaceHandoff *handoff,
+    uint8_t pal_start, uint8_t pal_count,
+    const char *source,
+    Nexus_UI_BpkImportReceipt *out_receipt);
+
+const char *nexus_ui_bpk_import_status_name(int status);
 
 /* Load TITLE.CG (164 KB) as the title screen.
  * Expects data[0..163839] = indexed image (320×200 or larger).
