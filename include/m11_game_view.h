@@ -884,6 +884,29 @@ int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
     int* outHallOverlayKind,
     int* outRenderCommandCount,
     int* outRuntimeRouteUsesReceipt);
+int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
+    int* outReady,
+    int* outConsumedProductionConsumer,
+    int* outConsumedRenderConsumer,
+    int* outConsumeDm1ReceiptsOnly,
+    int* outNoM11FallbackScan,
+    int* outExecuteBeforeHocInput,
+    int* outPublishPackagedProof,
+    int* outSuppressTitleSurface,
+    int* outSuppressClosedDoorFrame,
+    int* outSuppressHostFallbackVisuals,
+    int* outSuppressFalseItemPayloads,
+    int* outSuppressProjectilePayloads,
+    int* outSuppressSpellEffectPayloads,
+    int* outSuppressMirrorPayloadThings,
+    int* outSuppressMaterializedItemPayload,
+    int* outDrawOpenedEntranceFrame,
+    int* outClearChampionPanel,
+    int* outRenderHallMirrorOverlay,
+    int* outDrawChampionMirrorWallOverlay,
+    int* outWalkCaptureSafe,
+    int* outMapIndex,
+    int* outRenderCommandCount);
 int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outTitleReceiptReady,
     int* outTitleDrawExecuted,
@@ -897,7 +920,10 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outOpeningReceiptReady,
     int* outOpeningDrawExecuted,
     int* outConsumedHostViewOnly,
-    int* outSuppressLegacyUtilityFallback);
+    int* outSuppressLegacyUtilityFallback,
+    int* outPackagedVisualCaptureReady,
+    int* outInputConsumesReceiptOnly,
+    int* outUtilityInputDispatchReady);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,

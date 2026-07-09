@@ -2141,6 +2141,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view_receipt;
     CSB_V1_BootStartupHostViewDrawReceipt_PC34 host_view_draw_receipt;
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 host_ownership;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2699,6 +2700,26 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_input_dispatch.input_render_valid &&
               host_input_dispatch.input_render.host_decision.blocked_by_title,
           "boot startup host input dispatch receipt consumes title input gate");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+              &snapshot,
+              1,
+              9,
+              &capture_render_executor,
+              &host_ownership) == 1 &&
+              host_ownership.valid &&
+              host_ownership.packaged_visual_capture_ready &&
+              host_ownership.title_capture_ready &&
+              host_ownership.title_draw_ready &&
+              host_ownership.render_executed &&
+              host_ownership.draw_consumes_receipt_only &&
+              host_ownership.host_input_dispatch_valid &&
+              host_ownership.host_input_blocked &&
+              host_ownership.should_ignore_input &&
+              host_ownership.input_consumes_receipt_only &&
+              capture_render_probe.draw_title_count == 1,
+          "boot startup host ownership receipt binds title capture, draw, and blocked input");
     snapshot.utility_overlay_active = 1;
     snapshot.title_active = 0;
     snapshot.title_frame = 0;
@@ -3624,6 +3645,28 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_input_dispatch.input_render.host_decision.routed_to_utility &&
               host_input_dispatch.input_render.startup_hud_draw_ready,
           "boot startup host input dispatch receipt consumes utility redraw gate");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+              &snapshot,
+              1,
+              2,
+              &capture_render_executor,
+              &host_ownership) == 1 &&
+              host_ownership.valid &&
+              host_ownership.packaged_visual_capture_ready &&
+              host_ownership.hud_menu_capture_ready &&
+              host_ownership.utility_menu_draw_ready &&
+              host_ownership.render_executed &&
+              host_ownership.hud_menu_executed == 1 &&
+              host_ownership.draw_consumes_receipt_only &&
+              host_ownership.host_input_dispatch_valid &&
+              host_ownership.should_dispatch_input &&
+              host_ownership.input_redraws_hud_menu &&
+              host_ownership.input_consumes_receipt_only &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_utility_panel_count == 1,
+          "boot startup host ownership receipt binds utility capture, draw, and input redraw");
     (void)csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
         &snapshot,
         72,
