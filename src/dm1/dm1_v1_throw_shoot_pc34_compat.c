@@ -1021,12 +1021,43 @@ int dm1_v1_projectile_creature_precheck_damage_plan_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_champion_action_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct CombatAction_Compat* action,
+    int championPresent,
+    DM1_ProjectileChampionImpactPlanPc34* outPlan) {
+    (void)projectile;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->championIndex = -1;
+    outPlan->impactCell = -1;
+    if (!action) return 0;
+    if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_CHAMPION) {
+        return 0;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 510-558 resolves the champion in
+     * P0456_i_Cell, computes F0216 impact attack, calls F0321, then
+     * optionally calls F0322 poison. */
+    outPlan->handled = 1;
+    outPlan->championIndex = action->defenderSlotOrCreatureIndex;
+    outPlan->championPresent = championPresent ? 1 : 0;
+    outPlan->impactMapIndex = action->targetMapIndex;
+    outPlan->impactMapX = action->targetMapX;
+    outPlan->impactMapY = action->targetMapY;
+    outPlan->impactCell = action->targetCell;
+    outPlan->attackTypeCode = action->attackTypeCode;
+    outPlan->rawAttackValue = action->rawAttackValue;
+    outPlan->allowedWounds = action->allowedWounds;
+    return 1;
+}
+
 int dm1_v1_projectile_champion_impact_plan_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,
     int championPresent,
     DM1_ProjectileChampionImpactPlanPc34* outPlan) {
-    (void)projectile;
+    struct CombatAction_Compat action;
     if (!outPlan) return 0;
     memset(outPlan, 0, sizeof(*outPlan));
     outPlan->championIndex = -1;
@@ -1036,20 +1067,16 @@ int dm1_v1_projectile_champion_impact_plan_pc34(
         !result->emittedCombatAction) {
         return 0;
     }
-
-    /* ReDMCSB: PROJEXPL.C F0217 lines 510-558 resolves the champion in
-     * P0456_i_Cell, computes F0216 impact attack, calls F0321, then
-     * optionally calls F0322 poison. */
-    outPlan->handled = 1;
-    outPlan->championIndex = result->outAction.defenderSlotOrCreatureIndex;
-    outPlan->championPresent = championPresent ? 1 : 0;
+    action = result->outAction;
+    action.kind = COMBAT_ACTION_APPLY_DAMAGE_CHAMPION;
+    if (!dm1_v1_projectile_champion_action_plan_pc34(
+            projectile, &action, championPresent, outPlan)) {
+        return 0;
+    }
     outPlan->impactMapIndex = result->newMapIndex;
     outPlan->impactMapX = result->newMapX;
     outPlan->impactMapY = result->newMapY;
     outPlan->impactCell = result->newCell;
-    outPlan->attackTypeCode = result->outAction.attackTypeCode;
-    outPlan->rawAttackValue = result->outAction.rawAttackValue;
-    outPlan->allowedWounds = result->outAction.allowedWounds;
     return 1;
 }
 

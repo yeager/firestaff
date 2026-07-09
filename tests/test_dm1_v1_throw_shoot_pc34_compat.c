@@ -812,10 +812,12 @@ static void test_projectile_creature_impact_plan(void) {
 static void test_projectile_champion_impact_plan(void) {
     struct ProjectileInstance_Compat p;
     struct ProjectileTickResult_Compat r;
+    struct CombatAction_Compat action;
     DM1_ProjectileChampionImpactPlanPc34 impact;
     DM1_ProjectileChampionPoisonPlanPc34 poison;
     memset(&p, 0, sizeof(p));
     memset(&r, 0, sizeof(r));
+    memset(&action, 0, sizeof(action));
     memset(&impact, 0, sizeof(impact));
     memset(&poison, 0, sizeof(poison));
 
@@ -848,6 +850,43 @@ static void test_projectile_champion_impact_plan(void) {
     ASSERT_EQ(impact.allowedWounds,
               COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO,
               "champion allowed wounds");
+
+    action.kind = COMBAT_ACTION_APPLY_DAMAGE_CHAMPION;
+    action.defenderSlotOrCreatureIndex = 2;
+    action.targetMapIndex = 4;
+    action.targetMapX = 9;
+    action.targetMapY = 10;
+    action.targetCell = 1;
+    action.attackTypeCode = COMBAT_ATTACK_FIRE;
+    action.rawAttackValue = 77;
+    action.allowedWounds = COMBAT_WOUND_LEGS;
+    ASSERT_EQ(dm1_v1_projectile_champion_action_plan_pc34(
+                  &p, &action, 1, &impact), 1,
+              "champion action plan builds");
+    ASSERT_EQ(impact.handled, 1, "champion action handled");
+    ASSERT_EQ(impact.championPresent, 1, "champion action present");
+    ASSERT_EQ(impact.championIndex, 2, "champion action index");
+    ASSERT_EQ(impact.impactMapIndex, 4, "champion action map");
+    ASSERT_EQ(impact.impactMapX, 9, "champion action x");
+    ASSERT_EQ(impact.impactMapY, 10, "champion action y");
+    ASSERT_EQ(impact.impactCell, 1, "champion action cell");
+    ASSERT_EQ(impact.attackTypeCode, COMBAT_ATTACK_FIRE,
+              "champion action attack type");
+    ASSERT_EQ(impact.rawAttackValue, 77, "champion action raw attack");
+    ASSERT_EQ(impact.allowedWounds, COMBAT_WOUND_LEGS,
+              "champion action allowed wounds");
+    ASSERT_EQ(dm1_v1_projectile_champion_action_plan_pc34(
+                  &p, &action, 0, &impact), 1,
+              "champion absent action plan builds");
+    ASSERT_EQ(impact.handled, 1, "champion absent action handled");
+    ASSERT_EQ(impact.championPresent, 0, "champion absent action present");
+    action.kind = 0;
+    ASSERT_EQ(dm1_v1_projectile_champion_action_plan_pc34(
+                  &p, &action, 1, &impact), 0,
+              "non-champion action rejected");
+    ASSERT_EQ(dm1_v1_projectile_champion_impact_plan_pc34(
+                  &p, &r, 1, &impact), 1,
+              "champion impact plan rebuilds for poison");
 
     ASSERT_EQ(dm1_v1_projectile_champion_poison_plan_pc34(
                   &impact, &p, 12, 30, 65000, 1, &poison), 1,

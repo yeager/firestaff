@@ -347,6 +347,11 @@ int dm1_v1_projectile_creature_precheck_damage_plan_pc34(
     int creatureDefense,
     int creatureAttributes,
     DM1_ProjectileCreaturePrecheckDamagePlanPc34* outPlan);
+int dm1_v1_projectile_champion_action_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct CombatAction_Compat* action,
+    int championPresent,
+    DM1_ProjectileChampionImpactPlanPc34* outPlan);
 int dm1_v1_projectile_champion_impact_plan_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,
