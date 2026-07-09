@@ -215,6 +215,7 @@ int dm1_v1_melee_reach_gate_plan_f0402_pc34(
 
     relativeCell = ((in->championCell & 3) + 4 - (in->targetDirection & 3)) & 3;
     out->relativeCell = relativeCell;
+    out->sourceFixedBackRowGate = 1;
     if (relativeCell == 2) {
         blockingCell = ((in->championCell & 3) + 3) & 3;
     } else if (relativeCell == 3) {
@@ -224,9 +225,10 @@ int dm1_v1_melee_reach_gate_plan_f0402_pc34(
     }
     out->blockingCell = blockingCell;
 
-    /* ReDMCSB: MENU.C F0402 lines 1029-1041 rejects back-row melee when
-     * another living champion stands in the front cell, sets G0513 to
-     * CM1_DAMAGE_CANT_REACH, then returns false before F0231. */
+    /* ReDMCSB: MENU.C F0402 lines 1031-1041 (MEDIA240+ / PC34) fixes the
+     * old back-row reach bug by checking only relative cells 2 and 3, then
+     * testing the corresponding front cell before F0231. */
+    out->scannedFrontCell = 1;
     count = in->partyChampionCount;
     if (count < 0 || count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
     for (i = 0; i < count; ++i) {
