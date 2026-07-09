@@ -29303,7 +29303,10 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outSuppressLegacyUtilityFallback,
     int* outPackagedVisualCaptureReady,
     int* outInputConsumesReceiptOnly,
-    int* outUtilityInputDispatchReady)
+    int* outUtilityInputDispatchReady,
+    int* outTitleAssetDrawReady,
+    int* outClosedDoorFallbackSuppressed,
+    int* outOpeningFrameDrawReady)
 {
     CSB_V1_BootProfile boot;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
@@ -29442,6 +29445,24 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
             input_ownership.host_input_dispatch_valid &&
             input_ownership.should_dispatch_input &&
             input_ownership.input_redraws_hud_menu;
+    }
+    if (outTitleAssetDrawReady) {
+        *outTitleAssetDrawReady =
+            title_ownership.host_draw.title_asset_draw_ready &&
+            title_probe.drawFallbackTextCount == 0;
+    }
+    if (outClosedDoorFallbackSuppressed) {
+        *outClosedDoorFallbackSuppressed =
+            closed_ownership.host_draw.closed_door_asset_draw_ready &&
+            closed_ownership.host_draw.fallback_text_suppressed &&
+            closed_probe.drawFallbackTextCount == 0 &&
+            utility_probe.drawFallbackTextCount == 0;
+    }
+    if (outOpeningFrameDrawReady) {
+        *outOpeningFrameDrawReady =
+            opening_ownership.host_draw.opening_frame_draw_ready &&
+            opening_probe.drawFallbackTextCount == 0 &&
+            opening_probe.drawDoorFallbackCount == 0;
     }
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep post-swoosh
      * title, closed-door HUD/menu, utility menu, and door opening inside the

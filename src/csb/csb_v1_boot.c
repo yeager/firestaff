@@ -2620,6 +2620,39 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
                     host_view->capture_proof.suppress_legacy_utility_fallback
                 ? 1
                 : 0;
+        out_receipt->title_asset_draw_ready =
+            host_view->render_draw_valid &&
+                    host_view->render_draw.title_draw_ready &&
+                    host_view->capture_proof_valid &&
+                    host_view->capture_proof.title_route &&
+                    host_view->capture_proof.real_asset_matched
+                ? 1
+                : 0;
+        out_receipt->closed_door_asset_draw_ready =
+            host_view->render_draw_valid &&
+                    host_view->render_draw.hud_menu_draw_ready &&
+                    host_view->capture_proof_valid &&
+                    host_view->capture_proof.closed_door_menu_route &&
+                    host_view->capture_proof.real_asset_matched
+                ? 1
+                : 0;
+        out_receipt->opening_frame_draw_ready =
+            host_view->render_draw_valid &&
+                    host_view->render_draw.opening_draw_ready &&
+                    host_view->capture_proof_valid &&
+                    host_view->capture_proof.opening_door_route &&
+                    host_view->capture_proof.real_asset_matched
+                ? 1
+                : 0;
+        out_receipt->fallback_text_suppressed =
+            host_view->capture_proof_valid &&
+                    host_view->capture_proof.real_asset_matched &&
+                    (host_view->capture_proof.title_route ||
+                     host_view->capture_proof.closed_door_menu_route ||
+                     host_view->capture_proof.utility_menu_route ||
+                     host_view->capture_proof.opening_door_route)
+                ? 1
+                : 0;
     }
 
     render_executor = *executor;

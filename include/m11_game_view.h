@@ -963,7 +963,10 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outSuppressLegacyUtilityFallback,
     int* outPackagedVisualCaptureReady,
     int* outInputConsumesReceiptOnly,
-    int* outUtilityInputDispatchReady);
+    int* outUtilityInputDispatchReady,
+    int* outTitleAssetDrawReady,
+    int* outClosedDoorFallbackSuppressed,
+    int* outOpeningFrameDrawReady);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,
