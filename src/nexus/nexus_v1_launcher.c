@@ -840,6 +840,8 @@ void nexus_v1_launcher_startup_receipt_bundle_clear(
     receipt->first_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
     receipt->route_label = "invalid";
     receipt->first_draw_label = "none";
+    receipt->active_capture_frame = -1;
+    receipt->saturn_active_capture_frame = -1;
     receipt->status_scope = "STARTUP";
     receipt->status = "blocked-startup";
 }
@@ -866,6 +868,8 @@ void nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
     receipt->receipt_owner = "nexus-v1-launcher";
     receipt->asset_route = "blocked-startup";
     receipt->asset_blocker = "startup";
+    receipt->active_capture_frame = -1;
+    receipt->saturn_active_capture_frame = -1;
     receipt->saturn_save_capture_frame = -1;
     receipt->saturn_champion_capture_frame = -1;
     receipt->saturn_dungeon_capture_frame = -1;
@@ -887,6 +891,8 @@ void nexus_v1_launcher_startup_host_caller_receipt_clear(
     receipt->saturn_save_capture_frame = -1;
     receipt->saturn_champion_capture_frame = -1;
     receipt->saturn_dungeon_capture_frame = -1;
+    receipt->host_active_capture_frame = -1;
+    receipt->host_saturn_active_capture_frame = -1;
     receipt->host_route = "blocked-startup";
     receipt->status_scope = "STARTUP";
     receipt->status = "blocked-startup";
@@ -940,6 +946,48 @@ static int nexus_v1_launcher_saturn_full_start_capture_frames_exact(
         return 0;
     }
     return 1;
+}
+
+static int nexus_v1_launcher_active_capture_frame(
+    const Nexus_V1_StartupFullStartPackageReceipt *package)
+{
+    if (!package) {
+        return -1;
+    }
+    switch (package->capture_route) {
+    case NEXUS_V1_STARTUP_CAPTURE_TITLE:
+        return package->title_capture_frame;
+    case NEXUS_V1_STARTUP_CAPTURE_SAVE:
+        return package->save_capture_frame;
+    case NEXUS_V1_STARTUP_CAPTURE_CHAMPION:
+        return package->champion_capture_frame;
+    case NEXUS_V1_STARTUP_CAPTURE_BLOCKED:
+    case NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE:
+    case NEXUS_V1_STARTUP_CAPTURE_INVALID:
+    default:
+        return -1;
+    }
+}
+
+static int nexus_v1_launcher_saturn_active_capture_frame(
+    const Nexus_V1_StartupFullStartPackageReceipt *package)
+{
+    if (!package) {
+        return -1;
+    }
+    switch (package->capture_route) {
+    case NEXUS_V1_STARTUP_CAPTURE_TITLE:
+        return package->saturn_title_capture_frame;
+    case NEXUS_V1_STARTUP_CAPTURE_SAVE:
+        return package->saturn_save_capture_frame;
+    case NEXUS_V1_STARTUP_CAPTURE_CHAMPION:
+        return package->saturn_champion_capture_frame;
+    case NEXUS_V1_STARTUP_CAPTURE_BLOCKED:
+    case NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE:
+    case NEXUS_V1_STARTUP_CAPTURE_INVALID:
+    default:
+        return -1;
+    }
 }
 
 const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
@@ -3418,6 +3466,10 @@ static void nexus_v1_launcher_fill_startup_bundle(
     receipt->saturn_timing_exact = package->saturn_timing_exact;
     receipt->saturn_capture_frames_exact =
         package->saturn_capture_frames_exact;
+    receipt->active_capture_frame =
+        nexus_v1_launcher_active_capture_frame(package);
+    receipt->saturn_active_capture_frame =
+        nexus_v1_launcher_saturn_active_capture_frame(package);
     receipt->warning_visible = package->warning_visible;
     receipt->prompt_visible = package->title_prompt_visible;
     receipt->m11_ready = package->m11_ready;
@@ -3617,6 +3669,16 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
     receipt->saturn_timing_exact = package->saturn_timing_exact;
     receipt->saturn_capture_frames_exact =
         package->saturn_capture_frames_exact;
+    receipt->active_capture_frame =
+        receipt->startup_bundle.active_capture_frame;
+    receipt->saturn_active_capture_frame =
+        receipt->startup_bundle.saturn_active_capture_frame;
+    receipt->host_route_consumes_active_capture_frame =
+        receipt->package_capture_consumed_by_host &&
+        receipt->capture_route != NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+        receipt->capture_route != NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE &&
+        receipt->active_capture_frame >= 0 &&
+        receipt->saturn_active_capture_frame == receipt->active_capture_frame;
     receipt->saturn_save_capture_frame = package->saturn_save_capture_frame;
     receipt->saturn_champion_capture_frame =
         package->saturn_champion_capture_frame;
@@ -3627,6 +3689,11 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
     receipt->no_fallback_visuals_enforced =
         receipt->receipt_owner_is_nexus &&
         !receipt->fallback_visuals_permitted;
+    receipt->host_route_consumes_dungeon_capture_frame =
+        receipt->runtime_dgn_handoff_ready &&
+        receipt->runtime_dgn_route_joined &&
+        receipt->saturn_dungeon_capture_frame ==
+            package->boot_start_ready_frames;
 
     if (!receipt->no_fallback_visuals_enforced ||
         package->blocked_draw_suppressed ||
@@ -3902,6 +3969,14 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.saturn_timing_exact;
     out_receipt->saturn_capture_frames_exact =
         out_receipt->ownership.saturn_capture_frames_exact;
+    out_receipt->host_active_capture_frame =
+        out_receipt->ownership.active_capture_frame;
+    out_receipt->host_saturn_active_capture_frame =
+        out_receipt->ownership.saturn_active_capture_frame;
+    out_receipt->host_route_consumes_active_capture_frame =
+        out_receipt->ownership.host_route_consumes_active_capture_frame;
+    out_receipt->host_route_consumes_dungeon_capture_frame =
+        out_receipt->ownership.host_route_consumes_dungeon_capture_frame;
     out_receipt->capture_route = out_receipt->ownership.capture_route;
     out_receipt->ownership_route = out_receipt->ownership.route;
     out_receipt->host_route =

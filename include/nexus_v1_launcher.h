@@ -611,6 +611,8 @@ typedef struct {
     int timing_ready;
     int saturn_timing_exact;
     int saturn_capture_frames_exact;
+    int active_capture_frame;
+    int saturn_active_capture_frame;
     int warning_visible;
     int prompt_visible;
     int m11_ready;
@@ -660,6 +662,10 @@ typedef struct {
     int blocked_route_suppresses_dgn_draws;
     int saturn_timing_exact;
     int saturn_capture_frames_exact;
+    int active_capture_frame;
+    int saturn_active_capture_frame;
+    int host_route_consumes_active_capture_frame;
+    int host_route_consumes_dungeon_capture_frame;
     int saturn_save_capture_frame;
     int saturn_champion_capture_frame;
     int saturn_dungeon_capture_frame;
@@ -719,6 +725,10 @@ typedef struct {
     int saturn_gameover_capture_frame;
     int saturn_timing_exact;
     int saturn_capture_frames_exact;
+    int host_active_capture_frame;
+    int host_saturn_active_capture_frame;
+    int host_route_consumes_active_capture_frame;
+    int host_route_consumes_dungeon_capture_frame;
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupRealAssetOwnershipRoute ownership_route;
     const char *host_route;

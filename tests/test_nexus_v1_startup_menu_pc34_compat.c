@@ -1247,6 +1247,8 @@ int main(void)
                startup_bundle_receipt.timing_ready == 1 &&
                startup_bundle_receipt.saturn_timing_exact == 1 &&
                startup_bundle_receipt.saturn_capture_frames_exact == 1 &&
+               startup_bundle_receipt.active_capture_frame == 102 &&
+               startup_bundle_receipt.saturn_active_capture_frame == 102 &&
                strcmp(startup_bundle_receipt.route_label,
                       "champion-menu") == 0 &&
                strcmp(startup_bundle_receipt.first_draw_label,
@@ -1290,6 +1292,10 @@ int main(void)
                real_asset_ownership_receipt.first_host_draw_uses_package == 1 &&
                real_asset_ownership_receipt.saturn_timing_exact == 1 &&
                real_asset_ownership_receipt.saturn_capture_frames_exact == 1 &&
+               real_asset_ownership_receipt.active_capture_frame == 102 &&
+               real_asset_ownership_receipt.saturn_active_capture_frame == 102 &&
+               real_asset_ownership_receipt.host_route_consumes_active_capture_frame == 1 &&
+               real_asset_ownership_receipt.host_route_consumes_dungeon_capture_frame == 1 &&
                real_asset_ownership_receipt.saturn_champion_capture_frame == 102 &&
                real_asset_ownership_receipt.saturn_save_capture_frame == -1 &&
                real_asset_ownership_receipt.saturn_dungeon_capture_frame == 102 &&
@@ -1360,6 +1366,10 @@ int main(void)
                host_caller_receipt.saturn_gameover_capture_frame == 0 &&
                host_caller_receipt.saturn_timing_exact == 1 &&
                host_caller_receipt.saturn_capture_frames_exact == 1 &&
+               host_caller_receipt.host_active_capture_frame == 102 &&
+               host_caller_receipt.host_saturn_active_capture_frame == 102 &&
+               host_caller_receipt.host_route_consumes_active_capture_frame == 1 &&
+               host_caller_receipt.host_route_consumes_dungeon_capture_frame == 1 &&
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
                dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
@@ -1520,6 +1530,8 @@ int main(void)
                startup_bundle_receipt.command_count > 3 &&
                startup_bundle_receipt.copied_command_count == 2 &&
                startup_bundle_receipt.display_ready == 1 &&
+               startup_bundle_receipt.active_capture_frame == 102 &&
+               startup_bundle_receipt.saturn_active_capture_frame == 102 &&
                strcmp(startup_bundle_receipt.route_label,
                       "save-menu") == 0 &&
                draw_commands[0].kind ==
