@@ -2274,6 +2274,34 @@ static void tqr_startup_render_plan_reset(Theron_StartupRenderPlan *plan)
     plan->border_color = 11;
 }
 
+static unsigned int tqr_startup_required_bitmap_route_mask(
+    Theron_StartupPhase phase)
+{
+    switch (phase) {
+    case THERON_STARTUP_PHASE_TITLE:
+        return THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE;
+    case THERON_STARTUP_PHASE_STAGE_SELECT:
+        return THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE;
+    case THERON_STARTUP_PHASE_SOUL_ROOM:
+    case THERON_STARTUP_PHASE_READY:
+        return THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+               THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    case THERON_STARTUP_PHASE_IN_DUNGEON:
+    default:
+        return 0u;
+    }
+}
+
+static int tqr_startup_bitmap_route_count(unsigned int mask)
+{
+    int count = 0;
+    while (mask != 0u) {
+        count += (int)(mask & 1u);
+        mask >>= 1;
+    }
+    return count;
+}
+
 static int tqr_startup_render_plan_add_text(
     Theron_StartupRenderPlan *plan,
     int x,
@@ -2472,6 +2500,10 @@ int theron_v1_startup_render_plan_build(
     }
     tqr_startup_render_plan_reset(out_plan);
     out_plan->phase = state->phase;
+    out_plan->required_bitmap_route_mask =
+        tqr_startup_required_bitmap_route_mask(state->phase);
+    out_plan->required_bitmap_route_count =
+        tqr_startup_bitmap_route_count(out_plan->required_bitmap_route_mask);
     tqr_startup_render_plan_add_title_and_chapter(
         out_plan, elements, element_count);
 
