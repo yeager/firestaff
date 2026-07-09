@@ -295,3 +295,38 @@ void theron_v1_startup_media_capture_track02_state_receipt(
     }
     out_receipt->startup_roster_name_count = (int)i;
 }
+
+int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+    const Theron_StartupMediaStateReceipt *receipt) {
+    const unsigned int required_mask =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+
+    if (!receipt) {
+        return 0;
+    }
+    if (!receipt->startup_media_ready ||
+        receipt->startup_bitmap_decode_status != THERON_TRACK02_SIGNAL_OK ||
+        receipt->startup_bitmap_sample_count < 4 ||
+        (receipt->startup_bitmap_route_mask & required_mask) !=
+            required_mask ||
+        receipt->startup_bitmap_nonzero_pixel_count == 0u ||
+        receipt->startup_bitmap_checksum == 0u) {
+        return 0;
+    }
+
+    return receipt->startup_bitmap_title_route_ready &&
+           receipt->startup_bitmap_stage_route_ready &&
+           receipt->startup_bitmap_soul_room_route_ready &&
+           receipt->startup_bitmap_forcefield_route_ready &&
+           receipt->startup_bitmap_title_nonzero_pixel_count > 0u &&
+           receipt->startup_bitmap_stage_nonzero_pixel_count > 0u &&
+           receipt->startup_bitmap_soul_room_nonzero_pixel_count > 0u &&
+           receipt->startup_bitmap_forcefield_nonzero_pixel_count > 0u &&
+           receipt->startup_bitmap_title_checksum != 0u &&
+           receipt->startup_bitmap_stage_checksum != 0u &&
+           receipt->startup_bitmap_soul_room_checksum != 0u &&
+           receipt->startup_bitmap_forcefield_checksum != 0u;
+}

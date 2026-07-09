@@ -1559,6 +1559,7 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     Theron_StartupStateReceipt state_receipt;
     Theron_V2_HudOverlay hud_overlay;
     Theron_V2_HudSeedGate hud_seed_gate;
+    int startup_bitmap_routes_complete;
 
     if (out_receipt) {
         theron_v1_boot_startup_render_route_receipt_init(out_receipt);
@@ -1566,6 +1567,10 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     if (!view_model || !out_receipt) {
         return 0;
     }
+    startup_bitmap_routes_complete =
+        view_model->startup_media_state_valid &&
+        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            &view_model->startup_media_state_receipt);
 
     out_receipt->runtime_level_source = view_model->runtime_level_source;
     out_receipt->runtime_track02_semantic_handoff =
@@ -1618,6 +1623,7 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         out_receipt->runtime_readiness_ready ? 1 : 0;
     out_receipt->no_fallback_visuals_enforced =
         view_model->runtime_fallback_visuals_blocked ||
+                startup_bitmap_routes_complete ||
                 view_model->runtime_level_source ==
                     THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC ||
                 view_model->runtime_level_source ==
@@ -1744,7 +1750,11 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
             out_receipt->render_route.runtime_level_source;
         out_receipt->runtime_graphics_handoff =
             out_receipt->runtime_readiness_ready &&
-            out_receipt->no_fallback_visuals_enforced ? 1 : 0;
+            out_receipt->no_fallback_visuals_enforced &&
+            (out_receipt->runtime_level_source ==
+                 THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC ||
+             out_receipt->runtime_level_source ==
+                 THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME) ? 1 : 0;
         out_receipt->track02_runtime_graphics_handoff =
             out_receipt->runtime_graphics_handoff &&
                     out_receipt->runtime_level_source ==
@@ -2493,7 +2503,11 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
         render_route.runtime_level_source;
     out_receipt->runtime_graphics_handoff =
         out_receipt->runtime_readiness_ready &&
-        out_receipt->no_fallback_visuals_enforced ? 1 : 0;
+        out_receipt->no_fallback_visuals_enforced &&
+        (out_receipt->runtime_level_source ==
+             THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC ||
+         out_receipt->runtime_level_source ==
+             THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME) ? 1 : 0;
     out_receipt->track02_runtime_graphics_handoff =
         out_receipt->runtime_graphics_handoff &&
                 out_receipt->runtime_level_source ==
@@ -2517,11 +2531,8 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
     out_receipt->status_scope = render_route.status_scope;
     out_receipt->status = render_route.status;
     out_receipt->real_bitmap_startup_graphics_ready =
-        out_receipt->track02_real_media_ready &&
-                view_model->startup_media_state_receipt.
-                    startup_bitmap_decode_status == THERON_TRACK02_SIGNAL_OK &&
-                view_model->startup_media_state_receipt.
-                    startup_bitmap_route_mask != 0u &&
+        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            &view_model->startup_media_state_receipt) &&
                 render_route.render_plan_valid
             ? 1
             : 0;
@@ -2659,7 +2670,11 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
             render_route.runtime_level_source;
         out_receipt->runtime_graphics_handoff =
             out_receipt->runtime_readiness_ready &&
-            out_receipt->no_fallback_visuals_enforced ? 1 : 0;
+            out_receipt->no_fallback_visuals_enforced &&
+            (out_receipt->runtime_level_source ==
+                 THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC ||
+             out_receipt->runtime_level_source ==
+                 THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME) ? 1 : 0;
         out_receipt->track02_runtime_graphics_handoff =
             out_receipt->runtime_graphics_handoff &&
                     out_receipt->runtime_level_source ==
@@ -2683,12 +2698,8 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status_scope = render_route.status_scope;
         out_receipt->status = render_route.status;
         out_receipt->real_bitmap_startup_graphics_ready =
-            out_receipt->track02_real_media_ready &&
-                    view_model->startup_media_state_receipt.
-                        startup_bitmap_decode_status ==
-                            THERON_TRACK02_SIGNAL_OK &&
-                    view_model->startup_media_state_receipt.
-                        startup_bitmap_route_mask != 0u &&
+            theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+                &view_model->startup_media_state_receipt) &&
                     render_route.render_plan_valid
                 ? 1
                 : 0;

@@ -2090,7 +2090,8 @@ static void test_startup_session_facts_wrappers(void) {
                     host_view_receipt.runtime_level_render_allowed &&
                     host_view_receipt.title_menu_runtime_handoff_ready &&
                     host_view_receipt.save_resume_runtime_handoff_ready &&
-                    host_view_receipt.fallback_visuals_allowed &&
+                    host_view_receipt.no_fallback_visuals_enforced &&
+                    !host_view_receipt.fallback_visuals_allowed &&
                     strcmp(host_view_receipt.status,
                            "THERON RUNTIME READY") == 0,
                 "boot snapshot host-view receipt replaces raw prompt roster session rebuild");
@@ -2106,15 +2107,16 @@ static void test_startup_session_facts_wrappers(void) {
                     render_route_receipt.runtime_level_render_allowed &&
                     render_route_receipt.save_resume_start_ready &&
                     render_route_receipt.save_resume_runtime_handoff_ready &&
-                    !render_route_receipt
-                         .save_resume_track02_no_fallback_ready &&
+                    render_route_receipt
+                        .save_resume_track02_no_fallback_ready &&
                     render_route_receipt.save_resume_claim ==
                         THERON_V1_STARTUP_RESUME_DUAL &&
                     render_route_receipt.save_resume_tqsv_slot == 2 &&
                     render_route_receipt.save_resume_srm_slot == 3 &&
                     render_route_receipt.save_resume_srm_import_status ==
                         THERON_V1_SRM_PROGRESS_IMPORT_OK &&
-                    render_route_receipt.fallback_visuals_allowed &&
+                    render_route_receipt.no_fallback_visuals_enforced &&
+                    !render_route_receipt.fallback_visuals_allowed &&
                     strcmp(render_route_receipt.status,
                            "THERON RUNTIME READY") == 0,
                 "boot startup render route receipt carries startup menu save-resume and runtime-ready facts");
@@ -2918,7 +2920,8 @@ static void test_startup_session_facts_wrappers(void) {
                     !graphics_route_receipt.no_fallback_startup_graphics_proof &&
                     !graphics_route_receipt.fallback_startup_graphics_executed &&
                     graphics_route_receipt.startup_menu_render_allowed &&
-                    graphics_route_receipt.fallback_visuals_allowed &&
+                    graphics_route_receipt.no_fallback_visuals_enforced &&
+                    !graphics_route_receipt.fallback_visuals_allowed &&
                     media_graphics_counters.fill_count > 0 &&
                     media_graphics_counters.rect_count > 0,
                 "boot graphics route receipt executes startup graphics from view model");
@@ -2972,7 +2975,8 @@ static void test_startup_session_facts_wrappers(void) {
                     !full_start_receipt.raw_graphics_plan_consumer_required &&
                     !full_start_receipt.no_fallback_startup_graphics_proof &&
                     !full_start_receipt.fallback_startup_graphics_executed &&
-                    full_start_receipt.fallback_visuals_allowed &&
+                    full_start_receipt.no_fallback_visuals_enforced &&
+                    !full_start_receipt.fallback_visuals_allowed &&
                     !full_start_receipt.raw_prompt_roster_required &&
                     !full_start_receipt.raw_session_rebuild_required &&
                     media_graphics_counters.fill_count > 0 &&
