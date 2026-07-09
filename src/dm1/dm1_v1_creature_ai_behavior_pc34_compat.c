@@ -1671,3 +1671,34 @@ int F0810b_DM1_GROUP_PlanReactionApply_Compat(
 
     return 1;
 }
+
+int F0810c_DM1_GROUP_PlanReactionSchedule_Compat(
+    const struct DM1BehaviorResult_Compat* behavior,
+    int groupIndex,
+    int creatureType,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    uint32_t currentTick,
+    struct DM1BehaviorReactionSchedulePlan_Compat* out)
+{
+    if (!behavior || !out) return 0;
+    memset(out, 0, sizeof(*out));
+
+    /* ReDMCSB GROUP.C F0209 CM1/CM2/CM3 reaction creation resolves to a
+     * concrete C29-C31 event plus delay.  Callers own the host timeline
+     * insertion; DM1 owns whether there is a source reaction to insert. */
+    if (behavior->nextEventDelayTicks <= 0 || behavior->nextEventType <= 0) {
+        return 1;
+    }
+
+    out->shouldSchedule = 1;
+    out->fireAtTick = currentTick + (uint32_t)behavior->nextEventDelayTicks;
+    out->mapIndex = mapIndex;
+    out->mapX = mapX;
+    out->mapY = mapY;
+    out->groupIndex = groupIndex;
+    out->creatureType = creatureType;
+    out->eventType = behavior->nextEventType;
+    return 1;
+}

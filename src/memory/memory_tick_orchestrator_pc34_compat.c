@@ -4722,6 +4722,7 @@ static void orch_schedule_projectile_hit_group_reaction_compat(
     struct DM1GroupBehaviorContext_Compat ctx;
     struct DM1ActiveGroup_Compat activeGroup;
     struct DM1BehaviorResult_Compat behavior;
+    struct DM1BehaviorReactionSchedulePlan_Compat schedulePlan;
     struct TimelineEvent_Compat reaction;
 
     if (!world || !group || !action || groupIndex < 0) return;
@@ -4732,6 +4733,7 @@ static void orch_schedule_projectile_hit_group_reaction_compat(
     memset(&ctx, 0, sizeof(ctx));
     memset(&activeGroup, 0, sizeof(activeGroup));
     memset(&behavior, 0, sizeof(behavior));
+    memset(&schedulePlan, 0, sizeof(schedulePlan));
 
     ctx.currentMapIndex = action->targetMapIndex;
     ctx.currentGroupMapX = action->targetMapX;
@@ -4773,20 +4775,23 @@ static void orch_schedule_projectile_hit_group_reaction_compat(
             &ctx, &activeGroup, &world->masterRng, &behavior)) {
         return;
     }
-    if (behavior.nextEventDelayTicks <= 0 || behavior.nextEventType <= 0) {
+    if (!F0810c_DM1_GROUP_PlanReactionSchedule_Compat(
+            &behavior, groupIndex, (int)group->creatureType,
+            action->targetMapIndex, action->targetMapX, action->targetMapY,
+            world->gameTick, &schedulePlan) ||
+        !schedulePlan.shouldSchedule) {
         return;
     }
 
     memset(&reaction, 0, sizeof(reaction));
     reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
-    reaction.fireAtTick = world->gameTick +
-        (uint32_t)behavior.nextEventDelayTicks;
-    reaction.mapIndex = action->targetMapIndex;
-    reaction.mapX = action->targetMapX;
-    reaction.mapY = action->targetMapY;
-    reaction.aux0 = groupIndex;
-    reaction.aux1 = (int)group->creatureType;
-    reaction.aux2 = behavior.nextEventType;
+    reaction.fireAtTick = schedulePlan.fireAtTick;
+    reaction.mapIndex = schedulePlan.mapIndex;
+    reaction.mapX = schedulePlan.mapX;
+    reaction.mapY = schedulePlan.mapY;
+    reaction.aux0 = schedulePlan.groupIndex;
+    reaction.aux1 = schedulePlan.creatureType;
+    reaction.aux2 = schedulePlan.eventType;
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &reaction);
 }
 
