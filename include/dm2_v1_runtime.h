@@ -247,6 +247,8 @@ typedef struct DM2_V1_RuntimeProjectileRenderReceipt {
     int fallback_dx;
     int fallback_dy;
     int fallback_len;
+    uint32_t random_seed_before;
+    uint32_t random_seed_after;
 } DM2_V1_RuntimeProjectileRenderReceipt;
 int dm2_v1_runtime_last_projectile_render_receipt(
     DM2_V1_RuntimeProjectileRenderReceipt *out_receipt);

@@ -1280,6 +1280,10 @@ static void dm2_runtime_finish_projectile_render_receipt(
     g_dm2_last_projectile_render.atlas_frame_w = blit->frame_w;
     g_dm2_last_projectile_render.atlas_frame_h = blit->frame_h;
     g_dm2_last_projectile_render.asset_dst_rect = blit->dst_rect;
+    g_dm2_last_projectile_render.random_seed_before =
+        blit->random_seed_before;
+    g_dm2_last_projectile_render.random_seed_after =
+        blit->random_seed_after;
 }
 
 static void dm2_runtime_populate_active_creature_instances(
