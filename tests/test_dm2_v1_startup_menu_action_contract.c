@@ -425,13 +425,20 @@ int main(void)
               render_receipt.title_gdat_category == 0x05 &&
               render_receipt.title_gdat_index == 0 &&
               render_receipt.title_gdat_field == 1 &&
+              render_receipt.menu_gdat_found &&
+              render_receipt.menu_gdat_category == 0x05 &&
+              render_receipt.menu_gdat_index == 0 &&
+              render_receipt.menu_gdat_field == 4 &&
               render_receipt.skproject_title_query_ready == 1 &&
+              render_receipt.skproject_menu_query_ready == 1 &&
               render_receipt.skproject_title_category == 0x05 &&
               render_receipt.skproject_title_index == 0 &&
               render_receipt.skproject_credit_screen_field == 1 &&
               render_receipt.skproject_menu_screen_field == 4 &&
               render_receipt.title_rect.w == 320 &&
               render_receipt.title_rect.h == 200 &&
+              render_receipt.menu_rect.w == 320 &&
+              render_receipt.menu_rect.h == 200 &&
               render_receipt.panel_rect.x == 78 &&
               render_receipt.panel_rect.y == 50 &&
               render_receipt.menu_text_count == 6 &&
@@ -458,6 +465,7 @@ int main(void)
               view_receipt.menu_state.selected_row == 1 &&
               view_receipt.render.title_gdat_found &&
               view_receipt.render.skproject_title_query_ready == 1 &&
+              view_receipt.render.skproject_menu_query_ready == 1 &&
               view_receipt.render.title_rect.w == 320 &&
               view_receipt.render.title_rect.h == 200 &&
               view_receipt.render.selectable_text_count == 3 &&
@@ -600,8 +608,8 @@ int main(void)
                   boot_consumer_receipt.startup_draw_command_count &&
               boot_render_ownership_receipt.executed_command_count ==
                   boot_render_ownership_receipt.draw_command_count &&
-              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
-              boot_render_ownership_receipt.title_gdat_command_count == 1 &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 2 &&
+              boot_render_ownership_receipt.title_gdat_command_count == 2 &&
               boot_render_ownership_receipt.executed_rect_count >= 2 &&
               boot_render_ownership_receipt.executed_text_count >=
                   boot_full_start_package.menu_row_count &&
@@ -719,8 +727,8 @@ int main(void)
               boot_render_ownership_receipt.title_frame_remaining_ticks == 5 &&
               boot_render_ownership_receipt.next_title_tick_delta == 5 &&
               boot_render_ownership_receipt.title_next_frame_tick == 18 &&
-              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
-              boot_render_ownership_receipt.title_gdat_command_count == 1 &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 2 &&
+              boot_render_ownership_receipt.title_gdat_command_count == 2 &&
               boot_render_ownership_receipt.fallback_title_blit_used == 0 &&
               boot_render_ownership_receipt.final_m11_draw_caller_ready == 1 &&
               boot_render_ownership_receipt.final_m11_draw_caller_consumes_ownership == 1 &&
@@ -762,8 +770,11 @@ int main(void)
                       boot_real_visual_capture.graphics_dat_ready == 1 &&
                       boot_real_visual_capture.real_gdat_title_asset_required == 1 &&
                       boot_real_visual_capture.real_gdat_title_asset_consumed == 1 &&
+                      boot_real_visual_capture.real_gdat_menu_asset_consumed == 1 &&
                       boot_real_visual_capture.title_capture_ready == 1 &&
+                      boot_real_visual_capture.menu_gdat_capture_ready == 1 &&
                       boot_real_visual_capture.skproject_title_query_ready == 1 &&
+                      boot_real_visual_capture.skproject_menu_query_ready == 1 &&
                       boot_real_visual_capture.skproject_title_category == 0x05 &&
                       boot_real_visual_capture.skproject_credit_screen_field == 1 &&
                       boot_real_visual_capture.skproject_menu_screen_field == 4 &&
@@ -771,8 +782,10 @@ int main(void)
                       boot_real_visual_capture.title_gdat_asset_h == 200 &&
                       boot_real_visual_capture.title_pixel_count == 64000u &&
                       boot_real_visual_capture.title_pixel_hash != 0u &&
+                      boot_real_visual_capture.menu_pixel_count == 64000u &&
+                      boot_real_visual_capture.menu_pixel_hash != 0u &&
                       boot_real_visual_capture.menu_capture_ready == 1 &&
-                      boot_real_visual_capture.menu_gdat_command_count == 1 &&
+                      boot_real_visual_capture.menu_gdat_command_count == 2 &&
                       boot_real_visual_capture.menu_rect_command_count >= 2 &&
                       boot_real_visual_capture.menu_text_command_count >=
                           boot_real_visual_capture.menu_row_count &&

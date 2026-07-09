@@ -147,6 +147,14 @@ int dm2_v1_startup_presentation_build(
                                         1,
                                         &rect,
                                         -1) ||
+        !dm2_v1_startup_push_gdat_image(out_commands,
+                                        max_commands,
+                                        &count,
+                                        DM2_GDAT_CATEGORY_TITLE,
+                                        0,
+                                        4,
+                                        &rect,
+                                        -1) ||
         !dm2_v1_startup_panel_rect(&rect) ||
         !dm2_v1_startup_push_rect(out_commands,
                                   max_commands,
@@ -322,12 +330,23 @@ int dm2_v1_startup_presentation_render_receipt(
         const DM2_V1_StartupDrawCommand *command = &commands[i];
         if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
             command->gdat_category == DM2_GDAT_CATEGORY_TITLE &&
+            command->gdat_field == out_receipt->skproject_credit_screen_field &&
             !out_receipt->title_gdat_found) {
             out_receipt->title_gdat_found = 1;
             out_receipt->title_gdat_category = command->gdat_category;
             out_receipt->title_gdat_index = command->gdat_index;
             out_receipt->title_gdat_field = command->gdat_field;
             out_receipt->title_rect = command->rect;
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+                   command->gdat_category == DM2_GDAT_CATEGORY_TITLE &&
+                   command->gdat_field ==
+                       out_receipt->skproject_menu_screen_field &&
+                   !out_receipt->menu_gdat_found) {
+            out_receipt->menu_gdat_found = 1;
+            out_receipt->menu_gdat_category = command->gdat_category;
+            out_receipt->menu_gdat_index = command->gdat_index;
+            out_receipt->menu_gdat_field = command->gdat_field;
+            out_receipt->menu_rect = command->rect;
         } else if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
                    command->style == DM2_V1_STARTUP_STYLE_PANEL) {
             out_receipt->panel_rect = command->rect;
@@ -354,6 +373,17 @@ int dm2_v1_startup_presentation_render_receipt(
         out_receipt->title_gdat_field ==
             out_receipt->skproject_credit_screen_field &&
         out_receipt->skproject_menu_screen_field == 4;
+    out_receipt->skproject_menu_query_ready =
+        out_receipt->menu_gdat_found &&
+        out_receipt->menu_gdat_category ==
+            out_receipt->skproject_title_category &&
+        out_receipt->menu_gdat_index == out_receipt->skproject_title_index &&
+        out_receipt->menu_gdat_field ==
+            out_receipt->skproject_menu_screen_field &&
+        out_receipt->menu_rect.x == 0 &&
+        out_receipt->menu_rect.y == 0 &&
+        out_receipt->menu_rect.w == 320 &&
+        out_receipt->menu_rect.h == 200;
     for (i = 0; i < menu->row_count; ++i) {
         DM2_V1_StartupRowKind kind = DM2_V1_STARTUP_ROW_NONE;
         int slot = -1;
@@ -374,6 +404,7 @@ int dm2_v1_startup_presentation_render_receipt(
     out_receipt->full_start_graphics_ready =
         out_receipt->title_backdrop_ready &&
         out_receipt->skproject_title_query_ready &&
+        out_receipt->skproject_menu_query_ready &&
         out_receipt->new_game_menu_ready &&
         out_receipt->hud_overlay_suppressed &&
         out_receipt->selectable_text_count == menu->row_count;

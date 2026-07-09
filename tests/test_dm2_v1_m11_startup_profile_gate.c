@@ -429,13 +429,13 @@ static void expect_dm2_startup_layout_contract(void) {
         &snapshot,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 10 &&
+    expect_true(command_count == 11 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[5].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
-                    commands[5].row == 0 &&
-                    commands[6].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[6].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
                     commands[6].row == 0 &&
-                    strcmp(commands[6].text, "CONTINUE") == 0,
+                    commands[7].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[7].row == 0 &&
+                    strcmp(commands[7].text, "CONTINUE") == 0,
                 "DM2 startup presentation builds from snapshot");
     command_count = dm2_v1_startup_presentation_build_from_facts(
         "",
@@ -445,15 +445,15 @@ static void expect_dm2_startup_layout_contract(void) {
         9,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 10 &&
-                    commands[7].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
-                    commands[7].style ==
-                        DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
-                    commands[7].row == 2 &&
-                    commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+    expect_true(command_count == 11 &&
+                    commands[8].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
                     commands[8].style ==
+                        DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
+                    commands[8].row == 2 &&
+                    commands[9].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[9].style ==
                         DM2_V1_STARTUP_STYLE_SELECTED_TEXT &&
-                    strcmp(commands[8].text, "NEW GAME") == 0,
+                    strcmp(commands[9].text, "NEW GAME") == 0,
                 "DM2 startup presentation builds directly from runtime facts");
     memset(&host_facts, 0, sizeof(host_facts));
     host_facts.save_root = "";
@@ -465,12 +465,12 @@ static void expect_dm2_startup_layout_contract(void) {
         &host_facts,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 10 &&
-                    commands[7].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
-                    commands[7].style ==
+    expect_true(command_count == 11 &&
+                    commands[8].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[8].style ==
                         DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
-                    commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
-                    strcmp(commands[8].text, "NEW GAME") == 0,
+                    commands[9].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    strcmp(commands[9].text, "NEW GAME") == 0,
                 "DM2 startup presentation builds from host facts");
     memset(&boot_snapshot, 0, sizeof(boot_snapshot));
     boot_snapshot.startup_menu_active = 1;
@@ -495,7 +495,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     &title_frame,
                     &title_frame_max,
                     &title_ready) &&
-                    command_count == 10 &&
+                    command_count == 11 &&
                     view_receipt.valid &&
                     view_receipt.command_count == command_count &&
                     view_receipt.render.command_count == command_count &&
@@ -793,7 +793,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     commands,
                     command_count,
                     &executor) &&
-                    draw_probe.gdat_count == 1 &&
+                    draw_probe.gdat_count == 2 &&
                     draw_probe.fill_count == 2 &&
                     draw_probe.outline_count == 1 &&
                     draw_probe.text_count == 6,
@@ -878,7 +878,7 @@ static void expect_dm2_startup_layout_contract(void) {
         &menu,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 10,
+    expect_true(command_count == 11,
                 "DM2 startup presentation emits GDAT title, panel, text, rows, and footer");
     expect_true(commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
                     commands[0].gdat_category == 5 &&
@@ -887,26 +887,33 @@ static void expect_dm2_startup_layout_contract(void) {
                     commands[0].rect.w == 320 &&
                     commands[0].rect.h == 200,
                 "DM2 startup presentation owns original GDAT title backdrop command");
-    expect_true(commands[1].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
-                    commands[1].style == DM2_V1_STARTUP_STYLE_PANEL &&
-                    commands[1].rect.x == 78 &&
-                    commands[1].rect.y == 50,
+    expect_true(commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+                    commands[1].gdat_category == 5 &&
+                    commands[1].gdat_index == 0 &&
+                    commands[1].gdat_field == 4 &&
+                    commands[1].rect.w == 320 &&
+                    commands[1].rect.h == 200,
+                "DM2 startup presentation owns original GDAT menu surface command");
+    expect_true(commands[2].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[2].style == DM2_V1_STARTUP_STYLE_PANEL &&
+                    commands[2].rect.x == 78 &&
+                    commands[2].rect.y == 50,
                 "DM2 startup presentation owns panel fill command");
-    expect_true(commands[3].kind == DM2_V1_STARTUP_DRAW_TEXT &&
-                    commands[3].style == DM2_V1_STARTUP_STYLE_TITLE &&
-                    strcmp(commands[3].text, "DUNGEON MASTER II") == 0,
+    expect_true(commands[4].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[4].style == DM2_V1_STARTUP_STYLE_TITLE &&
+                    strcmp(commands[4].text, "DUNGEON MASTER II") == 0,
                 "DM2 startup presentation owns title command");
-    expect_true(commands[6].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
-                    commands[6].style == DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
-                    commands[6].row == 1,
+    expect_true(commands[7].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[7].style == DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
+                    commands[7].row == 1,
                 "DM2 startup presentation owns selected-row highlight command");
-    expect_true(commands[7].kind == DM2_V1_STARTUP_DRAW_TEXT &&
-                    commands[7].style == DM2_V1_STARTUP_STYLE_SELECTED_TEXT &&
-                    commands[7].row == 1 &&
-                    strcmp(commands[7].text, "LOAD SLOT 03") == 0,
+    expect_true(commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[8].style == DM2_V1_STARTUP_STYLE_SELECTED_TEXT &&
+                    commands[8].row == 1 &&
+                    strcmp(commands[8].text, "LOAD SLOT 03") == 0,
                 "DM2 startup presentation owns selected-row text command");
-    expect_true(commands[9].kind == DM2_V1_STARTUP_DRAW_TEXT &&
-                    strcmp(commands[9].text, "ENTER/ACTION STARTS") == 0,
+    expect_true(commands[10].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    strcmp(commands[10].text, "ENTER/ACTION STARTS") == 0,
                 "DM2 startup presentation owns footer command");
     menu.selected_row = 9;
     expect_true(dm2_v1_startup_menu_refresh(&menu, 0, 0u) &&
@@ -1199,12 +1206,12 @@ int main(void) {
     if (profile && profile->graphics_dat) {
         DM2_V1_BootRuntimeStartupSnapshot startup_snapshot;
         DM2_V1_BootStartupViewModel startup_view_model;
-        uint8_t *title_pixels = NULL;
-        int title_w = 0;
-        int title_h = 0;
-        int title_stride = 0;
-        int title_x = -1;
-        int title_y = -1;
+        uint8_t *menu_pixels = NULL;
+        int menu_w = 0;
+        int menu_h = 0;
+        int menu_stride = 0;
+        int menu_x = -1;
+        int menu_y = -1;
         memset(&startup_snapshot, 0, sizeof(startup_snapshot));
         startup_snapshot.profile = profile;
         startup_snapshot.startup_menu_active =
@@ -1388,11 +1395,13 @@ int main(void) {
                         real_visual_capture.title_pixel_count == 64000u &&
                         real_visual_capture.title_pixel_hash != 0u &&
                         real_visual_capture.skproject_title_query_ready == 1 &&
+                        real_visual_capture.skproject_menu_query_ready == 1 &&
                         real_visual_capture.skproject_title_category == 5 &&
                         real_visual_capture.skproject_credit_screen_field == 1 &&
                         real_visual_capture.skproject_menu_screen_field == 4 &&
+                        real_visual_capture.menu_gdat_capture_ready == 1 &&
                         real_visual_capture.menu_title_composite_capture_ready == 1 &&
-                        real_visual_capture.menu_gdat_command_count == 1 &&
+                        real_visual_capture.menu_gdat_command_count == 2 &&
                         real_visual_capture.menu_rect_command_count >= 2 &&
                         real_visual_capture.menu_text_command_count >=
                             real_visual_capture.menu_row_count &&
@@ -1412,39 +1421,39 @@ int main(void) {
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,
-                                               1,
-                                               &title_pixels,
-                                               &title_w,
-                                               &title_h,
-                                               &title_stride) == 0 &&
-            title_pixels && title_w == 320 && title_h == 200 &&
-            title_stride >= title_w) {
+                                               4,
+                                               &menu_pixels,
+                                               &menu_w,
+                                               &menu_h,
+                                               &menu_stride) == 0 &&
+            menu_pixels && menu_w == 320 && menu_h == 200 &&
+            menu_stride >= menu_w) {
             int y;
-            for (y = 0; y < title_h && title_x < 0; ++y) {
+            for (y = 0; y < menu_h && menu_x < 0; ++y) {
                 int x;
-                for (x = 0; x < title_w; ++x) {
+                for (x = 0; x < menu_w; ++x) {
                     if (x >= 78 && x < 242 && y >= 50 && y < 140) {
                         continue;
                     }
-                    if (title_pixels[y * title_stride + x] != 0) {
-                        title_x = x;
-                        title_y = y;
+                    if (menu_pixels[y * menu_stride + x] != 0) {
+                        menu_x = x;
+                        menu_y = y;
                         break;
                     }
                 }
             }
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(title_x >= 0 &&
-                            framebuffer[title_y * 320 + title_x] ==
-                                title_pixels[title_y * title_stride + title_x],
-                        "M11 DM2 startup menu draws the original GDAT title backdrop");
+            expect_true(menu_x >= 0 &&
+                            framebuffer[menu_y * 320 + menu_x] ==
+                                menu_pixels[menu_y * menu_stride + menu_x],
+                        "M11 DM2 startup menu draws the original GDAT menu surface");
             expect_true(strcmp(view.lastAction, "STARTUP") == 0 &&
                             strcmp(view.lastOutcome,
                                    "DM2 STARTUP MENU") == 0,
                         "M11 DM2 startup draw consumes packaged real-visual capture receipt status");
         }
-        dm2_v1_boot_gdat_image_asset_free(title_pixels);
+        dm2_v1_boot_gdat_image_asset_free(menu_pixels);
     }
     while (view.dm2State.startup_menu_selected_row + 1 <
            view.dm2State.startup_menu_row_count) {
