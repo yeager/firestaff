@@ -2685,9 +2685,18 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.bitmap_route_count >= 2 &&
                     graphics_route_receipt.soul_room_bitmap_route_ready &&
                     graphics_route_receipt.forcefield_bitmap_route_ready &&
+                    graphics_route_receipt.track02_startup_graphics_executed &&
+                    graphics_route_receipt
+                        .track02_startup_graphic_receipt_valid &&
+                    graphics_route_receipt.track02_startup_graphic_receipt.kind ==
+                        THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME &&
+                    graphics_route_receipt.track02_startup_graphic_receipt.x ==
+                        28 &&
+                    graphics_route_receipt.track02_startup_graphic_receipt.y ==
+                        82 &&
                     !graphics_route_receipt.raw_graphics_plan_consumer_required &&
                     !graphics_route_receipt.no_fallback_startup_graphics_proof &&
-                    graphics_route_receipt.fallback_startup_graphics_executed &&
+                    !graphics_route_receipt.fallback_startup_graphics_executed &&
                     graphics_route_receipt.startup_menu_render_allowed &&
                     graphics_route_receipt.fallback_visuals_allowed &&
                     media_graphics_counters.fill_count > 0 &&
@@ -2732,9 +2741,17 @@ static void test_startup_session_facts_wrappers(void) {
                     full_start_receipt.bitmap_route_count >= 2 &&
                     full_start_receipt.soul_room_bitmap_route_ready &&
                     full_start_receipt.forcefield_bitmap_route_ready &&
+                    full_start_receipt.track02_startup_graphics_executed &&
+                    full_start_receipt.track02_startup_graphic_receipt_valid &&
+                    full_start_receipt.track02_startup_graphic_receipt.kind ==
+                        THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME &&
+                    full_start_receipt.track02_startup_graphic_receipt.w ==
+                        54 &&
+                    full_start_receipt.track02_startup_graphic_receipt.h ==
+                        28 &&
                     !full_start_receipt.raw_graphics_plan_consumer_required &&
                     !full_start_receipt.no_fallback_startup_graphics_proof &&
-                    full_start_receipt.fallback_startup_graphics_executed &&
+                    !full_start_receipt.fallback_startup_graphics_executed &&
                     full_start_receipt.fallback_visuals_allowed &&
                     !full_start_receipt.raw_prompt_roster_required &&
                     !full_start_receipt.raw_session_rebuild_required &&
@@ -2799,6 +2816,11 @@ static void test_startup_session_facts_wrappers(void) {
                     host_render_receipt.bitmap_route_count >= 2 &&
                     host_render_receipt.soul_room_bitmap_route_ready &&
                     host_render_receipt.forcefield_bitmap_route_ready &&
+                    host_render_receipt.track02_startup_graphics_executed &&
+                    host_render_receipt
+                        .track02_startup_graphic_receipt_valid &&
+                    host_render_receipt.track02_startup_graphic_receipt.kind ==
+                        THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME &&
                     !host_render_receipt.raw_prompt_roster_required &&
                     !host_render_receipt.raw_session_rebuild_required &&
                     !host_render_receipt.raw_graphics_plan_consumer_required,

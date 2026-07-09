@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron Track02 startup graphic receipt: boot graphics/full-start/host-render receipts now carry the executed Track02 startup graphic command and mark it as Track02 media-backed execution instead of fallback visual execution. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 HoC mirror backing receipt consumer: champion mirror render receipts now carry C346 mirror-backing material plus C026 portrait geometry, and M11 D1C front-mirror drawing consumes that DM1 receipt instead of rebuilding a separate front-mirror plan. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, `test_m11_overlay_command_queue_block`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 packaged M11 startup consumer receipt: packaged full-start receipts now carry title-ready/runtime-menu/runtime-action/first-HUD fields, and M11-facing consumer receipts explicitly mark title-timing and first-HUD handoff consumption from that package instead of recomputing loose startup state. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
