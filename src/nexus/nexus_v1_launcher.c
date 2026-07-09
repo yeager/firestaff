@@ -262,10 +262,16 @@ int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
         out_receipt->title_asset_handoff_ready &&
         out_receipt->audio_asset_handoff_ready &&
         out_receipt->real_menu_asset_handoff_ready;
-    out_receipt->blocks_main_menu_route =
-        out_receipt->main_menu_route_ready ? 0 : 1;
     out_receipt->fallback_visuals_permitted =
         assets->menu_bpk_fallback_visuals_permitted ? 1 : 0;
+    out_receipt->saturn_asset_handoff_ready =
+        out_receipt->title_asset_handoff_ready &&
+        out_receipt->audio_asset_handoff_ready;
+    out_receipt->real_asset_route_ready =
+        out_receipt->main_menu_route_ready &&
+        !out_receipt->fallback_visuals_permitted;
+    out_receipt->blocks_main_menu_route =
+        out_receipt->main_menu_route_ready ? 0 : 1;
     out_receipt->title_asset_route =
         out_receipt->title_asset_handoff_ready
             ? "ready-title-assets"
