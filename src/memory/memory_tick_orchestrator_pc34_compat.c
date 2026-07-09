@@ -6883,7 +6883,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             DM1_MeleeF0190GroupDamageApplyPlanPc34 damageApplyPlan;
             DM1_MeleeF0231AftermathInputPc34 aftermathIn;
             DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
-            DM1_MeleeF0231RawGroupWritebackPlanPc34 rawGroupWritebackPlan;
+            DM1_MeleeF0231AftermathApplyPlanPc34 aftermathApplyPlan;
             DM1_MeleeF0231ResolveRuntimeInputPc34 resolveRuntimeIn;
             DM1_MeleeF0231ResolveRuntimePlanPc34 resolveRuntimePlan;
             DM1_MeleeF0231RuntimeApplyPlanPc34 runtimeApplyPlan;
@@ -7079,12 +7079,16 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         aftermathIn.damageOutcome = applyOutcome;
                         (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
                             &aftermathIn, &aftermathPlan);
-                        if (aftermathPlan.shouldCreateDeathSmoke) {
+                        memset(&aftermathApplyPlan, 0,
+                               sizeof(aftermathApplyPlan));
+                        (void)dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
+                            &aftermathPlan, &aftermathApplyPlan);
+                        if (aftermathApplyPlan.shouldCreateDeathSmoke) {
                             struct TimelineEvent_Compat advance;
                             int slotIndex = -1;
                             memset(&advance, 0, sizeof(advance));
                             if (F0821_EXPLOSION_Create_Compat(
-                                    &aftermathPlan.smokeCreateInput,
+                                    &aftermathApplyPlan.smokeCreateInput,
                                     &world->explosions,
                                     &slotIndex,
                                     &advance)) {
@@ -7092,23 +7096,17 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                     &world->timeline, &advance);
                             }
                         }
-                        if (aftermathPlan.shouldDropPossessions ||
-                            aftermathPlan.shouldApplyKilledSomeState ||
-                            aftermathPlan.shouldApplyKilledAllSideEffects) {
+                        if (aftermathApplyPlan.shouldApplyMutationDispatch) {
                             fearTriggered =
                                 orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
                                     world, &world->things->groups[groupIndex],
                                     &aftermathPlan);
                         }
-                        memset(&rawGroupWritebackPlan, 0,
-                               sizeof(rawGroupWritebackPlan));
-                        if (dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
-                                &aftermathPlan, &rawGroupWritebackPlan) &&
-                            rawGroupWritebackPlan.valid &&
-                            rawGroupWritebackPlan.shouldWriteRawGroup) {
+                        if (aftermathApplyPlan.shouldWriteRawGroup) {
                             orch_write_raw_group_compat(
                                 world->things,
-                                rawGroupWritebackPlan.groupIndex);
+                                aftermathApplyPlan.rawGroupWritebackPlan
+                                    .groupIndex);
                         }
                     }
                     aftermathIn.killedCell = killedCell;
@@ -7116,24 +7114,33 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     aftermathIn.fearTriggered = fearTriggered;
                     (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
                         &aftermathIn, &aftermathPlan);
-                    if (aftermathPlan.shouldEmitKillNotify) {
+                    memset(&aftermathApplyPlan, 0,
+                           sizeof(aftermathApplyPlan));
+                    (void)dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
+                        &aftermathPlan, &aftermathApplyPlan);
+                    if (aftermathApplyPlan.shouldEmitKillNotify) {
                         emit(result, EMIT_KILL_NOTIFY,
-                             aftermathPlan.killNotifyGroupIndex,
-                             aftermathPlan.killNotifyCreatureIndex,
-                             aftermathPlan.killNotifyOutcome,
-                             aftermathPlan.killNotifyCreatureType);
+                             aftermathApplyPlan.killNotifyGroupIndex,
+                             aftermathApplyPlan.killNotifyCreatureIndex,
+                             aftermathApplyPlan.killNotifyOutcome,
+                             aftermathApplyPlan.killNotifyCreatureType);
                     }
-                    if (aftermathPlan.shouldScheduleReaction) {
+                    if (aftermathApplyPlan.shouldScheduleReaction) {
                         struct TimelineEvent_Compat reaction;
                         memset(&reaction, 0, sizeof(reaction));
                         reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
-                        reaction.fireAtTick = aftermathPlan.reactionFireAtTick;
-                        reaction.mapIndex = aftermathPlan.reactionMapIndex;
-                        reaction.mapX = aftermathPlan.reactionMapX;
-                        reaction.mapY = aftermathPlan.reactionMapY;
-                        reaction.aux0 = aftermathPlan.reactionGroupIndex;
-                        reaction.aux1 = aftermathPlan.reactionCreatureType;
-                        reaction.aux2 = aftermathPlan.reactionEventKind;
+                        reaction.fireAtTick =
+                            aftermathApplyPlan.reactionFireAtTick;
+                        reaction.mapIndex =
+                            aftermathApplyPlan.reactionMapIndex;
+                        reaction.mapX = aftermathApplyPlan.reactionMapX;
+                        reaction.mapY = aftermathApplyPlan.reactionMapY;
+                        reaction.aux0 =
+                            aftermathApplyPlan.reactionGroupIndex;
+                        reaction.aux1 =
+                            aftermathApplyPlan.reactionCreatureType;
+                        reaction.aux2 =
+                            aftermathApplyPlan.reactionEventKind;
                         (void)F0721_TIMELINE_Schedule_Compat(
                             &world->timeline, &reaction);
                     }
