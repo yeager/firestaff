@@ -126,6 +126,7 @@ int main(void)
     Nexus_V1_M12StartupPackageReceipt m12_package_receipt;
     Nexus_V1_StartupReceiptBundle startup_bundle_receipt;
     Nexus_V1_StartupRealAssetOwnershipReceipt real_asset_ownership_receipt;
+    Nexus_V1_StartupHostCallerReceipt host_caller_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff_receipt;
@@ -1234,6 +1235,50 @@ int main(void)
                strcmp(real_asset_ownership_receipt.status,
                       "runtime-handoff-owned") == 0,
            "Nexus real-asset ownership receipt joins title menu capture and DGN handoff without fallback");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               11,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &host_caller_receipt) &&
+               host_caller_receipt.host_caller_ready == 1 &&
+               host_caller_receipt.receipt_owner_is_nexus == 1 &&
+               host_caller_receipt.host_startup_capture_ready == 1 &&
+               host_caller_receipt.host_runtime_dgn_ready == 1 &&
+               host_caller_receipt.host_execute_startup_draws == 1 &&
+               host_caller_receipt.host_execute_dgn_draws == 1 &&
+               host_caller_receipt.bpk_handoff_consumed == 1 &&
+               host_caller_receipt.prs3_blocker_consumed == 0 &&
+               host_caller_receipt.dgn_handoff_consumed == 1 &&
+               host_caller_receipt.suppress_fallback_visuals == 1 &&
+               host_caller_receipt.suppress_legacy_placeholder_visuals == 1 &&
+               host_caller_receipt.no_fallback_visuals_enforced == 1 &&
+               host_caller_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+               host_caller_receipt.ownership_route ==
+                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF &&
+               host_caller_receipt.startup_command_count > 3 &&
+               host_caller_receipt.copied_startup_command_count ==
+                   host_caller_receipt.startup_command_count &&
+               host_caller_receipt.dgn_command_count > 0 &&
+               host_caller_receipt.copied_dgn_command_count ==
+                   host_caller_receipt.dgn_command_count &&
+               host_caller_receipt.title_timing_ready == 1 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
+               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
+               strcmp(host_caller_receipt.host_route,
+                      "runtime-dgn-handoff") == 0 &&
+               strcmp(host_caller_receipt.status,
+                      "runtime-handoff-owned") == 0,
+           "Nexus host-caller receipt owns startup capture and DGN draw commands without fallback");
     runtime_snapshot.runtime = runtime_state;
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
@@ -2152,6 +2197,46 @@ int main(void)
                strcmp(real_asset_ownership_receipt.status,
                       "blocked-menu-bpk-prs3") == 0,
            "Nexus real-asset ownership receipt blocks PRS3 startup without fallback visuals");
+    memset(draw_commands, 0x7f, sizeof(draw_commands));
+    memset(dgn_commands, 0x7f, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               11,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &host_caller_receipt) &&
+               host_caller_receipt.host_caller_ready == 1 &&
+               host_caller_receipt.receipt_owner_is_nexus == 1 &&
+               host_caller_receipt.host_startup_capture_ready == 0 &&
+               host_caller_receipt.host_runtime_dgn_ready == 0 &&
+               host_caller_receipt.host_execute_startup_draws == 0 &&
+               host_caller_receipt.host_execute_dgn_draws == 0 &&
+               host_caller_receipt.bpk_handoff_consumed == 1 &&
+               host_caller_receipt.prs3_blocker_consumed == 1 &&
+               host_caller_receipt.dgn_handoff_consumed == 0 &&
+               host_caller_receipt.suppress_fallback_visuals == 1 &&
+               host_caller_receipt.suppress_legacy_placeholder_visuals == 1 &&
+               host_caller_receipt.no_fallback_visuals_enforced == 1 &&
+               host_caller_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+               host_caller_receipt.ownership_route ==
+                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS &&
+               host_caller_receipt.startup_command_count == 0 &&
+               host_caller_receipt.copied_startup_command_count == 0 &&
+               host_caller_receipt.dgn_command_count == 0 &&
+               host_caller_receipt.copied_dgn_command_count == 0 &&
+               draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE &&
+               dgn_commands[0].kind == 0 &&
+               strcmp(host_caller_receipt.host_route,
+                      "blocked-startup") == 0 &&
+               strcmp(host_caller_receipt.status,
+                      "blocked-menu-bpk-prs3") == 0,
+           "Nexus host-caller receipt suppresses PRS3 fallback startup and DGN draws");
     expect(nexus_v1_startup_champion_execution_mode_update(
                &champion_execution,
                2,
