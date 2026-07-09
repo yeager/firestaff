@@ -1697,6 +1697,7 @@ static void test_startup_session_facts_wrappers(void) {
                     &media_view_model,
                     &render_route_receipt) &&
                     render_route_receipt.startup_menu_render_allowed &&
+                    render_route_receipt.track02_title_menu_ready &&
                     render_route_receipt.render_plan_valid &&
                     render_route_receipt.render_plan.text_count ==
                         media_view_model.render_plan.text_count &&
@@ -1778,6 +1779,10 @@ static void test_startup_session_facts_wrappers(void) {
                         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
                     render_route_receipt.runtime_fallback_visuals_blocked == 1 &&
                     !render_route_receipt.runtime_level_render_allowed &&
+                    !render_route_receipt.runtime_readiness_ready &&
+                    !render_route_receipt.title_menu_runtime_handoff_ready &&
+                    render_route_receipt.track02_title_menu_ready &&
+                    render_route_receipt.no_fallback_visuals_enforced &&
                     !render_route_receipt.fallback_visuals_allowed &&
                     !render_route_receipt.state_receipt.set_level_loaded &&
                     strcmp(render_route_receipt.status,
@@ -1801,11 +1806,15 @@ static void test_startup_session_facts_wrappers(void) {
                     &semantic_view_model,
                     &render_route_receipt) &&
                     render_route_receipt.startup_menu_render_allowed &&
+                    render_route_receipt.track02_title_menu_ready &&
                     render_route_receipt.runtime_level_render_allowed &&
                     render_route_receipt.first_level_render_ready &&
                     render_route_receipt.hud_ready &&
                     render_route_receipt.hud_seed_gate ==
                         THERON_V2_HUD_SEED_V2_READY &&
+                    render_route_receipt.runtime_readiness_ready &&
+                    render_route_receipt.title_menu_runtime_handoff_ready &&
+                    render_route_receipt.no_fallback_visuals_enforced &&
                     !render_route_receipt.fallback_visuals_allowed &&
                     render_route_receipt.runtime_track02_semantic_handoff == 1 &&
                     strcmp(render_route_receipt.status,
