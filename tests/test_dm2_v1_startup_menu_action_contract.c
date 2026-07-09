@@ -514,6 +514,7 @@ int main(void)
               boot_capture_proof.title_frame_start_tick == 0 &&
               boot_capture_proof.title_next_frame_tick == 6 &&
               boot_capture_proof.title_frame_remaining_ticks == 6 &&
+              boot_capture_proof.title_ready == 0 &&
               boot_capture_proof.menu_capture_ready == 1 &&
               boot_capture_proof.hud_handoff_capture_ready == 1 &&
               boot_capture_proof.m11_consumer_ready == 1,
@@ -572,6 +573,7 @@ int main(void)
               boot_capture_proof.title_frame == 2 &&
               boot_capture_proof.title_frame_elapsed_ticks == 1 &&
               boot_capture_proof.title_frame_remaining_ticks == 5 &&
+              boot_capture_proof.title_ready == 0 &&
               boot_capture_proof.menu_capture_ready == 1 &&
               boot_capture_proof.m11_consumer_ready == 1,
           "boot packaged capture proof owns nonzero title timing for M11");

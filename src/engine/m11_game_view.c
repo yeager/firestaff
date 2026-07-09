@@ -895,6 +895,33 @@ static void m11_dm2_boot_probe_receipt_from_startup_view_model(
     if (!view_model || !out) {
         return;
     }
+    if (view_model->host_view_receipt.capture_proof_valid &&
+        view_model->host_view_receipt.capture_proof.valid) {
+        const DM2_V1_BootStartupPackagedCaptureProof *proof =
+            &view_model->host_view_receipt.capture_proof;
+        snprintf(out->startupPhase,
+                 sizeof(out->startupPhase),
+                 "%s",
+                 view_model->phase);
+        out->startupActive = proof->draw_startup_menu;
+        snprintf(out->startupAnimation,
+                 sizeof(out->startupAnimation),
+                 "%s",
+                 view_model->animation);
+        out->startupAnimationActive =
+            proof->hud_handoff_capture_ready;
+        out->startupTitleFrame = proof->title_frame;
+        out->startupTitleFrameMax = proof->title_frame_max;
+        out->startupTitleReady = proof->title_ready;
+        out->startupInitializeV2Runtime =
+            view_model->initialize_v2_runtime;
+        out->startupInitializeHudRuntime =
+            view_model->initialize_hud_runtime;
+        out->startupInitializeTouchRuntime =
+            view_model->initialize_touch_runtime;
+        out->startupHudRuntimeReady = proof->hud_runtime_ready;
+        return;
+    }
     if (view_model->host_view_receipt.valid) {
         snprintf(out->startupPhase,
                  sizeof(out->startupPhase),
@@ -33454,9 +33481,11 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     }
     if (!m11_dm2_boot_runtime_startup_view_model(state, &view_model) ||
         !view_model.host_view_receipt.valid ||
-        !view_model.host_view_receipt.draw_startup_menu ||
-        !view_model.host_view_receipt.render_commands_ready ||
-        !view_model.host_view_receipt.startup_hud_handoff_ready) {
+        !view_model.host_view_receipt.capture_proof_valid ||
+        !view_model.host_view_receipt.capture_proof.valid ||
+        !view_model.host_view_receipt.capture_proof.draw_startup_menu ||
+        !view_model.host_view_receipt.capture_proof.menu_capture_ready ||
+        !view_model.host_view_receipt.capture_proof.hud_handoff_capture_ready) {
         return 0;
     }
     if (out_host_receipt) {
@@ -33473,7 +33502,7 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     executor.draw_text = m11_dm2_startup_exec_text;
     (void)dm2_v1_boot_startup_execute_draw_commands(
         view_model.commands,
-        view_model.host_view_receipt.command_count,
+        view_model.host_view_receipt.capture_proof.command_count,
         &executor);
     return 1;
 }
