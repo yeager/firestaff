@@ -1514,15 +1514,24 @@ int main(void) {
                         runtime_hud_capture.valid == 1 &&
                         runtime_hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
                         runtime_hud_capture.min_asset_portrait_count >= 4 &&
-                        runtime_hud_capture.total_fallback_portrait_count == 0,
+                        runtime_hud_capture.total_fallback_portrait_count == 0 &&
+                        runtime_hud_capture.min_asset_floor_ceiling_count >= 2 &&
+                        runtime_hud_capture.min_asset_wall_count > 0 &&
+                        runtime_hud_capture.total_fallback_floor_ceiling_count == 0 &&
+                        runtime_hud_capture.total_fallback_wall_count == 0 &&
+                        runtime_hud_capture.real_gdat_core_render_ready == 1,
                     "M11 DM2 runtime owns broad real GDAT HUD capture receipt");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         expect_true(dm2_v1_runtime_last_asset_hud_portrait_count() >= 4 &&
                         dm2_v1_runtime_last_fallback_hud_portrait_count() == 0 &&
+                        dm2_v1_runtime_last_asset_floor_ceiling_count() >= 2 &&
+                        dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0 &&
+                        dm2_v1_runtime_last_asset_wall_count() > 0 &&
+                        dm2_v1_runtime_last_fallback_wall_count() == 0 &&
                         strcmp(view.lastAction, "RUNTIME") == 0 &&
-                        strcmp(view.lastOutcome, "DM2 RUNTIME HUD") == 0,
-                    "M11 DM2 runtime draw consumes real GDAT HUD receipt");
+                        strcmp(view.lastOutcome, "DM2 RUNTIME GDAT") == 0,
+                    "M11 DM2 runtime draw consumes real GDAT frame/HUD receipt");
     }
 
     expect_true(make_temp_save_root(direct_save_root),

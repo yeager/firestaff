@@ -39130,11 +39130,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                startup_visual_receipt.status_scope,
                                startup_visual_receipt.status);
             }
-        } else if (runtime_render_receipt.runtime_hud_capture_ready &&
-                   runtime_render_receipt.runtime_hud_no_fallback_portraits) {
+        } else if (runtime_render_receipt.runtime_render_real_asset_ready) {
             m11_set_status((M11_GameViewState *)state,
                            "RUNTIME",
-                           "DM2 RUNTIME HUD");
+                           "DM2 RUNTIME GDAT");
         }
         if (!startup_menu_drawn ||
             !startup_visual_receipt.suppress_game_hud) {
