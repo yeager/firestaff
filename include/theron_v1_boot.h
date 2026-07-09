@@ -326,6 +326,9 @@ typedef struct Theron_V1_BootStartupViewModel {
 typedef struct Theron_V1_BootStartupRenderRouteReceipt {
     int startup_menu_render_allowed;
     int runtime_level_render_allowed;
+    int first_level_render_ready;
+    int hud_ready;
+    int hud_seed_gate;
     int fallback_visuals_allowed;
     int render_plan_valid;
     Theron_StartupRenderPlan render_plan;
