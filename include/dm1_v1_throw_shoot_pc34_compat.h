@@ -176,6 +176,17 @@ typedef struct {
 } DM1_ProjectileChampionDamageApplyPlanPc34;
 
 typedef struct {
+    int valid;
+    int shouldApply;
+    int championIndex;
+    int championDown;
+    int incrementPoisonEventCount;
+    int schedulePoisonEvent;
+    struct TimelineEvent_Compat poisonEvent;
+    DM1_ProjectileChampionPoisonPlanPc34 poisonPlan;
+} DM1_ProjectileChampionPoisonApplyPlanPc34;
+
+typedef struct {
     int handled;
     int baseAttack;
     int rngModulus;
@@ -380,6 +391,17 @@ int dm1_v1_projectile_champion_damage_apply_pc34(
     struct RngState_Compat* rng,
     struct ChampionState_Compat* champion,
     DM1_ProjectileChampionDamageApplyPlanPc34* outPlan);
+int dm1_v1_projectile_champion_poison_apply_pc34(
+    const DM1_ProjectileChampionImpactPlanPc34* impactPlan,
+    const struct ProjectileInstance_Compat* projectile,
+    int appliedDamage,
+    int rng2,
+    uint32_t gameTick,
+    int partyMapIndex,
+    int partyMapX,
+    int partyMapY,
+    struct ChampionState_Compat* champion,
+    DM1_ProjectileChampionPoisonApplyPlanPc34* outPlan);
 int dm1_v1_projectile_champion_party_death_check_pc34(
     int combatKilledFlag,
     int championCurrentHealth);

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 projectile champion poison-apply ownership: DM1 throw/shoot compat now owns the F0217/F0322 immediate poison mutation and C75 event payload for projectile champion hits. M10 and M11 now only schedule the returned event and increment the live poison-event counter. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 projectile champion F0321 apply ownership: DM1 throw/shoot compat now owns the shared F0217->F0321 champion projectile damage apply path for scaled attack, wound selection, HP mutation, and killed flag. M10 and M11 both consume the same helper instead of duplicating F0739b/F0739c/F0737 stitching. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 projectile champion action-plan ownership: M10 projectile champion hits now consume a DM1 F0217 action plan for target champion, impact square, attack type, raw attack, and wound-mask payload instead of rebuilding those fields inline. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
