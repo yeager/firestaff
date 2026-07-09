@@ -1370,11 +1370,15 @@ int dm2_v1_viewport_build_door_render_plan(
                 row->button_gdat_index =
                     dm2_v1_viewport_door_button_graphic_index_for_state(
                         vs->door_button_state != 0);
+                row->button_source_kind = 1;
             } else {
                 row->button_gdat_index =
                     dm2_v1_viewport_wall_button_graphic_index(
                         vs->door_wall_button_index,
                         vs->door_wall_button_field);
+                row->button_source_kind = 2;
+                row->wall_button_index = vs->door_wall_button_index;
+                row->wall_button_field = vs->door_wall_button_field;
             }
         }
     }

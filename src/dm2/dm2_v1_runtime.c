@@ -411,6 +411,12 @@ static void dm2_runtime_capture_door_render_receipt(
         door->frame_gdat_index;
     g_dm2_last_door_render.button_gdat_index =
         door->button_gdat_index;
+    g_dm2_last_door_render.button_source_kind =
+        door->button_source_kind;
+    g_dm2_last_door_render.wall_button_index =
+        door->wall_button_index;
+    g_dm2_last_door_render.wall_button_field =
+        door->wall_button_field;
     g_dm2_last_door_render.panel_blit_ready =
         door->panel_gdat_index != 0 &&
         door->panel_visible_rect.w > 0 &&
