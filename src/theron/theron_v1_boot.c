@@ -2863,6 +2863,56 @@ int theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
         out_receipt);
 }
 
+int theron_v1_boot_startup_full_start_receipt_from_runtime_state_with_media_receipt(
+    Theron_V1_BootStartupFullStartReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    int startup_phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int startup_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count)
+{
+    Theron_V1_BootRuntimeStartupSnapshot snapshot;
+
+    if (out_receipt) {
+        theron_v1_boot_startup_full_start_receipt_init(out_receipt);
+    }
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.startup_phase = startup_phase;
+    snapshot.selected_dungeon = selected_dungeon;
+    snapshot.boot_profile = boot_profile;
+    snapshot.world = world;
+    snapshot.assets = assets;
+    snapshot.startup_cursor = startup_cursor;
+    snapshot.continue_focus = continue_focus;
+    snapshot.resume_claim = resume_claim;
+    snapshot.tqsv_slot = tqsv_slot;
+    snapshot.srm_slot = srm_slot;
+    snapshot.srm_import_status = srm_import_status;
+    snapshot.srm_root = srm_root;
+    snapshot.selected_mirrors_mask = selected_mirrors_mask;
+    snapshot.companion_count = companion_count;
+    snapshot.selected_mirror_order = selected_mirror_order;
+    snapshot.selected_mirror_order_count = selected_mirror_order_count;
+    return theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+        &snapshot,
+        startup_media_receipt,
+        executor,
+        out_receipt);
+}
+
 int theron_v1_boot_startup_execute_input_from_full_start_receipt(
     const Theron_V1_BootStartupFullStartReceipt *receipt,
     Theron_StartupInput input,

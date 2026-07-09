@@ -1889,6 +1889,49 @@ static void test_startup_session_facts_wrappers(void) {
                                .startup_text_prompt,
                            "RESURRECT THERON") != NULL,
                 "boot startup host-view receipt consumes Track02 media view model without raw rebuild");
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_runtime_state_with_media_receipt(
+                    &full_start_receipt,
+                    &media_receipt,
+                    NULL,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS) &&
+                    full_start_receipt.host_consumes_view_model &&
+                    full_start_receipt.host_view_valid &&
+                    full_start_receipt.host_view.track02_media_consumed &&
+                    !full_start_receipt.raw_prompt_roster_required &&
+                    !full_start_receipt.raw_session_rebuild_required &&
+                    strcmp(full_start_receipt.view_model
+                               .startup_media_state_receipt
+                               .startup_roster_names[4],
+                           "HAKAR-MEDIA") == 0 &&
+                    strstr(full_start_receipt.view_model
+                               .startup_media_state_receipt
+                               .startup_text_prompt,
+                           "RESURRECT THERON") != NULL,
+                "boot runtime-state full-start receipt consumes Track02 media without raw prompt roster");
+    expect_true(theron_v1_boot_startup_execute_input_from_full_start_receipt(
+                    &full_start_receipt,
+                    THERON_STARTUP_INPUT_BACK,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.state_receipt.flow.phase ==
+                        THERON_STARTUP_PHASE_STAGE_SELECT,
+                "boot runtime-state full-start receipt routes Soul Room Back without raw session rebuild");
     expect_true(theron_v1_boot_startup_host_view_receipt_from_snapshot_with_media_receipt(
                     &media_snapshot,
                     &media_receipt,
