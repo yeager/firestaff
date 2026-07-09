@@ -2152,7 +2152,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     TestStartupRenderProbe capture_render_probe;
     CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
     CSB_V1_StartupRenderPlan_PC34 receipt_closed_door_plan;
-    CSB_V1_StartupRenderPlan_PC34 runtime_render_plan;
     int packaged_title_ok;
     int enter_menu_x = 244;
     int enter_menu_y = 45;
@@ -2940,31 +2939,15 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.draw_title_count == 1,
           "boot startup host ownership receipt binds title capture, draw, and blocked input");
     snapshot.boot_profile = NULL;
-    CHECK(csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
-              &runtime_render_plan,
-              snapshot.title_active,
-              snapshot.title_frame,
-              snapshot.title_source_step,
-              snapshot.entrance_active,
-              snapshot.entrance_source_step,
-              snapshot.entrance_dismissed,
-              snapshot.credits_active,
-              snapshot.credits_remaining_ticks,
-              snapshot.opening_active,
-              snapshot.opening_delay_ticks,
-              snapshot.opening_step,
-              snapshot.pending_command,
-              snapshot.entrance_frame,
-              snapshot.utility_overlay_active,
-              snapshot.utility_selected_action_index,
-              snapshot.utility_imported_champion_count,
-              snapshot.utility_preview_active,
-              snapshot.utility_prompt,
-              snapshot.resume_available,
-              snapshot.resume_path,
-              snapshot.boot_profile) == 0 &&
-              runtime_render_plan.surface == CSB_V1_STARTUP_RENDER_NONE_PC34,
-          "boot startup runtime-state render-plan facade rejects unverified raw title route");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
+              snapshot.boot_profile,
+              &capture_render_executor,
+              &runtime_host_gate) == 0 &&
+              !runtime_host_gate.valid &&
+              !runtime_host_gate.all_runtime_routes_consumed,
+          "boot startup runtime host-capture gate rejects unverified raw title route");
     snapshot.boot_profile = &boot;
     snapshot.utility_overlay_active = 1;
     snapshot.title_active = 0;
@@ -3693,34 +3676,12 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               runtime_view_receipt.suppress_legacy_utility_fallback &&
               runtime_view_receipt.hud_menu_receipt_ready,
           "boot startup runtime-state render-view receipt owns closed-door HUD gate");
-    CHECK(csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
-              &runtime_render_plan,
-              snapshot.title_active,
-              snapshot.title_frame,
-              snapshot.title_source_step,
-              snapshot.entrance_active,
-              snapshot.entrance_source_step,
-              snapshot.entrance_dismissed,
-              snapshot.credits_active,
-              snapshot.credits_remaining_ticks,
-              snapshot.opening_active,
-              snapshot.opening_delay_ticks,
-              snapshot.opening_step,
-              snapshot.pending_command,
-              snapshot.entrance_frame,
-              snapshot.utility_overlay_active,
-              snapshot.utility_selected_action_index,
-              snapshot.utility_imported_champion_count,
-              snapshot.utility_preview_active,
-              snapshot.utility_prompt,
-              snapshot.resume_available,
-              snapshot.resume_path,
-              snapshot.boot_profile) == 1 &&
-              runtime_render_plan.surface ==
+    CHECK(runtime_view_receipt.render_plan_valid &&
+              runtime_view_receipt.render_plan.surface ==
                   host_view_receipt.render_draw.render_plan.surface &&
-              runtime_render_plan.waiting_for_input ==
+              runtime_view_receipt.render_plan.waiting_for_input ==
                   host_view_receipt.render_draw.render_plan.waiting_for_input,
-          "boot startup runtime-state render-plan facade matches host-view packaged plan");
+          "boot startup runtime render-view receipt matches host-view packaged plan");
     snapshot.utility_overlay_active = 1;
     snapshot.opening_active = 1;
     snapshot.opening_delay_ticks = 0;
