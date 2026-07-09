@@ -1743,6 +1743,21 @@ void csb_v1_boot_startup_host_decision_receipt_init_pc34(
         CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
 }
 
+void csb_v1_boot_startup_readiness_receipt_init_pc34(
+    CSB_V1_BootStartupReadinessReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->route = CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+    receipt->hud_menu_kind = CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34;
+    receipt->selected_command_id =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    receipt->selected_utility_action_index = -1;
+    snprintf(receipt->animation, sizeof(receipt->animation), "%s", "none");
+}
+
 static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
     const CSB_V1_BootStartupPresentationRouteReceipt_PC34 *route,
     CSB_V1_BootStartupRenderViewReceipt_PC34 *out_receipt)
@@ -1895,6 +1910,83 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
             ? 1
             : 0;
     return out_receipt->valid;
+}
+
+int csb_v1_boot_startup_readiness_receipt_from_view_pc34(
+    const CSB_V1_BootStartupRenderViewReceipt_PC34 *view,
+    CSB_V1_BootStartupReadinessReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_BootStartupHudMenuStateReceipt_PC34 *hud = NULL;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_readiness_receipt_init_pc34(out_receipt);
+    if (!view || !view->valid || !view->route_receipt.valid) {
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->startup_active =
+        view->route_receipt.presentation.startup_active ? 1 : 0;
+    out_receipt->route = view->route_receipt.route;
+    out_receipt->post_ftl_title_active =
+        view->title_after_swoosh_route ? 1 : 0;
+    out_receipt->title_ready =
+        view->route_receipt.presentation.title_ready ? 1 : 0;
+    out_receipt->title_frame = view->title_frame;
+    out_receipt->title_frame_max = view->title_frame_max;
+    out_receipt->title_stage = view->title_stage;
+    out_receipt->title_presents_visible =
+        view->title_presents_visible ? 1 : 0;
+    out_receipt->title_chaos_visible = view->title_chaos_visible ? 1 : 0;
+    out_receipt->title_strikes_back_visible =
+        view->title_strikes_back_visible ? 1 : 0;
+    out_receipt->input_ready =
+        view->route_receipt.accepts_input ? 1 : 0;
+    out_receipt->hud_menu_ready =
+        view->hud_menu_receipt_ready ? 1 : 0;
+    out_receipt->suppress_legacy_utility_fallback =
+        view->suppress_legacy_utility_fallback ? 1 : 0;
+    snprintf(out_receipt->animation, sizeof(out_receipt->animation), "%s",
+             view->route_receipt.presentation.animation);
+
+    hud = &view->route_receipt.hud_menu_state;
+    if (view->hud_menu_receipt_ready && hud->valid) {
+        out_receipt->hud_menu_kind = hud->kind;
+        out_receipt->hud_menu_option_count = hud->option_count;
+        out_receipt->utility_menu_row_count = hud->utility_menu_row_count;
+        out_receipt->selected_command_id = hud->selected_command_id;
+        out_receipt->selected_utility_action_index =
+            hud->utility_selected_action_index;
+        out_receipt->resume_available = hud->resume_available ? 1 : 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 lines 424-463 owns the post-FTL PRESENTS,
+     * CHAOS zoom, and STRIKES BACK title sequence. ENTRANCE.C F0441/F0806
+     * lines 850-883 owns the later closed-door HUD/menu wait loop. Keep
+     * those readiness gates in one CSB receipt for M11 boot probes. */
+    return 1;
+}
+
+int csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupReadinessReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootStartupRenderViewReceipt_PC34 view;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_readiness_receipt_init_pc34(out_receipt);
+    if (!csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+            snapshot,
+            &view)) {
+        return 0;
+    }
+    return csb_v1_boot_startup_readiness_receipt_from_view_pc34(
+        &view,
+        out_receipt);
 }
 
 int csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(

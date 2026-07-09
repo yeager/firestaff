@@ -2981,6 +2981,20 @@ static int m11_csb_boot_runtime_startup_presentation_receipt(
         out_title_ready);
 }
 
+static int m11_csb_boot_runtime_startup_readiness_receipt(
+    const M11_GameViewState *state,
+    CSB_V1_BootStartupReadinessReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
+        &snapshot,
+        out_receipt);
+}
+
 static int m11_csb_boot_runtime_startup_idle(
     const M11_GameViewState *state,
     CSB_V1_StartupIdleReceipt_PC34 *out_receipt)
@@ -11214,6 +11228,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->dm1WorldTick = state->world.gameTick;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
         out->levelLoaded = state->csbState.level_loaded;
         out->mapIndex = state->csbState.current_level;
         out->partyX = state->csbState.party_x;
@@ -11233,6 +11248,26 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             &out->startupTitleFrame,
             &out->startupTitleFrameMax,
             &out->startupTitleReady);
+        if (m11_csb_boot_runtime_startup_readiness_receipt(state,
+                                                           &readiness)) {
+            out->startupActive = readiness.startup_active;
+            snprintf(out->startupAnimation,
+                     sizeof(out->startupAnimation),
+                     "%s",
+                     readiness.animation);
+            out->startupTitleFrame = readiness.title_frame;
+            out->startupTitleFrameMax = readiness.title_frame_max;
+            out->startupTitleReady = readiness.title_ready;
+            out->startupInputReady = readiness.input_ready;
+            out->startupHudMenuReady = readiness.hud_menu_ready;
+            out->startupHudMenuKind = readiness.hud_menu_kind;
+            out->startupHudMenuOptionCount =
+                readiness.hud_menu_option_count;
+            out->startupSelectedCommandId =
+                readiness.selected_command_id;
+            out->startupUtilitySelectedActionIndex =
+                readiness.selected_utility_action_index;
+        }
         return 1;
     }
 

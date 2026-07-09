@@ -1259,7 +1259,9 @@ int main(void) {
                         receipt.startupTitleFrame == 0 &&
                         receipt.startupTitleFrameMax ==
                             csb_v1_startup_title_total_ticks_pc34() &&
-                        receipt.startupTitleReady == 0,
+                        receipt.startupTitleReady == 0 &&
+                        receipt.startupInputReady == 0 &&
+                        receipt.startupHudMenuReady == 0,
                     "M11 CSB receipt exposes active title prelude boundary");
     }
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
@@ -1309,7 +1311,9 @@ int main(void) {
                             receipt.startupTitleFrame > 0 &&
                             receipt.startupTitleFrameMax ==
                                 csb_v1_startup_title_total_ticks_pc34() &&
-                            receipt.startupTitleReady == 0,
+                            receipt.startupTitleReady == 0 &&
+                            receipt.startupInputReady == 0 &&
+                            receipt.startupHudMenuReady == 0,
                         "M11 CSB receipt keeps title boundary through CHAOS zoom");
         }
         expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
@@ -1328,6 +1332,19 @@ int main(void) {
         expect_true(view.csbState.startup_title_active == 0 &&
                         view.csbState.startup_title_source_step == 0,
                     "M11 CSB title prelude completes before entrance command input");
+        {
+            M11_BootProbeReceipt receipt;
+            expect_true(M11_GameView_GetBootProbeReceipt(&view, &receipt) == 1,
+                        "M11 CSB startup exports a boot receipt at entrance wait");
+            expect_true(receipt.startupInputReady == 1 &&
+                            receipt.startupHudMenuReady == 1 &&
+                            receipt.startupHudMenuKind ==
+                                CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+                            receipt.startupHudMenuOptionCount == 4 &&
+                            receipt.startupSelectedCommandId ==
+                                CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+                        "M11 CSB boot receipt consumes CSB HUD/menu readiness");
+        }
         expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
                         VGA_PALETTE_PC34_SPECIAL_ENTRANCE,
                     "M11 CSB entrance wait reports source entrance palette");
