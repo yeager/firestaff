@@ -202,6 +202,10 @@ static int variant_is_raw_bin(Theron_Track02Variant variant) {
            variant == THERON_TRACK02_VARIANT_JP_BIN;
 }
 
+static int variant_has_plain_user_data(Theron_Track02Variant variant) {
+    return variant == THERON_TRACK02_VARIANT_US_ISO;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_raw_user_data_size(
     size_t track02_size,
     const char *md5_hex,
@@ -390,6 +394,50 @@ Theron_Track02SignalStatus theron_v1_track02_copy_raw_user_data_range(
     }
 
     *out_user_data_offset = first_user_offset;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
+static Theron_Track02SignalStatus track02_copy_startup_bitmap_bytes(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t raw_offset,
+    size_t byte_count,
+    uint8_t *out_bytes,
+    size_t out_bytes_capacity,
+    size_t *out_user_data_offset)
+{
+    Theron_Track02Variant variant;
+
+    if (out_user_data_offset) {
+        *out_user_data_offset = 0u;
+    }
+    if (!track02_data || !md5_hex || !out_bytes || !out_user_data_offset ||
+        byte_count == 0u || out_bytes_capacity < byte_count) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    if (raw_offset >= track02_size || byte_count > track02_size - raw_offset) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant_is_raw_bin(variant)) {
+        return theron_v1_track02_copy_raw_user_data_range(
+            track02_data,
+            track02_size,
+            md5_hex,
+            raw_offset,
+            byte_count,
+            out_bytes,
+            out_bytes_capacity,
+            out_user_data_offset);
+    }
+    if (!variant_has_plain_user_data(variant)) {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+
+    memcpy(out_bytes, track02_data + raw_offset, byte_count);
+    *out_user_data_offset = raw_offset;
     return THERON_TRACK02_SIGNAL_OK;
 }
 
@@ -1045,7 +1093,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
 
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     out_catalog->variant = variant;
-    if (!variant_is_raw_bin(variant)) {
+    if (!variant_is_raw_bin(variant) &&
+        !variant_has_plain_user_data(variant)) {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
@@ -1071,7 +1120,7 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
         raw_offset =
             signal.post_boundary_span_offsets[sample_specs[i].anchor_index] +
             sample_specs[i].span_delta;
-        status = theron_v1_track02_copy_raw_user_data_range(
+        status = track02_copy_startup_bitmap_bytes(
             track02_data,
             track02_size,
             md5_hex,

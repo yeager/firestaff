@@ -1456,6 +1456,10 @@ static int m11_theron_boot_runtime_startup_host_render_receipt(
     const M11_GameViewState *state,
     const Theron_StartupGraphicExecutor *executor,
     Theron_V1_BootStartupHostRenderReceipt *out_receipt);
+static int m11_theron_boot_runtime_startup_ui_caller_receipt(
+    const M11_GameViewState *state,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupUiCallerReceipt *out_receipt);
 
 enum {
     M11_DM1_V1_POTION_VI_PC34 = 14,
@@ -12036,6 +12040,34 @@ static int m11_theron_boot_runtime_startup_host_render_receipt(
     return theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
         &full_start,
         out_receipt);
+}
+
+static int m11_theron_boot_runtime_startup_ui_caller_receipt(
+    const M11_GameViewState *state,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupUiCallerReceipt *out_receipt)
+{
+    Theron_V1_BootStartupFullStartReceipt full_start;
+
+    if (out_receipt) {
+        theron_v1_boot_startup_ui_caller_receipt_init(out_receipt);
+    }
+    if (!m11_theron_boot_runtime_startup_full_start_receipt(
+            state,
+            executor,
+            &full_start)) {
+        return 0;
+    }
+    if (!theron_v1_boot_startup_ui_caller_from_full_start_receipt(
+            &full_start,
+            -1,
+            -1,
+            -1,
+            out_receipt) &&
+        (!out_receipt || !out_receipt->host_render_valid)) {
+        return 0;
+    }
+    return out_receipt && out_receipt->host_render_valid;
 }
 
 static int M11_GameView_StartTheron(M11_GameViewState* state,
@@ -38405,7 +38437,7 @@ static int m11_theron_draw_startup_graphics_from_receipt(
 {
     M11_TheronStartupGraphicContext context;
     Theron_StartupGraphicExecutor executor;
-    Theron_V1_BootStartupHostRenderReceipt receipt;
+    Theron_V1_BootStartupUiCallerReceipt receipt;
 
     if (!state || !framebuffer) {
         return 0;
@@ -38417,13 +38449,14 @@ static int m11_theron_draw_startup_graphics_from_receipt(
     executor.fill_rect = m11_theron_startup_exec_fill_rect;
     executor.draw_rect = m11_theron_startup_exec_draw_rect;
     executor.plot_pixel = m11_theron_startup_exec_plot_pixel;
-    if (!m11_theron_boot_runtime_startup_host_render_receipt(
+    if (!m11_theron_boot_runtime_startup_ui_caller_receipt(
             state,
             &executor,
             &receipt)) {
         return 0;
     }
-    return receipt.graphics_route_valid &&
+    return receipt.host_render_valid &&
+           receipt.host_render.graphics_route_valid &&
            !receipt.raw_graphics_plan_consumer_required;
 }
 
@@ -38433,6 +38466,7 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                            int framebufferWidth,
                                            int framebufferHeight) {
     Theron_V1_BootStartupHostRenderReceipt host_render;
+    Theron_V1_BootStartupUiCallerReceipt ui_caller;
     int i;
     const Theron_StartupRenderPlan *plan;
 
@@ -38442,12 +38476,14 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         return;
     }
 
-    if (!m11_theron_boot_runtime_startup_host_render_receipt(state,
-                                                             NULL,
-                                                             &host_render) ||
-        !host_render.render_plan_valid) {
+    if (!m11_theron_boot_runtime_startup_ui_caller_receipt(state,
+                                                           NULL,
+                                                           &ui_caller) ||
+        !ui_caller.host_render_valid ||
+        !ui_caller.host_render.render_plan_valid) {
         return;
     }
+    host_render = ui_caller.host_render;
     plan = &host_render.render_plan;
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
