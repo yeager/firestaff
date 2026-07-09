@@ -159,6 +159,10 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.fullStartGraphicsExpected == 1);
     CHECK(boot.fullStartGraphicsReady == 1);
     CHECK(boot.startupMenuReady == 1);
+    CHECK(boot.startupStepCount == 6);
+    CHECK(boot.startupStepReadyCount == 6);
+    CHECK(boot.nextStepLabel && strcmp(boot.nextStepLabel, "READY") == 0);
+    CHECK(boot.startupPathLabel && strcmp(boot.startupPathLabel, "DM1 FULL START") == 0);
     CHECK(boot.statusLabel && strcmp(boot.statusLabel, "FULL START READY") == 0);
     CHECK(boot.detailLabel && strcmp(boot.detailLabel, "SWSH, TITLE, ENTRANCE, HOC") == 0);
     CHECK(strcmp(M12_StartupMenu_GetEntryBootStatusLabel(&state, kDm1GameIndex),

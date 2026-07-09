@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 M12 all-game boot readiness receipt: launcher game cards now expose per-game full-start path labels, startup step counts, ready counts, and next blocker for DM1/CSB/DM2/Nexus/Theron while keeping boot/start/menu scope separate from runtime systems. Verification: `test_m12_all_games_boot_readiness_receipt`, DM1 required-complete launcher test, CSB launch blocker test, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron full-start UI consumers: boot full-start receipts now provide copy-only layout, render rows, render plan, and host-view consumers plus title/stage/Soul Room action routing, so UI/M11 callers do not rebuild startup session/layout state. Verification: `test_theron_v1_startup_save_resume_pc34` 243/243 and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB snapshot capture render handoff: M11 startup drawing now consumes CSB's snapshot -> capture receipt -> render executor path for post-FTL title, utility, closed-door, and opening graphics. Verification: CSB boot runtime handoff, CSB M11 launcher handoff, CSB startup entrance pointer test, and `git diff --check` passed.

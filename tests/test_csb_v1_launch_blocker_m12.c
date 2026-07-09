@@ -111,6 +111,14 @@ int main(void) {
                 "CSB boot readiness receipt should build")) return 1;
     if (!expect(boot.fullStartGraphicsReady == 1,
                 "CSB boot readiness should report full startup ready")) return 1;
+    if (!expect(boot.startupStepCount == 6,
+                "CSB boot readiness should expose the full boot chain step count")) return 1;
+    if (!expect(boot.startupStepReadyCount == 6,
+                "CSB boot readiness should mark every startup step ready")) return 1;
+    if (!expect(boot.nextStepLabel && strcmp(boot.nextStepLabel, "READY") == 0,
+                "CSB boot readiness next step should be READY")) return 1;
+    if (!expect(boot.startupPathLabel && strcmp(boot.startupPathLabel, "CSB BOOT PATH") == 0,
+                "CSB boot readiness should name the CSB path")) return 1;
     if (!expect(boot.statusLabel && strcmp(boot.statusLabel, "BOOT READY") == 0,
                 "CSB boot status label should name boot readiness")) return 1;
     if (!expect(boot.detailLabel &&
@@ -145,6 +153,12 @@ int main(void) {
                 "CSB missing-data boot readiness receipt should build")) return 1;
     if (!expect(boot.fullStartGraphicsReady == 0,
                 "CSB missing-data boot readiness should not report full startup ready")) return 1;
+    if (!expect(boot.startupStepCount == 6,
+                "CSB missing-data boot readiness should retain full boot chain count")) return 1;
+    if (!expect(boot.startupStepReadyCount == 1,
+                "CSB missing-data boot readiness should only count the matched version")) return 1;
+    if (!expect(boot.nextStepLabel && strcmp(boot.nextStepLabel, "REQUIRED GAME DATA") == 0,
+                "CSB missing-data boot readiness should name required data as next step")) return 1;
     if (!expect(boot.statusLabel && strcmp(boot.statusLabel, "DATA MISSING") == 0,
                 "CSB missing-data status label should stay explicit")) return 1;
 

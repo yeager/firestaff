@@ -8592,6 +8592,18 @@ if(BUILD_TESTING)
         COMMAND test_m12_dm1_v1_required_complete_launches
     )
 
+    add_executable(test_m12_all_games_boot_readiness_receipt
+        tests/test_m12_all_games_boot_readiness_receipt.c
+    )
+    target_link_libraries(test_m12_all_games_boot_readiness_receipt PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_all_games_boot_readiness_receipt PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_all_games_boot_readiness_receipt
+        COMMAND test_m12_all_games_boot_readiness_receipt
+    )
+
     add_executable(test_m12_quick_resume_gate
         tests/test_m12_quick_resume_gate.c
         tests/csbwin_resume_fixture.c
