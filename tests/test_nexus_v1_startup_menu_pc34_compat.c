@@ -890,6 +890,12 @@ int main(void)
                        .menu_bpk_renderer_handoff.status ==
                    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
                route_proof_receipt.asset_handoff.real_asset_route_ready == 1 &&
+               route_proof_receipt.runtime_route_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
+               route_proof_receipt.runtime_route_receipt.consumed_by_nexus == 1 &&
+               route_proof_receipt.runtime_route_receipt.runtime_route_ready == 1 &&
+               route_proof_receipt.runtime_route_receipt
+                       .runtime_handoff.asset_handoff.real_asset_route_ready == 1 &&
                route_proof_receipt.title_menu_route_ready == 1 &&
                route_proof_receipt.menu_runtime_route_ready == 1 &&
                route_proof_receipt.first_runtime_route_ready == 1 &&
@@ -1050,6 +1056,13 @@ int main(void)
                        .menu_bpk_renderer_handoff.blocked_prs3_surfaces == 3 &&
                route_proof_receipt.asset_handoff
                        .menu_bpk_renderer_handoff.fallback_visuals_permitted == 0 &&
+               route_proof_receipt.runtime_route_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED &&
+               route_proof_receipt.runtime_route_receipt.consumed_by_nexus == 1 &&
+               route_proof_receipt.runtime_route_receipt.runtime_route_blocked == 1 &&
+               route_proof_receipt.runtime_route_receipt
+                       .runtime_handoff.asset_handoff
+                       .menu_bpk_prs3_blocks_real_menu_route == 1 &&
                route_proof_receipt.title_menu_route_ready == 0 &&
                route_proof_receipt.menu_runtime_route_ready == 0 &&
                route_proof_receipt.first_runtime_route_ready == 0 &&

@@ -321,6 +321,7 @@ typedef struct {
     Nexus_V1_LauncherStartupAssetsReceipt assets;
     Nexus_V1_StartupTitleHandoffReceipt title_handoff;
     Nexus_V1_StartupMenuPresentationReceipt menu_presentation;
+    Nexus_V1_StartupRuntimeRouteReceipt runtime_route_receipt;
     Nexus_V1_StartupRuntimeHandoffReceipt runtime_handoff;
     int saturn_asset_boot_ready;
     int title_route_ready;
@@ -541,6 +542,13 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_pointer_snapshot(
     Nexus_V1_DgnRenderCommand *out_commands,
     int max_commands,
     Nexus_V1_StartupRuntimeHandoffReceipt *out_receipt);
+int nexus_v1_launcher_startup_runtime_route_from_champion_execution(
+    const Nexus_V1_StartupRuntimeState *state,
+    const Nexus_V1_StartupChampionExecution *execution,
+    const Nexus_V1_StartupHostActionReceipt *host_action,
+    Nexus_V1_DgnRenderCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupRuntimeRouteReceipt *out_receipt);
 int nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
     const Nexus_V1_StartupRuntimeState *state,
     int menu_input,
