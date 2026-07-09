@@ -199,6 +199,15 @@ typedef struct CSB_V1_BootStartupRenderViewReceipt_PC34 {
     int title_dest_w;
     int title_dest_h;
     int closed_door_menu_route;
+    int closed_door_render_command_count;
+    int closed_door_asset_command_count;
+    int closed_door_menu_option_count;
+    int closed_door_selected_command_id;
+    int closed_door_resume_enabled;
+    int closed_door_resume_available;
+    int closed_door_resume_option_visible;
+    int closed_door_resume_option_selected;
+    char closed_door_prompt[CSB_V1_BOOT_STARTUP_HUD_PROMPT_CAP_PC34];
     int opening_door_route;
     int hud_menu_receipt_ready;
     int suppress_legacy_utility_fallback;
@@ -529,6 +538,9 @@ int csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupRenderViewReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
+    const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan);
+int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
 int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
