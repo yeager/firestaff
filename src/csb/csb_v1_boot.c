@@ -68,6 +68,9 @@ static void csb_v1_boot_startup_route_from_presentation_pc34(
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt);
 static void csb_v1_boot_startup_hud_menu_state_init_pc34(
     CSB_V1_BootStartupHudMenuStateReceipt_PC34 *state);
+static int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
+    const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan);
 
 /* ── DM1-assumption rejection strings ────────────────────────────────────
  *
@@ -2427,7 +2430,7 @@ int csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
         snapshot->boot_profile);
 }
 
-int csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
+static int csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
@@ -2918,7 +2921,7 @@ int csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
     return out_receipt->valid;
 }
 
-int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
+static int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
@@ -2992,7 +2995,7 @@ int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
     return 1;
 }
 
-int csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
+static int csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
     CSB_V1_UtilRenderPlan *out_plan)
 {
