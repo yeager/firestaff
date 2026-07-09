@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron menu/runtime handoff package: boot now exposes a Track02 media-owned package for host render, optional input/pointer routing, real-graphics runtime handoff, and no-fallback visual policy. Verification: `firestaff_theron`, Theron test object build, and `git diff --check` passed; full test target is blocked by an existing non-Theron M11/CSB type-name compile error.
+
 - ✅ 2026-07-09 DM2 startup render-ownership receipt: boot now consumes packaged full-start and host-frame receipts into one render ownership contract for GDAT title command execution, menu draw counts, HUD suppression, and next-title-tick scheduling without fallback title blits. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 HoC runtime mirror render receipt gate: M11 D1C champion-mirror drawing now requires the DM1 HoC render consumer receipt before drawing C346/C026 wall-overlay output, keeping mirror payload suppression and no-fallback-scan ownership in DM1. Verification: `test_m11_overlay_command_queue_block` and target rebuild passed.

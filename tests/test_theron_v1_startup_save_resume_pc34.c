@@ -1465,6 +1465,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootStartupGraphicsRouteReceipt graphics_route_receipt;
     Theron_V1_BootStartupFullStartReceipt full_start_receipt;
     Theron_V1_BootStartupHostRenderReceipt host_render_receipt;
+    Theron_V1_BootStartupMenuRuntimeHandoffReceipt handoff_receipt;
     Theron_StartupAction media_pointer_action;
     Theron_StartupInputReceipt media_pointer_receipt;
     Theron_StartupAction media_input_action;
@@ -1974,6 +1975,47 @@ static void test_startup_session_facts_wrappers(void) {
     }
     expect_true(media_prompt_row_found,
                 "boot runtime-state host-render receipt preserves Track02 prompt");
+    expect_true(theron_v1_boot_startup_menu_runtime_handoff_from_runtime_state_with_media_receipt(
+                    &handoff_receipt,
+                    &media_receipt,
+                    NULL,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS,
+                    10,
+                    50,
+                    80) &&
+                    handoff_receipt.host_consumes_full_start_receipt &&
+                    handoff_receipt.host_render_valid &&
+                    handoff_receipt.track02_media_consumed &&
+                    handoff_receipt.startup_menu_render_allowed &&
+                    handoff_receipt.soul_room_menu_ready &&
+                    handoff_receipt.real_graphics_handoff_ready &&
+                    handoff_receipt.input_route_requested &&
+                    handoff_receipt.input_route_valid &&
+                    handoff_receipt.input_route.state_receipt_valid &&
+                    handoff_receipt.pointer_route_requested &&
+                    handoff_receipt.pointer_route_valid &&
+                    handoff_receipt.pointer_route.state_receipt_valid &&
+                    !handoff_receipt.raw_prompt_roster_required &&
+                    !handoff_receipt.raw_session_rebuild_required &&
+                    !handoff_receipt.raw_graphics_plan_consumer_required &&
+                    !handoff_receipt.fallback_startup_graphics_executed &&
+                    !handoff_receipt.host_may_draw_fallback_visuals,
+                "boot menu/runtime handoff package consumes Track02 media render input and pointer receipts");
     theron_v1_boot_startup_host_view_receipt_init(&host_view_receipt);
     expect_true(theron_v1_boot_startup_host_view_from_runtime_state_with_media_receipt(
                     &host_view_receipt,
@@ -2161,6 +2203,28 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(host_view_receipt.status,
                            "TRACK02 RUNTIME BLOCKED") == 0,
                 "boot host-view receipt exposes Track02 blocked route without status fallback parsing");
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+                    &blocked_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &full_start_receipt) &&
+                    theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
+                        &full_start_receipt,
+                        -1,
+                        -1,
+                        -1,
+                        &handoff_receipt) &&
+                    handoff_receipt.host_render_valid &&
+                    handoff_receipt.track02_media_consumed &&
+                    handoff_receipt.startup_menu_render_allowed &&
+                    handoff_receipt.startup_graphics_blocked &&
+                    handoff_receipt.no_fallback_visuals_enforced &&
+                    !handoff_receipt.fallback_visuals_allowed &&
+                    handoff_receipt.host_must_not_draw_fallback_visuals &&
+                    !handoff_receipt.host_may_draw_fallback_visuals &&
+                    !handoff_receipt.fallback_startup_graphics_executed &&
+                    !handoff_receipt.runtime_handoff_ready,
+                "boot menu/runtime handoff package blocks Track02 fallback visuals before host draw");
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(!theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
                     &blocked_view_model,
@@ -2352,6 +2416,27 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(full_start_receipt.status,
                            "FORCEFIELD RUNTIME HANDOFF") == 0,
                 "boot full-start receipt hands Track02 forcefield route to runtime without fallback graphics");
+    expect_true(theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
+                    &full_start_receipt,
+                    -1,
+                    -1,
+                    -1,
+                    &handoff_receipt) &&
+                    handoff_receipt.host_render_valid &&
+                    handoff_receipt.track02_media_consumed &&
+                    handoff_receipt.runtime_handoff_ready &&
+                    handoff_receipt.track02_runtime_handoff_ready &&
+                    !handoff_receipt.save_resume_runtime_handoff_ready &&
+                    handoff_receipt.real_graphics_handoff_ready &&
+                    handoff_receipt.startup_graphics_blocked &&
+                    handoff_receipt.no_fallback_visuals_enforced &&
+                    !handoff_receipt.fallback_visuals_allowed &&
+                    handoff_receipt.host_must_not_draw_fallback_visuals &&
+                    !handoff_receipt.host_may_draw_fallback_visuals &&
+                    !handoff_receipt.fallback_startup_graphics_executed &&
+                    strcmp(handoff_receipt.status,
+                           "THERON RUNTIME HANDOFF NO FALLBACK") == 0,
+                "boot menu/runtime handoff package exposes Track02 runtime no-fallback handoff");
     world.current_level = 1;
     world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][1] = 1;
     semantic_level_snapshot = media_snapshot;
@@ -2543,6 +2628,25 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(graphics_route_receipt.status,
                            "SAVE RESUME RUNTIME GRAPHICS HANDOFF") == 0,
                 "boot graphics route receipt hands save-resume route to runtime without fallback startup draw");
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+                    &save_resume_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &full_start_receipt) &&
+                    theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
+                        &full_start_receipt,
+                        -1,
+                        -1,
+                        -1,
+                        &handoff_receipt) &&
+                    handoff_receipt.runtime_handoff_ready &&
+                    !handoff_receipt.track02_runtime_handoff_ready &&
+                    handoff_receipt.save_resume_runtime_handoff_ready &&
+                    handoff_receipt.startup_graphics_blocked &&
+                    handoff_receipt.host_must_not_draw_fallback_visuals &&
+                    !handoff_receipt.host_may_draw_fallback_visuals &&
+                    !handoff_receipt.fallback_startup_graphics_executed,
+                "boot menu/runtime handoff package exposes save-resume runtime no-fallback handoff");
     media_layout_roster_found = 0;
     expect_true(theron_v1_boot_startup_layout_build_from_view_model(
                     &media_view_model,

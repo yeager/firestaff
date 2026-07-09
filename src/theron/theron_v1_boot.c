@@ -3430,6 +3430,188 @@ int theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_rec
         out_receipt);
 }
 
+void theron_v1_boot_startup_menu_runtime_handoff_receipt_init(
+    Theron_V1_BootStartupMenuRuntimeHandoffReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    theron_v1_startup_action_host_receipt_init(&receipt->input_route);
+    theron_v1_startup_action_host_receipt_init(&receipt->pointer_route);
+    receipt->status_scope = "STARTUP";
+    receipt->status = "NO MENU RUNTIME HANDOFF";
+}
+
+int theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    int input_code,
+    int pointer_x,
+    int pointer_y,
+    Theron_V1_BootStartupMenuRuntimeHandoffReceipt *out_receipt)
+{
+    int host_render_ok;
+
+    if (out_receipt) {
+        theron_v1_boot_startup_menu_runtime_handoff_receipt_init(
+            out_receipt);
+    }
+    if (!receipt || !out_receipt) {
+        return 0;
+    }
+
+    out_receipt->host_consumes_full_start_receipt = 1;
+    out_receipt->full_start_valid = receipt->view_model_valid ? 1 : 0;
+    out_receipt->full_start = *receipt;
+    host_render_ok =
+        theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
+            receipt,
+            &out_receipt->host_render);
+    out_receipt->host_render_valid = host_render_ok ? 1 : 0;
+
+    out_receipt->track02_media_consumed =
+        receipt->host_view_valid &&
+        receipt->host_view.track02_media_consumed ? 1 : 0;
+    out_receipt->startup_menu_render_allowed =
+        receipt->host_view_valid &&
+        receipt->host_view.render_route_valid &&
+        receipt->host_view.render_route.startup_menu_render_allowed ? 1 : 0;
+    out_receipt->title_menu_ready = receipt->title_menu_ready ? 1 : 0;
+    out_receipt->stage_menu_ready = receipt->stage_menu_ready ? 1 : 0;
+    out_receipt->soul_room_menu_ready =
+        receipt->soul_room_menu_ready ? 1 : 0;
+    out_receipt->runtime_handoff_ready =
+        receipt->runtime_graphics_handoff ||
+        receipt->forcefield_runtime_handoff_ready ||
+        receipt->runtime_readiness_ready ? 1 : 0;
+    out_receipt->track02_runtime_handoff_ready =
+        receipt->track02_runtime_graphics_handoff ? 1 : 0;
+    out_receipt->save_resume_runtime_handoff_ready =
+        receipt->save_resume_runtime_graphics_handoff ||
+        receipt->save_resume_runtime_handoff_ready ? 1 : 0;
+    out_receipt->real_graphics_handoff_ready =
+        receipt->real_bitmap_startup_graphics_ready ||
+        receipt->runtime_graphics_handoff ? 1 : 0;
+    out_receipt->startup_graphics_executed =
+        receipt->full_start_graphics_executed ? 1 : 0;
+    out_receipt->startup_graphics_blocked =
+        receipt->full_start_graphics_blocked ? 1 : 0;
+    out_receipt->no_fallback_visuals_enforced =
+        receipt->no_fallback_visuals_enforced ? 1 : 0;
+    out_receipt->fallback_visuals_allowed =
+        receipt->fallback_visuals_allowed ? 1 : 0;
+    out_receipt->fallback_startup_graphics_executed =
+        receipt->fallback_startup_graphics_executed ? 1 : 0;
+    out_receipt->host_may_draw_fallback_visuals =
+        out_receipt->fallback_visuals_allowed &&
+        !out_receipt->no_fallback_visuals_enforced ? 1 : 0;
+    out_receipt->host_must_not_draw_fallback_visuals =
+        out_receipt->no_fallback_visuals_enforced ||
+        !out_receipt->fallback_visuals_allowed ? 1 : 0;
+    out_receipt->raw_prompt_roster_required =
+        receipt->raw_prompt_roster_required ? 1 : 0;
+    out_receipt->raw_session_rebuild_required =
+        receipt->raw_session_rebuild_required ? 1 : 0;
+    out_receipt->raw_graphics_plan_consumer_required =
+        receipt->raw_graphics_plan_consumer_required ? 1 : 0;
+
+    if (input_code >= 0) {
+        out_receipt->input_route_requested = 1;
+        out_receipt->input_route_valid =
+            theron_v1_boot_startup_execute_input_from_full_start_receipt(
+                receipt,
+                theron_v1_startup_input_from_firestaff_menu_code(input_code),
+                &out_receipt->input_route)
+                ? 1
+                : 0;
+    }
+    if (pointer_x >= 0 && pointer_y >= 0) {
+        out_receipt->pointer_route_requested = 1;
+        out_receipt->pointer_route_valid =
+            theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
+                receipt,
+                pointer_x,
+                pointer_y,
+                &out_receipt->pointer_route)
+                ? 1
+                : 0;
+    }
+
+    if (out_receipt->host_must_not_draw_fallback_visuals &&
+        out_receipt->runtime_handoff_ready) {
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "THERON RUNTIME HANDOFF NO FALLBACK";
+    } else if (out_receipt->startup_menu_render_allowed) {
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "THERON STARTUP MENU HANDOFF";
+    } else if (receipt->status) {
+        out_receipt->status_scope = receipt->status_scope;
+        out_receipt->status = receipt->status;
+    }
+
+    return out_receipt->full_start_valid && out_receipt->host_render_valid;
+}
+
+int theron_v1_boot_startup_menu_runtime_handoff_from_runtime_state_with_media_receipt(
+    Theron_V1_BootStartupMenuRuntimeHandoffReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    int startup_phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int startup_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    int input_code,
+    int pointer_x,
+    int pointer_y)
+{
+    Theron_V1_BootStartupFullStartReceipt full_start;
+
+    if (out_receipt) {
+        theron_v1_boot_startup_menu_runtime_handoff_receipt_init(
+            out_receipt);
+    }
+    if (!theron_v1_boot_startup_full_start_receipt_from_runtime_state_with_media_receipt(
+            &full_start,
+            startup_media_receipt,
+            executor,
+            startup_phase,
+            selected_dungeon,
+            boot_profile,
+            world,
+            assets,
+            startup_cursor,
+            continue_focus,
+            resume_claim,
+            tqsv_slot,
+            srm_slot,
+            srm_import_status,
+            srm_root,
+            selected_mirrors_mask,
+            companion_count,
+            selected_mirror_order,
+            selected_mirror_order_count)) {
+        return 0;
+    }
+    return theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
+        &full_start,
+        input_code,
+        pointer_x,
+        pointer_y,
+        out_receipt);
+}
+
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
