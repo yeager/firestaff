@@ -4401,25 +4401,37 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     !receipt.dm1HoCRuntimeApplyReady ||
                     !receipt.dm1HoCProductionConsumerReady ||
                     !receipt.dm1HoCRealAssetCapture ||
+                    !receipt.dm1HoCMacWindowCapture ||
+                    !receipt.dm1HoCReleaseAppCapture ||
+                    !receipt.dm1HoCHostWindowCapture ||
+                    !receipt.dm1HoCHostCaptureRouteMatches ||
+                    !receipt.dm1HoCReleaseCaptureOwnershipReady ||
                     !receipt.dm1HoCReceiptOnlyConsumerReady ||
                     !receipt.dm1HoCLowerLevelHelpersReady ||
                     !receipt.dm1HoCHostDrawRejectsBackingFallback ||
+                    !receipt.dm1HoCNoHostFallbackVisuals ||
                     !receipt.dm1HoCHoCAssetCapture ||
                     !receipt.dm1HoCOpenedEntranceFrame ||
                     !receipt.dm1HoCHallMirrorOverlay ||
                     !receipt.dm1HoCBlockedEnterUntilChampion ||
                     receipt.dm1HoCRenderCommandCount != 3) {
                     fprintf(stderr,
-                            "firestaff: boot-probe expected DM1 HoC full graphics receipt but got ready=%d render=%d proof=%d apply=%d consumer=%d real=%d receiptOnly=%d helpers=%d rejectBackingFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d\n",
+                            "firestaff: boot-probe expected DM1 HoC full graphics receipt but got ready=%d render=%d proof=%d apply=%d consumer=%d real=%d mac=%d release=%d hostWindow=%d route=%d ownership=%d receiptOnly=%d helpers=%d rejectBackingFallback=%d noFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d\n",
                             receipt.dm1HoCFullGraphicsReady,
                             receipt.dm1HoCHostRenderPlanReady,
                             receipt.dm1HoCCaptureProofPassed,
                             receipt.dm1HoCRuntimeApplyReady,
                             receipt.dm1HoCProductionConsumerReady,
                             receipt.dm1HoCRealAssetCapture,
+                            receipt.dm1HoCMacWindowCapture,
+                            receipt.dm1HoCReleaseAppCapture,
+                            receipt.dm1HoCHostWindowCapture,
+                            receipt.dm1HoCHostCaptureRouteMatches,
+                            receipt.dm1HoCReleaseCaptureOwnershipReady,
                             receipt.dm1HoCReceiptOnlyConsumerReady,
                             receipt.dm1HoCLowerLevelHelpersReady,
                             receipt.dm1HoCHostDrawRejectsBackingFallback,
+                            receipt.dm1HoCNoHostFallbackVisuals,
                             receipt.dm1HoCHoCAssetCapture,
                             receipt.dm1HoCOpenedEntranceFrame,
                             receipt.dm1HoCHallMirrorOverlay,
