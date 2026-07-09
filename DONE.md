@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 champion-stats ownership names: champion stats state, stat mutation, alive/kill/resurrect, statistic color, load, movement tick, and movement stamina-cost helpers now expose DM1-owned API names; old M11 names remain compatibility aliases. Verification: `test_dm1_v1_champion_stats_pc34_compat`, `test_dm1_v1_mirror_catalog_champion_stats_pc34_compat`, `test_dm1_v1_movement_pipeline_pc34_compat` (400/400), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 teleporter/pit ownership names: F0262/F0267 teleporter rotation, group move removal/route, ordinary group move, pit-fall, and Lord Chaos adjacent retry helpers now expose DM1-owned API names consumed by M10; old M11 names remain compatibility aliases. Verification: `test_dm1_v1_group_move_removal_pc34_compat`, `test_m10_c006_generator_reenable_dispatch_pc34_compat`, `test_dm1_v1_movement_pipeline_pc34_compat` (400/400), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0267 group-move plan ownership names: ordinary group move apply, group teleporter destination, and generated group placement plans now expose DM1-owned API names consumed by M10; old M11 names remain compatibility aliases. Verification: `test_dm1_v1_group_move_removal_pc34_compat`, `test_m10_c006_generator_reenable_dispatch_pc34_compat`, `test_dm1_v1_movement_pipeline_pc34_compat` (400/400), Phase A 24/24, and `git diff --check` passed.
