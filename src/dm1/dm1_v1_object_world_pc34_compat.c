@@ -6,15 +6,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-void m11_ow_init(M11_OW_WorldState* state) {
+void DM1_V1_ObjectWorld_InitPc34Compat(DM1_V1_ObjectWorldStatePc34* state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_OW_WorldState));
+    memset(state, 0, sizeof(DM1_V1_ObjectWorldStatePc34));
     state->loaded = false;
 }
 
 /* F0031_OBJECT_LoadNames: reads null-terminated strings sequentially from
  * graphic #559 data buffer. Up to 199 object names. */
-bool m11_ow_load_object_names(M11_OW_WorldState* state, const uint8_t* data, size_t size) {
+bool DM1_V1_ObjectWorld_LoadObjectNamesPc34Compat(DM1_V1_ObjectWorldStatePc34* state, const uint8_t* data, size_t size) {
     if (!state || !data || size == 0) return false;
 
     size_t offset = 0;
@@ -45,37 +45,37 @@ bool m11_ow_load_object_names(M11_OW_WorldState* state, const uint8_t* data, siz
     return true;
 }
 
-const char* m11_ow_get_obj_name(const M11_OW_WorldState* state, uint16_t idx) {
+const char* DM1_V1_ObjectWorld_GetObjectNamePc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx) {
     if (!state || idx >= DM1_OBJ_NAME_COUNT) return NULL;
     return state->obj_names[idx];
 }
 
-const M11_OW_ObjectInfo* m11_ow_get_obj_info(const M11_OW_WorldState* state, uint16_t idx) {
+const DM1_V1_ObjectWorldObjectInfoPc34* DM1_V1_ObjectWorld_GetObjectInfoPc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx) {
     if (!state || idx >= DM1_OBJ_INFO_COUNT) return NULL;
     return &state->obj_info[idx];
 }
 
-const M11_OW_WeaponInfo* m11_ow_get_weapon(const M11_OW_WorldState* state, uint16_t idx) {
+const DM1_V1_ObjectWorldWeaponInfoPc34* DM1_V1_ObjectWorld_GetWeaponPc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx) {
     if (!state || idx >= DM1_WEAPON_INFO_COUNT) return NULL;
     return &state->weapons[idx];
 }
 
-const M11_OW_ArmourInfo* m11_ow_get_armour(const M11_OW_WorldState* state, uint16_t idx) {
+const DM1_V1_ObjectWorldArmourInfoPc34* DM1_V1_ObjectWorld_GetArmourPc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx) {
     if (!state || idx >= DM1_ARMOUR_INFO_COUNT) return NULL;
     return &state->armour[idx];
 }
 
-const M11_OW_CreatureInfo* m11_ow_get_creature(const M11_OW_WorldState* state, uint16_t idx) {
+const DM1_V1_ObjectWorldCreatureInfoPc34* DM1_V1_ObjectWorld_GetCreaturePc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx) {
     if (!state || idx >= DM1_CREATURE_INFO_COUNT) return NULL;
     return &state->creatures[idx];
 }
 
-const M11_OW_DoorInfo* m11_ow_get_door(const M11_OW_WorldState* state, uint16_t idx) {
+const DM1_V1_ObjectWorldDoorInfoPc34* DM1_V1_ObjectWorld_GetDoorPc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx) {
     if (!state || idx >= DM1_DOOR_INFO_COUNT) return NULL;
     return &state->doors[idx];
 }
 
-void m11_ow_cleanup(M11_OW_WorldState* state) {
+void DM1_V1_ObjectWorld_CleanupPc34Compat(DM1_V1_ObjectWorldStatePc34* state) {
     if (!state) return;
     for (int i = 0; i < DM1_OBJ_NAME_COUNT; i++) {
         free(state->obj_names[i]);
