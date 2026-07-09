@@ -1,6 +1,8 @@
 # Firestaff TODO - Open Work
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
+- 🔧 2026-07-09 Nexus full-start follow-up: full-start receipts now cover boot/title/warning/save/champion menus, Track 02 SFX, and real startup graphics gates. Remaining work is wiring final M11/M12 Nexus startup consumers to read this receipt directly.
+
 
 - 🔧 2026-07-09 Theron boot/title follow-up: Track 02 media receipts now feed prompt and roster fallback rows in startup view-model builders. Remaining work is wiring any final UI callers to stop passing duplicate media arrays once they already hold the receipt.
   - 2026-07-09 update: render-route receipts now carry Track02 title/menu readiness, runtime/HUD readiness, title-menu-to-runtime handoff readiness, and explicit no-fallback-visuals policy. Remaining work is final UI/M11 render consumption and broader semantic Track02 level routes.
