@@ -5,6 +5,9 @@
 =======
 =======
 =======
+=======
+- ✅ 2026-07-09 CSB startup host action receipt: startup action receipts now flatten CSB host input result, status scope/text, import-preview clear, and bonus-request flags for Enter, Back, and pointer menu routes beside the render-view handoff. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus title route receipt: startup title input/pointer now emits one M11-ready route receipt for hold, save-select, champion-select, and return-to-launcher paths, carrying title frame, draw-command count, host result, mode updates, and status text. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup pointer action route receipt: startup action receipts now carry pointer coordinates, source left-button mask, pointer/keyboard route identity, and command ids from utility/entrance pointer paths alongside pre/post render-view receipts. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
