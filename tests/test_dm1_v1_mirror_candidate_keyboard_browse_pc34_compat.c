@@ -18,12 +18,12 @@ static int gPasses;
 
 static void test_next_champion_stays_inside_visible_page(void)
 {
-    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat state;
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat first;
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat second;
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat third;
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat fourth;
-    const Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat first;
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat second;
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat third;
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat fourth;
+    const DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateKeyboardBrowse_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidateKeyboardBrowse_InitPc34Compat(&state);
@@ -106,10 +106,10 @@ static void test_next_champion_stays_inside_visible_page(void)
 
 static void test_page_down_advances_and_refreshes_portrait(void)
 {
-    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat state;
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat next;
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat pageDown;
-    const Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat next;
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat pageDown;
+    const DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateKeyboardBrowse_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidateKeyboardBrowse_InitPc34Compat(&state);
@@ -158,9 +158,9 @@ static void test_page_down_advances_and_refreshes_portrait(void)
 
 static void test_page_up_wraps_previous_page(void)
 {
-    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat state;
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat pageUp;
-    const Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat pageUp;
+    const DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateKeyboardBrowse_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidateKeyboardBrowse_InitPc34Compat(&state);
@@ -193,10 +193,10 @@ static void test_page_up_wraps_previous_page(void)
 
 static void test_partial_press_release_cleans_deadzone(void)
 {
-    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat state;
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat press;
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat release;
-    const Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat press;
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat release;
+    const DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateKeyboardBrowse_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidateKeyboardBrowse_InitPc34Compat(&state);
@@ -244,7 +244,7 @@ static void test_partial_press_release_cleans_deadzone(void)
 
 static void test_source_lock_and_non_overlap_evidence(void)
 {
-    const Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateKeyboardBrowse_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,

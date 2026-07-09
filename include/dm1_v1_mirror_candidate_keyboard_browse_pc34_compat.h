@@ -9,16 +9,16 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_PAGE_SIZE_PC34_COMPAT 4
 #define DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_NONE_PC34_COMPAT (-1)
 
-typedef enum Dm1V1MirrorCandidateKeyboardBrowseKeyPc34Compat {
+typedef enum DM1_V1_MirrorCandidateKeyboardBrowseKeyPc34Compat {
     DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_KEY_NEXT_PC34_COMPAT = 1,
     DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_KEY_PREVIOUS_PC34_COMPAT = 2,
     DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_KEY_PAGE_DOWN_PC34_COMPAT = 3,
     DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_KEY_PAGE_UP_PC34_COMPAT = 4,
     DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_KEY_SELECT_PRESS_PC34_COMPAT = 5,
     DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_KEY_RELEASE_PC34_COMPAT = 6
-} Dm1V1MirrorCandidateKeyboardBrowseKeyPc34Compat;
+} DM1_V1_MirrorCandidateKeyboardBrowseKeyPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat {
     const char *chamdrawIconBitmapAnchor;
     const char *championInterfaceInputAnchor;
     const char *commandKeyboardQueueAnchor;
@@ -28,15 +28,15 @@ typedef struct Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat {
     const char *coordLayoutAnchor;
     const char *nonOverlapNote;
     const char *contractScope;
-} Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat;
+} DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateKeyboardBrowseRosterPc34Compat {
+typedef struct DM1_V1_MirrorCandidateKeyboardBrowseRosterPc34Compat {
     unsigned int championOrdinal;
     int c127SensorIndex;
     unsigned int portraitBitmapToken;
-} Dm1V1MirrorCandidateKeyboardBrowseRosterPc34Compat;
+} DM1_V1_MirrorCandidateKeyboardBrowseRosterPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat {
     int panelActive;
     int rosterCount;
     int pageSize;
@@ -58,13 +58,13 @@ typedef struct Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat {
     int portraitRealAssetParityClaimed;
     int lastPortraitSensorIndex;
     unsigned int lastPortraitBitmapToken;
-    Dm1V1MirrorCandidateKeyboardBrowseRosterPc34Compat roster
+    DM1_V1_MirrorCandidateKeyboardBrowseRosterPc34Compat roster
         [DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_ROSTER_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat;
+} DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat {
-    const Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat *evidence;
-    Dm1V1MirrorCandidateKeyboardBrowseKeyPc34Compat key;
+typedef struct DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat {
+    const DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat *evidence;
+    DM1_V1_MirrorCandidateKeyboardBrowseKeyPc34Compat key;
     int consumed;
     int pageStartBefore;
     int pageStartAfter;
@@ -106,17 +106,28 @@ typedef struct Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat {
     int nonTriggerContractHeld;
     int partialPressReleasedCleanly;
     int portraitRefreshContractOnly;
-} Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat;
+} DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateKeyboardBrowseKeyPc34Compat
+    Dm1V1MirrorCandidateKeyboardBrowseKeyPc34Compat;
+typedef DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat
+    Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateKeyboardBrowseRosterPc34Compat
+    Dm1V1MirrorCandidateKeyboardBrowseRosterPc34Compat;
+typedef DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat
+    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat;
+typedef DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat
+    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat;
 
 void DM1_V1_MirrorCandidateKeyboardBrowse_InitPc34Compat(
-    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat *state);
+    DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateKeyboardBrowse_ApplyKeyPc34Compat(
-    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardBrowseKeyPc34Compat key,
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardBrowseKeyPc34Compat key,
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat *
+const DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat *
 DM1_V1_MirrorCandidateKeyboardBrowse_EvidencePc34Compat(void);
 
 #ifdef __cplusplus

@@ -17,7 +17,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_INVENTORY_PORTRAIT_CLICK_C175_FIRST_PORTRAIT_ZONE_PC34_COMPAT 175
 #define DM1_V1_MIRROR_CANDIDATE_INVENTORY_PORTRAIT_CLICK_C040_PANEL_GRAPHIC_PC34_COMPAT 40
 
-typedef struct Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat {
     const char *commandGuardAnchor;
     const char *c159NameRouteAnchor;
     const char *defsPanelCommandAnchor;
@@ -26,9 +26,9 @@ typedef struct Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat {
     const char *chamdrawPortraitDispatchAnchor;
     const char *contractScope;
     const char *nonOverlapNote;
-} Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat;
+} DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat {
     int partyChampionCount;
     unsigned int candidateChampionOrdinal;
     unsigned int inventoryChampionOrdinal;
@@ -44,10 +44,10 @@ typedef struct Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat {
     int portraitClickAcceptCount;
     int c159NameRouteCount;
     int commandGuardRejectCount;
-} Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat;
+} DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat {
-    const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat {
+    const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat *evidence;
     int requestedZone;
     int requestedChampionIndex;
     int isPortraitZone;
@@ -85,25 +85,32 @@ typedef struct Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat {
     int inventoryLeaderPreserved;
     int leaderHandPreserved;
     int mirrorRoutePreserved;
-} Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat;
+} DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat
+    Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat
+    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat;
+typedef DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat
+    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat;
 
 void DM1_V1_MirrorCandidateInventoryPortraitClick_InitPc34Compat(
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state);
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateInventoryPortraitClick_OpenInventoryPc34Compat(
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
     unsigned int championOrdinal);
 
 int DM1_V1_MirrorCandidateInventoryPortraitClick_OpenC040FromResurrectClickPc34Compat(
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
     unsigned int candidateChampionOrdinal);
 
 int DM1_V1_MirrorCandidateInventoryPortraitClick_ProcessPortraitZonePc34Compat(
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
     int zone,
-    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat *
+const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat *
 DM1_V1_MirrorCandidateInventoryPortraitClick_EvidencePc34Compat(void);
 
 int dm1_v1_mirror_candidate_inventory_portrait_click_run(

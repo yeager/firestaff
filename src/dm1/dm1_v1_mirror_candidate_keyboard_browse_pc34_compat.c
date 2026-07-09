@@ -28,7 +28,7 @@ enum {
     kPortraitTokenBase = 0xC1270000u
 };
 
-static const Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat
+static const DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat
     s_evidence = {
         "CHAMDRAW.C F0622_PrepareChampionIconBitmap:32-68; "
         "CHAMDRAW.C F0292 redraw area:1040-1051",
@@ -58,7 +58,7 @@ static int clamp_visible_index(int visibleIndex, int pageSize)
     return visibleIndex;
 }
 
-static int highlighted_index(const Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat *state)
+static int highlighted_index(const DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat *state)
 {
     if (!state) {
         return DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_NONE_PC34_COMPAT;
@@ -67,7 +67,7 @@ static int highlighted_index(const Dm1V1MirrorCandidateKeyboardBrowseStatePc34Co
 }
 
 static unsigned int highlighted_ordinal(
-    const Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat *state)
 {
     int index = highlighted_index(state);
     if (!state || index < 0 || index >= state->rosterCount) {
@@ -77,7 +77,7 @@ static unsigned int highlighted_ordinal(
 }
 
 static void read_highlight_portrait(
-    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat *state)
+    DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat *state)
 {
     int index;
 
@@ -97,9 +97,9 @@ static void read_highlight_portrait(
 }
 
 static void snapshot_begin(
-    const Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardBrowseKeyPc34Compat key,
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardBrowseKeyPc34Compat key,
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat *result)
 {
     if (!result) {
         return;
@@ -152,8 +152,8 @@ static void snapshot_begin(
 }
 
 static void snapshot_finish(
-    const Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -221,7 +221,7 @@ static void snapshot_finish(
 }
 
 void DM1_V1_MirrorCandidateKeyboardBrowse_InitPc34Compat(
-    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat *state)
+    DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat *state)
 {
     int i;
 
@@ -254,9 +254,9 @@ void DM1_V1_MirrorCandidateKeyboardBrowse_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateKeyboardBrowse_ApplyKeyPc34Compat(
-    Dm1V1MirrorCandidateKeyboardBrowseStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardBrowseKeyPc34Compat key,
-    Dm1V1MirrorCandidateKeyboardBrowseResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateKeyboardBrowseStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardBrowseKeyPc34Compat key,
+    DM1_V1_MirrorCandidateKeyboardBrowseResultPc34Compat *outResult)
 {
     int maxPageStart;
 
@@ -331,7 +331,7 @@ int DM1_V1_MirrorCandidateKeyboardBrowse_ApplyKeyPc34Compat(
     return outResult->consumed;
 }
 
-const Dm1V1MirrorCandidateKeyboardBrowseEvidencePc34Compat *
+const DM1_V1_MirrorCandidateKeyboardBrowseEvidencePc34Compat *
 DM1_V1_MirrorCandidateKeyboardBrowse_EvidencePc34Compat(void)
 {
     return &s_evidence;
