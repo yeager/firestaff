@@ -223,9 +223,33 @@ typedef struct {
     int imported_program;
     int program_pc_before;
     int program_pc_after;
+    int field_door_valid;
+    int field_door_x;
+    int field_door_y;
+    int field_door_state;
+    int field_door_open_pct;
+    int field_blocks_movement;
+    int field_moved;
     int attack_cooldown_before;
     int attack_cooldown_after;
 } DM2_V1_CreatureCCMTickObserver;
+
+typedef int (*DM2_V1_CreatureDoorReadFn)(void *user,
+                                         int level,
+                                         int x,
+                                         int y,
+                                         int *out_state,
+                                         uint16_t *out_attributes);
+
+typedef struct {
+    DM2_V1_CreatureDoorReadFn read_door;
+    void *user;
+} DM2_V1_CreatureFieldRuntime;
+
+void dm2_v1_creature_set_field_runtime(
+    const DM2_V1_CreatureFieldRuntime *runtime);
+void dm2_v1_creature_reset_field_runtime(void);
+int dm2_v1_creature_door_open_pct_from_state(int door_state);
 
 /* ── Creature instance API ───────────────────────────────────────────────── */
 
@@ -291,6 +315,7 @@ void dm2_v1_creature_test_set_ccm_state(int instance_id,
                                         uint8_t b_17,
                                         int target_x,
                                         int target_y);
+void dm2_v1_creature_test_reset_instances(void);
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
 /* ── Death/drop observer (Phase 5 followup, 2026-06-22) ────────────────

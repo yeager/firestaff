@@ -279,7 +279,9 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
                 } else if (door_state > 4) {
                     door_state = 4;
                 }
-                door->door_open_pct = (uint8_t)((4 - door_state) * 25);
+                door->door_open_pct =
+                    (uint8_t)dm2_v1_creature_door_open_pct_from_state(
+                        door_state);
             }
             dm2_runtime_apply_door_record_metadata(
                 dd, rt->dungeon_level, map_x, map_y, dir,
