@@ -2471,6 +2471,9 @@ static void theron_v1_boot_startup_capture_track02_graphic_receipt(
 static void theron_v1_boot_startup_copy_required_bitmap_routes(
     const Theron_StartupRenderPlan *plan,
     Theron_V1_BootStartupGraphicsRouteReceipt *receipt);
+static int theron_v1_boot_startup_media_has_required_atlas_routes(
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    unsigned int required_route_mask);
 
 static int theron_v1_boot_startup_prepare_graphics_route_receipt(
     const Theron_V1_BootStartupViewModel *view_model,
@@ -2534,19 +2537,14 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
     out_receipt->status_scope = render_route.status_scope;
     out_receipt->status = render_route.status;
     out_receipt->real_bitmap_startup_graphics_ready =
-        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-            &view_model->startup_media_state_receipt) &&
-                render_route.render_plan_valid
+        render_route.render_plan_valid &&
+                theron_v1_boot_startup_media_has_required_atlas_routes(
+                    &view_model->startup_media_state_receipt,
+                    render_route.render_plan.required_bitmap_route_mask)
             ? 1
             : 0;
     out_receipt->track02_atlas_startup_graphics_ready =
-        out_receipt->real_bitmap_startup_graphics_ready &&
-                view_model->startup_media_state_receipt
-                    .startup_bitmap_atlas_ready &&
-                view_model->startup_media_state_receipt
-                    .startup_bitmap_atlas.route_count > 0u
-            ? 1
-            : 0;
+        out_receipt->real_bitmap_startup_graphics_ready;
     theron_v1_boot_startup_mark_bitmap_routes(
         view_model,
         &render_route.render_plan,
@@ -2703,6 +2701,45 @@ theron_v1_boot_startup_atlas_find_route(
         }
     }
     return NULL;
+}
+
+static int theron_v1_boot_startup_media_has_required_atlas_routes(
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    unsigned int required_route_mask)
+{
+    unsigned int bit;
+
+    if (!media_receipt || required_route_mask == 0u ||
+        !media_receipt->startup_media_ready ||
+        media_receipt->startup_bitmap_decode_status !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !media_receipt->startup_bitmap_atlas_ready ||
+        media_receipt->startup_bitmap_atlas.route_count == 0u ||
+        media_receipt->startup_bitmap_atlas_nonzero_pixel_count == 0u ||
+        media_receipt->startup_bitmap_atlas_checksum == 0u ||
+        (media_receipt->startup_bitmap_route_mask & required_route_mask) !=
+            required_route_mask ||
+        (media_receipt->startup_bitmap_atlas_route_mask &
+             required_route_mask) != required_route_mask ||
+        (media_receipt->startup_bitmap_atlas.route_mask &
+             required_route_mask) != required_route_mask) {
+        return 0;
+    }
+
+    for (bit = 1u; bit != 0u; bit <<= 1u) {
+        if ((required_route_mask & bit) == 0u) {
+            continue;
+        }
+        if (!theron_v1_boot_startup_atlas_find_route(
+                &media_receipt->startup_bitmap_atlas,
+                bit)) {
+            return 0;
+        }
+        if (bit >= THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) {
+            break;
+        }
+    }
+    return 1;
 }
 
 static void theron_v1_boot_startup_draw_atlas_route(
@@ -2884,19 +2921,14 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status_scope = render_route.status_scope;
         out_receipt->status = render_route.status;
         out_receipt->real_bitmap_startup_graphics_ready =
-            theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-                &view_model->startup_media_state_receipt) &&
-                    render_route.render_plan_valid
+            render_route.render_plan_valid &&
+                    theron_v1_boot_startup_media_has_required_atlas_routes(
+                        &view_model->startup_media_state_receipt,
+                        render_route.render_plan.required_bitmap_route_mask)
                 ? 1
                 : 0;
         out_receipt->track02_atlas_startup_graphics_ready =
-            out_receipt->real_bitmap_startup_graphics_ready &&
-                    view_model->startup_media_state_receipt
-                        .startup_bitmap_atlas_ready &&
-                    view_model->startup_media_state_receipt
-                        .startup_bitmap_atlas.route_count > 0u
-                ? 1
-                : 0;
+            out_receipt->real_bitmap_startup_graphics_ready;
         theron_v1_boot_startup_mark_bitmap_routes(
             view_model,
             &render_route.render_plan,
