@@ -5556,16 +5556,27 @@ static int orch_cmd_attack_apply_f0190_fear_compat(
     memset(&applyPlan, 0, sizeof(applyPlan));
     if (!dm1_v1_melee_mutation_dispatch_fear_apply_plan_f0190_pc34(
             dispatchPlan, shouldFlee, fleeDelay, &applyPlan) ||
-        !applyPlan.valid || !applyPlan.shouldApplyFear) {
+        !applyPlan.valid) {
         return 0;
     }
-
-    group->behavior = (unsigned char)applyPlan.newGroupBehavior;
-    activeIndex =
-        orch_find_active_group_state_index_compat(world, applyPlan.groupIndex);
-    if (activeIndex >= 0) {
-        world->creatureAI[activeIndex].stateKind = applyPlan.newAiStateKind;
-        world->creatureAI[activeIndex].fearCounter = applyPlan.fearCounter;
+    {
+        DM1_MeleeF0190KilledSomeStateApplyPlanPc34 receipt;
+        memset(&receipt, 0, sizeof(receipt));
+        if (!dm1_v1_melee_killed_some_state_apply_plan_f0190_pc34(
+                &applyPlan, &receipt) ||
+            !receipt.valid || !receipt.shouldApplyFear) {
+            return 0;
+        }
+        group->behavior = (unsigned char)receipt.newGroupBehavior;
+        activeIndex =
+            orch_find_active_group_state_index_compat(
+                world, receipt.groupIndex);
+        if (activeIndex >= 0) {
+            world->creatureAI[activeIndex].stateKind =
+                receipt.newAiStateKind;
+            world->creatureAI[activeIndex].fearCounter =
+                receipt.fearCounter;
+        }
     }
     return 1;
 }
@@ -5607,10 +5618,19 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
         !plan.valid) {
         return 0;
     }
-    if (plan.shouldCleanupCreatureEvents) {
-        orch_cmd_attack_cleanup_f0190_creature_events_compat(
-            world, plan.mapIndex, plan.mapX, plan.mapY,
-            plan.killedCreatureIndex);
+    {
+        DM1_MeleeF0190KilledSomeStateApplyPlanPc34 receipt;
+        memset(&receipt, 0, sizeof(receipt));
+        if (!dm1_v1_melee_killed_some_state_apply_plan_f0190_pc34(
+                &plan, &receipt) ||
+            !receipt.valid) {
+            return 0;
+        }
+        if (receipt.shouldCleanupCreatureEvents) {
+            orch_cmd_attack_cleanup_f0190_creature_events_compat(
+                world, receipt.mapIndex, receipt.mapX, receipt.mapY,
+                receipt.killedCreatureIndex);
+        }
     }
     if (plan.shouldEvaluateFear) {
         DM1_MeleeF0190MutationDispatchPlanPc34 dispatchPlan;
@@ -5624,6 +5644,41 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
             world, group, &dispatchPlan);
     }
     return 0;
+}
+
+static int orch_cmd_attack_apply_killed_some_receipt_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const DM1_MeleeF0190KilledSomeStatePlanPc34* statePlan)
+{
+    DM1_MeleeF0190KilledSomeStateApplyPlanPc34 receipt;
+    int activeIndex;
+
+    if (!world || !group || !statePlan) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_melee_killed_some_state_apply_plan_f0190_pc34(
+            statePlan, &receipt) ||
+        !receipt.valid) {
+        return 0;
+    }
+    if (receipt.shouldCleanupCreatureEvents) {
+        orch_cmd_attack_cleanup_f0190_creature_events_compat(
+            world, receipt.mapIndex, receipt.mapX, receipt.mapY,
+            receipt.killedCreatureIndex);
+    }
+    if (receipt.shouldApplyFear) {
+        group->behavior = (unsigned char)receipt.newGroupBehavior;
+        activeIndex =
+            orch_find_active_group_state_index_compat(
+                world, receipt.groupIndex);
+        if (activeIndex >= 0) {
+            world->creatureAI[activeIndex].stateKind =
+                receipt.newAiStateKind;
+            world->creatureAI[activeIndex].fearCounter =
+                receipt.fearCounter;
+        }
+    }
+    return receipt.shouldApplyFear;
 }
 
 static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
@@ -5647,13 +5702,8 @@ static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
             world, group, &plan.possessionDropPlan);
     }
     if (plan.shouldApplyKilledSomeState) {
-        if (plan.killedSomeStatePlan.shouldCleanupCreatureEvents) {
-            orch_cmd_attack_cleanup_f0190_creature_events_compat(
-                world, plan.killedSomeStatePlan.mapIndex,
-                plan.killedSomeStatePlan.mapX,
-                plan.killedSomeStatePlan.mapY,
-                plan.killedSomeStatePlan.killedCreatureIndex);
-        }
+        (void)orch_cmd_attack_apply_killed_some_receipt_compat(
+            world, group, &plan.killedSomeStatePlan);
         if (plan.killedSomeStatePlan.shouldEvaluateFear) {
             fearTriggered =
                 orch_cmd_attack_apply_f0190_fear_compat(

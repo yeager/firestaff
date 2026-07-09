@@ -1305,6 +1305,32 @@ int dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_killed_some_state_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledSomeStatePlanPc34* statePlan,
+    DM1_MeleeF0190KilledSomeStateApplyPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!statePlan || !statePlan->valid) return 0;
+
+    out->valid = 1;
+    out->groupIndex = statePlan->groupIndex;
+    out->killedCreatureIndex = statePlan->killedCreatureIndex;
+    out->mapIndex = statePlan->mapIndex;
+    out->mapX = statePlan->mapX;
+    out->mapY = statePlan->mapY;
+    out->shouldCleanupCreatureEvents =
+        statePlan->shouldCleanupCreatureEvents;
+    out->shouldApplyFear = statePlan->shouldApplyFear;
+    out->newGroupBehavior = statePlan->newGroupBehavior;
+    out->newAiStateKind = statePlan->newAiStateKind;
+    out->fearCounter = statePlan->fearCounter;
+
+    /* ReDMCSB: GROUP.C F0190 lines 848-889 deletes/shifts killed-creature
+     * events and may write C5 FLEE plus DelayFleeingFromTarget.  DM1 owns
+     * the apply receipt; M10 only materializes the returned live writes. */
+    return 1;
+}
+
 int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     const DM1_MeleeF0190KilledAllStateInputPc34* in,
     DM1_MeleeF0190KilledAllStatePlanPc34* out) {

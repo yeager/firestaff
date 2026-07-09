@@ -614,6 +614,20 @@ typedef struct {
 } DM1_MeleeF0190KilledSomeStatePlanPc34;
 
 typedef struct {
+    int valid;
+    int shouldCleanupCreatureEvents;
+    int shouldApplyFear;
+    int groupIndex;
+    int killedCreatureIndex;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int newGroupBehavior;
+    int newAiStateKind;
+    int fearCounter;
+} DM1_MeleeF0190KilledSomeStateApplyPlanPc34;
+
+typedef struct {
     int outcome;
     int groupIndex;
     int targetMapIndex;
@@ -821,6 +835,9 @@ int dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
     int shouldFlee,
     int fleeDelay,
     DM1_MeleeF0190KilledSomeStatePlanPc34* out);
+int dm1_v1_melee_killed_some_state_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledSomeStatePlanPc34* statePlan,
+    DM1_MeleeF0190KilledSomeStateApplyPlanPc34* out);
 int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     const DM1_MeleeF0190KilledAllStateInputPc34* in,
     DM1_MeleeF0190KilledAllStatePlanPc34* out);
