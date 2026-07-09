@@ -25,7 +25,7 @@ extern "C" {
 #define DM1_V1_MCRFC30_M568_PANEL_PC34_COMPAT 568
 #define DM1_V1_MCRFC30_G0426_OPEN_CHEST_PC34_COMPAT 0x6401u
 
-typedef struct Dm1V1MirrorCandidateResurrectFullC30EvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateResurrectFullC30EvidencePc34Compat {
     int contractOnly;
     const char *commandAnchor;
     const char *reviveOpenAnchor;
@@ -37,9 +37,9 @@ typedef struct Dm1V1MirrorCandidateResurrectFullC30EvidencePc34Compat {
     const char *panelAnchor;
     const char *defsAnchor;
     const char *scope;
-} Dm1V1MirrorCandidateResurrectFullC30EvidencePc34Compat;
+} DM1_V1_MirrorCandidateResurrectFullC30EvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat {
     int contractOnly;
     unsigned int candidateOrdinal;
     unsigned int activePanelCandidateOrdinal;
@@ -71,9 +71,9 @@ typedef struct Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat {
     int f0352EyeClickCount;
     int f0359PanelDispatchCount;
     unsigned int deterministicHash;
-} Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat;
+} DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat {
     int accepted;
     int rejectedNoEmptyC30;
     unsigned int candidateBefore;
@@ -96,19 +96,26 @@ typedef struct Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat {
     int cleanSuccess;
     unsigned int deterministicHashAfter;
     const char *anchor;
-} Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat;
+} DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateResurrectFullC30EvidencePc34Compat
+    Dm1V1MirrorCandidateResurrectFullC30EvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat
+    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat;
+typedef DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat
+    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat;
 
 void dm1_v1_mirror_candidate_resurrect_full_c30_init_pc34_compat(
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state);
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state);
 
 int dm1_v1_mirror_candidate_resurrect_full_c30_attempt_pc34_compat(
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state,
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state,
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat *outResult);
 
 void dm1_v1_mirror_candidate_resurrect_full_c30_free_last_slot_pc34_compat(
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state);
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state);
 
-const Dm1V1MirrorCandidateResurrectFullC30EvidencePc34Compat *
+const DM1_V1_MirrorCandidateResurrectFullC30EvidencePc34Compat *
 dm1_v1_mirror_candidate_resurrect_full_c30_evidence_pc34_compat(void);
 
 const char *

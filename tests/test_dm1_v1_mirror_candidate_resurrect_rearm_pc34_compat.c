@@ -35,7 +35,7 @@ static Dm1V1MirrorClickClosedStatePc34Compat base_candidate_state(void)
 static void test_resurrect_clears_g0299_and_rearms_mirror(void)
 {
     Dm1V1MirrorClickClosedStatePc34Compat state = base_candidate_state();
-    Dm1V1MirrorCandidateResurrectRearmResultPc34Compat result;
+    DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat result;
     int changed;
 
     changed = DM1_V1_MirrorCandidateResurrectRearm_ProcessResurrectPc34Compat(
@@ -78,7 +78,7 @@ static void test_resurrect_clears_g0299_and_rearms_mirror(void)
 static void test_resurrect_with_no_dead_champion_keeps_state(void)
 {
     Dm1V1MirrorClickClosedStatePc34Compat state = base_candidate_state();
-    Dm1V1MirrorCandidateResurrectRearmResultPc34Compat result;
+    DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat result;
     int changed;
 
     state.frontD1cMirrorChampionOrdinal = 2;
@@ -111,8 +111,8 @@ static void test_resurrect_with_no_dead_champion_keeps_state(void)
 static void test_post_resurrect_c159_click_re_routes_to_new_leader(void)
 {
     Dm1V1MirrorClickClosedStatePc34Compat state = base_candidate_state();
-    Dm1V1MirrorCandidateResurrectRearmResultPc34Compat resurrect;
-    Dm1V1MirrorCandidateStatusBoxResultPc34Compat status;
+    DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat resurrect;
+    DM1_V1_MirrorCandidateStatusBoxResultPc34Compat status;
     int changed;
 
     (void)DM1_V1_MirrorCandidateResurrectRearm_ProcessResurrectPc34Compat(
@@ -162,9 +162,9 @@ static void test_post_resurrect_c159_click_re_routes_to_new_leader(void)
 static void test_post_resurrect_inventory_toggle_re_enabled(void)
 {
     Dm1V1MirrorClickClosedStatePc34Compat state = base_candidate_state();
-    Dm1V1MirrorCandidateCommandGateResultPc34Compat beforeGate;
-    Dm1V1MirrorCandidateCommandGateResultPc34Compat afterGate;
-    Dm1V1MirrorCandidateResurrectRearmResultPc34Compat resurrect;
+    DM1_V1_MirrorCandidateCommandGateResultPc34Compat beforeGate;
+    DM1_V1_MirrorCandidateCommandGateResultPc34Compat afterGate;
+    DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat resurrect;
     int allowedBefore;
     int allowedAfter;
 

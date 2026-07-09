@@ -36,7 +36,7 @@ static int gAssertions;
 static int gFailures;
 static int gLastHash;
 
-static const Dm1V1MirrorCandidateRripEvidencePc34Compat s_evidence = {
+static const DM1_V1_MirrorCandidateRripEvidencePc34Compat s_evidence = {
     1,
     "CHAMPION.C F0284:93-131 party direction/champion redraw state",
     "CHAMPION.C F0297:243-268 leader-hand object ownership",
@@ -75,7 +75,7 @@ static uint32_t mix_hash(uint32_t hash, uint32_t value)
     return hash;
 }
 
-static void update_hash(Dm1V1MirrorCandidateRripStatePc34Compat *state,
+static void update_hash(DM1_V1_MirrorCandidateRripStatePc34Compat *state,
                         int tag,
                         int value)
 {
@@ -91,8 +91,8 @@ static void update_hash(Dm1V1MirrorCandidateRripStatePc34Compat *state,
 }
 
 static void snapshot_result(
-    const Dm1V1MirrorCandidateRripStatePc34Compat *state,
-    Dm1V1MirrorCandidateRripResultPc34Compat *result,
+    const DM1_V1_MirrorCandidateRripStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRripResultPc34Compat *result,
     const char *anchor)
 {
     if (!result) {
@@ -135,8 +135,8 @@ static void snapshot_result(
 }
 
 static void finish_result(
-    const Dm1V1MirrorCandidateRripStatePc34Compat *state,
-    Dm1V1MirrorCandidateRripResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateRripStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRripResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -173,7 +173,7 @@ static void finish_result(
 }
 
 void DM1_V1_MirrorCandidateRrip_InitPc34Compat(
-    Dm1V1MirrorCandidateRripStatePc34Compat *state)
+    DM1_V1_MirrorCandidateRripStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -208,11 +208,11 @@ void DM1_V1_MirrorCandidateRrip_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRrip_ReselectSameChampionPc34Compat(
-    Dm1V1MirrorCandidateRripStatePc34Compat *state,
-    Dm1V1MirrorCandidateRripResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateRripStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRripResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateRripResultPc34Compat localResult;
-    Dm1V1MirrorCandidateRripResultPc34Compat *result =
+    DM1_V1_MirrorCandidateRripResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateRripResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     snapshot_result(state, result, "REVIVE.C F0280:124-132; "
@@ -238,11 +238,11 @@ int DM1_V1_MirrorCandidateRrip_ReselectSameChampionPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRrip_InventoryClickDuringReselectPc34Compat(
-    Dm1V1MirrorCandidateRripStatePc34Compat *state,
-    Dm1V1MirrorCandidateRripResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateRripStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRripResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateRripResultPc34Compat localResult;
-    Dm1V1MirrorCandidateRripResultPc34Compat *result =
+    DM1_V1_MirrorCandidateRripResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateRripResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     snapshot_result(state, result, "CHAMPION.C F0302:662-713; "
@@ -281,8 +281,8 @@ int DM1_V1_MirrorCandidateRrip_InventoryClickDuringReselectPc34Compat(
 }
 
 static void dispatch_queued_inventory_click(
-    Dm1V1MirrorCandidateRripStatePc34Compat *state,
-    Dm1V1MirrorCandidateRripResultPc34Compat *result)
+    DM1_V1_MirrorCandidateRripStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRripResultPc34Compat *result)
 {
     if (!state ||
         state->queuedInventoryCommand !=
@@ -314,12 +314,12 @@ static void dispatch_queued_inventory_click(
 }
 
 int DM1_V1_MirrorCandidateRrip_FinishCandidatePc34Compat(
-    Dm1V1MirrorCandidateRripStatePc34Compat *state,
-    Dm1V1MirrorCandidateRripFinishPc34Compat finish,
-    Dm1V1MirrorCandidateRripResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateRripStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRripFinishPc34Compat finish,
+    DM1_V1_MirrorCandidateRripResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateRripResultPc34Compat localResult;
-    Dm1V1MirrorCandidateRripResultPc34Compat *result =
+    DM1_V1_MirrorCandidateRripResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateRripResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     snapshot_result(state, result, "REVIVE.C F0282:744-806; "
@@ -354,7 +354,7 @@ int DM1_V1_MirrorCandidateRrip_FinishCandidatePc34Compat(
     return 1;
 }
 
-const Dm1V1MirrorCandidateRripEvidencePc34Compat *
+const DM1_V1_MirrorCandidateRripEvidencePc34Compat *
 DM1_V1_MirrorCandidateRrip_EvidencePc34Compat(void)
 {
     return &s_evidence;
@@ -375,12 +375,12 @@ static void check_true(int condition, const char *message, const char *anchor)
     }
 }
 
-static void run_one_path(Dm1V1MirrorCandidateRripFinishPc34Compat finish)
+static void run_one_path(DM1_V1_MirrorCandidateRripFinishPc34Compat finish)
 {
-    Dm1V1MirrorCandidateRripStatePc34Compat state;
-    Dm1V1MirrorCandidateRripResultPc34Compat reselect;
-    Dm1V1MirrorCandidateRripResultPc34Compat inventory;
-    Dm1V1MirrorCandidateRripResultPc34Compat done;
+    DM1_V1_MirrorCandidateRripStatePc34Compat state;
+    DM1_V1_MirrorCandidateRripResultPc34Compat reselect;
+    DM1_V1_MirrorCandidateRripResultPc34Compat inventory;
+    DM1_V1_MirrorCandidateRripResultPc34Compat done;
 
     DM1_V1_MirrorCandidateRrip_InitPc34Compat(&state);
     check_true(state.candidateChampionOrdinal == kSelectedChampionOrdinal,
@@ -459,7 +459,7 @@ static void run_one_path(Dm1V1MirrorCandidateRripFinishPc34Compat finish)
 
 int DM1_V1_MirrorCandidateRrip_RunSelfTestPc34Compat(void)
 {
-    const Dm1V1MirrorCandidateRripEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateRripEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateRrip_EvidencePc34Compat();
     const char *source = DM1_V1_MirrorCandidateRrip_SourceEvidencePc34Compat();
 

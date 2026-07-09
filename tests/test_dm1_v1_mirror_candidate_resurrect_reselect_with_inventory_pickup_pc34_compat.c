@@ -16,7 +16,7 @@ static int gFailures;
 
 static void check_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateRripEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateRripEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateRrip_EvidencePc34Compat();
     const char *source = DM1_V1_MirrorCandidateRrip_SourceEvidencePc34Compat();
 
@@ -80,10 +80,10 @@ static void check_source_lock_metadata(void)
 
 static void check_manual_confirm_flow(void)
 {
-    Dm1V1MirrorCandidateRripStatePc34Compat state;
-    Dm1V1MirrorCandidateRripResultPc34Compat reselect;
-    Dm1V1MirrorCandidateRripResultPc34Compat inventory;
-    Dm1V1MirrorCandidateRripResultPc34Compat finish;
+    DM1_V1_MirrorCandidateRripStatePc34Compat state;
+    DM1_V1_MirrorCandidateRripResultPc34Compat reselect;
+    DM1_V1_MirrorCandidateRripResultPc34Compat inventory;
+    DM1_V1_MirrorCandidateRripResultPc34Compat finish;
 
     DM1_V1_MirrorCandidateRrip_InitPc34Compat(&state);
 

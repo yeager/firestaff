@@ -14,12 +14,12 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_RRIP_C30_CHEST_SLOT_PC34_COMPAT 30
 #define DM1_V1_MIRROR_CANDIDATE_RRIP_M568_PANEL_PC34_COMPAT 568
 
-typedef enum Dm1V1MirrorCandidateRripFinishPc34Compat {
+typedef enum DM1_V1_MirrorCandidateRripFinishPc34Compat {
     DM1_V1_MIRROR_CANDIDATE_RRIP_FINISH_CONFIRM_PC34_COMPAT = 1,
     DM1_V1_MIRROR_CANDIDATE_RRIP_FINISH_CANCEL_PC34_COMPAT = 2
-} Dm1V1MirrorCandidateRripFinishPc34Compat;
+} DM1_V1_MirrorCandidateRripFinishPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateRripEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateRripEvidencePc34Compat {
     int contractOnly;
     const char *championDirectionAnchor;
     const char *championLeaderHandAnchor;
@@ -33,9 +33,9 @@ typedef struct Dm1V1MirrorCandidateRripEvidencePc34Compat {
     const char *chestCloseAnchor;
     const char *defsAnchor;
     const char *nonDuplicationScope;
-} Dm1V1MirrorCandidateRripEvidencePc34Compat;
+} DM1_V1_MirrorCandidateRripEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateRripStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateRripStatePc34Compat {
     int partyChampionCount;
     int selectedChampionOrdinal;
     int candidateChampionOrdinal;
@@ -72,9 +72,9 @@ typedef struct Dm1V1MirrorCandidateRripStatePc34Compat {
     int blockedInventoryClicks;
     int handPreservedCount;
     int deterministicHash;
-} Dm1V1MirrorCandidateRripStatePc34Compat;
+} DM1_V1_MirrorCandidateRripStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateRripResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateRripResultPc34Compat {
     int accepted;
     int blocked;
     int queued;
@@ -105,25 +105,34 @@ typedef struct Dm1V1MirrorCandidateRripResultPc34Compat {
     int dispatchWaitedForCandidateFinish;
     int deterministicHashAfter;
     const char *anchor;
-} Dm1V1MirrorCandidateRripResultPc34Compat;
+} DM1_V1_MirrorCandidateRripResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateRripFinishPc34Compat
+    Dm1V1MirrorCandidateRripFinishPc34Compat;
+typedef DM1_V1_MirrorCandidateRripEvidencePc34Compat
+    Dm1V1MirrorCandidateRripEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateRripStatePc34Compat
+    Dm1V1MirrorCandidateRripStatePc34Compat;
+typedef DM1_V1_MirrorCandidateRripResultPc34Compat
+    Dm1V1MirrorCandidateRripResultPc34Compat;
 
 void DM1_V1_MirrorCandidateRrip_InitPc34Compat(
-    Dm1V1MirrorCandidateRripStatePc34Compat *state);
+    DM1_V1_MirrorCandidateRripStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateRrip_ReselectSameChampionPc34Compat(
-    Dm1V1MirrorCandidateRripStatePc34Compat *state,
-    Dm1V1MirrorCandidateRripResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateRripStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRripResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateRrip_InventoryClickDuringReselectPc34Compat(
-    Dm1V1MirrorCandidateRripStatePc34Compat *state,
-    Dm1V1MirrorCandidateRripResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateRripStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRripResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateRrip_FinishCandidatePc34Compat(
-    Dm1V1MirrorCandidateRripStatePc34Compat *state,
-    Dm1V1MirrorCandidateRripFinishPc34Compat finish,
-    Dm1V1MirrorCandidateRripResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateRripStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRripFinishPc34Compat finish,
+    DM1_V1_MirrorCandidateRripResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateRripEvidencePc34Compat *
+const DM1_V1_MirrorCandidateRripEvidencePc34Compat *
 DM1_V1_MirrorCandidateRrip_EvidencePc34Compat(void);
 
 const char *

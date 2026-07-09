@@ -18,7 +18,7 @@ static int gPasses;
 
 static void check_initial_fixture(void)
 {
-    Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat state;
+    DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat state;
     int slotIndex;
 
     DM1_V1_MirrorCandidateResurrectReincarnateSkills_InitPc34Compat(&state);
@@ -51,7 +51,7 @@ static void check_initial_fixture(void)
 }
 
 static void check_shared_finalization(
-    const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state,
     const char *label)
 {
     int slotIndex;
@@ -130,9 +130,9 @@ static void check_shared_finalization(
 
 static void check_c160_distinction(void)
 {
-    const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state =
+    const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state =
         DM1_V1_MirrorCandidateResurrectReincarnateSkills_DriveC160Pc34Compat();
-    const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *after =
+    const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *after =
         DM1_V1_MirrorCandidateResurrectReincarnateSkills_StateAfterPc34Compat(
             DM1_V1_MIRROR_CANDIDATE_RR_SKILLS_COMMAND_C160_PC34_COMPAT);
     int skillIndex;
@@ -192,9 +192,9 @@ static void check_c160_distinction(void)
 
 static void check_c161_distinction(void)
 {
-    const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state =
+    const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state =
         DM1_V1_MirrorCandidateResurrectReincarnateSkills_DriveC161Pc34Compat();
-    const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *after =
+    const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *after =
         DM1_V1_MirrorCandidateResurrectReincarnateSkills_StateAfterPc34Compat(
             DM1_V1_MIRROR_CANDIDATE_RR_SKILLS_COMMAND_C161_PC34_COMPAT);
     int skillIndex;

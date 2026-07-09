@@ -10,7 +10,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_RESURRECT_COMMAND_PC34_COMPAT 160
 #define DM1_V1_MIRROR_CANDIDATE_ACTION_AREA_COMMAND_PC34_COMPAT 111
 
-typedef struct Dm1V1MirrorCandidateResurrectRearmResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat {
     int candidateChampionIndex;
     unsigned int candidateChampionOrdinalBefore;
     unsigned int candidateChampionOrdinalAfter;
@@ -28,27 +28,34 @@ typedef struct Dm1V1MirrorCandidateResurrectRearmResultPc34Compat {
     int candidateCleared;
     int panelC040Cleared;
     int mirrorRouteRearmed;
-} Dm1V1MirrorCandidateResurrectRearmResultPc34Compat;
+} DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateStatusBoxResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateStatusBoxResultPc34Compat {
     Dm1V1MirrorClickClosedResultPc34Compat statusBox;
     int statusBoxChangedLeader;
     int previousFrontD1cMirrorChampionOrdinal;
     int newFrontD1cMirrorChampionOrdinal;
     int frontD1cPortraitIndex;
     int mirrorRouteLive;
-} Dm1V1MirrorCandidateStatusBoxResultPc34Compat;
+} DM1_V1_MirrorCandidateStatusBoxResultPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateCommandGateResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateCommandGateResultPc34Compat {
     int command;
     int panelC040Closed;
     int blockedByCandidatePanel;
     int commandAllowed;
-} Dm1V1MirrorCandidateCommandGateResultPc34Compat;
+} DM1_V1_MirrorCandidateCommandGateResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat
+    Dm1V1MirrorCandidateResurrectRearmResultPc34Compat;
+typedef DM1_V1_MirrorCandidateStatusBoxResultPc34Compat
+    Dm1V1MirrorCandidateStatusBoxResultPc34Compat;
+typedef DM1_V1_MirrorCandidateCommandGateResultPc34Compat
+    Dm1V1MirrorCandidateCommandGateResultPc34Compat;
 
 int DM1_V1_MirrorCandidateResurrectRearm_ProcessResurrectPc34Compat(
     Dm1V1MirrorClickClosedStatePc34Compat *state,
-    Dm1V1MirrorCandidateResurrectRearmResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateResurrectRearm_ProcessStatusBoxClickPc34Compat(
     Dm1V1MirrorClickClosedStatePc34Compat *state,
@@ -56,12 +63,12 @@ int DM1_V1_MirrorCandidateResurrectRearm_ProcessStatusBoxClickPc34Compat(
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1MirrorCandidateStatusBoxResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateStatusBoxResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateResurrectRearm_CanProcessCommandPc34Compat(
     const Dm1V1MirrorClickClosedStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateCommandGateResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateCommandGateResultPc34Compat *outResult);
 
 const char *DM1_V1_MirrorCandidateResurrectRearm_SourceEvidencePc34Compat(void);
 

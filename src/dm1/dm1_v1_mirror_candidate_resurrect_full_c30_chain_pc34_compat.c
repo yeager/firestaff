@@ -17,7 +17,7 @@ static int gAssertions;
 static int gFailures;
 static unsigned int gLastHash;
 
-static const Dm1V1MirrorCandidateResurrectFullC30EvidencePc34Compat
+static const DM1_V1_MirrorCandidateResurrectFullC30EvidencePc34Compat
     s_evidence = {
         1,
         "COMMAND.C F0359:1985-1990 M568/C040 dispatch requires "
@@ -66,7 +66,7 @@ static uint32_t fnv1a_step(uint32_t hash, uint32_t value)
 }
 
 static void update_hash(
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state,
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state,
     unsigned int tag,
     unsigned int value)
 {
@@ -78,7 +78,7 @@ static void update_hash(
 }
 
 static int c30_has_empty_slot(
-    const Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state)
+    const DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state)
 {
     int i;
 
@@ -94,7 +94,7 @@ static int c30_has_empty_slot(
 }
 
 static int first_empty_c30_slot(
-    const Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state)
+    const DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state)
 {
     int i;
 
@@ -110,8 +110,8 @@ static int first_empty_c30_slot(
 }
 
 static void snapshot_result(
-    const Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state,
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat *result,
+    const DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state,
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat *result,
     const char *anchor)
 {
     if (!result) {
@@ -148,8 +148,8 @@ static void snapshot_result(
 }
 
 static int c30_chain_unchanged(
-    const Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state,
-    const Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state,
+    const DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat *result)
 {
     int i;
 
@@ -169,7 +169,7 @@ static int c30_chain_unchanged(
 }
 
 static int champion_slots_seeded(
-    const Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state)
+    const DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state)
 {
     int i;
 
@@ -185,8 +185,8 @@ static int champion_slots_seeded(
 }
 
 static void finish_result(
-    const Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state,
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state,
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -224,7 +224,7 @@ static void finish_result(
 }
 
 void dm1_v1_mirror_candidate_resurrect_full_c30_init_pc34_compat(
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state)
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state)
 {
     int i;
 
@@ -262,11 +262,11 @@ void dm1_v1_mirror_candidate_resurrect_full_c30_init_pc34_compat(
 }
 
 int dm1_v1_mirror_candidate_resurrect_full_c30_attempt_pc34_compat(
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state,
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state,
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat localResult;
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat *result =
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat *result =
         outResult ? outResult : &localResult;
     int freeSlot;
 
@@ -323,7 +323,7 @@ int dm1_v1_mirror_candidate_resurrect_full_c30_attempt_pc34_compat(
 }
 
 void dm1_v1_mirror_candidate_resurrect_full_c30_free_last_slot_pc34_compat(
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat *state)
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -334,7 +334,7 @@ void dm1_v1_mirror_candidate_resurrect_full_c30_free_last_slot_pc34_compat(
     update_hash(state, 50u, DM1_V1_MCRFC30_C37_SLOT_PC34_COMPAT);
 }
 
-const Dm1V1MirrorCandidateResurrectFullC30EvidencePc34Compat *
+const DM1_V1_MirrorCandidateResurrectFullC30EvidencePc34Compat *
 dm1_v1_mirror_candidate_resurrect_full_c30_evidence_pc34_compat(void)
 {
     return &s_evidence;
@@ -356,9 +356,9 @@ static void self_check(int condition)
 
 int dm1_v1_mirror_candidate_resurrect_full_c30_run_self_test_pc34_compat(void)
 {
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat state;
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat rejected;
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat accepted;
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat state;
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat rejected;
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat accepted;
     int ok;
 
     gAssertions = 0;

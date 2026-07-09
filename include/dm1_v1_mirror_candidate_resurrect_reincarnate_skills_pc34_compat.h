@@ -15,7 +15,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_RR_SKILLS_STATISTIC_COUNT_PC34_COMPAT 7
 #define DM1_V1_MIRROR_CANDIDATE_RR_SKILLS_NONE_PC34_COMPAT (-1)
 
-typedef struct Dm1V1MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat {
+typedef struct DM1_V1_MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat {
     int present;
     int alive;
     int currentHealth;
@@ -29,9 +29,9 @@ typedef struct Dm1V1MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat 
     int statistics[
         DM1_V1_MIRROR_CANDIDATE_RR_SKILLS_STATISTIC_COUNT_PC34_COMPAT][3];
     int slots[DM1_V1_MIRROR_CANDIDATE_RR_SKILLS_SLOT_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat;
+} DM1_V1_MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat {
     int command;
     int validPanelCommand;
     int partyChampionCountBefore;
@@ -67,22 +67,27 @@ typedef struct Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat {
     int f0300SlotRemoveRouteCount;
     int f0301SlotAddRouteCount;
     int f0302SlotBoxRouteCount;
-    Dm1V1MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat
+    DM1_V1_MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat
         before[DM1_V1_MIRROR_CANDIDATE_RR_SKILLS_CHAMPION_COUNT_PC34_COMPAT];
-    Dm1V1MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat
+    DM1_V1_MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat
         after[DM1_V1_MIRROR_CANDIDATE_RR_SKILLS_CHAMPION_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat;
+} DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat;
+
+typedef DM1_V1_MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat
+    Dm1V1MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat;
+typedef DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat
+    Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat;
 
 void DM1_V1_MirrorCandidateResurrectReincarnateSkills_InitPc34Compat(
-    Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state);
+    DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state);
 
-const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
+const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
 DM1_V1_MirrorCandidateResurrectReincarnateSkills_DriveC160Pc34Compat(void);
 
-const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
+const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
 DM1_V1_MirrorCandidateResurrectReincarnateSkills_DriveC161Pc34Compat(void);
 
-const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
+const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
 DM1_V1_MirrorCandidateResurrectReincarnateSkills_StateAfterPc34Compat(
     int command);
 
