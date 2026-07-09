@@ -1392,6 +1392,10 @@ int main(void) {
                         real_visual_capture.menu_rect_command_count >= 2 &&
                         real_visual_capture.menu_text_command_count >=
                             real_visual_capture.menu_row_count &&
+                        real_visual_capture.resume_menu_ready == 0 &&
+                        real_visual_capture.new_game_menu_ready == 1 &&
+                        real_visual_capture.exact_selected_highlight_ready == 1 &&
+                        real_visual_capture.startup_title_menu_hud_breadth_ready == 0 &&
                         real_visual_capture.hud_handoff_capture_ready == 1 &&
                         real_visual_capture.title_menu_hud_visual_proof_ready == 1 &&
                         real_visual_capture.suppress_game_hud == 1 &&
