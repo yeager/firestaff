@@ -32,6 +32,9 @@ typedef struct {
 typedef struct {
     Theron_StartupResult result;
     int level_loaded;
+    int runtime_level_source;
+    int track02_semantic_handoff;
+    int fallback_visuals_blocked;
     int party_x;
     int party_y;
     int party_dir;
@@ -47,6 +50,13 @@ typedef struct {
     const char *log_first_line;
     int log_receipt;
 } Theron_V1StartupRuntimeEntryApplyReceipt;
+
+typedef enum {
+    THERON_V1_STARTUP_RUNTIME_LEVEL_NONE = 0,
+    THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM = 1,
+    THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC = 2,
+    THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED = 3
+} Theron_V1StartupRuntimeLevelSource;
 
 int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
     Theron_V1_World *world,

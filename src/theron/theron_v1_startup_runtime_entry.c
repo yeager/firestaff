@@ -372,6 +372,7 @@ void theron_v1_startup_runtime_entry_result_init(
     }
     memset(result, 0, sizeof(*result));
     result->result = THERON_STARTUP_OK;
+    result->runtime_level_source = THERON_V1_STARTUP_RUNTIME_LEVEL_NONE;
 }
 
 void theron_v1_startup_runtime_entry_apply_receipt_init(
@@ -407,6 +408,7 @@ int theron_v1_startup_host_receipt_from_runtime_entry_apply(
 
 static void theron_v1_startup_runtime_entry_capture_result(
     const Theron_V1_World *world,
+    const char *runtime_receipt,
     Theron_V1StartupRuntimeEntryResult *out_result) {
 
     if (!world || !out_result) {
@@ -415,10 +417,34 @@ static void theron_v1_startup_runtime_entry_capture_result(
     theron_v1_startup_runtime_entry_result_init(out_result);
     out_result->result = THERON_STARTUP_OK;
     out_result->level_loaded = 1;
+    if (runtime_receipt &&
+        strstr(runtime_receipt, "Track 02 semantic initial level")) {
+        out_result->runtime_level_source =
+            THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
+        out_result->track02_semantic_handoff = 1;
+    } else if (runtime_receipt &&
+               strstr(runtime_receipt, "fallback room stage=")) {
+        out_result->runtime_level_source =
+            THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM;
+    }
     out_result->party_x = world->party.leader_x;
     out_result->party_y = world->party.leader_y;
     out_result->party_dir = world->party.leader_dir;
     out_result->tick_count = (int)world->world_tick;
+}
+
+static void theron_v1_startup_runtime_entry_capture_failure_route(
+    const char *runtime_receipt,
+    Theron_V1StartupRuntimeEntryResult *out_result) {
+
+    if (!out_result || !runtime_receipt) {
+        return;
+    }
+    if (strstr(runtime_receipt, "fallback visuals blocked")) {
+        out_result->runtime_level_source =
+            THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED;
+        out_result->fallback_visuals_blocked = 1;
+    }
 }
 
 int theron_v1_startup_runtime_enter_from_forcefield(
@@ -483,10 +509,14 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                      "startup-flow runtime entry failed: %s",
                      theron_v1_startup_result_name(result));
         }
+        theron_v1_startup_runtime_entry_capture_failure_route(receipt,
+                                                              out_result);
         return 0;
     }
 
-    theron_v1_startup_runtime_entry_capture_result(world, out_result);
+    theron_v1_startup_runtime_entry_capture_result(world,
+                                                   receipt,
+                                                   out_result);
     return 1;
 }
 
@@ -574,6 +604,12 @@ int theron_v1_startup_runtime_entry_state_receipt_from_result(
     out_receipt->party_dir = result->party_dir;
     out_receipt->set_tick_count = 1;
     out_receipt->tick_count = result->tick_count;
+    out_receipt->set_runtime_level_route = 1;
+    out_receipt->runtime_level_source = result->runtime_level_source;
+    out_receipt->runtime_track02_semantic_handoff =
+        result->track02_semantic_handoff;
+    out_receipt->runtime_fallback_visuals_blocked =
+        result->fallback_visuals_blocked;
     return 1;
 }
 
@@ -613,6 +649,8 @@ int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
                                                       receipt,
                                                       receipt_cap)) {
         result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
+        theron_v1_startup_runtime_entry_capture_failure_route(receipt,
+                                                              result);
         theron_v1_startup_runtime_entry_failure_apply_receipt(
             plan,
             result,
@@ -626,7 +664,7 @@ int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
         return 0;
     }
 
-    theron_v1_startup_runtime_entry_capture_result(world, result);
+    theron_v1_startup_runtime_entry_capture_result(world, receipt, result);
     theron_v1_startup_flow_init(&flow);
     flow.phase = THERON_STARTUP_PHASE_IN_DUNGEON;
     flow.selected_dungeon = dungeon_id;
