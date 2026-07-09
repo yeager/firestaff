@@ -1097,7 +1097,27 @@ static void dm2_runtime_finish_creature_render_receipt(
     int frame_count;
 
     if (!viewport || !g_dm2_last_creature_render.valid ||
-        !viewport->last_creature_asset_blit_valid) {
+        !viewport->last_creature_render_valid) {
+        return;
+    }
+    render = &viewport->last_creature_render;
+    g_dm2_last_creature_render.draw_order =
+        viewport->last_creature_draw_order;
+    g_dm2_last_creature_render.fallback_rect = render->fallback_rect;
+    if (!viewport->last_creature_asset_blit_valid ||
+        viewport->last_creature_asset_blit.draw_order !=
+            viewport->last_creature_draw_order) {
+        /* skproject SKWIN/SkWinCore.cpp DRAW_TEMP_PICST falls back only when
+         * QUERY_DUNGEON_MAP_CHIP_PICT cannot supply a drawable map-chip. Keep
+         * that renderer-owned decision in the runtime receipt instead of
+         * making host code infer it from aggregate counters. */
+        g_dm2_last_creature_render.fallback_drawn = 1;
+        g_dm2_last_creature_render.asset_blit_ready = 0;
+        g_dm2_last_creature_render.requested_frame_index =
+            render->frame_index;
+        g_dm2_last_creature_render.party_direction = viewport->party_dir & 3;
+        g_dm2_last_creature_render.relative_direction =
+            ((viewport->party_dir & 3) - (render->direction & 3)) & 3;
         return;
     }
     blit = &viewport->last_creature_asset_blit;
@@ -1109,7 +1129,9 @@ static void dm2_runtime_finish_creature_render_receipt(
      * animation frame plus view-relative creature direction to choose the
      * atlas cell. Carry that resolved table row back to runtime receipt. */
     g_dm2_last_creature_render.gdat_index = blit->gdat_index;
+    g_dm2_last_creature_render.draw_order = blit->draw_order;
     g_dm2_last_creature_render.asset_blit_ready = 1;
+    g_dm2_last_creature_render.fallback_drawn = 0;
     g_dm2_last_creature_render.asset_src_w =
         viewport->last_creature_asset_src_w;
     g_dm2_last_creature_render.asset_src_h =

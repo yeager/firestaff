@@ -427,6 +427,7 @@ typedef struct {
     int src_stride;
     int transparent_color;
     int render_frame;
+    int draw_order;
 } DM2_V1_CreatureAssetBlit;
 
 typedef struct {
@@ -672,11 +673,14 @@ typedef struct {
     int asset_creature_drawn_count;
     int fallback_creature_drawn_count;
     int last_creature_asset_blit_valid;
+    int last_creature_render_valid;
+    int last_creature_draw_order;
     int last_creature_asset_src_w;
     int last_creature_asset_src_h;
     int last_creature_asset_src_stride;
     DM2_V1_CreatureRender last_creature_asset_render;
     DM2_V1_CreatureAssetBlit last_creature_asset_blit;
+    DM2_V1_CreatureRender last_creature_render;
     int asset_item_drawn_count;
     int fallback_item_drawn_count;
     int asset_creature_possession_item_drawn_count;

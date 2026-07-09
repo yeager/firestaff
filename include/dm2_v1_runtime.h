@@ -158,7 +158,9 @@ typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int screen_y;
     int depth;
     int gdat_index;
+    int draw_order;
     int asset_blit_ready;
+    int fallback_drawn;
     int asset_src_w;
     int asset_src_h;
     int asset_src_stride;
@@ -173,6 +175,7 @@ typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int atlas_frame_h;
     int render_frame;
     DM2_V1_ViewportRect asset_dst_rect;
+    DM2_V1_ViewportRect fallback_rect;
 } DM2_V1_RuntimeCreatureRenderReceipt;
 int dm2_v1_runtime_last_creature_render_receipt(
     DM2_V1_RuntimeCreatureRenderReceipt *out_receipt);
