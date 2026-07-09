@@ -186,6 +186,18 @@ typedef struct CSB_V1_BootStartupRenderViewReceipt_PC34 {
     int title_presents_visible;
     int title_chaos_visible;
     int title_strikes_back_visible;
+    int title_render_command_count;
+    int title_blit_kind;
+    int title_transparent_color;
+    int title_special_palette;
+    int title_source_x;
+    int title_source_y;
+    int title_source_w;
+    int title_source_h;
+    int title_dest_x;
+    int title_dest_y;
+    int title_dest_w;
+    int title_dest_h;
     int closed_door_menu_route;
     int opening_door_route;
     int hud_menu_receipt_ready;

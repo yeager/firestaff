@@ -1770,8 +1770,9 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
         /* ReDMCSB TITLE.C F0437 lines 424-463 draws CM58 PRESENTS for 60
          * ticks, animates CM59 CHAOS through source steps 2..21, holds CHAOS,
          * then blits C426 STRIKES BACK. CSBWin/Viewport.cpp keeps the active
-         * title/HUD surface as view-owned state. Publish the exact stage bits
-         * here so M11 does not derive PRESENTS/CHAOS/STRIKES from frame math. */
+         * title/HUD surface as view-owned state. Publish the exact stage and
+         * source/destination route here so M11 does not derive
+         * PRESENTS/CHAOS/STRIKES from frame math. */
         out_receipt->title_presents_visible =
             out_receipt->title_stage ==
                     CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34
@@ -1787,6 +1788,30 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
                     CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34
                 ? 1
                 : 0;
+        out_receipt->title_render_command_count =
+            route->presentation.render_plan.render_command_count;
+        out_receipt->title_blit_kind =
+            route->presentation.render_plan.title_blit_kind;
+        out_receipt->title_transparent_color =
+            route->presentation.render_plan.title_transparent_color;
+        out_receipt->title_special_palette =
+            route->presentation.render_plan.title_special_palette;
+        out_receipt->title_source_x =
+            route->presentation.render_plan.title_source_x;
+        out_receipt->title_source_y =
+            route->presentation.render_plan.title_source_y;
+        out_receipt->title_source_w =
+            route->presentation.render_plan.title_source_w;
+        out_receipt->title_source_h =
+            route->presentation.render_plan.title_source_h;
+        out_receipt->title_dest_x =
+            route->presentation.render_plan.title_dest_x;
+        out_receipt->title_dest_y =
+            route->presentation.render_plan.title_dest_y;
+        out_receipt->title_dest_w =
+            route->presentation.render_plan.title_dest_w;
+        out_receipt->title_dest_h =
+            route->presentation.render_plan.title_dest_h;
     }
     out_receipt->closed_door_menu_route =
         route->route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
