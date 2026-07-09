@@ -4957,47 +4957,57 @@ static int orch_apply_explosion_party_action_compat(
     const struct CombatAction_Compat* action,
     struct TickResult_Compat* result)
 {
+    DM1_ExplosionPartyDamageFanoutPlanPc34 fanoutPlan;
     int i;
     int applied = 0;
-    int randomWindow;
-    int baseAttack;
 
     if (!world || !action) return 0;
-    if (action->rawAttackValue <= 0) return 0;
-    randomWindow = (action->rawAttackValue >> 3) + 1;
-    baseAttack = action->rawAttackValue - randomWindow;
-    randomWindow <<= 1;
+    if (!dm1_v1_explosion_party_damage_fanout_plan_pc34(
+            action->rawAttackValue,
+            action->attackTypeCode,
+            action->allowedWounds,
+            &fanoutPlan)) {
+        return 0;
+    }
+    if (!fanoutPlan.handled) return 0;
 
     /* ReDMCSB PROJEXPL.C:F0213 line 173 and F0220 line 861 route
      * party-square fireball/lightning and poison-cloud explosions through
      * CHAMPION.C:F0324.  F0324 randomizes attack per champion by +/- 1/8
-     * and then calls F0321, which applies fire/magic shields, defense, and
-     * wound handling before reporting nonzero damage. */
+     * and then calls F0321.  DM1 owns the F0324 fanout plan; M10 applies
+     * the live F0321 shield/defense/wound mutation. */
     for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        DM1_ExplosionPartyChampionDamagePlanPc34 championPlan;
         struct CombatResult_Compat damage;
         struct CombatantChampionSnapshot_Compat defender;
         int killed = 0;
-        int randomizedAttack;
         int scaledAttack = 0;
         int selectedWounds = 0;
         struct ChampionState_Compat* champion = &world->party.champions[i];
-        if (!champion->present || champion->hp.current == 0) continue;
 
-        randomizedAttack = baseAttack +
-                           F0732_COMBAT_RngRandom_Compat(&world->masterRng,
-                                                         randomWindow);
-        if (randomizedAttack < 1) randomizedAttack = 1;
+        if (!champion->present || champion->hp.current == 0) {
+            continue;
+        }
+        if (!dm1_v1_explosion_party_champion_damage_plan_pc34(
+                &fanoutPlan, i, champion->present, champion->hp.current,
+                F0732_COMBAT_RngRandom_Compat(&world->masterRng,
+                                              fanoutPlan.rngModulus),
+                &championPlan)) {
+            return 0;
+        }
+        if (!championPlan.shouldAttemptDamage) continue;
+
         if (!orch_build_defender_champion_snapshot_compat(
-                world, i, action->attackTypeCode, &defender) ||
+                world, i, championPlan.attackTypeCode, &defender) ||
             !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
-                action->attackTypeCode, randomizedAttack,
-                action->allowedWounds, &defender, &world->masterRng,
+                championPlan.attackTypeCode, championPlan.randomizedAttack,
+                championPlan.allowedWounds, &defender, &world->masterRng,
                 &scaledAttack, NULL) ||
             scaledAttack <= 0) {
             continue;
         }
         if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
-                scaledAttack, action->allowedWounds, &defender,
+                scaledAttack, championPlan.allowedWounds, &defender,
                 &world->masterRng, &selectedWounds, NULL)) {
             continue;
         }

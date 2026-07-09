@@ -725,6 +725,55 @@ static void test_projectile_champion_impact_plan(void) {
               "killed flag party death check");
 }
 
+static void test_explosion_party_damage_plan(void) {
+    DM1_ExplosionPartyDamageFanoutPlanPc34 fanout;
+    DM1_ExplosionPartyChampionDamagePlanPc34 champion;
+    memset(&fanout, 0, sizeof(fanout));
+    memset(&champion, 0, sizeof(champion));
+
+    ASSERT_EQ(dm1_v1_explosion_party_damage_fanout_plan_pc34(
+                  40, COMBAT_ATTACK_FIRE,
+                  COMBAT_WOUND_READY_HAND | COMBAT_WOUND_HEAD, &fanout), 1,
+              "explosion party fanout builds");
+    ASSERT_EQ(fanout.handled, 1, "explosion party fanout handled");
+    ASSERT_EQ(fanout.baseAttack, 34, "F0324 base attack");
+    ASSERT_EQ(fanout.rngModulus, 12, "F0324 rng modulus");
+    ASSERT_EQ(fanout.attackTypeCode, COMBAT_ATTACK_FIRE,
+              "F0324 attack type");
+    ASSERT_EQ(fanout.allowedWounds,
+              COMBAT_WOUND_READY_HAND | COMBAT_WOUND_HEAD,
+              "F0324 wounds");
+
+    ASSERT_EQ(dm1_v1_explosion_party_champion_damage_plan_pc34(
+                  &fanout, 2, 1, 80, 7, &champion), 1,
+              "explosion champion plan builds");
+    ASSERT_EQ(champion.shouldAttemptDamage, 1,
+              "explosion champion should damage");
+    ASSERT_EQ(champion.championIndex, 2, "explosion champion index");
+    ASSERT_EQ(champion.randomizedAttack, 41, "explosion randomized attack");
+    ASSERT_EQ(champion.attackTypeCode, COMBAT_ATTACK_FIRE,
+              "explosion champion attack type");
+    ASSERT_EQ(champion.allowedWounds,
+              COMBAT_WOUND_READY_HAND | COMBAT_WOUND_HEAD,
+              "explosion champion wounds");
+
+    ASSERT_EQ(dm1_v1_explosion_party_champion_damage_plan_pc34(
+                  &fanout, 1, 0, 80, 7, &champion), 1,
+              "explosion absent champion plan builds");
+    ASSERT_EQ(champion.shouldAttemptDamage, 0,
+              "absent champion is skipped");
+    ASSERT_EQ(dm1_v1_explosion_party_champion_damage_plan_pc34(
+                  &fanout, 1, 1, 0, 7, &champion), 1,
+              "explosion dead champion plan builds");
+    ASSERT_EQ(champion.shouldAttemptDamage, 0,
+              "dead champion is skipped");
+
+    ASSERT_EQ(dm1_v1_explosion_party_damage_fanout_plan_pc34(
+                  0, COMBAT_ATTACK_FIRE, COMBAT_WOUND_NONE, &fanout), 1,
+              "zero explosion fanout builds");
+    ASSERT_EQ(fanout.handled, 0, "zero attack is not handled");
+}
+
 int main(void) {
     test_throw_weight_and_stamina();
     test_throw_runtime_math();
@@ -738,6 +787,7 @@ int main(void) {
     test_black_flame_heal_and_group_cell();
     test_projectile_creature_impact_plan();
     test_projectile_champion_impact_plan();
+    test_explosion_party_damage_plan();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_throw_shoot_pc34_compat: %d failures\n",
                 g_failures);
