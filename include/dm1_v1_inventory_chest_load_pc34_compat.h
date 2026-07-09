@@ -12,13 +12,13 @@ enum {
 };
 
 const char* dm1_inventory_chest_load_source_evidence_pc34(void);
-int m11_inventory_pc34_open_chest_visible_contents_weight(const M11_InventoryState* s,
+int m11_inventory_pc34_open_chest_visible_contents_weight(const DM1_V1_InventoryStatePc34* s,
                                                           int champ);
-int m11_inventory_pc34_open_chest_container_weight(const M11_InventoryState* s,
+int m11_inventory_pc34_open_chest_container_weight(const DM1_V1_InventoryStatePc34* s,
                                                    int champ);
-int m11_inventory_pc34_close_chest_with_weight_snapshot(M11_InventoryState* s,
+int m11_inventory_pc34_close_chest_with_weight_snapshot(DM1_V1_InventoryStatePc34* s,
                                                         int champ,
-                                                        M11_Item* linkedItemsOut,
+                                                        DM1_V1_ItemPc34* linkedItemsOut,
                                                         int maxItemsOut,
                                                         int* outContainerWeightBeforeClose);
 

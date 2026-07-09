@@ -19,12 +19,12 @@ typedef struct {
     uint32_t load;
     uint32_t maxLoad;
     int encumbered;
-    M11_Item storage[DM1_SLOT_COUNT];
+    DM1_V1_ItemPc34 storage[DM1_SLOT_COUNT];
 } DM1_V1_InventoryChestPickupChampionPc34;
 
 typedef struct {
     DM1_V1_InventoryChestPickupChampionPc34 champions[DM1_PC34_CHEST_PICKUP_ENCUMBRANCE_CHAMPION_COUNT];
-    M11_Item chestSlots[DM1_PC34_CHEST_PICKUP_ENCUMBRANCE_CHAMPION_COUNT][DM1_PC34_CHEST_PICKUP_ENCUMBRANCE_SLOT_COUNT];
+    DM1_V1_ItemPc34 chestSlots[DM1_PC34_CHEST_PICKUP_ENCUMBRANCE_CHAMPION_COUNT][DM1_PC34_CHEST_PICKUP_ENCUMBRANCE_SLOT_COUNT];
 } DM1_V1_InventoryChestPickupEncumbranceStatePc34;
 
 typedef struct {
@@ -87,7 +87,7 @@ int dm1_v1_inventory_chest_pickup_encumbrance_pickup_pc34(
     int chestSlotIndex,
     int storageSlotIndex,
     DM1_V1_InventoryChestPickupEncumbranceEventPc34* outEvent);
-int m11_inventory_pc34_probe_chest_pickup_encumbrance(
+int DM1_V1_Inventory_Pc34ProbeChestPickupEncumbranceCompat(
     DM1_V1_InventoryChestPickupEncumbranceProbePc34* out);
 
 #ifdef __cplusplus

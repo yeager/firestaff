@@ -25,9 +25,9 @@ static const DM1_V1_InventoryPouchQuiverBackpackSwapSpecPc34 s_spec = {
         "mask-swap gate, no real-asset runtime claim."
 };
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -65,80 +65,80 @@ static int run_swap_case(
     int sourceAllowedSlots,
     int sourceWeight)
 {
-    M11_InventoryState accepted;
-    M11_InventoryState rejected;
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 accepted;
+    DM1_V1_InventoryStatePc34 rejected;
+    DM1_V1_ItemPc34 item;
 
     if (!row) {
         return 0;
     }
     memset(row, 0, sizeof(*row));
     row->pc34Slot = pc34Slot;
-    row->storageSlot = m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
-    row->slotMask = m11_inventory_pc34_slot_mask(pc34Slot);
+    row->storageSlot = DM1_V1_Inventory_Pc34SourceSlotToStorageSlotCompat(pc34Slot);
+    row->slotMask = DM1_V1_Inventory_Pc34SlotMaskCompat(pc34Slot);
     row->sourceItemType = sourceItemType;
     row->sourceAllowedSlots = sourceAllowedSlots;
     row->sourceWeight = sourceWeight;
     row->incompatibleAllowedSlots = 0;
 
-    m11_inventory_init(&accepted, 1);
-    if (!m11_inventory_set_mouse_item(&accepted, 0, sourceItemType,
+    DM1_V1_Inventory_InitPc34Compat(&accepted, 1);
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&accepted, 0, sourceItemType,
                                       sourceWeight, 0, sourceAllowedSlots)) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(&accepted, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&accepted, 0, &item)) {
         return 0;
     }
     row->slotBefore = 0;
     row->handBefore = item.itemType;
     row->handAllowedBefore = item.allowedSlots;
-    row->loadBefore = m11_inventory_get_load(&accepted, 0);
+    row->loadBefore = DM1_V1_Inventory_GetLoadPc34Compat(&accepted, 0);
     row->maskOverlap = sourceAllowedSlots & row->slotMask;
-    row->canEquipBeforeClick = m11_inventory_can_equip(&item, pc34Slot);
+    row->canEquipBeforeClick = DM1_V1_Inventory_CanEquipPc34Compat(&item, pc34Slot);
 
     /* ReDMCSB INVENTORY.C (PC 3.4) and DEFS.H C545/C546/C547 define the
      * pouch/quiver/backpack AllowedSlots masks; CHAMPION.C F0302:697-710
      * accepts only when AllowedSlots & G0038_ai_Graphic562_SlotMasks is set. */
     row->acceptedClick =
-        m11_inventory_click_pc34_source_slot(&accepted, 0, pc34Slot);
-    if (!m11_inventory_get_mouse_item(&accepted, 0, &item)) {
+        DM1_V1_Inventory_ClickPc34SourceSlotCompat(&accepted, 0, pc34Slot);
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&accepted, 0, &item)) {
         return 0;
     }
     row->handAfterAccepted = item.itemType;
     row->handAllowedAfterAccepted = item.allowedSlots;
-    if (!m11_inventory_get_item_in_pc34_source_slot(&accepted, 0, pc34Slot,
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(&accepted, 0, pc34Slot,
                                                     &item)) {
         return 0;
     }
     row->slotAfterAccepted = item.itemType;
     row->slotAllowedAfterAccepted = item.allowedSlots;
     row->slotWeightAfterAccepted = item.weight;
-    row->loadAfterAccepted = m11_inventory_get_load(&accepted, 0);
+    row->loadAfterAccepted = DM1_V1_Inventory_GetLoadPc34Compat(&accepted, 0);
     row->handEmptyAfterAccepted = row->handAfterAccepted == 0 ? 1 : 0;
     row->slotReceivedSource =
         row->slotAfterAccepted == sourceItemType &&
         row->slotAllowedAfterAccepted == sourceAllowedSlots ? 1 : 0;
 
-    m11_inventory_init(&rejected, 1);
-    if (!m11_inventory_set_mouse_item(&rejected, 0,
+    DM1_V1_Inventory_InitPc34Compat(&rejected, 1);
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&rejected, 0,
                                       DM1_V1_IPQBS_INCOMPATIBLE_ITEM,
                                       sourceWeight + 10, 0,
                                       row->incompatibleAllowedSlots)) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(&rejected, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&rejected, 0, &item)) {
         return 0;
     }
     row->incompatibleMaskOverlap =
         row->incompatibleAllowedSlots & row->slotMask;
-    row->incompatibleCanEquip = m11_inventory_can_equip(&item, pc34Slot);
+    row->incompatibleCanEquip = DM1_V1_Inventory_CanEquipPc34Compat(&item, pc34Slot);
     row->incompatibleClick =
-        m11_inventory_click_pc34_source_slot(&rejected, 0, pc34Slot);
-    if (!m11_inventory_get_mouse_item(&rejected, 0, &item)) {
+        DM1_V1_Inventory_ClickPc34SourceSlotCompat(&rejected, 0, pc34Slot);
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&rejected, 0, &item)) {
         return 0;
     }
     row->incompatibleHandAfter = item.itemType;
-    if (!m11_inventory_get_item_in_pc34_source_slot(&rejected, 0, pc34Slot,
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(&rejected, 0, pc34Slot,
                                                     &item)) {
         return 0;
     }
@@ -153,10 +153,10 @@ static int run_swap_case(
 static int run_chest_close_case(
     DM1_V1_InventoryPouchQuiverBackpackChestClosePc34* row)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_V1_IPQBS_CHEST_ITEM_COUNT];
-    M11_Item closed[DM1_PC34_CHEST_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_V1_IPQBS_CHEST_ITEM_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int i;
 
     if (!row) {
@@ -164,7 +164,7 @@ static int run_chest_close_case(
     }
     memset(row, 0, sizeof(*row));
     memset(closed, 0, sizeof(closed));
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < DM1_V1_IPQBS_CHEST_ITEM_COUNT; ++i) {
         linked[i] = make_item(DM1_V1_IPQBS_CHEST_FIRST_ITEM + i, 2 + i,
                               DM1_PC34_ALLOWED_CONTAINER);
@@ -173,34 +173,34 @@ static int run_chest_close_case(
     /* ReDMCSB CHEST.C F0333:53-67 first copies the open chest chain into
      * G0425_aT_ChestSlots; the later belt-slot swap must not be serialized
      * into that chain by CHEST.C F0334:117-132. */
-    row->openResult = m11_inventory_open_chest(
+    row->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_V1_IPQBS_CHEST_THING, linked,
         DM1_V1_IPQBS_CHEST_ITEM_COUNT);
-    row->openThingBeforeClose = m11_inventory_get_open_chest_thing(&state, 0);
-    if (!m11_inventory_set_mouse_item(&state, 0, DM1_V1_IPQBS_POUCH_ITEM,
+    row->openThingBeforeClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, DM1_V1_IPQBS_POUCH_ITEM,
                                       7, 0, DM1_PC34_ALLOWED_POUCH)) {
         return 0;
     }
-    row->beltSwapResult = m11_inventory_click_pc34_source_slot(
+    row->beltSwapResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, DM1_V1_IPQBS_POUCH_SLOT);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     row->handAfterBeltSwap = item.itemType;
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, 0, DM1_V1_IPQBS_POUCH_SLOT, &item)) {
         return 0;
     }
     row->beltSlotAfterSwap = item.itemType;
 
-    row->closeCount = m11_inventory_close_chest(
+    row->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_CHEST_SLOT_COUNT);
-    row->openThingAfterClose = m11_inventory_get_open_chest_thing(&state, 0);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    row->openThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     row->handAfterClose = item.itemType;
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, 0, DM1_V1_IPQBS_POUCH_SLOT, &item)) {
         return 0;
     }

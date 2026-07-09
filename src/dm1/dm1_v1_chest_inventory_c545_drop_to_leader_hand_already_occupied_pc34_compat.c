@@ -18,7 +18,7 @@ typedef struct {
 } GuardSurface;
 
 typedef struct {
-    M11_InventoryState runtime;
+    DM1_V1_InventoryStatePc34 runtime;
     int source_locked_contract_only;
     int no_real_asset_bitmap_parity;
     int no_game_data_load;
@@ -171,9 +171,9 @@ static void record_contains(const char *haystack, const char *needle,
     }
 }
 
-static M11_Item make_item(int thing, int count)
+static DM1_V1_ItemPc34 make_item(int thing, int count)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = thing;
@@ -184,7 +184,7 @@ static M11_Item make_item(int thing, int count)
     return item;
 }
 
-static int icon_for_thing(const M11_Item *item)
+static int icon_for_thing(const DM1_V1_ItemPc34 *item)
 {
     if (!item || item->itemType == 0) {
         return DM1_PC34_C545_LEADER_HAND_OCCUPIED_NONE;
@@ -245,9 +245,9 @@ static int copy_chest(C545Fixture *fixture, int before)
     int i;
 
     for (i = 0; i < DM1_PC34_C545_LEADER_HAND_OCCUPIED_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &fixture->runtime, kLeaderIndex, i, &item)) {
             return 0;
         }
@@ -266,7 +266,7 @@ static int copy_chest(C545Fixture *fixture, int before)
 
 static int seed_fixture(C545Fixture *fixture)
 {
-    M11_Item linked[DM1_PC34_C545_LEADER_HAND_OCCUPIED_SLOT_COUNT];
+    DM1_V1_ItemPc34 linked[DM1_PC34_C545_LEADER_HAND_OCCUPIED_SLOT_COUNT];
     int i;
 
     memset(fixture, 0, sizeof(*fixture));
@@ -292,14 +292,14 @@ static int seed_fixture(C545Fixture *fixture)
     fixture->c040PanelStable = 1;
     fixture->f0333OpenInitCount = 1;
 
-    m11_inventory_init(&fixture->runtime, kPartyCount);
+    DM1_V1_Inventory_InitPc34Compat(&fixture->runtime, kPartyCount);
     for (i = 0; i < DM1_PC34_C545_LEADER_HAND_OCCUPIED_SLOT_COUNT; ++i) {
         linked[i] = make_item(kOtherThingBase + i, 1);
     }
     linked[fixture->activeSlotIndex] =
         make_item(DM1_PC34_C545_LEADER_HAND_OCCUPIED_SCROLL_THING,
                   DM1_PC34_C545_LEADER_HAND_OCCUPIED_CHEST_COUNT);
-    if (!m11_inventory_open_chest(
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(
             &fixture->runtime,
             kLeaderIndex,
             fixture->g0426OpenChestThing,
@@ -307,7 +307,7 @@ static int seed_fixture(C545Fixture *fixture)
             DM1_PC34_C545_LEADER_HAND_OCCUPIED_SLOT_COUNT)) {
         return 0;
     }
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &fixture->runtime,
             kLeaderIndex,
             DM1_PC34_C545_LEADER_HAND_OCCUPIED_SCROLL_THING,
@@ -324,8 +324,8 @@ static int seed_fixture(C545Fixture *fixture)
 
 static int c545_ready(const C545Fixture *fixture, int command)
 {
-    M11_Item hand;
-    M11_Item slot;
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 slot;
 
     if (!fixture || !fixture->source_locked_contract_only ||
         !fixture->no_real_asset_bitmap_parity || !fixture->no_game_data_load ||
@@ -346,8 +346,8 @@ static int c545_ready(const C545Fixture *fixture, int command)
         fixture->pickupRollbackCount != 0) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(&fixture->runtime, kLeaderIndex, &hand) ||
-        !m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&fixture->runtime, kLeaderIndex, &hand) ||
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &fixture->runtime,
             kLeaderIndex,
             fixture->activeSlotIndex,
@@ -366,15 +366,15 @@ static int c545_ready(const C545Fixture *fixture, int command)
 static int c545_drop_to_leader_hand_same_icon(C545Fixture *fixture,
                                               int command)
 {
-    M11_Item hand;
-    M11_Item slot;
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 slot;
     int newCount;
 
     if (!c545_ready(fixture, command)) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(&fixture->runtime, kLeaderIndex, &hand) ||
-        !m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&fixture->runtime, kLeaderIndex, &hand) ||
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &fixture->runtime,
             kLeaderIndex,
             fixture->activeSlotIndex,
@@ -399,13 +399,13 @@ static int c545_drop_to_leader_hand_same_icon(C545Fixture *fixture,
     fixture->c545DispatchPathHit = 1;
 
     newCount = hand.charges + slot.charges;
-    if (!m11_inventory_set_mouse_item(&fixture->runtime,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&fixture->runtime,
                                       kLeaderIndex,
                                       hand.itemType,
                                       kScrollWeight * newCount,
                                       newCount,
                                       DM1_PC34_ALLOWED_CONTAINER) ||
-        !m11_inventory_set_item_in_chest_slot(
+        !DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
             &fixture->runtime,
             kLeaderIndex,
             fixture->activeSlotIndex,
@@ -413,10 +413,10 @@ static int c545_drop_to_leader_hand_same_icon(C545Fixture *fixture,
             0,
             0,
             DM1_PC34_ALLOWED_CONTAINER) ||
-        !m11_inventory_get_mouse_item(&fixture->runtime,
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&fixture->runtime,
                                       kLeaderIndex,
                                       &hand) ||
-        !m11_inventory_get_item_in_chest_slot(
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &fixture->runtime,
             kLeaderIndex,
             fixture->activeSlotIndex,
@@ -478,7 +478,7 @@ static int guarded_rejection_preserves_surface(const C545Fixture *base,
         probe.activeSlotIndex = DM1_PC34_C545_LEADER_HAND_OCCUPIED_SLOT_COUNT;
         break;
     case 8:
-        if (!m11_inventory_set_mouse_item(
+        if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
                 &probe.runtime,
                 kLeaderIndex,
                 0x1234,
@@ -489,7 +489,7 @@ static int guarded_rejection_preserves_surface(const C545Fixture *base,
         }
         break;
     case 9:
-        if (!m11_inventory_set_item_in_chest_slot(
+        if (!DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
                 &probe.runtime,
                 kLeaderIndex,
                 DM1_PC34_C545_LEADER_HAND_OCCUPIED_ACTIVE_INDEX,

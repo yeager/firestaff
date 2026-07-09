@@ -121,92 +121,136 @@ typedef struct {
     int cursed;
     int identified;
     int allowedSlots;
-} M11_Item;
+} DM1_V1_ItemPc34;
 
 typedef struct {
-    M11_Item slots[DM1_SLOT_COUNT];
+    DM1_V1_ItemPc34 slots[DM1_SLOT_COUNT];
     int handItem;
-    M11_Item mouseItem;
+    DM1_V1_ItemPc34 mouseItem;
     int load;
     int maxLoad;
-    M11_Item chestSlots[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 chestSlots[DM1_PC34_CHEST_SLOT_COUNT];
     int openChestThing;
-} M11_ChampionInventory;
+} DM1_V1_ChampionInventoryPc34;
 
-#define M11_MAX_CHAMPIONS 4
+#define DM1_V1_MAX_CHAMPIONS_PC34 4
 
 typedef struct {
-    M11_ChampionInventory champions[M11_MAX_CHAMPIONS];
+    DM1_V1_ChampionInventoryPc34 champions[DM1_V1_MAX_CHAMPIONS_PC34];
     int championCount;
     int panelContent;
-} M11_InventoryState;
+} DM1_V1_InventoryStatePc34;
 
-void m11_inventory_init(M11_InventoryState* s, int championCount);
-int m11_inventory_set_item(M11_InventoryState* s, int champ, int slot, int itemType, int weight, int charges);
-int m11_inventory_set_item_with_allowed_slots(M11_InventoryState* s, int champ, int slot,
+void DM1_V1_Inventory_InitPc34Compat(DM1_V1_InventoryStatePc34* s, int championCount);
+int DM1_V1_Inventory_SetItemPc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int slot, int itemType, int weight, int charges);
+int DM1_V1_Inventory_SetItemWithAllowedSlotsPc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int slot,
                                               int itemType, int weight, int charges,
                                               int allowedSlots);
-int m11_inventory_get_item(const M11_InventoryState* s, int champ, int slot, M11_Item* out);
-int m11_inventory_remove_item(M11_InventoryState* s, int champ, int slot);
-int m11_inventory_swap_hand(M11_InventoryState* s, int champ);
-int m11_inventory_pickup_mouse(M11_InventoryState* s, int champ, int slot);
-int m11_inventory_drop_mouse(M11_InventoryState* s, int champ, int slot);
-void m11_inventory_recalc_load(M11_InventoryState* s, int champ);
-int m11_inventory_get_load(const M11_InventoryState* s, int champ);
-int m11_inventory_pc34_slot_mask(int pc34Slot);
-int m11_inventory_pc34_source_slot_to_storage_slot(int pc34Slot);
-int m11_inventory_set_mouse_item(M11_InventoryState* s, int champ, int itemType,
+int DM1_V1_Inventory_GetItemPc34Compat(const DM1_V1_InventoryStatePc34* s, int champ, int slot, DM1_V1_ItemPc34* out);
+int DM1_V1_Inventory_RemoveItemPc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int slot);
+int DM1_V1_Inventory_SwapHandPc34Compat(DM1_V1_InventoryStatePc34* s, int champ);
+int DM1_V1_Inventory_PickupMousePc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int slot);
+int DM1_V1_Inventory_DropMousePc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int slot);
+void DM1_V1_Inventory_RecalcLoadPc34Compat(DM1_V1_InventoryStatePc34* s, int champ);
+int DM1_V1_Inventory_GetLoadPc34Compat(const DM1_V1_InventoryStatePc34* s, int champ);
+int DM1_V1_Inventory_Pc34SlotMaskCompat(int pc34Slot);
+int DM1_V1_Inventory_Pc34SourceSlotToStorageSlotCompat(int pc34Slot);
+int DM1_V1_Inventory_SetMouseItemPc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int itemType,
                                  int weight, int charges, int allowedSlots);
-int m11_inventory_get_mouse_item(const M11_InventoryState* s, int champ, M11_Item* out);
-int m11_inventory_set_item_in_pc34_source_slot(M11_InventoryState* s, int champ,
+int DM1_V1_Inventory_GetMouseItemPc34Compat(const DM1_V1_InventoryStatePc34* s, int champ, DM1_V1_ItemPc34* out);
+int DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(DM1_V1_InventoryStatePc34* s, int champ,
                                                int pc34Slot, int itemType, int weight,
                                                int charges, int allowedSlots);
-int m11_inventory_get_item_in_pc34_source_slot(const M11_InventoryState* s, int champ,
-                                               int pc34Slot, M11_Item* out);
-int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int pc34Slot);
+int DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(const DM1_V1_InventoryStatePc34* s, int champ,
+                                               int pc34Slot, DM1_V1_ItemPc34* out);
+int DM1_V1_Inventory_ClickPc34SourceSlotCompat(DM1_V1_InventoryStatePc34* s, int champ, int pc34Slot);
 const char *dm1_inventory_pass601_inventory_source_evidence(void);
 const char *dm1_inventory_chest_stale_click_source_evidence_pc34(void);
-int m11_inventory_click_open_chest_slot_for_thing(M11_InventoryState* s, int champ,
+int DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(DM1_V1_InventoryStatePc34* s, int champ,
                                                   int expectedOpenChestThing,
                                                   int chestSlotIndex);
-int m11_inventory_resolve_status_hand_slot_box(int slotBoxIndex,
+int DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(int slotBoxIndex,
                                                int partyChampionCount,
                                                int inventoryChampionOrdinal,
                                                int candidateChampionOrdinal,
                                                const int* championCurrentHealth,
                                                int* outChampionIndex,
                                                int* outPc34SourceSlot);
-int m11_inventory_pc34_is_backpack_source_slot(int pc34Slot);
-int m11_inventory_pc34_is_chest_source_slot(int pc34Slot);
-int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThing,
-                             const M11_Item* linkedItems, int linkedItemCount);
-int m11_inventory_open_chest_replacing_current(M11_InventoryState* s, int champ,
+int DM1_V1_Inventory_Pc34IsBackpackSourceSlotCompat(int pc34Slot);
+int DM1_V1_Inventory_Pc34IsChestSourceSlotCompat(int pc34Slot);
+int DM1_V1_Inventory_OpenChestPc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int openChestThing,
+                             const DM1_V1_ItemPc34* linkedItems, int linkedItemCount);
+int DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat(DM1_V1_InventoryStatePc34* s, int champ,
                                                int openChestThing,
-                                               const M11_Item* linkedItems,
+                                               const DM1_V1_ItemPc34* linkedItems,
                                                int linkedItemCount,
-                                               M11_Item* previousItemsOut,
+                                               DM1_V1_ItemPc34* previousItemsOut,
                                                int maxPreviousItemsOut);
-int m11_inventory_get_panel_content_pc34(const M11_InventoryState* s);
-int m11_inventory_set_panel_content_pc34(M11_InventoryState* s,
+int DM1_V1_Inventory_GetPanelContentPc34Compat(const DM1_V1_InventoryStatePc34* s);
+int DM1_V1_Inventory_SetPanelContentPc34Compat(DM1_V1_InventoryStatePc34* s,
                                          int panelContent);
 /* ReDMCSB: PANEL.C F0347 redraws FOOD/WATER/POISONED when no container
  * remains in the action hand; keeps CHEST when the action hand is container. */
-int m11_inventory_apply_panel_route_after_close_pc34(M11_InventoryState* s,
+int DM1_V1_Inventory_ApplyPanelRouteAfterClosePc34Compat(DM1_V1_InventoryStatePc34* s,
                                                     int champ);
-int m11_inventory_close_chest(M11_InventoryState* s, int champ,
-                              M11_Item* linkedItemsOut, int maxItemsOut);
-int m11_inventory_get_open_chest_thing(const M11_InventoryState* s, int champ);
-int m11_inventory_set_item_in_chest_slot(M11_InventoryState* s, int champ, int chestSlotIndex,
+int DM1_V1_Inventory_CloseChestPc34Compat(DM1_V1_InventoryStatePc34* s, int champ,
+                              DM1_V1_ItemPc34* linkedItemsOut, int maxItemsOut);
+int DM1_V1_Inventory_GetOpenChestThingPc34Compat(const DM1_V1_InventoryStatePc34* s, int champ);
+int DM1_V1_Inventory_SetItemInChestSlotPc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int chestSlotIndex,
                                          int itemType, int weight, int charges, int allowedSlots);
-int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
-                                         int chestSlotIndex, M11_Item* out);
-int m11_inventory_can_equip(const M11_Item* item, int pc34Slot);
-int m11_inventory_pc34_applies_rabbits_foot_luck_modifier(const M11_Item* item,
+int DM1_V1_Inventory_GetItemInChestSlotPc34Compat(const DM1_V1_InventoryStatePc34* s, int champ,
+                                         int chestSlotIndex, DM1_V1_ItemPc34* out);
+int DM1_V1_Inventory_CanEquipPc34Compat(const DM1_V1_ItemPc34* item, int pc34Slot);
+int DM1_V1_Inventory_Pc34AppliesRabbitsFootLuckModifierCompat(const DM1_V1_ItemPc34* item,
                                                           int pc34Slot);
-int m11_inventory_pc34_get_rabbits_foot_luck_bonus(const M11_InventoryState* s,
+int DM1_V1_Inventory_Pc34GetRabbitsFootLuckBonusCompat(const DM1_V1_InventoryStatePc34* s,
                                                    int champ);
-int m11_inventory_equip(M11_InventoryState* s, int champ, int pc34Slot, const M11_Item* item);
-int m11_inventory_unequip(M11_InventoryState* s, int champ, int pc34Slot);
+int DM1_V1_Inventory_EquipPc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int pc34Slot, const DM1_V1_ItemPc34* item);
+int DM1_V1_Inventory_UnequipPc34Compat(DM1_V1_InventoryStatePc34* s, int champ, int pc34Slot);
+
+typedef DM1_V1_ItemPc34 M11_Item;
+typedef DM1_V1_ChampionInventoryPc34 M11_ChampionInventory;
+typedef DM1_V1_InventoryStatePc34 M11_InventoryState;
+
+#ifndef M11_MAX_CHAMPIONS
+#define M11_MAX_CHAMPIONS DM1_V1_MAX_CHAMPIONS_PC34
+#endif
+
+#define m11_inventory_init DM1_V1_Inventory_InitPc34Compat
+#define m11_inventory_set_item DM1_V1_Inventory_SetItemPc34Compat
+#define m11_inventory_set_item_with_allowed_slots DM1_V1_Inventory_SetItemWithAllowedSlotsPc34Compat
+#define m11_inventory_get_item DM1_V1_Inventory_GetItemPc34Compat
+#define m11_inventory_remove_item DM1_V1_Inventory_RemoveItemPc34Compat
+#define m11_inventory_swap_hand DM1_V1_Inventory_SwapHandPc34Compat
+#define m11_inventory_pickup_mouse DM1_V1_Inventory_PickupMousePc34Compat
+#define m11_inventory_drop_mouse DM1_V1_Inventory_DropMousePc34Compat
+#define m11_inventory_recalc_load DM1_V1_Inventory_RecalcLoadPc34Compat
+#define m11_inventory_get_load DM1_V1_Inventory_GetLoadPc34Compat
+#define m11_inventory_pc34_slot_mask DM1_V1_Inventory_Pc34SlotMaskCompat
+#define m11_inventory_pc34_source_slot_to_storage_slot DM1_V1_Inventory_Pc34SourceSlotToStorageSlotCompat
+#define m11_inventory_set_mouse_item DM1_V1_Inventory_SetMouseItemPc34Compat
+#define m11_inventory_get_mouse_item DM1_V1_Inventory_GetMouseItemPc34Compat
+#define m11_inventory_set_item_in_pc34_source_slot DM1_V1_Inventory_SetItemInPc34SourceSlotCompat
+#define m11_inventory_get_item_in_pc34_source_slot DM1_V1_Inventory_GetItemInPc34SourceSlotCompat
+#define m11_inventory_click_pc34_source_slot DM1_V1_Inventory_ClickPc34SourceSlotCompat
+#define m11_inventory_click_open_chest_slot_for_thing DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat
+#define m11_inventory_resolve_status_hand_slot_box DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat
+#define m11_inventory_pc34_is_backpack_source_slot DM1_V1_Inventory_Pc34IsBackpackSourceSlotCompat
+#define m11_inventory_pc34_is_chest_source_slot DM1_V1_Inventory_Pc34IsChestSourceSlotCompat
+#define m11_inventory_open_chest DM1_V1_Inventory_OpenChestPc34Compat
+#define m11_inventory_open_chest_replacing_current DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat
+#define m11_inventory_get_panel_content_pc34 DM1_V1_Inventory_GetPanelContentPc34Compat
+#define m11_inventory_set_panel_content_pc34 DM1_V1_Inventory_SetPanelContentPc34Compat
+#define m11_inventory_apply_panel_route_after_close_pc34 DM1_V1_Inventory_ApplyPanelRouteAfterClosePc34Compat
+#define m11_inventory_close_chest DM1_V1_Inventory_CloseChestPc34Compat
+#define m11_inventory_get_open_chest_thing DM1_V1_Inventory_GetOpenChestThingPc34Compat
+#define m11_inventory_set_item_in_chest_slot DM1_V1_Inventory_SetItemInChestSlotPc34Compat
+#define m11_inventory_get_item_in_chest_slot DM1_V1_Inventory_GetItemInChestSlotPc34Compat
+#define m11_inventory_can_equip DM1_V1_Inventory_CanEquipPc34Compat
+#define m11_inventory_pc34_applies_rabbits_foot_luck_modifier DM1_V1_Inventory_Pc34AppliesRabbitsFootLuckModifierCompat
+#define m11_inventory_pc34_get_rabbits_foot_luck_bonus DM1_V1_Inventory_Pc34GetRabbitsFootLuckBonusCompat
+#define m11_inventory_equip DM1_V1_Inventory_EquipPc34Compat
+#define m11_inventory_unequip DM1_V1_Inventory_UnequipPc34Compat
 
 #ifdef __cplusplus
 }

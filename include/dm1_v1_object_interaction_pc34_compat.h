@@ -76,7 +76,7 @@ int m11_obj_drop(M11_ObjectState* s, int objIdx, int x, int y, int level);
  * Delegates to dm1_v1_inventory_consumables_pc34_compat.c for
  * potions, food, and water/junk consumption. Equipment types
  * (weapon/armor/accessory) return 0 as they are handled by
- * m11_inventory_equip() slot system.
+ * DM1_V1_Inventory_EquipPc34Compat() slot system.
  * champData: DM1ConsumableChampionPc34* champion stats snapshot.
  * result: DM1ConsumableResultPc34* output, caller commits deltas.
  * Returns 1 on successful consumption, 0 if not consumable. */

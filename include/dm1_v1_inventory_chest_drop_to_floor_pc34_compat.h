@@ -58,8 +58,8 @@ typedef struct {
 } DM1_V1_InventoryChestDropToFloorEventPc34;
 
 typedef struct {
-    M11_InventoryState inventory;
-    M11_Item g0189_aT_Dungeon[DM1_PC34_CHEST_DROP_FLOOR_CELL_CAPACITY];
+    DM1_V1_InventoryStatePc34 inventory;
+    DM1_V1_ItemPc34 g0189_aT_Dungeon[DM1_PC34_CHEST_DROP_FLOOR_CELL_CAPACITY];
     int floorCount;
     int mapX;
     int mapY;
@@ -90,7 +90,7 @@ void dm1_v1_inventory_chest_drop_to_floor_init_pc34(
     DM1_V1_InventoryChestDropToFloorStatePc34* state);
 int dm1_v1_inventory_chest_drop_to_floor_open_pc34(
     DM1_V1_InventoryChestDropToFloorStatePc34* state,
-    const M11_Item* linkedItems,
+    const DM1_V1_ItemPc34* linkedItems,
     int linkedItemCount);
 int dm1_v1_inventory_chest_drop_to_floor_run_case_pc34(
     DM1_V1_InventoryChestDropToFloorStatePc34* state,

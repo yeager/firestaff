@@ -46,11 +46,11 @@ static uint32_t next_seed_pc34_compat(uint32_t* seed)
     return *seed;
 }
 
-static M11_Item make_seeded_item_pc34_compat(uint32_t* seed,
+static DM1_V1_ItemPc34 make_seeded_item_pc34_compat(uint32_t* seed,
                                              int tag,
                                              int weightBase)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = tag | (int)(next_seed_pc34_compat(seed) & 0x00ffu);
@@ -61,7 +61,7 @@ static M11_Item make_seeded_item_pc34_compat(uint32_t* seed,
     return item;
 }
 
-static void item_types_pc34_compat(const M11_Item* items,
+static void item_types_pc34_compat(const DM1_V1_ItemPc34* items,
                                    int count,
                                    int* types)
 {
@@ -74,7 +74,7 @@ static void item_types_pc34_compat(const M11_Item* items,
     }
 }
 
-static int read_visible_types_pc34_compat(const M11_InventoryState* runtime,
+static int read_visible_types_pc34_compat(const DM1_V1_InventoryStatePc34* runtime,
                                           int champion,
                                           int* types)
 {
@@ -86,9 +86,9 @@ static int read_visible_types_pc34_compat(const M11_InventoryState* runtime,
     for (i = 0;
          i < DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT;
          ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(runtime, champion, i,
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(runtime, champion, i,
                                                   &item)) {
             return 0;
         }
@@ -347,7 +347,7 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_init_pc34_compat
         return 0;
     }
     memset(state, 0, sizeof(*state));
-    m11_inventory_init(&state->runtime, 2);
+    DM1_V1_Inventory_InitPc34Compat(&state->runtime, 2);
     state->deterministicSeed = deterministicSeed;
     state->partyChampionCount = 2;
     state->inventoryChampionOrdinal = 1;
@@ -375,8 +375,8 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_exercise_pc34_co
     DM1_V1_ChestCloseWhileCandidateOpenReopenSideEffectsRuntimePc34Compat* state,
     DM1_V1_ChestCloseWhileCandidateOpenReopenSideEffectsProbePc34Compat* out)
 {
-    M11_Item firstClosed[DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT];
-    M11_Item secondClosed[DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT];
+    DM1_V1_ItemPc34 firstClosed[DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT];
+    DM1_V1_ItemPc34 secondClosed[DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT];
     int secondLinkedTypes[DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT];
     int i;
 
@@ -399,7 +399,7 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_exercise_pc34_co
 
     /* ReDMCSB CHEST.C F0333 lines 30-67 materializes linked chest A into
      * visible C537..C544 while PANEL.C F0344/F0345 keep C040 alive. */
-    if (!m11_inventory_open_chest(
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_FIRST_CHAMPION,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_G0426_FIRST,
@@ -407,11 +407,11 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_exercise_pc34_co
         record_assertions_pc34_compat(out);
         return 0;
     }
-    if (!m11_inventory_set_item_in_chest_slot(
+    if (!DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_FIRST_CHAMPION,
             1, 0, 0, 0, DM1_PC34_ALLOWED_CONTAINER) ||
-        !m11_inventory_set_item_in_chest_slot(
+        !DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_FIRST_CHAMPION,
             3, 0, 0, 0, DM1_PC34_ALLOWED_CONTAINER) ||
@@ -423,13 +423,13 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_exercise_pc34_co
         return 0;
     }
     out->firstOpenThingBeforeClose =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_FIRST_CHAMPION);
 
     /* ReDMCSB CHEST.C F0334 lines 117-132 compacts non-empty C537..C544
      * entries; PANEL.C F0352 redraws the still-live C040 candidate panel. */
-    out->firstClosedCount = m11_inventory_close_chest(
+    out->firstClosedCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state->runtime,
         DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_FIRST_CHAMPION,
         firstClosed,
@@ -441,7 +441,7 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_exercise_pc34_co
     item_types_pc34_compat(firstClosed, out->firstClosedCount,
                            out->firstClosedTypes);
     out->firstOpenThingAfterClose =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_FIRST_CHAMPION);
     out->firstCloseClearedG0426 =
@@ -459,16 +459,16 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_exercise_pc34_co
 
     /* ReDMCSB CHEST.C F0333 lines 34-67 binds a different G0426/C537..C544
      * chain to champion 2 before the original chest is reopened there. */
-    if (!m11_inventory_open_chest(
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_REOPEN_CHAMPION,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_G0426_SECOND,
             state->secondLinked, state->secondLinkedCount) ||
-        !m11_inventory_set_item_in_chest_slot(
+        !DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_REOPEN_CHAMPION,
             2, 0, 0, 0, DM1_PC34_ALLOWED_CONTAINER) ||
-        !m11_inventory_set_item_in_chest_slot(
+        !DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_REOPEN_CHAMPION,
             4, 0, 0, 0, DM1_PC34_ALLOWED_CONTAINER) ||
@@ -484,7 +484,7 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_exercise_pc34_co
 
     /* ReDMCSB CHEST.C F0333 lines 34-39 closes the different open chest
      * through F0334 before reopening the original compacted chain. */
-    out->secondClosedCount = m11_inventory_open_chest_replacing_current(
+    out->secondClosedCount = DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat(
         &state->runtime,
         DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_REOPEN_CHAMPION,
         DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_G0426_FIRST,
@@ -502,7 +502,7 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_exercise_pc34_co
     item_types_pc34_compat(secondClosed, out->secondClosedCount,
                            out->secondClosedTypes);
     out->reopenOpenThing =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_REOPEN_CHAMPION);
     out->reopenedVisibleCount = visible_count_pc34_compat(out->reopenedTypes);
@@ -540,7 +540,7 @@ int dm1_v1_chest_close_while_candidate_open_reopen_side_effects_exercise_pc34_co
         out->reopenedTypes[1] == out->firstClosedTypes[1] &&
         out->reopenedTypes[2] == out->firstClosedTypes[2] ? 1 : 0;
     out->championZeroVisibleCleared =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &state->runtime,
             DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_FIRST_CHAMPION) == 0 ? 1 : 0;
     out->noFirstLeakIntoSecondClosedChain =

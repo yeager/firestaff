@@ -27,9 +27,9 @@ static int expect_int(const char* label,
     return 1;
 }
 
-static M11_Item make_item(int ordinal)
+static DM1_V1_ItemPc34 make_item(int ordinal)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = 0x5100 + ordinal;
@@ -39,16 +39,16 @@ static M11_Item make_item(int ordinal)
     return item;
 }
 
-static int expect_chest_slot(const M11_InventoryState* state,
+static int expect_chest_slot(const DM1_V1_InventoryStatePc34* state,
                              int slot,
                              int wantItemType,
                              const char* redmcsbAnchor)
 {
-    M11_Item got;
+    DM1_V1_ItemPc34 got;
     int ok = 1;
 
     ok &= expect_int("get visible chest slot",
-                     m11_inventory_get_item_in_chest_slot(state, 0, slot, &got),
+                     DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, slot, &got),
                      1, redmcsbAnchor);
     ok &= expect_int("visible chest slot item type",
                      got.itemType, wantItemType, redmcsbAnchor);
@@ -70,11 +70,11 @@ int main(void)
     const char* f0334Compact =
         "ReDMCSB CHEST.C F0334:117-132 compacts non-empty G0425 slots back "
         "to the container list and ignores entries that are C0xFFFF_THING_NONE.";
-    M11_InventoryState state;
-    M11_Item overfull[10];
-    M11_Item shortChest[3];
-    M11_Item closed[10];
-    M11_Item limitedOut[2];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 overfull[10];
+    DM1_V1_ItemPc34 shortChest[3];
+    DM1_V1_ItemPc34 closed[10];
+    DM1_V1_ItemPc34 limitedOut[2];
     int ok = 1;
     int i;
 
@@ -88,17 +88,17 @@ int main(void)
         shortChest[i] = make_item(40 + i);
     }
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
 
     ok &= expect_int("open overfull chest",
-                     m11_inventory_open_chest(&state, 0, 0x7001,
+                     DM1_V1_Inventory_OpenChestPc34Compat(&state, 0, 0x7001,
                                               overfull, 10),
                      1, f0333FirstEight);
     ok &= expect_int("panel content is chest",
-                     m11_inventory_get_panel_content_pc34(&state),
+                     DM1_V1_Inventory_GetPanelContentPc34Compat(&state),
                      DM1_PC34_PANEL_CHEST, f0333FirstEight);
     ok &= expect_int("open chest token",
-                     m11_inventory_get_open_chest_thing(&state, 0),
+                     DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0),
                      0x7001, f0333FirstEight);
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
         ok &= expect_chest_slot(&state, i, overfull[i].itemType,
@@ -107,7 +107,7 @@ int main(void)
 
     memset(closed, 0, sizeof(closed));
     ok &= expect_int("replace returns eight visible previous items",
-                     m11_inventory_open_chest_replacing_current(
+                     DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat(
                          &state, 0, 0x7002, shortChest, 3, closed, 10),
                      DM1_PC34_CHEST_SLOT_COUNT, f0333Replace);
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
@@ -130,7 +130,7 @@ int main(void)
 
     memset(closed, 0, sizeof(closed));
     ok &= expect_int("short replacement closes as three visible items",
-                     m11_inventory_close_chest(&state, 0, closed, 10),
+                     DM1_V1_Inventory_CloseChestPc34Compat(&state, 0, closed, 10),
                      3, f0334Compact);
     for (i = 0; i < 3; ++i) {
         ok &= expect_int("short close order",
@@ -140,16 +140,16 @@ int main(void)
     ok &= expect_int("short close ignores cleared tail",
                      closed[3].itemType, 0, f0334Compact);
     ok &= expect_int("G0426 cleared after close",
-                     m11_inventory_get_open_chest_thing(&state, 0),
+                     DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0),
                      0, f0334Compact);
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     ok &= expect_int("limited output scenario opens baseline chest",
-                     m11_inventory_open_chest(&state, 0, 0x7003, overfull, 10),
+                     DM1_V1_Inventory_OpenChestPc34Compat(&state, 0, 0x7003, overfull, 10),
                      1, f0333FirstEight);
     memset(limitedOut, 0, sizeof(limitedOut));
     ok &= expect_int("limited output scenario replaces current chest",
-                     m11_inventory_open_chest_replacing_current(
+                     DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat(
                          &state, 0, 0x7004, shortChest, 3, limitedOut, 2),
                      DM1_PC34_CHEST_SLOT_COUNT, f0333LimitedOut);
     ok &= expect_int("limited output scenario first previous item",
@@ -160,7 +160,7 @@ int main(void)
                      f0333LimitedOut);
 
     ok &= expect_int("limited output scenario new open chest",
-                     m11_inventory_get_open_chest_thing(&state, 0),
+                     DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0),
                      0x7004, f0333Replace);
     for (i = 0; i < 3; ++i) {
         ok &= expect_chest_slot(&state, i, shortChest[i].itemType,
@@ -172,7 +172,7 @@ int main(void)
 
     memset(closed, 0, sizeof(closed));
     ok &= expect_int("limited output scenario closes as three visible items",
-                     m11_inventory_close_chest(&state, 0, closed, 10),
+                     DM1_V1_Inventory_CloseChestPc34Compat(&state, 0, closed, 10),
                      3, f0334Compact);
     for (i = 0; i < 3; ++i) {
         ok &= expect_int("limited output scenario close order",

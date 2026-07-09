@@ -31,7 +31,7 @@ typedef enum {
 } CrrSwRejectReasonPc34;
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     int quantities[DM1_PC34_CRR_SW_CHAMPION_COUNT]
                   [DM1_PC34_CRR_SW_SLOT_COUNT];
     int handQuantities[DM1_PC34_CRR_SW_CHAMPION_COUNT];
@@ -95,9 +95,9 @@ static const DM1_V1_ChestResurrectRotationScrollWheelSpecPc34 s_spec = {
     DM1_PC34_CRR_SW_TARGET_COMMAND
 };
 
-static M11_Item to_m11_item(CrrSwThingPc34 thing)
+static DM1_V1_ItemPc34 to_m11_item(CrrSwThingPc34 thing)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = thing.itemType;
@@ -135,9 +135,9 @@ static void record_slots(const CrrSwRuntimePc34* runtime,
     int i;
 
     for (i = 0; i < DM1_PC34_CRR_SW_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &runtime->inventory, champion, i, &item)) {
             types[i] = item.itemType;
             charges[i] = item.charges;
@@ -208,12 +208,12 @@ static int chain_matches_after_swap(const int* types,
 
 static void runtime_init(CrrSwRuntimePc34* runtime)
 {
-    M11_Item linked[DM1_PC34_CRR_SW_SLOT_COUNT];
+    DM1_V1_ItemPc34 linked[DM1_PC34_CRR_SW_SLOT_COUNT];
     int i;
 
     memset(runtime, 0, sizeof(*runtime));
     memset(linked, 0, sizeof(linked));
-    m11_inventory_init(&runtime->inventory, DM1_PC34_CRR_SW_CHAMPION_COUNT);
+    DM1_V1_Inventory_InitPc34Compat(&runtime->inventory, DM1_PC34_CRR_SW_CHAMPION_COUNT);
     runtime->currentLeader = DM1_PC34_CRR_SW_OLD_LEADER;
     runtime->openChampion = DM1_PC34_CRR_SW_NON_LEADER_OPEN;
     runtime->c028PanelLive = 1;
@@ -227,18 +227,18 @@ static void runtime_init(CrrSwRuntimePc34* runtime)
         runtime->quantities[runtime->openChampion][i] = thing.quantity;
     }
 
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &runtime->inventory, runtime->currentLeader,
         DM1_PC34_CRR_SW_HAND_ITEM, DM1_PC34_CRR_SW_HAND_WEIGHT,
         DM1_PC34_CRR_SW_HAND_CHARGES, DM1_PC34_ALLOWED_CONTAINER);
     runtime->handQuantities[runtime->currentLeader] =
         DM1_PC34_CRR_SW_HAND_QUANTITY;
 
-    (void)m11_inventory_open_chest(
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(
         &runtime->inventory, runtime->openChampion,
         DM1_PC34_CRR_SW_CHEST_THING, linked,
         DM1_PC34_CRR_SW_SLOT_COUNT);
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &runtime->inventory, DM1_PC34_PANEL_RESURRECT_REINCARNATE);
 }
 
@@ -247,7 +247,7 @@ static int queue_c028_close_and_rotation(CrrSwRuntimePc34* runtime)
     if (!runtime || runtime->c028CloseQueued || runtime->rotationQueued ||
         !runtime->c028PanelLive ||
         runtime->currentLeader != DM1_PC34_CRR_SW_OLD_LEADER ||
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime->inventory, runtime->openChampion) !=
             DM1_PC34_CRR_SW_CHEST_THING) {
         return 0;
@@ -310,30 +310,30 @@ static int drain_c028_close(CrrSwRuntimePc34* runtime)
     runtime->c028PanelLive = 0;
     runtime->c028CloseQueued = 0;
     --runtime->commandQueueDepth;
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &runtime->inventory, DM1_PC34_PANEL_CHEST);
     return 1;
 }
 
 static int drain_rotation(CrrSwRuntimePc34* runtime)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
 
     if (!runtime || !runtime->rotationQueued ||
         runtime->commandQueueDepth <= 0 ||
         runtime->currentLeader != runtime->queuedOldLeader ||
-        !m11_inventory_get_mouse_item(&runtime->inventory,
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&runtime->inventory,
                                       runtime->currentLeader,
                                       &hand)) {
         return 0;
     }
 
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &runtime->inventory, runtime->queuedNewLeader, hand.itemType,
         hand.weight, hand.charges, hand.allowedSlots);
     runtime->handQuantities[runtime->queuedNewLeader] =
         runtime->handQuantities[runtime->currentLeader];
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &runtime->inventory, runtime->currentLeader, 0, 0, 0, 0);
     runtime->handQuantities[runtime->currentLeader] = 0;
     runtime->currentLeader = runtime->queuedNewLeader;
@@ -345,8 +345,8 @@ static int drain_rotation(CrrSwRuntimePc34* runtime)
 
 static int accept_c540_swap(CrrSwRuntimePc34* runtime)
 {
-    M11_Item oldHand;
-    M11_Item oldSlot;
+    DM1_V1_ItemPc34 oldHand;
+    DM1_V1_ItemPc34 oldSlot;
     int oldHandQuantity;
     int oldSlotQuantity;
     int result;
@@ -354,13 +354,13 @@ static int accept_c540_swap(CrrSwRuntimePc34* runtime)
     if (!runtime || runtime->c028PanelLive || runtime->rotationQueued ||
         runtime->commandQueueDepth != 0 ||
         runtime->currentLeader != runtime->openChampion ||
-        !m11_inventory_get_mouse_item(&runtime->inventory,
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&runtime->inventory,
                                       runtime->currentLeader, &oldHand) ||
-        !m11_inventory_get_item_in_chest_slot(
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &runtime->inventory, runtime->openChampion,
             DM1_PC34_CRR_SW_TARGET_SLOT_INDEX, &oldSlot) ||
         oldHand.itemType == 0 || oldSlot.itemType == 0 ||
-        !m11_inventory_can_equip(&oldHand,
+        !DM1_V1_Inventory_CanEquipPc34Compat(&oldHand,
                                  DM1_PC34_CRR_SW_TARGET_PC34_SLOT)) {
         return 0;
     }
@@ -371,7 +371,7 @@ static int accept_c540_swap(CrrSwRuntimePc34* runtime)
     oldSlotQuantity =
         runtime->quantities[runtime->openChampion]
                            [DM1_PC34_CRR_SW_TARGET_SLOT_INDEX];
-    result = m11_inventory_click_open_chest_slot_for_thing(
+    result = DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
         &runtime->inventory, runtime->openChampion,
         DM1_PC34_CRR_SW_CHEST_THING,
         DM1_PC34_CRR_SW_TARGET_SLOT_INDEX);
@@ -442,8 +442,8 @@ int dm1_v1_chest_resurrect_rotation_scroll_wheel_run_pc34(
     DM1_V1_ChestResurrectRotationScrollWheelProbePc34* out)
 {
     CrrSwRuntimePc34 runtime;
-    M11_Item hand;
-    M11_Item target;
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 target;
     int typesAfterC028Reject[DM1_PC34_CRR_SW_SLOT_COUNT];
     int chargesAfterC028Reject[DM1_PC34_CRR_SW_SLOT_COUNT];
     int quantitiesAfterC028Reject[DM1_PC34_CRR_SW_SLOT_COUNT];
@@ -473,7 +473,7 @@ int dm1_v1_chest_resurrect_rotation_scroll_wheel_run_pc34(
         DM1_PC34_CRR_SW_STEP_OPEN_NON_LEADER_CHEST;
     out->openResult = 1;
     out->openChampionBefore = runtime.openChampion;
-    out->openChestThingBefore = m11_inventory_get_open_chest_thing(
+    out->openChestThingBefore = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, runtime.openChampion);
     out->panelChestBeforeC028 = DM1_PC34_PANEL_CHEST;
     out->stepTrace[out->stepCount++] =
@@ -484,13 +484,13 @@ int dm1_v1_chest_resurrect_rotation_scroll_wheel_run_pc34(
     out->candidateOrdinalBeforeQueue = runtime.candidateOrdinal;
     out->candidateCommandBeforeQueue = runtime.candidateCommand;
     out->leaderBeforeQueue = runtime.currentLeader;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, runtime.currentLeader, &hand);
     out->handTypeBeforeQueue = hand.itemType;
     out->handChargesBeforeQueue = hand.charges;
     out->handQuantityBeforeQueue =
         runtime.handQuantities[runtime.currentLeader];
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime.inventory, runtime.openChampion,
         DM1_PC34_CRR_SW_TARGET_SLOT_INDEX, &target);
     out->targetSlotTypeBeforeQueue = target.itemType;
@@ -527,15 +527,15 @@ int dm1_v1_chest_resurrect_rotation_scroll_wheel_run_pc34(
     out->f0078ObservedAfterC028Reject = runtime.f0078Observed;
     out->mouseDepthAfterC028Reject = runtime.mouseUpdateDepth;
     out->commandQueueDepthAfterC028Reject = runtime.commandQueueDepth;
-    out->openChestThingAfterC028Reject = m11_inventory_get_open_chest_thing(
+    out->openChestThingAfterC028Reject = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, runtime.openChampion);
-    out->panelAfterC028Reject = m11_inventory_get_panel_content_pc34(
+    out->panelAfterC028Reject = DM1_V1_Inventory_GetPanelContentPc34Compat(
         &runtime.inventory);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime.inventory, runtime.openChampion,
         DM1_PC34_CRR_SW_TARGET_SLOT_INDEX, &target);
     out->targetSlotTypeAfterC028Reject = target.itemType;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, runtime.currentLeader, &hand);
     out->handTypeAfterC028Reject = hand.itemType;
     record_slots(&runtime, runtime.openChampion, typesAfterC028Reject,
@@ -552,7 +552,7 @@ int dm1_v1_chest_resurrect_rotation_scroll_wheel_run_pc34(
         DM1_PC34_CRR_SW_STEP_DRAIN_C028_CLOSE;
     out->c028PanelLiveAfterClose = runtime.c028PanelLive;
     out->candidateOrdinalAfterClose = runtime.candidateOrdinal;
-    out->panelAfterC028Close = m11_inventory_get_panel_content_pc34(
+    out->panelAfterC028Close = DM1_V1_Inventory_GetPanelContentPc34Compat(
         &runtime.inventory);
     out->commandQueueDepthAfterC028Close = runtime.commandQueueDepth;
     out->rotationStillQueuedAfterC028Close = runtime.rotationQueued;
@@ -565,13 +565,13 @@ int dm1_v1_chest_resurrect_rotation_scroll_wheel_run_pc34(
         DM1_PC34_CRR_SW_STEP_REJECT_WHEEL_ROTATION_QUEUED;
     out->commandQueueDepthAfterRotationReject = runtime.commandQueueDepth;
     out->openChestThingAfterRotationReject =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime.inventory, runtime.openChampion);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime.inventory, runtime.openChampion,
         DM1_PC34_CRR_SW_TARGET_SLOT_INDEX, &target);
     out->targetSlotTypeAfterRotationReject = target.itemType;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, runtime.currentLeader, &hand);
     out->handTypeAfterRotationReject = hand.itemType;
     record_slots(&runtime, runtime.openChampion, typesAfterRotationReject,
@@ -590,13 +590,13 @@ int dm1_v1_chest_resurrect_rotation_scroll_wheel_run_pc34(
     out->leaderAfterRotationDrain = runtime.currentLeader;
     out->openChampionAfterRotationDrain = runtime.openChampion;
     out->commandQueueDepthAfterRotationDrain = runtime.commandQueueDepth;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, runtime.currentLeader, &hand);
     out->handTypeAfterRotationDrain = hand.itemType;
-    out->panelAfterRotationDrain = m11_inventory_get_panel_content_pc34(
+    out->panelAfterRotationDrain = DM1_V1_Inventory_GetPanelContentPc34Compat(
         &runtime.inventory);
     out->openChestThingAfterRotationDrain =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime.inventory, runtime.openChampion);
 
     out->wheelAcceptedAfterCloseAndRotation = accept_c540_swap(&runtime);
@@ -604,7 +604,7 @@ int dm1_v1_chest_resurrect_rotation_scroll_wheel_run_pc34(
         DM1_PC34_CRR_SW_STEP_ACCEPT_WHEEL_C540_SWAP;
     out->f0302DispatchCountAfterAccept = runtime.f0302DispatchCount;
     out->commandQueueDepthAfterAccept = runtime.commandQueueDepth;
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime.inventory, runtime.openChampion,
         DM1_PC34_CRR_SW_TARGET_SLOT_INDEX, &target);
     out->targetSlotTypeAfterAccept = target.itemType;
@@ -612,13 +612,13 @@ int dm1_v1_chest_resurrect_rotation_scroll_wheel_run_pc34(
     out->targetSlotQuantityAfterAccept =
         runtime.quantities[runtime.openChampion]
                           [DM1_PC34_CRR_SW_TARGET_SLOT_INDEX];
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, runtime.currentLeader, &hand);
     out->handTypeAfterAccept = hand.itemType;
     out->handChargesAfterAccept = hand.charges;
     out->handQuantityAfterAccept =
         runtime.handQuantities[runtime.currentLeader];
-    out->openChestThingAfterAccept = m11_inventory_get_open_chest_thing(
+    out->openChestThingAfterAccept = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, runtime.openChampion);
     record_slots(&runtime, runtime.openChampion, out->visibleTypesAfterAccept,
                  out->visibleChargesAfterAccept,

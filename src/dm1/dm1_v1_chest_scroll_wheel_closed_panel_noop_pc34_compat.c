@@ -16,7 +16,7 @@
  * F0380 lines 2045-2178 drains them. IO.C F0077:1113-1122 / F0078:1102-1111
  * bracket mouse screen updates. The "closed-panel noop" lane is the
  * specific contract that the G0426 mismatch guard in
- * m11_inventory_click_open_chest_slot_for_thing suppresses the entire
+ * DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat suppresses the entire
  * F0302 chest-slot dispatch while the leader hand, G0425_aT_ChestSlots,
  * G0426, and G0424_i_PanelContent stay byte-stable across one or more
  * scroll-wheel ticks and across a 32-tick settle window.
@@ -40,7 +40,7 @@
  */
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     int commandQueueDepth;
     int mouseUpdateDepth;
     int f0077Observed;
@@ -93,16 +93,16 @@ static const DM1_V1_ChestScrollWheelClosedPanelNoopSpecPc34 s_spec = {
     DM1_PC34_SCROLL_CLOSED_PANEL_SETTLE_TICKS
 };
 
-static int g0425_is_all_zero(const M11_InventoryState* s, int champ,
+static int g0425_is_all_zero(const DM1_V1_InventoryStatePc34* s, int champ,
                              int* outTypes, int* outCharges)
 {
     int i;
     int any = 0;
 
     for (i = 0; i < DM1_PC34_SCROLL_CLOSED_PANEL_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(s, champ, i, &item)) {
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(s, champ, i, &item)) {
             outTypes[i] = item.itemType;
             outCharges[i] = item.charges;
         } else {
@@ -120,25 +120,25 @@ static void snapshot_initial(
     const ScrollClosedPanelRuntimePc34* runtime,
     DM1_V1_ChestScrollWheelClosedPanelNoopProbePc34* probe)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
     int i;
 
     probe->initialPanelContent =
-        m11_inventory_get_panel_content_pc34(&runtime->inventory);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&runtime->inventory);
     probe->initialLeaderG0426 =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime->inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER);
     probe->initialNonLeaderG0426 =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime->inventory, DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER);
 
-    if (m11_inventory_get_mouse_item(
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(
             &runtime->inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER, &hand)) {
         probe->initialLeaderHandType = hand.itemType;
         probe->initialLeaderHandWeight = hand.weight;
         probe->initialLeaderHandCharges = hand.charges;
     }
-    if (m11_inventory_get_mouse_item(
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(
             &runtime->inventory, DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER,
             &hand)) {
         probe->initialNonLeaderHandType = hand.itemType;
@@ -149,9 +149,9 @@ static void snapshot_initial(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER,
         probe->initialG0425Types, probe->initialG0425Charges);
 
-    probe->initialLoadLeader = m11_inventory_get_load(
+    probe->initialLoadLeader = DM1_V1_Inventory_GetLoadPc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER);
-    probe->initialLoadNonLeader = m11_inventory_get_load(
+    probe->initialLoadNonLeader = DM1_V1_Inventory_GetLoadPc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER);
 
     for (i = 0; i < DM1_PC34_SCROLL_CLOSED_PANEL_SLOT_COUNT; ++i) {
@@ -189,11 +189,11 @@ static int drain_one_wheel_tick(ScrollClosedPanelRuntimePc34* runtime)
     }
     /* ReDMCSB: COMMAND.C F0380 lines 2045-2178 drains the queued slot-box
      * command.  The CHEST.C F0333 same-open guard and the
-     * m11_inventory_click_open_chest_slot_for_thing G0426 mismatch guard
+     * DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat G0426 mismatch guard
      * reject the C540 click when the leader's G0426_T_OpenChest is zero.
      * 0 = no-op reject, 1 = dispatched, 0 here means the panel stayed in
      * the inventory state. */
-    clickResult = m11_inventory_click_open_chest_slot_for_thing(
+    clickResult = DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER,
         /* expectedOpenChestThing = 1 is a non-zero sentinel; the actual
          * check is `s->champions[champ].openChestThing != expectedOpenChestThing`.
@@ -291,7 +291,7 @@ int dm1_v1_chest_scroll_wheel_closed_panel_noop_run_pc34(
     DM1_V1_ChestScrollWheelClosedPanelNoopProbePc34* out)
 {
     ScrollClosedPanelRuntimePc34 runtime;
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
     uint32_t hash = 2166136261u;
     int i;
     int tick;
@@ -311,9 +311,9 @@ int dm1_v1_chest_scroll_wheel_closed_panel_noop_run_pc34(
      * we can confirm the click does not leak through the F0298 remove
      * bridge.  G0425_aT_ChestSlots is all zero.  G0426_T_OpenChest is
      * zero.  G0424_i_PanelContent is PANEL_INVENTORY. */
-    m11_inventory_init(&runtime.inventory,
+    DM1_V1_Inventory_InitPc34Compat(&runtime.inventory,
                        DM1_PC34_SCROLL_CLOSED_PANEL_CHAMPION_COUNT);
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER,
             DM1_PC34_SCROLL_CLOSED_PANEL_LEADER_HAND_ITEM,
             DM1_PC34_SCROLL_CLOSED_PANEL_LEADER_HAND_WEIGHT,
@@ -321,7 +321,7 @@ int dm1_v1_chest_scroll_wheel_closed_panel_noop_run_pc34(
             DM1_PC34_ALLOWED_ANY_SLOT)) {
         return 0;
     }
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER,
             DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER_BACKPACK_ITEM,
             DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER_BACKPACK_WEIGHT,
@@ -329,11 +329,11 @@ int dm1_v1_chest_scroll_wheel_closed_panel_noop_run_pc34(
             DM1_PC34_ALLOWED_ANY_SLOT)) {
         return 0;
     }
-    m11_inventory_set_panel_content_pc34(&runtime.inventory,
+    DM1_V1_Inventory_SetPanelContentPc34Compat(&runtime.inventory,
                                          DM1_PC34_PANEL_INVENTORY);
-    m11_inventory_recalc_load(&runtime.inventory,
+    DM1_V1_Inventory_RecalcLoadPc34Compat(&runtime.inventory,
                               DM1_PC34_SCROLL_CLOSED_PANEL_LEADER);
-    m11_inventory_recalc_load(&runtime.inventory,
+    DM1_V1_Inventory_RecalcLoadPc34Compat(&runtime.inventory,
                               DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER);
 
     out->setupResult = 1;
@@ -365,18 +365,18 @@ int dm1_v1_chest_scroll_wheel_closed_panel_noop_run_pc34(
         DM1_PC34_SCROLL_CLOSED_PANEL_STEP_DRAIN_WHEEL_CLICK;
 
     out->panelContentAfterDrain =
-        m11_inventory_get_panel_content_pc34(&runtime.inventory);
-    out->leaderG0426AfterDrain = m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&runtime.inventory);
+    out->leaderG0426AfterDrain = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER);
-    out->nonLeaderG0426AfterDrain = m11_inventory_get_open_chest_thing(
+    out->nonLeaderG0426AfterDrain = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER);
-    if (m11_inventory_get_mouse_item(
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(
             &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER, &hand)) {
         out->leaderHandTypeAfterDrain = hand.itemType;
         out->leaderHandWeightAfterDrain = hand.weight;
         out->leaderHandChargesAfterDrain = hand.charges;
     }
-    if (m11_inventory_get_mouse_item(
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(
             &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER,
             &hand)) {
         out->nonLeaderHandTypeAfterDrain = hand.itemType;
@@ -395,9 +395,9 @@ int dm1_v1_chest_scroll_wheel_closed_panel_noop_run_pc34(
             g0425ManifestUnchanged = 0;
         }
     }
-    out->loadLeaderAfterDrain = m11_inventory_get_load(
+    out->loadLeaderAfterDrain = DM1_V1_Inventory_GetLoadPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER);
-    out->loadNonLeaderAfterDrain = m11_inventory_get_load(
+    out->loadNonLeaderAfterDrain = DM1_V1_Inventory_GetLoadPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER);
 
     out->panelStayedInventory = (out->panelContentAfterDrain ==
@@ -445,19 +445,19 @@ int dm1_v1_chest_scroll_wheel_closed_panel_noop_run_pc34(
     /* ReDMCSB: PANEL.C F0347 redraws FOOD/WATER/POISONED when no container
      * remains in the action hand, so the post-drain settle must end with
      * the panel still in the inventory state. */
-    m11_inventory_set_panel_content_pc34(&runtime.inventory,
+    DM1_V1_Inventory_SetPanelContentPc34Compat(&runtime.inventory,
                                          DM1_PC34_PANEL_INVENTORY);
-    m11_inventory_recalc_load(&runtime.inventory,
+    DM1_V1_Inventory_RecalcLoadPc34Compat(&runtime.inventory,
                               DM1_PC34_SCROLL_CLOSED_PANEL_LEADER);
-    m11_inventory_recalc_load(&runtime.inventory,
+    DM1_V1_Inventory_RecalcLoadPc34Compat(&runtime.inventory,
                               DM1_PC34_SCROLL_CLOSED_PANEL_NON_LEADER);
     out->panelContentAfterSettle =
-        m11_inventory_get_panel_content_pc34(&runtime.inventory);
-    if (m11_inventory_get_mouse_item(
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&runtime.inventory);
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(
             &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER, &hand)) {
         out->leaderHandTypeAfterSettle = hand.itemType;
     }
-    out->leaderG0426AfterSettle = m11_inventory_get_open_chest_thing(
+    out->leaderG0426AfterSettle = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSED_PANEL_LEADER);
     {
         int types[DM1_PC34_SCROLL_CLOSED_PANEL_SLOT_COUNT];

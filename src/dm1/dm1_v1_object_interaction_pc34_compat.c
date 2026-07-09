@@ -117,10 +117,10 @@ int m11_obj_pickup(M11_ObjectState* s, int objIdx, int* outWeight) {
     return 0;
 }
 int m11_obj_drop(M11_ObjectState* s, int objIdx, int x, int y, int level) {
-    /* Source: DUNGEON.C:F0140_DUNGEON_GetObjectWeight (weight lookup), 
-     * DUNGEON.C:F0159_DUNGEON_GetNextThing (thing list traversal), 
-     * DUNGEON.C:1111-1117 (container weight includes contents recursively). 
-     * The floor cell API is a simplification of ReDMCSB THING linked-list 
+    /* Source: DUNGEON.C:F0140_DUNGEON_GetObjectWeight (weight lookup),
+     * DUNGEON.C:F0159_DUNGEON_GetNextThing (thing list traversal),
+     * DUNGEON.C:1111-1117 (container weight includes contents recursively).
+     * The floor cell API is a simplification of ReDMCSB THING linked-list
      * system anchored in dungeon squares (DUNGEON square data). */
     if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
     if (x < 0 || x >= 32 || y < 0 || y >= 32 || level < 0 || level >= 16) return -1;
@@ -145,7 +145,7 @@ int m11_obj_drop(M11_ObjectState* s, int objIdx, int x, int y, int level) {
  *
  * m11_obj_use delegates to the consumables module for items that affect
  * champion stats (potions, food, junk/water). Equipment (weapons, armor,
- * accessories) is handled by the inventory slot system (m11_inventory_equip)
+ * accessories) is handled by the inventory slot system (DM1_V1_Inventory_EquipPc34Compat)
  * and does not go through this function — items in slots are used by
  * being equipped, not consumed. */
 int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
@@ -202,7 +202,7 @@ int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
         }
         case DM1_OBJTYPE_WEAPON:
         case DM1_OBJTYPE_ARMOR: {
-            /* Equipment: handled by m11_inventory_equip() slot system.
+            /* Equipment: handled by DM1_V1_Inventory_EquipPc34Compat() slot system.
              * Not consumed; mouth-click returns 0 (non-usable here).
              * Source: INVENTORY.C F0300-F0302 slot equip. */
             return 0;
@@ -236,17 +236,17 @@ int m11_obj_activate(M11_ObjectState* s, int objIdx) {
 }
 
 int m11_obj_examine(const M11_ObjectState* s, int objIdx, char* desc, int descLen) {
-    /* Source: OBJECT.C:F0033_OBJECT_GetIconIndex (icon), 
-     * OBJECT.C:237 (G0352_apc_ObjectNames[name]), 
-     * PANEL.C:1444-1469 (weight display format WEIGHS X.Y KG. 
-     * via F0140/10 and F0140%10, CHAMDRAW.C:349-392). 
-     * Note: obj->weight is the stored spawn weight; ReDMCSB recomputes 
-     * weight from type-specific tables (G0238/G0239/G0241) per F0140. 
-     * This means the displayed weight may diverge from ReDMCSB for items 
+    /* Source: OBJECT.C:F0033_OBJECT_GetIconIndex (icon),
+     * OBJECT.C:237 (G0352_apc_ObjectNames[name]),
+     * PANEL.C:1444-1469 (weight display format WEIGHS X.Y KG.
+     * via F0140/10 and F0140%10, CHAMDRAW.C:349-392).
+     * Note: obj->weight is the stored spawn weight; ReDMCSB recomputes
+     * weight from type-specific tables (G0238/G0239/G0241) per F0140.
+     * This means the displayed weight may diverge from ReDMCSB for items
      * whose weight varies by type detail (e.g. waterskin by charges). */
     if (!s || !m11_obj_is_valid(s, objIdx) || !desc || descLen <= 0) return -1;
     const M11_WorldObject* obj = &s->objects[objIdx];
-    const char* typeName = m11_obj_type_name(obj->objectType); 
+    const char* typeName = m11_obj_type_name(obj->objectType);
     snprintf(desc, descLen, "%s (Weight: %d)", typeName, obj->weight);
     return 0;
 }

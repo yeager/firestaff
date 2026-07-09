@@ -277,11 +277,11 @@ int dm1_v1_chest_close_stack_merge_run_pc34(
         DM1_PC34_CHEST_CLOSE_STACK_MERGE_VISIBLE_5,
         DM1_PC34_CHEST_CLOSE_STACK_MERGE_VISIBLE_6
     };
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_SLOT_COUNT];
-    M11_Item closed_items[DM1_PC34_CHEST_SLOT_COUNT];
-    M11_Item hand;
-    M11_Item hand_after;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed_items[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 hand_after;
     int post_close_slots[DM1_PC34_CHEST_SLOT_COUNT];
     int i;
     int visible_count = 0;
@@ -299,7 +299,7 @@ int dm1_v1_chest_close_stack_merge_run_pc34(
     memset(out, 0, sizeof(*out));
     memset(&log, 0, sizeof(log));
 
-    /* ---- Sparse open via m11_inventory_open_chest + slot set ---- */
+    /* ---- Sparse open via DM1_V1_Inventory_OpenChestPc34Compat + slot set ---- */
     for (i = 0; i < 6; ++i) {
         linked[i].itemType = s_linked_items[i];
         linked[i].weight = 2 + (i & 1);
@@ -309,45 +309,45 @@ int dm1_v1_chest_close_stack_merge_run_pc34(
         linked[i].allowedSlots =
             DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER;
     }
-    m11_inventory_init(&state, 1);
-    out->sparse_open_result = m11_inventory_open_chest(
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
+    out->sparse_open_result = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION,
         DM1_PC34_CHEST_CLOSE_STACK_MERGE_OPEN_CHEST_THING,
         linked, 6);
-    /* The m11_inventory_open_chest path writes the first 6 linked items
+    /* The DM1_V1_Inventory_OpenChestPc34Compat path writes the first 6 linked items
      * into G0425[0..5]; G0425[6,7] are left at itemType=0 (NONE). The
      * sparse G0425 pattern required by this gate is
      *   G0425 = [V1, NONE, V2, NONE, V3, V4, V5, V6]
-     * so we use m11_inventory_set_item_in_chest_slot to (a) place
+     * so we use DM1_V1_Inventory_SetItemInChestSlotPc34Compat to (a) place
      * V1..V6 at the right positions, (b) clear G0425[1] and G0425[3]
      * to NONE, and (c) populate G0425[6] and G0425[7] with V5 and V6.
      * The set call requires openChestThing to be non-zero, which it
      * is from the open above. */
-    out->sparse_open_result &= m11_inventory_set_item_in_chest_slot(
+    out->sparse_open_result &= DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, 0,
         s_input_g0425[0], 2, 1,
         DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER);
-    out->sparse_open_result &= m11_inventory_set_item_in_chest_slot(
+    out->sparse_open_result &= DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, 1, 0, 0, 0, 0);
-    out->sparse_open_result &= m11_inventory_set_item_in_chest_slot(
+    out->sparse_open_result &= DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, 2,
         s_input_g0425[2], 3, 1,
         DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER);
-    out->sparse_open_result &= m11_inventory_set_item_in_chest_slot(
+    out->sparse_open_result &= DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, 3, 0, 0, 0, 0);
-    out->sparse_open_result &= m11_inventory_set_item_in_chest_slot(
+    out->sparse_open_result &= DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, 4,
         s_input_g0425[4], 2, 1,
         DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER);
-    out->sparse_open_result &= m11_inventory_set_item_in_chest_slot(
+    out->sparse_open_result &= DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, 5,
         s_input_g0425[5], 3, 1,
         DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER);
-    out->sparse_open_result &= m11_inventory_set_item_in_chest_slot(
+    out->sparse_open_result &= DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, 6,
         s_input_g0425[6], 4, 1,
         DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER);
-    out->sparse_open_result &= m11_inventory_set_item_in_chest_slot(
+    out->sparse_open_result &= DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, 7,
         s_input_g0425[7], 5, 1,
         DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER);
@@ -362,14 +362,14 @@ int dm1_v1_chest_close_stack_merge_run_pc34(
     out->sparse_visible_count = visible_count;
 
     /* ---- Leader hand stackable setup ---- */
-    m11_inventory_set_mouse_item(
+    DM1_V1_Inventory_SetMouseItemPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION,
         DM1_PC34_CHEST_CLOSE_STACK_MERGE_LEADER_HAND_ITEM_TYPE,
         DM1_PC34_CHEST_CLOSE_STACK_MERGE_LEADER_HAND_WEIGHT,
         DM1_PC34_CHEST_CLOSE_STACK_MERGE_LEADER_HAND_CHARGES,
         DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_NECK |
             DM1_PC34_ALLOWED_TORSO | DM1_PC34_ALLOWED_LEGS);
-    m11_inventory_get_mouse_item(
+    DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, &hand);
     out->leader_hand_item_type_before = hand.itemType;
     out->leader_hand_charges_before = hand.charges;
@@ -405,14 +405,14 @@ int dm1_v1_chest_close_stack_merge_run_pc34(
         DM1_PC34_CHEST_CLOSE_STACK_MERGE_CONTAINER_BASE_WEIGHT;
 
     /* ---- M11 close (drives the real F0334 close rewire) ---- */
-    out->rewire_chain_count = m11_inventory_close_chest(
+    out->rewire_chain_count = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, closed_items,
         DM1_PC34_CHEST_SLOT_COUNT);
 
     /* ---- Post-close G0425 cleared, openChestThing cleared ---- */
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-        M11_Item slot_item;
-        int has_slot = m11_inventory_get_item_in_chest_slot(
+        DM1_V1_ItemPc34 slot_item;
+        int has_slot = DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, i,
             &slot_item);
         if (has_slot) {
@@ -425,25 +425,25 @@ int dm1_v1_chest_close_stack_merge_run_pc34(
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
         out->post_close_chest_slot_item_types[i] = post_close_slots[i];
     }
-    out->post_close_open_chest_thing = m11_inventory_get_open_chest_thing(
+    out->post_close_open_chest_thing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION);
 
     /* ---- Leader hand must be byte-stable through close ---- */
-    m11_inventory_get_mouse_item(
+    DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, &hand_after);
     out->leader_hand_item_type_after = hand_after.itemType;
     out->leader_hand_charges_after = hand_after.charges;
     out->leader_hand_weight_after = hand_after.weight;
 
     /* ---- Reopen with the closed chain ---- */
-    out->reopen_result = m11_inventory_open_chest(
+    out->reopen_result = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION,
         DM1_PC34_CHEST_CLOSE_STACK_MERGE_OPEN_CHEST_THING,
         closed_items, out->rewire_chain_count);
     out->reopen_visible_count = 0;
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-        M11_Item slot_item;
-        if (m11_inventory_get_item_in_chest_slot(
+        DM1_V1_ItemPc34 slot_item;
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, i,
                 &slot_item) &&
             slot_item.itemType != 0) {
@@ -453,7 +453,7 @@ int dm1_v1_chest_close_stack_merge_run_pc34(
             out->reopen_types[i] = 0;
         }
     }
-    m11_inventory_get_mouse_item(
+    DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state, DM1_PC34_CHEST_CLOSE_STACK_MERGE_CHAMPION, &hand_after);
     out->reopen_leader_hand_item_type = hand_after.itemType;
     out->reopen_leader_hand_charges = hand_after.charges;

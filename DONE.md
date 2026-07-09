@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 inventory/chest ownership names: inventory item/champion/state types, load, mouse hand, source-slot, chest open/close, panel route, equip, rabbit-foot, and broad DM1 chest call sites now use DM1-owned API names; old M11 inventory names remain compatibility aliases. Verification: `firestaff_m10` rebuild, inventory equip, backpack/chest, chest close rewire, nested-container weight, close-full-leader-hand, hand-swap no-duplicate, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 game-loop ownership names: game-loop phase/status/tick result/frame stats/state, frame/vblank budget constants, tick/vblank/pause/resume/state mutation/frame-budget helpers now expose DM1-owned API names; old M11 game-loop names remain compatibility aliases. Added CTest target `dm1_v1_game_loop_pc34_compat`. Verification: new game-loop test (49/49), movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 entrance champion-select ownership names: entrance state/context, mirror slots, door animation, mirror click, recruit, resurrect, reincarnate, cancel, finalize, completion, and party-count helpers now expose DM1-owned API names; old M11 entrance names remain compatibility aliases. Added CTest target `dm1_v1_entrance_champion_select_pc34_compat`. Verification: new entrance test (79/79), `test_dm1_v1_movement_pipeline_pc34_compat` (400/400), Phase A 24/24, and `git diff --check` passed.

@@ -20,9 +20,9 @@ const DM1_V1_ChestNinthItemHiddenTailSpecPc34
         DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_INPUT
     };
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -32,7 +32,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static int copy_open_types(const M11_InventoryState* state,
+static int copy_open_types(const DM1_V1_InventoryStatePc34* state,
                            int* typesOut)
 {
     int i;
@@ -41,9 +41,9 @@ static int copy_open_types(const M11_InventoryState* state,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, 0, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item)) {
             return 0;
         }
         typesOut[i] = item.itemType;
@@ -51,7 +51,7 @@ static int copy_open_types(const M11_InventoryState* state,
     return 1;
 }
 
-static void copy_closed_types(const M11_Item* items,
+static void copy_closed_types(const DM1_V1_ItemPc34* items,
                               int count,
                               int* typesOut)
 {
@@ -127,12 +127,12 @@ dm1_v1_chest_ninth_item_hidden_tail_spec_pc34(void)
 int dm1_v1_chest_ninth_item_hidden_tail_pc34(
     DM1_V1_ChestNinthItemHiddenTailProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_MAX_LINKED];
-    M11_Item hiddenTail[1];
-    M11_Item closed[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT];
-    M11_Item reopenInput[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_MAX_LINKED];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_MAX_LINKED];
+    DM1_V1_ItemPc34 hiddenTail[1];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT];
+    DM1_V1_ItemPc34 reopenInput[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_MAX_LINKED];
+    DM1_V1_ItemPc34 item;
     int hiddenTailCount = 0;
     int reopenInputCount;
     int i;
@@ -150,7 +150,7 @@ int dm1_v1_chest_ninth_item_hidden_tail_pc34(
     out->reopenedChestThing =
         DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_REOPEN_THING;
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_MAX_LINKED; ++i) {
         linked[i] =
             make_item(DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_VISIBLE_FIRST + i,
@@ -163,10 +163,10 @@ int dm1_v1_chest_ninth_item_hidden_tail_pc34(
      * lines 25-120 is represented by unique deterministic itemType sentinels.
      * The ninth linked input remains a hidden tail outside the visible panel. */
     out->linkedInputCount = DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_MAX_LINKED;
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, out->chestThing, linked,
         out->linkedInputCount);
-    out->openThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->openResult || !copy_open_types(&state, out->openedTypes)) {
         return 0;
     }
@@ -185,15 +185,15 @@ int dm1_v1_chest_ninth_item_hidden_tail_pc34(
 
     item = make_item(DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_INPUT, 17,
                      DM1_PC34_ALLOWED_CONTAINER);
-    if (!m11_inventory_set_mouse_item(&state, 0, item.itemType,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, item.itemType,
                                       item.weight, item.charges,
                                       item.allowedSlots) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandBeforePut = item.itemType;
     out->leaderHandCanEnterContainer =
-        m11_inventory_can_equip(&item, DM1_PC34_SLOT_CHEST_8);
+        DM1_V1_Inventory_CanEquipPc34Compat(&item, DM1_PC34_SLOT_CHEST_8);
 
     /* ReDMCSB CHAMPION.C F0297/F0298/F0302 lines 250-298,688-710 owns the
      * leader-hand put state.  With all C537..C544 slots occupied, this source
@@ -211,7 +211,7 @@ int dm1_v1_chest_ninth_item_hidden_tail_pc34(
     hiddenTail[hiddenTailCount++] =
         linked[DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT];
     if (!copy_open_types(&state, out->afterPutTypes) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterPut = item.itemType;
@@ -228,11 +228,11 @@ int dm1_v1_chest_ninth_item_hidden_tail_pc34(
     /* ReDMCSB CHEST.C F0334 lines 113-132 rewrites only the eight non-empty
      * visible G0425 slots, while DUNGEON.C F0163 lines 1796-1837 appends only
      * those visible-input returns and excludes hidden tail input 808. */
-    out->closeCount = m11_inventory_close_chest(
+    out->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed,
         DM1_PC34_CHEST_NINTH_HIDDEN_TAIL_SLOT_COUNT);
     if (out->closeCount < 0 ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     copy_closed_types(closed, out->closeCount, out->closedTypes);
@@ -254,10 +254,10 @@ int dm1_v1_chest_ninth_item_hidden_tail_pc34(
     /* ReDMCSB CHEST.C F0333 lines 31-67 reopens from the relinked visible
      * head plus the preserved hidden tail chain; only the first eight linked
      * objects rematerialize in C537..C544. */
-    out->reopenResult = m11_inventory_open_chest(
+    out->reopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, out->reopenedChestThing, reopenInput, reopenInputCount);
     if (!out->reopenResult || !copy_open_types(&state, out->reopenedTypes) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterReopen = item.itemType;

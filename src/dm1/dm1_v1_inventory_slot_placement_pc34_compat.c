@@ -48,7 +48,7 @@
  * and all earlier inventory hand/belt/quiver/pouch/backpack gates.
  *
  * This pass lands the *placement rule* layer that sits between the
- * existing slot-validation layer (m11_inventory_can_equip, F0302:
+ * existing slot-validation layer (DM1_V1_Inventory_CanEquipPc34Compat, F0302:
  * 694-699) and the existing slot-click layer (F0302:701-710):
  * given an AllowedSlots mask, which PC34 slot should the runtime
  * offer first?  The helper is a Firestaff-side convention layered
@@ -221,7 +221,7 @@ int dm1_v1_inventory_slot_placement_rule_for_pc34(int allowedSlots)
  *
  * Source-locked against DATA.C:436-466 (G0057 forced-drop priority
  * read backwards = placement priority) + DATA.C:1049-1087 (G0038
- * SlotMasks).  Composable with m11_inventory_can_equip: the
+ * SlotMasks).  Composable with DM1_V1_Inventory_CanEquipPc34Compat: the
  * returned slot always satisfies AllowedSlots & SlotMasks[slot]. */
 int dm1_v1_inventory_slot_placement_pick_pc34(int allowedSlots,
                                               int occupiedPouch1,
@@ -240,7 +240,7 @@ int dm1_v1_inventory_slot_placement_pick_pc34(int allowedSlots,
         /* Ready Hand wins over Action Hand.  Both C00/C01 slots
          * carry MASK0xFFFF_ANY_SLOT, so any hand-eligible item
          * passes the F0302:697-699 mask test for either slot. */
-        if (!m11_inventory_can_equip(&(M11_Item){
+        if (!DM1_V1_Inventory_CanEquipPc34Compat(&(DM1_V1_ItemPc34){
                 0, 0, 0, 0, 0, allowedSlots },
                 DM1_PC34_SLOT_READY_HAND)) {
             return DM1_PC34_SLOT_ACTION_HAND;
@@ -314,7 +314,7 @@ int dm1_v1_inventory_slot_placement_pick_pc34(int allowedSlots,
          * Line1 1, then C14..C21 Line2 2..9; DM1_PC34_SLOT_BACKPACK_LINE2_2
          * is C14).  The leading-occupied count tracks the first
          * four Line1 slots in the reverse priority order. */
-        if (!m11_inventory_can_equip(&(M11_Item){
+        if (!DM1_V1_Inventory_CanEquipPc34Compat(&(DM1_V1_ItemPc34){
                 0, 0, 0, 0, 0, allowedSlots },
                 DM1_PC34_SLOT_BACKPACK_LINE1_9)) {
             return -1;
@@ -353,7 +353,7 @@ static int run_case(DM1_V1_InventorySlotPlacementCasePc34* row,
                     int expectedRule,
                     int expectedPc34Slot)
 {
-    M11_Item probeItem;
+    DM1_V1_ItemPc34 probeItem;
 
     if (!row) {
         return 0;
@@ -381,7 +381,7 @@ static int run_case(DM1_V1_InventorySlotPlacementCasePc34* row,
         probeItem.itemType = itemType;
         probeItem.allowedSlots = allowedSlots;
         row->placementMatchCanEquip =
-            m11_inventory_can_equip(&probeItem, row->placementResult);
+            DM1_V1_Inventory_CanEquipPc34Compat(&probeItem, row->placementResult);
     } else {
         row->placementMatchCanEquip = 0;
     }

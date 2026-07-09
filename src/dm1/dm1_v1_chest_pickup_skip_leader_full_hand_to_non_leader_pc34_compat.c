@@ -32,10 +32,10 @@ const DM1_V1_ChestPickupSkipLeaderFullHandToNonLeaderSpecPc34
         "DEFS.H C30 and C537..C544 slot definitions"
     };
 
-static M11_Item make_item(int itemType, int weight, int charges,
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int charges,
                           int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -46,7 +46,7 @@ static M11_Item make_item(int itemType, int weight, int charges,
     return item;
 }
 
-static void seed_chest(M11_Item* items)
+static void seed_chest(DM1_V1_ItemPc34* items)
 {
     int i;
 
@@ -58,7 +58,7 @@ static void seed_chest(M11_Item* items)
     }
 }
 
-static int copy_open_fields(const M11_InventoryState* state,
+static int copy_open_fields(const DM1_V1_InventoryStatePc34* state,
                             int champ,
                             int* types,
                             int* weights,
@@ -71,9 +71,9 @@ static int copy_open_fields(const M11_InventoryState* state,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_SKIP_LEADER_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, champ, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item)) {
             return 0;
         }
         types[i] = item.itemType;
@@ -84,7 +84,7 @@ static int copy_open_fields(const M11_InventoryState* state,
     return 1;
 }
 
-static void copy_item_fields(const M11_Item* items,
+static void copy_item_fields(const DM1_V1_ItemPc34* items,
                              int count,
                              int* types,
                              int* weights,
@@ -218,13 +218,13 @@ dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_spec_pc34(void)
 int dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34(
     DM1_V1_ChestPickupSkipLeaderFullHandToNonLeaderProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_SKIP_LEADER_SLOT_COUNT];
-    M11_Item closed[DM1_PC34_CHEST_SKIP_LEADER_SLOT_COUNT];
-    M11_Item leaderHandBefore;
-    M11_Item leaderHandAfter;
-    M11_Item targetHandBefore;
-    M11_Item targetHandAfter;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_SKIP_LEADER_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_SKIP_LEADER_SLOT_COUNT];
+    DM1_V1_ItemPc34 leaderHandBefore;
+    DM1_V1_ItemPc34 leaderHandAfter;
+    DM1_V1_ItemPc34 targetHandBefore;
+    DM1_V1_ItemPc34 targetHandAfter;
     int leader = DM1_PC34_CHEST_SKIP_LEADER_LEADER_INDEX;
     int target = DM1_PC34_CHEST_SKIP_LEADER_TARGET_INDEX;
     int picked = DM1_PC34_CHEST_SKIP_LEADER_PICKED_INDEX;
@@ -246,13 +246,13 @@ int dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34(
     out->pickedItemCharges = linked[picked].charges;
     out->pickedItemAllowedSlots = linked[picked].allowedSlots;
 
-    m11_inventory_init(&state, DM1_PC34_CHEST_SKIP_LEADER_PARTY_COUNT);
-    out->leaderHandSetupResult = m11_inventory_set_mouse_item(
+    DM1_V1_Inventory_InitPc34Compat(&state, DM1_PC34_CHEST_SKIP_LEADER_PARTY_COUNT);
+    out->leaderHandSetupResult = DM1_V1_Inventory_SetMouseItemPc34Compat(
         &state, leader, DM1_PC34_CHEST_SKIP_LEADER_LEADER_HAND_ITEM,
         21, 4, DM1_PC34_ALLOWED_CONTAINER);
     if (!out->leaderHandSetupResult ||
-        !m11_inventory_get_mouse_item(&state, leader, &leaderHandBefore) ||
-        !m11_inventory_get_mouse_item(&state, target, &targetHandBefore)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, leader, &leaderHandBefore) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, target, &targetHandBefore)) {
         return 0;
     }
 
@@ -268,10 +268,10 @@ int dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34(
      * This probe opens the chest for the explicitly targeted non-leader,
      * while CHAMPION.C F0297/F0298 lines 243-298 leave the already-full
      * leader hand as separate state. */
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, target, DM1_PC34_CHEST_SKIP_LEADER_THING,
         linked, DM1_PC34_CHEST_SKIP_LEADER_SLOT_COUNT);
-    out->openThing = m11_inventory_get_open_chest_thing(&state, target);
+    out->openThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, target);
     if (!out->openResult ||
         !copy_open_fields(&state, target,
                           out->initialTypes,
@@ -285,10 +285,10 @@ int dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34(
      * chest slot through the current target. Firestaff's PC34 runtime state
      * stores the hand by champion, so a non-leader targeted empty hand picks
      * up the visible C539 object without colliding with the full leader hand. */
-    out->pickupClickResult = m11_inventory_click_open_chest_slot_for_thing(
+    out->pickupClickResult = DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
         &state, target, DM1_PC34_CHEST_SKIP_LEADER_THING, picked);
-    if (!m11_inventory_get_mouse_item(&state, leader, &leaderHandAfter) ||
-        !m11_inventory_get_mouse_item(&state, target, &targetHandAfter) ||
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, leader, &leaderHandAfter) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, target, &targetHandAfter) ||
         !copy_open_fields(&state, target,
                           out->openAfterPickupTypes,
                           out->openAfterPickupWeights,
@@ -334,7 +334,7 @@ int dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34(
     /* ReDMCSB CHEST.C F0334 lines 117-132 compacts the still-visible G0425
      * slots. Reopening from that snapshot pins the exact C537..C544 behavior:
      * the original order is preserved with the picked C539 item omitted. */
-    out->closeCount = m11_inventory_close_chest(
+    out->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, target, closed, DM1_PC34_CHEST_SKIP_LEADER_SLOT_COUNT);
     if (out->closeCount < 0) {
         return 0;
@@ -351,10 +351,10 @@ int dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34(
                                out->closedCharges,
                                out->closedAllowedSlots);
 
-    out->reopenResult = m11_inventory_open_chest(
+    out->reopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, target, DM1_PC34_CHEST_SKIP_LEADER_REOPEN_THING,
         closed, out->closeCount);
-    out->reopenThing = m11_inventory_get_open_chest_thing(&state, target);
+    out->reopenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, target);
     if (!out->reopenResult ||
         !copy_open_fields(&state, target,
                           out->reopenedTypes,

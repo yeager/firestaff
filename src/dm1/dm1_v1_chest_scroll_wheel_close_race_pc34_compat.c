@@ -23,7 +23,7 @@ typedef struct {
 } ScrollCloseThingPc34;
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     ScrollCloseThingPc34 linked[DM1_PC34_SCROLL_CLOSE_SLOT_COUNT];
     int quantityBySlot[DM1_PC34_SCROLL_CLOSE_SLOT_COUNT];
     int currentLeader;
@@ -74,9 +74,9 @@ static const DM1_V1_ChestScrollWheelCloseRaceSpecPc34 s_spec = {
     DM1_PC34_SCROLL_CLOSE_VISIBLE_COUNT
 };
 
-static M11_Item to_m11_item(ScrollCloseThingPc34 thing)
+static DM1_V1_ItemPc34 to_m11_item(ScrollCloseThingPc34 thing)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = thing.itemType;
@@ -108,9 +108,9 @@ static void copy_visible(const ScrollCloseRuntimePc34* runtime,
     int i;
 
     for (i = 0; i < DM1_PC34_SCROLL_CLOSE_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &runtime->inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER,
                 i, &item)) {
             types[i] = item.itemType;
@@ -148,11 +148,11 @@ static int visible_chain_matches_initial(const int* types,
 
 static void runtime_init(ScrollCloseRuntimePc34* runtime)
 {
-    M11_Item linked[DM1_PC34_SCROLL_CLOSE_SLOT_COUNT];
+    DM1_V1_ItemPc34 linked[DM1_PC34_SCROLL_CLOSE_SLOT_COUNT];
     int i;
 
     memset(runtime, 0, sizeof(*runtime));
-    m11_inventory_init(&runtime->inventory,
+    DM1_V1_Inventory_InitPc34Compat(&runtime->inventory,
                        DM1_PC34_SCROLL_CLOSE_CHAMPION_COUNT);
     runtime->currentLeader = DM1_PC34_SCROLL_CLOSE_OLD_LEADER;
 
@@ -166,13 +166,13 @@ static void runtime_init(ScrollCloseRuntimePc34* runtime)
         }
     }
 
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER,
         DM1_PC34_SCROLL_CLOSE_LEADER_HAND_ITEM,
         DM1_PC34_SCROLL_CLOSE_LEADER_HAND_WEIGHT,
         DM1_PC34_SCROLL_CLOSE_LEADER_HAND_CHARGES,
         DM1_PC34_ALLOWED_ANY_SLOT);
-    (void)m11_inventory_open_chest(
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER,
         DM1_PC34_SCROLL_CLOSE_CHEST_THING, linked,
         DM1_PC34_SCROLL_CLOSE_SLOT_COUNT);
@@ -181,7 +181,7 @@ static void runtime_init(ScrollCloseRuntimePc34* runtime)
 static int queue_scroll_and_rotate(ScrollCloseRuntimePc34* runtime)
 {
     if (!runtime || runtime->scrollQueued || runtime->rotationQueued ||
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime->inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER) !=
             DM1_PC34_SCROLL_CLOSE_CHEST_THING) {
         return 0;
@@ -203,18 +203,18 @@ static int queue_scroll_and_rotate(ScrollCloseRuntimePc34* runtime)
 static int close_same_champion_chest(ScrollCloseRuntimePc34* runtime,
                                      ScrollCloseThingPc34* closed)
 {
-    M11_Item closedItems[DM1_PC34_SCROLL_CLOSE_SLOT_COUNT];
+    DM1_V1_ItemPc34 closedItems[DM1_PC34_SCROLL_CLOSE_SLOT_COUNT];
     int count;
     int i;
 
     memset(closedItems, 0, sizeof(closedItems));
-    count = m11_inventory_close_chest(
+    count = DM1_V1_Inventory_CloseChestPc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER,
         closedItems, DM1_PC34_SCROLL_CLOSE_SLOT_COUNT);
     if (count < 0) {
         return -1;
     }
-    (void)m11_inventory_apply_panel_route_after_close_pc34(
+    (void)DM1_V1_Inventory_ApplyPanelRouteAfterClosePc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER);
 
     for (i = 0; i < DM1_PC34_SCROLL_CLOSE_SLOT_COUNT; ++i) {
@@ -236,7 +236,7 @@ static int drain_stale_scroll_command(ScrollCloseRuntimePc34* runtime)
         return 0;
     }
 
-    result = m11_inventory_click_open_chest_slot_for_thing(
+    result = DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER,
         DM1_PC34_SCROLL_CLOSE_CHEST_THING,
         DM1_PC34_SCROLL_CLOSE_QUEUE_SLOT_INDEX);
@@ -251,21 +251,21 @@ static int drain_stale_scroll_command(ScrollCloseRuntimePc34* runtime)
 
 static int drain_leader_rotation(ScrollCloseRuntimePc34* runtime)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
 
     if (!runtime || !runtime->rotationQueued ||
         runtime->commandQueueDepth <= 0) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(
             &runtime->inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER, &hand)) {
         return 0;
     }
 
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSE_NEW_LEADER,
         hand.itemType, hand.weight, hand.charges, hand.allowedSlots);
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &runtime->inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER, 0, 0, 0, 0);
     runtime->currentLeader = runtime->queuedNewLeader;
     runtime->rotationQueued = 0;
@@ -346,7 +346,7 @@ int dm1_v1_chest_scroll_wheel_close_race_run_pc34(
 {
     ScrollCloseRuntimePc34 runtime;
     ScrollCloseThingPc34 closed[DM1_PC34_SCROLL_CLOSE_SLOT_COUNT];
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
     uint32_t hash = 2166136261u;
     int i;
 
@@ -362,17 +362,17 @@ int dm1_v1_chest_scroll_wheel_close_race_run_pc34(
     out->stepTrace[out->stepCount++] =
         DM1_PC34_SCROLL_CLOSE_STEP_OPEN_CHEST;
     out->openResult = 1;
-    out->openChestThingBeforeQueue = m11_inventory_get_open_chest_thing(
+    out->openChestThingBeforeQueue = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER);
-    out->panelBeforeQueue = m11_inventory_get_panel_content_pc34(
+    out->panelBeforeQueue = DM1_V1_Inventory_GetPanelContentPc34Compat(
         &runtime.inventory);
     out->leaderBeforeQueue = runtime.currentLeader;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER, &hand);
     out->oldLeaderHandTypeBeforeQueue = hand.itemType;
     out->oldLeaderHandWeightBeforeQueue = hand.weight;
     out->oldLeaderHandChargesBeforeQueue = hand.charges;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_NEW_LEADER, &hand);
     out->newLeaderHandTypeBeforeQueue = hand.itemType;
     copy_visible(&runtime, out->visibleTypesBeforeClose,
@@ -403,14 +403,14 @@ int dm1_v1_chest_scroll_wheel_close_race_run_pc34(
     out->closeCount = close_same_champion_chest(&runtime, closed);
     out->stepTrace[out->stepCount++] =
         DM1_PC34_SCROLL_CLOSE_STEP_CLOSE_CHEST;
-    out->openChestThingAfterClose = m11_inventory_get_open_chest_thing(
+    out->openChestThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER);
-    out->panelAfterCloseRoute = m11_inventory_get_panel_content_pc34(
+    out->panelAfterCloseRoute = DM1_V1_Inventory_GetPanelContentPc34Compat(
         &runtime.inventory);
     out->commandQueueDepthAfterClose = runtime.commandQueueDepth;
     out->mouseUpdateDepthAfterClose = runtime.mouseUpdateDepth;
     out->leaderAfterClose = runtime.currentLeader;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER, &hand);
     out->oldLeaderHandTypeAfterClose = hand.itemType;
     out->oldLeaderHandWeightAfterClose = hand.weight;
@@ -432,9 +432,9 @@ int dm1_v1_chest_scroll_wheel_close_race_run_pc34(
         DM1_PC34_SCROLL_CLOSE_STEP_DRAIN_STALE_SCROLL;
     out->commandQueueDepthAfterStaleDrain = runtime.commandQueueDepth;
     out->mouseUpdateDepthAfterStaleDrain = runtime.mouseUpdateDepth;
-    out->openChestThingAfterStaleDrain = m11_inventory_get_open_chest_thing(
+    out->openChestThingAfterStaleDrain = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER);
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER, &hand);
     out->oldLeaderHandTypeAfterStaleDrain = hand.itemType;
     out->oldLeaderHandWeightAfterStaleDrain = hand.weight;
@@ -449,14 +449,14 @@ int dm1_v1_chest_scroll_wheel_close_race_run_pc34(
         DM1_PC34_SCROLL_CLOSE_STEP_ROTATE_LEADER;
     out->commandQueueDepthAfterRotate = runtime.commandQueueDepth;
     out->leaderAfterRotate = runtime.currentLeader;
-    out->oldLeaderOpenChestAfterRotate = m11_inventory_get_open_chest_thing(
+    out->oldLeaderOpenChestAfterRotate = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER);
-    out->newLeaderOpenChestAfterRotate = m11_inventory_get_open_chest_thing(
+    out->newLeaderOpenChestAfterRotate = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_NEW_LEADER);
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_OLD_LEADER, &hand);
     out->oldLeaderHandTypeAfterRotate = hand.itemType;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_SCROLL_CLOSE_NEW_LEADER, &hand);
     out->newLeaderHandTypeAfterRotate = hand.itemType;
     out->newLeaderHandWeightAfterRotate = hand.weight;
@@ -470,7 +470,7 @@ int dm1_v1_chest_scroll_wheel_close_race_run_pc34(
         runtime.f0077Observed && runtime.f0078Observed &&
         runtime.mouseUpdateDepth == 0 ? 1 : 0;
     out->panelRemainsClosedAfterRotate =
-        m11_inventory_get_panel_content_pc34(&runtime.inventory) ==
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&runtime.inventory) ==
         DM1_PC34_SCROLL_CLOSE_PANEL_FOOD ? 1 : 0;
     out->stepTrace[out->stepCount++] =
         DM1_PC34_SCROLL_CLOSE_STEP_MOUSE_BALANCED;

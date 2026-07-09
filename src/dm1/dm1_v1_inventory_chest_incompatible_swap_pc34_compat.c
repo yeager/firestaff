@@ -2,9 +2,9 @@
 
 #include <string.h>
 
-static M11_Item make_item(int itemType, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
     item.weight = 1;
@@ -12,7 +12,7 @@ static M11_Item make_item(int itemType, int allowedSlots)
     return item;
 }
 
-static int copy_item_types(const M11_Item* items, int count, int* typesOut)
+static int copy_item_types(const DM1_V1_ItemPc34* items, int count, int* typesOut)
 {
     int i;
 
@@ -50,11 +50,11 @@ int m11_inventory_pc34_probe_chest_incompatible_swap(
         C544_FIRST_ITEM = 800,
         C544_REPLACEMENT_ITEM = 900
     };
-    M11_InventoryState state;
-    M11_Item linked[9];
-    M11_Item closed[DM1_PC34_TEST_CHEST_SWAP_SLOT_COUNT];
-    M11_Item item;
-    M11_Item staffOfClaws;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[9];
+    DM1_V1_ItemPc34 closed[DM1_PC34_TEST_CHEST_SWAP_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
+    DM1_V1_ItemPc34 staffOfClaws;
     int i;
 
     if (!out) {
@@ -63,41 +63,41 @@ int m11_inventory_pc34_probe_chest_incompatible_swap(
     memset(out, 0, sizeof(*out));
     memset(closed, 0, sizeof(closed));
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < DM1_PC34_TEST_CHEST_SWAP_SLOT_COUNT; ++i) {
         linked[i] = make_item(C538_FIRST_ITEM + i, DM1_PC34_ALLOWED_CONTAINER);
     }
-    if (!m11_inventory_open_chest(&state, 0, CHEST_THING, linked,
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(&state, 0, CHEST_THING, linked,
                                   DM1_PC34_TEST_CHEST_SWAP_SLOT_COUNT)) {
         return 0;
     }
 
-    out->c538SlotMask = m11_inventory_pc34_slot_mask(DM1_PC34_SLOT_CHEST_2);
+    out->c538SlotMask = DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_PC34_SLOT_CHEST_2);
     staffOfClaws = make_item(DM1_PC34_TEST_STAFF_OF_CLAWS_OBJECT_INFO,
                              DM1_PC34_ALLOWED_QUIVER_LINE1);
-    out->c538StaffCanEquip = m11_inventory_can_equip(&staffOfClaws,
+    out->c538StaffCanEquip = DM1_V1_Inventory_CanEquipPc34Compat(&staffOfClaws,
                                                      DM1_PC34_SLOT_CHEST_2);
     out->c538LeaderHandBefore = DM1_PC34_TEST_STAFF_OF_CLAWS_OBJECT_INFO;
-    if (!m11_inventory_set_mouse_item(&state, 0,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0,
                                       DM1_PC34_TEST_STAFF_OF_CLAWS_OBJECT_INFO,
                                       1, 0, DM1_PC34_ALLOWED_QUIVER_LINE1)) {
         return 0;
     }
-    if (!m11_inventory_get_item_in_chest_slot(&state, 0, C538_INDEX, &item)) {
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, C538_INDEX, &item)) {
         return 0;
     }
     out->c538SlotBefore = item.itemType;
-    out->c538ClickResult = m11_inventory_click_pc34_source_slot(
+    out->c538ClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, DM1_PC34_SLOT_CHEST_2);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->c538LeaderHandAfter = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(&state, 0, C538_INDEX, &item)) {
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, C538_INDEX, &item)) {
         return 0;
     }
     out->c538SlotAfter = item.itemType;
-    out->c538ClosedCount = m11_inventory_close_chest(
+    out->c538ClosedCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_TEST_CHEST_SWAP_SLOT_COUNT);
     if (out->c538ClosedCount < 0 ||
         !copy_item_types(closed, DM1_PC34_TEST_CHEST_SWAP_SLOT_COUNT,
@@ -106,32 +106,32 @@ int m11_inventory_pc34_probe_chest_incompatible_swap(
     }
 
     memset(closed, 0, sizeof(closed));
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < 9; ++i) {
         linked[i] = make_item(C544_FIRST_ITEM + i, DM1_PC34_ALLOWED_CONTAINER);
     }
     out->c544HiddenTailInput = linked[8].itemType;
-    if (!m11_inventory_open_chest(&state, 0, CHEST_THING, linked, 9)) {
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(&state, 0, CHEST_THING, linked, 9)) {
         return 0;
     }
     item = make_item(C544_REPLACEMENT_ITEM, DM1_PC34_ALLOWED_CONTAINER);
-    out->c544ReplacementCanEquip = m11_inventory_can_equip(
+    out->c544ReplacementCanEquip = DM1_V1_Inventory_CanEquipPc34Compat(
         &item, DM1_PC34_SLOT_CHEST_8);
-    if (!m11_inventory_set_mouse_item(&state, 0, C544_REPLACEMENT_ITEM,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, C544_REPLACEMENT_ITEM,
                                       1, 0, DM1_PC34_ALLOWED_CONTAINER)) {
         return 0;
     }
-    out->c544ClickResult = m11_inventory_click_pc34_source_slot(
+    out->c544ClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, DM1_PC34_SLOT_CHEST_8);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->c544LeaderHandAfter = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(&state, 0, C544_INDEX, &item)) {
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, C544_INDEX, &item)) {
         return 0;
     }
     out->c544SlotAfter = item.itemType;
-    out->c544ClosedCount = m11_inventory_close_chest(
+    out->c544ClosedCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_TEST_CHEST_SWAP_SLOT_COUNT);
     if (out->c544ClosedCount < 0 ||
         !copy_item_types(closed, DM1_PC34_TEST_CHEST_SWAP_SLOT_COUNT,

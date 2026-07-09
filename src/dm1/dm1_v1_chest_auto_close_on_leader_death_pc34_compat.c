@@ -34,7 +34,7 @@ typedef struct {
 } ACLDThingPc34;
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     int leaderHealth;
     int leaderCell;
     int pressingEye;
@@ -148,9 +148,9 @@ static ACLDThingPc34 make_leader_action_hand(void)
     return thing;
 }
 
-static M11_Item to_item(ACLDThingPc34 thing)
+static DM1_V1_ItemPc34 to_item(ACLDThingPc34 thing)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = thing.itemType;
@@ -174,13 +174,13 @@ static void hash_int(uint32_t* hash, int value)
 
 static void runtime_init(ACLDRuntimePc34* rt)
 {
-    M11_Item linked[DM1_V1_CHEST_ACLD_SLOT_COUNT_PC34];
+    DM1_V1_ItemPc34 linked[DM1_V1_CHEST_ACLD_SLOT_COUNT_PC34];
     ACLDThingPc34 actionHand;
     ACLDThingPc34 leaderHand;
     int i;
 
     memset(rt, 0, sizeof(*rt));
-    m11_inventory_init(&rt->inventory,
+    DM1_V1_Inventory_InitPc34Compat(&rt->inventory,
                        DM1_V1_CHEST_ACLD_CHAMPION_COUNT_PC34);
     rt->leaderHealth = DM1_V1_CHEST_ACLD_LEADER_HEALTH_BEFORE_PC34;
     rt->leaderCell = 0;
@@ -192,17 +192,17 @@ static void runtime_init(ACLDRuntimePc34* rt)
         linked[i] = to_item(make_linked_thing(i));
     }
 
-    (void)m11_inventory_open_chest(&rt->inventory,
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(&rt->inventory,
                                    DM1_V1_CHEST_ACLD_LEADER_PC34,
                                    DM1_V1_CHEST_ACLD_CHEST_THING_PC34,
                                    linked,
                                    DM1_V1_CHEST_ACLD_SLOT_COUNT_PC34);
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &rt->inventory,
         DM1_V1_CHEST_ACLD_PANEL_CHEST_PC34);
 
     actionHand = make_leader_action_hand();
-    (void)m11_inventory_set_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &rt->inventory,
         DM1_V1_CHEST_ACLD_LEADER_PC34,
         DM1_V1_CHEST_ACLD_C01_ACTION_HAND_PC34,
@@ -211,7 +211,7 @@ static void runtime_init(ACLDRuntimePc34* rt)
         actionHand.charges,
         actionHand.allowedSlots);
     leaderHand = make_leader_hand();
-    (void)m11_inventory_set_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &rt->inventory,
         DM1_V1_CHEST_ACLD_LEADER_PC34,
         DM1_V1_CHEST_ACLD_C00_READY_HAND_PC34,
@@ -269,15 +269,15 @@ static int run_f0319_kill(ACLDRuntimePc34* rt)
      */
     rt->f0355Observed = 1;
     rt->f0355LeaderHandEmptyGuardSatisfied = 1;
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &rt->inventory,
         DM1_V1_CHEST_ACLD_PANEL_INVENTORY_PC34);
     rt->f0334Observed = 1;
     rt->f0334RanAfterF0319 = 1;
     {
-        M11_Item closed[DM1_V1_CHEST_ACLD_SLOT_COUNT_PC34];
+        DM1_V1_ItemPc34 closed[DM1_V1_CHEST_ACLD_SLOT_COUNT_PC34];
 
-        (void)m11_inventory_close_chest(&rt->inventory,
+        (void)DM1_V1_Inventory_CloseChestPc34Compat(&rt->inventory,
                                         DM1_V1_CHEST_ACLD_LEADER_PC34,
                                         closed,
                                         DM1_V1_CHEST_ACLD_SLOT_COUNT_PC34);
@@ -290,15 +290,15 @@ static int run_f0319_kill(ACLDRuntimePc34* rt)
      * clear them.
      */
     {
-        M11_Item midHand;
-        M11_Item midAction;
+        DM1_V1_ItemPc34 midHand;
+        DM1_V1_ItemPc34 midAction;
 
-        (void)m11_inventory_get_item_in_pc34_source_slot(
+        (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt->inventory,
             DM1_V1_CHEST_ACLD_LEADER_PC34,
             DM1_V1_CHEST_ACLD_C00_READY_HAND_PC34,
             &midHand);
-        (void)m11_inventory_get_item_in_pc34_source_slot(
+        (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt->inventory,
             DM1_V1_CHEST_ACLD_LEADER_PC34,
             DM1_V1_CHEST_ACLD_C01_ACTION_HAND_PC34,
@@ -323,16 +323,16 @@ static int run_f0319_kill(ACLDRuntimePc34* rt)
         for (slot = DM1_V1_CHEST_ACLD_C00_READY_HAND_PC34;
              slot < DM1_V1_CHEST_ACLD_C29_LAST_BODY_SLOT_PC34 + 1;
              ++slot) {
-            M11_Item item;
+            DM1_V1_ItemPc34 item;
 
-            (void)m11_inventory_get_item_in_pc34_source_slot(
+            (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
                 &rt->inventory,
                 DM1_V1_CHEST_ACLD_LEADER_PC34,
                 slot,
                 &item);
             if (item.itemType != 0) {
                 ++rt->dropCount;
-                (void)m11_inventory_set_item_in_pc34_source_slot(
+                (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
                     &rt->inventory,
                     DM1_V1_CHEST_ACLD_LEADER_PC34,
                     slot,
@@ -353,8 +353,8 @@ static int visible_chest_count(const ACLDRuntimePc34* rt)
     int i;
     int count = 0;
     for (i = 0; i < DM1_V1_CHEST_ACLD_SLOT_COUNT_PC34; ++i) {
-        M11_Item item;
-        if (m11_inventory_get_item_in_chest_slot(
+        DM1_V1_ItemPc34 item;
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &rt->inventory,
                 DM1_V1_CHEST_ACLD_LEADER_PC34,
                 i,
@@ -400,8 +400,8 @@ int dm1_v1_chest_auto_close_on_leader_death_run_pc34(
 {
     ACLDRuntimePc34 rt;
     uint32_t hash = DM1_V1_CHEST_ACLD_DETERMINISTIC_SEED_PC34;
-    M11_Item leaderHandBeforeF0319;
-    M11_Item leaderActionBeforeF0319;
+    DM1_V1_ItemPc34 leaderHandBeforeF0319;
+    DM1_V1_ItemPc34 leaderActionBeforeF0319;
 
     if (!out) {
         return 0;
@@ -421,18 +421,18 @@ int dm1_v1_chest_auto_close_on_leader_death_run_pc34(
 
     out->stepTrace[out->stepCount++] =
         DM1_V1_CHEST_ACLD_STEP_OPEN_CHEST_PC34;
-    out->g0426Before = m11_inventory_get_open_chest_thing(
+    out->g0426Before = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &rt.inventory,
         DM1_V1_CHEST_ACLD_LEADER_PC34);
     out->g0425VisibleCountBefore = visible_chest_count(&rt);
-    out->g0424Before = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->g0424Before = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->g0423Before = 0; /* leader is the inventory champion ordinal */
-    (void)m11_inventory_get_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
         &rt.inventory,
         DM1_V1_CHEST_ACLD_LEADER_PC34,
         DM1_V1_CHEST_ACLD_C00_READY_HAND_PC34,
         &leaderHandBeforeF0319);
-    (void)m11_inventory_get_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
         &rt.inventory,
         DM1_V1_CHEST_ACLD_LEADER_PC34,
         DM1_V1_CHEST_ACLD_C01_ACTION_HAND_PC34,
@@ -451,7 +451,7 @@ int dm1_v1_chest_auto_close_on_leader_death_run_pc34(
     out->leaderHealthAfter = rt.leaderHealth;
     out->leaderCurrentHealthCleared = rt.leaderHealth == 0;
     (void)run_f0319_kill(&rt);
-    out->g0426AfterF0319 = m11_inventory_get_open_chest_thing(
+    out->g0426AfterF0319 = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &rt.inventory,
         DM1_V1_CHEST_ACLD_LEADER_PC34);
     out->g0423AfterF0319 = 0;
@@ -469,11 +469,11 @@ int dm1_v1_chest_auto_close_on_leader_death_run_pc34(
 
     out->stepTrace[out->stepCount++] =
         DM1_V1_CHEST_ACLD_STEP_F0355_CLOSE_PC34;
-    out->g0424AfterF0355 = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->g0424AfterF0355 = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
 
     out->stepTrace[out->stepCount++] =
         DM1_V1_CHEST_ACLD_STEP_F0334_REWIRE_PC34;
-    out->g0426AfterF0334 = m11_inventory_get_open_chest_thing(
+    out->g0426AfterF0334 = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &rt.inventory,
         DM1_V1_CHEST_ACLD_LEADER_PC34);
     out->g0426ClearedByF0334 =
@@ -493,15 +493,15 @@ int dm1_v1_chest_auto_close_on_leader_death_run_pc34(
     out->deadLeaderActionObjectDropped =
         rt.deadLeaderActionItem != 0 && rt.dropCount >= 2;
     {
-        M11_Item afterHand;
-        M11_Item afterAction;
+        DM1_V1_ItemPc34 afterHand;
+        DM1_V1_ItemPc34 afterAction;
 
-        (void)m11_inventory_get_item_in_pc34_source_slot(
+        (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt.inventory,
             DM1_V1_CHEST_ACLD_LEADER_PC34,
             DM1_V1_CHEST_ACLD_C00_READY_HAND_PC34,
             &afterHand);
-        (void)m11_inventory_get_item_in_pc34_source_slot(
+        (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt.inventory,
             DM1_V1_CHEST_ACLD_LEADER_PC34,
             DM1_V1_CHEST_ACLD_C01_ACTION_HAND_PC34,
@@ -515,12 +515,12 @@ int dm1_v1_chest_auto_close_on_leader_death_run_pc34(
 
     out->stepTrace[out->stepCount++] =
         DM1_V1_CHEST_ACLD_STEP_ASSERT_STABLE_PC34;
-    out->g0426Final = m11_inventory_get_open_chest_thing(
+    out->g0426Final = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &rt.inventory,
         DM1_V1_CHEST_ACLD_LEADER_PC34);
     out->g0423Final = 0;
     out->g0423ClearedToNone = out->g0423Final == 0;
-    out->g0424Final = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->g0424Final = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->g0424EndedAtInventory =
         out->g0424Final == DM1_V1_CHEST_ACLD_PANEL_INVENTORY_PC34;
     out->f0319Observed = rt.f0319Observed;

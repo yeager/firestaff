@@ -96,7 +96,7 @@ static uint32_t hash_step(uint32_t hash, unsigned int value)
     return hash;
 }
 
-static uint32_t hash_inventory(const M11_InventoryState* inv)
+static uint32_t hash_inventory(const DM1_V1_InventoryStatePc34* inv)
 {
     uint32_t hash = 2166136261u;
     int i, j;
@@ -104,13 +104,13 @@ static uint32_t hash_inventory(const M11_InventoryState* inv)
     hash = hash_step(hash, (unsigned int)inv->championCount);
     hash = hash_step(hash, (unsigned int)inv->panelContent);
     for (i = 0; i < DM1_V1_MC_RASL_PARTY_COUNT_PC34; ++i) {
-        M11_Item item;
-        (void)m11_inventory_get_item(inv, i, 0, &item);
+        DM1_V1_ItemPc34 item;
+        (void)DM1_V1_Inventory_GetItemPc34Compat(inv, i, 0, &item);
         hash = hash_step(hash, (unsigned int)item.itemType);
         hash = hash_step(hash, (unsigned int)item.weight);
         hash = hash_step(hash, (unsigned int)inv->champions[i].openChestThing);
         for (j = 0; j < DM1_V1_MC_RASL_CHEST_SLOT_COUNT_PC34; ++j) {
-            (void)m11_inventory_get_item_in_chest_slot(inv, i, j, &item);
+            (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(inv, i, j, &item);
             hash = hash_step(hash, (unsigned int)item.itemType);
             hash = hash_step(hash, (unsigned int)item.weight);
         }
@@ -179,7 +179,7 @@ typedef struct {
  * EVENTs + TIMELINEs, none of which include G0299, G0424, G0425 or
  * G0426. */
 static int snapshot_save_pc34(SaveLoadModelPc34* model,
-                              const M11_InventoryState* inv,
+                              const DM1_V1_InventoryStatePc34* inv,
                               int g0299)
 {
     if (!model || !inv) return -1;
@@ -293,10 +293,10 @@ static void f0355_open_for_leader_pc34(C040PanelPc34* panel)
 int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
     DM1_V1_MirrorCandidateReopenAfterSaveLoadProbePc34* out)
 {
-    M11_InventoryState inv;
-    M11_Item leaderHand;
-    M11_Item chestItem;
-    M11_Item chestItems[DM1_V1_MC_RASL_CHEST_SLOT_COUNT_PC34];
+    DM1_V1_InventoryStatePc34 inv;
+    DM1_V1_ItemPc34 leaderHand;
+    DM1_V1_ItemPc34 chestItem;
+    DM1_V1_ItemPc34 chestItems[DM1_V1_MC_RASL_CHEST_SLOT_COUNT_PC34];
     SaveLoadModelPc34 model;
     C040PanelPc34 panel;
     int i;
@@ -323,7 +323,7 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
 
     /* ── Step 2: build the live C040 candidate state ─────────── */
     c040_panel_init(&panel);
-    m11_inventory_init(&inv, DM1_V1_MC_RASL_PARTY_COUNT_PC34);
+    DM1_V1_Inventory_InitPc34Compat(&inv, DM1_V1_MC_RASL_PARTY_COUNT_PC34);
 
     /* Set up a leader hand (C00 ready-hand torch-like item) and a
      * non-leader ready-hand item so we can verify the leader hand
@@ -333,7 +333,7 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
     leaderHand.charges = 48;
     leaderHand.identified = 1;
     leaderHand.allowedSlots = DM1_PC34_ALLOWED_HANDS;
-    (void)m11_inventory_set_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &inv, DM1_V1_MC_RASL_LEADER_PC34, 0,
         leaderHand.itemType, leaderHand.weight, leaderHand.charges,
         leaderHand.allowedSlots);
@@ -353,10 +353,10 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
     chestItem.charges = 1;
     chestItem.identified = 1;
     chestItem.allowedSlots = DM1_PC34_ALLOWED_CONTAINER;
-    (void)m11_inventory_open_chest(
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(
         &inv, DM1_V1_MC_RASL_LEADER_PC34, DM1_V1_MC_RASL_C040_THING_PC34,
         chestItems, DM1_V1_MC_RASL_CHEST_SLOT_COUNT_PC34);
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &inv, DM1_V1_MC_RASL_M568_PANEL_RESURRECT_REINCARNATE_PC34);
 
     /* The C040 panel state is established BEFORE the F0355
@@ -387,8 +387,8 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
     {
         int nonEmpty = 0;
         for (i = 0; i < DM1_V1_MC_RASL_CHEST_SLOT_COUNT_PC34; ++i) {
-            M11_Item item;
-            (void)m11_inventory_get_item_in_chest_slot(
+            DM1_V1_ItemPc34 item;
+            (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &inv, DM1_V1_MC_RASL_LEADER_PC34, i, &item);
             if (item.itemType != 0) {
                 ++nonEmpty;
@@ -438,7 +438,7 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
     /* The runtime UI state resets on load: the panel layer is
      * separate from the world state, so G0299, G0424, G0425, G0426
      * all reset to their initial values. The M11 layer mirrors
-     * this: the loaded M11_InventoryState is reconstructed with
+     * this: the loaded DM1_V1_InventoryStatePc34 is reconstructed with
      * the leader hand + party pose from the world blob, but the
      * panel layer is fresh. */
     panel.g0299 = 0;
@@ -452,13 +452,13 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
         (panel.panelContent == DM1_V1_MC_RASL_C00_PANEL_INVENTORY_PC34) ? 1 : 0;
     out->g0426ResetToNoThingByLoad =
         (out->g0426AfterLoad == DM1_V1_MC_RASL_NO_THING_PC34) ? 1 : 0;
-    /* The M11_InventoryState chest chain is also reset: the chest
+    /* The DM1_V1_InventoryStatePc34 chest chain is also reset: the chest
      * was a runtime UI state, not part of the world blob. The
      * post-load chest slots and open chest are C0xFFFF_THING_NONE. */
     {
         int allNone = 1;
         for (i = 0; i < DM1_V1_MC_RASL_CHEST_SLOT_COUNT_PC34; ++i) {
-            (void)m11_inventory_set_item_in_chest_slot(
+            (void)DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
                 &inv, DM1_V1_MC_RASL_LEADER_PC34, i, 0, 0, 0, 0);
             if (chestItems[i].itemType != 0) {
                 allNone = 0;
@@ -470,7 +470,7 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
             chestItems[i].weight = 0;
             chestItems[i].charges = 0;
         }
-        (void)m11_inventory_close_chest(
+        (void)DM1_V1_Inventory_CloseChestPc34Compat(
             &inv, DM1_V1_MC_RASL_LEADER_PC34, chestItems,
             DM1_V1_MC_RASL_CHEST_SLOT_COUNT_PC34);
         (void)chestItem;
@@ -481,9 +481,9 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
     /* The M11 panel content (G0424_i_PanelContent equivalent) is
      * also reset on load: the panel layer is part of the runtime
      * UI state, not the world blob. */
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &inv, DM1_V1_MC_RASL_C00_PANEL_INVENTORY_PC34);
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &inv, DM1_V1_MC_RASL_C00_PANEL_INVENTORY_PC34);
     out->panelContentAfterLoad = inv.panelContent;
     out->partyChampionCountAfterLoad = inv.championCount;
@@ -493,9 +493,9 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
      * field at L1348_s_GlobalData.LeaderHandObject =
      * G4055_s_LeaderHandObject.Thing (line 1536). */
     {
-        M11_Item after;
+        DM1_V1_ItemPc34 after;
         memset(&after, 0, sizeof(after));
-        (void)m11_inventory_get_item_in_pc34_source_slot(
+        (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &inv, DM1_V1_MC_RASL_LEADER_PC34, 0, &after);
         out->leaderHandItemAfterLoad = after.itemType;
     }
@@ -555,9 +555,9 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
      * up at M568 with the C040 graphic, and that the leader hand
      * is still preserved. */
     {
-        M11_Item afterReopen;
+        DM1_V1_ItemPc34 afterReopen;
         memset(&afterReopen, 0, sizeof(afterReopen));
-        (void)m11_inventory_get_item_in_pc34_source_slot(
+        (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &inv, DM1_V1_MC_RASL_LEADER_PC34, 0, &afterReopen);
         out->reopenLeaderHandPreserved =
             (afterReopen.itemType == leaderHand.itemType) ? 1 : 0;

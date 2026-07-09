@@ -3,10 +3,10 @@
 #include <string.h>
 
 typedef struct {
-    M11_InventoryState inventory;
-    M11_Item linked[DM1_PC34_CPRPNL_SLOT_COUNT];
-    M11_Item closed[DM1_PC34_CPRPNL_SLOT_COUNT];
-    M11_Item queued;
+    DM1_V1_InventoryStatePc34 inventory;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CPRPNL_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CPRPNL_SLOT_COUNT];
+    DM1_V1_ItemPc34 queued;
     int leader;
     int candidateOrdinal;
     int candidateSlot;
@@ -58,9 +58,9 @@ static const DM1_V1_ChestPickupDuringResurrectPendingNonLeaderSpecPc34 s_spec = 
     "Disjoint from chest_c545_non_leader_hand_to_mid_cast_leader, chest_scroll_wheel_resurrect_confirmation, mirror_candidate_resurrect, mirror_candidate_chest_open_during_pending, and chest_close_while_party_rotate_pickup_pending: this gate is C537, non-leader open G0426, C040 pending, close-under-panel, then post-resurrect leader-hand resolution with no scroll wheel, C545 mouth route, party rotate, or mirror-candidate chest-open mutation."
 };
 
-static M11_Item make_item(int index)
+static DM1_V1_ItemPc34 make_item(int index)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = DM1_PC34_CPRPNL_FIRST_ITEM + index;
@@ -72,7 +72,7 @@ static M11_Item make_item(int index)
 }
 
 static DM1_V1_ChestPickupDuringResurrectPendingNonLeaderItemPc34
-snapshot_item(M11_Item item)
+snapshot_item(DM1_V1_ItemPc34 item)
 {
     DM1_V1_ChestPickupDuringResurrectPendingNonLeaderItemPc34 out;
 
@@ -108,7 +108,7 @@ static void runtime_init(RuntimePc34* rt)
     int i;
 
     memset(rt, 0, sizeof(*rt));
-    m11_inventory_init(&rt->inventory, DM1_PC34_CPRPNL_CHAMPION_COUNT);
+    DM1_V1_Inventory_InitPc34Compat(&rt->inventory, DM1_PC34_CPRPNL_CHAMPION_COUNT);
     rt->leader = DM1_PC34_CPRPNL_LEADER_BEFORE;
     rt->partyChampionCount = DM1_PC34_CPRPNL_CHAMPION_COUNT;
     for (i = 0; i < 6; ++i) {
@@ -118,7 +118,7 @@ static void runtime_init(RuntimePc34* rt)
 
 static int open_non_leader_chest(RuntimePc34* rt)
 {
-    return m11_inventory_open_chest(
+    return DM1_V1_Inventory_OpenChestPc34Compat(
         &rt->inventory,
         DM1_PC34_CPRPNL_NON_LEADER_OWNER,
         DM1_PC34_CPRPNL_CHEST_THING,
@@ -131,15 +131,15 @@ static void publish_c040_candidate(RuntimePc34* rt)
     rt->candidateOrdinal = DM1_PC34_CPRPNL_NEW_LEADER_AFTER_RESURRECT + 1;
     rt->candidateSlot = DM1_PC34_CPRPNL_NEW_LEADER_AFTER_RESURRECT;
     rt->c040Chrome = DM1_PC34_CPRPNL_C040_GRAPHIC;
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &rt->inventory, DM1_PC34_CPRPNL_M568_RESURRECT_PANEL);
 }
 
 static int queue_c537(RuntimePc34* rt)
 {
-    M11_Item picked;
+    DM1_V1_ItemPc34 picked;
 
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &rt->inventory,
             DM1_PC34_CPRPNL_NON_LEADER_OWNER,
             0,
@@ -154,7 +154,7 @@ static int queue_c537(RuntimePc34* rt)
     /* ReDMCSB: CHAMPION.C F0300:511-515 clears C30+ through G0425.  The
      * queued click reserves C537 so F0334 cannot relink a duplicate while
      * C040 still owns the visible panel. */
-    return m11_inventory_set_item_in_chest_slot(
+    return DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &rt->inventory,
         DM1_PC34_CPRPNL_NON_LEADER_OWNER,
         0,
@@ -169,13 +169,13 @@ static int close_non_leader_chest(RuntimePc34* rt)
     int count;
 
     memset(rt->closed, 0, sizeof(rt->closed));
-    count = m11_inventory_close_chest(
+    count = DM1_V1_Inventory_CloseChestPc34Compat(
         &rt->inventory,
         DM1_PC34_CPRPNL_NON_LEADER_OWNER,
         rt->closed,
         DM1_PC34_CPRPNL_SLOT_COUNT);
     /* ReDMCSB: C040 panel state is independent of G0426 close. */
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &rt->inventory, DM1_PC34_CPRPNL_M568_RESURRECT_PANEL);
     return count;
 }
@@ -190,7 +190,7 @@ static int commit_resurrect(RuntimePc34* rt)
     rt->leader = DM1_PC34_CPRPNL_NEW_LEADER_AFTER_RESURRECT;
     rt->partyDirection = (rt->partyDirection + 1) & 3;
     rt->resurrectCommitted = 1;
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &rt->inventory, DM1_PC34_PANEL_INVENTORY);
     return 1;
 }
@@ -200,7 +200,7 @@ static int resolve_queued_pickup(RuntimePc34* rt)
     if (!rt->queuedValid || !rt->resurrectCommitted) {
         return 0;
     }
-    return m11_inventory_set_mouse_item(
+    return DM1_V1_Inventory_SetMouseItemPc34Compat(
         &rt->inventory,
         rt->leader,
         rt->queued.itemType,
@@ -209,7 +209,7 @@ static int resolve_queued_pickup(RuntimePc34* rt)
         rt->queued.allowedSlots);
 }
 
-static int count_item_type(const M11_Item* items, int count, int itemType)
+static int count_item_type(const DM1_V1_ItemPc34* items, int count, int itemType)
 {
     int i;
     int found = 0;
@@ -286,7 +286,7 @@ int dm1_v1_chest_pickup_during_resurrect_pending_non_leader_run_pc34(
     DM1_V1_ChestPickupDuringResurrectPendingNonLeaderProbePc34* out)
 {
     RuntimePc34 rt;
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
     int i;
 
     if (!out) {
@@ -307,15 +307,15 @@ int dm1_v1_chest_pickup_during_resurrect_pending_non_leader_run_pc34(
     out->openResult = open_non_leader_chest(&rt);
     out->stepTrace[out->stepCount++] = kStepOpenNonLeaderChest;
     out->openChestThingBeforePending =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &rt.inventory, DM1_PC34_CPRPNL_NON_LEADER_OWNER);
-    out->panelAfterOpen = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->panelAfterOpen = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->f0333OpenCount = out->openResult ? 1 : 0;
 
     publish_c040_candidate(&rt);
     out->stepTrace[out->stepCount++] = kStepPublishC040;
     out->c040PanelAfterPending =
-        m11_inventory_get_panel_content_pc34(&rt.inventory);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->c040ChromeBeforeClose = rt.c040Chrome;
     out->candidateOrdinalBeforeClose = rt.candidateOrdinal;
     out->candidateSlotBeforeClose = rt.candidateSlot;
@@ -343,7 +343,7 @@ int dm1_v1_chest_pickup_during_resurrect_pending_non_leader_run_pc34(
     out->stepTrace[out->stepCount++] = kStepCloseNonLeaderChest;
     out->f0334CloseCount = out->closeCount > 0 ? 1 : 0;
     out->openChestThingAfterClose =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &rt.inventory, DM1_PC34_CPRPNL_NON_LEADER_OWNER);
     out->closeClearedG0426 = out->openChestThingAfterClose == 0;
     out->candidateOrdinalAfterClose = rt.candidateOrdinal;
@@ -354,7 +354,7 @@ int dm1_v1_chest_pickup_during_resurrect_pending_non_leader_run_pc34(
         out->candidateOrdinalAfterClose == out->candidateOrdinalBeforeClose;
     out->c040ChromePreservedAcrossClose =
         out->c040ChromeAfterClose == out->c040ChromeBeforeClose &&
-        m11_inventory_get_panel_content_pc34(&rt.inventory) ==
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory) ==
             DM1_PC34_CPRPNL_M568_RESURRECT_PANEL;
     out->queuePreservedAcrossClose =
         rt.queuedValid && rt.queued.itemType == out->queuedItem.type;
@@ -372,14 +372,14 @@ int dm1_v1_chest_pickup_during_resurrect_pending_non_leader_run_pc34(
     out->partyDirectionAfterCommit = rt.partyDirection;
     out->candidateOrdinalAfterCommit = rt.candidateOrdinal;
     out->f0282ClearedCandidate = rt.candidateOrdinal == 0;
-    out->panelAfterCommit = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->panelAfterCommit = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->f0282CommitCount = out->resurrectCommitResult ? 1 : 0;
 
     out->pickupResolveResult = resolve_queued_pickup(&rt);
     out->stepTrace[out->stepCount++] = kStepResolvePickup;
     out->pickupResolvedAfterCommit =
         out->pickupResolveResult && rt.resurrectCommitted;
-    if (m11_inventory_get_mouse_item(&rt.inventory, rt.leader, &hand)) {
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(&rt.inventory, rt.leader, &hand)) {
         out->newLeaderHandType = hand.itemType;
         out->newLeaderHandWeight = hand.weight;
         out->newLeaderHandCharges = hand.charges;

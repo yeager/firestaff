@@ -6,9 +6,9 @@
  * Synthetic state machine for the DM1 V1 chest nested-tail
  * reopen-after-drop gate.
  *
- * The model pairs the M11_InventoryState's flattened CONTAINER
- * representation (each M11_Item is just an itemType + weight + flags;
- * the DEFS.H CONTAINER::Slot head pointer is not modelled by M11_Item)
+ * The model pairs the DM1_V1_InventoryStatePc34's flattened CONTAINER
+ * representation (each DM1_V1_ItemPc34 is just an itemType + weight + flags;
+ * the DEFS.H CONTAINER::Slot head pointer is not modelled by DM1_V1_ItemPc34)
  * with a parallel `innerContents[]` side-channel that holds the inner
  * CONTAINER's own Slot linked list.  The F0333/F0334 dispatch helpers
  * in the runtime only ever touch the OUTER container's Slot chain
@@ -101,9 +101,9 @@ dm1_v1_chest_nested_tail_reopen_after_drop_gate_spec_pc34(void)
 /* /F0297/F0298/F0302/F0140/F0159/F0163 contracts above.                 */
 /* --------------------------------------------------------------------- */
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -129,7 +129,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
  *   [7] key       (visible C544)
  *   [8] hidden tail (NOT visible - L1019_i_ThingCount > 8 break)
  */
-static int fill_outer_chest_input(M11_Item out[DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_LINKED_COUNT])
+static int fill_outer_chest_input(DM1_V1_ItemPc34 out[DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_LINKED_COUNT])
 {
     if (!out) {
         return 0;
@@ -168,7 +168,7 @@ static int fill_outer_chest_input(M11_Item out[DM1_PC34_CHEST_NESTED_TAIL_REOPEN
 }
 
 /* Inner Slot chain (DEFS.H CONTAINER::Slot head pointer modelled
- * outside M11_Item).  The chain is in fixed A/B/C order; F0333/F0334
+ * outside DM1_V1_ItemPc34).  The chain is in fixed A/B/C order; F0333/F0334
  * never touch this side-channel. */
 static void fill_inner_chain(int* types, int* weights, int* count,
                              int* storedWeight)
@@ -203,7 +203,7 @@ static uint32_t fnv1a_step(uint32_t hash, int value)
     return hash;
 }
 
-static int copy_open_types(const M11_InventoryState* state,
+static int copy_open_types(const DM1_V1_InventoryStatePc34* state,
                            int* typesOut)
 {
     int i;
@@ -212,9 +212,9 @@ static int copy_open_types(const M11_InventoryState* state,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_NESTED_TAIL_REOPEN_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, 0, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item)) {
             return 0;
         }
         typesOut[i] = item.itemType;
@@ -222,7 +222,7 @@ static int copy_open_types(const M11_InventoryState* state,
     return 1;
 }
 
-static void copy_closed_types(const M11_Item* items,
+static void copy_closed_types(const DM1_V1_ItemPc34* items,
                               int count,
                               int* typesOut)
 {
@@ -291,13 +291,13 @@ static int reopened_matches_closed(const int* closed,
 int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
     DM1_V1_ChestNestedTailReopenAfterDropGateProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item outerChestInput
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 outerChestInput
         [DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_LINKED_COUNT];
-    M11_Item closedOutput[DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_LINKED_COUNT];
-    M11_Item reopenInput
+    DM1_V1_ItemPc34 closedOutput[DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_LINKED_COUNT];
+    DM1_V1_ItemPc34 reopenInput
         [DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_LINKED_COUNT];
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     int innerChainTypes[DM1_PC34_CHEST_NESTED_TAIL_REOPEN_INNER_SLOT_COUNT];
     int innerChainWeights[DM1_PC34_CHEST_NESTED_TAIL_REOPEN_INNER_SLOT_COUNT];
     int innerChainCount = 0;
@@ -355,11 +355,11 @@ int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
      * the item the leader will route through the chest_8 swap path
      * on reopen).  F0297 has already placed it in the mouseItem slot;
      * F0140 has bumped Load by the item weight. */
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     item = make_item(DM1_PC34_CHEST_NESTED_TAIL_REOPEN_LEADER_HAND_DROP_THING,
                      DM1_PC34_CHEST_NESTED_TAIL_REOPEN_LEADER_HAND_DROP_WEIGHT,
                      DM1_PC34_ALLOWED_CONTAINER);
-    if (!m11_inventory_set_mouse_item(&state, 0, item.itemType,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, item.itemType,
                                       item.weight, item.charges,
                                       item.allowedSlots)) {
         return 0;
@@ -377,7 +377,7 @@ int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
     if (!fill_outer_chest_input(outerChestInput)) {
         return 0;
     }
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_CHEST_THING,
         outerChestInput,
         DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_LINKED_COUNT);
@@ -386,7 +386,7 @@ int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
     }
     out->f0333OpenCount += 1;
     out->openChestThingAfterOpen =
-        m11_inventory_get_open_chest_thing(&state, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->openChestThingMatches =
         out->openChestThingAfterOpen ==
         DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_CHEST_THING ? 1 : 0;
@@ -414,7 +414,7 @@ int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
     out->innerChainOrderMatchAfterOpen = inner_chain_order_match(innerChainTypes);
 
     /* Snapshot the leader hand AFTER open - should be byte-stable. */
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandItemAfterOpen = item.itemType;
@@ -444,7 +444,7 @@ int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
      * hidden-tail item (which was never in G0425) is NOT relinked.
      * The leader hand stays byte-stable - F0334 does not call
      * F0298/F0297/F0300/F0301. */
-    out->pressEyeCloseResult = m11_inventory_close_chest(
+    out->pressEyeCloseResult = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closedOutput,
         DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_LINKED_COUNT);
     if (out->pressEyeCloseResult < 0) {
@@ -456,7 +456,7 @@ int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
     copy_closed_types(closedOutput, closeOutputCount,
                       out->closedVisibleTypes);
     out->closedVisibleCount = count_visible(out->closedVisibleTypes);
-    out->openChestThingAfterClose = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openChestThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
 
     /* The hidden tail is preserved on the outer Slot chain across
      * F0334 close because F0334 only relinks the eight G0425 entries
@@ -479,7 +479,7 @@ int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
 
     /* Snapshot the leader hand AFTER close - F0334 must NOT touch
      * it on the press-eye close path. */
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandItemAfterClose = item.itemType;
@@ -513,14 +513,14 @@ int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
     if (reopenInputCount < DM1_PC34_CHEST_NESTED_TAIL_REOPEN_OUTER_LINKED_COUNT) {
         reopenInput[reopenInputCount++] = outerChestInput[8];
     }
-    out->reopenResult = m11_inventory_open_chest(
+    out->reopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_NESTED_TAIL_REOPEN_REOPENED_CHEST_THING,
         reopenInput, reopenInputCount);
     if (!out->reopenResult) {
         return 0;
     }
     out->f0333OpenCount += 1;
-    out->openChestThingAfterReopen = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openChestThingAfterReopen = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->reopenedChestThingMatches =
         out->openChestThingAfterReopen ==
         DM1_PC34_CHEST_NESTED_TAIL_REOPEN_REOPENED_CHEST_THING ? 1 : 0;
@@ -558,7 +558,7 @@ int dm1_v1_chest_nested_tail_reopen_after_drop_gate_run_pc34(
     out->hiddenTailPreservedAfterReopen = 1;
 
     /* Snapshot the leader hand AFTER reopen - byte-stable. */
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandItemAfterReopen = item.itemType;

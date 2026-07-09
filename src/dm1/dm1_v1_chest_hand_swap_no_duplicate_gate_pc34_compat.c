@@ -105,9 +105,9 @@ dm1_v1_chest_hand_swap_no_duplicate_gate_source_evidence_pc34(void)
     return s_source_evidence;
 }
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -117,14 +117,14 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static void copy_open_slots(const M11_InventoryState* state, int* typesOut)
+static void copy_open_slots(const DM1_V1_InventoryStatePc34* state, int* typesOut)
 {
     int i;
 
     for (i = 0; i < DM1_PC34_CHEST_HAND_SWAP_NO_DUP_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(state, 0, i, &item)) {
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item)) {
             typesOut[i] = item.itemType;
         } else {
             typesOut[i] = 0;
@@ -221,14 +221,14 @@ static int has_no_duplicate_nonzero(const int* sorted, int count)
     return 1;
 }
 
-static void build_union(const M11_InventoryState* state, int* unionOut)
+static void build_union(const DM1_V1_InventoryStatePc34* state, int* unionOut)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
 
     if (!state || !unionOut) {
         return;
     }
-    if (m11_inventory_get_mouse_item(state, 0, &hand)) {
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(state, 0, &hand)) {
         unionOut[0] = hand.itemType;
     } else {
         unionOut[0] = 0;
@@ -239,17 +239,17 @@ static void build_union(const M11_InventoryState* state, int* unionOut)
 int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
     DM1_V1_ChestHandSwapNoDuplicateGateProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_HAND_SWAP_NO_DUP_SLOT_COUNT];
-    M11_Item handItem;
-    M11_Item slotItem;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_HAND_SWAP_NO_DUP_SLOT_COUNT];
+    DM1_V1_ItemPc34 handItem;
+    DM1_V1_ItemPc34 slotItem;
     int unionSize;
     int slotCount;
     int emptyPickupIndex;
     int fullDropIndex;
     int fullSwapIndex;
     int sameTypeIndex;
-    M11_Item closed[DM1_PC34_CHEST_HAND_SWAP_NO_DUP_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_HAND_SWAP_NO_DUP_SLOT_COUNT];
 
     if (!out) {
         return 0;
@@ -285,12 +285,12 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
     linked[4] = make_item(s_spec.c541Item, 8, s_spec.actionHandMaskContainer);
     /* linked[5..7] stay empty (C0xFFFF_THING_NONE on the F0333 fill loop) */
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
 
     /* Open via F0333. */
-    out->chestOpenResult = m11_inventory_open_chest(
+    out->chestOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, s_spec.chestThing, linked, slotCount);
-    out->chestOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->chestOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
 
     /*
      * Scenario A: empty hand + occupied C540 slot -> pickup.
@@ -314,10 +314,10 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
         out->preClickNonZeroCountEmptyPickup = preCount;
         out->slotIndexEmptyPickup = emptyPickupIndex;
         out->clickAcceptedEmptyPickup =
-            m11_inventory_click_open_chest_slot_for_thing(
+            DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
                 &state, 0, s_spec.chestThing, emptyPickupIndex);
-        if (m11_inventory_get_mouse_item(&state, 0, &handItem) &&
-            m11_inventory_get_item_in_chest_slot(&state, 0, emptyPickupIndex,
+        if (DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &handItem) &&
+            DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, emptyPickupIndex,
                                                   &slotItem)) {
             out->handTypeAfterEmptyPickup = handItem.itemType;
             out->handWeightAfterEmptyPickup = handItem.weight;
@@ -337,8 +337,8 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
 
     /* Reset to a known state: leader hand empty, C540 carries its
      * original C540 item. */
-    m11_inventory_set_mouse_item(&state, 0, 0, 0, 0, 0);
-    m11_inventory_set_item_in_chest_slot(
+    DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, 0, 0, 0, 0);
+    DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, 0, emptyPickupIndex, s_spec.c540Item, 6, 0,
         s_spec.actionHandMaskContainer);
 
@@ -357,17 +357,17 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
         int postCount;
 
         out->handTypeBeforeFullDrop = s_spec.handItem;
-        m11_inventory_set_mouse_item(&state, 0, s_spec.handItem, 11, 0,
+        DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, s_spec.handItem, 11, 0,
                                      s_spec.actionHandMaskContainer);
         build_union(&state, preUnion);
         multiset_sorted_nonzero(preUnion, unionSize, preSorted, &preCount);
         out->preClickNonZeroCountFullDrop = preCount;
         out->slotIndexFullDrop = fullDropIndex;
         out->clickAcceptedFullDrop =
-            m11_inventory_click_open_chest_slot_for_thing(
+            DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
                 &state, 0, s_spec.chestThing, fullDropIndex);
-        if (m11_inventory_get_mouse_item(&state, 0, &handItem) &&
-            m11_inventory_get_item_in_chest_slot(&state, 0, fullDropIndex,
+        if (DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &handItem) &&
+            DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, fullDropIndex,
                                                   &slotItem)) {
             out->handTypeAfterFullDrop = handItem.itemType;
             out->handWeightAfterFullDrop = handItem.weight;
@@ -386,8 +386,8 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
     }
 
     /* Reset: leader hand empty, C542 cleared. */
-    m11_inventory_set_mouse_item(&state, 0, 0, 0, 0, 0);
-    m11_inventory_set_item_in_chest_slot(
+    DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, 0, 0, 0, 0);
+    DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, 0, fullDropIndex, 0, 0, 0, 0);
 
     /*
@@ -408,17 +408,17 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
         int postCount;
 
         out->handTypeBeforeFullSwap = s_spec.handItem;
-        m11_inventory_set_mouse_item(&state, 0, s_spec.handItem, 11, 0,
+        DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, s_spec.handItem, 11, 0,
                                      s_spec.actionHandMaskContainer);
         build_union(&state, preUnion);
         multiset_sorted_nonzero(preUnion, unionSize, preSorted, &preCount);
         out->preClickNonZeroCountFullSwap = preCount;
         out->slotIndexFullSwap = fullSwapIndex;
         out->clickAcceptedFullSwap =
-            m11_inventory_click_open_chest_slot_for_thing(
+            DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
                 &state, 0, s_spec.chestThing, fullSwapIndex);
-        if (m11_inventory_get_mouse_item(&state, 0, &handItem) &&
-            m11_inventory_get_item_in_chest_slot(&state, 0, fullSwapIndex,
+        if (DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &handItem) &&
+            DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, fullSwapIndex,
                                                   &slotItem)) {
             out->handTypeAfterFullSwap = handItem.itemType;
             out->handWeightAfterFullSwap = handItem.weight;
@@ -437,8 +437,8 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
     }
 
     /* Reset: leader hand empty, C538 back to C538_ITEM. */
-    m11_inventory_set_mouse_item(&state, 0, 0, 0, 0, 0);
-    m11_inventory_set_item_in_chest_slot(
+    DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, 0, 0, 0, 0);
+    DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, 0, fullSwapIndex, s_spec.c538Item, 7, 0,
         s_spec.actionHandMaskContainer);
 
@@ -466,17 +466,17 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
         int postCount;
 
         out->handTypeBeforeSameTypeClick = s_spec.sameTypeHand;
-        m11_inventory_set_mouse_item(&state, 0, s_spec.sameTypeHand, 9, 0,
+        DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, s_spec.sameTypeHand, 9, 0,
                                      s_spec.actionHandMaskContainer);
         build_union(&state, preUnion);
         multiset_sorted_nonzero(preUnion, unionSize, preSorted, &preCount);
         out->preClickNonZeroCountSameType = preCount;
         out->slotCountBeforeSameTypeClick = 2; /* hand + C539 */
         out->clickAcceptedSameTypeClick =
-            m11_inventory_click_open_chest_slot_for_thing(
+            DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
                 &state, 0, s_spec.chestThing, sameTypeIndex);
-        if (m11_inventory_get_mouse_item(&state, 0, &handItem) &&
-            m11_inventory_get_item_in_chest_slot(&state, 0, sameTypeIndex,
+        if (DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &handItem) &&
+            DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, sameTypeIndex,
                                                   &slotItem)) {
             out->handTypeAfterSameTypeClick = handItem.itemType;
             out->slotTypeAfterSameTypeClick = slotItem.itemType;
@@ -497,8 +497,8 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
     }
 
     /* Reset: hand empty, C539 back to C539_ITEM. */
-    m11_inventory_set_mouse_item(&state, 0, 0, 0, 0, 0);
-    m11_inventory_set_item_in_chest_slot(
+    DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, 0, 0, 0, 0);
+    DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         &state, 0, sameTypeIndex, s_spec.c539Item, 4, 0,
         s_spec.actionHandMaskContainer);
 
@@ -519,10 +519,10 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
         multiset_sorted_nonzero(preUnion, unionSize, preSorted, &preCount);
         out->preClickNonZeroCountEmptyEmptyNoop = preCount;
         out->clickAcceptedEmptyEmptyNoop =
-            m11_inventory_click_open_chest_slot_for_thing(
+            DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
                 &state, 0, s_spec.chestThing,
                 DM1_PC34_CHEST_HAND_SWAP_NO_DUP_C543_INDEX);
-        if (m11_inventory_get_mouse_item(&state, 0, &handItem)) {
+        if (DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &handItem)) {
             out->handTypeAfterEmptyEmptyNoop = handItem.itemType;
         }
         build_union(&state, out->postSameTypeUnionTypes);
@@ -554,13 +554,13 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
         int reopenedCount;
         int i;
 
-        m11_inventory_set_mouse_item(&state, 0, s_spec.handItem, 11, 0,
+        DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, s_spec.handItem, 11, 0,
                                      s_spec.actionHandMaskContainer);
         build_union(&state, preUnion);
         multiset_sorted_nonzero(preUnion, unionSize, preSorted, &preCount);
         out->preClickNonZeroCountRoundTrip = preCount;
 
-        out->closedCount = m11_inventory_close_chest(
+        out->closedCount = DM1_V1_Inventory_CloseChestPc34Compat(
             &state, 0, closed, slotCount);
         /* F0334 cleared the G0425 slots in-place; the `closed` output
          * is the source of truth for the post-close chain. */
@@ -576,12 +576,12 @@ int dm1_v1_chest_hand_swap_no_duplicate_gate_run_pc34(
         multiset_sorted_nonzero(closedUnion, unionSize, closedSorted,
                                 &closedCount);
 
-        out->reopenResult = m11_inventory_open_chest(
+        out->reopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
             &state, 0, s_spec.reopenThing, closed, out->closedCount);
-        out->reopenThing = m11_inventory_get_open_chest_thing(&state, 0);
+        out->reopenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
         copy_open_slots(&state, &out->reopenedTypes[0]);
         out->reopenedCount = non_empty_count(out->reopenedTypes, slotCount);
-        if (m11_inventory_get_mouse_item(&state, 0, &handItem)) {
+        if (DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &handItem)) {
             out->reopenedHandType = handItem.itemType;
             reopenedUnion[0] = handItem.itemType;
         } else {

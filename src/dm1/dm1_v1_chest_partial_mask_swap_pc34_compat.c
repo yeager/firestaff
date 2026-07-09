@@ -25,9 +25,9 @@ const DM1_V1_ChestPartialMaskSwapSpecPc34
         DM1_PC34_CHEST_PARTIAL_MASK_THING_NONE
     };
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -37,7 +37,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static int copy_closed_chain(const M11_Item* closed,
+static int copy_closed_chain(const DM1_V1_ItemPc34* closed,
                              int count,
                              int* typesOut,
                              int* allowedOut)
@@ -87,10 +87,10 @@ dm1_v1_chest_partial_mask_swap_spec_pc34(void)
 int dm1_v1_chest_partial_mask_swap_run_pc34(
     DM1_V1_ChestPartialMaskSwapProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_PARTIAL_MASK_SLOT_COUNT];
-    M11_Item closed[DM1_PC34_CHEST_PARTIAL_MASK_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_PARTIAL_MASK_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_PARTIAL_MASK_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int i;
 
     if (!out) {
@@ -103,7 +103,7 @@ int dm1_v1_chest_partial_mask_swap_run_pc34(
     out->targetPc34Slot = DM1_PC34_CHEST_PARTIAL_MASK_PC34_SLOT;
     out->targetSlotIndex = DM1_PC34_CHEST_PARTIAL_MASK_SLOT_INDEX;
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < DM1_PC34_CHEST_PARTIAL_MASK_SLOT_COUNT; ++i) {
         linked[i] = make_item(DM1_PC34_CHEST_PARTIAL_MASK_FIRST_ITEM + i,
                               2 + i,
@@ -112,18 +112,18 @@ int dm1_v1_chest_partial_mask_swap_run_pc34(
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 copies the visible C537..C544 link
      * window into G0425 before CHAMPION.C F0302 can route a C30+ slot click. */
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, out->chestThing, linked,
         DM1_PC34_CHEST_PARTIAL_MASK_SLOT_COUNT);
-    out->openThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->openResult ||
-        !m11_inventory_get_item_in_chest_slot(
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, out->targetSlotIndex, &item)) {
         return 0;
     }
     out->slotBefore = item.itemType;
 
-    out->slotMask = m11_inventory_pc34_slot_mask(out->targetPc34Slot);
+    out->slotMask = DM1_V1_Inventory_Pc34SlotMaskCompat(out->targetPc34Slot);
     out->leaderAllowedSlots = DM1_PC34_CHEST_PARTIAL_MASK_ALLOWED;
     out->maskExactMatch =
         out->leaderAllowedSlots == out->slotMask ? 1 : 0;
@@ -132,12 +132,12 @@ int dm1_v1_chest_partial_mask_swap_run_pc34(
     item = make_item(DM1_PC34_CHEST_PARTIAL_MASK_LEADER_ITEM, 13,
                      out->leaderAllowedSlots);
     out->leaderCanEquip =
-        m11_inventory_can_equip(&item, out->targetPc34Slot);
+        DM1_V1_Inventory_CanEquipPc34Compat(&item, out->targetPc34Slot);
 
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state, 0, DM1_PC34_CHEST_PARTIAL_MASK_LEADER_ITEM,
             13, 0, out->leaderAllowedSlots) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandBefore = item.itemType;
@@ -146,13 +146,13 @@ int dm1_v1_chest_partial_mask_swap_run_pc34(
      * when DATA.C G0038 AllowedSlots & SlotMasks is non-zero, removes the
      * leader hand through F0298, removes C30+ G0425 through F0300, then stores
      * the previous leader object through F0301's C30+ path. */
-    out->clickResult = m11_inventory_click_pc34_source_slot(
+    out->clickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, out->targetPc34Slot);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfter = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, out->targetSlotIndex, &item)) {
         return 0;
     }
@@ -167,7 +167,7 @@ int dm1_v1_chest_partial_mask_swap_run_pc34(
     /* ReDMCSB CHEST.C F0334 lines 113-132 and DUNGEON.C F0163 lines
      * 1796-1837 rewrite the non-empty C537..C544 G0425 window as a valid
      * linked visible chain after the partial-mask C30+ swap. */
-    out->closeCount = m11_inventory_close_chest(
+    out->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_CHEST_PARTIAL_MASK_SLOT_COUNT);
     if (out->closeCount < 0 ||
         !copy_closed_chain(closed, out->closeCount, out->closedTypes,
@@ -179,7 +179,7 @@ int dm1_v1_chest_partial_mask_swap_run_pc34(
         DM1_PC34_CHEST_PARTIAL_MASK_LEADER_ITEM ? 1 : 0;
     out->closedChainValid = closed_chain_valid(out);
     out->openChestClearedAfterClose =
-        m11_inventory_get_open_chest_thing(&state, 0) == 0 ? 1 : 0;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == 0 ? 1 : 0;
 
     return 1;
 }

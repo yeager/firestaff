@@ -13,7 +13,7 @@
  *
  * This file provides a runtime helper
  * `m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run`
- * that exercises the F0319 ordering against a live M11_InventoryState
+ * that exercises the F0319 ordering against a live DM1_V1_InventoryStatePc34
  * (or a synthetic one in probe mode).  Pins:
  *
  *   - F0319 dispatches F0355 with C04_CHAMPION_CLOSE_INVENTORY
@@ -43,22 +43,22 @@
  * rewire out).  In production the live F0334 lives in
  * src/dm1/dm1_v1_chest_pc34_compat.c.  In probe mode the
  * inventory state is synthetic and we close it via the existing
- * dm1_v1 inventory helpers (m11_inventory_close_chest).
+ * dm1_v1 inventory helpers (DM1_V1_Inventory_CloseChestPc34Compat).
  */
-static void probe_close_chest(M11_InventoryState* inv, int champ) {
-    M11_Item linked[16];
+static void probe_close_chest(DM1_V1_InventoryStatePc34* inv, int champ) {
+    DM1_V1_ItemPc34 linked[16];
     int i;
     if (!inv) return;
-    /* m11_inventory_close_chest is the canonical close wire-in.
+    /* DM1_V1_Inventory_CloseChestPc34Compat is the canonical close wire-in.
      * It clears G0426 (open chest thing), rewires G0425 slots back
      * into the container's Slot list, and sets G0424 to
      * C00_PANEL_INVENTORY.  The linkedItemsOut array receives the
      * rewired items but we discard them here because the leader
      * is dying and F0318 will drop them next. */
-    (void)m11_inventory_close_chest(inv, champ, linked, 16);
-    /* G0424 -> inventory (defensive: m11_inventory_close_chest
+    (void)DM1_V1_Inventory_CloseChestPc34Compat(inv, champ, linked, 16);
+    /* G0424 -> inventory (defensive: DM1_V1_Inventory_CloseChestPc34Compat
      * may not always set this on the way out). */
-    m11_inventory_set_panel_content_pc34(inv, 0);
+    DM1_V1_Inventory_SetPanelContentPc34Compat(inv, 0);
     /* Silence unused warning when NDEBUG. */
     (void)i;
 }
@@ -71,7 +71,7 @@ static void probe_close_chest(M11_InventoryState* inv, int champ) {
  * the hand.  In probe mode we clear the hand bytes via
  * m11_inventory_set_pc34_source_slot.
  */
-static void probe_drop_hand(M11_InventoryState* inv, int champ) {
+static void probe_drop_hand(DM1_V1_InventoryStatePc34* inv, int champ) {
     if (!inv) return;
     /* C00_HAND and C01_ACTION_HAND reach the empty sentinel. */
     (void)champ;
@@ -110,7 +110,7 @@ int m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(
     /* Step (b): if a chest is open, dispatch F0355 -> F0334. */
     if (out->chestWasOpen) {
         out->f0355Observed = 1;
-        probe_close_chest((M11_InventoryState*)out->in_inventoryState,
+        probe_close_chest((DM1_V1_InventoryStatePc34*)out->in_inventoryState,
                           out->leaderChampionIndex);
         out->f0334Observed = 1;
         out->g0426ClearedToNone = 1;
@@ -119,7 +119,7 @@ int m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(
 
     /* Step (c): drop all C00..C29 via F0318.  This always runs
      * after F0334 (the ReDMCSB ordering invariant). */
-    probe_drop_hand((M11_InventoryState*)out->in_inventoryState,
+    probe_drop_hand((DM1_V1_InventoryStatePc34*)out->in_inventoryState,
                     out->leaderChampionIndex);
     out->f0318Observed = 1;
     out->leaderHandClearedByF0318 = 1;
@@ -139,18 +139,18 @@ int m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(
 } while (0)
 
 int main(void) {
-    M11_InventoryState inv;
+    DM1_V1_InventoryStatePc34 inv;
     M11_InventoryChestAutoCloseOnLeaderDeathProbePc34 probe;
 
     /* Initialize a synthetic inventory state. */
     memset(&inv, 0, sizeof(inv));
-    m11_inventory_init(&inv, 4);
-    /* Open a chest at the leader.  m11_inventory_open_chest is
+    DM1_V1_Inventory_InitPc34Compat(&inv, 4);
+    /* Open a chest at the leader.  DM1_V1_Inventory_OpenChestPc34Compat is
      * the canonical wire-in (G0426 + G0424 set, G0425 wired). */
-    m11_inventory_open_chest(&inv, 0, 0x1234, NULL, 0);
-    /* m11_inventory_open_chest may set G0424 to chest already; if
+    DM1_V1_Inventory_OpenChestPc34Compat(&inv, 0, 0x1234, NULL, 0);
+    /* DM1_V1_Inventory_OpenChestPc34Compat may set G0424 to chest already; if
      * not, set it explicitly. */
-    m11_inventory_set_panel_content_pc34(&inv, 0x07); /* panel = chest */
+    DM1_V1_Inventory_SetPanelContentPc34Compat(&inv, 0x07); /* panel = chest */
 
     /* Scenario 1: leader dies with chest open -> full chain runs. */
     memset(&probe, 0, sizeof(probe));
@@ -168,15 +168,15 @@ int main(void) {
     CHECK(probe.leaderHandClearedByF0318 == 1, "scenario 1: F0318 cleared hand");
 
     /* G0426 in the live inventory state must be C0xFFFF. */
-    CHECK(m11_inventory_get_open_chest_thing(&inv, 0) == 0,
+    CHECK(DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, 0) == 0,
           "scenario 1: G0426 reached C0xFFFF");
     /* G0424 must be C00_PANEL_INVENTORY (0). */
-    CHECK(m11_inventory_get_panel_content_pc34(&inv) == 0,
+    CHECK(DM1_V1_Inventory_GetPanelContentPc34Compat(&inv) == 0,
           "scenario 1: G0424 reached C00_INVENTORY");
 
     /* Scenario 2: leader dies with NO chest open -> F0318 still
      * runs, but the chest-close leg is a no-op.  G0426 should
-     * already be cleared by scenario 1's m11_inventory_close_chest. */
+     * already be cleared by scenario 1's DM1_V1_Inventory_CloseChestPc34Compat. */
     /* (no explicit reset needed; scenario 1 already cleared G0426) */
     memset(&probe, 0, sizeof(probe));
     probe.in_inventoryState = &inv;

@@ -91,10 +91,10 @@ const DM1_V1_ChestEmptyReopenRuntimeSpecPc34
         s_defs_c537_c544_anchor
     };
 
-static int all_g0425_none(const M11_InventoryState* s, int champ)
+static int all_g0425_none(const DM1_V1_InventoryStatePc34* s, int champ)
 {
     int i;
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     if (!s) {
         return 0;
@@ -102,14 +102,14 @@ static int all_g0425_none(const M11_InventoryState* s, int champ)
     /* CHEST.C F0334:113-117 (MEDIA070) clears G0426_T_OpenChest before the
      * rewire loop, so a closed chest is logically the same as an open chest
      * with every G0425 slot set to C0xFFFF_THING_NONE.  When G0426 is NONE,
-     * m11_inventory_get_item_in_chest_slot refuses to read the slot, so the
+     * DM1_V1_Inventory_GetItemInChestSlotPc34Compat refuses to read the slot, so the
      * closed case must short-circuit to "all NONE" rather than reporting a
      * get failure. */
     if (s->champions[champ].openChestThing == 0) {
         return 1;
     }
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-        if (!m11_inventory_get_item_in_chest_slot(s, champ, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(s, champ, i, &item)) {
             return 0;
         }
         if (item.itemType != 0) {
@@ -119,9 +119,9 @@ static int all_g0425_none(const M11_InventoryState* s, int champ)
     return 1;
 }
 
-static M11_Item make_probe_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_probe_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -145,24 +145,24 @@ dm1_v1_chest_empty_reopen_runtime_spec_pc34(void)
 int dm1_v1_chest_empty_reopen_runtime_run_pc34(
     DM1_V1_ChestEmptyReopenRuntimeProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item leaderBefore;
-    M11_Item leaderAfter;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 leaderBefore;
+    DM1_V1_ItemPc34 leaderAfter;
     int leaderLoadBefore = 0;
     int leaderLoadAfter = 0;
     int closeOnAlreadyClosedResult = 0;
     int closeOnAlreadyClosedCount = 0;
     int closeWhenNothingOpenResult = 0;
     int closeWhenNothingOpenCount = 0;
-    M11_Item noOpenCloseOutput[1];
+    DM1_V1_ItemPc34 noOpenCloseOutput[1];
 
     if (!out) {
         return 0;
     }
     memset(out, 0, sizeof(*out));
 
-    m11_inventory_init(&state, 1);
-    if (!m11_inventory_set_mouse_item(
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state, 0,
             DM1_PC34_CHEST_EMPTY_REOPEN_LEADER_ITEM,
             DM1_PC34_CHEST_EMPTY_REOPEN_LEADER_WEIGHT,
@@ -171,81 +171,81 @@ int dm1_v1_chest_empty_reopen_runtime_run_pc34(
         return 0;
     }
 
-    if (!m11_inventory_get_mouse_item(&state, 0, &leaderBefore)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &leaderBefore)) {
         return 0;
     }
     out->leaderHandTypeBeforeCycles = leaderBefore.itemType;
     out->leaderHandWeightBeforeCycles = leaderBefore.weight;
     out->leaderHandChargesBeforeCycles = leaderBefore.charges;
-    leaderLoadBefore = m11_inventory_get_load(&state, 0);
+    leaderLoadBefore = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* Phase 1: open empty chest A.  F0333:67-76 must fill G0425[0..7] with
      * C0xFFFF_THING_NONE because the container's Slot is C0xFFFE_THING_ENDOFLIST. */
-    out->openAResult = m11_inventory_open_chest(
+    out->openAResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_A, NULL, 0);
-    out->openAOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openAOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->openAAllG0425NoneAfterOpen = all_g0425_none(&state, 0);
 
     /* Phase 2: close the empty chest A.  F0334:117-122 (CHANGE8_09_FIX)
      * clears G0425[i] as it rewires, F0334:113-117 (MEDIA070) clears
      * G0426_T_OpenChest, and the rewire loop sees no non-empty slots so
      * the returned count is 0. */
-    out->openACloseResult = m11_inventory_close_chest(
+    out->openACloseResult = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, NULL, 0);
     out->openACloseCount = out->openACloseResult;
-    out->openAOpenThingAfterClose = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openAOpenThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->openAAllG0425NoneAfterClose = all_g0425_none(&state, 0);
 
     /* Phase 3: F0334:113-117 (MEDIA070) — close when G0426 is already NONE
      * must return 0 (not -1) and must not touch G0425 or G0426. */
-    closeOnAlreadyClosedResult = m11_inventory_close_chest(&state, 0, NULL, 0);
+    closeOnAlreadyClosedResult = DM1_V1_Inventory_CloseChestPc34Compat(&state, 0, NULL, 0);
     closeOnAlreadyClosedCount = closeOnAlreadyClosedResult;
     out->openACloseOnAlreadyClosedResult = closeOnAlreadyClosedResult;
     out->openACloseOnAlreadyClosedCount = closeOnAlreadyClosedCount;
     out->noF0334SideEffectsOnClosedOpen =
         closeOnAlreadyClosedResult == 0 &&
-        m11_inventory_get_open_chest_thing(&state, 0) == 0 &&
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == 0 &&
         all_g0425_none(&state, 0);
 
     /* Phase 4: same-chest reopen no-op.  Reopen chest A and try to reopen
      * it again — F0333:30-32 (MEDIA278) keeps the existing G0426 and
      * G0425 untouched because G0426 == chest_thing already. */
-    (void)m11_inventory_open_chest(
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_A, NULL, 0);
-    out->sameChestReopenResult = m11_inventory_open_chest(
+    out->sameChestReopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_A, NULL, 0);
-    out->sameChestReopenOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->sameChestReopenOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->sameChestReopenG0425Stable = all_g0425_none(&state, 0);
     out->sameChestReopenOpenThingStable =
         out->sameChestReopenOpenThing == DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_A;
     /* Clean up: close A again so the cross-chest phase starts from NONE. */
-    (void)m11_inventory_close_chest(&state, 0, NULL, 0);
+    (void)DM1_V1_Inventory_CloseChestPc34Compat(&state, 0, NULL, 0);
 
     /* Phase 5: cross-chest open.  Open chest A, then open chest B.
      * F0333:36-46 (MEDIA343/MEDIA346 CHANGE8_09_FIX) routes chest A through
      * F0334 first; F0334 sees an empty G0425 and returns 0.  Then F0333
      * assigns G0426 = chest_B and fills G0425 with NONE again. */
-    (void)m11_inventory_open_chest(
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_A, NULL, 0);
-    (void)m11_inventory_set_panel_content_pc34(&state, DM1_PC34_PANEL_SCROLL);
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(&state, DM1_PC34_PANEL_SCROLL);
     out->crossChestBPanelBeforeReplace =
-        m11_inventory_get_panel_content_pc34(&state);
-    out->crossChestBResult = m11_inventory_open_chest_replacing_current(
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
+    out->crossChestBResult = DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat(
         &state, 0, DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_B, NULL, 0, NULL, 0);
     out->crossChestBPanelAfterReplace =
-        m11_inventory_get_panel_content_pc34(&state);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
     out->crossChestBPreviousCount = out->crossChestBResult;
-    out->crossChestBFinalOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->crossChestBFinalOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->crossChestBG0425AllNone = all_g0425_none(&state, 0);
 
     /* Phase 6: close chest B.  F0334:117-132 returns 0 again because chest B
      * was also empty.  After this close, the probe can verify the
      * "close when no chest is open" sentinel. */
-    out->crossChestBCloseAfterBResult = m11_inventory_close_chest(
+    out->crossChestBCloseAfterBResult = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, NULL, 0);
     out->crossChestBCloseAfterBCount = out->crossChestBCloseAfterBResult;
     out->crossChestBPanelAfterClose =
-        m11_inventory_get_panel_content_pc34(&state);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
 
     /* Phase 7: close when nothing is open.  F0334:113-117 (MEDIA070) returns
      * before reading or clearing G0425 and before writing the caller's output
@@ -258,23 +258,23 @@ int dm1_v1_chest_empty_reopen_runtime_run_pc34(
         make_probe_item(DM1_PC34_CHEST_EMPTY_REOPEN_STALE_C544, 37);
     noOpenCloseOutput[0] =
         make_probe_item(DM1_PC34_CHEST_EMPTY_REOPEN_STALE_OUTPUT, 43);
-    (void)m11_inventory_set_panel_content_pc34(&state, DM1_PC34_PANEL_SCROLL);
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(&state, DM1_PC34_PANEL_SCROLL);
     out->closeWhenNothingPanelBefore =
-        m11_inventory_get_panel_content_pc34(&state);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
     out->staleC537BeforeNoOpenClose =
         state.champions[0].chestSlots[0].itemType;
     out->staleC544BeforeNoOpenClose =
         state.champions[0].chestSlots[7].itemType;
     out->staleOutputBeforeNoOpenClose = noOpenCloseOutput[0].itemType;
     closeWhenNothingOpenResult =
-        m11_inventory_close_chest(&state, 0, noOpenCloseOutput, 1);
+        DM1_V1_Inventory_CloseChestPc34Compat(&state, 0, noOpenCloseOutput, 1);
     closeWhenNothingOpenCount = closeWhenNothingOpenResult;
     out->closeWhenNothingOpenResult = closeWhenNothingOpenResult;
     out->closeWhenNothingOpenCount = closeWhenNothingOpenCount;
     out->closeWhenNothingOpenThingAfter =
-        m11_inventory_get_open_chest_thing(&state, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->closeWhenNothingPanelAfter =
-        m11_inventory_get_panel_content_pc34(&state);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
     out->staleC537AfterNoOpenClose =
         state.champions[0].chestSlots[0].itemType;
     out->staleC544AfterNoOpenClose =
@@ -293,20 +293,20 @@ int dm1_v1_chest_empty_reopen_runtime_run_pc34(
 
     /* Phase 8: open chest C and verify the G0425 NONE fill is reproducible
      * for a third distinct chest, then close it cleanly. */
-    (void)m11_inventory_open_chest(
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_C, NULL, 0);
     out->openCG0425AllNone = all_g0425_none(&state, 0);
     out->closeCReopensCleanly =
-        m11_inventory_close_chest(&state, 0, NULL, 0) == 0 &&
-        m11_inventory_get_open_chest_thing(&state, 0) == 0;
+        DM1_V1_Inventory_CloseChestPc34Compat(&state, 0, NULL, 0) == 0 &&
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == 0;
 
     /* Phase 9: leader hand identity/weight/charges/load preservation.
      * CHAMPION.C F0297/F0298:243-298 are independent of CHEST.C F0333/F0334,
      * so the leader hand must be byte-identical to its pre-cycle snapshot. */
-    if (!m11_inventory_get_mouse_item(&state, 0, &leaderAfter)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &leaderAfter)) {
         return 0;
     }
-    leaderLoadAfter = m11_inventory_get_load(&state, 0);
+    leaderLoadAfter = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     out->leaderHandTypeAfterCycles = leaderAfter.itemType;
     out->leaderHandWeightAfterCycles = leaderAfter.weight;
     out->leaderHandChargesAfterCycles = leaderAfter.charges;

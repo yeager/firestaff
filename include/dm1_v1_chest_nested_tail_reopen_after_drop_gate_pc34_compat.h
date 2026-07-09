@@ -90,7 +90,7 @@ extern "C" {
  *      (initial open + reopen).
  *
  * Source-locked contract-only marker; no real-asset / original-DOS
- * pixel parity claim.  The M11_Item representation flattens the
+ * pixel parity claim.  The DM1_V1_ItemPc34 representation flattens the
  * DEFS.H CONTAINER::Slot head pointer into a single stored weight
  * value, so the inner Slot chain is modeled as a parallel side-
  * channel (`innerContentsType[]` + `innerContentsWeight[]`) that the
@@ -227,7 +227,7 @@ typedef struct {
 
 typedef struct {
     /* Inner Slot chain side-channel (DEFS.H CONTAINER::Slot head
-     * pointer; M11_Item does not encode the linked-list head). */
+     * pointer; DM1_V1_ItemPc34 does not encode the linked-list head). */
     int innerContentsType[DM1_PC34_CHEST_NESTED_TAIL_REOPEN_INNER_SLOT_COUNT];
     int innerContentsWeight[DM1_PC34_CHEST_NESTED_TAIL_REOPEN_INNER_SLOT_COUNT];
     int innerContentsCount;

@@ -38,9 +38,9 @@ typedef struct {
     int championCell[DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_PARTY_COUNT];
 } DM1_V1_ChestPickupAfterPartyRotatePartyStatePc34;
 
-static M11_Item make_item(int itemType, int weight, int charges)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int charges)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -51,7 +51,7 @@ static M11_Item make_item(int itemType, int weight, int charges)
     return item;
 }
 
-static void seed_chest(M11_Item* items)
+static void seed_chest(DM1_V1_ItemPc34* items)
 {
     int i;
 
@@ -95,7 +95,7 @@ static void apply_party_direction(
 }
 
 static void switch_leader_and_drop_old_hand(
-    M11_InventoryState* inventory,
+    DM1_V1_InventoryStatePc34* inventory,
     DM1_V1_ChestPickupAfterPartyRotatePartyStatePc34* party,
     int newLeader)
 {
@@ -112,11 +112,11 @@ static void switch_leader_and_drop_old_hand(
      * new leader, and rebalances the global leader-hand load. This Firestaff
      * PC34 slice binds that global-hand handoff as dropping stale per-champion
      * old-leader hand state while preserving the already-full new leader hand. */
-    (void)m11_inventory_set_mouse_item(inventory, oldLeader, 0, 0, 0, 0);
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(inventory, oldLeader, 0, 0, 0, 0);
     party->leaderIndex = newLeader;
 }
 
-static int copy_chest_fields(const M11_InventoryState* state,
+static int copy_chest_fields(const DM1_V1_InventoryStatePc34* state,
                              int champion,
                              int* types,
                              int* weights)
@@ -127,9 +127,9 @@ static int copy_chest_fields(const M11_InventoryState* state,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, champion, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champion, i, &item)) {
             return 0;
         }
         types[i] = item.itemType;
@@ -188,7 +188,7 @@ static int count_visible(const int* types)
 static int process_in_flight_pickup_after_rotation(
     const DM1_V1_ChestPickupAfterPartyRotatePartyStatePc34* party,
     int leaderAtPointerDown,
-    const M11_Item* currentLeaderHand,
+    const DM1_V1_ItemPc34* currentLeaderHand,
     int* refusedLeaderChanged,
     int* refusedHandFull)
 {
@@ -256,12 +256,12 @@ static void hash_case(
 static int run_case(DM1_V1_ChestPickupAfterPartyRotateCasePc34* out,
                     int mode)
 {
-    M11_InventoryState inventory;
-    M11_Item linked[DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_SLOT_COUNT];
-    M11_Item oldLeaderHandBefore;
-    M11_Item oldLeaderHandAfter;
-    M11_Item newLeaderHandBefore;
-    M11_Item newLeaderHandAfter;
+    DM1_V1_InventoryStatePc34 inventory;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_SLOT_COUNT];
+    DM1_V1_ItemPc34 oldLeaderHandBefore;
+    DM1_V1_ItemPc34 oldLeaderHandAfter;
+    DM1_V1_ItemPc34 newLeaderHandBefore;
+    DM1_V1_ItemPc34 newLeaderHandAfter;
     DM1_V1_ChestPickupAfterPartyRotatePartyStatePc34 party;
     int inventoryChampion =
         DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_INVENTORY_CHAMPION;
@@ -290,19 +290,19 @@ static int run_case(DM1_V1_ChestPickupAfterPartyRotateCasePc34* out,
     party.partyDirection = 0;
 
     seed_chest(linked);
-    m11_inventory_init(&inventory,
+    DM1_V1_Inventory_InitPc34Compat(&inventory,
                        DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_PARTY_COUNT);
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &inventory, out->oldLeaderIndex,
             DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_OLD_HAND_ITEM,
             17, 1, DM1_PC34_ALLOWED_CONTAINER) ||
-        !m11_inventory_set_mouse_item(
+        !DM1_V1_Inventory_SetMouseItemPc34Compat(
             &inventory, out->newLeaderIndex,
             DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_NEW_HAND_ITEM,
             23, 2, DM1_PC34_ALLOWED_CONTAINER) ||
-        !m11_inventory_get_mouse_item(
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(
             &inventory, out->oldLeaderIndex, &oldLeaderHandBefore) ||
-        !m11_inventory_get_mouse_item(
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(
             &inventory, out->newLeaderIndex, &newLeaderHandBefore)) {
         return 0;
     }
@@ -311,12 +311,12 @@ static int run_case(DM1_V1_ChestPickupAfterPartyRotateCasePc34* out,
 
     /* ReDMCSB: CHEST.C F0333 lines 53-76 copies the linked object order into
      * C537..C544/G0425 for the non-leader inventory champion. */
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &inventory, inventoryChampion,
         DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_CHEST_THING,
         linked, DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_SLOT_COUNT);
     out->openChestThing =
-        m11_inventory_get_open_chest_thing(&inventory, inventoryChampion);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inventory, inventoryChampion);
     if (!out->openResult ||
         !copy_chest_fields(&inventory, inventoryChampion,
                            out->initialTypes, out->initialWeights)) {
@@ -340,9 +340,9 @@ static int run_case(DM1_V1_ChestPickupAfterPartyRotateCasePc34* out,
     out->oldLeaderCellAfter = party.championCell[out->oldLeaderIndex];
     out->newLeaderCellAfter = party.championCell[out->newLeaderIndex];
 
-    if (!m11_inventory_get_mouse_item(
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(
             &inventory, out->oldLeaderIndex, &oldLeaderHandAfter) ||
-        !m11_inventory_get_mouse_item(
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(
             &inventory, out->newLeaderIndex, &newLeaderHandAfter)) {
         return 0;
     }
@@ -370,12 +370,12 @@ static int run_case(DM1_V1_ChestPickupAfterPartyRotateCasePc34* out,
     /* ReDMCSB: CHEST.C F0333 lines 30-32 returns when the same chest is still
      * G0426_T_OpenChest, so the next click sees the same visible C537..C544
      * order rather than rematerializing a shifted or swapped chain. */
-    out->sameOpenResult = m11_inventory_open_chest(
+    out->sameOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &inventory, inventoryChampion,
         DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_CHEST_THING,
         linked, DM1_PC34_CHEST_PICKUP_AFTER_ROTATE_SLOT_COUNT);
     out->sameOpenChestThing =
-        m11_inventory_get_open_chest_thing(&inventory, inventoryChampion);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inventory, inventoryChampion);
     if (!out->sameOpenResult ||
         !copy_chest_fields(&inventory, inventoryChampion,
                            out->reopenedTypes,

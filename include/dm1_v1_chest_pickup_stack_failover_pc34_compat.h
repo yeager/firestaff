@@ -123,9 +123,9 @@ dm1_v1_chest_pickup_stack_failover_spec_pc34(void);
 const DM1_V1_ChestPickupStackFailoverProbePc34*
 dm1_v1_chest_pickup_stack_failover_last_probe_pc34(void);
 int dm1_v1_chest_pickup_stack_failover_stack_kind_pc34(
-    const M11_Item* item);
+    const DM1_V1_ItemPc34* item);
 int dm1_v1_chest_pickup_stack_failover_click_pc34(
-    M11_InventoryState* state,
+    DM1_V1_InventoryStatePc34* state,
     int champ,
     int chestSlotIndex,
     int* routedPc34SlotOut);

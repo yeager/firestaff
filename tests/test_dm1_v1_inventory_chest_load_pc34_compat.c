@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
-static M11_Item make_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
     item.weight = weight;
@@ -41,9 +41,9 @@ int main(void)
     const char* f0301Load =
         "ReDMCSB CHAMPION.C F0301 lines 609-615";
 
-    M11_InventoryState state;
-    M11_Item linked[10];
-    M11_Item closed[8];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[10];
+    DM1_V1_ItemPc34 closed[8];
     int snapshotWeight = 0;
     int ok = 1;
 
@@ -55,12 +55,12 @@ int main(void)
         linked[i] = make_item(100 + i, 2 + i);
     }
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
 
     /* ReDMCSB: CHAMPION.C F0301 lines 609-615 adds an ordinary slot object
      * weight to champion Load through F0140. */
     ok &= expect_int("base backpack load",
-                     m11_inventory_set_item_in_pc34_source_slot(&state, 0,
+                     DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(&state, 0,
                                                                 DM1_PC34_SLOT_BACKPACK_LINE1_1,
                                                                 501, 13, 0,
                                                                 DM1_PC34_ALLOWED_ANY_SLOT),
@@ -68,12 +68,12 @@ int main(void)
     /* ReDMCSB: CHAMPION.C F0301 lines 609-615 keeps the source Load value as
      * the sum of champion slot object weights. */
     ok &= expect_int("base backpack load value",
-                     m11_inventory_get_load(&state, 0), 13, f0301Load);
+                     DM1_V1_Inventory_GetLoadPc34Compat(&state, 0), 13, f0301Load);
 
     /* ReDMCSB: CHEST.C F0333 lines 53-76 copies only the first eight linked
      * container entries into G0425_aT_ChestSlots. */
     ok &= expect_int("open overfull chest",
-                     m11_inventory_open_chest(&state, 0, TEST_CHEST, linked, 10),
+                     DM1_V1_Inventory_OpenChestPc34Compat(&state, 0, TEST_CHEST, linked, 10),
                      1, f0333VisibleSlots);
     /* ReDMCSB: CHEST.C F0333 lines 53-76 excludes the ninth and later linked
      * objects from the visible open-chest slot snapshot. */
@@ -88,12 +88,12 @@ int main(void)
     /* ReDMCSB: CHAMPION.C F0301 lines 609-615 adds C30+ slot object weight
      * through the same F0140 path used for ordinary inventory slots. */
     ok &= expect_int("load includes visible open-chest contents",
-                     m11_inventory_get_load(&state, 0), 57, f0301Load);
+                     DM1_V1_Inventory_GetLoadPc34Compat(&state, 0), 57, f0301Load);
 
     /* ReDMCSB: CHAMPION.C F0301 lines 609-615 stores C30+ additions in G0425,
      * so replacing one visible slot changes the source visible contents sum. */
     ok &= expect_int("replace visible chest slot",
-                     m11_inventory_set_item_in_chest_slot(&state, 0, 2,
+                     DM1_V1_Inventory_SetItemInChestSlotPc34Compat(&state, 0, 2,
                                                           909, 17, 0,
                                                           DM1_PC34_ALLOWED_CONTAINER),
                      1, f0301Load);
@@ -131,7 +131,7 @@ int main(void)
     /* ReDMCSB: CHAMPION.C F0300/F0301 lines 582-615 refresh Load after slot
      * object removal/addition; after F0334 close, transient G0425 weight is gone. */
     ok &= expect_int("close recomputes stale champion load",
-                     m11_inventory_get_load(&state, 0), 13, f0301Load);
+                     DM1_V1_Inventory_GetLoadPc34Compat(&state, 0), 13, f0301Load);
     /* ReDMCSB: CHEST.C F0334 lines 113-114 returns immediately when no chest
      * is open, leaving no container weight snapshot. */
     ok &= expect_int("no-open close returns zero",

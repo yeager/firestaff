@@ -98,10 +98,10 @@ static const DM1_V1_MirrorCandidateKeyboardBrowseOccupiedSlotSpecPc34 s_spec = {
     s_source_evidence
 };
 
-static M11_Item make_item(int itemType, int weight, int charges,
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int charges,
                           int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -112,7 +112,7 @@ static M11_Item make_item(int itemType, int weight, int charges,
     return item;
 }
 
-static void seed_chest(M11_Item items[])
+static void seed_chest(DM1_V1_ItemPc34 items[])
 {
     int i;
 
@@ -127,7 +127,7 @@ static void seed_chest(M11_Item items[])
                                   DM1_PC34_ALLOWED_CONTAINER);
 }
 
-static int copy_chest_slots(const M11_InventoryState *state, int champ,
+static int copy_chest_slots(const DM1_V1_InventoryStatePc34 *state, int champ,
                             int types[], int weights[])
 {
     int i;
@@ -139,9 +139,9 @@ static int copy_chest_slots(const M11_InventoryState *state, int champ,
          i <
          DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_OCCUPIED_SLOT_SLOT_COUNT_PC34_COMPAT;
          ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, champ, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item)) {
             return 0;
         }
         types[i] = item.itemType;
@@ -150,7 +150,7 @@ static int copy_chest_slots(const M11_InventoryState *state, int champ,
     return 1;
 }
 
-static void copy_closed_types(const M11_Item items[], int count, int types[])
+static void copy_closed_types(const DM1_V1_ItemPc34 items[], int count, int types[])
 {
     int i;
 
@@ -242,12 +242,12 @@ dm1_v1_mirror_candidate_keyboard_browse_occupied_slot_spec_pc34(void)
 int dm1_v1_mirror_candidate_keyboard_browse_occupied_slot_probe_pc34(
     DM1_V1_MirrorCandidateKeyboardBrowseOccupiedSlotResultPc34 *outResult)
 {
-    M11_InventoryState state;
-    M11_Item linked[
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[
         DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_OCCUPIED_SLOT_SLOT_COUNT_PC34_COMPAT];
-    M11_Item closed[
+    DM1_V1_ItemPc34 closed[
         DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_OCCUPIED_SLOT_SLOT_COUNT_PC34_COMPAT];
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     unsigned int candidateOrdinal = kLeaderOrdinal;
     int activeRosterIndex = kLeaderIndex;
     int i;
@@ -270,7 +270,7 @@ int dm1_v1_mirror_candidate_keyboard_browse_occupied_slot_probe_pc34(
     }
 
     seed_chest(linked);
-    m11_inventory_init(
+    DM1_V1_Inventory_InitPc34Compat(
         &state,
         DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_OCCUPIED_SLOT_PARTY_COUNT_PC34_COMPAT);
 
@@ -278,11 +278,11 @@ int dm1_v1_mirror_candidate_keyboard_browse_occupied_slot_probe_pc34(
      * G0425/C537..C544. The same-open guard is represented by keeping one
      * open chest thing authoritative for the later C538 click. */
     outResult->chestOpenDispatched =
-        m11_inventory_open_chest(
+        DM1_V1_Inventory_OpenChestPc34Compat(
             &state, kLeaderIndex, kOpenChestThing, linked,
             DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_OCCUPIED_SLOT_SLOT_COUNT_PC34_COMPAT);
     outResult->sameOpenDisplayGuardHeld =
-        m11_inventory_get_open_chest_thing(&state, kLeaderIndex) ==
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, kLeaderIndex) ==
         kOpenChestThing;
     if (!outResult->chestOpenDispatched ||
         !outResult->sameOpenDisplayGuardHeld ||
@@ -294,10 +294,10 @@ int dm1_v1_mirror_candidate_keyboard_browse_occupied_slot_probe_pc34(
 
     /* ReDMCSB CHAMPION.C F0297:243-268 models the scroll already held in
      * G4055 before the occupied C538 slot click. */
-    if (!m11_inventory_set_mouse_item(&state, kLeaderIndex, kC040ScrollThing,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&state, kLeaderIndex, kC040ScrollThing,
                                       2, 1,
                                       DM1_PC34_ALLOWED_CONTAINER) ||
-        !m11_inventory_get_mouse_item(&state, kLeaderIndex, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, kLeaderIndex, &item)) {
         return 0;
     }
     outResult->leaderHandTypeBeforeSwap = item.itemType;
@@ -305,7 +305,7 @@ int dm1_v1_mirror_candidate_keyboard_browse_occupied_slot_probe_pc34(
     outResult->leaderHandChargesBeforeSwap = item.charges;
     outResult->leaderHandAllowedSlotsBeforeSwap = item.allowedSlots;
     outResult->leaderHandCanEquipC538 =
-        m11_inventory_can_equip(&item, DM1_PC34_SLOT_CHEST_2);
+        DM1_V1_Inventory_CanEquipPc34Compat(&item, DM1_PC34_SLOT_CHEST_2);
 
     /* ReDMCSB REVIVE.C F0280:124-132 activates G0299. COMMAND.C
      * F0380:2075-2156 then dispatches queued left/right keyboard browse
@@ -338,14 +338,14 @@ int dm1_v1_mirror_candidate_keyboard_browse_occupied_slot_probe_pc34(
     outResult->panelReleaseDispatched = 1;
     outResult->c040RoutingPreserved = 1;
     outResult->occupiedSlotSwapDispatched =
-        m11_inventory_click_open_chest_slot_for_thing(
+        DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
             &state, kLeaderIndex, kOpenChestThing, kC538Index);
     outResult->occupiedSlotSwapAccepted =
         outResult->occupiedSlotSwapDispatched ? 1 : 0;
     outResult->occupiedSlotSwapRejected =
         outResult->occupiedSlotSwapDispatched ? 0 : 1;
     if (!outResult->occupiedSlotSwapDispatched ||
-        !m11_inventory_get_mouse_item(&state, kLeaderIndex, &item) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, kLeaderIndex, &item) ||
         !copy_chest_slots(&state, kLeaderIndex,
                           outResult->c537ToC544TypesAfter,
                           outResult->c537ToC544WeightsAfter)) {
@@ -382,13 +382,13 @@ int dm1_v1_mirror_candidate_keyboard_browse_occupied_slot_probe_pc34(
     /* ReDMCSB CHEST.C F0334:117-132 closes the still-open G0426 chest and
      * relinks the non-empty post-swap C537..C544 chain in visible order. */
     outResult->closedChestCount =
-        m11_inventory_close_chest(
+        DM1_V1_Inventory_CloseChestPc34Compat(
             &state, kLeaderIndex, closed,
             DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_OCCUPIED_SLOT_SLOT_COUNT_PC34_COMPAT);
     outResult->chestCloseDispatched = outResult->closedChestCount ==
         DM1_V1_MIRROR_CANDIDATE_KEYBOARD_BROWSE_OCCUPIED_SLOT_SLOT_COUNT_PC34_COMPAT;
     outResult->openChestThingAfterClose =
-        m11_inventory_get_open_chest_thing(&state, kLeaderIndex);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, kLeaderIndex);
     copy_closed_types(closed, outResult->closedChestCount,
                       outResult->closedChainTypes);
     outResult->closedChainMatchesOpenPostSwap =

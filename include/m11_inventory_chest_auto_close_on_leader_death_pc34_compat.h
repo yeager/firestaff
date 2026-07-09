@@ -22,7 +22,7 @@
  * contracts and have their own probes.
  *
  * Probe-mode caller (the regression test) sets `in_inventoryState`
- * to a synthetic M11_InventoryState and reads the resulting
+ * to a synthetic DM1_V1_InventoryStatePc34 and reads the resulting
  * G0426 / G0424 / G0423 fields.  Production-mode caller sets
  * `in_inventoryState` to the live M11 game-view inventory and
  * observes the same fields via m11_inventory_get_* helpers.
@@ -43,7 +43,7 @@ extern "C" {
 
 typedef struct M11_InventoryChestAutoCloseOnLeaderDeathProbePc34_ {
     /* Inputs */
-    const M11_InventoryState* in_inventoryState;
+    const DM1_V1_InventoryStatePc34* in_inventoryState;
     int leaderChampionIndex;
     int chestWasOpen;            /* 1 if G0426 was non-zero on entry */
 

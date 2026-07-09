@@ -63,7 +63,7 @@ int DM1V1_Fountain_EvaluateFrontWallClickPc34Compat(
     return 1;
 }
 
-int DM1V1_Fountain_ApplyLeaderHandItemPc34Compat(M11_Item* leaderHandItem,
+int DM1V1_Fountain_ApplyLeaderHandItemPc34Compat(DM1_V1_ItemPc34* leaderHandItem,
                                                  int facingFountain,
                                                  int weightAfter,
                                                  DM1V1FountainResultPc34Compat* outResult) {

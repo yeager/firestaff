@@ -56,12 +56,12 @@ static const DM1_V1_ChestPickupStackFailoverSpecPc34 s_spec = {
 
 static DM1_V1_ChestPickupStackFailoverProbePc34 s_last_probe;
 
-static M11_Item make_item(int itemType,
+static DM1_V1_ItemPc34 make_item(int itemType,
                           int weight,
                           int charges,
                           int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -82,7 +82,7 @@ static void record_check(int condition, int* passed, int* failed)
 }
 
 int dm1_v1_chest_pickup_stack_failover_stack_kind_pc34(
-    const M11_Item* item)
+    const DM1_V1_ItemPc34* item)
 {
     if (!item || item->itemType == 0) {
         return DM1_PC34_CHEST_STACK_KIND_NONE;
@@ -96,27 +96,27 @@ int dm1_v1_chest_pickup_stack_failover_stack_kind_pc34(
     return DM1_PC34_CHEST_STACK_KIND_NONE;
 }
 
-static int get_item_in_source_slot(const M11_InventoryState* state,
+static int get_item_in_source_slot(const DM1_V1_InventoryStatePc34* state,
                                    int champ,
                                    int pc34Slot,
-                                   M11_Item* out)
+                                   DM1_V1_ItemPc34* out)
 {
     if (!state || !out) {
         return 0;
     }
-    return m11_inventory_get_item_in_pc34_source_slot(
+    return DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
         state, champ, pc34Slot, out);
 }
 
-static int clear_chest_slot(M11_InventoryState* state,
+static int clear_chest_slot(DM1_V1_InventoryStatePc34* state,
                             int champ,
                             int chestSlotIndex)
 {
-    return m11_inventory_set_item_in_chest_slot(
+    return DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
         state, champ, chestSlotIndex, 0, 0, 0, 0);
 }
 
-static int find_first_free_backpack_slot(const M11_InventoryState* state,
+static int find_first_free_backpack_slot(const DM1_V1_InventoryStatePc34* state,
                                          int champ,
                                          int* firstOut,
                                          int* secondOut,
@@ -133,7 +133,7 @@ static int find_first_free_backpack_slot(const M11_InventoryState* state,
     for (pc34Slot = DM1_PC34_SLOT_BACKPACK_LINE1_1;
          pc34Slot <= DM1_PC34_SLOT_BACKPACK_LINE1_9;
          ++pc34Slot) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
         if (!get_item_in_source_slot(state, champ, pc34Slot, &item)) {
             return 0;
@@ -160,13 +160,13 @@ static int find_first_free_backpack_slot(const M11_InventoryState* state,
 }
 
 int dm1_v1_chest_pickup_stack_failover_click_pc34(
-    M11_InventoryState* state,
+    DM1_V1_InventoryStatePc34* state,
     int champ,
     int chestSlotIndex,
     int* routedPc34SlotOut)
 {
-    M11_Item chestItem;
-    M11_Item handItem;
+    DM1_V1_ItemPc34 chestItem;
+    DM1_V1_ItemPc34 handItem;
     int chestKind;
     int handKind;
     int routedPc34Slot = -1;
@@ -177,10 +177,10 @@ int dm1_v1_chest_pickup_stack_failover_click_pc34(
     if (!state || champ < 0 || champ >= state->championCount ||
         chestSlotIndex < 0 ||
         chestSlotIndex >= DM1_PC34_CHEST_STACK_FAILOVER_SLOT_COUNT ||
-        m11_inventory_get_open_chest_thing(state, champ) == 0 ||
-        !m11_inventory_get_item_in_chest_slot(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(state, champ) == 0 ||
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             state, champ, chestSlotIndex, &chestItem) ||
-        !m11_inventory_get_mouse_item(state, champ, &handItem) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(state, champ, &handItem) ||
         chestItem.itemType == 0) {
         return DM1_PC34_CHEST_STACK_OUTCOME_REJECTED;
     }
@@ -192,7 +192,7 @@ int dm1_v1_chest_pickup_stack_failover_click_pc34(
      * BLITMASK.C F0133:30-33 anchors the leader-hand icon redraw after the
      * default empty-hand pickup. */
     if (handItem.itemType == 0) {
-        if (!m11_inventory_set_mouse_item(
+        if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
                 state, champ, chestItem.itemType, chestItem.weight,
                 chestItem.charges, chestItem.allowedSlots) ||
             !clear_chest_slot(state, champ, chestSlotIndex)) {
@@ -207,7 +207,7 @@ int dm1_v1_chest_pickup_stack_failover_click_pc34(
     if (chestKind != DM1_PC34_CHEST_STACK_KIND_NONE &&
         handKind == chestKind &&
         handItem.itemType == chestItem.itemType) {
-        if (!m11_inventory_set_mouse_item(
+        if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
                 state, champ, handItem.itemType,
                 handItem.weight + chestItem.weight,
                 handItem.charges + chestItem.charges,
@@ -225,7 +225,7 @@ int dm1_v1_chest_pickup_stack_failover_click_pc34(
     if (chestKind != DM1_PC34_CHEST_STACK_KIND_NONE &&
         find_first_free_backpack_slot(state, champ, &routedPc34Slot,
                                       NULL, NULL)) {
-        if (!m11_inventory_set_item_in_pc34_source_slot(
+        if (!DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
                 state, champ, routedPc34Slot, chestItem.itemType,
                 chestItem.weight, chestItem.charges,
                 chestItem.allowedSlots) ||
@@ -241,7 +241,7 @@ int dm1_v1_chest_pickup_stack_failover_click_pc34(
     return DM1_PC34_CHEST_STACK_OUTCOME_REJECTED;
 }
 
-static int fill_backpack_except_two_free(M11_InventoryState* state,
+static int fill_backpack_except_two_free(DM1_V1_InventoryStatePc34* state,
                                          int champ)
 {
     int pc34Slot;
@@ -253,7 +253,7 @@ static int fill_backpack_except_two_free(M11_InventoryState* state,
             pc34Slot == DM1_PC34_CHEST_STACK_FAILOVER_FREE_B) {
             continue;
         }
-        if (!m11_inventory_set_item_in_pc34_source_slot(
+        if (!DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
                 state, champ, pc34Slot,
                 DM1_PC34_CHEST_STACK_FAILOVER_PACKED + pc34Slot,
                 1, 0, DM1_PC34_ALLOWED_ANY_SLOT)) {
@@ -263,7 +263,7 @@ static int fill_backpack_except_two_free(M11_InventoryState* state,
     return 1;
 }
 
-static int closed_contains(const M11_Item* closed, int count, int itemType)
+static int closed_contains(const DM1_V1_ItemPc34* closed, int count, int itemType)
 {
     int i;
 
@@ -284,18 +284,18 @@ static int run_case(DM1_V1_ChestPickupStackFailoverCasePc34* out,
                     int handCharges,
                     int wantOutcome)
 {
-    M11_InventoryState state;
-    M11_Item linked[2];
-    M11_Item handBefore;
-    M11_Item chestBefore;
-    M11_Item sentinelBefore;
-    M11_Item routedBefore;
-    M11_Item routedAfter;
-    M11_Item secondFreeAfter;
-    M11_Item handAfter;
-    M11_Item chestAfter;
-    M11_Item sentinelAfter;
-    M11_Item closed[DM1_PC34_CHEST_STACK_FAILOVER_SLOT_COUNT];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[2];
+    DM1_V1_ItemPc34 handBefore;
+    DM1_V1_ItemPc34 chestBefore;
+    DM1_V1_ItemPc34 sentinelBefore;
+    DM1_V1_ItemPc34 routedBefore;
+    DM1_V1_ItemPc34 routedAfter;
+    DM1_V1_ItemPc34 secondFreeAfter;
+    DM1_V1_ItemPc34 handAfter;
+    DM1_V1_ItemPc34 chestAfter;
+    DM1_V1_ItemPc34 sentinelAfter;
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_STACK_FAILOVER_SLOT_COUNT];
     int routedSlot = -1;
 
     if (!out) {
@@ -309,25 +309,25 @@ static int run_case(DM1_V1_ChestPickupStackFailoverCasePc34* out,
     linked[1] = make_item(DM1_PC34_CHEST_STACK_FAILOVER_SENTINEL, 5, 0,
                           DM1_PC34_ALLOWED_CONTAINER);
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     out->setupResult = fill_backpack_except_two_free(&state, 0);
     if (!out->setupResult) {
         return 0;
     }
     if (handItemType != 0 &&
-        !m11_inventory_set_mouse_item(&state, 0, handItemType, handWeight,
+        !DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, handItemType, handWeight,
                                       handCharges,
                                       DM1_PC34_ALLOWED_ANY_SLOT)) {
         return 0;
     }
 
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_STACK_FAILOVER_CHEST_THING, linked, 2);
-    out->openThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->openResult ||
-        !m11_inventory_get_mouse_item(&state, 0, &handBefore) ||
-        !m11_inventory_get_item_in_chest_slot(&state, 0, 0, &chestBefore) ||
-        !m11_inventory_get_item_in_chest_slot(&state, 0, 1,
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &handBefore) ||
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, 0, &chestBefore) ||
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, 1,
                                               &sentinelBefore) ||
         !find_first_free_backpack_slot(&state, 0, &out->firstFreeSlot,
                                        &out->secondFreeSlot,
@@ -354,7 +354,7 @@ static int run_case(DM1_V1_ChestPickupStackFailoverCasePc34* out,
         out->handBeforeType == out->chestBeforeType ? 1 : 0;
     out->routedSlotBeforeType = routedBefore.itemType;
     out->sentinelBeforeType = sentinelBefore.itemType;
-    out->loadBeforePickup = m11_inventory_get_load(&state, 0);
+    out->loadBeforePickup = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     out->pickupResult =
         dm1_v1_chest_pickup_stack_failover_click_pc34(
@@ -362,9 +362,9 @@ static int run_case(DM1_V1_ChestPickupStackFailoverCasePc34* out,
     out->outcome = out->pickupResult;
     out->routedSlot = routedSlot;
 
-    if (!m11_inventory_get_mouse_item(&state, 0, &handAfter) ||
-        !m11_inventory_get_item_in_chest_slot(&state, 0, 0, &chestAfter) ||
-        !m11_inventory_get_item_in_chest_slot(&state, 0, 1,
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &handAfter) ||
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, 0, &chestAfter) ||
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, 1,
                                               &sentinelAfter) ||
         !get_item_in_source_slot(&state, 0, out->firstFreeSlot,
                                  &routedAfter) ||
@@ -388,7 +388,7 @@ static int run_case(DM1_V1_ChestPickupStackFailoverCasePc34* out,
     out->sentinelAfterType = sentinelAfter.itemType;
     out->visibleWeightAfterPickup =
         m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
-    out->loadAfterPickup = m11_inventory_get_load(&state, 0);
+    out->loadAfterPickup = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     out->closeCount = m11_inventory_pc34_close_chest_with_weight_snapshot(
         &state, 0, closed,

@@ -64,9 +64,9 @@ typedef struct {
     int cellBitsCleared;
 } SquareListPc34;
 
-static M11_Item make_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -228,30 +228,30 @@ dm1_v1_chest_empty_party_group_cleanup_spec_pc34(void)
 static int run_empty_close_case(
     DM1_V1_ChestEmptyPartyGroupCleanupEmptyClosePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item item;
-    M11_Item closed[DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 item;
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT];
     SquareListPc34 square;
 
     memset(out, 0, sizeof(*out));
     memset(closed, 0, sizeof(closed));
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     seed_square_only(&square, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_CHEST_THING);
 
     /* ReDMCSB CHEST.C F0334 lines 113-114 returns when no G0426 chest is open. */
-    out->noOpenCloseCount = m11_inventory_close_chest(
+    out->noOpenCloseCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT);
 
     /* ReDMCSB CHEST.C F0333 lines 53-76 opens an empty container by filling
      * every visible G0425 chest slot with NONE. */
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_CHEST_THING, 0, 0);
-    out->openThingAfterOpen = m11_inventory_get_open_chest_thing(&state, 0);
-    if (!m11_inventory_get_item_in_chest_slot(&state, 0, 0, &item)) {
+    out->openThingAfterOpen = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, 0, &item)) {
         return 0;
     }
     out->emptyVisibleSlot0 = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT - 1,
             &item)) {
         return 0;
@@ -266,10 +266,10 @@ static int run_empty_close_case(
 
     /* ReDMCSB CHEST.C F0334 lines 117-132 closes G0426 and rewrites only
      * non-empty visible slots; an empty visible set returns count zero here. */
-    out->closeCount = m11_inventory_close_chest(
+    out->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT);
-    out->openThingAfterClose = m11_inventory_get_open_chest_thing(&state, 0);
-    out->getClosedSlotResult = m11_inventory_get_item_in_chest_slot(
+    out->openThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
+    out->getClosedSlotResult = DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &state, 0, 0, &item);
 
     out->emptyCloseCleanupApplied =
@@ -282,7 +282,7 @@ static int run_empty_close_case(
     out->emptyCloseRemovedNextAfterUnlink = square.removedNextAfterUnlink;
     out->emptyCloseCellBitsCleared = square.cellBitsCleared;
 
-    out->closeAgainCount = m11_inventory_close_chest(
+    out->closeAgainCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT);
     return 1;
 }
@@ -345,24 +345,24 @@ static int run_square_cases(
 static int run_open_close_cycle(
     DM1_V1_ChestEmptyPartyGroupCleanupOpenClosePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[2];
-    M11_Item closed[DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[2];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT];
     SquareListPc34 square;
     int i;
 
     memset(out, 0, sizeof(*out));
     memset(closed, 0, sizeof(closed));
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     linked[0] = make_item(DM1_PC34_CHEST_EMPTY_PARTY_GROUP_ITEM0, 4);
     linked[1] = make_item(DM1_PC34_CHEST_EMPTY_PARTY_GROUP_ITEM1, 9);
     seed_square_only(&square, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_CHEST_THING);
 
     /* ReDMCSB CHEST.C F0333 lines 53-76 materializes only visible linked
      * chest objects, and F0334 lines 117-132 preserves non-empty slots. */
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_CHEST_THING, linked, 2);
-    out->closeCount = m11_inventory_close_chest(
+    out->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT);
     for (i = 0; i < DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT; ++i) {
         out->closedTypes[i] = closed[i].itemType;
@@ -372,7 +372,7 @@ static int run_open_close_cycle(
     out->squarePresentAfterClose = square.squareListPresent;
     out->firstThingAfterClose = square.firstThing;
     out->closeClearsOpenThing =
-        m11_inventory_get_open_chest_thing(&state, 0) == 0 ? 1 : 0;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == 0 ? 1 : 0;
 
     /* ReDMCSB DUNGEON.C F0163 lines 1796-1837 can re-link the same synthetic
      * chest thing before another CHEST.C F0333/F0334 empty open-close cycle. */
@@ -380,9 +380,9 @@ static int run_open_close_cycle(
             &square, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_CHEST_THING)) {
         return 0;
     }
-    out->reopenEmptyResult = m11_inventory_open_chest(
+    out->reopenEmptyResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_REOPEN_THING, 0, 0);
-    out->reopenEmptyCloseCount = m11_inventory_close_chest(
+    out->reopenEmptyCloseCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_CHEST_EMPTY_PARTY_GROUP_SLOT_COUNT);
     out->reopenEmptyCleanupApplied =
         cleanup_if_empty_close(out->reopenEmptyCloseCount, &square);

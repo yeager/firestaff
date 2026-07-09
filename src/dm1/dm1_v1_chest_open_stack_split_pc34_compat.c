@@ -286,9 +286,9 @@ int dm1_v1_chest_open_stack_split_run_pc34(
     ChainModelPc34 chain_exact;
     ChainModelPc34 chain_over;
     ChainModelPc34 chain_after_close;
-    M11_InventoryState state;
-    M11_Item open_items[DM1_PC34_CHEST_SLOT_COUNT];
-    M11_Item closed_items[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 open_items[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed_items[DM1_PC34_CHEST_SLOT_COUNT];
     int visible_partial[DM1_PC34_CHEST_SLOT_COUNT];
     int visible_exact[DM1_PC34_CHEST_SLOT_COUNT];
     int visible_over[DM1_PC34_CHEST_SLOT_COUNT];
@@ -363,20 +363,20 @@ int dm1_v1_chest_open_stack_split_run_pc34(
         DM1_PC34_CHEST_OPEN_STACK_SPLIT_END_SENTINEL;
 
     /* ---- Empty chain open: produces all-NONE visible window ---- */
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     {
-        M11_Item empty_open[1] = { { 0, 0, 0, 0, 0, 0 } };
-        out->empty_open_result = m11_inventory_open_chest(
+        DM1_V1_ItemPc34 empty_open[1] = { { 0, 0, 0, 0, 0, 0 } };
+        out->empty_open_result = DM1_V1_Inventory_OpenChestPc34Compat(
             &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION,
             DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHEST_THING,
             empty_open, 0);
         out->empty_panel_content =
-            m11_inventory_get_panel_content_pc34(&state);
-        out->empty_chest_thing = m11_inventory_get_open_chest_thing(
+            DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
+        out->empty_chest_thing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION);
         for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-            M11_Item slot;
-            int has = m11_inventory_get_item_in_chest_slot(
+            DM1_V1_ItemPc34 slot;
+            int has = DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION, i,
                 &slot);
             if (has && slot.itemType != 0) {
@@ -396,7 +396,7 @@ int dm1_v1_chest_open_stack_split_run_pc34(
     out->panel_content_after_open = out->empty_panel_content;
 
     /* ---- Partial chain (length 5) open via M11 helper ---- */
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < 5; ++i) {
         open_items[i].itemType = chain_partial.items[i];
         open_items[i].weight = 3 + (i & 1);
@@ -406,7 +406,7 @@ int dm1_v1_chest_open_stack_split_run_pc34(
         open_items[i].allowedSlots =
             DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER;
     }
-    out->partial_open_result = m11_inventory_open_chest(
+    out->partial_open_result = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION,
         DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHEST_THING,
         open_items, 5);
@@ -424,8 +424,8 @@ int dm1_v1_chest_open_stack_split_run_pc34(
     out->partial_tail_fill_count = partial_tail_fill_count;
     out->partial_chain_head_ordinal = partial_head;
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-        M11_Item slot;
-        if (m11_inventory_get_item_in_chest_slot(
+        DM1_V1_ItemPc34 slot;
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION, i,
                 &slot) && slot.itemType != 0) {
             out->partial_visible_types[i] = slot.itemType;
@@ -436,7 +436,7 @@ int dm1_v1_chest_open_stack_split_run_pc34(
     }
 
     /* ---- Exact chain (length 8) open ---- */
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < 8; ++i) {
         open_items[i].itemType = chain_exact.items[i];
         open_items[i].weight = 3 + (i & 1);
@@ -446,7 +446,7 @@ int dm1_v1_chest_open_stack_split_run_pc34(
         open_items[i].allowedSlots =
             DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER;
     }
-    out->exact_open_result = m11_inventory_open_chest(
+    out->exact_open_result = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION,
         DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHEST_THING,
         open_items, 8);
@@ -463,8 +463,8 @@ int dm1_v1_chest_open_stack_split_run_pc34(
     out->exact_tail_fill_count = exact_tail_fill_count;
     out->exact_chain_head_ordinal = exact_head;
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-        M11_Item slot;
-        if (m11_inventory_get_item_in_chest_slot(
+        DM1_V1_ItemPc34 slot;
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION, i,
                 &slot) && slot.itemType != 0) {
             out->exact_visible_types[i] = slot.itemType;
@@ -475,7 +475,7 @@ int dm1_v1_chest_open_stack_split_run_pc34(
     }
 
     /* ---- Overfull chain (length 12) open: 8 visible + 4 hidden tail ---- */
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < 8; ++i) {
         open_items[i].itemType = chain_over.items[i];
         open_items[i].weight = 3 + (i & 1);
@@ -485,7 +485,7 @@ int dm1_v1_chest_open_stack_split_run_pc34(
         open_items[i].allowedSlots =
             DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER;
     }
-    out->over_open_result = m11_inventory_open_chest(
+    out->over_open_result = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION,
         DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHEST_THING,
         open_items, 8);
@@ -515,8 +515,8 @@ int dm1_v1_chest_open_stack_split_run_pc34(
     out->over_twelfth_terminator =
         (over_tail_count >= 4 && tail_over[3] == 0x90C) ? 1 : 0;
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-        M11_Item slot;
-        if (m11_inventory_get_item_in_chest_slot(
+        DM1_V1_ItemPc34 slot;
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION, i,
                 &slot) && slot.itemType != 0) {
             out->over_visible_types[i] = slot.itemType;
@@ -560,18 +560,18 @@ int dm1_v1_chest_open_stack_split_run_pc34(
 
     /* ---- M11 close: drains the visible 8 items + clears G0425 ---- */
     {
-        int close_count = m11_inventory_close_chest(
+        int close_count = DM1_V1_Inventory_CloseChestPc34Compat(
             &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION,
             closed_items, DM1_PC34_CHEST_SLOT_COUNT);
         out->round_trip_close_result = close_count;
         out->panel_content_after_close =
-            m11_inventory_get_panel_content_pc34(&state);
+            DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
     }
 
     /* ---- M11 reopen with the close-chain head + body + hidden tail
      * to verify the F0333 split round-trip identity ---- */
     {
-        M11_Item reopen_items[12];
+        DM1_V1_ItemPc34 reopen_items[12];
         int reopen_linked_count = 0;
         for (i = 0; i < 8; ++i) {
             reopen_items[i].itemType = chain_after_close.items[i];
@@ -583,14 +583,14 @@ int dm1_v1_chest_open_stack_split_run_pc34(
                 DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER;
             ++reopen_linked_count;
         }
-        out->round_trip_reopen_result = m11_inventory_open_chest(
+        out->round_trip_reopen_result = DM1_V1_Inventory_OpenChestPc34Compat(
             &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION,
             DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHEST_THING,
             reopen_items, reopen_linked_count);
         out->round_trip_reopen_visible_count = 0;
         for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-            M11_Item slot;
-            if (m11_inventory_get_item_in_chest_slot(
+            DM1_V1_ItemPc34 slot;
+            if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                     &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION,
                     i, &slot) && slot.itemType != 0) {
                 out->round_trip_reopen_visible_types[i] = slot.itemType;
@@ -604,9 +604,9 @@ int dm1_v1_chest_open_stack_split_run_pc34(
             }
         }
         out->round_trip_reopen_panel_content =
-            m11_inventory_get_panel_content_pc34(&state);
+            DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
         out->round_trip_reopen_open_chest_thing =
-            m11_inventory_get_open_chest_thing(
+            DM1_V1_Inventory_GetOpenChestThingPc34Compat(
                 &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION);
         out->round_trip_reopen_eighth_ordinal =
             (out->round_trip_reopen_visible_count > 0)
@@ -647,7 +647,7 @@ int dm1_v1_chest_open_stack_split_run_pc34(
     /* ---- Idempotence: open(overfull) twice preserves the same
      * visible window + chain head. ---- */
     {
-        m11_inventory_init(&state, 1);
+        DM1_V1_Inventory_InitPc34Compat(&state, 1);
         for (i = 0; i < 8; ++i) {
             open_items[i].itemType = chain_over.items[i];
             open_items[i].weight = 3 + (i & 1);
@@ -657,14 +657,14 @@ int dm1_v1_chest_open_stack_split_run_pc34(
             open_items[i].allowedSlots =
                 DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER;
         }
-        out->idempotent_open_result = m11_inventory_open_chest(
+        out->idempotent_open_result = DM1_V1_Inventory_OpenChestPc34Compat(
             &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION,
             DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHEST_THING,
             open_items, 8);
         out->idempotent_visible_count = 0;
         for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-            M11_Item slot;
-            if (m11_inventory_get_item_in_chest_slot(
+            DM1_V1_ItemPc34 slot;
+            if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                     &state, DM1_PC34_CHEST_OPEN_STACK_SPLIT_CHAMPION, i,
                     &slot) && slot.itemType != 0) {
                 out->idempotent_visible_types[i] = slot.itemType;

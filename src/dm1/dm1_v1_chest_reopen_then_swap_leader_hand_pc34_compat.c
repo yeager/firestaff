@@ -28,9 +28,9 @@ const DM1_V1_ChestReopenThenSwapLeaderHandSpecPc34
         DM1_PC34_CHEST_REOPEN_SWAP_A_HIDDEN_TAIL
     };
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -58,7 +58,7 @@ static int snapshot_world_hash(unsigned int* outHash)
     return 1;
 }
 
-static int copy_open_types(const M11_InventoryState* state, int* typesOut)
+static int copy_open_types(const DM1_V1_InventoryStatePc34* state, int* typesOut)
 {
     int i;
 
@@ -66,9 +66,9 @@ static int copy_open_types(const M11_InventoryState* state, int* typesOut)
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_REOPEN_SWAP_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, 0, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item)) {
             return 0;
         }
         typesOut[i] = item.itemType;
@@ -76,7 +76,7 @@ static int copy_open_types(const M11_InventoryState* state, int* typesOut)
     return 1;
 }
 
-static void copy_item_types(const M11_Item* items, int count, int* typesOut)
+static void copy_item_types(const DM1_V1_ItemPc34* items, int count, int* typesOut)
 {
     int i;
 
@@ -165,11 +165,11 @@ M11_GameView_ChestReopenThenSwapLeaderHandSpecPc34(void)
 int M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
     DM1_V1_ChestReopenThenSwapLeaderHandProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item chestAInput[DM1_PC34_CHEST_REOPEN_SWAP_MAX_LINKED];
-    M11_Item chestAClosed[DM1_PC34_CHEST_REOPEN_SWAP_SLOT_COUNT];
-    M11_Item chestAClosedWhileOpeningB[DM1_PC34_CHEST_REOPEN_SWAP_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 chestAInput[DM1_PC34_CHEST_REOPEN_SWAP_MAX_LINKED];
+    DM1_V1_ItemPc34 chestAClosed[DM1_PC34_CHEST_REOPEN_SWAP_SLOT_COUNT];
+    DM1_V1_ItemPc34 chestAClosedWhileOpeningB[DM1_PC34_CHEST_REOPEN_SWAP_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int i;
 
     if (!out) {
@@ -189,7 +189,7 @@ int M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
         return 0;
     }
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < DM1_PC34_CHEST_REOPEN_SWAP_MAX_LINKED; ++i) {
         chestAInput[i] =
             make_item(DM1_PC34_CHEST_REOPEN_SWAP_A_FIRST + i,
@@ -199,10 +199,10 @@ int M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
 
     /* ReDMCSB CHEST.C F0333 lines 31-67 materializes chest A's linked list
      * into C537..C544/G0425 and stops before the ninth hidden-tail object. */
-    out->chestAOpenResult = m11_inventory_open_chest(
+    out->chestAOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, out->chestAThing, chestAInput,
         DM1_PC34_CHEST_REOPEN_SWAP_MAX_LINKED);
-    out->chestAOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->chestAOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->chestAOpenResult ||
         !copy_open_types(&state, out->chestAOpenedTypes)) {
         return 0;
@@ -215,23 +215,23 @@ int M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
      * in the leader hand; F0302 lines 688-710 later permits it in C30+. */
     item = chestAInput[DM1_PC34_CHEST_REOPEN_SWAP_SLOT_COUNT];
     out->leaderHandSetupResult =
-        m11_inventory_set_mouse_item(&state, 0, item.itemType, item.weight,
+        DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, item.itemType, item.weight,
                                      item.charges, item.allowedSlots);
     if (!out->leaderHandSetupResult ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandBeforeClose = item.itemType;
     out->leaderHandCanEnterChestB =
-        m11_inventory_can_equip(&item, DM1_PC34_SLOT_CHEST_1);
+        DM1_V1_Inventory_CanEquipPc34Compat(&item, DM1_PC34_SLOT_CHEST_1);
 
     /* ReDMCSB CHEST.C F0334 lines 113-132 rewrites only visible G0425
      * members; DUNGEON.C F0163 lines 1796-1837 relinks those visible returns,
      * leaving the ninth object solely in the leader hand. */
-    out->chestACloseCount = m11_inventory_close_chest(
+    out->chestACloseCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, chestAClosed, DM1_PC34_CHEST_REOPEN_SWAP_SLOT_COUNT);
     if (out->chestACloseCount < 0 ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     copy_item_types(chestAClosed, out->chestACloseCount,
@@ -253,13 +253,13 @@ int M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
 
     /* ReDMCSB CHEST.C F0333 lines 31-67 reopens chest A from the F0334
      * visible-only rewrite, proving the hidden tail is not rematerialized. */
-    out->chestAReopenResult = m11_inventory_open_chest(
+    out->chestAReopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, out->chestAReopenThing, chestAClosed,
         out->chestACloseCount);
-    out->chestAReopenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->chestAReopenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->chestAReopenResult ||
         !copy_open_types(&state, out->chestAReopenedTypes) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->chestAReopenedVisibleCount = count_visible(out->chestAReopenedTypes);
@@ -276,12 +276,12 @@ int M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
     /* ReDMCSB CHEST.C F0333 lines 34-39 closes reopened chest A through
      * F0334 lines 113-132 before opening different chest B for C30 routing. */
     out->chestACloseWhileOpeningBCount =
-        m11_inventory_open_chest_replacing_current(
+        DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat(
             &state, 0, out->chestBThing, NULL, 0,
             chestAClosedWhileOpeningB,
             DM1_PC34_CHEST_REOPEN_SWAP_SLOT_COUNT);
     if (out->chestACloseWhileOpeningBCount < 0 ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     copy_item_types(chestAClosedWhileOpeningB,
@@ -291,22 +291,22 @@ int M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
         contains_type(out->chestAClosedWhileOpeningBTypes,
                       out->chestACloseWhileOpeningBCount,
                       DM1_PC34_CHEST_REOPEN_SWAP_A_HIDDEN_TAIL);
-    out->chestBOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->chestBOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
 
     /* ReDMCSB CHAMPION.C F0298 lines 263-285 removes the leader-hand object;
      * F0302 lines 688-710 adds it to B's empty C537/G0425 destination. */
-    out->chestBPlaceClickResult = m11_inventory_click_pc34_source_slot(
+    out->chestBPlaceClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0,
         DM1_PC34_SLOT_CHEST_1 + DM1_PC34_CHEST_REOPEN_SWAP_B_DEST_INDEX);
     if (!out->chestBPlaceClickResult ||
-        !m11_inventory_get_item_in_chest_slot(
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_REOPEN_SWAP_B_DEST_INDEX, &item)) {
         return 0;
     }
     out->chestBDestinationAfterPlace = item.itemType;
     out->hiddenTailStoredInChestB =
         item.itemType == DM1_PC34_CHEST_REOPEN_SWAP_A_HIDDEN_TAIL ? 1 : 0;
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterPlace = item.itemType;

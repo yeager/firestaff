@@ -2,16 +2,16 @@
  * DM1 V1 Stairs Inventory State Gate — narrow CTest gate
  *
  * Bridges the M11_StairLevelState I1/I2/I3 invariants and the
- * M11_InventoryState to lock down the previously-uncovered boundary
+ * DM1_V1_InventoryStatePc34 to lock down the previously-uncovered boundary
  * that the "stairs while already transitioning" path is a true no-op:
  *
  *   1. The I1 rejection path (m11_stairs_use while transitionActive==1)
  *      returns 0 AND does not mutate M11_StairLevelState, does not write
  *      *newX / *newY / *newFacing, AND does not touch the caller's
- *      M11_InventoryState (open chest, panel content, leader hand).
+ *      DM1_V1_InventoryStatePc34 (open chest, panel content, leader hand).
  *   2. The mid-tick window between m11_stairs_use returning and
  *      m11_stairs_tick consuming the full transitionTicksLeft is a
- *      "datafreeze" window: every M11_InventoryState field we care
+ *      "datafreeze" window: every DM1_V1_InventoryStatePc34 field we care
  *      about stays byte-identical until the transition settles.
  *   3. After the rejected second call, the original transition still
  *      settles to currentLevel=1, transitionActive=0, and a follow-up
@@ -63,9 +63,9 @@ static void expect_int(const char *id, int got, int want, const char *anchor)
     }
 }
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
     item.weight = weight;
@@ -84,13 +84,13 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
      * transitionToLevel, currentLevel, transitionTicksLeft, or
      * transitionActive, and *before* writing *newX / *newY / *newFacing.
      *
-     * The M11_InventoryState lives in CHAMPION.C M516_CHAMPIONS and is
+     * The DM1_V1_InventoryStatePc34 lives in CHAMPION.C M516_CHAMPIONS and is
      * independent of M11_StairLevelState, so a rejected call must not
      * mutate either the level state or any chest / hand / load state.
      */
     M11_StairLevelState stairs;
-    M11_InventoryState inv;
-    M11_Item linked[8];
+    DM1_V1_InventoryStatePc34 inv;
+    DM1_V1_ItemPc34 linked[8];
     int champ = 0;
     int newX, newY, newFacing;
     int rc, i;
@@ -108,15 +108,15 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
     /* Build a fully-open chest state. */
-    m11_inventory_init(&inv, 1);
+    DM1_V1_Inventory_InitPc34Compat(&inv, 1);
     for (i = 0; i < 8; ++i) {
         linked[i] = make_item(400 + i, /*weight=*/3 + i, DM1_PC34_ALLOWED_CONTAINER);
     }
     expect_int("open_chest_i1",
-               m11_inventory_open_chest(&inv, champ, openThing, linked, 8), 1,
+               DM1_V1_Inventory_OpenChestPc34Compat(&inv, champ, openThing, linked, 8), 1,
                "CHEST.C:F0333_INVENTORY_OpenChest:30-75");
     expect_int("set_action_hand_torch_i1",
-               m11_inventory_set_item(&inv, champ, DM1_SLOT_HAND_LEFT,
+               DM1_V1_Inventory_SetItemPc34Compat(&inv, champ, DM1_SLOT_HAND_LEFT,
                                       /*itemType=*/19 /* FLAME */,
                                       /*weight=*/1,
                                       /*charges=*/12), 1,
@@ -150,9 +150,9 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:87 nominal 500ms");
 
     /* Snapshot the inventory before the rejected call. */
-    const int panelBefore      = m11_inventory_get_panel_content_pc34(&inv);
-    const int openBefore       = m11_inventory_get_open_chest_thing(&inv, champ);
-    const int loadBefore       = m11_inventory_get_load(&inv, champ);
+    const int panelBefore      = DM1_V1_Inventory_GetPanelContentPc34Compat(&inv);
+    const int openBefore       = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ);
+    const int loadBefore       = DM1_V1_Inventory_GetLoadPc34Compat(&inv, champ);
     const int itemTypeBefore   = inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].itemType;
     const int weightBefore     = inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].weight;
     const int chargesBefore    = inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].charges;
@@ -203,15 +203,15 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
                stairs.transitionTicksLeft, transitionTicksLeftBefore,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:65 (I1 no-mutation)");
 
-    /* M11_InventoryState is byte-identical to the snapshot. */
+    /* DM1_V1_InventoryStatePc34 is byte-identical to the snapshot. */
     expect_int("i1_panel_unchanged",
-               m11_inventory_get_panel_content_pc34(&inv), panelBefore,
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv), panelBefore,
                "PANEL.C:G0424_i_PanelContent; I1 rejection never invokes F0355");
     expect_int("i1_open_chest_unchanged",
-               m11_inventory_get_open_chest_thing(&inv, champ), openBefore,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openBefore,
                "PANEL.C:G0426_T_OpenChest; I1 rejection never invokes F0334");
     expect_int("i1_load_unchanged",
-               m11_inventory_get_load(&inv, champ), loadBefore,
+               DM1_V1_Inventory_GetLoadPc34Compat(&inv, champ), loadBefore,
                "CHAMPION.C:M516.Champion[0].Load preserved");
     expect_int("i1_action_hand_item_unchanged",
                inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].itemType,
@@ -247,7 +247,7 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
      * Between m11_stairs_use returning (transitionActive=1,
      * transitionTicksLeft=500) and m11_stairs_tick consuming the full
      * 500 ms, the transition is "pending".  During this window the
-     * M11_InventoryState must remain byte-identical to the pre-use
+     * DM1_V1_InventoryStatePc34 must remain byte-identical to the pre-use
      * snapshot — neither the level state ticks (I4) nor any future
      * stairs call (I1) should reach into M516_CHAMPIONS or the
      * chest-slot / open-chest-thing globals.
@@ -257,8 +257,8 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
      * mid-tick (still-pending) inventory freeze.
      */
     M11_StairLevelState stairs;
-    M11_InventoryState inv;
-    M11_Item linked[8];
+    DM1_V1_InventoryStatePc34 inv;
+    DM1_V1_ItemPc34 linked[8];
     int champ = 0;
     int newX, newY, newFacing;
     int i, transitioning;
@@ -278,23 +278,23 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
                m11_stairs_add(&stairs, 3, 3, 0, 0, 3, 3, 0), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
-    m11_inventory_init(&inv, 1);
+    DM1_V1_Inventory_InitPc34Compat(&inv, 1);
     for (i = 0; i < 8; ++i) {
         linked[i] = make_item(500 + i, /*weight=*/2 + i, DM1_PC34_ALLOWED_CONTAINER);
     }
     expect_int("datafreeze_open_chest",
-               m11_inventory_open_chest(&inv, champ, 0xBEEF, linked, 8), 1,
+               DM1_V1_Inventory_OpenChestPc34Compat(&inv, champ, 0xBEEF, linked, 8), 1,
                "CHEST.C:F0333_INVENTORY_OpenChest:30-75");
     expect_int("datafreeze_set_torch",
-               m11_inventory_set_item(&inv, champ, DM1_SLOT_HAND_LEFT,
+               DM1_V1_Inventory_SetItemPc34Compat(&inv, champ, DM1_SLOT_HAND_LEFT,
                                       /*itemType=*/19 /* FLAME */,
                                       /*weight=*/1,
                                       /*charges=*/10), 1,
                "CHAMPION.C:F0301_AddObjectInSlot:587-660");
 
-    const int panelBefore = m11_inventory_get_panel_content_pc34(&inv);
-    const int openBefore  = m11_inventory_get_open_chest_thing(&inv, champ);
-    const int loadBefore  = m11_inventory_get_load(&inv, champ);
+    const int panelBefore = DM1_V1_Inventory_GetPanelContentPc34Compat(&inv);
+    const int openBefore  = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ);
+    const int loadBefore  = DM1_V1_Inventory_GetLoadPc34Compat(&inv, champ);
 
     /* Take the stairs so a transition is pending. */
     expect_int("datafreeze_first_use_rc",
@@ -316,13 +316,13 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
                stairs.transitionTicksLeft, 400,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:111 (I3 clamp)");
     expect_int("datafreeze_one_tick_panel",
-               m11_inventory_get_panel_content_pc34(&inv), panelBefore,
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv), panelBefore,
                "PANEL.C:G0424_i_PanelContent frozen mid-transition");
     expect_int("datafreeze_one_tick_open_chest",
-               m11_inventory_get_open_chest_thing(&inv, champ), openBefore,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openBefore,
                "PANEL.C:G0426_T_OpenChest frozen mid-transition");
     expect_int("datafreeze_one_tick_load",
-               m11_inventory_get_load(&inv, champ), loadBefore,
+               DM1_V1_Inventory_GetLoadPc34Compat(&inv, champ), loadBefore,
                "CHAMPION.C:M516.Champion[0].Load frozen mid-transition");
 
     /* Try the rejected stairs call mid-tick — must still be a no-op
@@ -336,10 +336,10 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
     expect_int("datafreeze_rejected_mid_tick_x", newX, -55,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:65-67 (I1 no-write)");
     expect_int("datafreeze_rejected_mid_tick_panel",
-               m11_inventory_get_panel_content_pc34(&inv), panelBefore,
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv), panelBefore,
                "PANEL.C:G0424_i_PanelContent; I1 mid-tick never invokes F0355");
     expect_int("datafreeze_rejected_mid_tick_open_chest",
-               m11_inventory_get_open_chest_thing(&inv, champ), openBefore,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openBefore,
                "PANEL.C:G0426_T_OpenChest; I1 mid-tick never invokes F0334");
 
     /* Tick through the rest of the transition (5 more ticks * 100ms = 500ms). */
@@ -350,10 +350,10 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
     expect_int("datafreeze_settled_transitioning", transitioning, 0,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:114 (settle)");
     expect_int("datafreeze_settled_panel",
-               m11_inventory_get_panel_content_pc34(&inv), panelBefore,
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv), panelBefore,
                "PANEL.C:G0424_i_PanelContent survives to settle");
     expect_int("datafreeze_settled_open_chest",
-               m11_inventory_get_open_chest_thing(&inv, champ), openBefore,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openBefore,
                "PANEL.C:G0426_T_OpenChest survives to settle");
 }
 
@@ -369,8 +369,8 @@ static void test_rejected_call_does_not_corrupt_followup_stairs_use(void)
      * exactly as if the rejected call had never happened.
      */
     M11_StairLevelState stairs;
-    M11_InventoryState inv;
-    M11_Item linked[8];
+    DM1_V1_InventoryStatePc34 inv;
+    DM1_V1_ItemPc34 linked[8];
     int champ = 0;
     int newX, newY, newFacing;
     int i, rc;
@@ -385,15 +385,15 @@ static void test_rejected_call_does_not_corrupt_followup_stairs_use(void)
                m11_stairs_add(&stairs, 9, 9, 2, 0, 9, 9, 2), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
-    m11_inventory_init(&inv, 1);
+    DM1_V1_Inventory_InitPc34Compat(&inv, 1);
     for (i = 0; i < 8; ++i) {
         linked[i] = make_item(600 + i, /*weight=*/4, DM1_PC34_ALLOWED_CONTAINER);
     }
     expect_int("followup_open_chest",
-               m11_inventory_open_chest(&inv, champ, 0xC0DE, linked, 8), 1,
+               DM1_V1_Inventory_OpenChestPc34Compat(&inv, champ, 0xC0DE, linked, 8), 1,
                "CHEST.C:F0333_INVENTORY_OpenChest:30-75");
     expect_int("followup_set_torch",
-               m11_inventory_set_item(&inv, champ, DM1_SLOT_HAND_LEFT,
+               DM1_V1_Inventory_SetItemPc34Compat(&inv, champ, DM1_SLOT_HAND_LEFT,
                                       /*itemType=*/19 /* FLAME */,
                                       /*weight=*/1,
                                       /*charges=*/8), 1,
@@ -425,11 +425,11 @@ static void test_rejected_call_does_not_corrupt_followup_stairs_use(void)
 
     /* Inventory still byte-identical (open chest + torch + load). */
     expect_int("followup_settled_panel",
-               m11_inventory_get_panel_content_pc34(&inv),
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv),
                DM1_PC34_PANEL_CHEST,
                "PANEL.C:G0424_i_PanelContent survives rejected + settled");
     expect_int("followup_settled_open_chest",
-               m11_inventory_get_open_chest_thing(&inv, champ), 0xC0DE,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), 0xC0DE,
                "PANEL.C:G0426_T_OpenChest survives rejected + settled");
     expect_int("followup_settled_chest_0_item",
                inv.champions[champ].chestSlots[0].itemType, 600,
@@ -450,7 +450,7 @@ static void test_rejected_call_does_not_corrupt_followup_stairs_use(void)
     expect_int("followup_second_ticks_left", stairs.transitionTicksLeft, 500,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:87 nominal 500ms");
     expect_int("followup_second_open_chest",
-               m11_inventory_get_open_chest_thing(&inv, champ), 0xC0DE,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), 0xC0DE,
                "PANEL.C:G0426_T_OpenChest survives second stairs use");
 }
 

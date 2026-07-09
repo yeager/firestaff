@@ -3,14 +3,14 @@
 #include <string.h>
 
 typedef struct {
-    M11_InventoryState inventory;
-    M11_Item floor[2];
+    DM1_V1_InventoryStatePc34 inventory;
+    DM1_V1_ItemPc34 floor[2];
     int floorCount;
 } PartialDropRuntimePc34;
 
-static M11_Item make_stack(int itemType, int count, int unitWeight)
+static DM1_V1_ItemPc34 make_stack(int itemType, int count, int unitWeight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -21,7 +21,7 @@ static M11_Item make_stack(int itemType, int count, int unitWeight)
     return item;
 }
 
-static DM1_V1_ChestPartialDropStackPc34 snapshot_stack(M11_Item item)
+static DM1_V1_ChestPartialDropStackPc34 snapshot_stack(DM1_V1_ItemPc34 item)
 {
     DM1_V1_ChestPartialDropStackPc34 stack;
 
@@ -32,16 +32,16 @@ static DM1_V1_ChestPartialDropStackPc34 snapshot_stack(M11_Item item)
 }
 
 static void copy_chest_slots(
-    const M11_InventoryState* state,
+    const DM1_V1_InventoryStatePc34* state,
     DM1_V1_ChestPartialDropStackPc34* out)
 {
     int i;
 
     for (i = 0; i < DM1_PC34_PARTIAL_DROP_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
         memset(&item, 0, sizeof(item));
-        (void)m11_inventory_get_item_in_chest_slot(state, 0, i, &item);
+        (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item);
         out[i] = snapshot_stack(item);
     }
 }
@@ -118,10 +118,10 @@ dm1_v1_chest_partial_drop_to_floor_while_chest_open_source_evidence_pc34(
 
 static int seed_runtime(PartialDropRuntimePc34* runtime)
 {
-    M11_Item linked[5];
+    DM1_V1_ItemPc34 linked[5];
 
     memset(runtime, 0, sizeof(*runtime));
-    m11_inventory_init(&runtime->inventory, 1);
+    DM1_V1_Inventory_InitPc34Compat(&runtime->inventory, 1);
     linked[0] = make_stack(0x7631, 2, 1);
     linked[1] = make_stack(DM1_PC34_PARTIAL_DROP_STACK_TYPE,
                            DM1_PC34_PARTIAL_DROP_INITIAL_COUNT,
@@ -132,7 +132,7 @@ static int seed_runtime(PartialDropRuntimePc34* runtime)
 
     /* ReDMCSB: CHEST.C F0333 lines 53-67 copies the container links into
      * G0425_aT_ChestSlots/C537..C544 while G0426 names the open chest. */
-    return m11_inventory_open_chest(&runtime->inventory, 0,
+    return DM1_V1_Inventory_OpenChestPc34Compat(&runtime->inventory, 0,
                                     DM1_PC34_PARTIAL_DROP_CHEST_THING,
                                     linked, 5);
 }
@@ -141,12 +141,12 @@ static int split_partial_stack_to_leader_hand(
     PartialDropRuntimePc34* runtime,
     DM1_V1_ChestPartialDropToFloorWhileOpenProbePc34* out)
 {
-    M11_Item slot;
-    M11_Item remaining;
-    M11_Item hand;
+    DM1_V1_ItemPc34 slot;
+    DM1_V1_ItemPc34 remaining;
+    DM1_V1_ItemPc34 hand;
     int remainingCount;
 
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &runtime->inventory, 0, DM1_PC34_PARTIAL_DROP_TARGET_INDEX,
             &slot) ||
         slot.itemType != DM1_PC34_PARTIAL_DROP_STACK_TYPE ||
@@ -170,7 +170,7 @@ static int split_partial_stack_to_leader_hand(
      * G0425 entry, then F0301 lines 606-614 leaves the remainder in G0425. */
     remaining = make_stack(slot.itemType, remainingCount,
                            DM1_PC34_PARTIAL_DROP_UNIT_WEIGHT);
-    if (!m11_inventory_set_item_in_chest_slot(
+    if (!DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
             &runtime->inventory, 0, DM1_PC34_PARTIAL_DROP_TARGET_INDEX,
             remaining.itemType, remaining.weight, remaining.charges,
             remaining.allowedSlots)) {
@@ -181,17 +181,17 @@ static int split_partial_stack_to_leader_hand(
 
     /* ReDMCSB: CHAMPION.C F0297 lines 243-268 puts the selected thing in the
      * leader hand. Here the partial stack is represented by charges/count. */
-    if (!m11_inventory_set_mouse_item(&runtime->inventory, 0, slot.itemType,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&runtime->inventory, 0, slot.itemType,
                                       out->partialDropWeight,
                                       out->partialDropCount,
                                       slot.allowedSlots) ||
-        !m11_inventory_get_mouse_item(&runtime->inventory, 0, &hand)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&runtime->inventory, 0, &hand)) {
         return 0;
     }
     out->f0297PutPartialInLeaderHand = 1;
     out->leaderHandAfterSplit = snapshot_stack(hand);
     out->f0133PartialMaskDispatches = 2;
-    m11_inventory_recalc_load(&runtime->inventory, 0);
+    DM1_V1_Inventory_RecalcLoadPc34Compat(&runtime->inventory, 0);
     return 1;
 }
 
@@ -199,10 +199,10 @@ static int link_leader_hand_to_floor(
     PartialDropRuntimePc34* runtime,
     DM1_V1_ChestPartialDropToFloorWhileOpenProbePc34* out)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
 
     if (runtime->floorCount >= 1 ||
-        !m11_inventory_get_mouse_item(&runtime->inventory, 0, &hand) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&runtime->inventory, 0, &hand) ||
         hand.itemType == 0) {
         return 0;
     }
@@ -218,13 +218,13 @@ static int link_leader_hand_to_floor(
     out->floorMapX = DM1_PC34_PARTIAL_DROP_FLOOR_X;
     out->floorMapY = DM1_PC34_PARTIAL_DROP_FLOOR_Y;
 
-    if (!m11_inventory_set_mouse_item(&runtime->inventory, 0, 0, 0, 0,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&runtime->inventory, 0, 0, 0, 0,
                                       DM1_PC34_ALLOWED_ANY_SLOT) ||
-        !m11_inventory_get_mouse_item(&runtime->inventory, 0, &hand)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&runtime->inventory, 0, &hand)) {
         return 0;
     }
     out->leaderHandAfterFloor = snapshot_stack(hand);
-    m11_inventory_recalc_load(&runtime->inventory, 0);
+    DM1_V1_Inventory_RecalcLoadPc34Compat(&runtime->inventory, 0);
     return 1;
 }
 
@@ -232,8 +232,8 @@ int dm1_v1_chest_partial_drop_to_floor_while_chest_open_run_pc34(
     DM1_V1_ChestPartialDropToFloorWhileOpenProbePc34* out)
 {
     PartialDropRuntimePc34 runtime;
-    M11_Item hand;
-    M11_Item closed[DM1_PC34_PARTIAL_DROP_SLOT_COUNT];
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 closed[DM1_PC34_PARTIAL_DROP_SLOT_COUNT];
     int i;
 
     if (!out) {
@@ -247,18 +247,18 @@ int dm1_v1_chest_partial_drop_to_floor_while_chest_open_run_pc34(
         DM1_PC34_PARTIAL_DROP_C537 + DM1_PC34_PARTIAL_DROP_TARGET_INDEX;
     out->sourceSlotIndex = DM1_PC34_PARTIAL_DROP_TARGET_INDEX;
     out->sourceAllowedByC30Mask =
-        m11_inventory_pc34_slot_mask(out->sourcePc34Slot) ==
+        DM1_V1_Inventory_Pc34SlotMaskCompat(out->sourcePc34Slot) ==
         DM1_PC34_ALLOWED_CONTAINER;
     out->commandPanelChest = DM1_PC34_PARTIAL_DROP_PANEL_CHEST;
     out->commandDispatchC040 = 1;
 
     out->openResult = seed_runtime(&runtime);
-    out->openChestThing = m11_inventory_get_open_chest_thing(
+    out->openChestThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, 0);
-    out->panelAfterOpen = m11_inventory_get_panel_content_pc34(
+    out->panelAfterOpen = DM1_V1_Inventory_GetPanelContentPc34Compat(
         &runtime.inventory);
     if (!out->openResult ||
-        !m11_inventory_get_mouse_item(&runtime.inventory, 0, &hand)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&runtime.inventory, 0, &hand)) {
         return 0;
     }
     out->leaderHandBefore = snapshot_stack(hand);
@@ -275,7 +275,7 @@ int dm1_v1_chest_partial_drop_to_floor_while_chest_open_run_pc34(
     out->openVisibleCountAfter = count_visible(out->chestAfter);
 
     memset(closed, 0, sizeof(closed));
-    out->closeCount = m11_inventory_close_chest(
+    out->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &runtime.inventory, 0, closed, DM1_PC34_PARTIAL_DROP_SLOT_COUNT);
     for (i = 0; i < DM1_PC34_PARTIAL_DROP_SLOT_COUNT; ++i) {
         out->closedChain[i] = snapshot_stack(closed[i]);

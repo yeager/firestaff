@@ -17,14 +17,14 @@
  *   PANEL.C F0347:1639-1691 (close-chest-first redraw + panel reroute)
  *
  * The precise state transition pinned by the gate is:
- *   step 1: open G0426 on inventory_owner champion via m11_inventory_open_chest,
+ *   step 1: open G0426 on inventory_owner champion via DM1_V1_Inventory_OpenChestPc34Compat,
  *           panelContent = M569_PANEL_CHEST, G0425[0..7] populated with 8
  *           distinct items.
  *   step 2: the inventory_owner's action hand item is currently a CONTAINER
  *           (matching the open chest on the same champion's G0426).
  *   step 3: a click on the inventory_owner's action-hand slot box (slot 1)
  *           replaces the CONTAINER action hand with a NON-CONTAINER item
- *           (modeled as m11_inventory_set_item_in_pc34_source_slot on
+ *           (modeled as DM1_V1_Inventory_SetItemInPc34SourceSlotCompat on
  *           DM1_PC34_SLOT_ACTION_HAND with DM1_PC34_ALLOWED_HANDS mask).
  *           This is the F0302:702-712 path with the leader-hand object
  *           being NONE (so the F0298 leader-hand remove is bypassed) and
@@ -51,13 +51,13 @@
  * The lane is intentionally a CONTAINER -> NON_CONTAINER transition, not
  * the inverse. The inverse (NON_CONTAINER -> CONTAINER action hand while
  * G0426 is closed and a fresh G0426 open needs to happen) is the
- * F0333 reopen path covered by m11_inventory_open_chest_replacing_current
+ * F0333 reopen path covered by DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat
  * and the close_stack_merge reopen-round-trip companion slice.
  */
 
 typedef struct {
-    M11_InventoryState inventory;
-    M11_Item visibleItems[DM1_PC34_CAOC_SLOT_COUNT];
+    DM1_V1_InventoryStatePc34 inventory;
+    DM1_V1_ItemPc34 visibleItems[DM1_PC34_CAOC_SLOT_COUNT];
     int otherChampionMouseItemType;
     int deadChampionMouseItemType;
     int otherChampionActionHandItemType;
@@ -154,9 +154,9 @@ static const DM1_V1_ChestActionHandOwnerChangeSpecPc34 s_spec = {
     "DEFS.H C00_THING_TYPE_DOOR/C05_THING_TYPE_WEAPON/C09_THING_TYPE_CONTAINER/C07_THING_TYPE_SCROLL"
 };
 
-static M11_Item make_visible_item(int index)
+static DM1_V1_ItemPc34 make_visible_item(int index)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = DM1_PC34_CAOC_FIRST_VISIBLE_ITEM + index;
@@ -168,9 +168,9 @@ static M11_Item make_visible_item(int index)
     return item;
 }
 
-static M11_Item make_container_item(void)
+static DM1_V1_ItemPc34 make_container_item(void)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = DM1_PC34_CAOC_CONTAINER_ITEM;
@@ -182,9 +182,9 @@ static M11_Item make_container_item(void)
     return item;
 }
 
-static M11_Item make_non_container_item(void)
+static DM1_V1_ItemPc34 make_non_container_item(void)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = DM1_PC34_CAOC_NON_CONTAINER_ITEM;
@@ -196,7 +196,7 @@ static M11_Item make_non_container_item(void)
     return item;
 }
 
-static int thing_type_of(const M11_Item* item)
+static int thing_type_of(const DM1_V1_ItemPc34* item)
 {
     if (!item || item->itemType == 0) {
         return DM1_PC34_CAOC_THING_TYPE_GENERIC;
@@ -229,14 +229,14 @@ static void runtime_init(RuntimePc34* rt)
     int i;
 
     memset(rt, 0, sizeof(*rt));
-    m11_inventory_init(&rt->inventory, DM1_PC34_CAOC_CHAMPION_COUNT);
+    DM1_V1_Inventory_InitPc34Compat(&rt->inventory, DM1_PC34_CAOC_CHAMPION_COUNT);
 
     /* Seed the inventory owner champion with an empty mouse / leader hand
      * and a non-container action hand. The mouse-hand starts empty so
      * the F0302 click on the action-hand slot will pick up the
      * container through the inventory's slot-hand path.
      */
-    (void)m11_inventory_set_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &rt->inventory,
         DM1_PC34_CAOC_INVENTORY_OWNER,
         DM1_PC34_SLOT_ACTION_HAND,
@@ -259,7 +259,7 @@ static void runtime_init(RuntimePc34* rt)
 
 static int open_inventory_owner_chest(RuntimePc34* rt)
 {
-    int ok = m11_inventory_open_chest(
+    int ok = DM1_V1_Inventory_OpenChestPc34Compat(
         &rt->inventory,
         DM1_PC34_CAOC_INVENTORY_OWNER,
         DM1_PC34_CAOC_OPEN_CHEST_THING,
@@ -273,8 +273,8 @@ static int open_inventory_owner_chest(RuntimePc34* rt)
 
 static int place_container_in_action_hand(RuntimePc34* rt)
 {
-    M11_Item container = make_container_item();
-    int ok = m11_inventory_set_item_in_pc34_source_slot(
+    DM1_V1_ItemPc34 container = make_container_item();
+    int ok = DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &rt->inventory,
         DM1_PC34_CAOC_INVENTORY_OWNER,
         DM1_PC34_SLOT_ACTION_HAND,
@@ -294,11 +294,11 @@ static int swap_action_hand_to_non_container(RuntimePc34* rt)
      * so F0300 fires (with F0299 to drop the CONTAINER modifier) and
      * then F0301 fires for the new NON_CONTAINER.
      */
-    M11_Item removed;
-    M11_Item inserted = make_non_container_item();
+    DM1_V1_ItemPc34 removed;
+    DM1_V1_ItemPc34 inserted = make_non_container_item();
     int ok;
 
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt->inventory,
             DM1_PC34_CAOC_INVENTORY_OWNER,
             DM1_PC34_SLOT_ACTION_HAND,
@@ -314,7 +314,7 @@ static int swap_action_hand_to_non_container(RuntimePc34* rt)
     /* F0300 path: remove the CONTAINER from the action hand. */
     ++rt->f0299ObjectModifierApplyCount; /* remove CONTAINER modifier */
     ++rt->f0300RemoveC030Count;
-    ok = m11_inventory_remove_item(
+    ok = DM1_V1_Inventory_RemoveItemPc34Compat(
         &rt->inventory,
         DM1_PC34_CAOC_INVENTORY_OWNER,
         DM1_SLOT_HAND_LEFT);
@@ -325,7 +325,7 @@ static int swap_action_hand_to_non_container(RuntimePc34* rt)
     /* F0301 path: insert the NON_CONTAINER into the action hand. */
     ++rt->f0299ObjectModifierApplyCount; /* add NON_CONTAINER modifier */
     ++rt->f0301AddC030Count;
-    ok = m11_inventory_set_item_in_pc34_source_slot(
+    ok = DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &rt->inventory,
         DM1_PC34_CAOC_INVENTORY_OWNER,
         DM1_PC34_SLOT_ACTION_HAND,
@@ -346,18 +346,18 @@ static int swap_action_hand_to_non_container(RuntimePc34* rt)
 }
 
 static int run_panel_redraw_close_chest_first(RuntimePc34* rt,
-                                              M11_Item* closedOut,
+                                              DM1_V1_ItemPc34* closedOut,
                                               int* closedCountOut)
 {
-    M11_Item closed[DM1_PC34_CAOC_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CAOC_SLOT_COUNT];
     int count;
-    M11_Item actionHand;
+    DM1_V1_ItemPc34 actionHand;
     int thingType;
 
     ++rt->f0347PanelRedrawCount;
 
     /* PANEL.C F0347 lines 1647-1650: close the chest first. */
-    count = m11_inventory_close_chest(
+    count = DM1_V1_Inventory_CloseChestPc34Compat(
         &rt->inventory,
         DM1_PC34_CAOC_INVENTORY_OWNER,
         closed,
@@ -377,7 +377,7 @@ static int run_panel_redraw_close_chest_first(RuntimePc34* rt,
      *   C07_THING_TYPE_SCROLL    -> M643_PANEL_SCROLL
      *   default                   -> M565_PANEL_FOOD_WATER_POISONED
      */
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt->inventory,
             DM1_PC34_CAOC_INVENTORY_OWNER,
             DM1_PC34_SLOT_ACTION_HAND,
@@ -386,21 +386,21 @@ static int run_panel_redraw_close_chest_first(RuntimePc34* rt,
     }
     thingType = thing_type_of(&actionHand);
     if (thingType == DM1_PC34_CAOC_THING_TYPE_CONTAINER) {
-        (void)m11_inventory_set_panel_content_pc34(
+        (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
             &rt->inventory, DM1_PC34_CAOC_PANEL_CHEST);
     } else if (thingType == DM1_PC34_CAOC_THING_TYPE_WEAPON) {
         /* weapons and the default branch land in FOOD_WATER_POISONED. */
-        (void)m11_inventory_set_panel_content_pc34(
+        (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
             &rt->inventory, DM1_PC34_CAOC_PANEL_FOOD_WATER_POISONED);
     } else {
-        (void)m11_inventory_set_panel_content_pc34(
+        (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
             &rt->inventory, DM1_PC34_CAOC_PANEL_FOOD_WATER_POISONED);
     }
     return 1;
 }
 
-static int visible_rewrite_matches(const M11_Item* closed, int count,
-                                   const M11_Item* expected)
+static int visible_rewrite_matches(const DM1_V1_ItemPc34* closed, int count,
+                                   const DM1_V1_ItemPc34* expected)
 {
     int i;
 
@@ -514,10 +514,10 @@ int dm1_v1_chest_action_hand_owner_change_run_pc34(
     DM1_V1_ChestActionHandOwnerChangeProbePc34* out)
 {
     RuntimePc34 rt;
-    M11_Item closed[DM1_PC34_CAOC_SLOT_COUNT];
-    M11_Item snapshotSlot;
-    M11_Item initialAction;
-    M11_Item afterAction;
+    DM1_V1_ItemPc34 closed[DM1_PC34_CAOC_SLOT_COUNT];
+    DM1_V1_ItemPc34 snapshotSlot;
+    DM1_V1_ItemPc34 initialAction;
+    DM1_V1_ItemPc34 afterAction;
     int closedCount = 0;
     int initialPanel;
     int initialThingType;
@@ -541,7 +541,7 @@ int dm1_v1_chest_action_hand_owner_change_run_pc34(
 
     /* ── Step 1: place a CONTAINER in the inventory_owner's action hand. */
     model_check(place_container_in_action_hand(&rt) == 1, out);
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt.inventory,
             DM1_PC34_CAOC_INVENTORY_OWNER,
             DM1_PC34_SLOT_ACTION_HAND,
@@ -557,14 +557,14 @@ int dm1_v1_chest_action_hand_owner_change_run_pc34(
 
     /* ── Step 2: open the G0426 chest on the inventory_owner champion. */
     out->openPanelContentBefore =
-        m11_inventory_get_panel_content_pc34(&rt.inventory);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->openResult = open_inventory_owner_chest(&rt);
     out->openPanelContentAfter =
-        m11_inventory_get_panel_content_pc34(&rt.inventory);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->openChampionAfter = DM1_PC34_CAOC_INVENTORY_OWNER;
 
     /* Snapshot the live visible G0425[0..7] items. */
-    if (m11_inventory_get_item_in_chest_slot(
+    if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &rt.inventory,
             DM1_PC34_CAOC_INVENTORY_OWNER,
             0,
@@ -573,7 +573,7 @@ int dm1_v1_chest_action_hand_owner_change_run_pc34(
         out->visibleBeforeSlot0Weight = snapshotSlot.weight;
         out->visibleBeforeSlot0Charges = snapshotSlot.charges;
     }
-    if (m11_inventory_get_item_in_chest_slot(
+    if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &rt.inventory,
             DM1_PC34_CAOC_INVENTORY_OWNER,
             3,
@@ -582,7 +582,7 @@ int dm1_v1_chest_action_hand_owner_change_run_pc34(
         out->visibleBeforeSlot3Weight = snapshotSlot.weight;
         out->visibleBeforeSlot3Charges = snapshotSlot.charges;
     }
-    if (m11_inventory_get_item_in_chest_slot(
+    if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &rt.inventory,
             DM1_PC34_CAOC_INVENTORY_OWNER,
             7,
@@ -593,7 +593,7 @@ int dm1_v1_chest_action_hand_owner_change_run_pc34(
     }
     out->visibleCountBefore = DM1_PC34_CAOC_SLOT_COUNT;
 
-    initialPanel = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    initialPanel = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->initialPanelContent = initialPanel;
     initialThingType = out->initialActionHandThingType;
 
@@ -604,7 +604,7 @@ int dm1_v1_chest_action_hand_owner_change_run_pc34(
      */
     model_check(swap_action_hand_to_non_container(&rt) == 1, out);
 
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt.inventory,
             DM1_PC34_CAOC_INVENTORY_OWNER,
             DM1_PC34_SLOT_ACTION_HAND,
@@ -630,9 +630,9 @@ int dm1_v1_chest_action_hand_owner_change_run_pc34(
         return 0;
     }
 
-    afterPanel = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    afterPanel = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->panelContentAfterClose = afterPanel;
-    out->openChestThingAfterClose = m11_inventory_get_open_chest_thing(
+    out->openChestThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &rt.inventory, DM1_PC34_CAOC_INVENTORY_OWNER);
     out->panelContentReRoutedToFood =
         afterPanel == DM1_PC34_CAOC_PANEL_FOOD_WATER_POISONED;

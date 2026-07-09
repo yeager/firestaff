@@ -106,7 +106,7 @@ static void assert_default_state(void)
 {
     DM1_V1_ChestOpenMirrorRotationThreeWayStatePc34 state =
         dm1_v1_chest_open_mirror_rotation_three_way_default_state_pc34();
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     uint32_t hash_a;
     uint32_t hash_b;
 
@@ -132,20 +132,20 @@ static void assert_default_state(void)
                     state.candidateHandQueueItem.type,
                     DM1_PC34_COMR3_CANDIDATE_HAND_ITEM);
     PROBE_ASSERT_EQ("default.open_chest",
-                    m11_inventory_get_open_chest_thing(
+                    DM1_V1_Inventory_GetOpenChestThingPc34Compat(
                         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER),
                     DM1_PC34_COMR3_CHEST_THING);
     PROBE_ASSERT_EQ("default.panel",
-                    m11_inventory_get_panel_content_pc34(&state.inventory),
+                    DM1_V1_Inventory_GetPanelContentPc34Compat(&state.inventory),
                     DM1_PC34_PANEL_CHEST);
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER, &item);
     PROBE_ASSERT_EQ("default.nonleader_hand", item.itemType,
                     DM1_PC34_COMR3_NON_LEADER_HAND_ITEM);
     PROBE_ASSERT_EQ("default.nonleader_hand_quantity",
                     state.handQuantities[DM1_PC34_COMR3_OPEN_NON_LEADER],
                     DM1_PC34_COMR3_HAND_QUANTITY);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER,
         DM1_PC34_COMR3_TARGET_SLOT_INDEX, &item);
     PROBE_ASSERT_EQ("default.c540_item", item.itemType,

@@ -301,7 +301,7 @@ static int test_dead_champion_no_click_path(void)
     int ok = 1;
 
     /* The dead-champion early return in F0302:681 is enforced by the
-     * status hand slot box routing, not by m11_inventory_click_pc34_source_slot.
+     * status hand slot box routing, not by DM1_V1_Inventory_ClickPc34SourceSlotCompat.
      * The contract-only probe therefore demonstrates that the dispatch code
      * in F0302:677-684 short-circuits before the F0302:695-708 swap path, so
      * the click on a dead champion is never reached and no click is needed.

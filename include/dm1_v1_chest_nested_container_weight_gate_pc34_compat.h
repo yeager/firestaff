@@ -125,7 +125,7 @@ typedef struct {
 
 typedef struct {
     /* Side-channel: the inner container's own Slot head chain.
-     * Lives outside the M11_Item representation because M11_Item does
+     * Lives outside the DM1_V1_ItemPc34 representation because DM1_V1_ItemPc34 does
      * not encode the CONTAINER::Next linked-list pointer; the test
      * model treats this array as the inner Slot chain that the
      * F0333/F0334/F0302 dispatch must NOT perturb when the outer

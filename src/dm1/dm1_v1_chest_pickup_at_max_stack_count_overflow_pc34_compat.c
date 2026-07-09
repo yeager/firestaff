@@ -12,7 +12,7 @@
  */
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     int partyDirection;
     int rotateTicks;
     int commandQueueLocked;
@@ -42,9 +42,9 @@ static const char s_source_evidence[] =
     "leaves the overflow count in the original chest slot; no new C537..C544 "
     "slot is allocated by F0302/F0301.";
 
-static M11_Item make_item(int itemType, int weight, int charges)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int charges)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -91,26 +91,26 @@ static void redraw_panel(
     int sourceSlotIndex,
     DM1_V1_ChestPickupAtMaxStackCountOverflowPanelPc34* panel)
 {
-    M11_Item hand;
-    M11_Item slot0;
-    M11_Item slot1;
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 slot0;
+    DM1_V1_ItemPc34 slot1;
 
     memset(&hand, 0, sizeof(hand));
     memset(&slot0, 0, sizeof(slot0));
     memset(&slot1, 0, sizeof(slot1));
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER, &hand);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER, 0,
         &slot0);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER, 1,
         &slot1);
 
     ++runtime->panelRedrawGeneration;
     memset(panel, 0, sizeof(*panel));
     panel->redrawGeneration = runtime->panelRedrawGeneration;
-    panel->panelContent = m11_inventory_get_panel_content_pc34(
+    panel->panelContent = DM1_V1_Inventory_GetPanelContentPc34Compat(
         &runtime->inventory);
     panel->sourceZone = DM1_PC34_CHEST_MAX_STACK_OVERFLOW_C537_ZONE +
                         sourceSlotIndex;
@@ -133,21 +133,21 @@ static void redraw_panel(
 
 static int total_stack_count(const RuntimePc34* runtime)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
     int total = 0;
     int i;
 
     memset(&hand, 0, sizeof(hand));
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER, &hand);
     if (hand.itemType == DM1_PC34_CHEST_MAX_STACK_OVERFLOW_STACK_ITEM) {
         total += hand.charges;
     }
     for (i = 0; i < DM1_PC34_CHEST_MAX_STACK_OVERFLOW_SLOT_COUNT; ++i) {
-        M11_Item slot;
+        DM1_V1_ItemPc34 slot;
 
         memset(&slot, 0, sizeof(slot));
-        (void)m11_inventory_get_item_in_chest_slot(
+        (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER, i,
             &slot);
         if (slot.itemType == DM1_PC34_CHEST_MAX_STACK_OVERFLOW_STACK_ITEM) {
@@ -159,7 +159,7 @@ static int total_stack_count(const RuntimePc34* runtime)
 
 static int setup_runtime(RuntimePc34* runtime, int handCount, int chestCount)
 {
-    M11_Item linked[DM1_PC34_CHEST_MAX_STACK_OVERFLOW_SLOT_COUNT];
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_MAX_STACK_OVERFLOW_SLOT_COUNT];
     int i;
 
     memset(runtime, 0, sizeof(*runtime));
@@ -169,18 +169,18 @@ static int setup_runtime(RuntimePc34* runtime, int handCount, int chestCount)
     linked[0] = make_item(DM1_PC34_CHEST_MAX_STACK_OVERFLOW_STACK_ITEM, 1,
                           chestCount);
 
-    m11_inventory_init(&runtime->inventory,
+    DM1_V1_Inventory_InitPc34Compat(&runtime->inventory,
                        DM1_PC34_CHEST_MAX_STACK_OVERFLOW_PARTY_COUNT);
     runtime->partyDirection = 3;
     runtime->rotateTicks = 2;
     runtime->commandQueueLocked = 1;
 
-    return m11_inventory_set_mouse_item(
+    return DM1_V1_Inventory_SetMouseItemPc34Compat(
                &runtime->inventory,
                DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER,
                DM1_PC34_CHEST_MAX_STACK_OVERFLOW_STACK_ITEM, 1, handCount,
                DM1_PC34_ALLOWED_ANY_SLOT) &&
-           m11_inventory_open_chest(
+           DM1_V1_Inventory_OpenChestPc34Compat(
                &runtime->inventory,
                DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER,
                DM1_PC34_CHEST_MAX_STACK_OVERFLOW_CHEST_THING, linked, 1);
@@ -190,9 +190,9 @@ static int click_chest_stack(
     RuntimePc34* runtime,
     DM1_V1_ChestPickupAtMaxStackCountOverflowEventPc34* out)
 {
-    M11_Item hand;
-    M11_Item chest;
-    M11_Item freeSlot;
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 chest;
+    DM1_V1_ItemPc34 freeSlot;
     int remainder;
 
     if (!runtime || !out) {
@@ -203,12 +203,12 @@ static int click_chest_stack(
     memset(&chest, 0, sizeof(chest));
     memset(&freeSlot, 0, sizeof(freeSlot));
 
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER, &hand);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER,
         DM1_PC34_CHEST_MAX_STACK_OVERFLOW_SOURCE_SLOT, &chest);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER,
         DM1_PC34_CHEST_MAX_STACK_OVERFLOW_FREE_SLOT, &freeSlot);
 
@@ -241,7 +241,7 @@ static int click_chest_stack(
             remainder = 0;
         }
         out->saturatedCount = DM1_PC34_CHEST_MAX_STACK_OVERFLOW_STACK_CAP;
-        if (!m11_inventory_set_mouse_item(
+        if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
                 &runtime->inventory,
                 DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER,
                 hand.itemType, hand.weight, out->saturatedCount,
@@ -249,7 +249,7 @@ static int click_chest_stack(
             --runtime->screenUpdateDepth;
             return 0;
         }
-        if (!m11_inventory_set_item_in_chest_slot(
+        if (!DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
                 &runtime->inventory,
                 DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER,
                 DM1_PC34_CHEST_MAX_STACK_OVERFLOW_SOURCE_SLOT,
@@ -270,12 +270,12 @@ static int click_chest_stack(
     memset(&hand, 0, sizeof(hand));
     memset(&chest, 0, sizeof(chest));
     memset(&freeSlot, 0, sizeof(freeSlot));
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER, &hand);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER,
         DM1_PC34_CHEST_MAX_STACK_OVERFLOW_SOURCE_SLOT, &chest);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime->inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER,
         DM1_PC34_CHEST_MAX_STACK_OVERFLOW_FREE_SLOT, &freeSlot);
 
@@ -339,9 +339,9 @@ int dm1_v1_chest_pickup_at_max_stack_count_overflow_run_pc34(
     out->setupResult = setup_runtime(
         &runtime, 1, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_CAP_MINUS_ONE);
     out->openResult = out->setupResult;
-    out->openChestThing = m11_inventory_get_open_chest_thing(
+    out->openChestThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_CHEST_MAX_STACK_OVERFLOW_LEADER);
-    out->initialPanelContent = m11_inventory_get_panel_content_pc34(
+    out->initialPanelContent = DM1_V1_Inventory_GetPanelContentPc34Compat(
         &runtime.inventory);
     out->initialPanelRedrawGeneration = runtime.panelRedrawGeneration;
     out->initialPartyDirection = runtime.partyDirection;
