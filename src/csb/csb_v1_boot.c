@@ -2582,6 +2582,10 @@ static int csb_v1_boot_startup_utility_receipt_handled_pc34(
 static int csb_v1_boot_startup_action_capture_pre_input_route_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
+    int input_is_pointer,
+    int pointer_x,
+    int pointer_y,
+    unsigned int pointer_button_mask,
     CSB_V1_BootStartupActionReceipt_PC34 *receipt)
 {
     int captured;
@@ -2595,6 +2599,12 @@ static int csb_v1_boot_startup_action_capture_pre_input_route_pc34(
      * receipt captures the pre-input render route before utility/entrance
      * dispatch mutates startup state. */
     receipt->menu_input = menu_input;
+    receipt->input_is_pointer = input_is_pointer ? 1 : 0;
+    receipt->pointer_x = pointer_x;
+    receipt->pointer_y = pointer_y;
+    receipt->pointer_button_mask = pointer_button_mask;
+    receipt->pointer_left_button =
+        (pointer_button_mask & ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT) ? 1 : 0;
     receipt->startup_input =
         csb_v1_startup_input_from_firestaff_menu_code_pc34(menu_input);
     receipt->entrance_command_id =
@@ -2714,6 +2724,10 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     if (!csb_v1_boot_startup_action_capture_pre_input_route_pc34(
             snapshot,
             menu_input,
+            0,
+            0,
+            0,
+            0U,
             out_receipt) ||
         !snapshot->entrance_active) {
         return 0;
@@ -2728,6 +2742,10 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
         out_receipt->handled = 1;
         out_receipt->input_routed_to_utility = 1;
         out_receipt->utility_receipt = utility_receipt;
+        if (utility_receipt.entrance_receipt_valid) {
+            out_receipt->entrance_command_id =
+                utility_receipt.entrance_receipt.command_receipt.command_id;
+        }
         (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
             snapshot,
             out_receipt);
@@ -2750,6 +2768,8 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     out_receipt->handled = 1;
     out_receipt->input_routed_to_entrance = 1;
     out_receipt->entrance_receipt = entrance_receipt;
+    out_receipt->entrance_command_id =
+        entrance_receipt.command_receipt.command_id;
     (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
         snapshot,
         out_receipt);
@@ -2773,6 +2793,10 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     if (!csb_v1_boot_startup_action_capture_pre_input_route_pc34(
             snapshot,
             0,
+            1,
+            x,
+            y,
+            button_mask,
             out_receipt) ||
         !snapshot->entrance_active) {
         return 0;
@@ -2789,6 +2813,10 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
         out_receipt->handled = 1;
         out_receipt->input_routed_to_utility = 1;
         out_receipt->utility_receipt = utility_receipt;
+        if (utility_receipt.entrance_receipt_valid) {
+            out_receipt->entrance_command_id =
+                utility_receipt.entrance_receipt.command_receipt.command_id;
+        }
         (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
             snapshot,
             out_receipt);
@@ -2813,6 +2841,8 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     out_receipt->handled = 1;
     out_receipt->input_routed_to_entrance = 1;
     out_receipt->entrance_receipt = entrance_receipt;
+    out_receipt->entrance_command_id =
+        entrance_receipt.command_receipt.command_id;
     (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
         snapshot,
         out_receipt);

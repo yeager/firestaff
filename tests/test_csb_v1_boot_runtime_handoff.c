@@ -30,6 +30,7 @@
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "asset_find_by_hash.h"
 
@@ -1816,6 +1817,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupRenderViewReceipt_PC34 runtime_view_receipt;
     CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
     CSB_V1_StartupRenderPlan_PC34 runtime_render_plan;
+    int enter_menu_x = 244;
+    int enter_menu_y = 45;
     const char *resume_path = "/tmp/firestaff-csb-resume.dat";
 
     csb_v1_boot_profile_init(&boot);
@@ -2255,14 +2258,42 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
         &snapshot,
         72,
         126,
-        1U,
+        ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
         &boot_action_receipt);
     CHECK(boot_action_receipt.pre_input_route.valid &&
               boot_action_receipt.pre_input_route.hud_menu_state.kind ==
-                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34,
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              boot_action_receipt.input_is_pointer &&
+              boot_action_receipt.pointer_x == 72 &&
+              boot_action_receipt.pointer_y == 126 &&
+              boot_action_receipt.pointer_button_mask ==
+                  ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT &&
+              boot_action_receipt.pointer_left_button &&
+              boot_action_receipt.input_routed_to_utility &&
+              !boot_action_receipt.input_routed_to_entrance &&
+              boot_action_receipt.startup_input ==
+                  CSB_V1_STARTUP_INPUT_NONE_PC34,
           "boot startup pointer action carries utility route proof");
 
     snapshot.utility_overlay_active = 0;
+    CHECK(csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
+              &snapshot,
+              enter_menu_x,
+              enter_menu_y,
+              ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
+              &boot_action_receipt) == 1,
+          "boot startup pointer action handles entrance menu row");
+    CHECK(boot_action_receipt.input_is_pointer &&
+              boot_action_receipt.pointer_x == enter_menu_x &&
+              boot_action_receipt.pointer_y == enter_menu_y &&
+              boot_action_receipt.pointer_left_button &&
+              boot_action_receipt.input_routed_to_entrance &&
+              !boot_action_receipt.input_routed_to_utility &&
+              boot_action_receipt.entrance_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              boot_action_receipt.post_input_render_view_valid &&
+              boot_action_receipt.post_input_render_view.opening_door_route,
+          "boot startup pointer entrance carries command and post-render route");
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               9,
