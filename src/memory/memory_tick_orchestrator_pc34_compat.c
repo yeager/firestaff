@@ -21,6 +21,7 @@
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "dm1_v1_teleporter_pit_pc34_compat.h"
 #include "dm1_v1_throw_shoot_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
@@ -5249,6 +5250,45 @@ static int orch_drop_group_f0267_rejection_possessions_compat(
     return orch_drop_group_slot_possessions_compat(world, group, mapIndex, mapX, mapY);
 }
 
+static int orch_apply_group_move_removal_plan_f0267_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const unsigned char* movingFixedDropCells,
+    int movingFixedDropCellCount,
+    int fallKilledGroup,
+    int creatureAllowedOnDestinationMap,
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapIndex,
+    int destinationMapX,
+    int destinationMapY)
+{
+    M11_GroupMoveRemovalPlan plan;
+
+    if (!world || !group) return 0;
+    memset(&plan, 0, sizeof(plan));
+    if (!m11_plan_group_move_removal_after_pit_teleporter(
+            fallKilledGroup, creatureAllowedOnDestinationMap,
+            sourceMapX, sourceMapY, destinationMapX, destinationMapY,
+            &plan)) {
+        return 0;
+    }
+    if (!plan.movePrevented) return 1;
+    if (plan.dropMovingCreatureFixedPossessions) {
+        (void)orch_drop_moving_fixed_possessions_compat(
+            world, group->creatureType, movingFixedDropCells,
+            movingFixedDropCellCount, destinationMapIndex,
+            plan.dropMapX, plan.dropMapY);
+    }
+    if (plan.dropGroupPossessions) {
+        (void)orch_drop_group_fixed_possessions_compat(
+            world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY);
+        return orch_drop_group_slot_possessions_compat(
+            world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY);
+    }
+    return 1;
+}
+
 static int orch_damage_group_by_pit_fall_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
@@ -5889,9 +5929,9 @@ static int orch_materialize_generated_group_compat(
         resolvedEvent.mapX = destMapX;
         resolvedEvent.mapY = destMapY;
         if (fallKilledGroup) {
-            if (!orch_drop_group_f0267_rejection_possessions_compat(
+            if (!orch_apply_group_move_removal_plan_f0267_compat(
                     world, group, movingFixedDropCells, movingFixedDropCellCount,
-                    destMapIndex, destMapX, destMapY)) {
+                    1, 1, -1, 0, destMapIndex, destMapX, destMapY)) {
                 return 0;
             }
             if (outGroupIndex) *outGroupIndex = groupIndex;
@@ -5901,8 +5941,9 @@ static int orch_materialize_generated_group_compat(
             world, group->creatureType, movingFixedDropCells,
             movingFixedDropCellCount, destMapIndex, destMapX, destMapY);
         if (!orch_is_group_creature_allowed_on_map_compat(world, group, destMapIndex)) {
-            if (!orch_drop_group_f0267_rejection_possessions_compat(
-                    world, group, NULL, 0, destMapIndex, destMapX, destMapY)) {
+            if (!orch_apply_group_move_removal_plan_f0267_compat(
+                    world, group, NULL, 0, 0, 0, -1, 0,
+                    destMapIndex, destMapX, destMapY)) {
                 return 0;
             }
             if (outGroupIndex) *outGroupIndex = groupIndex;
@@ -5960,64 +6001,87 @@ static int orch_handle_deferred_group_move_event_compat(
         &teleporterBuzzes);
     {
         int fallKilledGroup = 0;
+        int creatureAllowed = 0;
+        int destinationBlocked = 0;
+        int chaosAdjacentAvailable = 0;
+        int chaosAdjacentMapX = targetMapX;
+        int chaosAdjacentMapY = targetMapY;
         unsigned char movingFixedDropCells[4];
         int movingFixedDropCellCount = 0;
+        M11_GroupMoveRoutePlan routePlan;
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &retry.mapIndex, &targetMapX, &targetMapY,
                 &fallKilledGroup, movingFixedDropCells,
                 &movingFixedDropCellCount)) {
             return 0;
         }
-        if (fallKilledGroup) {
-            if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
-                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-                     targetMapX, targetMapY, retry.mapIndex);
-            }
-            orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
-            return orch_drop_group_f0267_rejection_possessions_compat(
-                world, group, movingFixedDropCells, movingFixedDropCellCount,
-                retry.mapIndex, targetMapX, targetMapY);
+        creatureAllowed =
+            orch_is_group_creature_allowed_on_map_compat(
+                world, group, retry.mapIndex);
+        if (!fallKilledGroup && creatureAllowed) {
+            (void)orch_drop_moving_fixed_possessions_compat(
+                world, group->creatureType, movingFixedDropCells,
+                movingFixedDropCellCount, retry.mapIndex,
+                targetMapX, targetMapY);
         }
-        (void)orch_drop_moving_fixed_possessions_compat(
-            world, group->creatureType, movingFixedDropCells,
-            movingFixedDropCellCount, retry.mapIndex, targetMapX, targetMapY);
-        if (!orch_is_group_creature_allowed_on_map_compat(world, group, retry.mapIndex)) {
-            if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
-                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-                     targetMapX, targetMapY, retry.mapIndex);
-            }
-            orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
-            return orch_drop_group_f0267_rejection_possessions_compat(
-                world, group, NULL, 0, retry.mapIndex, targetMapX, targetMapY);
-        }
-    }
-
-    if (orch_square_has_group_or_party_compat(world, retry.mapIndex, targetMapX, targetMapY)) {
-        if (orch_try_lord_chaos_random_adjacent_retry_compat(
-                world, group, ev, &targetMapX, &targetMapY) &&
+        destinationBlocked =
+            !fallKilledGroup && creatureAllowed &&
+            orch_square_has_group_or_party_compat(
+                world, retry.mapIndex, targetMapX, targetMapY);
+        if (destinationBlocked &&
+            orch_try_lord_chaos_random_adjacent_retry_compat(
+                world, group, ev, &chaosAdjacentMapX, &chaosAdjacentMapY) &&
             !orch_square_has_group_or_party_compat(
-                world, ev->mapIndex, targetMapX, targetMapY)) {
-            if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
-                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-                     targetMapX, targetMapY, ev->mapIndex);
-            }
-            return orch_link_existing_group_to_square_compat(
-                world, groupIndex, ev->mapIndex, targetMapX, targetMapY);
+                world, ev->mapIndex, chaosAdjacentMapX, chaosAdjacentMapY)) {
+            chaosAdjacentAvailable = 1;
         }
-
-        retry.fireAtTick = ev->fireAtTick + 5u;
-        retry.mapX = targetMapX;
-        retry.mapY = targetMapY;
-        return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+        memset(&routePlan, 0, sizeof(routePlan));
+        if (!m11_plan_deferred_group_move_route_f0267(
+                fallKilledGroup, creatureAllowed, destinationBlocked,
+                ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE,
+                chaosAdjacentAvailable, ev->fireAtTick, targetMapX,
+                targetMapY, chaosAdjacentMapX, chaosAdjacentMapY,
+                &routePlan) ||
+            !routePlan.valid) {
+            return 0;
+        }
+        if (routePlan.route == M11_GROUP_MOVE_ROUTE_REMOVE) {
+            if (routePlan.shouldEmitAudibleBuzz) {
+                emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                     routePlan.mapX, routePlan.mapY, retry.mapIndex);
+            }
+            orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
+            return orch_apply_group_move_removal_plan_f0267_compat(
+                world, group,
+                fallKilledGroup ? movingFixedDropCells : NULL,
+                fallKilledGroup ? movingFixedDropCellCount : 0,
+                fallKilledGroup, creatureAllowed, -1, 0,
+                retry.mapIndex, routePlan.mapX, routePlan.mapY);
+        }
+        if (routePlan.route == M11_GROUP_MOVE_ROUTE_RETRY) {
+            retry.fireAtTick = routePlan.retryFireAtTick;
+            retry.mapX = routePlan.mapX;
+            retry.mapY = routePlan.mapY;
+            return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+        }
+        if (routePlan.shouldEmitAudibleBuzz) {
+            int buzzMapIndex =
+                routePlan.route == M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT
+                    ? ev->mapIndex
+                    : retry.mapIndex;
+            emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                 routePlan.mapX, routePlan.mapY, buzzMapIndex);
+        }
+        if (routePlan.route != M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT) {
+            orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
+        }
+        return orch_link_existing_group_to_square_compat(
+            world, groupIndex,
+            routePlan.route == M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT
+                ? ev->mapIndex
+                : retry.mapIndex,
+            routePlan.mapX, routePlan.mapY);
     }
-
-    if (ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE) {
-        emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
-             targetMapX, targetMapY, retry.mapIndex);
-    }
-    orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
-    return orch_link_existing_group_to_square_compat(
-        world, groupIndex, retry.mapIndex, targetMapX, targetMapY);
 }
 
 

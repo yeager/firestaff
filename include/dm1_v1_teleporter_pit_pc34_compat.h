@@ -44,6 +44,11 @@ extern "C" {
 #define M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED   2
 #define M11_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER 2
 
+#define M11_GROUP_MOVE_ROUTE_INSERT                 1
+#define M11_GROUP_MOVE_ROUTE_REMOVE                 2
+#define M11_GROUP_MOVE_ROUTE_RETRY                  3
+#define M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT  4
+
 typedef struct {
     int x;
     int y;
@@ -69,6 +74,17 @@ typedef struct {
     int deleteMapY;
 } M11_GroupMoveRemovalPlan;
 
+typedef struct {
+    int valid;
+    int route;
+    int shouldEmitAudibleBuzz;
+    int shouldScheduleRetry;
+    uint32_t retryFireAtTick;
+    int mapX;
+    int mapY;
+    int removalReason;
+} M11_GroupMoveRoutePlan;
+
 int  m11_apply_teleporter_rotation(int thingKind,
                                    int sourceMapX,
                                    const M11_TeleporterDef* teleporter,
@@ -92,6 +108,18 @@ int  m11_plan_group_move_removal_after_pit_teleporter(
         int destinationMapX,
         int destinationMapY,
         M11_GroupMoveRemovalPlan* outPlan);
+int  m11_plan_deferred_group_move_route_f0267(
+        int fallKilledGroup,
+        int creatureAllowedOnDestinationMap,
+        int destinationBlocked,
+        int audibleEvent,
+        int chaosAdjacentAvailable,
+        uint32_t currentFireAtTick,
+        int destinationMapX,
+        int destinationMapY,
+        int chaosAdjacentMapX,
+        int chaosAdjacentMapY,
+        M11_GroupMoveRoutePlan* outPlan);
 const char* m11_group_move_removal_source_evidence(void);
 
 #ifdef __cplusplus
