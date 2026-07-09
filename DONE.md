@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB closed-door HUD/menu receipt plan: CSB render-view receipts now carry closed-door render/menu counts, selected command, resume state, and prompt, with a receipt-built render plan that ignores stale host plan fields. Verification: `test_csb_v1_boot_runtime_handoff` 344/344 and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM2 startup view receipt: startup presentation now emits one DM2-owned view receipt joining GDAT title commands, normalized menu state, render proof, and HUD/runtime handoff for host startup consumers. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 HoC menu route M11 handoff: M11 now exposes and consumes the DM1 HoC champion menu route receipt for live C040 panel input ownership, so keyboard/pointer/object routes block through DM1-owned hall/live-panel facts instead of raw M11 flag checks. Verification: `test_m11_overlay_command_queue_block`, `test_dm1_v1_entrance_champion_select_pc34_compat`, and `git diff --check` passed.

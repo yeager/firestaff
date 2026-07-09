@@ -1818,6 +1818,28 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
                 route->draw_closed_doors && route->hud_menu_visible
             ? 1
             : 0;
+    if (out_receipt->closed_door_menu_route) {
+        out_receipt->closed_door_render_command_count =
+            route->presentation.render_plan.render_command_count;
+        out_receipt->closed_door_asset_command_count =
+            route->presentation.render_plan.asset_command_count;
+        out_receipt->closed_door_menu_option_count =
+            route->hud_menu_state.option_count;
+        out_receipt->closed_door_selected_command_id =
+            route->hud_menu_state.selected_command_id;
+        out_receipt->closed_door_resume_enabled =
+            route->hud_menu_state.resume_enabled;
+        out_receipt->closed_door_resume_available =
+            route->hud_menu_state.resume_available;
+        out_receipt->closed_door_resume_option_visible =
+            route->hud_menu_state.resume_option_visible;
+        out_receipt->closed_door_resume_option_selected =
+            route->hud_menu_state.resume_option_selected;
+        snprintf(out_receipt->closed_door_prompt,
+                 sizeof(out_receipt->closed_door_prompt),
+                 "%s",
+                 route->hud_menu_state.prompt);
+    }
     out_receipt->opening_door_route =
         (route->route ==
              CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_DELAY_PC34 ||
@@ -2003,6 +2025,70 @@ int csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
 
     render = &out_plan->render_commands[out_plan->render_command_count++];
     render->kind = CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34;
+    return 1;
+}
+
+int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
+    const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    int i;
+    int selected_seen = 0;
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!receipt || !receipt->valid || !receipt->render_plan_valid ||
+        !receipt->closed_door_menu_route ||
+        !receipt->hud_menu_receipt_ready ||
+        receipt->closed_door_render_command_count <= 0 ||
+        receipt->closed_door_menu_option_count <= 0) {
+        return 0;
+    }
+
+    *out_plan = receipt->render_plan;
+    out_plan->surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    out_plan->waiting_for_input = 1;
+    out_plan->render_command_count =
+        receipt->closed_door_render_command_count;
+    out_plan->asset_command_count =
+        receipt->closed_door_asset_command_count;
+    out_plan->menu_option_count =
+        receipt->closed_door_menu_option_count;
+    out_plan->fallback_prompt_text =
+        receipt->closed_door_prompt[0] != '\0'
+            ? receipt->closed_door_prompt
+            : out_plan->fallback_prompt_text;
+    out_plan->blink_prompt_visible =
+        receipt->closed_door_prompt[0] != '\0' ? 1 : out_plan->blink_prompt_visible;
+
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns closed-door
+     * waiting/menu state. Rebuild selected command and resume availability
+     * from the CSB view receipt so startup HUD callers do not infer them
+     * from stale host render-plan menu rows. */
+    for (i = 0; i < out_plan->menu_option_count &&
+                i < CSB_V1_STARTUP_MENU_OPTION_CAP_PC34; ++i) {
+        CSB_V1_StartupMenuOption_PC34 *option = &out_plan->menu_options[i];
+        option->selected =
+            option->command_id == receipt->closed_door_selected_command_id
+                ? 1
+                : 0;
+        if (option->selected) {
+            selected_seen = 1;
+        }
+        if (option->command_id ==
+            CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34) {
+            option->enabled = receipt->closed_door_resume_enabled ? 1 : 0;
+            option->selected =
+                receipt->closed_door_resume_option_selected ? 1 : option->selected;
+            if (option->selected) {
+                selected_seen = 1;
+            }
+        }
+    }
+    if (!selected_seen && out_plan->menu_option_count > 0) {
+        out_plan->menu_options[0].selected = 1;
+    }
     return 1;
 }
 

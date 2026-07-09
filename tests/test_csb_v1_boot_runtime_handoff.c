@@ -1817,6 +1817,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupRenderViewReceipt_PC34 poisoned_view_receipt;
     CSB_V1_BootStartupRenderViewReceipt_PC34 runtime_view_receipt;
     CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
+    CSB_V1_StartupRenderPlan_PC34 receipt_closed_door_plan;
     CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
     CSB_V1_StartupRenderPlan_PC34 runtime_render_plan;
     int enter_menu_x = 244;
@@ -2155,6 +2156,32 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strcmp(view_receipt.route_receipt.hud_menu_state.resume_path,
                      resume_path) == 0,
           "boot startup render-view receipt owns closed-door HUD/menu and utility fallback gate");
+    poisoned_view_receipt = view_receipt;
+    poisoned_view_receipt.render_plan.waiting_for_input = 0;
+    poisoned_view_receipt.render_plan.render_command_count = 1;
+    poisoned_view_receipt.render_plan.asset_command_count = 0;
+    poisoned_view_receipt.render_plan.menu_option_count = 1;
+    poisoned_view_receipt.render_plan.menu_options[0].selected = 0;
+    poisoned_view_receipt.render_plan.menu_options[1].selected = 1;
+    poisoned_view_receipt.render_plan.fallback_prompt_text = "STALE";
+    CHECK(csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
+              &poisoned_view_receipt,
+              &receipt_closed_door_plan) == 1 &&
+              receipt_closed_door_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+              receipt_closed_door_plan.waiting_for_input &&
+              receipt_closed_door_plan.render_command_count ==
+                  view_receipt.closed_door_render_command_count &&
+              receipt_closed_door_plan.asset_command_count ==
+                  view_receipt.closed_door_asset_command_count &&
+              receipt_closed_door_plan.menu_option_count == 4 &&
+              receipt_closed_door_plan.menu_options[0].selected &&
+              !receipt_closed_door_plan.menu_options[1].selected &&
+              strcmp(receipt_closed_door_plan.fallback_prompt_text,
+                     view_receipt.closed_door_prompt) == 0 &&
+              strstr(receipt_closed_door_plan.fallback_prompt_text,
+                     "PRESS ENTER") != NULL,
+          "boot startup closed-door HUD/menu plan consumes render-view receipt fields");
     CHECK(csb_v1_boot_startup_render_plan_from_snapshot_pc34(
               &snapshot,
               &snapshot_render_plan) == 1 &&
