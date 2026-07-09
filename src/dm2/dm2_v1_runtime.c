@@ -98,6 +98,7 @@ static int g_dm2_last_asset_door_button_count = 0;
 static int g_dm2_last_fallback_door_count = 0;
 static int g_dm2_last_asset_creature_count = 0;
 static int g_dm2_last_fallback_creature_count = 0;
+static DM2_V1_RuntimeCreatureRenderReceipt g_dm2_last_creature_render;
 static int g_dm2_last_asset_creature_possession_item_count = 0;
 static int g_dm2_last_fallback_creature_possession_item_count = 0;
 static int g_dm2_last_asset_carried_item_count = 0;
@@ -902,6 +903,19 @@ static void dm2_runtime_append_creature_instance_sprite(
     dst->screen_y = (int16_t)placement->screen_y;
     dst->health_pct = (uint8_t)hp_pct;
     dst->direction = (uint8_t)(inst->direction & 3);
+
+    memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
+    g_dm2_last_creature_render.valid = 1;
+    g_dm2_last_creature_render.instance_id = inst->instance_id;
+    g_dm2_last_creature_render.creature_type = dst->creature_type;
+    g_dm2_last_creature_render.frame_index = dst->frame_index;
+    g_dm2_last_creature_render.direction = dst->direction;
+    g_dm2_last_creature_render.hp_pct = hp_pct;
+    g_dm2_last_creature_render.map_x = inst->world_x;
+    g_dm2_last_creature_render.map_y = inst->world_y;
+    g_dm2_last_creature_render.screen_x = placement->screen_x;
+    g_dm2_last_creature_render.screen_y = placement->screen_y;
+    g_dm2_last_creature_render.depth = placement->depth;
 }
 
 static void dm2_runtime_populate_active_creature_instances(
@@ -1324,6 +1338,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         return -1;
     }
 
+    memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
     dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
     dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
     dm2_v1_viewport_set_level(&viewport, rt->dungeon_level);
@@ -1453,6 +1468,16 @@ int dm2_v1_runtime_last_asset_carried_item_count(void) {
 
 int dm2_v1_runtime_last_fallback_carried_item_count(void) {
     return g_dm2_last_fallback_carried_item_count;
+}
+
+int dm2_v1_runtime_last_creature_render_receipt(
+    DM2_V1_RuntimeCreatureRenderReceipt *out_receipt) {
+    if (!out_receipt || !g_dm2_last_creature_render.valid) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    *out_receipt = g_dm2_last_creature_render;
+    return 1;
 }
 
 int dm2_v1_runtime_last_asset_creature_count(void) {
