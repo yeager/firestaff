@@ -77,6 +77,13 @@ typedef struct {
     int startup_assets_ready;
     int startup_audio_handoff_ready;
     int main_menu_route_ready;
+    int title_route_ready;
+    int real_menu_surface_route_ready;
+    int real_menu_surface_route_blocked;
+    int save_menu_route_ready;
+    int champion_menu_route_ready;
+    const char *real_menu_surface_blocker;
+    const char *startup_menu_asset_route;
 } Nexus_V1_LauncherStartupAssetsReceipt;
 
 typedef struct {
