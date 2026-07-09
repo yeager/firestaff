@@ -28,7 +28,32 @@ static void mark_game_ready(M12_StartupMenuState* state, int slot, const char* g
     }
     state->assetStatus.originalFileCandidateFound = 1;
     if (strcmp(gameId, "dm1") == 0) {
+        M12_AssetRequiredFileStatus* graphics;
+        M12_AssetRequiredFileStatus* dungeon;
         state->assetStatus.dm1Available = 1;
+        state->assetStatus.requiredFileCounts[slot] = 2U;
+        graphics = &state->assetStatus.requiredFiles[slot][0];
+        memset(graphics, 0, sizeof(*graphics));
+        graphics->gameId = "dm1";
+        graphics->roleId = "graphics";
+        graphics->label = "GRAPHICS.DAT";
+        graphics->required = 1;
+        graphics->matched = 1;
+        snprintf(graphics->matchedPath, sizeof(graphics->matchedPath),
+                 "/tmp/firestaff-test/dm1/GRAPHICS.DAT");
+        snprintf(graphics->matchedHash, sizeof(graphics->matchedHash),
+                 "fa6b1aa29e191418713bf2cda93d962e");
+        dungeon = &state->assetStatus.requiredFiles[slot][1];
+        memset(dungeon, 0, sizeof(*dungeon));
+        dungeon->gameId = "dm1";
+        dungeon->roleId = "dungeon";
+        dungeon->label = "DUNGEON.DAT";
+        dungeon->required = 1;
+        dungeon->matched = 1;
+        snprintf(dungeon->matchedPath, sizeof(dungeon->matchedPath),
+                 "/tmp/firestaff-test/dm1/DUNGEON.DAT");
+        snprintf(dungeon->matchedHash, sizeof(dungeon->matchedHash),
+                 "766450c940651fc021c92fe5d0d0b3a6");
     } else if (strcmp(gameId, "csb") == 0) {
         state->assetStatus.csbAvailable = 1;
     } else if (strcmp(gameId, "dm2") == 0) {
@@ -91,6 +116,12 @@ int main(void) {
                     "packaged capture proof should be expected")) return 1;
         if (!expect(boot.packagedCaptureReady == 1,
                     "packaged capture proof should be ready with verified startup")) return 1;
+        if (strcmp(expected[i].gameId, "dm1") == 0) {
+            if (!expect(boot.dm1HoCRealAssetCaptureReady == 1 &&
+                        boot.dm1HoCReleaseAppCaptureReady == 1 &&
+                        boot.dm1HoCHostCaptureRouteReady == 1,
+                        "DM1 M12 boot readiness should consume HoC release/app capture receipt")) return 1;
+        }
         if (!expect(boot.expectedStepMask == fullMask,
                     "boot receipt should expose the full expected startup proof mask")) return 1;
         if (!expect(boot.readyStepMask == fullMask,
