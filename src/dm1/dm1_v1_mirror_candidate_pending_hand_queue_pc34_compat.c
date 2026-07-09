@@ -19,7 +19,7 @@ enum {
     kFirstChestSlotCommand = 38
 };
 
-static const Dm1V1MirrorCandidatePendingHandQueueEvidencePc34Compat s_evidence = {
+static const DM1_V1_MirrorCandidatePendingHandQueueEvidencePc34Compat s_evidence = {
     "ReDMCSB CHEST.C F0333:30-32 already-open chest guard returns before "
     "visible G0425 chest slots are reorganized",
     "ReDMCSB CHEST.C F0334:113-132 close path clears G0426/G0425 and relinks "
@@ -43,7 +43,7 @@ static int valid_slot_index(int slotIndex)
 }
 
 static int queue_tail(
-    const Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state)
+    const DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state)
 {
     return (state->pendingHead + state->pendingCount) %
            DM1_V1_MIRROR_CANDIDATE_PENDING_HAND_QUEUE_CAPACITY_PC34_COMPAT;
@@ -63,9 +63,9 @@ static void fill_fixture_slots(int slots[
 }
 
 static void capture_before(
-    const Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    const DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
     int slotIndex,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *result)
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *result)
 {
     memset(result, 0, sizeof(*result));
     result->evidence = &s_evidence;
@@ -128,8 +128,8 @@ static void capture_before(
 }
 
 static void capture_after(
-    const Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *result)
+    const DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *result)
 {
     int i;
     int pendingOk = 1;
@@ -169,7 +169,7 @@ static void capture_after(
         const int pendingIndex =
             (state->pendingHead + i) %
             DM1_V1_MIRROR_CANDIDATE_PENDING_HAND_QUEUE_CAPACITY_PC34_COMPAT;
-        const Dm1V1MirrorCandidatePendingHandQueueEntryPc34Compat *entry =
+        const DM1_V1_MirrorCandidatePendingHandQueueEntryPc34Compat *entry =
             &state->pending[pendingIndex];
         if (entry->submissionOrdinal < 1 ||
             entry->submissionOrdinal >
@@ -210,7 +210,7 @@ static void capture_after(
 }
 
 void DM1_V1_MirrorCandidatePendingHandQueue_InitPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state)
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -241,14 +241,14 @@ void DM1_V1_MirrorCandidatePendingHandQueue_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidatePendingHandQueue_SubmitHandSwapPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
     int slotIndex,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat localResult;
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *result =
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat localResult;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *result =
         outResult ? outResult : &localResult;
-    Dm1V1MirrorCandidatePendingHandQueueEntryPc34Compat *entry;
+    DM1_V1_MirrorCandidatePendingHandQueueEntryPc34Compat *entry;
     int tail;
 
     capture_before(state, slotIndex, result);
@@ -286,11 +286,11 @@ int DM1_V1_MirrorCandidatePendingHandQueue_SubmitHandSwapPc34Compat(
 }
 
 int DM1_V1_MirrorCandidatePendingHandQueue_OpenAlreadyOpenChestPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat localResult;
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *result =
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat localResult;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     capture_before(
@@ -313,11 +313,11 @@ int DM1_V1_MirrorCandidatePendingHandQueue_OpenAlreadyOpenChestPc34Compat(
 }
 
 int DM1_V1_MirrorCandidatePendingHandQueue_CloseChestPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat localResult;
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *result =
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat localResult;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *result =
         outResult ? outResult : &localResult;
     int i;
     int processFirst = 1;
@@ -369,13 +369,13 @@ int DM1_V1_MirrorCandidatePendingHandQueue_CloseChestPc34Compat(
 }
 
 int DM1_V1_MirrorCandidatePendingHandQueue_DrainNextPc34Compat(
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat *state,
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat localResult;
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat *result =
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat localResult;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat *result =
         outResult ? outResult : &localResult;
-    Dm1V1MirrorCandidatePendingHandQueueEntryPc34Compat entry;
+    DM1_V1_MirrorCandidatePendingHandQueueEntryPc34Compat entry;
     int expectedSlot;
     int drainIndex;
 
@@ -423,7 +423,7 @@ int DM1_V1_MirrorCandidatePendingHandQueue_DrainNextPc34Compat(
     return 1;
 }
 
-const Dm1V1MirrorCandidatePendingHandQueueEvidencePc34Compat *
+const DM1_V1_MirrorCandidatePendingHandQueueEvidencePc34Compat *
 DM1_V1_MirrorCandidatePendingHandQueue_EvidencePc34Compat(void)
 {
     return &s_evidence;
@@ -442,8 +442,8 @@ int dm1_v1_mirror_candidate_pending_hand_queue_run(
     int *passed,
     int *failed)
 {
-    Dm1V1MirrorCandidatePendingHandQueueStatePc34Compat state;
-    Dm1V1MirrorCandidatePendingHandQueueResultPc34Compat result;
+    DM1_V1_MirrorCandidatePendingHandQueueStatePc34Compat state;
+    DM1_V1_MirrorCandidatePendingHandQueueResultPc34Compat result;
     int i;
 
     if (!passed || !failed) {
