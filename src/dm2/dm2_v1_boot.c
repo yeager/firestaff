@@ -2868,6 +2868,8 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     DM2_V1_BootRuntimeStartupSnapshot snapshot;
     DM2_V1_BootStartupViewModel view_model;
     DM2_V1_BootStartupPackagedFullStartReceipt package;
+    DM2_V1_BootStartupPackagedConsumerReceipt consumer;
+    DM2_V1_BootStartupHostFrameReceipt host_frame;
     DM2_V1_BootStartupRenderOwnershipReceipt ownership;
     uint8_t *title_pixels = NULL;
     uint8_t *menu_pixels = NULL;
@@ -2900,6 +2902,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         !dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
             &view_model.host_view_receipt,
             &package) ||
+        !dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
+            &package,
+            &consumer) ||
+        !dm2_v1_boot_startup_host_frame_receipt_from_consumer(
+            &consumer,
+            &host_frame) ||
         !dm2_v1_boot_startup_render_ownership_from_view_model(
             &snapshot,
             &view_model,
@@ -2910,7 +2918,38 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     out_receipt->profile_ready = profile->assets_verified ? 1 : 0;
     out_receipt->graphics_dat_ready = profile->graphics_dat ? 1 : 0;
     out_receipt->packaged_full_start_valid = package.valid;
+    out_receipt->packaged_consumer_valid = consumer.valid;
+    out_receipt->host_frame_valid = host_frame.valid;
     out_receipt->render_ownership_valid = ownership.valid;
+    out_receipt->real_visual_capture_consumes_package =
+        package.valid &&
+        consumer.packaged_full_start_valid &&
+        consumer.packaged_full_start_hash == package.packaged_full_start_hash;
+    out_receipt->real_visual_capture_consumes_host_frame =
+        host_frame.valid &&
+        host_frame.consume_startup_package &&
+        host_frame.packaged_full_start_hash == package.packaged_full_start_hash;
+    out_receipt->packaged_status_consumed =
+        consumer.status_scope == package.status_scope &&
+        consumer.status == package.status &&
+        host_frame.status_scope == package.status_scope &&
+        host_frame.status == package.status;
+    out_receipt->packaged_startup_phase_consumed =
+        consumer.phase &&
+        host_frame.phase &&
+        strcmp(consumer.phase, "dm2-startup-menu") == 0 &&
+        strcmp(host_frame.phase, consumer.phase) == 0 &&
+        host_frame.render_startup_title &&
+        host_frame.render_startup_menu;
+    out_receipt->packaged_hud_suppression_consumed =
+        host_frame.suppress_game_hud &&
+        !host_frame.present_first_hud_frame &&
+        consumer.startup_hud_runtime_ready &&
+        consumer.startup_draw_hud_handoff_ready;
+    out_receipt->packaged_full_start_hash = package.packaged_full_start_hash;
+    out_receipt->packaged_consumer_hash = consumer.packaged_full_start_hash;
+    out_receipt->phase = host_frame.phase;
+    out_receipt->animation = host_frame.animation;
     out_receipt->real_gdat_title_asset_required = 1;
     out_receipt->real_gdat_menu_asset_required = 1;
     out_receipt->title_gdat_category = package.title_gdat_category;
@@ -3085,9 +3124,18 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->skproject_menu_query_ready &&
         out_receipt->hud_suppressed_capture_ready &&
         out_receipt->no_fallback_title_blit;
+    out_receipt->real_visual_status_consumer_ready =
+        out_receipt->real_visual_capture_consumes_package &&
+        out_receipt->real_visual_capture_consumes_host_frame &&
+        out_receipt->packaged_status_consumed &&
+        out_receipt->packaged_startup_phase_consumed &&
+        out_receipt->packaged_hud_suppression_consumed &&
+        out_receipt->title_menu_hud_visual_proof_ready;
 
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, package.packaged_full_start_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, consumer.packaged_full_start_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, ownership.packaged_full_start_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -3114,6 +3162,8 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         hash, out_receipt->hud_handoff_capture_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->suppress_game_hud);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->real_visual_status_consumer_ready);
     out_receipt->packaged_visual_capture_hash = hash;
 
     /* skproject/SKWIN startup draws the real title GDAT surface, menu
@@ -3124,7 +3174,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->profile_ready &&
         out_receipt->graphics_dat_ready &&
         out_receipt->packaged_full_start_valid &&
+        out_receipt->packaged_consumer_valid &&
+        out_receipt->host_frame_valid &&
         out_receipt->render_ownership_valid &&
+        out_receipt->real_visual_capture_consumes_package &&
+        out_receipt->real_visual_capture_consumes_host_frame &&
+        out_receipt->real_visual_status_consumer_ready &&
         out_receipt->full_title_frame_capture_ready &&
         out_receipt->menu_title_composite_capture_ready &&
         out_receipt->full_visual_composite_capture_ready &&

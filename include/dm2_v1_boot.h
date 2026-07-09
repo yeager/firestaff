@@ -482,7 +482,15 @@ typedef struct {
     int profile_ready;
     int graphics_dat_ready;
     int packaged_full_start_valid;
+    int packaged_consumer_valid;
+    int host_frame_valid;
     int render_ownership_valid;
+    int real_visual_capture_consumes_package;
+    int real_visual_capture_consumes_host_frame;
+    int real_visual_status_consumer_ready;
+    int packaged_status_consumed;
+    int packaged_startup_phase_consumed;
+    int packaged_hud_suppression_consumed;
     int real_gdat_title_asset_required;
     int real_gdat_title_asset_consumed;
     int real_gdat_menu_asset_required;
@@ -542,6 +550,10 @@ typedef struct {
     int title_frame_remaining_ticks;
     int no_fallback_title_blit;
     uint32_t packaged_visual_capture_hash;
+    uint32_t packaged_full_start_hash;
+    uint32_t packaged_consumer_hash;
+    const char *phase;
+    const char *animation;
     const char *status_scope;
     const char *status;
 } DM2_V1_BootStartupRealVisualCaptureReceipt;
