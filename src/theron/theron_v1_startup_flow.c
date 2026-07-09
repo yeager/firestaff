@@ -4089,7 +4089,14 @@ Theron_StartupResult theron_v1_startup_enter_runtime_from_forcefield(
                     level_receipt,
                     sizeof(level_receipt))) {
         if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "Theron level load failed");
+            if (level_receipt[0]) {
+                snprintf(receipt,
+                         receipt_cap,
+                         "Theron level load failed: %s",
+                         level_receipt);
+            } else {
+                snprintf(receipt, receipt_cap, "Theron level load failed");
+            }
         }
         return THERON_STARTUP_ERR_LEVEL_LOAD;
     }
