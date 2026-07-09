@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB startup boot-route receipt: CSB boot now emits a title/entrance/credits/door-opening render-route receipt with palette, HUD/menu visibility, input readiness, and the presentation render plan; M11 CSB startup drawing now consumes that route. Verification: `csb_v1_boot_runtime_handoff`, `csb_v1_startup_entrance_pointer_pc34_compat`, `csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron SRM runtime receipt interop: SRM Continue results and state receipts now carry source slot, import status, restored progression, quest mask, party-restored flag, champion count, and gold from the actual runtime restore path. Verification: `test_theron_v1_startup_save_resume_pc34` 162/162 and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 projectile materialization guard: F0215/F0811 thrown-object materialization now only allows real carried object types. C14 projectile, group, sensor, and other structural thing refs are ignored instead of being linked into dungeon square item lists, preventing stale HoC fireballs/phantom objects from becoming floor items. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.

@@ -53,6 +53,10 @@ static const char *const g_csb_boot_fast_scan_subdirs[] = {
     NULL
 };
 
+static void csb_v1_boot_startup_route_from_presentation_pc34(
+    const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt);
+
 /* ── DM1-assumption rejection strings ────────────────────────────────────
  *
  * Each csb_v1_boot_assume_no_dm1_runtime() failure has a stable reason
@@ -1573,6 +1577,26 @@ int csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
         out_receipt);
 }
 
+int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupPresentationReceipt_PC34 presentation;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_presentation_route_receipt_init_pc34(out_receipt);
+    if (!csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
+            snapshot,
+            &presentation)) {
+        return 0;
+    }
+    csb_v1_boot_startup_route_from_presentation_pc34(&presentation,
+                                                     out_receipt);
+    return out_receipt->valid;
+}
+
 int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     CSB_V1_UtilRenderPlan *out_plan,
     int title_active,
@@ -2046,6 +2070,96 @@ void csb_v1_boot_startup_action_receipt_init_pc34(
         &receipt->utility_receipt);
     csb_v1_startup_entrance_host_action_receipt_init_pc34(
         &receipt->entrance_receipt);
+}
+
+void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->special_palette = -1;
+    csb_v1_startup_presentation_receipt_init_pc34(
+        &receipt->presentation);
+}
+
+static CSB_V1_BootStartupRenderRouteKind_PC34
+csb_v1_boot_startup_route_for_surface_pc34(
+    CSB_V1_StartupRenderSurface_PC34 surface)
+{
+    switch (surface) {
+        case CSB_V1_STARTUP_RENDER_TITLE_PC34:
+            return CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34;
+        case CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34:
+            return CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_BLACK_PC34;
+        case CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34:
+            return CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34;
+        case CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34:
+            return CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34;
+        case CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34:
+            return CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_DELAY_PC34;
+        case CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34:
+            return CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34;
+        case CSB_V1_STARTUP_RENDER_NONE_PC34:
+        default:
+            return CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+    }
+}
+
+static void csb_v1_boot_startup_route_from_presentation_pc34(
+    const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt)
+{
+    if (!presentation || !out_receipt || !presentation->valid) {
+        return;
+    }
+    out_receipt->valid = 1;
+    out_receipt->presentation = *presentation;
+    out_receipt->route = csb_v1_boot_startup_route_for_surface_pc34(
+        presentation->render_plan.surface);
+    out_receipt->special_palette = presentation->render_plan.special_palette;
+    out_receipt->accepts_input = presentation->accepts_input;
+    out_receipt->waiting_for_input = presentation->waiting_for_input;
+    out_receipt->menu_option_count = presentation->menu_option_count;
+
+    /* ReDMCSB TITLE.C F0437 lines 424-463 draws PRESENTS, CHAOS zoom,
+     * and STRIKES BACK; ENTRANCE.C F0441/F0806 lines 409-447 and
+     * 850-883 then own the entrance surface/wait loop; ENTRANCE.C
+     * F0438/F0807 supplies the door-opening frame.  This receipt keeps
+     * that route decision in CSB boot instead of letting host/HUD code
+     * infer it from raw startup fields. */
+    switch (out_receipt->route) {
+        case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34:
+            out_receipt->draw_title = 1;
+            break;
+        case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34:
+            out_receipt->draw_surface = 1;
+            out_receipt->draw_fallback_text = 1;
+            break;
+        case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34:
+            out_receipt->draw_surface = 1;
+            out_receipt->draw_closed_doors = 1;
+            out_receipt->draw_fallback_text = 1;
+            out_receipt->draw_utility_panel =
+                presentation->render_plan.waiting_for_input ? 1 : 0;
+            out_receipt->hud_menu_visible =
+                presentation->render_plan.waiting_for_input ? 1 : 0;
+            break;
+        case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_DELAY_PC34:
+            out_receipt->draw_surface = 1;
+            out_receipt->draw_closed_doors = 1;
+            break;
+        case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34:
+            out_receipt->draw_surface = 1;
+            out_receipt->draw_closed_doors = 1;
+            out_receipt->draw_opening_frame = 1;
+            break;
+        case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_BLACK_PC34:
+        case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34:
+        default:
+            break;
+    }
 }
 
 static int csb_v1_boot_startup_utility_receipt_handled_pc34(

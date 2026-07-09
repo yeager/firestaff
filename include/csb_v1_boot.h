@@ -132,8 +132,37 @@ typedef struct CSB_V1_BootStartupActionReceipt_PC34 {
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
 } CSB_V1_BootStartupActionReceipt_PC34;
 
+typedef enum CSB_V1_BootStartupRenderRouteKind_PC34 {
+    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 = 0,
+    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 = 1,
+    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_BLACK_PC34 = 2,
+    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 = 3,
+    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34 = 4,
+    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_DELAY_PC34 = 5,
+    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34 = 6
+} CSB_V1_BootStartupRenderRouteKind_PC34;
+
+typedef struct CSB_V1_BootStartupPresentationRouteReceipt_PC34 {
+    int valid;
+    CSB_V1_BootStartupRenderRouteKind_PC34 route;
+    int special_palette;
+    int draw_title;
+    int draw_surface;
+    int draw_closed_doors;
+    int draw_opening_frame;
+    int draw_fallback_text;
+    int draw_utility_panel;
+    int hud_menu_visible;
+    int menu_option_count;
+    int accepts_input;
+    int waiting_for_input;
+    CSB_V1_StartupPresentationReceipt_PC34 presentation;
+} CSB_V1_BootStartupPresentationRouteReceipt_PC34;
+
 void csb_v1_boot_startup_action_receipt_init_pc34(
     CSB_V1_BootStartupActionReceipt_PC34 *receipt);
+void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 *receipt);
 void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir);
 int csb_v1_boot_probe_available(const char *data_dir);
@@ -360,6 +389,9 @@ int csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
 int csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_StartupPresentationReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     CSB_V1_UtilRenderPlan *out_plan,
     int title_active,

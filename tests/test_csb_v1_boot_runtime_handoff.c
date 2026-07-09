@@ -1811,6 +1811,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupActionReceipt_PC34 boot_action_receipt;
     CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
 
     csb_v1_boot_profile_init(&boot);
     memset(&facts, 0, sizeof(facts));
@@ -1896,6 +1897,24 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     snapshot.utility_imported_champion_count = 2;
     snapshot.utility_prompt = facts.utility_prompt;
     snapshot.boot_profile = &boot;
+    snapshot.title_active = 1;
+    snapshot.title_frame = 0;
+    snapshot.title_source_step = 1;
+    CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+              &snapshot,
+              &route_receipt) == 1,
+          "boot startup route receipt accepts title snapshot");
+    CHECK(route_receipt.valid &&
+              route_receipt.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
+              route_receipt.draw_title &&
+              !route_receipt.draw_surface &&
+              !route_receipt.hud_menu_visible &&
+              strcmp(route_receipt.presentation.animation, "csb-title") == 0,
+          "boot startup route receipt owns title animation route");
+    snapshot.title_active = 0;
+    snapshot.title_frame = 0;
+    snapshot.title_source_step = 0;
     CHECK(csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
               &snapshot,
               &presentation_receipt) == 1,
@@ -1910,6 +1929,40 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               presentation_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup presentation receipt owns render/menu/input snapshot");
+    CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+              &snapshot,
+              &route_receipt) == 1,
+          "boot startup route receipt accepts entrance snapshot");
+    CHECK(route_receipt.valid &&
+              route_receipt.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+              route_receipt.draw_surface &&
+              route_receipt.draw_closed_doors &&
+              route_receipt.draw_fallback_text &&
+              route_receipt.draw_utility_panel &&
+              route_receipt.hud_menu_visible &&
+              route_receipt.menu_option_count == 4 &&
+              route_receipt.accepts_input,
+          "boot startup route receipt owns closed entrance HUD/menu route");
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 3;
+    CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+              &snapshot,
+              &route_receipt) == 1,
+          "boot startup route receipt accepts door-opening snapshot");
+    CHECK(route_receipt.valid &&
+              route_receipt.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34 &&
+              route_receipt.draw_surface &&
+              route_receipt.draw_closed_doors &&
+              route_receipt.draw_opening_frame &&
+              !route_receipt.hud_menu_visible &&
+              !route_receipt.accepts_input,
+          "boot startup route receipt owns door-opening render route");
+    snapshot.opening_active = 0;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 0;
     CHECK(csb_v1_boot_startup_presentation_state_receipt_from_runtime_state_pc34(
               &presentation_receipt,
               snapshot.title_active,
