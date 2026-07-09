@@ -882,10 +882,10 @@ int theron_v1_boot_startup_execute_input_from_runtime_state(
     int selected_mirror_order_count,
     int input)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_runtime_state(
-            &session,
+    if (!theron_v1_boot_startup_view_model_from_runtime_state(
+            &view_model,
             startup_phase,
             selected_dungeon,
             boot_profile,
@@ -909,8 +909,8 @@ int theron_v1_boot_startup_execute_input_from_runtime_state(
         theron_v1_startup_action_host_receipt_init(out_receipt);
         return 0;
     }
-    return theron_v1_startup_execute_input_from_session_with_host_receipt(
-        &session,
+    return theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
+        &view_model,
         theron_v1_startup_input_from_firestaff_menu_code(input),
         out_receipt);
 }
@@ -920,14 +920,15 @@ int theron_v1_boot_startup_execute_input_from_snapshot(
     int input,
     Theron_StartupActionHostReceipt *out_receipt)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_snapshot(&session, snapshot)) {
+    if (!theron_v1_boot_startup_view_model_from_snapshot(snapshot,
+                                                         &view_model)) {
         theron_v1_startup_action_host_receipt_init(out_receipt);
         return 0;
     }
-    return theron_v1_startup_execute_input_from_session_with_host_receipt(
-        &session,
+    return theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
+        &view_model,
         theron_v1_startup_input_from_firestaff_menu_code(input),
         out_receipt);
 }
@@ -988,10 +989,10 @@ int theron_v1_boot_startup_execute_pointer_from_runtime_state(
     int x,
     int y)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_runtime_state(
-            &session,
+    if (!theron_v1_boot_startup_view_model_from_runtime_state(
+            &view_model,
             startup_phase,
             selected_dungeon,
             boot_profile,
@@ -1015,8 +1016,8 @@ int theron_v1_boot_startup_execute_pointer_from_runtime_state(
         theron_v1_startup_action_host_receipt_init(out_receipt);
         return 0;
     }
-    return theron_v1_startup_execute_pointer_from_session_with_host_receipt(
-        &session,
+    return theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
+        &view_model,
         x,
         y,
         out_receipt);
@@ -1028,14 +1029,15 @@ int theron_v1_boot_startup_execute_pointer_from_snapshot(
     int y,
     Theron_StartupActionHostReceipt *out_receipt)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_snapshot(&session, snapshot)) {
+    if (!theron_v1_boot_startup_view_model_from_snapshot(snapshot,
+                                                         &view_model)) {
         theron_v1_startup_action_host_receipt_init(out_receipt);
         return 0;
     }
-    return theron_v1_startup_execute_pointer_from_session_with_host_receipt(
-        &session,
+    return theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
+        &view_model,
         x,
         y,
         out_receipt);
@@ -1098,10 +1100,10 @@ int theron_v1_boot_startup_layout_build_from_runtime_state(
     const int *selected_mirror_order,
     int selected_mirror_order_count)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_runtime_state(
-            &session,
+    if (!theron_v1_boot_startup_view_model_from_runtime_state(
+            &view_model,
             startup_phase,
             selected_dungeon,
             boot_profile,
@@ -1124,8 +1126,8 @@ int theron_v1_boot_startup_layout_build_from_runtime_state(
             selected_mirror_order_count)) {
         return 0;
     }
-    return theron_v1_startup_layout_build_from_session(
-        &session,
+    return theron_v1_boot_startup_layout_build_from_view_model(
+        &view_model,
         elements,
         max_elements);
 }
@@ -1135,13 +1137,14 @@ int theron_v1_boot_startup_layout_build_from_snapshot(
     Theron_StartupLayoutElement *elements,
     int max_elements)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_snapshot(&session, snapshot)) {
+    if (!theron_v1_boot_startup_view_model_from_snapshot(snapshot,
+                                                         &view_model)) {
         return 0;
     }
-    return theron_v1_startup_layout_build_from_session(
-        &session,
+    return theron_v1_boot_startup_layout_build_from_view_model(
+        &view_model,
         elements,
         max_elements);
 }
@@ -1193,10 +1196,10 @@ int theron_v1_boot_startup_render_rows_from_runtime_state(
     const int *selected_mirror_order,
     int selected_mirror_order_count)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_runtime_state(
-            &session,
+    if (!theron_v1_boot_startup_view_model_from_runtime_state(
+            &view_model,
             startup_phase,
             selected_dungeon,
             boot_profile,
@@ -1219,8 +1222,8 @@ int theron_v1_boot_startup_render_rows_from_runtime_state(
             selected_mirror_order_count)) {
         return 0;
     }
-    return theron_v1_startup_render_rows_build_from_session(
-        &session,
+    return theron_v1_boot_startup_render_rows_from_view_model(
+        &view_model,
         rows,
         max_rows);
 }
@@ -1230,13 +1233,14 @@ int theron_v1_boot_startup_render_rows_from_snapshot(
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_snapshot(&session, snapshot)) {
+    if (!theron_v1_boot_startup_view_model_from_snapshot(snapshot,
+                                                         &view_model)) {
         return 0;
     }
-    return theron_v1_startup_render_rows_build_from_session(
-        &session,
+    return theron_v1_boot_startup_render_rows_from_view_model(
+        &view_model,
         rows,
         max_rows);
 }
@@ -1289,10 +1293,10 @@ int theron_v1_boot_startup_render_plan_from_runtime_state(
     const int *selected_mirror_order,
     int selected_mirror_order_count)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_runtime_state(
-            &session,
+    if (!theron_v1_boot_startup_view_model_from_runtime_state(
+            &view_model,
             startup_phase,
             selected_dungeon,
             boot_profile,
@@ -1315,8 +1319,8 @@ int theron_v1_boot_startup_render_plan_from_runtime_state(
             selected_mirror_order_count)) {
         return 0;
     }
-    return theron_v1_startup_render_plan_build_from_session(
-        &session,
+    return theron_v1_boot_startup_render_plan_from_view_model(
+        &view_model,
         out_plan);
 }
 
@@ -1324,13 +1328,14 @@ int theron_v1_boot_startup_render_plan_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     Theron_StartupRenderPlan *out_plan)
 {
-    Theron_StartupSessionFacts session;
+    Theron_V1_BootStartupViewModel view_model;
 
-    if (!theron_v1_boot_startup_session_from_snapshot(&session, snapshot)) {
+    if (!theron_v1_boot_startup_view_model_from_snapshot(snapshot,
+                                                         &view_model)) {
         return 0;
     }
-    return theron_v1_startup_render_plan_build_from_session(
-        &session,
+    return theron_v1_boot_startup_render_plan_from_view_model(
+        &view_model,
         out_plan);
 }
 
