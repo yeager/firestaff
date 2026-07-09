@@ -1397,6 +1397,65 @@ void dm2_v1_boot_startup_view_model_clear(
     memset(out_view_model, 0, sizeof(*out_view_model));
 }
 
+static void dm2_v1_boot_startup_full_start_receipt_clear(
+    DM2_V1_BootStartupFullStartReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+    }
+}
+
+static int dm2_v1_boot_startup_fill_full_start_receipt(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupViewModel *view_model)
+{
+    DM2_V1_BootStartupFullStartReceipt *receipt;
+    const DM2_V1_StartupRuntimeHandoffReceipt *handoff;
+    const DM2_V1_StartupRenderReceipt *render;
+
+    if (!snapshot || !view_model ||
+        !view_model->view_receipt.valid ||
+        !view_model->view_receipt.runtime_handoff.valid) {
+        return 0;
+    }
+    receipt = &view_model->full_start_receipt;
+    handoff = &view_model->view_receipt.runtime_handoff;
+    render = &view_model->view_receipt.render;
+    dm2_v1_boot_startup_full_start_receipt_clear(receipt);
+    receipt->valid = 1;
+    receipt->startup_menu_active = handoff->startup_menu_active;
+    receipt->title_animation_tick = handoff->title_animation_tick;
+    receipt->title_frame = handoff->title_frame;
+    receipt->title_frame_max = handoff->title_frame_max;
+    receipt->title_frame_duration_ticks =
+        handoff->title_frame_duration_ticks;
+    receipt->title_ready = handoff->title_ready;
+    receipt->title_gdat_category = render->title_gdat_category;
+    receipt->title_gdat_index = render->title_gdat_index;
+    receipt->title_gdat_field = render->title_gdat_field;
+    receipt->title_backdrop_ready = render->title_backdrop_ready;
+    receipt->hud_overlay_suppressed = render->hud_overlay_suppressed;
+    receipt->hud_runtime_ready = handoff->hud_runtime_ready;
+    receipt->runtime_menu_ready = handoff->runtime_menu_ready;
+    receipt->runtime_action_ready = handoff->runtime_action_ready;
+    receipt->first_hud_frame_ready = handoff->first_hud_frame_ready;
+    receipt->full_start_graphics_ready = render->full_start_graphics_ready;
+    receipt->title_gdat_asset_ready = view_model->title_gdat_asset_ready;
+    receipt->title_gdat_asset_w = view_model->title_gdat_asset_w;
+    receipt->title_gdat_asset_h = view_model->title_gdat_asset_h;
+    receipt->title_gdat_asset_stride = view_model->title_gdat_asset_stride;
+    receipt->full_start_real_asset_ready =
+        receipt->full_start_graphics_ready &&
+        receipt->title_gdat_asset_ready &&
+        receipt->hud_overlay_suppressed &&
+        receipt->hud_runtime_ready;
+    /* skproject/SKWIN title/menu startup keeps title timing, GDAT title art,
+     * HUD suppression, and runtime handoff as one boot boundary. M11 can use
+     * this receipt directly instead of combining command counts and flags. */
+    (void)snapshot;
+    return 1;
+}
+
 int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupViewModel *out_view_model)
@@ -1480,8 +1539,31 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
         out_view_model->full_start_real_asset_ready =
             out_view_model->full_start_graphics_ready &&
             out_view_model->title_gdat_asset_ready;
+        (void)dm2_v1_boot_startup_fill_full_start_receipt(
+            snapshot,
+            out_view_model);
     }
     return ok;
+}
+
+int dm2_v1_boot_startup_full_start_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupFullStartReceipt *out_receipt)
+{
+    DM2_V1_BootStartupViewModel view_model;
+
+    if (out_receipt) {
+        dm2_v1_boot_startup_full_start_receipt_clear(out_receipt);
+    }
+    if (!snapshot || !out_receipt ||
+        !dm2_v1_boot_startup_view_model_receipt_from_snapshot(
+            snapshot,
+            &view_model) ||
+        !view_model.full_start_receipt.valid) {
+        return 0;
+    }
+    *out_receipt = view_model.full_start_receipt;
+    return 1;
 }
 
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(

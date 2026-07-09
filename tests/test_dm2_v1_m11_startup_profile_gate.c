@@ -306,6 +306,7 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_StartupHostFacts host_facts;
     DM2_V1_BootRuntimeStartupSnapshot boot_snapshot;
     DM2_V1_BootStartupViewModel boot_view_model;
+    DM2_V1_BootStartupFullStartReceipt full_start_receipt;
     DM2_V1_StartupMenu restored_menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupViewReceipt view_receipt;
@@ -527,6 +528,21 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.full_start_graphics_ready == 1 &&
                     boot_view_model.title_gdat_asset_ready == 0 &&
                     boot_view_model.full_start_real_asset_ready == 0 &&
+                    boot_view_model.full_start_receipt.valid &&
+                    boot_view_model.full_start_receipt.startup_menu_active == 1 &&
+                    boot_view_model.full_start_receipt.title_frame == 0 &&
+                    boot_view_model.full_start_receipt.title_frame_max == 7 &&
+                    boot_view_model.full_start_receipt
+                            .title_frame_duration_ticks == 6 &&
+                    boot_view_model.full_start_receipt.title_backdrop_ready == 1 &&
+                    boot_view_model.full_start_receipt.hud_overlay_suppressed == 1 &&
+                    boot_view_model.full_start_receipt.runtime_menu_ready == 1 &&
+                    boot_view_model.full_start_receipt.runtime_action_ready == 0 &&
+                    boot_view_model.full_start_receipt.first_hud_frame_ready == 0 &&
+                    boot_view_model.full_start_receipt
+                            .full_start_graphics_ready == 1 &&
+                    boot_view_model.full_start_receipt
+                            .full_start_real_asset_ready == 0 &&
                     strcmp(boot_view_model.phase, "dm2-startup-menu") == 0 &&
                     boot_view_model.startup_active == 1 &&
                     strcmp(boot_view_model.animation,
@@ -562,6 +578,22 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.runtime_action_ready == 1 &&
                     boot_view_model.first_hud_frame_ready == 1,
                 "DM2 boot view model hands off from title/menu to first runtime HUD state");
+    boot_snapshot.startup_menu_active = 1;
+    expect_true(dm2_v1_boot_startup_full_start_receipt_from_snapshot(
+                    &boot_snapshot,
+                    &full_start_receipt) &&
+                    full_start_receipt.valid &&
+                    full_start_receipt.startup_menu_active == 1 &&
+                    full_start_receipt.title_gdat_category == 5 &&
+                    full_start_receipt.title_gdat_index == 0 &&
+                    full_start_receipt.title_gdat_field == 1 &&
+                    full_start_receipt.title_backdrop_ready == 1 &&
+                    full_start_receipt.hud_overlay_suppressed == 1 &&
+                    full_start_receipt.hud_runtime_ready == 1 &&
+                    full_start_receipt.runtime_menu_ready == 1 &&
+                    full_start_receipt.first_hud_frame_ready == 0 &&
+                    full_start_receipt.full_start_graphics_ready == 1,
+                "DM2 boot full-start receipt joins title timing, GDAT command, HUD suppression, and runtime handoff");
     boot_snapshot.startup_menu_active = 1;
     expect_true(dm2_v1_startup_presentation_receipt(
                     1,
@@ -911,6 +943,7 @@ int main(void) {
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     M11_BootProbeReceipt boot_receipt;
+    DM2_V1_BootStartupFullStartReceipt full_start_receipt;
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
@@ -1036,8 +1069,25 @@ int main(void) {
                         startup_view_model.title_gdat_asset_w == 320 &&
                         startup_view_model.title_gdat_asset_h == 200 &&
                         startup_view_model.title_gdat_asset_stride >= 320 &&
-                        startup_view_model.full_start_real_asset_ready == 1,
+                        startup_view_model.full_start_real_asset_ready == 1 &&
+                        startup_view_model.full_start_receipt.valid &&
+                        startup_view_model.full_start_receipt
+                                .title_gdat_asset_ready == 1 &&
+                        startup_view_model.full_start_receipt
+                                .title_gdat_asset_w == 320 &&
+                        startup_view_model.full_start_receipt
+                                .title_gdat_asset_h == 200 &&
+                        startup_view_model.full_start_receipt
+                                .full_start_real_asset_ready == 1,
                     "DM2 boot startup view model proves real GDAT title asset readiness");
+        expect_true(dm2_v1_boot_startup_full_start_receipt_from_snapshot(
+                        &startup_snapshot,
+                        &full_start_receipt) &&
+                        full_start_receipt.title_gdat_asset_ready == 1 &&
+                        full_start_receipt.title_gdat_asset_w == 320 &&
+                        full_start_receipt.title_gdat_asset_h == 200 &&
+                        full_start_receipt.full_start_real_asset_ready == 1,
+                    "DM2 boot full-start receipt exposes real title asset readiness without command counts");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,
