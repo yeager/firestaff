@@ -27482,39 +27482,26 @@ static int m11_maybe_apply_projectile_poison_to_champion(
     const DM1_ProjectileChampionImpactPlanPc34* impactPlan,
     const struct ProjectileInstance_Compat* projectile,
     int appliedDamage) {
-    DM1_ProjectileChampionPoisonPlanPc34 poisonPlan;
+    DM1_ProjectileChampionPoisonApplyPlanPc34 poisonApply;
     int rng2;
-    struct TimelineEvent_Compat poisonEvent;
     if (!state || !champion || !impactPlan || !projectile) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     rng2 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2);
-    if (!dm1_v1_projectile_champion_poison_plan_pc34(
-            impactPlan, projectile, appliedDamage,
-            (int)champion->hp.current, (int)champion->poisonDose,
-            rng2, &poisonPlan) ||
-        !poisonPlan.shouldApply) {
+    if (!dm1_v1_projectile_champion_poison_apply_pc34(
+            impactPlan, projectile, appliedDamage, rng2,
+            state->world.gameTick, state->world.partyMapIndex,
+            state->world.party.mapX, state->world.party.mapY,
+            champion, &poisonApply) ||
+        !poisonApply.shouldApply) {
         return 0;
     }
 
-    champion->hp.current = (unsigned short)(
-        (int)champion->hp.current - poisonPlan.poisonDamage);
-    champion->poisonDose = (unsigned short)poisonPlan.newPoisonDose;
-
-    if (poisonPlan.nextAttack > 0) {
-        memset(&poisonEvent, 0, sizeof(poisonEvent));
-        poisonEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
-        poisonEvent.fireAtTick =
-            state->world.gameTick + (uint32_t)poisonPlan.scheduleDelayTicks;
-        poisonEvent.mapIndex = state->world.partyMapIndex;
-        poisonEvent.mapX = state->world.party.mapX;
-        poisonEvent.mapY = state->world.party.mapY;
-        poisonEvent.aux0 = LIFECYCLE_STATUS_POISON;
-        poisonEvent.aux1 = poisonPlan.nextAttack;
-        poisonEvent.aux4 = championIndex;
+    if (poisonApply.schedulePoisonEvent) {
         (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline,
-                                             &poisonEvent);
-        if (state->world.lifecycle.champions[championIndex].poisonEventCount
-                < 255) {
+                                             &poisonApply.poisonEvent);
+        if (poisonApply.incrementPoisonEventCount &&
+            state->world.lifecycle.champions[championIndex].poisonEventCount
+            < 255) {
             state->world.lifecycle.champions[championIndex].poisonEventCount++;
         }
     }

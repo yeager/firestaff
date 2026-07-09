@@ -819,6 +819,7 @@ static void test_projectile_champion_impact_plan(void) {
     DM1_ProjectileChampionImpactPlanPc34 impact;
     DM1_ProjectileChampionDamageApplyPlanPc34 damagePlan;
     DM1_ProjectileChampionPoisonPlanPc34 poison;
+    DM1_ProjectileChampionPoisonApplyPlanPc34 poisonApply;
     memset(&p, 0, sizeof(p));
     memset(&r, 0, sizeof(r));
     memset(&action, 0, sizeof(action));
@@ -828,6 +829,7 @@ static void test_projectile_champion_impact_plan(void) {
     memset(&impact, 0, sizeof(impact));
     memset(&damagePlan, 0, sizeof(damagePlan));
     memset(&poison, 0, sizeof(poison));
+    memset(&poisonApply, 0, sizeof(poisonApply));
 
     p.projectileSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
     p.poisonAttack = 130;
@@ -923,6 +925,37 @@ static void test_projectile_champion_impact_plan(void) {
     ASSERT_EQ(poison.newPoisonDose, 65130, "champion poison dose");
     ASSERT_EQ(poison.nextAttack, 129, "champion poison next attack");
     ASSERT_EQ(poison.scheduleDelayTicks, 36, "champion poison delay");
+
+    championState.hp.current = 30;
+    championState.poisonDose = 65000;
+    ASSERT_EQ(dm1_v1_projectile_champion_poison_apply_pc34(
+                  &impact, &p, 12, 1, 100, 2, 7, 8,
+                  &championState, &poisonApply), 1,
+              "champion poison apply builds");
+    ASSERT_EQ(poisonApply.valid, 1, "champion poison apply valid");
+    ASSERT_EQ(poisonApply.shouldApply, 1, "champion poison apply mutates");
+    ASSERT_EQ(poisonApply.championIndex, 1, "champion poison apply index");
+    ASSERT_EQ(championState.hp.current, 28, "champion poison apply hp");
+    ASSERT_EQ(championState.poisonDose, 65130,
+              "champion poison apply dose");
+    ASSERT_EQ(poisonApply.schedulePoisonEvent, 1,
+              "champion poison apply schedules");
+    ASSERT_EQ(poisonApply.incrementPoisonEventCount, 1,
+              "champion poison apply count");
+    ASSERT_EQ(poisonApply.poisonEvent.kind, TIMELINE_EVENT_STATUS_TIMEOUT,
+              "champion poison event kind");
+    ASSERT_EQ(poisonApply.poisonEvent.fireAtTick, 136,
+              "champion poison event tick");
+    ASSERT_EQ(poisonApply.poisonEvent.mapIndex, 2,
+              "champion poison event map");
+    ASSERT_EQ(poisonApply.poisonEvent.mapX, 7,
+              "champion poison event x");
+    ASSERT_EQ(poisonApply.poisonEvent.mapY, 8,
+              "champion poison event y");
+    ASSERT_EQ(poisonApply.poisonEvent.aux1, 129,
+              "champion poison event attack");
+    ASSERT_EQ(poisonApply.poisonEvent.aux4, 1,
+              "champion poison event champion");
 
     ASSERT_EQ(dm1_v1_projectile_champion_poison_plan_pc34(
                   &impact, &p, 12, 1, 65530, 1, &poison), 1,

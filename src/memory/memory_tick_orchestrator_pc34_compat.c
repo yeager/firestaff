@@ -4381,42 +4381,29 @@ static int orch_apply_projectile_champion_action_compat(
     }
 
     if (!damagePlan.killed && projectile && projectile->poisonAttack > 0) {
-        DM1_ProjectileChampionPoisonPlanPc34 poisonPlan;
-        struct TimelineEvent_Compat poisonEvent;
+        DM1_ProjectileChampionPoisonApplyPlanPc34 poisonApply;
 
-        if (!dm1_v1_projectile_champion_poison_plan_pc34(
+        if (!dm1_v1_projectile_champion_poison_apply_pc34(
                 &impactPlan, projectile, damagePlan.damage.damageApplied,
-                champion->hp.current, champion->poisonDose,
                 F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2),
-                &poisonPlan)) {
+                world->gameTick, world->partyMapIndex,
+                world->party.mapX, world->party.mapY,
+                champion, &poisonApply)) {
             return 0;
         }
-        if (!poisonPlan.shouldApply) {
+        if (!poisonApply.shouldApply) {
             return 1;
         }
-        champion->hp.current =
-            (unsigned short)((int)champion->hp.current -
-                             poisonPlan.poisonDamage);
-        champion->poisonDose = (unsigned short)poisonPlan.newPoisonDose;
-        if (poisonPlan.nextAttack > 0) {
-            memset(&poisonEvent, 0, sizeof(poisonEvent));
-            poisonEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
-            poisonEvent.fireAtTick = world->gameTick +
-                (uint32_t)poisonPlan.scheduleDelayTicks;
-            poisonEvent.mapIndex = world->partyMapIndex;
-            poisonEvent.mapX = world->party.mapX;
-            poisonEvent.mapY = world->party.mapY;
-            poisonEvent.aux0 = LIFECYCLE_STATUS_POISON;
-            poisonEvent.aux1 = poisonPlan.nextAttack;
-            poisonEvent.aux4 = championIndex;
+        if (poisonApply.schedulePoisonEvent) {
             (void)F0721_TIMELINE_Schedule_Compat(
-                &world->timeline, &poisonEvent);
-            if (world->lifecycle.champions[championIndex].poisonEventCount <
+                &world->timeline, &poisonApply.poisonEvent);
+            if (poisonApply.incrementPoisonEventCount &&
+                world->lifecycle.champions[championIndex].poisonEventCount <
                 255) {
                 world->lifecycle.champions[championIndex].poisonEventCount++;
             }
         }
-        if (champion->hp.current == 0) {
+        if (poisonApply.championDown) {
             emit(result, EMIT_CHAMPION_DOWN, championIndex, 0, 0, 0);
         }
     }

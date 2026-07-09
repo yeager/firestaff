@@ -2,6 +2,7 @@
 
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 #include <string.h>
@@ -1176,6 +1177,58 @@ int dm1_v1_projectile_champion_damage_apply_pc34(
         return 0;
     }
     outPlan->killed = killed ? 1 : 0;
+    return 1;
+}
+
+int dm1_v1_projectile_champion_poison_apply_pc34(
+    const DM1_ProjectileChampionImpactPlanPc34* impactPlan,
+    const struct ProjectileInstance_Compat* projectile,
+    int appliedDamage,
+    int rng2,
+    uint32_t gameTick,
+    int partyMapIndex,
+    int partyMapX,
+    int partyMapY,
+    struct ChampionState_Compat* champion,
+    DM1_ProjectileChampionPoisonApplyPlanPc34* outPlan) {
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->championIndex = -1;
+    if (!impactPlan || !champion) return 0;
+    outPlan->championIndex = impactPlan->championIndex;
+
+    if (!dm1_v1_projectile_champion_poison_plan_pc34(
+            impactPlan, projectile, appliedDamage, (int)champion->hp.current,
+            (int)champion->poisonDose, rng2, &outPlan->poisonPlan)) {
+        return 0;
+    }
+    outPlan->valid = 1;
+    if (!outPlan->poisonPlan.shouldApply) {
+        return 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 557-558 enters CHAMPION.C F0322
+     * only after F0321 applied damage. F0322 applies immediate poison HP,
+     * updates poison dose, and creates the first C75 status event. */
+    outPlan->shouldApply = 1;
+    champion->hp.current =
+        (unsigned short)((int)champion->hp.current -
+                         outPlan->poisonPlan.poisonDamage);
+    champion->poisonDose = (unsigned short)outPlan->poisonPlan.newPoisonDose;
+    outPlan->championDown = champion->hp.current == 0 ? 1 : 0;
+    if (outPlan->poisonPlan.nextAttack > 0) {
+        outPlan->schedulePoisonEvent = 1;
+        outPlan->incrementPoisonEventCount = 1;
+        outPlan->poisonEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+        outPlan->poisonEvent.fireAtTick =
+            gameTick + (uint32_t)outPlan->poisonPlan.scheduleDelayTicks;
+        outPlan->poisonEvent.mapIndex = partyMapIndex;
+        outPlan->poisonEvent.mapX = partyMapX;
+        outPlan->poisonEvent.mapY = partyMapY;
+        outPlan->poisonEvent.aux0 = LIFECYCLE_STATUS_POISON;
+        outPlan->poisonEvent.aux1 = outPlan->poisonPlan.nextAttack;
+        outPlan->poisonEvent.aux4 = outPlan->championIndex;
+    }
     return 1;
 }
 
