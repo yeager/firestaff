@@ -83,7 +83,7 @@ typedef struct {
     bool dialogUpdated;
 
     /* Key flags for the caller */
-    M11_GameStateId     currentState;
+    DM1_V1_GameStateIdPc34     currentState;
     DM1_V1_GameLoopPhasePc34   lastPhase;
     bool                partyDead;
     bool                gameWon;
@@ -95,7 +95,7 @@ typedef struct {
 /* ── Engine aggregate state ───────────────────────────────────────── */
 typedef struct {
     /* ── Subsystem states ── */
-    M11_GameStateMachine              stateMachine;
+    DM1_V1_GameStateMachinePc34              stateMachine;
     DM1_V1_GameLoopStatePc34                 gameLoop;
     DM1_V1_LoopIntegrationStatePc34                      loopIntegration;
     DM1_V1_InputStatePc34                    input;
@@ -165,7 +165,7 @@ void m11_engine_shutdown(M11_Engine *engine);
 /* ── Engine queries ───────────────────────────────────────────────── */
 
 /* Get current game state. */
-M11_GameStateId m11_engine_get_state(const M11_Engine *engine);
+DM1_V1_GameStateIdPc34 m11_engine_get_state(const M11_Engine *engine);
 
 /* Get pointer to the central dungeon data (for subsystem queries). */
 DM1_V1_DungeonDataPc34 *m11_engine_get_dungeon_data(M11_Engine *engine);

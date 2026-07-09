@@ -113,7 +113,7 @@ static void init_transition_table(void)
 
 /* ── Initialization ───────────────────────────────────────────────── */
 
-void m11_game_state_init(M11_GameStateMachine *sm)
+void DM1_V1_GameState_InitPc34Compat(DM1_V1_GameStateMachinePc34 *sm)
 {
     memset(sm, 0, sizeof(*sm));
     sm->currentState = DM1_STATE_NONE;
@@ -122,9 +122,9 @@ void m11_game_state_init(M11_GameStateMachine *sm)
     init_transition_table();
 }
 
-void m11_game_state_set_callbacks(M11_GameStateMachine *sm,
-                                  M11_StateCallback onEnter,
-                                  M11_StateCallback onExit,
+void DM1_V1_GameState_SetCallbacksPc34Compat(DM1_V1_GameStateMachinePc34 *sm,
+                                  DM1_V1_StateCallbackPc34 onEnter,
+                                  DM1_V1_StateCallbackPc34 onExit,
                                   void *userdata)
 {
     sm->onEnter = onEnter;
@@ -134,25 +134,25 @@ void m11_game_state_set_callbacks(M11_GameStateMachine *sm,
 
 /* ── Core transition ──────────────────────────────────────────────── */
 
-int m11_game_state_can_transition(const M11_GameStateMachine *sm,
-                                  M11_GameStateId target)
+int DM1_V1_GameState_CanTransitionPc34Compat(const DM1_V1_GameStateMachinePc34 *sm,
+                                  DM1_V1_GameStateIdPc34 target)
 {
     init_transition_table();
     if (target >= DM1_STATE_COUNT) return 0;
     return (s_valid_transitions[sm->currentState] >> target) & 1;
 }
 
-M11_TransitionResult m11_game_state_transition(M11_GameStateMachine *sm,
-                                                M11_GameStateId newState)
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_TransitionPc34Compat(DM1_V1_GameStateMachinePc34 *sm,
+                                                DM1_V1_GameStateIdPc34 newState)
 {
     if (newState >= DM1_STATE_COUNT) return DM1_TRANS_INVALID;
     if (newState == sm->currentState) return DM1_TRANS_SAME_STATE;
 
-    if (!m11_game_state_can_transition(sm, newState)) {
+    if (!DM1_V1_GameState_CanTransitionPc34Compat(sm, newState)) {
         return DM1_TRANS_INVALID;
     }
 
-    M11_GameStateId oldState = sm->currentState;
+    DM1_V1_GameStateIdPc34 oldState = sm->currentState;
 
     /* Exit callback */
     if (sm->onExit) {
@@ -221,68 +221,68 @@ M11_TransitionResult m11_game_state_transition(M11_GameStateMachine *sm,
 
 /* ── Query ────────────────────────────────────────────────────────── */
 
-M11_GameStateId m11_game_state_current(const M11_GameStateMachine *sm)
+DM1_V1_GameStateIdPc34 DM1_V1_GameState_CurrentPc34Compat(const DM1_V1_GameStateMachinePc34 *sm)
 {
     return sm->currentState;
 }
 
-M11_GameStateId m11_game_state_previous(const M11_GameStateMachine *sm)
+DM1_V1_GameStateIdPc34 DM1_V1_GameState_PreviousPc34Compat(const DM1_V1_GameStateMachinePc34 *sm)
 {
     return sm->previousState;
 }
 
 /* ── Convenience state setters ────────────────────────────────────── */
 
-M11_TransitionResult m11_game_state_start_new_game(M11_GameStateMachine *sm)
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_StartNewGamePc34Compat(DM1_V1_GameStateMachinePc34 *sm)
 {
-    return m11_game_state_transition(sm, DM1_STATE_NEWGAME_INIT);
+    return DM1_V1_GameState_TransitionPc34Compat(sm, DM1_STATE_NEWGAME_INIT);
 }
 
-M11_TransitionResult m11_game_state_load_game(M11_GameStateMachine *sm)
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_LoadGamePc34Compat(DM1_V1_GameStateMachinePc34 *sm)
 {
-    return m11_game_state_transition(sm, DM1_STATE_LOADGAME_INIT);
+    return DM1_V1_GameState_TransitionPc34Compat(sm, DM1_STATE_LOADGAME_INIT);
 }
 
-M11_TransitionResult m11_game_state_enter_dungeon(M11_GameStateMachine *sm)
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_EnterDungeonPc34Compat(DM1_V1_GameStateMachinePc34 *sm)
 {
-    return m11_game_state_transition(sm, DM1_STATE_DUNGEON_VIEWPORT);
+    return DM1_V1_GameState_TransitionPc34Compat(sm, DM1_STATE_DUNGEON_VIEWPORT);
 }
 
-M11_TransitionResult m11_game_state_open_inventory(M11_GameStateMachine *sm,
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_OpenInventoryPc34Compat(DM1_V1_GameStateMachinePc34 *sm,
                                                     int championOrdinal)
 {
-    M11_TransitionResult r = m11_game_state_transition(sm, DM1_STATE_INVENTORY);
+    DM1_V1_TransitionResultPc34 r = DM1_V1_GameState_TransitionPc34Compat(sm, DM1_STATE_INVENTORY);
     if (r == DM1_TRANS_OK) {
         sm->inventoryChampionOrdinal = championOrdinal;
     }
     return r;
 }
 
-M11_TransitionResult m11_game_state_close_inventory(M11_GameStateMachine *sm)
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_CloseInventoryPc34Compat(DM1_V1_GameStateMachinePc34 *sm)
 {
     sm->inventoryChampionOrdinal = 0;
-    return m11_game_state_transition(sm, DM1_STATE_DUNGEON_VIEWPORT);
+    return DM1_V1_GameState_TransitionPc34Compat(sm, DM1_STATE_DUNGEON_VIEWPORT);
 }
 
-M11_TransitionResult m11_game_state_party_died(M11_GameStateMachine *sm)
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_PartyDiedPc34Compat(DM1_V1_GameStateMachinePc34 *sm)
 {
-    return m11_game_state_transition(sm, DM1_STATE_GAME_OVER);
+    return DM1_V1_GameState_TransitionPc34Compat(sm, DM1_STATE_GAME_OVER);
 }
 
-M11_TransitionResult m11_game_state_victory(M11_GameStateMachine *sm)
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_VictoryPc34Compat(DM1_V1_GameStateMachinePc34 *sm)
 {
-    return m11_game_state_transition(sm, DM1_STATE_VICTORY);
+    return DM1_V1_GameState_TransitionPc34Compat(sm, DM1_STATE_VICTORY);
 }
 
-M11_TransitionResult m11_game_state_request_restart(M11_GameStateMachine *sm)
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_RequestRestartPc34Compat(DM1_V1_GameStateMachinePc34 *sm)
 {
     if (!sm->restartAllowed) return DM1_TRANS_BLOCKED;
-    return m11_game_state_transition(sm, DM1_STATE_RESTART);
+    return DM1_V1_GameState_TransitionPc34Compat(sm, DM1_STATE_RESTART);
 }
 
 /* ── Name lookup ──────────────────────────────────────────────────── */
 
-const char *m11_game_state_name(M11_GameStateId state)
+const char *DM1_V1_GameState_NamePc34Compat(DM1_V1_GameStateIdPc34 state)
 {
     if (state >= DM1_STATE_COUNT) return "UNKNOWN";
     return s_state_names[state];
@@ -290,7 +290,7 @@ const char *m11_game_state_name(M11_GameStateId state)
 
 /* ── Source evidence ──────────────────────────────────────────────── */
 
-const char *m11_game_state_source_evidence(void)
+const char *DM1_V1_GameState_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206\n"
