@@ -14,7 +14,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_RCC_C160_RESURRECT_PC34_COMPAT 160
 #define DM1_V1_MIRROR_CANDIDATE_RCC_C30_SLOT_CHEST_1_PC34_COMPAT 30
 
-enum Dm1V1MirrorCandidateRccStepIdPc34Compat {
+enum DM1_V1_MirrorCandidateRccStepIdPc34Compat {
     DM1_V1_MIRROR_CANDIDATE_RCC_STEP_SEED_STALE_B_PANEL_PC34_COMPAT = 1,
     DM1_V1_MIRROR_CANDIDATE_RCC_STEP_CLOSE_STALE_B_PANEL_PC34_COMPAT = 2,
     DM1_V1_MIRROR_CANDIDATE_RCC_STEP_QUEUE_FRESH_A_PANEL_PC34_COMPAT = 3,
@@ -22,7 +22,7 @@ enum Dm1V1MirrorCandidateRccStepIdPc34Compat {
     DM1_V1_MIRROR_CANDIDATE_RCC_STEP_SETTLE_PANEL_PC34_COMPAT = 5
 };
 
-typedef struct Dm1V1MirrorCandidateRccChampionPc34Compat {
+typedef struct DM1_V1_MirrorCandidateRccChampionPc34Compat {
     int present;
     int currentHealth;
     int maximumHealth;
@@ -35,9 +35,9 @@ typedef struct Dm1V1MirrorCandidateRccChampionPc34Compat {
     int redrawStateCount;
     int redrawPanelCount;
     int slots[DM1_V1_MIRROR_CANDIDATE_RCC_SLOT_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateRccChampionPc34Compat;
+} DM1_V1_MirrorCandidateRccChampionPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateRccPanelPc34Compat {
+typedef struct DM1_V1_MirrorCandidateRccPanelPc34Compat {
     int panelOpen;
     int panelContent;
     int panelGraphic;
@@ -48,9 +48,9 @@ typedef struct Dm1V1MirrorCandidateRccPanelPc34Compat {
     int closedWithoutResurrect;
     int chestFirstSlot;
     int chestSlotProbeCount;
-} Dm1V1MirrorCandidateRccPanelPc34Compat;
+} DM1_V1_MirrorCandidateRccPanelPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateRccStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateRccStatePc34Compat {
     int partyChampionCount;
     int leaderIndex;
     int leaderEmptyHanded;
@@ -83,12 +83,12 @@ typedef struct Dm1V1MirrorCandidateRccStatePc34Compat {
     int g0426OpenChestThing;
     int g0425ChestSlots[
         DM1_V1_MIRROR_CANDIDATE_RCC_CHEST_SLOT_COUNT_PC34_COMPAT];
-    Dm1V1MirrorCandidateRccPanelPc34Compat panel;
-    Dm1V1MirrorCandidateRccChampionPc34Compat
+    DM1_V1_MirrorCandidateRccPanelPc34Compat panel;
+    DM1_V1_MirrorCandidateRccChampionPc34Compat
         champions[DM1_V1_MIRROR_CANDIDATE_RCC_CHAMPION_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateRccStatePc34Compat;
+} DM1_V1_MirrorCandidateRccStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateRccStepPc34Compat {
+typedef struct DM1_V1_MirrorCandidateRccStepPc34Compat {
     int stepId;
     const char *name;
     const char *redmcsbAnchor;
@@ -125,34 +125,45 @@ typedef struct Dm1V1MirrorCandidateRccStepPc34Compat {
     int leaderOwnsFreshA;
     int bStillDead;
     int aResurrected;
-} Dm1V1MirrorCandidateRccStepPc34Compat;
+} DM1_V1_MirrorCandidateRccStepPc34Compat;
+
+typedef enum DM1_V1_MirrorCandidateRccStepIdPc34Compat
+    Dm1V1MirrorCandidateRccStepIdPc34Compat;
+typedef DM1_V1_MirrorCandidateRccChampionPc34Compat
+    Dm1V1MirrorCandidateRccChampionPc34Compat;
+typedef DM1_V1_MirrorCandidateRccPanelPc34Compat
+    Dm1V1MirrorCandidateRccPanelPc34Compat;
+typedef DM1_V1_MirrorCandidateRccStatePc34Compat
+    Dm1V1MirrorCandidateRccStatePc34Compat;
+typedef DM1_V1_MirrorCandidateRccStepPc34Compat
+    Dm1V1MirrorCandidateRccStepPc34Compat;
 
 void DM1_V1_MirrorCandidateRcc_InitPc34Compat(
-    Dm1V1MirrorCandidateRccStatePc34Compat *state);
+    DM1_V1_MirrorCandidateRccStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateRcc_SeedStaleBPanelPc34Compat(
-    Dm1V1MirrorCandidateRccStatePc34Compat *state,
-    Dm1V1MirrorCandidateRccStepPc34Compat *outStep);
+    DM1_V1_MirrorCandidateRccStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRccStepPc34Compat *outStep);
 
 int DM1_V1_MirrorCandidateRcc_CloseStaleBPanelPc34Compat(
-    Dm1V1MirrorCandidateRccStatePc34Compat *state,
-    Dm1V1MirrorCandidateRccStepPc34Compat *outStep);
+    DM1_V1_MirrorCandidateRccStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRccStepPc34Compat *outStep);
 
 int DM1_V1_MirrorCandidateRcc_QueueFreshAPanelPc34Compat(
-    Dm1V1MirrorCandidateRccStatePc34Compat *state,
-    Dm1V1MirrorCandidateRccStepPc34Compat *outStep);
+    DM1_V1_MirrorCandidateRccStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRccStepPc34Compat *outStep);
 
 int DM1_V1_MirrorCandidateRcc_ResurrectAPc34Compat(
-    Dm1V1MirrorCandidateRccStatePc34Compat *state,
-    Dm1V1MirrorCandidateRccStepPc34Compat *outStep);
+    DM1_V1_MirrorCandidateRccStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRccStepPc34Compat *outStep);
 
 int DM1_V1_MirrorCandidateRcc_SettlePanelPc34Compat(
-    Dm1V1MirrorCandidateRccStatePc34Compat *state,
-    Dm1V1MirrorCandidateRccStepPc34Compat *outStep);
+    DM1_V1_MirrorCandidateRccStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRccStepPc34Compat *outStep);
 
 int DM1_V1_MirrorCandidateRcc_DriveRegressionPc34Compat(
-    Dm1V1MirrorCandidateRccStatePc34Compat *state,
-    Dm1V1MirrorCandidateRccStepPc34Compat *steps,
+    DM1_V1_MirrorCandidateRccStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRccStepPc34Compat *steps,
     int stepCapacity);
 
 const char *

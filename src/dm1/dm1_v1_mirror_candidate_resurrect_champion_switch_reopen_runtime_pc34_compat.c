@@ -32,8 +32,8 @@ static int normalize_direction(int value)
 }
 
 static void snapshot_step(
-    Dm1V1MirrorCandidateRcsrStepPc34Compat *step,
-    const Dm1V1MirrorCandidateRcsrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRcsrStepPc34Compat *step,
+    const DM1_V1_MirrorCandidateRcsrStatePc34Compat *state,
     int stepId,
     const char *name,
     const char *anchor)
@@ -60,9 +60,9 @@ static void snapshot_step(
     step->panelChampionAfter = state->activePanelChampionIndex;
 }
 
-static Dm1V1MirrorCandidateRcsrPanelChromePc34Compat make_c040_chrome(void)
+static DM1_V1_MirrorCandidateRcsrPanelChromePc34Compat make_c040_chrome(void)
 {
-    Dm1V1MirrorCandidateRcsrPanelChromePc34Compat chrome;
+    DM1_V1_MirrorCandidateRcsrPanelChromePc34Compat chrome;
 
     memset(&chrome, 0, sizeof(chrome));
     chrome.panelContent = DM1_V1_MIRROR_CANDIDATE_RCSR_M568_PANEL_PC34_COMPAT;
@@ -81,8 +81,8 @@ static Dm1V1MirrorCandidateRcsrPanelChromePc34Compat make_c040_chrome(void)
 }
 
 static int same_chrome(
-    const Dm1V1MirrorCandidateRcsrPanelChromePc34Compat *left,
-    const Dm1V1MirrorCandidateRcsrPanelChromePc34Compat *right)
+    const DM1_V1_MirrorCandidateRcsrPanelChromePc34Compat *left,
+    const DM1_V1_MirrorCandidateRcsrPanelChromePc34Compat *right)
 {
     return left && right &&
            left->panelContent == right->panelContent &&
@@ -98,7 +98,7 @@ static int same_chrome(
 }
 
 static void draw_all_champion_states(
-    Dm1V1MirrorCandidateRcsrStatePc34Compat *state)
+    DM1_V1_MirrorCandidateRcsrStatePc34Compat *state)
 {
     int championIndex;
 
@@ -110,7 +110,7 @@ static void draw_all_champion_states(
 }
 
 static void draw_panel_chrome(
-    Dm1V1MirrorCandidateRcsrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRcsrStatePc34Compat *state,
     int championIndex,
     int reopened)
 {
@@ -135,7 +135,7 @@ static void draw_panel_chrome(
 }
 
 void DM1_V1_MirrorCandidateRcsr_InitPc34Compat(
-    Dm1V1MirrorCandidateRcsrStatePc34Compat *state)
+    DM1_V1_MirrorCandidateRcsrStatePc34Compat *state)
 {
     int championIndex;
     int slotIndex;
@@ -180,9 +180,9 @@ void DM1_V1_MirrorCandidateRcsr_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRcsr_SelectCandidatePc34Compat(
-    Dm1V1MirrorCandidateRcsrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRcsrStatePc34Compat *state,
     int championIndex,
-    Dm1V1MirrorCandidateRcsrStepPc34Compat *outStep)
+    DM1_V1_MirrorCandidateRcsrStepPc34Compat *outStep)
 {
     snapshot_step(outStep, state, STEP_SELECT_CANDIDATE_PC34_COMPAT,
                   "select C040 candidate champion 0",
@@ -211,9 +211,9 @@ int DM1_V1_MirrorCandidateRcsr_SelectCandidatePc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRcsr_ClickResurrectHandIconPc34Compat(
-    Dm1V1MirrorCandidateRcsrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRcsrStatePc34Compat *state,
     int championIndex,
-    Dm1V1MirrorCandidateRcsrStepPc34Compat *outStep)
+    DM1_V1_MirrorCandidateRcsrStepPc34Compat *outStep)
 {
     int reopened;
 
@@ -257,10 +257,10 @@ int DM1_V1_MirrorCandidateRcsr_ClickResurrectHandIconPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRcsr_SwitchInventoryChampionPc34Compat(
-    Dm1V1MirrorCandidateRcsrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRcsrStatePc34Compat *state,
     int championIndex,
     int newPartyDirection,
-    Dm1V1MirrorCandidateRcsrStepPc34Compat *outStep)
+    DM1_V1_MirrorCandidateRcsrStepPc34Compat *outStep)
 {
     int championIterator;
     int oldDirection;
@@ -318,8 +318,8 @@ int DM1_V1_MirrorCandidateRcsr_SwitchInventoryChampionPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRcsr_DriveRegressionPc34Compat(
-    Dm1V1MirrorCandidateRcsrStatePc34Compat *state,
-    Dm1V1MirrorCandidateRcsrStepPc34Compat *steps,
+    DM1_V1_MirrorCandidateRcsrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRcsrStepPc34Compat *steps,
     int stepCapacity)
 {
     if (!state || !steps || stepCapacity < 4) {
