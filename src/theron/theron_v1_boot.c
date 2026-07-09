@@ -2673,6 +2673,29 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
     return out_receipt->graphics_executed;
 }
 
+int theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (out_receipt) {
+        theron_v1_boot_startup_graphics_route_receipt_init(out_receipt);
+    }
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+        &view_model,
+        executor,
+        out_receipt);
+}
+
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
