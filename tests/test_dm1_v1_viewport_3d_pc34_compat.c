@@ -3814,9 +3814,12 @@ static void test_side_lane_clear_contract(void)
                   (int)visibility.left_open_depth_mask, 0x3);
         check_int("F0128.lane_visibility.right_mask",
                   (int)visibility.right_open_depth_mask, 0x5);
-        check_int("F0128.lane_visibility.left_d3_clear",
+        check_int("F0128.lane_visibility.left_d3_blocked_by_center_d2",
                   dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
-                      &visibility, 3, -1), 1);
+                      &visibility, 3, -1), 0);
+        check_int("F0128.lane_visibility.left_d2_clear_before_center_block",
+                  dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+                      &visibility, 2, -1), 1);
         check_int("F0128.lane_visibility.right_d3_blocked",
                   dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
                       &visibility, 3, 1), 0);
