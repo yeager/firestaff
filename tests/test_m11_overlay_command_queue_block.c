@@ -1078,6 +1078,52 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
               "HoC front mirror receipt carries mirror frame ornament");
     ASSERT_EQ(portrait, 13,
               "HoC front mirror uses zero-based C026 render index");
+    {
+        int draw = 0;
+        int graphic = 0;
+        int sx = -1;
+        int sy = -1;
+        int w = 0;
+        int h = 0;
+        int dx = -1;
+        int dy = -1;
+        int transparent = -1;
+        int consumedWall = 0;
+        ASSERT_EQ(M11_GameView_ProbeDm1FrontChampionPortraitReceipt(
+                      &state,
+                      &draw,
+                      &graphic,
+                      &sx,
+                      &sy,
+                      &w,
+                      &h,
+                      &dx,
+                      &dy,
+                      &transparent,
+                      &consumedWall),
+                  1,
+                  "M11 HoC portrait draw exposes DM1-owned render receipt");
+        ASSERT_EQ(draw, 1,
+                  "DM1 render receipt owns C026 portrait draw gate");
+        ASSERT_EQ(graphic, 26,
+                  "DM1 render receipt owns C026 graphic id");
+        ASSERT_EQ(sx, 160,
+                  "DM1 render receipt owns ordinal-13 C026 source x");
+        ASSERT_EQ(sy, 29,
+                  "DM1 render receipt owns ordinal-13 C026 source y");
+        ASSERT_EQ(w, 32,
+                  "DM1 render receipt owns C026 width");
+        ASSERT_EQ(h, 29,
+                  "DM1 render receipt owns C026 height");
+        ASSERT_EQ(dx, 96,
+                  "DM1 render receipt owns D1C portrait destination x");
+        ASSERT_EQ(dy, 35,
+                  "DM1 render receipt owns D1C portrait destination y");
+        ASSERT_EQ(transparent, 1,
+                  "DM1 render receipt owns C026 transparent color");
+        ASSERT_EQ(consumedWall, 1,
+                  "M11 consumed the wall-square receipt for C026 draw");
+    }
 
     squareFirstThings[0] = make_thing_cell(THING_TYPE_SENSOR, 0, 1);
     portrait = -2;

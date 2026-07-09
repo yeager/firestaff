@@ -2,9 +2,13 @@
 
 - ✅ 2026-07-09 pass913 DM2 packaged full-start consumer receipt: DM2 boot now exports a consumer receipt for startup draw/probe gates from the packaged full-start receipt, including exact title timing, GDAT title readiness, menu capture, HUD handoff, and command count so UI/M11 callers can avoid loose boot fields. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
 
+- ✅ 2026-07-09 pass899 DM1 HoC render production consumer: startup now exposes a DM1-owned HoC render consumer that combines first-frame render commands with champion mirror thing-layer receipts, returning wall-overlay, real floor-object/projectile, spell-effect suppression, and no-M11-fallback-scan decisions for production call sites. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `test_dm1_v1_champion_mirror_pc34_compat`, target rebuilds, and `git diff --check` passed.
+
 - ✅ 2026-07-09 pass900 Theron non-media render export cleanup: removed the older runtime/snapshot layout, row, and render-plan boot exports; tests now verify the same data through full-start host-render receipts, keeping render consumers off raw prompt/roster rebuild paths. Verification: `test_theron_v1_startup_save_resume_pc34`, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB public capture render-plan API retired: capture-level title/full render-plan accessors were removed from the public boot header; package/host-view internals still build the plans, and tests now prove title, utility, closed-door, and door-opening through host-view/package receipts. Verification: CSB startup tests and `git diff --check`.
+
+- ✅ 2026-07-09 M11 DM1 HoC portrait receipt consumer: D1C champion portrait drawing now consumes the DM1 ChampionMirror render receipt for C026 atlas geometry, destination, transparency, and wall-square gating instead of using M11-local portrait geometry. Verification: `test_m11_overlay_command_queue_block` and `git diff --check`.
 
 - ✅ 2026-07-09 pass912 Nexus card display package labels: Nexus M12 startup package receipts now also own the game id, card title, card subtitle, and timing summary labels, closing the remaining Nexus-owned launcher/status display text gap after pass911. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
 
