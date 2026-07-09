@@ -6,6 +6,7 @@
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
+#include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 
 #include <stdarg.h>
@@ -1781,6 +1782,19 @@ void csb_v1_boot_startup_packaged_capture_proof_init_pc34(
         "ENTRANCE.C F0441/F0806 lines 850-883";
 }
 
+void csb_v1_boot_startup_visual_sequence_capture_receipt_init_pc34(
+    CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; "
+        "ENTRANCE.C F0441/F0806 lines 850-883; "
+        "ENTRANCE.C F0438/F0807 door-opening frames";
+}
+
 void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt)
 {
@@ -3373,6 +3387,280 @@ int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
     return csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
         &capture_receipt,
         out_proof);
+}
+
+static void csb_v1_boot_startup_visual_base_snapshot_pc34(
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    memset(snapshot, 0, sizeof(*snapshot));
+    snapshot->boot_profile = boot_profile;
+    snapshot->entrance_active = 1;
+    snapshot->entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
+    snapshot->pending_command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    snapshot->resume_available = 1;
+    snapshot->resume_path = "/tmp/firestaff-csb-resume.dat";
+}
+
+static int csb_v1_boot_startup_visual_title_sample_pc34(
+    const CSB_V1_BootProfile *boot_profile,
+    int frame,
+    int source_step,
+    int expected_stage,
+    uint32_t *out_hash)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 proof;
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.title_active = 1;
+    snapshot.title_frame = frame;
+    snapshot.title_source_step = source_step;
+    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
+            &snapshot,
+            &proof) ||
+        !proof.valid ||
+        !proof.real_asset_matched ||
+        !proof.title_capture_ready ||
+        !proof.title_route ||
+        !proof.render_plan_available ||
+        proof.title_stage != expected_stage ||
+        proof.draw_fallback_text ||
+        proof.hud_menu_draw_available) {
+        return 0;
+    }
+    if (out_hash) {
+        *out_hash = proof.packaged_capture_hash;
+    }
+    return 1;
+}
+
+static int csb_v1_boot_startup_visual_packaged_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof,
+    uint32_t *out_hash)
+{
+    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
+            snapshot,
+            proof) ||
+        !proof->valid ||
+        !proof->real_asset_matched ||
+        !proof->render_plan_available) {
+        return 0;
+    }
+    if (out_hash) {
+        *out_hash = proof->packaged_capture_hash;
+    }
+    return 1;
+}
+
+int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
+    const CSB_V1_BootProfile *boot_profile,
+    CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 proof;
+    uint32_t sequence_hash = 2166136261u;
+    int i;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_visual_sequence_capture_receipt_init_pc34(out_receipt);
+    if (!boot_profile) {
+        return 0;
+    }
+
+    out_receipt->source_title_presents_ticks =
+        csb_v1_startup_title_presents_ticks_pc34();
+    out_receipt->source_title_chaos_zoom_ticks =
+        csb_v1_startup_title_chaos_zoom_ticks_pc34();
+    out_receipt->source_title_chaos_hold_ticks =
+        csb_v1_startup_title_chaos_hold_ticks_pc34();
+    out_receipt->source_title_strikes_back_ticks =
+        csb_v1_startup_title_strikes_back_ticks_pc34();
+    out_receipt->source_door_pre_open_delay_ticks =
+        csb_v1_startup_entrance_pre_open_delay_ticks_pc34();
+    out_receipt->source_door_step_count =
+        ENTRANCE_Compat_GetDoorAnimationStepCount();
+
+    out_receipt->title_presents_capture_ready =
+        csb_v1_boot_startup_visual_title_sample_pc34(
+            boot_profile,
+            0,
+            1,
+            CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
+            &out_receipt->title_sample_hashes[0]);
+    out_receipt->title_chaos_zoom_capture_ready =
+        csb_v1_boot_startup_visual_title_sample_pc34(
+            boot_profile,
+            out_receipt->source_title_presents_ticks,
+            2,
+            CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+            &out_receipt->title_sample_hashes[1]);
+    out_receipt->title_chaos_hold_capture_ready =
+        csb_v1_boot_startup_visual_title_sample_pc34(
+            boot_profile,
+            out_receipt->source_title_presents_ticks +
+                out_receipt->source_title_chaos_zoom_ticks,
+            19,
+            CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+            &out_receipt->title_sample_hashes[2]);
+    out_receipt->title_strikes_back_capture_ready =
+        csb_v1_boot_startup_visual_title_sample_pc34(
+            boot_profile,
+            csb_v1_startup_title_total_ticks_pc34() - 1,
+            20,
+            CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
+            &out_receipt->title_sample_hashes[3]);
+    out_receipt->title_sample_count =
+        CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+    out_receipt->title_all_stages_captured =
+        out_receipt->title_presents_capture_ready &&
+                out_receipt->title_chaos_zoom_capture_ready &&
+                out_receipt->title_chaos_hold_capture_ready &&
+                out_receipt->title_strikes_back_capture_ready
+            ? 1
+            : 0;
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.utility_overlay_active = 0;
+    out_receipt->closed_door_hud_capture_ready =
+        csb_v1_boot_startup_visual_packaged_snapshot_pc34(
+            &snapshot,
+            &proof,
+            &out_receipt->closed_door_hud_hash) &&
+                proof.closed_door_menu_route &&
+                proof.hud_menu_capture_ready &&
+                proof.hud_menu_draw_available &&
+                proof.draw_closed_doors &&
+                !proof.draw_fallback_text;
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.utility_overlay_active = 1;
+    snapshot.utility_selected_action_index = 0;
+    snapshot.utility_imported_champion_count = 2;
+    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
+    out_receipt->utility_hud_capture_ready =
+        csb_v1_boot_startup_visual_packaged_snapshot_pc34(
+            &snapshot,
+            &proof,
+            &out_receipt->utility_hud_hash) &&
+                proof.utility_menu_route &&
+                proof.hud_menu_capture_ready &&
+                proof.hud_menu_draw_available &&
+                proof.draw_utility_panel &&
+                !proof.draw_fallback_text;
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks =
+        csb_v1_startup_entrance_pre_open_delay_ticks_pc34();
+    snapshot.opening_step = 0;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    out_receipt->door_opening_delay_capture_ready =
+        csb_v1_boot_startup_visual_packaged_snapshot_pc34(
+            &snapshot,
+            &proof,
+            &out_receipt->door_opening_delay_hash) &&
+                proof.opening_door_route &&
+                !proof.hud_menu_draw_available &&
+                !proof.draw_fallback_text;
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 3;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    out_receipt->door_opening_frame_capture_ready =
+        csb_v1_boot_startup_visual_packaged_snapshot_pc34(
+            &snapshot,
+            &proof,
+            &out_receipt->door_opening_frame_hash) &&
+                proof.opening_door_route &&
+                proof.draw_opening_frame &&
+                !proof.hud_menu_draw_available &&
+                !proof.draw_fallback_text;
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.credits_active = 1;
+    snapshot.credits_remaining_ticks =
+        csb_v1_startup_entrance_credits_ticks_pc34();
+    out_receipt->credits_capture_ready =
+        csb_v1_boot_startup_visual_packaged_snapshot_pc34(
+            &snapshot,
+            &proof,
+            &out_receipt->credits_hash) &&
+                proof.credits_route &&
+                !proof.hud_menu_draw_available &&
+                !proof.draw_fallback_text;
+
+    out_receipt->real_asset_matched =
+        out_receipt->title_all_stages_captured ? 1 : 0;
+    out_receipt->hud_menu_draw_available =
+        out_receipt->closed_door_hud_capture_ready &&
+                out_receipt->utility_hud_capture_ready
+            ? 1
+            : 0;
+    out_receipt->opening_frame_draw_available =
+        out_receipt->door_opening_frame_capture_ready ? 1 : 0;
+    out_receipt->no_fallback_text_routes =
+        out_receipt->title_all_stages_captured &&
+                out_receipt->closed_door_hud_capture_ready &&
+                out_receipt->utility_hud_capture_ready &&
+                out_receipt->door_opening_delay_capture_ready &&
+                out_receipt->door_opening_frame_capture_ready &&
+                out_receipt->credits_capture_ready
+            ? 1
+            : 0;
+    out_receipt->no_legacy_door_fallback_routes =
+        out_receipt->door_opening_delay_capture_ready &&
+                out_receipt->door_opening_frame_capture_ready
+            ? 1
+            : 0;
+
+    for (i = 0; i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34; ++i) {
+        sequence_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+            sequence_hash,
+            out_receipt->title_sample_hashes[i]);
+    }
+    sequence_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        sequence_hash,
+        out_receipt->closed_door_hud_hash);
+    sequence_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        sequence_hash,
+        out_receipt->utility_hud_hash);
+    sequence_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        sequence_hash,
+        out_receipt->door_opening_delay_hash);
+    sequence_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        sequence_hash,
+        out_receipt->door_opening_frame_hash);
+    sequence_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        sequence_hash,
+        out_receipt->credits_hash);
+    out_receipt->sequence_capture_hash = sequence_hash ? sequence_hash : 1u;
+    out_receipt->valid =
+        out_receipt->title_all_stages_captured &&
+                out_receipt->closed_door_hud_capture_ready &&
+                out_receipt->utility_hud_capture_ready &&
+                out_receipt->door_opening_delay_capture_ready &&
+                out_receipt->door_opening_frame_capture_ready &&
+                out_receipt->credits_capture_ready &&
+                out_receipt->no_fallback_text_routes &&
+                out_receipt->no_legacy_door_fallback_routes &&
+                out_receipt->sequence_capture_hash != 0u
+            ? 1
+            : 0;
+    /* ReDMCSB TITLE.C F0437 samples every title phase that CSB shows after
+     * the FTL swoosh. ENTRANCE.C F0441/F0806 and F0438/F0807 own the closed
+     * doors, utility HUD, credits, and door-opening frames. This aggregate
+     * receipt binds those runtime-visible phases to the same packaged asset
+     * capture path, so host callers cannot prove startup with a title-only
+     * sample or a text/door fallback route. */
+    return out_receipt->valid;
 }
 
 int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
