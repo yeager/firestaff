@@ -1427,6 +1427,13 @@ int main(void) {
                         real_visual_capture.sampled_menu_composite_hash != 0u &&
                         (real_visual_capture.sampled_menu_selection_mask & 0x7) == 0x7 &&
                         real_visual_capture.sampled_runtime_hud_handoff_capture_ready == 1 &&
+                        real_visual_capture.runtime_hud_capture_consumed == 1 &&
+                        real_visual_capture.runtime_hud_real_gdat_ready == 1 &&
+                        real_visual_capture.runtime_hud_direction_mask == 0x0f &&
+                        real_visual_capture.runtime_hud_sample_count == 4 &&
+                        real_visual_capture.runtime_hud_unique_frame_hash_count > 0 &&
+                        real_visual_capture.runtime_hud_frame_hash != 0u &&
+                        real_visual_capture.runtime_hud_pixel_count == 4u * 320u * 200u &&
                         real_visual_capture.real_gdat_capture_breadth_ready == 1 &&
                         real_visual_capture.hud_handoff_capture_ready == 1 &&
                         real_visual_capture.hud_suppressed_capture_ready == 1 &&

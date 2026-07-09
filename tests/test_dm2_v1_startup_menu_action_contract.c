@@ -785,8 +785,17 @@ int main(void)
                           ((1 << 0) | (1 << 2) | (1 << 7)) &&
                       boot_real_visual_capture.sampled_menu_selection_capture_count >= 3 &&
                       boot_real_visual_capture.sampled_menu_composite_capture_count >= 3 &&
+                      boot_real_visual_capture.sampled_menu_unique_composite_hash_count >= 3 &&
+                      boot_real_visual_capture.sampled_menu_composite_hash != 0u &&
                       (boot_real_visual_capture.sampled_menu_selection_mask & 0x7) == 0x7 &&
                       boot_real_visual_capture.sampled_runtime_hud_handoff_capture_ready == 1 &&
+                      boot_real_visual_capture.runtime_hud_capture_consumed == 1 &&
+                      boot_real_visual_capture.runtime_hud_real_gdat_ready == 1 &&
+                      boot_real_visual_capture.runtime_hud_direction_mask == 0x0f &&
+                      boot_real_visual_capture.runtime_hud_sample_count == 4 &&
+                      boot_real_visual_capture.runtime_hud_unique_frame_hash_count > 0 &&
+                      boot_real_visual_capture.runtime_hud_frame_hash != 0u &&
+                      boot_real_visual_capture.runtime_hud_pixel_count == 4u * 320u * 200u &&
                       boot_real_visual_capture.real_gdat_capture_breadth_ready == 1 &&
                       boot_real_visual_capture.packaged_full_start_hash != 0u &&
                       boot_real_visual_capture.packaged_consumer_hash ==
