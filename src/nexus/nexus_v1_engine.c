@@ -293,8 +293,14 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
     if (!engine) return;
     engine->menu_bpk_decode_receipt_valid = 0;
     engine->menu_bpk_decode_receipt_attempted = 0;
+    engine->menu_bpk_upload_receipt_valid = 0;
+    engine->menu_bpk_upload_row_count = 0;
     memset(&engine->menu_bpk_decode_receipt, 0,
            sizeof(engine->menu_bpk_decode_receipt));
+    memset(&engine->menu_bpk_upload_receipt, 0,
+           sizeof(engine->menu_bpk_upload_receipt));
+    memset(engine->menu_bpk_upload_rows, 0,
+           sizeof(engine->menu_bpk_upload_rows));
 
     data = nexus_v1_read_file(engine, "MENU.BPK", &size);
     if (!data || size <= 0) {
@@ -308,6 +314,19 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
             (size_t)size,
             &engine->menu_bpk_decode_receipt) == 0) {
         engine->menu_bpk_decode_receipt_valid = 1;
+    }
+    if (nexus_v1_bpk_archive_runtime_upload_plan(
+            data,
+            (size_t)size,
+            engine->menu_bpk_upload_rows,
+            NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS,
+            &engine->menu_bpk_upload_receipt) == 0) {
+        engine->menu_bpk_upload_receipt_valid = 1;
+        engine->menu_bpk_upload_row_count =
+            (engine->menu_bpk_upload_receipt.planned_rows >
+             NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS)
+                ? (int)NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS
+                : (int)engine->menu_bpk_upload_receipt.planned_rows;
     }
     free(data);
 }
@@ -629,6 +648,34 @@ int nexus_v1_menu_bpk_decode_receipt(
     }
     *out_receipt = engine->menu_bpk_decode_receipt;
     return 0;
+}
+
+int nexus_v1_menu_bpk_upload_plan_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_BpkRuntimeUploadReceipt *out_receipt) {
+    if (!engine || !out_receipt || !engine->menu_bpk_upload_receipt_valid) {
+        return -1;
+    }
+    *out_receipt = engine->menu_bpk_upload_receipt;
+    return 0;
+}
+
+int nexus_v1_menu_bpk_upload_plan_rows(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_BpkRuntimeUploadRow *out_rows,
+    int max_rows) {
+    int count;
+    if (!engine || !out_rows || max_rows <= 0 ||
+        !engine->menu_bpk_upload_receipt_valid) {
+        return -1;
+    }
+    count = engine->menu_bpk_upload_row_count;
+    if (count > max_rows) count = max_rows;
+    if (count > 0) {
+        memcpy(out_rows, engine->menu_bpk_upload_rows,
+               (size_t)count * sizeof(out_rows[0]));
+    }
+    return count;
 }
 
 static Nexus_V1_MenuBpkRendererHandoffStatus

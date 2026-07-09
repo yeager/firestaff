@@ -610,6 +610,72 @@ static void test_runtime_decode_receipt_routes(void) {
            "decode receipt exposes truncated stored blockers");
 }
 
+static void test_runtime_upload_plan_routes(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkRuntimeUploadRow rows[4];
+    Nexus_V1_BpkRuntimeUploadReceipt receipt;
+    int rc;
+
+    make_synthetic_4entry_bpk(data, sizeof(data));
+    memset(rows, 0, sizeof(rows));
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_v1_bpk_archive_runtime_upload_plan(
+        data, sizeof(data), rows, 4U, &receipt);
+    expect(rc == 0, "upload plan returns 0 for PRS3 archive");
+    expect(receipt.route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3,
+           "upload plan routes PRS3 archive to blocked-prs3");
+    expect(strcmp(nexus_v1_bpk_runtime_upload_route_name(receipt.route),
+                  "blocked-prs3") == 0,
+           "upload plan blocked-prs3 route name is stable");
+    expect(receipt.surface_entries == 3U &&
+               receipt.blocked_prs3_uploads == 3U &&
+               receipt.ready_uploads == 0U &&
+               receipt.blocks_real_menu_surface_render == 1 &&
+               receipt.fallback_visuals_permitted == 0,
+           "upload plan exposes PRS3 blockers and forbids fallback");
+    expect(rows[0].entry_index == 1U &&
+               rows[0].status ==
+                   NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3 &&
+               rows[0].decode_blocked == 1 &&
+               rows[0].upload_ready == 0 &&
+               rows[0].expected_output_bytes == 16U,
+           "upload plan row carries first PRS3 upload blocker");
+
+    make_synthetic_stored_bpk(data, sizeof(data));
+    memset(rows, 0, sizeof(rows));
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_v1_bpk_archive_runtime_upload_plan(
+        data, sizeof(data), rows, 4U, &receipt);
+    expect(rc == 0, "upload plan returns 0 for stored archive");
+    expect(receipt.route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED,
+           "upload plan routes stored archive to ready-stored");
+    expect(receipt.ready_uploads == 3U &&
+               receipt.blocked_prs3_uploads == 0U &&
+               receipt.extractable_upload_bytes == 98U &&
+               receipt.fallback_visuals_permitted == 1,
+           "upload plan exposes extractable stored upload bytes");
+    expect(rows[0].entry_index == 1U &&
+               rows[0].upload_ready == 1 &&
+               rows[0].expected_output_bytes == 16U,
+           "upload plan row carries ready stored upload");
+
+    make_synthetic_4entry_bpk(data, sizeof(data));
+    memset(data + 96U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 128U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 160U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(rows, 0, sizeof(rows));
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_v1_bpk_archive_runtime_upload_plan(
+        data, sizeof(data), rows, 1U, &receipt);
+    expect(rc == 0, "upload plan returns 0 for truncated archive");
+    expect(receipt.route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED,
+           "upload plan routes short stored surfaces to blocked-truncated");
+    expect(receipt.blocked_truncated_uploads == 2U &&
+               receipt.ready_uploads == 1U &&
+               receipt.truncated == 1,
+           "upload plan exposes truncated blockers and row capacity hit");
+}
+
 /* ---- Synthetic BPX3 directory-trailer entry ---- */
 
 static void test_bpx3_trailer_entry(void) {
@@ -819,6 +885,8 @@ static void test_optional_local_menu_bpk(void) {
     Nexus_V1_BpkSurfaceEntry entries[200];
     Nexus_V1_BpkSurfaceEstimate summary;
     Nexus_V1_BpkRuntimeRenderReceipt receipt;
+    Nexus_V1_BpkRuntimeUploadRow upload_rows[8];
+    Nexus_V1_BpkRuntimeUploadReceipt upload_receipt;
     uint32_t indexed = 0U, rgb565 = 0U, rgb888 = 0U, rgba32 = 0U;
     uint64_t expected_total = 0U;
 
@@ -911,6 +979,29 @@ static void test_optional_local_menu_bpk(void) {
     expect(receipt.fallback_visuals_permitted == 0,
            "local MENU.BPK runtime receipt forbids fallback visuals");
 
+    memset(upload_rows, 0, sizeof(upload_rows));
+    memset(&upload_receipt, 0, sizeof(upload_receipt));
+    expect(nexus_v1_bpk_archive_runtime_upload_plan(
+               data, size, upload_rows,
+               (uint32_t)(sizeof(upload_rows) / sizeof(upload_rows[0])),
+               &upload_receipt) == 0,
+           "local MENU.BPK upload plan returns 0");
+    expect(upload_receipt.route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3,
+           "local MENU.BPK upload route blocks on PRS3 decoder");
+    expect(upload_receipt.surface_entries == 162U &&
+               upload_receipt.blocked_prs3_uploads == 162U &&
+               upload_receipt.planned_rows == 162U,
+           "local MENU.BPK upload plan exposes all PRS3 surface blockers");
+    expect(upload_receipt.truncated == 1,
+           "local MENU.BPK upload plan marks bounded row receipt");
+    expect(upload_receipt.fallback_visuals_permitted == 0,
+           "local MENU.BPK upload plan forbids fallback visuals");
+    expect(upload_rows[0].entry_index == 1U &&
+               upload_rows[0].decode_blocked == 1 &&
+               upload_rows[0].stream_offset > 0U &&
+               upload_rows[0].expected_output_bytes > 0U,
+           "local MENU.BPK upload row carries first PRS3 stream blocker");
+
     free(data);
 }
 
@@ -927,6 +1018,7 @@ int main(void) {
     test_runtime_surface_handoff_ready_stored();
     test_runtime_surface_handoff_truncated_and_capacity();
     test_runtime_decode_receipt_routes();
+    test_runtime_upload_plan_routes();
     test_bpx3_trailer_entry();
     test_bpx3_trailer_rejections();
     test_bpx3_prs3_span_rejections();
