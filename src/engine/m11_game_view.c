@@ -20250,6 +20250,85 @@ static int m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
     return 1;
 }
 
+static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
+    const DM1_V1_StartupHoCRenderConsumerReceipt_PC34* renderReceipt,
+    DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34* outReceipt) {
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
+    DM1_V1_StartupHoCFullStartProductionReceipt_PC34 productionStart;
+    DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 captureArtifact;
+    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 captureFacts;
+    DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 captureProof;
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 runtimeApply;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34 suppressionFacts;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 suppression;
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 production;
+
+    if (!renderReceipt || !outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->zone = -1;
+    outReceipt->row = -1;
+    outReceipt->view_cell = -1;
+    if (!renderReceipt->handled) {
+        return 1;
+    }
+
+    if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
+        !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &outcome) ||
+        !dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+            "dm1", &postPlan, &outcome, &productionStart) ||
+        !dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
+            &productionStart, &captureArtifact)) {
+        return 0;
+    }
+
+    memset(&captureFacts, 0, sizeof(captureFacts));
+    captureFacts.captured_after_first_frame_render = 1;
+    captureFacts.captured_map_index = renderReceipt->map_index;
+    captureFacts.captured_map_width =
+        productionStart.packaged_proof.expected_map_width;
+    captureFacts.captured_map_height =
+        productionStart.packaged_proof.expected_map_height;
+    captureFacts.captured_entrance_door_frame_index =
+        renderReceipt->entrance_door_frame_index;
+    captureFacts.captured_hall_overlay_kind = renderReceipt->hall_overlay_kind;
+    captureFacts.captured_hoc_render_command_count =
+        renderReceipt->render_command_count;
+    captureFacts.saw_opened_entrance_frame =
+        renderReceipt->draw_opened_entrance_frame;
+    captureFacts.saw_hall_mirror_overlay =
+        renderReceipt->render_hall_mirror_overlay;
+    captureFacts.cleared_champion_panel =
+        renderReceipt->clear_champion_panel;
+    captureFacts.blocked_enter_until_champion_selected =
+        renderReceipt->block_enter_until_champion_selected;
+
+    memset(&suppressionFacts, 0, sizeof(suppressionFacts));
+    suppressionFacts.observed_hall_mirror_overlay =
+        renderReceipt->draw_champion_mirror_wall_overlay;
+    suppressionFacts.observed_enter_blocked_until_champion_selected =
+        renderReceipt->block_enter_until_champion_selected;
+    suppressionFacts.observed_hoc_render_command_count =
+        renderReceipt->render_command_count;
+
+    if (!dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
+            &captureArtifact, &captureFacts, &captureProof) ||
+        !dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
+            &captureArtifact, &captureProof, &runtimeApply) ||
+        !dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+            &runtimeApply, &suppressionFacts, &suppression) ||
+        !dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
+            &runtimeApply, &suppression, &production) ||
+        !dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
+            &production, renderReceipt, outReceipt)) {
+        return 0;
+    }
+    return 1;
+}
+
 static void m11_draw_dm1_front_champion_portrait(const M11_GameViewState* state,
                                                  const M11_ViewportCell* cell,
                                                  unsigned char* framebuffer,
@@ -20370,15 +20449,19 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     }
     {
         DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
+        DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
         if (!m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
                 &mirrorCell, &receipt, &consumer) ||
-            !consumer.ready ||
-            !consumer.consume_dm1_receipts_only ||
-            !consumer.draw_champion_mirror_wall_overlay ||
-            !consumer.suppress_mirror_floor_item_payload ||
-            !consumer.suppress_mirror_projectile_payload ||
-            !consumer.suppress_mirror_spell_effect_payload ||
-            !consumer.no_m11_fallback_scan) {
+            !m11_build_dm1_hoc_full_graphics_ownership_receipt(
+                &consumer, &ownership) ||
+            !ownership.ready ||
+            !ownership.consume_dm1_receipts_only ||
+            !ownership.draw_champion_mirror_wall_overlay ||
+            !ownership.suppress_false_item_payloads ||
+            !ownership.suppress_projectile_payloads ||
+            !ownership.suppress_spell_effect_payloads ||
+            !ownership.suppress_materialized_item_payload ||
+            !ownership.no_m11_fallback_scan) {
             return;
         }
     }
