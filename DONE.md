@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Nexus launcher startup route receipts: launcher/runtime-state and snapshot paths now expose save-route and title-route receipts directly for keyboard, pointer, save-slot, pointer-miss, and title-return handoff without M11 rebuilding host facts. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron runtime-state startup view-model handoff: boot now builds the complete title/menu startup view model directly from runtime state, carrying layout rows, render plan, continue/save facts, and runtime level-route fields without requiring callers to assemble a snapshot first. Verification: `test_theron_v1_startup_save_resume_pc34` 175/175 and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup host action receipt: startup action receipts now flatten CSB host input result, status scope/text, import-preview clear, and bonus-request flags for Enter, Back, and pointer menu routes beside the render-view handoff. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
