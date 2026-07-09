@@ -1433,6 +1433,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupExecution execution;
     Theron_StartupHostReceipt host_receipt;
     Theron_V1_BootRuntimeStartupSnapshot snapshot;
+    Theron_V1_BootRuntimeStartupSnapshot media_snapshot;
     Theron_V1_BootStartupViewModel view_model;
     Theron_V1_BootStartupViewModel direct_view_model;
     Theron_V1_BootStartupViewModel media_view_model;
@@ -1554,6 +1555,12 @@ static void test_startup_session_facts_wrappers(void) {
     snprintf(media_receipt.startup_text_prompt,
              sizeof(media_receipt.startup_text_prompt),
              "GO AWAY AND RESURRECT THERON");
+    media_snapshot = snapshot;
+    media_snapshot.startup_phase = THERON_STARTUP_PHASE_READY;
+    media_snapshot.startup_text_prompt = NULL;
+    media_snapshot.startup_roster_names = NULL;
+    media_snapshot.startup_roster_titles = NULL;
+    media_snapshot.startup_roster_name_count = 0;
     expect_true(theron_v1_boot_startup_view_model_from_snapshot(
                     &snapshot,
                     &view_model) &&
@@ -1805,6 +1812,59 @@ static void test_startup_session_facts_wrappers(void) {
                     media_graphics_counters.fill_count > 0 &&
                     media_graphics_counters.rect_count > 0,
                 "boot startup view model render route executes graphics plan receipt");
+    expect_true(theron_v1_boot_startup_render_rows_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    media_rows,
+                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP) > 0,
+                "boot startup snapshot media receipt builds render rows through view model");
+    media_prompt_row_found = 0;
+    media_roster_row_found = 0;
+    for (i = 0; i < THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP; ++i) {
+        if (strstr(media_rows[i], "RESURRECT THERON") != NULL) {
+            media_prompt_row_found = 1;
+        }
+        if (strstr(media_rows[i], "HAKAR-MEDIA") != NULL) {
+            media_roster_row_found = 1;
+        }
+    }
+    expect_true(media_prompt_row_found && media_roster_row_found,
+                "boot startup snapshot media receipt preserves Track02 render text");
+    expect_true(theron_v1_boot_startup_layout_build_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    media_layout,
+                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP) > 0 &&
+                    strcmp(media_layout[2].label, "HAKAR-MEDIA") == 0,
+                "boot startup snapshot media receipt preserves Track02 layout labels");
+    expect_true(theron_v1_boot_startup_render_plan_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    &media_plan) &&
+                    media_plan.text_count > 0 &&
+                    media_plan.graphic_count > 0,
+                "boot startup snapshot media receipt builds render plan through view model");
+    expect_true(theron_v1_boot_startup_execute_input_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    9,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot startup snapshot media receipt routes input through view model host receipt");
+    expect_true(theron_v1_boot_startup_execute_pointer_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    50,
+                    80,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot startup snapshot media receipt routes pointer through view model host receipt");
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;

@@ -397,6 +397,11 @@ int theron_v1_boot_startup_execute_input_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     int input,
     Theron_StartupActionHostReceipt *out_receipt);
+int theron_v1_boot_startup_execute_input_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    int input,
+    Theron_StartupActionHostReceipt *out_receipt);
 int theron_v1_boot_startup_execute_pointer_from_runtime_state(
     Theron_StartupActionHostReceipt *out_receipt,
     int startup_phase,
@@ -423,6 +428,12 @@ int theron_v1_boot_startup_execute_pointer_from_runtime_state(
     int y);
 int theron_v1_boot_startup_execute_pointer_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    int x,
+    int y,
+    Theron_StartupActionHostReceipt *out_receipt);
+int theron_v1_boot_startup_execute_pointer_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
     int x,
     int y,
     Theron_StartupActionHostReceipt *out_receipt);
@@ -453,6 +464,11 @@ int theron_v1_boot_startup_layout_build_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     Theron_StartupLayoutElement *elements,
     int max_elements);
+int theron_v1_boot_startup_layout_build_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_StartupLayoutElement *elements,
+    int max_elements);
 int theron_v1_boot_startup_render_rows_from_runtime_state(
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows,
@@ -480,6 +496,11 @@ int theron_v1_boot_startup_render_rows_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows);
+int theron_v1_boot_startup_render_rows_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows);
 int theron_v1_boot_startup_render_plan_from_runtime_state(
     Theron_StartupRenderPlan *out_plan,
     int startup_phase,
@@ -504,6 +525,10 @@ int theron_v1_boot_startup_render_plan_from_runtime_state(
     int selected_mirror_order_count);
 int theron_v1_boot_startup_render_plan_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    Theron_StartupRenderPlan *out_plan);
+int theron_v1_boot_startup_render_plan_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
     Theron_StartupRenderPlan *out_plan);
 void theron_v1_boot_startup_view_model_clear(
     Theron_V1_BootStartupViewModel *view_model);

@@ -932,6 +932,37 @@ int theron_v1_boot_startup_execute_input_from_snapshot(
         out_receipt);
 }
 
+int theron_v1_boot_startup_execute_input_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    int input,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
+        &view_model,
+        theron_v1_startup_input_from_firestaff_menu_code(input),
+        out_receipt);
+}
+
 int theron_v1_boot_startup_execute_pointer_from_runtime_state(
     Theron_StartupActionHostReceipt *out_receipt,
     int startup_phase,
@@ -1010,6 +1041,39 @@ int theron_v1_boot_startup_execute_pointer_from_snapshot(
         out_receipt);
 }
 
+int theron_v1_boot_startup_execute_pointer_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    int x,
+    int y,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
+        &view_model,
+        x,
+        y,
+        out_receipt);
+}
+
 int theron_v1_boot_startup_layout_build_from_runtime_state(
     Theron_StartupLayoutElement *elements,
     int max_elements,
@@ -1078,6 +1142,29 @@ int theron_v1_boot_startup_layout_build_from_snapshot(
     }
     return theron_v1_startup_layout_build_from_session(
         &session,
+        elements,
+        max_elements);
+}
+
+int theron_v1_boot_startup_layout_build_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_StartupLayoutElement *elements,
+    int max_elements)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        if (elements && max_elements > 0) {
+            memset(elements, 0, (size_t)max_elements * sizeof(elements[0]));
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_layout_build_from_view_model(
+        &view_model,
         elements,
         max_elements);
 }
@@ -1154,6 +1241,31 @@ int theron_v1_boot_startup_render_rows_from_snapshot(
         max_rows);
 }
 
+int theron_v1_boot_startup_render_rows_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        if (rows && max_rows > 0) {
+            memset(rows,
+                   0,
+                   (size_t)max_rows * THERON_STARTUP_RENDER_ROW_CAPACITY);
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_render_rows_from_view_model(
+        &view_model,
+        rows,
+        max_rows);
+}
+
 int theron_v1_boot_startup_render_plan_from_runtime_state(
     Theron_StartupRenderPlan *out_plan,
     int startup_phase,
@@ -1219,6 +1331,27 @@ int theron_v1_boot_startup_render_plan_from_snapshot(
     }
     return theron_v1_startup_render_plan_build_from_session(
         &session,
+        out_plan);
+}
+
+int theron_v1_boot_startup_render_plan_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_StartupRenderPlan *out_plan)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        if (out_plan) {
+            memset(out_plan, 0, sizeof(*out_plan));
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_render_plan_from_view_model(
+        &view_model,
         out_plan);
 }
 
