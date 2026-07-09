@@ -196,6 +196,43 @@ int main(void)
             DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(&stairs, NULL), 0);
     }
 
+    {
+        struct MovementResult_Compat movement;
+        struct Dm1V1MovementSuccessfulStepApplyPlanPc34Compat stepPlan;
+        memset(&movement, 0, sizeof(movement));
+        movement.resultCode = MOVE_OK;
+        movement.newMapIndex = 2;
+        movement.newMapX = 7;
+        movement.newMapY = 8;
+        movement.newDirection = DIR_SOUTH;
+        ok &= expect_int("successful step plan builds",
+            DM1_V1_MovementCommandCore_SuccessfulStepApplyPlanPc34Compat(
+                &movement, &stepPlan), 1);
+        ok &= expect_int("successful step plan valid", stepPlan.valid, 1);
+        ok &= expect_int("successful step plan map", stepPlan.newMapIndex, 2);
+        ok &= expect_int("successful step plan x", stepPlan.newMapX, 7);
+        ok &= expect_int("successful step plan y", stepPlan.newMapY, 8);
+        ok &= expect_int("successful step plan direction", stepPlan.newDirection, DIR_SOUTH);
+        ok &= expect_int("successful step plan move ok", stepPlan.movementResultCode, MOVE_OK);
+        ok &= expect_int("successful step plan marks step", stepPlan.stepApplied, 1);
+        ok &= expect_int("successful step plan releases wait", stepPlan.stopWaitingForPlayerInput, 1);
+        ok &= expect_int("successful step plan redraw", stepPlan.viewportRedrawRequested, 1);
+
+        movement.resultCode = MOVE_BLOCKED_WALL;
+        ok &= expect_int("successful step plan blocked builds empty",
+            DM1_V1_MovementCommandCore_SuccessfulStepApplyPlanPc34Compat(
+                &movement, &stepPlan), 1);
+        ok &= expect_int("successful step plan blocked invalid", stepPlan.valid, 0);
+        movement.resultCode = MOVE_TURN_ONLY;
+        ok &= expect_int("successful step plan turn-only builds empty",
+            DM1_V1_MovementCommandCore_SuccessfulStepApplyPlanPc34Compat(
+                &movement, &stepPlan), 1);
+        ok &= expect_int("successful step plan turn-only invalid", stepPlan.valid, 0);
+        ok &= expect_int("successful step plan null output rejected",
+            DM1_V1_MovementCommandCore_SuccessfulStepApplyPlanPc34Compat(
+                &movement, NULL), 0);
+    }
+
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
     setup_party(&party);
