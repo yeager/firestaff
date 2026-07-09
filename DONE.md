@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 HoC mirror stale-clear receipt: champion-mirror render receipts now expose wall-square consumption and stale portrait/materialized-payload clear flags from ReDMCSB G0289 behavior, so hosts can avoid leaking old mirror payloads into thing layers. Verification: `test_dm1_v1_champion_mirror_pc34_compat` 40/40, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron host-view runtime handoff receipt: boot host-view receipts now expose runtime readiness, level-render, Track02 semantic/blocked route, structured-vs-text route, HUD, and no-fallback flags copied from the render-route receipt, so UI consumers do not need status-string fallback parsing for Track02 handoff. Verification: scoped Theron source/test syntax checks and `git diff --check` passed; the linked CMake target is blocked by an unrelated Nexus startup declaration error.
 
 - ✅ 2026-07-09 DM1 F0412 spell-effect receipt consumption: M10 now consumes DM1-owned F0412 receipts for projectile and OTHER spell effects instead of rebuilding light/status/shield state from generic spell metadata, and M11 no longer double-launches Open Door projectiles after the M10 F0810 path. Verification: `test_dm1_v1_spell_casting_pc34_compat`, `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_open_door_spell_runtime_pc34_compat`, and `firestaff_m11_phase_a_probe` passed in `build-codex`.
