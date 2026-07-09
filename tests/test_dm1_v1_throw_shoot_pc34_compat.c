@@ -180,6 +180,104 @@ static void test_shoot_runtime_math(void) {
               "legacy throw probe formula");
 }
 
+static void test_spell_projectile_f0412_to_f0327_create_input(void) {
+    DM1_SpellF0412RuntimeReceipt receipt;
+    DM1_SpellF0327ProjectileContextPc34 context;
+    DM1_SpellF0327ProjectileLaunchPlanPc34 plan;
+    struct ProjectileCreateInput_Compat input;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&context, 0, sizeof(context));
+    receipt.castResult = DM1_SPELL_CAST_SUCCESS;
+    receipt.createsProjectile = 1;
+    receipt.projectileThing = DM1_PROJECTILE_THING_FIREBALL;
+    receipt.projectileKineticEnergy = 21;
+    receipt.projectileStepEnergy = 10;
+    receipt.championDirectionAfter = 2;
+    context.championIndex = 1;
+    context.championCell = 1;
+    context.partyMapIndex = 0;
+    context.partyMapX = 4;
+    context.partyMapY = 5;
+    context.gameTick = 1234;
+
+    ASSERT_EQ(dm1_v1_spell_projectile_launch_plan_f0327_pc34(
+                  &receipt, &context, &plan), 1,
+              "F0412 projectile launch plan builds");
+    ASSERT_EQ(plan.valid, 1, "F0412 projectile plan valid");
+    ASSERT_EQ(plan.shouldCreateProjectile, 1, "F0412 projectile should create");
+    ASSERT_EQ(plan.projectileSubtype, PROJECTILE_SUBTYPE_FIREBALL,
+              "F0412 fireball subtype");
+    ASSERT_EQ(plan.attackTypeCode, COMBAT_ATTACK_FIRE,
+              "F0412 fireball attack type");
+    ASSERT_EQ(plan.kineticEnergyBeforeF0327, 21,
+              "F0412 kinetic before F0327");
+    ASSERT_EQ(plan.kineticEnergyAfterF0327, 24,
+              "F0327 weak spell projectile kinetic adjustment");
+    ASSERT_EQ(plan.stepEnergyBeforeF0327, 10,
+              "F0412 step before F0327");
+    ASSERT_EQ(plan.stepEnergyAfterF0327, 9,
+              "F0327 weak spell projectile step adjustment");
+    ASSERT_EQ(plan.attack, 90, "F0327 spell projectile attack");
+    ASSERT_EQ(plan.launchDirection, 2, "F0327 launch direction");
+    ASSERT_EQ(plan.launchCell, 2, "F0326 launch cell");
+    ASSERT_EQ(plan.movementDisabledTicks, 0,
+              "spell projectile does not use F0328 movement-disable gate");
+
+    ASSERT_EQ(dm1_v1_build_spell_projectile_create_input_f0327_pc34(
+                  &receipt, &context, &input), 1,
+              "F0412/F0327 projectile create input builds");
+    ASSERT_EQ(input.category, PROJECTILE_CATEGORY_MAGICAL,
+              "spell projectile category");
+    ASSERT_EQ(input.subtype, PROJECTILE_SUBTYPE_FIREBALL,
+              "spell projectile create subtype");
+    ASSERT_EQ(input.ownerKind, PROJECTILE_OWNER_CHAMPION,
+              "spell projectile owner kind");
+    ASSERT_EQ(input.ownerIndex, 1, "spell projectile owner index");
+    ASSERT_EQ(input.mapX, 4, "spell projectile map x");
+    ASSERT_EQ(input.mapY, 5, "spell projectile map y");
+    ASSERT_EQ(input.cell, 2, "spell projectile create cell");
+    ASSERT_EQ(input.direction, 2, "spell projectile create direction");
+    ASSERT_EQ(input.kineticEnergy, 24, "spell projectile create kinetic");
+    ASSERT_EQ(input.attack, 90, "spell projectile create attack");
+    ASSERT_EQ(input.launcherStrength, 90,
+              "spell projectile launcher strength follows F0327 attack");
+    ASSERT_EQ(input.stepEnergy, 9, "spell projectile create step");
+    ASSERT_EQ(input.currentTick, 1234, "spell projectile create tick");
+    ASSERT_EQ(input.attackTypeCode, COMBAT_ATTACK_FIRE,
+              "spell projectile create attack type");
+    ASSERT_EQ(input.associatedThing, THING_NONE,
+              "spell projectile carries no thrown item");
+    ASSERT_EQ(input.firstMoveGraceFlag, 1, "spell projectile first move grace");
+
+    receipt.projectileThing = DM1_PROJECTILE_THING_OPEN_DOOR;
+    receipt.projectileKineticEnergy = 120;
+    receipt.projectileStepEnergy = 7;
+    receipt.championDirectionAfter = 3;
+    context.championCell = 0;
+    ASSERT_EQ(dm1_v1_build_spell_projectile_create_input_f0327_pc34(
+                  &receipt, &context, &input), 1,
+              "open-door spell projectile create input builds");
+    ASSERT_EQ(input.subtype, PROJECTILE_SUBTYPE_OPEN_DOOR,
+              "open-door spell subtype");
+    ASSERT_EQ(input.attackTypeCode, COMBAT_ATTACK_MAGIC,
+              "open-door spell attack type");
+    ASSERT_EQ(input.kineticEnergy, 120,
+              "open-door spell kinetic not adjusted");
+    ASSERT_EQ(input.stepEnergy, 7, "open-door spell step not adjusted");
+    ASSERT_EQ(input.direction, 3, "open-door spell direction");
+    ASSERT_EQ(input.cell, 0, "open-door spell launch cell");
+
+    receipt.castResult = DM1_SPELL_CAST_FAILURE;
+    receipt.createsProjectile = 0;
+    ASSERT_EQ(dm1_v1_spell_projectile_launch_plan_f0327_pc34(
+                  &receipt, &context, &plan), 1,
+              "failed spell launch plan is handled");
+    ASSERT_EQ(plan.valid, 0, "failed spell has no launch plan");
+    ASSERT_EQ(plan.shouldCreateProjectile, 0,
+              "failed spell creates no projectile");
+}
+
 static void test_projectile_create_input_model(void) {
     DM1_ProjectileCreateRequestPc34 req;
     DM1_CreatureProjectileCreateRequestPc34 creatureReq;
@@ -1309,6 +1407,7 @@ int main(void) {
     test_throw_runtime_math();
     test_projectile_shapes_and_launch();
     test_shoot_runtime_math();
+    test_spell_projectile_f0412_to_f0327_create_input();
     test_projectile_create_input_model();
     test_projectile_impact_model();
     test_projectile_group_slot_materialization_plan();
