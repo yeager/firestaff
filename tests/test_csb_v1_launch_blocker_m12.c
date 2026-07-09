@@ -114,12 +114,17 @@ int main(void) {
                 "CSB boot readiness should report full startup ready")) return 1;
     if (!expect(boot.startupContractExpected == 1 && boot.startupContractReady == 1,
                 "CSB boot readiness should expose ready startup receipt contract")) return 1;
+    if (!expect(boot.packagedCaptureExpected == 1 && boot.packagedCaptureReady == 1,
+                "CSB boot readiness should expose ready packaged capture proof")) return 1;
     if (!expect(boot.startupContractLabel &&
                 strcmp(boot.startupContractLabel, "CSB STARTUP CAPTURE RECEIPT") == 0,
                 "CSB boot readiness should name the startup receipt contract")) return 1;
-    if (!expect(boot.startupStepCount == 6,
+    if (!expect(boot.packagedCaptureLabel &&
+                strcmp(boot.packagedCaptureLabel, "CSB TITLE + HUD CAPTURE PROOF") == 0,
+                "CSB boot readiness should name the packaged capture proof")) return 1;
+    if (!expect(boot.startupStepCount == 7,
                 "CSB boot readiness should expose the full boot chain step count")) return 1;
-    if (!expect(boot.startupStepReadyCount == 6,
+    if (!expect(boot.startupStepReadyCount == 7,
                 "CSB boot readiness should mark every startup step ready")) return 1;
     if (!expect(boot.nextStepLabel && strcmp(boot.nextStepLabel, "READY") == 0,
                 "CSB boot readiness next step should be READY")) return 1;
@@ -173,7 +178,9 @@ int main(void) {
                 "CSB missing-data boot readiness should not report full startup ready")) return 1;
     if (!expect(boot.startupContractExpected == 1 && boot.startupContractReady == 0,
                 "CSB missing-data boot readiness should expect but not satisfy startup receipt contract")) return 1;
-    if (!expect(boot.startupStepCount == 6,
+    if (!expect(boot.packagedCaptureExpected == 1 && boot.packagedCaptureReady == 0,
+                "CSB missing-data boot readiness should expect but not satisfy packaged capture proof")) return 1;
+    if (!expect(boot.startupStepCount == 7,
                 "CSB missing-data boot readiness should retain full boot chain count")) return 1;
     if (!expect(boot.startupStepReadyCount == 1,
                 "CSB missing-data boot readiness should only count the matched version")) return 1;

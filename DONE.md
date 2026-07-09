@@ -2,13 +2,15 @@
 
 - ✅ 2026-07-09 pass884 DM2 packaged title/startup capture proof: boot host-view receipts now carry a packaged capture proof joining exact title frame timing, GDAT title asset receipt, menu render receipt counts, HUD suppression, and M11 consumer readiness. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
 
-- ✅ 2026-07-09 CSB host-view title/HUD consumption: M11 now reads CSB host-view receipts for special palette and full startup rendering, with host-input dispatch used directly for keyboard/pointer startup routing. Verification: CSB startup tests and `git diff --check`.
-
 - ✅ 2026-07-09 pass908-nexus startup package consumer helpers: Nexus full-start package receipts now export M11/M12 presentation fields and build title/warning/save/champion startup draw commands directly from the package while suppressing SFX/PRS3-blocked fallback draws. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
+
+- ✅ 2026-07-09 CSB host-view title/HUD consumption: M11 now reads CSB host-view receipts for special palette and full startup rendering, with host-input dispatch used directly for keyboard/pointer startup routing. Verification: CSB startup tests and `git diff --check`.
 
 - ✅ 2026-07-09 pass886 DM1 HoC full-graphics thing suppression receipt: startup HoC capture now has a DM1-owned receipt proving Hall mirror overlay while rejecting false floor item, projectile, spell-effect, mirror-payload, stale title/door, and host fallback visual leaks before HoC walk/capture. Verification: DM1 startup intro state-machine test, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass887 Theron startup bitmap-route receipts: graphics/full-start receipts now expose title, stage, Soul Room, and forcefield bitmap-route readiness from the Track 02 media-backed render plan, so UI/M11 can stop inspecting raw render commands for those startup graphics. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
+
+- ✅ 2026-07-09 M12 packaged capture proof gate: boot-readiness and launch-gate receipts now expose per-game packaged capture proof fields for DM1 HoC render proof, CSB title/HUD, DM2 title timing, Nexus timing capture, and Theron Track 02 real graphics. Verification: `test_m12_all_games_boot_readiness_receipt`, `test_m12_dm1_v1_required_complete_launches`, `test_csb_v1_launch_blocker_m12`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB packaged host startup consumers: boot now emits host-view and host-input dispatch receipts that package title/PRESENTS/CHAOS/STRIKES, utility HUD, closed-door menu, door-opening, runtime handoff, and keyboard/pointer startup decisions for M11 consumers. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_launcher_handoff_boundary`, and `git diff --check` passed.
 
