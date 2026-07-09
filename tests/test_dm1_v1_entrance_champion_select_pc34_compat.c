@@ -76,6 +76,7 @@ static void test_mirror_recruit_and_finalize(void)
 {
     DM1_V1_EntranceCtxPc34 ctx;
     DM1_V1_EntranceTickResultPc34 result;
+    DM1_V1_EntranceMenuRouteReceiptPc34 route;
 
     DM1_V1_Entrance_InitPc34Compat(&ctx);
     ctx.state = DM1_ENTRANCE_VIEWING;
@@ -85,29 +86,47 @@ static void test_mirror_recruit_and_finalize(void)
     expect_int("mirror.count", ctx.mirrorCount, 2);
     expect_int("mirror.0.champion", ctx.mirrors[0].championIndex, 7);
     expect_int("mirror.1.dead", ctx.mirrors[1].dead, 1);
+    expect_int("route.hall", DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(&ctx, &route), 1);
+    expect_int("route.hall.kind", route.route, DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34);
+    expect_int("route.hall.enter.blocked", route.canEnterDungeon, 0);
 
     result = DM1_V1_Entrance_ClickMirrorPc34Compat(&ctx, 0, 5000u);
     expect_true("click.live.selected", result.mirrorSelected);
     expect_int("click.live.state", ctx.state, DM1_ENTRANCE_SELECTING);
     expect_int("click.live.new_state", result.newState, DM1_ENTRANCE_SELECTING);
     expect_true("click.live.redraw", result.needsRedraw);
+    expect_int("route.live", DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(&ctx, &route), 1);
+    expect_int("route.live.kind", route.route, DM1_V1_ENTRANCE_MENU_ROUTE_LIVE_CHAMPION_PC34);
+    expect_int("route.live.champion", route.selectedChampionIndex, 7);
+    expect_int("route.live.mapx", route.selectedMirrorMapX, 1);
+    expect_int("route.live.mapy", route.selectedMirrorMapY, 2);
+    expect_int("route.live.facing", route.selectedMirrorFacing, 3);
+    expect_int("route.live.panel", route.showChampionPanel, 1);
+    expect_int("route.live.recruit", route.canRecruit, 1);
+    expect_int("route.live.cancel", route.canCancelSelection, 1);
 
     expect_int("recruit.live", DM1_V1_Entrance_RecruitChampionPc34Compat(&ctx), 1);
     expect_int("recruit.party.count", DM1_V1_Entrance_GetPartyCountPc34Compat(&ctx), 1);
     expect_int("recruit.party.index", ctx.partyChampionIndices[0], 7);
     expect_int("recruit.state", ctx.state, DM1_ENTRANCE_VIEWING);
     expect_int("recruit.same_again", DM1_V1_Entrance_ClickMirrorPc34Compat(&ctx, 0, 5100u).mirrorSelected, 0);
+    expect_int("route.hall.after_recruit", DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(&ctx, &route), 1);
+    expect_int("route.hall.enter.ready", route.canEnterDungeon, 1);
 
     result = DM1_V1_Entrance_FinalizePc34Compat(&ctx);
     expect_true("finalize.complete", result.entranceComplete);
     expect_int("finalize.state", ctx.state, DM1_ENTRANCE_DONE);
     expect_int("is_complete", DM1_V1_Entrance_IsCompletePc34Compat(&ctx), 1);
+    expect_int("route.done", DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(&ctx, &route), 1);
+    expect_int("route.done.kind", route.route, DM1_V1_ENTRANCE_MENU_ROUTE_ENTER_DUNGEON_PC34);
+    expect_int("route.done.enter", route.canEnterDungeon, 1);
 }
 
 static void test_dead_mirror_paths(void)
 {
     DM1_V1_EntranceCtxPc34 ctx;
     DM1_V1_EntranceTickResultPc34 result;
+    DM1_V1_EntranceMenuRouteReceiptPc34 route;
 
     DM1_V1_Entrance_InitPc34Compat(&ctx);
     ctx.state = DM1_ENTRANCE_VIEWING;
@@ -116,6 +135,12 @@ static void test_dead_mirror_paths(void)
     result = DM1_V1_Entrance_ClickMirrorPc34Compat(&ctx, 0, 7000u);
     expect_true("click.dead.selected", result.mirrorSelected);
     expect_int("click.dead.state", ctx.state, DM1_ENTRANCE_RESURRECTING);
+    expect_int("route.dead", DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(&ctx, &route), 1);
+    expect_int("route.dead.kind", route.route, DM1_V1_ENTRANCE_MENU_ROUTE_DEAD_CHAMPION_PC34);
+    expect_int("route.dead.champion", route.selectedChampionIndex, 12);
+    expect_int("route.dead.choices", route.showResurrectReincarnateChoices, 1);
+    expect_int("route.dead.resurrect", route.canResurrect, 1);
+    expect_int("route.dead.reincarnate", route.canReincarnate, 1);
     expect_int("dead.recruit.reject", DM1_V1_Entrance_RecruitChampionPc34Compat(&ctx), 0);
     expect_int("dead.resurrect", DM1_V1_Entrance_ResurrectPc34Compat(&ctx), 1);
     expect_int("dead.resurrect.state", ctx.state, DM1_ENTRANCE_SELECTING);
@@ -136,6 +161,7 @@ static void test_dead_mirror_paths(void)
 static void test_capacity(void)
 {
     DM1_V1_EntranceCtxPc34 ctx;
+    DM1_V1_EntranceMenuRouteReceiptPc34 route;
 
     DM1_V1_Entrance_InitPc34Compat(&ctx);
     for (int i = 0; i < DM1_V1_MAX_MIRROR_SLOTS_PC34; i++) {
@@ -149,6 +175,10 @@ static void test_capacity(void)
         expect_int("capacity.recruit", DM1_V1_Entrance_RecruitChampionPc34Compat(&ctx), 1);
     }
     (void)DM1_V1_Entrance_ClickMirrorPc34Compat(&ctx, M11_MAX_CHAMPIONS, 9100u);
+    expect_int("capacity.route", DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(&ctx, &route), 1);
+    expect_int("capacity.route.kind", route.route, DM1_V1_ENTRANCE_MENU_ROUTE_PARTY_FULL_PC34);
+    expect_int("capacity.route.full", route.partyFull, 1);
+    expect_int("capacity.route.no_recruit", route.canRecruit, 0);
     expect_int("capacity.party_full", DM1_V1_Entrance_RecruitChampionPc34Compat(&ctx), 0);
 }
 

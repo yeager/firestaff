@@ -42,6 +42,15 @@ typedef enum {
     DM1_ENTRANCE_DONE             /* All champions selected, entering dungeon */
 } DM1_V1_EntranceStatePc34;
 
+typedef enum {
+    DM1_V1_ENTRANCE_MENU_ROUTE_NONE_PC34 = 0,
+    DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34 = 1,
+    DM1_V1_ENTRANCE_MENU_ROUTE_LIVE_CHAMPION_PC34 = 2,
+    DM1_V1_ENTRANCE_MENU_ROUTE_DEAD_CHAMPION_PC34 = 3,
+    DM1_V1_ENTRANCE_MENU_ROUTE_PARTY_FULL_PC34 = 4,
+    DM1_V1_ENTRANCE_MENU_ROUTE_ENTER_DUNGEON_PC34 = 5
+} DM1_V1_EntranceMenuRoutePc34;
+
 /* Mirror slot state */
 typedef struct {
     int occupied;           /* 1 if a champion is in this mirror */
@@ -79,6 +88,30 @@ typedef struct {
     int playDoorRattleSound;
     int entranceMusicRequested;
 } DM1_V1_EntranceFullStartRenderReceiptPc34;
+
+typedef struct {
+    int handled;
+    DM1_V1_EntranceMenuRoutePc34 route;
+    DM1_V1_EntranceStatePc34 state;
+    int selectedMirrorIndex;
+    int selectedChampionIndex;
+    int selectedMirrorDead;
+    int selectedMirrorMapX;
+    int selectedMirrorMapY;
+    int selectedMirrorFacing;
+    int partyChampionCount;
+    int partyFull;
+    int showHall;
+    int showChampionPanel;
+    int showResurrectReincarnateChoices;
+    int canRecruit;
+    int canResurrect;
+    int canReincarnate;
+    int canCancelSelection;
+    int canEnterDungeon;
+    int needsRedraw;
+    const char *reason;
+} DM1_V1_EntranceMenuRouteReceiptPc34;
 
 /* Entrance persistent state */
 typedef struct {
@@ -187,6 +220,14 @@ int DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
     DM1_V1_EntranceFullStartRenderReceiptPc34 *outReceipt);
 
 /*
+ * Build the HoC champion-selection menu route for M11/M12 without host-side
+ * state inference.
+ */
+int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
+    const DM1_V1_EntranceCtxPc34 *ctx,
+    DM1_V1_EntranceMenuRouteReceiptPc34 *outReceipt);
+
+/*
  * Source evidence string.
  */
 const char *DM1_V1_Entrance_SourceEvidencePc34Compat(void);
@@ -197,6 +238,7 @@ typedef DM1_V1_DoorAnimationPc34 M11_DoorAnimation;
 typedef DM1_V1_EntranceCtxPc34 M11_EntranceCtx;
 typedef DM1_V1_EntranceTickResultPc34 M11_EntranceTickResult;
 typedef DM1_V1_EntranceFullStartRenderReceiptPc34 M11_EntranceFullStartRenderReceipt;
+typedef DM1_V1_EntranceMenuRouteReceiptPc34 M11_EntranceMenuRouteReceipt;
 
 #define M11_MAX_MIRROR_SLOTS DM1_V1_MAX_MIRROR_SLOTS_PC34
 #define m11_entrance_init DM1_V1_Entrance_InitPc34Compat
@@ -212,6 +254,7 @@ typedef DM1_V1_EntranceFullStartRenderReceiptPc34 M11_EntranceFullStartRenderRec
 #define m11_entrance_is_complete DM1_V1_Entrance_IsCompletePc34Compat
 #define m11_entrance_get_party_count DM1_V1_Entrance_GetPartyCountPc34Compat
 #define m11_entrance_build_full_start_render_receipt DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat
+#define m11_entrance_build_menu_route_receipt DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat
 #define m11_entrance_source_evidence DM1_V1_Entrance_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
