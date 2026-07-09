@@ -1014,12 +1014,21 @@ static void dm2_runtime_finish_creature_render_receipt(
     const DM2_V1_ViewportState *viewport)
 {
     const DM2_V1_CreatureAssetBlit *blit;
+    const DM2_V1_CreatureRender *render;
+    int frame_count;
 
     if (!viewport || !g_dm2_last_creature_render.valid ||
         !viewport->last_creature_asset_blit_valid) {
         return;
     }
     blit = &viewport->last_creature_asset_blit;
+    render = &viewport->last_creature_asset_render;
+    frame_count = dm2_v1_viewport_map_chip_frame_count(
+        viewport->last_creature_asset_src_w,
+        viewport->last_creature_asset_src_h);
+    /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP uses the requested
+     * animation frame plus view-relative creature direction to choose the
+     * atlas cell. Carry that resolved table row back to runtime receipt. */
     g_dm2_last_creature_render.gdat_index = blit->gdat_index;
     g_dm2_last_creature_render.asset_blit_ready = 1;
     g_dm2_last_creature_render.asset_src_w =
@@ -1028,6 +1037,13 @@ static void dm2_runtime_finish_creature_render_receipt(
         viewport->last_creature_asset_src_h;
     g_dm2_last_creature_render.asset_src_stride =
         viewport->last_creature_asset_src_stride;
+    g_dm2_last_creature_render.asset_frame_count = frame_count;
+    g_dm2_last_creature_render.requested_frame_index =
+        render->frame_index;
+    g_dm2_last_creature_render.party_direction = viewport->party_dir & 3;
+    g_dm2_last_creature_render.relative_direction =
+        ((viewport->party_dir & 3) - (render->direction & 3)) & 3;
+    g_dm2_last_creature_render.atlas_frame_index = blit->render_frame;
     g_dm2_last_creature_render.atlas_frame_x = blit->frame_x;
     g_dm2_last_creature_render.atlas_frame_y = blit->frame_y;
     g_dm2_last_creature_render.atlas_frame_w = blit->frame_w;
