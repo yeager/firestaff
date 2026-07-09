@@ -47,6 +47,79 @@ static int dm1_v1_startup_hoc_host_draw_rejects_backing_fallback_pc34(
                &render, 0, &host_draw);
 }
 
+static int dm1_v1_startup_hoc_host_draw_uses_owned_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34*
+        production,
+    int* out_consumed_owned_host_draw_receipt) {
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 post_plan;
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34 first_frame;
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 front_wall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 floor_thing;
+    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 thing_consumer;
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 render_consumer;
+    DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 host_draw;
+    const DM1V1D1LD1RF0115LanePc34Data* lane;
+    int consumed;
+
+    if (out_consumed_owned_host_draw_receipt) {
+        *out_consumed_owned_host_draw_receipt = 0;
+    }
+    memset(&post_plan, 0, sizeof(post_plan));
+    memset(&outcome, 0, sizeof(outcome));
+    memset(&first_frame, 0, sizeof(first_frame));
+    memset(&front_wall, 0, sizeof(front_wall));
+    memset(&render, 0, sizeof(render));
+    memset(&boundary, 0, sizeof(boundary));
+    memset(&floor_thing, 0, sizeof(floor_thing));
+    memset(&thing_consumer, 0, sizeof(thing_consumer));
+    memset(&render_consumer, 0, sizeof(render_consumer));
+    memset(&ownership, 0, sizeof(ownership));
+    memset(&host_draw, 0, sizeof(host_draw));
+
+    lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
+    if (!production || !lane ||
+        !dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &post_plan) ||
+        !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &outcome) ||
+        !dm1_v1_startup_hoc_first_frame_receipt_pc34(
+            "dm1", &post_plan, &outcome, &first_frame) ||
+        !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 2, 2, &front_wall) ||
+        !DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&front_wall, &render) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+            &render, &boundary) ||
+        !dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+            lane, 5, 1, 1, 0, &floor_thing) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+            &boundary, &floor_thing, &thing_consumer) ||
+        !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+            &first_frame, &thing_consumer, &render_consumer) ||
+        !dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
+            production, &render_consumer, &ownership) ||
+        !dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
+            &ownership, &render, 0, 1, &host_draw)) {
+        return 0;
+    }
+    consumed =
+        ownership.ready &&
+        ownership.consumed_production_consumer_receipt &&
+        ownership.consumed_render_consumer_receipt &&
+        ownership.consume_dm1_receipts_only &&
+        ownership.no_m11_fallback_scan;
+    if (out_consumed_owned_host_draw_receipt) {
+        *out_consumed_owned_host_draw_receipt = consumed;
+    }
+    return consumed &&
+           host_draw.valid &&
+           host_draw.drawMirrorBackingAsset &&
+           host_draw.drawChampionPortrait &&
+           !host_draw.drawMirrorBackingFallbackRect;
+}
+
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage) {
     switch (stage) {
         case DM1_V1_STARTUP_STAGE_SWSH_LOGO_PC34:
@@ -1982,6 +2055,10 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     receipt.render_hall_mirror_overlay = consumer.render_hall_mirror_overlay;
     receipt.suppress_host_fallback_visuals =
         consumer.suppress_host_fallback_visuals;
+    receipt.host_draw_uses_owned_receipt =
+        dm1_v1_startup_hoc_host_draw_uses_owned_receipt_pc34(
+            &consumer,
+            &receipt.consumed_owned_host_draw_receipt);
     receipt.host_draw_rejects_backing_fallback =
         dm1_v1_startup_hoc_host_draw_rejects_backing_fallback_pc34(
             &receipt.host_draw_consumes_backing_asset);
@@ -2016,6 +2093,8 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.draw_opened_entrance_frame &&
         receipt.render_hall_mirror_overlay &&
         receipt.suppress_host_fallback_visuals &&
+        receipt.consumed_owned_host_draw_receipt &&
+        receipt.host_draw_uses_owned_receipt &&
         receipt.host_draw_consumes_backing_asset &&
         receipt.host_draw_rejects_backing_fallback &&
         receipt.lower_level_renderer_helper_owned &&

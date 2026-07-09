@@ -2155,7 +2155,7 @@ static void m11_phase_a_print_boot_probe_receipt(
         return;
     }
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawUsesOwnedReceipt=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -2195,6 +2195,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             receipt.dm1HoCReleaseCaptureOwnershipReady,
             receipt.dm1HoCReceiptOnlyConsumerReady,
             receipt.dm1HoCLowerLevelHelpersReady,
+            receipt.dm1HoCHostDrawUsesOwnedReceipt,
             receipt.dm1HoCHostDrawConsumesBackingAsset,
             receipt.dm1HoCHostDrawRejectsBackingFallback,
             receipt.dm1HoCHoCAssetCapture,
@@ -4409,6 +4410,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     !receipt.dm1HoCReleaseCaptureOwnershipReady ||
                     !receipt.dm1HoCReceiptOnlyConsumerReady ||
                     !receipt.dm1HoCLowerLevelHelpersReady ||
+                    !receipt.dm1HoCHostDrawUsesOwnedReceipt ||
                     !receipt.dm1HoCHostDrawConsumesBackingAsset ||
                     !receipt.dm1HoCHostDrawRejectsBackingFallback ||
                     !receipt.dm1HoCNoHostFallbackVisuals ||
@@ -4418,7 +4420,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     !receipt.dm1HoCBlockedEnterUntilChampion ||
                     receipt.dm1HoCRenderCommandCount != 3) {
                     fprintf(stderr,
-                            "firestaff: boot-probe expected DM1 HoC full graphics receipt but got ready=%d render=%d proof=%d apply=%d consumer=%d real=%d mac=%d release=%d hostWindow=%d route=%d ownership=%d receiptOnly=%d helpers=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d\n",
+                            "firestaff: boot-probe expected DM1 HoC full graphics receipt but got ready=%d render=%d proof=%d apply=%d consumer=%d real=%d mac=%d release=%d hostWindow=%d route=%d ownership=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d\n",
                             receipt.dm1HoCFullGraphicsReady,
                             receipt.dm1HoCHostRenderPlanReady,
                             receipt.dm1HoCCaptureProofPassed,
@@ -4432,6 +4434,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             receipt.dm1HoCReleaseCaptureOwnershipReady,
                             receipt.dm1HoCReceiptOnlyConsumerReady,
                             receipt.dm1HoCLowerLevelHelpersReady,
+                            receipt.dm1HoCHostDrawUsesOwnedReceipt,
                             receipt.dm1HoCHostDrawConsumesBackingAsset,
                             receipt.dm1HoCHostDrawRejectsBackingFallback,
                             receipt.dm1HoCNoHostFallbackVisuals,
@@ -4452,11 +4455,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     !receipt.dm1HoCReleaseCaptureOwnershipReady ||
                     !receipt.dm1HoCReceiptOnlyConsumerReady ||
                     !receipt.dm1HoCLowerLevelHelpersReady ||
+                    !receipt.dm1HoCHostDrawUsesOwnedReceipt ||
                     !receipt.dm1HoCHostDrawConsumesBackingAsset ||
                     !receipt.dm1HoCHostDrawRejectsBackingFallback ||
                     !receipt.dm1HoCNoHostFallbackVisuals) {
                     fprintf(stderr,
-                            "firestaff: boot-probe expected DM1 HoC release-app host capture but got mac=%d release=%d hostWindow=%d route=%d ownership=%d receiptOnly=%d helpers=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d\n",
+                            "firestaff: boot-probe expected DM1 HoC release-app host capture but got mac=%d release=%d hostWindow=%d route=%d ownership=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d\n",
                             receipt.dm1HoCMacWindowCapture,
                             receipt.dm1HoCReleaseAppCapture,
                             receipt.dm1HoCHostWindowCapture,
@@ -4464,6 +4468,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             receipt.dm1HoCReleaseCaptureOwnershipReady,
                             receipt.dm1HoCReceiptOnlyConsumerReady,
                             receipt.dm1HoCLowerLevelHelpersReady,
+                            receipt.dm1HoCHostDrawUsesOwnedReceipt,
                             receipt.dm1HoCHostDrawConsumesBackingAsset,
                             receipt.dm1HoCHostDrawRejectsBackingFallback,
                             receipt.dm1HoCNoHostFallbackVisuals);

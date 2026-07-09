@@ -1775,6 +1775,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.render_hall_mirror_overlay &&
                  hoc_release_capture_ownership.suppress_host_fallback_visuals &&
                  hoc_release_capture_ownership
+                     .consumed_owned_host_draw_receipt &&
+                 hoc_release_capture_ownership.host_draw_uses_owned_receipt &&
+                 hoc_release_capture_ownership
                      .host_draw_consumes_backing_asset &&
                  hoc_release_capture_ownership
                      .host_draw_rejects_backing_fallback &&
