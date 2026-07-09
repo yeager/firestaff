@@ -37053,17 +37053,18 @@ static void m11_theron_startup_exec_plot_pixel(
         (unsigned char)color;
 }
 
-static void m11_theron_draw_startup_graphics(
-    const Theron_StartupRenderPlan *plan,
+static int m11_theron_draw_startup_graphics_from_receipt(
+    const Theron_V1_BootStartupViewModel *view_model,
     unsigned char *framebuffer,
     int framebufferWidth,
     int framebufferHeight)
 {
     M11_TheronStartupGraphicContext context;
     Theron_StartupGraphicExecutor executor;
+    Theron_V1_BootStartupFullStartReceipt receipt;
 
-    if (!plan || !framebuffer) {
-        return;
+    if (!view_model || !framebuffer) {
+        return 0;
     }
     context.framebuffer = framebuffer;
     context.framebufferWidth = framebufferWidth;
@@ -37072,7 +37073,14 @@ static void m11_theron_draw_startup_graphics(
     executor.fill_rect = m11_theron_startup_exec_fill_rect;
     executor.draw_rect = m11_theron_startup_exec_draw_rect;
     executor.plot_pixel = m11_theron_startup_exec_plot_pixel;
-    (void)theron_v1_boot_startup_execute_graphics_plan(plan, &executor);
+    if (!theron_v1_boot_startup_full_start_receipt_from_view_model(
+            view_model,
+            &executor,
+            &receipt)) {
+        return 0;
+    }
+    return receipt.graphics_route_valid &&
+           !receipt.raw_graphics_plan_consumer_required;
 }
 
 static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
@@ -37099,10 +37107,10 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight,
                   plan->background_color);
-    m11_theron_draw_startup_graphics(plan,
-                                     framebuffer,
-                                     framebufferWidth,
-                                     framebufferHeight);
+    (void)m11_theron_draw_startup_graphics_from_receipt(&view_model,
+                                                        framebuffer,
+                                                        framebufferWidth,
+                                                        framebufferHeight);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   plan->border_x, plan->border_y,
                   plan->border_w, plan->border_h,

@@ -2269,8 +2269,12 @@ static void test_startup_session_facts_wrappers(void) {
                     !graphics_route_receipt.runtime_receipt_text_route &&
                     graphics_route_receipt.track02_real_media_ready &&
                     graphics_route_receipt.real_bitmap_startup_graphics_ready &&
+                    (graphics_route_receipt.bitmap_route_mask & 0x04u) &&
+                    (graphics_route_receipt.bitmap_route_mask & 0x08u) &&
+                    graphics_route_receipt.bitmap_route_count >= 2 &&
                     graphics_route_receipt.soul_room_bitmap_route_ready &&
                     graphics_route_receipt.forcefield_bitmap_route_ready &&
+                    !graphics_route_receipt.raw_graphics_plan_consumer_required &&
                     graphics_route_receipt.no_fallback_startup_graphics_proof &&
                     !graphics_route_receipt.fallback_startup_graphics_executed &&
                     graphics_route_receipt.no_fallback_visuals_enforced &&
@@ -2420,8 +2424,12 @@ static void test_startup_session_facts_wrappers(void) {
                     full_start_receipt.full_start_graphics_blocked &&
                     full_start_receipt.track02_real_media_ready &&
                     full_start_receipt.real_bitmap_startup_graphics_ready &&
+                    (full_start_receipt.bitmap_route_mask & 0x04u) &&
+                    (full_start_receipt.bitmap_route_mask & 0x08u) &&
+                    full_start_receipt.bitmap_route_count >= 2 &&
                     full_start_receipt.soul_room_bitmap_route_ready &&
                     full_start_receipt.forcefield_bitmap_route_ready &&
+                    !full_start_receipt.raw_graphics_plan_consumer_required &&
                     full_start_receipt.no_fallback_startup_graphics_proof &&
                     !full_start_receipt.fallback_startup_graphics_executed &&
                     full_start_receipt.no_fallback_visuals_enforced &&
@@ -2763,8 +2771,12 @@ static void test_startup_session_facts_wrappers(void) {
                     !graphics_route_receipt.graphics_blocked &&
                     graphics_route_receipt.track02_real_media_ready &&
                     graphics_route_receipt.real_bitmap_startup_graphics_ready &&
+                    (graphics_route_receipt.bitmap_route_mask & 0x04u) &&
+                    (graphics_route_receipt.bitmap_route_mask & 0x08u) &&
+                    graphics_route_receipt.bitmap_route_count >= 2 &&
                     graphics_route_receipt.soul_room_bitmap_route_ready &&
                     graphics_route_receipt.forcefield_bitmap_route_ready &&
+                    !graphics_route_receipt.raw_graphics_plan_consumer_required &&
                     !graphics_route_receipt.no_fallback_startup_graphics_proof &&
                     graphics_route_receipt.fallback_startup_graphics_executed &&
                     graphics_route_receipt.startup_menu_render_allowed &&
@@ -2806,8 +2818,12 @@ static void test_startup_session_facts_wrappers(void) {
                     !full_start_receipt.full_start_graphics_blocked &&
                     full_start_receipt.track02_real_media_ready &&
                     full_start_receipt.real_bitmap_startup_graphics_ready &&
+                    (full_start_receipt.bitmap_route_mask & 0x04u) &&
+                    (full_start_receipt.bitmap_route_mask & 0x08u) &&
+                    full_start_receipt.bitmap_route_count >= 2 &&
                     full_start_receipt.soul_room_bitmap_route_ready &&
                     full_start_receipt.forcefield_bitmap_route_ready &&
+                    !full_start_receipt.raw_graphics_plan_consumer_required &&
                     !full_start_receipt.no_fallback_startup_graphics_proof &&
                     full_start_receipt.fallback_startup_graphics_executed &&
                     full_start_receipt.fallback_visuals_allowed &&
@@ -2867,6 +2883,8 @@ static void test_startup_session_facts_wrappers(void) {
                         &media_receipt,
                         &media_graphics_executor,
                         &full_start_receipt) &&
+                        full_start_receipt.bitmap_route_mask == 0x01u &&
+                        full_start_receipt.bitmap_route_count == 1 &&
                         full_start_receipt.title_bitmap_route_ready &&
                         !full_start_receipt.stage_bitmap_route_ready &&
                         !full_start_receipt.soul_room_bitmap_route_ready &&
@@ -2893,6 +2911,8 @@ static void test_startup_session_facts_wrappers(void) {
                         &media_receipt,
                         &media_graphics_executor,
                         &full_start_receipt) &&
+                        (full_start_receipt.bitmap_route_mask & 0x02u) &&
+                        full_start_receipt.bitmap_route_count >= 1 &&
                         !full_start_receipt.title_bitmap_route_ready &&
                         full_start_receipt.stage_bitmap_route_ready &&
                         !full_start_receipt.soul_room_bitmap_route_ready &&
