@@ -11,18 +11,18 @@ static const char* skill_names[] = {
     "Fighter", "Ninja", "Priest", "Wizard"
 };
 
-void m11_stats_init(M11_ChampionStatsState* s) {
+void DM1_V1_ChampionStats_InitPc34Compat(DM1_V1_ChampionStatsStatePc34* s) {
     if (!s) return;
-    memset(s, 0, sizeof(M11_ChampionStatsState));
+    memset(s, 0, sizeof(DM1_V1_ChampionStatsStatePc34));
     s->leader = 0;
 }
 
-int m11_stats_add_champion(M11_ChampionStatsState* s, const char* name) {
+int DM1_V1_ChampionStats_AddChampionPc34Compat(DM1_V1_ChampionStatsStatePc34* s, const char* name) {
     if (!s || !name) return -1;
-    if (s->count >= M11_MAX_CHAMPIONS) return -1;
+    if (s->count >= DM1_V1_MAX_CHAMPIONS_PC34) return -1;
 
     int idx = s->count;
-    M11_ChampionStats* c = &s->champions[idx];
+    DM1_V1_ChampionStatsPc34* c = &s->champions[idx];
 
     strncpy(c->name, name, sizeof(c->name) - 1);
     c->name[sizeof(c->name) - 1] = '\0';
@@ -77,30 +77,30 @@ int m11_stats_add_champion(M11_ChampionStatsState* s, const char* name) {
     return idx;
 }
 
-int m11_stats_get(const M11_ChampionStatsState* s, int champ, int stat) {
+int DM1_V1_ChampionStats_GetPc34Compat(const DM1_V1_ChampionStatsStatePc34* s, int champ, int stat) {
     if (!s) return 0;
     if (champ < 0 || champ >= s->count) return 0;
     if (stat < 0 || stat >= DM1_STAT_COUNT) return 0;
     return s->champions[champ].stats[stat];
 }
 
-void m11_stats_set(M11_ChampionStatsState* s, int champ, int stat, int val) {
+void DM1_V1_ChampionStats_SetPc34Compat(DM1_V1_ChampionStatsStatePc34* s, int champ, int stat, int val) {
     if (!s) return;
     if (champ < 0 || champ >= s->count) return;
     if (stat < 0 || stat >= DM1_STAT_COUNT) return;
 
-    M11_ChampionStats* c = &s->champions[champ];
+    DM1_V1_ChampionStatsPc34* c = &s->champions[champ];
     if (val < 0) val = 0;
     if (val > c->maxStats[stat]) val = c->maxStats[stat];
     c->stats[stat] = val;
 }
 
-void m11_stats_modify(M11_ChampionStatsState* s, int champ, int stat, int delta) {
+void DM1_V1_ChampionStats_ModifyPc34Compat(DM1_V1_ChampionStatsStatePc34* s, int champ, int stat, int delta) {
     if (!s) return;
     if (champ < 0 || champ >= s->count) return;
     if (stat < 0 || stat >= DM1_STAT_COUNT) return;
 
-    M11_ChampionStats* c = &s->champions[champ];
+    DM1_V1_ChampionStatsPc34* c = &s->champions[champ];
     c->stats[stat] += delta;
 
     // Clamp
@@ -109,15 +109,15 @@ void m11_stats_modify(M11_ChampionStatsState* s, int champ, int stat, int delta)
 
     // If health reaches 0, kill
     if (stat == DM1_STAT_HEALTH && c->stats[DM1_STAT_HEALTH] <= 0) {
-        m11_stats_kill(s, champ);
+        DM1_V1_ChampionStats_KillPc34Compat(s, champ);
     }
 }
 
-void m11_stats_tick(M11_ChampionStatsState* s) {
+void DM1_V1_ChampionStats_TickPc34Compat(DM1_V1_ChampionStatsStatePc34* s) {
     if (!s) return;
 
     for (int i = 0; i < s->count; i++) {
-        M11_ChampionStats* c = &s->champions[i];
+        DM1_V1_ChampionStatsPc34* c = &s->champions[i];
         if (!c->alive) continue;
 
         // Fixed per-tick food/water consumption (1 per tick, frame-rate independent)
@@ -129,12 +129,12 @@ void m11_stats_tick(M11_ChampionStatsState* s) {
 
         // If food <= 0, decrease health
         if (c->food <= 0) {
-            m11_stats_modify(s, i, DM1_STAT_HEALTH, -1);
+            DM1_V1_ChampionStats_ModifyPc34Compat(s, i, DM1_STAT_HEALTH, -1);
         }
 
         // If poisoned, decrease health by poisonAmount
         if (c->poisoned && c->poisonAmount > 0) {
-            m11_stats_modify(s, i, DM1_STAT_HEALTH, -c->poisonAmount);
+            DM1_V1_ChampionStats_ModifyPc34Compat(s, i, DM1_STAT_HEALTH, -c->poisonAmount);
         }
 
         // Stamina regen: +1 every 3rd tick
@@ -149,43 +149,43 @@ void m11_stats_tick(M11_ChampionStatsState* s) {
     }
 }
 
-int m11_stats_is_alive(const M11_ChampionStatsState* s, int champ) {
+int DM1_V1_ChampionStats_IsAlivePc34Compat(const DM1_V1_ChampionStatsStatePc34* s, int champ) {
     if (!s) return 0;
     if (champ < 0 || champ >= s->count) return 0;
     return s->champions[champ].alive;
 }
 
-void m11_stats_kill(M11_ChampionStatsState* s, int champ) {
+void DM1_V1_ChampionStats_KillPc34Compat(DM1_V1_ChampionStatsStatePc34* s, int champ) {
     if (!s) return;
     if (champ < 0 || champ >= s->count) return;
 
-    M11_ChampionStats* c = &s->champions[champ];
+    DM1_V1_ChampionStatsPc34* c = &s->champions[champ];
     c->alive = 0;
     c->stats[DM1_STAT_HEALTH] = 0;
 }
 
-void m11_stats_resurrect(M11_ChampionStatsState* s, int champ, int hp) {
+void DM1_V1_ChampionStats_ResurrectPc34Compat(DM1_V1_ChampionStatsStatePc34* s, int champ, int hp) {
     if (!s) return;
     if (champ < 0 || champ >= s->count) return;
 
-    M11_ChampionStats* c = &s->champions[champ];
+    DM1_V1_ChampionStatsPc34* c = &s->champions[champ];
     c->alive = 1;
     if (hp > c->maxStats[DM1_STAT_HEALTH]) hp = c->maxStats[DM1_STAT_HEALTH];
     if (hp < 0) hp = 0;
     c->stats[DM1_STAT_HEALTH] = hp;
 }
 
-const char* m11_stat_name(int stat) {
+const char* DM1_V1_ChampionStats_StatNamePc34Compat(int stat) {
     if (stat < 0 || stat >= DM1_STAT_COUNT) return "Unknown";
     return stat_names[stat];
 }
 
-const char* m11_skill_name(int skill) {
+const char* DM1_V1_ChampionStats_SkillNamePc34Compat(int skill) {
     if (skill < 0 || skill >= DM1_SKILL_COUNT) return "Unknown";
     return skill_names[skill];
 }
 
-int dm1_stats_stamina_adjusted_value_pc34(int currentStamina,
+int DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat(int currentStamina,
                                           int maximumStamina,
                                           int value) {
     int halfMaximumStamina = maximumStamina >> 1;
@@ -200,7 +200,7 @@ int dm1_stats_stamina_adjusted_value_pc34(int currentStamina,
     return value;
 }
 
-int m11_stats_statistic_color_pc34(int currentValue, int maximumValue) {
+int DM1_V1_ChampionStats_StatisticColorPc34Compat(int currentValue, int maximumValue) {
     /* ReDMCSB PANEL.C:2081-2096 / F0351 compares the drawn current
        statistic against its maximum row: below max red, above max light
        green, equal lightest gray. */
@@ -213,15 +213,15 @@ int m11_stats_statistic_color_pc34(int currentValue, int maximumValue) {
     return DM1_STAT_COLOR_LIGHTEST_GRAY;
 }
 
-int m11_stats_champion_statistic_color_pc34(const M11_ChampionStats* champion, int stat) {
+int DM1_V1_ChampionStats_ChampionStatisticColorPc34Compat(const DM1_V1_ChampionStatsPc34* champion, int stat) {
     if (!champion) return DM1_STAT_COLOR_LIGHTEST_GRAY;
     if (stat < 0 || stat >= DM1_STAT_COUNT) return DM1_STAT_COLOR_LIGHTEST_GRAY;
 
-    return m11_stats_statistic_color_pc34(champion->stats[stat],
+    return DM1_V1_ChampionStats_StatisticColorPc34Compat(champion->stats[stat],
                                           champion->maxStats[stat]);
 }
 
-int m11_stats_maximum_load_pc34(const M11_ChampionStats* champion) {
+int DM1_V1_ChampionStats_MaximumLoadPc34Compat(const DM1_V1_ChampionStatsPc34* champion) {
     int maximumLoad;
 
     if (!champion) return 0;
@@ -229,7 +229,7 @@ int m11_stats_maximum_load_pc34(const M11_ChampionStats* champion) {
     /* ReDMCSB CHAMPION.C:1157-1177 / F0309. Units are the original
        tenths-of-kilogram load units used by the champion panel. */
     maximumLoad = (champion->stats[DM1_STAT_STRENGTH] << 3) + 100;
-    maximumLoad = dm1_stats_stamina_adjusted_value_pc34(
+    maximumLoad = DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat(
         champion->stats[DM1_STAT_STAMINA],
         champion->maxStats[DM1_STAT_STAMINA],
         maximumLoad);
@@ -247,7 +247,7 @@ int m11_stats_maximum_load_pc34(const M11_ChampionStats* champion) {
     return maximumLoad;
 }
 
-int m11_stats_movement_ticks_pc34(const M11_ChampionStats* champion) {
+int DM1_V1_ChampionStats_MovementTicksPc34Compat(const DM1_V1_ChampionStatsPc34* champion) {
     int load;
     int maximumLoad;
     int ticks;
@@ -258,7 +258,7 @@ int m11_stats_movement_ticks_pc34(const M11_ChampionStats* champion) {
     /* ReDMCSB CHAMPION.C:1180-1215 / F0310, preserving BUG0_72:
        load == maximumLoad follows the overloaded branch. */
     load = champion->load;
-    maximumLoad = m11_stats_maximum_load_pc34(champion);
+    maximumLoad = DM1_V1_ChampionStats_MaximumLoadPc34Compat(champion);
     if (maximumLoad > load) {
         ticks = 2;
         if (((long)load << 3) > ((long)maximumLoad * 5)) {
@@ -284,26 +284,26 @@ int m11_stats_movement_ticks_pc34(const M11_ChampionStats* champion) {
     return ticks < 1 ? 1 : ticks;
 }
 
-int m11_stats_movement_stamina_cost_pc34(const M11_ChampionStats* champion) {
+int DM1_V1_ChampionStats_MovementStaminaCostPc34Compat(const DM1_V1_ChampionStatsPc34* champion) {
     int maximumLoad;
 
     if (!champion) return 0;
 
     /* ReDMCSB MOVESENS.C:590-598 applies this through F0325 when a
        champion uses a rope to climb down a pit. */
-    maximumLoad = m11_stats_maximum_load_pc34(champion);
+    maximumLoad = DM1_V1_ChampionStats_MaximumLoadPc34Compat(champion);
     if (maximumLoad <= 0) return 0;
     return ((champion->load * 25) / maximumLoad) + 1;
 }
 
-int m11_stats_load_color_pc34(const M11_ChampionStats* champion) {
+int DM1_V1_ChampionStats_LoadColorPc34Compat(const DM1_V1_ChampionStatsPc34* champion) {
     int maximumLoad;
 
     if (!champion) return DM1_LOAD_COLOR_LIGHTEST_GRAY;
 
     /* ReDMCSB CHAMDRAW.C:958-966 / F0292. The displayed load turns
        red only above maximum load; exactly-at-maximum remains yellow. */
-    maximumLoad = m11_stats_maximum_load_pc34(champion);
+    maximumLoad = DM1_V1_ChampionStats_MaximumLoadPc34Compat(champion);
     if (champion->load > maximumLoad) {
         return DM1_LOAD_COLOR_RED;
     }
@@ -313,7 +313,7 @@ int m11_stats_load_color_pc34(const M11_ChampionStats* champion) {
     return DM1_LOAD_COLOR_LIGHTEST_GRAY;
 }
 
-int m11_stats_format_load_pc34(const M11_ChampionStats* champion,
+int DM1_V1_ChampionStats_FormatLoadPc34Compat(const DM1_V1_ChampionStatsPc34* champion,
                                char* out,
                                size_t outSize) {
     int currentWhole;
@@ -326,7 +326,7 @@ int m11_stats_format_load_pc34(const M11_ChampionStats* champion,
        load as current integer, decimal digit, '/', rounded max, and KG. */
     currentWhole = champion->load / 10;
     currentTenths = champion->load - (currentWhole * 10);
-    maximumWhole = (m11_stats_maximum_load_pc34(champion) + 5) / 10;
+    maximumWhole = (DM1_V1_ChampionStats_MaximumLoadPc34Compat(champion) + 5) / 10;
     snprintf(out, outSize, "%3d.%d/%3d KG",
              currentWhole, currentTenths, maximumWhole);
     return 1;

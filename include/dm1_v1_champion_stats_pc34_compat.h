@@ -67,40 +67,64 @@ typedef struct {
     int alive;
     int poisoned;
     int poisonAmount;
-} M11_ChampionStats;
+} DM1_V1_ChampionStatsPc34;
 
-#define M11_MAX_CHAMPIONS 4
+#define DM1_V1_MAX_CHAMPIONS_PC34 4
 
 typedef struct {
-    M11_ChampionStats champions[M11_MAX_CHAMPIONS];
+    DM1_V1_ChampionStatsPc34 champions[DM1_V1_MAX_CHAMPIONS_PC34];
     int count;
     int leader;
     int staminaTick;
-} M11_ChampionStatsState;
+} DM1_V1_ChampionStatsStatePc34;
 
-void m11_stats_init(M11_ChampionStatsState* s);
-int m11_stats_add_champion(M11_ChampionStatsState* s, const char* name);
-int m11_stats_get(const M11_ChampionStatsState* s, int champ, int stat);
-void m11_stats_set(M11_ChampionStatsState* s, int champ, int stat, int val);
-void m11_stats_modify(M11_ChampionStatsState* s, int champ, int stat, int delta);
-void m11_stats_tick(M11_ChampionStatsState* s);
-int m11_stats_is_alive(const M11_ChampionStatsState* s, int champ);
-void m11_stats_kill(M11_ChampionStatsState* s, int champ);
-void m11_stats_resurrect(M11_ChampionStatsState* s, int champ, int hp);
-const char* m11_stat_name(int stat);
-const char* m11_skill_name(int skill);
-int dm1_stats_stamina_adjusted_value_pc34(int currentStamina,
+void DM1_V1_ChampionStats_InitPc34Compat(DM1_V1_ChampionStatsStatePc34* s);
+int DM1_V1_ChampionStats_AddChampionPc34Compat(DM1_V1_ChampionStatsStatePc34* s, const char* name);
+int DM1_V1_ChampionStats_GetPc34Compat(const DM1_V1_ChampionStatsStatePc34* s, int champ, int stat);
+void DM1_V1_ChampionStats_SetPc34Compat(DM1_V1_ChampionStatsStatePc34* s, int champ, int stat, int val);
+void DM1_V1_ChampionStats_ModifyPc34Compat(DM1_V1_ChampionStatsStatePc34* s, int champ, int stat, int delta);
+void DM1_V1_ChampionStats_TickPc34Compat(DM1_V1_ChampionStatsStatePc34* s);
+int DM1_V1_ChampionStats_IsAlivePc34Compat(const DM1_V1_ChampionStatsStatePc34* s, int champ);
+void DM1_V1_ChampionStats_KillPc34Compat(DM1_V1_ChampionStatsStatePc34* s, int champ);
+void DM1_V1_ChampionStats_ResurrectPc34Compat(DM1_V1_ChampionStatsStatePc34* s, int champ, int hp);
+const char* DM1_V1_ChampionStats_StatNamePc34Compat(int stat);
+const char* DM1_V1_ChampionStats_SkillNamePc34Compat(int skill);
+int DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat(int currentStamina,
                                           int maximumStamina,
                                           int value);
-int m11_stats_statistic_color_pc34(int currentValue, int maximumValue);
-int m11_stats_champion_statistic_color_pc34(const M11_ChampionStats* champion, int stat);
-int m11_stats_maximum_load_pc34(const M11_ChampionStats* champion);
-int m11_stats_movement_ticks_pc34(const M11_ChampionStats* champion);
-int m11_stats_movement_stamina_cost_pc34(const M11_ChampionStats* champion);
-int m11_stats_load_color_pc34(const M11_ChampionStats* champion);
-int m11_stats_format_load_pc34(const M11_ChampionStats* champion,
+int DM1_V1_ChampionStats_StatisticColorPc34Compat(int currentValue, int maximumValue);
+int DM1_V1_ChampionStats_ChampionStatisticColorPc34Compat(const DM1_V1_ChampionStatsPc34* champion, int stat);
+int DM1_V1_ChampionStats_MaximumLoadPc34Compat(const DM1_V1_ChampionStatsPc34* champion);
+int DM1_V1_ChampionStats_MovementTicksPc34Compat(const DM1_V1_ChampionStatsPc34* champion);
+int DM1_V1_ChampionStats_MovementStaminaCostPc34Compat(const DM1_V1_ChampionStatsPc34* champion);
+int DM1_V1_ChampionStats_LoadColorPc34Compat(const DM1_V1_ChampionStatsPc34* champion);
+int DM1_V1_ChampionStats_FormatLoadPc34Compat(const DM1_V1_ChampionStatsPc34* champion,
                                char* out,
                                size_t outSize);
+
+typedef DM1_V1_ChampionStatsPc34 M11_ChampionStats;
+typedef DM1_V1_ChampionStatsStatePc34 M11_ChampionStatsState;
+
+#define M11_MAX_CHAMPIONS DM1_V1_MAX_CHAMPIONS_PC34
+#define m11_stats_init DM1_V1_ChampionStats_InitPc34Compat
+#define m11_stats_add_champion DM1_V1_ChampionStats_AddChampionPc34Compat
+#define m11_stats_get DM1_V1_ChampionStats_GetPc34Compat
+#define m11_stats_set DM1_V1_ChampionStats_SetPc34Compat
+#define m11_stats_modify DM1_V1_ChampionStats_ModifyPc34Compat
+#define m11_stats_tick DM1_V1_ChampionStats_TickPc34Compat
+#define m11_stats_is_alive DM1_V1_ChampionStats_IsAlivePc34Compat
+#define m11_stats_kill DM1_V1_ChampionStats_KillPc34Compat
+#define m11_stats_resurrect DM1_V1_ChampionStats_ResurrectPc34Compat
+#define m11_stat_name DM1_V1_ChampionStats_StatNamePc34Compat
+#define m11_skill_name DM1_V1_ChampionStats_SkillNamePc34Compat
+#define dm1_stats_stamina_adjusted_value_pc34 DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat
+#define m11_stats_statistic_color_pc34 DM1_V1_ChampionStats_StatisticColorPc34Compat
+#define m11_stats_champion_statistic_color_pc34 DM1_V1_ChampionStats_ChampionStatisticColorPc34Compat
+#define m11_stats_maximum_load_pc34 DM1_V1_ChampionStats_MaximumLoadPc34Compat
+#define m11_stats_movement_ticks_pc34 DM1_V1_ChampionStats_MovementTicksPc34Compat
+#define m11_stats_movement_stamina_cost_pc34 DM1_V1_ChampionStats_MovementStaminaCostPc34Compat
+#define m11_stats_load_color_pc34 DM1_V1_ChampionStats_LoadColorPc34Compat
+#define m11_stats_format_load_pc34 DM1_V1_ChampionStats_FormatLoadPc34Compat
 
 #ifdef __cplusplus
 }
