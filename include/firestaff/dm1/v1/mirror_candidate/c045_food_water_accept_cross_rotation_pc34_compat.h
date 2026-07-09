@@ -24,7 +24,7 @@ typedef struct {
     const char *leaderSetAnchor;
     const char *defsAnchor;
     const char *nonOverlap;
-} Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34;
+} DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34;
 
 typedef struct {
     int ordinal;
@@ -33,7 +33,7 @@ typedef struct {
     int chainLinked;
     uint16_t handThing;
     int load;
-} Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationChampionPc34;
+} DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationChampionPc34;
 
 typedef struct {
     int contractOnly;
@@ -83,9 +83,9 @@ typedef struct {
     uint32_t afterQueueHash;
     uint32_t afterAcceptHash;
     uint32_t afterRotateHash;
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationChampionPc34
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationChampionPc34
         champions[DM1_V1_MC_C045_ACCEPT_ROTATE_PARTY_COUNT_PC34];
-} Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34;
+} DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34;
 
 typedef struct {
     int accepted;
@@ -126,22 +126,40 @@ typedef struct {
     uint32_t afterAcceptHash;
     uint32_t afterRotateHash;
     uint32_t hash;
-} Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34;
+} DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34;
 
-void dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_init_pc34(
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state);
+typedef DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34
+    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34;
+typedef DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationChampionPc34
+    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationChampionPc34;
+typedef DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34
+    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34;
+typedef DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34
+    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34;
 
-int dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_run_pc34(
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state,
-    Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34 *result);
+void DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_InitPc34(
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state);
 
-const Dm1V1MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34 *
-dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_evidence_pc34(
+int DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_RunPc34(
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationStatePc34 *state,
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationResultPc34 *result);
+
+const DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotationEvidencePc34 *
+DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_EvidencePc34(
     void);
 
 const char *
-dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_source_evidence_pc34(
+DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_SourceEvidencePc34(
     void);
+
+#define dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_init_pc34 \
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_InitPc34
+#define dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_run_pc34 \
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_RunPc34
+#define dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_evidence_pc34 \
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_EvidencePc34
+#define dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateC045FoodWaterAcceptCrossRotation_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

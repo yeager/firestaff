@@ -83,7 +83,7 @@ static const char s_source_evidence[] =
     "C30, 1874-1878 C38/M070, 2078-2088 C10_COLOR_FLESH, 2200/2205 C040/"
     "C045, 2999-3008 M565/M568, 3906-3914 C537..C545, 5694 G0299.";
 
-static const Dm1V1MirrorCandidateC045AcceptDeadOwnerEvidencePc34 s_evidence = {
+static const DM1_V1_MirrorCandidateC045AcceptDeadOwnerEvidencePc34 s_evidence = {
     "ReDMCSB REVIVE.C F0280:124-188 candidate publication gate (candidate is dead until accepted)",
     "ReDMCSB REVIVE.C F0282:744-806 C160 accept clear path runs F0286 stats-reset on the candidate body",
     "ReDMCSB REVIVE.C F0286 statistics-reset sweep initializes Food/Water on the candidate body",
@@ -121,7 +121,7 @@ static void copy_ints(int dst[], const int src[], int count)
 }
 
 static uint32_t hash_state(
-    const Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
+    const DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -194,8 +194,8 @@ static int source_anchors_present(void)
            strstr(s_source_evidence, "5694 G0299") != NULL;
 }
 
-void dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
+void DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_InitPc34(
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
 {
     int i;
 
@@ -265,7 +265,7 @@ void dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(
     state->beforeHash = hash_state(state);
 }
 
-static int ready(const Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
+static int ready(const DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
 {
     return state && state->contractOnly && state->assetFree &&
            state->partyChampionCount == 3 &&
@@ -292,7 +292,7 @@ static int ready(const Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
            state->commandQueueDepth == 0;
 }
 
-static int queue_accept(Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
+static int queue_accept(DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
 {
     if (!ready(state)) {
         return 0;
@@ -305,7 +305,7 @@ static int queue_accept(Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
 }
 
 static int dispatch_accept_through_f0282(
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
 {
     if (!state || state->commandQueueDepth != 1 ||
         state->trace[1] != kTraceQueueAccept || !state->c040PanelOpen ||
@@ -354,7 +354,7 @@ static int dispatch_accept_through_f0282(
 }
 
 static int settle_leader_state(
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *state)
 {
     if (!state || state->commandQueueDepth != 0 ||
         state->trace[3] != kTraceAcceptDone ||
@@ -379,10 +379,10 @@ static int settle_leader_state(
 }
 
 static int guard_rejects(
-    const Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *base, int kind)
+    const DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *base, int kind)
 {
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 probe = *base;
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerResultPc34 result;
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 probe = *base;
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerResultPc34 result;
 
     if (kind == 0) {
         probe.candidateOwnerAlive = DM1_V1_MC_C045_DEAD_OWNER_ALIVE_PC34;
@@ -404,15 +404,15 @@ static int guard_rejects(
     } else {
         probe.champions[kLeaderIndex].handThing = 0x0001u;
     }
-    return dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+    return DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
                &probe, &result) == 0;
 }
 
-int dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 *state,
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerResultPc34 *result)
+int DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_RunPc34(
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 *state,
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerResultPc34 *result)
 {
-    Dm1V1MirrorCandidateC045AcceptDeadOwnerStatePc34 base;
+    DM1_V1_MirrorCandidateC045AcceptDeadOwnerStatePc34 base;
     int queued;
     int accepted;
     int settled;
@@ -568,14 +568,14 @@ int dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
     return result->accepted;
 }
 
-const Dm1V1MirrorCandidateC045AcceptDeadOwnerEvidencePc34 *
-dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_evidence_pc34(void)
+const DM1_V1_MirrorCandidateC045AcceptDeadOwnerEvidencePc34 *
+DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_EvidencePc34(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateC045AcceptDeadOwnerGuard_SourceEvidencePc34(void)
 {
     return s_source_evidence;
 }

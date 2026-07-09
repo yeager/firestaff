@@ -268,11 +268,18 @@ typedef struct {
 } DM1_V1_MirrorCandidateReopenAfterSaveLoadProbePc34;
 
 const char*
-dm1_v1_mirror_candidate_reopen_after_save_load_source_evidence_pc34(void);
+DM1_V1_MirrorCandidateReopenAfterSaveLoad_SourceEvidencePc34(void);
 const DM1_V1_MirrorCandidateReopenAfterSaveLoadSpecPc34*
-dm1_v1_mirror_candidate_reopen_after_save_load_spec_pc34(void);
-int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
+DM1_V1_MirrorCandidateReopenAfterSaveLoad_SpecPc34(void);
+int DM1_V1_MirrorCandidateReopenAfterSaveLoad_RunPc34(
     DM1_V1_MirrorCandidateReopenAfterSaveLoadProbePc34* out);
+
+#define dm1_v1_mirror_candidate_reopen_after_save_load_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateReopenAfterSaveLoad_SourceEvidencePc34
+#define dm1_v1_mirror_candidate_reopen_after_save_load_spec_pc34 \
+    DM1_V1_MirrorCandidateReopenAfterSaveLoad_SpecPc34
+#define dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34 \
+    DM1_V1_MirrorCandidateReopenAfterSaveLoad_RunPc34
 
 #ifdef __cplusplus
 }

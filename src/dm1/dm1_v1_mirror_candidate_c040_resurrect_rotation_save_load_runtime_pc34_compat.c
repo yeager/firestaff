@@ -29,7 +29,7 @@ typedef struct {
     int partyDirection;
     int leaderIndex;
     int leaderHandThing;
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34
         champions[DM1_V1_MC_C040_RRSL_PARTY_COUNT_PC34];
 } SaveBlobPc34;
 
@@ -52,7 +52,7 @@ static const char s_source_evidence[] =
     "DEFS.H:538-572 GLOBAL_DATA, DEFS.H:2200 C040, DEFS.H:3001-3008 M568, DEFS.H:5694 G0299, DEFS.H:5876 G0423, DEFS.H:5877 G0424, DEFS.H:5878 G0425, DEFS.H:5881 G0426, DEFS.H C30 and M070. "
     "Non-overlap marker: live C040 resurrect confirmation, queued turn replayed, direct F0433/F0435 save/load boundary, no F0282 clear and no F0302 slot mutation; not reopen-after-save-load, not inventory-click-during-rotation, not rotation-during-resurrect-confirmation, not c160-close-while-rotation-pending, not full-chain, not eye-slot-swap.";
 
-static const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34
+static const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34
     s_evidence = {
         "ReDMCSB COMMAND.C F0359:1452-1662 and F0380:2045-2178 queue/drain; F0380:2366-2369 blocks C140 while G0299 is live",
         "ReDMCSB LOADSAVE.C F0433:1502-1707; F0433:1517-1538 GLOBAL_DATA; F0433:1565-1584 M516_CHAMPIONS + G0407_s_Party",
@@ -80,7 +80,7 @@ static uint32_t hash_step(uint32_t hash, unsigned int value)
 }
 
 static uint32_t hash_champion(
-    const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34 *c)
+    const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34 *c)
 {
     uint32_t hash = UINT32_C(2166136261);
 
@@ -93,7 +93,7 @@ static uint32_t hash_champion(
 }
 
 static uint32_t hash_party_pose(
-    const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
+    const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -108,7 +108,7 @@ static uint32_t hash_party_pose(
 }
 
 static uint32_t hash_chest_slots(
-    const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
+    const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -120,7 +120,7 @@ static uint32_t hash_chest_slots(
 }
 
 static uint32_t hash_state(
-    const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
+    const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -175,8 +175,8 @@ static int source_anchors_present(void)
            strstr(s_source_evidence, "C040") != NULL;
 }
 
-void dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_init_pc34(
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
+void DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_InitPc34(
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
     uint32_t seed)
 {
     int i;
@@ -211,9 +211,9 @@ void dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_init_pc34(
 }
 
 static void publish_candidate_f0280(
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
 {
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34 *candidate;
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadChampionPc34 *candidate;
 
     state->f0280PublishCount++;
     candidate = &state->champions[1];
@@ -234,7 +234,7 @@ static void publish_candidate_f0280(
 }
 
 static void rotate_party_f0284(
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
     int newDirection)
 {
     int delta;
@@ -254,7 +254,7 @@ static void rotate_party_f0284(
     state->partyDirection = newDirection;
 }
 
-static void save_f0433(const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
+static void save_f0433(const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
                        SaveBlobPc34 *save)
 {
     int i;
@@ -268,7 +268,7 @@ static void save_f0433(const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadSt
     }
 }
 
-static void load_f0435(Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
+static void load_f0435(DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
                        const SaveBlobPc34 *save)
 {
     int i;
@@ -292,7 +292,7 @@ static void copy_trace(int *dst, const int *src)
 }
 
 static int state_ready(
-    const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
+    const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state)
 {
     return state && state->contractOnly && state->noGameDataRequired &&
            state->g0299CandidateOrdinal == kCandidateOrdinal &&
@@ -301,12 +301,12 @@ static int state_ready(
            state->partyChampionCount == 2;
 }
 
-int dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34(
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 *result)
+int DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_RunPc34(
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 *state,
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadResultPc34 *result)
 {
     SaveBlobPc34 save;
-    Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 replay;
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadStatePc34 replay;
     uint32_t beforeCandidateHash;
     uint32_t beforePoseHash;
     int i;
@@ -316,10 +316,10 @@ int dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34(
     }
     memset(result, 0, sizeof(*result));
     result->guardRejectsNullState =
-        !dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34(
+        !DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_RunPc34(
             NULL, result);
     result->guardRejectsNullResult =
-        !dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34(
+        !DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_RunPc34(
             state, NULL);
 
     publish_candidate_f0280(state);
@@ -370,7 +370,7 @@ int dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34(
     result->candidateHashAfterLoad = hash_champion(&state->champions[1]);
     result->partyPoseHashAfterLoad = hash_party_pose(state);
 
-    dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_init_pc34(
+    DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_InitPc34(
         &replay, state->seed);
     publish_candidate_f0280(&replay);
     replay.pendingRotationCommand = kCommandTurnRight;
@@ -435,14 +435,14 @@ int dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_run_pc34(
     return 1;
 }
 
-const Dm1V1MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *
-dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_evidence_pc34(void)
+const DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoadEvidencePc34 *
+DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_EvidencePc34(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_source_evidence_pc34(
+DM1_V1_MirrorCandidateC040ResurrectRotationSaveLoad_SourceEvidencePc34(
     void)
 {
     return s_source_evidence;

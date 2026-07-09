@@ -290,7 +290,7 @@ static void f0355_open_for_leader_pc34(C040PanelPc34* panel)
 
 /* ── Main probe ──────────────────────────────────────────────────── */
 
-int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
+int DM1_V1_MirrorCandidateReopenAfterSaveLoad_RunPc34(
     DM1_V1_MirrorCandidateReopenAfterSaveLoadProbePc34* out)
 {
     DM1_V1_InventoryStatePc34 inv;
@@ -600,13 +600,13 @@ int dm1_v1_mirror_candidate_reopen_after_save_load_run_pc34(
 }
 
 const char*
-dm1_v1_mirror_candidate_reopen_after_save_load_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateReopenAfterSaveLoad_SourceEvidencePc34(void)
 {
     return s_source_evidence;
 }
 
 const DM1_V1_MirrorCandidateReopenAfterSaveLoadSpecPc34*
-dm1_v1_mirror_candidate_reopen_after_save_load_spec_pc34(void)
+DM1_V1_MirrorCandidateReopenAfterSaveLoad_SpecPc34(void)
 {
     return &s_spec;
 }
