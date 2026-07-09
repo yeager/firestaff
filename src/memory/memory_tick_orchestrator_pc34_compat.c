@@ -4358,20 +4358,24 @@ static int orch_apply_projectile_champion_action_compat(
     DM1_ProjectileChampionImpactPlanPc34 impactPlan;
 
     if (!world || !action) return 0;
-    if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_CHAMPION) return 0;
-    if (action->rawAttackValue <= 0) return 0;
-    championIndex = action->defenderSlotOrCreatureIndex;
+    if (!dm1_v1_projectile_champion_action_plan_pc34(
+            projectile, action, 1, &impactPlan) ||
+        !impactPlan.handled) {
+        return 0;
+    }
+    if (impactPlan.rawAttackValue <= 0) return 0;
+    championIndex = impactPlan.championIndex;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     champion = &world->party.champions[championIndex];
     if (!champion->present || champion->hp.current == 0) return 0;
 
     memset(&damage, 0, sizeof(damage));
     if (!orch_build_defender_champion_snapshot_compat(
-            world, championIndex, action->attackTypeCode, &defender) ||
+            world, championIndex, impactPlan.attackTypeCode, &defender) ||
         !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
-            action->attackTypeCode,
-            action->rawAttackValue,
-            action->allowedWounds,
+            impactPlan.attackTypeCode,
+            impactPlan.rawAttackValue,
+            impactPlan.allowedWounds,
             &defender,
             &world->masterRng,
             &scaledAttack,
@@ -4383,7 +4387,7 @@ static int orch_apply_projectile_champion_action_compat(
     }
     if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
             scaledAttack,
-            action->allowedWounds,
+            impactPlan.allowedWounds,
             &defender,
             &world->masterRng,
             &selectedWounds,
@@ -4403,17 +4407,6 @@ static int orch_apply_projectile_champion_action_compat(
     if (killed) {
         emit(result, EMIT_CHAMPION_DOWN, championIndex, 0, 0, 0);
     }
-    memset(&impactPlan, 0, sizeof(impactPlan));
-    impactPlan.handled = 1;
-    impactPlan.championPresent = 1;
-    impactPlan.championIndex = championIndex;
-    impactPlan.impactMapIndex = action->targetMapIndex;
-    impactPlan.impactMapX = action->targetMapX;
-    impactPlan.impactMapY = action->targetMapY;
-    impactPlan.impactCell = action->targetCell;
-    impactPlan.attackTypeCode = action->attackTypeCode;
-    impactPlan.rawAttackValue = action->rawAttackValue;
-    impactPlan.allowedWounds = action->allowedWounds;
 
     if (!killed && projectile && projectile->poisonAttack > 0) {
         DM1_ProjectileChampionPoisonPlanPc34 poisonPlan;
