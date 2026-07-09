@@ -255,6 +255,38 @@ typedef struct {
     Nexus_V1_StartupHostReceipt host_receipt;
 } Nexus_V1_StartupIdleReceipt;
 
+typedef enum {
+    NEXUS_V1_STARTUP_TITLE_ROUTE_INVALID = 0,
+    NEXUS_V1_STARTUP_TITLE_ROUTE_HOLD = 1,
+    NEXUS_V1_STARTUP_TITLE_ROUTE_SAVE_SELECT = 2,
+    NEXUS_V1_STARTUP_TITLE_ROUTE_CHAMPION_SELECT = 3,
+    NEXUS_V1_STARTUP_TITLE_ROUTE_RETURN_TO_LAUNCHER = 4
+} Nexus_V1_StartupTitleRoute;
+
+typedef struct {
+    Nexus_V1_StartupTitleRoute route;
+    int handled;
+    int title_frame;
+    int slot_mask;
+    int draw_command_count;
+    Nexus_V1_StartupTitleExecutionKind execution_kind;
+    Nexus_V1_StartupHostInputResult host_input_result;
+    int set_title_active;
+    int title_active;
+    int set_title_frame;
+    int next_title_frame;
+    int set_save_select_active;
+    int save_select_active;
+    int set_save_selected_row;
+    int save_selected_row;
+    int set_champion_select_active;
+    int champion_select_active;
+    int set_champion_cursor;
+    int champion_cursor;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupTitleRouteReceipt;
+
 typedef struct {
     int save_state_receipt_valid;
     Nexus_V1_StartupMenuStateReceipt save_state_receipt;
@@ -591,6 +623,17 @@ int nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
     const Nexus_V1_StartupHostFacts *facts,
     Nexus_V1_StartupTitleExecution *out_execution,
     Nexus_V1_StartupHostActionReceipt *out_receipt);
+void nexus_v1_startup_title_route_receipt_clear(
+    Nexus_V1_StartupTitleRouteReceipt *receipt);
+const char *nexus_v1_startup_title_route_name(
+    Nexus_V1_StartupTitleRoute route);
+int nexus_v1_startup_title_route_receipt_from_host_facts_input(
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt);
+int nexus_v1_startup_title_route_receipt_from_host_facts_pointer(
+    const Nexus_V1_StartupHostFacts *facts,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt);
 int nexus_v1_startup_champion_execution_mode_update(
     const Nexus_V1_StartupChampionExecution *execution,
     int save_row_count,
