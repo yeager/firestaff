@@ -273,6 +273,7 @@ typedef struct {
     Nexus_V1_StartupChampionExecution champion_execution;
     Nexus_V1_StartupHostActionReceipt host_action_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
     int runtime_ready;

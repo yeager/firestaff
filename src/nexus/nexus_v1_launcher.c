@@ -237,23 +237,25 @@ int nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
     return 1;
 }
 
-int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
-    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+static int nexus_v1_launcher_startup_asset_handoff_from_parts(
+    Nexus_V1_Engine *engine,
+    int level_loaded,
+    int title_loaded,
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets,
+    const char *boot_status,
     Nexus_V1_StartupAssetHandoffReceipt *out_receipt)
 {
-    const Nexus_V1_LauncherStartupAssetsReceipt *assets;
     Nexus_V1_MenuBpkRendererHandoffReceipt renderer_handoff;
 
     nexus_v1_launcher_startup_asset_handoff_receipt_clear(out_receipt);
-    if (!out_receipt || !runtime) {
+    if (!out_receipt || !assets) {
         return 0;
     }
 
-    assets = &runtime->startup_assets;
     out_receipt->assets = *assets;
     memset(&renderer_handoff, 0, sizeof(renderer_handoff));
-    if (runtime->engine &&
-        nexus_v1_menu_bpk_renderer_handoff_receipt(runtime->engine,
+    if (engine &&
+        nexus_v1_menu_bpk_renderer_handoff_receipt(engine,
                                                    &renderer_handoff) == 0) {
         out_receipt->menu_bpk_renderer_handoff = renderer_handoff;
         out_receipt->menu_bpk_renderer_handoff_valid =
@@ -263,7 +265,7 @@ int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
             NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3;
     }
     out_receipt->title_asset_handoff_ready =
-        runtime->engine && runtime->title_loaded && assets->title_route_ready;
+        engine && title_loaded && assets->title_route_ready;
     out_receipt->real_menu_asset_handoff_ready =
         assets->real_menu_surface_route_ready &&
         (!out_receipt->menu_bpk_renderer_handoff_valid ||
@@ -271,8 +273,8 @@ int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
     out_receipt->audio_asset_handoff_ready =
         assets->startup_audio_handoff_ready ? 1 : 0;
     out_receipt->main_menu_route_ready =
-        runtime->engine &&
-        runtime->level_loaded &&
+        engine &&
+        level_loaded &&
         out_receipt->title_asset_handoff_ready &&
         out_receipt->audio_asset_handoff_ready &&
         out_receipt->real_menu_asset_handoff_ready;
@@ -299,11 +301,11 @@ int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
             ? "ready-track02-sfx"
             : "blocked-track02-sfx";
 
-    if (!runtime->engine || !runtime->level_loaded) {
+    if (!engine || !level_loaded) {
         out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_DATA_ERROR;
         out_receipt->status_scope = "BOOT";
-        out_receipt->status = runtime->startup_receipt.host_receipt.status
-            ? runtime->startup_receipt.host_receipt.status
+        out_receipt->status = boot_status
+            ? boot_status
             : "NEXUS DATA ERROR";
     } else if (!out_receipt->title_asset_handoff_ready) {
         out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_TITLE_READY;
@@ -331,6 +333,23 @@ int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
             : "blocked-track02-sfx";
     }
     return 1;
+}
+
+int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    Nexus_V1_StartupAssetHandoffReceipt *out_receipt)
+{
+    if (!runtime) {
+        nexus_v1_launcher_startup_asset_handoff_receipt_clear(out_receipt);
+        return 0;
+    }
+    return nexus_v1_launcher_startup_asset_handoff_from_parts(
+        runtime->engine,
+        runtime->level_loaded,
+        runtime->title_loaded,
+        &runtime->startup_assets,
+        runtime->startup_receipt.host_receipt.status,
+        out_receipt);
 }
 
 static void nexus_v1_launcher_resume_receipt_clear(
@@ -1440,13 +1459,21 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     Nexus_V1_StartupRuntimeHandoffReceipt *out_receipt)
 {
     Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
 
     nexus_v1_launcher_startup_runtime_handoff_receipt_clear(out_receipt);
     if (!state || !execution || !out_receipt ||
         !nexus_v1_launcher_startup_assets_from_runtime_state(state,
-                                                             &assets)) {
+                                                             &assets) ||
+        !nexus_v1_launcher_startup_asset_handoff_from_parts(
+            state->engine,
+            state->engine ? state->engine->level_loaded : 0,
+            assets.title_route_ready,
+            &assets,
+            NULL,
+            &asset_handoff)) {
         return 0;
     }
 
@@ -1455,16 +1482,21 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         out_receipt->host_action_receipt = *host_action;
     }
     out_receipt->assets = assets;
+    out_receipt->asset_handoff = asset_handoff;
     out_receipt->asset_route = assets.startup_menu_asset_route;
     out_receipt->fallback_visuals_permitted =
-        assets.menu_bpk_fallback_visuals_permitted;
+        asset_handoff.fallback_visuals_permitted;
 
-    if (!assets.champion_menu_route_ready) {
+    if (asset_handoff.blocks_main_menu_route ||
+        !asset_handoff.real_asset_route_ready ||
+        !assets.champion_menu_route_ready) {
         out_receipt->route =
             NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED;
         out_receipt->dgn_render_blocked = 1;
         out_receipt->status_scope = "ASSETS";
-        out_receipt->status = assets.startup_menu_asset_route
+        out_receipt->status = asset_handoff.status
+            ? asset_handoff.status
+            : assets.startup_menu_asset_route
             ? assets.startup_menu_asset_route
             : "blocked-startup-assets";
         return 1;
