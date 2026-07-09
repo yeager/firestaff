@@ -3669,6 +3669,70 @@ int csb_v1_startup_receipt_presentation_from_host_facts_pc34(
         out_title_ready);
 }
 
+void csb_v1_startup_presentation_receipt_init_pc34(
+    CSB_V1_StartupPresentationReceipt_PC34 *receipt)
+{
+    int title_max;
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    title_max = csb_v1_startup_title_total_ticks_pc34();
+    receipt->title_frame = title_max;
+    receipt->title_frame_max = title_max;
+    receipt->title_ready = 1;
+}
+
+int csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    CSB_V1_StartupPresentationReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_startup_presentation_receipt_init_pc34(out_receipt);
+    if (!facts) {
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 own the CSB
+     * startup presentation order.  Keep phase, animation, render plan, and
+     * entrance menu/input state in one CSB receipt so host HUD/menu code
+     * does not infer source-stage semantics itself. */
+    if (!csb_v1_startup_receipt_presentation_from_host_facts_pc34(
+            facts,
+            out_receipt->phase,
+            (int)sizeof(out_receipt->phase),
+            &out_receipt->startup_active,
+            &out_receipt->startup_frame,
+            out_receipt->animation,
+            (int)sizeof(out_receipt->animation),
+            &out_receipt->animation_active,
+            &out_receipt->title_frame,
+            &out_receipt->title_frame_max,
+            &out_receipt->title_ready)) {
+        csb_v1_startup_presentation_receipt_init_pc34(out_receipt);
+        return 0;
+    }
+    if (!csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
+            facts,
+            &out_receipt->render_plan)) {
+        csb_v1_startup_presentation_receipt_init_pc34(out_receipt);
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->accepts_input =
+        csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(facts);
+    out_receipt->waiting_for_input =
+        out_receipt->render_plan.waiting_for_input;
+    out_receipt->menu_option_count =
+        out_receipt->render_plan.menu_option_count;
+    out_receipt->render_command_count =
+        out_receipt->render_plan.render_command_count;
+    return 1;
+}
+
 int csb_v1_startup_sequence_source_order_valid_pc34(void)
 {
     /* ReDMCSB startup source order:
