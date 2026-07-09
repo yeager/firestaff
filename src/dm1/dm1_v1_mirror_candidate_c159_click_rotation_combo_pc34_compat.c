@@ -28,7 +28,7 @@ enum {
     kCandidateOrdinal = 3
 };
 
-static const Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat
+static const DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat
     s_evidence = {
         1,
         "COMMAND.C:484-488 G0455 maps C159/C160/C161/C162 champion-name "
@@ -71,9 +71,9 @@ static int is_valid_panel_command(int command)
 }
 
 static void capture_before(
-    const Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
     int panelCommand,
-    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat *result)
+    DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat *result)
 {
     memset(result, 0, sizeof(*result));
     result->evidence = &s_evidence;
@@ -105,8 +105,8 @@ static void capture_before(
 }
 
 static void finish_result(
-    const Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
-    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat *result)
 {
     result->partyChampionCountAfterPanel = state->partyChampionCount;
     result->candidateOrdinalAfterPanel = state->candidateChampionOrdinal;
@@ -149,7 +149,7 @@ static void finish_result(
 }
 
 void DM1_V1_MirrorCandidateC159ClickRotationCombo_InitPc34Compat(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -164,7 +164,7 @@ void DM1_V1_MirrorCandidateC159ClickRotationCombo_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateC159ClickRotationCombo_PublishCandidatePc34Compat(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state)
 {
     if (!state || !state->contractOnly || !state->leaderEmptyHanded ||
         state->partyChampionCount >= 4u ||
@@ -184,8 +184,8 @@ int DM1_V1_MirrorCandidateC159ClickRotationCombo_PublishCandidatePc34Compat(
 }
 
 static void click_c159_row(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
-    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat *result)
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat *result)
 {
     ++state->c159RowClickCount;
     state->c159MappedLeaderCommand =
@@ -216,7 +216,7 @@ static void click_c159_row(
 }
 
 static void probe_non_panel_guards(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state)
 {
     if (state->candidateChampionOrdinal == 0u) {
         ++state->spellDispatchCount;
@@ -226,9 +226,9 @@ static void probe_non_panel_guards(
 }
 
 static void dispatch_panel_command(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
     int panelCommand,
-    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat *result)
+    DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat *result)
 {
     if (!state->c040PanelOpen ||
         state->panelKind !=
@@ -262,9 +262,9 @@ static void dispatch_panel_command(
 }
 
 int DM1_V1_MirrorCandidateC159ClickRotationCombo_RunPc34Compat(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
     int panelCommand,
-    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat *outResult)
 {
     if (!state || !outResult || !state->contractOnly) {
         return 0;
@@ -285,7 +285,7 @@ int DM1_V1_MirrorCandidateC159ClickRotationCombo_RunPc34Compat(
            outResult->noSlotRoutes;
 }
 
-const Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat *
+const DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat *
 DM1_V1_MirrorCandidateC159ClickRotationCombo_EvidencePc34Compat(void)
 {
     return &s_evidence;

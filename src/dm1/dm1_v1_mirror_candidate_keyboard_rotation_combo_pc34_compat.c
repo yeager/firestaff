@@ -17,7 +17,7 @@
  * party count and !G0299 before F0433 save dispatch.
  */
 
-static const Dm1V1MirrorCandidateKeyboardRotationComboEvidencePc34Compat
+static const DM1_V1_MirrorCandidateKeyboardRotationComboEvidencePc34Compat
     s_evidence = {
         1,
         "COMMAND.C F0361_COMMAND_ProcessKeyPress:1709-1806",
@@ -33,8 +33,8 @@ static const Dm1V1MirrorCandidateKeyboardRotationComboEvidencePc34Compat
     };
 
 static void capture_before(
-    const Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardRotationComboResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardRotationComboResultPc34Compat *result)
 {
     result->evidence = &s_evidence;
     result->candidateBefore = state->g0420CandidateIdentityOrdinal;
@@ -63,8 +63,8 @@ static void capture_before(
 }
 
 static void capture_after(
-    const Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardRotationComboResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardRotationComboResultPc34Compat *result)
 {
     result->candidateAfterCombo = state->g0420CandidateIdentityOrdinal;
     result->rosterIndexAfter = state->rosterIndex;
@@ -100,8 +100,8 @@ static void capture_after(
 }
 
 static void rotate_candidate(
-    Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardRotationComboRotationPc34Compat rotation)
+    DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardRotationComboRotationPc34Compat rotation)
 {
     int nextIndex = state->rosterIndex + (int)rotation;
 
@@ -120,8 +120,8 @@ static void rotate_candidate(
 }
 
 static int candidate_blocks_non_rotation(
-    const Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardRotationComboInputPc34Compat input)
+    const DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardRotationComboInputPc34Compat input)
 {
     if (state->g0299CandidateChampionOrdinal == 0u) {
         return 0;
@@ -137,8 +137,8 @@ static int candidate_blocks_non_rotation(
 }
 
 static void dispatch_non_rotation(
-    Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardRotationComboInputPc34Compat input)
+    DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardRotationComboInputPc34Compat input)
 {
     switch (input) {
     case DM1_V1_MIRROR_CANDIDATE_KEYBOARD_ROTATION_COMBO_STATUS_BOX_PC34_COMPAT:
@@ -164,7 +164,7 @@ static void dispatch_non_rotation(
 }
 
 void DM1_V1_MirrorCandidateKeyboardRotationCombo_InitPc34Compat(
-    Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat *state)
+    DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat *state)
 {
     int i;
 
@@ -185,10 +185,10 @@ void DM1_V1_MirrorCandidateKeyboardRotationCombo_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateKeyboardRotationCombo_ApplyPc34Compat(
-    Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
-    Dm1V1MirrorCandidateKeyboardRotationComboRotationPc34Compat rotation,
-    Dm1V1MirrorCandidateKeyboardRotationComboInputPc34Compat nonRotation,
-    Dm1V1MirrorCandidateKeyboardRotationComboResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyboardRotationComboRotationPc34Compat rotation,
+    DM1_V1_MirrorCandidateKeyboardRotationComboInputPc34Compat nonRotation,
+    DM1_V1_MirrorCandidateKeyboardRotationComboResultPc34Compat *outResult)
 {
     if (!state || !outResult || !state->contractOnly) {
         return 0;
@@ -208,7 +208,7 @@ int DM1_V1_MirrorCandidateKeyboardRotationCombo_ApplyPc34Compat(
     return outResult->onlyRotationSucceeded;
 }
 
-const Dm1V1MirrorCandidateKeyboardRotationComboEvidencePc34Compat *
+const DM1_V1_MirrorCandidateKeyboardRotationComboEvidencePc34Compat *
 DM1_V1_MirrorCandidateKeyboardRotationCombo_EvidencePc34Compat(void)
 {
     return &s_evidence;

@@ -17,7 +17,7 @@ static int gPasses;
 
 static const char *anchor_for_index(size_t index)
 {
-    const Dm1V1MirrorCandidateInventoryClickDuringRotationCasePc34Compat
+    const DM1_V1_MirrorCandidateInventoryClickDuringRotationCasePc34Compat
         *testCase = 0;
 
     if (dm1_v1_mirror_candidate_inventory_click_during_rotation_case_at(
@@ -30,7 +30,7 @@ static const char *anchor_for_index(size_t index)
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateInventoryClickDuringRotationEvidencePc34Compat
+    const DM1_V1_MirrorCandidateInventoryClickDuringRotationEvidencePc34Compat
         *e = dm1_v1_mirror_candidate_inventory_click_during_rotation_evidence();
 
     CHECK_REDMCSB(e != 0,
@@ -68,7 +68,7 @@ static void test_source_lock_metadata(void)
 static void test_static_fixture_table(void)
 {
     size_t count = 0u;
-    const Dm1V1MirrorCandidateInventoryClickDuringRotationCasePc34Compat
+    const DM1_V1_MirrorCandidateInventoryClickDuringRotationCasePc34Compat
         *table =
             dm1_v1_mirror_candidate_inventory_click_during_rotation_table(
                 &count);
@@ -142,13 +142,13 @@ static void test_table_decisions(void)
 {
     size_t i;
     size_t count = 0u;
-    const Dm1V1MirrorCandidateInventoryClickDuringRotationCasePc34Compat
+    const DM1_V1_MirrorCandidateInventoryClickDuringRotationCasePc34Compat
         *table =
             dm1_v1_mirror_candidate_inventory_click_during_rotation_table(
                 &count);
 
     for (i = 0u; i < count; ++i) {
-        Dm1V1MirrorCandidateInventoryClickDecisionPc34Compat decision =
+        DM1_V1_MirrorCandidateInventoryClickDecisionPc34Compat decision =
             dm1_v1_mirror_candidate_inventory_click_during_rotation_decide(
                 table[i].rotationInProgress,
                 table[i].clickType,
@@ -161,8 +161,8 @@ static void test_table_decisions(void)
 
 static void test_required_runtime_edges(void)
 {
-    Dm1V1MirrorCandidateInventoryClickDecisionPc34Compat first;
-    Dm1V1MirrorCandidateInventoryClickDecisionPc34Compat second;
+    DM1_V1_MirrorCandidateInventoryClickDecisionPc34Compat first;
+    DM1_V1_MirrorCandidateInventoryClickDecisionPc34Compat second;
 
     CHECK_REDMCSB(
         dm1_v1_mirror_candidate_inventory_click_during_rotation_decide(
@@ -236,7 +236,7 @@ static void test_required_runtime_edges(void)
 
 static void test_safety_and_rejection(void)
 {
-    const Dm1V1MirrorCandidateInventoryClickDuringRotationCasePc34Compat
+    const DM1_V1_MirrorCandidateInventoryClickDuringRotationCasePc34Compat
         *testCase = 0;
 
     CHECK_REDMCSB(

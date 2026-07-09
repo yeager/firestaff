@@ -17,8 +17,8 @@ static int gPasses;
 
 static void test_no_candidate_front_cell_click_is_noop(void)
 {
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat state;
-    Dm1V1MirrorCandidateClickCancelResultPc34Compat result;
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat state;
+    DM1_V1_MirrorCandidateClickCancelResultPc34Compat result;
     int changed;
     unsigned int leaderHandBefore;
     int partyCountBefore;
@@ -200,9 +200,9 @@ static void test_no_candidate_front_cell_click_is_noop(void)
 
 static void test_repeat_front_cell_click_remains_noop(void)
 {
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat state;
-    Dm1V1MirrorCandidateClickCancelResultPc34Compat first;
-    Dm1V1MirrorCandidateClickCancelResultPc34Compat second;
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat state;
+    DM1_V1_MirrorCandidateClickCancelResultPc34Compat first;
+    DM1_V1_MirrorCandidateClickCancelResultPc34Compat second;
     int changedFirst;
     int changedSecond;
 
@@ -252,8 +252,8 @@ static void test_repeat_front_cell_click_remains_noop(void)
 
 static void test_selected_champion_cell_click_does_not_enable_inventory(void)
 {
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat state;
-    Dm1V1MirrorCandidateClickCancelResultPc34Compat result;
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat state;
+    DM1_V1_MirrorCandidateClickCancelResultPc34Compat result;
     int selected;
     int changed;
 
@@ -306,7 +306,7 @@ static void test_selected_champion_cell_click_does_not_enable_inventory(void)
 
 static void test_spec_and_source_evidence(void)
 {
-    const Dm1V1MirrorCandidateClickCancelSpecPc34Compat *spec =
+    const DM1_V1_MirrorCandidateClickCancelSpecTypePc34Compat *spec =
         dm1_v1_mirror_candidate_click_cancel_spec_pc34();
     const char *evidence =
         dm1_v1_mirror_candidate_click_cancel_source_evidence_pc34();

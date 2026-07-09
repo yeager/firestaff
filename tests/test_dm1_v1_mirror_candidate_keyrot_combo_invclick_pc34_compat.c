@@ -17,7 +17,7 @@ static int gPasses;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *e =
         dm1_v1_mirror_candidate_keyrot_combo_invclick_evidence_pc34_compat();
 
     CHECK_REDMCSB(e != NULL,
@@ -84,12 +84,12 @@ static void test_source_lock_metadata(void)
 }
 
 static void check_runtime_case(
-    Dm1V1MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
+    DM1_V1_MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
     int expectedCommand,
     int expectedDirection)
 {
-    Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat result;
-    const Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat result;
+    const DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *e =
         dm1_v1_mirror_candidate_keyrot_combo_invclick_evidence_pc34_compat();
     int ok = dm1_v1_mirror_candidate_keyrot_combo_invclick_run_pc34_compat(
         turn, &result);
@@ -142,9 +142,9 @@ static void test_required_runtime_edges(void)
 
 static void test_inventory_slot_negative_control(void)
 {
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat state;
-    Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat result;
-    const Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat result;
+    const DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *e =
         dm1_v1_mirror_candidate_keyrot_combo_invclick_evidence_pc34_compat();
     int ok;
 
@@ -170,9 +170,9 @@ static void test_inventory_slot_negative_control(void)
 
 static void test_clear_path_negative_control(void)
 {
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat state;
-    Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat result;
-    const Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat result;
+    const DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *e =
         dm1_v1_mirror_candidate_keyrot_combo_invclick_evidence_pc34_compat();
     int ok;
 

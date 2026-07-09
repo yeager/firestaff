@@ -15,7 +15,7 @@
  * reached with a stale in-progress rotation portrait.
  */
 
-static const Dm1V1MirrorCandidateInventoryClickDuringRotationEvidencePc34Compat
+static const DM1_V1_MirrorCandidateInventoryClickDuringRotationEvidencePc34Compat
     s_evidence = {
         1,
         "CHAMPION.C F0284:93-131 C156/C157 SetPartyDirection update",
@@ -28,7 +28,7 @@ static const Dm1V1MirrorCandidateInventoryClickDuringRotationEvidencePc34Compat
         "real-asset, or V2 presentation parity is claimed"
     };
 
-static const Dm1V1MirrorCandidateInventoryClickDuringRotationCasePc34Compat
+static const DM1_V1_MirrorCandidateInventoryClickDuringRotationCasePc34Compat
     dm1_v1_mirror_candidate_rotation_click_table[] = {
         {
             DM1_V1_MIRROR_CANDIDATE_ROTATION_C156_TURN_LEFT_PC34_COMPAT,
@@ -110,7 +110,7 @@ static int is_valid_click_type(int clickType)
            clickType <= DM1_V1_MIRROR_CANDIDATE_CLICK_MIDDLE_PC34_COMPAT;
 }
 
-Dm1V1MirrorCandidateInventoryClickDecisionPc34Compat
+DM1_V1_MirrorCandidateInventoryClickDecisionPc34Compat
 dm1_v1_mirror_candidate_inventory_click_during_rotation_decide(
     int rotationInProgress,
     int clickType,
@@ -144,7 +144,7 @@ dm1_v1_mirror_candidate_inventory_click_during_rotation_decide(
     return DM1_V1_MIRROR_CANDIDATE_DISPATCH_NORMALLY_PC34_COMPAT;
 }
 
-const Dm1V1MirrorCandidateInventoryClickDuringRotationCasePc34Compat *
+const DM1_V1_MirrorCandidateInventoryClickDuringRotationCasePc34Compat *
 dm1_v1_mirror_candidate_inventory_click_during_rotation_table(
     size_t *outCount)
 {
@@ -157,7 +157,7 @@ dm1_v1_mirror_candidate_inventory_click_during_rotation_table(
 
 int dm1_v1_mirror_candidate_inventory_click_during_rotation_case_at(
     size_t index,
-    const Dm1V1MirrorCandidateInventoryClickDuringRotationCasePc34Compat
+    const DM1_V1_MirrorCandidateInventoryClickDuringRotationCasePc34Compat
         **outCase)
 {
     size_t count = 0u;
@@ -174,7 +174,7 @@ int dm1_v1_mirror_candidate_inventory_click_during_rotation_case_at(
     return 1;
 }
 
-const Dm1V1MirrorCandidateInventoryClickDuringRotationEvidencePc34Compat *
+const DM1_V1_MirrorCandidateInventoryClickDuringRotationEvidencePc34Compat *
 dm1_v1_mirror_candidate_inventory_click_during_rotation_evidence(void)
 {
     return &s_evidence;
