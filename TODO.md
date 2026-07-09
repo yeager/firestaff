@@ -99,6 +99,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: M10 F0266 moving-group projectile prechecks now consume a DM1 F0217 aftermath receipt before GROUP.Slot sharp-weapon linking. Remaining runtime coding work is reducing post-kill group side-effect adapters and lower-level thing-link writes.
   - 2026-07-09 update: M11 projectile creature hits now consume the same DM1 F0217/F0190 action apply and aftermath receipts as M10. Remaining runtime coding work is reducing explosion group apply duplication and lower-level thing-link writes.
   - 2026-07-09 update: M11 explosion group ticks now consume the DM1 F0220/F0190 group apply helper instead of local first-living F0738 damage. Remaining runtime coding work is reducing lower-level thing-link writes and end-to-end full-graphics proof.
+  - 2026-07-09 update: M11 kept sharp thrown weapons now consume the DM1 F0215 group-slot attach plan for empty heads and append-after-tail links. Remaining runtime coding work is reducing ordinary square materialization link writes and end-to-end full-graphics proof.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
