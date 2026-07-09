@@ -388,6 +388,60 @@ int m11_plan_group_teleporter_destination_f0267(
     return 1;
 }
 
+int m11_plan_generated_group_placement_f0183_f0180(
+        int partyMapIndex,
+        int mapIndex,
+        int mapX,
+        int mapY,
+        int groupIndex,
+        int creatureType,
+        int groupCells,
+        int groupDirection,
+        int activeGroupCount,
+        int activeGroupCapacity,
+        uint32_t currentTick,
+        M11_GeneratedGroupPlacementPlan* outPlan) {
+    M11_GeneratedGroupPlacementPlan plan;
+
+    if (!outPlan) return 0;
+    memset(&plan, 0, sizeof(plan));
+    plan.valid = 1;
+    plan.activeTargetChampionIndex = -1;
+    plan.activeLastSeenPartyMapX = -1;
+    plan.activeLastSeenPartyMapY = -1;
+    plan.activeLastSeenPartyTick = -1;
+
+    plan.shouldScheduleWanderEvent = 1;
+    plan.wanderFireAtTick = currentTick + 1u;
+    plan.wanderMapIndex = mapIndex;
+    plan.wanderMapX = mapX;
+    plan.wanderMapY = mapY;
+    plan.wanderGroupIndex = groupIndex;
+    plan.wanderCreatureType = creatureType;
+    plan.wanderEventType = M11_AI_STATE_WANDER;
+
+    if (mapIndex == partyMapIndex && activeGroupCapacity > 0 && activeGroupCount >= 0) {
+        if (activeGroupCount >= activeGroupCapacity) {
+            return 0;
+        }
+        plan.shouldCreateActiveState = 1;
+        plan.activeStateKind = M11_AI_STATE_WANDER;
+        plan.activeCreatureType = creatureType;
+        plan.activeMapIndex = mapIndex;
+        plan.activeMapX = mapX;
+        plan.activeMapY = mapY;
+        plan.activeCells = groupCells;
+        plan.activeDirection = groupDirection & 3;
+        plan.activeReservedGroupIndex = groupIndex;
+    }
+
+    /* ReDMCSB GROUP.C F0183 lines 414-447 creates ACTIVE_GROUP state for
+     * generated groups on the party map. GROUP.C F0180 lines 311-338 starts
+     * newly placed groups wandering by scheduling C37 at game time +1. */
+    *outPlan = plan;
+    return 1;
+}
+
 int m11_plan_lord_chaos_adjacent_retry_f0252(
         int creatureType,
         int randomGate,
