@@ -18,13 +18,19 @@ enum {
     DM1_C01_VIEW_CELL_FRONT_RIGHT = 1,    /* ReDMCSB DEFS.H:2643 */
     DM1_C02_VIEW_CELL_BACK_RIGHT = 2,     /* ReDMCSB DEFS.H:2644 */
     DM1_C03_VIEW_CELL_BACK_LEFT = 3,      /* ReDMCSB DEFS.H:2645 */
+    DM1_C05_THING_TYPE_WEAPON = 5,
+    DM1_C10_THING_TYPE_JUNK = 10,
+    DM1_C14_THING_TYPE_PROJECTILE = 14,
     DM1_MASK0x0008_DOOR_FRONT = 0x0008,   /* ReDMCSB DEFS.H:2657 */
+    DM1_MASK0x8000_SHIFT_OBJECTS_CREATURES = 0x8000,
     DM1_C0x0028_DOORPASS1_BACKRIGHT = 0x0028, /* ReDMCSB DEFS.H:2663 */
     DM1_C0x0032_BACKRIGHT_FRONTRIGHT = 0x0032,/* ReDMCSB DEFS.H:2664 */
     DM1_C0x0039_DOORPASS2_FRONTRIGHT = 0x0039,/* ReDMCSB DEFS.H:2665 */
     DM1_C0x0041_BACKLEFT_FRONTLEFT = 0x0041,  /* ReDMCSB DEFS.H:2666 */
     DM1_C0x0049_DOORPASS2_FRONTLEFT = 0x0049,/* ReDMCSB DEFS.H:2667 */
     DM1_C0x0018_DOORPASS1_BACKLEFT = 0x0018, /* ReDMCSB DEFS.H:2661 */
+    DM1_C2500_ZONE_OBJECT_BASE = 2500,    /* ReDMCSB DEFS.H:4228 */
+    DM1_C2900_ZONE_PROJECTILE_BASE = 2900,/* ReDMCSB DEFS.H:4230 */
     DM1_M630_ZONE_DOOR_D1L = 3780,        /* ReDMCSB DEFS.H:4258 */
     DM1_M632_ZONE_DOOR_D1R = 3800         /* ReDMCSB DEFS.H:4260 */
 };
@@ -377,6 +383,88 @@ int dm1_v1_viewport_d1l_d1r_f0115_thing_pass_first_thing_slot_pc34(
         return -1;
     }
     return lane->m550_first_thing_square_aspect_slot + view_cell;
+}
+
+int dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+    const DM1V1D1LD1RF0115LanePc34Data *lane,
+    int thing_type,
+    int thing_cell,
+    int view_cell,
+    int square_has_projectile,
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->input_valid = 0;
+    out_receipt->thing_type = thing_type;
+    out_receipt->thing_cell = thing_cell;
+    out_receipt->view_cell = view_cell;
+    out_receipt->row = -1;
+    out_receipt->zone = -1;
+    out_receipt->draw_item = 0;
+    out_receipt->draw_projectile = 0;
+    out_receipt->suppress_item = 1;
+    out_receipt->suppress_projectile = 1;
+    out_receipt->suppress_non_thing_payload = 1;
+    out_receipt->consumes_runtime_thing_layer = 1;
+    out_receipt->consumes_runtime_projectile_list = 0;
+    out_receipt->draw_projectile_as_object = 0;
+    out_receipt->uses_object_creature_shift_mask = 0;
+    out_receipt->must_not_materialize_thing = 1;
+    out_receipt->source_anchor =
+        "ReDMCSB DUNVIEW.C:4923 item gate; 5075 item zone; "
+        "5668-5683 projectile gate/zone";
+
+    if (!lane ||
+        !dm1_v1_viewport_d1l_d1r_f0115_thing_pass_validate_view_cell_pc34(view_cell) ||
+        thing_cell != view_cell ||
+        lane->item_projectile_row < 0 ||
+        !dm1_v1_viewport_d1l_d1r_f0115_thing_pass_depth1_keeps_cell_pc34(view_cell)) {
+        return 1;
+    }
+
+    out_receipt->input_valid = 1;
+    out_receipt->row = lane->item_projectile_row;
+
+    if (thing_type >= DM1_C05_THING_TYPE_WEAPON &&
+        thing_type <= DM1_C10_THING_TYPE_JUNK) {
+        /* ReDMCSB: DUNVIEW.C line 4923 gates objects by visible row,
+         * current view cell, and depth clip; line 5075 builds
+         * C2500|MASK0x8000 + row*4 + cell. This DM1 receipt owns that
+         * runtime decision so hosts do not draw HoC mirror/static payloads
+         * as floor things. */
+        out_receipt->draw_item = 1;
+        out_receipt->suppress_item = 0;
+        out_receipt->zone =
+            (DM1_C2500_ZONE_OBJECT_BASE |
+             DM1_MASK0x8000_SHIFT_OBJECTS_CREATURES) +
+            (lane->item_projectile_row * 4) + view_cell;
+        out_receipt->uses_object_creature_shift_mask = 1;
+        out_receipt->suppress_non_thing_payload = 0;
+        return 1;
+    }
+
+    if (thing_type == DM1_C14_THING_TYPE_PROJECTILE) {
+        out_receipt->consumes_runtime_projectile_list = 1;
+        if (!square_has_projectile) {
+            return 1;
+        }
+        /* ReDMCSB: DUNVIEW.C lines 5668-5677 reuse G2028 row/depth
+         * clipping for projectiles, then 5681-5683 emits C2900 + row*4
+         * + cell while drawing the projectile through the object path. */
+        out_receipt->draw_projectile = 1;
+        out_receipt->draw_projectile_as_object = 1;
+        out_receipt->suppress_projectile = 0;
+        out_receipt->zone =
+            DM1_C2900_ZONE_PROJECTILE_BASE +
+            (lane->item_projectile_row * 4) + view_cell;
+        out_receipt->suppress_non_thing_payload = 0;
+        return 1;
+    }
+
+    return 1;
 }
 
 uint32_t dm1_v1_viewport_d1l_d1r_f0115_thing_pass_hash_pc34(void)

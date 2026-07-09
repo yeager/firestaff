@@ -414,6 +414,72 @@ static void test_rejections_and_disjointness(void)
                0x0041, "non-door order is not stripped");
 }
 
+static void test_runtime_thing_receipts(void)
+{
+    const DM1V1D1LD1RF0115LanePc34Data *d1l =
+        dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 receipt;
+
+    expect_int("runtime.item.receipt",
+               dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                   d1l, 5, 2, 2, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:4923");
+    expect_int("runtime.item.draw", receipt.draw_item, 1,
+               "ReDMCSB DUNVIEW.C:4923 visible object gate");
+    expect_int("runtime.item.suppress", receipt.suppress_item, 0,
+               "ReDMCSB DUNVIEW.C:4923 visible object gate");
+    expect_int("runtime.item.zone", receipt.zone, 35306,
+               "ReDMCSB DUNVIEW.C:5075 C2500|MASK0x8000 + row*4 + cell");
+    expect_int("runtime.item.no.materialize", receipt.must_not_materialize_thing, 1,
+               "ReDMCSB DUNGEON.C:1769-1905 mutation outside draw");
+    expect_int("runtime.item.nonpayload", receipt.suppress_non_thing_payload, 0,
+               "DM1 thing-layer receipt owns visible payload");
+
+    expect_int("runtime.item.wrong.cell.receipt",
+               dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                   d1l, 5, 1, 2, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:4923 M011_CELL gate");
+    expect_int("runtime.item.wrong.cell.draw", receipt.draw_item, 0,
+               "wrong-cell HoC thing is suppressed");
+    expect_int("runtime.item.wrong.cell.payload", receipt.suppress_non_thing_payload, 1,
+               "wrong-cell static/mirror payload cannot leak into thing layer");
+
+    expect_int("runtime.projectile.receipt",
+               dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                   d1l, 14, 2, 2, 1, &receipt),
+               1, "ReDMCSB DUNVIEW.C:5668-5683");
+    expect_int("runtime.projectile.draw", receipt.draw_projectile, 1,
+               "ReDMCSB DUNVIEW.C:5681 projectile cell gate");
+    expect_int("runtime.projectile.as.object", receipt.draw_projectile_as_object, 1,
+               "ReDMCSB DUNVIEW.C:4931/5187 projectile as object path");
+    expect_int("runtime.projectile.zone", receipt.zone, 2938,
+               "ReDMCSB DUNVIEW.C:5683 C2900 + row*4 + cell");
+    expect_int("runtime.projectile.list", receipt.consumes_runtime_projectile_list, 1,
+               "ReDMCSB DUNVIEW.C:5668 square projectile flag");
+
+    expect_int("runtime.projectile.no.flag.receipt",
+               dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                   d1l, 14, 2, 2, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:5656-5671 projectile flag gate");
+    expect_int("runtime.projectile.no.flag.draw", receipt.draw_projectile, 0,
+               "projectile payload suppressed without square projectile flag");
+    expect_int("runtime.projectile.no.flag.payload", receipt.suppress_non_thing_payload, 1,
+               "stale projectile payload cannot leak without runtime flag");
+
+    expect_int("runtime.nonthing.receipt",
+               dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                   d1l, 3, 2, 2, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:4840-4850 non-item scan");
+    expect_int("runtime.nonthing.item", receipt.draw_item, 0,
+               "sensor/mirror payload is not an item draw");
+    expect_int("runtime.nonthing.projectile", receipt.draw_projectile, 0,
+               "sensor/mirror payload is not a projectile draw");
+    expect_int("runtime.null.out",
+               dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                   d1l, 5, 2, 2, 0, NULL),
+               0, "runtime receipt rejects NULL output");
+}
+
 static void test_evidence_and_hash(void)
 {
     const char *e =
@@ -489,6 +555,7 @@ int main(void)
     test_corridor_pit_teleporter_routes();
     test_depth1_clip_and_m550_slots();
     test_rejections_and_disjointness();
+    test_runtime_thing_receipts();
     test_evidence_and_hash();
 
     if (g_failures) {
