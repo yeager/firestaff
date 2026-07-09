@@ -3383,6 +3383,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           int framebufferHeight)
 {
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
+    CSB_V1_BootStartupHostViewDrawReceipt_PC34 draw_receipt;
     M11_CSBStartupRenderExecutorContext context;
     CSB_V1_StartupRenderExecutor_PC34 executor;
 
@@ -3414,9 +3415,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         m11_csb_startup_executor_draw_fallback_text;
     executor.draw_utility_panel =
         m11_csb_startup_executor_draw_utility_panel;
-    if (csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    if (csb_v1_boot_startup_execute_host_view_receipt_pc34(
             &host_view,
-            &executor)) {
+            &executor,
+            &draw_receipt)) {
         return;
     }
     if (host_view.render_plan_valid) {
@@ -28526,6 +28528,313 @@ int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
             runtimeConsumer.suppress_mirror_projectile_payload &&
             runtimeConsumer.suppress_mirror_spell_effect_payload;
     }
+    return 1;
+}
+
+typedef struct M11_CSBStartupHostViewProbe {
+    int clearBlackCount;
+    int drawTitleCount;
+    int drawFullSurfaceCount;
+    int drawOpeningFrameCount;
+    int drawClosedDoorsCount;
+    int drawDoorFallbackCount;
+    int drawFallbackTextCount;
+    int drawUtilityPanelCount;
+} M11_CSBStartupHostViewProbe;
+
+static void m11_csb_startup_probe_clear_black(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->clearBlackCount;
+    }
+}
+
+static int m11_csb_startup_probe_draw_title(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawTitleCount;
+    }
+    return 1;
+}
+
+static int m11_csb_startup_probe_draw_full_surface(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawFullSurfaceCount;
+    }
+    return 1;
+}
+
+static int m11_csb_startup_probe_draw_opening_frame(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawOpeningFrameCount;
+    }
+    return 1;
+}
+
+static void m11_csb_startup_probe_draw_closed_doors(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawClosedDoorsCount;
+    }
+}
+
+static void m11_csb_startup_probe_draw_door_fallback(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawDoorFallbackCount;
+    }
+}
+
+static void m11_csb_startup_probe_draw_fallback_text(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawFallbackTextCount;
+    }
+}
+
+static void m11_csb_startup_probe_draw_utility_panel(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawUtilityPanelCount;
+    }
+}
+
+static void m11_csb_startup_probe_executor_init(
+    CSB_V1_StartupRenderExecutor_PC34 *executor,
+    M11_CSBStartupHostViewProbe *probe)
+{
+    memset(probe, 0, sizeof(*probe));
+    memset(executor, 0, sizeof(*executor));
+    executor->user = probe;
+    executor->clear_black = m11_csb_startup_probe_clear_black;
+    executor->draw_title = m11_csb_startup_probe_draw_title;
+    executor->draw_full_surface = m11_csb_startup_probe_draw_full_surface;
+    executor->draw_opening_frame = m11_csb_startup_probe_draw_opening_frame;
+    executor->draw_closed_doors = m11_csb_startup_probe_draw_closed_doors;
+    executor->draw_door_fallback = m11_csb_startup_probe_draw_door_fallback;
+    executor->draw_fallback_text = m11_csb_startup_probe_draw_fallback_text;
+    executor->draw_utility_panel = m11_csb_startup_probe_draw_utility_panel;
+}
+
+static void m11_csb_startup_probe_boot_profile(
+    CSB_V1_BootProfile *boot)
+{
+    csb_v1_boot_profile_init(boot);
+    snprintf(boot->asset_root, sizeof(boot->asset_root), "%s", "/tmp");
+    snprintf(boot->graphics_path,
+             sizeof(boot->graphics_path),
+             "%s",
+             "/tmp/firestaff_csb_GRAPHICS.DAT");
+    snprintf(boot->dungeon_path,
+             sizeof(boot->dungeon_path),
+             "%s",
+             "/tmp/firestaff_csb_DUNGEON.DAT");
+    snprintf(boot->graphics_md5,
+             sizeof(boot->graphics_md5),
+             "%s",
+             "61fbfd56887c8bfe85ba4fb306fc2861");
+    snprintf(boot->dungeon_md5,
+             sizeof(boot->dungeon_md5),
+             "%s",
+             "6695d2acebce49f95db1d8f3a5c733de");
+    boot->assets_verified = 1;
+    boot->graphics_verified = 1;
+    boot->dungeon_verified = 1;
+    boot->variant_id = CSB_V1_VARIANT_PC34_EN;
+    boot->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+}
+
+static int m11_csb_startup_probe_execute_snapshot(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupHostViewDrawReceipt_PC34 *draw_receipt,
+    M11_CSBStartupHostViewProbe *probe)
+{
+    CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
+    CSB_V1_StartupRenderExecutor_PC34 executor;
+
+    m11_csb_startup_probe_executor_init(&executor, probe);
+    if (!csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
+            snapshot,
+            &host_view)) {
+        return 0;
+    }
+    return csb_v1_boot_startup_execute_host_view_receipt_pc34(
+        &host_view,
+        &executor,
+        draw_receipt);
+}
+
+int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
+    int* outTitleReceiptReady,
+    int* outTitleDrawExecuted,
+    int* outTitleHudExecuted,
+    int* outClosedDoorReceiptReady,
+    int* outClosedDoorDrawExecuted,
+    int* outClosedDoorHudExecuted,
+    int* outUtilityReceiptReady,
+    int* outUtilityDrawExecuted,
+    int* outUtilityHudExecuted,
+    int* outOpeningReceiptReady,
+    int* outOpeningDrawExecuted,
+    int* outConsumedHostViewOnly,
+    int* outSuppressLegacyUtilityFallback)
+{
+    CSB_V1_BootProfile boot;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupHostViewDrawReceipt_PC34 title_draw;
+    CSB_V1_BootStartupHostViewDrawReceipt_PC34 closed_draw;
+    CSB_V1_BootStartupHostViewDrawReceipt_PC34 utility_draw;
+    CSB_V1_BootStartupHostViewDrawReceipt_PC34 opening_draw;
+    M11_CSBStartupHostViewProbe title_probe;
+    M11_CSBStartupHostViewProbe closed_probe;
+    M11_CSBStartupHostViewProbe utility_probe;
+    M11_CSBStartupHostViewProbe opening_probe;
+
+    m11_csb_startup_probe_boot_profile(&boot);
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.boot_profile = &boot;
+    snapshot.title_active = 1;
+    snapshot.title_frame = 0;
+    snapshot.title_source_step = 1;
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = 0;
+    if (!m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                &title_draw,
+                                                &title_probe)) {
+        return 0;
+    }
+
+    snapshot.title_active = 0;
+    snapshot.title_frame = csb_v1_startup_title_total_ticks_pc34();
+    snapshot.title_source_step = 0;
+    snapshot.entrance_source_step = 4;
+    snapshot.resume_available = 1;
+    snapshot.resume_path = "/tmp/firestaff-csb-resume.dat";
+    if (!m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                &closed_draw,
+                                                &closed_probe)) {
+        return 0;
+    }
+
+    snapshot.utility_overlay_active = 1;
+    snapshot.utility_selected_action_index = 0;
+    snapshot.utility_imported_champion_count = 2;
+    snapshot.utility_preview_active = 0;
+    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
+    if (!m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                &utility_draw,
+                                                &utility_probe)) {
+        return 0;
+    }
+
+    snapshot.utility_overlay_active = 0;
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 1;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    if (!m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                &opening_draw,
+                                                &opening_probe)) {
+        return 0;
+    }
+
+    if (outTitleReceiptReady) {
+        *outTitleReceiptReady = title_draw.valid;
+    }
+    if (outTitleDrawExecuted) {
+        *outTitleDrawExecuted =
+            title_draw.render_executed && title_probe.drawTitleCount == 1;
+    }
+    if (outTitleHudExecuted) {
+        *outTitleHudExecuted = title_draw.hud_menu_executed;
+    }
+    if (outClosedDoorReceiptReady) {
+        *outClosedDoorReceiptReady = closed_draw.valid;
+    }
+    if (outClosedDoorDrawExecuted) {
+        *outClosedDoorDrawExecuted =
+            closed_draw.render_executed &&
+            closed_probe.drawFullSurfaceCount == 1;
+    }
+    if (outClosedDoorHudExecuted) {
+        *outClosedDoorHudExecuted = closed_draw.hud_menu_executed;
+    }
+    if (outUtilityReceiptReady) {
+        *outUtilityReceiptReady = utility_draw.valid;
+    }
+    if (outUtilityDrawExecuted) {
+        *outUtilityDrawExecuted =
+            utility_draw.render_executed &&
+            utility_probe.drawFullSurfaceCount == 1;
+    }
+    if (outUtilityHudExecuted) {
+        *outUtilityHudExecuted = utility_draw.hud_menu_executed;
+    }
+    if (outOpeningReceiptReady) {
+        *outOpeningReceiptReady = opening_draw.valid;
+    }
+    if (outOpeningDrawExecuted) {
+        *outOpeningDrawExecuted =
+            opening_draw.render_executed &&
+            opening_probe.drawOpeningFrameCount == 1;
+    }
+    if (outConsumedHostViewOnly) {
+        *outConsumedHostViewOnly =
+            title_draw.consumed_host_view_only &&
+            closed_draw.consumed_host_view_only &&
+            utility_draw.consumed_host_view_only &&
+            opening_draw.consumed_host_view_only;
+    }
+    if (outSuppressLegacyUtilityFallback) {
+        *outSuppressLegacyUtilityFallback =
+            closed_draw.suppress_legacy_utility_fallback;
+    }
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep post-swoosh
+     * title, closed-door HUD/menu, utility menu, and door opening inside the
+     * CSB startup host loop. This probe mirrors M11's draw call boundary. */
     return 1;
 }
 
