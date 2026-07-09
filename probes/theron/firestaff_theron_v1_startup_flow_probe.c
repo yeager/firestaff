@@ -2504,6 +2504,9 @@ int main(void) {
             check_contains("runtime loader verified Track02 blocked receipt",
                            load_receipt,
                            "fallback visuals blocked");
+            check_contains("runtime loader verified Track02 block detail",
+                           load_receipt,
+                           "Track 02 bank signal");
             {
                 Theron_StartupAction forcefield_action;
                 Theron_StartupActionPlan forcefield_plan;
@@ -2572,6 +2575,9 @@ int main(void) {
                 check_contains("runtime load host verified Track02 inspect",
                                load_host_receipt.inspect_detail,
                                "fallback visuals blocked");
+                check_contains("runtime load host verified Track02 detail",
+                               load_host_receipt.inspect_detail,
+                               "Track 02 bank signal");
                 check_int("runtime load host verified Track02 no level",
                           world.level_loaded[
                               THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
@@ -2815,6 +2821,9 @@ int main(void) {
                     check_contains("runtime host verified Track02 inspect",
                                    runtime_host_receipt.inspect_detail,
                                    "fallback visuals blocked");
+                    check_contains("runtime host verified Track02 detail",
+                                   runtime_host_receipt.inspect_detail,
+                                   "Track 02 bank signal");
                     check_int("runtime host verified Track02 redraw",
                               runtime_host_receipt.input_result,
                               THERON_STARTUP_INPUT_RESULT_REDRAW);
