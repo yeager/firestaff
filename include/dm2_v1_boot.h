@@ -224,6 +224,18 @@ typedef struct {
     int runtime_hud_asset_portrait_count;
     int runtime_hud_fallback_portrait_count;
     int runtime_hud_no_fallback_portraits;
+    int runtime_hud_raw_gdat_capture_ready;
+    int runtime_hud_raw_portrait_count;
+    uint32_t runtime_hud_raw_portrait_hash;
+    uint32_t runtime_hud_raw_portrait_byte_count;
+    uint32_t runtime_hud_raw_core_hash;
+    uint32_t runtime_hud_raw_core_byte_count;
+    int runtime_hud_decoded_gdat_capture_ready;
+    int runtime_hud_decoded_portrait_count;
+    uint32_t runtime_hud_decoded_portrait_hash;
+    uint32_t runtime_hud_decoded_portrait_pixel_count;
+    uint32_t runtime_hud_decoded_core_hash;
+    uint32_t runtime_hud_decoded_core_pixel_count;
     uint32_t runtime_hud_frame_hash;
     uint32_t runtime_hud_frame_pixel_count;
     int runtime_render_real_asset_ready;
