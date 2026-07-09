@@ -267,6 +267,12 @@ typedef struct {
     uint32_t raw_gdat_runtime_portrait_byte_count;
     uint32_t raw_gdat_runtime_core_hash;
     uint32_t raw_gdat_runtime_core_byte_count;
+    int decoded_gdat_runtime_hud_capture_ready;
+    int decoded_gdat_runtime_portrait_count;
+    uint32_t decoded_gdat_runtime_portrait_hash;
+    uint32_t decoded_gdat_runtime_portrait_pixel_count;
+    uint32_t decoded_gdat_runtime_core_hash;
+    uint32_t decoded_gdat_runtime_core_pixel_count;
     uint32_t combined_frame_hash;
     uint32_t combined_pixel_count;
     DM2_V1_BootRuntimeRenderReceipt first_frame;
@@ -601,6 +607,12 @@ typedef struct {
     uint32_t runtime_hud_raw_portrait_byte_count;
     uint32_t runtime_hud_raw_core_hash;
     uint32_t runtime_hud_raw_core_byte_count;
+    int runtime_hud_decoded_gdat_capture_ready;
+    int runtime_hud_decoded_portrait_count;
+    uint32_t runtime_hud_decoded_portrait_hash;
+    uint32_t runtime_hud_decoded_portrait_pixel_count;
+    uint32_t runtime_hud_decoded_core_hash;
+    uint32_t runtime_hud_decoded_core_pixel_count;
     uint32_t runtime_hud_frame_hash;
     uint32_t runtime_hud_pixel_count;
     int real_gdat_capture_breadth_ready;

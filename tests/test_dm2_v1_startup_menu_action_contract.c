@@ -808,6 +808,12 @@ int main(void)
                       boot_real_visual_capture.runtime_hud_raw_portrait_byte_count > 0u &&
                       boot_real_visual_capture.runtime_hud_raw_core_hash != 0u &&
                       boot_real_visual_capture.runtime_hud_raw_core_byte_count > 0u &&
+                      boot_real_visual_capture.runtime_hud_decoded_gdat_capture_ready == 1 &&
+                      boot_real_visual_capture.runtime_hud_decoded_portrait_count >= 4 &&
+                      boot_real_visual_capture.runtime_hud_decoded_portrait_hash != 0u &&
+                      boot_real_visual_capture.runtime_hud_decoded_portrait_pixel_count > 0u &&
+                      boot_real_visual_capture.runtime_hud_decoded_core_hash != 0u &&
+                      boot_real_visual_capture.runtime_hud_decoded_core_pixel_count > 0u &&
                       boot_real_visual_capture.runtime_hud_frame_hash != 0u &&
                       boot_real_visual_capture.runtime_hud_pixel_count == 4u * 320u * 200u &&
                       boot_real_visual_capture.real_gdat_capture_breadth_ready == 1 &&
