@@ -2002,6 +2002,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupRenderViewReceipt_PC34 runtime_view_receipt;
     CSB_V1_BootStartupReadinessReceipt_PC34 readiness_receipt;
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_draw_receipt;
+    CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     TestHudMenuDrawProbe hud_draw_probe;
     CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
@@ -2143,6 +2144,27 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strcmp(readiness_receipt.animation, "csb-title") == 0 &&
               readiness_receipt.title_presents_visible,
           "boot startup readiness receipt owns post-FTL title-not-ready gate");
+    CHECK(csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+              &snapshot,
+              &capture_receipt) == 1 &&
+              capture_receipt.valid &&
+              capture_receipt.route_valid &&
+              capture_receipt.render_view_valid &&
+              capture_receipt.readiness_valid &&
+              !capture_receipt.hud_menu_draw_valid &&
+              capture_receipt.title_capture_ready &&
+              !capture_receipt.hud_menu_capture_ready &&
+              capture_receipt.host_input_blocked &&
+              capture_receipt.host_hud_blocked &&
+              !capture_receipt.startup_input_ready &&
+              !capture_receipt.startup_hud_ready &&
+              capture_receipt.render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
+              capture_receipt.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              capture_receipt.title_frame == 0 &&
+              capture_receipt.title_source_step == 1,
+          "boot startup capture receipt packages title block gates");
     CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
               &runtime_view_receipt,
               snapshot.title_active,
@@ -2429,6 +2451,26 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_UTIL_MENU_ROW_COUNT &&
               readiness_receipt.selected_utility_action_index == 0,
           "boot startup readiness receipt owns utility HUD/menu readiness");
+    CHECK(csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+              &snapshot,
+              &capture_receipt) == 1 &&
+              capture_receipt.valid &&
+              capture_receipt.route_valid &&
+              capture_receipt.render_view_valid &&
+              capture_receipt.readiness_valid &&
+              capture_receipt.hud_menu_draw_valid &&
+              !capture_receipt.title_capture_ready &&
+              capture_receipt.hud_menu_capture_ready &&
+              !capture_receipt.host_input_blocked &&
+              !capture_receipt.host_hud_blocked &&
+              capture_receipt.startup_input_ready &&
+              capture_receipt.startup_hud_ready &&
+              capture_receipt.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              capture_receipt.selected_utility_action_index == 0 &&
+              capture_receipt.hud_menu_draw.draw_utility_panel &&
+              capture_receipt.hud_menu_draw.utility_render_plan_valid,
+          "boot startup capture receipt packages utility HUD/menu draw");
     poisoned_view_receipt = view_receipt;
     poisoned_view_receipt.route_receipt.utility_plan.menu_row_count = 1;
     poisoned_view_receipt.route_receipt.utility_plan.menu_rows[0].selected = 0;
@@ -2563,6 +2605,24 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               readiness_receipt.runtime_champion_count == 4 &&
               readiness_receipt.runtime_tick_count == 77,
           "boot startup readiness receipt owns runtime HUD handoff after title/menu chain");
+    CHECK(csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+              &snapshot,
+              &capture_receipt) == 1 &&
+              capture_receipt.valid &&
+              !capture_receipt.route_valid &&
+              !capture_receipt.render_view_valid &&
+              capture_receipt.readiness_valid &&
+              !capture_receipt.hud_menu_draw_valid &&
+              !capture_receipt.title_capture_ready &&
+              !capture_receipt.hud_menu_capture_ready &&
+              capture_receipt.runtime_capture_ready &&
+              !capture_receipt.host_input_blocked &&
+              !capture_receipt.host_hud_blocked &&
+              capture_receipt.render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 &&
+              capture_receipt.readiness.runtime_map_index == 6 &&
+              capture_receipt.readiness.runtime_champion_count == 4,
+          "boot startup capture receipt packages runtime HUD readiness");
     snapshot.entrance_active = 1;
     snapshot.entrance_source_step = 4;
     snapshot.entrance_dismissed = 0;
