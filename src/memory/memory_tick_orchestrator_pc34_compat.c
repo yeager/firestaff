@@ -5684,23 +5684,16 @@ static int orch_cmd_attack_apply_killed_some_receipt_compat(
 static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan)
+    const DM1_MeleeF0190MutationDispatchPlanPc34* plan)
 {
-    DM1_MeleeF0190MutationDispatchPlanPc34 plan;
     DM1_MeleeF0190MutationDispatchApplyPlanPc34 applyPlan;
     int fearTriggered = 0;
 
-    if (!world || !group || !aftermathPlan) return 0;
+    if (!world || !group || !plan) return 0;
 
-    memset(&plan, 0, sizeof(plan));
-    if (!dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
-            aftermathPlan, &plan) ||
-        !plan.valid) {
-        return 0;
-    }
     memset(&applyPlan, 0, sizeof(applyPlan));
     if (!dm1_v1_melee_mutation_dispatch_apply_plan_f0190_pc34(
-            &plan, &applyPlan) ||
+            plan, &applyPlan) ||
         !applyPlan.valid) {
         return 0;
     }
@@ -5714,7 +5707,7 @@ static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
         if (applyPlan.shouldEvaluateFear) {
             fearTriggered =
                 orch_cmd_attack_apply_f0190_fear_compat(
-                    world, group, &plan);
+                    world, group, plan);
         }
     }
     if (applyPlan.shouldApplyKilledAllSideEffects) {
@@ -7100,7 +7093,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             fearTriggered =
                                 orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
                                     world, &world->things->groups[groupIndex],
-                                    &aftermathPlan);
+                                    &aftermathApplyPlan
+                                        .mutationDispatchPlan);
                         }
                         if (aftermathApplyPlan.shouldWriteRawGroup) {
                             orch_write_raw_group_compat(
