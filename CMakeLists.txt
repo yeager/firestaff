@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 if(POLICY CMP0156)
-    cmake_policy(SET CMP0156 NEW)
+    # Firestaff's M11/M12 test and probe targets still contain static
+    # archive cycles. Keep repeated static libraries on link lines until
+    # those libraries are split into acyclic units.
+    cmake_policy(SET CMP0156 OLD)
 endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
