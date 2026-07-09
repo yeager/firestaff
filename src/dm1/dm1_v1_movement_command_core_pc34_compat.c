@@ -72,33 +72,77 @@ static int dm1_v1_normalize_cell(int cell)
     return cell & 3;
 }
 
-static void dm1_v1_record_blocked_wall_or_door_damage_request(
+int DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(
     const struct PartyState_Compat* party,
     int movementArrowIndex,
-    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
+    int movementResultCode,
+    int blockedByGroup,
+    struct Dm1V1MovementBlockedResolutionPlanPc34Compat* outPlan)
 {
     int firstCell;
 
-    if (!party || !outResult || party->championCount <= 0) {
-        return;
+    if (!outPlan) {
+        return 0;
+    }
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->valid = 1;
+    outPlan->movementBlocked = 1;
+    outPlan->inputDiscardRequested = 1;
+    outPlan->blockedMovementVblankWaitRequested = 1;
+
+    if (blockedByGroup) {
+        /* ReDMCSB CLIKMENU.C F0366 lines 312-313 requests a party-adjacent
+         * group reaction before discarding input and waiting one VBlank. */
+        outPlan->blockedByGroup = 1;
+        outPlan->groupReactionPartyAdjacentRequested = 1;
+        return 1;
     }
 
-    /* Source lock: CLIKMENU.C:285-299 handles a wall/closed-door/closed
-     * fake-wall block by calling F0321_CHAMPION_AddPendingDamageAndWounds_GetDamage
-     * with attack=1, allowed wounds torso|legs (0x0008|0x0010), and
-     * C2_ATTACK_SELF for the two leading party cells computed from the
-     * movement arrow plus party direction.  The combat layer owns random
-     * defense/wound materialization; this command seam records the request
-     * exactly where F0366 makes it, before input discard and the PC-34
-     * blocked-movement VBlank wait.
-     */
-    firstCell = dm1_v1_normalize_cell(movementArrowIndex + party->direction + 2);
-    outResult->blockedByWallOrDoorDamageRequested = 1;
-    outResult->blockedByWallOrDoorDamageAttack = 1;
-    outResult->blockedByWallOrDoorDamageAttackTypeSelf = 2;
-    outResult->blockedByWallOrDoorDamageAllowedWounds = 0x0018u;
-    outResult->blockedByWallOrDoorDamageFirstCell = firstCell;
-    outResult->blockedByWallOrDoorDamageSecondCell = dm1_v1_normalize_cell(firstCell + 1);
+    if (party && party->championCount > 0 &&
+        (movementResultCode == MOVE_BLOCKED_WALL ||
+         movementResultCode == MOVE_BLOCKED_DOOR)) {
+        /* ReDMCSB CLIKMENU.C F0366 lines 285-299: wall/closed-door/closed
+         * fake-wall blocks request F0321 self damage with attack=1,
+         * torso|legs wounds, and the two leading cells. */
+        firstCell = dm1_v1_normalize_cell(
+            movementArrowIndex + party->direction + 2);
+        outPlan->blockedByWallOrDoorDamageRequested = 1;
+        outPlan->blockedByWallOrDoorDamageAttack = 1;
+        outPlan->blockedByWallOrDoorDamageAttackTypeSelf = 2;
+        outPlan->blockedByWallOrDoorDamageAllowedWounds = 0x0018u;
+        outPlan->blockedByWallOrDoorDamageFirstCell = firstCell;
+        outPlan->blockedByWallOrDoorDamageSecondCell =
+            dm1_v1_normalize_cell(firstCell + 1);
+    }
+    return 1;
+}
+
+static void dm1_v1_apply_blocked_resolution_plan(
+    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult,
+    const struct Dm1V1MovementBlockedResolutionPlanPc34Compat* plan)
+{
+    if (!outResult || !plan || !plan->valid) {
+        return;
+    }
+    outResult->movementBlocked = plan->movementBlocked;
+    outResult->blockedByGroup = plan->blockedByGroup;
+    outResult->blockedByWallOrDoorDamageRequested =
+        plan->blockedByWallOrDoorDamageRequested;
+    outResult->blockedByWallOrDoorDamageAttack =
+        plan->blockedByWallOrDoorDamageAttack;
+    outResult->blockedByWallOrDoorDamageAttackTypeSelf =
+        plan->blockedByWallOrDoorDamageAttackTypeSelf;
+    outResult->blockedByWallOrDoorDamageAllowedWounds =
+        plan->blockedByWallOrDoorDamageAllowedWounds;
+    outResult->blockedByWallOrDoorDamageFirstCell =
+        plan->blockedByWallOrDoorDamageFirstCell;
+    outResult->blockedByWallOrDoorDamageSecondCell =
+        plan->blockedByWallOrDoorDamageSecondCell;
+    outResult->groupReactionPartyAdjacentRequested =
+        plan->groupReactionPartyAdjacentRequested;
+    outResult->inputDiscardRequested = plan->inputDiscardRequested;
+    outResult->blockedMovementVblankWaitRequested =
+        plan->blockedMovementVblankWaitRequested;
 }
 
 static int dm1_v1_compute_step_stamina_cost(const struct ChampionState_Compat* champion)
@@ -337,13 +381,10 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     }
 
     if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, action, &outResult->movement)) {
-        outResult->movementBlocked = 1;
-        if (outResult->movement.resultCode == MOVE_BLOCKED_WALL ||
-            outResult->movement.resultCode == MOVE_BLOCKED_DOOR) {
-            dm1_v1_record_blocked_wall_or_door_damage_request(party, action, outResult);
-        }
-        outResult->inputDiscardRequested = 1;
-        outResult->blockedMovementVblankWaitRequested = 1;
+        struct Dm1V1MovementBlockedResolutionPlanPc34Compat blockPlan;
+        (void)DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(
+            party, action, outResult->movement.resultCode, 0, &blockPlan);
+        dm1_v1_apply_blocked_resolution_plan(outResult, &blockPlan);
         DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);
         return 1;
     }
@@ -377,17 +418,10 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     }
 
     if (F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(dungeon, things, party, action)) {
-        outResult->movementBlocked = 1;
-        outResult->blockedByGroup = 1;
-        /* Source lock: CLIKMENU.C:312-313 calls F0209_GROUP_ProcessEvents29to41
-         * with CM1_EVENT_CREATE_REACTION_EVENT_31_PARTY_IS_ADJACENT when
-         * movement is blocked by a group.  This command-core seam records
-         * the required reaction request; creature timeline materialization is
-         * handled by the creature-AI/timeline layer.
-         */
-        outResult->groupReactionPartyAdjacentRequested = 1;
-        outResult->inputDiscardRequested = 1;
-        outResult->blockedMovementVblankWaitRequested = 1;
+        struct Dm1V1MovementBlockedResolutionPlanPc34Compat blockPlan;
+        (void)DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(
+            party, action, outResult->movement.resultCode, 1, &blockPlan);
+        dm1_v1_apply_blocked_resolution_plan(outResult, &blockPlan);
         DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);
         return 1;
     }
