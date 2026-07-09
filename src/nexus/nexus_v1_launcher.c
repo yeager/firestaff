@@ -401,6 +401,40 @@ static void nexus_v1_launcher_fill_save_asset_blocked_route(
     }
 }
 
+static void nexus_v1_launcher_fill_save_asset_blocked_action(
+    const Nexus_V1_StartupHostFacts *facts,
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    if (out_execution) {
+        memset(out_execution, 0, sizeof(*out_execution));
+        out_execution->kind = NEXUS_V1_STARTUP_SAVE_EXEC_IGNORE;
+        out_execution->status_scope = "ASSETS";
+        out_execution->status = assets && assets->startup_menu_asset_route
+            ? assets->startup_menu_asset_route
+            : "blocked-startup-assets";
+    }
+    if (!out_receipt) {
+        return;
+    }
+    nexus_v1_startup_host_action_receipt_clear(out_receipt);
+    out_receipt->host_receipt.input_result =
+        NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+    out_receipt->host_receipt.status_scope = "ASSETS";
+    out_receipt->host_receipt.status =
+        assets && assets->startup_menu_asset_route
+            ? assets->startup_menu_asset_route
+            : "blocked-startup-assets";
+    if (facts && nexus_v1_startup_menu_state_receipt_from_facts(
+            &out_receipt->save_state_receipt,
+            facts->save_dir,
+            facts->slot_mask,
+            facts->save_selected_row)) {
+        out_receipt->save_state_receipt_valid = 1;
+    }
+}
+
 static int nexus_v1_launcher_startup_save_assets_blocked(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_LauncherStartupAssetsReceipt *out_assets)
@@ -599,10 +633,18 @@ int nexus_v1_launcher_startup_execute_save_firestaff_input_from_runtime_state(
     Nexus_V1_StartupHostActionReceipt *out_receipt)
 {
     Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
     if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
             state,
             &facts)) {
         return 0;
+    }
+    if (nexus_v1_launcher_startup_save_assets_blocked(state, &assets)) {
+        nexus_v1_launcher_fill_save_asset_blocked_action(&facts,
+                                                         &assets,
+                                                         out_execution,
+                                                         out_receipt);
+        return out_receipt ? 1 : 0;
     }
     return nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
         &facts,
@@ -643,10 +685,18 @@ int nexus_v1_launcher_startup_execute_save_pointer_from_runtime_state(
     Nexus_V1_StartupHostActionReceipt *out_receipt)
 {
     Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
     if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
             state,
             &facts)) {
         return 0;
+    }
+    if (nexus_v1_launcher_startup_save_assets_blocked(state, &assets)) {
+        nexus_v1_launcher_fill_save_asset_blocked_action(&facts,
+                                                         &assets,
+                                                         out_execution,
+                                                         out_receipt);
+        return out_receipt ? 1 : 0;
     }
     return nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
         &facts,
@@ -776,6 +826,28 @@ int nexus_v1_launcher_startup_save_pointer_route_receipt_from_snapshot(
         out_receipt);
 }
 
+static void nexus_v1_launcher_fill_title_asset_blocked_action(
+    const Nexus_V1_StartupTitleHandoffReceipt *handoff,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    if (out_execution) {
+        memset(out_execution, 0, sizeof(*out_execution));
+        out_execution->kind = NEXUS_V1_STARTUP_TITLE_EXEC_IGNORE;
+        out_execution->status_scope = "ASSETS";
+        out_execution->status = handoff && handoff->status
+            ? handoff->status
+            : "blocked-startup-assets";
+    }
+    if (!out_receipt) {
+        return;
+    }
+    nexus_v1_startup_host_action_receipt_clear(out_receipt);
+    if (handoff) {
+        out_receipt->host_receipt = handoff->host_receipt;
+    }
+}
+
 int nexus_v1_launcher_startup_execute_title_firestaff_input_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     int menu_input,
@@ -783,6 +855,17 @@ int nexus_v1_launcher_startup_execute_title_firestaff_input_from_runtime_state(
     Nexus_V1_StartupHostActionReceipt *out_receipt)
 {
     Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_StartupTitleHandoffReceipt handoff;
+    if (nexus_v1_launcher_startup_title_handoff_receipt_from_runtime_state(
+            state,
+            menu_input,
+            &handoff) &&
+        handoff.route_blocked) {
+        nexus_v1_launcher_fill_title_asset_blocked_action(&handoff,
+                                                          out_execution,
+                                                          out_receipt);
+        return out_receipt ? 1 : 0;
+    }
     if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
             state,
             &facts)) {
@@ -817,6 +900,16 @@ int nexus_v1_launcher_startup_execute_title_pointer_from_runtime_state(
     Nexus_V1_StartupHostActionReceipt *out_receipt)
 {
     Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_StartupTitleHandoffReceipt handoff;
+    if (nexus_v1_launcher_startup_title_pointer_handoff_receipt_from_runtime_state(
+            state,
+            &handoff) &&
+        handoff.route_blocked) {
+        nexus_v1_launcher_fill_title_asset_blocked_action(&handoff,
+                                                          out_execution,
+                                                          out_receipt);
+        return out_receipt ? 1 : 0;
+    }
     if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
             state,
             &facts)) {

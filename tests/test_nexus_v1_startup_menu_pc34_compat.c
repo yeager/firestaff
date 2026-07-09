@@ -2154,6 +2154,22 @@ int main(void)
                                strcmp(title_handoff_receipt.status,
                                       "blocked-menu-bpk-prs3") == 0,
                            "Nexus launcher title handoff blocks save route on MENU.BPK PRS3");
+                    expect(nexus_v1_launcher_startup_execute_title_firestaff_input_from_runtime_state(
+                               &runtime_state,
+                               9,
+                               &title_execution,
+                               &host_action_receipt) &&
+                               title_execution.kind ==
+                                   NEXUS_V1_STARTUP_TITLE_EXEC_IGNORE &&
+                               host_action_receipt.host_receipt.input_result ==
+                                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                               !host_action_receipt.host_receipt.mode_update
+                                    .set_save_select_active &&
+                               strcmp(host_action_receipt.host_receipt.status_scope,
+                                      "ASSETS") == 0 &&
+                               strcmp(host_action_receipt.host_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus launcher title execute blocks save route on MENU.BPK PRS3");
                     runtime_state.slot_mask = 0u;
                     expect(nexus_v1_launcher_startup_title_handoff_receipt_from_runtime_state(
                                &runtime_state,
@@ -2180,6 +2196,17 @@ int main(void)
                                strcmp(title_handoff_receipt.status,
                                       "NEXUS TITLE") == 0,
                            "Nexus launcher title handoff keeps title hold route drawable");
+                    expect(nexus_v1_launcher_startup_execute_title_pointer_from_runtime_state(
+                               &runtime_state,
+                               &title_execution,
+                               &host_action_receipt) &&
+                               title_execution.kind ==
+                                   NEXUS_V1_STARTUP_TITLE_EXEC_HOLD_TITLE &&
+                               host_action_receipt.host_receipt.input_result ==
+                                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                               strcmp(host_action_receipt.host_receipt.status,
+                                      "NEXUS TITLE") == 0,
+                           "Nexus launcher title execute preserves hold route");
                     runtime_state.title_frame =
                         nexus_v1_boot_start_ready_frames();
                     runtime_state.save_select_active = 1;
@@ -2207,6 +2234,24 @@ int main(void)
                                       "blocked-menu-bpk-prs3") == 0 &&
                                load_calls == 0,
                            "Nexus launcher blocks save-slot route on MENU.BPK PRS3");
+                    load_calls = 0;
+                    expect(nexus_v1_launcher_startup_execute_save_pointer_from_runtime_state(
+                               &runtime_state,
+                               20,
+                               44,
+                               startup_load_success,
+                               &load_calls,
+                               &execution,
+                               &host_action_receipt) &&
+                               execution.kind ==
+                                   NEXUS_V1_STARTUP_SAVE_EXEC_IGNORE &&
+                               host_action_receipt.save_state_receipt_valid &&
+                               host_action_receipt.host_receipt.input_result ==
+                                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                               strcmp(host_action_receipt.host_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0 &&
+                               load_calls == 0,
+                           "Nexus launcher save execute blocks load-slot on MENU.BPK PRS3");
                     runtime_state.champion_select_active = 1;
                     runtime_state.champion_cursor = 0;
                     runtime_state.champion_frame = 0;
