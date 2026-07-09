@@ -123,6 +123,94 @@ int DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(int menu_input)
     }
 }
 
+static int dm1_v1_orchestrator_command_to_move_action_pc34(
+    int command,
+    int partyDirection)
+{
+    partyDirection &= 3;
+    switch (command) {
+        case 0x01:
+            return (partyDirection == DM1_V1_DIR_NORTH) ? MOVE_FORWARD :
+                   (partyDirection == DM1_V1_DIR_SOUTH) ? MOVE_BACKWARD :
+                   (partyDirection == DM1_V1_DIR_EAST)  ? MOVE_LEFT :
+                                                          MOVE_RIGHT;
+        case 0x02:
+            return (partyDirection == DM1_V1_DIR_EAST)  ? MOVE_FORWARD :
+                   (partyDirection == DM1_V1_DIR_WEST)  ? MOVE_BACKWARD :
+                   (partyDirection == DM1_V1_DIR_NORTH) ? MOVE_RIGHT :
+                                                          MOVE_LEFT;
+        case 0x03:
+            return (partyDirection == DM1_V1_DIR_SOUTH) ? MOVE_FORWARD :
+                   (partyDirection == DM1_V1_DIR_NORTH) ? MOVE_BACKWARD :
+                   (partyDirection == DM1_V1_DIR_WEST)  ? MOVE_RIGHT :
+                                                          MOVE_LEFT;
+        case 0x04:
+            return (partyDirection == DM1_V1_DIR_WEST)  ? MOVE_FORWARD :
+                   (partyDirection == DM1_V1_DIR_EAST)  ? MOVE_BACKWARD :
+                   (partyDirection == DM1_V1_DIR_SOUTH) ? MOVE_RIGHT :
+                                                          MOVE_LEFT;
+        case 0x05:
+            return MOVE_TURN_LEFT;
+        case 0x06:
+            return MOVE_TURN_RIGHT;
+        default:
+            return -1;
+    }
+}
+
+static int dm1_v1_move_action_absolute_direction_pc34(
+    int partyDirection,
+    int moveAction)
+{
+    partyDirection &= 3;
+    switch (moveAction) {
+        case MOVE_FORWARD:  return partyDirection;
+        case MOVE_RIGHT:    return (partyDirection + 1) & 3;
+        case MOVE_BACKWARD: return (partyDirection + 2) & 3;
+        case MOVE_LEFT:     return (partyDirection + 3) & 3;
+        default:            return -1;
+    }
+}
+
+int DM1_V1_Movement_OrchestratorRoutePlanPc34Compat(
+    int command,
+    int partyDirection,
+    int disabledMovementTicks,
+    int projectileDisabledMovementTicks,
+    int lastProjectileDisabledMovementDirection,
+    DM1_V1_MovementOrchestratorRoutePlanPc34Compat* outPlan)
+{
+    int action;
+
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+
+    action = dm1_v1_orchestrator_command_to_move_action_pc34(
+        command, partyDirection);
+    if (action < 0) return 1;
+
+    outPlan->valid = 1;
+    outPlan->moveAction = action;
+    outPlan->absoluteDirection =
+        dm1_v1_move_action_absolute_direction_pc34(partyDirection, action);
+    outPlan->dispatchedTurn =
+        action == MOVE_TURN_LEFT || action == MOVE_TURN_RIGHT;
+    outPlan->dispatchedMove = outPlan->absoluteDirection >= 0;
+
+    if (outPlan->dispatchedMove) {
+        /* ReDMCSB COMMAND.C F0380 lines ~2073-2078 gates movement
+         * commands only. Turns bypass movement cadence and projectile
+         * movement lockout. */
+        if (disabledMovementTicks > 0 ||
+            (projectileDisabledMovementTicks > 0 &&
+             ((lastProjectileDisabledMovementDirection & 3) ==
+              outPlan->absoluteDirection))) {
+            outPlan->movementDisabledGate = 1;
+        }
+    }
+    return 1;
+}
+
 
 /*
  * dm1v1_movement_poll_input — Enqueue a single command code.
