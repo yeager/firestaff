@@ -172,6 +172,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
     src/dm1/dm1_v1_throw_shoot_pc34_compat.c
     src/dm2/dm2_v1_creature.c
+    src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_sound.c
     src/dm2/dm2_v1_drops.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -6922,6 +6923,27 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_creature_death_drop_pc34_compat
         COMMAND test_dm2_v1_creature_death_drop_pc34_compat
+    )
+
+    # ── DM2 V1 Phase 6: GDAT-backed creature AI definition import ──
+    add_executable(test_dm2_v1_creature_gdat_ai_table
+        tests/test_dm2_v1_creature_gdat_ai_table.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+    )
+    target_include_directories(test_dm2_v1_creature_gdat_ai_table PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_gdat_ai_table
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_gdat_ai_table
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_gdat_ai_table
+        COMMAND test_dm2_v1_creature_gdat_ai_table
     )
 
     # ── DM2 V1 Phase 5: Creature death/drop headless probe ──

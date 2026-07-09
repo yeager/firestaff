@@ -124,6 +124,59 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
     return &g_ai_table[idx];
 }
 
+void dm2_v1_creature_reset_ai_table(void) {
+    memset(g_ai_table, 0, sizeof(g_ai_table));
+}
+
+static void dm2_v1_creature_decode_ai_spec(const uint8_t *raw,
+                                           DM2_AIDefinition *out) {
+    out->w0AIFlags = (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
+    out->ArmorClass = raw[2];
+    out->b3 = (int8_t)raw[3];
+    out->BaseHP = (uint16_t)raw[4] | ((uint16_t)raw[5] << 8);
+    out->AttackStrength = raw[6];
+    out->PoisonDamage = raw[7];
+    out->Defense = raw[8];
+    out->b9x = raw[9];
+    out->w10 = (uint16_t)raw[10] | ((uint16_t)raw[11] << 8);
+    out->w12 = (uint16_t)raw[12] | ((uint16_t)raw[13] << 8);
+    out->AttacksSpells = (uint16_t)raw[14] | ((uint16_t)raw[15] << 8);
+    out->w16 = (uint16_t)raw[16] | ((uint16_t)raw[17] << 8);
+    out->w18 = (uint16_t)raw[18] | ((uint16_t)raw[19] << 8);
+    out->w20 = (uint16_t)raw[20] | ((uint16_t)raw[21] << 8);
+    out->w22 = (uint16_t)raw[22] | ((uint16_t)raw[23] << 8);
+    out->w24 = (uint16_t)raw[24] | ((uint16_t)raw[25] << 8);
+    out->w26 = (uint16_t)raw[26] | ((uint16_t)raw[27] << 8);
+    out->b28 = raw[28];
+    out->Weight = raw[29];
+    out->w30 = (uint16_t)raw[30] | ((uint16_t)raw[31] << 8);
+    out->w32 = (uint16_t)raw[32] | ((uint16_t)raw[33] << 8);
+    out->b34 = raw[34];
+    out->b35 = raw[35];
+}
+
+int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
+    int loaded = 0;
+    int i;
+
+    if (!loader || !loader->loaded) return -1;
+
+    /* skproject/SKWIN/SkWinCore.cpp EXTENDED_LOAD_AI_DEFINITION lines
+     * ~233-400 loads 36 AIDefinition bytes per creature AI index from
+     * GDAT_CATEGORY_CREATURE_AI (0x19).  QUERY_CREATURE_AI_SPEC_FROM_TYPE
+     * line ~2995 then indexes this table by creature type. */
+    for (i = 0; i < DM2_AI_TABLE_SIZE; ++i) {
+        size_t raw_size = 0;
+        const uint8_t *raw = dm2_v1_asset_load_sized(
+            loader, DM2_GDAT_CATEGORY_CREATURE_AI, i, 0, &raw_size);
+        if (!raw || raw_size < sizeof(DM2_AIDefinition)) continue;
+        dm2_v1_creature_decode_ai_spec(raw, &g_ai_table[i]);
+        ++loaded;
+    }
+
+    return loaded;
+}
+
 /* dm2_v1_creature_attacks_party — check if creature attacks at given distance
  * Source: SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM, DM2_CREATURE_ATTACKS_PARTY
  * Attack decision: based on AI_ATTACK_FLAGS and distance check.
@@ -279,7 +332,7 @@ void dm2_v1_creature_test_set_ai_spec(int ai_index,
 }
 
 void dm2_v1_creature_test_clear_ai_overrides(void) {
-    memset(g_ai_table, 0, sizeof(g_ai_table));
+    dm2_v1_creature_reset_ai_table();
 }
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 

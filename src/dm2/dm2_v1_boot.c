@@ -20,6 +20,7 @@
 
 #include "dm2_v1_boot.h"
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_creature.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
@@ -257,6 +258,7 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     }
     dm2_v1_asset_free_pixels(gfx->startup_title_pixels);
     dm2_v1_asset_loader_free(&gfx->loader);
+    dm2_v1_creature_reset_ai_table();
     free(gfx->bytes);
     memset(gfx, 0, sizeof(*gfx));
     free(gfx);
@@ -305,6 +307,7 @@ static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load(
         dm2_v1_boot_graphics_free(gfx);
         return NULL;
     }
+    (void)dm2_v1_creature_load_ai_table_from_gdat(&gfx->loader);
     gfx->size = got;
     return gfx;
 }

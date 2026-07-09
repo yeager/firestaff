@@ -125,6 +125,12 @@ int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
 const uint8_t *dm2_v1_asset_load(const DM2_V1_AssetLoader *loader,
                                    int category, int index, int field);
 
+/* Load raw asset by (category, index, field), returning its byte size.
+ * Source: skproject SKWIN/SkWinCore.cpp QUERY_GDAT_ENTRY_DATA_PTR */
+const uint8_t *dm2_v1_asset_load_sized(const DM2_V1_AssetLoader *loader,
+                                        int category, int index, int field,
+                                        size_t *out_size);
+
 /* Load image asset and decode to pixel buffer.
  * out_width, out_height set dimensions, out_format sets format.
  * Caller owns returned buffer (must free with dm2_v1_asset_free_pixels).

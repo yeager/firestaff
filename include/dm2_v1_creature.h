@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_DM2_V1_CREATURE_H
 #define FIRESTAFF_DM2_V1_CREATURE_H
 #include <stdint.h>
+#include "dm2_v1_asset_loader.h"
 
 /* DM2 V1 — Creature AI, Attacks, and Spells
  * Phase 6 source-lock (2026-05-26)
@@ -154,6 +155,8 @@ typedef struct __attribute__((packed)) {
 int  dm2_v1_creature_ai_index_count(void);
 const char *dm2_v1_creature_ai_name(int ai_index);
 const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type);
+int  dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader);
+void dm2_v1_creature_reset_ai_table(void);
 int  dm2_v1_creature_attacks_party(int ai_index, int distance);
 int  dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags);
 const char *dm2_v1_creature_source_evidence(void);
