@@ -250,9 +250,9 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
             s_last_probe.open.openedTypes,
             DM1_PC34_CHEST_ROUND_TRIP_LINKED_INPUT_COUNT);
     s_last_probe.open.openVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     s_last_probe.open.openContainerWeight =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     s_last_probe.open.openContainerBaseContribution =
         s_last_probe.open.openContainerWeight -
         s_last_probe.open.openVisibleWeight;
@@ -284,9 +284,9 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
     s_last_probe.firstSwap.afterFirstC538Empty =
         s_last_probe.firstSwap.afterFirstTypes[1] == 0;
     s_last_probe.firstSwap.afterFirstVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     s_last_probe.firstSwap.afterFirstContainerWeight =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     s_last_probe.firstSwap.afterFirstContainerBaseContribution =
         s_last_probe.firstSwap.afterFirstContainerWeight -
         s_last_probe.firstSwap.afterFirstVisibleWeight;
@@ -332,9 +332,9 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
         contains_type(s_last_probe.secondSwap.afterSecondTypes,
                       DM1_PC34_CHEST_ROUND_TRIP_TORCH);
     s_last_probe.secondSwap.afterSecondVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     s_last_probe.secondSwap.afterSecondContainerWeight =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     s_last_probe.secondSwap.afterSecondContainerBaseContribution =
         s_last_probe.secondSwap.afterSecondContainerWeight -
         s_last_probe.secondSwap.afterSecondVisibleWeight;
@@ -353,7 +353,7 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
      * CHAMPION.C F0300/F0301:582-615 then leaves transient chest load back at
      * the pre-open value while F0297 keeps the leader hand object intact. */
     s_last_probe.close.closeCount =
-        m11_inventory_pc34_close_chest_with_weight_snapshot(
+        DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
             &state, 0, closed, DM1_PC34_CHEST_ROUND_TRIP_SLOT_COUNT,
             &s_last_probe.close.closeContainerWeightSnapshot);
     if (s_last_probe.close.closeCount < 0 ||
@@ -379,7 +379,7 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
         s_last_probe.close.closeContainerWeightSnapshot -
         s_last_probe.secondSwap.afterSecondVisibleWeight;
     s_last_probe.close.closeContainerWeightAfter =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     s_last_probe.close.loadAfterClose = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     s_last_probe.close.loadDeltaAfterClose =
         s_last_probe.close.loadAfterClose -
@@ -419,9 +419,9 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
         !contains_type(s_last_probe.reopen.reopenedTypes,
                        DM1_PC34_CHEST_ROUND_TRIP_DAGGER);
     s_last_probe.reopen.reopenedVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     s_last_probe.reopen.reopenedContainerWeight =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     s_last_probe.reopen.reopenedContainerBaseContribution =
         s_last_probe.reopen.reopenedContainerWeight -
         s_last_probe.reopen.reopenedVisibleWeight;

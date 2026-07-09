@@ -48,7 +48,7 @@ static int stack_count(const DM1_V1_InventoryStatePc34* state, int champ)
 
 static int stack_visible_weight(const DM1_V1_InventoryStatePc34* state, int champ)
 {
-    return m11_inventory_pc34_open_chest_visible_contents_weight(state, champ);
+    return DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(state, champ);
 }
 
 static DM1_V1_ItemPc34 stack_bottom(const DM1_V1_InventoryStatePc34* state, int champ)

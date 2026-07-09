@@ -120,7 +120,7 @@ int M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
     }
 
     out->visibleWeightBefore =
-        m11_inventory_pc34_open_chest_visible_contents_weight(
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(
             state, championIndex);
 
     if (out->handBefore.itemType != 0 &&
@@ -145,7 +145,7 @@ int M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
         return 0;
     }
     out->visibleWeightAfter =
-        m11_inventory_pc34_open_chest_visible_contents_weight(
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(
             state, championIndex);
     out->originalChestOccupantReturnedToHand =
         out->accepted &&
@@ -184,7 +184,7 @@ int M11_V1_Inventory_HandSwapWithChest_RunPc34(
     out->sourceLockedContractOnly =
         dm1_v1_chest_occupied_slot_swap_spec_pc34() != NULL &&
         dm1_inventory_chest_incompatible_swap_source_evidence_pc34() != NULL &&
-        dm1_inventory_chest_load_source_evidence_pc34() != NULL ? 1 : 0;
+        DM1_V1_InventoryChestLoad_SourceEvidencePc34Compat() != NULL ? 1 : 0;
     out->stackingNotApplicable =
         dm1_v1_inventory_hand_swap_with_chest_pc34_spec.stackingNotApplicable;
 

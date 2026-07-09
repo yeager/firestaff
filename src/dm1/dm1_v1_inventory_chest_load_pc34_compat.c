@@ -1,6 +1,6 @@
 #include "dm1_v1_inventory_chest_load_pc34_compat.h"
 
-const char* dm1_inventory_chest_load_source_evidence_pc34(void)
+const char* DM1_V1_InventoryChestLoad_SourceEvidencePc34Compat(void)
 {
     return
         "DUNGEON.C:1082-1133 F0140_DUNGEON_GetObjectWeight\n"
@@ -11,7 +11,7 @@ const char* dm1_inventory_chest_load_source_evidence_pc34(void)
         "CHAMPION.C:582-615 F0300/F0301 remove/add F0140 object weight from slot load";
 }
 
-int m11_inventory_pc34_open_chest_visible_contents_weight(const DM1_V1_InventoryStatePc34* s,
+int DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(const DM1_V1_InventoryStatePc34* s,
                                                           int champ)
 {
     int total = 0;
@@ -36,7 +36,7 @@ int m11_inventory_pc34_open_chest_visible_contents_weight(const DM1_V1_Inventory
     return total;
 }
 
-int m11_inventory_pc34_open_chest_container_weight(const DM1_V1_InventoryStatePc34* s,
+int DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(const DM1_V1_InventoryStatePc34* s,
                                                    int champ)
 {
     if (!s || champ < 0 || champ >= s->championCount ||
@@ -47,10 +47,10 @@ int m11_inventory_pc34_open_chest_container_weight(const DM1_V1_InventoryStatePc
     /* ReDMCSB DUNGEON.C F0140 lines 1114-1120 gives every container a base
      * weight of 50 before adding each linked CONTENTS object weight. */
     return DM1_PC34_CHEST_EMPTY_THING_WEIGHT +
-           m11_inventory_pc34_open_chest_visible_contents_weight(s, champ);
+           DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(s, champ);
 }
 
-int m11_inventory_pc34_close_chest_with_weight_snapshot(DM1_V1_InventoryStatePc34* s,
+int DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(DM1_V1_InventoryStatePc34* s,
                                                         int champ,
                                                         DM1_V1_ItemPc34* linkedItemsOut,
                                                         int maxItemsOut,
@@ -73,7 +73,7 @@ int m11_inventory_pc34_close_chest_with_weight_snapshot(DM1_V1_InventoryStatePc3
      * champion Load through F0140 object weight.  CHEST.C F0334 lines 112-133
      * closes the open G0426 chest by compacting G0425 first, so capture the
      * source F0140 container weight before the transient slots are erased. */
-    weightBeforeClose = m11_inventory_pc34_open_chest_container_weight(s, champ);
+    weightBeforeClose = DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(s, champ);
     if (outContainerWeightBeforeClose) {
         *outContainerWeightBeforeClose = weightBeforeClose;
     }

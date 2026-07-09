@@ -86,15 +86,15 @@ int dm1_v1_chest_runtime_encumbrance_run_pc34(
     out->openChestThingAfterOpen =
         DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, LEADER);
     out->visibleContentsWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, LEADER);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, LEADER);
     out->openContainerWeight =
-        m11_inventory_pc34_open_chest_container_weight(&state, LEADER);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, LEADER);
     out->leaderLoadAfterOpen = DM1_V1_Inventory_GetLoadPc34Compat(&state, LEADER);
 
     /* ReDMCSB CHEST.C F0334 lines 117-132 closes by compacting G0425 and
      * clearing G0426; CHAMPION.C F0300/F0301 lines 582-615 require the leader
      * Load/encumbrance view to be recomputed after those transient slots drop. */
-    out->closeCount = m11_inventory_pc34_close_chest_with_weight_snapshot(
+    out->closeCount = DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
         &state, LEADER, closed,
         DM1_PC34_CHEST_RUNTIME_ENCUMBRANCE_SLOT_COUNT,
         &out->closeContainerWeightSnapshot);
@@ -103,7 +103,7 @@ int dm1_v1_chest_runtime_encumbrance_run_pc34(
     }
     copy_closed_items(closed, out);
     out->closeContainerWeightAfter =
-        m11_inventory_pc34_open_chest_container_weight(&state, LEADER);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, LEADER);
     out->openChestThingAfterClose =
         DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, LEADER);
     out->leaderLoadAfterClose = DM1_V1_Inventory_GetLoadPc34Compat(&state, LEADER);

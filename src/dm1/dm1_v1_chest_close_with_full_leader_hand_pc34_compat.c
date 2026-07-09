@@ -238,9 +238,9 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
         return 0;
     }
     out->chestAVisibleWeightAfterOpen =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     out->chestAContainerWeightAfterOpen =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
 
     out->leaderHandBeforeC544Click = 0;
     if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
@@ -269,13 +269,13 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
     }
     out->c544AfterPickupType = item.itemType;
     out->chestAVisibleWeightAfterPickup =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     out->loadAfterC544Pickup = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB CHEST.C F0334 lines 117-132 closes chest A from the visible
      * G0425 slots while the leader hand remains full. */
     out->leaderHandFullDuringChestAClose = out->leaderHandFullAfterC544Click;
-    out->chestACloseCount = m11_inventory_pc34_close_chest_with_weight_snapshot(
+    out->chestACloseCount = DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
         &state, 0, chestAClosed, DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT,
         &out->chestAContainerWeightSnapshotAtClose);
     if (out->chestACloseCount < 0) {
@@ -344,9 +344,9 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
                       DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT,
                       out->leaderHandAfterChestBOpen);
     out->chestBVisibleWeightAfterOpen =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     out->chestBContainerWeightAfterOpen =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     out->chestBC538Type =
         out->chestBOpenTypes[DM1_PC34_CHEST_CLOSE_FULL_HAND_C538_INDEX];
     out->chestBC538IsOwnItem =
@@ -356,7 +356,7 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
      * chest B link array; chest A's closed snapshot must remain untouched. */
     out->leaderHandFullDuringChestBClose =
         out->leaderHandAfterChestBOpen != 0 ? 1 : 0;
-    out->chestBCloseCount = m11_inventory_pc34_close_chest_with_weight_snapshot(
+    out->chestBCloseCount = DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
         &state, 0, chestBClosed, DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT,
         &out->chestBContainerWeightSnapshotAtClose);
     if (out->chestBCloseCount < 0) {

@@ -48,7 +48,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_inventory_chest_load_pc34_compat\n");
-    printf("sourceEvidence=%s\n", dm1_inventory_chest_load_source_evidence_pc34());
+    printf("sourceEvidence=%s\n", DM1_V1_InventoryChestLoad_SourceEvidencePc34Compat());
 
     memset(closed, 0, sizeof(closed));
     for (int i = 0; i < 10; ++i) {
@@ -78,12 +78,12 @@ int main(void)
     /* ReDMCSB: CHEST.C F0333 lines 53-76 excludes the ninth and later linked
      * objects from the visible open-chest slot snapshot. */
     ok &= expect_int("visible contents weight excludes hidden tail",
-                     m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0),
+                     DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0),
                      44, f0333VisibleSlots);
     /* ReDMCSB: DUNGEON.C F0140 lines 1114-1120 gives a container base weight
      * of 50 before adding linked CONTENTS object weights. */
     ok &= expect_int("open chest container weight",
-                     m11_inventory_pc34_open_chest_container_weight(&state, 0),
+                     DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0),
                      94, f0140ContainerWeight);
     /* ReDMCSB: CHAMPION.C F0301 lines 609-615 adds C30+ slot object weight
      * through the same F0140 path used for ordinary inventory slots. */
@@ -100,19 +100,19 @@ int main(void)
     /* ReDMCSB: DUNGEON.C F0140 lines 1117-1119 sums the current linked
      * CONTENTS weights, including the edited visible slot value. */
     ok &= expect_int("edited visible contents weight",
-                     m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0),
+                     DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0),
                      57, f0140ContainerWeight);
     /* ReDMCSB: DUNGEON.C F0140 lines 1114-1120 keeps the 50-unit container
      * shell separate from the edited CONTENTS sum. */
     ok &= expect_int("edited open chest container weight",
-                     m11_inventory_pc34_open_chest_container_weight(&state, 0),
+                     DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0),
                      107, f0140ContainerWeight);
 
     state.champions[0].load = 777;
     /* ReDMCSB: CHEST.C F0334 lines 117-132 compacts non-empty G0425 slots
      * before clearing the open chest; this helper snapshots F0140 weight first. */
     ok &= expect_int("close snapshots compacted container weight",
-                     m11_inventory_pc34_close_chest_with_weight_snapshot(&state, 0,
+                     DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(&state, 0,
                                                                         closed, 8,
                                                                         &snapshotWeight),
                      8, f0334CloseCompacts);
@@ -135,7 +135,7 @@ int main(void)
     /* ReDMCSB: CHEST.C F0334 lines 113-114 returns immediately when no chest
      * is open, leaving no container weight snapshot. */
     ok &= expect_int("no-open close returns zero",
-                     m11_inventory_pc34_close_chest_with_weight_snapshot(&state, 0,
+                     DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(&state, 0,
                                                                         closed, 8,
                                                                         &snapshotWeight),
                      0, f0334CloseCompacts);
