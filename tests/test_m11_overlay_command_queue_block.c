@@ -615,6 +615,7 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
     int titleAssetDrawReady = 0;
     int closedDoorFallbackSuppressed = 0;
     int openingFrameDrawReady = 0;
+    int fullVisualSequenceConsumed = 0;
 
     ASSERT_EQ(M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                   &titleReceiptReady,
@@ -635,7 +636,8 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
                   &utilityInputDispatchReady,
                   &titleAssetDrawReady,
                   &closedDoorFallbackSuppressed,
-                  &openingFrameDrawReady),
+                  &openingFrameDrawReady,
+                  &fullVisualSequenceConsumed),
               1,
               "M11 exposes CSB startup host-view draw receipt");
     ASSERT_EQ(titleReceiptReady, 1,
@@ -676,6 +678,8 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
               "CSB closed-door/menu receipt blocks fallback text path");
     ASSERT_EQ(openingFrameDrawReady, 1,
               "CSB door opening uses receipt-owned frame draw");
+    ASSERT_EQ(fullVisualSequenceConsumed, 1,
+              "M11 CSB startup requires the full title/HUD/door visual sequence receipt");
 }
 
 static void test_candidate_panel_blocks_direct_object_helpers(void)
