@@ -1296,6 +1296,9 @@ int main(void)
                real_asset_ownership_receipt.saturn_active_capture_frame == 102 &&
                real_asset_ownership_receipt.host_route_consumes_active_capture_frame == 1 &&
                real_asset_ownership_receipt.host_route_consumes_dungeon_capture_frame == 1 &&
+               real_asset_ownership_receipt.host_route_capture_matrix_ready == 1 &&
+               real_asset_ownership_receipt.host_saturn_non_title_capture_count == 2 &&
+               real_asset_ownership_receipt.host_saturn_non_title_capture_mask == 6u &&
                real_asset_ownership_receipt.saturn_champion_capture_frame == 102 &&
                real_asset_ownership_receipt.saturn_save_capture_frame == -1 &&
                real_asset_ownership_receipt.saturn_dungeon_capture_frame == 102 &&
@@ -1370,6 +1373,9 @@ int main(void)
                host_caller_receipt.host_saturn_active_capture_frame == 102 &&
                host_caller_receipt.host_route_consumes_active_capture_frame == 1 &&
                host_caller_receipt.host_route_consumes_dungeon_capture_frame == 1 &&
+               host_caller_receipt.host_route_capture_matrix_ready == 1 &&
+               host_caller_receipt.host_saturn_non_title_capture_count == 2 &&
+               host_caller_receipt.host_saturn_non_title_capture_mask == 6u &&
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
                dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
@@ -1554,6 +1560,9 @@ int main(void)
                real_asset_ownership_receipt.saturn_active_capture_frame == 102 &&
                real_asset_ownership_receipt.host_route_consumes_active_capture_frame == 1 &&
                real_asset_ownership_receipt.host_route_consumes_dungeon_capture_frame == 0 &&
+               real_asset_ownership_receipt.host_route_capture_matrix_ready == 1 &&
+               real_asset_ownership_receipt.host_saturn_non_title_capture_count == 1 &&
+               real_asset_ownership_receipt.host_saturn_non_title_capture_mask == 1u &&
                strcmp(real_asset_ownership_receipt.status,
                       "menu-capture-owned") == 0,
            "Nexus real-asset ownership consumes SAVE package capture route");
@@ -1583,6 +1592,9 @@ int main(void)
                host_caller_receipt.host_saturn_active_capture_frame == 102 &&
                host_caller_receipt.host_route_consumes_active_capture_frame == 1 &&
                host_caller_receipt.host_route_consumes_dungeon_capture_frame == 0 &&
+               host_caller_receipt.host_route_capture_matrix_ready == 1 &&
+               host_caller_receipt.host_saturn_non_title_capture_count == 1 &&
+               host_caller_receipt.host_saturn_non_title_capture_mask == 1u &&
                host_caller_receipt.saturn_save_capture_frame == 102 &&
                host_caller_receipt.saturn_champion_capture_frame == -1 &&
                host_caller_receipt.saturn_dungeon_capture_frame == -1 &&

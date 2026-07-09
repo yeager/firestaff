@@ -990,6 +990,34 @@ static int nexus_v1_launcher_saturn_active_capture_frame(
     }
 }
 
+static unsigned int nexus_v1_launcher_saturn_non_title_capture_mask(
+    int save_capture_frame,
+    int champion_capture_frame,
+    int dungeon_capture_frame)
+{
+    unsigned int mask = 0;
+    if (save_capture_frame >= 0) {
+        mask |= 1u;
+    }
+    if (champion_capture_frame >= 0) {
+        mask |= 2u;
+    }
+    if (dungeon_capture_frame >= 0) {
+        mask |= 4u;
+    }
+    return mask;
+}
+
+static int nexus_v1_launcher_capture_mask_count(unsigned int mask)
+{
+    int count = 0;
+    while (mask) {
+        count += (int)(mask & 1u);
+        mask >>= 1;
+    }
+    return count;
+}
+
 const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
     Nexus_V1_StartupRealAssetOwnershipRoute route)
 {
@@ -3695,6 +3723,23 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->runtime_dgn_route_joined &&
         receipt->saturn_dungeon_capture_frame ==
             package->boot_start_ready_frames;
+    receipt->host_saturn_non_title_capture_mask =
+        nexus_v1_launcher_saturn_non_title_capture_mask(
+            receipt->saturn_save_capture_frame,
+            receipt->saturn_champion_capture_frame,
+            receipt->saturn_dungeon_capture_frame);
+    receipt->host_saturn_non_title_capture_count =
+        nexus_v1_launcher_capture_mask_count(
+            receipt->host_saturn_non_title_capture_mask);
+    receipt->host_route_capture_matrix_ready =
+        receipt->host_route_consumes_active_capture_frame &&
+        ((receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+          (receipt->host_saturn_non_title_capture_mask & 1u)) ||
+         (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+          (receipt->host_saturn_non_title_capture_mask & 2u) &&
+          (!receipt->runtime_dgn_handoff_ready ||
+           (receipt->host_route_consumes_dungeon_capture_frame &&
+            (receipt->host_saturn_non_title_capture_mask & 4u)))));
 
     if (!receipt->no_fallback_visuals_enforced ||
         package->blocked_draw_suppressed ||
@@ -3978,6 +4023,12 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.host_route_consumes_active_capture_frame;
     out_receipt->host_route_consumes_dungeon_capture_frame =
         out_receipt->ownership.host_route_consumes_dungeon_capture_frame;
+    out_receipt->host_route_capture_matrix_ready =
+        out_receipt->ownership.host_route_capture_matrix_ready;
+    out_receipt->host_saturn_non_title_capture_count =
+        out_receipt->ownership.host_saturn_non_title_capture_count;
+    out_receipt->host_saturn_non_title_capture_mask =
+        out_receipt->ownership.host_saturn_non_title_capture_mask;
     out_receipt->capture_route = out_receipt->ownership.capture_route;
     out_receipt->ownership_route = out_receipt->ownership.route;
     out_receipt->host_route =

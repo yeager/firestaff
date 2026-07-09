@@ -666,6 +666,9 @@ typedef struct {
     int saturn_active_capture_frame;
     int host_route_consumes_active_capture_frame;
     int host_route_consumes_dungeon_capture_frame;
+    int host_route_capture_matrix_ready;
+    int host_saturn_non_title_capture_count;
+    unsigned int host_saturn_non_title_capture_mask;
     int saturn_save_capture_frame;
     int saturn_champion_capture_frame;
     int saturn_dungeon_capture_frame;
@@ -729,6 +732,9 @@ typedef struct {
     int host_saturn_active_capture_frame;
     int host_route_consumes_active_capture_frame;
     int host_route_consumes_dungeon_capture_frame;
+    int host_route_capture_matrix_ready;
+    int host_saturn_non_title_capture_count;
+    unsigned int host_saturn_non_title_capture_mask;
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupRealAssetOwnershipRoute ownership_route;
     const char *host_route;

@@ -632,6 +632,9 @@ typedef struct {
         int startup_host_saturn_active_capture_frame;
         int startup_host_route_consumes_active_capture_frame;
         int startup_host_route_consumes_dungeon_capture_frame;
+        int startup_host_route_capture_matrix_ready;
+        int startup_host_saturn_non_title_capture_count;
+        unsigned int startup_host_saturn_non_title_capture_mask;
         int startup_title_timing_frame;
         int startup_title_timing_frame_max;
         int startup_title_timing_ready;
