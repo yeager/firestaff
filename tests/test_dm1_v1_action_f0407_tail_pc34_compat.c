@@ -1933,6 +1933,10 @@ static void test_melee_f0231_aftermath_plan(void) {
     in.groupIndex = 4;
     in.creatureIndex = 2;
     in.creatureType = 6;
+    in.targetMapIndex = 3;
+    in.targetMapX = 8;
+    in.targetMapY = 9;
+    in.currentTick = 77u;
     in.creatureAttributes = DM1_SIZE_FULL_SQUARE;
     in.killedCell = EXPLOSION_CELL_CENTERED;
     in.damageOutcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
@@ -1982,6 +1986,18 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 killed-some keeps group linked");
     CHECK_EQ(out.shouldScheduleReaction, 1,
              "F0231 killed-some reaction without fear");
+    CHECK_EQ((int)out.reactionFireAtTick, 78,
+             "F0231 killed-some reaction tick");
+    CHECK_EQ(out.reactionMapIndex, 3,
+             "F0231 killed-some reaction map");
+    CHECK_EQ(out.reactionMapX, 8,
+             "F0231 killed-some reaction x");
+    CHECK_EQ(out.reactionMapY, 9,
+             "F0231 killed-some reaction y");
+    CHECK_EQ(out.reactionGroupIndex, 4,
+             "F0231 killed-some reaction group");
+    CHECK_EQ(out.reactionCreatureType, 6,
+             "F0231 killed-some reaction creature type");
     CHECK_EQ(out.reactionEventKind, DM1_EVENT_REACTION_PARTY_IS_ADJACENT,
              "F0231 reaction event kind");
 
@@ -1990,6 +2006,8 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 fear aftermath builds");
     CHECK_EQ(out.shouldScheduleReaction, 0,
              "F0231 fear suppresses reaction");
+    CHECK_EQ(out.reactionGroupIndex, -1,
+             "F0231 fear clears reaction group");
 
     in.creatureAttributes = 0;
     in.damageOutcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
