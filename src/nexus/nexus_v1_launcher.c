@@ -1953,6 +1953,43 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
     out_receipt->title_route_ready = assets.title_route_ready ? 1 : 0;
     out_receipt->menu_route_ready =
         assets.save_menu_route_ready && assets.champion_menu_route_ready;
+    out_receipt->title_art_loaded = assets.title_surface_loaded ? 1 : 0;
+    out_receipt->warning_art_loaded = assets.warning_surface_loaded ? 1 : 0;
+    out_receipt->startup_surfaces_real_ready =
+        assets.startup_surfaces_expected > 0 &&
+        assets.startup_surfaces_loaded == assets.startup_surfaces_expected &&
+        assets.startup_surfaces_fallback == 0;
+    out_receipt->faces_real_ready =
+        assets.faces_expected > 0 &&
+        assets.faces_loaded == assets.faces_expected &&
+        assets.faces_fallback == 0;
+    out_receipt->full_start_graphics_ready =
+        out_receipt->startup_surfaces_real_ready &&
+        out_receipt->faces_real_ready &&
+        assets.real_menu_surface_route_ready;
+    out_receipt->save_load_menu_route_ready =
+        assets.save_menu_route_ready &&
+        out_receipt->full_start_graphics_ready;
+    out_receipt->startup_ui_route_ready =
+        out_receipt->title_route_ready &&
+        out_receipt->full_start_graphics_ready &&
+        assets.startup_audio_handoff_ready;
+    if (!out_receipt->title_route_ready) {
+        out_receipt->startup_ui_blocker = "title";
+    } else if (!out_receipt->startup_surfaces_real_ready) {
+        out_receipt->startup_ui_blocker = "startup-surfaces";
+    } else if (!out_receipt->faces_real_ready) {
+        out_receipt->startup_ui_blocker = "faces";
+    } else if (!assets.real_menu_surface_route_ready) {
+        out_receipt->startup_ui_blocker =
+            assets.real_menu_surface_blocker
+                ? assets.real_menu_surface_blocker
+                : "menu-bpk";
+    } else if (!assets.startup_audio_handoff_ready) {
+        out_receipt->startup_ui_blocker = "track02-sfx";
+    } else {
+        out_receipt->startup_ui_blocker = "none";
+    }
     out_receipt->audio_ready = assets.startup_audio_handoff_ready ? 1 : 0;
     out_receipt->startup_sfx_status = assets.startup_sfx_status;
     out_receipt->startup_sfx_level_index = assets.startup_sfx_level_index;
@@ -2036,7 +2073,7 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
 
     out_receipt->graphics_ready =
         assets.title_route_ready &&
-        assets.real_menu_surface_route_ready &&
+        out_receipt->full_start_graphics_ready &&
         (!execution || out_receipt->runtime_handoff.render_plan.plan_ready);
     out_receipt->audio_runtime_route_ready =
         out_receipt->audio_ready && out_receipt->first_runtime_route_ready;
