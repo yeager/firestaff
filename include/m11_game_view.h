@@ -884,6 +884,20 @@ int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
     int* outHallOverlayKind,
     int* outRenderCommandCount,
     int* outRuntimeRouteUsesReceipt);
+int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
+    int* outTitleReceiptReady,
+    int* outTitleDrawExecuted,
+    int* outTitleHudExecuted,
+    int* outClosedDoorReceiptReady,
+    int* outClosedDoorDrawExecuted,
+    int* outClosedDoorHudExecuted,
+    int* outUtilityReceiptReady,
+    int* outUtilityDrawExecuted,
+    int* outUtilityHudExecuted,
+    int* outOpeningReceiptReady,
+    int* outOpeningDrawExecuted,
+    int* outConsumedHostViewOnly,
+    int* outSuppressLegacyUtilityFallback);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,

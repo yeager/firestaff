@@ -498,6 +498,66 @@ static void test_dm1_hoc_startup_render_consumer_is_m11_ready(void)
               "M11 runtime front mirror route consumes DM1 HoC receipt");
 }
 
+static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
+{
+    int titleReceiptReady = 0;
+    int titleDrawExecuted = 0;
+    int titleHudExecuted = -1;
+    int closedDoorReceiptReady = 0;
+    int closedDoorDrawExecuted = 0;
+    int closedDoorHudExecuted = 0;
+    int utilityReceiptReady = 0;
+    int utilityDrawExecuted = 0;
+    int utilityHudExecuted = 0;
+    int openingReceiptReady = 0;
+    int openingDrawExecuted = 0;
+    int consumedHostViewOnly = 0;
+    int suppressLegacyUtilityFallback = 0;
+
+    ASSERT_EQ(M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
+                  &titleReceiptReady,
+                  &titleDrawExecuted,
+                  &titleHudExecuted,
+                  &closedDoorReceiptReady,
+                  &closedDoorDrawExecuted,
+                  &closedDoorHudExecuted,
+                  &utilityReceiptReady,
+                  &utilityDrawExecuted,
+                  &utilityHudExecuted,
+                  &openingReceiptReady,
+                  &openingDrawExecuted,
+                  &consumedHostViewOnly,
+                  &suppressLegacyUtilityFallback),
+              1,
+              "M11 exposes CSB startup host-view draw receipt");
+    ASSERT_EQ(titleReceiptReady, 1,
+              "CSB title receipt is ready");
+    ASSERT_EQ(titleDrawExecuted, 1,
+              "CSB title draw executes through host-view receipt");
+    ASSERT_EQ(titleHudExecuted, 0,
+              "CSB title blocks HUD/menu draw while PRESENTS is active");
+    ASSERT_EQ(closedDoorReceiptReady, 1,
+              "CSB closed-door receipt is ready");
+    ASSERT_EQ(closedDoorDrawExecuted, 1,
+              "CSB closed-door draw executes through host-view receipt");
+    ASSERT_EQ(closedDoorHudExecuted, 2,
+              "CSB closed-door HUD/menu executes through receipt");
+    ASSERT_EQ(utilityReceiptReady, 1,
+              "CSB utility receipt is ready");
+    ASSERT_EQ(utilityDrawExecuted, 1,
+              "CSB utility startup draw executes through host-view receipt");
+    ASSERT_EQ(utilityHudExecuted, 1,
+              "CSB utility HUD/menu executes through receipt");
+    ASSERT_EQ(openingReceiptReady, 1,
+              "CSB opening receipt is ready");
+    ASSERT_EQ(openingDrawExecuted, 1,
+              "CSB door-opening draw executes through host-view receipt");
+    ASSERT_EQ(consumedHostViewOnly, 1,
+              "M11 CSB startup draw consumes host-view receipt only");
+    ASSERT_EQ(suppressLegacyUtilityFallback, 1,
+              "CSB receipt suppresses legacy utility fallback");
+}
+
 static void test_candidate_panel_blocks_direct_object_helpers(void)
 {
     M11_GameViewState state;
@@ -1638,6 +1698,7 @@ int main(void)
     test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_uses_dm1_hoc_menu_route_receipt();
     test_dm1_hoc_startup_render_consumer_is_m11_ready();
+    test_csb_startup_host_view_draw_receipt_is_m11_ready();
     test_candidate_panel_blocks_direct_object_helpers();
     test_candidate_panel_blocks_direct_leader_hand_chest_helpers();
     test_candidate_panel_blocks_direct_quickload_only();

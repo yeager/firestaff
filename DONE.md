@@ -62,6 +62,8 @@
 
 - ✅ 2026-07-09 CSB capture-HUD executor retired: utility and closed-door HUD/menu tests now execute host-view HUD draw receipts plus readiness receipts directly instead of the older capture-level HUD draw helper. Verification: CSB startup tests and `git diff --check`.
 
+- ✅ 2026-07-09 pass917 CSB M11 host-view draw consumer: M11 CSB startup rendering now executes the full host-view draw receipt, covering post-FTL title/PRESENTS, utility, closed-door HUD/menu, and door-opening routes. Verification: `test_m11_overlay_command_queue_block`, `test_csb_v1_boot_runtime_handoff`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 M12 visible capture-proof label: start menu now exposes a public per-game capture-proof label and modern game-card progress uses the packaged proof label once launch-ready, so DM1 HoC, CSB title/HUD, DM2 timing, Nexus capture, and Theron Track02 proof are visible instead of hidden behind generic ready text. Verification: `test_m12_all_games_boot_readiness_receipt`, `test_nexus_v1_startup_menu_pc34_compat`, `firestaff_m11_phase_a_probe`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass909 Nexus M11 packaged startup capture: M11 Nexus boot-probe presentation and startup title/warning/save/champion rendering now consume the full-start package receipt directly, including NULL-runtime snapshot derivation and no-fallback blocked captures. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
