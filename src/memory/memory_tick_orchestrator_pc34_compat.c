@@ -6975,6 +6975,12 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     aftermathIn.creatureIndex = creatureIndex;
                     aftermathIn.creatureType = creatureSnapshot.creatureType;
                     aftermathIn.creatureAttributes = creatureSnapshot.attributes;
+                    orch_cmd_attack_target_square_compat(
+                        world, targetDirection,
+                        &aftermathIn.targetMapIndex,
+                        &aftermathIn.targetMapX,
+                        &aftermathIn.targetMapY);
+                    aftermathIn.currentTick = world->gameTick;
                     aftermathIn.killedCell = killedCell;
                     aftermathIn.damageOutcome = applyOutcome;
                     aftermathIn.fallbackCombatOutcome = combatResult.outcome;
@@ -7042,9 +7048,18 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                              aftermathPlan.killNotifyCreatureType);
                     }
                     if (aftermathPlan.shouldScheduleReaction) {
-                        orch_cmd_attack_schedule_f0231_reaction_compat(
-                            world, groupIndex, &creatureSnapshot,
-                            targetDirection, aftermathPlan.outcome);
+                        struct TimelineEvent_Compat reaction;
+                        memset(&reaction, 0, sizeof(reaction));
+                        reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
+                        reaction.fireAtTick = aftermathPlan.reactionFireAtTick;
+                        reaction.mapIndex = aftermathPlan.reactionMapIndex;
+                        reaction.mapX = aftermathPlan.reactionMapX;
+                        reaction.mapY = aftermathPlan.reactionMapY;
+                        reaction.aux0 = aftermathPlan.reactionGroupIndex;
+                        reaction.aux1 = aftermathPlan.reactionCreatureType;
+                        reaction.aux2 = aftermathPlan.reactionEventKind;
+                        (void)F0721_TIMELINE_Schedule_Compat(
+                            &world->timeline, &reaction);
                     }
                     if (resolveRuntimePlan.runtimeResultPlan
                             .shouldEmitDamageDealt) {

@@ -392,6 +392,10 @@ typedef struct {
     int creatureIndex;
     int creatureType;
     int creatureAttributes;
+    int targetMapIndex;
+    int targetMapX;
+    int targetMapY;
+    unsigned int currentTick;
     int killedCell;
     int damageOutcome;
     int fallbackCombatOutcome;
@@ -415,6 +419,12 @@ typedef struct {
     int killNotifyCreatureIndex;
     int killNotifyOutcome;
     int killNotifyCreatureType;
+    unsigned int reactionFireAtTick;
+    int reactionMapIndex;
+    int reactionMapX;
+    int reactionMapY;
+    int reactionGroupIndex;
+    int reactionCreatureType;
 } DM1_MeleeF0231AftermathPlanPc34;
 
 typedef struct {

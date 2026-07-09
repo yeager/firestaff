@@ -4,6 +4,7 @@
 - ✅ 2026-07-09 pass812 DM1 F0231 runtime-result ownership now carries group-damage apply group/creature/damage/outcome facts, so M10 consumes the DM1 receipt instead of reassembling the F0190 apply call.
 - ✅ 2026-07-09 pass813 DM1 F0231 runtime-result ownership now also carries damage-emission champion/group/damage facts, and M10 uses the DM1 receipt for both F0190 apply and EMIT_DAMAGE_DEALT routing.
 - ✅ 2026-07-09 pass814 DM1 F0231 aftermath ownership now carries kill-notify group/creature/outcome/type facts, so M10 emits kill notifications from the DM1 receipt instead of reassembling them.
+- ✅ 2026-07-09 pass815 DM1 F0231 aftermath ownership now carries reaction scheduling tick/map/group/creature facts, so M10 inserts the reaction event from the DM1 receipt.
 
 - ✅ 2026-07-09 Theron SRM envelope startup receipt proof: Theron startup save/resume probe now asserts the decoded SRM envelope kind, so staged gzip SRM data proves the same typed progression handoff used by Continue. Verification: `theron_v1_startup_save_resume_probe`, `theron_v1_startup_save_resume_pc34`, and focused build passed.
 

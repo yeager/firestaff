@@ -849,6 +849,11 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
     out->killNotifyCreatureIndex = -1;
     out->killNotifyOutcome = COMBAT_OUTCOME_INVALID;
     out->killNotifyCreatureType = -1;
+    out->reactionMapIndex = -1;
+    out->reactionMapX = -1;
+    out->reactionMapY = -1;
+    out->reactionGroupIndex = -1;
+    out->reactionCreatureType = -1;
     if (!in) return 0;
 
     out->valid = 1;
@@ -890,6 +895,14 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
     out->shouldScheduleReaction =
         !in->fearTriggered &&
         out->outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    if (out->shouldScheduleReaction && in->groupIndex >= 0) {
+        out->reactionFireAtTick = in->currentTick + 1u;
+        out->reactionMapIndex = in->targetMapIndex;
+        out->reactionMapX = in->targetMapX;
+        out->reactionMapY = in->targetMapY;
+        out->reactionGroupIndex = in->groupIndex;
+        out->reactionCreatureType = in->creatureType;
+    }
     return 1;
 }
 
