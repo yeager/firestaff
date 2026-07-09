@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-09 DM2 runtime/render follow-up: DB0 door records now hand level door-set GDAT panel identity into the render plan. Remaining DM2 work is broader GDAT door masks/ornates, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
+
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
   - 2026-07-09 update: M11 DM1 projectile/explosion sprite selection now uses runtime projectile/explosion lists rather than stale static dungeon C14/C15 refs when rendering HoC/effect squares. Remaining viewport coding work is extending the same receipt ownership to champion mirror/materialized item render routes.
   - 2026-07-09 update: DM1 F0115 thing-layer receipt now separates real floor items from stale C14/C15 projectile/explosion refs. Remaining viewport coding work is wiring the receipt into the HoC runtime render path and replacing residual M11 thing-list filtering.

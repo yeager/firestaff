@@ -83,6 +83,7 @@ typedef struct {
     void *viewport_asset_user;
     uint8_t map_wall_gfx_list[16];
     int map_wall_gfx_count;
+    uint8_t map_door_gfx_list[2];
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -214,6 +215,7 @@ static void dm2_runtime_apply_door_record_metadata(
     int view_dir,
     const uint8_t *wall_gfx_list,
     int wall_gfx_count,
+    const uint8_t *door_gfx_list,
     DM2_ViewSquare *door) {
     int thing;
     int door_thing;
@@ -243,6 +245,9 @@ static void dm2_runtime_apply_door_record_metadata(
     door->door_button_state = (uint8_t)((w2 >> 11) & 1u);
     door->door_record_type = (uint8_t)(w2 & 1u);
     door->door_opening_dir = (uint8_t)((w2 >> 5) & 1u);
+    if (door_gfx_list) {
+        door->door_gfx_index = door_gfx_list[door->door_record_type & 1u];
+    }
     if (!door->door_button &&
         dm2_v1_dungeon_find_text_wall_gfx(dd, (uint16_t)thing,
                                           view_dir, 2, 8,
@@ -283,8 +288,15 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
     if (!rt) return;
     memset(rt->map_wall_gfx_list, 0, sizeof(rt->map_wall_gfx_list));
     rt->map_wall_gfx_count = 0;
+    memset(rt->map_door_gfx_list, 0, sizeof(rt->map_door_gfx_list));
     if (!rt->boot || !rt->boot->dungeon_data) return;
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    if (rt->dungeon_level >= 0 && rt->dungeon_level < dd->level_count) {
+        rt->map_door_gfx_list[0] =
+            (uint8_t)(dd->map_door_set0[rt->dungeon_level] & 0xff);
+        rt->map_door_gfx_list[1] =
+            (uint8_t)(dd->map_door_set1[rt->dungeon_level] & 0xff);
+    }
     count = dm2_v1_dungeon_get_map_wall_gfx_list(
         dd,
         rt->dungeon_level,
@@ -350,7 +362,8 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
             }
             dm2_runtime_apply_door_record_metadata(
                 dd, rt->dungeon_level, map_x, map_y, dir,
-                rt->map_wall_gfx_list, rt->map_wall_gfx_count, door);
+                rt->map_wall_gfx_list, rt->map_wall_gfx_count,
+                rt->map_door_gfx_list, door);
         }
     }
 }

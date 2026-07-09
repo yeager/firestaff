@@ -54,6 +54,7 @@ static uint8_t s_wall_button_pixels[16 * 8];
 static uint8_t s_item_pixels[16 * 8];
 static uint8_t s_projectile_pixels[16 * 8];
 static uint8_t s_hud_portrait_pixels[16 * 8];
+static int s_last_door_panel_index;
 
 #define CHECK(cond, msg) do { \
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
@@ -145,10 +146,12 @@ static int synthetic_viewport_asset_fetch(void *user,
         if (out_stride) *out_stride = 16;
         return 0;
     }
-    if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE &&
-        DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index <
-            (0x100 << DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT)) {
-        if (out_pixels) *out_pixels = s_wall_button_pixels;
+    if (gdat_index <=
+        DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE &&
+        DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE - gdat_index <
+            (0x100 << DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT)) {
+        s_last_door_panel_index = gdat_index;
+        if (out_pixels) *out_pixels = s_door_panel_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
@@ -158,7 +161,17 @@ static int synthetic_viewport_asset_fetch(void *user,
         DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE -
             DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT &&
         DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - gdat_index < 0x04) {
+        s_last_door_panel_index = gdat_index;
         if (out_pixels) *out_pixels = s_door_panel_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE &&
+        DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index <
+            (0x100 << DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT)) {
+        if (out_pixels) *out_pixels = s_wall_button_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
@@ -224,6 +237,7 @@ static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
     put16le(buf + 16, 1);
     desc = buf + header_size;
     put16le(desc + 8, (uint16_t)((1u << 6) | (1u << 11)));
+    put16le(desc + 14, (uint16_t)((3u << 8) | (7u << 12)));
     put16le(buf + column_base, 0);
     put16le(buf + column_base + 2, 0);
     put16le(buf + sft_base, 0x0800);
@@ -900,8 +914,13 @@ static void test_first_tick_after_boot_profile_handoff(void)
                 replacement = NULL;
                 dm2_v1_runtime_set_position(0, 1, 1, 0);
                 dm2_v1_runtime_set_outdoor(0);
+                CHECK(dm2_v1_dungeon_set_tile_raw(
+                          (DM2_V1_DungeonData *)profile.dungeon_data,
+                          0, 1, 0, 4u) == 0,
+                      "runtime DB0 closed door seeds panel GDAT receipt");
                 memset(framebuffer, 0, sizeof(framebuffer));
                 fetch_count = 0;
+                s_last_door_panel_index = 0;
                 dm2_v1_runtime_set_viewport_asset_provider(
                     synthetic_viewport_asset_fetch, &fetch_count);
                 CHECK(dm2_v1_runtime_render_frame(
@@ -912,6 +931,10 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
                       dm2_v1_runtime_last_asset_door_button_count() == 1,
                       "runtime door record drives default button asset draw");
+                CHECK(s_last_door_panel_index ==
+                          dm2_v1_viewport_door_panel_graphic_index_for_record(
+                              DM2_SQ_D0C, 7, 1),
+                      "runtime DB0 door type selects level door-set GDAT panel");
                 CHECK(set_door_state_preserve_tile(
                           (DM2_V1_DungeonData *)profile.dungeon_data,
                           0, 1, 0, 1) == 0 &&
