@@ -277,6 +277,9 @@ static void probe_staged_srm_claims_resume(void) {
               THERON_V1_SRM_PAYLOAD_PROBE_OK);
     check_int("staged payload hits FSTQPRG1",
               snap.srm_payload_hits_fstq_magic, 1);
+    check_int("staged envelope kind PROGRESSION",
+              snap.srm_envelope_kind,
+              THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION);
     check_int("staged progression import ran",
               snap.srm_progress_import_ran, 1);
     check_int("staged progression import OK",
