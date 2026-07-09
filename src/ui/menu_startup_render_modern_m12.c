@@ -1314,15 +1314,20 @@ static void draw_card(M12_ModernCanvas* c,
     /* Game card: status line under title, then version list. */
     int slotIdx = slot_for_game_id(entry->gameId);
     const M12_AssetVersionStatus* status = pick_status(state, slotIdx);
+    M12_StartupBootReadiness boot;
 
     M12_RGB statusColor;
     const char* statusLabel;
-    if (!game_supported(entry->gameId)) {
+    if (M12_StartupMenu_GetBootReadiness(state, slot, &boot) &&
+        boot.handled && boot.fullStartGraphicsReady) {
+        statusColor = COLOR_OK();
+        statusLabel = boot.statusLabel;
+    } else if (!game_supported(entry->gameId)) {
         statusColor = rgb(168, 168, 176);
         statusLabel = slotIdx == 3 ? "PLANNED" : "UNSUPPORTED";
     } else if (entry->available && status && status->matched) {
         statusColor = COLOR_OK();
-        statusLabel = "VERIFIED";
+        statusLabel = M12_StartupMenu_GetEntryBootStatusLabel(state, slot);
     } else if (status) {
         statusColor = COLOR_BAD();
         statusLabel = "DATA MISSING";

@@ -90,6 +90,7 @@ static int render_smoke_nonblank(const M12_StartupMenuState* state, const char* 
 int main(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
+    M12_StartupBootReadiness boot;
     int changed;
     const int gridLeft = 42 + 390 + 44;
     const int cardW = (1920 - gridLeft - 48 - 22 * 2) / 3;
@@ -106,6 +107,15 @@ int main(void) {
     if (!expect(changed == 1, "CSB card direct click should change menu state")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS, "CSB card direct click should enter game options")) return 1;
     if (!expect(state.activatedIndex == 1, "CSB direct click should activate CSB")) return 1;
+    if (!expect(M12_StartupMenu_GetBootReadiness(&state, 1, &boot) == 1,
+                "CSB boot readiness receipt should build")) return 1;
+    if (!expect(boot.fullStartGraphicsReady == 1,
+                "CSB boot readiness should report full startup ready")) return 1;
+    if (!expect(boot.statusLabel && strcmp(boot.statusLabel, "BOOT READY") == 0,
+                "CSB boot status label should name boot readiness")) return 1;
+    if (!expect(boot.detailLabel &&
+                strcmp(boot.detailLabel, "SWSH, TITLE, ENTRANCE, UTILITY") == 0,
+                "CSB boot detail should name startup/menu chain")) return 1;
     if (!render_smoke_nonblank(&state, "CSB options")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
@@ -131,6 +141,12 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS, "CSB version-only fixture enters game options")) return 1;
     if (!expect(state.gameOptions[1].presentationModeIndex == M12_PRESENTATION_V21_UPSCALED,
                 "CSB version-only fixture keeps the V2.1 presentation selection")) return 1;
+    if (!expect(M12_StartupMenu_GetBootReadiness(&state, 1, &boot) == 1,
+                "CSB missing-data boot readiness receipt should build")) return 1;
+    if (!expect(boot.fullStartGraphicsReady == 0,
+                "CSB missing-data boot readiness should not report full startup ready")) return 1;
+    if (!expect(boot.statusLabel && strcmp(boot.statusLabel, "DATA MISSING") == 0,
+                "CSB missing-data status label should stay explicit")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB V2.1 launch click should be handled")) return 1;

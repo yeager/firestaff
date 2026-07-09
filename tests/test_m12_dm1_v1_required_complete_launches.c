@@ -125,6 +125,7 @@ static void seed_dm1_v1_complete_required_state(M12_StartupMenuState* state) {
 static void check_dm1_v1_required_complete_launches(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
+    M12_StartupBootReadiness boot;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
 
@@ -151,6 +152,19 @@ static void check_dm1_v1_required_complete_launches(void) {
      * fixture, and the gate must still let DM1 through. The launch
      * runtime decides how to render title/intro/FTL independently. */
     CHECK(M12_AssetStatus_HasOriginalFileCandidate(&state.assetStatus) == 0);
+    CHECK(M12_StartupMenu_GetBootReadiness(&state, kDm1GameIndex, &boot) == 1);
+    CHECK(boot.handled == 1);
+    CHECK(boot.dataReady == 1);
+    CHECK(boot.versionReady == 1);
+    CHECK(boot.fullStartGraphicsExpected == 1);
+    CHECK(boot.fullStartGraphicsReady == 1);
+    CHECK(boot.startupMenuReady == 1);
+    CHECK(boot.statusLabel && strcmp(boot.statusLabel, "FULL START READY") == 0);
+    CHECK(boot.detailLabel && strcmp(boot.detailLabel, "SWSH, TITLE, ENTRANCE, HOC") == 0);
+    CHECK(strcmp(M12_StartupMenu_GetEntryBootStatusLabel(&state, kDm1GameIndex),
+                 "FULL START READY") == 0);
+    CHECK(strcmp(M12_StartupMenu_GetEntryBootDetailLabel(&state, kDm1GameIndex),
+                 "SWSH, TITLE, ENTRANCE, HOC") == 0);
 
     /* Pressing ACCEPT on the launch row with both required files
      * matched must request a launch and surface the "READY TO LAUNCH"
