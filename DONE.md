@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM2 boot-owned startup view model: DM2 boot now exposes a startup view-model wrapper carrying draw commands, presentation receipt, phase, animation, and title readiness, and M11 consumes that wrapper instead of defining its own DM2 startup model. Verification: clean-worktree `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup host decision receipt: boot action receipts now flatten title-block, utility redraw, entrance redraw, launcher-return, status, route, and selected-row decisions for M11 startup input consumers. Verification: `test_csb_v1_boot_runtime_handoff` 350/350 and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 startup media receipt production handoff: M11 DM1 SWSH/TITLE production rendering now consumes the DM1 full-graphics media receipt for logo waits, C001 PRESENTS/zoom palettes, frame timing, and post-title guard/pad timing. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
