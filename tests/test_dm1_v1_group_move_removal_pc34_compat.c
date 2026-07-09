@@ -262,6 +262,44 @@ static void test_group_teleporter_destination_plan(void) {
     expect_int("teleporter_invalid_target_no_move", plan.shouldTeleport, 0);
 }
 
+static void test_generated_group_placement_plan(void) {
+    M11_GeneratedGroupPlacementPlan plan;
+
+    expect_int("generated_party_map_ok",
+        m11_plan_generated_group_placement_f0183_f0180(
+            2, 2, 7, 8, 4, 11, 0x55, M11_DIRECTION_WEST,
+            3, 16, 100u, &plan), 1);
+    expect_int("generated_party_active", plan.shouldCreateActiveState, 1);
+    expect_int("generated_party_state", plan.activeStateKind, M11_AI_STATE_WANDER);
+    expect_int("generated_party_creature", plan.activeCreatureType, 11);
+    expect_int("generated_party_map", plan.activeMapIndex, 2);
+    expect_int("generated_party_x", plan.activeMapX, 7);
+    expect_int("generated_party_y", plan.activeMapY, 8);
+    expect_int("generated_party_cells", plan.activeCells, 0x55);
+    expect_int("generated_party_dir", plan.activeDirection, M11_DIRECTION_WEST);
+    expect_int("generated_party_target", plan.activeTargetChampionIndex, -1);
+    expect_int("generated_party_seen_x", plan.activeLastSeenPartyMapX, -1);
+    expect_int("generated_party_seen_y", plan.activeLastSeenPartyMapY, -1);
+    expect_int("generated_party_seen_tick", plan.activeLastSeenPartyTick, -1);
+    expect_int("generated_party_reserved", plan.activeReservedGroupIndex, 4);
+    expect_int("generated_party_wander", plan.shouldScheduleWanderEvent, 1);
+    expect_int("generated_party_wander_tick", (int)plan.wanderFireAtTick, 101);
+    expect_int("generated_party_wander_group", plan.wanderGroupIndex, 4);
+    expect_int("generated_party_wander_type", plan.wanderEventType, M11_AI_STATE_WANDER);
+
+    expect_int("generated_other_map_ok",
+        m11_plan_generated_group_placement_f0183_f0180(
+            2, 1, 7, 8, 4, 11, 0x55, M11_DIRECTION_EAST,
+            3, 16, 100u, &plan), 1);
+    expect_int("generated_other_no_active", plan.shouldCreateActiveState, 0);
+    expect_int("generated_other_wander", plan.shouldScheduleWanderEvent, 1);
+
+    expect_int("generated_capacity_blocks",
+        m11_plan_generated_group_placement_f0183_f0180(
+            2, 2, 7, 8, 4, 11, 0x55, M11_DIRECTION_EAST,
+            16, 16, 100u, &plan), 0);
+}
+
 int main(void) {
     test_allowed_group_keeps_move();
     test_fall_killed_group_drops_and_deletes_source();
@@ -270,6 +308,7 @@ int main(void) {
     test_ordinary_group_move_plan();
     test_pit_and_chaos_subplans();
     test_group_teleporter_destination_plan();
+    test_generated_group_placement_plan();
     test_source_evidence();
 
     if (g_failed) return 1;

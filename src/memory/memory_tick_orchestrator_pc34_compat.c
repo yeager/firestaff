@@ -5785,30 +5785,36 @@ static int orch_add_generated_group_active_state_compat(
     int mapY)
 {
     struct CreatureAIState_Compat* ai;
+    M11_GeneratedGroupPlacementPlan plan;
     if (!world || !group) return 0;
-    if (mapIndex != world->partyMapIndex) return 1;
-    if (world->creatureAICount < 0 ||
-        world->creatureAICount >= GAMEWORLD_CREATURE_AI_CAPACITY) {
+    memset(&plan, 0, sizeof(plan));
+    if (!m11_plan_generated_group_placement_f0183_f0180(
+            world->partyMapIndex, mapIndex, mapX, mapY, groupIndex,
+            group->creatureType, group->cells, group->direction,
+            world->creatureAICount, GAMEWORLD_CREATURE_AI_CAPACITY,
+            world->gameTick, &plan) ||
+        !plan.valid) {
         return 0;
     }
+    if (!plan.shouldCreateActiveState) return 1;
 
     /* ReDMCSB GROUP.C:414-447/F0183 creates ACTIVE_GROUP state for a
      * group that arrives on the party map.  Phase 20 stores the closest
      * persistent active-group analogue in creatureAI[]. */
     ai = &world->creatureAI[world->creatureAICount++];
     memset(ai, 0, sizeof(*ai));
-    ai->stateKind = AI_STATE_WANDER;
-    ai->creatureType = group->creatureType;
-    ai->groupMapIndex = mapIndex;
-    ai->groupMapX = mapX;
-    ai->groupMapY = mapY;
-    ai->groupCells = group->cells;
-    ai->groupDirection = group->direction;
-    ai->targetChampionIndex = -1;
-    ai->lastSeenPartyMapX = -1;
-    ai->lastSeenPartyMapY = -1;
-    ai->lastSeenPartyTick = -1;
-    ai->reserved0 = groupIndex;
+    ai->stateKind = plan.activeStateKind;
+    ai->creatureType = plan.activeCreatureType;
+    ai->groupMapIndex = plan.activeMapIndex;
+    ai->groupMapX = plan.activeMapX;
+    ai->groupMapY = plan.activeMapY;
+    ai->groupCells = plan.activeCells;
+    ai->groupDirection = plan.activeDirection;
+    ai->targetChampionIndex = plan.activeTargetChampionIndex;
+    ai->lastSeenPartyMapX = plan.activeLastSeenPartyMapX;
+    ai->lastSeenPartyMapY = plan.activeLastSeenPartyMapY;
+    ai->lastSeenPartyTick = plan.activeLastSeenPartyTick;
+    ai->reserved0 = plan.activeReservedGroupIndex;
     return 1;
 }
 
@@ -5821,19 +5827,29 @@ static void orch_schedule_generated_group_wandering_event_compat(
     int mapY)
 {
     struct TimelineEvent_Compat wander;
+    M11_GeneratedGroupPlacementPlan plan;
     if (!world || !group) return;
 
     /* ReDMCSB GROUP.C:311-338/F0180: newly placed groups start
      * wandering by scheduling C37 for game time +1 on their square. */
+    memset(&plan, 0, sizeof(plan));
+    if (!m11_plan_generated_group_placement_f0183_f0180(
+            world->partyMapIndex, mapIndex, mapX, mapY, groupIndex,
+            group->creatureType, group->cells, group->direction,
+            -1, 0,
+            world->gameTick, &plan) ||
+        !plan.valid || !plan.shouldScheduleWanderEvent) {
+        return;
+    }
     memset(&wander, 0, sizeof(wander));
     wander.kind = TIMELINE_EVENT_CREATURE_TICK;
-    wander.fireAtTick = world->gameTick + 1u;
-    wander.mapIndex = mapIndex;
-    wander.mapX = mapX;
-    wander.mapY = mapY;
-    wander.aux0 = groupIndex;
-    wander.aux1 = group->creatureType;
-    wander.aux2 = AI_STATE_WANDER;
+    wander.fireAtTick = plan.wanderFireAtTick;
+    wander.mapIndex = plan.wanderMapIndex;
+    wander.mapX = plan.wanderMapX;
+    wander.mapY = plan.wanderMapY;
+    wander.aux0 = plan.wanderGroupIndex;
+    wander.aux1 = plan.wanderCreatureType;
+    wander.aux2 = plan.wanderEventType;
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander);
 }
 

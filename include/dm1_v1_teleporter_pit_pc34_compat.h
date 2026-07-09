@@ -57,6 +57,8 @@ extern "C" {
 #define M11_DIRECTION_SOUTH                         2
 #define M11_DIRECTION_WEST                          3
 
+#define M11_AI_STATE_WANDER                         1
+
 typedef struct {
     int x;
     int y;
@@ -131,6 +133,31 @@ typedef struct {
     int targetMapX;
     int targetMapY;
 } M11_GroupTeleporterDestinationPlan;
+
+typedef struct {
+    int valid;
+    int shouldCreateActiveState;
+    int activeStateKind;
+    int activeCreatureType;
+    int activeMapIndex;
+    int activeMapX;
+    int activeMapY;
+    int activeCells;
+    int activeDirection;
+    int activeTargetChampionIndex;
+    int activeLastSeenPartyMapX;
+    int activeLastSeenPartyMapY;
+    int activeLastSeenPartyTick;
+    int activeReservedGroupIndex;
+    int shouldScheduleWanderEvent;
+    uint32_t wanderFireAtTick;
+    int wanderMapIndex;
+    int wanderMapX;
+    int wanderMapY;
+    int wanderGroupIndex;
+    int wanderCreatureType;
+    int wanderEventType;
+} M11_GeneratedGroupPlacementPlan;
 
 typedef struct {
     int valid;
@@ -212,6 +239,19 @@ int  m11_plan_group_teleporter_destination_f0267(
         int sourceMapY,
         int mapCount,
         M11_GroupTeleporterDestinationPlan* outPlan);
+int  m11_plan_generated_group_placement_f0183_f0180(
+        int partyMapIndex,
+        int mapIndex,
+        int mapX,
+        int mapY,
+        int groupIndex,
+        int creatureType,
+        int groupCells,
+        int groupDirection,
+        int activeGroupCount,
+        int activeGroupCapacity,
+        uint32_t currentTick,
+        M11_GeneratedGroupPlacementPlan* outPlan);
 int  m11_plan_lord_chaos_adjacent_retry_f0252(
         int creatureType,
         int randomGate,
