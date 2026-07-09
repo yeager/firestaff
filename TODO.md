@@ -1271,6 +1271,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### Nexus V1
 
+- 🔧 2026-07-09 Nexus MENU.BPK follow-up: engine init now exposes a hash-resolved runtime PRS3 decode receipt for startup/renderer handoff. Remaining work is the real PRS3 decoder and decoded surface upload into the Nexus menu/render path.
 - 🔧 Runtime handoff/playability proof: V1 phases 0-7 are implemented/source-locked; remaining work is launcher/game-loop handoff and real Saturn asset-path proof.
 - 🔧 Mechanics parity hardening: movement, click routes, item usage, doors, pits, teleporters, triggers, combat, AI, and sound are implemented; remaining work is broader runtime/probe coverage beyond compile/save-load gates.
 - 🔧 DMDF embedded BITMAP/palette/string runtime handoff remains open after the parser-level bounds gates: `nexus_v1_dmdf_parse_bitmap_block`, `nexus_v1_dmdf_scan_embedded_blocks`, and `nexus_v1_dmdf_estimate_raw_texture_payload` now cover bounded synthetic BITM/PLTB/STRB discovery plus optional real `.MNS` scan receipts (see DONE.md 2026-06-29 entry), but real VDP1 BITMAP decompression, per-cell palette/CLUT lookup from real `.MNS` payloads, texture upload, and runtime render binding are still needed before Nexus creature textures can be shown.

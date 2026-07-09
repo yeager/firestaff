@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB startup HUD/menu state receipt: closed-door startup route receipts now carry entrance and utility HUD/menu state, including selected command, resume availability, utility row count, preview flag, and prompt text. Verification: `csb_v1_boot_runtime_handoff`, `csb_v1_startup_entrance_pointer_pc34_compat`, `csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
+
+- ✅ 2026-07-09 Nexus MENU.BPK engine decode receipt: Nexus engine init now reads hash-resolved `MENU.BPK`, records the bounded PRS3 decode-status receipt, and exposes it through Nexus-owned API for startup/renderer handoff. Verification: `test_nexus_v1_boot_file_hash_scan`, Nexus BPK focused CTests, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron runtime route receipt: forcefield/runtime entry results and state receipts now carry an explicit route enum for fallback room, semantic Track02 handoff, or verified Track02 fallback-blocked failure. Verification: `firestaff_theron_v1_startup_flow_probe` 609/609 and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0215 group-slot materialization receipt: thrown sharp weapons retained by creatures now use a DM1-owned chain receipt like square materialization, so M10 applies empty/append/overflow cases from one receipt path after F0190/F0231/F0267/F0328/F0811 projectile hits. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.

@@ -85,6 +85,8 @@ int main(void) {
     char dst[FSP_PATH_MAX];
     char dm_bin_src[FSP_PATH_MAX];
     char dm_bin_dst[FSP_PATH_MAX];
+    char menu_bpk_src[FSP_PATH_MAX];
+    char menu_bpk_dst[FSP_PATH_MAX];
     char profile_root[FSP_PATH_MAX];
     char profile_nexus_dir[FSP_PATH_MAX];
     char profile_dm_bin_dst[FSP_PATH_MAX];
@@ -97,8 +99,10 @@ int main(void) {
     Nexus_V1_GameState game;
     Nexus_V1_BootProfile profile;
     Nexus_V1_Diagnostic diags[4];
+    Nexus_V1_BpkRuntimeDecodeReceipt receipt;
     uint8_t* data;
     int size = 0;
+    int menu_bpk_copied = 0;
 
     if (!home || !home[0]) {
         puts("SKIP: HOME unset");
@@ -127,11 +131,33 @@ int main(void) {
         local_file_exists(dm_bin_src) &&
         FSP_JoinPath(dm_bin_dst, sizeof(dm_bin_dst), root, "renamed-saturn-data.payload") &&
         copy_file_bytes(dm_bin_src, dm_bin_dst)) {
+        if (FSP_JoinPath(menu_bpk_src, sizeof(menu_bpk_src), home, ".firestaff/data/nexus/MENU.BPK") &&
+            local_file_exists(menu_bpk_src) &&
+            FSP_JoinPath(menu_bpk_dst, sizeof(menu_bpk_dst), root, "renamed-menu-bpk.payload") &&
+            copy_file_bytes(menu_bpk_src, menu_bpk_dst)) {
+            menu_bpk_copied = 1;
+        }
+
         memset(&engine, 0, sizeof(engine));
         check_int(nexus_v1_init(&engine, root) == 0,
                   "Nexus init accepts renamed DM.BIN marker by hash");
         check_int(engine.source == NEXUS_SRC_EXTRACTED,
                   "renamed DM.BIN selects extracted Nexus source");
+        if (menu_bpk_copied) {
+            memset(&receipt, 0, sizeof(receipt));
+            check_int(nexus_v1_menu_bpk_decode_receipt_ready(&engine) == 1,
+                      "Nexus init records MENU.BPK decode receipt");
+            check_int(nexus_v1_menu_bpk_decode_receipt(&engine, &receipt) == 0,
+                      "Nexus engine exposes MENU.BPK decode receipt");
+            check_int(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
+                      "Nexus MENU.BPK runtime route blocks on PRS3 decoder");
+            check_int(receipt.blocked_prs3_surfaces == 162U,
+                      "Nexus MENU.BPK receipt preserves PRS3 surface blocker count");
+            check_int(receipt.first_blocked_entry == 1U,
+                      "Nexus MENU.BPK receipt exposes first blocked surface entry");
+        } else {
+            puts("SKIP: local Nexus MENU.BPK not present for engine decode receipt");
+        }
         nexus_v1_shutdown(&engine);
 
         check_int(FSP_JoinPath(profile_root, sizeof(profile_root), root, "profile-root") &&
