@@ -19,7 +19,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_PENDING_PANEL_SLOT2_THING_PC34_COMPAT 0x0102
 #define DM1_V1_MIRROR_CANDIDATE_CHEST_CLOSE_PENDING_PANEL_SLOT3_THING_PC34_COMPAT 0x0103
 
-typedef struct Dm1V1MirrorCandidateChestClosePendingPanelEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateChestClosePendingPanelEvidencePc34Compat {
     const char *commandInventoryGuardAnchor;
     const char *commandSlotDispatchAnchor;
     const char *championSlotBoxAnchor;
@@ -28,9 +28,9 @@ typedef struct Dm1V1MirrorCandidateChestClosePendingPanelEvidencePc34Compat {
     const char *reviveCancelAnchor;
     const char *contractScope;
     const char *nonOverlapNote;
-} Dm1V1MirrorCandidateChestClosePendingPanelEvidencePc34Compat;
+} DM1_V1_MirrorCandidateChestClosePendingPanelEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat {
     int panelContent;
     int c040PanelOpen;
     unsigned int candidateChampionOrdinal;
@@ -52,10 +52,10 @@ typedef struct Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat {
     int chestSlotClearCount;
     int chestFirstSlotWriteCount;
     int chestRelinkCount;
-} Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat;
+} DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat {
-    const Dm1V1MirrorCandidateChestClosePendingPanelEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat {
+    const DM1_V1_MirrorCandidateChestClosePendingPanelEvidencePc34Compat *evidence;
     int command;
     int requestedChestSlotIndex;
     int accepted;
@@ -119,25 +119,32 @@ typedef struct Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat {
     int inventoryPreserved;
     int noChestCloseSideEffects;
     int closeRepackedNonEmptySlots;
-} Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat;
+} DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateChestClosePendingPanelEvidencePc34Compat
+    Dm1V1MirrorCandidateChestClosePendingPanelEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat
+    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat;
+typedef DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat
+    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat;
 
 void DM1_V1_MirrorCandidateChestClosePendingPanel_InitPc34Compat(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state);
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateChestClosePendingPanel_AttemptInventoryClosePc34Compat(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateChestClosePendingPanel_SwapChestSlotPc34Compat(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
     int chestSlotIndex,
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateChestClosePendingPanel_CancelC040Pc34Compat(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateChestClosePendingPanelEvidencePc34Compat *
+const DM1_V1_MirrorCandidateChestClosePendingPanelEvidencePc34Compat *
 DM1_V1_MirrorCandidateChestClosePendingPanel_EvidencePc34Compat(void);
 
 int dm1_v1_mirror_candidate_chest_close_pending_panel_run(

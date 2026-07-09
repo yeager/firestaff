@@ -17,7 +17,7 @@ static int gPasses;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateOpenThenReselectEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateOpenThenReselect_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,
@@ -115,7 +115,7 @@ static void test_source_lock_metadata(void)
 
 static void test_init_contract_state(void)
 {
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat state;
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat state;
 
     DM1_V1_MirrorCandidateOpenThenReselect_InitPc34Compat(&state);
 
@@ -172,7 +172,7 @@ static void test_init_contract_state(void)
 
 static void test_manual_deadzone_and_no_pending_paths(void)
 {
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat state;
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat state;
     int changed;
     int rejected;
 
@@ -212,9 +212,9 @@ static void test_manual_deadzone_and_no_pending_paths(void)
 
 static void test_open_then_reselect_contract(void)
 {
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat state;
-    Dm1V1MirrorCandidateOpenThenReselectResultPc34Compat result;
-    const Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat state;
+    DM1_V1_MirrorCandidateOpenThenReselectResultPc34Compat result;
+    const DM1_V1_MirrorCandidateOpenThenReselectEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateOpenThenReselect_EvidencePc34Compat();
     int ok;
 

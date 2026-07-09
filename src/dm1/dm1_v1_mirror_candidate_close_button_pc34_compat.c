@@ -41,7 +41,7 @@ static const char s_source_evidence[] =
     "lines 1619-1635 blits C040 to the C101 panel and PANEL.C F0347 "
     "lines 1654-1656 selects that panel while G0299 is set.";
 
-const Dm1V1MirrorCandidateCloseButtonSpecPc34Compat
+const DM1_V1_MirrorCandidateCloseButtonSpecTypePc34Compat
     DM1_V1_MirrorCandidateCloseButtonSpecPc34Compat = {
         "dm1_v1_mirror_candidate_close_button_pc34_compat",
         kSourceC040PanelGraphic,
@@ -59,7 +59,7 @@ static int valid_party_index(int index)
 }
 
 static int portrait_index_for_front_d1c(
-    const Dm1V1MirrorCandidateCloseButtonStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateCloseButtonStatePc34Compat *state)
 {
     int index;
 
@@ -76,7 +76,7 @@ static int portrait_index_for_front_d1c(
 }
 
 void dm1_v1_mirror_candidate_close_button_init_pc34(
-    Dm1V1MirrorCandidateCloseButtonStatePc34Compat *state)
+    DM1_V1_MirrorCandidateCloseButtonStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -113,9 +113,9 @@ void dm1_v1_mirror_candidate_close_button_init_pc34(
 }
 
 static void result_init(
-    const Dm1V1MirrorCandidateCloseButtonStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateCloseButtonStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateCloseButtonResultPc34Compat *result)
+    DM1_V1_MirrorCandidateCloseButtonResultPc34Compat *result)
 {
     if (!result) {
         return;
@@ -165,9 +165,9 @@ static void result_init(
 }
 
 int dm1_v1_mirror_candidate_close_button_pc34(
-    Dm1V1MirrorCandidateCloseButtonStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCloseButtonStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateCloseButtonResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateCloseButtonResultPc34Compat *outResult)
 {
     result_init(state, command, outResult);
     if (!state || !outResult || !state->active) {
@@ -229,7 +229,7 @@ int dm1_v1_mirror_candidate_close_button_pc34(
     return 1;
 }
 
-const Dm1V1MirrorCandidateCloseButtonSpecPc34Compat *
+const DM1_V1_MirrorCandidateCloseButtonSpecTypePc34Compat *
 dm1_v1_mirror_candidate_close_button_spec_pc34(void)
 {
     return &DM1_V1_MirrorCandidateCloseButtonSpecPc34Compat;

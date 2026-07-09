@@ -28,7 +28,7 @@ enum {
     kChampionBSlotFingerprint = 0xB159u
 };
 
-static const Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat
+static const DM1_V1_MirrorCandidateOpenThenReselectEvidencePc34Compat
     s_evidence = {
         1,
         "COMMAND.C:484-488 G0455 maps C159/C160 champion-name rows to "
@@ -64,7 +64,7 @@ static int valid_champion_index(int championIndex)
 }
 
 static unsigned int champion_ordinal(
-    const Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state,
     int championIndex)
 {
     if (!state || !valid_champion_index(championIndex) ||
@@ -81,7 +81,7 @@ static int c159_maps_to_champion_command(int championIndex)
 }
 
 void DM1_V1_MirrorCandidateOpenThenReselect_InitPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state)
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -110,7 +110,7 @@ void DM1_V1_MirrorCandidateOpenThenReselect_InitPc34Compat(
 }
 
 static void block_guarded_inputs(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state)
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state)
 {
     if (state->g0299CandidateChampionOrdinal == 0u) {
         return;
@@ -124,7 +124,7 @@ static void block_guarded_inputs(
 }
 
 static void close_panel_for_reopen(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state)
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state)
 {
     if (!state->c040PanelOpen) {
         return;
@@ -143,7 +143,7 @@ static void close_panel_for_reopen(
 }
 
 int DM1_V1_MirrorCandidateOpenThenReselect_OpenCandidatePc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state,
     int championIndex)
 {
     unsigned int ordinal;
@@ -187,7 +187,7 @@ int DM1_V1_MirrorCandidateOpenThenReselect_OpenCandidatePc34Compat(
 }
 
 int DM1_V1_MirrorCandidateOpenThenReselect_SelectChampionPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state,
     int championIndex)
 {
     unsigned int handBefore;
@@ -217,7 +217,7 @@ int DM1_V1_MirrorCandidateOpenThenReselect_SelectChampionPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateOpenThenReselect_CancelPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state)
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state)
 {
     if (!state || !state->contractOnly || !state->c040PanelOpen ||
         state->g0299CandidateChampionOrdinal == 0u) {
@@ -234,7 +234,7 @@ int DM1_V1_MirrorCandidateOpenThenReselect_CancelPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateOpenThenReselect_ClickResurrectPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state)
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state)
 {
     if (!state || !state->contractOnly || !state->c040PanelOpen ||
         state->g0299CandidateChampionOrdinal == 0u) {
@@ -247,8 +247,8 @@ int DM1_V1_MirrorCandidateOpenThenReselect_ClickResurrectPc34Compat(
 }
 
 static void capture_before(
-    const Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state,
-    Dm1V1MirrorCandidateOpenThenReselectResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOpenThenReselectResultPc34Compat *result)
 {
     memset(result, 0, sizeof(*result));
     result->evidence = &s_evidence;
@@ -267,8 +267,8 @@ static void capture_before(
 }
 
 static void finish_result(
-    const Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state,
-    Dm1V1MirrorCandidateOpenThenReselectResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOpenThenReselectResultPc34Compat *result)
 {
     result->leaderHandAfter = state->leaderHandThing;
     result->aSlotAfterReopen = state->panelSlotFingerprint;
@@ -331,8 +331,8 @@ static void finish_result(
 }
 
 int DM1_V1_MirrorCandidateOpenThenReselect_RunPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state,
-    Dm1V1MirrorCandidateOpenThenReselectResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOpenThenReselectResultPc34Compat *outResult)
 {
     unsigned int aSlot;
     unsigned int bSlot;
@@ -462,7 +462,7 @@ int DM1_V1_MirrorCandidateOpenThenReselect_RunPc34Compat(
     return outResult->ok;
 }
 
-const Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat *
+const DM1_V1_MirrorCandidateOpenThenReselectEvidencePc34Compat *
 DM1_V1_MirrorCandidateOpenThenReselect_EvidencePc34Compat(void)
 {
     return &s_evidence;

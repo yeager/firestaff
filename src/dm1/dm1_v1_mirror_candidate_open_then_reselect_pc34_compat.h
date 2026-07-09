@@ -15,7 +15,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_OPEN_THEN_RESELECT_C040_GRAPHIC_PC34_COMPAT 40
 #define DM1_V1_MIRROR_CANDIDATE_OPEN_THEN_RESELECT_M568_PANEL_PC34_COMPAT 568
 
-typedef struct Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateOpenThenReselectEvidencePc34Compat {
     int contractOnly;
     const char *commandNameRowAnchor;
     const char *commandF0359DispatchAnchor;
@@ -28,18 +28,18 @@ typedef struct Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat {
     const char *commandGuardAnchor;
     const char *nonOverlapNote;
     const char *contractScope;
-} Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat;
+} DM1_V1_MirrorCandidateOpenThenReselectEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateOpenThenReselectChampionPc34Compat {
+typedef struct DM1_V1_MirrorCandidateOpenThenReselectChampionPc34Compat {
     unsigned int championOrdinal;
     unsigned int slotFingerprint;
     int present;
     int redrawGeneration;
     int candidateOpenCount;
     int cancelCount;
-} Dm1V1MirrorCandidateOpenThenReselectChampionPc34Compat;
+} DM1_V1_MirrorCandidateOpenThenReselectChampionPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat {
     int contractOnly;
     int partyChampionCount;
     int selectedChampionIndex;
@@ -73,12 +73,12 @@ typedef struct Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat {
     int lastRedrawChampionIndex;
     int lastRedrawGeneration;
     int bRedrawLeakIntoA;
-    Dm1V1MirrorCandidateOpenThenReselectChampionPc34Compat champions
+    DM1_V1_MirrorCandidateOpenThenReselectChampionPc34Compat champions
         [DM1_V1_MIRROR_CANDIDATE_OPEN_THEN_RESELECT_CHAMPION_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat;
+} DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateOpenThenReselectResultPc34Compat {
-    const Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateOpenThenReselectResultPc34Compat {
+    const DM1_V1_MirrorCandidateOpenThenReselectEvidencePc34Compat *evidence;
     int ok;
     int championAIndex;
     int championBIndex;
@@ -127,30 +127,39 @@ typedef struct Dm1V1MirrorCandidateOpenThenReselectResultPc34Compat {
     int blockedSpellRuneCountAfter;
     int blockedActionAreaCountAfter;
     int blockedSaveCountAfter;
-} Dm1V1MirrorCandidateOpenThenReselectResultPc34Compat;
+} DM1_V1_MirrorCandidateOpenThenReselectResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateOpenThenReselectEvidencePc34Compat
+    Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateOpenThenReselectChampionPc34Compat
+    Dm1V1MirrorCandidateOpenThenReselectChampionPc34Compat;
+typedef DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat
+    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat;
+typedef DM1_V1_MirrorCandidateOpenThenReselectResultPc34Compat
+    Dm1V1MirrorCandidateOpenThenReselectResultPc34Compat;
 
 void DM1_V1_MirrorCandidateOpenThenReselect_InitPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state);
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateOpenThenReselect_OpenCandidatePc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state,
     int championIndex);
 
 int DM1_V1_MirrorCandidateOpenThenReselect_SelectChampionPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state,
     int championIndex);
 
 int DM1_V1_MirrorCandidateOpenThenReselect_CancelPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state);
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateOpenThenReselect_ClickResurrectPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state);
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateOpenThenReselect_RunPc34Compat(
-    Dm1V1MirrorCandidateOpenThenReselectStatePc34Compat *state,
-    Dm1V1MirrorCandidateOpenThenReselectResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateOpenThenReselectStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOpenThenReselectResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateOpenThenReselectEvidencePc34Compat *
+const DM1_V1_MirrorCandidateOpenThenReselectEvidencePc34Compat *
 DM1_V1_MirrorCandidateOpenThenReselect_EvidencePc34Compat(void);
 
 #ifdef __cplusplus

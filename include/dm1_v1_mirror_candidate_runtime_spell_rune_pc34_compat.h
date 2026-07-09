@@ -12,16 +12,16 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_RUNTIME_SPELL_RUNE_C100_PC34_COMPAT 100
 #define DM1_V1_MIRROR_CANDIDATE_RUNTIME_SPELL_RUNE_C107_PC34_COMPAT 107
 
-typedef struct Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat {
     unsigned int candidateChampionOrdinal;
     int partyChampionCount;
     int magicCasterChampionIndex;
     struct Dm1V1InputCommandQueuePc34Compat queue;
     DM1_SpellCastingState spellState;
     DM1_ChampionSpellStats casterStats;
-} Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat;
+} DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat {
     unsigned int candidateChampionOrdinalBefore;
     unsigned int candidateChampionOrdinalAfter;
     int commandQueued;
@@ -42,23 +42,28 @@ typedef struct Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat {
     int manaAfter;
     char symbolsBefore[5];
     char symbolsAfter[5];
-} Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat;
+} DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat
+    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat;
+typedef DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat
+    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat;
 
 void DM1_V1_MirrorCandidateRuntimeSpellRune_InitPc34Compat(
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state);
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state);
 
 void DM1_V1_MirrorCandidateRuntimeSpellRune_ClearCandidatePc34Compat(
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state);
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateRuntimeSpellRune_ClickSpellAreaPc34Compat(
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
     int x,
     int y,
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateRuntimeSpellRune_CancelPc34Compat(
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult);
 
 const char *DM1_V1_MirrorCandidateRuntimeSpellRune_SourceEvidencePc34Compat(void);
 

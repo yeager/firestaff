@@ -17,8 +17,8 @@ static int gPasses;
 
 static void test_candidate_blocks_spell_rune_dispatch(void)
 {
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat blocked;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat blocked;
 
     DM1_V1_MirrorCandidateRuntimeSpellRune_InitPc34Compat(&state);
     (void)DM1_V1_MirrorCandidateRuntimeSpellRune_ClickSpellAreaPc34Compat(
@@ -47,9 +47,9 @@ static void test_candidate_blocks_spell_rune_dispatch(void)
 
 static void test_cleared_candidate_allows_same_spell_rune_dispatch(void)
 {
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat blocked;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat allowed;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat blocked;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat allowed;
 
     DM1_V1_MirrorCandidateRuntimeSpellRune_InitPc34Compat(&state);
     (void)DM1_V1_MirrorCandidateRuntimeSpellRune_ClickSpellAreaPc34Compat(
@@ -85,10 +85,10 @@ static void test_cleared_candidate_allows_same_spell_rune_dispatch(void)
 
 static void test_recant_deletes_last_rune_without_refunding_mana(void)
 {
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat addPower;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat addElement;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat recant;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat addPower;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat addElement;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat recant;
 
     DM1_V1_MirrorCandidateRuntimeSpellRune_InitPc34Compat(&state);
     DM1_V1_MirrorCandidateRuntimeSpellRune_ClearCandidatePc34Compat(&state);
@@ -129,8 +129,8 @@ static void test_recant_deletes_last_rune_without_refunding_mana(void)
 
 static void test_candidate_blocks_recant_dispatch(void)
 {
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat blocked;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat blocked;
 
     DM1_V1_MirrorCandidateRuntimeSpellRune_InitPc34Compat(&state);
     state.spellState.input[0].symbolStep = 1;
@@ -155,10 +155,10 @@ static void test_candidate_blocks_recant_dispatch(void)
 
 static void test_cancel_clears_spell_input_without_refunding_mana(void)
 {
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat addPower;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat addElement;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat cancel;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat addPower;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat addElement;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat cancel;
 
     DM1_V1_MirrorCandidateRuntimeSpellRune_InitPc34Compat(&state);
     DM1_V1_MirrorCandidateRuntimeSpellRune_ClearCandidatePc34Compat(&state);
@@ -183,8 +183,8 @@ static void test_cancel_clears_spell_input_without_refunding_mana(void)
 
 static void test_missing_caster_still_does_not_dispatch(void)
 {
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat result;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat result;
 
     DM1_V1_MirrorCandidateRuntimeSpellRune_InitPc34Compat(&state);
     DM1_V1_MirrorCandidateRuntimeSpellRune_ClearCandidatePc34Compat(&state);
@@ -235,9 +235,9 @@ static void test_source_evidence_mentions_runtime_anchors(void)
 
 int main(void)
 {
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat blocked;
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat allowed;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat state;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat blocked;
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat allowed;
 
     test_candidate_blocks_spell_rune_dispatch();
     test_cleared_candidate_allows_same_spell_rune_dispatch();
