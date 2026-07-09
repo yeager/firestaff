@@ -145,6 +145,39 @@ static void theron_v1_startup_media_record_bitmap_route(
     *checksum ^= sample->checksum;
 }
 
+static void theron_v1_startup_media_record_atlas_route(
+    Theron_StartupMedia *media,
+    const Theron_Track02StartupBitmapAtlasRoute *route) {
+    size_t *tile_count = NULL;
+    uint16_t *width = NULL;
+
+    if (!media || !route) {
+        return;
+    }
+    switch (route->route_bit) {
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE:
+        tile_count = &media->startup_bitmap_title_atlas_tile_count;
+        width = &media->startup_bitmap_title_atlas_width;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE:
+        tile_count = &media->startup_bitmap_stage_atlas_tile_count;
+        width = &media->startup_bitmap_stage_atlas_width;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM:
+        tile_count = &media->startup_bitmap_soul_room_atlas_tile_count;
+        width = &media->startup_bitmap_soul_room_atlas_width;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD:
+        tile_count = &media->startup_bitmap_forcefield_atlas_tile_count;
+        width = &media->startup_bitmap_forcefield_atlas_width;
+        break;
+    default:
+        return;
+    }
+    *tile_count = route->tile_count;
+    *width = route->width;
+}
+
 static void theron_v1_startup_media_capture_bitmaps(
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
@@ -191,6 +224,10 @@ static void theron_v1_startup_media_capture_bitmaps(
             atlas.total_nonzero_pixel_count;
         media->startup_bitmap_atlas_checksum = atlas.checksum;
         media->startup_bitmap_atlas = atlas;
+        for (i = 0u; i < atlas.route_count; ++i) {
+            theron_v1_startup_media_record_atlas_route(media,
+                                                       &atlas.routes[i]);
+        }
     }
 }
 
@@ -310,6 +347,22 @@ void theron_v1_startup_media_capture_track02_state_receipt(
         media.startup_bitmap_soul_room_checksum;
     out_receipt->startup_bitmap_forcefield_checksum =
         media.startup_bitmap_forcefield_checksum;
+    out_receipt->startup_bitmap_title_atlas_tile_count =
+        media.startup_bitmap_title_atlas_tile_count;
+    out_receipt->startup_bitmap_stage_atlas_tile_count =
+        media.startup_bitmap_stage_atlas_tile_count;
+    out_receipt->startup_bitmap_soul_room_atlas_tile_count =
+        media.startup_bitmap_soul_room_atlas_tile_count;
+    out_receipt->startup_bitmap_forcefield_atlas_tile_count =
+        media.startup_bitmap_forcefield_atlas_tile_count;
+    out_receipt->startup_bitmap_title_atlas_width =
+        media.startup_bitmap_title_atlas_width;
+    out_receipt->startup_bitmap_stage_atlas_width =
+        media.startup_bitmap_stage_atlas_width;
+    out_receipt->startup_bitmap_soul_room_atlas_width =
+        media.startup_bitmap_soul_room_atlas_width;
+    out_receipt->startup_bitmap_forcefield_atlas_width =
+        media.startup_bitmap_forcefield_atlas_width;
     out_receipt->startup_roster_name_status =
         media.startup_roster_name_status;
     out_receipt->startup_text_prompt_status =
@@ -358,7 +411,7 @@ int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
         receipt->startup_bitmap_atlas_route_count < 4 ||
         (receipt->startup_bitmap_atlas_route_mask & required_mask) !=
             required_mask ||
-        receipt->startup_bitmap_atlas_tile_count < 8u ||
+        receipt->startup_bitmap_atlas_tile_count < 20u ||
         receipt->startup_bitmap_atlas_nonzero_pixel_count == 0u ||
         receipt->startup_bitmap_atlas_checksum == 0u ||
         (receipt->startup_bitmap_route_mask & required_mask) !=
@@ -383,5 +436,13 @@ int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
            receipt->startup_bitmap_title_checksum != 0u &&
            receipt->startup_bitmap_stage_checksum != 0u &&
            receipt->startup_bitmap_soul_room_checksum != 0u &&
-           receipt->startup_bitmap_forcefield_checksum != 0u;
+           receipt->startup_bitmap_forcefield_checksum != 0u &&
+           receipt->startup_bitmap_title_atlas_tile_count >= 8u &&
+           receipt->startup_bitmap_stage_atlas_tile_count >= 8u &&
+           receipt->startup_bitmap_soul_room_atlas_tile_count >= 2u &&
+           receipt->startup_bitmap_forcefield_atlas_tile_count >= 2u &&
+           receipt->startup_bitmap_title_atlas_width >= 64u &&
+           receipt->startup_bitmap_stage_atlas_width >= 64u &&
+           receipt->startup_bitmap_soul_room_atlas_width >= 16u &&
+           receipt->startup_bitmap_forcefield_atlas_width >= 16u;
 }

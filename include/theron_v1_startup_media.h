@@ -46,6 +46,14 @@ typedef struct {
     uint32_t startup_bitmap_stage_checksum;
     uint32_t startup_bitmap_soul_room_checksum;
     uint32_t startup_bitmap_forcefield_checksum;
+    size_t startup_bitmap_title_atlas_tile_count;
+    size_t startup_bitmap_stage_atlas_tile_count;
+    size_t startup_bitmap_soul_room_atlas_tile_count;
+    size_t startup_bitmap_forcefield_atlas_tile_count;
+    uint16_t startup_bitmap_title_atlas_width;
+    uint16_t startup_bitmap_stage_atlas_width;
+    uint16_t startup_bitmap_soul_room_atlas_width;
+    uint16_t startup_bitmap_forcefield_atlas_width;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
@@ -90,6 +98,14 @@ typedef struct {
     uint32_t startup_bitmap_stage_checksum;
     uint32_t startup_bitmap_soul_room_checksum;
     uint32_t startup_bitmap_forcefield_checksum;
+    size_t startup_bitmap_title_atlas_tile_count;
+    size_t startup_bitmap_stage_atlas_tile_count;
+    size_t startup_bitmap_soul_room_atlas_tile_count;
+    size_t startup_bitmap_forcefield_atlas_tile_count;
+    uint16_t startup_bitmap_title_atlas_width;
+    uint16_t startup_bitmap_stage_atlas_width;
+    uint16_t startup_bitmap_soul_room_atlas_width;
+    uint16_t startup_bitmap_forcefield_atlas_width;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]

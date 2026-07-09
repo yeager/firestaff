@@ -2552,6 +2552,9 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
     theron_v1_boot_startup_copy_required_bitmap_routes(
         &render_route.render_plan,
         out_receipt);
+    if (!out_receipt->real_bitmap_startup_graphics_ready) {
+        out_receipt->required_bitmap_routes_ready = 0;
+    }
     theron_v1_boot_startup_capture_track02_graphic_receipt(
         &render_route.render_plan,
         out_receipt);
@@ -2758,6 +2761,10 @@ theron_v1_boot_startup_atlas_find_route(
     return NULL;
 }
 
+static int theron_v1_boot_startup_media_route_has_dense_bitmap(
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    unsigned int route_bit);
+
 static int theron_v1_boot_startup_media_has_required_atlas_routes(
     const Theron_StartupMediaStateReceipt *media_receipt,
     unsigned int required_route_mask)
@@ -2790,11 +2797,55 @@ static int theron_v1_boot_startup_media_has_required_atlas_routes(
                 bit)) {
             return 0;
         }
+        if (!theron_v1_boot_startup_media_route_has_dense_bitmap(
+                media_receipt,
+                bit)) {
+            return 0;
+        }
         if (bit >= THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) {
             break;
         }
     }
     return 1;
+}
+
+static int theron_v1_boot_startup_media_route_has_dense_bitmap(
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    unsigned int route_bit)
+{
+    size_t tile_count = 0u;
+    size_t min_tile_count = 2u;
+    uint16_t width = 0u;
+    uint16_t min_width = 16u;
+
+    if (!media_receipt) {
+        return 0;
+    }
+    switch (route_bit) {
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE:
+        tile_count = media_receipt->startup_bitmap_title_atlas_tile_count;
+        width = media_receipt->startup_bitmap_title_atlas_width;
+        min_tile_count = 8u;
+        min_width = 64u;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE:
+        tile_count = media_receipt->startup_bitmap_stage_atlas_tile_count;
+        width = media_receipt->startup_bitmap_stage_atlas_width;
+        min_tile_count = 8u;
+        min_width = 64u;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM:
+        tile_count = media_receipt->startup_bitmap_soul_room_atlas_tile_count;
+        width = media_receipt->startup_bitmap_soul_room_atlas_width;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD:
+        tile_count = media_receipt->startup_bitmap_forcefield_atlas_tile_count;
+        width = media_receipt->startup_bitmap_forcefield_atlas_width;
+        break;
+    default:
+        return 0;
+    }
+    return tile_count >= min_tile_count && width >= min_width;
 }
 
 static void theron_v1_boot_startup_draw_atlas_route(
@@ -2991,6 +3042,9 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         theron_v1_boot_startup_copy_required_bitmap_routes(
             &render_route.render_plan,
             out_receipt);
+        if (!out_receipt->real_bitmap_startup_graphics_ready) {
+            out_receipt->required_bitmap_routes_ready = 0;
+        }
         theron_v1_boot_startup_capture_track02_graphic_receipt(
             &render_route.render_plan,
             out_receipt);
