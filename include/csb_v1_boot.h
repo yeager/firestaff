@@ -204,6 +204,11 @@ typedef struct CSB_V1_BootStartupActionReceipt_PC34 {
     CSB_V1_BootStartupActionKind_PC34 kind;
     int handled;
     int menu_input;
+    int input_is_pointer;
+    int pointer_x;
+    int pointer_y;
+    unsigned int pointer_button_mask;
+    int pointer_left_button;
     CSB_V1_StartupInput_PC34 startup_input;
     int entrance_command_id;
     int input_blocked_by_title;
