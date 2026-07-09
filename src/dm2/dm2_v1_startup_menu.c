@@ -1237,6 +1237,41 @@ static void dm2_v1_startup_input_route_set(
      * not reinterpret Firestaff key or pointer codes. */
 }
 
+static void dm2_v1_startup_host_menu_route_set(
+    DM2_V1_StartupHostActionReceipt *receipt,
+    const DM2_V1_StartupExecution *execution,
+    const DM2_V1_StartupMenuStateReceipt *menu_receipt,
+    const DM2_V1_StartupHostFacts *facts)
+{
+    DM2_V1_StartupHostMenuRouteReceipt *route;
+
+    if (!receipt || !execution || !facts) {
+        return;
+    }
+    route = &receipt->host_menu_route;
+    memset(route, 0, sizeof(*route));
+    route->valid = 1;
+    route->consume_input = 1;
+    route->redraw_startup_menu =
+        receipt->host_receipt.input_result == DM2_V1_STARTUP_HOST_INPUT_REDRAW
+            ? 1 : 0;
+    route->close_startup_menu =
+        receipt->host_receipt.mode_update.set_startup_menu_active &&
+        receipt->host_receipt.mode_update.startup_menu_active == 0;
+    route->return_to_launcher =
+        receipt->host_receipt.input_result ==
+            DM2_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER ? 1 : 0;
+    route->apply_session =
+        execution->kind == DM2_V1_STARTUP_EXEC_SESSION_READY ? 1 : 0;
+    route->rescan_saves = receipt->host_receipt.rescan_saves ? 1 : 0;
+    route->selected_row_after =
+        menu_receipt ? menu_receipt->selected_row : facts->selected_row;
+    route->status_scope = receipt->host_receipt.status_scope;
+    route->status = receipt->host_receipt.status;
+    /* DM2-owned M11/M12 route: callers can now use these flags directly
+     * instead of re-reading selected-row, status text, or execution kind. */
+}
+
 void dm2_v1_startup_idle_receipt_clear(
     DM2_V1_StartupIdleReceipt *receipt)
 {
@@ -1408,6 +1443,13 @@ int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
         out_receipt->menu_state_receipt_valid
             ? out_receipt->menu_state_receipt.selected_row
             : facts->selected_row;
+    dm2_v1_startup_host_menu_route_set(
+        out_receipt,
+        execution,
+        out_receipt->menu_state_receipt_valid
+            ? &out_receipt->menu_state_receipt
+            : NULL,
+        facts);
     return 1;
 }
 
@@ -1451,6 +1493,10 @@ int dm2_v1_startup_execute_firestaff_input_from_host_facts_with_receipt(
     if (!out_receipt->menu_state_receipt_valid) {
         out_receipt->menu_state_receipt = menu_receipt;
         out_receipt->menu_state_receipt_valid = 1;
+    }
+    if (out_receipt->host_menu_route.valid) {
+        out_receipt->host_menu_route.selected_row_after =
+            out_receipt->menu_state_receipt.selected_row;
     }
     dm2_v1_startup_input_route_set(
         out_receipt,
@@ -1507,6 +1553,10 @@ int dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
     if (!out_receipt->menu_state_receipt_valid) {
         out_receipt->menu_state_receipt = menu_receipt;
         out_receipt->menu_state_receipt_valid = 1;
+    }
+    if (out_receipt->host_menu_route.valid) {
+        out_receipt->host_menu_route.selected_row_after =
+            out_receipt->menu_state_receipt.selected_row;
     }
     dm2_v1_startup_input_route_set(out_receipt,
                                    2,
