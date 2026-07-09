@@ -622,6 +622,8 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
     int fullVisualSequenceConsumed = 0;
     int runtimeRouteHardeningReady = 0;
     int runtimeRouteHardeningHashReady = 0;
+    int runtimeHostCaptureGateReady = 0;
+    int runtimeHostCaptureGateHashReady = 0;
 
     ASSERT_EQ(M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                   &titleReceiptReady,
@@ -645,7 +647,9 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
                   &openingFrameDrawReady,
                   &fullVisualSequenceConsumed,
                   &runtimeRouteHardeningReady,
-                  &runtimeRouteHardeningHashReady),
+                  &runtimeRouteHardeningHashReady,
+                  &runtimeHostCaptureGateReady,
+                  &runtimeHostCaptureGateHashReady),
               1,
               "M11 exposes CSB startup host-view draw receipt");
     ASSERT_EQ(titleReceiptReady, 1,
@@ -692,6 +696,10 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
               "M11 CSB startup routes require runtime route hardening");
     ASSERT_EQ(runtimeRouteHardeningHashReady, 1,
               "M11 CSB startup route hardening publishes route hashes");
+    ASSERT_EQ(runtimeHostCaptureGateReady, 1,
+              "M11 CSB startup requires full runtime host capture gate");
+    ASSERT_EQ(runtimeHostCaptureGateHashReady, 1,
+              "M11 CSB startup runtime host capture gate publishes hashes");
 }
 
 static void test_candidate_panel_blocks_direct_object_helpers(void)

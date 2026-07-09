@@ -29863,11 +29863,14 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outOpeningFrameDrawReady,
     int* outFullVisualSequenceConsumed,
     int* outRuntimeRouteHardeningReady,
-    int* outRuntimeRouteHardeningHashReady)
+    int* outRuntimeRouteHardeningHashReady,
+    int* outRuntimeHostCaptureGateReady,
+    int* outRuntimeHostCaptureGateHashReady)
 {
     CSB_V1_BootProfile boot;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
+    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 runtime_gate;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 title_ownership;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 closed_ownership;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 utility_ownership;
@@ -29885,6 +29888,7 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
 
     m11_csb_startup_probe_boot_profile(&boot);
     memset(&visual_sequence, 0, sizeof(visual_sequence));
+    memset(&runtime_gate, 0, sizeof(runtime_gate));
     memset(&title_hardening, 0, sizeof(title_hardening));
     memset(&closed_hardening, 0, sizeof(closed_hardening));
     memset(&utility_hardening, 0, sizeof(utility_hardening));
@@ -29892,6 +29896,16 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     (void)csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
         &boot,
         &visual_sequence);
+    {
+        CSB_V1_StartupRenderExecutor_PC34 runtime_gate_executor;
+        M11_CSBStartupHostViewProbe runtime_gate_probe;
+        m11_csb_startup_probe_executor_init(&runtime_gate_executor,
+                                            &runtime_gate_probe);
+        (void)csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
+            &boot,
+            &runtime_gate_executor,
+            &runtime_gate);
+    }
     memset(&snapshot, 0, sizeof(snapshot));
     snapshot.boot_profile = &boot;
     snapshot.pending_command =
@@ -30087,6 +30101,30 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
             closed_hardening.route_hardening_hash != 0u &&
             utility_hardening.route_hardening_hash != 0u &&
             opening_hardening.route_hardening_hash != 0u;
+    }
+    if (outRuntimeHostCaptureGateReady) {
+        *outRuntimeHostCaptureGateReady =
+            runtime_gate.valid &&
+            runtime_gate.runtime_visual_valid &&
+            runtime_gate.visual_sequence_valid &&
+            runtime_gate.route_hardening_valid &&
+            runtime_gate.all_runtime_routes_consumed &&
+            runtime_gate.title_runtime_captured &&
+            runtime_gate.closed_door_hud_runtime_captured &&
+            runtime_gate.utility_hud_runtime_captured &&
+            runtime_gate.door_opening_runtime_captured &&
+            runtime_gate.credits_runtime_captured &&
+            runtime_gate.draw_consumes_receipt_only &&
+            runtime_gate.input_consumes_receipt_only &&
+            runtime_gate.no_fallback_callbacks &&
+            runtime_gate.no_wrapper_fallback_routes;
+    }
+    if (outRuntimeHostCaptureGateHashReady) {
+        *outRuntimeHostCaptureGateHashReady =
+            runtime_gate.sequence_capture_hash != 0u &&
+            runtime_gate.runtime_capture_hash != 0u &&
+            runtime_gate.route_hardening_hash != 0u &&
+            runtime_gate.runtime_host_gate_hash != 0u;
     }
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep post-swoosh
      * title, closed-door HUD/menu, utility menu, and door opening inside the

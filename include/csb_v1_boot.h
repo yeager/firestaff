@@ -548,6 +548,33 @@ typedef struct CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34;
 
+typedef struct CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 {
+    int valid;
+    int runtime_visual_valid;
+    int visual_sequence_valid;
+    int route_hardening_valid;
+    int all_runtime_routes_consumed;
+    int title_runtime_captured;
+    int closed_door_hud_runtime_captured;
+    int utility_hud_runtime_captured;
+    int door_opening_runtime_captured;
+    int credits_runtime_captured;
+    int draw_consumes_receipt_only;
+    int input_consumes_receipt_only;
+    int no_fallback_callbacks;
+    int no_wrapper_fallback_routes;
+    uint32_t sequence_capture_hash;
+    uint32_t runtime_capture_hash;
+    uint32_t route_hardening_hash;
+    uint32_t runtime_host_gate_hash;
+    CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 runtime_visual;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 title_route_hardening;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 closed_door_route_hardening;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 utility_route_hardening;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 door_opening_route_hardening;
+    const char *source_evidence;
+} CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupRenderDrawReceipt_PC34 {
     int valid;
     int route;
@@ -685,6 +712,8 @@ void csb_v1_boot_startup_runtime_visual_capture_receipt_init_pc34(
     CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 *receipt);
 void csb_v1_boot_startup_runtime_route_hardening_receipt_init_pc34(
     CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 *receipt);
+void csb_v1_boot_startup_runtime_host_capture_gate_receipt_init_pc34(
+    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *receipt);
 void csb_v1_boot_startup_render_draw_receipt_init_pc34(
     CSB_V1_BootStartupRenderDrawReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_view_receipt_init_pc34(
@@ -997,6 +1026,10 @@ int csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
     const CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *visual_sequence,
     const CSB_V1_BootStartupHostOwnershipReceipt_PC34 *ownership,
     CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
+    const CSB_V1_BootProfile *boot_profile,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor,
+    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt);

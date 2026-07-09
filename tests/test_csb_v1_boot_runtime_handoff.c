@@ -2145,6 +2145,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
     CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 runtime_visual;
     CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 route_hardening;
+    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 runtime_host_gate;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2245,6 +2246,41 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.draw_door_fallback_count == 0 &&
               strstr(runtime_visual.source_evidence, "CSBWin") != NULL,
           "boot startup runtime visual capture consumes title, HUD and door-opening through host executor without fallback callbacks");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
+              &boot,
+              &capture_render_executor,
+              &runtime_host_gate) == 1 &&
+              runtime_host_gate.valid &&
+              runtime_host_gate.runtime_visual_valid &&
+              runtime_host_gate.visual_sequence_valid &&
+              runtime_host_gate.route_hardening_valid &&
+              runtime_host_gate.all_runtime_routes_consumed &&
+              runtime_host_gate.title_runtime_captured &&
+              runtime_host_gate.closed_door_hud_runtime_captured &&
+              runtime_host_gate.utility_hud_runtime_captured &&
+              runtime_host_gate.door_opening_runtime_captured &&
+              runtime_host_gate.credits_runtime_captured &&
+              runtime_host_gate.draw_consumes_receipt_only &&
+              runtime_host_gate.input_consumes_receipt_only &&
+              runtime_host_gate.no_fallback_callbacks &&
+              runtime_host_gate.no_wrapper_fallback_routes &&
+              runtime_host_gate.sequence_capture_hash ==
+                  visual_sequence.sequence_capture_hash &&
+              runtime_host_gate.runtime_capture_hash != 0u &&
+              runtime_host_gate.route_hardening_hash != 0u &&
+              runtime_host_gate.runtime_host_gate_hash != 0u &&
+              runtime_host_gate.title_route_hardening.title_route_covered &&
+              runtime_host_gate.closed_door_route_hardening
+                  .closed_door_hud_route_covered &&
+              runtime_host_gate.utility_route_hardening
+                  .utility_hud_route_covered &&
+              runtime_host_gate.door_opening_route_hardening
+                  .door_opening_route_covered &&
+              capture_render_probe.draw_fallback_text_count == 0 &&
+              capture_render_probe.draw_door_fallback_count == 0,
+          "boot startup runtime host gate binds full capture to route hardening without wrapper fallbacks");
     memset(&snapshot, 0, sizeof(snapshot));
     snapshot.boot_profile = &boot;
     snapshot.entrance_active = 1;
