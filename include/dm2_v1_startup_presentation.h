@@ -53,6 +53,14 @@ typedef struct DM2_V1_StartupRenderReceipt {
     int hud_overlay_suppressed;
 } DM2_V1_StartupRenderReceipt;
 
+typedef struct DM2_V1_StartupViewReceipt {
+    int valid;
+    int command_count;
+    DM2_V1_StartupMenuStateReceipt menu_state;
+    DM2_V1_StartupRenderReceipt render;
+    DM2_V1_StartupRuntimeHandoffReceipt runtime_handoff;
+} DM2_V1_StartupViewReceipt;
+
 typedef int (*DM2_V1_StartupDrawGdatImageFn)(
     void *userdata,
     const DM2_V1_StartupDrawCommand *command);
@@ -103,6 +111,12 @@ int dm2_v1_startup_presentation_render_receipt(
     int command_count,
     int hud_runtime_ready,
     DM2_V1_StartupRenderReceipt *out_receipt);
+int dm2_v1_startup_presentation_view_receipt_from_host_facts(
+    const DM2_V1_StartupHostFacts *facts,
+    int hud_runtime_ready,
+    DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    DM2_V1_StartupViewReceipt *out_receipt);
 int dm2_v1_startup_presentation_receipt(int startup_menu_active,
                                         char *out_phase,
                                         int out_phase_size,

@@ -340,6 +340,72 @@ int dm2_v1_startup_presentation_render_receipt(
     return 1;
 }
 
+int dm2_v1_startup_presentation_view_receipt_from_host_facts(
+    const DM2_V1_StartupHostFacts *facts,
+    int hud_runtime_ready,
+    DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    DM2_V1_StartupViewReceipt *out_receipt)
+{
+    DM2_V1_StartupMenuSnapshot snapshot;
+    DM2_V1_StartupMenu menu;
+    int command_count;
+    int active;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!facts || !out_commands || max_commands <= 0 || !out_receipt) {
+        return 0;
+    }
+    if (!dm2_v1_startup_menu_snapshot_from_facts(&snapshot,
+                                                 facts->save_root,
+                                                 facts->fallback_save_root,
+                                                 facts->resume_available,
+                                                 facts->slot_mask,
+                                                 facts->selected_row) ||
+        !dm2_v1_startup_menu_from_snapshot(&snapshot, &menu)) {
+        return 0;
+    }
+    command_count = dm2_v1_startup_presentation_build(&menu,
+                                                      out_commands,
+                                                      max_commands);
+    if (command_count <= 0 ||
+        !dm2_v1_startup_menu_state_receipt_from_snapshot(
+            &snapshot,
+            &out_receipt->menu_state) ||
+        !dm2_v1_startup_presentation_render_receipt(
+            &menu,
+            out_commands,
+            command_count,
+            hud_runtime_ready,
+            &out_receipt->render)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+
+    active = facts->startup_menu_active ? 1 : 0;
+    out_receipt->runtime_handoff.valid = 1;
+    out_receipt->runtime_handoff.startup_menu_active = active;
+    out_receipt->runtime_handoff.animation_active = active;
+    snprintf(out_receipt->runtime_handoff.animation,
+             sizeof(out_receipt->runtime_handoff.animation),
+             "%s",
+             active ? "dm2-startup-menu" : "dm2-runtime");
+    out_receipt->runtime_handoff.title_frame = 0;
+    out_receipt->runtime_handoff.title_frame_max = 0;
+    out_receipt->runtime_handoff.title_ready = active ? 0 : 1;
+    /* skproject/SKWIN SkWinCore presents DM2's title/menu before normal
+     * dungeon HUD ownership; this receipt keeps that boundary in DM2 code. */
+    out_receipt->runtime_handoff.initialize_v2_runtime = 1;
+    out_receipt->runtime_handoff.initialize_hud_runtime = 1;
+    out_receipt->runtime_handoff.initialize_touch_runtime = 1;
+    out_receipt->runtime_handoff.hud_runtime_ready = hud_runtime_ready ? 1 : 0;
+    out_receipt->valid = 1;
+    out_receipt->command_count = command_count;
+    return 1;
+}
+
 int dm2_v1_startup_presentation_receipt(int startup_menu_active,
                                         char *out_phase,
                                         int out_phase_size,
