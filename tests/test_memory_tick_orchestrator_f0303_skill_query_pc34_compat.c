@@ -64,6 +64,18 @@ static void init_world(struct GameWorld_Compat* world,
     things->junkCount = 2;
 }
 
+static void make_spell_caster(struct GameWorld_Compat* world, int skillIndex) {
+    if (!world) return;
+    world->party.champions[0].hp.current = 100;
+    world->party.champions[0].hp.maximum = 100;
+    world->party.champions[0].mana.current = 100;
+    world->party.champions[0].mana.maximum = 100;
+    world->party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 60;
+    if (skillIndex >= 0 && skillIndex < LIFECYCLE_SKILL_COUNT) {
+        world->lifecycle.champions[0].skills20[skillIndex].experience = 5000;
+    }
+}
+
 static void test_orch_f0303_inventory_and_rest_query(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -213,6 +225,7 @@ static void test_orch_light_spell_uses_source_light_amount_and_party_map(void) {
     struct TickResult_Compat result;
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_AIR);
     world.gameTick = 77;
     world.party.mapIndex = 3;
     world.partyMapIndex = 0; /* stale legacy mirror must not place event */
@@ -247,13 +260,10 @@ static void test_orch_darkness_spell_decays_back_to_zero_without_clamp(void) {
     uint32_t decayTick;
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_DEFEND);
     world.gameTick = 80;
     world.party.mapIndex = 2;
     world.partyMapIndex = 2;
-    world.party.champions[0].hp.current = 100;
-    world.party.champions[0].hp.maximum = 100;
-    world.party.champions[0].mana.current = 100;
-    world.party.champions[0].mana.maximum = 100;
 
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -301,13 +311,10 @@ static void test_orch_magic_torch_spell_decays_back_to_zero(void) {
     uint32_t decayTick;
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_FIRE);
     world.gameTick = 90;
     world.party.mapIndex = 4;
     world.partyMapIndex = 4;
-    world.party.champions[0].hp.current = 100;
-    world.party.champions[0].hp.maximum = 100;
-    world.party.champions[0].mana.current = 100;
-    world.party.champions[0].mana.maximum = 100;
 
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -440,11 +447,8 @@ static void test_orch_thieves_eye_spell_uses_f0412_square_duration(void) {
     int i;
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_EARTH);
     world.gameTick = 123;
-    world.party.champions[0].hp.current = 100;
-    world.party.champions[0].hp.maximum = 100;
-    world.party.champions[0].mana.current = 100;
-    world.party.champions[0].mana.maximum = 100;
 
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -496,11 +500,8 @@ static void test_orch_invisibility_spell_mirrors_lifecycle_counter(void) {
     uint32_t expiryTick;
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_AIR);
     world.gameTick = 200;
-    world.party.champions[0].hp.current = 100;
-    world.party.champions[0].hp.maximum = 100;
-    world.party.champions[0].mana.current = 100;
-    world.party.champions[0].mana.maximum = 100;
 
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -540,6 +541,7 @@ static void test_orch_party_shield_spell_mirrors_lifecycle_defense(void) {
     uint32_t expiryTick;
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_DEFEND);
     world.gameTick = 300;
     world.party.champions[0].hp.current = 100;
     world.party.champions[0].hp.maximum = 100;
@@ -586,6 +588,7 @@ static void test_orch_fire_shield_spell_mirrors_lifecycle_defense(void) {
     uint32_t expiryTick;
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_DEFEND);
     world.gameTick = 400;
     world.party.champions[0].hp.current = 100;
     world.party.champions[0].hp.maximum = 100;
@@ -633,6 +636,7 @@ static void test_orch_footprints_spell_mirrors_lifecycle_counter_and_scent(void)
     uint32_t expiryTick;
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_EARTH);
     world.gameTick = 450;
     world.magic.scentCount = 23;
     world.party.champions[0].hp.current = 100;
@@ -685,6 +689,7 @@ static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {
     int i;
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_HEAL);
     memset(potions, 0, sizeof(potions));
     memset(rawPotionData, 0, sizeof(rawPotionData));
 
@@ -746,6 +751,7 @@ static void test_orch_zokathra_spell_materializes_in_ready_hand(void) {
     unsigned short zokathraThing = make_thing(THING_TYPE_JUNK, 0);
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_WIZARD);
     memset(rawJunkData, 0, sizeof(rawJunkData));
     junks[0].next = THING_NONE;
     junks[0].type = 0;
@@ -794,6 +800,7 @@ static void test_orch_zokathra_spell_falls_back_to_party_square(void) {
     unsigned short zokathraThing = make_thing(THING_TYPE_JUNK, 0);
 
     init_world(&world, &things, weapons, junks);
+    make_spell_caster(&world, DM1_SKILL_IDX_WIZARD);
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
