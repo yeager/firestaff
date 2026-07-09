@@ -459,6 +459,14 @@ typedef struct {
     int save_menu_ready;
     int champion_menu_ready;
     int fallback_visuals_permitted;
+    int capture_valid;
+    int capture_route_ready;
+    int capture_command_count;
+    int title_capture_ready;
+    int save_capture_ready;
+    int champion_capture_ready;
+    int blocked_draw_suppressed;
+    Nexus_V1_StartupDrawKind first_capture_draw_kind;
     const char *consumer_route;
     const char *asset_route;
     const char *startup_ui_blocker;

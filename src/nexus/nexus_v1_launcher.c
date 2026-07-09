@@ -2484,6 +2484,58 @@ static void nexus_v1_launcher_copy_startup_text(char *dst,
     snprintf(dst, (size_t)dst_size, "%s", src);
 }
 
+static void nexus_v1_launcher_fill_full_start_package_capture(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupFullStartPackageReceipt *receipt)
+{
+    Nexus_V1_StartupDrawCommand commands[80];
+    int command_count = 0;
+
+    if (!state || !receipt) {
+        return;
+    }
+    memset(commands, 0, sizeof(commands));
+    receipt->capture_valid = 1;
+    receipt->first_capture_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
+    if (!receipt->consumer.full_start.full_start_menu_ready) {
+        receipt->blocked_draw_suppressed = 1;
+        return;
+    }
+    if (state->title_active && receipt->consumer.title_handoff_valid &&
+        receipt->consumer.title_handoff.title_draw_ready) {
+        command_count = nexus_v1_startup_presentation_build_title(
+            state->title_frame,
+            commands,
+            (int)(sizeof(commands) / sizeof(commands[0])));
+        receipt->title_capture_ready = command_count > 0;
+    } else if (state->save_select_active &&
+               receipt->consumer.presentation_valid &&
+               receipt->consumer.presentation.kind ==
+                   NEXUS_V1_STARTUP_MENU_PRESENTATION_SAVE) {
+        command_count =
+            nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
+                state,
+                commands,
+                (int)(sizeof(commands) / sizeof(commands[0])));
+        receipt->save_capture_ready = command_count > 0;
+    } else if (state->champion_select_active &&
+               receipt->consumer.presentation_valid &&
+               receipt->consumer.presentation.kind ==
+                   NEXUS_V1_STARTUP_MENU_PRESENTATION_CHAMPION) {
+        command_count =
+            nexus_v1_launcher_startup_presentation_build_champion_from_runtime_state(
+                state,
+                commands,
+                (int)(sizeof(commands) / sizeof(commands[0])));
+        receipt->champion_capture_ready = command_count > 0;
+    }
+    receipt->capture_command_count = command_count;
+    receipt->capture_route_ready = command_count > 0;
+    if (command_count > 0) {
+        receipt->first_capture_draw_kind = commands[0].kind;
+    }
+}
+
 int nexus_v1_launcher_startup_full_start_package_from_runtime_state(
     const Nexus_V1_LauncherRuntimeReceipt *runtime,
     const Nexus_V1_StartupRuntimeState *state,
@@ -2546,6 +2598,7 @@ int nexus_v1_launcher_startup_full_start_package_from_runtime_state(
         out_receipt->consumer.full_start.startup_ui_blocker;
     out_receipt->status_scope = out_receipt->consumer.status_scope;
     out_receipt->status = out_receipt->consumer.status;
+    nexus_v1_launcher_fill_full_start_package_capture(state, out_receipt);
     return 1;
 }
 
