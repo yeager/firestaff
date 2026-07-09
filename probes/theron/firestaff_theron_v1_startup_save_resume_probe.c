@@ -241,10 +241,20 @@ static void probe_staged_srm_claims_resume(void) {
         return;
     }
     char slot_path[THERON_V1_SRM_PATH_MAX];
+    char external_path[THERON_V1_SRM_PATH_MAX];
     int rc = theron_v1_srm_slot_path(staged, 0, slot_path);
     check_int("staged slot 0 path constructs", rc, 1);
     check_int("staged slot 0 written",
               write_bytes(slot_path, g_valid_gzip_srm,
+                          sizeof(g_valid_gzip_srm)),
+              1);
+    snprintf(external_path,
+             sizeof(external_path),
+             "%s%cexternal-save.srm",
+             staged,
+             PROBE_PATH_SEP);
+    check_int("external staged srm written",
+              write_bytes(external_path, g_valid_gzip_srm,
                           sizeof(g_valid_gzip_srm)),
               1);
 
@@ -271,7 +281,9 @@ static void probe_staged_srm_claims_resume(void) {
               snap.srm_first_recognized_slot, 0);
     {
         Theron_V1StartupSaveResume explicit_snap;
+        Theron_V1StartupSaveResume external_snap;
         memset(&explicit_snap, 0, sizeof(explicit_snap));
+        memset(&external_snap, 0, sizeof(external_snap));
         check_int("explicit staged srm path applies",
                   theron_v1_startup_save_resume_apply_explicit_path(
                       &explicit_snap,
@@ -284,6 +296,18 @@ static void probe_staged_srm_claims_resume(void) {
         check_int("explicit staged slot 0",
                   explicit_snap.srm_first_recognized_slot,
                   0);
+        check_int("external staged srm path applies",
+                  theron_v1_startup_save_resume_apply_explicit_path(
+                      &external_snap,
+                      external_path,
+                      NULL),
+                  1);
+        check_int("external staged resume_claim SRM",
+                  external_snap.resume_claim,
+                  THERON_V1_STARTUP_RESUME_SRM);
+        check_int("external staged slot is path-only",
+                  external_snap.srm_first_recognized_slot,
+                  -1);
 #if FIRESTAFF_HAS_ZLIB
         check_int("explicit staged payload probe ran",
                   explicit_snap.srm_payload_probe_ran,
@@ -296,6 +320,15 @@ static void probe_staged_srm_claims_resume(void) {
                   THERON_V1_SRM_PROGRESS_IMPORT_OK);
         check_int("explicit staged progression quest mask 0x03",
                   explicit_snap.srm_progress_quest_mask,
+                  0x03);
+        check_int("external staged payload probe ran",
+                  external_snap.srm_payload_probe_ran,
+                  1);
+        check_int("external staged progression import OK",
+                  external_snap.srm_progress_import_status,
+                  THERON_V1_SRM_PROGRESS_IMPORT_OK);
+        check_int("external staged progression quest mask 0x03",
+                  external_snap.srm_progress_quest_mask,
                   0x03);
 #endif
     }
@@ -324,6 +357,7 @@ static void probe_staged_srm_claims_resume(void) {
               snap.srm_payload_probe_ran, 0);
 #endif
 
+    probe_unlink(external_path);
     cleanup_srm_root(staged);
     if (had) {
         probe_setenv("FIRESTAFF_THERON_SRM_DIR", saved_srm);

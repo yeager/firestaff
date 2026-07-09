@@ -138,6 +138,18 @@ static int parse_slot_file(const char *path,
     return base[4] - '0';
 }
 
+static int path_has_suffix(const char *path, const char *suffix) {
+    size_t path_len;
+    size_t suffix_len;
+    if (!path || !suffix) {
+        return 0;
+    }
+    path_len = strlen(path);
+    suffix_len = strlen(suffix);
+    return path_len >= suffix_len &&
+           strcmp(path + path_len - suffix_len, suffix) == 0;
+}
+
 static void recompute_verdict_and_claim(Theron_V1StartupSaveResume *snap) {
     if (!snap) {
         return;
@@ -444,15 +456,21 @@ int theron_v1_startup_save_resume_apply_explicit_path(
     slot = parse_slot_file(save_path,
                            ".srm",
                            THERON_V1_SRM_DISK_SLOT_COUNT);
-    if (slot >= 0) {
+    if (slot >= 0 || path_has_suffix(save_path, ".srm")) {
         char srm_path[THERON_V1_SRM_PATH_MAX];
         uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
         Theron_V1SrmEnvelopeReceipt envelope;
         Theron_V1SrmEnvelopeKind kind;
 
-        if (!path_dirname(root, save_path) ||
-            !theron_v1_srm_slot_path(root, slot, srm_path)) {
+        if (!path_dirname(root, save_path)) {
             return 0;
+        }
+        if (slot >= 0) {
+            if (!theron_v1_srm_slot_path(root, slot, srm_path)) {
+                return 0;
+            }
+        } else {
+            copy_name(srm_path, sizeof(srm_path), save_path);
         }
         memset(scratch, 0, sizeof(scratch));
         memset(&envelope, 0, sizeof(envelope));
