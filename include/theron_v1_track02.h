@@ -32,6 +32,12 @@
 #define THERON_TRACK02_RAW_USER_DATA_BYTES 2048u
 #define THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES 32u
 #define THERON_TRACK02_STARTUP_BITMAP_PIXELS 64u
+#define THERON_TRACK02_STARTUP_BITMAP_ATLAS_ROUTE_MAX 4u
+#define THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH 32u
+#define THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_HEIGHT 8u
+#define THERON_TRACK02_STARTUP_BITMAP_ATLAS_PIXELS \
+    (THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH * \
+     THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_HEIGHT)
 
 enum {
     THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE = 1u << 0,
@@ -312,6 +318,31 @@ typedef struct {
         samples[THERON_TRACK02_MAX_STARTUP_BITMAP_SAMPLES];
 } Theron_Track02StartupBitmapCatalog;
 
+typedef struct {
+    unsigned int route_bit;
+    size_t tile_count;
+    uint16_t width;
+    uint16_t height;
+    size_t first_raw_offset;
+    size_t last_raw_offset;
+    size_t first_user_data_offset;
+    size_t nonzero_pixel_count;
+    uint32_t checksum;
+    uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_ATLAS_PIXELS];
+} Theron_Track02StartupBitmapAtlasRoute;
+
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t route_count;
+    size_t overflow_count;
+    unsigned int route_mask;
+    size_t total_tile_count;
+    size_t total_nonzero_pixel_count;
+    uint32_t checksum;
+    Theron_Track02StartupBitmapAtlasRoute
+        routes[THERON_TRACK02_STARTUP_BITMAP_ATLAS_ROUTE_MAX];
+} Theron_Track02StartupBitmapAtlas;
+
 Theron_Track02SignalStatus theron_v1_track02_decode_4bpp_tile(
     const uint8_t *tile_bytes,
     size_t tile_size,
@@ -324,6 +355,10 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02StartupBitmapCatalog *out_catalog);
+
+Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas(
+    const Theron_Track02StartupBitmapCatalog *catalog,
+    Theron_Track02StartupBitmapAtlas *out_atlas);
 
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);
