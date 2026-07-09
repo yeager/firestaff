@@ -3292,8 +3292,8 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
         int squareIndex;
         int squareType;
         struct DungeonTeleporter_Compat tp;
-        int targetMapIndex;
-        int destinationIsTeleporterTarget;
+        int teleporterFound;
+        M11_GroupTeleporterDestinationPlan plan;
 
         if (*inOutMapIndex < 0 || *inOutMapIndex >= (int)world->dungeon->header.mapCount) break;
         map = &world->dungeon->maps[*inOutMapIndex];
@@ -3304,26 +3304,28 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
         squareIndex = (*inOutMapX * map->height) + *inOutMapY;
         squareByte = world->dungeon->tiles[*inOutMapIndex].squareData[squareIndex];
         squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-        if (squareType != DUNGEON_ELEMENT_TELEPORTER || !(squareByte & 0x08)) break;
-        if (!orch_find_teleporter_on_square_compat(
-                world, *inOutMapIndex, *inOutMapX, *inOutMapY, &tp)) break;
-        if (!(tp.scope & 0x01)) break;
+        memset(&tp, 0, sizeof(tp));
+        teleporterFound = orch_find_teleporter_on_square_compat(
+            world, *inOutMapIndex, *inOutMapX, *inOutMapY, &tp);
+        if (!m11_plan_group_teleporter_destination_f0267(
+                squareType, DUNGEON_ELEMENT_TELEPORTER,
+                (squareByte & 0x08) ? 1 : 0, teleporterFound,
+                (int)tp.scope, (int)tp.audible, (int)tp.targetMapIndex,
+                (int)tp.targetMapX, (int)tp.targetMapY, *inOutMapIndex,
+                *inOutMapX, *inOutMapY,
+                (int)world->dungeon->header.mapCount, &plan) ||
+            !plan.valid || !plan.shouldTeleport) {
+            break;
+        }
 
-        destinationIsTeleporterTarget =
-            (*inOutMapX == (int)tp.targetMapX &&
-             *inOutMapY == (int)tp.targetMapY &&
-             *inOutMapIndex == (int)tp.targetMapIndex);
-
-        targetMapIndex = (int)tp.targetMapIndex;
-        if (targetMapIndex < 0 || targetMapIndex >= (int)world->dungeon->header.mapCount) break;
-        *inOutMapIndex = targetMapIndex;
-        *inOutMapX = (int)tp.targetMapX;
-        *inOutMapY = (int)tp.targetMapY;
-        if (tp.audible) {
+        *inOutMapIndex = plan.targetMapIndex;
+        *inOutMapX = plan.targetMapX;
+        *inOutMapY = plan.targetMapY;
+        if (plan.shouldEmitAudibleBuzz) {
             orch_record_teleporter_buzz_compat(
                 outTeleporterBuzzes, *inOutMapIndex, *inOutMapX, *inOutMapY);
         }
-        if (destinationIsTeleporterTarget) break;
+        if (plan.shouldStopChain) break;
     }
     return 1;
 }

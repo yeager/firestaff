@@ -161,12 +161,53 @@ static void test_pit_and_chaos_subplans(void) {
     expect_int("chaos_blocked_no_insert", chaos.shouldInsertAdjacent, 0);
 }
 
+static void test_group_teleporter_destination_plan(void) {
+    M11_GroupTeleporterDestinationPlan plan;
+
+    expect_int("teleporter_open_scope_ok",
+        m11_plan_group_teleporter_destination_f0267(
+            3, 3, 1, 1, M11_TELEPORTER_SCOPE_CREATURES, 1,
+            2, 7, 8, 1, 4, 5, 5, &plan), 1);
+    expect_int("teleporter_open_scope_teleports", plan.shouldTeleport, 1);
+    expect_int("teleporter_open_scope_buzz", plan.shouldEmitAudibleBuzz, 1);
+    expect_int("teleporter_open_scope_map", plan.targetMapIndex, 2);
+    expect_int("teleporter_open_scope_x", plan.targetMapX, 7);
+    expect_int("teleporter_open_scope_y", plan.targetMapY, 8);
+    expect_int("teleporter_open_scope_chain", plan.shouldStopChain, 0);
+
+    expect_int("teleporter_self_ok",
+        m11_plan_group_teleporter_destination_f0267(
+            3, 3, 1, 1, M11_TELEPORTER_SCOPE_CREATURES, 0,
+            1, 4, 5, 1, 4, 5, 5, &plan), 1);
+    expect_int("teleporter_self_teleports", plan.shouldTeleport, 1);
+    expect_int("teleporter_self_stop", plan.shouldStopChain, 1);
+    expect_int("teleporter_self_no_buzz", plan.shouldEmitAudibleBuzz, 0);
+
+    expect_int("teleporter_closed_ok",
+        m11_plan_group_teleporter_destination_f0267(
+            3, 3, 0, 1, M11_TELEPORTER_SCOPE_CREATURES, 1,
+            2, 7, 8, 1, 4, 5, 5, &plan), 1);
+    expect_int("teleporter_closed_no_move", plan.shouldTeleport, 0);
+
+    expect_int("teleporter_wrong_scope_ok",
+        m11_plan_group_teleporter_destination_f0267(
+            3, 3, 1, 1, 0, 1, 2, 7, 8, 1, 4, 5, 5, &plan), 1);
+    expect_int("teleporter_wrong_scope_no_move", plan.shouldTeleport, 0);
+
+    expect_int("teleporter_invalid_target_ok",
+        m11_plan_group_teleporter_destination_f0267(
+            3, 3, 1, 1, M11_TELEPORTER_SCOPE_CREATURES, 1,
+            5, 7, 8, 1, 4, 5, 5, &plan), 1);
+    expect_int("teleporter_invalid_target_no_move", plan.shouldTeleport, 0);
+}
+
 int main(void) {
     test_allowed_group_keeps_move();
     test_fall_killed_group_drops_and_deletes_source();
     test_not_allowed_group_drops_without_placement_delete();
     test_deferred_route_plan();
     test_pit_and_chaos_subplans();
+    test_group_teleporter_destination_plan();
     test_source_evidence();
 
     if (g_failed) return 1;
