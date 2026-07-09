@@ -7077,7 +7077,9 @@ int M12_StartupMenu_GetLaunchGate(
     } else {
         gate.canLaunch = 1;
         gate.blockedLabel = "READY TO LAUNCH";
-        gate.blockedDetail = gate.boot.startupPathLabel;
+        gate.blockedDetail = gate.boot.activeProofLabel
+                                 ? gate.boot.activeProofLabel
+                                 : gate.boot.startupPathLabel;
     }
 
     *outGate = gate;

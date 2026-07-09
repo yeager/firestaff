@@ -2,9 +2,9 @@
 
 - ✅ 2026-07-09 pass897 Theron render export cleanup: removed old Track 02 media layout/row/render-plan compatibility exports and moved tests to the full-start host-render receipt, keeping no raw prompt/roster arrays and no raw graphics-plan consumer proof. Verification: `test_theron_v1_startup_save_resume_pc34`, target rebuild, and `git diff --check` passed.
 
-- ✅ 2026-07-09 pass887 DM2 full-start compatibility cleanup: DM2 host/startup tests now consume the packaged full-start receipt instead of separate full-start and capture helper queries, and the old public wrappers were removed from the boot API. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
-
 - ✅ 2026-07-09 pass896 DM1 mirror floor-item consumer receipt: champion mirror rendering now exposes a DM1-owned consumer that combines the C026 wall-overlay boundary with F0115 runtime thing receipts, proving mirror payload suppression while real floor objects/projectiles remain drawable. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, target rebuild, and `git diff --check` passed.
+
+- ✅ 2026-07-09 pass887 DM2 full-start compatibility cleanup: DM2 host/startup tests now consume the packaged full-start receipt instead of separate full-start and capture helper queries, and the old public wrappers were removed from the boot API. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 M12 active capture launch detail: ready launch gates now publish the active packaged capture proof as their detail label instead of a generic boot-path label, so DM1 HoC, CSB HUD/title, DM2 timing, Nexus capture, and Theron Track02 cards/status consumers stay receipt-driven. Verification: `test_m12_all_games_boot_readiness_receipt`, `test_csb_v1_launch_blocker_m12`, `test_m12_dm1_v1_required_complete_launches`, and `git diff --check`.
 

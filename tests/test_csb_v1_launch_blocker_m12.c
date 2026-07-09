@@ -145,8 +145,8 @@ int main(void) {
                        "READY TO LAUNCH") == 0,
                 "CSB ready card status should use launch gate label")) return 1;
     if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, 1),
-                       "CSB BOOT PATH") == 0,
-                "CSB ready card detail should use launch gate path")) return 1;
+                       "CSB TITLE + HUD CAPTURE PROOF") == 0,
+                "CSB ready card detail should use active startup capture proof")) return 1;
     if (!render_smoke_nonblank(&state, "CSB options")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
