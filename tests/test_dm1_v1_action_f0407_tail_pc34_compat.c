@@ -575,8 +575,13 @@ static void test_light_and_window_plans(void) {
     CHECK_EQ(dm1_v1_action_light_plan_f0407_pc34(&light), 1,
              "light plan builds");
     CHECK_EQ(light.magicalLightAmountDelta, 12, "light amount delta");
+    CHECK_EQ(light.createsLightEvent, 1, "light creates timeline event");
+    CHECK_EQ(light.eventType, 70, "light event type");
+    CHECK_EQ(light.eventPriority, 0, "light event priority");
     CHECK_EQ(light.eventLightPower, -2, "light event power");
     CHECK_EQ(light.eventDelayTicks, 2500, "light event delay");
+    CHECK_EQ(light.refreshesDungeonViewPalette, 1,
+             "light refreshes dungeon view palette");
     CHECK_EQ(light.decrementsActionHandCharges, 1,
              "light decrements charges");
 
