@@ -422,8 +422,13 @@ int main(void)
               render_receipt.selectable_text_count == 3 &&
               render_receipt.selected_highlight_count == 1 &&
               render_receipt.hud_runtime_ready == 1 &&
-              render_receipt.hud_overlay_suppressed == 1,
-          "startup render receipt exposes title/menu/HUD handoff");
+              render_receipt.hud_overlay_suppressed == 1 &&
+              render_receipt.title_backdrop_ready == 1 &&
+              render_receipt.resume_menu_ready == 1 &&
+              render_receipt.save_slot_menu_ready == 1 &&
+              render_receipt.new_game_menu_ready == 1 &&
+              render_receipt.full_start_graphics_ready == 1,
+          "startup render receipt exposes full title/save-menu graphics readiness");
     host_facts.startup_menu_active = 1;
     check(dm2_v1_startup_presentation_view_receipt_from_host_facts(
               &host_facts,
@@ -441,6 +446,11 @@ int main(void)
               view_receipt.render.selectable_text_count == 3 &&
               view_receipt.render.selected_highlight_count == 1 &&
               view_receipt.render.hud_overlay_suppressed == 1 &&
+              view_receipt.render.title_backdrop_ready == 1 &&
+              view_receipt.render.resume_menu_ready == 1 &&
+              view_receipt.render.save_slot_menu_ready == 1 &&
+              view_receipt.render.new_game_menu_ready == 1 &&
+              view_receipt.render.full_start_graphics_ready == 1 &&
               view_receipt.runtime_handoff.valid &&
               view_receipt.runtime_handoff.startup_menu_active == 1 &&
               view_receipt.runtime_handoff.animation_active == 1 &&

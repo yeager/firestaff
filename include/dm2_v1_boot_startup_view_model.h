@@ -22,6 +22,11 @@ struct DM2_V1_BootStartupViewModel {
     int runtime_menu_ready;
     int runtime_action_ready;
     int first_hud_frame_ready;
+    int title_backdrop_ready;
+    int resume_menu_ready;
+    int save_slot_menu_ready;
+    int new_game_menu_ready;
+    int full_start_graphics_ready;
 };
 
 #endif

@@ -1436,6 +1436,16 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
         out_view_model->runtime_action_ready = handoff->runtime_action_ready;
         out_view_model->first_hud_frame_ready =
             handoff->first_hud_frame_ready;
+        out_view_model->title_backdrop_ready =
+            out_view_model->view_receipt.render.title_backdrop_ready;
+        out_view_model->resume_menu_ready =
+            out_view_model->view_receipt.render.resume_menu_ready;
+        out_view_model->save_slot_menu_ready =
+            out_view_model->view_receipt.render.save_slot_menu_ready;
+        out_view_model->new_game_menu_ready =
+            out_view_model->view_receipt.render.new_game_menu_ready;
+        out_view_model->full_start_graphics_ready =
+            out_view_model->view_receipt.render.full_start_graphics_ready;
     }
     return ok;
 }

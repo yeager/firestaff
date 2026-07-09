@@ -51,6 +51,11 @@ typedef struct DM2_V1_StartupRenderReceipt {
     int selected_highlight_count;
     int hud_runtime_ready;
     int hud_overlay_suppressed;
+    int title_backdrop_ready;
+    int resume_menu_ready;
+    int save_slot_menu_ready;
+    int new_game_menu_ready;
+    int full_start_graphics_ready;
 } DM2_V1_StartupRenderReceipt;
 
 typedef struct DM2_V1_StartupViewReceipt {

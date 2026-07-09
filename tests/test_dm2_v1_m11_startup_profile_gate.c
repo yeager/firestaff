@@ -499,6 +499,11 @@ static void expect_dm2_startup_layout_contract(void) {
                     view_receipt.menu_state.selected_row == 2 &&
                     view_receipt.render.title_gdat_found &&
                     view_receipt.render.hud_overlay_suppressed == 1 &&
+                    view_receipt.render.title_backdrop_ready == 1 &&
+                    view_receipt.render.resume_menu_ready == 1 &&
+                    view_receipt.render.save_slot_menu_ready == 1 &&
+                    view_receipt.render.new_game_menu_ready == 1 &&
+                    view_receipt.render.full_start_graphics_ready == 1 &&
                     view_receipt.runtime_handoff.startup_menu_active == 1 &&
                     view_receipt.runtime_handoff.runtime_menu_ready == 1 &&
                     view_receipt.runtime_handoff.runtime_action_ready == 0 &&
@@ -515,6 +520,11 @@ static void expect_dm2_startup_layout_contract(void) {
                         command_count &&
                     boot_view_model.view_receipt.render.hud_overlay_suppressed ==
                         1 &&
+                    boot_view_model.title_backdrop_ready == 1 &&
+                    boot_view_model.resume_menu_ready == 1 &&
+                    boot_view_model.save_slot_menu_ready == 1 &&
+                    boot_view_model.new_game_menu_ready == 1 &&
+                    boot_view_model.full_start_graphics_ready == 1 &&
                     strcmp(boot_view_model.phase, "dm2-startup-menu") == 0 &&
                     boot_view_model.startup_active == 1 &&
                     strcmp(boot_view_model.animation,
