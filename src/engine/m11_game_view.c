@@ -181,7 +181,6 @@ static int m11_projectile_aspect_flip_flags(int aspectIndex,
                                             int mapY);
 static int m11_dm1_hoc_menu_route_blocks_normal_input(
     const M11_GameViewState* state);
-static int m11_dm1_hoc_host_draw_rejects_backing_fallback(void);
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -11754,7 +11753,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_ownership.lower_level_renderer_helper_owned &&
                 hoc_ownership.lower_level_audio_helper_owned;
             out->dm1HoCHostDrawRejectsBackingFallback =
-                m11_dm1_hoc_host_draw_rejects_backing_fallback();
+                hoc_ownership.host_draw_rejects_backing_fallback;
             out->dm1HoCHoCAssetCapture =
                 hoc_consumer.hoc_asset_capture;
             out->dm1HoCHostWindowCapture =
@@ -21260,20 +21259,6 @@ static int m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
            !outReceipt->drawMirrorBackingFallbackRect;
 }
 
-static int m11_dm1_hoc_host_draw_rejects_backing_fallback(void) {
-    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
-    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
-    DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
-    memset(&frontWall, 0, sizeof(frontWall));
-    memset(&render, 0, sizeof(render));
-    memset(&hostDraw, 0, sizeof(hostDraw));
-    return DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
-               127, 13, 4, 2, 2, &frontWall) &&
-           DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&frontWall, &render) &&
-           !m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
-               &render, 0, 0, &hostDraw);
-}
-
 static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             const M11_ViewportCell* frontCell,
                                             unsigned char* framebuffer,
@@ -29692,7 +29677,7 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     }
     if (outHostDrawRejectsBackingFallback) {
         *outHostDrawRejectsBackingFallback =
-            m11_dm1_hoc_host_draw_rejects_backing_fallback();
+            releaseOwnership.host_draw_rejects_backing_fallback;
     }
     if (outMacWindowCapture) {
         *outMacWindowCapture = releaseOwnership.mac_window_capture;

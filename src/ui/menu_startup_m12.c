@@ -17,7 +17,6 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
-#include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -6793,35 +6792,6 @@ static int m12_dm1_required_asset_capture_ready(
         dungeon->matchedHash[0] != '\0';
 }
 
-/* ReDMCSB: DUNGEON.C F0172 line ~2466 feeds DUNVIEW.C wall draw
- * routes around line ~6373; HoC mirror backing must be receipt-owned here. */
-static int m12_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
-    const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
-    int backingAssetAvailable,
-    DM1_V1_ChampionMirrorHostDrawReceiptPc34* outReceipt) {
-    return DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
-               render, 0, backingAssetAvailable, outReceipt) &&
-           outReceipt->valid &&
-           outReceipt->drawMirrorBackingAsset &&
-           !outReceipt->drawMirrorBackingFallbackRect;
-}
-
-static int m12_dm1_hoc_host_draw_rejects_backing_fallback(void) {
-    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
-    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
-    DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
-    memset(&frontWall, 0, sizeof(frontWall));
-    memset(&render, 0, sizeof(render));
-    memset(&hostDraw, 0, sizeof(hostDraw));
-    return DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
-               127, 13, 4, 2, 2, &frontWall) &&
-           DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&frontWall, &render) &&
-           m12_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
-               &render, 1, &hostDraw) &&
-           !m12_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
-               &render, 0, &hostDraw);
-}
-
 static int m12_apply_dm1_hoc_startup_capture_package(
     const M12_StartupMenuState* state,
     M12_StartupBootReadiness* receipt) {
@@ -6870,7 +6840,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         ownership.lower_level_renderer_helper_owned &&
         ownership.lower_level_audio_helper_owned;
     receipt->dm1HoCHostDrawRejectsBackingFallbackReady =
-        m12_dm1_hoc_host_draw_rejects_backing_fallback();
+        ownership.host_draw_rejects_backing_fallback;
     receipt->dm1HoCHoCAssetCaptureReady = ownership.hoc_asset_capture;
     receipt->dm1HoCHostWindowCaptureReady = ownership.host_window_capture;
     receipt->dm1HoCOpenedEntranceFrameReady =
