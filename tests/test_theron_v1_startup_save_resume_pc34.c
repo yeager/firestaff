@@ -480,10 +480,17 @@ static void test_srm_party_continue_restores_all_champions(void) {
     char slot_path[THERON_V1_SRM_PATH_MAX];
     Theron_V1_World world;
     char receipt[256];
+    char saved_srm[THERON_V1_SRM_PATH_MAX] = {0};
+    const char *prev = getenv("FIRESTAFF_THERON_SRM_DIR");
+    int had = prev != NULL;
 
     if (!make_temp_save_root(srm_root)) {
         printf("SKIP: mkdtemp failed for srm party continue test\n");
         return;
+    }
+    if (had) {
+        strncpy(saved_srm, prev, THERON_V1_SRM_PATH_MAX - 1);
+        saved_srm[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     }
     expect_true(theron_v1_srm_slot_path(srm_root, 2, slot_path) == 1,
                 "srm party slot 2 path constructs");
@@ -491,6 +498,36 @@ static void test_srm_party_continue_restores_all_champions(void) {
                             g_valid_party_gzip_srm,
                             sizeof(g_valid_party_gzip_srm)) == 1,
                 "srm party slot 2 written");
+    test_setenv("FIRESTAFF_THERON_SRM_DIR", srm_root);
+
+    {
+        Theron_V1StartupSaveResume snap;
+        memset(&snap, 0, sizeof(snap));
+        expect_true(theron_v1_startup_save_resume_evaluate(NULL, &snap) == 1,
+                    "srm party snapshot evaluate returns 1");
+        expect_true(snap.resume_claim == THERON_V1_STARTUP_RESUME_SRM &&
+                        snap.srm_first_recognized_slot == 2,
+                    "srm party snapshot selects SRM slot 2");
+#if FIRESTAFF_HAS_ZLIB
+        expect_true(snap.srm_envelope_kind ==
+                        THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY,
+                    "srm party snapshot records PROGRESSION_PARTY envelope");
+        expect_true(snap.srm_progress_import_status ==
+                        THERON_V1_SRM_PROGRESS_IMPORT_OK &&
+                        snap.srm_progress_current_dungeon ==
+                            THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                    "srm party snapshot restores progression receipt");
+        expect_true(snap.srm_party_import_ran == 1 &&
+                        snap.srm_party_restored == 1 &&
+                        snap.srm_party_champion_count ==
+                            THERON_MAX_CHAMPIONS &&
+                        snap.srm_party_gold == 777u,
+                    "srm party snapshot carries party body receipt");
+#else
+        expect_true(snap.srm_payload_probe_ran == 0,
+                    "srm party snapshot does not decode without zlib");
+#endif
+    }
 
     theron_v1_world_init(&world);
     world.party.champion_count = 1;
@@ -520,6 +557,11 @@ static void test_srm_party_continue_restores_all_champions(void) {
                 "srm party continue receipt reports party envelope");
 
     cleanup_srm_root(srm_root);
+    if (had) {
+        test_setenv("FIRESTAFF_THERON_SRM_DIR", saved_srm);
+    } else {
+        test_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
+    }
 }
 
 static void test_dual_resume_claim(void) {
