@@ -45,7 +45,7 @@ static const char s_source_summary[] =
     "not reached for a close/rewrite, visible capacity=8, pickup rejected, "
     "leader hand unchanged, chest slots unchanged, no F0334 rewrite.";
 
-static const Dm1V1ChestPickupAtCapacityContractPc34Compat s_contract = {
+static const DM1_V1_ChestPickupAtCapacityContractPc34 s_contract = {
     1,
     DM1_V1_CHEST_PICKUP_AT_CAPACITY_VISIBLE_CAPACITY,
     DM1_V1_CHEST_PICKUP_AT_CAPACITY_VISIBLE_CAPACITY,
@@ -69,8 +69,8 @@ static const Dm1V1ChestPickupAtCapacityContractPc34Compat s_contract = {
     s_source_summary
 };
 
-const Dm1V1ChestPickupAtCapacityContractPc34Compat *
-dm1_v1_chest_pickup_at_capacity_contract_pc34_compat(void)
+const DM1_V1_ChestPickupAtCapacityContractPc34 *
+DM1_V1_ChestPickupAtCapacity_ContractPc34(void)
 {
     return &s_contract;
 }

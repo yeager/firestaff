@@ -48,28 +48,42 @@ typedef struct {
     const char *redrawIdentityAnchor;
     const char *defsAnchor;
     const char *scope;
-} Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34Compat;
+} DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34;
 
 typedef struct {
     int assertions;
     int failures;
     uint32_t deterministic_hash;
-} Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34Compat;
+} DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34;
 
-const Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34Compat *
-dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_evidence_pc34_compat(
+const DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34 *
+DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_EvidencePc34(
     void);
 
 const char *
-dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_source_evidence_pc34_compat(
+DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_SourceEvidencePc34(
     void);
 
-int run_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat_self_test(
+int DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_RunSelfTestPc34(
     void);
 
-Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34Compat
-dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_last_stats_pc34_compat(
+DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34
+DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_LastStatsPc34(
     void);
+
+typedef DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34
+    Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34Compat;
+typedef DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34
+    Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34Compat;
+
+#define dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_evidence_pc34_compat \
+    DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_EvidencePc34
+#define dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_source_evidence_pc34_compat \
+    DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_SourceEvidencePc34
+#define run_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat_self_test \
+    DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_RunSelfTestPc34
+#define dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_last_stats_pc34_compat \
+    DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_LastStatsPc34
 
 #ifdef __cplusplus
 }

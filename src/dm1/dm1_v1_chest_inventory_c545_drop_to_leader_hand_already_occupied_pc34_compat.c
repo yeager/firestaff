@@ -70,10 +70,10 @@ typedef struct {
     uint32_t deterministic_hash;
 } C545Fixture;
 
-static Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34Compat
+static DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34
     s_lastStats;
 
-static const Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34Compat
+static const DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34
     s_evidence = {
         1,
         1,
@@ -522,10 +522,10 @@ static int guarded_rejection_preserves_surface(const C545Fixture *base,
 static void assert_evidence(void)
 {
     const char *text =
-        dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_source_evidence_pc34_compat();
-    const Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34Compat
+        DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_SourceEvidencePc34();
+    const DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34
         *e =
-            dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_evidence_pc34_compat();
+            DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_EvidencePc34();
 
     record_check(e != NULL, "evidence pointer", "COMMAND.C F0380:2045-2159");
     record_int_eq(e->source_locked_contract_only, 1,
@@ -755,21 +755,21 @@ static void assert_after_drop(const C545Fixture *fixture)
                   "COMMAND.C F0380:2045-2159");
 }
 
-const Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34Compat *
-dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_evidence_pc34_compat(
+const DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedEvidencePc34 *
+DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_EvidencePc34(
     void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_source_evidence_pc34_compat(
+DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_SourceEvidencePc34(
     void)
 {
     return s_source_evidence;
 }
 
-int run_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat_self_test(
+int DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_RunSelfTestPc34(
     void)
 {
     C545Fixture fixture;
@@ -812,8 +812,8 @@ int run_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_co
     return s_lastStats.failures == 0;
 }
 
-Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34Compat
-dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_last_stats_pc34_compat(
+DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34
+DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_LastStatsPc34(
     void)
 {
     return s_lastStats;

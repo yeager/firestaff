@@ -68,7 +68,7 @@ static int expect_contains(const char *label,
 }
 
 static int test_contract_values(
-    const Dm1V1ChestPickupAtCapacityContractPc34Compat *contract)
+    const DM1_V1_ChestPickupAtCapacityContractPc34 *contract)
 {
     const char *f0333 = contract->redmcsb_f0333_anchor;
     const char *f0334 = contract->redmcsb_f0334_anchor;
@@ -111,7 +111,7 @@ static int test_contract_values(
 }
 
 static int test_anchor_text(
-    const Dm1V1ChestPickupAtCapacityContractPc34Compat *contract)
+    const DM1_V1_ChestPickupAtCapacityContractPc34 *contract)
 {
     const char *f0333 = contract->redmcsb_f0333_anchor;
     const char *f0334 = contract->redmcsb_f0334_anchor;
@@ -161,7 +161,7 @@ static int test_anchor_text(
 }
 
 static int test_required_phrases(
-    const Dm1V1ChestPickupAtCapacityContractPc34Compat *contract)
+    const DM1_V1_ChestPickupAtCapacityContractPc34 *contract)
 {
     const char *note = contract->capacity_note;
     const char *summary = contract->source_summary;
@@ -218,8 +218,8 @@ static int test_required_phrases(
 
 int main(void)
 {
-    const Dm1V1ChestPickupAtCapacityContractPc34Compat *contract =
-        dm1_v1_chest_pickup_at_capacity_contract_pc34_compat();
+    const DM1_V1_ChestPickupAtCapacityContractPc34 *contract =
+        DM1_V1_ChestPickupAtCapacity_ContractPc34();
     int ok = 1;
 
     printf("probe=dm1_v1_chest_pickup_at_capacity_pc34_compat\n");

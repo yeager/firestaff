@@ -27,10 +27,16 @@ typedef struct {
     const char *redmcsb_defs_c08_anchor;
     const char *capacity_note;
     const char *source_summary;
-} Dm1V1ChestPickupAtCapacityContractPc34Compat;
+} DM1_V1_ChestPickupAtCapacityContractPc34;
 
-const Dm1V1ChestPickupAtCapacityContractPc34Compat *
-dm1_v1_chest_pickup_at_capacity_contract_pc34_compat(void);
+const DM1_V1_ChestPickupAtCapacityContractPc34 *
+DM1_V1_ChestPickupAtCapacity_ContractPc34(void);
+
+typedef DM1_V1_ChestPickupAtCapacityContractPc34
+    Dm1V1ChestPickupAtCapacityContractPc34Compat;
+
+#define dm1_v1_chest_pickup_at_capacity_contract_pc34_compat \
+    DM1_V1_ChestPickupAtCapacity_ContractPc34
 
 #ifdef __cplusplus
 }
