@@ -1418,6 +1418,8 @@ int main(void) {
                         real_visual_capture.startup_title_menu_hud_breadth_ready == 1 &&
                         real_visual_capture.sampled_title_timing_capture_count >= 3 &&
                         real_visual_capture.sampled_title_pixel_capture_count >= 3 &&
+                        real_visual_capture.sampled_title_unique_pixel_hash_count >= 1 &&
+                        real_visual_capture.sampled_title_pixel_hash != 0u &&
                         (real_visual_capture.sampled_title_frame_mask &
                          ((1 << 0) | (1 << 2) | (1 << 7))) ==
                             ((1 << 0) | (1 << 2) | (1 << 7)) &&

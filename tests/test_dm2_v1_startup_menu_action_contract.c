@@ -780,6 +780,8 @@ int main(void)
                       boot_real_visual_capture.packaged_hud_suppression_consumed == 1 &&
                       boot_real_visual_capture.sampled_title_timing_capture_count >= 3 &&
                       boot_real_visual_capture.sampled_title_pixel_capture_count >= 3 &&
+                      boot_real_visual_capture.sampled_title_unique_pixel_hash_count >= 1 &&
+                      boot_real_visual_capture.sampled_title_pixel_hash != 0u &&
                       (boot_real_visual_capture.sampled_title_frame_mask &
                        ((1 << 0) | (1 << 2) | (1 << 7))) ==
                           ((1 << 0) | (1 << 2) | (1 << 7)) &&
