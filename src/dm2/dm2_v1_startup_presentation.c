@@ -132,9 +132,9 @@ int dm2_v1_startup_presentation_build(
     for (row = 0; row < max_commands; ++row) {
         dm2_v1_startup_draw_clear(&out_commands[row]);
     }
-    /* skproject/SKWin: ANIM_BOOTSTRAP_TITLE() leads into the GDAT-backed
-     * title/main-menu art; category 0x05 is TITLE and field 0x01 is the
-     * 320x200 base title surface in PC GRAPHICS.DAT. */
+    /* skproject/SKWIN/SkWinCore.cpp lines ~55180-55196:
+     * startup asks GDAT TITLE category 0x05, index 0, field 0x01 for the
+     * credit/title screen and field 0x04 for the menu screen. */
     rect.x = 0;
     rect.y = 0;
     rect.w = 320;
@@ -313,6 +313,10 @@ int dm2_v1_startup_presentation_render_receipt(
     /* skproject/SKWIN SkWinCore startup keeps the GDAT title/menu scene in
      * front of the game HUD. Record that suppression explicitly for M11. */
     out_receipt->hud_overlay_suppressed = 1;
+    out_receipt->skproject_title_category = DM2_GDAT_CATEGORY_TITLE;
+    out_receipt->skproject_title_index = 0;
+    out_receipt->skproject_credit_screen_field = 1;
+    out_receipt->skproject_menu_screen_field = 4;
 
     for (i = 0; i < command_count; ++i) {
         const DM2_V1_StartupDrawCommand *command = &commands[i];
@@ -343,6 +347,13 @@ int dm2_v1_startup_presentation_render_receipt(
         out_receipt->title_rect.y == 0 &&
         out_receipt->title_rect.w == 320 &&
         out_receipt->title_rect.h == 200;
+    out_receipt->skproject_title_query_ready =
+        out_receipt->title_gdat_category ==
+            out_receipt->skproject_title_category &&
+        out_receipt->title_gdat_index == out_receipt->skproject_title_index &&
+        out_receipt->title_gdat_field ==
+            out_receipt->skproject_credit_screen_field &&
+        out_receipt->skproject_menu_screen_field == 4;
     for (i = 0; i < menu->row_count; ++i) {
         DM2_V1_StartupRowKind kind = DM2_V1_STARTUP_ROW_NONE;
         int slot = -1;
@@ -362,6 +373,7 @@ int dm2_v1_startup_presentation_render_receipt(
      * gives M11 one DM2-owned readiness bit instead of rechecking commands. */
     out_receipt->full_start_graphics_ready =
         out_receipt->title_backdrop_ready &&
+        out_receipt->skproject_title_query_ready &&
         out_receipt->new_game_menu_ready &&
         out_receipt->hud_overlay_suppressed &&
         out_receipt->selectable_text_count == menu->row_count;

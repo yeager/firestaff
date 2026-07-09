@@ -425,6 +425,11 @@ int main(void)
               render_receipt.title_gdat_category == 0x05 &&
               render_receipt.title_gdat_index == 0 &&
               render_receipt.title_gdat_field == 1 &&
+              render_receipt.skproject_title_query_ready == 1 &&
+              render_receipt.skproject_title_category == 0x05 &&
+              render_receipt.skproject_title_index == 0 &&
+              render_receipt.skproject_credit_screen_field == 1 &&
+              render_receipt.skproject_menu_screen_field == 4 &&
               render_receipt.title_rect.w == 320 &&
               render_receipt.title_rect.h == 200 &&
               render_receipt.panel_rect.x == 78 &&
@@ -452,6 +457,7 @@ int main(void)
               view_receipt.menu_state.row_count == 3 &&
               view_receipt.menu_state.selected_row == 1 &&
               view_receipt.render.title_gdat_found &&
+              view_receipt.render.skproject_title_query_ready == 1 &&
               view_receipt.render.title_rect.w == 320 &&
               view_receipt.render.title_rect.h == 200 &&
               view_receipt.render.selectable_text_count == 3 &&
@@ -757,6 +763,10 @@ int main(void)
                       boot_real_visual_capture.real_gdat_title_asset_required == 1 &&
                       boot_real_visual_capture.real_gdat_title_asset_consumed == 1 &&
                       boot_real_visual_capture.title_capture_ready == 1 &&
+                      boot_real_visual_capture.skproject_title_query_ready == 1 &&
+                      boot_real_visual_capture.skproject_title_category == 0x05 &&
+                      boot_real_visual_capture.skproject_credit_screen_field == 1 &&
+                      boot_real_visual_capture.skproject_menu_screen_field == 4 &&
                       boot_real_visual_capture.title_gdat_asset_w == 320 &&
                       boot_real_visual_capture.title_gdat_asset_h == 200 &&
                       boot_real_visual_capture.title_pixel_count == 64000u &&
