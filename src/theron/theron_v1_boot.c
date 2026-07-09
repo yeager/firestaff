@@ -2750,6 +2750,11 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         return 0;
     }
     out_receipt->host_consumes_view_model = 1;
+    out_receipt->track02_real_media_ready =
+        view_model->startup_media_state_valid &&
+                view_model->startup_media_state_receipt.startup_media_ready
+            ? 1
+            : 0;
     if (theron_v1_boot_startup_render_route_receipt_from_view_model(
             view_model,
             &render_route)) {
@@ -2790,11 +2795,18 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
             render_route.runtime_receipt_text_route;
         out_receipt->status_scope = render_route.status_scope;
         out_receipt->status = render_route.status;
+        out_receipt->real_bitmap_startup_graphics_ready =
+            out_receipt->track02_real_media_ready &&
+                    render_route.render_plan_valid
+                ? 1
+                : 0;
     }
     if (out_receipt->runtime_fallback_visuals_blocked ||
         out_receipt->runtime_level_source ==
             THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED) {
         out_receipt->graphics_blocked = 1;
+        out_receipt->no_fallback_startup_graphics_proof =
+            out_receipt->no_fallback_visuals_enforced ? 1 : 0;
         out_receipt->status_scope = "STARTUP";
         out_receipt->status = "TRACK02 GRAPHICS BLOCKED";
         return 0;
@@ -2804,6 +2816,7 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->runtime_level_source ==
             THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC) {
         out_receipt->graphics_blocked = 1;
+        out_receipt->no_fallback_startup_graphics_proof = 1;
         out_receipt->status_scope = "STARTUP";
         out_receipt->status = "TRACK02 RUNTIME GRAPHICS HANDOFF";
         return 0;
@@ -2813,6 +2826,7 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->runtime_level_source ==
             THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME) {
         out_receipt->graphics_blocked = 1;
+        out_receipt->no_fallback_startup_graphics_proof = 1;
         out_receipt->status_scope = "STARTUP";
         out_receipt->status = "SAVE RESUME RUNTIME GRAPHICS HANDOFF";
         return 0;
@@ -2833,6 +2847,11 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
     }
     out_receipt->graphics_executed =
         theron_v1_boot_startup_execute_graphics_plan(&plan, executor) ? 1 : 0;
+    out_receipt->fallback_startup_graphics_executed =
+        out_receipt->graphics_executed &&
+                out_receipt->fallback_visuals_allowed
+            ? 1
+            : 0;
     if (!out_receipt->graphics_executed) {
         out_receipt->graphics_blocked = 1;
         out_receipt->status_scope = "STARTUP";
@@ -2963,6 +2982,14 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
             out_receipt->graphics_route.graphics_executed;
         out_receipt->full_start_graphics_blocked =
             out_receipt->graphics_route.graphics_blocked;
+        out_receipt->track02_real_media_ready =
+            out_receipt->graphics_route.track02_real_media_ready;
+        out_receipt->real_bitmap_startup_graphics_ready =
+            out_receipt->graphics_route.real_bitmap_startup_graphics_ready;
+        out_receipt->no_fallback_startup_graphics_proof =
+            out_receipt->graphics_route.no_fallback_startup_graphics_proof;
+        out_receipt->fallback_startup_graphics_executed =
+            out_receipt->graphics_route.fallback_startup_graphics_executed;
     }
     out_receipt->full_start_graphics_ready =
         out_receipt->full_start_graphics_executed ||
