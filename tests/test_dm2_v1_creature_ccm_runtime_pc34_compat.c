@@ -65,10 +65,83 @@ static int test_attack_tick_sets_cooldown(void) {
     return 1;
 }
 
+static int spawn_runtime_ai(void) {
+    int slot;
+    install_mobile_melee_ai();
+    slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 12, 13, 0, 2, 8);
+    return slot;
+}
+
+static int test_steal_opcode_writeback(void) {
+    DM2_V1_CreatureCCMTickObserver obs;
+    int slot = spawn_runtime_ai();
+    CHECK("spawn steal", slot >= 0);
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_STEAL_ITEM, 3, 0, 0);
+    dm2_v1_creature_tick();
+    CHECK("steal observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("steal opcode", obs.ccm_opcode == DM2_CCM_STEAL_ITEM);
+    CHECK("steal flag", obs.ccm_flag_steal == 1);
+    CHECK("steal target", obs.ccm_target_id == 3);
+    CHECK("steal returns walk", obs.after_b_1a == DM2_CCM_WALK_NOW);
+    CHECK("steal cooldown", obs.attack_cooldown_after == 9);
+    return 1;
+}
+
+static int test_shoot_opcode_writeback(void) {
+    DM2_V1_CreatureCCMTickObserver obs;
+    int slot = spawn_runtime_ai();
+    CHECK("spawn shoot", slot >= 0);
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_SHOOT_ITEM, 44, 0, 0);
+    dm2_v1_creature_tick();
+    CHECK("shoot observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("shoot opcode", obs.ccm_opcode == DM2_CCM_SHOOT_ITEM);
+    CHECK("shoot flag", obs.ccm_flag_shoot == 1);
+    CHECK("shoot stack top", obs.ccm_stack_top == 2);
+    CHECK("shoot item stack", obs.ccm_stack_value0 == 44);
+    CHECK("shoot direction stack", obs.ccm_stack_value1 == 2);
+    CHECK("shoot returns walk", obs.after_b_1a == DM2_CCM_WALK_NOW);
+    CHECK("shoot cooldown", obs.attack_cooldown_after == 18);
+    return 1;
+}
+
+static int test_cast_spell_opcode_writeback(void) {
+    DM2_V1_CreatureCCMTickObserver obs;
+    int slot = spawn_runtime_ai();
+    CHECK("spawn cast", slot >= 0);
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_CAST_SPELL, 16, 5, 7);
+    dm2_v1_creature_tick();
+    CHECK("cast observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("cast opcode", obs.ccm_opcode == DM2_CCM_CAST_SPELL);
+    CHECK("cast flag", obs.ccm_flag_cast_spell == 1);
+    CHECK("cast target x", obs.ccm_target_x == 5);
+    CHECK("cast target y", obs.ccm_target_y == 7);
+    CHECK("cast returns walk", obs.after_b_1a == DM2_CCM_WALK_NOW);
+    CHECK("cast cooldown", obs.attack_cooldown_after == 18);
+    return 1;
+}
+
+static int test_explode_or_summon_opcode_writeback(void) {
+    DM2_V1_CreatureCCMTickObserver obs;
+    int slot = spawn_runtime_ai();
+    CHECK("spawn explode", slot >= 0);
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_EXPLODE_OR_SUMMON, 2, 0, 0);
+    dm2_v1_creature_tick();
+    CHECK("explode observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("explode opcode", obs.ccm_opcode == DM2_CCM_EXPLODE_OR_SUMMON);
+    CHECK("explode flag", obs.ccm_flag_explode_or_summon == 1);
+    CHECK("explode returns walk", obs.after_b_1a == DM2_CCM_WALK_NOW);
+    CHECK("explode cooldown", obs.attack_cooldown_after == 18);
+    return 1;
+}
+
 int main(void) {
     printf("DM2 V1 creature CCM runtime bridge\n");
     if (!test_walk_tick_enters_attack_state()) return 1;
     if (!test_attack_tick_sets_cooldown()) return 1;
+    if (!test_steal_opcode_writeback()) return 1;
+    if (!test_shoot_opcode_writeback()) return 1;
+    if (!test_cast_spell_opcode_writeback()) return 1;
+    if (!test_explode_or_summon_opcode_writeback()) return 1;
     printf("%d/%d checks passed\n", g_pass, g_run);
     return 0;
 }

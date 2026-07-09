@@ -203,6 +203,16 @@ typedef struct {
     int ccm_result;
     int ccm_flag_attack_party;
     int ccm_flag_walk;
+    int ccm_flag_steal;
+    int ccm_flag_shoot;
+    int ccm_flag_cast_spell;
+    int ccm_flag_explode_or_summon;
+    int ccm_target_id;
+    int ccm_target_x;
+    int ccm_target_y;
+    int ccm_stack_top;
+    int ccm_stack_value0;
+    int ccm_stack_value1;
     int attack_cooldown_before;
     int attack_cooldown_after;
 } DM2_V1_CreatureCCMTickObserver;
@@ -266,6 +276,11 @@ const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id);
 void dm2_v1_creature_test_set_ai_spec(int ai_index,
                                        const DM2_AIDefinition *spec);
 void dm2_v1_creature_test_clear_ai_overrides(void);
+void dm2_v1_creature_test_set_ccm_state(int instance_id,
+                                        uint8_t b_1a,
+                                        uint8_t b_17,
+                                        int target_x,
+                                        int target_y);
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
 /* ── Death/drop observer (Phase 5 followup, 2026-06-22) ────────────────

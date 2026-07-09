@@ -383,6 +383,19 @@ void dm2_v1_creature_test_set_ai_spec(int ai_index,
 void dm2_v1_creature_test_clear_ai_overrides(void) {
     dm2_v1_creature_reset_ai_table();
 }
+
+void dm2_v1_creature_test_set_ccm_state(int instance_id,
+                                        uint8_t b_1a,
+                                        uint8_t b_17,
+                                        int target_x,
+                                        int target_y) {
+    if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return;
+    if (!g_creature_pool[instance_id].alive) return;
+    g_creature_pool[instance_id].b_1a = b_1a;
+    g_creature_pool[instance_id].b_17 = b_17;
+    g_creature_pool[instance_id].target_x = target_x;
+    g_creature_pool[instance_id].target_y = target_y;
+}
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
 /* dm2_v1_creature_death_check — death → drop + spatial sound.
@@ -540,12 +553,28 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     g_last_ccm_tick.ccm_result = rc;
     g_last_ccm_tick.ccm_flag_attack_party = state.flags[9];
     g_last_ccm_tick.ccm_flag_walk = state.flags[0];
+    g_last_ccm_tick.ccm_flag_steal = state.flags[3];
+    g_last_ccm_tick.ccm_flag_shoot = state.flags[5];
+    g_last_ccm_tick.ccm_flag_cast_spell = state.flags[8];
+    g_last_ccm_tick.ccm_flag_explode_or_summon = state.flags[10];
+    g_last_ccm_tick.ccm_target_id = state.target_id;
+    g_last_ccm_tick.ccm_target_x = state.target_x;
+    g_last_ccm_tick.ccm_target_y = state.target_y;
+    g_last_ccm_tick.ccm_stack_top = state.stack_top;
+    if (state.stack_top > 0) g_last_ccm_tick.ccm_stack_value0 = state.stack[0];
+    if (state.stack_top > 1) g_last_ccm_tick.ccm_stack_value1 = state.stack[1];
     g_last_ccm_tick.attack_cooldown_before = before_cooldown;
 
     if (rc == (int)DM2_CCM_RESULT_OK) {
         if (state.flags[9]) {
             c->b_1a = DM2_CCM_WALK_NOW;
             c->attack_cooldown = 18;
+        } else if (state.flags[5] || state.flags[8] || state.flags[10]) {
+            c->b_1a = DM2_CCM_WALK_NOW;
+            c->attack_cooldown = 18;
+        } else if (state.flags[3]) {
+            c->b_1a = DM2_CCM_WALK_NOW;
+            c->attack_cooldown = 9;
         } else if (state.flags[0] && before_cooldown == 0 &&
                    dm2_v1_creature_attacks_party(c->ai_index, 1)) {
             c->b_1a = DM2_CCM_CREATURE_ATTACKS_PARTY;
