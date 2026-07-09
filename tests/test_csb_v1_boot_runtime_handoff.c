@@ -2142,6 +2142,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupHostViewDrawReceipt_PC34 host_view_draw_receipt;
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 host_ownership;
+    CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2169,6 +2170,45 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     boot.dungeon_verified = 1;
     boot.variant_id = CSB_V1_VARIANT_PC34_EN;
     boot.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+    CHECK(csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
+              &boot,
+              &visual_sequence) == 1 &&
+              visual_sequence.valid &&
+              visual_sequence.real_asset_matched &&
+              visual_sequence.sequence_capture_hash != 0u &&
+              visual_sequence.title_sample_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              visual_sequence.title_all_stages_captured &&
+              visual_sequence.title_presents_capture_ready &&
+              visual_sequence.title_chaos_zoom_capture_ready &&
+              visual_sequence.title_chaos_hold_capture_ready &&
+              visual_sequence.title_strikes_back_capture_ready &&
+              visual_sequence.closed_door_hud_capture_ready &&
+              visual_sequence.utility_hud_capture_ready &&
+              visual_sequence.door_opening_delay_capture_ready &&
+              visual_sequence.door_opening_frame_capture_ready &&
+              visual_sequence.credits_capture_ready &&
+              visual_sequence.hud_menu_draw_available &&
+              visual_sequence.opening_frame_draw_available &&
+              visual_sequence.no_fallback_text_routes &&
+              visual_sequence.no_legacy_door_fallback_routes &&
+              visual_sequence.source_title_presents_ticks == 60 &&
+              visual_sequence.source_title_chaos_zoom_ticks == 18 &&
+              visual_sequence.source_title_chaos_hold_ticks == 2 &&
+              visual_sequence.source_title_strikes_back_ticks == 1 &&
+              visual_sequence.source_door_pre_open_delay_ticks == 20 &&
+              visual_sequence.source_door_step_count == 31 &&
+              visual_sequence.title_sample_hashes[0] != 0u &&
+              visual_sequence.title_sample_hashes[1] != 0u &&
+              visual_sequence.title_sample_hashes[2] != 0u &&
+              visual_sequence.title_sample_hashes[3] != 0u &&
+              visual_sequence.closed_door_hud_hash != 0u &&
+              visual_sequence.utility_hud_hash != 0u &&
+              visual_sequence.door_opening_delay_hash != 0u &&
+              visual_sequence.door_opening_frame_hash != 0u &&
+              visual_sequence.credits_hash != 0u &&
+              strstr(visual_sequence.source_evidence, "TITLE.C F0437") != NULL,
+          "boot startup visual sequence capture covers title, HUD, credits and door opening without fallback routes");
     memset(&facts, 0, sizeof(facts));
     facts.boot_profile = &boot;
     facts.utility_overlay_active = 1;
