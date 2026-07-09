@@ -24,6 +24,13 @@ static unsigned short make_thing(int type, int index)
     return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
 }
 
+static unsigned short make_thing_cell(int type, int index, int cell)
+{
+    return (unsigned short)(((cell & 0x03) << 14) |
+                            ((type & 0x0f) << 10) |
+                            (index & 0x03ff));
+}
+
 #define ASSERT_EQ(actual, expected, msg) do { \
     int a_ = (int)(actual); \
     int e_ = (int)(expected); \
@@ -729,7 +736,7 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     struct DungeonThings_Compat things;
     struct DungeonProjectile_Compat projectiles[1];
     unsigned char squareData[1];
-    unsigned short squareFirstThings[1];
+    unsigned short squareFirstThings[2];
     unsigned char projectileRaw[8];
     unsigned char explosionRaw[8];
     int projectileCount = -1;
@@ -912,7 +919,7 @@ static void test_hoc_floor_items_route_through_dm1_receipt(void)
     struct DungeonMapTiles_Compat tiles;
     struct DungeonThings_Compat things;
     unsigned char squareData[1];
-    unsigned short squareFirstThings[1];
+    unsigned short squareFirstThings[2];
     unsigned char weaponRaw[8];
     int floorItemCount = -1;
     int summaryItemCount = -1;
@@ -957,6 +964,82 @@ static void test_hoc_floor_items_route_through_dm1_receipt(void)
               "HoC map-0 item route suppresses loose floor rendering");
     ASSERT_EQ(summaryItemCount, 0,
               "HoC map-0 summary follows DM1 item route receipt");
+}
+
+static void test_hoc_front_mirror_receipt_uses_render_index(void)
+{
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonSensor_Compat sensors[1];
+    unsigned char squareData[2];
+    unsigned short squareFirstThings[2];
+    unsigned char sensorRaw[8];
+    int wallOrnament = -1;
+    int portrait = -1;
+    int elementType = -1;
+
+    seed_active_view(&state);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    memset(sensorRaw, 0, sizeof(sensorRaw));
+
+    squareData[0] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    squareData[1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    squareFirstThings[0] = make_thing_cell(THING_TYPE_SENSOR, 0, 2);
+    squareFirstThings[1] = THING_ENDOFLIST;
+    sensorRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    sensorRaw[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xffu);
+    sensors[0].sensorType = 127;
+    sensors[0].sensorData = 13;
+    sensors[0].ornamentOrdinal = 4;
+
+    map.width = 1;
+    map.height = 2;
+    tiles.squareData = squareData;
+    tiles.squareCount = 2;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 2;
+    things.rawThingData[THING_TYPE_SENSOR] = sensorRaw;
+    things.thingCounts[THING_TYPE_SENSOR] = 1;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapX = 0;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 0;
+
+    ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
+                  &state, 1, 0, NULL, NULL, &elementType,
+                  &wallOrnament, &portrait, NULL, NULL),
+              1,
+              "HoC front mirror probe samples front wall");
+    ASSERT_EQ(elementType, DUNGEON_ELEMENT_WALL,
+              "HoC front mirror square is wall");
+    ASSERT_EQ(wallOrnament, 4,
+              "HoC front mirror receipt carries mirror frame ornament");
+    ASSERT_EQ(portrait, 13,
+              "HoC front mirror uses zero-based C026 render index");
+
+    squareFirstThings[0] = make_thing_cell(THING_TYPE_SENSOR, 0, 1);
+    portrait = -2;
+    ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
+                  &state, 1, 0, NULL, NULL, NULL,
+                  NULL, &portrait, NULL, NULL),
+              1,
+              "HoC side mirror probe samples front wall");
+    ASSERT_EQ(portrait, -1,
+              "HoC side-cell C127 does not render a floating portrait");
 }
 
 static void test_runtime_projectiles_use_f0115_c2900_raw_rows(void)
@@ -1398,6 +1481,7 @@ int main(void)
     test_mouse_positive_control_dispatches_without_overlay();
     test_static_dungeon_effects_do_not_render_as_viewport_fireballs();
     test_hoc_floor_items_route_through_dm1_receipt();
+    test_hoc_front_mirror_receipt_uses_render_index();
     test_runtime_projectiles_use_f0115_c2900_raw_rows();
     test_runtime_floor_items_use_f0115_c2500_raw_rows();
     test_m11_runtime_samples_d2_d3_side_walls();
