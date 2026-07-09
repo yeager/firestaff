@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-09 DM2 runtime/render follow-up: DB0 door records now hand level door-set GDAT panel identity into the render plan. Remaining DM2 work is broader GDAT door masks/ornates, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
+  - 2026-07-09 update: startup title/menu/HUD render receipts now expose GDAT title, panel, selected row, text counts, and HUD overlay suppression. Remaining boot/start work is exact title timing, real title asset receipt breadth, and tighter M11 consumption.
   - 2026-07-09 update: DM2 startup launch receipts now carry menu animation/title readiness and V2/HUD/touch runtime handoff flags. Remaining boot/start work is exact title timing, real title asset receipt breadth, and tighter M11 consumption.
   - 2026-07-09 update: DB0 door ornate and destroyed-mask overlays now have runtime/render receipt paths and boot asset fetch ranges. Remaining DM2 work is real GDAT mask field parity, door ornate list decoding, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
   - 2026-07-09 update: DB4 creature records now feed runtime creature sprite rendering through the GDAT map-chip path with receipts. Remaining DM2 work is creature animation/AI frame writeback, more CCM opcodes, real save corpus handoff, and exact GDAT mask/list parity.
