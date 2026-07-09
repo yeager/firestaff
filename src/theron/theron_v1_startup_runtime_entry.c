@@ -651,7 +651,7 @@ int theron_v1_startup_runtime_entry_state_receipt_from_result(
     return 1;
 }
 
-int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
+int theron_v1_startup_runtime_load_initial_level_with_receipts(
     Theron_V1_World *world,
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
@@ -659,7 +659,7 @@ int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
     Theron_DungeonID dungeon_id,
     const Theron_StartupActionPlan *plan,
     Theron_V1StartupRuntimeEntryResult *out_result,
-    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_apply_receipt,
     Theron_StartupStateReceipt *out_state_receipt,
     char *receipt,
     size_t receipt_cap) {
@@ -672,8 +672,9 @@ int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
 
     theron_v1_startup_runtime_entry_result_init(result);
     theron_v1_startup_runtime_entry_apply_receipt_init(&apply_receipt);
-    if (out_host_receipt) {
-        theron_v1_startup_host_receipt_init(out_host_receipt);
+    if (out_apply_receipt) {
+        theron_v1_startup_runtime_entry_apply_receipt_init(
+            out_apply_receipt);
     }
     if (out_state_receipt) {
         theron_v1_startup_state_receipt_init(out_state_receipt);
@@ -694,10 +695,8 @@ int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
             result,
             receipt,
             &apply_receipt);
-        if (out_host_receipt) {
-            theron_v1_startup_host_receipt_from_runtime_entry_apply(
-                &apply_receipt,
-                out_host_receipt);
+        if (out_apply_receipt) {
+            *out_apply_receipt = apply_receipt;
         }
         return 0;
     }
@@ -718,6 +717,50 @@ int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
                                                        result,
                                                        receipt,
                                                        &apply_receipt)) {
+        return 0;
+    }
+    if (out_apply_receipt) {
+        *out_apply_receipt = apply_receipt;
+    }
+    return 1;
+}
+
+int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    const Theron_StartupActionPlan *plan,
+    Theron_V1StartupRuntimeEntryResult *out_result,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_V1StartupRuntimeEntryApplyReceipt apply_receipt;
+
+    theron_v1_startup_runtime_entry_apply_receipt_init(&apply_receipt);
+    if (out_host_receipt) {
+        theron_v1_startup_host_receipt_init(out_host_receipt);
+    }
+    if (!theron_v1_startup_runtime_load_initial_level_with_receipts(
+            world,
+            hucard_rom,
+            hucard_rom_size,
+            md5_hex,
+            dungeon_id,
+            plan,
+            out_result,
+            &apply_receipt,
+            out_state_receipt,
+            receipt,
+            receipt_cap)) {
+        if (out_host_receipt) {
+            theron_v1_startup_host_receipt_from_runtime_entry_apply(
+                &apply_receipt,
+                out_host_receipt);
+        }
         return 0;
     }
     if (out_host_receipt &&
