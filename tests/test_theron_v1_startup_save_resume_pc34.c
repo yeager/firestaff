@@ -1377,6 +1377,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupHostReceipt host_receipt;
     Theron_V1_BootRuntimeStartupSnapshot snapshot;
     Theron_V1_BootStartupViewModel view_model;
+    Theron_V1_BootStartupViewModel direct_view_model;
     char exit_receipt[128];
     int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
 
@@ -1470,6 +1471,39 @@ static void test_startup_session_facts_wrappers(void) {
                     view_model.runtime_track02_semantic_handoff == 0 &&
                     view_model.runtime_fallback_visuals_blocked == 0,
                 "boot startup view model carries menu save and runtime route receipts");
+    expect_true(theron_v1_boot_startup_view_model_from_runtime_state(
+                    &direct_view_model,
+                    THERON_STARTUP_PHASE_STAGE_SELECT,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    1,
+                    1,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    "SELECT",
+                    NULL,
+                    NULL,
+                    0,
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS) &&
+                    direct_view_model.row_count == view_model.row_count &&
+                    direct_view_model.render_plan_valid &&
+                    direct_view_model.continue_focus == 1 &&
+                    direct_view_model.resume_claim ==
+                        THERON_V1_STARTUP_RESUME_DUAL &&
+                    direct_view_model.tqsv_slot == 2 &&
+                    direct_view_model.srm_slot == 3 &&
+                    direct_view_model.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM &&
+                    direct_view_model.runtime_champion_count == 3,
+                "boot runtime-state view model wrapper carries menu save and route receipts");
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;
