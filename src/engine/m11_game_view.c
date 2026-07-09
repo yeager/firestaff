@@ -3448,6 +3448,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 ownership;
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 route_hardening;
     M11_CSBStartupRenderExecutorContext context;
     CSB_V1_StartupRenderExecutor_PC34 executor;
 
@@ -3488,12 +3489,25 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         m11_csb_startup_executor_draw_fallback_text;
     executor.draw_utility_panel =
         m11_csb_startup_executor_draw_utility_panel;
-    (void)csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
-        &snapshot,
-        0,
-        0,
-        &executor,
-        &ownership);
+    if (!csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+            &snapshot,
+            0,
+            0,
+            &executor,
+            &ownership) ||
+        !csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+            &visual_sequence,
+            &ownership,
+            &route_hardening)) {
+        m11_fill_rect(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      0,
+                      0,
+                      framebufferWidth,
+                      framebufferHeight,
+                      M11_COLOR_BLACK);
+    }
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(
@@ -21209,6 +21223,26 @@ static void m11_draw_dm1_front_mirror_backing(unsigned char* framebuffer,
                    M11_COLOR_GRAY);
 }
 
+static int m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
+    const DM1_V1_ChampionMirrorRenderReceiptPc34* receipt,
+    int candidatePanelActive,
+    int backingAssetAvailable,
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34* outReceipt) {
+    if (!DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+            receipt,
+            candidatePanelActive,
+            backingAssetAvailable,
+            outReceipt) ||
+        !outReceipt->valid) {
+        return 0;
+    }
+    if (outReceipt->candidatePanelOwnsCell) {
+        return 1;
+    }
+    return outReceipt->drawMirrorBackingAsset &&
+           !outReceipt->drawMirrorBackingFallbackRect;
+}
+
 static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             const M11_ViewportCell* frontCell,
                                             unsigned char* framebuffer,
@@ -21220,6 +21254,7 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     const M11_AssetSlot* slot;
     M11_ViewportCell mirrorCell;
     int portraitOrdinal;
+    int backingAssetAvailable;
     if (!state || !frontCell) {
         return;
     }
@@ -21258,13 +21293,14 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
      * draw a floating C026 portrait. */
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)receipt.backingGraphicIndex);
-    if (!DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+    backingAssetAvailable =
+        slot && slot->loaded && slot->pixels && slot->width > 0 &&
+        slot->height > 0;
+    if (!m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
             &receipt,
             state->candidateMirrorPanelActive,
-            slot && slot->loaded && slot->pixels && slot->width > 0 &&
-                slot->height > 0,
-            &drawReceipt) ||
-        !drawReceipt.valid) {
+            backingAssetAvailable,
+            &drawReceipt)) {
         return;
     }
 
@@ -21286,12 +21322,6 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                                drawReceipt.backingPaletteMapValid ?
                                                    drawReceipt.backingPaletteMap : NULL,
                                                drawReceipt.backingFlipHorizontal);
-    } else if (drawReceipt.drawMirrorBackingFallbackRect) {
-        m11_fill_rect(framebuffer, fbW, fbH,
-                      M11_VIEWPORT_X + drawReceipt.backingDstX,
-                      M11_VIEWPORT_Y + drawReceipt.backingDstY,
-                      drawReceipt.backingWidth, drawReceipt.backingHeight,
-                      (unsigned char)M11_COLOR_DARK_GRAY);
     }
     /* ReDMCSB DUNVIEW.C:3913-3928 draws the C346 D1C wall ornament
      * before the C026 champion portrait, with coord-set 5 from
@@ -29439,6 +29469,7 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     int* outRenderHallMirrorOverlay,
     int* outDrawChampionMirrorWallOverlay,
     int* outWalkCaptureSafe,
+    int* outHostDrawRejectsBackingFallback,
     int* outMapIndex,
     int* outRenderCommandCount) {
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
@@ -29600,6 +29631,13 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     }
     if (outWalkCaptureSafe) {
         *outWalkCaptureSafe = ownership.walk_capture_safe;
+    }
+    if (outHostDrawRejectsBackingFallback) {
+        DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
+        memset(&hostDraw, 0, sizeof(hostDraw));
+        *outHostDrawRejectsBackingFallback =
+            !m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
+                &render, 0, 0, &hostDraw);
     }
     if (outMapIndex) *outMapIndex = ownership.map_index;
     if (outRenderCommandCount) {

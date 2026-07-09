@@ -1804,6 +1804,20 @@ void csb_v1_boot_startup_runtime_visual_capture_receipt_init_pc34(
         "CSBWin Viewport startup/HUD ownership";
 }
 
+void csb_v1_boot_startup_runtime_route_hardening_receipt_init_pc34(
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; "
+        "ENTRANCE.C F0441/F0806 lines 850-883; "
+        "ENTRANCE.C F0438/F0807 door-opening frames; "
+        "CSBWin Viewport startup/HUD ownership";
+}
+
 void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt)
 {
@@ -3879,6 +3893,132 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
      * here through the same CSB host-view executor path used by M11. This
      * closes the old proof gap where title/HUD/door-opening capture could be
      * asserted without actually executing the real runtime draw receipt. */
+    return out_receipt->valid;
+}
+
+int csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+    const CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *visual_sequence,
+    const CSB_V1_BootStartupHostOwnershipReceipt_PC34 *ownership,
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof = NULL;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_runtime_route_hardening_receipt_init_pc34(
+        out_receipt);
+    if (!visual_sequence || !ownership || !ownership->capture_proof_valid) {
+        return 0;
+    }
+    proof = &ownership->host_view.capture_proof;
+    out_receipt->visual_sequence_valid =
+        visual_sequence->valid &&
+                visual_sequence->title_all_stages_captured &&
+                visual_sequence->closed_door_hud_capture_ready &&
+                visual_sequence->utility_hud_capture_ready &&
+                visual_sequence->door_opening_delay_capture_ready &&
+                visual_sequence->door_opening_frame_capture_ready &&
+                visual_sequence->credits_capture_ready &&
+                visual_sequence->no_fallback_text_routes &&
+                visual_sequence->no_legacy_door_fallback_routes
+            ? 1
+            : 0;
+    out_receipt->host_ownership_valid =
+        ownership->valid && ownership->host_draw_valid &&
+                ownership->capture_proof_valid &&
+                ownership->packaged_visual_capture_ready
+            ? 1
+            : 0;
+    out_receipt->real_asset_matched =
+        visual_sequence->real_asset_matched && ownership->real_asset_matched
+            ? 1
+            : 0;
+    out_receipt->title_route_covered =
+        proof->title_route && visual_sequence->title_all_stages_captured &&
+                ownership->title_capture_ready && ownership->title_draw_ready
+            ? 1
+            : 0;
+    out_receipt->closed_door_hud_route_covered =
+        proof->closed_door_menu_route &&
+                visual_sequence->closed_door_hud_capture_ready &&
+                ownership->hud_menu_capture_ready &&
+                ownership->closed_door_menu_draw_ready
+            ? 1
+            : 0;
+    out_receipt->utility_hud_route_covered =
+        proof->utility_menu_route &&
+                visual_sequence->utility_hud_capture_ready &&
+                ownership->hud_menu_capture_ready &&
+                ownership->utility_menu_draw_ready
+            ? 1
+            : 0;
+    out_receipt->door_opening_route_covered =
+        proof->opening_door_route &&
+                visual_sequence->door_opening_delay_capture_ready &&
+                visual_sequence->door_opening_frame_capture_ready
+            ? 1
+            : 0;
+    out_receipt->credits_route_covered =
+        proof->credits_route && visual_sequence->credits_capture_ready ? 1 : 0;
+    out_receipt->route_covered_by_full_capture =
+        out_receipt->title_route_covered ||
+                out_receipt->closed_door_hud_route_covered ||
+                out_receipt->utility_hud_route_covered ||
+                out_receipt->door_opening_route_covered ||
+                out_receipt->credits_route_covered
+            ? 1
+            : 0;
+    out_receipt->no_fallback_text_route =
+        !proof->draw_fallback_text &&
+                visual_sequence->no_fallback_text_routes &&
+                ownership->host_draw.fallback_text_suppressed
+            ? 1
+            : 0;
+    out_receipt->no_legacy_door_fallback_route =
+        visual_sequence->no_legacy_door_fallback_routes &&
+                (proof->opening_door_route ? !proof->draw_fallback_text : 1)
+            ? 1
+            : 0;
+    out_receipt->host_draw_consumes_receipt_only =
+        ownership->draw_consumes_receipt_only &&
+                ownership->host_draw.consumed_host_view_only
+            ? 1
+            : 0;
+    out_receipt->input_consumes_receipt_only =
+        ownership->input_consumes_receipt_only || ownership->host_input_blocked
+            ? 1
+            : 0;
+
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        visual_sequence->sequence_capture_hash);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        ownership->packaged_capture_hash);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)ownership->route);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)ownership->hud_menu_kind);
+    out_receipt->route_hardening_hash = hash ? hash : 1u;
+    out_receipt->valid =
+        out_receipt->visual_sequence_valid &&
+                out_receipt->host_ownership_valid &&
+                out_receipt->real_asset_matched &&
+                out_receipt->route_covered_by_full_capture &&
+                out_receipt->no_fallback_text_route &&
+                out_receipt->no_legacy_door_fallback_route &&
+                out_receipt->host_draw_consumes_receipt_only &&
+                out_receipt->route_hardening_hash != 0u
+            ? 1
+            : 0;
+    /* ReDMCSB TITLE.C/ENTRANCE.C and CSBWin keep title, HUD, utility, door
+     * opening, and credits on the CSB startup route. This receipt hardens the
+     * current host-owned draw against proving a route that was not part of
+     * the full visual capture, or that still wants fallback text/door draws. */
     return out_receipt->valid;
 }
 
