@@ -3965,25 +3965,65 @@ static int orch_materialize_projectile_associated_thing_compat(
     const struct ProjectileInstance_Compat* projectile,
     int associatedThingMovedToGroup)
 {
-    DM1_ProjectileMaterializationPlanPc34 plan;
+    int sftIndex;
+    DM1_ProjectileMaterializationReceiptPc34 receipt;
+    unsigned short chainThings[64];
+    unsigned short current;
+    int chainCount = 0;
 
     if (!world || !projectile || associatedThingMovedToGroup) return 1;
     if (!world->things || !world->dungeon) return 1;
-    memset(&plan, 0, sizeof(plan));
-    if (!dm1_v1_projectile_materialization_plan_pc34(
+
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, projectile->mapIndex, projectile->mapX, projectile->mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
+        return 1;
+    }
+
+    current = world->things->squareFirstThings[sftIndex];
+    while (current != THING_NONE &&
+           current != THING_ENDOFLIST &&
+           chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+        current = orch_next_thing_compat(world->things, current);
+    }
+    if (chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_projectile_materialization_receipt_f0215_pc34(
             projectile, NULL, associatedThingMovedToGroup,
-            world->things->potionCount, &plan) ||
-        !plan.handled || !plan.shouldMaterialize) {
+            world->things->potionCount,
+            world->things->squareFirstThings[sftIndex],
+            chainThings, chainCount, &receipt) ||
+        !receipt.valid || !receipt.handled || !receipt.shouldMaterialize) {
         return 1;
     }
 
     /* ReDMCSB PROJEXPL.C:F0215 lines 248-259 moves Projectile.Slot to
      * the projectile map square when F0217 does not pass a GROUP.Slot
-     * pointer for KEEP_THROWN_SHARP_WEAPONS.  F0219 lines 717-725 call
-     * wall impacts before committing the destination move, so use the
-     * projectile's stored square and cell here. */
-    return orch_link_thing_to_square_tail_compat(
-        world, plan.mapIndex, plan.mapX, plan.mapY, plan.droppedThing);
+     * pointer.  DUNGEON.C:F0163 lines 1798-1837 owns the empty-square vs
+     * append-after-tail writeback; M10 now applies DM1's combined receipt
+     * instead of rebuilding the materialization and link decisions locally. */
+    if (receipt.squareAttach.chainOverflow ||
+        !receipt.squareAttach.shouldSetDroppedNextEnd ||
+        !orch_set_next_thing_compat(
+            world->things, receipt.squareAttach.baseThing, THING_ENDOFLIST)) {
+        return 0;
+    }
+    if (receipt.squareAttach.shouldSetSquareFirstThing) {
+        world->things->squareFirstThings[sftIndex] =
+            receipt.squareAttach.droppedThing;
+        return 1;
+    }
+    if (receipt.squareAttach.shouldAppendAfterTail &&
+        receipt.squareAttach.foundTail) {
+        return orch_set_next_thing_compat(
+            world->things, receipt.squareAttach.tailThing,
+            receipt.squareAttach.droppedThing);
+    }
+    return 0;
 }
 
 static int orch_projectile_associated_icon_index_compat(
