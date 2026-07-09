@@ -1986,64 +1986,9 @@ static void test_startup_session_facts_wrappers(void) {
                     view_model_host_receipt.host_receipt.input_result ==
                         THERON_STARTUP_INPUT_RESULT_REDRAW,
                 "boot runtime-state pointer wrapper consumes Track02 media receipt without raw layout rebuild");
-    memset(media_layout, 0, sizeof(media_layout));
-    expect_true(theron_v1_boot_startup_layout_build_from_runtime_state_with_media_receipt(
-                    media_layout,
-                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP,
-                    &media_receipt,
-                    THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
-                    NULL,
-                    &world,
-                    NULL,
-                    THERON_STARTUP_HERO_MIRROR_COUNT,
-                    0,
-                    THERON_V1_STARTUP_RESUME_DUAL,
-                    2,
-                    3,
-                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
-                    "/tmp/firestaff-theron-srm",
-                    0x03,
-                    2,
-                    order,
-                    THERON_STARTUP_MAX_COMPANIONS) ==
-                    full_start_receipt.view_model.layout_count &&
-                    strcmp(media_layout[2].label, "HAKAR-MEDIA") == 0,
-                "boot runtime-state layout wrapper consumes full-start media receipt");
-    memset(media_rows, 0, sizeof(media_rows));
-    media_prompt_row_found = 0;
-    expect_true(theron_v1_boot_startup_render_rows_from_runtime_state_with_media_receipt(
-                    media_rows,
-                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP,
-                    &media_receipt,
-                    THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
-                    NULL,
-                    &world,
-                    NULL,
-                    THERON_STARTUP_HERO_MIRROR_COUNT,
-                    0,
-                    THERON_V1_STARTUP_RESUME_DUAL,
-                    2,
-                    3,
-                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
-                    "/tmp/firestaff-theron-srm",
-                    0x03,
-                    2,
-                    order,
-                    THERON_STARTUP_MAX_COMPANIONS) ==
-                    full_start_receipt.view_model.row_count,
-                "boot runtime-state row wrapper consumes full-start media receipt");
-    for (i = 0; i < full_start_receipt.view_model.row_count; ++i) {
-        if (strstr(media_rows[i], "RESURRECT THERON") != NULL) {
-            media_prompt_row_found = 1;
-        }
-    }
-    expect_true(media_prompt_row_found,
-                "boot runtime-state row wrapper preserves Track02 prompt");
-    memset(&media_plan, 0, sizeof(media_plan));
-    expect_true(theron_v1_boot_startup_render_plan_from_runtime_state_with_media_receipt(
-                    &media_plan,
+    theron_v1_boot_startup_host_render_receipt_init(&host_render_receipt);
+    expect_true(theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt(
+                    &host_render_receipt,
                     &media_receipt,
                     THERON_STARTUP_PHASE_READY,
                     THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
@@ -2061,11 +2006,31 @@ static void test_startup_session_facts_wrappers(void) {
                     2,
                     order,
                     THERON_STARTUP_MAX_COMPANIONS) &&
-                    media_plan.text_count ==
+                    host_render_receipt.layout_count ==
+                        full_start_receipt.view_model.layout_count &&
+                    host_render_receipt.row_count ==
+                        full_start_receipt.view_model.row_count &&
+                    host_render_receipt.render_plan_valid &&
+                    host_render_receipt.render_plan.text_count ==
                         full_start_receipt.view_model.render_plan.text_count &&
-                    media_plan.graphic_count ==
-                        full_start_receipt.view_model.render_plan.graphic_count,
-                "boot runtime-state render-plan wrapper consumes full-start media receipt");
+                    host_render_receipt.render_plan.graphic_count ==
+                        full_start_receipt.view_model.render_plan.graphic_count &&
+                    strcmp(host_render_receipt.layout[2].label,
+                           "HAKAR-MEDIA") == 0 &&
+                    host_render_receipt.track02_real_media_ready &&
+                    host_render_receipt.real_bitmap_startup_graphics_ready &&
+                    !host_render_receipt.raw_prompt_roster_required &&
+                    !host_render_receipt.raw_session_rebuild_required &&
+                    !host_render_receipt.raw_graphics_plan_consumer_required,
+                "boot runtime-state host-render receipt replaces layout row and render-plan media exports");
+    media_prompt_row_found = 0;
+    for (i = 0; i < host_render_receipt.row_count; ++i) {
+        if (strstr(host_render_receipt.rows[i], "RESURRECT THERON") != NULL) {
+            media_prompt_row_found = 1;
+        }
+    }
+    expect_true(media_prompt_row_found,
+                "boot runtime-state host-render receipt preserves Track02 prompt");
     theron_v1_boot_startup_host_view_receipt_init(&host_view_receipt);
     expect_true(theron_v1_boot_startup_host_view_from_runtime_state_with_media_receipt(
                     &host_view_receipt,
@@ -2857,15 +2822,6 @@ static void test_startup_session_facts_wrappers(void) {
     }
     expect_true(media_prompt_row_found,
                 "boot full-start receipt preserves Track02 prompt row");
-    memset(&media_plan, 0, sizeof(media_plan));
-    expect_true(theron_v1_boot_startup_render_plan_from_full_start_receipt(
-                    &full_start_receipt,
-                    &media_plan) &&
-                    media_plan.text_count ==
-                        full_start_receipt.view_model.render_plan.text_count &&
-                    media_plan.graphic_count ==
-                        full_start_receipt.view_model.render_plan.graphic_count,
-                "boot full-start receipt supplies startup render plan without raw rebuild");
     theron_v1_boot_startup_host_view_receipt_init(&host_view_receipt);
     expect_true(theron_v1_boot_startup_host_view_from_full_start_receipt(
                     &full_start_receipt,
@@ -2887,6 +2843,8 @@ static void test_startup_session_facts_wrappers(void) {
                     host_render_receipt.row_count ==
                         full_start_receipt.view_model.row_count &&
                     host_render_receipt.render_plan_valid &&
+                    host_render_receipt.render_plan.text_count ==
+                        full_start_receipt.view_model.render_plan.text_count &&
                     host_render_receipt.render_plan.graphic_count ==
                         full_start_receipt.view_model.render_plan.graphic_count &&
                     host_render_receipt.render_route_valid &&
@@ -3026,38 +2984,37 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(view_model_host_receipt.host_receipt.status,
                            "FULL START RECEIPT MISSING") == 0,
                 "boot full-start receipt input rejects missing view model");
-    expect_true(theron_v1_boot_startup_render_rows_from_snapshot_with_media_receipt(
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
                     &media_snapshot,
                     &media_receipt,
-                    media_rows,
-                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP) > 0,
-                "boot startup snapshot media receipt builds render rows through view model");
+                    NULL,
+                    &full_start_receipt) &&
+                    theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
+                        &full_start_receipt,
+                        &host_render_receipt),
+                "boot startup snapshot media receipt builds host-render receipt through full-start receipt");
     media_prompt_row_found = 0;
     media_roster_row_found = 0;
-    for (i = 0; i < THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP; ++i) {
-        if (strstr(media_rows[i], "RESURRECT THERON") != NULL) {
+    for (i = 0; i < host_render_receipt.row_count; ++i) {
+        if (strstr(host_render_receipt.rows[i], "RESURRECT THERON") != NULL) {
             media_prompt_row_found = 1;
         }
-        if (strstr(media_rows[i], "HAKAR-MEDIA") != NULL) {
+        if (strstr(host_render_receipt.rows[i], "HAKAR-MEDIA") != NULL) {
             media_roster_row_found = 1;
         }
     }
     expect_true(media_prompt_row_found && media_roster_row_found,
-                "boot startup snapshot media receipt preserves Track02 render text");
-    expect_true(theron_v1_boot_startup_layout_build_from_snapshot_with_media_receipt(
-                    &media_snapshot,
-                    &media_receipt,
-                    media_layout,
-                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP) > 0 &&
-                    strcmp(media_layout[2].label, "HAKAR-MEDIA") == 0,
-                "boot startup snapshot media receipt preserves Track02 layout labels");
-    expect_true(theron_v1_boot_startup_render_plan_from_snapshot_with_media_receipt(
-                    &media_snapshot,
-                    &media_receipt,
-                    &media_plan) &&
-                    media_plan.text_count > 0 &&
-                    media_plan.graphic_count > 0,
-                "boot startup snapshot media receipt builds render plan through view model");
+                "boot startup snapshot host-render receipt preserves Track02 render text");
+    expect_true(host_render_receipt.layout_count > 0 &&
+                    strcmp(host_render_receipt.layout[2].label,
+                           "HAKAR-MEDIA") == 0 &&
+                    host_render_receipt.render_plan_valid &&
+                    host_render_receipt.render_plan.text_count > 0 &&
+                    host_render_receipt.render_plan.graphic_count > 0 &&
+                    !host_render_receipt.raw_prompt_roster_required &&
+                    !host_render_receipt.raw_session_rebuild_required &&
+                    !host_render_receipt.raw_graphics_plan_consumer_required,
+                "boot startup snapshot host-render receipt replaces Track02 layout and render-plan media exports");
     expect_true(theron_v1_boot_startup_execute_input_from_snapshot_with_media_receipt(
                     &media_snapshot,
                     &media_receipt,
