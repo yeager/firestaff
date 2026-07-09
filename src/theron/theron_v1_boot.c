@@ -1248,6 +1248,7 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
 {
     Theron_V1_BootRuntimeStartupSnapshot effective_snapshot;
     Theron_StartupSessionFacts session;
+    int i;
 
     if (!out_view_model) {
         return 0;
@@ -1322,6 +1323,33 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
     out_view_model->srm_slot = effective_snapshot.srm_slot;
     out_view_model->srm_import_status =
         effective_snapshot.srm_import_status;
+    out_view_model->startup_phase = effective_snapshot.startup_phase;
+    out_view_model->selected_dungeon = effective_snapshot.selected_dungeon;
+    out_view_model->boot_profile = effective_snapshot.boot_profile;
+    out_view_model->world = effective_snapshot.world;
+    out_view_model->assets = effective_snapshot.assets;
+    out_view_model->startup_cursor = effective_snapshot.startup_cursor;
+    out_view_model->selected_mirrors_mask =
+        effective_snapshot.selected_mirrors_mask;
+    out_view_model->companion_count = effective_snapshot.companion_count;
+    out_view_model->selected_mirror_order_count =
+        effective_snapshot.selected_mirror_order_count;
+    if (out_view_model->selected_mirror_order_count < 0) {
+        out_view_model->selected_mirror_order_count = 0;
+    }
+    if (out_view_model->selected_mirror_order_count >
+        THERON_STARTUP_MAX_COMPANIONS) {
+        out_view_model->selected_mirror_order_count =
+            THERON_STARTUP_MAX_COMPANIONS;
+    }
+    for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
+        out_view_model->selected_mirror_order[i] =
+            effective_snapshot.selected_mirror_order &&
+                    i < out_view_model->selected_mirror_order_count
+                ? effective_snapshot.selected_mirror_order[i]
+                : -1;
+    }
+    out_view_model->srm_root = effective_snapshot.srm_root;
     out_view_model->runtime_level_source = 0;
     out_view_model->runtime_track02_semantic_handoff = 0;
     out_view_model->runtime_fallback_visuals_blocked = 0;
@@ -1672,6 +1700,63 @@ tqr_boot_startup_view_model_move_stage_focus(
     return last_stage ? last_stage : focused;
 }
 
+static int tqr_boot_startup_session_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupSessionFacts *out_session)
+{
+    const char (*roster_names)
+        [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY] = NULL;
+    const char (*roster_titles)
+        [THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY] = NULL;
+    const char *startup_prompt = NULL;
+    int roster_count = 0;
+
+    if (!view_model || !out_session) {
+        return 0;
+    }
+    if (view_model->startup_media_state_valid &&
+        view_model->startup_media_state_receipt.startup_roster_name_status ==
+            THERON_TRACK02_SIGNAL_OK) {
+        roster_names =
+            view_model->startup_media_state_receipt.startup_roster_names;
+        roster_titles =
+            view_model->startup_media_state_receipt.startup_roster_titles;
+        roster_count =
+            view_model->startup_media_state_receipt.startup_roster_name_count;
+    }
+    if (view_model->startup_media_state_valid &&
+        view_model->startup_media_state_receipt.startup_text_prompt_status ==
+            THERON_TRACK02_SIGNAL_OK &&
+        view_model->startup_media_state_receipt.startup_text_prompt[0] !=
+            '\0') {
+        startup_prompt =
+            view_model->startup_media_state_receipt.startup_text_prompt;
+    }
+    theron_v1_boot_startup_session_from_runtime_state(
+        out_session,
+        view_model->startup_phase,
+        view_model->selected_dungeon,
+        view_model->boot_profile,
+        view_model->world,
+        view_model->assets,
+        view_model->startup_cursor,
+        view_model->continue_focus,
+        view_model->resume_claim,
+        view_model->tqsv_slot,
+        view_model->srm_slot,
+        view_model->srm_import_status,
+        view_model->srm_root,
+        startup_prompt,
+        roster_names,
+        roster_titles,
+        roster_count,
+        view_model->selected_mirrors_mask,
+        view_model->companion_count,
+        view_model->selected_mirror_order,
+        view_model->selected_mirror_order_count);
+    return 1;
+}
+
 int theron_v1_boot_startup_execute_pointer_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     int x,
@@ -1868,6 +1953,78 @@ int theron_v1_boot_startup_execute_input_from_view_model(
         }
     }
     return 1;
+}
+
+int theron_v1_boot_startup_execute_action_from_view_model_with_host_receipt(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_StartupAction *action,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    Theron_StartupSessionFacts session;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!view_model || !action || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+        }
+        return 0;
+    }
+    if (!tqr_boot_startup_session_from_view_model(view_model, &session)) {
+        out_receipt->result = THERON_STARTUP_ERR_NULL;
+        out_receipt->host_receipt.input_result =
+            THERON_STARTUP_INPUT_RESULT_REDRAW;
+        out_receipt->host_receipt.status_scope = "STARTUP";
+        out_receipt->host_receipt.status = theron_v1_startup_result_name(
+            THERON_STARTUP_ERR_NULL);
+        return 0;
+    }
+    return theron_v1_startup_execute_action_from_session_with_host_receipt(
+        action,
+        &session,
+        out_receipt);
+}
+
+int theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupInput input,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    Theron_StartupAction action;
+    Theron_StartupInputReceipt input_receipt;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!view_model || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        return 0;
+    }
+    if (!theron_v1_boot_startup_execute_input_from_view_model(
+            view_model,
+            input,
+            &action,
+            &input_receipt)) {
+        out_receipt->result = input_receipt.result;
+        out_receipt->host_receipt.input_result =
+            input_receipt.input_result;
+        out_receipt->host_receipt.status_scope =
+            input_receipt.status_scope;
+        out_receipt->host_receipt.status = input_receipt.status;
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_action_from_view_model_with_host_receipt(
+        view_model,
+        &action,
+        out_receipt);
 }
 
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
