@@ -96,8 +96,11 @@ int dm1_v1_inventory_chest_drop_to_floor_run_case_pc34(
     DM1_V1_InventoryChestDropToFloorStatePc34* state,
     int chestSlotIndex,
     DM1_V1_InventoryChestDropToFloorEventPc34* outEvent);
-int m11_inventory_pc34_probe_chest_drop_to_floor(
+int DM1_V1_InventoryChestDropToFloor_RunProbePc34Compat(
     DM1_V1_InventoryChestDropToFloorProbePc34* out);
+
+#define m11_inventory_pc34_probe_chest_drop_to_floor \
+    DM1_V1_InventoryChestDropToFloor_RunProbePc34Compat
 
 #ifdef __cplusplus
 }

@@ -97,11 +97,18 @@ typedef struct {
 extern const DM1_V1_ChestReopenCrossChampionSpecPc34
     dm1_v1_chest_reopen_cross_champion_pc34_spec;
 
-const char* M11_GameView_ChestReopenCrossChampionSourceEvidencePc34(void);
+const char* DM1_V1_ChestReopenCrossChampion_SourceEvidencePc34Compat(void);
 const DM1_V1_ChestReopenCrossChampionSpecPc34*
-M11_GameView_ChestReopenCrossChampionSpecPc34(void);
-int M11_GameView_ChestReopenCrossChampionRunPc34(
+DM1_V1_ChestReopenCrossChampion_SpecPc34Compat(void);
+int DM1_V1_ChestReopenCrossChampion_RunPc34Compat(
     DM1_V1_ChestReopenCrossChampionProbePc34* out);
+
+#define M11_GameView_ChestReopenCrossChampionSourceEvidencePc34 \
+    DM1_V1_ChestReopenCrossChampion_SourceEvidencePc34Compat
+#define M11_GameView_ChestReopenCrossChampionSpecPc34 \
+    DM1_V1_ChestReopenCrossChampion_SpecPc34Compat
+#define M11_GameView_ChestReopenCrossChampionRunPc34 \
+    DM1_V1_ChestReopenCrossChampion_RunPc34Compat
 
 #ifdef __cplusplus
 }

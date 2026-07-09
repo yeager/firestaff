@@ -86,11 +86,18 @@ typedef struct {
 } DM1_V1_ChestDestinationGuardProbePc34;
 
 const DM1_V1_ChestDestinationGuardEvidencePc34*
-M11_GameView_ChestDestinationGuardEvidencePc34(void);
+DM1_V1_ChestDestinationGuard_EvidencePc34Compat(void);
 const DM1_V1_ChestDestinationGuardSpecPc34*
-M11_GameView_ChestDestinationGuardSpecPc34(void);
-int M11_GameView_ChestDestinationGuardRunPc34(
+DM1_V1_ChestDestinationGuard_SpecPc34Compat(void);
+int DM1_V1_ChestDestinationGuard_RunPc34Compat(
     DM1_V1_ChestDestinationGuardProbePc34* out);
+
+#define M11_GameView_ChestDestinationGuardEvidencePc34 \
+    DM1_V1_ChestDestinationGuard_EvidencePc34Compat
+#define M11_GameView_ChestDestinationGuardSpecPc34 \
+    DM1_V1_ChestDestinationGuard_SpecPc34Compat
+#define M11_GameView_ChestDestinationGuardRunPc34 \
+    DM1_V1_ChestDestinationGuard_RunPc34Compat
 
 #ifdef __cplusplus
 }

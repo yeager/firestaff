@@ -246,12 +246,12 @@ static int run_case(int caseIndex,
     return 1;
 }
 
-const char* M11_GameView_ChestReopenContentsOrderSourceEvidencePc34(void)
+const char* DM1_V1_ChestReopenContentsOrder_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }
 
-int M11_GameView_ChestReopenContentsOrderRunPc34(
+int DM1_V1_ChestReopenContentsOrder_RunPc34Compat(
     M11_GameView_ChestReopenContentsOrderProbePc34* out)
 {
     DM1_V1_ItemPc34 caseOne[1];

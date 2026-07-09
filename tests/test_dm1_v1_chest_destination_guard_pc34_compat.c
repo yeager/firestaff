@@ -45,9 +45,9 @@ static int expect_str_nonempty(const char* label,
 static int test_spec_and_evidence(void)
 {
     const DM1_V1_ChestDestinationGuardSpecPc34* spec =
-        M11_GameView_ChestDestinationGuardSpecPc34();
+        DM1_V1_ChestDestinationGuard_SpecPc34Compat();
     const DM1_V1_ChestDestinationGuardEvidencePc34* evidence =
-        M11_GameView_ChestDestinationGuardEvidencePc34();
+        DM1_V1_ChestDestinationGuard_EvidencePc34Compat();
     const char* f0333 = "ReDMCSB CHEST.C F0333 lines 31-76";
     const char* f0334 = "ReDMCSB CHEST.C F0334 lines 113-132";
     const char* f0302 = "ReDMCSB CHAMPION.C F0302 lines 688-710";
@@ -213,7 +213,7 @@ static int test_guard_contract(void)
 int main(void)
 {
     const DM1_V1_ChestDestinationGuardEvidencePc34* evidence =
-        M11_GameView_ChestDestinationGuardEvidencePc34();
+        DM1_V1_ChestDestinationGuard_EvidencePc34Compat();
     const char* f0334 = "ReDMCSB CHEST.C F0334 lines 113-132";
     int ok = 1;
 
@@ -229,7 +229,7 @@ int main(void)
            evidence->disjointCoverage);
 
     ok &= expect_int("probe setup",
-                     M11_GameView_ChestDestinationGuardRunPc34(&g_probe),
+                     DM1_V1_ChestDestinationGuard_RunPc34Compat(&g_probe),
                      1, f0334);
     if (!ok) {
         printf("assertionCount=%d\n", g_assertions);

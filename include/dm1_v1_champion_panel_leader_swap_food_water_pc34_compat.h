@@ -188,13 +188,20 @@ typedef struct {
 } dm1_v1_champion_panel_leader_swap_food_water_result_t;
 
 dm1_v1_champion_panel_leader_swap_food_water_input_t
-M11_GameView_ChampionPanelLeaderSwapFoodWater_DefaultInput(void);
+DM1_V1_ChampionPanelLeaderSwapFoodWater_DefaultInputPc34Compat(void);
 
 dm1_v1_champion_panel_leader_swap_food_water_result_t
-M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(
+DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(
     const dm1_v1_champion_panel_leader_swap_food_water_input_t *input);
 
-const char *M11_GameView_ChampionPanelLeaderSwapFoodWater_SourceEvidence(void);
+const char *DM1_V1_ChampionPanelLeaderSwapFoodWater_SourceEvidencePc34Compat(void);
+
+#define M11_GameView_ChampionPanelLeaderSwapFoodWater_DefaultInput \
+    DM1_V1_ChampionPanelLeaderSwapFoodWater_DefaultInputPc34Compat
+#define M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch \
+    DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat
+#define M11_GameView_ChampionPanelLeaderSwapFoodWater_SourceEvidence \
+    DM1_V1_ChampionPanelLeaderSwapFoodWater_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }

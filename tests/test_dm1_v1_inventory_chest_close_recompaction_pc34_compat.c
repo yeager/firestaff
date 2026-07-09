@@ -323,7 +323,7 @@ int main(void)
            dm1_inventory_chest_close_recompaction_source_evidence_pc34());
 
     ok &= expect_int("probe setup",
-                     m11_inventory_pc34_probe_chest_close_recompaction(&probe),
+                     DM1_V1_InventoryChestCloseRecompaction_RunProbePc34Compat(&probe),
                      1, f0334F0163, &assertionCount);
     if (!ok) {
         printf("assertionCount=%d\n", assertionCount);

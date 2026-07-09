@@ -234,7 +234,7 @@ int main(void)
     /* ReDMCSB: CHEST.C F0333 lines 53-67 is the first runtime gate in the
      * probe; if setup fails, later close/reopen assertions are not meaningful. */
     ok &= expect_int("probe setup",
-                     m11_inventory_pc34_probe_chest_close_rewire_runtime(&g_probe),
+                     DM1_V1_ChestCloseRewireRuntime_RunProbePc34Compat(&g_probe),
                      1, f0333Open);
     if (!ok) {
         printf("chestCloseRewireRuntimeInvariantOk=0\n");

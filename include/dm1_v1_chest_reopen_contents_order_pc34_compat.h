@@ -74,9 +74,14 @@ typedef struct {
         cases[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_CASE_COUNT];
 } M11_GameView_ChestReopenContentsOrderProbePc34;
 
-const char* M11_GameView_ChestReopenContentsOrderSourceEvidencePc34(void);
-int M11_GameView_ChestReopenContentsOrderRunPc34(
+const char* DM1_V1_ChestReopenContentsOrder_SourceEvidencePc34Compat(void);
+int DM1_V1_ChestReopenContentsOrder_RunPc34Compat(
     M11_GameView_ChestReopenContentsOrderProbePc34* out);
+
+#define M11_GameView_ChestReopenContentsOrderSourceEvidencePc34 \
+    DM1_V1_ChestReopenContentsOrder_SourceEvidencePc34Compat
+#define M11_GameView_ChestReopenContentsOrderRunPc34 \
+    DM1_V1_ChestReopenContentsOrder_RunPc34Compat
 
 #ifdef __cplusplus
 }

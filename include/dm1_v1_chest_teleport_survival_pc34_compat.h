@@ -124,9 +124,14 @@ typedef struct {
     M11_GameView_ChestTeleportSurvivalNegativePc34 negative;
 } M11_GameView_ChestTeleportSurvivalProbePc34;
 
-const char* M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(void);
-int M11_GameView_ChestTeleportSurvivalRunPc34(
+const char* DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(void);
+int DM1_V1_ChestTeleportSurvival_RunPc34Compat(
     M11_GameView_ChestTeleportSurvivalProbePc34* out);
+
+#define M11_GameView_ChestTeleportSurvivalSourceEvidencePc34 \
+    DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat
+#define M11_GameView_ChestTeleportSurvivalRunPc34 \
+    DM1_V1_ChestTeleportSurvival_RunPc34Compat
 
 #ifdef __cplusplus
 }

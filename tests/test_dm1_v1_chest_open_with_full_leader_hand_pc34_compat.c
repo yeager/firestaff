@@ -25,7 +25,7 @@ static int expect_int(const char* label, int got, int want,
 static int test_probe_spec_and_setup(void)
 {
     const DM1_V1_ChestOpenFullLeaderHandSpecPc34* spec =
-        M11_GameView_ChestOpenWithFullLeaderHandSpecPc34();
+        DM1_V1_ChestOpenWithFullLeaderHand_SpecPc34Compat();
     const char* f0333Open = "ReDMCSB CHEST.C F0333 lines 43,53-67";
     const char* f0302Hand = "ReDMCSB CHAMPION.C F0302 lines 688-710";
     int ok = 1;
@@ -282,11 +282,11 @@ int main(void)
 
     printf("probe=dm1_v1_chest_open_with_full_leader_hand_pc34_compat\n");
     printf("sourceEvidence=%s\n",
-           M11_GameView_ChestOpenWithFullLeaderHandSourceEvidencePc34());
+           DM1_V1_ChestOpenWithFullLeaderHand_SourceEvidencePc34Compat());
 
     ok &= expect_int(
         "probe setup",
-        M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(&g_probe),
+        DM1_V1_ChestOpenWithFullLeaderHand_RuntimeGatePc34Compat(&g_probe),
         1, f0333Open);
     if (!ok) {
         printf("assertionCount=%d\n", g_assertions);

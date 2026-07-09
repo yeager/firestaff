@@ -151,18 +151,18 @@ static int orders_match(const int* left, const int* right)
 }
 
 const char*
-M11_GameView_ChestReopenThenSwapLeaderHandSourceEvidencePc34(void)
+DM1_V1_ChestReopenThenSwapLeaderHand_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }
 
 const DM1_V1_ChestReopenThenSwapLeaderHandSpecPc34*
-M11_GameView_ChestReopenThenSwapLeaderHandSpecPc34(void)
+DM1_V1_ChestReopenThenSwapLeaderHand_SpecPc34Compat(void)
 {
     return &dm1_v1_chest_reopen_then_swap_leader_hand_pc34_spec;
 }
 
-int M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
+int DM1_V1_ChestReopenThenSwapLeaderHand_RunPc34Compat(
     DM1_V1_ChestReopenThenSwapLeaderHandProbePc34* out)
 {
     DM1_V1_InventoryStatePc34 state;

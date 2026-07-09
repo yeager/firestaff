@@ -229,10 +229,10 @@ int main(void)
 
     printf("probe=dm1_v1_chest_reopen_contents_order_pc34_compat\n");
     printf("sourceEvidence=%s\n",
-           M11_GameView_ChestReopenContentsOrderSourceEvidencePc34());
+           DM1_V1_ChestReopenContentsOrder_SourceEvidencePc34Compat());
 
     ok &= expect_int("probe setup",
-                     M11_GameView_ChestReopenContentsOrderRunPc34(&g_probe),
+                     DM1_V1_ChestReopenContentsOrder_RunPc34Compat(&g_probe),
                      1, f0333Open);
     if (!ok) {
         printf("assertionCount=%d\n", g_assertions);

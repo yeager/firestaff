@@ -125,18 +125,18 @@ static void run_attempt(
 }
 
 const DM1_V1_ChestDestinationGuardEvidencePc34*
-M11_GameView_ChestDestinationGuardEvidencePc34(void)
+DM1_V1_ChestDestinationGuard_EvidencePc34Compat(void)
 {
     return &s_evidence;
 }
 
 const DM1_V1_ChestDestinationGuardSpecPc34*
-M11_GameView_ChestDestinationGuardSpecPc34(void)
+DM1_V1_ChestDestinationGuard_SpecPc34Compat(void)
 {
     return &s_spec;
 }
 
-int M11_GameView_ChestDestinationGuardRunPc34(
+int DM1_V1_ChestDestinationGuard_RunPc34Compat(
     DM1_V1_ChestDestinationGuardProbePc34* out)
 {
     if (!out) {
