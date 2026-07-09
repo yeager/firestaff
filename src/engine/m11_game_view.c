@@ -875,6 +875,7 @@ static void m11_dm2_boot_runtime_startup_snapshot(
 typedef struct M11_DM2BootStartupViewModel {
     DM2_V1_StartupDrawCommand commands[DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP];
     int command_count;
+    DM2_V1_StartupViewReceipt view_receipt;
     char phase[DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP];
     int startup_active;
     char animation[DM2_V1_BOOT_STARTUP_VIEW_MODEL_ANIMATION_CAP];
@@ -899,6 +900,7 @@ static int m11_dm2_boot_runtime_startup_view_model(
         out_view_model->commands,
         (int)(sizeof(out_view_model->commands) / sizeof(out_view_model->commands[0])),
         &out_view_model->command_count,
+        &out_view_model->view_receipt,
         out_view_model->phase,
         (int)sizeof(out_view_model->phase),
         &out_view_model->startup_active,
@@ -33437,7 +33439,9 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
         return;
     }
     if (!m11_dm2_boot_runtime_startup_view_model(state, &view_model) ||
-        view_model.command_count <= 0) {
+        !view_model.view_receipt.valid ||
+        view_model.view_receipt.render.command_count <= 0 ||
+        view_model.view_receipt.render.hud_overlay_suppressed != 1) {
         return;
     }
     context.state = state;
@@ -33451,7 +33455,7 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     executor.draw_text = m11_dm2_startup_exec_text;
     (void)dm2_v1_boot_startup_execute_draw_commands(
         view_model.commands,
-        view_model.command_count,
+        view_model.view_receipt.render.command_count,
         &executor);
 }
 
