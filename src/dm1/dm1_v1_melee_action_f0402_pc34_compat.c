@@ -1294,6 +1294,41 @@ done:
     return 1;
 }
 
+int dm1_v1_melee_resolve_runtime_f0231_pc34(
+    struct CombatantChampionSnapshot_Compat* attacker,
+    const struct WeaponProfile_Compat* weapon,
+    const struct CombatantCreatureSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    const DM1_MeleeF0231ResolveRuntimeInputPc34* in,
+    DM1_MeleeF0231ResolveRuntimePlanPc34* out) {
+    DM1_MeleeF0231RuntimeResultInputPc34 runtimeIn;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+    if (!dm1_v1_melee_resolve_damage_f0231_pc34(
+            attacker, weapon, defender, rng, &out->combatResult)) {
+        return 0;
+    }
+
+    memset(&runtimeIn, 0, sizeof(runtimeIn));
+    runtimeIn.combatOutcome = out->combatResult.outcome;
+    runtimeIn.damageApplied = out->combatResult.damageApplied;
+    runtimeIn.groupIndex = in->groupIndex;
+    runtimeIn.groupCount = in->groupCount;
+    if (!dm1_v1_melee_runtime_result_plan_f0231_pc34(
+            &runtimeIn, &out->runtimeResultPlan) ||
+        !out->runtimeResultPlan.valid) {
+        return 0;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1477-1547 resolves melee damage and
+     * immediately routes to luck/stamina/XP/group-apply side effects.  Keep
+     * that damage+runtime decision pair DM1-owned; M10 only applies returned
+     * live mutations. */
+    out->valid = 1;
+    return 1;
+}
+
 int dm1_v1_melee_apply_group_damage_f0190_pc34(
     const struct CombatResult_Compat* result,
     struct DungeonGroup_Compat* group,

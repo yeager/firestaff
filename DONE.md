@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0231 resolve-runtime entrypoint: DM1 melee compat now exposes a combined F0231 damage+runtime-gate entrypoint, so M10 no longer separately stitches together damage resolution and NO_ACTION/luck/side-effect/group-apply/emission gates. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_dm1_v1_combat_pc34_compat_integration` (39/39), `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0176/F0177 living-slot target gate: DM1 compact combat and M10 F0177 target plans now reject dead/empty creature slots before applying F0176 cell occupancy. This prevents a cleared `0xFF` slot from being treated as a live single-centered target and restores the broader DM1 combat source-lock gate. Verification: `test_dm1_v1_combat_pc34_compat_integration` (39/39), `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0231 local damage resolver: DM1 melee compat now owns the F0231 dex/random/luck hit gate, F0308 luck mutation, damage RNG, weak-damage branch, Vorpal halving, skill critical, and final damage outcome locally instead of delegating the whole path to shared F0735. CSB can still use shared F0735. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

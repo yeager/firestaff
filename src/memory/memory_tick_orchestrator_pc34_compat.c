@@ -6651,8 +6651,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             DM1_MeleeF0190GroupDamageApplyPlanPc34 damageApplyPlan;
             DM1_MeleeF0231AftermathInputPc34 aftermathIn;
             DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
-            DM1_MeleeF0231RuntimeResultInputPc34 runtimeResultIn;
-            DM1_MeleeF0231RuntimeResultPlanPc34 runtimeResultPlan;
+            DM1_MeleeF0231ResolveRuntimeInputPc34 resolveRuntimeIn;
+            DM1_MeleeF0231ResolveRuntimePlanPc34 resolveRuntimePlan;
             int targetDirection = decodePlan.targetDirection;
             int targetResolved;
             int reachBlocked = 0;
@@ -6753,22 +6753,22 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 if (orch_build_cmd_attack_weapon_profile_compat(
                         &weaponInfo, weaponType, actionIndex, actionSkillIndex,
                         &weaponProfile) &&
-                    dm1_v1_melee_resolve_damage_f0231_pc34(
+                    (memset(&resolveRuntimeIn, 0, sizeof(resolveRuntimeIn)),
+                     memset(&resolveRuntimePlan, 0, sizeof(resolveRuntimePlan)),
+                     resolveRuntimeIn.groupIndex = groupIndex,
+                     resolveRuntimeIn.groupCount =
+                         world && world->things ? world->things->groupCount : 0,
+                     dm1_v1_melee_resolve_runtime_f0231_pc34(
                         &championSnapshot, &weaponProfile, &creatureSnapshot,
-                        &world->masterRng, &combatResult)) {
-                    memset(&runtimeResultIn, 0, sizeof(runtimeResultIn));
-                    memset(&runtimeResultPlan, 0, sizeof(runtimeResultPlan));
-                    runtimeResultIn.combatOutcome = combatResult.outcome;
-                    runtimeResultIn.damageApplied = combatResult.damageApplied;
-                    runtimeResultIn.groupIndex = groupIndex;
-                    runtimeResultIn.groupCount =
-                        world && world->things ? world->things->groupCount : 0;
-                    (void)dm1_v1_melee_runtime_result_plan_f0231_pc34(
-                        &runtimeResultIn, &runtimeResultPlan);
-                    if (!runtimeResultPlan.valid) {
+                        &world->masterRng, &resolveRuntimeIn,
+                        &resolveRuntimePlan))) {
+                    combatResult = resolveRuntimePlan.combatResult;
+                    if (!resolveRuntimePlan.valid ||
+                        !resolveRuntimePlan.runtimeResultPlan.valid) {
                         return 1;
                     }
-                    if (runtimeResultPlan.shouldReturnHandledNoAction) {
+                    if (resolveRuntimePlan.runtimeResultPlan
+                            .shouldReturnHandledNoAction) {
                         /* ReDMCSB CLIKCHAM.C F0368 lines 69-71 keeps the
                          * live candidate champion panel from being redrawn
                          * as a normal champion state.  Firestaff carries
@@ -6777,11 +6777,12 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                          * with stamina, reaction, or damage emissions. */
                         return 1;
                     }
-                    if (runtimeResultPlan.shouldWriteBackLuck) {
+                    if (resolveRuntimePlan.runtimeResultPlan.shouldWriteBackLuck) {
                         orch_writeback_cmd_attack_luck_compat(
                             world, (int)input->commandArg1, &championSnapshot);
                     }
-                    if (runtimeResultPlan.shouldApplySideEffects) {
+                    if (resolveRuntimePlan.runtimeResultPlan
+                            .shouldApplySideEffects) {
                         orch_cmd_attack_apply_f0231_side_effects_compat(
                             world, (int)input->commandArg1, actionSkillIndex,
                             &creatureSnapshot, combatResult.damageApplied);
@@ -6796,7 +6797,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     aftermathIn.fearTriggered = fearTriggered;
                     (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
                         &aftermathIn, &aftermathPlan);
-                    if (runtimeResultPlan.shouldApplyGroupDamage) {
+                    if (resolveRuntimePlan.runtimeResultPlan
+                            .shouldApplyGroupDamage) {
                         memset(&damageApplyPlan, 0, sizeof(damageApplyPlan));
                         (void)dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
                             &combatResult, &world->things->groups[groupIndex],
@@ -6854,7 +6856,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             world, groupIndex, &creatureSnapshot,
                             targetDirection, aftermathPlan.outcome);
                     }
-                    if (runtimeResultPlan.shouldEmitDamageDealt) {
+                    if (resolveRuntimePlan.runtimeResultPlan
+                            .shouldEmitDamageDealt) {
                         emit(result, EMIT_DAMAGE_DEALT,
                              input->commandArg1, groupIndex,
                              combatResult.damageApplied,
