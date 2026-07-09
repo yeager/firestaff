@@ -394,6 +394,59 @@ static void test_runtime_thing_receipts(void)
                0, "runtime receipt rejects NULL output");
 }
 
+static void test_wall_route_receipts(void)
+{
+    const DM1_V1_D3L2D3R2F0115ThingPassPc34 *d3l2 =
+        dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_square_pc34(1);
+    const DM1_V1_D3L2D3R2F0115ThingPassPc34 *d3r2 =
+        dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_square_pc34(2);
+    DM1_V1_D3L2D3R2WallRouteReceiptPc34 receipt;
+
+    expect_int("wall.d3l2.receipt",
+               dm1_v1_viewport_d3l2_d3r2_wall_route_receipt_pc34(
+                   d3l2, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:6253-6264");
+    expect_int("wall.d3l2.draw", receipt.draws_wall_bitmap, 1,
+               "D3L2 wall bitmap is consumed by wall route");
+    expect_int("wall.d3l2.zone", receipt.wall_zone, 702,
+               "DEFS.H:4042 C702_ZONE_WALL_D3L2");
+    expect_int("wall.d3l2.side.ornament", receipt.calls_side_wall_ornament, 1,
+               "ReDMCSB DUNVIEW.C:6257 side F0107");
+    expect_int("wall.d3l2.front.ornament", receipt.calls_front_wall_ornament, 1,
+               "ReDMCSB DUNVIEW.C:6258 front F0107");
+    expect_int("wall.d3l2.return", receipt.returns_before_f0115, 1,
+               "plain wall returns before F0115");
+    expect_int("wall.d3l2.no.f0115", receipt.calls_f0115_for_alcove, 0,
+               "plain wall has no thing pass");
+    expect_int("wall.d3l2.suppress.things", receipt.suppress_thing_layer, 1,
+               "plain wall cannot leak mirror/static thing payload");
+    expect_int("wall.d3l2.clear.mirror", receipt.clears_stale_mirror_payload, 1,
+               "wall route clears stale mirror payload");
+
+    expect_int("wall.d3r2.receipt",
+               dm1_v1_viewport_d3l2_d3r2_wall_route_receipt_pc34(
+                   d3r2, 1, &receipt),
+               1, "ReDMCSB DUNVIEW.C:6320-6331");
+    expect_int("wall.d3r2.draw", receipt.draws_wall_bitmap, 1,
+               "D3R2 wall bitmap is consumed by wall route");
+    expect_int("wall.d3r2.zone", receipt.wall_zone, 703,
+               "DEFS.H:4043 C703_ZONE_WALL_D3R2");
+    expect_int("wall.d3r2.alcove", receipt.front_wall_ornament_is_alcove, 1,
+               "front F0107 alcove opens alcove thing pass");
+    expect_int("wall.d3r2.no.return", receipt.returns_before_f0115, 0,
+               "alcove does not return before F0115");
+    expect_int("wall.d3r2.calls.f0115", receipt.calls_f0115_for_alcove, 1,
+               "ReDMCSB DUNVIEW.C:6326-6327 alcove order then F0115");
+    expect_int("wall.d3r2.alcove.order", receipt.alcove_cell_order, 0,
+               "ReDMCSB C0x0000_CELL_ORDER_ALCOVE");
+    expect_int("wall.d3r2.thing.layer", receipt.suppress_thing_layer, 0,
+               "alcove owns its thing pass");
+    expect_int("wall.null.out",
+               dm1_v1_viewport_d3l2_d3r2_wall_route_receipt_pc34(
+                   d3l2, 0, NULL),
+               0, "wall receipt rejects NULL output");
+}
+
 static void test_pixel_contract_one(
     const DM1_V1_D3L2D3R2F0115ThingPassPc34 *f,
     int x_first,
@@ -591,6 +644,7 @@ int main(void)
     test_route_tables();
     test_thing_zone_bindings();
     test_runtime_thing_receipts();
+    test_wall_route_receipts();
     test_pixel_contract();
     test_source_evidence_mentions_required_anchors();
 

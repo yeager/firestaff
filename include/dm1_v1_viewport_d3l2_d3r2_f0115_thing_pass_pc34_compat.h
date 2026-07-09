@@ -139,6 +139,25 @@ typedef struct {
     const char *source_anchor;
 } DM1_V1_D3L2D3R2F0115RuntimeThingReceiptPc34;
 
+typedef struct {
+    int valid;
+    int input_valid;
+    int side;
+    int wall_zone;
+    int draws_wall_bitmap;
+    int calls_side_wall_ornament;
+    int calls_front_wall_ornament;
+    int front_wall_ornament_is_alcove;
+    int returns_before_f0115;
+    int calls_f0115_for_alcove;
+    int alcove_cell_order;
+    int suppress_thing_layer;
+    int suppress_projectile_layer;
+    int consumes_wall_route;
+    int clears_stale_mirror_payload;
+    const char *source_anchor;
+} DM1_V1_D3L2D3R2WallRouteReceiptPc34;
+
 void dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_init_pc34(void);
 
 size_t dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_count_pc34(void);
@@ -201,6 +220,11 @@ int dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
     int view_cell,
     int square_has_projectile,
     DM1_V1_D3L2D3R2F0115RuntimeThingReceiptPc34 *out_receipt);
+
+int dm1_v1_viewport_d3l2_d3r2_wall_route_receipt_pc34(
+    const DM1_V1_D3L2D3R2F0115ThingPassPc34 *fixture,
+    int front_wall_ornament_is_alcove,
+    DM1_V1_D3L2D3R2WallRouteReceiptPc34 *out_receipt);
 
 const char *dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_source_evidence_pc34(void);
 
