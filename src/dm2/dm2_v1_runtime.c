@@ -436,6 +436,71 @@ static void dm2_runtime_capture_door_render_receipt(
     g_dm2_last_door_render.button_rect = door->button_rect;
 }
 
+static void dm2_runtime_finish_door_render_receipt(
+    const DM2_V1_ViewportState *viewport)
+{
+    if (!viewport || !g_dm2_last_door_render.valid) {
+        return;
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_TILE and DRAW_DOOR_FRAMES
+     * consume the selected DB0 row by fetching GDAT images before blitting.
+     * Keep that actual asset-consumption receipt in DM2 runtime so callers do
+     * not infer success from aggregate draw counters. */
+    g_dm2_last_door_render.panel_asset_drawn =
+        viewport->last_door_panel_asset_blit_valid;
+    g_dm2_last_door_render.ornate_asset_drawn =
+        viewport->last_door_ornate_asset_blit_valid;
+    g_dm2_last_door_render.destroyed_mask_asset_drawn =
+        viewport->last_door_destroyed_mask_asset_blit_valid;
+    g_dm2_last_door_render.frame_asset_drawn =
+        viewport->last_door_frame_asset_blit_valid;
+    g_dm2_last_door_render.button_asset_drawn =
+        viewport->last_door_button_asset_blit_valid;
+
+    g_dm2_last_door_render.panel_asset_src_w =
+        viewport->last_door_panel_asset_src_w;
+    g_dm2_last_door_render.panel_asset_src_h =
+        viewport->last_door_panel_asset_src_h;
+    g_dm2_last_door_render.panel_asset_src_stride =
+        viewport->last_door_panel_asset_src_stride;
+    g_dm2_last_door_render.ornate_asset_src_w =
+        viewport->last_door_ornate_asset_src_w;
+    g_dm2_last_door_render.ornate_asset_src_h =
+        viewport->last_door_ornate_asset_src_h;
+    g_dm2_last_door_render.ornate_asset_src_stride =
+        viewport->last_door_ornate_asset_src_stride;
+    g_dm2_last_door_render.destroyed_mask_asset_src_w =
+        viewport->last_door_destroyed_mask_asset_src_w;
+    g_dm2_last_door_render.destroyed_mask_asset_src_h =
+        viewport->last_door_destroyed_mask_asset_src_h;
+    g_dm2_last_door_render.destroyed_mask_asset_src_stride =
+        viewport->last_door_destroyed_mask_asset_src_stride;
+    g_dm2_last_door_render.frame_asset_src_w =
+        viewport->last_door_frame_asset_src_w;
+    g_dm2_last_door_render.frame_asset_src_h =
+        viewport->last_door_frame_asset_src_h;
+    g_dm2_last_door_render.frame_asset_src_stride =
+        viewport->last_door_frame_asset_src_stride;
+    g_dm2_last_door_render.button_asset_src_w =
+        viewport->last_door_button_asset_src_w;
+    g_dm2_last_door_render.button_asset_src_h =
+        viewport->last_door_button_asset_src_h;
+    g_dm2_last_door_render.button_asset_src_stride =
+        viewport->last_door_button_asset_src_stride;
+
+    g_dm2_last_door_render.panel_asset_dst_rect =
+        viewport->last_door_panel_asset_blit.dst_rect;
+    g_dm2_last_door_render.ornate_asset_dst_rect =
+        viewport->last_door_ornate_asset_blit.dst_rect;
+    g_dm2_last_door_render.destroyed_mask_asset_dst_rect =
+        viewport->last_door_destroyed_mask_asset_blit.dst_rect;
+    g_dm2_last_door_render.frame_asset_dst_rect =
+        viewport->last_door_frame_asset_blit.dst_rect;
+    g_dm2_last_door_render.button_asset_dst_rect =
+        viewport->last_door_button_asset_blit.dst_rect;
+}
+
 static int dm2_runtime_set_target_door_state(DM2_V1_RuntimeState *rt,
                                              int level,
                                              int x,
@@ -1517,6 +1582,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
+    dm2_runtime_finish_door_render_receipt(&viewport);
     dm2_runtime_finish_creature_render_receipt(&viewport);
     g_dm2_last_asset_floor_ceiling_count =
         viewport.asset_floor_ceiling_drawn_count;

@@ -1091,6 +1091,25 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       door_receipt.panel_rect.h > 0 &&
                       door_receipt.panel_visible_rect.w > 0 &&
                       door_receipt.panel_visible_rect.h > 0 &&
+                      door_receipt.panel_asset_drawn == 1 &&
+                      door_receipt.ornate_asset_drawn == 1 &&
+                      door_receipt.destroyed_mask_asset_drawn == 0 &&
+                      door_receipt.frame_asset_drawn == 1 &&
+                      door_receipt.button_asset_drawn == 1 &&
+                      door_receipt.panel_asset_src_w == 16 &&
+                      door_receipt.panel_asset_src_h == 8 &&
+                      door_receipt.ornate_asset_src_w == 16 &&
+                      door_receipt.ornate_asset_src_h == 8 &&
+                      door_receipt.frame_asset_src_w == 16 &&
+                      door_receipt.frame_asset_src_h == 8 &&
+                      door_receipt.button_asset_src_w == 16 &&
+                      door_receipt.button_asset_src_h == 8 &&
+                      door_receipt.panel_asset_dst_rect.w > 0 &&
+                      door_receipt.panel_asset_dst_rect.h > 0 &&
+                      door_receipt.ornate_asset_dst_rect.w ==
+                          door_receipt.panel_rect.w &&
+                      door_receipt.ornate_asset_dst_rect.h ==
+                          door_receipt.panel_rect.h &&
                       door_receipt.overlay_rect.w == door_receipt.panel_rect.w &&
                       door_receipt.overlay_rect.h == door_receipt.panel_rect.h &&
                       door_receipt.frame_rect.w > 0 &&
@@ -1199,6 +1218,19 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       door_receipt.destroyed_mask_blit_ready == 1 &&
                       door_receipt.frame_blit_ready == 1 &&
                       door_receipt.button_blit_ready == 1 &&
+                      door_receipt.panel_asset_drawn == 0 &&
+                      door_receipt.ornate_asset_drawn == 1 &&
+                      door_receipt.destroyed_mask_asset_drawn == 1 &&
+                      door_receipt.frame_asset_drawn == 1 &&
+                      door_receipt.button_asset_drawn == 1 &&
+                      door_receipt.ornate_asset_src_w == 16 &&
+                      door_receipt.ornate_asset_src_h == 8 &&
+                      door_receipt.destroyed_mask_asset_src_w == 16 &&
+                      door_receipt.destroyed_mask_asset_src_h == 8 &&
+                      door_receipt.destroyed_mask_asset_dst_rect.w ==
+                          door_receipt.panel_rect.w &&
+                      door_receipt.destroyed_mask_asset_dst_rect.h ==
+                          door_receipt.panel_rect.h &&
                       door_receipt.panel_visible_rect.h == 0 &&
                       door_receipt.overlay_rect.w == door_receipt.panel_rect.w &&
                       door_receipt.overlay_rect.h == door_receipt.panel_rect.h,
