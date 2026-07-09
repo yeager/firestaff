@@ -2402,6 +2402,8 @@ void csb_v1_boot_startup_action_receipt_init_pc34(
     csb_v1_boot_startup_presentation_route_receipt_init_pc34(
         &receipt->pre_input_route);
     csb_v1_boot_startup_render_view_receipt_init_pc34(
+        &receipt->pre_input_render_view);
+    csb_v1_boot_startup_render_view_receipt_init_pc34(
         &receipt->post_input_render_view);
     csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
         &receipt->utility_receipt);
@@ -2581,6 +2583,8 @@ static int csb_v1_boot_startup_action_capture_pre_input_route_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupActionReceipt_PC34 *receipt)
 {
+    int captured;
+
     if (!snapshot || !receipt) {
         return 0;
     }
@@ -2589,9 +2593,17 @@ static int csb_v1_boot_startup_action_capture_pre_input_route_pc34(
      * that HUD/menu routing in the viewport layer, so every boot action
      * receipt captures the pre-input render route before utility/entrance
      * dispatch mutates startup state. */
-    return csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+    captured = csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
         snapshot,
         &receipt->pre_input_route);
+    if (!captured) {
+        return 0;
+    }
+    receipt->pre_input_render_view_valid =
+        csb_v1_boot_startup_render_view_receipt_from_route_pc34(
+            &receipt->pre_input_route,
+            &receipt->pre_input_render_view);
+    return captured;
 }
 
 static void csb_v1_boot_startup_snapshot_apply_command_state_pc34(
