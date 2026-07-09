@@ -620,6 +620,8 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
     int closedDoorFallbackSuppressed = 0;
     int openingFrameDrawReady = 0;
     int fullVisualSequenceConsumed = 0;
+    int runtimeRouteHardeningReady = 0;
+    int runtimeRouteHardeningHashReady = 0;
 
     ASSERT_EQ(M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                   &titleReceiptReady,
@@ -641,7 +643,9 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
                   &titleAssetDrawReady,
                   &closedDoorFallbackSuppressed,
                   &openingFrameDrawReady,
-                  &fullVisualSequenceConsumed),
+                  &fullVisualSequenceConsumed,
+                  &runtimeRouteHardeningReady,
+                  &runtimeRouteHardeningHashReady),
               1,
               "M11 exposes CSB startup host-view draw receipt");
     ASSERT_EQ(titleReceiptReady, 1,
@@ -684,6 +688,10 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
               "CSB door opening uses receipt-owned frame draw");
     ASSERT_EQ(fullVisualSequenceConsumed, 1,
               "M11 CSB startup requires the full title/HUD/door visual sequence receipt");
+    ASSERT_EQ(runtimeRouteHardeningReady, 1,
+              "M11 CSB startup routes require runtime route hardening");
+    ASSERT_EQ(runtimeRouteHardeningHashReady, 1,
+              "M11 CSB startup route hardening publishes route hashes");
 }
 
 static void test_candidate_panel_blocks_direct_object_helpers(void)

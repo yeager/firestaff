@@ -365,6 +365,7 @@ static void run_real_data_handoff_if_available(void) {
                               receipt.dm1HoCReleaseCaptureOwnershipReady &&
                               receipt.dm1HoCReceiptOnlyConsumerReady &&
                               receipt.dm1HoCLowerLevelHelpersReady &&
+                              receipt.dm1HoCHostDrawRejectsBackingFallback &&
                               receipt.dm1HoCOpenedEntranceFrame &&
                               receipt.dm1HoCHallMirrorOverlay &&
                               receipt.dm1HoCBlockedEnterUntilChampion &&
