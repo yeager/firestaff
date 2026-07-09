@@ -219,7 +219,35 @@ typedef struct {
     int startup_profile_verified;
     int startup_hud_runtime_ready;
     int startup_render_ready;
+    int runtime_hud_capture_ready;
+    int runtime_hud_real_asset_ready;
+    int runtime_hud_asset_portrait_count;
+    int runtime_hud_fallback_portrait_count;
+    int runtime_hud_no_fallback_portraits;
+    uint32_t runtime_hud_frame_hash;
+    uint32_t runtime_hud_frame_pixel_count;
 } DM2_V1_BootRuntimeRenderReceipt;
+
+typedef struct {
+    int valid;
+    int profile_ready;
+    int graphics_dat_ready;
+    int runtime_ready;
+    int render_sample_count;
+    int render_success_count;
+    int sampled_direction_mask;
+    int total_asset_portrait_count;
+    int total_fallback_portrait_count;
+    int min_asset_portrait_count;
+    int max_asset_portrait_count;
+    int no_fallback_portraits;
+    int first_runtime_hud_ready;
+    int real_gdat_portrait_ready;
+    int real_gdat_runtime_hud_breadth_ready;
+    uint32_t combined_frame_hash;
+    uint32_t combined_pixel_count;
+    DM2_V1_BootRuntimeRenderReceipt first_frame;
+} DM2_V1_BootRuntimeHudCaptureReceipt;
 
 typedef struct {
     int valid;
@@ -970,6 +998,11 @@ int dm2_v1_boot_runtime_render_frame(
     DM2_V1_BootRuntimeRenderCallback v2_render,
     void *v2_userdata,
     DM2_V1_BootRuntimeRenderReceipt *out_receipt);
+void dm2_v1_boot_runtime_hud_capture_receipt_init(
+    DM2_V1_BootRuntimeHudCaptureReceipt *receipt);
+int dm2_v1_boot_runtime_hud_capture_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_BootRuntimeHudCaptureReceipt *out_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

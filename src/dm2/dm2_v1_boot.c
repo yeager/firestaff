@@ -3690,6 +3690,26 @@ static void dm2_v1_boot_runtime_render_receipt_clear(
     }
 }
 
+static uint32_t dm2_v1_boot_runtime_hud_hash_frame(const uint8_t *framebuffer,
+                                                   int stride,
+                                                   int width,
+                                                   int height)
+{
+    uint32_t hash = 0x32485544u;
+    int y;
+    if (!framebuffer || stride <= 0 || width <= 0 || height <= 0) {
+        return 0u;
+    }
+    for (y = 0; y < height; ++y) {
+        int x;
+        const uint8_t *row = framebuffer + (size_t)y * (size_t)stride;
+        for (x = 0; x < width; ++x) {
+            hash = dm2_v1_boot_packaged_capture_hash_step(hash, row[x]);
+        }
+    }
+    return hash;
+}
+
 int dm2_v1_boot_runtime_render_frame(
     DM2_V1_BootProfile *profile,
     uint8_t *framebuffer,
@@ -3755,8 +3775,139 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->startup_title_ready &&
             out_receipt->startup_profile_verified &&
             out_receipt->startup_hud_runtime_ready;
+        out_receipt->runtime_hud_asset_portrait_count =
+            dm2_v1_runtime_last_asset_hud_portrait_count();
+        out_receipt->runtime_hud_fallback_portrait_count =
+            dm2_v1_runtime_last_fallback_hud_portrait_count();
+        out_receipt->runtime_hud_no_fallback_portraits =
+            out_receipt->runtime_hud_asset_portrait_count > 0 &&
+            out_receipt->runtime_hud_fallback_portrait_count == 0;
+        out_receipt->runtime_hud_frame_hash =
+            dm2_v1_boot_runtime_hud_hash_frame(framebuffer,
+                                               fb_stride,
+                                               view_w,
+                                               view_h);
+        out_receipt->runtime_hud_frame_pixel_count =
+            (uint32_t)(view_w * view_h);
+        out_receipt->runtime_hud_real_asset_ready =
+            profile->graphics_dat &&
+            out_receipt->runtime_hud_no_fallback_portraits &&
+            out_receipt->runtime_hud_frame_hash != 0u;
+        out_receipt->runtime_hud_capture_ready =
+            out_receipt->startup_render_ready &&
+            out_receipt->runtime_hud_real_asset_ready;
     }
     return rendered == 0;
+}
+
+void dm2_v1_boot_runtime_hud_capture_receipt_init(
+    DM2_V1_BootRuntimeHudCaptureReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+    }
+}
+
+int dm2_v1_boot_runtime_hud_capture_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_BootRuntimeHudCaptureReceipt *out_receipt)
+{
+    uint8_t framebuffer[320 * 200];
+    uint32_t combined_hash = 0x32485543u;
+    int dir;
+
+    dm2_v1_boot_runtime_hud_capture_receipt_init(out_receipt);
+    if (!profile || !profile->dm2_state || !out_receipt) {
+        return 0;
+    }
+
+    out_receipt->profile_ready = profile->assets_verified ? 1 : 0;
+    out_receipt->graphics_dat_ready = profile->graphics_dat ? 1 : 0;
+    out_receipt->runtime_ready = 1;
+    out_receipt->min_asset_portrait_count = 9999;
+
+    /* skproject/SKWIN T560 renders the same right-side runtime HUD from
+     * party state while the dungeon view changes by direction. Sampling all
+     * directions proves Firestaff keeps HUD portraits GDAT-backed through the
+     * real runtime frame path, not only through startup handoff receipts. */
+    for (dir = 0; dir < 4; ++dir) {
+        DM2_V1_BootRuntimeRenderReceipt frame_receipt;
+        DM2_V1_BootRuntimeReceipt runtime;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        if (!dm2_v1_boot_runtime_capture(profile, &runtime)) {
+            continue;
+        }
+        if (!dm2_v1_boot_runtime_render_frame(profile,
+                                              framebuffer,
+                                              320,
+                                              320,
+                                              200,
+                                              NULL,
+                                              NULL,
+                                              &frame_receipt)) {
+            continue;
+        }
+        ++out_receipt->render_sample_count;
+        out_receipt->sampled_direction_mask |= 1 << (dir & 3);
+        if (frame_receipt.render_result == 0 &&
+            frame_receipt.runtime_hud_capture_ready) {
+            ++out_receipt->render_success_count;
+        }
+        out_receipt->total_asset_portrait_count +=
+            frame_receipt.runtime_hud_asset_portrait_count;
+        out_receipt->total_fallback_portrait_count +=
+            frame_receipt.runtime_hud_fallback_portrait_count;
+        if (frame_receipt.runtime_hud_asset_portrait_count <
+            out_receipt->min_asset_portrait_count) {
+            out_receipt->min_asset_portrait_count =
+                frame_receipt.runtime_hud_asset_portrait_count;
+        }
+        if (frame_receipt.runtime_hud_asset_portrait_count >
+            out_receipt->max_asset_portrait_count) {
+            out_receipt->max_asset_portrait_count =
+                frame_receipt.runtime_hud_asset_portrait_count;
+        }
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            frame_receipt.runtime_hud_frame_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            (uint32_t)frame_receipt.runtime_hud_asset_portrait_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            (uint32_t)frame_receipt.runtime.party_dir);
+        out_receipt->combined_pixel_count +=
+            frame_receipt.runtime_hud_frame_pixel_count;
+        if (out_receipt->render_sample_count == 1) {
+            out_receipt->first_frame = frame_receipt;
+        }
+        (void)dm2_v1_boot_runtime_turn(profile, 1, &runtime);
+    }
+    if (out_receipt->min_asset_portrait_count == 9999) {
+        out_receipt->min_asset_portrait_count = 0;
+    }
+    out_receipt->combined_frame_hash = combined_hash;
+    out_receipt->no_fallback_portraits =
+        out_receipt->total_asset_portrait_count > 0 &&
+        out_receipt->total_fallback_portrait_count == 0;
+    out_receipt->first_runtime_hud_ready =
+        out_receipt->first_frame.runtime_hud_capture_ready;
+    out_receipt->real_gdat_portrait_ready =
+        out_receipt->graphics_dat_ready &&
+        out_receipt->min_asset_portrait_count >= 4 &&
+        out_receipt->no_fallback_portraits;
+    out_receipt->real_gdat_runtime_hud_breadth_ready =
+        out_receipt->render_sample_count == 4 &&
+        out_receipt->render_success_count == 4 &&
+        out_receipt->sampled_direction_mask == 0x0f &&
+        out_receipt->real_gdat_portrait_ready &&
+        out_receipt->combined_frame_hash != 0u &&
+        out_receipt->combined_pixel_count == 4u * 320u * 200u;
+    out_receipt->valid =
+        out_receipt->profile_ready &&
+        out_receipt->runtime_ready &&
+        out_receipt->real_gdat_runtime_hud_breadth_ready;
+    return out_receipt->valid;
 }
 
 static const char *dm2_v1_boot_startup_prepare_host_status(
@@ -4095,7 +4246,10 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_pixels = &gfx->hud_portrait_pixels[index];
         cache_w = &gfx->hud_portrait_w[index];
         cache_h = &gfx->hud_portrait_h[index];
-        category = DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET;
+        /* skproject SKWIN/SkWinCore.cpp DRAW_CHAMPION_PICTURE
+         * (_2e62_061d) draws runtime HUD portraits from
+         * GDAT_CATEGORY_CHAMPIONS, hero type, image field 0. */
+        category = DM2_GDAT_CATEGORY_CHAMPIONS;
     } else if (gdat_index <=
                    DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE &&
                gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE) {

@@ -355,6 +355,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     DM2_V1_BootRuntimeReceipt after;
     DM2_V1_BootRuntimeActionReceipt action;
     DM2_V1_BootRuntimeRenderReceipt render_receipt;
+    DM2_V1_BootRuntimeHudCaptureReceipt hud_capture;
     unsigned char framebuffer[320 * 200];
     int v2_callback_count = 0;
     const char *home = getenv("HOME");
@@ -425,8 +426,31 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.startup_title_ready == 1 &&
               render_receipt.startup_profile_verified == 1 &&
               render_receipt.startup_hud_runtime_ready == 1 &&
-              render_receipt.startup_render_ready == 1,
-          "boot runtime render owns V2 callback, V1 fallback, and first HUD readiness receipt");
+              render_receipt.startup_render_ready == 1 &&
+              render_receipt.runtime_hud_capture_ready == 1 &&
+              render_receipt.runtime_hud_real_asset_ready == 1 &&
+              render_receipt.runtime_hud_asset_portrait_count >= 4 &&
+              render_receipt.runtime_hud_fallback_portrait_count == 0 &&
+              render_receipt.runtime_hud_frame_hash != 0u &&
+              render_receipt.runtime_hud_frame_pixel_count == 320u * 200u,
+          "boot runtime render owns V2 callback, V1 fallback, and real GDAT HUD readiness receipt");
+    memset(&hud_capture, 0, sizeof(hud_capture));
+    CHECK(dm2_v1_boot_runtime_hud_capture_receipt(
+              launch.profile,
+              &hud_capture) == 1 &&
+              hud_capture.valid == 1 &&
+              hud_capture.render_sample_count == 4 &&
+              hud_capture.render_success_count == 4 &&
+              hud_capture.sampled_direction_mask == 0x0f &&
+              hud_capture.min_asset_portrait_count >= 4 &&
+              hud_capture.total_fallback_portrait_count == 0 &&
+              hud_capture.no_fallback_portraits == 1 &&
+              hud_capture.first_runtime_hud_ready == 1 &&
+              hud_capture.real_gdat_portrait_ready == 1 &&
+              hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
+              hud_capture.combined_frame_hash != 0u &&
+              hud_capture.combined_pixel_count == 4u * 320u * 200u,
+          "boot runtime HUD capture proves real GDAT portraits across sampled directions");
     memset(&action, 0, sizeof(action));
     CHECK(dm2_v1_boot_runtime_action_front_cell(
               launch.profile,

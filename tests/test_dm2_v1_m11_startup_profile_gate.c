@@ -1504,6 +1504,27 @@ int main(void) {
                     boot_receipt.startupHudRuntimeReady == 1,
                 "M11 DM2 boot probe reaches first runtime HUD state after startup menu");
 
+    profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+    if (profile) {
+        DM2_V1_BootRuntimeHudCaptureReceipt runtime_hud_capture;
+        memset(&runtime_hud_capture, 0, sizeof(runtime_hud_capture));
+        expect_true(dm2_v1_boot_runtime_hud_capture_receipt(
+                        profile,
+                        &runtime_hud_capture) == 1 &&
+                        runtime_hud_capture.valid == 1 &&
+                        runtime_hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
+                        runtime_hud_capture.min_asset_portrait_count >= 4 &&
+                        runtime_hud_capture.total_fallback_portrait_count == 0,
+                    "M11 DM2 runtime owns broad real GDAT HUD capture receipt");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(dm2_v1_runtime_last_asset_hud_portrait_count() >= 4 &&
+                        dm2_v1_runtime_last_fallback_hud_portrait_count() == 0 &&
+                        strcmp(view.lastAction, "RUNTIME") == 0 &&
+                        strcmp(view.lastOutcome, "DM2 RUNTIME HUD") == 0,
+                    "M11 DM2 runtime draw consumes real GDAT HUD receipt");
+    }
+
     expect_true(make_temp_save_root(direct_save_root),
                 "created isolated DM2 direct-start quick-save root");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;

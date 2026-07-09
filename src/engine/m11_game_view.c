@@ -38832,12 +38832,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         DM2_V1_BootStartupHostViewReceipt startup_host_receipt;
         DM2_V1_BootStartupRenderOwnershipReceipt startup_ownership_receipt;
         DM2_V1_BootStartupRealVisualCaptureReceipt startup_visual_receipt;
+        DM2_V1_BootRuntimeRenderReceipt runtime_render_receipt;
         int startup_menu_drawn = 0;
         memset(&startup_host_receipt, 0, sizeof(startup_host_receipt));
         memset(&startup_ownership_receipt, 0, sizeof(startup_ownership_receipt));
         memset(&startup_visual_receipt, 0, sizeof(startup_visual_receipt));
+        memset(&runtime_render_receipt, 0, sizeof(runtime_render_receipt));
         if (state->dm2World) {
-            DM2_V1_BootRuntimeRenderReceipt receipt;
             (void)dm2_v1_boot_runtime_render_frame(
                 (DM2_V1_BootProfile *)state->dm2BootProfile,
                 framebuffer,
@@ -38846,8 +38847,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 framebufferHeight,
                 m11_dm2_boot_v2_render_callback,
                 NULL,
-                &receipt);
-            rendered = receipt.render_result;
+                &runtime_render_receipt);
+            rendered = runtime_render_receipt.render_result;
         }
         if (rendered != 0) {
             const char *boot_status = state->lastOutcome[0]
@@ -38874,6 +38875,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                startup_visual_receipt.status_scope,
                                startup_visual_receipt.status);
             }
+        } else if (runtime_render_receipt.runtime_hud_capture_ready &&
+                   runtime_render_receipt.runtime_hud_no_fallback_portraits) {
+            m11_set_status((M11_GameViewState *)state,
+                           "RUNTIME",
+                           "DM2 RUNTIME HUD");
         }
         if (!startup_menu_drawn ||
             !startup_visual_receipt.suppress_game_hud) {
