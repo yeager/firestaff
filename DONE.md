@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0190/F0187 fixed-possession drop cell ownership: M10 group fixed-possession drops and moving fixed-possession drops now consume DM1-owned source-order cell plans for Count-down F0190 drops and stack-order F0187 movement rejection drops. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 projectile square attach ownership: M10 and M11 ordinary Projectile.Slot square materialization now consume a DM1 F0215/DUNGEON.C F0163 attach plan for empty square heads and append-after-tail links. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_creature_projectile_runtime_pc34_compat` (25/25), `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 M11 projectile GROUP.Slot attach ownership: M11 kept sharp thrown weapons now consume the DM1 F0215 group-slot attach plan for empty possession heads and append-after-tail links instead of using a generic append helper directly. Verification: `test_m11_creature_projectile_runtime_pc34_compat` (25/25), `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

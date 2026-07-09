@@ -5184,15 +5184,19 @@ static int orch_drop_moving_fixed_possessions_compat(
 {
     int i;
     int droppedAny = 0;
+    DM1_MeleeF0190FixedDropCellsPlanPc34 plan;
 
-    if (!cells || cellCount <= 0) return 1;
-    /* ReDMCSB GROUP.C:F0187:670-672 consumes the moving fixed-possession
-     * cell accumulator as a stack, passing C02_MODE_PLAY_ONE_TICK_LATER. */
-    for (i = cellCount - 1; i >= 0; --i) {
-        droppedAny |= orch_drop_creature_fixed_possessions_compat(
-            world, creatureType, cells[i], mapIndex, mapX, mapY);
+    memset(&plan, 0, sizeof(plan));
+    if (!dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
+            cells, cellCount, &plan) ||
+        !plan.valid) {
+        return 0;
     }
-    return droppedAny || cellCount == 0;
+    for (i = 0; i < plan.dropCellCount; ++i) {
+        droppedAny |= orch_drop_creature_fixed_possessions_compat(
+            world, creatureType, plan.dropCells[i], mapIndex, mapX, mapY);
+    }
+    return droppedAny || plan.dropCellCount == 0;
 }
 
 static int orch_drop_group_fixed_possessions_compat(
@@ -5202,24 +5206,21 @@ static int orch_drop_group_fixed_possessions_compat(
     int mapX,
     int mapY)
 {
-    int creatureIndex;
-    int groupCells;
+    int i;
+    DM1_MeleeF0190FixedDropCellsPlanPc34 plan;
 
     if (!world || !group) return 0;
-    creatureIndex = group->count;
-    if (creatureIndex < 0) creatureIndex = 0;
-    if (creatureIndex > 3) creatureIndex = 3;
-    groupCells = group->cells;
-
-    /* ReDMCSB GROUP.C:F0188:716-721 drops fixed possessions for each
-     * creature still represented by Count/cells before dropping Slot. */
-    do {
-        int cell = (groupCells == 0xFF)
-            ? DM1_SINGLE_CENTERED_CREATURE_CELL
-            : orch_group_creature_cell_compat(group, creatureIndex);
+    memset(&plan, 0, sizeof(plan));
+    if (!dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
+            group, &plan) ||
+        !plan.valid) {
+        return 0;
+    }
+    for (i = 0; i < plan.dropCellCount; ++i) {
         (void)orch_drop_creature_fixed_possessions_compat(
-            world, group->creatureType, cell, mapIndex, mapX, mapY);
-    } while (creatureIndex--);
+            world, group->creatureType, plan.dropCells[i],
+            mapIndex, mapX, mapY);
+    }
     return 1;
 }
 

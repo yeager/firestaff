@@ -923,6 +923,59 @@ int dm1_v1_melee_possession_drop_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
+    const struct DungeonGroup_Compat* group,
+    DM1_MeleeF0190FixedDropCellsPlanPc34* out) {
+    int creatureIndex;
+    int groupCells;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!group) return 0;
+
+    creatureIndex = group->count;
+    if (creatureIndex < 0) creatureIndex = 0;
+    if (creatureIndex > 3) creatureIndex = 3;
+    groupCells = group->cells;
+
+    out->valid = 1;
+    do {
+        int cell = (groupCells == 0xFF)
+            ? EXPLOSION_CELL_CENTERED
+            : ((groupCells >> (creatureIndex << 1)) & 0x03);
+        if (out->dropCellCount < 4) {
+            out->dropCells[out->dropCellCount++] = cell;
+        }
+    } while (creatureIndex--);
+
+    /* ReDMCSB: GROUP.C F0188 lines 716-721 drops fixed possessions from
+     * Count down to 0 before F0190 drops the GROUP.Slot chain. */
+    return 1;
+}
+
+int dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
+    const unsigned char* movingFixedDropCells,
+    int movingFixedDropCellCount,
+    DM1_MeleeF0190FixedDropCellsPlanPc34* out) {
+    int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->valid = 1;
+    if (!movingFixedDropCells || movingFixedDropCellCount <= 0) {
+        return 1;
+    }
+    if (movingFixedDropCellCount > 4) movingFixedDropCellCount = 4;
+    for (i = movingFixedDropCellCount - 1; i >= 0; --i) {
+        out->dropCells[out->dropCellCount++] =
+            movingFixedDropCells[i] & 0x03;
+    }
+
+    /* ReDMCSB: GROUP.C F0187 lines 670-672 consumes the moving fixed
+     * possession cell accumulator as a stack when F0267 rejects movement. */
+    return 1;
+}
+
 int dm1_v1_melee_killed_some_state_plan_f0190_pc34(
     const DM1_MeleeF0190KilledSomeStateInputPc34* in,
     DM1_MeleeF0190KilledSomeStatePlanPc34* out) {

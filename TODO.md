@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 F0190/F0187 now owns fixed-possession drop cell order for group-death and movement-rejection paths. Remaining runtime coding work is reducing residual F0190/F0267 live mutation adapters and full-graphics proof.
   - 2026-07-09 update: M10/M11 ordinary Projectile.Slot square materialization now consumes a DM1 F0215/DUNGEON.C F0163 attach receipt for empty square heads and append-after-tail links. Remaining runtime coding work is end-to-end full-graphics proof and any residual thing-link writes outside projectile materialization.
   - 2026-07-08 update: DM1 runtime-ready startup now combines dungeon-load success, runtime-start state, and sibling `GRAPHICS.DAT` bind decisions into one DM1-owned receipt consumed by M11. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 selected-launch routing now uses a DM1-owned route receipt, so M11 asks DM1 whether to run the source-visible SWSH/TITLE/ENTRANCE transaction or generic launch. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.

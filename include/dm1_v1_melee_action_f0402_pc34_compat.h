@@ -449,6 +449,12 @@ typedef struct {
 } DM1_MeleeF0190PossessionDropPlanPc34;
 
 typedef struct {
+    int valid;
+    int dropCellCount;
+    int dropCells[4];
+} DM1_MeleeF0190FixedDropCellsPlanPc34;
+
+typedef struct {
     int outcome;
     int groupBehavior;
     int groupIndex;
@@ -590,6 +596,13 @@ int dm1_v1_melee_death_smoke_plan_f0190_pc34(
 int dm1_v1_melee_possession_drop_plan_f0190_pc34(
     const DM1_MeleeF0190PossessionDropInputPc34* in,
     DM1_MeleeF0190PossessionDropPlanPc34* out);
+int dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
+    const struct DungeonGroup_Compat* group,
+    DM1_MeleeF0190FixedDropCellsPlanPc34* out);
+int dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
+    const unsigned char* movingFixedDropCells,
+    int movingFixedDropCellCount,
+    DM1_MeleeF0190FixedDropCellsPlanPc34* out);
 int dm1_v1_melee_killed_some_state_plan_f0190_pc34(
     const DM1_MeleeF0190KilledSomeStateInputPc34* in,
     DM1_MeleeF0190KilledSomeStatePlanPc34* out);

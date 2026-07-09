@@ -2008,6 +2008,9 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190KilledAllStatePlanPc34 killedAllOut;
     DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
     DM1_MeleeF0190TimelineCleanupPlanPc34 cleanupOut;
+    DM1_MeleeF0190FixedDropCellsPlanPc34 fixedCellsOut;
+    struct DungeonGroup_Compat fixedGroup;
+    unsigned char movingCells[4];
     struct CombatResult_Compat resultA;
     struct CombatResult_Compat resultB;
     struct DungeonGroup_Compat groupA;
@@ -2132,6 +2135,42 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 killed-some no-fixed plan builds");
     CHECK_EQ(dropOut.shouldDropCreatureFixedPossessions, 0,
              "F0190 killed-some no fixed attr suppresses drop");
+
+    memset(&fixedGroup, 0, sizeof(fixedGroup));
+    fixedGroup.count = 2;
+    fixedGroup.cells = (unsigned char)((1u << 0) | (3u << 2) | (2u << 4));
+    CHECK_EQ(dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
+                 &fixedGroup, &fixedCellsOut), 1,
+             "F0190 group fixed cells plan builds");
+    CHECK_EQ(fixedCellsOut.valid, 1, "F0190 group fixed cells valid");
+    CHECK_EQ(fixedCellsOut.dropCellCount, 3,
+             "F0190 group fixed cells count down from group count");
+    CHECK_EQ(fixedCellsOut.dropCells[0], 2,
+             "F0190 group fixed cells first highest creature");
+    CHECK_EQ(fixedCellsOut.dropCells[1], 3,
+             "F0190 group fixed cells second middle creature");
+    CHECK_EQ(fixedCellsOut.dropCells[2], 1,
+             "F0190 group fixed cells last lowest creature");
+
+    fixedGroup.cells = 0xFFu;
+    CHECK_EQ(dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
+                 &fixedGroup, &fixedCellsOut), 1,
+             "F0190 centered group fixed cells plan builds");
+    CHECK_EQ(fixedCellsOut.dropCells[0], EXPLOSION_CELL_CENTERED,
+             "F0190 centered group uses centered fixed-drop cell");
+
+    movingCells[0] = 1;
+    movingCells[1] = 2;
+    movingCells[2] = 3;
+    CHECK_EQ(dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
+                 movingCells, 3, &fixedCellsOut), 1,
+             "F0187 moving fixed cells plan builds");
+    CHECK_EQ(fixedCellsOut.dropCellCount, 3,
+             "F0187 moving fixed cells count");
+    CHECK_EQ(fixedCellsOut.dropCells[0], 3,
+             "F0187 moving fixed cells consumed as stack first");
+    CHECK_EQ(fixedCellsOut.dropCells[2], 1,
+             "F0187 moving fixed cells consumed as stack last");
 
     memset(&stateIn, 0, sizeof(stateIn));
     stateIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
