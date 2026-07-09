@@ -167,6 +167,9 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.dm1HoCReleaseAppCaptureReady == 1);
     CHECK(boot.dm1HoCHostCaptureRouteReady == 1);
     CHECK(boot.dm1HoCReleaseCaptureOwnershipReady == 1);
+    CHECK(boot.dm1HoCReceiptOnlyConsumerReady == 1);
+    CHECK(boot.dm1HoCNoHostFallbackVisualsReady == 1);
+    CHECK(boot.dm1HoCLowerLevelHelpersReady == 1);
     CHECK(boot.startupMenuReady == 1);
     CHECK(boot.startupStepCount == 7);
     CHECK(boot.startupStepReadyCount == 7);

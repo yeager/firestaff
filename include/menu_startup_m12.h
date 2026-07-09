@@ -338,6 +338,9 @@ typedef struct {
     int dm1HoCReleaseAppCaptureReady;
     int dm1HoCHostCaptureRouteReady;
     int dm1HoCReleaseCaptureOwnershipReady;
+    int dm1HoCReceiptOnlyConsumerReady;
+    int dm1HoCNoHostFallbackVisualsReady;
+    int dm1HoCLowerLevelHelpersReady;
     unsigned int expectedStepMask;
     unsigned int readyStepMask;
     unsigned int blockedStepMask;

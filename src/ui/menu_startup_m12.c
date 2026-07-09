@@ -6828,16 +6828,28 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     receipt->dm1HoCHostCaptureRouteReady =
         ownership.host_capture_route_matches;
     receipt->dm1HoCReleaseCaptureOwnershipReady = ownership.ready;
+    receipt->dm1HoCReceiptOnlyConsumerReady =
+        ownership.consume_dm1_receipts_only &&
+        ownership.consumed_runtime_apply_receipt &&
+        ownership.consumed_production_consumer_receipt &&
+        ownership.publish_packaged_full_graphics_proof;
+    receipt->dm1HoCNoHostFallbackVisualsReady =
+        ownership.suppress_host_fallback_visuals;
+    receipt->dm1HoCLowerLevelHelpersReady =
+        ownership.lower_level_renderer_helper_owned &&
+        ownership.lower_level_audio_helper_owned;
     receipt->packagedCaptureReady =
         receipt->packagedCaptureExpected &&
         ownership.ready &&
+        receipt->dm1HoCReceiptOnlyConsumerReady &&
+        receipt->dm1HoCNoHostFallbackVisualsReady &&
+        receipt->dm1HoCLowerLevelHelpersReady &&
         ownership.real_asset_capture &&
         ownership.release_app_capture &&
         ownership.host_capture_route_matches &&
         ownership.hoc_asset_capture &&
         ownership.draw_opened_entrance_frame &&
         ownership.render_hall_mirror_overlay &&
-        ownership.suppress_host_fallback_visuals &&
         ownership.render_command_count == 3;
     if (receipt->packagedCaptureReady) {
         receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
