@@ -13,36 +13,36 @@
 extern "C" {
 #endif
 
-#define DM1_CR_MAX_CREATURES     64  /* Max creatures per level */
-#define DM1_CR_MAX_VISIBLE        8  /* Max visible in viewport at once */
-#define DM1_CR_ANIM_FRAMES        4  /* Animation frames per creature */
-#define DM1_CR_FLASH_DURATION     4  /* Damage flash frames */
+#define DM1_V1_CREATURE_VIEWPORT_MAX_CREATURES_PC34     64  /* Max creatures per level */
+#define DM1_V1_CREATURE_VIEWPORT_MAX_VISIBLE_PC34        8  /* Max visible in viewport at once */
+#define DM1_V1_CREATURE_VIEWPORT_ANIM_FRAMES_PC34        4  /* Animation frames per creature */
+#define DM1_V1_CREATURE_VIEWPORT_FLASH_DURATION_PC34     4  /* Damage flash frames */
 
 /* Creature types — from ReDMCSB creature tables (GROUP.C G0217) */
 typedef enum {
-    M11_CR_MUMMY = 0,
-    M11_CR_SCREAMER,
-    M11_CR_ROCK_PILE,
-    M11_CR_GIANT_SCORPION,
-    M11_CR_TROLIN,
-    M11_CR_MAGENTA_WORM,
-    M11_CR_PAIN_RAT,
-    M11_CR_SKELETON,
-    M11_CR_GIANT_WASP,
-    M11_CR_STONE_GOLEM,
-    M11_CR_GHOST,
-    M11_CR_COUATL,
-    M11_CR_WATER_ELEMENTAL,
-    M11_CR_OITU,
-    M11_CR_DEMON,
-    M11_CR_LORD_CHAOS,
-    M11_CR_RED_DRAGON,
-    M11_CR_KNIGHT,
-    M11_CR_SWAMP_SLIME,
-    M11_CR_ANIMATED_ARMOR,
-    M11_CR_BLACK_FLAME,
-    M11_CR_TYPE_COUNT
-} M11_CR_CreatureType;
+    DM1_V1_CREATURE_VIEWPORT_MUMMY_PC34 = 0,
+    DM1_V1_CREATURE_VIEWPORT_SCREAMER_PC34,
+    DM1_V1_CREATURE_VIEWPORT_ROCK_PILE_PC34,
+    DM1_V1_CREATURE_VIEWPORT_GIANT_SCORPION_PC34,
+    DM1_V1_CREATURE_VIEWPORT_TROLIN_PC34,
+    DM1_V1_CREATURE_VIEWPORT_MAGENTA_WORM_PC34,
+    DM1_V1_CREATURE_VIEWPORT_PAIN_RAT_PC34,
+    DM1_V1_CREATURE_VIEWPORT_SKELETON_PC34,
+    DM1_V1_CREATURE_VIEWPORT_GIANT_WASP_PC34,
+    DM1_V1_CREATURE_VIEWPORT_STONE_GOLEM_PC34,
+    DM1_V1_CREATURE_VIEWPORT_GHOST_PC34,
+    DM1_V1_CREATURE_VIEWPORT_COUATL_PC34,
+    DM1_V1_CREATURE_VIEWPORT_WATER_ELEMENTAL_PC34,
+    DM1_V1_CREATURE_VIEWPORT_OITU_PC34,
+    DM1_V1_CREATURE_VIEWPORT_DEMON_PC34,
+    DM1_V1_CREATURE_VIEWPORT_LORD_CHAOS_PC34,
+    DM1_V1_CREATURE_VIEWPORT_RED_DRAGON_PC34,
+    DM1_V1_CREATURE_VIEWPORT_KNIGHT_PC34,
+    DM1_V1_CREATURE_VIEWPORT_SWAMP_SLIME_PC34,
+    DM1_V1_CREATURE_VIEWPORT_ANIMATED_ARMOR_PC34,
+    DM1_V1_CREATURE_VIEWPORT_BLACK_FLAME_PC34,
+    DM1_V1_CREATURE_VIEWPORT_TYPE_COUNT_PC34
+} DM1_V1_CreatureViewportTypePc34;
 
 /* Sprite info for one creature type */
 typedef struct {
@@ -51,11 +51,11 @@ typedef struct {
     uint16_t base_width;        /* Sprite width at depth 0 */
     uint16_t base_height;       /* Sprite height at depth 0 */
     bool     mirror_walk;       /* Mirror sprite for left/right walk */
-} M11_CR_SpriteInfo;
+} DM1_V1_CreatureViewportSpriteInfoPc34;
 
 /* Per-creature instance state */
 typedef struct {
-    M11_CR_CreatureType type;
+    DM1_V1_CreatureViewportTypePc34 type;
     int16_t  map_x, map_y;      /* Tile position */
     uint8_t  facing;            /* 0-3 direction */
     uint8_t  cell;              /* Sub-cell position (0-3) within tile */
@@ -66,40 +66,84 @@ typedef struct {
     uint8_t  flash_timer;       /* Damage flash countdown */
     bool     alive;
     bool     visible;           /* Currently in viewport */
-} M11_CR_Creature;
+} DM1_V1_CreatureViewportCreaturePc34;
 
 /* Viewport rendering info for a visible creature */
 typedef struct {
-    const M11_CR_Creature* creature;
+    const DM1_V1_CreatureViewportCreaturePc34* creature;
     int16_t screen_x, screen_y; /* Viewport screen position */
     int16_t draw_w, draw_h;     /* Scaled size for depth */
     uint8_t depth;              /* 0=closest, 3=farthest */
     uint8_t side;               /* 0=left, 1=center, 2=right */
     bool    flipped;            /* Horizontally mirrored */
-} M11_CR_ViewportEntry;
+} DM1_V1_CreatureViewportEntryPc34;
 
 typedef struct {
-    M11_CR_Creature creatures[DM1_CR_MAX_CREATURES];
+    DM1_V1_CreatureViewportCreaturePc34 creatures[DM1_V1_CREATURE_VIEWPORT_MAX_CREATURES_PC34];
     uint16_t creature_count;
-    M11_CR_SpriteInfo sprite_info[M11_CR_TYPE_COUNT];
-    M11_CR_ViewportEntry visible[DM1_CR_MAX_VISIBLE];
+    DM1_V1_CreatureViewportSpriteInfoPc34 sprite_info[DM1_V1_CREATURE_VIEWPORT_TYPE_COUNT_PC34];
+    DM1_V1_CreatureViewportEntryPc34 visible[DM1_V1_CREATURE_VIEWPORT_MAX_VISIBLE_PC34];
     uint8_t visible_count;
     int16_t party_x, party_y;   /* Current party position for visibility */
     uint8_t party_facing;       /* Party direction */
-} M11_CR_State;
+} DM1_V1_CreatureViewportStatePc34;
 
-void m11_cr_init(M11_CR_State* state);
-void m11_cr_setup_sprite_table(M11_CR_State* state);
-uint16_t m11_cr_add_creature(M11_CR_State* state, M11_CR_CreatureType type,
+void DM1_V1_CreatureViewport_InitPc34Compat(DM1_V1_CreatureViewportStatePc34* state);
+void DM1_V1_CreatureViewport_SetupSpriteTablePc34Compat(DM1_V1_CreatureViewportStatePc34* state);
+uint16_t DM1_V1_CreatureViewport_AddCreaturePc34Compat(DM1_V1_CreatureViewportStatePc34* state, DM1_V1_CreatureViewportTypePc34 type,
                               int16_t x, int16_t y, uint8_t facing,
                               int16_t hp);
-void m11_cr_set_party_pos(M11_CR_State* state, int16_t x, int16_t y,
+void DM1_V1_CreatureViewport_SetPartyPosPc34Compat(DM1_V1_CreatureViewportStatePc34* state, int16_t x, int16_t y,
                            uint8_t facing);
-void m11_cr_update_visibility(M11_CR_State* state);
-void m11_cr_animate_frame(M11_CR_State* state);
-void m11_cr_damage(M11_CR_State* state, uint16_t index, int16_t damage);
-bool m11_cr_is_alive(const M11_CR_State* state, uint16_t index);
-uint8_t m11_cr_get_visible_count(const M11_CR_State* state);
+void DM1_V1_CreatureViewport_UpdateVisibilityPc34Compat(DM1_V1_CreatureViewportStatePc34* state);
+void DM1_V1_CreatureViewport_AnimateFramePc34Compat(DM1_V1_CreatureViewportStatePc34* state);
+void DM1_V1_CreatureViewport_DamagePc34Compat(DM1_V1_CreatureViewportStatePc34* state, uint16_t index, int16_t damage);
+bool DM1_V1_CreatureViewport_IsAlivePc34Compat(const DM1_V1_CreatureViewportStatePc34* state, uint16_t index);
+uint8_t DM1_V1_CreatureViewport_GetVisibleCountPc34Compat(const DM1_V1_CreatureViewportStatePc34* state);
+
+typedef DM1_V1_CreatureViewportTypePc34 M11_CR_CreatureType;
+typedef DM1_V1_CreatureViewportSpriteInfoPc34 M11_CR_SpriteInfo;
+typedef DM1_V1_CreatureViewportCreaturePc34 M11_CR_Creature;
+typedef DM1_V1_CreatureViewportEntryPc34 M11_CR_ViewportEntry;
+typedef DM1_V1_CreatureViewportStatePc34 M11_CR_State;
+
+#define DM1_CR_MAX_CREATURES DM1_V1_CREATURE_VIEWPORT_MAX_CREATURES_PC34
+#define DM1_CR_MAX_VISIBLE DM1_V1_CREATURE_VIEWPORT_MAX_VISIBLE_PC34
+#define DM1_CR_ANIM_FRAMES DM1_V1_CREATURE_VIEWPORT_ANIM_FRAMES_PC34
+#define DM1_CR_FLASH_DURATION DM1_V1_CREATURE_VIEWPORT_FLASH_DURATION_PC34
+
+#define M11_CR_MUMMY DM1_V1_CREATURE_VIEWPORT_MUMMY_PC34
+#define M11_CR_SCREAMER DM1_V1_CREATURE_VIEWPORT_SCREAMER_PC34
+#define M11_CR_ROCK_PILE DM1_V1_CREATURE_VIEWPORT_ROCK_PILE_PC34
+#define M11_CR_GIANT_SCORPION DM1_V1_CREATURE_VIEWPORT_GIANT_SCORPION_PC34
+#define M11_CR_TROLIN DM1_V1_CREATURE_VIEWPORT_TROLIN_PC34
+#define M11_CR_MAGENTA_WORM DM1_V1_CREATURE_VIEWPORT_MAGENTA_WORM_PC34
+#define M11_CR_PAIN_RAT DM1_V1_CREATURE_VIEWPORT_PAIN_RAT_PC34
+#define M11_CR_SKELETON DM1_V1_CREATURE_VIEWPORT_SKELETON_PC34
+#define M11_CR_GIANT_WASP DM1_V1_CREATURE_VIEWPORT_GIANT_WASP_PC34
+#define M11_CR_STONE_GOLEM DM1_V1_CREATURE_VIEWPORT_STONE_GOLEM_PC34
+#define M11_CR_GHOST DM1_V1_CREATURE_VIEWPORT_GHOST_PC34
+#define M11_CR_COUATL DM1_V1_CREATURE_VIEWPORT_COUATL_PC34
+#define M11_CR_WATER_ELEMENTAL DM1_V1_CREATURE_VIEWPORT_WATER_ELEMENTAL_PC34
+#define M11_CR_OITU DM1_V1_CREATURE_VIEWPORT_OITU_PC34
+#define M11_CR_DEMON DM1_V1_CREATURE_VIEWPORT_DEMON_PC34
+#define M11_CR_LORD_CHAOS DM1_V1_CREATURE_VIEWPORT_LORD_CHAOS_PC34
+#define M11_CR_RED_DRAGON DM1_V1_CREATURE_VIEWPORT_RED_DRAGON_PC34
+#define M11_CR_KNIGHT DM1_V1_CREATURE_VIEWPORT_KNIGHT_PC34
+#define M11_CR_SWAMP_SLIME DM1_V1_CREATURE_VIEWPORT_SWAMP_SLIME_PC34
+#define M11_CR_ANIMATED_ARMOR DM1_V1_CREATURE_VIEWPORT_ANIMATED_ARMOR_PC34
+#define M11_CR_BLACK_FLAME DM1_V1_CREATURE_VIEWPORT_BLACK_FLAME_PC34
+#define M11_CR_TYPE_COUNT DM1_V1_CREATURE_VIEWPORT_TYPE_COUNT_PC34
+
+#define m11_cr_init DM1_V1_CreatureViewport_InitPc34Compat
+#define m11_cr_setup_sprite_table DM1_V1_CreatureViewport_SetupSpriteTablePc34Compat
+#define m11_cr_add_creature DM1_V1_CreatureViewport_AddCreaturePc34Compat
+#define m11_cr_set_party_pos DM1_V1_CreatureViewport_SetPartyPosPc34Compat
+#define m11_cr_update_visibility DM1_V1_CreatureViewport_UpdateVisibilityPc34Compat
+#define m11_cr_animate_frame DM1_V1_CreatureViewport_AnimateFramePc34Compat
+#define m11_cr_damage DM1_V1_CreatureViewport_DamagePc34Compat
+#define m11_cr_is_alive DM1_V1_CreatureViewport_IsAlivePc34Compat
+#define m11_cr_get_visible_count DM1_V1_CreatureViewport_GetVisibleCountPc34Compat
 
 #ifdef __cplusplus
 }
