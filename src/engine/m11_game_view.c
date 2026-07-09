@@ -10184,6 +10184,53 @@ static void m11_nexus_runtime_startup_snapshot(
     snapshot->runtime.champion_frame = state->nexusState.champion_select_frame;
 }
 
+static int m11_nexus_runtime_receipt_from_state(
+    const M11_GameViewState *state,
+    Nexus_V1_LauncherRuntimeReceipt *receipt)
+{
+    Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
+    Nexus_V1_StartupHostFacts host_facts;
+
+    if (!receipt) {
+        return 0;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    if (!state || !state->nexusEngine) {
+        return 0;
+    }
+    m11_nexus_runtime_startup_snapshot(state, &snapshot);
+    receipt->engine = state->nexusEngine;
+    receipt->title_screen =
+        (Nexus_TitleScreen*)state->nexusTitleScreen;
+    receipt->title_screen_keep = 1;
+    receipt->level_loaded = state->nexusState.level_loaded;
+    receipt->party_x = state->nexusState.party_x;
+    receipt->party_y = state->nexusState.party_y;
+    receipt->party_dir = state->nexusState.party_dir;
+    receipt->tick_count = state->nexusState.tick_count;
+    receipt->title_loaded = state->nexusState.title_loaded;
+    snprintf(receipt->title, sizeof(receipt->title), "%s", state->title);
+    snprintf(receipt->source_id,
+             sizeof(receipt->source_id),
+             "%s",
+             state->sourceId);
+    snprintf(receipt->dungeon_path,
+             sizeof(receipt->dungeon_path),
+             "%s",
+             state->dungeonPath);
+    (void)nexus_v1_launcher_startup_assets_receipt_from_snapshot(
+        &snapshot,
+        &receipt->startup_assets);
+    memset(&host_facts, 0, sizeof(host_facts));
+    if (nexus_v1_launcher_startup_host_facts_from_snapshot(&snapshot,
+                                                           &host_facts)) {
+        (void)nexus_v1_startup_launch_from_host_facts_with_receipt(
+            &host_facts,
+            &receipt->startup_receipt);
+    }
+    return 1;
+}
+
 static void m11_nexus_apply_runtime_handoff_receipt(
     M11_GameViewState *state,
     const Nexus_V1_StartupRuntimeHandoffReceipt *receipt)
@@ -11095,6 +11142,129 @@ int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state) {
         state->dm1StartupIntroBypassed);
 }
 
+static int m11_dm1_hoc_full_graphics_probe_receipt(
+    const M11_GameViewState* state,
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_apply,
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_consumer)
+{
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 post_plan;
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
+    DM1_V1_StartupHoCFullStartProductionReceipt_PC34 production;
+    DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 artifact;
+    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 capture_facts;
+    DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 proof;
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 apply;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34 suppression_facts;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 suppression;
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 consumer;
+
+    if (out_apply) {
+        memset(out_apply, 0, sizeof(*out_apply));
+    }
+    if (out_consumer) {
+        memset(out_consumer, 0, sizeof(*out_consumer));
+    }
+    if (!state || strcmp(state->sourceId, "dm1") != 0 ||
+        !state->world.dungeon || !state->world.dungeon->maps ||
+        state->world.dungeon->header.mapCount <= 0) {
+        return 0;
+    }
+
+    memset(&post_plan, 0, sizeof(post_plan));
+    memset(&outcome, 0, sizeof(outcome));
+    memset(&production, 0, sizeof(production));
+    memset(&artifact, 0, sizeof(artifact));
+    memset(&capture_facts, 0, sizeof(capture_facts));
+    memset(&proof, 0, sizeof(proof));
+    memset(&apply, 0, sizeof(apply));
+    memset(&suppression_facts, 0, sizeof(suppression_facts));
+    memset(&suppression, 0, sizeof(suppression));
+    memset(&consumer, 0, sizeof(consumer));
+
+    if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &post_plan) ||
+        !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_ENTER,
+            &outcome)) {
+        return 0;
+    }
+    outcome.title_played = 1;
+    if (!dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+            "dm1",
+            &post_plan,
+            &outcome,
+            &production) ||
+        !dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
+            &production,
+            &artifact)) {
+        return 0;
+    }
+
+    capture_facts.captured_after_first_frame_render = 1;
+    capture_facts.captured_map_index = artifact.expected_map_index;
+    capture_facts.captured_map_width = artifact.expected_map_width;
+    capture_facts.captured_map_height = artifact.expected_map_height;
+    capture_facts.captured_entrance_door_frame_index =
+        artifact.expected_entrance_door_frame_index;
+    capture_facts.captured_hall_overlay_kind =
+        artifact.expected_hall_overlay_kind;
+    capture_facts.captured_hoc_render_command_count =
+        artifact.expected_hoc_render_command_count;
+    capture_facts.saw_title_surface = 0;
+    capture_facts.saw_closed_door_frame = 0;
+    capture_facts.saw_host_fallback_visuals = 0;
+    capture_facts.saw_opened_entrance_frame =
+        artifact.opened_entrance_frame_required;
+    capture_facts.saw_hall_mirror_overlay =
+        artifact.hall_mirror_overlay_required;
+    capture_facts.cleared_champion_panel =
+        artifact.clear_champion_panel_required;
+    capture_facts.blocked_enter_until_champion_selected =
+        artifact.block_enter_until_champion_selected;
+
+    if (!dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
+            &artifact,
+            &capture_facts,
+            &proof) ||
+        !dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
+            &artifact,
+            &proof,
+            &apply)) {
+        return 0;
+    }
+
+    suppression_facts.observed_hall_mirror_overlay =
+        apply.apply_hall_mirror_overlay;
+    suppression_facts.observed_false_floor_item_payload_count = 0;
+    suppression_facts.observed_projectile_payload_count = 0;
+    suppression_facts.observed_spell_effect_payload_count = 0;
+    suppression_facts.observed_mirror_payload_as_thing_count = 0;
+    suppression_facts.observed_host_fallback_visuals = 0;
+    suppression_facts.observed_title_surface = 0;
+    suppression_facts.observed_closed_door_frame = 0;
+    suppression_facts.observed_enter_blocked_until_champion_selected =
+        apply.block_enter_until_champion_selected;
+    suppression_facts.observed_hoc_render_command_count =
+        apply.render_command_count;
+    if (!dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+            &apply,
+            &suppression_facts,
+            &suppression) ||
+        !dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
+            &apply,
+            &suppression,
+            &consumer)) {
+        return 0;
+    }
+
+    if (out_apply) {
+        *out_apply = apply;
+    }
+    if (out_consumer) {
+        *out_consumer = consumer;
+    }
+    return apply.ready && consumer.ready;
+}
+
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                                      M11_BootProbeReceipt* out) {
     if (!out) {
@@ -11279,8 +11449,13 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     if (strcmp(state->sourceId, "dm1") == 0) {
         DM1_V1_StartupBootProbeFacts_PC34 facts;
         DM1_V1_StartupBootProbeReceipt_PC34 receipt;
+        DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 hoc_apply;
+        DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
+            hoc_consumer;
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
+        memset(&hoc_apply, 0, sizeof(hoc_apply));
+        memset(&hoc_consumer, 0, sizeof(hoc_consumer));
         facts.source_id = state->sourceId;
         facts.level_loaded = out->levelLoaded;
         facts.intro_bypassed = state->dm1StartupIntroBypassed;
@@ -11320,6 +11495,31 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->championCount = receipt.champion_count;
             out->runtimeTick = receipt.runtime_tick;
             out->dm1WorldTick = receipt.world_tick;
+        }
+        if (m11_dm1_hoc_full_graphics_probe_receipt(
+                state,
+                &hoc_apply,
+                &hoc_consumer)) {
+            out->dm1HoCFullGraphicsReady = 1;
+            out->dm1HoCHostRenderPlanReady =
+                hoc_apply.consumed_capture_artifact &&
+                hoc_apply.consumed_capture_proof;
+            out->dm1HoCCaptureProofPassed =
+                hoc_apply.ready && hoc_apply.require_proof_passed;
+            out->dm1HoCRuntimeApplyReady = hoc_apply.ready;
+            out->dm1HoCProductionConsumerReady = hoc_consumer.ready;
+            out->dm1HoCNoHostFallbackVisuals =
+                hoc_consumer.suppress_host_fallback_visuals;
+            out->dm1HoCOpenedEntranceFrame =
+                hoc_consumer.draw_opened_entrance_frame;
+            out->dm1HoCHallMirrorOverlay =
+                hoc_consumer.render_hall_mirror_overlay;
+            out->dm1HoCBlockedEnterUntilChampion =
+                hoc_consumer.block_enter_until_champion_selected;
+            out->dm1HoCMapWidth = hoc_consumer.map_width;
+            out->dm1HoCMapHeight = hoc_consumer.map_height;
+            out->dm1HoCRenderCommandCount =
+                hoc_consumer.render_command_count;
         }
     } else {
         snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
@@ -13852,9 +14052,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
             Nexus_V1_StartupTitleExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
+            Nexus_V1_StartupHostFacts facts;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
-            if (!nexus_v1_launcher_startup_execute_title_firestaff_input_from_snapshot(
+            memset(&facts, 0, sizeof(facts));
+            if (!nexus_v1_launcher_startup_host_facts_from_snapshot(
                     &snapshot,
+                    &facts) ||
+                !nexus_v1_startup_execute_title_firestaff_input_from_host_facts_with_receipt(
+                    &facts,
                     (int)input,
                     &execution,
                     &receipt)) {
@@ -34810,6 +35015,38 @@ static void m11_draw_nexus_startup_commands(
                                                          &executor);
 }
 
+static int m11_draw_nexus_title_from_real_assets(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    const Nexus_TitleScreen *title;
+    Nexus_Framebuffer nexusFb;
+    int y;
+    int copyW;
+    int copyH;
+
+    if (!state || !framebuffer || !state->nexusState.title_active) {
+        return 0;
+    }
+    title = (const Nexus_TitleScreen*)state->nexusTitleScreen;
+    if (!title || !title->loaded || !title->pixels ||
+        title->width <= 0 || title->height <= 0) {
+        return 0;
+    }
+    nexus_fb_init(&nexusFb);
+    nexus_render_title(title, &nexusFb, state->nexusState.title_frame);
+    copyW = framebufferWidth < NEXUS_FB_W ? framebufferWidth : NEXUS_FB_W;
+    copyH = framebufferHeight < NEXUS_FB_H ? framebufferHeight : NEXUS_FB_H;
+    for (y = 0; y < copyH; ++y) {
+        memcpy(&framebuffer[y * framebufferWidth],
+               &nexusFb.color_buffer[y * NEXUS_FB_W],
+               (size_t)copyW);
+    }
+    return 1;
+}
+
 static void m11_draw_utility_panel(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -38328,13 +38565,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             (state->nexusState.champion_select_active &&
              state->nexusEngine)) {
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
+            Nexus_V1_LauncherRuntimeReceipt runtime_receipt;
             Nexus_V1_StartupFullStartPackageReceipt package_receipt;
             Nexus_V1_StartupDrawCommand commands[80];
             int command_count;
             directDraw = 1;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
+            memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+            (void)m11_nexus_runtime_receipt_from_state(state,
+                                                       &runtime_receipt);
             if (nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
-                    NULL,
+                    &runtime_receipt,
                     &snapshot,
                     M12_MENU_INPUT_NONE,
                     m11_nexus_startup_load_save_callback,
@@ -38352,6 +38593,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                             framebufferHeight,
                                             commands,
                                             command_count);
+            if (command_count <= 0 && state->nexusState.title_active) {
+                (void)m11_draw_nexus_title_from_real_assets(state,
+                                                            framebuffer,
+                                                            framebufferWidth,
+                                                            framebufferHeight);
+            }
         } else if (state->nexusEngine) {
             Nexus_Viewport vp;
             nexus_viewport_init(&vp);

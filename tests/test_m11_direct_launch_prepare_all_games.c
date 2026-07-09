@@ -340,6 +340,21 @@ static void run_real_data_handoff_if_available(void) {
             expect_true(receipt.startupTitleFrame == receipt.startupTitleFrameMax &&
                             receipt.startupTitleFrameMax == 53,
                         "DM1 receipt exposes the source TITLE frame-bank completion boundary");
+            expect_true(receipt.dm1HoCFullGraphicsReady &&
+                            receipt.dm1HoCHostRenderPlanReady &&
+                            receipt.dm1HoCCaptureProofPassed &&
+                            receipt.dm1HoCRuntimeApplyReady &&
+                            receipt.dm1HoCProductionConsumerReady,
+                        "DM1 receipt consumes HoC full-graphics host render and capture proof");
+            expect_true(receipt.dm1HoCNoHostFallbackVisuals &&
+                            receipt.dm1HoCOpenedEntranceFrame &&
+                            receipt.dm1HoCHallMirrorOverlay &&
+                            receipt.dm1HoCBlockedEnterUntilChampion &&
+                            receipt.dm1HoCRenderCommandCount == 3,
+                        "DM1 HoC proof owns opened entrance, mirror overlay, input block, and no fallback visuals");
+            expect_true(receipt.dm1HoCMapWidth > 0 &&
+                            receipt.dm1HoCMapHeight > 0,
+                        "DM1 HoC proof records real loaded map dimensions");
         } else if (strcmp(kCases[i].gameId, "csb") == 0) {
             expect_true(receipt.startupAnimationActive == 1 &&
                             receipt.startupTitleFrame == 0 &&

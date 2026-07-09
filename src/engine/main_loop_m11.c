@@ -2153,7 +2153,7 @@ static void m11_phase_a_print_boot_probe_receipt(
         return;
     }
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -2179,7 +2179,19 @@ static void m11_phase_a_print_boot_probe_receipt(
             receipt.runtimeTick,
             (unsigned int)receipt.dm1WorldTick,
             receipt.startedFromLauncher,
-            receipt.dm1StartupIntroBypassed);
+            receipt.dm1StartupIntroBypassed,
+            receipt.dm1HoCFullGraphicsReady,
+            receipt.dm1HoCHostRenderPlanReady,
+            receipt.dm1HoCCaptureProofPassed,
+            receipt.dm1HoCRuntimeApplyReady,
+            receipt.dm1HoCProductionConsumerReady,
+            receipt.dm1HoCNoHostFallbackVisuals,
+            receipt.dm1HoCOpenedEntranceFrame,
+            receipt.dm1HoCHallMirrorOverlay,
+            receipt.dm1HoCBlockedEnterUntilChampion,
+            receipt.dm1HoCMapWidth,
+            receipt.dm1HoCMapHeight,
+            receipt.dm1HoCRenderCommandCount);
 }
 
 static int m11_boot_probe_expected_phase_is_runtime(const char *phase) {

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 M11 startup host-render integration sweep: DM1 boot probe now exposes HoC full-graphics host-render/capture readiness from DM1 receipts, and Nexus M11 startup now consumes real TITLE.CG host facts/draw assets so title reveal and accept transition work without blank/fallback frames. Verification: `firestaff_m11_phase_a_probe`, DM1 startup/HoC tests, `test_csb_v1_boot_runtime_handoff`, `test_dm2_v1_m11_startup_profile_gate`, `test_theron_v1_startup_save_resume_pc34`, `test_nexus_v1_m11_launcher_handoff_boundary`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 projectile F0215 delete/materialize ownership: DM1 throw/shoot receipts now carry projectile-delete, Projectile.Next clear, potion-consume, and optional square-chain materialization decisions; M10 consumes that receipt instead of owning the delete/apply branch locally. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB host ownership startup receipt: boot now packages real-asset visual capture, host-view draw, and startup input dispatch into one receipt for title/PRESENTS, closed-door HUD/menu, utility HUD/menu, and door opening; M11 startup draw consumes it without raw render-plan fallback. Verification: `test_csb_v1_boot_runtime_handoff`, `test_m11_overlay_command_queue_block`, and `git diff --check` passed.
