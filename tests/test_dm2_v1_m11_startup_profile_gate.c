@@ -1096,6 +1096,7 @@ int main(void) {
     DM2_V1_BootStartupHostViewReceipt host_view_receipt;
     DM2_V1_BootStartupPackagedFullStartReceipt full_start_package;
     DM2_V1_BootStartupPackagedConsumerReceipt consumer_receipt;
+    DM2_V1_BootStartupRealVisualCaptureReceipt real_visual_capture;
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
@@ -1369,6 +1370,37 @@ int main(void) {
                             full_start_package.command_count &&
                         consumer_receipt.startup_hud_runtime_ready == 1,
                     "DM2 packaged consumer receipt carries real GDAT startup proof");
+        expect_true(dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+                        profile,
+                        startup_snapshot.startup_menu_active,
+                        startup_snapshot.startup_save_root,
+                        startup_snapshot.resume_available,
+                        startup_snapshot.slot_mask,
+                        startup_snapshot.selected_row,
+                        13,
+                        &real_visual_capture) &&
+                        real_visual_capture.valid &&
+                        real_visual_capture.profile_ready == 1 &&
+                        real_visual_capture.graphics_dat_ready == 1 &&
+                        real_visual_capture.full_title_frame_capture_ready == 1 &&
+                        real_visual_capture.title_gdat_asset_w == 320 &&
+                        real_visual_capture.title_gdat_asset_h == 200 &&
+                        real_visual_capture.title_pixel_count == 64000u &&
+                        real_visual_capture.title_pixel_hash != 0u &&
+                        real_visual_capture.menu_title_composite_capture_ready == 1 &&
+                        real_visual_capture.menu_gdat_command_count == 1 &&
+                        real_visual_capture.menu_rect_command_count >= 2 &&
+                        real_visual_capture.menu_text_command_count >=
+                            real_visual_capture.menu_row_count &&
+                        real_visual_capture.hud_handoff_capture_ready == 1 &&
+                        real_visual_capture.title_menu_hud_visual_proof_ready == 1 &&
+                        real_visual_capture.suppress_game_hud == 1 &&
+                        real_visual_capture.present_first_hud_frame == 0 &&
+                        real_visual_capture.no_fallback_title_blit == 1 &&
+                        real_visual_capture.exact_title_timing_ready == 1 &&
+                        real_visual_capture.title_frame == 2 &&
+                        real_visual_capture.packaged_visual_capture_hash != 0u,
+                    "DM2 real visual capture receipt proves full GDAT title/menu/HUD startup frame");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,

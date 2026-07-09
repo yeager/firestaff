@@ -2801,6 +2801,24 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->real_gdat_title_asset_consumed &&
         out_receipt->title_pixel_hash != 0u &&
         out_receipt->title_pixel_count == 64000u;
+    out_receipt->full_title_frame_capture_ready =
+        out_receipt->title_capture_ready &&
+        out_receipt->title_gdat_asset_w == 320 &&
+        out_receipt->title_gdat_asset_h == 200 &&
+        out_receipt->title_gdat_asset_stride >= 320;
+    out_receipt->menu_title_composite_capture_ready =
+        out_receipt->full_title_frame_capture_ready &&
+        out_receipt->menu_capture_ready &&
+        out_receipt->menu_gdat_command_count == 1 &&
+        out_receipt->menu_rect_command_count >= 2 &&
+        out_receipt->menu_text_command_count >= out_receipt->menu_row_count &&
+        out_receipt->selected_highlight_count >= 1;
+    out_receipt->title_menu_hud_visual_proof_ready =
+        out_receipt->menu_title_composite_capture_ready &&
+        out_receipt->hud_handoff_capture_ready &&
+        out_receipt->suppress_game_hud &&
+        !out_receipt->present_first_hud_frame &&
+        out_receipt->no_fallback_title_blit;
 
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, package.packaged_full_start_hash);
@@ -2827,15 +2845,10 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->graphics_dat_ready &&
         out_receipt->packaged_full_start_valid &&
         out_receipt->render_ownership_valid &&
-        out_receipt->title_capture_ready &&
-        out_receipt->menu_capture_ready &&
-        out_receipt->menu_gdat_command_count == 1 &&
-        out_receipt->menu_rect_command_count >= 2 &&
-        out_receipt->menu_text_command_count >= out_receipt->menu_row_count &&
-        out_receipt->hud_handoff_capture_ready &&
-        out_receipt->suppress_game_hud &&
+        out_receipt->full_title_frame_capture_ready &&
+        out_receipt->menu_title_composite_capture_ready &&
+        out_receipt->title_menu_hud_visual_proof_ready &&
         out_receipt->exact_title_timing_ready &&
-        out_receipt->no_fallback_title_blit &&
         out_receipt->packaged_visual_capture_hash != 0u;
     return out_receipt->valid;
 }

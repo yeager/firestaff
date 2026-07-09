@@ -486,6 +486,7 @@ typedef struct {
     int real_gdat_title_asset_required;
     int real_gdat_title_asset_consumed;
     int title_capture_ready;
+    int full_title_frame_capture_ready;
     int title_gdat_category;
     int title_gdat_index;
     int title_gdat_field;
@@ -495,6 +496,7 @@ typedef struct {
     uint32_t title_pixel_hash;
     uint32_t title_pixel_count;
     int menu_capture_ready;
+    int menu_title_composite_capture_ready;
     int menu_command_count;
     int menu_gdat_command_count;
     int menu_rect_command_count;
@@ -502,6 +504,7 @@ typedef struct {
     int menu_row_count;
     int selected_highlight_count;
     int hud_handoff_capture_ready;
+    int title_menu_hud_visual_proof_ready;
     int suppress_game_hud;
     int present_first_hud_frame;
     int exact_title_timing_ready;
