@@ -28,7 +28,7 @@
  * and slot-box constants referenced by the source chain.
  */
 
-static const Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat
+static const DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat
     s_evidence = {
         1,
         "COMMAND.C F0359_COMMAND_ProcessClick_CPSC:1985-1990 M568/C040 dispatch",
@@ -47,7 +47,7 @@ static const Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat
     };
 
 static int key_command_for_turn(
-    Dm1V1MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn)
+    DM1_V1_MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn)
 {
     return turn == DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_TURN_RIGHT_PC34
                ? DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_COMMAND_TURN_RIGHT_PC34
@@ -64,7 +64,7 @@ static int rotated_direction(int direction, int command)
 }
 
 static void draw_all_champion_states(
-    const Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
     unsigned char outRedraw
         [DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_REDRAW_BYTES_PC34])
 {
@@ -88,7 +88,7 @@ static void draw_all_champion_states(
 }
 
 static void simulate_f0361_key_queue_write(
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
     int command)
 {
     state->queueLocked = 1;
@@ -97,7 +97,7 @@ static void simulate_f0361_key_queue_write(
 }
 
 static void defer_pending_click_during_f0380(
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
     int pendingClickCommand)
 {
     state->pendingClickCommand = pendingClickCommand;
@@ -115,7 +115,7 @@ static void defer_pending_click_during_f0380(
 }
 
 static void dispatch_inventory_click_if_not_deferred(
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
     int command)
 {
     if (command ==
@@ -137,7 +137,7 @@ static void dispatch_inventory_click_if_not_deferred(
 }
 
 static void process_f0380_turn_with_optional_race(
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat *state,
     int command,
     int pendingClickCommand,
     unsigned char outRedraw
@@ -161,7 +161,7 @@ static void process_f0380_turn_with_optional_race(
 }
 
 void dm1_v1_mirror_candidate_keyrot_combo_invclick_init_pc34_compat(
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat *state)
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -179,13 +179,13 @@ void dm1_v1_mirror_candidate_keyrot_combo_invclick_init_pc34_compat(
 }
 
 int dm1_v1_mirror_candidate_keyrot_combo_invclick_run_case_pc34_compat(
-    const Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat *initial,
-    Dm1V1MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
+    const DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat *initial,
+    DM1_V1_MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
     int pendingClickCommand,
-    Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat noClick;
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat withClick;
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat noClick;
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat withClick;
     int command;
 
     if (!initial || !outResult || !initial->contractOnly) {
@@ -256,10 +256,10 @@ int dm1_v1_mirror_candidate_keyrot_combo_invclick_run_case_pc34_compat(
 }
 
 int dm1_v1_mirror_candidate_keyrot_combo_invclick_run_pc34_compat(
-    Dm1V1MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
-    Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
+    DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat state;
 
     dm1_v1_mirror_candidate_keyrot_combo_invclick_init_pc34_compat(&state);
     return dm1_v1_mirror_candidate_keyrot_combo_invclick_run_case_pc34_compat(
@@ -269,7 +269,7 @@ int dm1_v1_mirror_candidate_keyrot_combo_invclick_run_pc34_compat(
         outResult);
 }
 
-const Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *
+const DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *
 dm1_v1_mirror_candidate_keyrot_combo_invclick_evidence_pc34_compat(void)
 {
     return &s_evidence;

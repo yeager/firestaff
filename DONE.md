@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 mirror-candidate click/rotation ownership names: click-cancel, C159 click rotation combo, keyboard rotation combo, keyrot inventory-click combo, and inventory-click-during-rotation APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: click-cancel, C159 combo, keyboard rotation combo, keyrot inventory-click combo, inventory-click-during-rotation, double-open-close, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 mirror-candidate reincarnate/race ownership names: reincarnate rearm, resurrect double-candidate race, and no-pending-resurrect APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: reincarnate rearm, resurrect double-candidate race, no-pending-resurrect, double-open-close, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 mirror-candidate resurrect ownership names: resurrect/reincarnate skills, full C30 chain, resurrect rearm, and resurrect-reselect inventory pickup APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: resurrect/reincarnate skills, full C30 chain, resurrect rearm, reincarnate rearm, resurrect-reselect inventory pickup, double-open-close, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

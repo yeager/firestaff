@@ -18,7 +18,7 @@ static int gPasses;
 
 static void test_source_lock_evidence(void)
 {
-    const Dm1V1MirrorCandidateKeyboardRotationComboEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateKeyboardRotationComboEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateKeyboardRotationCombo_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,
@@ -59,9 +59,9 @@ static void test_source_lock_evidence(void)
 
 static void test_rotation_status_box_combo_only_rotates(void)
 {
-    Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat state;
-    Dm1V1MirrorCandidateKeyboardRotationComboResultPc34Compat result;
-    const Dm1V1MirrorCandidateKeyboardRotationComboEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyboardRotationComboResultPc34Compat result;
+    const DM1_V1_MirrorCandidateKeyboardRotationComboEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateKeyboardRotationCombo_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidateKeyboardRotationCombo_InitPc34Compat(&state);
@@ -89,9 +89,9 @@ static void test_rotation_status_box_combo_only_rotates(void)
 
 static void test_rotation_spell_rune_combo_only_rotates(void)
 {
-    Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat state;
-    Dm1V1MirrorCandidateKeyboardRotationComboResultPc34Compat result;
-    const Dm1V1MirrorCandidateKeyboardRotationComboEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyboardRotationComboResultPc34Compat result;
+    const DM1_V1_MirrorCandidateKeyboardRotationComboEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateKeyboardRotationCombo_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidateKeyboardRotationCombo_InitPc34Compat(&state);
@@ -123,9 +123,9 @@ static void test_rotation_spell_rune_combo_only_rotates(void)
 
 static void test_rotation_save_combo_only_rotates(void)
 {
-    Dm1V1MirrorCandidateKeyboardRotationComboStatePc34Compat state;
-    Dm1V1MirrorCandidateKeyboardRotationComboResultPc34Compat result;
-    const Dm1V1MirrorCandidateKeyboardRotationComboEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateKeyboardRotationComboStatePc34Compat state;
+    DM1_V1_MirrorCandidateKeyboardRotationComboResultPc34Compat result;
+    const DM1_V1_MirrorCandidateKeyboardRotationComboEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateKeyboardRotationCombo_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidateKeyboardRotationCombo_InitPc34Compat(&state);

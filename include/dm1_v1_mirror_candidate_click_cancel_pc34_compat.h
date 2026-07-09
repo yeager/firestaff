@@ -14,14 +14,14 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_CLICK_CANCEL_SOURCE_PORTRAIT_SENSOR_PC34_COMPAT 127
 #define DM1_V1_MIRROR_CANDIDATE_CLICK_CANCEL_SOURCE_D1C_WALL_PC34_COMPAT 587
 
-typedef struct Dm1V1MirrorCandidateClickCancelChampionPc34Compat {
+typedef struct DM1_V1_MirrorCandidateClickCancelChampionPc34Compat {
     unsigned int championOrdinal;
     int currentHealth;
     int portraitOrdinal;
     int present;
-} Dm1V1MirrorCandidateClickCancelChampionPc34Compat;
+} DM1_V1_MirrorCandidateClickCancelChampionPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateClickCancelStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateClickCancelStatePc34Compat {
     int active;
     int partyChampionCount;
     int preC040PartyChampionCount;
@@ -40,11 +40,11 @@ typedef struct Dm1V1MirrorCandidateClickCancelStatePc34Compat {
     int c040PanelOpen;
     int c040PanelPixelsDrawn;
     unsigned int c040AbsencePixelHash;
-    Dm1V1MirrorCandidateClickCancelChampionPc34Compat
+    DM1_V1_MirrorCandidateClickCancelChampionPc34Compat
         party[DM1_V1_MIRROR_CANDIDATE_CLICK_CANCEL_CHAMPION_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateClickCancelStatePc34Compat;
+} DM1_V1_MirrorCandidateClickCancelStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateClickCancelResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateClickCancelResultPc34Compat {
     int command;
     int consumed;
     int ignoredFrontCellOnly;
@@ -89,9 +89,9 @@ typedef struct Dm1V1MirrorCandidateClickCancelResultPc34Compat {
     int leaderHandUnchanged;
     int championIdentityUnchanged;
     int partyCountUnchanged;
-} Dm1V1MirrorCandidateClickCancelResultPc34Compat;
+} DM1_V1_MirrorCandidateClickCancelResultPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateClickCancelSpecPc34Compat {
+typedef struct DM1_V1_MirrorCandidateClickCancelSpecTypePc34Compat {
     const char *name;
     int dungeonViewCommand;
     int c040PanelGraphic;
@@ -100,23 +100,32 @@ typedef struct Dm1V1MirrorCandidateClickCancelSpecPc34Compat {
     int d1cViewWall;
     const char *contractMarker;
     const char *sourceEvidence;
-} Dm1V1MirrorCandidateClickCancelSpecPc34Compat;
+} DM1_V1_MirrorCandidateClickCancelSpecTypePc34Compat;
 
-extern const Dm1V1MirrorCandidateClickCancelSpecPc34Compat
+typedef DM1_V1_MirrorCandidateClickCancelChampionPc34Compat
+    Dm1V1MirrorCandidateClickCancelChampionPc34Compat;
+typedef DM1_V1_MirrorCandidateClickCancelStatePc34Compat
+    Dm1V1MirrorCandidateClickCancelStatePc34Compat;
+typedef DM1_V1_MirrorCandidateClickCancelResultPc34Compat
+    Dm1V1MirrorCandidateClickCancelResultPc34Compat;
+typedef DM1_V1_MirrorCandidateClickCancelSpecTypePc34Compat
+    Dm1V1MirrorCandidateClickCancelSpecPc34Compat;
+
+extern const DM1_V1_MirrorCandidateClickCancelSpecTypePc34Compat
     DM1_V1_MirrorCandidateClickCancelSpecPc34Compat;
 
 void dm1_v1_mirror_candidate_click_cancel_init_pc34(
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat *state);
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat *state);
 
 int dm1_v1_mirror_candidate_click_cancel_select_champion_pc34(
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat *state,
     unsigned int championOrdinal);
 
 int dm1_v1_mirror_candidate_click_cancel_front_cell_pc34(
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat *state,
-    Dm1V1MirrorCandidateClickCancelResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateClickCancelResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateClickCancelSpecPc34Compat *
+const DM1_V1_MirrorCandidateClickCancelSpecTypePc34Compat *
 dm1_v1_mirror_candidate_click_cancel_spec_pc34(void);
 
 const char *dm1_v1_mirror_candidate_click_cancel_source_evidence_pc34(void);

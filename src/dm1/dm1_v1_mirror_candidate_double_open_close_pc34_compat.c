@@ -105,8 +105,8 @@ static unsigned int event_candidate(
 
 static int route_click_cancel_deadzone(void)
 {
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat state;
-    Dm1V1MirrorCandidateClickCancelResultPc34Compat result;
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat state;
+    DM1_V1_MirrorCandidateClickCancelResultPc34Compat result;
 
     dm1_v1_mirror_candidate_click_cancel_init_pc34(&state);
     (void)dm1_v1_mirror_candidate_click_cancel_front_cell_pc34(

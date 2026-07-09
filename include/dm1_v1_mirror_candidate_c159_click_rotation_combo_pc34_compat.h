@@ -19,7 +19,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_C159_CLICK_ROTATION_COMBO_C175_PORTRAIT_PC34_COMPAT 175
 #define DM1_V1_MIRROR_CANDIDATE_C159_CLICK_ROTATION_COMBO_M568_PANEL_PC34_COMPAT 568
 
-typedef struct Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat {
     int contractOnly;
     const char *commandNameRowAnchor;
     const char *commandC040DispatchAnchor;
@@ -36,9 +36,9 @@ typedef struct Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat {
     const char *defsNameZoneAnchor;
     const char *defsPanelZoneAnchor;
     const char *contractScope;
-} Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat;
+} DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat {
     int contractOnly;
     unsigned int partyChampionCount;
     unsigned int candidateChampionOrdinal;
@@ -66,10 +66,10 @@ typedef struct Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat {
     int leaderHandPutCount;
     int leaderHandRemoveCount;
     int slotRouteCount;
-} Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat;
+} DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat {
-    const Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat {
+    const DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat *evidence;
     int panelCommand;
     int panelCommandValid;
     int c159Clicked;
@@ -108,20 +108,27 @@ typedef struct Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat {
     int panelDispatchCountAfter;
     int candidateClearCountBefore;
     int candidateClearCountAfter;
-} Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat;
+} DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat
+    Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat
+    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat;
+typedef DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat
+    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat;
 
 void DM1_V1_MirrorCandidateC159ClickRotationCombo_InitPc34Compat(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state);
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateC159ClickRotationCombo_PublishCandidatePc34Compat(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state);
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateC159ClickRotationCombo_RunPc34Compat(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state,
     int panelCommand,
-    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat *
+const DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat *
 DM1_V1_MirrorCandidateC159ClickRotationCombo_EvidencePc34Compat(void);
 
 #ifdef __cplusplus

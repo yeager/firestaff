@@ -31,7 +31,7 @@ static const char s_source_evidence[] =
     "F0298/F0302 lines 243-285 and 662-706 are the leader-hand put/remove/"
     "slot routes that this D1C cell no-op must not enter.";
 
-const Dm1V1MirrorCandidateClickCancelSpecPc34Compat
+const DM1_V1_MirrorCandidateClickCancelSpecTypePc34Compat
     DM1_V1_MirrorCandidateClickCancelSpecPc34Compat = {
         "dm1_v1_mirror_candidate_click_cancel_pc34_compat",
         kDungeonViewCommand,
@@ -51,7 +51,7 @@ static int valid_party_index(int index)
 }
 
 void dm1_v1_mirror_candidate_click_cancel_init_pc34(
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat *state)
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -83,7 +83,7 @@ void dm1_v1_mirror_candidate_click_cancel_init_pc34(
 }
 
 int dm1_v1_mirror_candidate_click_cancel_select_champion_pc34(
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat *state,
     unsigned int championOrdinal)
 {
     int i;
@@ -103,8 +103,8 @@ int dm1_v1_mirror_candidate_click_cancel_select_champion_pc34(
 }
 
 static void result_init(
-    const Dm1V1MirrorCandidateClickCancelStatePc34Compat *state,
-    Dm1V1MirrorCandidateClickCancelResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateClickCancelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateClickCancelResultPc34Compat *result)
 {
     if (!result) {
         return;
@@ -155,8 +155,8 @@ static void result_init(
 }
 
 static void result_finish(
-    const Dm1V1MirrorCandidateClickCancelStatePc34Compat *state,
-    Dm1V1MirrorCandidateClickCancelResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateClickCancelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateClickCancelResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -219,8 +219,8 @@ static void result_finish(
 }
 
 int dm1_v1_mirror_candidate_click_cancel_front_cell_pc34(
-    Dm1V1MirrorCandidateClickCancelStatePc34Compat *state,
-    Dm1V1MirrorCandidateClickCancelResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateClickCancelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateClickCancelResultPc34Compat *outResult)
 {
     result_init(state, outResult);
     if (!state || !outResult || !state->active || !state->frontD1cCellVisible) {
@@ -236,7 +236,7 @@ int dm1_v1_mirror_candidate_click_cancel_front_cell_pc34(
     return 0;
 }
 
-const Dm1V1MirrorCandidateClickCancelSpecPc34Compat *
+const DM1_V1_MirrorCandidateClickCancelSpecTypePc34Compat *
 dm1_v1_mirror_candidate_click_cancel_spec_pc34(void)
 {
     return &DM1_V1_MirrorCandidateClickCancelSpecPc34Compat;

@@ -9,12 +9,12 @@ extern "C" {
 
 #define DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_REDRAW_BYTES_PC34 16
 
-typedef enum Dm1V1MirrorCandidateKeyrotComboInvclickTurnPc34Compat {
+typedef enum DM1_V1_MirrorCandidateKeyrotComboInvclickTurnPc34Compat {
     DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_TURN_LEFT_PC34 = 1,
     DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_TURN_RIGHT_PC34 = 2
-} Dm1V1MirrorCandidateKeyrotComboInvclickTurnPc34Compat;
+} DM1_V1_MirrorCandidateKeyrotComboInvclickTurnPc34Compat;
 
-typedef enum Dm1V1MirrorCandidateKeyrotComboInvclickCommandPc34Compat {
+typedef enum DM1_V1_MirrorCandidateKeyrotComboInvclickCommandPc34Compat {
     DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_COMMAND_NONE_PC34 = 0,
     DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_COMMAND_TURN_LEFT_PC34 = 1,
     DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_COMMAND_TURN_RIGHT_PC34 = 2,
@@ -22,9 +22,9 @@ typedef enum Dm1V1MirrorCandidateKeyrotComboInvclickCommandPc34Compat {
     DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_COMMAND_STATUS_BOX_PC34 = 12,
     DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_COMMAND_SLOT_BOX_20_PC34 = 40,
     DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_COMMAND_PANEL_CANCEL_PC34 = 162
-} Dm1V1MirrorCandidateKeyrotComboInvclickCommandPc34Compat;
+} DM1_V1_MirrorCandidateKeyrotComboInvclickCommandPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat {
     int contractOnly;
     const char *f0359PanelDispatchAnchor;
     const char *f0361KeyboardQueueAnchor;
@@ -38,9 +38,9 @@ typedef struct Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat {
     const char *f0293RedrawAnchor;
     const char *defsAnchor;
     const char *nonDuplicateScope;
-} Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat;
+} DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat {
     int contractOnly;
     unsigned int g0299CandidateChampionOrdinal;
     unsigned int g0305PartyChampionCount;
@@ -63,10 +63,10 @@ typedef struct Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat {
     int f0293RedrawCount;
     unsigned int leaderHandThing;
     unsigned int inventorySlotThing;
-} Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat;
+} DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat {
-    const Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat {
+    const DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *evidence;
     unsigned int candidateBefore;
     unsigned int candidateAfter;
     int directionBefore;
@@ -86,22 +86,33 @@ typedef struct Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat {
         [DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_REDRAW_BYTES_PC34];
     unsigned char withClickRedraw
         [DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_REDRAW_BYTES_PC34];
-} Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat;
+} DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateKeyrotComboInvclickTurnPc34Compat
+    Dm1V1MirrorCandidateKeyrotComboInvclickTurnPc34Compat;
+typedef DM1_V1_MirrorCandidateKeyrotComboInvclickCommandPc34Compat
+    Dm1V1MirrorCandidateKeyrotComboInvclickCommandPc34Compat;
+typedef DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat
+    Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat
+    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat;
+typedef DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat
+    Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat;
 
 void dm1_v1_mirror_candidate_keyrot_combo_invclick_init_pc34_compat(
-    Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat *state);
+    DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat *state);
 
 int dm1_v1_mirror_candidate_keyrot_combo_invclick_run_pc34_compat(
-    Dm1V1MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
-    Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
+    DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat *outResult);
 
 int dm1_v1_mirror_candidate_keyrot_combo_invclick_run_case_pc34_compat(
-    const Dm1V1MirrorCandidateKeyrotComboInvclickStatePc34Compat *initial,
-    Dm1V1MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
+    const DM1_V1_MirrorCandidateKeyrotComboInvclickStatePc34Compat *initial,
+    DM1_V1_MirrorCandidateKeyrotComboInvclickTurnPc34Compat turn,
     int pendingClickCommand,
-    Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateKeyrotComboInvclickResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *
+const DM1_V1_MirrorCandidateKeyrotComboInvclickEvidencePc34Compat *
 dm1_v1_mirror_candidate_keyrot_combo_invclick_evidence_pc34_compat(void);
 
 #ifdef __cplusplus

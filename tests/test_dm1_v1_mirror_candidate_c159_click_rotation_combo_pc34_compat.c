@@ -17,7 +17,7 @@ static int gPasses;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateC159ClickRotationCombo_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,
@@ -97,10 +97,10 @@ static void test_source_lock_metadata(void)
 }
 
 static void publish_live_candidate(
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat *state)
 {
     int published;
-    const Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateC159ClickRotationCombo_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidateC159ClickRotationCombo_InitPc34Compat(state);
@@ -129,9 +129,9 @@ static void publish_live_candidate(
 
 static void test_c159_cancel_combo(void)
 {
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat state;
-    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat result;
-    const Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat state;
+    DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat result;
+    const DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateC159ClickRotationCombo_EvidencePc34Compat();
     int ok;
 
@@ -191,9 +191,9 @@ static void test_c159_cancel_combo(void)
 
 static void test_c159_accept_combo(int panelCommand)
 {
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat state;
-    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat result;
-    const Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat state;
+    DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat result;
+    const DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateC159ClickRotationCombo_EvidencePc34Compat();
     int ok;
 
@@ -234,9 +234,9 @@ static void test_c159_accept_combo(int panelCommand)
 
 static void test_c159_baseline_without_g0299_reaches_leader_route(void)
 {
-    Dm1V1MirrorCandidateC159ClickRotationComboStatePc34Compat state;
-    Dm1V1MirrorCandidateC159ClickRotationComboResultPc34Compat result;
-    const Dm1V1MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateC159ClickRotationComboStatePc34Compat state;
+    DM1_V1_MirrorCandidateC159ClickRotationComboResultPc34Compat result;
+    const DM1_V1_MirrorCandidateC159ClickRotationComboEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateC159ClickRotationCombo_EvidencePc34Compat();
     int ok;
 
