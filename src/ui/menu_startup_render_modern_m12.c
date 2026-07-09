@@ -1338,7 +1338,7 @@ static void draw_card(M12_ModernCanvas* c,
         statusLabel = slotIdx == 3 ? "PLANNED" : "UNSUPPORTED";
     } else if (entry->available && status && status->matched) {
         statusColor = COLOR_OK();
-        statusLabel = M12_StartupMenu_GetEntryBootStatusLabel(state, slot);
+        statusLabel = M12_StartupMenu_GetEntryLaunchStatusLabel(state, slot);
     } else if (status) {
         statusColor = COLOR_BAD();
         statusLabel = "DATA MISSING";

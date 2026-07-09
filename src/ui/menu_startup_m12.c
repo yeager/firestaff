@@ -6586,92 +6586,85 @@ static const char* m12_game_select_game_id(int index) {
     return gameIds[index];
 }
 
-static const char* m12_full_start_ready_status_label(const char* gameId) {
+typedef struct {
+    const char* gameId;
+    const char* readyStatusLabel;
+    const char* readyDetailLabel;
+    const char* pathLabel;
+    const char* contractLabel;
+    int stageCount;
+} M12_FullStartManifest;
+
+static const M12_FullStartManifest kM12FullStartManifests[] = {
+    {"dm1",
+     "FULL START READY",
+     "SWSH, TITLE, ENTRANCE, HOC",
+     "DM1 FULL START",
+     "DM1 MEDIA + ENTRANCE + HOC RECEIPTS",
+     4},
+    {"csb",
+     "BOOT READY",
+     "SWSH, TITLE, ENTRANCE, UTILITY",
+     "CSB BOOT PATH",
+     "CSB STARTUP CAPTURE RECEIPT",
+     4},
+    {"dm2",
+     "START MENU READY",
+     "TITLE, SAVE MENU, FIRST HUD",
+     "DM2 START MENU",
+     "DM2 STARTUP HOST VIEW RECEIPT",
+     3},
+    {"nexus",
+     "TITLE MENU READY",
+     "TITLE, WARNING, SAVE, CHAMPIONS",
+     "NEXUS TITLE MENU",
+     "NEXUS FULL START CONSUMER RECEIPT",
+     4},
+    {"theron",
+     "TRACK 02 READY",
+     "TRACK 02, TITLE, STAGE, SOUL ROOM",
+     "THERON TRACK 02",
+     "THERON FULL START HOST VIEW RECEIPT",
+     4},
+};
+
+static const M12_FullStartManifest* m12_full_start_manifest(const char* gameId) {
+    size_t i;
     if (!gameId) {
-        return "READY";
+        return NULL;
     }
-    if (strcmp(gameId, "dm1") == 0) {
-        return "FULL START READY";
+    for (i = 0; i < sizeof(kM12FullStartManifests) /
+                    sizeof(kM12FullStartManifests[0]); ++i) {
+        if (strcmp(gameId, kM12FullStartManifests[i].gameId) == 0) {
+            return &kM12FullStartManifests[i];
+        }
     }
-    if (strcmp(gameId, "csb") == 0) {
-        return "BOOT READY";
-    }
-    if (strcmp(gameId, "dm2") == 0) {
-        return "START MENU READY";
-    }
-    if (strcmp(gameId, "nexus") == 0) {
-        return "TITLE MENU READY";
-    }
-    if (strcmp(gameId, "theron") == 0) {
-        return "TRACK 02 READY";
-    }
-    return "READY";
+    return NULL;
+}
+
+static const char* m12_full_start_ready_status_label(const char* gameId) {
+    const M12_FullStartManifest* manifest = m12_full_start_manifest(gameId);
+    return manifest ? manifest->readyStatusLabel : "READY";
 }
 
 static const char* m12_full_start_ready_detail_label(const char* gameId) {
-    if (!gameId) {
-        return "VERIFIED DATA READY";
-    }
-    if (strcmp(gameId, "dm1") == 0) {
-        return "SWSH, TITLE, ENTRANCE, HOC";
-    }
-    if (strcmp(gameId, "csb") == 0) {
-        return "SWSH, TITLE, ENTRANCE, UTILITY";
-    }
-    if (strcmp(gameId, "dm2") == 0) {
-        return "TITLE, SAVE MENU, FIRST HUD";
-    }
-    if (strcmp(gameId, "nexus") == 0) {
-        return "TITLE, WARNING, SAVE, CHAMPIONS";
-    }
-    if (strcmp(gameId, "theron") == 0) {
-        return "TRACK 02, TITLE, STAGE, SOUL ROOM";
-    }
-    return "VERIFIED DATA READY";
+    const M12_FullStartManifest* manifest = m12_full_start_manifest(gameId);
+    return manifest ? manifest->readyDetailLabel : "VERIFIED DATA READY";
 }
 
 static int m12_full_start_stage_count(const char* gameId) {
-    if (!gameId) {
-        return 1;
-    }
-    if (strcmp(gameId, "dm1") == 0) {
-        return 4; /* SWSH, TITLE, ENTRANCE, HOC */
-    }
-    if (strcmp(gameId, "csb") == 0) {
-        return 4; /* SWSH, TITLE, ENTRANCE, UTILITY */
-    }
-    if (strcmp(gameId, "dm2") == 0) {
-        return 3; /* TITLE, SAVE MENU, FIRST HUD */
-    }
-    if (strcmp(gameId, "nexus") == 0) {
-        return 4; /* TITLE, WARNING, SAVE, CHAMPIONS */
-    }
-    if (strcmp(gameId, "theron") == 0) {
-        return 4; /* TRACK 02, TITLE, STAGE, SOUL ROOM */
-    }
-    return 1;
+    const M12_FullStartManifest* manifest = m12_full_start_manifest(gameId);
+    return manifest ? manifest->stageCount : 1;
 }
 
 static const char* m12_full_start_path_label(const char* gameId) {
-    if (!gameId) {
-        return "BOOT PATH";
-    }
-    if (strcmp(gameId, "dm1") == 0) {
-        return "DM1 FULL START";
-    }
-    if (strcmp(gameId, "csb") == 0) {
-        return "CSB BOOT PATH";
-    }
-    if (strcmp(gameId, "dm2") == 0) {
-        return "DM2 START MENU";
-    }
-    if (strcmp(gameId, "nexus") == 0) {
-        return "NEXUS TITLE MENU";
-    }
-    if (strcmp(gameId, "theron") == 0) {
-        return "THERON TRACK 02";
-    }
-    return "BOOT PATH";
+    const M12_FullStartManifest* manifest = m12_full_start_manifest(gameId);
+    return manifest ? manifest->pathLabel : "BOOT PATH";
+}
+
+static const char* m12_full_start_contract_label(const char* gameId) {
+    const M12_FullStartManifest* manifest = m12_full_start_manifest(gameId);
+    return manifest ? manifest->contractLabel : "BOOT RECEIPT";
 }
 
 int M12_StartupMenu_GetBootReadiness(
@@ -6691,6 +6684,7 @@ int M12_StartupMenu_GetBootReadiness(
     receipt.detailLabel = "OFFLINE";
     receipt.nextStepLabel = "OFFLINE";
     receipt.startupPathLabel = "BOOT PATH";
+    receipt.startupContractLabel = "BOOT RECEIPT";
 
     entry = M12_StartupMenu_GetEntry(state, entryIndex);
     if (!state || !entry || entry->kind != M12_MENU_ENTRY_GAME) {
@@ -6711,6 +6705,8 @@ int M12_StartupMenu_GetBootReadiness(
     receipt.startupStepCount = 2 + m12_full_start_stage_count(entry->gameId);
     receipt.startupStepReadyCount = 0;
     receipt.startupPathLabel = m12_full_start_path_label(entry->gameId);
+    receipt.startupContractExpected = receipt.fullStartGraphicsExpected;
+    receipt.startupContractLabel = m12_full_start_contract_label(entry->gameId);
     if (receipt.dataReady) {
         receipt.startupStepReadyCount++;
     }
@@ -6720,6 +6716,8 @@ int M12_StartupMenu_GetBootReadiness(
     receipt.startupMenuReady = receipt.dataReady && receipt.versionReady;
     receipt.fullStartGraphicsReady =
         receipt.fullStartGraphicsExpected && receipt.startupMenuReady;
+    receipt.startupContractReady =
+        receipt.startupContractExpected && receipt.fullStartGraphicsReady;
     if (receipt.fullStartGraphicsReady) {
         receipt.startupStepReadyCount = receipt.startupStepCount;
     }
