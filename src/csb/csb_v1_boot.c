@@ -1199,39 +1199,49 @@ int csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile)
 {
-    CSB_V1_BootStartupRenderViewReceipt_PC34 receipt;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
 
     if (!out_plan) {
         return 0;
     }
     memset(out_plan, 0, sizeof(*out_plan));
-    if (!csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
-            &receipt,
-            title_active,
-            title_frame,
-            title_source_step,
-            entrance_active,
-            entrance_source_step,
-            entrance_dismissed,
-            credits_active,
-            credits_remaining_ticks,
-            opening_active,
-            opening_delay_ticks,
-            opening_step,
-            pending_command,
-            entrance_frame,
-            utility_overlay_active,
-            utility_selected_action_index,
-            utility_imported_champion_count,
-            utility_preview_active,
-            utility_prompt,
-            resume_available,
-            resume_path,
-            boot_profile)) {
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.title_active = title_active;
+    snapshot.title_frame = title_frame;
+    snapshot.title_source_step = title_source_step;
+    snapshot.entrance_active = entrance_active;
+    snapshot.entrance_source_step = entrance_source_step;
+    snapshot.entrance_dismissed = entrance_dismissed;
+    snapshot.credits_active = credits_active;
+    snapshot.credits_remaining_ticks = credits_remaining_ticks;
+    snapshot.opening_active = opening_active;
+    snapshot.opening_delay_ticks = opening_delay_ticks;
+    snapshot.opening_step = opening_step;
+    snapshot.pending_command = pending_command;
+    snapshot.entrance_frame = entrance_frame;
+    snapshot.utility_overlay_active = utility_overlay_active;
+    snapshot.utility_selected_action_index = utility_selected_action_index;
+    snapshot.utility_imported_champion_count = utility_imported_champion_count;
+    snapshot.utility_preview_active = utility_preview_active;
+    snapshot.utility_prompt = utility_prompt;
+    snapshot.resume_available = resume_available;
+    snapshot.resume_path = resume_path;
+    snapshot.boot_profile = boot_profile;
+    if (!csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
+            &snapshot,
+            &host_view) ||
+        !host_view.render_draw_valid ||
+        !host_view.render_draw.render_plan_valid) {
         return 0;
     }
-    *out_plan = receipt.render_plan;
-    return receipt.render_plan_valid;
+    *out_plan = host_view.render_draw.render_plan;
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep title,
+     * closed-door, utility, credits, and door-opening drawing in one startup
+     * transaction. This legacy-looking facade now consumes the same packaged
+     * host-view receipt as M11, instead of returning a raw render plan built
+     * directly from startup fields. */
+    return 1;
 }
 
 int csb_v1_boot_startup_advance_idle_from_runtime_state_pc34(
@@ -3708,10 +3718,14 @@ int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile)
 {
-    CSB_V1_StartupHostFacts_PC34 facts;
+    CSB_V1_BootStartupRenderViewReceipt_PC34 view;
 
-    if (!csb_v1_boot_startup_runtime_facts_pc34(
-            &facts,
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
+            &view,
             title_active,
             title_frame,
             title_source_step,
@@ -3735,8 +3749,12 @@ int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
             boot_profile)) {
         return 0;
     }
-    return csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
-        &facts,
+    /* ReDMCSB ENTRANCE.C F0441/F0806 owns the utility overlay as part of the
+     * closed-door startup loop. Consume the CSB render-view receipt so this
+     * facade cannot bypass route/HUD state by rebuilding utility rows from
+     * raw host facts. */
+    return csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
+        &view,
         out_plan);
 }
 
@@ -3744,13 +3762,19 @@ int csb_v1_boot_runtime_util_render_plan_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_UtilRenderPlan *out_plan)
 {
-    CSB_V1_StartupHostFacts_PC34 facts;
+    CSB_V1_BootStartupRenderViewReceipt_PC34 view;
 
-    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
+    if (!out_plan) {
         return 0;
     }
-    return csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
-        &facts,
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+            snapshot,
+            &view)) {
+        return 0;
+    }
+    return csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
+        &view,
         out_plan);
 }
 
