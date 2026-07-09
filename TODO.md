@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 door-bash feedback resolver/action/source-lock helpers now expose DM1-owned API names and DM1 call sites use them; old M11 names remain aliases. Remaining runtime coding work is reducing residual action/viewport adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 chest auto-close-on-leader-death and full-leader-hand drop-to-floor probes now expose DM1-owned API names; old M11 names remain aliases. Remaining runtime coding work is reducing residual chest/inventory adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 chest C545 occupied-drop and pickup-at-capacity APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual chest/inventory adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 champion mirror, mirror-click-closed, and champion leader APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual champion/mirror adapter names and full-graphics proof.

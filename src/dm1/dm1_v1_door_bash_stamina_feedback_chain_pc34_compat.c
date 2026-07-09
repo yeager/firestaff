@@ -161,7 +161,7 @@ bool DM1_V1_DoorBashStaminaFeedbackChain_ResolvePc34Compat(
      */
     feedback_in.action_strength = out->stamina.bash_strength_arg_to_f0232;
 
-    feedback_ok = M11_GameView_DoorBashResolvePc34(&feedback_in,
+    feedback_ok = DM1_V1_DoorBash_ResolvePc34Compat(&feedback_in,
                                                    &out->feedback);
     if (!feedback_ok) {
         return false;

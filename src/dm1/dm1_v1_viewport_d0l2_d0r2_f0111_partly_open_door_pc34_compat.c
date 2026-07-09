@@ -264,7 +264,7 @@ static int resolve_door_bash_chain(int open_degree)
     input.action_strength = 50;
     input.is_door_target = true;
 
-    if (!M11_GameView_DoorBashResolvePc34(&input, &result)) return 0;
+    if (!DM1_V1_DoorBash_ResolvePc34Compat(&input, &result)) return 0;
     if (open_degree == DM1_OPEN_DEGREE_CLOSED) {
         return result.scheduled_destruction_event &&
                result.destruction_delay_ticks == DM1_V1_DOOR_BASH_DESTRUCTION_DELAY_TICKS_PC34 &&
