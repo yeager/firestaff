@@ -460,6 +460,15 @@ typedef struct {
     int title_frame;
     int title_frame_max;
     int title_ready;
+    int boot_warning_frames;
+    int boot_start_ready_frames;
+    int boot_frame_in_phase;
+    int title_frames_until_ready;
+    int title_hold_frame;
+    int title_prompt_visible;
+    int title_reveal_y0;
+    int title_reveal_y1;
+    int title_reveal_h;
     int route_ready;
     int m11_ready;
     int m12_ready;
