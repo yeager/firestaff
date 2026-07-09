@@ -13,7 +13,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_LEFT_CLICK_ROTATION_M568_PANEL_PC34_COMPAT 568
 #define DM1_V1_MIRROR_CANDIDATE_LEFT_CLICK_ROTATION_LEADER_HAND_THING_PC34_COMPAT 0x0BEEu
 
-typedef struct Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat {
     int contractOnly;
     const char *commandPanelDispatchAnchor;
     const char *commandClickRoutingAnchor;
@@ -29,9 +29,9 @@ typedef struct Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat {
     const char *g0299GuardAnchor;
     const char *nonOverlapNote;
     const char *contractScope;
-} Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat;
+} DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat {
     int contractOnly;
     int c040PanelOpen;
     int panelKind;
@@ -56,10 +56,10 @@ typedef struct Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat {
     int slotWriteCount;
     int slotClearCount;
     int portraitRedrawCount;
-} Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat;
+} DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat {
-    const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat {
+    const DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat *evidence;
     int eventDispatchedToMirrorCandidateHandler;
     int candidateAdvancedByOne;
     int candidateStayedWithinVisibleSet;
@@ -109,17 +109,24 @@ typedef struct Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat {
     int slotClearCountAfter;
     int portraitRedrawCountBefore;
     int portraitRedrawCountAfter;
-} Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat;
+} DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat
+    Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat
+    Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat;
+typedef DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat
+    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat;
 
 void DM1_V1_MirrorCandidateLeftClickRotation_InitPc34Compat(
-    Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat *state);
+    DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateLeftClickRotation_ApplyPc34Compat(
-    Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat *state,
+    DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat *state,
     unsigned int mouseButtons,
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat *
+const DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat *
 DM1_V1_MirrorCandidateLeftClickRotation_EvidencePc34Compat(void);
 
 #ifdef __cplusplus

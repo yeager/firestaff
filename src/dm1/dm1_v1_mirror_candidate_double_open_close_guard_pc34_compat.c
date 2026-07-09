@@ -25,7 +25,7 @@ enum {
     kOpenChestThing = 0x0700
 };
 
-static const Dm1V1MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat
+static const DM1_V1_MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat
     s_evidence = {
         1,
         "runtime-only non-duplicative guard for C040 double-open, double-close, "
@@ -40,7 +40,7 @@ static const Dm1V1MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat
     };
 
 static void set_slot_orders(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
 {
     state->closeSlotOrder[0] = 0;
     state->closeSlotOrder[1] = 2;
@@ -58,7 +58,7 @@ static void set_slot_orders(
 }
 
 static void fill_chest_slots(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
 {
     state->chestSlots[0] = 0x0101;
     state->chestSlots[1] =
@@ -68,7 +68,7 @@ static void fill_chest_slots(
 }
 
 static void init_common(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -84,7 +84,7 @@ static void init_common(
 }
 
 void dm1_v1_mirror_candidate_double_open_close_guard_init_open_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
 {
     init_common(state);
     if (!state) {
@@ -99,7 +99,7 @@ void dm1_v1_mirror_candidate_double_open_close_guard_init_open_pc34_compat(
 }
 
 void dm1_v1_mirror_candidate_double_open_close_guard_init_closed_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
 {
     init_common(state);
     if (!state) {
@@ -111,7 +111,7 @@ void dm1_v1_mirror_candidate_double_open_close_guard_init_closed_pc34_compat(
 }
 
 static unsigned int event_candidate(
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *event)
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *event)
 {
     if (event && event->candidateChampionOrdinal != 0u) {
         return event->candidateChampionOrdinal;
@@ -120,8 +120,8 @@ static unsigned int event_candidate(
 }
 
 static void open_c040_panel(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *event)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *event)
 {
     if (state->c040PanelOpen) {
         ++state->duplicateOpenNoopCount;
@@ -137,7 +137,7 @@ static void open_c040_panel(
 }
 
 static void close_chest_in_close_order(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
 {
     if (state->openChestThing ==
         DM1_V1_MIRROR_CANDIDATE_DOUBLE_OPEN_CLOSE_GUARD_NONE_PC34) {
@@ -152,7 +152,7 @@ static void close_chest_in_close_order(
 }
 
 static void close_c040_panel(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
 {
     if (!state->c040PanelOpen) {
         ++state->duplicateCloseNoopCount;
@@ -171,8 +171,8 @@ static void close_c040_panel(
 }
 
 static void arm_pending_open_from_chest_close(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *event)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *event)
 {
     ++state->f0334ChestCloseCount;
     state->openChestThing =
@@ -182,9 +182,9 @@ static void arm_pending_open_from_chest_close(
 }
 
 static void flush_pending_open(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state)
 {
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat event;
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat event;
 
     if (!state->pendingOpenArmed) {
         return;
@@ -200,7 +200,7 @@ static void flush_pending_open(
 }
 
 static void inventory_portrait_click(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
     int closeProcessedThisTick)
 {
     ++state->inventoryPortraitClickCount;
@@ -217,8 +217,8 @@ static void inventory_portrait_click(
 }
 
 static void capture_before(
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *result)
 {
     memset(result, 0, sizeof(*result));
     result->evidence = &s_evidence;
@@ -251,8 +251,8 @@ static int same_order(const int *a, const int *b)
 }
 
 static void capture_after(
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state,
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -322,14 +322,14 @@ static void capture_after(
 }
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_events_pc34_compat(
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *initial,
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *events,
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *initial,
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *events,
     unsigned int eventCount,
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat localResult;
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *result =
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *result =
         outResult ? outResult : &localResult;
     unsigned int index;
 
@@ -383,11 +383,11 @@ int dm1_v1_mirror_candidate_double_open_close_guard_run_events_pc34_compat(
     return 1;
 }
 
-static Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat event_of(
+static DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat event_of(
     int kind,
     int tick)
 {
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat event;
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat event;
 
     memset(&event, 0, sizeof(event));
     event.kind = kind;
@@ -399,10 +399,10 @@ static Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat event_of(
 }
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_double_open_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat events[2];
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat events[2];
 
     dm1_v1_mirror_candidate_double_open_close_guard_init_open_pc34_compat(
         &state);
@@ -417,10 +417,10 @@ int dm1_v1_mirror_candidate_double_open_close_guard_run_double_open_pc34_compat(
 }
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_double_close_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat events[1];
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat events[1];
 
     dm1_v1_mirror_candidate_double_open_close_guard_init_closed_pc34_compat(
         &state);
@@ -432,10 +432,10 @@ int dm1_v1_mirror_candidate_double_open_close_guard_run_double_close_pc34_compat
 }
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_close_during_pending_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat events[2];
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat events[2];
 
     dm1_v1_mirror_candidate_double_open_close_guard_init_closed_pc34_compat(
         &state);
@@ -450,10 +450,10 @@ int dm1_v1_mirror_candidate_double_open_close_guard_run_close_during_pending_pc3
 }
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_inventory_click_during_close_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat events[2];
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat state;
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat events[2];
 
     dm1_v1_mirror_candidate_double_open_close_guard_init_open_pc34_compat(
         &state);
@@ -467,7 +467,7 @@ int dm1_v1_mirror_candidate_double_open_close_guard_run_inventory_click_during_c
         &state, events, 2u, outResult);
 }
 
-const Dm1V1MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat *
+const DM1_V1_MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat *
 dm1_v1_mirror_candidate_double_open_close_guard_evidence_pc34_compat(void)
 {
     return &s_evidence;

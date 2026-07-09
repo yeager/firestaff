@@ -10,7 +10,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_ICON_REFRESH_INVENTORY_SLOTS_PC34_COMPAT 8
 #define DM1_V1_MIRROR_CANDIDATE_ICON_REFRESH_CHEST_SLOTS_PC34_COMPAT 8
 
-typedef struct Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat {
     const char *chamdrawIconProbeAnchor;
     const char *chamdrawRefreshAnchor;
     const char *championPartyLoopAnchor;
@@ -18,15 +18,15 @@ typedef struct Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat {
     const char *defsPrototypeAnchor;
     const char *contractScope;
     const char *disjointFunctions;
-} Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat;
+} DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateIconSlotPc34Compat {
+typedef struct DM1_V1_MirrorCandidateIconSlotPc34Compat {
     int currentIcon;
     int objectIcon;
     int changed;
-} Dm1V1MirrorCandidateIconSlotPc34Compat;
+} DM1_V1_MirrorCandidateIconSlotPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateIconRefreshStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateIconRefreshStatePc34Compat {
     unsigned int candidateChampionOrdinal;
     unsigned int inventoryChampionOrdinal;
     int partyChampionCount;
@@ -52,17 +52,17 @@ typedef struct Dm1V1MirrorCandidateIconRefreshStatePc34Compat {
     int candidateOrdinalClearedCount;
     int panelClearedCount;
     int commandQueueMutationCount;
-    Dm1V1MirrorCandidateIconSlotPc34Compat partyHandSlots
+    DM1_V1_MirrorCandidateIconSlotPc34Compat partyHandSlots
         [DM1_V1_MIRROR_CANDIDATE_ICON_REFRESH_CHAMPION_COUNT_PC34_COMPAT]
         [DM1_V1_MIRROR_CANDIDATE_ICON_REFRESH_HAND_SLOTS_PC34_COMPAT];
-    Dm1V1MirrorCandidateIconSlotPc34Compat inventorySlots
+    DM1_V1_MirrorCandidateIconSlotPc34Compat inventorySlots
         [DM1_V1_MIRROR_CANDIDATE_ICON_REFRESH_INVENTORY_SLOTS_PC34_COMPAT];
-    Dm1V1MirrorCandidateIconSlotPc34Compat chestSlots
+    DM1_V1_MirrorCandidateIconSlotPc34Compat chestSlots
         [DM1_V1_MIRROR_CANDIDATE_ICON_REFRESH_CHEST_SLOTS_PC34_COMPAT];
-} Dm1V1MirrorCandidateIconRefreshStatePc34Compat;
+} DM1_V1_MirrorCandidateIconRefreshStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateIconRefreshResultPc34Compat {
-    const Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateIconRefreshResultPc34Compat {
+    const DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat *evidence;
     int contractOnly;
     int suppressedByCandidateWithoutInventory;
     int processedWithInventoryOpen;
@@ -111,28 +111,39 @@ typedef struct Dm1V1MirrorCandidateIconRefreshResultPc34Compat {
     int mutableIconPotionRange;
     int mutableIconEmptyFlask;
     int immutableIconRejected;
-} Dm1V1MirrorCandidateIconRefreshResultPc34Compat;
+} DM1_V1_MirrorCandidateIconRefreshResultPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateIconRefreshProbePc34Compat {
-    const Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat *evidence;
-    Dm1V1MirrorCandidateIconRefreshResultPc34Compat suppressed;
-    Dm1V1MirrorCandidateIconRefreshResultPc34Compat inventoryOpen;
-} Dm1V1MirrorCandidateIconRefreshProbePc34Compat;
+typedef struct DM1_V1_MirrorCandidateIconRefreshProbePc34Compat {
+    const DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat *evidence;
+    DM1_V1_MirrorCandidateIconRefreshResultPc34Compat suppressed;
+    DM1_V1_MirrorCandidateIconRefreshResultPc34Compat inventoryOpen;
+} DM1_V1_MirrorCandidateIconRefreshProbePc34Compat;
+
+typedef DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat
+    Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateIconSlotPc34Compat
+    Dm1V1MirrorCandidateIconSlotPc34Compat;
+typedef DM1_V1_MirrorCandidateIconRefreshStatePc34Compat
+    Dm1V1MirrorCandidateIconRefreshStatePc34Compat;
+typedef DM1_V1_MirrorCandidateIconRefreshResultPc34Compat
+    Dm1V1MirrorCandidateIconRefreshResultPc34Compat;
+typedef DM1_V1_MirrorCandidateIconRefreshProbePc34Compat
+    Dm1V1MirrorCandidateIconRefreshProbePc34Compat;
 
 void DM1_V1_MirrorCandidateIconRefresh_InitSuppressedPc34Compat(
-    Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state);
+    DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state);
 
 void DM1_V1_MirrorCandidateIconRefresh_InitInventoryOpenPc34Compat(
-    Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state);
+    DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateIconRefresh_DrawChangedObjectIconsPc34Compat(
-    Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state,
-    Dm1V1MirrorCandidateIconRefreshResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state,
+    DM1_V1_MirrorCandidateIconRefreshResultPc34Compat *outResult);
 
-Dm1V1MirrorCandidateIconRefreshProbePc34Compat
+DM1_V1_MirrorCandidateIconRefreshProbePc34Compat
 DM1_V1_MirrorCandidateIconRefresh_ProbePc34Compat(void);
 
-const Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat *
+const DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat *
 DM1_V1_MirrorCandidateIconRefresh_EvidencePc34Compat(void);
 
 #ifdef __cplusplus

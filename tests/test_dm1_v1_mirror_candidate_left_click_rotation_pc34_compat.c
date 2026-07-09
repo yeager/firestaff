@@ -17,7 +17,7 @@ static int gPasses;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateLeftClickRotation_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,
@@ -85,9 +85,9 @@ static void test_source_lock_metadata(void)
 
 static void test_left_click_rotates_candidate_view_only(void)
 {
-    Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat state;
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat result;
-    const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat state;
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat result;
+    const DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateLeftClickRotation_EvidencePc34Compat();
     int ok;
 
@@ -167,9 +167,9 @@ static void test_left_click_rotates_candidate_view_only(void)
 
 static void test_left_click_wraps_within_visible_candidates(void)
 {
-    Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat state;
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat result;
-    const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat state;
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat result;
+    const DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateLeftClickRotation_EvidencePc34Compat();
     int ok;
 
@@ -202,9 +202,9 @@ static void test_left_click_wraps_within_visible_candidates(void)
 
 static void test_non_left_click_does_not_rotate(void)
 {
-    Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat state;
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat result;
-    const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat state;
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat result;
+    const DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateLeftClickRotation_EvidencePc34Compat();
     int ok;
 
@@ -237,9 +237,9 @@ static void test_non_left_click_does_not_rotate(void)
 
 static void test_closed_panel_blocks_left_click_rotation(void)
 {
-    Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat state;
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat result;
-    const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat state;
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat result;
+    const DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateLeftClickRotation_EvidencePc34Compat();
     int ok;
 

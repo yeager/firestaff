@@ -25,8 +25,8 @@ static int gPasses;
 } while (0)
 
 static void test_suppressed_candidate_without_inventory(
-    const Dm1V1MirrorCandidateIconRefreshResultPc34Compat *result,
-    const Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat *evidence)
+    const DM1_V1_MirrorCandidateIconRefreshResultPc34Compat *result,
+    const DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat *evidence)
 {
     const char *anchor = evidence->chamdrawRefreshAnchor;
 
@@ -123,8 +123,8 @@ static void test_suppressed_candidate_without_inventory(
 }
 
 static void test_inventory_open_candidate_refresh(
-    const Dm1V1MirrorCandidateIconRefreshResultPc34Compat *result,
-    const Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat *evidence)
+    const DM1_V1_MirrorCandidateIconRefreshResultPc34Compat *result,
+    const DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat *evidence)
 {
     const char *anchor = evidence->chamdrawRefreshAnchor;
 
@@ -212,9 +212,9 @@ static void test_inventory_open_candidate_refresh(
 }
 
 static void test_source_lock_metadata(
-    const Dm1V1MirrorCandidateIconRefreshProbePc34Compat *probe)
+    const DM1_V1_MirrorCandidateIconRefreshProbePc34Compat *probe)
 {
-    const Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat *e =
         probe->evidence;
 
     CHECK_REDMCSB(e != NULL,
@@ -269,7 +269,7 @@ static void test_source_lock_metadata(
 
 int main(void)
 {
-    Dm1V1MirrorCandidateIconRefreshProbePc34Compat probe =
+    DM1_V1_MirrorCandidateIconRefreshProbePc34Compat probe =
         DM1_V1_MirrorCandidateIconRefresh_ProbePc34Compat();
 
     test_source_lock_metadata(&probe);

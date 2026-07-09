@@ -119,8 +119,8 @@ static int route_click_cancel_deadzone(void)
 
 static int route_icon_refresh_while_open(void)
 {
-    Dm1V1MirrorCandidateIconRefreshStatePc34Compat state;
-    Dm1V1MirrorCandidateIconRefreshResultPc34Compat result;
+    DM1_V1_MirrorCandidateIconRefreshStatePc34Compat state;
+    DM1_V1_MirrorCandidateIconRefreshResultPc34Compat result;
 
     DM1_V1_MirrorCandidateIconRefresh_InitSuppressedPc34Compat(&state);
     (void)DM1_V1_MirrorCandidateIconRefresh_DrawChangedObjectIconsPc34Compat(

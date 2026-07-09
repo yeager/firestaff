@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 mirror-candidate click/icon guard ownership names: icon refresh, occupied-hand panel, left-click rotation, and double-open-close guard APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: icon refresh, occupied-hand panel, left-click rotation, double-open-close guard, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 mirror-candidate keyboard/portrait/chest-open ownership names: keyboard browse, inventory portrait click, and chest-open-during-pending APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: keyboard browse, inventory portrait click, chest-open-during-pending, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 mirror-candidate rotation interaction ownership names: scroll-pickup while party rotation is in progress and click-cancel-with-rotation APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: scroll-pickup rotation, click-cancel rotation, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

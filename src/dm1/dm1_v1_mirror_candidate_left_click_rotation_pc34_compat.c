@@ -29,7 +29,7 @@ enum {
     kVisibleOrdinal3 = 14
 };
 
-static const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat
+static const DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat
     s_evidence = {
         1,
         "COMMAND.C F0359:1985-1990 M568/C040 mirror dispatch to F0282",
@@ -58,7 +58,7 @@ static const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat
     };
 
 static unsigned int candidate_ordinal_at(
-    const Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat *state,
     int index)
 {
     if (!state || index < 0 || index >= state->visibleCandidateCount) {
@@ -68,8 +68,8 @@ static unsigned int candidate_ordinal_at(
 }
 
 static void capture_before(
-    const Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat *state,
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat *state,
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat *result)
 {
     memset(result, 0, sizeof(*result));
     result->evidence = &s_evidence;
@@ -120,8 +120,8 @@ static void capture_before(
 }
 
 static void capture_after(
-    const Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat *state,
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat *state,
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat *result)
 {
     int expectedIndex =
         (result->visibleCandidateIndexBefore + 1) %
@@ -202,7 +202,7 @@ static void capture_after(
 }
 
 void DM1_V1_MirrorCandidateLeftClickRotation_InitPc34Compat(
-    Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat *state)
+    DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -228,12 +228,12 @@ void DM1_V1_MirrorCandidateLeftClickRotation_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateLeftClickRotation_ApplyPc34Compat(
-    Dm1V1MirrorCandidateLeftClickRotationStatePc34Compat *state,
+    DM1_V1_MirrorCandidateLeftClickRotationStatePc34Compat *state,
     unsigned int mouseButtons,
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat localResult;
-    Dm1V1MirrorCandidateLeftClickRotationResultPc34Compat *result =
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateLeftClickRotationResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     if (!state || !state->contractOnly || state->visibleCandidateCount <= 0) {
@@ -264,7 +264,7 @@ int DM1_V1_MirrorCandidateLeftClickRotation_ApplyPc34Compat(
     return result->rotationViewOnly;
 }
 
-const Dm1V1MirrorCandidateLeftClickRotationEvidencePc34Compat *
+const DM1_V1_MirrorCandidateLeftClickRotationEvidencePc34Compat *
 DM1_V1_MirrorCandidateLeftClickRotation_EvidencePc34Compat(void)
 {
     return &s_evidence;

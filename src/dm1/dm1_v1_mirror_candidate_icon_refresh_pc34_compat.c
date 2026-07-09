@@ -28,7 +28,7 @@ enum {
     kImmutableIcon = 40
 };
 
-static const Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat
+static const DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat
     s_evidence = {
         "CHAMDRAW.C F0295_CHAMPION_HasObjectIconInSlotBoxChanged:1153-1182",
         "CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1262",
@@ -49,7 +49,7 @@ static int mutable_icon_index(int iconIndex)
            iconIndex == 195;
 }
 
-static void slot_init(Dm1V1MirrorCandidateIconSlotPc34Compat *slot,
+static void slot_init(DM1_V1_MirrorCandidateIconSlotPc34Compat *slot,
                       int currentIcon,
                       int objectIcon)
 {
@@ -58,7 +58,7 @@ static void slot_init(Dm1V1MirrorCandidateIconSlotPc34Compat *slot,
     slot->changed = 0;
 }
 
-static void fill_fixture(Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state)
+static void fill_fixture(DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state)
 {
     int championIndex;
     int handIndex;
@@ -105,7 +105,7 @@ static void fill_fixture(Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state)
 }
 
 void DM1_V1_MirrorCandidateIconRefresh_InitSuppressedPc34Compat(
-    Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state)
+    DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -115,7 +115,7 @@ void DM1_V1_MirrorCandidateIconRefresh_InitSuppressedPc34Compat(
 }
 
 void DM1_V1_MirrorCandidateIconRefresh_InitInventoryOpenPc34Compat(
-    Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state)
+    DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -125,8 +125,8 @@ void DM1_V1_MirrorCandidateIconRefresh_InitInventoryOpenPc34Compat(
 }
 
 static void result_begin(
-    const Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state,
-    Dm1V1MirrorCandidateIconRefreshResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state,
+    DM1_V1_MirrorCandidateIconRefreshResultPc34Compat *result)
 {
     if (!result) {
         return;
@@ -191,8 +191,8 @@ static void result_begin(
 }
 
 static void result_finish(
-    const Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state,
-    Dm1V1MirrorCandidateIconRefreshResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state,
+    DM1_V1_MirrorCandidateIconRefreshResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -222,8 +222,8 @@ static void result_finish(
 }
 
 static int refresh_slot_icon(
-    Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state,
-    Dm1V1MirrorCandidateIconSlotPc34Compat *slot,
+    DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state,
+    DM1_V1_MirrorCandidateIconSlotPc34Compat *slot,
     int slotBoxIndex)
 {
     if (!mutable_icon_index(slot->currentIcon) ||
@@ -240,8 +240,8 @@ static int refresh_slot_icon(
 }
 
 int DM1_V1_MirrorCandidateIconRefresh_DrawChangedObjectIconsPc34Compat(
-    Dm1V1MirrorCandidateIconRefreshStatePc34Compat *state,
-    Dm1V1MirrorCandidateIconRefreshResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateIconRefreshStatePc34Compat *state,
+    DM1_V1_MirrorCandidateIconRefreshResultPc34Compat *outResult)
 {
     int championIndex;
     int handIndex;
@@ -332,11 +332,11 @@ int DM1_V1_MirrorCandidateIconRefresh_DrawChangedObjectIconsPc34Compat(
     return 1;
 }
 
-Dm1V1MirrorCandidateIconRefreshProbePc34Compat
+DM1_V1_MirrorCandidateIconRefreshProbePc34Compat
 DM1_V1_MirrorCandidateIconRefresh_ProbePc34Compat(void)
 {
-    Dm1V1MirrorCandidateIconRefreshProbePc34Compat probe;
-    Dm1V1MirrorCandidateIconRefreshStatePc34Compat state;
+    DM1_V1_MirrorCandidateIconRefreshProbePc34Compat probe;
+    DM1_V1_MirrorCandidateIconRefreshStatePc34Compat state;
 
     memset(&probe, 0, sizeof(probe));
     probe.evidence = &s_evidence;
@@ -351,7 +351,7 @@ DM1_V1_MirrorCandidateIconRefresh_ProbePc34Compat(void)
     return probe;
 }
 
-const Dm1V1MirrorCandidateIconRefreshEvidencePc34Compat *
+const DM1_V1_MirrorCandidateIconRefreshEvidencePc34Compat *
 DM1_V1_MirrorCandidateIconRefresh_EvidencePc34Compat(void)
 {
     return &s_evidence;
