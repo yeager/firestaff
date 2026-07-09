@@ -17,6 +17,17 @@ extern "C" {
 #define DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT (-1)
 
 #define DM1_V1_CHAMPION_MIRROR_MOUSE_LEFT_PC34_COMPAT 0x0002u
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_GRAPHIC_PC34_COMPAT 26
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_WIDTH_PC34_COMPAT 32
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_HEIGHT_PC34_COMPAT 29
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COLS_PC34_COMPAT 8
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_DST_X_PC34_COMPAT 96
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_DST_Y_PC34_COMPAT 35
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_LEFT_PC34_COMPAT 96
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_RIGHT_PC34_COMPAT 127
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_TOP_PC34_COMPAT 35
+#define DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_BOTTOM_PC34_COMPAT 63
+#define DM1_V1_CHAMPION_MIRROR_TRANSPARENT_COLOR_PC34_COMPAT 1
 
 #define DM1_V1_COMMAND_CLICK_STATUS_BOX_0_PC34_COMPAT 12
 #define DM1_V1_COMMAND_CLICK_STATUS_BOX_3_PC34_COMPAT 15
@@ -59,6 +70,28 @@ typedef struct DM1_V1_ChampionMirrorFrontWallReceiptPc34 {
     int championPortraitRenderIndex;   /* C026 atlas index, 0-based */
     int wallOrnamentOrdinal;
 } DM1_V1_ChampionMirrorFrontWallReceiptPc34;
+
+typedef struct DM1_V1_ChampionMirrorRenderReceiptPc34 {
+    int valid;
+    int drawChampionPortrait;
+    int suppressChampionPortrait;
+    int suppressMaterializedItemPayload;
+    int sourceOrdinal;
+    int renderIndex;
+    int graphicIndex;
+    int sourceX;
+    int sourceY;
+    int width;
+    int height;
+    int dstX;
+    int dstY;
+    int frameLeft;
+    int frameRight;
+    int frameTop;
+    int frameBottom;
+    int transparentColor;
+    const char *sourceAnchor;
+} DM1_V1_ChampionMirrorRenderReceiptPc34;
 
 void DM1_V1_ChampionMirror_InitClickStatePc34(
     DM1_V1_ChampionMirrorClickStatePc34 *state);
@@ -104,6 +137,10 @@ int DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
     int visibleWallCell,
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 *outReceipt);
 
+int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
+    const DM1_V1_ChampionMirrorFrontWallReceiptPc34 *frontWallReceipt,
+    DM1_V1_ChampionMirrorRenderReceiptPc34 *outReceipt);
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void);
 
 typedef DM1_V1_ChampionMirrorChampionPc34
@@ -114,6 +151,8 @@ typedef DM1_V1_ChampionMirrorClickResultPc34
     Dm1V1ChampionMirrorClickResultPc34Compat;
 typedef DM1_V1_ChampionMirrorFrontWallReceiptPc34
     Dm1V1ChampionMirrorFrontWallReceiptPc34Compat;
+typedef DM1_V1_ChampionMirrorRenderReceiptPc34
+    Dm1V1ChampionMirrorRenderReceiptPc34Compat;
 
 #define DM1_V1_ChampionMirror_InitClickStatePc34Compat \
     DM1_V1_ChampionMirror_InitClickStatePc34
@@ -129,6 +168,8 @@ typedef DM1_V1_ChampionMirrorFrontWallReceiptPc34
     DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34
 #define DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34Compat \
     DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34
+#define DM1_V1_ChampionMirror_BuildRenderReceiptPc34Compat \
+    DM1_V1_ChampionMirror_BuildRenderReceiptPc34
 #define DM1_V1_ChampionMirror_SourceEvidencePc34Compat \
     DM1_V1_ChampionMirror_SourceEvidencePc34
 

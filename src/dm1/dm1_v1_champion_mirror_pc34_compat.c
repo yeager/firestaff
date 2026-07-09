@@ -263,6 +263,70 @@ int DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
     return 1;
 }
 
+int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
+    const DM1_V1_ChampionMirrorFrontWallReceiptPc34 *frontWallReceipt,
+    DM1_V1_ChampionMirrorRenderReceiptPc34 *outReceipt)
+{
+    int renderIndex;
+
+    if (!frontWallReceipt || !outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->valid = 1;
+    outReceipt->sourceOrdinal =
+        DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+    outReceipt->renderIndex =
+        DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+    outReceipt->sourceAnchor =
+        "ReDMCSB DUNVIEW.C:3913-3928 C026->G0109 champion portrait blit";
+
+    if (!frontWallReceipt->valid ||
+        !frontWallReceipt->isFrontMirror ||
+        frontWallReceipt->championPortraitRenderIndex < 0) {
+        outReceipt->suppressChampionPortrait = 1;
+        outReceipt->suppressMaterializedItemPayload = 1;
+        return 1;
+    }
+
+    renderIndex = frontWallReceipt->championPortraitRenderIndex;
+    outReceipt->drawChampionPortrait = 1;
+    outReceipt->sourceOrdinal = frontWallReceipt->championPortraitOrdinal;
+    outReceipt->renderIndex = renderIndex;
+    outReceipt->graphicIndex =
+        DM1_V1_CHAMPION_MIRROR_PORTRAIT_GRAPHIC_PC34_COMPAT;
+    outReceipt->sourceX =
+        (renderIndex %
+         DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COLS_PC34_COMPAT) *
+        DM1_V1_CHAMPION_MIRROR_PORTRAIT_WIDTH_PC34_COMPAT;
+    outReceipt->sourceY =
+        (renderIndex /
+         DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COLS_PC34_COMPAT) *
+        DM1_V1_CHAMPION_MIRROR_PORTRAIT_HEIGHT_PC34_COMPAT;
+    outReceipt->width = DM1_V1_CHAMPION_MIRROR_PORTRAIT_WIDTH_PC34_COMPAT;
+    outReceipt->height = DM1_V1_CHAMPION_MIRROR_PORTRAIT_HEIGHT_PC34_COMPAT;
+    outReceipt->dstX = DM1_V1_CHAMPION_MIRROR_PORTRAIT_DST_X_PC34_COMPAT;
+    outReceipt->dstY = DM1_V1_CHAMPION_MIRROR_PORTRAIT_DST_Y_PC34_COMPAT;
+    outReceipt->frameLeft =
+        DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_LEFT_PC34_COMPAT;
+    outReceipt->frameRight =
+        DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_RIGHT_PC34_COMPAT;
+    outReceipt->frameTop =
+        DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_TOP_PC34_COMPAT;
+    outReceipt->frameBottom =
+        DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_BOTTOM_PC34_COMPAT;
+    outReceipt->transparentColor =
+        DM1_V1_CHAMPION_MIRROR_TRANSPARENT_COLOR_PC34_COMPAT;
+
+    /* ReDMCSB: DUNVIEW.C lines 3913-3928 only blit C026 champion
+     * portraits when the wall is D1C front and G0289 decrements to a
+     * valid source ordinal. DUNVIEW.C line 525 fixes G0109 to
+     * {96,127,35,63}; the source rect is (ordinal & 7)*32,
+     * (ordinal >> 3)*29. Keep the draw/suppress choice in this DM1 receipt
+     * so host render code does not reuse stale mirror or item payload state. */
+    return 1;
+}
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
 {
     return "ReDMCSB COMMAND.C:484-488 G0455 maps C159..C162 champion-name "
@@ -273,5 +337,6 @@ const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
            "G0411 leader and skips redraw for the G0299 candidate; "
            "DUNGEON.C:2573,2608-2612 F0172/F0174 and COMPILE.H:1038 map "
            "C127 front-wall sensor data to the 1-based G0289 champion "
-           "portrait ordinal.";
+           "portrait ordinal; DUNVIEW.C:3913-3928 blits C026 champion "
+           "portraits through G0109 {96,127,35,63}.";
 }

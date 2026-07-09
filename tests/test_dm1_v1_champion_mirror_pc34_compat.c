@@ -226,6 +226,7 @@ static void test_f0358_edges_and_f0368_dead_target(void)
 static void test_f0172_front_wall_sensor_receipt(void)
 {
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 receipt;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
@@ -263,6 +264,67 @@ static void test_f0172_front_wall_sensor_receipt(void)
             127, 13, 4, 2, 2, NULL) == 0,
         "front mirror receipt rejects NULL output",
         "DUNGEON.C:2608-2612");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 2, 2, &receipt) == 1 &&
+            DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
+                &receipt, &render) == 1 &&
+            render.valid == 1 &&
+            render.drawChampionPortrait == 1 &&
+            render.suppressChampionPortrait == 0 &&
+            render.sourceOrdinal == 14 &&
+            render.renderIndex == 13 &&
+            render.graphicIndex ==
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_GRAPHIC_PC34_COMPAT,
+        "front mirror render receipt owns C026 draw decision",
+        "DUNVIEW.C:3913-3928");
+
+    CHECK_ANCHOR(
+        render.sourceX == 160 &&
+            render.sourceY == 29 &&
+            render.width ==
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_WIDTH_PC34_COMPAT &&
+            render.height ==
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_HEIGHT_PC34_COMPAT,
+        "render receipt owns C026 atlas source rect",
+        "DUNVIEW.C:3916-3919; DEFS.H:821-826");
+
+    CHECK_ANCHOR(
+        render.dstX == DM1_V1_CHAMPION_MIRROR_PORTRAIT_DST_X_PC34_COMPAT &&
+            render.dstY == DM1_V1_CHAMPION_MIRROR_PORTRAIT_DST_Y_PC34_COMPAT &&
+            render.frameLeft ==
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_LEFT_PC34_COMPAT &&
+            render.frameRight ==
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_RIGHT_PC34_COMPAT &&
+            render.frameTop ==
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_TOP_PC34_COMPAT &&
+            render.frameBottom ==
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_BOTTOM_PC34_COMPAT &&
+            render.transparentColor ==
+                DM1_V1_CHAMPION_MIRROR_TRANSPARENT_COLOR_PC34_COMPAT,
+        "render receipt owns G0109 destination frame and transparency",
+        "DUNVIEW.C:525; DUNVIEW.C:3916-3928");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 1, 2, &receipt) == 1 &&
+            DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
+                &receipt, &render) == 1 &&
+            render.valid == 1 &&
+            render.drawChampionPortrait == 0 &&
+            render.suppressChampionPortrait == 1 &&
+            render.suppressMaterializedItemPayload == 1 &&
+            render.renderIndex ==
+                DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT,
+        "non-front mirror suppresses portrait and stale payload render",
+        "DUNGEON.C:2573; DUNVIEW.C:3913");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildRenderReceiptPc34(NULL, &render) == 0 &&
+            DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&receipt, NULL) == 0,
+        "render receipt rejects NULL inputs",
+        "DM1 receipt guard");
 }
 
 int main(void)
