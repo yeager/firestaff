@@ -10060,6 +10060,10 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 m11_award_magic_xp(state, sChamp, sSkill, sXp);
                 break;
             }
+            case EMIT_ACTION_DISABLED:
+                m11_disable_champion_action_after_spell_f0412(
+                    state, (int)e->payload[0], (int)e->payload[1]);
+                break;
             case EMIT_GAME_WON:
                 if (!state->gameWon) {
                     state->gameWon = 1;

@@ -214,6 +214,19 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
         }
     }
     assert(sawSpellEffect == 1);
+    {
+        int sawDisable = 0;
+        for (i = 0; i < result.emissionCount; ++i) {
+            if (result.emissions[i].kind == EMIT_ACTION_DISABLED &&
+                result.emissions[i].payload[0] == 0 &&
+                result.emissions[i].payload[1] == spell.disabledTicks &&
+                result.emissions[i].payload[2] == 0xFF &&
+                result.emissions[i].payload[3] == 0) {
+                sawDisable = 1;
+            }
+        }
+        assert(sawDisable == 1);
+    }
 }
 
 static void test_orch_light_spell_uses_source_light_amount_and_party_map(void) {

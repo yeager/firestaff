@@ -7050,6 +7050,7 @@ cmd_attack_legacy_marker:
         int emptyFlaskSlot = orch_cmd_cast_spell_empty_flask_slot_compat(input);
         int spellExperience = 0;
         int receiptExperience = -1;
+        int actionDisabledTicks = 0;
         uint32_t spellRngRaw;
 
         spellRngRaw = F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
@@ -7090,6 +7091,7 @@ cmd_attack_legacy_marker:
                 return 0;
             }
             receiptExperience = receipt.experience;
+            actionDisabledTicks = receipt.disabledTicks;
 
             if (receipt.castResult != DM1_SPELL_CAST_SUCCESS ||
                 !receipt.createsProjectile) {
@@ -7138,6 +7140,7 @@ cmd_attack_legacy_marker:
                 return 0;
             }
             receiptExperience = receipt.experience;
+            actionDisabledTicks = receipt.disabledTicks;
             break;
         }
         case C1_SPELL_KIND_POTION_COMPAT: {
@@ -7161,6 +7164,7 @@ cmd_attack_legacy_marker:
                 return 0;
             }
             receiptExperience = receipt.experience;
+            actionDisabledTicks = receipt.disabledTicks;
             break;
         }
         case C4_SPELL_KIND_MAGIC_MAP_COMPAT:
@@ -7168,6 +7172,7 @@ cmd_attack_legacy_marker:
                 &spell, powerOrd,
                 orch_cmd_cast_spell_has_magic_map_compat(input),
                 champIdx, world->party.direction, &effect);
+            actionDisabledTicks = spell.disabledTicks;
             break;
         default:
             /* Unknown kind — no effect. */
@@ -7225,6 +7230,14 @@ cmd_attack_legacy_marker:
                  EMIT_SPELL_EFFECT_PACK_POWER_SKILL_XP(effect.powerOrdinal,
                                                        spell.skillIndex,
                                                        spellExperience));
+            if (actionDisabledTicks > 0) {
+                /* ReDMCSB: MENU.C F0412 lines 2034-2039 awards spell XP,
+                 * then calls F0330_CHAMPION_DisableAction.  CHAMPION.C
+                 * F0330 lines 2233-2255 stores slot ordinal 0 for spell
+                 * cooldowns; spells do not bind a Graphic560 action index. */
+                emit(result, EMIT_ACTION_DISABLED, champIdx,
+                     actionDisabledTicks, 0xFF, 0);
+            }
         }
 
         return 1;
