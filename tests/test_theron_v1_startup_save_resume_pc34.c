@@ -1459,9 +1459,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootStartupViewModel save_resume_view_model;
     Theron_StartupMediaStateReceipt media_receipt;
     Theron_StartupLayoutElement media_layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
-    Theron_StartupLayoutElement legacy_layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
     Theron_StartupRenderPlan media_plan;
-    Theron_StartupRenderPlan legacy_plan;
     Theron_V1_BootStartupRenderRouteReceipt render_route_receipt;
     Theron_V1_BootStartupHostViewReceipt host_view_receipt;
     Theron_V1_BootStartupGraphicsRouteReceipt graphics_route_receipt;
@@ -1477,8 +1475,6 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupGraphicExecutor media_graphics_executor;
     TestStartupGraphicsCounters media_graphics_counters;
     char media_rows[THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP]
-        [THERON_STARTUP_RENDER_ROW_CAPACITY];
-    char legacy_rows[THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP]
         [THERON_STARTUP_RENDER_ROW_CAPACITY];
     char exit_receipt[128];
     int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
@@ -1643,84 +1639,26 @@ static void test_startup_session_facts_wrappers(void) {
                         THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM &&
                     direct_view_model.runtime_champion_count == 3,
                 "boot runtime-state view model wrapper carries menu save and route receipts");
-    expect_true(theron_v1_boot_startup_layout_build_from_runtime_state(
-                    legacy_layout,
-                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP,
-                    THERON_STARTUP_PHASE_STAGE_SELECT,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_view_model(
+                    &direct_view_model,
                     NULL,
-                    &world,
-                    NULL,
-                    1,
-                    1,
-                    THERON_V1_STARTUP_RESUME_DUAL,
-                    2,
-                    3,
-                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
-                    "/tmp/firestaff-theron-srm",
-                    "SELECT",
-                    NULL,
-                    NULL,
-                    0,
-                    0x03,
-                    2,
-                    order,
-                    THERON_STARTUP_MAX_COMPANIONS) ==
-                    direct_view_model.layout_count &&
-                    legacy_layout[0].kind ==
-                        direct_view_model.layout[0].kind,
-                "boot runtime layout wrapper consumes startup view model");
-    expect_true(theron_v1_boot_startup_render_rows_from_runtime_state(
-                    legacy_rows,
-                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP,
-                    THERON_STARTUP_PHASE_STAGE_SELECT,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
-                    NULL,
-                    &world,
-                    NULL,
-                    1,
-                    1,
-                    THERON_V1_STARTUP_RESUME_DUAL,
-                    2,
-                    3,
-                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
-                    "/tmp/firestaff-theron-srm",
-                    "SELECT",
-                    NULL,
-                    NULL,
-                    0,
-                    0x03,
-                    2,
-                    order,
-                    THERON_STARTUP_MAX_COMPANIONS) ==
-                    direct_view_model.row_count &&
-                    strcmp(legacy_rows[0], direct_view_model.rows[0]) == 0,
-                "boot runtime render-row wrapper consumes startup view model");
-    expect_true(theron_v1_boot_startup_render_plan_from_runtime_state(
-                    &legacy_plan,
-                    THERON_STARTUP_PHASE_STAGE_SELECT,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
-                    NULL,
-                    &world,
-                    NULL,
-                    1,
-                    1,
-                    THERON_V1_STARTUP_RESUME_DUAL,
-                    2,
-                    3,
-                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
-                    "/tmp/firestaff-theron-srm",
-                    "SELECT",
-                    NULL,
-                    NULL,
-                    0,
-                    0x03,
-                    2,
-                    order,
-                    THERON_STARTUP_MAX_COMPANIONS) &&
-                    legacy_plan.text_count ==
-                        direct_view_model.render_plan.text_count,
-                "boot runtime render-plan wrapper consumes startup view model");
+                    &full_start_receipt) &&
+                    theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
+                        &full_start_receipt,
+                        &host_render_receipt) &&
+                    host_render_receipt.layout_count ==
+                        direct_view_model.layout_count &&
+                    host_render_receipt.layout[0].kind ==
+                        direct_view_model.layout[0].kind &&
+                    host_render_receipt.row_count ==
+                        direct_view_model.row_count &&
+                    strcmp(host_render_receipt.rows[0],
+                           direct_view_model.rows[0]) == 0 &&
+                    host_render_receipt.render_plan_valid &&
+                    host_render_receipt.render_plan.text_count ==
+                        direct_view_model.render_plan.text_count &&
+                    host_render_receipt.raw_session_rebuild_required == 0,
+                "boot runtime host-render receipt replaces layout row and render-plan wrappers");
     expect_true(theron_v1_boot_startup_execute_input_from_runtime_state(
                     &legacy_host_receipt,
                     THERON_STARTUP_PHASE_STAGE_SELECT,
@@ -1778,12 +1716,17 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(legacy_host_receipt.host_receipt.status,
                            "CONTINUE FAILED") == 0,
                 "boot runtime pointer host wrapper consumes startup view model");
-    expect_true(theron_v1_boot_startup_render_plan_from_snapshot(
-                    &snapshot,
-                    &legacy_plan) &&
-                    legacy_plan.text_count ==
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_view_model(
+                    &view_model,
+                    NULL,
+                    &full_start_receipt) &&
+                    theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
+                        &full_start_receipt,
+                        &host_render_receipt) &&
+                    host_render_receipt.render_plan_valid &&
+                    host_render_receipt.render_plan.text_count ==
                         view_model.render_plan.text_count,
-                "boot snapshot render-plan wrapper consumes startup view model");
+                "boot snapshot host-render receipt replaces render-plan wrapper");
     expect_true(theron_v1_boot_startup_execute_input_from_snapshot(
                     &snapshot,
                     9,
