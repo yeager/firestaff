@@ -1419,6 +1419,22 @@ int main(void) {
                     "M11 CSB entrance enter button accepts source-locked pointer command");
         expect_true(strcmp(view.lastOutcome, "CSB DOORS") == 0,
                     "M11 CSB entrance enter status consumes CSB command plan");
+        {
+            M11_BootProbeReceipt receipt;
+            expect_true(M11_GameView_GetBootProbeReceipt(&view, &receipt) == 1,
+                        "M11 CSB startup exports a door-opening receipt");
+            expect_true(receipt.startupActive == 1 &&
+                            receipt.startupInputReady == 0 &&
+                            receipt.startupHudMenuReady == 0,
+                        "M11 CSB boot receipt blocks input during door opening");
+            expect_true(M11_GameView_HandlePointerButton(
+                            &view,
+                            250,
+                            188,
+                            M11_DM1_MOUSE_MASK_LEFT) ==
+                            M11_GAME_INPUT_IGNORED,
+                        "M11 CSB door opening consumes CSB input readiness gate");
+        }
         drive_csb_entrance_opening(&view,
                                    "M11 CSB entrance dismisses to dungeon runtime");
         expect_true(view.csbState.startup_entrance_last_command ==
