@@ -2665,6 +2665,48 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff
     return out_handoff->status;
 }
 
+int theron_v1_track02_startup_runtime_receipt_from_handoff(
+    const Theron_Track02StartupSemanticHandoff *handoff,
+    Theron_Track02StartupRuntimeReceipt *out_receipt) {
+
+    const Theron_Track02LevelCandidate *candidate;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->status = THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+        out_receipt->seed_table_status =
+            THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    }
+    if (!handoff || !out_receipt) {
+        return 0;
+    }
+
+    candidate = &handoff->initial_candidate.candidate;
+    out_receipt->status = handoff->status;
+    out_receipt->seed_table_status = handoff->seed_table_status;
+    out_receipt->descriptor_offset = handoff->descriptor_offset;
+    out_receipt->raw_offset = candidate->absolute_offset;
+    out_receipt->byte_count = candidate->byte_count;
+    out_receipt->user_data_offset = handoff->user_data_offset;
+    out_receipt->user_data_offset_valid = handoff->user_data_offset_valid;
+    out_receipt->header_width = candidate->header_width;
+    out_receipt->header_height = candidate->header_height;
+    out_receipt->header_seed = candidate->header_seed;
+    out_receipt->header_level_index = candidate->header_level_index;
+    out_receipt->progression_seed0 =
+        handoff->seed_table_binding.dungeon_seed_table.seeds[0];
+    out_receipt->ready_for_runtime = handoff->ready_for_runtime ? 1 : 0;
+    out_receipt->fallback_visuals_allowed =
+        handoff->ready_for_runtime ? 0 : 1;
+    out_receipt->valid =
+        handoff->status == THERON_TRACK02_LEVEL_HANDOFF_OK &&
+        handoff->seed_table_status == THERON_TRACK02_SEMANTIC_BINDING_OK &&
+        handoff->ready_for_runtime &&
+        handoff->user_data_offset_valid &&
+        candidate->loaded;
+    return out_receipt->valid ? 1 : 0;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
     const uint8_t *track02_data,
     size_t track02_size,

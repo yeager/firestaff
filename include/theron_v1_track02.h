@@ -914,6 +914,24 @@ typedef struct {
     int ready_for_runtime;
 } Theron_Track02StartupSemanticHandoff;
 
+typedef struct {
+    int valid;
+    Theron_Track02LevelHandoffStatus status;
+    Theron_Track02SemanticBindingStatus seed_table_status;
+    size_t descriptor_offset;
+    size_t raw_offset;
+    size_t byte_count;
+    size_t user_data_offset;
+    int user_data_offset_valid;
+    uint16_t header_width;
+    uint16_t header_height;
+    uint32_t header_seed;
+    uint16_t header_level_index;
+    uint32_t progression_seed0;
+    int ready_for_runtime;
+    int fallback_visuals_allowed;
+} Theron_Track02StartupRuntimeReceipt;
+
 /* Compose the bounded Track 02 startup evidence into one runtime-facing
  * handoff summary.
  *
@@ -932,6 +950,10 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff
     const char *md5_hex,
     size_t descriptor_offset,
     Theron_Track02StartupSemanticHandoff *out_handoff);
+
+int theron_v1_track02_startup_runtime_receipt_from_handoff(
+    const Theron_Track02StartupSemanticHandoff *handoff,
+    Theron_Track02StartupRuntimeReceipt *out_receipt);
 
 /* Runtime-facing semantic startup level load.
  *

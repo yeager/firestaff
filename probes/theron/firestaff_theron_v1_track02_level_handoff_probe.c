@@ -474,6 +474,8 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     Theron_Track02LevelHandoffStatus status;
     Theron_Track02StartupSemanticHandoff startup_handoff;
     Theron_Track02StartupSemanticHandoff loaded_semantic_handoff;
+    Theron_Track02StartupRuntimeReceipt startup_receipt;
+    Theron_Track02StartupRuntimeReceipt loaded_startup_receipt;
     Theron_Track02LevelHandoff loaded_level_handoff;
     Theron_V1_Level loaded_level;
     size_t copied_size = 0u;
@@ -572,6 +574,32 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     check_int("synthetic startup semantic seed concepts distinct",
               startup_handoff.startup_seed_in_seed_table,
               0);
+    check_int("synthetic startup semantic runtime receipt",
+              theron_v1_track02_startup_runtime_receipt_from_handoff(
+                  &startup_handoff,
+                  &startup_receipt),
+              1);
+    check_int("synthetic startup semantic receipt valid",
+              startup_receipt.valid,
+              1);
+    check_int("synthetic startup semantic receipt no fallback visuals",
+              startup_receipt.fallback_visuals_allowed,
+              0);
+    check_size("synthetic startup semantic receipt raw offset",
+               startup_receipt.raw_offset,
+               candidate_offset);
+    check_size("synthetic startup semantic receipt user-data offset",
+               startup_receipt.user_data_offset,
+               expected_user_offset);
+    check_u16("synthetic startup semantic receipt width",
+              startup_receipt.header_width,
+              candidate_width);
+    check_u32("synthetic startup semantic receipt header seed",
+              startup_receipt.header_seed,
+              0x0108e938u);
+    check_u32("synthetic startup semantic receipt progression seed0",
+              startup_receipt.progression_seed0,
+              313u);
     status = theron_v1_track02_load_startup_semantic_level(
         track,
         sizeof(track),
@@ -594,6 +622,17 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     check_size("synthetic startup semantic level load user-data offset",
                loaded_semantic_handoff.user_data_offset,
                expected_user_offset);
+    check_int("synthetic startup semantic level load receipt",
+              theron_v1_track02_startup_runtime_receipt_from_handoff(
+                  &loaded_semantic_handoff,
+                  &loaded_startup_receipt),
+              1);
+    check_int("synthetic startup semantic level load receipt ready",
+              loaded_startup_receipt.ready_for_runtime,
+              1);
+    check_int("synthetic startup semantic level load receipt no fallback visuals",
+              loaded_startup_receipt.fallback_visuals_allowed,
+              0);
     check_int("synthetic startup semantic level load map status",
               loaded_level_handoff.map_status,
               THERON_MAP_OK);
