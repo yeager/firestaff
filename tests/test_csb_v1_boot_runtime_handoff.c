@@ -2014,6 +2014,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     const char *resume_path = "/tmp/firestaff-csb-resume.dat";
 
     csb_v1_boot_profile_init(&boot);
+    snprintf(boot.asset_root, sizeof(boot.asset_root), "/tmp");
+    snprintf(boot.graphics_path, sizeof(boot.graphics_path),
+             "/tmp/firestaff_csb_GRAPHICS.DAT");
+    snprintf(boot.dungeon_path, sizeof(boot.dungeon_path),
+             "/tmp/firestaff_csb_DUNGEON.DAT");
+    snprintf(boot.graphics_md5, sizeof(boot.graphics_md5),
+             "61fbfd56887c8bfe85ba4fb306fc2861");
+    snprintf(boot.dungeon_md5, sizeof(boot.dungeon_md5),
+             "6695d2acebce49f95db1d8f3a5c733de");
+    boot.assets_verified = 1;
+    boot.graphics_verified = 1;
+    boot.dungeon_verified = 1;
+    boot.variant_id = CSB_V1_VARIANT_PC34_EN;
+    boot.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     memset(&facts, 0, sizeof(facts));
     facts.boot_profile = &boot;
     facts.utility_overlay_active = 1;
@@ -2152,6 +2166,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_receipt.render_view_valid &&
               capture_receipt.readiness_valid &&
               !capture_receipt.hud_menu_draw_valid &&
+              capture_receipt.real_asset_receipt_valid &&
+              capture_receipt.real_asset_receipt.matched &&
+              strcmp(capture_receipt.real_asset_receipt.graphics_path,
+                     "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
+              strcmp(capture_receipt.real_asset_receipt.dungeon_md5,
+                     "6695d2acebce49f95db1d8f3a5c733de") == 0 &&
+              capture_receipt.real_asset_receipt.receipt_hash != 0u &&
               capture_receipt.title_capture_ready &&
               !capture_receipt.hud_menu_capture_ready &&
               capture_receipt.host_input_blocked &&
@@ -2471,6 +2492,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_receipt.hud_menu_draw.draw_utility_panel &&
               capture_receipt.hud_menu_draw.utility_render_plan_valid,
           "boot startup capture receipt packages utility HUD/menu draw");
+    memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
+    hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
+    CHECK(csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
+              &capture_receipt,
+              &hud_draw_executor) == 1 &&
+              hud_draw_probe.utility_panel_count == 1 &&
+              hud_draw_probe.closed_doors_count == 0 &&
+              hud_draw_probe.fallback_text_count == 0 &&
+              hud_draw_probe.last_waiting_for_input &&
+              hud_draw_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
+          "boot startup capture receipt executes utility HUD/menu draw");
     poisoned_view_receipt = view_receipt;
     poisoned_view_receipt.route_receipt.utility_plan.menu_row_count = 1;
     poisoned_view_receipt.route_receipt.utility_plan.menu_rows[0].selected = 0;
@@ -2675,6 +2708,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_receipt.startup_render_plan.menu_options[0].selected &&
               strstr(hud_draw_receipt.prompt, "PRESS ENTER") != NULL,
           "boot startup HUD/menu draw receipt consumes closed-door render-view receipt");
+    CHECK(csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+              &snapshot,
+              &capture_receipt) == 1 &&
+              capture_receipt.hud_menu_capture_ready &&
+              capture_receipt.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              capture_receipt.hud_menu_draw_valid &&
+              capture_receipt.hud_menu_draw.draw_closed_doors &&
+              capture_receipt.hud_menu_draw.draw_fallback_text &&
+              capture_receipt.real_asset_receipt_valid &&
+              capture_receipt.real_asset_receipt.matched,
+          "boot startup capture receipt packages closed-door HUD/menu draw");
     CHECK(csb_v1_boot_startup_readiness_receipt_from_view_pc34(
               &view_receipt,
               &readiness_receipt) == 1 &&
@@ -2697,6 +2742,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup HUD/menu executor draws closed-door HUD from readiness-gated receipt");
+    memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
+    hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
+    CHECK(csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
+              &capture_receipt,
+              &hud_draw_executor) == 2 &&
+              hud_draw_probe.utility_panel_count == 0 &&
+              hud_draw_probe.closed_doors_count == 1 &&
+              hud_draw_probe.fallback_text_count == 1 &&
+              hud_draw_probe.last_waiting_for_input &&
+              hud_draw_probe.last_menu_option_count == 4 &&
+              hud_draw_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
+          "boot startup capture receipt executes closed-door HUD/menu draw");
     CHECK(csb_v1_boot_startup_render_plan_from_snapshot_pc34(
               &snapshot,
               &snapshot_render_plan) == 1 &&

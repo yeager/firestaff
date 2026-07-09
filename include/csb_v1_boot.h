@@ -395,6 +395,8 @@ typedef struct CSB_V1_BootStartupCaptureReceipt_PC34 {
     CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
     int hud_menu_draw_valid;
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_menu_draw;
+    int real_asset_receipt_valid;
+    CSB_V1_StartupRealReceipt real_asset_receipt;
     int title_capture_ready;
     int hud_menu_capture_ready;
     int runtime_capture_ready;
@@ -734,6 +736,9 @@ int csb_v1_boot_startup_hud_menu_draw_receipt_from_action_pc34(
 int csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
     const CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *draw_receipt,
     const CSB_V1_BootStartupReadinessReceipt_PC34 *readiness_receipt,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor);
+int csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
+    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     const CSB_V1_StartupRenderExecutor_PC34 *executor);
 int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
