@@ -1382,6 +1382,9 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupMediaStateReceipt media_receipt;
     char exit_receipt[128];
     int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
+    int media_prompt_row_found;
+    int media_roster_row_found;
+    int i;
 
     theron_v1_world_init(&world);
     theron_v1_startup_session_facts_from_runtime(
@@ -1470,6 +1473,12 @@ static void test_startup_session_facts_wrappers(void) {
     snprintf(media_receipt.startup_roster_titles[0],
              sizeof(media_receipt.startup_roster_titles[0]),
              "SAVED");
+    snprintf(media_receipt.startup_roster_names[4],
+             sizeof(media_receipt.startup_roster_names[4]),
+             "HAKAR-MEDIA");
+    snprintf(media_receipt.startup_roster_titles[4],
+             sizeof(media_receipt.startup_roster_titles[4]),
+             "THE BRAVE");
     media_receipt.startup_text_prompt_status = THERON_TRACK02_SIGNAL_OK;
     media_receipt.startup_text_prompt_count = 1;
     snprintf(media_receipt.startup_text_prompt,
@@ -1530,7 +1539,7 @@ static void test_startup_session_facts_wrappers(void) {
     expect_true(theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
                     &media_view_model,
                     &media_receipt,
-                    THERON_STARTUP_PHASE_STAGE_SELECT,
+                    THERON_STARTUP_PHASE_READY,
                     THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
                     NULL,
                     &world,
@@ -1542,7 +1551,7 @@ static void test_startup_session_facts_wrappers(void) {
                     3,
                     THERON_V1_SRM_PROGRESS_IMPORT_OK,
                     "/tmp/firestaff-theron-srm",
-                    "SELECT",
+                    NULL,
                     NULL,
                     NULL,
                     0,
@@ -1567,6 +1576,20 @@ static void test_startup_session_facts_wrappers(void) {
                     media_view_model.runtime_level_source ==
                         THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM,
                 "boot runtime-state view model carries Track02 title/menu media receipt");
+    media_prompt_row_found = 0;
+    media_roster_row_found = 0;
+    for (i = 0; i < media_view_model.row_count; ++i) {
+        if (strstr(media_view_model.rows[i],
+                   "RESURRECT THERON") != NULL) {
+            media_prompt_row_found = 1;
+        }
+        if (strstr(media_view_model.rows[i],
+                   "HAKAR-MEDIA") != NULL) {
+            media_roster_row_found = 1;
+        }
+    }
+    expect_true(media_prompt_row_found && media_roster_row_found,
+                "boot startup view model consumes Track02 media receipt for prompt and roster rows");
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;
