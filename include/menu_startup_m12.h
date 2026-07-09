@@ -341,6 +341,7 @@ typedef struct {
     int dm1HoCReceiptOnlyConsumerReady;
     int dm1HoCNoHostFallbackVisualsReady;
     int dm1HoCLowerLevelHelpersReady;
+    int dm1HoCHostDrawRejectsBackingFallbackReady;
     unsigned int expectedStepMask;
     unsigned int readyStepMask;
     unsigned int blockedStepMask;
