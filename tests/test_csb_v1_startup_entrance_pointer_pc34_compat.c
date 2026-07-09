@@ -754,18 +754,18 @@ int main(void)
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-              plan.title_source_x == 136 &&
-              plan.title_source_y == 74 &&
-              plan.title_source_w == 48 &&
-              plan.title_source_h == 12 &&
+              plan.title_source_x == 0 &&
+              plan.title_source_y == 0 &&
+              plan.title_source_w == 320 &&
+              plan.title_source_h == 80 &&
               plan.title_blit_kind ==
                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 &&
               plan.title_transparent_color == -1 &&
               plan.title_empty_fallback_text == NULL &&
-              plan.title_dest_x == 0 &&
-              plan.title_dest_y == 0 &&
-              plan.title_dest_w == 320 &&
-              plan.title_dest_h == 80 &&
+              plan.title_dest_x == 136 &&
+              plan.title_dest_y == 74 &&
+              plan.title_dest_w == 48 &&
+              plan.title_dest_h == 12 &&
               plan.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_TITLE &&
               plan.special_palette ==
@@ -774,9 +774,34 @@ int main(void)
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34 &&
               plan.asset_commands[0].asset_id == 1 &&
-              plan.asset_commands[0].dest_w == 320 &&
-              plan.asset_commands[0].dest_h == 80,
+              plan.asset_commands[0].source_x == 0 &&
+              plan.asset_commands[0].source_y == 0 &&
+              plan.asset_commands[0].source_w == 320 &&
+              plan.asset_commands[0].source_h == 80 &&
+              plan.asset_commands[0].dest_x == 136 &&
+              plan.asset_commands[0].dest_y == 74 &&
+              plan.asset_commands[0].dest_w == 48 &&
+              plan.asset_commands[0].dest_h == 12,
           "startup render plan exposes title CHAOS zoom stage, boxes, palette, and asset blit");
+
+    render_state.title_frame =
+        csb_v1_startup_title_presents_ticks_pc34() +
+        csb_v1_startup_title_chaos_zoom_ticks_pc34() - 1;
+    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+              plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              plan.title_source_x == 0 &&
+              plan.title_source_y == 0 &&
+              plan.title_source_w == 320 &&
+              plan.title_source_h == 80 &&
+              plan.title_dest_x == 0 &&
+              plan.title_dest_y == 40 &&
+              plan.title_dest_w == 320 &&
+              plan.title_dest_h == 80 &&
+              plan.asset_commands[0].source_w == 320 &&
+              plan.asset_commands[0].source_h == 80 &&
+              plan.asset_commands[0].dest_y == 40,
+          "startup render plan grows CSB CHAOS zoom to full centered title");
 
     render_state.title_frame =
         csb_v1_startup_title_total_ticks_pc34() - 1;
