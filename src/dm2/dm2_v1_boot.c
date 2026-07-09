@@ -2001,7 +2001,8 @@ int dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
         out_receipt->full_start_valid &&
         out_receipt->capture_proof_valid &&
         out_receipt->exact_title_timing_ready &&
-        out_receipt->title_menu_decoded_gdat_capture_ready &&
+        (!out_receipt->full_start_real_asset_ready ||
+         out_receipt->title_menu_decoded_gdat_capture_ready) &&
         out_receipt->menu_capture_ready &&
         out_receipt->m11_consumer_ready &&
         out_receipt->packaged_full_start_hash != 0u;
@@ -2418,6 +2419,16 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
         package->hud_raw_gdat_core_hash;
     out_receipt->startup_hud_raw_gdat_core_byte_count =
         package->hud_raw_gdat_core_byte_count;
+    out_receipt->startup_title_menu_decoded_gdat_capture_ready =
+        package->title_menu_decoded_gdat_capture_ready;
+    out_receipt->startup_title_decoded_gdat_hash =
+        package->title_decoded_gdat_hash;
+    out_receipt->startup_title_decoded_gdat_pixel_count =
+        package->title_decoded_gdat_pixel_count;
+    out_receipt->startup_menu_decoded_gdat_hash =
+        package->menu_decoded_gdat_hash;
+    out_receipt->startup_menu_decoded_gdat_pixel_count =
+        package->menu_decoded_gdat_pixel_count;
     out_receipt->startup_draw_ready = draw_ready;
     out_receipt->startup_draw_command_count = package->command_count;
     out_receipt->startup_draw_menu_capture_ready =
@@ -2434,6 +2445,8 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
         package->exact_title_timing_ready;
     out_receipt->packaged_title_timing_consumed =
         package->exact_title_timing_ready &&
+        (!package->full_start_real_asset_ready ||
+         package->title_menu_decoded_gdat_capture_ready) &&
         package->title_frame_duration_ticks > 0 &&
         package->title_cycle_ticks > 0 &&
         package->title_next_frame_tick >
@@ -2553,7 +2566,9 @@ int dm2_v1_boot_startup_host_frame_receipt_from_consumer(
     out_receipt->render_startup_title =
         consumer->startup_active &&
         consumer->startup_draw_ready &&
-        consumer->packaged_title_timing_consumed;
+        consumer->packaged_title_timing_consumed &&
+        (!consumer->full_start_real_asset_ready ||
+         consumer->startup_title_menu_decoded_gdat_capture_ready);
     out_receipt->render_startup_menu =
         consumer->startup_active &&
         consumer->startup_draw_ready &&
@@ -2606,6 +2621,16 @@ int dm2_v1_boot_startup_host_frame_receipt_from_consumer(
         consumer->startup_hud_raw_gdat_core_hash;
     out_receipt->startup_hud_raw_gdat_core_byte_count =
         consumer->startup_hud_raw_gdat_core_byte_count;
+    out_receipt->startup_title_menu_decoded_gdat_capture_ready =
+        consumer->startup_title_menu_decoded_gdat_capture_ready;
+    out_receipt->startup_title_decoded_gdat_hash =
+        consumer->startup_title_decoded_gdat_hash;
+    out_receipt->startup_title_decoded_gdat_pixel_count =
+        consumer->startup_title_decoded_gdat_pixel_count;
+    out_receipt->startup_menu_decoded_gdat_hash =
+        consumer->startup_menu_decoded_gdat_hash;
+    out_receipt->startup_menu_decoded_gdat_pixel_count =
+        consumer->startup_menu_decoded_gdat_pixel_count;
     out_receipt->runtime_menu_ready = consumer->runtime_menu_ready;
     out_receipt->runtime_action_ready = consumer->runtime_action_ready;
     out_receipt->first_hud_frame_ready = consumer->first_hud_frame_ready;
@@ -2723,6 +2748,16 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
     out_receipt->suppress_game_hud = host_frame.suppress_game_hud;
     out_receipt->startup_hud_raw_gdat_receipt_consumed =
         host_frame.startup_hud_raw_gdat_capture_ready;
+    out_receipt->startup_title_menu_decoded_gdat_receipt_consumed =
+        host_frame.startup_title_menu_decoded_gdat_capture_ready;
+    out_receipt->startup_title_decoded_gdat_hash =
+        host_frame.startup_title_decoded_gdat_hash;
+    out_receipt->startup_title_decoded_gdat_pixel_count =
+        host_frame.startup_title_decoded_gdat_pixel_count;
+    out_receipt->startup_menu_decoded_gdat_hash =
+        host_frame.startup_menu_decoded_gdat_hash;
+    out_receipt->startup_menu_decoded_gdat_pixel_count =
+        host_frame.startup_menu_decoded_gdat_pixel_count;
     out_receipt->present_first_hud_frame =
         host_frame.present_first_hud_frame;
     out_receipt->schedule_next_title_tick =
@@ -2832,7 +2867,8 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         package.menu_capture_ready &&
         package.hud_handoff_capture_ready &&
         (!package.full_start_real_asset_ready ||
-         out_receipt->startup_hud_raw_gdat_receipt_consumed) &&
+         (out_receipt->startup_hud_raw_gdat_receipt_consumed &&
+          out_receipt->startup_title_menu_decoded_gdat_receipt_consumed)) &&
         out_receipt->executed_rect_count >= 2 &&
         out_receipt->executed_text_count >= package.menu_row_count &&
         out_receipt->suppress_game_hud;
@@ -2858,7 +2894,8 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         out_receipt->executed_text_count > 0 &&
         out_receipt->suppress_game_hud &&
         (!package.full_start_real_asset_ready ||
-         out_receipt->startup_hud_raw_gdat_receipt_consumed) &&
+         (out_receipt->startup_hud_raw_gdat_receipt_consumed &&
+          out_receipt->startup_title_menu_decoded_gdat_receipt_consumed)) &&
         out_receipt->schedule_next_title_tick &&
         !out_receipt->fallback_title_blit_used &&
         (!out_receipt->title_gdat_asset_required ||
