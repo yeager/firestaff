@@ -2137,6 +2137,7 @@ int dm2_v1_viewport_item_asset_blit(
     blit.transparent_color = DM2_COLOR_TRANSPARENT;
     blit.flip_mirror = render->flip_mirror;
     blit.render_frame = render_frame;
+    blit.draw_order = render->item_index;
     *out_blit = blit;
     return frame_w > 0 && dst_w > 0 && dst_h > 0;
 }
@@ -3171,6 +3172,16 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
         const DM2_V1_ItemRender *it = &plan.items[i];
         int drawn_asset = 0;
 
+        s->last_item_render_valid = 1;
+        s->last_item_asset_blit_valid = 0;
+        s->last_item_source_kind = 1;
+        s->last_item_draw_order = i;
+        s->last_item_render = *it;
+        memset(&s->last_item_asset_blit, 0, sizeof(s->last_item_asset_blit));
+        s->last_item_asset_src_w = 0;
+        s->last_item_asset_src_h = 0;
+        s->last_item_asset_src_stride = 0;
+
         {
             const uint8_t *pixels = NULL;
             int src_w = 0;
@@ -3204,6 +3215,13 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                         blit.transparent_color,
                         blit.flip_mirror);
                     ++s->asset_item_drawn_count;
+                    s->last_item_asset_blit_valid = 1;
+                    s->last_item_asset_blit = blit;
+                    s->last_item_asset_blit.draw_order = i;
+                    s->last_item_asset_src_w = src_w;
+                    s->last_item_asset_src_h = src_h;
+                    s->last_item_asset_src_stride =
+                        src_stride > 0 ? src_stride : src_w;
                     drawn_asset = 1;
                 }
             }
@@ -3249,6 +3267,16 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
         const DM2_V1_ItemRender *it = &plan.items[i];
         int drawn_asset = 0;
 
+        s->last_item_render_valid = 1;
+        s->last_item_asset_blit_valid = 0;
+        s->last_item_source_kind = 2;
+        s->last_item_draw_order = i;
+        s->last_item_render = *it;
+        memset(&s->last_item_asset_blit, 0, sizeof(s->last_item_asset_blit));
+        s->last_item_asset_src_w = 0;
+        s->last_item_asset_src_h = 0;
+        s->last_item_asset_src_stride = 0;
+
         {
             const uint8_t *pixels = NULL;
             int src_w = 0;
@@ -3282,6 +3310,13 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                         blit.transparent_color,
                         blit.flip_mirror);
                     ++s->asset_creature_possession_item_drawn_count;
+                    s->last_item_asset_blit_valid = 1;
+                    s->last_item_asset_blit = blit;
+                    s->last_item_asset_blit.draw_order = i;
+                    s->last_item_asset_src_w = src_w;
+                    s->last_item_asset_src_h = src_h;
+                    s->last_item_asset_src_stride =
+                        src_stride > 0 ? src_stride : src_w;
                     drawn_asset = 1;
                 }
             }
@@ -3330,6 +3365,15 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
     it = &plan.item;
     vp = s->framebuffer;
     stride = s->fb_stride;
+    s->last_item_render_valid = 1;
+    s->last_item_asset_blit_valid = 0;
+    s->last_item_source_kind = 3;
+    s->last_item_draw_order = 0;
+    s->last_item_render = *it;
+    memset(&s->last_item_asset_blit, 0, sizeof(s->last_item_asset_blit));
+    s->last_item_asset_src_w = 0;
+    s->last_item_asset_src_h = 0;
+    s->last_item_asset_src_stride = 0;
 
     {
         const uint8_t *pixels = NULL;
@@ -3364,6 +3408,13 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
                     blit.transparent_color,
                     blit.flip_mirror);
                 ++s->asset_carried_item_drawn_count;
+                s->last_item_asset_blit_valid = 1;
+                s->last_item_asset_blit = blit;
+                s->last_item_asset_blit.draw_order = 0;
+                s->last_item_asset_src_w = src_w;
+                s->last_item_asset_src_h = src_h;
+                s->last_item_asset_src_stride =
+                    src_stride > 0 ? src_stride : src_w;
                 drawn_asset = 1;
             }
         }
@@ -3676,6 +3727,15 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->fallback_creature_possession_item_drawn_count = 0;
     s->asset_carried_item_drawn_count = 0;
     s->fallback_carried_item_drawn_count = 0;
+    s->last_item_render_valid = 0;
+    s->last_item_asset_blit_valid = 0;
+    s->last_item_source_kind = 0;
+    s->last_item_draw_order = -1;
+    s->last_item_asset_src_w = 0;
+    s->last_item_asset_src_h = 0;
+    s->last_item_asset_src_stride = 0;
+    memset(&s->last_item_render, 0, sizeof(s->last_item_render));
+    memset(&s->last_item_asset_blit, 0, sizeof(s->last_item_asset_blit));
     s->asset_projectile_drawn_count = 0;
     s->fallback_projectile_drawn_count = 0;
     s->asset_hud_portrait_drawn_count = 0;

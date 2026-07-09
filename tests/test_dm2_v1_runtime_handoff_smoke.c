@@ -741,6 +741,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
     {
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
+        DM2_V1_RuntimeItemRenderReceipt item_receipt;
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
@@ -763,6 +764,26 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(dm2_v1_runtime_last_asset_carried_item_count() == 1 &&
               dm2_v1_runtime_last_fallback_carried_item_count() == 0,
               "runtime records asset-backed carried leader-hand item draw");
+        CHECK(dm2_v1_runtime_last_item_render_receipt(&item_receipt) == 1 &&
+              item_receipt.source_kind == 3 &&
+              item_receipt.item_category == 0x15 &&
+              item_receipt.item_type == 0x55 &&
+              item_receipt.gdat_index ==
+                  dm2_v1_viewport_item_graphic_index(0x15, 0x55, 0) &&
+              item_receipt.draw_order == 0 &&
+              item_receipt.asset_blit_ready == 1 &&
+              item_receipt.fallback_drawn == 0 &&
+              item_receipt.asset_src_w == 16 &&
+              item_receipt.asset_src_h == 8 &&
+              item_receipt.asset_frame_count == 2 &&
+              item_receipt.render_frame == 0 &&
+              item_receipt.atlas_frame_w == 8 &&
+              item_receipt.atlas_frame_h == 8 &&
+              item_receipt.asset_dst_rect.x == 296 &&
+              item_receipt.asset_dst_rect.y == 180 &&
+              item_receipt.asset_dst_rect.w == 8 &&
+              item_receipt.asset_dst_rect.h == 8,
+              "runtime carried-item receipt exposes GDAT item map-chip blit");
         dm2_v1_runtime_set_leader_hand_object(0u);
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
     }
@@ -878,6 +899,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
         DM2_V1_RuntimeCreatureRenderReceipt receipt;
+        DM2_V1_RuntimeItemRenderReceipt item_receipt;
 
         CHECK(fixture_size > 0 && replacement != NULL,
               "runtime creature-possession fixture allocates");
@@ -931,6 +953,20 @@ static void test_first_tick_after_boot_profile_handoff(void)
             CHECK(dm2_v1_runtime_last_asset_creature_possession_item_count() == 2 &&
                   dm2_v1_runtime_last_fallback_creature_possession_item_count() == 0,
                   "runtime records asset-backed creature possession item draws");
+            CHECK(dm2_v1_runtime_last_item_render_receipt(&item_receipt) == 1 &&
+                  item_receipt.source_kind == 2 &&
+                  item_receipt.draw_order == 1 &&
+                  item_receipt.frame_index == 0 &&
+                  item_receipt.asset_blit_ready == 1 &&
+                  item_receipt.fallback_drawn == 0 &&
+                  item_receipt.asset_src_w == 16 &&
+                  item_receipt.asset_src_h == 8 &&
+                  item_receipt.asset_frame_count == 2 &&
+                  item_receipt.atlas_frame_w == 8 &&
+                  item_receipt.atlas_frame_h == 8 &&
+                  item_receipt.asset_dst_rect.w > 0 &&
+                  item_receipt.asset_dst_rect.h > 0,
+                  "runtime creature-possession receipt exposes final item map-chip blit");
             dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
         } else {
             CHECK(0, "runtime creature-possession fixture loads");

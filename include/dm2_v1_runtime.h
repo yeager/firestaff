@@ -139,6 +139,36 @@ int dm2_v1_runtime_last_door_render_receipt(
     DM2_V1_RuntimeDoorRenderReceipt *out_receipt);
 int dm2_v1_runtime_last_asset_carried_item_count(void);
 int dm2_v1_runtime_last_fallback_carried_item_count(void);
+typedef struct DM2_V1_RuntimeItemRenderReceipt {
+    int valid;
+    int source_kind;       /* 1=floor item, 2=creature possession, 3=carried */
+    int item_index;
+    int item_category;
+    int item_type;
+    int frame_index;
+    int render_frame;
+    int direction;
+    int depth;
+    int center_x;
+    int center_y;
+    int gdat_index;
+    int draw_order;
+    int flip_mirror;
+    int asset_blit_ready;
+    int fallback_drawn;
+    int asset_src_w;
+    int asset_src_h;
+    int asset_src_stride;
+    int asset_frame_count;
+    int atlas_frame_x;
+    int atlas_frame_y;
+    int atlas_frame_w;
+    int atlas_frame_h;
+    DM2_V1_ViewportRect asset_dst_rect;
+    int fallback_radius;
+} DM2_V1_RuntimeItemRenderReceipt;
+int dm2_v1_runtime_last_item_render_receipt(
+    DM2_V1_RuntimeItemRenderReceipt *out_receipt);
 typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int valid;
     int instance_id;

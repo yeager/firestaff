@@ -100,6 +100,7 @@ static DM2_V1_RuntimeDoorRenderReceipt g_dm2_last_door_render;
 static int g_dm2_last_asset_creature_count = 0;
 static int g_dm2_last_fallback_creature_count = 0;
 static DM2_V1_RuntimeCreatureRenderReceipt g_dm2_last_creature_render;
+static DM2_V1_RuntimeItemRenderReceipt g_dm2_last_item_render;
 static int g_dm2_last_asset_creature_possession_item_count = 0;
 static int g_dm2_last_fallback_creature_possession_item_count = 0;
 static int g_dm2_last_asset_carried_item_count = 0;
@@ -1153,6 +1154,62 @@ static void dm2_runtime_finish_creature_render_receipt(
     g_dm2_last_creature_render.asset_dst_rect = blit->dst_rect;
 }
 
+static void dm2_runtime_finish_item_render_receipt(
+    const DM2_V1_ViewportState *viewport)
+{
+    const DM2_V1_ItemRender *render;
+    const DM2_V1_ItemAssetBlit *blit;
+
+    memset(&g_dm2_last_item_render, 0, sizeof(g_dm2_last_item_render));
+    if (!viewport || !viewport->last_item_render_valid) {
+        return;
+    }
+
+    render = &viewport->last_item_render;
+    g_dm2_last_item_render.valid = 1;
+    g_dm2_last_item_render.source_kind = viewport->last_item_source_kind;
+    g_dm2_last_item_render.item_index = render->item_index;
+    g_dm2_last_item_render.item_category = render->item_category;
+    g_dm2_last_item_render.item_type = render->item_type;
+    g_dm2_last_item_render.frame_index = render->frame_index;
+    g_dm2_last_item_render.direction = render->direction;
+    g_dm2_last_item_render.depth = render->depth;
+    g_dm2_last_item_render.center_x = render->center_x;
+    g_dm2_last_item_render.center_y = render->center_y;
+    g_dm2_last_item_render.gdat_index = render->gdat_index;
+    g_dm2_last_item_render.draw_order = viewport->last_item_draw_order;
+    g_dm2_last_item_render.flip_mirror = render->flip_mirror;
+    g_dm2_last_item_render.fallback_radius = render->fallback_radius;
+
+    if (!viewport->last_item_asset_blit_valid ||
+        viewport->last_item_asset_blit.draw_order !=
+            viewport->last_item_draw_order) {
+        /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP consumes item,
+         * carried-item and creature-possession map chips through the same
+         * QUERY_DUNGEON_MAP_CHIP_PICT path. This receipt keeps that final
+         * renderer decision DM2-owned, including fallback. */
+        g_dm2_last_item_render.fallback_drawn = 1;
+        return;
+    }
+
+    blit = &viewport->last_item_asset_blit;
+    g_dm2_last_item_render.asset_blit_ready = 1;
+    g_dm2_last_item_render.asset_src_w = viewport->last_item_asset_src_w;
+    g_dm2_last_item_render.asset_src_h = viewport->last_item_asset_src_h;
+    g_dm2_last_item_render.asset_src_stride =
+        viewport->last_item_asset_src_stride;
+    g_dm2_last_item_render.asset_frame_count =
+        dm2_v1_viewport_map_chip_frame_count(
+            viewport->last_item_asset_src_w,
+            viewport->last_item_asset_src_h);
+    g_dm2_last_item_render.render_frame = blit->render_frame;
+    g_dm2_last_item_render.atlas_frame_x = blit->frame_x;
+    g_dm2_last_item_render.atlas_frame_y = blit->frame_y;
+    g_dm2_last_item_render.atlas_frame_w = blit->frame_w;
+    g_dm2_last_item_render.atlas_frame_h = blit->frame_h;
+    g_dm2_last_item_render.asset_dst_rect = blit->dst_rect;
+}
+
 static void dm2_runtime_populate_active_creature_instances(
     const DM2_V1_RuntimeState *rt,
     DM2_V1_ViewportState *viewport,
@@ -1577,6 +1634,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     }
 
     memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
+    memset(&g_dm2_last_item_render, 0, sizeof(g_dm2_last_item_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
     dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
     dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
@@ -1606,6 +1664,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_render(&viewport);
     dm2_runtime_finish_door_render_receipt(&viewport);
     dm2_runtime_finish_creature_render_receipt(&viewport);
+    dm2_runtime_finish_item_render_receipt(&viewport);
     g_dm2_last_asset_floor_ceiling_count =
         viewport.asset_floor_ceiling_drawn_count;
     g_dm2_last_fallback_floor_ceiling_count =
@@ -1720,6 +1779,16 @@ int dm2_v1_runtime_last_asset_carried_item_count(void) {
 
 int dm2_v1_runtime_last_fallback_carried_item_count(void) {
     return g_dm2_last_fallback_carried_item_count;
+}
+
+int dm2_v1_runtime_last_item_render_receipt(
+    DM2_V1_RuntimeItemRenderReceipt *out_receipt) {
+    if (!out_receipt || !g_dm2_last_item_render.valid) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    *out_receipt = g_dm2_last_item_render;
+    return 1;
 }
 
 int dm2_v1_runtime_last_creature_render_receipt(
