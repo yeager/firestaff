@@ -86,6 +86,18 @@ int ENTRANCE_Compat_HitTestMouseRoute(int screenX,
     return 0;
 }
 
+int ENTRANCE_Compat_DispatchMouseRouteCommand(int screenX,
+                                              int screenY,
+                                              unsigned int buttonMask)
+{
+    EntranceMouseRouteCompat route;
+    if (!ENTRANCE_Compat_HitTestMouseRoute(screenX, screenY, buttonMask,
+                                           &route)) {
+        return 0;
+    }
+    return (int)route.commandId;
+}
+
 const char *ENTRANCE_Compat_GetMouseRouteEvidence(void)
 {
     return "test stub";

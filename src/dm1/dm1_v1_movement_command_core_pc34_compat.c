@@ -56,7 +56,11 @@ static void dm1_v1_apply_party_turn_receipt(
     outReceipt->oldDirection = oldDirection;
     outReceipt->newDirection = newDirection;
     outReceipt->delta = delta;
+    outReceipt->quarterTurnSteps = 1;
+    outReceipt->animationFrames = 1;
+    outReceipt->intermediateFrames = 0;
     outReceipt->stopWaitingForPlayerInput = 1;
+    outReceipt->redrawOnNextGameLoop = 1;
     outReceipt->wallBlockCheck = 0;
     outReceipt->highlightLeft = (command == DM1_V1_COMMAND_TURN_LEFT);
     outReceipt->highlightRight = (command == DM1_V1_COMMAND_TURN_RIGHT);

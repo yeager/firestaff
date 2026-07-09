@@ -37,7 +37,11 @@ struct Dm1V1MovementTurnReceiptPc34Compat {
     int oldDirection;
     int newDirection;
     int delta;
+    int quarterTurnSteps;
+    int animationFrames;
+    int intermediateFrames;
     int stopWaitingForPlayerInput;
+    int redrawOnNextGameLoop;
     int wallBlockCheck;
     int highlightLeft;
     int highlightRight;

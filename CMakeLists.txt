@@ -6069,6 +6069,9 @@ if(BUILD_TESTING)
         src/csb/csb_v1_startup_entrance_pointer_pc34_compat.c
         src/csb/csb_v1_startup_sequence_pc34_compat.c
         src/dm1/dm1_v1_startup_sequence_pc34_compat.c
+        src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
+        src/frontend/entrance_frontend_pc34_compat.c
+        src/frontend/swsh_frontend_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
@@ -15955,6 +15958,10 @@ if(NOT TARGET test_dm1_v1_skill_levelup_formula_gate_pc34_compat)
         src/dm1/dm1_v1_skill_experience_pc34_compat.c
         src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_damage_factor_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_stamina_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_defense_pc34_compat.c
         src/dm1/dm1_v1_g0497_pc34_compat.c
     )
     if(NOT MSVC)
@@ -17408,6 +17415,10 @@ if(BUILD_TESTING)
     add_executable(firestaff_v1_dm_title_palette_regression_probe
         probes/v1/firestaff_v1_dm_title_palette_regression_probe.c
         src/dm1/dm1_v1_startup_sequence_pc34_compat.c
+        src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
+        src/frontend/entrance_frontend_pc34_compat.c
+        src/frontend/entrance_mouse_routes_pc34_compat.c
+        src/frontend/swsh_frontend_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
         src/shared/vga_palette_pc34_compat.c
@@ -17601,6 +17612,10 @@ if(BUILD_TESTING)
     add_executable(test_title_frontend_runtime_cadence_pc34_compat
         tests/test_title_frontend_runtime_cadence_pc34_compat.c
         src/dm1/dm1_v1_startup_sequence_pc34_compat.c
+        src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
+        src/frontend/entrance_frontend_pc34_compat.c
+        src/frontend/entrance_mouse_routes_pc34_compat.c
+        src/frontend/swsh_frontend_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
@@ -17614,6 +17629,10 @@ if(BUILD_TESTING)
     add_executable(test_title_frontend_c001_fallback_gate_pc34_compat
         tests/test_title_frontend_c001_fallback_gate_pc34_compat.c
         src/dm1/dm1_v1_startup_sequence_pc34_compat.c
+        src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
+        src/frontend/entrance_frontend_pc34_compat.c
+        src/frontend/entrance_mouse_routes_pc34_compat.c
+        src/frontend/swsh_frontend_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
@@ -17647,6 +17666,10 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_intro_skip_state_cleanup_pc34_compat
         tests/test_dm1_v1_intro_skip_state_cleanup_pc34_compat.c
         src/dm1/dm1_v1_startup_sequence_pc34_compat.c
+        src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
+        src/frontend/entrance_frontend_pc34_compat.c
+        src/frontend/entrance_mouse_routes_pc34_compat.c
+        src/frontend/swsh_frontend_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
         src/dm1/dm1_v1_title_screen_pc34_compat.c
@@ -18111,6 +18134,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_csbgraphics_dat_classify.c
         src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
+        src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/shared/asset_find_by_hash.c
@@ -18150,6 +18174,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_csbgraphics_dat_classify.c
         src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
+        src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/shared/asset_find_by_hash.c

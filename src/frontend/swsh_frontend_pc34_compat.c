@@ -1,6 +1,3 @@
-#ifndef COMPILE_H
-#include "COMPILE.H"
-#endif
 #include "swsh_frontend_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
@@ -161,9 +158,8 @@ static int swsh_expand_logo_to_bitmap_bounded(const unsigned char* graphic,
         return 1;
 }
 
-void SWSH_Compat_ExpandLogoToBitmap(
-const unsigned char* graphic SEPARATOR
-unsigned char*       bitmap FINAL_SEPARATOR
+void SWSH_Compat_ExpandLogoToBitmap(const unsigned char* graphic,
+                                     unsigned char* bitmap)
 {
         (void)swsh_expand_logo_to_bitmap_bounded(graphic, 65536u, bitmap, 0);
 }
