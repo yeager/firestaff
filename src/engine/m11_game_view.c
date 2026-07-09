@@ -11271,6 +11271,10 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
 #else
         0;
 #endif
+    facts.captured_from_release_app =
+        state && state->startedFromLauncher &&
+        !state->dm1StartupIntroBypassed &&
+        host_window_present;
     facts.observed_c026_portrait_asset =
         portraits && portraits->loaded && portraits->pixels ? 1 : 0;
     facts.observed_c346_mirror_backing_asset =
@@ -11531,6 +11535,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_consumer.real_asset_capture;
             out->dm1HoCMacWindowCapture =
                 hoc_consumer.mac_window_capture;
+            out->dm1HoCReleaseAppCapture =
+                hoc_consumer.release_app_capture;
             out->dm1HoCHostCaptureRouteMatches =
                 hoc_consumer.host_capture_route_matches;
             out->dm1HoCHoCAssetCapture =
@@ -20639,7 +20645,9 @@ static int m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
 }
 
 static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
+    const M11_GameViewState* state,
     const DM1_V1_StartupHoCRenderConsumerReceipt_PC34* renderReceipt,
+    const DM1_V1_ChampionMirrorRenderReceiptPc34* mirrorReceipt,
     DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34* outReceipt) {
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
     DM1_V1_StartupHandoffOutcome_PC34 outcome;
@@ -20652,7 +20660,12 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 suppression;
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 production;
 
-    if (!renderReceipt || !outReceipt) {
+    const M11_AssetSlot* portraits;
+    const M11_AssetSlot* backing;
+    int hoc_assets_ready;
+    int host_window_present;
+
+    if (!renderReceipt || !mirrorReceipt || !outReceipt) {
         return 0;
     }
     memset(outReceipt, 0, sizeof(*outReceipt));
@@ -20662,6 +20675,25 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     if (!renderReceipt->handled) {
         return 1;
     }
+    portraits = NULL;
+    backing = NULL;
+    hoc_assets_ready = 0;
+    host_window_present = 0;
+    if (state && state->assetsAvailable && state->assetLoader.fileState &&
+        mirrorReceipt->valid && mirrorReceipt->drawChampionPortrait) {
+        portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                         (unsigned int)mirrorReceipt->graphicIndex);
+        backing = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                       (unsigned int)mirrorReceipt->backingGraphicIndex);
+        hoc_assets_ready =
+            portraits && portraits->loaded && portraits->pixels &&
+            backing && backing->loaded && backing->pixels;
+    }
+#ifdef __APPLE__
+    host_window_present = M11_Render_GetWindow() != NULL;
+#else
+    host_window_present = 0;
+#endif
 
     if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
         !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
@@ -20675,6 +20707,17 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
 
     memset(&captureFacts, 0, sizeof(captureFacts));
     captureFacts.captured_after_first_frame_render = 1;
+    captureFacts.captured_from_real_assets = hoc_assets_ready;
+    captureFacts.captured_from_mac_window = host_window_present;
+    captureFacts.captured_from_release_app =
+        state && state->startedFromLauncher &&
+        !state->dm1StartupIntroBypassed &&
+        host_window_present;
+    captureFacts.observed_c026_portrait_asset =
+        portraits && portraits->loaded && portraits->pixels;
+    captureFacts.observed_c346_mirror_backing_asset =
+        backing && backing->loaded && backing->pixels;
+    captureFacts.observed_host_window_present = host_window_present;
     captureFacts.captured_map_index = renderReceipt->map_index;
     captureFacts.captured_map_width =
         productionStart.packaged_proof.expected_map_width;
@@ -20841,7 +20884,7 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         if (!m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
                 &mirrorCell, &receipt, &consumer) ||
             !m11_build_dm1_hoc_full_graphics_ownership_receipt(
-                &consumer, &ownership) ||
+                state, &consumer, &receipt, &ownership) ||
             !ownership.ready ||
             !ownership.consume_dm1_receipts_only ||
             !ownership.draw_champion_mirror_wall_overlay ||
@@ -29083,6 +29126,7 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     captureFacts.captured_after_first_frame_render = 1;
     captureFacts.captured_from_real_assets = 1;
     captureFacts.captured_from_mac_window = 1;
+    captureFacts.captured_from_release_app = 1;
     captureFacts.observed_c026_portrait_asset = 1;
     captureFacts.observed_c346_mirror_backing_asset = 1;
     captureFacts.observed_host_window_present = 1;
@@ -38831,18 +38875,21 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                startup_visual_receipt.status);
             }
         }
-        m11_draw_dm2_shop_panel(state, framebuffer,
-                                framebufferWidth, framebufferHeight);
-        if (state->inventoryPanelActive) {
-            m11_draw_inventory_panel(state, framebuffer,
-                                     framebufferWidth, framebufferHeight);
+        if (!startup_menu_drawn ||
+            !startup_visual_receipt.suppress_game_hud) {
+            m11_draw_dm2_shop_panel(state, framebuffer,
+                                    framebufferWidth, framebufferHeight);
+            if (state->inventoryPanelActive) {
+                m11_draw_inventory_panel(state, framebuffer,
+                                         framebufferWidth, framebufferHeight);
+            }
+            m11_draw_v1_leader_hand_object_name(state, framebuffer,
+                                                framebufferWidth,
+                                                framebufferHeight);
+            m11_draw_dm2_leader_hand_object_icon(state, framebuffer,
+                                                 framebufferWidth,
+                                                 framebufferHeight);
         }
-        m11_draw_v1_leader_hand_object_name(state, framebuffer,
-                                            framebufferWidth,
-                                            framebufferHeight);
-        m11_draw_dm2_leader_hand_object_icon(state, framebuffer,
-                                             framebufferWidth,
-                                             framebufferHeight);
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                             framebufferHeight);
         g_drawState = NULL;

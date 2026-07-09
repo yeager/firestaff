@@ -2153,7 +2153,7 @@ static void m11_phase_a_print_boot_probe_receipt(
         return;
     }
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCHostCaptureRouteMatches=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCHostCaptureRouteMatches=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -2188,6 +2188,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             receipt.dm1HoCNoHostFallbackVisuals,
             receipt.dm1HoCRealAssetCapture,
             receipt.dm1HoCMacWindowCapture,
+            receipt.dm1HoCReleaseAppCapture,
             receipt.dm1HoCHostCaptureRouteMatches,
             receipt.dm1HoCHoCAssetCapture,
             receipt.dm1HoCHostWindowCapture,

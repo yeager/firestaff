@@ -1419,6 +1419,8 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
     receipt.consumed_capture_facts = 1;
     receipt.real_asset_capture = facts->captured_from_real_assets ? 1 : 0;
     receipt.mac_window_capture = facts->captured_from_mac_window ? 1 : 0;
+    receipt.release_app_capture =
+        facts->captured_from_release_app ? 1 : 0;
     receipt.redmcsb_c026_asset_present =
         facts->observed_c026_portrait_asset ? 1 : 0;
     receipt.redmcsb_c346_asset_present =
@@ -1457,7 +1459,9 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         facts->captured_hoc_render_command_count ==
         artifact->expected_hoc_render_command_count;
     receipt.host_capture_route_matches =
-        receipt.hoc_asset_capture && receipt.host_window_capture;
+        receipt.hoc_asset_capture &&
+        receipt.host_window_capture &&
+        receipt.release_app_capture;
     receipt.stale_title_absent =
         artifact->title_surface_forbidden && !facts->saw_title_surface;
     receipt.stale_door_absent =
@@ -1483,6 +1487,7 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.command_count_matches &&
         receipt.hoc_asset_capture &&
         receipt.host_window_capture &&
+        receipt.release_app_capture &&
         receipt.stale_title_absent &&
         receipt.stale_door_absent &&
         receipt.host_fallback_absent &&
@@ -1513,6 +1518,7 @@ int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
     receipt.require_proof_passed = 1;
     receipt.real_asset_capture = proof->real_asset_capture;
     receipt.mac_window_capture = proof->mac_window_capture;
+    receipt.release_app_capture = proof->release_app_capture;
     receipt.host_capture_route_matches = proof->host_capture_route_matches;
     receipt.hoc_asset_capture = proof->hoc_asset_capture;
     receipt.host_window_capture = proof->host_window_capture;
@@ -1664,6 +1670,7 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.consumed_thing_suppression_receipt = 1;
     receipt.real_asset_capture = apply->real_asset_capture;
     receipt.mac_window_capture = apply->mac_window_capture;
+    receipt.release_app_capture = apply->release_app_capture;
     receipt.host_capture_route_matches = apply->host_capture_route_matches;
     receipt.hoc_asset_capture = apply->hoc_asset_capture;
     receipt.host_window_capture = apply->host_window_capture;
@@ -1695,6 +1702,7 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.consume_dm1_receipts_only = 1;
     receipt.real_asset_capture = apply->real_asset_capture;
     receipt.mac_window_capture = apply->mac_window_capture;
+    receipt.release_app_capture = apply->release_app_capture;
     receipt.host_capture_route_matches = apply->host_capture_route_matches;
     receipt.hoc_asset_capture = apply->hoc_asset_capture;
     receipt.host_window_capture = apply->host_window_capture;
@@ -1815,6 +1823,8 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
         facts->captured_from_real_assets;
     capture_facts.captured_from_mac_window =
         facts->captured_from_mac_window;
+    capture_facts.captured_from_release_app =
+        facts->captured_from_release_app;
     capture_facts.observed_c026_portrait_asset =
         facts->observed_c026_portrait_asset;
     capture_facts.observed_c346_mirror_backing_asset =

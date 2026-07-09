@@ -320,6 +320,7 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 {
     int captured_after_first_frame_render;
     int captured_from_real_assets;
     int captured_from_mac_window;
+    int captured_from_release_app;
     int observed_c026_portrait_asset;
     int observed_c346_mirror_backing_asset;
     int observed_host_window_present;
@@ -346,6 +347,7 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int consumed_capture_facts;
     int real_asset_capture;
     int mac_window_capture;
+    int release_app_capture;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int host_window_capture;
@@ -372,6 +374,7 @@ typedef struct DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 {
     int require_proof_passed;
     int real_asset_capture;
     int mac_window_capture;
+    int release_app_capture;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int host_window_capture;
@@ -440,6 +443,7 @@ typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
     int consume_dm1_receipts_only;
     int real_asset_capture;
     int mac_window_capture;
+    int release_app_capture;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int host_window_capture;
@@ -481,6 +485,7 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int captured_after_first_frame_render;
     int captured_from_real_assets;
     int captured_from_mac_window;
+    int captured_from_release_app;
     int observed_c026_portrait_asset;
     int observed_c346_mirror_backing_asset;
     int observed_host_window_present;
