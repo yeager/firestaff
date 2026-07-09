@@ -124,7 +124,13 @@ int main(void) {
                         boot.dm1HoCReceiptOnlyConsumerReady == 1 &&
                         boot.dm1HoCNoHostFallbackVisualsReady == 1 &&
                         boot.dm1HoCLowerLevelHelpersReady == 1 &&
-                        boot.dm1HoCHostDrawRejectsBackingFallbackReady == 1,
+                        boot.dm1HoCHostDrawRejectsBackingFallbackReady == 1 &&
+                        boot.dm1HoCHoCAssetCaptureReady == 1 &&
+                        boot.dm1HoCHostWindowCaptureReady == 1 &&
+                        boot.dm1HoCOpenedEntranceFrameReady == 1 &&
+                        boot.dm1HoCHallMirrorOverlayReady == 1 &&
+                        boot.dm1HoCBlockedEnterUntilChampionReady == 1 &&
+                        boot.dm1HoCRenderCommandCount == 3,
                         "DM1 M12 boot readiness should consume HoC release/app capture ownership receipt")) return 1;
         }
         if (!expect(boot.expectedStepMask == fullMask,

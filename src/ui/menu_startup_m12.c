@@ -6870,6 +6870,15 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         ownership.lower_level_audio_helper_owned;
     receipt->dm1HoCHostDrawRejectsBackingFallbackReady =
         m12_dm1_hoc_host_draw_rejects_backing_fallback();
+    receipt->dm1HoCHoCAssetCaptureReady = ownership.hoc_asset_capture;
+    receipt->dm1HoCHostWindowCaptureReady = ownership.host_window_capture;
+    receipt->dm1HoCOpenedEntranceFrameReady =
+        ownership.draw_opened_entrance_frame;
+    receipt->dm1HoCHallMirrorOverlayReady =
+        ownership.render_hall_mirror_overlay;
+    receipt->dm1HoCBlockedEnterUntilChampionReady =
+        ownership.block_enter_until_champion_selected;
+    receipt->dm1HoCRenderCommandCount = ownership.render_command_count;
     receipt->packagedCaptureReady =
         receipt->packagedCaptureExpected &&
         ownership.ready &&
@@ -6880,10 +6889,12 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         ownership.real_asset_capture &&
         ownership.release_app_capture &&
         ownership.host_capture_route_matches &&
-        ownership.hoc_asset_capture &&
-        ownership.draw_opened_entrance_frame &&
-        ownership.render_hall_mirror_overlay &&
-        ownership.render_command_count == 3;
+        receipt->dm1HoCHoCAssetCaptureReady &&
+        receipt->dm1HoCHostWindowCaptureReady &&
+        receipt->dm1HoCOpenedEntranceFrameReady &&
+        receipt->dm1HoCHallMirrorOverlayReady &&
+        receipt->dm1HoCBlockedEnterUntilChampionReady &&
+        receipt->dm1HoCRenderCommandCount == 3;
     if (receipt->packagedCaptureReady) {
         receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
         receipt->startupStepReadyCount = receipt->startupStepCount;

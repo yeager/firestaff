@@ -342,6 +342,12 @@ typedef struct {
     int dm1HoCNoHostFallbackVisualsReady;
     int dm1HoCLowerLevelHelpersReady;
     int dm1HoCHostDrawRejectsBackingFallbackReady;
+    int dm1HoCHoCAssetCaptureReady;
+    int dm1HoCHostWindowCaptureReady;
+    int dm1HoCOpenedEntranceFrameReady;
+    int dm1HoCHallMirrorOverlayReady;
+    int dm1HoCBlockedEnterUntilChampionReady;
+    int dm1HoCRenderCommandCount;
     unsigned int expectedStepMask;
     unsigned int readyStepMask;
     unsigned int blockedStepMask;
