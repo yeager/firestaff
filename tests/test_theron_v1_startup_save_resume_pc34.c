@@ -2467,6 +2467,94 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(full_start_receipt.status,
                            "FULL START GRAPHICS READY") == 0,
                 "boot full-start receipt owns title stage soul-room save-resume graphics readiness");
+    memset(media_layout, 0, sizeof(media_layout));
+    expect_true(theron_v1_boot_startup_layout_build_from_full_start_receipt(
+                    &full_start_receipt,
+                    media_layout,
+                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP) ==
+                    full_start_receipt.view_model.layout_count &&
+                    strcmp(media_layout[2].label, "HAKAR-MEDIA") == 0,
+                "boot full-start receipt supplies startup layout without raw rebuild");
+    memset(media_rows, 0, sizeof(media_rows));
+    media_prompt_row_found = 0;
+    expect_true(theron_v1_boot_startup_render_rows_from_full_start_receipt(
+                    &full_start_receipt,
+                    media_rows,
+                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP) ==
+                    full_start_receipt.view_model.row_count,
+                "boot full-start receipt supplies startup render rows without raw rebuild");
+    for (i = 0; i < full_start_receipt.view_model.row_count; ++i) {
+        if (strstr(media_rows[i], "GO AWAY") != NULL) {
+            media_prompt_row_found = 1;
+        }
+    }
+    expect_true(media_prompt_row_found,
+                "boot full-start receipt preserves Track02 prompt row");
+    memset(&media_plan, 0, sizeof(media_plan));
+    expect_true(theron_v1_boot_startup_render_plan_from_full_start_receipt(
+                    &full_start_receipt,
+                    &media_plan) &&
+                    media_plan.text_count ==
+                        full_start_receipt.view_model.render_plan.text_count &&
+                    media_plan.graphic_count ==
+                        full_start_receipt.view_model.render_plan.graphic_count,
+                "boot full-start receipt supplies startup render plan without raw rebuild");
+    theron_v1_boot_startup_host_view_receipt_init(&host_view_receipt);
+    expect_true(theron_v1_boot_startup_host_view_from_full_start_receipt(
+                    &full_start_receipt,
+                    &host_view_receipt) &&
+                    host_view_receipt.host_consumes_view_model &&
+                    host_view_receipt.render_route_valid &&
+                    host_view_receipt.track02_media_consumed &&
+                    !host_view_receipt.raw_prompt_roster_required &&
+                    !host_view_receipt.raw_session_rebuild_required,
+                "boot full-start receipt supplies host-view receipt without status parsing");
+    {
+        Theron_V1_BootRuntimeStartupSnapshot title_snapshot = media_snapshot;
+        title_snapshot.startup_phase = THERON_STARTUP_PHASE_TITLE;
+        expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+                        &title_snapshot,
+                        &media_receipt,
+                        &media_graphics_executor,
+                        &full_start_receipt) &&
+                        theron_v1_boot_startup_execute_input_from_full_start_receipt(
+                            &full_start_receipt,
+                            THERON_STARTUP_INPUT_ACCEPT,
+                            &view_model_host_receipt) &&
+                        view_model_host_receipt.result == THERON_STARTUP_OK &&
+                        view_model_host_receipt.state_receipt_valid &&
+                        view_model_host_receipt.state_receipt.flow.phase ==
+                            THERON_STARTUP_PHASE_STAGE_SELECT,
+                    "boot full-start receipt routes title accept to stage menu");
+    }
+    {
+        Theron_V1_BootRuntimeStartupSnapshot stage_snapshot = snapshot;
+        stage_snapshot.startup_phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+        stage_snapshot.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        stage_snapshot.startup_cursor = 0;
+        stage_snapshot.continue_focus = 0;
+        stage_snapshot.resume_claim = THERON_V1_STARTUP_RESUME_NONE;
+        expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+                        &stage_snapshot,
+                        &media_receipt,
+                        &media_graphics_executor,
+                        &full_start_receipt) &&
+                        theron_v1_boot_startup_execute_input_from_full_start_receipt(
+                            &full_start_receipt,
+                            THERON_STARTUP_INPUT_ACCEPT,
+                            &view_model_host_receipt) &&
+                        view_model_host_receipt.result == THERON_STARTUP_OK &&
+                        view_model_host_receipt.state_receipt_valid &&
+                        view_model_host_receipt.state_receipt.flow.phase ==
+                            THERON_STARTUP_PHASE_SOUL_ROOM,
+                    "boot full-start receipt routes stage accept to Soul Room");
+    }
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &full_start_receipt),
+                "boot full-start receipt restores Soul Room fixture for action routing");
     expect_true(theron_v1_boot_startup_execute_input_from_full_start_receipt(
                     &full_start_receipt,
                     THERON_STARTUP_INPUT_ACCEPT,
