@@ -819,6 +819,11 @@ int main(void)
                       boot_real_visual_capture.real_gdat_title_asset_required == 1 &&
                       boot_real_visual_capture.real_gdat_title_asset_consumed == 1 &&
                       boot_real_visual_capture.real_gdat_menu_asset_consumed == 1 &&
+                      boot_real_visual_capture.raw_gdat_capture_ready == 1 &&
+                      boot_real_visual_capture.title_raw_byte_hash != 0u &&
+                      boot_real_visual_capture.title_raw_byte_count > 0u &&
+                      boot_real_visual_capture.menu_raw_byte_hash != 0u &&
+                      boot_real_visual_capture.menu_raw_byte_count > 0u &&
                       boot_real_visual_capture.title_capture_ready == 1 &&
                       boot_real_visual_capture.menu_gdat_capture_ready == 1 &&
                       boot_real_visual_capture.skproject_title_query_ready == 1 &&

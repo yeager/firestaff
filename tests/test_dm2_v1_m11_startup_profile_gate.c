@@ -1392,6 +1392,9 @@ int main(void) {
                         real_visual_capture.full_title_frame_capture_ready == 1 &&
                         real_visual_capture.title_gdat_asset_w == 320 &&
                         real_visual_capture.title_gdat_asset_h == 200 &&
+                        real_visual_capture.raw_gdat_capture_ready == 1 &&
+                        real_visual_capture.title_raw_byte_hash != 0u &&
+                        real_visual_capture.title_raw_byte_count > 0u &&
                         real_visual_capture.title_pixel_count == 64000u &&
                         real_visual_capture.title_pixel_hash != 0u &&
                         real_visual_capture.skproject_title_query_ready == 1 &&
@@ -1400,6 +1403,8 @@ int main(void) {
                         real_visual_capture.skproject_credit_screen_field == 1 &&
                         real_visual_capture.skproject_menu_screen_field == 4 &&
                         real_visual_capture.menu_gdat_capture_ready == 1 &&
+                        real_visual_capture.menu_raw_byte_hash != 0u &&
+                        real_visual_capture.menu_raw_byte_count > 0u &&
                         real_visual_capture.menu_title_composite_capture_ready == 1 &&
                         real_visual_capture.full_visual_composite_capture_ready == 1 &&
                         real_visual_capture.composite_gdat_blit_count == 2 &&
