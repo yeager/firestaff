@@ -888,6 +888,37 @@ int dm1_v1_projectile_creature_action_plan_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_creature_action_apply_pc34(
+    const DM1_ProjectileCreatureActionPlanPc34* actionPlan,
+    struct DungeonGroup_Compat* group,
+    DM1_ProjectileCreatureActionApplyPlanPc34* outPlan) {
+    int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->outcomeCode = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+    outPlan->creatureIndex = -1;
+    if (!actionPlan || !actionPlan->handled || !group) return 0;
+    outPlan->valid = 1;
+    if (!actionPlan->shouldApplyDamage || actionPlan->slotIndex < 0) {
+        return 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 515-539 consumes the bounded
+     * projectile group-action payload and applies it through GROUP.C F0190.
+     * Firestaff's F0738 is the live GROUP mutation entrypoint for F0190. */
+    outPlan->handled = 1;
+    outPlan->creatureIndex = actionPlan->slotIndex;
+    outPlan->damageApplied = actionPlan->damageApplied;
+    outPlan->damage.damageApplied = actionPlan->damageApplied;
+    if (!F0738_COMBAT_ApplyDamageToGroup_Compat(
+            &outPlan->damage, group, actionPlan->slotIndex, &outcome)) {
+        return 0;
+    }
+    outPlan->outcomeCode = outcome;
+    return 1;
+}
+
 int dm1_v1_projectile_creature_impact_aftermath_pc34(
     const DM1_ProjectileCreatureImpactPlanPc34* plan,
     const struct ProjectileInstance_Compat* projectile,

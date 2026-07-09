@@ -94,6 +94,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: M10 and M11 projectile champion poison now share a DM1 F0217/F0322 apply helper for immediate poison HP/dose mutation and C75 event payload. Remaining runtime coding work is reducing final event/count adapters and thing-link adapters.
   - 2026-07-09 update: M10 explosion party damage now consumes a DM1 F0324/F0321 per-champion apply helper for attack scaling, wound selection, HP mutation, and killed flag. Remaining runtime coding work is reducing group explosion side-effect adapters and thing-link adapters.
   - 2026-07-09 update: M10 explosion group damage now consumes a DM1 F0220/F0190 apply helper for live-slot iteration and F0738 mutation. Remaining runtime coding work is reducing post-kill group side-effect adapters and thing-link adapters.
+  - 2026-07-09 update: M10 projectile group damage now consumes a DM1 F0217/F0190 apply helper for F0738 mutation and outcome payload. Remaining runtime coding work is reducing post-kill group side-effect adapters, reaction scheduling adapters, and thing-link adapters.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
