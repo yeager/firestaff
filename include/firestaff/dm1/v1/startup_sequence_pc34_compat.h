@@ -425,6 +425,22 @@ typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
+    const char* source_id;
+    int dungeon_loaded;
+    int map_count;
+    int entrance_command;
+    int title_played;
+    int captured_after_first_frame_render;
+    int observed_false_floor_item_payload_count;
+    int observed_projectile_payload_count;
+    int observed_spell_effect_payload_count;
+    int observed_mirror_payload_as_thing_count;
+    int observed_host_fallback_visuals;
+    int observed_title_surface;
+    int observed_closed_door_frame;
+} DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34;
+
 typedef struct DM1_V1_StartupHoCRenderConsumerReceipt_PC34 {
     int handled;
     int ready;
@@ -859,6 +875,10 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     const DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* apply,
     const DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34* suppression,
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_apply,
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_consumer);
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,

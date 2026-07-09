@@ -11,6 +11,7 @@ unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_failures;
+static unsigned char g_surface_pixel = 7u;
 
 static void expect_true(int condition, const char *message)
 {
@@ -28,6 +29,15 @@ static void fill_ready_engine(Nexus_V1_Engine *engine)
     engine->game.party_y = 4;
     engine->game.party_dir = 0;
     engine->game.tick_count = 0;
+    engine->ui.surfaces[NEXUS_SURFACE_TITLE].data = &g_surface_pixel;
+    engine->ui.surfaces[NEXUS_SURFACE_TITLE].w = 320;
+    engine->ui.surfaces[NEXUS_SURFACE_TITLE].h = 200;
+    engine->ui.surfaces[NEXUS_SURFACE_WARNING].data = &g_surface_pixel;
+    engine->ui.surfaces[NEXUS_SURFACE_WARNING].w = 320;
+    engine->ui.surfaces[NEXUS_SURFACE_WARNING].h = 200;
+    engine->ui.surfaces[NEXUS_SURFACE_GAMEOVER].data = &g_surface_pixel;
+    engine->ui.surfaces[NEXUS_SURFACE_GAMEOVER].w = 320;
+    engine->ui.surfaces[NEXUS_SURFACE_GAMEOVER].h = 200;
     engine->ui_startup_surfaces_expected = 1;
     engine->ui_startup_surfaces_loaded = 1;
     engine->ui_faces_expected = NEXUS_MAX_CHAMPIONS;
@@ -37,9 +47,23 @@ static void fill_ready_engine(Nexus_V1_Engine *engine)
         NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
     engine->menu_bpk_upload_receipt.ready_uploads = 3;
     engine->menu_bpk_upload_receipt.planned_rows = 3;
+    engine->menu_bpk_decode_receipt_valid = 1;
+    engine->menu_bpk_decode_receipt_attempted = 1;
+    engine->menu_bpk_decode_receipt.route =
+        NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
+    engine->menu_bpk_decode_receipt.surface_entries = 3;
+    engine->menu_bpk_decode_receipt.ready_stored_surfaces = 3;
     engine->sfx_runtime_receipt.status = NEXUS_SFX_RUNTIME_READY_DECODED;
     engine->sfx_runtime_receipt.level_index = 0;
     engine->sfx_runtime_receipt.cd_track = 2;
+    engine->script_runtime_receipt.status =
+        NEXUS_SCRIPT_RUNTIME_READY_PARSED;
+    engine->script_runtime_receipt.level_index = 0;
+    engine->script_runtime_receipt.candidate_source_loaded = 1;
+    engine->script_runtime_receipt.candidate_source_bytes = 2388;
+    engine->script_runtime_receipt.parser_supported = 1;
+    engine->script_runtime_receipt.dispatch_enabled = 1;
+    engine->script_runtime_receipt.rules_loaded = 2;
     engine->current_level.width = NEXUS_MAX_MAP_SIZE;
     engine->current_level.height = NEXUS_MAX_MAP_SIZE;
     engine->current_level.geometry_info.dmweb_container = 1;
@@ -68,6 +92,7 @@ static void fill_view(M11_GameViewState *view, Nexus_V1_Engine *engine)
     view->nexusState.party_x = engine->game.party_x;
     view->nexusState.party_y = engine->game.party_y;
     view->nexusState.party_dir = engine->game.party_dir;
+    view->nexusState.title_loaded = 1;
     view->nexusState.champion_select_active = 1;
     view->nexusState.champion_cursor = 0;
     view->nexusState.champion_select_frame = 0;
@@ -92,6 +117,25 @@ int main(void)
                     view.nexusState.startup_dgn_render_command_count > 0 &&
                     view.nexusState.startup_dgn_render_blocked == 0,
                 "M11 Nexus startup gate exposes first DGN/HUD readiness");
+    expect_true(view.nexusState.startup_host_caller_ready == 1 &&
+                    view.nexusState.startup_host_capture_ready == 1 &&
+                    view.nexusState.startup_host_dgn_ready == 1 &&
+                    view.nexusState.startup_host_execute_startup_draws == 1 &&
+                    view.nexusState.startup_host_execute_dgn_draws == 1 &&
+                    view.nexusState.startup_bpk_handoff_consumed == 1 &&
+                    view.nexusState.startup_prs3_blocker_consumed == 0 &&
+                    view.nexusState.startup_dgn_handoff_consumed == 1 &&
+                    view.nexusState.startup_no_fallback_visuals_enforced == 1 &&
+                    view.nexusState.startup_suppress_fallback_visuals == 1 &&
+                    view.nexusState.startup_suppress_legacy_placeholder_visuals == 1 &&
+                    view.nexusState.startup_full_start_package_consumed == 1 &&
+                    view.nexusState.startup_bundle_consumed == 1 &&
+                    view.nexusState.startup_display_callers_use_package_receipt == 1 &&
+                    view.nexusState.startup_saturn_timing_exact == 1 &&
+                    view.nexusState.startup_saturn_capture_frames_exact == 1 &&
+                    view.nexusState.startup_copied_draw_command_count > 0 &&
+                    view.nexusState.startup_copied_dgn_render_command_count > 0,
+                "M11 Nexus startup gate consumes host-caller receipt for capture and DGN handoff");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
@@ -99,6 +143,12 @@ int main(void)
         NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
     engine.menu_bpk_upload_receipt.blocked_prs3_uploads = 3;
     engine.menu_bpk_upload_receipt.blocks_real_menu_surface_render = 1;
+    engine.menu_bpk_decode_receipt.route =
+        NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3;
+    engine.menu_bpk_decode_receipt.blocked_prs3_surfaces = 3;
+    engine.menu_bpk_decode_receipt.prs3_stream_plans = 3;
+    engine.menu_bpk_decode_receipt.requires_prs3_decoder = 1;
+    engine.menu_bpk_decode_receipt.decode_blocked = 1;
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
     expect_true(result == M11_GAME_INPUT_REDRAW,
                 "M11 Nexus blocked startup action still redraws");
@@ -108,6 +158,20 @@ int main(void)
                     view.nexusState.startup_dgn_render_ready == 0 &&
                     view.nexusState.startup_hud_ready == 0,
                 "M11 Nexus blocked startup action exposes no runtime readiness");
+    expect_true(view.nexusState.startup_host_caller_ready == 1 &&
+                    view.nexusState.startup_host_capture_ready == 0 &&
+                    view.nexusState.startup_host_dgn_ready == 0 &&
+                    view.nexusState.startup_host_execute_startup_draws == 0 &&
+                    view.nexusState.startup_host_execute_dgn_draws == 0 &&
+                    view.nexusState.startup_bpk_handoff_consumed == 1 &&
+                    view.nexusState.startup_prs3_blocker_consumed == 1 &&
+                    view.nexusState.startup_dgn_handoff_consumed == 0 &&
+                    view.nexusState.startup_no_fallback_visuals_enforced == 1 &&
+                    view.nexusState.startup_suppress_fallback_visuals == 1 &&
+                    view.nexusState.startup_suppress_legacy_placeholder_visuals == 1 &&
+                    view.nexusState.startup_copied_draw_command_count == 0 &&
+                    view.nexusState.startup_copied_dgn_render_command_count == 0,
+                "M11 Nexus blocked startup suppresses fallback through host-caller receipt");
 
     if (g_failures) {
         fprintf(stderr,

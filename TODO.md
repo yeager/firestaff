@@ -5,6 +5,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: startup receipt bundles now package full-start state, M12 card facts, timing fields, capture route, first draw kind, and bounded draw-command consumption for title/save/champion consumers. Remaining work is wiring any final host callers to this bundle.
   - 2026-07-09 update: Nexus startup now has a real-asset ownership receipt joining title/menu capture, BPK/PRS3 blockers, DGN runtime handoff, and no-fallback visual enforcement. Remaining work is wiring final host callers to consume this ownership receipt directly.
   - 2026-07-09 update: Nexus host-caller receipts now package startup draw commands, DGN draw commands, BPK/PRS3 blockers, timing, capture route, and no-fallback suppression behind one Nexus-owned API. Remaining work is switching final M11 callers to this API.
+  - 2026-07-09 update: M11 Nexus startup input/render consumers now read host-caller receipts for startup capture, DGN handoff, Saturn timing proof, and no-fallback suppression. Remaining work is replacing any last launcher display text that still reads generic manifest labels instead of Nexus package receipt fields.
 
 
 - 🔧 2026-07-09 Theron boot/title follow-up: Track 02 media receipts now feed prompt and roster fallback rows in startup view-model builders. Remaining work is wiring any final UI callers to stop passing duplicate media arrays once they already hold the receipt.
@@ -38,6 +39,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: snapshot host-render receipts can now consume Track02 media plus a graphics executor directly, without rebuilding runtime field lists. Remaining work is broader real bitmap decode breadth and replacing remaining input-only compatibility paths.
   - 2026-07-09 update: menu/runtime handoff receipts now package Track02 media, host render, optional input/pointer routes, real-graphics handoff, and no-fallback flags. Remaining work is wiring final UI callers to this package and widening real bitmap decode.
   - 2026-07-09 update: UI caller receipts now package host-render, menu/runtime handoff, Track02 prompt/roster, bitmap-route breadth, semantic level coverage, and no-fallback policy. Remaining work is replacing final M11 call sites with this receipt.
+  - 2026-07-09 update: startup media receipts now expose per-route Track02 bitmap decode proof for title, stage, Soul Room, and forcefield samples. Remaining work is replacing final M11 call sites and broadening real bitmap decode beyond sampled startup tiles.
 
 - 🔧 2026-07-09 DM2 runtime/render follow-up: DB0 door records now hand level door-set GDAT panel identity into the render plan. Remaining DM2 work is broader GDAT door masks/ornates, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
   - 2026-07-09 update: M11 DM2 startup drawing now gates command execution on the boot render-ownership receipt, including final caller, exact title timing, GDAT title breadth, menu/HUD breadth, and no fallback-title proof. Remaining boot/start work is real packaged visual capture with local DM2 data.
