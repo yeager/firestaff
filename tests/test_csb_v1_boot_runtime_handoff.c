@@ -2137,6 +2137,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupInputGateReceipt_PC34 input_gate_receipt;
     CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
     CSB_V1_BootStartupCaptureReceipt_PC34 snapshot_execute_receipt;
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof;
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof_from_snapshot;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2345,6 +2347,37 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               snapshot_render_plan.asset_command_count == 1 &&
               snapshot_render_plan.render_command_count == 2,
           "boot startup capture receipt returns full title render plan");
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+              &capture_receipt,
+              &packaged_proof) == 1 &&
+              packaged_proof.valid &&
+              packaged_proof.capture_valid &&
+              packaged_proof.real_asset_matched &&
+              packaged_proof.real_asset_receipt_hash ==
+                  capture_receipt.real_asset_receipt.receipt_hash &&
+              packaged_proof.packaged_capture_hash != 0u &&
+              packaged_proof.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
+              packaged_proof.title_capture_ready &&
+              !packaged_proof.hud_menu_capture_ready &&
+              !packaged_proof.runtime_capture_ready &&
+              packaged_proof.render_plan_available &&
+              !packaged_proof.hud_menu_draw_available &&
+              packaged_proof.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              packaged_proof.title_frame == 0 &&
+              packaged_proof.selected_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
+          "boot startup packaged proof binds title capture route, real assets, and render plan");
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
+              &snapshot,
+              &packaged_proof_from_snapshot) == 1 &&
+              packaged_proof_from_snapshot.valid &&
+              packaged_proof_from_snapshot.packaged_capture_hash ==
+                  packaged_proof.packaged_capture_hash &&
+              packaged_proof_from_snapshot.real_asset_receipt_hash ==
+                  packaged_proof.real_asset_receipt_hash,
+          "boot startup packaged proof snapshot wrapper is deterministic");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_capture_render_plan_pc34(
@@ -2355,6 +2388,25 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34,
           "boot startup capture receipt executes full title render plan");
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+              &capture_receipt,
+              &packaged_proof) == 1 &&
+              packaged_proof.valid &&
+              packaged_proof.real_asset_matched &&
+              packaged_proof.real_asset_receipt_hash ==
+                  capture_receipt.real_asset_receipt.receipt_hash &&
+              packaged_proof.packaged_capture_hash != 0u &&
+              packaged_proof.title_capture_ready &&
+              !packaged_proof.hud_menu_capture_ready &&
+              !packaged_proof.runtime_capture_ready &&
+              packaged_proof.render_plan_available &&
+              !packaged_proof.hud_menu_draw_available &&
+              packaged_proof.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
+              packaged_proof.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              strstr(packaged_proof.source_evidence, "TITLE.C") != NULL,
+          "boot startup packaged capture proof binds title and real assets");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_snapshot_capture_render_plan_pc34(
@@ -2363,6 +2415,11 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &snapshot_execute_receipt) == 1 &&
               snapshot_execute_receipt.valid &&
               snapshot_execute_receipt.title_capture_ready &&
+              csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
+                  &snapshot,
+                  &packaged_proof_from_snapshot) == 1 &&
+              packaged_proof_from_snapshot.packaged_capture_hash ==
+                  packaged_proof.packaged_capture_hash &&
               capture_render_probe.clear_black_count == 1 &&
               capture_render_probe.draw_title_count == 1 &&
               capture_render_probe.last_surface ==
@@ -2737,6 +2794,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup capture receipt executes utility HUD/menu draw");
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+              &capture_receipt,
+              &packaged_proof) == 1 &&
+              packaged_proof.valid &&
+              packaged_proof.hud_menu_capture_ready &&
+              !packaged_proof.title_capture_ready &&
+              !packaged_proof.runtime_capture_ready &&
+              packaged_proof.render_plan_available &&
+              packaged_proof.hud_menu_draw_available &&
+              packaged_proof.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              packaged_proof.selected_utility_action_index == 0 &&
+              packaged_proof.packaged_capture_hash != 0u,
+          "boot startup packaged capture proof binds utility HUD/menu draw");
     poisoned_view_receipt = view_receipt;
     poisoned_view_receipt.route_receipt.utility_plan.menu_row_count = 1;
     poisoned_view_receipt.route_receipt.utility_plan.menu_rows[0].selected = 0;
@@ -2889,6 +2960,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_receipt.readiness.runtime_map_index == 6 &&
               capture_receipt.readiness.runtime_champion_count == 4,
           "boot startup capture receipt packages runtime HUD readiness");
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
+              &snapshot,
+              &packaged_proof) == 1 &&
+              packaged_proof.valid &&
+              packaged_proof.runtime_capture_ready &&
+              !packaged_proof.title_capture_ready &&
+              !packaged_proof.hud_menu_capture_ready &&
+              !packaged_proof.render_plan_available &&
+              !packaged_proof.hud_menu_draw_available &&
+              packaged_proof.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 &&
+              packaged_proof.real_asset_matched &&
+              packaged_proof.packaged_capture_hash != 0u,
+          "boot startup packaged capture proof binds runtime HUD handoff");
     snapshot.entrance_active = 1;
     snapshot.entrance_source_step = 4;
     snapshot.entrance_dismissed = 0;
@@ -3028,6 +3113,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup capture receipt executes closed-door HUD/menu draw");
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+              &capture_receipt,
+              &packaged_proof) == 1 &&
+              packaged_proof.valid &&
+              packaged_proof.hud_menu_capture_ready &&
+              packaged_proof.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              packaged_proof.selected_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              packaged_proof.render_plan_available &&
+              packaged_proof.hud_menu_draw_available &&
+              packaged_proof.packaged_capture_hash != 0u &&
+              strstr(packaged_proof.source_evidence, "ENTRANCE.C") != NULL,
+          "boot startup packaged capture proof binds closed-door HUD/menu draw");
     CHECK(csb_v1_boot_startup_render_plan_from_snapshot_pc34(
               &snapshot,
               &snapshot_render_plan) == 1 &&
