@@ -765,6 +765,40 @@ int dm1_v1_melee_runtime_result_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_runtime_apply_plan_f0231_pc34(
+    const DM1_MeleeF0231RuntimeResultPlanPc34* runtimePlan,
+    DM1_MeleeF0231RuntimeApplyPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->groupDamageGroupIndex = -1;
+    out->groupDamageCreatureIndex = -1;
+    out->groupDamageFallbackOutcome = COMBAT_OUTCOME_INVALID;
+    out->emitChampionIndex = -1;
+    out->emitGroupIndex = -1;
+    if (!runtimePlan || !runtimePlan->valid) return 0;
+
+    out->valid = 1;
+    out->shouldReturnHandledNoAction =
+        runtimePlan->shouldReturnHandledNoAction;
+    out->shouldWriteBackLuck = runtimePlan->shouldWriteBackLuck;
+    out->shouldApplySideEffects = runtimePlan->shouldApplySideEffects;
+    out->shouldApplyGroupDamage = runtimePlan->shouldApplyGroupDamage;
+    out->shouldEmitDamageDealt = runtimePlan->shouldEmitDamageDealt;
+    out->groupDamageGroupIndex = runtimePlan->groupDamageGroupIndex;
+    out->groupDamageCreatureIndex = runtimePlan->groupDamageCreatureIndex;
+    out->groupDamageApplied = runtimePlan->groupDamageApplied;
+    out->groupDamageFallbackOutcome =
+        runtimePlan->groupDamageFallbackOutcome;
+    out->emitChampionIndex = runtimePlan->emitChampionIndex;
+    out->emitGroupIndex = runtimePlan->emitGroupIndex;
+    out->emitDamageApplied = runtimePlan->emitDamageApplied;
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1531-1549 owns the post-resolve
+     * luck, stamina/XP, group-damage, damage feedback, and reaction gates.
+     * This apply receipt keeps those gates in DM1 instead of M10. */
+    return 1;
+}
+
 int dm1_v1_melee_luck_writeback_plan_f0231_pc34(
     const DM1_MeleeF0231LuckWritebackInputPc34* in,
     DM1_MeleeF0231LuckWritebackPlanPc34* out) {
