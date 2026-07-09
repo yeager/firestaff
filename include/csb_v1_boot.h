@@ -119,19 +119,6 @@ typedef struct CSB_V1_BootRuntimeStartupSnapshot_PC34 {
     const CSB_V1_BootProfile *boot_profile;
 } CSB_V1_BootRuntimeStartupSnapshot_PC34;
 
-typedef enum CSB_V1_BootStartupActionKind_PC34 {
-    CSB_V1_BOOT_STARTUP_ACTION_NONE_PC34 = 0,
-    CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34 = 1,
-    CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34 = 2
-} CSB_V1_BootStartupActionKind_PC34;
-
-typedef struct CSB_V1_BootStartupActionReceipt_PC34 {
-    CSB_V1_BootStartupActionKind_PC34 kind;
-    int handled;
-    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 utility_receipt;
-    CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
-} CSB_V1_BootStartupActionReceipt_PC34;
-
 typedef enum CSB_V1_BootStartupRenderRouteKind_PC34 {
     CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 = 0,
     CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 = 1,
@@ -181,6 +168,20 @@ typedef struct CSB_V1_BootStartupPresentationRouteReceipt_PC34 {
     int waiting_for_input;
     CSB_V1_StartupPresentationReceipt_PC34 presentation;
 } CSB_V1_BootStartupPresentationRouteReceipt_PC34;
+
+typedef enum CSB_V1_BootStartupActionKind_PC34 {
+    CSB_V1_BOOT_STARTUP_ACTION_NONE_PC34 = 0,
+    CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34 = 1,
+    CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34 = 2
+} CSB_V1_BootStartupActionKind_PC34;
+
+typedef struct CSB_V1_BootStartupActionReceipt_PC34 {
+    CSB_V1_BootStartupActionKind_PC34 kind;
+    int handled;
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 pre_input_route;
+    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 utility_receipt;
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
+} CSB_V1_BootStartupActionReceipt_PC34;
 
 void csb_v1_boot_startup_action_receipt_init_pc34(
     CSB_V1_BootStartupActionReceipt_PC34 *receipt);
