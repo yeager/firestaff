@@ -7,19 +7,19 @@
 #include "dm1_v1_game_loop_integration_pc34_compat.h"
 #include <string.h>
 
-void m11_gl_init(M11_GL_State* state) {
+void DM1_V1_LoopIntegration_InitPc34Compat(DM1_V1_LoopIntegrationStatePc34* state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_GL_State));
-    state->current_state = M11_GL_STATE_INIT;
+    memset(state, 0, sizeof(DM1_V1_LoopIntegrationStatePc34));
+    state->current_state = DM1_V1_LOOP_INTEGRATION_STATE_INIT_PC34;
     state->timing.max_vblank_wait = 10;  /* G0318 PC34 value */
     state->timing.target_frame_ms = 55;  /* ~18.2 Hz PC timer tick */
     state->running = true;
 }
 
-void m11_gl_register_handler(M11_GL_State* state, M11_GL_GameState gs,
-                              M11_GL_StateCallback on_enter,
-                              M11_GL_StateCallback on_exit,
-                              M11_GL_StateCallback on_update,
+void DM1_V1_LoopIntegration_RegisterHandlerPc34Compat(DM1_V1_LoopIntegrationStatePc34* state, DM1_V1_LoopIntegrationGameStatePc34 gs,
+                              DM1_V1_LoopIntegrationStateCallbackPc34 on_enter,
+                              DM1_V1_LoopIntegrationStateCallbackPc34 on_exit,
+                              DM1_V1_LoopIntegrationStateCallbackPc34 on_update,
                               void* userdata) {
     if (!state || (int)gs < 0 || (int)gs >= 10) return;
     state->handlers[gs].on_enter = on_enter;
@@ -29,49 +29,49 @@ void m11_gl_register_handler(M11_GL_State* state, M11_GL_GameState gs,
 }
 
 /* State transition with enter/exit callbacks */
-void m11_gl_set_state(M11_GL_State* state, M11_GL_GameState new_state) {
+void DM1_V1_LoopIntegration_SetStatePc34Compat(DM1_V1_LoopIntegrationStatePc34* state, DM1_V1_LoopIntegrationGameStatePc34 new_state) {
     if (!state || (int)new_state < 0 || (int)new_state >= 10) return;
     if (new_state == state->current_state) return;
 
     /* Exit current state */
-    M11_GL_StateHandler* old_h = &state->handlers[state->current_state];
+    DM1_V1_LoopIntegrationStateHandlerPc34* old_h = &state->handlers[state->current_state];
     if (old_h->on_exit) {
         old_h->on_exit(old_h->userdata);
     }
 
-    M11_GL_GameState prev = state->current_state;
+    DM1_V1_LoopIntegrationGameStatePc34 prev = state->current_state;
     state->current_state = new_state;
     (void)prev; /* Available for debugging */
 
     /* Enter new state */
-    M11_GL_StateHandler* new_h = &state->handlers[new_state];
+    DM1_V1_LoopIntegrationStateHandlerPc34* new_h = &state->handlers[new_state];
     if (new_h->on_enter) {
         new_h->on_enter(new_h->userdata);
     }
 }
 
-M11_GL_GameState m11_gl_get_state(const M11_GL_State* state) {
-    if (!state) return M11_GL_STATE_INIT;
+DM1_V1_LoopIntegrationGameStatePc34 DM1_V1_LoopIntegration_GetStatePc34Compat(const DM1_V1_LoopIntegrationStatePc34* state) {
+    if (!state) return DM1_V1_LOOP_INTEGRATION_STATE_INIT_PC34;
     return state->current_state;
 }
 
 /* F0002 pattern: one frame of the game loop
  * Original: infinite for(;;) with G0317 vblank wait + input + update
  * Here: called once per frame by the host platform */
-void m11_gl_frame_update(M11_GL_State* state, uint32_t current_ms) {
+void DM1_V1_LoopIntegration_FrameUpdatePc34Compat(DM1_V1_LoopIntegrationStatePc34* state, uint32_t current_ms) {
     if (!state || !state->running || state->timing.paused) return;
 
     /* G0523 restart check — DECOMPDU.C pattern */
     if (state->restart_requested) {
         state->restart_requested = false;
-        m11_gl_set_state(state, M11_GL_STATE_TITLE);
+        DM1_V1_LoopIntegration_SetStatePc34Compat(state, DM1_V1_LOOP_INTEGRATION_STATE_TITLE_PC34);
         return;
     }
 
     /* Handle deferred state transitions */
     if (state->transition_pending) {
         state->transition_pending = false;
-        m11_gl_set_state(state, state->pending_state);
+        DM1_V1_LoopIntegration_SetStatePc34Compat(state, state->pending_state);
     }
 
     /* Frame timing — vblank sync equivalent
@@ -85,22 +85,22 @@ void m11_gl_frame_update(M11_GL_State* state, uint32_t current_ms) {
     state->timing.vblank_count = 0; /* G0317 reset */
 
     /* Call current state's update handler */
-    M11_GL_StateHandler* h = &state->handlers[state->current_state];
+    DM1_V1_LoopIntegrationStateHandlerPc34* h = &state->handlers[state->current_state];
     if (h->on_update) {
         h->on_update(h->userdata);
     }
 }
 
-bool m11_gl_is_dungeon_running(const M11_GL_State* state) {
-    return state && state->current_state == M11_GL_STATE_DUNGEON;
+bool DM1_V1_LoopIntegration_IsDungeonRunningPc34Compat(const DM1_V1_LoopIntegrationStatePc34* state) {
+    return state && state->current_state == DM1_V1_LOOP_INTEGRATION_STATE_DUNGEON_PC34;
 }
 
-void m11_gl_request_restart(M11_GL_State* state) {
+void DM1_V1_LoopIntegration_RequestRestartPc34Compat(DM1_V1_LoopIntegrationStatePc34* state) {
     if (!state) return;
     state->restart_requested = true; /* G0523 pattern */
 }
 
-void m11_gl_stop(M11_GL_State* state) {
+void DM1_V1_LoopIntegration_StopPc34Compat(DM1_V1_LoopIntegrationStatePc34* state) {
     if (!state) return;
     state->running = false;
 }

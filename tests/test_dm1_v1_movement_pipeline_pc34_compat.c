@@ -1345,14 +1345,14 @@ static void test_original_keyboard_buffer_forward_route_to_first_redraw(void)
     struct PartyState_Compat party;
     struct Dm1V1MovementPipelinePc34Compat pipeline;
     struct Dm1V1MovementPipelineResultPc34Compat result;
-    M11_InputState input;
+    DM1_V1_InputStatePc34 input;
     unsigned short transcript[2];
     unsigned int transcriptCount = 0u;
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 10, 10);
     setup_party(&party, 5, 5, DIR_NORTH, 1);
     DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
-    m11_input_init(&input);
+    DM1_V1_Input_InitPc34Compat(&input);
 
     /* Source lock:
      * - INPUT.C:822-858 stores/extracts the 64-slot keyboard buffer.
@@ -1366,11 +1366,11 @@ static void test_original_keyboard_buffer_forward_route_to_first_redraw(void)
      * keyboard-buffer boundary: F1097 stores one normalized key and F1098
      * extracts the same key before the command queue sees it.
      */
-    EXPECT_INT("keyboard_buffer_store_i34e_forward", m11_input_store_key(&input, 0x004C), 1);
-    EXPECT_INT("keyboard_buffer_available_after_store", m11_input_key_available(&input), 1);
+    EXPECT_INT("keyboard_buffer_store_i34e_forward", DM1_V1_Input_StoreKeyPc34Compat(&input, 0x004C), 1);
+    EXPECT_INT("keyboard_buffer_available_after_store", DM1_V1_Input_KeyAvailablePc34Compat(&input), 1);
 
-    while (m11_input_key_available(&input)) {
-        unsigned short key = m11_input_get_key(&input);
+    while (DM1_V1_Input_KeyAvailablePc34Compat(&input)) {
+        unsigned short key = DM1_V1_Input_GetKeyPc34Compat(&input);
         if (transcriptCount < (sizeof(transcript) / sizeof(transcript[0]))) {
             transcript[transcriptCount++] = key;
         }
@@ -1383,7 +1383,7 @@ static void test_original_keyboard_buffer_forward_route_to_first_redraw(void)
 
     EXPECT_INT("keyboard_buffer_transcript_count", (int)transcriptCount, 1);
     EXPECT_INT("keyboard_buffer_transcript_key", transcript[0], 0x004C);
-    EXPECT_INT("keyboard_buffer_empty_after_drain", m11_input_key_available(&input), 0);
+    EXPECT_INT("keyboard_buffer_empty_after_drain", DM1_V1_Input_KeyAvailablePc34Compat(&input), 0);
     EXPECT_INT("keyboard_buffer_command_queued", (int)pipeline.commandQueue.count, 1);
 
     EXPECT_INT("keyboard_buffer_process_tick",

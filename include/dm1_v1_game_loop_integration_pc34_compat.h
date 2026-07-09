@@ -16,27 +16,27 @@ extern "C" {
 
 /* Game states — derived from GAMELOOP.C/TITLE.C/ENTRANCE.C/ENDGAME.C flow */
 typedef enum {
-    M11_GL_STATE_INIT = 0,
-    M11_GL_STATE_TITLE,         /* TITLE.C: title screen display */
-    M11_GL_STATE_ENTRANCE,      /* ENTRANCE.C: champion selection hall */
-    M11_GL_STATE_DUNGEON,       /* GAMELOOP.C F0002: main dungeon gameplay */
-    M11_GL_STATE_INVENTORY,     /* MENU.C: inventory/champion screen */
-    M11_GL_STATE_MAP,           /* Map display (if available) */
-    M11_GL_STATE_ENDGAME,       /* ENDGAME.C: victory sequence */
-    M11_GL_STATE_DEATH,         /* Party death screen */
-    M11_GL_STATE_SAVE_LOAD,     /* Save/load menu */
-    M11_GL_STATE_RESTART        /* G0523_B_RestartGameRequested from DECOMPDU.C */
-} M11_GL_GameState;
+    DM1_V1_LOOP_INTEGRATION_STATE_INIT_PC34 = 0,
+    DM1_V1_LOOP_INTEGRATION_STATE_TITLE_PC34,         /* TITLE.C: title screen display */
+    DM1_V1_LOOP_INTEGRATION_STATE_ENTRANCE_PC34,      /* ENTRANCE.C: champion selection hall */
+    DM1_V1_LOOP_INTEGRATION_STATE_DUNGEON_PC34,       /* GAMELOOP.C F0002: main dungeon gameplay */
+    DM1_V1_LOOP_INTEGRATION_STATE_INVENTORY_PC34,     /* MENU.C: inventory/champion screen */
+    DM1_V1_LOOP_INTEGRATION_STATE_MAP_PC34,           /* Map display (if available) */
+    DM1_V1_LOOP_INTEGRATION_STATE_ENDGAME_PC34,       /* ENDGAME.C: victory sequence */
+    DM1_V1_LOOP_INTEGRATION_STATE_DEATH_PC34,         /* Party death screen */
+    DM1_V1_LOOP_INTEGRATION_STATE_SAVE_LOAD_PC34,     /* Save/load menu */
+    DM1_V1_LOOP_INTEGRATION_STATE_RESTART_PC34        /* G0523_B_RestartGameRequested from DECOMPDU.C */
+} DM1_V1_LoopIntegrationGameStatePc34;
 
-typedef void (*M11_GL_StateCallback)(void* userdata);
+typedef void (*DM1_V1_LoopIntegrationStateCallbackPc34)(void* userdata);
 
 /* Per-state enter/exit callbacks */
 typedef struct {
-    M11_GL_StateCallback on_enter;
-    M11_GL_StateCallback on_exit;
-    M11_GL_StateCallback on_update;
+    DM1_V1_LoopIntegrationStateCallbackPc34 on_enter;
+    DM1_V1_LoopIntegrationStateCallbackPc34 on_exit;
+    DM1_V1_LoopIntegrationStateCallbackPc34 on_update;
     void* userdata;
-} M11_GL_StateHandler;
+} DM1_V1_LoopIntegrationStateHandlerPc34;
 
 /* Frame timing — G0317/G0318 from GAMELOOP.C */
 typedef struct {
@@ -46,30 +46,55 @@ typedef struct {
     uint32_t last_frame_ms;     /* Timestamp of last frame */
     uint32_t target_frame_ms;   /* Target frame duration (~55ms for 18.2Hz) */
     bool     paused;
-} M11_GL_FrameTiming;
+} DM1_V1_LoopIntegrationFrameTimingPc34;
 
 typedef struct {
-    M11_GL_GameState   current_state;
-    M11_GL_GameState   pending_state;  /* For deferred transitions */
+    DM1_V1_LoopIntegrationGameStatePc34   current_state;
+    DM1_V1_LoopIntegrationGameStatePc34   pending_state;  /* For deferred transitions */
     bool               transition_pending;
-    M11_GL_StateHandler handlers[10];  /* One per M11_GL_GameState */
-    M11_GL_FrameTiming timing;
+    DM1_V1_LoopIntegrationStateHandlerPc34 handlers[10];  /* One per DM1_V1_LoopIntegrationGameStatePc34 */
+    DM1_V1_LoopIntegrationFrameTimingPc34 timing;
     bool               restart_requested; /* G0523 mirror */
     bool               running;
-} M11_GL_State;
+} DM1_V1_LoopIntegrationStatePc34;
 
-void m11_gl_init(M11_GL_State* state);
-void m11_gl_register_handler(M11_GL_State* state, M11_GL_GameState gs,
-                              M11_GL_StateCallback on_enter,
-                              M11_GL_StateCallback on_exit,
-                              M11_GL_StateCallback on_update,
+void DM1_V1_LoopIntegration_InitPc34Compat(DM1_V1_LoopIntegrationStatePc34* state);
+void DM1_V1_LoopIntegration_RegisterHandlerPc34Compat(DM1_V1_LoopIntegrationStatePc34* state, DM1_V1_LoopIntegrationGameStatePc34 gs,
+                              DM1_V1_LoopIntegrationStateCallbackPc34 on_enter,
+                              DM1_V1_LoopIntegrationStateCallbackPc34 on_exit,
+                              DM1_V1_LoopIntegrationStateCallbackPc34 on_update,
                               void* userdata);
-void m11_gl_set_state(M11_GL_State* state, M11_GL_GameState new_state);
-M11_GL_GameState m11_gl_get_state(const M11_GL_State* state);
-void m11_gl_frame_update(M11_GL_State* state, uint32_t current_ms);
-bool m11_gl_is_dungeon_running(const M11_GL_State* state);
-void m11_gl_request_restart(M11_GL_State* state);
-void m11_gl_stop(M11_GL_State* state);
+void DM1_V1_LoopIntegration_SetStatePc34Compat(DM1_V1_LoopIntegrationStatePc34* state, DM1_V1_LoopIntegrationGameStatePc34 new_state);
+DM1_V1_LoopIntegrationGameStatePc34 DM1_V1_LoopIntegration_GetStatePc34Compat(const DM1_V1_LoopIntegrationStatePc34* state);
+void DM1_V1_LoopIntegration_FrameUpdatePc34Compat(DM1_V1_LoopIntegrationStatePc34* state, uint32_t current_ms);
+bool DM1_V1_LoopIntegration_IsDungeonRunningPc34Compat(const DM1_V1_LoopIntegrationStatePc34* state);
+void DM1_V1_LoopIntegration_RequestRestartPc34Compat(DM1_V1_LoopIntegrationStatePc34* state);
+void DM1_V1_LoopIntegration_StopPc34Compat(DM1_V1_LoopIntegrationStatePc34* state);
+
+typedef DM1_V1_LoopIntegrationGameStatePc34 M11_GL_GameState;
+typedef DM1_V1_LoopIntegrationStateCallbackPc34 M11_GL_StateCallback;
+typedef DM1_V1_LoopIntegrationStateHandlerPc34 M11_GL_StateHandler;
+typedef DM1_V1_LoopIntegrationFrameTimingPc34 M11_GL_FrameTiming;
+typedef DM1_V1_LoopIntegrationStatePc34 M11_GL_State;
+
+#define M11_GL_STATE_INIT DM1_V1_LOOP_INTEGRATION_STATE_INIT_PC34
+#define M11_GL_STATE_TITLE DM1_V1_LOOP_INTEGRATION_STATE_TITLE_PC34
+#define M11_GL_STATE_ENTRANCE DM1_V1_LOOP_INTEGRATION_STATE_ENTRANCE_PC34
+#define M11_GL_STATE_DUNGEON DM1_V1_LOOP_INTEGRATION_STATE_DUNGEON_PC34
+#define M11_GL_STATE_INVENTORY DM1_V1_LOOP_INTEGRATION_STATE_INVENTORY_PC34
+#define M11_GL_STATE_MAP DM1_V1_LOOP_INTEGRATION_STATE_MAP_PC34
+#define M11_GL_STATE_ENDGAME DM1_V1_LOOP_INTEGRATION_STATE_ENDGAME_PC34
+#define M11_GL_STATE_DEATH DM1_V1_LOOP_INTEGRATION_STATE_DEATH_PC34
+#define M11_GL_STATE_SAVE_LOAD DM1_V1_LOOP_INTEGRATION_STATE_SAVE_LOAD_PC34
+#define M11_GL_STATE_RESTART DM1_V1_LOOP_INTEGRATION_STATE_RESTART_PC34
+#define m11_gl_init DM1_V1_LoopIntegration_InitPc34Compat
+#define m11_gl_register_handler DM1_V1_LoopIntegration_RegisterHandlerPc34Compat
+#define m11_gl_set_state DM1_V1_LoopIntegration_SetStatePc34Compat
+#define m11_gl_get_state DM1_V1_LoopIntegration_GetStatePc34Compat
+#define m11_gl_frame_update DM1_V1_LoopIntegration_FrameUpdatePc34Compat
+#define m11_gl_is_dungeon_running DM1_V1_LoopIntegration_IsDungeonRunningPc34Compat
+#define m11_gl_request_restart DM1_V1_LoopIntegration_RequestRestartPc34Compat
+#define m11_gl_stop DM1_V1_LoopIntegration_StopPc34Compat
 
 #ifdef __cplusplus
 }
