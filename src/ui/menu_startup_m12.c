@@ -4821,60 +4821,41 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_ACTION:
                 if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
                     const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
+                    M12_StartupLaunchGate launchGate;
+                    int hasLaunchGate = M12_StartupMenu_GetLaunchGate(
+                        state,
+                        state->activatedIndex,
+                        &launchGate);
                     /* Launch row — when V2.2 mode is selected but modern assets
                      * are not installed, the fallback chain kicks in at runtime
                      * (V2.2 → V2.1 → V2.0 → V1). No block here; launch proceeds
                      * and the best available shape source is used. */
-                    if (pmode == M12_PRESENTATION_V22_MODERN &&
-                        !M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus)) {
-                        /* Assets not installed — proceed with launch; fallback
-                         * happens at runtime via m11_v22_best_available_shape_source(). */
-                    } else if (pmode == M12_PRESENTATION_V22_MODERN &&
-                               (!launchEntry || !launchEntry->gameId ||
-                                strcmp(launchEntry->gameId, "nexus") != 0)) {
-                        /* V2.2 selected and installed — currently blocked as
-                         * "COMING SOON" since the V2.2 renderer is not yet
-                         * implemented. Remove this block once rendering is wired. */
+                    if (hasLaunchGate && !launchGate.presentationReady) {
                         state->launchRequested = 0;
                         state->quickResumeLaunchRequested = 0;
                         m12_enter_message_view(state);
-                        state->messageLine1 = m12_tr(state, "V3 MODERN/3D");
-                        state->messageLine2 = m12_tr(state, "COMING SOON");
+                        state->messageLine1 = launchGate.blockedLabel;
+                        state->messageLine2 = launchGate.blockedDetail;
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
-                    } else if (!M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex)) {
+                    } else if (hasLaunchGate && !launchGate.rendererReady) {
                         state->launchRequested = 0;
                         m12_enter_message_view(state);
-                        state->messageLine1 = m12_text(state, M12_TEXT_RENDERER_BACKEND_UNAVAILABLE);
-                        state->messageLine2 = M12_StartupMenu_GetRendererBackendLabel(state);
+                        state->messageLine1 = launchGate.blockedLabel;
+                        state->messageLine2 = launchGate.blockedDetail;
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
-                    } else if (launchEntry && launchEntry->gameId &&
-                               !M12_AssetStatus_GameAvailable(&state->assetStatus, launchEntry->gameId)) {
+                    } else if (hasLaunchGate && !launchGate.dataReady &&
+                               launchEntry && launchEntry->gameId) {
                         m12_show_missing_game_data_popup(state, launchEntry->gameId);
-                    } else if (!m12_selected_version_status(state, gi) ||
-                               !m12_selected_version_status(state, gi)->matched) {
-                        /* Auto-select first matched version if available */
-                        int found_match = 0;
-                        {
-                            static const char* const gids[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus", "theron"};
-                            size_t vc = M12_AssetStatus_GetVersionCount(gids[gi]);
-                            for (size_t vi = 0; vi < vc; vi++) {
-                                const M12_AssetVersionStatus* vs = M12_AssetStatus_GetVersion(
-                                    &state->assetStatus, gids[gi], vi);
-                                if (vs && vs->matched) {
-                                    state->gameOptions[gi].versionIndex = (int)vi;
-                                    found_match = 1;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!found_match) {
+                    } else if (hasLaunchGate && !launchGate.boot.versionReady) {
+                        if (launchGate.autoSelectedVersionIndex < 0) {
                             state->launchRequested = 0;
                             m12_enter_message_view(state);
-                            state->messageLine1 = m12_tr(state, "SELECTED VERSION NOT FOUND");
-                            state->messageLine2 = m12_selected_version_label(state, gi, 0);
+                            state->messageLine1 = launchGate.blockedLabel;
+                            state->messageLine2 = launchGate.blockedDetail;
                             state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                         } else {
-                            /* Retry with matched version */
+                            state->gameOptions[gi].versionIndex =
+                                launchGate.autoSelectedVersionIndex;
                             state->launchRequested = 1;
                             state->quickResumeLaunchRequested = 0;
                         }
@@ -6788,6 +6769,103 @@ const char* M12_StartupMenu_GetEntryBootDetailLabel(
         return "OFFLINE";
     }
     return receipt.detailLabel;
+}
+
+static int m12_first_matched_version_index_for_game(
+    const M12_StartupMenuState* state,
+    const char* gameId) {
+    size_t vc;
+    size_t vi;
+    if (!state || !gameId || gameId[0] == '\0') {
+        return -1;
+    }
+    vc = M12_AssetStatus_GetVersionCount(gameId);
+    for (vi = 0; vi < vc; ++vi) {
+        const M12_AssetVersionStatus* vs = M12_AssetStatus_GetVersion(
+            &state->assetStatus,
+            gameId,
+            vi);
+        if (vs && vs->matched) {
+            return (int)vi;
+        }
+    }
+    return -1;
+}
+
+int M12_StartupMenu_GetLaunchGate(
+    const M12_StartupMenuState* state,
+    int entryIndex,
+    M12_StartupLaunchGate* outGate) {
+    M12_StartupLaunchGate gate;
+    const M12_MenuEntry* entry;
+    int gameIndex;
+    int pmode;
+
+    if (!outGate) {
+        return 0;
+    }
+    memset(&gate, 0, sizeof(gate));
+    gate.entryIndex = entryIndex;
+    gate.autoSelectedVersionIndex = -1;
+    gate.blockedLabel = "OFFLINE";
+    gate.blockedDetail = "OFFLINE";
+
+    entry = M12_StartupMenu_GetEntry(state, entryIndex);
+    if (!state || !entry || entry->kind != M12_MENU_ENTRY_GAME) {
+        *outGate = gate;
+        return 1;
+    }
+
+    gate.handled = 1;
+    (void)M12_StartupMenu_GetBootReadiness(state, entryIndex, &gate.boot);
+    gate.rendererReady = M12_StartupMenu_RendererBackendAvailable(
+        state->settings.rendererBackendIndex);
+    gameIndex = m12_game_slot_from_id(entry->gameId);
+    if (gameIndex < 0) {
+        gameIndex = m12_clamp_index(entryIndex, M12_CONFIG_GAME_COUNT);
+    }
+    pmode = m12_clamp_index(state->gameOptions[gameIndex].presentationModeIndex,
+                            M12_PRESENTATION_MODE_COUNT);
+    gate.presentationReady = 1;
+    if (pmode == M12_PRESENTATION_V22_MODERN &&
+        (!entry->gameId ||
+         (strcmp(entry->gameId, "dm1") != 0 &&
+          strcmp(entry->gameId, "nexus") != 0))) {
+        gate.presentationReady = 0;
+    }
+    gate.dataReady = gate.boot.dataReady;
+    gate.versionReady = gate.boot.versionReady;
+    if (!gate.versionReady && gate.dataReady && entry->gameId) {
+        gate.autoSelectedVersionIndex =
+            m12_first_matched_version_index_for_game(state, entry->gameId);
+        if (gate.autoSelectedVersionIndex >= 0) {
+            gate.versionReady = 1;
+        }
+    }
+
+    if (!gate.boot.supported) {
+        gate.blockedLabel = "RUNTIME NOT READY";
+        gate.blockedDetail = gate.boot.statusLabel;
+    } else if (!gate.presentationReady) {
+        gate.blockedLabel = "PRESENTATION NOT READY";
+        gate.blockedDetail = "V2.2 MODERN IS NOT LAUNCHABLE FOR THIS GAME";
+    } else if (!gate.rendererReady) {
+        gate.blockedLabel = m12_text(state, M12_TEXT_RENDERER_BACKEND_UNAVAILABLE);
+        gate.blockedDetail = M12_StartupMenu_GetRendererBackendLabel(state);
+    } else if (!gate.dataReady) {
+        gate.blockedLabel = gate.boot.statusLabel;
+        gate.blockedDetail = gate.boot.detailLabel;
+    } else if (!gate.versionReady) {
+        gate.blockedLabel = "SELECTED VERSION NOT FOUND";
+        gate.blockedDetail = m12_selected_version_label(state, gameIndex, 0);
+    } else {
+        gate.canLaunch = 1;
+        gate.blockedLabel = "READY TO LAUNCH";
+        gate.blockedDetail = gate.boot.startupPathLabel;
+    }
+
+    *outGate = gate;
+    return 1;
 }
 
 static const char *g_game_mode_labels[M12_GAME_MODE_COUNT] = {
@@ -10087,10 +10165,12 @@ void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {
 
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {
     M12_LaunchIntent intent;
+    M12_StartupLaunchGate gate;
     const M12_AssetVersionStatus* version;
     int selectedVersionIndex;
     int gi;
     int pmode;
+    int hasGate;
     memset(&intent, 0, sizeof(intent));
     intent.valid = 0;
     if (!state || state->activatedIndex < 0 || state->activatedIndex >= m12_entry_count()) {
@@ -10100,31 +10180,17 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.gameId = state->entries[state->activatedIndex].gameId;
     pmode = m12_clamp_index(state->gameOptions[gi].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
-    /* V2.2 is launchable for DM1 and Nexus. Nexus keeps V1 gameplay/source
-     * state locked and uses full original startup graphics as presentation
-     * fallback while wider V2 runtime rendering is hardened. */
-    if (pmode == M12_PRESENTATION_V22_MODERN &&
-        (!intent.gameId ||
-         (strcmp(intent.gameId, "dm1") != 0 &&
-          strcmp(intent.gameId, "nexus") != 0))) {
+    hasGate = M12_StartupMenu_GetLaunchGate(state, state->activatedIndex, &gate);
+    if (!hasGate || !gate.handled || !gate.presentationReady) {
         return intent;
     }
     version = m12_selected_version_status(state, gi);
     selectedVersionIndex = state->gameOptions[gi].versionIndex;
-    if ((!version || !version->matched) &&
-        intent.gameId &&
-        M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)) {
-        size_t vc = M12_AssetStatus_GetVersionCount(intent.gameId);
-        size_t vi;
-        for (vi = 0; vi < vc; ++vi) {
-            const M12_AssetVersionStatus* vs = M12_AssetStatus_GetVersion(
-                &state->assetStatus, intent.gameId, vi);
-            if (vs && vs->matched) {
-                version = vs;
-                selectedVersionIndex = (int)vi;
-                break;
-            }
-        }
+    if ((!version || !version->matched) && gate.autoSelectedVersionIndex >= 0) {
+        version = M12_AssetStatus_GetVersion(&state->assetStatus,
+                                             intent.gameId,
+                                             (size_t)gate.autoSelectedVersionIndex);
+        selectedVersionIndex = gate.autoSelectedVersionIndex;
     }
     intent.versionId = version ? version->versionId : NULL;
     intent.presentationMode = pmode;
@@ -10166,11 +10232,7 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     M12_Resolution_Dimensions(intent.options.resolution,
                               &intent.resolutionWidth,
                               &intent.resolutionHeight);
-    intent.valid = m12_game_supported(intent.gameId) &&
-                   intent.rendererBackendAvailable &&
-                   state->entries[state->activatedIndex].available &&
-                   M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId) &&
-                   version && version->matched ? 1 : 0;
+    intent.valid = gate.canLaunch && version && version->matched ? 1 : 0;
     return intent;
 }
 

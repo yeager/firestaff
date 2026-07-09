@@ -126,6 +126,7 @@ static void check_dm1_v1_required_complete_launches(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
     M12_StartupBootReadiness boot;
+    M12_StartupLaunchGate gate;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
 
@@ -169,6 +170,16 @@ static void check_dm1_v1_required_complete_launches(void) {
                  "FULL START READY") == 0);
     CHECK(strcmp(M12_StartupMenu_GetEntryBootDetailLabel(&state, kDm1GameIndex),
                  "SWSH, TITLE, ENTRANCE, HOC") == 0);
+    CHECK(M12_StartupMenu_GetLaunchGate(&state, kDm1GameIndex, &gate) == 1);
+    CHECK(gate.handled == 1);
+    CHECK(gate.canLaunch == 1);
+    CHECK(gate.rendererReady == 1);
+    CHECK(gate.presentationReady == 1);
+    CHECK(gate.dataReady == 1);
+    CHECK(gate.versionReady == 1);
+    CHECK(gate.autoSelectedVersionIndex == -1);
+    CHECK(gate.blockedLabel && strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0);
+    CHECK(gate.blockedDetail && strcmp(gate.blockedDetail, "DM1 FULL START") == 0);
 
     /* Pressing ACCEPT on the launch row with both required files
      * matched must request a launch and surface the "READY TO LAUNCH"

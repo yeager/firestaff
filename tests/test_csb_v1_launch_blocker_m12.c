@@ -91,6 +91,7 @@ int main(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
     M12_StartupBootReadiness boot;
+    M12_StartupLaunchGate gate;
     int changed;
     const int gridLeft = 42 + 390 + 44;
     const int cardW = (1920 - gridLeft - 48 - 22 * 2) / 3;
@@ -124,6 +125,12 @@ int main(void) {
     if (!expect(boot.detailLabel &&
                 strcmp(boot.detailLabel, "SWSH, TITLE, ENTRANCE, UTILITY") == 0,
                 "CSB boot detail should name startup/menu chain")) return 1;
+    if (!expect(M12_StartupMenu_GetLaunchGate(&state, 1, &gate) == 1,
+                "CSB launch gate should build")) return 1;
+    if (!expect(gate.canLaunch == 1,
+                "CSB launch gate should allow hash-matched startup")) return 1;
+    if (!expect(gate.boot.fullStartGraphicsReady == 1,
+                "CSB launch gate should carry ready boot receipt")) return 1;
     if (!render_smoke_nonblank(&state, "CSB options")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
@@ -161,6 +168,14 @@ int main(void) {
                 "CSB missing-data boot readiness should name required data as next step")) return 1;
     if (!expect(boot.statusLabel && strcmp(boot.statusLabel, "DATA MISSING") == 0,
                 "CSB missing-data status label should stay explicit")) return 1;
+    if (!expect(M12_StartupMenu_GetLaunchGate(&state, 1, &gate) == 1,
+                "CSB missing-data launch gate should build")) return 1;
+    if (!expect(gate.canLaunch == 0,
+                "CSB missing-data launch gate should block launch")) return 1;
+    if (!expect(gate.dataReady == 0 && gate.versionReady == 1,
+                "CSB missing-data launch gate should expose data/version split")) return 1;
+    if (!expect(gate.blockedLabel && strcmp(gate.blockedLabel, "DATA MISSING") == 0,
+                "CSB missing-data launch gate should expose blocker label")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB V2.1 launch click should be handled")) return 1;
