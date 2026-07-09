@@ -305,6 +305,14 @@ typedef struct {
     int startup_cd_track;
     int startup_audio_handoff_ready;
     int startup_sfx_blocks_real_playback;
+    Nexus_V1_DgnRendererHandoffStatus dgn_handoff_status;
+    Nexus_V1_DgnRendererHandoffStatus dgn_render_plan_status;
+    Nexus_V1_DgnRenderCommandKind first_dgn_render_command_kind;
+    int dgn_render_plan_ready;
+    int dgn_render_command_count;
+    int dgn_render_floor_count;
+    int dgn_render_wall_count;
+    int dgn_blocks_real_mesh_render;
     int consumed_by_nexus;
     int fallback_visuals_permitted;
     const char *status_scope;

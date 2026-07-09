@@ -941,6 +941,16 @@ int main(void)
                runtime_route_receipt.startup_cd_track == 2 &&
                runtime_route_receipt.startup_audio_handoff_ready == 1 &&
                runtime_route_receipt.startup_sfx_blocks_real_playback == 0 &&
+               runtime_route_receipt.dgn_handoff_status ==
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
+               runtime_route_receipt.dgn_render_plan_status ==
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
+               runtime_route_receipt.dgn_render_plan_ready == 1 &&
+               runtime_route_receipt.dgn_render_command_count > 0 &&
+               runtime_route_receipt.dgn_render_floor_count > 0 &&
+               runtime_route_receipt.first_dgn_render_command_kind ==
+                   NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
+               runtime_route_receipt.dgn_blocks_real_mesh_render == 0 &&
                runtime_route_receipt.fallback_visuals_permitted == 0 &&
                runtime_route_receipt.runtime_handoff.asset_handoff
                        .real_asset_route_ready == 1 &&
@@ -1033,6 +1043,14 @@ int main(void)
                runtime_route_receipt.startup_cd_track == 2 &&
                runtime_route_receipt.startup_audio_handoff_ready == 1 &&
                runtime_route_receipt.startup_sfx_blocks_real_playback == 0 &&
+               runtime_route_receipt.dgn_handoff_status ==
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING &&
+               runtime_route_receipt.dgn_render_plan_status ==
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING &&
+               runtime_route_receipt.dgn_render_plan_ready == 0 &&
+               runtime_route_receipt.dgn_render_command_count == 0 &&
+               runtime_route_receipt.first_dgn_render_command_kind == 0 &&
+               runtime_route_receipt.dgn_blocks_real_mesh_render == 0 &&
                runtime_route_receipt.fallback_visuals_permitted == 0 &&
                runtime_route_receipt.runtime_handoff.asset_handoff
                        .menu_bpk_prs3_blocks_real_menu_route == 1 &&
