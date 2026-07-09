@@ -260,10 +260,16 @@ typedef struct {
     int title_timing_ready;
     int title_asset_ready;
     int title_menu_ready;
+    int title_animation_tick;
     int title_frame;
     int title_frame_max;
     int title_frame_duration_ticks;
     int title_ready;
+    int title_gdat_asset_ready;
+    int title_gdat_asset_w;
+    int title_gdat_asset_h;
+    int title_gdat_asset_stride;
+    int full_start_real_asset_ready;
     int hud_overlay_suppressed;
     int hud_runtime_ready;
     int runtime_menu_ready;

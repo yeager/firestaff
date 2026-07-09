@@ -555,6 +555,10 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.host_view_receipt.title_timing_ready == 1 &&
                     boot_view_model.host_view_receipt.title_asset_ready == 1 &&
                     boot_view_model.host_view_receipt.title_menu_ready == 1 &&
+                    boot_view_model.host_view_receipt.title_animation_tick == 0 &&
+                    boot_view_model.host_view_receipt.title_gdat_asset_ready == 0 &&
+                    boot_view_model.host_view_receipt
+                            .full_start_real_asset_ready == 0 &&
                     boot_view_model.host_view_receipt.hud_overlay_suppressed == 1 &&
                     boot_view_model.host_view_receipt.runtime_menu_ready == 1 &&
                     boot_view_model.host_view_receipt.runtime_action_ready == 0 &&
@@ -627,6 +631,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     host_view_receipt.title_timing_ready == 1 &&
                     host_view_receipt.title_asset_ready == 1 &&
                     host_view_receipt.title_menu_ready == 1 &&
+                    host_view_receipt.title_animation_tick == 0 &&
                     host_view_receipt.title_frame == 0 &&
                     host_view_receipt.title_frame_max == 7 &&
                     host_view_receipt.title_frame_duration_ticks == 6 &&
@@ -1145,6 +1150,12 @@ int main(void) {
                         host_view_receipt.title_timing_ready == 1 &&
                         host_view_receipt.title_asset_ready == 1 &&
                         host_view_receipt.title_menu_ready == 1 &&
+                        host_view_receipt.title_animation_tick == 0 &&
+                        host_view_receipt.title_gdat_asset_ready == 1 &&
+                        host_view_receipt.title_gdat_asset_w == 320 &&
+                        host_view_receipt.title_gdat_asset_h == 200 &&
+                        host_view_receipt.title_gdat_asset_stride >= 320 &&
+                        host_view_receipt.full_start_real_asset_ready == 1 &&
                         host_view_receipt.hud_overlay_suppressed == 1 &&
                         host_view_receipt.hud_runtime_ready == 1 &&
                         host_view_receipt.startup_hud_handoff_ready == 1 &&
@@ -1185,6 +1196,10 @@ int main(void) {
                             framebuffer[title_y * 320 + title_x] ==
                                 title_pixels[title_y * title_stride + title_x],
                         "M11 DM2 startup menu draws the original GDAT title backdrop");
+            expect_true(strcmp(view.lastAction, "STARTUP") == 0 &&
+                            strcmp(view.lastOutcome,
+                                   "DM2 STARTUP MENU") == 0,
+                        "M11 DM2 startup draw consumes host-view receipt status");
         }
         dm2_v1_boot_gdat_image_asset_free(title_pixels);
     }
