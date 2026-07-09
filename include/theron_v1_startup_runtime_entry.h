@@ -73,6 +73,18 @@ int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
     Theron_StartupStateReceipt *out_state_receipt,
     char *receipt,
     size_t receipt_cap);
+int theron_v1_startup_runtime_load_initial_level_with_receipts(
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    const Theron_StartupActionPlan *plan,
+    Theron_V1StartupRuntimeEntryResult *out_result,
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap);
 
 void theron_v1_startup_runtime_entry_request_init(
     Theron_V1StartupRuntimeEntryRequest *request);

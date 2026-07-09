@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron runtime-load direct receipts: boot/startup menu Track 02 level-load now exposes direct apply/state receipts for fallback-room and verified-Track02-blocked paths, keeping the host receipt as a thin adapter and preserving no-fallback-visuals proof for startup consumers. Verification: `firestaff_theron_v1_startup_flow_probe` 642/642, `firestaff_theron` build, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM2 startup title/menu/HUD render receipt: startup presentation now exposes a render receipt for the GDAT title image, menu panel, selected row highlight, selectable text count, and HUD overlay suppression while the boot menu is active. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup input command route receipt: startup action receipts now carry Firestaff menu input, source startup input, resolved entrance command id, title-block state, and utility/entrance routing flags beside the render-view receipts. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
