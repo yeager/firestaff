@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-static M11_GameView_ChestReopenContentsOrderProbePc34 g_probe;
+static DM1_V1_ChestReopenContentsOrderProbePc34 g_probe;
 static int g_assertions;
 
 static int expect_int(const char* label, int got, int want,
@@ -43,7 +43,7 @@ static int test_single_item_round_trip(void)
 {
     const char* f0333Open = "ReDMCSB CHEST.C F0333 lines 53-67";
     const char* f0334Close = "ReDMCSB CHEST.C F0334 lines 117-132";
-    const M11_GameView_ChestReopenContentsOrderCasePc34* c =
+    const DM1_V1_ChestReopenContentsOrderCasePc34* c =
         &g_probe.cases[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_CASE_ONE];
     int ok = 1;
 
@@ -75,7 +75,7 @@ static int test_three_item_head_middle_tail_order(void)
     const char* f0333Open = "ReDMCSB CHEST.C F0333 lines 53-67";
     const char* f0334Close = "ReDMCSB CHEST.C F0334 lines 117-132";
     const char* f0163Next = "ReDMCSB DUNGEON.C F0163 lines 1796-1837";
-    const M11_GameView_ChestReopenContentsOrderCasePc34* c =
+    const DM1_V1_ChestReopenContentsOrderCasePc34* c =
         &g_probe.cases[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_CASE_THREE];
     int ok = 1;
 
@@ -116,7 +116,7 @@ static int test_full_eight_slots_round_trip(void)
     const char* f0333Open = "ReDMCSB CHEST.C F0333 lines 53-67";
     const char* f0334Close = "ReDMCSB CHEST.C F0334 lines 117-132";
     const char* f0163Next = "ReDMCSB DUNGEON.C F0163 lines 1796-1837";
-    const M11_GameView_ChestReopenContentsOrderCasePc34* c =
+    const DM1_V1_ChestReopenContentsOrderCasePc34* c =
         &g_probe.cases[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_CASE_FULL];
     int ok = 1;
     int i;
@@ -154,7 +154,7 @@ static int test_hidden_tail_excluded_after_reopen(void)
 {
     const char* f0333Open = "ReDMCSB CHEST.C F0333 lines 53-67";
     const char* f0334Close = "ReDMCSB CHEST.C F0334 lines 117-132";
-    const M11_GameView_ChestReopenContentsOrderCasePc34* c =
+    const DM1_V1_ChestReopenContentsOrderCasePc34* c =
         &g_probe.cases[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_CASE_HIDDEN_TAIL];
     int ok = 1;
 
@@ -184,7 +184,7 @@ static int test_leader_hand_helmet_preserved(void)
     const char* f0333Open = "ReDMCSB CHEST.C F0333 lines 53-67";
     const char* f0334Close = "ReDMCSB CHEST.C F0334 lines 117-132";
     const char* f0302Leader = "ReDMCSB CHAMPION.C F0302 lines 688-710";
-    const M11_GameView_ChestReopenContentsOrderCasePc34* c =
+    const DM1_V1_ChestReopenContentsOrderCasePc34* c =
         &g_probe.cases[
             DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_CASE_LEADER_HELMET];
     int ok = 1;

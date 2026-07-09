@@ -180,7 +180,7 @@ static int chest_resolved_on_current_map(const ChestTeleportRuntimePc34* runtime
 static void snapshot_runtime(
     const ChestTeleportRuntimePc34* runtime,
     const char* phaseName,
-    M11_GameView_ChestTeleportSurvivalSnapshotPc34* out)
+    DM1_V1_ChestTeleportSurvivalSnapshotPc34* out)
 {
     int i;
 
@@ -311,7 +311,7 @@ static int close_chest(ChestTeleportRuntimePc34* runtime)
     return 1;
 }
 
-static void fill_anchors(M11_GameView_ChestTeleportSurvivalAnchorsPc34* out)
+static void fill_anchors(DM1_V1_ChestTeleportSurvivalAnchorsPc34* out)
 {
     out->chestF0333OpenMaterialization =
         "ReDMCSB CHEST.C F0333 lines 31-67";
@@ -343,7 +343,7 @@ static void fill_anchors(M11_GameView_ChestTeleportSurvivalAnchorsPc34* out)
 
 static void fill_probe_constants(
     const ChestTeleportRuntimePc34* runtime,
-    M11_GameView_ChestTeleportSurvivalProbePc34* out)
+    DM1_V1_ChestTeleportSurvivalProbePc34* out)
 {
     int i;
 
@@ -373,7 +373,7 @@ static void fill_probe_constants(
 }
 
 static void run_negative_path(
-    M11_GameView_ChestTeleportSurvivalNegativePc34* out)
+    DM1_V1_ChestTeleportSurvivalNegativePc34* out)
 {
     ChestTeleportRuntimePc34 runtime;
     int i;
@@ -416,7 +416,7 @@ const char* DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(void)
 }
 
 int DM1_V1_ChestTeleportSurvival_RunPc34Compat(
-    M11_GameView_ChestTeleportSurvivalProbePc34* out)
+    DM1_V1_ChestTeleportSurvivalProbePc34* out)
 {
     ChestTeleportRuntimePc34 runtime;
 
