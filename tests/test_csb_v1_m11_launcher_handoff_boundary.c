@@ -23,6 +23,7 @@
 #endif
 
 #include "m11_game_view.h"
+#include "csb_v1_boot.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
@@ -198,6 +199,7 @@ static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenuState menu;
     M12_LaunchIntent intent;
     M11_GameViewState view;
+    M11_BootProbeReceipt probe;
     const M12_MenuEntry* entry;
     char real_dir[512];
     const char* data_dir = default_data_root(real_dir);
@@ -255,6 +257,16 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 CSB launcher handoff has no recycled entrance command");
     expect_true(view.csbState.startup_import_available == 0,
                 "M11 CSB normal launcher handoff has no import panel armed");
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &probe) == 1,
+                "M11 CSB startup exposes boot probe receipt at title prelude");
+    expect_true(probe.startupActive == 1 &&
+                    probe.startupInputReady == 0 &&
+                    probe.startupHudMenuReady == 0,
+                "M11 CSB title prelude blocks startup input/HUD through receipt");
+    expect_true(probe.startupTitleReady == 0 &&
+                    probe.startupHudMenuKind ==
+                        CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34,
+                "M11 CSB title prelude receipt has no HUD menu route");
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
@@ -298,6 +310,19 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.startup_title_active == 0 &&
                     view.csbState.startup_title_source_step == 0,
                 "M11 CSB launcher title prelude completed before entrance input");
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &probe) == 1,
+                "M11 CSB startup exposes boot probe receipt at entrance wait loop");
+    expect_true(probe.startupActive == 1 &&
+                    probe.startupInputReady == 1 &&
+                    probe.startupHudMenuReady == 1,
+                "M11 CSB entrance wait loop is input/HUD-ready through receipt");
+    expect_true(probe.startupHudMenuKind ==
+                    CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34,
+                "M11 CSB entrance wait loop consumes entrance HUD draw receipt");
+    expect_true(probe.startupHudMenuOptionCount >= 3 &&
+                    probe.startupSelectedCommandId ==
+                        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+                "M11 CSB entrance wait loop receipt owns menu options and selection");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
