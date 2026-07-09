@@ -450,6 +450,12 @@ typedef struct {
 } DM1_MeleeF0231AftermathPlanPc34;
 
 typedef struct {
+    int valid;
+    int shouldWriteRawGroup;
+    int groupIndex;
+} DM1_MeleeF0231RawGroupWritebackPlanPc34;
+
+typedef struct {
     int groupIndex;
     int creatureType;
     int mapIndex;
@@ -762,6 +768,9 @@ int dm1_v1_melee_resolve_runtime_f0231_pc34(
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out);
+int dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
+    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
+    DM1_MeleeF0231RawGroupWritebackPlanPc34* out);
 int dm1_v1_melee_reaction_plan_f0231_pc34(
     const DM1_MeleeF0231ReactionInputPc34* in,
     DM1_MeleeF0231ReactionPlanPc34* out);

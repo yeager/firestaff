@@ -953,6 +953,30 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
+    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
+    DM1_MeleeF0231RawGroupWritebackPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->groupIndex = -1;
+    if (!aftermathPlan || !aftermathPlan->valid) return 0;
+
+    out->valid = 1;
+    out->shouldWriteRawGroup = aftermathPlan->shouldWriteRawGroup;
+    out->groupIndex = aftermathPlan->mutationGroupIndex >= 0
+        ? aftermathPlan->mutationGroupIndex
+        : (aftermathPlan->killNotifyGroupIndex >= 0
+            ? aftermathPlan->killNotifyGroupIndex
+            : aftermathPlan->reactionGroupIndex);
+    if (out->shouldWriteRawGroup && out->groupIndex < 0) {
+        out->shouldWriteRawGroup = 0;
+    }
+
+    /* ReDMCSB: GROUP.C F0190 lines 892-917 mutates the live group after
+     * F0231 damage.  DM1 owns the raw-record writeback gate and group. */
+    return 1;
+}
+
 int dm1_v1_melee_reaction_plan_f0231_pc34(
     const DM1_MeleeF0231ReactionInputPc34* in,
     DM1_MeleeF0231ReactionPlanPc34* out) {
