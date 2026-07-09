@@ -726,6 +726,17 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int shouldDropPossessions;
+    int shouldApplyKilledSomeState;
+    int shouldEvaluateFear;
+    int shouldApplyKilledAllSideEffects;
+    DM1_MeleeF0190PossessionDropPlanPc34 possessionDropPlan;
+    DM1_MeleeF0190KilledSomeStatePlanPc34 killedSomeStatePlan;
+    DM1_MeleeF0190KilledAllStatePlanPc34 killedAllStatePlan;
+} DM1_MeleeF0190MutationDispatchApplyPlanPc34;
+
+typedef struct {
+    int valid;
     int shouldEvaluateFear;
     int originalGroupCount;
     struct DM1GroupBehaviorContext_Compat fearContext;
@@ -856,6 +867,9 @@ int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
 int dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
     DM1_MeleeF0190MutationDispatchPlanPc34* out);
+int dm1_v1_melee_mutation_dispatch_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
+    DM1_MeleeF0190MutationDispatchApplyPlanPc34* out);
 int dm1_v1_melee_mutation_dispatch_fear_roll_plan_f0190_pc34(
     const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
     DM1_MeleeF0190FearRollPlanPc34* out);

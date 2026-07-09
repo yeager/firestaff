@@ -2116,6 +2116,7 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190FixedDropCellsPlanPc34 fixedCellsOut;
     DM1_MeleeF0190MutationDispatchInputPc34 dispatchIn;
     DM1_MeleeF0190MutationDispatchPlanPc34 dispatchOut;
+    DM1_MeleeF0190MutationDispatchApplyPlanPc34 dispatchApplyOut;
     DM1_MeleeF0231AftermathInputPc34 aftermathIn;
     DM1_MeleeF0231AftermathPlanPc34 aftermathOut;
     DM1_MeleeF0190MutationDispatchPlanPc34 aftermathDispatchOut;
@@ -2662,6 +2663,17 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 mutation dispatch killed-all group");
     CHECK_EQ(dispatchOut.shouldApplyKilledSomeState, 0,
              "F0190 mutation dispatch killed-all no killed-some cleanup");
+    CHECK_EQ(dm1_v1_melee_mutation_dispatch_apply_plan_f0190_pc34(
+                 &dispatchOut, &dispatchApplyOut), 1,
+             "F0190 mutation dispatch killed-all apply receipt builds");
+    CHECK_EQ(dispatchApplyOut.valid, 1,
+             "F0190 mutation dispatch killed-all apply valid");
+    CHECK_EQ(dispatchApplyOut.shouldDropPossessions, 1,
+             "F0190 mutation dispatch killed-all apply drops");
+    CHECK_EQ(dispatchApplyOut.shouldApplyKilledAllSideEffects, 1,
+             "F0190 mutation dispatch killed-all apply side effects");
+    CHECK_EQ(dispatchApplyOut.killedAllStatePlan.groupIndex, 9,
+             "F0190 mutation dispatch killed-all apply group");
 
     dispatchIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
     dispatchIn.killedCell = 6;
@@ -2682,6 +2694,15 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 mutation dispatch evaluates fear on party map");
     CHECK_EQ(dispatchOut.shouldApplyKilledAllSideEffects, 0,
              "F0190 mutation dispatch killed-some no killed-all side effects");
+    CHECK_EQ(dm1_v1_melee_mutation_dispatch_apply_plan_f0190_pc34(
+                 &dispatchOut, &dispatchApplyOut), 1,
+             "F0190 mutation dispatch killed-some apply receipt builds");
+    CHECK_EQ(dispatchApplyOut.shouldApplyKilledSomeState, 1,
+             "F0190 mutation dispatch killed-some apply state");
+    CHECK_EQ(dispatchApplyOut.shouldEvaluateFear, 1,
+             "F0190 mutation dispatch killed-some apply fear gate");
+    CHECK_EQ(dispatchApplyOut.killedSomeStatePlan.killedCreatureIndex, 1,
+             "F0190 mutation dispatch killed-some apply killed index");
     CHECK_EQ(dm1_v1_melee_mutation_dispatch_fear_roll_plan_f0190_pc34(
                  &dispatchOut, &fearRollOut), 1,
              "F0190 mutation dispatch fear roll plan builds");
