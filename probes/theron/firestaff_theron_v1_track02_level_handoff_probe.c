@@ -473,6 +473,9 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     Theron_Track02SignalStatus signal_status;
     Theron_Track02LevelHandoffStatus status;
     Theron_Track02StartupSemanticHandoff startup_handoff;
+    Theron_Track02StartupSemanticHandoff loaded_semantic_handoff;
+    Theron_Track02LevelHandoff loaded_level_handoff;
+    Theron_V1_Level loaded_level;
     size_t copied_size = 0u;
     size_t copied_user_offset = 0u;
     static const uint32_t progression_seeds[THERON_TRACK02_DUNGEON_COUNT] = {
@@ -569,6 +572,40 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     check_int("synthetic startup semantic seed concepts distinct",
               startup_handoff.startup_seed_in_seed_table,
               0);
+    status = theron_v1_track02_load_startup_semantic_level(
+        track,
+        sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
+        descriptor_offset,
+        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        0,
+        &loaded_level,
+        &loaded_semantic_handoff,
+        &loaded_level_handoff);
+    check_int("synthetic startup semantic level load status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_int("synthetic startup semantic level load ready",
+              loaded_semantic_handoff.ready_for_runtime,
+              1);
+    check_size("synthetic startup semantic level load offset",
+               loaded_level_handoff.absolute_offset,
+               candidate_offset);
+    check_size("synthetic startup semantic level load user-data offset",
+               loaded_semantic_handoff.user_data_offset,
+               expected_user_offset);
+    check_int("synthetic startup semantic level load map status",
+              loaded_level_handoff.map_status,
+              THERON_MAP_OK);
+    check_int("synthetic startup semantic level load width",
+              loaded_level.width,
+              (int)candidate_width);
+    check_int("synthetic startup semantic level load start x",
+              loaded_level.start_x,
+              1);
+    check_int("synthetic startup semantic level load start y",
+              loaded_level.start_y,
+              1);
     status = theron_v1_track02_copy_initial_level_user_data_window(
         track,
         sizeof(track),

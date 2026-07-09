@@ -2664,3 +2664,96 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff
     out_handoff->status = THERON_TRACK02_LEVEL_HANDOFF_OK;
     return out_handoff->status;
 }
+
+Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t descriptor_offset,
+    int dungeon_id,
+    int sub_level_index,
+    Theron_V1_Level *out_level,
+    Theron_Track02StartupSemanticHandoff *out_semantic_handoff,
+    Theron_Track02LevelHandoff *out_level_handoff) {
+
+    Theron_Track02StartupSemanticHandoff local_semantic;
+    Theron_Track02StartupSemanticHandoff *semantic =
+        out_semantic_handoff ? out_semantic_handoff : &local_semantic;
+    const Theron_Track02LevelCandidate *candidate;
+    const uint8_t *level_bytes;
+    Theron_Track02LevelHandoffStatus status;
+    Theron_MapLoadResult map_status;
+
+    if (out_semantic_handoff) {
+        memset(out_semantic_handoff, 0, sizeof(*out_semantic_handoff));
+    }
+    if (out_level_handoff) {
+        memset(out_level_handoff, 0, sizeof(*out_level_handoff));
+        out_level_handoff->map_status = THERON_MAP_ERR_NULL;
+    }
+    if (out_level) {
+        memset(out_level, 0, sizeof(*out_level));
+    }
+    if (!track02_data || track02_size == 0u || !out_level ||
+        !out_level_handoff) {
+        return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+    }
+
+    status = theron_v1_track02_bind_startup_semantic_handoff(track02_data,
+                                                              track02_size,
+                                                              md5_hex,
+                                                              descriptor_offset,
+                                                              semantic);
+    out_level_handoff->binding_status = (int32_t)status;
+    out_level_handoff->candidate_count = semantic->initial_candidate.candidate_count;
+    out_level_handoff->expected_offset = semantic->initial_candidate.expected_offset;
+    out_level_handoff->matches_initial_anchor =
+        semantic->initial_candidate.matches_initial_anchor;
+    out_level_handoff->user_data_offset = semantic->user_data_offset;
+    out_level_handoff->user_data_offset_valid = semantic->user_data_offset_valid;
+    if (semantic->initial_candidate.candidate_count == 1u) {
+        out_level_handoff->descriptor_delta =
+            semantic->initial_candidate.candidate.descriptor_delta;
+    }
+    if (status != THERON_TRACK02_LEVEL_HANDOFF_OK ||
+        !semantic->ready_for_runtime) {
+        return status;
+    }
+
+    candidate = &semantic->initial_candidate.candidate;
+    if (candidate->absolute_offset > track02_size ||
+        candidate->byte_count > track02_size - candidate->absolute_offset) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
+
+    level_bytes = track02_data + candidate->absolute_offset;
+    out_level_handoff->entry_index = THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES;
+    out_level_handoff->absolute_offset = candidate->absolute_offset;
+    out_level_handoff->byte_count = candidate->byte_count;
+    out_level_handoff->window_kind = THERON_TRACK02_DESCRIPTOR_WINDOW_DATA;
+    out_level_handoff->header_width = rd16be(level_bytes + 0);
+    out_level_handoff->header_height = rd16be(level_bytes + 2);
+    out_level_handoff->header_seed = rd32be(level_bytes + 4);
+    out_level_handoff->header_level_index = rd16be(level_bytes + 8);
+
+    if (out_level_handoff->header_width != TQR_RAW_INITIAL_LEVEL_WIDTH ||
+        out_level_handoff->header_height != TQR_RAW_INITIAL_LEVEL_HEIGHT ||
+        out_level_handoff->header_seed != TQR_RAW_INITIAL_LEVEL_SEED ||
+        out_level_handoff->header_level_index != TQR_RAW_INITIAL_LEVEL_INDEX) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
+
+    map_status = theron_v1_level_load(out_level,
+                                      level_bytes,
+                                      (int)candidate->byte_count,
+                                      dungeon_id,
+                                      sub_level_index);
+    out_level_handoff->map_status = map_status;
+    if (map_status != THERON_MAP_OK) {
+        return THERON_TRACK02_LEVEL_HANDOFF_LEVEL_LOAD_FAILED;
+    }
+
+    choose_initial_level_start_pose(out_level);
+    out_level_handoff->loaded = 1;
+    return THERON_TRACK02_LEVEL_HANDOFF_OK;
+}

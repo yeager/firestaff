@@ -137,9 +137,67 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
     }
 
     for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
+        Theron_Track02StartupSemanticHandoff semantic_handoff;
+        Theron_Track02LevelHandoff semantic_level_handoff;
+        Theron_Track02LevelHandoffStatus semantic_status;
+        Theron_V1_Level semantic_level;
         Theron_Track02LevelHandoff initial_handoff;
         Theron_Track02LevelHandoffStatus initial_status;
         Theron_V1_Level initial_candidate;
+
+        semantic_status = theron_v1_track02_load_startup_semantic_level(
+            hucard_rom,
+            hucard_rom_size,
+            md5_hex,
+            signal.descriptor_offsets[anchor],
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            &semantic_level,
+            &semantic_handoff,
+            &semantic_level_handoff);
+        ++tried;
+        if (semantic_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
+            world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+            world->current_level = 0;
+            world->levels[0][0] = semantic_level;
+            world->level_loaded[0][0] = 1;
+            theron_v1_party_place(world,
+                                  world->levels[0][0].start_x,
+                                  world->levels[0][0].start_y,
+                                  world->levels[0][0].start_dir);
+            if (receipt && receipt_cap > 0u) {
+                snprintf(receipt,
+                         receipt_cap,
+                         "Track 02 semantic initial level anchor=%zu offset=0x%zx user_valid=%d user=0x%zx seed_status=%s seed0=%u seed6=%u startup_seed=0x%08x startup_level=0x%04x seed_in_table=%d user_windows=%zu user_desc=%zu user_span=%zu user_initial=%zu text_markers=%zu text_us=%zu text_jp=%zu header=%ux%u start=(%d,%d,%d)",
+                         anchor,
+                         semantic_level_handoff.absolute_offset,
+                         semantic_handoff.user_data_offset_valid,
+                         semantic_handoff.user_data_offset,
+                         theron_v1_track02_semantic_binding_status_name(
+                             semantic_handoff.seed_table_status),
+                         (unsigned)semantic_handoff.seed_table_binding
+                             .dungeon_seed_table.seeds[0],
+                         (unsigned)semantic_handoff.seed_table_binding
+                             .dungeon_seed_table
+                             .seeds[THERON_TRACK02_DUNGEON_COUNT - 1u],
+                         (unsigned)semantic_handoff.startup_seed,
+                         (unsigned)semantic_handoff.startup_level_index,
+                         semantic_handoff.startup_seed_in_seed_table,
+                         user_window_catalog.entry_count,
+                         user_window_descriptor_count,
+                         user_window_span_count,
+                         user_window_initial_count,
+                         text_marker_catalog.marker_count,
+                         startup_text_us_count,
+                         startup_text_jp_count,
+                         (unsigned)semantic_level_handoff.header_width,
+                         (unsigned)semantic_level_handoff.header_height,
+                         (int)world->levels[0][0].start_x,
+                         (int)world->levels[0][0].start_y,
+                         (int)world->levels[0][0].start_dir);
+            }
+            return 1;
+        }
 
         initial_status = theron_v1_track02_load_initial_level_candidate(
             hucard_rom,
