@@ -211,6 +211,7 @@ typedef struct {
     int dm1HoCReleaseCaptureOwnershipReady;
     int dm1HoCReceiptOnlyConsumerReady;
     int dm1HoCLowerLevelHelpersReady;
+    int dm1HoCHostDrawRejectsBackingFallback;
     int dm1HoCHoCAssetCapture;
     int dm1HoCHostWindowCapture;
     int dm1HoCOpenedEntranceFrame;
@@ -1014,7 +1015,9 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outTitleAssetDrawReady,
     int* outClosedDoorFallbackSuppressed,
     int* outOpeningFrameDrawReady,
-    int* outFullVisualSequenceConsumed);
+    int* outFullVisualSequenceConsumed,
+    int* outRuntimeRouteHardeningReady,
+    int* outRuntimeRouteHardeningHashReady);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,

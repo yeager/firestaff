@@ -181,6 +181,7 @@ static int m11_projectile_aspect_flip_flags(int aspectIndex,
                                             int mapY);
 static int m11_dm1_hoc_menu_route_blocks_normal_input(
     const M11_GameViewState* state);
+static int m11_dm1_hoc_host_draw_rejects_backing_fallback(void);
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -11738,6 +11739,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->dm1HoCLowerLevelHelpersReady =
                 hoc_ownership.lower_level_renderer_helper_owned &&
                 hoc_ownership.lower_level_audio_helper_owned;
+            out->dm1HoCHostDrawRejectsBackingFallback =
+                m11_dm1_hoc_host_draw_rejects_backing_fallback();
             out->dm1HoCHoCAssetCapture =
                 hoc_consumer.hoc_asset_capture;
             out->dm1HoCHostWindowCapture =
@@ -21243,6 +21246,20 @@ static int m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
            !outReceipt->drawMirrorBackingFallbackRect;
 }
 
+static int m11_dm1_hoc_host_draw_rejects_backing_fallback(void) {
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
+    memset(&frontWall, 0, sizeof(frontWall));
+    memset(&render, 0, sizeof(render));
+    memset(&hostDraw, 0, sizeof(hostDraw));
+    return DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+               127, 13, 4, 2, 2, &frontWall) &&
+           DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&frontWall, &render) &&
+           !m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
+               &render, 0, 0, &hostDraw);
+}
+
 static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             const M11_ViewportCell* frontCell,
                                             unsigned char* framebuffer,
@@ -29633,11 +29650,8 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
         *outWalkCaptureSafe = ownership.walk_capture_safe;
     }
     if (outHostDrawRejectsBackingFallback) {
-        DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
-        memset(&hostDraw, 0, sizeof(hostDraw));
         *outHostDrawRejectsBackingFallback =
-            !m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
-                &render, 0, 0, &hostDraw);
+            m11_dm1_hoc_host_draw_rejects_backing_fallback();
     }
     if (outMapIndex) *outMapIndex = ownership.map_index;
     if (outRenderCommandCount) {
@@ -29839,7 +29853,9 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outTitleAssetDrawReady,
     int* outClosedDoorFallbackSuppressed,
     int* outOpeningFrameDrawReady,
-    int* outFullVisualSequenceConsumed)
+    int* outFullVisualSequenceConsumed,
+    int* outRuntimeRouteHardeningReady,
+    int* outRuntimeRouteHardeningHashReady)
 {
     CSB_V1_BootProfile boot;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
@@ -29849,6 +29865,10 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 utility_ownership;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 opening_ownership;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 input_ownership;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 title_hardening;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 closed_hardening;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 utility_hardening;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 opening_hardening;
     M11_CSBStartupHostViewProbe title_probe;
     M11_CSBStartupHostViewProbe closed_probe;
     M11_CSBStartupHostViewProbe utility_probe;
@@ -29857,6 +29877,10 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
 
     m11_csb_startup_probe_boot_profile(&boot);
     memset(&visual_sequence, 0, sizeof(visual_sequence));
+    memset(&title_hardening, 0, sizeof(title_hardening));
+    memset(&closed_hardening, 0, sizeof(closed_hardening));
+    memset(&utility_hardening, 0, sizeof(utility_hardening));
+    memset(&opening_hardening, 0, sizeof(opening_hardening));
     (void)csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
         &boot,
         &visual_sequence);
@@ -29876,6 +29900,10 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                                                  0,
                                                  &title_ownership,
                                                  &title_probe);
+    (void)csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+        &visual_sequence,
+        &title_ownership,
+        &title_hardening);
 
     snapshot.title_active = 0;
     snapshot.title_frame = csb_v1_startup_title_total_ticks_pc34();
@@ -29887,6 +29915,10 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                                                  0,
                                                  &closed_ownership,
                                                  &closed_probe);
+    (void)csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+        &visual_sequence,
+        &closed_ownership,
+        &closed_hardening);
 
     snapshot.utility_overlay_active = 1;
     snapshot.utility_selected_action_index = 0;
@@ -29898,6 +29930,10 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                                                  0,
                                                  &utility_ownership,
                                                  &utility_probe);
+    (void)csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+        &visual_sequence,
+        &utility_ownership,
+        &utility_hardening);
     (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
                                                  1,
                                                  2,
@@ -29915,6 +29951,10 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                                                  0,
                                                  &opening_ownership,
                                                  &opening_probe);
+    (void)csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+        &visual_sequence,
+        &opening_ownership,
+        &opening_hardening);
 
     if (outTitleReceiptReady) {
         *outTitleReceiptReady = title_ownership.valid;
@@ -30017,6 +30057,28 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
             closed_ownership.packaged_visual_capture_ready &&
             utility_ownership.packaged_visual_capture_ready &&
             opening_ownership.packaged_visual_capture_ready;
+    }
+    if (outRuntimeRouteHardeningReady) {
+        *outRuntimeRouteHardeningReady =
+            title_hardening.valid &&
+            title_hardening.title_route_covered &&
+            closed_hardening.valid &&
+            closed_hardening.closed_door_hud_route_covered &&
+            utility_hardening.valid &&
+            utility_hardening.utility_hud_route_covered &&
+            opening_hardening.valid &&
+            opening_hardening.door_opening_route_covered &&
+            title_hardening.no_fallback_text_route &&
+            closed_hardening.no_fallback_text_route &&
+            utility_hardening.no_fallback_text_route &&
+            opening_hardening.no_legacy_door_fallback_route;
+    }
+    if (outRuntimeRouteHardeningHashReady) {
+        *outRuntimeRouteHardeningHashReady =
+            title_hardening.route_hardening_hash != 0u &&
+            closed_hardening.route_hardening_hash != 0u &&
+            utility_hardening.route_hardening_hash != 0u &&
+            opening_hardening.route_hardening_hash != 0u;
     }
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep post-swoosh
      * title, closed-door HUD/menu, utility menu, and door opening inside the
