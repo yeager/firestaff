@@ -38,7 +38,7 @@ static const char s_source_evidence[] =
     "when MASK0x0800_PANEL is set on the inventory champion after F0301.";
 
 dm1_v1_champion_panel_leader_swap_food_water_input_t
-M11_GameView_ChampionPanelLeaderSwapFoodWater_DefaultInput(void)
+DM1_V1_ChampionPanelLeaderSwapFoodWater_DefaultInputPc34Compat(void)
 {
     dm1_v1_champion_panel_leader_swap_food_water_input_t input;
 
@@ -68,7 +68,7 @@ static void append_call(
 }
 
 dm1_v1_champion_panel_leader_swap_food_water_result_t
-M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(
+DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(
     const dm1_v1_champion_panel_leader_swap_food_water_input_t *input)
 {
     dm1_v1_champion_panel_leader_swap_food_water_result_t result;
@@ -89,7 +89,7 @@ M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(
 
     if (!input) {
         local_input =
-            M11_GameView_ChampionPanelLeaderSwapFoodWater_DefaultInput();
+            DM1_V1_ChampionPanelLeaderSwapFoodWater_DefaultInputPc34Compat();
         input = &local_input;
     }
 
@@ -289,7 +289,7 @@ M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(
     return result;
 }
 
-const char *M11_GameView_ChampionPanelLeaderSwapFoodWater_SourceEvidence(void)
+const char *DM1_V1_ChampionPanelLeaderSwapFoodWater_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }

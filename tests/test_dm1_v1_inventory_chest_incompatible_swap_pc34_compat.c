@@ -38,7 +38,7 @@ int main(void)
      * G0425 slots; CHAMPION.C F0302 lines 688-699 then uses the C538 slot
      * mask from DATA.C lines 1080-1087 before any swap. */
     ok &= expect_int("probe setup",
-                     m11_inventory_pc34_probe_chest_incompatible_swap(&probe),
+                     DM1_V1_InventoryChestIncompatibleSwap_RunProbePc34Compat(&probe),
                      1, f0333Open);
     /* ReDMCSB: DATA.C lines 1080-1087 gives C30..C37 chest slots
      * MASK0x0400_CONTAINER, including C538 / DM1 source slot C31. */

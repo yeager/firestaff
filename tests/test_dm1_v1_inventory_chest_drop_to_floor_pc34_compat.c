@@ -240,7 +240,7 @@ int main(void)
            dm1_v1_inventory_chest_drop_to_floor_source_evidence_pc34());
 
     ok &= expect_int("probe setup",
-                     m11_inventory_pc34_probe_chest_drop_to_floor(&probe),
+                     DM1_V1_InventoryChestDropToFloor_RunProbePc34Compat(&probe),
                      1, chest);
     if (!ok) {
         printf("assertionCount=%d\n", g_assertions);

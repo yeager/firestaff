@@ -410,12 +410,12 @@ static void run_negative_path(
     }
 }
 
-const char* M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(void)
+const char* DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }
 
-int M11_GameView_ChestTeleportSurvivalRunPc34(
+int DM1_V1_ChestTeleportSurvival_RunPc34Compat(
     M11_GameView_ChestTeleportSurvivalProbePc34* out)
 {
     ChestTeleportRuntimePc34 runtime;

@@ -139,11 +139,18 @@ typedef struct {
 extern const DM1_V1_ChestOpenFullLeaderHandSpecPc34
     dm1_v1_chest_open_with_full_leader_hand_pc34_spec;
 
-const char* M11_GameView_ChestOpenWithFullLeaderHandSourceEvidencePc34(void);
+const char* DM1_V1_ChestOpenWithFullLeaderHand_SourceEvidencePc34Compat(void);
 const DM1_V1_ChestOpenFullLeaderHandSpecPc34*
-M11_GameView_ChestOpenWithFullLeaderHandSpecPc34(void);
-int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
+DM1_V1_ChestOpenWithFullLeaderHand_SpecPc34Compat(void);
+int DM1_V1_ChestOpenWithFullLeaderHand_RuntimeGatePc34Compat(
     DM1_V1_ChestOpenFullLeaderHandProbePc34* out);
+
+#define M11_GameView_ChestOpenWithFullLeaderHandSourceEvidencePc34 \
+    DM1_V1_ChestOpenWithFullLeaderHand_SourceEvidencePc34Compat
+#define M11_GameView_ChestOpenWithFullLeaderHandSpecPc34 \
+    DM1_V1_ChestOpenWithFullLeaderHand_SpecPc34Compat
+#define M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34 \
+    DM1_V1_ChestOpenWithFullLeaderHand_RuntimeGatePc34Compat
 
 #ifdef __cplusplus
 }

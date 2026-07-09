@@ -152,18 +152,18 @@ static int contains_type(const int* types, int count, int itemType)
     return 0;
 }
 
-const char* M11_GameView_ChestOpenWithFullLeaderHandSourceEvidencePc34(void)
+const char* DM1_V1_ChestOpenWithFullLeaderHand_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }
 
 const DM1_V1_ChestOpenFullLeaderHandSpecPc34*
-M11_GameView_ChestOpenWithFullLeaderHandSpecPc34(void)
+DM1_V1_ChestOpenWithFullLeaderHand_SpecPc34Compat(void)
 {
     return &dm1_v1_chest_open_with_full_leader_hand_pc34_spec;
 }
 
-int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
+int DM1_V1_ChestOpenWithFullLeaderHand_RuntimeGatePc34Compat(
     DM1_V1_ChestOpenFullLeaderHandProbePc34* out)
 {
     DM1_V1_InventoryStatePc34 state;

@@ -442,7 +442,7 @@ const char* dm1_inventory_chest_close_recompaction_source_evidence_pc34(void)
         "CHAMPION.C:609-614 F0301 adds F0140 object weight to champion Load";
 }
 
-int m11_inventory_pc34_probe_chest_close_recompaction(
+int DM1_V1_InventoryChestCloseRecompaction_RunProbePc34Compat(
     DM1_V1_InventoryChestCloseRecompactionProbePc34* out)
 {
     const int fullSlots[DM1_PC34_CHEST_CLOSE_RECOMPACTION_SLOT_COUNT] = {

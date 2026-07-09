@@ -288,7 +288,7 @@ static int setup_and_drop_pc34(
         &state, dropSlotIndex, event);
 }
 
-int m11_inventory_pc34_probe_chest_drop_to_floor(
+int DM1_V1_InventoryChestDropToFloor_RunProbePc34Compat(
     DM1_V1_InventoryChestDropToFloorProbePc34* out)
 {
     if (!out) {

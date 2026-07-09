@@ -122,55 +122,55 @@ static int test_anchor_table(void)
     int ok = 1;
 
     ok &= expect_contains("source evidence F0333",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "CHEST.C F0333:31-67",
                           "ReDMCSB CHEST.C F0333 lines 31-67");
     ok &= expect_contains("source evidence F0334",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "CHEST.C F0334:113-132",
                           "ReDMCSB CHEST.C F0334 lines 113-132");
     ok &= expect_contains("source evidence F0297",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "CHAMPION.C F0297:243-298",
                           "ReDMCSB CHAMPION.C F0297 lines 243-298");
     ok &= expect_contains("source evidence F0298",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "CHAMPION.C F0298:270-298",
                           "ReDMCSB CHAMPION.C F0298 lines 270-298");
     ok &= expect_contains("source evidence F0300",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "F0300:511-515",
                           "ReDMCSB CHAMPION.C F0300 lines 511-515");
     ok &= expect_contains("source evidence F0301",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "F0301:606-614",
                           "ReDMCSB CHAMPION.C F0301 lines 606-614");
     ok &= expect_contains("source evidence F0302",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "F0302:662-710",
                           "ReDMCSB CHAMPION.C F0302 lines 662-710");
     ok &= expect_contains("source evidence F0163",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "DUNGEON.C F0163:1769-1838",
                           "ReDMCSB DUNGEON.C F0163 lines 1769-1838");
     ok &= expect_contains("source evidence map setter",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "F0173:2724-2740/F0174:2742-2756",
                           "ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2756");
     ok &= expect_contains("source evidence teleport",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "MOVESENS.C F0267:469-492",
                           "ReDMCSB MOVESENS.C F0267 lines 469-492");
     ok &= expect_contains("source evidence object",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "OBJECT.C F0033:147-212",
                           "ReDMCSB OBJECT.C F0033 lines 147-212");
     ok &= expect_contains("source evidence blit",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "BLITMASK.C F0133:30-33",
                           "ReDMCSB BLITMASK.C F0133 lines 30-33");
     ok &= expect_contains("source evidence defs",
-                          M11_GameView_ChestTeleportSurvivalSourceEvidencePc34(),
+                          DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(),
                           "DEFS.H:2088",
                           defs);
 
@@ -590,7 +590,7 @@ int main(void)
 {
     int ok = 1;
 
-    if (!M11_GameView_ChestTeleportSurvivalRunPc34(&g_probe)) {
+    if (!DM1_V1_ChestTeleportSurvival_RunPc34Compat(&g_probe)) {
         printf("FAIL probe builder returned false\n");
         return 1;
     }

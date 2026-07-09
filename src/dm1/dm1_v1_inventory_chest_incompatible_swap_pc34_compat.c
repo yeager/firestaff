@@ -39,7 +39,7 @@ const char* dm1_inventory_chest_incompatible_swap_source_evidence_pc34(void)
         "DUNGEON.C:108 gives Staff Of Claws AllowedSlots 0x0040 Quiver 1";
 }
 
-int m11_inventory_pc34_probe_chest_incompatible_swap(
+int DM1_V1_InventoryChestIncompatibleSwap_RunProbePc34Compat(
     DM1_V1_InventoryChestIncompatibleSwapProbePc34* out)
 {
     enum {

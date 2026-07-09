@@ -53,13 +53,13 @@ static void expect_str_not_contains(const char *label, const char *haystack,
 static dm1_v1_champion_panel_leader_swap_food_water_input_t
 make_default_input(void)
 {
-    return M11_GameView_ChampionPanelLeaderSwapFoodWater_DefaultInput();
+    return DM1_V1_ChampionPanelLeaderSwapFoodWater_DefaultInputPc34Compat();
 }
 
 static void test_source_evidence_and_disjoint_contract(void)
 {
     const char *source =
-        M11_GameView_ChampionPanelLeaderSwapFoodWater_SourceEvidence();
+        DM1_V1_ChampionPanelLeaderSwapFoodWater_SourceEvidencePc34Compat();
 
     expect_str_contains("source.f0302_inventory_branch", source,
         "F0302:662-714", "CHAMPION.C F0302:662-714 inventory branch");
@@ -117,7 +117,7 @@ static void test_leader_is_inventory_champion_predicate(void)
     input.leader_index = 0;
     input.inventory_ordinal = 1;
     input.inventory_index = 0;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_int("leader_is_inventory_champion.true", result.leader_is_inventory_champion, 1,
                anchor);
@@ -144,7 +144,7 @@ static void test_leader_not_inventory_champion_predicate(void)
     input.leader_index = 0;
     input.inventory_ordinal = 3;
     input.inventory_index = 2;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_int("leader_is_inventory_champion.false", result.leader_is_inventory_champion, 0,
                anchor);
@@ -178,7 +178,7 @@ static void test_removed_not_chest_or_scroll_breaks_bug0_39(void)
     input.leader_index = 0;
     input.inventory_ordinal = 1;
     input.inventory_index = 0;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_int("bug0_39_predicate.non_chest_scroll",
                result.bug0_39_flicker_predicate_holds, 0,
@@ -203,7 +203,7 @@ static void test_leader_hand_empty_skips_f0298_and_predicate(void)
     input.leader_index = 0;
     input.inventory_ordinal = 1;
     input.inventory_index = 0;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_int("bug0_39_predicate.empty_leader_hand",
                result.bug0_39_flicker_predicate_holds, 0,
@@ -235,7 +235,7 @@ static void test_slot_thing_empty_skips_f0297_f0300_and_predicate(void)
     input.leader_index = 0;
     input.inventory_ordinal = 1;
     input.inventory_index = 0;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_int("bug0_39_predicate.empty_slot",
                result.bug0_39_flicker_predicate_holds, 0, anchor);
@@ -267,7 +267,7 @@ static void test_helper_order_and_outer_bracket(void)
     input.leader_index = 0;
     input.inventory_ordinal = 1;
     input.inventory_index = 0;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_int("f0077_count", result.f0077_enable_screen_update_call_count, 1, anchor);
     expect_int("f0078_count", result.f0078_disable_screen_update_call_count, 1, anchor);
@@ -310,7 +310,7 @@ static void test_attribute_trace_anchors(void)
     input.leader_index = 0;
     input.inventory_ordinal = 1;
     input.inventory_index = 0;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_u16("leader_load_set",
                result.attribute_trace.leader_attributes_at_f0297_entry,
@@ -343,7 +343,7 @@ static void test_f0292_champion_indices(void)
     input.leader_index = 0;
     input.inventory_ordinal = 1;
     input.inventory_index = 0;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_int("f0292_intermediate_champion",
                result.f0292_intermediate_champion_index, 0, anchor);
@@ -374,7 +374,7 @@ static void test_leader_not_inventory_f0292_targets(void)
     input.leader_index = 0;
     input.inventory_ordinal = 3;
     input.inventory_index = 2;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_int("f0292_intermediate_champion",
                result.f0292_intermediate_champion_index, 0,
@@ -406,7 +406,7 @@ static void test_leader_not_inventory_f0292_targets(void)
 static void test_null_input_defaults(void)
 {
     dm1_v1_champion_panel_leader_swap_food_water_result_t result =
-        M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(NULL);
+        DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(NULL);
     const char *anchor =
         "synthetic default probe (NULL input -> default contract)";
 
@@ -436,7 +436,7 @@ static void test_inventory_champion_out_of_range(void)
 
     input.inventory_index = -1;
     input.inventory_ordinal = 0;
-    result = M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch(&input);
+    result = DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(&input);
 
     expect_int("oor.inventory_champion_alive",
                result.inventory_champion_alive, 0, anchor);

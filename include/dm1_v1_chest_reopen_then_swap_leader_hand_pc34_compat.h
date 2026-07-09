@@ -85,11 +85,18 @@ extern const DM1_V1_ChestReopenThenSwapLeaderHandSpecPc34
     dm1_v1_chest_reopen_then_swap_leader_hand_pc34_spec;
 
 const char*
-M11_GameView_ChestReopenThenSwapLeaderHandSourceEvidencePc34(void);
+DM1_V1_ChestReopenThenSwapLeaderHand_SourceEvidencePc34Compat(void);
 const DM1_V1_ChestReopenThenSwapLeaderHandSpecPc34*
-M11_GameView_ChestReopenThenSwapLeaderHandSpecPc34(void);
-int M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
+DM1_V1_ChestReopenThenSwapLeaderHand_SpecPc34Compat(void);
+int DM1_V1_ChestReopenThenSwapLeaderHand_RunPc34Compat(
     DM1_V1_ChestReopenThenSwapLeaderHandProbePc34* out);
+
+#define M11_GameView_ChestReopenThenSwapLeaderHandSourceEvidencePc34 \
+    DM1_V1_ChestReopenThenSwapLeaderHand_SourceEvidencePc34Compat
+#define M11_GameView_ChestReopenThenSwapLeaderHandSpecPc34 \
+    DM1_V1_ChestReopenThenSwapLeaderHand_SpecPc34Compat
+#define M11_GameView_ChestReopenThenSwapLeaderHandRunPc34 \
+    DM1_V1_ChestReopenThenSwapLeaderHand_RunPc34Compat
 
 #ifdef __cplusplus
 }

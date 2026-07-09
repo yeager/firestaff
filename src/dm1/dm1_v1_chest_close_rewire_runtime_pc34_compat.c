@@ -87,7 +87,7 @@ const char* dm1_v1_chest_close_rewire_runtime_source_evidence_pc34(void)
         "DUNGEON.C:108 gives Staff Of Claws AllowedSlots 0x0040";
 }
 
-int m11_inventory_pc34_probe_chest_close_rewire_runtime(
+int DM1_V1_ChestCloseRewireRuntime_RunProbePc34Compat(
     DM1_V1_ChestCloseRewireRuntimeProbePc34* out)
 {
     enum {

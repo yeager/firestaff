@@ -68,7 +68,7 @@ static int test_spec(void)
 {
     const char* f0333 = "ReDMCSB CHEST.C F0333 lines 31-67";
     const DM1_V1_ChestReopenThenSwapLeaderHandSpecPc34* spec =
-        M11_GameView_ChestReopenThenSwapLeaderHandSpecPc34();
+        DM1_V1_ChestReopenThenSwapLeaderHand_SpecPc34Compat();
     int ok = 1;
 
     ok &= expect_str("contract marker", spec->contractMarker,
@@ -227,10 +227,10 @@ int main(void)
 
     printf("probe=dm1_v1_chest_reopen_then_swap_leader_hand_pc34_compat\n");
     printf("sourceEvidence=%s\n",
-           M11_GameView_ChestReopenThenSwapLeaderHandSourceEvidencePc34());
+           DM1_V1_ChestReopenThenSwapLeaderHand_SourceEvidencePc34Compat());
 
     ok &= expect_int("probe setup",
-                     M11_GameView_ChestReopenThenSwapLeaderHandRunPc34(
+                     DM1_V1_ChestReopenThenSwapLeaderHand_RunPc34Compat(
                          &g_probe),
                      1, f0333);
     if (!ok) {

@@ -149,18 +149,18 @@ static void seed_leader_switch_state(
         handWeight;
 }
 
-const char* M11_GameView_ChestReopenCrossChampionSourceEvidencePc34(void)
+const char* DM1_V1_ChestReopenCrossChampion_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }
 
 const DM1_V1_ChestReopenCrossChampionSpecPc34*
-M11_GameView_ChestReopenCrossChampionSpecPc34(void)
+DM1_V1_ChestReopenCrossChampion_SpecPc34Compat(void)
 {
     return &dm1_v1_chest_reopen_cross_champion_pc34_spec;
 }
 
-int M11_GameView_ChestReopenCrossChampionRunPc34(
+int DM1_V1_ChestReopenCrossChampion_RunPc34Compat(
     DM1_V1_ChestReopenCrossChampionProbePc34* out)
 {
     DM1_V1_InventoryStatePc34 inventory;
