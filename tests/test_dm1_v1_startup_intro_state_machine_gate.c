@@ -1731,6 +1731,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.map_count = 1;
     hoc_host_probe_facts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
     hoc_host_probe_facts.title_played = 1;
+    hoc_host_probe_facts.consumed_launch_path_receipt = 1;
+    hoc_host_probe_facts.launch_path_started_from_launcher = 1;
+    hoc_host_probe_facts.launch_path_intro_not_bypassed = 1;
     hoc_host_probe_facts.captured_after_first_frame_render = 1;
     hoc_host_probe_facts.captured_from_real_assets = 1;
     hoc_host_probe_facts.captured_from_mac_window = 1;
@@ -1764,6 +1767,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      .consumed_runtime_apply_receipt &&
                  hoc_release_capture_ownership
                      .consumed_production_consumer_receipt &&
+                 hoc_release_capture_ownership
+                     .consumed_launch_path_receipt &&
+                 hoc_release_capture_ownership
+                     .launch_path_started_from_launcher &&
+                 hoc_release_capture_ownership
+                     .launch_path_intro_not_bypassed &&
                  hoc_release_capture_ownership.consume_dm1_receipts_only &&
                  hoc_release_capture_ownership.real_asset_capture &&
                  hoc_release_capture_ownership.mac_window_capture &&
@@ -1859,6 +1868,32 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  !hoc_release_capture_ownership.host_capture_route_matches,
              1);
     hoc_host_probe_facts.captured_from_mac_window = 1;
+    hoc_host_probe_facts.launch_path_started_from_launcher = 0;
+    expect_i("DM1 HoC release/app ownership rejects direct M11 launch path",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership
+                     .consumed_launch_path_receipt &&
+                 !hoc_release_capture_ownership
+                      .launch_path_started_from_launcher,
+             1);
+    hoc_host_probe_facts.launch_path_started_from_launcher = 1;
+    hoc_host_probe_facts.launch_path_intro_not_bypassed = 0;
+    expect_i("DM1 HoC release/app ownership rejects intro-bypassed path",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership
+                     .launch_path_started_from_launcher &&
+                 !hoc_release_capture_ownership
+                      .launch_path_intro_not_bypassed,
+             1);
+    hoc_host_probe_facts.launch_path_intro_not_bypassed = 1;
     hoc_lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
     expect_i("DM1 HoC render consumer prepares mirror wall receipt",
              hoc_lane != NULL &&

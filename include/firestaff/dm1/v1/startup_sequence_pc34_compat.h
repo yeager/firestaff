@@ -482,6 +482,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int map_count;
     int entrance_command;
     int title_played;
+    int consumed_launch_path_receipt;
+    int launch_path_started_from_launcher;
+    int launch_path_intro_not_bypassed;
     int captured_after_first_frame_render;
     int captured_from_real_assets;
     int captured_from_mac_window;
@@ -502,10 +505,13 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int handled;
     int ready;
     int consumed_host_probe_facts;
+    int consumed_launch_path_receipt;
     int consumed_runtime_apply_receipt;
     int consumed_production_consumer_receipt;
     int consume_dm1_receipts_only;
     int publish_packaged_full_graphics_proof;
+    int launch_path_started_from_launcher;
+    int launch_path_intro_not_bypassed;
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;

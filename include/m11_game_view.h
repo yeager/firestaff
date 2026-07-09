@@ -209,6 +209,7 @@ typedef struct {
     int dm1HoCReleaseAppCapture;
     int dm1HoCHostCaptureRouteMatches;
     int dm1HoCReleaseCaptureOwnershipReady;
+    int dm1HoCLaunchPathReady;
     int dm1HoCReceiptOnlyConsumerReady;
     int dm1HoCLowerLevelHelpersReady;
     int dm1HoCHostDrawUsesOwnedReceipt;
@@ -1009,6 +1010,7 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     int* outHostWindowCapture,
     int* outHostCaptureRouteMatches,
     int* outReleaseCaptureOwnershipReady,
+    int* outLaunchPathReady,
     int* outOwnedHostDrawReady,
     int* outMapIndex,
     int* outRenderCommandCount);
