@@ -5599,42 +5599,31 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
 static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    const struct CombatantCreatureSnapshot_Compat* creature,
-    int groupIndex,
-    int killedCreatureIndex,
-    int originalGroupCount,
-    int killedCell,
-    int targetDirection,
-    int outcome)
+    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan)
 {
     DM1_MeleeF0190MutationDispatchInputPc34 in;
     DM1_MeleeF0190MutationDispatchPlanPc34 plan;
-    int mapIndex;
-    int mapX;
-    int mapY;
     int fearTriggered = 0;
 
-    if (!world || !group || !creature) return 0;
-    orch_cmd_attack_target_square_compat(
-        world, targetDirection, &mapIndex, &mapX, &mapY);
+    if (!world || !group || !aftermathPlan) return 0;
 
     memset(&in, 0, sizeof(in));
     memset(&plan, 0, sizeof(plan));
-    in.outcome = outcome;
-    in.groupIndex = groupIndex;
-    in.groupBehavior = group->behavior;
-    in.killedCreatureIndex = killedCreatureIndex;
-    in.originalGroupCount = originalGroupCount;
-    in.creatureType = creature->creatureType;
-    in.creatureAttributes = creature->attributes;
-    in.creatureProperties = creature->properties;
-    in.killedCell = killedCell;
-    in.mapIndex = mapIndex;
-    in.mapX = mapX;
-    in.mapY = mapY;
-    in.partyMapIndex = world->partyMapIndex;
-    in.partyMapX = world->party.mapX;
-    in.partyMapY = world->party.mapY;
+    in.outcome = aftermathPlan->mutationOutcome;
+    in.groupIndex = aftermathPlan->mutationGroupIndex;
+    in.groupBehavior = aftermathPlan->mutationGroupBehavior;
+    in.killedCreatureIndex = aftermathPlan->mutationKilledCreatureIndex;
+    in.originalGroupCount = aftermathPlan->mutationOriginalGroupCount;
+    in.creatureType = aftermathPlan->mutationCreatureType;
+    in.creatureAttributes = aftermathPlan->mutationCreatureAttributes;
+    in.creatureProperties = aftermathPlan->mutationCreatureProperties;
+    in.killedCell = aftermathPlan->mutationKilledCell;
+    in.mapIndex = aftermathPlan->mutationMapIndex;
+    in.mapX = aftermathPlan->mutationMapX;
+    in.mapY = aftermathPlan->mutationMapY;
+    in.partyMapIndex = aftermathPlan->mutationPartyMapIndex;
+    in.partyMapX = aftermathPlan->mutationPartyMapX;
+    in.partyMapY = aftermathPlan->mutationPartyMapY;
 
     if (!dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(&in, &plan) ||
         !plan.valid) {
@@ -5655,7 +5644,7 @@ static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
         if (plan.killedSomeStatePlan.shouldEvaluateFear) {
             fearTriggered =
                 orch_cmd_attack_apply_f0190_fear_compat(
-                    world, group, originalGroupCount,
+                    world, group, aftermathPlan->mutationOriginalGroupCount,
                     &plan.killedSomeStatePlan);
         }
     }
@@ -6975,6 +6964,13 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     aftermathIn.creatureIndex = creatureIndex;
                     aftermathIn.creatureType = creatureSnapshot.creatureType;
                     aftermathIn.creatureAttributes = creatureSnapshot.attributes;
+                    aftermathIn.creatureProperties = creatureSnapshot.properties;
+                    aftermathIn.groupBehavior =
+                        world->things->groups[groupIndex].behavior;
+                    aftermathIn.originalGroupCount = originalGroupCount;
+                    aftermathIn.partyMapIndex = world->partyMapIndex;
+                    aftermathIn.partyMapX = world->party.mapX;
+                    aftermathIn.partyMapY = world->party.mapY;
                     orch_cmd_attack_target_square_compat(
                         world, targetDirection,
                         &aftermathIn.targetMapIndex,
@@ -7031,9 +7027,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             fearTriggered =
                                 orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
                                     world, &world->things->groups[groupIndex],
-                                    &creatureSnapshot, groupIndex, creatureIndex,
-                                    originalGroupCount, killedCell,
-                                    targetDirection, applyOutcome);
+                                    &aftermathPlan);
                         }
                         if (aftermathPlan.shouldWriteRawGroup) {
                             /* ReDMCSB GROUP.C:F0190 lines 892-917 compacts or

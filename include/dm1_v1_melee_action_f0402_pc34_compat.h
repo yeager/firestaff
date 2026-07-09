@@ -392,6 +392,12 @@ typedef struct {
     int creatureIndex;
     int creatureType;
     int creatureAttributes;
+    int creatureProperties;
+    int groupBehavior;
+    int originalGroupCount;
+    int partyMapIndex;
+    int partyMapX;
+    int partyMapY;
     int targetMapIndex;
     int targetMapX;
     int targetMapY;
@@ -426,6 +432,21 @@ typedef struct {
     int reactionGroupIndex;
     int reactionCreatureType;
     struct ExplosionCreateInput_Compat smokeCreateInput;
+    int mutationOutcome;
+    int mutationGroupIndex;
+    int mutationGroupBehavior;
+    int mutationKilledCreatureIndex;
+    int mutationOriginalGroupCount;
+    int mutationCreatureType;
+    int mutationCreatureAttributes;
+    int mutationCreatureProperties;
+    int mutationKilledCell;
+    int mutationMapIndex;
+    int mutationMapX;
+    int mutationMapY;
+    int mutationPartyMapIndex;
+    int mutationPartyMapX;
+    int mutationPartyMapY;
 } DM1_MeleeF0231AftermathPlanPc34;
 
 typedef struct {
