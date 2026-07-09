@@ -65,6 +65,12 @@ typedef struct FakeDm1StartupCallbacks {
     int after_open;
     int draw_opened;
     int mark_failed;
+    int prelude_begin_count;
+    int prelude_end_count;
+    int post_begin_count;
+    int post_end_count;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 prelude_media;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 post_media;
     char opened_source_id[64];
     char resolved_path[512];
 } FakeDm1StartupCallbacks;
@@ -102,6 +108,48 @@ static int fake_discard_presentation(void* user) {
     return 1;
 }
 
+static int fake_begin_prelude_plan(
+    void* user,
+    const DM1_V1_StartupHandoffPreludePlan_PC34* plan) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    if (!fake || !plan) {
+        return 0;
+    }
+    fake->prelude_begin_count++;
+    fake->prelude_media = plan->media_receipt;
+    return 1;
+}
+
+static int fake_end_prelude_plan(void* user) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    if (!fake) {
+        return 0;
+    }
+    fake->prelude_end_count++;
+    return 1;
+}
+
+static int fake_begin_post_launch_plan(
+    void* user,
+    const DM1_V1_StartupHandoffPostLaunchPlan_PC34* plan) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    if (!fake || !plan) {
+        return 0;
+    }
+    fake->post_begin_count++;
+    fake->post_media = plan->media_receipt;
+    return 1;
+}
+
+static int fake_end_post_launch_plan(void* user) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    if (!fake) {
+        return 0;
+    }
+    fake->post_end_count++;
+    return 1;
+}
+
 static int fake_play_title(void* user,
                            const char* source_id,
                            int* out_played_any_frame) {
@@ -134,6 +182,10 @@ static DM1_V1_StartupHandoffCallbacks_PC34 fake_callbacks(
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     memset(&callbacks, 0, sizeof(callbacks));
     callbacks.user = fake;
+    callbacks.begin_prelude_plan = fake_begin_prelude_plan;
+    callbacks.end_prelude_plan = fake_end_prelude_plan;
+    callbacks.begin_post_launch_plan = fake_begin_post_launch_plan;
+    callbacks.end_post_launch_plan = fake_end_post_launch_plan;
     callbacks.report_source_order_failure = fake_report_source_order_failure;
     callbacks.raise_window = fake_raise_window;
     callbacks.play_swsh = fake_play_swsh;
@@ -1004,6 +1056,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 handoff prelude plays SWSH",
              prelude.play_swsh,
              1);
+    expect_i("DM1 handoff prelude carries startup media receipt",
+             prelude.media_receipt.handled &&
+                 prelude.media_receipt.play_swsh,
+             1);
     expect_i("DM1 handoff prelude discards post-SWSH texture",
              prelude.discard_presentation_after_swsh,
              1);
@@ -1027,6 +1083,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
              1);
     expect_i("DM1 post-launch plan plays entrance",
              post.play_entrance,
+             1);
+    expect_i("DM1 post-launch plan carries media title receipt",
+             post.media_receipt.handled &&
+                 post.media_receipt.play_title &&
+                 post.media_receipt.title_menu_boundary_frame ==
+                     (unsigned int)post.title_menu_boundary_frame,
              1);
     expect_i("DM1 post-launch plan keeps entrance timeout",
              post.entrance_auto_enter_ms,
@@ -1076,6 +1138,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 prelude executor owns SWSH order",
              strcmp(fake.order, "RSD"),
              0);
+    expect_i("DM1 prelude executor brackets media receipt",
+             fake.prelude_begin_count == 1 &&
+                 fake.prelude_end_count == 1 &&
+                 fake.prelude_media.handled &&
+                 fake.prelude_media.play_swsh,
+             1);
 
     memset(&fake, 0, sizeof(fake));
     fake.entrance_command = 2;
@@ -1090,6 +1158,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 post-launch executor owns TITLE then ENTRANCE order",
              strcmp(fake.order, "RTE"),
              0);
+    expect_i("DM1 post-launch executor brackets media receipt",
+             fake.post_begin_count == 1 &&
+                 fake.post_end_count == 1 &&
+                 fake.post_media.handled &&
+                 fake.post_media.play_title,
+             1);
     expect_i("DM1 post-launch executor reports title played",
              title_played,
              1);
@@ -1354,6 +1428,14 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 selected launch transaction owns full order",
              strcmp(fake.order, "RSDOARTEG"),
              0);
+    expect_i("DM1 selected launch transaction brackets startup media",
+             fake.prelude_begin_count == 1 &&
+                 fake.prelude_end_count == 1 &&
+                 fake.post_begin_count == 1 &&
+                 fake.post_end_count == 1 &&
+                 fake.prelude_media.handled &&
+                 fake.post_media.handled,
+             1);
     expect_i("DM1 selected launch transaction draws enter path",
              fake.draw_opened,
              1);

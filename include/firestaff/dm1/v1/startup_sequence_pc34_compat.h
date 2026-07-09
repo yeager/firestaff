@@ -30,6 +30,32 @@ typedef enum DM1_V1_StartupHandoffAction_PC34 {
     DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34 = 4
 } DM1_V1_StartupHandoffAction_PC34;
 
+typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
+    int handled;
+    int play_swsh;
+    int play_title;
+    int play_entrance;
+    unsigned int swsh_vblank_ms;
+    unsigned int swsh_initial_logo_hold_ms;
+    unsigned int swsh_palette_wait_ms;
+    unsigned int swsh_sound_wait_ms;
+    unsigned int swsh_final_hold_ms;
+    unsigned int title_presents_hold_ms;
+    unsigned int title_zoom_frame_delay_ms;
+    unsigned int title_zoom_step_count;
+    unsigned int title_post_zoom_guard_ms;
+    unsigned int title_c001_cadence_pad_ms;
+    unsigned int title_source_animation_steps;
+    unsigned int title_frame_bank_equivalent_steps;
+    unsigned int title_menu_boundary_frame;
+    int title_presents_palette;
+    int title_zoom_palette;
+    int title_menu_eligible;
+    int title_consume_pending_input;
+    int entrance_auto_enter_ms;
+    const char* source_evidence;
+} DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
+
 typedef struct DM1_V1_StartupHandoffPreludePlan_PC34 {
     int required;
     int source_order_valid;
@@ -37,6 +63,7 @@ typedef struct DM1_V1_StartupHandoffPreludePlan_PC34 {
     int discard_presentation_after_swsh;
     const char* game_id;
     const char* failure_evidence;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media_receipt;
 } DM1_V1_StartupHandoffPreludePlan_PC34;
 
 typedef struct DM1_V1_StartupHandoffPostLaunchPlan_PC34 {
@@ -52,6 +79,7 @@ typedef struct DM1_V1_StartupHandoffPostLaunchPlan_PC34 {
     const char* title_menu_reason;
     DM1_V1_StartupStage_PC34 entrance_wait_stage;
     DM1_V1_EntranceFullStartRenderReceiptPc34 entrance_full_start_receipt;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media_receipt;
     const char* source_id;
 } DM1_V1_StartupHandoffPostLaunchPlan_PC34;
 
@@ -73,6 +101,13 @@ typedef struct DM1_V1_StartupHostApplyResult_PC34 {
 
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
+    int (*begin_prelude_plan)(void* user,
+                              const DM1_V1_StartupHandoffPreludePlan_PC34* plan);
+    int (*end_prelude_plan)(void* user);
+    int (*begin_post_launch_plan)(
+        void* user,
+        const DM1_V1_StartupHandoffPostLaunchPlan_PC34* plan);
+    int (*end_post_launch_plan)(void* user);
     int (*report_source_order_failure)(void* user, const char* evidence);
     int (*raise_window)(void* user);
     int (*play_swsh)(void* user, const char* game_id, int preserve_audio);
@@ -299,32 +334,6 @@ typedef struct DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 {
     DM1_V1_StartupStage_PC34 next_stage;
     const char* reason;
 } DM1_V1_StartupTitleMenuEligibilityReceipt_PC34;
-
-typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
-    int handled;
-    int play_swsh;
-    int play_title;
-    int play_entrance;
-    unsigned int swsh_vblank_ms;
-    unsigned int swsh_initial_logo_hold_ms;
-    unsigned int swsh_palette_wait_ms;
-    unsigned int swsh_sound_wait_ms;
-    unsigned int swsh_final_hold_ms;
-    unsigned int title_presents_hold_ms;
-    unsigned int title_zoom_frame_delay_ms;
-    unsigned int title_zoom_step_count;
-    unsigned int title_post_zoom_guard_ms;
-    unsigned int title_c001_cadence_pad_ms;
-    unsigned int title_source_animation_steps;
-    unsigned int title_frame_bank_equivalent_steps;
-    unsigned int title_menu_boundary_frame;
-    int title_presents_palette;
-    int title_zoom_palette;
-    int title_menu_eligible;
-    int title_consume_pending_input;
-    int entrance_auto_enter_ms;
-    const char* source_evidence;
-} DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
 
 typedef struct DM1_V1_StartupSelectedBootProbeFacts_PC34 {
     const char* expected_game_id;

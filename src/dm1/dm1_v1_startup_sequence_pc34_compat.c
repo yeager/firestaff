@@ -364,7 +364,14 @@ int dm1_v1_startup_handoff_prelude_plan_pc34(
     source_order_valid = dm1_v1_startup_sequence_source_order_valid_pc34();
     out_plan->required = required;
     out_plan->source_order_valid = source_order_valid;
-    out_plan->play_swsh = required ? 1 : 0;
+    if (required &&
+        !dm1_v1_startup_full_graphics_media_receipt_pc34(
+            game_id,
+            &out_plan->media_receipt)) {
+        return 0;
+    }
+    out_plan->play_swsh =
+        (required && out_plan->media_receipt.play_swsh) ? 1 : 0;
     out_plan->discard_presentation_after_swsh = required ? 1 : 0;
     out_plan->game_id = game_id;
     out_plan->failure_evidence =
@@ -386,17 +393,24 @@ int dm1_v1_startup_handoff_post_launch_plan_pc34(
     memset(out_plan, 0, sizeof(*out_plan));
     required = dm1_v1_startup_source_visible_handoff_required_pc34(source_id);
     out_plan->required = required;
-    out_plan->play_title = required ? 1 : 0;
-    out_plan->play_entrance = required ? 1 : 0;
-    out_plan->entrance_auto_enter_ms = required ? 1200 : 0;
     out_plan->source_id = source_id;
     if (required) {
+        if (!dm1_v1_startup_full_graphics_media_receipt_pc34(
+                source_id,
+                &out_plan->media_receipt)) {
+            return 0;
+        }
+        out_plan->play_title = out_plan->media_receipt.play_title ? 1 : 0;
+        out_plan->play_entrance =
+            out_plan->media_receipt.play_entrance ? 1 : 0;
+        out_plan->entrance_auto_enter_ms =
+            out_plan->media_receipt.entrance_auto_enter_ms;
         memset(&title_facts, 0, sizeof(title_facts));
         memset(&title_receipt, 0, sizeof(title_receipt));
         title_facts.title_frame =
-            dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1u;
+            out_plan->media_receipt.title_menu_boundary_frame;
         title_facts.title_frame_max =
-            dm1_v1_startup_title_frame_bank_equivalent_steps_pc34();
+            out_plan->media_receipt.title_frame_bank_equivalent_steps;
         title_facts.advance_requested = 1;
         title_facts.title_handoff_ready = 1;
         if (!dm1_v1_startup_title_menu_eligibility_receipt_pc34(
@@ -410,7 +424,8 @@ int dm1_v1_startup_handoff_post_launch_plan_pc34(
                 &out_plan->entrance_full_start_receipt)) {
             return 0;
         }
-        out_plan->title_menu_boundary_frame = (int)title_facts.title_frame;
+        out_plan->title_menu_boundary_frame =
+            (int)out_plan->media_receipt.title_menu_boundary_frame;
         out_plan->title_menu_eligible = title_receipt.menu_eligible;
         out_plan->title_keep_surface = title_receipt.keep_title_surface;
         out_plan->title_consume_pending_input =
@@ -438,6 +453,10 @@ int dm1_v1_startup_execute_handoff_prelude_pc34(
     if (!plan.required) {
         return 1;
     }
+    if (callbacks->begin_prelude_plan &&
+        !callbacks->begin_prelude_plan(callbacks->user, &plan)) {
+        return 0;
+    }
     /* ReDMCSB: APPA.C loads SWSH before TITLE/APPB, and STARTUP2.C later
      * calls F0437_STARTEND_DrawTitle before entrance processing.  Keep the
      * host-side calls behind this DM1-owned execution facade so M11 cannot
@@ -446,22 +465,41 @@ int dm1_v1_startup_execute_handoff_prelude_pc34(
         callbacks->report_source_order_failure &&
         !callbacks->report_source_order_failure(callbacks->user,
                                                 plan.failure_evidence)) {
+        if (callbacks->end_prelude_plan) {
+            (void)callbacks->end_prelude_plan(callbacks->user);
+        }
         return 0;
     }
     if (plan.play_swsh) {
         if (!callbacks->raise_window || !callbacks->play_swsh) {
+            if (callbacks->end_prelude_plan) {
+                (void)callbacks->end_prelude_plan(callbacks->user);
+            }
             return 0;
         }
         if (!callbacks->raise_window(callbacks->user)) {
+            if (callbacks->end_prelude_plan) {
+                (void)callbacks->end_prelude_plan(callbacks->user);
+            }
             return 0;
         }
         if (!callbacks->play_swsh(callbacks->user, plan.game_id, 0)) {
+            if (callbacks->end_prelude_plan) {
+                (void)callbacks->end_prelude_plan(callbacks->user);
+            }
             return 0;
         }
     }
     if (plan.discard_presentation_after_swsh &&
         (!callbacks->discard_presentation_texture ||
          !callbacks->discard_presentation_texture(callbacks->user))) {
+        if (callbacks->end_prelude_plan) {
+            (void)callbacks->end_prelude_plan(callbacks->user);
+        }
+        return 0;
+    }
+    if (callbacks->end_prelude_plan &&
+        !callbacks->end_prelude_plan(callbacks->user)) {
         return 0;
     }
     return 1;
@@ -489,31 +527,54 @@ int dm1_v1_startup_execute_handoff_post_launch_pc34(
     if (!plan.required) {
         return 1;
     }
+    if (callbacks->begin_post_launch_plan &&
+        !callbacks->begin_post_launch_plan(callbacks->user, &plan)) {
+        return 0;
+    }
     /* ReDMCSB STARTUP2.C: F0437_STARTEND_DrawTitle precedes the later
      * F0441_STARTEND_ProcessEntrance gate. */
     if (plan.play_title) {
         if (!callbacks->raise_window || !callbacks->play_title) {
+            if (callbacks->end_post_launch_plan) {
+                (void)callbacks->end_post_launch_plan(callbacks->user);
+            }
             return 0;
         }
         if (!callbacks->raise_window(callbacks->user)) {
+            if (callbacks->end_post_launch_plan) {
+                (void)callbacks->end_post_launch_plan(callbacks->user);
+            }
             return 0;
         }
         if (!callbacks->play_title(callbacks->user,
                                    plan.source_id,
                                    &title_played)) {
+            if (callbacks->end_post_launch_plan) {
+                (void)callbacks->end_post_launch_plan(callbacks->user);
+            }
             return 0;
         }
     }
     if (plan.play_entrance) {
         if (!callbacks->play_entrance) {
+            if (callbacks->end_post_launch_plan) {
+                (void)callbacks->end_post_launch_plan(callbacks->user);
+            }
             return 0;
         }
         if (!callbacks->play_entrance(callbacks->user,
                                       plan.source_id,
                                       plan.entrance_auto_enter_ms,
                                       &entrance_command)) {
+            if (callbacks->end_post_launch_plan) {
+                (void)callbacks->end_post_launch_plan(callbacks->user);
+            }
             return 0;
         }
+    }
+    if (callbacks->end_post_launch_plan &&
+        !callbacks->end_post_launch_plan(callbacks->user)) {
+        return 0;
     }
     if (out_title_played) {
         *out_title_played = title_played;
