@@ -23,6 +23,13 @@ extern "C" {
 /* Maximum champions in DM1 — 4 party slots, 24 mirrors total */
 #define M11_MAX_CHAMPIONS          4
 #define DM1_V1_MAX_MIRROR_SLOTS_PC34      24
+#define DM1_V1_ENTRANCE_MICRO_DUNGEON_SIZE_PC34 25
+#define DM1_V1_ENTRANCE_MAP_INDEX_PC34 255
+#define DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 5
+#define DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 5
+#define DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34 2
+#define DM1_V1_ENTRANCE_ELEMENT_WALL_PC34 0
+#define DM1_V1_ENTRANCE_ELEMENT_CORRIDOR_PC34 1
 
 /* Entrance states */
 typedef enum {
@@ -54,6 +61,24 @@ typedef struct {
     uint32_t lastFrameMs;   /* timestamp of last frame */
     int complete;           /* 1 when animation finished */
 } DM1_V1_DoorAnimationPc34;
+
+typedef struct {
+    int valid;
+    int mapIndex;
+    int width;
+    int height;
+    int partyX;
+    int partyY;
+    int partyDirection;
+    int drawFloorAndCeilingRequested;
+    unsigned char squares[DM1_V1_ENTRANCE_MICRO_DUNGEON_SIZE_PC34];
+    int corridorCount;
+    int doorFrameIndex;
+    int doorSourceStep;
+    int drawDoorFrame;
+    int playDoorRattleSound;
+    int entranceMusicRequested;
+} DM1_V1_EntranceFullStartRenderReceiptPc34;
 
 /* Entrance persistent state */
 typedef struct {
@@ -154,6 +179,14 @@ int DM1_V1_Entrance_IsCompletePc34Compat(const DM1_V1_EntranceCtxPc34 *ctx);
 int DM1_V1_Entrance_GetPartyCountPc34Compat(const DM1_V1_EntranceCtxPc34 *ctx);
 
 /*
+ * Build the full-start graphics receipt for the entrance micro-dungeon and
+ * currently visible door-animation frame.
+ */
+int DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
+    const DM1_V1_EntranceCtxPc34 *ctx,
+    DM1_V1_EntranceFullStartRenderReceiptPc34 *outReceipt);
+
+/*
  * Source evidence string.
  */
 const char *DM1_V1_Entrance_SourceEvidencePc34Compat(void);
@@ -163,6 +196,7 @@ typedef DM1_V1_MirrorSlotPc34 M11_MirrorSlot;
 typedef DM1_V1_DoorAnimationPc34 M11_DoorAnimation;
 typedef DM1_V1_EntranceCtxPc34 M11_EntranceCtx;
 typedef DM1_V1_EntranceTickResultPc34 M11_EntranceTickResult;
+typedef DM1_V1_EntranceFullStartRenderReceiptPc34 M11_EntranceFullStartRenderReceipt;
 
 #define M11_MAX_MIRROR_SLOTS DM1_V1_MAX_MIRROR_SLOTS_PC34
 #define m11_entrance_init DM1_V1_Entrance_InitPc34Compat
@@ -177,6 +211,7 @@ typedef DM1_V1_EntranceTickResultPc34 M11_EntranceTickResult;
 #define m11_entrance_finalize DM1_V1_Entrance_FinalizePc34Compat
 #define m11_entrance_is_complete DM1_V1_Entrance_IsCompletePc34Compat
 #define m11_entrance_get_party_count DM1_V1_Entrance_GetPartyCountPc34Compat
+#define m11_entrance_build_full_start_render_receipt DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat
 #define m11_entrance_source_evidence DM1_V1_Entrance_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
