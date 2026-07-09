@@ -2926,17 +2926,31 @@ static int m11_csb_boot_runtime_startup_capture_receipt(
         out_receipt);
 }
 
+static int m11_csb_boot_runtime_startup_host_view_receipt(
+    const M11_GameViewState *state,
+    CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    return csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
+        &snapshot,
+        out_receipt);
+}
+
 static int m11_csb_boot_startup_active_from_capture(
     const M11_GameViewState *state)
 {
-    CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
+    CSB_V1_BootStartupHostViewReceipt_PC34 view_receipt;
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
-    if (m11_csb_boot_runtime_startup_capture_receipt(state,
-                                                     &capture_receipt) &&
-        capture_receipt.readiness_valid) {
-        return capture_receipt.readiness.startup_active ? 1 : 0;
+    if (m11_csb_boot_runtime_startup_host_view_receipt(state,
+                                                       &view_receipt) &&
+        view_receipt.valid) {
+        return view_receipt.startup_active ? 1 : 0;
     }
     return state->csbState.startup_entrance_active ? 1 : 0;
 }
@@ -11114,7 +11128,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->dm1WorldTick = state->world.gameTick;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
+        CSB_V1_BootStartupHostViewReceipt_PC34 view_receipt;
         out->levelLoaded = state->csbState.level_loaded;
         out->mapIndex = state->csbState.current_level;
         out->partyX = state->csbState.party_x;
@@ -11122,83 +11136,42 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->csbState.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->csbState.tick_count;
-        if (m11_csb_boot_runtime_startup_capture_receipt(state,
-                                                         &capture_receipt)) {
-            if (capture_receipt.route_valid &&
-                capture_receipt.route.presentation.valid) {
-                snprintf(out->startupPhase,
-                         sizeof(out->startupPhase),
-                         "%s",
-                         capture_receipt.route.presentation.phase);
-                out->startupActive =
-                    capture_receipt.route.presentation.startup_active;
-                out->startupFrame =
-                    capture_receipt.route.presentation.startup_frame;
-                snprintf(out->startupAnimation,
-                         sizeof(out->startupAnimation),
-                         "%s",
-                         capture_receipt.route.presentation.animation);
-                out->startupAnimationActive =
-                    capture_receipt.route.presentation.animation_active;
-                out->startupTitleFrame =
-                    capture_receipt.route.presentation.title_frame;
-                out->startupTitleFrameMax =
-                    capture_receipt.route.presentation.title_frame_max;
-                out->startupTitleReady =
-                    capture_receipt.route.presentation.title_ready;
-            }
-            if (!capture_receipt.readiness_valid) {
-                return 1;
-            }
-            out->startupActive = capture_receipt.readiness.startup_active;
+        if (m11_csb_boot_runtime_startup_host_view_receipt(state,
+                                                           &view_receipt) &&
+            view_receipt.valid) {
+            snprintf(out->startupPhase,
+                     sizeof(out->startupPhase),
+                     "%s",
+                     view_receipt.phase);
             snprintf(out->startupAnimation,
                      sizeof(out->startupAnimation),
                      "%s",
-                     capture_receipt.readiness.animation);
-            out->startupTitleFrame = capture_receipt.readiness.title_frame;
-            out->startupTitleFrameMax =
-                capture_receipt.readiness.title_frame_max;
-            out->startupTitleReady = capture_receipt.readiness.title_ready;
-            out->startupInputReady =
-                capture_receipt.startup_input_ready;
-            out->startupHudMenuReady =
-                capture_receipt.startup_hud_ready;
-            out->startupHudMenuKind = capture_receipt.hud_menu_kind;
+                     view_receipt.animation);
+            out->startupActive = view_receipt.startup_active;
+            out->startupFrame = view_receipt.startup_frame;
+            out->startupAnimationActive = view_receipt.animation_active;
+            out->startupTitleFrame = view_receipt.title_frame;
+            out->startupTitleFrameMax = view_receipt.title_frame_max;
+            out->startupTitleReady = view_receipt.title_ready;
+            out->startupInputReady = view_receipt.startup_input_ready;
+            out->startupHudMenuReady = view_receipt.startup_hud_menu_ready;
+            out->startupHudMenuKind = view_receipt.hud_menu_kind;
             out->startupHudMenuOptionCount =
-                capture_receipt.readiness.hud_menu_option_count;
+                view_receipt.hud_menu_option_count;
             out->startupSelectedCommandId =
-                capture_receipt.selected_command_id;
+                view_receipt.selected_command_id;
             out->startupUtilitySelectedActionIndex =
-                capture_receipt.selected_utility_action_index;
-            if (capture_receipt.hud_menu_capture_ready &&
-                capture_receipt.hud_menu_draw_valid) {
-                /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns the
-                 * visible entrance/utility HUD menu inside the startup loop.
-                 * M11 boot probes consume the CSB draw receipt here instead
-                 * of re-reading host-side menu rows. */
-                out->startupHudMenuKind =
-                    capture_receipt.hud_menu_draw.kind;
-                out->startupHudMenuOptionCount =
-                    capture_receipt.hud_menu_draw.option_count;
-                out->startupSelectedCommandId =
-                    capture_receipt.hud_menu_draw.selected_command_id;
-                out->startupUtilitySelectedActionIndex =
-                    capture_receipt.hud_menu_draw
-                        .selected_utility_action_index;
-            }
+                view_receipt.selected_utility_action_index;
             out->startupHudRuntimeReady =
-                capture_receipt.readiness.host_runtime_hud_ready;
-            if (capture_receipt.readiness.runtime_handoff_ready) {
-                out->levelLoaded =
-                    capture_receipt.readiness.runtime_level_loaded;
-                out->mapIndex = capture_receipt.readiness.runtime_map_index;
-                out->partyX = capture_receipt.readiness.runtime_party_x;
-                out->partyY = capture_receipt.readiness.runtime_party_y;
-                out->partyDir = capture_receipt.readiness.runtime_party_dir;
-                out->championCount =
-                    capture_receipt.readiness.runtime_champion_count;
-                out->runtimeTick =
-                    capture_receipt.readiness.runtime_tick_count;
+                view_receipt.startup_hud_runtime_ready;
+            if (view_receipt.runtime_handoff_ready) {
+                out->levelLoaded = view_receipt.runtime_level_loaded;
+                out->mapIndex = view_receipt.runtime_map_index;
+                out->partyX = view_receipt.runtime_party_x;
+                out->partyY = view_receipt.runtime_party_y;
+                out->partyDir = view_receipt.runtime_party_dir;
+                out->championCount = view_receipt.runtime_champion_count;
+                out->runtimeTick = view_receipt.runtime_tick_count;
             }
         }
         return 1;
@@ -13717,17 +13690,21 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         CSB_V1_BootStartupInputGateReceipt_PC34 gate_receipt;
+        CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
         if (m11_csb_boot_runtime_startup_keyboard_gate(
                 state,
                 (int)input,
                 &gate_receipt) &&
-            gate_receipt.valid &&
-            gate_receipt.startup_active) {
-            if (gate_receipt.should_dispatch_input &&
-                gate_receipt.input_render_valid) {
+            csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
+                &gate_receipt,
+                &dispatch_receipt) &&
+            dispatch_receipt.valid &&
+            dispatch_receipt.startup_active) {
+            if (dispatch_receipt.should_dispatch_input &&
+                dispatch_receipt.input_render_valid) {
                 return m11_csb_startup_apply_input_render_receipt(
                     state,
-                    &gate_receipt.input_render);
+                    &dispatch_receipt.input_render);
             }
             return M11_GAME_INPUT_IGNORED;
         }
@@ -14764,20 +14741,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         CSB_V1_BootStartupInputGateReceipt_PC34 gate_receipt;
+        CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
         if (m11_csb_boot_runtime_startup_pointer_gate(
                 state,
                 x,
                 y,
                 (unsigned int)buttonMask,
                 &gate_receipt) &&
-            gate_receipt.valid &&
-            gate_receipt.startup_active &&
-            gate_receipt.pointer_button_relevant) {
-            if (gate_receipt.should_dispatch_input &&
-                gate_receipt.input_render_valid) {
+            csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
+                &gate_receipt,
+                &dispatch_receipt) &&
+            dispatch_receipt.valid &&
+            dispatch_receipt.startup_active &&
+            dispatch_receipt.pointer_button_relevant) {
+            if (dispatch_receipt.should_dispatch_input &&
+                dispatch_receipt.input_render_valid) {
                 return m11_csb_startup_apply_input_render_receipt(
                     state,
-                    &gate_receipt.input_render);
+                    &dispatch_receipt.input_render);
             }
             return M11_GAME_INPUT_IGNORED;
         }

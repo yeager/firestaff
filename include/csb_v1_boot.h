@@ -467,6 +467,46 @@ typedef struct CSB_V1_BootStartupPackagedCaptureProof_PC34 {
     const char *source_evidence;
 } CSB_V1_BootStartupPackagedCaptureProof_PC34;
 
+typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
+    int valid;
+    int startup_active;
+    char phase[64];
+    char animation[CSB_V1_STARTUP_ANIMATION_CAP_PC34];
+    int animation_active;
+    int startup_frame;
+    int title_frame;
+    int title_frame_max;
+    int title_ready;
+    int startup_input_ready;
+    int startup_hud_menu_ready;
+    int startup_hud_runtime_ready;
+    CSB_V1_BootStartupHudMenuKind_PC34 hud_menu_kind;
+    int hud_menu_option_count;
+    int selected_command_id;
+    int selected_utility_action_index;
+    int runtime_handoff_ready;
+    int runtime_level_loaded;
+    int runtime_map_index;
+    int runtime_party_x;
+    int runtime_party_y;
+    int runtime_party_dir;
+    int runtime_champion_count;
+    int runtime_tick_count;
+    int capture_proof_valid;
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 capture_proof;
+} CSB_V1_BootStartupHostViewReceipt_PC34;
+
+typedef struct CSB_V1_BootStartupHostInputDispatchReceipt_PC34 {
+    int valid;
+    int input_is_pointer;
+    int pointer_button_relevant;
+    int startup_active;
+    int should_dispatch_input;
+    int should_ignore_input;
+    int input_render_valid;
+    CSB_V1_BootStartupInputRenderReceipt_PC34 input_render;
+} CSB_V1_BootStartupHostInputDispatchReceipt_PC34;
+
 void csb_v1_boot_startup_action_receipt_init_pc34(
     CSB_V1_BootStartupActionReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_decision_receipt_init_pc34(
@@ -481,6 +521,10 @@ void csb_v1_boot_startup_capture_receipt_init_pc34(
     CSB_V1_BootStartupCaptureReceipt_PC34 *receipt);
 void csb_v1_boot_startup_packaged_capture_proof_init_pc34(
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof);
+void csb_v1_boot_startup_host_view_receipt_init_pc34(
+    CSB_V1_BootStartupHostViewReceipt_PC34 *receipt);
+void csb_v1_boot_startup_host_input_dispatch_receipt_init_pc34(
+    CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *receipt);
 void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *receipt);
 void csb_v1_boot_startup_render_view_receipt_init_pc34(
@@ -816,6 +860,15 @@ int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
 int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *out_proof);
+int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
+    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
+    CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
+    const CSB_V1_BootStartupInputGateReceipt_PC34 *gate_receipt,
+    CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);

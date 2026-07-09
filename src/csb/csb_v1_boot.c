@@ -3164,6 +3164,161 @@ int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
         out_proof);
 }
 
+int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
+    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
+    CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *hud = NULL;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_host_view_receipt_init_pc34(out_receipt);
+    if (!capture_receipt || !capture_receipt->valid) {
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    if (capture_receipt->route_valid &&
+        capture_receipt->route.presentation.valid) {
+        snprintf(out_receipt->phase,
+                 sizeof(out_receipt->phase),
+                 "%s",
+                 capture_receipt->route.presentation.phase);
+        snprintf(out_receipt->animation,
+                 sizeof(out_receipt->animation),
+                 "%s",
+                 capture_receipt->route.presentation.animation);
+        out_receipt->startup_active =
+            capture_receipt->route.presentation.startup_active ? 1 : 0;
+        out_receipt->startup_frame =
+            capture_receipt->route.presentation.startup_frame;
+        out_receipt->animation_active =
+            capture_receipt->route.presentation.animation_active ? 1 : 0;
+        out_receipt->title_frame =
+            capture_receipt->route.presentation.title_frame;
+        out_receipt->title_frame_max =
+            capture_receipt->route.presentation.title_frame_max;
+        out_receipt->title_ready =
+            capture_receipt->route.presentation.title_ready ? 1 : 0;
+    }
+
+    if (capture_receipt->readiness_valid) {
+        snprintf(out_receipt->animation,
+                 sizeof(out_receipt->animation),
+                 "%s",
+                 capture_receipt->readiness.animation);
+        out_receipt->startup_active =
+            capture_receipt->readiness.startup_active ? 1 : 0;
+        out_receipt->title_frame = capture_receipt->readiness.title_frame;
+        out_receipt->title_frame_max =
+            capture_receipt->readiness.title_frame_max;
+        out_receipt->title_ready =
+            capture_receipt->readiness.title_ready ? 1 : 0;
+        out_receipt->startup_input_ready =
+            capture_receipt->startup_input_ready ? 1 : 0;
+        out_receipt->startup_hud_menu_ready =
+            capture_receipt->startup_hud_ready ? 1 : 0;
+        out_receipt->startup_hud_runtime_ready =
+            capture_receipt->readiness.host_runtime_hud_ready ? 1 : 0;
+        out_receipt->hud_menu_kind = capture_receipt->hud_menu_kind;
+        out_receipt->hud_menu_option_count =
+            capture_receipt->readiness.hud_menu_option_count;
+        out_receipt->selected_command_id =
+            capture_receipt->selected_command_id;
+        out_receipt->selected_utility_action_index =
+            capture_receipt->selected_utility_action_index;
+        out_receipt->runtime_handoff_ready =
+            capture_receipt->readiness.runtime_handoff_ready ? 1 : 0;
+        out_receipt->runtime_level_loaded =
+            capture_receipt->readiness.runtime_level_loaded;
+        out_receipt->runtime_map_index =
+            capture_receipt->readiness.runtime_map_index;
+        out_receipt->runtime_party_x =
+            capture_receipt->readiness.runtime_party_x;
+        out_receipt->runtime_party_y =
+            capture_receipt->readiness.runtime_party_y;
+        out_receipt->runtime_party_dir =
+            capture_receipt->readiness.runtime_party_dir;
+        out_receipt->runtime_champion_count =
+            capture_receipt->readiness.runtime_champion_count;
+        out_receipt->runtime_tick_count =
+            capture_receipt->readiness.runtime_tick_count;
+    }
+
+    if (capture_receipt->hud_menu_capture_ready &&
+        capture_receipt->hud_menu_draw_valid) {
+        hud = &capture_receipt->hud_menu_draw;
+        out_receipt->hud_menu_kind = hud->kind;
+        out_receipt->hud_menu_option_count = hud->option_count;
+        out_receipt->selected_command_id = hud->selected_command_id;
+        out_receipt->selected_utility_action_index =
+            hud->selected_utility_action_index;
+    }
+
+    out_receipt->capture_proof_valid =
+        csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+            capture_receipt,
+            &out_receipt->capture_proof);
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep title,
+     * input/HUD readiness, menu rows, and runtime handoff in one startup
+     * loop. This host-view receipt is the CSB-owned consumer surface for
+     * M11 boot probes and draw/input guards. */
+    return 1;
+}
+
+int csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_host_view_receipt_init_pc34(out_receipt);
+    if (!snapshot ||
+        !csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+            snapshot,
+            &capture_receipt)) {
+        return 0;
+    }
+    return csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
+        &capture_receipt,
+        out_receipt);
+}
+
+int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
+    const CSB_V1_BootStartupInputGateReceipt_PC34 *gate_receipt,
+    CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_host_input_dispatch_receipt_init_pc34(out_receipt);
+    if (!gate_receipt || !gate_receipt->valid) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->input_is_pointer = gate_receipt->input_is_pointer ? 1 : 0;
+    out_receipt->pointer_button_relevant =
+        gate_receipt->pointer_button_relevant ? 1 : 0;
+    out_receipt->startup_active = gate_receipt->startup_active ? 1 : 0;
+    out_receipt->should_dispatch_input =
+        gate_receipt->should_dispatch_input ? 1 : 0;
+    out_receipt->should_ignore_input =
+        gate_receipt->should_ignore_input ? 1 : 0;
+    out_receipt->input_render_valid =
+        gate_receipt->input_render_valid ? 1 : 0;
+    if (gate_receipt->input_render_valid) {
+        out_receipt->input_render = gate_receipt->input_render;
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 owns whether startup input is ignored,
+     * blocked by title, routed to utility, or dispatched to entrance. Keep
+     * that dispatch decision in a CSB receipt for M11 keyboard/pointer paths. */
+    return 1;
+}
+
 static int csb_v1_boot_startup_input_render_receipt_from_action_pc34(
     const CSB_V1_BootStartupActionReceipt_PC34 *action,
     CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt)
@@ -3766,6 +3921,41 @@ void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
         &receipt->presentation);
     csb_v1_boot_startup_hud_menu_state_init_pc34(
         &receipt->hud_menu_state);
+}
+
+void csb_v1_boot_startup_host_view_receipt_init_pc34(
+    CSB_V1_BootStartupHostViewReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    snprintf(receipt->phase, sizeof(receipt->phase), "%s", "inactive");
+    snprintf(receipt->animation, sizeof(receipt->animation), "%s", "none");
+    receipt->title_frame = -1;
+    receipt->title_frame_max = -1;
+    receipt->title_ready = 1;
+    receipt->runtime_map_index = -1;
+    receipt->runtime_party_x = -1;
+    receipt->runtime_party_y = -1;
+    receipt->runtime_party_dir = -1;
+    receipt->runtime_champion_count = -1;
+    receipt->selected_command_id =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    receipt->selected_utility_action_index = -1;
+    csb_v1_boot_startup_packaged_capture_proof_init_pc34(
+        &receipt->capture_proof);
+}
+
+void csb_v1_boot_startup_host_input_dispatch_receipt_init_pc34(
+    CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_boot_startup_input_render_receipt_init_pc34(
+        &receipt->input_render);
 }
 
 static void csb_v1_boot_startup_hud_menu_state_init_pc34(
