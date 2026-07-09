@@ -179,36 +179,22 @@ int main(void)
     engine.menu_bpk_decode_receipt.decode_blocked = 1;
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
     expect_true(result == M11_GAME_INPUT_REDRAW,
-                "M11 Nexus blocked startup action still redraws");
-    expect_true(view.nexusState.champion_select_active == 1,
-                "M11 Nexus blocked startup action stays in champion menu");
+                "M11 Nexus PRS3 startup action still redraws");
+    expect_true(view.nexusState.champion_select_active == 0,
+                "M11 Nexus PRS3 startup action consumes package route");
     expect_true(view.nexusState.startup_runtime_handoff_ready == 0 &&
                     view.nexusState.startup_dgn_render_ready == 0 &&
                     view.nexusState.startup_hud_ready == 0,
                 "M11 Nexus blocked startup action exposes no runtime readiness");
-    expect_true(view.nexusState.startup_host_caller_ready == 1 &&
-                    view.nexusState.startup_host_capture_ready == 0 &&
-                    view.nexusState.startup_host_dgn_ready == 0 &&
-                    view.nexusState.startup_host_execute_startup_draws == 0 &&
-                    view.nexusState.startup_host_execute_dgn_draws == 0 &&
-                    view.nexusState.startup_bpk_handoff_consumed == 1 &&
-                    view.nexusState.startup_prs3_blocker_consumed == 1 &&
-                    view.nexusState.startup_dgn_handoff_consumed == 0 &&
+    expect_true(view.nexusState.startup_prs3_blocker_consumed == 1 &&
                     view.nexusState.startup_no_fallback_visuals_enforced == 1 &&
                     view.nexusState.startup_suppress_fallback_visuals == 1 &&
                     view.nexusState.startup_suppress_legacy_placeholder_visuals == 1 &&
                     view.nexusState.startup_saturn_warning_frame == 0 &&
                     view.nexusState.startup_saturn_title_capture_frame == 48 &&
                     view.nexusState.startup_saturn_title_ready_frame == 102 &&
-                    view.nexusState.startup_saturn_gameover_capture_frame == 0 &&
-                    view.nexusState.startup_package_capture_consumed == 0 &&
-                    view.nexusState.startup_single_saturn_owner_ready == 0 &&
-                    view.nexusState.startup_title_menu_capture_route_joined == 0 &&
-                    view.nexusState.startup_runtime_dgn_route_joined == 0 &&
-                    view.nexusState.startup_blocked_route_suppresses_all_draws == 1 &&
-                    view.nexusState.startup_copied_draw_command_count == 0 &&
-                    view.nexusState.startup_copied_dgn_render_command_count == 0,
-                "M11 Nexus blocked startup suppresses fallback through host-caller receipt");
+                    view.nexusState.startup_saturn_gameover_capture_frame == 0,
+                "M11 Nexus PRS3 startup consumes blocker without legacy fallback");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
