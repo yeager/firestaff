@@ -103,7 +103,7 @@ typedef struct {
     DM1_Viewport3DState               viewport3d;
     struct Dm1V1MovementPipelinePc34Compat movementPipeline;
     M11_DG_State                      dialog;
-    M11_CK_State                      clickRouting;
+    DM1_V1_ClickRoutingStatePc34                      clickRouting;
     M11_SL_State                      saveLoad;
     M11_ScreenState                   screen;
 

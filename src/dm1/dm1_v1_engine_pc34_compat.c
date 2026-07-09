@@ -130,8 +130,8 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
     m11_dg_set_bar_position(&engine->dialog, 0, 169, 320, 7);
 
     /* 11. Click routing + dungeon zones */
-    m11_ck_init(&engine->clickRouting);
-    m11_ck_setup_dungeon_zones(&engine->clickRouting);
+    DM1_V1_ClickRouting_InitPc34Compat(&engine->clickRouting);
+    DM1_V1_ClickRouting_SetupDungeonZonesPc34Compat(&engine->clickRouting);
 
     /* 12. Save/load */
     m11_sl_init(&engine->saveLoad,
