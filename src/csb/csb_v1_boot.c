@@ -1840,6 +1840,27 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
                  "%s",
                  route->hud_menu_state.prompt);
     }
+    out_receipt->utility_menu_route =
+        route->route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+                route->draw_utility_panel &&
+                route->utility_plan_valid &&
+                route->hud_menu_state.valid &&
+                route->hud_menu_state.kind ==
+                    CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34
+            ? 1
+            : 0;
+    if (out_receipt->utility_menu_route) {
+        out_receipt->utility_menu_row_count =
+            route->hud_menu_state.utility_menu_row_count;
+        out_receipt->utility_selected_action_index =
+            route->hud_menu_state.utility_selected_action_index;
+        out_receipt->utility_preview_active =
+            route->hud_menu_state.utility_preview_active;
+        snprintf(out_receipt->utility_prompt,
+                 sizeof(out_receipt->utility_prompt),
+                 "%s",
+                 route->hud_menu_state.prompt);
+    }
     out_receipt->opening_door_route =
         (route->route ==
              CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_DELAY_PC34 ||
@@ -2088,6 +2109,44 @@ int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
     }
     if (!selected_seen && out_plan->menu_option_count > 0) {
         out_plan->menu_options[0].selected = 1;
+    }
+    return 1;
+}
+
+int csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
+    const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
+    CSB_V1_UtilRenderPlan *out_plan)
+{
+    int i;
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!receipt || !receipt->valid || !receipt->utility_menu_route ||
+        !receipt->route_receipt.utility_plan_valid ||
+        receipt->utility_menu_row_count <= 0) {
+        return 0;
+    }
+
+    *out_plan = receipt->route_receipt.utility_plan;
+    out_plan->menu_row_count = receipt->utility_menu_row_count;
+    out_plan->preview_active = receipt->utility_preview_active ? 1 : 0;
+    if (receipt->utility_prompt[0] != '\0') {
+        out_plan->has_prompt_row = 1;
+        snprintf(out_plan->prompt_row.text,
+                 sizeof(out_plan->prompt_row.text),
+                 "%s",
+                 receipt->utility_prompt);
+    }
+
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 and CSB utility
+     * CEDTINC7/CEDTDATA strings own this startup menu surface. Re-apply
+     * selected row, preview state, and prompt from the CSB render-view
+     * receipt so HUD/menu callers do not infer them from host facts. */
+    for (i = 0; i < out_plan->menu_row_count &&
+                i < CSB_V1_UTIL_MENU_ROW_COUNT; ++i) {
+        out_plan->menu_rows[i].selected =
+            i == receipt->utility_selected_action_index ? 1 : 0;
     }
     return 1;
 }
