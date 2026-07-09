@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+
+- ✅ 2026-07-09 DM2 active creature render handoff: runtime-spawned/CCM-mutated creature instances now project into the viewport and use the same GDAT creature map-chip path as DB4 records, including frame/direction/health receipts from live AI state. Verification: `test_dm2_v1_runtime_handoff_smoke`, `test_dm2_v1_lighting_falloff_boundary`, `test_dm2_v1_creature_ccm_runtime_pc34_compat`, and `git diff --check` passed.
 - ✅ 2026-07-09 Nexus DGN viewport render plan: DMWeb `LEV*.DGN` levels now retain Structure1B collision refs, build a bounded viewport render plan from real 64x64 DGN cells, and route Nexus viewport drawing through that plan without falling back to synthetic visuals when real-DGN handoff blocks. Verification: `test_nexus_v1_dgn_geometry_readiness`, `test_nexus_v1_boot_file_hash_scan`, Nexus focused CTests, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup render-view receipt: CSB boot now emits one render/HUD/menu view receipt for post-FTL title, closed-door entrance, utility fallback suppression, and door-opening routes, plus a render-plan facade for future M11 adapter cleanup. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
