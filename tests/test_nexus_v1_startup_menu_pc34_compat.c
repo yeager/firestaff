@@ -121,6 +121,7 @@ int main(void)
     Nexus_V1_StartupRouteProofReceipt route_proof_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
+    Nexus_V1_StartupAssetHandoffReceipt asset_handoff_receipt;
     Nexus_V1_LauncherRuntimeReceipt synthetic_runtime_receipt;
     Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_Engine synthetic_engine;
@@ -799,6 +800,29 @@ int main(void)
                &runtime_state,
                &synthetic_runtime_receipt.startup_assets),
            "Nexus synthetic runtime assets build for route proof");
+    expect(nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+               &synthetic_runtime_receipt,
+               &asset_handoff_receipt) &&
+               asset_handoff_receipt.route ==
+                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY &&
+               strcmp(nexus_v1_launcher_startup_asset_handoff_route_name(
+                          asset_handoff_receipt.route),
+                      "main-menu-ready") == 0 &&
+               asset_handoff_receipt.title_asset_handoff_ready == 1 &&
+               asset_handoff_receipt.real_menu_asset_handoff_ready == 1 &&
+               asset_handoff_receipt.audio_asset_handoff_ready == 1 &&
+               asset_handoff_receipt.main_menu_route_ready == 1 &&
+               asset_handoff_receipt.saturn_asset_handoff_ready == 1 &&
+               asset_handoff_receipt.real_asset_route_ready == 1 &&
+               asset_handoff_receipt.blocks_main_menu_route == 0 &&
+               asset_handoff_receipt.fallback_visuals_permitted == 0 &&
+               strcmp(asset_handoff_receipt.title_asset_route,
+                      "ready-title-assets") == 0 &&
+               strcmp(asset_handoff_receipt.menu_asset_route,
+                      "ready-real-menu-surfaces") == 0 &&
+               strcmp(asset_handoff_receipt.audio_asset_route,
+                      "ready-track02-sfx") == 0,
+           "Nexus startup asset handoff proves title menu audio readiness");
     memset(dgn_commands, 0, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                &runtime_state,
@@ -2245,6 +2269,23 @@ int main(void)
                    !launch_gate_receipt.engine_ready &&
                    strcmp(launch_gate_receipt.status, "NEXUS DATA ERROR") == 0,
                "Nexus launcher missing-data runtime emits launch gate receipt");
+        expect(nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+                   &runtime_receipt,
+                   &asset_handoff_receipt) &&
+                   asset_handoff_receipt.route ==
+                       NEXUS_V1_STARTUP_ASSET_HANDOFF_DATA_ERROR &&
+                   strcmp(nexus_v1_launcher_startup_asset_handoff_route_name(
+                              asset_handoff_receipt.route),
+                          "data-error") == 0 &&
+                   asset_handoff_receipt.title_asset_handoff_ready == 0 &&
+                   asset_handoff_receipt.audio_asset_handoff_ready == 0 &&
+                   asset_handoff_receipt.main_menu_route_ready == 0 &&
+                   asset_handoff_receipt.saturn_asset_handoff_ready == 0 &&
+                   asset_handoff_receipt.real_asset_route_ready == 0 &&
+                   asset_handoff_receipt.blocks_main_menu_route == 1 &&
+                   strcmp(asset_handoff_receipt.status,
+                          "NEXUS DATA ERROR") == 0,
+               "Nexus startup asset handoff blocks missing runtime data");
     }
 
     {
@@ -2315,6 +2356,30 @@ int main(void)
                                strcmp(launch_gate_receipt.status,
                                       "blocked-menu-bpk-prs3") == 0,
                            "Nexus launcher runtime emits MENU.BPK launch gate blocker");
+                    expect(nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+                               &runtime_receipt,
+                               &asset_handoff_receipt) &&
+                               asset_handoff_receipt.route ==
+                                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED &&
+                               strcmp(nexus_v1_launcher_startup_asset_handoff_route_name(
+                                          asset_handoff_receipt.route),
+                                      "menu-blocked") == 0 &&
+                               asset_handoff_receipt.title_asset_handoff_ready == 1 &&
+                               asset_handoff_receipt.audio_asset_handoff_ready == 1 &&
+                               asset_handoff_receipt.real_menu_asset_handoff_ready == 0 &&
+                               asset_handoff_receipt.main_menu_route_ready == 0 &&
+                               asset_handoff_receipt.saturn_asset_handoff_ready == 1 &&
+                               asset_handoff_receipt.real_asset_route_ready == 0 &&
+                               asset_handoff_receipt.blocks_main_menu_route == 1 &&
+                               strcmp(asset_handoff_receipt.title_asset_route,
+                                      "ready-title-assets") == 0 &&
+                               strcmp(asset_handoff_receipt.audio_asset_route,
+                                      "ready-track02-sfx") == 0 &&
+                               strcmp(asset_handoff_receipt.menu_asset_route,
+                                      "blocked-menu-bpk-prs3") == 0 &&
+                               strcmp(asset_handoff_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus startup asset handoff blocks main menu on PRS3 surfaces");
                     nexus_v1_launcher_startup_runtime_state_clear(
                         &runtime_state);
                     runtime_state.engine = runtime_receipt.engine;

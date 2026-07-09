@@ -160,6 +160,8 @@ typedef struct {
     int real_menu_asset_handoff_ready;
     int audio_asset_handoff_ready;
     int main_menu_route_ready;
+    int saturn_asset_handoff_ready;
+    int real_asset_route_ready;
     int blocks_main_menu_route;
     int fallback_visuals_permitted;
     const char *title_asset_route;
