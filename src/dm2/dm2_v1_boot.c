@@ -2675,6 +2675,186 @@ void dm2_v1_boot_startup_real_visual_capture_receipt_init(
     }
 }
 
+static uint8_t dm2_v1_boot_startup_style_color(DM2_V1_StartupStyle style)
+{
+    switch (style) {
+        case DM2_V1_STARTUP_STYLE_PANEL: return 0x08u;
+        case DM2_V1_STARTUP_STYLE_BORDER: return 0x0fu;
+        case DM2_V1_STARTUP_STYLE_TITLE: return 0x0eu;
+        case DM2_V1_STARTUP_STYLE_SELECTED_FILL: return 0x04u;
+        case DM2_V1_STARTUP_STYLE_SELECTED_TEXT: return 0x0fu;
+        case DM2_V1_STARTUP_STYLE_TEXT:
+        default: return 0x0cu;
+    }
+}
+
+static void dm2_v1_boot_startup_composite_rect(uint8_t *frame,
+                                               int width,
+                                               int height,
+                                               const DM2_V1_StartupDrawCommand *command)
+{
+    int x0;
+    int y0;
+    int x1;
+    int y1;
+    int x;
+    int y;
+    uint8_t color;
+
+    if (!frame || !command || width <= 0 || height <= 0) {
+        return;
+    }
+    x0 = command->rect.x < 0 ? 0 : command->rect.x;
+    y0 = command->rect.y < 0 ? 0 : command->rect.y;
+    x1 = command->rect.x + command->rect.w;
+    y1 = command->rect.y + command->rect.h;
+    if (x1 > width) x1 = width;
+    if (y1 > height) y1 = height;
+    if (x0 >= x1 || y0 >= y1) {
+        return;
+    }
+    color = dm2_v1_boot_startup_style_color(command->style);
+    if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT) {
+        for (y = y0; y < y1; ++y) {
+            memset(frame + (size_t)y * (size_t)width + (size_t)x0,
+                   color,
+                   (size_t)(x1 - x0));
+        }
+        return;
+    }
+    for (x = x0; x < x1; ++x) {
+        frame[(size_t)y0 * (size_t)width + (size_t)x] = color;
+        frame[(size_t)(y1 - 1) * (size_t)width + (size_t)x] = color;
+    }
+    for (y = y0; y < y1; ++y) {
+        frame[(size_t)y * (size_t)width + (size_t)x0] = color;
+        frame[(size_t)y * (size_t)width + (size_t)(x1 - 1)] = color;
+    }
+}
+
+static void dm2_v1_boot_startup_composite_text_zone(
+    uint8_t *frame,
+    int width,
+    int height,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    int cx;
+    int cy;
+    size_t i;
+    uint8_t color;
+
+    if (!frame || !command || width <= 0 || height <= 0) {
+        return;
+    }
+    color = dm2_v1_boot_startup_style_color(command->style);
+    for (i = 0; command->text[i] != '\0'; ++i) {
+        if (command->text[i] == ' ') {
+            continue;
+        }
+        for (cy = 0; cy < 7; ++cy) {
+            int y = command->y + cy;
+            if (y < 0 || y >= height) {
+                continue;
+            }
+            for (cx = 0; cx < 5; ++cx) {
+                int x = command->x + (int)i * 6 + cx;
+                if (x >= 0 && x < width) {
+                    frame[(size_t)y * (size_t)width + (size_t)x] = color;
+                }
+            }
+        }
+    }
+}
+
+static int dm2_v1_boot_startup_composite_capture(
+    DM2_V1_BootProfile *profile,
+    const DM2_V1_StartupDrawCommand *commands,
+    int command_count,
+    DM2_V1_BootStartupRealVisualCaptureReceipt *out_receipt)
+{
+    uint8_t *frame;
+    uint32_t pixel_hash = 0x32464346u;
+    int i;
+    int ready;
+
+    if (!profile || !commands || command_count <= 0 || !out_receipt) {
+        return 0;
+    }
+    frame = (uint8_t *)calloc(320u * 200u, 1u);
+    if (!frame) {
+        return 0;
+    }
+
+    /* skproject/SKWIN/SkWinCore.cpp SHOW_MENU_SCREEN first consumes TITLE
+     * GDAT fields 1 and 4, then draws the startup menu while the game HUD is
+     * suppressed until runtime handoff. */
+    for (i = 0; i < command_count; ++i) {
+        const DM2_V1_StartupDrawCommand *command = &commands[i];
+        if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE) {
+            uint8_t *pixels = NULL;
+            int w = 0;
+            int h = 0;
+            int stride = 0;
+            if (dm2_v1_boot_gdat_image_asset_fetch(profile,
+                                                   command->gdat_category,
+                                                   command->gdat_index,
+                                                   command->gdat_field,
+                                                   &pixels,
+                                                   &w,
+                                                   &h,
+                                                   &stride) == 0 &&
+                pixels && w > 0 && h > 0 && stride >= w) {
+                int y;
+                int copy_w = command->rect.w < w ? command->rect.w : w;
+                int copy_h = command->rect.h < h ? command->rect.h : h;
+                if (copy_w > 320 - command->rect.x) copy_w = 320 - command->rect.x;
+                if (copy_h > 200 - command->rect.y) copy_h = 200 - command->rect.y;
+                for (y = 0; y < copy_h; ++y) {
+                    int dst_y = command->rect.y + y;
+                    if (dst_y >= 0 && dst_y < 200 && command->rect.x >= 0 &&
+                        command->rect.x < 320 && copy_w > 0) {
+                        memcpy(frame + (size_t)dst_y * 320u +
+                                   (size_t)command->rect.x,
+                               pixels + (size_t)y * (size_t)stride,
+                               (size_t)copy_w);
+                    }
+                }
+                ++out_receipt->composite_gdat_blit_count;
+            }
+            dm2_v1_boot_gdat_image_asset_free(pixels);
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT ||
+                   command->kind == DM2_V1_STARTUP_DRAW_OUTLINE_RECT) {
+            dm2_v1_boot_startup_composite_rect(frame, 320, 200, command);
+            ++out_receipt->composite_rect_count;
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_TEXT) {
+            dm2_v1_boot_startup_composite_text_zone(frame, 320, 200, command);
+            ++out_receipt->composite_text_zone_count;
+        }
+    }
+
+    for (i = 0; i < 320 * 200; ++i) {
+        pixel_hash = dm2_v1_boot_packaged_capture_hash_step(
+            pixel_hash,
+            frame[i]);
+    }
+    out_receipt->composite_pixel_hash = pixel_hash;
+    out_receipt->composite_pixel_count = 64000u;
+    out_receipt->hud_suppressed_capture_ready =
+        out_receipt->hud_handoff_capture_ready &&
+        out_receipt->suppress_game_hud &&
+        !out_receipt->present_first_hud_frame;
+    ready =
+        out_receipt->composite_gdat_blit_count == 2 &&
+        out_receipt->composite_rect_count >= 2 &&
+        out_receipt->composite_text_zone_count >= out_receipt->menu_row_count &&
+        out_receipt->composite_pixel_hash != 0u &&
+        out_receipt->composite_pixel_count == 64000u &&
+        out_receipt->hud_suppressed_capture_ready;
+    out_receipt->full_visual_composite_capture_ready = ready ? 1 : 0;
+    free(frame);
+    return ready;
+}
+
 int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     DM2_V1_BootProfile *profile,
     int startup_menu_active,
@@ -2884,8 +3064,13 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->selected_highlight_count >= 1;
     out_receipt->exact_selected_highlight_ready =
         out_receipt->selected_highlight_count == 1;
+    (void)dm2_v1_boot_startup_composite_capture(profile,
+                                                view_model.commands,
+                                                view_model.command_count,
+                                                out_receipt);
     out_receipt->startup_title_menu_hud_breadth_ready =
         out_receipt->menu_title_composite_capture_ready &&
+        out_receipt->full_visual_composite_capture_ready &&
         out_receipt->resume_menu_ready &&
         out_receipt->save_slot_menu_ready &&
         out_receipt->new_game_menu_ready &&
@@ -2895,11 +3080,10 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         !out_receipt->present_first_hud_frame;
     out_receipt->title_menu_hud_visual_proof_ready =
         out_receipt->menu_title_composite_capture_ready &&
+        out_receipt->full_visual_composite_capture_ready &&
         out_receipt->skproject_title_query_ready &&
         out_receipt->skproject_menu_query_ready &&
-        out_receipt->hud_handoff_capture_ready &&
-        out_receipt->suppress_game_hud &&
-        !out_receipt->present_first_hud_frame &&
+        out_receipt->hud_suppressed_capture_ready &&
         out_receipt->no_fallback_title_blit;
 
     hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -2910,6 +3094,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         hash, out_receipt->title_pixel_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->menu_pixel_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->composite_pixel_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->composite_gdat_blit_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->hud_suppressed_capture_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->skproject_title_query_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -2937,6 +3127,8 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->render_ownership_valid &&
         out_receipt->full_title_frame_capture_ready &&
         out_receipt->menu_title_composite_capture_ready &&
+        out_receipt->full_visual_composite_capture_ready &&
+        out_receipt->hud_suppressed_capture_ready &&
         out_receipt->title_menu_hud_visual_proof_ready &&
         out_receipt->exact_title_timing_ready &&
         out_receipt->packaged_visual_capture_hash != 0u;

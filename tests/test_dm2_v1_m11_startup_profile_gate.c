@@ -1401,6 +1401,13 @@ int main(void) {
                         real_visual_capture.skproject_menu_screen_field == 4 &&
                         real_visual_capture.menu_gdat_capture_ready == 1 &&
                         real_visual_capture.menu_title_composite_capture_ready == 1 &&
+                        real_visual_capture.full_visual_composite_capture_ready == 1 &&
+                        real_visual_capture.composite_gdat_blit_count == 2 &&
+                        real_visual_capture.composite_rect_count >= 2 &&
+                        real_visual_capture.composite_text_zone_count >=
+                            real_visual_capture.menu_row_count &&
+                        real_visual_capture.composite_pixel_count == 64000u &&
+                        real_visual_capture.composite_pixel_hash != 0u &&
                         real_visual_capture.menu_gdat_command_count == 2 &&
                         real_visual_capture.menu_rect_command_count >= 2 &&
                         real_visual_capture.menu_text_command_count >=
@@ -1410,6 +1417,7 @@ int main(void) {
                         real_visual_capture.exact_selected_highlight_ready == 1 &&
                         real_visual_capture.startup_title_menu_hud_breadth_ready == 0 &&
                         real_visual_capture.hud_handoff_capture_ready == 1 &&
+                        real_visual_capture.hud_suppressed_capture_ready == 1 &&
                         real_visual_capture.title_menu_hud_visual_proof_ready == 1 &&
                         real_visual_capture.suppress_game_hud == 1 &&
                         real_visual_capture.present_first_hud_frame == 0 &&
