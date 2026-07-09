@@ -872,48 +872,22 @@ static void m11_dm2_boot_runtime_startup_snapshot(
         state->dm2State.startup_menu_selected_row;
 }
 
-typedef struct M11_DM2BootStartupViewModel {
-    DM2_V1_StartupDrawCommand commands[DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP];
-    int command_count;
-    DM2_V1_StartupViewReceipt view_receipt;
-    char phase[DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP];
-    int startup_active;
-    char animation[DM2_V1_BOOT_STARTUP_VIEW_MODEL_ANIMATION_CAP];
-    int animation_active;
-    int title_frame;
-    int title_frame_max;
-    int title_ready;
-} M11_DM2BootStartupViewModel;
-
 static int m11_dm2_boot_runtime_startup_view_model(
     const M11_GameViewState *state,
-    M11_DM2BootStartupViewModel *out_view_model)
+    DM2_V1_BootStartupViewModel *out_view_model)
 {
     DM2_V1_BootRuntimeStartupSnapshot snapshot;
     if (!state || !out_view_model) {
         return 0;
     }
-    memset(out_view_model, 0, sizeof(*out_view_model));
     m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-    return dm2_v1_boot_startup_view_model_from_snapshot(
+    return dm2_v1_boot_startup_view_model_receipt_from_snapshot(
         &snapshot,
-        out_view_model->commands,
-        (int)(sizeof(out_view_model->commands) / sizeof(out_view_model->commands[0])),
-        &out_view_model->command_count,
-        &out_view_model->view_receipt,
-        out_view_model->phase,
-        (int)sizeof(out_view_model->phase),
-        &out_view_model->startup_active,
-        out_view_model->animation,
-        (int)sizeof(out_view_model->animation),
-        &out_view_model->animation_active,
-        &out_view_model->title_frame,
-        &out_view_model->title_frame_max,
-        &out_view_model->title_ready);
+        out_view_model);
 }
 
 static void m11_dm2_boot_probe_receipt_from_startup_view_model(
-    const M11_DM2BootStartupViewModel *view_model,
+    const DM2_V1_BootStartupViewModel *view_model,
     M11_BootProbeReceipt *out)
 {
     const DM2_V1_StartupRuntimeHandoffReceipt *handoff;
@@ -11237,7 +11211,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-        M11_DM2BootStartupViewModel view_model;
+        DM2_V1_BootStartupViewModel view_model;
         out->levelLoaded = state->dm2State.level_loaded;
         out->mapIndex = state->world.party.mapIndex;
         out->partyX = state->dm2State.party_x;
@@ -33462,7 +33436,7 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                       int framebufferWidth,
                                       int framebufferHeight)
 {
-    M11_DM2BootStartupViewModel view_model;
+    DM2_V1_BootStartupViewModel view_model;
     DM2_V1_StartupDrawExecutor executor;
     M11_DM2StartupDrawContext context;
 

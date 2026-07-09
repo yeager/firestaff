@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "dm2_v1_startup_presentation.h"
+
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
 typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
-typedef struct DM2_V1_StartupDrawCommand DM2_V1_StartupDrawCommand;
-typedef struct DM2_V1_StartupViewReceipt DM2_V1_StartupViewReceipt;
 struct DM2_V1_StartupHostReceipt;
 struct DM2_V1_SessionState;
 struct DM2_V1_StartupExecution;
@@ -223,6 +223,19 @@ enum {
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_ANIMATION_CAP = 32
 };
 
+typedef struct DM2_V1_BootStartupViewModel {
+    DM2_V1_StartupDrawCommand commands[DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP];
+    int command_count;
+    DM2_V1_StartupViewReceipt view_receipt;
+    char phase[DM2_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP];
+    int startup_active;
+    char animation[DM2_V1_BOOT_STARTUP_VIEW_MODEL_ANIMATION_CAP];
+    int animation_active;
+    int title_frame;
+    int title_frame_max;
+    int title_ready;
+} DM2_V1_BootStartupViewModel;
+
 /* ── Boot API ──────────────────────────────────────────────────────── */
 
 /* Initialize a boot profile with defaults.
@@ -397,6 +410,11 @@ int dm2_v1_boot_startup_view_model_from_snapshot(
     int *out_title_frame,
     int *out_title_frame_max,
     int *out_title_ready);
+void dm2_v1_boot_startup_view_model_clear(
+    DM2_V1_BootStartupViewModel *out_view_model);
+int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupViewModel *out_view_model);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,

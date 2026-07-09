@@ -304,6 +304,7 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupHostFacts host_facts;
     DM2_V1_BootRuntimeStartupSnapshot boot_snapshot;
+    DM2_V1_BootStartupViewModel boot_view_model;
     DM2_V1_StartupMenu restored_menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupViewReceipt view_receipt;
@@ -501,6 +502,22 @@ static void expect_dm2_startup_layout_contract(void) {
                     strcmp(view_receipt.runtime_handoff.animation,
                            "dm2-startup-menu") == 0,
                 "DM2 boot startup view model carries the presentation view receipt");
+    expect_true(dm2_v1_boot_startup_view_model_receipt_from_snapshot(
+                    &boot_snapshot,
+                    &boot_view_model) &&
+                    boot_view_model.command_count == command_count &&
+                    boot_view_model.view_receipt.valid &&
+                    boot_view_model.view_receipt.render.command_count ==
+                        command_count &&
+                    boot_view_model.view_receipt.render.hud_overlay_suppressed ==
+                        1 &&
+                    strcmp(boot_view_model.phase, "dm2-startup-menu") == 0 &&
+                    boot_view_model.startup_active == 1 &&
+                    strcmp(boot_view_model.animation,
+                           "dm2-startup-menu") == 0 &&
+                    boot_view_model.animation_active == 1 &&
+                    boot_view_model.title_ready == 0,
+                "DM2 boot owns the startup view model wrapper consumed by M11");
     expect_true(dm2_v1_startup_presentation_receipt(
                     1,
                     phase,
