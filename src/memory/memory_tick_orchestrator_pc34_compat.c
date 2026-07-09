@@ -3271,7 +3271,7 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
         int squareType;
         struct DungeonTeleporter_Compat tp;
         int teleporterFound;
-        M11_GroupTeleporterDestinationPlan plan;
+        DM1_V1_GroupTeleporterDestinationPlanPc34 plan;
 
         if (*inOutMapIndex < 0 || *inOutMapIndex >= (int)world->dungeon->header.mapCount) break;
         map = &world->dungeon->maps[*inOutMapIndex];
@@ -3285,7 +3285,7 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
         memset(&tp, 0, sizeof(tp));
         teleporterFound = orch_find_teleporter_on_square_compat(
             world, *inOutMapIndex, *inOutMapX, *inOutMapY, &tp);
-        if (!m11_plan_group_teleporter_destination_f0267(
+        if (!DM1_V1_PlanGroupTeleporterDestinationF0267Pc34Compat(
                 squareType, DUNGEON_ELEMENT_TELEPORTER,
                 (squareByte & 0x08) ? 1 : 0, teleporterFound,
                 (int)tp.scope, (int)tp.audible, (int)tp.targetMapIndex,
@@ -5768,10 +5768,10 @@ static int orch_add_generated_group_active_state_compat(
     int mapY)
 {
     struct CreatureAIState_Compat* ai;
-    M11_GeneratedGroupPlacementPlan plan;
+    DM1_V1_GeneratedGroupPlacementPlanPc34 plan;
     if (!world || !group) return 0;
     memset(&plan, 0, sizeof(plan));
-    if (!m11_plan_generated_group_placement_f0183_f0180(
+    if (!DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
             world->partyMapIndex, mapIndex, mapX, mapY, groupIndex,
             group->creatureType, group->cells, group->direction,
             world->creatureAICount, GAMEWORLD_CREATURE_AI_CAPACITY,
@@ -5810,13 +5810,13 @@ static void orch_schedule_generated_group_wandering_event_compat(
     int mapY)
 {
     struct TimelineEvent_Compat wander;
-    M11_GeneratedGroupPlacementPlan plan;
+    DM1_V1_GeneratedGroupPlacementPlanPc34 plan;
     if (!world || !group) return;
 
     /* ReDMCSB GROUP.C:311-338/F0180: newly placed groups start
      * wandering by scheduling C37 for game time +1 on their square. */
     memset(&plan, 0, sizeof(plan));
-    if (!m11_plan_generated_group_placement_f0183_f0180(
+    if (!DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
             world->partyMapIndex, mapIndex, mapX, mapY, groupIndex,
             group->creatureType, group->cells, group->direction,
             -1, 0,
@@ -6172,7 +6172,7 @@ static int orch_handle_creature_tick_group_move_compat(
     struct DungeonGroup_Compat* group;
     struct TimelineEvent_Compat nextEvent;
     M11_OrdinaryGroupMovePlan movePlan;
-    M11_OrdinaryGroupMoveApplyPlan applyPlan;
+    DM1_V1_OrdinaryGroupMoveApplyPlanPc34 applyPlan;
 
     (void)result;
     if (!world || !ev || !world->things || !world->dungeon) return 0;
@@ -6222,7 +6222,7 @@ static int orch_handle_creature_tick_group_move_compat(
         return 0;
     }
     memset(&applyPlan, 0, sizeof(applyPlan));
-    if (!m11_plan_ordinary_group_move_apply_f0267(
+    if (!DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
             &movePlan, ev->mapIndex, direction, group->cells,
             world->gameTick, &applyPlan) ||
         !applyPlan.valid) {

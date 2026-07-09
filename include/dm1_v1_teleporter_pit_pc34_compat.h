@@ -117,7 +117,7 @@ typedef struct {
     uint32_t nextFireAtTick;
     int nextEventMapX;
     int nextEventMapY;
-} M11_OrdinaryGroupMoveApplyPlan;
+} DM1_V1_OrdinaryGroupMoveApplyPlanPc34;
 
 typedef struct {
     int valid;
@@ -132,7 +132,7 @@ typedef struct {
     int targetMapIndex;
     int targetMapX;
     int targetMapY;
-} M11_GroupTeleporterDestinationPlan;
+} DM1_V1_GroupTeleporterDestinationPlanPc34;
 
 typedef struct {
     int valid;
@@ -157,7 +157,11 @@ typedef struct {
     int wanderGroupIndex;
     int wanderCreatureType;
     int wanderEventType;
-} M11_GeneratedGroupPlacementPlan;
+} DM1_V1_GeneratedGroupPlacementPlanPc34;
+
+typedef DM1_V1_OrdinaryGroupMoveApplyPlanPc34 M11_OrdinaryGroupMoveApplyPlan;
+typedef DM1_V1_GroupTeleporterDestinationPlanPc34 M11_GroupTeleporterDestinationPlan;
+typedef DM1_V1_GeneratedGroupPlacementPlanPc34 M11_GeneratedGroupPlacementPlan;
 
 typedef struct {
     int valid;
@@ -211,20 +215,20 @@ int  m11_plan_ordinary_group_move_f0267(
         int killedByProjectile,
         uint32_t currentTick,
         M11_OrdinaryGroupMovePlan* outPlan);
-int  m11_plan_ordinary_group_move_apply_f0267(
+int  DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
         const M11_OrdinaryGroupMovePlan* movePlan,
         int sourceMapIndex,
         int direction,
         int groupCells,
         uint32_t currentTick,
-        M11_OrdinaryGroupMoveApplyPlan* outPlan);
+        DM1_V1_OrdinaryGroupMoveApplyPlanPc34* outPlan);
 int  m11_plan_group_pit_fall_square_f0267(
         int squareType,
         int pitSquareType,
         int pitOpen,
         int pitImaginary,
         M11_GroupPitFallSquarePlan* outPlan);
-int  m11_plan_group_teleporter_destination_f0267(
+int  DM1_V1_PlanGroupTeleporterDestinationF0267Pc34Compat(
         int squareType,
         int teleporterSquareType,
         int teleporterOpen,
@@ -238,8 +242,8 @@ int  m11_plan_group_teleporter_destination_f0267(
         int sourceMapX,
         int sourceMapY,
         int mapCount,
-        M11_GroupTeleporterDestinationPlan* outPlan);
-int  m11_plan_generated_group_placement_f0183_f0180(
+        DM1_V1_GroupTeleporterDestinationPlanPc34* outPlan);
+int  DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
         int partyMapIndex,
         int mapIndex,
         int mapX,
@@ -251,7 +255,7 @@ int  m11_plan_generated_group_placement_f0183_f0180(
         int activeGroupCount,
         int activeGroupCapacity,
         uint32_t currentTick,
-        M11_GeneratedGroupPlacementPlan* outPlan);
+        DM1_V1_GeneratedGroupPlacementPlanPc34* outPlan);
 int  m11_plan_lord_chaos_adjacent_retry_f0252(
         int creatureType,
         int randomGate,
@@ -262,6 +266,13 @@ int  m11_plan_lord_chaos_adjacent_retry_f0252(
         int candidateBlocked,
         M11_LordChaosAdjacentRetryPlan* outPlan);
 const char* m11_group_move_removal_source_evidence(void);
+
+#define m11_plan_ordinary_group_move_apply_f0267 \
+    DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat
+#define m11_plan_group_teleporter_destination_f0267 \
+    DM1_V1_PlanGroupTeleporterDestinationF0267Pc34Compat
+#define m11_plan_generated_group_placement_f0183_f0180 \
+    DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat
 
 #ifdef __cplusplus
 }
