@@ -6839,6 +6839,8 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     receipt->dm1HoCLowerLevelHelpersReady =
         ownership.lower_level_renderer_helper_owned &&
         ownership.lower_level_audio_helper_owned;
+    receipt->dm1HoCHostDrawConsumesBackingAssetReady =
+        ownership.host_draw_consumes_backing_asset;
     receipt->dm1HoCHostDrawRejectsBackingFallbackReady =
         ownership.host_draw_rejects_backing_fallback;
     receipt->dm1HoCHoCAssetCaptureReady = ownership.hoc_asset_capture;
@@ -6856,6 +6858,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         receipt->dm1HoCReceiptOnlyConsumerReady &&
         receipt->dm1HoCNoHostFallbackVisualsReady &&
         receipt->dm1HoCLowerLevelHelpersReady &&
+        receipt->dm1HoCHostDrawConsumesBackingAssetReady &&
         receipt->dm1HoCHostDrawRejectsBackingFallbackReady &&
         ownership.real_asset_capture &&
         receipt->dm1HoCMacWindowCaptureReady &&

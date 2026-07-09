@@ -342,6 +342,7 @@ typedef struct {
     int dm1HoCReceiptOnlyConsumerReady;
     int dm1HoCNoHostFallbackVisualsReady;
     int dm1HoCLowerLevelHelpersReady;
+    int dm1HoCHostDrawConsumesBackingAssetReady;
     int dm1HoCHostDrawRejectsBackingFallbackReady;
     int dm1HoCHoCAssetCaptureReady;
     int dm1HoCHostWindowCaptureReady;
