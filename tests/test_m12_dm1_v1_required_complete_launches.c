@@ -187,7 +187,8 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(gate.versionReady == 1);
     CHECK(gate.autoSelectedVersionIndex == -1);
     CHECK(gate.blockedLabel && strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0);
-    CHECK(gate.blockedDetail && strcmp(gate.blockedDetail, "DM1 FULL START") == 0);
+    CHECK(gate.blockedDetail &&
+          strcmp(gate.blockedDetail, "DM1 HOC RENDER CAPTURE PROOF") == 0);
 
     /* Pressing ACCEPT on the launch row with both required files
      * matched must request a launch and surface the "READY TO LAUNCH"

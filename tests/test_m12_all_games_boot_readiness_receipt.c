@@ -158,8 +158,8 @@ int main(void) {
                            "READY TO LAUNCH") == 0,
                     "ready game launch status label should come from launch gate")) return 1;
         if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
-                           expected[i].pathLabel) == 0,
-                    "ready game launch detail label should name boot path")) return 1;
+                           expected[i].captureLabel) == 0,
+                    "ready game launch detail label should name active capture proof")) return 1;
     }
     if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "5 GAMES READY") == 0,
                 "scan feedback should count launch-gated full-start-ready games")) return 1;
