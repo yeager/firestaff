@@ -980,6 +980,33 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 post-launch plan keeps entrance timeout",
              post.entrance_auto_enter_ms,
              1200);
+    expect_i("DM1 post-launch plan carries title boundary frame",
+             post.title_menu_boundary_frame,
+             (int)dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1);
+    expect_i("DM1 post-launch plan marks title menu eligible",
+             post.title_menu_eligible,
+             1);
+    expect_i("DM1 post-launch plan consumes title boundary input",
+             post.title_consume_pending_input,
+             1);
+    expect_u("DM1 post-launch plan enters entrance wait after menu",
+             (unsigned int)post.entrance_wait_stage,
+             (unsigned int)DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34);
+    expect_i("DM1 post-launch plan carries entrance C255 map",
+             post.entrance_full_start_receipt.mapIndex,
+             DM1_V1_ENTRANCE_MAP_INDEX_PC34);
+    expect_i("DM1 post-launch plan carries 5x5 entrance width",
+             post.entrance_full_start_receipt.width,
+             DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34);
+    expect_i("DM1 post-launch plan carries 5x5 entrance height",
+             post.entrance_full_start_receipt.height,
+             DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34);
+    expect_i("DM1 post-launch plan carries entrance corridor count",
+             post.entrance_full_start_receipt.corridorCount,
+             6);
+    expect_i("DM1 post-launch plan starts facing south at 2,0",
+             post.entrance_full_start_receipt.partyDirection,
+             DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34);
     expect_i("CSB post-launch plan does not use DM1 title",
              dm1_v1_startup_handoff_post_launch_plan_pc34("csb", &post) &&
                  post.play_title == 0 &&
