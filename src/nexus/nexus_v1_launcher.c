@@ -747,6 +747,7 @@ void nexus_v1_launcher_startup_full_start_receipt_clear(
         &receipt->launch_gate);
     nexus_v1_launcher_startup_asset_handoff_receipt_clear(
         &receipt->asset_handoff);
+    nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
 }
 
 const char *nexus_v1_launcher_startup_runtime_handoff_route_name(
@@ -791,6 +792,43 @@ const char *nexus_v1_launcher_startup_full_start_route_name(
         return "warning-title-ready";
     case NEXUS_V1_STARTUP_FULL_START_MENU_READY: return "menu-ready";
     default: return "unknown";
+    }
+}
+
+static void nexus_v1_launcher_fill_full_start_host_route(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupFullStartReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    receipt->host_receipt.input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+    receipt->host_receipt.status_scope = receipt->status_scope;
+    receipt->host_receipt.status = receipt->status;
+    receipt->m11_host_route = "blocked-startup";
+    receipt->m11_host_route_ready = 0;
+
+    if (!state || !receipt->full_start_menu_ready) {
+        return;
+    }
+    receipt->host_receipt.status_scope = "STARTUP";
+    if (state->save_select_active && receipt->save_status_ready) {
+        receipt->m11_host_route = "save-menu";
+        receipt->host_receipt.status = "NEXUS SAVE SELECT";
+        receipt->m11_host_route_ready = 1;
+    } else if (state->champion_select_active &&
+               receipt->champion_status_ready) {
+        receipt->m11_host_route = "champion-menu";
+        receipt->host_receipt.status = "NEXUS CHAMPIONS";
+        receipt->m11_host_route_ready = 1;
+    } else if (state->title_active && receipt->title_status_ready) {
+        receipt->m11_host_route = "title-warning";
+        receipt->host_receipt.status = "NEXUS TITLE";
+        receipt->m11_host_route_ready = 1;
+    } else {
+        receipt->m11_host_route = "startup-menu";
+        receipt->host_receipt.status = "full-start-menu-ready";
+        receipt->m11_host_route_ready = 1;
     }
 }
 
@@ -2184,6 +2222,9 @@ int nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
     out_receipt->assets = assets;
     out_receipt->warning_art_loaded = assets.warning_surface_loaded ? 1 : 0;
     out_receipt->title_art_loaded = assets.title_surface_loaded ? 1 : 0;
+    out_receipt->warning_status_ready = out_receipt->warning_art_loaded;
+    out_receipt->title_status_ready =
+        out_receipt->title_art_loaded && assets.title_route_ready;
     out_receipt->boot_warning_title_ready =
         out_receipt->warning_art_loaded &&
         out_receipt->title_art_loaded &&
@@ -2213,6 +2254,14 @@ int nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
         out_receipt->startup_surfaces_real_ready &&
         out_receipt->faces_real_ready &&
         out_receipt->menu_bpk_route_ready;
+    out_receipt->save_status_ready =
+        out_receipt->full_start_graphics_ready &&
+        out_receipt->save_menu_route_ready &&
+        out_receipt->audio_track02_ready;
+    out_receipt->champion_status_ready =
+        out_receipt->full_start_graphics_ready &&
+        out_receipt->champion_menu_route_ready &&
+        out_receipt->audio_track02_ready;
     out_receipt->full_start_menu_ready =
         out_receipt->full_start_graphics_ready &&
         out_receipt->save_menu_route_ready &&
@@ -2257,6 +2306,7 @@ int nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
             ? out_receipt->asset_handoff.status
             : out_receipt->startup_ui_blocker;
     }
+    nexus_v1_launcher_fill_full_start_host_route(state, out_receipt);
     return 1;
 }
 
