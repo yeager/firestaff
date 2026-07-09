@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 HoC menu route M11 handoff: M11 now exposes and consumes the DM1 HoC champion menu route receipt for live C040 panel input ownership, so keyboard/pointer/object routes block through DM1-owned hall/live-panel facts instead of raw M11 flag checks. Verification: `test_m11_overlay_command_queue_block`, `test_dm1_v1_entrance_champion_select_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus startup menu presentation handoff receipts: launcher save/champion presentation now emits asset-gated handoff receipts that carry MENU.BPK/face readiness, ASSETS blocker status, and zero draw commands when real menu surfaces are blocked, so M11 does not infer fallback rendering. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 M11 startup host-route consumption: M11 DM2 startup input now consumes the DM2-owned host route receipt for redraw, close-menu, return-to-launcher, status, and post-action selected row instead of interpreting host receipt/menu state itself. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.

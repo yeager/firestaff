@@ -378,6 +378,54 @@ static void test_candidate_panel_blocks_direct_map_toggle(void)
                                 "C040 direct map helper does not tick");
 }
 
+static void test_candidate_panel_uses_dm1_hoc_menu_route_receipt(void)
+{
+    M11_GameViewState state;
+    DM1_V1_EntranceMenuRouteReceiptPc34 receipt;
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+
+    ASSERT_EQ(M11_GameView_GetDm1HocMenuRouteReceipt(&state, &receipt),
+              1, "M11 exposes DM1 HoC route receipt");
+    ASSERT_EQ(receipt.route, DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34,
+              "normal HoC route starts in hall");
+    ASSERT_EQ(receipt.showChampionPanel, 0,
+              "hall route does not show champion panel");
+    ASSERT_EQ(receipt.canEnterDungeon, 1,
+              "hall route can enter when party has a champion");
+
+    state.candidateMirrorOrdinal = 7;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+
+    ASSERT_EQ(M11_GameView_GetDm1HocMenuRouteReceipt(&state, &receipt),
+              1, "M11 maps live C040 state into DM1 HoC receipt");
+    ASSERT_EQ(receipt.route, DM1_V1_ENTRANCE_MENU_ROUTE_LIVE_CHAMPION_PC34,
+              "candidate panel uses live champion route");
+    ASSERT_EQ(receipt.selectedChampionIndex, 7,
+              "receipt carries selected mirror/champion ordinal");
+    ASSERT_EQ(receipt.showChampionPanel, 1,
+              "receipt marks champion panel as input owner");
+    ASSERT_EQ(receipt.canCancelSelection, 1,
+              "receipt exposes cancel route for C162");
+
+    ASSERT_EQ(M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP),
+              M11_GAME_INPUT_IGNORED,
+              "DM1 HoC receipt blocks keyboard gameplay input");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 20, 170, 1),
+              M11_GAME_INPUT_IGNORED,
+              "DM1 HoC receipt blocks normal pointer gameplay input");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "receipt-routed input keeps C040 live");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "receipt-routed C040 does not tick");
+}
+
 static void test_candidate_panel_blocks_direct_object_helpers(void)
 {
     M11_GameViewState state;
@@ -1470,6 +1518,7 @@ int main(void)
     test_candidate_panel_blocks_direct_spell_helpers();
     test_candidate_panel_blocks_direct_inventory_toggle();
     test_candidate_panel_blocks_direct_map_toggle();
+    test_candidate_panel_uses_dm1_hoc_menu_route_receipt();
     test_candidate_panel_blocks_direct_object_helpers();
     test_candidate_panel_blocks_direct_leader_hand_chest_helpers();
     test_candidate_panel_blocks_direct_quickload_only();
