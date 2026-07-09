@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 D3L2/D3R2 HoC thing-layer runtime receipt: D3 side lanes now expose a DM1-owned runtime receipt for item/projectile draw vs suppress, depth-3 front-cell clipping, C2500|MASK0x8000/C2900 zones, and projectile-as-object routing so stale mirror/static payloads cannot leak into side-lane rendering. Verification: `test_dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat` 379/379, target rebuild, CMake configure, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron save-resume graphics handoff: boot render-route and graphics-route receipts now treat SAVE_RESUME as a runtime-owned route, enforce no fallback startup visuals, and return a dedicated runtime graphics handoff status. Verification: `test_theron_v1_startup_save_resume_pc34` 228/228 and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 D2L2/D2R2 HoC thing-layer suppress receipt: D2 side lanes now expose a DM1-owned runtime suppress receipt that blocks item/projectile/creature/explosion payloads, rejects borrowed D2C `0x3421` F0115 order, and prevents stale mirror/static payloads from leaking into side-lane rendering. Verification: `test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat` 136/136, target rebuild, CMake configure, and `git diff --check` passed.

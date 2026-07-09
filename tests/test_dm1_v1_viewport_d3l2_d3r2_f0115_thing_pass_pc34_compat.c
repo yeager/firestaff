@@ -324,6 +324,76 @@ static void test_thing_zone_bindings(void)
                -1, "invalid input guard");
 }
 
+static void test_runtime_thing_receipts(void)
+{
+    const DM1_V1_D3L2D3R2F0115ThingPassPc34 *d3l2 =
+        dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_square_pc34(1);
+    const DM1_V1_D3L2D3R2F0115ThingPassPc34 *d3r2 =
+        dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_square_pc34(2);
+    DM1_V1_D3L2D3R2F0115RuntimeThingReceiptPc34 receipt;
+
+    expect_int("runtime.item.receipt",
+               dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
+                   d3l2, 5, 2, 2, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:4923");
+    expect_int("runtime.item.draw", receipt.draw_item, 1,
+               "ReDMCSB DUNVIEW.C:4923 visible item gate");
+    expect_int("runtime.item.suppress", receipt.suppress_item, 0,
+               "visible item is not suppressed");
+    expect_int("runtime.item.zone", receipt.zone, 35282,
+               "ReDMCSB DUNVIEW.C:5075 C2500|MASK0x8000 + row*4 + cell");
+    expect_int("runtime.item.shift", receipt.uses_object_creature_shift_mask, 1,
+               "ReDMCSB DUNVIEW.C:5075 object/creature shift mask");
+    expect_int("runtime.item.no.payload", receipt.suppress_non_thing_payload, 0,
+               "visible thing owns payload");
+
+    expect_int("runtime.item.front.clipped",
+               dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
+                   d3l2, 5, 0, 0, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:4923 depth-3 front clip");
+    expect_int("runtime.item.front.draw", receipt.draw_item, 0,
+               "front cell item clipped");
+    expect_int("runtime.item.front.clip.flag", receipt.clipped_by_depth3_front_cell, 1,
+               "depth-3 front-cell clip exposed");
+    expect_int("runtime.item.front.payload", receipt.suppress_non_thing_payload, 1,
+               "clipped front cell cannot leak stale payload");
+
+    expect_int("runtime.projectile.receipt",
+               dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
+                   d3r2, 14, 3, 3, 1, &receipt),
+               1, "ReDMCSB DUNVIEW.C:5668-5683");
+    expect_int("runtime.projectile.draw", receipt.draw_projectile, 1,
+               "visible projectile drawn");
+    expect_int("runtime.projectile.as.object", receipt.draw_projectile_as_object, 1,
+               "ReDMCSB projectile goes through object path");
+    expect_int("runtime.projectile.zone", receipt.zone, 2919,
+               "ReDMCSB DUNVIEW.C:5683 C2900 + row*4 + cell");
+    expect_int("runtime.projectile.list", receipt.consumes_runtime_projectile_list, 1,
+               "projectile receipt consumes runtime projectile list");
+
+    expect_int("runtime.projectile.no.flag",
+               dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
+                   d3r2, 14, 3, 3, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:5656 square projectile flag");
+    expect_int("runtime.projectile.no.flag.draw", receipt.draw_projectile, 0,
+               "no square projectile flag suppresses projectile");
+    expect_int("runtime.projectile.no.flag.payload", receipt.suppress_non_thing_payload, 1,
+               "no projectile flag cannot leak stale projectile payload");
+
+    expect_int("runtime.nonthing",
+               dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
+                   d3l2, 3, 2, 2, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:4840-4850 non-item scan");
+    expect_int("runtime.nonthing.draw.item", receipt.draw_item, 0,
+               "sensor/mirror payload is not item");
+    expect_int("runtime.nonthing.payload", receipt.suppress_non_thing_payload, 1,
+               "sensor/mirror payload suppressed from thing layer");
+    expect_int("runtime.null.out",
+               dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
+                   d3l2, 5, 2, 2, 0, NULL),
+               0, "runtime receipt rejects NULL output");
+}
+
 static void test_pixel_contract_one(
     const DM1_V1_D3L2D3R2F0115ThingPassPc34 *f,
     int x_first,
@@ -520,6 +590,7 @@ int main(void)
     test_fixture_metadata();
     test_route_tables();
     test_thing_zone_bindings();
+    test_runtime_thing_receipts();
     test_pixel_contract();
     test_source_evidence_mentions_required_anchors();
 
