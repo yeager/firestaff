@@ -798,7 +798,8 @@ void nexus_v1_launcher_m12_startup_package_receipt_clear(
     receipt->ready_status_label = "TITLE MENU READY";
     receipt->ready_detail_label = "TITLE, WARNING, SAVE, CHAMPIONS";
     receipt->path_label = "NEXUS TITLE MENU";
-    receipt->contract_label = "NEXUS FULL START PACKAGE RECEIPT";
+    receipt->contract_label =
+        "NEXUS HOST-CALLER/FULL-START PACKAGE RECEIPTS";
     receipt->capture_label = "NEXUS TIMING CAPTURE PROOF";
     receipt->capture_route_label = "invalid";
     receipt->first_capture_draw_label = "none";
@@ -871,6 +872,26 @@ void nexus_v1_launcher_startup_host_caller_receipt_clear(
     receipt->host_route = "blocked-startup";
     receipt->status_scope = "STARTUP";
     receipt->status = "blocked-startup";
+}
+
+static int nexus_v1_launcher_saturn_timing_exact(
+    int boot_warning_frames,
+    int boot_start_ready_frames,
+    int title_frame_max)
+{
+    return boot_warning_frames == nexus_v1_boot_warning_frames() &&
+           boot_start_ready_frames == nexus_v1_boot_start_ready_frames() &&
+           title_frame_max == nexus_v1_boot_start_ready_frames();
+}
+
+static int nexus_v1_launcher_saturn_capture_frames_exact(
+    int warning_capture_frame,
+    int title_capture_frame,
+    int gameover_capture_frame)
+{
+    return warning_capture_frame == 0 &&
+           title_capture_frame == nexus_v1_boot_warning_frames() &&
+           gameover_capture_frame == 0;
 }
 
 const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
@@ -988,6 +1009,13 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
         out_receipt->data_ready && out_receipt->version_ready;
     out_receipt->gameover_capture_surface_ready =
         out_receipt->data_ready && out_receipt->version_ready;
+    out_receipt->saturn_warning_frame = out_receipt->warning_capture_frame;
+    out_receipt->saturn_title_capture_frame =
+        out_receipt->title_capture_frame;
+    out_receipt->saturn_title_ready_frame =
+        out_receipt->boot_start_ready_frames;
+    out_receipt->saturn_gameover_capture_frame =
+        out_receipt->gameover_capture_frame;
     if (nexus_v1_title_frame(out_receipt->boot_start_ready_frames,
                              NEXUS_FB_H,
                              &title)) {
@@ -1022,6 +1050,22 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
         out_receipt->full_start_graphics_ready;
     out_receipt->packaged_capture_ready =
         out_receipt->startup_contract_ready;
+    out_receipt->saturn_timing_exact =
+        nexus_v1_launcher_saturn_timing_exact(
+            out_receipt->boot_warning_frames,
+            out_receipt->boot_start_ready_frames,
+            out_receipt->title_frame_max);
+    out_receipt->saturn_capture_frames_exact =
+        nexus_v1_launcher_saturn_capture_frames_exact(
+            out_receipt->warning_capture_frame,
+            out_receipt->title_capture_frame,
+            out_receipt->gameover_capture_frame);
+    out_receipt->full_start_package_receipt_ready =
+        out_receipt->packaged_capture_ready &&
+        out_receipt->saturn_timing_exact &&
+        out_receipt->saturn_capture_frames_exact;
+    out_receipt->host_display_caller_expected =
+        out_receipt->full_start_package_receipt_ready;
     if (!out_receipt->data_ready) {
         out_receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
     } else if (!out_receipt->version_ready) {
@@ -1094,6 +1138,20 @@ int nexus_v1_launcher_m12_startup_package_from_full_start_package(
     out_receipt->warning_capture_frame = package->warning_capture_frame;
     out_receipt->title_capture_frame = package->title_capture_frame;
     out_receipt->gameover_capture_frame = package->gameover_capture_frame;
+    out_receipt->saturn_warning_frame = package->saturn_warning_frame;
+    out_receipt->saturn_title_capture_frame =
+        package->saturn_title_capture_frame;
+    out_receipt->saturn_title_ready_frame =
+        package->saturn_title_ready_frame;
+    out_receipt->saturn_gameover_capture_frame =
+        package->saturn_gameover_capture_frame;
+    out_receipt->saturn_timing_exact = package->saturn_timing_exact;
+    out_receipt->saturn_capture_frames_exact =
+        package->saturn_capture_frames_exact;
+    out_receipt->full_start_package_receipt_ready =
+        package->full_start_package_receipt_ready;
+    out_receipt->host_display_caller_expected =
+        package->host_display_caller_expected;
     out_receipt->capture_command_count = package->capture_command_count;
     out_receipt->capture_route = package->capture_route;
     out_receipt->first_capture_draw_kind =
@@ -2943,6 +3001,37 @@ static void nexus_v1_launcher_fill_full_start_package_capture(
     }
 }
 
+static void nexus_v1_launcher_finalize_full_start_package_saturn_receipt(
+    Nexus_V1_StartupFullStartPackageReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    receipt->saturn_warning_frame = receipt->warning_capture_frame;
+    receipt->saturn_title_capture_frame = receipt->title_capture_frame;
+    receipt->saturn_title_ready_frame = receipt->boot_start_ready_frames;
+    receipt->saturn_gameover_capture_frame = receipt->gameover_capture_frame;
+    receipt->saturn_timing_exact =
+        nexus_v1_launcher_saturn_timing_exact(
+            receipt->boot_warning_frames,
+            receipt->boot_start_ready_frames,
+            receipt->title_frame_max);
+    receipt->saturn_capture_frames_exact =
+        nexus_v1_launcher_saturn_capture_frames_exact(
+            receipt->warning_capture_frame,
+            receipt->title_capture_frame,
+            receipt->gameover_capture_frame);
+    receipt->full_start_package_receipt_ready =
+        receipt->m11_ready &&
+        receipt->m12_ready &&
+        receipt->graphics_ready &&
+        receipt->saturn_timing_exact &&
+        receipt->saturn_capture_frames_exact;
+    receipt->host_display_caller_expected =
+        receipt->full_start_package_receipt_ready &&
+        !receipt->fallback_visuals_permitted;
+}
+
 int nexus_v1_launcher_startup_full_start_package_from_runtime_state(
     const Nexus_V1_LauncherRuntimeReceipt *runtime,
     const Nexus_V1_StartupRuntimeState *state,
@@ -3014,6 +3103,32 @@ int nexus_v1_launcher_startup_full_start_package_from_runtime_state(
     out_receipt->warning_capture_frame = 0;
     out_receipt->title_capture_frame = nexus_v1_boot_warning_frames();
     out_receipt->gameover_capture_frame = 0;
+    out_receipt->saturn_warning_frame = out_receipt->warning_capture_frame;
+    out_receipt->saturn_title_capture_frame =
+        out_receipt->title_capture_frame;
+    out_receipt->saturn_title_ready_frame =
+        out_receipt->boot_start_ready_frames;
+    out_receipt->saturn_gameover_capture_frame =
+        out_receipt->gameover_capture_frame;
+    out_receipt->saturn_timing_exact =
+        nexus_v1_launcher_saturn_timing_exact(
+            out_receipt->boot_warning_frames,
+            out_receipt->boot_start_ready_frames,
+            out_receipt->title_frame_max);
+    out_receipt->saturn_capture_frames_exact =
+        nexus_v1_launcher_saturn_capture_frames_exact(
+            out_receipt->warning_capture_frame,
+            out_receipt->title_capture_frame,
+            out_receipt->gameover_capture_frame);
+    out_receipt->full_start_package_receipt_ready =
+        out_receipt->m11_ready &&
+        out_receipt->m12_ready &&
+        out_receipt->graphics_ready &&
+        out_receipt->saturn_timing_exact &&
+        out_receipt->saturn_capture_frames_exact;
+    out_receipt->host_display_caller_expected =
+        out_receipt->full_start_package_receipt_ready &&
+        !out_receipt->fallback_visuals_permitted;
     out_receipt->consumer_route = out_receipt->consumer.consumer_route;
     out_receipt->asset_route = out_receipt->consumer.full_start.asset_route;
     out_receipt->startup_ui_blocker =
@@ -3021,6 +3136,7 @@ int nexus_v1_launcher_startup_full_start_package_from_runtime_state(
     out_receipt->status_scope = out_receipt->consumer.status_scope;
     out_receipt->status = out_receipt->consumer.status;
     nexus_v1_launcher_fill_full_start_package_capture(state, out_receipt);
+    nexus_v1_launcher_finalize_full_start_package_saturn_receipt(out_receipt);
     return 1;
 }
 
@@ -3226,6 +3342,9 @@ static void nexus_v1_launcher_fill_startup_bundle(
     receipt->timing_frame = package->title_frame;
     receipt->timing_frame_max = package->title_frame_max;
     receipt->timing_ready = package->title_ready;
+    receipt->saturn_timing_exact = package->saturn_timing_exact;
+    receipt->saturn_capture_frames_exact =
+        package->saturn_capture_frames_exact;
     receipt->warning_visible = package->warning_visible;
     receipt->prompt_visible = package->title_prompt_visible;
     receipt->m11_ready = package->m11_ready;
@@ -3389,6 +3508,11 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         package->consumer.full_start.menu_bpk_route_ready &&
         asset_handoff->real_menu_asset_handoff_ready &&
         !package->fallback_visuals_permitted;
+    receipt->full_start_package_consumed =
+        package->full_start_package_receipt_ready;
+    receipt->saturn_timing_exact = package->saturn_timing_exact;
+    receipt->saturn_capture_frames_exact =
+        package->saturn_capture_frames_exact;
     receipt->no_fallback_visuals_enforced =
         receipt->receipt_owner_is_nexus &&
         !receipt->fallback_visuals_permitted;
@@ -3620,6 +3744,29 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.startup_bundle.timing_frame_max;
     out_receipt->title_timing_ready =
         out_receipt->ownership.startup_bundle.timing_ready;
+    out_receipt->full_start_package_consumed =
+        out_receipt->ownership.full_start_package_consumed;
+    out_receipt->startup_bundle_consumed =
+        out_receipt->ownership.startup_bundle.package
+            .full_start_package_receipt_ready;
+    out_receipt->display_callers_use_package_receipt =
+        out_receipt->full_start_package_consumed &&
+        out_receipt->startup_bundle_consumed;
+    out_receipt->saturn_warning_frame =
+        out_receipt->ownership.startup_bundle.package.saturn_warning_frame;
+    out_receipt->saturn_title_capture_frame =
+        out_receipt->ownership.startup_bundle.package
+            .saturn_title_capture_frame;
+    out_receipt->saturn_title_ready_frame =
+        out_receipt->ownership.startup_bundle.package
+            .saturn_title_ready_frame;
+    out_receipt->saturn_gameover_capture_frame =
+        out_receipt->ownership.startup_bundle.package
+            .saturn_gameover_capture_frame;
+    out_receipt->saturn_timing_exact =
+        out_receipt->ownership.saturn_timing_exact;
+    out_receipt->saturn_capture_frames_exact =
+        out_receipt->ownership.saturn_capture_frames_exact;
     out_receipt->capture_route = out_receipt->ownership.capture_route;
     out_receipt->ownership_route = out_receipt->ownership.route;
     out_receipt->host_route =

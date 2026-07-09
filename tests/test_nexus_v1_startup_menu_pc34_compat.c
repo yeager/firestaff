@@ -207,8 +207,16 @@ int main(void)
                       "title-warning") == 0 &&
                strcmp(m12_package_receipt.first_capture_draw_label,
                       "warning-background") == 0 &&
+               m12_package_receipt.saturn_warning_frame == 0 &&
+               m12_package_receipt.saturn_title_capture_frame == 48 &&
+               m12_package_receipt.saturn_title_ready_frame == 102 &&
+               m12_package_receipt.saturn_gameover_capture_frame == 0 &&
+               m12_package_receipt.saturn_timing_exact == 1 &&
+               m12_package_receipt.saturn_capture_frames_exact == 1 &&
+               m12_package_receipt.full_start_package_receipt_ready == 1 &&
+               m12_package_receipt.host_display_caller_expected == 1 &&
                strcmp(m12_package_receipt.contract_label,
-                      "NEXUS FULL START PACKAGE RECEIPT") == 0 &&
+                      "NEXUS HOST-CALLER/FULL-START PACKAGE RECEIPTS") == 0 &&
                strcmp(m12_package_receipt.active_proof_label,
                       "NEXUS TIMING CAPTURE PROOF") == 0 &&
                strcmp(m12_package_receipt.launch_status_label,
@@ -1137,6 +1145,14 @@ int main(void)
                full_start_package_receipt.title_route_active == 0 &&
                full_start_package_receipt.champion_capture_ready == 1 &&
                full_start_package_receipt.capture_command_count > 3 &&
+               full_start_package_receipt.saturn_warning_frame == 0 &&
+               full_start_package_receipt.saturn_title_capture_frame == 48 &&
+               full_start_package_receipt.saturn_title_ready_frame == 102 &&
+               full_start_package_receipt.saturn_gameover_capture_frame == 0 &&
+               full_start_package_receipt.saturn_timing_exact == 1 &&
+               full_start_package_receipt.saturn_capture_frames_exact == 1 &&
+               full_start_package_receipt.full_start_package_receipt_ready == 1 &&
+               full_start_package_receipt.host_display_caller_expected == 1 &&
                full_start_package_receipt.first_capture_draw_kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
                strcmp(full_start_package_receipt.startup_ui_blocker,
@@ -1185,6 +1201,8 @@ int main(void)
                startup_bundle_receipt.timing_frame_max ==
                    nexus_v1_boot_start_ready_frames() &&
                startup_bundle_receipt.timing_ready == 1 &&
+               startup_bundle_receipt.saturn_timing_exact == 1 &&
+               startup_bundle_receipt.saturn_capture_frames_exact == 1 &&
                strcmp(startup_bundle_receipt.route_label,
                       "champion-menu") == 0 &&
                strcmp(startup_bundle_receipt.first_draw_label,
@@ -1220,6 +1238,9 @@ int main(void)
                real_asset_ownership_receipt.dgn_render_plan.plan_ready == 1 &&
                real_asset_ownership_receipt.runtime_dgn_handoff_ready == 1 &&
                real_asset_ownership_receipt.menu_capture_uses_real_assets == 1 &&
+               real_asset_ownership_receipt.full_start_package_consumed == 1 &&
+               real_asset_ownership_receipt.saturn_timing_exact == 1 &&
+               real_asset_ownership_receipt.saturn_capture_frames_exact == 1 &&
                real_asset_ownership_receipt.no_fallback_visuals_enforced == 1 &&
                real_asset_ownership_receipt.fallback_visuals_permitted == 0 &&
                real_asset_ownership_receipt.capture_route ==
@@ -1257,6 +1278,9 @@ int main(void)
                host_caller_receipt.bpk_handoff_consumed == 1 &&
                host_caller_receipt.prs3_blocker_consumed == 0 &&
                host_caller_receipt.dgn_handoff_consumed == 1 &&
+               host_caller_receipt.full_start_package_consumed == 1 &&
+               host_caller_receipt.startup_bundle_consumed == 1 &&
+               host_caller_receipt.display_callers_use_package_receipt == 1 &&
                host_caller_receipt.suppress_fallback_visuals == 1 &&
                host_caller_receipt.suppress_legacy_placeholder_visuals == 1 &&
                host_caller_receipt.no_fallback_visuals_enforced == 1 &&
@@ -1271,6 +1295,12 @@ int main(void)
                host_caller_receipt.copied_dgn_command_count ==
                    host_caller_receipt.dgn_command_count &&
                host_caller_receipt.title_timing_ready == 1 &&
+               host_caller_receipt.saturn_warning_frame == 0 &&
+               host_caller_receipt.saturn_title_capture_frame == 48 &&
+               host_caller_receipt.saturn_title_ready_frame == 102 &&
+               host_caller_receipt.saturn_gameover_capture_frame == 0 &&
+               host_caller_receipt.saturn_timing_exact == 1 &&
+               host_caller_receipt.saturn_capture_frames_exact == 1 &&
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
                dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
@@ -1492,6 +1522,14 @@ int main(void)
                full_start_package_receipt.warning_capture_frame == 0 &&
                full_start_package_receipt.title_capture_frame == 48 &&
                full_start_package_receipt.gameover_capture_frame == 0 &&
+               full_start_package_receipt.saturn_warning_frame == 0 &&
+               full_start_package_receipt.saturn_title_capture_frame == 48 &&
+               full_start_package_receipt.saturn_title_ready_frame == 102 &&
+               full_start_package_receipt.saturn_gameover_capture_frame == 0 &&
+               full_start_package_receipt.saturn_timing_exact == 1 &&
+               full_start_package_receipt.saturn_capture_frames_exact == 1 &&
+               full_start_package_receipt.full_start_package_receipt_ready == 1 &&
+               full_start_package_receipt.host_display_caller_expected == 1 &&
                strcmp(full_start_package_receipt.consumer_route,
                       "title-warning") == 0 &&
                strcmp(full_start_package_receipt.animation,
@@ -1525,6 +1563,14 @@ int main(void)
                m12_package_receipt.warning_capture_frame == 0 &&
                m12_package_receipt.title_capture_frame == 48 &&
                m12_package_receipt.gameover_capture_frame == 0 &&
+               m12_package_receipt.saturn_warning_frame == 0 &&
+               m12_package_receipt.saturn_title_capture_frame == 48 &&
+               m12_package_receipt.saturn_title_ready_frame == 102 &&
+               m12_package_receipt.saturn_gameover_capture_frame == 0 &&
+               m12_package_receipt.saturn_timing_exact == 1 &&
+               m12_package_receipt.saturn_capture_frames_exact == 1 &&
+               m12_package_receipt.full_start_package_receipt_ready == 1 &&
+               m12_package_receipt.host_display_caller_expected == 1 &&
                m12_package_receipt.capture_command_count ==
                    full_start_package_receipt.capture_command_count,
            "Nexus M12 startup package consumes full-start TITLE/WARNING/GAMEOVER capture receipt");
