@@ -591,6 +591,24 @@ typedef struct {
         int startup_hud_ready;
         int startup_dgn_render_command_count;
         int startup_dgn_render_blocked;
+        int startup_host_caller_ready;
+        int startup_host_capture_ready;
+        int startup_host_dgn_ready;
+        int startup_host_execute_startup_draws;
+        int startup_host_execute_dgn_draws;
+        int startup_bpk_handoff_consumed;
+        int startup_prs3_blocker_consumed;
+        int startup_dgn_handoff_consumed;
+        int startup_no_fallback_visuals_enforced;
+        int startup_suppress_fallback_visuals;
+        int startup_suppress_legacy_placeholder_visuals;
+        int startup_full_start_package_consumed;
+        int startup_bundle_consumed;
+        int startup_display_callers_use_package_receipt;
+        int startup_saturn_timing_exact;
+        int startup_saturn_capture_frames_exact;
+        int startup_copied_draw_command_count;
+        int startup_copied_dgn_render_command_count;
     } nexusState;
 
     /* Theron's Quest V1 runtime — active when sourceKind ==

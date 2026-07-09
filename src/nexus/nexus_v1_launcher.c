@@ -3728,7 +3728,10 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
     out_receipt->bpk_handoff_consumed =
         out_receipt->ownership.consumes_bpk_menu_handoff;
     out_receipt->prs3_blocker_consumed =
-        out_receipt->ownership.consumes_prs3_blocker;
+        out_receipt->ownership.consumes_prs3_blocker ||
+        (state->engine &&
+         state->engine->menu_bpk_upload_receipt.route ==
+             NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3);
     out_receipt->dgn_handoff_consumed =
         out_receipt->ownership.consumes_dgn_handoff;
     out_receipt->no_fallback_visuals_enforced =

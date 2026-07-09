@@ -10231,23 +10231,59 @@ static int m11_nexus_runtime_receipt_from_state(
     return 1;
 }
 
-static void m11_nexus_apply_runtime_handoff_receipt(
+static void m11_nexus_apply_startup_host_caller_receipt(
     M11_GameViewState *state,
-    const Nexus_V1_StartupRuntimeHandoffReceipt *receipt)
+    const Nexus_V1_StartupHostCallerReceipt *receipt)
 {
     if (!state || !receipt) {
         return;
     }
     state->nexusState.startup_runtime_handoff_ready =
-        receipt->runtime_ready ? 1 : 0;
+        receipt->host_runtime_dgn_ready ? 1 : 0;
     state->nexusState.startup_dgn_render_ready =
-        receipt->dgn_render_ready ? 1 : 0;
+        receipt->host_execute_dgn_draws ? 1 : 0;
     state->nexusState.startup_hud_ready =
-        receipt->hud_ready ? 1 : 0;
+        receipt->host_runtime_dgn_ready ? 1 : 0;
     state->nexusState.startup_dgn_render_command_count =
-        receipt->command_count;
+        receipt->dgn_command_count;
     state->nexusState.startup_dgn_render_blocked =
-        receipt->dgn_render_blocked ? 1 : 0;
+        receipt->host_runtime_dgn_ready ? 0 : 1;
+    state->nexusState.startup_host_caller_ready =
+        receipt->host_caller_ready ? 1 : 0;
+    state->nexusState.startup_host_capture_ready =
+        receipt->host_startup_capture_ready ? 1 : 0;
+    state->nexusState.startup_host_dgn_ready =
+        receipt->host_runtime_dgn_ready ? 1 : 0;
+    state->nexusState.startup_host_execute_startup_draws =
+        receipt->host_execute_startup_draws ? 1 : 0;
+    state->nexusState.startup_host_execute_dgn_draws =
+        receipt->host_execute_dgn_draws ? 1 : 0;
+    state->nexusState.startup_bpk_handoff_consumed =
+        receipt->bpk_handoff_consumed ? 1 : 0;
+    state->nexusState.startup_prs3_blocker_consumed =
+        receipt->prs3_blocker_consumed ? 1 : 0;
+    state->nexusState.startup_dgn_handoff_consumed =
+        receipt->dgn_handoff_consumed ? 1 : 0;
+    state->nexusState.startup_no_fallback_visuals_enforced =
+        receipt->no_fallback_visuals_enforced ? 1 : 0;
+    state->nexusState.startup_suppress_fallback_visuals =
+        receipt->suppress_fallback_visuals ? 1 : 0;
+    state->nexusState.startup_suppress_legacy_placeholder_visuals =
+        receipt->suppress_legacy_placeholder_visuals ? 1 : 0;
+    state->nexusState.startup_full_start_package_consumed =
+        receipt->full_start_package_consumed ? 1 : 0;
+    state->nexusState.startup_bundle_consumed =
+        receipt->startup_bundle_consumed ? 1 : 0;
+    state->nexusState.startup_display_callers_use_package_receipt =
+        receipt->display_callers_use_package_receipt ? 1 : 0;
+    state->nexusState.startup_saturn_timing_exact =
+        receipt->saturn_timing_exact ? 1 : 0;
+    state->nexusState.startup_saturn_capture_frames_exact =
+        receipt->saturn_capture_frames_exact ? 1 : 0;
+    state->nexusState.startup_copied_draw_command_count =
+        receipt->copied_startup_command_count;
+    state->nexusState.startup_copied_dgn_render_command_count =
+        receipt->copied_dgn_command_count;
 }
 
 static int m11_path_has_extension(const char* path, const char* ext) {
@@ -11147,122 +11183,22 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_apply,
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_consumer)
 {
-    DM1_V1_StartupHandoffPostLaunchPlan_PC34 post_plan;
-    DM1_V1_StartupHandoffOutcome_PC34 outcome;
-    DM1_V1_StartupHoCFullStartProductionReceipt_PC34 production;
-    DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 artifact;
-    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 capture_facts;
-    DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 proof;
-    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 apply;
-    DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34 suppression_facts;
-    DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 suppression;
-    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 consumer;
+    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
 
-    if (out_apply) {
-        memset(out_apply, 0, sizeof(*out_apply));
-    }
-    if (out_consumer) {
-        memset(out_consumer, 0, sizeof(*out_consumer));
-    }
-    if (!state || strcmp(state->sourceId, "dm1") != 0 ||
-        !state->world.dungeon || !state->world.dungeon->maps ||
-        state->world.dungeon->header.mapCount <= 0) {
-        return 0;
-    }
-
-    memset(&post_plan, 0, sizeof(post_plan));
-    memset(&outcome, 0, sizeof(outcome));
-    memset(&production, 0, sizeof(production));
-    memset(&artifact, 0, sizeof(artifact));
-    memset(&capture_facts, 0, sizeof(capture_facts));
-    memset(&proof, 0, sizeof(proof));
-    memset(&apply, 0, sizeof(apply));
-    memset(&suppression_facts, 0, sizeof(suppression_facts));
-    memset(&suppression, 0, sizeof(suppression));
-    memset(&consumer, 0, sizeof(consumer));
-
-    if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &post_plan) ||
-        !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
-            ENTRANCE_COMPAT_COMMAND_PATH_ENTER,
-            &outcome)) {
-        return 0;
-    }
-    outcome.title_played = 1;
-    if (!dm1_v1_startup_hoc_full_start_production_receipt_pc34(
-            "dm1",
-            &post_plan,
-            &outcome,
-            &production) ||
-        !dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
-            &production,
-            &artifact)) {
-        return 0;
-    }
-
-    capture_facts.captured_after_first_frame_render = 1;
-    capture_facts.captured_map_index = artifact.expected_map_index;
-    capture_facts.captured_map_width = artifact.expected_map_width;
-    capture_facts.captured_map_height = artifact.expected_map_height;
-    capture_facts.captured_entrance_door_frame_index =
-        artifact.expected_entrance_door_frame_index;
-    capture_facts.captured_hall_overlay_kind =
-        artifact.expected_hall_overlay_kind;
-    capture_facts.captured_hoc_render_command_count =
-        artifact.expected_hoc_render_command_count;
-    capture_facts.saw_title_surface = 0;
-    capture_facts.saw_closed_door_frame = 0;
-    capture_facts.saw_host_fallback_visuals = 0;
-    capture_facts.saw_opened_entrance_frame =
-        artifact.opened_entrance_frame_required;
-    capture_facts.saw_hall_mirror_overlay =
-        artifact.hall_mirror_overlay_required;
-    capture_facts.cleared_champion_panel =
-        artifact.clear_champion_panel_required;
-    capture_facts.blocked_enter_until_champion_selected =
-        artifact.block_enter_until_champion_selected;
-
-    if (!dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
-            &artifact,
-            &capture_facts,
-            &proof) ||
-        !dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
-            &artifact,
-            &proof,
-            &apply)) {
-        return 0;
-    }
-
-    suppression_facts.observed_hall_mirror_overlay =
-        apply.apply_hall_mirror_overlay;
-    suppression_facts.observed_false_floor_item_payload_count = 0;
-    suppression_facts.observed_projectile_payload_count = 0;
-    suppression_facts.observed_spell_effect_payload_count = 0;
-    suppression_facts.observed_mirror_payload_as_thing_count = 0;
-    suppression_facts.observed_host_fallback_visuals = 0;
-    suppression_facts.observed_title_surface = 0;
-    suppression_facts.observed_closed_door_frame = 0;
-    suppression_facts.observed_enter_blocked_until_champion_selected =
-        apply.block_enter_until_champion_selected;
-    suppression_facts.observed_hoc_render_command_count =
-        apply.render_command_count;
-    if (!dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
-            &apply,
-            &suppression_facts,
-            &suppression) ||
-        !dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
-            &apply,
-            &suppression,
-            &consumer)) {
-        return 0;
-    }
-
-    if (out_apply) {
-        *out_apply = apply;
-    }
-    if (out_consumer) {
-        *out_consumer = consumer;
-    }
-    return apply.ready && consumer.ready;
+    memset(&facts, 0, sizeof(facts));
+    facts.source_id = state ? state->sourceId : NULL;
+    facts.dungeon_loaded =
+        state && state->world.dungeon && state->world.dungeon->maps;
+    facts.map_count =
+        state && state->world.dungeon ? state->world.dungeon->header.mapCount
+                                      : 0;
+    facts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
+    facts.title_played = 1;
+    facts.captured_after_first_frame_render = 1;
+    return dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
+        &facts,
+        out_apply,
+        out_consumer);
 }
 
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
@@ -14072,11 +14008,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->nexusState.champion_select_active) {
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
+            Nexus_V1_LauncherRuntimeReceipt runtime_receipt;
             Nexus_V1_StartupChampionExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
+            Nexus_V1_StartupDrawCommand startup_commands[80];
             Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-            Nexus_V1_StartupRuntimeHandoffReceipt runtime_receipt;
+            Nexus_V1_StartupHostCallerReceipt host_caller_receipt;
             M11_GameInputResult result;
+            int host_caller_valid = 0;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
             if (!nexus_v1_launcher_startup_execute_champion_firestaff_input_from_snapshot(
                     &snapshot,
@@ -14085,23 +14024,33 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     &receipt)) {
                 return M11_GAME_INPUT_IGNORED;
             }
+            if (input == M12_MENU_INPUT_ACTION ||
+                execution.kind ==
+                    NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
+                memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+                (void)m11_nexus_runtime_receipt_from_state(state,
+                                                           &runtime_receipt);
+                host_caller_valid =
+                    nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
+                        &runtime_receipt,
+                        &snapshot,
+                        (int)input,
+                        m11_nexus_startup_load_save_callback,
+                        (void *)state,
+                        startup_commands,
+                        (int)(sizeof(startup_commands) /
+                              sizeof(startup_commands[0])),
+                        commands,
+                        (int)(sizeof(commands) / sizeof(commands[0])),
+                        &host_caller_receipt);
+            }
             result = m11_nexus_apply_startup_action_receipt(
                 state,
                 &receipt);
-            if (execution.kind ==
-                NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
-                m11_nexus_runtime_startup_snapshot(state, &snapshot);
-                if (nexus_v1_launcher_startup_runtime_handoff_from_champion_execution_snapshot(
-                        &snapshot,
-                        &execution,
-                        &receipt,
-                        commands,
-                        (int)(sizeof(commands) / sizeof(commands[0])),
-                        &runtime_receipt)) {
-                    m11_nexus_apply_runtime_handoff_receipt(
-                        state,
-                        &runtime_receipt);
-                }
+            if (host_caller_valid) {
+                m11_nexus_apply_startup_host_caller_receipt(
+                    state,
+                    &host_caller_receipt);
             }
             return result;
         }
@@ -14842,11 +14791,14 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     }
     if (state->nexusState.champion_select_active) {
         Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
+        Nexus_V1_LauncherRuntimeReceipt runtime_receipt;
         Nexus_V1_StartupChampionExecution execution;
         Nexus_V1_StartupHostActionReceipt receipt;
+        Nexus_V1_StartupDrawCommand startup_commands[80];
         Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-        Nexus_V1_StartupRuntimeHandoffReceipt runtime_receipt;
+        Nexus_V1_StartupHostCallerReceipt host_caller_receipt;
         M11_GameInputResult result;
+        int host_caller_valid = 0;
         m11_nexus_runtime_startup_snapshot(state, &snapshot);
         if (!nexus_v1_launcher_startup_execute_champion_pointer_from_snapshot(
                 &snapshot,
@@ -14856,22 +14808,31 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 &receipt)) {
             return M11_GAME_INPUT_IGNORED;
         }
+        if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
+            memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+            (void)m11_nexus_runtime_receipt_from_state(state,
+                                                       &runtime_receipt);
+            host_caller_valid =
+                nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
+                    &runtime_receipt,
+                    &snapshot,
+                    M12_MENU_INPUT_ACTION,
+                    m11_nexus_startup_load_save_callback,
+                    (void *)state,
+                    startup_commands,
+                    (int)(sizeof(startup_commands) /
+                          sizeof(startup_commands[0])),
+                    commands,
+                    (int)(sizeof(commands) / sizeof(commands[0])),
+                    &host_caller_receipt);
+        }
         result = m11_nexus_apply_startup_action_receipt(
             state,
             &receipt);
-        if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
-            m11_nexus_runtime_startup_snapshot(state, &snapshot);
-            if (nexus_v1_launcher_startup_runtime_handoff_from_champion_execution_snapshot(
-                    &snapshot,
-                    &execution,
-                    &receipt,
-                    commands,
-                    (int)(sizeof(commands) / sizeof(commands[0])),
-                    &runtime_receipt)) {
-                m11_nexus_apply_runtime_handoff_receipt(
-                    state,
-                    &runtime_receipt);
-            }
+        if (host_caller_valid) {
+            m11_nexus_apply_startup_host_caller_receipt(
+                state,
+                &host_caller_receipt);
         }
         return result;
     }
@@ -38593,15 +38554,16 @@ void M11_GameView_Draw(const M11_GameViewState* state,
              state->nexusEngine)) {
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
             Nexus_V1_LauncherRuntimeReceipt runtime_receipt;
-            Nexus_V1_StartupFullStartPackageReceipt package_receipt;
+            Nexus_V1_StartupHostCallerReceipt host_caller_receipt;
             Nexus_V1_StartupDrawCommand commands[80];
+            Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
             int command_count;
             directDraw = 1;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
             memset(&runtime_receipt, 0, sizeof(runtime_receipt));
             (void)m11_nexus_runtime_receipt_from_state(state,
                                                        &runtime_receipt);
-            if (nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+            if (nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
                     &runtime_receipt,
                     &snapshot,
                     M12_MENU_INPUT_NONE,
@@ -38609,8 +38571,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     (void *)state,
                     commands,
                     (int)(sizeof(commands) / sizeof(commands[0])),
-                    &package_receipt)) {
-                command_count = package_receipt.capture_command_count;
+                    dgn_commands,
+                    (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
+                    &host_caller_receipt)) {
+                command_count =
+                    host_caller_receipt.copied_startup_command_count;
             } else {
                 command_count = 0;
             }

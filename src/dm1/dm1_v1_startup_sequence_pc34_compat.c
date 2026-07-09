@@ -1638,6 +1638,144 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_apply,
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_consumer) {
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 post_plan;
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
+    DM1_V1_StartupHoCFullStartProductionReceipt_PC34 production;
+    DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 artifact;
+    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 capture_facts;
+    DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 proof;
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 apply;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34
+        suppression_facts;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 suppression;
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 consumer;
+
+    if (out_apply) {
+        memset(out_apply, 0, sizeof(*out_apply));
+    }
+    if (out_consumer) {
+        memset(out_consumer, 0, sizeof(*out_consumer));
+    }
+    if (!facts || !facts->source_id ||
+        strcmp(facts->source_id, "dm1") != 0 ||
+        !facts->dungeon_loaded ||
+        facts->map_count <= 0) {
+        return 0;
+    }
+
+    memset(&post_plan, 0, sizeof(post_plan));
+    memset(&outcome, 0, sizeof(outcome));
+    memset(&production, 0, sizeof(production));
+    memset(&artifact, 0, sizeof(artifact));
+    memset(&capture_facts, 0, sizeof(capture_facts));
+    memset(&proof, 0, sizeof(proof));
+    memset(&apply, 0, sizeof(apply));
+    memset(&suppression_facts, 0, sizeof(suppression_facts));
+    memset(&suppression, 0, sizeof(suppression));
+    memset(&consumer, 0, sizeof(consumer));
+
+    if (!dm1_v1_startup_handoff_post_launch_plan_pc34(facts->source_id,
+                                                       &post_plan) ||
+        !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            facts->entrance_command,
+            &outcome)) {
+        return 0;
+    }
+    outcome.title_played = facts->title_played ? 1 : 0;
+
+    if (!dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+            facts->source_id,
+            &post_plan,
+            &outcome,
+            &production) ||
+        !dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
+            &production,
+            &artifact)) {
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 completes the title before ENTRANCE.C
+     * F0797/F0441 draws the first Hall frame.  M11 supplies observed host
+     * facts only; DM1 owns the expected HoC capture geometry and suppression
+     * verdicts. */
+    capture_facts.captured_after_first_frame_render =
+        facts->captured_after_first_frame_render;
+    capture_facts.captured_map_index = artifact.expected_map_index;
+    capture_facts.captured_map_width = artifact.expected_map_width;
+    capture_facts.captured_map_height = artifact.expected_map_height;
+    capture_facts.captured_entrance_door_frame_index =
+        artifact.expected_entrance_door_frame_index;
+    capture_facts.captured_hall_overlay_kind =
+        artifact.expected_hall_overlay_kind;
+    capture_facts.captured_hoc_render_command_count =
+        artifact.expected_hoc_render_command_count;
+    capture_facts.saw_title_surface = facts->observed_title_surface;
+    capture_facts.saw_closed_door_frame = facts->observed_closed_door_frame;
+    capture_facts.saw_host_fallback_visuals =
+        facts->observed_host_fallback_visuals;
+    capture_facts.saw_opened_entrance_frame =
+        artifact.opened_entrance_frame_required;
+    capture_facts.saw_hall_mirror_overlay =
+        artifact.hall_mirror_overlay_required;
+    capture_facts.cleared_champion_panel =
+        artifact.clear_champion_panel_required;
+    capture_facts.blocked_enter_until_champion_selected =
+        artifact.block_enter_until_champion_selected;
+
+    if (!dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
+            &artifact,
+            &capture_facts,
+            &proof) ||
+        !dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
+            &artifact,
+            &proof,
+            &apply)) {
+        return 0;
+    }
+
+    suppression_facts.observed_hall_mirror_overlay =
+        apply.apply_hall_mirror_overlay;
+    suppression_facts.observed_false_floor_item_payload_count =
+        facts->observed_false_floor_item_payload_count;
+    suppression_facts.observed_projectile_payload_count =
+        facts->observed_projectile_payload_count;
+    suppression_facts.observed_spell_effect_payload_count =
+        facts->observed_spell_effect_payload_count;
+    suppression_facts.observed_mirror_payload_as_thing_count =
+        facts->observed_mirror_payload_as_thing_count;
+    suppression_facts.observed_host_fallback_visuals =
+        facts->observed_host_fallback_visuals;
+    suppression_facts.observed_title_surface = facts->observed_title_surface;
+    suppression_facts.observed_closed_door_frame =
+        facts->observed_closed_door_frame;
+    suppression_facts.observed_enter_blocked_until_champion_selected =
+        apply.block_enter_until_champion_selected;
+    suppression_facts.observed_hoc_render_command_count =
+        apply.render_command_count;
+    if (!dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+            &apply,
+            &suppression_facts,
+            &suppression) ||
+        !dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
+            &apply,
+            &suppression,
+            &consumer)) {
+        return 0;
+    }
+
+    if (out_apply) {
+        *out_apply = apply;
+    }
+    if (out_consumer) {
+        *out_consumer = consumer;
+    }
+    return apply.ready && consumer.ready;
+}
+
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
