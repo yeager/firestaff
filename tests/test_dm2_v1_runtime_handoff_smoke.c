@@ -17,6 +17,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_creature.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
@@ -790,6 +791,51 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   (DM2_V1_DungeonData *)profile.dungeon_data,
                   0, door_x, door_y) == 3,
           "runtime door action writes the stepped raw tile state");
+        {
+            int slot;
+            DM2_V1_CreatureCCMTickObserver obs;
+            const DM2_V1_CreatureInstance *inst;
+
+            CHECK(dm2_v1_dungeon_set_tile_raw(
+                      (DM2_V1_DungeonData *)profile.dungeon_data,
+                      0, door_x, door_y, 4u) == 0,
+                  "runtime seeds closed door for creature field tick");
+            slot = dm2_v1_creature_spawn(0, door_x, door_y + 1, 0, 0, 8);
+            dm2_v1_creature_reset_ccm_tick_observer();
+            dm2_v1_runtime_tick();
+            CHECK(slot >= 0 &&
+                  dm2_v1_creature_last_ccm_tick(&obs) == 1 &&
+                  obs.instance_id == slot &&
+                  obs.field_door_valid == 1 &&
+                  obs.field_blocks_movement == 1 &&
+                  obs.field_moved == 0 &&
+                  obs.field_door_open_pct == 0,
+                  "runtime creature tick reads closed dungeon door and blocks writeback");
+            inst = dm2_v1_creature_get_instance(slot);
+            CHECK(inst != NULL &&
+                  inst->world_x == door_x &&
+                  inst->world_y == door_y + 1,
+                  "runtime blocked creature remains before the door");
+
+            CHECK(dm2_v1_dungeon_set_tile_raw(
+                      (DM2_V1_DungeonData *)profile.dungeon_data,
+                      0, door_x, door_y, 2u) == 0,
+                  "runtime seeds half-open door for creature field tick");
+            dm2_v1_creature_reset_ccm_tick_observer();
+            dm2_v1_runtime_tick();
+            CHECK(dm2_v1_creature_last_ccm_tick(&obs) == 1 &&
+                  obs.instance_id == slot &&
+                  obs.field_door_valid == 1 &&
+                  obs.field_blocks_movement == 0 &&
+                  obs.field_moved == 1 &&
+                  obs.field_door_open_pct == 50,
+                  "runtime creature tick writes through passable door and records render pct");
+            inst = dm2_v1_creature_get_instance(slot);
+            CHECK(inst != NULL &&
+                  inst->world_x == door_x &&
+                  inst->world_y == door_y,
+                  "runtime creature world position writes back after passable door");
+        }
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
@@ -984,9 +1030,12 @@ static void test_first_tick_after_boot_profile_handoff(void)
         }
     }
 
-    dm2_v1_runtime_tick();
-    CHECK(dm2_v1_runtime_get_tick_count() == 78,
-          "first deterministic DM2 V1 runtime tick is observable");
+    {
+        int tick_before = dm2_v1_runtime_get_tick_count();
+        dm2_v1_runtime_tick();
+        CHECK(dm2_v1_runtime_get_tick_count() == tick_before + 1,
+              "deterministic DM2 V1 runtime tick advances by one");
+    }
     CHECK(dm2_v1_runtime_get_last_target_message() != NULL &&
           strstr(dm2_v1_runtime_get_last_target_message(),
                  "dungeon awakens") != NULL,

@@ -19,6 +19,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_creature.h"
+#include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
@@ -138,6 +139,55 @@ static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
     int square_type = dm2_runtime_square_type_at(dd, level, x, y, raw);
     return square_type == DM2_SQUARE_DOOR ||
            dm2_runtime_raw_is_door_square((uint16_t)raw);
+}
+
+static uint16_t dm2_runtime_door_attributes_at(DM2_V1_DungeonData *dd,
+                                               int level,
+                                               int x,
+                                               int y) {
+    int thing;
+    int door_thing;
+    int type = -1;
+    int index = -1;
+    int size = 0;
+    const uint8_t *record;
+    uint16_t w2;
+    int door_type;
+
+    if (!dd) return 0;
+    thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
+    if (thing < 0) return 0;
+    door_thing = dm2_v1_dungeon_find_thing_of_type(dd, (uint16_t)thing, 0, 8);
+    if (door_thing < 0) return 0;
+    record = dm2_v1_dungeon_get_thing_record(
+        dd, (uint16_t)door_thing, &type, &index, &size);
+    (void)index;
+    if (!record || type != 0 || size < 4) return 0;
+
+    w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    door_type = (int)(w2 & 3u);
+    return dm2_door_get_attributes(door_type);
+}
+
+static int dm2_runtime_creature_read_door(void *user,
+                                          int level,
+                                          int x,
+                                          int y,
+                                          int *out_state,
+                                          uint16_t *out_attributes) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dd;
+    int raw;
+
+    if (!rt || !rt->boot || !rt->boot->dungeon_data) return 0;
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
+    if (raw < 0 || !dm2_runtime_is_door_at(dd, level, x, y, raw)) return 0;
+    if (out_state) *out_state = dm2_runtime_door_state((uint16_t)raw);
+    if (out_attributes) {
+        *out_attributes = dm2_runtime_door_attributes_at(dd, level, x, y);
+    }
+    return 1;
 }
 
 static void dm2_runtime_apply_door_record_metadata(
@@ -887,6 +937,7 @@ static void dm2_runtime_populate_creature_possession_items(
  */
 void dm2_v1_runtime_tick(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_CreatureFieldRuntime creature_field;
     rt->tick_count++;
 
     /* Advance time-of-day (1440 min per day) */
@@ -906,6 +957,19 @@ void dm2_v1_runtime_tick(void) {
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
     dm2_runtime_process_timeline(rt, rt->tick_count * 55);
+
+    memset(&creature_field, 0, sizeof(creature_field));
+    creature_field.read_door = dm2_runtime_creature_read_door;
+    creature_field.user = rt;
+    dm2_v1_creature_set_field_runtime(&creature_field);
+    /* skproject/SKULLWIN/c_ai.cpp DM2_THINK_CREATURE and
+     * c_creature.cpp DM2_PROCEED_CCM read the live dungeon field while
+     * advancing b_1a/b_17 creature state.  Firestaff now gives the creature
+     * tick the runtime's dungeon-backed door reader, then clears the bridge so
+     * standalone creature tests and later sessions cannot retain stale boot
+     * pointers. */
+    dm2_v1_creature_tick();
+    dm2_v1_creature_reset_field_runtime();
 
     /* Phase 5+ extension: step then drain DM2 projectile list into
      * M11-ready cache.  The step path applies the STEP_MISSILE
