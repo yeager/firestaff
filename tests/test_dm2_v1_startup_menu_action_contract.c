@@ -1,5 +1,6 @@
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
+#include "dm2_v1_boot.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -58,6 +59,8 @@ int main(void)
     DM2_V1_StartupRenderReceipt render_receipt;
     DM2_V1_StartupViewReceipt view_receipt;
     DM2_V1_StartupRuntimeHandoffReceipt runtime_handoff;
+    DM2_V1_BootRuntimeStartupSnapshot boot_snapshot;
+    DM2_V1_BootStartupHostViewReceipt boot_host_view_receipt;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -463,6 +466,30 @@ int main(void)
               view_receipt.runtime_handoff.runtime_action_ready == 0 &&
               view_receipt.runtime_handoff.first_hud_frame_ready == 0,
           "startup view receipt joins title commands, menu state, and HUD handoff");
+    memset(&boot_snapshot, 0, sizeof(boot_snapshot));
+    boot_snapshot.startup_menu_active = 1;
+    boot_snapshot.startup_save_root = "/tmp/firestaff-dm2-startup";
+    boot_snapshot.resume_available = 1;
+    boot_snapshot.slot_mask = (1u << 2);
+    boot_snapshot.selected_row = 1;
+    check(dm2_v1_boot_startup_host_view_receipt_from_snapshot(
+              &boot_snapshot,
+              &boot_host_view_receipt) &&
+              boot_host_view_receipt.valid &&
+              boot_host_view_receipt.title_timing_ready == 1 &&
+              boot_host_view_receipt.title_animation_tick == 0 &&
+              boot_host_view_receipt.title_frame == 0 &&
+              boot_host_view_receipt.title_frame_max == 7 &&
+              boot_host_view_receipt.title_frame_duration_ticks == 6 &&
+              boot_host_view_receipt.title_cycle_ticks == 48 &&
+              boot_host_view_receipt.menu_row_count == 3 &&
+              boot_host_view_receipt.menu_text_count == 6 &&
+              boot_host_view_receipt.selectable_text_count == 3 &&
+              boot_host_view_receipt.selected_highlight_count == 1 &&
+              boot_host_view_receipt.menu_panel_ready == 1 &&
+              boot_host_view_receipt.startup_menu_assets_ready == 1 &&
+              boot_host_view_receipt.startup_hud_handoff_ready == 1,
+          "boot host-view receipt owns exact title timing and menu asset proof");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&

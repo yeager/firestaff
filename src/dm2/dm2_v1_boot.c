@@ -1452,9 +1452,28 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
     receipt->title_gdat_asset_w = view_model->title_gdat_asset_w;
     receipt->title_gdat_asset_h = view_model->title_gdat_asset_h;
     receipt->title_gdat_asset_stride = view_model->title_gdat_asset_stride;
+    receipt->title_cycle_ticks =
+        (receipt->title_frame_max + 1) *
+        receipt->title_frame_duration_ticks;
+    receipt->menu_row_count = render->row_count;
+    receipt->menu_text_count = render->menu_text_count;
+    receipt->selectable_text_count = render->selectable_text_count;
+    receipt->selected_highlight_count = render->selected_highlight_count;
+    receipt->menu_panel_ready =
+        render->panel_rect.x == 78 &&
+        render->panel_rect.y == 50 &&
+        render->panel_rect.w == 164 &&
+        render->panel_rect.h == 122;
+    receipt->startup_menu_assets_ready =
+        receipt->title_backdrop_ready &&
+        receipt->menu_panel_ready &&
+        receipt->menu_text_count >= receipt->menu_row_count &&
+        receipt->selectable_text_count == receipt->menu_row_count &&
+        receipt->selected_highlight_count == 1;
     receipt->full_start_real_asset_ready =
         receipt->full_start_graphics_ready &&
         receipt->title_gdat_asset_ready &&
+        receipt->startup_menu_assets_ready &&
         receipt->hud_overlay_suppressed &&
         receipt->hud_runtime_ready;
     /* skproject/SKWIN title/menu startup keeps title timing, GDAT title art,
@@ -1520,6 +1539,14 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
     receipt->title_gdat_asset_stride = full_start->title_gdat_asset_stride;
     receipt->full_start_real_asset_ready =
         full_start->full_start_real_asset_ready;
+    receipt->title_cycle_ticks = full_start->title_cycle_ticks;
+    receipt->menu_row_count = full_start->menu_row_count;
+    receipt->menu_text_count = full_start->menu_text_count;
+    receipt->selectable_text_count = full_start->selectable_text_count;
+    receipt->selected_highlight_count = full_start->selected_highlight_count;
+    receipt->menu_panel_ready = full_start->menu_panel_ready;
+    receipt->startup_menu_assets_ready =
+        full_start->startup_menu_assets_ready;
     receipt->hud_overlay_suppressed = full_start->hud_overlay_suppressed;
     receipt->hud_runtime_ready = full_start->hud_runtime_ready;
     receipt->runtime_menu_ready = full_start->runtime_menu_ready;
