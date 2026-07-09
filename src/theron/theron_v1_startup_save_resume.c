@@ -475,6 +475,12 @@ int theron_v1_startup_save_resume_apply_explicit_path(
             snap->srm_recognized_slots = 1;
         }
         snap->srm_first_recognized_slot = slot;
+        snap->srm_envelope_kind = kind;
+        snap->srm_payload_probe_status = envelope.inflate_status;
+        snap->srm_payload_probe_ran =
+            envelope.inflate_status != THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT;
+        snap->srm_payload_size = envelope.inflate_payload_size;
+        snap->srm_payload_hits_fstq_magic = 1;
         snap->srm_progress_import_status = envelope.decode_status;
         snap->srm_progress_import_ran = 1;
         snap->srm_progress_current_dungeon =
@@ -483,6 +489,13 @@ int theron_v1_startup_save_resume_apply_explicit_path(
             (int)envelope.progression.current_level;
         snap->srm_progress_quest_mask =
             (int)envelope.progression.quest_items_bitmask;
+        if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
+            snap->srm_party_import_ran = 1;
+            snap->srm_party_restored = envelope.party.restored ? 1 : 0;
+            snap->srm_party_champion_count =
+                (int)envelope.party.champion_count;
+            snap->srm_party_gold = envelope.party.party_gold;
+        }
         recompute_verdict_and_claim(snap);
         return 1;
     }

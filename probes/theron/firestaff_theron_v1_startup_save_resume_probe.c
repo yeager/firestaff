@@ -269,6 +269,36 @@ static void probe_staged_srm_claims_resume(void) {
               snap.srm_recognized_slots, 1);
     check_int("staged srm_first_recognized_slot == 0",
               snap.srm_first_recognized_slot, 0);
+    {
+        Theron_V1StartupSaveResume explicit_snap;
+        memset(&explicit_snap, 0, sizeof(explicit_snap));
+        check_int("explicit staged srm path applies",
+                  theron_v1_startup_save_resume_apply_explicit_path(
+                      &explicit_snap,
+                      slot_path,
+                      NULL),
+                  1);
+        check_int("explicit staged resume_claim SRM",
+                  explicit_snap.resume_claim,
+                  THERON_V1_STARTUP_RESUME_SRM);
+        check_int("explicit staged slot 0",
+                  explicit_snap.srm_first_recognized_slot,
+                  0);
+#if FIRESTAFF_HAS_ZLIB
+        check_int("explicit staged payload probe ran",
+                  explicit_snap.srm_payload_probe_ran,
+                  1);
+        check_int("explicit staged envelope kind PROGRESSION",
+                  explicit_snap.srm_envelope_kind,
+                  THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION);
+        check_int("explicit staged progression import OK",
+                  explicit_snap.srm_progress_import_status,
+                  THERON_V1_SRM_PROGRESS_IMPORT_OK);
+        check_int("explicit staged progression quest mask 0x03",
+                  explicit_snap.srm_progress_quest_mask,
+                  0x03);
+#endif
+    }
 
 #if FIRESTAFF_HAS_ZLIB
     check_int("staged payload probe ran", snap.srm_payload_probe_ran, 1);
