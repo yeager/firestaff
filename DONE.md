@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0190 M11 timeline-cleanup ownership: M11 projectile killed-some cleanup now consumes the DM1 F0190 timeline cleanup plan for C33-C36/C38-C41 removal and ordinal decrement instead of duplicating event-type decoding locally. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), `test_m11_creature_projectile_runtime_pc34_compat` (25/25), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0190 M11 death-smoke ownership: M11 projectile creature death now consumes DM1 F0190 smoke attack and explosion-create-input planning instead of rebuilding C040 smoke fields directly. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), `test_m11_creature_projectile_runtime_pc34_compat` (25/25), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0190 M11 killed-some fear ownership: M11 projectile killed-some fear now builds a DM1 F0190 killed-some state plan and consumes the DM1 fear-apply receipt for FLEE behavior, AI state, fear counter, and active-group index instead of writing those fields directly. Verification: `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), `test_m11_creature_projectile_runtime_pc34_compat` (25/25), `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, Phase A 24/24, and `git diff --check` passed.
