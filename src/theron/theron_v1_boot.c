@@ -1446,6 +1446,162 @@ int theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
         out_view_model);
 }
 
+int theron_v1_boot_startup_layout_build_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupLayoutElement *elements,
+    int max_elements)
+{
+    int count;
+
+    if (!view_model || !elements || max_elements <= 0) {
+        if (elements && max_elements > 0) {
+            memset(elements, 0, (size_t)max_elements * sizeof(elements[0]));
+        }
+        return 0;
+    }
+    count = view_model->layout_count;
+    if (count < 0) {
+        count = 0;
+    }
+    if (count > THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP) {
+        count = THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP;
+    }
+    if (count > max_elements) {
+        count = max_elements;
+    }
+    memset(elements, 0, (size_t)max_elements * sizeof(elements[0]));
+    if (count > 0) {
+        memcpy(elements,
+               view_model->layout,
+               (size_t)count * sizeof(elements[0]));
+    }
+    return count;
+}
+
+int theron_v1_boot_startup_render_rows_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows)
+{
+    int count;
+
+    if (!view_model || !rows || max_rows <= 0) {
+        if (rows && max_rows > 0) {
+            memset(rows,
+                   0,
+                   (size_t)max_rows * THERON_STARTUP_RENDER_ROW_CAPACITY);
+        }
+        return 0;
+    }
+    count = view_model->row_count;
+    if (count < 0) {
+        count = 0;
+    }
+    if (count > THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP) {
+        count = THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP;
+    }
+    if (count > max_rows) {
+        count = max_rows;
+    }
+    memset(rows, 0, (size_t)max_rows * THERON_STARTUP_RENDER_ROW_CAPACITY);
+    if (count > 0) {
+        memcpy(rows,
+               view_model->rows,
+               (size_t)count * THERON_STARTUP_RENDER_ROW_CAPACITY);
+    }
+    return count;
+}
+
+int theron_v1_boot_startup_render_plan_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupRenderPlan *out_plan)
+{
+    if (!view_model || !out_plan || !view_model->render_plan_valid) {
+        if (out_plan) {
+            memset(out_plan, 0, sizeof(*out_plan));
+        }
+        return 0;
+    }
+    *out_plan = view_model->render_plan;
+    return 1;
+}
+
+int theron_v1_boot_startup_execute_pointer_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    int x,
+    int y,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt)
+{
+    Theron_StartupHit hit;
+    Theron_StartupPhase phase = THERON_STARTUP_PHASE_TITLE;
+    int handled;
+
+    if (out_action) {
+        theron_v1_startup_action_init(out_action);
+    }
+    if (out_receipt) {
+        out_receipt->result = THERON_STARTUP_OK;
+        out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = NULL;
+        out_receipt->status = NULL;
+    }
+    if (!view_model || !out_action || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->status_scope = "STARTUP";
+            out_receipt->status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        return 0;
+    }
+
+    if (view_model->layout_count > 0) {
+        phase = view_model->layout[0].phase;
+    }
+
+    handled = theron_v1_startup_layout_hit_at(
+        phase,
+        view_model->layout,
+        view_model->layout_count,
+        x,
+        y,
+        &hit);
+    if (!handled) {
+        return 0;
+    }
+
+    switch (hit.kind) {
+    case THERON_STARTUP_HIT_TITLE:
+        out_action->kind = THERON_STARTUP_ACTION_SHOW_STAGE_SELECT;
+        out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+        return 1;
+    case THERON_STARTUP_HIT_CONTINUE:
+        out_action->kind = THERON_STARTUP_ACTION_CONTINUE_SAVE;
+        out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+        return 1;
+    case THERON_STARTUP_HIT_STAGE:
+        out_action->kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
+        out_action->selected_dungeon = hit.selected_dungeon;
+        out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+        return 1;
+    case THERON_STARTUP_HIT_MIRROR:
+        out_action->kind = THERON_STARTUP_ACTION_TOGGLE_MIRROR;
+        out_action->mirror_index = hit.mirror_index;
+        out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+        return 1;
+    case THERON_STARTUP_HIT_FORCEFIELD:
+        out_action->kind = THERON_STARTUP_ACTION_ENTER_FORCEFIELD;
+        out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+        return 1;
+    case THERON_STARTUP_HIT_PANEL:
+    case THERON_STARTUP_HIT_NONE:
+    default:
+        return 0;
+    }
+}
+
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,

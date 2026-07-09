@@ -14,6 +14,8 @@
 
 - ✅ 2026-07-09 Theron Track02 media receipt consumption: boot startup view-model builders now use the Track 02 media receipt as the fallback source for title/menu prompt text and roster names/titles when callers do not pass duplicate media arrays, so final title/menu rows consume the receipt instead of re-reading Track 02 media state. Verification: `test_theron_v1_startup_save_resume_pc34` 177/177 and `git diff --check` passed.
 
+- ✅ 2026-07-09 Theron title/menu view-model consumers: boot now exposes layout, render-row, render-plan, and pointer-route consumers that operate from the Theron-owned startup view model, preserving Track 02 receipt prompt/roster data without rebuilding from raw media/state arguments. Verification: `test_theron_v1_startup_save_resume_pc34` 183/183 and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup title render route receipt: CSB render-view receipts now expose post-FTL title render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus startup asset gate receipt: launcher startup assets now separate title readiness from real save/champion menu surface readiness, blocking menu routes on MENU.BPK PRS3/truncated/no-surface states while keeping fallback visuals disallowed. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.

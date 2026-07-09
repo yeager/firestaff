@@ -1380,10 +1380,17 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootStartupViewModel direct_view_model;
     Theron_V1_BootStartupViewModel media_view_model;
     Theron_StartupMediaStateReceipt media_receipt;
+    Theron_StartupLayoutElement media_layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
+    Theron_StartupRenderPlan media_plan;
+    Theron_StartupAction media_pointer_action;
+    Theron_StartupInputReceipt media_pointer_receipt;
+    char media_rows[THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP]
+        [THERON_STARTUP_RENDER_ROW_CAPACITY];
     char exit_receipt[128];
     int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
     int media_prompt_row_found;
     int media_roster_row_found;
+    int media_layout_roster_found;
     int i;
 
     theron_v1_world_init(&world);
@@ -1590,6 +1597,52 @@ static void test_startup_session_facts_wrappers(void) {
     }
     expect_true(media_prompt_row_found && media_roster_row_found,
                 "boot startup view model consumes Track02 media receipt for prompt and roster rows");
+    expect_true(theron_v1_boot_startup_render_rows_from_view_model(
+                    &media_view_model,
+                    media_rows,
+                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP) ==
+                    media_view_model.row_count,
+                "boot startup row consumer uses view model without direct Track02 text");
+    media_prompt_row_found = 0;
+    for (i = 0; i < media_view_model.row_count; ++i) {
+        if (strstr(media_rows[i], "RESURRECT THERON") != NULL) {
+            media_prompt_row_found = 1;
+        }
+    }
+    expect_true(media_prompt_row_found,
+                "boot startup row consumer preserves Track02 prompt receipt text");
+    expect_true(theron_v1_boot_startup_render_plan_from_view_model(
+                    &media_view_model,
+                    &media_plan) &&
+                    media_plan.text_count ==
+                        media_view_model.render_plan.text_count,
+                "boot startup render-plan consumer uses view model receipt");
+    media_layout_roster_found = 0;
+    expect_true(theron_v1_boot_startup_layout_build_from_view_model(
+                    &media_view_model,
+                    media_layout,
+                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP) ==
+                    media_view_model.layout_count,
+                "boot startup layout consumer uses view model receipt");
+    for (i = 0; i < media_view_model.layout_count; ++i) {
+        if (strcmp(media_layout[i].label, "HAKAR-MEDIA") == 0) {
+            media_layout_roster_found = 1;
+        }
+    }
+    expect_true(media_layout_roster_found,
+                "boot startup layout consumer preserves Track02 roster receipt labels");
+    expect_true(theron_v1_boot_startup_execute_pointer_from_view_model(
+                    &media_view_model,
+                    50,
+                    80,
+                    &media_pointer_action,
+                    &media_pointer_receipt) &&
+                    media_pointer_action.kind ==
+                        THERON_STARTUP_ACTION_TOGGLE_MIRROR &&
+                    media_pointer_action.mirror_index == 0 &&
+                    media_pointer_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot startup pointer consumer routes through view model layout receipt");
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;

@@ -548,6 +548,23 @@ int theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
     int companion_count,
     const int *selected_mirror_order,
     int selected_mirror_order_count);
+int theron_v1_boot_startup_layout_build_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupLayoutElement *elements,
+    int max_elements);
+int theron_v1_boot_startup_render_rows_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows);
+int theron_v1_boot_startup_render_plan_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupRenderPlan *out_plan);
+int theron_v1_boot_startup_execute_pointer_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    int x,
+    int y,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
