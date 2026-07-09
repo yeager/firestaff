@@ -166,9 +166,10 @@ static void check_startup_mirror_summary(const Theron_V1_StartupReceipt *r,
              prefix);
     check(r->startup_decoded_label_count <=
           THERON_STARTUP_HERO_MIRROR_COUNT, name);
-    snprintf(name, sizeof(name), "%s decoded mirror art count starts at zero",
+    snprintf(name, sizeof(name), "%s decoded mirror art count stays bounded",
              prefix);
-    check(r->startup_decoded_art_count == 0u, name);
+    check(r->startup_decoded_art_count <= THERON_STARTUP_HERO_MIRROR_COUNT,
+          name);
 }
 
 static void check_startup_chapter_placeholder(
@@ -654,8 +655,9 @@ static void check_real_asset_path(void) {
                           "US raw Track 02 receipt has no decoded roster yet");
                     check(r.startup_fallback_label_count == 7u &&
                           r.startup_decoded_label_count == 0u &&
-                          r.startup_decoded_art_count == 0u,
-                          "US raw Track 02 receipt keeps label/art fallback split");
+                          r.startup_decoded_art_count ==
+                              THERON_STARTUP_HERO_MIRROR_COUNT,
+                          "US raw Track 02 receipt keeps label fallback but consumes decoded bitmap art");
                 } else {
                     check(r.startup_text_us_prompt_count == 0u,
                           "JP raw Track 02 receipt has no US prompt markers");
@@ -675,8 +677,9 @@ static void check_real_asset_path(void) {
                           "JP raw Track 02 receipt has no roster overflow");
                     check(r.startup_fallback_label_count == 0u &&
                           r.startup_decoded_label_count == 7u &&
-                          r.startup_decoded_art_count == 0u,
-                          "JP raw Track 02 receipt uses decoded labels but no decoded art");
+                          r.startup_decoded_art_count ==
+                              THERON_STARTUP_HERO_MIRROR_COUNT,
+                          "JP raw Track 02 receipt uses decoded labels and bitmap art");
                 }
             }
             check(r.descriptor_window_entry_index >= 0 &&

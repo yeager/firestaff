@@ -2837,10 +2837,14 @@ static int theron_v1_boot_startup_media_route_has_dense_bitmap(
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM:
         tile_count = media_receipt->startup_bitmap_soul_room_atlas_tile_count;
         width = media_receipt->startup_bitmap_soul_room_atlas_width;
+        min_tile_count = 8u;
+        min_width = 64u;
         break;
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD:
         tile_count = media_receipt->startup_bitmap_forcefield_atlas_tile_count;
         width = media_receipt->startup_bitmap_forcefield_atlas_width;
+        min_tile_count = 8u;
+        min_width = 64u;
         break;
     default:
         return 0;
