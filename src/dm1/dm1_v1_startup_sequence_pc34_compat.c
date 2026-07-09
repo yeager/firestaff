@@ -1,4 +1,5 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
@@ -11,6 +12,40 @@
 #define DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34 2u
 #define DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34 1u
 #define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 55u
+
+static int dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
+    const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
+    int backing_asset_available,
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34* out_receipt) {
+    return DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+               render, 0, backing_asset_available, out_receipt) &&
+           out_receipt->valid &&
+           out_receipt->drawMirrorBackingAsset &&
+           !out_receipt->drawMirrorBackingFallbackRect;
+}
+
+static int dm1_v1_startup_hoc_host_draw_rejects_backing_fallback_pc34(
+    int* out_consumes_backing_asset) {
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 front_wall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 host_draw;
+    int consumes_backing_asset;
+    memset(&front_wall, 0, sizeof(front_wall));
+    memset(&render, 0, sizeof(render));
+    memset(&host_draw, 0, sizeof(host_draw));
+    consumes_backing_asset =
+        DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 2, 2, &front_wall) &&
+        DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&front_wall, &render) &&
+        dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
+            &render, 1, &host_draw);
+    if (out_consumes_backing_asset) {
+        *out_consumes_backing_asset = consumes_backing_asset;
+    }
+    return consumes_backing_asset &&
+           !dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
+               &render, 0, &host_draw);
+}
 
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage) {
     switch (stage) {
@@ -1947,6 +1982,9 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     receipt.render_hall_mirror_overlay = consumer.render_hall_mirror_overlay;
     receipt.suppress_host_fallback_visuals =
         consumer.suppress_host_fallback_visuals;
+    receipt.host_draw_rejects_backing_fallback =
+        dm1_v1_startup_hoc_host_draw_rejects_backing_fallback_pc34(
+            &receipt.host_draw_consumes_backing_asset);
     receipt.lower_level_renderer_helper_owned =
         consumer.lower_level_renderer_helper_owned;
     receipt.lower_level_audio_helper_owned =
@@ -1978,6 +2016,8 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.draw_opened_entrance_frame &&
         receipt.render_hall_mirror_overlay &&
         receipt.suppress_host_fallback_visuals &&
+        receipt.host_draw_consumes_backing_asset &&
+        receipt.host_draw_rejects_backing_fallback &&
         receipt.lower_level_renderer_helper_owned &&
         receipt.lower_level_audio_helper_owned &&
         receipt.block_enter_until_champion_selected &&
