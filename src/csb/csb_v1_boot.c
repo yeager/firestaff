@@ -39,6 +39,14 @@ static const CSB_V1_VariantId g_csb_boot_graphics_variants[] = {
     CSB_V1_VARIANT_AMIGA35_MULTI
 };
 
+static uint32_t csb_v1_boot_packaged_capture_hash_step_pc34(uint32_t hash,
+                                                            uint32_t value)
+{
+    hash ^= value;
+    hash *= 16777619u;
+    return hash;
+}
+
 static const char *const g_csb_boot_dungeon_hashes[] = {
     "6695d2acebce49f95db1d8f3a5c733de",
     NULL
@@ -1828,6 +1836,23 @@ void csb_v1_boot_startup_capture_receipt_init_pc34(
     receipt->selected_utility_action_index = -1;
 }
 
+void csb_v1_boot_startup_packaged_capture_proof_init_pc34(
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof)
+{
+    if (!proof) {
+        return;
+    }
+    memset(proof, 0, sizeof(*proof));
+    proof->route = CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+    proof->hud_menu_kind = CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34;
+    proof->selected_command_id =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    proof->selected_utility_action_index = -1;
+    proof->source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; "
+        "ENTRANCE.C F0441/F0806 lines 850-883";
+}
+
 void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt)
 {
@@ -2913,6 +2938,126 @@ int csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
         &capture_receipt->hud_menu_draw,
         &capture_receipt->readiness,
         executor);
+}
+
+int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 *out_proof)
+{
+    CSB_V1_StartupRenderPlan_PC34 render_plan;
+    uint32_t hash = 2166136261u;
+
+    if (!out_proof) {
+        return 0;
+    }
+    csb_v1_boot_startup_packaged_capture_proof_init_pc34(out_proof);
+    if (!capture_receipt || !capture_receipt->valid) {
+        return 0;
+    }
+
+    out_proof->capture_valid = 1;
+    out_proof->real_asset_matched =
+        capture_receipt->real_asset_receipt_valid &&
+                capture_receipt->real_asset_receipt.matched
+            ? 1
+            : 0;
+    if (!out_proof->real_asset_matched) {
+        return 0;
+    }
+
+    out_proof->valid = 1;
+    out_proof->real_asset_receipt_hash =
+        capture_receipt->real_asset_receipt.receipt_hash;
+    out_proof->route = capture_receipt->render_route;
+    out_proof->hud_menu_kind = capture_receipt->hud_menu_kind;
+    out_proof->title_capture_ready =
+        capture_receipt->title_capture_ready ? 1 : 0;
+    out_proof->hud_menu_capture_ready =
+        capture_receipt->hud_menu_capture_ready ? 1 : 0;
+    out_proof->runtime_capture_ready =
+        capture_receipt->runtime_capture_ready ? 1 : 0;
+    out_proof->hud_menu_draw_available =
+        capture_receipt->hud_menu_capture_ready &&
+                capture_receipt->hud_menu_draw_valid
+            ? 1
+            : 0;
+    out_proof->render_plan_available =
+        csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+            capture_receipt,
+            &render_plan);
+    out_proof->title_stage = capture_receipt->title_stage;
+    out_proof->title_frame = capture_receipt->title_frame;
+    out_proof->selected_command_id = capture_receipt->selected_command_id;
+    out_proof->selected_utility_action_index =
+        capture_receipt->selected_utility_action_index;
+
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)(out_proof->real_asset_receipt_hash & 0xffffffffu));
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)(out_proof->real_asset_receipt_hash >> 32));
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->route);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->hud_menu_kind);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->title_capture_ready);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->hud_menu_capture_ready);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->runtime_capture_ready);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->render_plan_available);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->hud_menu_draw_available);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->title_stage);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->title_frame);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->selected_command_id);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)(out_proof->selected_utility_action_index + 1));
+    out_proof->packaged_capture_hash = hash ? hash : 1u;
+    /* ReDMCSB TITLE.C F0437 lines 424-463 and ENTRANCE.C F0441/F0806
+     * lines 850-883 define the visible startup package. This proof is a
+     * compact CSB-owned receipt for M11/tests: asset hash, render route,
+     * title/HUD/runtime capture flags, and draw availability are bound
+     * together instead of inferred by a host consumer. */
+    return out_proof->valid;
+}
+
+int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 *out_proof)
+{
+    CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
+
+    if (!out_proof) {
+        return 0;
+    }
+    csb_v1_boot_startup_packaged_capture_proof_init_pc34(out_proof);
+    if (!snapshot ||
+        !csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+            snapshot,
+            &capture_receipt)) {
+        return 0;
+    }
+    return csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+        &capture_receipt,
+        out_proof);
 }
 
 static int csb_v1_boot_startup_input_render_receipt_from_action_pc34(
