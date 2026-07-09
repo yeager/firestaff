@@ -43,6 +43,21 @@ struct Dm1V1MovementTurnReceiptPc34Compat {
     int highlightRight;
 };
 
+struct Dm1V1MovementBlockedResolutionPlanPc34Compat {
+    int valid;
+    int movementBlocked;
+    int blockedByGroup;
+    int blockedByWallOrDoorDamageRequested;
+    int blockedByWallOrDoorDamageAttack;
+    int blockedByWallOrDoorDamageAttackTypeSelf;
+    unsigned short blockedByWallOrDoorDamageAllowedWounds;
+    int blockedByWallOrDoorDamageFirstCell;
+    int blockedByWallOrDoorDamageSecondCell;
+    int groupReactionPartyAdjacentRequested;
+    int inputDiscardRequested;
+    int blockedMovementVblankWaitRequested;
+};
+
 struct Dm1V1MovementCommandCoreResultPc34Compat {
     struct Dm1V1InputQueueProcessResultPc34Compat queue;
     struct MovementResult_Compat movement;
@@ -96,6 +111,13 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     struct Dm1V1MovementCommandCoreResultPc34Compat* outResult);
 
 const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void);
+
+int DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(
+    const struct PartyState_Compat* party,
+    int movementArrowIndex,
+    int movementResultCode,
+    int blockedByGroup,
+    struct Dm1V1MovementBlockedResolutionPlanPc34Compat* outPlan);
 
 #ifdef __cplusplus
 }

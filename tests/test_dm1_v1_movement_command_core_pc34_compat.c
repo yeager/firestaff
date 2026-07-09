@@ -136,6 +136,30 @@ int main(void)
     ok &= expect_contains("source evidence move result globals", sourceEvidence, "738-741 move-result globals");
     ok &= expect_contains("source evidence movement scent", sourceEvidence, "752-783 party-square/scent/last-movement update");
 
+    {
+        struct Dm1V1MovementBlockedResolutionPlanPc34Compat blockPlan;
+        setup_party(&party);
+        ok &= expect_int("blocked plan wall builds",
+            DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(
+                &party, MOVE_FORWARD, MOVE_BLOCKED_WALL, 0, &blockPlan), 1);
+        ok &= expect_int("blocked plan wall valid", blockPlan.valid, 1);
+        ok &= expect_int("blocked plan wall discard", blockPlan.inputDiscardRequested, 1);
+        ok &= expect_int("blocked plan wall vblank", blockPlan.blockedMovementVblankWaitRequested, 1);
+        ok &= expect_int("blocked plan wall damage requested", blockPlan.blockedByWallOrDoorDamageRequested, 1);
+        ok &= expect_int("blocked plan wall first cell", blockPlan.blockedByWallOrDoorDamageFirstCell, DIR_SOUTH);
+        ok &= expect_int("blocked plan wall second cell", blockPlan.blockedByWallOrDoorDamageSecondCell, DIR_WEST);
+        ok &= expect_int("blocked plan group builds",
+            DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(
+                &party, MOVE_FORWARD, MOVE_OK, 1, &blockPlan), 1);
+        ok &= expect_int("blocked plan group reaction", blockPlan.groupReactionPartyAdjacentRequested, 1);
+        ok &= expect_int("blocked plan group no self damage", blockPlan.blockedByWallOrDoorDamageRequested, 0);
+        party.championCount = 0;
+        ok &= expect_int("blocked plan empty party builds",
+            DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(
+                &party, MOVE_FORWARD, MOVE_BLOCKED_DOOR, 0, &blockPlan), 1);
+        ok &= expect_int("blocked plan empty party no self damage", blockPlan.blockedByWallOrDoorDamageRequested, 0);
+    }
+
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
     setup_party(&party);
