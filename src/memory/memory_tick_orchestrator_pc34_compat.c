@@ -4038,12 +4038,8 @@ static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
 static int orch_cmd_attack_apply_f0190_fear_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    const struct CombatantCreatureSnapshot_Compat* creature,
-    int groupIndex,
     int originalGroupCount,
-    int mapIndex,
-    int mapX,
-    int mapY);
+    const DM1_MeleeF0190KilledSomeStatePlanPc34* statePlan);
 
 static int orch_materialize_projectile_associated_thing_compat(
     struct GameWorld_Compat* world,
@@ -4674,13 +4670,35 @@ static int orch_apply_projectile_group_action_compat(
                     action->targetMapY);
             }
             if (creatureSnapshotReady && group->behavior == DM1_BEHAVIOR_ATTACK) {
-                orch_cmd_attack_cleanup_f0190_creature_events_compat(
-                    world, action->targetMapIndex, action->targetMapX,
-                    action->targetMapY, creatureIndex);
-                (void)orch_cmd_attack_apply_f0190_fear_compat(
-                    world, group, &creatureSnapshot, groupIndex,
-                    originalGroupCount, action->targetMapIndex,
-                    action->targetMapX, action->targetMapY);
+                DM1_MeleeF0190KilledSomeStateInputPc34 stateIn;
+                DM1_MeleeF0190KilledSomeStatePlanPc34 statePlan;
+                memset(&stateIn, 0, sizeof(stateIn));
+                memset(&statePlan, 0, sizeof(statePlan));
+                stateIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+                stateIn.groupBehavior = group->behavior;
+                stateIn.groupIndex = groupIndex;
+                stateIn.killedCreatureIndex = creatureIndex;
+                stateIn.originalGroupCount = originalGroupCount;
+                stateIn.mapIndex = action->targetMapIndex;
+                stateIn.mapX = action->targetMapX;
+                stateIn.mapY = action->targetMapY;
+                stateIn.partyMapIndex = world->partyMapIndex;
+                stateIn.partyMapX = world->party.mapX;
+                stateIn.partyMapY = world->party.mapY;
+                stateIn.creatureType = creatureSnapshot.creatureType;
+                stateIn.creatureProperties = creatureSnapshot.properties;
+                if (dm1_v1_melee_killed_some_state_plan_f0190_pc34(
+                        &stateIn, &statePlan) && statePlan.valid) {
+                    if (statePlan.shouldCleanupCreatureEvents) {
+                        orch_cmd_attack_cleanup_f0190_creature_events_compat(
+                            world, statePlan.mapIndex, statePlan.mapX,
+                            statePlan.mapY, statePlan.killedCreatureIndex);
+                    }
+                    if (statePlan.shouldEvaluateFear) {
+                        (void)orch_cmd_attack_apply_f0190_fear_compat(
+                            world, group, originalGroupCount, &statePlan);
+                    }
+                }
             }
             orch_create_f0190_death_smoke_at_square_compat(
                 world, originalCreatureType, killedCell,
@@ -5431,58 +5449,37 @@ static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
 static int orch_cmd_attack_apply_f0190_fear_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    const struct CombatantCreatureSnapshot_Compat* creature,
-    int groupIndex,
     int originalGroupCount,
-    int mapIndex,
-    int mapX,
-    int mapY)
+    const DM1_MeleeF0190KilledSomeStatePlanPc34* statePlan)
 {
-    DM1_MeleeF0190KilledSomeStateInputPc34 in;
-    DM1_MeleeF0190KilledSomeStatePlanPc34 plan;
+    DM1_MeleeF0190KilledSomeStatePlanPc34 applyPlan;
     int activeIndex;
     int shouldFlee = 0;
     int fleeDelay = 0;
 
-    if (!world || !group || !creature) return 0;
-
-    memset(&in, 0, sizeof(in));
-    memset(&plan, 0, sizeof(plan));
-    in.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
-    in.groupBehavior = group->behavior;
-    in.groupIndex = groupIndex;
-    in.killedCreatureIndex = 0;
-    in.originalGroupCount = originalGroupCount;
-    in.mapIndex = mapIndex;
-    in.mapX = mapX;
-    in.mapY = mapY;
-    in.partyMapIndex = world->partyMapIndex;
-    in.partyMapX = world->party.mapX;
-    in.partyMapY = world->party.mapY;
-    in.creatureType = creature->creatureType;
-    in.creatureProperties = creature->properties;
-
-    if (!dm1_v1_melee_killed_some_state_plan_f0190_pc34(&in, &plan) ||
-        !plan.valid || !plan.shouldEvaluateFear) {
+    if (!world || !group || !statePlan ||
+        !statePlan->valid || !statePlan->shouldEvaluateFear) {
         return 0;
     }
 
     if (!F0821_DM1_GROUP_ShouldFrighten_Compat(
-            &plan.fearContext, originalGroupCount, &world->masterRng,
+            &statePlan->fearContext, originalGroupCount, &world->masterRng,
             &shouldFlee, &fleeDelay)) {
         return 0;
     }
-    if (!dm1_v1_melee_killed_some_fear_apply_plan_f0190_pc34(
-            &in, shouldFlee, fleeDelay, &plan) ||
-        !plan.valid || !plan.shouldApplyFear) {
+    memset(&applyPlan, 0, sizeof(applyPlan));
+    if (!dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
+            statePlan, shouldFlee, fleeDelay, &applyPlan) ||
+        !applyPlan.valid || !applyPlan.shouldApplyFear) {
         return 0;
     }
 
-    group->behavior = (unsigned char)plan.newGroupBehavior;
-    activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+    group->behavior = (unsigned char)applyPlan.newGroupBehavior;
+    activeIndex =
+        orch_find_active_group_state_index_compat(world, applyPlan.groupIndex);
     if (activeIndex >= 0) {
-        world->creatureAI[activeIndex].stateKind = plan.newAiStateKind;
-        world->creatureAI[activeIndex].fearCounter = plan.fearCounter;
+        world->creatureAI[activeIndex].stateKind = applyPlan.newAiStateKind;
+        world->creatureAI[activeIndex].fearCounter = applyPlan.fearCounter;
     }
     return 1;
 }
@@ -5534,8 +5531,7 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_compat(
     }
     if (plan.shouldEvaluateFear) {
         return orch_cmd_attack_apply_f0190_fear_compat(
-            world, group, creature, groupIndex, originalGroupCount,
-            mapIndex, mapX, mapY);
+            world, group, originalGroupCount, &plan);
     }
     return 0;
 }
