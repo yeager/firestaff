@@ -27568,10 +27568,10 @@ static void m11_projectile_apply_impact(
                     CREATURE_GetProfile_Compat((int)g->creatureType);
                 int creatureAttributes = profile ? profile->attributes : 0;
                 DM1_ProjectileCreatureActionPlanPc34 actionPlan;
-                DM1_ProjectileCreatureImpactPlanPc34 plan;
+                DM1_ProjectileCreatureActionApplyPlanPc34 actionApply;
                 DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
                 memset(&actionPlan, 0, sizeof(actionPlan));
-                memset(&plan, 0, sizeof(plan));
+                memset(&actionApply, 0, sizeof(actionApply));
                 memset(&aftermath, 0, sizeof(aftermath));
                 if (dm1_v1_projectile_creature_action_plan_pc34(
                         p, &r->outAction, g, creatureAttributes, &actionPlan) &&
@@ -27588,34 +27588,23 @@ static void m11_projectile_apply_impact(
                         return;
                 }
                 if (actionPlan.handled && actionPlan.shouldApplyDamage) {
-                        struct CombatResult_Compat res;
-                        int outcome = 0;
-                        memset(&res, 0, sizeof(res));
-                        res.damageApplied = actionPlan.damageApplied;
-                        F0738_COMBAT_ApplyDamageToGroup_Compat(
-                            &res, g, actionPlan.slotIndex, &outcome);
-                        plan.handled = actionPlan.handled;
-                        plan.shouldApplyDamage = actionPlan.shouldApplyDamage;
-                        plan.slotIndex = actionPlan.slotIndex;
-                        plan.damageApplied = actionPlan.damageApplied;
-                        plan.originalCreatureType =
-                            actionPlan.originalCreatureType;
-                        plan.originalCells = actionPlan.originalCells;
-                        plan.originalGroupCount =
-                            actionPlan.originalGroupCount;
-                        plan.killedCell = actionPlan.killedCell;
-                        (void)dm1_v1_projectile_creature_impact_aftermath_pc34(
-                            &plan, p, creatureAttributes, (int)g->behavior,
-                            outcome,
+                        if (!dm1_v1_projectile_creature_action_apply_pc34(
+                                &actionPlan, g, &actionApply) ||
+                            !actionApply.handled) {
+                            return;
+                        }
+                        (void)dm1_v1_projectile_creature_action_aftermath_pc34(
+                            &actionPlan, p, creatureAttributes, (int)g->behavior,
+                            actionApply.outcomeCode,
                             m11_projectile_associated_weapon_type(state, p),
                             &aftermath);
                         if (aftermath.cleanupEventsAndFear) {
                                 m11_cleanup_f0190_creature_events(
                                     state, impactMap, impactX, impactY,
-                                    plan.slotIndex);
+                                    actionPlan.slotIndex);
                                 (void)m11_apply_f0190_fear(
-                                    state, g, plan.originalCreatureType, gIdx,
-                                    plan.originalGroupCount, impactMap,
+                                    state, g, actionPlan.originalCreatureType, gIdx,
+                                    actionPlan.originalGroupCount, impactMap,
                                     impactX, impactY);
                         }
                         if (aftermath.dropFixedPossessions) {
@@ -27625,13 +27614,13 @@ static void m11_projectile_apply_impact(
                              * already compacted the M11 group, so use the
                              * saved original cell. */
                             (void)m11_materialize_creature_fixed_possession_drops(
-                                state, plan.originalCreatureType,
-                                plan.killedCell, impactMap, impactX, impactY);
+                                state, actionPlan.originalCreatureType,
+                                actionPlan.killedCell, impactMap, impactX, impactY);
                         }
                         if (aftermath.spawnDeathSmoke) {
                             (void)m11_spawn_f0190_death_smoke(
-                                state, plan.originalCreatureType,
-                                plan.killedCell, impactMap, impactX, impactY);
+                                state, actionPlan.originalCreatureType,
+                                actionPlan.killedCell, impactMap, impactX, impactY);
                         }
                         if (aftermath.scheduleReaction) {
                             m11_schedule_projectile_hit_creature_reaction(
