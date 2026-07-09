@@ -3230,15 +3230,9 @@ static int m11_csb_startup_executor_draw_title(
 {
     M11_CSBStartupRenderExecutorContext *context =
         (M11_CSBStartupRenderExecutorContext *)user;
-    CSB_V1_StartupRenderPlan_PC34 receipt_plan;
     const CSB_V1_StartupRenderPlan_PC34 *title_plan = plan;
     if (!context) {
         return 0;
-    }
-    if (context->host_view &&
-        context->host_view->title_render_plan_valid) {
-        receipt_plan = context->host_view->title_render_plan;
-        title_plan = &receipt_plan;
     }
     m11_draw_csb_startup_title(context->state,
                                context->framebuffer,
@@ -20277,7 +20271,7 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             unsigned char* framebuffer,
                                             int fbW,
                                             int fbH) {
-    DM1_FrontMirrorRenderPlanPc34 plan;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
     M11_DM1ZoneBlit backingBlit;
     const M11_AssetSlot* slot;
     M11_ViewportCell mirrorCell;
@@ -20287,10 +20281,13 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     }
     mirrorCell = *frontCell;
     portraitOrdinal = m11_front_cell_mirror_ordinal(state);
-    if (!dm1_v1_front_mirror_render_plan_pc34(portraitOrdinal, &plan)) {
+    mirrorCell.championPortraitOrdinal = portraitOrdinal;
+    if (!m11_build_dm1_front_champion_portrait_receipt(&mirrorCell,
+                                                       &receipt) ||
+        !receipt.valid ||
+        !receipt.drawChampionPortrait) {
         return;
     }
-    mirrorCell.championPortraitOrdinal = portraitOrdinal;
     /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
      * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
      * rectangle from that state.  `m11_front_cell_mirror_ordinal` already
@@ -20298,7 +20295,7 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
      * corridor squares carrying unrelated or transplanted C127 data cannot
      * draw a floating C026 portrait. */
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)plan.ornament.graphicIndex);
+                                (unsigned int)receipt.backingGraphicIndex);
     /* BUG-120 + BUG-121 fix: when the C040 candidate panel is open
      * (candidateMirrorPanelActive == 1), the wall-ornament graphic is
      * not drawn — only the champion portrait. The ornament graphic
@@ -20317,16 +20314,18 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         m11_draw_dm1_front_champion_portrait(state, &mirrorCell, framebuffer, fbW, fbH);
         return;
     }
-    if (slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0) {
+    if (receipt.drawMirrorBacking &&
+        slot && slot->loaded && slot->pixels && slot->width > 0 &&
+        slot->height > 0) {
         m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
-                                               M11_VIEWPORT_X + plan.ornament.dstX,
-                                               M11_VIEWPORT_Y + plan.ornament.dstY,
-                                               plan.ornament.width,
-                                               plan.ornament.height,
-                                               plan.ornament.transparentColor,
-                                               plan.ornament.paletteMapValid ?
-                                                   plan.ornament.paletteMap : NULL,
-                                               plan.ornament.flipHorizontal);
+                                               M11_VIEWPORT_X + receipt.backingDstX,
+                                               M11_VIEWPORT_Y + receipt.backingDstY,
+                                               receipt.backingWidth,
+                                               receipt.backingHeight,
+                                               receipt.backingTransparentColor,
+                                               receipt.backingPaletteMapValid ?
+                                                   receipt.backingPaletteMap : NULL,
+                                               receipt.backingFlipHorizontal);
     } else {
         /* BUG-DNY-DM1-2026-06-16: when the wall-ornament graphic does
          * not load (e.g. user is on a Hall of Champions tile whose
@@ -20340,9 +20339,9 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
          * through.  Fall back to a solid dark-gray wall rect at the
          * same destination so the portrait always has a backdrop. */
         m11_fill_rect(framebuffer, fbW, fbH,
-                      M11_VIEWPORT_X + plan.backingDstX,
-                      M11_VIEWPORT_Y + plan.backingDstY,
-                      plan.backingWidth, plan.backingHeight,
+                      M11_VIEWPORT_X + receipt.backingDstX,
+                      M11_VIEWPORT_Y + receipt.backingDstY,
+                      receipt.backingWidth, receipt.backingHeight,
                       (unsigned char)M11_COLOR_DARK_GRAY);
     }
     /* ReDMCSB DUNVIEW.C:3913-3928 draws the C346 D1C wall ornament
@@ -20352,13 +20351,13 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
      * Make that source geometry an invariant for every C127 route: the
      * extracted C346 bitmap may still contribute source pixels above, but
      * the portrait must never sit directly on stone or appear to float. */
-    backingBlit.graphicIndex = plan.ornament.graphicIndex;
-    backingBlit.srcX = plan.ornament.srcX;
-    backingBlit.srcY = plan.ornament.srcY;
-    backingBlit.dstX = plan.backingDstX;
-    backingBlit.dstY = plan.backingDstY;
-    backingBlit.width = plan.backingWidth;
-    backingBlit.height = plan.backingHeight;
+    backingBlit.graphicIndex = receipt.backingGraphicIndex;
+    backingBlit.srcX = receipt.backingSourceX;
+    backingBlit.srcY = receipt.backingSourceY;
+    backingBlit.dstX = receipt.backingDstX;
+    backingBlit.dstY = receipt.backingDstY;
+    backingBlit.width = receipt.backingWidth;
+    backingBlit.height = receipt.backingHeight;
     m11_draw_dm1_front_mirror_backing(framebuffer, fbW, fbH, &backingBlit);
     m11_draw_dm1_front_champion_portrait(state, &mirrorCell, framebuffer, fbW, fbH);
 }

@@ -1,4 +1,5 @@
 #include "dm1_v1_champion_mirror_pc34_compat.h"
+#include "dm1_v1_wall_ornament_pc34_compat.h"
 
 #include <string.h>
 
@@ -267,6 +268,7 @@ int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
     const DM1_V1_ChampionMirrorFrontWallReceiptPc34 *frontWallReceipt,
     DM1_V1_ChampionMirrorRenderReceiptPc34 *outReceipt)
 {
+    DM1_FrontMirrorRenderPlanPc34 mirrorPlan;
     int renderIndex;
 
     if (!frontWallReceipt || !outReceipt) {
@@ -292,6 +294,7 @@ int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
 
     renderIndex = frontWallReceipt->championPortraitRenderIndex;
     outReceipt->drawChampionPortrait = 1;
+    outReceipt->drawMirrorBacking = 1;
     outReceipt->sourceOrdinal = frontWallReceipt->championPortraitOrdinal;
     outReceipt->renderIndex = renderIndex;
     outReceipt->graphicIndex =
@@ -318,13 +321,34 @@ int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
         DM1_V1_CHAMPION_MIRROR_PORTRAIT_FRAME_BOTTOM_PC34_COMPAT;
     outReceipt->transparentColor =
         DM1_V1_CHAMPION_MIRROR_TRANSPARENT_COLOR_PC34_COMPAT;
+    if (dm1_v1_front_mirror_render_plan_pc34(renderIndex, &mirrorPlan)) {
+        int i;
+        outReceipt->backingGraphicIndex = mirrorPlan.ornament.graphicIndex;
+        outReceipt->backingSourceX = mirrorPlan.ornament.srcX;
+        outReceipt->backingSourceY = mirrorPlan.ornament.srcY;
+        outReceipt->backingDstX = mirrorPlan.backingDstX;
+        outReceipt->backingDstY = mirrorPlan.backingDstY;
+        outReceipt->backingWidth = mirrorPlan.backingWidth;
+        outReceipt->backingHeight = mirrorPlan.backingHeight;
+        outReceipt->backingTransparentColor =
+            mirrorPlan.ornament.transparentColor;
+        outReceipt->backingFlipHorizontal =
+            mirrorPlan.ornament.flipHorizontal;
+        outReceipt->backingPaletteMapValid =
+            mirrorPlan.ornament.paletteMapValid;
+        for (i = 0; i < 16; ++i) {
+            outReceipt->backingPaletteMap[i] =
+                mirrorPlan.ornament.paletteMap[i];
+        }
+    } else {
+        outReceipt->drawMirrorBacking = 0;
+    }
 
     /* ReDMCSB: DUNVIEW.C lines 3913-3928 only blit C026 champion
-     * portraits when the wall is D1C front and G0289 decrements to a
-     * valid source ordinal. DUNVIEW.C line 525 fixes G0109 to
-     * {96,127,35,63}; the source rect is (ordinal & 7)*32,
-     * (ordinal >> 3)*29. Keep the draw/suppress choice in this DM1 receipt
-     * so host render code does not reuse stale mirror or item payload state. */
+     * portraits when the wall is D1C front and G0289 decrements to a valid
+     * source ordinal; lines 3922-3928 draw C346 backing before C026. Keep
+     * both draw/material decisions in this DM1 receipt so host render code
+     * does not rebuild a second mirror plan or reuse stale payload state. */
     return 1;
 }
 

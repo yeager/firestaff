@@ -277,12 +277,13 @@ static void test_f0172_front_wall_sensor_receipt(void)
                 &receipt, &render) == 1 &&
             render.valid == 1 &&
             render.drawChampionPortrait == 1 &&
+            render.drawMirrorBacking == 1 &&
             render.suppressChampionPortrait == 0 &&
             render.sourceOrdinal == 14 &&
             render.renderIndex == 13 &&
             render.graphicIndex ==
                 DM1_V1_CHAMPION_MIRROR_PORTRAIT_GRAPHIC_PC34_COMPAT,
-        "front mirror render receipt owns C026 draw decision",
+        "front mirror render receipt owns C026/C346 draw decision",
         "DUNVIEW.C:3913-3928");
 
     CHECK_ANCHOR(
@@ -310,6 +311,17 @@ static void test_f0172_front_wall_sensor_receipt(void)
                 DM1_V1_CHAMPION_MIRROR_TRANSPARENT_COLOR_PC34_COMPAT,
         "render receipt owns G0109 destination frame and transparency",
         "DUNVIEW.C:525; DUNVIEW.C:3916-3928");
+
+    CHECK_ANCHOR(
+        render.backingGraphicIndex == 346 &&
+            render.backingDstX == 80 &&
+            render.backingDstY == 29 &&
+            render.backingWidth == 64 &&
+            render.backingHeight == 43 &&
+            render.backingTransparentColor == 10 &&
+            render.backingPaletteMapValid == 1,
+        "render receipt owns C346 mirror backing material",
+        "DUNVIEW.C:3922-3928; DUNVIEW.C G0205 coord-set 5");
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
