@@ -2396,6 +2396,9 @@ int csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
         out_receipt->valid = 1;
         out_receipt->kind = CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34;
         out_receipt->route = view->route_receipt.route;
+        out_receipt->startup_render_plan = view->render_plan;
+        out_receipt->startup_render_plan_valid =
+            view->render_plan_valid ? 1 : 0;
         out_receipt->utility_render_plan_valid = 1;
         out_receipt->draw_utility_panel = 1;
         out_receipt->option_count = view->utility_menu_row_count;
@@ -2494,6 +2497,62 @@ int csb_v1_boot_startup_hud_menu_draw_receipt_from_action_pc34(
      * pre/post render-view receipt and flattened host decision together so
      * a caller does not have to re-route utility vs entrance draw paths. */
     return out_receipt->valid;
+}
+
+int csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
+    const CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *draw_receipt,
+    const CSB_V1_BootStartupReadinessReceipt_PC34 *readiness_receipt,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor)
+{
+    int drew = 0;
+
+    if (!draw_receipt || !draw_receipt->valid || !executor) {
+        return 0;
+    }
+    if (readiness_receipt) {
+        if (!readiness_receipt->valid || !readiness_receipt->hud_menu_ready ||
+            readiness_receipt->host_hud_blocked ||
+            readiness_receipt->hud_menu_kind != draw_receipt->kind) {
+            return 0;
+        }
+    }
+
+    if (draw_receipt->kind == CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34) {
+        if (!draw_receipt->draw_utility_panel ||
+            !draw_receipt->startup_render_plan_valid ||
+            !draw_receipt->startup_render_plan.waiting_for_input ||
+            !executor->draw_utility_panel) {
+            return 0;
+        }
+        executor->draw_utility_panel(executor->user,
+                                     &draw_receipt->startup_render_plan);
+        return 1;
+    }
+
+    if (draw_receipt->kind == CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34) {
+        if (!draw_receipt->startup_render_plan_valid) {
+            return 0;
+        }
+        if (draw_receipt->draw_closed_doors && executor->draw_closed_doors) {
+            executor->draw_closed_doors(executor->user,
+                                        &draw_receipt->startup_render_plan);
+            ++drew;
+        }
+        if (draw_receipt->draw_fallback_text &&
+            executor->draw_fallback_text) {
+            executor->draw_fallback_text(executor->user,
+                                         &draw_receipt->startup_render_plan);
+            ++drew;
+        }
+        /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 keeps the
+         * closed-door wait/menu and CSB utility overlay under the entrance
+         * loop. This is the CSB-owned draw-consumption point for M11: callers
+         * pass render-view/readiness receipts instead of inferring utility vs
+         * closed-door HUD state from host-side render branches. */
+        return drew;
+    }
+
+    return 0;
 }
 
 int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
