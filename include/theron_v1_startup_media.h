@@ -23,6 +23,18 @@ typedef struct {
     unsigned int startup_bitmap_route_mask;
     size_t startup_bitmap_nonzero_pixel_count;
     uint32_t startup_bitmap_checksum;
+    int startup_bitmap_title_route_ready;
+    int startup_bitmap_stage_route_ready;
+    int startup_bitmap_soul_room_route_ready;
+    int startup_bitmap_forcefield_route_ready;
+    size_t startup_bitmap_title_nonzero_pixel_count;
+    size_t startup_bitmap_stage_nonzero_pixel_count;
+    size_t startup_bitmap_soul_room_nonzero_pixel_count;
+    size_t startup_bitmap_forcefield_nonzero_pixel_count;
+    uint32_t startup_bitmap_title_checksum;
+    uint32_t startup_bitmap_stage_checksum;
+    uint32_t startup_bitmap_soul_room_checksum;
+    uint32_t startup_bitmap_forcefield_checksum;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
@@ -44,6 +56,18 @@ typedef struct {
     unsigned int startup_bitmap_route_mask;
     size_t startup_bitmap_nonzero_pixel_count;
     uint32_t startup_bitmap_checksum;
+    int startup_bitmap_title_route_ready;
+    int startup_bitmap_stage_route_ready;
+    int startup_bitmap_soul_room_route_ready;
+    int startup_bitmap_forcefield_route_ready;
+    size_t startup_bitmap_title_nonzero_pixel_count;
+    size_t startup_bitmap_stage_nonzero_pixel_count;
+    size_t startup_bitmap_soul_room_nonzero_pixel_count;
+    size_t startup_bitmap_forcefield_nonzero_pixel_count;
+    uint32_t startup_bitmap_title_checksum;
+    uint32_t startup_bitmap_stage_checksum;
+    uint32_t startup_bitmap_soul_room_checksum;
+    uint32_t startup_bitmap_forcefield_checksum;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
