@@ -183,6 +183,9 @@ typedef struct DM2_V1_StartupHostMenuRouteReceipt {
     int apply_session;
     int rescan_saves;
     int selected_row_after;
+    int runtime_menu_ready;
+    int runtime_action_ready;
+    int first_hud_frame_ready;
     const char *status_scope;
     const char *status;
 } DM2_V1_StartupHostMenuRouteReceipt;

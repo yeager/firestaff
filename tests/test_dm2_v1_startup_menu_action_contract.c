@@ -500,7 +500,10 @@ int main(void)
               host_action_receipt.host_menu_route.return_to_launcher == 0 &&
               host_action_receipt.host_menu_route.apply_session == 0 &&
               host_action_receipt.host_menu_route.rescan_saves == 1 &&
-              host_action_receipt.host_menu_route.selected_row_after == 0,
+              host_action_receipt.host_menu_route.selected_row_after == 0 &&
+              host_action_receipt.host_menu_route.runtime_menu_ready == 1 &&
+              host_action_receipt.host_menu_route.runtime_action_ready == 1 &&
+              host_action_receipt.host_menu_route.first_hud_frame_ready == 0,
           "host action receipt owns failed Continue M11 menu route");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
@@ -720,7 +723,10 @@ int main(void)
               host_action_receipt.host_menu_route.redraw_startup_menu == 1 &&
               host_action_receipt.host_menu_route.close_startup_menu == 1 &&
               host_action_receipt.host_menu_route.apply_session == 1 &&
-              host_action_receipt.host_menu_route.selected_row_after == 2,
+              host_action_receipt.host_menu_route.selected_row_after == 2 &&
+              host_action_receipt.host_menu_route.runtime_menu_ready == 0 &&
+              host_action_receipt.host_menu_route.runtime_action_ready == 1 &&
+              host_action_receipt.host_menu_route.first_hud_frame_ready == 1,
           "host facts keyboard wrapper returns M11/M12-ready startup route");
     check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
@@ -889,7 +895,10 @@ int main(void)
               host_action_receipt.host_menu_route.valid &&
               host_action_receipt.host_menu_route.close_startup_menu == 1 &&
               host_action_receipt.host_menu_route.apply_session == 1 &&
-              host_action_receipt.host_menu_route.selected_row_after == 2,
+              host_action_receipt.host_menu_route.selected_row_after == 2 &&
+              host_action_receipt.host_menu_route.runtime_menu_ready == 0 &&
+              host_action_receipt.host_menu_route.runtime_action_ready == 1 &&
+              host_action_receipt.host_menu_route.first_hud_frame_ready == 1,
           "host facts pointer wrapper returns M11/M12-ready input route");
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
