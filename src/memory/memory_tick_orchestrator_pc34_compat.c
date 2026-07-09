@@ -20,6 +20,7 @@
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
+#include "dm1_v1_movement_timing_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
@@ -6533,33 +6534,6 @@ static int orch_damage_group_all_creatures_compat(
     return damaged;
 }
 
-static int redmcsb_party_move_cooldown_ticks_compat(
-    const struct PartyState_Compat* party)
-{
-    int i;
-    int ticks = 1;
-
-    if (!party) return ticks;
-
-    /*
-     * ReDMCSB source-lock: CLIKMENU.C:330-346 starts AL1115_ui_Ticks
-     * at 1, then for each living party champion takes the max of
-     * F0310_CHAMPION_GetMovementTicks before assigning
-     * G0310_i_DisabledMovementTicks and clearing
-     * G0311_i_ProjectileDisabledMovementTicks.  F0310 is ported as
-     * F0841_LIFECYCLE_ComputeMoveTicks_Compat (CHAMPION.C:1180-1215).
-     */
-    for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
-        const struct ChampionState_Compat* c = &party->champions[i];
-        uint16_t championTicks;
-        if (!c->present || c->hp.current == 0) continue;
-        championTicks = F0841_LIFECYCLE_ComputeMoveTicks_Compat(
-            c->load, c->maxLoad, c->wounds, LIFECYCLE_ICON_NONE);
-        if ((int)championTicks > ticks) ticks = (int)championTicks;
-    }
-    return ticks;
-}
-
 int F0888_ORCH_ApplyPlayerInput_Compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
@@ -6672,7 +6646,9 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                          world->party.mapX, world->party.mapY,
                          world->party.mapIndex);
                 }
-                world->disabledMovementTicks = redmcsb_party_move_cooldown_ticks_compat(&world->party);
+                world->disabledMovementTicks =
+                    DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat(
+                        &world->party, NULL);
                 world->projectileDisabledMovementTicks = 0;
                 emit(result, EMIT_PARTY_MOVED,
                      world->party.mapX, world->party.mapY,
@@ -7565,8 +7541,9 @@ void F0890_ORCH_ApplyPeriodicEffects_Compat(
 {
     (void)result;
     if (!world) return;
-    if (world->disabledMovementTicks > 0) world->disabledMovementTicks--;
-    if (world->projectileDisabledMovementTicks > 0) world->projectileDisabledMovementTicks--;
+    DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(
+        &world->disabledMovementTicks,
+        &world->projectileDisabledMovementTicks);
     if (world->freezeLifeTicks > 0) world->freezeLifeTicks--;
     /* ReDMCSB: GAMELOOP.C lines 124-126 increments G0313_ul_GameTime,
      * then calls PANEL.C F0338 lines 434-473 when !(GameTime & 511).
