@@ -534,6 +534,8 @@ typedef struct {
     int flip_mirror;
     int render_frame;
     int draw_order;
+    uint32_t random_seed_before;
+    uint32_t random_seed_after;
 } DM2_V1_ProjectileAssetBlit;
 
 typedef struct {

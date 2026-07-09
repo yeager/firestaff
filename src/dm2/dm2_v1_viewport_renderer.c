@@ -2240,6 +2240,10 @@ int dm2_v1_viewport_projectile_asset_blit(
 
     render_frame = render->frame_index;
     flip_mirror = render->flip_mirror;
+    if (random_seed) {
+        blit.random_seed_before = *random_seed;
+        blit.random_seed_after = *random_seed;
+    }
     if (!dm2_v1_prepare_projectile_map_chip_frame(src_w,
                                                   src_h,
                                                   render->frame_index,
@@ -2257,6 +2261,9 @@ int dm2_v1_viewport_projectile_asset_blit(
         int frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
         if (render->cloud_flip_from_seed) {
             flip_mirror = dm2_v1_viewport_cloud_flip_for_seed(random_seed);
+            if (random_seed) {
+                blit.random_seed_after = *random_seed;
+            }
         }
         render_frame = dm2_v1_viewport_cloud_frame_for_tick(tick_count,
                                                             frame_count);

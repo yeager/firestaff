@@ -1682,6 +1682,57 @@ static void test_first_tick_after_boot_profile_handoff(void)
               "runtime projects the projectile to the depth-1 first-person row");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
         dm2_v1_projectile_test_reset_list();
+
+        fetch_count = 0;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        memset(s_projectile_pixels, 13, sizeof(s_projectile_pixels));
+        dm2_v1_runtime_set_weather_seed(0x12345678u);
+        dm2_v1_runtime_set_position(0, 10, 6, 0);
+        CHECK(dm2_v1_projectile_dispatch_synthetic(
+                  PROJECTILE_CATEGORY_MAGICAL,
+                  DM2_PROJ_SUBTYPE_MAGICAL_POISON_CLOUD,
+                  10, 4, 0, 0) >= 0,
+              "runtime cloud projectile fixture dispatches two tiles ahead");
+        dm2_v1_runtime_tick();
+        dm2_v1_runtime_set_viewport_asset_provider(
+            synthetic_viewport_asset_fetch, &fetch_count);
+        CHECK(dm2_v1_runtime_render_frame(
+                  dm2_v1_runtime_get_party_dir(),
+                  dm2_v1_runtime_get_party_x(),
+                  dm2_v1_runtime_get_party_y(),
+                  framebuffer, 320, 320, 200) == 0,
+              "runtime renders a drained cloud projectile through the viewport");
+        {
+            uint32_t expected_seed = 0x12345678u;
+            int expected_flip =
+                dm2_v1_viewport_cloud_flip_for_seed(&expected_seed);
+            int expected_frame =
+                dm2_v1_viewport_cloud_frame_for_tick(
+                    dm2_v1_runtime_get_tick_count(), 2);
+            CHECK(dm2_v1_runtime_last_projectile_render_receipt(
+                      &projectile_receipt) == 1 &&
+                  projectile_receipt.projectile_category == 0x0d &&
+                  projectile_receipt.projectile_type ==
+                      DM2_PROJ_SUBTYPE_MAGICAL_POISON_CLOUD &&
+                  projectile_receipt.frame_class ==
+                      DM2_V1_PROJECTILE_FRAME_CLASS_FRONT_ONLY &&
+                  projectile_receipt.render_kind ==
+                      DM2_V1_PROJECTILE_RENDER_CLOUD &&
+                  projectile_receipt.cloud_flip_from_seed == 1 &&
+                  projectile_receipt.flip_mirror == expected_flip &&
+                  projectile_receipt.random_seed_before == 0x12345678u &&
+                  projectile_receipt.random_seed_after == expected_seed &&
+                  projectile_receipt.render_frame == expected_frame &&
+                  projectile_receipt.atlas_frame_x == expected_frame * 8 &&
+                  projectile_receipt.atlas_frame_w == 8 &&
+                  projectile_receipt.asset_blit_ready == 1 &&
+                  projectile_receipt.fallback_drawn == 0 &&
+                  projectile_receipt.asset_dst_rect.w == 6 &&
+                  projectile_receipt.asset_dst_rect.h == 6,
+                  "runtime cloud projectile receipt exposes tick frame and RAND02 flip");
+        }
+        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+        dm2_v1_projectile_test_reset_list();
     }
 
     dm2_v1_boot_cleanup(&profile);
