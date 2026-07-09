@@ -20,7 +20,7 @@
  * Dead champions show bones → resurrect or reincarnate option.
  */
 
-void m11_entrance_init(M11_EntranceCtx *ctx)
+void DM1_V1_Entrance_InitPc34Compat(DM1_V1_EntranceCtxPc34 *ctx)
 {
     memset(ctx, 0, sizeof(*ctx));
     ctx->state = DM1_ENTRANCE_IDLE;
@@ -32,14 +32,14 @@ void m11_entrance_init(M11_EntranceCtx *ctx)
     ctx->doorAnim.frameDelayMs = 100; /* ~10 fps door animation */
 }
 
-int m11_entrance_add_mirror(M11_EntranceCtx *ctx, int championIndex,
+int DM1_V1_Entrance_AddMirrorPc34Compat(DM1_V1_EntranceCtxPc34 *ctx, int championIndex,
                             int mapX, int mapY, int facing, int isDead)
 {
-    if (ctx->mirrorCount >= M11_MAX_MIRROR_SLOTS) {
+    if (ctx->mirrorCount >= DM1_V1_MAX_MIRROR_SLOTS_PC34) {
         return -1;
     }
     int idx = ctx->mirrorCount;
-    M11_MirrorSlot *slot = &ctx->mirrors[idx];
+    DM1_V1_MirrorSlotPc34 *slot = &ctx->mirrors[idx];
     slot->occupied = 1;
     slot->championIndex = championIndex;
     slot->selected = 0;
@@ -51,7 +51,7 @@ int m11_entrance_add_mirror(M11_EntranceCtx *ctx, int championIndex,
     return idx;
 }
 
-void m11_entrance_start_door_animation(M11_EntranceCtx *ctx, uint32_t nowMs)
+void DM1_V1_Entrance_StartDoorAnimationPc34Compat(DM1_V1_EntranceCtxPc34 *ctx, uint32_t nowMs)
 {
     ctx->state = DM1_ENTRANCE_DOOR_OPENING;
     ctx->doorAnim.animationStep = 0;
@@ -59,7 +59,7 @@ void m11_entrance_start_door_animation(M11_EntranceCtx *ctx, uint32_t nowMs)
     ctx->doorAnim.complete = 0;
 }
 
-int m11_entrance_tick_door_animation(M11_EntranceCtx *ctx, uint32_t nowMs)
+int DM1_V1_Entrance_TickDoorAnimationPc34Compat(DM1_V1_EntranceCtxPc34 *ctx, uint32_t nowMs)
 {
     if (ctx->doorAnim.complete) {
         return 0;
@@ -84,11 +84,11 @@ int m11_entrance_tick_door_animation(M11_EntranceCtx *ctx, uint32_t nowMs)
     return 1;
 }
 
-M11_EntranceTickResult m11_entrance_click_mirror(M11_EntranceCtx *ctx,
+DM1_V1_EntranceTickResultPc34 DM1_V1_Entrance_ClickMirrorPc34Compat(DM1_V1_EntranceCtxPc34 *ctx,
                                                   int mirrorIndex,
                                                   uint32_t nowMs)
 {
-    M11_EntranceTickResult result;
+    DM1_V1_EntranceTickResultPc34 result;
     memset(&result, 0, sizeof(result));
 
     if (mirrorIndex < 0 || mirrorIndex >= ctx->mirrorCount) {
@@ -98,7 +98,7 @@ M11_EntranceTickResult m11_entrance_click_mirror(M11_EntranceCtx *ctx,
         return result;
     }
 
-    M11_MirrorSlot *slot = &ctx->mirrors[mirrorIndex];
+    DM1_V1_MirrorSlotPc34 *slot = &ctx->mirrors[mirrorIndex];
     if (!slot->occupied || slot->selected) {
         return result;
     }
@@ -120,7 +120,7 @@ M11_EntranceTickResult m11_entrance_click_mirror(M11_EntranceCtx *ctx,
     return result;
 }
 
-int m11_entrance_recruit_champion(M11_EntranceCtx *ctx)
+int DM1_V1_Entrance_RecruitChampionPc34Compat(DM1_V1_EntranceCtxPc34 *ctx)
 {
     if (ctx->partyChampionCount >= M11_MAX_CHAMPIONS) {
         return 0;
@@ -132,7 +132,7 @@ int m11_entrance_recruit_champion(M11_EntranceCtx *ctx)
         return 0;
     }
 
-    M11_MirrorSlot *slot = &ctx->mirrors[ctx->selectedMirrorIndex];
+    DM1_V1_MirrorSlotPc34 *slot = &ctx->mirrors[ctx->selectedMirrorIndex];
     if (!slot->occupied || slot->selected || slot->dead) {
         return 0;
     }
@@ -148,7 +148,7 @@ int m11_entrance_recruit_champion(M11_EntranceCtx *ctx)
     return 1;
 }
 
-int m11_entrance_resurrect(M11_EntranceCtx *ctx)
+int DM1_V1_Entrance_ResurrectPc34Compat(DM1_V1_EntranceCtxPc34 *ctx)
 {
     if (ctx->selectedMirrorIndex < 0) {
         return 0;
@@ -157,7 +157,7 @@ int m11_entrance_resurrect(M11_EntranceCtx *ctx)
         return 0;
     }
 
-    M11_MirrorSlot *slot = &ctx->mirrors[ctx->selectedMirrorIndex];
+    DM1_V1_MirrorSlotPc34 *slot = &ctx->mirrors[ctx->selectedMirrorIndex];
     if (!slot->dead) {
         return 0;
     }
@@ -169,7 +169,7 @@ int m11_entrance_resurrect(M11_EntranceCtx *ctx)
     return 1;
 }
 
-int m11_entrance_reincarnate(M11_EntranceCtx *ctx)
+int DM1_V1_Entrance_ReincarnatePc34Compat(DM1_V1_EntranceCtxPc34 *ctx)
 {
     if (ctx->selectedMirrorIndex < 0) {
         return 0;
@@ -179,7 +179,7 @@ int m11_entrance_reincarnate(M11_EntranceCtx *ctx)
         return 0;
     }
 
-    M11_MirrorSlot *slot = &ctx->mirrors[ctx->selectedMirrorIndex];
+    DM1_V1_MirrorSlotPc34 *slot = &ctx->mirrors[ctx->selectedMirrorIndex];
     if (!slot->dead) {
         return 0;
     }
@@ -191,7 +191,7 @@ int m11_entrance_reincarnate(M11_EntranceCtx *ctx)
     return 1;
 }
 
-void m11_entrance_cancel_selection(M11_EntranceCtx *ctx)
+void DM1_V1_Entrance_CancelSelectionPc34Compat(DM1_V1_EntranceCtxPc34 *ctx)
 {
     ctx->selectedMirrorIndex = -1;
     if (ctx->state == DM1_ENTRANCE_SELECTING ||
@@ -201,9 +201,9 @@ void m11_entrance_cancel_selection(M11_EntranceCtx *ctx)
     }
 }
 
-M11_EntranceTickResult m11_entrance_finalize(M11_EntranceCtx *ctx)
+DM1_V1_EntranceTickResultPc34 DM1_V1_Entrance_FinalizePc34Compat(DM1_V1_EntranceCtxPc34 *ctx)
 {
-    M11_EntranceTickResult result;
+    DM1_V1_EntranceTickResultPc34 result;
     memset(&result, 0, sizeof(result));
 
     if (ctx->partyChampionCount == 0) {
@@ -219,17 +219,17 @@ M11_EntranceTickResult m11_entrance_finalize(M11_EntranceCtx *ctx)
     return result;
 }
 
-int m11_entrance_is_complete(const M11_EntranceCtx *ctx)
+int DM1_V1_Entrance_IsCompletePc34Compat(const DM1_V1_EntranceCtxPc34 *ctx)
 {
     return ctx->state == DM1_ENTRANCE_DONE;
 }
 
-int m11_entrance_get_party_count(const M11_EntranceCtx *ctx)
+int DM1_V1_Entrance_GetPartyCountPc34Compat(const DM1_V1_EntranceCtxPc34 *ctx)
 {
     return ctx->partyChampionCount;
 }
 
-const char *m11_entrance_source_evidence(void)
+const char *DM1_V1_Entrance_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206 ENTRANCE.C\n"
@@ -242,5 +242,5 @@ const char *m11_entrance_source_evidence(void)
         "G0562_apuc_Bitmap_EntranceDoorAnimationSteps[10]: door frames.\n"
         "G0563: interface entrance screen, G0564: credits, "
         "G0565/G0566: sound graphics.\n"
-        "24 mirror slots max (M11_MAX_MIRROR_SLOTS), 4 party slots.";
+        "24 mirror slots max (DM1_V1_MAX_MIRROR_SLOTS_PC34), 4 party slots.";
 }
