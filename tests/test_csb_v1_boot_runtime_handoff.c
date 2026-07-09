@@ -2291,9 +2291,14 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !boot_action_receipt.input_routed_to_utility &&
               boot_action_receipt.entrance_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              boot_action_receipt.host_receipt_valid &&
+              boot_action_receipt.host_input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              strcmp(boot_action_receipt.host_status_scope, "BOOT") == 0 &&
+              strcmp(boot_action_receipt.host_status, "CSB DOORS") == 0 &&
               boot_action_receipt.post_input_render_view_valid &&
               boot_action_receipt.post_input_render_view.opening_door_route,
-          "boot startup pointer entrance carries command and post-render route");
+          "boot startup pointer entrance carries command, host, and post-render route");
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               9,
@@ -2313,6 +2318,11 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_INPUT_ACCEPT_PC34 &&
               boot_action_receipt.entrance_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              boot_action_receipt.host_receipt_valid &&
+              boot_action_receipt.host_input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              strcmp(boot_action_receipt.host_status_scope, "BOOT") == 0 &&
+              strcmp(boot_action_receipt.host_status, "CSB DOORS") == 0 &&
               !boot_action_receipt.input_routed_to_utility &&
               boot_action_receipt.input_routed_to_entrance &&
               boot_action_receipt.pre_input_render_view_valid &&
@@ -2347,6 +2357,11 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_INPUT_BACK_PC34 &&
               boot_action_receipt.entrance_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34 &&
+              boot_action_receipt.host_receipt_valid &&
+              boot_action_receipt.host_input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34 &&
+              strcmp(boot_action_receipt.host_status_scope, "RETURN") == 0 &&
+              strcmp(boot_action_receipt.host_status, "BACK TO LAUNCHER") == 0 &&
               boot_action_receipt.input_routed_to_entrance &&
               boot_action_receipt.pre_input_render_view_valid &&
               boot_action_receipt.pre_input_render_view.closed_door_menu_route &&

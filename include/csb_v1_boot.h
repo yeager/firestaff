@@ -214,6 +214,13 @@ typedef struct CSB_V1_BootStartupActionReceipt_PC34 {
     int input_blocked_by_title;
     int input_routed_to_utility;
     int input_routed_to_entrance;
+    int host_receipt_valid;
+    CSB_V1_StartupEntranceInputResult_PC34 host_input_result;
+    const char *host_status_scope;
+    const char *host_status;
+    int host_clear_import_preview;
+    int host_bonus_requested_changed;
+    int host_bonus_requested;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 pre_input_route;
     int pre_input_render_view_valid;
     CSB_V1_BootStartupRenderViewReceipt_PC34 pre_input_render_view;
