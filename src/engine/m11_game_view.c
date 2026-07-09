@@ -740,6 +740,8 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
     M11_GameViewState *state,
     const DM2_V1_StartupHostActionReceipt *action_receipt)
 {
+    const DM2_V1_StartupHostMenuRouteReceipt *route;
+
     if (!state || !action_receipt) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -747,6 +749,29 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
         m11_dm2_startup_state_receipt_to_m11(
             state,
             &action_receipt->menu_state_receipt);
+    }
+    route = &action_receipt->host_menu_route;
+    if (route->valid) {
+        if (route->close_startup_menu) {
+            state->dm2State.startup_menu_active = 0;
+        }
+        state->dm2State.startup_menu_selected_row =
+            route->selected_row_after;
+        if (route->status_scope || route->status) {
+            m11_set_status(state,
+                           route->status_scope ? route->status_scope
+                                               : "STARTUP",
+                           route->status ? route->status : "");
+        }
+        if (route->return_to_launcher) {
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        if (route->redraw_startup_menu || route->close_startup_menu ||
+            route->apply_session || route->rescan_saves) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return route->consume_input ? M11_GAME_INPUT_IGNORED
+                                    : M11_GAME_INPUT_IGNORED;
     }
     return m11_dm2_startup_apply_host_receipt(
         state,
