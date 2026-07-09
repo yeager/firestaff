@@ -737,6 +737,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCRenderConsumerReceipt_PC34 hoc_render_consumer;
     DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34
         hoc_fallback_ownership;
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 hoc_owned_host_draw;
     DM1_V1_StartupHoCFirstFrameReceipt_PC34 bad_hoc_first_frame;
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
         bad_hoc_production_consumer;
@@ -1972,6 +1973,30 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_fallback_ownership.zone == hoc_floor_thing.zone &&
                  hoc_fallback_ownership.row == hoc_floor_thing.row &&
                  hoc_fallback_ownership.view_cell == hoc_floor_thing.view_cell,
+             1);
+    memset(&hoc_owned_host_draw, 0, sizeof(hoc_owned_host_draw));
+    expect_i("DM1 HoC owned host draw consumes backing asset",
+             dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
+                 &hoc_fallback_ownership,
+                 &mirror_render,
+                 0,
+                 1,
+                 &hoc_owned_host_draw) &&
+                 hoc_owned_host_draw.valid &&
+                 hoc_owned_host_draw.drawMirrorBackingAsset &&
+                 !hoc_owned_host_draw.drawMirrorBackingFallbackRect &&
+                 hoc_owned_host_draw.drawChampionPortrait,
+             1);
+    memset(&hoc_owned_host_draw, 0, sizeof(hoc_owned_host_draw));
+    expect_i("DM1 HoC owned host draw rejects missing backing fallback",
+             dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
+                 &hoc_fallback_ownership,
+                 &mirror_render,
+                 0,
+                 0,
+                 &hoc_owned_host_draw) &&
+                 !hoc_owned_host_draw.valid &&
+                 !hoc_owned_host_draw.drawMirrorBackingFallbackRect,
              1);
     expect_i("DM1 HoC render consumer prepares projectile receipt",
              dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
