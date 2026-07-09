@@ -708,6 +708,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 hoc_capture_facts;
     DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 hoc_capture_proof;
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 hoc_runtime_apply;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34
+        hoc_suppression_facts;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34
+        hoc_suppression_receipt;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1562,6 +1566,83 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
                  hoc_runtime_apply.render_command_count == 3,
              1);
+    memset(&hoc_suppression_facts, 0, sizeof(hoc_suppression_facts));
+    hoc_suppression_facts.observed_hall_mirror_overlay = 1;
+    hoc_suppression_facts.observed_enter_blocked_until_champion_selected = 1;
+    hoc_suppression_facts.observed_hoc_render_command_count =
+        hoc_runtime_apply.render_command_count;
+    memset(&hoc_suppression_receipt, 0, sizeof(hoc_suppression_receipt));
+    expect_i("DM1 HoC thing suppression receipt builds",
+             dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+                 &hoc_runtime_apply,
+                 &hoc_suppression_facts,
+                 &hoc_suppression_receipt),
+             1);
+    expect_i("DM1 HoC thing suppression proof passes clean Hall frame",
+             hoc_suppression_receipt.handled &&
+                 hoc_suppression_receipt.ready &&
+                 hoc_suppression_receipt.proof_passed &&
+                 hoc_suppression_receipt.walk_capture_safe &&
+                 hoc_suppression_receipt.consumed_runtime_apply_receipt &&
+                 hoc_suppression_receipt.consumed_suppression_facts,
+             1);
+    expect_i("DM1 HoC thing suppression forbids false payload layers",
+             hoc_suppression_receipt.champion_mirror_overlay_present &&
+                 hoc_suppression_receipt.false_item_payloads_absent &&
+                 hoc_suppression_receipt.projectile_payloads_absent &&
+                 hoc_suppression_receipt.spell_effect_payloads_absent &&
+                 hoc_suppression_receipt.mirror_payload_thing_absent &&
+                 hoc_suppression_receipt.fallback_visuals_absent &&
+                 hoc_suppression_receipt.stale_title_absent &&
+                 hoc_suppression_receipt.stale_door_absent,
+             1);
+    expect_i("DM1 HoC thing suppression matches commands/input",
+             hoc_suppression_receipt.command_count_matches &&
+                 hoc_suppression_receipt.enter_block_matches,
+             1);
+    expect_i("DM1 HoC thing suppression rejects projectile leak",
+             (hoc_suppression_facts.observed_projectile_payload_count = 1,
+              dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+                  &hoc_runtime_apply,
+                  &hoc_suppression_facts,
+                  &hoc_suppression_receipt) &&
+                  hoc_suppression_receipt.handled &&
+                  hoc_suppression_receipt.ready &&
+                  !hoc_suppression_receipt.proof_passed &&
+                  !hoc_suppression_receipt.projectile_payloads_absent &&
+                  !hoc_suppression_receipt.walk_capture_safe),
+             1);
+    hoc_suppression_facts.observed_projectile_payload_count = 0;
+    expect_i("DM1 HoC thing suppression rejects false floor item leak",
+             (hoc_suppression_facts.observed_false_floor_item_payload_count = 1,
+              dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+                  &hoc_runtime_apply,
+                  &hoc_suppression_facts,
+                  &hoc_suppression_receipt) &&
+                  hoc_suppression_receipt.handled &&
+                  hoc_suppression_receipt.ready &&
+                  !hoc_suppression_receipt.proof_passed &&
+                  !hoc_suppression_receipt.false_item_payloads_absent),
+             1);
+    hoc_suppression_facts.observed_false_floor_item_payload_count = 0;
+    expect_i("DM1 HoC thing suppression rejects mirror thing leak",
+             (hoc_suppression_facts.observed_mirror_payload_as_thing_count = 1,
+              dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+                  &hoc_runtime_apply,
+                  &hoc_suppression_facts,
+                  &hoc_suppression_receipt) &&
+                  hoc_suppression_receipt.handled &&
+                  hoc_suppression_receipt.ready &&
+                  !hoc_suppression_receipt.proof_passed &&
+                  !hoc_suppression_receipt.mirror_payload_thing_absent),
+             1);
+    hoc_suppression_facts.observed_mirror_payload_as_thing_count = 0;
+    expect_i("DM1 HoC thing suppression rejects NULL input",
+             dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+                 NULL,
+                 &hoc_suppression_facts,
+                 &hoc_suppression_receipt),
+             0);
     expect_i("DM1 HoC capture proof rejects stale title surface",
              (hoc_capture_facts.saw_title_surface = 1,
               dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
