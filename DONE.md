@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 game-loop ownership names: game-loop phase/status/tick result/frame stats/state, frame/vblank budget constants, tick/vblank/pause/resume/state mutation/frame-budget helpers now expose DM1-owned API names; old M11 game-loop names remain compatibility aliases. Added CTest target `dm1_v1_game_loop_pc34_compat`. Verification: new game-loop test (49/49), movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 entrance champion-select ownership names: entrance state/context, mirror slots, door animation, mirror click, recruit, resurrect, reincarnate, cancel, finalize, completion, and party-count helpers now expose DM1-owned API names; old M11 entrance names remain compatibility aliases. Added CTest target `dm1_v1_entrance_champion_select_pc34_compat`. Verification: new entrance test (79/79), `test_dm1_v1_movement_pipeline_pc34_compat` (400/400), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 render-helper ownership names: blit/fill framebuffer/source/rect primitives plus creature-render init/collect/sort/graphic/name façade now expose DM1-owned API names; old M11 names remain compatibility aliases. Verification: `test_dm1_v1_creature_render_pc34_compat_integration` (127/127), `test_dm1_v1_movement_pipeline_pc34_compat` (400/400), Phase A 24/24, and `git diff --check` passed.

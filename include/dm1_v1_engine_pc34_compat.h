@@ -84,7 +84,7 @@ typedef struct {
 
     /* Key flags for the caller */
     M11_GameStateId     currentState;
-    M11_GameLoopPhase   lastPhase;
+    DM1_V1_GameLoopPhasePc34   lastPhase;
     bool                partyDead;
     bool                gameWon;
     bool                exitRequested;
@@ -96,7 +96,7 @@ typedef struct {
 typedef struct {
     /* ── Subsystem states ── */
     M11_GameStateMachine              stateMachine;
-    M11_GameLoopState                 gameLoop;
+    DM1_V1_GameLoopStatePc34                 gameLoop;
     M11_GL_State                      loopIntegration;
     M11_InputState                    input;
     M11_DD_DungeonData                dungeonData;

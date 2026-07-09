@@ -96,9 +96,9 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
     m11_game_state_transition(&engine->stateMachine, DM1_STATE_TITLE_SCREEN);
 
     /* 4. Game loop (tick rate, vblank config) */
-    m11_game_loop_init(&engine->gameLoop, config->extended_vblank);
+    DM1_V1_GameLoop_InitPc34Compat(&engine->gameLoop, config->extended_vblank);
     if (config->tick_rate_hz > 0)
-        m11_game_loop_set_tick_rate(&engine->gameLoop, config->tick_rate_hz);
+        DM1_V1_GameLoop_SetTickRatePc34Compat(&engine->gameLoop, config->tick_rate_hz);
 
     /* 5. Game loop integration */
     m11_gl_init(&engine->loopIntegration);
@@ -151,8 +151,8 @@ M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs)
         return result;
     }
 
-    M11_GameLoopTickResult loopResult =
-        m11_game_loop_tick(&engine->gameLoop, nowMs);
+    DM1_V1_GameLoopTickResultPc34 loopResult =
+        DM1_V1_GameLoop_TickPc34Compat(&engine->gameLoop, nowMs);
 
     /* 1. Poll input — always */
     result.inputProcessed = true;
@@ -299,7 +299,7 @@ bool m11_engine_save_game(M11_Engine *engine, uint8_t slot)
 void m11_engine_request_exit(M11_Engine *engine)
 {
     if (!engine) return;
-    m11_game_loop_request_exit(&engine->gameLoop);
+    DM1_V1_GameLoop_RequestExitPc34Compat(&engine->gameLoop);
 }
 
 /* ── Module manifest ──────────────────────────────────────────────── */

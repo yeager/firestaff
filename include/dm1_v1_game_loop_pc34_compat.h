@@ -51,7 +51,7 @@ typedef enum {
     DM1_PHASE_DEATH_CHECK,
     DM1_PHASE_INPUT_WAIT,
     DM1_PHASE_COUNT
-} M11_GameLoopPhase;
+} DM1_V1_GameLoopPhasePc34;
 
 /* ── Game loop states ─────────────────────────────────────────────── */
 typedef enum {
@@ -59,24 +59,24 @@ typedef enum {
     DM1_LOOP_RUNNING,         /* Normal game loop active */
     DM1_LOOP_PAUSED,          /* G2586_TimerActive == false */
     DM1_LOOP_STOPPED          /* Exit requested */
-} M11_GameLoopStatus;
+} DM1_V1_GameLoopStatusPc34;
 
 /* ── Frame timing constants (source: VBLANK.C / DOS CLOCK.C) ────── */
-#define M11_FRAME_RATE_HZ               50   /* PAL VBlank rate */
-#define M11_FRAME_BUDGET_MS             20   /* 1000/50 = 20ms per frame */
-#define M11_VBLANK_WAIT_MAX_DEFAULT     10   /* G0318: PC34 default */
-#define M11_VBLANK_WAIT_MAX_EXTENDED    12   /* Amiga A3x extended wait */
-#define M11_VBLANK_TIMER_BUDGET_MS       1   /* VBlank ISR overhead */
-#define M11_INPUT_POLL_BUDGET_MS         2   /* Input phase budget */
-#define M11_COMMAND_BUDGET_MS            3   /* Command processing budget */
-#define M11_MOVEMENT_BUDGET_MS           3   /* Movement update budget */
-#define M11_VIEWPORT_BUDGET_MS           6   /* Viewport render budget */
-#define M11_DIALOG_BUDGET_MS             1   /* Dialog/message budget */
-#define M11_SAVELOAD_BUDGET_MS           1   /* Save/load check budget */
+#define DM1_V1_FRAME_RATE_HZ_PC34               50   /* PAL VBlank rate */
+#define DM1_V1_FRAME_BUDGET_MS_PC34             20   /* 1000/50 = 20ms per frame */
+#define DM1_V1_VBLANK_WAIT_MAX_DEFAULT_PC34     10   /* G0318: PC34 default */
+#define DM1_V1_VBLANK_WAIT_MAX_EXTENDED_PC34    12   /* Amiga A3x extended wait */
+#define DM1_V1_VBLANK_TIMER_BUDGET_MS_PC34       1   /* VBlank ISR overhead */
+#define DM1_V1_INPUT_POLL_BUDGET_MS_PC34         2   /* Input phase budget */
+#define DM1_V1_COMMAND_BUDGET_MS_PC34            3   /* Command processing budget */
+#define DM1_V1_MOVEMENT_BUDGET_MS_PC34           3   /* Movement update budget */
+#define DM1_V1_VIEWPORT_BUDGET_MS_PC34           6   /* Viewport render budget */
+#define DM1_V1_DIALOG_BUDGET_MS_PC34             1   /* Dialog/message budget */
+#define DM1_V1_SAVELOAD_BUDGET_MS_PC34           1   /* Save/load check budget */
 
 /* ── Per-tick result from game loop orchestrator ──────────────────── */
 typedef struct {
-    M11_GameLoopPhase lastPhaseCompleted;
+    DM1_V1_GameLoopPhasePc34 lastPhaseCompleted;
     int newMapProcessed;           /* F0003 was called */
     int newMapIndex;               /* map index if processed, else -1 */
     int timelineEventsProcessed;   /* timeline should be called */
@@ -91,7 +91,7 @@ typedef struct {
     int stopWaitingForInput;       /* G0321 stop waiting */
     int vblankWaitCount;           /* G0317 current count */
     int exitRequested;             /* game exit requested */
-} M11_GameLoopTickResult;
+} DM1_V1_GameLoopTickResultPc34;
 
 /* ── Frame timing statistics ──────────────────────────────────────── */
 typedef struct {
@@ -100,12 +100,12 @@ typedef struct {
     uint32_t longestFrameUs;       /* worst-case frame time in microseconds */
     uint32_t avgFrameUs;           /* running average frame time */
     uint32_t budgetOverrunCount;   /* times any phase exceeded its budget */
-} M11_FrameTimingStats;
+} DM1_V1_FrameTimingStatsPc34;
 
 /* ── Game loop persistent state ───────────────────────────────────── */
 typedef struct {
     /* Loop status */
-    M11_GameLoopStatus loopStatus;
+    DM1_V1_GameLoopStatusPc34 loopStatus;
     int timerActive;                    /* G2586_TimerActive */
 
     /* VBlank/timing — from VBLANK.C */
@@ -129,61 +129,98 @@ typedef struct {
     uint32_t lastTickMs;
 
     /* Frame timing stats */
-    M11_FrameTimingStats frameStats;
-} M11_GameLoopState;
+    DM1_V1_FrameTimingStatsPc34 frameStats;
+} DM1_V1_GameLoopStatePc34;
 
 /* ── Initialization ───────────────────────────────────────────────── */
 
 /* Initialize game loop state. extendedVBlankWait selects 12 vs 10. */
-void m11_game_loop_init(M11_GameLoopState *state, int extendedVBlankWait);
+void DM1_V1_GameLoop_InitPc34Compat(DM1_V1_GameLoopStatePc34 *state, int extendedVBlankWait);
 
 /* Set configurable tick rate in Hz (default: 50). */
-void m11_game_loop_set_tick_rate(M11_GameLoopState *state, int hz);
+void DM1_V1_GameLoop_SetTickRatePc34Compat(DM1_V1_GameLoopStatePc34 *state, int hz);
 
 /* ── Core loop ────────────────────────────────────────────────────── */
 
 /* Process one tick of the game loop (F0002 body).
  * Pure orchestration — sets flags; caller invokes subsystems. */
-M11_GameLoopTickResult m11_game_loop_tick(M11_GameLoopState *state, uint32_t nowMs);
+DM1_V1_GameLoopTickResultPc34 DM1_V1_GameLoop_TickPc34Compat(DM1_V1_GameLoopStatePc34 *state, uint32_t nowMs);
 
 /* Simulate VBlank interrupt (F0577). Increments G0317 + G1086. */
-void m11_game_loop_vblank_tick(M11_GameLoopState *state);
+void DM1_V1_GameLoop_VBlankTickPc34Compat(DM1_V1_GameLoopStatePc34 *state);
 
 /* ── Pause/resume (G2586_TimerActive) ─────────────────────────────── */
 
 /* Pause the game loop (dialogue, loading, save screen). */
-void m11_game_loop_pause(M11_GameLoopState *state);
+void DM1_V1_GameLoop_PausePc34Compat(DM1_V1_GameLoopStatePc34 *state);
 
 /* Resume the game loop. */
-void m11_game_loop_resume(M11_GameLoopState *state);
+void DM1_V1_GameLoop_ResumePc34Compat(DM1_V1_GameLoopStatePc34 *state);
 
 /* Check if game loop is paused. */
-int m11_game_loop_is_paused(const M11_GameLoopState *state);
+int DM1_V1_GameLoop_IsPausedPc34Compat(const DM1_V1_GameLoopStatePc34 *state);
 
 /* ── State mutation ───────────────────────────────────────────────── */
 
-void m11_game_loop_request_new_map(M11_GameLoopState *state, int newMapIndex);
-void m11_game_loop_set_party_dead(M11_GameLoopState *state);
-void m11_game_loop_set_inventory(M11_GameLoopState *state, int championOrdinal);
-void m11_game_loop_set_resting(M11_GameLoopState *state, int resting);
-void m11_game_loop_request_exit(M11_GameLoopState *state);
-int  m11_game_loop_should_continue(const M11_GameLoopState *state);
+void DM1_V1_GameLoop_RequestNewMapPc34Compat(DM1_V1_GameLoopStatePc34 *state, int newMapIndex);
+void DM1_V1_GameLoop_SetPartyDeadPc34Compat(DM1_V1_GameLoopStatePc34 *state);
+void DM1_V1_GameLoop_SetInventoryPc34Compat(DM1_V1_GameLoopStatePc34 *state, int championOrdinal);
+void DM1_V1_GameLoop_SetRestingPc34Compat(DM1_V1_GameLoopStatePc34 *state, int resting);
+void DM1_V1_GameLoop_RequestExitPc34Compat(DM1_V1_GameLoopStatePc34 *state);
+int  DM1_V1_GameLoop_ShouldContinuePc34Compat(const DM1_V1_GameLoopStatePc34 *state);
 
 /* ── Frame budget monitoring ──────────────────────────────────────── */
 
 /* Record a phase's elapsed time for budget tracking. */
-void m11_game_loop_record_phase_time(M11_GameLoopState *state,
-                                     M11_GameLoopPhase phase,
+void DM1_V1_GameLoop_RecordPhaseTimePc34Compat(DM1_V1_GameLoopStatePc34 *state,
+                                     DM1_V1_GameLoopPhasePc34 phase,
                                      uint32_t elapsedUs);
 
 /* Get current frame timing statistics. */
-M11_FrameTimingStats m11_game_loop_get_frame_stats(const M11_GameLoopState *state);
+DM1_V1_FrameTimingStatsPc34 DM1_V1_GameLoop_GetFrameStatsPc34Compat(const DM1_V1_GameLoopStatePc34 *state);
 
 /* Reset frame timing statistics. */
-void m11_game_loop_reset_frame_stats(M11_GameLoopState *state);
+void DM1_V1_GameLoop_ResetFrameStatsPc34Compat(DM1_V1_GameLoopStatePc34 *state);
 
 /* ── Source evidence ──────────────────────────────────────────────── */
-const char *m11_game_loop_source_evidence(void);
+const char *DM1_V1_GameLoop_SourceEvidencePc34Compat(void);
+
+/* Backward-compatible M11 names for existing shared call sites. */
+typedef DM1_V1_GameLoopPhasePc34 M11_GameLoopPhase;
+typedef DM1_V1_GameLoopStatusPc34 M11_GameLoopStatus;
+typedef DM1_V1_GameLoopTickResultPc34 M11_GameLoopTickResult;
+typedef DM1_V1_FrameTimingStatsPc34 M11_FrameTimingStats;
+typedef DM1_V1_GameLoopStatePc34 M11_GameLoopState;
+
+#define M11_FRAME_RATE_HZ DM1_V1_FRAME_RATE_HZ_PC34
+#define M11_FRAME_BUDGET_MS DM1_V1_FRAME_BUDGET_MS_PC34
+#define M11_VBLANK_WAIT_MAX_DEFAULT DM1_V1_VBLANK_WAIT_MAX_DEFAULT_PC34
+#define M11_VBLANK_WAIT_MAX_EXTENDED DM1_V1_VBLANK_WAIT_MAX_EXTENDED_PC34
+#define M11_VBLANK_TIMER_BUDGET_MS DM1_V1_VBLANK_TIMER_BUDGET_MS_PC34
+#define M11_INPUT_POLL_BUDGET_MS DM1_V1_INPUT_POLL_BUDGET_MS_PC34
+#define M11_COMMAND_BUDGET_MS DM1_V1_COMMAND_BUDGET_MS_PC34
+#define M11_MOVEMENT_BUDGET_MS DM1_V1_MOVEMENT_BUDGET_MS_PC34
+#define M11_VIEWPORT_BUDGET_MS DM1_V1_VIEWPORT_BUDGET_MS_PC34
+#define M11_DIALOG_BUDGET_MS DM1_V1_DIALOG_BUDGET_MS_PC34
+#define M11_SAVELOAD_BUDGET_MS DM1_V1_SAVELOAD_BUDGET_MS_PC34
+
+#define m11_game_loop_init DM1_V1_GameLoop_InitPc34Compat
+#define m11_game_loop_set_tick_rate DM1_V1_GameLoop_SetTickRatePc34Compat
+#define m11_game_loop_tick DM1_V1_GameLoop_TickPc34Compat
+#define m11_game_loop_vblank_tick DM1_V1_GameLoop_VBlankTickPc34Compat
+#define m11_game_loop_pause DM1_V1_GameLoop_PausePc34Compat
+#define m11_game_loop_resume DM1_V1_GameLoop_ResumePc34Compat
+#define m11_game_loop_is_paused DM1_V1_GameLoop_IsPausedPc34Compat
+#define m11_game_loop_request_new_map DM1_V1_GameLoop_RequestNewMapPc34Compat
+#define m11_game_loop_set_party_dead DM1_V1_GameLoop_SetPartyDeadPc34Compat
+#define m11_game_loop_set_inventory DM1_V1_GameLoop_SetInventoryPc34Compat
+#define m11_game_loop_set_resting DM1_V1_GameLoop_SetRestingPc34Compat
+#define m11_game_loop_request_exit DM1_V1_GameLoop_RequestExitPc34Compat
+#define m11_game_loop_should_continue DM1_V1_GameLoop_ShouldContinuePc34Compat
+#define m11_game_loop_record_phase_time DM1_V1_GameLoop_RecordPhaseTimePc34Compat
+#define m11_game_loop_get_frame_stats DM1_V1_GameLoop_GetFrameStatsPc34Compat
+#define m11_game_loop_reset_frame_stats DM1_V1_GameLoop_ResetFrameStatsPc34Compat
+#define m11_game_loop_source_evidence DM1_V1_GameLoop_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }
