@@ -2139,6 +2139,133 @@ int dm2_v1_boot_startup_packaged_full_start_receipt_from_runtime_state(
         out_receipt);
 }
 
+void dm2_v1_boot_startup_packaged_consumer_receipt_init(
+    DM2_V1_BootStartupPackagedConsumerReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+    }
+}
+
+int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
+    const DM2_V1_BootStartupPackagedFullStartReceipt *package,
+    DM2_V1_BootStartupPackagedConsumerReceipt *out_receipt)
+{
+    int draw_ready;
+
+    dm2_v1_boot_startup_packaged_consumer_receipt_init(out_receipt);
+    if (!package || !out_receipt || !package->valid) {
+        return 0;
+    }
+
+    draw_ready =
+        package->draw_startup_menu &&
+        package->menu_capture_ready &&
+        package->hud_handoff_capture_ready &&
+        package->command_count > 0;
+
+    /* skproject/SKWIN boot hosts consume the title/menu/HUD startup state as
+     * one receipt; keep draw/probe gates here instead of exposing callers to
+     * loose timing, command-count, and asset-readiness fields. */
+    out_receipt->packaged_full_start_valid = package->valid;
+    out_receipt->packaged_full_start_hash = package->packaged_full_start_hash;
+    out_receipt->startup_active = package->draw_startup_menu;
+    out_receipt->startup_animation_active =
+        package->hud_handoff_capture_ready;
+    out_receipt->startup_title_frame = package->title_frame;
+    out_receipt->startup_title_frame_max = package->title_frame_max;
+    out_receipt->startup_title_ready = package->capture_proof.title_ready;
+    out_receipt->startup_hud_runtime_ready = package->hud_runtime_ready;
+    out_receipt->startup_draw_ready = draw_ready;
+    out_receipt->startup_draw_command_count = package->command_count;
+    out_receipt->startup_draw_menu_capture_ready =
+        package->menu_capture_ready;
+    out_receipt->startup_draw_hud_handoff_ready =
+        package->hud_handoff_capture_ready;
+    out_receipt->title_capture_ready = package->title_capture_ready;
+    out_receipt->menu_capture_ready = package->menu_capture_ready;
+    out_receipt->hud_handoff_capture_ready =
+        package->hud_handoff_capture_ready;
+    out_receipt->runtime_handoff_capture_ready =
+        package->runtime_handoff_capture_ready;
+    out_receipt->exact_title_timing_ready =
+        package->exact_title_timing_ready;
+    out_receipt->full_start_real_asset_ready =
+        package->full_start_real_asset_ready;
+    out_receipt->title_gdat_asset_ready = package->title_gdat_asset_ready;
+    out_receipt->title_gdat_asset_w = package->title_gdat_asset_w;
+    out_receipt->title_gdat_asset_h = package->title_gdat_asset_h;
+    out_receipt->title_frame_duration_ticks =
+        package->title_frame_duration_ticks;
+    out_receipt->title_cycle_ticks = package->title_cycle_ticks;
+    out_receipt->title_cycle_position_tick =
+        package->title_cycle_position_tick;
+    out_receipt->title_frame_start_tick = package->title_frame_start_tick;
+    out_receipt->title_next_frame_tick = package->title_next_frame_tick;
+    out_receipt->title_frame_elapsed_ticks =
+        package->title_frame_elapsed_ticks;
+    out_receipt->title_frame_remaining_ticks =
+        package->title_frame_remaining_ticks;
+    out_receipt->phase =
+        package->draw_startup_menu ? "dm2-startup-menu" : "dm2-runtime";
+    out_receipt->animation = out_receipt->phase;
+    out_receipt->status_scope = package->status_scope;
+    out_receipt->status = package->status;
+    out_receipt->valid =
+        out_receipt->packaged_full_start_valid &&
+        package->m11_consumer_ready &&
+        out_receipt->packaged_full_start_hash != 0u;
+    return out_receipt->valid;
+}
+
+int dm2_v1_boot_startup_packaged_consumer_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupPackagedConsumerReceipt *out_receipt)
+{
+    DM2_V1_BootStartupPackagedFullStartReceipt package;
+
+    dm2_v1_boot_startup_packaged_consumer_receipt_init(out_receipt);
+    if (!snapshot || !out_receipt ||
+        !dm2_v1_boot_startup_packaged_full_start_receipt_from_snapshot(
+            snapshot,
+            &package)) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
+        &package,
+        out_receipt);
+}
+
+int dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupPackagedConsumerReceipt *out_receipt)
+{
+    DM2_V1_BootStartupPackagedFullStartReceipt package;
+
+    dm2_v1_boot_startup_packaged_consumer_receipt_init(out_receipt);
+    if (!out_receipt ||
+        !dm2_v1_boot_startup_packaged_full_start_receipt_from_runtime_state(
+            profile,
+            startup_menu_active,
+            startup_save_root,
+            resume_available,
+            slot_mask,
+            selected_row,
+            title_animation_tick,
+            &package)) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
+        &package,
+        out_receipt);
+}
+
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,

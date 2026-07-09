@@ -62,6 +62,7 @@ int main(void)
     DM2_V1_BootRuntimeStartupSnapshot boot_snapshot;
     DM2_V1_BootStartupHostViewReceipt boot_host_view_receipt;
     DM2_V1_BootStartupPackagedFullStartReceipt boot_full_start_package;
+    DM2_V1_BootStartupPackagedConsumerReceipt boot_consumer_receipt;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -523,6 +524,26 @@ int main(void)
               boot_full_start_package.full_start.valid == 1 &&
               boot_full_start_package.capture_proof.valid == 1,
           "boot packaged full-start receipt joins full-start and capture proof");
+    check(dm2_v1_boot_startup_packaged_consumer_receipt_from_snapshot(
+              &boot_snapshot,
+              &boot_consumer_receipt) &&
+              boot_consumer_receipt.valid &&
+              boot_consumer_receipt.packaged_full_start_valid == 1 &&
+              boot_consumer_receipt.packaged_full_start_hash ==
+                  boot_full_start_package.packaged_full_start_hash &&
+              boot_consumer_receipt.startup_active == 1 &&
+              boot_consumer_receipt.startup_animation_active == 1 &&
+              boot_consumer_receipt.startup_title_frame == 0 &&
+              boot_consumer_receipt.startup_title_frame_max == 7 &&
+              boot_consumer_receipt.startup_title_ready == 0 &&
+              boot_consumer_receipt.startup_hud_runtime_ready == 1 &&
+              boot_consumer_receipt.startup_draw_ready == 1 &&
+              boot_consumer_receipt.startup_draw_command_count ==
+                  boot_full_start_package.command_count &&
+              boot_consumer_receipt.startup_draw_menu_capture_ready == 1 &&
+              boot_consumer_receipt.startup_draw_hud_handoff_ready == 1 &&
+              strcmp(boot_consumer_receipt.phase, "dm2-startup-menu") == 0,
+          "boot packaged consumer receipt gives M11 startup draw gate");
     check(dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
               NULL,
               1,
@@ -564,6 +585,23 @@ int main(void)
               boot_full_start_package.menu_capture_ready == 1 &&
               boot_full_start_package.m11_consumer_ready == 1,
           "boot packaged full-start receipt owns nonzero title timing");
+    check(dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
+              NULL,
+              1,
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              13,
+              &boot_consumer_receipt) &&
+              boot_consumer_receipt.valid &&
+              boot_consumer_receipt.startup_title_frame == 2 &&
+              boot_consumer_receipt.title_frame_start_tick == 12 &&
+              boot_consumer_receipt.title_next_frame_tick == 18 &&
+              boot_consumer_receipt.startup_draw_command_count ==
+                  boot_full_start_package.command_count &&
+              boot_consumer_receipt.startup_draw_ready == 1,
+          "boot packaged consumer receipt owns nonzero startup draw timing");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&
