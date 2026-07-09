@@ -8333,11 +8333,6 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         state->lastWorldHash = state->lastTickResult.worldHashPost;
         M11_GameView_ProcessTickEmissions(state);
     }
-    m11_disable_champion_action_after_spell_f0412(
-        state,
-        state->world.party.activeChampionIndex,
-        spell.disabledTicks);
-
     m11_log_event(state, M11_COLOR_GREEN, "T%u: %s CAST SPELL #%d (COST %d MANA)",
                   (unsigned int)state->world.gameTick, champName, tableIndex, manaCost);
     m11_set_status(state, "CAST", "SPELL COMMITTED");

@@ -9021,6 +9021,30 @@ static void test_f0231_zero_damage_emission_skips_hit_feedback(void) {
               "zero-damage F0231 emission does not award synthetic damage XP");
 }
 
+static void test_spell_action_disable_emission_owns_cooldown(void) {
+    M11_GameViewState state;
+
+    seed_state(&state, 100, 7);
+    state.actionDisabledTicks[0] = 0;
+    state.actionDisabledIndex[0] = 0xFFu;
+    state.actionEnableSlotOrdinal[0] = 0xFFu;
+    state.lastTickResult.emissionCount = 1;
+    state.lastTickResult.emissions[0].kind = EMIT_ACTION_DISABLED;
+    state.lastTickResult.emissions[0].payload[0] = 0;
+    state.lastTickResult.emissions[0].payload[1] = 42;
+    state.lastTickResult.emissions[0].payload[2] = 0xFF;
+    state.lastTickResult.emissions[0].payload[3] = 0;
+
+    M11_GameView_ProcessTickEmissions(&state);
+
+    ASSERT_EQ(state.actionDisabledTicks[0], 42,
+              "M11 consumes M10 F0412/F0330 action-disable emission");
+    ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+              "spell cooldown keeps no Graphic560 action index");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
+              "spell cooldown mirrors F0330 enable-action slot ordinal");
+}
+
 static void test_f0231_positive_damage_emission_skips_duplicate_xp(void) {
     M11_GameViewState state;
     int xpBefore;
@@ -9121,6 +9145,7 @@ int main(void) {
     test_spellshield_success_consumes_mana_charges_and_full_xp();
     test_fireshield_success_schedules_c78_and_expires();
     test_spellshield_high_defense_quarters_new_event_defense();
+    test_spell_action_disable_emission_owns_cooldown();
     test_shoot_no_ammunition_clears_action_xp_but_keeps_tail();
     test_direct_shoot_no_ammunition_clears_action_xp();
     test_shoot_action_uses_champion_cell_for_f0326_launch();
