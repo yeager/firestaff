@@ -108,6 +108,15 @@ typedef struct {
 } DM1_ProjectileCreatureActionPlanPc34;
 
 typedef struct {
+    int valid;
+    int handled;
+    int outcomeCode;
+    int damageApplied;
+    int creatureIndex;
+    struct CombatResult_Compat damage;
+} DM1_ProjectileCreatureActionApplyPlanPc34;
+
+typedef struct {
     int scheduleReaction;
     int cleanupEventsAndFear;
     int dropFixedPossessions;
@@ -369,6 +378,10 @@ int dm1_v1_projectile_creature_action_plan_pc34(
     const struct DungeonGroup_Compat* group,
     int creatureAttributes,
     DM1_ProjectileCreatureActionPlanPc34* outPlan);
+int dm1_v1_projectile_creature_action_apply_pc34(
+    const DM1_ProjectileCreatureActionPlanPc34* actionPlan,
+    struct DungeonGroup_Compat* group,
+    DM1_ProjectileCreatureActionApplyPlanPc34* outPlan);
 int dm1_v1_projectile_creature_impact_aftermath_pc34(
     const DM1_ProjectileCreatureImpactPlanPc34* plan,
     const struct ProjectileInstance_Compat* projectile,

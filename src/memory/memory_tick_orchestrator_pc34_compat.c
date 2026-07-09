@@ -4524,17 +4524,16 @@ static int orch_apply_projectile_group_action_compat(
     struct TickResult_Compat* result)
 {
     struct DungeonGroup_Compat* group;
-    struct CombatResult_Compat damage;
     struct CombatantCreatureSnapshot_Compat creatureSnapshot;
     int groupIndex = -1;
     int creatureIndex;
     int killedCell;
     int originalCreatureType;
     int originalGroupCount;
-    int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
     int associatedThingMovedToGroup = 0;
     int creatureAttributes = 0;
     DM1_ProjectileCreatureActionPlanPc34 actionPlan;
+    DM1_ProjectileCreatureActionApplyPlanPc34 applyPlan;
 
     if (!world || !action || !world->things || !world->things->groups) return 0;
     if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP) return 0;
@@ -4585,20 +4584,12 @@ static int orch_apply_projectile_group_action_compat(
         }
     }
 
-    memset(&damage, 0, sizeof(damage));
-    damage.damageApplied = actionPlan.damageApplied;
-
-    /* ReDMCSB PROJEXPL.C:F0217 lines 515-537 resolves a concrete
-     * creature ordinal in the impact cell, scales attack by creature
-     * defense, adds F0192 poison adjustment, and applies the result
-     * through GROUP.C F0190.  F0811 has already produced the bounded
-     * scaled action payload, so the dispatcher only mutates the live
-     * group through F0738. */
-    if (!F0738_COMBAT_ApplyDamageToGroup_Compat(
-            &damage, group, creatureIndex, &outcome)) {
+    if (!dm1_v1_projectile_creature_action_apply_pc34(
+            &actionPlan, group, &applyPlan) ||
+        !applyPlan.handled) {
         return 0;
     }
-    if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+    if (applyPlan.outcomeCode == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
         /* ReDMCSB PROJEXPL.C:F0217 lines 535-539 receives the F0190
          * damage outcome; GROUP.C:F0190 lines 907-917 creates death
          * smoke, and all-kill removes the group from the square.  Route the
@@ -4609,14 +4600,14 @@ static int orch_apply_projectile_group_action_compat(
         orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
             world, group, &creatureSnapshot, killedCell,
             action->targetMapIndex, action->targetMapX, action->targetMapY,
-            outcome);
+            applyPlan.outcomeCode);
         orch_cmd_attack_apply_group_kill_side_effects_at_square_compat(
             world, groupIndex, action->targetMapIndex, action->targetMapX,
-            action->targetMapY, outcome);
+            action->targetMapY, applyPlan.outcomeCode);
         emit(result, EMIT_KILL_NOTIFY, groupIndex, creatureIndex,
-             outcome, originalCreatureType);
+             applyPlan.outcomeCode, originalCreatureType);
     } else {
-        if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+        if (applyPlan.outcomeCode == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
             /* ReDMCSB GROUP.C:F0190 lines 842-917 drops fixed possessions
              * for the killed member, cleans per-creature events, may frighten
              * the surviving group, compacts the group, and creates death smoke.
@@ -4625,19 +4616,20 @@ static int orch_apply_projectile_group_action_compat(
             orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
                 world, group, &creatureSnapshot, killedCell,
                 action->targetMapIndex, action->targetMapX, action->targetMapY,
-                outcome);
+                applyPlan.outcomeCode);
             (void)orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
                 world, group, &creatureSnapshot, groupIndex, creatureIndex,
                 originalGroupCount, action->targetMapIndex,
-                action->targetMapX, action->targetMapY, outcome);
+                action->targetMapX, action->targetMapY,
+                applyPlan.outcomeCode);
             orch_create_f0190_death_smoke_at_square_compat(
                 world, originalCreatureType, killedCell,
                 action->targetMapIndex, action->targetMapX, action->targetMapY);
             emit(result, EMIT_KILL_NOTIFY, groupIndex, creatureIndex,
-                 outcome, originalCreatureType);
+                 applyPlan.outcomeCode, originalCreatureType);
         } else {
             if (orch_maybe_attach_projectile_weapon_to_group_slot_compat(
-                    world, group, projectile, outcome)) {
+                    world, group, projectile, applyPlan.outcomeCode)) {
                 associatedThingMovedToGroup = 1;
             }
         }

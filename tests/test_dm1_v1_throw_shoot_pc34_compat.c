@@ -641,6 +641,7 @@ static void test_projectile_creature_impact_plan(void) {
     struct CombatAction_Compat action;
     DM1_ProjectileCreatureImpactPlanPc34 plan;
     DM1_ProjectileCreatureActionPlanPc34 actionPlan;
+    DM1_ProjectileCreatureActionApplyPlanPc34 actionApply;
     DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
     DM1_ProjectileCreaturePrecheckDamagePlanPc34 precheck;
     unsigned short weaponThing =
@@ -651,6 +652,7 @@ static void test_projectile_creature_impact_plan(void) {
     memset(&action, 0, sizeof(action));
     memset(&plan, 0, sizeof(plan));
     memset(&actionPlan, 0, sizeof(actionPlan));
+    memset(&actionApply, 0, sizeof(actionApply));
     memset(&aftermath, 0, sizeof(aftermath));
     memset(&precheck, 0, sizeof(precheck));
 
@@ -691,6 +693,20 @@ static void test_projectile_creature_impact_plan(void) {
     ASSERT_EQ(actionPlan.slotIndex, 1, "creature action target slot");
     ASSERT_EQ(actionPlan.damageApplied, 17, "creature action damage");
     ASSERT_EQ(actionPlan.killedCell, 3, "creature action killed cell");
+
+    ASSERT_EQ(dm1_v1_projectile_creature_action_apply_pc34(
+                  &actionPlan, &group, &actionApply), 1,
+              "creature action apply builds");
+    ASSERT_EQ(actionApply.valid, 1, "creature action apply valid");
+    ASSERT_EQ(actionApply.handled, 1, "creature action apply handled");
+    ASSERT_EQ(actionApply.creatureIndex, 1, "creature action apply slot");
+    ASSERT_EQ(actionApply.damageApplied, 17, "creature action apply damage");
+    ASSERT_EQ(actionApply.damage.damageApplied, 17,
+              "creature action apply payload");
+    ASSERT_EQ(actionApply.outcomeCode, COMBAT_OUTCOME_KILLED_NO_CREATURES,
+              "creature action apply outcome");
+    ASSERT_EQ(group.health[1], 3, "creature action apply mutates hp");
+    group.health[1] = 20;
 
     ASSERT_EQ(dm1_v1_projectile_creature_impact_aftermath_pc34(
                   &plan, &p,
