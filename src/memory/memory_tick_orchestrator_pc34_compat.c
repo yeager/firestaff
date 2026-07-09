@@ -4934,10 +4934,8 @@ static int orch_apply_explosion_group_action_compat(
     const struct CombatAction_Compat* action)
 {
     struct DungeonGroup_Compat* group;
-    struct CombatResult_Compat damage;
+    DM1_ExplosionGroupApplyPlanPc34 applyPlan;
     int groupIndex = -1;
-    int creatureIndex = 0;
-    int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
 
     if (!world || !action || !world->things || !world->things->groups) return 0;
     if (!orch_cmd_attack_find_group_on_square_compat(
@@ -4948,21 +4946,10 @@ static int orch_apply_explosion_group_action_compat(
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
     group = &world->things->groups[groupIndex];
 
-    memset(&damage, 0, sizeof(damage));
-    damage.damageApplied = action->rawAttackValue;
-    if (damage.damageApplied <= 0) return 0;
-
-    while (creatureIndex <= (int)group->count && creatureIndex < 4) {
-        if (group->health[creatureIndex] == 0) {
-            ++creatureIndex;
-            continue;
-        }
-        (void)F0738_COMBAT_ApplyDamageToGroup_Compat(
-            &damage, group, creatureIndex, &outcome);
-        if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) break;
-        if (outcome == COMBAT_OUTCOME_KILLED_NO_CREATURES) ++creatureIndex;
+    if (!dm1_v1_explosion_group_apply_pc34(action, group, &applyPlan)) {
+        return 0;
     }
-    return 1;
+    return applyPlan.handled;
 }
 
 

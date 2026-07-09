@@ -980,14 +980,20 @@ static void test_explosion_party_damage_plan(void) {
     DM1_ExplosionPartyDamageFanoutPlanPc34 fanout;
     DM1_ExplosionPartyChampionDamagePlanPc34 champion;
     DM1_ExplosionPartyChampionApplyPlanPc34 apply;
+    DM1_ExplosionGroupApplyPlanPc34 groupApply;
     struct CombatantChampionSnapshot_Compat defender;
     struct ChampionState_Compat championState;
+    struct CombatAction_Compat groupAction;
+    struct DungeonGroup_Compat group;
     struct RngState_Compat rng;
     memset(&fanout, 0, sizeof(fanout));
     memset(&champion, 0, sizeof(champion));
     memset(&apply, 0, sizeof(apply));
+    memset(&groupApply, 0, sizeof(groupApply));
     memset(&defender, 0, sizeof(defender));
     memset(&championState, 0, sizeof(championState));
+    memset(&groupAction, 0, sizeof(groupAction));
+    memset(&group, 0, sizeof(group));
     memset(&rng, 0, sizeof(rng));
 
     ASSERT_EQ(dm1_v1_explosion_party_damage_fanout_plan_pc34(
@@ -1048,6 +1054,24 @@ static void test_explosion_party_damage_plan(void) {
                   0, COMBAT_ATTACK_FIRE, COMBAT_WOUND_NONE, &fanout), 1,
               "zero explosion fanout builds");
     ASSERT_EQ(fanout.handled, 0, "zero attack is not handled");
+
+    groupAction.kind = COMBAT_ACTION_APPLY_DAMAGE_GROUP;
+    groupAction.rawAttackValue = 15;
+    group.count = 1;
+    group.cells = (0 << 0) | (1 << 2);
+    group.health[0] = 10;
+    group.health[1] = 20;
+    ASSERT_EQ(dm1_v1_explosion_group_apply_pc34(
+                  &groupAction, &group, &groupApply), 1,
+              "explosion group apply builds");
+    ASSERT_EQ(groupApply.valid, 1, "explosion group apply valid");
+    ASSERT_EQ(groupApply.handled, 1, "explosion group handled");
+    ASSERT_EQ(groupApply.appliedCount, 2, "explosion group applies twice");
+    ASSERT_EQ(groupApply.damage.damageApplied, 15,
+              "explosion group damage payload");
+    ASSERT_EQ(group.count, 0, "explosion group compacts count");
+    ASSERT_EQ(group.health[0], 5, "explosion group shifted health");
+    ASSERT_EQ(group.health[1], 20, "explosion group preserves tail health");
 }
 
 int main(void) {

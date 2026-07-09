@@ -211,6 +211,14 @@ typedef struct {
     struct CombatResult_Compat damage;
 } DM1_ExplosionPartyChampionApplyPlanPc34;
 
+typedef struct {
+    int valid;
+    int handled;
+    int appliedCount;
+    int finalOutcomeCode;
+    struct CombatResult_Compat damage;
+} DM1_ExplosionGroupApplyPlanPc34;
+
 enum {
     DM1_PROJECTILE_IMPACT_LOG_NONE_PC34 = 0,
     DM1_PROJECTILE_IMPACT_LOG_HIT_WALL_PC34,
@@ -432,6 +440,10 @@ int dm1_v1_explosion_party_champion_apply_pc34(
     struct RngState_Compat* rng,
     struct ChampionState_Compat* champion,
     DM1_ExplosionPartyChampionApplyPlanPc34* outPlan);
+int dm1_v1_explosion_group_apply_pc34(
+    const struct CombatAction_Compat* action,
+    struct DungeonGroup_Compat* group,
+    DM1_ExplosionGroupApplyPlanPc34* outPlan);
 
 #ifdef __cplusplus
 }
