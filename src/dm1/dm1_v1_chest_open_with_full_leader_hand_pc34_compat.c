@@ -237,9 +237,9 @@ int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
     out->leaderHandAfterChestBOpenAllowedSlots = item.allowedSlots;
     out->leaderHandEvictedByChestBOpen = item.itemType == 0 ? 1 : 0;
     out->chestBVisibleWeightAfterOpen =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     out->chestBContainerWeightAfterOpen =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     out->chestBC537TypeAfterOpen =
         out->chestBOpenTypes[DM1_PC34_CHEST_OPEN_FULL_HAND_C537_INDEX];
     out->chestBC540TypeAfterOpen =
@@ -316,9 +316,9 @@ int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
     out->case2ChestAC538TypeAfterOpen =
         out->case2ChestAOpenTypes[DM1_PC34_CHEST_OPEN_FULL_HAND_C538_INDEX];
     out->case2ChestAVisibleWeightAfterOpen =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state2, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state2, 0);
     out->case2ChestAContainerWeightAfterOpen =
-        m11_inventory_pc34_open_chest_container_weight(&state2, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state2, 0);
 
     /* ReDMCSB CHEST.C F0333 lines 34-38 closes a different current chest
      * before lines 53-67 repopulate G0425 from chest B. */
@@ -348,9 +348,9 @@ int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
             case2PreviousChestAClosed,
             out->case2PreviousChestAClosedCount);
     out->case2ChestBVisibleWeightAfterOpen =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state2, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state2, 0);
     out->case2ChestBContainerWeightAfterOpen =
-        m11_inventory_pc34_open_chest_container_weight(&state2, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state2, 0);
     out->case2ChestBC537TypeAfterOpen =
         out->case2ChestBOpenTypes[DM1_PC34_CHEST_OPEN_FULL_HAND_C537_INDEX];
     out->case2ChestBC538TypeAfterOpen =

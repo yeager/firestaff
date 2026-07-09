@@ -387,10 +387,10 @@ static int run_case(DM1_V1_ChestPickupStackFailoverCasePc34* out,
     out->chestAfterCharges = chestAfter.charges;
     out->sentinelAfterType = sentinelAfter.itemType;
     out->visibleWeightAfterPickup =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     out->loadAfterPickup = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
-    out->closeCount = m11_inventory_pc34_close_chest_with_weight_snapshot(
+    out->closeCount = DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
         &state, 0, closed,
         DM1_PC34_CHEST_STACK_FAILOVER_SLOT_COUNT, NULL);
     if (out->closeCount < 0) {

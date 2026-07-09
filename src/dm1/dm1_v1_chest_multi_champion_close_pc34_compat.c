@@ -164,7 +164,7 @@ static int run_champion_case(
     out->openThings[championIndex] =
         DM1_V1_Inventory_GetOpenChestThingPc34Compat(state, championIndex);
     out->visibleWeightsAfterOpen[championIndex] =
-        m11_inventory_pc34_open_chest_visible_contents_weight(
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(
             state, championIndex);
     out->loadsAfterOpen[championIndex] =
         DM1_V1_Inventory_GetLoadPc34Compat(state, championIndex);
@@ -203,7 +203,7 @@ static int run_champion_case(
     }
     out->slotAfterTypes[championIndex] = item.itemType;
     out->visibleWeightsAfterClick[championIndex] =
-        m11_inventory_pc34_open_chest_visible_contents_weight(
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(
             state, championIndex);
     out->loadsAfterClick[championIndex] =
         DM1_V1_Inventory_GetLoadPc34Compat(state, championIndex);
@@ -214,7 +214,7 @@ static int run_champion_case(
      * non-empty G0425 slots; DUNGEON.C F0140 lines 1114-1120 requires the
      * close snapshot to be base 50 plus the champion's own visible contents. */
     out->closeCounts[championIndex] =
-        m11_inventory_pc34_close_chest_with_weight_snapshot(
+        DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
             state, championIndex, closed,
             DM1_PC34_CHEST_MULTI_CHAMPION_SLOT_COUNT,
             &out->closeContainerSnapshots[championIndex]);

@@ -101,7 +101,7 @@ int dm1_v1_chest_same_open_noop_run_pc34(
         DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, CHAMPION);
     copy_chest_slot_types(&state, CHAMPION, out->firstOpenSlotTypes);
     out->firstOpenVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state,
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state,
                                                               CHAMPION);
 
     /* ReDMCSB CHAMPION.C F0302 lines 688-710 reads the current G0425 C538
@@ -118,7 +118,7 @@ int dm1_v1_chest_same_open_noop_run_pc34(
         out->c538AfterPickup = c538.itemType;
     }
     out->visibleWeightAfterPickup =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state,
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state,
                                                               CHAMPION);
     out->loadAfterPickup = DM1_V1_Inventory_GetLoadPc34Compat(&state, CHAMPION);
 
@@ -152,7 +152,7 @@ int dm1_v1_chest_same_open_noop_run_pc34(
     out->bItemsLeakedAfterSameOpen =
         count_b_items_in_open_slots(&state, CHAMPION);
     out->visibleWeightAfterSameOpen =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state,
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state,
                                                               CHAMPION);
     out->loadAfterSameOpen = DM1_V1_Inventory_GetLoadPc34Compat(&state, CHAMPION);
 

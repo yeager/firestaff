@@ -134,9 +134,9 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
         return 0;
     }
     out->openVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     out->openContainerWeight =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     out->loadAfterOpen = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     out->incompatibleSlotMask = DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_PC34_SLOT_CHEST_2);
@@ -191,15 +191,15 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
     }
     out->finalSlotAfterReplacement = item.itemType;
     out->replacementVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     out->replacementContainerWeight =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     out->loadAfterReplacement = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB CHEST.C F0334 lines 117-132 rewrites only the eight visible
      * G0425 slots and clears them; DUNGEON.C F0140 lines 1114-1120 container
      * weight is sampled before that transient state is reset. */
-    out->closeCount = m11_inventory_pc34_close_chest_with_weight_snapshot(
+    out->closeCount = DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
         &state, 0, closed, DM1_PC34_CHEST_CLOSE_REWIRE_TEST_SLOT_COUNT,
         &out->closeContainerWeightSnapshot);
     if (out->closeCount < 0 ||
@@ -210,7 +210,7 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
     out->hiddenTailClosed = contains_type(out->closedTypes, out->closeCount,
                                           out->hiddenTailInput);
     out->closeContainerWeightAfter =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     out->loadAfterClose = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 reopens from the F0334-produced link
@@ -226,9 +226,9 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
                                             out->reopenVisibleCount,
                                             out->hiddenTailInput);
     out->reopenVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&state, 0);
     out->reopenContainerWeight =
-        m11_inventory_pc34_open_chest_container_weight(&state, 0);
+        DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(&state, 0);
     out->loadAfterReopen = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     return 1;

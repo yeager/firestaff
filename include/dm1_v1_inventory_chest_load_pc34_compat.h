@@ -11,16 +11,25 @@ enum {
     DM1_PC34_CHEST_EMPTY_THING_WEIGHT = 50
 };
 
-const char* dm1_inventory_chest_load_source_evidence_pc34(void);
-int m11_inventory_pc34_open_chest_visible_contents_weight(const DM1_V1_InventoryStatePc34* s,
+const char* DM1_V1_InventoryChestLoad_SourceEvidencePc34Compat(void);
+int DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(const DM1_V1_InventoryStatePc34* s,
                                                           int champ);
-int m11_inventory_pc34_open_chest_container_weight(const DM1_V1_InventoryStatePc34* s,
+int DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat(const DM1_V1_InventoryStatePc34* s,
                                                    int champ);
-int m11_inventory_pc34_close_chest_with_weight_snapshot(DM1_V1_InventoryStatePc34* s,
+int DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(DM1_V1_InventoryStatePc34* s,
                                                         int champ,
                                                         DM1_V1_ItemPc34* linkedItemsOut,
                                                         int maxItemsOut,
                                                         int* outContainerWeightBeforeClose);
+
+#define dm1_inventory_chest_load_source_evidence_pc34 \
+    DM1_V1_InventoryChestLoad_SourceEvidencePc34Compat
+#define m11_inventory_pc34_open_chest_visible_contents_weight \
+    DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat
+#define m11_inventory_pc34_open_chest_container_weight \
+    DM1_V1_InventoryChestLoad_OpenChestContainerWeightPc34Compat
+#define m11_inventory_pc34_close_chest_with_weight_snapshot \
+    DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat
 
 #ifdef __cplusplus
 }

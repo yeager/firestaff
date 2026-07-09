@@ -232,14 +232,14 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
         return 0;
     }
     out->chestAOpenedVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(
             &inventory, leaderA);
     out->leaderAPanelLoadAfterOpen =
         DM1_V1_Inventory_GetLoadPc34Compat(&inventory, leaderA) + hand.weight;
 
     /* ReDMCSB CHEST.C F0334 lines 113-132 closes A by compacting current
      * G0425 entries; DUNGEON.C F0140 lines 1114-1120 gives the snapshot weight. */
-    out->chestACloseCount = m11_inventory_pc34_close_chest_with_weight_snapshot(
+    out->chestACloseCount = DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
         &inventory, leaderA, closedA,
         DM1_PC34_CHEST_REOPEN_CROSS_SLOT_COUNT,
         &out->chestACloseContainerSnapshot);
@@ -298,7 +298,7 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
     out->chestBReopenedVisibleCount =
         count_visible_types(out->chestBReopenedTypes);
     out->chestBReopenedVisibleWeight =
-        m11_inventory_pc34_open_chest_visible_contents_weight(
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(
             &inventory, leaderB);
     out->chestBOrderMatchesLeaderB =
         order_matches_sequence(out->chestBReopenedTypes,
@@ -318,7 +318,7 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
     /* ReDMCSB CHEST.C F0334 lines 117-132 and DUNGEON.C F0163 lines 1796-1837
      * rewrite the B snapshot once; closing proves the container weight matches
      * the four B links and is not counted twice. */
-    out->chestBCloseCount = m11_inventory_pc34_close_chest_with_weight_snapshot(
+    out->chestBCloseCount = DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
         &inventory, leaderB, closedB,
         DM1_PC34_CHEST_REOPEN_CROSS_SLOT_COUNT,
         &out->chestBCloseContainerSnapshot);

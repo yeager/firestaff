@@ -257,7 +257,7 @@ static int seed_open_chest(ProbeRuntime* rt)
     rt->openThingBeforeClick =
         DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt->inventory, 0);
     rt->visibleWeightBeforeClick =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&rt->inventory,
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&rt->inventory,
                                                               0);
     rt->f0333EarlyReturnTaken = 0;
     rt->f0333DispatchCount = openResult ? 1 : 0;
@@ -356,7 +356,7 @@ static int run_probe(ProbeRuntime* rt)
         return 0;
     }
     rt->visibleWeightAfterClick =
-        m11_inventory_pc34_open_chest_visible_contents_weight(&rt->inventory,
+        DM1_V1_InventoryChestLoad_OpenChestVisibleContentsWeightPc34Compat(&rt->inventory,
                                                               0);
     rt->openThingBeforeClose =
         DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt->inventory, 0);
@@ -367,7 +367,7 @@ static int run_probe(ProbeRuntime* rt)
         }
     }
     rt->f0334CloseCount =
-        m11_inventory_pc34_close_chest_with_weight_snapshot(
+        DM1_V1_InventoryChestLoad_CloseChestWithWeightSnapshotPc34Compat(
             &rt->inventory, 0, rt->closed, DM1_PC34_CHEST_SLOT_COUNT,
             &rt->containerWeightBeforeClose);
     rt->openThingAfterClose =
