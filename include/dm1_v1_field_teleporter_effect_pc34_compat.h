@@ -18,13 +18,13 @@ extern "C" {
 #define DM1_FT_PIT_FALL_FRAMES   8   /* Pit fall animation frames */
 
 typedef enum {
-    M11_FT_EFFECT_NONE = 0,
-    M11_FT_EFFECT_TELEPORT,     /* Flash + warp */
-    M11_FT_EFFECT_PIT_FALL,     /* Falling down pit */
-    M11_FT_EFFECT_STAIRS,       /* Stairs transition */
-    M11_FT_EFFECT_SPELL_FLASH,  /* Spell impact flash */
-    M11_FT_EFFECT_EXPLOSION     /* PROJEXPL.C explosion */
-} M11_FT_EffectType;
+    DM1_V1_FT_EFFECT_NONE = 0,
+    DM1_V1_FT_EFFECT_TELEPORT,     /* Flash + warp */
+    DM1_V1_FT_EFFECT_PIT_FALL,     /* Falling down pit */
+    DM1_V1_FT_EFFECT_STAIRS,       /* Stairs transition */
+    DM1_V1_FT_EFFECT_SPELL_FLASH,  /* Spell impact flash */
+    DM1_V1_FT_EFFECT_EXPLOSION     /* PROJEXPL.C explosion */
+} DM1_V1_FieldTeleporterEffectTypePc34;
 
 typedef struct {
     int16_t x, y;               /* Screen position */
@@ -32,10 +32,10 @@ typedef struct {
     uint8_t color;              /* Palette color index */
     uint8_t life;               /* Remaining frames */
     bool    active;
-} M11_FT_Particle;
+} DM1_V1_FieldTeleporterParticlePc34;
 
 typedef struct {
-    M11_FT_EffectType type;
+    DM1_V1_FieldTeleporterEffectTypePc34 type;
     int               frame;
     int               total_frames;
     bool              active;
@@ -46,9 +46,9 @@ typedef struct {
     uint8_t flash_intensity;    /* 0-15 for palette flash */
 
     /* Particle system */
-    M11_FT_Particle particles[DM1_FT_MAX_PARTICLES];
+    DM1_V1_FieldTeleporterParticlePc34 particles[DM1_FT_MAX_PARTICLES];
     uint8_t particle_count;
-} M11_FT_EffectState;
+} DM1_V1_FieldTeleporterEffectStatePc34;
 
 typedef struct DM1_FieldRenderPlanPc34 {
     int relForward;
@@ -81,19 +81,19 @@ typedef struct DM1_FieldAssetBindingPc34 {
     int transparentColor;
 } DM1_FieldAssetBindingPc34;
 
-void m11_ft_init(M11_FT_EffectState* state);
-void m11_ft_start_teleport(M11_FT_EffectState* state,
+void DM1_V1_FieldTeleporter_InitPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state);
+void DM1_V1_FieldTeleporter_StartTeleportPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state,
                             int16_t sx, int16_t sy, int16_t sl,
                             int16_t dx, int16_t dy, int16_t dl);
-void m11_ft_start_pit_fall(M11_FT_EffectState* state,
+void DM1_V1_FieldTeleporter_StartPitFallPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state,
                             int16_t x, int16_t y, int16_t level);
-void m11_ft_start_explosion(M11_FT_EffectState* state,
+void DM1_V1_FieldTeleporter_StartExplosionPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state,
                              int16_t screen_x, int16_t screen_y,
                              uint8_t radius);
-bool m11_ft_tick(M11_FT_EffectState* state);
-bool m11_ft_is_active(const M11_FT_EffectState* state);
-uint8_t m11_ft_get_flash_intensity(const M11_FT_EffectState* state);
-uint8_t m11_ft_get_particle_count(const M11_FT_EffectState* state);
+bool DM1_V1_FieldTeleporter_TickPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state);
+bool DM1_V1_FieldTeleporter_IsActivePc34Compat(const DM1_V1_FieldTeleporterEffectStatePc34* state);
+uint8_t DM1_V1_FieldTeleporter_GetFlashIntensityPc34Compat(const DM1_V1_FieldTeleporterEffectStatePc34* state);
+uint8_t DM1_V1_FieldTeleporter_GetParticleCountPc34Compat(const DM1_V1_FieldTeleporterEffectStatePc34* state);
 
 int dm1_v1_field_render_plan_count_pc34(void);
 
@@ -146,6 +146,25 @@ int dm1_v1_field_asset_indices_pc34(
     int* outMaskGraphicIndex);
 
 int dm1_v1_field_square_is_visible_open_pc34(int square);
+
+/* Compatibility aliases for older M11 call sites. */
+typedef DM1_V1_FieldTeleporterEffectTypePc34 M11_FT_EffectType;
+typedef DM1_V1_FieldTeleporterParticlePc34 M11_FT_Particle;
+typedef DM1_V1_FieldTeleporterEffectStatePc34 M11_FT_EffectState;
+#define M11_FT_EFFECT_NONE DM1_V1_FT_EFFECT_NONE
+#define M11_FT_EFFECT_TELEPORT DM1_V1_FT_EFFECT_TELEPORT
+#define M11_FT_EFFECT_PIT_FALL DM1_V1_FT_EFFECT_PIT_FALL
+#define M11_FT_EFFECT_STAIRS DM1_V1_FT_EFFECT_STAIRS
+#define M11_FT_EFFECT_SPELL_FLASH DM1_V1_FT_EFFECT_SPELL_FLASH
+#define M11_FT_EFFECT_EXPLOSION DM1_V1_FT_EFFECT_EXPLOSION
+#define m11_ft_init DM1_V1_FieldTeleporter_InitPc34Compat
+#define m11_ft_start_teleport DM1_V1_FieldTeleporter_StartTeleportPc34Compat
+#define m11_ft_start_pit_fall DM1_V1_FieldTeleporter_StartPitFallPc34Compat
+#define m11_ft_start_explosion DM1_V1_FieldTeleporter_StartExplosionPc34Compat
+#define m11_ft_tick DM1_V1_FieldTeleporter_TickPc34Compat
+#define m11_ft_is_active DM1_V1_FieldTeleporter_IsActivePc34Compat
+#define m11_ft_get_flash_intensity DM1_V1_FieldTeleporter_GetFlashIntensityPc34Compat
+#define m11_ft_get_particle_count DM1_V1_FieldTeleporter_GetParticleCountPc34Compat
 
 #ifdef __cplusplus
 }

@@ -63,13 +63,13 @@ static const char *s_skill_names[4] = {
 
 /* ── Death effect ─────────────────────────────────────────────────── */
 
-void m11_death_effect_init(M11_DeathEffectState *state)
+void DM1_V1_DeathEffect_InitPc34Compat(DM1_V1_DeathEffectStatePc34 *state)
 {
     memset(state, 0, sizeof(*state));
     state->phase = DM1_DEATH_IDLE;
 }
 
-void m11_death_effect_start(M11_DeathEffectState *state, int gameWon,
+void DM1_V1_DeathEffect_StartPc34Compat(DM1_V1_DeathEffectStatePc34 *state, int gameWon,
                             int restartAllowed)
 {
     state->gameWon = gameWon;
@@ -88,7 +88,7 @@ void m11_death_effect_start(M11_DeathEffectState *state, int gameWon,
     }
 }
 
-M11_DeathEffectPhase m11_death_effect_tick(M11_DeathEffectState *state,
+DM1_V1_DeathEffectPhasePc34 DM1_V1_DeathEffect_TickPc34Compat(DM1_V1_DeathEffectStatePc34 *state,
                                             uint32_t nowMs)
 {
     switch (state->phase) {
@@ -164,7 +164,7 @@ M11_DeathEffectPhase m11_death_effect_tick(M11_DeathEffectState *state,
                 state->waitBeforeRestart = 1;
             }
             /* Actual restart is triggered by caller calling
-             * m11_death_effect_restart_requested after user input */
+             * DM1_V1_DeathEffect_RestartRequestedPc34Compat after user input */
             break;
 
         case DM1_DEATH_COMPLETE:
@@ -174,7 +174,7 @@ M11_DeathEffectPhase m11_death_effect_tick(M11_DeathEffectState *state,
     return state->phase;
 }
 
-void m11_death_effect_set_champion(M11_DeathEffectState *state,
+void DM1_V1_DeathEffect_SetChampionPc34Compat(DM1_V1_DeathEffectStatePc34 *state,
                                     int index,
                                     const char *name,
                                     const int skillLevels[4],
@@ -182,7 +182,7 @@ void m11_death_effect_set_champion(M11_DeathEffectState *state,
 {
     if (index < 0 || index >= 4) return;
 
-    M11_ChampionEndgameStats *cs = &state->champions[index];
+    DM1_V1_ChampionEndgameStatsPc34 *cs = &state->champions[index];
     memset(cs, 0, sizeof(*cs));
 
     /* Copy name (max 7 chars) */
@@ -229,24 +229,24 @@ void m11_death_effect_set_champion(M11_DeathEffectState *state,
     }
 }
 
-int m11_death_effect_fade_level(const M11_DeathEffectState *state)
+int DM1_V1_DeathEffect_FadeLevelPc34Compat(const DM1_V1_DeathEffectStatePc34 *state)
 {
     return state->fadeStep;
 }
 
-int m11_death_effect_restart_requested(const M11_DeathEffectState *state)
+int DM1_V1_DeathEffect_RestartRequestedPc34Compat(const DM1_V1_DeathEffectStatePc34 *state)
 {
     return state->restartRequested;
 }
 
-int m11_death_effect_is_complete(const M11_DeathEffectState *state)
+int DM1_V1_DeathEffect_IsCompletePc34Compat(const DM1_V1_DeathEffectStatePc34 *state)
 {
     return state->phase == DM1_DEATH_COMPLETE;
 }
 
 /* ── Title screen ─────────────────────────────────────────────────── */
 
-void m11_title_screen_init(M11_TitleScreenState *state,
+void DM1_V1_TitleScreen_InitPc34Compat(DM1_V1_TitleScreenStatePc34 *state,
                            uint32_t availableMemory)
 {
     memset(state, 0, sizeof(*state));
@@ -274,7 +274,7 @@ void m11_title_screen_init(M11_TitleScreenState *state,
     }
 }
 
-void m11_title_screen_start(M11_TitleScreenState *state)
+void DM1_V1_TitleScreen_StartPc34Compat(DM1_V1_TitleScreenStatePc34 *state)
 {
     if (!state->hasEnoughMemory) {
         /* Silently skip title (matches TITLE.C behavior) */
@@ -294,7 +294,7 @@ void m11_title_screen_start(M11_TitleScreenState *state)
     state->palette[15] = DM1_RGB_WHITE;
 }
 
-M11_TitlePhase m11_title_screen_tick(M11_TitleScreenState *state,
+DM1_V1_TitlePhasePc34 DM1_V1_TitleScreen_TickPc34Compat(DM1_V1_TitleScreenStatePc34 *state,
                                       uint32_t nowMs)
 {
     if (state->phaseStartMs == 0) {
@@ -392,7 +392,7 @@ M11_TitlePhase m11_title_screen_tick(M11_TitleScreenState *state,
     return state->phase;
 }
 
-void m11_title_screen_get_zoom(const M11_TitleScreenState *state,
+void DM1_V1_TitleScreen_GetZoomPc34Compat(const DM1_V1_TitleScreenStatePc34 *state,
                                 int *width, int *height,
                                 int *x, int *y)
 {
@@ -406,19 +406,19 @@ void m11_title_screen_get_zoom(const M11_TitleScreenState *state,
     if (y) *y = state->zoomSteps[step].y;
 }
 
-const uint16_t *m11_title_screen_get_palette(const M11_TitleScreenState *state)
+const uint16_t *DM1_V1_TitleScreen_GetPalettePc34Compat(const DM1_V1_TitleScreenStatePc34 *state)
 {
     return state->palette;
 }
 
-int m11_title_screen_is_complete(const M11_TitleScreenState *state)
+int DM1_V1_TitleScreen_IsCompletePc34Compat(const DM1_V1_TitleScreenStatePc34 *state)
 {
     return state->phase == DM1_TITLE_COMPLETE;
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */
 
-const char *m11_game_over_source_evidence(void)
+const char *DM1_V1_GameOver_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206\n"

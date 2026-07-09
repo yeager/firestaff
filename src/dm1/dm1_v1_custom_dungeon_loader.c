@@ -66,7 +66,7 @@ static int find_case_insensitive(const char* dirPath, const char* wanted,
 
 /* ── Public API ─────────────────────────────────────────────────────── */
 
-const char* M11_CustomDungeon_DefaultDir(void) {
+const char* DM1_V1_CustomDungeon_DefaultDirPc34Compat(void) {
     static char path[1024];
     const char* home = getenv("HOME");
     char base[1024];
@@ -78,14 +78,14 @@ const char* M11_CustomDungeon_DefaultDir(void) {
     return path;
 }
 
-void M11_CustomDungeon_Init(M11_CustomDungeonList* list) {
+void DM1_V1_CustomDungeon_InitPc34Compat(DM1_V1_CustomDungeonListPc34* list) {
     if (!list) return;
     memset(list, 0, sizeof(*list));
     list->count = 0;
     list->selectedIndex = 0;
 }
 
-int M11_CustomDungeon_Validate(const char* dungeonDatPath, int* mapCount) {
+int DM1_V1_CustomDungeon_ValidatePc34Compat(const char* dungeonDatPath, int* mapCount) {
     FILE* f;
     unsigned char hdr[DUNGEON_HEADER_SIZE];
     unsigned int sig;
@@ -123,25 +123,25 @@ int M11_CustomDungeon_Validate(const char* dungeonDatPath, int* mapCount) {
     return ok;
 }
 
-int M11_CustomDungeon_Scan(M11_CustomDungeonList* list, const char* directory) {
+int DM1_V1_CustomDungeon_ScanPc34Compat(DM1_V1_CustomDungeonListPc34* list, const char* directory) {
     DIR* d;
     struct dirent* e;
     const char* baseDir;
-    char fullPath[M11_CUSTOM_DUNGEON_PATH_MAX];
+    char fullPath[DM1_V1_CUSTOM_DUNGEON_PATH_MAX];
     struct stat st;
 
     if (!list) return 0;
-    M11_CustomDungeon_Init(list);
+    DM1_V1_CustomDungeon_InitPc34Compat(list);
 
-    baseDir = directory && *directory ? directory : M11_CustomDungeon_DefaultDir();
+    baseDir = directory && *directory ? directory : DM1_V1_CustomDungeon_DefaultDirPc34Compat();
     d = opendir(baseDir);
     if (!d) return 0;
 
     while ((e = readdir(d)) != NULL &&
-           list->count < M11_CUSTOM_DUNGEON_MAX_ENTRIES) {
+           list->count < DM1_V1_CUSTOM_DUNGEON_MAX_ENTRIES) {
         char matchedDun[64];
         char matchedGfx[64];
-        M11_CustomDungeon* ent;
+        DM1_V1_CustomDungeonPc34* ent;
 
         if (e->d_name[0] == '.') continue;
 
@@ -175,7 +175,7 @@ int M11_CustomDungeon_Scan(M11_CustomDungeonList* list, const char* directory) {
             ent->fileSize = 0;
         }
 
-        ent->valid = M11_CustomDungeon_Validate(ent->dungeonDatPath,
+        ent->valid = DM1_V1_CustomDungeon_ValidatePc34Compat(ent->dungeonDatPath,
                                                 &ent->mapCount);
         list->count++;
     }
@@ -184,8 +184,8 @@ int M11_CustomDungeon_Scan(M11_CustomDungeonList* list, const char* directory) {
     return list->count;
 }
 
-const M11_CustomDungeon* M11_CustomDungeon_GetSelected(
-    const M11_CustomDungeonList* list) {
+const DM1_V1_CustomDungeonPc34* DM1_V1_CustomDungeon_GetSelectedPc34Compat(
+    const DM1_V1_CustomDungeonListPc34* list) {
     if (!list || list->count == 0) return NULL;
     if (list->selectedIndex < 0 ||
         list->selectedIndex >= list->count) return NULL;

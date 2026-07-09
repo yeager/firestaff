@@ -24,9 +24,9 @@
  *   - Event timer             (dm1_v1_event_timer)
  *
  * Callers use:
- *   m11_engine_init()     — allocate and wire all subsystems
- *   m11_engine_tick()     — advance one game frame (F0002 body)
- *   m11_engine_shutdown() — tear down all subsystems
+ *   DM1_V1_Engine_InitPc34Compat()     — allocate and wire all subsystems
+ *   DM1_V1_Engine_TickPc34Compat()     — advance one game frame (F0002 body)
+ *   DM1_V1_Engine_ShutdownPc34Compat() — tear down all subsystems
  *
  * The engine struct aggregates all subsystem states.  It does NOT
  * allocate heap memory — the caller provides the struct (typically
@@ -70,7 +70,7 @@ typedef struct {
     const char *save_dir;            /* Save file directory */
     int         tick_rate_hz;        /* Target tick rate (default: 50) */
     int         extended_vblank;     /* Use 12-tick vblank wait (0=10) */
-} M11_EngineConfig;
+} DM1_V1_EngineConfigPc34;
 
 /* ── Per-tick result ──────────────────────────────────────────────── */
 typedef struct {
@@ -90,7 +90,7 @@ typedef struct {
     bool                exitRequested;
     uint32_t            gameTime;
     uint32_t            frameNumber;
-} M11_EngineTickResult;
+} DM1_V1_EngineTickResultPc34;
 
 /* ── Engine aggregate state ───────────────────────────────────────── */
 typedef struct {
@@ -108,10 +108,10 @@ typedef struct {
     DM1_V1_ScreenStatePc34                   screen;
 
     /* ── Engine metadata ── */
-    M11_EngineConfig                  config;
+    DM1_V1_EngineConfigPc34                  config;
     bool                              initialized;
     uint32_t                          totalTicks;
-} M11_Engine;
+} DM1_V1_EnginePc34;
 
 /* ── Lifecycle API ────────────────────────────────────────────────── */
 
@@ -134,7 +134,7 @@ typedef struct {
  * Returns true if all subsystems initialized successfully.
  * On failure, partially initialized subsystems are cleaned up.
  */
-bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config);
+bool DM1_V1_Engine_InitPc34Compat(DM1_V1_EnginePc34 *engine, const DM1_V1_EngineConfigPc34 *config);
 
 /*
  * Process one game tick.
@@ -152,7 +152,7 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config);
  * The caller provides nowMs (wall-clock milliseconds) for frame pacing.
  * Returns a result struct describing what happened this tick.
  */
-M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs);
+DM1_V1_EngineTickResultPc34 DM1_V1_Engine_TickPc34Compat(DM1_V1_EnginePc34 *engine, uint32_t nowMs);
 
 /*
  * Shut down all engine subsystems.  Safe to call on partially
@@ -160,38 +160,38 @@ M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs);
  *
  * Equivalent to DM.C cleanup path.
  */
-void m11_engine_shutdown(M11_Engine *engine);
+void DM1_V1_Engine_ShutdownPc34Compat(DM1_V1_EnginePc34 *engine);
 
 /* ── Engine queries ───────────────────────────────────────────────── */
 
 /* Get current game state. */
-DM1_V1_GameStateIdPc34 m11_engine_get_state(const M11_Engine *engine);
+DM1_V1_GameStateIdPc34 DM1_V1_Engine_GetStatePc34Compat(const DM1_V1_EnginePc34 *engine);
 
 /* Get pointer to the central dungeon data (for subsystem queries). */
-DM1_V1_DungeonDataPc34 *m11_engine_get_dungeon_data(M11_Engine *engine);
+DM1_V1_DungeonDataPc34 *DM1_V1_Engine_GetDungeonDataPc34Compat(DM1_V1_EnginePc34 *engine);
 
 /* Get pointer to input state (for feeding external events). */
-DM1_V1_InputStatePc34 *m11_engine_get_input(M11_Engine *engine);
+DM1_V1_InputStatePc34 *DM1_V1_Engine_GetInputPc34Compat(DM1_V1_EnginePc34 *engine);
 
 /* Get pointer to screen state (for presentation). */
-DM1_V1_ScreenStatePc34 *m11_engine_get_screen(M11_Engine *engine);
+DM1_V1_ScreenStatePc34 *DM1_V1_Engine_GetScreenPc34Compat(DM1_V1_EnginePc34 *engine);
 
 /* Get pointer to save/load state. */
-DM1_V1_SaveLoadStatePc34 *m11_engine_get_save_load(M11_Engine *engine);
+DM1_V1_SaveLoadStatePc34 *DM1_V1_Engine_GetSaveLoadPc34Compat(DM1_V1_EnginePc34 *engine);
 
 /* ── Engine actions (wrappers for common multi-subsystem ops) ────── */
 
 /* Start a new game.  Loads dungeon level 0, places party at entrance. */
-bool m11_engine_new_game(M11_Engine *engine);
+bool DM1_V1_Engine_NewGamePc34Compat(DM1_V1_EnginePc34 *engine);
 
 /* Load a saved game from slot. */
-bool m11_engine_load_game(M11_Engine *engine, uint8_t slot);
+bool DM1_V1_Engine_LoadGamePc34Compat(DM1_V1_EnginePc34 *engine, uint8_t slot);
 
 /* Save current game to slot. */
-bool m11_engine_save_game(M11_Engine *engine, uint8_t slot);
+bool DM1_V1_Engine_SaveGamePc34Compat(DM1_V1_EnginePc34 *engine, uint8_t slot);
 
 /* Request game exit.  Next tick will return exitRequested=true. */
-void m11_engine_request_exit(M11_Engine *engine);
+void DM1_V1_Engine_RequestExitPc34Compat(DM1_V1_EnginePc34 *engine);
 
 /* ── Module manifest ──────────────────────────────────────────────── */
 
@@ -199,16 +199,36 @@ void m11_engine_request_exit(M11_Engine *engine);
  * Return the number of dm1_v1_* modules compiled into the engine.
  * This is the authoritative module count.
  */
-int m11_engine_module_count(void);
+int DM1_V1_Engine_ModuleCountPc34Compat(void);
 
 /*
  * Return the name of dm1_v1_* module at index (0-based).
  * Returns NULL if index is out of range.
  */
-const char *m11_engine_module_name(int index);
+const char *DM1_V1_Engine_ModuleNamePc34Compat(int index);
 
 /* ── Source evidence ──────────────────────────────────────────────── */
-const char *m11_engine_source_evidence(void);
+const char *DM1_V1_Engine_SourceEvidencePc34Compat(void);
+
+/* Compatibility aliases for older M11 call sites. */
+typedef DM1_V1_EngineConfigPc34 M11_EngineConfig;
+typedef DM1_V1_EngineTickResultPc34 M11_EngineTickResult;
+typedef DM1_V1_EnginePc34 M11_Engine;
+#define m11_engine_init DM1_V1_Engine_InitPc34Compat
+#define m11_engine_tick DM1_V1_Engine_TickPc34Compat
+#define m11_engine_shutdown DM1_V1_Engine_ShutdownPc34Compat
+#define m11_engine_get_state DM1_V1_Engine_GetStatePc34Compat
+#define m11_engine_get_dungeon_data DM1_V1_Engine_GetDungeonDataPc34Compat
+#define m11_engine_get_input DM1_V1_Engine_GetInputPc34Compat
+#define m11_engine_get_screen DM1_V1_Engine_GetScreenPc34Compat
+#define m11_engine_get_save_load DM1_V1_Engine_GetSaveLoadPc34Compat
+#define m11_engine_new_game DM1_V1_Engine_NewGamePc34Compat
+#define m11_engine_load_game DM1_V1_Engine_LoadGamePc34Compat
+#define m11_engine_save_game DM1_V1_Engine_SaveGamePc34Compat
+#define m11_engine_request_exit DM1_V1_Engine_RequestExitPc34Compat
+#define m11_engine_module_count DM1_V1_Engine_ModuleCountPc34Compat
+#define m11_engine_module_name DM1_V1_Engine_ModuleNamePc34Compat
+#define m11_engine_source_evidence DM1_V1_Engine_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }

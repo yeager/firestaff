@@ -19,45 +19,57 @@
 extern "C" {
 #endif
 
-#define M11_CUSTOM_DUNGEON_MAX_ENTRIES   64
-#define M11_CUSTOM_DUNGEON_NAME_MAX      64
-#define M11_CUSTOM_DUNGEON_PATH_MAX     512
+#define DM1_V1_CUSTOM_DUNGEON_MAX_ENTRIES   64
+#define DM1_V1_CUSTOM_DUNGEON_NAME_MAX      64
+#define DM1_V1_CUSTOM_DUNGEON_PATH_MAX     512
 
 typedef struct {
-    char name[M11_CUSTOM_DUNGEON_NAME_MAX];
-    char path[M11_CUSTOM_DUNGEON_PATH_MAX];           /* directory path */
-    char dungeonDatPath[M11_CUSTOM_DUNGEON_PATH_MAX]; /* full path to dungeon.dat */
-    char graphicsDatPath[M11_CUSTOM_DUNGEON_PATH_MAX];/* full path to graphics.dat ("" if none) */
+    char name[DM1_V1_CUSTOM_DUNGEON_NAME_MAX];
+    char path[DM1_V1_CUSTOM_DUNGEON_PATH_MAX];           /* directory path */
+    char dungeonDatPath[DM1_V1_CUSTOM_DUNGEON_PATH_MAX]; /* full path to dungeon.dat */
+    char graphicsDatPath[DM1_V1_CUSTOM_DUNGEON_PATH_MAX];/* full path to graphics.dat ("" if none) */
     int  valid;                                       /* 1 = header looks good */
     int  mapCount;                                    /* parsed from header (if valid) */
     long fileSize;                                    /* dungeon.dat size in bytes */
-} M11_CustomDungeon;
+} DM1_V1_CustomDungeonPc34;
 
 typedef struct {
-    M11_CustomDungeon entries[M11_CUSTOM_DUNGEON_MAX_ENTRIES];
+    DM1_V1_CustomDungeonPc34 entries[DM1_V1_CUSTOM_DUNGEON_MAX_ENTRIES];
     int               count;
     int               selectedIndex;
-} M11_CustomDungeonList;
+} DM1_V1_CustomDungeonListPc34;
 
 /* Resolve the default custom-dungeon directory, creating it if missing
  * (~/.firestaff/dungeons/).  Returns a static buffer. */
-const char* M11_CustomDungeon_DefaultDir(void);
+const char* DM1_V1_CustomDungeon_DefaultDirPc34Compat(void);
 
 /* Initialize list state to zero (count=0, selectedIndex=0). */
-void M11_CustomDungeon_Init(M11_CustomDungeonList* list);
+void DM1_V1_CustomDungeon_InitPc34Compat(DM1_V1_CustomDungeonListPc34* list);
 
 /* Scan `directory` for custom dungeons.  Pass NULL for the default
  * directory.  Returns the number of entries discovered. */
-int M11_CustomDungeon_Scan(M11_CustomDungeonList* list, const char* directory);
+int DM1_V1_CustomDungeon_ScanPc34Compat(DM1_V1_CustomDungeonListPc34* list, const char* directory);
 
 /* Validate a dungeon.dat path on disk.  Returns 1 if the 44-byte
  * header parses as plausible DM1 V1 data, 0 otherwise.  Populates
  * mapCount with the parsed value when valid. */
-int M11_CustomDungeon_Validate(const char* dungeonDatPath, int* mapCount);
+int DM1_V1_CustomDungeon_ValidatePc34Compat(const char* dungeonDatPath, int* mapCount);
 
 /* Return the currently selected entry, or NULL. */
-const M11_CustomDungeon* M11_CustomDungeon_GetSelected(
-    const M11_CustomDungeonList* list);
+const DM1_V1_CustomDungeonPc34* DM1_V1_CustomDungeon_GetSelectedPc34Compat(
+    const DM1_V1_CustomDungeonListPc34* list);
+
+/* Compatibility aliases for older M11 call sites. */
+#define M11_CUSTOM_DUNGEON_MAX_ENTRIES DM1_V1_CUSTOM_DUNGEON_MAX_ENTRIES
+#define M11_CUSTOM_DUNGEON_NAME_MAX DM1_V1_CUSTOM_DUNGEON_NAME_MAX
+#define M11_CUSTOM_DUNGEON_PATH_MAX DM1_V1_CUSTOM_DUNGEON_PATH_MAX
+typedef DM1_V1_CustomDungeonPc34 M11_CustomDungeon;
+typedef DM1_V1_CustomDungeonListPc34 M11_CustomDungeonList;
+#define M11_CustomDungeon_DefaultDir DM1_V1_CustomDungeon_DefaultDirPc34Compat
+#define M11_CustomDungeon_Init DM1_V1_CustomDungeon_InitPc34Compat
+#define M11_CustomDungeon_Scan DM1_V1_CustomDungeon_ScanPc34Compat
+#define M11_CustomDungeon_Validate DM1_V1_CustomDungeon_ValidatePc34Compat
+#define M11_CustomDungeon_GetSelected DM1_V1_CustomDungeon_GetSelectedPc34Compat
 
 #ifdef __cplusplus
 }

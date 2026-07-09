@@ -7,12 +7,12 @@ static const uint16_t default_palette_data[DM1_PALETTE_SIZE] = {
     0x0010, 0x0020, 0x0040, 0x0080, 0x0100, 0x0200, 0x0400, 0x0800
 };
 
-void m11_pf_palette_init(M11_PF_PaletteState* state) {
+void DM1_V1_PaletteFont_PaletteInitPc34Compat(DM1_V1_PaletteFontPaletteStatePc34* state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_PF_PaletteState));
+    memset(state, 0, sizeof(DM1_V1_PaletteFontPaletteStatePc34));
 }
 
-void m11_pf_set_palette(M11_PF_PaletteState* state, const uint16_t* colors, int count) {
+void DM1_V1_PaletteFont_SetPalettePc34Compat(DM1_V1_PaletteFontPaletteStatePc34* state, const uint16_t* colors, int count) {
     if (!state || !colors || count <= 0) return;
     int i;
     for (i = 0; i < count && i < DM1_PALETTE_SIZE; i++) {
@@ -26,11 +26,11 @@ void m11_pf_set_palette(M11_PF_PaletteState* state, const uint16_t* colors, int 
     }
 }
 
-const uint16_t* m11_pf_get_default_palette(void) {
+const uint16_t* DM1_V1_PaletteFont_GetDefaultPalettePc34Compat(void) {
     return default_palette_data;
 }
 
-void m11_pf_font_init(M11_PF_FontState* state) {
+void DM1_V1_PaletteFont_FontInitPc34Compat(DM1_V1_PaletteFontFontStatePc34* state) {
     if (!state) return;
     state->base_font = NULL;
     state->custom_font = NULL;
@@ -38,7 +38,7 @@ void m11_pf_font_init(M11_PF_FontState* state) {
     state->bg_color = 0;
 }
 
-bool m11_pf_font_alloc(M11_PF_FontState* state) {
+bool DM1_V1_PaletteFont_FontAllocPc34Compat(DM1_V1_PaletteFontFontStatePc34* state) {
     if (!state) return false;
     state->base_font = (uint8_t*)malloc(1024 * DM1_FONT_CHAR_H);
     state->custom_font = (uint8_t*)malloc(768);
@@ -52,14 +52,14 @@ bool m11_pf_font_alloc(M11_PF_FontState* state) {
     return true;
 }
 
-void m11_pf_build_custom_colors(M11_PF_FontState* state, int16_t text, int16_t bg) {
+void DM1_V1_PaletteFont_BuildCustomColorsPc34Compat(DM1_V1_PaletteFontFontStatePc34* state, int16_t text, int16_t bg) {
     if (!state || !state->base_font || !state->custom_font) return;
     state->text_color = text;
     state->bg_color = bg;
     memcpy(state->custom_font, state->base_font, 768);
 }
 
-void m11_pf_draw_char(const M11_PF_FontState* state, uint8_t* fb, int x, int y, unsigned char ch, int scr_w) {
+void DM1_V1_PaletteFont_DrawCharPc34Compat(const DM1_V1_PaletteFontFontStatePc34* state, uint8_t* fb, int x, int y, unsigned char ch, int scr_w) {
     if (!state || !fb || !state->custom_font) return;
     if ( ch >= DM1_FONT_CHARS) return;
     const uint8_t* glyph = state->custom_font + (ch * DM1_FONT_CHAR_H);
@@ -85,7 +85,7 @@ void m11_pf_draw_char(const M11_PF_FontState* state, uint8_t* fb, int x, int y, 
     }
 }
 
-void m11_pf_draw_string(const M11_PF_FontState* state, uint8_t* fb, int x, int y, const char* str, int scr_w) {
+void DM1_V1_PaletteFont_DrawStringPc34Compat(const DM1_V1_PaletteFontFontStatePc34* state, uint8_t* fb, int x, int y, const char* str, int scr_w) {
     if (!str) return;
     int cx = x;
     while (*str) {
@@ -93,7 +93,7 @@ void m11_pf_draw_string(const M11_PF_FontState* state, uint8_t* fb, int x, int y
             cx = x;
             y += DM1_FONT_CHAR_H;
         } else {
-            m11_pf_draw_char(state, fb, cx, y, *str, scr_w);
+            DM1_V1_PaletteFont_DrawCharPc34Compat(state, fb, cx, y, *str, scr_w);
             cx += DM1_FONT_CHAR_W;
         }
         str++;
@@ -106,12 +106,12 @@ static const char* skill_names_data[DM1_SKILL_LEVEL_COUNT] = {
     "ON MASTER", "EE MASTER", "HI MASTER", "SU MASTER", "ARCHMASTER"
 };
 
-const char* m11_pf_get_skill_name(int level) {
+const char* DM1_V1_PaletteFont_GetSkillNamePc34Compat(int level) {
     if (level < 0 || level >= DM1_SKILL_LEVEL_COUNT) return "Unknown";
     return skill_names_data[level];
 }
 
-void m11_pf_convert_portrait_planar(uint8_t* buf) {
+void DM1_V1_PaletteFont_ConvertPortraitPlanarPc34Compat(uint8_t* buf) {
     if (!buf) return;
     int w = DM1_PORTRAIT_W;
     int h = DM1_PORTRAIT_H;

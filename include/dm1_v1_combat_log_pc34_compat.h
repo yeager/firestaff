@@ -18,25 +18,25 @@ extern "C" {
 #endif
 
 typedef enum {
-    M11_COMBAT_LOG_TYPE_INFO = 0,
-    M11_COMBAT_LOG_TYPE_CHAMP_HIT,
-    M11_COMBAT_LOG_TYPE_CREATURE_HIT,
-    M11_COMBAT_LOG_TYPE_SPELL,
-    M11_COMBAT_LOG_TYPE_MISS
-} M11_CombatLogType;
+    DM1_V1_COMBAT_LOG_TYPE_INFO = 0,
+    DM1_V1_COMBAT_LOG_TYPE_CHAMP_HIT,
+    DM1_V1_COMBAT_LOG_TYPE_CREATURE_HIT,
+    DM1_V1_COMBAT_LOG_TYPE_SPELL,
+    DM1_V1_COMBAT_LOG_TYPE_MISS
+} DM1_V1_CombatLogTypePc34;
 
 typedef struct {
     char     text[128];
     uint32_t gameTick;
     uint8_t  type;
-} M11_CombatLogEntry;
+} DM1_V1_CombatLogEntryPc34;
 
 /* Clear the log (called on new game / level reset). */
 void DM1_CombatLog_Reset(void);
 
 /* Push one entry (printf-style). Honours combatLogMaxLines. */
 void DM1_CombatLog_Pushf(uint32_t gameTick,
-                         M11_CombatLogType type,
+                         DM1_V1_CombatLogTypePc34 type,
                          const char* fmt, ...);
 
 /* Convenience hooks used by the combat / magic paths. */
@@ -56,6 +56,15 @@ void DM1_CombatLog_Render(M11_GameViewState* gameView,
                           unsigned char* framebuffer,
                           int fbWidth,
                           int fbHeight);
+
+/* Compatibility aliases for older M11 call sites. */
+typedef DM1_V1_CombatLogTypePc34 M11_CombatLogType;
+typedef DM1_V1_CombatLogEntryPc34 M11_CombatLogEntry;
+#define M11_COMBAT_LOG_TYPE_INFO DM1_V1_COMBAT_LOG_TYPE_INFO
+#define M11_COMBAT_LOG_TYPE_CHAMP_HIT DM1_V1_COMBAT_LOG_TYPE_CHAMP_HIT
+#define M11_COMBAT_LOG_TYPE_CREATURE_HIT DM1_V1_COMBAT_LOG_TYPE_CREATURE_HIT
+#define M11_COMBAT_LOG_TYPE_SPELL DM1_V1_COMBAT_LOG_TYPE_SPELL
+#define M11_COMBAT_LOG_TYPE_MISS DM1_V1_COMBAT_LOG_TYPE_MISS
 
 #ifdef __cplusplus
 }
