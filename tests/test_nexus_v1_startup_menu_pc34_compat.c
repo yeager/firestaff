@@ -894,6 +894,11 @@ int main(void)
                route_proof_receipt.runtime_route_ready == 1 &&
                route_proof_receipt.graphics_ready == 1 &&
                route_proof_receipt.audio_ready == 1 &&
+               route_proof_receipt.startup_sfx_status ==
+                   NEXUS_SFX_RUNTIME_READY_DECODED &&
+               route_proof_receipt.startup_sfx_level_index == 0 &&
+               route_proof_receipt.startup_cd_track == 2 &&
+               route_proof_receipt.startup_sfx_blocks_real_playback == 0 &&
                route_proof_receipt.asset_handoff.route ==
                    NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY &&
                route_proof_receipt.asset_handoff
@@ -912,6 +917,7 @@ int main(void)
                route_proof_receipt.menu_runtime_route_ready == 1 &&
                route_proof_receipt.first_runtime_route_ready == 1 &&
                route_proof_receipt.audio_runtime_route_ready == 1 &&
+               route_proof_receipt.audio_runtime_route_blocked == 0 &&
                route_proof_receipt.script_runtime_status ==
                    NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
                route_proof_receipt.script_candidate_source_bytes == 2388 &&
@@ -1005,6 +1011,49 @@ int main(void)
                route_proof_receipt.full_startup_route_ready == 0 &&
                route_proof_receipt.fallback_visuals_permitted == 0,
            "Nexus startup route proof exposes script parser blocker");
+    synthetic_engine.sfx_runtime_receipt.status =
+        NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET;
+    synthetic_engine.sfx_runtime_receipt.level_index = -1;
+    synthetic_engine.sfx_runtime_receipt.cd_track = -1;
+    synthetic_engine.sfx_runtime_receipt.blocks_real_sfx_playback = 1;
+    expect(nexus_v1_launcher_startup_assets_receipt_from_runtime_state(
+               &runtime_state,
+               &synthetic_runtime_receipt.startup_assets),
+           "Nexus synthetic audio-blocked assets rebuild for route proof");
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_route_proof_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               &champion_execution,
+               NULL,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &route_proof_receipt) &&
+               route_proof_receipt.route ==
+                   NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED &&
+               route_proof_receipt.startup_sfx_status ==
+                   NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET &&
+               route_proof_receipt.startup_sfx_level_index == -1 &&
+               route_proof_receipt.startup_cd_track == -1 &&
+               route_proof_receipt.startup_sfx_blocks_real_playback == 1 &&
+               route_proof_receipt.audio_ready == 0 &&
+               route_proof_receipt.audio_runtime_route_ready == 0 &&
+               route_proof_receipt.audio_runtime_route_blocked == 1 &&
+               route_proof_receipt.asset_handoff.audio_asset_handoff_ready == 0 &&
+               route_proof_receipt.runtime_route_receipt.startup_sfx_status ==
+                   NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET &&
+               strcmp(route_proof_receipt.status,
+                      "blocked-track02-sfx") == 0,
+           "Nexus startup route proof exposes Track 02 SFX blocker");
+    synthetic_engine.sfx_runtime_receipt.status =
+        NEXUS_SFX_RUNTIME_READY_DECODED;
+    synthetic_engine.sfx_runtime_receipt.level_index = 0;
+    synthetic_engine.sfx_runtime_receipt.cd_track = 2;
+    synthetic_engine.sfx_runtime_receipt.blocks_real_sfx_playback = 0;
+    expect(nexus_v1_launcher_startup_assets_receipt_from_runtime_state(
+               &runtime_state,
+               &synthetic_runtime_receipt.startup_assets),
+           "Nexus synthetic audio-ready assets restore for later route proof");
     synthetic_engine.script_runtime_receipt.status =
         NEXUS_SCRIPT_RUNTIME_READY_PARSED;
     synthetic_engine.script_runtime_receipt.parser_supported = 1;
