@@ -17,6 +17,8 @@
 #include "dm2_v1_sound.h"
 #include <string.h>
 
+#define DM2_CREATURE_DOOR_ATTR_CREATURES_CAN_SEE_THROUGH 0x0001u
+
 /* ── dAITableGenuine — 64-entry AI definition table (hardcoded) ───────────
  * Source: skproject/SKWIN/SkWinCore.cpp:741-810 (getAIName)
  * Extended mode override: EXTENDED_LOAD_AI_DEFINITION() at SkWinCore.cpp:233-400
@@ -108,6 +110,7 @@ static DM2_V1_CCMProgram g_ccm_programs[DM2_AI_TABLE_SIZE];
 static uint8_t g_ccm_program_loaded[DM2_AI_TABLE_SIZE];
 static int g_ccm_program_count = 0;
 static int g_ccm_program_field = -1;
+static DM2_V1_CreatureFieldRuntime g_field_runtime;
 
 int dm2_v1_creature_ai_index_count(void) {
     return DM2_AI_TABLE_SIZE;
@@ -263,6 +266,36 @@ int dm2_v1_creature_loaded_ccm_program_count(void) {
 
 int dm2_v1_creature_loaded_ccm_program_field(void) {
     return g_ccm_program_field;
+}
+
+void dm2_v1_creature_set_field_runtime(
+    const DM2_V1_CreatureFieldRuntime *runtime) {
+    if (runtime) {
+        g_field_runtime = *runtime;
+    } else {
+        memset(&g_field_runtime, 0, sizeof(g_field_runtime));
+    }
+}
+
+void dm2_v1_creature_reset_field_runtime(void) {
+    memset(&g_field_runtime, 0, sizeof(g_field_runtime));
+}
+
+int dm2_v1_creature_door_open_pct_from_state(int door_state) {
+    if (door_state < 0) door_state = 0;
+    if (door_state > 4) door_state = 4;
+    return (4 - door_state) * 25;
+}
+
+static int dm2_v1_creature_door_blocks_creature(int door_state,
+                                                uint16_t door_attributes,
+                                                int creature_nonmaterial) {
+    if (creature_nonmaterial) return 0;
+    if (door_state != 3 && door_state != 4) return 0;
+    if ((door_attributes & DM2_CREATURE_DOOR_ATTR_CREATURES_CAN_SEE_THROUGH) != 0) {
+        return 0;
+    }
+    return 1;
 }
 
 static int dm2_v1_creature_ai_has_gdat_spec(int ai_index) {
@@ -480,6 +513,13 @@ void dm2_v1_creature_test_set_ccm_state(int instance_id,
     g_creature_pool[instance_id].target_x = target_x;
     g_creature_pool[instance_id].target_y = target_y;
 }
+
+void dm2_v1_creature_test_reset_instances(void) {
+    memset(g_creature_pool, 0, sizeof(g_creature_pool));
+    g_next_instance_id = 0;
+    g_tick_counter = 0;
+    dm2_v1_creature_reset_ccm_tick_observer();
+}
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
 /* dm2_v1_creature_death_check — death → drop + spatial sound.
@@ -626,6 +666,8 @@ static const DM2_V1_CCMProgramOp *dm2_v1_creature_imported_ccm_op(
 
 static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
                                          int slot) {
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
     DM2_V1_CCMState state;
     int args[DM2_CCM_MAX_PROGRAM_ARGS];
     int opcode;
@@ -634,10 +676,31 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     int imported_pc = -1;
     const DM2_V1_CCMProgramOp *imported_op;
     int rc;
+    int door_valid = 0;
+    int door_state = -1;
+    uint16_t door_attributes = 0;
+    int door_x = 0;
+    int door_y = 0;
+    int door_blocks = 0;
 
     if (!c) return;
     opcode = (int)c->b_1a;
     before_cooldown = c->attack_cooldown;
+    door_x = c->world_x + dx[c->direction & 3];
+    door_y = c->world_y + dy[c->direction & 3];
+    if (g_field_runtime.read_door &&
+        g_field_runtime.read_door(g_field_runtime.user,
+                                  c->map_index,
+                                  door_x,
+                                  door_y,
+                                  &door_state,
+                                  &door_attributes) == 1) {
+        int nonmaterial = dm2_v1_creature_ai_spec(c->ai_index)->w0AIFlags &
+                          DM2_AIFLAG_NONMATERIAL;
+        door_valid = 1;
+        door_blocks = dm2_v1_creature_door_blocks_creature(
+            door_state, door_attributes, nonmaterial != 0);
+    }
     imported_op = dm2_v1_creature_imported_ccm_op(c, &imported_pc);
     if (imported_op) {
         opcode = (int)imported_op->opcode;
@@ -681,6 +744,13 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     if (state.stack_top > 1) g_last_ccm_tick.ccm_stack_value1 = state.stack[1];
     g_last_ccm_tick.imported_program = imported_op ? 1 : 0;
     g_last_ccm_tick.program_pc_before = imported_pc;
+    g_last_ccm_tick.field_door_valid = door_valid;
+    g_last_ccm_tick.field_door_x = door_x;
+    g_last_ccm_tick.field_door_y = door_y;
+    g_last_ccm_tick.field_door_state = door_state;
+    g_last_ccm_tick.field_door_open_pct =
+        door_valid ? dm2_v1_creature_door_open_pct_from_state(door_state) : -1;
+    g_last_ccm_tick.field_blocks_movement = door_blocks;
     g_last_ccm_tick.attack_cooldown_before = before_cooldown;
 
     if (rc == (int)DM2_CCM_RESULT_OK) {
@@ -696,6 +766,17 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
         } else if (state.flags[0] && before_cooldown == 0 &&
                    dm2_v1_creature_attacks_party(c->ai_index, 1)) {
             c->b_1a = DM2_CCM_CREATURE_ATTACKS_PARTY;
+        } else if (state.flags[0] && before_cooldown == 0 &&
+                   (!door_valid || !door_blocks)) {
+            /* skproject/SKULLWIN/c_ai.cpp DM2_THINK_CREATURE advances the
+             * creature's map cell after DM2_PROCEED_CCM leaves a walk state,
+             * while GROUP.C door tests gate closed DB0 door cells.  The
+             * Firestaff field-runtime bridge keeps the same order: CCM first,
+             * then write back the real world_x/world_y when the door state
+             * allows movement. */
+            c->world_x = door_x;
+            c->world_y = door_y;
+            g_last_ccm_tick.field_moved = 1;
         }
     }
 
