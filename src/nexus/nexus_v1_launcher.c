@@ -2496,18 +2496,21 @@ static void nexus_v1_launcher_fill_full_start_package_capture(
     }
     memset(commands, 0, sizeof(commands));
     receipt->capture_valid = 1;
+    receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
     receipt->first_capture_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
     if (!receipt->consumer.full_start.full_start_menu_ready) {
         receipt->blocked_draw_suppressed = 1;
         return;
     }
-    if (state->title_active && receipt->consumer.title_handoff_valid &&
-        receipt->consumer.title_handoff.title_draw_ready) {
+    if (state->title_active &&
+        receipt->consumer.full_start.title_status_ready) {
         command_count = nexus_v1_startup_presentation_build_title(
             state->title_frame,
             commands,
             (int)(sizeof(commands) / sizeof(commands[0])));
         receipt->title_capture_ready = command_count > 0;
+        receipt->title_route_active = 1;
+        receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_TITLE;
     } else if (state->save_select_active &&
                receipt->consumer.presentation_valid &&
                receipt->consumer.presentation.kind ==
@@ -2518,6 +2521,8 @@ static void nexus_v1_launcher_fill_full_start_package_capture(
                 commands,
                 (int)(sizeof(commands) / sizeof(commands[0])));
         receipt->save_capture_ready = command_count > 0;
+        receipt->save_route_active = 1;
+        receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_SAVE;
     } else if (state->champion_select_active &&
                receipt->consumer.presentation_valid &&
                receipt->consumer.presentation.kind ==
@@ -2528,11 +2533,18 @@ static void nexus_v1_launcher_fill_full_start_package_capture(
                 commands,
                 (int)(sizeof(commands) / sizeof(commands[0])));
         receipt->champion_capture_ready = command_count > 0;
+        receipt->champion_route_active = 1;
+        receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_CHAMPION;
+    } else {
+        receipt->menu_idle_active = 1;
+        receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE;
     }
     receipt->capture_command_count = command_count;
     receipt->capture_route_ready = command_count > 0;
     if (command_count > 0) {
         receipt->first_capture_draw_kind = commands[0].kind;
+        receipt->warning_visible =
+            commands[0].kind == NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND;
     }
 }
 

@@ -441,6 +441,15 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupFullStartConsumerReceipt;
 
+typedef enum {
+    NEXUS_V1_STARTUP_CAPTURE_INVALID = 0,
+    NEXUS_V1_STARTUP_CAPTURE_BLOCKED = 1,
+    NEXUS_V1_STARTUP_CAPTURE_TITLE = 2,
+    NEXUS_V1_STARTUP_CAPTURE_SAVE = 3,
+    NEXUS_V1_STARTUP_CAPTURE_CHAMPION = 4,
+    NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE = 5
+} Nexus_V1_StartupCaptureRoute;
+
 typedef struct {
     Nexus_V1_StartupFullStartConsumerReceipt consumer;
     char phase[32];
@@ -466,6 +475,12 @@ typedef struct {
     int save_capture_ready;
     int champion_capture_ready;
     int blocked_draw_suppressed;
+    int title_route_active;
+    int save_route_active;
+    int champion_route_active;
+    int menu_idle_active;
+    int warning_visible;
+    Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupDrawKind first_capture_draw_kind;
     const char *consumer_route;
     const char *asset_route;
