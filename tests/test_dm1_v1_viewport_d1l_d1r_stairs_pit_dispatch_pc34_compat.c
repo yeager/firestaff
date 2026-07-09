@@ -87,7 +87,7 @@ static DM1_V1_D1LD1RStairsPitDispatchResultPc34 render(
 {
     DM1_V1_D1LD1RStairsPitDispatchResultPc34 result;
     expect_int(id, side_anchor(context.side),
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34(
+               DM1_V1_D1LD1RStairsPitDispatch_RenderPc34Compat(
                    &context, &result),
                1);
     return result;
@@ -100,7 +100,7 @@ static DM1_V1_D1LD1RStairsPitDispatchContextPc34 context_for(
     int visible)
 {
     DM1_V1_D1LD1RStairsPitDispatchContextPc34 context;
-    M11_GameView_ViewportD1LD1RStairsPitDispatch_InitContextPc34(&context, side);
+    DM1_V1_D1LD1RStairsPitDispatch_InitContextPc34Compat(&context, side);
     context.direction = 2;
     context.map_x = side == DM1_V1_D1LR_STAIRS_PIT_SIDE_D1L_PC34 ? 17 : 19;
     context.map_y = side == DM1_V1_D1LR_STAIRS_PIT_SIDE_D1L_PC34 ? 23 : 29;
@@ -141,21 +141,21 @@ static void test_evidence_table(void)
 {
     size_t count = 0;
     const DM1_V1_D1LD1RStairsPitEvidencePc34 *all =
-        M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidencePc34(&count);
+        DM1_V1_D1LD1RStairsPitDispatch_EvidencePc34Compat(&count);
     size_t i;
 
     expect_size("evidence.count", A_F0122, count, 8);
     expect_int("evidence.nonnull", A_F0122, all != NULL, 1);
     expect_int("evidence.d1l.up.exists", A_F0122,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34(
+               DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat(
                    DM1_V1_D1LR_STAIRS_PIT_SIDE_D1L_PC34,
                    DM1_V1_D1LR_STAIRS_PIT_ROUTE_UP_FRONT_PC34) != NULL, 1);
     expect_int("evidence.d1r.pit.exists", A_F0123,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34(
+               DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat(
                    DM1_V1_D1LR_STAIRS_PIT_SIDE_D1R_PC34,
                    DM1_V1_D1LR_STAIRS_PIT_ROUTE_OPEN_PIT_PC34) != NULL, 1);
     expect_int("evidence.unknown.missing", A_F0122,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34(
+               DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat(
                    (DM1_V1_D1LD1RStairsPitSidePc34)99,
                    DM1_V1_D1LR_STAIRS_PIT_ROUTE_UP_FRONT_PC34) == NULL, 1);
 
@@ -216,7 +216,7 @@ static void test_route_constants(void)
 
     for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
         const DM1_V1_D1LD1RStairsPitEvidencePc34 *e =
-            M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34(
+            DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat(
                 cases[i].side, cases[i].route);
         char id[80];
 
@@ -315,16 +315,16 @@ static void test_rejections_and_unsupported(void)
     DM1_V1_D1LD1RStairsPitDispatchResultPc34 result;
 
     expect_int("render.reject.null_input", A_F0122,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34(NULL, &result), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_RenderPc34Compat(NULL, &result), 0);
     expect_int("render.reject.null_output", A_F0122,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34(&context, NULL), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_RenderPc34Compat(&context, NULL), 0);
     context.contract_only = false;
     expect_int("render.reject.non_contract", A_F0122,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34(&context, &result), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_RenderPc34Compat(&context, &result), 0);
     context.contract_only = true;
     context.real_asset_claim = true;
     expect_int("render.reject.real_asset", A_F0122,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34(&context, &result), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_RenderPc34Compat(&context, &result), 0);
 
     result = render(context_for(DM1_V1_D1LR_STAIRS_PIT_SIDE_D1L_PC34, 18, 1, 0),
                     "render.unsupported.stairs_side");
@@ -356,7 +356,7 @@ static void test_blit_contracts(void)
                        left_source, sizeof(left_source), destination,
                        sizeof(destination), 3, 2, 4);
     expect_int("blit.d1l.ok", A_F0104,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(&input, &result), 1);
+               DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(&input, &result), 1);
     expect_bytes("blit.d1l.bytes", A_F0104, destination, left_want, sizeof(left_want));
     expect_int("blit.d1l.not_flipped", A_F0104, result.flipped_horizontally, 0);
     expect_size("blit.d1l.writes", A_F0104, result.writes, 5);
@@ -370,7 +370,7 @@ static void test_blit_contracts(void)
                        right_source, sizeof(right_source), destination,
                        sizeof(destination), 3, 2, 4);
     expect_int("blit.d1r.ok", A_F0105,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(&input, &result), 1);
+               DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(&input, &result), 1);
     expect_bytes("blit.d1r.bytes", A_F0105, destination, right_want, sizeof(right_want));
     expect_int("blit.d1r.flipped", A_F0105, result.flipped_horizontally, 1);
     expect_size("blit.d1r.writes", A_F0105, result.writes, 4);
@@ -393,7 +393,7 @@ static void test_blit_edges_and_assert_helper(void)
     DM1_V1_D1LD1RStairsPitAssertResultPc34 assert_result;
 
     expect_int("blit.transparent.ok", A_DEFS_C10,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(&input, &result), 1);
+               DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(&input, &result), 1);
     expect_bytes("blit.transparent.unchanged", A_DEFS_C10,
                  destination, original_destination, sizeof(destination));
     expect_size("blit.transparent.writes", A_DEFS_C10, result.writes, 0);
@@ -401,23 +401,23 @@ static void test_blit_edges_and_assert_helper(void)
     expect_int("blit.transparent.wrote_any", A_DEFS_C10, result.wrote_any, 0);
 
     expect_int("blit.reject.null_input", A_F0104,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(NULL, &result), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(NULL, &result), 0);
     expect_int("blit.reject.null_output", A_F0104,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(&input, NULL), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(&input, NULL), 0);
     input.contract_only = false;
     expect_int("blit.reject.non_contract", A_F0104,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(&input, &result), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(&input, &result), 0);
     input.contract_only = true;
     input.real_asset_claim = true;
     expect_int("blit.reject.real_asset", A_F0104,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(&input, &result), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(&input, &result), 0);
     input.real_asset_claim = false;
     input.destination_stride = 1;
     expect_int("blit.reject.short_stride", A_F0104,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(&input, &result), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(&input, &result), 0);
 
     expect_int("assert_helper.ok", A_F0122,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_AssertPc34(
+               DM1_V1_D1LD1RStairsPitDispatch_AssertPc34Compat(
                    &assert_result), 1);
     expect_int("assert_helper.failures", A_F0122, assert_result.failures, 0);
     expect_int("assert_helper.count", A_F0122, assert_result.expected_assertions, 8);
@@ -427,13 +427,13 @@ static void test_blit_edges_and_assert_helper(void)
     expect_int("assert_helper.no_f0111", A_F0122, assert_result.no_f0111, 1);
     expect_int("assert_helper.no_f0115", A_F0123, assert_result.no_f0115_thing_pass, 1);
     expect_int("assert_helper.null", A_F0122,
-               M11_GameView_ViewportD1LD1RStairsPitDispatch_AssertPc34(NULL), 0);
+               DM1_V1_D1LD1RStairsPitDispatch_AssertPc34Compat(NULL), 0);
 }
 
 static void test_source_evidence(void)
 {
     const char *summary =
-        M11_GameView_ViewportD1LD1RStairsPitDispatch_SourceEvidencePc34();
+        DM1_V1_D1LD1RStairsPitDispatch_SourceEvidencePc34Compat();
 
     expect_contains("summary.contract", A_F0122, summary, "contract_only=1");
     expect_contains("summary.no_real_asset", A_F0104, summary, "no real-asset");

@@ -149,30 +149,45 @@ typedef struct {
     bool no_f0115_thing_pass;
 } DM1_V1_D1LD1RStairsPitAssertResultPc34;
 
-void M11_GameView_ViewportD1LD1RStairsPitDispatch_InitContextPc34(
+void DM1_V1_D1LD1RStairsPitDispatch_InitContextPc34Compat(
     DM1_V1_D1LD1RStairsPitDispatchContextPc34 *context,
     DM1_V1_D1LD1RStairsPitSidePc34 side);
 
 const DM1_V1_D1LD1RStairsPitEvidencePc34 *
-M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidencePc34(size_t *count);
+DM1_V1_D1LD1RStairsPitDispatch_EvidencePc34Compat(size_t *count);
 
 const DM1_V1_D1LD1RStairsPitEvidencePc34 *
-M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34(
+DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat(
     DM1_V1_D1LD1RStairsPitSidePc34 side,
     DM1_V1_D1LD1RStairsPitRoutePc34 route);
 
-bool M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34(
+bool DM1_V1_D1LD1RStairsPitDispatch_RenderPc34Compat(
     const DM1_V1_D1LD1RStairsPitDispatchContextPc34 *context,
     DM1_V1_D1LD1RStairsPitDispatchResultPc34 *out);
 
-bool M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(
+bool DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(
     const DM1_V1_D1LD1RStairsPitBlitInputPc34 *input,
     DM1_V1_D1LD1RStairsPitBlitResultPc34 *out);
 
-bool M11_GameView_ViewportD1LD1RStairsPitDispatch_AssertPc34(
+bool DM1_V1_D1LD1RStairsPitDispatch_AssertPc34Compat(
     DM1_V1_D1LD1RStairsPitAssertResultPc34 *out);
 
-const char *M11_GameView_ViewportD1LD1RStairsPitDispatch_SourceEvidencePc34(void);
+const char *DM1_V1_D1LD1RStairsPitDispatch_SourceEvidencePc34Compat(void);
+
+#define M11_GameView_ViewportD1LD1RStairsPitDispatch_InitContextPc34 \
+    DM1_V1_D1LD1RStairsPitDispatch_InitContextPc34Compat
+#define M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidencePc34 \
+    DM1_V1_D1LD1RStairsPitDispatch_EvidencePc34Compat
+#define M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34 \
+    DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat
+#define M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34 \
+    DM1_V1_D1LD1RStairsPitDispatch_RenderPc34Compat
+#define M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34 \
+    DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat
+#define M11_GameView_ViewportD1LD1RStairsPitDispatch_AssertPc34 \
+    DM1_V1_D1LD1RStairsPitDispatch_AssertPc34Compat
+#define M11_GameView_ViewportD1LD1RStairsPitDispatch_SourceEvidencePc34 \
+    DM1_V1_D1LD1RStairsPitDispatch_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }
