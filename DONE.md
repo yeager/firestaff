@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB capture render executor retired: title, utility, closed-door, and door-opening render execution tests now stay on host-view render receipts instead of the older capture-level render executor. Verification: CSB startup tests and `git diff --check`.
+
 - ✅ 2026-07-09 pass910 Nexus M12 packaged startup card receipt: Nexus now exposes an M12 full-start package receipt for title/warning timing, capture route, first draw kind, and card labels; M12 boot/status/card readiness consumes it for Nexus instead of generic loose manifest facts. Verification: Nexus startup test, M12 boot-readiness test, firestaff build, and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass894 Theron host-render full-start receipt: boot now exposes a host-render receipt that packages layout, rows, render plan, render route, Track 02 bitmap-route masks/counts, and no-fallback flags from full-start receipts without raw prompt/roster arrays or raw graphics-plan consumer requirements. Verification: `test_theron_v1_startup_save_resume_pc34`, target rebuild, and `git diff --check` passed.

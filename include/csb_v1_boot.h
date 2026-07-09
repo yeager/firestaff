@@ -835,9 +835,6 @@ int csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
 int csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
-int csb_v1_boot_startup_execute_capture_render_plan_pc34(
-    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
-    const CSB_V1_StartupRenderExecutor_PC34 *executor);
 int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
