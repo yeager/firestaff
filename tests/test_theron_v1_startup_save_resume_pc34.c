@@ -580,6 +580,67 @@ static void test_srm_party_continue_restores_all_champions(void) {
     expect_true(strstr(receipt, "path=-1") != NULL &&
                     strstr(receipt, "PROGRESSION_PARTY") != NULL,
                 "srm party custom path receipt reports path envelope");
+    {
+        Theron_StartupAction action;
+        Theron_StartupActionPlan plan;
+        Theron_V1StartupContinueResult continue_result;
+        Theron_StartupHostReceipt host_receipt;
+        Theron_StartupStateReceipt state_receipt;
+
+        theron_v1_startup_action_init(&action);
+        action.kind = THERON_STARTUP_ACTION_CONTINUE_SAVE;
+        expect_true(theron_v1_startup_plan_for_action(&action, &plan) == 1,
+                    "srm party custom path host plan");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(theron_v1_startup_continue_srm_path_apply_with_host_receipts(
+                        &world,
+                        custom_path,
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) == 1 &&
+                        continue_result.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_SRM &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strcmp(host_receipt.status, "CONTINUE LOADED") == 0 &&
+                        strstr(host_receipt.inspect_detail,
+                               "PROGRESSION_PARTY") != NULL &&
+                        state_receipt.flow_changed &&
+                        state_receipt.flow.phase ==
+                            THERON_STARTUP_PHASE_STAGE_SELECT &&
+                        state_receipt.flow.selected_dungeon ==
+                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                        state_receipt.set_level_loaded &&
+                        state_receipt.level_loaded == 0,
+                    "srm party custom path emits host and state receipts");
+
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(!theron_v1_startup_continue_srm_path_apply_with_host_receipts(
+                        &world,
+                        "",
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strstr(host_receipt.status,
+                               "Continue requires an SRM path") != NULL &&
+                        strstr(host_receipt.inspect_detail,
+                               "source=NONE") != NULL,
+                    "srm party custom path failure emits host receipt");
+    }
 
     test_unlink(custom_path);
     cleanup_srm_root(srm_root);

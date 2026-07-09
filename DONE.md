@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron external `.srm` path Continue receipts: arbitrary staged `.srm` path resumes now have a host/state receipt wrapper, including failure receipts for missing paths. Verification: `test_theron_v1_startup_save_resume_pc34` 150/150 and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron Continue host/apply failure receipts: SRM/TQSV Continue failure paths now return M11-visible host/apply receipts for no-source and missing boot-profile cases instead of silent ignored receipts. Verification: `firestaff_theron_v1_startup_flow_probe`, `test_theron_v1_startup_save_resume_pc34`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron Track02 runtime host fallback gate: forcefield facts/host entry now preserves the verified-Track02/no-semantic-handoff failure as a host receipt and blocks fallback visuals in that wrapper path. Verification: `firestaff_theron_v1_startup_flow_probe`, `test_theron_v1_startup_save_resume_pc34`, and `git diff --check` passed.
