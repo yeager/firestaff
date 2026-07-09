@@ -17,7 +17,7 @@
 
 #define COMBAT_LOG_RING_CAP 512   /* hard cap; combatLogMaxLines clamps display */
 
-static M11_CombatLogEntry g_ring[COMBAT_LOG_RING_CAP];
+static DM1_V1_CombatLogEntryPc34 g_ring[COMBAT_LOG_RING_CAP];
 static int                g_count;     /* total pushed (monotonic) */
 static int                g_writeIdx;  /* next slot to write */
 
@@ -28,9 +28,9 @@ void DM1_CombatLog_Reset(void) {
 }
 
 void DM1_CombatLog_Pushf(uint32_t gameTick,
-                         M11_CombatLogType type,
+                         DM1_V1_CombatLogTypePc34 type,
                          const char* fmt, ...) {
-    M11_CombatLogEntry* e;
+    DM1_V1_CombatLogEntryPc34* e;
     va_list ap;
     if (!fmt) return;
     e = &g_ring[g_writeIdx];
@@ -48,7 +48,7 @@ void DM1_CombatLog_OnChampionHit(uint32_t gameTick,
                                  const char* championName,
                                  const char* creatureName,
                                  int damage) {
-    DM1_CombatLog_Pushf(gameTick, M11_COMBAT_LOG_TYPE_CHAMP_HIT,
+    DM1_CombatLog_Pushf(gameTick, DM1_V1_COMBAT_LOG_TYPE_CHAMP_HIT,
                         "T%u: %s hits %s for %d",
                         (unsigned int)gameTick,
                         championName ? championName : "?",
@@ -59,7 +59,7 @@ void DM1_CombatLog_OnChampionHit(uint32_t gameTick,
 void DM1_CombatLog_OnCreatureAttack(uint32_t gameTick,
                                     const char* creatureName,
                                     const char* championName) {
-    DM1_CombatLog_Pushf(gameTick, M11_COMBAT_LOG_TYPE_CREATURE_HIT,
+    DM1_CombatLog_Pushf(gameTick, DM1_V1_COMBAT_LOG_TYPE_CREATURE_HIT,
                         "T%u: %s attacks %s",
                         (unsigned int)gameTick,
                         creatureName ? creatureName : "creature",
@@ -69,7 +69,7 @@ void DM1_CombatLog_OnCreatureAttack(uint32_t gameTick,
 void DM1_CombatLog_OnSpellCast(uint32_t gameTick,
                                const char* championName,
                                const char* spellName) {
-    DM1_CombatLog_Pushf(gameTick, M11_COMBAT_LOG_TYPE_SPELL,
+    DM1_CombatLog_Pushf(gameTick, DM1_V1_COMBAT_LOG_TYPE_SPELL,
                         "T%u: %s casts %s",
                         (unsigned int)gameTick,
                         championName ? championName : "?",
@@ -247,14 +247,14 @@ void DM1_CombatLog_Render(M11_GameViewState* state,
     currentDrawIdx = oldestIdx;
     for (i = 0; i < displayLines; ++i) {
         int slot = (currentDrawIdx + i) % COMBAT_LOG_RING_CAP;
-        const M11_CombatLogEntry* e = &g_ring[slot];
+        const DM1_V1_CombatLogEntryPc34* e = &g_ring[slot];
         int ly = barY + 2 + i * lineH;
         unsigned char color = fontFg;
         switch (e->type) {
-            case M11_COMBAT_LOG_TYPE_CHAMP_HIT:    color = 14; break; /* yellow */
-            case M11_COMBAT_LOG_TYPE_CREATURE_HIT: color = 12; break; /* red */
-            case M11_COMBAT_LOG_TYPE_SPELL:        color = 11; break; /* cyan */
-            case M11_COMBAT_LOG_TYPE_MISS:         color = 8;  break; /* gray */
+            case DM1_V1_COMBAT_LOG_TYPE_CHAMP_HIT:    color = 14; break; /* yellow */
+            case DM1_V1_COMBAT_LOG_TYPE_CREATURE_HIT: color = 12; break; /* red */
+            case DM1_V1_COMBAT_LOG_TYPE_SPELL:        color = 11; break; /* cyan */
+            case DM1_V1_COMBAT_LOG_TYPE_MISS:         color = 8;  break; /* gray */
             default:                               color = fontFg; break;
         }
         if (useOriginalFont) {

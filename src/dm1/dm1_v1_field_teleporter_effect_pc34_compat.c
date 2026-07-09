@@ -230,15 +230,15 @@ int dm1_v1_field_square_is_visible_open_pc34(int square)
            (square & DM1_FIELD_TELEPORTER_OPEN_MASK_PC34) != 0;
 }
 
-void m11_ft_init(M11_FT_EffectState* state) {
+void DM1_V1_FieldTeleporter_InitPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_FT_EffectState));
+    memset(state, 0, sizeof(DM1_V1_FieldTeleporterEffectStatePc34));
 }
 
-static void spawn_particles(M11_FT_EffectState* state, int16_t cx, int16_t cy,
+static void spawn_particles(DM1_V1_FieldTeleporterEffectStatePc34* state, int16_t cx, int16_t cy,
                              uint8_t count, uint8_t color) {
     for (uint8_t i = 0; i < count && state->particle_count < DM1_FT_MAX_PARTICLES; i++) {
-        M11_FT_Particle* p = &state->particles[state->particle_count++];
+        DM1_V1_FieldTeleporterParticlePc34* p = &state->particles[state->particle_count++];
         p->x = cx;
         p->y = cy;
         /* Simple radial scatter — pseudo-random via index */
@@ -251,11 +251,11 @@ static void spawn_particles(M11_FT_EffectState* state, int16_t cx, int16_t cy,
 }
 
 /* MOVESENS.C F0263 pattern: teleporter triggers flash + level transition */
-void m11_ft_start_teleport(M11_FT_EffectState* state,
+void DM1_V1_FieldTeleporter_StartTeleportPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state,
                             int16_t sx, int16_t sy, int16_t sl,
                             int16_t dx, int16_t dy, int16_t dl) {
     if (!state) return;
-    state->type = M11_FT_EFFECT_TELEPORT;
+    state->type = DM1_V1_FT_EFFECT_TELEPORT;
     state->frame = 0;
     state->total_frames = DM1_FT_TELEPORT_FRAMES;
     state->active = true;
@@ -266,10 +266,10 @@ void m11_ft_start_teleport(M11_FT_EffectState* state,
     spawn_particles(state, 112, 72, 16, 15); /* White particles at viewport center */
 }
 
-void m11_ft_start_pit_fall(M11_FT_EffectState* state,
+void DM1_V1_FieldTeleporter_StartPitFallPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state,
                             int16_t x, int16_t y, int16_t level) {
     if (!state) return;
-    state->type = M11_FT_EFFECT_PIT_FALL;
+    state->type = DM1_V1_FT_EFFECT_PIT_FALL;
     state->frame = 0;
     state->total_frames = DM1_FT_PIT_FALL_FRAMES;
     state->active = true;
@@ -280,11 +280,11 @@ void m11_ft_start_pit_fall(M11_FT_EffectState* state,
 }
 
 /* PROJEXPL.C pattern: explosion with radial particles */
-void m11_ft_start_explosion(M11_FT_EffectState* state,
+void DM1_V1_FieldTeleporter_StartExplosionPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state,
                              int16_t screen_x, int16_t screen_y,
                              uint8_t radius) {
     if (!state) return;
-    state->type = M11_FT_EFFECT_EXPLOSION;
+    state->type = DM1_V1_FT_EFFECT_EXPLOSION;
     state->frame = 0;
     state->total_frames = (int)(radius * 2);
     state->active = true;
@@ -294,7 +294,7 @@ void m11_ft_start_explosion(M11_FT_EffectState* state,
     spawn_particles(state, screen_x, screen_y, count, 8); /* Red particles */
 }
 
-bool m11_ft_tick(M11_FT_EffectState* state) {
+bool DM1_V1_FieldTeleporter_TickPc34Compat(DM1_V1_FieldTeleporterEffectStatePc34* state) {
     if (!state || !state->active) return false;
 
     state->frame++;
@@ -306,7 +306,7 @@ bool m11_ft_tick(M11_FT_EffectState* state) {
 
     /* Update particles */
     for (uint8_t i = 0; i < state->particle_count; i++) {
-        M11_FT_Particle* p = &state->particles[i];
+        DM1_V1_FieldTeleporterParticlePc34* p = &state->particles[i];
         if (!p->active) continue;
         p->x += p->dx;
         p->y += p->dy;
@@ -327,16 +327,16 @@ bool m11_ft_tick(M11_FT_EffectState* state) {
     return true;
 }
 
-bool m11_ft_is_active(const M11_FT_EffectState* state) {
+bool DM1_V1_FieldTeleporter_IsActivePc34Compat(const DM1_V1_FieldTeleporterEffectStatePc34* state) {
     return state && state->active;
 }
 
-uint8_t m11_ft_get_flash_intensity(const M11_FT_EffectState* state) {
+uint8_t DM1_V1_FieldTeleporter_GetFlashIntensityPc34Compat(const DM1_V1_FieldTeleporterEffectStatePc34* state) {
     if (!state) return 0;
     return state->flash_intensity;
 }
 
-uint8_t m11_ft_get_particle_count(const M11_FT_EffectState* state) {
+uint8_t DM1_V1_FieldTeleporter_GetParticleCountPc34Compat(const DM1_V1_FieldTeleporterEffectStatePc34* state) {
     if (!state) return 0;
     uint8_t count = 0;
     for (uint8_t i = 0; i < state->particle_count; i++) {

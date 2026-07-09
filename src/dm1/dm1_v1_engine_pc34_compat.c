@@ -78,7 +78,7 @@ static const char * const s_moduleNames[] = {
 
 /* ── Lifecycle ────────────────────────────────────────────────────── */
 
-bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
+bool DM1_V1_Engine_InitPc34Compat(DM1_V1_EnginePc34 *engine, const DM1_V1_EngineConfigPc34 *config)
 {
     if (!engine || !config) return false;
 
@@ -141,9 +141,9 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
     return true;
 }
 
-M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs)
+DM1_V1_EngineTickResultPc34 DM1_V1_Engine_TickPc34Compat(DM1_V1_EnginePc34 *engine, uint32_t nowMs)
 {
-    M11_EngineTickResult result;
+    DM1_V1_EngineTickResultPc34 result;
     memset(&result, 0, sizeof(result));
 
     if (!engine || !engine->initialized) {
@@ -200,7 +200,7 @@ M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs)
     return result;
 }
 
-void m11_engine_shutdown(M11_Engine *engine)
+void DM1_V1_Engine_ShutdownPc34Compat(DM1_V1_EnginePc34 *engine)
 {
     if (!engine) return;
 
@@ -214,35 +214,35 @@ void m11_engine_shutdown(M11_Engine *engine)
 
 /* ── Engine queries ───────────────────────────────────────────────── */
 
-DM1_V1_GameStateIdPc34 m11_engine_get_state(const M11_Engine *engine)
+DM1_V1_GameStateIdPc34 DM1_V1_Engine_GetStatePc34Compat(const DM1_V1_EnginePc34 *engine)
 {
     return engine ? DM1_V1_GameState_CurrentPc34Compat(&engine->stateMachine)
                   : DM1_STATE_NONE;
 }
 
-DM1_V1_DungeonDataPc34 *m11_engine_get_dungeon_data(M11_Engine *engine)
+DM1_V1_DungeonDataPc34 *DM1_V1_Engine_GetDungeonDataPc34Compat(DM1_V1_EnginePc34 *engine)
 {
     return engine ? &engine->dungeonData : NULL;
 }
 
-DM1_V1_InputStatePc34 *m11_engine_get_input(M11_Engine *engine)
+DM1_V1_InputStatePc34 *DM1_V1_Engine_GetInputPc34Compat(DM1_V1_EnginePc34 *engine)
 {
     return engine ? &engine->input : NULL;
 }
 
-DM1_V1_ScreenStatePc34 *m11_engine_get_screen(M11_Engine *engine)
+DM1_V1_ScreenStatePc34 *DM1_V1_Engine_GetScreenPc34Compat(DM1_V1_EnginePc34 *engine)
 {
     return engine ? &engine->screen : NULL;
 }
 
-DM1_V1_SaveLoadStatePc34 *m11_engine_get_save_load(M11_Engine *engine)
+DM1_V1_SaveLoadStatePc34 *DM1_V1_Engine_GetSaveLoadPc34Compat(DM1_V1_EnginePc34 *engine)
 {
     return engine ? &engine->saveLoad : NULL;
 }
 
 /* ── Engine actions ───────────────────────────────────────────────── */
 
-bool m11_engine_new_game(M11_Engine *engine)
+bool DM1_V1_Engine_NewGamePc34Compat(DM1_V1_EnginePc34 *engine)
 {
     if (!engine || !engine->initialized) return false;
 
@@ -264,7 +264,7 @@ bool m11_engine_new_game(M11_Engine *engine)
     return true;
 }
 
-bool m11_engine_load_game(M11_Engine *engine, uint8_t slot)
+bool DM1_V1_Engine_LoadGamePc34Compat(DM1_V1_EnginePc34 *engine, uint8_t slot)
 {
     if (!engine || !engine->initialized) return false;
     if (!DM1_V1_SaveLoad_SourceRuntimeSlotSupportedPc34Compat(slot)) return false;
@@ -278,7 +278,7 @@ bool m11_engine_load_game(M11_Engine *engine, uint8_t slot)
     return true;
 }
 
-bool m11_engine_save_game(M11_Engine *engine, uint8_t slot)
+bool DM1_V1_Engine_SaveGamePc34Compat(DM1_V1_EnginePc34 *engine, uint8_t slot)
 {
     if (!engine || !engine->initialized) return false;
     if (!DM1_V1_SaveLoad_SourceRuntimeSlotSupportedPc34Compat(slot)) return false;
@@ -296,7 +296,7 @@ bool m11_engine_save_game(M11_Engine *engine, uint8_t slot)
     return DM1_V1_SaveLoad_SavePc34Compat(&engine->saveLoad, slot, &header, NULL, 0);
 }
 
-void m11_engine_request_exit(M11_Engine *engine)
+void DM1_V1_Engine_RequestExitPc34Compat(DM1_V1_EnginePc34 *engine)
 {
     if (!engine) return;
     DM1_V1_GameLoop_RequestExitPc34Compat(&engine->gameLoop);
@@ -304,12 +304,12 @@ void m11_engine_request_exit(M11_Engine *engine)
 
 /* ── Module manifest ──────────────────────────────────────────────── */
 
-int m11_engine_module_count(void)
+int DM1_V1_Engine_ModuleCountPc34Compat(void)
 {
     return MODULE_COUNT;
 }
 
-const char *m11_engine_module_name(int index)
+const char *DM1_V1_Engine_ModuleNamePc34Compat(int index)
 {
     if (index < 0 || index >= MODULE_COUNT) return NULL;
     return s_moduleNames[index];
@@ -317,7 +317,7 @@ const char *m11_engine_module_name(int index)
 
 /* ── Source evidence ──────────────────────────────────────────────── */
 
-const char *m11_engine_source_evidence(void)
+const char *DM1_V1_Engine_SourceEvidencePc34Compat(void)
 {
     return
         "DM1 V1 Engine Integration Layer\n"

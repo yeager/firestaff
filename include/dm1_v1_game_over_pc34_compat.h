@@ -87,7 +87,7 @@ typedef enum {
     DM1_DEATH_SHOW_STATS,        /* Displaying champion stats */
     DM1_DEATH_WAIT_RESTART,      /* Waiting for restart input */
     DM1_DEATH_COMPLETE           /* Animation complete */
-} M11_DeathEffectPhase;
+} DM1_V1_DeathEffectPhasePc34;
 
 /* ── Title screen state ───────────────────────────────────────────── */
 typedef enum {
@@ -100,7 +100,7 @@ typedef enum {
     DM1_TITLE_HOLD_DISPLAY,      /* Hold completed title */
     DM1_TITLE_FADE_OUT,          /* Fade to gameplay */
     DM1_TITLE_COMPLETE           /* Title sequence done */
-} M11_TitlePhase;
+} DM1_V1_TitlePhasePc34;
 
 /* ── Champion endgame stats (from F0444 champion loop) ────────────── */
 typedef struct {
@@ -109,11 +109,11 @@ typedef struct {
     int  skillLevels[4];            /* Fighter, Ninja, Priest, Wizard levels */
     int  highestSkillIndex;         /* Which skill was highest */
     int  alive;                     /* Was champion alive at end */
-} M11_ChampionEndgameStats;
+} DM1_V1_ChampionEndgameStatsPc34;
 
 /* ── Death effect persistent state ────────────────────────────────── */
 typedef struct {
-    M11_DeathEffectPhase phase;
+    DM1_V1_DeathEffectPhasePc34 phase;
     int currentFrame;               /* Current animation frame */
     int fadeStep;                   /* Current fade step (0-15) */
     int restartAllowed;             /* G0524 */
@@ -123,17 +123,17 @@ typedef struct {
     uint32_t phaseStartMs;          /* Timestamp when phase started */
 
     /* Champion stats for display */
-    M11_ChampionEndgameStats champions[4];
+    DM1_V1_ChampionEndgameStatsPc34 champions[4];
     int championCount;
 
     /* Text to display */
     char gameOverMessage[64];
     char areaReachedText[64];
-} M11_DeathEffectState;
+} DM1_V1_DeathEffectStatePc34;
 
 /* ── Title screen persistent state ────────────────────────────────── */
 typedef struct {
-    M11_TitlePhase phase;
+    DM1_V1_TitlePhasePc34 phase;
     int currentZoomStep;            /* 0..17 zoom level */
     int frameCounter;               /* Frames in current phase */
     uint32_t phaseStartMs;          /* Timestamp when phase started */
@@ -149,63 +149,84 @@ typedef struct {
         int16_t x;                  /* Centered X */
         int16_t y;                  /* Centered Y */
     } zoomSteps[DM1_TITLE_ZOOM_STEPS];
-} M11_TitleScreenState;
+} DM1_V1_TitleScreenStatePc34;
 
 /* ── Death effect API ─────────────────────────────────────────────── */
 
 /* Initialize death effect state. */
-void m11_death_effect_init(M11_DeathEffectState *state);
+void DM1_V1_DeathEffect_InitPc34Compat(DM1_V1_DeathEffectStatePc34 *state);
 
 /* Start the death effect animation sequence. */
-void m11_death_effect_start(M11_DeathEffectState *state, int gameWon,
+void DM1_V1_DeathEffect_StartPc34Compat(DM1_V1_DeathEffectStatePc34 *state, int gameWon,
                             int restartAllowed);
 
 /* Advance death effect by one frame. Returns current phase. */
-M11_DeathEffectPhase m11_death_effect_tick(M11_DeathEffectState *state,
+DM1_V1_DeathEffectPhasePc34 DM1_V1_DeathEffect_TickPc34Compat(DM1_V1_DeathEffectStatePc34 *state,
                                             uint32_t nowMs);
 
 /* Set champion stats for endgame display. */
-void m11_death_effect_set_champion(M11_DeathEffectState *state,
+void DM1_V1_DeathEffect_SetChampionPc34Compat(DM1_V1_DeathEffectStatePc34 *state,
                                     int index,
                                     const char *name,
                                     const int skillLevels[4],
                                     int alive);
 
 /* Get the fade intensity (0=full color, 15=black). */
-int m11_death_effect_fade_level(const M11_DeathEffectState *state);
+int DM1_V1_DeathEffect_FadeLevelPc34Compat(const DM1_V1_DeathEffectStatePc34 *state);
 
 /* Check if restart was requested. */
-int m11_death_effect_restart_requested(const M11_DeathEffectState *state);
+int DM1_V1_DeathEffect_RestartRequestedPc34Compat(const DM1_V1_DeathEffectStatePc34 *state);
 
 /* Check if death sequence is complete. */
-int m11_death_effect_is_complete(const M11_DeathEffectState *state);
+int DM1_V1_DeathEffect_IsCompletePc34Compat(const DM1_V1_DeathEffectStatePc34 *state);
 
 /* ── Title screen API ─────────────────────────────────────────────── */
 
 /* Initialize title screen state. availableMemory = heap bytes. */
-void m11_title_screen_init(M11_TitleScreenState *state,
+void DM1_V1_TitleScreen_InitPc34Compat(DM1_V1_TitleScreenStatePc34 *state,
                            uint32_t availableMemory);
 
 /* Start the title screen animation. */
-void m11_title_screen_start(M11_TitleScreenState *state);
+void DM1_V1_TitleScreen_StartPc34Compat(DM1_V1_TitleScreenStatePc34 *state);
 
 /* Advance title screen by one frame. Returns current phase. */
-M11_TitlePhase m11_title_screen_tick(M11_TitleScreenState *state,
+DM1_V1_TitlePhasePc34 DM1_V1_TitleScreen_TickPc34Compat(DM1_V1_TitleScreenStatePc34 *state,
                                       uint32_t nowMs);
 
 /* Get current zoom step dimensions for rendering. */
-void m11_title_screen_get_zoom(const M11_TitleScreenState *state,
+void DM1_V1_TitleScreen_GetZoomPc34Compat(const DM1_V1_TitleScreenStatePc34 *state,
                                 int *width, int *height,
                                 int *x, int *y);
 
 /* Get current palette for rendering. */
-const uint16_t *m11_title_screen_get_palette(const M11_TitleScreenState *state);
+const uint16_t *DM1_V1_TitleScreen_GetPalettePc34Compat(const DM1_V1_TitleScreenStatePc34 *state);
 
 /* Check if title sequence is complete. */
-int m11_title_screen_is_complete(const M11_TitleScreenState *state);
+int DM1_V1_TitleScreen_IsCompletePc34Compat(const DM1_V1_TitleScreenStatePc34 *state);
 
 /* ── Source evidence ──────────────────────────────────────────────── */
-const char *m11_game_over_source_evidence(void);
+const char *DM1_V1_GameOver_SourceEvidencePc34Compat(void);
+
+/* Compatibility aliases for older M11 call sites. */
+typedef DM1_V1_DeathEffectPhasePc34 M11_DeathEffectPhase;
+typedef DM1_V1_TitlePhasePc34 M11_TitlePhase;
+typedef DM1_V1_ChampionEndgameStatsPc34 M11_ChampionEndgameStats;
+typedef DM1_V1_DeathEffectStatePc34 M11_DeathEffectState;
+typedef DM1_V1_TitleScreenStatePc34 M11_TitleScreenState;
+#define m11_death_effect_init DM1_V1_DeathEffect_InitPc34Compat
+#define m11_death_effect_start DM1_V1_DeathEffect_StartPc34Compat
+#define m11_death_effect_tick DM1_V1_DeathEffect_TickPc34Compat
+#define m11_death_effect_set_champion DM1_V1_DeathEffect_SetChampionPc34Compat
+#define m11_death_effect_fade_level DM1_V1_DeathEffect_FadeLevelPc34Compat
+#define m11_death_effect_restart_requested DM1_V1_DeathEffect_RestartRequestedPc34Compat
+#define m11_death_effect_is_complete DM1_V1_DeathEffect_IsCompletePc34Compat
+#define m11_title_screen_init DM1_V1_TitleScreen_InitPc34Compat
+#define m11_title_screen_start DM1_V1_TitleScreen_StartPc34Compat
+#define m11_title_screen_tick DM1_V1_TitleScreen_TickPc34Compat
+#define m11_title_screen_get_zoom DM1_V1_TitleScreen_GetZoomPc34Compat
+#define m11_title_screen_get_palette DM1_V1_TitleScreen_GetPalettePc34Compat
+#define m11_title_screen_is_complete DM1_V1_TitleScreen_IsCompletePc34Compat
+#define m11_game_over_source_evidence DM1_V1_GameOver_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }

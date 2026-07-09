@@ -22,7 +22,7 @@
  *   Clears the command highlight feedback box (button press visual).
  */
 
-void m11_menu_render_init(M11_MenuRenderState *s)
+void DM1_V1_MenuRender_InitPc34Compat(DM1_V1_MenuRenderStatePc34 *s)
 {
     memset(s, 0, sizeof(*s));
     s->movementArrowsEnabled = 1;
@@ -32,14 +32,14 @@ void m11_menu_render_init(M11_MenuRenderState *s)
     s->leaderHandObjectIcon = -1;
 }
 
-int m11_menu_render_draw_movement_arrows(const M11_MenuRenderState *s)
+int DM1_V1_MenuRender_DrawMovementArrowsPc34Compat(const DM1_V1_MenuRenderStatePc34 *s)
 {
     if (!s->movementArrowsEnabled) return 0;
     /* F0395: blit C013_GRAPHIC_MOVEMENT_ARROWS to zone 009 */
     return 1;
 }
 
-int m11_menu_render_draw_action_area(const M11_MenuRenderState *s)
+int DM1_V1_MenuRender_DrawActionAreaPc34Compat(const DM1_V1_MenuRenderStatePc34 *s)
 {
     if (!s->actionAreaEnabled) return 0;
 
@@ -53,9 +53,9 @@ int m11_menu_render_draw_action_area(const M11_MenuRenderState *s)
     return 1;
 }
 
-M11_MenuRenderResult m11_menu_render_draw_enabled(const M11_MenuRenderState *s)
+DM1_V1_MenuRenderResultPc34 DM1_V1_MenuRender_DrawEnabledPc34Compat(const DM1_V1_MenuRenderStatePc34 *s)
 {
-    M11_MenuRenderResult result;
+    DM1_V1_MenuRenderResultPc34 result;
     memset(&result, 0, sizeof(result));
 
     /*
@@ -67,11 +67,11 @@ M11_MenuRenderResult m11_menu_render_draw_enabled(const M11_MenuRenderState *s)
      */
 
     if (s->movementArrowsEnabled) {
-        result.movementArrowsDrawn = m11_menu_render_draw_movement_arrows(s);
+        result.movementArrowsDrawn = DM1_V1_MenuRender_DrawMovementArrowsPc34Compat(s);
     }
 
     if (s->actionAreaEnabled) {
-        result.actionAreaDrawn = m11_menu_render_draw_action_area(s);
+        result.actionAreaDrawn = DM1_V1_MenuRender_DrawActionAreaPc34Compat(s);
     }
 
     if (s->spellAreaEnabled) {
@@ -84,7 +84,7 @@ M11_MenuRenderResult m11_menu_render_draw_enabled(const M11_MenuRenderState *s)
     return result;
 }
 
-void m11_menu_render_set_highlight(M11_MenuRenderState *s,
+void DM1_V1_MenuRender_SetHighlightPc34Compat(DM1_V1_MenuRenderStatePc34 *s,
                                     int x, int y, int w, int h)
 {
     s->commandHighlightActive = 1;
@@ -94,7 +94,7 @@ void m11_menu_render_set_highlight(M11_MenuRenderState *s,
     s->commandHighlightH = h;
 }
 
-void m11_menu_render_clear_highlight(M11_MenuRenderState *s)
+void DM1_V1_MenuRender_ClearHighlightPc34Compat(DM1_V1_MenuRenderStatePc34 *s)
 {
     /* F0363_COMMAND_HighlightBoxDisable */
     s->commandHighlightActive = 0;
@@ -104,30 +104,30 @@ void m11_menu_render_clear_highlight(M11_MenuRenderState *s)
     s->commandHighlightH = 0;
 }
 
-void m11_menu_render_enable_movement(M11_MenuRenderState *s, int enabled)
+void DM1_V1_MenuRender_EnableMovementPc34Compat(DM1_V1_MenuRenderStatePc34 *s, int enabled)
 {
     s->movementArrowsEnabled = enabled;
 }
 
-void m11_menu_render_enable_spells(M11_MenuRenderState *s, int enabled)
+void DM1_V1_MenuRender_EnableSpellsPc34Compat(DM1_V1_MenuRenderStatePc34 *s, int enabled)
 {
     s->spellAreaEnabled = enabled;
 }
 
-void m11_menu_render_enable_actions(M11_MenuRenderState *s, int enabled)
+void DM1_V1_MenuRender_EnableActionsPc34Compat(DM1_V1_MenuRenderStatePc34 *s, int enabled)
 {
     s->actionAreaEnabled = enabled;
 }
 
-void m11_menu_render_set_leader_hand(M11_MenuRenderState *s,
-                                      M11_ActionHandType handType,
+void DM1_V1_MenuRender_SetLeaderHandPc34Compat(DM1_V1_MenuRenderStatePc34 *s,
+                                      DM1_V1_ActionHandTypePc34 handType,
                                       int objectIcon)
 {
     s->leaderHand = handType;
     s->leaderHandObjectIcon = objectIcon;
 }
 
-const char *m11_menu_render_source_evidence(void)
+const char *DM1_V1_MenuRender_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206 MENUDRAW.C / MENU.C\n"
