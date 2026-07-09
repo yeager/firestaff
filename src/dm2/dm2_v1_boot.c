@@ -2566,7 +2566,7 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         out_receipt->title_next_frame_tick >
             out_receipt->title_animation_tick;
     out_receipt->real_gdat_title_asset_receipt_breadth =
-        out_receipt->title_gdat_command_count == 1 &&
+        out_receipt->title_gdat_command_count == 2 &&
         ((out_receipt->title_gdat_asset_required &&
           out_receipt->title_gdat_asset_consumed &&
           out_receipt->title_gdat_asset_w > 0 &&
@@ -2600,7 +2600,7 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         out_receipt->execute_startup_draw_commands &&
         out_receipt->draw_command_count > 0 &&
         out_receipt->packaged_draw_commands_consumed &&
-        out_receipt->title_gdat_command_count == 1 &&
+        out_receipt->title_gdat_command_count == 2 &&
         out_receipt->executed_text_count > 0 &&
         out_receipt->suppress_game_hud &&
         out_receipt->schedule_next_title_tick &&
@@ -2690,9 +2690,13 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     DM2_V1_BootStartupPackagedFullStartReceipt package;
     DM2_V1_BootStartupRenderOwnershipReceipt ownership;
     uint8_t *title_pixels = NULL;
+    uint8_t *menu_pixels = NULL;
     int title_w = 0;
     int title_h = 0;
     int title_stride = 0;
+    int menu_w = 0;
+    int menu_h = 0;
+    int menu_stride = 0;
     uint32_t hash = 0x32475643u;
     int i;
 
@@ -2728,11 +2732,20 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     out_receipt->packaged_full_start_valid = package.valid;
     out_receipt->render_ownership_valid = ownership.valid;
     out_receipt->real_gdat_title_asset_required = 1;
+    out_receipt->real_gdat_menu_asset_required = 1;
     out_receipt->title_gdat_category = package.title_gdat_category;
     out_receipt->title_gdat_index = package.title_gdat_index;
     out_receipt->title_gdat_field = package.title_gdat_field;
+    out_receipt->menu_gdat_category =
+        view_model.view_receipt.render.menu_gdat_category;
+    out_receipt->menu_gdat_index =
+        view_model.view_receipt.render.menu_gdat_index;
+    out_receipt->menu_gdat_field =
+        view_model.view_receipt.render.menu_gdat_field;
     out_receipt->skproject_title_query_ready =
         view_model.view_receipt.render.skproject_title_query_ready;
+    out_receipt->skproject_menu_query_ready =
+        view_model.view_receipt.render.skproject_menu_query_ready;
     out_receipt->skproject_title_category =
         view_model.view_receipt.render.skproject_title_category;
     out_receipt->skproject_title_index =
@@ -2813,6 +2826,38 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     }
     dm2_v1_boot_gdat_image_asset_free(title_pixels);
 
+    if (dm2_v1_boot_gdat_image_asset_fetch(profile,
+                                           out_receipt->menu_gdat_category,
+                                           out_receipt->menu_gdat_index,
+                                           out_receipt->menu_gdat_field,
+                                           &menu_pixels,
+                                           &menu_w,
+                                           &menu_h,
+                                           &menu_stride) == 0 &&
+        menu_pixels &&
+        menu_w == 320 &&
+        menu_h == 200 &&
+        menu_stride >= menu_w) {
+        size_t row;
+        uint32_t pixel_hash = 0x324d454eu;
+        out_receipt->real_gdat_menu_asset_consumed = 1;
+        out_receipt->menu_gdat_asset_w = menu_w;
+        out_receipt->menu_gdat_asset_h = menu_h;
+        out_receipt->menu_gdat_asset_stride = menu_stride;
+        out_receipt->menu_pixel_count = (uint32_t)(menu_w * menu_h);
+        for (row = 0; row < (size_t)menu_h; ++row) {
+            const uint8_t *src = menu_pixels + row * (size_t)menu_stride;
+            int x;
+            for (x = 0; x < menu_w; ++x) {
+                pixel_hash = dm2_v1_boot_packaged_capture_hash_step(
+                    pixel_hash,
+                    src[x]);
+            }
+        }
+        out_receipt->menu_pixel_hash = pixel_hash;
+    }
+    dm2_v1_boot_gdat_image_asset_free(menu_pixels);
+
     out_receipt->title_capture_ready =
         out_receipt->real_gdat_title_asset_consumed &&
         out_receipt->title_pixel_hash != 0u &&
@@ -2822,10 +2867,18 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->title_gdat_asset_w == 320 &&
         out_receipt->title_gdat_asset_h == 200 &&
         out_receipt->title_gdat_asset_stride >= 320;
+    out_receipt->menu_gdat_capture_ready =
+        out_receipt->real_gdat_menu_asset_consumed &&
+        out_receipt->menu_pixel_hash != 0u &&
+        out_receipt->menu_pixel_count == 64000u &&
+        out_receipt->menu_gdat_asset_w == 320 &&
+        out_receipt->menu_gdat_asset_h == 200 &&
+        out_receipt->menu_gdat_asset_stride >= 320;
     out_receipt->menu_title_composite_capture_ready =
         out_receipt->full_title_frame_capture_ready &&
+        out_receipt->menu_gdat_capture_ready &&
         out_receipt->menu_capture_ready &&
-        out_receipt->menu_gdat_command_count == 1 &&
+        out_receipt->menu_gdat_command_count == 2 &&
         out_receipt->menu_rect_command_count >= 2 &&
         out_receipt->menu_text_command_count >= out_receipt->menu_row_count &&
         out_receipt->selected_highlight_count >= 1;
@@ -2843,6 +2896,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     out_receipt->title_menu_hud_visual_proof_ready =
         out_receipt->menu_title_composite_capture_ready &&
         out_receipt->skproject_title_query_ready &&
+        out_receipt->skproject_menu_query_ready &&
         out_receipt->hud_handoff_capture_ready &&
         out_receipt->suppress_game_hud &&
         !out_receipt->present_first_hud_frame &&
@@ -2854,6 +2908,8 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         hash, ownership.packaged_full_start_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->title_pixel_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->menu_pixel_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->skproject_title_query_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
