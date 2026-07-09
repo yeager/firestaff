@@ -750,6 +750,22 @@ void nexus_v1_launcher_startup_full_start_receipt_clear(
     nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
 }
 
+void nexus_v1_launcher_startup_full_start_consumer_receipt_clear(
+    Nexus_V1_StartupFullStartConsumerReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    nexus_v1_launcher_startup_full_start_receipt_clear(
+        &receipt->full_start);
+    nexus_v1_launcher_startup_title_handoff_receipt_clear(
+        &receipt->title_handoff);
+    nexus_v1_launcher_startup_menu_presentation_receipt_clear(
+        &receipt->presentation);
+    nexus_v1_startup_save_route_receipt_clear(&receipt->save_route);
+}
+
 const char *nexus_v1_launcher_startup_runtime_handoff_route_name(
     Nexus_V1_StartupRuntimeHandoffRoute route)
 {
@@ -2322,6 +2338,122 @@ int nexus_v1_launcher_startup_full_start_receipt_from_snapshot(
     return nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
         runtime,
         &snapshot->runtime,
+        out_receipt);
+}
+
+static void nexus_v1_launcher_fill_full_start_consumer_status(
+    Nexus_V1_StartupFullStartConsumerReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    receipt->m11_ready = receipt->full_start.m11_host_route_ready ? 1 : 0;
+    receipt->m12_ready = receipt->full_start.full_start_menu_ready ? 1 : 0;
+    receipt->redraw =
+        receipt->full_start.host_receipt.input_result ==
+        NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+    receipt->consumer_route = receipt->full_start.m11_host_route
+        ? receipt->full_start.m11_host_route
+        : "blocked-startup";
+    receipt->status_scope = receipt->full_start.host_receipt.status_scope
+        ? receipt->full_start.host_receipt.status_scope
+        : receipt->full_start.status_scope;
+    receipt->status = receipt->full_start.host_receipt.status
+        ? receipt->full_start.host_receipt.status
+        : receipt->full_start.status;
+}
+
+int nexus_v1_launcher_startup_full_start_consumer_from_runtime_state(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupFullStartConsumerReceipt *out_receipt)
+{
+    Nexus_V1_StartupDrawCommand draw_commands[80];
+
+    nexus_v1_launcher_startup_full_start_consumer_receipt_clear(out_receipt);
+    if (!out_receipt || !runtime || !state ||
+        !nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+            runtime,
+            state,
+            &out_receipt->full_start)) {
+        return 0;
+    }
+    nexus_v1_launcher_fill_full_start_consumer_status(out_receipt);
+    if (!out_receipt->full_start.full_start_menu_ready) {
+        return 1;
+    }
+
+    if (state->title_active) {
+        out_receipt->title_handoff_valid =
+            nexus_v1_launcher_startup_title_handoff_receipt_from_runtime_state(
+                state,
+                menu_input,
+                &out_receipt->title_handoff);
+        if (out_receipt->title_handoff_valid) {
+            out_receipt->draw_command_count =
+                out_receipt->title_handoff.title_draw_ready ? 1 : 0;
+        }
+    } else if (state->save_select_active) {
+        memset(draw_commands, 0, sizeof(draw_commands));
+        out_receipt->presentation_valid =
+            nexus_v1_launcher_startup_save_presentation_receipt_from_runtime_state(
+                state,
+                draw_commands,
+                (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+                &out_receipt->presentation);
+        if (out_receipt->presentation_valid) {
+            out_receipt->draw_command_count =
+                out_receipt->presentation.draw_command_count;
+        }
+        out_receipt->save_route_valid =
+            nexus_v1_launcher_startup_save_route_receipt_from_runtime_state(
+                state,
+                menu_input,
+                load_save,
+                load_userdata,
+                &out_receipt->save_route);
+        if (out_receipt->save_route_valid) {
+            out_receipt->save_row_count = out_receipt->save_route.row_count;
+            out_receipt->selected_row = out_receipt->save_route.selected_row;
+        }
+    } else if (state->champion_select_active) {
+        memset(draw_commands, 0, sizeof(draw_commands));
+        out_receipt->presentation_valid =
+            nexus_v1_launcher_startup_champion_presentation_receipt_from_runtime_state(
+                state,
+                draw_commands,
+                (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+                &out_receipt->presentation);
+        if (out_receipt->presentation_valid) {
+            out_receipt->draw_command_count =
+                out_receipt->presentation.draw_command_count;
+        }
+    }
+    return 1;
+}
+
+int nexus_v1_launcher_startup_full_start_consumer_from_snapshot(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupFullStartConsumerReceipt *out_receipt)
+{
+    if (!snapshot) {
+        nexus_v1_launcher_startup_full_start_consumer_receipt_clear(
+            out_receipt);
+        return 0;
+    }
+    return nexus_v1_launcher_startup_full_start_consumer_from_runtime_state(
+        runtime,
+        &snapshot->runtime,
+        menu_input,
+        load_save,
+        load_userdata,
         out_receipt);
 }
 

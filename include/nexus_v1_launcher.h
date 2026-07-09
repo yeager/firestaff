@@ -422,6 +422,25 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupFullStartReceipt;
 
+typedef struct {
+    Nexus_V1_StartupFullStartReceipt full_start;
+    Nexus_V1_StartupTitleHandoffReceipt title_handoff;
+    Nexus_V1_StartupMenuPresentationReceipt presentation;
+    Nexus_V1_StartupSaveRouteReceipt save_route;
+    int title_handoff_valid;
+    int presentation_valid;
+    int save_route_valid;
+    int m11_ready;
+    int m12_ready;
+    int redraw;
+    int draw_command_count;
+    int save_row_count;
+    int selected_row;
+    const char *consumer_route;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupFullStartConsumerReceipt;
+
 void nexus_v1_launcher_startup_runtime_state_clear(
     Nexus_V1_StartupRuntimeState *state);
 void nexus_v1_launcher_runtime_startup_snapshot_clear(
@@ -438,6 +457,8 @@ void nexus_v1_launcher_startup_route_proof_receipt_clear(
     Nexus_V1_StartupRouteProofReceipt *receipt);
 void nexus_v1_launcher_startup_full_start_receipt_clear(
     Nexus_V1_StartupFullStartReceipt *receipt);
+void nexus_v1_launcher_startup_full_start_consumer_receipt_clear(
+    Nexus_V1_StartupFullStartConsumerReceipt *receipt);
 int nexus_v1_launcher_startup_host_facts_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupHostFacts *out_facts);
@@ -683,6 +704,20 @@ int nexus_v1_launcher_startup_full_start_receipt_from_snapshot(
     const Nexus_V1_LauncherRuntimeReceipt *runtime,
     const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     Nexus_V1_StartupFullStartReceipt *out_receipt);
+int nexus_v1_launcher_startup_full_start_consumer_from_runtime_state(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupFullStartConsumerReceipt *out_receipt);
+int nexus_v1_launcher_startup_full_start_consumer_from_snapshot(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupFullStartConsumerReceipt *out_receipt);
 int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupDrawCommand *out_commands,
