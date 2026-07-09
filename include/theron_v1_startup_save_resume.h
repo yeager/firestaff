@@ -218,6 +218,11 @@ int theron_v1_startup_continue_srm_apply(
     int slot_index,
     char *receipt,
     size_t receipt_cap);
+int theron_v1_startup_continue_srm_path_apply(
+    Theron_V1_World *world,
+    const char *srm_path,
+    char *receipt,
+    size_t receipt_cap);
 void theron_v1_startup_continue_request_init(
     Theron_V1StartupContinueRequest *request);
 void theron_v1_startup_continue_result_init(

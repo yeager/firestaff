@@ -298,6 +298,19 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
     return 0;
 }
 
+static int theron_v1_startup_runtime_has_verified_track02_request(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex) {
+
+    if (!hucard_rom || hucard_rom_size == 0u ||
+        !md5_hex || md5_hex[0] == '\0') {
+        return 0;
+    }
+    return theron_v1_track02_variant_for_md5(md5_hex) !=
+        THERON_TRACK02_VARIANT_UNKNOWN;
+}
+
 int theron_v1_startup_runtime_load_initial_level(
     Theron_V1_World *world,
     const uint8_t *hucard_rom,
@@ -330,6 +343,17 @@ int theron_v1_startup_runtime_load_initial_level(
                                                             receipt,
                                                             receipt_cap)) {
         return 1;
+    }
+    if (theron_v1_startup_runtime_has_verified_track02_request(
+            hucard_rom,
+            hucard_rom_size,
+            md5_hex)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 verified profile present but no semantic runtime handoff; fallback visuals blocked");
+        }
+        return 0;
     }
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';

@@ -2408,6 +2408,7 @@ int main(void) {
         }
         {
             char load_receipt[192];
+            static const uint8_t fake_verified_track02[64] = {0};
             load_receipt[0] = '\0';
             theron_v1_world_init(&world);
             result = theron_v1_startup_runtime_load_initial_level(
@@ -2432,6 +2433,25 @@ int main(void) {
             check_contains("runtime loader fallback receipt",
                            load_receipt,
                            "fallback room stage=3");
+            theron_v1_world_init(&world);
+            load_receipt[0] = '\0';
+            result = theron_v1_startup_runtime_load_initial_level(
+                &world,
+                fake_verified_track02,
+                sizeof(fake_verified_track02),
+                THERON_TRACK02_MD5_US_BIN,
+                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                load_receipt,
+                sizeof(load_receipt));
+            check_int("runtime loader verified Track02 blocks fallback rc",
+                      result,
+                      0);
+            check_int("runtime loader verified Track02 no synthetic level",
+                      world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                      0);
+            check_contains("runtime loader verified Track02 blocked receipt",
+                           load_receipt,
+                           "fallback visuals blocked");
         }
         {
             Theron_V1StartupRuntimeEntryRequest runtime_request;
