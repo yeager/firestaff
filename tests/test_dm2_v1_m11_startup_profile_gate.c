@@ -1434,7 +1434,7 @@ int main(void) {
             expect_true(strcmp(view.lastAction, "STARTUP") == 0 &&
                             strcmp(view.lastOutcome,
                                    "DM2 STARTUP MENU") == 0,
-                        "M11 DM2 startup draw consumes host-view receipt status");
+                        "M11 DM2 startup draw consumes packaged real-visual capture receipt status");
         }
         dm2_v1_boot_gdat_image_asset_free(title_pixels);
     }
