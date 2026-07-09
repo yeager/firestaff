@@ -4,6 +4,7 @@
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v1_movement_command_core_pc34_compat.h"
 #include "dm1_v1_movement_timing_pc34_compat.h"
+#include "m11_v1_turning_presentation_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "memory_sensor_execution_pc34_compat.h"
 
