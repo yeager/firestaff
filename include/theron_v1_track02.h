@@ -933,4 +933,25 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff
     size_t descriptor_offset,
     Theron_Track02StartupSemanticHandoff *out_handoff);
 
+/* Runtime-facing semantic startup level load.
+ *
+ * This is the narrowest promoted Track 02 startup path: it first composes the
+ * semantic startup handoff above, then loads only that handoff's
+ * hash/anchor-gated initial 32x27 candidate through theron_v1_level_load().
+ * The caller gets both the semantic handoff (seed table + user-data offsets)
+ * and the level-load handoff (header + map loader status).  It does not scan
+ * descriptor DATA windows as levels and it does not claim broader dungeon,
+ * object, menu-art, font, palette, or audio semantics.
+ */
+Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t descriptor_offset,
+    int dungeon_id,
+    int sub_level_index,
+    Theron_V1_Level *out_level,
+    Theron_Track02StartupSemanticHandoff *out_semantic_handoff,
+    Theron_Track02LevelHandoff *out_level_handoff);
+
 #endif /* THERON_V1_TRACK02_H */
