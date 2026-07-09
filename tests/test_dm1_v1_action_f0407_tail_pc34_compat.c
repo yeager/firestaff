@@ -2510,6 +2510,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
 static void test_melee_f0231_runtime_result_plan(void) {
     DM1_MeleeF0231RuntimeResultInputPc34 in;
     DM1_MeleeF0231RuntimeResultPlanPc34 out;
+    DM1_MeleeF0231LuckWritebackInputPc34 luckIn;
+    DM1_MeleeF0231LuckWritebackPlanPc34 luckOut;
 
     memset(&in, 0, sizeof(in));
     in.combatOutcome = COMBAT_OUTCOME_NO_ACTION;
@@ -2555,6 +2557,36 @@ static void test_melee_f0231_runtime_result_plan(void) {
              "F0231 out-of-range runtime result builds");
     CHECK_EQ(out.shouldApplyGroupDamage, 0,
              "F0231 out-of-range skips group damage");
+
+    memset(&luckIn, 0, sizeof(luckIn));
+    luckIn.championIndex = 1;
+    luckIn.championCount = 4;
+    luckIn.snapshotLuck = 280;
+    CHECK_EQ(dm1_v1_melee_luck_writeback_plan_f0231_pc34(
+                 &luckIn, &luckOut), 1,
+             "F0231 luck writeback high clamp builds");
+    CHECK_EQ(luckOut.valid, 1, "F0231 luck writeback valid");
+    CHECK_EQ(luckOut.shouldWriteBack, 1,
+             "F0231 luck writeback applies valid champion");
+    CHECK_EQ(luckOut.championIndex, 1,
+             "F0231 luck writeback champion");
+    CHECK_EQ(luckOut.clampedLuck, 255,
+             "F0231 luck writeback clamps high");
+
+    luckIn.snapshotLuck = -9;
+    CHECK_EQ(dm1_v1_melee_luck_writeback_plan_f0231_pc34(
+                 &luckIn, &luckOut), 1,
+             "F0231 luck writeback low clamp builds");
+    CHECK_EQ(luckOut.clampedLuck, 0,
+             "F0231 luck writeback clamps low");
+
+    luckIn.championIndex = 4;
+    luckIn.snapshotLuck = 77;
+    CHECK_EQ(dm1_v1_melee_luck_writeback_plan_f0231_pc34(
+                 &luckIn, &luckOut), 1,
+             "F0231 luck writeback out-of-range builds");
+    CHECK_EQ(luckOut.shouldWriteBack, 0,
+             "F0231 luck writeback skips invalid champion");
 }
 
 static void test_melee_f0231_damage_resolver_entrypoint(void) {

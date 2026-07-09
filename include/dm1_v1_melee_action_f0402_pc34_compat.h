@@ -344,6 +344,19 @@ typedef struct {
 } DM1_MeleeF0231RuntimeResultPlanPc34;
 
 typedef struct {
+    int championIndex;
+    int snapshotLuck;
+    int championCount;
+} DM1_MeleeF0231LuckWritebackInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldWriteBack;
+    int championIndex;
+    int clampedLuck;
+} DM1_MeleeF0231LuckWritebackPlanPc34;
+
+typedef struct {
     int groupIndex;
     int groupCount;
 } DM1_MeleeF0231ResolveRuntimeInputPc34;
@@ -641,6 +654,9 @@ int dm1_v1_melee_damage_gate_plan_f0231_pc34(
 int dm1_v1_melee_runtime_result_plan_f0231_pc34(
     const DM1_MeleeF0231RuntimeResultInputPc34* in,
     DM1_MeleeF0231RuntimeResultPlanPc34* out);
+int dm1_v1_melee_luck_writeback_plan_f0231_pc34(
+    const DM1_MeleeF0231LuckWritebackInputPc34* in,
+    DM1_MeleeF0231LuckWritebackPlanPc34* out);
 int dm1_v1_melee_resolve_runtime_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
