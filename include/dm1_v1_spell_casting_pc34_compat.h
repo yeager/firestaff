@@ -260,6 +260,8 @@ typedef struct {
 
     int lightPower;
     int lightAmountDelta;
+    int potionType;
+    int potionPower;
     int shieldDefenseBefore;
     int shieldDefenseDelta;
     int shieldDefenseAfter;
@@ -397,6 +399,15 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
     int championDirection,
     int partyDirection,
     int partyShieldDefense,
+    DM1_SpellF0412RuntimeReceipt* outReceipt);
+int dm1_spell_f0412PotionReceiptForTableIndex(
+    int spellTableIndex,
+    int powerOrdinal,
+    int champIdx,
+    const DM1_ChampionSpellStats* stats,
+    uint16_t experienceRng16,
+    uint16_t potionPowerRng16,
+    int hasEmptyFlask,
     DM1_SpellF0412RuntimeReceipt* outReceipt);
 
 /**

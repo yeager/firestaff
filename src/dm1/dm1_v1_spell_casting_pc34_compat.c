@@ -871,6 +871,49 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
         partyShieldDefense, outReceipt);
 }
 
+int dm1_spell_f0412PotionReceiptForTableIndex(
+    int spellTableIndex,
+    int powerOrdinal,
+    int champIdx,
+    const DM1_ChampionSpellStats* stats,
+    uint16_t experienceRng16,
+    uint16_t potionPowerRng16,
+    int hasEmptyFlask,
+    DM1_SpellF0412RuntimeReceipt* outReceipt)
+{
+    DM1_SpellF0412RuntimeReceipt receipt;
+
+    if (!outReceipt) return 0;
+    if (!dm1_spell_f0412RuntimeReceiptForTableIndex(
+            spellTableIndex, powerOrdinal, champIdx, stats, experienceRng16,
+            0, 0, 0, &receipt)) {
+        return 0;
+    }
+    if (receipt.spellKind != DM1_SPELL_KIND_POTION) {
+        *outReceipt = receipt;
+        return 1;
+    }
+    if (!hasEmptyFlask ||
+        receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE ||
+        receipt.failureType == DM1_FAILURE_MEANINGLESS_SPELL) {
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB MENU.C F0412 lines 1850-1860: after the F0411 empty-flask
+     * lookup succeeds, the potion type is M068_SPELL_TYPE and power is
+     * M003_RANDOM(16) + (PowerSymbolOrdinal * 40). */
+    receipt.castResult = DM1_SPELL_CAST_SUCCESS;
+    receipt.failureType = -1;
+    receipt.potionType = receipt.spellType;
+    receipt.potionPower = (int)(potionPowerRng16 & 0x000Fu) +
+                          (receipt.powerOrdinal * 40);
+    receipt.symbolsCleared =
+        dm1_spell_castClearsSymbolsForResult(receipt.castResult);
+    *outReceipt = receipt;
+    return 1;
+}
+
 int dm1_spell_f0412ReceiptToSpellEffectPc34(
     const DM1_SpellF0412RuntimeReceipt* receipt,
     int currentFireShieldDefense,
@@ -898,6 +941,11 @@ int dm1_spell_f0412ReceiptToSpellEffectPc34(
     if (receipt->spellKind == DM1_SPELL_KIND_PROJECTILE) {
         outEffect->impactAttack = 90;
         outEffect->kineticEnergy = receipt->projectileKineticEnergy;
+        return 1;
+    }
+
+    if (receipt->spellKind == DM1_SPELL_KIND_POTION) {
+        outEffect->kineticEnergy = receipt->potionPower;
         return 1;
     }
 

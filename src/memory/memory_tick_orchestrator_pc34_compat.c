@@ -7140,10 +7140,29 @@ cmd_attack_legacy_marker:
             receiptExperience = receipt.experience;
             break;
         }
-        case C1_SPELL_KIND_POTION_COMPAT:
-            F0758_MAGIC_ProducePotionEffect_Compat(
-                &spell, powerOrd, emptyFlaskSlot >= 0, &world->masterRng, &effect);
+        case C1_SPELL_KIND_POTION_COMPAT: {
+            DM1_ChampionSpellStats dm1Stats;
+            DM1_SpellF0412RuntimeReceipt receipt;
+            uint16_t potionPowerRng16 = 0;
+
+            if (emptyFlaskSlot >= 0) {
+                potionPowerRng16 =
+                    (uint16_t)F0732_COMBAT_RngRandom_Compat(
+                        &world->masterRng, 16);
+            }
+            if (!orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
+                    world, champIdx, &dm1Stats) ||
+                !dm1_spell_f0412PotionReceiptForTableIndex(
+                    tableIdx, powerOrd, champIdx, &dm1Stats,
+                    (uint16_t)(spellRngRaw & 0xFFFFu),
+                    potionPowerRng16, emptyFlaskSlot >= 0, &receipt) ||
+                !dm1_spell_f0412ReceiptToSpellEffectPc34(
+                    &receipt, world->magic.fireShieldDefense, &effect)) {
+                return 0;
+            }
+            receiptExperience = receipt.experience;
             break;
+        }
         case C4_SPELL_KIND_MAGIC_MAP_COMPAT:
             F0759_MAGIC_ProduceMagicMapEffect_Compat(
                 &spell, powerOrd,
