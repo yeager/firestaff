@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 chest struct ownership names: chest reopen contents-order and chest teleport-survival structs now expose DM1-owned type names; old M11 type names remain aliases. Verification: reopen contents order 86 assertions, teleport survival 282 assertions, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 chest/inventory runtime probe ownership names: chest close rewire, incompatible swap, drop-to-floor, close recompaction, reopen cross-champion, open full-hand, reopen-then-swap, destination guard, reopen contents order, teleport survival, and leader-swap food/water entrypoints now expose DM1-owned API names; old M11/m11 names remain aliases. Verification: all touched chest/inventory probes passed, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 viewport dispatch ownership names: D1L/D1R stairs/pit dispatch and D0L2/D0R2 floor-ornament helpers now expose DM1-owned API names; old M11 names remain aliases. Verification: stairs/pit dispatch 288 assertions, floor-ornament 51/51, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

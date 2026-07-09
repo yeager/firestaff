@@ -115,7 +115,7 @@ static int unique_visible_count(const int* types)
 }
 
 static int contains_every_visible_input(
-    const M11_GameView_ChestReopenContentsOrderCasePc34* out)
+    const DM1_V1_ChestReopenContentsOrderCasePc34* out)
 {
     int visibleInputCount =
         out->inputCount < DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT ?
@@ -136,7 +136,7 @@ static int run_case(int caseIndex,
                     const DM1_V1_ItemPc34* inputItems,
                     int inputCount,
                     int leaderHandItemType,
-                    M11_GameView_ChestReopenContentsOrderCasePc34* out)
+                    DM1_V1_ChestReopenContentsOrderCasePc34* out)
 {
     DM1_V1_InventoryStatePc34 state;
     DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT];
@@ -252,7 +252,7 @@ const char* DM1_V1_ChestReopenContentsOrder_SourceEvidencePc34Compat(void)
 }
 
 int DM1_V1_ChestReopenContentsOrder_RunPc34Compat(
-    M11_GameView_ChestReopenContentsOrderProbePc34* out)
+    DM1_V1_ChestReopenContentsOrderProbePc34* out)
 {
     DM1_V1_ItemPc34 caseOne[1];
     DM1_V1_ItemPc34 caseThree[3];

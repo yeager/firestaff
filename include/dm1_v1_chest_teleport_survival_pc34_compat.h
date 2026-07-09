@@ -43,7 +43,7 @@ typedef struct {
     const char* objectF0033IconIndex;
     const char* blitmaskF0133PresentationRoute;
     const char* defsSentinelsAndSlots;
-} M11_GameView_ChestTeleportSurvivalAnchorsPc34;
+} DM1_V1_ChestTeleportSurvivalAnchorsPc34;
 
 typedef struct {
     const char* phaseName;
@@ -79,7 +79,7 @@ typedef struct {
     int objectIconLookupCount;
     int blitRouteCount;
     int c30SlotClearWriteObserved;
-} M11_GameView_ChestTeleportSurvivalSnapshotPc34;
+} DM1_V1_ChestTeleportSurvivalSnapshotPc34;
 
 typedef struct {
     int beforeMapIndex;
@@ -98,7 +98,7 @@ typedef struct {
     int preservedOpenChestOnForeignMap;
     int preservedG0425OnForeignMap;
     int preservedLeaderHandOnForeignMap;
-} M11_GameView_ChestTeleportSurvivalNegativePc34;
+} DM1_V1_ChestTeleportSurvivalNegativePc34;
 
 typedef struct {
     int sourceLockedContractOnly;
@@ -118,15 +118,24 @@ typedef struct {
     int initialChestWeights[DM1_PC34_CHEST_TELEPORT_SURVIVAL_ITEM_COUNT];
     int initialLeaderHandThing;
     int initialLeaderHandWeight;
-    M11_GameView_ChestTeleportSurvivalAnchorsPc34 anchors;
-    M11_GameView_ChestTeleportSurvivalSnapshotPc34
+    DM1_V1_ChestTeleportSurvivalAnchorsPc34 anchors;
+    DM1_V1_ChestTeleportSurvivalSnapshotPc34
         snapshots[DM1_PC34_CHEST_TELEPORT_SURVIVAL_SNAPSHOT_COUNT];
-    M11_GameView_ChestTeleportSurvivalNegativePc34 negative;
-} M11_GameView_ChestTeleportSurvivalProbePc34;
+    DM1_V1_ChestTeleportSurvivalNegativePc34 negative;
+} DM1_V1_ChestTeleportSurvivalProbePc34;
+
+typedef DM1_V1_ChestTeleportSurvivalAnchorsPc34
+    M11_GameView_ChestTeleportSurvivalAnchorsPc34;
+typedef DM1_V1_ChestTeleportSurvivalSnapshotPc34
+    M11_GameView_ChestTeleportSurvivalSnapshotPc34;
+typedef DM1_V1_ChestTeleportSurvivalNegativePc34
+    M11_GameView_ChestTeleportSurvivalNegativePc34;
+typedef DM1_V1_ChestTeleportSurvivalProbePc34
+    M11_GameView_ChestTeleportSurvivalProbePc34;
 
 const char* DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat(void);
 int DM1_V1_ChestTeleportSurvival_RunPc34Compat(
-    M11_GameView_ChestTeleportSurvivalProbePc34* out);
+    DM1_V1_ChestTeleportSurvivalProbePc34* out);
 
 #define M11_GameView_ChestTeleportSurvivalSourceEvidencePc34 \
     DM1_V1_ChestTeleportSurvival_SourceEvidencePc34Compat

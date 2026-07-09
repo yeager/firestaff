@@ -28,7 +28,7 @@ typedef struct {
     int itemType;
     int weight;
     int allowedSlots;
-} M11_GameView_ChestReopenContentsOrderItemPc34;
+} DM1_V1_ChestReopenContentsOrderItemPc34;
 
 typedef struct {
     int inputCount;
@@ -63,20 +63,27 @@ typedef struct {
     int leaderHandAfterClose;
     int leaderHandAfterReopen;
     int leaderHandUnchangedAcrossCycle;
-} M11_GameView_ChestReopenContentsOrderCasePc34;
+} DM1_V1_ChestReopenContentsOrderCasePc34;
 
 typedef struct {
     int sourceLockedContractOnly;
     int c537Pc34Slot;
     int c544Pc34Slot;
     int chestSlotCount;
-    M11_GameView_ChestReopenContentsOrderCasePc34
+    DM1_V1_ChestReopenContentsOrderCasePc34
         cases[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_CASE_COUNT];
-} M11_GameView_ChestReopenContentsOrderProbePc34;
+} DM1_V1_ChestReopenContentsOrderProbePc34;
+
+typedef DM1_V1_ChestReopenContentsOrderItemPc34
+    M11_GameView_ChestReopenContentsOrderItemPc34;
+typedef DM1_V1_ChestReopenContentsOrderCasePc34
+    M11_GameView_ChestReopenContentsOrderCasePc34;
+typedef DM1_V1_ChestReopenContentsOrderProbePc34
+    M11_GameView_ChestReopenContentsOrderProbePc34;
 
 const char* DM1_V1_ChestReopenContentsOrder_SourceEvidencePc34Compat(void);
 int DM1_V1_ChestReopenContentsOrder_RunPc34Compat(
-    M11_GameView_ChestReopenContentsOrderProbePc34* out);
+    DM1_V1_ChestReopenContentsOrderProbePc34* out);
 
 #define M11_GameView_ChestReopenContentsOrderSourceEvidencePc34 \
     DM1_V1_ChestReopenContentsOrder_SourceEvidencePc34Compat

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static M11_GameView_ChestTeleportSurvivalProbePc34 g_probe;
+static DM1_V1_ChestTeleportSurvivalProbePc34 g_probe;
 static int g_assertions;
 static int g_failures;
 
@@ -115,7 +115,7 @@ static int expect_empty_slots(const char* label,
 
 static int test_anchor_table(void)
 {
-    const M11_GameView_ChestTeleportSurvivalAnchorsPc34* a =
+    const DM1_V1_ChestTeleportSurvivalAnchorsPc34* a =
         &g_probe.anchors;
     const char* defs =
         "ReDMCSB DEFS.H line 2088, C30, G0425, G0426, M070, M516";
@@ -295,7 +295,7 @@ static int test_probe_constants(void)
 }
 
 static int test_snapshot_common(
-    const M11_GameView_ChestTeleportSurvivalSnapshotPc34* s,
+    const DM1_V1_ChestTeleportSurvivalSnapshotPc34* s,
     int expectedMap,
     int expectedOpenChest,
     int expectedVisibleCount,
@@ -359,12 +359,12 @@ static int test_snapshot_common(
 
 static int test_open_and_teleport_cycle(void)
 {
-    const M11_GameView_ChestTeleportSurvivalSnapshotPc34* openA =
+    const DM1_V1_ChestTeleportSurvivalSnapshotPc34* openA =
         &g_probe.snapshots[DM1_PC34_CHEST_TELEPORT_SURVIVAL_SNAPSHOT_OPEN_A];
-    const M11_GameView_ChestTeleportSurvivalSnapshotPc34* teleportB =
+    const DM1_V1_ChestTeleportSurvivalSnapshotPc34* teleportB =
         &g_probe.snapshots[
             DM1_PC34_CHEST_TELEPORT_SURVIVAL_SNAPSHOT_TELEPORT_B];
-    const M11_GameView_ChestTeleportSurvivalSnapshotPc34* teleportA =
+    const DM1_V1_ChestTeleportSurvivalSnapshotPc34* teleportA =
         &g_probe.snapshots[
             DM1_PC34_CHEST_TELEPORT_SURVIVAL_SNAPSHOT_TELEPORT_A];
     int ok = 1;
@@ -454,9 +454,9 @@ static int test_open_and_teleport_cycle(void)
 
 static int test_close_and_reopen_cycle(void)
 {
-    const M11_GameView_ChestTeleportSurvivalSnapshotPc34* closeA =
+    const DM1_V1_ChestTeleportSurvivalSnapshotPc34* closeA =
         &g_probe.snapshots[DM1_PC34_CHEST_TELEPORT_SURVIVAL_SNAPSHOT_CLOSE_A];
-    const M11_GameView_ChestTeleportSurvivalSnapshotPc34* reopenA =
+    const DM1_V1_ChestTeleportSurvivalSnapshotPc34* reopenA =
         &g_probe.snapshots[
             DM1_PC34_CHEST_TELEPORT_SURVIVAL_SNAPSHOT_REOPEN_A];
     int ok = 1;
@@ -531,7 +531,7 @@ static int test_close_and_reopen_cycle(void)
 
 static int test_negative_foreign_map_close(void)
 {
-    const M11_GameView_ChestTeleportSurvivalNegativePc34* n =
+    const DM1_V1_ChestTeleportSurvivalNegativePc34* n =
         &g_probe.negative;
     int ok = 1;
 
