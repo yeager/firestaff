@@ -308,6 +308,7 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_BootStartupViewModel boot_view_model;
     DM2_V1_BootStartupHostViewReceipt host_view_receipt;
     DM2_V1_BootStartupPackagedFullStartReceipt full_start_package;
+    DM2_V1_BootStartupPackagedConsumerReceipt consumer_receipt;
     DM2_V1_StartupMenu restored_menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupViewReceipt view_receipt;
@@ -716,6 +717,22 @@ static void expect_dm2_startup_layout_contract(void) {
                     full_start_package.m11_consumer_ready == 1 &&
                     full_start_package.packaged_full_start_hash != 0u,
                 "DM2 packaged full-start receipt joins timing/assets/menu/HUD proof");
+    expect_true(dm2_v1_boot_startup_packaged_consumer_receipt_from_snapshot(
+                    &boot_snapshot,
+                    &consumer_receipt) &&
+                    consumer_receipt.valid &&
+                    consumer_receipt.packaged_full_start_hash ==
+                        full_start_package.packaged_full_start_hash &&
+                    consumer_receipt.startup_active == 1 &&
+                    consumer_receipt.startup_draw_ready == 1 &&
+                    consumer_receipt.startup_draw_command_count ==
+                        full_start_package.command_count &&
+                    consumer_receipt.startup_title_frame == 0 &&
+                    consumer_receipt.startup_title_frame_max == 7 &&
+                    consumer_receipt.startup_draw_menu_capture_ready == 1 &&
+                    consumer_receipt.startup_draw_hud_handoff_ready == 1 &&
+                    strcmp(consumer_receipt.phase, "dm2-startup-menu") == 0,
+                "DM2 packaged consumer receipt gives M11 one startup draw contract");
     boot_snapshot.startup_menu_active = 1;
     expect_true(dm2_v1_startup_presentation_receipt(
                     1,
@@ -1067,6 +1084,7 @@ int main(void) {
     M11_BootProbeReceipt boot_receipt;
     DM2_V1_BootStartupHostViewReceipt host_view_receipt;
     DM2_V1_BootStartupPackagedFullStartReceipt full_start_package;
+    DM2_V1_BootStartupPackagedConsumerReceipt consumer_receipt;
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
@@ -1305,6 +1323,31 @@ int main(void) {
                         full_start_package.title_gdat_asset_h == 200 &&
                         full_start_package.packaged_full_start_hash != 0u,
                     "DM2 packaged full-start receipt binds real GDAT title/menu proof");
+        expect_true(dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
+                        profile,
+                        startup_snapshot.startup_menu_active,
+                        startup_snapshot.startup_save_root,
+                        startup_snapshot.resume_available,
+                        startup_snapshot.slot_mask,
+                        startup_snapshot.selected_row,
+                        13,
+                        &consumer_receipt) &&
+                        consumer_receipt.valid &&
+                        consumer_receipt.packaged_full_start_hash ==
+                            full_start_package.packaged_full_start_hash &&
+                        consumer_receipt.title_capture_ready == 1 &&
+                        consumer_receipt.full_start_real_asset_ready == 1 &&
+                        consumer_receipt.title_gdat_asset_ready == 1 &&
+                        consumer_receipt.title_gdat_asset_w == 320 &&
+                        consumer_receipt.title_gdat_asset_h == 200 &&
+                        consumer_receipt.startup_title_frame == 2 &&
+                        consumer_receipt.title_frame_start_tick == 12 &&
+                        consumer_receipt.title_frame_elapsed_ticks == 1 &&
+                        consumer_receipt.startup_draw_ready == 1 &&
+                        consumer_receipt.startup_draw_command_count ==
+                            full_start_package.command_count &&
+                        consumer_receipt.startup_hud_runtime_ready == 1,
+                    "DM2 packaged consumer receipt carries real GDAT startup proof");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,

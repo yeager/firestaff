@@ -357,6 +357,42 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int packaged_full_start_valid;
+    uint32_t packaged_full_start_hash;
+    int startup_active;
+    int startup_animation_active;
+    int startup_title_frame;
+    int startup_title_frame_max;
+    int startup_title_ready;
+    int startup_hud_runtime_ready;
+    int startup_draw_ready;
+    int startup_draw_command_count;
+    int startup_draw_menu_capture_ready;
+    int startup_draw_hud_handoff_ready;
+    int title_capture_ready;
+    int menu_capture_ready;
+    int hud_handoff_capture_ready;
+    int runtime_handoff_capture_ready;
+    int exact_title_timing_ready;
+    int full_start_real_asset_ready;
+    int title_gdat_asset_ready;
+    int title_gdat_asset_w;
+    int title_gdat_asset_h;
+    int title_frame_duration_ticks;
+    int title_cycle_ticks;
+    int title_cycle_position_tick;
+    int title_frame_start_tick;
+    int title_next_frame_tick;
+    int title_frame_elapsed_ticks;
+    int title_frame_remaining_ticks;
+    const char *phase;
+    const char *animation;
+    const char *status_scope;
+    const char *status;
+} DM2_V1_BootStartupPackagedConsumerReceipt;
+
+typedef struct {
+    int valid;
     int draw_startup_menu;
     int command_count;
     int selected_row;
@@ -630,6 +666,23 @@ int dm2_v1_boot_startup_packaged_full_start_receipt_from_runtime_state(
     int selected_row,
     int title_animation_tick,
     DM2_V1_BootStartupPackagedFullStartReceipt *out_receipt);
+void dm2_v1_boot_startup_packaged_consumer_receipt_init(
+    DM2_V1_BootStartupPackagedConsumerReceipt *receipt);
+int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
+    const DM2_V1_BootStartupPackagedFullStartReceipt *package,
+    DM2_V1_BootStartupPackagedConsumerReceipt *out_receipt);
+int dm2_v1_boot_startup_packaged_consumer_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupPackagedConsumerReceipt *out_receipt);
+int dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupPackagedConsumerReceipt *out_receipt);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,

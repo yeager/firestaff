@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass913 DM2 packaged full-start consumer receipt: DM2 boot now exports a consumer receipt for startup draw/probe gates from the packaged full-start receipt, including exact title timing, GDAT title readiness, menu capture, HUD handoff, and command count so UI/M11 callers can avoid loose boot fields. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 pass900 Theron non-media render export cleanup: removed the older runtime/snapshot layout, row, and render-plan boot exports; tests now verify the same data through full-start host-render receipts, keeping render consumers off raw prompt/roster rebuild paths. Verification: `test_theron_v1_startup_save_resume_pc34`, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB public capture render-plan API retired: capture-level title/full render-plan accessors were removed from the public boot header; package/host-view internals still build the plans, and tests now prove title, utility, closed-door, and door-opening through host-view/package receipts. Verification: CSB startup tests and `git diff --check`.
