@@ -382,6 +382,9 @@ typedef struct Theron_V1_BootStartupHostViewReceipt {
     int save_resume_track02_no_fallback_ready;
     int no_fallback_visuals_enforced;
     int fallback_visuals_allowed;
+    int runtime_graphics_handoff;
+    int track02_runtime_graphics_handoff;
+    int save_resume_runtime_graphics_handoff;
     int runtime_level_source;
     int runtime_track02_semantic_handoff;
     int runtime_fallback_visuals_blocked;
@@ -408,6 +411,9 @@ typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
     int runtime_readiness_ready;
     int no_fallback_visuals_enforced;
     int fallback_visuals_allowed;
+    int runtime_graphics_handoff;
+    int track02_runtime_graphics_handoff;
+    int save_resume_runtime_graphics_handoff;
     int runtime_level_source;
     int runtime_track02_semantic_handoff;
     int runtime_fallback_visuals_blocked;
