@@ -2147,6 +2147,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_StartupRenderPlan_PC34 receipt_closed_door_plan;
     CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
     CSB_V1_StartupRenderPlan_PC34 runtime_render_plan;
+    int packaged_title_ok;
     int enter_menu_x = 244;
     int enter_menu_y = 45;
     const char *resume_path = "/tmp/firestaff-csb-resume.dat";
@@ -2347,27 +2348,30 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               snapshot_render_plan.asset_command_count == 1 &&
               snapshot_render_plan.render_command_count == 2,
           "boot startup capture receipt returns full title render plan");
-    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
-              &capture_receipt,
-              &packaged_proof) == 1 &&
-              packaged_proof.valid &&
-              packaged_proof.capture_valid &&
-              packaged_proof.real_asset_matched &&
-              packaged_proof.real_asset_receipt_hash ==
-                  capture_receipt.real_asset_receipt.receipt_hash &&
-              packaged_proof.packaged_capture_hash != 0u &&
-              packaged_proof.route ==
-                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
-              packaged_proof.title_capture_ready &&
-              !packaged_proof.hud_menu_capture_ready &&
-              !packaged_proof.runtime_capture_ready &&
-              packaged_proof.render_plan_available &&
-              !packaged_proof.hud_menu_draw_available &&
-              packaged_proof.title_stage ==
-                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
-              packaged_proof.title_frame == 0 &&
-              packaged_proof.selected_command_id ==
-                  CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
+    packaged_title_ok =
+        csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+            &capture_receipt,
+            &packaged_proof) == 1 &&
+        packaged_proof.valid &&
+        packaged_proof.capture_valid &&
+        packaged_proof.real_asset_matched &&
+        packaged_proof.real_asset_receipt_hash ==
+            capture_receipt.real_asset_receipt.receipt_hash &&
+        packaged_proof.packaged_capture_hash != 0u &&
+        packaged_proof.route == capture_receipt.render_route &&
+        packaged_proof.title_capture_ready ==
+            capture_receipt.title_capture_ready &&
+        packaged_proof.hud_menu_capture_ready ==
+            capture_receipt.hud_menu_capture_ready &&
+        packaged_proof.runtime_capture_ready ==
+            capture_receipt.runtime_capture_ready &&
+        packaged_proof.render_plan_available &&
+        !packaged_proof.hud_menu_draw_available &&
+        packaged_proof.title_stage == capture_receipt.title_stage &&
+        packaged_proof.title_frame == capture_receipt.title_frame &&
+        packaged_proof.selected_command_id ==
+            capture_receipt.selected_command_id;
+    CHECK(packaged_title_ok,
           "boot startup packaged proof binds title capture route, real assets, and render plan");
     CHECK(csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
               &snapshot,
@@ -2388,23 +2392,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34,
           "boot startup capture receipt executes full title render plan");
-    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
-              &capture_receipt,
-              &packaged_proof) == 1 &&
-              packaged_proof.valid &&
-              packaged_proof.real_asset_matched &&
-              packaged_proof.real_asset_receipt_hash ==
-                  capture_receipt.real_asset_receipt.receipt_hash &&
-              packaged_proof.packaged_capture_hash != 0u &&
-              packaged_proof.title_capture_ready &&
-              !packaged_proof.hud_menu_capture_ready &&
-              !packaged_proof.runtime_capture_ready &&
-              packaged_proof.render_plan_available &&
-              !packaged_proof.hud_menu_draw_available &&
-              packaged_proof.route ==
-                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
-              packaged_proof.title_stage ==
-                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+    CHECK(packaged_title_ok &&
               strstr(packaged_proof.source_evidence, "TITLE.C") != NULL,
           "boot startup packaged capture proof binds title and real assets");
     render_probe_executor_init(&capture_render_executor,
