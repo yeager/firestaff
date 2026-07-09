@@ -63,6 +63,7 @@ int main(void)
     DM2_V1_BootStartupHostViewReceipt boot_host_view_receipt;
     DM2_V1_BootStartupFullStartReceipt boot_full_start_receipt;
     DM2_V1_BootStartupPackagedCaptureProof boot_capture_proof;
+    DM2_V1_BootStartupPackagedFullStartReceipt boot_full_start_package;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -519,6 +520,22 @@ int main(void)
               boot_capture_proof.hud_handoff_capture_ready == 1 &&
               boot_capture_proof.m11_consumer_ready == 1,
           "boot packaged capture proof owns startup menu timing and HUD handoff");
+    check(dm2_v1_boot_startup_packaged_full_start_receipt_from_snapshot(
+              &boot_snapshot,
+              &boot_full_start_package) &&
+              boot_full_start_package.valid &&
+              boot_full_start_package.full_start_valid == 1 &&
+              boot_full_start_package.capture_proof_valid == 1 &&
+              boot_full_start_package.packaged_full_start_hash != 0u &&
+              boot_full_start_package.title_animation_tick == 0 &&
+              boot_full_start_package.title_frame_start_tick == 0 &&
+              boot_full_start_package.title_next_frame_tick == 6 &&
+              boot_full_start_package.menu_capture_ready == 1 &&
+              boot_full_start_package.hud_handoff_capture_ready == 1 &&
+              boot_full_start_package.m11_consumer_ready == 1 &&
+              boot_full_start_package.full_start.valid == 1 &&
+              boot_full_start_package.capture_proof.valid == 1,
+          "boot packaged full-start receipt joins full-start and capture proof");
     check(dm2_v1_boot_startup_full_start_receipt_from_runtime_state(
               NULL,
               1,
@@ -577,6 +594,23 @@ int main(void)
               boot_capture_proof.menu_capture_ready == 1 &&
               boot_capture_proof.m11_consumer_ready == 1,
           "boot packaged capture proof owns nonzero title timing for M11");
+    check(dm2_v1_boot_startup_packaged_full_start_receipt_from_runtime_state(
+              NULL,
+              1,
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              13,
+              &boot_full_start_package) &&
+              boot_full_start_package.valid &&
+              boot_full_start_package.title_animation_tick == 13 &&
+              boot_full_start_package.title_frame == 2 &&
+              boot_full_start_package.title_frame_elapsed_ticks == 1 &&
+              boot_full_start_package.title_frame_remaining_ticks == 5 &&
+              boot_full_start_package.menu_capture_ready == 1 &&
+              boot_full_start_package.m11_consumer_ready == 1,
+          "boot packaged full-start receipt owns nonzero title timing");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&

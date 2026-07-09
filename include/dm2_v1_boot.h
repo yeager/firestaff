@@ -308,6 +308,55 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int full_start_valid;
+    int capture_proof_valid;
+    uint32_t packaged_full_start_hash;
+    int full_start_graphics_ready;
+    int full_start_real_asset_ready;
+    int exact_title_timing_ready;
+    int title_capture_ready;
+    int menu_capture_ready;
+    int hud_handoff_capture_ready;
+    int runtime_handoff_capture_ready;
+    int m11_consumer_ready;
+    int startup_menu_active;
+    int draw_startup_menu;
+    int command_count;
+    int selected_row;
+    int title_animation_tick;
+    int title_frame;
+    int title_frame_max;
+    int title_frame_duration_ticks;
+    int title_cycle_ticks;
+    int title_cycle_position_tick;
+    int title_frame_start_tick;
+    int title_next_frame_tick;
+    int title_frame_elapsed_ticks;
+    int title_frame_remaining_ticks;
+    int title_cycle_remaining_ticks;
+    int title_gdat_category;
+    int title_gdat_index;
+    int title_gdat_field;
+    int title_gdat_asset_ready;
+    int title_gdat_asset_w;
+    int title_gdat_asset_h;
+    int title_gdat_asset_stride;
+    int menu_row_count;
+    int menu_text_count;
+    int selectable_text_count;
+    int selected_highlight_count;
+    int menu_panel_ready;
+    int startup_menu_assets_ready;
+    int hud_overlay_suppressed;
+    int hud_runtime_ready;
+    const char *status_scope;
+    const char *status;
+    DM2_V1_BootStartupFullStartReceipt full_start;
+    DM2_V1_BootStartupPackagedCaptureProof capture_proof;
+} DM2_V1_BootStartupPackagedFullStartReceipt;
+
+typedef struct {
+    int valid;
     int draw_startup_menu;
     int command_count;
     int selected_row;
@@ -588,6 +637,23 @@ int dm2_v1_boot_startup_packaged_capture_proof_from_runtime_state(
     int selected_row,
     int title_animation_tick,
     DM2_V1_BootStartupPackagedCaptureProof *out_proof);
+void dm2_v1_boot_startup_packaged_full_start_receipt_init(
+    DM2_V1_BootStartupPackagedFullStartReceipt *receipt);
+int dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
+    const DM2_V1_BootStartupHostViewReceipt *host_view,
+    DM2_V1_BootStartupPackagedFullStartReceipt *out_receipt);
+int dm2_v1_boot_startup_packaged_full_start_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupPackagedFullStartReceipt *out_receipt);
+int dm2_v1_boot_startup_packaged_full_start_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupPackagedFullStartReceipt *out_receipt);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,
