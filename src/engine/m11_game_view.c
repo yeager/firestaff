@@ -25454,6 +25454,39 @@ static int m11_apply_f0190_fear(
     return 1;
 }
 
+static int m11_apply_f0190_projectile_possession_drops(
+    M11_GameViewState* state,
+    int creatureType,
+    int creatureAttributes,
+    int killedCell,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int outcome)
+{
+    DM1_MeleeF0190PossessionDropInputPc34 dropIn;
+    DM1_MeleeF0190PossessionDropPlanPc34 dropPlan;
+
+    if (!state) return 0;
+    memset(&dropIn, 0, sizeof(dropIn));
+    memset(&dropPlan, 0, sizeof(dropPlan));
+    dropIn.outcome = outcome;
+    dropIn.creatureType = creatureType;
+    dropIn.creatureAttributes = creatureAttributes;
+    dropIn.killedCell = killedCell;
+    dropIn.mapIndex = mapIndex;
+    dropIn.mapX = mapX;
+    dropIn.mapY = mapY;
+    if (!dm1_v1_melee_possession_drop_plan_f0190_pc34(
+            &dropIn, &dropPlan) ||
+        !dropPlan.valid || !dropPlan.shouldDropCreatureFixedPossessions) {
+        return 0;
+    }
+    return m11_materialize_creature_fixed_possession_drops(
+        state, dropPlan.creatureType, dropPlan.creatureCell,
+        dropPlan.mapIndex, dropPlan.mapX, dropPlan.mapY);
+}
+
 static void m11_schedule_creature_reaction_f0209(
     M11_GameViewState* state,
     int groupIndex,
@@ -27684,14 +27717,11 @@ static void m11_projectile_apply_impact(
                                     impactMap, impactX, impactY);
                         }
                         if (aftermath.dropFixedPossessions) {
-                            /* ReDMCSB GROUP.C F0190 lines 842-847 calls
-                             * F0186 for the killed member before group
-                             * compaction side effects finish.  F0738 has
-                             * already compacted the M11 group, so use the
-                             * saved original cell. */
-                            (void)m11_materialize_creature_fixed_possession_drops(
+                            (void)m11_apply_f0190_projectile_possession_drops(
                                 state, actionPlan.originalCreatureType,
-                                actionPlan.killedCell, impactMap, impactX, impactY);
+                                creatureAttributes, actionPlan.killedCell,
+                                impactMap, impactX, impactY,
+                                actionApply.outcomeCode);
                         }
                         if (aftermath.spawnDeathSmoke) {
                             (void)m11_spawn_f0190_death_smoke(
