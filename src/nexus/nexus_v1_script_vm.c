@@ -3,16 +3,12 @@
 #include <string.h>
 #include <stdio.h>
 
-/* Nexus V1 script VM — SDDRVS.TSK bytecode parser + trigger dispatcher.
- * STUB IMPLEMENTATION — actual SDDRVS.TSK bytecode format is unknown.
- * This module provides the hook scaffolding for when the format is reverse-
- * engineered. Current status: parsing stubs exist but no real bytecode decode.
- * Source: docs/nexus_triggers.md (SDDRVS.TSK analysis),
- * docs/nexus_sensors.md (Nexus trigger model vs DM1/DM2). */
-
-/* Static action handler + user data */
-static Nexus_ScriptActionHandler g_handler = NULL;
-static void *g_handler_data = NULL;
+/* Nexus V1 provisional trigger VM + dispatcher.
+ * Stub implementation: the real trigger owner/record format is unresolved.
+ * docs/nexus_triggers.md and docs/nexus_sensors.md currently classify
+ * SDDRVS.TSK as Saturn sound-driver data; SLEV*.BIN / DGN metadata remain
+ * candidate trigger sources. This module only provides deterministic runtime
+ * condition/action dispatch for synthetic and future parsed rules. */
 
 /* ═══════════════════════════════════════════════════════════════════
  * Init
@@ -26,19 +22,16 @@ void nexus_script_vm_init(Nexus_ScriptVM *vm) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
- * Load SDDRVS.TSK for a level — STUB
- * TODO: parse actual SDDRVS.TSK bytecode.
+ * Load candidate trigger data for a level — STUB
+ * TODO: parse actual SLEV*.BIN/DGN trigger records once source-locked.
  * Current approach: register a small number of default rules
  * based on level index. Real implementation needs format reverse-
- * engineering of the 5,448-byte SDDRVS.TSK file.
- * Source: docs/nexus_triggers.md — opcode hypothesis.
+ * engineering of the real trigger owner.
+ * Source: docs/nexus_triggers.md — unresolved trigger owner.
  * ═══════════════════════════════════════════════════════════════════ */
 
 int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
                                 const uint8_t *data, int size) {
-    int i;
-    (void)i;
-
     if (!vm || !vm->initialized) return -1;
     if (level_index < 0 || level_index > 15) return -1;
 
@@ -48,19 +41,18 @@ int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
     vm->current_level = level_index;
 
     /* STUB: no real parsing yet.
-     * The SDDRVS.TSK format is unknown.
+     * The Nexus trigger owner/format is unknown.
      * We register minimal placeholder rules that allow
      * the script VM interface to function.
-     * TODO: actual bytecode parsing when SDDRVS.TSK format is reverse-engineered.
+     * TODO: actual bytecode parsing when SLEV*.BIN/DGN trigger records
+     * are source-locked.
      *
      * Evidence so far:
-     * - File is 5,448 bytes — too small for complex VM but right for simple rule engine
-     * - 16 levels × ~340 bytes per level suggests ~10-20 rules per level
-     * - 8-byte rule entries plausible (1-byte opcode + 3-byte pos + 4-byte action)
-     * - Per-level SLEV*.BIN files (2-12 KB) likely contain additional event/script data */
+     * - docs/nexus_triggers.md: SDDRVS.TSK is the 26,610-byte sound driver.
+     * - Per-level SLEV*.BIN files (2-12 KB) remain plausible event/script data. */
 
-    /* For now: register some default level-transition rules
-     * (these would in reality come from the SDDRVS.TSK parse) */
+    /* For now: register a default level-transition placeholder. Future real
+     * rules must come from source-locked SLEV*.BIN/DGN trigger evidence. */
     if (vm->rule_count < NEXUS_SCRIPT_MAX_RULES) {
         /* Level 0: party starts at entrance */
         /* Level 15: exit reached → end game */
@@ -77,7 +69,7 @@ int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
         r->action.x = 15; r->action.y = 15;
     }
 
-    printf("Nexus script VM: loaded level %d (%d bytes, stub parsing)\n",
+    printf("Nexus script VM: loaded level %d (%d bytes, provisional dispatch only)\n",
         level_index, size);
     (void)data;
     return 0;
@@ -93,35 +85,13 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
  * Condition evaluation helpers
  * ═══════════════════════════════════════════════════════════════════ */
 
-static int nexus_eval_condition(const Nexus_ScriptCondition *cond, void *ctx) {
-    (void)ctx;
-    if (!cond) return 0;
-
-    switch (cond->opcode) {
-    case NEXUS_OP_WHEN_PARTY_ON_XY:
-        /* ctx = party position { x, y, level } — checked by caller */
-        return 1;
-    case NEXUS_OP_WHEN_CHAMPION_HAS:
-        return 1;
-    case NEXUS_OP_WHEN_LEVEL_LOADED:
-        return 1;
-    case NEXUS_OP_WHEN_CREATURE_DEAD:
-        return 1;
-    case NEXUS_OP_WHEN_DOOR_OPEN:
-        return 1;
-    case NEXUS_OP_WHEN_ITEM_USED:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-static void nexus_dispatch_action(const Nexus_ScriptAction *action) {
+static void nexus_dispatch_action(Nexus_ScriptVM *vm,
+                                  const Nexus_ScriptAction *action) {
     if (!action) return;
 
     /* Call registered handler if any */
-    if (g_handler) {
-        g_handler(action, g_handler_data);
+    if (vm && vm->handler) {
+        vm->handler(action, vm->handler_data);
         return;
     }
 
@@ -171,39 +141,49 @@ static void nexus_dispatch_action(const Nexus_ScriptAction *action) {
  * Rule evaluation and firing
  * ═══════════════════════════════════════════════════════════════════ */
 
-static int nexus_eval_and_fire_rule(Nexus_ScriptVM *vm, int idx,
-                                     int party_x, int party_y, int level) {
+static int nexus_condition_matches_party_xy(const Nexus_ScriptCondition *cond,
+                                            int party_x, int party_y,
+                                            int level) {
+    return cond &&
+           cond->opcode == NEXUS_OP_WHEN_PARTY_ON_XY &&
+           cond->x == party_x &&
+           cond->y == party_y &&
+           cond->value == level;
+}
+
+static int nexus_condition_matches_value(const Nexus_ScriptCondition *cond,
+                                         Nexus_WorldOpcode opcode,
+                                         int value) {
+    return cond && cond->opcode == opcode && cond->value == value;
+}
+
+static int nexus_condition_matches_door_open(const Nexus_ScriptCondition *cond,
+                                             int x, int y, int is_open) {
+    return cond &&
+           cond->opcode == NEXUS_OP_WHEN_DOOR_OPEN &&
+           is_open &&
+           cond->x == x &&
+           cond->y == y;
+}
+
+static int nexus_fire_rule_action(Nexus_ScriptVM *vm, Nexus_ScriptRule *r) {
+    if (!vm || !r) return 0;
+    if (!r->enabled) return 0;
+    if (r->once_only && r->fired_count > 0) return 0;
+
+    nexus_dispatch_action(vm, &r->action);
+    r->fired_count++;
+    return 1;
+}
+
+static int nexus_fire_rule_if(Nexus_ScriptVM *vm, int idx, int cond_true) {
     Nexus_ScriptRule *r;
-    int cond_true;
 
     if (!vm || idx < 0 || idx >= vm->rule_count) return 0;
     r = &vm->rules[idx];
 
-    if (!r->enabled) return 0;
-    if (r->once_only && r->fired_count > 0) return 0;
-
-    /* Evaluate condition */
-    cond_true = 0;
-    switch (r->cond.opcode) {
-    case NEXUS_OP_WHEN_PARTY_ON_XY:
-        cond_true = (r->cond.x == party_x && r->cond.y == party_y &&
-                     r->cond.value == level);
-        break;
-    case NEXUS_OP_WHEN_LEVEL_LOADED:
-        cond_true = (r->cond.value == level);
-        break;
-    default:
-        /* Generic: if handler registered, delegate */
-        cond_true = nexus_eval_condition(&r->cond, NULL);
-        break;
-    }
-
     if (!cond_true) return 0;
-
-    /* Fire action */
-    nexus_dispatch_action(&r->action);
-    r->fired_count++;
-    return 1;
+    return nexus_fire_rule_action(vm, r);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -216,7 +196,9 @@ void nexus_script_on_party_move(Nexus_ScriptVM *vm, int x, int y, int level) {
     if (!vm || !vm->initialized) return;
     for (i = 0; i < vm->rule_count; i++) {
         if (vm->rules[i].cond.opcode == NEXUS_OP_WHEN_PARTY_ON_XY)
-            fired += nexus_eval_and_fire_rule(vm, i, x, y, level);
+            fired += nexus_fire_rule_if(vm, i,
+                nexus_condition_matches_party_xy(&vm->rules[i].cond,
+                                                 x, y, level));
     }
     (void)fired;
 }
@@ -224,44 +206,49 @@ void nexus_script_on_party_move(Nexus_ScriptVM *vm, int x, int y, int level) {
 /* Champion picked up item — evaluate HAS_ITEM rules */
 void nexus_script_on_champion_item(Nexus_ScriptVM *vm, int champ_idx, int item_id) {
     int i;
-    (void)champ_idx; (void)item_id;
+    (void)champ_idx;
     if (!vm || !vm->initialized) return;
     for (i = 0; i < vm->rule_count; i++) {
         if (vm->rules[i].cond.opcode == NEXUS_OP_WHEN_CHAMPION_HAS)
-            (void)nexus_eval_and_fire_rule(vm, i, 0, 0, -1);
+            (void)nexus_fire_rule_if(vm, i,
+                nexus_condition_matches_value(&vm->rules[i].cond,
+                    NEXUS_OP_WHEN_CHAMPION_HAS, item_id));
     }
 }
 
 /* Creature died — evaluate CREATURE_DEAD rules */
 void nexus_script_on_creature_dead(Nexus_ScriptVM *vm, int creature_type) {
     int i;
-    (void)creature_type;
     if (!vm || !vm->initialized) return;
     for (i = 0; i < vm->rule_count; i++) {
         if (vm->rules[i].cond.opcode == NEXUS_OP_WHEN_CREATURE_DEAD)
-            (void)nexus_eval_and_fire_rule(vm, i, 0, 0, -1);
+            (void)nexus_fire_rule_if(vm, i,
+                nexus_condition_matches_value(&vm->rules[i].cond,
+                    NEXUS_OP_WHEN_CREATURE_DEAD, creature_type));
     }
 }
 
 /* Door state changed */
 void nexus_script_on_door_change(Nexus_ScriptVM *vm, int x, int y, int is_open) {
     int i;
-    (void)x; (void)y; (void)is_open;
     if (!vm || !vm->initialized) return;
     for (i = 0; i < vm->rule_count; i++) {
         if (vm->rules[i].cond.opcode == NEXUS_OP_WHEN_DOOR_OPEN)
-            (void)nexus_eval_and_fire_rule(vm, i, 0, 0, -1);
+            (void)nexus_fire_rule_if(vm, i,
+                nexus_condition_matches_door_open(&vm->rules[i].cond,
+                                                  x, y, is_open));
     }
 }
 
 /* Item consumed */
 void nexus_script_on_item_used(Nexus_ScriptVM *vm, int item_id) {
     int i;
-    (void)item_id;
     if (!vm || !vm->initialized) return;
     for (i = 0; i < vm->rule_count; i++) {
         if (vm->rules[i].cond.opcode == NEXUS_OP_WHEN_ITEM_USED)
-            (void)nexus_eval_and_fire_rule(vm, i, 0, 0, -1);
+            (void)nexus_fire_rule_if(vm, i,
+                nexus_condition_matches_value(&vm->rules[i].cond,
+                    NEXUS_OP_WHEN_ITEM_USED, item_id));
     }
 }
 
@@ -271,7 +258,9 @@ void nexus_script_on_level_load(Nexus_ScriptVM *vm, int level_index) {
     if (!vm || !vm->initialized) return;
     for (i = 0; i < vm->rule_count; i++) {
         if (vm->rules[i].cond.opcode == NEXUS_OP_WHEN_LEVEL_LOADED)
-            fired += nexus_eval_and_fire_rule(vm, i, 0, 0, level_index);
+            fired += nexus_fire_rule_if(vm, i,
+                nexus_condition_matches_value(&vm->rules[i].cond,
+                    NEXUS_OP_WHEN_LEVEL_LOADED, level_index));
     }
     (void)fired;
 }
@@ -283,9 +272,9 @@ void nexus_script_on_level_load(Nexus_ScriptVM *vm, int level_index) {
 void nexus_script_vm_set_handler(Nexus_ScriptVM *vm,
                                    Nexus_ScriptActionHandler handler,
                                    void *user_data) {
-    (void)vm;
-    g_handler = handler;
-    g_handler_data = user_data;
+    if (!vm) return;
+    vm->handler = handler;
+    vm->handler_data = user_data;
 }
 
 int nexus_script_vm_fire_rule(Nexus_ScriptVM *vm, int rule_id) {
@@ -293,7 +282,7 @@ int nexus_script_vm_fire_rule(Nexus_ScriptVM *vm, int rule_id) {
     if (!vm || !vm->initialized) return 0;
     for (i = 0; i < vm->rule_count; i++) {
         if (vm->rules[i].rule_id == rule_id)
-            return nexus_eval_and_fire_rule(vm, i, 0, 0, -1);
+            return nexus_fire_rule_action(vm, &vm->rules[i]);
     }
     return 0;
 }
