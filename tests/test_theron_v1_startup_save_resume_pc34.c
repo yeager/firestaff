@@ -2485,6 +2485,60 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(full_start_receipt.status,
                            "FORCEFIELD RUNTIME HANDOFF") == 0,
                 "boot full-start receipt exposes Track02 semantic nonzero level no-fallback proof");
+    world.current_level = 2;
+    world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][2] = 1;
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_runtime_route_with_media_receipt(
+                    &full_start_receipt,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC,
+                    1,
+                    0,
+                    1,
+                    0,
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS) &&
+                    full_start_receipt.host_consumes_view_model &&
+                    full_start_receipt.view_model_valid &&
+                    full_start_receipt.host_view_valid &&
+                    full_start_receipt.graphics_route_valid &&
+                    full_start_receipt.runtime_readiness_ready &&
+                    full_start_receipt.runtime_level_render_allowed &&
+                    full_start_receipt.runtime_level == 2 &&
+                    full_start_receipt.runtime_champion_count == 3 &&
+                    full_start_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
+                    full_start_receipt.runtime_track02_semantic_handoff &&
+                    full_start_receipt.runtime_structured_route &&
+                    !full_start_receipt.runtime_receipt_text_route &&
+                    full_start_receipt.full_start_graphics_ready &&
+                    full_start_receipt.full_start_graphics_blocked &&
+                    full_start_receipt.no_fallback_visuals_enforced &&
+                    !full_start_receipt.fallback_visuals_allowed &&
+                    full_start_receipt.runtime_graphics_handoff &&
+                    full_start_receipt.track02_runtime_graphics_handoff &&
+                    !full_start_receipt.save_resume_runtime_graphics_handoff &&
+                    !full_start_receipt.raw_prompt_roster_required &&
+                    !full_start_receipt.raw_session_rebuild_required &&
+                    media_graphics_counters.fill_count == 0 &&
+                    strcmp(full_start_receipt.status,
+                           "FORCEFIELD RUNTIME HANDOFF") == 0,
+                "boot runtime-route full-start receipt proves Track02 semantic level 2 no-fallback handoff");
     world.current_level = 0;
     save_resume_snapshot = media_snapshot;
     save_resume_snapshot.runtime_level_source =
