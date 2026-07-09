@@ -99,6 +99,16 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
     int destroyed_mask_gdat_index;
     int frame_gdat_index;
     int button_gdat_index;
+    int panel_blit_ready;
+    int ornate_blit_ready;
+    int destroyed_mask_blit_ready;
+    int frame_blit_ready;
+    int button_blit_ready;
+    DM2_V1_ViewportRect panel_rect;
+    DM2_V1_ViewportRect panel_visible_rect;
+    DM2_V1_ViewportRect overlay_rect;
+    DM2_V1_ViewportRect frame_rect;
+    DM2_V1_ViewportRect button_rect;
 } DM2_V1_RuntimeDoorRenderReceipt;
 int dm2_v1_runtime_last_door_render_receipt(
     DM2_V1_RuntimeDoorRenderReceipt *out_receipt);
