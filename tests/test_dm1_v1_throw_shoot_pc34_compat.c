@@ -638,7 +638,9 @@ static void test_projectile_creature_impact_plan(void) {
     struct DungeonGroup_Compat group;
     struct ProjectileInstance_Compat p;
     struct ProjectileTickResult_Compat r;
+    struct CombatAction_Compat action;
     DM1_ProjectileCreatureImpactPlanPc34 plan;
+    DM1_ProjectileCreatureActionPlanPc34 actionPlan;
     DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
     DM1_ProjectileCreaturePrecheckDamagePlanPc34 precheck;
     unsigned short weaponThing =
@@ -646,7 +648,9 @@ static void test_projectile_creature_impact_plan(void) {
     memset(&group, 0, sizeof(group));
     memset(&p, 0, sizeof(p));
     memset(&r, 0, sizeof(r));
+    memset(&action, 0, sizeof(action));
     memset(&plan, 0, sizeof(plan));
+    memset(&actionPlan, 0, sizeof(actionPlan));
     memset(&aftermath, 0, sizeof(aftermath));
     memset(&precheck, 0, sizeof(precheck));
 
@@ -674,6 +678,19 @@ static void test_projectile_creature_impact_plan(void) {
     ASSERT_EQ(plan.originalCreatureType, 6, "creature impact type snapshot");
     ASSERT_EQ(plan.originalGroupCount, 2, "creature impact count snapshot");
     ASSERT_EQ(plan.killedCell, 3, "creature impact killed cell");
+
+    action.kind = COMBAT_ACTION_APPLY_DAMAGE_GROUP;
+    action.targetCell = 3;
+    action.rawAttackValue = 17;
+    ASSERT_EQ(dm1_v1_projectile_creature_action_plan_pc34(
+                  &p, &action, &group, 0, &actionPlan), 1,
+              "creature action plan builds");
+    ASSERT_EQ(actionPlan.handled, 1, "creature action handled");
+    ASSERT_EQ(actionPlan.shouldApplyDamage, 1,
+              "creature action applies damage");
+    ASSERT_EQ(actionPlan.slotIndex, 1, "creature action target slot");
+    ASSERT_EQ(actionPlan.damageApplied, 17, "creature action damage");
+    ASSERT_EQ(actionPlan.killedCell, 3, "creature action killed cell");
 
     ASSERT_EQ(dm1_v1_projectile_creature_impact_aftermath_pc34(
                   &plan, &p,
@@ -708,6 +725,14 @@ static void test_projectile_creature_impact_plan(void) {
               "non-material plan builds");
     ASSERT_EQ(plan.blockedByNonMaterial, 1, "non-material blocks ordinary projectile");
     ASSERT_EQ(plan.shouldApplyDamage, 0, "non-material no ordinary damage");
+    ASSERT_EQ(dm1_v1_projectile_creature_action_plan_pc34(
+                  &p, &action, &group,
+                  DM1_PROJECTILE_ATTR_NON_MATERIAL_PC34, &actionPlan), 1,
+              "non-material action plan builds");
+    ASSERT_EQ(actionPlan.blockedByNonMaterial, 1,
+              "non-material action blocks ordinary projectile");
+    ASSERT_EQ(actionPlan.shouldApplyDamage, 0,
+              "non-material action no damage");
 
     p.projectileSubtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
     ASSERT_EQ(dm1_v1_projectile_creature_impact_plan_pc34(
@@ -716,6 +741,14 @@ static void test_projectile_creature_impact_plan(void) {
               "harm non-material plan builds");
     ASSERT_EQ(plan.blockedByNonMaterial, 0, "harm non-material bypasses block");
     ASSERT_EQ(plan.shouldApplyDamage, 1, "harm non-material damages");
+    ASSERT_EQ(dm1_v1_projectile_creature_action_plan_pc34(
+                  &p, &action, &group,
+                  DM1_PROJECTILE_ATTR_NON_MATERIAL_PC34, &actionPlan), 1,
+              "harm non-material action plan builds");
+    ASSERT_EQ(actionPlan.blockedByNonMaterial, 0,
+              "harm non-material action bypasses block");
+    ASSERT_EQ(actionPlan.shouldApplyDamage, 1,
+              "harm non-material action damages");
 
     memset(&group, 0, sizeof(group));
     memset(&p, 0, sizeof(p));
@@ -759,6 +792,21 @@ static void test_projectile_creature_impact_plan(void) {
     ASSERT_EQ(precheck.newHealth[0], DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34,
               "F0266 black flame heal caps");
     ASSERT_EQ(precheck.outcomeCode, 0, "F0266 black flame no kill outcome");
+
+    memset(&action, 0, sizeof(action));
+    action.kind = COMBAT_ACTION_APPLY_DAMAGE_GROUP;
+    action.targetCell = 0;
+    action.rawAttackValue = 80;
+    ASSERT_EQ(dm1_v1_projectile_creature_action_plan_pc34(
+                  &p, &action, &group, 0, &actionPlan), 1,
+              "black flame action plan builds");
+    ASSERT_EQ(actionPlan.healsBlackFlame, 1,
+              "black flame action heals");
+    ASSERT_EQ(actionPlan.shouldApplyDamage, 0,
+              "black flame action skips damage");
+    ASSERT_EQ(actionPlan.slotIndex, 0, "black flame action slot");
+    ASSERT_EQ(actionPlan.newHealth, DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34,
+              "black flame action heal cap");
 }
 
 static void test_projectile_champion_impact_plan(void) {
