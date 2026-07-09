@@ -110,6 +110,9 @@ typedef struct {
     int shouldRemoveActiveGroup;
     int shouldRequeue;
     int groupDirection;
+    int sourceMapIndex;
+    int sourceMapX;
+    int sourceMapY;
     int activeMapIndex;
     int activeMapX;
     int activeMapY;
@@ -225,6 +228,8 @@ int  DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
 int  DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
         const DM1_V1_OrdinaryGroupMovePlanPc34* movePlan,
         int sourceMapIndex,
+        int sourceMapX,
+        int sourceMapY,
         int direction,
         int groupCells,
         uint32_t currentTick,

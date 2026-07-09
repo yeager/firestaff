@@ -4094,6 +4094,10 @@ static int orch_cmd_attack_apply_f0190_fear_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
     const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan);
+static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const DM1_MeleeF0190MutationDispatchPlanPc34* plan);
 
 static int orch_materialize_projectile_associated_thing_compat(
     struct GameWorld_Compat* world,
@@ -6331,34 +6335,31 @@ static int orch_handle_creature_tick_group_move_compat(
         !movePlan.valid) {
         return 0;
     }
-    if (movePlan.route == M11_GROUP_MOVE_ROUTE_RETRY) {
-        nextEvent = *ev;
-        nextEvent.fireAtTick = movePlan.retryFireAtTick;
-        return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
-    }
-
-    if (!orch_apply_f0266_group_projectile_precheck_compat(
-            world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY,
-            destMapX, destMapY, &killedByProjectile)) {
-        return 0;
-    }
-    if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
-            ev->mapX, ev->mapY, direction, destinationPassable,
-            destinationBlocked, killedByProjectile, world->gameTick,
-            &movePlan) ||
-        !movePlan.valid) {
-        return 0;
+    if (movePlan.route != M11_GROUP_MOVE_ROUTE_RETRY) {
+        if (!orch_apply_f0266_group_projectile_precheck_compat(
+                world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY,
+                destMapX, destMapY, &killedByProjectile)) {
+            return 0;
+        }
+        if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
+                ev->mapX, ev->mapY, direction, destinationPassable,
+                destinationBlocked, killedByProjectile, world->gameTick,
+                &movePlan) ||
+            !movePlan.valid) {
+            return 0;
+        }
     }
     memset(&applyPlan, 0, sizeof(applyPlan));
     if (!DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
-            &movePlan, ev->mapIndex, direction, group->cells,
+            &movePlan, ev->mapIndex, ev->mapX, ev->mapY, direction, group->cells,
             world->gameTick, &applyPlan) ||
         !applyPlan.valid) {
         return 0;
     }
     if (applyPlan.shouldRemoveActiveGroup) {
         (void)orch_unlink_thing_from_square_compat(
-            world, ev->mapIndex, ev->mapX, ev->mapY,
+            world, applyPlan.sourceMapIndex, applyPlan.sourceMapX,
+            applyPlan.sourceMapY,
             orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
         group->next = THING_NONE;
         orch_remove_active_group_state_compat(world, groupIndex);
@@ -6367,7 +6368,8 @@ static int orch_handle_creature_tick_group_move_compat(
 
     if (applyPlan.shouldUnlinkSource &&
         !orch_unlink_thing_from_square_compat(
-                world, ev->mapIndex, ev->mapX, ev->mapY,
+                world, applyPlan.sourceMapIndex, applyPlan.sourceMapX,
+                applyPlan.sourceMapY,
                 orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
         return 0;
     }

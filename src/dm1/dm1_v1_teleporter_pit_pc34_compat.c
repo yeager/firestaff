@@ -271,6 +271,8 @@ int DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
 int DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
         const DM1_V1_OrdinaryGroupMovePlanPc34* movePlan,
         int sourceMapIndex,
+        int sourceMapX,
+        int sourceMapY,
         int direction,
         int groupCells,
         uint32_t currentTick,
@@ -281,6 +283,9 @@ int DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
     memset(&plan, 0, sizeof(plan));
     plan.valid = 1;
     plan.groupDirection = direction & 3;
+    plan.sourceMapIndex = sourceMapIndex;
+    plan.sourceMapX = sourceMapX;
+    plan.sourceMapY = sourceMapY;
     plan.activeMapIndex = sourceMapIndex;
     plan.activeMapX = movePlan->destinationMapX;
     plan.activeMapY = movePlan->destinationMapY;
@@ -308,10 +313,10 @@ int DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
         plan.nextEventMapY = movePlan->destinationMapY;
     }
 
-    /* ReDMCSB GROUP.C F0209 plus MOVESENS.C F0267: once an ordinary
-     * C37 group move survives the projectile precheck, the source group is
-     * unlinked, reinserted at the destination, active-group coordinates are
-     * advanced, and the next behavior event carries the destination square. */
+    /* ReDMCSB GROUP.C F0209 lines 1928-1931/2175-2178 plus
+     * MOVESENS.C F0267 lines 738-741: the runtime receipt carries both the
+     * source square to unlink and the G0397/G0398 destination written into
+     * the next C37 behavior event after F0267 succeeds. */
     *outPlan = plan;
     return 1;
 }
