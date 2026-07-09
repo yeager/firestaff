@@ -112,6 +112,8 @@ int main(void)
     Nexus_V1_StartupMenuSnapshot menu_snapshot;
     Nexus_V1_StartupChampionSnapshot champion_snapshot;
     Nexus_V1_StartupHostFacts host_facts;
+    Nexus_V1_StartupRuntimeState runtime_state;
+    Nexus_V1_LauncherRuntimeStartupSnapshot runtime_snapshot;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
@@ -1816,6 +1818,87 @@ int main(void)
                    save_route_receipt.selected_row == 1 &&
                    save_route_receipt.draw_command_count > 3,
                "Nexus save route receipt preserves render state on pointer miss");
+
+        nexus_v1_launcher_startup_runtime_state_clear(&runtime_state);
+        runtime_state.save_select_active = 1;
+        runtime_state.save_dir = save_dir;
+        runtime_state.slot_mask = menu.slot_mask;
+        runtime_state.save_selected_row = 0;
+        runtime_state.save_row_count = menu.row_count;
+        load_calls = 0;
+        expect(nexus_v1_launcher_startup_save_route_receipt_from_runtime_state(
+                   &runtime_state,
+                   2,
+                   startup_load_success,
+                   &load_calls,
+                   &save_route_receipt) &&
+                   save_route_receipt.route ==
+                       NEXUS_V1_STARTUP_SAVE_ROUTE_NAVIGATE &&
+                   save_route_receipt.selected_row == 1 &&
+                   save_route_receipt.draw_command_count > 3 &&
+                   load_calls == 0,
+               "Nexus launcher runtime save route owns keyboard handoff");
+
+        runtime_state.save_selected_row = 1;
+        load_calls = 0;
+        expect(nexus_v1_launcher_startup_save_pointer_route_receipt_from_runtime_state(
+                   &runtime_state,
+                   20,
+                   44,
+                   startup_load_success,
+                   &load_calls,
+                   &save_route_receipt) &&
+                   save_route_receipt.route ==
+                       NEXUS_V1_STARTUP_SAVE_ROUTE_LOAD_SLOT &&
+                   save_route_receipt.selected_slot == 3 &&
+                   save_route_receipt.set_save_select_active &&
+                   save_route_receipt.save_select_active == 0 &&
+                   load_calls == 1,
+               "Nexus launcher runtime save route owns slot handoff");
+
+        nexus_v1_launcher_runtime_startup_snapshot_clear(&runtime_snapshot);
+        runtime_snapshot.runtime = runtime_state;
+        load_calls = 0;
+        expect(nexus_v1_launcher_startup_save_pointer_route_receipt_from_snapshot(
+                   &runtime_snapshot,
+                   -50,
+                   -50,
+                   startup_load_success,
+                   &load_calls,
+                   &save_route_receipt) &&
+                   save_route_receipt.route ==
+                       NEXUS_V1_STARTUP_SAVE_ROUTE_POINTER_MISS &&
+                   save_route_receipt.selected_row == 1 &&
+                   save_route_receipt.draw_command_count > 3 &&
+                   load_calls == 0,
+               "Nexus launcher snapshot save route preserves pointer miss state");
+
+        nexus_v1_launcher_startup_runtime_state_clear(&runtime_state);
+        runtime_state.title_active = 1;
+        runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
+        runtime_state.slot_mask = menu.slot_mask;
+        expect(nexus_v1_launcher_startup_title_route_receipt_from_runtime_state(
+                   &runtime_state,
+                   10,
+                   &title_route_receipt) &&
+                   title_route_receipt.route ==
+                       NEXUS_V1_STARTUP_TITLE_ROUTE_RETURN_TO_LAUNCHER &&
+                   title_route_receipt.host_input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER &&
+                   strcmp(title_route_receipt.status, "BACK TO LAUNCHER") == 0,
+               "Nexus launcher runtime title route owns launcher return");
+
+        nexus_v1_launcher_runtime_startup_snapshot_clear(&runtime_snapshot);
+        runtime_snapshot.runtime = runtime_state;
+        runtime_snapshot.runtime.title_frame = 30;
+        expect(nexus_v1_launcher_startup_title_pointer_route_receipt_from_snapshot(
+                   &runtime_snapshot,
+                   &title_route_receipt) &&
+                   title_route_receipt.route ==
+                       NEXUS_V1_STARTUP_TITLE_ROUTE_HOLD &&
+                   title_route_receipt.draw_command_count > 0 &&
+                   strcmp(title_route_receipt.status, "NEXUS TITLE") == 0,
+               "Nexus launcher snapshot title route preserves hold gate");
     }
     memset(&hit, 0, sizeof(hit));
     hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_PANEL;

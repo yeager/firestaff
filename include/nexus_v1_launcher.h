@@ -195,6 +195,32 @@ int nexus_v1_launcher_startup_execute_save_pointer_from_snapshot(
     void *load_userdata,
     Nexus_V1_StartupSaveExecution *out_execution,
     Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_launcher_startup_save_route_receipt_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveRouteReceipt *out_receipt);
+int nexus_v1_launcher_startup_save_route_receipt_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveRouteReceipt *out_receipt);
+int nexus_v1_launcher_startup_save_pointer_route_receipt_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    int x,
+    int y,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveRouteReceipt *out_receipt);
+int nexus_v1_launcher_startup_save_pointer_route_receipt_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int x,
+    int y,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveRouteReceipt *out_receipt);
 int nexus_v1_launcher_startup_execute_title_firestaff_input_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     int menu_input,
@@ -213,6 +239,20 @@ int nexus_v1_launcher_startup_execute_title_pointer_from_snapshot(
     const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     Nexus_V1_StartupTitleExecution *out_execution,
     Nexus_V1_StartupHostActionReceipt *out_receipt);
+int nexus_v1_launcher_startup_title_route_receipt_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt);
+int nexus_v1_launcher_startup_title_route_receipt_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt);
+int nexus_v1_launcher_startup_title_pointer_route_receipt_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt);
+int nexus_v1_launcher_startup_title_pointer_route_receipt_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt);
 int nexus_v1_launcher_startup_execute_champion_firestaff_input_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     int menu_input,
