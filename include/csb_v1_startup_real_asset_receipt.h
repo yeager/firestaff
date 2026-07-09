@@ -134,6 +134,22 @@ typedef struct {
 /* Initialize an empty (skip-safe) receipt. */
 void csb_v1_startup_real_receipt_init(CSB_V1_StartupRealReceipt *receipt);
 
+int csb_v1_startup_real_receipt_from_profile_fields(
+    const char *asset_root,
+    const char *graphics_path,
+    const char *dungeon_path,
+    const char *graphics_md5,
+    const char *dungeon_md5,
+    uint64_t graphics_size_bytes,
+    uint64_t dungeon_size_bytes,
+    CSB_V1_VariantId variant_id,
+    CSB_V1_AssetGfxArchiveType graphics_kind,
+    int max_depth,
+    int assets_verified,
+    int graphics_verified,
+    int dungeon_verified,
+    CSB_V1_StartupRealReceipt *receipt);
+
 /*
  * Scan `data_dir` recursively and build a real-asset receipt.
  *

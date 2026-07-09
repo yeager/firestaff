@@ -1098,6 +1098,25 @@ static void test_startup_real_asset_receipt_is_skip_safe_and_deterministic(void)
     receipt.graphics_size_bytes++;
     CHECK(csb_v1_startup_real_receipt_recompute_hash(&receipt) == 0,
           "startup real-asset receipt detects changed packaged metadata");
+    CHECK(csb_v1_startup_real_receipt_from_profile_fields(
+              tmp_dir,
+              "/tmp/firestaff-csb-v1-startup-real-receipt/GRAPHICS.DAT",
+              "/tmp/firestaff-csb-v1-startup-real-receipt/DUNGEON.DAT",
+              "61fbfd56887c94adc26888a9491c6611",
+              "6695d2acebce49f95db1d8f3a5c733de",
+              0u,
+              0u,
+              CSB_V1_VARIANT_PC34_EN,
+              CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS,
+              4,
+              1,
+              1,
+              1,
+              &receipt) == 1 &&
+              receipt.matched &&
+              receipt.receipt_hash != 0u &&
+              strcmp(receipt.asset_root, tmp_dir) == 0,
+          "startup real-asset receipt packages verified boot profile fields");
     CHECK(strcmp(csb_v1_startup_real_result_name(
                      CSB_V1_STARTUP_REAL_ERR_BOOT_SCAN),
                  "CSB_V1_STARTUP_REAL_ERR_BOOT_SCAN") == 0,
@@ -1831,15 +1850,27 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                   "boot runtime detach fixture allocates CSB profile");
             if (launch.profile) {
                 csb_v1_boot_profile_init(launch.profile);
+                snprintf(launch.profile->asset_root,
+                         sizeof(launch.profile->asset_root),
+                         "/tmp");
                 snprintf(launch.profile->graphics_md5,
                          sizeof(launch.profile->graphics_md5),
                          "61fbfd56887c8bfe85ba4fb306fc2861");
+                snprintf(launch.profile->dungeon_md5,
+                         sizeof(launch.profile->dungeon_md5),
+                         "6695d2acebce49f95db1d8f3a5c733de");
                 snprintf(launch.profile->graphics_path,
                          sizeof(launch.profile->graphics_path),
                          "/tmp/firestaff_csb_GRAPHICS.DAT");
                 snprintf(launch.profile->dungeon_path,
                          sizeof(launch.profile->dungeon_path),
                          "/tmp/firestaff_csb_DUNGEON.DAT");
+                launch.profile->assets_verified = 1;
+                launch.profile->graphics_verified = 1;
+                launch.profile->dungeon_verified = 1;
+                launch.profile->variant_id = CSB_V1_VARIANT_PC34_EN;
+                launch.profile->graphics_kind =
+                    CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
                 launch.receipts.launch_host_receipt.status_scope = "BOOT";
                 launch.receipts.launch_host_receipt.status = "CSB ENTRANCE";
                 launch.receipts.launch_host_receipt.log_color = 11U;
@@ -1864,6 +1895,13 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                                  "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
                           strcmp(runtime_receipt.dungeon_path,
                                  "/tmp/firestaff_csb_DUNGEON.DAT") == 0 &&
+                          runtime_receipt.real_asset_receipt_valid &&
+                          runtime_receipt.real_asset_receipt.matched &&
+                          strcmp(runtime_receipt.real_asset_receipt.graphics_path,
+                                 "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
+                          strcmp(runtime_receipt.real_asset_receipt.dungeon_md5,
+                                 "6695d2acebce49f95db1d8f3a5c733de") == 0 &&
+                          runtime_receipt.real_asset_receipt.receipt_hash != 0u &&
                           runtime_receipt.receipts.init_state.command_state.entrance_active &&
                           runtime_receipt.receipts.session_state.entrance_resume_available &&
                           runtime_receipt.receipts.launch_host_receipt.status &&
