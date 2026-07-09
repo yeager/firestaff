@@ -1339,6 +1339,7 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     if (!assets.champion_menu_route_ready) {
         out_receipt->route =
             NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED;
+        out_receipt->dgn_render_blocked = 1;
         out_receipt->status_scope = "ASSETS";
         out_receipt->status = assets.startup_menu_asset_route
             ? assets.startup_menu_asset_route
@@ -1359,6 +1360,7 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
             state->engine,
             &dgn_handoff) != 0) {
         out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
+        out_receipt->dgn_render_blocked = 1;
         out_receipt->status_scope = "DGN";
         out_receipt->status = "missing-dgn-runtime";
         return 1;
@@ -1380,6 +1382,7 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         render_plan.blocks_real_dgn_mesh_render) {
         out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
         out_receipt->render_plan = render_plan;
+        out_receipt->dgn_render_blocked = 1;
         out_receipt->fallback_visuals_permitted =
             render_plan.fallback_visuals_permitted;
         out_receipt->status_scope = "DGN";
@@ -1393,6 +1396,9 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE;
     out_receipt->render_plan = render_plan;
     out_receipt->runtime_ready = 1;
+    out_receipt->dgn_render_ready = 1;
+    out_receipt->hud_ready = out_receipt->level_loaded ? 1 : 0;
+    out_receipt->dgn_render_blocked = 0;
     out_receipt->party_x = state->engine->game.party_x;
     out_receipt->party_y = state->engine->game.party_y;
     out_receipt->party_dir = state->engine->game.party_dir;

@@ -10347,18 +10347,13 @@ static void m11_nexus_apply_runtime_handoff_receipt(
     state->nexusState.startup_runtime_handoff_ready =
         receipt->runtime_ready ? 1 : 0;
     state->nexusState.startup_dgn_render_ready =
-        receipt->route ==
-            NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
-        receipt->render_plan.plan_ready &&
-        !receipt->render_plan.blocks_real_dgn_mesh_render;
+        receipt->dgn_render_ready ? 1 : 0;
     state->nexusState.startup_hud_ready =
-        state->nexusState.startup_dgn_render_ready &&
-        receipt->level_loaded;
+        receipt->hud_ready ? 1 : 0;
     state->nexusState.startup_dgn_render_command_count =
         receipt->command_count;
     state->nexusState.startup_dgn_render_blocked =
-        receipt->route == NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED ||
-        receipt->route == NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED;
+        receipt->dgn_render_blocked ? 1 : 0;
 }
 
 static int m11_path_has_extension(const char* path, const char* ext) {

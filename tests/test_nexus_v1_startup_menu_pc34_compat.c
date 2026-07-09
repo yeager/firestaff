@@ -813,6 +813,9 @@ int main(void)
                           runtime_handoff_receipt.route),
                       "ready-render-state") == 0 &&
                runtime_handoff_receipt.runtime_ready == 1 &&
+               runtime_handoff_receipt.dgn_render_ready == 1 &&
+               runtime_handoff_receipt.hud_ready == 1 &&
+               runtime_handoff_receipt.dgn_render_blocked == 0 &&
                runtime_handoff_receipt.render_plan.plan_ready == 1 &&
                runtime_handoff_receipt.command_count > 0 &&
                runtime_handoff_receipt.fallback_visuals_permitted == 0 &&
@@ -910,6 +913,9 @@ int main(void)
                &runtime_handoff_receipt) &&
                runtime_handoff_receipt.route ==
                    NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED &&
+               runtime_handoff_receipt.dgn_render_ready == 0 &&
+               runtime_handoff_receipt.hud_ready == 0 &&
+               runtime_handoff_receipt.dgn_render_blocked == 1 &&
                strcmp(runtime_handoff_receipt.status,
                       "blocked-menu-bpk-prs3") == 0,
            "Nexus startup handoff blocks DGN route when Saturn menu assets are blocked");
