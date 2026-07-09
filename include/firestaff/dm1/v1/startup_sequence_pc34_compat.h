@@ -121,6 +121,23 @@ typedef struct DM1_V1_StartupHostApplyResult_PC34 {
     char resume_path[512];
 } DM1_V1_StartupHostApplyResult_PC34;
 
+typedef struct DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 {
+    int handled;
+    int full_graphics_required;
+    int swsh_consumed;
+    int title_consumed;
+    int entrance_consumed;
+    int full_graphics_consumed;
+    int hoc_runtime_ready;
+    int resumed_runtime_ready;
+    int draw_opened_runtime;
+    int suppress_draw_opened;
+    int return_to_launcher;
+    int entrance_command;
+    DM1_V1_StartupHandoffAction_PC34 action;
+    const char* status;
+} DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34;
+
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
     int (*begin_prelude_plan)(void* user,
@@ -176,6 +193,7 @@ typedef struct DM1_V1_StartupSelectedLaunchResult_PC34 {
     int launch_failed;
     DM1_V1_StartupHandoffOutcome_PC34 handoff_outcome;
     DM1_V1_StartupHostApplyResult_PC34 host_apply_result;
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 runtime_handoff_receipt;
 } DM1_V1_StartupSelectedLaunchResult_PC34;
 
 typedef struct DM1_V1_StartupSelectedLaunchRouteFacts_PC34 {
@@ -441,6 +459,12 @@ int dm1_v1_startup_apply_handoff_outcome_pc34(
     const char* source_id,
     const DM1_V1_StartupHostCallbacks_PC34* callbacks,
     DM1_V1_StartupHostApplyResult_PC34* out_result);
+int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+    const char* selected_game_id,
+    const char* opened_source_id,
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    const DM1_V1_StartupHostApplyResult_PC34* host_result,
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* out_receipt);
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

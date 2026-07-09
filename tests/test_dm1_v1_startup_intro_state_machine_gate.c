@@ -698,6 +698,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupDungeonLoadReceipt_PC34 load_receipt;
     DM1_V1_StartupRuntimeReadyFacts_PC34 ready_facts;
     DM1_V1_StartupRuntimeReadyReceipt_PC34 ready_receipt;
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 runtime_handoff;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1106,6 +1107,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
 
     memset(&ready_facts, 0, sizeof(ready_facts));
     memset(&ready_receipt, 0, sizeof(ready_receipt));
+    memset(&runtime_handoff, 0, sizeof(runtime_handoff));
     ready_facts.runtime_start.game_id = "dm1";
     ready_facts.runtime_start.source_id = "dm1";
     ready_facts.runtime_start.title = "Dungeon Master";
@@ -1470,6 +1472,20 @@ static void check_dm1_launch_path_bypass_contract(void) {
                                                            &apply_result) &&
                  apply_result.handled == 0,
              1);
+    outcome.title_played = 1;
+    expect_i("DM1 full graphics handoff enters HoC runtime",
+             dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+                 "dm1",
+                 "dm1",
+                 &outcome,
+                 &apply_result,
+                 &runtime_handoff) &&
+                 runtime_handoff.handled &&
+                 runtime_handoff.full_graphics_consumed &&
+                 runtime_handoff.hoc_runtime_ready &&
+                 runtime_handoff.draw_opened_runtime &&
+                 !runtime_handoff.suppress_draw_opened,
+             1);
 
     memset(&fake, 0, sizeof(fake));
     fake.entrance_command = 2;
@@ -1495,6 +1511,18 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 combined post-launch apply maps resume action",
              outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34,
              1);
+    expect_i("DM1 full graphics handoff draws loaded resume runtime",
+             dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+                 "dm1",
+                 "dm1",
+                 &outcome,
+                 &apply_result,
+                 &runtime_handoff) &&
+                 runtime_handoff.full_graphics_consumed &&
+                 runtime_handoff.resumed_runtime_ready &&
+                 runtime_handoff.draw_opened_runtime &&
+                 !runtime_handoff.hoc_runtime_ready,
+             1);
 
     memset(&fake, 0, sizeof(fake));
     callbacks = fake_callbacks(&fake);
@@ -1509,6 +1537,15 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  fake.order[0] == '\0' &&
                  outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34 &&
                  apply_result.handled == 0,
+             1);
+    expect_i("CSB full graphics handoff no-ops",
+             dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+                 "csb",
+                 "csb",
+                 &outcome,
+                 &apply_result,
+                 &runtime_handoff) &&
+                 runtime_handoff.handled == 0,
              1);
     expect_i("NULL combined post-launch apply rejects missing outcome",
              dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
@@ -1565,6 +1602,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 selected launch transaction draws enter path",
              fake.draw_opened,
              1);
+    expect_i("DM1 selected launch transaction exposes HoC handoff receipt",
+             launch_result.runtime_handoff_receipt.handled &&
+                 launch_result.runtime_handoff_receipt.full_graphics_consumed &&
+                 launch_result.runtime_handoff_receipt.hoc_runtime_ready &&
+                 launch_result.runtime_handoff_receipt.draw_opened_runtime,
+             1);
 
     memset(&fake, 0, sizeof(fake));
     fake.open_ok = 1;
@@ -1580,6 +1623,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  &launch_callbacks,
                  &launch_result) &&
                  launch_result.host_apply_result.quit_requested &&
+                 launch_result.runtime_handoff_receipt.suppress_draw_opened &&
                  fake.draw_opened == 0,
              1);
 

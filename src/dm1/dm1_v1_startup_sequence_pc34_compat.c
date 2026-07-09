@@ -735,6 +735,75 @@ int dm1_v1_startup_apply_handoff_outcome_pc34(
     return 1;
 }
 
+int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+    const char* selected_game_id,
+    const char* opened_source_id,
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    const DM1_V1_StartupHostApplyResult_PC34* host_result,
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* out_receipt) {
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 receipt;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+
+    if (!out_receipt || !outcome || !host_result) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&media, 0, sizeof(media));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            selected_game_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    if (!dm1_v1_startup_full_graphics_media_receipt_pc34(opened_source_id,
+                                                         &media)) {
+        return 0;
+    }
+
+    /* ReDMCSB source order:
+     * SWSH.C runs START.PRG, TITLE.C F0437 lines 319-409 completes
+     * PRESENTS/title/guard, and ENTRANCE.C F0441 lines 850-883 returns an
+     * entrance command before the dungeon/HoC runtime is redrawn.  This
+     * receipt is the DM1-owned boundary from full-graphics startup media to
+     * the live Hall of Champions/runtime frame. */
+    receipt.handled = 1;
+    receipt.full_graphics_required = media.handled ? 1 : 0;
+    receipt.swsh_consumed = media.play_swsh ? 1 : 0;
+    receipt.title_consumed =
+        (media.play_title && outcome->title_played) ? 1 : 0;
+    receipt.entrance_consumed =
+        (media.play_entrance &&
+         outcome->action != DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34)
+            ? 1
+            : 0;
+    receipt.full_graphics_consumed =
+        receipt.full_graphics_required &&
+        receipt.swsh_consumed &&
+        receipt.title_consumed &&
+        receipt.entrance_consumed;
+    receipt.entrance_command = outcome->entrance_command;
+    receipt.action = outcome->action;
+    receipt.status = outcome->status;
+    receipt.return_to_launcher =
+        (outcome->action == DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34 ||
+         host_result->quit_requested)
+            ? 1
+            : 0;
+    receipt.hoc_runtime_ready =
+        receipt.full_graphics_consumed &&
+        outcome->action == DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34 &&
+        !receipt.return_to_launcher;
+    receipt.resumed_runtime_ready =
+        receipt.full_graphics_consumed &&
+        outcome->action == DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34 &&
+        host_result->resume_loaded &&
+        !receipt.return_to_launcher;
+    receipt.draw_opened_runtime =
+        (receipt.hoc_runtime_ready || receipt.resumed_runtime_ready) ? 1 : 0;
+    receipt.suppress_draw_opened = receipt.draw_opened_runtime ? 0 : 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
@@ -821,7 +890,15 @@ int dm1_v1_startup_execute_selected_launch_transaction_pc34(
             &result.host_apply_result)) {
         return 0;
     }
-    if (!result.host_apply_result.quit_requested &&
+    if (!dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+            selected_game_id,
+            opened_source_id,
+            &result.handoff_outcome,
+            &result.host_apply_result,
+            &result.runtime_handoff_receipt)) {
+        return 0;
+    }
+    if (result.runtime_handoff_receipt.draw_opened_runtime &&
         callbacks->draw_opened &&
         !callbacks->draw_opened(callbacks->user)) {
         return 0;
