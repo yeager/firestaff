@@ -192,7 +192,11 @@ typedef struct CSB_V1_BootStartupRenderViewReceipt_PC34 {
     int title_frame_max;
     int title_presents_visible;
     int title_chaos_visible;
+    int title_chaos_zoom_visible;
+    int title_chaos_hold_visible;
     int title_strikes_back_visible;
+    int title_phase_tick;
+    int title_phase_tick_count;
     int title_render_command_count;
     int title_blit_kind;
     int title_transparent_color;
@@ -238,7 +242,11 @@ typedef struct CSB_V1_BootStartupReadinessReceipt_PC34 {
     int title_stage;
     int title_presents_visible;
     int title_chaos_visible;
+    int title_chaos_zoom_visible;
+    int title_chaos_hold_visible;
     int title_strikes_back_visible;
+    int title_phase_tick;
+    int title_phase_tick_count;
     int input_ready;
     int hud_menu_ready;
     int host_input_blocked;

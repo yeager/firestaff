@@ -1815,8 +1815,9 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
         out_receipt->title_frame = route->presentation.title_frame;
         out_receipt->title_frame_max = route->presentation.title_frame_max;
         /* ReDMCSB TITLE.C F0437 lines 424-463 draws CM58 PRESENTS for 60
-         * ticks, animates CM59 CHAOS through source steps 2..21, holds CHAOS,
-         * then blits C426 STRIKES BACK. CSBWin/Viewport.cpp keeps the active
+         * ticks, animates 18 PC-path CM59 CHAOS frames through source steps
+         * 2..19, holds CHAOS for two vblanks, then blits C426 STRIKES BACK.
+         * CSBWin/Viewport.cpp keeps the active
          * title/HUD surface as view-owned state. Publish the exact stage and
          * source/destination route here so M11 does not derive
          * PRESENTS/CHAOS/STRIKES from frame math. */
@@ -1835,6 +1836,37 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
                     CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34
                 ? 1
                 : 0;
+        if (out_receipt->title_presents_visible) {
+            out_receipt->title_phase_tick = out_receipt->title_frame;
+            out_receipt->title_phase_tick_count =
+                csb_v1_startup_title_presents_ticks_pc34();
+        } else if (out_receipt->title_chaos_visible) {
+            const int chaos_frame =
+                out_receipt->title_frame -
+                csb_v1_startup_title_presents_ticks_pc34();
+            const int zoom_ticks =
+                csb_v1_startup_title_chaos_zoom_ticks_pc34();
+            out_receipt->title_chaos_zoom_visible =
+                chaos_frame < zoom_ticks ? 1 : 0;
+            out_receipt->title_chaos_hold_visible =
+                chaos_frame >= zoom_ticks ? 1 : 0;
+            out_receipt->title_phase_tick =
+                out_receipt->title_chaos_zoom_visible
+                    ? chaos_frame
+                    : chaos_frame - zoom_ticks;
+            out_receipt->title_phase_tick_count =
+                out_receipt->title_chaos_zoom_visible
+                    ? zoom_ticks
+                    : csb_v1_startup_title_chaos_hold_ticks_pc34();
+        } else if (out_receipt->title_strikes_back_visible) {
+            out_receipt->title_phase_tick =
+                out_receipt->title_frame -
+                csb_v1_startup_title_presents_ticks_pc34() -
+                csb_v1_startup_title_chaos_zoom_ticks_pc34() -
+                csb_v1_startup_title_chaos_hold_ticks_pc34();
+            out_receipt->title_phase_tick_count =
+                csb_v1_startup_title_strikes_back_ticks_pc34();
+        }
         out_receipt->title_render_command_count =
             route->presentation.render_plan.render_command_count;
         out_receipt->title_blit_kind =
@@ -1956,8 +1988,14 @@ int csb_v1_boot_startup_readiness_receipt_from_view_pc34(
     out_receipt->title_presents_visible =
         view->title_presents_visible ? 1 : 0;
     out_receipt->title_chaos_visible = view->title_chaos_visible ? 1 : 0;
+    out_receipt->title_chaos_zoom_visible =
+        view->title_chaos_zoom_visible ? 1 : 0;
+    out_receipt->title_chaos_hold_visible =
+        view->title_chaos_hold_visible ? 1 : 0;
     out_receipt->title_strikes_back_visible =
         view->title_strikes_back_visible ? 1 : 0;
+    out_receipt->title_phase_tick = view->title_phase_tick;
+    out_receipt->title_phase_tick_count = view->title_phase_tick_count;
     out_receipt->input_ready =
         view->route_receipt.accepts_input ? 1 : 0;
     out_receipt->hud_menu_ready =
@@ -2228,6 +2266,8 @@ int csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
     asset->transparent_color = receipt->title_transparent_color;
     asset->visible = 1;
 
+    render = &out_plan->render_commands[out_plan->render_command_count++];
+    render->kind = CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34;
     render = &out_plan->render_commands[out_plan->render_command_count++];
     render->kind = CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34;
     return 1;

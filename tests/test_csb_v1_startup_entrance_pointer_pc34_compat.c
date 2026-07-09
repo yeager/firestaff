@@ -688,18 +688,20 @@ int main(void)
               plan.asset_commands[0].transparent_color == -1 &&
               !plan.waiting_for_input,
           "startup render plan owns title PRESENTS surface, boxes, palette, fallback rows, asset blit, and primitive clear");
-    check(plan.render_command_count == 1 &&
+    check(plan.render_command_count == 2 &&
               plan.render_commands[0].kind ==
+                  CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
+              plan.render_commands[1].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
-          "startup render plan owns title draw command");
+          "startup render plan owns title clear and draw command");
     memset(&render_probe, 0, sizeof(render_probe));
     render_probe_executor_init(&render_executor, &render_probe);
     check(csb_v1_startup_execute_render_plan_pc34(&plan, &render_executor) &&
               render_probe.draw_title_count == 1 &&
-              render_probe.clear_black_count == 0 &&
+              render_probe.clear_black_count == 1 &&
               render_probe.draw_full_surface_count == 0 &&
               render_probe.draw_fallback_text_count == 0,
-          "startup render executor dispatches title command and stops");
+          "startup render executor dispatches title clear before draw");
     memset(&probe, 0, sizeof(probe));
     check(csb_v1_startup_execute_asset_commands_kind_pc34(
               &plan,
@@ -736,13 +738,13 @@ int main(void)
     }
 
     check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
-              csb_v1_startup_title_total_ticks_pc34() == 102 &&
+              csb_v1_startup_title_total_ticks_pc34() == 81 &&
               csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
               csb_v1_startup_title_source_step_for_frame_pc34(60) == 2 &&
-              csb_v1_startup_title_source_step_for_frame_pc34(79) == 21 &&
-              csb_v1_startup_title_source_step_for_frame_pc34(99) == 21 &&
-              csb_v1_startup_title_source_step_for_frame_pc34(101) == 22 &&
-              csb_v1_startup_title_stage_for_frame_pc34(100) ==
+              csb_v1_startup_title_source_step_for_frame_pc34(77) == 19 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(79) == 19 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(80) == 20 &&
+              csb_v1_startup_title_stage_for_frame_pc34(80) ==
                   CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
           "startup title timing preserves CSB PRESENTS/CHAOS/STRIKES timing");
 
@@ -752,10 +754,10 @@ int main(void)
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-              plan.title_source_x == 152 &&
-              plan.title_source_y == 78 &&
-              plan.title_source_w == 16 &&
-              plan.title_source_h == 4 &&
+              plan.title_source_x == 136 &&
+              plan.title_source_y == 74 &&
+              plan.title_source_w == 48 &&
+              plan.title_source_h == 12 &&
               plan.title_blit_kind ==
                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 &&
               plan.title_transparent_color == -1 &&
