@@ -2510,7 +2510,7 @@ int csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
     return 1;
 }
 
-int csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
+static int csb_v1_boot_startup_capture_title_render_plan_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
@@ -2533,7 +2533,7 @@ int csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
         out_plan);
 }
 
-int csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+static int csb_v1_boot_startup_capture_render_plan_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
@@ -2550,7 +2550,7 @@ int csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
     }
 
     if (capture_receipt->title_capture_ready) {
-        return csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
+        return csb_v1_boot_startup_capture_title_render_plan_pc34(
             capture_receipt,
             out_plan);
     }
@@ -2930,7 +2930,7 @@ int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
             ? 1
             : 0;
     out_proof->render_plan_available =
-        csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+        csb_v1_boot_startup_capture_render_plan_pc34(
             capture_receipt,
             &render_plan);
     if (capture_receipt->render_view_valid) {
@@ -3209,11 +3209,11 @@ int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
     }
 
     out_receipt->render_plan_valid =
-        csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+        csb_v1_boot_startup_capture_render_plan_pc34(
             capture_receipt,
             &out_receipt->render_plan);
     out_receipt->title_render_plan_valid =
-        csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
+        csb_v1_boot_startup_capture_title_render_plan_pc34(
             capture_receipt,
             &out_receipt->title_render_plan);
     out_receipt->capture_proof_valid =
