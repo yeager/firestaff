@@ -1518,7 +1518,8 @@ int dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
     receipt.consumed_suppression_facts = 1;
     receipt.capture_phase = apply->capture_phase;
     receipt.source_evidence =
-        "ReDMCSB ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+        "ReDMCSB ENTRANCE.C:68-80/850-883; "
+        "DUNVIEW.C:3916-3928/4547-4581";
     if (!apply->ready ||
         !apply->apply_before_hoc_input ||
         !apply->apply_hall_mirror_overlay ||
@@ -1606,7 +1607,9 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
         !suppression->false_item_payloads_absent ||
         !suppression->projectile_payloads_absent ||
         !suppression->spell_effect_payloads_absent ||
-        !suppression->mirror_payload_thing_absent) {
+        !suppression->mirror_payload_thing_absent ||
+        !apply->apply_hall_mirror_overlay ||
+        apply->hall_overlay_kind != DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34) {
         *out_receipt = receipt;
         return 1;
     }
@@ -1638,6 +1641,16 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
         suppression->mirror_payload_thing_absent;
     receipt.publish_packaged_full_graphics_proof =
         apply->publish_packaged_full_graphics_proof;
+    receipt.redmcsb_c026_portrait_overlay_ready =
+        suppression->champion_mirror_overlay_present;
+    receipt.redmcsb_c346_mirror_backing_ready =
+        apply->apply_hall_mirror_overlay &&
+        apply->hall_overlay_kind == DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34;
+    receipt.redmcsb_f0115_thing_layer_suppression_ready =
+        suppression->false_item_payloads_absent &&
+        suppression->projectile_payloads_absent &&
+        suppression->spell_effect_payloads_absent &&
+        suppression->mirror_payload_thing_absent;
     receipt.block_enter_until_champion_selected =
         apply->block_enter_until_champion_selected;
     receipt.map_index = apply->map_index;
@@ -1917,6 +1930,9 @@ int dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
         !production->suppress_projectile_payloads ||
         !production->suppress_spell_effect_payloads ||
         !production->suppress_mirror_payload_things ||
+        !production->redmcsb_c026_portrait_overlay_ready ||
+        !production->redmcsb_c346_mirror_backing_ready ||
+        !production->redmcsb_f0115_thing_layer_suppression_ready ||
         !render->suppress_mirror_floor_item_payload ||
         !render->suppress_mirror_projectile_payload ||
         !render->suppress_mirror_spell_effect_payload) {
@@ -1962,6 +1978,17 @@ int dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
         production->suppress_mirror_payload_things;
     receipt.suppress_materialized_item_payload =
         render->suppress_materialized_item_payload;
+    receipt.redmcsb_c026_portrait_overlay_ready =
+        production->redmcsb_c026_portrait_overlay_ready &&
+        render->draw_champion_mirror_wall_overlay;
+    receipt.redmcsb_c346_mirror_backing_ready =
+        production->redmcsb_c346_mirror_backing_ready &&
+        render->render_hall_mirror_overlay;
+    receipt.redmcsb_f0115_thing_layer_suppression_ready =
+        production->redmcsb_f0115_thing_layer_suppression_ready &&
+        render->suppress_mirror_floor_item_payload &&
+        render->suppress_mirror_projectile_payload &&
+        render->suppress_mirror_spell_effect_payload;
     receipt.block_enter_until_champion_selected =
         production->block_enter_until_champion_selected &&
         render->block_enter_until_champion_selected;
