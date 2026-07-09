@@ -2731,6 +2731,16 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     out_receipt->title_gdat_category = package.title_gdat_category;
     out_receipt->title_gdat_index = package.title_gdat_index;
     out_receipt->title_gdat_field = package.title_gdat_field;
+    out_receipt->skproject_title_query_ready =
+        view_model.view_receipt.render.skproject_title_query_ready;
+    out_receipt->skproject_title_category =
+        view_model.view_receipt.render.skproject_title_category;
+    out_receipt->skproject_title_index =
+        view_model.view_receipt.render.skproject_title_index;
+    out_receipt->skproject_credit_screen_field =
+        view_model.view_receipt.render.skproject_credit_screen_field;
+    out_receipt->skproject_menu_screen_field =
+        view_model.view_receipt.render.skproject_menu_screen_field;
     out_receipt->menu_capture_ready = package.menu_capture_ready;
     out_receipt->menu_command_count = view_model.command_count;
     out_receipt->menu_row_count = package.menu_row_count;
@@ -2832,6 +2842,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         !out_receipt->present_first_hud_frame;
     out_receipt->title_menu_hud_visual_proof_ready =
         out_receipt->menu_title_composite_capture_ready &&
+        out_receipt->skproject_title_query_ready &&
         out_receipt->hud_handoff_capture_ready &&
         out_receipt->suppress_game_hud &&
         !out_receipt->present_first_hud_frame &&
@@ -2843,6 +2854,10 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         hash, ownership.packaged_full_start_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->title_pixel_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->skproject_title_query_ready);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->skproject_menu_screen_field);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->menu_command_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(

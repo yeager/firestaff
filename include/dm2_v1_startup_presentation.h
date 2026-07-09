@@ -44,6 +44,11 @@ typedef struct DM2_V1_StartupRenderReceipt {
     int title_gdat_category;
     int title_gdat_index;
     int title_gdat_field;
+    int skproject_title_query_ready;
+    int skproject_title_category;
+    int skproject_title_index;
+    int skproject_credit_screen_field;
+    int skproject_menu_screen_field;
     DM2_V1_StartupRect title_rect;
     DM2_V1_StartupRect panel_rect;
     int menu_text_count;
