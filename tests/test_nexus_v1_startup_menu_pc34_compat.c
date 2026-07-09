@@ -101,6 +101,7 @@ int main(void)
     Nexus_V1_StartupHostReceipt host_receipt;
     Nexus_V1_StartupHostActionReceipt host_action_receipt;
     Nexus_V1_StartupIdleReceipt idle_receipt;
+    Nexus_V1_StartupSaveRouteReceipt save_route_receipt;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupSaveRenderRow save_rows[4];
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
@@ -1559,6 +1560,30 @@ int main(void)
                        NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW &&
                    load_calls == 0,
                "Nexus save input wrapper returns M11-ready state and action receipt");
+        load_calls = 0;
+        memset(&save_route_receipt, 0, sizeof(save_route_receipt));
+        expect(nexus_v1_startup_save_route_receipt_from_host_facts_input(
+                   &host_facts,
+                   2,
+                   startup_load_success,
+                   &load_calls,
+                   &save_route_receipt) &&
+                   save_route_receipt.route ==
+                       NEXUS_V1_STARTUP_SAVE_ROUTE_NAVIGATE &&
+                   strcmp(nexus_v1_startup_save_route_name(
+                              save_route_receipt.route),
+                          "navigate") == 0 &&
+                   save_route_receipt.handled == 1 &&
+                   save_route_receipt.save_state_receipt_valid &&
+                   save_route_receipt.selected_row == 1 &&
+                   save_route_receipt.row_count == 2 &&
+                   save_route_receipt.draw_command_count > 3 &&
+                   save_route_receipt.host_input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   strcmp(save_route_receipt.status,
+                          "NEXUS SAVE SELECT") == 0 &&
+                   load_calls == 0,
+               "Nexus save route receipt owns keyboard navigation handoff");
         snapshot_row_count =
             nexus_v1_startup_menu_snapshot_build_save_render_rows(
                 &snapshot,
@@ -1681,6 +1706,41 @@ int main(void)
                        NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT &&
                    load_calls == 1,
                "Nexus save pointer wrapper returns M11-ready state and action receipt");
+        load_calls = 0;
+        memset(&save_route_receipt, 0, sizeof(save_route_receipt));
+        expect(nexus_v1_startup_save_route_receipt_from_host_facts_pointer(
+                   &host_facts,
+                   20,
+                   44,
+                   startup_load_success,
+                   &load_calls,
+                   &save_route_receipt) &&
+                   save_route_receipt.route ==
+                       NEXUS_V1_STARTUP_SAVE_ROUTE_LOAD_SLOT &&
+                   save_route_receipt.handled == 1 &&
+                   save_route_receipt.save_state_receipt_valid &&
+                   save_route_receipt.selected_row == 0 &&
+                   save_route_receipt.selected_slot == 3 &&
+                   save_route_receipt.draw_command_count > 3 &&
+                   save_route_receipt.set_save_select_active &&
+                   save_route_receipt.save_select_active == 0 &&
+                   load_calls == 1,
+               "Nexus save route receipt owns pointer load-slot handoff");
+        memset(&save_route_receipt, 0, sizeof(save_route_receipt));
+        expect(nexus_v1_startup_save_route_receipt_from_host_facts_pointer(
+                   &host_facts,
+                   -50,
+                   -50,
+                   startup_load_success,
+                   &load_calls,
+                   &save_route_receipt) &&
+                   save_route_receipt.route ==
+                       NEXUS_V1_STARTUP_SAVE_ROUTE_POINTER_MISS &&
+                   save_route_receipt.handled == 0 &&
+                   save_route_receipt.save_state_receipt_valid &&
+                   save_route_receipt.selected_row == 1 &&
+                   save_route_receipt.draw_command_count > 3,
+               "Nexus save route receipt preserves render state on pointer miss");
     }
     memset(&hit, 0, sizeof(hit));
     hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_PANEL;
