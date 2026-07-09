@@ -546,12 +546,26 @@ static void expect_dm2_startup_layout_contract(void) {
                             .full_start_real_asset_ready == 0 &&
                     boot_view_model.host_view_receipt.valid &&
                     boot_view_model.host_view_receipt.draw_startup_menu == 1 &&
+                    boot_view_model.host_view_receipt.render_commands_ready == 1 &&
+                    boot_view_model.host_view_receipt.menu_state_ready == 1 &&
+                    boot_view_model.host_view_receipt.row_selection_ready == 1 &&
+                    boot_view_model.host_view_receipt.resume_menu_ready == 1 &&
+                    boot_view_model.host_view_receipt.save_slot_menu_ready == 1 &&
+                    boot_view_model.host_view_receipt.new_game_menu_ready == 1 &&
                     boot_view_model.host_view_receipt.title_timing_ready == 1 &&
                     boot_view_model.host_view_receipt.title_asset_ready == 1 &&
+                    boot_view_model.host_view_receipt.title_menu_ready == 1 &&
                     boot_view_model.host_view_receipt.hud_overlay_suppressed == 1 &&
                     boot_view_model.host_view_receipt.runtime_menu_ready == 1 &&
                     boot_view_model.host_view_receipt.runtime_action_ready == 0 &&
                     boot_view_model.host_view_receipt.first_hud_frame_ready == 0 &&
+                    boot_view_model.host_view_receipt
+                            .startup_hud_handoff_ready == 1 &&
+                    boot_view_model.host_view_receipt.runtime_handoff_ready == 0 &&
+                    strcmp(boot_view_model.host_view_receipt.status_scope,
+                           "STARTUP") == 0 &&
+                    strcmp(boot_view_model.host_view_receipt.status,
+                           "DM2 STARTUP MENU") == 0 &&
                     strcmp(boot_view_model.phase, "dm2-startup-menu") == 0 &&
                     boot_view_model.startup_active == 1 &&
                     strcmp(boot_view_model.animation,
@@ -612,6 +626,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     host_view_receipt.selected_row == 2 &&
                     host_view_receipt.title_timing_ready == 1 &&
                     host_view_receipt.title_asset_ready == 1 &&
+                    host_view_receipt.title_menu_ready == 1 &&
                     host_view_receipt.title_frame == 0 &&
                     host_view_receipt.title_frame_max == 7 &&
                     host_view_receipt.title_frame_duration_ticks == 6 &&
@@ -619,8 +634,14 @@ static void expect_dm2_startup_layout_contract(void) {
                     host_view_receipt.hud_runtime_ready == 1 &&
                     host_view_receipt.runtime_menu_ready == 1 &&
                     host_view_receipt.runtime_action_ready == 0 &&
-                    host_view_receipt.first_hud_frame_ready == 0,
-                "DM2 boot host-view receipt lets M11 consume startup state without loose command-count gates");
+                    host_view_receipt.first_hud_frame_ready == 0 &&
+                    host_view_receipt.startup_hud_handoff_ready == 1 &&
+                    host_view_receipt.runtime_handoff_ready == 0 &&
+                    strcmp(host_view_receipt.status_scope, "STARTUP") == 0 &&
+                    strcmp(host_view_receipt.status, "DM2 STARTUP MENU") == 0 &&
+                    strcmp(host_view_receipt.log_line,
+                           "T0: DM2 STARTUP MENU") == 0,
+                "DM2 boot host-view receipt lets M11 consume startup state/status without loose command-count gates");
     boot_snapshot.startup_menu_active = 1;
     expect_true(dm2_v1_startup_presentation_receipt(
                     1,
@@ -1123,8 +1144,12 @@ int main(void) {
                         host_view_receipt.draw_startup_menu == 1 &&
                         host_view_receipt.title_timing_ready == 1 &&
                         host_view_receipt.title_asset_ready == 1 &&
+                        host_view_receipt.title_menu_ready == 1 &&
                         host_view_receipt.hud_overlay_suppressed == 1 &&
                         host_view_receipt.hud_runtime_ready == 1 &&
+                        host_view_receipt.startup_hud_handoff_ready == 1 &&
+                        strcmp(host_view_receipt.status,
+                               "DM2 STARTUP MENU") == 0 &&
                         host_view_receipt.full_start
                                 .title_gdat_asset_ready == 1 &&
                         host_view_receipt.full_start

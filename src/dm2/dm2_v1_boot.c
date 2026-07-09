@@ -1479,6 +1479,19 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
     receipt->valid = 1;
     receipt->command_count = view_model->command_count;
     receipt->selected_row = view_model->view_receipt.menu_state.selected_row;
+    receipt->render_commands_ready = view_model->command_count > 0;
+    receipt->menu_state_ready =
+        view_model->view_receipt.menu_state.row_count > 0 &&
+        view_model->view_receipt.menu_state.selected_row >= 0 &&
+        view_model->view_receipt.menu_state.selected_row <
+            view_model->view_receipt.menu_state.row_count;
+    receipt->row_selection_ready = receipt->menu_state_ready;
+    receipt->resume_menu_ready =
+        view_model->view_receipt.render.resume_menu_ready;
+    receipt->save_slot_menu_ready =
+        view_model->view_receipt.render.save_slot_menu_ready;
+    receipt->new_game_menu_ready =
+        view_model->view_receipt.render.new_game_menu_ready;
     receipt->title_timing_ready =
         full_start->startup_menu_active &&
         full_start->title_frame_max >= 0 &&
@@ -1487,6 +1500,10 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
         full_start->full_start_real_asset_ready
             ? 1
             : full_start->title_backdrop_ready;
+    receipt->title_menu_ready =
+        receipt->title_timing_ready &&
+        receipt->title_asset_ready &&
+        receipt->new_game_menu_ready;
     receipt->draw_startup_menu =
         full_start->startup_menu_active &&
         full_start->full_start_graphics_ready &&
@@ -1501,6 +1518,22 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
     receipt->runtime_menu_ready = full_start->runtime_menu_ready;
     receipt->runtime_action_ready = full_start->runtime_action_ready;
     receipt->first_hud_frame_ready = full_start->first_hud_frame_ready;
+    receipt->startup_hud_handoff_ready =
+        receipt->draw_startup_menu &&
+        receipt->hud_overlay_suppressed &&
+        receipt->hud_runtime_ready &&
+        !receipt->first_hud_frame_ready;
+    receipt->runtime_handoff_ready =
+        full_start->title_ready &&
+        receipt->runtime_action_ready &&
+        receipt->first_hud_frame_ready;
+    receipt->status_scope =
+        receipt->draw_startup_menu ? "STARTUP" : "RUNTIME";
+    receipt->status =
+        receipt->draw_startup_menu ? "DM2 STARTUP MENU" : "DM2 RUNTIME";
+    receipt->log_line =
+        receipt->draw_startup_menu ? "T0: DM2 STARTUP MENU"
+                                   : "T0: DM2 RUNTIME";
     receipt->full_start = *full_start;
     /* M11 host consumption contract: callers gate startup drawing and probe
      * state on this receipt, not on ad-hoc command-count/HUD flag checks. */

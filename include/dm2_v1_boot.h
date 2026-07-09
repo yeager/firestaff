@@ -251,8 +251,15 @@ typedef struct {
     int draw_startup_menu;
     int command_count;
     int selected_row;
+    int render_commands_ready;
+    int menu_state_ready;
+    int row_selection_ready;
+    int resume_menu_ready;
+    int save_slot_menu_ready;
+    int new_game_menu_ready;
     int title_timing_ready;
     int title_asset_ready;
+    int title_menu_ready;
     int title_frame;
     int title_frame_max;
     int title_frame_duration_ticks;
@@ -262,6 +269,11 @@ typedef struct {
     int runtime_menu_ready;
     int runtime_action_ready;
     int first_hud_frame_ready;
+    int startup_hud_handoff_ready;
+    int runtime_handoff_ready;
+    const char *status_scope;
+    const char *status;
+    const char *log_line;
     DM2_V1_BootStartupFullStartReceipt full_start;
 } DM2_V1_BootStartupHostViewReceipt;
 
