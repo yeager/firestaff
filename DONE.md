@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 full-graphics runtime handoff receipt: selected DM1 launch now produces a DM1-owned receipt from SWSH/PRESENTS/TITLE/entrance into HoC/runtime draw, including enter, resume, quit, and draw-suppression decisions. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 entrance render/audio receipt command consumption: M11 now consumes a DM1-built entrance command for fade, closed doors, opening door frames, entrance palette present, rattle sound marker, and delay timing instead of rebuilding those choices from raw entrance steps. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 entrance transition delay receipt consumption: M11 now computes DM1 entrance transition delays through the active startup media receipt, and the startup probe rejects too-fast vblank/pre-open timing receipts. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `git diff --check` passed.
