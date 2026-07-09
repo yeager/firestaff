@@ -2040,11 +2040,17 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
      * instead of each rebuilding a host-side capture verdict. */
     receipt.handled = 1;
     receipt.consumed_host_probe_facts = 1;
+    receipt.consumed_launch_path_receipt =
+        facts->consumed_launch_path_receipt ? 1 : 0;
     receipt.consumed_runtime_apply_receipt = apply.handled ? 1 : 0;
     receipt.consumed_production_consumer_receipt = consumer.handled ? 1 : 0;
     receipt.consume_dm1_receipts_only = consumer.consume_dm1_receipts_only;
     receipt.publish_packaged_full_graphics_proof =
         consumer.publish_packaged_full_graphics_proof;
+    receipt.launch_path_started_from_launcher =
+        facts->launch_path_started_from_launcher ? 1 : 0;
+    receipt.launch_path_intro_not_bypassed =
+        facts->launch_path_intro_not_bypassed ? 1 : 0;
     receipt.real_asset_capture = consumer.real_asset_capture;
     receipt.mac_window_capture = consumer.mac_window_capture;
     receipt.release_app_capture = consumer.release_app_capture;
@@ -2082,6 +2088,9 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         consumer.ready &&
         receipt.consumed_runtime_apply_receipt &&
         receipt.consumed_production_consumer_receipt &&
+        receipt.consumed_launch_path_receipt &&
+        receipt.launch_path_started_from_launcher &&
+        receipt.launch_path_intro_not_bypassed &&
         receipt.consume_dm1_receipts_only &&
         receipt.publish_packaged_full_graphics_proof &&
         receipt.real_asset_capture &&

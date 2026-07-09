@@ -6812,6 +6812,9 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     facts.map_count = facts.dungeon_loaded ? 1 : 0;
     facts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
     facts.title_played = receipt->startupContractReady;
+    facts.consumed_launch_path_receipt = receipt->startupContractReady;
+    facts.launch_path_started_from_launcher = 1;
+    facts.launch_path_intro_not_bypassed = 1;
     facts.captured_after_first_frame_render = receipt->startupContractReady;
     facts.captured_from_real_assets = realAssetReady;
     facts.captured_from_mac_window = 1;
@@ -6829,6 +6832,10 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     receipt->dm1HoCHostCaptureRouteReady =
         ownership.host_capture_route_matches;
     receipt->dm1HoCReleaseCaptureOwnershipReady = ownership.ready;
+    receipt->dm1HoCLaunchPathReady =
+        ownership.consumed_launch_path_receipt &&
+        ownership.launch_path_started_from_launcher &&
+        ownership.launch_path_intro_not_bypassed;
     receipt->dm1HoCReceiptOnlyConsumerReady =
         ownership.consume_dm1_receipts_only &&
         ownership.consumed_runtime_apply_receipt &&
@@ -6857,6 +6864,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     receipt->packagedCaptureReady =
         receipt->packagedCaptureExpected &&
         ownership.ready &&
+        receipt->dm1HoCLaunchPathReady &&
         receipt->dm1HoCReceiptOnlyConsumerReady &&
         receipt->dm1HoCNoHostFallbackVisualsReady &&
         receipt->dm1HoCLowerLevelHelpersReady &&

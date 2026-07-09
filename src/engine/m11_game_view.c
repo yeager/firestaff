@@ -11423,6 +11423,11 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
                                       : 0;
     facts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
     facts.title_played = 1;
+    facts.consumed_launch_path_receipt = 1;
+    facts.launch_path_started_from_launcher =
+        state && state->startedFromLauncher ? 1 : 0;
+    facts.launch_path_intro_not_bypassed =
+        state && !state->dm1StartupIntroBypassed ? 1 : 0;
     facts.captured_after_first_frame_render = 1;
     facts.captured_from_real_assets =
         state && state->assetsAvailable && state->assetLoader.fileState &&
@@ -11729,6 +11734,10 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_consumer.host_capture_route_matches;
             out->dm1HoCReleaseCaptureOwnershipReady =
                 hoc_ownership.ready;
+            out->dm1HoCLaunchPathReady =
+                hoc_ownership.consumed_launch_path_receipt &&
+                hoc_ownership.launch_path_started_from_launcher &&
+                hoc_ownership.launch_path_intro_not_bypassed;
             out->dm1HoCReceiptOnlyConsumerReady =
                 hoc_ownership.consume_dm1_receipts_only &&
                 hoc_ownership.consumed_runtime_apply_receipt &&
@@ -29460,6 +29469,7 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     int* outHostWindowCapture,
     int* outHostCaptureRouteMatches,
     int* outReleaseCaptureOwnershipReady,
+    int* outLaunchPathReady,
     int* outOwnedHostDrawReady,
     int* outMapIndex,
     int* outRenderCommandCount) {
@@ -29535,6 +29545,9 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     hostProbeFacts.map_count = 1;
     hostProbeFacts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
     hostProbeFacts.title_played = 1;
+    hostProbeFacts.consumed_launch_path_receipt = 1;
+    hostProbeFacts.launch_path_started_from_launcher = 1;
+    hostProbeFacts.launch_path_intro_not_bypassed = 1;
     hostProbeFacts.captured_after_first_frame_render = 1;
     hostProbeFacts.captured_from_real_assets = 1;
     hostProbeFacts.captured_from_mac_window = 1;
@@ -29673,6 +29686,12 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     }
     if (outReleaseCaptureOwnershipReady) {
         *outReleaseCaptureOwnershipReady = releaseOwnership.ready;
+    }
+    if (outLaunchPathReady) {
+        *outLaunchPathReady =
+            releaseOwnership.consumed_launch_path_receipt &&
+            releaseOwnership.launch_path_started_from_launcher &&
+            releaseOwnership.launch_path_intro_not_bypassed;
     }
     if (outOwnedHostDrawReady) {
         *outOwnedHostDrawReady =

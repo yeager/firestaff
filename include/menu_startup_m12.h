@@ -339,6 +339,7 @@ typedef struct {
     int dm1HoCReleaseAppCaptureReady;
     int dm1HoCHostCaptureRouteReady;
     int dm1HoCReleaseCaptureOwnershipReady;
+    int dm1HoCLaunchPathReady;
     int dm1HoCReceiptOnlyConsumerReady;
     int dm1HoCNoHostFallbackVisualsReady;
     int dm1HoCLowerLevelHelpersReady;
