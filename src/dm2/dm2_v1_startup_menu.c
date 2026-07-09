@@ -1203,6 +1203,40 @@ static void dm2_v1_startup_save_menu_handoff_set(
      * rebuild load/continue/new-game routing from strings. */
 }
 
+static void dm2_v1_startup_input_route_set(
+    DM2_V1_StartupHostActionReceipt *receipt,
+    int source_kind,
+    int firestaff_menu_input,
+    DM2_V1_StartupInput startup_input,
+    int pointer_x,
+    int pointer_y,
+    const DM2_V1_StartupHostFacts *facts,
+    const DM2_V1_StartupMenuStateReceipt *menu_receipt,
+    const DM2_V1_StartupAction *action)
+{
+    DM2_V1_StartupInputRouteReceipt *route;
+
+    if (!receipt || !facts || !menu_receipt || !action) {
+        return;
+    }
+    route = &receipt->input_route;
+    memset(route, 0, sizeof(*route));
+    route->valid = 1;
+    route->source_kind = source_kind;
+    route->firestaff_menu_input = firestaff_menu_input;
+    route->startup_input = startup_input;
+    route->pointer_x = pointer_x;
+    route->pointer_y = pointer_y;
+    route->selected_row_before = facts->selected_row;
+    route->selected_row_after = menu_receipt->selected_row;
+    route->action_kind = action->kind;
+    route->action_row = action->row;
+    route->action_slot = action->slot;
+    /* SKULL.ASM T000 owns the startup menu loop. Keep the input translation
+     * and resulting DM2 startup action together so host HUD/menu routing does
+     * not reinterpret Firestaff key or pointer codes. */
+}
+
 void dm2_v1_startup_idle_receipt_clear(
     DM2_V1_StartupIdleReceipt *receipt)
 {
@@ -1418,6 +1452,16 @@ int dm2_v1_startup_execute_firestaff_input_from_host_facts_with_receipt(
         out_receipt->menu_state_receipt = menu_receipt;
         out_receipt->menu_state_receipt_valid = 1;
     }
+    dm2_v1_startup_input_route_set(
+        out_receipt,
+        1,
+        menu_input,
+        dm2_v1_startup_input_from_firestaff_menu_code(menu_input),
+        -1,
+        -1,
+        facts,
+        &menu_receipt,
+        &action);
     return 1;
 }
 
@@ -1464,6 +1508,15 @@ int dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
         out_receipt->menu_state_receipt = menu_receipt;
         out_receipt->menu_state_receipt_valid = 1;
     }
+    dm2_v1_startup_input_route_set(out_receipt,
+                                   2,
+                                   0,
+                                   DM2_V1_STARTUP_INPUT_NONE,
+                                   x,
+                                   y,
+                                   facts,
+                                   &menu_receipt,
+                                   &action);
     return 1;
 }
 
