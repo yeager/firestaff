@@ -58,6 +58,20 @@ struct Dm1V1MovementBlockedResolutionPlanPc34Compat {
     int blockedMovementVblankWaitRequested;
 };
 
+struct Dm1V1MovementStairsApplyPlanPc34Compat {
+    int valid;
+    int fromMapIndex;
+    int toMapIndex;
+    int newMapX;
+    int newMapY;
+    int newDirection;
+    int movementResultCode;
+    int stairTransitionApplied;
+    int stairDestinationEnterDeferred;
+    int stopWaitingForPlayerInput;
+    int viewportRedrawRequested;
+};
+
 struct Dm1V1MovementCommandCoreResultPc34Compat {
     struct Dm1V1InputQueueProcessResultPc34Compat queue;
     struct MovementResult_Compat movement;
@@ -118,6 +132,10 @@ int DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(
     int movementResultCode,
     int blockedByGroup,
     struct Dm1V1MovementBlockedResolutionPlanPc34Compat* outPlan);
+
+int DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(
+    const struct StairsTransitionResult_Compat* stairs,
+    struct Dm1V1MovementStairsApplyPlanPc34Compat* outPlan);
 
 #ifdef __cplusplus
 }

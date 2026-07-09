@@ -229,26 +229,55 @@ static int dm1_v1_party_source_square_is_stairs(
     return ((squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5) == DUNGEON_ELEMENT_STAIRS;
 }
 
-static void dm1_v1_apply_stairs_transition_result(
-    struct PartyState_Compat* party,
+int DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(
     const struct StairsTransitionResult_Compat* stairs,
+    struct Dm1V1MovementStairsApplyPlanPc34Compat* outPlan)
+{
+    if (!outPlan) {
+        return 0;
+    }
+    memset(outPlan, 0, sizeof(*outPlan));
+    if (!stairs || !stairs->transitioned) {
+        return 1;
+    }
+
+    outPlan->valid = 1;
+    outPlan->fromMapIndex = stairs->fromMapIndex;
+    outPlan->toMapIndex = stairs->toMapIndex;
+    outPlan->newMapX = stairs->newMapX;
+    outPlan->newMapY = stairs->newMapY;
+    outPlan->newDirection = stairs->newDirection;
+    outPlan->movementResultCode = MOVE_OK;
+    outPlan->stairTransitionApplied = 1;
+    outPlan->stairDestinationEnterDeferred =
+        (stairs->toMapIndex != stairs->fromMapIndex) ? 1 : 0;
+    outPlan->stopWaitingForPlayerInput = 1;
+    outPlan->viewportRedrawRequested = 1;
+    return 1;
+}
+
+static void dm1_v1_apply_stairs_transition_plan(
+    struct PartyState_Compat* party,
+    const struct Dm1V1MovementStairsApplyPlanPc34Compat* plan,
     struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
 {
-    party->mapIndex = stairs->toMapIndex;
-    party->mapX = stairs->newMapX;
-    party->mapY = stairs->newMapY;
-    party->direction = stairs->newDirection;
-    outResult->movement.resultCode = MOVE_OK;
+    if (!party || !plan || !plan->valid || !outResult) {
+        return;
+    }
+
+    party->mapIndex = plan->toMapIndex;
+    party->mapX = plan->newMapX;
+    party->mapY = plan->newMapY;
+    party->direction = plan->newDirection;
+    outResult->movement.resultCode = plan->movementResultCode;
     outResult->movement.newMapX = party->mapX;
     outResult->movement.newMapY = party->mapY;
     outResult->movement.newDirection = party->direction;
     outResult->movement.newMapIndex = party->mapIndex;
-    outResult->stairTransitionApplied = 1;
-    if (stairs->toMapIndex != stairs->fromMapIndex) {
-        outResult->stairDestinationEnterDeferred = 1;
-    }
-    outResult->stopWaitingForPlayerInput = 1;
-    outResult->viewportRedrawRequested = 1;
+    outResult->stairTransitionApplied = plan->stairTransitionApplied;
+    outResult->stairDestinationEnterDeferred = plan->stairDestinationEnterDeferred;
+    outResult->stopWaitingForPlayerInput = plan->stopWaitingForPlayerInput;
+    outResult->viewportRedrawRequested = plan->viewportRedrawRequested;
 }
 
 static int dm1_v1_process_stair_walk_off_append(
@@ -323,12 +352,15 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
          * sensor pass is preserved without a same-square walk-on pass.
          */
         if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, party, &stairs) && stairs.transitioned) {
+            struct Dm1V1MovementStairsApplyPlanPc34Compat stairsPlan;
             if (dm1_v1_process_stair_walk_off_append(
                     dungeon, things, party->mapIndex, party->mapX, party->mapY,
                     &outResult->leaveEffects)) {
                 outResult->stairSourceLeaveProcessed = 1;
             }
-            dm1_v1_apply_stairs_transition_result(party, &stairs, outResult);
+            (void)DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(
+                &stairs, &stairsPlan);
+            dm1_v1_apply_stairs_transition_plan(party, &stairsPlan, outResult);
             outResult->movement.resultCode = MOVE_TURN_ONLY;
             outResult->turnApplied = 1;
             return 1;
@@ -370,12 +402,15 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     if (action == MOVE_BACKWARD) {
         struct StairsTransitionResult_Compat stairs;
         if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, party, &stairs) && stairs.transitioned) {
+            struct Dm1V1MovementStairsApplyPlanPc34Compat stairsPlan;
             if (dm1_v1_process_stair_walk_off_append(
                     dungeon, things, party->mapIndex, party->mapX, party->mapY,
                     &outResult->leaveEffects)) {
                 outResult->stairSourceLeaveProcessed = 1;
             }
-            dm1_v1_apply_stairs_transition_result(party, &stairs, outResult);
+            (void)DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(
+                &stairs, &stairsPlan);
+            dm1_v1_apply_stairs_transition_plan(party, &stairsPlan, outResult);
             return 1;
         }
     }
@@ -402,6 +437,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         targetParty.mapY = outResult->movement.newMapY;
         targetParty.direction = outResult->movement.newDirection;
         if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, &targetParty, &stairs) && stairs.transitioned) {
+            struct Dm1V1MovementStairsApplyPlanPc34Compat stairsPlan;
             if (dm1_v1_process_stair_walk_off_append(
                     dungeon, things, party->mapIndex, party->mapX, party->mapY,
                     &outResult->leaveEffects)) {
@@ -412,7 +448,9 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
                     &outResult->leaveEffects)) {
                 outResult->stairTargetLeaveProcessed = 1;
             }
-            dm1_v1_apply_stairs_transition_result(party, &stairs, outResult);
+            (void)DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(
+                &stairs, &stairsPlan);
+            dm1_v1_apply_stairs_transition_plan(party, &stairsPlan, outResult);
             return 1;
         }
     }
