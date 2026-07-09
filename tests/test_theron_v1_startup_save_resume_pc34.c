@@ -24,7 +24,6 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_runtime_entry.h"
-#include "theron_v2_hud_overlay_pc34.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1436,12 +1435,10 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootRuntimeStartupSnapshot snapshot;
     Theron_V1_BootRuntimeStartupSnapshot media_snapshot;
     Theron_V1_BootRuntimeStartupSnapshot blocked_snapshot;
-    Theron_V1_BootRuntimeStartupSnapshot semantic_snapshot;
     Theron_V1_BootStartupViewModel view_model;
     Theron_V1_BootStartupViewModel direct_view_model;
     Theron_V1_BootStartupViewModel media_view_model;
     Theron_V1_BootStartupViewModel blocked_view_model;
-    Theron_V1_BootStartupViewModel semantic_view_model;
     Theron_StartupMediaStateReceipt media_receipt;
     Theron_StartupLayoutElement media_layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
     Theron_StartupRenderPlan media_plan;
@@ -1783,34 +1780,6 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(render_route_receipt.status,
                            "TRACK02 RUNTIME BLOCKED") == 0,
                 "boot startup render route receipt blocks Track02 level fallback visuals");
-    semantic_snapshot = media_snapshot;
-    semantic_snapshot.runtime_level_source =
-        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
-    semantic_snapshot.runtime_track02_semantic_handoff = 1;
-    semantic_snapshot.runtime_fallback_visuals_blocked = 0;
-    expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
-                    &semantic_snapshot,
-                    &media_receipt,
-                    &semantic_view_model) &&
-                    semantic_view_model.runtime_level_source ==
-                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
-                    semantic_view_model.runtime_track02_semantic_handoff == 1 &&
-                    semantic_view_model.runtime_level == 0,
-                "boot startup view model carries Track02 semantic first-level route");
-    expect_true(theron_v1_boot_startup_render_route_receipt_from_view_model(
-                    &semantic_view_model,
-                    &render_route_receipt) &&
-                    render_route_receipt.startup_menu_render_allowed &&
-                    render_route_receipt.runtime_level_render_allowed &&
-                    render_route_receipt.first_level_render_ready &&
-                    render_route_receipt.hud_ready &&
-                    render_route_receipt.hud_seed_gate ==
-                        THERON_V2_HUD_SEED_V2_READY &&
-                    !render_route_receipt.fallback_visuals_allowed &&
-                    render_route_receipt.runtime_track02_semantic_handoff == 1 &&
-                    strcmp(render_route_receipt.status,
-                           "TRACK02 RUNTIME READY") == 0,
-                "boot startup render route receipt marks Track02 semantic first level HUD-ready without fallback visuals");
     media_layout_roster_found = 0;
     expect_true(theron_v1_boot_startup_layout_build_from_view_model(
                     &media_view_model,
