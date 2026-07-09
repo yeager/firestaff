@@ -2518,6 +2518,78 @@ static void test_boot_forcefield_pointer_snapshot_enters_runtime(void) {
     }
 }
 
+static void test_runtime_entry_structured_track02_routes(void) {
+    static const unsigned char fake_track02[2352] = {0};
+    Theron_V1_World world;
+    Theron_StartupActionPlan plan;
+    Theron_V1StartupRuntimeEntryResult result;
+    Theron_V1StartupRuntimeEntryApplyReceipt apply_receipt;
+    Theron_StartupStateReceipt state_receipt;
+    char receipt[512];
+
+    theron_v1_startup_action_plan_init(&plan);
+    plan.status_scope = "READY";
+    plan.status = "THERON READY";
+
+    theron_v1_world_init(&world);
+    memset(receipt, 0, sizeof(receipt));
+    expect_true(theron_v1_startup_runtime_load_initial_level_with_receipts(
+                    &world,
+                    NULL,
+                    0u,
+                    NULL,
+                    THERON_DUNGEON_1_HALL_OF_RECORDS,
+                    &plan,
+                    &result,
+                    &apply_receipt,
+                    &state_receipt,
+                    receipt,
+                    sizeof(receipt)) &&
+                    result.level_loaded &&
+                    result.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM &&
+                    result.structured_runtime_route &&
+                    !result.runtime_receipt_text_route &&
+                    apply_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM &&
+                    apply_receipt.structured_runtime_route &&
+                    !apply_receipt.runtime_receipt_text_route &&
+                    state_receipt.set_runtime_level_route &&
+                    state_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM,
+                "runtime entry fallback route is structured without receipt text parsing");
+
+    theron_v1_world_init(&world);
+    memset(receipt, 0, sizeof(receipt));
+    expect_true(!theron_v1_startup_runtime_load_initial_level_with_receipts(
+                    &world,
+                    fake_track02,
+                    sizeof(fake_track02),
+                    THERON_TRACK02_MD5_US_BIN,
+                    THERON_DUNGEON_1_HALL_OF_RECORDS,
+                    &plan,
+                    &result,
+                    &apply_receipt,
+                    &state_receipt,
+                    receipt,
+                    sizeof(receipt)) &&
+                    result.result == THERON_STARTUP_ERR_LEVEL_LOAD &&
+                    result.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
+                    result.fallback_visuals_blocked &&
+                    result.structured_runtime_route &&
+                    !result.runtime_receipt_text_route &&
+                    apply_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
+                    apply_receipt.fallback_visuals_blocked &&
+                    apply_receipt.structured_runtime_route &&
+                    !apply_receipt.runtime_receipt_text_route &&
+                    strstr(apply_receipt.inspect_detail,
+                           "structured=1 text_route=0") != NULL &&
+                    world.level_loaded[0][0] == 0,
+                "runtime entry verified Track02 block route is structured without fallback visuals");
+}
+
 static void test_boot_runtime_render_frame_facade(void) {
     Theron_V1_World world;
     Theron_V1_Viewport viewport;
@@ -2615,6 +2687,7 @@ int main(void) {
     test_boot_prepare_startup_profile_missing_track02();
     test_boot_startup_launch_detach_runtime_receipt();
     test_boot_forcefield_pointer_snapshot_enters_runtime();
+    test_runtime_entry_structured_track02_routes();
     test_boot_runtime_render_frame_facade();
     test_boot_runtime_release_facade();
     test_startup_session_facts_wrappers();
