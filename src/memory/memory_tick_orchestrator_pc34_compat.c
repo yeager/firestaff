@@ -4002,29 +4002,45 @@ static int orch_materialize_projectile_associated_thing_compat(
     int associatedThingMovedToGroup)
 {
     int sftIndex;
-    DM1_ProjectileMaterializationPlanPc34 targetPlan;
     DM1_ProjectileMaterializationReceiptPc34 receipt;
     unsigned short chainThings[64];
     unsigned short current;
     int chainCount = 0;
+    int mapIndex;
+    int mapX;
+    int mapY;
 
     if (!world || !projectile || associatedThingMovedToGroup) return 1;
     if (!world->things || !world->dungeon) return 1;
 
-    memset(&targetPlan, 0, sizeof(targetPlan));
-    if (!dm1_v1_projectile_materialization_plan_pc34(
-            projectile, tickResult, associatedThingMovedToGroup,
-            world->things->potionCount, &targetPlan) ||
-        !targetPlan.handled || !targetPlan.shouldMaterialize) {
-        return 1;
-    }
-
+    mapIndex = projectile->mapIndex;
+    mapX = projectile->mapX;
+    mapY = projectile->mapY;
     sftIndex = orch_square_first_thing_list_index_compat(
-        world->dungeon, targetPlan.mapIndex, targetPlan.mapX, targetPlan.mapY);
+        world->dungeon, mapIndex, mapX, mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
         return 1;
     }
 
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_projectile_materialization_receipt_f0215_pc34(
+            projectile, tickResult, associatedThingMovedToGroup,
+            world->things->potionCount,
+            world->things->squareFirstThings[sftIndex],
+            NULL, 0, &receipt) ||
+        !receipt.valid || !receipt.handled || !receipt.shouldMaterialize) {
+        return 1;
+    }
+
+    if (receipt.mapIndex != mapIndex ||
+        receipt.mapX != mapX ||
+        receipt.mapY != mapY) {
+        sftIndex = orch_square_first_thing_list_index_compat(
+            world->dungeon, receipt.mapIndex, receipt.mapX, receipt.mapY);
+        if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
+            return 1;
+        }
+    }
     current = world->things->squareFirstThings[sftIndex];
     while (current != THING_NONE &&
            current != THING_ENDOFLIST &&
@@ -4036,7 +4052,6 @@ static int orch_materialize_projectile_associated_thing_compat(
         chainThings[chainCount++] = current;
     }
 
-    memset(&receipt, 0, sizeof(receipt));
     if (!dm1_v1_projectile_materialization_receipt_f0215_pc34(
             projectile, tickResult, associatedThingMovedToGroup,
             world->things->potionCount,
