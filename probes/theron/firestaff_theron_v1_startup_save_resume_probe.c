@@ -370,6 +370,7 @@ static void probe_continue_apply_mutates_world(void) {
     char tqsv_root[THERON_V1_SRM_PATH_MAX];
     char srm_root[THERON_V1_SRM_PATH_MAX];
     char slot_path[THERON_V1_SRM_PATH_MAX];
+    char external_path[THERON_V1_SRM_PATH_MAX];
     char receipt[192];
     Theron_V1_World world;
     Theron_V1_Party party;
@@ -435,6 +436,16 @@ static void probe_continue_apply_mutates_world(void) {
     check_int("continue apply srm write",
               write_bytes(slot_path, g_valid_gzip_srm, sizeof(g_valid_gzip_srm)),
               1);
+    snprintf(external_path,
+             sizeof(external_path),
+             "%s%cexternal-continue.srm",
+             srm_root,
+             PROBE_PATH_SEP);
+    check_int("continue apply external srm write",
+              write_bytes(external_path,
+                          g_valid_gzip_srm,
+                          sizeof(g_valid_gzip_srm)),
+              1);
     theron_v1_world_init(&world);
     world.object_count = 5;
     world.timer_count = 2;
@@ -456,12 +467,61 @@ static void probe_continue_apply_mutates_world(void) {
     check_int("continue apply srm receipt",
               strstr(receipt, "continued srm slot=0") != NULL,
               1);
+    {
+        Theron_StartupAction action;
+        Theron_StartupActionPlan plan;
+        Theron_V1StartupContinueResult continue_result;
+        Theron_V1StartupContinueApplyReceipt apply_receipt;
+        Theron_StartupStateReceipt state_receipt;
+
+        theron_v1_startup_action_init(&action);
+        action.kind = THERON_STARTUP_ACTION_CONTINUE_SAVE;
+        check_int("continue apply external srm plan",
+                  theron_v1_startup_plan_for_action(&action, &plan),
+                  1);
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        check_int("continue apply external srm receipts rc",
+                  theron_v1_startup_continue_srm_path_apply_with_receipts(
+                      &world,
+                      external_path,
+                      &plan,
+                      NULL,
+                      &continue_result,
+                      &apply_receipt,
+                      &state_receipt,
+                      receipt,
+                      sizeof(receipt)),
+                  1);
+        check_int("continue apply external srm result source",
+                  continue_result.source,
+                  THERON_V1_STARTUP_CONTINUE_SOURCE_SRM);
+        check_int("continue apply external srm result slot",
+                  continue_result.source_slot_index,
+                  -1);
+        check_int("continue apply external srm apply source",
+                  apply_receipt.source,
+                  THERON_V1_STARTUP_CONTINUE_SOURCE_SRM);
+        check_int("continue apply external srm apply slot",
+                  apply_receipt.source_slot_index,
+                  -1);
+        check_int("continue apply external srm apply dungeon",
+                  apply_receipt.srm_current_dungeon,
+                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+        check_int("continue apply external srm state slot",
+                  state_receipt.save_resume_srm_active_slot,
+                  -1);
+        check_int("continue apply external srm state dungeon",
+                  state_receipt.save_resume_srm_current_dungeon,
+                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+    }
 
     for (int i = 0; i < THERON_SAVE_SLOT_COUNT; ++i) {
         char path[THERON_V1_SRM_PATH_MAX];
         theron_v1_save_slot_path(tqsv_root, i, path, sizeof(path));
         probe_unlink(path);
     }
+    probe_unlink(external_path);
     probe_rmdir(tqsv_root);
     cleanup_srm_root(srm_root);
 }

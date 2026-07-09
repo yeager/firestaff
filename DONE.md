@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron external SRM apply/state receipt helper: external `.srm` Continue paths now expose apply and state receipts directly, carrying source SRM, path-only slot `-1`, import status, dungeon, quest, party count, and gold without forcing callers to parse host inspect text. Verification: `test_theron_v1_startup_save_resume_pc34` 171/171, `firestaff_theron_v1_startup_save_resume_probe` 91/91, and `git diff --check` passed.
+
 
 - ✅ 2026-07-09 DM2 active creature render handoff: runtime-spawned/CCM-mutated creature instances now project into the viewport and use the same GDAT creature map-chip path as DB4 records, including frame/direction/health receipts from live AI state. Verification: `test_dm2_v1_runtime_handoff_smoke`, `test_dm2_v1_lighting_falloff_boundary`, `test_dm2_v1_creature_ccm_runtime_pc34_compat`, and `git diff --check` passed.
 - ✅ 2026-07-09 Nexus DGN viewport render plan: DMWeb `LEV*.DGN` levels now retain Structure1B collision refs, build a bounded viewport render plan from real 64x64 DGN cells, and route Nexus viewport drawing through that plan without falling back to synthetic visuals when real-DGN handoff blocks. Verification: `test_nexus_v1_dgn_geometry_readiness`, `test_nexus_v1_boot_file_hash_scan`, Nexus focused CTests, and `git diff --check` passed.
