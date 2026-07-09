@@ -768,6 +768,27 @@ int main(void)
                       boot_real_visual_capture.valid &&
                       boot_real_visual_capture.profile_ready == 1 &&
                       boot_real_visual_capture.graphics_dat_ready == 1 &&
+                      boot_real_visual_capture.packaged_full_start_valid == 1 &&
+                      boot_real_visual_capture.packaged_consumer_valid == 1 &&
+                      boot_real_visual_capture.host_frame_valid == 1 &&
+                      boot_real_visual_capture.render_ownership_valid == 1 &&
+                      boot_real_visual_capture.real_visual_capture_consumes_package == 1 &&
+                      boot_real_visual_capture.real_visual_capture_consumes_host_frame == 1 &&
+                      boot_real_visual_capture.real_visual_status_consumer_ready == 1 &&
+                      boot_real_visual_capture.packaged_status_consumed == 1 &&
+                      boot_real_visual_capture.packaged_startup_phase_consumed == 1 &&
+                      boot_real_visual_capture.packaged_hud_suppression_consumed == 1 &&
+                      boot_real_visual_capture.packaged_full_start_hash != 0u &&
+                      boot_real_visual_capture.packaged_consumer_hash ==
+                          boot_real_visual_capture.packaged_full_start_hash &&
+                      strcmp(boot_real_visual_capture.phase,
+                             "dm2-startup-menu") == 0 &&
+                      strcmp(boot_real_visual_capture.animation,
+                             "dm2-startup-menu") == 0 &&
+                      strcmp(boot_real_visual_capture.status_scope,
+                             "STARTUP") == 0 &&
+                      strcmp(boot_real_visual_capture.status,
+                             "DM2 STARTUP MENU") == 0 &&
                       boot_real_visual_capture.real_gdat_title_asset_required == 1 &&
                       boot_real_visual_capture.real_gdat_title_asset_consumed == 1 &&
                       boot_real_visual_capture.real_gdat_menu_asset_consumed == 1 &&
