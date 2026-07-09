@@ -11357,7 +11357,8 @@ int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state) {
 static int m11_dm1_hoc_full_graphics_probe_receipt(
     const M11_GameViewState* state,
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_apply,
-    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_consumer)
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_consumer,
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* out_ownership)
 {
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 front_wall;
@@ -11428,10 +11429,19 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.observed_c346_mirror_backing_asset =
         backing && backing->loaded && backing->pixels ? 1 : 0;
     facts.observed_host_window_present = host_window_present;
-    return dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
-        &facts,
-        out_apply,
-        out_consumer);
+    if (out_ownership) {
+        memset(out_ownership, 0, sizeof(*out_ownership));
+    }
+    if (!dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
+            &facts, out_apply, out_consumer)) {
+        return 0;
+    }
+    if (out_ownership &&
+        !dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+            &facts, out_ownership)) {
+        return 0;
+    }
+    return 1;
 }
 
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
@@ -11634,10 +11644,13 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 hoc_apply;
         DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
             hoc_consumer;
+        DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34
+            hoc_ownership;
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
         memset(&hoc_apply, 0, sizeof(hoc_apply));
         memset(&hoc_consumer, 0, sizeof(hoc_consumer));
+        memset(&hoc_ownership, 0, sizeof(hoc_ownership));
         facts.source_id = state->sourceId;
         facts.level_loaded = out->levelLoaded;
         facts.intro_bypassed = state->dm1StartupIntroBypassed;
@@ -11681,7 +11694,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         if (m11_dm1_hoc_full_graphics_probe_receipt(
                 state,
                 &hoc_apply,
-                &hoc_consumer)) {
+                &hoc_consumer,
+                &hoc_ownership)) {
             out->dm1HoCFullGraphicsReady = 1;
             out->dm1HoCHostRenderPlanReady =
                 hoc_apply.consumed_capture_artifact &&
@@ -11700,6 +11714,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_consumer.release_app_capture;
             out->dm1HoCHostCaptureRouteMatches =
                 hoc_consumer.host_capture_route_matches;
+            out->dm1HoCReleaseCaptureOwnershipReady =
+                hoc_ownership.ready;
             out->dm1HoCHoCAssetCapture =
                 hoc_consumer.hoc_asset_capture;
             out->dm1HoCHostWindowCapture =

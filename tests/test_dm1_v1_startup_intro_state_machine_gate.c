@@ -725,6 +725,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_host_probe_apply;
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
         hoc_host_probe_consumer;
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34
+        hoc_release_capture_ownership;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirror_front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 mirror_boundary;
@@ -1721,6 +1723,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     memset(&hoc_host_probe_facts, 0, sizeof(hoc_host_probe_facts));
     memset(&hoc_host_probe_apply, 0, sizeof(hoc_host_probe_apply));
     memset(&hoc_host_probe_consumer, 0, sizeof(hoc_host_probe_consumer));
+    memset(&hoc_release_capture_ownership, 0,
+           sizeof(hoc_release_capture_ownership));
     hoc_host_probe_facts.source_id = "dm1";
     hoc_host_probe_facts.dungeon_loaded = 1;
     hoc_host_probe_facts.map_count = 1;
@@ -1747,6 +1751,31 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_host_probe_consumer.hoc_asset_capture &&
                  hoc_host_probe_consumer.host_window_capture &&
                  hoc_host_probe_consumer.host_capture_route_matches,
+             1);
+    expect_i("DM1 HoC release/app capture ownership consumes host probe",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership.consumed_host_probe_facts &&
+                 hoc_release_capture_ownership
+                     .consumed_runtime_apply_receipt &&
+                 hoc_release_capture_ownership
+                     .consumed_production_consumer_receipt &&
+                 hoc_release_capture_ownership.consume_dm1_receipts_only &&
+                 hoc_release_capture_ownership.real_asset_capture &&
+                 hoc_release_capture_ownership.mac_window_capture &&
+                 hoc_release_capture_ownership.release_app_capture &&
+                 hoc_release_capture_ownership.host_capture_route_matches &&
+                 hoc_release_capture_ownership.hoc_asset_capture &&
+                 hoc_release_capture_ownership.draw_opened_entrance_frame &&
+                 hoc_release_capture_ownership.render_hall_mirror_overlay &&
+                 hoc_release_capture_ownership.suppress_host_fallback_visuals &&
+                 hoc_release_capture_ownership
+                     .lower_level_renderer_helper_owned &&
+                 hoc_release_capture_ownership.lower_level_audio_helper_owned &&
+                 hoc_release_capture_ownership.render_command_count == 3,
              1);
     hoc_host_probe_facts.captured_from_real_assets = 0;
     expect_i("DM1 HoC host probe exposes missing real-asset capture route",

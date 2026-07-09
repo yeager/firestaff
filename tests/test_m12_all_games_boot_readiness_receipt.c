@@ -119,8 +119,9 @@ int main(void) {
         if (strcmp(expected[i].gameId, "dm1") == 0) {
             if (!expect(boot.dm1HoCRealAssetCaptureReady == 1 &&
                         boot.dm1HoCReleaseAppCaptureReady == 1 &&
-                        boot.dm1HoCHostCaptureRouteReady == 1,
-                        "DM1 M12 boot readiness should consume HoC release/app capture receipt")) return 1;
+                        boot.dm1HoCHostCaptureRouteReady == 1 &&
+                        boot.dm1HoCReleaseCaptureOwnershipReady == 1,
+                        "DM1 M12 boot readiness should consume HoC release/app capture ownership receipt")) return 1;
         }
         if (!expect(boot.expectedStepMask == fullMask,
                     "boot receipt should expose the full expected startup proof mask")) return 1;
