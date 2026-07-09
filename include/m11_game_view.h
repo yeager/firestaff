@@ -644,6 +644,17 @@ typedef struct {
         int startup_title_timing_frame_max;
         int startup_title_timing_ready;
         int startup_package_capture_consumed;
+        int startup_package_route_matches_capture_route;
+        int startup_host_route_consumes_package_route;
+        int startup_host_route_consumes_capture_matrix;
+        int startup_dgn_route_consumes_startup_package;
+        int startup_dgn_route_saturn_capture_exact;
+        int startup_host_ownership_route_matches_capture_route;
+        int startup_package_route_consumes_host_ownership;
+        int startup_dgn_route_consumes_host_ownership;
+        int startup_route_consumption_complete;
+        int startup_non_title_saturn_capture_route_complete;
+        int startup_dungeon_route_consumption_complete;
         int startup_single_saturn_owner_ready;
         int startup_title_menu_capture_route_joined;
         int startup_runtime_dgn_route_joined;

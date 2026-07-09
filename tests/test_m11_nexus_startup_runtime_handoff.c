@@ -169,6 +169,17 @@ int main(void)
                     view.nexusState.startup_title_timing_frame_max == 102 &&
                     view.nexusState.startup_title_timing_ready == 1 &&
                     view.nexusState.startup_package_capture_consumed == 1 &&
+                    view.nexusState.startup_package_route_matches_capture_route == 1 &&
+                    view.nexusState.startup_host_route_consumes_package_route == 1 &&
+                    view.nexusState.startup_host_route_consumes_capture_matrix == 1 &&
+                    view.nexusState.startup_dgn_route_consumes_startup_package == 1 &&
+                    view.nexusState.startup_dgn_route_saturn_capture_exact == 1 &&
+                    view.nexusState.startup_host_ownership_route_matches_capture_route == 1 &&
+                    view.nexusState.startup_package_route_consumes_host_ownership == 1 &&
+                    view.nexusState.startup_dgn_route_consumes_host_ownership == 1 &&
+                    view.nexusState.startup_route_consumption_complete == 1 &&
+                    view.nexusState.startup_non_title_saturn_capture_route_complete == 1 &&
+                    view.nexusState.startup_dungeon_route_consumption_complete == 1 &&
                     view.nexusState.startup_single_saturn_owner_ready == 1 &&
                     view.nexusState.startup_title_menu_capture_route_joined == 1 &&
                     view.nexusState.startup_runtime_dgn_route_joined == 1 &&
@@ -200,6 +211,17 @@ int main(void)
                     view.nexusState.startup_host_saturn_non_title_capture_count == 1 &&
                     view.nexusState.startup_host_saturn_non_title_capture_mask == 1u &&
                     view.nexusState.startup_host_saturn_expected_capture_mask == 1u &&
+                    view.nexusState.startup_package_route_matches_capture_route == 1 &&
+                    view.nexusState.startup_host_route_consumes_package_route == 1 &&
+                    view.nexusState.startup_host_route_consumes_capture_matrix == 1 &&
+                    view.nexusState.startup_dgn_route_consumes_startup_package == 0 &&
+                    view.nexusState.startup_dgn_route_saturn_capture_exact == 0 &&
+                    view.nexusState.startup_host_ownership_route_matches_capture_route == 1 &&
+                    view.nexusState.startup_package_route_consumes_host_ownership == 1 &&
+                    view.nexusState.startup_dgn_route_consumes_host_ownership == 0 &&
+                    view.nexusState.startup_route_consumption_complete == 1 &&
+                    view.nexusState.startup_non_title_saturn_capture_route_complete == 1 &&
+                    view.nexusState.startup_dungeon_route_consumption_complete == 0 &&
                     view.nexusState.startup_copied_draw_command_count > 0,
                 "M11 Nexus save startup route consumes Saturn save capture receipt");
 

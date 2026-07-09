@@ -10387,6 +10387,28 @@ static void m11_nexus_apply_startup_host_caller_receipt(
         receipt->title_timing_ready ? 1 : 0;
     state->nexusState.startup_package_capture_consumed =
         receipt->package_capture_consumed_by_host ? 1 : 0;
+    state->nexusState.startup_package_route_matches_capture_route =
+        receipt->package_route_matches_capture_route ? 1 : 0;
+    state->nexusState.startup_host_route_consumes_package_route =
+        receipt->host_route_consumes_package_route ? 1 : 0;
+    state->nexusState.startup_host_route_consumes_capture_matrix =
+        receipt->host_route_consumes_capture_matrix ? 1 : 0;
+    state->nexusState.startup_dgn_route_consumes_startup_package =
+        receipt->dgn_route_consumes_startup_package ? 1 : 0;
+    state->nexusState.startup_dgn_route_saturn_capture_exact =
+        receipt->dgn_route_saturn_capture_exact ? 1 : 0;
+    state->nexusState.startup_host_ownership_route_matches_capture_route =
+        receipt->host_ownership_route_matches_capture_route ? 1 : 0;
+    state->nexusState.startup_package_route_consumes_host_ownership =
+        receipt->package_route_consumes_host_ownership ? 1 : 0;
+    state->nexusState.startup_dgn_route_consumes_host_ownership =
+        receipt->dgn_route_consumes_host_ownership ? 1 : 0;
+    state->nexusState.startup_route_consumption_complete =
+        receipt->startup_route_consumption_complete ? 1 : 0;
+    state->nexusState.startup_non_title_saturn_capture_route_complete =
+        receipt->non_title_saturn_capture_route_complete ? 1 : 0;
+    state->nexusState.startup_dungeon_route_consumption_complete =
+        receipt->dungeon_startup_route_consumption_complete ? 1 : 0;
     state->nexusState.startup_single_saturn_owner_ready =
         receipt->single_saturn_startup_owner_ready ? 1 : 0;
     state->nexusState.startup_title_menu_capture_route_joined =
