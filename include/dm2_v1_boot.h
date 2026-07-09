@@ -565,6 +565,7 @@ typedef struct {
     int real_gdat_title_asset_consumed;
     int real_gdat_menu_asset_required;
     int real_gdat_menu_asset_consumed;
+    int raw_gdat_capture_ready;
     int title_capture_ready;
     int menu_gdat_capture_ready;
     int full_title_frame_capture_ready;
@@ -583,11 +584,15 @@ typedef struct {
     int title_gdat_asset_w;
     int title_gdat_asset_h;
     int title_gdat_asset_stride;
+    uint32_t title_raw_byte_hash;
+    uint32_t title_raw_byte_count;
     uint32_t title_pixel_hash;
     uint32_t title_pixel_count;
     int menu_gdat_asset_w;
     int menu_gdat_asset_h;
     int menu_gdat_asset_stride;
+    uint32_t menu_raw_byte_hash;
+    uint32_t menu_raw_byte_count;
     uint32_t menu_pixel_hash;
     uint32_t menu_pixel_count;
     int full_visual_composite_capture_ready;

@@ -3049,6 +3049,47 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
     return out_receipt->real_gdat_capture_breadth_ready;
 }
 
+static int dm2_v1_boot_startup_raw_gdat_hash(
+    DM2_V1_BootProfile *profile,
+    int category,
+    int index,
+    int field,
+    uint32_t seed,
+    uint32_t *out_hash,
+    uint32_t *out_count)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0;
+    size_t i;
+    uint32_t hash = seed;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_count) *out_count = 0u;
+    if (!profile || !profile->graphics_dat || !out_hash || !out_count) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_sized(&gfx->loader,
+                                  category,
+                                  index,
+                                  field,
+                                  &raw_size);
+    if (!raw || raw_size == 0 || raw_size > UINT32_MAX) {
+        return 0;
+    }
+    /* skproject/SKWIN/SkWinCore.cpp SHOW_MENU_SCREEN lines 55187-55196
+     * first queries the raw TITLE GDAT entries, then presents/decodes them.
+     * Hashing the raw GDAT payload alongside decoded pixels proves both
+     * layers came from GRAPHICS.DAT. */
+    for (i = 0; i < raw_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+    *out_hash = hash;
+    *out_count = (uint32_t)raw_size;
+    return 1;
+}
+
 int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     DM2_V1_BootProfile *profile,
     int startup_menu_active,
@@ -3204,6 +3245,27 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         } else if (command->kind == DM2_V1_STARTUP_DRAW_TEXT) {
             ++out_receipt->menu_text_command_count;
         }
+    }
+
+    if (dm2_v1_boot_startup_raw_gdat_hash(profile,
+                                          package.title_gdat_category,
+                                          package.title_gdat_index,
+                                          package.title_gdat_field,
+                                          0x32545257u,
+                                          &out_receipt->title_raw_byte_hash,
+                                          &out_receipt->title_raw_byte_count) &&
+        dm2_v1_boot_startup_raw_gdat_hash(profile,
+                                          out_receipt->menu_gdat_category,
+                                          out_receipt->menu_gdat_index,
+                                          out_receipt->menu_gdat_field,
+                                          0x324d5257u,
+                                          &out_receipt->menu_raw_byte_hash,
+                                          &out_receipt->menu_raw_byte_count)) {
+        out_receipt->raw_gdat_capture_ready =
+            out_receipt->title_raw_byte_hash != 0u &&
+            out_receipt->title_raw_byte_count > 0u &&
+            out_receipt->menu_raw_byte_hash != 0u &&
+            out_receipt->menu_raw_byte_count > 0u;
     }
 
     if (dm2_v1_boot_gdat_image_asset_fetch(profile,
@@ -3368,6 +3430,10 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, ownership.packaged_full_start_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->title_raw_byte_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->menu_raw_byte_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->title_pixel_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->menu_pixel_hash);
@@ -3436,6 +3502,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->real_visual_capture_consumes_host_frame &&
         out_receipt->real_visual_status_consumer_ready &&
         out_receipt->real_gdat_capture_breadth_ready &&
+        out_receipt->raw_gdat_capture_ready &&
         out_receipt->runtime_hud_capture_consumed &&
         out_receipt->runtime_hud_real_gdat_ready &&
         out_receipt->runtime_hud_direction_mask == 0x0f &&
