@@ -283,6 +283,96 @@ int DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
     return 1;
 }
 
+int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
+    const DM1_V1_EntranceCtxPc34 *ctx,
+    DM1_V1_EntranceMenuRouteReceiptPc34 *outReceipt)
+{
+    DM1_V1_EntranceMenuRouteReceiptPc34 receipt;
+    const DM1_V1_MirrorSlotPc34 *slot = 0;
+
+    if (!ctx || !outReceipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.handled = 1;
+    receipt.state = ctx->state;
+    receipt.selectedMirrorIndex = ctx->selectedMirrorIndex;
+    receipt.selectedChampionIndex = -1;
+    receipt.partyChampionCount = ctx->partyChampionCount;
+    receipt.partyFull = ctx->partyChampionCount >= M11_MAX_CHAMPIONS ? 1 : 0;
+    receipt.reason = "entrance-idle";
+
+    if (ctx->selectedMirrorIndex >= 0 &&
+        ctx->selectedMirrorIndex < ctx->mirrorCount) {
+        slot = &ctx->mirrors[ctx->selectedMirrorIndex];
+        if (slot->occupied) {
+            receipt.selectedChampionIndex = slot->championIndex;
+            receipt.selectedMirrorDead = slot->dead ? 1 : 0;
+            receipt.selectedMirrorMapX = slot->mapX;
+            receipt.selectedMirrorMapY = slot->mapY;
+            receipt.selectedMirrorFacing = slot->facing;
+        }
+    }
+
+    switch (ctx->state) {
+        case DM1_ENTRANCE_VIEWING:
+            receipt.route = DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34;
+            receipt.showHall = 1;
+            receipt.canEnterDungeon = ctx->partyChampionCount > 0 ? 1 : 0;
+            receipt.reason = receipt.canEnterDungeon
+                                 ? "hall-enter-ready"
+                                 : "hall-needs-champion";
+            break;
+        case DM1_ENTRANCE_SELECTING:
+            receipt.showChampionPanel = slot ? 1 : 0;
+            receipt.canCancelSelection = slot ? 1 : 0;
+            receipt.canRecruit =
+                (slot && !slot->selected && !slot->dead && !receipt.partyFull)
+                    ? 1
+                    : 0;
+            receipt.route = receipt.partyFull
+                                ? DM1_V1_ENTRANCE_MENU_ROUTE_PARTY_FULL_PC34
+                                : DM1_V1_ENTRANCE_MENU_ROUTE_LIVE_CHAMPION_PC34;
+            receipt.reason = receipt.canRecruit
+                                 ? "live-champion-can-recruit"
+                                 : "live-champion-blocked";
+            break;
+        case DM1_ENTRANCE_RESURRECTING:
+        case DM1_ENTRANCE_REINCARNATING:
+            receipt.route = DM1_V1_ENTRANCE_MENU_ROUTE_DEAD_CHAMPION_PC34;
+            receipt.showChampionPanel = slot ? 1 : 0;
+            receipt.showResurrectReincarnateChoices =
+                (slot && slot->dead) ? 1 : 0;
+            receipt.canResurrect = receipt.showResurrectReincarnateChoices;
+            receipt.canReincarnate = receipt.showResurrectReincarnateChoices;
+            receipt.canCancelSelection = slot ? 1 : 0;
+            receipt.reason = receipt.showResurrectReincarnateChoices
+                                 ? "dead-champion-choices"
+                                 : "dead-champion-blocked";
+            break;
+        case DM1_ENTRANCE_DONE:
+            receipt.route = DM1_V1_ENTRANCE_MENU_ROUTE_ENTER_DUNGEON_PC34;
+            receipt.canEnterDungeon = 1;
+            receipt.reason = "enter-dungeon";
+            break;
+        default:
+            receipt.route = DM1_V1_ENTRANCE_MENU_ROUTE_NONE_PC34;
+            break;
+    }
+
+    receipt.needsRedraw =
+        (receipt.showHall || receipt.showChampionPanel ||
+         receipt.route == DM1_V1_ENTRANCE_MENU_ROUTE_ENTER_DUNGEON_PC34)
+            ? 1
+            : 0;
+
+    /* ReDMCSB ENTRANCE.C F0441:850-883 redraws entrance, discards stale
+     * input, and waits in entrance mode. REVIVE.C F0280:127-130 blocks party
+     * overflow, then F0280:272 publishes the candidate ordinal after a valid
+     * mirror champion joins. This receipt keeps those HoC menu routes DM1-owned
+     * for M11/M12. */
+    *outReceipt = receipt;
+    return 1;
+}
+
 const char *DM1_V1_Entrance_SourceEvidencePc34Compat(void)
 {
     return
