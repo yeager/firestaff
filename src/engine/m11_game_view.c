@@ -20185,37 +20185,57 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
     }
 }
 
+static int m11_build_dm1_front_champion_portrait_receipt(
+    const M11_ViewportCell* cell,
+    DM1_V1_ChampionMirrorRenderReceiptPc34* outReceipt) {
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontReceipt;
+    int portraitIdx;
+    if (!cell || !outReceipt) {
+        return 0;
+    }
+    portraitIdx = cell->championPortraitOrdinal;
+    if (portraitIdx < 0) {
+        return 0;
+    }
+    if (!DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, portraitIdx, 0, 2, 2, &frontReceipt)) {
+        return 0;
+    }
+    return DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+        1, &frontReceipt, outReceipt);
+}
+
 static void m11_draw_dm1_front_champion_portrait(const M11_GameViewState* state,
                                                  const M11_ViewportCell* cell,
                                                  unsigned char* framebuffer,
                                                  int fbW,
                                                  int fbH) {
-    DM1_FrontMirrorRenderPlanPc34 plan;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
     const M11_AssetSlot* portraits;
-    int portraitIdx;
     if (!state || !cell) {
         return;
     }
-    portraitIdx = cell->championPortraitOrdinal;
-    if (!dm1_v1_front_mirror_render_plan_pc34(portraitIdx, &plan)) {
+    if (!m11_build_dm1_front_champion_portrait_receipt(cell, &receipt) ||
+        !receipt.valid ||
+        !receipt.drawChampionPortrait) {
         return;
     }
     portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                     (unsigned int)plan.portraitGraphicIndex);
+                                     (unsigned int)receipt.graphicIndex);
     if (!portraits || !portraits->loaded || !portraits->pixels) {
         return;
     }
     M11_AssetLoader_BlitRegion(portraits,
-                               plan.portraitSrcX,
-                               plan.portraitSrcY,
-                               plan.portraitWidth,
-                               plan.portraitHeight,
+                               receipt.sourceX,
+                               receipt.sourceY,
+                               receipt.width,
+                               receipt.height,
                                framebuffer,
                                fbW,
                                fbH,
-                               M11_VIEWPORT_X + plan.portraitDstX,
-                               M11_VIEWPORT_Y + plan.portraitDstY,
-                               plan.portraitTransparentColor);
+                               M11_VIEWPORT_X + receipt.dstX,
+                               M11_VIEWPORT_Y + receipt.dstY,
+                               receipt.transparentColor);
 }
 
 static void m11_draw_dm1_front_mirror_backing(unsigned char* framebuffer,
@@ -28275,6 +28295,59 @@ int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
     }
     if (outFloorOrnamentOrdinal) {
         *outFloorOrnamentOrdinal = cell.floorOrnamentOrdinal;
+    }
+    return 1;
+}
+
+int M11_GameView_ProbeDm1FrontChampionPortraitReceipt(
+    const M11_GameViewState* state,
+    int* outDrawChampionPortrait,
+    int* outGraphicIndex,
+    int* outSourceX,
+    int* outSourceY,
+    int* outWidth,
+    int* outHeight,
+    int* outDstX,
+    int* outDstY,
+    int* outTransparentColor,
+    int* outConsumedWallSquareReceipt) {
+    M11_ViewportCell cell;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
+    if (!m11_sample_viewport_cell(state, 1, 0, &cell) ||
+        !cell.valid ||
+        !m11_build_dm1_front_champion_portrait_receipt(&cell, &receipt) ||
+        !receipt.valid) {
+        return 0;
+    }
+    if (outDrawChampionPortrait) {
+        *outDrawChampionPortrait = receipt.drawChampionPortrait;
+    }
+    if (outGraphicIndex) {
+        *outGraphicIndex = receipt.graphicIndex;
+    }
+    if (outSourceX) {
+        *outSourceX = receipt.sourceX;
+    }
+    if (outSourceY) {
+        *outSourceY = receipt.sourceY;
+    }
+    if (outWidth) {
+        *outWidth = receipt.width;
+    }
+    if (outHeight) {
+        *outHeight = receipt.height;
+    }
+    if (outDstX) {
+        *outDstX = receipt.dstX;
+    }
+    if (outDstY) {
+        *outDstY = receipt.dstY;
+    }
+    if (outTransparentColor) {
+        *outTransparentColor = receipt.transparentColor;
+    }
+    if (outConsumedWallSquareReceipt) {
+        *outConsumedWallSquareReceipt = receipt.consumedWallSquareReceipt;
     }
     return 1;
 }

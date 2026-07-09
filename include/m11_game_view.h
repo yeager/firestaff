@@ -855,6 +855,18 @@ int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
                                              int* outChampionPortraitOrdinal,
                                              int* outInscriptionTextIndex,
                                              int* outFloorOrnamentOrdinal);
+int M11_GameView_ProbeDm1FrontChampionPortraitReceipt(
+    const M11_GameViewState* state,
+    int* outDrawChampionPortrait,
+    int* outGraphicIndex,
+    int* outSourceX,
+    int* outSourceY,
+    int* outWidth,
+    int* outHeight,
+    int* outDstX,
+    int* outDstY,
+    int* outTransparentColor,
+    int* outConsumedWallSquareReceipt);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,
