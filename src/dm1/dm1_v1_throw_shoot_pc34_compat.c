@@ -380,6 +380,104 @@ int dm1_v1_projectile_attack_type_for_subtype_pc34(int subtype) {
     }
 }
 
+int dm1_v1_spell_projectile_launch_plan_f0327_pc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    const DM1_SpellF0327ProjectileContextPc34* context,
+    DM1_SpellF0327ProjectileLaunchPlanPc34* outPlan) {
+    int subtype;
+    int kineticEnergy;
+    int stepEnergy;
+
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->projectileThing = THING_NONE;
+    outPlan->projectileSubtype = -1;
+    outPlan->projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+    outPlan->attackTypeCode = COMBAT_ATTACK_NORMAL;
+    outPlan->attack = 90;
+    outPlan->launchCell = -1;
+    outPlan->launchDirection = -1;
+
+    if (!receipt || !context) return 0;
+    if (receipt->castResult != DM1_SPELL_CAST_SUCCESS ||
+        !receipt->createsProjectile) {
+        return 1;
+    }
+    if (context->championIndex < 0 ||
+        !dm1_v1_projectile_subtype_from_thing_pc34(
+            receipt->projectileThing, &subtype)) {
+        return 0;
+    }
+
+    kineticEnergy = receipt->projectileKineticEnergy;
+    stepEnergy = receipt->projectileStepEnergy > 0
+                     ? receipt->projectileStepEnergy
+                     : 1;
+    if (kineticEnergy < (stepEnergy << 2)) {
+        kineticEnergy += 3;
+        --stepEnergy;
+    }
+    if (stepEnergy < 1) stepEnergy = 1;
+
+    /* ReDMCSB CHAMPION.C F0327:2091-2102 consumes F0412's projectile thing
+     * and kinetic receipt, subtracts required mana, adjusts weak projectiles
+     * by (+3 kinetic, -1 step), then calls F0326.  F0326:2064-2066 uses the
+     * champion direction/cell to create the F0212 projectile at attack 90. */
+    outPlan->valid = 1;
+    outPlan->shouldCreateProjectile = 1;
+    outPlan->projectileThing = (unsigned short)receipt->projectileThing;
+    outPlan->projectileSubtype = subtype;
+    outPlan->projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+    outPlan->attackTypeCode =
+        dm1_v1_projectile_attack_type_for_subtype_pc34(subtype);
+    outPlan->kineticEnergyBeforeF0327 = receipt->projectileKineticEnergy;
+    outPlan->kineticEnergyAfterF0327 = kineticEnergy;
+    outPlan->stepEnergyBeforeF0327 = receipt->projectileStepEnergy;
+    outPlan->stepEnergyAfterF0327 = stepEnergy;
+    outPlan->launchDirection = receipt->championDirectionAfter & 3;
+    outPlan->launchCell = dm1_v1_projectile_launch_cell_pc34(
+        context->championCell, outPlan->launchDirection);
+    outPlan->movementDisabledTicks = 0;
+    outPlan->lastProjectileDisabledMovementDirection = -1;
+    return 1;
+}
+
+int dm1_v1_build_spell_projectile_create_input_f0327_pc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    const DM1_SpellF0327ProjectileContextPc34* context,
+    struct ProjectileCreateInput_Compat* outInput) {
+    DM1_SpellF0327ProjectileLaunchPlanPc34 plan;
+
+    if (!outInput) return 0;
+    memset(outInput, 0, sizeof(*outInput));
+    if (!dm1_v1_spell_projectile_launch_plan_f0327_pc34(
+            receipt, context, &plan)) {
+        return 0;
+    }
+    if (!plan.valid || !plan.shouldCreateProjectile) {
+        return 1;
+    }
+
+    outInput->category = plan.projectileCategory;
+    outInput->subtype = plan.projectileSubtype;
+    outInput->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    outInput->ownerIndex = context->championIndex;
+    outInput->mapIndex = context->partyMapIndex;
+    outInput->mapX = context->partyMapX;
+    outInput->mapY = context->partyMapY;
+    outInput->cell = plan.launchCell;
+    outInput->direction = plan.launchDirection;
+    outInput->kineticEnergy = plan.kineticEnergyAfterF0327;
+    outInput->attack = plan.attack;
+    outInput->launcherStrength = plan.attack;
+    outInput->stepEnergy = plan.stepEnergyAfterF0327;
+    outInput->currentTick = context->gameTick;
+    outInput->attackTypeCode = plan.attackTypeCode;
+    outInput->associatedThing = THING_NONE;
+    outInput->firstMoveGraceFlag = 1;
+    return 1;
+}
+
 int dm1_v1_build_creature_projectile_create_input_pc34(
     const DM1_CreatureProjectileCreateRequestPc34* req,
     struct ProjectileCreateInput_Compat* outInput) {

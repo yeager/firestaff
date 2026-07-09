@@ -3,6 +3,7 @@
 
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -321,6 +322,33 @@ typedef struct {
     int lastProjectileDisabledMovementDirection;
 } DM1_ThrowF0328ProjectilePlanPc34;
 
+typedef struct {
+    int championIndex;
+    int championCell;
+    int partyMapIndex;
+    int partyMapX;
+    int partyMapY;
+    int gameTick;
+} DM1_SpellF0327ProjectileContextPc34;
+
+typedef struct {
+    int valid;
+    int shouldCreateProjectile;
+    unsigned short projectileThing;
+    int projectileSubtype;
+    int projectileCategory;
+    int attackTypeCode;
+    int attack;
+    int kineticEnergyBeforeF0327;
+    int kineticEnergyAfterF0327;
+    int stepEnergyBeforeF0327;
+    int stepEnergyAfterF0327;
+    int launchCell;
+    int launchDirection;
+    int movementDisabledTicks;
+    int lastProjectileDisabledMovementDirection;
+} DM1_SpellF0327ProjectileLaunchPlanPc34;
+
 int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight);
 int dm1_v1_throw_armour_weight_f0140_pc34(int armourType);
 int dm1_v1_throw_junk_base_weight_f0140_pc34(int junkType);
@@ -355,6 +383,14 @@ int dm1_v1_build_projectile_create_input_pc34(
 int dm1_v1_projectile_subtype_from_thing_pc34(int projectileThing,
                                               int* outSubtype);
 int dm1_v1_projectile_attack_type_for_subtype_pc34(int subtype);
+int dm1_v1_spell_projectile_launch_plan_f0327_pc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    const DM1_SpellF0327ProjectileContextPc34* context,
+    DM1_SpellF0327ProjectileLaunchPlanPc34* outPlan);
+int dm1_v1_build_spell_projectile_create_input_f0327_pc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    const DM1_SpellF0327ProjectileContextPc34* context,
+    struct ProjectileCreateInput_Compat* outInput);
 int dm1_v1_build_creature_projectile_create_input_pc34(
     const DM1_CreatureProjectileCreateRequestPc34* req,
     struct ProjectileCreateInput_Compat* outInput);
