@@ -8,6 +8,9 @@
 =======
 =======
 =======
+=======
+- ✅ 2026-07-09 DM2 startup HUD/menu input-route receipt: host action receipts now carry Firestaff keyboard input or pointer coordinates, translated DM2 startup input, before/after selected row, and resolved action row/slot so M11 can consume DM2-owned menu routing. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus launcher startup route receipts: launcher/runtime-state and snapshot paths now expose save-route and title-route receipts directly for keyboard, pointer, save-slot, pointer-miss, and title-return handoff without M11 rebuilding host facts. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron runtime-state startup view-model handoff: boot now builds the complete title/menu startup view model directly from runtime state, carrying layout rows, render plan, continue/save facts, and runtime level-route fields without requiring callers to assemble a snapshot first. Verification: `test_theron_v1_startup_save_resume_pc34` 175/175 and `git diff --check` passed.
