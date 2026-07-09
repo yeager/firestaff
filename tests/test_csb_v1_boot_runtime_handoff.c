@@ -3560,6 +3560,65 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     snapshot.opening_active = 0;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 0;
+    snapshot.credits_active = 1;
+    snapshot.credits_remaining_ticks =
+        csb_v1_startup_entrance_credits_ticks_pc34();
+    CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+              &snapshot,
+              &route_receipt) == 1 &&
+              route_receipt.valid &&
+              route_receipt.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34 &&
+              route_receipt.draw_surface &&
+              !route_receipt.draw_fallback_text &&
+              !route_receipt.hud_menu_visible,
+          "boot startup route receipt owns credits surface without text fallback");
+    CHECK(csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+              &snapshot,
+              &capture_receipt) == 1 &&
+              capture_receipt.valid &&
+              capture_receipt.render_view_valid &&
+              capture_receipt.render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34 &&
+              capture_receipt.host_hud_blocked,
+          "boot startup capture receipt packages credits surface gate");
+    CHECK(csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
+              &capture_receipt,
+              &host_view_receipt) == 1 &&
+              host_view_receipt.valid &&
+              host_view_receipt.render_plan_valid &&
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
+              host_view_receipt.render_plan.render_command_count == 2 &&
+              host_view_receipt.render_plan.render_commands[1].kind ==
+                  CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34 &&
+              host_view_receipt.capture_proof.credits_route &&
+              !host_view_receipt.capture_proof.draw_fallback_text,
+          "boot startup host-view receipt packages credits as real surface");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    capture_render_probe.draw_full_surface_result = 0;
+    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+              &host_view_receipt,
+              &capture_render_executor) == 1 &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_fallback_text_count == 0,
+          "boot startup credits capture plan refuses text fallback when surface assets fail");
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+              &capture_receipt,
+              &packaged_proof) == 1 &&
+              packaged_proof.valid &&
+              packaged_proof.render_plan_available &&
+              packaged_proof.credits_route &&
+              !packaged_proof.draw_fallback_text &&
+              packaged_proof.packaged_capture_hash != 0u,
+          "boot startup packaged capture proof binds credits surface route");
+    snapshot.credits_active = 0;
+    snapshot.credits_remaining_ticks = 0;
+    snapshot.opening_active = 0;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 0;
     CHECK(csb_v1_boot_startup_presentation_state_receipt_from_runtime_state_pc34(
               &presentation_receipt,
               snapshot.title_active,
