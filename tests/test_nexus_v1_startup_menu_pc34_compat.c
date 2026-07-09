@@ -102,6 +102,7 @@ int main(void)
     Nexus_V1_StartupHostActionReceipt host_action_receipt;
     Nexus_V1_StartupIdleReceipt idle_receipt;
     Nexus_V1_StartupSaveRouteReceipt save_route_receipt;
+    Nexus_V1_StartupTitleRouteReceipt title_route_receipt;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupSaveRenderRow save_rows[4];
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
@@ -1114,6 +1115,80 @@ int main(void)
                    &title_execution,
                    &title_action_receipt),
                "startup title keyboard wrapper rejects inactive host facts");
+
+        title_facts.title_active = 1;
+        title_facts.title_frame = nexus_v1_boot_start_ready_frames();
+        expect(nexus_v1_startup_title_route_receipt_from_host_facts_input(
+                   &title_facts,
+                   9,
+                   &title_route_receipt) &&
+                   title_route_receipt.route ==
+                       NEXUS_V1_STARTUP_TITLE_ROUTE_SAVE_SELECT &&
+                   strcmp(nexus_v1_startup_title_route_name(
+                              title_route_receipt.route),
+                          "save-select") == 0 &&
+                   title_route_receipt.handled &&
+                   title_route_receipt.draw_command_count > 0 &&
+                   title_route_receipt.host_input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   title_route_receipt.set_save_select_active &&
+                   title_route_receipt.save_select_active == 1 &&
+                   title_route_receipt.set_save_selected_row &&
+                   title_route_receipt.save_selected_row == 0 &&
+                   strcmp(title_route_receipt.status, "NEXUS LOAD GAME") == 0,
+               "startup title route receipt hands ready Accept to save select");
+
+        title_facts.title_frame = 30;
+        expect(nexus_v1_startup_title_route_receipt_from_host_facts_pointer(
+                   &title_facts,
+                   &title_route_receipt) &&
+                   title_route_receipt.route ==
+                       NEXUS_V1_STARTUP_TITLE_ROUTE_HOLD &&
+                   title_route_receipt.handled &&
+                   title_route_receipt.draw_command_count > 0 &&
+                   title_route_receipt.host_input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                   !title_route_receipt.set_save_select_active &&
+                   strcmp(title_route_receipt.status, "NEXUS TITLE") == 0,
+               "startup title route receipt preserves pointer hold gate");
+
+        title_facts.title_frame = nexus_v1_boot_start_ready_frames();
+        title_facts.slot_mask = 0u;
+        expect(nexus_v1_startup_title_route_receipt_from_host_facts_input(
+                   &title_facts,
+                   11,
+                   &title_route_receipt) &&
+                   title_route_receipt.route ==
+                       NEXUS_V1_STARTUP_TITLE_ROUTE_CHAMPION_SELECT &&
+                   title_route_receipt.set_champion_select_active &&
+                   title_route_receipt.champion_select_active == 1 &&
+                   title_route_receipt.set_champion_cursor &&
+                   title_route_receipt.champion_cursor == 0 &&
+                   strcmp(title_route_receipt.status, "NEXUS CHAMPIONS") == 0,
+               "startup title route receipt hands no-save Action to champions");
+
+        title_facts.slot_mask = menu.slot_mask;
+        expect(nexus_v1_startup_title_route_receipt_from_host_facts_input(
+                   &title_facts,
+                   10,
+                   &title_route_receipt) &&
+                   title_route_receipt.route ==
+                       NEXUS_V1_STARTUP_TITLE_ROUTE_RETURN_TO_LAUNCHER &&
+                   title_route_receipt.host_input_result ==
+                       NEXUS_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER &&
+                   strcmp(title_route_receipt.status_scope, "RETURN") == 0 &&
+                   strcmp(title_route_receipt.status, "BACK TO LAUNCHER") == 0,
+               "startup title route receipt exposes launcher return");
+
+        title_facts.title_active = 0;
+        expect(!nexus_v1_startup_title_route_receipt_from_host_facts_input(
+                   &title_facts,
+                   9,
+                   &title_route_receipt) &&
+                   title_route_receipt.route ==
+                       NEXUS_V1_STARTUP_TITLE_ROUTE_INVALID &&
+                   !title_route_receipt.handled,
+               "startup title route receipt rejects inactive host facts");
     }
     expect(nexus_v1_startup_title_handle_hit(
                54,
