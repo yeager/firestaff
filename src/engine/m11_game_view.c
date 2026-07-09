@@ -81,6 +81,7 @@
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
+#include "dm1_v1_dialog_layout_pc34_compat.h"
 #include "dm1_v1_endgame_layout_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
@@ -4042,50 +4043,12 @@ static int m11_return_confirm_dialog_max_text_pixel_width(
     return max * M11_FONT_CHAR_CELL_WIDTH * scale;
 }
 
-static int m11_dialog_source_c469_text_y_for_lines(int lineCount) {
-    enum {
-        SOURCE_TEXT_HEIGHT = 6,
-        SOURCE_TEXT_PAD = 1,
-        SOURCE_TEXT_BASELINE = 6,
-        SOURCE_LINE_STEP = 8
-    };
-    int zoneX, zoneY, zoneW, zoneH;
-    int count = lineCount < 1 ? 1 : lineCount;
-    int block = count * (SOURCE_TEXT_HEIGHT + (SOURCE_TEXT_PAD * 2) - 1 + 1);
-    int relativeY;
-    (void)M11_GameView_GetV1DialogMessageZone(1, &zoneX, &zoneY, &zoneW, &zoneH);
-    (void)zoneX;
-    (void)zoneW;
-    relativeY = zoneY + ((zoneH - (block - (SOURCE_TEXT_PAD * 2))) / 2) +
-                    SOURCE_TEXT_BASELINE - 1;
-    (void)SOURCE_LINE_STEP;
-    return M11_VIEWPORT_Y + relativeY;
-}
-
-static int m11_dialog_source_c471_text_y_for_lines(int lineCount) {
-    enum {
-        SOURCE_TEXT_HEIGHT = 6,
-        SOURCE_TEXT_PAD = 1,
-        SOURCE_TEXT_BASELINE = 6
-    };
-    int zoneX, zoneY, zoneW, zoneH;
-    int count = lineCount < 1 ? 1 : lineCount;
-    int block = count * (SOURCE_TEXT_HEIGHT + (SOURCE_TEXT_PAD * 2) - 1 + 1);
-    int relativeY;
-    (void)M11_GameView_GetV1DialogMessageZone(2, &zoneX, &zoneY, &zoneW, &zoneH);
-    (void)zoneX;
-    (void)zoneW;
-    relativeY = zoneY + ((zoneH - (block - (SOURCE_TEXT_PAD * 2))) / 2) +
-                    SOURCE_TEXT_BASELINE - 1;
-    return M11_VIEWPORT_Y + relativeY;
-}
-
 int M11_GameView_GetV1DialogSingleChoiceMessageTextY(int lineCount) {
-    return m11_dialog_source_c469_text_y_for_lines(lineCount);
+    return dm1_v1_dialog_single_choice_message_text_y_pc34(lineCount);
 }
 
 int M11_GameView_GetV1DialogMultiChoiceMessageTextY(int lineCount) {
-    return m11_dialog_source_c471_text_y_for_lines(lineCount);
+    return dm1_v1_dialog_multi_choice_message_text_y_pc34(lineCount);
 }
 
 int M11_GameView_GetV1DialogMessageZone(int choiceCount,
@@ -4093,50 +4056,22 @@ int M11_GameView_GetV1DialogMessageZone(int choiceCount,
                                          int* outY,
                                          int* outW,
                                          int* outH) {
-    int x, y, w, h;
-    if (choiceCount > 1) {
-        /* C471_ZONE_DIALOG: parent C470 bottom/right (188,36), child top/left (112,32). */
-        x = 112; y = 32; w = 77; h = 5;
-    } else {
-        /* C469_ZONE_DIALOG: parent C468 bottom/right (188,73), child top/left (112,49). */
-        x = 112; y = 49; w = 77; h = 25;
-    }
-    if (outX) *outX = x;
-    if (outY) *outY = y;
-    if (outW) *outW = w;
-    if (outH) *outH = h;
+    DM1_V1_DialogRectPc34 r;
+    if (!dm1_v1_dialog_message_rect_pc34(choiceCount, &r)) return 0;
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
     return 1;
 }
 
 int M11_GameView_GetV1DialogMessageWidth(int choiceCount) {
-    int w = 0;
-    (void)M11_GameView_GetV1DialogMessageZone(choiceCount, NULL, NULL, &w, NULL);
-    return w;
+    return dm1_v1_dialog_message_width_pc34(choiceCount);
 }
 
 int M11_GameView_GetV1DialogChoiceTextZoneId(int choiceCount,
                                               int choiceIndex) {
-    if (choiceIndex < 0) return 0;
-    switch (choiceCount) {
-        case 1:
-            return choiceIndex == 0 ? 462 : 0;
-        case 2:
-            if (choiceIndex == 0) return 463;
-            if (choiceIndex == 1) return 462;
-            return 0;
-        case 3:
-            if (choiceIndex == 0) return 463;
-            if (choiceIndex == 1) return 466;
-            if (choiceIndex == 2) return 467;
-            return 0;
-        default:
-            if (choiceCount < 4) return 0;
-            if (choiceIndex == 0) return 464;
-            if (choiceIndex == 1) return 465;
-            if (choiceIndex == 2) return 466;
-            if (choiceIndex == 3) return 467;
-            return 0;
-    }
+    return dm1_v1_dialog_choice_text_zone_id_pc34(choiceCount, choiceIndex);
 }
 
 int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
@@ -4145,60 +4080,20 @@ int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
                                             int* outY,
                                             int* outW,
                                             int* outH) {
-    int zoneId = M11_GameView_GetV1DialogChoiceTextZoneId(choiceCount, choiceIndex);
-    int x = 0, y = 0, w = 0;
-    switch (zoneId) {
-        case 462:
-            x = 16; y = 110; w = 192;
-            break;
-        case 463:
-            x = 16; y = 73; w = 192;
-            break;
-        case 464:
-            x = 16; y = 73; w = 86;
-            break;
-        case 465:
-            x = 123; y = 73; w = 86;
-            break;
-        case 466:
-            x = 16; y = 110; w = 86;
-            break;
-        case 467:
-            x = 123; y = 110; w = 86;
-            break;
-        default:
-            return 0;
+    DM1_V1_DialogRectPc34 r;
+    if (!dm1_v1_dialog_choice_text_rect_pc34(choiceCount, choiceIndex, &r)) {
+        return 0;
     }
-    if (outX) *outX = x;
-    if (outY) *outY = y;
-    if (outW) *outW = w;
-    if (outH) *outH = 7;
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
     return 1;
 }
 
 int M11_GameView_GetV1DialogChoiceButtonZoneId(int choiceCount,
                                                 int choiceIndex) {
-    if (choiceIndex < 0) return 0;
-    switch (choiceCount) {
-        case 1:
-            return choiceIndex == 0 ? 456 : 0;
-        case 2:
-            if (choiceIndex == 0) return 457;
-            if (choiceIndex == 1) return 456;
-            return 0;
-        case 3:
-            if (choiceIndex == 0) return 457;
-            if (choiceIndex == 1) return 460;
-            if (choiceIndex == 2) return 461;
-            return 0;
-        default:
-            if (choiceCount < 4) return 0;
-            if (choiceIndex == 0) return 458;
-            if (choiceIndex == 1) return 459;
-            if (choiceIndex == 2) return 460;
-            if (choiceIndex == 3) return 461;
-            return 0;
-    }
+    return dm1_v1_dialog_choice_button_zone_id_pc34(choiceCount, choiceIndex);
 }
 
 int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
@@ -4207,34 +4102,14 @@ int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
                                            int* outY,
                                            int* outW,
                                            int* outH) {
-    int zoneId = M11_GameView_GetV1DialogChoiceButtonZoneId(choiceCount, choiceIndex);
-    int x = 0, y = 0, w = 0;
-    switch (zoneId) {
-        case 456:
-            x = 16; y = 104; w = 192;
-            break;
-        case 457:
-            x = 16; y = 67; w = 192;
-            break;
-        case 458:
-            x = 16; y = 67; w = 86;
-            break;
-        case 459:
-            x = 123; y = 67; w = 86;
-            break;
-        case 460:
-            x = 16; y = 104; w = 86;
-            break;
-        case 461:
-            x = 123; y = 104; w = 86;
-            break;
-        default:
-            return 0;
+    DM1_V1_DialogRectPc34 r;
+    if (!dm1_v1_dialog_choice_hit_rect_pc34(choiceCount, choiceIndex, &r)) {
+        return 0;
     }
-    if (outX) *outX = x;
-    if (outY) *outY = y;
-    if (outW) *outW = w;
-    if (outH) *outH = 17;
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
     return 1;
 }
 
@@ -32235,9 +32110,7 @@ int M11_GameView_GetV1DialogBackdropGraphicId(void) {
 }
 
 int M11_GameView_GetV1DialogVersionTextOrigin(int* outX, int* outY) {
-    if (outX) *outX = M11_VIEWPORT_X + 192;
-    if (outY) *outY = M11_VIEWPORT_Y + 7;
-    return 1;
+    return dm1_v1_dialog_version_text_origin_pc34(outX, outY);
 }
 
 int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
@@ -32247,24 +32120,14 @@ int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
                                              int* outH,
                                              int* outDstX,
                                              int* outDstY) {
-    int sx, sy, w, h, dx, dy;
-    if (choiceCount == 3) return 0;
-    if (choiceCount <= 1) {
-        /* M621_NEGGRAPHIC_DIALOG_PATCH_1_CHOICE -> C451. */
-        sx = 0; sy = 14; w = 224; h = 75; dx = 0; dy = 51;
-    } else if (choiceCount == 2) {
-        /* M622_NEGGRAPHIC_DIALOG_PATCH_2_CHOICES -> C452. */
-        sx = 102; sy = 52; w = 21; h = 37; dx = 102; dy = 89;
-    } else {
-        /* M623_NEGGRAPHIC_DIALOG_PATCH_4_CHOICES -> C453. */
-        sx = 102; sy = 99; w = 21; h = 36; dx = 102; dy = 62;
-    }
-    if (outSrcX) *outSrcX = sx;
-    if (outSrcY) *outSrcY = sy;
-    if (outW) *outW = w;
-    if (outH) *outH = h;
-    if (outDstX) *outDstX = dx;
-    if (outDstY) *outDstY = dy;
+    DM1_V1_DialogPatchPc34 p;
+    if (!dm1_v1_dialog_choice_patch_pc34(choiceCount, &p)) return 0;
+    if (outSrcX) *outSrcX = p.srcX;
+    if (outSrcY) *outSrcY = p.srcY;
+    if (outW) *outW = p.w;
+    if (outH) *outH = p.h;
+    if (outDstX) *outDstX = p.dstX;
+    if (outDstY) *outDstY = p.dstY;
     return 1;
 }
 
