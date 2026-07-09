@@ -2740,6 +2740,129 @@ int theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receip
         out_receipt);
 }
 
+void theron_v1_boot_startup_full_start_receipt_init(
+    Theron_V1_BootStartupFullStartReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->status_scope = "STARTUP";
+    receipt->status = "NO FULL START";
+}
+
+int theron_v1_boot_startup_full_start_receipt_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupFullStartReceipt *out_receipt)
+{
+    if (out_receipt) {
+        theron_v1_boot_startup_full_start_receipt_init(out_receipt);
+    }
+    if (!view_model || !out_receipt) {
+        return 0;
+    }
+
+    out_receipt->host_consumes_view_model = 1;
+    out_receipt->view_model_valid = 1;
+    out_receipt->view_model = *view_model;
+    out_receipt->stage_menu_ready =
+        view_model->startup_phase != THERON_STARTUP_PHASE_TITLE ? 1 : 0;
+    out_receipt->soul_room_menu_ready =
+        view_model->startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
+                view_model->startup_phase == THERON_STARTUP_PHASE_READY
+            ? 1
+            : 0;
+    out_receipt->forcefield_menu_ready =
+        view_model->startup_phase == THERON_STARTUP_PHASE_READY ? 1 : 0;
+
+    if (theron_v1_boot_startup_host_view_receipt_from_view_model(
+            view_model,
+            &out_receipt->host_view)) {
+        out_receipt->host_view_valid = 1;
+        out_receipt->title_menu_ready =
+            out_receipt->host_view.render_route.track02_title_menu_ready;
+        out_receipt->save_resume_start_ready =
+            out_receipt->host_view.render_route.save_resume_start_ready;
+        out_receipt->save_resume_runtime_handoff_ready =
+            out_receipt->host_view.save_resume_runtime_handoff_ready;
+        out_receipt->no_fallback_visuals_enforced =
+            out_receipt->host_view.no_fallback_visuals_enforced;
+        out_receipt->fallback_visuals_allowed =
+            out_receipt->host_view.fallback_visuals_allowed;
+        out_receipt->runtime_graphics_handoff =
+            out_receipt->host_view.runtime_graphics_handoff;
+        out_receipt->track02_runtime_graphics_handoff =
+            out_receipt->host_view.track02_runtime_graphics_handoff;
+        out_receipt->save_resume_runtime_graphics_handoff =
+            out_receipt->host_view.save_resume_runtime_graphics_handoff;
+        out_receipt->raw_prompt_roster_required =
+            out_receipt->host_view.raw_prompt_roster_required;
+        out_receipt->raw_session_rebuild_required =
+            out_receipt->host_view.raw_session_rebuild_required;
+        out_receipt->forcefield_runtime_handoff_ready =
+            out_receipt->forcefield_menu_ready &&
+            out_receipt->host_view.runtime_readiness_ready ? 1 : 0;
+        out_receipt->status_scope = out_receipt->host_view.status_scope;
+        out_receipt->status = out_receipt->host_view.status;
+    }
+    if (executor &&
+        theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+            view_model,
+            executor,
+            &out_receipt->graphics_route)) {
+        out_receipt->graphics_route_valid = 1;
+    } else if (executor &&
+               out_receipt->graphics_route.render_route_valid) {
+        out_receipt->graphics_route_valid = 1;
+    }
+    if (out_receipt->graphics_route_valid) {
+        out_receipt->full_start_graphics_executed =
+            out_receipt->graphics_route.graphics_executed;
+        out_receipt->full_start_graphics_blocked =
+            out_receipt->graphics_route.graphics_blocked;
+    }
+    out_receipt->full_start_graphics_ready =
+        out_receipt->full_start_graphics_executed ||
+        out_receipt->runtime_graphics_handoff ||
+        out_receipt->forcefield_runtime_handoff_ready ? 1 : 0;
+    if (out_receipt->forcefield_runtime_handoff_ready &&
+        out_receipt->runtime_graphics_handoff) {
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "FORCEFIELD RUNTIME HANDOFF";
+    } else if (out_receipt->full_start_graphics_ready) {
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "FULL START GRAPHICS READY";
+    } else if (out_receipt->host_view_valid) {
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "FULL START MENU READY";
+    }
+    return out_receipt->host_view_valid || out_receipt->graphics_route_valid;
+}
+
+int theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupFullStartReceipt *out_receipt)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (out_receipt) {
+        theron_v1_boot_startup_full_start_receipt_init(out_receipt);
+    }
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        return 0;
+    }
+    return theron_v1_boot_startup_full_start_receipt_from_view_model(
+        &view_model,
+        executor,
+        out_receipt);
+}
+
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,

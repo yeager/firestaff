@@ -1463,6 +1463,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootStartupRenderRouteReceipt render_route_receipt;
     Theron_V1_BootStartupHostViewReceipt host_view_receipt;
     Theron_V1_BootStartupGraphicsRouteReceipt graphics_route_receipt;
+    Theron_V1_BootStartupFullStartReceipt full_start_receipt;
     Theron_StartupAction media_pointer_action;
     Theron_StartupInputReceipt media_pointer_receipt;
     Theron_StartupAction media_input_action;
@@ -2194,6 +2195,33 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(graphics_route_receipt.status,
                            "TRACK02 RUNTIME GRAPHICS HANDOFF") == 0,
                 "boot snapshot graphics route hands semantic Track02 route to runtime");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+                    &semantic_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &full_start_receipt) &&
+                    full_start_receipt.host_view_valid &&
+                    full_start_receipt.graphics_route_valid &&
+                    full_start_receipt.title_menu_ready &&
+                    full_start_receipt.stage_menu_ready &&
+                    full_start_receipt.soul_room_menu_ready &&
+                    full_start_receipt.forcefield_menu_ready &&
+                    full_start_receipt.forcefield_runtime_handoff_ready &&
+                    full_start_receipt.full_start_graphics_ready &&
+                    !full_start_receipt.full_start_graphics_executed &&
+                    full_start_receipt.full_start_graphics_blocked &&
+                    full_start_receipt.no_fallback_visuals_enforced &&
+                    !full_start_receipt.fallback_visuals_allowed &&
+                    full_start_receipt.runtime_graphics_handoff &&
+                    full_start_receipt.track02_runtime_graphics_handoff &&
+                    !full_start_receipt.save_resume_runtime_graphics_handoff &&
+                    !full_start_receipt.raw_prompt_roster_required &&
+                    !full_start_receipt.raw_session_rebuild_required &&
+                    media_graphics_counters.fill_count == 0 &&
+                    strcmp(full_start_receipt.status,
+                           "FORCEFIELD RUNTIME HANDOFF") == 0,
+                "boot full-start receipt hands Track02 forcefield route to runtime without fallback graphics");
     save_resume_snapshot = media_snapshot;
     save_resume_snapshot.runtime_level_source =
         THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME;
@@ -2412,6 +2440,33 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.startup_menu_render_allowed &&
                     media_graphics_counters.fill_count > 0,
                 "boot snapshot graphics route consumes Track02 media receipt without raw UI adapter");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &full_start_receipt) &&
+                    full_start_receipt.host_consumes_view_model &&
+                    full_start_receipt.view_model_valid &&
+                    full_start_receipt.host_view_valid &&
+                    full_start_receipt.graphics_route_valid &&
+                    full_start_receipt.title_menu_ready &&
+                    full_start_receipt.stage_menu_ready &&
+                    full_start_receipt.soul_room_menu_ready &&
+                    full_start_receipt.forcefield_menu_ready &&
+                    full_start_receipt.save_resume_start_ready &&
+                    full_start_receipt.save_resume_runtime_handoff_ready &&
+                    full_start_receipt.forcefield_runtime_handoff_ready &&
+                    full_start_receipt.full_start_graphics_ready &&
+                    full_start_receipt.full_start_graphics_executed &&
+                    !full_start_receipt.full_start_graphics_blocked &&
+                    full_start_receipt.fallback_visuals_allowed &&
+                    !full_start_receipt.raw_prompt_roster_required &&
+                    !full_start_receipt.raw_session_rebuild_required &&
+                    media_graphics_counters.fill_count > 0 &&
+                    strcmp(full_start_receipt.status,
+                           "FULL START GRAPHICS READY") == 0,
+                "boot full-start receipt owns title stage soul-room save-resume graphics readiness");
     expect_true(theron_v1_boot_startup_render_rows_from_snapshot_with_media_receipt(
                     &media_snapshot,
                     &media_receipt,

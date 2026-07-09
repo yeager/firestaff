@@ -6,6 +6,8 @@
 
 - ✅ 2026-07-09 DM1 D3L2/D3R2 HoC thing-layer runtime receipt: D3 side lanes now expose a DM1-owned runtime receipt for item/projectile draw vs suppress, depth-3 front-cell clipping, C2500|MASK0x8000/C2900 zones, and projectile-as-object routing so stale mirror/static payloads cannot leak into side-lane rendering. Verification: `test_dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat` 379/379, target rebuild, CMake configure, and `git diff --check` passed.
 
+- ✅ 2026-07-09 Theron full-start startup/menu receipt: boot now exposes one full-start receipt joining title, stage, Soul Room, save/resume, startup graphics, and forcefield runtime handoff readiness, including no-fallback Track02 semantic handoff proof. Verification: `test_theron_v1_startup_save_resume_pc34` 231/231 and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron runtime graphics handoff receipts: host-view and graphics-route receipts now expose explicit runtime-graphics handoff flags for Track02 semantic and save/resume routes, so UI/host code does not need status-string parsing before blocking fallback startup visuals. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron save-resume graphics handoff: boot render-route and graphics-route receipts now treat SAVE_RESUME as a runtime-owned route, enforce no fallback startup visuals, and return a dedicated runtime graphics handoff status. Verification: `test_theron_v1_startup_save_resume_pc34` 228/228 and `git diff --check` passed.
