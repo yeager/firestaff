@@ -1983,6 +1983,111 @@ static void test_startup_session_facts_wrappers(void) {
                     view_model_host_receipt.host_receipt.input_result ==
                         THERON_STARTUP_INPUT_RESULT_REDRAW,
                 "boot runtime-state pointer wrapper consumes Track02 media receipt without raw layout rebuild");
+    memset(media_layout, 0, sizeof(media_layout));
+    expect_true(theron_v1_boot_startup_layout_build_from_runtime_state_with_media_receipt(
+                    media_layout,
+                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP,
+                    &media_receipt,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS) ==
+                    full_start_receipt.view_model.layout_count &&
+                    strcmp(media_layout[2].label, "HAKAR-MEDIA") == 0,
+                "boot runtime-state layout wrapper consumes full-start media receipt");
+    memset(media_rows, 0, sizeof(media_rows));
+    media_prompt_row_found = 0;
+    expect_true(theron_v1_boot_startup_render_rows_from_runtime_state_with_media_receipt(
+                    media_rows,
+                    THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP,
+                    &media_receipt,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS) ==
+                    full_start_receipt.view_model.row_count,
+                "boot runtime-state row wrapper consumes full-start media receipt");
+    for (i = 0; i < full_start_receipt.view_model.row_count; ++i) {
+        if (strstr(media_rows[i], "RESURRECT THERON") != NULL) {
+            media_prompt_row_found = 1;
+        }
+    }
+    expect_true(media_prompt_row_found,
+                "boot runtime-state row wrapper preserves Track02 prompt");
+    memset(&media_plan, 0, sizeof(media_plan));
+    expect_true(theron_v1_boot_startup_render_plan_from_runtime_state_with_media_receipt(
+                    &media_plan,
+                    &media_receipt,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS) &&
+                    media_plan.text_count ==
+                        full_start_receipt.view_model.render_plan.text_count &&
+                    media_plan.graphic_count ==
+                        full_start_receipt.view_model.render_plan.graphic_count,
+                "boot runtime-state render-plan wrapper consumes full-start media receipt");
+    theron_v1_boot_startup_host_view_receipt_init(&host_view_receipt);
+    expect_true(theron_v1_boot_startup_host_view_from_runtime_state_with_media_receipt(
+                    &host_view_receipt,
+                    &media_receipt,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS) &&
+                    host_view_receipt.host_consumes_view_model &&
+                    host_view_receipt.track02_media_consumed &&
+                    !host_view_receipt.raw_prompt_roster_required &&
+                    !host_view_receipt.raw_session_rebuild_required,
+                "boot runtime-state host-view wrapper consumes full-start media receipt without raw rebuild");
     expect_true(theron_v1_boot_startup_host_view_receipt_from_snapshot_with_media_receipt(
                     &media_snapshot,
                     &media_receipt,
