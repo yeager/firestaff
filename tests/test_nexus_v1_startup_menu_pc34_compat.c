@@ -118,6 +118,7 @@ int main(void)
     Nexus_V1_StartupMenuPresentationReceipt presentation_receipt;
     Nexus_V1_StartupTitleHandoffReceipt title_handoff_receipt;
     Nexus_V1_StartupRuntimeHandoffReceipt runtime_handoff_receipt;
+    Nexus_V1_StartupRuntimeRouteReceipt runtime_route_receipt;
     Nexus_V1_StartupRouteProofReceipt route_proof_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
@@ -915,6 +916,25 @@ int main(void)
                runtime_handoff_receipt.command_count > 0 &&
                dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
            "Nexus startup Action input routes menu directly to first DGN render state");
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
+               &runtime_state,
+               11,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &runtime_route_receipt) &&
+               runtime_route_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
+               runtime_route_receipt.host_action_valid == 1 &&
+               runtime_route_receipt.consumed_by_nexus == 1 &&
+               runtime_route_receipt.runtime_route_ready == 1 &&
+               runtime_route_receipt.runtime_route_blocked == 0 &&
+               runtime_route_receipt.fallback_visuals_permitted == 0 &&
+               runtime_route_receipt.runtime_handoff.asset_handoff
+                       .real_asset_route_ready == 1 &&
+               runtime_route_receipt.runtime_handoff.command_count > 0 &&
+               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+           "Nexus runtime route receipt consumes host action and DGN route");
     expect(nexus_v1_startup_champion_footer_rect(&footer_rect),
            "Nexus champion footer rect builds for pointer route");
     runtime_snapshot.runtime = runtime_state;
@@ -982,6 +1002,28 @@ int main(void)
                strcmp(runtime_handoff_receipt.status,
                       "blocked-menu-bpk-prs3") == 0,
            "Nexus startup handoff blocks DGN route when Saturn menu assets are blocked");
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
+               &runtime_state,
+               11,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &runtime_route_receipt) &&
+               runtime_route_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED &&
+               runtime_route_receipt.host_action_valid == 1 &&
+               runtime_route_receipt.consumed_by_nexus == 1 &&
+               runtime_route_receipt.runtime_route_ready == 0 &&
+               runtime_route_receipt.runtime_route_blocked == 1 &&
+               runtime_route_receipt.fallback_visuals_permitted == 0 &&
+               runtime_route_receipt.runtime_handoff.asset_handoff
+                       .menu_bpk_prs3_blocks_real_menu_route == 1 &&
+               runtime_route_receipt.runtime_handoff.asset_handoff
+                       .menu_bpk_renderer_handoff.status ==
+                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
+               strcmp(runtime_route_receipt.status,
+                      "blocked-menu-bpk-prs3") == 0,
+           "Nexus runtime route receipt blocks PRS3 without fallback");
     expect(nexus_v1_launcher_startup_route_proof_from_runtime_state(
                &synthetic_runtime_receipt,
                &runtime_state,
