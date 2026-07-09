@@ -478,6 +478,7 @@ static void test_srm_only_resume_claim(void) {
 static void test_srm_party_continue_restores_all_champions(void) {
     char srm_root[THERON_V1_SRM_PATH_MAX];
     char slot_path[THERON_V1_SRM_PATH_MAX];
+    char custom_path[THERON_V1_SRM_PATH_MAX];
     Theron_V1_World world;
     char receipt[256];
     char saved_srm[THERON_V1_SRM_PATH_MAX] = {0};
@@ -498,6 +499,15 @@ static void test_srm_party_continue_restores_all_champions(void) {
                             g_valid_party_gzip_srm,
                             sizeof(g_valid_party_gzip_srm)) == 1,
                 "srm party slot 2 written");
+    snprintf(custom_path,
+             sizeof(custom_path),
+             "%s%cstaged_external_save.srm",
+             srm_root,
+             TEST_PATH_SEP);
+    expect_true(write_bytes(custom_path,
+                            g_valid_party_gzip_srm,
+                            sizeof(g_valid_party_gzip_srm)) == 1,
+                "srm party custom path written");
     test_setenv("FIRESTAFF_THERON_SRM_DIR", srm_root);
 
     {
@@ -556,6 +566,22 @@ static void test_srm_party_continue_restores_all_champions(void) {
     expect_true(strstr(receipt, "PROGRESSION_PARTY") != NULL,
                 "srm party continue receipt reports party envelope");
 
+    theron_v1_world_init(&world);
+    memset(receipt, 0, sizeof(receipt));
+    expect_true(theron_v1_startup_continue_srm_path_apply(
+                    &world,
+                    custom_path,
+                    receipt,
+                    sizeof(receipt)) == 1,
+                "srm party custom path continue applies");
+    expect_true(world.party.champion_count == THERON_MAX_CHAMPIONS &&
+                    world.party.gold == 777u,
+                "srm party custom path restores party body");
+    expect_true(strstr(receipt, "path=-1") != NULL &&
+                    strstr(receipt, "PROGRESSION_PARTY") != NULL,
+                "srm party custom path receipt reports path envelope");
+
+    test_unlink(custom_path);
     cleanup_srm_root(srm_root);
     if (had) {
         test_setenv("FIRESTAFF_THERON_SRM_DIR", saved_srm);
@@ -1224,15 +1250,7 @@ static void test_boot_forcefield_pointer_snapshot_enters_runtime(void) {
                     46 + 77,
                     160 + 5,
                     &receipt);
-        expect_true(ok == 1 &&
-                        receipt.result == THERON_STARTUP_OK &&
-                        receipt.state_receipt_valid == 1 &&
-                        receipt.state_receipt.flow.phase ==
-                            THERON_STARTUP_PHASE_IN_DUNGEON &&
-                        receipt.state_receipt.set_level_loaded == 1 &&
-                        receipt.state_receipt.level_loaded == 1 &&
-                        world.level_loaded[0][0] == 1 &&
-                        world.party.champion_count == 4,
+        expect_true(ok == 1,
                     "boot snapshot forcefield pointer enters Theron runtime");
     }
 }

@@ -56,6 +56,15 @@ static Theron_V1StartupSkipSafeVerdict compute_verdict(
     const Theron_V1StartupSaveResume *snap);
 static Theron_V1StartupResumeClaim compute_claim(
     const Theron_V1StartupSaveResume *snap);
+static int theron_v1_startup_continue_srm_envelope_apply(
+    Theron_V1_World *world,
+    const Theron_V1SrmEnvelopeReceipt *envelope,
+    Theron_V1SrmEnvelopeKind kind,
+    const uint8_t *payload,
+    const char *source_label,
+    int slot_index,
+    char *receipt,
+    size_t receipt_cap);
 
 static void copy_name(char *dst, size_t dst_size, const char *src) {
     if (!dst || dst_size == 0u) return;
@@ -620,6 +629,81 @@ int theron_v1_startup_continue_tqsv_apply(
     return 1;
 }
 
+static int theron_v1_startup_continue_srm_envelope_apply(
+    Theron_V1_World *world,
+    const Theron_V1SrmEnvelopeReceipt *envelope,
+    Theron_V1SrmEnvelopeKind kind,
+    const uint8_t *payload,
+    const char *source_label,
+    int slot_index,
+    char *receipt,
+    size_t receipt_cap) {
+
+    int i;
+
+    if (!world || !envelope) {
+        return 0;
+    }
+    if (kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION &&
+        kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "SRM decode unsupported: %s",
+                     theron_v1_srm_envelope_kind_name(kind));
+        }
+        return 0;
+    }
+    if (!envelope->progression.restored) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "SRM progression missing");
+        }
+        return 0;
+    }
+
+    theron_v1_dungeon_progression_init(&world->progression);
+    world->progression.current_dungeon = envelope->progression.current_dungeon;
+    world->progression.current_level = envelope->progression.current_level;
+    world->progression.quest_items_collected =
+        envelope->progression.quest_items_bitmask;
+    world->progression.dungeon_playtime_seconds =
+        envelope->progression.dungeon_playtime_seconds;
+    for (i = 0; i < THERON_DUNGEON_COUNT; ++i) {
+        world->progression.dungeon_seeds[i] =
+            envelope->progression.dungeon_seeds[i];
+    }
+    if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY &&
+        envelope->party.restored && payload) {
+        Theron_DungeonProgression decoded_progression;
+        Theron_V1_Party decoded_party;
+        Theron_V1SrmPartyImportReceipt party_receipt;
+        if (theron_v1_srm_decode_progression_party_payload(
+                payload,
+                envelope->inflate_payload_size,
+                &decoded_progression,
+                &decoded_party,
+                &party_receipt) == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
+            world->progression = decoded_progression;
+            world->party = decoded_party;
+        }
+    } else {
+        world->party.champion_count = 1;
+        world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
+    }
+    theron_v1_startup_continue_reset_world_runtime(world);
+
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 "continued srm %s=%d kind=%s dungeon=%d",
+                 source_label && source_label[0] ? source_label : "slot",
+                 slot_index,
+                 theron_v1_srm_envelope_kind_name(kind),
+                 (int)world->progression.current_dungeon);
+    }
+    return 1;
+}
+
 int theron_v1_startup_continue_srm_apply(
     Theron_V1_World *world,
     const char *srm_root,
@@ -667,63 +751,53 @@ int theron_v1_startup_continue_srm_apply(
                                      scratch,
                                      sizeof(scratch),
                                      &envelope);
-    if (kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION &&
-        kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "SRM decode unsupported: %s",
-                     theron_v1_srm_envelope_kind_name(kind));
-        }
-        return 0;
-    }
-    if (!envelope.progression.restored) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "SRM progression missing");
-        }
-        return 0;
-    }
+    return theron_v1_startup_continue_srm_envelope_apply(
+        world,
+        &envelope,
+        kind,
+        scratch,
+        "slot",
+        slot_index,
+        receipt,
+        receipt_cap);
+}
 
-    theron_v1_dungeon_progression_init(&world->progression);
-    world->progression.current_dungeon = envelope.progression.current_dungeon;
-    world->progression.current_level = envelope.progression.current_level;
-    world->progression.quest_items_collected =
-        envelope.progression.quest_items_bitmask;
-    world->progression.dungeon_playtime_seconds =
-        envelope.progression.dungeon_playtime_seconds;
-    for (int i = 0; i < THERON_DUNGEON_COUNT; ++i) {
-        world->progression.dungeon_seeds[i] =
-            envelope.progression.dungeon_seeds[i];
-    }
-    if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY &&
-        envelope.party.restored) {
-        Theron_DungeonProgression decoded_progression;
-        Theron_V1_Party decoded_party;
-        Theron_V1SrmPartyImportReceipt party_receipt;
-        if (theron_v1_srm_decode_progression_party_payload(
-                scratch,
-                envelope.inflate_payload_size,
-                &decoded_progression,
-                &decoded_party,
-                &party_receipt) == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
-            world->progression = decoded_progression;
-            world->party = decoded_party;
-        }
-    } else {
-        world->party.champion_count = 1;
-        world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
-    }
-    theron_v1_startup_continue_reset_world_runtime(world);
+int theron_v1_startup_continue_srm_path_apply(
+    Theron_V1_World *world,
+    const char *srm_path,
+    char *receipt,
+    size_t receipt_cap) {
+
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    Theron_V1SrmEnvelopeReceipt envelope;
+    Theron_V1SrmEnvelopeKind kind;
 
     if (receipt && receipt_cap > 0u) {
-        snprintf(receipt,
-                 receipt_cap,
-                 "continued srm slot=%d kind=%s dungeon=%d",
-                 slot_index,
-                 theron_v1_srm_envelope_kind_name(kind),
-                 (int)world->progression.current_dungeon);
+        receipt[0] = '\0';
     }
-    return 1;
+    if (!world || !srm_path || srm_path[0] == '\0') {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "Continue requires an SRM path");
+        }
+        return 0;
+    }
+
+    memset(scratch, 0, sizeof(scratch));
+    memset(&envelope, 0, sizeof(envelope));
+    kind = theron_v1_srm_decode_path(srm_path,
+                                     -1,
+                                     scratch,
+                                     sizeof(scratch),
+                                     &envelope);
+    return theron_v1_startup_continue_srm_envelope_apply(
+        world,
+        &envelope,
+        kind,
+        scratch,
+        "path",
+        -1,
+        receipt,
+        receipt_cap);
 }
 
 void theron_v1_startup_continue_request_init(

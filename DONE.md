@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron SRM path interop and startup fallback block: Theron Continue can now import a decoded `.srm` from an arbitrary staged file path, while the direct runtime loader blocks synthetic fallback visuals when a verified Track 02 profile is present but no semantic handoff can be proven. Verification: `test_theron_v1_startup_save_resume_pc34` and `firestaff_theron_v1_startup_flow_probe` passed.
+
 - ✅ 2026-07-09 Theron Track 02 startup runtime receipt: semantic Track 02 startup handoff now emits a compact runtime receipt with raw/user-data offsets, header fields, progression seed evidence, and an explicit no-fallback-visuals flag when real startup data is ready. Verification: `firestaff_theron_v1_track02_level_handoff_probe` build and direct probe run passed.
 
 - ✅ 2026-07-09 pass811 DM1 F0231 side-effect ownership now carries XP map/tick/last-attack context in the DM1 plan, so M10 no longer reconstructs those facts at the XP award call site. The focused F0407/F0231 test pins the receipt fields.
