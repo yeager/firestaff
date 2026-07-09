@@ -661,6 +661,74 @@ int dm1_v1_projectile_square_attach_plan_f0215_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_square_attach_receipt_f0215_pc34(
+    unsigned short droppedThing,
+    unsigned short squareFirstThing,
+    const unsigned short* chainThings,
+    int chainCount,
+    DM1_ProjectileSquareAttachReceiptPc34* outReceipt) {
+    DM1_ProjectileSquareAttachPlanPc34 plan;
+    unsigned short tailThing = THING_NONE;
+    int i;
+
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->droppedThing = droppedThing;
+    outReceipt->baseThing = (unsigned short)(droppedThing & 0x3FFFu);
+    outReceipt->squareFirstThing = squareFirstThing;
+    outReceipt->tailThing = THING_NONE;
+
+    if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
+            droppedThing, squareFirstThing, THING_NONE, &plan) ||
+        !plan.valid ||
+        !plan.shouldSetDroppedNextEnd) {
+        return 0;
+    }
+
+    outReceipt->valid = 1;
+    outReceipt->shouldSetDroppedNextEnd = 1;
+    if (plan.shouldSetSquareFirstThing) {
+        outReceipt->shouldSetSquareFirstThing = 1;
+        return 1;
+    }
+
+    if (!chainThings || chainCount <= 0) {
+        return 1;
+    }
+    for (i = 0; i < chainCount; ++i) {
+        unsigned short thing = chainThings[i];
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+            break;
+        }
+        tailThing = thing;
+    }
+    if (i >= chainCount) {
+        outReceipt->chainOverflow = 1;
+        return 1;
+    }
+    if (tailThing == THING_NONE || tailThing == THING_ENDOFLIST) {
+        return 1;
+    }
+
+    memset(&plan, 0, sizeof(plan));
+    if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
+            droppedThing, squareFirstThing, tailThing, &plan) ||
+        !plan.valid ||
+        !plan.shouldAppendAfterTail ||
+        !plan.shouldSetDroppedNextEnd) {
+        return 1;
+    }
+    outReceipt->foundTail = 1;
+    outReceipt->shouldAppendAfterTail = 1;
+    outReceipt->tailThing = tailThing;
+
+    /* ReDMCSB: DUNGEON.C F0163 lines 1798-1837 walks the existing list
+     * until C0xFFFE_THING_ENDOFLIST, clears Next for the inserted thing,
+     * and then links it after the tail.  M10 supplies the observed chain;
+     * this DM1 receipt owns the empty-vs-append decision. */
+    return 1;
+}
+
 int dm1_v1_projectile_associated_thing_disposition_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,
