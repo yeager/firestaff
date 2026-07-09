@@ -352,6 +352,32 @@ typedef struct Theron_V1_BootStartupRenderRouteReceipt {
     const char *status;
 } Theron_V1_BootStartupRenderRouteReceipt;
 
+typedef struct Theron_V1_BootStartupHostViewReceipt {
+    int host_consumes_view_model;
+    int view_model_valid;
+    Theron_V1_BootStartupViewModel view_model;
+    int layout_count;
+    int row_count;
+    int render_plan_valid;
+    int presentation_ready;
+    char phase[THERON_V1_BOOT_STARTUP_VIEW_MODEL_TEXT_CAP];
+    int startup_active;
+    char animation[THERON_V1_BOOT_STARTUP_VIEW_MODEL_ANIMATION_CAP];
+    int animation_active;
+    int title_frame;
+    int title_frame_max;
+    int title_ready;
+    int render_route_valid;
+    Theron_V1_BootStartupRenderRouteReceipt render_route;
+    int state_receipt_valid;
+    Theron_StartupStateReceipt state_receipt;
+    int track02_media_consumed;
+    int raw_prompt_roster_required;
+    int raw_session_rebuild_required;
+    const char *status_scope;
+    const char *status;
+} Theron_V1_BootStartupHostViewReceipt;
+
 int theron_v1_boot_prepare_startup_profile(
     Theron_V1_BootProfile *profile,
     const char *data_dir,
@@ -636,6 +662,15 @@ int theron_v1_boot_startup_render_route_receipt_from_snapshot_with_media_receipt
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     const Theron_StartupMediaStateReceipt *startup_media_receipt,
     Theron_V1_BootStartupRenderRouteReceipt *out_receipt);
+void theron_v1_boot_startup_host_view_receipt_init(
+    Theron_V1_BootStartupHostViewReceipt *receipt);
+int theron_v1_boot_startup_host_view_receipt_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_V1_BootStartupHostViewReceipt *out_receipt);
+int theron_v1_boot_startup_host_view_receipt_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_V1_BootStartupHostViewReceipt *out_receipt);
 int theron_v1_boot_startup_state_receipt_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_StartupStateReceipt *out_receipt);

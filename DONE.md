@@ -70,6 +70,8 @@
 
 - ✅ 2026-07-09 Theron startup view-model host consumption: legacy runtime-state and snapshot wrappers for layout, render rows, render plans, keyboard host input, and pointer host input now build a Theron-owned startup view model first and consume the same view-model routes as Track 02 media callers. Verification: `test_theron_v1_startup_save_resume_pc34` 213/213 and `git diff --check` passed.
 
+- ✅ 2026-07-09 Theron startup host-view receipt: boot now exposes a combined host-view receipt carrying the Track 02 startup view model, layout/rows/render plan, presentation facts, render route, state receipt, and explicit no-raw-prompt/roster/session-rebuild flags for UI/M11 startup consumers. Verification: `test_theron_v1_startup_save_resume_pc34` 215/215 and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup title render route receipt: CSB render-view receipts now expose post-FTL title render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus startup asset gate receipt: launcher startup assets now separate title readiness from real save/champion menu surface readiness, blocking menu routes on MENU.BPK PRS3/truncated/no-surface states while keeping fallback visuals disallowed. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
