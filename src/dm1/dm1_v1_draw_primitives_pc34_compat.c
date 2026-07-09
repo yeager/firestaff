@@ -15,7 +15,7 @@
  * All operations clip to bitmap bounds. No out-of-bounds writes.
  */
 
-void m11_draw_init_bitmap(M11_Bitmap *bmp, uint8_t *pixels,
+void DM1_V1_Draw_InitBitmapPc34Compat(DM1_V1_BitmapPc34 *bmp, uint8_t *pixels,
                           int w, int h, int stride)
 {
     bmp->pixels = pixels;
@@ -24,7 +24,7 @@ void m11_draw_init_bitmap(M11_Bitmap *bmp, uint8_t *pixels,
     bmp->stride = (stride > 0) ? stride : w;
 }
 
-void m11_draw_clear(M11_Bitmap *bmp, uint8_t color)
+void DM1_V1_Draw_ClearPc34Compat(DM1_V1_BitmapPc34 *bmp, uint8_t color)
 {
     if (!bmp->pixels) return;
     for (int y = 0; y < bmp->height; y++) {
@@ -32,21 +32,21 @@ void m11_draw_clear(M11_Bitmap *bmp, uint8_t color)
     }
 }
 
-void m11_draw_pixel(M11_Bitmap *bmp, int x, int y, uint8_t color)
+void DM1_V1_Draw_PixelPc34Compat(DM1_V1_BitmapPc34 *bmp, int x, int y, uint8_t color)
 {
     if (!bmp->pixels) return;
     if (x < 0 || x >= bmp->width || y < 0 || y >= bmp->height) return;
     bmp->pixels[y * bmp->stride + x] = color;
 }
 
-uint8_t m11_draw_get_pixel(const M11_Bitmap *bmp, int x, int y)
+uint8_t DM1_V1_Draw_GetPixelPc34Compat(const DM1_V1_BitmapPc34 *bmp, int x, int y)
 {
     if (!bmp->pixels) return 0;
     if (x < 0 || x >= bmp->width || y < 0 || y >= bmp->height) return 0;
     return bmp->pixels[y * bmp->stride + x];
 }
 
-void m11_draw_hline(M11_Bitmap *bmp, int x, int y, int w, uint8_t color)
+void DM1_V1_Draw_HLinePc34Compat(DM1_V1_BitmapPc34 *bmp, int x, int y, int w, uint8_t color)
 {
     if (!bmp->pixels) return;
     if (y < 0 || y >= bmp->height) return;
@@ -56,7 +56,7 @@ void m11_draw_hline(M11_Bitmap *bmp, int x, int y, int w, uint8_t color)
     memset(bmp->pixels + y * bmp->stride + x, color, (size_t)w);
 }
 
-void m11_draw_vline(M11_Bitmap *bmp, int x, int y, int h, uint8_t color)
+void DM1_V1_Draw_VLinePc34Compat(DM1_V1_BitmapPc34 *bmp, int x, int y, int h, uint8_t color)
 {
     if (!bmp->pixels) return;
     if (x < 0 || x >= bmp->width) return;
@@ -68,16 +68,16 @@ void m11_draw_vline(M11_Bitmap *bmp, int x, int y, int h, uint8_t color)
     }
 }
 
-void m11_draw_rect(M11_Bitmap *bmp, const M11_Rect *r, uint8_t color)
+void DM1_V1_Draw_RectPc34Compat(DM1_V1_BitmapPc34 *bmp, const DM1_V1_RectPc34 *r, uint8_t color)
 {
     if (!r || r->w <= 0 || r->h <= 0) return;
-    m11_draw_hline(bmp, r->x, r->y, r->w, color);
-    m11_draw_hline(bmp, r->x, r->y + r->h - 1, r->w, color);
-    m11_draw_vline(bmp, r->x, r->y, r->h, color);
-    m11_draw_vline(bmp, r->x + r->w - 1, r->y, r->h, color);
+    DM1_V1_Draw_HLinePc34Compat(bmp, r->x, r->y, r->w, color);
+    DM1_V1_Draw_HLinePc34Compat(bmp, r->x, r->y + r->h - 1, r->w, color);
+    DM1_V1_Draw_VLinePc34Compat(bmp, r->x, r->y, r->h, color);
+    DM1_V1_Draw_VLinePc34Compat(bmp, r->x + r->w - 1, r->y, r->h, color);
 }
 
-void m11_draw_fill_rect(M11_Bitmap *bmp, const M11_Rect *r, uint8_t color)
+void DM1_V1_Draw_FillRectPc34Compat(DM1_V1_BitmapPc34 *bmp, const DM1_V1_RectPc34 *r, uint8_t color)
 {
     if (!bmp->pixels || !r) return;
     int x0 = r->x, y0 = r->y, x1 = r->x + r->w, y1 = r->y + r->h;
@@ -92,8 +92,8 @@ void m11_draw_fill_rect(M11_Bitmap *bmp, const M11_Rect *r, uint8_t color)
     }
 }
 
-void m11_draw_blit(M11_Bitmap *dst, int dx, int dy,
-                   const M11_Bitmap *src, const M11_Rect *srcRect)
+void DM1_V1_Draw_BlitPc34Compat(DM1_V1_BitmapPc34 *dst, int dx, int dy,
+                   const DM1_V1_BitmapPc34 *src, const DM1_V1_RectPc34 *srcRect)
 {
     if (!dst->pixels || !src->pixels) return;
 
@@ -123,9 +123,9 @@ void m11_draw_blit(M11_Bitmap *dst, int dx, int dy,
     }
 }
 
-void m11_draw_blit_transparent(M11_Bitmap *dst, int dx, int dy,
-                               const M11_Bitmap *src,
-                               const M11_Rect *srcRect,
+void DM1_V1_Draw_BlitTransparentPc34Compat(DM1_V1_BitmapPc34 *dst, int dx, int dy,
+                               const DM1_V1_BitmapPc34 *src,
+                               const DM1_V1_RectPc34 *srcRect,
                                uint8_t transpColor)
 {
     if (!dst->pixels || !src->pixels) return;
@@ -157,8 +157,8 @@ void m11_draw_blit_transparent(M11_Bitmap *dst, int dx, int dy,
     }
 }
 
-void m11_draw_blit_scaled(M11_Bitmap *dst, const M11_Rect *dstRect,
-                          const M11_Bitmap *src, const M11_Rect *srcRect)
+void DM1_V1_Draw_BlitScaledPc34Compat(DM1_V1_BitmapPc34 *dst, const DM1_V1_RectPc34 *dstRect,
+                          const DM1_V1_BitmapPc34 *src, const DM1_V1_RectPc34 *srcRect)
 {
     if (!dst->pixels || !src->pixels || !dstRect || !srcRect) return;
     if (dstRect->w <= 0 || dstRect->h <= 0) return;
@@ -182,7 +182,7 @@ void m11_draw_blit_scaled(M11_Bitmap *dst, const M11_Rect *dstRect,
     }
 }
 
-void m11_draw_flip_h(M11_Bitmap *bmp, const M11_Rect *r)
+void DM1_V1_Draw_FlipHPc34Compat(DM1_V1_BitmapPc34 *bmp, const DM1_V1_RectPc34 *r)
 {
     if (!bmp->pixels || !r) return;
     int x0 = r->x, y0 = r->y, x1 = r->x + r->w - 1, y1 = r->y + r->h - 1;
@@ -204,7 +204,7 @@ void m11_draw_flip_h(M11_Bitmap *bmp, const M11_Rect *r)
     }
 }
 
-void m11_draw_flip_v(M11_Bitmap *bmp, const M11_Rect *r)
+void DM1_V1_Draw_FlipVPc34Compat(DM1_V1_BitmapPc34 *bmp, const DM1_V1_RectPc34 *r)
 {
     if (!bmp->pixels || !r) return;
     int x0 = r->x, y0 = r->y, x1 = r->x + r->w, y1 = r->y + r->h - 1;
@@ -229,7 +229,7 @@ void m11_draw_flip_v(M11_Bitmap *bmp, const M11_Rect *r)
     }
 }
 
-uint8_t m11_draw_darken_color(uint8_t color, int depthLevel)
+uint8_t DM1_V1_Draw_DarkenColorPc34Compat(uint8_t color, int depthLevel)
 {
     /*
      * F0095 DARKCOLR: the original uses a lookup table to darken
@@ -251,7 +251,7 @@ uint8_t m11_draw_darken_color(uint8_t color, int depthLevel)
     return (uint8_t)(group * 4 + shade);
 }
 
-const char *m11_draw_primitives_source_evidence(void)
+const char *DM1_V1_Draw_PrimitivesSourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206\n"
