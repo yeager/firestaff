@@ -283,6 +283,70 @@ int DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
     return 1;
 }
 
+static void DM1_V1_Entrance_AppendOverlayCommandPc34(
+    DM1_V1_EntranceMenuRouteReceiptPc34 *receipt,
+    DM1_V1_EntranceOverlayKindPc34 kind,
+    const DM1_V1_MirrorSlotPc34 *slot,
+    const char *reason)
+{
+    DM1_V1_EntranceRenderOverlayCommandPc34 *command;
+    int portraitIndex;
+
+    if (!receipt ||
+        receipt->renderOverlayCommandCount >=
+            DM1_V1_ENTRANCE_OVERLAY_COMMAND_MAX_PC34) {
+        return;
+    }
+
+    command = &receipt->renderOverlayCommands[receipt->renderOverlayCommandCount++];
+    memset(command, 0, sizeof(*command));
+    command->valid = 1;
+    command->kind = kind;
+    command->mirrorIndex = receipt->selectedMirrorIndex;
+    command->championIndex = receipt->selectedChampionIndex;
+    command->mirrorMapX = receipt->selectedMirrorMapX;
+    command->mirrorMapY = receipt->selectedMirrorMapY;
+    command->mirrorFacing = receipt->selectedMirrorFacing;
+    command->reason = reason;
+
+    if (kind == DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34) {
+        command->clearStalePanelFirst =
+            receipt->clearStaleChampionMirrorOverlay ? 1 : 0;
+        command->suppressThingPayloads = 1;
+        command->blockEnterUntilChampionSelected =
+            receipt->blockEnterUntilChampionSelected ? 1 : 0;
+        return;
+    }
+
+    if (kind == DM1_V1_ENTRANCE_OVERLAY_CHAMPION_PORTRAIT_PC34 && slot) {
+        portraitIndex = slot->championIndex;
+        if (portraitIndex < 0) portraitIndex = 0;
+        command->graphicIndex =
+            DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_GRAPHIC_PC34;
+        command->sourceX =
+            (portraitIndex %
+             DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_ATLAS_COLS_PC34) *
+            DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_W_PC34;
+        command->sourceY =
+            (portraitIndex /
+             DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_ATLAS_COLS_PC34) *
+            DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_H_PC34;
+        command->width = DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_W_PC34;
+        command->height = DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_H_PC34;
+        command->viewportX = DM1_V1_ENTRANCE_WALL_PORTRAIT_X_PC34;
+        command->viewportY = DM1_V1_ENTRANCE_WALL_PORTRAIT_Y_PC34;
+        command->suppressThingPayloads = 1;
+        return;
+    }
+
+    if (kind == DM1_V1_ENTRANCE_OVERLAY_RESURRECT_REINCARNATE_PC34) {
+        command->graphicIndex =
+            DM1_V1_ENTRANCE_RESURRECT_PANEL_GRAPHIC_PC34;
+        command->suppressThingPayloads = 1;
+        return;
+    }
+}
+
 int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
     const DM1_V1_EntranceCtxPc34 *ctx,
     DM1_V1_EntranceMenuRouteReceiptPc34 *outReceipt)
@@ -321,6 +385,11 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
             receipt.canEnterDungeon = ctx->partyChampionCount > 0 ? 1 : 0;
             receipt.blockEnterUntilChampionSelected =
                 receipt.canEnterDungeon ? 0 : 1;
+            DM1_V1_Entrance_AppendOverlayCommandPc34(
+                &receipt,
+                DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34,
+                0,
+                "hall-mirror-wall-overlay");
             receipt.reason = receipt.canEnterDungeon
                                  ? "hall-enter-ready"
                                  : "hall-needs-champion";
@@ -339,6 +408,13 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
             receipt.reason = receipt.canRecruit
                                  ? "live-champion-can-recruit"
                                  : "live-champion-blocked";
+            if (receipt.renderChampionMirrorOverlay) {
+                DM1_V1_Entrance_AppendOverlayCommandPc34(
+                    &receipt,
+                    DM1_V1_ENTRANCE_OVERLAY_CHAMPION_PORTRAIT_PC34,
+                    slot,
+                    "live-champion-portrait-overlay");
+            }
             break;
         case DM1_ENTRANCE_RESURRECTING:
         case DM1_ENTRANCE_REINCARNATING:
@@ -355,11 +431,30 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
             receipt.reason = receipt.showResurrectReincarnateChoices
                                  ? "dead-champion-choices"
                                  : "dead-champion-blocked";
+            if (receipt.renderChampionMirrorOverlay) {
+                DM1_V1_Entrance_AppendOverlayCommandPc34(
+                    &receipt,
+                    DM1_V1_ENTRANCE_OVERLAY_CHAMPION_PORTRAIT_PC34,
+                    slot,
+                    "dead-champion-portrait-overlay");
+            }
+            if (receipt.renderResurrectReincarnateOverlay) {
+                DM1_V1_Entrance_AppendOverlayCommandPc34(
+                    &receipt,
+                    DM1_V1_ENTRANCE_OVERLAY_RESURRECT_REINCARNATE_PC34,
+                    slot,
+                    "dead-champion-resurrect-overlay");
+            }
             break;
         case DM1_ENTRANCE_DONE:
             receipt.route = DM1_V1_ENTRANCE_MENU_ROUTE_ENTER_DUNGEON_PC34;
             receipt.canEnterDungeon = 1;
             receipt.renderEnterDungeonOverlay = 1;
+            DM1_V1_Entrance_AppendOverlayCommandPc34(
+                &receipt,
+                DM1_V1_ENTRANCE_OVERLAY_ENTER_DUNGEON_PC34,
+                0,
+                "enter-dungeon-overlay");
             receipt.reason = "enter-dungeon";
             break;
         default:
@@ -378,10 +473,11 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
     /* ReDMCSB ENTRANCE.C F0441:850-883 redraws entrance, discards stale
      * input, and waits in entrance mode. REVIVE.C F0280:127-130 blocks party
      * overflow, then F0280:272 publishes the candidate ordinal after a valid
-     * mirror champion joins. PANEL.C/F0282 later owns the C040 candidate panel.
-     * Keep Hall, champion-panel, resurrect/reincarnate, enter-dungeon, and
-     * stale-panel-clear overlay choices on this DM1 receipt so M11/M12 do not
-     * infer HoC render state from loose host flags. */
+     * mirror champion joins. DUNVIEW.C:3913-3928 blits C026 portraits to
+     * G0109 {96,127,35,63}; PANEL.C:1619-1635 blits C040 resurrect panel.
+     * Keep Hall, champion-panel, C040, enter-dungeon, stale-panel-clear, and
+     * thing-payload suppression overlay commands on this DM1 receipt so M11/M12
+     * do not infer HoC render state from loose host flags. */
     *outReceipt = receipt;
     return 1;
 }

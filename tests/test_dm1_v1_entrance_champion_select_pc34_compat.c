@@ -93,6 +93,12 @@ static void test_mirror_recruit_and_finalize(void)
     expect_int("route.hall.clear_stale_panel", route.clearStaleChampionMirrorOverlay, 1);
     expect_int("route.hall.block_enter", route.blockEnterUntilChampionSelected, 1);
     expect_int("route.hall.no_champion_panel", route.renderChampionMirrorOverlay, 0);
+    expect_int("route.hall.command.count", route.renderOverlayCommandCount, 1);
+    expect_int("route.hall.command.kind", route.renderOverlayCommands[0].kind,
+               DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34);
+    expect_int("route.hall.command.clear", route.renderOverlayCommands[0].clearStalePanelFirst, 1);
+    expect_int("route.hall.command.suppress", route.renderOverlayCommands[0].suppressThingPayloads, 1);
+    expect_int("route.hall.command.block", route.renderOverlayCommands[0].blockEnterUntilChampionSelected, 1);
 
     result = DM1_V1_Entrance_ClickMirrorPc34Compat(&ctx, 0, 5000u);
     expect_true("click.live.selected", result.mirrorSelected);
@@ -109,6 +115,22 @@ static void test_mirror_recruit_and_finalize(void)
     expect_int("route.live.render_panel", route.renderChampionMirrorOverlay, 1);
     expect_int("route.live.no_hall_overlay", route.renderHallMirrorOverlay, 0);
     expect_int("route.live.no_stale_clear", route.clearStaleChampionMirrorOverlay, 0);
+    expect_int("route.live.command.count", route.renderOverlayCommandCount, 1);
+    expect_int("route.live.command.kind", route.renderOverlayCommands[0].kind,
+               DM1_V1_ENTRANCE_OVERLAY_CHAMPION_PORTRAIT_PC34);
+    expect_int("route.live.command.graphic", route.renderOverlayCommands[0].graphicIndex,
+               DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_GRAPHIC_PC34);
+    expect_int("route.live.command.source_x", route.renderOverlayCommands[0].sourceX, 224);
+    expect_int("route.live.command.source_y", route.renderOverlayCommands[0].sourceY, 0);
+    expect_int("route.live.command.width", route.renderOverlayCommands[0].width,
+               DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_W_PC34);
+    expect_int("route.live.command.height", route.renderOverlayCommands[0].height,
+               DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_H_PC34);
+    expect_int("route.live.command.viewport_x", route.renderOverlayCommands[0].viewportX,
+               DM1_V1_ENTRANCE_WALL_PORTRAIT_X_PC34);
+    expect_int("route.live.command.viewport_y", route.renderOverlayCommands[0].viewportY,
+               DM1_V1_ENTRANCE_WALL_PORTRAIT_Y_PC34);
+    expect_int("route.live.command.suppress", route.renderOverlayCommands[0].suppressThingPayloads, 1);
     expect_int("route.live.recruit", route.canRecruit, 1);
     expect_int("route.live.cancel", route.canCancelSelection, 1);
 
@@ -121,6 +143,8 @@ static void test_mirror_recruit_and_finalize(void)
     expect_int("route.hall.enter.ready", route.canEnterDungeon, 1);
     expect_int("route.hall.after_recruit.render_hall", route.renderHallMirrorOverlay, 1);
     expect_int("route.hall.after_recruit.no_block", route.blockEnterUntilChampionSelected, 0);
+    expect_int("route.hall.after_recruit.command.block",
+               route.renderOverlayCommands[0].blockEnterUntilChampionSelected, 0);
 
     result = DM1_V1_Entrance_FinalizePc34Compat(&ctx);
     expect_true("finalize.complete", result.entranceComplete);
@@ -131,6 +155,9 @@ static void test_mirror_recruit_and_finalize(void)
     expect_int("route.done.enter", route.canEnterDungeon, 1);
     expect_int("route.done.render_enter", route.renderEnterDungeonOverlay, 1);
     expect_int("route.done.no_hall", route.renderHallMirrorOverlay, 0);
+    expect_int("route.done.command.count", route.renderOverlayCommandCount, 1);
+    expect_int("route.done.command.kind", route.renderOverlayCommands[0].kind,
+               DM1_V1_ENTRANCE_OVERLAY_ENTER_DUNGEON_PC34);
 }
 
 static void test_dead_mirror_paths(void)
@@ -153,6 +180,18 @@ static void test_dead_mirror_paths(void)
     expect_int("route.dead.render_panel", route.renderChampionMirrorOverlay, 1);
     expect_int("route.dead.render_choices", route.renderResurrectReincarnateOverlay, 1);
     expect_int("route.dead.no_hall", route.renderHallMirrorOverlay, 0);
+    expect_int("route.dead.command.count", route.renderOverlayCommandCount, 2);
+    expect_int("route.dead.command.0.kind", route.renderOverlayCommands[0].kind,
+               DM1_V1_ENTRANCE_OVERLAY_CHAMPION_PORTRAIT_PC34);
+    expect_int("route.dead.command.0.graphic", route.renderOverlayCommands[0].graphicIndex,
+               DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_GRAPHIC_PC34);
+    expect_int("route.dead.command.0.source_x", route.renderOverlayCommands[0].sourceX, 128);
+    expect_int("route.dead.command.0.source_y", route.renderOverlayCommands[0].sourceY, 29);
+    expect_int("route.dead.command.1.kind", route.renderOverlayCommands[1].kind,
+               DM1_V1_ENTRANCE_OVERLAY_RESURRECT_REINCARNATE_PC34);
+    expect_int("route.dead.command.1.graphic", route.renderOverlayCommands[1].graphicIndex,
+               DM1_V1_ENTRANCE_RESURRECT_PANEL_GRAPHIC_PC34);
+    expect_int("route.dead.command.1.suppress", route.renderOverlayCommands[1].suppressThingPayloads, 1);
     expect_int("route.dead.resurrect", route.canResurrect, 1);
     expect_int("route.dead.reincarnate", route.canReincarnate, 1);
     expect_int("dead.recruit.reject", DM1_V1_Entrance_RecruitChampionPc34Compat(&ctx), 0);
@@ -195,6 +234,12 @@ static void test_capacity(void)
     expect_int("capacity.route.no_recruit", route.canRecruit, 0);
     expect_int("capacity.route.render_panel", route.renderChampionMirrorOverlay, 1);
     expect_int("capacity.route.no_choices", route.renderResurrectReincarnateOverlay, 0);
+    expect_int("capacity.route.command.count", route.renderOverlayCommandCount, 1);
+    expect_int("capacity.route.command.kind", route.renderOverlayCommands[0].kind,
+               DM1_V1_ENTRANCE_OVERLAY_CHAMPION_PORTRAIT_PC34);
+    expect_int("capacity.route.command.no_c040",
+               route.renderOverlayCommands[0].graphicIndex,
+               DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_GRAPHIC_PC34);
     expect_int("capacity.party_full", DM1_V1_Entrance_RecruitChampionPc34Compat(&ctx), 0);
 }
 
