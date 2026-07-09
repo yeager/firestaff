@@ -723,7 +723,31 @@ static void test_fright_plan(void) {
 
 static void test_projectile_spell_plan(void) {
     DM1_ActionProjectileSpellInputPc34 in;
+    DM1_ActionProjectileSpellDescriptorPc34 desc;
     DM1_ActionProjectileSpellPlanPc34 out;
+
+    CHECK_EQ(dm1_v1_action_projectile_spell_descriptor_f0407_pc34(
+                 DM1_ACTION_FIREBALL, &desc), 1,
+             "fireball projectile descriptor builds");
+    CHECK_EQ(desc.valid, 1, "fireball descriptor valid");
+    CHECK_EQ(desc.actionSkillIndex, 16, "fireball descriptor fire skill");
+    CHECK_EQ(desc.verbKind, DM1_ACTION_PROJECTILE_VERB_FIREBALL_PC34,
+             "fireball descriptor verb");
+    CHECK_EQ(desc.requiresInvokeRolls, 0,
+             "fireball descriptor no invoke rolls");
+
+    CHECK_EQ(dm1_v1_action_projectile_spell_descriptor_f0407_pc34(
+                 DM1_ACTION_INVOKE, &desc), 1,
+             "invoke projectile descriptor builds");
+    CHECK_EQ(desc.actionSkillIndex, 3, "invoke descriptor wizard skill");
+    CHECK_EQ(desc.verbKind, DM1_ACTION_PROJECTILE_VERB_INVOKE_PC34,
+             "invoke descriptor verb");
+    CHECK_EQ(desc.requiresInvokeRolls, 1,
+             "invoke descriptor requires rolls");
+
+    CHECK_EQ(dm1_v1_action_projectile_spell_descriptor_f0407_pc34(
+                 DM1_ACTION_LIGHT, &desc), 0,
+             "light projectile descriptor rejected");
 
     memset(&in, 0, sizeof(in));
     in.actionIndex = DM1_ACTION_FIREBALL;
@@ -733,6 +757,8 @@ static void test_projectile_spell_plan(void) {
     CHECK_EQ(dm1_v1_action_projectile_spell_plan_f0407_pc34(&in, &out), 1,
              "fireball projectile plan builds");
     CHECK_EQ(out.actionSkillIndex, 16, "fireball uses fire skill");
+    CHECK_EQ(out.verbKind, DM1_ACTION_PROJECTILE_VERB_FIREBALL_PC34,
+             "fireball verb kind");
     CHECK_EQ(out.subtype, PROJECTILE_SUBTYPE_FIREBALL, "fireball subtype");
     CHECK_EQ(out.category, PROJECTILE_CATEGORY_MAGICAL, "fireball category");
     CHECK_EQ(out.attackTypeCode, COMBAT_ATTACK_FIRE, "fireball attack type");
@@ -743,6 +769,7 @@ static void test_projectile_spell_plan(void) {
     CHECK_EQ(out.remainingMana, 6, "fireball remaining mana");
     CHECK_EQ(out.stepEnergy, 2, "fireball step energy");
     CHECK_EQ(out.impactAttack, 90, "fireball impact attack");
+    CHECK_EQ(out.poisonAttack, 0, "fireball no poison attack");
     CHECK_EQ(out.decrementsActionHandCharges, 1,
              "fireball decrements charges");
 
@@ -772,6 +799,8 @@ static void test_projectile_spell_plan(void) {
     CHECK_EQ(dm1_v1_action_projectile_spell_plan_f0407_pc34(&in, &out), 1,
              "invoke projectile plan builds");
     CHECK_EQ(out.actionSkillIndex, 3, "invoke uses wizard skill");
+    CHECK_EQ(out.verbKind, DM1_ACTION_PROJECTILE_VERB_INVOKE_PC34,
+             "invoke verb kind");
     CHECK_EQ(out.subtype, PROJECTILE_SUBTYPE_POISON_CLOUD,
              "invoke family roll poison cloud");
     CHECK_EQ(out.attackTypeCode, COMBAT_ATTACK_NORMAL,
@@ -782,6 +811,7 @@ static void test_projectile_spell_plan(void) {
     CHECK_EQ(out.remainingMana, 4, "invoke remaining mana");
     CHECK_EQ(out.actualKineticEnergy, 127, "invoke actual kinetic");
     CHECK_EQ(out.stepEnergy, 2, "invoke step energy max mana clamp");
+    CHECK_EQ(out.poisonAttack, 90, "invoke poison attack");
 
     memset(&in, 0, sizeof(in));
     in.actionIndex = DM1_ACTION_LIGHT;
