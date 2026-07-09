@@ -2160,15 +2160,21 @@ static void orch_writeback_cmd_attack_luck_compat(
     int championIndex,
     const struct CombatantChampionSnapshot_Compat* championSnapshot)
 {
-    int luck;
+    DM1_MeleeF0231LuckWritebackInputPc34 in;
+    DM1_MeleeF0231LuckWritebackPlanPc34 plan;
     if (!world || !championSnapshot) return;
-    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
-    luck = championSnapshot->statisticLuck;
-    if (luck < 0) luck = 0;
-    if (luck > 255) luck = 255;
-    world->lifecycle.champions[championIndex]
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.championIndex = championIndex;
+    in.snapshotLuck = championSnapshot->statisticLuck;
+    in.championCount = CHAMPION_MAX_PARTY;
+    if (!dm1_v1_melee_luck_writeback_plan_f0231_pc34(&in, &plan) ||
+        !plan.valid || !plan.shouldWriteBack) {
+        return;
+    }
+    world->lifecycle.champions[plan.championIndex]
         .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_CURRENT] =
-            (uint8_t)luck;
+            (uint8_t)plan.clampedLuck;
 }
 
 static int orch_build_defender_champion_snapshot_compat(

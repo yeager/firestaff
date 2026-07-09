@@ -742,6 +742,33 @@ int dm1_v1_melee_runtime_result_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_luck_writeback_plan_f0231_pc34(
+    const DM1_MeleeF0231LuckWritebackInputPc34* in,
+    DM1_MeleeF0231LuckWritebackPlanPc34* out) {
+    int luck;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    out->valid = 1;
+    out->championIndex = in->championIndex;
+    if (in->championIndex < 0 ||
+        in->championIndex >= in->championCount) {
+        return 1;
+    }
+
+    luck = in->snapshotLuck;
+    if (luck < 0) luck = 0;
+    if (luck > 255) luck = 255;
+    out->shouldWriteBack = 1;
+    out->clampedLuck = luck;
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1531-1536 writes back the Luck
+     * mutated by CHAMPION.C F0308 after melee resolution.  DM1 owns the
+     * champion index gate and byte clamp; M10 only writes the receipt. */
+    return 1;
+}
+
 int dm1_v1_melee_damage_gate_plan_f0231_pc34(
     const DM1_MeleeF0231DamageGateInputPc34* in,
     DM1_MeleeF0231DamageGatePlanPc34* out) {

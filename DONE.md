@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0231 luck writeback receipt: DM1 now owns the post-melee Luck writeback gate and byte clamp after F0308 mutates champion luck; M10 only writes the returned receipt into lifecycle state. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus MENU.BPK runtime render receipt: Nexus BPK parser now emits a real-asset render route receipt that distinguishes stored render-ready surfaces from PRS3-blocked surfaces and forbids fallback visuals for PRS3-compressed MENU.BPK output. Verification: `nexus_v1_bpk_surface_class`, `nexus_v1_bpk_prs3_payload_evidence_probe`, `nexus_v1_bpk_surface_class_probe`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0190 melee mutation dispatch receipt: DM1 now owns the combined killed-some/killed-all F0190 dispatch for possession drops, killed-some event/fear cleanup, and killed-all unlink/active-state cleanup; M10 materializes the returned receipt. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
