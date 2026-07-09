@@ -226,6 +226,38 @@ int DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34(
     return changed;
 }
 
+int DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+    int sensorType,
+    int sensorData,
+    int ornamentOrdinal,
+    int thingCell,
+    int visibleWallCell,
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 *outReceipt)
+{
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->championPortraitOrdinal =
+        DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+
+    /* ReDMCSB DUNGEON.C F0172/F0174: C127 champion-portrait sensors
+     * count only on the wall face currently seen by the party; then
+     * G0289 receives M000_INDEX_TO_ORDINAL(sensorData) for the D1C
+     * champion portrait route. */
+    outReceipt->valid = 1;
+    if (sensorType != 127 || thingCell != visibleWallCell) {
+        return 1;
+    }
+
+    outReceipt->isFrontMirror = 1;
+    outReceipt->championPortraitOrdinal = sensorData;
+    if (ornamentOrdinal > 0) {
+        outReceipt->wallOrnamentOrdinal = ornamentOrdinal;
+    }
+    return 1;
+}
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
 {
     return "ReDMCSB COMMAND.C:484-488 G0455 maps C159..C162 champion-name "
@@ -233,5 +265,7 @@ const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
            "mouse boxes; COMMAND.C:2158-2162 F0380 dispatches champion status "
            "boxes only when G0299 is clear; CLIKCHAM.C:24-35 F0367 maps "
            "status/name clicks to F0368; CLIKCHAM.C:51-72 F0368 changes "
-           "G0411 leader and skips redraw for the G0299 candidate.";
+           "G0411 leader and skips redraw for the G0299 candidate; "
+           "DUNGEON.C:2573,2608-2612 F0172/F0174 map C127 front-wall "
+           "sensor data to G0289 champion portrait ordinal.";
 }

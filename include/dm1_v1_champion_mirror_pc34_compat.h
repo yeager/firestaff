@@ -52,6 +52,13 @@ typedef struct DM1_V1_ChampionMirrorClickResultPc34 {
     int ignoredDeadTarget;
 } DM1_V1_ChampionMirrorClickResultPc34;
 
+typedef struct DM1_V1_ChampionMirrorFrontWallReceiptPc34 {
+    int valid;
+    int isFrontMirror;
+    int championPortraitOrdinal;
+    int wallOrnamentOrdinal;
+} DM1_V1_ChampionMirrorFrontWallReceiptPc34;
+
 void DM1_V1_ChampionMirror_InitClickStatePc34(
     DM1_V1_ChampionMirrorClickStatePc34 *state);
 
@@ -88,6 +95,14 @@ int DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34(
     unsigned int mouseButtons,
     DM1_V1_ChampionMirrorClickResultPc34 *outResult);
 
+int DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+    int sensorType,
+    int sensorData,
+    int ornamentOrdinal,
+    int thingCell,
+    int visibleWallCell,
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 *outReceipt);
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void);
 
 typedef DM1_V1_ChampionMirrorChampionPc34
@@ -96,6 +111,8 @@ typedef DM1_V1_ChampionMirrorClickStatePc34
     Dm1V1ChampionMirrorClickStatePc34Compat;
 typedef DM1_V1_ChampionMirrorClickResultPc34
     Dm1V1ChampionMirrorClickResultPc34Compat;
+typedef DM1_V1_ChampionMirrorFrontWallReceiptPc34
+    Dm1V1ChampionMirrorFrontWallReceiptPc34Compat;
 
 #define DM1_V1_ChampionMirror_InitClickStatePc34Compat \
     DM1_V1_ChampionMirror_InitClickStatePc34
@@ -109,6 +126,8 @@ typedef DM1_V1_ChampionMirrorClickResultPc34
     DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34
 #define DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat \
     DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34
+#define DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34Compat \
+    DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34
 #define DM1_V1_ChampionMirror_SourceEvidencePc34Compat \
     DM1_V1_ChampionMirror_SourceEvidencePc34
 
