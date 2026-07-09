@@ -2648,7 +2648,7 @@ static int csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
     return 1;
 }
 
-int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+static int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
     const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view,
     const CSB_V1_StartupRenderExecutor_PC34 *executor)
 {
