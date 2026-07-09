@@ -1319,6 +1319,10 @@ int main(void) {
         expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
                         VGA_PALETTE_PC34_SPECIAL_TITLE,
                     "M11 CSB CHAOS zoom reports source title palette");
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_IGNORED,
+                    "M11 CSB title consumes CSB host-input block receipt");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         250,
@@ -1434,6 +1438,10 @@ int main(void) {
                             M11_DM1_MOUSE_MASK_LEFT) ==
                             M11_GAME_INPUT_IGNORED,
                         "M11 CSB door opening consumes CSB input readiness gate");
+            expect_true(M11_GameView_HandleInput(&view,
+                                                 M12_MENU_INPUT_ACCEPT) ==
+                            M11_GAME_INPUT_IGNORED,
+                        "M11 CSB door opening blocks keyboard through CSB readiness");
         }
         drive_csb_entrance_opening(&view,
                                    "M11 CSB entrance dismisses to dungeon runtime");
