@@ -114,6 +114,7 @@ int main(void)
     Nexus_V1_StartupHostFacts host_facts;
     Nexus_V1_StartupRuntimeState runtime_state;
     Nexus_V1_LauncherRuntimeStartupSnapshot runtime_snapshot;
+    Nexus_V1_StartupMenuPresentationReceipt presentation_receipt;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
@@ -2122,6 +2123,41 @@ int main(void)
                                strcmp(host_action_receipt.host_receipt.status,
                                       "blocked-menu-bpk-prs3") == 0,
                            "Nexus launcher blocks champion route on MENU.BPK PRS3");
+                    memset(draw_commands, 0, sizeof(draw_commands));
+                    expect(nexus_v1_launcher_startup_save_presentation_receipt_from_runtime_state(
+                               &runtime_state,
+                               draw_commands,
+                               (int)(sizeof(draw_commands) /
+                                     sizeof(draw_commands[0])),
+                               &presentation_receipt) &&
+                               presentation_receipt.kind ==
+                                   NEXUS_V1_STARTUP_MENU_PRESENTATION_SAVE &&
+                               presentation_receipt.route_blocked == 1 &&
+                               presentation_receipt.route_ready == 0 &&
+                               presentation_receipt.draw_command_count == 0 &&
+                               presentation_receipt.assets
+                                   .menu_bpk_blocks_real_menu_surface_render == 1 &&
+                               strcmp(presentation_receipt.status_scope,
+                                      "ASSETS") == 0 &&
+                               strcmp(presentation_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus launcher save presentation receipt blocks fallback draw commands");
+                    memset(draw_commands, 0, sizeof(draw_commands));
+                    expect(nexus_v1_launcher_startup_champion_presentation_receipt_from_runtime_state(
+                               &runtime_state,
+                               draw_commands,
+                               (int)(sizeof(draw_commands) /
+                                     sizeof(draw_commands[0])),
+                               &presentation_receipt) &&
+                               presentation_receipt.kind ==
+                                   NEXUS_V1_STARTUP_MENU_PRESENTATION_CHAMPION &&
+                               presentation_receipt.route_blocked == 1 &&
+                               presentation_receipt.draw_command_count == 0 &&
+                               strcmp(presentation_receipt.asset_blocker,
+                                      "menu-bpk-prs3") == 0 &&
+                               strcmp(presentation_receipt.host_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus launcher champion presentation receipt blocks fallback draw commands");
                 }
                 nexus_title_free(&title_screen);
                 nexus_v1_launcher_shutdown();
