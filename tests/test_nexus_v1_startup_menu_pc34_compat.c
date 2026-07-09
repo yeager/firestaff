@@ -159,8 +159,15 @@ int main(void)
     expect(m12_package_receipt.capture_route ==
                NEXUS_V1_STARTUP_CAPTURE_INVALID &&
                m12_package_receipt.first_capture_draw_kind ==
-                   NEXUS_V1_STARTUP_DRAW_NONE,
-           "Nexus M12 startup package clear resets capture fields");
+                   NEXUS_V1_STARTUP_DRAW_NONE &&
+               strcmp(m12_package_receipt.game_id, "nexus") == 0 &&
+               strcmp(m12_package_receipt.card_title_label,
+                      "DM Nexus") == 0 &&
+               strcmp(m12_package_receipt.card_subtitle_label,
+                      "Saturn boot, title, save, champions") == 0 &&
+               strcmp(m12_package_receipt.timing_summary_label,
+                      "warning 48f / title ready 102f") == 0,
+           "Nexus M12 startup package clear resets capture and card fields");
     expect(nexus_v1_launcher_m12_startup_package_from_flags(
                1,
                1,
@@ -178,6 +185,12 @@ int main(void)
                m12_package_receipt.boot_start_ready_frames == 102 &&
                m12_package_receipt.title_frame_max == 102 &&
                m12_package_receipt.title_prompt_visible == 1 &&
+               strcmp(m12_package_receipt.card_title_label,
+                      "DM Nexus") == 0 &&
+               strcmp(m12_package_receipt.card_subtitle_label,
+                      "Saturn boot, title, save, champions") == 0 &&
+               strcmp(m12_package_receipt.timing_summary_label,
+                      "warning 48f / title ready 102f") == 0 &&
                strcmp(m12_package_receipt.capture_route_label,
                       "title-warning") == 0 &&
                strcmp(m12_package_receipt.first_capture_draw_label,
@@ -208,7 +221,9 @@ int main(void)
                strcmp(m12_package_receipt.blocked_status_label,
                       "VERSION MISSING") == 0 &&
                strcmp(m12_package_receipt.blocked_detail_label,
-                      "SELECTED VERSION") == 0,
+                      "SELECTED VERSION") == 0 &&
+               strcmp(m12_package_receipt.card_subtitle_label,
+                      "Saturn boot, title, save, champions") == 0,
            "Nexus M12 startup package blocks display/capture before version proof");
 
     memset(&empty_champions, 0, sizeof(empty_champions));

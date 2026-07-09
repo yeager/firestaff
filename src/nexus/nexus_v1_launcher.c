@@ -788,6 +788,10 @@ void nexus_v1_launcher_m12_startup_package_receipt_clear(
     memset(receipt, 0, sizeof(*receipt));
     receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_INVALID;
     receipt->first_capture_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
+    receipt->game_id = "nexus";
+    receipt->card_title_label = "DM Nexus";
+    receipt->card_subtitle_label = "Saturn boot, title, save, champions";
+    receipt->timing_summary_label = "warning 48f / title ready 102f";
     receipt->ready_status_label = "TITLE MENU READY";
     receipt->ready_detail_label = "TITLE, WARNING, SAVE, CHAMPIONS";
     receipt->path_label = "NEXUS TITLE MENU";
