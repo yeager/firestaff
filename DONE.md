@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron Track 02 startup runtime receipt: semantic Track 02 startup handoff now emits a compact runtime receipt with raw/user-data offsets, header fields, progression seed evidence, and an explicit no-fallback-visuals flag when real startup data is ready. Verification: `firestaff_theron_v1_track02_level_handoff_probe` build and direct probe run passed.
+
 - ✅ 2026-07-09 pass811 DM1 F0231 side-effect ownership now carries XP map/tick/last-attack context in the DM1 plan, so M10 no longer reconstructs those facts at the XP award call site. The focused F0407/F0231 test pins the receipt fields.
 - ✅ 2026-07-09 pass812 DM1 F0231 runtime-result ownership now carries group-damage apply group/creature/damage/outcome facts, so M10 consumes the DM1 receipt instead of reassembling the F0190 apply call.
 - ✅ 2026-07-09 pass813 DM1 F0231 runtime-result ownership now also carries damage-emission champion/group/damage facts, and M10 uses the DM1 receipt for both F0190 apply and EMIT_DAMAGE_DEALT routing.
