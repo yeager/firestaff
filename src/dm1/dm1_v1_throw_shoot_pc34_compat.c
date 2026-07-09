@@ -1287,3 +1287,59 @@ int dm1_v1_explosion_party_champion_damage_plan_pc34(
     outPlan->allowedWounds = fanoutPlan->allowedWounds;
     return 1;
 }
+
+int dm1_v1_explosion_party_champion_apply_pc34(
+    const DM1_ExplosionPartyChampionDamagePlanPc34* championPlan,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    struct ChampionState_Compat* champion,
+    DM1_ExplosionPartyChampionApplyPlanPc34* outPlan) {
+    int selectedWounds = 0;
+    int killed = 0;
+
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->championIndex = -1;
+    if (!championPlan || !championPlan->shouldAttemptDamage) {
+        outPlan->valid = 1;
+        return 1;
+    }
+    outPlan->championIndex = championPlan->championIndex;
+    if (!defender || !rng || !champion) return 0;
+
+    /* ReDMCSB: CHAMPION.C F0324 lines 1991-2022 randomizes party-square
+     * explosion attack per champion, then calls F0321 for defense,
+     * wound selection, HP mutation, and down state. */
+    if (!F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
+            championPlan->attackTypeCode,
+            championPlan->randomizedAttack,
+            championPlan->allowedWounds,
+            defender,
+            rng,
+            &outPlan->scaledAttack,
+            NULL)) {
+        return 0;
+    }
+    outPlan->valid = 1;
+    if (outPlan->scaledAttack <= 0) {
+        return 1;
+    }
+    if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+            outPlan->scaledAttack,
+            championPlan->allowedWounds,
+            defender,
+            rng,
+            &selectedWounds,
+            NULL)) {
+        return 0;
+    }
+    outPlan->selectedWounds = selectedWounds;
+    outPlan->damage.damageApplied = outPlan->scaledAttack;
+    outPlan->damage.woundMaskAdded = selectedWounds;
+    if (!F0737_COMBAT_ApplyDamageToChampion_Compat(
+            &outPlan->damage, champion, &killed)) {
+        return 0;
+    }
+    outPlan->killed = killed ? 1 : 0;
+    return 1;
+}

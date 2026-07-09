@@ -202,6 +202,15 @@ typedef struct {
     int allowedWounds;
 } DM1_ExplosionPartyChampionDamagePlanPc34;
 
+typedef struct {
+    int valid;
+    int championIndex;
+    int scaledAttack;
+    int selectedWounds;
+    int killed;
+    struct CombatResult_Compat damage;
+} DM1_ExplosionPartyChampionApplyPlanPc34;
+
 enum {
     DM1_PROJECTILE_IMPACT_LOG_NONE_PC34 = 0,
     DM1_PROJECTILE_IMPACT_LOG_HIT_WALL_PC34,
@@ -417,6 +426,12 @@ int dm1_v1_explosion_party_champion_damage_plan_pc34(
     int championCurrentHealth,
     int rngWindowRoll,
     DM1_ExplosionPartyChampionDamagePlanPc34* outPlan);
+int dm1_v1_explosion_party_champion_apply_pc34(
+    const DM1_ExplosionPartyChampionDamagePlanPc34* championPlan,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    struct ChampionState_Compat* champion,
+    DM1_ExplosionPartyChampionApplyPlanPc34* outPlan);
 
 #ifdef __cplusplus
 }
