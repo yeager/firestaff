@@ -27580,19 +27580,43 @@ static void m11_projectile_apply_impact(
                 const struct CreatureBehaviorProfile_Compat* profile =
                     CREATURE_GetProfile_Compat((int)g->creatureType);
                 int creatureAttributes = profile ? profile->attributes : 0;
+                DM1_ProjectileCreatureActionPlanPc34 actionPlan;
                 DM1_ProjectileCreatureImpactPlanPc34 plan;
                 DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
+                memset(&actionPlan, 0, sizeof(actionPlan));
                 memset(&plan, 0, sizeof(plan));
                 memset(&aftermath, 0, sizeof(aftermath));
-                if (dm1_v1_projectile_creature_impact_plan_pc34(
-                        p, r, g, creatureAttributes, &plan) &&
-                    plan.shouldApplyDamage) {
+                if (dm1_v1_projectile_creature_action_plan_pc34(
+                        p, &r->outAction, g, creatureAttributes, &actionPlan) &&
+                    actionPlan.healsBlackFlame) {
+                        g->health[actionPlan.slotIndex] =
+                            (unsigned short)actionPlan.newHealth;
+                        m11_write_raw_group_record(state->world.things, gIdx);
+                        m11_log_event(state, M11_COLOR_ORANGE,
+                                      "T%u: FIREBALL FEEDS %s",
+                                      (unsigned int)state->world.gameTick,
+                                      m11_creature_name((int)g->creatureType));
+                        (void)m11_materialize_projectile_associated_thing(
+                            state, p, r, 0);
+                        return;
+                }
+                if (actionPlan.handled && actionPlan.shouldApplyDamage) {
                         struct CombatResult_Compat res;
                         int outcome = 0;
                         memset(&res, 0, sizeof(res));
-                        res.damageApplied = plan.damageApplied;
+                        res.damageApplied = actionPlan.damageApplied;
                         F0738_COMBAT_ApplyDamageToGroup_Compat(
-                            &res, g, plan.slotIndex, &outcome);
+                            &res, g, actionPlan.slotIndex, &outcome);
+                        plan.handled = actionPlan.handled;
+                        plan.shouldApplyDamage = actionPlan.shouldApplyDamage;
+                        plan.slotIndex = actionPlan.slotIndex;
+                        plan.damageApplied = actionPlan.damageApplied;
+                        plan.originalCreatureType =
+                            actionPlan.originalCreatureType;
+                        plan.originalCells = actionPlan.originalCells;
+                        plan.originalGroupCount =
+                            actionPlan.originalGroupCount;
+                        plan.killedCell = actionPlan.killedCell;
                         (void)dm1_v1_projectile_creature_impact_aftermath_pc34(
                             &plan, p, creatureAttributes, (int)g->behavior,
                             outcome,
