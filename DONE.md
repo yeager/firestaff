@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 graphics loader ownership names: bitmap headers, decoded bitmaps, LZW state, loader state, GRAPHICS.DAT open/load/free/close, and LZW decompress helpers now expose DM1-owned API names; old M11_GFX/m11_gfx names remain aliases for CSB/engine compatibility. Verification: LZW round-trip 8/8, firestaff_m10/firestaff_m11 build, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 stairs level ownership names: stair definitions, level info, level state, max constants, and add/check/use/tick/transition helpers now expose DM1-owned API names; old m11_stairs names remain aliases. Verification: stairs inventory state 90/90, stairs gate 72/72, F0155 stairs exit gate 47/47, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 chest rotation/swap ownership names: reopen-after-leader-rotation and cross-champion-hand-swap actions, logs, cases, probes, and source-evidence helpers now expose DM1-owned API names; old M11 chest names remain aliases. Verification: cross-champion hand swap 678 assertions, reopen-after-leader-rotation 277 assertions, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
