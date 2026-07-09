@@ -425,6 +425,7 @@ typedef struct {
     int reactionMapY;
     int reactionGroupIndex;
     int reactionCreatureType;
+    struct ExplosionCreateInput_Compat smokeCreateInput;
 } DM1_MeleeF0231AftermathPlanPc34;
 
 typedef struct {
