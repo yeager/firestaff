@@ -27696,64 +27696,43 @@ static void m11_projectile_apply_impact(
             impactPlan.championIndex >= 0 &&
             impactPlan.championIndex < CHAMPION_MAX_PARTY) {
             struct CombatantChampionSnapshot_Compat defender;
-            struct CombatResult_Compat damage;
-            int scaledAttack = 0;
-            int selectedWounds = 0;
-            int killed = 0;
+            DM1_ProjectileChampionDamageApplyPlanPc34 damagePlan;
             ci = impactPlan.championIndex;
 
-            memset(&damage, 0, sizeof(damage));
             /* ReDMCSB PROJEXPL.C F0217 lines 513-558 routes champion
              * projectile impact through F0321, which applies attack-type
              * defense, wounds, shields, armour, and vitality before HP is
              * changed; CHAMPION.C F0321 lines 1842-1900 contains the
              * scaling path. */
+            memset(&damagePlan, 0, sizeof(damagePlan));
             if (m11_build_projectile_defender_champion_snapshot(
                     &state->world, ci, impactPlan.attackTypeCode,
                     &defender)) {
-                (void)F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
-                    impactPlan.attackTypeCode,
-                    impactPlan.rawAttackValue,
-                    impactPlan.allowedWounds,
+                (void)dm1_v1_projectile_champion_damage_apply_pc34(
+                    &impactPlan,
                     &defender,
                     &state->world.masterRng,
-                    &scaledAttack,
-                    NULL);
-                if (scaledAttack > 0) {
-                    if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
-                            scaledAttack,
-                            impactPlan.allowedWounds,
-                            &defender,
-                            &state->world.masterRng,
-                            &selectedWounds,
-                            NULL)) {
-                        selectedWounds = 0;
-                    }
-                    damage.damageApplied = scaledAttack;
-                    damage.woundMaskAdded = selectedWounds;
-                    (void)F0737_COMBAT_ApplyDamageToChampion_Compat(
-                        &damage,
-                        &state->world.party.champions[ci],
-                        &killed);
-                }
+                    &state->world.party.champions[ci],
+                    &damagePlan);
             }
             /* ReDMCSB PROJEXPL.C F0217 lines 545-556 applies poison only
              * after F0321 returns applied damage and the source random gate
              * passes. */
             (void)m11_maybe_apply_projectile_poison_to_champion(
                 state, ci, &state->world.party.champions[ci],
-                &impactPlan, p, scaledAttack);
+                &impactPlan, p, damagePlan.scaledAttack);
             /* CHAMPION.C lines 1659-1667 sets G0303_B_PartyDead when the
              * final party champion reaches zero HP; mirror that M11 gate
              * for direct F0811 projectile advances that bypass F0884. */
             if (dm1_v1_projectile_champion_party_death_check_pc34(
-                    killed, (int)state->world.party.champions[ci].hp.current)) {
+                    damagePlan.killed,
+                    (int)state->world.party.champions[ci].hp.current)) {
                 m11_check_party_death(state);
             }
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s HITS PARTY FOR %d",
                           (unsigned int)state->world.gameTick, name,
-                          scaledAttack);
+                          damagePlan.scaledAttack);
         } else {
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s HITS PARTY",

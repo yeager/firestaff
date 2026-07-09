@@ -167,6 +167,15 @@ typedef struct {
 } DM1_ProjectileChampionPoisonPlanPc34;
 
 typedef struct {
+    int valid;
+    int championIndex;
+    int scaledAttack;
+    int selectedWounds;
+    int killed;
+    struct CombatResult_Compat damage;
+} DM1_ProjectileChampionDamageApplyPlanPc34;
+
+typedef struct {
     int handled;
     int baseAttack;
     int rngModulus;
@@ -365,6 +374,12 @@ int dm1_v1_projectile_champion_poison_plan_pc34(
     int championPoisonDose,
     int rng2,
     DM1_ProjectileChampionPoisonPlanPc34* outPlan);
+int dm1_v1_projectile_champion_damage_apply_pc34(
+    const DM1_ProjectileChampionImpactPlanPc34* impactPlan,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    struct ChampionState_Compat* champion,
+    DM1_ProjectileChampionDamageApplyPlanPc34* outPlan);
 int dm1_v1_projectile_champion_party_death_check_pc34(
     int combatKilledFlag,
     int championCurrentHealth);

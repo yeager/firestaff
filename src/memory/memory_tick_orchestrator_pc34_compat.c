@@ -4348,14 +4348,11 @@ static int orch_apply_projectile_champion_action_compat(
     const struct ProjectileInstance_Compat* projectile,
     struct TickResult_Compat* result)
 {
-    struct CombatResult_Compat damage;
     struct CombatantChampionSnapshot_Compat defender;
     struct ChampionState_Compat* champion;
     int championIndex;
-    int scaledAttack = 0;
-    int selectedWounds = 0;
-    int killed = 0;
     DM1_ProjectileChampionImpactPlanPc34 impactPlan;
+    DM1_ProjectileChampionDamageApplyPlanPc34 damagePlan;
 
     if (!world || !action) return 0;
     if (!dm1_v1_projectile_champion_action_plan_pc34(
@@ -4369,51 +4366,26 @@ static int orch_apply_projectile_champion_action_compat(
     champion = &world->party.champions[championIndex];
     if (!champion->present || champion->hp.current == 0) return 0;
 
-    memset(&damage, 0, sizeof(damage));
     if (!orch_build_defender_champion_snapshot_compat(
             world, championIndex, impactPlan.attackTypeCode, &defender) ||
-        !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
-            impactPlan.attackTypeCode,
-            impactPlan.rawAttackValue,
-            impactPlan.allowedWounds,
-            &defender,
-            &world->masterRng,
-            &scaledAttack,
-            NULL)) {
+        !dm1_v1_projectile_champion_damage_apply_pc34(
+            &impactPlan, &defender, &world->masterRng, champion,
+            &damagePlan)) {
         return 0;
     }
-    if (scaledAttack <= 0) {
+    if (damagePlan.scaledAttack <= 0) {
         return 1;
     }
-    if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
-            scaledAttack,
-            impactPlan.allowedWounds,
-            &defender,
-            &world->masterRng,
-            &selectedWounds,
-            NULL)) {
-        return 0;
-    }
-    damage.damageApplied = scaledAttack;
-    damage.woundMaskAdded = selectedWounds;
-
-    /* ReDMCSB PROJEXPL.C:F0217 lines 513-558 computes champion
-     * projectile impact damage, lets CHAMPION.C:F0321 select any pending
-     * wounds through its vitality/RNG loop, then deletes the projectile. */
-    if (!F0737_COMBAT_ApplyDamageToChampion_Compat(
-            &damage, champion, &killed)) {
-        return 0;
-    }
-    if (killed) {
+    if (damagePlan.killed) {
         emit(result, EMIT_CHAMPION_DOWN, championIndex, 0, 0, 0);
     }
 
-    if (!killed && projectile && projectile->poisonAttack > 0) {
+    if (!damagePlan.killed && projectile && projectile->poisonAttack > 0) {
         DM1_ProjectileChampionPoisonPlanPc34 poisonPlan;
         struct TimelineEvent_Compat poisonEvent;
 
         if (!dm1_v1_projectile_champion_poison_plan_pc34(
-                &impactPlan, projectile, damage.damageApplied,
+                &impactPlan, projectile, damagePlan.damage.damageApplied,
                 champion->hp.current, champion->poisonDose,
                 F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2),
                 &poisonPlan)) {
