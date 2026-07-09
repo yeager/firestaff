@@ -2769,9 +2769,15 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     poisoned_view_receipt.render_plan.asset_commands[0].dest_h = 1;
     poisoned_view_receipt.render_plan.title_source_y = 1;
     poisoned_view_receipt.render_plan.title_dest_h = 1;
-    CHECK(csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
-              &poisoned_view_receipt,
-              &receipt_title_plan) == 1 &&
+    capture_receipt.render_view = poisoned_view_receipt;
+    CHECK(csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
+              &capture_receipt,
+              &host_view_receipt) == 1 &&
+              host_view_receipt.render_draw_valid &&
+              host_view_receipt.render_draw.render_plan_valid &&
+              (receipt_title_plan =
+                   host_view_receipt.render_draw.render_plan,
+               1) &&
               receipt_title_plan.asset_command_count == 1 &&
               receipt_title_plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34 &&
@@ -2788,7 +2794,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
               receipt_title_plan.render_commands[1].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
-          "boot startup title draw handoff consumes render-view receipt fields");
+          "boot startup host-view title draw consumes render-view receipt fields");
     snapshot.title_frame = 78;
     snapshot.title_source_step = 19;
     CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
@@ -3198,9 +3204,12 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     poisoned_view_receipt.route_receipt.utility_plan.has_prompt_row = 0;
     poisoned_view_receipt.route_receipt.utility_plan.prompt_row.text[0] = '\0';
     poisoned_view_receipt.route_receipt.utility_plan.preview_active = 1;
-    CHECK(csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
+    CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
               &poisoned_view_receipt,
-              &receipt_utility_plan) == 1 &&
+              &hud_draw_receipt) == 1 &&
+              hud_draw_receipt.utility_render_plan_valid &&
+              (receipt_utility_plan = hud_draw_receipt.utility_render_plan,
+               1) &&
               receipt_utility_plan.menu_row_count ==
                   CSB_V1_UTIL_MENU_ROW_COUNT &&
               receipt_utility_plan.menu_rows[0].selected &&
@@ -3209,7 +3218,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strstr(receipt_utility_plan.prompt_row.text,
                      "CHAOS STRIKES BACK READY") != NULL &&
               !receipt_utility_plan.preview_active,
-          "boot startup utility HUD/menu plan consumes render-view receipt fields");
+          "boot startup utility HUD/menu receipt consumes render-view receipt fields");
     CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
               &poisoned_view_receipt,
               &hud_draw_receipt) == 1 &&
@@ -3429,9 +3438,12 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     poisoned_view_receipt.render_plan.menu_options[0].selected = 0;
     poisoned_view_receipt.render_plan.menu_options[1].selected = 1;
     poisoned_view_receipt.render_plan.fallback_prompt_text = "STALE";
-    CHECK(csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
+    CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
               &poisoned_view_receipt,
-              &receipt_closed_door_plan) == 1 &&
+              &hud_draw_receipt) == 1 &&
+              hud_draw_receipt.startup_render_plan_valid &&
+              (receipt_closed_door_plan = hud_draw_receipt.startup_render_plan,
+               1) &&
               receipt_closed_door_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               receipt_closed_door_plan.waiting_for_input &&
@@ -3448,7 +3460,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                      view_receipt.closed_door_prompt) == 0 &&
               strstr(receipt_closed_door_plan.fallback_prompt_text,
                      "PRESS ENTER") != NULL,
-          "boot startup closed-door HUD/menu plan consumes render-view receipt fields");
+          "boot startup closed-door HUD/menu receipt consumes render-view receipt fields");
     CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
               &poisoned_view_receipt,
               &hud_draw_receipt) == 1 &&
