@@ -1793,6 +1793,18 @@ void csb_v1_boot_startup_input_render_receipt_init_pc34(
         &receipt->hud_menu_draw);
 }
 
+void csb_v1_boot_startup_input_gate_receipt_init_pc34(
+    CSB_V1_BootStartupInputGateReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_boot_startup_readiness_receipt_init_pc34(&receipt->readiness);
+    csb_v1_boot_startup_input_render_receipt_init_pc34(
+        &receipt->input_render);
+}
+
 void csb_v1_boot_startup_capture_receipt_init_pc34(
     CSB_V1_BootStartupCaptureReceipt_PC34 *receipt)
 {
@@ -3892,6 +3904,55 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc3
         out_receipt);
 }
 
+int csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_input_gate_receipt_init_pc34(out_receipt);
+    if (!snapshot ||
+        !csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
+            snapshot,
+            &out_receipt->readiness)) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->startup_active =
+        out_receipt->readiness.startup_active ? 1 : 0;
+    out_receipt->startup_input_ready =
+        out_receipt->readiness.host_startup_input_ready ? 1 : 0;
+    out_receipt->host_input_blocked =
+        out_receipt->readiness.host_input_blocked ? 1 : 0;
+    out_receipt->should_dispatch_input =
+        out_receipt->startup_active &&
+                out_receipt->startup_input_ready &&
+                !out_receipt->host_input_blocked
+            ? 1
+            : 0;
+    out_receipt->should_ignore_input =
+        out_receipt->startup_active &&
+                (out_receipt->host_input_blocked ||
+                 !out_receipt->startup_input_ready)
+            ? 1
+            : 0;
+    if (out_receipt->should_dispatch_input ||
+        out_receipt->host_input_blocked) {
+        out_receipt->input_render_valid =
+            csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc34(
+                snapshot,
+                menu_input,
+                &out_receipt->input_render);
+    }
+    /* ReDMCSB TITLE.C F0437 lines 424-463 blocks title input until
+     * ENTRANCE.C F0441/F0806 lines 850-883 reaches the menu/wait loop.
+     * Keep M11's startup input gate and post-input render/HUD decision in
+     * one CSB receipt beside the snapshot capture render executor. */
+    return out_receipt->valid;
+}
+
 int csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
     const CSB_V1_BootStartupActionReceipt_PC34 *receipt,
     CSB_V1_BootStartupHostDecisionReceipt_PC34 *out_decision)
@@ -4069,6 +4130,69 @@ int csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
     return csb_v1_boot_startup_input_render_receipt_from_action_pc34(
         &action,
         out_receipt);
+}
+
+int csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_input_gate_receipt_init_pc34(out_receipt);
+    if (!snapshot ||
+        !csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
+            snapshot,
+            &out_receipt->readiness)) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->input_is_pointer = 1;
+    out_receipt->pointer_left_button =
+        (button_mask & ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT) ? 1 : 0;
+    out_receipt->pointer_button_relevant =
+        (button_mask & (ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT |
+                        ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))
+            ? 1
+            : 0;
+    out_receipt->startup_active =
+        out_receipt->readiness.startup_active ? 1 : 0;
+    out_receipt->startup_input_ready =
+        out_receipt->readiness.host_startup_input_ready ? 1 : 0;
+    out_receipt->host_input_blocked =
+        out_receipt->readiness.host_input_blocked ? 1 : 0;
+    out_receipt->should_dispatch_input =
+        out_receipt->pointer_button_relevant &&
+                out_receipt->startup_active &&
+                out_receipt->startup_input_ready &&
+                !out_receipt->host_input_blocked
+            ? 1
+            : 0;
+    out_receipt->should_ignore_input =
+        out_receipt->pointer_button_relevant &&
+                out_receipt->startup_active &&
+                (out_receipt->host_input_blocked ||
+                 !out_receipt->startup_input_ready)
+            ? 1
+            : 0;
+    if (out_receipt->should_dispatch_input ||
+        (out_receipt->pointer_button_relevant &&
+         out_receipt->host_input_blocked)) {
+        out_receipt->input_render_valid =
+            csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
+                snapshot,
+                x,
+                y,
+                button_mask,
+                &out_receipt->input_render);
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns mouse routing for
+     * the utility/menu wait loop. M11 now receives one CSB gate receipt for
+     * pointer relevance, title blocking, dispatch, and post-input HUD draw. */
+    return out_receipt->valid;
 }
 
 int csb_v1_boot_runtime_save_game_to_path_pc34(

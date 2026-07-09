@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB startup input/HUD gate receipt: M11 keyboard and pointer startup paths now consume a CSB-owned input gate receipt that carries title blocking, readiness, dispatch, post-input render, and HUD draw decisions. Verification: CSB boot runtime handoff, CSB M11 launcher handoff, CSB startup entrance pointer test, three CSB real-asset probes, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron runtime-state full-start media receipt: boot full-start receipts can now be built from runtime state plus Track 02 media receipt without raw prompt/roster arrays, preserving host-view consumption and Soul Room action routing. Verification: `test_theron_v1_startup_save_resume_pc34` 245/245 and `git diff --check` passed.
 
 - ✅ 2026-07-09 M12 all-game boot readiness receipt: launcher game cards now expose per-game full-start path labels, startup step counts, ready counts, and next blocker for DM1/CSB/DM2/Nexus/Theron while keeping boot/start/menu scope separate from runtime systems. Verification: `test_m12_all_games_boot_readiness_receipt`, DM1 required-complete launcher test, CSB launch blocker test, and `git diff --check` passed.

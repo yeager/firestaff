@@ -2885,35 +2885,35 @@ static int m11_csb_boot_runtime_util_render_plan(
         out_plan);
 }
 
-static int m11_csb_boot_runtime_startup_keyboard(
+static int m11_csb_boot_runtime_startup_keyboard_gate(
     const M11_GameViewState *state,
     int menu_input,
-    CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt)
+    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt)
 {
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || !out_receipt) {
         return 0;
     }
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
-    return csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc34(
+    return csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
         &snapshot,
         menu_input,
         out_receipt);
 }
 
-static int m11_csb_boot_runtime_startup_pointer(
+static int m11_csb_boot_runtime_startup_pointer_gate(
     const M11_GameViewState *state,
     int x,
     int y,
     unsigned int button_mask,
-    CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt)
+    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt)
 {
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || !out_receipt) {
         return 0;
     }
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
-    return csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
+    return csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
         &snapshot,
         x,
         y,
@@ -3013,36 +3013,6 @@ static int m11_csb_boot_startup_active_from_readiness(
         return readiness.startup_active ? 1 : 0;
     }
     return state->csbState.startup_entrance_active ? 1 : 0;
-}
-
-static int m11_csb_boot_startup_input_from_readiness(
-    const M11_GameViewState *state)
-{
-    CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
-        return 0;
-    }
-    if (m11_csb_boot_runtime_startup_readiness_receipt(state, &readiness)) {
-        /* ReDMCSB TITLE.C F0437 lines 424-463 keeps post-FTL title input
-         * blocked until ENTRANCE.C F0441/F0806 lines 850-883 exposes the
-         * closed-door/menu loop. M11 consumes this CSB readiness gate instead
-         * of inferring input state from startup_entrance_active. */
-        return readiness.host_startup_input_ready ? 1 : 0;
-    }
-    return state->csbState.startup_entrance_active ? 1 : 0;
-}
-
-static int m11_csb_boot_host_input_blocked_from_readiness(
-    const M11_GameViewState *state)
-{
-    CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
-        return 0;
-    }
-    if (m11_csb_boot_runtime_startup_readiness_receipt(state, &readiness)) {
-        return readiness.host_input_blocked ? 1 : 0;
-    }
-    return 0;
 }
 
 static int m11_csb_boot_runtime_startup_idle(
@@ -3817,48 +3787,6 @@ static M11_GameInputResult m11_csb_startup_apply_input_render_receipt(
     return m11_csb_startup_apply_host_decision_receipt(
         state,
         &receipt->host_decision);
-}
-
-static M11_GameInputResult m11_csb_startup_handle_pointer(
-    M11_GameViewState *state,
-    int x,
-    int y,
-    unsigned int button_mask)
-{
-    CSB_V1_BootStartupInputRenderReceipt_PC34 receipt;
-
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !m11_csb_boot_startup_input_from_readiness(state)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!m11_csb_boot_runtime_startup_pointer(
-            state,
-            x,
-            y,
-            button_mask,
-            &receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    return m11_csb_startup_apply_input_render_receipt(state, &receipt);
-}
-
-static M11_GameInputResult m11_csb_startup_handle_keyboard(
-    M11_GameViewState *state,
-    M12_MenuInput input)
-{
-    CSB_V1_BootStartupInputRenderReceipt_PC34 receipt;
-
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !m11_csb_boot_startup_input_from_readiness(state)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!m11_csb_boot_runtime_startup_keyboard(
-            state,
-            (int)input,
-            &receipt)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    return m11_csb_startup_apply_input_render_receipt(state, &receipt);
 }
 
 static int m11_measure_text_pixels(const char* text,
@@ -13837,13 +13765,22 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         m11_mark_v1_movement_arrow_visual(state, input);
     }
 
-    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        m11_csb_boot_startup_input_from_readiness(state)) {
-        return m11_csb_startup_handle_keyboard(state, input);
-    }
-    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        m11_csb_boot_host_input_blocked_from_readiness(state)) {
-        return M11_GAME_INPUT_IGNORED;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_BootStartupInputGateReceipt_PC34 gate_receipt;
+        if (m11_csb_boot_runtime_startup_keyboard_gate(
+                state,
+                (int)input,
+                &gate_receipt) &&
+            gate_receipt.valid &&
+            gate_receipt.startup_active) {
+            if (gate_receipt.should_dispatch_input &&
+                gate_receipt.input_render_valid) {
+                return m11_csb_startup_apply_input_render_receipt(
+                    state,
+                    &gate_receipt.input_render);
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
     }
 
     if (m11_source_is_csb(state)) {
@@ -14875,20 +14812,25 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         return M11_GAME_INPUT_REDRAW;
     }
 
-    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        m11_csb_boot_startup_input_from_readiness(state) &&
-        (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
-                       ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
-        return m11_csb_startup_handle_pointer(state,
-                                              x,
-                                              y,
-                                              (unsigned int)buttonMask);
-    }
-    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        m11_csb_boot_host_input_blocked_from_readiness(state) &&
-        (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
-                       ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
-        return M11_GAME_INPUT_IGNORED;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_BootStartupInputGateReceipt_PC34 gate_receipt;
+        if (m11_csb_boot_runtime_startup_pointer_gate(
+                state,
+                x,
+                y,
+                (unsigned int)buttonMask,
+                &gate_receipt) &&
+            gate_receipt.valid &&
+            gate_receipt.startup_active &&
+            gate_receipt.pointer_button_relevant) {
+            if (gate_receipt.should_dispatch_input &&
+                gate_receipt.input_render_valid) {
+                return m11_csb_startup_apply_input_render_receipt(
+                    state,
+                    &gate_receipt.input_render);
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&

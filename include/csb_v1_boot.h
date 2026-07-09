@@ -385,6 +385,21 @@ typedef struct CSB_V1_BootStartupInputRenderReceipt_PC34 {
     int return_to_launcher;
 } CSB_V1_BootStartupInputRenderReceipt_PC34;
 
+typedef struct CSB_V1_BootStartupInputGateReceipt_PC34 {
+    int valid;
+    int input_is_pointer;
+    int pointer_left_button;
+    int pointer_button_relevant;
+    int startup_active;
+    int startup_input_ready;
+    int host_input_blocked;
+    int should_dispatch_input;
+    int should_ignore_input;
+    int input_render_valid;
+    CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
+    CSB_V1_BootStartupInputRenderReceipt_PC34 input_render;
+} CSB_V1_BootStartupInputGateReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupCaptureReceipt_PC34 {
     int valid;
     int route_valid;
@@ -422,6 +437,8 @@ void csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *receipt);
 void csb_v1_boot_startup_input_render_receipt_init_pc34(
     CSB_V1_BootStartupInputRenderReceipt_PC34 *receipt);
+void csb_v1_boot_startup_input_gate_receipt_init_pc34(
+    CSB_V1_BootStartupInputGateReceipt_PC34 *receipt);
 void csb_v1_boot_startup_capture_receipt_init_pc34(
     CSB_V1_BootStartupCaptureReceipt_PC34 *receipt);
 void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
@@ -934,6 +951,10 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc3
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
     CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt);
+int csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
     const CSB_V1_BootStartupActionReceipt_PC34 *receipt,
     CSB_V1_BootStartupHostDecisionReceipt_PC34 *out_decision);
@@ -949,6 +970,12 @@ int csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
     int y,
     unsigned int button_mask,
     CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt);
+int csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_save_game_to_path_pc34(
     const CSB_V1_BootProfile *profile,
     const char *path,
