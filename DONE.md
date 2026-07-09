@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB M11 startup decision consumption: M11 CSB startup input now consumes the CSB host decision receipt for status, redraw, bonus, and launcher-return while keeping CSB-owned utility/entrance state application. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 entrance callback receipt verification: M11 DM1 entrance handoff now requires the active post-launch receipt, validates the C255/5x5/south-facing entrance state before the transition, and the startup probe verifies TITLE/PRESENTS media plus entrance receipts through callbacks. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m10`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 startup media receipt plan handoff: DM1 prelude/post-launch plans now carry the full-graphics media receipt, and M11 keeps that active through SWSH/TITLE callbacks so production startup rendering consumes the selected receipt instead of re-resolving host timing. Verification: `firestaff_m10` build, M11/test syntax checks, and `git diff --check` passed; full M11 target is blocked by unrelated DM2 header edits in the shared worktree.

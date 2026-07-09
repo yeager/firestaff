@@ -3613,24 +3613,6 @@ static M11_GameInputResult m11_csb_startup_apply_idle_receipt(
     return m11_csb_startup_apply_host_receipt(state, &receipt->host_receipt);
 }
 
-static M11_GameInputResult m11_csb_startup_apply_entrance_action_receipt(
-    M11_GameViewState *state,
-    const CSB_V1_StartupEntranceHostActionReceipt_PC34 *receipt)
-{
-    if (!state || !receipt || !receipt->handled) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    state->csbState.startup_entrance_last_command =
-        receipt->command_receipt.command_id;
-    if (receipt->sync_profile_state) {
-        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-    }
-    m11_csb_startup_command_state_receipt_to_m11(state,
-                                                 &receipt->state_receipt);
-    return m11_csb_startup_apply_host_receipt(state,
-                                             &receipt->host_receipt);
-}
-
 static void m11_csb_startup_apply_utility_state_receipt(
     M11_GameViewState *state,
     const CSB_V1_UtilStateReceipt *receipt)
@@ -3648,31 +3630,47 @@ static void m11_csb_startup_apply_utility_state_receipt(
     }
 }
 
-static M11_GameInputResult
-m11_csb_startup_handle_utility_action_receipt(
+static void m11_csb_startup_apply_entrance_action_state_receipt(
     M11_GameViewState *state,
-    const CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *receipt)
+    const CSB_V1_StartupEntranceHostActionReceipt_PC34 *receipt)
 {
-    if (!state || !receipt) {
+    if (!state || !receipt || !receipt->handled) {
+        return;
+    }
+    state->csbState.startup_entrance_last_command =
+        receipt->command_receipt.command_id;
+    if (receipt->sync_profile_state) {
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+    }
+    m11_csb_startup_command_state_receipt_to_m11(
+        state,
+        &receipt->state_receipt);
+}
+
+static M11_GameInputResult m11_csb_startup_apply_host_decision_receipt(
+    M11_GameViewState *state,
+    const CSB_V1_BootStartupHostDecisionReceipt_PC34 *decision)
+{
+    if (!state || !decision || !decision->valid) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_csb_startup_apply_utility_state_receipt(
-        state,
-        &receipt->util_state_receipt);
-    if (receipt->util_receipt.status) {
+    if (decision->clear_import_preview) {
+        state->csbState.startup_import_preview_active = 0;
+    }
+    if (decision->bonus_requested_changed) {
+        state->csbState.startup_entrance_bonus_requested =
+            decision->bonus_requested ? 1 : 0;
+    }
+    if (decision->status) {
         m11_set_status(
             state,
-            receipt->util_receipt.status_scope
-                ? receipt->util_receipt.status_scope
-                : "BOOT",
-            receipt->util_receipt.status);
+            decision->status_scope ? decision->status_scope : "BOOT",
+            decision->status);
     }
-    if (receipt->entrance_receipt_valid) {
-        return m11_csb_startup_apply_entrance_action_receipt(
-            state,
-            &receipt->entrance_receipt);
+    if (decision->return_to_launcher) {
+        return M11_GAME_INPUT_RETURN_TO_MENU;
     }
-    if (receipt->util_receipt.result == CSB_V1_UTIL_APPLY_REDRAW) {
+    if (decision->redraw_startup) {
         return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
@@ -3682,20 +3680,37 @@ static M11_GameInputResult m11_csb_startup_apply_action_receipt(
     M11_GameViewState *state,
     const CSB_V1_BootStartupActionReceipt_PC34 *receipt)
 {
+    CSB_V1_BootStartupHostDecisionReceipt_PC34 decision;
+
     if (!state || !receipt || !receipt->handled) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (receipt->kind == CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34) {
-        return m11_csb_startup_handle_utility_action_receipt(
+        m11_csb_startup_apply_utility_state_receipt(
             state,
-            &receipt->utility_receipt);
-    }
-    if (receipt->kind == CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34) {
-        return m11_csb_startup_apply_entrance_action_receipt(
+            &receipt->utility_receipt.util_state_receipt);
+        if (receipt->utility_receipt.entrance_receipt_valid) {
+            m11_csb_startup_apply_entrance_action_state_receipt(
+                state,
+                &receipt->utility_receipt.entrance_receipt);
+        }
+    } else if (receipt->kind == CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34) {
+        m11_csb_startup_apply_entrance_action_state_receipt(
             state,
             &receipt->entrance_receipt);
+    } else {
+        return M11_GAME_INPUT_IGNORED;
     }
-    return M11_GAME_INPUT_IGNORED;
+    if (!csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
+            receipt,
+            &decision)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 keeps input, redraw,
+     * status, and return-to-launcher decisions inside the entrance loop.
+     * Consume the CSB boot decision receipt here instead of re-reading
+     * utility/entrance result enums in the M11 host adapter. */
+    return m11_csb_startup_apply_host_decision_receipt(state, &decision);
 }
 
 static M11_GameInputResult m11_csb_startup_handle_pointer(
