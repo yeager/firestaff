@@ -35,6 +35,7 @@
 #include "theron_v1_startup_save_resume.h"
 
 #include "theron_v1_boot.h"
+#include "theron_v1_startup_runtime_entry.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -1253,6 +1254,13 @@ int theron_v1_startup_continue_state_receipt_from_result(
     out_receipt->party_dir = result->party_dir;
     out_receipt->set_tick_count = 1;
     out_receipt->tick_count = result->tick_count;
+    out_receipt->set_runtime_level_route = 1;
+    out_receipt->runtime_level_source =
+        THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME;
+    out_receipt->runtime_track02_semantic_handoff = 0;
+    out_receipt->runtime_fallback_visuals_blocked = 0;
+    out_receipt->runtime_structured_route = 1;
+    out_receipt->runtime_receipt_text_route = 0;
     if (result->source == THERON_V1_STARTUP_CONTINUE_SOURCE_SRM) {
         out_receipt->set_save_resume = 1;
         out_receipt->save_resume_claim = THERON_V1_STARTUP_RESUME_SRM;

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron SRM runtime route receipt: Continue/SRM state receipts now set a structured SAVE_RESUME runtime-level source, with no text-route fallback and no fallback-visual block, so hosts can hand off restored SRM/.tqsv worlds without parsing status strings. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 D1L/D1R HoC thing-layer runtime receipt: D1 side thing-pass now exposes a DM1-owned runtime receipt for item/projectile draw vs suppress, exact C2500/C2900 zones, projectile-as-object routing, and no materialization during draw so stale mirror/static payloads cannot leak into the thing layer. Verification: `test_dm1_v1_viewport_d1l_d1r_f0115_thing_pass_pc34_compat` 224/224, target rebuild, CMake configure, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron snapshot graphics route receipt: snapshot+Track02-media graphics execution now delegates through the Theron-owned startup view model and graphics route receipt, covering normal startup draw, Track02-blocked no-fallback, and semantic runtime handoff without a raw UI adapter. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
