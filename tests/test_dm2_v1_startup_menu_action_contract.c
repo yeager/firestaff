@@ -756,6 +756,56 @@ int main(void)
                                              &boot_launch) &&
             boot_launch.prepare_result == DM2_V1_BOOT_STARTUP_PREPARE_OK &&
             boot_launch.profile) {
+            check(dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
+                      boot_launch.profile,
+                      1,
+                      "/tmp/firestaff-dm2-startup",
+                      1,
+                      (1u << 2),
+                      1,
+                      13,
+                      &boot_consumer_receipt) &&
+                      boot_consumer_receipt.valid &&
+                      boot_consumer_receipt.full_start_real_asset_ready == 1 &&
+                      boot_consumer_receipt.startup_title_menu_decoded_gdat_capture_ready == 1 &&
+                      boot_consumer_receipt.startup_title_decoded_gdat_hash != 0u &&
+                      boot_consumer_receipt.startup_title_decoded_gdat_pixel_count == 320u * 200u &&
+                      boot_consumer_receipt.startup_menu_decoded_gdat_hash != 0u &&
+                      boot_consumer_receipt.startup_menu_decoded_gdat_pixel_count == 320u * 200u &&
+                      boot_consumer_receipt.m11_startup_receipt_ready == 1,
+                  "real DM2 consumer receipt consumes decoded title/menu GDAT");
+            check(dm2_v1_boot_startup_host_frame_receipt_from_runtime_state(
+                      boot_launch.profile,
+                      1,
+                      "/tmp/firestaff-dm2-startup",
+                      1,
+                      (1u << 2),
+                      1,
+                      13,
+                      &boot_host_frame_receipt) &&
+                      boot_host_frame_receipt.valid &&
+                      boot_host_frame_receipt.startup_title_menu_decoded_gdat_capture_ready == 1 &&
+                      boot_host_frame_receipt.startup_title_decoded_gdat_hash != 0u &&
+                      boot_host_frame_receipt.startup_menu_decoded_gdat_hash != 0u &&
+                      boot_host_frame_receipt.render_startup_title == 1,
+                  "real DM2 host frame carries decoded title/menu GDAT");
+            check(dm2_v1_boot_startup_render_ownership_receipt_from_runtime_state(
+                      boot_launch.profile,
+                      1,
+                      "/tmp/firestaff-dm2-startup",
+                      1,
+                      (1u << 2),
+                      1,
+                      13,
+                      &boot_render_ownership_receipt) &&
+                      boot_render_ownership_receipt.valid &&
+                      boot_render_ownership_receipt.startup_title_menu_decoded_gdat_receipt_consumed == 1 &&
+                      boot_render_ownership_receipt.startup_title_decoded_gdat_hash != 0u &&
+                      boot_render_ownership_receipt.startup_title_decoded_gdat_pixel_count == 320u * 200u &&
+                      boot_render_ownership_receipt.startup_menu_decoded_gdat_hash != 0u &&
+                      boot_render_ownership_receipt.startup_menu_decoded_gdat_pixel_count == 320u * 200u &&
+                      boot_render_ownership_receipt.final_m11_draw_caller_ready == 1,
+                  "real DM2 render ownership consumes decoded title/menu GDAT");
             check(dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
                       boot_launch.profile,
                       1,
