@@ -484,6 +484,38 @@ typedef struct Theron_V1_BootStartupFullStartReceipt {
     const char *status;
 } Theron_V1_BootStartupFullStartReceipt;
 
+typedef struct Theron_V1_BootStartupHostRenderReceipt {
+    int host_consumes_full_start_receipt;
+    int full_start_valid;
+    int layout_count;
+    Theron_StartupLayoutElement
+        layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
+    int row_count;
+    char rows[THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP]
+        [THERON_STARTUP_RENDER_ROW_CAPACITY];
+    int render_plan_valid;
+    Theron_StartupRenderPlan render_plan;
+    int render_route_valid;
+    Theron_V1_BootStartupRenderRouteReceipt render_route;
+    int graphics_route_valid;
+    unsigned int bitmap_route_mask;
+    int bitmap_route_count;
+    int title_bitmap_route_ready;
+    int stage_bitmap_route_ready;
+    int soul_room_bitmap_route_ready;
+    int forcefield_bitmap_route_ready;
+    int track02_real_media_ready;
+    int real_bitmap_startup_graphics_ready;
+    int no_fallback_startup_graphics_proof;
+    int no_fallback_visuals_enforced;
+    int fallback_visuals_allowed;
+    int raw_prompt_roster_required;
+    int raw_session_rebuild_required;
+    int raw_graphics_plan_consumer_required;
+    const char *status_scope;
+    const char *status;
+} Theron_V1_BootStartupHostRenderReceipt;
+
 int theron_v1_boot_prepare_startup_profile(
     Theron_V1_BootProfile *profile,
     const char *data_dir,
@@ -1020,6 +1052,30 @@ int theron_v1_boot_startup_render_plan_from_full_start_receipt(
 int theron_v1_boot_startup_host_view_from_full_start_receipt(
     const Theron_V1_BootStartupFullStartReceipt *receipt,
     Theron_V1_BootStartupHostViewReceipt *out_receipt);
+void theron_v1_boot_startup_host_render_receipt_init(
+    Theron_V1_BootStartupHostRenderReceipt *receipt);
+int theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    Theron_V1_BootStartupHostRenderReceipt *out_receipt);
+int theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt(
+    Theron_V1_BootStartupHostRenderReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    int startup_phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int startup_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,

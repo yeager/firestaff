@@ -1466,6 +1466,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootStartupHostViewReceipt host_view_receipt;
     Theron_V1_BootStartupGraphicsRouteReceipt graphics_route_receipt;
     Theron_V1_BootStartupFullStartReceipt full_start_receipt;
+    Theron_V1_BootStartupHostRenderReceipt host_render_receipt;
     Theron_StartupAction media_pointer_action;
     Theron_StartupInputReceipt media_pointer_receipt;
     Theron_StartupAction media_input_action;
@@ -2875,6 +2876,59 @@ static void test_startup_session_facts_wrappers(void) {
                     !host_view_receipt.raw_prompt_roster_required &&
                     !host_view_receipt.raw_session_rebuild_required,
                 "boot full-start receipt supplies host-view receipt without status parsing");
+    theron_v1_boot_startup_host_render_receipt_init(&host_render_receipt);
+    expect_true(theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
+                    &full_start_receipt,
+                    &host_render_receipt) &&
+                    host_render_receipt.host_consumes_full_start_receipt &&
+                    host_render_receipt.full_start_valid &&
+                    host_render_receipt.layout_count ==
+                        full_start_receipt.view_model.layout_count &&
+                    host_render_receipt.row_count ==
+                        full_start_receipt.view_model.row_count &&
+                    host_render_receipt.render_plan_valid &&
+                    host_render_receipt.render_plan.graphic_count ==
+                        full_start_receipt.view_model.render_plan.graphic_count &&
+                    host_render_receipt.render_route_valid &&
+                    host_render_receipt.graphics_route_valid &&
+                    host_render_receipt.track02_real_media_ready &&
+                    host_render_receipt.real_bitmap_startup_graphics_ready &&
+                    (host_render_receipt.bitmap_route_mask & 0x04u) &&
+                    (host_render_receipt.bitmap_route_mask & 0x08u) &&
+                    host_render_receipt.bitmap_route_count >= 2 &&
+                    host_render_receipt.soul_room_bitmap_route_ready &&
+                    host_render_receipt.forcefield_bitmap_route_ready &&
+                    !host_render_receipt.raw_prompt_roster_required &&
+                    !host_render_receipt.raw_session_rebuild_required &&
+                    !host_render_receipt.raw_graphics_plan_consumer_required,
+                "boot host render receipt packages Track02 bitmap routes without raw prompt roster or render-plan consumer");
+    theron_v1_boot_startup_host_render_receipt_init(&host_render_receipt);
+    expect_true(theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt(
+                    &host_render_receipt,
+                    &media_receipt,
+                    media_snapshot.startup_phase,
+                    media_snapshot.selected_dungeon,
+                    media_snapshot.boot_profile,
+                    media_snapshot.world,
+                    media_snapshot.assets,
+                    media_snapshot.startup_cursor,
+                    media_snapshot.continue_focus,
+                    media_snapshot.resume_claim,
+                    media_snapshot.tqsv_slot,
+                    media_snapshot.srm_slot,
+                    media_snapshot.srm_import_status,
+                    media_snapshot.srm_root,
+                    media_snapshot.selected_mirrors_mask,
+                    media_snapshot.companion_count,
+                    media_snapshot.selected_mirror_order,
+                    media_snapshot.selected_mirror_order_count) &&
+                    host_render_receipt.host_consumes_full_start_receipt &&
+                    host_render_receipt.track02_real_media_ready &&
+                    host_render_receipt.real_bitmap_startup_graphics_ready &&
+                    !host_render_receipt.raw_prompt_roster_required &&
+                    !host_render_receipt.raw_session_rebuild_required &&
+                    !host_render_receipt.raw_graphics_plan_consumer_required,
+                "boot runtime-state host render receipt consumes Track02 media without raw arrays");
     {
         Theron_V1_BootRuntimeStartupSnapshot title_snapshot = media_snapshot;
         title_snapshot.startup_phase = THERON_STARTUP_PHASE_TITLE;
