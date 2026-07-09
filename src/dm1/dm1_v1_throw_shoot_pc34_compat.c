@@ -1122,6 +1122,63 @@ int dm1_v1_projectile_champion_poison_plan_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_champion_damage_apply_pc34(
+    const DM1_ProjectileChampionImpactPlanPc34* impactPlan,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    struct ChampionState_Compat* champion,
+    DM1_ProjectileChampionDamageApplyPlanPc34* outPlan) {
+    int selectedWounds = 0;
+    int killed = 0;
+
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->championIndex = -1;
+    if (!impactPlan || !impactPlan->handled ||
+        !impactPlan->championPresent) {
+        outPlan->valid = 1;
+        return 1;
+    }
+    outPlan->championIndex = impactPlan->championIndex;
+    if (!defender || !rng || !champion) return 0;
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 513-558 routes champion projectile
+     * impact through CHAMPION.C F0321; F0321 applies attack-type defense,
+     * armour/vitality scaling, pending wound selection, then HP mutation. */
+    if (!F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
+            impactPlan->attackTypeCode,
+            impactPlan->rawAttackValue,
+            impactPlan->allowedWounds,
+            defender,
+            rng,
+            &outPlan->scaledAttack,
+            NULL)) {
+        return 0;
+    }
+    outPlan->valid = 1;
+    if (outPlan->scaledAttack <= 0) {
+        return 1;
+    }
+    if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+            outPlan->scaledAttack,
+            impactPlan->allowedWounds,
+            defender,
+            rng,
+            &selectedWounds,
+            NULL)) {
+        return 0;
+    }
+    outPlan->selectedWounds = selectedWounds;
+    outPlan->damage.damageApplied = outPlan->scaledAttack;
+    outPlan->damage.woundMaskAdded = selectedWounds;
+    if (!F0737_COMBAT_ApplyDamageToChampion_Compat(
+            &outPlan->damage, champion, &killed)) {
+        return 0;
+    }
+    outPlan->killed = killed ? 1 : 0;
+    return 1;
+}
+
 int dm1_v1_projectile_champion_party_death_check_pc34(
     int combatKilledFlag,
     int championCurrentHealth) {

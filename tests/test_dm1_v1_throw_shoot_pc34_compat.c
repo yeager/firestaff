@@ -813,12 +813,20 @@ static void test_projectile_champion_impact_plan(void) {
     struct ProjectileInstance_Compat p;
     struct ProjectileTickResult_Compat r;
     struct CombatAction_Compat action;
+    struct CombatantChampionSnapshot_Compat defender;
+    struct ChampionState_Compat championState;
+    struct RngState_Compat rng;
     DM1_ProjectileChampionImpactPlanPc34 impact;
+    DM1_ProjectileChampionDamageApplyPlanPc34 damagePlan;
     DM1_ProjectileChampionPoisonPlanPc34 poison;
     memset(&p, 0, sizeof(p));
     memset(&r, 0, sizeof(r));
     memset(&action, 0, sizeof(action));
+    memset(&defender, 0, sizeof(defender));
+    memset(&championState, 0, sizeof(championState));
+    memset(&rng, 0, sizeof(rng));
     memset(&impact, 0, sizeof(impact));
+    memset(&damagePlan, 0, sizeof(damagePlan));
     memset(&poison, 0, sizeof(poison));
 
     p.projectileSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
@@ -887,6 +895,24 @@ static void test_projectile_champion_impact_plan(void) {
     ASSERT_EQ(dm1_v1_projectile_champion_impact_plan_pc34(
                   &p, &r, 1, &impact), 1,
               "champion impact plan rebuilds for poison");
+
+    defender.currentHealth = 100;
+    defender.statisticVitality = 64;
+    championState.present = 1;
+    championState.hp.current = 100;
+    rng.seed = 1u;
+    impact.rawAttackValue = 40;
+    impact.attackTypeCode = COMBAT_ATTACK_NORMAL;
+    impact.allowedWounds = COMBAT_WOUND_NONE;
+    ASSERT_EQ(dm1_v1_projectile_champion_damage_apply_pc34(
+                  &impact, &defender, &rng, &championState, &damagePlan), 1,
+              "champion damage apply builds");
+    ASSERT_EQ(damagePlan.valid, 1, "champion damage valid");
+    ASSERT_EQ(damagePlan.championIndex, 1, "champion damage index");
+    ASSERT_EQ(damagePlan.scaledAttack, 40, "champion damage scaled");
+    ASSERT_EQ(damagePlan.selectedWounds, 0, "champion damage wounds");
+    ASSERT_EQ(damagePlan.killed, 0, "champion damage killed");
+    ASSERT_EQ(championState.hp.current, 60, "champion damage hp applied");
 
     ASSERT_EQ(dm1_v1_projectile_champion_poison_plan_pc34(
                   &impact, &p, 12, 30, 65000, 1, &poison), 1,
