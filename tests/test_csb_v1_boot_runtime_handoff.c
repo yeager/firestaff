@@ -83,6 +83,20 @@ typedef struct {
     int last_surface;
 } TestHudMenuDrawProbe;
 
+typedef struct {
+    int draw_title_count;
+    int clear_black_count;
+    int draw_full_surface_count;
+    int draw_full_surface_result;
+    int draw_opening_frame_count;
+    int draw_opening_frame_result;
+    int draw_closed_doors_count;
+    int draw_door_fallback_count;
+    int draw_fallback_text_count;
+    int draw_utility_panel_count;
+    int last_surface;
+} TestStartupRenderProbe;
+
 static void hud_probe_draw_utility_panel(
     void *user,
     const CSB_V1_StartupRenderPlan_PC34 *plan)
@@ -134,6 +148,124 @@ static void hud_probe_executor_init(
     executor->draw_utility_panel = hud_probe_draw_utility_panel;
     executor->draw_closed_doors = hud_probe_draw_closed_doors;
     executor->draw_fallback_text = hud_probe_draw_fallback_text;
+}
+
+static int render_probe_draw_title(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
+    if (!probe || !plan) {
+        return 0;
+    }
+    ++probe->draw_title_count;
+    probe->last_surface = (int)plan->surface;
+    return 1;
+}
+
+static void render_probe_clear_black(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
+    if (!probe || !plan) {
+        return;
+    }
+    ++probe->clear_black_count;
+    probe->last_surface = (int)plan->surface;
+}
+
+static int render_probe_draw_full_surface(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
+    if (!probe || !plan) {
+        return 0;
+    }
+    ++probe->draw_full_surface_count;
+    probe->last_surface = (int)plan->surface;
+    return probe->draw_full_surface_result;
+}
+
+static int render_probe_draw_opening_frame(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
+    if (!probe || !plan) {
+        return 0;
+    }
+    ++probe->draw_opening_frame_count;
+    probe->last_surface = (int)plan->surface;
+    return probe->draw_opening_frame_result;
+}
+
+static void render_probe_draw_closed_doors(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
+    if (!probe || !plan) {
+        return;
+    }
+    ++probe->draw_closed_doors_count;
+    probe->last_surface = (int)plan->surface;
+}
+
+static void render_probe_draw_door_fallback(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
+    if (!probe || !plan) {
+        return;
+    }
+    ++probe->draw_door_fallback_count;
+    probe->last_surface = (int)plan->surface;
+}
+
+static void render_probe_draw_fallback_text(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
+    if (!probe || !plan) {
+        return;
+    }
+    ++probe->draw_fallback_text_count;
+    probe->last_surface = (int)plan->surface;
+}
+
+static void render_probe_draw_utility_panel(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
+    if (!probe || !plan) {
+        return;
+    }
+    ++probe->draw_utility_panel_count;
+    probe->last_surface = (int)plan->surface;
+}
+
+static void render_probe_executor_init(
+    CSB_V1_StartupRenderExecutor_PC34 *executor,
+    TestStartupRenderProbe *probe)
+{
+    memset(executor, 0, sizeof(*executor));
+    memset(probe, 0, sizeof(*probe));
+    executor->user = probe;
+    executor->draw_title = render_probe_draw_title;
+    executor->clear_black = render_probe_clear_black;
+    executor->draw_full_surface = render_probe_draw_full_surface;
+    executor->draw_opening_frame = render_probe_draw_opening_frame;
+    executor->draw_closed_doors = render_probe_draw_closed_doors;
+    executor->draw_door_fallback = render_probe_draw_door_fallback;
+    executor->draw_fallback_text = render_probe_draw_fallback_text;
+    executor->draw_utility_panel = render_probe_draw_utility_panel;
+    probe->draw_full_surface_result = 1;
+    probe->draw_opening_frame_result = 1;
 }
 
 static void write_le16(uint8_t *buf, size_t off, uint16_t value)
@@ -2004,7 +2136,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_draw_receipt;
     CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
+    CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
+    TestStartupRenderProbe capture_render_probe;
     CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
     CSB_V1_StartupRenderPlan_PC34 receipt_closed_door_plan;
     CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
@@ -2209,6 +2343,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               snapshot_render_plan.asset_command_count == 1 &&
               snapshot_render_plan.render_command_count == 2,
           "boot startup capture receipt returns full title render plan");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_capture_render_plan_pc34(
+              &capture_receipt,
+              &capture_render_executor) == 1 &&
+              capture_render_probe.clear_black_count == 1 &&
+              capture_render_probe.draw_title_count == 1 &&
+              capture_render_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_TITLE_PC34,
+          "boot startup capture receipt executes full title render plan");
     CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
               &runtime_view_receipt,
               snapshot.title_active,
@@ -2523,6 +2667,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               snapshot_render_plan.waiting_for_input &&
               snapshot_render_plan.menu_option_count == 4,
           "boot startup capture receipt returns full utility base render plan");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_capture_render_plan_pc34(
+              &capture_receipt,
+              &capture_render_executor) == 1 &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_utility_panel_count == 1 &&
+              capture_render_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
+          "boot startup capture receipt executes full utility render plan");
     memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
     hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
     CHECK(csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
@@ -2761,6 +2915,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strstr(snapshot_render_plan.fallback_prompt_text,
                      "PRESS ENTER") != NULL,
           "boot startup capture receipt returns full closed-door render plan");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_capture_render_plan_pc34(
+              &capture_receipt,
+              &capture_render_executor) == 1 &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_closed_doors_count == 1 &&
+              capture_render_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
+          "boot startup capture receipt executes full closed-door render plan");
     CHECK(csb_v1_boot_startup_readiness_receipt_from_view_pc34(
               &view_receipt,
               &readiness_receipt) == 1 &&
@@ -2907,6 +3071,15 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
               snapshot_render_plan.opening_step == 3,
           "boot startup capture receipt returns full door-opening render plan");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_capture_render_plan_pc34(
+              &capture_receipt,
+              &capture_render_executor) == 1 &&
+              capture_render_probe.draw_opening_frame_count == 1 &&
+              capture_render_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
+          "boot startup capture receipt executes full door-opening render plan");
     snapshot.opening_active = 0;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 0;
