@@ -428,19 +428,19 @@ static void test_palette_boundaries(void) {
 /* ── Test: Legacy API compatibility ─────────────────────────────────── */
 
 static void test_legacy_api(void) {
-    M11_LightState s;
-    m11_light_init(&s);
+    DM1_V1_LegacyLightStatePc34 s;
+    DM1_V1_Light_LegacyInitPc34Compat(&s);
 
     ASSERT_EQ(s.dungeon_view_palette_idx, DM1_LIGHT_PALETTE_DARKEST);
 
-    m11_light_apply_torch(&s, 10);
+    DM1_V1_Light_LegacyApplyTorchPc34Compat(&s, 10);
     ASSERT_TRUE(s.total_light_amount > 0);
     ASSERT_TRUE(s.dungeon_view_palette_idx < DM1_LIGHT_PALETTE_DARKEST);
 
     /* Level at depth 0 should be non-zero */
-    ASSERT_TRUE(m11_light_get_level_at_depth(&s, 0) > 0);
+    ASSERT_TRUE(DM1_V1_Light_LegacyGetLevelAtDepthPc34Compat(&s, 0) > 0);
     /* Darkness mask at depth 0 should be < 100 */
-    ASSERT_TRUE(m11_light_get_darkness_mask(&s, 0) < 100);
+    ASSERT_TRUE(DM1_V1_Light_LegacyGetDarknessMaskPc34Compat(&s, 0) < 100);
 }
 
 /* ── Test: Four torches weighted sum matches ReDMCSB ────────────────── */

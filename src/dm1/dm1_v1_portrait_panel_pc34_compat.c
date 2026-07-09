@@ -6,13 +6,13 @@
 #include "dm1_v1_portrait_panel_pc34_compat.h"
 #include <string.h>
 
-void m11_pp_init(M11_PP_PanelState* state) {
+void DM1_V1_PortraitPanel_InitPc34Compat(DM1_V1_PortraitPanelStatePc34* state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_PP_PanelState));
+    memset(state, 0, sizeof(DM1_V1_PortraitPanelStatePc34));
     state->selected_index = -1;
 }
 
-void m11_pp_set_champion_count(M11_PP_PanelState* state, uint8_t count) {
+void DM1_V1_PortraitPanel_SetChampionCountPc34Compat(DM1_V1_PortraitPanelStatePc34* state, uint8_t count) {
     if (!state) return;
     if (count > DM1_MAX_CHAMPIONS) count = DM1_MAX_CHAMPIONS;
     state->active_count = count;
@@ -20,7 +20,7 @@ void m11_pp_set_champion_count(M11_PP_PanelState* state, uint8_t count) {
 
 /* F0515 pattern: load planar portrait data (4 bitplanes, 32x29)
  * Expected size: (32/8) * 29 * 4 = 464 bytes */
-bool m11_pp_load_portrait(M11_PP_Portrait* port, const uint8_t* planar_data,
+bool DM1_V1_PortraitPanel_LoadPortraitPc34Compat(DM1_V1_PortraitPanelPortraitPc34* port, const uint8_t* planar_data,
                            uint16_t data_size) {
     if (!port || !planar_data) return false;
     uint16_t expected = (DM1_PORTRAIT_W / 8) * DM1_PORTRAIT_H * DM1_PORTRAIT_BITPLANES;
@@ -35,7 +35,7 @@ bool m11_pp_load_portrait(M11_PP_Portrait* port, const uint8_t* planar_data,
 
 /* Convert Amiga planar bitplanes to chunky 8-bit indexed pixels
  * F0515: iterate through 4 bitplanes, extract pixel values */
-void m11_pp_convert_planar_to_chunky(M11_PP_Portrait* port) {
+void DM1_V1_PortraitPanel_ConvertPlanarToChunkyPc34Compat(DM1_V1_PortraitPanelPortraitPc34* port) {
     if (!port || !port->loaded) return;
 
     uint16_t plane_size = (DM1_PORTRAIT_W / 8) * DM1_PORTRAIT_H;
@@ -57,7 +57,7 @@ void m11_pp_convert_planar_to_chunky(M11_PP_Portrait* port) {
     }
 }
 
-void m11_pp_update_bars(M11_PP_ChampionPanel* panel,
+void DM1_V1_PortraitPanel_UpdateBarsPc34Compat(DM1_V1_PortraitPanelChampionPc34* panel,
                          int16_t hp, int16_t max_hp,
                          int16_t mana, int16_t max_mana,
                          int16_t stamina, int16_t max_stamina,
@@ -81,7 +81,7 @@ void m11_pp_update_bars(M11_PP_ChampionPanel* panel,
     panel->alive = (hp > 0);
 }
 
-void m11_pp_select(M11_PP_PanelState* state, int8_t index) {
+void DM1_V1_PortraitPanel_SelectPc34Compat(DM1_V1_PortraitPanelStatePc34* state, int8_t index) {
     if (!state) return;
     /* Deselect all */
     for (int i = 0; i < DM1_MAX_CHAMPIONS; i++) {
@@ -93,16 +93,16 @@ void m11_pp_select(M11_PP_PanelState* state, int8_t index) {
     }
 }
 
-void m11_pp_damage_flash(M11_PP_PanelState* state, uint8_t champ_idx) {
+void DM1_V1_PortraitPanel_DamageFlashPc34Compat(DM1_V1_PortraitPanelStatePc34* state, uint8_t champ_idx) {
     if (!state || champ_idx >= DM1_MAX_CHAMPIONS) return;
     state->panels[champ_idx].portrait.injured = true;
     state->panels[champ_idx].portrait.damage_flash_timer = 6; /* 6 frames */
 }
 
-void m11_pp_tick(M11_PP_PanelState* state) {
+void DM1_V1_PortraitPanel_TickPc34Compat(DM1_V1_PortraitPanelStatePc34* state) {
     if (!state) return;
     for (int i = 0; i < DM1_MAX_CHAMPIONS; i++) {
-        M11_PP_Portrait* p = &state->panels[i].portrait;
+        DM1_V1_PortraitPanelPortraitPc34* p = &state->panels[i].portrait;
         if (p->damage_flash_timer > 0) {
             p->damage_flash_timer--;
             if (p->damage_flash_timer == 0) {
@@ -114,7 +114,7 @@ void m11_pp_tick(M11_PP_PanelState* state) {
 
 /* Layout champion panels at the right side of screen (224, 33)
  * Original DM1: 4 panels stacked vertically, each ~33px tall */
-void m11_pp_layout(M11_PP_PanelState* state, int16_t base_x, int16_t base_y) {
+void DM1_V1_PortraitPanel_LayoutPc34Compat(DM1_V1_PortraitPanelStatePc34* state, int16_t base_x, int16_t base_y) {
     if (!state) return;
     for (int i = 0; i < DM1_MAX_CHAMPIONS; i++) {
         state->panels[i].panel_x = base_x;

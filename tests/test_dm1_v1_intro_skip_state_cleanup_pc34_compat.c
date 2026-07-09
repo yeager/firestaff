@@ -30,9 +30,9 @@
  *      so a runtime that falls back to the decoded TITLE.DAT bank does
  *      not corrupt the PRESENTS word colour on the skip path.
  *
- *   4. M11_TS_TitleState cleanup invariants — the M11 title-screen state
+ *   4. DM1_V1_TitleStatePc34 cleanup invariants — the M11 title-screen state
  *      struct (src/dm1/dm1_v1_title_screen_pc34_compat.c) must zero-init
- *      on construction, leave no stale heap pointers after m11_ts_cleanup,
+ *      on construction, leave no stale heap pointers after DM1_V1_Title_CleanupPc34Compat,
  *      and remain re-init/re-load safe across a clean/load cycle so a
  *      skipped intro cannot leak buffers into the entrance or gameplay
  *      surfaces.
@@ -242,7 +242,7 @@ static int check_m11_ts_state_cleanup(void) {
      * If any of these invariants regress, a skipped intro that hits
      * the M11 fallback path will leak 320*200 screen buffers into the
      * entrance surface. */
-    M11_TS_TitleState state;
+    DM1_V1_TitleStatePc34 state;
     uint8_t fakeBitmap[64];
     uint8_t fakeBitmapAgain[64];
     int i;
@@ -252,7 +252,7 @@ static int check_m11_ts_state_cleanup(void) {
         fakeBitmapAgain[i] = (uint8_t)(i * 5 + 11);
     }
     memset(&state, 0xAA, sizeof(state));
-    m11_ts_init(&state);
+    DM1_V1_Title_InitPc34Compat(&state);
     expect_signed("init zeroes screen_buffers[0]", state.screen_buffers[0] == 0, 1);
     expect_signed("init zeroes screen_buffers[1]", state.screen_buffers[1] == 0, 1);
     expect_u("init active_buffer reset", state.active_buffer, 0u);
@@ -263,10 +263,10 @@ static int check_m11_ts_state_cleanup(void) {
     /* Null-state init must be a no-op, not a crash.  A skip path that
      * forwards a NULL pointer through the launcher would otherwise
      * segfault the title fade-out. */
-    m11_ts_init(0);
-    m11_ts_cleanup(0);
+    DM1_V1_Title_InitPc34Compat(0);
+    DM1_V1_Title_CleanupPc34Compat(0);
 
-    if (!m11_ts_load_title_graphics(&state, fakeBitmap, sizeof(fakeBitmap))) {
+    if (!DM1_V1_Title_LoadGraphicsPc34Compat(&state, fakeBitmap, sizeof(fakeBitmap))) {
         printf("FAIL load_title_graphics: load returned false on a valid 64-byte buffer\n");
         g_failures++;
         return 0;
@@ -279,18 +279,18 @@ static int check_m11_ts_state_cleanup(void) {
 
     /* A zoom step with no crash + the state surviving cleanup is the
      * contract the entrance/runtime relies on. */
-    if (!m11_ts_animate_zoom(&state, 0u)) {
+    if (!DM1_V1_Title_AnimateZoomPc34Compat(&state, 0u)) {
         printf("FAIL animate_zoom(0): rejected on a freshly-loaded state\n");
         g_failures++;
     }
-    if (!m11_ts_animate_zoom(&state, DM1_TITLE_ZOOM_STEPS - 1u)) {
+    if (!DM1_V1_Title_AnimateZoomPc34Compat(&state, DM1_TITLE_ZOOM_STEPS - 1u)) {
         printf("FAIL animate_zoom(last): rejected on a freshly-loaded state\n");
         g_failures++;
     }
-    m11_ts_draw_title(&state);
-    m11_ts_set_credits_palette(&state);
+    DM1_V1_Title_DrawPc34Compat(&state);
+    DM1_V1_Title_SetCreditsPalettePc34Compat(&state);
 
-    m11_ts_cleanup(&state);
+    DM1_V1_Title_CleanupPc34Compat(&state);
     expect_signed("cleanup zeroes screen_buffers[0]", state.screen_buffers[0] == 0, 1);
     expect_signed("cleanup zeroes screen_buffers[1]", state.screen_buffers[1] == 0, 1);
     expect_signed("cleanup zeroes title_bitmap", state.title_bitmap == 0, 1);
@@ -300,53 +300,53 @@ static int check_m11_ts_state_cleanup(void) {
 
     /* Re-init + re-load must succeed after a cleanup, and the new
      * buffers must be distinct from the old ones.  If the cleanup
-     * path left stale pointers, the second m11_ts_load_title_graphics
+     * path left stale pointers, the second DM1_V1_Title_LoadGraphicsPc34Compat
      * call would write into already-freed memory. */
-    m11_ts_init(&state);
-    if (!m11_ts_load_title_graphics(&state, fakeBitmapAgain, sizeof(fakeBitmapAgain))) {
+    DM1_V1_Title_InitPc34Compat(&state);
+    if (!DM1_V1_Title_LoadGraphicsPc34Compat(&state, fakeBitmapAgain, sizeof(fakeBitmapAgain))) {
         printf("FAIL re-load: second load returned false after cleanup\n");
         g_failures++;
     }
     expect_truth("re-load screen_buffers[0] fresh", state.screen_buffers[0] != 0, 1);
     expect_truth("re-load screen_buffers[1] fresh", state.screen_buffers[1] != 0, 1);
     expect_truth("re-load title_bitmap fresh", state.title_bitmap != 0, 1);
-    m11_ts_cleanup(&state);
+    DM1_V1_Title_CleanupPc34Compat(&state);
     return 1;
 }
 
 static int check_m11_ts_animate_zoom_skip(void) {
-    /* Once m11_ts_cleanup runs (or before init runs), animate_zoom must
+    /* Once DM1_V1_Title_CleanupPc34Compat runs (or before init runs), animate_zoom must
      * refuse to advance the zoom step.  Otherwise the M11 runtime that
-     * forwards an early input-quit through m11_ts_animate_zoom would
+     * forwards an early input-quit through DM1_V1_Title_AnimateZoomPc34Compat would
      * write into the bitmap pointer it already freed, producing
      * visible garbage in the entrance transition. */
-    M11_TS_TitleState cleanState;
-    M11_TS_TitleState loadedState;
+    DM1_V1_TitleStatePc34 cleanState;
+    DM1_V1_TitleStatePc34 loadedState;
     uint8_t fakeBitmap[64];
     int i;
 
     for (i = 0; i < 64; ++i) fakeBitmap[i] = (uint8_t)(i + 1);
 
     memset(&cleanState, 0xAA, sizeof(cleanState));
-    m11_ts_init(&cleanState);
+    DM1_V1_Title_InitPc34Compat(&cleanState);
     expect_truth("animate_zoom refuses pre-load state",
-                 m11_ts_animate_zoom(&cleanState, 0u) == 0, 1);
-    m11_ts_cleanup(&cleanState);
+                 DM1_V1_Title_AnimateZoomPc34Compat(&cleanState, 0u) == 0, 1);
+    DM1_V1_Title_CleanupPc34Compat(&cleanState);
 
     memset(&loadedState, 0, sizeof(loadedState));
-    m11_ts_init(&loadedState);
-    if (m11_ts_load_title_graphics(&loadedState, fakeBitmap, sizeof(fakeBitmap))) {
-        expect_truth("animate_zoom accepts frame 0", m11_ts_animate_zoom(&loadedState, 0u) != 0, 1);
-        expect_truth("animate_zoom accepts frame mid", m11_ts_animate_zoom(&loadedState, 9u) != 0, 1);
-        expect_truth("animate_zoom accepts frame last", m11_ts_animate_zoom(&loadedState, DM1_TITLE_ZOOM_STEPS - 1u) != 0, 1);
+    DM1_V1_Title_InitPc34Compat(&loadedState);
+    if (DM1_V1_Title_LoadGraphicsPc34Compat(&loadedState, fakeBitmap, sizeof(fakeBitmap))) {
+        expect_truth("animate_zoom accepts frame 0", DM1_V1_Title_AnimateZoomPc34Compat(&loadedState, 0u) != 0, 1);
+        expect_truth("animate_zoom accepts frame mid", DM1_V1_Title_AnimateZoomPc34Compat(&loadedState, 9u) != 0, 1);
+        expect_truth("animate_zoom accepts frame last", DM1_V1_Title_AnimateZoomPc34Compat(&loadedState, DM1_TITLE_ZOOM_STEPS - 1u) != 0, 1);
         /* Frame ordinal past the zoom step count must wrap via the
          * DM1_TITLE_ZOOM_STEPS modulus, not crash.  This is the
          * shape the F0437 zoom loop uses internally (TITLE.C:385-387
          * generates 18 reverse-order bitmaps). */
         expect_truth("animate_zoom wraps past last frame",
-                     m11_ts_animate_zoom(&loadedState, DM1_TITLE_ZOOM_STEPS) != 0, 1);
+                     DM1_V1_Title_AnimateZoomPc34Compat(&loadedState, DM1_TITLE_ZOOM_STEPS) != 0, 1);
     }
-    m11_ts_cleanup(&loadedState);
+    DM1_V1_Title_CleanupPc34Compat(&loadedState);
     return 1;
 }
 

@@ -475,11 +475,11 @@ uint16_t dm1_light_darken_rgb444(uint16_t rgb444) {
 
 /* ── Legacy API wrappers ────────────────────────────────────────────── */
 
-void m11_light_init(M11_LightState *s) {
+void DM1_V1_Light_LegacyInitPc34Compat(DM1_V1_LegacyLightStatePc34 *s) {
     dm1_light_init(s);
 }
 
-void m11_light_tick(M11_LightState *s, int tick_ms) {
+void DM1_V1_Light_LegacyTickPc34Compat(DM1_V1_LegacyLightStatePc34 *s, int tick_ms) {
     if (!s) return;
     /* Legacy API used milliseconds; convert roughly.
      * One DM1 game tick ≈ 1/6 second. */
@@ -487,7 +487,7 @@ void m11_light_tick(M11_LightState *s, int tick_ms) {
     dm1_light_tick(s);
 }
 
-int m11_light_get_level_at_depth(const M11_LightState *s, int view_depth) {
+int DM1_V1_Light_LegacyGetLevelAtDepthPc34Compat(const DM1_V1_LegacyLightStatePc34 *s, int view_depth) {
     if (!s) return 0;
     /* Approximate: total light reduced by depth.
      * ReDMCSB doesn't have a per-depth light level directly —
@@ -497,11 +497,11 @@ int m11_light_get_level_at_depth(const M11_LightState *s, int view_depth) {
     return level > 0 ? level : 0;
 }
 
-int m11_light_get_darkness_mask(const M11_LightState *s, int view_depth) {
-    return 100 - m11_light_get_level_at_depth(s, view_depth);
+int DM1_V1_Light_LegacyGetDarknessMaskPc34Compat(const DM1_V1_LegacyLightStatePc34 *s, int view_depth) {
+    return 100 - DM1_V1_Light_LegacyGetLevelAtDepthPc34Compat(s, view_depth);
 }
 
-void m11_light_apply_torch(M11_LightState *s, int torch_power) {
+void DM1_V1_Light_LegacyApplyTorchPc34Compat(DM1_V1_LegacyLightStatePc34 *s, int torch_power) {
     if (!s) return;
     /* Legacy: add torch to first available slot of champion 0 */
     dm1_light_set_champion_count(s, 1);

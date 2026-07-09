@@ -55,12 +55,12 @@ static void copy_palette(unsigned char dst[16], const unsigned char src[16])
     }
 }
 
-void m11_wo_init(M11_WO_OrnamentState* state) {
+void DM1_V1_WallOrnament_InitPc34Compat(DM1_V1_WallOrnamentStatePc34* state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_WO_OrnamentState));
+    memset(state, 0, sizeof(DM1_V1_WallOrnamentStatePc34));
 }
 
-void m11_wo_set_level_ornaments(M11_WO_OrnamentState* state,
+void DM1_V1_WallOrnament_SetLevelOrnamentsPc34Compat(DM1_V1_WallOrnamentStatePc34* state,
                                  uint8_t wall_count, uint8_t floor_count,
                                  uint8_t door_count) {
     if (!state) return;
@@ -71,12 +71,12 @@ void m11_wo_set_level_ornaments(M11_WO_OrnamentState* state,
 
 /* F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF
  * Alcoves are wall ornaments where items can be placed/retrieved */
-bool m11_wo_is_alcove(const M11_WO_OrnamentDef* orn) {
+bool DM1_V1_WallOrnament_IsAlcovePc34Compat(const DM1_V1_WallOrnamentDefPc34* orn) {
     if (!orn) return false;
-    return orn->is_alcove || orn->kind == M11_ORN_ALCOVE;
+    return orn->is_alcove || orn->kind == DM1_V1_WALL_ORN_ALCOVE;
 }
 
-const M11_WO_OrnCoord* m11_wo_get_coord(const M11_WO_OrnamentDef* orn,
+const DM1_V1_WallOrnamentCoordPc34* DM1_V1_WallOrnament_GetCoordPc34Compat(const DM1_V1_WallOrnamentDefPc34* orn,
                                           int16_t depth, int16_t side) {
     if (!orn) return NULL;
     if (depth < 0 || depth > 3 || side < 0 || side > 2) return NULL;
@@ -90,7 +90,7 @@ const M11_WO_OrnCoord* m11_wo_get_coord(const M11_WO_OrnamentDef* orn,
 /* Setup default ornament coordinate positions based on DM1 perspective geometry.
  * These approximate the ReDMCSB coordinate tables from graphic 558.
  * Depth 0 = closest (largest), depth 3 = farthest (smallest) */
-void m11_wo_setup_default_coords(M11_WO_OrnamentDef* orn) {
+void DM1_V1_WallOrnament_SetupDefaultCoordsPc34Compat(DM1_V1_WallOrnamentDefPc34* orn) {
     if (!orn) return;
 
     /* Depth scaling factors: approximate DM1 perspective projection

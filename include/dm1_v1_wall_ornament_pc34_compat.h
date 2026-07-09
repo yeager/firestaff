@@ -20,15 +20,15 @@ extern "C" {
 
 /* Ornament types from ReDMCSB */
 typedef enum {
-    M11_ORN_NONE = 0,
-    M11_ORN_ALCOVE,            /* Interactive alcove (item storage) */
-    M11_ORN_SWITCH,            /* Wall switch (lever/button) */
-    M11_ORN_KEYHOLE,           /* Keyhole */
-    M11_ORN_INSCRIPTION,       /* Text inscription */
-    M11_ORN_FOUNTAIN,          /* Fountain (water source) */
-    M11_ORN_TORCH_HOLDER,      /* Wall torch */
-    M11_ORN_GENERIC            /* Generic decorative ornament */
-} M11_WO_OrnamentKind;
+    DM1_V1_WALL_ORN_NONE = 0,
+    DM1_V1_WALL_ORN_ALCOVE,            /* Interactive alcove (item storage) */
+    DM1_V1_WALL_ORN_SWITCH,            /* Wall switch (lever/button) */
+    DM1_V1_WALL_ORN_KEYHOLE,           /* Keyhole */
+    DM1_V1_WALL_ORN_INSCRIPTION,       /* Text inscription */
+    DM1_V1_WALL_ORN_FOUNTAIN,          /* Fountain (water source) */
+    DM1_V1_WALL_ORN_TORCH_HOLDER,      /* Wall torch */
+    DM1_V1_WALL_ORN_GENERIC            /* Generic decorative ornament */
+} DM1_V1_WallOrnamentKindPc34;
 
 /* Ornament coordinate set — where to draw at each depth/side */
 typedef struct {
@@ -36,25 +36,25 @@ typedef struct {
     int16_t w, h;             /* Ornament bitmap dimensions at this depth */
     int16_t depth;            /* View depth (0=closest, 3=farthest) */
     int16_t side;             /* 0=left, 1=center, 2=right */
-} M11_WO_OrnCoord;
+} DM1_V1_WallOrnamentCoordPc34;
 
 /* Ornament definition */
 typedef struct {
     uint16_t gfx_index;       /* Bitmap index in GRAPHICS.DAT */
-    M11_WO_OrnamentKind kind;
+    DM1_V1_WallOrnamentKindPc34 kind;
     bool is_alcove;            /* F0107 check result */
     bool is_interactive;       /* Can be clicked */
-    M11_WO_OrnCoord coords[DM1_ORN_COORD_SETS]; /* Per depth/side */
-} M11_WO_OrnamentDef;
+    DM1_V1_WallOrnamentCoordPc34 coords[DM1_ORN_COORD_SETS]; /* Per depth/side */
+} DM1_V1_WallOrnamentDefPc34;
 
 typedef struct {
-    M11_WO_OrnamentDef wall_ornaments[DM1_WALL_ORN_MAX];
-    M11_WO_OrnamentDef floor_ornaments[DM1_FLOOR_ORN_MAX];
-    M11_WO_OrnamentDef door_ornaments[DM1_DOOR_ORN_MAX];
+    DM1_V1_WallOrnamentDefPc34 wall_ornaments[DM1_WALL_ORN_MAX];
+    DM1_V1_WallOrnamentDefPc34 floor_ornaments[DM1_FLOOR_ORN_MAX];
+    DM1_V1_WallOrnamentDefPc34 door_ornaments[DM1_DOOR_ORN_MAX];
     uint8_t wall_count;
     uint8_t floor_count;
     uint8_t door_count;
-} M11_WO_OrnamentState;
+} DM1_V1_WallOrnamentStatePc34;
 
 typedef struct DM1_WallOrnamentZoneBlitPc34 {
     int srcX;
@@ -103,14 +103,14 @@ typedef struct DM1_FrontMirrorRenderPlanPc34 {
     int backingHeight;
 } DM1_FrontMirrorRenderPlanPc34;
 
-void m11_wo_init(M11_WO_OrnamentState* state);
-void m11_wo_set_level_ornaments(M11_WO_OrnamentState* state,
+void DM1_V1_WallOrnament_InitPc34Compat(DM1_V1_WallOrnamentStatePc34* state);
+void DM1_V1_WallOrnament_SetLevelOrnamentsPc34Compat(DM1_V1_WallOrnamentStatePc34* state,
                                  uint8_t wall_count, uint8_t floor_count,
                                  uint8_t door_count);
-bool m11_wo_is_alcove(const M11_WO_OrnamentDef* orn);
-const M11_WO_OrnCoord* m11_wo_get_coord(const M11_WO_OrnamentDef* orn,
+bool DM1_V1_WallOrnament_IsAlcovePc34Compat(const DM1_V1_WallOrnamentDefPc34* orn);
+const DM1_V1_WallOrnamentCoordPc34* DM1_V1_WallOrnament_GetCoordPc34Compat(const DM1_V1_WallOrnamentDefPc34* orn,
                                           int16_t depth, int16_t side);
-void m11_wo_setup_default_coords(M11_WO_OrnamentDef* orn);
+void DM1_V1_WallOrnament_SetupDefaultCoordsPc34Compat(DM1_V1_WallOrnamentDefPc34* orn);
 
 int dm1_v1_wall_ornament_coord_set_index_pc34(int globalIndex);
 int dm1_v1_wall_ornament_zone_pc34(int coordSet,
@@ -130,6 +130,25 @@ int dm1_v1_wall_ornament_render_plan_pc34(
 int dm1_v1_front_mirror_render_plan_pc34(
     int portraitOrdinal,
     DM1_FrontMirrorRenderPlanPc34* outPlan);
+
+/* Compatibility aliases for older M11 call sites. */
+typedef DM1_V1_WallOrnamentKindPc34 M11_WO_OrnamentKind;
+typedef DM1_V1_WallOrnamentCoordPc34 M11_WO_OrnCoord;
+typedef DM1_V1_WallOrnamentDefPc34 M11_WO_OrnamentDef;
+typedef DM1_V1_WallOrnamentStatePc34 M11_WO_OrnamentState;
+#define M11_ORN_NONE DM1_V1_WALL_ORN_NONE
+#define M11_ORN_ALCOVE DM1_V1_WALL_ORN_ALCOVE
+#define M11_ORN_SWITCH DM1_V1_WALL_ORN_SWITCH
+#define M11_ORN_KEYHOLE DM1_V1_WALL_ORN_KEYHOLE
+#define M11_ORN_INSCRIPTION DM1_V1_WALL_ORN_INSCRIPTION
+#define M11_ORN_FOUNTAIN DM1_V1_WALL_ORN_FOUNTAIN
+#define M11_ORN_TORCH_HOLDER DM1_V1_WALL_ORN_TORCH_HOLDER
+#define M11_ORN_GENERIC DM1_V1_WALL_ORN_GENERIC
+#define m11_wo_init DM1_V1_WallOrnament_InitPc34Compat
+#define m11_wo_set_level_ornaments DM1_V1_WallOrnament_SetLevelOrnamentsPc34Compat
+#define m11_wo_is_alcove DM1_V1_WallOrnament_IsAlcovePc34Compat
+#define m11_wo_get_coord DM1_V1_WallOrnament_GetCoordPc34Compat
+#define m11_wo_setup_default_coords DM1_V1_WallOrnament_SetupDefaultCoordsPc34Compat
 
 #ifdef __cplusplus
 }

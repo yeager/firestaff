@@ -385,29 +385,29 @@ static void test_constants(void) {
     ASSERT_EQ(DM1_V1_MESSAGE_CONTINUATION_INDENT, 12, "ContIndent=12");
 }
 
-/* ── Test: Legacy M11_TextState compatibility ───────────────────────── */
+/* ── Test: Legacy DM1_V1_LegacyTextStatePc34 compatibility ───────────────────────── */
 static void test_legacy_compat(void) {
-    M11_TextState s;
-    const M11_TextMessage* msg;
+    DM1_V1_LegacyTextStatePc34 s;
+    const DM1_V1_LegacyTextMessagePc34* msg;
 
-    m11_text_init(&s);
-    ASSERT_EQ(m11_text_get_active_count(&s), 0, "legacy init empty");
+    DM1_V1_LegacyText_InitPc34Compat(&s);
+    ASSERT_EQ(DM1_V1_LegacyText_GetActiveCountPc34Compat(&s), 0, "legacy init empty");
 
-    m11_text_show(&s, "Test", 10, 20, 15, 0);
-    ASSERT_EQ(m11_text_get_active_count(&s), 1, "legacy count 1");
+    DM1_V1_LegacyText_ShowPc34Compat(&s, "Test", 10, 20, 15, 0);
+    ASSERT_EQ(DM1_V1_LegacyText_GetActiveCountPc34Compat(&s), 1, "legacy count 1");
 
-    msg = m11_text_get_message(&s, 0);
+    msg = DM1_V1_LegacyText_GetMessagePc34Compat(&s, 0);
     ASSERT_NONNULL(msg, "legacy msg non-null");
     ASSERT_STR_EQ(msg->text, "Test", "legacy msg text");
     ASSERT_EQ(msg->x, 10, "legacy msg x");
     ASSERT_EQ(msg->y, 20, "legacy msg y");
     ASSERT_EQ(msg->color, 15, "legacy msg color");
 
-    m11_text_show_centered(&s, "Centered", 100, 8);
-    ASSERT_EQ(m11_text_get_active_count(&s), 2, "legacy count 2");
+    DM1_V1_LegacyText_ShowCenteredPc34Compat(&s, "Centered", 100, 8);
+    ASSERT_EQ(DM1_V1_LegacyText_GetActiveCountPc34Compat(&s), 2, "legacy count 2");
 
-    m11_text_tick(&s, M11_TEXT_DISPLAY_TICKS + 1);
-    ASSERT_EQ(m11_text_get_active_count(&s), 0, "legacy tick expired");
+    DM1_V1_LegacyText_TickPc34Compat(&s, DM1_V1_LEGACY_TEXT_DISPLAY_TICKS_PC34 + 1);
+    ASSERT_EQ(DM1_V1_LegacyText_GetActiveCountPc34Compat(&s), 0, "legacy tick expired");
 }
 
 /* ── Main ───────────────────────────────────────────────────────────── */
