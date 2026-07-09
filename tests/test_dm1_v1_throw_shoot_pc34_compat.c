@@ -805,6 +805,7 @@ static void test_projectile_creature_impact_plan(void) {
     group.cells = (1 << 0) | (3 << 2);
     group.health[0] = 4;
     group.health[1] = 20;
+    p.projectileCategory = PROJECTILE_CATEGORY_KINETIC;
     p.projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
     p.attack = 64;
     ASSERT_EQ(dm1_v1_projectile_creature_precheck_damage_plan_pc34(
@@ -818,6 +819,27 @@ static void test_projectile_creature_impact_plan(void) {
     ASSERT_EQ(precheck.newCount, 0, "F0266 precheck compacts count");
     ASSERT_EQ(precheck.newHealth[0], 20, "F0266 precheck shifts health");
     ASSERT_EQ(precheck.newHealth[1], 0, "F0266 precheck clears tail");
+    ASSERT_EQ(dm1_v1_projectile_creature_precheck_aftermath_pc34(
+                  &precheck, &p,
+                  DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34,
+                  27, &aftermath), 1,
+              "F0266 killed-some aftermath builds");
+    ASSERT_EQ(aftermath.keepSharpWeaponInGroup, 0,
+              "F0266 killed-some does not keep sharp weapon");
+
+    group.health[0] = 100;
+    ASSERT_EQ(dm1_v1_projectile_creature_precheck_damage_plan_pc34(
+                  &p, &group, 0, 64, 0, &precheck), 1,
+              "F0266 no-kill precheck damage plan builds");
+    ASSERT_EQ(precheck.outcomeCode, 0,
+              "F0266 no-kill outcome");
+    ASSERT_EQ(dm1_v1_projectile_creature_precheck_aftermath_pc34(
+                  &precheck, &p,
+                  DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34,
+                  27, &aftermath), 1,
+              "F0266 no-kill aftermath builds");
+    ASSERT_EQ(aftermath.keepSharpWeaponInGroup, 1,
+              "F0266 no-kill keeps sharp weapon");
 
     ASSERT_EQ(dm1_v1_projectile_creature_precheck_damage_plan_pc34(
                   &p, &group, 0, 64,

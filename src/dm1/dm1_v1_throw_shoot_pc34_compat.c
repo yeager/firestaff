@@ -1098,6 +1098,40 @@ int dm1_v1_projectile_creature_precheck_damage_plan_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_creature_precheck_aftermath_pc34(
+    const DM1_ProjectileCreaturePrecheckDamagePlanPc34* precheckPlan,
+    const struct ProjectileInstance_Compat* projectile,
+    int creatureAttributes,
+    int associatedWeaponType,
+    DM1_ProjectileCreatureImpactAftermathPc34* outAftermath) {
+    if (!outAftermath) return 0;
+    memset(outAftermath, 0, sizeof(*outAftermath));
+    if (!precheckPlan || !projectile ||
+        !precheckPlan->valid || !precheckPlan->handled ||
+        !precheckPlan->shouldWriteGroup) {
+        return 0;
+    }
+
+    if (precheckPlan->damageApplied > 0 &&
+        precheckPlan->outcomeCode != 2 &&
+        precheckPlan->outcomeCode != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        outAftermath->scheduleReaction = 1;
+    }
+    if ((precheckPlan->outcomeCode == 0 ||
+         precheckPlan->outcomeCode == COMBAT_OUTCOME_KILLED_NO_CREATURES) &&
+        projectile->projectileCategory == PROJECTILE_CATEGORY_KINETIC &&
+        (creatureAttributes &
+         DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34) &&
+        dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(
+            associatedWeaponType)) {
+        /* ReDMCSB: MOVESENS.C F0266 lines 292-301 reuses F0217 while a
+         * group enters/leaves a projectile square; F0217 lines 540-553 keeps
+         * selected sharp thrown weapons in GROUP.Slot after non-killing hits. */
+        outAftermath->keepSharpWeaponInGroup = 1;
+    }
+    return 1;
+}
+
 int dm1_v1_projectile_champion_action_plan_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct CombatAction_Compat* action,
