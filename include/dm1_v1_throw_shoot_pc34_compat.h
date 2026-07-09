@@ -208,6 +208,29 @@ typedef struct {
 } DM1_ProjectileMaterializationReceiptPc34;
 
 typedef struct {
+    int valid;
+    int shouldApply;
+    int shouldUnlinkSourceSquare;
+    int shouldLinkDestinationSquare;
+    int shouldWriteProjectileState;
+    int shouldScheduleNextMove;
+    int sourceMapIndex;
+    int sourceMapX;
+    int sourceMapY;
+    int sourceCell;
+    int destinationMapIndex;
+    int destinationMapX;
+    int destinationMapY;
+    int destinationCell;
+    int destinationDirection;
+    int destinationKineticEnergy;
+    int destinationAttack;
+    int destinationFirstMoveGraceFlag;
+    unsigned short sourceProjectileThing;
+    unsigned short destinationProjectileThing;
+} DM1_ProjectileFlightRelinkReceiptPc34;
+
+typedef struct {
     int handled;
     int championPresent;
     int championIndex;
@@ -475,6 +498,11 @@ int dm1_v1_projectile_materialization_receipt_f0215_pc34(
     const unsigned short* squareChainThings,
     int squareChainCount,
     DM1_ProjectileMaterializationReceiptPc34* outReceipt);
+int dm1_v1_projectile_flight_relink_receipt_f0219_pc34(
+    const struct ProjectileInstance_Compat* before,
+    const struct ProjectileInstance_Compat* after,
+    const struct ProjectileTickResult_Compat* result,
+    DM1_ProjectileFlightRelinkReceiptPc34* outReceipt);
 int dm1_v1_group_creature_index_for_cell_pc34(
     const struct DungeonGroup_Compat* group,
     int targetCell);

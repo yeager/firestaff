@@ -1068,6 +1068,73 @@ int dm1_v1_projectile_materialization_receipt_f0215_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_flight_relink_receipt_f0219_pc34(
+    const struct ProjectileInstance_Compat* before,
+    const struct ProjectileInstance_Compat* after,
+    const struct ProjectileTickResult_Compat* result,
+    DM1_ProjectileFlightRelinkReceiptPc34* outReceipt) {
+    unsigned short projectileBase;
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!before || !after || !result) return 0;
+    if (before->slotIndex < 0 || before->slotIndex > 0x03ff) return 0;
+    if (result->despawn) return 0;
+    if (result->resultKind != PROJECTILE_RESULT_FLEW) return 0;
+    if (after->mapIndex != result->newMapIndex ||
+        after->mapX != result->newMapX ||
+        after->mapY != result->newMapY ||
+        (after->cell & 3) != (result->newCell & 3) ||
+        (after->direction & 3) != (result->newDirection & 3) ||
+        after->kineticEnergy != result->newKineticEnergy ||
+        after->attack != result->newAttack ||
+        (after->firstMoveGraceFlag ? 1 : 0) !=
+            (result->newFirstMoveGraceFlag ? 1 : 0)) {
+        return 0;
+    }
+
+    projectileBase =
+        (unsigned short)((THING_TYPE_PROJECTILE << 10) |
+                         (before->slotIndex & 0x03ff));
+    outReceipt->valid = 1;
+    outReceipt->shouldApply = 1;
+    outReceipt->shouldWriteProjectileState = 1;
+    outReceipt->shouldScheduleNextMove = 1;
+    outReceipt->sourceMapIndex = before->mapIndex;
+    outReceipt->sourceMapX = before->mapX;
+    outReceipt->sourceMapY = before->mapY;
+    outReceipt->sourceCell = before->cell & 3;
+    outReceipt->destinationMapIndex = result->newMapIndex;
+    outReceipt->destinationMapX = result->newMapX;
+    outReceipt->destinationMapY = result->newMapY;
+    outReceipt->destinationCell = result->newCell & 3;
+    outReceipt->destinationDirection = result->newDirection & 3;
+    outReceipt->destinationKineticEnergy = result->newKineticEnergy;
+    outReceipt->destinationAttack = result->newAttack;
+    outReceipt->destinationFirstMoveGraceFlag =
+        result->newFirstMoveGraceFlag ? 1 : 0;
+    outReceipt->sourceProjectileThing =
+        (unsigned short)(projectileBase |
+                         (unsigned short)((before->cell & 3) << 14));
+    outReceipt->destinationProjectileThing =
+        (unsigned short)(projectileBase |
+                         (unsigned short)((result->newCell & 3) << 14));
+
+    if (before->mapIndex != result->newMapIndex ||
+        before->mapX != result->newMapX ||
+        before->mapY != result->newMapY ||
+        (before->cell & 3) != (result->newCell & 3)) {
+        outReceipt->shouldUnlinkSourceSquare = 1;
+        outReceipt->shouldLinkDestinationSquare = 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0219 lines 735-762 moves a live projectile by
+     * unlinking/linking the Thing when the square/cell changes, then writes
+     * MapX/MapY/Direction/Cell and schedules the next C48/C49 event.  M10
+     * consumes this receipt so those live mutation decisions stay DM1-owned
+     * instead of being reconstructed beside the timeline dispatcher. */
+    return 1;
+}
+
 int dm1_v1_group_creature_index_for_cell_pc34(
     const struct DungeonGroup_Compat* group,
     int targetCell) {
