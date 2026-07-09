@@ -188,6 +188,10 @@ typedef struct {
     int startupTitleFrame;
     int startupTitleFrameMax;
     int startupTitleReady;
+    int startupInitializeV2Runtime;
+    int startupInitializeHudRuntime;
+    int startupInitializeTouchRuntime;
+    int startupHudRuntimeReady;
     int levelLoaded;
     int mapIndex;
     int partyX;

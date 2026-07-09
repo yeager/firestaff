@@ -911,6 +911,11 @@ static void m11_dm2_boot_probe_receipt_from_startup_view_model(
         out->startupTitleFrame = handoff->title_frame;
         out->startupTitleFrameMax = handoff->title_frame_max;
         out->startupTitleReady = handoff->title_ready;
+        out->startupInitializeV2Runtime = handoff->initialize_v2_runtime;
+        out->startupInitializeHudRuntime = handoff->initialize_hud_runtime;
+        out->startupInitializeTouchRuntime =
+            handoff->initialize_touch_runtime;
+        out->startupHudRuntimeReady = handoff->hud_runtime_ready;
         return;
     }
     snprintf(out->startupPhase,
@@ -926,6 +931,11 @@ static void m11_dm2_boot_probe_receipt_from_startup_view_model(
     out->startupTitleFrame = view_model->title_frame;
     out->startupTitleFrameMax = view_model->title_frame_max;
     out->startupTitleReady = view_model->title_ready;
+    out->startupInitializeV2Runtime = view_model->initialize_v2_runtime;
+    out->startupInitializeHudRuntime = view_model->initialize_hud_runtime;
+    out->startupInitializeTouchRuntime =
+        view_model->initialize_touch_runtime;
+    out->startupHudRuntimeReady = view_model->hud_runtime_ready;
 }
 
 static int m11_dm2_boot_runtime_startup_idle(

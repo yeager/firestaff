@@ -517,8 +517,31 @@ static void expect_dm2_startup_layout_contract(void) {
                     strcmp(boot_view_model.animation,
                            "dm2-startup-menu") == 0 &&
                     boot_view_model.animation_active == 1 &&
-                    boot_view_model.title_ready == 0,
+                    boot_view_model.title_ready == 0 &&
+                    boot_view_model.initialize_v2_runtime == 1 &&
+                    boot_view_model.initialize_hud_runtime == 1 &&
+                    boot_view_model.initialize_touch_runtime == 1 &&
+                    boot_view_model.hud_runtime_ready == 1,
                 "DM2 boot owns the startup view model wrapper consumed by M11");
+    boot_snapshot.startup_menu_active = 0;
+    expect_true(dm2_v1_boot_startup_view_model_receipt_from_snapshot(
+                    &boot_snapshot,
+                    &boot_view_model) &&
+                    boot_view_model.command_count == 0 &&
+                    boot_view_model.view_receipt.valid &&
+                    boot_view_model.view_receipt.render.command_count == 0 &&
+                    boot_view_model.view_receipt.render.hud_overlay_suppressed ==
+                        0 &&
+                    boot_view_model.view_receipt.runtime_handoff
+                            .startup_menu_active == 0 &&
+                    strcmp(boot_view_model.phase, "dm2-runtime") == 0 &&
+                    boot_view_model.startup_active == 0 &&
+                    strcmp(boot_view_model.animation, "dm2-runtime") == 0 &&
+                    boot_view_model.animation_active == 0 &&
+                    boot_view_model.title_ready == 1 &&
+                    boot_view_model.hud_runtime_ready == 1,
+                "DM2 boot view model hands off from title/menu to first runtime HUD state");
+    boot_snapshot.startup_menu_active = 1;
     expect_true(dm2_v1_startup_presentation_receipt(
                     1,
                     phase,
@@ -945,7 +968,11 @@ int main(void) {
                     strcmp(boot_receipt.startupAnimation,
                            "dm2-startup-menu") == 0 &&
                     boot_receipt.startupAnimationActive == 1 &&
-                    boot_receipt.startupTitleReady == 0,
+                    boot_receipt.startupTitleReady == 0 &&
+                    boot_receipt.startupInitializeV2Runtime == 1 &&
+                    boot_receipt.startupInitializeHudRuntime == 1 &&
+                    boot_receipt.startupInitializeTouchRuntime == 1 &&
+                    boot_receipt.startupHudRuntimeReady == 1,
                 "M11 DM2 boot probe consumes startup view receipt handoff");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_NONE) ==
                     M11_GAME_INPUT_IGNORED,
@@ -1013,6 +1040,18 @@ int main(void) {
                 "M11 DM2 startup menu NEW GAME enters runtime");
     expect_true(view.dm2State.startup_menu_active == 0,
                 "M11 DM2 startup menu is dismissed after NEW GAME");
+    memset(&boot_receipt, 0, sizeof(boot_receipt));
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
+                    boot_receipt.startupActive == 0 &&
+                    strcmp(boot_receipt.startupPhase, "dm2-runtime") == 0 &&
+                    strcmp(boot_receipt.startupAnimation, "dm2-runtime") == 0 &&
+                    boot_receipt.startupAnimationActive == 0 &&
+                    boot_receipt.startupTitleReady == 1 &&
+                    boot_receipt.startupInitializeV2Runtime == 1 &&
+                    boot_receipt.startupInitializeHudRuntime == 1 &&
+                    boot_receipt.startupInitializeTouchRuntime == 1 &&
+                    boot_receipt.startupHudRuntimeReady == 1,
+                "M11 DM2 boot probe reaches first runtime HUD state after startup menu");
 
     expect_true(make_temp_save_root(direct_save_root),
                 "created isolated DM2 direct-start quick-save root");

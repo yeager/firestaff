@@ -15,6 +15,10 @@ struct DM2_V1_BootStartupViewModel {
     int title_frame;
     int title_frame_max;
     int title_ready;
+    int initialize_v2_runtime;
+    int initialize_hud_runtime;
+    int initialize_touch_runtime;
+    int hud_runtime_ready;
 };
 
 #endif
