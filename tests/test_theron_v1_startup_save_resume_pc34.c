@@ -2467,6 +2467,45 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(full_start_receipt.status,
                            "FULL START GRAPHICS READY") == 0,
                 "boot full-start receipt owns title stage soul-room save-resume graphics readiness");
+    expect_true(theron_v1_boot_startup_execute_input_from_full_start_receipt(
+                    &full_start_receipt,
+                    THERON_STARTUP_INPUT_ACCEPT,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                    strcmp(view_model_host_receipt.host_receipt.status,
+                           "HERO RELEASED") == 0,
+                "boot full-start receipt routes Soul Room input without rebuilding startup session");
+    expect_true(theron_v1_boot_startup_execute_input_from_full_start_receipt(
+                    &full_start_receipt,
+                    THERON_STARTUP_INPUT_BACK,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.state_receipt.flow.phase ==
+                        THERON_STARTUP_PHASE_STAGE_SELECT,
+                "boot full-start receipt routes Back to stage menu without raw startup fields");
+    expect_true(theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
+                    &full_start_receipt,
+                    50,
+                    80,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot full-start receipt routes Soul Room pointer without rebuilding layout");
+    theron_v1_boot_startup_full_start_receipt_init(&full_start_receipt);
+    expect_true(!theron_v1_boot_startup_execute_input_from_full_start_receipt(
+                    &full_start_receipt,
+                    THERON_STARTUP_INPUT_ACCEPT,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_ERR_NULL &&
+                    strcmp(view_model_host_receipt.host_receipt.status,
+                           "FULL START RECEIPT MISSING") == 0,
+                "boot full-start receipt input rejects missing view model");
     expect_true(theron_v1_boot_startup_render_rows_from_snapshot_with_media_receipt(
                     &media_snapshot,
                     &media_receipt,

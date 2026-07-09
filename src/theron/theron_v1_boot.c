@@ -2863,6 +2863,56 @@ int theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
         out_receipt);
 }
 
+int theron_v1_boot_startup_execute_input_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    Theron_StartupInput input,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!receipt || !receipt->view_model_valid || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status = "FULL START RECEIPT MISSING";
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
+        &receipt->view_model,
+        input,
+        out_receipt);
+}
+
+int theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    int x,
+    int y,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!receipt || !receipt->view_model_valid || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status = "FULL START RECEIPT MISSING";
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
+        &receipt->view_model,
+        x,
+        y,
+        out_receipt);
+}
+
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
