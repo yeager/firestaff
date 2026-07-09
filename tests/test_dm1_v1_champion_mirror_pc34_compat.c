@@ -22,10 +22,10 @@ static int gPasses;
     } \
 } while (0)
 
-static Dm1V1ChampionMirrorClickStatePc34Compat base_state(void)
+static DM1_V1_ChampionMirrorClickStatePc34 base_state(void)
 {
-    Dm1V1ChampionMirrorClickStatePc34Compat state;
-    DM1_V1_ChampionMirror_InitClickStatePc34Compat(&state);
+    DM1_V1_ChampionMirrorClickStatePc34 state;
+    DM1_V1_ChampionMirror_InitClickStatePc34(&state);
     state.partyChampionCount = 4;
     state.inventoryChampionOrdinal = 1u;
     return state;
@@ -33,15 +33,15 @@ static Dm1V1ChampionMirrorClickStatePc34Compat base_state(void)
 
 static void test_c159_name_route_without_candidate_panel(void)
 {
-    Dm1V1ChampionMirrorClickStatePc34Compat state = base_state();
-    Dm1V1ChampionMirrorClickResultPc34Compat result;
+    DM1_V1_ChampionMirrorClickStatePc34 state = base_state();
+    DM1_V1_ChampionMirrorClickResultPc34 result;
     int changed;
 
     state.partyChampionCount = 1;
     state.inventoryChampionOrdinal = 1u;
     state.leaderIndex = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
 
-    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat(
+    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34(
         &state,
         DM1_V1_COMMAND_CLICK_STATUS_BOX_0_PC34_COMPAT,
         1,
@@ -68,8 +68,8 @@ static void test_c159_name_route_without_candidate_panel(void)
 
 static void test_c159_name_route_blocked_while_c040_live(void)
 {
-    Dm1V1ChampionMirrorClickStatePc34Compat state = base_state();
-    Dm1V1ChampionMirrorClickResultPc34Compat result;
+    DM1_V1_ChampionMirrorClickStatePc34 state = base_state();
+    DM1_V1_ChampionMirrorClickResultPc34 result;
     int changed;
 
     state.partyChampionCount = 1;
@@ -77,7 +77,7 @@ static void test_c159_name_route_blocked_while_c040_live(void)
     state.candidateChampionOrdinal = 1u;
     state.leaderIndex = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
 
-    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat(
+    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34(
         &state,
         DM1_V1_COMMAND_CLICK_STATUS_BOX_0_PC34_COMPAT,
         1,
@@ -110,14 +110,14 @@ static void test_c159_name_route_blocked_while_c040_live(void)
 
 static void test_nested_c019_name_route_without_candidate_panel(void)
 {
-    Dm1V1ChampionMirrorClickStatePc34Compat state = base_state();
-    Dm1V1ChampionMirrorClickResultPc34Compat result;
+    DM1_V1_ChampionMirrorClickStatePc34 state = base_state();
+    DM1_V1_ChampionMirrorClickResultPc34 result;
     int changed;
 
     state.inventoryChampionOrdinal = 2u;
     state.leaderIndex = 0;
 
-    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat(
+    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34(
         &state,
         DM1_V1_COMMAND_CLICK_STATUS_BOX_0_PC34_COMPAT,
         208,
@@ -144,15 +144,15 @@ static void test_nested_c019_name_route_without_candidate_panel(void)
 
 static void test_nested_c019_route_blocked_while_c040_live(void)
 {
-    Dm1V1ChampionMirrorClickStatePc34Compat state = base_state();
-    Dm1V1ChampionMirrorClickResultPc34Compat result;
+    DM1_V1_ChampionMirrorClickStatePc34 state = base_state();
+    DM1_V1_ChampionMirrorClickResultPc34 result;
     int changed;
 
     state.inventoryChampionOrdinal = 2u;
     state.candidateChampionOrdinal = 1u;
     state.leaderIndex = 0;
 
-    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat(
+    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34(
         &state,
         DM1_V1_COMMAND_CLICK_STATUS_BOX_0_PC34_COMPAT,
         208,
@@ -179,24 +179,24 @@ static void test_nested_c019_route_blocked_while_c040_live(void)
 
 static void test_f0358_edges_and_f0368_dead_target(void)
 {
-    Dm1V1ChampionMirrorClickStatePc34Compat state = base_state();
-    Dm1V1ChampionMirrorClickResultPc34Compat result;
+    DM1_V1_ChampionMirrorClickStatePc34 state = base_state();
+    DM1_V1_ChampionMirrorClickResultPc34 result;
     int changed;
 
     CHECK_ANCHOR(
-        DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34Compat(
+        DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34(
             249, 6, DM1_V1_CHAMPION_MIRROR_MOUSE_LEFT_PC34_COMPAT) ==
             DM1_V1_COMMAND_SET_LEADER_3_PC34_COMPAT,
         "F0358 uses inclusive right/bottom edges for C019",
         "COMMAND.C:484-488; COMMAND.C:1437-1449");
     CHECK_ANCHOR(
-        DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34Compat(
+        DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34(
             249, 7, DM1_V1_CHAMPION_MIRROR_MOUSE_LEFT_PC34_COMPAT) ==
             DM1_V1_COMMAND_NONE_PC34_COMPAT,
         "F0358 rejects points below the C019 name row",
         "COMMAND.C:484-488; COMMAND.C:1437-1449");
     CHECK_ANCHOR(
-        DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34Compat(
+        DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34(
             249, 6, 0u) == DM1_V1_COMMAND_NONE_PC34_COMPAT,
         "F0358 requires the left mouse button bit",
         "COMMAND.C:484-488; COMMAND.C:1437-1449");
@@ -204,7 +204,7 @@ static void test_f0358_edges_and_f0368_dead_target(void)
     state.champions[3].currentHealth = 0;
     state.inventoryChampionOrdinal = 2u;
     state.leaderIndex = 0;
-    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat(
+    changed = DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34(
         &state,
         DM1_V1_COMMAND_CLICK_STATUS_BOX_0_PC34_COMPAT,
         208,
@@ -231,7 +231,7 @@ int main(void)
     test_nested_c019_route_blocked_while_c040_live();
     test_f0358_edges_and_f0368_dead_target();
 
-    CHECK_ANCHOR(DM1_V1_ChampionMirror_SourceEvidencePc34Compat() != NULL,
+    CHECK_ANCHOR(DM1_V1_ChampionMirror_SourceEvidencePc34() != NULL,
                  "source evidence string is available",
                  "COMMAND.C:484-488; CLIKCHAM.C:24-72");
 

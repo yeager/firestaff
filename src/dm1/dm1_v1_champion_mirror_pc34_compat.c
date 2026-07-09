@@ -2,15 +2,15 @@
 
 #include <string.h>
 
-typedef struct Dm1V1ChampionMirrorNameZonePc34Compat {
+typedef struct DM1_V1_ChampionMirrorNameZonePc34 {
     int command;
     int left;
     int right;
     int top;
     int bottom;
-} Dm1V1ChampionMirrorNameZonePc34Compat;
+} DM1_V1_ChampionMirrorNameZonePc34;
 
-static const Dm1V1ChampionMirrorNameZonePc34Compat kNameZones[] = {
+static const DM1_V1_ChampionMirrorNameZonePc34 kNameZones[] = {
     { 16,   0,  42, 0, 6 },
     { 17,  69, 111, 0, 6 },
     { 18, 138, 180, 0, 6 },
@@ -23,8 +23,8 @@ static int valid_champion_index(int championIndex)
            championIndex < DM1_V1_CHAMPION_MIRROR_COUNT_PC34_COMPAT;
 }
 
-static void result_init(Dm1V1ChampionMirrorClickResultPc34Compat *result,
-                        const Dm1V1ChampionMirrorClickStatePc34Compat *state)
+static void result_init(DM1_V1_ChampionMirrorClickResultPc34 *result,
+                        const DM1_V1_ChampionMirrorClickStatePc34 *state)
 {
     if (!result) {
         return;
@@ -38,8 +38,8 @@ static void result_init(Dm1V1ChampionMirrorClickResultPc34Compat *result,
     result->targetLeaderIndex = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
 }
 
-void DM1_V1_ChampionMirror_InitClickStatePc34Compat(
-    Dm1V1ChampionMirrorClickStatePc34Compat *state)
+void DM1_V1_ChampionMirror_InitClickStatePc34(
+    DM1_V1_ChampionMirrorClickStatePc34 *state)
 {
     int i;
 
@@ -53,7 +53,7 @@ void DM1_V1_ChampionMirror_InitClickStatePc34Compat(
     }
 }
 
-int DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34Compat(
+int DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34(
     int x,
     int y,
     unsigned int mouseButtons)
@@ -75,12 +75,12 @@ int DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34Compat(
     return DM1_V1_COMMAND_NONE_PC34_COMPAT;
 }
 
-int DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34Compat(
+int DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34(
     int command,
     int partyChampionCount,
     unsigned int candidateChampionOrdinal,
     int *outChampionIndex,
-    Dm1V1ChampionMirrorClickResultPc34Compat *outResult)
+    DM1_V1_ChampionMirrorClickResultPc34 *outResult)
 {
     int championIndex;
 
@@ -119,10 +119,10 @@ int DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34Compat(
     return 1;
 }
 
-int DM1_V1_ChampionMirror_F0368SetLeaderPc34Compat(
-    Dm1V1ChampionMirrorClickStatePc34Compat *state,
+int DM1_V1_ChampionMirror_F0368SetLeaderPc34(
+    DM1_V1_ChampionMirrorClickStatePc34 *state,
     int targetChampionIndex,
-    Dm1V1ChampionMirrorClickResultPc34Compat *ioResult)
+    DM1_V1_ChampionMirrorClickResultPc34 *ioResult)
 {
     if (!state || !ioResult || !valid_champion_index(targetChampionIndex)) {
         return 0;
@@ -151,13 +151,13 @@ int DM1_V1_ChampionMirror_F0368SetLeaderPc34Compat(
     return 1;
 }
 
-int DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34Compat(
-    Dm1V1ChampionMirrorClickStatePc34Compat *state,
+int DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34(
+    DM1_V1_ChampionMirrorClickStatePc34 *state,
     int clickedChampionIndex,
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1ChampionMirrorClickResultPc34Compat *outResult)
+    DM1_V1_ChampionMirrorClickResultPc34 *outResult)
 {
     int nestedCommand;
     int targetChampionIndex;
@@ -172,11 +172,11 @@ int DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34Compat(
      * directly when that status box belongs to the open inventory champion. */
     if ((unsigned int)(clickedChampionIndex + 1) ==
         state->inventoryChampionOrdinal) {
-        return DM1_V1_ChampionMirror_F0368SetLeaderPc34Compat(
+        return DM1_V1_ChampionMirror_F0368SetLeaderPc34(
             state, clickedChampionIndex, outResult);
     }
 
-    nestedCommand = DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34Compat(
+    nestedCommand = DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34(
         x, y, mouseButtons);
     outResult->nestedCommand = nestedCommand;
 
@@ -186,23 +186,23 @@ int DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34Compat(
         nestedCommand <= DM1_V1_COMMAND_SET_LEADER_3_PC34_COMPAT) {
         targetChampionIndex =
             nestedCommand - DM1_V1_COMMAND_SET_LEADER_0_PC34_COMPAT;
-        return DM1_V1_ChampionMirror_F0368SetLeaderPc34Compat(
+        return DM1_V1_ChampionMirror_F0368SetLeaderPc34(
             state, targetChampionIndex, outResult);
     }
     return 0;
 }
 
-int DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat(
-    Dm1V1ChampionMirrorClickStatePc34Compat *state,
+int DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34(
+    DM1_V1_ChampionMirrorClickStatePc34 *state,
     int command,
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1ChampionMirrorClickResultPc34Compat *outResult)
+    DM1_V1_ChampionMirrorClickResultPc34 *outResult)
 {
     int championIndex;
-    Dm1V1ChampionMirrorClickResultPc34Compat outerResult;
-    Dm1V1ChampionMirrorClickResultPc34Compat innerResult;
+    DM1_V1_ChampionMirrorClickResultPc34 outerResult;
+    DM1_V1_ChampionMirrorClickResultPc34 innerResult;
     int changed;
 
     result_init(outResult, state);
@@ -210,13 +210,13 @@ int DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat(
         return 0;
     }
     result_init(&outerResult, state);
-    if (!DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34Compat(
+    if (!DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34(
             command, state->partyChampionCount, state->candidateChampionOrdinal,
             &championIndex, &outerResult)) {
         *outResult = outerResult;
         return 0;
     }
-    changed = DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34Compat(
+    changed = DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34(
         state, championIndex, x, y, mouseButtons, &innerResult);
     innerResult.dispatchesStatusBoxClick = outerResult.dispatchesStatusBoxClick;
     innerResult.ignoredByCandidatePanel = outerResult.ignoredByCandidatePanel;
@@ -226,7 +226,7 @@ int DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat(
     return changed;
 }
 
-const char *DM1_V1_ChampionMirror_SourceEvidencePc34Compat(void)
+const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
 {
     return "ReDMCSB COMMAND.C:484-488 G0455 maps C159..C162 champion-name "
            "zones to C016..C019; COMMAND.C:1379-1449 F0358 matches inclusive "

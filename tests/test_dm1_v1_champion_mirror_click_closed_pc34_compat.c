@@ -16,11 +16,11 @@ static int gPasses;
 
 static void test_c040_closed_c159_click_switches_leader_and_keeps_mirror(void)
 {
-    Dm1V1MirrorClickClosedStatePc34Compat state;
-    Dm1V1MirrorClickClosedResultPc34Compat result;
+    DM1_V1_MirrorClickClosedStatePc34 state;
+    DM1_V1_MirrorClickClosedResultPc34 result;
     int changed;
 
-    DM1_V1_MirrorClickClosed_InitPc34Compat(&state);
+    DM1_V1_MirrorClickClosed_InitPc34(&state);
     state.partyChampionCount = 4;
     state.candidateChampionOrdinal = 0u;
     state.inventoryChampionOrdinal = 2u;
@@ -29,7 +29,7 @@ static void test_c040_closed_c159_click_switches_leader_and_keeps_mirror(void)
     state.champions[0].portraitOrdinal = 7;
     state.champions[1].portraitOrdinal = 11;
 
-    changed = DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34Compat(
+    changed = DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34(
         &state,
         DM1_V1_MIRROR_CLICK_CLOSED_STATUS_BOX_0_PC34_COMPAT,
         1,
@@ -77,7 +77,7 @@ int main(void)
     test_c040_closed_c159_click_switches_leader_and_keeps_mirror();
 
     CHECK_REDMCSB(
-        DM1_V1_MirrorClickClosed_SourceEvidencePc34Compat() != NULL,
+        DM1_V1_MirrorClickClosed_SourceEvidencePc34() != NULL,
         "source evidence string is available",
         "COMMAND.C:484-488; COMMAND.C:2158-2162; CLIKCHAM.C:24-72");
 

@@ -39,14 +39,14 @@ static void expect_mask(const char *id, unsigned int got, unsigned int mask,
     }
 }
 
-static void seed_live_party(Dm1V1ChampionLeaderStatePc34Compat *state,
+static void seed_live_party(DM1_V1_ChampionLeaderStatePc34 *state,
                             int leaderIndex,
                             int handWeight,
                             unsigned int candidateChampionOrdinal)
 {
     int i;
 
-    DM1_V1_ChampionLeader_InitPc34Compat(state);
+    DM1_V1_ChampionLeader_InitPc34(state);
     state->leaderIndex = leaderIndex;
     state->partyDirection = 2;
     state->leaderHandWeight = handWeight;
@@ -64,15 +64,15 @@ static void seed_live_party(Dm1V1ChampionLeaderStatePc34Compat *state,
 
 static void test_same_leader_is_ignored(void)
 {
-    Dm1V1ChampionLeaderStatePc34Compat state;
-    Dm1V1ChampionLeaderSetResultPc34Compat result;
+    DM1_V1_ChampionLeaderStatePc34 state;
+    DM1_V1_ChampionLeaderSetResultPc34 result;
 
     seed_live_party(&state, 1, 7, 0u);
 
     /* ReDMCSB CLIKCHAM.C F0368 lines 51-53 returns before detaching G0411
      * when the clicked champion is already the leader. */
     expect_int("same.return",
-               DM1_V1_ChampionLeader_SetPc34Compat(&state, 1, &result),
+               DM1_V1_ChampionLeader_SetPc34(&state, 1, &result),
                0, "CLIKCHAM.C F0368:51-53");
     expect_int("same.previous", result.previousLeaderIndex, 1,
                "CLIKCHAM.C F0368:51 G0411 compare");
@@ -100,8 +100,8 @@ static void test_same_leader_is_ignored(void)
 
 static void test_dead_target_is_ignored(void)
 {
-    Dm1V1ChampionLeaderStatePc34Compat state;
-    Dm1V1ChampionLeaderSetResultPc34Compat result;
+    DM1_V1_ChampionLeaderStatePc34 state;
+    DM1_V1_ChampionLeaderSetResultPc34 result;
 
     seed_live_party(&state, 0, 11, 0u);
     state.champions[2].currentHealth = 0;
@@ -109,7 +109,7 @@ static void test_dead_target_is_ignored(void)
     /* ReDMCSB CLIKCHAM.C F0368 lines 51-53 rejects a dead non-CM1 target
      * before old leader load/name dirties, hand-weight removal, or redraw. */
     expect_int("dead.return",
-               DM1_V1_ChampionLeader_SetPc34Compat(&state, 2, &result),
+               DM1_V1_ChampionLeader_SetPc34(&state, 2, &result),
                0, "CLIKCHAM.C F0368:51-53");
     expect_int("dead.previous", result.previousLeaderIndex, 0,
                "CLIKCHAM.C F0368:51 G0411 compare");
@@ -137,8 +137,8 @@ static void test_dead_target_is_ignored(void)
 
 static void test_live_target_swaps_leader(void)
 {
-    Dm1V1ChampionLeaderStatePc34Compat state;
-    Dm1V1ChampionLeaderSetResultPc34Compat result;
+    DM1_V1_ChampionLeaderStatePc34 state;
+    DM1_V1_ChampionLeaderSetResultPc34 result;
     const unsigned int oldDirty =
         DM1_V1_CHAMPION_ATTR_LOAD_PC34_COMPAT |
         DM1_V1_CHAMPION_ATTR_NAME_TITLE_PC34_COMPAT;
@@ -152,7 +152,7 @@ static void test_live_target_swaps_leader(void)
     /* ReDMCSB CLIKCHAM.C F0368 lines 54-59 must dirty/redraw the old G0411
      * champion and clear G0411 before lines 66-72 attach the live target. */
     expect_int("swap.return",
-               DM1_V1_ChampionLeader_SetPc34Compat(&state, 2, &result),
+               DM1_V1_ChampionLeader_SetPc34(&state, 2, &result),
                1, "CLIKCHAM.C F0368:54-72");
     expect_int("swap.previous", result.previousLeaderIndex, 0,
                "CLIKCHAM.C F0368:54-55 old G0411 snapshot");
@@ -185,8 +185,8 @@ static void test_live_target_swaps_leader(void)
 
 static void test_clear_to_none_removes_hand_weight_and_stops(void)
 {
-    Dm1V1ChampionLeaderStatePc34Compat state;
-    Dm1V1ChampionLeaderSetResultPc34Compat result;
+    DM1_V1_ChampionLeaderStatePc34 state;
+    DM1_V1_ChampionLeaderSetResultPc34 result;
     const unsigned int oldDirty =
         DM1_V1_CHAMPION_ATTR_LOAD_PC34_COMPAT |
         DM1_V1_CHAMPION_ATTR_NAME_TITLE_PC34_COMPAT;
@@ -196,7 +196,7 @@ static void test_clear_to_none_removes_hand_weight_and_stops(void)
     /* ReDMCSB CLIKCHAM.C F0368 lines 54-64 clears G0411 to CM1_NONE after
      * removing the leader-hand weight, then returns before new-leader redraw. */
     expect_int("clear.return",
-               DM1_V1_ChampionLeader_SetPc34Compat(
+               DM1_V1_ChampionLeader_SetPc34(
                    &state, DM1_V1_CHAMPION_LEADER_NONE_PC34_COMPAT, &result),
                1, "CLIKCHAM.C F0368:54-64");
     expect_int("clear.previous", result.previousLeaderIndex, 1,
@@ -223,8 +223,8 @@ static void test_clear_to_none_removes_hand_weight_and_stops(void)
 
 static void test_candidate_target_suppresses_new_redraw(void)
 {
-    Dm1V1ChampionLeaderStatePc34Compat state;
-    Dm1V1ChampionLeaderSetResultPc34Compat result;
+    DM1_V1_ChampionLeaderStatePc34 state;
+    DM1_V1_ChampionLeaderSetResultPc34 result;
     const unsigned int oldDirty =
         DM1_V1_CHAMPION_ATTR_LOAD_PC34_COMPAT |
         DM1_V1_CHAMPION_ATTR_NAME_TITLE_PC34_COMPAT;
@@ -234,7 +234,7 @@ static void test_candidate_target_suppresses_new_redraw(void)
     /* ReDMCSB CLIKCHAM.C F0368 lines 66-72 still assigns G0411 and adds the
      * hand weight, but lines 69-71 skip new redraw when target ordinal is G0299. */
     expect_int("candidate.return",
-               DM1_V1_ChampionLeader_SetPc34Compat(&state, 2, &result),
+               DM1_V1_ChampionLeader_SetPc34(&state, 2, &result),
                1, "CLIKCHAM.C F0368:66-72");
     expect_int("candidate.previous", result.previousLeaderIndex, 0,
                "CLIKCHAM.C F0368:54-55 old G0411 snapshot");
