@@ -1537,6 +1537,10 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.real_asset_capture &&
         receipt.redmcsb_c026_asset_present &&
         receipt.redmcsb_c346_asset_present;
+    receipt.required_asset_capture =
+        receipt.real_asset_capture &&
+        facts->observed_required_graphics_hash_match &&
+        facts->observed_required_dungeon_hash_match;
     receipt.host_window_capture =
         receipt.mac_window_capture && facts->observed_host_window_present;
     receipt.capture_phase = artifact->capture_phase;
@@ -1568,6 +1572,7 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         artifact->expected_hoc_render_command_count;
     receipt.host_capture_route_matches =
         receipt.hoc_asset_capture &&
+        receipt.required_asset_capture &&
         receipt.host_window_capture &&
         receipt.release_app_capture;
     receipt.stale_title_absent =
@@ -1594,6 +1599,7 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.hall_overlay_matches &&
         receipt.command_count_matches &&
         receipt.hoc_asset_capture &&
+        receipt.required_asset_capture &&
         receipt.host_window_capture &&
         receipt.release_app_capture &&
         receipt.stale_title_absent &&
@@ -1927,8 +1933,6 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
      * verdicts. */
     capture_facts.captured_after_first_frame_render =
         facts->captured_after_first_frame_render;
-    capture_facts.captured_from_real_assets =
-        facts->captured_from_real_assets;
     capture_facts.captured_from_mac_window =
         facts->captured_from_mac_window;
     capture_facts.captured_from_release_app =
@@ -1937,6 +1941,14 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
         facts->observed_c026_portrait_asset;
     capture_facts.observed_c346_mirror_backing_asset =
         facts->observed_c346_mirror_backing_asset;
+    capture_facts.observed_required_graphics_hash_match =
+        facts->observed_required_graphics_hash_match;
+    capture_facts.observed_required_dungeon_hash_match =
+        facts->observed_required_dungeon_hash_match;
+    capture_facts.captured_from_real_assets =
+        facts->captured_from_real_assets &&
+        facts->observed_required_graphics_hash_match &&
+        facts->observed_required_dungeon_hash_match;
     capture_facts.observed_host_window_present =
         facts->observed_host_window_present;
     capture_facts.captured_map_index = artifact.expected_map_index;
@@ -2056,6 +2068,14 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     receipt.release_app_capture = consumer.release_app_capture;
     receipt.host_capture_route_matches = consumer.host_capture_route_matches;
     receipt.hoc_asset_capture = consumer.hoc_asset_capture;
+    receipt.consumed_required_graphics_asset =
+        facts->observed_required_graphics_hash_match ? 1 : 0;
+    receipt.consumed_required_dungeon_asset =
+        facts->observed_required_dungeon_hash_match ? 1 : 0;
+    receipt.required_asset_capture =
+        receipt.real_asset_capture &&
+        receipt.consumed_required_graphics_asset &&
+        receipt.consumed_required_dungeon_asset;
     receipt.host_window_capture = consumer.host_window_capture;
     receipt.draw_opened_entrance_frame = consumer.draw_opened_entrance_frame;
     receipt.render_hall_mirror_overlay = consumer.render_hall_mirror_overlay;
@@ -2098,6 +2118,7 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.release_app_capture &&
         receipt.host_capture_route_matches &&
         receipt.hoc_asset_capture &&
+        receipt.required_asset_capture &&
         receipt.host_window_capture &&
         receipt.draw_opened_entrance_frame &&
         receipt.render_hall_mirror_overlay &&

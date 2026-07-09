@@ -323,6 +323,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 {
     int captured_from_release_app;
     int observed_c026_portrait_asset;
     int observed_c346_mirror_backing_asset;
+    int observed_required_graphics_hash_match;
+    int observed_required_dungeon_hash_match;
     int observed_host_window_present;
     int captured_map_index;
     int captured_map_width;
@@ -350,6 +352,7 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int release_app_capture;
     int host_capture_route_matches;
     int hoc_asset_capture;
+    int required_asset_capture;
     int host_window_capture;
     int redmcsb_c026_asset_present;
     int redmcsb_c346_asset_present;
@@ -491,6 +494,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int captured_from_release_app;
     int observed_c026_portrait_asset;
     int observed_c346_mirror_backing_asset;
+    int observed_required_graphics_hash_match;
+    int observed_required_dungeon_hash_match;
     int observed_host_window_present;
     int observed_false_floor_item_payload_count;
     int observed_projectile_payload_count;
@@ -517,10 +522,13 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int release_app_capture;
     int host_capture_route_matches;
     int hoc_asset_capture;
+    int required_asset_capture;
     int host_window_capture;
     int draw_opened_entrance_frame;
     int render_hall_mirror_overlay;
     int suppress_host_fallback_visuals;
+    int consumed_required_graphics_asset;
+    int consumed_required_dungeon_asset;
     int consumed_owned_host_draw_receipt;
     int host_draw_uses_owned_receipt;
     int host_draw_consumes_backing_asset;

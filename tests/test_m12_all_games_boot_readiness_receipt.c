@@ -123,6 +123,7 @@ int main(void) {
                         boot.dm1HoCHostCaptureRouteReady == 1 &&
                         boot.dm1HoCReleaseCaptureOwnershipReady == 1 &&
                         boot.dm1HoCLaunchPathReady == 1 &&
+                        boot.dm1HoCRequiredAssetCaptureReady == 1 &&
                         boot.dm1HoCReceiptOnlyConsumerReady == 1 &&
                         boot.dm1HoCNoHostFallbackVisualsReady == 1 &&
                         boot.dm1HoCLowerLevelHelpersReady == 1 &&
