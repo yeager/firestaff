@@ -324,6 +324,8 @@ static void check_swsh_to_title_boundary(void) {
 static void check_title_to_menu_boundary(void) {
     V1_TitleFrontendSourceAnimationStep sourceStep;
     V1_TitleFrontendSourceAnimationStep finalGuard;
+    DM1_V1_StartupTitleMenuEligibilityFacts_PC34 facts;
+    DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
     V1_TitleFrontendSourceTiming titleTiming = V1_TitleFrontend_GetSourceTimingEvidence();
     V1_TitleFrontendHandoffDecision firstTitle =
         V1_TitleFrontend_DecideTitleMenuHandoffStep(1u, 1);
@@ -400,6 +402,45 @@ static void check_title_to_menu_boundary(void) {
              (unsigned int)held.surface,
              (unsigned int)V1_TITLE_FRONTEND_SURFACE_TITLE);
     expect_i("TITLE explicit hold does not enter menu", held.enteredMenuAfterHandoff, 0);
+
+    memset(&facts, 0, sizeof(facts));
+    memset(&receipt, 0, sizeof(receipt));
+    facts.title_frame = V1_TITLE_DAT_FRAME_MAX;
+    facts.title_frame_max = V1_TITLE_DAT_FRAME_MAX;
+    facts.title_handoff_ready = 1;
+    facts.advance_requested = 1;
+    expect_i("DM1 title menu receipt handles last title frame",
+             dm1_v1_startup_title_menu_eligibility_receipt_pc34(&facts,
+                                                                &receipt),
+             1);
+    expect_i("DM1 title menu receipt keeps last title surface",
+             receipt.keep_title_surface, 1);
+    expect_i("DM1 title menu receipt does not enter early",
+             receipt.menu_eligible, 0);
+
+    facts.title_frame = V1_TITLE_DAT_FRAME_MAX + 1u;
+    facts.advance_requested = 0;
+    expect_i("DM1 title menu receipt handles held post-boundary frame",
+             dm1_v1_startup_title_menu_eligibility_receipt_pc34(&facts,
+                                                                &receipt),
+             1);
+    expect_i("DM1 title menu receipt holds without input",
+             receipt.keep_title_surface, 1);
+    expect_i("DM1 title menu receipt still blocks menu without input",
+             receipt.menu_eligible, 0);
+
+    facts.advance_requested = 1;
+    expect_i("DM1 title menu receipt handles menu boundary",
+             dm1_v1_startup_title_menu_eligibility_receipt_pc34(&facts,
+                                                                &receipt),
+             1);
+    expect_i("DM1 title menu receipt enters menu at post-boundary",
+             receipt.menu_eligible, 1);
+    expect_i("DM1 title menu receipt consumes boundary input",
+             receipt.consume_pending_input, 1);
+    expect_u("DM1 title menu receipt advances stage",
+             (unsigned int)receipt.next_stage,
+             (unsigned int)DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE_PC34);
 
     expect_stage_after("last TITLE frame follows first TITLE frame",
                        DM1_V1_STARTUP_STAGE_TITLE_LAST_FRAME_PC34,
