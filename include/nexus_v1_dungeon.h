@@ -15,6 +15,8 @@
 #define NEXUS_DGN_STRUCTURE1B_BYTES 0x8000
 #define NEXUS_DGN_STRUCTURE1B_CELL_BYTES 8
 #define NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES 4
+#define NEXUS_V1_DGN_VIEW_DISTANCE 4
+#define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
 
 typedef struct {
     int dmweb_container;
@@ -34,6 +36,7 @@ typedef struct {
 typedef struct {
     int width, height;
     uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint16_t collision_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     int thing_count;
     int creature_count;
     int has_3d_geometry;
@@ -67,8 +70,41 @@ typedef struct {
     int descriptor_capacity;
 } Nexus_V1_DgnRendererHandoffReceipt;
 
+typedef enum {
+    NEXUS_V1_DGN_RENDER_COMMAND_FLOOR = 1,
+    NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT = 2,
+    NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT = 3,
+    NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT = 4
+} Nexus_V1_DgnRenderCommandKind;
+
+typedef struct {
+    Nexus_V1_DgnRenderCommandKind kind;
+    int x;
+    int y;
+    int depth;
+    int lateral; /* -1=left, 0=center, +1=right */
+    int square_type;
+    int wall_dir;
+    uint16_t collision_ref;
+} Nexus_V1_DgnRenderCommand;
+
+typedef struct {
+    Nexus_V1_DgnRendererHandoffStatus status;
+    int plan_ready;
+    int blocks_real_dgn_mesh_render;
+    int fallback_visuals_permitted;
+    int command_count;
+    int floor_count;
+    int wall_count;
+    int source_cell_count;
+    int first_blocking_depth;
+    int first_blocking_x;
+    int first_blocking_y;
+} Nexus_V1_DgnRenderPlanReceipt;
+
 int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, int level_index);
 int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y);
+int nexus_v1_level_get_collision_ref(const Nexus_V1_Level *level, int x, int y);
 int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
                                const uint8_t *data,
                                int size);
@@ -77,5 +113,13 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt);
 const char *nexus_v1_dgn_renderer_handoff_status_name(
     Nexus_V1_DgnRendererHandoffStatus status);
+int nexus_v1_level_build_dgn_view_render_plan(
+    const Nexus_V1_Level *level,
+    int party_x,
+    int party_y,
+    int party_dir,
+    Nexus_V1_DgnRenderCommand *commands,
+    int max_commands,
+    Nexus_V1_DgnRenderPlanReceipt *out_receipt);
 
 #endif

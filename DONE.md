@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Nexus DGN viewport render plan: DMWeb `LEV*.DGN` levels now retain Structure1B collision refs, build a bounded viewport render plan from real 64x64 DGN cells, and route Nexus viewport drawing through that plan without falling back to synthetic visuals when real-DGN handoff blocks. Verification: `test_nexus_v1_dgn_geometry_readiness`, `test_nexus_v1_boot_file_hash_scan`, Nexus focused CTests, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup render-view receipt: CSB boot now emits one render/HUD/menu view receipt for post-FTL title, closed-door entrance, utility fallback suppression, and door-opening routes, plus a render-plan facade for future M11 adapter cleanup. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 HoC champion mirror ordinal/render route: the DM1 F0172 mirror receipt now keeps ReDMCSB's 1-based G0289 source ordinal separate from the 0-based C026 portrait render index, and M11 consumes the render index through a HoC front-wall probe so C127 side sensors cannot draw floating portraits. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, `test_m11_overlay_command_queue_block`, and `git diff --check` passed.
