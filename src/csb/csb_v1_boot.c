@@ -4286,17 +4286,6 @@ static int csb_v1_boot_startup_input_render_receipt_from_action_pc34(
     return 1;
 }
 
-int csb_v1_boot_startup_execute_opening_composite_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,
-    void *user)
-{
-    return csb_v1_startup_execute_opening_composite_pc34(
-        plan,
-        executor,
-        user);
-}
-
 int csb_v1_boot_runtime_util_apply_pointer_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int x,

@@ -982,6 +982,12 @@ int dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
     const DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* production,
     const DM1_V1_StartupHoCRenderConsumerReceipt_PC34* render,
     DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
+    const DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34* ownership,
+    const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
+    int candidate_panel_active,
+    int backing_asset_available,
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34* out_receipt);
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
