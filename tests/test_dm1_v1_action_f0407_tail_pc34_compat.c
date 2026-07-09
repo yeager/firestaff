@@ -2544,6 +2544,7 @@ static void test_melee_f0231_runtime_result_plan(void) {
     in.combatOutcome = COMBAT_OUTCOME_HIT_DAMAGE;
     in.damageApplied = 12;
     in.groupIndex = 0;
+    in.creatureIndex = 2;
     in.groupCount = 1;
     CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(&in, &out), 1,
              "F0231 damage runtime result builds");
@@ -2552,6 +2553,14 @@ static void test_melee_f0231_runtime_result_plan(void) {
              "F0231 damage applies side effects");
     CHECK_EQ(out.shouldApplyGroupDamage, 1,
              "F0231 damage applies group damage");
+    CHECK_EQ(out.groupDamageGroupIndex, 0,
+             "F0231 damage carries group damage group");
+    CHECK_EQ(out.groupDamageCreatureIndex, 2,
+             "F0231 damage carries group damage creature");
+    CHECK_EQ(out.groupDamageApplied, 12,
+             "F0231 damage carries group damage amount");
+    CHECK_EQ(out.groupDamageFallbackOutcome, COMBAT_OUTCOME_HIT_DAMAGE,
+             "F0231 damage carries group damage fallback outcome");
     CHECK_EQ(out.shouldEmitDamageDealt, 1,
              "F0231 damage emits damage result");
 
@@ -2567,6 +2576,7 @@ static void test_melee_f0231_runtime_result_plan(void) {
 
     in.damageApplied = 12;
     in.groupIndex = 3;
+    in.creatureIndex = 0;
     in.groupCount = 1;
     CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(&in, &out), 1,
              "F0231 out-of-range runtime result builds");
@@ -2677,6 +2687,7 @@ static void test_melee_f0231_damage_resolver_entrypoint(void) {
         memset(&separateRuntimeOut, 0, sizeof(separateRuntimeOut));
         memset(&separateResult, 0, sizeof(separateResult));
         runtimeIn.groupIndex = 0;
+        runtimeIn.creatureIndex = 0;
         runtimeIn.groupCount = 1;
         CHECK_EQ(F0730_COMBAT_RngInit_Compat(&rngC, 0x630u), 1,
                  "DM1 F0231 runtime entry rng C init");
@@ -2693,6 +2704,7 @@ static void test_melee_f0231_damage_resolver_entrypoint(void) {
         separateRuntimeIn.combatOutcome = separateResult.outcome;
         separateRuntimeIn.damageApplied = separateResult.damageApplied;
         separateRuntimeIn.groupIndex = runtimeIn.groupIndex;
+        separateRuntimeIn.creatureIndex = runtimeIn.creatureIndex;
         separateRuntimeIn.groupCount = runtimeIn.groupCount;
         CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(
                      &separateRuntimeIn, &separateRuntimeOut), 1,

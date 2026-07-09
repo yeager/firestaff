@@ -340,6 +340,7 @@ typedef struct {
     int combatOutcome;
     int damageApplied;
     int groupIndex;
+    int creatureIndex;
     int groupCount;
 } DM1_MeleeF0231RuntimeResultInputPc34;
 
@@ -350,6 +351,10 @@ typedef struct {
     int shouldApplySideEffects;
     int shouldApplyGroupDamage;
     int shouldEmitDamageDealt;
+    int groupDamageGroupIndex;
+    int groupDamageCreatureIndex;
+    int groupDamageApplied;
+    int groupDamageFallbackOutcome;
 } DM1_MeleeF0231RuntimeResultPlanPc34;
 
 typedef struct {
@@ -367,6 +372,7 @@ typedef struct {
 
 typedef struct {
     int groupIndex;
+    int creatureIndex;
     int groupCount;
 } DM1_MeleeF0231ResolveRuntimeInputPc34;
 
