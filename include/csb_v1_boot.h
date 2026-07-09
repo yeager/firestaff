@@ -174,6 +174,19 @@ typedef struct CSB_V1_BootStartupPresentationRouteReceipt_PC34 {
     CSB_V1_StartupPresentationReceipt_PC34 presentation;
 } CSB_V1_BootStartupPresentationRouteReceipt_PC34;
 
+typedef struct CSB_V1_BootStartupRenderViewReceipt_PC34 {
+    int valid;
+    int render_plan_valid;
+    int boot_executor_route;
+    int title_after_swoosh_route;
+    int closed_door_menu_route;
+    int opening_door_route;
+    int hud_menu_receipt_ready;
+    int suppress_legacy_utility_fallback;
+    CSB_V1_StartupRenderPlan_PC34 render_plan;
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
+} CSB_V1_BootStartupRenderViewReceipt_PC34;
+
 typedef enum CSB_V1_BootStartupActionKind_PC34 {
     CSB_V1_BOOT_STARTUP_ACTION_NONE_PC34 = 0,
     CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34 = 1,
@@ -192,6 +205,8 @@ void csb_v1_boot_startup_action_receipt_init_pc34(
     CSB_V1_BootStartupActionReceipt_PC34 *receipt);
 void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *receipt);
+void csb_v1_boot_startup_render_view_receipt_init_pc34(
+    CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt);
 void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir);
 int csb_v1_boot_probe_available(const char *data_dir);
@@ -421,6 +436,12 @@ int csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
 int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupRenderViewReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan);
 int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     CSB_V1_UtilRenderPlan *out_plan,
     int title_active,
