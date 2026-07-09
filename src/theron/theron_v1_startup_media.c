@@ -99,6 +99,36 @@ static void theron_v1_startup_media_capture_text(
     }
 }
 
+static void theron_v1_startup_media_capture_bitmaps(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_StartupMedia *media) {
+    Theron_Track02StartupBitmapCatalog catalog;
+    Theron_Track02SignalStatus status;
+    size_t i;
+
+    memset(&catalog, 0, sizeof(catalog));
+    status = theron_v1_track02_catalog_startup_bitmap_samples(hucard_rom,
+                                                              hucard_rom_size,
+                                                              md5_hex,
+                                                              &catalog);
+    media->startup_bitmap_decode_status = (int)status;
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return;
+    }
+
+    media->startup_bitmap_sample_count = (int)catalog.sample_count;
+    media->startup_bitmap_route_mask = catalog.route_mask;
+    for (i = 0u; i < catalog.sample_count; ++i) {
+        media->startup_bitmap_nonzero_pixel_count +=
+            catalog.samples[i].nonzero_pixel_count;
+        media->startup_bitmap_checksum ^=
+            catalog.samples[i].checksum +
+            (uint32_t)(catalog.samples[i].route_bit * 16777619u);
+    }
+}
+
 void theron_v1_startup_media_capture_track02(
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
@@ -125,9 +155,14 @@ void theron_v1_startup_media_capture_track02(
                                          hucard_rom_size,
                                          md5_hex,
                                          out_media);
+    theron_v1_startup_media_capture_bitmaps(hucard_rom,
+                                            hucard_rom_size,
+                                            md5_hex,
+                                            out_media);
     out_media->startup_media_ready =
         out_media->track02_variant != THERON_TRACK02_VARIANT_UNKNOWN &&
-        (out_media->startup_roster_name_status == THERON_TRACK02_SIGNAL_OK ||
+        (out_media->startup_bitmap_decode_status == THERON_TRACK02_SIGNAL_OK ||
+         out_media->startup_roster_name_status == THERON_TRACK02_SIGNAL_OK ||
          out_media->startup_text_prompt_status == THERON_TRACK02_SIGNAL_OK);
 }
 
@@ -155,6 +190,16 @@ void theron_v1_startup_media_capture_track02_state_receipt(
              media.track02_md5);
     out_receipt->track02_size = media.track02_size;
     out_receipt->startup_media_ready = media.startup_media_ready;
+    out_receipt->startup_bitmap_decode_status =
+        media.startup_bitmap_decode_status;
+    out_receipt->startup_bitmap_sample_count =
+        media.startup_bitmap_sample_count;
+    out_receipt->startup_bitmap_route_mask =
+        media.startup_bitmap_route_mask;
+    out_receipt->startup_bitmap_nonzero_pixel_count =
+        media.startup_bitmap_nonzero_pixel_count;
+    out_receipt->startup_bitmap_checksum =
+        media.startup_bitmap_checksum;
     out_receipt->startup_roster_name_status =
         media.startup_roster_name_status;
     out_receipt->startup_text_prompt_status =

@@ -24,11 +24,21 @@
 #define THERON_TRACK02_MAX_USER_DATA_WINDOWS 8u
 #define THERON_TRACK02_MAX_STARTUP_TEXT_MARKERS 8u
 #define THERON_TRACK02_MAX_STARTUP_ROSTER_NAMES 8u
+#define THERON_TRACK02_MAX_STARTUP_BITMAP_SAMPLES 4u
 #define THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY 16u
 #define THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY 32u
 #define THERON_TRACK02_RAW_SECTOR_BYTES 2352u
 #define THERON_TRACK02_RAW_USER_DATA_OFFSET 0x10u
 #define THERON_TRACK02_RAW_USER_DATA_BYTES 2048u
+#define THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES 32u
+#define THERON_TRACK02_STARTUP_BITMAP_PIXELS 64u
+
+enum {
+    THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE = 1u << 0,
+    THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE = 1u << 1,
+    THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM = 1u << 2,
+    THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD = 1u << 3
+};
 
 typedef enum {
     THERON_TRACK02_VARIANT_UNKNOWN = 0,
@@ -279,6 +289,41 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02StartupRosterNameCatalog *out_catalog);
+
+typedef struct {
+    unsigned int route_bit;
+    size_t raw_offset;
+    size_t user_data_offset;
+    size_t byte_count;
+    uint8_t width;
+    uint8_t height;
+    uint8_t bpp;
+    size_t nonzero_pixel_count;
+    uint32_t checksum;
+    uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_PIXELS];
+} Theron_Track02StartupBitmapSample;
+
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t sample_count;
+    size_t overflow_count;
+    unsigned int route_mask;
+    Theron_Track02StartupBitmapSample
+        samples[THERON_TRACK02_MAX_STARTUP_BITMAP_SAMPLES];
+} Theron_Track02StartupBitmapCatalog;
+
+Theron_Track02SignalStatus theron_v1_track02_decode_4bpp_tile(
+    const uint8_t *tile_bytes,
+    size_t tile_size,
+    uint8_t out_pixels[THERON_TRACK02_STARTUP_BITMAP_PIXELS],
+    size_t *out_nonzero_pixel_count,
+    uint32_t *out_checksum);
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02StartupBitmapCatalog *out_catalog);
 
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);
