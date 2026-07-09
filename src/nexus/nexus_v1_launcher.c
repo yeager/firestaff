@@ -793,9 +793,83 @@ void nexus_v1_launcher_m12_startup_package_receipt_clear(
     receipt->path_label = "NEXUS TITLE MENU";
     receipt->contract_label = "NEXUS FULL START PACKAGE RECEIPT";
     receipt->capture_label = "NEXUS TIMING CAPTURE PROOF";
+    receipt->capture_route_label = "invalid";
+    receipt->first_capture_draw_label = "none";
     receipt->next_step_label = "REQUIRED GAME DATA";
+    receipt->active_proof_label = "REQUIRED GAME DATA";
     receipt->status_label = "DATA MISSING";
     receipt->detail_label = "KNOWN SLOT, HASH COVERAGE STILL GROWING";
+    receipt->launch_status_label = "DATA MISSING";
+    receipt->launch_detail_label = "KNOWN SLOT, HASH COVERAGE STILL GROWING";
+    receipt->blocked_status_label = "DATA MISSING";
+    receipt->blocked_detail_label = "KNOWN SLOT, HASH COVERAGE STILL GROWING";
+}
+
+static const char *nexus_v1_launcher_m12_capture_route_label(
+    Nexus_V1_StartupCaptureRoute route)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_CAPTURE_BLOCKED: return "blocked-startup";
+    case NEXUS_V1_STARTUP_CAPTURE_TITLE: return "title-warning";
+    case NEXUS_V1_STARTUP_CAPTURE_SAVE: return "save-menu";
+    case NEXUS_V1_STARTUP_CAPTURE_CHAMPION: return "champion-menu";
+    case NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE: return "menu-idle";
+    case NEXUS_V1_STARTUP_CAPTURE_INVALID:
+    default:
+        return "invalid";
+    }
+}
+
+static const char *nexus_v1_launcher_m12_draw_kind_label(
+    Nexus_V1_StartupDrawKind kind)
+{
+    switch (kind) {
+    case NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND:
+        return "title-background";
+    case NEXUS_V1_STARTUP_DRAW_FILL_RECT:
+        return "fill-rect";
+    case NEXUS_V1_STARTUP_DRAW_OUTLINE_RECT:
+        return "outline-rect";
+    case NEXUS_V1_STARTUP_DRAW_TEXT:
+        return "text";
+    case NEXUS_V1_STARTUP_DRAW_PORTRAIT:
+        return "portrait";
+    case NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME:
+        return "boot-title-frame";
+    case NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND:
+        return "warning-background";
+    case NEXUS_V1_STARTUP_DRAW_NONE:
+    default:
+        return "none";
+    }
+}
+
+static void nexus_v1_launcher_m12_finalize_startup_display(
+    Nexus_V1_M12StartupPackageReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    receipt->capture_route_label =
+        nexus_v1_launcher_m12_capture_route_label(receipt->capture_route);
+    receipt->first_capture_draw_label =
+        nexus_v1_launcher_m12_draw_kind_label(
+            receipt->first_capture_draw_kind);
+    receipt->active_proof_label =
+        receipt->packaged_capture_ready
+            ? receipt->capture_label
+            : receipt->next_step_label;
+    if (receipt->packaged_capture_ready) {
+        receipt->launch_status_label = "READY TO LAUNCH";
+        receipt->launch_detail_label = receipt->path_label;
+        receipt->blocked_status_label = "READY TO LAUNCH";
+        receipt->blocked_detail_label = receipt->path_label;
+    } else {
+        receipt->launch_status_label = receipt->status_label;
+        receipt->launch_detail_label = receipt->detail_label;
+        receipt->blocked_status_label = receipt->status_label;
+        receipt->blocked_detail_label = receipt->active_proof_label;
+    }
 }
 
 int nexus_v1_launcher_m12_startup_package_from_flags(
@@ -834,6 +908,7 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
         out_receipt->status_label = "UNSUPPORTED";
         out_receipt->detail_label = "RUNTIME NOT WIRED";
         out_receipt->next_step_label = "SUPPORTED RUNTIME";
+        nexus_v1_launcher_m12_finalize_startup_display(out_receipt);
         return 1;
     }
     if (out_receipt->data_ready) {
@@ -869,6 +944,7 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
         out_receipt->first_capture_draw_kind =
             NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND;
     }
+    nexus_v1_launcher_m12_finalize_startup_display(out_receipt);
     return 1;
 }
 

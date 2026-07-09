@@ -178,9 +178,19 @@ int main(void)
                m12_package_receipt.boot_start_ready_frames == 102 &&
                m12_package_receipt.title_frame_max == 102 &&
                m12_package_receipt.title_prompt_visible == 1 &&
+               strcmp(m12_package_receipt.capture_route_label,
+                      "title-warning") == 0 &&
+               strcmp(m12_package_receipt.first_capture_draw_label,
+                      "warning-background") == 0 &&
                strcmp(m12_package_receipt.contract_label,
-                      "NEXUS FULL START PACKAGE RECEIPT") == 0,
-           "Nexus M12 startup package owns ready card timing/capture facts");
+                      "NEXUS FULL START PACKAGE RECEIPT") == 0 &&
+               strcmp(m12_package_receipt.active_proof_label,
+                      "NEXUS TIMING CAPTURE PROOF") == 0 &&
+               strcmp(m12_package_receipt.launch_status_label,
+                      "READY TO LAUNCH") == 0 &&
+               strcmp(m12_package_receipt.launch_detail_label,
+                      "NEXUS TITLE MENU") == 0,
+           "Nexus M12 startup package owns ready card display/timing/capture facts");
     expect(nexus_v1_launcher_m12_startup_package_from_flags(
                1,
                1,
@@ -189,9 +199,17 @@ int main(void)
                m12_package_receipt.packaged_capture_ready == 0 &&
                m12_package_receipt.capture_route ==
                    NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+               strcmp(m12_package_receipt.capture_route_label,
+                      "blocked-startup") == 0 &&
                strcmp(m12_package_receipt.next_step_label,
+                      "SELECTED VERSION") == 0 &&
+               strcmp(m12_package_receipt.active_proof_label,
+                      "SELECTED VERSION") == 0 &&
+               strcmp(m12_package_receipt.blocked_status_label,
+                      "VERSION MISSING") == 0 &&
+               strcmp(m12_package_receipt.blocked_detail_label,
                       "SELECTED VERSION") == 0,
-           "Nexus M12 startup package blocks capture before version proof");
+           "Nexus M12 startup package blocks display/capture before version proof");
 
     memset(&empty_champions, 0, sizeof(empty_champions));
     expect(nexus_v1_startup_input_from_firestaff_menu_code(0) ==

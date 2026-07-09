@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 M12 active capture launch detail: ready launch gates now publish the active packaged capture proof as their detail label instead of a generic boot-path label, so DM1 HoC, CSB HUD/title, DM2 timing, Nexus capture, and Theron Track02 cards/status consumers stay receipt-driven. Verification: `test_m12_all_games_boot_readiness_receipt`, `test_csb_v1_launch_blocker_m12`, `test_m12_dm1_v1_required_complete_launches`, and `git diff --check`.
+
+- ✅ 2026-07-09 pass911 Nexus package display labels: Nexus M12 startup package receipts now own ready/blocked launcher display labels, active proof labels, capture-route names, and first draw-kind names so callers do not need generic manifest or loose startup text for Nexus status/card display. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB capture render executor retired: title, utility, closed-door, and door-opening render execution tests now stay on host-view render receipts instead of the older capture-level render executor. Verification: CSB startup tests and `git diff --check`.
 
 - ✅ 2026-07-09 pass910 Nexus M12 packaged startup card receipt: Nexus now exposes an M12 full-start package receipt for title/warning timing, capture route, first draw kind, and card labels; M12 boot/status/card readiness consumes it for Nexus instead of generic loose manifest facts. Verification: Nexus startup test, M12 boot-readiness test, firestaff build, and `git diff --check` passed.
