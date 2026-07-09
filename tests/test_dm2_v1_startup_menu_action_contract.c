@@ -63,6 +63,7 @@ int main(void)
     DM2_V1_BootStartupHostViewReceipt boot_host_view_receipt;
     DM2_V1_BootStartupPackagedFullStartReceipt boot_full_start_package;
     DM2_V1_BootStartupPackagedConsumerReceipt boot_consumer_receipt;
+    DM2_V1_BootStartupHostFrameReceipt boot_host_frame_receipt;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -554,6 +555,28 @@ int main(void)
               boot_consumer_receipt.startup_draw_hud_handoff_ready == 1 &&
               strcmp(boot_consumer_receipt.phase, "dm2-startup-menu") == 0,
           "boot packaged consumer receipt gives M11 startup draw gate");
+    check(dm2_v1_boot_startup_host_frame_receipt_from_snapshot(
+              &boot_snapshot,
+              &boot_host_frame_receipt) &&
+              boot_host_frame_receipt.valid &&
+              boot_host_frame_receipt.consume_startup_package == 1 &&
+              boot_host_frame_receipt.render_startup_title == 1 &&
+              boot_host_frame_receipt.render_startup_menu == 1 &&
+              boot_host_frame_receipt.suppress_game_hud == 1 &&
+              boot_host_frame_receipt.enable_runtime_input == 0 &&
+              boot_host_frame_receipt.present_first_hud_frame == 0 &&
+              boot_host_frame_receipt.schedule_next_title_tick == 1 &&
+              boot_host_frame_receipt.next_title_tick_delta == 6 &&
+              boot_host_frame_receipt.title_animation_tick == 0 &&
+              boot_host_frame_receipt.title_frame == 0 &&
+              boot_host_frame_receipt.title_frame_remaining_ticks == 6 &&
+              boot_host_frame_receipt.startup_draw_command_count ==
+                  boot_consumer_receipt.startup_draw_command_count &&
+              boot_host_frame_receipt.packaged_full_start_hash ==
+                  boot_consumer_receipt.packaged_full_start_hash &&
+              strcmp(boot_host_frame_receipt.phase,
+                     "dm2-startup-menu") == 0,
+          "boot host-frame receipt owns startup title/menu/HUD decision");
     check(dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
               NULL,
               1,
@@ -615,6 +638,27 @@ int main(void)
                   boot_full_start_package.command_count &&
               boot_consumer_receipt.startup_draw_ready == 1,
           "boot packaged consumer receipt owns nonzero startup draw timing");
+    check(dm2_v1_boot_startup_host_frame_receipt_from_runtime_state(
+              NULL,
+              1,
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              13,
+              &boot_host_frame_receipt) &&
+              boot_host_frame_receipt.valid &&
+              boot_host_frame_receipt.render_startup_title == 1 &&
+              boot_host_frame_receipt.render_startup_menu == 1 &&
+              boot_host_frame_receipt.suppress_game_hud == 1 &&
+              boot_host_frame_receipt.schedule_next_title_tick == 1 &&
+              boot_host_frame_receipt.next_title_tick_delta == 5 &&
+              boot_host_frame_receipt.title_animation_tick == 13 &&
+              boot_host_frame_receipt.title_frame == 2 &&
+              boot_host_frame_receipt.title_frame_elapsed_ticks == 1 &&
+              boot_host_frame_receipt.title_frame_remaining_ticks == 5 &&
+              boot_host_frame_receipt.title_next_frame_tick == 18,
+          "boot host-frame receipt owns nonzero title tick scheduling");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&

@@ -2291,6 +2291,140 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
         out_receipt);
 }
 
+void dm2_v1_boot_startup_host_frame_receipt_init(
+    DM2_V1_BootStartupHostFrameReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+    }
+}
+
+int dm2_v1_boot_startup_host_frame_receipt_from_consumer(
+    const DM2_V1_BootStartupPackagedConsumerReceipt *consumer,
+    DM2_V1_BootStartupHostFrameReceipt *out_receipt)
+{
+    dm2_v1_boot_startup_host_frame_receipt_init(out_receipt);
+    if (!consumer || !out_receipt || !consumer->valid) {
+        return 0;
+    }
+
+    /* skproject/SKWIN keeps boot-title drawing, startup menu selection, and
+     * the first HUD/runtime handoff in one host frame decision. Preserve that
+     * as a DM2-owned receipt so M11 does not re-derive draw/input/HUD gates
+     * from individual timing and command-count fields. */
+    out_receipt->consume_startup_package =
+        consumer->m11_startup_receipt_ready;
+    out_receipt->render_startup_title =
+        consumer->startup_active &&
+        consumer->startup_draw_ready &&
+        consumer->packaged_title_timing_consumed;
+    out_receipt->render_startup_menu =
+        consumer->startup_active &&
+        consumer->startup_draw_ready &&
+        consumer->startup_draw_menu_capture_ready;
+    out_receipt->suppress_game_hud =
+        consumer->startup_active &&
+        consumer->startup_hud_runtime_ready &&
+        !consumer->first_hud_frame_ready;
+    out_receipt->enable_runtime_input =
+        consumer->runtime_action_ready &&
+        consumer->first_hud_frame_ready &&
+        !consumer->startup_active;
+    out_receipt->present_first_hud_frame =
+        consumer->first_hud_frame_ready &&
+        !out_receipt->suppress_game_hud;
+    out_receipt->schedule_next_title_tick =
+        out_receipt->render_startup_title &&
+        consumer->title_frame_remaining_ticks > 0;
+    out_receipt->next_title_tick_delta =
+        out_receipt->schedule_next_title_tick
+            ? consumer->title_frame_remaining_ticks
+            : 0;
+    out_receipt->title_animation_tick =
+        consumer->title_cycle_position_tick;
+    out_receipt->title_frame = consumer->startup_title_frame;
+    out_receipt->title_frame_max = consumer->startup_title_frame_max;
+    out_receipt->title_frame_duration_ticks =
+        consumer->title_frame_duration_ticks;
+    out_receipt->title_frame_elapsed_ticks =
+        consumer->title_frame_elapsed_ticks;
+    out_receipt->title_frame_remaining_ticks =
+        consumer->title_frame_remaining_ticks;
+    out_receipt->title_next_frame_tick = consumer->title_next_frame_tick;
+    out_receipt->startup_draw_command_count =
+        consumer->startup_draw_command_count;
+    out_receipt->startup_draw_ready = consumer->startup_draw_ready;
+    out_receipt->startup_hud_runtime_ready =
+        consumer->startup_hud_runtime_ready;
+    out_receipt->runtime_menu_ready = consumer->runtime_menu_ready;
+    out_receipt->runtime_action_ready = consumer->runtime_action_ready;
+    out_receipt->first_hud_frame_ready = consumer->first_hud_frame_ready;
+    out_receipt->packaged_full_start_hash =
+        consumer->packaged_full_start_hash;
+    out_receipt->phase = consumer->phase;
+    out_receipt->animation = consumer->animation;
+    out_receipt->status_scope = consumer->status_scope;
+    out_receipt->status = consumer->status;
+    out_receipt->valid =
+        out_receipt->consume_startup_package &&
+        ((out_receipt->render_startup_title &&
+          out_receipt->render_startup_menu &&
+          out_receipt->suppress_game_hud &&
+          out_receipt->schedule_next_title_tick) ||
+         (out_receipt->enable_runtime_input &&
+          out_receipt->present_first_hud_frame)) &&
+        out_receipt->packaged_full_start_hash != 0u;
+    return out_receipt->valid;
+}
+
+int dm2_v1_boot_startup_host_frame_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupHostFrameReceipt *out_receipt)
+{
+    DM2_V1_BootStartupPackagedConsumerReceipt consumer;
+
+    dm2_v1_boot_startup_host_frame_receipt_init(out_receipt);
+    if (!snapshot || !out_receipt ||
+        !dm2_v1_boot_startup_packaged_consumer_receipt_from_snapshot(
+            snapshot,
+            &consumer)) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_host_frame_receipt_from_consumer(
+        &consumer,
+        out_receipt);
+}
+
+int dm2_v1_boot_startup_host_frame_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupHostFrameReceipt *out_receipt)
+{
+    DM2_V1_BootStartupPackagedConsumerReceipt consumer;
+
+    dm2_v1_boot_startup_host_frame_receipt_init(out_receipt);
+    if (!out_receipt ||
+        !dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
+            profile,
+            startup_menu_active,
+            startup_save_root,
+            resume_available,
+            slot_mask,
+            selected_row,
+            title_animation_tick,
+            &consumer)) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_host_frame_receipt_from_consumer(
+        &consumer,
+        out_receipt);
+}
+
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,

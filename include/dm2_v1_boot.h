@@ -403,6 +403,36 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int consume_startup_package;
+    int render_startup_title;
+    int render_startup_menu;
+    int suppress_game_hud;
+    int enable_runtime_input;
+    int present_first_hud_frame;
+    int schedule_next_title_tick;
+    int next_title_tick_delta;
+    int title_animation_tick;
+    int title_frame;
+    int title_frame_max;
+    int title_frame_duration_ticks;
+    int title_frame_elapsed_ticks;
+    int title_frame_remaining_ticks;
+    int title_next_frame_tick;
+    int startup_draw_command_count;
+    int startup_draw_ready;
+    int startup_hud_runtime_ready;
+    int runtime_menu_ready;
+    int runtime_action_ready;
+    int first_hud_frame_ready;
+    uint32_t packaged_full_start_hash;
+    const char *phase;
+    const char *animation;
+    const char *status_scope;
+    const char *status;
+} DM2_V1_BootStartupHostFrameReceipt;
+
+typedef struct {
+    int valid;
     int draw_startup_menu;
     int command_count;
     int selected_row;
@@ -693,6 +723,23 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
     int selected_row,
     int title_animation_tick,
     DM2_V1_BootStartupPackagedConsumerReceipt *out_receipt);
+void dm2_v1_boot_startup_host_frame_receipt_init(
+    DM2_V1_BootStartupHostFrameReceipt *receipt);
+int dm2_v1_boot_startup_host_frame_receipt_from_consumer(
+    const DM2_V1_BootStartupPackagedConsumerReceipt *consumer,
+    DM2_V1_BootStartupHostFrameReceipt *out_receipt);
+int dm2_v1_boot_startup_host_frame_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupHostFrameReceipt *out_receipt);
+int dm2_v1_boot_startup_host_frame_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupHostFrameReceipt *out_receipt);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,
