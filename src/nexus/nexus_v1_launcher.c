@@ -1930,11 +1930,17 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
         !nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
             runtime,
             &out_receipt->launch_gate) ||
-        !nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
-            runtime,
-            &out_receipt->asset_handoff) ||
         !nexus_v1_launcher_startup_assets_from_runtime_state(state,
                                                              &assets)) {
+        return 0;
+    }
+    if (!nexus_v1_launcher_startup_asset_handoff_from_parts(
+            state->engine,
+            state->engine ? state->engine->level_loaded : runtime->level_loaded,
+            assets.title_route_ready,
+            &assets,
+            runtime->startup_receipt.host_receipt.status,
+            &out_receipt->asset_handoff)) {
         return 0;
     }
 
@@ -1948,6 +1954,11 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
     out_receipt->menu_route_ready =
         assets.save_menu_route_ready && assets.champion_menu_route_ready;
     out_receipt->audio_ready = assets.startup_audio_handoff_ready ? 1 : 0;
+    out_receipt->startup_sfx_status = assets.startup_sfx_status;
+    out_receipt->startup_sfx_level_index = assets.startup_sfx_level_index;
+    out_receipt->startup_cd_track = assets.startup_cd_track;
+    out_receipt->startup_sfx_blocks_real_playback =
+        assets.startup_sfx_blocks_real_playback ? 1 : 0;
     out_receipt->title_menu_route_ready =
         out_receipt->title_route_ready && out_receipt->menu_route_ready;
     out_receipt->fallback_visuals_permitted =
@@ -2029,6 +2040,8 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
         (!execution || out_receipt->runtime_handoff.render_plan.plan_ready);
     out_receipt->audio_runtime_route_ready =
         out_receipt->audio_ready && out_receipt->first_runtime_route_ready;
+    out_receipt->audio_runtime_route_blocked =
+        out_receipt->audio_runtime_route_ready ? 0 : 1;
     out_receipt->full_startup_route_ready =
         out_receipt->saturn_asset_boot_ready &&
         out_receipt->title_menu_route_ready &&

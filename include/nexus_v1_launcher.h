@@ -354,6 +354,11 @@ typedef struct {
     int menu_runtime_route_ready;
     int first_runtime_route_ready;
     int audio_runtime_route_ready;
+    int audio_runtime_route_blocked;
+    Nexus_SfxRuntimeStatus startup_sfx_status;
+    int startup_sfx_level_index;
+    int startup_cd_track;
+    int startup_sfx_blocks_real_playback;
     int script_runtime_route_ready;
     int script_runtime_route_blocked;
     int full_startup_route_ready;
