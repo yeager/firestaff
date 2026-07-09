@@ -6569,6 +6569,7 @@ if(BUILD_TESTING)
     target_link_libraries(test_dm2_v1_runtime_handoff_smoke PRIVATE firestaff_dm2 firestaff_m10)
     target_compile_definitions(test_dm2_v1_runtime_handoff_smoke PRIVATE
         FIRESTAFF_DM2_PROJECTILE_TESTING=1
+        FIRESTAFF_DM2_CREATURE_TESTING=1
     )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_runtime_handoff_smoke PRIVATE -Wall -Wextra -O2)

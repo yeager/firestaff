@@ -182,6 +182,18 @@ static void put16le(uint8_t *p, uint16_t v)
     p[1] = (uint8_t)((v >> 8) & 0xffu);
 }
 
+static int set_door_state_preserve_tile(DM2_V1_DungeonData *d,
+                                        int level,
+                                        int x,
+                                        int y,
+                                        int state)
+{
+    int raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    if (raw < 0) return -1;
+    return dm2_v1_dungeon_set_tile_raw(
+        d, level, x, y, (uint16_t)((raw & ~0x0007u) | (state & 0x0007)));
+}
+
 static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
 {
     const size_t header_size = 44;
@@ -891,6 +903,95 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
                       dm2_v1_runtime_last_asset_door_button_count() == 1,
                       "runtime door record drives default button asset draw");
+                CHECK(set_door_state_preserve_tile(
+                          (DM2_V1_DungeonData *)profile.dungeon_data,
+                          0, 1, 0, 1) == 0 &&
+                      dm2_v1_runtime_is_passable(0, 1, 0) == 1,
+                      "runtime DB0 door state 1 remains party-passable");
+                CHECK(set_door_state_preserve_tile(
+                          (DM2_V1_DungeonData *)profile.dungeon_data,
+                          0, 1, 0, 2) == 0 &&
+                      dm2_v1_runtime_is_passable(0, 1, 0) == 0,
+                      "runtime DB0 door state 2 blocks party movement");
+                CHECK(set_door_state_preserve_tile(
+                          (DM2_V1_DungeonData *)profile.dungeon_data,
+                          0, 1, 0, 5) == 0 &&
+                      dm2_v1_runtime_is_passable(0, 1, 0) == 1,
+                      "runtime DB0 destroyed door state remains passable");
+                {
+                    int slot;
+                    DM2_V1_CreatureCCMTickObserver obs;
+                    const DM2_V1_CreatureInstance *inst;
+
+#ifdef FIRESTAFF_DM2_CREATURE_TESTING
+                    dm2_v1_creature_test_reset_instances();
+#endif
+                    CHECK(set_door_state_preserve_tile(
+                              (DM2_V1_DungeonData *)profile.dungeon_data,
+                              0, 1, 0, 3) == 0,
+                          "runtime DB0 door state 3 seeds creature block");
+                    slot = dm2_v1_creature_spawn(0, 1, 1, 0, 0, 8);
+                    dm2_v1_creature_reset_ccm_tick_observer();
+                    dm2_v1_runtime_tick();
+                    CHECK(slot >= 0 &&
+                          dm2_v1_creature_last_ccm_tick(&obs) == 1 &&
+                          obs.instance_id == slot &&
+                          obs.field_door_valid == 1 &&
+                          obs.field_door_state == 3 &&
+                          obs.field_blocks_movement == 1 &&
+                          obs.field_door_open_pct == 25,
+                          "runtime DB0 state 3 blocks creature and reports 25 pct open");
+                    inst = dm2_v1_creature_get_instance(slot);
+                    CHECK(inst != NULL &&
+                          inst->world_x == 1 &&
+                          inst->world_y == 1,
+                          "runtime DB0 state 3 keeps creature before door");
+
+                    CHECK(set_door_state_preserve_tile(
+                              (DM2_V1_DungeonData *)profile.dungeon_data,
+                              0, 1, 0, 1) == 0,
+                          "runtime DB0 door state 1 seeds creature pass");
+                    dm2_v1_creature_reset_ccm_tick_observer();
+                    dm2_v1_runtime_tick();
+                    CHECK(dm2_v1_creature_last_ccm_tick(&obs) == 1 &&
+                          obs.instance_id == slot &&
+                          obs.field_door_state == 1 &&
+                          obs.field_blocks_movement == 0 &&
+                          obs.field_moved == 1 &&
+                          obs.field_door_open_pct == 75,
+                          "runtime DB0 state 1 passes creature and reports 75 pct open");
+
+                    CHECK(set_door_state_preserve_tile(
+                              (DM2_V1_DungeonData *)profile.dungeon_data,
+                              0, 1, 0, 5) == 0,
+                          "runtime DB0 door state 5 seeds destroyed pass");
+#ifdef FIRESTAFF_DM2_CREATURE_TESTING
+                    dm2_v1_creature_test_reset_instances();
+#endif
+                    slot = dm2_v1_creature_spawn(0, 1, 1, 0, 0, 8);
+                    dm2_v1_creature_reset_ccm_tick_observer();
+                    dm2_v1_runtime_tick();
+                    CHECK(slot >= 0 &&
+                          dm2_v1_creature_last_ccm_tick(&obs) == 1 &&
+                          obs.instance_id == slot &&
+                          obs.field_door_state == 5 &&
+                          obs.field_blocks_movement == 0 &&
+                          obs.field_moved == 1 &&
+                          obs.field_door_open_pct == 100,
+                          "runtime DB0 destroyed door passes creature and reports fully open");
+                }
+                memset(framebuffer, 0, sizeof(framebuffer));
+                fetch_count = 0;
+                CHECK(set_door_state_preserve_tile(
+                          (DM2_V1_DungeonData *)profile.dungeon_data,
+                          0, 1, 0, 5) == 0,
+                      "runtime DB0 destroyed door render state seeded");
+                CHECK(dm2_v1_runtime_render_frame(
+                          0, 1, 1, framebuffer, 320, 320, 200) == 0,
+                      "runtime renders DB0 destroyed door state");
+                CHECK(dm2_v1_runtime_last_asset_door_panel_count() == 0 &&
+                      dm2_v1_runtime_last_asset_door_frame_count() == 1,
+                      "runtime DB0 destroyed door skips panel and keeps frame receipt");
                 dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
             } else {
                 CHECK(0, "runtime door-record fixture loads");

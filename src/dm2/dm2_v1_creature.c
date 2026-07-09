@@ -282,6 +282,7 @@ void dm2_v1_creature_reset_field_runtime(void) {
 }
 
 int dm2_v1_creature_door_open_pct_from_state(int door_state) {
+    if (door_state == 5) return 100;
     if (door_state < 0) door_state = 0;
     if (door_state > 4) door_state = 4;
     return (4 - door_state) * 25;
@@ -480,7 +481,7 @@ const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id) {
 }
 
 /* ── Test-only API ────────────────────────────────────────────────
- * Compiled in only when FIRESTAFF_DM2_CREATURE_TESTING=1.  Lets the
+ * Declared only when FIRESTAFF_DM2_CREATURE_TESTING=1.  Lets the
  * collision gate inject a synthetic AI definition (with REFLECTOR /
  * ABSORBS_MISSILE / NONMATERIAL / TURNS_MISSILE bits set) without
  * depending on GDAT-loaded real AI table values.
@@ -488,7 +489,6 @@ const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id) {
  * The override is a full-struct copy; the slot becomes a clone of the
  * caller's spec.  clear_ai_overrides() restores the zero-init default
  * so subsequent tests see a clean table. */
-#ifdef FIRESTAFF_DM2_CREATURE_TESTING
 void dm2_v1_creature_test_set_ai_spec(int ai_index,
                                        const DM2_AIDefinition *spec) {
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return;
@@ -520,7 +520,6 @@ void dm2_v1_creature_test_reset_instances(void) {
     g_tick_counter = 0;
     dm2_v1_creature_reset_ccm_tick_observer();
 }
-#endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
 /* dm2_v1_creature_death_check — death → drop + spatial sound.
  * Source: SKULLWIN/c_creature.cpp, SKULLWIN/c_sound.cpp, SKWin.GDAT2.InternalCodes.txt */

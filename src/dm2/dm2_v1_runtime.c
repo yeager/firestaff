@@ -131,6 +131,17 @@ static int dm2_runtime_square_type_at(const DM2_V1_DungeonData *dd,
     return raw & DM2_SQUARE_TYPE_MASK;
 }
 
+static int dm2_runtime_has_door_record_at(DM2_V1_DungeonData *dd,
+                                          int level,
+                                          int x,
+                                          int y) {
+    int thing;
+    if (!dd) return 0;
+    thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
+    if (thing < 0) return 0;
+    return dm2_v1_dungeon_find_thing_of_type(dd, (uint16_t)thing, 0, 8) >= 0;
+}
+
 static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
                                   int level,
                                   int x,
@@ -138,6 +149,8 @@ static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
                                   int raw) {
     int square_type = dm2_runtime_square_type_at(dd, level, x, y, raw);
     return square_type == DM2_SQUARE_DOOR ||
+           dm2_runtime_has_door_record_at((DM2_V1_DungeonData *)dd,
+                                          level, x, y) ||
            dm2_runtime_raw_is_door_square((uint16_t)raw);
 }
 
@@ -326,7 +339,7 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
                 int door_state = dm2_runtime_door_state((uint16_t)raw);
                 if (door_state < 0) {
                     door_state = 0;
-                } else if (door_state > 4) {
+                } else if (door_state > 5) {
                     door_state = 4;
                 }
                 door->door_open_pct =
@@ -1713,9 +1726,9 @@ int dm2_v1_runtime_is_passable(int level, int x, int y) {
         tile_type == 11 || tile_type == 13) {
         return 0;
     }
-    if (dm2_runtime_is_door_at(dd, level, x, y, raw) &&
-        (raw & 0x0007) != 0) {
-        return 0;
+    if (dm2_runtime_is_door_at(dd, level, x, y, raw)) {
+        return dm2_door_state_blocks_movement(
+                   dm2_runtime_door_state((uint16_t)raw), 1) ? 0 : 1;
     }
     return 1;
 }
