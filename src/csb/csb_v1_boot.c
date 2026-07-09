@@ -1974,6 +1974,7 @@ int csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *out_receipt)
 {
     CSB_V1_BootStartupRenderViewReceipt_PC34 view;
+    int receipt_valid;
 
     if (!out_receipt) {
         return 0;
@@ -1982,11 +1983,54 @@ int csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
     if (!csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
             snapshot,
             &view)) {
+        if (snapshot && snapshot->runtime_level_loaded &&
+            !snapshot->title_active && !snapshot->entrance_active &&
+            !snapshot->opening_active && !snapshot->credits_active) {
+            /* ReDMCSB ENTRANCE.C F0438/F0807 lines 725-790 exits the door
+             * sequence before normal dungeon redraw resumes; CSBWin keeps the
+             * viewport/HUD readiness in the CSB view transition instead of
+             * deriving it in the host. */
+            out_receipt->valid = 1;
+            out_receipt->title_ready = 1;
+            out_receipt->runtime_handoff_ready = 1;
+            out_receipt->runtime_viewport_ready = 1;
+            out_receipt->runtime_hud_ready = 1;
+            out_receipt->runtime_level_loaded =
+                snapshot->runtime_level_loaded;
+            out_receipt->runtime_map_index = snapshot->runtime_map_index;
+            out_receipt->runtime_party_x = snapshot->runtime_party_x;
+            out_receipt->runtime_party_y = snapshot->runtime_party_y;
+            out_receipt->runtime_party_dir = snapshot->runtime_party_dir;
+            out_receipt->runtime_champion_count =
+                snapshot->runtime_champion_count;
+            out_receipt->runtime_tick_count = snapshot->runtime_tick_count;
+            return 1;
+        }
         return 0;
     }
-    return csb_v1_boot_startup_readiness_receipt_from_view_pc34(
+    receipt_valid = csb_v1_boot_startup_readiness_receipt_from_view_pc34(
         &view,
         out_receipt);
+    if (receipt_valid && snapshot && snapshot->runtime_level_loaded &&
+        !snapshot->title_active && !snapshot->entrance_active &&
+        !snapshot->opening_active && !snapshot->credits_active) {
+        /* ReDMCSB ENTRANCE.C F0438/F0807 lines 725-790 exits the door
+         * sequence before normal dungeon redraw resumes; CSBWin keeps the
+         * viewport/HUD readiness in the CSB view transition instead of
+         * deriving it in the host. */
+        out_receipt->runtime_handoff_ready = 1;
+        out_receipt->runtime_viewport_ready = 1;
+        out_receipt->runtime_hud_ready = 1;
+        out_receipt->runtime_level_loaded = snapshot->runtime_level_loaded;
+        out_receipt->runtime_map_index = snapshot->runtime_map_index;
+        out_receipt->runtime_party_x = snapshot->runtime_party_x;
+        out_receipt->runtime_party_y = snapshot->runtime_party_y;
+        out_receipt->runtime_party_dir = snapshot->runtime_party_dir;
+        out_receipt->runtime_champion_count =
+            snapshot->runtime_champion_count;
+        out_receipt->runtime_tick_count = snapshot->runtime_tick_count;
+    }
+    return receipt_valid;
 }
 
 int csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(

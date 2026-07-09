@@ -117,6 +117,13 @@ typedef struct CSB_V1_BootRuntimeStartupSnapshot_PC34 {
     int resume_available;
     const char *resume_path;
     const CSB_V1_BootProfile *boot_profile;
+    int runtime_level_loaded;
+    int runtime_map_index;
+    int runtime_party_x;
+    int runtime_party_y;
+    int runtime_party_dir;
+    int runtime_champion_count;
+    int runtime_tick_count;
 } CSB_V1_BootRuntimeStartupSnapshot_PC34;
 
 typedef enum CSB_V1_BootStartupRenderRouteKind_PC34 {
@@ -241,6 +248,16 @@ typedef struct CSB_V1_BootStartupReadinessReceipt_PC34 {
     int selected_utility_action_index;
     int resume_available;
     int suppress_legacy_utility_fallback;
+    int runtime_handoff_ready;
+    int runtime_viewport_ready;
+    int runtime_hud_ready;
+    int runtime_level_loaded;
+    int runtime_map_index;
+    int runtime_party_x;
+    int runtime_party_y;
+    int runtime_party_dir;
+    int runtime_champion_count;
+    int runtime_tick_count;
     char animation[CSB_V1_STARTUP_ANIMATION_CAP_PC34];
 } CSB_V1_BootStartupReadinessReceipt_PC34;
 
