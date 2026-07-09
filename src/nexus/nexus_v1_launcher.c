@@ -698,6 +698,9 @@ void nexus_v1_launcher_startup_runtime_route_receipt_clear(
     }
     memset(receipt, 0, sizeof(*receipt));
     receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_INVALID;
+    receipt->startup_sfx_status = NEXUS_SFX_RUNTIME_MISSING;
+    receipt->startup_sfx_level_index = -1;
+    receipt->startup_cd_track = -1;
     nexus_v1_startup_host_action_receipt_clear(&receipt->host_action_receipt);
     nexus_v1_launcher_startup_runtime_handoff_receipt_clear(
         &receipt->runtime_handoff);
@@ -1724,6 +1727,14 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
     out_receipt->runtime_route_blocked =
         handoff->route == NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED ||
         handoff->route == NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
+    out_receipt->startup_sfx_status = handoff->assets.startup_sfx_status;
+    out_receipt->startup_sfx_level_index =
+        handoff->assets.startup_sfx_level_index;
+    out_receipt->startup_cd_track = handoff->assets.startup_cd_track;
+    out_receipt->startup_audio_handoff_ready =
+        handoff->assets.startup_audio_handoff_ready ? 1 : 0;
+    out_receipt->startup_sfx_blocks_real_playback =
+        handoff->assets.startup_sfx_blocks_real_playback ? 1 : 0;
     out_receipt->consumed_by_nexus =
         handoff->route != NEXUS_V1_STARTUP_RUNTIME_HANDOFF_INVALID;
     out_receipt->fallback_visuals_permitted =

@@ -300,6 +300,11 @@ typedef struct {
     int host_action_valid;
     int runtime_route_ready;
     int runtime_route_blocked;
+    Nexus_SfxRuntimeStatus startup_sfx_status;
+    int startup_sfx_level_index;
+    int startup_cd_track;
+    int startup_audio_handoff_ready;
+    int startup_sfx_blocks_real_playback;
     int consumed_by_nexus;
     int fallback_visuals_permitted;
     const char *status_scope;
