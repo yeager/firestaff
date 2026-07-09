@@ -22,6 +22,7 @@
 - ✅ 2026-07-09 pass820 DM1 F0190 timeline cleanup ownership now carries a batch compaction receipt for killed-some creature event deletion/shifts, so M10 copies back the DM1 event list instead of owning the cleanup loop.
 - ✅ 2026-07-09 pass821 DM1 F0190 possession-drop ownership now carries ordered apply receipts for group fixed cells, group slot drops, and killed-creature fixed drops, so M10 consumes the DM1 drop order instead of interpreting drop flags directly.
 - ✅ 2026-07-09 pass822 DM1 F0231 aftermath ownership now carries raw group writeback receipts, so M10 writes decoded group records from a DM1-returned group index instead of reading aftermath flags directly.
+- ✅ 2026-07-09 pass823 DM1 F0190 killed-all state ownership now carries unlink, GROUP.Next clear, and active-state removal apply receipts, so M10 no longer interprets killed-all state flags directly.
 
 - ✅ 2026-07-09 Theron SRM envelope startup receipt proof: Theron startup save/resume probe now asserts the decoded SRM envelope kind, so staged gzip SRM data proves the same typed progression handoff used by Continue. Verification: `theron_v1_startup_save_resume_probe`, `theron_v1_startup_save_resume_pc34`, and focused build passed.
 

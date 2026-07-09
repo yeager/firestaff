@@ -2497,18 +2497,28 @@ static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
     struct GameWorld_Compat* world,
     const DM1_MeleeF0190KilledAllStatePlanPc34* plan)
 {
+    DM1_MeleeF0190KilledAllStateApplyPlanPc34 applyPlan;
+
     if (!world || !world->things || !plan || !plan->valid) return;
-    if (plan->shouldUnlinkGroupFromSquare) {
+    memset(&applyPlan, 0, sizeof(applyPlan));
+    if (!dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
+            plan, &applyPlan) ||
+        !applyPlan.valid) {
+        return;
+    }
+    if (applyPlan.shouldUnlinkGroupFromSquare) {
         (void)orch_unlink_thing_from_square_compat(
-            world, plan->mapIndex, plan->mapX, plan->mapY,
-            orch_make_thing_ref_compat(THING_TYPE_GROUP, plan->groupIndex));
+            world, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
+            applyPlan.groupThing);
     }
-    if (plan->shouldClearGroupNext &&
-        plan->groupIndex < world->things->groupCount && world->things->groups) {
-        world->things->groups[plan->groupIndex].next = THING_NONE;
+    if (applyPlan.shouldClearGroupNext &&
+        applyPlan.groupIndex < world->things->groupCount &&
+        world->things->groups) {
+        world->things->groups[applyPlan.groupIndex].next =
+            applyPlan.clearedNextThing;
     }
-    if (plan->shouldRemoveActiveGroupState) {
-        orch_remove_active_group_state_compat(world, plan->groupIndex);
+    if (applyPlan.shouldRemoveActiveGroupState) {
+        orch_remove_active_group_state_compat(world, applyPlan.groupIndex);
     }
 }
 

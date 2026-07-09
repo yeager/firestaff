@@ -634,6 +634,19 @@ typedef struct {
 } DM1_MeleeF0190KilledAllStatePlanPc34;
 
 typedef struct {
+    int valid;
+    int shouldUnlinkGroupFromSquare;
+    int shouldClearGroupNext;
+    int shouldRemoveActiveGroupState;
+    int groupIndex;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    unsigned short groupThing;
+    unsigned short clearedNextThing;
+} DM1_MeleeF0190KilledAllStateApplyPlanPc34;
+
+typedef struct {
     int eventKind;
     int eventMapIndex;
     int eventMapX;
@@ -811,6 +824,9 @@ int dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
 int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     const DM1_MeleeF0190KilledAllStateInputPc34* in,
     DM1_MeleeF0190KilledAllStatePlanPc34* out);
+int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledAllStatePlanPc34* statePlan,
+    DM1_MeleeF0190KilledAllStateApplyPlanPc34* out);
 int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
     const DM1_MeleeF0190TimelineCleanupInputPc34* in,
     DM1_MeleeF0190TimelineCleanupPlanPc34* out);

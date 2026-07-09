@@ -2107,6 +2107,7 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190KilledSomeStatePlanPc34 stateApplyOut;
     DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
     DM1_MeleeF0190KilledAllStatePlanPc34 killedAllOut;
+    DM1_MeleeF0190KilledAllStateApplyPlanPc34 killedAllApplyOut;
     DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
     DM1_MeleeF0190TimelineCleanupPlanPc34 cleanupOut;
     DM1_MeleeF0190TimelineCleanupBatchInputPc34 cleanupBatchIn;
@@ -2587,6 +2588,22 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     CHECK_EQ(killedAllOut.mapIndex, 2, "F0190 killed-all map");
     CHECK_EQ(killedAllOut.mapX, 13, "F0190 killed-all x");
     CHECK_EQ(killedAllOut.mapY, 14, "F0190 killed-all y");
+    CHECK_EQ(dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
+                 &killedAllOut, &killedAllApplyOut), 1,
+             "F0190 killed-all apply receipt builds");
+    CHECK_EQ(killedAllApplyOut.valid, 1,
+             "F0190 killed-all apply receipt valid");
+    CHECK_EQ(killedAllApplyOut.shouldUnlinkGroupFromSquare, 1,
+             "F0190 killed-all apply unlinks group");
+    CHECK_EQ(killedAllApplyOut.shouldClearGroupNext, 1,
+             "F0190 killed-all apply clears next");
+    CHECK_EQ(killedAllApplyOut.shouldRemoveActiveGroupState, 1,
+             "F0190 killed-all apply removes active state");
+    CHECK_EQ(killedAllApplyOut.groupThing,
+             (unsigned short)(((unsigned short)THING_TYPE_GROUP << 10) | 9u),
+             "F0190 killed-all apply group thing");
+    CHECK_EQ(killedAllApplyOut.clearedNextThing, THING_NONE,
+             "F0190 killed-all apply next none");
 
     killedAllIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
     CHECK_EQ(dm1_v1_melee_killed_all_state_plan_f0190_pc34(
