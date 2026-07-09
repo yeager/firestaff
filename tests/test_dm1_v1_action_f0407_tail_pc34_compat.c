@@ -1933,6 +1933,12 @@ static void test_melee_f0231_aftermath_plan(void) {
     in.groupIndex = 4;
     in.creatureIndex = 2;
     in.creatureType = 6;
+    in.creatureProperties = 0x0230;
+    in.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    in.originalGroupCount = 3;
+    in.partyMapIndex = 3;
+    in.partyMapX = 7;
+    in.partyMapY = 9;
     in.targetMapIndex = 3;
     in.targetMapX = 8;
     in.targetMapY = 9;
@@ -1965,6 +1971,14 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 killed-all skips killed-some state");
     CHECK_EQ(out.shouldApplyKilledAllSideEffects, 1,
              "F0231 killed-all unlinks group");
+    CHECK_EQ(out.mutationOutcome, COMBAT_OUTCOME_KILLED_ALL_CREATURES,
+             "F0231 killed-all mutation outcome");
+    CHECK_EQ(out.mutationGroupIndex, 4,
+             "F0231 killed-all mutation group");
+    CHECK_EQ(out.mutationOriginalGroupCount, 3,
+             "F0231 killed-all mutation original count");
+    CHECK_EQ(out.mutationPartyMapX, 7,
+             "F0231 killed-all mutation party x");
     CHECK_EQ(out.shouldWriteRawGroup, 1, "F0231 killed-all writeback");
     CHECK_EQ(out.shouldEmitKillNotify, 1, "F0231 killed-all notifies");
     CHECK_EQ(out.killNotifyGroupIndex, 4,
@@ -1994,6 +2008,12 @@ static void test_melee_f0231_aftermath_plan(void) {
     CHECK_EQ(out.shouldCreateDeathSmoke, 1, "F0231 killed-some smoke");
     CHECK_EQ(out.shouldApplyKilledSomeState, 1,
              "F0231 killed-some state/fear");
+    CHECK_EQ(out.mutationKilledCreatureIndex, 2,
+             "F0231 killed-some mutation creature");
+    CHECK_EQ(out.mutationCreatureProperties, 0x0230,
+             "F0231 killed-some mutation properties");
+    CHECK_EQ(out.mutationKilledCell, 6,
+             "F0231 killed-some mutation killed cell");
     CHECK_EQ(out.shouldApplyKilledAllSideEffects, 0,
              "F0231 killed-some keeps group linked");
     CHECK_EQ(out.shouldScheduleReaction, 1,
@@ -2031,6 +2051,8 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 no-kill outcome");
     CHECK_EQ(out.smokeAttack, 110, "F0231 quarter/default smoke attack");
     CHECK_EQ(out.shouldDropPossessions, 0, "F0231 no-kill no drops");
+    CHECK_EQ(out.mutationGroupIndex, -1,
+             "F0231 no-kill clears mutation group");
     CHECK_EQ(out.shouldCreateDeathSmoke, 0, "F0231 no-kill no smoke");
     CHECK_EQ(out.shouldWriteRawGroup, 1, "F0231 no-kill writeback");
     CHECK_EQ(out.shouldEmitKillNotify, 0, "F0231 no-kill no notify");

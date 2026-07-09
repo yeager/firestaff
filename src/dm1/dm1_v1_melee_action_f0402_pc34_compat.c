@@ -854,6 +854,17 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
     out->reactionMapY = -1;
     out->reactionGroupIndex = -1;
     out->reactionCreatureType = -1;
+    out->mutationOutcome = COMBAT_OUTCOME_INVALID;
+    out->mutationGroupIndex = -1;
+    out->mutationKilledCreatureIndex = -1;
+    out->mutationOriginalGroupCount = -1;
+    out->mutationCreatureType = -1;
+    out->mutationMapIndex = -1;
+    out->mutationMapX = -1;
+    out->mutationMapY = -1;
+    out->mutationPartyMapIndex = -1;
+    out->mutationPartyMapX = -1;
+    out->mutationPartyMapY = -1;
     if (!in) return 0;
 
     out->valid = 1;
@@ -903,6 +914,25 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
             in->damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES;
         out->shouldApplyKilledAllSideEffects =
             in->damageOutcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+        if (out->shouldDropPossessions ||
+            out->shouldApplyKilledSomeState ||
+            out->shouldApplyKilledAllSideEffects) {
+            out->mutationOutcome = in->damageOutcome;
+            out->mutationGroupIndex = in->groupIndex;
+            out->mutationGroupBehavior = in->groupBehavior;
+            out->mutationKilledCreatureIndex = in->creatureIndex;
+            out->mutationOriginalGroupCount = in->originalGroupCount;
+            out->mutationCreatureType = in->creatureType;
+            out->mutationCreatureAttributes = in->creatureAttributes;
+            out->mutationCreatureProperties = in->creatureProperties;
+            out->mutationKilledCell = in->killedCell;
+            out->mutationMapIndex = in->targetMapIndex;
+            out->mutationMapX = in->targetMapX;
+            out->mutationMapY = in->targetMapY;
+            out->mutationPartyMapIndex = in->partyMapIndex;
+            out->mutationPartyMapX = in->partyMapX;
+            out->mutationPartyMapY = in->partyMapY;
+        }
     }
 
     /* ReDMCSB: PROJEXPL.C F0231 lines 1548-1549 schedules the physical

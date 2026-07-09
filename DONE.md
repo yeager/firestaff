@@ -6,6 +6,7 @@
 - ✅ 2026-07-09 pass814 DM1 F0231 aftermath ownership now carries kill-notify group/creature/outcome/type facts, so M10 emits kill notifications from the DM1 receipt instead of reassembling them.
 - ✅ 2026-07-09 pass815 DM1 F0231 aftermath ownership now carries reaction scheduling tick/map/group/creature facts, so M10 inserts the reaction event from the DM1 receipt.
 - ✅ 2026-07-09 pass816 DM1 F0231 aftermath ownership now carries F0190 death-smoke create input, so M10 creates/schedules death smoke from the DM1 receipt.
+- ✅ 2026-07-09 pass817 DM1 F0231 aftermath ownership now carries F0190 mutation-dispatch facts, so M10 no longer rebuilds the dispatch input from live combat locals.
 
 - ✅ 2026-07-09 Theron SRM envelope startup receipt proof: Theron startup save/resume probe now asserts the decoded SRM envelope kind, so staged gzip SRM data proves the same typed progression handoff used by Continue. Verification: `theron_v1_startup_save_resume_probe`, `theron_v1_startup_save_resume_pc34`, and focused build passed.
 
