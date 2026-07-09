@@ -11,6 +11,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
