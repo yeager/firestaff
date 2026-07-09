@@ -1455,6 +1455,29 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
     receipt->title_cycle_ticks =
         (receipt->title_frame_max + 1) *
         receipt->title_frame_duration_ticks;
+    if (receipt->startup_menu_active &&
+        receipt->title_frame_duration_ticks > 0 &&
+        receipt->title_cycle_ticks > 0) {
+        const int cycle_tick =
+            receipt->title_animation_tick % receipt->title_cycle_ticks;
+        receipt->title_frame_start_tick =
+            (cycle_tick / receipt->title_frame_duration_ticks) *
+            receipt->title_frame_duration_ticks;
+        receipt->title_next_frame_tick =
+            receipt->title_frame_start_tick +
+            receipt->title_frame_duration_ticks;
+        receipt->title_cycle_remaining_ticks =
+            receipt->title_cycle_ticks - cycle_tick;
+        receipt->exact_title_timing_ready =
+            receipt->title_frame_start_tick <= cycle_tick &&
+            cycle_tick < receipt->title_next_frame_tick &&
+            receipt->title_next_frame_tick <= receipt->title_cycle_ticks &&
+            receipt->title_frame ==
+                receipt->title_frame_start_tick /
+                    receipt->title_frame_duration_ticks;
+    } else {
+        receipt->exact_title_timing_ready = receipt->title_ready ? 1 : 0;
+    }
     receipt->menu_row_count = render->row_count;
     receipt->menu_text_count = render->menu_text_count;
     receipt->selectable_text_count = render->selectable_text_count;
@@ -1540,6 +1563,11 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
     receipt->full_start_real_asset_ready =
         full_start->full_start_real_asset_ready;
     receipt->title_cycle_ticks = full_start->title_cycle_ticks;
+    receipt->title_frame_start_tick = full_start->title_frame_start_tick;
+    receipt->title_next_frame_tick = full_start->title_next_frame_tick;
+    receipt->title_cycle_remaining_ticks =
+        full_start->title_cycle_remaining_ticks;
+    receipt->exact_title_timing_ready = full_start->exact_title_timing_ready;
     receipt->menu_row_count = full_start->menu_row_count;
     receipt->menu_text_count = full_start->menu_text_count;
     receipt->selectable_text_count = full_start->selectable_text_count;
@@ -1561,6 +1589,13 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
         full_start->title_ready &&
         receipt->runtime_action_ready &&
         receipt->first_hud_frame_ready;
+    receipt->m11_host_view_ready =
+        receipt->valid &&
+        receipt->exact_title_timing_ready &&
+        ((receipt->draw_startup_menu &&
+          receipt->startup_menu_assets_ready &&
+          receipt->startup_hud_handoff_ready) ||
+         receipt->runtime_handoff_ready);
     receipt->status_scope =
         receipt->draw_startup_menu ? "STARTUP" : "RUNTIME";
     receipt->status =
