@@ -238,8 +238,11 @@ typedef struct {
     int title_gdat_asset_h;
     int title_gdat_asset_stride;
     int title_cycle_ticks;
+    int title_cycle_position_tick;
     int title_frame_start_tick;
     int title_next_frame_tick;
+    int title_frame_elapsed_ticks;
+    int title_frame_remaining_ticks;
     int title_cycle_remaining_ticks;
     int exact_title_timing_ready;
     int menu_row_count;
@@ -282,8 +285,11 @@ typedef struct {
     int title_gdat_asset_stride;
     int full_start_real_asset_ready;
     int title_cycle_ticks;
+    int title_cycle_position_tick;
     int title_frame_start_tick;
     int title_next_frame_tick;
+    int title_frame_elapsed_ticks;
+    int title_frame_remaining_ticks;
     int title_cycle_remaining_ticks;
     int exact_title_timing_ready;
     int menu_row_count;
@@ -496,8 +502,26 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
 int dm2_v1_boot_startup_full_start_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupFullStartReceipt *out_receipt);
+int dm2_v1_boot_startup_full_start_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupFullStartReceipt *out_receipt);
 int dm2_v1_boot_startup_host_view_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupHostViewReceipt *out_receipt);
+int dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
     DM2_V1_BootStartupHostViewReceipt *out_receipt);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,

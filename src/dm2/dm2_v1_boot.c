@@ -1460,17 +1460,24 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
         receipt->title_cycle_ticks > 0) {
         const int cycle_tick =
             receipt->title_animation_tick % receipt->title_cycle_ticks;
+        receipt->title_cycle_position_tick = cycle_tick;
         receipt->title_frame_start_tick =
             (cycle_tick / receipt->title_frame_duration_ticks) *
             receipt->title_frame_duration_ticks;
         receipt->title_next_frame_tick =
             receipt->title_frame_start_tick +
             receipt->title_frame_duration_ticks;
+        receipt->title_frame_elapsed_ticks =
+            cycle_tick - receipt->title_frame_start_tick;
+        receipt->title_frame_remaining_ticks =
+            receipt->title_next_frame_tick - cycle_tick;
         receipt->title_cycle_remaining_ticks =
             receipt->title_cycle_ticks - cycle_tick;
         receipt->exact_title_timing_ready =
             receipt->title_frame_start_tick <= cycle_tick &&
             cycle_tick < receipt->title_next_frame_tick &&
+            receipt->title_frame_elapsed_ticks >= 0 &&
+            receipt->title_frame_remaining_ticks > 0 &&
             receipt->title_next_frame_tick <= receipt->title_cycle_ticks &&
             receipt->title_frame ==
                 receipt->title_frame_start_tick /
@@ -1563,8 +1570,14 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
     receipt->full_start_real_asset_ready =
         full_start->full_start_real_asset_ready;
     receipt->title_cycle_ticks = full_start->title_cycle_ticks;
+    receipt->title_cycle_position_tick =
+        full_start->title_cycle_position_tick;
     receipt->title_frame_start_tick = full_start->title_frame_start_tick;
     receipt->title_next_frame_tick = full_start->title_next_frame_tick;
+    receipt->title_frame_elapsed_ticks =
+        full_start->title_frame_elapsed_ticks;
+    receipt->title_frame_remaining_ticks =
+        full_start->title_frame_remaining_ticks;
     receipt->title_cycle_remaining_ticks =
         full_start->title_cycle_remaining_ticks;
     receipt->exact_title_timing_ready = full_start->exact_title_timing_ready;
@@ -1701,6 +1714,57 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
     return ok;
 }
 
+static int dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    int title_animation_tick,
+    DM2_V1_BootStartupViewModel *out_view_model)
+{
+    DM2_V1_StartupRuntimeHandoffReceipt handoff;
+
+    if (!snapshot || !out_view_model ||
+        !dm2_v1_boot_startup_view_model_receipt_from_snapshot(
+            snapshot,
+            out_view_model) ||
+        !out_view_model->view_receipt.valid) {
+        return 0;
+    }
+    memset(&handoff, 0, sizeof(handoff));
+    if (!dm2_v1_startup_runtime_handoff_receipt_from_tick(
+            &handoff,
+            snapshot->startup_menu_active,
+            1,
+            title_animation_tick)) {
+        return 0;
+    }
+    out_view_model->view_receipt.runtime_handoff = handoff;
+    snprintf(out_view_model->phase,
+             sizeof(out_view_model->phase),
+             "%s",
+             handoff.animation);
+    out_view_model->startup_active = handoff.startup_menu_active;
+    snprintf(out_view_model->animation,
+             sizeof(out_view_model->animation),
+             "%s",
+             handoff.animation);
+    out_view_model->animation_active = handoff.animation_active;
+    out_view_model->title_frame = handoff.title_frame;
+    out_view_model->title_frame_max = handoff.title_frame_max;
+    out_view_model->title_ready = handoff.title_ready;
+    out_view_model->initialize_v2_runtime = handoff.initialize_v2_runtime;
+    out_view_model->initialize_hud_runtime = handoff.initialize_hud_runtime;
+    out_view_model->initialize_touch_runtime = handoff.initialize_touch_runtime;
+    out_view_model->hud_runtime_ready = handoff.hud_runtime_ready;
+    out_view_model->runtime_menu_ready = handoff.runtime_menu_ready;
+    out_view_model->runtime_action_ready = handoff.runtime_action_ready;
+    out_view_model->first_hud_frame_ready = handoff.first_hud_frame_ready;
+    (void)dm2_v1_boot_startup_fill_full_start_receipt(
+        snapshot,
+        out_view_model);
+    (void)dm2_v1_boot_startup_fill_host_view_receipt(out_view_model);
+    return out_view_model->full_start_receipt.valid &&
+           out_view_model->host_view_receipt.valid;
+}
+
 int dm2_v1_boot_startup_full_start_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupFullStartReceipt *out_receipt)
@@ -1721,6 +1785,43 @@ int dm2_v1_boot_startup_full_start_receipt_from_snapshot(
     return 1;
 }
 
+int dm2_v1_boot_startup_full_start_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupFullStartReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
+    DM2_V1_BootStartupViewModel view_model;
+
+    if (out_receipt) {
+        dm2_v1_boot_startup_full_start_receipt_clear(out_receipt);
+    }
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.profile = profile;
+    snapshot.startup_menu_active = startup_menu_active;
+    snapshot.startup_save_root = startup_save_root;
+    snapshot.resume_available = resume_available;
+    snapshot.slot_mask = slot_mask;
+    snapshot.selected_row = selected_row;
+    if (!dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
+            &snapshot,
+            title_animation_tick,
+            &view_model) ||
+        !view_model.full_start_receipt.valid) {
+        return 0;
+    }
+    *out_receipt = view_model.full_start_receipt;
+    return 1;
+}
+
 int dm2_v1_boot_startup_host_view_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupHostViewReceipt *out_receipt)
@@ -1733,6 +1834,43 @@ int dm2_v1_boot_startup_host_view_receipt_from_snapshot(
     if (!snapshot || !out_receipt ||
         !dm2_v1_boot_startup_view_model_receipt_from_snapshot(
             snapshot,
+            &view_model) ||
+        !view_model.host_view_receipt.valid) {
+        return 0;
+    }
+    *out_receipt = view_model.host_view_receipt;
+    return 1;
+}
+
+int dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupHostViewReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
+    DM2_V1_BootStartupViewModel view_model;
+
+    if (out_receipt) {
+        dm2_v1_boot_startup_host_view_receipt_clear(out_receipt);
+    }
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.profile = profile;
+    snapshot.startup_menu_active = startup_menu_active;
+    snapshot.startup_save_root = startup_save_root;
+    snapshot.resume_available = resume_available;
+    snapshot.slot_mask = slot_mask;
+    snapshot.selected_row = selected_row;
+    if (!dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
+            &snapshot,
+            title_animation_tick,
             &view_model) ||
         !view_model.host_view_receipt.valid) {
         return 0;

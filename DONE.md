@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass881 DM2 startup exact title timing receipt: DM2 boot full-start/host-view receipts now expose title cycle position, frame start/next tick, frame elapsed/remaining tick, cycle remaining tick, and nonzero tick real-GDAT title/menu proof for host consumers. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 pass882 Nexus packaged startup timing capture: full-start package receipts now expose warning/title timing windows, ready-frame boundaries, title reveal geometry, prompt visibility, capture route kind, and no-fallback draw suppression for title/warning/save/champion startup consumers. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass883 Theron full-start graphics proof receipt: boot graphics/full-start receipts now expose Track 02 real-media readiness, bitmap-route readiness, no-fallback startup-graphics proof, and fallback-executor usage so UI/M11 can consume one Theron-owned contract. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
