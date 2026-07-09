@@ -3403,22 +3403,6 @@ static void m11_csb_startup_executor_draw_closed_doors(
         plan);
 }
 
-static void m11_csb_startup_executor_draw_door_fallback(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    (void)user;
-    (void)plan;
-}
-
-static void m11_csb_startup_executor_draw_fallback_text(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    (void)user;
-    (void)plan;
-}
-
 static void m11_csb_startup_executor_draw_utility_panel(
     void *user,
     const CSB_V1_StartupRenderPlan_PC34 *plan)
@@ -3484,9 +3468,6 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     executor.draw_opening_frame =
         m11_csb_startup_executor_draw_opening_frame;
     executor.draw_closed_doors = m11_csb_startup_executor_draw_closed_doors;
-    executor.draw_door_fallback = m11_csb_startup_executor_draw_door_fallback;
-    executor.draw_fallback_text =
-        m11_csb_startup_executor_draw_fallback_text;
     executor.draw_utility_panel =
         m11_csb_startup_executor_draw_utility_panel;
     if (!csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
