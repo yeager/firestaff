@@ -1117,6 +1117,7 @@ int main(void)
            "Nexus full-start package owns save startup capture proof");
     runtime_state.save_select_active = 0;
     runtime_state.title_active = 1;
+    runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
     expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
                &synthetic_runtime_receipt,
                &runtime_state,
@@ -1168,6 +1169,15 @@ int main(void)
                full_start_package_receipt.m11_ready == 1 &&
                full_start_package_receipt.title_frame >= 0 &&
                full_start_package_receipt.title_frame_max > 0 &&
+               full_start_package_receipt.boot_warning_frames == 48 &&
+               full_start_package_receipt.boot_start_ready_frames == 102 &&
+               full_start_package_receipt.boot_frame_in_phase == 54 &&
+               full_start_package_receipt.title_frames_until_ready == 0 &&
+               full_start_package_receipt.title_hold_frame == 24 &&
+               full_start_package_receipt.title_prompt_visible == 1 &&
+               full_start_package_receipt.title_reveal_y0 == 0 &&
+               full_start_package_receipt.title_reveal_y1 == NEXUS_FB_H &&
+               full_start_package_receipt.title_reveal_h == NEXUS_FB_H &&
                strcmp(full_start_package_receipt.consumer_route,
                       "title-warning") == 0 &&
                strcmp(full_start_package_receipt.animation,
@@ -1195,6 +1205,10 @@ int main(void)
                &full_start_package_receipt) &&
                full_start_package_receipt.capture_route ==
                    NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               full_start_package_receipt.boot_warning_frames == 48 &&
+               full_start_package_receipt.boot_start_ready_frames == 102 &&
+               full_start_package_receipt.boot_frame_in_phase == 0 &&
+               full_start_package_receipt.title_frames_until_ready == 102 &&
                full_start_package_receipt.warning_visible == 1 &&
                full_start_package_receipt.first_capture_draw_kind ==
                    NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&

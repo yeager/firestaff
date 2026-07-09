@@ -2489,12 +2489,30 @@ static void nexus_v1_launcher_fill_full_start_package_capture(
     Nexus_V1_StartupFullStartPackageReceipt *receipt)
 {
     Nexus_V1_StartupDrawCommand commands[80];
+    Nexus_V1_BootFrame boot_frame;
     int command_count = 0;
 
     if (!state || !receipt) {
         return;
     }
     memset(commands, 0, sizeof(commands));
+    memset(&boot_frame, 0, sizeof(boot_frame));
+    receipt->boot_warning_frames = nexus_v1_boot_warning_frames();
+    receipt->boot_start_ready_frames = nexus_v1_boot_start_ready_frames();
+    if (state->title_active &&
+        nexus_v1_boot_frame(state->title_frame, NEXUS_FB_H, &boot_frame)) {
+        receipt->boot_frame_in_phase = boot_frame.frame_in_phase;
+        receipt->warning_visible = boot_frame.warning_visible;
+        receipt->title_frames_until_ready =
+            boot_frame.warning_visible
+                ? receipt->boot_start_ready_frames - state->title_frame
+                : boot_frame.title.frames_until_ready;
+        receipt->title_hold_frame = boot_frame.title.hold_frame;
+        receipt->title_prompt_visible = boot_frame.title.prompt_visible;
+        receipt->title_reveal_y0 = boot_frame.title.reveal_y0;
+        receipt->title_reveal_y1 = boot_frame.title.reveal_y1;
+        receipt->title_reveal_h = boot_frame.title.reveal_h;
+    }
     receipt->capture_valid = 1;
     receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
     receipt->first_capture_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
@@ -2544,6 +2562,7 @@ static void nexus_v1_launcher_fill_full_start_package_capture(
     if (command_count > 0) {
         receipt->first_capture_draw_kind = commands[0].kind;
         receipt->warning_visible =
+            receipt->warning_visible ||
             commands[0].kind == NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND;
     }
 }
