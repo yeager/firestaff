@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0412 spell-effect receipt consumption: M10 now consumes DM1-owned F0412 receipts for projectile and OTHER spell effects instead of rebuilding light/status/shield state from generic spell metadata, and M11 no longer double-launches Open Door projectiles after the M10 F0810 path. Verification: `test_dm1_v1_spell_casting_pc34_compat`, `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_open_door_spell_runtime_pc34_compat`, and `firestaff_m11_phase_a_probe` passed in `build-codex`.
+
 - ✅ 2026-07-09 DM1 clean HoC mirror-start receipt: champion-mirror startup handoff now also proves the first HoC frame is a clean Hall start with mirror input ready, no selected mirror/C040 panel, and dungeon entry blocked until a champion is chosen. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 champion-mirror startup handoff: HoC first-frame readiness now requires a DM1-built Hall champion-mirror menu-route receipt, so the first runtime frame starts from the Hall route instead of stale title/entrance host state. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.

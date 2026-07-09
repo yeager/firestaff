@@ -5,6 +5,7 @@
  * See header for full source reference list.
  */
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "memory_magic_pc34_compat.h"
 #include <string.h>
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -781,12 +782,13 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
         case DM1_SPELL_TYPE_OTHER_THIEVES_EYE:
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_THIEVES_EYE_PC34;
-            receipt.eventTicks = (spellPower >> 1) * spellPower;
+            spellPower >>= 1;
+            receipt.eventTicks = spellPower * spellPower;
             break;
         case DM1_SPELL_TYPE_OTHER_INVISIBILITY:
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_INVISIBILITY_PC34;
-            receipt.eventTicks = (spellPower << 3) * spellPower;
+            receipt.eventTicks = spellPower << 3;
             break;
         case DM1_SPELL_TYPE_OTHER_PARTY_SHIELD:
             receipt.createsEvent = 1;
@@ -867,6 +869,92 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
     return dm1_spell_f0412RuntimeReceipt(
         &s, champIdx, stats, rng16, championDirection, partyDirection,
         partyShieldDefense, outReceipt);
+}
+
+int dm1_spell_f0412ReceiptToSpellEffectPc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    int currentFireShieldDefense,
+    struct SpellEffect_Compat* outEffect)
+{
+    if (!outEffect) return 0;
+    memset(outEffect, 0, sizeof(*outEffect));
+    outEffect->followupEventKind = TIMELINE_EVENT_INVALID;
+
+    if (!receipt) return 0;
+
+    outEffect->castResult =
+        (receipt->castResult == DM1_SPELL_CAST_SUCCESS)
+            ? SPELL_CAST_SUCCESS
+            : SPELL_CAST_FAILURE;
+    outEffect->failureReason = receipt->failureType;
+    outEffect->spellKind = receipt->spellKind;
+    outEffect->spellType = receipt->spellType;
+    outEffect->powerOrdinal = receipt->powerOrdinal;
+
+    if (receipt->castResult != DM1_SPELL_CAST_SUCCESS) {
+        return 1;
+    }
+
+    if (receipt->spellKind == DM1_SPELL_KIND_PROJECTILE) {
+        outEffect->impactAttack = 90;
+        outEffect->kineticEnergy = receipt->projectileKineticEnergy;
+        return 1;
+    }
+
+    if (receipt->spellKind != DM1_SPELL_KIND_OTHER) {
+        return 1;
+    }
+
+    /* ReDMCSB MENU.C F0412 lines 1926-2030 owns these OTHER spell facts.
+     * This adapter keeps M10 from deriving runtime state from generic spell
+     * metadata after F0412 has already produced a source-locked receipt. */
+    outEffect->durationTicks = receipt->eventTicks;
+    switch (receipt->spellType) {
+        case DM1_SPELL_TYPE_OTHER_LIGHT:
+        case DM1_SPELL_TYPE_OTHER_MAGIC_TORCH:
+        case DM1_SPELL_TYPE_OTHER_DARKNESS:
+            outEffect->magicStateDelta[3] = receipt->lightAmountDelta;
+            outEffect->followupEventKind = TIMELINE_EVENT_MAGIC_LIGHT_DECAY;
+            outEffect->followupEventAux0 =
+                (receipt->lightAmountDelta >= 0)
+                    ? -receipt->lightPower
+                    : receipt->lightPower;
+            break;
+        case DM1_SPELL_TYPE_OTHER_THIEVES_EYE:
+            outEffect->magicStateDelta[5] = 1;
+            outEffect->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
+            outEffect->followupEventAux0 = TIMELINE_AUX_THIEVES_EYE;
+            break;
+        case DM1_SPELL_TYPE_OTHER_INVISIBILITY:
+            outEffect->magicStateDelta[5] = 1;
+            outEffect->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
+            outEffect->followupEventAux0 = TIMELINE_AUX_INVISIBILITY;
+            break;
+        case DM1_SPELL_TYPE_OTHER_PARTY_SHIELD:
+            outEffect->magicStateDelta[2] = receipt->shieldDefenseDelta;
+            outEffect->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
+            outEffect->followupEventAux0 = TIMELINE_AUX_PARTY_SHIELD;
+            break;
+        case DM1_SPELL_TYPE_OTHER_FOOTPRINTS:
+            outEffect->magicStateDelta[5] = 1;
+            outEffect->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
+            outEffect->followupEventAux0 = TIMELINE_AUX_FOOTPRINTS;
+            break;
+        case DM1_SPELL_TYPE_OTHER_FIRESHIELD: {
+            int defense = receipt->fireShieldPower >> 5;
+            if (currentFireShieldDefense > 50) defense >>= 2;
+            outEffect->durationTicks = receipt->fireShieldPower;
+            outEffect->magicStateDelta[1] = defense;
+            outEffect->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
+            outEffect->followupEventAux0 = TIMELINE_AUX_FIRESHIELD;
+            break;
+        }
+        case DM1_SPELL_TYPE_OTHER_ZOKATHRA:
+        default:
+            break;
+    }
+
+    return 1;
 }
 
 const char* dm1_spell_symbolName(char sym) {

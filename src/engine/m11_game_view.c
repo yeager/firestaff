@@ -10046,68 +10046,13 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 int sSkill = (int)EMIT_SPELL_EFFECT_UNPACK_SKILL(e->payload[3]);
                 int sXp = (int)EMIT_SPELL_EFFECT_UNPACK_XP(e->payload[3]);
                 const char* kindStr = "SPELL";
-                int launchedProjectile = 0;
                 if (sKind == C2_SPELL_KIND_PROJECTILE_COMPAT) kindStr = "PROJECTILE";
                 else if (sKind == C3_SPELL_KIND_OTHER_COMPAT) kindStr = "ENCHANTMENT";
                 else if (sKind == C1_SPELL_KIND_POTION_COMPAT) kindStr = "POTION";
-                if (sKind == C2_SPELL_KIND_PROJECTILE_COMPAT &&
-                    sType == C4_SPELL_TYPE_PROJECTILE_OPEN_DOOR_COMPAT &&
-                    sChamp >= 0 && sChamp < CHAMPION_MAX_PARTY) {
-                    struct ChampionState_Compat* caster = &state->world.party.champions[sChamp];
-                    struct SpellDefinition_Compat spell;
-                    struct SpellEffect_Compat effect;
-                    int stepEnergy;
-                    int launchCell;
-                    int launchDirection;
-                    int skillLevel;
-                    enum { DM1_V1_OPEN_DOOR_TABLE_INDEX = 14 };
-
-                    memset(&spell, 0, sizeof(spell));
-                    memset(&effect, 0, sizeof(effect));
-                    skillLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-                        &state->world.lifecycle.champions[sChamp],
-                        LIFECYCLE_SKILL_AIR, 0);
-                    if (F0752b_MAGIC_LookupSpellByTableIndex_Compat(DM1_V1_OPEN_DOOR_TABLE_INDEX, &spell) &&
-                        F0756_MAGIC_ProduceProjectileEffect_Compat(&spell, sPow,
-                                                                   skillLevel,
-                                                                   &state->world.masterRng,
-                                                                   &effect)) {
-                        /* ReDMCSB MENU.C:1867-1870 produces C0xFF84 from
-                         * ZO/Open Door; CHAMPION.C:2097-2102 then derives
-                         * step energy from MaximumMana and launches through
-                         * F0326/F0212 with attack=90. */
-                        stepEnergy = 10 - (((int)caster->mana.maximum >> 3) < 8
-                                                ? ((int)caster->mana.maximum >> 3)
-                                                : 8);
-                        if (effect.impactAttack < (stepEnergy << 2)) {
-                            effect.impactAttack += 3;
-                            stepEnergy--;
-                        }
-                        if (stepEnergy < 1) stepEnergy = 1;
-                        launchDirection = state->world.party.direction & 3;
-                        launchCell = m11_dm1_projectile_launch_cell(caster->cell,
-                                                                    launchDirection);
-                        launchedProjectile = m11_spawn_action_projectile_ex(
-                            state,
-                            sChamp,
-                            PROJECTILE_SUBTYPE_OPEN_DOOR,
-                            PROJECTILE_CATEGORY_MAGICAL,
-                            effect.impactAttack,
-                            90,
-                            COMBAT_ATTACK_MAGIC,
-                            launchCell,
-                            launchDirection,
-                            stepEnergy,
-                            90,
-                            THING_NONE,
-                            0);
-                    }
-                }
                 m11_log_event(state, M11_COLOR_CYAN,
-                              "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d%s)",
+                              "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)",
                               (unsigned int)state->world.gameTick,
-                              kindStr, sType, sPow,
-                              launchedProjectile ? ", LAUNCHED" : "");
+                              kindStr, sType, sPow);
                 /* ReDMCSB: MENU.C F0412 lines 1826-1839 computes spell
                  * experience from G0487 Spell.SkillIndex, then lines
                  * 2034-2039 award it once and disable the caster after
