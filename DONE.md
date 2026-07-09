@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron Continue apply SRM receipts: Continue apply receipts now carry structured source, slot, SRM import, dungeon/level, quest mask, party restored/count, and gold fields for TQSV/SRM/no-source paths, so runtime/host handoff can avoid parsing inspect text when applying real `.srm` progress. Verification: `firestaff_theron_v1_startup_flow_probe` 627/627, `test_theron_v1_startup_save_resume_pc34` 162/162, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM2 door-record passability slice: DM2 runtime passability now treats DB0 door records as door squares even when the square type alone is not enough, and destroyed doors report fully open render state. Verification: `test_dm2_v1_runtime_handoff_smoke` 120/120, `test_dm2_v1_creature_ccm_runtime_pc34_compat` 72/72, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup pre-input route receipt: CSB startup action receipts now capture the visible render/HUD/menu route before utility or entrance input mutates startup state, giving M11 one receipt boundary for title, closed entrance, and utility input paths. Verification: `csb_v1_boot_runtime_handoff`, `csb_v1_startup_entrance_pointer_pc34_compat`, `csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.

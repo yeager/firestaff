@@ -905,6 +905,12 @@ void theron_v1_startup_continue_apply_receipt_init(
     }
     memset(receipt, 0, sizeof(*receipt));
     receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
+    receipt->source = THERON_V1_STARTUP_CONTINUE_SOURCE_NONE;
+    receipt->source_slot_index = -1;
+    receipt->srm_import_status = THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    receipt->srm_current_dungeon = -1;
+    receipt->srm_current_level = -1;
+    receipt->srm_quest_mask = -1;
 }
 
 int theron_v1_startup_host_receipt_from_continue_apply(
@@ -1105,6 +1111,16 @@ int theron_v1_startup_continue_apply_receipt(
     }
 
     out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+    out_receipt->source = result->source;
+    out_receipt->source_slot_index = result->source_slot_index;
+    out_receipt->srm_import_status = result->srm_import_status;
+    out_receipt->srm_current_dungeon = result->srm_current_dungeon;
+    out_receipt->srm_current_level = result->srm_current_level;
+    out_receipt->srm_quest_mask = result->srm_quest_mask;
+    out_receipt->srm_party_restored = result->srm_party_restored;
+    out_receipt->srm_party_champion_count =
+        result->srm_party_champion_count;
+    out_receipt->srm_party_gold = result->srm_party_gold;
     out_receipt->status_scope = plan->status_scope
         ? plan->status_scope
         : "STARTUP";
@@ -1149,6 +1165,18 @@ static int theron_v1_startup_continue_failure_apply_receipt(
         : (plan && plan->failure_status ? plan->failure_status
                                         : "CONTINUE FAILED");
     out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+    if (result) {
+        out_receipt->source = result->source;
+        out_receipt->source_slot_index = result->source_slot_index;
+        out_receipt->srm_import_status = result->srm_import_status;
+        out_receipt->srm_current_dungeon = result->srm_current_dungeon;
+        out_receipt->srm_current_level = result->srm_current_level;
+        out_receipt->srm_quest_mask = result->srm_quest_mask;
+        out_receipt->srm_party_restored = result->srm_party_restored;
+        out_receipt->srm_party_champion_count =
+            result->srm_party_champion_count;
+        out_receipt->srm_party_gold = result->srm_party_gold;
+    }
     out_receipt->status_scope = (plan && plan->status_scope)
         ? plan->status_scope
         : "STARTUP";
