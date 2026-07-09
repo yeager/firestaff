@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB startup host decision receipt: boot action receipts now flatten title-block, utility redraw, entrance redraw, launcher-return, status, route, and selected-row decisions for M11 startup input consumers. Verification: `test_csb_v1_boot_runtime_handoff` 350/350 and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 startup media receipt production handoff: M11 DM1 SWSH/TITLE production rendering now consumes the DM1 full-graphics media receipt for logo waits, C001 PRESENTS/zoom palettes, frame timing, and post-title guard/pad timing. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus runtime launch gate receipt: launcher runtime receipts now expose one launch gate route for missing data, title-ready, MENU.BPK/face menu-asset blockers, and fully ready menu handoff, carrying startup assets, host status, fallback permission, and boot log details. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
