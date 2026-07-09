@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 dialog layout now owns V1 version text, choice patch, message, choice text, and choice hit-zone geometry; M11 wrappers delegate to the DM1 dialog layout module. Remaining runtime coding work is reducing residual dialog apply/input state and full-graphics proof.
   - 2026-07-09 update: DM1 endgame layout now owns THE END, champion mirror/portrait/name/skill, restart, and quit geometry; M11 wrappers delegate to the DM1 endgame layout module. Remaining runtime coding work is reducing residual endgame apply/render state and full-graphics proof.
   - 2026-07-09 update: DM1 graphic-id catalog now owns common C006/C014..C020/C023/C026/C028..C039/C346 wrapper constants; M11 delegates V1 graphic-id accessors. Remaining runtime coding work is reducing residual viewport/render graphic ownership and full-graphics proof.
   - 2026-07-09 update: DM1 layout-zones now owns screen, viewport, message, dialog, champion-icon, inventory-panel, and object-description C002/C004/C005/C006/C007/C015/C017/C101/C113..C116/C503..C506/C556 geometry; M11 wrappers only expose legacy API. Remaining runtime coding work is reducing residual render state mutation and full-graphics proof.
