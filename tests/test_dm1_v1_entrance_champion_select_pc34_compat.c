@@ -23,6 +23,7 @@ static void expect_true(const char *label, int condition)
 static void test_door_animation(void)
 {
     DM1_V1_EntranceCtxPc34 ctx;
+    DM1_V1_EntranceFullStartRenderReceiptPc34 receipt;
 
     DM1_V1_Entrance_InitPc34Compat(&ctx);
     expect_int("init.state", ctx.state, DM1_ENTRANCE_IDLE);
@@ -43,6 +44,32 @@ static void test_door_animation(void)
     expect_int("door.complete", ctx.doorAnim.complete, 1);
     expect_int("door.complete.state", ctx.state, DM1_ENTRANCE_VIEWING);
     expect_int("door.after_complete", DM1_V1_Entrance_TickDoorAnimationPc34Compat(&ctx, 2200u), 0);
+
+    expect_int("fullstart.receipt", DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(&ctx, &receipt), 1);
+    expect_int("fullstart.map", receipt.mapIndex, DM1_V1_ENTRANCE_MAP_INDEX_PC34);
+    expect_int("fullstart.width", receipt.width, 5);
+    expect_int("fullstart.height", receipt.height, 5);
+    expect_int("fullstart.party.x", receipt.partyX, 2);
+    expect_int("fullstart.party.y", receipt.partyY, 0);
+    expect_int("fullstart.party.dir", receipt.partyDirection, DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34);
+    expect_int("fullstart.corridors", receipt.corridorCount, 6);
+    for (int i = 0; i < DM1_V1_ENTRANCE_MICRO_DUNGEON_SIZE_PC34; ++i) {
+        int want = (i >= 10 && i <= 14) || i == 7
+                   ? DM1_V1_ENTRANCE_ELEMENT_CORRIDOR_PC34
+                   : DM1_V1_ENTRANCE_ELEMENT_WALL_PC34;
+        expect_int("fullstart.square", receipt.squares[i], want);
+    }
+    expect_int("fullstart.complete.frame", receipt.doorFrameIndex, 9);
+    expect_int("fullstart.music", receipt.entranceMusicRequested, 1);
+
+    DM1_V1_Entrance_StartDoorAnimationPc34Compat(&ctx, 3000u);
+    expect_int("fullstart.start.receipt", DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(&ctx, &receipt), 1);
+    expect_int("fullstart.start.frame", receipt.doorFrameIndex, 0);
+    expect_int("fullstart.start.rattle", receipt.playDoorRattleSound, 0);
+    expect_int("door.step1", DM1_V1_Entrance_TickDoorAnimationPc34Compat(&ctx, 3100u), 1);
+    expect_int("fullstart.step1.receipt", DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(&ctx, &receipt), 1);
+    expect_int("fullstart.step1.frame", receipt.doorFrameIndex, 1);
+    expect_int("fullstart.step1.rattle", receipt.playDoorRattleSound, 1);
 }
 
 static void test_mirror_recruit_and_finalize(void)
