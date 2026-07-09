@@ -29501,6 +29501,11 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     int* outDrawChampionMirrorWallOverlay,
     int* outWalkCaptureSafe,
     int* outHostDrawRejectsBackingFallback,
+    int* outMacWindowCapture,
+    int* outReleaseAppCapture,
+    int* outHostWindowCapture,
+    int* outHostCaptureRouteMatches,
+    int* outReleaseCaptureOwnershipReady,
     int* outMapIndex,
     int* outRenderCommandCount) {
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
@@ -29515,6 +29520,8 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 suppression;
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
         productionConsumer;
+    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 hostProbeFacts;
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 releaseOwnership;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
@@ -29525,6 +29532,8 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     const DM1V1D1LD1RF0115LanePc34Data* lane;
 
     memset(&captureFacts, 0, sizeof(captureFacts));
+    memset(&hostProbeFacts, 0, sizeof(hostProbeFacts));
+    memset(&releaseOwnership, 0, sizeof(releaseOwnership));
     memset(&suppressionFacts, 0, sizeof(suppressionFacts));
 
     if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
@@ -29560,6 +29569,22 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     captureFacts.cleared_champion_panel = 1;
     captureFacts.blocked_enter_until_champion_selected =
         artifact.block_enter_until_champion_selected;
+    /* ReDMCSB: DUNGEON.C F0172 line ~2466 feeds DUNVIEW.C wall draw
+     * routes around line ~6373. This M11 probe consumes the DM1 HoC
+     * release/app ownership receipt instead of letting host fallback state
+     * stand in for the real Mac capture boundary. */
+    hostProbeFacts.source_id = "dm1";
+    hostProbeFacts.dungeon_loaded = 1;
+    hostProbeFacts.map_count = 1;
+    hostProbeFacts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
+    hostProbeFacts.title_played = 1;
+    hostProbeFacts.captured_after_first_frame_render = 1;
+    hostProbeFacts.captured_from_real_assets = 1;
+    hostProbeFacts.captured_from_mac_window = 1;
+    hostProbeFacts.captured_from_release_app = 1;
+    hostProbeFacts.observed_c026_portrait_asset = 1;
+    hostProbeFacts.observed_c346_mirror_backing_asset = 1;
+    hostProbeFacts.observed_host_window_present = 1;
 
     if (!dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
             &artifact, &captureFacts, &captureProof) ||
@@ -29592,11 +29617,13 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
         !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
             &firstFrame, &thingConsumer, &renderConsumer) ||
         !dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
-            &productionConsumer, &renderConsumer, &ownership)) {
+            &productionConsumer, &renderConsumer, &ownership) ||
+        !dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+            &hostProbeFacts, &releaseOwnership)) {
         return 0;
     }
 
-    if (outReady) *outReady = ownership.ready;
+    if (outReady) *outReady = ownership.ready && releaseOwnership.ready;
     if (outConsumedProductionConsumer) {
         *outConsumedProductionConsumer =
             ownership.consumed_production_consumer_receipt;
@@ -29666,6 +29693,22 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     if (outHostDrawRejectsBackingFallback) {
         *outHostDrawRejectsBackingFallback =
             m11_dm1_hoc_host_draw_rejects_backing_fallback();
+    }
+    if (outMacWindowCapture) {
+        *outMacWindowCapture = releaseOwnership.mac_window_capture;
+    }
+    if (outReleaseAppCapture) {
+        *outReleaseAppCapture = releaseOwnership.release_app_capture;
+    }
+    if (outHostWindowCapture) {
+        *outHostWindowCapture = releaseOwnership.host_window_capture;
+    }
+    if (outHostCaptureRouteMatches) {
+        *outHostCaptureRouteMatches =
+            releaseOwnership.host_capture_route_matches;
+    }
+    if (outReleaseCaptureOwnershipReady) {
+        *outReleaseCaptureOwnershipReady = releaseOwnership.ready;
     }
     if (outMapIndex) *outMapIndex = ownership.map_index;
     if (outRenderCommandCount) {

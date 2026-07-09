@@ -521,6 +521,11 @@ static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
     int drawMirrorWall = 0;
     int walkSafe = 0;
     int rejectBackingFallback = 0;
+    int macWindowCapture = 0;
+    int releaseAppCapture = 0;
+    int hostWindowCapture = 0;
+    int hostCaptureRoute = 0;
+    int releaseOwnership = 0;
     int mapIndex = -1;
     int commandCount = 0;
 
@@ -546,6 +551,11 @@ static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
                   &drawMirrorWall,
                   &walkSafe,
                   &rejectBackingFallback,
+                  &macWindowCapture,
+                  &releaseAppCapture,
+                  &hostWindowCapture,
+                  &hostCaptureRoute,
+                  &releaseOwnership,
                   &mapIndex,
                   &commandCount),
               1,
@@ -592,6 +602,16 @@ static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
               "DM1 full-graphics HoC capture is walk-safe");
     ASSERT_EQ(rejectBackingFallback, 1,
               "M11 HoC mirror route rejects host backing fallback rect");
+    ASSERT_EQ(macWindowCapture, 1,
+              "M11 HoC ownership consumes Mac window capture receipt");
+    ASSERT_EQ(releaseAppCapture, 1,
+              "M11 HoC ownership consumes release-app capture receipt");
+    ASSERT_EQ(hostWindowCapture, 1,
+              "M11 HoC ownership requires host window capture");
+    ASSERT_EQ(hostCaptureRoute, 1,
+              "M11 HoC ownership requires host capture route match");
+    ASSERT_EQ(releaseOwnership, 1,
+              "M11 HoC ownership consumes release/app ownership receipt");
     ASSERT_EQ(mapIndex, DM1_V1_ENTRANCE_MAP_INDEX_PC34,
               "DM1 full-graphics HoC keeps entrance map");
     ASSERT_EQ(commandCount, 3,
