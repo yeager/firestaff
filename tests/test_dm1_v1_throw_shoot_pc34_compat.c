@@ -534,6 +534,8 @@ static void test_projectile_materialization_plan(void) {
     struct ProjectileTickResult_Compat r;
     DM1_ProjectileMaterializationPlanPc34 plan;
     DM1_ProjectileSquareAttachPlanPc34 attach;
+    DM1_ProjectileSquareAttachReceiptPc34 receipt;
+    unsigned short chain[66];
     unsigned short weaponThing =
         (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
     unsigned short droppedThing =
@@ -602,6 +604,18 @@ static void test_projectile_materialization_plan(void) {
               "F0215 empty square attach sets first thing");
     ASSERT_EQ(attach.shouldAppendAfterTail, 0,
               "F0215 empty square attach skips tail append");
+    memset(&receipt, 0, sizeof(receipt));
+    chain[0] = THING_ENDOFLIST;
+    ASSERT_EQ(dm1_v1_projectile_square_attach_receipt_f0215_pc34(
+                  droppedThing, THING_ENDOFLIST, chain, 1, &receipt), 1,
+              "F0215 empty square attach receipt builds");
+    ASSERT_EQ(receipt.valid, 1, "F0215 empty square receipt valid");
+    ASSERT_EQ(receipt.shouldSetDroppedNextEnd, 1,
+              "F0215 empty square receipt terminates dropped thing");
+    ASSERT_EQ(receipt.shouldSetSquareFirstThing, 1,
+              "F0215 empty square receipt sets first thing");
+    ASSERT_EQ(receipt.shouldAppendAfterTail, 0,
+              "F0215 empty square receipt skips append");
 
     ASSERT_EQ(dm1_v1_projectile_square_attach_plan_f0215_pc34(
                   droppedThing, tailThing, tailThing, &attach), 1,
@@ -613,11 +627,44 @@ static void test_projectile_materialization_plan(void) {
               "F0215 occupied square attach appends after tail");
     ASSERT_EQ(attach.tailThing, tailThing,
               "F0215 occupied square attach tail");
+    chain[0] = tailThing;
+    chain[1] = THING_ENDOFLIST;
+    memset(&receipt, 0, sizeof(receipt));
+    ASSERT_EQ(dm1_v1_projectile_square_attach_receipt_f0215_pc34(
+                  droppedThing, tailThing, chain, 2, &receipt), 1,
+              "F0215 occupied square attach receipt builds");
+    ASSERT_EQ(receipt.valid, 1, "F0215 occupied square receipt valid");
+    ASSERT_EQ(receipt.shouldSetDroppedNextEnd, 1,
+              "F0215 occupied square receipt terminates dropped thing");
+    ASSERT_EQ(receipt.shouldSetSquareFirstThing, 0,
+              "F0215 occupied square receipt keeps first thing");
+    ASSERT_EQ(receipt.shouldAppendAfterTail, 1,
+              "F0215 occupied square receipt appends after tail");
+    ASSERT_EQ(receipt.foundTail, 1,
+              "F0215 occupied square receipt finds tail");
+    ASSERT_EQ(receipt.tailThing, tailThing,
+              "F0215 occupied square receipt tail thing");
+
+    memset(chain, 0, sizeof(chain));
+    for (int i = 0; i < 66; ++i) {
+        chain[i] = (unsigned short)((THING_TYPE_JUNK << 10) | (i & 0x03ff));
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    ASSERT_EQ(dm1_v1_projectile_square_attach_receipt_f0215_pc34(
+                  droppedThing, tailThing, chain, 66, &receipt), 1,
+              "F0215 overflow square attach receipt builds");
+    ASSERT_EQ(receipt.valid, 1, "F0215 overflow square receipt valid");
+    ASSERT_EQ(receipt.chainOverflow, 1,
+              "F0215 overflow square receipt reports overflow");
 
     ASSERT_EQ(dm1_v1_projectile_square_attach_plan_f0215_pc34(
                   (unsigned short)((THING_TYPE_EXPLOSION << 10) | 1),
                   THING_ENDOFLIST, THING_NONE, &attach), 0,
               "F0215 explosion square attach is rejected");
+    ASSERT_EQ(dm1_v1_projectile_square_attach_receipt_f0215_pc34(
+                  (unsigned short)((THING_TYPE_EXPLOSION << 10) | 1),
+                  THING_ENDOFLIST, chain, 1, &receipt), 0,
+              "F0215 explosion square receipt is rejected");
 }
 
 static void test_black_flame_heal_and_group_cell(void) {

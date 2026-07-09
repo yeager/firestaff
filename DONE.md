@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 projectile square-link receipt ownership: DM1 throw/shoot compat now owns the full F0215/DUNGEON.C F0163 empty-vs-tail square attach receipt from a supplied thing-chain snapshot; M10 only gathers the current chain and applies the returned link writes. Verification: `dm1_v1_throw_shoot_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, syntax checks, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 original-save runtime reload roundtrip: original PC34 save handoff now exposes a full bytes → Firestaff world → PC34 export → Firestaff world reload helper with a core-state report for champion count, party pose, game time, event count, and active-group count. Verification: original-save handoff PASS, native PC34 export source-lock PASS, syntax checks, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 champion status layout ownership: DM1 now owns status box, hand, name, bar, shield, poison, and damage geometry/graphic decisions behind DM1 API names; M11 wrappers delegate to that module. Verification: status layout 142/142, champion status slotbox invariant PASS, status hand slot pixels PASS, damage indicator 957/957, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

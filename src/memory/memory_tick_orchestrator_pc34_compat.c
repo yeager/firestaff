@@ -5072,9 +5072,11 @@ static int orch_link_thing_to_square_tail_compat(
     unsigned short thing)
 {
     int sftIndex;
-    DM1_ProjectileSquareAttachPlanPc34 attachPlan;
+    DM1_ProjectileSquareAttachReceiptPc34 attachReceipt;
+    unsigned short chainThings[64];
     unsigned short current;
     int safety = 0;
+    int chainCount = 0;
 
     if (!world || !world->dungeon || !world->things) return 0;
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
@@ -5082,43 +5084,41 @@ static int orch_link_thing_to_square_tail_compat(
         world->dungeon, mapIndex, mapX, mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
 
-    memset(&attachPlan, 0, sizeof(attachPlan));
-    if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
-            thing, world->things->squareFirstThings[sftIndex], THING_NONE,
-            &attachPlan) ||
-        !attachPlan.valid ||
-        !attachPlan.shouldSetDroppedNextEnd) {
+    current = world->things->squareFirstThings[sftIndex];
+    while (current != THING_NONE &&
+           current != THING_ENDOFLIST &&
+           chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+        current = orch_next_thing_compat(world->things, current);
+        ++safety;
+        if (safety >= 64) break;
+    }
+    if (chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+    }
+
+    memset(&attachReceipt, 0, sizeof(attachReceipt));
+    if (!dm1_v1_projectile_square_attach_receipt_f0215_pc34(
+            thing, world->things->squareFirstThings[sftIndex],
+            chainThings, chainCount, &attachReceipt) ||
+        !attachReceipt.valid ||
+        !attachReceipt.shouldSetDroppedNextEnd ||
+        attachReceipt.chainOverflow) {
         return 0;
     }
     if (!orch_set_next_thing_compat(
-            world->things, attachPlan.baseThing, THING_ENDOFLIST)) {
+            world->things, attachReceipt.baseThing, THING_ENDOFLIST)) {
         return 0;
     }
-    current = attachPlan.squareFirstThing;
-    if (attachPlan.shouldSetSquareFirstThing) {
-        world->things->squareFirstThings[sftIndex] = attachPlan.droppedThing;
+    if (attachReceipt.shouldSetSquareFirstThing) {
+        world->things->squareFirstThings[sftIndex] =
+            attachReceipt.droppedThing;
         return 1;
     }
-    while (current != THING_NONE && current != THING_ENDOFLIST && safety++ < 64) {
-        unsigned short next = orch_next_thing_compat(world->things, current);
-        if (next == THING_NONE || next == THING_ENDOFLIST) {
-            memset(&attachPlan, 0, sizeof(attachPlan));
-            if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
-                    thing, world->things->squareFirstThings[sftIndex],
-                    current, &attachPlan) ||
-                !attachPlan.valid ||
-                !attachPlan.shouldAppendAfterTail ||
-                !attachPlan.shouldSetDroppedNextEnd) {
-                return 0;
-            }
-            if (!orch_set_next_thing_compat(
-                    world->things, attachPlan.baseThing, THING_ENDOFLIST)) {
-                return 0;
-            }
-            return orch_set_next_thing_compat(
-                world->things, attachPlan.tailThing, attachPlan.droppedThing);
-        }
-        current = next;
+    if (attachReceipt.shouldAppendAfterTail && attachReceipt.foundTail) {
+        return orch_set_next_thing_compat(
+            world->things, attachReceipt.tailThing,
+            attachReceipt.droppedThing);
     }
     return 0;
 }

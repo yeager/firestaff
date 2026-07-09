@@ -165,6 +165,19 @@ typedef struct {
 } DM1_ProjectileSquareAttachPlanPc34;
 
 typedef struct {
+    int valid;
+    int shouldSetDroppedNextEnd;
+    int shouldSetSquareFirstThing;
+    int shouldAppendAfterTail;
+    int foundTail;
+    int chainOverflow;
+    unsigned short droppedThing;
+    unsigned short baseThing;
+    unsigned short squareFirstThing;
+    unsigned short tailThing;
+} DM1_ProjectileSquareAttachReceiptPc34;
+
+typedef struct {
     int handled;
     int championPresent;
     int championIndex;
@@ -361,6 +374,12 @@ int dm1_v1_projectile_square_attach_plan_f0215_pc34(
     unsigned short squareFirstThing,
     unsigned short tailThing,
     DM1_ProjectileSquareAttachPlanPc34* outPlan);
+int dm1_v1_projectile_square_attach_receipt_f0215_pc34(
+    unsigned short droppedThing,
+    unsigned short squareFirstThing,
+    const unsigned short* chainThings,
+    int chainCount,
+    DM1_ProjectileSquareAttachReceiptPc34* outReceipt);
 int dm1_v1_projectile_associated_thing_disposition_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,
