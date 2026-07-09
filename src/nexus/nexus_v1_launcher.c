@@ -683,6 +683,8 @@ void nexus_v1_launcher_startup_runtime_handoff_receipt_clear(
     receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_INVALID;
     receipt->dgn_handoff.status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
     receipt->render_plan.status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+    receipt->script_receipt.status = NEXUS_SCRIPT_RUNTIME_MISSING;
+    receipt->script_receipt.level_index = -1;
     receipt->party_x = -1;
     receipt->party_y = -1;
     receipt->party_dir = -1;
@@ -703,6 +705,7 @@ void nexus_v1_launcher_startup_runtime_route_receipt_clear(
     receipt->startup_cd_track = -1;
     receipt->dgn_handoff_status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
     receipt->dgn_render_plan_status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+    receipt->script_runtime_status = NEXUS_SCRIPT_RUNTIME_MISSING;
     nexus_v1_startup_host_action_receipt_clear(&receipt->host_action_receipt);
     nexus_v1_launcher_startup_runtime_handoff_receipt_clear(
         &receipt->runtime_handoff);
@@ -1482,6 +1485,7 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
+    Nexus_ScriptRuntimeReceipt script_receipt;
 
     nexus_v1_launcher_startup_runtime_handoff_receipt_clear(out_receipt);
     if (!state || !execution || !out_receipt ||
@@ -1570,6 +1574,17 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     out_receipt->route =
         NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE;
     out_receipt->render_plan = render_plan;
+    memset(&script_receipt, 0, sizeof(script_receipt));
+    if (nexus_v1_current_level_script_runtime_receipt(
+            state->engine,
+            &script_receipt) == 0) {
+        out_receipt->script_receipt = script_receipt;
+        out_receipt->script_runtime_blocked =
+            script_receipt.blocks_real_script_dispatch ? 1 : 0;
+        out_receipt->script_runtime_ready =
+            !out_receipt->script_runtime_blocked &&
+            script_receipt.status != NEXUS_SCRIPT_RUNTIME_MISSING;
+    }
     out_receipt->runtime_ready = 1;
     out_receipt->dgn_render_ready = 1;
     out_receipt->hud_ready = out_receipt->level_loaded ? 1 : 0;
@@ -1751,6 +1766,14 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
     if (commands && handoff->render_plan.command_count > 0) {
         out_receipt->first_dgn_render_command_kind = commands[0].kind;
     }
+    out_receipt->script_runtime_status = handoff->script_receipt.status;
+    out_receipt->script_runtime_ready =
+        handoff->script_runtime_ready ? 1 : 0;
+    out_receipt->script_runtime_blocked =
+        handoff->script_runtime_blocked ? 1 : 0;
+    out_receipt->script_candidate_source_bytes =
+        handoff->script_receipt.candidate_source_bytes;
+    out_receipt->script_rules_loaded = handoff->script_receipt.rules_loaded;
     out_receipt->consumed_by_nexus =
         handoff->route != NEXUS_V1_STARTUP_RUNTIME_HANDOFF_INVALID;
     out_receipt->fallback_visuals_permitted =
@@ -1990,6 +2013,14 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
             out_receipt->first_runtime_route_ready
                 ? "first-dgn-render-state"
                 : out_receipt->runtime_route;
+        out_receipt->script_runtime_status =
+            out_receipt->runtime_route_receipt.script_runtime_status;
+        out_receipt->script_candidate_source_bytes =
+            out_receipt->runtime_route_receipt.script_candidate_source_bytes;
+        out_receipt->script_runtime_route_blocked =
+            out_receipt->runtime_route_receipt.script_runtime_blocked;
+        out_receipt->script_runtime_route_ready =
+            out_receipt->runtime_route_receipt.script_runtime_ready;
     }
 
     out_receipt->graphics_ready =
@@ -2004,6 +2035,7 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
         out_receipt->menu_runtime_route_ready &&
         out_receipt->first_runtime_route_ready &&
         out_receipt->audio_runtime_route_ready &&
+        !out_receipt->script_runtime_route_blocked &&
         !out_receipt->fallback_visuals_permitted;
 
     if (out_receipt->runtime_route_ready) {

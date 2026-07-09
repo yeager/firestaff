@@ -276,10 +276,13 @@ typedef struct {
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
+    Nexus_ScriptRuntimeReceipt script_receipt;
     int runtime_ready;
     int dgn_render_ready;
     int hud_ready;
     int dgn_render_blocked;
+    int script_runtime_ready;
+    int script_runtime_blocked;
     int level_loaded;
     int party_x;
     int party_y;
@@ -313,6 +316,11 @@ typedef struct {
     int dgn_render_floor_count;
     int dgn_render_wall_count;
     int dgn_blocks_real_mesh_render;
+    Nexus_ScriptRuntimeStatus script_runtime_status;
+    int script_runtime_ready;
+    int script_runtime_blocked;
+    int script_candidate_source_bytes;
+    int script_rules_loaded;
     int consumed_by_nexus;
     int fallback_visuals_permitted;
     const char *status_scope;
@@ -346,7 +354,11 @@ typedef struct {
     int menu_runtime_route_ready;
     int first_runtime_route_ready;
     int audio_runtime_route_ready;
+    int script_runtime_route_ready;
+    int script_runtime_route_blocked;
     int full_startup_route_ready;
+    Nexus_ScriptRuntimeStatus script_runtime_status;
+    int script_candidate_source_bytes;
     int fallback_visuals_permitted;
     const char *asset_route;
     const char *title_route;

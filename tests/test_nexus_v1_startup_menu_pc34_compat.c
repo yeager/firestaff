@@ -766,6 +766,14 @@ int main(void)
         NEXUS_SFX_RUNTIME_READY_DECODED;
     synthetic_engine.sfx_runtime_receipt.level_index = 0;
     synthetic_engine.sfx_runtime_receipt.cd_track = 2;
+    synthetic_engine.script_runtime_receipt.status =
+        NEXUS_SCRIPT_RUNTIME_READY_PARSED;
+    synthetic_engine.script_runtime_receipt.level_index = 0;
+    synthetic_engine.script_runtime_receipt.candidate_source_loaded = 1;
+    synthetic_engine.script_runtime_receipt.candidate_source_bytes = 2388;
+    synthetic_engine.script_runtime_receipt.parser_supported = 1;
+    synthetic_engine.script_runtime_receipt.dispatch_enabled = 1;
+    synthetic_engine.script_runtime_receipt.rules_loaded = 2;
     synthetic_engine.current_level.width = NEXUS_MAX_MAP_SIZE;
     synthetic_engine.current_level.height = NEXUS_MAX_MAP_SIZE;
     synthetic_engine.current_level.geometry_info.dmweb_container = 1;
@@ -851,6 +859,10 @@ int main(void)
                runtime_handoff_receipt.dgn_render_ready == 1 &&
                runtime_handoff_receipt.hud_ready == 1 &&
                runtime_handoff_receipt.dgn_render_blocked == 0 &&
+               runtime_handoff_receipt.script_receipt.status ==
+                   NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
+               runtime_handoff_receipt.script_runtime_ready == 1 &&
+               runtime_handoff_receipt.script_runtime_blocked == 0 &&
                runtime_handoff_receipt.asset_handoff.route ==
                    NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY &&
                runtime_handoff_receipt.asset_handoff
@@ -900,6 +912,11 @@ int main(void)
                route_proof_receipt.menu_runtime_route_ready == 1 &&
                route_proof_receipt.first_runtime_route_ready == 1 &&
                route_proof_receipt.audio_runtime_route_ready == 1 &&
+               route_proof_receipt.script_runtime_status ==
+                   NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
+               route_proof_receipt.script_candidate_source_bytes == 2388 &&
+               route_proof_receipt.script_runtime_route_ready == 1 &&
+               route_proof_receipt.script_runtime_route_blocked == 0 &&
                route_proof_receipt.full_startup_route_ready == 1 &&
                strcmp(route_proof_receipt.first_runtime_route,
                       "first-dgn-render-state") == 0 &&
@@ -951,12 +968,49 @@ int main(void)
                runtime_route_receipt.first_dgn_render_command_kind ==
                    NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
                runtime_route_receipt.dgn_blocks_real_mesh_render == 0 &&
+               runtime_route_receipt.script_runtime_status ==
+                   NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
+               runtime_route_receipt.script_candidate_source_bytes == 2388 &&
+               runtime_route_receipt.script_rules_loaded == 2 &&
+               runtime_route_receipt.script_runtime_ready == 1 &&
+               runtime_route_receipt.script_runtime_blocked == 0 &&
                runtime_route_receipt.fallback_visuals_permitted == 0 &&
                runtime_route_receipt.runtime_handoff.asset_handoff
                        .real_asset_route_ready == 1 &&
                runtime_route_receipt.runtime_handoff.command_count > 0 &&
                dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
            "Nexus runtime route receipt consumes host action and DGN route");
+    synthetic_engine.script_runtime_receipt.status =
+        NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT;
+    synthetic_engine.script_runtime_receipt.parser_supported = 0;
+    synthetic_engine.script_runtime_receipt.dispatch_enabled = 0;
+    synthetic_engine.script_runtime_receipt.rules_loaded = 0;
+    synthetic_engine.script_runtime_receipt.blocks_real_script_dispatch = 1;
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_route_proof_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               &champion_execution,
+               NULL,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &route_proof_receipt) &&
+               route_proof_receipt.runtime_route_ready == 1 &&
+               route_proof_receipt.first_runtime_route_ready == 1 &&
+               route_proof_receipt.script_runtime_status ==
+                   NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT &&
+               route_proof_receipt.script_candidate_source_bytes == 2388 &&
+               route_proof_receipt.script_runtime_route_ready == 0 &&
+               route_proof_receipt.script_runtime_route_blocked == 1 &&
+               route_proof_receipt.full_startup_route_ready == 0 &&
+               route_proof_receipt.fallback_visuals_permitted == 0,
+           "Nexus startup route proof exposes script parser blocker");
+    synthetic_engine.script_runtime_receipt.status =
+        NEXUS_SCRIPT_RUNTIME_READY_PARSED;
+    synthetic_engine.script_runtime_receipt.parser_supported = 1;
+    synthetic_engine.script_runtime_receipt.dispatch_enabled = 1;
+    synthetic_engine.script_runtime_receipt.rules_loaded = 2;
+    synthetic_engine.script_runtime_receipt.blocks_real_script_dispatch = 0;
     expect(nexus_v1_startup_champion_footer_rect(&footer_rect),
            "Nexus champion footer rect builds for pointer route");
     runtime_snapshot.runtime = runtime_state;
