@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Nexus title route receipt: startup title input/pointer now emits one M11-ready route receipt for hold, save-select, champion-select, and return-to-launcher paths, carrying title frame, draw-command count, host result, mode updates, and status text. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup pointer action route receipt: startup action receipts now carry pointer coordinates, source left-button mask, pointer/keyboard route identity, and command ids from utility/entrance pointer paths alongside pre/post render-view receipts. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron startup view-model route/save receipt: boot startup view models now carry continue focus, TQSV/SRM slot/import facts, runtime level, champion count, and runtime level-route facts so title/menu callers can consume one Theron-owned startup model instead of re-reading world/save receipts. Verification: `test_theron_v1_startup_save_resume_pc34` 174/174 and `git diff --check` passed.
