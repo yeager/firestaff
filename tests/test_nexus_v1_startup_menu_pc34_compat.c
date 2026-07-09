@@ -123,6 +123,7 @@ int main(void)
     Nexus_V1_StartupFullStartReceipt full_start_receipt;
     Nexus_V1_StartupFullStartConsumerReceipt full_start_consumer_receipt;
     Nexus_V1_StartupFullStartPackageReceipt full_start_package_receipt;
+    Nexus_V1_StartupFullStartPackageReceipt mutated_package_receipt;
     Nexus_V1_M12StartupPackageReceipt m12_package_receipt;
     Nexus_V1_StartupReceiptBundle startup_bundle_receipt;
     Nexus_V1_StartupRealAssetOwnershipReceipt real_asset_ownership_receipt;
@@ -1574,6 +1575,38 @@ int main(void)
                m12_package_receipt.capture_command_count ==
                    full_start_package_receipt.capture_command_count,
            "Nexus M12 startup package consumes full-start TITLE/WARNING/GAMEOVER capture receipt");
+    mutated_package_receipt = full_start_package_receipt;
+    mutated_package_receipt.title_frame_max =
+        nexus_v1_boot_start_ready_frames() - 1;
+    mutated_package_receipt.saturn_timing_exact = 0;
+    mutated_package_receipt.full_start_package_receipt_ready = 0;
+    mutated_package_receipt.host_display_caller_expected = 0;
+    expect(nexus_v1_launcher_m12_startup_package_from_full_start_package(
+               &mutated_package_receipt,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 0 &&
+               m12_package_receipt.full_start_package_receipt_ready == 0 &&
+               m12_package_receipt.host_display_caller_expected == 0 &&
+               strcmp(m12_package_receipt.launch_status_label,
+                      "READY TO LAUNCH") != 0,
+           "Nexus M12 startup package rejects non-exact Saturn title timing");
+    mutated_package_receipt = full_start_package_receipt;
+    mutated_package_receipt.title_capture_frame =
+        nexus_v1_boot_warning_frames() + 1;
+    mutated_package_receipt.saturn_title_capture_frame =
+        mutated_package_receipt.title_capture_frame;
+    mutated_package_receipt.saturn_capture_frames_exact = 0;
+    mutated_package_receipt.full_start_package_receipt_ready = 0;
+    mutated_package_receipt.host_display_caller_expected = 0;
+    expect(nexus_v1_launcher_m12_startup_package_from_full_start_package(
+               &mutated_package_receipt,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 0 &&
+               m12_package_receipt.saturn_title_capture_frame ==
+                   nexus_v1_boot_warning_frames() + 1 &&
+               m12_package_receipt.saturn_capture_frames_exact == 0 &&
+               m12_package_receipt.host_display_caller_expected == 0,
+           "Nexus M12 startup package rejects off-by-one Saturn capture frame");
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_receipt_bundle_from_snapshot(
                NULL,

@@ -1048,8 +1048,6 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
         out_receipt->startup_menu_ready;
     out_receipt->startup_contract_ready =
         out_receipt->full_start_graphics_ready;
-    out_receipt->packaged_capture_ready =
-        out_receipt->startup_contract_ready;
     out_receipt->saturn_timing_exact =
         nexus_v1_launcher_saturn_timing_exact(
             out_receipt->boot_warning_frames,
@@ -1060,6 +1058,10 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
             out_receipt->warning_capture_frame,
             out_receipt->title_capture_frame,
             out_receipt->gameover_capture_frame);
+    out_receipt->packaged_capture_ready =
+        out_receipt->startup_contract_ready &&
+        out_receipt->saturn_timing_exact &&
+        out_receipt->saturn_capture_frames_exact;
     out_receipt->full_start_package_receipt_ready =
         out_receipt->packaged_capture_ready &&
         out_receipt->saturn_timing_exact &&
@@ -1111,6 +1113,10 @@ int nexus_v1_launcher_m12_startup_package_from_full_start_package(
     out_receipt->packaged_capture_ready =
         package->capture_valid &&
         package->capture_route_ready &&
+        package->full_start_package_receipt_ready &&
+        package->host_display_caller_expected &&
+        package->saturn_timing_exact &&
+        package->saturn_capture_frames_exact &&
         !package->fallback_visuals_permitted;
     out_receipt->startup_step_count = 7;
     out_receipt->startup_step_ready_count =
