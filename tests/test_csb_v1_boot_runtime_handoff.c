@@ -2144,6 +2144,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 host_ownership;
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
     CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 runtime_visual;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 route_hardening;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2244,6 +2245,91 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.draw_door_fallback_count == 0 &&
               strstr(runtime_visual.source_evidence, "CSBWin") != NULL,
           "boot startup runtime visual capture consumes title, HUD and door-opening through host executor without fallback callbacks");
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.boot_profile = &boot;
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
+    snapshot.pending_command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    snapshot.resume_available = 1;
+    snapshot.resume_path = resume_path;
+    snapshot.title_active = 1;
+    snapshot.title_frame = 0;
+    snapshot.title_source_step = 1;
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+              &snapshot,
+              0,
+              0,
+              &capture_render_executor,
+              &host_ownership) == 1 &&
+              csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+                  &visual_sequence,
+                  &host_ownership,
+                  &route_hardening) == 1 &&
+              route_hardening.valid &&
+              route_hardening.title_route_covered &&
+              route_hardening.no_fallback_text_route &&
+              route_hardening.no_legacy_door_fallback_route &&
+              route_hardening.host_draw_consumes_receipt_only &&
+              route_hardening.route_hardening_hash != 0u,
+          "boot startup route hardening accepts only full-captured title ownership");
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.boot_profile = &boot;
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
+    snapshot.pending_command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    snapshot.resume_available = 1;
+    snapshot.resume_path = resume_path;
+    snapshot.utility_overlay_active = 1;
+    snapshot.utility_selected_action_index = 0;
+    snapshot.utility_imported_champion_count = 2;
+    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+              &snapshot,
+              0,
+              0,
+              &capture_render_executor,
+              &host_ownership) == 1 &&
+              csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+                  &visual_sequence,
+                  &host_ownership,
+                  &route_hardening) == 1 &&
+              route_hardening.valid &&
+              route_hardening.utility_hud_route_covered &&
+              route_hardening.no_fallback_text_route &&
+              capture_render_probe.draw_fallback_text_count == 0,
+          "boot startup route hardening accepts only full-captured utility HUD ownership");
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.boot_profile = &boot;
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
+    snapshot.resume_available = 1;
+    snapshot.resume_path = resume_path;
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 3;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+              &snapshot,
+              0,
+              0,
+              &capture_render_executor,
+              &host_ownership) == 1 &&
+              csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+                  &visual_sequence,
+                  &host_ownership,
+                  &route_hardening) == 1 &&
+              route_hardening.valid &&
+              route_hardening.door_opening_route_covered &&
+              route_hardening.no_legacy_door_fallback_route &&
+              capture_render_probe.draw_door_fallback_count == 0,
+          "boot startup route hardening accepts only full-captured door-opening ownership");
     memset(&facts, 0, sizeof(facts));
     facts.boot_profile = &boot;
     facts.utility_overlay_active = 1;
