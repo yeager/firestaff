@@ -2143,6 +2143,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 host_ownership;
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
+    CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 runtime_visual;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2209,6 +2210,40 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               visual_sequence.credits_hash != 0u &&
               strstr(visual_sequence.source_evidence, "TITLE.C F0437") != NULL,
           "boot startup visual sequence capture covers title, HUD, credits and door opening without fallback routes");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
+              &boot,
+              &capture_render_executor,
+              &runtime_visual) == 1 &&
+              runtime_visual.valid &&
+              runtime_visual.visual_sequence_valid &&
+              runtime_visual.real_asset_matched &&
+              runtime_visual.sequence_capture_hash ==
+                  visual_sequence.sequence_capture_hash &&
+              runtime_visual.runtime_capture_hash != 0u &&
+              runtime_visual.title_runtime_consumed &&
+              runtime_visual.closed_door_hud_runtime_consumed &&
+              runtime_visual.utility_hud_runtime_consumed &&
+              runtime_visual.door_opening_delay_runtime_consumed &&
+              runtime_visual.door_opening_frame_runtime_consumed &&
+              runtime_visual.credits_runtime_consumed &&
+              runtime_visual.title_draw_consumed &&
+              runtime_visual.closed_door_hud_draw_consumed &&
+              runtime_visual.utility_hud_draw_consumed &&
+              runtime_visual.door_opening_frame_draw_consumed &&
+              runtime_visual.credits_surface_draw_consumed &&
+              runtime_visual.no_fallback_callbacks &&
+              runtime_visual.no_wrapper_fallback_routes &&
+              runtime_visual.draw_consumes_receipt_only &&
+              runtime_visual.input_consumes_receipt_only &&
+              capture_render_probe.draw_title_count >= 1 &&
+              capture_render_probe.draw_full_surface_count >= 4 &&
+              capture_render_probe.draw_opening_frame_count >= 1 &&
+              capture_render_probe.draw_fallback_text_count == 0 &&
+              capture_render_probe.draw_door_fallback_count == 0 &&
+              strstr(runtime_visual.source_evidence, "CSBWin") != NULL,
+          "boot startup runtime visual capture consumes title, HUD and door-opening through host executor without fallback callbacks");
     memset(&facts, 0, sizeof(facts));
     facts.boot_profile = &boot;
     facts.utility_overlay_active = 1;
