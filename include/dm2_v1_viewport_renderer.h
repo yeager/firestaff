@@ -107,9 +107,13 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_DOOR_FRAME_D1C 0x07
 #define DM2_V1_VIEWPORT_GFX_DOOR_FRAME_D2C 0x09
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE (-0x300)
+#define DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE (-0xA0000)
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT 0x00
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D1C 0x00
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D2C 0x01
+#define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT 8
+#define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_OPENING_SHIFT 4
+#define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_MASK 0x0F
 #define DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE (-0x400)
 #define DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_RELEASED 0x00
 #define DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_PUSHED 0x05
@@ -138,6 +142,9 @@ int dm2_v1_viewport_door_frame_field_for_square(int view_square);
 int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square);
 int dm2_v1_viewport_door_panel_field_for_square(int view_square);
 int dm2_v1_viewport_door_panel_graphic_index_for_square(int view_square);
+int dm2_v1_viewport_door_panel_graphic_index_for_record(int view_square,
+                                                        int door_gfx_index,
+                                                        int opening_dir);
 int dm2_v1_viewport_door_button_field_for_state(int pushed);
 int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed);
 int dm2_v1_viewport_skproject_cell_for_square(int view_square);

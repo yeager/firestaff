@@ -79,6 +79,7 @@ typedef struct {
     uint8_t *door_panel_pixels[DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT];
     int door_panel_w[DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT];
     int door_panel_h[DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT];
+    int door_panel_keys[DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT];
     uint8_t *door_button_pixels[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
     int door_button_w[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
     int door_button_h[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
@@ -2031,6 +2032,31 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_w = &gfx->hud_portrait_w[index];
         cache_h = &gfx->hud_portrait_h[index];
         category = DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET;
+    } else if (gdat_index <=
+               DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE) {
+        int packed =
+            DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE - gdat_index;
+        /* skproject SKWIN/SkWinCore.cpp lines 46405-46457 load door panels
+         * from GDAT_CATEGORY_DOORS using the map-local door graphic index. */
+        field = packed & DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_MASK;
+        if (packed < 0 ||
+            packed >= (0x100 << DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT) ||
+            field >= DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT) {
+            return -1;
+        }
+        index = (packed >> DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT) & 0xff;
+        if (gfx->door_panel_pixels[field] &&
+            gfx->door_panel_keys[field] != gdat_index) {
+            dm2_v1_asset_free_pixels(gfx->door_panel_pixels[field]);
+            gfx->door_panel_pixels[field] = NULL;
+            gfx->door_panel_w[field] = 0;
+            gfx->door_panel_h[field] = 0;
+        }
+        cache_pixels = &gfx->door_panel_pixels[field];
+        cache_w = &gfx->door_panel_w[field];
+        cache_h = &gfx->door_panel_h[field];
+        gfx->door_panel_keys[field] = gdat_index;
+        category = DM2_GDAT_CATEGORY_DOORS;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE) {
         int packed = DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index;
         int slot = -1;
@@ -2086,6 +2112,14 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_pixels = &gfx->door_panel_pixels[field];
         cache_w = &gfx->door_panel_w[field];
         cache_h = &gfx->door_panel_h[field];
+        if (gfx->door_panel_pixels[field] &&
+            gfx->door_panel_keys[field] != gdat_index) {
+            dm2_v1_asset_free_pixels(gfx->door_panel_pixels[field]);
+            gfx->door_panel_pixels[field] = NULL;
+            gfx->door_panel_w[field] = 0;
+            gfx->door_panel_h[field] = 0;
+        }
+        gfx->door_panel_keys[field] = gdat_index;
         category = DM2_GDAT_CATEGORY_DOORS;
         index = 0;
     } else if (gdat_index <=

@@ -815,6 +815,26 @@ int dm2_v1_viewport_door_panel_graphic_index_for_square(int view_square)
     return DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - field;
 }
 
+int dm2_v1_viewport_door_panel_graphic_index_for_record(int view_square,
+                                                        int door_gfx_index,
+                                                        int opening_dir)
+{
+    int field = dm2_v1_viewport_door_panel_field_for_square(view_square);
+    int record_field;
+    if (field < 0) return 0;
+    if (door_gfx_index < 0) door_gfx_index = 0;
+    if (door_gfx_index > 0xff) door_gfx_index = 0xff;
+    /* skproject SKWIN/SkWinCore.cpp lines 46405-46431 fetch the panel from
+     * GDAT_CATEGORY_DOORS using glbMapDoorType[DoorType()]. Lines 46580-46606
+     * use OpeningDir() to select the split/position path for moving panels. */
+    record_field = field & DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_MASK;
+    record_field |= (opening_dir & 1) <<
+        DM2_V1_VIEWPORT_GFX_DOOR_PANEL_OPENING_SHIFT;
+    record_field |= (door_gfx_index & 0xff) <<
+        DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT;
+    return DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE - record_field;
+}
+
 int dm2_v1_viewport_door_button_field_for_state(int pushed)
 {
     /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES line ~46342 calls
@@ -1280,8 +1300,18 @@ int dm2_v1_viewport_build_door_render_plan(
         row = &out_plan->doors[out_plan->door_count++];
         row->view_square = square;
         row->skproject_cell = dm2_v1_viewport_skproject_cell_for_square(square);
-        row->panel_gdat_index =
-            dm2_v1_viewport_door_panel_graphic_index_for_square(square);
+        if (vs->door_gfx_index != 0 ||
+            vs->door_record_type != 0 ||
+            vs->door_opening_dir != 0) {
+            row->panel_gdat_index =
+                dm2_v1_viewport_door_panel_graphic_index_for_record(
+                    square,
+                    vs->door_gfx_index,
+                    vs->door_opening_dir);
+        } else {
+            row->panel_gdat_index =
+                dm2_v1_viewport_door_panel_graphic_index_for_square(square);
+        }
         row->frame_gdat_index =
             dm2_v1_viewport_door_frame_graphic_index_for_square(square);
         row->door_open_pct = vs->door_open_pct;

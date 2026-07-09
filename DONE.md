@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM2 DB0 door GDAT render handoff: DM2 runtime now carries map door-set graphics from dungeon metadata into DB0 door squares, and the viewport render plan selects the door panel pseudo-GDAT index from door type plus opening direction. Verification: focused DM2 runtime/renderer tests and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 runtime projectile render source: M11 no longer chooses projectile/explosion sprite data from static dungeon C14/C15 links when DM1 runtime effect lists are authoritative, preventing HoC stale fireball/spell refs from overriding live thrown-object/projectile visuals. Verification: `test_m11_overlay_command_queue_block`, `test_dm1_v1_projectile_explosion_render_pc34_compat`, `firestaff` build, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus DGN renderer handoff receipt: Structure1B/geometry decode now emits a renderer/runtime receipt for real DGN mesh readiness, descriptor-budget blockers, and legacy fallback blockers, with fallback visuals forbidden on blocked real-DGN routes. `LEV00.DGN` is also hash-resolved in Nexus runtime level load. Verification: `test_nexus_v1_dgn_geometry_readiness`, `test_nexus_v1_boot_file_hash_scan`, Nexus BPK focused CTests, and `git diff --check` passed.
