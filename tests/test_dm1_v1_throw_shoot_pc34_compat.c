@@ -533,8 +533,13 @@ static void test_projectile_materialization_plan(void) {
     struct ProjectileInstance_Compat p;
     struct ProjectileTickResult_Compat r;
     DM1_ProjectileMaterializationPlanPc34 plan;
+    DM1_ProjectileSquareAttachPlanPc34 attach;
     unsigned short weaponThing =
         (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
+    unsigned short droppedThing =
+        (unsigned short)(weaponThing | (unsigned short)(2u << 14));
+    unsigned short tailThing =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 3);
     memset(&p, 0, sizeof(p));
     memset(&r, 0, sizeof(r));
     memset(&plan, 0, sizeof(plan));
@@ -584,6 +589,35 @@ static void test_projectile_materialization_plan(void) {
               "potion materialization plan builds");
     ASSERT_EQ(plan.shouldConsumePotion, 1, "potion materialization consumes");
     ASSERT_EQ(plan.shouldMaterialize, 0, "potion materialization blocked");
+
+    ASSERT_EQ(dm1_v1_projectile_square_attach_plan_f0215_pc34(
+                  droppedThing, THING_ENDOFLIST, THING_NONE, &attach), 1,
+              "F0215 empty square attach plan builds");
+    ASSERT_EQ(attach.valid, 1, "F0215 empty square attach valid");
+    ASSERT_EQ(attach.baseThing, weaponThing,
+              "F0215 empty square attach strips cell bits for next write");
+    ASSERT_EQ(attach.shouldSetDroppedNextEnd, 1,
+              "F0215 empty square attach terminates dropped thing");
+    ASSERT_EQ(attach.shouldSetSquareFirstThing, 1,
+              "F0215 empty square attach sets first thing");
+    ASSERT_EQ(attach.shouldAppendAfterTail, 0,
+              "F0215 empty square attach skips tail append");
+
+    ASSERT_EQ(dm1_v1_projectile_square_attach_plan_f0215_pc34(
+                  droppedThing, tailThing, tailThing, &attach), 1,
+              "F0215 occupied square attach plan builds");
+    ASSERT_EQ(attach.valid, 1, "F0215 occupied square attach valid");
+    ASSERT_EQ(attach.shouldSetSquareFirstThing, 0,
+              "F0215 occupied square attach keeps first thing");
+    ASSERT_EQ(attach.shouldAppendAfterTail, 1,
+              "F0215 occupied square attach appends after tail");
+    ASSERT_EQ(attach.tailThing, tailThing,
+              "F0215 occupied square attach tail");
+
+    ASSERT_EQ(dm1_v1_projectile_square_attach_plan_f0215_pc34(
+                  (unsigned short)((THING_TYPE_EXPLOSION << 10) | 1),
+                  THING_ENDOFLIST, THING_NONE, &attach), 0,
+              "F0215 explosion square attach is rejected");
 }
 
 static void test_black_flame_heal_and_group_cell(void) {

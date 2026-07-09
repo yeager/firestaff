@@ -628,6 +628,39 @@ int dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_square_attach_plan_f0215_pc34(
+    unsigned short droppedThing,
+    unsigned short squareFirstThing,
+    unsigned short tailThing,
+    DM1_ProjectileSquareAttachPlanPc34* outPlan) {
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->droppedThing = droppedThing;
+    outPlan->baseThing = (unsigned short)(droppedThing & 0x3FFFu);
+    outPlan->squareFirstThing = squareFirstThing;
+    outPlan->tailThing = tailThing;
+
+    if (droppedThing == THING_NONE ||
+        droppedThing == THING_ENDOFLIST ||
+        THING_GET_TYPE(droppedThing) == THING_TYPE_EXPLOSION) {
+        return 0;
+    }
+
+    outPlan->valid = 1;
+    outPlan->shouldSetDroppedNextEnd = 1;
+    if (squareFirstThing == THING_NONE ||
+        squareFirstThing == THING_ENDOFLIST) {
+        outPlan->shouldSetSquareFirstThing = 1;
+    } else if (tailThing != THING_NONE && tailThing != THING_ENDOFLIST) {
+        outPlan->shouldAppendAfterTail = 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0215 lines 248-259 materializes Projectile.Slot
+     * on the projectile square; DUNGEON.C F0163 lines 1798-1837 appends to
+     * an existing square chain instead of replacing the first thing. */
+    return 1;
+}
+
 int dm1_v1_projectile_associated_thing_disposition_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,

@@ -26992,7 +26992,7 @@ static int m11_link_projectile_thing_to_square_tail(
     int base;
     const struct DungeonMapDesc_Compat* map;
     int squareIndex;
-    unsigned short baseThing;
+    DM1_ProjectileSquareAttachPlanPc34 attachPlan;
     unsigned short current;
     int safety = 0;
 
@@ -27016,14 +27016,19 @@ static int m11_link_projectile_thing_to_square_tail(
         return 0;
     }
 
-    baseThing = (unsigned short)(thing & 0x3FFFu);
-    m11_set_object_drop_next(world->things, baseThing, THING_ENDOFLIST);
-    m11_set_next_thing(world->things, baseThing, THING_ENDOFLIST);
-    current = world->things->squareFirstThings[squareIndex];
-    if (current == THING_NONE || current == THING_ENDOFLIST) {
-        world->things->squareFirstThings[squareIndex] = thing;
-        m11_set_object_drop_next(world->things, baseThing, THING_ENDOFLIST);
-        m11_set_next_thing(world->things, baseThing, THING_ENDOFLIST);
+    memset(&attachPlan, 0, sizeof(attachPlan));
+    if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
+            thing, world->things->squareFirstThings[squareIndex], THING_NONE,
+            &attachPlan) ||
+        !attachPlan.valid ||
+        !attachPlan.shouldSetDroppedNextEnd) {
+        return 0;
+    }
+    m11_set_object_drop_next(world->things, attachPlan.baseThing, THING_ENDOFLIST);
+    m11_set_next_thing(world->things, attachPlan.baseThing, THING_ENDOFLIST);
+    current = attachPlan.squareFirstThing;
+    if (attachPlan.shouldSetSquareFirstThing) {
+        world->things->squareFirstThings[squareIndex] = attachPlan.droppedThing;
         return 1;
     }
     while (current != THING_NONE && current != THING_ENDOFLIST &&
@@ -27033,9 +27038,21 @@ static int m11_link_projectile_thing_to_square_tail(
             next = m11_get_decoded_next_thing(world->things, current);
         }
         if (next == THING_NONE || next == THING_ENDOFLIST) {
-            m11_set_next_thing(world->things, current, thing);
-            m11_set_object_drop_next(world->things, baseThing, THING_ENDOFLIST);
-            m11_set_next_thing(world->things, baseThing, THING_ENDOFLIST);
+            memset(&attachPlan, 0, sizeof(attachPlan));
+            if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
+                    thing, world->things->squareFirstThings[squareIndex],
+                    current, &attachPlan) ||
+                !attachPlan.valid ||
+                !attachPlan.shouldAppendAfterTail ||
+                !attachPlan.shouldSetDroppedNextEnd) {
+                return 0;
+            }
+            m11_set_next_thing(
+                world->things, attachPlan.tailThing, attachPlan.droppedThing);
+            m11_set_object_drop_next(
+                world->things, attachPlan.baseThing, THING_ENDOFLIST);
+            m11_set_next_thing(
+                world->things, attachPlan.baseThing, THING_ENDOFLIST);
             return 1;
         }
         current = next;
