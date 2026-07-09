@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-09 Theron boot/title follow-up: Track 02 media receipts now feed prompt and roster fallback rows in startup view-model builders. Remaining work is wiring any final UI callers to stop passing duplicate media arrays once they already hold the receipt.
+  - 2026-07-09 update: boot layout/render/pointer consumers can now operate from the startup view model directly. Remaining work is replacing final host UI call sites that still pass raw prompt/roster/state fields instead of the view model.
 
 - 🔧 2026-07-09 DM2 runtime/render follow-up: DB0 door records now hand level door-set GDAT panel identity into the render plan. Remaining DM2 work is broader GDAT door masks/ornates, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
   - 2026-07-09 update: M11 DM2 startup input now consumes the DM2 host route receipt directly for redraw, close-menu, return-to-launcher, status, and selected row. Remaining boot/start work is exact title timing and real title asset receipt breadth.
