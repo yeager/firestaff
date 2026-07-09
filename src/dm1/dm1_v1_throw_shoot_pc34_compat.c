@@ -752,6 +752,21 @@ int dm1_v1_projectile_associated_thing_disposition_pc34(
     associatedType = (int)THING_GET_TYPE(associatedThing);
     associatedIndex = (int)THING_GET_INDEX(associatedThing);
 
+    if (associatedType != THING_TYPE_WEAPON &&
+        associatedType != THING_TYPE_ARMOUR &&
+        associatedType != THING_TYPE_SCROLL &&
+        associatedType != THING_TYPE_POTION &&
+        associatedType != THING_TYPE_CONTAINER &&
+        associatedType != THING_TYPE_JUNK &&
+        associatedType != THING_TYPE_EXPLOSION) {
+        /* ReDMCSB PROJEXPL.C F0215 lines 248-259 only materializes a
+         * projectile Slot when it is a carried object.  Runtime C14
+         * projectile things and structural dungeon things must not become
+         * floor objects after an impact; otherwise stale HoC lists can show
+         * fireballs or group/sensor refs as loose items. */
+        return 1;
+    }
+
     if (result && result->despawn &&
         (projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0 &&
         associatedType == THING_TYPE_POTION &&
