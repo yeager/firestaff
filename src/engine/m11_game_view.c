@@ -25300,18 +25300,6 @@ static int m11_find_creature_ai_on_square(const M11_GameViewState* state,
                                           int mapX,
                                           int mapY);
 
-static int m11_f0190_smoke_attack_for_creature(int creatureType) {
-    const struct CreatureBehaviorProfile_Compat* profile =
-        CREATURE_GetProfile_Compat(creatureType);
-    int size = 0;
-    if (profile) {
-        size = profile->attributes & DM1_ATTR_SIZE_MASK;
-    }
-    if (size == 0) return 110;
-    if (size == 1) return 190;
-    return 255;
-}
-
 static int m11_spawn_f0190_death_smoke(
     M11_GameViewState* state,
     int creatureType,
@@ -25319,25 +25307,30 @@ static int m11_spawn_f0190_death_smoke(
     int mapIndex,
     int mapX,
     int mapY) {
-    struct ExplosionCreateInput_Compat eIn;
+    const struct CreatureBehaviorProfile_Compat* profile;
+    DM1_MeleeF0190DeathSmokeInputPc34 smokeIn;
+    DM1_MeleeF0190DeathSmokePlanPc34 smokePlan;
     struct TimelineEvent_Compat eFirst;
     int slot = -1;
     if (!state) return 0;
-    memset(&eIn, 0, sizeof(eIn));
-    /* ReDMCSB GROUP.C F0190 lines 907-917 creates C040 smoke at the
-     * killed creature cell, with attack 110/190/255 by creature size. */
-    eIn.explosionType = C040_EXPLOSION_SMOKE;
-    eIn.attack = m11_f0190_smoke_attack_for_creature(creatureType);
-    eIn.mapIndex = mapIndex;
-    eIn.mapX = mapX;
-    eIn.mapY = mapY;
-    eIn.cell = killedCell;
-    eIn.centered = (killedCell == EXPLOSION_CELL_CENTERED) ? 1 : 0;
-    eIn.currentTick = (int)state->world.gameTick;
-    eIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
-    eIn.ownerIndex = state->world.party.activeChampionIndex;
-    eIn.creatorProjectileSlot = -1;
-    if (!F0821_EXPLOSION_Create_Compat(&eIn, &state->world.explosions,
+    profile = CREATURE_GetProfile_Compat(creatureType);
+    memset(&smokeIn, 0, sizeof(smokeIn));
+    memset(&smokePlan, 0, sizeof(smokePlan));
+    smokeIn.shouldCreate = 1;
+    smokeIn.smokeAttack = dm1_v1_melee_death_smoke_attack_f0190_pc34(
+        profile ? profile->attributes : 0);
+    smokeIn.smokeCell = killedCell;
+    smokeIn.mapIndex = mapIndex;
+    smokeIn.mapX = mapX;
+    smokeIn.mapY = mapY;
+    smokeIn.currentTick = (int)state->world.gameTick;
+    if (!dm1_v1_melee_death_smoke_plan_f0190_pc34(
+            &smokeIn, &smokePlan) ||
+        !smokePlan.valid || !smokePlan.shouldCreate) {
+        return 0;
+    }
+    if (!F0821_EXPLOSION_Create_Compat(&smokePlan.createInput,
+                                       &state->world.explosions,
                                        &slot, &eFirst)) {
         return 0;
     }

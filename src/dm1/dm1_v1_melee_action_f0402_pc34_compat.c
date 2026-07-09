@@ -893,6 +893,17 @@ int dm1_v1_melee_death_smoke_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_death_smoke_attack_f0190_pc34(int creatureAttributes) {
+    int size = creatureAttributes & DM1_ATTR_SIZE_MASK;
+
+    /* ReDMCSB: GROUP.C F0190 lines 907-917 creates death smoke with
+     * attack 110 for quarter-square/default, 190 for half-square, and
+     * 255 for full-square creatures. */
+    if (size == DM1_SIZE_HALF_SQUARE) return 190;
+    if (size == DM1_SIZE_FULL_SQUARE) return 255;
+    return 110;
+}
+
 int dm1_v1_melee_possession_drop_plan_f0190_pc34(
     const DM1_MeleeF0190PossessionDropInputPc34* in,
     DM1_MeleeF0190PossessionDropPlanPc34* out) {

@@ -593,6 +593,7 @@ int dm1_v1_melee_reaction_plan_f0231_pc34(
 int dm1_v1_melee_death_smoke_plan_f0190_pc34(
     const DM1_MeleeF0190DeathSmokeInputPc34* in,
     DM1_MeleeF0190DeathSmokePlanPc34* out);
+int dm1_v1_melee_death_smoke_attack_f0190_pc34(int creatureAttributes);
 int dm1_v1_melee_possession_drop_plan_f0190_pc34(
     const DM1_MeleeF0190PossessionDropInputPc34* in,
     DM1_MeleeF0190PossessionDropPlanPc34* out);
