@@ -1291,6 +1291,11 @@ int main(void) {
                         host_view_receipt.capture_proof.title_raw_gdat_byte_count > 0u &&
                         host_view_receipt.capture_proof.menu_raw_gdat_hash != 0u &&
                         host_view_receipt.capture_proof.menu_raw_gdat_byte_count > 0u &&
+                        host_view_receipt.capture_proof.title_menu_decoded_gdat_capture_ready == 1 &&
+                        host_view_receipt.capture_proof.title_decoded_gdat_hash != 0u &&
+                        host_view_receipt.capture_proof.title_decoded_gdat_pixel_count == 320u * 200u &&
+                        host_view_receipt.capture_proof.menu_decoded_gdat_hash != 0u &&
+                        host_view_receipt.capture_proof.menu_decoded_gdat_pixel_count == 320u * 200u &&
                         host_view_receipt.capture_proof.menu_capture_ready == 1 &&
                         host_view_receipt.capture_proof.hud_handoff_capture_ready == 1 &&
                         host_view_receipt.capture_proof.hud_raw_gdat_capture_ready == 1 &&
@@ -1351,6 +1356,11 @@ int main(void) {
                         full_start_package.title_raw_gdat_byte_count > 0u &&
                         full_start_package.menu_raw_gdat_hash != 0u &&
                         full_start_package.menu_raw_gdat_byte_count > 0u &&
+                        full_start_package.title_menu_decoded_gdat_capture_ready == 1 &&
+                        full_start_package.title_decoded_gdat_hash != 0u &&
+                        full_start_package.title_decoded_gdat_pixel_count == 320u * 200u &&
+                        full_start_package.menu_decoded_gdat_hash != 0u &&
+                        full_start_package.menu_decoded_gdat_pixel_count == 320u * 200u &&
                         full_start_package.menu_capture_ready == 1 &&
                         full_start_package.hud_handoff_capture_ready == 1 &&
                         full_start_package.hud_raw_gdat_capture_ready == 1 &&
