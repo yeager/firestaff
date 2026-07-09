@@ -2769,6 +2769,7 @@ add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
     probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
     src/dm1/dm1_v1_input_command_queue_pc34_compat.c
@@ -2854,6 +2855,7 @@ add_executable(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
     probes/csb/firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
     src/dm1/dm1_v1_input_command_queue_pc34_compat.c
@@ -2903,6 +2905,7 @@ add_executable(firestaff_csb_v1_first_viewport_frame_probe
     probes/csb/firestaff_csb_v1_first_viewport_frame_probe.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_viewport_pc34_compat.c
     src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
@@ -8113,6 +8116,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_runtime_route_first_frame_movement_utility_gate
         tests/test_csb_v1_runtime_route_first_frame_movement_utility_gate.c
         src/csb/csb_v1_boot.c
+        src/csb/csb_v1_startup_real_asset_receipt.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/csb/csb_v1_character_pc34_compat.c

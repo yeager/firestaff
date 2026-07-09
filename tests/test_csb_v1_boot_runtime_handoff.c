@@ -2186,6 +2186,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_receipt.title_frame == 0 &&
               capture_receipt.title_source_step == 1,
           "boot startup capture receipt packages title block gates");
+    CHECK(csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
+              &capture_receipt,
+              &receipt_title_plan) == 1 &&
+              receipt_title_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              receipt_title_plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              receipt_title_plan.asset_command_count == 1 &&
+              receipt_title_plan.asset_commands[0].kind ==
+                  CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&
+              receipt_title_plan.render_command_count == 2 &&
+              receipt_title_plan.source_asset_id == 1,
+          "boot startup capture receipt consumes real-asset title route");
     CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
               &runtime_view_receipt,
               snapshot.title_active,
