@@ -125,6 +125,7 @@ int main(void)
     Nexus_V1_StartupFullStartPackageReceipt full_start_package_receipt;
     Nexus_V1_M12StartupPackageReceipt m12_package_receipt;
     Nexus_V1_StartupReceiptBundle startup_bundle_receipt;
+    Nexus_V1_StartupRealAssetOwnershipReceipt real_asset_ownership_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff_receipt;
@@ -1192,6 +1193,47 @@ int main(void)
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
            "Nexus startup receipt bundle exports champion timing capture and M12 card facts");
+    expect(nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               11,
+               NULL,
+               NULL,
+               &real_asset_ownership_receipt) &&
+               real_asset_ownership_receipt.route ==
+                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF &&
+               strcmp(nexus_v1_launcher_startup_real_asset_ownership_route_name(
+                          real_asset_ownership_receipt.route),
+                      "runtime-handoff") == 0 &&
+               real_asset_ownership_receipt.receipt_owner_is_nexus == 1 &&
+               real_asset_ownership_receipt.title_menu_receipt_owned == 1 &&
+               real_asset_ownership_receipt.capture_receipt_owned == 1 &&
+               real_asset_ownership_receipt.real_asset_receipt_owned == 1 &&
+               real_asset_ownership_receipt.consumes_bpk_menu_handoff == 1 &&
+               real_asset_ownership_receipt.consumes_prs3_blocker == 0 &&
+               real_asset_ownership_receipt.consumes_dgn_handoff == 1 &&
+               real_asset_ownership_receipt.menu_bpk_handoff.status ==
+                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
+               real_asset_ownership_receipt.dgn_handoff.status ==
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
+               real_asset_ownership_receipt.dgn_render_plan.plan_ready == 1 &&
+               real_asset_ownership_receipt.runtime_dgn_handoff_ready == 1 &&
+               real_asset_ownership_receipt.menu_capture_uses_real_assets == 1 &&
+               real_asset_ownership_receipt.no_fallback_visuals_enforced == 1 &&
+               real_asset_ownership_receipt.fallback_visuals_permitted == 0 &&
+               real_asset_ownership_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+               real_asset_ownership_receipt.first_startup_draw_kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
+               real_asset_ownership_receipt.first_dgn_draw_kind ==
+                   NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
+               real_asset_ownership_receipt.startup_draw_command_count > 3 &&
+               real_asset_ownership_receipt.dgn_draw_command_count > 0 &&
+               strcmp(real_asset_ownership_receipt.receipt_owner,
+                      "nexus-v1-launcher") == 0 &&
+               strcmp(real_asset_ownership_receipt.status,
+                      "runtime-handoff-owned") == 0,
+           "Nexus real-asset ownership receipt joins title menu capture and DGN handoff without fallback");
     runtime_snapshot.runtime = runtime_state;
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
@@ -2076,6 +2118,40 @@ int main(void)
                full_start_package_receipt.fallback_visuals_permitted == 0 &&
                draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE,
            "Nexus full-start package command helper blocks PRS3 fallback draw");
+    expect(nexus_v1_launcher_startup_real_asset_ownership_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               11,
+               NULL,
+               NULL,
+               &real_asset_ownership_receipt) &&
+               real_asset_ownership_receipt.route ==
+                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS &&
+               real_asset_ownership_receipt.receipt_owner_is_nexus == 1 &&
+               real_asset_ownership_receipt.capture_receipt_owned == 1 &&
+               real_asset_ownership_receipt.real_asset_receipt_owned == 1 &&
+               real_asset_ownership_receipt.consumes_bpk_menu_handoff == 1 &&
+               real_asset_ownership_receipt.consumes_prs3_blocker == 1 &&
+               real_asset_ownership_receipt.consumes_dgn_handoff == 0 &&
+               real_asset_ownership_receipt.menu_bpk_handoff.status ==
+                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
+               real_asset_ownership_receipt.menu_bpk_handoff
+                       .blocked_prs3_surfaces == 3 &&
+               real_asset_ownership_receipt.runtime_dgn_handoff_ready == 0 &&
+               real_asset_ownership_receipt.menu_capture_uses_real_assets == 0 &&
+               real_asset_ownership_receipt.no_fallback_visuals_enforced == 1 &&
+               real_asset_ownership_receipt.fallback_visuals_permitted == 0 &&
+               real_asset_ownership_receipt.blocked_draw_suppressed == 1 &&
+               real_asset_ownership_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+               real_asset_ownership_receipt.first_startup_draw_kind ==
+                   NEXUS_V1_STARTUP_DRAW_NONE &&
+               real_asset_ownership_receipt.startup_draw_command_count == 0 &&
+               strcmp(real_asset_ownership_receipt.asset_blocker,
+                      "menu-bpk-prs3") == 0 &&
+               strcmp(real_asset_ownership_receipt.status,
+                      "blocked-menu-bpk-prs3") == 0,
+           "Nexus real-asset ownership receipt blocks PRS3 startup without fallback visuals");
     expect(nexus_v1_startup_champion_execution_mode_update(
                &champion_execution,
                2,

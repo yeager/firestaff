@@ -831,6 +831,51 @@ void nexus_v1_launcher_startup_receipt_bundle_clear(
     receipt->status = "blocked-startup";
 }
 
+void nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
+    Nexus_V1_StartupRealAssetOwnershipReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->route = NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_INVALID;
+    nexus_v1_launcher_startup_receipt_bundle_clear(
+        &receipt->startup_bundle);
+    nexus_v1_launcher_startup_asset_handoff_receipt_clear(
+        &receipt->asset_handoff);
+    nexus_v1_launcher_startup_runtime_route_receipt_clear(
+        &receipt->runtime_route);
+    receipt->menu_bpk_handoff.status =
+        NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_MISSING;
+    receipt->dgn_handoff.status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+    receipt->dgn_render_plan.status =
+        NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+    receipt->receipt_owner = "nexus-v1-launcher";
+    receipt->asset_route = "blocked-startup";
+    receipt->asset_blocker = "startup";
+    receipt->status_scope = "STARTUP";
+    receipt->status = "blocked-startup";
+}
+
+const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
+    Nexus_V1_StartupRealAssetOwnershipRoute route)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_INVALID:
+        return "invalid";
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS:
+        return "blocked-assets";
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_TITLE_CAPTURE:
+        return "title-capture";
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_MENU_CAPTURE:
+        return "menu-capture";
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF:
+        return "runtime-handoff";
+    default:
+        return "unknown";
+    }
+}
+
 static const char *nexus_v1_launcher_m12_capture_route_label(
     Nexus_V1_StartupCaptureRoute route)
 {
@@ -3252,6 +3297,178 @@ int nexus_v1_launcher_startup_receipt_bundle_from_snapshot(
         load_userdata,
         out_commands,
         max_commands,
+        out_receipt);
+}
+
+static void nexus_v1_launcher_fill_real_asset_ownership(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupRealAssetOwnershipReceipt *receipt)
+{
+    const Nexus_V1_StartupFullStartPackageReceipt *package;
+    const Nexus_V1_StartupAssetHandoffReceipt *asset_handoff;
+    const Nexus_V1_StartupRuntimeRouteReceipt *runtime_route;
+
+    if (!receipt) {
+        return;
+    }
+    package = &receipt->startup_bundle.package;
+    asset_handoff = &package->consumer.full_start.asset_handoff;
+    runtime_route = &receipt->runtime_route;
+
+    receipt->asset_handoff = *asset_handoff;
+    receipt->menu_bpk_handoff = asset_handoff->menu_bpk_renderer_handoff;
+    receipt->receipt_owner = "nexus-v1-launcher";
+    receipt->receipt_owner_is_nexus = 1;
+    receipt->title_menu_receipt_owned = 1;
+    receipt->capture_receipt_owned = package->capture_valid ? 1 : 0;
+    receipt->real_asset_receipt_owned = 1;
+    receipt->consumes_bpk_menu_handoff =
+        asset_handoff->menu_bpk_renderer_handoff_valid ? 1 : 0;
+    receipt->consumes_prs3_blocker =
+        asset_handoff->menu_bpk_prs3_blocks_real_menu_route ? 1 : 0;
+    receipt->capture_ready = receipt->startup_bundle.capture_ready ? 1 : 0;
+    receipt->display_ready = receipt->startup_bundle.display_ready ? 1 : 0;
+    receipt->startup_draw_command_count =
+        receipt->startup_bundle.command_count;
+    receipt->capture_route = receipt->startup_bundle.capture_route;
+    receipt->first_startup_draw_kind = receipt->startup_bundle.first_draw_kind;
+    receipt->fallback_visuals_permitted =
+        package->fallback_visuals_permitted ||
+        asset_handoff->fallback_visuals_permitted ||
+        runtime_route->fallback_visuals_permitted;
+    receipt->blocked_draw_suppressed = package->blocked_draw_suppressed;
+    receipt->asset_route = package->asset_route
+        ? package->asset_route
+        : asset_handoff->menu_asset_route;
+    receipt->asset_blocker = package->startup_ui_blocker
+        ? package->startup_ui_blocker
+        : package->consumer.full_start.startup_ui_blocker;
+    receipt->status_scope = package->status_scope;
+    receipt->status = package->status;
+
+    if (runtime_route->runtime_handoff.dgn_handoff.status !=
+        NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING) {
+        receipt->dgn_handoff = runtime_route->runtime_handoff.dgn_handoff;
+        receipt->dgn_render_plan =
+            runtime_route->runtime_handoff.render_plan;
+        receipt->consumes_dgn_handoff = 1;
+        receipt->runtime_dgn_handoff_ready =
+            runtime_route->runtime_route_ready &&
+            runtime_route->dgn_render_plan_ready &&
+            !runtime_route->dgn_blocks_real_mesh_render;
+        receipt->dgn_draw_command_count =
+            runtime_route->dgn_render_command_count;
+        receipt->first_dgn_draw_kind =
+            runtime_route->first_dgn_render_command_kind;
+    }
+
+    receipt->title_capture_uses_real_assets =
+        package->capture_valid &&
+        package->title_capture_surface_ready &&
+        package->warning_capture_surface_ready &&
+        !package->fallback_visuals_permitted;
+    receipt->menu_capture_uses_real_assets =
+        package->capture_valid &&
+        (package->save_capture_ready || package->champion_capture_ready) &&
+        package->consumer.full_start.menu_bpk_route_ready &&
+        asset_handoff->real_menu_asset_handoff_ready &&
+        !package->fallback_visuals_permitted;
+    receipt->no_fallback_visuals_enforced =
+        receipt->receipt_owner_is_nexus &&
+        !receipt->fallback_visuals_permitted;
+
+    if (!receipt->no_fallback_visuals_enforced ||
+        package->blocked_draw_suppressed ||
+        asset_handoff->blocks_main_menu_route ||
+        package->capture_route == NEXUS_V1_STARTUP_CAPTURE_BLOCKED) {
+        receipt->route =
+            NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS;
+        receipt->status_scope = asset_handoff->status_scope
+            ? asset_handoff->status_scope
+            : package->status_scope;
+        receipt->status = asset_handoff->status
+            ? asset_handoff->status
+            : package->status;
+        return;
+    }
+
+    if (state && state->champion_select_active &&
+        receipt->runtime_dgn_handoff_ready) {
+        receipt->route =
+            NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF;
+        receipt->status_scope = "RUNTIME";
+        receipt->status = "runtime-handoff-owned";
+    } else if (receipt->menu_capture_uses_real_assets) {
+        receipt->route =
+            NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_MENU_CAPTURE;
+        receipt->status_scope = "STARTUP";
+        receipt->status = "menu-capture-owned";
+    } else if (receipt->title_capture_uses_real_assets) {
+        receipt->route =
+            NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_TITLE_CAPTURE;
+        receipt->status_scope = "STARTUP";
+        receipt->status = "title-capture-owned";
+    }
+}
+
+int nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupRealAssetOwnershipReceipt *out_receipt)
+{
+    Nexus_V1_StartupDrawCommand startup_commands[80];
+    Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+
+    nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
+        out_receipt);
+    if (!out_receipt || !state ||
+        !nexus_v1_launcher_startup_receipt_bundle_from_runtime_state(
+            runtime,
+            state,
+            menu_input,
+            load_save,
+            load_userdata,
+            startup_commands,
+            (int)(sizeof(startup_commands) / sizeof(startup_commands[0])),
+            &out_receipt->startup_bundle)) {
+        return 0;
+    }
+
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    if (state->champion_select_active) {
+        (void)nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
+            state,
+            menu_input,
+            dgn_commands,
+            (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
+            &out_receipt->runtime_route);
+    }
+    nexus_v1_launcher_fill_real_asset_ownership(state, out_receipt);
+    return 1;
+}
+
+int nexus_v1_launcher_startup_real_asset_ownership_from_snapshot(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupRealAssetOwnershipReceipt *out_receipt)
+{
+    if (!snapshot) {
+        nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
+            out_receipt);
+        return 0;
+    }
+    return nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
+        runtime,
+        &snapshot->runtime,
+        menu_input,
+        load_save,
+        load_userdata,
         out_receipt);
 }
 
