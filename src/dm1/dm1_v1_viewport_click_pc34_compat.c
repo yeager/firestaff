@@ -33,12 +33,12 @@
 static const int s_dirStepEast[4]  = { 0, 1, 0, -1 }; /* N, E, S, W */
 static const int s_dirStepNorth[4] = { -1, 0, 1, 0 };
 
-static int is_valid_view_cell(M11_ViewCell cell)
+static int is_valid_view_cell(DM1_V1_ViewCellPc34 cell)
 {
     return cell >= DM1_VIEW_CELL_FRONT_LEFT && cell < DM1_VIEW_CELL_COUNT;
 }
 
-void m11_viewport_grabbable_clear(M11_ViewportGrabbableState *state)
+void DM1_V1_ViewportGrabbable_ClearPc34Compat(DM1_V1_ViewportGrabbableStatePc34 *state)
 {
     if (!state) return;
     state->grabbableCellMask = DM1_VIEWPORT_GRABBABLE_NO_CELLS;
@@ -47,13 +47,13 @@ void m11_viewport_grabbable_clear(M11_ViewportGrabbableState *state)
     }
 }
 
-void m11_viewport_grabbable_init(M11_ViewportGrabbableState *state)
+void DM1_V1_ViewportGrabbable_InitPc34Compat(DM1_V1_ViewportGrabbableStatePc34 *state)
 {
-    m11_viewport_grabbable_clear(state);
+    DM1_V1_ViewportGrabbable_ClearPc34Compat(state);
 }
 
-int m11_viewport_grabbable_set_pile_top(M11_ViewportGrabbableState *state,
-                                        M11_ViewCell cell,
+int DM1_V1_ViewportGrabbable_SetPileTopPc34Compat(DM1_V1_ViewportGrabbableStatePc34 *state,
+                                        DM1_V1_ViewCellPc34 cell,
                                         int pileTopObjectId)
 {
     if (!state || !is_valid_view_cell(cell)) return 0;
@@ -67,8 +67,8 @@ int m11_viewport_grabbable_set_pile_top(M11_ViewportGrabbableState *state,
     return 1;
 }
 
-int m11_viewport_grabbable_pile_top(
-    const M11_ViewportGrabbableState *state, M11_ViewCell cell)
+int DM1_V1_ViewportGrabbable_PileTopPc34Compat(
+    const DM1_V1_ViewportGrabbableStatePc34 *state, DM1_V1_ViewCellPc34 cell)
 {
     if (!state || !is_valid_view_cell(cell)) {
         return DM1_VIEWPORT_NO_PILE_TOP_OBJECT;
@@ -79,18 +79,18 @@ int m11_viewport_grabbable_pile_top(
     return state->pileTopObjectId[cell];
 }
 
-void m11_click_init(M11_ClickState *s)
+void DM1_V1_Click_InitPc34Compat(DM1_V1_ClickStatePc34 *s)
 {
     memset(s, 0, sizeof(*s));
     s->lastClickZone = DM1_ZONE_NONE;
 }
 
-int m11_click_add_zone(M11_ClickState *s, int x, int y, int w, int h,
-                       M11_ClickZoneId zoneId)
+int DM1_V1_Click_AddZonePc34Compat(DM1_V1_ClickStatePc34 *s, int x, int y, int w, int h,
+                       DM1_V1_ClickZoneIdPc34 zoneId)
 {
-    if (s->zoneCount >= M11_MAX_CLICK_ZONES) return -1;
+    if (s->zoneCount >= DM1_V1_MAX_CLICK_ZONES_PC34) return -1;
     int idx = s->zoneCount;
-    M11_ClickZone *z = &s->zones[idx];
+    DM1_V1_ClickZonePc34 *z = &s->zones[idx];
     z->x = x;
     z->y = y;
     z->w = w;
@@ -101,7 +101,7 @@ int m11_click_add_zone(M11_ClickState *s, int x, int y, int w, int h,
     return idx;
 }
 
-void m11_click_enable_zone(M11_ClickState *s, M11_ClickZoneId zoneId,
+void DM1_V1_Click_EnableZonePc34Compat(DM1_V1_ClickStatePc34 *s, DM1_V1_ClickZoneIdPc34 zoneId,
                            int enabled)
 {
     for (int i = 0; i < s->zoneCount; i++) {
@@ -111,11 +111,11 @@ void m11_click_enable_zone(M11_ClickState *s, M11_ClickZoneId zoneId,
     }
 }
 
-M11_ClickZoneId m11_click_hit_test(const M11_ClickState *s, int mx, int my)
+DM1_V1_ClickZoneIdPc34 DM1_V1_Click_HitTestPc34Compat(const DM1_V1_ClickStatePc34 *s, int mx, int my)
 {
     /* Iterate in reverse order — last added zones have priority */
     for (int i = s->zoneCount - 1; i >= 0; i--) {
-        const M11_ClickZone *z = &s->zones[i];
+        const DM1_V1_ClickZonePc34 *z = &s->zones[i];
         if (!z->enabled) continue;
         if (mx >= z->x && mx < z->x + z->w &&
             my >= z->y && my < z->y + z->h) {
@@ -125,18 +125,18 @@ M11_ClickZoneId m11_click_hit_test(const M11_ClickState *s, int mx, int my)
     return DM1_ZONE_NONE;
 }
 
-M11_ClickZoneId m11_click_mouse_down(M11_ClickState *s,
+DM1_V1_ClickZoneIdPc34 DM1_V1_Click_MouseDownPc34Compat(DM1_V1_ClickStatePc34 *s,
                                       int mx, int my, int button)
 {
     s->mouseDown = 1;
     s->mouseButton = button;
     s->lastClickX = mx;
     s->lastClickY = my;
-    s->lastClickZone = m11_click_hit_test(s, mx, my);
+    s->lastClickZone = DM1_V1_Click_HitTestPc34Compat(s, mx, my);
     return s->lastClickZone;
 }
 
-M11_ClickZoneId m11_click_mouse_up(M11_ClickState *s, int mx, int my)
+DM1_V1_ClickZoneIdPc34 DM1_V1_Click_MouseUpPc34Compat(DM1_V1_ClickStatePc34 *s, int mx, int my)
 {
     s->mouseDown = 0;
     (void)mx;
@@ -144,65 +144,65 @@ M11_ClickZoneId m11_click_mouse_up(M11_ClickState *s, int mx, int my)
     return s->lastClickZone;
 }
 
-void m11_click_setup_game_zones(M11_ClickState *s)
+void DM1_V1_Click_SetupGameZonesPc34Compat(DM1_V1_ClickStatePc34 *s)
 {
-    m11_click_clear_zones(s);
+    DM1_V1_Click_ClearZonesPc34Compat(s);
 
     /* Viewport: 224x136 at top-left */
-    m11_click_add_zone(s, 0, 0, 224, 136, DM1_ZONE_VIEWPORT);
+    DM1_V1_Click_AddZonePc34Compat(s, 0, 0, 224, 136, DM1_ZONE_VIEWPORT);
 
     /* Spell symbols area */
-    m11_click_add_zone(s, 233, 2, 85, 70, DM1_ZONE_SPELL_AREA);
+    DM1_V1_Click_AddZonePc34Compat(s, 233, 2, 85, 70, DM1_ZONE_SPELL_AREA);
 
     /* Action area */
-    m11_click_add_zone(s, 233, 72, 85, 50, DM1_ZONE_ACTION_AREA);
+    DM1_V1_Click_AddZonePc34Compat(s, 233, 72, 85, 50, DM1_ZONE_ACTION_AREA);
 
     /* Movement arrows — non-overlapping zones per ReDMCSB COMMAND.C
      * G0459_aai_Graphic561_CommandAreaCoordinates.
      * Layout: forward top-center, turn left/right at sides,
      * strafe left/right below turns, backward bottom-center. */
-    m11_click_add_zone(s, 255, 124, 42, 18, DM1_ZONE_MOVEMENT_FORWARD);
-    m11_click_add_zone(s, 234, 142, 28, 28, DM1_ZONE_MOVEMENT_TURN_LEFT);
-    m11_click_add_zone(s, 292, 142, 28, 28, DM1_ZONE_MOVEMENT_TURN_RIGHT);
-    m11_click_add_zone(s, 234, 170, 28, 30, DM1_ZONE_MOVEMENT_LEFT);
-    m11_click_add_zone(s, 292, 170, 28, 30, DM1_ZONE_MOVEMENT_RIGHT);
-    m11_click_add_zone(s, 262, 170, 30, 30, DM1_ZONE_MOVEMENT_BACKWARD);
+    DM1_V1_Click_AddZonePc34Compat(s, 255, 124, 42, 18, DM1_ZONE_MOVEMENT_FORWARD);
+    DM1_V1_Click_AddZonePc34Compat(s, 234, 142, 28, 28, DM1_ZONE_MOVEMENT_TURN_LEFT);
+    DM1_V1_Click_AddZonePc34Compat(s, 292, 142, 28, 28, DM1_ZONE_MOVEMENT_TURN_RIGHT);
+    DM1_V1_Click_AddZonePc34Compat(s, 234, 170, 28, 30, DM1_ZONE_MOVEMENT_LEFT);
+    DM1_V1_Click_AddZonePc34Compat(s, 292, 170, 28, 30, DM1_ZONE_MOVEMENT_RIGHT);
+    DM1_V1_Click_AddZonePc34Compat(s, 262, 170, 30, 30, DM1_ZONE_MOVEMENT_BACKWARD);
 
     /* Champion panels: 4 panels in 2x2 grid at bottom of screen.
      * Each panel is 80x29 pixels per ReDMCSB screen layout. */
-    m11_click_add_zone(s, 0, 136, 80, 29, DM1_ZONE_CHAMPION_0);
-    m11_click_add_zone(s, 80, 136, 80, 29, DM1_ZONE_CHAMPION_1);
-    m11_click_add_zone(s, 0, 165, 80, 29, DM1_ZONE_CHAMPION_2);
-    m11_click_add_zone(s, 80, 165, 80, 29, DM1_ZONE_CHAMPION_3);
+    DM1_V1_Click_AddZonePc34Compat(s, 0, 136, 80, 29, DM1_ZONE_CHAMPION_0);
+    DM1_V1_Click_AddZonePc34Compat(s, 80, 136, 80, 29, DM1_ZONE_CHAMPION_1);
+    DM1_V1_Click_AddZonePc34Compat(s, 0, 165, 80, 29, DM1_ZONE_CHAMPION_2);
+    DM1_V1_Click_AddZonePc34Compat(s, 80, 165, 80, 29, DM1_ZONE_CHAMPION_3);
 }
 
-void m11_click_setup_inventory_zones(M11_ClickState *s)
+void DM1_V1_Click_SetupInventoryZonesPc34Compat(DM1_V1_ClickStatePc34 *s)
 {
-    m11_click_clear_zones(s);
+    DM1_V1_Click_ClearZonesPc34Compat(s);
     /* Inventory uses a grid of slots — simplified as one large zone */
-    m11_click_add_zone(s, 0, 0, 320, 200, DM1_ZONE_INVENTORY);
+    DM1_V1_Click_AddZonePc34Compat(s, 0, 0, 320, 200, DM1_ZONE_INVENTORY);
 }
 
-void m11_click_clear_zones(M11_ClickState *s)
+void DM1_V1_Click_ClearZonesPc34Compat(DM1_V1_ClickStatePc34 *s)
 {
     s->zoneCount = 0;
     s->lastClickZone = DM1_ZONE_NONE;
 }
 
-M11_ViewportClickResult m11_viewport_resolve_click(
+DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickPc34Compat(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty)
 {
-    return m11_viewport_resolve_click_with_grabbable_mask(
+    return DM1_V1_Viewport_ResolveClickWithGrabbableMaskPc34Compat(
         mx, my, partyDir, partyX, partyY, hasLeader, leaderHandEmpty,
         DM1_VIEWPORT_GRABBABLE_NO_CELLS);
 }
 
-M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_mask(
+DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithGrabbableMaskPc34Compat(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty, uint8_t grabbableCellMask)
 {
-    M11_ViewportClickResult result;
+    DM1_V1_ViewportClickResultPc34 result;
     memset(&result, 0, sizeof(result));
     result.pileTopObjectId = DM1_VIEWPORT_NO_PILE_TOP_OBJECT;
 
@@ -258,23 +258,23 @@ M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_mask(
     return result;
 }
 
-M11_ViewportClickResult m11_viewport_resolve_click_with_grabbable_state(
+DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithGrabbableStatePc34Compat(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty,
-    const M11_ViewportGrabbableState *grabbableState)
+    const DM1_V1_ViewportGrabbableStatePc34 *grabbableState)
 {
-    M11_ViewportClickResult result = m11_viewport_resolve_click_with_grabbable_mask(
+    DM1_V1_ViewportClickResultPc34 result = DM1_V1_Viewport_ResolveClickWithGrabbableMaskPc34Compat(
         mx, my, partyDir, partyX, partyY, hasLeader, leaderHandEmpty,
         grabbableState ? grabbableState->grabbableCellMask
                        : DM1_VIEWPORT_GRABBABLE_NO_CELLS);
     if (result.objectGrabbed) {
         result.pileTopObjectId =
-            m11_viewport_grabbable_pile_top(grabbableState, result.viewCell);
+            DM1_V1_ViewportGrabbable_PileTopPc34Compat(grabbableState, result.viewCell);
     }
     return result;
 }
 
-const char *m11_viewport_click_source_evidence(void)
+const char *DM1_V1_ViewportClick_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206\n"

@@ -102,9 +102,9 @@ static void test_map_change_replaces_pickup_target_after_redraw(void)
 {
     struct Dm1V1RoomTransitionInputPc34Compat in;
     struct Dm1V1RoomTransitionPlanPc34Compat plan;
-    M11_ViewportGrabbableState state;
-    M11_ViewportClickResult clickBefore;
-    M11_ViewportClickResult clickAfter;
+    DM1_V1_ViewportGrabbableStatePc34 state;
+    DM1_V1_ViewportClickResultPc34 clickBefore;
+    DM1_V1_ViewportClickResultPc34 clickAfter;
     const uint8_t frontLeftMask = DM1_VIEWPORT_GRABBABLE_CELL_MASK(DM1_VIEW_CELL_FRONT_LEFT);
 
     memset(&in, 0, sizeof(in));
@@ -134,15 +134,15 @@ static void test_map_change_replaces_pickup_target_after_redraw(void)
     EXPECT_INT("pickup_order_discard_input", plan.requestInputDiscard, 1);
     EXPECT_INT("pickup_order_preserve_hand", plan.preserveLeaderHandObject, 1);
 
-    m11_viewport_grabbable_init(&state);
+    DM1_V1_ViewportGrabbable_InitPc34Compat(&state);
     EXPECT_INT("pickup_order_init_mask", state.grabbableCellMask,
                DM1_VIEWPORT_GRABBABLE_NO_CELLS);
 
     EXPECT_INT("pickup_order_pre_set",
-               m11_viewport_grabbable_set_pile_top(&state,
+               DM1_V1_ViewportGrabbable_SetPileTopPc34Compat(&state,
                    DM1_VIEW_CELL_FRONT_LEFT, 11),
                1);
-    clickBefore = m11_viewport_resolve_click_with_grabbable_state(
+    clickBefore = DM1_V1_Viewport_ResolveClickWithGrabbableStatePc34Compat(
         16, 96, 0, 7, 8, 1, 1, &state);
     EXPECT_INT("pickup_order_pre_grab", clickBefore.objectGrabbed, 1);
     EXPECT_INT("pickup_order_pre_item", clickBefore.pileTopObjectId, 11);
@@ -153,16 +153,16 @@ static void test_map_change_replaces_pickup_target_after_redraw(void)
      * not the thing that gets grabbed on the next click.
      */
     EXPECT_INT("pickup_order_post_replace",
-               m11_viewport_grabbable_set_pile_top(&state,
+               DM1_V1_ViewportGrabbable_SetPileTopPc34Compat(&state,
                    DM1_VIEW_CELL_FRONT_LEFT, 42),
                1);
-    clickAfter = m11_viewport_resolve_click_with_grabbable_state(
+    clickAfter = DM1_V1_Viewport_ResolveClickWithGrabbableStatePc34Compat(
         16, 96, 0, 7, 8, 1, 1, &state);
     EXPECT_INT("pickup_order_post_grab", clickAfter.objectGrabbed, 1);
     EXPECT_INT("pickup_order_post_item", clickAfter.pileTopObjectId, 42);
     EXPECT_INT("pickup_order_post_mask", state.grabbableCellMask, frontLeftMask);
     EXPECT_INT("pickup_order_wrong_cell",
-               m11_viewport_grabbable_pile_top(&state, DM1_VIEW_CELL_BACK_RIGHT),
+               DM1_V1_ViewportGrabbable_PileTopPc34Compat(&state, DM1_VIEW_CELL_BACK_RIGHT),
                DM1_VIEWPORT_NO_PILE_TOP_OBJECT);
 }
 
