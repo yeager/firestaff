@@ -3794,6 +3794,23 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
           (!receipt->runtime_dgn_handoff_ready ||
            (receipt->host_route_consumes_dungeon_capture_frame &&
             (receipt->host_saturn_non_title_capture_mask & 4u)))));
+    receipt->host_route_consumes_capture_matrix =
+        receipt->host_route_consumes_package_route &&
+        receipt->saturn_timing_exact &&
+        receipt->saturn_capture_frames_exact &&
+        receipt->host_route_capture_matrix_ready;
+    receipt->dgn_route_saturn_capture_exact =
+        receipt->runtime_dgn_handoff_ready &&
+        receipt->saturn_timing_exact &&
+        receipt->saturn_capture_frames_exact &&
+        receipt->saturn_dungeon_capture_frame ==
+            package->boot_start_ready_frames;
+    receipt->dgn_route_consumes_startup_package =
+        receipt->host_route_consumes_package_route &&
+        receipt->runtime_dgn_route_joined &&
+        receipt->host_route_consumes_dungeon_capture_frame &&
+        receipt->dgn_route_saturn_capture_exact &&
+        receipt->dgn_draw_command_count > 0;
 
     if (!receipt->no_fallback_visuals_enforced ||
         package->blocked_draw_suppressed ||
@@ -4042,6 +4059,12 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.package_route_matches_capture_route;
     out_receipt->host_route_consumes_package_route =
         out_receipt->ownership.host_route_consumes_package_route;
+    out_receipt->host_route_consumes_capture_matrix =
+        out_receipt->ownership.host_route_consumes_capture_matrix;
+    out_receipt->dgn_route_consumes_startup_package =
+        out_receipt->ownership.dgn_route_consumes_startup_package;
+    out_receipt->dgn_route_saturn_capture_exact =
+        out_receipt->ownership.dgn_route_saturn_capture_exact;
     out_receipt->startup_bundle_consumed =
         out_receipt->ownership.startup_bundle.package
             .full_start_package_receipt_ready;
@@ -4111,6 +4134,8 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->suppress_fallback_visuals &&
         out_receipt->host_runtime_dgn_ready &&
         out_receipt->host_route_consumes_package_route &&
+        out_receipt->dgn_route_consumes_startup_package &&
+        out_receipt->dgn_route_saturn_capture_exact &&
         out_receipt->host_route_capture_matrix_ready &&
         out_receipt->host_route_consumes_dungeon_capture_frame &&
         out_receipt->copied_dgn_command_count > 0;
