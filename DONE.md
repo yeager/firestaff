@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 HoC first-frame readiness handoff: full-graphics runtime handoff receipts now distinguish HoC first-frame readiness from resume runtime readiness, and M11 consumes the receipt instead of returning from the selected launch on `opened` alone. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 full-graphics runtime handoff receipt: selected DM1 launch now produces a DM1-owned receipt from SWSH/PRESENTS/TITLE/entrance into HoC/runtime draw, including enter, resume, quit, and draw-suppression decisions. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 entrance render/audio receipt command consumption: M11 now consumes a DM1-built entrance command for fade, closed doors, opening door frames, entrance palette present, rattle sound marker, and delay timing instead of rebuilding those choices from raw entrance steps. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
@@ -10,21 +12,21 @@
 
 - ✅ 2026-07-09 DM1 entrance timing receipt handoff: DM1 full-graphics startup media receipts now carry entrance source-step count, door-step count, vblank timing, and pre-open delay, and M11 validates the active receipt before entrance transition. Verification: `firestaff_m10`, M11/test syntax checks, and `git diff --check` passed; full focused target is blocked by unrelated Nexus worktree edits.
 
+- ✅ 2026-07-09 DM1 entrance callback receipt verification: M11 DM1 entrance handoff now requires the active post-launch receipt, validates the C255/5x5/south-facing entrance state before the transition, and the startup probe verifies TITLE/PRESENTS media plus entrance receipts through callbacks. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m10`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB M11 startup decision consumption: M11 CSB startup input now consumes the CSB host decision receipt for status, redraw, bonus, and launcher-return while keeping CSB-owned utility/entrance state application. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup readiness receipt: CSB boot now exposes one readiness receipt for post-FTL title-not-ready, entrance input readiness, and HUD/menu readiness, and M11 boot probes consume it for startup title/HUD gates. Verification: `test_csb_v1_boot_runtime_handoff` 353/353, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
-
-- ✅ 2026-07-09 DM1 entrance callback receipt verification: M11 DM1 entrance handoff now requires the active post-launch receipt, validates the C255/5x5/south-facing entrance state before the transition, and the startup probe verifies TITLE/PRESENTS media plus entrance receipts through callbacks. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m10`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 startup media receipt plan handoff: DM1 prelude/post-launch plans now carry the full-graphics media receipt, and M11 keeps that active through SWSH/TITLE callbacks so production startup rendering consumes the selected receipt instead of re-resolving host timing. Verification: `firestaff_m10` build, M11/test syntax checks, and `git diff --check` passed; full M11 target is blocked by unrelated DM2 header edits in the shared worktree.
 
 - ✅ 2026-07-09 DM2 boot-owned startup view model: DM2 boot now exposes a startup view-model wrapper carrying draw commands, presentation receipt, phase, animation, and title readiness, and M11 consumes that wrapper instead of defining its own DM2 startup model. Verification: clean-worktree `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
 
+- ✅ 2026-07-09 Nexus direct execute asset-gate consumption: launcher title/save execute paths now consume the real-asset gate directly, blocking title-to-save and save-slot execution on MENU.BPK/face blockers with ASSETS host receipts and without fallback visuals or save loads. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup host decision receipt: boot action receipts now flatten title-block, utility redraw, entrance redraw, launcher-return, status, route, and selected-row decisions for M11 startup input consumers. Verification: `test_csb_v1_boot_runtime_handoff` 350/350 and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 startup media receipt production handoff: M11 DM1 SWSH/TITLE production rendering now consumes the DM1 full-graphics media receipt for logo waits, C001 PRESENTS/zoom palettes, frame timing, and post-title guard/pad timing. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
-
-- ✅ 2026-07-09 Nexus runtime launch gate receipt: launcher runtime receipts now expose one launch gate route for missing data, title-ready, MENU.BPK/face menu-asset blockers, and fully ready menu handoff, carrying startup assets, host status, fallback permission, and boot log details. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 boot startup view receipt consumption: boot startup view models now carry the DM2 presentation view receipt, and M11 startup drawing consumes its render count/HUD suppression instead of inferring from loose command counts. Verification: `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
 
@@ -59,16 +61,6 @@
 - ✅ 2026-07-09 Theron pointer/render host routes from view-model: boot now exposes pointer-to-host receipt and graphics-plan execution directly from the Track 02 startup view model, so click routing and title/menu rendering can consume the same receipt without rebuilding raw session/media state. Verification: `test_theron_v1_startup_save_resume_pc34` 192/192 and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron snapshot media receipt routes: boot snapshot render rows, layout, render plan, input host, and pointer host routes now accept a Track 02 startup media receipt and delegate through the Theron startup view model, eliminating duplicated prompt/roster/session inference for snapshot callers. Verification: manual isolated `test_theron_v1_startup_save_resume_pc34` 198/198 and `git diff --check` passed; the normal CMake target is currently blocked by unrelated DM2 `DM2_V1_BootProfile` header errors.
-
-- ✅ 2026-07-09 Theron snapshot media receipt route expansion: boot snapshot input, pointer, layout, row, and render-plan routes now have Track 02 media receipt variants that all delegate through the startup view model, keeping title/menu text, roster, and host receipts in one Theron-owned handoff. Verification: isolated `test_theron_v1_startup_save_resume_pc34` 198/198 and `git diff --check` passed; normal CMake target remains blocked by unrelated DM2 `DM2_V1_BootProfile` header errors.
-
-- ✅ 2026-07-09 Theron startup view-model state receipt: boot startup view models now emit one startup state receipt carrying title/menu flow, level-route, Continue focus, and TQSV/SRM resume facts, and snapshot+Track02 media routes can produce the same receipt without duplicate host inference. Verification: isolated `test_theron_v1_startup_save_resume_pc34` 200/200 and `git diff --check` passed; normal CMake target remains blocked by unrelated DM2 `DM2_V1_BootProfile` header errors.
-
-- ✅ 2026-07-09 Theron Track02 blocked menu route receipt: startup snapshots now carry explicit runtime route fields into the Track02/media-backed view model, and view-model state receipts report Track02-blocked/no-fallback without marking a level loaded. Verification: isolated `test_theron_v1_startup_save_resume_pc34` 202/202 and `git diff --check` passed; normal CMake target is blocked by unrelated Nexus `nexus_v1_startup_champion_execution_clear` declaration errors.
-
-- ✅ 2026-07-09 Theron Track02 startup render route receipt: boot startup view models now emit a render-route receipt that carries the startup menu render plan, runtime level-render eligibility, state receipt, and no-fallback Track02 blocked status so callers can render menus without falling back to fake runtime visuals. Verification: `test_theron_v1_startup_save_resume_pc34` 204/204, focused CMake target build/run, and `git diff --check` passed.
-
-- ✅ 2026-07-09 Theron Track02 first-level HUD-ready route receipt: startup render-route receipts now mark semantic Track02 level 0 as first-level render ready, seed the Theron HUD gate, and keep fallback visuals disabled for real Track02 semantic handoff. Verification: `test_theron_v1_startup_save_resume_pc34` 206/206, focused CMake target build/run, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup title render route receipt: CSB render-view receipts now expose post-FTL title render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
