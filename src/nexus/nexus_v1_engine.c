@@ -589,3 +589,87 @@ int nexus_v1_menu_bpk_decode_receipt(
     *out_receipt = engine->menu_bpk_decode_receipt;
     return 0;
 }
+
+static Nexus_V1_MenuBpkRendererHandoffStatus
+nexus_v1_menu_bpk_handoff_status_from_decode_route(
+    Nexus_V1_BpkRuntimeDecodeRoute route) {
+    switch (route) {
+    case NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED:
+        return NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED;
+    case NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3:
+        return NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3;
+    case NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED:
+        return NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_TRUNCATED;
+    case NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES:
+        return NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_NO_SURFACES;
+    case NEXUS_V1_BPK_DECODE_ROUTE_INVALID:
+    default:
+        return NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID;
+    }
+}
+
+int nexus_v1_menu_bpk_renderer_handoff_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_MenuBpkRendererHandoffReceipt *out_receipt) {
+    const Nexus_V1_BpkRuntimeDecodeReceipt *decode;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_MISSING;
+    out_receipt->decode_route = NEXUS_V1_BPK_DECODE_ROUTE_INVALID;
+    out_receipt->fallback_visuals_permitted = 1;
+
+    if (!engine) return -1;
+    out_receipt->attempted = engine->menu_bpk_decode_receipt_attempted;
+    out_receipt->receipt_valid = engine->menu_bpk_decode_receipt_valid;
+    if (!engine->menu_bpk_decode_receipt_valid) {
+        return 0;
+    }
+
+    decode = &engine->menu_bpk_decode_receipt;
+    out_receipt->decode_route = decode->route;
+    out_receipt->status =
+        nexus_v1_menu_bpk_handoff_status_from_decode_route(decode->route);
+    out_receipt->archive_entries = decode->archive_entries;
+    out_receipt->surface_entries = decode->surface_entries;
+    out_receipt->ready_stored_surfaces = decode->ready_stored_surfaces;
+    out_receipt->blocked_prs3_surfaces = decode->blocked_prs3_surfaces;
+    out_receipt->blocked_truncated_surfaces =
+        decode->blocked_truncated_surfaces;
+    out_receipt->prs3_stream_plans = decode->prs3_stream_plans;
+    out_receipt->prs3_stream_plan_failures =
+        decode->prs3_stream_plan_failures;
+    out_receipt->first_blocked_entry = decode->first_blocked_entry;
+    out_receipt->first_blocked_stream_offset =
+        decode->first_blocked_stream_offset;
+    out_receipt->first_blocked_stream_size =
+        decode->first_blocked_stream_size;
+    out_receipt->first_blocked_expected_output_bytes =
+        decode->first_blocked_expected_output_bytes;
+
+    out_receipt->can_render_stored_surfaces =
+        (decode->route == NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED);
+    out_receipt->blocks_real_menu_surface_render =
+        (decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 ||
+         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED);
+    out_receipt->fallback_visuals_permitted =
+        out_receipt->blocks_real_menu_surface_render ? 0 : 1;
+    return 0;
+}
+
+const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
+    Nexus_V1_MenuBpkRendererHandoffStatus status) {
+    switch (status) {
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_MISSING: return "missing";
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED:
+        return "ready-stored";
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3:
+        return "blocked-prs3";
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_TRUNCATED:
+        return "blocked-truncated";
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_NO_SURFACES:
+        return "no-surfaces";
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID: return "invalid";
+    default: return "unknown";
+    }
+}
