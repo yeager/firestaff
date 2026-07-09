@@ -17,7 +17,7 @@ typedef enum {
     DM1_V1_MC_C045_AFTER_NC_TRANSITION_C040_CHROME_PC34 = 2,
     DM1_V1_MC_C045_AFTER_NC_TRANSITION_C503_C018_CHROME_PC34 = 3,
     DM1_V1_MC_C045_AFTER_NC_TRANSITION_PANEL_REDRAW_PC34 = 4
-} Dm1V1MirrorCandidateC045AfterNonCandidateTransitionKindPc34Compat;
+} DM1_V1_MirrorCandidateC045AfterNonCandidateTransitionKindPc34Compat;
 
 typedef struct {
     const char *chestOpenAnchor;
@@ -28,7 +28,7 @@ typedef struct {
     const char *panelAnchor;
     const char *defsAnchor;
     const char *scope;
-} Dm1V1MirrorCandidateC045AfterNonCandidateEvidencePc34Compat;
+} DM1_V1_MirrorCandidateC045AfterNonCandidateEvidencePc34Compat;
 
 typedef struct {
     int contractOnly;
@@ -72,7 +72,7 @@ typedef struct {
     uint32_t beforeHash;
     uint32_t transitionHash;
     uint32_t closeHash;
-} Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat;
+} DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat;
 
 typedef struct {
     int accepted;
@@ -106,16 +106,25 @@ typedef struct {
     uint16_t visibleSlotsAfter[DM1_V1_MC_C045_AFTER_NC_SLOT_COUNT_PC34];
     uint32_t baselineCloseHash;
     uint32_t hash;
-} Dm1V1MirrorCandidateC045AfterNonCandidateResultPc34Compat;
+} DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateC045AfterNonCandidateTransitionKindPc34Compat
+    Dm1V1MirrorCandidateC045AfterNonCandidateTransitionKindPc34Compat;
+typedef DM1_V1_MirrorCandidateC045AfterNonCandidateEvidencePc34Compat
+    Dm1V1MirrorCandidateC045AfterNonCandidateEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat
+    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat;
+typedef DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34Compat
+    Dm1V1MirrorCandidateC045AfterNonCandidateResultPc34Compat;
 
 void dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *state);
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *state);
 
 int dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *state,
-    Dm1V1MirrorCandidateC045AfterNonCandidateResultPc34Compat *result);
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *state,
+    DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34Compat *result);
 
-const Dm1V1MirrorCandidateC045AfterNonCandidateEvidencePc34Compat *
+const DM1_V1_MirrorCandidateC045AfterNonCandidateEvidencePc34Compat *
 dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_evidence_pc34(void);
 
 const char *

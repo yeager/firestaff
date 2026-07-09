@@ -51,7 +51,7 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_evidence(void)
 {
-    const Dm1V1MirrorCandidateC045FoodWaterCloseEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34Compat *e =
         dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_evidence_pc34();
     const char *text =
         dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_source_evidence_pc34();
@@ -126,7 +126,7 @@ static void test_evidence(void)
 
 static void test_initial_state(void)
 {
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat state;
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat state;
     int i;
 
     dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_init_pc34(&state);
@@ -179,8 +179,8 @@ static void test_initial_state(void)
 
 static uint32_t test_run(void)
 {
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat state;
-    Dm1V1MirrorCandidateC045FoodWaterCloseResultPc34Compat result;
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat state;
+    DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34Compat result;
     int ok;
     int i;
 
@@ -306,8 +306,8 @@ static uint32_t test_run(void)
 
 static void test_rejects(void)
 {
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat state;
-    Dm1V1MirrorCandidateC045FoodWaterCloseResultPc34Compat result;
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat state;
+    DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34Compat result;
 
     check_int_eq(
         dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_run_pc34(
