@@ -74,6 +74,8 @@
 
 - ✅ 2026-07-09 Theron structured Track02 runtime route receipts: runtime-entry result/apply receipts now classify fallback-room, Track 02 semantic, and verified Track 02 blocked routes from structured request state instead of parsing receipt text, with explicit flags showing whether a route came from structured state or legacy text. Verification: `test_theron_v1_startup_save_resume_pc34` 217/217 and `git diff --check` passed.
 
+- ✅ 2026-07-09 Theron structured runtime route state handoff: runtime-entry state receipts, boot startup view models, and boot render-route receipts now carry structured-vs-text route flags through final host/UI-facing state, preserving no-fallback Track 02 blocked routes without status-text parsing. Verification: `test_theron_v1_startup_save_resume_pc34` 217/217 and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup title render route receipt: CSB render-view receipts now expose post-FTL title render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus startup asset gate receipt: launcher startup assets now separate title readiness from real save/champion menu surface readiness, blocking menu routes on MENU.BPK PRS3/truncated/no-surface states while keeping fallback visuals disallowed. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
