@@ -225,6 +225,9 @@ typedef struct DM2_V1_StartupRuntimeHandoffReceipt {
     int initialize_hud_runtime;
     int initialize_touch_runtime;
     int hud_runtime_ready;
+    int runtime_menu_ready;
+    int runtime_action_ready;
+    int first_hud_frame_ready;
 } DM2_V1_StartupRuntimeHandoffReceipt;
 
 typedef struct DM2_V1_StartupLaunchReceipt {

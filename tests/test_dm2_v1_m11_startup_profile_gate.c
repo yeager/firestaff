@@ -500,6 +500,9 @@ static void expect_dm2_startup_layout_contract(void) {
                     view_receipt.render.title_gdat_found &&
                     view_receipt.render.hud_overlay_suppressed == 1 &&
                     view_receipt.runtime_handoff.startup_menu_active == 1 &&
+                    view_receipt.runtime_handoff.runtime_menu_ready == 1 &&
+                    view_receipt.runtime_handoff.runtime_action_ready == 0 &&
+                    view_receipt.runtime_handoff.first_hud_frame_ready == 0 &&
                     strcmp(view_receipt.runtime_handoff.animation,
                            "dm2-startup-menu") == 0,
                 "DM2 boot startup view model carries the presentation view receipt");
@@ -521,7 +524,10 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.initialize_v2_runtime == 1 &&
                     boot_view_model.initialize_hud_runtime == 1 &&
                     boot_view_model.initialize_touch_runtime == 1 &&
-                    boot_view_model.hud_runtime_ready == 1,
+                    boot_view_model.hud_runtime_ready == 1 &&
+                    boot_view_model.runtime_menu_ready == 1 &&
+                    boot_view_model.runtime_action_ready == 0 &&
+                    boot_view_model.first_hud_frame_ready == 0,
                 "DM2 boot owns the startup view model wrapper consumed by M11");
     boot_snapshot.startup_menu_active = 0;
     expect_true(dm2_v1_boot_startup_view_model_receipt_from_snapshot(
@@ -539,7 +545,10 @@ static void expect_dm2_startup_layout_contract(void) {
                     strcmp(boot_view_model.animation, "dm2-runtime") == 0 &&
                     boot_view_model.animation_active == 0 &&
                     boot_view_model.title_ready == 1 &&
-                    boot_view_model.hud_runtime_ready == 1,
+                    boot_view_model.hud_runtime_ready == 1 &&
+                    boot_view_model.runtime_menu_ready == 0 &&
+                    boot_view_model.runtime_action_ready == 1 &&
+                    boot_view_model.first_hud_frame_ready == 1,
                 "DM2 boot view model hands off from title/menu to first runtime HUD state");
     boot_snapshot.startup_menu_active = 1;
     expect_true(dm2_v1_startup_presentation_receipt(

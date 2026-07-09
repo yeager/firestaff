@@ -1303,6 +1303,9 @@ int dm2_v1_boot_startup_view_model_from_snapshot(
             handoff->initialize_hud_runtime = 1;
             handoff->initialize_touch_runtime = 1;
             handoff->hud_runtime_ready = 1;
+            handoff->runtime_menu_ready = 0;
+            handoff->runtime_action_ready = 1;
+            handoff->first_hud_frame_ready = 1;
         }
         if (out_command_count) {
             *out_command_count = 0;
@@ -1440,6 +1443,10 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
         out_view_model->initialize_touch_runtime =
             handoff->initialize_touch_runtime;
         out_view_model->hud_runtime_ready = handoff->hud_runtime_ready;
+        out_view_model->runtime_menu_ready = handoff->runtime_menu_ready;
+        out_view_model->runtime_action_ready = handoff->runtime_action_ready;
+        out_view_model->first_hud_frame_ready =
+            handoff->first_hud_frame_ready;
     }
     return ok;
 }

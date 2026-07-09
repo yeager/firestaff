@@ -1331,6 +1331,9 @@ static void dm2_v1_startup_runtime_handoff_receipt_set_menu(
     receipt->initialize_hud_runtime = 1;
     receipt->initialize_touch_runtime = 1;
     receipt->hud_runtime_ready = 1;
+    receipt->runtime_menu_ready = active;
+    receipt->runtime_action_ready = 0;
+    receipt->first_hud_frame_ready = active ? 0 : 1;
 }
 
 void dm2_v1_startup_direct_resume_receipt_clear(
