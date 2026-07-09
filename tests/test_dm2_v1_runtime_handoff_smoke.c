@@ -809,7 +809,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
               receipt.depth == 0 &&
               receipt.gdat_index ==
                   dm2_v1_viewport_creature_graphic_index(DM2_AI_CAVE_BAT, 2) &&
+              receipt.draw_order == 0 &&
               receipt.asset_blit_ready == 1 &&
+              receipt.fallback_drawn == 0 &&
               receipt.asset_src_w == 32 &&
               receipt.asset_src_h == 8 &&
               receipt.asset_src_stride == 32 &&
@@ -829,6 +831,41 @@ static void test_first_tick_after_boot_profile_handoff(void)
               "runtime active creature render receipt exposes live AI projection and atlas blit");
         s_creature_asset_w = 16;
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+        clear_creature_pool_for_door_runtime_test();
+    }
+
+    {
+        uint8_t framebuffer[320 * 200];
+        int slot;
+        DM2_V1_RuntimeCreatureRenderReceipt receipt;
+
+        clear_creature_pool_for_door_runtime_test();
+        dm2_v1_runtime_set_position(0, 1, 1, 0);
+        dm2_v1_runtime_set_outdoor(0);
+        slot = dm2_v1_creature_spawn(DM2_AI_WOLF, 1, 0, 0, 2, 12);
+        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        CHECK(slot >= 0 &&
+              dm2_v1_runtime_render_frame(
+                  0, 1, 1, framebuffer, 320, 320, 200) == 0,
+              "runtime renders active CCM creature fallback without GDAT provider");
+        CHECK(dm2_v1_runtime_last_asset_creature_count() == 0 &&
+              dm2_v1_runtime_last_fallback_creature_count() == 1,
+              "runtime records creature fallback when GDAT sprite is absent");
+        CHECK(dm2_v1_runtime_last_creature_render_receipt(&receipt) == 1 &&
+              receipt.source_kind == 1 &&
+              receipt.creature_type == DM2_AI_WOLF &&
+              receipt.draw_order == 0 &&
+              receipt.asset_blit_ready == 0 &&
+              receipt.fallback_drawn == 1 &&
+              receipt.requested_frame_index == receipt.frame_index &&
+              receipt.party_direction == 0 &&
+              receipt.relative_direction == 2 &&
+              receipt.fallback_rect.x == 108 &&
+              receipt.fallback_rect.y == 94 &&
+              receipt.fallback_rect.w == 8 &&
+              receipt.fallback_rect.h == 8,
+              "runtime creature receipt exposes renderer-owned fallback consumption");
         clear_creature_pool_for_door_runtime_test();
     }
 
@@ -875,9 +912,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   receipt.gdat_index ==
                       dm2_v1_viewport_creature_graphic_index(
                           receipt.creature_type, receipt.frame_index) &&
+                  receipt.draw_order == 0 &&
                   receipt.map_x == 1 &&
                   receipt.map_y == 0 &&
                   receipt.asset_blit_ready == 1 &&
+                  receipt.fallback_drawn == 0 &&
                   receipt.asset_src_w == 16 &&
                   receipt.asset_src_h == 8 &&
                   receipt.asset_frame_count == 2 &&

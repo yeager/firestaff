@@ -1923,6 +1923,7 @@ int dm2_v1_viewport_creature_asset_blit(
     blit.src_stride = src_stride > 0 ? src_stride : src_w;
     blit.transparent_color = DM2_COLOR_TRANSPARENT;
     blit.render_frame = render_frame;
+    blit.draw_order = render->creature_index;
     *out_blit = blit;
     return frame_w > 0 && dst_w > 0 && dst_h > 0;
 }
@@ -3045,10 +3046,14 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
         return;
     }
     s->last_creature_asset_blit_valid = 0;
+    s->last_creature_render_valid = 0;
+    s->last_creature_draw_order = -1;
     memset(&s->last_creature_asset_render, 0,
            sizeof(s->last_creature_asset_render));
     memset(&s->last_creature_asset_blit, 0,
            sizeof(s->last_creature_asset_blit));
+    memset(&s->last_creature_render, 0,
+           sizeof(s->last_creature_render));
     s->last_creature_asset_src_w = 0;
     s->last_creature_asset_src_h = 0;
     s->last_creature_asset_src_stride = 0;
@@ -3057,6 +3062,10 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
         const DM2_V1_CreatureRender *c = &plan.creatures[i];
         int drawn_asset = 0;
         int drawn_h = 8;
+
+        s->last_creature_render_valid = 1;
+        s->last_creature_render = *c;
+        s->last_creature_draw_order = i;
 
         {
             const uint8_t *pixels = NULL;
@@ -3093,6 +3102,7 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                     s->last_creature_asset_blit_valid = 1;
                     s->last_creature_asset_render = *c;
                     s->last_creature_asset_blit = blit;
+                    s->last_creature_asset_blit.draw_order = i;
                     s->last_creature_asset_src_w = src_w;
                     s->last_creature_asset_src_h = src_h;
                     s->last_creature_asset_src_stride =
