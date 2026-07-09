@@ -397,6 +397,26 @@ typedef struct Theron_V1_BootStartupHostViewReceipt {
     const char *status;
 } Theron_V1_BootStartupHostViewReceipt;
 
+typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
+    int host_consumes_view_model;
+    int render_route_valid;
+    Theron_V1_BootStartupRenderRouteReceipt render_route;
+    int graphics_plan_valid;
+    int graphics_executed;
+    int graphics_blocked;
+    int startup_menu_render_allowed;
+    int runtime_readiness_ready;
+    int no_fallback_visuals_enforced;
+    int fallback_visuals_allowed;
+    int runtime_level_source;
+    int runtime_track02_semantic_handoff;
+    int runtime_fallback_visuals_blocked;
+    int runtime_structured_route;
+    int runtime_receipt_text_route;
+    const char *status_scope;
+    const char *status;
+} Theron_V1_BootStartupGraphicsRouteReceipt;
+
 int theron_v1_boot_prepare_startup_profile(
     Theron_V1_BootProfile *profile,
     const char *data_dir,
@@ -724,6 +744,12 @@ int theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
 int theron_v1_boot_startup_execute_graphics_plan_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupGraphicExecutor *executor);
+void theron_v1_boot_startup_graphics_route_receipt_init(
+    Theron_V1_BootStartupGraphicsRouteReceipt *receipt);
+int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
