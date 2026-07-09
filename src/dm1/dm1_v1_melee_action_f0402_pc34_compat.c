@@ -1023,6 +1023,51 @@ static int dm1_v1_melee_event_creature_index_f0190_pc34(int eventType) {
     return -1;
 }
 
+static int dm1_v1_melee_champion_is_lucky_f0308_pc34(
+    struct CombatantChampionSnapshot_Compat* champ,
+    struct RngState_Compat* rng,
+    int percentage,
+    int* outRngCalls) {
+    unsigned int randShort;
+    unsigned int randPct;
+    int luckCur;
+    int luckMin;
+    int luckMax;
+    int luckNew;
+    int lucky = 0;
+    int rngCalls = 0;
+    if (outRngCalls) *outRngCalls = 0;
+    if (!champ || !rng) return 0;
+
+    randShort = (unsigned int)F0732_COMBAT_RngRandom_Compat(rng, 2);
+    rngCalls++;
+    if (randShort != 0) {
+        randPct = (unsigned int)F0732_COMBAT_RngRandom_Compat(rng, 100);
+        rngCalls++;
+        lucky = randPct > (unsigned int)percentage;
+    } else {
+        luckCur = champ->statisticLuck;
+        luckMin = champ->statisticLuckMin;
+        luckMax = champ->statisticLuckMax;
+        if (luckCur > 0) {
+            unsigned int r =
+                (unsigned int)F0732_COMBAT_RngRandom_Compat(rng, luckCur << 1);
+            rngCalls++;
+            lucky = r > (unsigned int)percentage;
+        }
+        luckNew = lucky ? luckCur - 2 : luckCur + 2;
+        if (luckMax > 0 && luckNew > luckMax) luckNew = luckMax;
+        if (luckMin < 0 && luckNew < luckMin) luckNew = luckMin;
+        if (luckNew < 0) luckNew = 0;
+        champ->statisticLuck = luckNew;
+    }
+    if (outRngCalls) *outRngCalls = rngCalls;
+
+    /* ReDMCSB: CHAMPION.C F0308 lines 1120-1155 uses the same two-stage
+     * random/luck mutation path that F0231 calls after failed dex/random hit. */
+    return lucky;
+}
+
 int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
     const DM1_MeleeF0190TimelineCleanupInputPc34* in,
     DM1_MeleeF0190TimelineCleanupPlanPc34* out) {
@@ -1070,6 +1115,23 @@ int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatResult_Compat* out) {
     DM1_MeleeF0231DamageGateInputPc34 gateIn;
     DM1_MeleeF0231DamageGatePlanPc34 gatePlan;
+    int doubledMapDifficulty;
+    int nonMaterial;
+    int rand1;
+    int rand2;
+    int dexThreshold;
+    int dexOk;
+    int rand2IsZero;
+    int luckyHit;
+    int baseDamage;
+    int bonus;
+    int defense;
+    int damage0;
+    int r;
+    int delta;
+    int d1;
+    int d2;
+    int skillRoll;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     out->outcome = COMBAT_OUTCOME_MISS;
@@ -1093,13 +1155,142 @@ int dm1_v1_melee_resolve_damage_f0231_pc34(
         return 1;
     }
 
-    /* ReDMCSB: PROJEXPL.C F0231 lines 1416-1546 owns the champion melee
-     * hit gate, damage RNG, weak-damage recovery, Vorpal/non-material
-     * handling, skill critical bonus, and final damage value before F0190.
-     * Keep the entry point DM1-owned while the shared M10 resolver still
-     * carries the source-locked arithmetic used by DM1 and CSB. */
-    return F0735_COMBAT_ResolveChampionMelee_Compat(
-        attacker, weapon, defender, rng, out);
+    doubledMapDifficulty = defender->doubledMapDifficulty;
+    nonMaterial =
+        (defender->attributes & DM1_MELEE_CREATURE_ATTR_NON_MATERIAL_PC34) != 0;
+
+    rand1 = F0732_COMBAT_RngRandom_Compat(rng, 32);
+    out->rngCallCount++;
+    dexThreshold = rand1 + defender->dexterity + doubledMapDifficulty - 16;
+    dexOk = attacker->dexterity > dexThreshold;
+
+    rand2 = 1;
+    rand2IsZero = 0;
+    if (!dexOk) {
+        rand2 = F0732_COMBAT_RngRandom_Compat(rng, 4);
+        out->rngCallCount++;
+        rand2IsZero = rand2 == 0;
+    }
+    luckyHit = 0;
+    if (!dexOk && !rand2IsZero) {
+        int luckyRngCalls = 0;
+        int lucky = dm1_v1_melee_champion_is_lucky_f0308_pc34(
+            attacker, rng, 75 - gatePlan.normalizedHitProbability,
+            &luckyRngCalls);
+        out->rngCallCount += luckyRngCalls;
+        if (lucky) {
+            luckyHit = 1;
+            out->luckyHit = 1;
+        }
+    }
+
+    if (!(dexOk || rand2IsZero || luckyHit)) {
+        goto done;
+    }
+
+    out->hitLanded = 1;
+    out->rawAttackRoll = rand1;
+    baseDamage = attacker->strengthActionHand;
+    if (baseDamage == 0) {
+        damage0 = 0;
+        goto weak_branch;
+    }
+
+    bonus = F0732_COMBAT_RngRandom_Compat(rng, (baseDamage >> 1) + 1);
+    out->rngCallCount++;
+    baseDamage += bonus;
+    baseDamage = (baseDamage * weapon->damageFactor) >> 5;
+
+    defense = F0732_COMBAT_RngRandom_Compat(rng, 32) +
+              defender->defense + doubledMapDifficulty;
+    out->rngCallCount++;
+    if (attacker->actionHandIcon == COMBAT_ICON_DIAMOND_EDGE) {
+        defense -= defense >> 2;
+    } else if (attacker->actionHandIcon ==
+               COMBAT_ICON_HARDCLEAVE_EXECUTIONER) {
+        defense -= defense >> 3;
+    }
+    out->defenseRoll = defense;
+
+    damage0 = F0732_COMBAT_RngRandom_Compat(rng, 32) +
+              baseDamage - defense;
+    out->rngCallCount++;
+    if (damage0 <= 1) {
+weak_branch:
+        r = F0732_COMBAT_RngRandom_Compat(rng, 4);
+        out->rngCallCount++;
+        if (r == 0) {
+            out->hitLanded = 0;
+            out->damageApplied = 0;
+            out->outcome = COMBAT_OUTCOME_MISS;
+            goto done;
+        }
+        baseDamage = r + 1;
+        delta = F0732_COMBAT_RngRandom_Compat(rng, 16);
+        out->rngCallCount++;
+        damage0 += delta;
+        if (damage0 > 0 || F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
+            if (damage0 <= 0) {
+                out->rngCallCount++;
+            }
+            baseDamage += F0732_COMBAT_RngRandom_Compat(rng, 4);
+            out->rngCallCount++;
+            if (F0732_COMBAT_RngRandom_Compat(rng, 4) == 0) {
+                out->rngCallCount++;
+                delta = F0732_COMBAT_RngRandom_Compat(rng, 16);
+                out->rngCallCount++;
+                if (damage0 + delta > 0) {
+                    baseDamage += damage0 + delta;
+                }
+                out->wasCritical = 1;
+            } else {
+                out->rngCallCount++;
+            }
+        }
+    } else {
+        baseDamage = damage0;
+    }
+
+    baseDamage >>= 1;
+    d1 = F0732_COMBAT_RngRandom_Compat(rng, baseDamage > 0 ? baseDamage : 1);
+    out->rngCallCount++;
+    d2 = F0732_COMBAT_RngRandom_Compat(rng, 4);
+    out->rngCallCount++;
+    baseDamage += d1 + d2;
+    d1 = F0732_COMBAT_RngRandom_Compat(rng, baseDamage > 0 ? baseDamage : 1);
+    out->rngCallCount++;
+    baseDamage += d1;
+    baseDamage >>= 2;
+    baseDamage += F0732_COMBAT_RngRandom_Compat(rng, 4) + 1;
+    out->rngCallCount++;
+
+    if (attacker->actionHandIcon == COMBAT_ICON_VORPAL_BLADE && !nonMaterial) {
+        baseDamage >>= 1;
+        if (baseDamage == 0) {
+            out->hitLanded = 0;
+            out->damageApplied = 0;
+            out->outcome = COMBAT_OUTCOME_MISS;
+            goto done;
+        }
+    }
+
+    skillRoll = F0732_COMBAT_RngRandom_Compat(rng, 64);
+    out->rngCallCount++;
+    if (skillRoll < attacker->skillLevelAction) {
+        baseDamage = baseDamage + baseDamage + 10;
+    }
+    if (baseDamage < 0) baseDamage = 0;
+    out->damageApplied = baseDamage;
+    out->outcome = baseDamage > 0 ? COMBAT_OUTCOME_HIT_DAMAGE
+                                  : COMBAT_OUTCOME_HIT_NO_DAMAGE;
+
+done:
+    out->followupEventAux0 = 110;
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1477-1534 owns the dex/random/luck
+     * hit gate, damage RNG, weak branch, Vorpal halving, skill critical, and
+     * final damage value.  DM1 keeps this source-shaped resolver local; CSB
+     * can continue using shared F0735 for its separate runtime path. */
+    return 1;
 }
 
 int dm1_v1_melee_apply_group_damage_f0190_pc34(
