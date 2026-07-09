@@ -2591,3 +2591,76 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
     out_binding->status = status;
     return status;
 }
+
+Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t descriptor_offset,
+    Theron_Track02StartupSemanticHandoff *out_handoff) {
+
+    Theron_Track02LevelHandoffStatus candidate_status;
+    size_t i;
+
+    if (out_handoff) {
+        memset(out_handoff, 0, sizeof(*out_handoff));
+        out_handoff->status = THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+        out_handoff->descriptor_offset = descriptor_offset;
+        out_handoff->startup_seed_table_index = (size_t)-1;
+    }
+    if (!track02_data || track02_size == 0u || !out_handoff) {
+        return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+    }
+
+    out_handoff->seed_table_status =
+        theron_v1_track02_bind_semantic_descriptor(
+            track02_data,
+            track02_size,
+            descriptor_offset,
+            0u,
+            &out_handoff->seed_table_binding);
+
+    candidate_status = theron_v1_track02_bind_initial_level_candidate(
+        track02_data,
+        track02_size,
+        md5_hex,
+        descriptor_offset,
+        &out_handoff->initial_candidate);
+
+    out_handoff->status = candidate_status;
+    if (candidate_status != THERON_TRACK02_LEVEL_HANDOFF_OK) {
+        return candidate_status;
+    }
+
+    out_handoff->startup_seed =
+        out_handoff->initial_candidate.candidate.header_seed;
+    out_handoff->startup_level_index =
+        out_handoff->initial_candidate.candidate.header_level_index;
+    out_handoff->user_data_offset =
+        out_handoff->initial_candidate.candidate.user_data_offset;
+    out_handoff->user_data_offset_valid =
+        out_handoff->initial_candidate.candidate.user_data_offset_valid;
+
+    if (!out_handoff->user_data_offset_valid) {
+        out_handoff->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+        return out_handoff->status;
+    }
+    if (out_handoff->seed_table_status !=
+        THERON_TRACK02_SEMANTIC_BINDING_OK) {
+        out_handoff->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+        return out_handoff->status;
+    }
+
+    for (i = 0u; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
+        if (out_handoff->seed_table_binding.dungeon_seed_table.seeds[i] ==
+            out_handoff->startup_seed) {
+            out_handoff->startup_seed_in_seed_table = 1;
+            out_handoff->startup_seed_table_index = i;
+            break;
+        }
+    }
+
+    out_handoff->ready_for_runtime = 1;
+    out_handoff->status = THERON_TRACK02_LEVEL_HANDOFF_OK;
+    return out_handoff->status;
+}

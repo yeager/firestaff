@@ -78,6 +78,13 @@ static void write_be32(uint8_t *p, uint32_t v) {
     write_be16(p + 2, (uint16_t)(v & 0xffffu));
 }
 
+static void write_le32(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+    p[2] = (uint8_t)((v >> 16) & 0xffu);
+    p[3] = (uint8_t)((v >> 24) & 0xffu);
+}
+
 static int file_exists(const char *path) {
     struct stat st;
     return path && path[0] && stat(path, &st) == 0 && st.st_size > 0;
@@ -453,6 +460,8 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
         candidate_offset = THERON_TRACK02_RAW_SECTOR_BYTES +
             THERON_TRACK02_RAW_USER_DATA_OFFSET + 0x40u,
         descriptor_offset = candidate_offset + 0xa852u,
+        descriptor_base_offset = descriptor_offset - 0x1584u,
+        seed_table_offset = descriptor_base_offset + 0x20u,
         candidate_width = 32u,
         candidate_height = 27u,
         candidate_size = 12u + candidate_width * candidate_height,
@@ -463,13 +472,20 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02SignalStatus signal_status;
     Theron_Track02LevelHandoffStatus status;
+    Theron_Track02StartupSemanticHandoff startup_handoff;
     size_t copied_size = 0u;
     size_t copied_user_offset = 0u;
+    static const uint32_t progression_seeds[THERON_TRACK02_DUNGEON_COUNT] = {
+        313u, 414u, 527u, 632u, 749u, 856u, 967u
+    };
 
     memset(track, 0, sizeof(track));
     memcpy(track + descriptor_offset,
            g_canonical_descriptor,
            sizeof(g_canonical_descriptor));
+    for (size_t i = 0u; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
+        write_le32(track + seed_table_offset + i * 4u, progression_seeds[i]);
+    }
     write_initial_candidate_fixture(track + candidate_offset,
                                     candidate_width,
                                     candidate_height);
@@ -516,6 +532,42 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                expected_user_offset);
     check_int("synthetic user-data initial window bytes",
               memcmp(copied, track + candidate_offset, candidate_size),
+              0);
+    status = theron_v1_track02_bind_startup_semantic_handoff(
+        track,
+        sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
+        descriptor_offset,
+        &startup_handoff);
+    check_int("synthetic startup semantic handoff status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_int("synthetic startup semantic handoff ready",
+              startup_handoff.ready_for_runtime,
+              1);
+    check_int("synthetic startup semantic seed-table status",
+              startup_handoff.seed_table_status,
+              THERON_TRACK02_SEMANTIC_BINDING_OK);
+    check_size("synthetic startup semantic candidate count",
+               startup_handoff.initial_candidate.candidate_count,
+               1u);
+    check_size("synthetic startup semantic user-data offset",
+               startup_handoff.user_data_offset,
+               expected_user_offset);
+    check_int("synthetic startup semantic user-data valid",
+              startup_handoff.user_data_offset_valid,
+              1);
+    check_u32("synthetic startup semantic payload seed",
+              startup_handoff.startup_seed,
+              0x0108e938u);
+    check_u16("synthetic startup semantic payload level",
+              startup_handoff.startup_level_index,
+              0x0026u);
+    check_u32("synthetic startup semantic progression seed",
+              startup_handoff.seed_table_binding.dungeon_seed_table.seeds[0],
+              313u);
+    check_int("synthetic startup semantic seed concepts distinct",
+              startup_handoff.startup_seed_in_seed_table,
               0);
     status = theron_v1_track02_copy_initial_level_user_data_window(
         track,
