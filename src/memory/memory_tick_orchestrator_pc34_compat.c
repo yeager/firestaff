@@ -6936,6 +6936,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     (memset(&resolveRuntimeIn, 0, sizeof(resolveRuntimeIn)),
                      memset(&resolveRuntimePlan, 0, sizeof(resolveRuntimePlan)),
                      resolveRuntimeIn.groupIndex = groupIndex,
+                     resolveRuntimeIn.creatureIndex = creatureIndex,
                      resolveRuntimeIn.groupCount =
                          world && world->things ? world->things->groupCount : 0,
                      dm1_v1_melee_resolve_runtime_f0231_pc34(
@@ -6981,8 +6982,13 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             .shouldApplyGroupDamage) {
                         memset(&damageApplyPlan, 0, sizeof(damageApplyPlan));
                         (void)dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
-                            &combatResult, &world->things->groups[groupIndex],
-                            creatureIndex, &damageApplyPlan);
+                            &combatResult,
+                            &world->things->groups[
+                                resolveRuntimePlan.runtimeResultPlan
+                                    .groupDamageGroupIndex],
+                            resolveRuntimePlan.runtimeResultPlan
+                                .groupDamageCreatureIndex,
+                            &damageApplyPlan);
                         originalGroupCount = damageApplyPlan.originalGroupCount;
                         killedCell = damageApplyPlan.killedCell;
                         applyOutcome = damageApplyPlan.outcome;
