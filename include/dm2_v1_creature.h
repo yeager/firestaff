@@ -158,6 +158,10 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type);
 int  dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader);
 int  dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
                                                   int field);
+int  dm2_v1_creature_load_ccm_programs_from_gdat_auto(const DM2_V1_AssetLoader *loader,
+                                                       int *out_field);
+int  dm2_v1_creature_loaded_ccm_program_count(void);
+int  dm2_v1_creature_loaded_ccm_program_field(void);
 void dm2_v1_creature_reset_ai_table(void);
 void dm2_v1_creature_reset_ccm_programs(void);
 int  dm2_v1_creature_attacks_party(int ai_index, int distance);

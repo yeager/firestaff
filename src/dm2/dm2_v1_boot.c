@@ -104,6 +104,8 @@ typedef struct {
     uint8_t *startup_title_pixels;
     int startup_title_w;
     int startup_title_h;
+    int ccm_program_count;
+    int ccm_program_field;
 } DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
@@ -259,6 +261,7 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     dm2_v1_asset_free_pixels(gfx->startup_title_pixels);
     dm2_v1_asset_loader_free(&gfx->loader);
     dm2_v1_creature_reset_ai_table();
+    dm2_v1_creature_reset_ccm_programs();
     free(gfx->bytes);
     memset(gfx, 0, sizeof(*gfx));
     free(gfx);
@@ -308,6 +311,9 @@ static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load(
         return NULL;
     }
     (void)dm2_v1_creature_load_ai_table_from_gdat(&gfx->loader);
+    gfx->ccm_program_count =
+        dm2_v1_creature_load_ccm_programs_from_gdat_auto(
+            &gfx->loader, &gfx->ccm_program_field);
     gfx->size = got;
     return gfx;
 }
