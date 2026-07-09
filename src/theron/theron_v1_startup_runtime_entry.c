@@ -52,7 +52,6 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
     size_t startup_text_us_count = 0u;
     size_t startup_text_jp_count = 0u;
     size_t anchor;
-    size_t entry;
     int tried = 0;
 
     if (receipt && receipt_cap > 0u) {
@@ -141,9 +140,6 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         Theron_Track02LevelHandoff semantic_level_handoff;
         Theron_Track02LevelHandoffStatus semantic_status;
         Theron_V1_Level semantic_level;
-        Theron_Track02LevelHandoff initial_handoff;
-        Theron_Track02LevelHandoffStatus initial_status;
-        Theron_V1_Level initial_candidate;
 
         semantic_status = theron_v1_track02_load_startup_semantic_level(
             hucard_rom,
@@ -198,102 +194,21 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
             }
             return 1;
         }
-
-        initial_status = theron_v1_track02_load_initial_level_candidate(
-            hucard_rom,
-            hucard_rom_size,
-            md5_hex,
-            signal.descriptor_offsets[anchor],
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
-            0,
-            &initial_candidate,
-            &initial_handoff);
-        ++tried;
-        if (initial_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
-            world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-            world->current_level = 0;
-            world->levels[0][0] = initial_candidate;
-            world->level_loaded[0][0] = 1;
-            theron_v1_party_place(world,
-                                  world->levels[0][0].start_x,
-                                  world->levels[0][0].start_y,
-                                  world->levels[0][0].start_dir);
-            if (receipt && receipt_cap > 0u) {
-                snprintf(receipt,
-                         receipt_cap,
-                         "Track 02 initial level bind=%s anchor=%zu offset=0x%zx user_valid=%d user=0x%zx user_windows=%zu user_desc=%zu user_span=%zu user_initial=%zu text_markers=%zu text_us=%zu text_jp=%zu expected=0x%zx delta=0x%zx candidates=%zu match=%d header=%ux%u seed=0x%08x start=(%d,%d,%d)",
-                         theron_v1_track02_level_handoff_status_name(
-                             (Theron_Track02LevelHandoffStatus)
-                                 initial_handoff.binding_status),
-                         anchor,
-                         initial_handoff.absolute_offset,
-                         initial_handoff.user_data_offset_valid,
-                         initial_handoff.user_data_offset,
-                         user_window_catalog.entry_count,
-                         user_window_descriptor_count,
-                         user_window_span_count,
-                         user_window_initial_count,
-                         text_marker_catalog.marker_count,
-                         startup_text_us_count,
-                         startup_text_jp_count,
-                         initial_handoff.expected_offset,
-                         initial_handoff.descriptor_delta,
-                         initial_handoff.candidate_count,
-                         initial_handoff.matches_initial_anchor,
-                         (unsigned)initial_handoff.header_width,
-                         (unsigned)initial_handoff.header_height,
-                         (unsigned)initial_handoff.header_seed,
-                         (int)world->levels[0][0].start_x,
-                         (int)world->levels[0][0].start_y,
-                         (int)world->levels[0][0].start_dir);
-            }
-            return 1;
-        }
-
-        for (entry = 0u; entry < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES; ++entry) {
-            Theron_Track02LevelHandoff handoff;
-            Theron_Track02LevelHandoffStatus level_status;
-            Theron_V1_Level candidate;
-
-            level_status = theron_v1_track02_load_descriptor_window_level(
-                hucard_rom,
-                hucard_rom_size,
-                signal.descriptor_offsets[anchor],
-                entry,
-                THERON_DUNGEON_1_HALL_OF_RECORDS,
-                (int)entry,
-                &candidate,
-                &handoff);
-            ++tried;
-            if (level_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
-                world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-                world->current_level = 0;
-                world->levels[0][0] = candidate;
-                world->level_loaded[0][0] = 1;
-                theron_v1_party_place(world,
-                                      world->levels[0][0].start_x,
-                                      world->levels[0][0].start_y,
-                                      world->levels[0][0].start_dir);
-                if (receipt && receipt_cap > 0u) {
-                    snprintf(receipt,
-                             receipt_cap,
-                             "Track 02 level anchor=%zu entry=%zu offset=0x%zx size=%zu",
-                             anchor,
-                             entry,
-                             handoff.absolute_offset,
-                             handoff.byte_count);
-                }
-                return 1;
-            }
-        }
     }
 
     if (receipt && receipt_cap > 0u) {
         snprintf(receipt,
                  receipt_cap,
-                 "Track 02 descriptors scanned anchors=%zu windows=%d; no level claim yet",
+                 "Track 02 semantic startup handoff scanned anchors=%zu attempts=%d user_windows=%zu user_desc=%zu user_span=%zu user_initial=%zu text_markers=%zu text_us=%zu text_jp=%zu; no semantic runtime level claim",
                  signal.anchor_count,
-                 tried);
+                 tried,
+                 user_window_catalog.entry_count,
+                 user_window_descriptor_count,
+                 user_window_span_count,
+                 user_window_initial_count,
+                 text_marker_catalog.marker_count,
+                 startup_text_us_count,
+                 startup_text_jp_count);
     }
     return 0;
 }
