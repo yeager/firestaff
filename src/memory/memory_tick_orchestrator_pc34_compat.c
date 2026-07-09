@@ -2664,7 +2664,8 @@ static int orch_cmd_attack_f0177_creature_slot_compat(
     int targetDirection)
 {
     const struct DungeonGroup_Compat* group;
-    DM1_CreatureGroup combatGroup;
+    DM1_MeleeF0177TargetCreatureInputPc34 in;
+    DM1_MeleeF0177TargetCreaturePlanPc34 plan;
     int i;
 
     if (!world || !world->things || !world->things->groups) return -1;
@@ -2672,29 +2673,30 @@ static int orch_cmd_attack_f0177_creature_slot_compat(
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return -1;
 
     group = &world->things->groups[groupIndex];
-    if (group->cells == 0xFFu) {
-        return orch_cmd_attack_first_living_creature_compat(group);
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.groupCount = (int)group->count;
+    in.groupCells = (int)group->cells;
+    in.groupDirection = (int)group->direction;
+    in.creatureSize = 0;
+    {
+        const struct CreatureBehaviorProfile_Compat* profile =
+            CREATURE_GetProfile_Compat((int)group->creatureType);
+        if (profile) {
+            in.creatureSize = (int)(profile->attributes & DM1_ATTR_SIZE_MASK);
+        }
     }
+    for (i = 0; i <= (int)group->count && i < 4; ++i) {
+        in.creatureHealth[i] = (int)group->health[i];
+    }
+    in.championCell = (int)(world->party.champions[championIndex].cell & 3);
+    in.targetDirection = targetDirection;
 
-    dm1_combat_init_group(&combatGroup);
-    combatGroup.count = (int)group->count;
-    if (combatGroup.count < 0) combatGroup.count = 0;
-    if (combatGroup.count >= DM1_MAX_CREATURES_IN_GROUP) {
-        combatGroup.count = DM1_MAX_CREATURES_IN_GROUP - 1;
+    if (!dm1_v1_melee_target_creature_plan_f0177_pc34(&in, &plan) ||
+        !plan.valid) {
+        return -1;
     }
-    for (i = 0; i <= combatGroup.count; ++i) {
-        combatGroup.creatures[i].health = (int)group->health[i];
-        combatGroup.creatures[i].cell = (int)((group->cells >> (i << 1)) & 0x03u);
-        combatGroup.creatures[i].direction = (int)group->direction;
-    }
-
-    /* ReDMCSB: MENU.C F0402 lines 1024-1026 calls GROUP.C F0177 with the
-     * champion Cell; F0177 then calls PROJEXPL.C F0229 for ordered cells. */
-    return dm1_get_melee_target(
-        &combatGroup,
-        (int)(world->party.champions[championIndex].cell & 3),
-        targetDirection,
-        (int)group->direction);
+    return plan.selectedCreatureIndex;
 }
 
 static int orch_cmd_attack_champion_reach_blocked_f0407_compat(

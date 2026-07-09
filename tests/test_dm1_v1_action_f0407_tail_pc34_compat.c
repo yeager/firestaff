@@ -1560,6 +1560,52 @@ static void test_melee_f0402_weapon_availability_and_preflight(void) {
              "F0402 ready target can resolve F0231 damage");
 }
 
+static void test_melee_f0177_target_creature_plan(void) {
+    DM1_MeleeF0177TargetCreatureInputPc34 in;
+    DM1_MeleeF0177TargetCreaturePlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.groupCount = 2;
+    in.groupCells = DM1_GROUP_CELLS_SINGLE_CENTERED;
+    in.creatureHealth[0] = 0;
+    in.creatureHealth[1] = 14;
+    in.creatureHealth[2] = 9;
+    CHECK_EQ(dm1_v1_melee_target_creature_plan_f0177_pc34(&in, &out), 1,
+             "F0177 single-centered plan builds");
+    CHECK_EQ(out.valid, 1, "F0177 single-centered valid");
+    CHECK_EQ(out.singleCenteredGroup, 1, "F0177 single-centered flag");
+    CHECK_EQ(out.firstLivingCreatureIndex, 1,
+             "F0177 first living creature");
+    CHECK_EQ(out.selectedCreatureIndex, 1,
+             "F0177 single-centered selects first living");
+
+    memset(&in, 0, sizeof(in));
+    in.groupCount = 1;
+    in.groupCells = (1 << 2) | 3;
+    in.creatureHealth[0] = 8;
+    in.creatureHealth[1] = 12;
+    in.championCell = 0;
+    in.targetDirection = 0;
+    in.groupDirection = 0;
+    CHECK_EQ(dm1_v1_melee_target_creature_plan_f0177_pc34(&in, &out), 1,
+             "F0177 full-square plan builds");
+    CHECK_EQ(out.selectedCreatureIndex, 1,
+             "F0177 full-square ordered cell selects higher ordinal");
+
+    memset(&in, 0, sizeof(in));
+    in.groupCount = 0;
+    in.groupCells = 0;
+    in.groupDirection = 1;
+    in.creatureSize = DM1_CREATURE_SIZE_HALF_SQUARE;
+    in.creatureHealth[0] = 20;
+    in.championCell = 0;
+    in.targetDirection = 1;
+    CHECK_EQ(dm1_v1_melee_target_creature_plan_f0177_pc34(&in, &out), 1,
+             "F0177 half-square plan builds");
+    CHECK_EQ(out.selectedCreatureIndex, 0,
+             "F0177 half-square occupancy selects creature");
+}
+
 static void test_melee_f0312_strength_plan(void) {
     DM1_MeleeF0312StrengthInputPc34 in;
     DM1_MeleeF0312StrengthPlanPc34 out;
@@ -2262,6 +2308,7 @@ int main(void) {
     test_melee_weapon_profile_plan();
     test_melee_f0231_side_effect_plan();
     test_melee_f0402_weapon_availability_and_preflight();
+    test_melee_f0177_target_creature_plan();
     test_melee_f0312_strength_plan();
     test_melee_f0231_champion_snapshot_plan();
     test_melee_f0231_creature_snapshot_plan();
