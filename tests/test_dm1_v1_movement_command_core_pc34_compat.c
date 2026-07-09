@@ -233,6 +233,49 @@ int main(void)
                 &movement, NULL), 0);
     }
 
+    {
+        struct Dm1V1MovementPreStepStaminaApplyPlanPc34Compat staminaPlan;
+        setup_party(&party);
+        party.champions[0].load = 100;
+        party.champions[0].maxLoad = 100;
+        party.champions[0].stamina.current = 1;
+        party.champions[0].stamina.maximum = 100;
+        party.champions[1].hp.current = 0;
+        party.champions[1].stamina.current = 55;
+        party.champions[2].present = 1;
+        party.champions[2].hp.current = 10;
+        party.champions[2].maxLoad = 100;
+        party.champions[2].stamina.current = 100;
+        party.champions[2].stamina.maximum = 100;
+        party.champions[3].present = 1;
+        party.champions[3].hp.current = 10;
+        party.champions[3].maxLoad = 100;
+        party.champions[3].stamina.current = 100;
+        party.champions[3].stamina.maximum = 100;
+        party.championCount = CHAMPION_MAX_PARTY + 4;
+        ok &= expect_int("pre-step stamina plan builds",
+            DM1_V1_MovementCommandCore_PreStepStaminaApplyPlanPc34Compat(
+                &party, &staminaPlan), 1);
+        ok &= expect_int("pre-step stamina plan valid", staminaPlan.valid, 1);
+        ok &= expect_int("pre-step stamina plan affected count", staminaPlan.affectedCount, 3);
+        ok &= expect_int("pre-step stamina plan applies champion0", staminaPlan.shouldApply[0], 1);
+        ok &= expect_int("pre-step stamina plan champion0 cost", staminaPlan.staminaCost[0], 4);
+        ok &= expect_int("pre-step stamina plan champion0 clamps stamina", staminaPlan.staminaAfter[0], 0);
+        ok &= expect_int("pre-step stamina plan champion0 health damage", staminaPlan.staminaDamage[0], 1);
+        ok &= expect_int("pre-step stamina plan champion0 health after", staminaPlan.healthAfter[0], 9);
+        ok &= expect_int("pre-step stamina plan skips dead champion1", staminaPlan.shouldApply[1], 0);
+        ok &= expect_int("pre-step stamina plan champion2 included", staminaPlan.shouldApply[2], 1);
+        ok &= expect_int("pre-step stamina plan champion3 included", staminaPlan.shouldApply[3], 1);
+        ok &= expect_int("pre-step stamina plan null party builds empty",
+            DM1_V1_MovementCommandCore_PreStepStaminaApplyPlanPc34Compat(
+                NULL, &staminaPlan), 1);
+        ok &= expect_int("pre-step stamina plan null party valid", staminaPlan.valid, 1);
+        ok &= expect_int("pre-step stamina plan null party empty", staminaPlan.affectedCount, 0);
+        ok &= expect_int("pre-step stamina plan null output rejected",
+            DM1_V1_MovementCommandCore_PreStepStaminaApplyPlanPc34Compat(
+                &party, NULL), 0);
+    }
+
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
     setup_party(&party);

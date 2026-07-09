@@ -156,18 +156,23 @@ static int dm1_v1_compute_step_stamina_cost(const struct ChampionState_Compat* c
     return (int)(((unsigned long)champion->load * 3ul) / (unsigned long)maxLoad) + 1;
 }
 
-static void dm1_v1_apply_pre_step_stamina_cost(
-    struct PartyState_Compat* party,
-    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
+int DM1_V1_MovementCommandCore_PreStepStaminaApplyPlanPc34Compat(
+    const struct PartyState_Compat* party,
+    struct Dm1V1MovementPreStepStaminaApplyPlanPc34Compat* outPlan)
 {
     int i;
 
-    if (!party || !outResult) {
-        return;
+    if (!outPlan) {
+        return 0;
+    }
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->valid = 1;
+    if (!party) {
+        return 1;
     }
 
     for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
-        struct ChampionState_Compat* champion = &party->champions[i];
+        const struct ChampionState_Compat* champion = &party->champions[i];
         DM1_ActionF0325StaminaInputPc34 staminaIn;
         DM1_ActionF0325StaminaPlanPc34 staminaPlan;
         int cost;
@@ -191,17 +196,45 @@ static void dm1_v1_apply_pre_step_stamina_cost(
             continue;
         }
 
-        outResult->staminaCost[i] = cost;
-        outResult->staminaDamage[i] = staminaPlan.pendingHealthDamage;
-        outResult->staminaDamageFlash[i] = staminaPlan.shouldDamageFlash;
-        outResult->staminaAppliedAttributeMask[i] =
+        outPlan->shouldApply[i] = 1;
+        outPlan->staminaCost[i] = cost;
+        outPlan->staminaAfter[i] = staminaPlan.currentStaminaAfter;
+        outPlan->healthAfter[i] = staminaPlan.currentHealthAfter;
+        outPlan->staminaDamage[i] = staminaPlan.pendingHealthDamage;
+        outPlan->staminaDamageFlash[i] = staminaPlan.shouldDamageFlash;
+        outPlan->staminaAppliedAttributeMask[i] =
             staminaPlan.appliedAttributeMask;
-        outResult->staminaAffectedCount++;
-
-        champion->stamina.current =
-            (unsigned short)staminaPlan.currentStaminaAfter;
-        champion->hp.current = (unsigned short)staminaPlan.currentHealthAfter;
+        outPlan->affectedCount++;
     }
+    return 1;
+}
+
+static void dm1_v1_apply_pre_step_stamina_plan(
+    struct PartyState_Compat* party,
+    const struct Dm1V1MovementPreStepStaminaApplyPlanPc34Compat* plan,
+    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
+{
+    int i;
+
+    if (!party || !plan || !plan->valid || !outResult) {
+        return;
+    }
+
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        struct ChampionState_Compat* champion;
+        if (!plan->shouldApply[i]) {
+            continue;
+        }
+        champion = &party->champions[i];
+        outResult->staminaCost[i] = plan->staminaCost[i];
+        outResult->staminaDamage[i] = plan->staminaDamage[i];
+        outResult->staminaDamageFlash[i] = plan->staminaDamageFlash[i];
+        outResult->staminaAppliedAttributeMask[i] =
+            plan->staminaAppliedAttributeMask[i];
+        champion->stamina.current = (unsigned short)plan->staminaAfter[i];
+        champion->hp.current = (unsigned short)plan->healthAfter[i];
+    }
+    outResult->staminaAffectedCount = plan->affectedCount;
 }
 
 static int dm1_v1_party_source_square_is_stairs(
@@ -439,7 +472,12 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     }
 
     outResult->commandHandled = 1;
-    dm1_v1_apply_pre_step_stamina_cost(party, outResult);
+    {
+        struct Dm1V1MovementPreStepStaminaApplyPlanPc34Compat staminaPlan;
+        (void)DM1_V1_MovementCommandCore_PreStepStaminaApplyPlanPc34Compat(
+            party, &staminaPlan);
+        dm1_v1_apply_pre_step_stamina_plan(party, &staminaPlan, outResult);
+    }
     action = dm1_v1_command_to_move_action(outResult->queue.command);
 
     /* Source lock: CLIKMENU.C:264-267 consumes MOVE_BACKWARD while already

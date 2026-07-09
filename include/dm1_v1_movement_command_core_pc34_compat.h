@@ -84,6 +84,18 @@ struct Dm1V1MovementSuccessfulStepApplyPlanPc34Compat {
     int viewportRedrawRequested;
 };
 
+struct Dm1V1MovementPreStepStaminaApplyPlanPc34Compat {
+    int valid;
+    int affectedCount;
+    int shouldApply[CHAMPION_MAX_PARTY];
+    int staminaCost[CHAMPION_MAX_PARTY];
+    int staminaAfter[CHAMPION_MAX_PARTY];
+    int healthAfter[CHAMPION_MAX_PARTY];
+    int staminaDamage[CHAMPION_MAX_PARTY];
+    int staminaDamageFlash[CHAMPION_MAX_PARTY];
+    int staminaAppliedAttributeMask[CHAMPION_MAX_PARTY];
+};
+
 struct Dm1V1MovementCommandCoreResultPc34Compat {
     struct Dm1V1InputQueueProcessResultPc34Compat queue;
     struct MovementResult_Compat movement;
@@ -152,6 +164,10 @@ int DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(
 int DM1_V1_MovementCommandCore_SuccessfulStepApplyPlanPc34Compat(
     const struct MovementResult_Compat* movement,
     struct Dm1V1MovementSuccessfulStepApplyPlanPc34Compat* outPlan);
+
+int DM1_V1_MovementCommandCore_PreStepStaminaApplyPlanPc34Compat(
+    const struct PartyState_Compat* party,
+    struct Dm1V1MovementPreStepStaminaApplyPlanPc34Compat* outPlan);
 
 #ifdef __cplusplus
 }
