@@ -4,6 +4,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-09 DM2 runtime/render follow-up: DB0 door records now hand level door-set GDAT panel identity into the render plan. Remaining DM2 work is broader GDAT door masks/ornates, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
   - 2026-07-09 update: DB0 door ornate and destroyed-mask overlays now have runtime/render receipt paths and boot asset fetch ranges. Remaining DM2 work is real GDAT mask field parity, door ornate list decoding, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
+  - 2026-07-09 update: DB4 creature records now feed runtime creature sprite rendering through the GDAT map-chip path with receipts. Remaining DM2 work is creature animation/AI frame writeback, more CCM opcodes, real save corpus handoff, and exact GDAT mask/list parity.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
   - 2026-07-09 update: DM1 F0115 item-route receipt now owns HoC mirror-payload suppression for viewport floor-item routing. Remaining viewport coding work is finishing champion mirror portrait/frame routing and moving more M11 wall-mirror cases behind DM1 receipts.

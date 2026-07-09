@@ -2,6 +2,8 @@
 
 - ✅ 2026-07-09 CSB startup resume gate receipt: CSB closed-door startup HUD/menu receipts now carry resume option visibility, selection, availability, and save path, so host render/input code can consume a CSB-owned resume gate instead of inferring it from menu text. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
+- ✅ 2026-07-09 DM2 DB4 creature sprite handoff: runtime now scans visible dungeon thing chains for DB4 creatures, routes Creature::CreatureType into the existing GDAT creature map-chip renderer, and records asset/fallback creature draw receipts. Verification: `test_dm2_v1_runtime_handoff_smoke`, `test_dm2_v1_lighting_falloff_boundary`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM2 door ornate/destroyed overlay handoff: DB0 Door::OrnateIndex and destroyed state now emit separate door overlay pseudo-GDAT indices, render after base panels, and are fetched through boot-owned DOOR_GFX/DOORS asset routes. Verification: `test_dm2_v1_lighting_falloff_boundary` 137/137, `test_dm2_v1_runtime_handoff_smoke`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus SLEV script runtime receipt: Nexus engine now loads per-level `SLEV*.BIN` candidate bytes beside `LEV*.DGN`, records a script runtime receipt, routes mechanics party-move events through the engine-owned VM, and blocks unsupported real script dispatch without synthetic fallback rules. Verification: `test_nexus_v1_script_vm`, `test_nexus_v1_boot_file_hash_scan`, Nexus focused CTests, and `git diff --check` passed.

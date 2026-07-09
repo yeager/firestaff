@@ -52,6 +52,7 @@ static uint8_t s_door_overlay_pixels[16 * 8];
 static uint8_t s_door_frame_pixels[16 * 8];
 static uint8_t s_door_button_pixels[16 * 8];
 static uint8_t s_wall_button_pixels[16 * 8];
+static uint8_t s_creature_pixels[16 * 8];
 static uint8_t s_item_pixels[16 * 8];
 static uint8_t s_projectile_pixels[16 * 8];
 static uint8_t s_hud_portrait_pixels[16 * 8];
@@ -131,6 +132,15 @@ static int synthetic_viewport_asset_fetch(void *user,
         (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
           DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) <= 0x15) {
         if (out_pixels) *out_pixels = s_item_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
+        DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
+            (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) {
+        if (out_pixels) *out_pixels = s_creature_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
@@ -772,6 +782,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
             replacement = NULL;
             dm2_v1_runtime_set_position(0, 1, 1, 0);
             dm2_v1_runtime_set_outdoor(0);
+            memset(s_creature_pixels, 12, sizeof(s_creature_pixels));
             memset(s_item_pixels, 7, sizeof(s_item_pixels));
             memset(framebuffer, 0, sizeof(framebuffer));
             dm2_v1_runtime_set_viewport_asset_provider(
@@ -781,6 +792,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   "runtime renders skproject creature possession chain");
             CHECK(fetch_count >= 14,
                   "runtime creature possession chain reaches item-map-chip fetch path");
+            CHECK(dm2_v1_runtime_last_asset_creature_count() == 1 &&
+                  dm2_v1_runtime_last_fallback_creature_count() == 0,
+                  "runtime DB4 creature draws through creature GDAT map-chip path");
             CHECK(dm2_v1_runtime_last_asset_creature_possession_item_count() == 2 &&
                   dm2_v1_runtime_last_fallback_creature_possession_item_count() == 0,
                   "runtime records asset-backed creature possession item draws");

@@ -96,6 +96,8 @@ static int g_dm2_last_asset_door_overlay_count = 0;
 static int g_dm2_last_asset_door_frame_count = 0;
 static int g_dm2_last_asset_door_button_count = 0;
 static int g_dm2_last_fallback_door_count = 0;
+static int g_dm2_last_asset_creature_count = 0;
+static int g_dm2_last_fallback_creature_count = 0;
 static int g_dm2_last_asset_creature_possession_item_count = 0;
 static int g_dm2_last_fallback_creature_possession_item_count = 0;
 static int g_dm2_last_asset_carried_item_count = 0;
@@ -826,6 +828,99 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport,
     }
 }
 
+static void dm2_runtime_append_creature_sprite(
+    DM2_V1_ViewportState *viewport,
+    int screen_x,
+    int screen_y,
+    int depth,
+    const uint8_t *record,
+    int record_size)
+{
+    DM2_CreatureSprite *dst;
+
+    if (!viewport || !record || record_size < 5) return;
+    if (viewport->creature_count >= DM2_MAX_CREATURES_PER_SQ) return;
+
+    dst = &viewport->creatures[viewport->creature_count++];
+    memset(dst, 0, sizeof(*dst));
+    /* skproject SKWIN/DME.h Creature::CreatureType() exposes the DB4
+     * creature record's b4 byte as the GDAT creature index. SkWinCore.cpp
+     * lines 10557-10619 then routes it through QUERY_DUNGEON_MAP_CHIP_PICT
+     * before DRAW_CHIP_OF_MAGIC_MAP. */
+    dst->creature_type = record[4];
+    dst->frame_index = 0;
+    dst->depth = (int16_t)depth;
+    dst->screen_x = (int16_t)screen_x;
+    dst->screen_y = (int16_t)screen_y;
+    dst->health_pct = 100;
+    if (record_size >= 8) {
+        dst->direction = (uint8_t)(record[7] & 3u);
+    }
+}
+
+static void dm2_runtime_populate_creatures(
+    const DM2_V1_RuntimeState *rt,
+    DM2_V1_ViewportState *viewport,
+    int party_dir,
+    int party_x,
+    int party_y)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    DM2_V1_DungeonData *dd;
+    int dir;
+    int right;
+
+    if (!rt || !viewport || rt->outdoor || !rt->boot ||
+        !rt->boot->dungeon_data) {
+        return;
+    }
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    dir = party_dir & 3;
+    right = (dir + 1) & 3;
+
+    for (int forward = 1; forward <= 4; ++forward) {
+        for (int lateral = -2; lateral <= 2; ++lateral) {
+            int map_x = party_x + dx[dir] * forward +
+                        dx[right] * lateral;
+            int map_y = party_y + dy[dir] * forward +
+                        dy[right] * lateral;
+            int thing = dm2_v1_dungeon_get_first_thing(
+                dd, rt->dungeon_level, map_x, map_y);
+            int guard = 0;
+            DM2_V1_ViewportSpritePlacement placement;
+
+            if (thing < 0 || thing == 0xfffe) continue;
+            if (!dm2_v1_viewport_project_map_to_sprite(
+                    map_x, map_y, party_dir, party_x, party_y,
+                    &placement)) {
+                continue;
+            }
+            while (thing >= 0 && thing != 0xfffe && guard++ < 64 &&
+                   viewport->creature_count < DM2_MAX_CREATURES_PER_SQ) {
+                int type = -1;
+                int size = 0;
+                int next;
+                const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+                    dd, (uint16_t)thing, &type, NULL, &size);
+                if (!record || size < 2) break;
+                if (type == 4 && size >= 5) {
+                    dm2_runtime_append_creature_sprite(
+                        viewport,
+                        placement.screen_x,
+                        placement.screen_y,
+                        placement.depth,
+                        record,
+                        size);
+                }
+                next = dm2_v1_dungeon_get_next_thing(dd, (uint16_t)thing);
+                if (next < 0 || next == thing) break;
+                thing = next;
+            }
+        }
+    }
+}
+
 static void dm2_runtime_append_creature_possession_item(
     DM2_V1_ViewportState *viewport,
     uint16_t thing,
@@ -1167,6 +1262,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     viewport.random_seed = rt->weather.weather_seed;
     dm2_runtime_populate_front_square(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_projectiles(&viewport, party_dir, party_x, party_y);
+    dm2_runtime_populate_creatures(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_creature_possession_items(
         rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_carried_item(rt, &viewport);
@@ -1191,6 +1287,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_asset_door_button_count =
         viewport.asset_door_button_drawn_count;
     g_dm2_last_fallback_door_count = viewport.fallback_door_drawn_count;
+    g_dm2_last_asset_creature_count =
+        viewport.asset_creature_drawn_count;
+    g_dm2_last_fallback_creature_count =
+        viewport.fallback_creature_drawn_count;
     g_dm2_last_asset_creature_possession_item_count =
         viewport.asset_creature_possession_item_drawn_count;
     g_dm2_last_fallback_creature_possession_item_count =
@@ -1276,6 +1376,14 @@ int dm2_v1_runtime_last_asset_carried_item_count(void) {
 
 int dm2_v1_runtime_last_fallback_carried_item_count(void) {
     return g_dm2_last_fallback_carried_item_count;
+}
+
+int dm2_v1_runtime_last_asset_creature_count(void) {
+    return g_dm2_last_asset_creature_count;
+}
+
+int dm2_v1_runtime_last_fallback_creature_count(void) {
+    return g_dm2_last_fallback_creature_count;
 }
 
 int dm2_v1_runtime_last_asset_creature_possession_item_count(void) {
