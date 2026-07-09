@@ -2084,6 +2084,15 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 death smoke centered cell");
     CHECK_EQ(smokeOut.createInput.centered, 1,
              "F0190 death smoke centered flag");
+    CHECK_EQ(dm1_v1_melee_death_smoke_attack_f0190_pc34(
+                 DM1_SIZE_QUARTER_SQUARE), 110,
+             "F0190 quarter-square smoke attack helper");
+    CHECK_EQ(dm1_v1_melee_death_smoke_attack_f0190_pc34(
+                 DM1_SIZE_HALF_SQUARE), 190,
+             "F0190 half-square smoke attack helper");
+    CHECK_EQ(dm1_v1_melee_death_smoke_attack_f0190_pc34(
+                 DM1_SIZE_FULL_SQUARE), 255,
+             "F0190 full-square smoke attack helper");
 
     smokeIn.shouldCreate = 0;
     CHECK_EQ(dm1_v1_melee_death_smoke_plan_f0190_pc34(
