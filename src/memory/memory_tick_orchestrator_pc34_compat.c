@@ -21,6 +21,7 @@
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "dm1_v1_throw_shoot_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"        /* DM1_SND_BUZZ for C006 generator audio */
@@ -4516,15 +4517,6 @@ static int orch_find_group_creature_index_for_cell_compat(
     return -1;
 }
 
-static int orch_projectile_weapon_type_is_kept_sharp_compat(int weaponType)
-{
-    return weaponType == 8  ||  /* C08_WEAPON_DAGGER */
-           weaponType == 27 ||  /* C27_WEAPON_ARROW */
-           weaponType == 28 ||  /* C28_WEAPON_SLAYER */
-           weaponType == 31 ||  /* C31_WEAPON_POISON_DART */
-           weaponType == 32;    /* C32_WEAPON_THROWING_STAR */
-}
-
 static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
@@ -4532,23 +4524,18 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
     int damageOutcome)
 {
     const struct CreatureBehaviorProfile_Compat* profile;
+    DM1_ProjectileGroupSlotMaterializationPlanPc34 plan;
     unsigned short associatedThing;
     int weaponIndex;
     int weaponType;
 
     if (!world || !group || !projectile || !world->things) return 0;
-    if (damageOutcome != COMBAT_OUTCOME_KILLED_NO_CREATURES) return 0;
-    if ((projectile->flags & PROJECTILE_FLAG_CREATES_EXPLOSION) != 0) return 0;
 
     associatedThing = (unsigned short)projectile->reserved1;
     if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return 0;
     if (THING_GET_TYPE(associatedThing) != THING_TYPE_WEAPON) return 0;
 
     profile = CREATURE_GetProfile_Compat((int)group->creatureType);
-    if (!profile ||
-        ((profile->attributes & CREATURE_ATTR_MASK_KEEP_THROWN_SHARP_WEAPONS) == 0)) {
-        return 0;
-    }
 
     weaponIndex = THING_GET_INDEX(associatedThing);
     if (!world->things->weapons ||
@@ -4557,7 +4544,12 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
         return 0;
     }
     weaponType = (int)world->things->weapons[weaponIndex].type;
-    if (!orch_projectile_weapon_type_is_kept_sharp_compat(weaponType)) {
+    memset(&plan, 0, sizeof(plan));
+    if (!dm1_v1_projectile_group_slot_materialization_plan_pc34(
+            projectile, damageOutcome,
+            profile ? profile->attributes : 0,
+            weaponType, &plan) ||
+        !plan.valid || !plan.shouldAttachToGroupSlot) {
         return 0;
     }
 
