@@ -414,6 +414,8 @@ static void test_projectile_group_slot_materialization_plan(void) {
     struct ProjectileInstance_Compat p;
     DM1_ProjectileGroupSlotMaterializationPlanPc34 plan;
     DM1_ProjectileGroupSlotAttachPlanPc34 attach;
+    DM1_ProjectileGroupSlotAttachReceiptPc34 receipt;
+    unsigned short chain[66];
     unsigned short weaponThing =
         (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
     unsigned short tailThing =
@@ -468,6 +470,19 @@ static void test_projectile_group_slot_materialization_plan(void) {
     ASSERT_EQ(attach.shouldAppendAfterTail, 0,
               "F0215 empty attach skips tail append");
 
+    memset(&receipt, 0, sizeof(receipt));
+    chain[0] = THING_ENDOFLIST;
+    ASSERT_EQ(dm1_v1_projectile_group_slot_attach_receipt_f0215_pc34(
+                  weaponThing, THING_ENDOFLIST, chain, 1, &receipt), 1,
+              "F0215 empty group slot attach receipt builds");
+    ASSERT_EQ(receipt.valid, 1, "F0215 empty group receipt valid");
+    ASSERT_EQ(receipt.shouldSetAssociatedNextEnd, 1,
+              "F0215 empty group receipt terminates associated thing");
+    ASSERT_EQ(receipt.shouldSetGroupSlotHead, 1,
+              "F0215 empty group receipt sets group slot head");
+    ASSERT_EQ(receipt.shouldAppendAfterTail, 0,
+              "F0215 empty group receipt skips append");
+
     ASSERT_EQ(dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
                   weaponThing, tailThing, tailThing, &attach), 1,
               "F0215 occupied group slot attach plan builds");
@@ -478,10 +493,44 @@ static void test_projectile_group_slot_materialization_plan(void) {
               "F0215 occupied attach appends after tail");
     ASSERT_EQ(attach.tailThing, tailThing, "F0215 occupied attach tail");
 
+    chain[0] = tailThing;
+    chain[1] = THING_ENDOFLIST;
+    memset(&receipt, 0, sizeof(receipt));
+    ASSERT_EQ(dm1_v1_projectile_group_slot_attach_receipt_f0215_pc34(
+                  weaponThing, tailThing, chain, 2, &receipt), 1,
+              "F0215 occupied group slot attach receipt builds");
+    ASSERT_EQ(receipt.valid, 1, "F0215 occupied group receipt valid");
+    ASSERT_EQ(receipt.shouldSetAssociatedNextEnd, 1,
+              "F0215 occupied group receipt terminates associated thing");
+    ASSERT_EQ(receipt.shouldSetGroupSlotHead, 0,
+              "F0215 occupied group receipt keeps group slot head");
+    ASSERT_EQ(receipt.shouldAppendAfterTail, 1,
+              "F0215 occupied group receipt appends after tail");
+    ASSERT_EQ(receipt.foundTail, 1,
+              "F0215 occupied group receipt finds tail");
+    ASSERT_EQ(receipt.tailThing, tailThing,
+              "F0215 occupied group receipt tail thing");
+
+    memset(chain, 0, sizeof(chain));
+    for (int i = 0; i < 66; ++i) {
+        chain[i] = (unsigned short)((THING_TYPE_JUNK << 10) | (i & 0x03ff));
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    ASSERT_EQ(dm1_v1_projectile_group_slot_attach_receipt_f0215_pc34(
+                  weaponThing, tailThing, chain, 66, &receipt), 1,
+              "F0215 overflow group slot attach receipt builds");
+    ASSERT_EQ(receipt.valid, 1, "F0215 overflow group receipt valid");
+    ASSERT_EQ(receipt.chainOverflow, 1,
+              "F0215 overflow group receipt reports overflow");
+
     ASSERT_EQ(dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
                   (unsigned short)((THING_TYPE_EXPLOSION << 10) | 1),
                   THING_ENDOFLIST, THING_NONE, &attach), 0,
               "F0215 explosion slot is not attached");
+    ASSERT_EQ(dm1_v1_projectile_group_slot_attach_receipt_f0215_pc34(
+                  (unsigned short)((THING_TYPE_EXPLOSION << 10) | 1),
+                  THING_ENDOFLIST, chain, 1, &receipt), 0,
+              "F0215 explosion group receipt is rejected");
 }
 
 static void test_projectile_associated_thing_disposition(void) {

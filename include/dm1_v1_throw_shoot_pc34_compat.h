@@ -155,6 +155,18 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int shouldSetAssociatedNextEnd;
+    int shouldSetGroupSlotHead;
+    int shouldAppendAfterTail;
+    int foundTail;
+    int chainOverflow;
+    unsigned short associatedThing;
+    unsigned short groupSlotHead;
+    unsigned short tailThing;
+} DM1_ProjectileGroupSlotAttachReceiptPc34;
+
+typedef struct {
+    int valid;
     int shouldSetDroppedNextEnd;
     int shouldSetSquareFirstThing;
     int shouldAppendAfterTail;
@@ -369,6 +381,12 @@ int dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
     unsigned short groupSlotHead,
     unsigned short tailThing,
     DM1_ProjectileGroupSlotAttachPlanPc34* outPlan);
+int dm1_v1_projectile_group_slot_attach_receipt_f0215_pc34(
+    unsigned short associatedThing,
+    unsigned short groupSlotHead,
+    const unsigned short* chainThings,
+    int chainCount,
+    DM1_ProjectileGroupSlotAttachReceiptPc34* outReceipt);
 int dm1_v1_projectile_square_attach_plan_f0215_pc34(
     unsigned short droppedThing,
     unsigned short squareFirstThing,
