@@ -993,6 +993,11 @@ int csb_v1_startup_execute_render_plan_pc34(
                     executor->draw_door_fallback(executor->user, plan);
                 }
                 break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34:
+                if (drew_asset && executor->draw_closed_doors) {
+                    executor->draw_closed_doors(executor->user, plan);
+                }
+                break;
             case CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34:
                 if (!drew_asset && executor->draw_fallback_text) {
                     executor->draw_fallback_text(executor->user, plan);

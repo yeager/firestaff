@@ -2750,7 +2750,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
               route_receipt.draw_surface &&
               route_receipt.draw_closed_doors &&
-              route_receipt.draw_fallback_text &&
+              !route_receipt.draw_fallback_text &&
               route_receipt.draw_utility_panel &&
               route_receipt.hud_menu_visible &&
               route_receipt.menu_option_count == 4 &&
@@ -3146,7 +3146,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               receipt_closed_door_plan.waiting_for_input &&
               receipt_closed_door_plan.render_command_count ==
-                  view_receipt.closed_door_render_command_count &&
+                  view_receipt.closed_door_render_command_count - 1 &&
+              receipt_closed_door_plan.render_commands[2].kind ==
+                  CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34 &&
               receipt_closed_door_plan.asset_command_count ==
                   view_receipt.closed_door_asset_command_count &&
               receipt_closed_door_plan.menu_option_count == 4 &&
@@ -3166,7 +3168,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_receipt.startup_render_plan_valid &&
               !hud_draw_receipt.utility_render_plan_valid &&
               hud_draw_receipt.draw_closed_doors &&
-              hud_draw_receipt.draw_fallback_text &&
+              !hud_draw_receipt.draw_fallback_text &&
               hud_draw_receipt.suppress_legacy_utility_fallback &&
               hud_draw_receipt.option_count == 4 &&
               hud_draw_receipt.selected_command_id ==
@@ -3186,7 +3188,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
               capture_receipt.hud_menu_draw_valid &&
               capture_receipt.hud_menu_draw.draw_closed_doors &&
-              capture_receipt.hud_menu_draw.draw_fallback_text &&
+              !capture_receipt.hud_menu_draw.draw_fallback_text &&
               capture_receipt.selected_command_id ==
                   capture_receipt.hud_menu_draw.selected_command_id &&
               capture_receipt.suppress_legacy_utility_fallback ==
@@ -3225,15 +3227,15 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CHECK(csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
               &hud_draw_receipt,
               &readiness_receipt,
-              &hud_draw_executor) == 2 &&
+              &hud_draw_executor) == 1 &&
               hud_draw_probe.utility_panel_count == 0 &&
               hud_draw_probe.closed_doors_count == 1 &&
-              hud_draw_probe.fallback_text_count == 1 &&
+              hud_draw_probe.fallback_text_count == 0 &&
               hud_draw_probe.last_waiting_for_input &&
               hud_draw_probe.last_menu_option_count == 4 &&
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
-          "boot startup HUD/menu executor draws closed-door HUD from readiness-gated receipt");
+          "boot startup HUD/menu executor draws closed-door HUD without fallback text");
     memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
     hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
     CHECK(csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
@@ -3242,16 +3244,17 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.hud_menu_draw_valid &&
               host_view_receipt.capture_proof.hud_menu_draw_available &&
               host_view_receipt.capture_proof.closed_door_menu_route &&
+              !host_view_receipt.capture_proof.draw_fallback_text &&
               host_view_receipt.readiness_valid &&
               host_view_receipt.readiness.hud_menu_kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
               csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
                   &host_view_receipt.hud_menu_draw,
                   &readiness_receipt,
-                  &hud_draw_executor) == 2 &&
+                  &hud_draw_executor) == 1 &&
               hud_draw_probe.utility_panel_count == 0 &&
               hud_draw_probe.closed_doors_count == 1 &&
-              hud_draw_probe.fallback_text_count == 1 &&
+              hud_draw_probe.fallback_text_count == 0 &&
               hud_draw_probe.last_waiting_for_input &&
               hud_draw_probe.last_menu_option_count == 4 &&
               hud_draw_probe.last_surface ==
@@ -3271,7 +3274,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !packaged_proof.utility_menu_route &&
               !packaged_proof.opening_door_route &&
               packaged_proof.draw_closed_doors &&
-              packaged_proof.draw_fallback_text &&
+              !packaged_proof.draw_fallback_text &&
               !packaged_proof.draw_utility_panel &&
               packaged_proof.startup_input_ready &&
               packaged_proof.startup_hud_ready &&
@@ -3299,10 +3302,14 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.selected_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
               host_view_receipt.render_plan_valid &&
+              host_view_receipt.render_plan.render_command_count == 4 &&
+              host_view_receipt.render_plan.render_commands[2].kind ==
+                  CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34 &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.hud_menu_draw_ready &&
               host_view_receipt.hud_menu_draw_valid &&
               host_view_receipt.hud_menu_draw.draw_closed_doors &&
+              !host_view_receipt.hud_menu_draw.draw_fallback_text &&
               host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               host_view_receipt.capture_proof_valid &&
@@ -3326,15 +3333,26 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.valid &&
               host_view_draw_receipt.render_executed &&
-              host_view_draw_receipt.hud_menu_executed == 2 &&
+              host_view_draw_receipt.hud_menu_executed == 1 &&
               host_view_draw_receipt.hud_menu_kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
               host_view_draw_receipt.suppress_legacy_utility_fallback &&
               host_view_draw_receipt.consumed_host_view_only &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_closed_doors_count == 1 &&
-              capture_render_probe.draw_fallback_text_count == 1,
-          "boot startup host-view draw receipt consumes closed-door render plus HUD without legacy split");
+              capture_render_probe.draw_fallback_text_count == 0,
+          "boot startup host-view draw receipt consumes closed-door render plus HUD without fallback text");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    capture_render_probe.draw_full_surface_result = 0;
+    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+              &host_view_receipt,
+              &capture_render_executor) == 1 &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_closed_doors_count == 0 &&
+              capture_render_probe.draw_door_fallback_count == 0 &&
+              capture_render_probe.draw_fallback_text_count == 0,
+          "boot startup closed-door capture plan refuses fallback when surface assets fail");
     CHECK(csb_v1_boot_startup_render_plan_from_snapshot_pc34(
               &snapshot,
               &snapshot_render_plan) == 1 &&
@@ -3450,6 +3468,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
               host_view_receipt.render_plan.opening_step == 3 &&
+              host_view_receipt.render_plan.render_command_count >= 4 &&
+              host_view_receipt.render_plan.render_commands[3].kind ==
+                  CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34 &&
               host_view_receipt.capture_proof.opening_door_route,
           "boot startup host-view receipt packages door-opening render plan");
     render_probe_executor_init(&capture_render_executor,
@@ -3461,6 +3482,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
           "boot startup host-view receipt executes door-opening render plan directly");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    capture_render_probe.draw_full_surface_result = 0;
+    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+              &host_view_receipt,
+              &capture_render_executor) == 1 &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_opening_frame_count == 0 &&
+              capture_render_probe.draw_closed_doors_count == 0 &&
+              capture_render_probe.draw_door_fallback_count == 0 &&
+              capture_render_probe.draw_fallback_text_count == 0,
+          "boot startup door-opening capture plan refuses fallback when surface assets fail");
     CHECK(csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
               &snapshot,
               &host_view_receipt) == 1 &&

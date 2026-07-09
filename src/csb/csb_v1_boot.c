@@ -2455,6 +2455,7 @@ static int csb_v1_boot_startup_capture_render_plan_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
+    int i;
     if (!out_plan) {
         return 0;
     }
@@ -2498,9 +2499,18 @@ static int csb_v1_boot_startup_capture_render_plan_pc34(
 
     if (capture_receipt->render_view.opening_door_route) {
         *out_plan = capture_receipt->render_view.render_plan;
+        for (i = 0; i < out_plan->render_command_count &&
+                    i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
+            if (out_plan->render_commands[i].kind ==
+                CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34) {
+                out_plan->render_commands[i].kind =
+                    CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34;
+            }
+        }
         /* ReDMCSB ENTRANCE.C F0806 lines 857-883 moves from title/menu into
          * the door-open startup animation before runtime handoff. Keep that
-         * full-start graphic path available through the aggregate receipt. */
+         * full-start graphic path available through the aggregate receipt,
+         * but strip the old fallback-door branch from the capture plan. */
         return 1;
     }
 
@@ -2813,11 +2823,21 @@ int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
             : out_plan->fallback_prompt_text;
     out_plan->blink_prompt_visible =
         receipt->closed_door_prompt[0] != '\0' ? 1 : out_plan->blink_prompt_visible;
+    out_plan->render_command_count = 0;
+    out_plan->render_commands[out_plan->render_command_count++].kind =
+        CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34;
+    out_plan->render_commands[out_plan->render_command_count++].kind =
+        CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34;
+    out_plan->render_commands[out_plan->render_command_count++].kind =
+        CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34;
+    out_plan->render_commands[out_plan->render_command_count++].kind =
+        CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34;
 
     /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns closed-door
      * waiting/menu state. Rebuild selected command and resume availability
-     * from the CSB view receipt so startup HUD callers do not infer them
-     * from stale host render-plan menu rows. */
+     * from the CSB view receipt, and use an asset-only door command so
+     * capture consumers cannot satisfy this route with the old no-asset
+     * fallback text/door path. */
     for (i = 0; i < out_plan->menu_option_count &&
                 i < CSB_V1_STARTUP_MENU_OPTION_CAP_PC34; ++i) {
         CSB_V1_StartupMenuOption_PC34 *option = &out_plan->menu_options[i];
@@ -2933,8 +2953,7 @@ int csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
         out_receipt->route = view->route_receipt.route;
         out_receipt->startup_render_plan_valid = 1;
         out_receipt->draw_closed_doors = 1;
-        out_receipt->draw_fallback_text =
-            view->route_receipt.draw_fallback_text ? 1 : 0;
+        out_receipt->draw_fallback_text = 0;
         out_receipt->suppress_legacy_utility_fallback =
             view->suppress_legacy_utility_fallback ? 1 : 0;
         out_receipt->option_count = view->closed_door_menu_option_count;
@@ -2954,7 +2973,8 @@ int csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
                  view->closed_door_prompt);
         /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns closed-door
          * command rows, Resume gating, and the prompt. This draw receipt is
-         * the CSB-owned consumption boundary for the entrance HUD/menu. */
+         * the CSB-owned consumption boundary for the entrance HUD/menu; it
+         * deliberately does not advertise the legacy fallback-text branch. */
         return 1;
     }
 
@@ -4323,7 +4343,7 @@ static void csb_v1_boot_startup_route_from_presentation_pc34(
         case CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34:
             out_receipt->draw_surface = 1;
             out_receipt->draw_closed_doors = 1;
-            out_receipt->draw_fallback_text = 1;
+            out_receipt->draw_fallback_text = 0;
             out_receipt->hud_menu_visible =
                 presentation->render_plan.waiting_for_input ? 1 : 0;
             break;
