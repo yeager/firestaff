@@ -156,12 +156,15 @@ typedef enum {
 typedef struct {
     Nexus_V1_StartupAssetHandoffRoute route;
     Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_MenuBpkRendererHandoffReceipt menu_bpk_renderer_handoff;
     int title_asset_handoff_ready;
     int real_menu_asset_handoff_ready;
     int audio_asset_handoff_ready;
     int main_menu_route_ready;
     int saturn_asset_handoff_ready;
     int real_asset_route_ready;
+    int menu_bpk_renderer_handoff_valid;
+    int menu_bpk_prs3_blocks_real_menu_route;
     int blocks_main_menu_route;
     int fallback_visuals_permitted;
     const char *title_asset_route;
