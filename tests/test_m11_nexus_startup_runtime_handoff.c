@@ -133,6 +133,13 @@ int main(void)
                     view.nexusState.startup_display_callers_use_package_receipt == 1 &&
                     view.nexusState.startup_saturn_timing_exact == 1 &&
                     view.nexusState.startup_saturn_capture_frames_exact == 1 &&
+                    view.nexusState.startup_saturn_warning_frame == 0 &&
+                    view.nexusState.startup_saturn_title_capture_frame == 48 &&
+                    view.nexusState.startup_saturn_title_ready_frame == 102 &&
+                    view.nexusState.startup_saturn_gameover_capture_frame == 0 &&
+                    view.nexusState.startup_title_timing_frame == -1 &&
+                    view.nexusState.startup_title_timing_frame_max == 102 &&
+                    view.nexusState.startup_title_timing_ready == 1 &&
                     view.nexusState.startup_copied_draw_command_count > 0 &&
                     view.nexusState.startup_copied_dgn_render_command_count > 0,
                 "M11 Nexus startup gate consumes host-caller receipt for capture and DGN handoff");
@@ -169,6 +176,10 @@ int main(void)
                     view.nexusState.startup_no_fallback_visuals_enforced == 1 &&
                     view.nexusState.startup_suppress_fallback_visuals == 1 &&
                     view.nexusState.startup_suppress_legacy_placeholder_visuals == 1 &&
+                    view.nexusState.startup_saturn_warning_frame == 0 &&
+                    view.nexusState.startup_saturn_title_capture_frame == 48 &&
+                    view.nexusState.startup_saturn_title_ready_frame == 102 &&
+                    view.nexusState.startup_saturn_gameover_capture_frame == 0 &&
                     view.nexusState.startup_copied_draw_command_count == 0 &&
                     view.nexusState.startup_copied_dgn_render_command_count == 0,
                 "M11 Nexus blocked startup suppresses fallback through host-caller receipt");

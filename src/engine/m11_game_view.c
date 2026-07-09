@@ -10280,6 +10280,20 @@ static void m11_nexus_apply_startup_host_caller_receipt(
         receipt->saturn_timing_exact ? 1 : 0;
     state->nexusState.startup_saturn_capture_frames_exact =
         receipt->saturn_capture_frames_exact ? 1 : 0;
+    state->nexusState.startup_saturn_warning_frame =
+        receipt->saturn_warning_frame;
+    state->nexusState.startup_saturn_title_capture_frame =
+        receipt->saturn_title_capture_frame;
+    state->nexusState.startup_saturn_title_ready_frame =
+        receipt->saturn_title_ready_frame;
+    state->nexusState.startup_saturn_gameover_capture_frame =
+        receipt->saturn_gameover_capture_frame;
+    state->nexusState.startup_title_timing_frame =
+        receipt->title_timing_frame;
+    state->nexusState.startup_title_timing_frame_max =
+        receipt->title_timing_frame_max;
+    state->nexusState.startup_title_timing_ready =
+        receipt->title_timing_ready ? 1 : 0;
     state->nexusState.startup_copied_draw_command_count =
         receipt->copied_startup_command_count;
     state->nexusState.startup_copied_dgn_render_command_count =
