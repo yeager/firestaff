@@ -325,8 +325,17 @@ static void test_tqsv_only_resume_claim(void) {
         return;
     }
 
-    uint8_t champion_data[THERON_SAVE_CHAMPION_BLOCK_SIZE * 4];
+    uint8_t champion_data[THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
+    Theron_V1_Party party;
     memset(champion_data, 0, sizeof(champion_data));
+    theron_v1_party_init(&party, THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+    party.leader_x = 6;
+    party.leader_y = 7;
+    party.leader_dir = 1;
+    expect_true(theron_v1_party_pack(&party,
+                                     champion_data,
+                                     sizeof(champion_data)) > 0,
+                "tqsv-only party pack");
     Theron_DungeonProgression prog;
     memset(&prog, 0, sizeof(prog));
     /* Init to a valid dungeon so the save_to_slot API does not
@@ -381,6 +390,66 @@ static void test_tqsv_only_resume_claim(void) {
         expect_true(explicit_snap.tqsv_active_slot == 2 &&
                         explicit_snap.tqsv_valid_slots == 1,
                     "explicit tqsv path selects requested slot");
+    }
+    {
+        Theron_StartupAction action;
+        Theron_StartupActionPlan plan;
+        Theron_V1StartupContinueResult continue_result;
+        Theron_StartupHostReceipt host_receipt;
+        Theron_StartupStateReceipt state_receipt;
+        Theron_V1_World world;
+        char receipt[256];
+
+        theron_v1_startup_action_init(&action);
+        action.kind = THERON_STARTUP_ACTION_CONTINUE_SAVE;
+        expect_true(theron_v1_startup_plan_for_action(&action, &plan) == 1,
+                    "tqsv-only host plan");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(theron_v1_startup_continue_tqsv_apply_with_host_receipts(
+                        &world,
+                        tqsv_root,
+                        2,
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) == 1 &&
+                        continue_result.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strcmp(host_receipt.status, "CONTINUE LOADED") == 0 &&
+                        strstr(host_receipt.inspect_detail,
+                               "after dungeon 2") != NULL &&
+                        state_receipt.flow_changed &&
+                        state_receipt.flow.selected_dungeon ==
+                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    "tqsv-only slot emits host and state receipts");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(!theron_v1_startup_continue_tqsv_apply_with_host_receipts(
+                        &world,
+                        tqsv_root,
+                        7,
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strstr(host_receipt.status,
+                               "Continue slot 7 failed") != NULL &&
+                        strstr(host_receipt.inspect_detail,
+                               "source=NONE") != NULL,
+                    "tqsv-only empty slot emits host failure receipt");
     }
 
     cleanup_tqsv_root(tqsv_root);
