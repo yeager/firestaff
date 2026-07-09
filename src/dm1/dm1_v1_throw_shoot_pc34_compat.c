@@ -1656,7 +1656,10 @@ int dm1_v1_projectile_champion_poison_apply_pc34(
                          outPlan->poisonPlan.poisonDamage);
     champion->poisonDose = (unsigned short)outPlan->poisonPlan.newPoisonDose;
     outPlan->championDown = champion->hp.current == 0 ? 1 : 0;
-    if (outPlan->poisonPlan.nextAttack > 0) {
+    /* ReDMCSB CHAMPION.C F0319 lines 1651-1652 unpoisons killed champions;
+     * Firestaff mutates poison HP immediately, so do not enqueue a dead
+     * champion's next C75 chain event. */
+    if (outPlan->poisonPlan.nextAttack > 0 && !outPlan->championDown) {
         outPlan->schedulePoisonEvent = 1;
         outPlan->incrementPoisonEventCount = 1;
         outPlan->poisonEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;

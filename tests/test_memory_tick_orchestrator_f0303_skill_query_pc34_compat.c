@@ -3587,6 +3587,109 @@ static void test_orch_projectile_champion_hit_applies_poison(void) {
     assert(sawPoisonEvent);
 }
 
+static void test_orch_projectile_champion_hit_poison_kill_does_not_reschedule(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    struct ProjectileCreateInput_Compat createIn;
+    struct TimelineEvent_Compat firstMove;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int slot = -1;
+    int sawChampionDown = 0;
+    int sawPoisonEvent = 0;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 7;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.direction = 1;
+    world.party.championCount = 2;
+    world.party.champions[0].present = 1;
+    world.party.champions[0].hp.current = 999;
+    world.party.champions[0].hp.maximum = 999;
+    world.party.champions[0].cell = 0;
+    world.party.champions[1].present = 1;
+    world.party.champions[1].hp.current = 34;
+    world.party.champions[1].hp.maximum = 34;
+    world.party.champions[1].cell = 1;
+    world.party.champions[1].poisonDose = 0;
+    assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 3u) == 1);
+
+    memset(&createIn, 0, sizeof(createIn));
+    createIn.category = PROJECTILE_CATEGORY_MAGICAL;
+    createIn.subtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+    createIn.ownerKind = PROJECTILE_OWNER_CREATURE;
+    createIn.ownerIndex = 0;
+    createIn.mapIndex = 0;
+    createIn.mapX = 1;
+    createIn.mapY = 0;
+    createIn.cell = 0;
+    createIn.direction = 3;
+    createIn.kineticEnergy = 80;
+    createIn.attack = 32;
+    createIn.stepEnergy = 10;
+    createIn.poisonAttack = 128;
+    createIn.currentTick = 100;
+    createIn.firstMoveGraceFlag = 0;
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot, &firstMove) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    {
+        int rc = F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result);
+        assert(rc == ORCH_OK);
+    }
+    assert(world.projectiles.count == 0);
+    assert(world.party.champions[1].hp.current == 0);
+    assert(world.party.champions[1].poisonDose == 128);
+    assert(world.lifecycle.champions[1].poisonEventCount == 0);
+
+    for (i = 0; i < result.emissionCount; ++i) {
+        if (result.emissions[i].kind == EMIT_CHAMPION_DOWN &&
+            result.emissions[i].payload[0] == 1) {
+            sawChampionDown = 1;
+        }
+    }
+    for (i = 0; i < world.timeline.count; ++i) {
+        if (world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+            world.timeline.events[i].aux0 == LIFECYCLE_STATUS_POISON &&
+            world.timeline.events[i].aux4 == 1) {
+            sawPoisonEvent = 1;
+        }
+    }
+    assert(sawChampionDown);
+    assert(!sawPoisonEvent);
+}
+
 static void test_orch_projectile_champion_hit_uses_f0321_magic_scale(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -7275,6 +7378,7 @@ int main(void) {
     test_orch_projectile_champion_hit_uses_equipped_armour_defense();
     test_orch_projectile_champion_hit_uses_hand_shield_strength();
     test_orch_projectile_champion_hit_applies_poison();
+    test_orch_projectile_champion_hit_poison_kill_does_not_reschedule();
     test_orch_projectile_champion_hit_uses_f0321_magic_scale();
     test_orch_projectile_champion_hit_uses_f0313_rng_scale();
     test_orch_projectile_group_hit_applies_damage();
