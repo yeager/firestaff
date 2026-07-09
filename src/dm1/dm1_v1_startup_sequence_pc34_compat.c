@@ -375,6 +375,9 @@ int dm1_v1_startup_handoff_post_launch_plan_pc34(
     const char* source_id,
     DM1_V1_StartupHandoffPostLaunchPlan_PC34* out_plan) {
     int required;
+    DM1_V1_StartupTitleMenuEligibilityFacts_PC34 title_facts;
+    DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 title_receipt;
+    DM1_V1_EntranceCtxPc34 entrance_ctx;
 
     if (!out_plan) {
         return 0;
@@ -386,6 +389,39 @@ int dm1_v1_startup_handoff_post_launch_plan_pc34(
     out_plan->play_entrance = required ? 1 : 0;
     out_plan->entrance_auto_enter_ms = required ? 1200 : 0;
     out_plan->source_id = source_id;
+    if (required) {
+        memset(&title_facts, 0, sizeof(title_facts));
+        memset(&title_receipt, 0, sizeof(title_receipt));
+        title_facts.title_frame =
+            dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1u;
+        title_facts.title_frame_max =
+            dm1_v1_startup_title_frame_bank_equivalent_steps_pc34();
+        title_facts.advance_requested = 1;
+        title_facts.title_handoff_ready = 1;
+        if (!dm1_v1_startup_title_menu_eligibility_receipt_pc34(
+                &title_facts,
+                &title_receipt)) {
+            return 0;
+        }
+        DM1_V1_Entrance_InitPc34Compat(&entrance_ctx);
+        if (!DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
+                &entrance_ctx,
+                &out_plan->entrance_full_start_receipt)) {
+            return 0;
+        }
+        out_plan->title_menu_boundary_frame = (int)title_facts.title_frame;
+        out_plan->title_menu_eligible = title_receipt.menu_eligible;
+        out_plan->title_keep_surface = title_receipt.keep_title_surface;
+        out_plan->title_consume_pending_input =
+            title_receipt.consume_pending_input;
+        out_plan->title_next_stage = title_receipt.next_stage;
+        out_plan->title_menu_reason = title_receipt.reason;
+        out_plan->entrance_wait_stage = DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34;
+        /* ReDMCSB TITLE.C F0437:319-409 finishes PRESENTS/title/guard before
+         * ENTRANCE.C F0441:850-883 discards input and waits on entrance.
+         * F0797:68-80 builds the C255 5x5 entrance micro-dungeon that M11/M12
+         * should consume from this DM1-owned startup plan. */
+    }
     return 1;
 }
 

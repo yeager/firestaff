@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_DM1_V1_STARTUP_SEQUENCE_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_STARTUP_SEQUENCE_PC34_COMPAT_H
 
+#include "dm1_v1_entrance_champion_select_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,6 +44,14 @@ typedef struct DM1_V1_StartupHandoffPostLaunchPlan_PC34 {
     int play_title;
     int play_entrance;
     int entrance_auto_enter_ms;
+    int title_menu_boundary_frame;
+    int title_menu_eligible;
+    int title_keep_surface;
+    int title_consume_pending_input;
+    DM1_V1_StartupStage_PC34 title_next_stage;
+    const char* title_menu_reason;
+    DM1_V1_StartupStage_PC34 entrance_wait_stage;
+    DM1_V1_EntranceFullStartRenderReceiptPc34 entrance_full_start_receipt;
     const char* source_id;
 } DM1_V1_StartupHandoffPostLaunchPlan_PC34;
 
