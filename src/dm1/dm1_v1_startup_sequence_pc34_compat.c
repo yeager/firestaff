@@ -1491,6 +1491,82 @@ int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* apply,
+    const DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34* facts,
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 receipt;
+
+    if (!apply || !facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!apply->handled) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    receipt.consumed_runtime_apply_receipt = 1;
+    receipt.consumed_suppression_facts = 1;
+    receipt.capture_phase = apply->capture_phase;
+    receipt.source_evidence =
+        "ReDMCSB ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    if (!apply->ready ||
+        !apply->apply_before_hoc_input ||
+        !apply->apply_hall_mirror_overlay ||
+        !apply->suppress_title_surface ||
+        !apply->suppress_closed_door_frame ||
+        !apply->suppress_host_fallback_visuals) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB ENTRANCE.C F0797 builds the C255 5x5 entrance micro-dungeon
+     * and F0441 waits in Hall before dungeon entry.  HoC first-frame capture
+     * must therefore prove mirror overlay presence while rejecting item,
+     * projectile, spell-effect, and mirror-as-thing payload leakage. */
+    receipt.ready = 1;
+    receipt.champion_mirror_overlay_present =
+        facts->observed_hall_mirror_overlay &&
+        apply->hall_overlay_kind == DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34;
+    receipt.false_item_payloads_absent =
+        facts->observed_false_floor_item_payload_count == 0;
+    receipt.projectile_payloads_absent =
+        facts->observed_projectile_payload_count == 0;
+    receipt.spell_effect_payloads_absent =
+        facts->observed_spell_effect_payload_count == 0;
+    receipt.mirror_payload_thing_absent =
+        facts->observed_mirror_payload_as_thing_count == 0;
+    receipt.fallback_visuals_absent =
+        !facts->observed_host_fallback_visuals &&
+        apply->suppress_host_fallback_visuals;
+    receipt.stale_title_absent =
+        !facts->observed_title_surface && apply->suppress_title_surface;
+    receipt.stale_door_absent =
+        !facts->observed_closed_door_frame &&
+        apply->suppress_closed_door_frame;
+    receipt.command_count_matches =
+        facts->observed_hoc_render_command_count == apply->render_command_count;
+    receipt.enter_block_matches =
+        facts->observed_enter_blocked_until_champion_selected ==
+        apply->block_enter_until_champion_selected;
+    receipt.proof_passed =
+        receipt.champion_mirror_overlay_present &&
+        receipt.false_item_payloads_absent &&
+        receipt.projectile_payloads_absent &&
+        receipt.spell_effect_payloads_absent &&
+        receipt.mirror_payload_thing_absent &&
+        receipt.fallback_visuals_absent &&
+        receipt.stale_title_absent &&
+        receipt.stale_door_absent &&
+        receipt.command_count_matches &&
+        receipt.enter_block_matches;
+    receipt.walk_capture_safe = receipt.proof_passed;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

@@ -360,6 +360,40 @@ typedef struct DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34 {
+    int observed_hall_mirror_overlay;
+    int observed_false_floor_item_payload_count;
+    int observed_projectile_payload_count;
+    int observed_spell_effect_payload_count;
+    int observed_mirror_payload_as_thing_count;
+    int observed_host_fallback_visuals;
+    int observed_title_surface;
+    int observed_closed_door_frame;
+    int observed_enter_blocked_until_champion_selected;
+    int observed_hoc_render_command_count;
+} DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34;
+
+typedef struct DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 {
+    int handled;
+    int ready;
+    int proof_passed;
+    int consumed_runtime_apply_receipt;
+    int consumed_suppression_facts;
+    int champion_mirror_overlay_present;
+    int false_item_payloads_absent;
+    int projectile_payloads_absent;
+    int spell_effect_payloads_absent;
+    int mirror_payload_thing_absent;
+    int fallback_visuals_absent;
+    int stale_title_absent;
+    int stale_door_absent;
+    int command_count_matches;
+    int enter_block_matches;
+    int walk_capture_safe;
+    const char* capture_phase;
+    const char* source_evidence;
+} DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34;
+
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
     int (*begin_prelude_plan)(void* user,
@@ -717,6 +751,10 @@ int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
     const DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34* artifact,
     const DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34* proof,
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* apply,
+    const DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34* facts,
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34* out_receipt);
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

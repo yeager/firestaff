@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass886 DM1 HoC full-graphics thing suppression receipt: startup HoC capture now has a DM1-owned receipt proving Hall mirror overlay while rejecting false floor item, projectile, spell-effect, mirror-payload, stale title/door, and host fallback visual leaks before HoC walk/capture. Verification: DM1 startup intro state-machine test, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB packaged host startup consumers: boot now emits host-view and host-input dispatch receipts that package title/PRESENTS/CHAOS/STRIKES, utility HUD, closed-door menu, door-opening, runtime handoff, and keyboard/pointer startup decisions for M11 consumers. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_launcher_handoff_boundary`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass881 DM2 startup exact title timing receipt: DM2 boot full-start/host-view receipts now expose title cycle position, frame start/next tick, frame elapsed/remaining tick, cycle remaining tick, and nonzero tick real-GDAT title/menu proof for host consumers. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
