@@ -165,10 +165,25 @@ typedef struct DM2_V1_StartupHostFacts {
     const char *scan_save_root;
 } DM2_V1_StartupHostFacts;
 
+typedef struct DM2_V1_StartupRuntimeHandoffReceipt {
+    int valid;
+    int startup_menu_active;
+    int animation_active;
+    char animation[32];
+    int title_frame;
+    int title_frame_max;
+    int title_ready;
+    int initialize_v2_runtime;
+    int initialize_hud_runtime;
+    int initialize_touch_runtime;
+    int hud_runtime_ready;
+} DM2_V1_StartupRuntimeHandoffReceipt;
+
 typedef struct DM2_V1_StartupLaunchReceipt {
     DM2_V1_StartupHostReceipt host_receipt;
     int menu_state_receipt_valid;
     DM2_V1_StartupMenuStateReceipt menu_state_receipt;
+    DM2_V1_StartupRuntimeHandoffReceipt runtime_handoff;
     int session_valid;
     DM2_V1_SessionState session;
 } DM2_V1_StartupLaunchReceipt;
