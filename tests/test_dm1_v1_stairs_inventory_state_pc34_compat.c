@@ -2,7 +2,7 @@
  * DM1 V1 Stairs Inventory State — narrow CTest gate
  *
  * Bridges the DM1_V1_RoomTransition_BuildPlanPc34Compat module and the
- * DM1_V1_InventoryStatePc34 / M11_StairLevelState modules and asserts the
+ * DM1_V1_InventoryStatePc34 / DM1_V1_StairLevelStatePc34 modules and asserts the
  * ReDMCSB-derived contract that a stairs-triggered level change does NOT
  * mutate the per-champion inventory state.  Concretely:
  *
@@ -159,14 +159,14 @@ static void test_stairs_plan_preserves_open_chest_state(void)
                 "DUNGEON.C:F0174_DUNGEON_SetCurrentMapAndPartyMap:2742-2762");
 }
 
-/* ── Test 2: M11_StairLevelState transition does not touch inventory ──── */
+/* ── Test 2: DM1_V1_StairLevelStatePc34 transition does not touch inventory ──── */
 
 static void test_stairs_use_leaves_open_chest_intact(void)
 {
     /*
-     * The M11_StairLevelState carries the per-level layout metadata
+     * The DM1_V1_StairLevelStatePc34 carries the per-level layout metadata
      * (stairs[] and levels[]) and exposes a transition counter.  Calling
-     * m11_stairs_use only mutates currentLevel, transitionActive,
+     * DM1_V1_Stairs_UsePc34Compat only mutates currentLevel, transitionActive,
      * transitionTicksLeft, transitionFromLevel, and transitionToLevel.
      * It MUST NOT touch the DM1_V1_InventoryStatePc34 that the caller holds
      * alongside it.
@@ -175,9 +175,9 @@ static void test_stairs_use_leaves_open_chest_intact(void)
      * is in M516_CHAMPIONS, not in the level state), so the test is
      * really checking that there is no implicit shared pointer.  In the
      * PC 3.4 layout, M516 is a global array in CHAMPION.C and the level
-     * state is a separate M11_StairLevelState; they are independent.
+     * state is a separate DM1_V1_StairLevelStatePc34; they are independent.
      */
-    M11_StairLevelState stairs;
+    DM1_V1_StairLevelStatePc34 stairs;
     DM1_V1_InventoryStatePc34 inv;
     DM1_V1_ItemPc34 linked[8];
     int champ = 0;
@@ -188,17 +188,17 @@ static void test_stairs_use_leaves_open_chest_intact(void)
     int useRc, transitioning;
     int i;
 
-    m11_stairs_init(&stairs);
-    m11_stairs_add_level(&stairs, 16, 16);
-    m11_stairs_add_level(&stairs, 16, 16);
+    DM1_V1_Stairs_InitPc34Compat(&stairs);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
     /* Stairs at (7, 8) facing south on level 0 → (7, 8) facing south on level 1. */
     expect_int("stairs_add",
-               m11_stairs_add(&stairs, 7, 8, 2, 1, 7, 8, 2), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 7, 8, 2, 1, 7, 8, 2), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142; DUNGEON.C:F0154");
     expect_int("stairs_initial_level", stairs.currentLevel, 0,
-               "M11_StairLevelState init");
+               "DM1_V1_StairLevelStatePc34 init");
     expect_int("stairs_initial_transition", stairs.transitionActive, 0,
-               "M11_StairLevelState init");
+               "DM1_V1_StairLevelStatePc34 init");
 
     /* Build a fully-open chest state in the inventory. */
     DM1_V1_Inventory_InitPc34Compat(&inv, 1);
@@ -230,7 +230,7 @@ static void test_stairs_use_leaves_open_chest_intact(void)
     slotChargeBefore = inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].charges;
 
     /* Take the stairs. */
-    useRc = m11_stairs_use(&stairs, 7, 8, &newX, &newY, &newFacing);
+    useRc = DM1_V1_Stairs_UsePc34Compat(&stairs, 7, 8, &newX, &newY, &newFacing);
     expect_int("stairs_use_rc", useRc, 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142; MOVESENS.C:F0267");
     expect_int("stairs_use_x", newX, 7,
@@ -240,7 +240,7 @@ static void test_stairs_use_leaves_open_chest_intact(void)
     expect_int("stairs_use_facing", newFacing, 2,
                "DUNGEON.C:F0155_GetStairsExitDirection");
 
-    /* M11_StairLevelState reflects the level change. */
+    /* DM1_V1_StairLevelStatePc34 reflects the level change. */
     expect_int("stairs_level_after_use", stairs.currentLevel, 1,
                "DUNGEON.C:F0154_GetLocationAfterLevelChange");
     expect_int("stairs_transition_active_after_use", stairs.transitionActive, 1,
@@ -303,9 +303,9 @@ static void test_stairs_use_leaves_open_chest_intact(void)
     /* Tick the stairs transition to completion; the level state should
      * settle but the inventory must STILL be untouched. */
     for (i = 0; i < 16; ++i) {
-        m11_stairs_tick(&stairs, 100);
+        DM1_V1_Stairs_TickPc34Compat(&stairs, 100);
     }
-    transitioning = m11_stairs_is_transitioning(&stairs);
+    transitioning = DM1_V1_Stairs_IsTransitioningPc34Compat(&stairs);
     expect_int("stairs_transition_settled", transitioning, 0,
                "GAMELOOP.C:58-64 deferred new-party-map processing; "
                "DUNGEON.C:F0173:2724-2740");
@@ -331,18 +331,18 @@ static void test_stairs_use_with_no_chest_keeps_inventory_panel(void)
      * must be PANEL_INVENTORY (or FOOD_WATER_POISONED) across the
      * stairs, and no slot is touched.
      */
-    M11_StairLevelState stairs;
+    DM1_V1_StairLevelStatePc34 stairs;
     DM1_V1_InventoryStatePc34 inv;
     int champ = 0;
     int newX, newY, newFacing;
     int panelBefore;
     int i;
 
-    m11_stairs_init(&stairs);
-    m11_stairs_add_level(&stairs, 16, 16);
-    m11_stairs_add_level(&stairs, 16, 16);
+    DM1_V1_Stairs_InitPc34Compat(&stairs);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
     expect_int("stairs_add_2",
-               m11_stairs_add(&stairs, 3, 3, 0, 1, 3, 3, 0), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 3, 3, 0, 1, 3, 3, 0), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
     DM1_V1_Inventory_InitPc34Compat(&inv, 1);
@@ -363,7 +363,7 @@ static void test_stairs_use_with_no_chest_keeps_inventory_panel(void)
                "PANEL.C:G0426_T_OpenChest initially C0xFFFF_THING_NONE");
 
     expect_int("stairs_use_no_chest",
-               m11_stairs_use(&stairs, 3, 3, &newX, &newY, &newFacing), 1,
+               DM1_V1_Stairs_UsePc34Compat(&stairs, 3, 3, &newX, &newY, &newFacing), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("stairs_use_x_no_chest", newX, 3,
                "DUNGEON.C:F0154_GetLocationAfterLevelChange");
@@ -389,7 +389,7 @@ static void test_stairs_use_with_no_chest_keeps_inventory_panel(void)
 
     /* Ticking through the transition must also not toggle the panel. */
     for (i = 0; i < 32; ++i) {
-        m11_stairs_tick(&stairs, 100);
+        DM1_V1_Stairs_TickPc34Compat(&stairs, 100);
     }
     expect_int("panel_unchanged_after_ticks",
                DM1_V1_Inventory_GetPanelContentPc34Compat(&inv),
@@ -410,11 +410,11 @@ static void test_two_stairs_uses_keep_open_chest_across_both(void)
      * the level change, the tick to settle, the next level change,
      * and the tick to settle again.
      *
-     * M11_StairLevelState::m11_stairs_check matches the first stairs
+     * DM1_V1_StairLevelStatePc34::DM1_V1_Stairs_CheckPc34Compat matches the first stairs
      * registered at a given (x,y), so we use distinct coordinates for
      * the up- and down-stairs to be able to drive both transitions.
      */
-    M11_StairLevelState stairs;
+    DM1_V1_StairLevelStatePc34 stairs;
     DM1_V1_InventoryStatePc34 inv;
     DM1_V1_ItemPc34 linked[8];
     int champ = 0;
@@ -422,15 +422,15 @@ static void test_two_stairs_uses_keep_open_chest_across_both(void)
     int openThing = 0xC0DE;
     int i;
 
-    m11_stairs_init(&stairs);
-    m11_stairs_add_level(&stairs, 16, 16);
-    m11_stairs_add_level(&stairs, 16, 16);
+    DM1_V1_Stairs_InitPc34Compat(&stairs);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
     /* Up-stairs: (5,5)→(5,5) on level 0→1, down-stairs: (10,10)→(10,10) on level 1→0. */
     expect_int("stairs_add_first",
-               m11_stairs_add(&stairs, 5, 5, 0, 1, 5, 5, 0), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 5, 5, 0, 1, 5, 5, 0), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("stairs_add_second",
-               m11_stairs_add(&stairs, 10, 10, 0, 0, 10, 10, 0), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 10, 10, 0, 0, 10, 10, 0), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
     DM1_V1_Inventory_InitPc34Compat(&inv, 1);
@@ -443,22 +443,22 @@ static void test_two_stairs_uses_keep_open_chest_across_both(void)
 
     /* Stairs up. */
     expect_int("stairs_up_use",
-               m11_stairs_use(&stairs, 5, 5, &newX, &newY, &newFacing), 1,
+               DM1_V1_Stairs_UsePc34Compat(&stairs, 5, 5, &newX, &newY, &newFacing), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("stairs_up_level", stairs.currentLevel, 1,
                "DUNGEON.C:F0154_GetLocationAfterLevelChange");
-    for (i = 0; i < 16; ++i) m11_stairs_tick(&stairs, 100);
+    for (i = 0; i < 16; ++i) DM1_V1_Stairs_TickPc34Compat(&stairs, 100);
     expect_int("open_chest_after_up",
                DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openThing,
                "PANEL.C:G0426_T_OpenChest survives first stairs up");
 
     /* Stairs down. */
     expect_int("stairs_down_use",
-               m11_stairs_use(&stairs, 10, 10, &newX, &newY, &newFacing), 1,
+               DM1_V1_Stairs_UsePc34Compat(&stairs, 10, 10, &newX, &newY, &newFacing), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("stairs_down_level", stairs.currentLevel, 0,
                "DUNGEON.C:F0154_GetLocationAfterLevelChange");
-    for (i = 0; i < 16; ++i) m11_stairs_tick(&stairs, 100);
+    for (i = 0; i < 16; ++i) DM1_V1_Stairs_TickPc34Compat(&stairs, 100);
     expect_int("open_chest_after_down",
                DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openThing,
                "PANEL.C:G0426_T_OpenChest survives second stairs down");

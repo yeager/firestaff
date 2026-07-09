@@ -11,7 +11,7 @@
  *
  * This gate pins the *positive* path end-to-end with a synthetic 2-level
  * dungeon whose stairs squares have an actual element byte, plus pins
- * the four M11_StairLevelState state-machine invariants (I1..I4) that
+ * the four DM1_V1_StairLevelStatePc34 state-machine invariants (I1..I4) that
  * govern the level-transition timing in the M11 launcher seam.
  *
  * Why this matters now:
@@ -19,7 +19,7 @@
  *     neighbor checks swapped (see the inline comment in
  *     `memory_movement_pc34_compat.c:132`).  Without a focused gate,
  *     that swap can silently regress again.
- *   - The M11_StairLevelState state machine has only informal invariants
+ *   - The DM1_V1_StairLevelStatePc34 state machine has only informal invariants
  *     (I1..I4 in `dm1_v1_stairs_level_pc34_compat.c`) and no test that
  *     pins the no-concurrent-transitions / write-order / clamp-to-zero /
  *     idempotent-no-op behavior across M11 launcher ticks.
@@ -478,23 +478,23 @@ static void test_f0705_returns_zero_when_no_target_map_covers_coord(void)
                "F0705 keeps toMapIndex = party.mapIndex on F0154 miss");
 }
 
-/* ── Test 6: M11_StairLevelState invariants I1..I4 across
- *       m11_stairs_use and m11_stairs_tick.  This pins the state-machine
+/* ── Test 6: DM1_V1_StairLevelStatePc34 invariants I1..I4 across
+ *       DM1_V1_Stairs_UsePc34Compat and DM1_V1_Stairs_TickPc34Compat.  This pins the state-machine
  *       contract that the M11 launcher tick relies on. */
 
 static void test_m11_stairs_state_machine_invariants(void)
 {
-    M11_StairLevelState s;
+    DM1_V1_StairLevelStatePc34 s;
     int newX, newY, newFacing;
     int rc;
 
-    m11_stairs_init(&s);
-    m11_stairs_add_level(&s, 16, 16);
-    m11_stairs_add_level(&s, 16, 16);
-    rc = m11_stairs_add(&s, 5, 6, DM1_STAIR_UP, /*destLevel=*/1,
+    DM1_V1_Stairs_InitPc34Compat(&s);
+    DM1_V1_Stairs_AddLevelPc34Compat(&s, 16, 16);
+    DM1_V1_Stairs_AddLevelPc34Compat(&s, 16, 16);
+    rc = DM1_V1_Stairs_AddPc34Compat(&s, 5, 6, DM1_STAIR_UP, /*destLevel=*/1,
                         /*destX=*/5, /*destY=*/6, /*destFacing=*/DM1_STAIR_UP);
     expect_int("m11.add_rc", rc, 1,
-               "M11_StairDef registration before transition");
+               "DM1_V1_StairDefPc34 registration before transition");
     expect_int("m11.current_level_init", s.currentLevel, 0,
                "I0 — fresh init keeps currentLevel=0");
     expect_int("m11.transition_active_init", s.transitionActive, 0,
@@ -503,23 +503,23 @@ static void test_m11_stairs_state_machine_invariants(void)
     /* I4 — tick is idempotent when inactive (no state mutation, no
      * underflow).  Tick with absurd values to make sure no negative
      * underflow reaches transitionActive. */
-    m11_stairs_tick(&s, 1);
-    m11_stairs_tick(&s, 100000);
+    DM1_V1_Stairs_TickPc34Compat(&s, 1);
+    DM1_V1_Stairs_TickPc34Compat(&s, 100000);
     expect_int("m11.i4_idempotent_active", s.transitionActive, 0,
                "I4 — tick with transitionActive=0 is a no-op");
     expect_int("m11.i4_idempotent_ticks_left", s.transitionTicksLeft, 0,
                "I4 — ticksLeft stays at 0, never underflows");
 
     /* Use the stairs at (5, 6): triggers the transition. */
-    rc = m11_stairs_use(&s, 5, 6, &newX, &newY, &newFacing);
+    rc = DM1_V1_Stairs_UsePc34Compat(&s, 5, 6, &newX, &newY, &newFacing);
     expect_int("m11.use_rc", rc, 1,
                "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:441-451 — staircase lookup");
     expect_int("m11.use_newX", newX, 5,
-               "M11_StairDef.destX carry-over");
+               "DM1_V1_StairDefPc34.destX carry-over");
     expect_int("m11.use_newY", newY, 6,
-               "M11_StairDef.destY carry-over");
+               "DM1_V1_StairDefPc34.destY carry-over");
     expect_int("m11.use_newFacing", newFacing, DM1_STAIR_UP,
-               "M11_StairDef.destFacing carry-over");
+               "DM1_V1_StairDefPc34.destFacing carry-over");
 
     /* I2 — write order: fromLevel/toLevel/currentLevel/ticksLeft all
      * set BEFORE transitionActive becomes 1. */
@@ -535,9 +535,9 @@ static void test_m11_stairs_state_machine_invariants(void)
                "I2 — transitionActive=1 is the LAST write of the use sequence");
 
     /* I1 — concurrent use while in flight is rejected. */
-    rc = m11_stairs_use(&s, 5, 6, &newX, &newY, &newFacing);
+    rc = DM1_V1_Stairs_UsePc34Compat(&s, 5, 6, &newX, &newY, &newFacing);
     expect_int("m11.i1_concurrent_use_rejected", rc, 0,
-               "I1 — m11_stairs_use must reject while transitionActive=1");
+               "I1 — DM1_V1_Stairs_UsePc34Compat must reject while transitionActive=1");
     expect_int("m11.i1_state_unchanged_current_level",
                s.currentLevel, 1,
                "I1 — currentLevel not corrupted by concurrent call");
@@ -546,14 +546,14 @@ static void test_m11_stairs_state_machine_invariants(void)
                "I1 — transitionActive stays 1 across rejected concurrent call");
 
     /* I3 — tick clamps to 0 on overshoot, no negative underflow. */
-    m11_stairs_tick(&s, 100000);
+    DM1_V1_Stairs_TickPc34Compat(&s, 100000);
     expect_int("m11.i3_clamp_to_zero", s.transitionTicksLeft, 0,
                "I3 — overshoot clamp keeps transitionTicksLeft=0 (never negative)");
     expect_int("m11.i3_clamp_clears_active", s.transitionActive, 0,
                "I3 — once transitionTicksLeft hits 0, transitionActive clears");
 
     /* I4 — once cleared, tick is again a no-op (and stays at 0/0). */
-    m11_stairs_tick(&s, 100000);
+    DM1_V1_Stairs_TickPc34Compat(&s, 100000);
     expect_int("m11.i4_re_idempotent_after_clear",
                s.transitionActive, 0,
                "I4 — tick after settle stays a no-op");

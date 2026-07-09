@@ -2,16 +2,16 @@
 #include <string.h>
 
 /*
- * Invariants governing the M11_StairLevelState state machine:
+ * Invariants governing the DM1_V1_StairLevelStatePc34 state machine:
  *
- * I1 — No concurrent transitions.  m11_stairs_use must not mutate state while
+ * I1 — No concurrent transitions.  DM1_V1_Stairs_UsePc34Compat must not mutate state while
  *   transitionActive is already 1.  A second stair step during a pending
  *   transition would corrupt currentLevel / transitionFromLevel / transitionToLevel.
  *
  * I2 — IRED (Immutability-before-mutation rule).  transitionFromLevel and
  *   transitionToLevel describe the edge in flight.  Both must be written BEFORE
  *   currentLevel changes, and transitionActive must be set as the very last
- *   write of the m11_stairs_use sequence so that any concurrent caller that
+ *   write of the DM1_V1_Stairs_UsePc34Compat sequence so that any concurrent caller that
  *   tests transitionActive atomically sees either "no transition" or "complete
  *   new transition" — never a partial or mid-flight state.
  *
@@ -24,17 +24,17 @@
  *   m11_game_view.c invoke it every frame without branching on transition state.
  */
 
-void m11_stairs_init(M11_StairLevelState* s) {
+void DM1_V1_Stairs_InitPc34Compat(DM1_V1_StairLevelStatePc34* s) {
     if (!s) return;
-    memset(s, 0, sizeof(M11_StairLevelState));
+    memset(s, 0, sizeof(DM1_V1_StairLevelStatePc34));
     s->currentLevel = 0;
 }
 
-int m11_stairs_add(M11_StairLevelState* s, int x, int y, int dir, int destLevel, int destX, int destY, int destFacing) {
+int DM1_V1_Stairs_AddPc34Compat(DM1_V1_StairLevelStatePc34* s, int x, int y, int dir, int destLevel, int destX, int destY, int destFacing) {
     if (!s) return 0;
-    if (s->stairCount >= M11_MAX_STAIRS) return 0;
+    if (s->stairCount >= DM1_V1_MAX_STAIRS_PC34) return 0;
 
-    M11_StairDef* stair = &s->stairs[s->stairCount];
+    DM1_V1_StairDefPc34* stair = &s->stairs[s->stairCount];
     stair->x = x;
     stair->y = y;
     stair->direction = dir;
@@ -47,7 +47,7 @@ int m11_stairs_add(M11_StairLevelState* s, int x, int y, int dir, int destLevel,
     return 1;
 }
 
-int m11_stairs_check(const M11_StairLevelState* s, int x, int y, M11_StairDef* out) {
+int DM1_V1_Stairs_CheckPc34Compat(const DM1_V1_StairLevelStatePc34* s, int x, int y, DM1_V1_StairDefPc34* out) {
     if (!s || !out) return 0;
 
     for (int i = 0; i < s->stairCount; i++) {
@@ -59,14 +59,14 @@ int m11_stairs_check(const M11_StairLevelState* s, int x, int y, M11_StairDef* o
     return 0;
 }
 
-int m11_stairs_use(M11_StairLevelState* s, int x, int y, int* newX, int* newY, int* newFacing) {
+int DM1_V1_Stairs_UsePc34Compat(DM1_V1_StairLevelStatePc34* s, int x, int y, int* newX, int* newY, int* newFacing) {
     if (!s) return 0;
 
     /* I1 — reject any stair step while a transition is already in flight. */
     if (s->transitionActive) return 0;
 
-    M11_StairDef foundStair;
-    if (!m11_stairs_check(s, x, y, &foundStair)) {
+    DM1_V1_StairDefPc34 foundStair;
+    if (!DM1_V1_Stairs_CheckPc34Compat(s, x, y, &foundStair)) {
         return 0;
     }
 
@@ -93,11 +93,11 @@ int m11_stairs_use(M11_StairLevelState* s, int x, int y, int* newX, int* newY, i
     return 1;
 }
 
-void m11_stairs_add_level(M11_StairLevelState* s, int width, int height) {
+void DM1_V1_Stairs_AddLevelPc34Compat(DM1_V1_StairLevelStatePc34* s, int width, int height) {
     if (!s) return;
-    if (s->levelCount >= M11_MAX_LEVELS) return;
+    if (s->levelCount >= DM1_V1_MAX_LEVELS_PC34) return;
 
-    M11_LevelInfo* level = &s->levels[s->levelCount];
+    DM1_V1_LevelInfoPc34* level = &s->levels[s->levelCount];
     level->width = width;
     level->height = height;
     level->levelIndex = s->levelCount;
@@ -105,7 +105,7 @@ void m11_stairs_add_level(M11_StairLevelState* s, int width, int height) {
     s->levelCount++;
 }
 
-void m11_stairs_tick(M11_StairLevelState* s, int tickMs) {
+void DM1_V1_Stairs_TickPc34Compat(DM1_V1_StairLevelStatePc34* s, int tickMs) {
     if (!s) return;
 
     /*
@@ -124,7 +124,7 @@ void m11_stairs_tick(M11_StairLevelState* s, int tickMs) {
     }
 }
 
-int m11_stairs_is_transitioning(const M11_StairLevelState* s) {
+int DM1_V1_Stairs_IsTransitioningPc34Compat(const DM1_V1_StairLevelStatePc34* s) {
     if (!s) return 0;
     return s->transitionActive;
 }
