@@ -73,12 +73,14 @@ static void setup_party(struct PartyState_Compat* party)
     party->champions[0].maxLoad = 100;
     party->champions[0].stamina.current = 100;
     party->champions[0].stamina.maximum = 100;
+    party->champions[0].cell = DIR_NORTH;
     party->champions[0].direction = DIR_NORTH;
     party->champions[1].present = 1;
     party->champions[1].hp.current = 10;
     party->champions[1].maxLoad = 100;
     party->champions[1].stamina.current = 100;
     party->champions[1].stamina.maximum = 100;
+    party->champions[1].cell = DIR_SOUTH;
     party->champions[1].direction = DIR_EAST;
 }
 
@@ -146,7 +148,13 @@ int main(void)
     ok &= expect_int("turn applied", result.turnApplied, 1);
     ok &= expect_int("turn is no step", result.stepApplied, 0);
     ok &= expect_int("party direction rotates north to east", party.direction, DIR_EAST);
+    ok &= expect_int("turn receipt applied", result.turning.applied, 1);
+    ok &= expect_int("turn receipt delta", result.turning.delta, 1);
+    ok &= expect_int("turn receipt no wall check", result.turning.wallBlockCheck, 0);
+    ok &= expect_int("turn receipt highlights right", result.turning.highlightRight, 1);
+    ok &= expect_int("champion0 cell rotates with party", party.champions[0].cell, DIR_EAST);
     ok &= expect_int("champion0 direction rotates with party", party.champions[0].direction, DIR_EAST);
+    ok &= expect_int("champion1 cell rotates with party", party.champions[1].cell, DIR_WEST);
     ok &= expect_int("champion1 direction rotates with party", party.champions[1].direction, DIR_SOUTH);
     ok &= expect_int("turn requests viewport redraw", result.viewportRedrawRequested, 1);
     ok &= expect_int("turn releases input wait", result.stopWaitingForPlayerInput, 1);
