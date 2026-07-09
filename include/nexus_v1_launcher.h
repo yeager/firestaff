@@ -499,6 +499,7 @@ typedef struct {
     int saturn_gameover_capture_frame;
     int saturn_timing_exact;
     int saturn_capture_frames_exact;
+    int package_route_matches_capture_route;
     int full_start_package_receipt_ready;
     int host_display_caller_expected;
     int route_ready;
@@ -523,6 +524,7 @@ typedef struct {
     int warning_visible;
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupDrawKind first_capture_draw_kind;
+    const char *capture_route_expected_consumer_route;
     const char *consumer_route;
     const char *asset_route;
     const char *startup_ui_blocker;
@@ -654,6 +656,8 @@ typedef struct {
     int menu_capture_uses_real_assets;
     int full_start_package_consumed;
     int package_capture_consumed_by_host;
+    int package_route_matches_capture_route;
+    int host_route_consumes_package_route;
     int title_menu_capture_route_joined;
     int bpk_menu_route_joined;
     int runtime_dgn_route_joined;
@@ -713,6 +717,8 @@ typedef struct {
     int title_timing_ready;
     int full_start_package_consumed;
     int package_capture_consumed_by_host;
+    int package_route_matches_capture_route;
+    int host_route_consumes_package_route;
     int startup_bundle_consumed;
     int display_callers_use_package_receipt;
     int single_saturn_startup_owner_ready;
@@ -738,6 +744,7 @@ typedef struct {
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupRealAssetOwnershipRoute ownership_route;
     const char *host_route;
+    const char *startup_package_route;
     const char *status_scope;
     const char *status;
 } Nexus_V1_StartupHostCallerReceipt;
