@@ -1047,7 +1047,7 @@ static void test_orch_projectile_move_event_advances_and_reschedules(void) {
     world.gameTick = 101;
     world.timeline.nowTick = 101;
     world.party.mapIndex = 0;
-    world.partyMapIndex = 0;
+    world.partyMapIndex = 7; /* stale legacy mirror must not tag poison event */
     world.party.mapX = 0;
     world.party.mapY = 0;
     world.party.championCount = 1;
@@ -3574,6 +3574,9 @@ static void test_orch_projectile_champion_hit_applies_poison(void) {
         }
         if (world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
             world.timeline.events[i].fireAtTick == 137 &&
+            world.timeline.events[i].mapIndex == 0 &&
+            world.timeline.events[i].mapX == 0 &&
+            world.timeline.events[i].mapY == 0 &&
             world.timeline.events[i].aux0 == LIFECYCLE_STATUS_POISON &&
             world.timeline.events[i].aux1 == 11 &&
             world.timeline.events[i].aux4 == 1) {
