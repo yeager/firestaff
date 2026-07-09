@@ -154,21 +154,29 @@ static void test_ordinary_group_move_plan(void) {
 
     expect_int("ordinary_apply_insert_ok",
         DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
-            &plan, 2, DM1_V1_DIRECTION_SOUTH_PC34, 0x44, 400u, &apply), 1);
+            &plan, 2, 4, 5, DM1_V1_DIRECTION_SOUTH_PC34, 0x44, 400u,
+            &apply), 1);
     expect_int("ordinary_apply_kill_unlink", apply.shouldUnlinkSource, 1);
     expect_int("ordinary_apply_kill_remove", apply.shouldRemoveActiveGroup, 1);
     expect_int("ordinary_apply_kill_no_link", apply.shouldLinkDestination, 0);
+    expect_int("ordinary_apply_kill_source_map", apply.sourceMapIndex, 2);
+    expect_int("ordinary_apply_kill_source_x", apply.sourceMapX, 4);
+    expect_int("ordinary_apply_kill_source_y", apply.sourceMapY, 5);
 
     expect_int("ordinary_apply_move_plan_ok",
         DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             4, 5, DM1_V1_DIRECTION_EAST_PC34, 1, 0, 0, 500u, &plan), 1);
     expect_int("ordinary_apply_insert_plan_ok",
         DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
-            &plan, 3, DM1_V1_DIRECTION_EAST_PC34, 0x12, 500u, &apply), 1);
+            &plan, 3, 4, 5, DM1_V1_DIRECTION_EAST_PC34, 0x12, 500u,
+            &apply), 1);
     expect_int("ordinary_apply_insert_unlink", apply.shouldUnlinkSource, 1);
     expect_int("ordinary_apply_insert_link", apply.shouldLinkDestination, 1);
     expect_int("ordinary_apply_insert_requeue", apply.shouldRequeue, 1);
     expect_int("ordinary_apply_insert_dir", apply.groupDirection, DM1_V1_DIRECTION_EAST_PC34);
+    expect_int("ordinary_apply_insert_source_map", apply.sourceMapIndex, 3);
+    expect_int("ordinary_apply_insert_source_x", apply.sourceMapX, 4);
+    expect_int("ordinary_apply_insert_source_y", apply.sourceMapY, 5);
     expect_int("ordinary_apply_insert_map", apply.activeMapIndex, 3);
     expect_int("ordinary_apply_insert_x", apply.activeMapX, 5);
     expect_int("ordinary_apply_insert_y", apply.activeMapY, 5);
@@ -176,6 +184,22 @@ static void test_ordinary_group_move_plan(void) {
     expect_int("ordinary_apply_insert_tick", (int)apply.nextFireAtTick, 501);
     expect_int("ordinary_apply_insert_event_x", apply.nextEventMapX, 5);
     expect_int("ordinary_apply_insert_event_y", apply.nextEventMapY, 5);
+
+    expect_int("ordinary_apply_retry_plan_ok",
+        DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
+            4, 5, DM1_V1_DIRECTION_NORTH_PC34, 1, 1, 0, 600u, &plan), 1);
+    expect_int("ordinary_apply_retry_ok",
+        DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
+            &plan, 7, 4, 5, DM1_V1_DIRECTION_NORTH_PC34, 0x21, 600u,
+            &apply), 1);
+    expect_int("ordinary_apply_retry_no_unlink", apply.shouldUnlinkSource, 0);
+    expect_int("ordinary_apply_retry_no_link", apply.shouldLinkDestination, 0);
+    expect_int("ordinary_apply_retry_requeue", apply.shouldRequeue, 1);
+    expect_int("ordinary_apply_retry_source_map", apply.sourceMapIndex, 7);
+    expect_int("ordinary_apply_retry_source_x", apply.sourceMapX, 4);
+    expect_int("ordinary_apply_retry_source_y", apply.sourceMapY, 5);
+    expect_int("ordinary_apply_retry_event_x", apply.nextEventMapX, 4);
+    expect_int("ordinary_apply_retry_event_y", apply.nextEventMapY, 4);
 }
 
 static void test_pit_and_chaos_subplans(void) {
