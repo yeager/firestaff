@@ -285,6 +285,32 @@ static void nexus_v1_load_startup_surfaces(Nexus_V1_Engine *engine) {
                                        nexus_ui_load_stabg);
 }
 
+static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
+    int size = 0;
+    uint8_t *data;
+
+    if (!engine) return;
+    engine->menu_bpk_decode_receipt_valid = 0;
+    engine->menu_bpk_decode_receipt_attempted = 0;
+    memset(&engine->menu_bpk_decode_receipt, 0,
+           sizeof(engine->menu_bpk_decode_receipt));
+
+    data = nexus_v1_read_file(engine, "MENU.BPK", &size);
+    if (!data || size <= 0) {
+        free(data);
+        return;
+    }
+
+    engine->menu_bpk_decode_receipt_attempted = 1;
+    if (nexus_v1_bpk_archive_runtime_decode_receipt(
+            data,
+            (size_t)size,
+            &engine->menu_bpk_decode_receipt) == 0) {
+        engine->menu_bpk_decode_receipt_valid = 1;
+    }
+    free(data);
+}
+
 int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     char disc_path[512];
     if (!engine || !data_dir) return -1;
@@ -319,6 +345,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_ui_manager_init(&engine->ui);
     nexus_v1_load_startup_surfaces(engine);
     nexus_v1_load_startup_faces(engine);
+    nexus_v1_load_menu_bpk_decode_receipt(engine);
 
     /* Init creature manager */
     nexus_v1_creatures_init(&engine->creatures);
@@ -547,4 +574,18 @@ int nexus_v1_startup_surfaces_ready(const Nexus_V1_Engine *engine) {
            engine->ui_startup_surfaces_loaded +
                    engine->ui_startup_surfaces_fallback ==
                engine->ui_startup_surfaces_expected;
+}
+
+int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine) {
+    return engine ? engine->menu_bpk_decode_receipt_valid : 0;
+}
+
+int nexus_v1_menu_bpk_decode_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_BpkRuntimeDecodeReceipt *out_receipt) {
+    if (!engine || !out_receipt || !engine->menu_bpk_decode_receipt_valid) {
+        return -1;
+    }
+    *out_receipt = engine->menu_bpk_decode_receipt;
+    return 0;
 }

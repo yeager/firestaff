@@ -23,6 +23,7 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 #include "nexus_v1_champions.h"
 #include "nexus_v1_creatures.h"
 #include "nexus_v1_ui_surfaces.h"
+#include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_sound.h"
 #include <stdint.h>
 
@@ -69,6 +70,9 @@ struct Nexus_V1_Engine {
     int ui_faces_loaded;
     int ui_faces_expected;
     int ui_faces_fallback;
+    int menu_bpk_decode_receipt_valid;
+    int menu_bpk_decode_receipt_attempted;
+    Nexus_V1_BpkRuntimeDecodeReceipt menu_bpk_decode_receipt;
 
     /* Creature manager */
     Nexus_V1_CreatureManager creatures;
@@ -124,5 +128,9 @@ int nexus_v1_startup_surfaces_loaded_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_expected_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_fallback_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_ready(const Nexus_V1_Engine *engine);
+int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
+int nexus_v1_menu_bpk_decode_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_BpkRuntimeDecodeReceipt *out_receipt);
 
 #endif /* NEXUS_V1_ENGINE_H */
