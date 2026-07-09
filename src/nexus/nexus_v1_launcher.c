@@ -3697,12 +3697,33 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
         receipt->host_ownership_route_matches_capture_route &&
         receipt->route ==
             NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF;
+    receipt->save_route_consumes_package_capture =
+        receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+        receipt->package_route_consumes_host_ownership &&
+        receipt->host_route_consumes_active_capture_frame &&
+        receipt->saturn_save_capture_frame ==
+            receipt->startup_bundle.package.boot_start_ready_frames &&
+        (receipt->host_saturn_non_title_capture_mask & 1u);
+    receipt->champion_route_consumes_package_capture =
+        receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+        receipt->package_route_consumes_host_ownership &&
+        receipt->host_route_consumes_active_capture_frame &&
+        receipt->saturn_champion_capture_frame ==
+            receipt->startup_bundle.package.boot_start_ready_frames &&
+        (receipt->host_saturn_non_title_capture_mask & 2u);
+    receipt->dungeon_route_consumes_package_capture =
+        receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+        receipt->runtime_dgn_handoff_ready &&
+        receipt->dgn_route_consumes_host_ownership &&
+        receipt->dgn_route_saturn_capture_exact &&
+        receipt->host_route_consumes_dungeon_capture_frame &&
+        receipt->saturn_dungeon_capture_frame ==
+            receipt->startup_bundle.package.boot_start_ready_frames &&
+        (receipt->host_saturn_non_title_capture_mask & 4u);
     non_title_capture_route_complete =
         receipt->no_fallback_visuals_enforced &&
         !receipt->fallback_visuals_permitted &&
         !receipt->blocked_draw_suppressed &&
-        (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE ||
-         receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION) &&
         receipt->package_route_matches_capture_route &&
         receipt->host_route_consumes_package_route &&
         receipt->host_ownership_route_matches_capture_route &&
@@ -3714,7 +3735,13 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
         receipt->saturn_capture_frames_exact &&
         receipt->host_saturn_expected_capture_mask != 0u &&
         receipt->host_saturn_non_title_capture_mask ==
-            receipt->host_saturn_expected_capture_mask;
+            receipt->host_saturn_expected_capture_mask &&
+        ((receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+          receipt->save_route_consumes_package_capture) ||
+         (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+          receipt->champion_route_consumes_package_capture &&
+          (!receipt->runtime_dgn_handoff_ready ||
+           receipt->dungeon_route_consumes_package_capture)));
     dungeon_route_complete =
         non_title_capture_route_complete &&
         receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
@@ -3722,6 +3749,8 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
         receipt->runtime_dgn_route_joined &&
         receipt->dgn_route_consumes_startup_package &&
         receipt->dgn_route_consumes_host_ownership &&
+        receipt->champion_route_consumes_package_capture &&
+        receipt->dungeon_route_consumes_package_capture &&
         receipt->dgn_route_saturn_capture_exact &&
         receipt->host_route_consumes_dungeon_capture_frame &&
         receipt->dgn_draw_command_count > 0;
@@ -4191,6 +4220,12 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.non_title_saturn_capture_route_complete;
     out_receipt->dungeon_startup_route_consumption_complete =
         out_receipt->ownership.dungeon_startup_route_consumption_complete;
+    out_receipt->save_route_consumes_package_capture =
+        out_receipt->ownership.save_route_consumes_package_capture;
+    out_receipt->champion_route_consumes_package_capture =
+        out_receipt->ownership.champion_route_consumes_package_capture;
+    out_receipt->dungeon_route_consumes_package_capture =
+        out_receipt->ownership.dungeon_route_consumes_package_capture;
     out_receipt->startup_bundle_consumed =
         out_receipt->ownership.startup_bundle.package
             .full_start_package_receipt_ready;
