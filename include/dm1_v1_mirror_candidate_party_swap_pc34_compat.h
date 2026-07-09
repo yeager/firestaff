@@ -16,7 +16,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_PARTY_SWAP_C28_PARTY_FIRST_PC34_COMPAT 28
 #define DM1_V1_MIRROR_CANDIDATE_PARTY_SWAP_C29_PARTY_LAST_PC34_COMPAT 29
 
-typedef struct Dm1V1MirrorCandidatePartySwapEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat {
     const char *leaderHandAnchor;
     const char *slotClickAnchor;
     const char *drawAllAnchor;
@@ -25,9 +25,9 @@ typedef struct Dm1V1MirrorCandidatePartySwapEvidencePc34Compat {
     const char *partyAnchor;
     const char *mirrorClosedAnchor;
     const char *nonOverlapNote;
-} Dm1V1MirrorCandidatePartySwapEvidencePc34Compat;
+} DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidatePartySwapStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidatePartySwapStatePc34Compat {
     int g0227_aT_Party
         [DM1_V1_MIRROR_CANDIDATE_PARTY_SWAP_MAX_PARTY_PC34_COMPAT];
     int g0305_ui_PartyChampionCount;
@@ -42,10 +42,10 @@ typedef struct Dm1V1MirrorCandidatePartySwapStatePc34Compat {
     int rejectedLeaderSwapCount;
     int rejectedEmptySlotCount;
     int rejectedMirrorClosedCount;
-} Dm1V1MirrorCandidatePartySwapStatePc34Compat;
+} DM1_V1_MirrorCandidatePartySwapStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidatePartySwapResultPc34Compat {
-    const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidatePartySwapResultPc34Compat {
+    const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat *evidence;
     int requestedIndexA;
     int requestedIndexB;
     int beforeParty
@@ -82,19 +82,26 @@ typedef struct Dm1V1MirrorCandidatePartySwapResultPc34Compat {
     int f0293NotCalledTwice;
     int onlyRequestedPairMoved;
     int g0227PartyContract;
-} Dm1V1MirrorCandidatePartySwapResultPc34Compat;
+} DM1_V1_MirrorCandidatePartySwapResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat
+    Dm1V1MirrorCandidatePartySwapEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidatePartySwapStatePc34Compat
+    Dm1V1MirrorCandidatePartySwapStatePc34Compat;
+typedef DM1_V1_MirrorCandidatePartySwapResultPc34Compat
+    Dm1V1MirrorCandidatePartySwapResultPc34Compat;
 
 void DM1_V1_MirrorCandidatePartySwap_InitPc34Compat(
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat *state,
     int mirrorPanelOpen);
 
 int DM1_V1_MirrorCandidatePartySwap_RunPc34Compat(
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat *state,
     int indexA,
     int indexB,
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat *
+const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat *
 DM1_V1_MirrorCandidatePartySwap_EvidencePc34Compat(void);
 
 #ifdef __cplusplus
