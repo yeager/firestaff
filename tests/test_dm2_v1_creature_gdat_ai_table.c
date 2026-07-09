@@ -57,10 +57,10 @@ static void make_ai_raw(uint8_t out[36],
 }
 
 int main(void) {
-    uint8_t raw_data[72];
-    uint32_t raw_offsets[2] = { 0, 36 };
-    uint32_t raw_sizes[2] = { 36, 36 };
-    DM2_V1_GdatEntry entries[2];
+    uint8_t raw_data[108];
+    uint32_t raw_offsets[3] = { 0, 36, 72 };
+    uint32_t raw_sizes[3] = { 36, 36, 36 };
+    DM2_V1_GdatEntry entries[3];
     DM2_V1_AssetLoader loader;
 
     make_ai_raw(raw_data,
@@ -85,6 +85,17 @@ int main(void) {
                 AI_ATTACK_FLAGS__SHOOT,
                 11,
                 DM2_AI_W30_TURNS_MISSILE);
+    make_ai_raw(raw_data + 72,
+                DM2_AIFLAG_STATIC,
+                1,
+                0,
+                12,
+                0,
+                0,
+                0,
+                0,
+                255,
+                0);
 
     memset(entries, 0, sizeof(entries));
     entries[0].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
@@ -95,16 +106,20 @@ int main(void) {
     entries[1].cls2 = DM2_AI_CAVE_BAT;
     entries[1].cls4 = 0;
     entries[1].data_index = 1;
+    entries[2].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
+    entries[2].cls2 = 0;
+    entries[2].cls4 = 0;
+    entries[2].data_index = 2;
 
     memset(&loader, 0, sizeof(loader));
     loader.data = raw_data;
     loader.data_size = sizeof(raw_data);
     loader.loaded = 1;
-    loader.raw_data_count = 2;
+    loader.raw_data_count = 3;
     loader.raw_offsets = raw_offsets;
     loader.raw_sizes = raw_sizes;
     loader.entries = entries;
-    loader.entry_count = 2;
+    loader.entry_count = 3;
 
     dm2_v1_creature_reset_ai_table();
 
@@ -112,8 +127,8 @@ int main(void) {
           "NULL loader rejected");
     CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON)->BaseHP == 0,
           "reset leaves AI table empty before GDAT import");
-    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 2,
-          "GDAT import loads two AI definitions");
+    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 3,
+          "GDAT import loads three AI definitions");
 
     const DM2_AIDefinition *thorn =
         dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON);
@@ -139,6 +154,23 @@ int main(void) {
               bat->AttacksSpells == AI_ATTACK_FLAGS__SHOOT &&
               bat->w30 == DM2_AI_W30_TURNS_MISSILE,
           "Cavern Bat spec decodes missile/attack flags");
+
+    CHECK(dm2_v1_creature_attacks_party(DM2_AI_THORN_DEMON, 1) == 1 &&
+              dm2_v1_creature_attacks_party(DM2_AI_THORN_DEMON, 7) == 0,
+          "imported melee/spell creature attacks only inside GDAT range gate");
+
+    CHECK(dm2_v1_creature_attacks_party(DM2_AI_CAVE_BAT, 4) == 1 &&
+              dm2_v1_creature_attacks_party(DM2_AI_CAVE_BAT, 7) == 0,
+          "imported shooter creature attacks inside ranged GDAT gate");
+
+    CHECK(dm2_v1_creature_resolves_spell(DM2_AI_THORN_DEMON,
+                                         AI_ATTACK_FLAGS__POISON_BOLT) == 1 &&
+              dm2_v1_creature_resolves_spell(DM2_AI_THORN_DEMON,
+                                             AI_ATTACK_FLAGS__FIREBALL) == 0,
+          "spell resolution intersects requested flags with imported GDAT attacks");
+
+    CHECK(dm2_v1_creature_attacks_party(0, 0) == 0,
+          "imported static AI row suppresses attack routing");
 
     CHECK(unused->BaseHP == 0 && unused->AttacksSpells == 0,
           "missing GDAT AI entries leave unrelated table slots unchanged");

@@ -102,6 +102,7 @@ static const char *const g_ai_names[DM2_AI_TABLE_SIZE] = {
  * Values populated from SKWIN/GDAT at SkWinCore.cpp:233-400.
  * Stub shows field offsets consistent with DME.h:1505-1545. */
 static DM2_AIDefinition g_ai_table[DM2_AI_TABLE_SIZE];
+static uint8_t g_ai_table_loaded[DM2_AI_TABLE_SIZE];
 
 int dm2_v1_creature_ai_index_count(void) {
     return DM2_AI_TABLE_SIZE;
@@ -126,6 +127,7 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
 
 void dm2_v1_creature_reset_ai_table(void) {
     memset(g_ai_table, 0, sizeof(g_ai_table));
+    memset(g_ai_table_loaded, 0, sizeof(g_ai_table_loaded));
 }
 
 static void dm2_v1_creature_decode_ai_spec(const uint8_t *raw,
@@ -171,10 +173,37 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
             loader, DM2_GDAT_CATEGORY_CREATURE_AI, i, 0, &raw_size);
         if (!raw || raw_size < sizeof(DM2_AIDefinition)) continue;
         dm2_v1_creature_decode_ai_spec(raw, &g_ai_table[i]);
+        g_ai_table_loaded[i] = 1;
         ++loaded;
     }
 
     return loaded;
+}
+
+static int dm2_v1_creature_ai_has_gdat_spec(int ai_index) {
+    return ai_index >= 0 && ai_index < DM2_AI_TABLE_SIZE &&
+           g_ai_table_loaded[ai_index] != 0;
+}
+
+static int dm2_v1_creature_is_static_ai_index(int ai_index) {
+    return ai_index == 0  || ai_index == 1  || ai_index == 4
+        || ai_index == 5  || ai_index == 6  || ai_index == 7
+        || ai_index == 8  || ai_index == 9  || ai_index == 10
+        || ai_index == 11 || ai_index == 12 || ai_index == 20
+        || ai_index == 33 || ai_index == 45 || ai_index == 59
+        || ai_index == 60;
+}
+
+static int dm2_v1_creature_attack_flags_are_ranged(uint16_t flags) {
+    return (flags & (AI_ATTACK_FLAGS__SHOOT |
+                     AI_ATTACK_FLAGS__FIREBALL |
+                     AI_ATTACK_FLAGS__DISPELL |
+                     AI_ATTACK_FLAGS__LIGHTNING |
+                     AI_ATTACK_FLAGS__POISON_CLOUD |
+                     AI_ATTACK_FLAGS__POISON_BOLT |
+                     AI_ATTACK_FLAGS__POISON_BLOB |
+                     AI_ATTACK_FLAGS__PUSH_SPELL |
+                     AI_ATTACK_FLAGS__PULL_SPELL)) != 0;
 }
 
 /* dm2_v1_creature_attacks_party — check if creature attacks at given distance
@@ -182,35 +211,51 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
  * Attack decision: based on AI_ATTACK_FLAGS and distance check.
  * b_1a command byte 0x17+ = fallback to CREATURE_ATTACKS_PARTY.
  * Melee range: distance == 1 tile. Ranged: AI_ATTACK_FLAGS__SHOOT.
- * Stub: non-mobile AIs (pillars, trees, objects, merchants) do not attack. */
+ * GDAT path: use AIDefinition.AttacksSpells loaded by
+ * EXTENDED_LOAD_AI_DEFINITION (SkWinCore.cpp:233-400), with static
+ * objects suppressed by w0AIFlags. Data-free fallback preserves the
+ * original no-assets probe behavior for rows not yet imported. */
 int dm2_v1_creature_attacks_party(int ai_index, int distance) {
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return 0;
-    if (ai_index == 0  || ai_index == 1  || ai_index == 4
-     || ai_index == 5  || ai_index == 6  || ai_index == 7
-     || ai_index == 8  || ai_index == 9  || ai_index == 10
-     || ai_index == 11 || ai_index == 12 || ai_index == 20
-     || ai_index == 33 || ai_index == 45 || ai_index == 59
-     || ai_index == 60) {
+    if (distance < 0) return 0;
+
+    if (dm2_v1_creature_ai_has_gdat_spec(ai_index)) {
+        const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
+        uint16_t attacks = spec ? spec->AttacksSpells : 0;
+
+        if (!spec || (spec->w0AIFlags & DM2_AIFLAG_STATIC) != 0) return 0;
+        if ((attacks & AI_ATTACK_FLAGS__MELEE) != 0 && distance <= 1) return 1;
+        if (dm2_v1_creature_attack_flags_are_ranged(attacks) && distance <= 6) return 1;
         return 0;
     }
-    return (distance <= 1 && distance >= 0) ? 1 : 0;
+
+    if (dm2_v1_creature_is_static_ai_index(ai_index)) return 0;
+    return distance <= 1 ? 1 : 0;
 }
 
 /* dm2_v1_creature_resolves_spell — map AI_ATTACK_FLAGS to spell effect
  * Source: SkWinCore.cpp:27038-27096 (OBJECT_EFFECT_* mapping)
- * Returns non-zero if creature has the spell-flag set.
- * Stub only — full resolution needs creature instance AttacksSpells field. */
+ * Returns non-zero if creature has the requested spell-flag set.
+ * GDAT path intersects the requested flags with the imported
+ * AIDefinition.AttacksSpells. Data-free fallback preserves the old
+ * flag-only classification for rows not yet imported. */
 int dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags) {
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return 0;
-    (void)ai_index;
+    if (!dm2_v1_creature_attack_flags_are_ranged(attack_flags)) return 0;
+
+    if (dm2_v1_creature_ai_has_gdat_spec(ai_index)) {
+        const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
+        return spec && (spec->AttacksSpells & attack_flags) != 0;
+    }
+
     if (attack_flags & (AI_ATTACK_FLAGS__FIREBALL |
-                       AI_ATTACK_FLAGS__DISPELL  |
-                       AI_ATTACK_FLAGS__LIGHTNING |
-                       AI_ATTACK_FLAGS__POISON_CLOUD |
-                       AI_ATTACK_FLAGS__POISON_BOLT |
-                       AI_ATTACK_FLAGS__POISON_BLOB |
-                       AI_ATTACK_FLAGS__PUSH_SPELL |
-                       AI_ATTACK_FLAGS__PULL_SPELL)) {
+                        AI_ATTACK_FLAGS__DISPELL  |
+                        AI_ATTACK_FLAGS__LIGHTNING |
+                        AI_ATTACK_FLAGS__POISON_CLOUD |
+                        AI_ATTACK_FLAGS__POISON_BOLT |
+                        AI_ATTACK_FLAGS__POISON_BLOB |
+                        AI_ATTACK_FLAGS__PUSH_SPELL |
+                        AI_ATTACK_FLAGS__PULL_SPELL)) {
         return 1;
     }
     return 0;
@@ -329,6 +374,7 @@ void dm2_v1_creature_test_set_ai_spec(int ai_index,
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return;
     if (!spec) return;
     g_ai_table[ai_index] = *spec;
+    g_ai_table_loaded[ai_index] = 1;
 }
 
 void dm2_v1_creature_test_clear_ai_overrides(void) {
