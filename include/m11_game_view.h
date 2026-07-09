@@ -194,6 +194,18 @@ typedef struct {
     int startupHudMenuOptionCount;
     int startupSelectedCommandId;
     int startupUtilitySelectedActionIndex;
+    int dm1HoCFullGraphicsReady;
+    int dm1HoCHostRenderPlanReady;
+    int dm1HoCCaptureProofPassed;
+    int dm1HoCRuntimeApplyReady;
+    int dm1HoCProductionConsumerReady;
+    int dm1HoCNoHostFallbackVisuals;
+    int dm1HoCOpenedEntranceFrame;
+    int dm1HoCHallMirrorOverlay;
+    int dm1HoCBlockedEnterUntilChampion;
+    int dm1HoCMapWidth;
+    int dm1HoCMapHeight;
+    int dm1HoCRenderCommandCount;
     int startupInitializeV2Runtime;
     int startupInitializeHudRuntime;
     int startupInitializeTouchRuntime;
