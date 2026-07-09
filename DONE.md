@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 M12 launch-gate card labels: modern and legacy launcher game cards now use the same launch-gate status/detail labels as the launch button, so blocked data/version/renderer/presentation states and ready states share one receipt. Verification: `test_m12_all_games_boot_readiness_receipt`, CSB launch blocker test, DM1 required-complete launcher test, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup input/HUD gate receipt: M11 keyboard and pointer startup paths now consume a CSB-owned input gate receipt that carries title blocking, readiness, dispatch, post-input render, and HUD draw decisions. Verification: CSB boot runtime handoff, CSB M11 launcher handoff, CSB startup entrance pointer test, three CSB real-asset probes, and `git diff --check` passed.
 
 - ✅ 2026-07-09 M12 launch gate receipt: launcher launch buttons and launch intents now share a structured gate receipt carrying boot readiness, renderer/presentation readiness, data/version readiness, auto-version fallback, and blocker labels instead of duplicating startup checks. Verification: `test_m12_all_games_boot_readiness_receipt`, DM1 required-complete launcher test, CSB launch blocker test, and `git diff --check` passed.

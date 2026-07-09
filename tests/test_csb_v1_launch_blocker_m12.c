@@ -131,6 +131,12 @@ int main(void) {
                 "CSB launch gate should allow hash-matched startup")) return 1;
     if (!expect(gate.boot.fullStartGraphicsReady == 1,
                 "CSB launch gate should carry ready boot receipt")) return 1;
+    if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&state, 1),
+                       "READY TO LAUNCH") == 0,
+                "CSB ready card status should use launch gate label")) return 1;
+    if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, 1),
+                       "CSB BOOT PATH") == 0,
+                "CSB ready card detail should use launch gate path")) return 1;
     if (!render_smoke_nonblank(&state, "CSB options")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
@@ -176,6 +182,12 @@ int main(void) {
                 "CSB missing-data launch gate should expose data/version split")) return 1;
     if (!expect(gate.blockedLabel && strcmp(gate.blockedLabel, "DATA MISSING") == 0,
                 "CSB missing-data launch gate should expose blocker label")) return 1;
+    if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&state, 1),
+                       "DATA MISSING") == 0,
+                "CSB missing-data card status should use launch gate blocker")) return 1;
+    if (!expect(strstr(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, 1),
+                       "FILES ARE MISSING") != NULL,
+                "CSB missing-data card detail should use launch gate detail")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB V2.1 launch click should be handled")) return 1;

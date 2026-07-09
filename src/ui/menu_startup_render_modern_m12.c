@@ -1315,13 +1315,24 @@ static void draw_card(M12_ModernCanvas* c,
     int slotIdx = slot_for_game_id(entry->gameId);
     const M12_AssetVersionStatus* status = pick_status(state, slotIdx);
     M12_StartupBootReadiness boot = {0};
+    M12_StartupLaunchGate gate = {0};
+    int hasGate = M12_StartupMenu_GetLaunchGate(state, slot, &gate);
 
     M12_RGB statusColor;
     const char* statusLabel;
-    if (M12_StartupMenu_GetBootReadiness(state, slot, &boot) &&
-        boot.handled && boot.fullStartGraphicsReady) {
+    if (hasGate && gate.handled) {
+        boot = gate.boot;
+    } else {
+        (void)M12_StartupMenu_GetBootReadiness(state, slot, &boot);
+    }
+    if (hasGate && gate.handled && gate.canLaunch) {
         statusColor = COLOR_OK();
-        statusLabel = boot.statusLabel;
+        statusLabel = gate.blockedLabel ? gate.blockedLabel : boot.statusLabel;
+    } else if (hasGate && gate.handled && !gate.canLaunch) {
+        statusColor = gate.rendererReady && gate.presentationReady && gate.versionReady
+                          ? COLOR_BAD()
+                          : COLOR_WARN();
+        statusLabel = gate.blockedLabel ? gate.blockedLabel : boot.statusLabel;
     } else if (!game_supported(entry->gameId)) {
         statusColor = rgb(168, 168, 176);
         statusLabel = slotIdx == 3 ? "PLANNED" : "UNSUPPORTED";
@@ -1349,8 +1360,11 @@ static void draw_card(M12_ModernCanvas* c,
         draw_text(c, pillX + (pillW - tw) / 2, pillY + 8, statusLabel, &s);
         if (boot.handled && boot.startupStepCount > 0) {
             char progress[96];
-            const char* next = boot.fullStartGraphicsReady ? boot.startupPathLabel
-                                                           : boot.nextStepLabel;
+            const char* next = (hasGate && gate.handled)
+                                   ? (gate.canLaunch ? gate.boot.startupPathLabel
+                                                     : gate.blockedDetail)
+                                   : (boot.fullStartGraphicsReady ? boot.startupPathLabel
+                                                                  : boot.nextStepLabel);
             ModernTextStyle p = text_style_make(1, COLOR_TEXT_FAINT(), 0);
             snprintf(progress,
                      sizeof(progress),
