@@ -1661,7 +1661,13 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_production_consumer.suppress_projectile_payloads &&
                  hoc_production_consumer.suppress_spell_effect_payloads &&
                  hoc_production_consumer.suppress_mirror_payload_things &&
-                 hoc_production_consumer.walk_capture_safe,
+                 hoc_production_consumer.walk_capture_safe &&
+                 hoc_production_consumer
+                     .redmcsb_c026_portrait_overlay_ready &&
+                 hoc_production_consumer
+                     .redmcsb_c346_mirror_backing_ready &&
+                 hoc_production_consumer
+                     .redmcsb_f0115_thing_layer_suppression_ready,
              1);
     expect_i("DM1 HoC production consumer carries geometry",
              hoc_production_consumer.map_index ==

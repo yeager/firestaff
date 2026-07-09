@@ -424,6 +424,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
     int suppress_spell_effect_payloads;
     int suppress_mirror_payload_things;
     int publish_packaged_full_graphics_proof;
+    int redmcsb_c026_portrait_overlay_ready;
+    int redmcsb_c346_mirror_backing_ready;
+    int redmcsb_f0115_thing_layer_suppression_ready;
     int block_enter_until_champion_selected;
     int map_index;
     int map_width;
@@ -508,6 +511,9 @@ typedef struct DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 {
     int suppress_spell_effect_payloads;
     int suppress_mirror_payload_things;
     int suppress_materialized_item_payload;
+    int redmcsb_c026_portrait_overlay_ready;
+    int redmcsb_c346_mirror_backing_ready;
+    int redmcsb_f0115_thing_layer_suppression_ready;
     int block_enter_until_champion_selected;
     int map_index;
     int map_width;
