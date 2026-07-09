@@ -2855,6 +2855,151 @@ static int dm2_v1_boot_startup_composite_capture(
     return ready;
 }
 
+static int dm2_v1_boot_startup_real_visual_breadth_probe(
+    DM2_V1_BootProfile *profile,
+    const DM2_V1_BootRuntimeStartupSnapshot *base_snapshot,
+    DM2_V1_BootStartupRealVisualCaptureReceipt *out_receipt)
+{
+    static const int k_title_ticks[] = {0, 13, 47};
+    static const int k_selected_rows[] = {0, 1, 2};
+    int i;
+
+    if (!profile || !base_snapshot || !out_receipt) {
+        return 0;
+    }
+
+    /* skproject/SKWIN title/menu startup is ticked and re-entered while the
+     * HUD is suppressed. Sample separate title ticks and menu selections so
+     * the real-data receipt proves more than the single current host frame. */
+    for (i = 0; i < (int)(sizeof(k_title_ticks) / sizeof(k_title_ticks[0])); ++i) {
+        DM2_V1_BootStartupViewModel sample_view;
+        DM2_V1_BootStartupPackagedFullStartReceipt sample_package;
+        DM2_V1_BootRuntimeStartupSnapshot sample_snapshot = *base_snapshot;
+        const int tick = k_title_ticks[i];
+        uint8_t *pixels = NULL;
+        int w = 0;
+        int h = 0;
+        int stride = 0;
+
+        if (!dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
+                &sample_snapshot,
+                tick,
+                &sample_view) ||
+            !dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
+                &sample_view.host_view_receipt,
+                &sample_package) ||
+            !sample_package.exact_title_timing_ready ||
+            sample_package.title_frame < 0 ||
+            sample_package.title_frame > 30) {
+            continue;
+        }
+        ++out_receipt->sampled_title_timing_capture_count;
+        out_receipt->sampled_title_frame_mask |=
+            1 << sample_package.title_frame;
+        if (dm2_v1_boot_gdat_image_asset_fetch(
+                profile,
+                sample_package.title_gdat_category,
+                sample_package.title_gdat_index,
+                sample_package.title_gdat_field,
+                &pixels,
+                &w,
+                &h,
+                &stride) == 0 &&
+            pixels &&
+            w == 320 &&
+            h == 200 &&
+            stride >= w) {
+            ++out_receipt->sampled_title_pixel_capture_count;
+        }
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+    }
+
+    for (i = 0; i < (int)(sizeof(k_selected_rows) / sizeof(k_selected_rows[0])); ++i) {
+        DM2_V1_BootStartupViewModel sample_view;
+        DM2_V1_BootStartupPackagedFullStartReceipt sample_package;
+        DM2_V1_BootStartupRealVisualCaptureReceipt sample_capture;
+        DM2_V1_BootRuntimeStartupSnapshot sample_snapshot = *base_snapshot;
+        sample_snapshot.selected_row = k_selected_rows[i];
+
+        const int required_rows =
+            (base_snapshot->resume_available || base_snapshot->slot_mask)
+                ? 3
+                : 1;
+        if (i >= required_rows) {
+            continue;
+        }
+        if (!dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
+                &sample_snapshot,
+                out_receipt->title_animation_tick,
+                &sample_view) ||
+            !dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
+                &sample_view.host_view_receipt,
+                &sample_package) ||
+            sample_package.menu_row_count < required_rows ||
+            sample_package.selected_row != k_selected_rows[i] ||
+            !sample_package.menu_capture_ready) {
+            continue;
+        }
+        ++out_receipt->sampled_menu_selection_capture_count;
+        out_receipt->sampled_menu_selection_mask |=
+            1 << sample_package.selected_row;
+
+        dm2_v1_boot_startup_real_visual_capture_receipt_init(&sample_capture);
+        sample_capture.menu_row_count = sample_package.menu_row_count;
+        sample_capture.hud_handoff_capture_ready =
+            sample_package.hud_handoff_capture_ready;
+        sample_capture.suppress_game_hud = 1;
+        sample_capture.present_first_hud_frame = 0;
+        if (dm2_v1_boot_startup_composite_capture(
+                profile,
+                sample_view.commands,
+                sample_view.command_count,
+                &sample_capture) &&
+            sample_capture.composite_gdat_blit_count == 2 &&
+            sample_capture.composite_pixel_hash != 0u) {
+            ++out_receipt->sampled_menu_composite_capture_count;
+        }
+    }
+
+    {
+        DM2_V1_BootStartupHostViewReceipt runtime_view;
+        dm2_v1_boot_startup_host_view_receipt_clear(&runtime_view);
+        if (dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
+                profile,
+                0,
+                base_snapshot->startup_save_root,
+                base_snapshot->resume_available,
+                base_snapshot->slot_mask,
+                base_snapshot->selected_row,
+                0,
+                &runtime_view) &&
+            runtime_view.runtime_handoff_ready &&
+            runtime_view.first_hud_frame_ready &&
+            runtime_view.runtime_action_ready &&
+            !runtime_view.draw_startup_menu &&
+            runtime_view.status &&
+            strcmp(runtime_view.status, "DM2 RUNTIME") == 0) {
+            out_receipt->sampled_runtime_hud_handoff_capture_ready = 1;
+        }
+    }
+
+    out_receipt->real_gdat_capture_breadth_ready =
+        out_receipt->sampled_title_timing_capture_count >= 3 &&
+        out_receipt->sampled_title_pixel_capture_count >= 3 &&
+        (out_receipt->sampled_title_frame_mask & (1 << 0)) &&
+        (out_receipt->sampled_title_frame_mask & (1 << 2)) &&
+        (out_receipt->sampled_title_frame_mask & (1 << 7)) &&
+        ((base_snapshot->resume_available || base_snapshot->slot_mask)
+             ? (out_receipt->sampled_menu_selection_capture_count >= 3 &&
+                out_receipt->sampled_menu_composite_capture_count >= 3 &&
+                (out_receipt->sampled_menu_selection_mask & 0x7) == 0x7)
+             : (out_receipt->sampled_menu_selection_capture_count >= 1 &&
+                out_receipt->sampled_menu_composite_capture_count >= 1 &&
+                (out_receipt->sampled_menu_selection_mask & 0x1) == 0x1)) &&
+        out_receipt->sampled_runtime_hud_handoff_capture_ready;
+    return out_receipt->real_gdat_capture_breadth_ready;
+}
+
 int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     DM2_V1_BootProfile *profile,
     int startup_menu_active,
@@ -3110,8 +3255,8 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     out_receipt->startup_title_menu_hud_breadth_ready =
         out_receipt->menu_title_composite_capture_ready &&
         out_receipt->full_visual_composite_capture_ready &&
-        out_receipt->resume_menu_ready &&
-        out_receipt->save_slot_menu_ready &&
+        (!resume_available || out_receipt->resume_menu_ready) &&
+        (slot_mask == 0u || out_receipt->save_slot_menu_ready) &&
         out_receipt->new_game_menu_ready &&
         out_receipt->exact_selected_highlight_ready &&
         out_receipt->hud_handoff_capture_ready &&
@@ -3124,13 +3269,17 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->skproject_menu_query_ready &&
         out_receipt->hud_suppressed_capture_ready &&
         out_receipt->no_fallback_title_blit;
+    (void)dm2_v1_boot_startup_real_visual_breadth_probe(profile,
+                                                        &snapshot,
+                                                        out_receipt);
     out_receipt->real_visual_status_consumer_ready =
         out_receipt->real_visual_capture_consumes_package &&
         out_receipt->real_visual_capture_consumes_host_frame &&
         out_receipt->packaged_status_consumed &&
         out_receipt->packaged_startup_phase_consumed &&
         out_receipt->packaged_hud_suppression_consumed &&
-        out_receipt->title_menu_hud_visual_proof_ready;
+        out_receipt->title_menu_hud_visual_proof_ready &&
+        out_receipt->real_gdat_capture_breadth_ready;
 
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, package.packaged_full_start_hash);
@@ -3164,6 +3313,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         hash, out_receipt->suppress_game_hud);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->real_visual_status_consumer_ready);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->sampled_title_frame_mask);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->sampled_menu_selection_mask);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->sampled_runtime_hud_handoff_capture_ready);
     out_receipt->packaged_visual_capture_hash = hash;
 
     /* skproject/SKWIN startup draws the real title GDAT surface, menu
@@ -3180,6 +3335,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->real_visual_capture_consumes_package &&
         out_receipt->real_visual_capture_consumes_host_frame &&
         out_receipt->real_visual_status_consumer_ready &&
+        out_receipt->real_gdat_capture_breadth_ready &&
         out_receipt->full_title_frame_capture_ready &&
         out_receipt->menu_title_composite_capture_ready &&
         out_receipt->full_visual_composite_capture_ready &&

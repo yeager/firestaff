@@ -491,6 +491,14 @@ typedef struct {
     int packaged_status_consumed;
     int packaged_startup_phase_consumed;
     int packaged_hud_suppression_consumed;
+    int sampled_title_timing_capture_count;
+    int sampled_title_frame_mask;
+    int sampled_title_pixel_capture_count;
+    int sampled_menu_selection_capture_count;
+    int sampled_menu_selection_mask;
+    int sampled_menu_composite_capture_count;
+    int sampled_runtime_hud_handoff_capture_ready;
+    int real_gdat_capture_breadth_ready;
     int real_gdat_title_asset_required;
     int real_gdat_title_asset_consumed;
     int real_gdat_menu_asset_required;
