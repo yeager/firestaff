@@ -1455,6 +1455,35 @@ static int orch_cmd_cast_spell_xp_compat(
         F0732_COMBAT_RngRandom_Compat(rng, 8));
 }
 
+static int orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    DM1_ChampionSpellStats* outStats)
+{
+    const struct ChampionState_Compat* champion;
+    int i;
+    if (!world || !outStats) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present) return 0;
+
+    memset(outStats, 0, sizeof(*outStats));
+    outStats->currentMana = (int16_t)champion->mana.current;
+    outStats->maximumMana = (int16_t)champion->mana.maximum;
+    outStats->currentHealth = (int16_t)champion->hp.current;
+    outStats->wisdom = (uint8_t)(champion->attributes[CHAMPION_ATTR_WISDOM] > 255
+                                     ? 255
+                                     : champion->attributes[CHAMPION_ATTR_WISDOM]);
+    for (i = 0; i < 20; ++i) {
+        int level = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+            world, championIndex, i);
+        if (level < 0) level = 0;
+        if (level > 255) level = 255;
+        outStats->skillLevels[i] = (uint8_t)level;
+    }
+    return 1;
+}
+
 static int orch_cmd_cast_spell_mutate_empty_flask_f0411_compat(
     struct GameWorld_Compat* world,
     int championIndex,
@@ -7020,8 +7049,10 @@ cmd_attack_legacy_marker:
         int powerOrd = (int)input->reserved;
         int emptyFlaskSlot = orch_cmd_cast_spell_empty_flask_slot_compat(input);
         int spellExperience = 0;
+        int receiptExperience = -1;
+        uint32_t spellRngRaw;
 
-        (void)F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
+        spellRngRaw = F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
         emit(result, EMIT_SOUND_REQUEST, tableIdx,
              world->party.mapX, world->party.mapY, 0);
 
@@ -7035,10 +7066,60 @@ cmd_attack_legacy_marker:
 
         switch (spell.kind) {
         case C2_SPELL_KIND_PROJECTILE_COMPAT: {
-            int skillLvl = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
-                world, champIdx, spell.skillIndex);
-            F0756_MAGIC_ProduceProjectileEffect_Compat(
-                &spell, powerOrd, skillLvl, &world->masterRng, &effect);
+            DM1_ChampionSpellStats dm1Stats;
+            DM1_SpellF0412RuntimeReceipt receipt;
+            DM1_SpellF0327ProjectileContextPc34 projectileContext;
+            struct ProjectileCreateInput_Compat projectileInput;
+            struct TimelineEvent_Compat firstMove;
+            int projectileSlot = -1;
+
+            if (!orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
+                    world, champIdx, &dm1Stats) ||
+                !dm1_spell_f0412RuntimeReceiptForTableIndex(
+                    tableIdx, powerOrd, champIdx, &dm1Stats,
+                    (uint16_t)(spellRngRaw & 0xFFFFu),
+                    world->party.champions[champIdx].direction,
+                    world->party.direction,
+                    world->magic.partyShieldDefense,
+                    &receipt)) {
+                return 0;
+            }
+
+            effect.castResult =
+                (receipt.castResult == DM1_SPELL_CAST_SUCCESS)
+                    ? SPELL_CAST_SUCCESS
+                    : SPELL_CAST_FAILURE;
+            effect.failureReason = receipt.failureType;
+            effect.spellKind = C2_SPELL_KIND_PROJECTILE_COMPAT;
+            effect.spellType = receipt.spellType;
+            effect.powerOrdinal = receipt.powerOrdinal;
+            effect.impactAttack = 90;
+            effect.kineticEnergy = receipt.projectileKineticEnergy;
+            effect.followupEventKind = TIMELINE_EVENT_INVALID;
+            receiptExperience = receipt.experience;
+
+            if (receipt.castResult != DM1_SPELL_CAST_SUCCESS ||
+                !receipt.createsProjectile) {
+                break;
+            }
+
+            memset(&projectileContext, 0, sizeof(projectileContext));
+            projectileContext.championIndex = champIdx;
+            projectileContext.championCell =
+                world->party.champions[champIdx].cell;
+            projectileContext.partyMapIndex = world->party.mapIndex;
+            projectileContext.partyMapX = world->party.mapX;
+            projectileContext.partyMapY = world->party.mapY;
+            projectileContext.gameTick = (int)world->gameTick;
+
+            if (!dm1_v1_build_spell_projectile_create_input_f0327_pc34(
+                    &receipt, &projectileContext, &projectileInput) ||
+                !F0810_PROJECTILE_Create_Compat(
+                    &projectileInput, &world->projectiles,
+                    &projectileSlot, &firstMove)) {
+                return 0;
+            }
+            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove);
             break;
         }
         case C3_SPELL_KIND_OTHER_COMPAT:
@@ -7075,8 +7156,15 @@ cmd_attack_legacy_marker:
             F0760_MAGIC_ApplyStateDelta_Compat(&effect, &world->magic);
             orch_mirror_other_spell_lifecycle_status_pc34_compat(
                 world, &effect);
-            spellExperience = orch_cmd_cast_spell_xp_compat(
-                input, &spell, effect.powerOrdinal, &world->masterRng);
+            spellExperience =
+                (receiptExperience >= 0 &&
+                 (!input ||
+                  (input->reserved2 &
+                   CMD_CAST_SPELL_RESERVED2_HAS_SPELL_XP) == 0u))
+                    ? receiptExperience
+                    : orch_cmd_cast_spell_xp_compat(
+                          input, &spell, effect.powerOrdinal,
+                          &world->masterRng);
 
             /* Schedule follow-up timeline event if applicable.
              * ReDMCSB MENU.C F0412 T0412033 always adds the status

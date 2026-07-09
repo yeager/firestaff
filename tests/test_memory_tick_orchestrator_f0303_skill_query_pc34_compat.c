@@ -131,6 +131,15 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
 
     init_world(&world, &things, weapons, junks);
     champion = &world.party.champions[0];
+    champion->hp.current = 100;
+    champion->mana.current = 100;
+    champion->mana.maximum = 24;
+    champion->attributes[CHAMPION_ATTR_WISDOM] = 60;
+    champion->cell = 1;
+    world.party.mapIndex = 2;
+    world.party.mapX = 3;
+    world.party.mapY = 4;
+    world.party.direction = 1;
     champion->inventory[CHAMPION_SLOT_ACTION_HAND] =
         make_thing(THING_TYPE_WEAPON, 0);
     world.lifecycle.champions[0]
@@ -159,7 +168,19 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
     input.commandArg2 = 14;
     input.reserved = 1;
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
-    assert(world.timeline.count == 0);
+    assert(world.projectiles.count == 1);
+    assert(world.projectiles.entries[0].projectileSubtype ==
+           PROJECTILE_SUBTYPE_OPEN_DOOR);
+    assert(world.projectiles.entries[0].ownerKind == PROJECTILE_OWNER_CHAMPION);
+    assert(world.projectiles.entries[0].ownerIndex == 0);
+    assert(world.projectiles.entries[0].mapIndex == 2);
+    assert(world.projectiles.entries[0].mapX == 3);
+    assert(world.projectiles.entries[0].mapY == 4);
+    assert(world.projectiles.entries[0].direction == 1);
+    assert(world.projectiles.entries[0].cell == 1);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_PROJECTILE_MOVE);
+    assert(world.timeline.events[0].aux0 == 0);
     sawSpellEffect = 0;
     for (i = 0; i < result.emissionCount; ++i) {
         if (result.emissions[i].kind == EMIT_SPELL_EFFECT &&

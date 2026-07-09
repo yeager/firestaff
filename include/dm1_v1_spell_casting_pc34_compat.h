@@ -386,6 +386,16 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
                                   int partyDirection,
                                   int partyShieldDefense,
                                   DM1_SpellF0412RuntimeReceipt* outReceipt);
+int dm1_spell_f0412RuntimeReceiptForTableIndex(
+    int spellTableIndex,
+    int powerOrdinal,
+    int champIdx,
+    const DM1_ChampionSpellStats* stats,
+    uint16_t rng16,
+    int championDirection,
+    int partyDirection,
+    int partyShieldDefense,
+    DM1_SpellF0412RuntimeReceipt* outReceipt);
 
 /** Get the name string for a symbol character. */
 const char* dm1_spell_symbolName(char sym);

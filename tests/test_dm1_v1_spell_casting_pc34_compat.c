@@ -966,6 +966,17 @@ static void test_f0412_runtime_receipt_projectile_fireball(void) {
     assert(receipt.projectileRequiredMana == 0);
     assert(s.input[0].symbols[0] != '\0');
 
+    memset(&receipt, 0, sizeof(receipt));
+    assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+               8, 3, 0, &stats, 0x0005, 1, 2, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(receipt.spellIndex == 8);
+    assert(receipt.powerOrdinal == 3);
+    assert(receipt.championDirectionAfter == 2);
+    assert(receipt.projectileThing == DM1_SPELL_THING_FIRST_EXPLOSION_PC34);
+    assert(receipt.projectileKineticEnergy == 70);
+    assert(receipt.projectileStepEnergy == 2);
+
     printf("    PASS\n");
 }
 

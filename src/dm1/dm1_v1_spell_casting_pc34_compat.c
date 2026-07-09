@@ -815,6 +815,60 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
     return 1;
 }
 
+int dm1_spell_f0412RuntimeReceiptForTableIndex(
+    int spellTableIndex,
+    int powerOrdinal,
+    int champIdx,
+    const DM1_ChampionSpellStats* stats,
+    uint16_t rng16,
+    int championDirection,
+    int partyDirection,
+    int partyShieldDefense,
+    DM1_SpellF0412RuntimeReceipt* outReceipt)
+{
+    DM1_SpellCastingState s;
+    const DM1_Spell* spell;
+    uint32_t symbols;
+    int out = 1;
+    int i;
+
+    if (!outReceipt) return 0;
+    if (spellTableIndex < 0 || spellTableIndex >= DM1_SPELL_COUNT) {
+        memset(outReceipt, 0, sizeof(*outReceipt));
+        outReceipt->castResult = DM1_SPELL_CAST_FAILURE;
+        outReceipt->failureType = DM1_FAILURE_MEANINGLESS_SPELL;
+        outReceipt->spellIndex = -1;
+        return 1;
+    }
+    if (powerOrdinal < 1 || powerOrdinal > 6) powerOrdinal = 1;
+    if (champIdx < 0 || champIdx >= 4) return 0;
+
+    memset(&s, 0, sizeof(s));
+    s.magicCasterIndex = champIdx;
+    s.input[champIdx].symbolStep = 0;
+    s.input[champIdx].symbols[0] = (char)(95 + powerOrdinal);
+
+    spell = &dm1_spells[spellTableIndex];
+    symbols = (uint32_t)spell->symbols;
+    for (i = 0; i < 3; ++i) {
+        unsigned char sym =
+            (unsigned char)((symbols >> (16 - (i * 8))) & 0xFFu);
+        if (sym == 0) break;
+        s.input[champIdx].symbols[out++] = (char)sym;
+    }
+    s.input[champIdx].symbols[out] = '\0';
+    s.input[champIdx].symbolStep = (uint8_t)(out & 3);
+
+    /* ReDMCSB MENU.C F0412 receives a champion spell-symbol buffer, while
+     * Firestaff M10 command routing often carries only the table index from
+     * prevalidated UI input. Rebuild the exact symbol buffer here so command
+     * callers still consume the F0412 receipt instead of reimplementing the
+     * projectile/light/status branches from spell table metadata. */
+    return dm1_spell_f0412RuntimeReceipt(
+        &s, champIdx, stats, rng16, championDirection, partyDirection,
+        partyShieldDefense, outReceipt);
+}
+
 const char* dm1_spell_symbolName(char sym) {
     int idx = (int)(unsigned char)sym - 96;
     if (idx < 0 || idx >= DM1_SYMBOL_STEP_COUNT * DM1_SYMBOLS_PER_STEP) return "?";
