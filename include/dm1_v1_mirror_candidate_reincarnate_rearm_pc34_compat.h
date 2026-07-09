@@ -16,7 +16,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_REINCARNATE_SPELL_AREA_COMMAND_PC34_COMPAT 100
 #define DM1_V1_MIRROR_CANDIDATE_REINCARNATE_ACTION_AREA_COMMAND_PC34_COMPAT 111
 
-typedef struct Dm1V1MirrorCandidateReincarnateChampionPc34Compat {
+typedef struct DM1_V1_MirrorCandidateReincarnateChampionPc34Compat {
     int present;
     int currentHealth;
     int maximumHealth;
@@ -26,9 +26,9 @@ typedef struct Dm1V1MirrorCandidateReincarnateChampionPc34Compat {
     int maximumMana;
     int portraitOrdinal;
     int skillBytesNonZero;
-} Dm1V1MirrorCandidateReincarnateChampionPc34Compat;
+} DM1_V1_MirrorCandidateReincarnateChampionPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat {
     int partyChampionCount;
     unsigned int candidateChampionOrdinal;
     unsigned int inventoryChampionOrdinal;
@@ -41,11 +41,11 @@ typedef struct Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat {
     int leaderHandPutRouteCount;
     int leaderHandRemoveRouteCount;
     int slotBoxRouteCount;
-    Dm1V1MirrorCandidateReincarnateChampionPc34Compat
+    DM1_V1_MirrorCandidateReincarnateChampionPc34Compat
         champions[DM1_V1_MIRROR_CANDIDATE_REINCARNATE_CHAMPION_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat;
+} DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat {
     int command;
     int validPanelCommand;
     int candidateChampionIndex;
@@ -85,9 +85,9 @@ typedef struct Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat {
     int previousFrontD1cMirrorChampionOrdinal;
     int newFrontD1cMirrorChampionOrdinal;
     int frontD1cPortraitIndex;
-} Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat;
+} DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat {
     int command;
     int panelC040Closed;
     int statusBoxAllowed;
@@ -95,20 +95,29 @@ typedef struct Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat {
     int spellAreaAllowed;
     int actionAreaAllowed;
     int blockedByCandidatePanel;
-} Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat;
+} DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateReincarnateChampionPc34Compat
+    Dm1V1MirrorCandidateReincarnateChampionPc34Compat;
+typedef DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat
+    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat;
+typedef DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat
+    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat;
+typedef DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat
+    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat;
 
 void DM1_V1_MirrorCandidateReincarnateRearm_InitPc34Compat(
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat *state);
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateReincarnateRearm_ProcessPanelCommandPc34Compat(
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat *state,
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateReincarnateRearm_CanProcessCommandPc34Compat(
-    const Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat *outResult);
 
 const char *DM1_V1_MirrorCandidateReincarnateRearm_SourceEvidencePc34Compat(void);
 

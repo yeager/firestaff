@@ -32,7 +32,7 @@ static const char s_source_summary[] =
     "G0299 unchanged, G0305 unchanged, and F0282 not invoked, champion, "
     "C040 panel, and inventory state remain unchanged.";
 
-static const Dm1V1MirrorCandidateNoPendingResurrectContractPc34Compat
+static const DM1_V1_MirrorCandidateNoPendingResurrectContractPc34Compat
     s_contract = {
         1,
         1,
@@ -53,7 +53,7 @@ static const Dm1V1MirrorCandidateNoPendingResurrectContractPc34Compat
         s_source_summary
     };
 
-static const Dm1V1MirrorCandidateNoPendingResurrectStepPc34Compat s_steps[] = {
+static const DM1_V1_MirrorCandidateNoPendingResurrectStepPc34Compat s_steps[] = {
     {
         STEP_BEGIN_G0299_LIVE_G0305_ZERO,
         "STEP_BEGIN_G0299_LIVE_G0305_ZERO",
@@ -92,14 +92,14 @@ static const Dm1V1MirrorCandidateNoPendingResurrectStepPc34Compat s_steps[] = {
     }
 };
 
-const Dm1V1MirrorCandidateNoPendingResurrectContractPc34Compat *
+const DM1_V1_MirrorCandidateNoPendingResurrectContractPc34Compat *
 dm1_v1_mirror_candidate_no_pending_resurrect_contract_pc34_compat(void)
 {
     return &s_contract;
 }
 
 size_t dm1_v1_mirror_candidate_no_pending_resurrect_steps_pc34_compat(
-    Dm1V1MirrorCandidateNoPendingResurrectStepPc34Compat *out,
+    DM1_V1_MirrorCandidateNoPendingResurrectStepPc34Compat *out,
     size_t cap)
 {
     size_t i;

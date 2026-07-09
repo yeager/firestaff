@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 mirror-candidate reincarnate/race ownership names: reincarnate rearm, resurrect double-candidate race, and no-pending-resurrect APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: reincarnate rearm, resurrect double-candidate race, no-pending-resurrect, double-open-close, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 mirror-candidate resurrect ownership names: resurrect/reincarnate skills, full C30 chain, resurrect rearm, and resurrect-reselect inventory pickup APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: resurrect/reincarnate skills, full C30 chain, resurrect rearm, reincarnate rearm, resurrect-reselect inventory pickup, double-open-close, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 mirror-candidate panel command ownership names: open-then-reselect, chest-close-pending-panel, runtime spell-rune, and close-button APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: open-then-reselect, chest-close-pending-panel, runtime spell-rune, close-button, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

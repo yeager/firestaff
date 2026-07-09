@@ -66,7 +66,7 @@ static void check_source_evidence(void)
 }
 
 static void check_step_shape(
-    const Dm1V1MirrorCandidateRdcrStepPc34Compat *steps,
+    const DM1_V1_MirrorCandidateRdcrStepPc34Compat *steps,
     int stepCount)
 {
     CHECK_EQ(stepCount, 5, "driver emits five explicit state-machine steps");
@@ -98,7 +98,7 @@ static void check_step_shape(
 }
 
 static void check_first_death(
-    const Dm1V1MirrorCandidateRdcrStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRdcrStepPc34Compat *step)
 {
     CHECK_EQ(step->candidateOrdinalBefore, 0,
              "first death starts with no candidate");
@@ -143,7 +143,7 @@ static void check_first_death(
 }
 
 static void check_first_resurrect(
-    const Dm1V1MirrorCandidateRdcrStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRdcrStepPc34Compat *step)
 {
     CHECK_EQ(step->candidateOrdinalBefore, 1,
              "first resurrect starts with champion 0 pending");
@@ -188,7 +188,7 @@ static void check_first_resurrect(
 }
 
 static void check_second_death(
-    const Dm1V1MirrorCandidateRdcrStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRdcrStepPc34Compat *step)
 {
     CHECK_EQ(step->candidateOrdinalBefore, 0,
              "second death starts after first pending consumed");
@@ -239,7 +239,7 @@ static void check_second_death(
 }
 
 static void check_second_resurrect(
-    const Dm1V1MirrorCandidateRdcrStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRdcrStepPc34Compat *step)
 {
     CHECK_EQ(step->candidateOrdinalBefore, 3,
              "second resurrect starts with champion 2 pending");
@@ -284,7 +284,7 @@ static void check_second_resurrect(
 }
 
 static void check_panel_draw_after_race(
-    const Dm1V1MirrorCandidateRdcrStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRdcrStepPc34Compat *step)
 {
     CHECK_EQ(step->pendingCountBefore, 0,
              "post-race panel draw starts after both candidates consumed");
@@ -316,7 +316,7 @@ static void check_panel_draw_after_race(
 }
 
 static void check_final_state(
-    const Dm1V1MirrorCandidateRdcrStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateRdcrStatePc34Compat *state)
 {
     int championIndex;
     int slotIndex;
@@ -445,8 +445,8 @@ static void check_final_state(
 
 int main(void)
 {
-    Dm1V1MirrorCandidateRdcrStatePc34Compat state;
-    Dm1V1MirrorCandidateRdcrStepPc34Compat steps[5];
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat state;
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat steps[5];
     int stepCount;
 
     check_source_evidence();

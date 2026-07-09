@@ -23,7 +23,7 @@ static int has_phrase(const char *text, const char *phrase)
 
 static void test_contract_fields(void)
 {
-    const Dm1V1MirrorCandidateNoPendingResurrectContractPc34Compat *contract =
+    const DM1_V1_MirrorCandidateNoPendingResurrectContractPc34Compat *contract =
         dm1_v1_mirror_candidate_no_pending_resurrect_contract_pc34_compat();
 
     CHECK_REDMCSB(contract != NULL,
@@ -66,7 +66,7 @@ static void test_contract_fields(void)
 
 static void test_required_phrases(void)
 {
-    const Dm1V1MirrorCandidateNoPendingResurrectContractPc34Compat *contract =
+    const DM1_V1_MirrorCandidateNoPendingResurrectContractPc34Compat *contract =
         dm1_v1_mirror_candidate_no_pending_resurrect_contract_pc34_compat();
 
     CHECK_REDMCSB(has_phrase(contract->non_op_note, "contract_only=1") &&
@@ -108,7 +108,7 @@ static void test_required_phrases(void)
 
 static void test_anchor_strings(void)
 {
-    const Dm1V1MirrorCandidateNoPendingResurrectContractPc34Compat *contract =
+    const DM1_V1_MirrorCandidateNoPendingResurrectContractPc34Compat *contract =
         dm1_v1_mirror_candidate_no_pending_resurrect_contract_pc34_compat();
 
     CHECK_REDMCSB(has_phrase(contract->redmcsb_f0280_anchor,
@@ -131,7 +131,7 @@ static void test_anchor_strings(void)
 
 static void test_steps(void)
 {
-    Dm1V1MirrorCandidateNoPendingResurrectStepPc34Compat steps[8];
+    DM1_V1_MirrorCandidateNoPendingResurrectStepPc34Compat steps[8];
     size_t count =
         dm1_v1_mirror_candidate_no_pending_resurrect_steps_pc34_compat(
             steps, sizeof(steps) / sizeof(steps[0]));

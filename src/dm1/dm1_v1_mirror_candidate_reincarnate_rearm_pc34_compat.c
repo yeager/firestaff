@@ -10,7 +10,7 @@ static int valid_champion_index(int championIndex)
 }
 
 static int front_d1c_portrait_index(
-    const Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat *state)
 {
     int championIndex;
 
@@ -28,7 +28,7 @@ static int front_d1c_portrait_index(
 }
 
 void DM1_V1_MirrorCandidateReincarnateRearm_InitPc34Compat(
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat *state)
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -67,8 +67,8 @@ void DM1_V1_MirrorCandidateReincarnateRearm_InitPc34Compat(
 }
 
 static void result_init(
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat *result,
-    const Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat *state,
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat *result,
+    const DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat *state,
     int command)
 {
     int candidateIndex;
@@ -102,7 +102,7 @@ static void result_init(
     candidateIndex = (int)state->candidateChampionOrdinal - 1;
     result->candidateChampionIndex = candidateIndex;
     if (valid_champion_index(candidateIndex)) {
-        const Dm1V1MirrorCandidateReincarnateChampionPc34Compat *champion =
+        const DM1_V1_MirrorCandidateReincarnateChampionPc34Compat *champion =
             &state->champions[candidateIndex];
         result->currentHealthBefore = champion->currentHealth;
         result->currentHealthAfter = champion->currentHealth;
@@ -122,9 +122,9 @@ static void result_init(
 }
 
 static void publish_finalize_result(
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat *state,
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat *state,
     int candidateIndex,
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat *result)
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat *result)
 {
     state->candidateChampionOrdinal = 0u;
     state->c040PanelOpen = 0;
@@ -148,12 +148,12 @@ static void publish_finalize_result(
 }
 
 int DM1_V1_MirrorCandidateReincarnateRearm_ProcessPanelCommandPc34Compat(
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat *state,
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat *outResult)
 {
     int candidateIndex;
-    Dm1V1MirrorCandidateReincarnateChampionPc34Compat *champion;
+    DM1_V1_MirrorCandidateReincarnateChampionPc34Compat *champion;
 
     result_init(outResult, state, command);
     if (!state || !outResult) {
@@ -229,9 +229,9 @@ int DM1_V1_MirrorCandidateReincarnateRearm_ProcessPanelCommandPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateReincarnateRearm_CanProcessCommandPc34Compat(
-    const Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat *outResult)
 {
     if (outResult) {
         memset(outResult, 0, sizeof(*outResult));
