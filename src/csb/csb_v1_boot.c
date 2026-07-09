@@ -1168,88 +1168,6 @@ static int csb_v1_boot_startup_facts_from_snapshot_pc34(
         snapshot->boot_profile);
 }
 
-int csb_v1_boot_startup_build_render_plan_from_runtime_state_pc34(
-    CSB_V1_StartupRenderPlan_PC34 *out_plan,
-    int title_active,
-    int title_frame,
-    int title_source_step,
-    int entrance_active,
-    int entrance_source_step,
-    int entrance_dismissed,
-    int credits_active,
-    int credits_remaining_ticks,
-    int opening_active,
-    int opening_delay_ticks,
-    int opening_step,
-    int pending_command,
-    int entrance_frame,
-    int utility_overlay_active,
-    int utility_selected_action_index,
-    int utility_imported_champion_count,
-    int utility_preview_active,
-    const char *utility_prompt,
-    int resume_available,
-    const char *resume_path,
-    const CSB_V1_BootProfile *boot_profile)
-{
-    return csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
-        out_plan,
-        title_active,
-        title_frame,
-        title_source_step,
-        entrance_active,
-        entrance_source_step,
-        entrance_dismissed,
-        credits_active,
-        credits_remaining_ticks,
-        opening_active,
-        opening_delay_ticks,
-        opening_step,
-        pending_command,
-        entrance_frame,
-        utility_overlay_active,
-        utility_selected_action_index,
-        utility_imported_champion_count,
-        utility_preview_active,
-        utility_prompt,
-        resume_available,
-        resume_path,
-        boot_profile);
-}
-
-int csb_v1_boot_startup_build_render_plan_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan)
-{
-    if (!snapshot) {
-        return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
-                                                                  out_plan);
-    }
-    return csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
-        out_plan,
-        snapshot->title_active,
-        snapshot->title_frame,
-        snapshot->title_source_step,
-        snapshot->entrance_active,
-        snapshot->entrance_source_step,
-        snapshot->entrance_dismissed,
-        snapshot->credits_active,
-        snapshot->credits_remaining_ticks,
-        snapshot->opening_active,
-        snapshot->opening_delay_ticks,
-        snapshot->opening_step,
-        snapshot->pending_command,
-        snapshot->entrance_frame,
-        snapshot->utility_overlay_active,
-        snapshot->utility_selected_action_index,
-        snapshot->utility_imported_champion_count,
-        snapshot->utility_preview_active,
-        snapshot->utility_prompt,
-        snapshot->resume_available,
-        snapshot->resume_path,
-        snapshot->boot_profile);
-}
-
 int csb_v1_boot_startup_build_default_render_plan_pc34(
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
@@ -2735,6 +2653,10 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
     return out_receipt ? out_receipt->valid : (render_result || hud_result > 0);
 }
 
+static int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
+    const CSB_V1_BootStartupInputGateReceipt_PC34 *gate_receipt,
+    CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt);
+
 int csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int include_menu_input,
@@ -2742,8 +2664,6 @@ int csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
     const CSB_V1_StartupRenderExecutor_PC34 *executor,
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 *out_receipt)
 {
-    CSB_V1_BootStartupInputGateReceipt_PC34 input_gate;
-
     if (!out_receipt) {
         return 0;
     }
@@ -2815,19 +2735,15 @@ int csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
     }
 
     if (include_menu_input) {
-        csb_v1_boot_startup_input_gate_receipt_init_pc34(&input_gate);
-        if (csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
+        if (csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
                 snapshot,
                 menu_input,
-                &input_gate) &&
-            csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
-                &input_gate,
                 &out_receipt->host_input)) {
             out_receipt->host_input_dispatch_valid = 1;
             out_receipt->host_input_blocked =
-                input_gate.host_input_blocked ? 1 : 0;
+                out_receipt->host_input.host_input_blocked ? 1 : 0;
             out_receipt->startup_input_ready =
-                input_gate.startup_input_ready ? 1 : 0;
+                out_receipt->host_input.startup_input_ready ? 1 : 0;
             out_receipt->should_dispatch_input =
                 out_receipt->host_input.should_dispatch_input ? 1 : 0;
             out_receipt->should_ignore_input =
@@ -3508,7 +3424,7 @@ int csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
         out_receipt);
 }
 
-int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
+static int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
     const CSB_V1_BootStartupInputGateReceipt_PC34 *gate_receipt,
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt)
 {
@@ -3524,6 +3440,10 @@ int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
     out_receipt->pointer_button_relevant =
         gate_receipt->pointer_button_relevant ? 1 : 0;
     out_receipt->startup_active = gate_receipt->startup_active ? 1 : 0;
+    out_receipt->startup_input_ready =
+        gate_receipt->startup_input_ready ? 1 : 0;
+    out_receipt->host_input_blocked =
+        gate_receipt->host_input_blocked ? 1 : 0;
     out_receipt->should_dispatch_input =
         gate_receipt->should_dispatch_input ? 1 : 0;
     out_receipt->should_ignore_input =
@@ -3537,6 +3457,62 @@ int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
      * blocked by title, routed to utility, or dispatched to entrance. Keep
      * that dispatch decision in a CSB receipt for M11 keyboard/pointer paths. */
     return 1;
+}
+
+int csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootStartupInputGateReceipt_PC34 gate_receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_host_input_dispatch_receipt_init_pc34(out_receipt);
+    csb_v1_boot_startup_input_gate_receipt_init_pc34(&gate_receipt);
+    if (!csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
+            snapshot,
+            menu_input,
+            &gate_receipt)) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 keeps keyboard command dispatch inside
+     * the startup loop. Expose that as the host receipt consumed by M11
+     * instead of exporting the intermediate gate compatibility wrapper. */
+    return csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
+        &gate_receipt,
+        out_receipt);
+}
+
+int csb_v1_boot_startup_host_input_dispatch_pointer_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootStartupInputGateReceipt_PC34 gate_receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_host_input_dispatch_receipt_init_pc34(out_receipt);
+    csb_v1_boot_startup_input_gate_receipt_init_pc34(&gate_receipt);
+    if (!csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
+            snapshot,
+            x,
+            y,
+            button_mask,
+            &gate_receipt)) {
+        return 0;
+    }
+    /* CSBWin preserves the same entrance button boundary as ReDMCSB:
+     * pointer handling resolves to a startup command before runtime play.
+     * M11 therefore consumes the host dispatch receipt, not raw gate facts. */
+    return csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
+        &gate_receipt,
+        out_receipt);
 }
 
 static int csb_v1_boot_startup_input_render_receipt_from_action_pc34(
