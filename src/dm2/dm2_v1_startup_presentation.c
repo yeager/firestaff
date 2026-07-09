@@ -290,6 +290,56 @@ int dm2_v1_startup_presentation_build_from_host_facts(
         max_commands);
 }
 
+int dm2_v1_startup_presentation_render_receipt(
+    const DM2_V1_StartupMenu *menu,
+    const DM2_V1_StartupDrawCommand *commands,
+    int command_count,
+    int hud_runtime_ready,
+    DM2_V1_StartupRenderReceipt *out_receipt)
+{
+    int i;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!menu || !commands || command_count < 0 || !out_receipt) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->command_count = command_count;
+    out_receipt->row_count = menu->row_count;
+    out_receipt->selected_row = menu->selected_row;
+    out_receipt->hud_runtime_ready = hud_runtime_ready ? 1 : 0;
+    /* skproject/SKWIN SkWinCore startup keeps the GDAT title/menu scene in
+     * front of the game HUD. Record that suppression explicitly for M11. */
+    out_receipt->hud_overlay_suppressed = 1;
+
+    for (i = 0; i < command_count; ++i) {
+        const DM2_V1_StartupDrawCommand *command = &commands[i];
+        if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+            command->gdat_category == DM2_GDAT_CATEGORY_TITLE &&
+            !out_receipt->title_gdat_found) {
+            out_receipt->title_gdat_found = 1;
+            out_receipt->title_gdat_category = command->gdat_category;
+            out_receipt->title_gdat_index = command->gdat_index;
+            out_receipt->title_gdat_field = command->gdat_field;
+            out_receipt->title_rect = command->rect;
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                   command->style == DM2_V1_STARTUP_STYLE_PANEL) {
+            out_receipt->panel_rect = command->rect;
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                   command->style == DM2_V1_STARTUP_STYLE_SELECTED_FILL) {
+            ++out_receipt->selected_highlight_count;
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_TEXT) {
+            ++out_receipt->menu_text_count;
+            if (command->row >= 0) {
+                ++out_receipt->selectable_text_count;
+            }
+        }
+    }
+    return 1;
+}
+
 int dm2_v1_startup_presentation_receipt(int startup_menu_active,
                                         char *out_phase,
                                         int out_phase_size,
