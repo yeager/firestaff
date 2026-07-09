@@ -1813,7 +1813,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
     CSB_V1_BootStartupRenderViewReceipt_PC34 view_receipt;
+    CSB_V1_BootStartupRenderViewReceipt_PC34 runtime_view_receipt;
     CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
+    CSB_V1_StartupRenderPlan_PC34 runtime_render_plan;
     const char *resume_path = "/tmp/firestaff-csb-resume.dat";
 
     csb_v1_boot_profile_init(&boot);
@@ -1929,6 +1931,33 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               view_receipt.route_receipt.draw_title &&
               !view_receipt.hud_menu_receipt_ready,
           "boot startup render-view receipt owns post-swoosh CSB title route");
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
+              &runtime_view_receipt,
+              snapshot.title_active,
+              snapshot.title_frame,
+              snapshot.title_source_step,
+              snapshot.entrance_active,
+              snapshot.entrance_source_step,
+              snapshot.entrance_dismissed,
+              snapshot.credits_active,
+              snapshot.credits_remaining_ticks,
+              snapshot.opening_active,
+              snapshot.opening_delay_ticks,
+              snapshot.opening_step,
+              snapshot.pending_command,
+              snapshot.entrance_frame,
+              snapshot.utility_overlay_active,
+              snapshot.utility_selected_action_index,
+              snapshot.utility_imported_champion_count,
+              snapshot.utility_preview_active,
+              snapshot.utility_prompt,
+              snapshot.resume_available,
+              snapshot.resume_path,
+              snapshot.boot_profile) == 1 &&
+              runtime_view_receipt.title_after_swoosh_route &&
+              runtime_view_receipt.render_plan.surface ==
+                  view_receipt.render_plan.surface,
+          "boot startup runtime-state render-view receipt matches post-swoosh title route");
     snapshot.utility_overlay_active = 0;
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
@@ -2025,6 +2054,60 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               snapshot_render_plan.waiting_for_input,
           "boot startup render-plan facade returns CSB-owned closed-door plan");
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
+              &runtime_view_receipt,
+              snapshot.title_active,
+              snapshot.title_frame,
+              snapshot.title_source_step,
+              snapshot.entrance_active,
+              snapshot.entrance_source_step,
+              snapshot.entrance_dismissed,
+              snapshot.credits_active,
+              snapshot.credits_remaining_ticks,
+              snapshot.opening_active,
+              snapshot.opening_delay_ticks,
+              snapshot.opening_step,
+              snapshot.pending_command,
+              snapshot.entrance_frame,
+              snapshot.utility_overlay_active,
+              snapshot.utility_selected_action_index,
+              snapshot.utility_imported_champion_count,
+              snapshot.utility_preview_active,
+              snapshot.utility_prompt,
+              snapshot.resume_available,
+              snapshot.resume_path,
+              snapshot.boot_profile) == 1 &&
+              runtime_view_receipt.closed_door_menu_route &&
+              runtime_view_receipt.suppress_legacy_utility_fallback &&
+              runtime_view_receipt.hud_menu_receipt_ready,
+          "boot startup runtime-state render-view receipt owns closed-door HUD gate");
+    CHECK(csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
+              &runtime_render_plan,
+              snapshot.title_active,
+              snapshot.title_frame,
+              snapshot.title_source_step,
+              snapshot.entrance_active,
+              snapshot.entrance_source_step,
+              snapshot.entrance_dismissed,
+              snapshot.credits_active,
+              snapshot.credits_remaining_ticks,
+              snapshot.opening_active,
+              snapshot.opening_delay_ticks,
+              snapshot.opening_step,
+              snapshot.pending_command,
+              snapshot.entrance_frame,
+              snapshot.utility_overlay_active,
+              snapshot.utility_selected_action_index,
+              snapshot.utility_imported_champion_count,
+              snapshot.utility_preview_active,
+              snapshot.utility_prompt,
+              snapshot.resume_available,
+              snapshot.resume_path,
+              snapshot.boot_profile) == 1 &&
+              runtime_render_plan.surface == snapshot_render_plan.surface &&
+              runtime_render_plan.waiting_for_input ==
+                  snapshot_render_plan.waiting_for_input,
+          "boot startup runtime-state render-plan facade matches snapshot plan");
     snapshot.utility_overlay_active = 1;
     snapshot.opening_active = 1;
     snapshot.opening_delay_ticks = 0;

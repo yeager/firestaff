@@ -1168,10 +1168,103 @@ int csb_v1_boot_startup_build_render_plan_from_runtime_state_pc34(
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile)
 {
-    CSB_V1_StartupHostFacts_PC34 facts;
+    return csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
+        out_plan,
+        title_active,
+        title_frame,
+        title_source_step,
+        entrance_active,
+        entrance_source_step,
+        entrance_dismissed,
+        credits_active,
+        credits_remaining_ticks,
+        opening_active,
+        opening_delay_ticks,
+        opening_step,
+        pending_command,
+        entrance_frame,
+        utility_overlay_active,
+        utility_selected_action_index,
+        utility_imported_champion_count,
+        utility_preview_active,
+        utility_prompt,
+        resume_available,
+        resume_path,
+        boot_profile);
+}
 
-    if (!csb_v1_boot_startup_runtime_facts_pc34(
-            &facts,
+int csb_v1_boot_startup_build_render_plan_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    if (!snapshot) {
+        return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
+                                                                  out_plan);
+    }
+    return csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
+        out_plan,
+        snapshot->title_active,
+        snapshot->title_frame,
+        snapshot->title_source_step,
+        snapshot->entrance_active,
+        snapshot->entrance_source_step,
+        snapshot->entrance_dismissed,
+        snapshot->credits_active,
+        snapshot->credits_remaining_ticks,
+        snapshot->opening_active,
+        snapshot->opening_delay_ticks,
+        snapshot->opening_step,
+        snapshot->pending_command,
+        snapshot->entrance_frame,
+        snapshot->utility_overlay_active,
+        snapshot->utility_selected_action_index,
+        snapshot->utility_imported_champion_count,
+        snapshot->utility_preview_active,
+        snapshot->utility_prompt,
+        snapshot->resume_available,
+        snapshot->resume_path,
+        snapshot->boot_profile);
+}
+
+int csb_v1_boot_startup_build_default_render_plan_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
+                                                              out_plan);
+}
+
+int csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *out_plan,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    CSB_V1_BootStartupRenderViewReceipt_PC34 receipt;
+
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
+            &receipt,
             title_active,
             title_frame,
             title_source_step,
@@ -1193,36 +1286,10 @@ int csb_v1_boot_startup_build_render_plan_from_runtime_state_pc34(
             resume_available,
             resume_path,
             boot_profile)) {
-        return csb_v1_startup_build_render_plan_from_request_pc34(
-            NULL,
-            out_plan);
+        return 0;
     }
-    return csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
-        &facts,
-        out_plan);
-}
-
-int csb_v1_boot_startup_build_render_plan_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan)
-{
-    CSB_V1_StartupHostFacts_PC34 facts;
-
-    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
-        return csb_v1_startup_build_render_plan_from_request_pc34(
-            NULL,
-            out_plan);
-    }
-    return csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
-        &facts,
-        out_plan);
-}
-
-int csb_v1_boot_startup_build_default_render_plan_pc34(
-    CSB_V1_StartupRenderPlan_PC34 *out_plan)
-{
-    return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
-                                                              out_plan);
+    *out_plan = receipt.render_plan;
+    return receipt.render_plan_valid;
 }
 
 int csb_v1_boot_startup_advance_idle_from_runtime_state_pc34(
@@ -1580,25 +1647,23 @@ int csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
         out_receipt);
 }
 
-int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+static int csb_v1_boot_startup_presentation_route_receipt_from_facts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt)
 {
-    CSB_V1_StartupHostFacts_PC34 facts;
     CSB_V1_StartupPresentationReceipt_PC34 presentation;
 
     if (!out_receipt) {
         return 0;
     }
     csb_v1_boot_startup_presentation_route_receipt_init_pc34(out_receipt);
-    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot) ||
-        !csb_v1_startup_presentation_receipt_from_host_facts_pc34(
-            &facts,
-            &presentation)) {
+    if (!facts ||
+        !csb_v1_startup_presentation_receipt_from_host_facts_pc34(facts,
+                                                                  &presentation)) {
         return 0;
     }
     csb_v1_boot_startup_route_from_presentation_pc34(&presentation,
-                                                     &facts,
+                                                     facts,
                                                      out_receipt);
     /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 keeps input waiting
      * inside the entrance loop; CSBWin/Viewport.cpp mirrors CSB HUD/menu
@@ -1606,9 +1671,9 @@ int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
      * the same route receipt so M11 does not rebuild startup menu state. */
     if (out_receipt->route ==
             CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
-        facts.utility_overlay_active &&
+        facts->utility_overlay_active &&
         csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
-            &facts,
+            facts,
             &out_receipt->utility_plan)) {
         out_receipt->utility_plan_valid = 1;
         out_receipt->draw_utility_panel = 1;
@@ -1616,9 +1681,9 @@ int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
         out_receipt->hud_menu_state.kind =
             CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34;
         out_receipt->hud_menu_state.utility_selected_action_index =
-            facts.utility_selected_action_index;
+            facts->utility_selected_action_index;
         out_receipt->hud_menu_state.utility_preview_active =
-            facts.utility_preview_active ? 1 : 0;
+            facts->utility_preview_active ? 1 : 0;
         out_receipt->hud_menu_state.utility_menu_row_count =
             out_receipt->utility_plan.menu_row_count;
         out_receipt->hud_menu_state.option_count =
@@ -1633,6 +1698,24 @@ int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
     return out_receipt->valid;
 }
 
+int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+
+    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
+        if (out_receipt) {
+            csb_v1_boot_startup_presentation_route_receipt_init_pc34(
+                out_receipt);
+        }
+        return 0;
+    }
+    return csb_v1_boot_startup_presentation_route_receipt_from_facts_pc34(
+        &facts,
+        out_receipt);
+}
+
 void csb_v1_boot_startup_render_view_receipt_init_pc34(
     CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt)
 {
@@ -1644,30 +1727,26 @@ void csb_v1_boot_startup_render_view_receipt_init_pc34(
         &receipt->route_receipt);
 }
 
-int csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
+    const CSB_V1_BootStartupPresentationRouteReceipt_PC34 *route,
     CSB_V1_BootStartupRenderViewReceipt_PC34 *out_receipt)
 {
-    CSB_V1_BootStartupPresentationRouteReceipt_PC34 route;
-
     if (!out_receipt) {
         return 0;
     }
     csb_v1_boot_startup_render_view_receipt_init_pc34(out_receipt);
-    if (!csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
-            snapshot,
-            &route)) {
+    if (!route || !route->valid) {
         return 0;
     }
 
-    out_receipt->valid = route.valid;
-    out_receipt->route_receipt = route;
-    out_receipt->render_plan = route.presentation.render_plan;
-    out_receipt->render_plan_valid = route.presentation.valid;
+    out_receipt->valid = route->valid;
+    out_receipt->route_receipt = *route;
+    out_receipt->render_plan = route->presentation.render_plan;
+    out_receipt->render_plan_valid = route->presentation.valid;
     out_receipt->boot_executor_route =
-        route.draw_title || route.draw_surface || route.draw_closed_doors ||
-                route.draw_opening_frame || route.draw_fallback_text ||
-                route.draw_utility_panel
+        route->draw_title || route->draw_surface || route->draw_closed_doors ||
+                route->draw_opening_frame || route->draw_fallback_text ||
+                route->draw_utility_panel
             ? 1
             : 0;
     /* ReDMCSB TITLE.C F0437 lines 424-463 is the post-FTL CSB title
@@ -1677,31 +1756,129 @@ int csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
      * This view receipt lets M11 consume one CSB-owned render/HUD route
      * instead of rebuilding title, door, and utility fallback gates. */
     out_receipt->title_after_swoosh_route =
-        route.route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
-                route.draw_title &&
-                strcmp(route.presentation.animation, "csb-title") == 0
+        route->route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
+                route->draw_title &&
+                strcmp(route->presentation.animation, "csb-title") == 0
             ? 1
             : 0;
     out_receipt->closed_door_menu_route =
-        route.route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
-                route.draw_closed_doors && route.hud_menu_visible
+        route->route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+                route->draw_closed_doors && route->hud_menu_visible
             ? 1
             : 0;
     out_receipt->opening_door_route =
-        route.route ==
+        route->route ==
                     CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34 &&
-                route.draw_opening_frame && !route.accepts_input
+                route->draw_opening_frame && !route->accepts_input
             ? 1
             : 0;
     out_receipt->hud_menu_receipt_ready =
-        route.hud_menu_visible && route.hud_menu_state.valid ? 1 : 0;
+        route->hud_menu_visible && route->hud_menu_state.valid ? 1 : 0;
     out_receipt->suppress_legacy_utility_fallback =
-        route.route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
-                route.hud_menu_visible && !route.draw_utility_panel &&
-                !route.utility_plan_valid
+        route->route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+                route->hud_menu_visible && !route->draw_utility_panel &&
+                !route->utility_plan_valid
             ? 1
             : 0;
     return out_receipt->valid;
+}
+
+int csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
+    CSB_V1_BootStartupRenderViewReceipt_PC34 *out_receipt,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 route;
+
+    if (!csb_v1_boot_startup_runtime_facts_pc34(
+            &facts,
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            entrance_frame,
+            utility_overlay_active,
+            utility_selected_action_index,
+            utility_imported_champion_count,
+            utility_preview_active,
+            utility_prompt,
+            resume_available,
+            resume_path,
+            boot_profile) ||
+        !csb_v1_boot_startup_presentation_route_receipt_from_facts_pc34(
+            &facts,
+            &route)) {
+        if (out_receipt) {
+            csb_v1_boot_startup_render_view_receipt_init_pc34(out_receipt);
+        }
+        return 0;
+    }
+    return csb_v1_boot_startup_render_view_receipt_from_route_pc34(
+        &route,
+        out_receipt);
+}
+
+int csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupRenderViewReceipt_PC34 *out_receipt)
+{
+    if (!snapshot) {
+        if (out_receipt) {
+            csb_v1_boot_startup_render_view_receipt_init_pc34(out_receipt);
+        }
+        return 0;
+    }
+    return csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
+        out_receipt,
+        snapshot->title_active,
+        snapshot->title_frame,
+        snapshot->title_source_step,
+        snapshot->entrance_active,
+        snapshot->entrance_source_step,
+        snapshot->entrance_dismissed,
+        snapshot->credits_active,
+        snapshot->credits_remaining_ticks,
+        snapshot->opening_active,
+        snapshot->opening_delay_ticks,
+        snapshot->opening_step,
+        snapshot->pending_command,
+        snapshot->entrance_frame,
+        snapshot->utility_overlay_active,
+        snapshot->utility_selected_action_index,
+        snapshot->utility_imported_champion_count,
+        snapshot->utility_preview_active,
+        snapshot->utility_prompt,
+        snapshot->resume_available,
+        snapshot->resume_path,
+        snapshot->boot_profile);
 }
 
 int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
