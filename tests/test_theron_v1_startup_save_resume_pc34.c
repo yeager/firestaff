@@ -3629,8 +3629,9 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
         0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
         0x93, 0x80, 0x00, 0x3f
     };
+    const size_t raw_span_bitmap_bytes = 60u;
     const size_t track02_size =
-        ((span_offsets[2] + sizeof(post_boundary_span) +
+        ((span_offsets[2] + raw_span_bitmap_bytes +
           THERON_TRACK02_RAW_SECTOR_BYTES - 1u) /
          THERON_TRACK02_RAW_SECTOR_BYTES) *
         THERON_TRACK02_RAW_SECTOR_BYTES;
@@ -3654,6 +3655,12 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
         memcpy(track02 + span_offsets[anchor],
                post_boundary_span,
                sizeof(post_boundary_span));
+        for (size_t i = sizeof(post_boundary_span);
+             i < raw_span_bitmap_bytes;
+             ++i) {
+            track02[span_offsets[anchor] + i] =
+                (uint8_t)(0x33u + ((anchor * 19u + i * 11u) % 0xccu));
+        }
     }
 
     expect_true(theron_v1_track02_catalog_startup_bitmap_samples(
@@ -3661,7 +3668,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &catalog) == THERON_TRACK02_SIGNAL_OK &&
-                    catalog.sample_count == 12u &&
+                    catalog.sample_count == 20u &&
                     catalog.overflow_count == 0u &&
                     (catalog.route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
@@ -3674,7 +3681,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     &catalog,
                     &atlas) == THERON_TRACK02_SIGNAL_OK &&
                     atlas.route_count == 4u &&
-                    atlas.total_tile_count == 12u &&
+                    atlas.total_tile_count == 20u &&
                     atlas.route_mask ==
                         (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
@@ -3687,12 +3694,12 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     atlas.routes[1].width == 16u &&
                     atlas.routes[1].raw_offsets[0] == span_offsets[0] + 8u &&
                     atlas.routes[1].raw_offsets[1] == span_offsets[0] + 12u &&
-                    atlas.routes[2].width == 32u &&
+                    atlas.routes[2].width == 64u &&
                     atlas.routes[2].raw_offsets[0] == span_offsets[1] &&
-                    atlas.routes[2].raw_offsets[3] == span_offsets[1] + 12u &&
-                    atlas.routes[3].width == 32u &&
+                    atlas.routes[2].raw_offsets[7] == span_offsets[1] + 28u &&
+                    atlas.routes[3].width == 64u &&
                     atlas.routes[3].raw_offsets[0] == span_offsets[2] &&
-                    atlas.routes[3].raw_offsets[3] == span_offsets[2] + 12u &&
+                    atlas.routes[3].raw_offsets[7] == span_offsets[2] + 28u &&
                     atlas.total_nonzero_pixel_count > 0u &&
                     atlas.checksum != 0u,
                 "Track02 startup bitmap atlas joins decoded tiles into sourced per-route bitmaps");
@@ -3705,7 +3712,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
     expect_true(receipt.startup_media_ready &&
                     receipt.startup_bitmap_decode_status ==
                         THERON_TRACK02_SIGNAL_OK &&
-                    receipt.startup_bitmap_sample_count == 12 &&
+                    receipt.startup_bitmap_sample_count == 20 &&
                     (receipt.startup_bitmap_route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE) &&
                     (receipt.startup_bitmap_route_mask &
@@ -3725,15 +3732,16 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
-                    receipt.startup_bitmap_atlas_tile_count == 12u &&
+                    receipt.startup_bitmap_atlas_tile_count == 20u &&
                     receipt.startup_bitmap_atlas_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_atlas_checksum != 0u &&
                     receipt.startup_bitmap_atlas.route_count == 4u &&
-                    receipt.startup_bitmap_atlas.total_tile_count == 12u &&
+                    receipt.startup_bitmap_atlas.total_tile_count == 20u &&
                     receipt.startup_bitmap_atlas.routes[0].width == 16u &&
-                    receipt.startup_bitmap_atlas.routes[2].width == 32u &&
-                    receipt.startup_bitmap_title_sample_count == 4 &&
-                    receipt.startup_bitmap_stage_sample_count == 4 &&
+                    receipt.startup_bitmap_atlas.routes[2].width == 64u &&
+                    receipt.startup_bitmap_atlas.routes[3].width == 64u &&
+                    receipt.startup_bitmap_title_sample_count == 8 &&
+                    receipt.startup_bitmap_stage_sample_count == 8 &&
                     receipt.startup_bitmap_soul_room_sample_count == 2 &&
                     receipt.startup_bitmap_forcefield_sample_count == 2 &&
                     receipt.startup_bitmap_title_nonzero_pixel_count > 0u &&
