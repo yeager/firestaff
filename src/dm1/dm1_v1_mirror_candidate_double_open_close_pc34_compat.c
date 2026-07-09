@@ -150,8 +150,8 @@ static int route_resurrect_gate_while_open(void)
 
 static int route_reincarnate_gate_while_open(void)
 {
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat state;
-    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat gate;
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat state;
+    DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat gate;
 
     DM1_V1_MirrorCandidateReincarnateRearm_InitPc34Compat(&state);
     return !DM1_V1_MirrorCandidateReincarnateRearm_CanProcessCommandPc34Compat(
@@ -165,8 +165,8 @@ static int route_no_finalize_after_close(void)
 {
     Dm1V1MirrorClickClosedStatePc34Compat resurrectState;
     DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat resurrect;
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat reincarnateState;
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat reincarnate;
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat reincarnateState;
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat reincarnate;
 
     DM1_V1_MirrorClickClosed_InitPc34Compat(&resurrectState);
     resurrectState.candidateChampionOrdinal = 0u;

@@ -15,10 +15,10 @@ static int gPasses;
     } \
 } while (0)
 
-static Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat
+static DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat
 base_candidate_state(void)
 {
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat state;
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat state;
 
     DM1_V1_MirrorCandidateReincarnateRearm_InitPc34Compat(&state);
     return state;
@@ -26,9 +26,9 @@ base_candidate_state(void)
 
 static void test_c161_reincarnate_clears_g0299_and_rearms_mirror(void)
 {
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat state =
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat state =
         base_candidate_state();
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat result;
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat result;
     int changed;
 
     CHECK_REDMCSB(state.candidateChampionOrdinal == 2u &&
@@ -101,9 +101,9 @@ static void test_c161_reincarnate_clears_g0299_and_rearms_mirror(void)
 
 static void test_c161_does_not_enter_leader_hand_routes(void)
 {
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat state =
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat state =
         base_candidate_state();
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat result;
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat result;
     int leaderHandBefore = state.leaderHandThingOrdinal;
     int leaderIndexBefore = state.leaderIndex;
 
@@ -134,9 +134,9 @@ static void test_c161_does_not_enter_leader_hand_routes(void)
 
 static void test_c160_resurrect_contract_remains_distinct(void)
 {
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat state =
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat state =
         base_candidate_state();
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat result;
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat result;
     int changed;
 
     state.champions[1].currentHealth = 0;
@@ -179,15 +179,15 @@ static void test_c160_resurrect_contract_remains_distinct(void)
 
 static void test_candidate_panel_gate_reopens_after_c161(void)
 {
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat state =
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat state =
         base_candidate_state();
-    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat beforeStatus;
-    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat beforeAction;
-    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat afterStatus;
-    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat afterInventory;
-    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat afterSpell;
-    Dm1V1MirrorCandidateReincarnateCommandGateResultPc34Compat afterAction;
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat reincarnate;
+    DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat beforeStatus;
+    DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat beforeAction;
+    DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat afterStatus;
+    DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat afterInventory;
+    DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat afterSpell;
+    DM1_V1_MirrorCandidateReincarnateCommandGateResultPc34Compat afterAction;
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat reincarnate;
 
     (void)DM1_V1_MirrorCandidateReincarnateRearm_CanProcessCommandPc34Compat(
         &state,
@@ -243,9 +243,9 @@ static void test_candidate_panel_gate_reopens_after_c161(void)
 
 static void test_c161_requires_candidate_state(void)
 {
-    Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat state =
+    DM1_V1_MirrorCandidateReincarnateRearmStatePc34Compat state =
         base_candidate_state();
-    Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat result;
+    DM1_V1_MirrorCandidateReincarnateRearmResultPc34Compat result;
     int changed;
 
     state.candidateChampionOrdinal = 0u;

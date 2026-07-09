@@ -22,7 +22,7 @@ static int index_from_ordinal(unsigned int ordinal)
     return (int)ordinal - 1;
 }
 
-static int alive_count(const Dm1V1MirrorCandidateRdcrStatePc34Compat *state)
+static int alive_count(const DM1_V1_MirrorCandidateRdcrStatePc34Compat *state)
 {
     int championIndex;
     int count;
@@ -42,7 +42,7 @@ static int alive_count(const Dm1V1MirrorCandidateRdcrStatePc34Compat *state)
 }
 
 static unsigned int pending_ordinal_at(
-    const Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
     int index)
 {
     if (!state || index < 0 || index >= state->pendingCount ||
@@ -53,8 +53,8 @@ static unsigned int pending_ordinal_at(
 }
 
 static void snapshot_step(
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *step,
-    const Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *step,
+    const DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
     int stepId,
     const char *name,
     const char *anchor)
@@ -106,8 +106,8 @@ static void snapshot_step(
 }
 
 static void finish_step(
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *step,
-    const Dm1V1MirrorCandidateRdcrStatePc34Compat *state)
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *step,
+    const DM1_V1_MirrorCandidateRdcrStatePc34Compat *state)
 {
     int championIndex;
     int seen[
@@ -171,7 +171,7 @@ static void finish_step(
 }
 
 static void draw_all_champion_states(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state)
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state)
 {
     int championIndex;
 
@@ -182,7 +182,7 @@ static void draw_all_champion_states(
 }
 
 static void draw_c040_panel(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
     int afterRace)
 {
     int candidateIndex;
@@ -242,7 +242,7 @@ static void draw_c040_panel(
 }
 
 static int push_pending_candidate(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
     int championIndex)
 {
     if (!state || !valid_champion_index(championIndex) ||
@@ -257,7 +257,7 @@ static int push_pending_candidate(
 }
 
 static unsigned int pop_pending_candidate(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state)
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state)
 {
     unsigned int ordinal;
     int queueIndex;
@@ -282,10 +282,10 @@ static unsigned int pop_pending_candidate(
 }
 
 static int register_death(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
     int championIndex,
     int firstDeath,
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *step)
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *step)
 {
     int previousLeader;
 
@@ -341,9 +341,9 @@ static int register_death(
 }
 
 static int process_resurrect(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
     int expectedChampionIndex,
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *step)
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *step)
 {
     unsigned int ordinal;
     int championIndex;
@@ -392,7 +392,7 @@ static int process_resurrect(
 }
 
 void DM1_V1_MirrorCandidateRdcr_InitPc34Compat(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state)
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state)
 {
     int championIndex;
     int slotIndex;
@@ -440,8 +440,8 @@ void DM1_V1_MirrorCandidateRdcr_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRdcr_FirstDeathPc34Compat(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *outStep)
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *outStep)
 {
     snapshot_step(outStep, state,
                   DM1_V1_MIRROR_CANDIDATE_RDCR_STEP_FIRST_DEATH_PC34_COMPAT,
@@ -455,8 +455,8 @@ int DM1_V1_MirrorCandidateRdcr_FirstDeathPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRdcr_FirstResurrectPc34Compat(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *outStep)
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *outStep)
 {
     snapshot_step(outStep, state,
                   DM1_V1_MIRROR_CANDIDATE_RDCR_STEP_FIRST_RESURRECT_PC34_COMPAT,
@@ -470,8 +470,8 @@ int DM1_V1_MirrorCandidateRdcr_FirstResurrectPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRdcr_SecondDeathPc34Compat(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *outStep)
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *outStep)
 {
     snapshot_step(outStep, state,
                   DM1_V1_MIRROR_CANDIDATE_RDCR_STEP_SECOND_DEATH_PC34_COMPAT,
@@ -485,8 +485,8 @@ int DM1_V1_MirrorCandidateRdcr_SecondDeathPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRdcr_SecondResurrectPc34Compat(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *outStep)
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *outStep)
 {
     snapshot_step(
         outStep, state,
@@ -501,8 +501,8 @@ int DM1_V1_MirrorCandidateRdcr_SecondResurrectPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRdcr_PanelDrawAfterRacePc34Compat(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *outStep)
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *outStep)
 {
     snapshot_step(
         outStep, state,
@@ -518,8 +518,8 @@ int DM1_V1_MirrorCandidateRdcr_PanelDrawAfterRacePc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRdcr_DriveRegressionPc34Compat(
-    Dm1V1MirrorCandidateRdcrStatePc34Compat *state,
-    Dm1V1MirrorCandidateRdcrStepPc34Compat *steps,
+    DM1_V1_MirrorCandidateRdcrStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRdcrStepPc34Compat *steps,
     int stepCapacity)
 {
     if (!state || !steps || stepCapacity < 5) {
