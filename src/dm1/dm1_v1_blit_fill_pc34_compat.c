@@ -6,7 +6,7 @@
 #include "dm1_v1_blit_fill_pc34_compat.h"
 #include <string.h>
 
-static inline bool clip_rect(const M11_BF_Framebuffer* fb, M11_BF_Rect* r) {
+static inline bool clip_rect(const DM1_V1_BlitFramebufferPc34* fb, DM1_V1_BlitRectPc34* r) {
     if (r->x < 0) { r->w += r->x; r->x = 0; }
     if (r->y < 0) { r->h += r->y; r->y = 0; }
     if (r->x + r->w > (int16_t)fb->width)  r->w = (int16_t)fb->width - r->x;
@@ -15,11 +15,11 @@ static inline bool clip_rect(const M11_BF_Framebuffer* fb, M11_BF_Rect* r) {
 }
 
 /* FILLBOX.C F0133 pattern: fill rectangle with solid color */
-void m11_bf_fill_rect(M11_BF_Framebuffer* fb, const M11_BF_Rect* rect,
+void DM1_V1_BlitFillRectPc34Compat(DM1_V1_BlitFramebufferPc34* fb, const DM1_V1_BlitRectPc34* rect,
                        uint8_t color) {
     if (!fb || !fb->pixels || !rect) return;
 
-    M11_BF_Rect r = *rect;
+    DM1_V1_BlitRectPc34 r = *rect;
     if (!clip_rect(fb, &r)) return;
 
     for (int16_t y = r.y; y < r.y + r.h; y++) {
@@ -27,13 +27,13 @@ void m11_bf_fill_rect(M11_BF_Framebuffer* fb, const M11_BF_Rect* rect,
     }
 }
 
-void m11_bf_clear(M11_BF_Framebuffer* fb, uint8_t color) {
+void DM1_V1_BlitClearPc34Compat(DM1_V1_BlitFramebufferPc34* fb, uint8_t color) {
     if (!fb || !fb->pixels) return;
     memset(fb->pixels, color, (size_t)fb->pitch * fb->height);
 }
 
 /* BLIT.C F0132 pattern: copy source bitmap to framebuffer with flags */
-void m11_bf_blit(M11_BF_Framebuffer* fb, const M11_BF_BlitSource* src,
+void DM1_V1_BlitPc34Compat(DM1_V1_BlitFramebufferPc34* fb, const DM1_V1_BlitSourcePc34* src,
                   int16_t dst_x, int16_t dst_y, uint8_t flags) {
     if (!fb || !fb->pixels || !src || !src->data) return;
 
@@ -68,7 +68,7 @@ void m11_bf_blit(M11_BF_Framebuffer* fb, const M11_BF_BlitSource* src,
 }
 
 /* Scaled blit — nearest-neighbor scaling for depth-based rendering */
-void m11_bf_blit_scaled(M11_BF_Framebuffer* fb, const M11_BF_BlitSource* src,
+void DM1_V1_BlitScaledPc34Compat(DM1_V1_BlitFramebufferPc34* fb, const DM1_V1_BlitSourcePc34* src,
                          int16_t dst_x, int16_t dst_y,
                          int16_t dst_w, int16_t dst_h, uint8_t flags) {
     if (!fb || !fb->pixels || !src || !src->data) return;
@@ -98,7 +98,7 @@ void m11_bf_blit_scaled(M11_BF_Framebuffer* fb, const M11_BF_BlitSource* src,
     }
 }
 
-void m11_bf_hline(M11_BF_Framebuffer* fb, int16_t x1, int16_t x2,
+void DM1_V1_BlitHLinePc34Compat(DM1_V1_BlitFramebufferPc34* fb, int16_t x1, int16_t x2,
                    int16_t y, uint8_t color) {
     if (!fb || !fb->pixels) return;
     if (y < 0 || y >= (int16_t)fb->height) return;
@@ -109,7 +109,7 @@ void m11_bf_hline(M11_BF_Framebuffer* fb, int16_t x1, int16_t x2,
     memset(fb->pixels + y * fb->pitch + x1, color, (size_t)(x2 - x1 + 1));
 }
 
-void m11_bf_vline(M11_BF_Framebuffer* fb, int16_t x, int16_t y1,
+void DM1_V1_BlitVLinePc34Compat(DM1_V1_BlitFramebufferPc34* fb, int16_t x, int16_t y1,
                    int16_t y2, uint8_t color) {
     if (!fb || !fb->pixels) return;
     if (x < 0 || x >= (int16_t)fb->width) return;
@@ -121,11 +121,11 @@ void m11_bf_vline(M11_BF_Framebuffer* fb, int16_t x, int16_t y1,
     }
 }
 
-void m11_bf_copy_region(M11_BF_Framebuffer* dst, const M11_BF_Framebuffer* src,
-                         const M11_BF_Rect* region) {
+void DM1_V1_BlitCopyRegionPc34Compat(DM1_V1_BlitFramebufferPc34* dst, const DM1_V1_BlitFramebufferPc34* src,
+                         const DM1_V1_BlitRectPc34* region) {
     if (!dst || !dst->pixels || !src || !src->pixels || !region) return;
 
-    M11_BF_Rect r = *region;
+    DM1_V1_BlitRectPc34 r = *region;
     /* Clip to both source and destination */
     if (r.x < 0) { r.w += r.x; r.x = 0; }
     if (r.y < 0) { r.h += r.y; r.y = 0; }

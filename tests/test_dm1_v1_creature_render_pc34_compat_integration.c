@@ -318,21 +318,21 @@ static void test_type_names(void) {
 /* ── Test 9: Legacy API ── */
 static void test_legacy_api(void) {
     DM1_CreatureRenderList list;
-    m11_creature_render_init(&list);
+    DM1_V1_CreatureRender_InitPc34Compat(&list);
     ASSERT_EQ(list.count, 0, "legacy init count=0");
 
-    m11_creature_render_collect(&list, 5, 5, 0, NULL);
+    DM1_V1_CreatureRender_CollectPc34Compat(&list, 5, 5, 0, NULL);
     ASSERT_EQ(list.count, 0, "legacy collect stub count=0");
 
     /* Legacy get_graphic should use aspect table, not type*18 */
-    int gfx = m11_creature_get_graphic(0, 0, 0);
+    int gfx = DM1_V1_CreatureRender_GetGraphicPc34Compat(0, 0, 0);
     ASSERT_EQ(gfx, 584, "legacy get_graphic scorpion front=584");
 
-    gfx = m11_creature_get_graphic(0, 1, 0);
+    gfx = DM1_V1_CreatureRender_GetGraphicPc34Compat(0, 1, 0);
     /* Scorpion GI=0x0482: ATTACK=0 (bit5=0), so attack falls to front */
     ASSERT_EQ(gfx, 584, "legacy get_graphic scorpion attack→front=584");
 
-    ASSERT_STR_EQ(m11_creature_type_name(22), "Demon", "legacy name demon");
+    ASSERT_STR_EQ(DM1_V1_CreatureRender_TypeNamePc34Compat(22), "Demon", "legacy name demon");
 }
 
 /* ── Test 10: Cross-check M11 aspect data agreement ──
