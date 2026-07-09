@@ -242,6 +242,9 @@ typedef struct {
     int render_sample_count;
     int render_success_count;
     int sampled_direction_mask;
+    int runtime_direction_mask;
+    int runtime_turn_count;
+    int unique_frame_hash_count;
     int total_asset_portrait_count;
     int total_fallback_portrait_count;
     int min_asset_portrait_count;

@@ -3829,8 +3829,10 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     DM2_V1_BootRuntimeHudCaptureReceipt *out_receipt)
 {
     uint8_t framebuffer[320 * 200];
+    uint32_t frame_hashes[4];
     uint32_t combined_hash = 0x32485543u;
     int dir;
+    int frame_hash_count = 0;
 
     dm2_v1_boot_runtime_hud_capture_receipt_init(out_receipt);
     if (!profile || !profile->dm2_state || !out_receipt) {
@@ -3850,11 +3852,10 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
      * real runtime frame path, not only through startup handoff receipts. */
     for (dir = 0; dir < 4; ++dir) {
         DM2_V1_BootRuntimeRenderReceipt frame_receipt;
-        DM2_V1_BootRuntimeReceipt runtime;
+        DM2_V1_BootRuntimeReceipt turn_receipt;
+        int seen_hash = 0;
+        int hash_i;
         memset(framebuffer, 0, sizeof(framebuffer));
-        if (!dm2_v1_boot_runtime_capture(profile, &runtime)) {
-            continue;
-        }
         if (!dm2_v1_boot_runtime_render_frame(profile,
                                               framebuffer,
                                               320,
@@ -3867,9 +3868,22 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         }
         ++out_receipt->render_sample_count;
         out_receipt->sampled_direction_mask |= 1 << (dir & 3);
+        out_receipt->runtime_direction_mask |=
+            1 << (frame_receipt.runtime.party_dir & 3);
         if (frame_receipt.render_result == 0 &&
             frame_receipt.runtime_hud_capture_ready) {
             ++out_receipt->render_success_count;
+        }
+        for (hash_i = 0; hash_i < frame_hash_count; ++hash_i) {
+            if (frame_hashes[hash_i] ==
+                frame_receipt.runtime_hud_frame_hash) {
+                seen_hash = 1;
+                break;
+            }
+        }
+        if (!seen_hash && frame_hash_count < 4) {
+            frame_hashes[frame_hash_count++] =
+                frame_receipt.runtime_hud_frame_hash;
         }
         out_receipt->total_asset_portrait_count +=
             frame_receipt.runtime_hud_asset_portrait_count;
@@ -3923,7 +3937,12 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         if (out_receipt->render_sample_count == 1) {
             out_receipt->first_frame = frame_receipt;
         }
-        (void)dm2_v1_boot_runtime_turn(profile, 1, &runtime);
+        memset(&turn_receipt, 0, sizeof(turn_receipt));
+        if (dm2_v1_boot_runtime_turn(profile, 1, &turn_receipt) &&
+            turn_receipt.runtime_ready &&
+            turn_receipt.operation_result == 0) {
+            ++out_receipt->runtime_turn_count;
+        }
     }
     if (out_receipt->min_asset_portrait_count == 9999) {
         out_receipt->min_asset_portrait_count = 0;
@@ -3934,6 +3953,7 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     if (out_receipt->min_asset_wall_count == 9999) {
         out_receipt->min_asset_wall_count = 0;
     }
+    out_receipt->unique_frame_hash_count = frame_hash_count;
     out_receipt->combined_frame_hash = combined_hash;
     out_receipt->no_fallback_portraits =
         out_receipt->total_asset_portrait_count > 0 &&
@@ -3958,6 +3978,9 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->render_sample_count == 4 &&
         out_receipt->render_success_count == 4 &&
         out_receipt->sampled_direction_mask == 0x0f &&
+        out_receipt->runtime_direction_mask == 0x0f &&
+        out_receipt->runtime_turn_count == 4 &&
+        out_receipt->unique_frame_hash_count > 0 &&
         out_receipt->real_gdat_portrait_ready &&
         out_receipt->real_gdat_core_render_ready &&
         out_receipt->combined_frame_hash != 0u &&

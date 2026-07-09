@@ -448,6 +448,9 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.render_sample_count == 4 &&
               hud_capture.render_success_count == 4 &&
               hud_capture.sampled_direction_mask == 0x0f &&
+              hud_capture.runtime_direction_mask == 0x0f &&
+              hud_capture.runtime_turn_count == 4 &&
+              hud_capture.unique_frame_hash_count > 0 &&
               hud_capture.min_asset_portrait_count >= 4 &&
               hud_capture.total_fallback_portrait_count == 0 &&
               hud_capture.min_asset_floor_ceiling_count >= 2 &&
@@ -462,7 +465,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
-          "boot runtime HUD capture proves real GDAT portraits across sampled directions");
+          "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");
     memset(&action, 0, sizeof(action));
     CHECK(dm2_v1_boot_runtime_action_front_cell(
               launch.profile,

@@ -1513,6 +1513,9 @@ int main(void) {
                         &runtime_hud_capture) == 1 &&
                         runtime_hud_capture.valid == 1 &&
                         runtime_hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
+                        runtime_hud_capture.runtime_direction_mask == 0x0f &&
+                        runtime_hud_capture.runtime_turn_count == 4 &&
+                        runtime_hud_capture.unique_frame_hash_count > 0 &&
                         runtime_hud_capture.min_asset_portrait_count >= 4 &&
                         runtime_hud_capture.total_fallback_portrait_count == 0 &&
                         runtime_hud_capture.min_asset_floor_ceiling_count >= 2 &&
