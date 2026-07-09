@@ -1779,7 +1779,9 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     out_receipt->no_fallback_visuals_enforced =
         view_model->runtime_fallback_visuals_blocked ||
                 view_model->runtime_level_source ==
-                    THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC
+                    THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC ||
+                view_model->runtime_level_source ==
+                    THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME
             ? 1
             : 0;
     out_receipt->fallback_visuals_allowed =
@@ -1795,9 +1797,12 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
             : (view_model->runtime_level_source ==
                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC
                    ? "TRACK02 RUNTIME READY"
+                   : (view_model->runtime_level_source ==
+                              THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME
+                          ? "SAVE RESUME RUNTIME READY"
                    : (out_receipt->runtime_level_render_allowed
                           ? "THERON RUNTIME READY"
-                          : "THERON STARTUP MENU"));
+                          : "THERON STARTUP MENU")));
     if (theron_v1_boot_startup_render_plan_from_view_model(
             view_model,
             &out_receipt->render_plan)) {
@@ -2647,6 +2652,15 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->graphics_blocked = 1;
         out_receipt->status_scope = "STARTUP";
         out_receipt->status = "TRACK02 RUNTIME GRAPHICS HANDOFF";
+        return 0;
+    }
+    if (out_receipt->runtime_readiness_ready &&
+        out_receipt->no_fallback_visuals_enforced &&
+        out_receipt->runtime_level_source ==
+            THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME) {
+        out_receipt->graphics_blocked = 1;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "SAVE RESUME RUNTIME GRAPHICS HANDOFF";
         return 0;
     }
 

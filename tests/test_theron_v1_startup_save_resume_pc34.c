@@ -1448,11 +1448,13 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootRuntimeStartupSnapshot media_snapshot;
     Theron_V1_BootRuntimeStartupSnapshot blocked_snapshot;
     Theron_V1_BootRuntimeStartupSnapshot semantic_snapshot;
+    Theron_V1_BootRuntimeStartupSnapshot save_resume_snapshot;
     Theron_V1_BootStartupViewModel view_model;
     Theron_V1_BootStartupViewModel direct_view_model;
     Theron_V1_BootStartupViewModel media_view_model;
     Theron_V1_BootStartupViewModel blocked_view_model;
     Theron_V1_BootStartupViewModel semantic_view_model;
+    Theron_V1_BootStartupViewModel save_resume_view_model;
     Theron_StartupMediaStateReceipt media_receipt;
     Theron_StartupLayoutElement media_layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
     Theron_StartupLayoutElement legacy_layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
@@ -2174,6 +2176,53 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(graphics_route_receipt.status,
                            "TRACK02 RUNTIME GRAPHICS HANDOFF") == 0,
                 "boot snapshot graphics route hands semantic Track02 route to runtime");
+    save_resume_snapshot = media_snapshot;
+    save_resume_snapshot.runtime_level_source =
+        THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME;
+    save_resume_snapshot.runtime_track02_semantic_handoff = 0;
+    save_resume_snapshot.runtime_fallback_visuals_blocked = 0;
+    save_resume_snapshot.runtime_structured_route = 1;
+    save_resume_snapshot.runtime_receipt_text_route = 0;
+    expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+                    &save_resume_snapshot,
+                    &media_receipt,
+                    &save_resume_view_model) &&
+                    save_resume_view_model.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME &&
+                    save_resume_view_model.runtime_structured_route &&
+                    !save_resume_view_model.runtime_receipt_text_route,
+                "boot startup view model carries save-resume runtime route");
+    expect_true(theron_v1_boot_startup_render_route_receipt_from_view_model(
+                    &save_resume_view_model,
+                    &render_route_receipt) &&
+                    render_route_receipt.runtime_level_render_allowed &&
+                    render_route_receipt.runtime_readiness_ready &&
+                    render_route_receipt.save_resume_runtime_handoff_ready &&
+                    render_route_receipt.no_fallback_visuals_enforced &&
+                    !render_route_receipt.fallback_visuals_allowed &&
+                    render_route_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME &&
+                    render_route_receipt.runtime_structured_route &&
+                    !render_route_receipt.runtime_receipt_text_route &&
+                    strcmp(render_route_receipt.status,
+                           "SAVE RESUME RUNTIME READY") == 0,
+                "boot render route receipt hands save-resume route to runtime without fallback visuals");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(!theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
+                    &save_resume_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &graphics_route_receipt) &&
+                    graphics_route_receipt.runtime_readiness_ready &&
+                    graphics_route_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME &&
+                    graphics_route_receipt.graphics_blocked &&
+                    graphics_route_receipt.no_fallback_visuals_enforced &&
+                    !graphics_route_receipt.fallback_visuals_allowed &&
+                    media_graphics_counters.fill_count == 0 &&
+                    strcmp(graphics_route_receipt.status,
+                           "SAVE RESUME RUNTIME GRAPHICS HANDOFF") == 0,
+                "boot graphics route receipt hands save-resume route to runtime without fallback startup draw");
     media_layout_roster_found = 0;
     expect_true(theron_v1_boot_startup_layout_build_from_view_model(
                     &media_view_model,
