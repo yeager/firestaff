@@ -52,6 +52,18 @@ static void expect_true(int condition, const char* message) {
     }
 }
 
+static void wr16_be(unsigned char* p, unsigned int v) {
+    p[0] = (unsigned char)(v >> 8);
+    p[1] = (unsigned char)v;
+}
+
+static void wr32_be(unsigned char* p, unsigned int v) {
+    p[0] = (unsigned char)(v >> 24);
+    p[1] = (unsigned char)(v >> 16);
+    p[2] = (unsigned char)(v >> 8);
+    p[3] = (unsigned char)v;
+}
+
 static int make_temp_root(char root[512]) {
 #ifdef _WIN32
     snprintf(root, 512, ".\\firestaff_nexus_m11_startup_%lu",
@@ -527,6 +539,116 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     nexus_ui_manager_free(&ui);
 }
 
+static void make_bpk_surface_archive(unsigned char* data,
+                                     size_t size,
+                                     int prs3)
+{
+    const unsigned int trailer_off = 48U;
+    const unsigned int surface_off = 80U;
+    unsigned int i;
+    memset(data, 0, size);
+    memcpy(data, "BPPK", 4);
+    wr32_be(data + 4, (unsigned int)size);
+    memcpy(data + 12, "BMPD", 4);
+    wr32_be(data + 16, (unsigned int)size - 20U);
+    wr32_be(data + 20, 2U);
+    wr32_be(data + 24, trailer_off);
+    wr32_be(data + 28, surface_off);
+    data[trailer_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_TRAILER;
+
+    wr16_be(data + surface_off + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 4U);
+    data[surface_off + NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 4U;
+    data[surface_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_8BPP;
+    if (prs3) {
+        memcpy(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES,
+               "PRS3",
+               4);
+        wr32_be(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 4U,
+                1U);
+        wr32_be(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 8U,
+                16U);
+    } else {
+        for (i = 0; i < 16U; ++i) {
+            data[surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + i] =
+                (unsigned char)(0x30U + i);
+        }
+    }
+}
+
+static void expect_bpk_runtime_surface_import(void) {
+    Nexus_UI_Manager ui;
+    unsigned char archive[128];
+    Nexus_V1_BpkRuntimeSurfaceHandoff rows[2];
+    Nexus_V1_BpkRuntimeSurfaceHandoffSummary summary;
+    Nexus_UI_BpkImportReceipt receipt;
+    const Nexus_UI_Surface* surface;
+    int rc;
+
+    nexus_ui_manager_init(&ui);
+    make_bpk_surface_archive(archive, sizeof(archive), 0);
+    memset(rows, 0, sizeof(rows));
+    memset(&summary, 0, sizeof(summary));
+    rc = nexus_v1_bpk_archive_runtime_surface_handoff(
+        archive, sizeof(archive), rows, 2U, &summary);
+    expect_true(rc == 0 &&
+                    summary.ready_stored_surfaces == 1U &&
+                    rows[0].status ==
+                        NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED,
+                "Nexus BPK handoff exposes one ready stored surface");
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_ui_load_bpk_runtime_surface(&ui,
+                                           NEXUS_SURFACE_STABG,
+                                           archive,
+                                           sizeof(archive),
+                                           &rows[0],
+                                           32,
+                                           16,
+                                           "MENU.BPK[1]",
+                                           &receipt);
+    surface = &ui.surfaces[NEXUS_SURFACE_STABG];
+    expect_true(rc == NEXUS_UI_BPK_IMPORT_OK &&
+                    receipt.loaded == 1 &&
+                    receipt.bytes_loaded == 16U &&
+                    receipt.width == 4 &&
+                    receipt.height == 4 &&
+                    surface->data != NULL &&
+                    surface->w == 4 &&
+                    surface->h == 4 &&
+                    surface->data[0] == 0x30 &&
+                    surface->data[15] == 0x3f,
+                "Nexus UI imports ready stored BPK surface bytes");
+
+    make_bpk_surface_archive(archive, sizeof(archive), 1);
+    memset(rows, 0, sizeof(rows));
+    memset(&summary, 0, sizeof(summary));
+    rc = nexus_v1_bpk_archive_runtime_surface_handoff(
+        archive, sizeof(archive), rows, 2U, &summary);
+    expect_true(rc == 0 &&
+                    summary.blocked_prs3_surfaces == 1U &&
+                    rows[0].status ==
+                        NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3,
+                "Nexus BPK handoff marks PRS3 surface blocked");
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_ui_load_bpk_runtime_surface(&ui,
+                                           NEXUS_SURFACE_WARNING,
+                                           archive,
+                                           sizeof(archive),
+                                           &rows[0],
+                                           32,
+                                           16,
+                                           "MENU.BPK[1]",
+                                           &receipt);
+    expect_true(rc == NEXUS_UI_BPK_IMPORT_ERR_NOT_READY &&
+                    receipt.blocked_prs3 == 1 &&
+                    receipt.loaded == 0 &&
+                    strcmp(nexus_ui_bpk_import_status_name(rc),
+                           "not-ready") == 0,
+                "Nexus UI refuses PRS3 BPK surface until decoder exists");
+    nexus_ui_manager_free(&ui);
+}
+
 static void expect_failed_start_is_inactive(const char* data_dir,
                                             const char* expected_status) {
     M11_GameViewState view;
@@ -572,6 +694,7 @@ int main(void) {
     const char* real_dir;
 
     expect_face_loader_counts_real_vs_fallback();
+    expect_bpk_runtime_surface_import();
     expect_title_sequence_contract();
     expect_title_render_is_frame_dependent();
     expect_startup_layout_contract();

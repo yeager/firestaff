@@ -123,6 +123,107 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     return (int)surf->owns_data;
 }
 
+int nexus_ui_load_bpk_runtime_surface(Nexus_UI_Manager *mgr,
+    Nexus_UISurfaceType which,
+    const uint8_t *archive_data, size_t archive_size,
+    const Nexus_V1_BpkRuntimeSurfaceHandoff *handoff,
+    uint8_t pal_start, uint8_t pal_count,
+    const char *source,
+    Nexus_UI_BpkImportReceipt *out_receipt)
+{
+    Nexus_UI_BpkImportReceipt receipt;
+    Nexus_V1_BpkSurfaceEntry extracted_surface;
+    uint8_t *pixels = NULL;
+    size_t written = 0U;
+    int extract_status;
+    int load_status;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!mgr || !archive_data || !handoff) {
+        if (out_receipt) *out_receipt = receipt;
+        return NEXUS_UI_BPK_IMPORT_ERR_NULL;
+    }
+
+    receipt.entry_index = handoff->entry_index;
+    receipt.payload_offset = handoff->payload_offset;
+    receipt.width = (int)handoff->surface.width;
+    receipt.height = (int)handoff->surface.height;
+    receipt.surface_class = handoff->surface.layout.surface_class;
+
+    if (handoff->status == NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3) {
+        receipt.blocked_prs3 = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return NEXUS_UI_BPK_IMPORT_ERR_NOT_READY;
+    }
+    if (handoff->status == NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED) {
+        receipt.blocked_truncated = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return NEXUS_UI_BPK_IMPORT_ERR_NOT_READY;
+    }
+    if (handoff->status != NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED ||
+        !handoff->extractable ||
+        handoff->surface.layout.surface_bytes == 0U) {
+        receipt.blocked_not_ready = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return NEXUS_UI_BPK_IMPORT_ERR_NOT_READY;
+    }
+
+    pixels = (uint8_t *)malloc(handoff->surface.layout.surface_bytes);
+    if (!pixels) {
+        if (out_receipt) *out_receipt = receipt;
+        return NEXUS_UI_BPK_IMPORT_ERR_LOAD;
+    }
+    memset(&extracted_surface, 0, sizeof(extracted_surface));
+    extract_status = nexus_v1_bpk_archive_extract_stored_surface(
+        archive_data,
+        archive_size,
+        handoff->entry_index,
+        pixels,
+        handoff->surface.layout.surface_bytes,
+        &extracted_surface,
+        &written);
+    if (extract_status != NEXUS_V1_BPK_EXTRACT_OK ||
+        written != handoff->surface.layout.surface_bytes) {
+        free(pixels);
+        if (out_receipt) *out_receipt = receipt;
+        return NEXUS_UI_BPK_IMPORT_ERR_EXTRACT;
+    }
+
+    load_status = nexus_ui_surface_load(mgr,
+                                        which,
+                                        pixels,
+                                        (int)written,
+                                        (int)extracted_surface.width,
+                                        (int)extracted_surface.height,
+                                        pal_start,
+                                        pal_count,
+                                        source ? source : "MENU.BPK");
+    free(pixels);
+    if (load_status <= 0) {
+        if (out_receipt) *out_receipt = receipt;
+        return NEXUS_UI_BPK_IMPORT_ERR_LOAD;
+    }
+
+    receipt.loaded = 1;
+    receipt.bytes_loaded = (uint32_t)written;
+    receipt.width = (int)extracted_surface.width;
+    receipt.height = (int)extracted_surface.height;
+    receipt.surface_class = extracted_surface.layout.surface_class;
+    if (out_receipt) *out_receipt = receipt;
+    return NEXUS_UI_BPK_IMPORT_OK;
+}
+
+const char *nexus_ui_bpk_import_status_name(int status) {
+    switch (status) {
+    case NEXUS_UI_BPK_IMPORT_OK: return "ok";
+    case NEXUS_UI_BPK_IMPORT_ERR_NULL: return "null";
+    case NEXUS_UI_BPK_IMPORT_ERR_NOT_READY: return "not-ready";
+    case NEXUS_UI_BPK_IMPORT_ERR_EXTRACT: return "extract";
+    case NEXUS_UI_BPK_IMPORT_ERR_LOAD: return "load";
+    default: return "unknown";
+    }
+}
+
 /* ── Surface-specific loaders ──────────────────────────────────── */
 
 /* TITLE.CG (164 KB) — title screen color graphics.
