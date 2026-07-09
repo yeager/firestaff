@@ -1167,6 +1167,42 @@ void dm2_v1_startup_host_action_receipt_clear(
     dm2_v1_startup_menu_state_receipt_init(&receipt->menu_state_receipt);
 }
 
+static void dm2_v1_startup_save_menu_handoff_set(
+    DM2_V1_StartupHostActionReceipt *receipt,
+    const DM2_V1_StartupAction *action,
+    const DM2_V1_StartupActionPlan *plan,
+    const DM2_V1_StartupExecution *execution,
+    const char *save_root)
+{
+    DM2_V1_StartupSaveMenuHandoffReceipt *handoff;
+
+    if (!receipt || !plan || !execution) {
+        return;
+    }
+    handoff = &receipt->save_menu_handoff;
+    memset(handoff, 0, sizeof(*handoff));
+    handoff->valid = 1;
+    handoff->action_kind = action
+        ? action->kind
+        : DM2_V1_STARTUP_ACTION_NONE;
+    handoff->plan_kind = plan->kind;
+    handoff->execution_kind = execution->kind;
+    handoff->source_row = action ? action->row : -1;
+    handoff->source_slot = action ? action->slot : -1;
+    snprintf(handoff->save_root,
+             sizeof(handoff->save_root),
+             "%s",
+             save_root ? save_root : "");
+    handoff->rescan_saves = execution->rescan_saves ? 1 : 0;
+    handoff->session_ready =
+        execution->kind == DM2_V1_STARTUP_EXEC_SESSION_READY ? 1 : 0;
+    handoff->return_to_launcher =
+        execution->kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER ? 1 : 0;
+    /* SKULL.ASM T200 owns DM2 save namespace resolution; keep the resolved
+     * menu save root and action plan beside the host receipt so M11 need not
+     * rebuild load/continue/new-game routing from strings. */
+}
+
 void dm2_v1_startup_idle_receipt_clear(
     DM2_V1_StartupIdleReceipt *receipt)
 {
@@ -1293,6 +1329,9 @@ int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
     DM2_V1_StartupHostActionReceipt *out_receipt)
 {
     const char *save_root;
+    DM2_V1_StartupActionPlan plan;
+    DM2_V1_StartupExecution local_execution;
+    DM2_V1_StartupExecution *execution;
 
     if (out_receipt) {
         dm2_v1_startup_host_action_receipt_clear(out_receipt);
@@ -1300,16 +1339,21 @@ int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
     if (!facts || !out_receipt) {
         return 0;
     }
+    dm2_v1_startup_action_plan_clear(&plan);
+    if (!dm2_v1_startup_plan_for_action(action, &plan)) {
+        return 0;
+    }
 
     save_root = facts->fallback_save_root && facts->fallback_save_root[0]
                     ? facts->fallback_save_root
                     : facts->save_root;
+    execution = out_execution ? out_execution : &local_execution;
     if (!dm2_v1_startup_execute_action_with_host_receipt(
             action,
             save_root,
             apply_session,
             apply_userdata,
-            out_execution,
+            execution,
             &out_receipt->host_receipt)) {
         return 0;
     }
@@ -1319,6 +1363,17 @@ int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
             facts)) {
         out_receipt->menu_state_receipt_valid = 1;
     }
+    dm2_v1_startup_save_menu_handoff_set(out_receipt,
+                                         action,
+                                         &plan,
+                                         execution,
+                                         save_root);
+    out_receipt->save_menu_handoff.menu_state_receipt_valid =
+        out_receipt->menu_state_receipt_valid;
+    out_receipt->save_menu_handoff.selected_row_after =
+        out_receipt->menu_state_receipt_valid
+            ? out_receipt->menu_state_receipt.selected_row
+            : facts->selected_row;
     return 1;
 }
 

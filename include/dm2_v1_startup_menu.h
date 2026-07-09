@@ -145,10 +145,26 @@ typedef struct {
     int selected_row;
 } DM2_V1_StartupMenuStateReceipt;
 
+typedef struct DM2_V1_StartupSaveMenuHandoffReceipt {
+    int valid;
+    DM2_V1_StartupActionKind action_kind;
+    DM2_V1_StartupPlanKind plan_kind;
+    DM2_V1_StartupExecutionKind execution_kind;
+    int source_row;
+    int source_slot;
+    char save_root[512];
+    int rescan_saves;
+    int session_ready;
+    int return_to_launcher;
+    int menu_state_receipt_valid;
+    int selected_row_after;
+} DM2_V1_StartupSaveMenuHandoffReceipt;
+
 typedef struct DM2_V1_StartupHostActionReceipt {
     DM2_V1_StartupHostReceipt host_receipt;
     int menu_state_receipt_valid;
     DM2_V1_StartupMenuStateReceipt menu_state_receipt;
+    DM2_V1_StartupSaveMenuHandoffReceipt save_menu_handoff;
 } DM2_V1_StartupHostActionReceipt;
 
 typedef struct DM2_V1_StartupIdleReceipt {
