@@ -44,8 +44,8 @@ static void check_party(
 
 static void test_evidence_and_fixture(void)
 {
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat state;
-    const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat state;
+    const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat *e =
         DM1_V1_MirrorCandidatePartySwap_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidatePartySwap_InitPc34Compat(&state, 1);
@@ -103,9 +103,9 @@ static void test_evidence_and_fixture(void)
 
 static void test_open_non_adjacent_swap_refreshes_once(void)
 {
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat state;
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat result;
-    const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat state;
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat result;
+    const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat *e =
         DM1_V1_MirrorCandidatePartySwap_EvidencePc34Compat();
     int returned;
 
@@ -198,9 +198,9 @@ static void test_open_non_adjacent_swap_refreshes_once(void)
 
 static void test_leader_swap_rejected_and_order_unchanged(void)
 {
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat state;
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat result;
-    const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat state;
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat result;
+    const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat *e =
         DM1_V1_MirrorCandidatePartySwap_EvidencePc34Compat();
     int returned;
 
@@ -253,9 +253,9 @@ static void test_leader_swap_rejected_and_order_unchanged(void)
 
 static void test_empty_party_slot_swap_rejected(void)
 {
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat state;
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat result;
-    const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat state;
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat result;
+    const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat *e =
         DM1_V1_MirrorCandidatePartySwap_EvidencePc34Compat();
     int returned;
 
@@ -308,9 +308,9 @@ static void test_empty_party_slot_swap_rejected(void)
 
 static void test_mirror_closed_swap_rejected(void)
 {
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat state;
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat result;
-    const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat state;
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat result;
+    const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat *e =
         DM1_V1_MirrorCandidatePartySwap_EvidencePc34Compat();
     int returned;
 
@@ -372,10 +372,10 @@ static void test_mirror_closed_swap_rejected(void)
 
 static void test_order_after_each_sequential_swap(void)
 {
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat state;
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat first;
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat second;
-    const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat state;
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat first;
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat second;
+    const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat *e =
         DM1_V1_MirrorCandidatePartySwap_EvidencePc34Compat();
 
     DM1_V1_MirrorCandidatePartySwap_InitPc34Compat(&state, 1);

@@ -23,7 +23,7 @@ enum {
     kInventoryOrdinal = 4
 };
 
-static const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat s_evidence = {
+static const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat s_evidence = {
     "ReDMCSB: CHAMPION.C:243-340 F0297_CHAMPION_PutObjectInLeaderHand; "
     "leader hand object/weight redraw path is intentionally not entered",
     "ReDMCSB: CHAMPION.C:587-700 F0301_CHAMPION_AddObjectInSlot and "
@@ -90,7 +90,7 @@ static int parties_equal(
 }
 
 static int only_pair_moved(
-    const Dm1V1MirrorCandidatePartySwapResultPc34Compat *result)
+    const DM1_V1_MirrorCandidatePartySwapResultPc34Compat *result)
 {
     int i;
 
@@ -111,10 +111,10 @@ static int only_pair_moved(
 }
 
 static void capture_before(
-    const Dm1V1MirrorCandidatePartySwapStatePc34Compat *state,
+    const DM1_V1_MirrorCandidatePartySwapStatePc34Compat *state,
     int indexA,
     int indexB,
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat *result)
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat *result)
 {
     memset(result, 0, sizeof(*result));
     result->evidence = &s_evidence;
@@ -133,8 +133,8 @@ static void capture_before(
 }
 
 static void capture_after(
-    const Dm1V1MirrorCandidatePartySwapStatePc34Compat *state,
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat *result)
+    const DM1_V1_MirrorCandidatePartySwapStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat *result)
 {
     copy_party(result->afterParty, state->g0227_aT_Party);
     result->partyCountAfter = state->g0305_ui_PartyChampionCount;
@@ -181,7 +181,7 @@ static void capture_after(
 }
 
 void DM1_V1_MirrorCandidatePartySwap_InitPc34Compat(
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat *state,
     int mirrorPanelOpen)
 {
     if (!state) {
@@ -206,10 +206,10 @@ void DM1_V1_MirrorCandidatePartySwap_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidatePartySwap_RunPc34Compat(
-    Dm1V1MirrorCandidatePartySwapStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePartySwapStatePc34Compat *state,
     int indexA,
     int indexB,
-    Dm1V1MirrorCandidatePartySwapResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidatePartySwapResultPc34Compat *outResult)
 {
     int temp;
 
@@ -255,7 +255,7 @@ int DM1_V1_MirrorCandidatePartySwap_RunPc34Compat(
     return outResult->accepted;
 }
 
-const Dm1V1MirrorCandidatePartySwapEvidencePc34Compat *
+const DM1_V1_MirrorCandidatePartySwapEvidencePc34Compat *
 DM1_V1_MirrorCandidatePartySwap_EvidencePc34Compat(void)
 {
     return &s_evidence;
