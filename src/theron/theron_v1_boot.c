@@ -2735,6 +2735,36 @@ void theron_v1_boot_startup_graphics_route_receipt_init(
     receipt->status = "NO GRAPHICS ROUTE";
 }
 
+static void theron_v1_boot_startup_mark_bitmap_routes(
+    const Theron_StartupRenderPlan *plan,
+    Theron_V1_BootStartupGraphicsRouteReceipt *receipt)
+{
+    int i;
+
+    if (!plan || !receipt) {
+        return;
+    }
+    for (i = 0; i < plan->graphic_count &&
+                i < THERON_STARTUP_RENDER_GRAPHIC_CAPACITY_MAX; ++i) {
+        switch (plan->graphics[i].kind) {
+        case THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK:
+            receipt->title_bitmap_route_ready = 1;
+            break;
+        case THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL:
+            receipt->stage_bitmap_route_ready = 1;
+            break;
+        case THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME:
+            receipt->soul_room_bitmap_route_ready = 1;
+            break;
+        case THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD:
+            receipt->forcefield_bitmap_route_ready = 1;
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
     const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupGraphicExecutor *executor,
@@ -2800,6 +2830,9 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
                     render_route.render_plan_valid
                 ? 1
                 : 0;
+        theron_v1_boot_startup_mark_bitmap_routes(
+            &render_route.render_plan,
+            out_receipt);
     }
     if (out_receipt->runtime_fallback_visuals_blocked ||
         out_receipt->runtime_level_source ==
@@ -2986,6 +3019,14 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
             out_receipt->graphics_route.track02_real_media_ready;
         out_receipt->real_bitmap_startup_graphics_ready =
             out_receipt->graphics_route.real_bitmap_startup_graphics_ready;
+        out_receipt->title_bitmap_route_ready =
+            out_receipt->graphics_route.title_bitmap_route_ready;
+        out_receipt->stage_bitmap_route_ready =
+            out_receipt->graphics_route.stage_bitmap_route_ready;
+        out_receipt->soul_room_bitmap_route_ready =
+            out_receipt->graphics_route.soul_room_bitmap_route_ready;
+        out_receipt->forcefield_bitmap_route_ready =
+            out_receipt->graphics_route.forcefield_bitmap_route_ready;
         out_receipt->no_fallback_startup_graphics_proof =
             out_receipt->graphics_route.no_fallback_startup_graphics_proof;
         out_receipt->fallback_startup_graphics_executed =
