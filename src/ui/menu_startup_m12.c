@@ -6790,6 +6790,27 @@ static int m12_first_matched_version_index_for_game(
     return -1;
 }
 
+static void m12_boot_readiness_mark_version_ready(M12_StartupBootReadiness* boot) {
+    if (!boot || !boot->handled || boot->versionReady) {
+        return;
+    }
+    boot->versionReady = 1;
+    if (boot->startupStepReadyCount < boot->startupStepCount) {
+        boot->startupStepReadyCount++;
+    }
+    boot->startupMenuReady = boot->dataReady && boot->versionReady;
+    boot->fullStartGraphicsReady =
+        boot->fullStartGraphicsExpected && boot->startupMenuReady;
+    boot->startupContractReady =
+        boot->startupContractExpected && boot->fullStartGraphicsReady;
+    if (boot->fullStartGraphicsReady) {
+        boot->startupStepReadyCount = boot->startupStepCount;
+        boot->statusLabel = m12_full_start_ready_status_label(boot->gameId);
+        boot->detailLabel = m12_full_start_ready_detail_label(boot->gameId);
+        boot->nextStepLabel = "READY";
+    }
+}
+
 int M12_StartupMenu_GetLaunchGate(
     const M12_StartupMenuState* state,
     int entryIndex,
@@ -6838,6 +6859,7 @@ int M12_StartupMenu_GetLaunchGate(
             m12_first_matched_version_index_for_game(state, entry->gameId);
         if (gate.autoSelectedVersionIndex >= 0) {
             gate.versionReady = 1;
+            m12_boot_readiness_mark_version_ready(&gate.boot);
         }
     }
 

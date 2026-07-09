@@ -59,6 +59,7 @@ int main(void) {
          "THERON FULL START HOST VIEW RECEIPT", 6},
     };
     M12_StartupMenuState state;
+    M12_LaunchIntent intent;
     int i;
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
@@ -113,6 +114,37 @@ int main(void) {
         if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
                            expected[i].pathLabel) == 0,
                     "ready game launch detail label should name boot path")) return 1;
+    }
+
+    state.activatedIndex = 0;
+    state.gameOptions[0].versionIndex = 1;
+    state.assetStatus.versions[0][1].gameId = "dm1";
+    state.assetStatus.versions[0][1].versionId = "synthetic-missing";
+    state.assetStatus.versions[0][1].label = "Synthetic missing";
+    state.assetStatus.versions[0][1].shortLabel = "MISS";
+    state.assetStatus.versions[0][1].matched = 0;
+    {
+        M12_StartupBootReadiness boot;
+        M12_StartupLaunchGate gate;
+        if (!expect(M12_StartupMenu_GetBootReadiness(&state, 0, &boot) == 1,
+                    "selected missing-version boot receipt should build")) return 1;
+        if (!expect(boot.versionReady == 0 && boot.fullStartGraphicsReady == 0,
+                    "raw boot receipt should report selected missing version")) return 1;
+        if (!expect(M12_StartupMenu_GetLaunchGate(&state, 0, &gate) == 1,
+                    "auto-version launch gate should build")) return 1;
+        if (!expect(gate.autoSelectedVersionIndex == 0,
+                    "launch gate should find the first matched version by hash")) return 1;
+        if (!expect(gate.canLaunch == 1 && gate.versionReady == 1,
+                    "auto-version launch gate should allow verified data")) return 1;
+        if (!expect(gate.boot.versionReady == 1 &&
+                    gate.boot.fullStartGraphicsReady == 1 &&
+                    gate.boot.startupContractReady == 1,
+                    "auto-version launch gate should normalize full-start boot readiness")) return 1;
+        if (!expect(gate.boot.startupStepReadyCount == gate.boot.startupStepCount,
+                    "auto-version launch gate should complete startup progress")) return 1;
+        intent = M12_StartupMenu_GetLaunchIntent(&state);
+        if (!expect(intent.valid == 1 && intent.options.versionIndex == 0,
+                    "launch intent should use the auto-selected matched version")) return 1;
     }
 
     puts("ok: all game launcher boot-readiness receipts expose full-start progress and labels");

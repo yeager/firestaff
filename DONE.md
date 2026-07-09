@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 M12 auto-version full-start gate: launch-gate receipts now normalize boot-readiness/full-start progress when a selected missing version is replaced by a hash-matched auto-selected version, and launch intents use that version. Verification: `test_m12_all_games_boot_readiness_receipt` and `git diff --check` passed.
+
 - ✅ 2026-07-09 M12 startup contract manifest: launcher boot-readiness receipts now expose the expected game-owned startup proof contract for DM1, CSB, DM2, Nexus, and Theron, and modern game cards consistently read launch-gate labels. Verification: `test_m12_all_games_boot_readiness_receipt`, `test_csb_v1_launch_blocker_m12`, `test_m12_dm1_v1_required_complete_launches`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron runtime-state render media consumers: boot layout, render rows, render plan, and host-view wrappers now build from full-start Track 02 media receipts, so render/UI callers can avoid raw prompt/roster/session rebuilds. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
