@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0188 group-slot materialization receipt: GROUP.Slot possession drops now use a DM1-owned ReDMCSB F0188 plan for chain order, random drop cells, source-slot clear, and weapon-vs-wood thud classification; M10 only gathers live next pointers/RNG cells and links the returned dropped things. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 projectile square-link receipt ownership: DM1 throw/shoot compat now owns the full F0215/DUNGEON.C F0163 empty-vs-tail square attach receipt from a supplied thing-chain snapshot; M10 only gathers the current chain and applies the returned link writes. Verification: `dm1_v1_throw_shoot_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, syntax checks, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 original-save runtime reload roundtrip: original PC34 save handoff now exposes a full bytes → Firestaff world → PC34 export → Firestaff world reload helper with a core-state report for champion count, party pose, game time, event count, and active-group count. Verification: original-save handoff PASS, native PC34 export source-lock PASS, syntax checks, and `git diff --check` passed.

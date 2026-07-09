@@ -454,6 +454,42 @@ typedef struct {
     int dropCells[4];
 } DM1_MeleeF0190FixedDropCellsPlanPc34;
 
+#define DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34 64
+
+typedef struct {
+    unsigned short thing;
+    unsigned short nextThing;
+} DM1_MeleeF0188GroupSlotDropChainEntryPc34;
+
+typedef struct {
+    unsigned short slotHead;
+    int chainEntryCount;
+    DM1_MeleeF0188GroupSlotDropChainEntryPc34
+        chain[DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34];
+    int randomCellCount;
+    unsigned char randomCells[DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34];
+} DM1_MeleeF0188GroupSlotDropInputPc34;
+
+typedef struct {
+    unsigned short sourceThing;
+    unsigned short nextThing;
+    unsigned short droppedThing;
+    int dropCell;
+    int thingType;
+} DM1_MeleeF0188GroupSlotDropStepPc34;
+
+typedef struct {
+    int valid;
+    int shouldDrop;
+    int shouldClearGroupSlot;
+    int stepCount;
+    int truncated;
+    int weaponDropped;
+    int soundId;
+    DM1_MeleeF0188GroupSlotDropStepPc34
+        steps[DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34];
+} DM1_MeleeF0188GroupSlotDropPlanPc34;
+
 typedef struct {
     int outcome;
     int groupBehavior;
@@ -525,6 +561,34 @@ typedef struct {
     int newEventType;
     int eventCreatureIndex;
 } DM1_MeleeF0190TimelineCleanupPlanPc34;
+
+typedef struct {
+    int outcome;
+    int groupIndex;
+    int groupBehavior;
+    int killedCreatureIndex;
+    int originalGroupCount;
+    int creatureType;
+    int creatureAttributes;
+    int creatureProperties;
+    int killedCell;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int partyMapIndex;
+    int partyMapX;
+    int partyMapY;
+} DM1_MeleeF0190MutationDispatchInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldDropPossessions;
+    int shouldApplyKilledSomeState;
+    int shouldApplyKilledAllSideEffects;
+    DM1_MeleeF0190PossessionDropPlanPc34 possessionDropPlan;
+    DM1_MeleeF0190KilledSomeStatePlanPc34 killedSomeStatePlan;
+    DM1_MeleeF0190KilledAllStatePlanPc34 killedAllStatePlan;
+} DM1_MeleeF0190MutationDispatchPlanPc34;
 
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
@@ -604,6 +668,9 @@ int dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
     const unsigned char* movingFixedDropCells,
     int movingFixedDropCellCount,
     DM1_MeleeF0190FixedDropCellsPlanPc34* out);
+int dm1_v1_melee_group_slot_drop_plan_f0188_pc34(
+    const DM1_MeleeF0188GroupSlotDropInputPc34* in,
+    DM1_MeleeF0188GroupSlotDropPlanPc34* out);
 int dm1_v1_melee_killed_some_state_plan_f0190_pc34(
     const DM1_MeleeF0190KilledSomeStateInputPc34* in,
     DM1_MeleeF0190KilledSomeStatePlanPc34* out);
@@ -623,6 +690,9 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
 int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
     const DM1_MeleeF0190TimelineCleanupInputPc34* in,
     DM1_MeleeF0190TimelineCleanupPlanPc34* out);
+int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
+    const DM1_MeleeF0190MutationDispatchInputPc34* in,
+    DM1_MeleeF0190MutationDispatchPlanPc34* out);
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
