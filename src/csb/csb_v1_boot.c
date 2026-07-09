@@ -1602,12 +1602,14 @@ int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
      * inside the entrance loop; CSBWin/Viewport.cpp mirrors CSB HUD/menu
      * ownership in the CSB view layer.  Export the utility render plan in
      * the same route receipt so M11 does not rebuild startup menu state. */
-    if (out_receipt->draw_utility_panel &&
+    if (out_receipt->route ==
+            CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
         facts.utility_overlay_active &&
         csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
             &facts,
             &out_receipt->utility_plan)) {
         out_receipt->utility_plan_valid = 1;
+        out_receipt->draw_utility_panel = 1;
         out_receipt->hud_menu_state.valid = 1;
         out_receipt->hud_menu_state.kind =
             CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34;
@@ -2225,8 +2227,6 @@ static void csb_v1_boot_startup_route_from_presentation_pc34(
             out_receipt->draw_surface = 1;
             out_receipt->draw_closed_doors = 1;
             out_receipt->draw_fallback_text = 1;
-            out_receipt->draw_utility_panel =
-                presentation->render_plan.waiting_for_input ? 1 : 0;
             out_receipt->hud_menu_visible =
                 presentation->render_plan.waiting_for_input ? 1 : 0;
             break;

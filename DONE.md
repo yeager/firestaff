@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB closed-door utility route gate: CSB startup route receipts now only request utility-panel rendering when the utility overlay is active and CSB has built a utility render plan; plain closed-door entrance HUD stays source-owned without falling through to M11 host utility rendering. Verification: `csb_v1_boot_runtime_handoff`, `csb_v1_startup_entrance_pointer_pc34_compat`, `csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron explicit SRM snapshot interop: explicit `slotN.srm` save-resume imports now carry the same envelope, payload, progression, quest-mask, and party body receipts as the normal SRM scan path, so external Save Disk paths no longer drop restored champion/gold state before Continue/runtime handoff. Verification: `test_theron_v1_startup_save_resume_pc34` 166/166, `firestaff_theron_v1_startup_save_resume_probe` 74/74, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 DB0 door GDAT render handoff: DM2 runtime now carries map door-set graphics from dungeon metadata into DB0 door squares, and the viewport render plan selects the door panel pseudo-GDAT index from door type plus opening direction. Verification: focused DM2 runtime/renderer tests and `git diff --check` passed.
