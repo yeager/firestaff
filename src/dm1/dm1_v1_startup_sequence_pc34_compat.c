@@ -1903,6 +1903,86 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
     return apply.handled && consumer.handled;
 }
 
+int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 apply;
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 consumer;
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&apply, 0, sizeof(apply));
+    memset(&consumer, 0, sizeof(consumer));
+    if (!facts) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
+            facts, &apply, &consumer)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0797/F0441 define the release
+     * app capture boundary: title is gone, C255 Hall is open, and HoC mirrors
+     * are drawn before input.  M11/M12 consume this single DM1-owned receipt
+     * instead of each rebuilding a host-side capture verdict. */
+    receipt.handled = 1;
+    receipt.consumed_host_probe_facts = 1;
+    receipt.consumed_runtime_apply_receipt = apply.handled ? 1 : 0;
+    receipt.consumed_production_consumer_receipt = consumer.handled ? 1 : 0;
+    receipt.consume_dm1_receipts_only = consumer.consume_dm1_receipts_only;
+    receipt.publish_packaged_full_graphics_proof =
+        consumer.publish_packaged_full_graphics_proof;
+    receipt.real_asset_capture = consumer.real_asset_capture;
+    receipt.mac_window_capture = consumer.mac_window_capture;
+    receipt.release_app_capture = consumer.release_app_capture;
+    receipt.host_capture_route_matches = consumer.host_capture_route_matches;
+    receipt.hoc_asset_capture = consumer.hoc_asset_capture;
+    receipt.host_window_capture = consumer.host_window_capture;
+    receipt.draw_opened_entrance_frame = consumer.draw_opened_entrance_frame;
+    receipt.render_hall_mirror_overlay = consumer.render_hall_mirror_overlay;
+    receipt.suppress_host_fallback_visuals =
+        consumer.suppress_host_fallback_visuals;
+    receipt.lower_level_renderer_helper_owned =
+        consumer.lower_level_renderer_helper_owned;
+    receipt.lower_level_audio_helper_owned =
+        consumer.lower_level_audio_helper_owned;
+    receipt.block_enter_until_champion_selected =
+        consumer.block_enter_until_champion_selected;
+    receipt.map_index = consumer.map_index;
+    receipt.map_width = consumer.map_width;
+    receipt.map_height = consumer.map_height;
+    receipt.entrance_door_frame_index = consumer.entrance_door_frame_index;
+    receipt.hall_overlay_kind = consumer.hall_overlay_kind;
+    receipt.render_command_count = consumer.render_command_count;
+    receipt.capture_phase = consumer.capture_phase;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    receipt.ready =
+        apply.ready &&
+        consumer.ready &&
+        receipt.consumed_runtime_apply_receipt &&
+        receipt.consumed_production_consumer_receipt &&
+        receipt.consume_dm1_receipts_only &&
+        receipt.publish_packaged_full_graphics_proof &&
+        receipt.real_asset_capture &&
+        receipt.release_app_capture &&
+        receipt.host_capture_route_matches &&
+        receipt.hoc_asset_capture &&
+        receipt.draw_opened_entrance_frame &&
+        receipt.render_hall_mirror_overlay &&
+        receipt.suppress_host_fallback_visuals &&
+        receipt.lower_level_renderer_helper_owned &&
+        receipt.lower_level_audio_helper_owned &&
+        receipt.render_command_count == 3;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,

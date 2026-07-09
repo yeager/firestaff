@@ -498,6 +498,36 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int observed_closed_door_frame;
 } DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34;
 
+typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
+    int handled;
+    int ready;
+    int consumed_host_probe_facts;
+    int consumed_runtime_apply_receipt;
+    int consumed_production_consumer_receipt;
+    int consume_dm1_receipts_only;
+    int publish_packaged_full_graphics_proof;
+    int real_asset_capture;
+    int mac_window_capture;
+    int release_app_capture;
+    int host_capture_route_matches;
+    int hoc_asset_capture;
+    int host_window_capture;
+    int draw_opened_entrance_frame;
+    int render_hall_mirror_overlay;
+    int suppress_host_fallback_visuals;
+    int lower_level_renderer_helper_owned;
+    int lower_level_audio_helper_owned;
+    int block_enter_until_champion_selected;
+    int map_index;
+    int map_width;
+    int map_height;
+    int entrance_door_frame_index;
+    int hall_overlay_kind;
+    int render_command_count;
+    const char* capture_phase;
+    const char* source_evidence;
+} DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34;
+
 typedef struct DM1_V1_StartupHoCRenderConsumerReceipt_PC34 {
     int handled;
     int ready;
@@ -939,6 +969,9 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
     const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_apply,
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_consumer);
+int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* out_receipt);
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,

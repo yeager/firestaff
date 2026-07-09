@@ -6796,8 +6796,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     const M12_StartupMenuState* state,
     M12_StartupBootReadiness* receipt) {
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
-    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 apply;
-    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 consumer;
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 ownership;
     int realAssetReady;
 
     if (!state || !receipt || !receipt->gameId ||
@@ -6807,8 +6806,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
 
     realAssetReady = m12_dm1_required_asset_capture_ready(state);
     memset(&facts, 0, sizeof(facts));
-    memset(&apply, 0, sizeof(apply));
-    memset(&consumer, 0, sizeof(consumer));
+    memset(&ownership, 0, sizeof(ownership));
     facts.source_id = "dm1";
     facts.dungeon_loaded = receipt->dataReady && receipt->versionReady;
     facts.map_count = facts.dungeon_loaded ? 1 : 0;
@@ -6822,23 +6820,25 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     facts.observed_c346_mirror_backing_asset = realAssetReady;
     facts.observed_host_window_present = 1;
 
-    (void)dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
-        &facts, &apply, &consumer);
+    (void)dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+        &facts, &ownership);
 
-    receipt->dm1HoCRealAssetCaptureReady = consumer.real_asset_capture;
-    receipt->dm1HoCReleaseAppCaptureReady = consumer.release_app_capture;
-    receipt->dm1HoCHostCaptureRouteReady = consumer.host_capture_route_matches;
+    receipt->dm1HoCRealAssetCaptureReady = ownership.real_asset_capture;
+    receipt->dm1HoCReleaseAppCaptureReady = ownership.release_app_capture;
+    receipt->dm1HoCHostCaptureRouteReady =
+        ownership.host_capture_route_matches;
+    receipt->dm1HoCReleaseCaptureOwnershipReady = ownership.ready;
     receipt->packagedCaptureReady =
         receipt->packagedCaptureExpected &&
-        consumer.ready &&
-        consumer.real_asset_capture &&
-        consumer.release_app_capture &&
-        consumer.host_capture_route_matches &&
-        consumer.hoc_asset_capture &&
-        consumer.draw_opened_entrance_frame &&
-        consumer.render_hall_mirror_overlay &&
-        consumer.suppress_host_fallback_visuals &&
-        consumer.render_command_count == 3;
+        ownership.ready &&
+        ownership.real_asset_capture &&
+        ownership.release_app_capture &&
+        ownership.host_capture_route_matches &&
+        ownership.hoc_asset_capture &&
+        ownership.draw_opened_entrance_frame &&
+        ownership.render_hall_mirror_overlay &&
+        ownership.suppress_host_fallback_visuals &&
+        ownership.render_command_count == 3;
     if (receipt->packagedCaptureReady) {
         receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
         receipt->startupStepReadyCount = receipt->startupStepCount;
