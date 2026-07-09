@@ -96,6 +96,23 @@ typedef struct DM1_V1_ChampionMirrorRenderReceiptPc34 {
     const char *sourceAnchor;
 } DM1_V1_ChampionMirrorRenderReceiptPc34;
 
+typedef struct DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 {
+    int valid;
+    int consumedRenderReceipt;
+    int drawChampionPortraitAsWallOverlay;
+    int suppressMirrorAsFloorItem;
+    int suppressMirrorAsProjectile;
+    int suppressMirrorAsSpellEffect;
+    int suppressMaterializedItemPayload;
+    int allowIndependentFloorObjects;
+    int requireRuntimeProjectileReceipt;
+    int thingLayerSafe;
+    int sourceOrdinal;
+    int renderIndex;
+    int graphicIndex;
+    const char *sourceAnchor;
+} DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34;
+
 void DM1_V1_ChampionMirror_InitClickStatePc34(
     DM1_V1_ChampionMirrorClickStatePc34 *state);
 
@@ -149,6 +166,10 @@ int DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
     const DM1_V1_ChampionMirrorFrontWallReceiptPc34 *frontWallReceipt,
     DM1_V1_ChampionMirrorRenderReceiptPc34 *outReceipt);
 
+int DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+    const DM1_V1_ChampionMirrorRenderReceiptPc34 *renderReceipt,
+    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 *outReceipt);
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void);
 
 typedef DM1_V1_ChampionMirrorChampionPc34
@@ -161,6 +182,8 @@ typedef DM1_V1_ChampionMirrorFrontWallReceiptPc34
     Dm1V1ChampionMirrorFrontWallReceiptPc34Compat;
 typedef DM1_V1_ChampionMirrorRenderReceiptPc34
     Dm1V1ChampionMirrorRenderReceiptPc34Compat;
+typedef DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34
+    Dm1V1ChampionMirrorThingLayerBoundaryReceiptPc34Compat;
 
 #define DM1_V1_ChampionMirror_InitClickStatePc34Compat \
     DM1_V1_ChampionMirror_InitClickStatePc34
@@ -180,6 +203,8 @@ typedef DM1_V1_ChampionMirrorRenderReceiptPc34
     DM1_V1_ChampionMirror_BuildRenderReceiptPc34
 #define DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34Compat \
     DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34
+#define DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34Compat \
+    DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34
 #define DM1_V1_ChampionMirror_SourceEvidencePc34Compat \
     DM1_V1_ChampionMirror_SourceEvidencePc34
 

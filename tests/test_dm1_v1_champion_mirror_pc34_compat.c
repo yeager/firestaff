@@ -227,6 +227,7 @@ static void test_f0172_front_wall_sensor_receipt(void)
 {
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 receipt;
     DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
@@ -307,6 +308,34 @@ static void test_f0172_front_wall_sensor_receipt(void)
         "DUNVIEW.C:525; DUNVIEW.C:3916-3928");
 
     CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+            &render, &boundary) == 1 &&
+            boundary.valid == 1 &&
+            boundary.consumedRenderReceipt == 1 &&
+            boundary.drawChampionPortraitAsWallOverlay == 1 &&
+            boundary.sourceOrdinal == 14 &&
+            boundary.renderIndex == 13 &&
+            boundary.graphicIndex ==
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_GRAPHIC_PC34_COMPAT,
+        "thing-layer boundary consumes mirror render receipt as wall overlay",
+        "DUNVIEW.C:3913-3928");
+
+    CHECK_ANCHOR(
+        boundary.suppressMirrorAsFloorItem == 1 &&
+            boundary.suppressMirrorAsProjectile == 1 &&
+            boundary.suppressMirrorAsSpellEffect == 1 &&
+            boundary.suppressMaterializedItemPayload == 1 &&
+            boundary.thingLayerSafe == 1,
+        "champion mirror payload cannot leak into floor item/projectile layers",
+        "DUNVIEW.C:3913-3928; DUNVIEW.C:4547-4581");
+
+    CHECK_ANCHOR(
+        boundary.allowIndependentFloorObjects == 1 &&
+            boundary.requireRuntimeProjectileReceipt == 1,
+        "receipt suppresses mirror payload without blocking real floor objects",
+        "DUNVIEW.C:4547-4581; DUNVIEW.C:5668-5683");
+
+    CHECK_ANCHOR(
         DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
             127, 13, 4, 1, 2, &receipt) == 1 &&
             DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
@@ -333,6 +362,17 @@ static void test_f0172_front_wall_sensor_receipt(void)
         "DUNGEON.C:2558; DUNVIEW.C:3913-3928");
 
     CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+            &render, &boundary) == 1 &&
+            boundary.valid == 1 &&
+            boundary.drawChampionPortraitAsWallOverlay == 0 &&
+            boundary.suppressMirrorAsFloorItem == 1 &&
+            boundary.suppressMirrorAsProjectile == 1 &&
+            boundary.thingLayerSafe == 1,
+        "suppressed viewport mirror still protects thing/projectile layers",
+        "DUNGEON.C:2558; DUNVIEW.C:3913-3928");
+
+    CHECK_ANCHOR(
         DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
             0, &receipt, &render) == 1 &&
             render.consumedWallSquareReceipt == 0 &&
@@ -347,7 +387,11 @@ static void test_f0172_front_wall_sensor_receipt(void)
             DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
                 1, NULL, &render) == 0 &&
             DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
-                1, &receipt, NULL) == 0,
+                1, &receipt, NULL) == 0 &&
+            DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+                NULL, &boundary) == 0 &&
+            DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+                &render, NULL) == 0,
         "render receipt rejects NULL inputs",
         "DM1 receipt guard");
 }

@@ -353,6 +353,53 @@ int DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
     return 1;
 }
 
+int DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+    const DM1_V1_ChampionMirrorRenderReceiptPc34 *renderReceipt,
+    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 *outReceipt)
+{
+    if (!renderReceipt || !outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->sourceOrdinal = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+    outReceipt->renderIndex = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+    outReceipt->sourceAnchor =
+        "ReDMCSB DUNVIEW.C:3913-3928 C026 wall overlay; "
+        "DUNVIEW.C:4547-4581 F0115 thing pass";
+    if (!renderReceipt->valid) {
+        return 1;
+    }
+
+    outReceipt->valid = 1;
+    outReceipt->consumedRenderReceipt = 1;
+    outReceipt->sourceOrdinal = renderReceipt->sourceOrdinal;
+    outReceipt->renderIndex = renderReceipt->renderIndex;
+    outReceipt->graphicIndex = renderReceipt->graphicIndex;
+    outReceipt->allowIndependentFloorObjects = 1;
+    outReceipt->requireRuntimeProjectileReceipt = 1;
+
+    /* ReDMCSB DUNVIEW.C F0107 lines 3913-3928 draws the C026 champion
+     * portrait through the D1C front wall ornament path.  F0115 lines
+     * 4547-4581 owns floor objects/projectiles separately, so the mirror
+     * payload must not be reclassified as a floor item, projectile, or spell
+     * effect while real floor objects stay available to the thing pass. */
+    outReceipt->drawChampionPortraitAsWallOverlay =
+        renderReceipt->drawChampionPortrait ? 1 : 0;
+    outReceipt->suppressMirrorAsFloorItem = 1;
+    outReceipt->suppressMirrorAsProjectile = 1;
+    outReceipt->suppressMirrorAsSpellEffect = 1;
+    outReceipt->suppressMaterializedItemPayload =
+        renderReceipt->suppressMaterializedItemPayload ||
+        renderReceipt->drawChampionPortrait;
+    outReceipt->thingLayerSafe =
+        outReceipt->suppressMirrorAsFloorItem &&
+        outReceipt->suppressMirrorAsProjectile &&
+        outReceipt->suppressMirrorAsSpellEffect &&
+        outReceipt->allowIndependentFloorObjects &&
+        outReceipt->requireRuntimeProjectileReceipt;
+    return 1;
+}
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
 {
     return "ReDMCSB COMMAND.C:484-488 G0455 maps C159..C162 champion-name "
