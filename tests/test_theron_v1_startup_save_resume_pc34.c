@@ -1589,7 +1589,7 @@ static void test_startup_session_facts_wrappers(void) {
              sizeof(media_receipt.startup_text_prompt),
              "GO AWAY AND RESURRECT THERON");
     media_receipt.startup_bitmap_decode_status = THERON_TRACK02_SIGNAL_OK;
-    media_receipt.startup_bitmap_sample_count = 6;
+    media_receipt.startup_bitmap_sample_count = 8;
     media_receipt.startup_bitmap_route_mask =
         THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
         THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
@@ -1601,8 +1601,8 @@ static void test_startup_session_facts_wrappers(void) {
     media_receipt.startup_bitmap_stage_route_ready = 1;
     media_receipt.startup_bitmap_soul_room_route_ready = 1;
     media_receipt.startup_bitmap_forcefield_route_ready = 1;
-    media_receipt.startup_bitmap_title_sample_count = 2;
-    media_receipt.startup_bitmap_stage_sample_count = 2;
+    media_receipt.startup_bitmap_title_sample_count = 3;
+    media_receipt.startup_bitmap_stage_sample_count = 3;
     media_receipt.startup_bitmap_soul_room_sample_count = 1;
     media_receipt.startup_bitmap_forcefield_sample_count = 1;
     media_receipt.startup_bitmap_title_nonzero_pixel_count = 24u;
@@ -3523,7 +3523,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &catalog) == THERON_TRACK02_SIGNAL_OK &&
-                    catalog.sample_count == 6u &&
+                    catalog.sample_count == 12u &&
                     catalog.overflow_count == 0u &&
                     (catalog.route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
@@ -3541,7 +3541,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
     expect_true(receipt.startup_media_ready &&
                     receipt.startup_bitmap_decode_status ==
                         THERON_TRACK02_SIGNAL_OK &&
-                    receipt.startup_bitmap_sample_count == 6 &&
+                    receipt.startup_bitmap_sample_count == 12 &&
                     (receipt.startup_bitmap_route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE) &&
                     (receipt.startup_bitmap_route_mask &
@@ -3554,10 +3554,10 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     receipt.startup_bitmap_stage_route_ready &&
                     receipt.startup_bitmap_soul_room_route_ready &&
                     receipt.startup_bitmap_forcefield_route_ready &&
-                    receipt.startup_bitmap_title_sample_count == 2 &&
-                    receipt.startup_bitmap_stage_sample_count == 2 &&
-                    receipt.startup_bitmap_soul_room_sample_count == 1 &&
-                    receipt.startup_bitmap_forcefield_sample_count == 1 &&
+                    receipt.startup_bitmap_title_sample_count == 4 &&
+                    receipt.startup_bitmap_stage_sample_count == 4 &&
+                    receipt.startup_bitmap_soul_room_sample_count == 2 &&
+                    receipt.startup_bitmap_forcefield_sample_count == 2 &&
                     receipt.startup_bitmap_title_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_stage_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_soul_room_nonzero_pixel_count > 0u &&
@@ -3605,7 +3605,7 @@ static void test_track02_startup_bitmap_decode_iso_receipt(void) {
                     THERON_TRACK02_MD5_US_ISO,
                     &catalog) == THERON_TRACK02_SIGNAL_OK &&
                     catalog.variant == THERON_TRACK02_VARIANT_US_ISO &&
-                    catalog.sample_count == 2u &&
+                    catalog.sample_count == 4u &&
                     catalog.overflow_count == 0u &&
                     (catalog.route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
@@ -3613,8 +3613,10 @@ static void test_track02_startup_bitmap_decode_iso_receipt(void) {
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
                     catalog.samples[0].raw_offset == 0x3000u &&
                     catalog.samples[0].user_data_offset == 0x3000u &&
-                    catalog.samples[1].raw_offset == 0x300cu &&
-                    catalog.samples[1].user_data_offset == 0x300cu &&
+                    catalog.samples[1].raw_offset == 0x3004u &&
+                    catalog.samples[1].user_data_offset == 0x3004u &&
+                    catalog.samples[3].raw_offset == 0x300cu &&
+                    catalog.samples[3].user_data_offset == 0x300cu &&
                     catalog.samples[0].nonzero_pixel_count > 0u &&
                     catalog.samples[1].checksum != 0u,
                 "Track02 startup bitmap catalog decodes bounded ISO startup bitmap samples");
@@ -3627,7 +3629,7 @@ static void test_track02_startup_bitmap_decode_iso_receipt(void) {
     expect_true(receipt.startup_media_ready &&
                     receipt.startup_bitmap_decode_status ==
                         THERON_TRACK02_SIGNAL_OK &&
-                    receipt.startup_bitmap_sample_count == 2 &&
+                    receipt.startup_bitmap_sample_count == 4 &&
                     (receipt.startup_bitmap_route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
                     (receipt.startup_bitmap_route_mask &
