@@ -1145,6 +1145,58 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     return 1;
 }
 
+unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    int entrance_event_kind,
+    unsigned int delay_ticks,
+    unsigned int vblank_loop_count) {
+    if (!media_receipt || !media_receipt->handled ||
+        media_receipt->entrance_vblank_ms == 0U) {
+        return 0U;
+    }
+    if (entrance_event_kind == ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY &&
+        media_receipt->entrance_pre_open_delay_ms > 0U) {
+        return media_receipt->entrance_pre_open_delay_ms;
+    }
+    if (delay_ticks > 0U) {
+        if (delay_ticks > 0xffffffffU / media_receipt->entrance_vblank_ms) {
+            return 0U;
+        }
+        return delay_ticks * media_receipt->entrance_vblank_ms;
+    }
+    if (vblank_loop_count > 0U) {
+        if (vblank_loop_count >
+            0xffffffffU / media_receipt->entrance_vblank_ms) {
+            return 0U;
+        }
+        return vblank_loop_count * media_receipt->entrance_vblank_ms;
+    }
+    return 0U;
+}
+
+int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt) {
+    EntranceCompatSourceAnimationStep pre_open_step;
+
+    if (!media_receipt || !media_receipt->handled) {
+        return 0;
+    }
+    memset(&pre_open_step, 0, sizeof(pre_open_step));
+    if (!ENTRANCE_Compat_GetSourceAnimationStep(6U, &pre_open_step) ||
+        pre_open_step.kind != ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY) {
+        return 0;
+    }
+    return
+        media_receipt->entrance_source_animation_steps ==
+            ENTRANCE_Compat_GetSourceAnimationStepCount() &&
+        media_receipt->entrance_door_step_count ==
+            ENTRANCE_Compat_GetDoorAnimationStepCount() &&
+        media_receipt->entrance_vblank_ms ==
+            ENTRANCE_Compat_GetVblankDelayMs() &&
+        media_receipt->entrance_pre_open_delay_ms ==
+            ENTRANCE_Compat_GetRuntimeDelayMs(&pre_open_step);
+}
+
 int dm1_v1_startup_sequence_source_order_valid_pc34(void) {
     /* ReDMCSB startup source order:
      * SWSH.C:39-47 runs START.PRG after the FTL palette program;

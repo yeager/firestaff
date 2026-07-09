@@ -466,6 +466,13 @@ int dm1_v1_startup_title_menu_eligibility_receipt_pc34(
 int dm1_v1_startup_full_graphics_media_receipt_pc34(
     const char* source_id,
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt);
+unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    int entrance_event_kind,
+    unsigned int delay_ticks,
+    unsigned int vblank_loop_count);
+int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);
