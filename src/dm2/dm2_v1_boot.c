@@ -1282,6 +1282,44 @@ int dm2_v1_boot_startup_view_model_from_snapshot(
     if (!snapshot) {
         return 0;
     }
+    if (!snapshot->startup_menu_active) {
+        if (out_view_receipt) {
+            DM2_V1_StartupRuntimeHandoffReceipt *handoff =
+                &out_view_receipt->runtime_handoff;
+            memset(out_view_receipt, 0, sizeof(*out_view_receipt));
+            out_view_receipt->valid = 1;
+            out_view_receipt->render.valid = 1;
+            out_view_receipt->render.hud_runtime_ready = 1;
+            out_view_receipt->render.hud_overlay_suppressed = 0;
+            handoff->valid = 1;
+            handoff->startup_menu_active = 0;
+            handoff->animation_active = 0;
+            snprintf(handoff->animation,
+                     sizeof(handoff->animation),
+                     "%s",
+                     "dm2-runtime");
+            handoff->title_ready = 1;
+            handoff->initialize_v2_runtime = 1;
+            handoff->initialize_hud_runtime = 1;
+            handoff->initialize_touch_runtime = 1;
+            handoff->hud_runtime_ready = 1;
+        }
+        if (out_command_count) {
+            *out_command_count = 0;
+        }
+        (void)dm2_v1_boot_startup_presentation_receipt_from_snapshot(
+            snapshot,
+            out_phase,
+            out_phase_size,
+            out_startup_active,
+            out_animation,
+            out_animation_size,
+            out_animation_active,
+            out_title_frame,
+            out_title_frame_max,
+            out_title_ready);
+        return 1;
+    }
     if (out_commands && max_commands > 0) {
         if (out_view_receipt) {
             DM2_V1_StartupHostFacts facts;
@@ -1371,11 +1409,12 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupViewModel *out_view_model)
 {
+    int ok;
     if (!snapshot || !out_view_model) {
         return 0;
     }
     dm2_v1_boot_startup_view_model_clear(out_view_model);
-    return dm2_v1_boot_startup_view_model_from_snapshot(
+    ok = dm2_v1_boot_startup_view_model_from_snapshot(
         snapshot,
         out_view_model->commands,
         (int)(sizeof(out_view_model->commands) /
@@ -1391,6 +1430,18 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
         &out_view_model->title_frame,
         &out_view_model->title_frame_max,
         &out_view_model->title_ready);
+    if (ok && out_view_model->view_receipt.runtime_handoff.valid) {
+        const DM2_V1_StartupRuntimeHandoffReceipt *handoff =
+            &out_view_model->view_receipt.runtime_handoff;
+        out_view_model->initialize_v2_runtime =
+            handoff->initialize_v2_runtime;
+        out_view_model->initialize_hud_runtime =
+            handoff->initialize_hud_runtime;
+        out_view_model->initialize_touch_runtime =
+            handoff->initialize_touch_runtime;
+        out_view_model->hud_runtime_ready = handoff->hud_runtime_ready;
+    }
+    return ok;
 }
 
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
