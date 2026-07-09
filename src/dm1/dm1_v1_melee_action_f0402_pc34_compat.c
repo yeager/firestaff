@@ -43,6 +43,7 @@ static int dm1_v1_f0176_creature_occupies_cell_pc34(
         creatureIndex >= 4) {
         return 0;
     }
+    if (in->creatureHealth[creatureIndex] <= 0) return 0;
     creatureCell = (in->groupCells >> (creatureIndex << 1)) & 0x03;
     queryCell = cell & 3;
     if ((in->creatureSize & 3) == DM1_CREATURE_SIZE_HALF_SQUARE) {
