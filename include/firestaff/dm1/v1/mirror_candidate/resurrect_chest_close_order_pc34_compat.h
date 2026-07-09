@@ -19,13 +19,13 @@ typedef enum {
     DM1_V1_MC_RCCO_COMMAND_CHEST_CLOSE_PC34 = 334,
     DM1_V1_MC_RCCO_COMMAND_MOVE_FORWARD_PC34 = 3,
     DM1_V1_MC_RCCO_COMMAND_WHEEL_UP_PC34 = 77
-} Dm1V1MirrorCandidateResurrectChestCloseOrderCommandPc34;
+} DM1_V1_MirrorCandidateResurrectChestCloseOrderCommandPc34;
 
 typedef enum {
     DM1_V1_MC_RCCO_WHEEL_TARGET_NONE_PC34 = 0,
     DM1_V1_MC_RCCO_WHEEL_TARGET_CLOSED_CHEST_PC34 = 1,
     DM1_V1_MC_RCCO_WHEEL_TARGET_LEADER_HAND_PC34 = 2
-} Dm1V1MirrorCandidateResurrectChestCloseOrderWheelTargetPc34;
+} DM1_V1_MirrorCandidateResurrectChestCloseOrderWheelTargetPc34;
 
 typedef struct {
     int contractOnly;
@@ -47,9 +47,9 @@ typedef struct {
     uint16_t chestVisibleSlots[DM1_V1_MC_RCCO_CHEST_SLOT_COUNT_PC34];
     uint16_t chestContainerChain[DM1_V1_MC_RCCO_CHEST_SLOT_COUNT_PC34];
     int candidateChain[DM1_V1_MC_RCCO_CANDIDATE_CHAIN_COUNT_PC34];
-    Dm1V1MirrorCandidateResurrectChestCloseOrderCommandPc34
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderCommandPc34
         queuedCommands[DM1_V1_MC_RCCO_COMMAND_COUNT_PC34];
-    Dm1V1MirrorCandidateResurrectChestCloseOrderCommandPc34
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderCommandPc34
         dispatchOrder[DM1_V1_MC_RCCO_COMMAND_COUNT_PC34];
     int commandQueueDepth;
     int queueWriteCountF0359;
@@ -68,10 +68,10 @@ typedef struct {
     int forwardDrainedOnClosedChest;
     int wheelQueuedAfterForward;
     int wheelSawClosedChest;
-    Dm1V1MirrorCandidateResurrectChestCloseOrderWheelTargetPc34
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderWheelTargetPc34
         wheelTarget;
     int trace[DM1_V1_MC_RCCO_TRACE_COUNT_PC34];
-} Dm1V1MirrorCandidateResurrectChestCloseOrderStatePc34;
+} DM1_V1_MirrorCandidateResurrectChestCloseOrderStatePc34;
 
 typedef struct {
     int acceptedFirst;
@@ -108,20 +108,38 @@ typedef struct {
     uint32_t afterForwardHash;
     uint32_t afterWheelHash;
     uint32_t hash;
-} Dm1V1MirrorCandidateResurrectChestCloseOrderResultPc34;
+} DM1_V1_MirrorCandidateResurrectChestCloseOrderResultPc34;
 
-Dm1V1MirrorCandidateResurrectChestCloseOrderStatePc34
-dm1_v1_mirror_candidate_resurrect_chest_close_order_default_state_pc34(void);
+typedef DM1_V1_MirrorCandidateResurrectChestCloseOrderCommandPc34
+    Dm1V1MirrorCandidateResurrectChestCloseOrderCommandPc34;
+typedef DM1_V1_MirrorCandidateResurrectChestCloseOrderWheelTargetPc34
+    Dm1V1MirrorCandidateResurrectChestCloseOrderWheelTargetPc34;
+typedef DM1_V1_MirrorCandidateResurrectChestCloseOrderStatePc34
+    Dm1V1MirrorCandidateResurrectChestCloseOrderStatePc34;
+typedef DM1_V1_MirrorCandidateResurrectChestCloseOrderResultPc34
+    Dm1V1MirrorCandidateResurrectChestCloseOrderResultPc34;
 
-int dm1_v1_mirror_candidate_resurrect_chest_close_order_run_pc34(
-    Dm1V1MirrorCandidateResurrectChestCloseOrderStatePc34 *state,
-    Dm1V1MirrorCandidateResurrectChestCloseOrderResultPc34 *result);
+DM1_V1_MirrorCandidateResurrectChestCloseOrderStatePc34
+DM1_V1_MirrorCandidateResurrectChestCloseOrder_DefaultStatePc34(void);
 
-uint32_t dm1_v1_mirror_candidate_resurrect_chest_close_order_hash_pc34(
-    const Dm1V1MirrorCandidateResurrectChestCloseOrderStatePc34 *state);
+int DM1_V1_MirrorCandidateResurrectChestCloseOrder_RunPc34(
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderStatePc34 *state,
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderResultPc34 *result);
+
+uint32_t DM1_V1_MirrorCandidateResurrectChestCloseOrder_HashPc34(
+    const DM1_V1_MirrorCandidateResurrectChestCloseOrderStatePc34 *state);
 
 const char *
-dm1_v1_mirror_candidate_resurrect_chest_close_order_source_evidence_pc34(void);
+DM1_V1_MirrorCandidateResurrectChestCloseOrder_SourceEvidencePc34(void);
+
+#define dm1_v1_mirror_candidate_resurrect_chest_close_order_default_state_pc34 \
+    DM1_V1_MirrorCandidateResurrectChestCloseOrder_DefaultStatePc34
+#define dm1_v1_mirror_candidate_resurrect_chest_close_order_run_pc34 \
+    DM1_V1_MirrorCandidateResurrectChestCloseOrder_RunPc34
+#define dm1_v1_mirror_candidate_resurrect_chest_close_order_hash_pc34 \
+    DM1_V1_MirrorCandidateResurrectChestCloseOrder_HashPc34
+#define dm1_v1_mirror_candidate_resurrect_chest_close_order_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateResurrectChestCloseOrder_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

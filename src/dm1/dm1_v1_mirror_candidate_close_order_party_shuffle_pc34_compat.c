@@ -202,8 +202,8 @@ static int source_anchors_present(void)
                   "shuffle_close_order_gate") != 0;
 }
 
-uint32_t dm1_v1_mirror_candidate_close_order_party_shuffle_hash_pc34(
-    const Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
+uint32_t DM1_V1_MirrorCandidateCloseOrderPartyShuffle_HashPc34(
+    const DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -258,10 +258,10 @@ uint32_t dm1_v1_mirror_candidate_close_order_party_shuffle_hash_pc34(
     return hash;
 }
 
-Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34
-dm1_v1_mirror_candidate_close_order_party_shuffle_default_state_pc34(void)
+DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34
+DM1_V1_MirrorCandidateCloseOrderPartyShuffle_DefaultStatePc34(void)
 {
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34 state;
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34 state;
     int i;
 
     memset(&state, 0, sizeof(state));
@@ -304,7 +304,7 @@ dm1_v1_mirror_candidate_close_order_party_shuffle_default_state_pc34(void)
 }
 
 static int ready(
-    const Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
+    const DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
 {
     return state && state->contractOnly && state->noAssetReads &&
            state->noOriginalDosPixelParityClaim &&
@@ -321,8 +321,8 @@ static int ready(
 }
 
 static void queue_command(
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34 *state,
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleCommandPc34 command)
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34 *state,
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleCommandPc34 command)
 {
     int index = state->commandQueueDepth;
 
@@ -340,7 +340,7 @@ static void queue_command(
 }
 
 static void shift_queue(
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
 {
     int i;
 
@@ -353,7 +353,7 @@ static void shift_queue(
 }
 
 static void rotate_party_direction(
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34 *state,
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34 *state,
     int requestedDirection)
 {
     int delta;
@@ -387,7 +387,7 @@ static void rotate_party_direction(
 }
 
 static void accept_candidate(
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
 {
     int candidatePartyIndex = state->g0305PartyChampionCount - 1;
 
@@ -411,9 +411,9 @@ static void accept_candidate(
 }
 
 static void drain_next(
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34 *state)
 {
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleCommandPc34 command;
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleCommandPc34 command;
     int index = state->dispatchDrainCountF0380;
 
     if (state->commandQueueDepth <= 0) {
@@ -437,9 +437,9 @@ static void drain_next(
     }
 }
 
-int dm1_v1_mirror_candidate_close_order_party_shuffle_run_pc34(
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleStatePc34 *state,
-    Dm1V1MirrorCandidateCloseOrderPartyShuffleResultPc34 *result)
+int DM1_V1_MirrorCandidateCloseOrderPartyShuffle_RunPc34(
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleStatePc34 *state,
+    DM1_V1_MirrorCandidateCloseOrderPartyShuffleResultPc34 *result)
 {
     int c159Before;
     int c038Before;
@@ -468,7 +468,7 @@ int dm1_v1_mirror_candidate_close_order_party_shuffle_run_pc34(
         directionBefore[i] = state->championDirection[i];
     }
     result->beforeHash =
-        dm1_v1_mirror_candidate_close_order_party_shuffle_hash_pc34(state);
+        DM1_V1_MirrorCandidateCloseOrderPartyShuffle_HashPc34(state);
 
     /* Close first: the C160 close click is dispatched BEFORE the
      * F0284 party-direction rotations. F0282 reads the appended
@@ -492,7 +492,7 @@ int dm1_v1_mirror_candidate_close_order_party_shuffle_run_pc34(
         !state->c040PanelOpen && state->c040PanelClosed;
     state->trace[4] = kTraceF0282Done;
     result->afterCloseHash =
-        dm1_v1_mirror_candidate_close_order_party_shuffle_hash_pc34(state);
+        DM1_V1_MirrorCandidateCloseOrderPartyShuffle_HashPc34(state);
 
     /* Shuffle #1: F0284 rotates the party direction from kInitial
      * (North=0) to East=1, with delta=+1. The C040 panel stays
@@ -512,7 +512,7 @@ int dm1_v1_mirror_candidate_close_order_party_shuffle_run_pc34(
     state->trace[7] = kTraceF0284First;
     state->trace[8] = kTraceF0284FirstDone;
     result->afterFirstShuffleHash =
-        dm1_v1_mirror_candidate_close_order_party_shuffle_hash_pc34(state);
+        DM1_V1_MirrorCandidateCloseOrderPartyShuffle_HashPc34(state);
 
     /* Shuffle #2: F0284 rotates the party direction from East=1 to
      * South=2, with delta=+1. The C040 panel stays closed. */
@@ -532,7 +532,7 @@ int dm1_v1_mirror_candidate_close_order_party_shuffle_run_pc34(
     state->trace[11] = kTraceF0284Second;
     state->trace[12] = kTraceF0284SecondDone;
     result->afterSecondShuffleHash =
-        dm1_v1_mirror_candidate_close_order_party_shuffle_hash_pc34(state);
+        DM1_V1_MirrorCandidateCloseOrderPartyShuffle_HashPc34(state);
 
     state->trace[13] = 0;
     result->c038PanelPriorityPreserved = state->c038PanelPriorityByte == c038Before;
@@ -599,7 +599,7 @@ int dm1_v1_mirror_candidate_close_order_party_shuffle_run_pc34(
 }
 
 const char *
-dm1_v1_mirror_candidate_close_order_party_shuffle_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateCloseOrderPartyShuffle_SourceEvidencePc34(void)
 {
     return s_source_evidence;
 }

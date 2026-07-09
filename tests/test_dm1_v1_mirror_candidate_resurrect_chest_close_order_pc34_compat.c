@@ -51,7 +51,7 @@ static int contains(const char *haystack, const char *needle)
 static void test_source_evidence(void)
 {
     const char *evidence =
-        dm1_v1_mirror_candidate_resurrect_chest_close_order_source_evidence_pc34();
+        DM1_V1_MirrorCandidateResurrectChestCloseOrder_SourceEvidencePc34();
 
     PROBE_ASSERT("evidence.present", evidence != 0);
     PROBE_ASSERT("evidence.f0280",
@@ -92,8 +92,8 @@ static void test_source_evidence(void)
 
 static void test_default_state(void)
 {
-    Dm1V1MirrorCandidateResurrectChestCloseOrderStatePc34 state =
-        dm1_v1_mirror_candidate_resurrect_chest_close_order_default_state_pc34();
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderStatePc34 state =
+        DM1_V1_MirrorCandidateResurrectChestCloseOrder_DefaultStatePc34();
     int i;
 
     PROBE_ASSERT_EQ("default.contract_only", state.contractOnly, 1);
@@ -136,19 +136,19 @@ static void test_default_state(void)
         }
     }
     PROBE_ASSERT("default.hash.nonzero",
-                 dm1_v1_mirror_candidate_resurrect_chest_close_order_hash_pc34(
+                 DM1_V1_MirrorCandidateResurrectChestCloseOrder_HashPc34(
                      &state) != 0);
 }
 
 static void test_ordered_regression(uint32_t *out_hash)
 {
-    Dm1V1MirrorCandidateResurrectChestCloseOrderStatePc34 state =
-        dm1_v1_mirror_candidate_resurrect_chest_close_order_default_state_pc34();
-    Dm1V1MirrorCandidateResurrectChestCloseOrderResultPc34 result;
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderStatePc34 state =
+        DM1_V1_MirrorCandidateResurrectChestCloseOrder_DefaultStatePc34();
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderResultPc34 result;
     int ok;
     int i;
 
-    ok = dm1_v1_mirror_candidate_resurrect_chest_close_order_run_pc34(
+    ok = DM1_V1_MirrorCandidateResurrectChestCloseOrder_RunPc34(
         &state, &result);
     PROBE_ASSERT_EQ("run.ok", ok, 1);
     PROBE_ASSERT_EQ("result.accepted_first", result.acceptedFirst, 1);
@@ -262,44 +262,44 @@ static void test_ordered_regression(uint32_t *out_hash)
     PROBE_ASSERT("hash.wheel_changes", result.afterWheelHash !=
                                             result.afterForwardHash);
     PROBE_ASSERT_U32("hash.result_matches", result.hash,
-                     dm1_v1_mirror_candidate_resurrect_chest_close_order_hash_pc34(
+                     DM1_V1_MirrorCandidateResurrectChestCloseOrder_HashPc34(
                          &state));
     *out_hash = result.hash;
 }
 
 static void test_guards(void)
 {
-    Dm1V1MirrorCandidateResurrectChestCloseOrderStatePc34 state =
-        dm1_v1_mirror_candidate_resurrect_chest_close_order_default_state_pc34();
-    Dm1V1MirrorCandidateResurrectChestCloseOrderResultPc34 result;
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderStatePc34 state =
+        DM1_V1_MirrorCandidateResurrectChestCloseOrder_DefaultStatePc34();
+    DM1_V1_MirrorCandidateResurrectChestCloseOrderResultPc34 result;
 
     PROBE_ASSERT_EQ("guard.null_state",
-                    dm1_v1_mirror_candidate_resurrect_chest_close_order_run_pc34(
+                    DM1_V1_MirrorCandidateResurrectChestCloseOrder_RunPc34(
                         0, &result),
                     0);
     PROBE_ASSERT_EQ("guard.null_result",
-                    dm1_v1_mirror_candidate_resurrect_chest_close_order_run_pc34(
+                    DM1_V1_MirrorCandidateResurrectChestCloseOrder_RunPc34(
                         &state, 0),
                     0);
     state =
-        dm1_v1_mirror_candidate_resurrect_chest_close_order_default_state_pc34();
+        DM1_V1_MirrorCandidateResurrectChestCloseOrder_DefaultStatePc34();
     state.contractOnly = 0;
     PROBE_ASSERT_EQ("guard.non_contract",
-                    dm1_v1_mirror_candidate_resurrect_chest_close_order_run_pc34(
+                    DM1_V1_MirrorCandidateResurrectChestCloseOrder_RunPc34(
                         &state, &result),
                     0);
     state =
-        dm1_v1_mirror_candidate_resurrect_chest_close_order_default_state_pc34();
+        DM1_V1_MirrorCandidateResurrectChestCloseOrder_DefaultStatePc34();
     state.g0299CandidateOrdinal = 0;
     PROBE_ASSERT_EQ("guard.no_candidate",
-                    dm1_v1_mirror_candidate_resurrect_chest_close_order_run_pc34(
+                    DM1_V1_MirrorCandidateResurrectChestCloseOrder_RunPc34(
                         &state, &result),
                     0);
     state =
-        dm1_v1_mirror_candidate_resurrect_chest_close_order_default_state_pc34();
+        DM1_V1_MirrorCandidateResurrectChestCloseOrder_DefaultStatePc34();
     state.g0426OpenChestThing = DM1_V1_MC_RCCO_NONE_PC34;
     PROBE_ASSERT_EQ("guard.closed_chest",
-                    dm1_v1_mirror_candidate_resurrect_chest_close_order_run_pc34(
+                    DM1_V1_MirrorCandidateResurrectChestCloseOrder_RunPc34(
                         &state, &result),
                     0);
 }
