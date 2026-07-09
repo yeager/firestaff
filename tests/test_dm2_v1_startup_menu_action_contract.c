@@ -3,6 +3,7 @@
 #include "dm2_v1_boot.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_passed;
@@ -65,8 +66,11 @@ int main(void)
     DM2_V1_BootStartupPackagedConsumerReceipt boot_consumer_receipt;
     DM2_V1_BootStartupHostFrameReceipt boot_host_frame_receipt;
     DM2_V1_BootStartupRenderOwnershipReceipt boot_render_ownership_receipt;
+    DM2_V1_BootStartupRealVisualCaptureReceipt boot_real_visual_capture;
+    DM2_V1_BootStartupLaunch boot_launch;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
+    const char *real_data_dir;
     char phase[64];
     char save_root[128];
     uint8_t save_slot;
@@ -720,6 +724,61 @@ int main(void)
               boot_render_ownership_receipt.menu_hud_startup_receipt_breadth == 1 &&
               boot_render_ownership_receipt.suppress_game_hud == 1,
           "boot render-ownership receipt owns nonzero title timing and draw execution");
+    check(!dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+              NULL,
+              1,
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              13,
+              &boot_real_visual_capture) &&
+              boot_real_visual_capture.valid == 0,
+          "boot real visual capture rejects missing GRAPHICS.DAT profile");
+    real_data_dir = getenv("FIRESTAFF_DM2_REAL_DATA_DIR");
+    if (real_data_dir && real_data_dir[0]) {
+        memset(&boot_launch, 0, sizeof(boot_launch));
+        if (dm2_v1_boot_startup_launch_alloc(real_data_dir,
+                                             &boot_launch) &&
+            boot_launch.prepare_result == DM2_V1_BOOT_STARTUP_PREPARE_OK &&
+            boot_launch.profile) {
+            check(dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+                      boot_launch.profile,
+                      1,
+                      "/tmp/firestaff-dm2-startup",
+                      1,
+                      (1u << 2),
+                      1,
+                      13,
+                      &boot_real_visual_capture) &&
+                      boot_real_visual_capture.valid &&
+                      boot_real_visual_capture.profile_ready == 1 &&
+                      boot_real_visual_capture.graphics_dat_ready == 1 &&
+                      boot_real_visual_capture.real_gdat_title_asset_required == 1 &&
+                      boot_real_visual_capture.real_gdat_title_asset_consumed == 1 &&
+                      boot_real_visual_capture.title_capture_ready == 1 &&
+                      boot_real_visual_capture.title_gdat_asset_w == 320 &&
+                      boot_real_visual_capture.title_gdat_asset_h == 200 &&
+                      boot_real_visual_capture.title_pixel_count == 64000u &&
+                      boot_real_visual_capture.title_pixel_hash != 0u &&
+                      boot_real_visual_capture.menu_capture_ready == 1 &&
+                      boot_real_visual_capture.menu_gdat_command_count == 1 &&
+                      boot_real_visual_capture.menu_rect_command_count >= 2 &&
+                      boot_real_visual_capture.menu_text_command_count >=
+                          boot_real_visual_capture.menu_row_count &&
+                      boot_real_visual_capture.hud_handoff_capture_ready == 1 &&
+                      boot_real_visual_capture.suppress_game_hud == 1 &&
+                      boot_real_visual_capture.no_fallback_title_blit == 1 &&
+                      boot_real_visual_capture.packaged_visual_capture_hash != 0u,
+                  "boot real visual capture consumes local GRAPHICS.DAT title/menu/HUD package");
+        } else {
+            printf("SKIP boot real visual capture: no verified DM2 data in %s\n",
+                   real_data_dir);
+        }
+        dm2_v1_boot_startup_launch_cleanup(&boot_launch);
+    } else {
+        printf("SKIP boot real visual capture: FIRESTAFF_DM2_REAL_DATA_DIR unset\n");
+    }
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&

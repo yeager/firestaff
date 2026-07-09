@@ -479,6 +479,43 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int profile_ready;
+    int graphics_dat_ready;
+    int packaged_full_start_valid;
+    int render_ownership_valid;
+    int real_gdat_title_asset_required;
+    int real_gdat_title_asset_consumed;
+    int title_capture_ready;
+    int title_gdat_category;
+    int title_gdat_index;
+    int title_gdat_field;
+    int title_gdat_asset_w;
+    int title_gdat_asset_h;
+    int title_gdat_asset_stride;
+    uint32_t title_pixel_hash;
+    uint32_t title_pixel_count;
+    int menu_capture_ready;
+    int menu_command_count;
+    int menu_gdat_command_count;
+    int menu_rect_command_count;
+    int menu_text_command_count;
+    int menu_row_count;
+    int selected_highlight_count;
+    int hud_handoff_capture_ready;
+    int suppress_game_hud;
+    int present_first_hud_frame;
+    int exact_title_timing_ready;
+    int title_animation_tick;
+    int title_frame;
+    int title_frame_remaining_ticks;
+    int no_fallback_title_blit;
+    uint32_t packaged_visual_capture_hash;
+    const char *status_scope;
+    const char *status;
+} DM2_V1_BootStartupRealVisualCaptureReceipt;
+
+typedef struct {
+    int valid;
     int draw_startup_menu;
     int command_count;
     int selected_row;
@@ -800,6 +837,17 @@ int dm2_v1_boot_startup_render_ownership_receipt_from_runtime_state(
     int selected_row,
     int title_animation_tick,
     DM2_V1_BootStartupRenderOwnershipReceipt *out_receipt);
+void dm2_v1_boot_startup_real_visual_capture_receipt_init(
+    DM2_V1_BootStartupRealVisualCaptureReceipt *receipt);
+int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+    DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupRealVisualCaptureReceipt *out_receipt);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,
