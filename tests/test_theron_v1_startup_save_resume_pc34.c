@@ -3041,6 +3041,90 @@ static void test_startup_session_facts_wrappers(void) {
                         partial_graphics_receipt.fallback_startup_graphics_executed,
                     "boot graphics route rejects incomplete Track02 startup bitmap route");
     }
+    {
+        Theron_StartupMediaStateReceipt iso_media_receipt = media_receipt;
+        Theron_V1_BootStartupViewModel iso_media_view_model;
+        Theron_V1_BootStartupGraphicsRouteReceipt iso_graphics_receipt;
+
+        iso_media_receipt.track02_variant = THERON_TRACK02_VARIANT_US_ISO;
+        snprintf(iso_media_receipt.track02_md5,
+                 sizeof(iso_media_receipt.track02_md5),
+                 "%s",
+                 THERON_TRACK02_MD5_US_ISO);
+        iso_media_receipt.startup_bitmap_sample_count = 4;
+        iso_media_receipt.startup_bitmap_route_mask =
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+        iso_media_receipt.startup_bitmap_title_route_ready = 0;
+        iso_media_receipt.startup_bitmap_stage_route_ready = 0;
+        iso_media_receipt.startup_bitmap_title_sample_count = 0;
+        iso_media_receipt.startup_bitmap_stage_sample_count = 0;
+        iso_media_receipt.startup_bitmap_title_nonzero_pixel_count = 0u;
+        iso_media_receipt.startup_bitmap_stage_nonzero_pixel_count = 0u;
+        iso_media_receipt.startup_bitmap_title_checksum = 0u;
+        iso_media_receipt.startup_bitmap_stage_checksum = 0u;
+        iso_media_receipt.startup_bitmap_atlas_route_count = 2;
+        iso_media_receipt.startup_bitmap_atlas_route_mask =
+            iso_media_receipt.startup_bitmap_route_mask;
+        iso_media_receipt.startup_bitmap_atlas_tile_count = 4u;
+        iso_media_receipt.startup_bitmap_atlas.route_count = 2u;
+        iso_media_receipt.startup_bitmap_atlas.route_mask =
+            iso_media_receipt.startup_bitmap_atlas_route_mask;
+        iso_media_receipt.startup_bitmap_atlas.total_tile_count = 4u;
+        iso_media_receipt.startup_bitmap_atlas.routes[0] =
+            media_receipt.startup_bitmap_atlas.routes[2];
+        iso_media_receipt.startup_bitmap_atlas.routes[1] =
+            media_receipt.startup_bitmap_atlas.routes[3];
+        memset(&iso_media_receipt.startup_bitmap_atlas.routes[2],
+               0,
+               sizeof(iso_media_receipt.startup_bitmap_atlas.routes[2]));
+        memset(&iso_media_receipt.startup_bitmap_atlas.routes[3],
+               0,
+               sizeof(iso_media_receipt.startup_bitmap_atlas.routes[3]));
+        memset(&iso_media_view_model, 0, sizeof(iso_media_view_model));
+        memset(&iso_graphics_receipt, 0, sizeof(iso_graphics_receipt));
+        memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+        expect_true(!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+                        &iso_media_receipt) &&
+                        theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
+                            &iso_media_view_model,
+                            &iso_media_receipt,
+                            THERON_STARTUP_PHASE_READY,
+                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                            NULL,
+                            &world,
+                            NULL,
+                            1,
+                            1,
+                            THERON_V1_STARTUP_RESUME_DUAL,
+                            2,
+                            3,
+                            THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                            "/tmp/firestaff-theron-srm",
+                            NULL,
+                            NULL,
+                            NULL,
+                            0,
+                            0x03,
+                            2,
+                            order,
+                            THERON_STARTUP_MAX_COMPANIONS) &&
+                        theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                            &iso_media_view_model,
+                            &media_graphics_executor,
+                            &iso_graphics_receipt) &&
+                        iso_graphics_receipt.required_bitmap_route_mask ==
+                            (THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+                             THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                        iso_graphics_receipt.required_bitmap_routes_ready &&
+                        iso_graphics_receipt.real_bitmap_startup_graphics_ready &&
+                        iso_graphics_receipt.track02_atlas_startup_graphics_ready &&
+                        iso_graphics_receipt.track02_atlas_startup_graphics_executed &&
+                        iso_graphics_receipt.track02_startup_graphics_executed &&
+                        !iso_graphics_receipt.raw_graphics_plan_consumer_required &&
+                        !iso_graphics_receipt.fallback_startup_graphics_executed,
+                    "boot graphics route consumes partial ISO Track02 atlas for Soul Room without full-start fallback");
+    }
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
                     &media_snapshot,
