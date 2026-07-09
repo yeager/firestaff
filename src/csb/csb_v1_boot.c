@@ -2367,6 +2367,7 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
     CSB_V1_BootStartupHostViewDrawReceipt_PC34 *out_receipt)
 {
     CSB_V1_StartupRenderExecutor_PC34 render_executor;
+    CSB_V1_StartupRenderExecutor_PC34 hud_executor;
     int render_result = 0;
     int hud_result = 0;
 
@@ -2437,18 +2438,22 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
                      host_view->capture_proof.credits_route)
                 ? 1
                 : 0;
+        out_receipt->fallback_callbacks_stripped = 1;
     }
 
     render_executor = *executor;
-    if (host_view->capture_proof_valid &&
-        host_view->capture_proof.real_asset_matched) {
-        render_executor.draw_door_fallback = NULL;
-        render_executor.draw_fallback_text = NULL;
-    }
+    hud_executor = *executor;
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 render CSB startup
+     * from concrete title/HUD/door surfaces. Host-view receipts are the M11
+     * runtime boundary, so strip legacy fallback callbacks before any lower
+     * startup renderer can observe them. */
+    render_executor.draw_door_fallback = NULL;
+    render_executor.draw_fallback_text = NULL;
+    hud_executor.draw_door_fallback = NULL;
+    hud_executor.draw_fallback_text = NULL;
     if (host_view->hud_menu_draw_valid && host_view->hud_menu_draw.valid) {
         render_executor.draw_closed_doors = NULL;
         render_executor.draw_utility_panel = NULL;
-        render_executor.draw_fallback_text = NULL;
     }
 
     render_result = csb_v1_boot_startup_execute_host_view_render_plan_pc34(
@@ -2464,7 +2469,7 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
         hud_result = csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
             &host_view->hud_menu_draw,
             &host_view->readiness,
-            executor);
+            &hud_executor);
         if (out_receipt) {
             out_receipt->hud_menu_executed = hud_result;
         }
@@ -3462,6 +3467,7 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 ownership;
     uint32_t runtime_hash = 2166136261u;
+    int fallback_callbacks_stripped = 1;
 
     if (!out_receipt) {
         return 0;
@@ -3496,6 +3502,9 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
         ownership.title_draw_ready) {
         out_receipt->title_runtime_consumed = 1;
         out_receipt->title_draw_consumed = 1;
+        fallback_callbacks_stripped =
+            fallback_callbacks_stripped &&
+            ownership.host_draw.fallback_callbacks_stripped;
     }
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
@@ -3509,6 +3518,9 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
         ownership.closed_door_menu_draw_ready) {
         out_receipt->closed_door_hud_runtime_consumed = 1;
         out_receipt->closed_door_hud_draw_consumed = 1;
+        fallback_callbacks_stripped =
+            fallback_callbacks_stripped &&
+            ownership.host_draw.fallback_callbacks_stripped;
     }
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
@@ -3525,6 +3537,9 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
         ownership.utility_menu_draw_ready) {
         out_receipt->utility_hud_runtime_consumed = 1;
         out_receipt->utility_hud_draw_consumed = 1;
+        fallback_callbacks_stripped =
+            fallback_callbacks_stripped &&
+            ownership.host_draw.fallback_callbacks_stripped;
     }
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
@@ -3541,6 +3556,9 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
             &runtime_hash) &&
         ownership.host_view.capture_proof.opening_door_route) {
         out_receipt->door_opening_delay_runtime_consumed = 1;
+        fallback_callbacks_stripped =
+            fallback_callbacks_stripped &&
+            ownership.host_draw.fallback_callbacks_stripped;
     }
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
@@ -3557,6 +3575,9 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
         ownership.opening_draw_ready) {
         out_receipt->door_opening_frame_runtime_consumed = 1;
         out_receipt->door_opening_frame_draw_consumed = 1;
+        fallback_callbacks_stripped =
+            fallback_callbacks_stripped &&
+            ownership.host_draw.fallback_callbacks_stripped;
     }
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
@@ -3571,6 +3592,9 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
         ownership.host_view.capture_proof.credits_route) {
         out_receipt->credits_runtime_consumed = 1;
         out_receipt->credits_surface_draw_consumed = 1;
+        fallback_callbacks_stripped =
+            fallback_callbacks_stripped &&
+            ownership.host_draw.fallback_callbacks_stripped;
     }
 
     out_receipt->runtime_capture_hash = runtime_hash ? runtime_hash : 1u;
@@ -3580,7 +3604,8 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
                 out_receipt->utility_hud_runtime_consumed &&
                 out_receipt->door_opening_delay_runtime_consumed &&
                 out_receipt->door_opening_frame_runtime_consumed &&
-                out_receipt->credits_runtime_consumed
+                out_receipt->credits_runtime_consumed &&
+                fallback_callbacks_stripped
             ? 1
             : 0;
     out_receipt->no_wrapper_fallback_routes =
