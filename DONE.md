@@ -4,6 +4,8 @@
 
 - ✅ 2026-07-09 DM1 front-mirror host draw receipt: DM1 champion-mirror receipts now own C346 asset/fallback/invariant backing and C040 panel suppression, and M11 D1C drawing consumes that receipt instead of branching on host fallback rules. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, `test_m11_overlay_command_queue_block`, and `git diff --check` passed.
 
+- ✅ 2026-07-09 DM1 HoC full-graphics ownership route: M11 D1C champion-mirror drawing now requires the DM1 HoC full-graphics fallback ownership receipt before blitting C346/C026 output, joining production capture proof, thing suppression, and no-fallback-scan ownership. Verification: `test_dm1_v1_startup_intro_state_machine_gate` passed; `test_m11_overlay_command_queue_block` builds but currently fails on unrelated CSB assertions in the same binary.
+
 - ✅ 2026-07-09 Nexus real-asset ownership receipt: launcher now exposes a Nexus-owned receipt that joins title/menu capture, BPK/PRS3 startup blockers, DGN first-render handoff, and no-fallback visual enforcement. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus host-caller startup receipt: launcher now exposes one Nexus-owned host API for title/menu startup capture, DGN/BPK/PRS3 handoff, timing fields, copied startup/DGN draw commands, and no-fallback visual suppression. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
