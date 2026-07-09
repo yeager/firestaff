@@ -11209,6 +11209,14 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
     facts.title_played = 1;
     facts.captured_after_first_frame_render = 1;
+    facts.captured_from_real_assets =
+        state && state->assetsAvailable && state->assetLoader.fileState;
+    facts.captured_from_mac_window =
+#ifdef __APPLE__
+        1;
+#else
+        0;
+#endif
     return dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
         &facts,
         out_apply,
@@ -11460,6 +11468,12 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->dm1HoCProductionConsumerReady = hoc_consumer.ready;
             out->dm1HoCNoHostFallbackVisuals =
                 hoc_consumer.suppress_host_fallback_visuals;
+            out->dm1HoCRealAssetCapture =
+                hoc_consumer.real_asset_capture;
+            out->dm1HoCMacWindowCapture =
+                hoc_consumer.mac_window_capture;
+            out->dm1HoCHostCaptureRouteMatches =
+                hoc_consumer.host_capture_route_matches;
             out->dm1HoCOpenedEntranceFrame =
                 hoc_consumer.draw_opened_entrance_frame;
             out->dm1HoCHallMirrorOverlay =
