@@ -99,7 +99,7 @@ typedef struct {
     DM1_V1_GameLoopStatePc34                 gameLoop;
     M11_GL_State                      loopIntegration;
     M11_InputState                    input;
-    M11_DD_DungeonData                dungeonData;
+    DM1_V1_DungeonDataPc34                dungeonData;
     DM1_Viewport3DState               viewport3d;
     struct Dm1V1MovementPipelinePc34Compat movementPipeline;
     M11_DG_State                      dialog;
@@ -168,7 +168,7 @@ void m11_engine_shutdown(M11_Engine *engine);
 M11_GameStateId m11_engine_get_state(const M11_Engine *engine);
 
 /* Get pointer to the central dungeon data (for subsystem queries). */
-M11_DD_DungeonData *m11_engine_get_dungeon_data(M11_Engine *engine);
+DM1_V1_DungeonDataPc34 *m11_engine_get_dungeon_data(M11_Engine *engine);
 
 /* Get pointer to input state (for feeding external events). */
 M11_InputState *m11_engine_get_input(M11_Engine *engine);

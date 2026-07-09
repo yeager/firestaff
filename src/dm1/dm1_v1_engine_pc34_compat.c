@@ -104,15 +104,15 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
     m11_gl_init(&engine->loopIntegration);
 
     /* 6. Central dungeon data */
-    m11_dd_init(&engine->dungeonData);
+    DM1_V1_DungeonData_InitPc34Compat(&engine->dungeonData);
     if (config->dungeon_dat_path) {
-        if (!m11_dd_load_dungeon(&engine->dungeonData,
+        if (!DM1_V1_DungeonData_LoadDungeonPc34Compat(&engine->dungeonData,
                                  config->dungeon_dat_path)) {
             /* Non-fatal: engine can run in title-only mode */
         }
     }
     if (config->graphics_dat_path) {
-        m11_dd_load_objects(&engine->dungeonData, config->graphics_dat_path);
+        DM1_V1_DungeonData_LoadObjectsPc34Compat(&engine->dungeonData, config->graphics_dat_path);
     }
 
     /* 7. Event timer (embedded in dungeonData — already init'd) */
@@ -168,7 +168,7 @@ M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs)
 
     /* 3. Advance game time + process expired events */
     if (engine->gameLoop.timerActive) {
-        m11_dd_advance_tick(&engine->dungeonData);
+        DM1_V1_DungeonData_AdvanceTickPc34Compat(&engine->dungeonData);
         result.timelineProcessed = true;
     }
 
@@ -193,7 +193,7 @@ M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs)
     result.partyDead     = loopResult.partyDead;
     result.gameWon       = engine->dungeonData.gameWon;
     result.exitRequested = loopResult.exitRequested;
-    result.gameTime      = m11_dd_get_game_time(&engine->dungeonData);
+    result.gameTime      = DM1_V1_DungeonData_GetGameTimePc34Compat(&engine->dungeonData);
     result.frameNumber   = engine->gameLoop.verticalBlankCount;
 
     engine->totalTicks++;
@@ -206,7 +206,7 @@ void m11_engine_shutdown(M11_Engine *engine)
 
     if (engine->initialized) {
         m11_input_deinit(&engine->input);
-        m11_dd_shutdown(&engine->dungeonData);
+        DM1_V1_DungeonData_ShutdownPc34Compat(&engine->dungeonData);
     }
 
     engine->initialized = false;
@@ -220,7 +220,7 @@ M11_GameStateId m11_engine_get_state(const M11_Engine *engine)
                   : DM1_STATE_NONE;
 }
 
-M11_DD_DungeonData *m11_engine_get_dungeon_data(M11_Engine *engine)
+DM1_V1_DungeonDataPc34 *m11_engine_get_dungeon_data(M11_Engine *engine)
 {
     return engine ? &engine->dungeonData : NULL;
 }
@@ -251,7 +251,7 @@ bool m11_engine_new_game(M11_Engine *engine)
     if (tr != DM1_TRANS_OK) return false;
 
     /* Reset dungeon to level 0 */
-    m11_dd_set_current_map(&engine->dungeonData, 0);
+    DM1_V1_DungeonData_SetCurrentMapPc34Compat(&engine->dungeonData, 0);
     engine->dungeonData.gameTime = 0;
     engine->dungeonData.newGame  = true;
 
