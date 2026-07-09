@@ -16,10 +16,10 @@ static int gFailures;
 
 static void check_source_lock_metadata(void)
 {
-    const Dm1V1MirrorRciiEvidencePc34Compat *e =
-        dm1_v1_mirror_candidate_rcii_evidence_pc34_compat();
+    const DM1_V1_MirrorCandidateRciiEvidencePc34Compat *e =
+        DM1_V1_MirrorCandidateRcii_EvidencePc34Compat();
     const char *source =
-        dm1_v1_mirror_candidate_rcii_source_evidence_pc34_compat();
+        DM1_V1_MirrorCandidateRcii_SourceEvidencePc34Compat();
 
     CHECK_TRUE(e != NULL && e->contractOnly == 1,
                "evidence metadata is available",
@@ -69,12 +69,12 @@ static void check_source_lock_metadata(void)
 
 static void check_manual_resurrect_confirm_interrupt(void)
 {
-    Dm1V1MirrorRciiStatePc34Compat state;
-    Dm1V1MirrorRciiResultPc34Compat begin;
-    Dm1V1MirrorRciiResultPc34Compat interrupt;
-    Dm1V1MirrorRciiResultPc34Compat finish;
+    DM1_V1_MirrorCandidateRciiStatePc34Compat state;
+    DM1_V1_MirrorCandidateRciiResultPc34Compat begin;
+    DM1_V1_MirrorCandidateRciiResultPc34Compat interrupt;
+    DM1_V1_MirrorCandidateRciiResultPc34Compat finish;
 
-    dm1_v1_mirror_candidate_rcii_init_pc34_compat(&state);
+    DM1_V1_MirrorCandidateRcii_InitPc34Compat(&state);
 
     CHECK_TRUE(state.candidateChampionOrdinal == 2 &&
                    state.activePanelCandidateOrdinal == 2,
@@ -90,7 +90,7 @@ static void check_manual_resurrect_confirm_interrupt(void)
                "C040 owns the initial panel redraw",
                "PANEL.C F0346/F0347:1619-1657");
 
-    CHECK_TRUE(dm1_v1_mirror_candidate_rcii_begin_confirm_pc34_compat(
+    CHECK_TRUE(DM1_V1_MirrorCandidateRcii_BeginConfirmPc34Compat(
                    &state,
                    DM1_V1_MIRROR_RCII_FINISH_RESURRECT_PC34_COMPAT,
                    &begin) == 1,
@@ -102,7 +102,7 @@ static void check_manual_resurrect_confirm_interrupt(void)
                "pending C160 confirm keeps candidate identity",
                "REVIVE.C F0282:744-806");
 
-    CHECK_TRUE(dm1_v1_mirror_candidate_rcii_inventory_interrupt_pc34_compat(
+    CHECK_TRUE(DM1_V1_MirrorCandidateRcii_InventoryInterruptPc34Compat(
                    &state, &interrupt) == 1,
                "inventory/chest slot click interrupts pending confirm",
                "CHAMPION.C F0302:662-713");
@@ -124,7 +124,7 @@ static void check_manual_resurrect_confirm_interrupt(void)
                "C040 redraw owner observes the queued chest thing",
                "PANEL.C F0346/F0347:1619-1657; CHEST.C F0333:30-67");
 
-    CHECK_TRUE(dm1_v1_mirror_candidate_rcii_finish_confirm_pc34_compat(
+    CHECK_TRUE(DM1_V1_MirrorCandidateRcii_FinishConfirmPc34Compat(
                    &state, &finish) == 1,
                "F0282 completes resurrect confirm after interrupt",
                "REVIVE.C F0282:744-806");
@@ -158,10 +158,10 @@ int main(void)
     check_source_lock_metadata();
     check_manual_resurrect_confirm_interrupt();
 
-    ok = dm1_v1_mirror_candidate_rcii_run_self_test_pc34_compat();
-    selfAssertions = dm1_v1_mirror_candidate_rcii_assertions_pc34_compat();
-    selfFailures = dm1_v1_mirror_candidate_rcii_failures_pc34_compat();
-    hash = dm1_v1_mirror_candidate_rcii_hash_pc34_compat();
+    ok = DM1_V1_MirrorCandidateRcii_RunSelfTestPc34Compat();
+    selfAssertions = DM1_V1_MirrorCandidateRcii_AssertionsPc34Compat();
+    selfFailures = DM1_V1_MirrorCandidateRcii_FailuresPc34Compat();
+    hash = DM1_V1_MirrorCandidateRcii_HashPc34Compat();
 
     CHECK_TRUE(ok == 1 && selfFailures == 0,
                "library self-test passes",

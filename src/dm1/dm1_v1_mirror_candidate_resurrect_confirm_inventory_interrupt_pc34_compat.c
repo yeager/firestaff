@@ -19,7 +19,7 @@ static int gAssertions;
 static int gFailures;
 static int gLastHash;
 
-static const Dm1V1MirrorRciiEvidencePc34Compat s_evidence = {
+static const DM1_V1_MirrorCandidateRciiEvidencePc34Compat s_evidence = {
     1,
     "REVIVE.C F0280:124-132 G0299/C040 candidate open guard",
     "REVIVE.C F0282:744-806 C160/C161 candidate finish and G0299 clear",
@@ -52,7 +52,7 @@ static uint32_t mix_hash(uint32_t hash, uint32_t value)
     return hash;
 }
 
-static void update_hash(Dm1V1MirrorRciiStatePc34Compat *state,
+static void update_hash(DM1_V1_MirrorCandidateRciiStatePc34Compat *state,
                         int tag,
                         int value)
 {
@@ -67,8 +67,8 @@ static void update_hash(Dm1V1MirrorRciiStatePc34Compat *state,
     state->deterministicHash = (int)hash;
 }
 
-static void snapshot_result(const Dm1V1MirrorRciiStatePc34Compat *state,
-                            Dm1V1MirrorRciiResultPc34Compat *result,
+static void snapshot_result(const DM1_V1_MirrorCandidateRciiStatePc34Compat *state,
+                            DM1_V1_MirrorCandidateRciiResultPc34Compat *result,
                             const char *anchor)
 {
     if (!result) {
@@ -102,8 +102,8 @@ static void snapshot_result(const Dm1V1MirrorRciiStatePc34Compat *state,
     result->deterministicHashAfter = state->deterministicHash;
 }
 
-static void finish_result(const Dm1V1MirrorRciiStatePc34Compat *state,
-                          Dm1V1MirrorRciiResultPc34Compat *result)
+static void finish_result(const DM1_V1_MirrorCandidateRciiStatePc34Compat *state,
+                          DM1_V1_MirrorCandidateRciiResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -138,8 +138,8 @@ static void finish_result(const Dm1V1MirrorRciiStatePc34Compat *state,
     result->deterministicHashAfter = state->deterministicHash;
 }
 
-void dm1_v1_mirror_candidate_rcii_init_pc34_compat(
-    Dm1V1MirrorRciiStatePc34Compat *state)
+void DM1_V1_MirrorCandidateRcii_InitPc34Compat(
+    DM1_V1_MirrorCandidateRciiStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -179,13 +179,13 @@ void dm1_v1_mirror_candidate_rcii_init_pc34_compat(
     update_hash(state, 3, state->sourceC30Thing);
 }
 
-int dm1_v1_mirror_candidate_rcii_begin_confirm_pc34_compat(
-    Dm1V1MirrorRciiStatePc34Compat *state,
-    Dm1V1MirrorRciiFinishPc34Compat finish,
-    Dm1V1MirrorRciiResultPc34Compat *outResult)
+int DM1_V1_MirrorCandidateRcii_BeginConfirmPc34Compat(
+    DM1_V1_MirrorCandidateRciiStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRciiFinishPc34Compat finish,
+    DM1_V1_MirrorCandidateRciiResultPc34Compat *outResult)
 {
-    Dm1V1MirrorRciiResultPc34Compat localResult;
-    Dm1V1MirrorRciiResultPc34Compat *result =
+    DM1_V1_MirrorCandidateRciiResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateRciiResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     snapshot_result(state, result,
@@ -215,12 +215,12 @@ int dm1_v1_mirror_candidate_rcii_begin_confirm_pc34_compat(
     return 1;
 }
 
-int dm1_v1_mirror_candidate_rcii_inventory_interrupt_pc34_compat(
-    Dm1V1MirrorRciiStatePc34Compat *state,
-    Dm1V1MirrorRciiResultPc34Compat *outResult)
+int DM1_V1_MirrorCandidateRcii_InventoryInterruptPc34Compat(
+    DM1_V1_MirrorCandidateRciiStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRciiResultPc34Compat *outResult)
 {
-    Dm1V1MirrorRciiResultPc34Compat localResult;
-    Dm1V1MirrorRciiResultPc34Compat *result =
+    DM1_V1_MirrorCandidateRciiResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateRciiResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     snapshot_result(state, result,
@@ -253,12 +253,12 @@ int dm1_v1_mirror_candidate_rcii_inventory_interrupt_pc34_compat(
     return 1;
 }
 
-int dm1_v1_mirror_candidate_rcii_finish_confirm_pc34_compat(
-    Dm1V1MirrorRciiStatePc34Compat *state,
-    Dm1V1MirrorRciiResultPc34Compat *outResult)
+int DM1_V1_MirrorCandidateRcii_FinishConfirmPc34Compat(
+    DM1_V1_MirrorCandidateRciiStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRciiResultPc34Compat *outResult)
 {
-    Dm1V1MirrorRciiResultPc34Compat localResult;
-    Dm1V1MirrorRciiResultPc34Compat *result =
+    DM1_V1_MirrorCandidateRciiResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateRciiResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     snapshot_result(state, result,
@@ -306,14 +306,14 @@ int dm1_v1_mirror_candidate_rcii_finish_confirm_pc34_compat(
     return 1;
 }
 
-const Dm1V1MirrorRciiEvidencePc34Compat *
-dm1_v1_mirror_candidate_rcii_evidence_pc34_compat(void)
+const DM1_V1_MirrorCandidateRciiEvidencePc34Compat *
+DM1_V1_MirrorCandidateRcii_EvidencePc34Compat(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_rcii_source_evidence_pc34_compat(void)
+DM1_V1_MirrorCandidateRcii_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }
@@ -327,14 +327,14 @@ static void check_true(int condition, const char *message, const char *anchor)
     }
 }
 
-static void run_path(Dm1V1MirrorRciiFinishPc34Compat finish)
+static void run_path(DM1_V1_MirrorCandidateRciiFinishPc34Compat finish)
 {
-    Dm1V1MirrorRciiStatePc34Compat state;
-    Dm1V1MirrorRciiResultPc34Compat begin;
-    Dm1V1MirrorRciiResultPc34Compat interrupt;
-    Dm1V1MirrorRciiResultPc34Compat done;
+    DM1_V1_MirrorCandidateRciiStatePc34Compat state;
+    DM1_V1_MirrorCandidateRciiResultPc34Compat begin;
+    DM1_V1_MirrorCandidateRciiResultPc34Compat interrupt;
+    DM1_V1_MirrorCandidateRciiResultPc34Compat done;
 
-    dm1_v1_mirror_candidate_rcii_init_pc34_compat(&state);
+    DM1_V1_MirrorCandidateRcii_InitPc34Compat(&state);
     check_true(state.candidateChampionOrdinal == kCandidateOrdinal &&
                    state.panelRedrawOwner ==
                        DM1_V1_MIRROR_RCII_C040_PANEL_PC34_COMPAT,
@@ -345,7 +345,7 @@ static void run_path(Dm1V1MirrorRciiFinishPc34Compat finish)
                "fixture starts with leader-hand metadata",
                "CHAMPION.C F0297:243-268; OBJECT.C F0033:147-212");
 
-    check_true(dm1_v1_mirror_candidate_rcii_begin_confirm_pc34_compat(
+    check_true(DM1_V1_MirrorCandidateRcii_BeginConfirmPc34Compat(
                    &state, finish, &begin) == 1,
                "confirm command reaches C040 boundary",
                "COMMAND.C F0359:1985-1990");
@@ -354,7 +354,7 @@ static void run_path(Dm1V1MirrorRciiFinishPc34Compat finish)
                "candidate and panel owner survive confirm boundary",
                "REVIVE.C F0282:744-806; PANEL.C F0347:1651-1657");
 
-    check_true(dm1_v1_mirror_candidate_rcii_inventory_interrupt_pc34_compat(
+    check_true(DM1_V1_MirrorCandidateRcii_InventoryInterruptPc34Compat(
                    &state, &interrupt) == 1,
                "chest/inventory click interrupts pending confirm",
                "CHAMPION.C F0302:662-713");
@@ -371,7 +371,7 @@ static void run_path(Dm1V1MirrorRciiFinishPc34Compat finish)
                "C040 keeps redraw ownership before F0282",
                "PANEL.C F0346/F0347:1619-1657");
 
-    check_true(dm1_v1_mirror_candidate_rcii_finish_confirm_pc34_compat(
+    check_true(DM1_V1_MirrorCandidateRcii_FinishConfirmPc34Compat(
                    &state, &done) == 1,
                "F0282 completes the pending confirm",
                "REVIVE.C F0282:744-806");
@@ -397,12 +397,12 @@ static void run_path(Dm1V1MirrorRciiFinishPc34Compat finish)
     gLastHash ^= state.deterministicHash;
 }
 
-int dm1_v1_mirror_candidate_rcii_run_self_test_pc34_compat(void)
+int DM1_V1_MirrorCandidateRcii_RunSelfTestPc34Compat(void)
 {
-    const Dm1V1MirrorRciiEvidencePc34Compat *e =
-        dm1_v1_mirror_candidate_rcii_evidence_pc34_compat();
+    const DM1_V1_MirrorCandidateRciiEvidencePc34Compat *e =
+        DM1_V1_MirrorCandidateRcii_EvidencePc34Compat();
     const char *source =
-        dm1_v1_mirror_candidate_rcii_source_evidence_pc34_compat();
+        DM1_V1_MirrorCandidateRcii_SourceEvidencePc34Compat();
 
     gAssertions = 0;
     gFailures = 0;
@@ -456,17 +456,17 @@ int dm1_v1_mirror_candidate_rcii_run_self_test_pc34_compat(void)
     return gFailures == 0;
 }
 
-int dm1_v1_mirror_candidate_rcii_assertions_pc34_compat(void)
+int DM1_V1_MirrorCandidateRcii_AssertionsPc34Compat(void)
 {
     return gAssertions;
 }
 
-int dm1_v1_mirror_candidate_rcii_failures_pc34_compat(void)
+int DM1_V1_MirrorCandidateRcii_FailuresPc34Compat(void)
 {
     return gFailures;
 }
 
-int dm1_v1_mirror_candidate_rcii_hash_pc34_compat(void)
+int DM1_V1_MirrorCandidateRcii_HashPc34Compat(void)
 {
     return gLastHash;
 }

@@ -21,15 +21,15 @@ extern "C" {
 #define DM1_V1_MIRROR_CWRPIP_C537_VISIBLE_SLOT_PC34_COMPAT 537
 #define DM1_V1_MIRROR_CWRPIP_M568_PANEL_PC34_COMPAT 568
 
-typedef enum Dm1V1MirrorCwrpipStepPc34Compat {
+typedef enum DM1_V1_MirrorCandidateCwrpipStepPc34Compat {
     DM1_V1_MIRROR_CWRPIP_STEP_BOOTSTRAP_PC34_COMPAT = 0,
     DM1_V1_MIRROR_CWRPIP_STEP_RESURRECT_CANDIDATE_PENDING_PC34_COMPAT = 1,
     DM1_V1_MIRROR_CWRPIP_STEP_C537_PICKUP_BEFORE_CLOSE_PC34_COMPAT = 2,
     DM1_V1_MIRROR_CWRPIP_STEP_C040_CLOSE_WHILE_PENDING_PC34_COMPAT = 3,
     DM1_V1_MIRROR_CWRPIP_STEP_NEXT_OPEN_REFIRE_PC34_COMPAT = 4
-} Dm1V1MirrorCwrpipStepPc34Compat;
+} DM1_V1_MirrorCandidateCwrpipStepPc34Compat;
 
-typedef struct Dm1V1MirrorCwrpipEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateCwrpipEvidencePc34Compat {
     int contractOnly;
     const char *commandC040Anchor;
     const char *reviveOpenAnchor;
@@ -40,13 +40,13 @@ typedef struct Dm1V1MirrorCwrpipEvidencePc34Compat {
     const char *panelAnchor;
     const char *defsAnchor;
     const char *scope;
-} Dm1V1MirrorCwrpipEvidencePc34Compat;
+} DM1_V1_MirrorCandidateCwrpipEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCwrpipStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateCwrpipStatePc34Compat {
     int contractOnly;
     unsigned int deterministicSeed;
-    Dm1V1MirrorCwrpipStepPc34Compat currentStep;
-    Dm1V1MirrorCwrpipStepPc34Compat dominantStep;
+    DM1_V1_MirrorCandidateCwrpipStepPc34Compat currentStep;
+    DM1_V1_MirrorCandidateCwrpipStepPc34Compat dominantStep;
     unsigned int originalCandidateOrdinal;
     unsigned int pendingCandidateOrdinal;
     unsigned int activePanelCandidateOrdinal;
@@ -88,14 +88,14 @@ typedef struct Dm1V1MirrorCwrpipStatePc34Compat {
     int candidateConsumedByPickupCount;
     int candidateConsumedByCloseCount;
     unsigned int deterministicHash;
-} Dm1V1MirrorCwrpipStatePc34Compat;
+} DM1_V1_MirrorCandidateCwrpipStatePc34Compat;
 
-typedef struct Dm1V1MirrorCwrpipResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateCwrpipResultPc34Compat {
     int accepted;
     int rejected;
-    Dm1V1MirrorCwrpipStepPc34Compat stepBefore;
-    Dm1V1MirrorCwrpipStepPc34Compat stepAfter;
-    Dm1V1MirrorCwrpipStepPc34Compat dominantStepAfter;
+    DM1_V1_MirrorCandidateCwrpipStepPc34Compat stepBefore;
+    DM1_V1_MirrorCandidateCwrpipStepPc34Compat stepAfter;
+    DM1_V1_MirrorCandidateCwrpipStepPc34Compat dominantStepAfter;
     unsigned int candidateBefore;
     unsigned int candidateAfter;
     int leaderHandBefore;
@@ -116,38 +116,70 @@ typedef struct Dm1V1MirrorCwrpipResultPc34Compat {
     int reopenRefiredOriginalChampion;
     unsigned int deterministicHashAfter;
     const char *anchor;
-} Dm1V1MirrorCwrpipResultPc34Compat;
+} DM1_V1_MirrorCandidateCwrpipResultPc34Compat;
 
-void dm1_v1_mirror_candidate_cwrpip_init_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state);
+typedef enum DM1_V1_MirrorCandidateCwrpipStepPc34Compat
+    Dm1V1MirrorCwrpipStepPc34Compat;
+typedef DM1_V1_MirrorCandidateCwrpipEvidencePc34Compat
+    Dm1V1MirrorCwrpipEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateCwrpipStatePc34Compat
+    Dm1V1MirrorCwrpipStatePc34Compat;
+typedef DM1_V1_MirrorCandidateCwrpipResultPc34Compat
+    Dm1V1MirrorCwrpipResultPc34Compat;
 
-int dm1_v1_mirror_candidate_cwrpip_c537_pickup_before_close_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state,
-    Dm1V1MirrorCwrpipResultPc34Compat *outResult);
+void DM1_V1_MirrorCandidateCwrpip_InitPc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state);
 
-int dm1_v1_mirror_candidate_cwrpip_c040_close_while_pending_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state,
-    Dm1V1MirrorCwrpipResultPc34Compat *outResult);
+int DM1_V1_MirrorCandidateCwrpip_C537PickupBeforeClosePc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *outResult);
 
-int dm1_v1_mirror_candidate_cwrpip_next_open_refire_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state,
-    Dm1V1MirrorCwrpipResultPc34Compat *outResult);
+int DM1_V1_MirrorCandidateCwrpip_C040CloseWhilePendingPc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *outResult);
 
-int dm1_v1_mirror_candidate_cwrpip_drive_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state,
-    Dm1V1MirrorCwrpipResultPc34Compat *steps,
+int DM1_V1_MirrorCandidateCwrpip_NextOpenRefirePc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *outResult);
+
+int DM1_V1_MirrorCandidateCwrpip_DrivePc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *steps,
     int stepCapacity);
 
-const Dm1V1MirrorCwrpipEvidencePc34Compat *
-dm1_v1_mirror_candidate_cwrpip_evidence_pc34_compat(void);
+const DM1_V1_MirrorCandidateCwrpipEvidencePc34Compat *
+DM1_V1_MirrorCandidateCwrpip_EvidencePc34Compat(void);
 
 const char *
-dm1_v1_mirror_candidate_cwrpip_source_evidence_pc34_compat(void);
+DM1_V1_MirrorCandidateCwrpip_SourceEvidencePc34Compat(void);
 
-int dm1_v1_mirror_candidate_cwrpip_run_self_test_pc34_compat(void);
-int dm1_v1_mirror_candidate_cwrpip_assertions_pc34_compat(void);
-int dm1_v1_mirror_candidate_cwrpip_failures_pc34_compat(void);
-unsigned int dm1_v1_mirror_candidate_cwrpip_hash_pc34_compat(void);
+int DM1_V1_MirrorCandidateCwrpip_RunSelfTestPc34Compat(void);
+int DM1_V1_MirrorCandidateCwrpip_AssertionsPc34Compat(void);
+int DM1_V1_MirrorCandidateCwrpip_FailuresPc34Compat(void);
+unsigned int DM1_V1_MirrorCandidateCwrpip_HashPc34Compat(void);
+
+#define dm1_v1_mirror_candidate_cwrpip_init_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_InitPc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_c537_pickup_before_close_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_C537PickupBeforeClosePc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_c040_close_while_pending_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_C040CloseWhilePendingPc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_next_open_refire_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_NextOpenRefirePc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_drive_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_DrivePc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_evidence_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_EvidencePc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_source_evidence_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_SourceEvidencePc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_run_self_test_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_RunSelfTestPc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_assertions_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_AssertionsPc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_failures_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_FailuresPc34Compat
+#define dm1_v1_mirror_candidate_cwrpip_hash_pc34_compat \
+    DM1_V1_MirrorCandidateCwrpip_HashPc34Compat
 
 #ifdef __cplusplus
 }

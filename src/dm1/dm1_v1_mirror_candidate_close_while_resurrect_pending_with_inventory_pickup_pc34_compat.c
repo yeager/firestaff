@@ -27,7 +27,7 @@ static int gAssertions;
 static int gFailures;
 static unsigned int gLastHash;
 
-static const Dm1V1MirrorCwrpipEvidencePc34Compat s_evidence = {
+static const DM1_V1_MirrorCandidateCwrpipEvidencePc34Compat s_evidence = {
     1,
     "COMMAND.C F0359:1985-1990 M568/C040 dispatch is skipped when "
         "G0415_ui_LeaderEmptyHanded is false",
@@ -65,7 +65,7 @@ static uint32_t mix_hash(uint32_t hash, unsigned int value)
     return hash;
 }
 
-static void update_hash(Dm1V1MirrorCwrpipStatePc34Compat *state,
+static void update_hash(DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
                         unsigned int tag,
                         unsigned int value)
 {
@@ -77,7 +77,7 @@ static void update_hash(Dm1V1MirrorCwrpipStatePc34Compat *state,
 }
 
 static int pending_is_original(
-    const Dm1V1MirrorCwrpipStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state)
 {
     return state &&
            state->dominantStep ==
@@ -87,8 +87,8 @@ static int pending_is_original(
 }
 
 static void snapshot_result(
-    const Dm1V1MirrorCwrpipStatePc34Compat *state,
-    Dm1V1MirrorCwrpipResultPc34Compat *result,
+    const DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *result,
     const char *anchor)
 {
     if (!result) {
@@ -121,8 +121,8 @@ static void snapshot_result(
     result->deterministicHashAfter = state->deterministicHash;
 }
 
-static void finish_result(const Dm1V1MirrorCwrpipStatePc34Compat *state,
-                          Dm1V1MirrorCwrpipResultPc34Compat *result)
+static void finish_result(const DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+                          DM1_V1_MirrorCandidateCwrpipResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -166,7 +166,7 @@ static void finish_result(const Dm1V1MirrorCwrpipStatePc34Compat *state,
 }
 
 static void redraw_c040_panel_against_chain(
-    Dm1V1MirrorCwrpipStatePc34Compat *state)
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -188,8 +188,8 @@ static void redraw_c040_panel_against_chain(
     update_hash(state, 41u, (unsigned int)state->panelRedrawSawC30Slot0Thing);
 }
 
-void dm1_v1_mirror_candidate_cwrpip_init_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state)
+void DM1_V1_MirrorCandidateCwrpip_InitPc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state)
 {
     int i;
 
@@ -237,12 +237,12 @@ void dm1_v1_mirror_candidate_cwrpip_init_pc34_compat(
     update_hash(state, 2u, (unsigned int)state->c30Chain[0]);
 }
 
-int dm1_v1_mirror_candidate_cwrpip_c537_pickup_before_close_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state,
-    Dm1V1MirrorCwrpipResultPc34Compat *outResult)
+int DM1_V1_MirrorCandidateCwrpip_C537PickupBeforeClosePc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCwrpipResultPc34Compat localResult;
-    Dm1V1MirrorCwrpipResultPc34Compat *result =
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     snapshot_result(state, result,
@@ -282,12 +282,12 @@ int dm1_v1_mirror_candidate_cwrpip_c537_pickup_before_close_pc34_compat(
     return 1;
 }
 
-int dm1_v1_mirror_candidate_cwrpip_c040_close_while_pending_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state,
-    Dm1V1MirrorCwrpipResultPc34Compat *outResult)
+int DM1_V1_MirrorCandidateCwrpip_C040CloseWhilePendingPc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCwrpipResultPc34Compat localResult;
-    Dm1V1MirrorCwrpipResultPc34Compat *result =
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     snapshot_result(state, result,
@@ -327,12 +327,12 @@ int dm1_v1_mirror_candidate_cwrpip_c040_close_while_pending_pc34_compat(
     return 1;
 }
 
-int dm1_v1_mirror_candidate_cwrpip_next_open_refire_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state,
-    Dm1V1MirrorCwrpipResultPc34Compat *outResult)
+int DM1_V1_MirrorCandidateCwrpip_NextOpenRefirePc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCwrpipResultPc34Compat localResult;
-    Dm1V1MirrorCwrpipResultPc34Compat *result =
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     snapshot_result(state, result,
@@ -361,9 +361,9 @@ int dm1_v1_mirror_candidate_cwrpip_next_open_refire_pc34_compat(
     return 1;
 }
 
-int dm1_v1_mirror_candidate_cwrpip_drive_pc34_compat(
-    Dm1V1MirrorCwrpipStatePc34Compat *state,
-    Dm1V1MirrorCwrpipResultPc34Compat *steps,
+int DM1_V1_MirrorCandidateCwrpip_DrivePc34Compat(
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat *steps,
     int stepCapacity)
 {
     int count = 0;
@@ -371,17 +371,17 @@ int dm1_v1_mirror_candidate_cwrpip_drive_pc34_compat(
     if (!state || !steps || stepCapacity < 3) {
         return 0;
     }
-    if (!dm1_v1_mirror_candidate_cwrpip_c537_pickup_before_close_pc34_compat(
+    if (!DM1_V1_MirrorCandidateCwrpip_C537PickupBeforeClosePc34Compat(
             state, &steps[count])) {
         return count;
     }
     ++count;
-    if (!dm1_v1_mirror_candidate_cwrpip_c040_close_while_pending_pc34_compat(
+    if (!DM1_V1_MirrorCandidateCwrpip_C040CloseWhilePendingPc34Compat(
             state, &steps[count])) {
         return count;
     }
     ++count;
-    if (!dm1_v1_mirror_candidate_cwrpip_next_open_refire_pc34_compat(
+    if (!DM1_V1_MirrorCandidateCwrpip_NextOpenRefirePc34Compat(
             state, &steps[count])) {
         return count;
     }
@@ -389,14 +389,14 @@ int dm1_v1_mirror_candidate_cwrpip_drive_pc34_compat(
     return count;
 }
 
-const Dm1V1MirrorCwrpipEvidencePc34Compat *
-dm1_v1_mirror_candidate_cwrpip_evidence_pc34_compat(void)
+const DM1_V1_MirrorCandidateCwrpipEvidencePc34Compat *
+DM1_V1_MirrorCandidateCwrpip_EvidencePc34Compat(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_cwrpip_source_evidence_pc34_compat(void)
+DM1_V1_MirrorCandidateCwrpip_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }
@@ -410,18 +410,18 @@ static void check_true(int condition, const char *message, const char *anchor)
     }
 }
 
-int dm1_v1_mirror_candidate_cwrpip_run_self_test_pc34_compat(void)
+int DM1_V1_MirrorCandidateCwrpip_RunSelfTestPc34Compat(void)
 {
-    Dm1V1MirrorCwrpipStatePc34Compat state;
-    Dm1V1MirrorCwrpipResultPc34Compat steps[3];
-    const Dm1V1MirrorCwrpipEvidencePc34Compat *evidence =
-        dm1_v1_mirror_candidate_cwrpip_evidence_pc34_compat();
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat state;
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat steps[3];
+    const DM1_V1_MirrorCandidateCwrpipEvidencePc34Compat *evidence =
+        DM1_V1_MirrorCandidateCwrpip_EvidencePc34Compat();
     int count;
 
     gAssertions = 0;
     gFailures = 0;
     gLastHash = 0u;
-    dm1_v1_mirror_candidate_cwrpip_init_pc34_compat(&state);
+    DM1_V1_MirrorCandidateCwrpip_InitPc34Compat(&state);
 
     check_true(evidence != NULL && evidence->contractOnly == 1,
                "contract-only evidence exists",
@@ -470,7 +470,7 @@ int dm1_v1_mirror_candidate_cwrpip_run_self_test_pc34_compat(void)
                "fixture starts with C537/C30 pickup source and empty hand",
                "CHAMPION.C F0302:662-713");
 
-    count = dm1_v1_mirror_candidate_cwrpip_drive_pc34_compat(
+    count = DM1_V1_MirrorCandidateCwrpip_DrivePc34Compat(
         &state, steps, 3);
     check_true(count == 3,
                "driver executes pickup, close, and next-open steps",
@@ -517,17 +517,17 @@ int dm1_v1_mirror_candidate_cwrpip_run_self_test_pc34_compat(void)
     return gFailures == 0;
 }
 
-int dm1_v1_mirror_candidate_cwrpip_assertions_pc34_compat(void)
+int DM1_V1_MirrorCandidateCwrpip_AssertionsPc34Compat(void)
 {
     return gAssertions;
 }
 
-int dm1_v1_mirror_candidate_cwrpip_failures_pc34_compat(void)
+int DM1_V1_MirrorCandidateCwrpip_FailuresPc34Compat(void)
 {
     return gFailures;
 }
 
-unsigned int dm1_v1_mirror_candidate_cwrpip_hash_pc34_compat(void)
+unsigned int DM1_V1_MirrorCandidateCwrpip_HashPc34Compat(void)
 {
     return gLastHash;
 }
