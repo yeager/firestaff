@@ -1002,6 +1002,19 @@ int main(void)
                strcmp(full_start_consumer_receipt.status,
                       "NEXUS CHAMPIONS") == 0,
            "Nexus full-start consumer receipt owns champion M11/M12 facts");
+    runtime_snapshot.runtime = runtime_state;
+    expect(nexus_v1_launcher_startup_full_start_consumer_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               11,
+               NULL,
+               NULL,
+               &full_start_consumer_receipt) &&
+               full_start_consumer_receipt.m11_ready == 1 &&
+               strcmp(full_start_consumer_receipt.consumer_route,
+                      "champion-menu") == 0 &&
+               full_start_consumer_receipt.presentation_valid == 1,
+           "Nexus full-start snapshot consumer owns champion M11/M12 facts");
     runtime_state.champion_select_active = 0;
     runtime_state.save_select_active = 1;
     expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
@@ -1033,6 +1046,20 @@ int main(void)
                strcmp(full_start_consumer_receipt.status,
                       "NEXUS SAVE SELECT") == 0,
            "Nexus full-start consumer receipt owns save-menu M11/M12 facts");
+    runtime_snapshot.runtime = runtime_state;
+    expect(nexus_v1_launcher_startup_full_start_consumer_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               2,
+               NULL,
+               NULL,
+               &full_start_consumer_receipt) &&
+               full_start_consumer_receipt.m11_ready == 1 &&
+               strcmp(full_start_consumer_receipt.consumer_route,
+                      "save-menu") == 0 &&
+               full_start_consumer_receipt.presentation_valid == 1 &&
+               full_start_consumer_receipt.save_route_valid == 1,
+           "Nexus full-start snapshot consumer owns save M11/M12 facts");
     runtime_state.save_select_active = 0;
     runtime_state.title_active = 1;
     expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
@@ -1063,6 +1090,19 @@ int main(void)
                strcmp(full_start_consumer_receipt.status,
                       "NEXUS TITLE") == 0,
            "Nexus full-start consumer receipt owns title M11/M12 facts");
+    runtime_snapshot.runtime = runtime_state;
+    expect(nexus_v1_launcher_startup_full_start_consumer_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               9,
+               NULL,
+               NULL,
+               &full_start_consumer_receipt) &&
+               full_start_consumer_receipt.m11_ready == 1 &&
+               strcmp(full_start_consumer_receipt.consumer_route,
+                      "title-warning") == 0 &&
+               full_start_consumer_receipt.title_handoff_valid == 1,
+           "Nexus full-start snapshot consumer owns title M11/M12 facts");
     runtime_state.title_active = 0;
     runtime_state.champion_select_active = 1;
     memset(dgn_commands, 0, sizeof(dgn_commands));
@@ -1229,6 +1269,19 @@ int main(void)
                strcmp(full_start_consumer_receipt.status,
                       "blocked-track02-sfx") == 0,
            "Nexus full-start consumer receipt blocks M11/M12 on SFX");
+    runtime_snapshot.runtime = runtime_state;
+    expect(nexus_v1_launcher_startup_full_start_consumer_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               11,
+               NULL,
+               NULL,
+               &full_start_consumer_receipt) &&
+               full_start_consumer_receipt.m11_ready == 0 &&
+               strcmp(full_start_consumer_receipt.consumer_route,
+                      "blocked-startup") == 0 &&
+               full_start_consumer_receipt.presentation_valid == 0,
+           "Nexus full-start snapshot consumer blocks M11/M12 on SFX");
     synthetic_engine.sfx_runtime_receipt.status =
         NEXUS_SFX_RUNTIME_READY_DECODED;
     synthetic_engine.sfx_runtime_receipt.level_index = 0;
@@ -1437,6 +1490,19 @@ int main(void)
                strcmp(full_start_consumer_receipt.status,
                       "blocked-menu-bpk-prs3") == 0,
            "Nexus full-start consumer receipt blocks M11/M12 on PRS3");
+    runtime_snapshot.runtime = runtime_state;
+    expect(nexus_v1_launcher_startup_full_start_consumer_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               11,
+               NULL,
+               NULL,
+               &full_start_consumer_receipt) &&
+               full_start_consumer_receipt.m11_ready == 0 &&
+               strcmp(full_start_consumer_receipt.consumer_route,
+                      "blocked-startup") == 0 &&
+               full_start_consumer_receipt.presentation_valid == 0,
+           "Nexus full-start snapshot consumer blocks M11/M12 on PRS3");
     expect(nexus_v1_startup_champion_execution_mode_update(
                &champion_execution,
                2,
