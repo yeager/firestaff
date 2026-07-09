@@ -1275,6 +1275,12 @@ int main(void) {
                         host_view_receipt.startup_menu_assets_ready == 1 &&
                         host_view_receipt.hud_overlay_suppressed == 1 &&
                         host_view_receipt.hud_runtime_ready == 1 &&
+                        host_view_receipt.full_start.hud_raw_gdat_capture_ready == 1 &&
+                        host_view_receipt.full_start.hud_raw_gdat_portrait_count >= 4 &&
+                        host_view_receipt.full_start.hud_raw_gdat_portrait_hash != 0u &&
+                        host_view_receipt.full_start.hud_raw_gdat_portrait_byte_count > 0u &&
+                        host_view_receipt.full_start.hud_raw_gdat_core_hash != 0u &&
+                        host_view_receipt.full_start.hud_raw_gdat_core_byte_count > 0u &&
                         host_view_receipt.startup_hud_handoff_ready == 1 &&
                         host_view_receipt.m11_host_view_ready == 1 &&
                         host_view_receipt.capture_proof_valid == 1 &&
@@ -1282,6 +1288,7 @@ int main(void) {
                         host_view_receipt.capture_proof.title_capture_ready == 1 &&
                         host_view_receipt.capture_proof.menu_capture_ready == 1 &&
                         host_view_receipt.capture_proof.hud_handoff_capture_ready == 1 &&
+                        host_view_receipt.capture_proof.hud_raw_gdat_capture_ready == 1 &&
                         host_view_receipt.capture_proof.title_gdat_asset_w == 320 &&
                         host_view_receipt.capture_proof.title_gdat_asset_h == 200 &&
                         host_view_receipt.capture_proof.packaged_capture_hash != 0u &&
@@ -1336,6 +1343,10 @@ int main(void) {
                         full_start_package.title_capture_ready == 1 &&
                         full_start_package.menu_capture_ready == 1 &&
                         full_start_package.hud_handoff_capture_ready == 1 &&
+                        full_start_package.hud_raw_gdat_capture_ready == 1 &&
+                        full_start_package.hud_raw_gdat_portrait_count >= 4 &&
+                        full_start_package.hud_raw_gdat_portrait_hash != 0u &&
+                        full_start_package.hud_raw_gdat_core_hash != 0u &&
                         full_start_package.full_start_real_asset_ready == 1 &&
                         full_start_package.capture_proof.m11_consumer_ready == 1 &&
                         full_start_package.title_gdat_asset_w == 320 &&
@@ -1368,6 +1379,10 @@ int main(void) {
                         consumer_receipt.title_frame_elapsed_ticks == 1 &&
                         consumer_receipt.packaged_title_timing_consumed == 1 &&
                         consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
+                        consumer_receipt.startup_hud_raw_gdat_capture_ready == 1 &&
+                        consumer_receipt.startup_hud_raw_gdat_portrait_count >= 4 &&
+                        consumer_receipt.startup_hud_raw_gdat_portrait_hash != 0u &&
+                        consumer_receipt.startup_hud_raw_gdat_core_hash != 0u &&
                         consumer_receipt.m11_startup_receipt_ready == 1 &&
                         consumer_receipt.runtime_menu_ready == 1 &&
                         consumer_receipt.runtime_action_ready == 0 &&
