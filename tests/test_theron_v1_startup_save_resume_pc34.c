@@ -1449,6 +1449,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupRenderPlan legacy_plan;
     Theron_V1_BootStartupRenderRouteReceipt render_route_receipt;
     Theron_V1_BootStartupHostViewReceipt host_view_receipt;
+    Theron_V1_BootStartupGraphicsRouteReceipt graphics_route_receipt;
     Theron_StartupAction media_pointer_action;
     Theron_StartupInputReceipt media_pointer_receipt;
     Theron_StartupAction media_input_action;
@@ -2033,6 +2034,28 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(host_view_receipt.status,
                            "TRACK02 RUNTIME BLOCKED") == 0,
                 "boot host-view receipt exposes Track02 blocked route without status fallback parsing");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(!theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                    &blocked_view_model,
+                    &media_graphics_executor,
+                    &graphics_route_receipt) &&
+                    graphics_route_receipt.host_consumes_view_model &&
+                    graphics_route_receipt.render_route_valid &&
+                    !graphics_route_receipt.graphics_plan_valid &&
+                    !graphics_route_receipt.graphics_executed &&
+                    graphics_route_receipt.graphics_blocked &&
+                    graphics_route_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
+                    graphics_route_receipt.runtime_fallback_visuals_blocked &&
+                    graphics_route_receipt.runtime_structured_route &&
+                    !graphics_route_receipt.runtime_receipt_text_route &&
+                    graphics_route_receipt.no_fallback_visuals_enforced &&
+                    !graphics_route_receipt.fallback_visuals_allowed &&
+                    media_graphics_counters.fill_count == 0 &&
+                    media_graphics_counters.rect_count == 0 &&
+                    strcmp(graphics_route_receipt.status,
+                           "TRACK02 GRAPHICS BLOCKED") == 0,
+                "boot graphics route receipt blocks Track02 fallback visuals before execution");
     semantic_snapshot = media_snapshot;
     semantic_snapshot.runtime_level_source =
         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
@@ -2101,6 +2124,23 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(host_view_receipt.status,
                            "TRACK02 RUNTIME READY") == 0,
                 "boot host-view receipt exposes Track02 semantic runtime handoff without fallback adapters");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                    &semantic_view_model,
+                    &media_graphics_executor,
+                    &graphics_route_receipt) == 0 &&
+                    !graphics_route_receipt.graphics_executed &&
+                    graphics_route_receipt.graphics_blocked &&
+                    graphics_route_receipt.runtime_readiness_ready &&
+                    graphics_route_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
+                    graphics_route_receipt.runtime_track02_semantic_handoff &&
+                    graphics_route_receipt.no_fallback_visuals_enforced &&
+                    !graphics_route_receipt.fallback_visuals_allowed &&
+                    media_graphics_counters.fill_count == 0 &&
+                    strcmp(graphics_route_receipt.status,
+                           "TRACK02 RUNTIME GRAPHICS HANDOFF") == 0,
+                "boot graphics route receipt hands Track02 semantic route to runtime without fallback startup draw");
     media_layout_roster_found = 0;
     expect_true(theron_v1_boot_startup_layout_build_from_view_model(
                     &media_view_model,
@@ -2226,6 +2266,21 @@ static void test_startup_session_facts_wrappers(void) {
                     media_graphics_counters.fill_count > 0 &&
                     media_graphics_counters.rect_count > 0,
                 "boot startup view model render route executes graphics plan receipt");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                    &media_view_model,
+                    &media_graphics_executor,
+                    &graphics_route_receipt) &&
+                    graphics_route_receipt.host_consumes_view_model &&
+                    graphics_route_receipt.render_route_valid &&
+                    graphics_route_receipt.graphics_plan_valid &&
+                    graphics_route_receipt.graphics_executed &&
+                    !graphics_route_receipt.graphics_blocked &&
+                    graphics_route_receipt.startup_menu_render_allowed &&
+                    graphics_route_receipt.fallback_visuals_allowed &&
+                    media_graphics_counters.fill_count > 0 &&
+                    media_graphics_counters.rect_count > 0,
+                "boot graphics route receipt executes startup graphics from view model");
     expect_true(theron_v1_boot_startup_render_rows_from_snapshot_with_media_receipt(
                     &media_snapshot,
                     &media_receipt,

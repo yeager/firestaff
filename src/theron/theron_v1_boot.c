@@ -2572,14 +2572,105 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupGraphicExecutor *executor)
 {
+    Theron_V1_BootStartupGraphicsRouteReceipt receipt;
+
+    return theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+        view_model,
+        executor,
+        &receipt);
+}
+
+void theron_v1_boot_startup_graphics_route_receipt_init(
+    Theron_V1_BootStartupGraphicsRouteReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->status_scope = "STARTUP";
+    receipt->status = "NO GRAPHICS ROUTE";
+}
+
+int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt)
+{
     Theron_StartupRenderPlan plan;
+    Theron_V1_BootStartupRenderRouteReceipt render_route;
+
+    if (out_receipt) {
+        theron_v1_boot_startup_graphics_route_receipt_init(out_receipt);
+    }
+    if (!view_model || !executor || !out_receipt) {
+        return 0;
+    }
+    out_receipt->host_consumes_view_model = 1;
+    if (theron_v1_boot_startup_render_route_receipt_from_view_model(
+            view_model,
+            &render_route)) {
+        out_receipt->render_route = render_route;
+        out_receipt->render_route_valid = 1;
+        out_receipt->startup_menu_render_allowed =
+            render_route.startup_menu_render_allowed;
+        out_receipt->runtime_readiness_ready =
+            render_route.runtime_readiness_ready;
+        out_receipt->no_fallback_visuals_enforced =
+            render_route.no_fallback_visuals_enforced;
+        out_receipt->fallback_visuals_allowed =
+            render_route.fallback_visuals_allowed;
+        out_receipt->runtime_level_source =
+            render_route.runtime_level_source;
+        out_receipt->runtime_track02_semantic_handoff =
+            render_route.runtime_track02_semantic_handoff;
+        out_receipt->runtime_fallback_visuals_blocked =
+            render_route.runtime_fallback_visuals_blocked;
+        out_receipt->runtime_structured_route =
+            render_route.runtime_structured_route;
+        out_receipt->runtime_receipt_text_route =
+            render_route.runtime_receipt_text_route;
+        out_receipt->status_scope = render_route.status_scope;
+        out_receipt->status = render_route.status;
+    }
+    if (out_receipt->runtime_fallback_visuals_blocked ||
+        out_receipt->runtime_level_source ==
+            THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED) {
+        out_receipt->graphics_blocked = 1;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "TRACK02 GRAPHICS BLOCKED";
+        return 0;
+    }
+    if (out_receipt->runtime_readiness_ready &&
+        out_receipt->no_fallback_visuals_enforced &&
+        out_receipt->runtime_level_source ==
+            THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC) {
+        out_receipt->graphics_blocked = 1;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "TRACK02 RUNTIME GRAPHICS HANDOFF";
+        return 0;
+    }
 
     if (!theron_v1_boot_startup_render_plan_from_view_model(
             view_model,
             &plan)) {
         return 0;
     }
-    return theron_v1_boot_startup_execute_graphics_plan(&plan, executor);
+    out_receipt->graphics_plan_valid = 1;
+    if (!out_receipt->startup_menu_render_allowed &&
+        !out_receipt->runtime_readiness_ready) {
+        out_receipt->graphics_blocked = 1;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "GRAPHICS ROUTE BLOCKED";
+        return 0;
+    }
+    out_receipt->graphics_executed =
+        theron_v1_boot_startup_execute_graphics_plan(&plan, executor) ? 1 : 0;
+    if (!out_receipt->graphics_executed) {
+        out_receipt->graphics_blocked = 1;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "GRAPHICS EXECUTOR BLOCKED";
+    }
+    return out_receipt->graphics_executed;
 }
 
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
