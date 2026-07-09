@@ -1105,6 +1105,14 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
           TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 8u },
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
           TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 12u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 16u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 20u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 24u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 28u },
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
           TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 16u },
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
@@ -1112,7 +1120,15 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
           TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 24u },
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
-          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 28u }
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 28u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 32u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 36u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 40u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 44u }
     };
 
     if (out_catalog) {
@@ -1285,6 +1301,8 @@ static void startup_atlas_append_tile(
         route->first_raw_offset = sample->raw_offset;
         route->first_user_data_offset = sample->user_data_offset;
     }
+    route->raw_offsets[route->tile_count] = sample->raw_offset;
+    route->user_data_offsets[route->tile_count] = sample->user_data_offset;
     route->last_raw_offset = sample->raw_offset;
     ++route->tile_count;
     route->width = (uint16_t)(route->tile_count * 8u);
