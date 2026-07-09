@@ -275,6 +275,17 @@ int DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
          ctx->state == DM1_ENTRANCE_SELECTING ||
          ctx->state == DM1_ENTRANCE_RESURRECTING ||
          ctx->state == DM1_ENTRANCE_REINCARNATING);
+    outReceipt->realAssetCaptureProof = 1;
+    outReceipt->entranceScreenGraphicIndex =
+        DM1_V1_ENTRANCE_SCREEN_GRAPHIC_PC34;
+    outReceipt->doorAnimationGraphicIndex =
+        DM1_V1_ENTRANCE_DOOR_ANIMATION_GRAPHIC_PC34;
+    outReceipt->doorFrameCount = ctx->doorAnim.totalSteps;
+    outReceipt->requiresGraphicsDat = 1;
+    outReceipt->noHostRenderInference = 1;
+    outReceipt->captureProofReason =
+        "entrance-full-start-real-asset-capture: C563 entrance screen "
+        "plus G0562 door frame receipt, no M11 host render inference";
 
     /* ReDMCSB ENTRANCE.C F0797:68-80 builds C255 entrance map as 5x5
      * walls, opens row y=2 plus square index 7, and draws south from 2,0.
@@ -307,9 +318,19 @@ static void DM1_V1_Entrance_AppendOverlayCommandPc34(
     command->mirrorMapX = receipt->selectedMirrorMapX;
     command->mirrorMapY = receipt->selectedMirrorMapY;
     command->mirrorFacing = receipt->selectedMirrorFacing;
+    command->realAssetCaptureProof = 1;
+    command->requiresGraphicsDat = 1;
+    command->noHostRenderInference = 1;
     command->reason = reason;
 
     if (kind == DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34) {
+        command->graphicIndex = DM1_V1_ENTRANCE_SCREEN_GRAPHIC_PC34;
+        command->sourceX = 0;
+        command->sourceY = 0;
+        command->width = DM1_V1_ENTRANCE_SCREEN_W_PC34;
+        command->height = DM1_V1_ENTRANCE_SCREEN_H_PC34;
+        command->viewportX = 0;
+        command->viewportY = 0;
         command->clearStalePanelFirst =
             receipt->clearStaleChampionMirrorOverlay ? 1 : 0;
         command->suppressThingPayloads = 1;
@@ -343,6 +364,11 @@ static void DM1_V1_Entrance_AppendOverlayCommandPc34(
         command->graphicIndex =
             DM1_V1_ENTRANCE_RESURRECT_PANEL_GRAPHIC_PC34;
         command->suppressThingPayloads = 1;
+        return;
+    }
+
+    if (kind == DM1_V1_ENTRANCE_OVERLAY_ENTER_DUNGEON_PC34) {
+        command->requiresGraphicsDat = 0;
         return;
     }
 }

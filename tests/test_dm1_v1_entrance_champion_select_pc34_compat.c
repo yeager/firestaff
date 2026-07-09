@@ -61,6 +61,15 @@ static void test_door_animation(void)
     }
     expect_int("fullstart.complete.frame", receipt.doorFrameIndex, 9);
     expect_int("fullstart.music", receipt.entranceMusicRequested, 1);
+    expect_int("fullstart.real_asset_proof", receipt.realAssetCaptureProof, 1);
+    expect_int("fullstart.entrance_graphic", receipt.entranceScreenGraphicIndex,
+               DM1_V1_ENTRANCE_SCREEN_GRAPHIC_PC34);
+    expect_int("fullstart.door_graphic", receipt.doorAnimationGraphicIndex,
+               DM1_V1_ENTRANCE_DOOR_ANIMATION_GRAPHIC_PC34);
+    expect_int("fullstart.door_count", receipt.doorFrameCount, 10);
+    expect_int("fullstart.requires_graphics", receipt.requiresGraphicsDat, 1);
+    expect_int("fullstart.no_host_inference", receipt.noHostRenderInference, 1);
+    expect_true("fullstart.reason", receipt.captureProofReason != 0);
 
     DM1_V1_Entrance_StartDoorAnimationPc34Compat(&ctx, 3000u);
     expect_int("fullstart.start.receipt", DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(&ctx, &receipt), 1);
@@ -96,6 +105,17 @@ static void test_mirror_recruit_and_finalize(void)
     expect_int("route.hall.command.count", route.renderOverlayCommandCount, 1);
     expect_int("route.hall.command.kind", route.renderOverlayCommands[0].kind,
                DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34);
+    expect_int("route.hall.command.real_asset_proof",
+               route.renderOverlayCommands[0].realAssetCaptureProof, 1);
+    expect_int("route.hall.command.graphic",
+               route.renderOverlayCommands[0].graphicIndex,
+               DM1_V1_ENTRANCE_SCREEN_GRAPHIC_PC34);
+    expect_int("route.hall.command.width", route.renderOverlayCommands[0].width,
+               DM1_V1_ENTRANCE_SCREEN_W_PC34);
+    expect_int("route.hall.command.height", route.renderOverlayCommands[0].height,
+               DM1_V1_ENTRANCE_SCREEN_H_PC34);
+    expect_int("route.hall.command.no_host_inference",
+               route.renderOverlayCommands[0].noHostRenderInference, 1);
     expect_int("route.hall.command.clear", route.renderOverlayCommands[0].clearStalePanelFirst, 1);
     expect_int("route.hall.command.suppress", route.renderOverlayCommands[0].suppressThingPayloads, 1);
     expect_int("route.hall.command.block", route.renderOverlayCommands[0].blockEnterUntilChampionSelected, 1);
@@ -120,6 +140,12 @@ static void test_mirror_recruit_and_finalize(void)
                DM1_V1_ENTRANCE_OVERLAY_CHAMPION_PORTRAIT_PC34);
     expect_int("route.live.command.graphic", route.renderOverlayCommands[0].graphicIndex,
                DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_GRAPHIC_PC34);
+    expect_int("route.live.command.real_asset_proof",
+               route.renderOverlayCommands[0].realAssetCaptureProof, 1);
+    expect_int("route.live.command.requires_graphics",
+               route.renderOverlayCommands[0].requiresGraphicsDat, 1);
+    expect_int("route.live.command.no_host_inference",
+               route.renderOverlayCommands[0].noHostRenderInference, 1);
     expect_int("route.live.command.source_x", route.renderOverlayCommands[0].sourceX, 224);
     expect_int("route.live.command.source_y", route.renderOverlayCommands[0].sourceY, 0);
     expect_int("route.live.command.width", route.renderOverlayCommands[0].width,
@@ -158,6 +184,10 @@ static void test_mirror_recruit_and_finalize(void)
     expect_int("route.done.command.count", route.renderOverlayCommandCount, 1);
     expect_int("route.done.command.kind", route.renderOverlayCommands[0].kind,
                DM1_V1_ENTRANCE_OVERLAY_ENTER_DUNGEON_PC34);
+    expect_int("route.done.command.real_asset_proof",
+               route.renderOverlayCommands[0].realAssetCaptureProof, 1);
+    expect_int("route.done.command.no_graphics_required",
+               route.renderOverlayCommands[0].requiresGraphicsDat, 0);
 }
 
 static void test_dead_mirror_paths(void)
@@ -191,6 +221,8 @@ static void test_dead_mirror_paths(void)
                DM1_V1_ENTRANCE_OVERLAY_RESURRECT_REINCARNATE_PC34);
     expect_int("route.dead.command.1.graphic", route.renderOverlayCommands[1].graphicIndex,
                DM1_V1_ENTRANCE_RESURRECT_PANEL_GRAPHIC_PC34);
+    expect_int("route.dead.command.1.real_asset_proof",
+               route.renderOverlayCommands[1].realAssetCaptureProof, 1);
     expect_int("route.dead.command.1.suppress", route.renderOverlayCommands[1].suppressThingPayloads, 1);
     expect_int("route.dead.resurrect", route.canResurrect, 1);
     expect_int("route.dead.reincarnate", route.canReincarnate, 1);

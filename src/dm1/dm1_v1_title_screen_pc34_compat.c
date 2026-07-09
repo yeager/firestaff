@@ -29,6 +29,7 @@ bool DM1_V1_Title_LoadGraphicsPc34Compat(DM1_V1_TitleStatePc34* state, const uin
     }
 
     memcpy(state->title_bitmap, data, size);
+    state->title_bitmap_size = size;
     state->master_bitmap = state->title_bitmap;
     state->initialized = true;
     return true;
@@ -82,6 +83,48 @@ void DM1_V1_Title_DrawPc34Compat(DM1_V1_TitleStatePc34* state) {
 void DM1_V1_Title_SetCreditsPalettePc34Compat(DM1_V1_TitleStatePc34* state) {
     if (!state) return;
     (void)state;
+}
+
+bool DM1_V1_Title_BuildRealAssetCaptureReceiptPc34Compat(
+    const DM1_V1_TitleStatePc34* state,
+    uint32_t frame,
+    DM1_V1_TitleRealAssetCaptureReceiptPc34* out) {
+    uint8_t step;
+    int16_t w;
+    int16_t h;
+    int16_t x;
+    int16_t y;
+
+    if (!state || !out) return false;
+    memset(out, 0, sizeof(*out));
+
+    step = frame % DM1_TITLE_ZOOM_STEPS;
+    w = 48 + step * 16;
+    h = 12 + step * 4;
+    x = (320 - w) / 2;
+    y = (200 - h) / 2;
+
+    out->valid = 1;
+    out->initialized = state->initialized ? 1 : 0;
+    out->graphicIndex = DM1_V1_TITLE_GRAPHIC_TITLE_PRESENTS_PC34;
+    out->loadedByteSize = state->title_bitmap_size;
+    out->zoomStepCount = DM1_TITLE_ZOOM_STEPS;
+    out->zoomFrameIndex = step;
+    out->sourceX = 0;
+    out->sourceY = 0;
+    out->sourceW = w;
+    out->sourceH = h;
+    out->viewportX = x;
+    out->viewportY = y;
+    out->viewportW = w;
+    out->viewportH = h;
+    out->usesByteCoordinates = state->use_byte_coords ? 1 : 0;
+    out->requiresGraphicsDat = 1;
+    out->noHostRenderInference = 1;
+    out->reason =
+        "title-real-asset-capture: GRAPHICS.DAT C562, byte zoom rect, "
+        "no M11 host render inference";
+    return true;
 }
 
 void DM1_V1_Title_CleanupPc34Compat(DM1_V1_TitleStatePc34* state) {
