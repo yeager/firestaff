@@ -47,6 +47,9 @@ typedef struct {
     const char *status;
     const char *inspect_scope;
     char inspect_detail[320];
+    int runtime_level_source;
+    int track02_semantic_handoff;
+    int fallback_visuals_blocked;
     const char *log_first_line;
     int log_receipt;
 } Theron_V1StartupRuntimeEntryApplyReceipt;
