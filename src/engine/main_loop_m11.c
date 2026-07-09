@@ -712,14 +712,25 @@ static int m11_play_redmcsb_entrance_transition(
      * fallback preserving timing/geometry if assets are missing. */
     for (sourceStep = 1U; sourceStep <= ENTRANCE_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
         EntranceCompatSourceAnimationStep step;
+        DM1_V1_StartupEntranceRenderAudioCommand_PC34 command;
         if (!ENTRANCE_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
+        memset(&command, 0, sizeof(command));
+        if (!dm1_v1_startup_entrance_render_audio_command_pc34(
+                mediaReceipt,
+                sourceStep,
+                (int)step.kind,
+                step.delayTicks,
+                step.vblankLoopCount,
+                &command)) {
+            free(dungeonFrame);
+            return 0;
+        }
 
-        if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_FADE_TO_BLACK) {
+        if (command.render_kind ==
+            DM1_V1_STARTUP_ENTRANCE_RENDER_FADE_BLACK_PC34) {
             memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-        } else if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_ENTRANCE_SCREEN ||
-                   step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT ||
-                   step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND ||
-                   step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY) {
+        } else if (command.render_kind ==
+                   DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34) {
             if (m11_draw_entrance_screen_asset(gameView, framebuffer)) {
                 (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
             } else {
@@ -728,9 +739,15 @@ static int m11_play_redmcsb_entrance_transition(
                                                               M11_FB_WIDTH,
                                                               M11_FB_HEIGHT);
             }
-        } else if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP) {
+        } else if (command.render_kind ==
+                   DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34) {
             EntranceCompatDoorStep door;
-            if (ENTRANCE_Compat_GetDoorAnimationStep(sourceStep - 6U, &door)) {
+            if (ENTRANCE_Compat_GetDoorAnimationStep(command.door_animation_step,
+                                                     &door)) {
+                if (command.play_door_rattle_sound) {
+                    (void)M11_Audio_EmitMarker(&gameView->audioState,
+                                               M11_AUDIO_MARKER_DOOR);
+                }
                 if (!m11_draw_entrance_opening_doors_asset(gameView, framebuffer, dungeonFrame, &door)) {
                     memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
                     (void)ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(framebuffer,
@@ -743,7 +760,12 @@ static int m11_play_redmcsb_entrance_transition(
             memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
         }
 
-        M11_Render_PresentIndexedWithSpecialPalette(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
+        if (command.present_entrance_palette) {
+            M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
+                                                        M11_FB_WIDTH,
+                                                        M11_FB_HEIGHT,
+                                                        VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
+        }
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
             M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs);
             if (cmd == M11_ENTRANCE_COMMAND_QUIT) {
@@ -766,15 +788,7 @@ static int m11_play_redmcsb_entrance_transition(
             }
         }
         {
-            unsigned int delayMs =
-                dm1_v1_startup_entrance_step_delay_ms_pc34(
-                    mediaReceipt,
-                    (int)step.kind,
-                    step.delayTicks,
-                    step.vblankLoopCount);
-            if (delayMs == 0U) {
-                delayMs = ENTRANCE_Compat_GetRuntimeDelayMs(&step);
-            }
+            unsigned int delayMs = command.delay_ms;
             if (delayMs > 0U) {
                 SDL_Delay(delayMs);
             }

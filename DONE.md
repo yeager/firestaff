@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 entrance render/audio receipt command consumption: M11 now consumes a DM1-built entrance command for fade, closed doors, opening door frames, entrance palette present, rattle sound marker, and delay timing instead of rebuilding those choices from raw entrance steps. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 entrance transition delay receipt consumption: M11 now computes DM1 entrance transition delays through the active startup media receipt, and the startup probe rejects too-fast vblank/pre-open timing receipts. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 startup-to-HUD handoff receipt: DM2 boot view models now return a runtime HUD-ready receipt after the startup menu closes, with title ready, V2/HUD/touch init flags, HUD-ready status, and no stale startup draw commands. Verification: `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
