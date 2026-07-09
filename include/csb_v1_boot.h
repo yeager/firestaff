@@ -504,6 +504,31 @@ typedef struct CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34;
 
+typedef struct CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 {
+    int valid;
+    int visual_sequence_valid;
+    int real_asset_matched;
+    int title_runtime_consumed;
+    int closed_door_hud_runtime_consumed;
+    int utility_hud_runtime_consumed;
+    int door_opening_delay_runtime_consumed;
+    int door_opening_frame_runtime_consumed;
+    int credits_runtime_consumed;
+    int title_draw_consumed;
+    int closed_door_hud_draw_consumed;
+    int utility_hud_draw_consumed;
+    int door_opening_frame_draw_consumed;
+    int credits_surface_draw_consumed;
+    int no_fallback_callbacks;
+    int no_wrapper_fallback_routes;
+    int draw_consumes_receipt_only;
+    int input_consumes_receipt_only;
+    uint32_t sequence_capture_hash;
+    uint32_t runtime_capture_hash;
+    CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
+    const char *source_evidence;
+} CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupRenderDrawReceipt_PC34 {
     int valid;
     int route;
@@ -637,6 +662,8 @@ void csb_v1_boot_startup_packaged_capture_proof_init_pc34(
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof);
 void csb_v1_boot_startup_visual_sequence_capture_receipt_init_pc34(
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *receipt);
+void csb_v1_boot_startup_runtime_visual_capture_receipt_init_pc34(
+    CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 *receipt);
 void csb_v1_boot_startup_render_draw_receipt_init_pc34(
     CSB_V1_BootStartupRenderDrawReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_view_receipt_init_pc34(
@@ -943,6 +970,10 @@ int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
 int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
     const CSB_V1_BootProfile *boot_profile,
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
+    const CSB_V1_BootProfile *boot_profile,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor,
+    CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt);
@@ -1015,11 +1046,6 @@ int csb_v1_boot_startup_execute_closed_door_asset_commands_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupAssetExecutor_PC34 executor,
     void *user);
-int csb_v1_boot_startup_title_empty_fallback_needed_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    const unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height);
 int csb_v1_boot_startup_execute_opening_composite_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,

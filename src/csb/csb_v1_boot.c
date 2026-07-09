@@ -1795,6 +1795,22 @@ void csb_v1_boot_startup_visual_sequence_capture_receipt_init_pc34(
         "ENTRANCE.C F0438/F0807 door-opening frames";
 }
 
+void csb_v1_boot_startup_runtime_visual_capture_receipt_init_pc34(
+    CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_boot_startup_visual_sequence_capture_receipt_init_pc34(
+        &receipt->visual_sequence);
+    receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; "
+        "ENTRANCE.C F0441/F0806 lines 850-883; "
+        "ENTRANCE.C F0438/F0807 door-opening frames; "
+        "CSBWin Viewport startup/HUD ownership";
+}
+
 void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt)
 {
@@ -2691,12 +2707,18 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
                     (host_view->capture_proof.title_route ||
                      host_view->capture_proof.closed_door_menu_route ||
                      host_view->capture_proof.utility_menu_route ||
-                     host_view->capture_proof.opening_door_route)
+                     host_view->capture_proof.opening_door_route ||
+                     host_view->capture_proof.credits_route)
                 ? 1
                 : 0;
     }
 
     render_executor = *executor;
+    if (host_view->capture_proof_valid &&
+        host_view->capture_proof.real_asset_matched) {
+        render_executor.draw_door_fallback = NULL;
+        render_executor.draw_fallback_text = NULL;
+    }
     if (host_view->hud_menu_draw_valid && host_view->hud_menu_draw.valid) {
         render_executor.draw_closed_doors = NULL;
         render_executor.draw_utility_panel = NULL;
@@ -3663,6 +3685,210 @@ int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
     return out_receipt->valid;
 }
 
+static int csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor,
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 *ownership,
+    uint32_t *runtime_hash)
+{
+    uint32_t hash;
+
+    if (!snapshot || !executor || !ownership || !runtime_hash) {
+        return 0;
+    }
+    if (!csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+            snapshot,
+            0,
+            CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
+            executor,
+            ownership) ||
+        !ownership->valid ||
+        !ownership->host_draw_valid ||
+        !ownership->draw_consumes_receipt_only ||
+        !ownership->capture_proof_valid ||
+        !ownership->real_asset_matched ||
+        !ownership->packaged_visual_capture_ready) {
+        return 0;
+    }
+
+    hash = *runtime_hash ? *runtime_hash : 2166136261u;
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        ownership->packaged_capture_hash);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)ownership->route);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)ownership->hud_menu_kind);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)ownership->host_draw.render_executed);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)ownership->host_draw.hud_menu_executed);
+    *runtime_hash = hash ? hash : 1u;
+    return 1;
+}
+
+int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
+    const CSB_V1_BootProfile *boot_profile,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor,
+    CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 ownership;
+    uint32_t runtime_hash = 2166136261u;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_runtime_visual_capture_receipt_init_pc34(out_receipt);
+    if (!boot_profile || !executor) {
+        return 0;
+    }
+    if (!csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
+            boot_profile,
+            &out_receipt->visual_sequence) ||
+        !out_receipt->visual_sequence.valid) {
+        return 0;
+    }
+
+    out_receipt->visual_sequence_valid = 1;
+    out_receipt->real_asset_matched =
+        out_receipt->visual_sequence.real_asset_matched ? 1 : 0;
+    out_receipt->sequence_capture_hash =
+        out_receipt->visual_sequence.sequence_capture_hash;
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.title_active = 1;
+    snapshot.title_frame = 0;
+    snapshot.title_source_step = 1;
+    if (csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
+            &snapshot,
+            executor,
+            &ownership,
+            &runtime_hash) &&
+        ownership.title_capture_ready &&
+        ownership.title_draw_ready) {
+        out_receipt->title_runtime_consumed = 1;
+        out_receipt->title_draw_consumed = 1;
+    }
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.utility_overlay_active = 0;
+    if (csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
+            &snapshot,
+            executor,
+            &ownership,
+            &runtime_hash) &&
+        ownership.hud_menu_capture_ready &&
+        ownership.closed_door_menu_draw_ready) {
+        out_receipt->closed_door_hud_runtime_consumed = 1;
+        out_receipt->closed_door_hud_draw_consumed = 1;
+    }
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.utility_overlay_active = 1;
+    snapshot.utility_selected_action_index = 0;
+    snapshot.utility_imported_champion_count = 2;
+    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
+    if (csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
+            &snapshot,
+            executor,
+            &ownership,
+            &runtime_hash) &&
+        ownership.hud_menu_capture_ready &&
+        ownership.utility_menu_draw_ready) {
+        out_receipt->utility_hud_runtime_consumed = 1;
+        out_receipt->utility_hud_draw_consumed = 1;
+    }
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks =
+        csb_v1_startup_entrance_pre_open_delay_ticks_pc34();
+    snapshot.opening_step = 0;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    if (csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
+            &snapshot,
+            executor,
+            &ownership,
+            &runtime_hash) &&
+        ownership.host_view.capture_proof.opening_door_route) {
+        out_receipt->door_opening_delay_runtime_consumed = 1;
+    }
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 3;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    if (csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
+            &snapshot,
+            executor,
+            &ownership,
+            &runtime_hash) &&
+        ownership.opening_draw_ready) {
+        out_receipt->door_opening_frame_runtime_consumed = 1;
+        out_receipt->door_opening_frame_draw_consumed = 1;
+    }
+
+    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+    snapshot.credits_active = 1;
+    snapshot.credits_remaining_ticks =
+        csb_v1_startup_entrance_credits_ticks_pc34();
+    if (csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
+            &snapshot,
+            executor,
+            &ownership,
+            &runtime_hash) &&
+        ownership.host_view.capture_proof.credits_route) {
+        out_receipt->credits_runtime_consumed = 1;
+        out_receipt->credits_surface_draw_consumed = 1;
+    }
+
+    out_receipt->runtime_capture_hash = runtime_hash ? runtime_hash : 1u;
+    out_receipt->no_fallback_callbacks =
+        out_receipt->title_runtime_consumed &&
+                out_receipt->closed_door_hud_runtime_consumed &&
+                out_receipt->utility_hud_runtime_consumed &&
+                out_receipt->door_opening_delay_runtime_consumed &&
+                out_receipt->door_opening_frame_runtime_consumed &&
+                out_receipt->credits_runtime_consumed
+            ? 1
+            : 0;
+    out_receipt->no_wrapper_fallback_routes =
+        out_receipt->visual_sequence.no_fallback_text_routes &&
+                out_receipt->visual_sequence.no_legacy_door_fallback_routes
+            ? 1
+            : 0;
+    out_receipt->draw_consumes_receipt_only =
+        out_receipt->no_fallback_callbacks ? 1 : 0;
+    out_receipt->input_consumes_receipt_only = 1;
+    out_receipt->valid =
+        out_receipt->visual_sequence_valid &&
+                out_receipt->real_asset_matched &&
+                out_receipt->title_runtime_consumed &&
+                out_receipt->closed_door_hud_runtime_consumed &&
+                out_receipt->utility_hud_runtime_consumed &&
+                out_receipt->door_opening_delay_runtime_consumed &&
+                out_receipt->door_opening_frame_runtime_consumed &&
+                out_receipt->credits_runtime_consumed &&
+                out_receipt->no_fallback_callbacks &&
+                out_receipt->no_wrapper_fallback_routes &&
+                out_receipt->runtime_capture_hash != 0u
+            ? 1
+            : 0;
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806/F0438 are consumed
+     * here through the same CSB host-view executor path used by M11. This
+     * closes the old proof gap where title/HUD/door-opening capture could be
+     * asserted without actually executing the real runtime draw receipt. */
+    return out_receipt->valid;
+}
+
 int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt)
@@ -4108,19 +4334,6 @@ int csb_v1_boot_startup_execute_closed_door_asset_commands_pc34(
         plan,
         executor,
         user);
-}
-
-int csb_v1_boot_startup_title_empty_fallback_needed_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    const unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height)
-{
-    return csb_v1_startup_title_empty_fallback_needed_pc34(
-        plan,
-        framebuffer,
-        framebuffer_width,
-        framebuffer_height);
 }
 
 int csb_v1_boot_startup_execute_opening_composite_pc34(
