@@ -2277,6 +2277,11 @@ static void test_startup_session_facts_wrappers(void) {
                     !graphics_route_receipt.runtime_receipt_text_route &&
                     graphics_route_receipt.track02_real_media_ready &&
                     graphics_route_receipt.real_bitmap_startup_graphics_ready &&
+                    graphics_route_receipt.required_bitmap_route_mask ==
+                        (THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                    graphics_route_receipt.required_bitmap_route_count == 2 &&
+                    graphics_route_receipt.required_bitmap_routes_ready &&
                     (graphics_route_receipt.bitmap_route_mask & 0x04u) &&
                     (graphics_route_receipt.bitmap_route_mask & 0x08u) &&
                     graphics_route_receipt.bitmap_route_count >= 2 &&
@@ -2925,6 +2930,59 @@ static void test_startup_session_facts_wrappers(void) {
                     media_graphics_counters.fill_count > 0 &&
                     media_graphics_counters.rect_count > 0,
                 "boot graphics route receipt executes startup graphics from view model");
+    {
+        Theron_StartupMediaStateReceipt partial_media_receipt =
+            media_receipt;
+        Theron_V1_BootStartupViewModel partial_media_view_model;
+        Theron_V1_BootStartupGraphicsRouteReceipt partial_graphics_receipt;
+
+        partial_media_receipt.startup_bitmap_route_mask &=
+            ~THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+        partial_media_receipt.startup_bitmap_forcefield_route_ready = 0;
+        partial_media_receipt.startup_bitmap_forcefield_nonzero_pixel_count = 0u;
+        partial_media_receipt.startup_bitmap_forcefield_checksum = 0u;
+        partial_media_receipt.startup_bitmap_sample_count = 3;
+        memset(&partial_media_view_model, 0, sizeof(partial_media_view_model));
+        memset(&partial_graphics_receipt, 0, sizeof(partial_graphics_receipt));
+        memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+        expect_true(theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
+                        &partial_media_view_model,
+                        &partial_media_receipt,
+                        THERON_STARTUP_PHASE_READY,
+                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                        NULL,
+                        &world,
+                        NULL,
+                        1,
+                        1,
+                        THERON_V1_STARTUP_RESUME_DUAL,
+                        2,
+                        3,
+                        THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                        "/tmp/firestaff-theron-srm",
+                        NULL,
+                        NULL,
+                        NULL,
+                        0,
+                        0x03,
+                        2,
+                        order,
+                        THERON_STARTUP_MAX_COMPANIONS) &&
+                        theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                            &partial_media_view_model,
+                            &media_graphics_executor,
+                            &partial_graphics_receipt) &&
+                        partial_graphics_receipt.required_bitmap_route_mask ==
+                            (THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+                             THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                        partial_graphics_receipt.required_bitmap_route_count == 2 &&
+                        !partial_graphics_receipt.required_bitmap_routes_ready &&
+                        !partial_graphics_receipt.real_bitmap_startup_graphics_ready &&
+                        partial_graphics_receipt.raw_graphics_plan_consumer_required &&
+                        !partial_graphics_receipt.track02_startup_graphics_executed &&
+                        partial_graphics_receipt.fallback_startup_graphics_executed,
+                    "boot graphics route rejects incomplete Track02 startup bitmap route");
+    }
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
                     &media_snapshot,
@@ -2959,6 +3017,8 @@ static void test_startup_session_facts_wrappers(void) {
                     !full_start_receipt.full_start_graphics_blocked &&
                     full_start_receipt.track02_real_media_ready &&
                     full_start_receipt.real_bitmap_startup_graphics_ready &&
+                    full_start_receipt.required_bitmap_routes_ready &&
+                    full_start_receipt.required_bitmap_route_count == 2 &&
                     (full_start_receipt.bitmap_route_mask & 0x04u) &&
                     (full_start_receipt.bitmap_route_mask & 0x08u) &&
                     full_start_receipt.bitmap_route_count >= 2 &&

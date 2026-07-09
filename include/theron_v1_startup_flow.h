@@ -437,6 +437,8 @@ typedef struct {
 
 typedef struct {
     Theron_StartupPhase phase;
+    unsigned int required_bitmap_route_mask;
+    int required_bitmap_route_count;
     int background_color;
     int border_x;
     int border_y;

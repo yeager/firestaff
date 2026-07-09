@@ -412,6 +412,9 @@ typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
     int track02_startup_graphics_executed;
     int track02_startup_graphic_receipt_valid;
     Theron_StartupRenderGraphicCommand track02_startup_graphic_receipt;
+    unsigned int required_bitmap_route_mask;
+    int required_bitmap_route_count;
+    int required_bitmap_routes_ready;
     unsigned int bitmap_route_mask;
     int bitmap_route_count;
     int title_bitmap_route_ready;
@@ -460,6 +463,9 @@ typedef struct Theron_V1_BootStartupFullStartReceipt {
     int track02_startup_graphics_executed;
     int track02_startup_graphic_receipt_valid;
     Theron_StartupRenderGraphicCommand track02_startup_graphic_receipt;
+    unsigned int required_bitmap_route_mask;
+    int required_bitmap_route_count;
+    int required_bitmap_routes_ready;
     unsigned int bitmap_route_mask;
     int bitmap_route_count;
     int title_bitmap_route_ready;
@@ -519,6 +525,9 @@ typedef struct Theron_V1_BootStartupHostRenderReceipt {
     int track02_startup_graphics_executed;
     int track02_startup_graphic_receipt_valid;
     Theron_StartupRenderGraphicCommand track02_startup_graphic_receipt;
+    unsigned int required_bitmap_route_mask;
+    int required_bitmap_route_count;
+    int required_bitmap_routes_ready;
     int no_fallback_startup_graphics_proof;
     int no_fallback_visuals_enforced;
     int fallback_visuals_allowed;
@@ -582,6 +591,9 @@ typedef struct Theron_V1_BootStartupUiCallerReceipt {
     int save_resume_runtime_handoff_ready;
     int real_graphics_handoff_ready;
     int real_bitmap_decode_ready;
+    int required_bitmap_routes_ready;
+    int required_bitmap_route_mask;
+    int required_bitmap_route_count;
     int bitmap_route_mask;
     int bitmap_route_count;
     int title_bitmap_route_ready;
