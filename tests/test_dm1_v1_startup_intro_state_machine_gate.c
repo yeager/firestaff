@@ -702,6 +702,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCFirstFrameReceipt_PC34 hoc_first_frame;
     DM1_V1_StartupHoCHostRenderPlan_PC34 hoc_host_plan;
     DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34 hoc_full_graphics_proof;
+    DM1_V1_StartupHoCProductionFullStartHook_PC34 hoc_production_hook;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1389,6 +1390,49 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_full_graphics_proof.block_enter_until_champion_selected &&
                  hoc_full_graphics_proof.command_count == 3,
              1);
+    memset(&hoc_production_hook, 0, sizeof(hoc_production_hook));
+    expect_i("DM1 HoC production full-start hook builds",
+             dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
+                 &hoc_full_graphics_proof,
+                 &hoc_production_hook),
+             1);
+    expect_i("DM1 HoC production hook consumes startup receipts",
+             hoc_production_hook.handled &&
+                 hoc_production_hook.ready &&
+                 hoc_production_hook.consume_dm1_startup_receipts_only &&
+                 hoc_production_hook.run_before_hoc_input &&
+                 hoc_production_hook.capture_after_first_frame_render &&
+                 hoc_production_hook.publish_packaged_full_graphics_proof,
+             1);
+    expect_i("DM1 HoC production hook carries render plan",
+             hoc_production_hook.draw_opened_entrance_frame &&
+                 hoc_production_hook.clear_champion_panel &&
+                 hoc_production_hook.render_hall_mirror_overlay &&
+                 hoc_production_hook.suppress_host_fallback_visuals &&
+                 hoc_production_hook.expected_map_index ==
+                     DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_production_hook.expected_map_width ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 &&
+                 hoc_production_hook.expected_map_height ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 &&
+                 hoc_production_hook.expected_entrance_door_frame_index == 9 &&
+                 hoc_production_hook.expected_hall_overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 hoc_production_hook.block_enter_until_champion_selected,
+             1);
+    hoc_full_graphics_proof.expected_map_width = 4;
+    expect_i("DM1 HoC production hook rejects corrupt proof metadata",
+             dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
+                 &hoc_full_graphics_proof,
+                 &hoc_production_hook) &&
+                 hoc_production_hook.handled &&
+                 !hoc_production_hook.ready,
+             1);
+    expect_i("DM1 HoC production hook rejects NULL input",
+             dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
+                 NULL,
+                 &hoc_production_hook),
+             0);
     hoc_host_plan.ready = 0;
     expect_i("DM1 HoC packaged proof rejects unready host plan",
              dm1_v1_startup_hoc_packaged_full_graphics_proof_from_host_plan_pc34(
