@@ -1689,6 +1689,128 @@ int dm1_v1_original_save_pc34_roundtrip_world_bytes(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static void fill_roundtrip_core_report(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const DM1OriginalSavePC34HandoffReport *export_report,
+    const struct GameWorld_Compat *reloaded_world,
+    const struct DM1_EventQueue_V1 *reloaded_queue,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    if (!out_report) {
+        return;
+    }
+    memset(out_report, 0, sizeof(*out_report));
+    if (source_report) {
+        out_report->source_champion_count =
+            source_report->imported_champion_count;
+        out_report->source_map_index = source_report->imported_map_index;
+        out_report->source_map_x = source_report->imported_map_x;
+        out_report->source_map_y = source_report->imported_map_y;
+        out_report->source_direction = source_report->imported_direction;
+        out_report->source_game_time = source_report->original_game_time;
+        out_report->source_event_count = source_report->original_event_count;
+        out_report->source_active_group_count =
+            source_report->original_current_active_group_count;
+    }
+    if (export_report) {
+        out_report->exported_champion_count =
+            export_report->imported_champion_count;
+        out_report->exported_map_index = export_report->imported_map_index;
+        out_report->exported_map_x = export_report->imported_map_x;
+        out_report->exported_map_y = export_report->imported_map_y;
+        out_report->exported_direction = export_report->imported_direction;
+        out_report->exported_game_time = export_report->original_game_time;
+        out_report->exported_event_count = export_report->original_event_count;
+        out_report->exported_active_group_count =
+            export_report->original_current_active_group_count;
+    }
+    if (reloaded_world) {
+        out_report->reloaded_champion_count =
+            reloaded_world->party.championCount;
+        out_report->reloaded_map_index = reloaded_world->party.mapIndex;
+        out_report->reloaded_map_x = reloaded_world->party.mapX;
+        out_report->reloaded_map_y = reloaded_world->party.mapY;
+        out_report->reloaded_direction = reloaded_world->party.direction;
+        out_report->reloaded_game_time = reloaded_world->gameTick;
+        out_report->reloaded_active_group_count =
+            reloaded_world->creatureAICount;
+    }
+    if (reloaded_queue) {
+        out_report->reloaded_event_count = reloaded_queue->eventCount;
+    }
+
+    out_report->core_state_matches =
+        out_report->source_champion_count ==
+            out_report->exported_champion_count &&
+        out_report->source_champion_count ==
+            out_report->reloaded_champion_count &&
+        out_report->source_map_index == out_report->exported_map_index &&
+        out_report->source_map_index == out_report->reloaded_map_index &&
+        out_report->source_map_x == out_report->exported_map_x &&
+        out_report->source_map_x == out_report->reloaded_map_x &&
+        out_report->source_map_y == out_report->exported_map_y &&
+        out_report->source_map_y == out_report->reloaded_map_y &&
+        out_report->source_direction == out_report->exported_direction &&
+        out_report->source_direction == out_report->reloaded_direction &&
+        out_report->source_game_time == out_report->exported_game_time &&
+        out_report->source_game_time == out_report->reloaded_game_time &&
+        out_report->source_event_count == out_report->exported_event_count &&
+        out_report->source_event_count == out_report->reloaded_event_count &&
+        out_report->source_active_group_count ==
+            out_report->exported_active_group_count &&
+        out_report->source_active_group_count ==
+            out_report->reloaded_active_group_count;
+}
+
+int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    uint32_t game_id,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    DM1OriginalSavePC34HandoffReport import_report;
+    DM1OriginalSavePC34HandoffReport export_report;
+    struct GameWorld_Compat reloaded_world;
+    struct DM1_EventQueue_V1 reloaded_queue;
+    int result;
+
+    if (out_report) {
+        memset(out_report, 0, sizeof(*out_report));
+    }
+    if (!bytes || !out_bytes || !out_size) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+
+    result = dm1_v1_original_save_pc34_roundtrip_world_bytes(
+        bytes, size, game_id, out_bytes, out_capacity, out_size,
+        &import_report, &export_report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
+    }
+
+    memset(&reloaded_world, 0, sizeof(reloaded_world));
+    memset(&reloaded_queue, 0, sizeof(reloaded_queue));
+    result = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        out_bytes, *out_size, &reloaded_world, &reloaded_queue,
+        &export_report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&reloaded_world);
+        return result;
+    }
+
+    fill_roundtrip_core_report(&import_report, &export_report,
+                               &reloaded_world, &reloaded_queue,
+                               out_report);
+    F0883_WORLD_Free_Compat(&reloaded_world);
+    if (out_report && !out_report->core_state_matches) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 const char *dm1_v1_original_save_pc34_handoff_result_name(int result)
 {
     switch (result) {

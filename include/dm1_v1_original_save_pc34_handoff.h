@@ -104,6 +104,34 @@ typedef struct {
     uint32_t game_id;
 } DM1OriginalSavePC34FixtureSpec;
 
+typedef struct {
+    int source_champion_count;
+    int exported_champion_count;
+    int reloaded_champion_count;
+    int source_map_index;
+    int exported_map_index;
+    int reloaded_map_index;
+    int source_map_x;
+    int exported_map_x;
+    int reloaded_map_x;
+    int source_map_y;
+    int exported_map_y;
+    int reloaded_map_y;
+    int source_direction;
+    int exported_direction;
+    int reloaded_direction;
+    uint32_t source_game_time;
+    uint32_t exported_game_time;
+    uint32_t reloaded_game_time;
+    int source_event_count;
+    int exported_event_count;
+    int reloaded_event_count;
+    int source_active_group_count;
+    int exported_active_group_count;
+    int reloaded_active_group_count;
+    int core_state_matches;
+} DM1OriginalSavePC34RoundtripReport;
+
 /* Classify `bytes` as a ReDMCSB DM1 PC 3.4 save header, then hand
  * the same byte buffer through a bounded ReDMCSB PC save-part
  * reader for GLOBAL_DATA and optional timeline handoff.
@@ -173,6 +201,22 @@ int dm1_v1_original_save_pc34_roundtrip_world_bytes(
     size_t *out_size,
     DM1OriginalSavePC34HandoffReport *import_report,
     DM1OriginalSavePC34HandoffReport *verify_report);
+
+/* Full bounded original-save runtime round-trip:
+ *   original PC34 bytes -> Firestaff world -> PC34 export -> Firestaff world.
+ *
+ * `out_report` records the source, exported-byte, and reloaded-world core
+ * runtime state and sets core_state_matches only when party pose, game time,
+ * event count, and active-group count survive both handoff edges.
+ */
+int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    uint32_t game_id,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size,
+    DM1OriginalSavePC34RoundtripReport *out_report);
 
 /* Builds a bounded ReDMCSB PC34-shaped original-save byte stream for
  * importer/export handoff verification. This is not a full user save
