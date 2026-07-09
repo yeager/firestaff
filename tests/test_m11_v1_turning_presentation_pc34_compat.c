@@ -14,26 +14,26 @@ static int expect_int(const char* label, int got, int want)
 
 int main(void)
 {
-    struct M11V1TurningChampionPosePc34Compat poses[2];
-    struct M11V1TurningPresentationResultPc34Compat r;
+    DM1_V1_TurningChampionPosePc34Compat poses[2];
+    DM1_V1_TurningPresentationResultPc34Compat r;
     struct PartyState_Compat party;
     int ok = 1;
 
-    printf("probe=m11_v1_turning_presentation_pc34_compat\n");
-    printf("sourceEvidence=%s\n", m11_v1_turning_presentation_source_evidence_pc34_compat());
+    printf("probe=dm1_v1_turning_presentation_pc34_compat\n");
+    printf("sourceEvidence=%s\n", DM1_V1_Turning_PresentationSourceEvidencePc34Compat());
 
-    ok &= expect_int("left command recognized", m11_v1_turning_is_turn_command_pc34_compat(DM1_V1_COMMAND_TURN_LEFT), 1);
-    ok &= expect_int("right command recognized", m11_v1_turning_is_turn_command_pc34_compat(DM1_V1_COMMAND_TURN_RIGHT), 1);
-    ok &= expect_int("forward is not turn", m11_v1_turning_is_turn_command_pc34_compat(DM1_V1_COMMAND_MOVE_FORWARD), 0);
-    ok &= expect_int("right from north becomes east", m11_v1_turning_target_direction_pc34_compat(DIR_NORTH, DM1_V1_COMMAND_TURN_RIGHT), DIR_EAST);
-    ok &= expect_int("left from north becomes west", m11_v1_turning_target_direction_pc34_compat(DIR_NORTH, DM1_V1_COMMAND_TURN_LEFT), DIR_WEST);
+    ok &= expect_int("left command recognized", DM1_V1_Turning_IsTurnCommandPc34Compat(DM1_V1_COMMAND_TURN_LEFT), 1);
+    ok &= expect_int("right command recognized", DM1_V1_Turning_IsTurnCommandPc34Compat(DM1_V1_COMMAND_TURN_RIGHT), 1);
+    ok &= expect_int("forward is not turn", DM1_V1_Turning_IsTurnCommandPc34Compat(DM1_V1_COMMAND_MOVE_FORWARD), 0);
+    ok &= expect_int("right from north becomes east", DM1_V1_Turning_TargetDirectionPc34Compat(DIR_NORTH, DM1_V1_COMMAND_TURN_RIGHT), DIR_EAST);
+    ok &= expect_int("left from north becomes west", DM1_V1_Turning_TargetDirectionPc34Compat(DIR_NORTH, DM1_V1_COMMAND_TURN_LEFT), DIR_WEST);
 
     poses[0].cell = DIR_NORTH;
     poses[0].direction = DIR_NORTH;
     poses[1].cell = DIR_WEST;
     poses[1].direction = DIR_SOUTH;
-    r = m11_v1_turning_apply_original_presentation_pc34_compat(
-        M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL,
+    r = DM1_V1_Turning_ApplyOriginalPresentationPc34Compat(
+        DM1_V1_TURNING_PRESENTATION_MODE_ORIGINAL_PC34,
         DM1_V1_COMMAND_TURN_RIGHT,
         DIR_NORTH,
         poses,
@@ -57,8 +57,8 @@ int main(void)
 
     poses[0].cell = DIR_EAST;
     poses[0].direction = DIR_EAST;
-    r = m11_v1_turning_apply_original_presentation_pc34_compat(
-        M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL,
+    r = DM1_V1_Turning_ApplyOriginalPresentationPc34Compat(
+        DM1_V1_TURNING_PRESENTATION_MODE_ORIGINAL_PC34,
         DM1_V1_COMMAND_TURN_LEFT,
         DIR_NORTH,
         poses,
@@ -69,8 +69,8 @@ int main(void)
     ok &= expect_int("left highlight", r.highlightLeft, 1);
     ok &= expect_int("pose cell rotates left", poses[0].cell, DIR_NORTH);
 
-    r = m11_v1_turning_apply_original_presentation_pc34_compat(
-        M11_V1_TURNING_PRESENTATION_MODE_OTHER,
+    r = DM1_V1_Turning_ApplyOriginalPresentationPc34Compat(
+        DM1_V1_TURNING_PRESENTATION_MODE_OTHER_PC34,
         DM1_V1_COMMAND_TURN_RIGHT,
         DIR_NORTH,
         poses,
@@ -87,8 +87,8 @@ int main(void)
     party.champions[1].cell = DIR_SOUTH;
     party.champions[0].direction = DIR_NORTH;
     party.champions[1].direction = DIR_EAST;
-    r = m11_v1_turning_apply_party_original_presentation_pc34_compat(
-        M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL,
+    r = DM1_V1_Turning_ApplyPartyOriginalPresentationPc34Compat(
+        DM1_V1_TURNING_PRESENTATION_MODE_ORIGINAL_PC34,
         DM1_V1_COMMAND_TURN_RIGHT,
         &party);
     ok &= expect_int("party turn applied", r.applied, 1);
@@ -99,7 +99,7 @@ int main(void)
     ok &= expect_int("champion1 direction rotated", party.champions[1].direction, DIR_SOUTH);
 
     if (ok) {
-        printf("PASS m11_v1_turning_presentation_pc34_compat\n");
+        printf("PASS dm1_v1_turning_presentation_pc34_compat\n");
         return 0;
     }
     return 1;
