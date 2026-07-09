@@ -2367,6 +2367,15 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
             capture_receipt.runtime_capture_ready &&
         packaged_proof.render_plan_available &&
         !packaged_proof.hud_menu_draw_available &&
+        packaged_proof.boot_executor_route &&
+        packaged_proof.title_route &&
+        !packaged_proof.closed_door_menu_route &&
+        !packaged_proof.utility_menu_route &&
+        !packaged_proof.opening_door_route &&
+        packaged_proof.host_input_blocked &&
+        packaged_proof.host_hud_blocked &&
+        !packaged_proof.startup_input_ready &&
+        !packaged_proof.startup_hud_ready &&
         packaged_proof.title_stage == capture_receipt.title_stage &&
         packaged_proof.title_frame == capture_receipt.title_frame &&
         packaged_proof.selected_command_id ==
@@ -2793,6 +2802,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               packaged_proof.hud_menu_draw_available &&
               packaged_proof.hud_menu_kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              !packaged_proof.title_route &&
+              packaged_proof.utility_menu_route &&
+              packaged_proof.closed_door_menu_route &&
+              !packaged_proof.opening_door_route &&
+              packaged_proof.draw_utility_panel &&
+              !packaged_proof.draw_closed_doors &&
+              packaged_proof.startup_input_ready &&
+              packaged_proof.startup_hud_ready &&
+              !packaged_proof.host_input_blocked &&
+              !packaged_proof.host_hud_blocked &&
+              packaged_proof.hud_menu_option_count ==
+                  CSB_V1_UTIL_MENU_ROW_COUNT &&
+              packaged_proof.utility_menu_row_count ==
+                  CSB_V1_UTIL_MENU_ROW_COUNT &&
               packaged_proof.selected_utility_action_index == 0 &&
               packaged_proof.packaged_capture_hash != 0u,
           "boot startup packaged capture proof binds utility HUD/menu draw");
@@ -2959,6 +2982,15 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !packaged_proof.hud_menu_draw_available &&
               packaged_proof.route ==
                   CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 &&
+              !packaged_proof.boot_executor_route &&
+              !packaged_proof.title_route &&
+              !packaged_proof.closed_door_menu_route &&
+              !packaged_proof.utility_menu_route &&
+              !packaged_proof.opening_door_route &&
+              packaged_proof.startup_input_ready == 0 &&
+              packaged_proof.startup_hud_ready == 0 &&
+              !packaged_proof.host_input_blocked &&
+              !packaged_proof.host_hud_blocked &&
               packaged_proof.real_asset_matched &&
               packaged_proof.packaged_capture_hash != 0u,
           "boot startup packaged capture proof binds runtime HUD handoff");
@@ -3110,6 +3142,21 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
               packaged_proof.selected_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              !packaged_proof.title_route &&
+              packaged_proof.closed_door_menu_route &&
+              !packaged_proof.utility_menu_route &&
+              !packaged_proof.opening_door_route &&
+              packaged_proof.draw_closed_doors &&
+              packaged_proof.draw_fallback_text &&
+              !packaged_proof.draw_utility_panel &&
+              packaged_proof.startup_input_ready &&
+              packaged_proof.startup_hud_ready &&
+              !packaged_proof.host_input_blocked &&
+              !packaged_proof.host_hud_blocked &&
+              packaged_proof.hud_menu_option_count == 4 &&
+              packaged_proof.resume_available &&
+              packaged_proof.resume_option_visible &&
+              packaged_proof.suppress_legacy_utility_fallback &&
               packaged_proof.render_plan_available &&
               packaged_proof.hud_menu_draw_available &&
               packaged_proof.packaged_capture_hash != 0u &&
@@ -3248,6 +3295,23 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
           "boot startup snapshot executor consumes door-opening capture receipt");
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+              &capture_receipt,
+              &packaged_proof) == 1 &&
+              packaged_proof.valid &&
+              packaged_proof.render_plan_available &&
+              !packaged_proof.hud_menu_draw_available &&
+              packaged_proof.opening_door_route &&
+              packaged_proof.draw_opening_frame &&
+              !packaged_proof.title_route &&
+              !packaged_proof.closed_door_menu_route &&
+              !packaged_proof.utility_menu_route &&
+              packaged_proof.host_input_blocked &&
+              packaged_proof.host_hud_blocked &&
+              !packaged_proof.startup_input_ready &&
+              !packaged_proof.startup_hud_ready &&
+              packaged_proof.packaged_capture_hash != 0u,
+          "boot startup packaged capture proof binds door-opening animation route");
     snapshot.opening_active = 0;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 0;
