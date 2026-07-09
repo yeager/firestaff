@@ -1031,6 +1031,7 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     receipt.play_swsh = 1;
     receipt.play_title = 1;
     receipt.play_entrance = 1;
+    receipt.swsh_vblank_ms = SWSH_COMPAT_RUNTIME_VBLANK_MS;
     receipt.swsh_initial_logo_hold_ms =
         SWSH_Compat_GetRuntimeInitialLogoHoldMs();
     receipt.swsh_palette_wait_ms =
@@ -1047,6 +1048,8 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     receipt.title_zoom_step_count = title_timing.zoomStepCount;
     receipt.title_post_zoom_guard_ms =
         V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&title_timing);
+    receipt.title_c001_cadence_pad_ms =
+        V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&title_timing);
     receipt.title_source_animation_steps =
         title_timing.sourceAnimationStepCount;
     receipt.title_frame_bank_equivalent_steps =

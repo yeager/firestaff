@@ -395,6 +395,9 @@ static void check_title_to_menu_boundary(void) {
     expect_u("DM1 full graphics media receipt keeps SWSH logo hold",
              media.swsh_initial_logo_hold_ms,
              SWSH_Compat_GetRuntimeInitialLogoHoldMs());
+    expect_u("DM1 full graphics media receipt exposes SWSH vblank",
+             media.swsh_vblank_ms,
+             SWSH_COMPAT_RUNTIME_VBLANK_MS);
     expect_u("DM1 full graphics media receipt keeps SWSH palette waits",
              media.swsh_palette_wait_ms,
              SWSH_Compat_GetRuntimeDelayMsForVblankCount(
@@ -405,6 +408,9 @@ static void check_title_to_menu_boundary(void) {
     expect_u("DM1 full graphics media receipt keeps TITLE zoom delay",
              media.title_zoom_frame_delay_ms,
              V1_TitleFrontend_GetRuntimeFrameDelayMs(&titleTiming));
+    expect_u("DM1 full graphics media receipt keeps TITLE C001 pad",
+             media.title_c001_cadence_pad_ms,
+             V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&titleTiming));
     expect_u("DM1 full graphics media receipt menu boundary",
              media.title_menu_boundary_frame,
              V1_TITLE_DAT_FRAME_MAX + 1u);

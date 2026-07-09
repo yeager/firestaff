@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 startup media receipt production handoff: M11 DM1 SWSH/TITLE production rendering now consumes the DM1 full-graphics media receipt for logo waits, C001 PRESENTS/zoom palettes, frame timing, and post-title guard/pad timing. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus runtime launch gate receipt: launcher runtime receipts now expose one launch gate route for missing data, title-ready, MENU.BPK/face menu-asset blockers, and fully ready menu handoff, carrying startup assets, host status, fallback permission, and boot log details. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 boot startup view receipt consumption: boot startup view models now carry the DM2 presentation view receipt, and M11 startup drawing consumes its render count/HUD suppression instead of inferring from loose command counts. Verification: `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
