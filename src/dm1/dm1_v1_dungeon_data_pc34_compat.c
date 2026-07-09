@@ -20,7 +20,7 @@
 
 /* ── Initialization / teardown ────────────────────────────────────── */
 
-void m11_dd_init(M11_DD_DungeonData *dd)
+void DM1_V1_DungeonData_InitPc34Compat(DM1_V1_DungeonDataPc34 *dd)
 {
     memset(dd, 0, sizeof(*dd));
     m11_dl_init(&dd->dungeon);
@@ -31,7 +31,7 @@ void m11_dd_init(M11_DD_DungeonData *dd)
     dd->party.facing    = 0;
 }
 
-bool m11_dd_load_dungeon(M11_DD_DungeonData *dd, const char *dungeon_dat_path)
+bool DM1_V1_DungeonData_LoadDungeonPc34Compat(DM1_V1_DungeonDataPc34 *dd, const char *dungeon_dat_path)
 {
     if (!dd || !dungeon_dat_path) return false;
     if (!m11_dl_load_from_file(&dd->dungeon, dungeon_dat_path)) return false;
@@ -46,7 +46,7 @@ bool m11_dd_load_dungeon(M11_DD_DungeonData *dd, const char *dungeon_dat_path)
     return true;
 }
 
-bool m11_dd_load_objects(M11_DD_DungeonData *dd,
+bool DM1_V1_DungeonData_LoadObjectsPc34Compat(DM1_V1_DungeonDataPc34 *dd,
                          const char *graphics_dat_path)
 {
     /* Object table load is a future integration point.
@@ -57,7 +57,7 @@ bool m11_dd_load_objects(M11_DD_DungeonData *dd,
     return true;
 }
 
-void m11_dd_shutdown(M11_DD_DungeonData *dd)
+void DM1_V1_DungeonData_ShutdownPc34Compat(DM1_V1_DungeonDataPc34 *dd)
 {
     if (!dd) return;
     m11_dl_cleanup(&dd->dungeon);
@@ -66,7 +66,7 @@ void m11_dd_shutdown(M11_DD_DungeonData *dd)
 
 /* ── Map access ───────────────────────────────────────────────────── */
 
-bool m11_dd_set_current_map(M11_DD_DungeonData *dd, int16_t mapIndex)
+bool DM1_V1_DungeonData_SetCurrentMapPc34Compat(DM1_V1_DungeonDataPc34 *dd, int16_t mapIndex)
 {
     if (!dd || !dd->loaded) return false;
     if (mapIndex < 0 || mapIndex >= (int16_t)dd->dungeon.header.level_count)
@@ -78,14 +78,14 @@ bool m11_dd_set_current_map(M11_DD_DungeonData *dd, int16_t mapIndex)
     return true;
 }
 
-const M11_DL_Tile *m11_dd_get_tile(const M11_DD_DungeonData *dd,
+const M11_DL_Tile *DM1_V1_DungeonData_GetTilePc34Compat(const DM1_V1_DungeonDataPc34 *dd,
                                     uint8_t level, uint8_t x, uint8_t y)
 {
     if (!dd || !dd->loaded) return NULL;
     return m11_dl_get_tile(&dd->dungeon, level, x, y);
 }
 
-const M11_DL_Tile *m11_dd_get_current_tile(M11_DD_DungeonData *dd,
+const M11_DL_Tile *DM1_V1_DungeonData_GetCurrentTilePc34Compat(DM1_V1_DungeonDataPc34 *dd,
                                             int16_t x, int16_t y)
 {
     if (!dd || !dd->loaded || dd->currentMapIndex < 0) return NULL;
@@ -103,7 +103,7 @@ const M11_DL_Tile *m11_dd_get_current_tile(M11_DD_DungeonData *dd,
 
 /* ── Party access ─────────────────────────────────────────────────── */
 
-void m11_dd_set_party_pos(M11_DD_DungeonData *dd,
+void DM1_V1_DungeonData_SetPartyPosPc34Compat(DM1_V1_DungeonDataPc34 *dd,
                            int16_t mapIndex, int16_t x, int16_t y,
                            uint8_t facing)
 {
@@ -114,43 +114,43 @@ void m11_dd_set_party_pos(M11_DD_DungeonData *dd,
     dd->party.facing   = facing;
 }
 
-const M11_DD_PartyPos *m11_dd_get_party_pos(const M11_DD_DungeonData *dd)
+const DM1_V1_DungeonDataPartyPosPc34 *DM1_V1_DungeonData_GetPartyPosPc34Compat(const DM1_V1_DungeonDataPc34 *dd)
 {
     return dd ? &dd->party : NULL;
 }
 
-void m11_dd_set_champion_count(M11_DD_DungeonData *dd, int count)
+void DM1_V1_DungeonData_SetChampionCountPc34Compat(DM1_V1_DungeonDataPc34 *dd, int count)
 {
     if (!dd) return;
     if (count < 0) count = 0;
-    if (count > M11_DD_MAX_CHAMPIONS) count = M11_DD_MAX_CHAMPIONS;
+    if (count > DM1_V1_DUNGEON_DATA_MAX_CHAMPIONS_PC34) count = DM1_V1_DUNGEON_DATA_MAX_CHAMPIONS_PC34;
     dd->championCount = count;
 }
 
 /* ── Time ─────────────────────────────────────────────────────────── */
 
-void m11_dd_advance_tick(M11_DD_DungeonData *dd)
+void DM1_V1_DungeonData_AdvanceTickPc34Compat(DM1_V1_DungeonDataPc34 *dd)
 {
     if (!dd) return;
     dd->gameTime++;
     dm1v1_event_advance_tick(&dd->events);
 }
 
-uint32_t m11_dd_get_game_time(const M11_DD_DungeonData *dd)
+uint32_t DM1_V1_DungeonData_GetGameTimePc34Compat(const DM1_V1_DungeonDataPc34 *dd)
 {
     return dd ? dd->gameTime : 0;
 }
 
 /* ── Event queue convenience ──────────────────────────────────────── */
 
-int m11_dd_add_event(M11_DD_DungeonData *dd,
+int DM1_V1_DungeonData_AddEventPc34Compat(DM1_V1_DungeonDataPc34 *dd,
                      const struct DM1_Event_V1 *event)
 {
     if (!dd || !event) return -1;
     return dm1v1_event_add(&dd->events, event);
 }
 
-bool m11_dd_has_expired_events(const M11_DD_DungeonData *dd)
+bool DM1_V1_DungeonData_HasExpiredEventsPc34Compat(const DM1_V1_DungeonDataPc34 *dd)
 {
     if (!dd) return false;
     return dm1v1_event_is_first_expired(&dd->events);
@@ -158,7 +158,7 @@ bool m11_dd_has_expired_events(const M11_DD_DungeonData *dd)
 
 /* ── Source evidence ──────────────────────────────────────────────── */
 
-const char *m11_dd_source_evidence(void)
+const char *DM1_V1_DungeonData_SourceEvidencePc34Compat(void)
 {
     return
         "DM1 V1 Central Dungeon Data Store\n"
