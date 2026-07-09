@@ -353,10 +353,14 @@ static void test_projectile_impact_model(void) {
 static void test_projectile_group_slot_materialization_plan(void) {
     struct ProjectileInstance_Compat p;
     DM1_ProjectileGroupSlotMaterializationPlanPc34 plan;
+    DM1_ProjectileGroupSlotAttachPlanPc34 attach;
     unsigned short weaponThing =
         (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
+    unsigned short tailThing =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 3);
     memset(&p, 0, sizeof(p));
     memset(&plan, 0, sizeof(plan));
+    memset(&attach, 0, sizeof(attach));
 
     p.reserved1 = weaponThing;
     ASSERT_EQ(dm1_v1_projectile_group_slot_materialization_plan_pc34(
@@ -392,6 +396,32 @@ static void test_projectile_group_slot_materialization_plan(void) {
               "no keep attr group slot materialization builds");
     ASSERT_EQ(plan.shouldAttachToGroupSlot, 0,
               "creature without keep attr does not attach");
+
+    ASSERT_EQ(dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
+                  weaponThing, THING_ENDOFLIST, THING_NONE, &attach), 1,
+              "F0215 empty group slot attach plan builds");
+    ASSERT_EQ(attach.valid, 1, "F0215 empty attach valid");
+    ASSERT_EQ(attach.shouldSetAssociatedNextEnd, 1,
+              "F0215 empty attach terminates associated thing");
+    ASSERT_EQ(attach.shouldSetGroupSlotHead, 1,
+              "F0215 empty attach sets group slot head");
+    ASSERT_EQ(attach.shouldAppendAfterTail, 0,
+              "F0215 empty attach skips tail append");
+
+    ASSERT_EQ(dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
+                  weaponThing, tailThing, tailThing, &attach), 1,
+              "F0215 occupied group slot attach plan builds");
+    ASSERT_EQ(attach.valid, 1, "F0215 occupied attach valid");
+    ASSERT_EQ(attach.shouldSetGroupSlotHead, 0,
+              "F0215 occupied attach keeps head");
+    ASSERT_EQ(attach.shouldAppendAfterTail, 1,
+              "F0215 occupied attach appends after tail");
+    ASSERT_EQ(attach.tailThing, tailThing, "F0215 occupied attach tail");
+
+    ASSERT_EQ(dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
+                  (unsigned short)((THING_TYPE_EXPLOSION << 10) | 1),
+                  THING_ENDOFLIST, THING_NONE, &attach), 0,
+              "F0215 explosion slot is not attached");
 }
 
 static void test_projectile_associated_thing_disposition(void) {

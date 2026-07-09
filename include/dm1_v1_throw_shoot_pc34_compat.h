@@ -95,6 +95,16 @@ typedef struct {
 } DM1_ProjectileGroupSlotMaterializationPlanPc34;
 
 typedef struct {
+    int valid;
+    int shouldSetAssociatedNextEnd;
+    int shouldSetGroupSlotHead;
+    int shouldAppendAfterTail;
+    unsigned short associatedThing;
+    unsigned short groupSlotHead;
+    unsigned short tailThing;
+} DM1_ProjectileGroupSlotAttachPlanPc34;
+
+typedef struct {
     int handled;
     int championPresent;
     int championIndex;
@@ -222,6 +232,11 @@ int dm1_v1_projectile_group_slot_materialization_plan_pc34(
     int creatureAttributes,
     int associatedWeaponType,
     DM1_ProjectileGroupSlotMaterializationPlanPc34* outPlan);
+int dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
+    unsigned short associatedThing,
+    unsigned short groupSlotHead,
+    unsigned short tailThing,
+    DM1_ProjectileGroupSlotAttachPlanPc34* outPlan);
 int dm1_v1_projectile_associated_thing_disposition_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,

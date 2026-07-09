@@ -4525,6 +4525,7 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
 {
     const struct CreatureBehaviorProfile_Compat* profile;
     DM1_ProjectileGroupSlotMaterializationPlanPc34 plan;
+    DM1_ProjectileGroupSlotAttachPlanPc34 attachPlan;
     unsigned short associatedThing;
     int weaponIndex;
     int weaponType;
@@ -4560,11 +4561,17 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
      * empty possession lists get the thrown weapon as head; existing lists
      * keep their head and append the thrown weapon at the tail. */
     if (group->slot == THING_ENDOFLIST) {
-        if (!orch_set_next_thing_compat(
-                world->things, associatedThing, THING_ENDOFLIST)) {
+        memset(&attachPlan, 0, sizeof(attachPlan));
+        if (!dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
+                associatedThing, group->slot, THING_NONE, &attachPlan) ||
+            !attachPlan.valid ||
+            !attachPlan.shouldSetAssociatedNextEnd ||
+            !attachPlan.shouldSetGroupSlotHead ||
+            !orch_set_next_thing_compat(
+                world->things, attachPlan.associatedThing, THING_ENDOFLIST)) {
             return 0;
         }
-        group->slot = associatedThing;
+        group->slot = attachPlan.associatedThing;
     } else {
         unsigned short tail = group->slot;
         int safety = 0;
@@ -4572,12 +4579,18 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
         while (tail != THING_NONE && tail != THING_ENDOFLIST && safety++ < 64) {
             unsigned short next = orch_next_thing_compat(world->things, tail);
             if (next == THING_ENDOFLIST) {
-                if (!orch_set_next_thing_compat(
-                        world->things, associatedThing, THING_ENDOFLIST)) {
-                    return 0;
-                }
-                if (!orch_set_next_thing_compat(
-                        world->things, tail, associatedThing)) {
+                memset(&attachPlan, 0, sizeof(attachPlan));
+                if (!dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
+                        associatedThing, group->slot, tail, &attachPlan) ||
+                    !attachPlan.valid ||
+                    !attachPlan.shouldSetAssociatedNextEnd ||
+                    !attachPlan.shouldAppendAfterTail ||
+                    !orch_set_next_thing_compat(
+                        world->things, attachPlan.associatedThing,
+                        THING_ENDOFLIST) ||
+                    !orch_set_next_thing_compat(
+                        world->things, attachPlan.tailThing,
+                        attachPlan.associatedThing)) {
                     return 0;
                 }
                 linked = 1;
