@@ -706,6 +706,38 @@ static void test_srm_party_continue_restores_all_champions(void) {
                             THERON_MAX_CHAMPIONS &&
                         snap.srm_party_gold == 777u,
                     "srm party snapshot carries party body receipt");
+        {
+            Theron_V1StartupSaveResume explicit_snap;
+            Theron_StartupStateReceipt explicit_state_receipt;
+            memset(&explicit_snap, 0, sizeof(explicit_snap));
+            memset(&explicit_state_receipt, 0, sizeof(explicit_state_receipt));
+            expect_true(theron_v1_startup_save_resume_apply_explicit_path(
+                            &explicit_snap,
+                            slot_path,
+                            NULL) == 1,
+                        "explicit srm party path applies");
+            expect_true(explicit_snap.srm_envelope_kind ==
+                            THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY &&
+                            explicit_snap.srm_payload_probe_ran == 1 &&
+                            explicit_snap.srm_payload_hits_fstq_magic == 1,
+                        "explicit srm party path carries envelope receipt");
+            expect_true(explicit_snap.srm_party_import_ran == 1 &&
+                            explicit_snap.srm_party_restored == 1 &&
+                            explicit_snap.srm_party_champion_count ==
+                                THERON_MAX_CHAMPIONS &&
+                            explicit_snap.srm_party_gold == 777u,
+                        "explicit srm party path carries party body receipt");
+            expect_true(theron_v1_startup_save_resume_state_receipt(
+                            &explicit_snap,
+                            1,
+                            &explicit_state_receipt) == 1 &&
+                            explicit_state_receipt
+                                    .save_resume_srm_party_champion_count ==
+                                THERON_MAX_CHAMPIONS &&
+                            explicit_state_receipt.save_resume_srm_party_gold ==
+                                777u,
+                        "explicit srm party path state receipt carries party body");
+        }
         memset(&snapshot_state_receipt, 0, sizeof(snapshot_state_receipt));
         expect_true(theron_v1_startup_save_resume_state_receipt(
                         &snap,

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron explicit SRM snapshot interop: explicit `slotN.srm` save-resume imports now carry the same envelope, payload, progression, quest-mask, and party body receipts as the normal SRM scan path, so external Save Disk paths no longer drop restored champion/gold state before Continue/runtime handoff. Verification: `test_theron_v1_startup_save_resume_pc34` 166/166, `firestaff_theron_v1_startup_save_resume_probe` 74/74, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM2 DB0 door GDAT render handoff: DM2 runtime now carries map door-set graphics from dungeon metadata into DB0 door squares, and the viewport render plan selects the door panel pseudo-GDAT index from door type plus opening direction. Verification: focused DM2 runtime/renderer tests and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 runtime projectile render source: M11 no longer chooses projectile/explosion sprite data from static dungeon C14/C15 links when DM1 runtime effect lists are authoritative, preventing HoC stale fireball/spell refs from overriding live thrown-object/projectile visuals. Verification: `test_m11_overlay_command_queue_block`, `test_dm1_v1_projectile_explosion_render_pc34_compat`, `firestaff` build, and `git diff --check` passed.
