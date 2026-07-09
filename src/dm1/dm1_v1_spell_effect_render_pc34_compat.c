@@ -24,16 +24,16 @@
  *   (Movement arrows, not spell-specific, but in same file.)
  */
 
-void m11_spell_render_init(M11_SpellRenderState *s)
+void DM1_V1_SpellRender_InitPc34Compat(DM1_V1_SpellRenderStatePc34 *s)
 {
     memset(s, 0, sizeof(*s));
     s->casterChampionIndex = -1;
-    for (int i = 0; i < M11_MAX_SPELL_LENGTH; i++) {
+    for (int i = 0; i < DM1_V1_MAX_SPELL_LENGTH_PC34; i++) {
         s->selectedSymbols[i] = -1;
     }
 }
 
-void m11_spell_render_set_caster(M11_SpellRenderState *s,
+void DM1_V1_SpellRender_SetCasterPc34Compat(DM1_V1_SpellRenderStatePc34 *s,
                                   int championIndex)
 {
     s->casterChampionIndex = championIndex;
@@ -41,29 +41,29 @@ void m11_spell_render_set_caster(M11_SpellRenderState *s,
     s->selectedCount = 0;
     s->spellValid = 0;
     s->castingInProgress = 0;
-    for (int i = 0; i < M11_MAX_SPELL_LENGTH; i++) {
+    for (int i = 0; i < DM1_V1_MAX_SPELL_LENGTH_PC34; i++) {
         s->selectedSymbols[i] = -1;
     }
 }
 
-int m11_spell_render_add_symbol(M11_SpellRenderState *s, int symbolIndex)
+int DM1_V1_SpellRender_AddSymbolPc34Compat(DM1_V1_SpellRenderStatePc34 *s, int symbolIndex)
 {
-    if (s->selectedCount >= M11_MAX_SPELL_LENGTH) return 0;
-    if (symbolIndex < 0 || symbolIndex >= M11_SYMBOLS_PER_STEP) return 0;
+    if (s->selectedCount >= DM1_V1_MAX_SPELL_LENGTH_PC34) return 0;
+    if (symbolIndex < 0 || symbolIndex >= DM1_V1_SYMBOLS_PER_STEP_PC34) return 0;
 
-    int globalIdx = m11_spell_render_symbol_code(s->currentSymbolStep, symbolIndex);
+    int globalIdx = DM1_V1_SpellRender_SymbolCodePc34Compat(s->currentSymbolStep, symbolIndex);
     s->selectedSymbols[s->selectedCount] = globalIdx;
     s->selectedCount++;
 
     /* Advance to next step if there is one */
-    if (s->currentSymbolStep < M11_SPELL_SYMBOL_STEPS - 1) {
+    if (s->currentSymbolStep < DM1_V1_SPELL_SYMBOL_STEPS_PC34 - 1) {
         s->currentSymbolStep++;
     }
 
     return 1;
 }
 
-int m11_spell_render_remove_symbol(M11_SpellRenderState *s)
+int DM1_V1_SpellRender_RemoveSymbolPc34Compat(DM1_V1_SpellRenderStatePc34 *s)
 {
     if (s->selectedCount <= 0) return 0;
     s->selectedCount--;
@@ -78,22 +78,22 @@ int m11_spell_render_remove_symbol(M11_SpellRenderState *s)
     return 1;
 }
 
-void m11_spell_render_clear(M11_SpellRenderState *s)
+void DM1_V1_SpellRender_ClearPc34Compat(DM1_V1_SpellRenderStatePc34 *s)
 {
     s->selectedCount = 0;
     s->currentSymbolStep = 0;
     s->spellValid = 0;
-    for (int i = 0; i < M11_MAX_SPELL_LENGTH; i++) {
+    for (int i = 0; i < DM1_V1_MAX_SPELL_LENGTH_PC34; i++) {
         s->selectedSymbols[i] = -1;
     }
 }
 
-M11_SpellRenderResult m11_spell_render_draw_controls(
-    const M11_SpellRenderState *s,
-    const M11_SpellChampionInfo champInfo[4],
+DM1_V1_SpellRenderResultPc34 DM1_V1_SpellRender_DrawControlsPc34Compat(
+    const DM1_V1_SpellRenderStatePc34 *s,
+    const DM1_V1_SpellChampionInfoPc34 champInfo[4],
     int partyChampionCount)
 {
-    M11_SpellRenderResult result;
+    DM1_V1_SpellRenderResultPc34 result;
     memset(&result, 0, sizeof(result));
 
     /*
@@ -131,7 +131,7 @@ M11_SpellRenderResult m11_spell_render_draw_controls(
     return result;
 }
 
-int m11_spell_render_draw_symbols(const M11_SpellRenderState *s)
+int DM1_V1_SpellRender_DrawSymbolsPc34Compat(const DM1_V1_SpellRenderStatePc34 *s)
 {
     /*
      * F0397: draw 6 symbols for the current step.
@@ -140,17 +140,17 @@ int m11_spell_render_draw_symbols(const M11_SpellRenderState *s)
      * Printed cyan on black.
      */
     if (s->currentSymbolStep < 0 ||
-        s->currentSymbolStep >= M11_SPELL_SYMBOL_STEPS) return 0;
-    return M11_SYMBOLS_PER_STEP; /* All 6 symbols drawn */
+        s->currentSymbolStep >= DM1_V1_SPELL_SYMBOL_STEPS_PC34) return 0;
+    return DM1_V1_SYMBOLS_PER_STEP_PC34; /* All 6 symbols drawn */
 }
 
-int m11_spell_render_symbol_code(int step, int localIndex)
+int DM1_V1_SpellRender_SymbolCodePc34Compat(int step, int localIndex)
 {
     /* Original encoding: character 96 + 6*step + index */
     return 96 + 6 * step + localIndex;
 }
 
-const char *m11_spell_render_source_evidence(void)
+const char *DM1_V1_SpellRender_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206 SPELDRAW.C / MENUDRAW.C\n"

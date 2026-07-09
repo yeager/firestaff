@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 spell-effect render ownership names: spell render state, champion info, result, layout constants, init/caster/add/remove/clear/draw/symbol/evidence helpers now expose DM1-owned API names; old m11_spell_render names remain aliases. Verification: firestaff_m10/firestaff_m11 build, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 draw primitive ownership names: bitmap/rect types plus clear/pixel/line/rect/blit/transparent/scaled/flip/darken/source-evidence helpers now expose DM1-owned API names; old m11_draw names remain aliases. Verification: firestaff_m10/firestaff_m11 build, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 inventory chest-load ownership names: source evidence, open-chest visible/container weight, and close-with-weight-snapshot helpers now expose DM1-owned API names; old m11_inventory_pc34 chest-load names remain aliases. Verification: chest close rewire, close-with-full-hand, hand-swap no-duplicate, nested-container weight, backpack/chest, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
