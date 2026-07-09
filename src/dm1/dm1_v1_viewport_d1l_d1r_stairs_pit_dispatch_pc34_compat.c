@@ -211,7 +211,7 @@ static size_t evidence_count(void)
     return sizeof(s_evidence) / sizeof(s_evidence[0]);
 }
 
-void M11_GameView_ViewportD1LD1RStairsPitDispatch_InitContextPc34(
+void DM1_V1_D1LD1RStairsPitDispatch_InitContextPc34Compat(
     DM1_V1_D1LD1RStairsPitDispatchContextPc34 *context,
     DM1_V1_D1LD1RStairsPitSidePc34 side)
 {
@@ -225,7 +225,7 @@ void M11_GameView_ViewportD1LD1RStairsPitDispatch_InitContextPc34(
 }
 
 const DM1_V1_D1LD1RStairsPitEvidencePc34 *
-M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidencePc34(size_t *count)
+DM1_V1_D1LD1RStairsPitDispatch_EvidencePc34Compat(size_t *count)
 {
     if (count) {
         *count = evidence_count();
@@ -234,7 +234,7 @@ M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidencePc34(size_t *count)
 }
 
 const DM1_V1_D1LD1RStairsPitEvidencePc34 *
-M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34(
+DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat(
     DM1_V1_D1LD1RStairsPitSidePc34 side,
     DM1_V1_D1LD1RStairsPitRoutePc34 route)
 {
@@ -248,7 +248,7 @@ M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34(
     return NULL;
 }
 
-bool M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34(
+bool DM1_V1_D1LD1RStairsPitDispatch_RenderPc34Compat(
     const DM1_V1_D1LD1RStairsPitDispatchContextPc34 *context,
     DM1_V1_D1LD1RStairsPitDispatchResultPc34 *out)
 {
@@ -286,7 +286,7 @@ bool M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34(
         return true;
     }
 
-    evidence = M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34(
+    evidence = DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat(
         context->side, route);
     if (!evidence) return false;
 
@@ -307,7 +307,7 @@ bool M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34(
     return true;
 }
 
-bool M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(
+bool DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat(
     const DM1_V1_D1LD1RStairsPitBlitInputPc34 *input,
     DM1_V1_D1LD1RStairsPitBlitResultPc34 *out)
 {
@@ -326,7 +326,7 @@ bool M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(
     if (input->height > ((size_t)-1) / input->row_width) return false;
     if (input->height > ((size_t)-1) / input->destination_stride) return false;
 
-    evidence = M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34(
+    evidence = DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat(
         input->side, input->route);
     if (!evidence) return false;
 
@@ -375,7 +375,7 @@ bool M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34(
     return true;
 }
 
-bool M11_GameView_ViewportD1LD1RStairsPitDispatch_AssertPc34(
+bool DM1_V1_D1LD1RStairsPitDispatch_AssertPc34Compat(
     DM1_V1_D1LD1RStairsPitAssertResultPc34 *out)
 {
     size_t i;
@@ -415,7 +415,7 @@ bool M11_GameView_ViewportD1LD1RStairsPitDispatch_AssertPc34(
     return out->failures == 0;
 }
 
-const char *M11_GameView_ViewportD1LD1RStairsPitDispatch_SourceEvidencePc34(void)
+const char *DM1_V1_D1LD1RStairsPitDispatch_SourceEvidencePc34Compat(void)
 {
     return s_source_evidence;
 }

@@ -58,11 +58,11 @@ typedef struct {
 #define DM1_V1_PC34_D0L2_D0R2_VIEWPORT_HEIGHT 136
 #define DM1_V1_PC34_D0L2_D0R2_TRANSPARENT_COLOR 10
 
-bool M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(
+bool DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat(
     const DM1_V1_FloorOrnamentD0L2D0R2InputPc34 *input,
     DM1_V1_FloorOrnamentD0L2D0R2ResultPc34 *out);
 
-bool M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34(
+bool DM1_V1_FloorOrnamentD0L2D0R2_ApplyPixelSlicePc34Compat(
     const DM1_V1_FloorOrnamentD0L2D0R2InputPc34 *input,
     uint8_t *viewport,
     size_t viewport_len,
@@ -70,12 +70,21 @@ bool M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34(
     int col,
     DM1_V1_FloorOrnamentD0L2D0R2ResultPc34 *out);
 
-uint8_t M11_GameView_FloorOrnamentD0L2D0R2BlendPixelPc34(
+uint8_t DM1_V1_FloorOrnamentD0L2D0R2_BlendPixelPc34Compat(
     const DM1_V1_FloorOrnamentD0L2D0R2ResultPc34 *spec,
     uint8_t destination_pixel,
     uint8_t source_pixel);
 
-const char *M11_GameView_FloorOrnamentD0L2D0R2SourceLockPc34(void);
+const char *DM1_V1_FloorOrnamentD0L2D0R2_SourceLockPc34Compat(void);
+
+#define M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34 \
+    DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat
+#define M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34 \
+    DM1_V1_FloorOrnamentD0L2D0R2_ApplyPixelSlicePc34Compat
+#define M11_GameView_FloorOrnamentD0L2D0R2BlendPixelPc34 \
+    DM1_V1_FloorOrnamentD0L2D0R2_BlendPixelPc34Compat
+#define M11_GameView_FloorOrnamentD0L2D0R2SourceLockPc34 \
+    DM1_V1_FloorOrnamentD0L2D0R2_SourceLockPc34Compat
 
 #ifdef __cplusplus
 }

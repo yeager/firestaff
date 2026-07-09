@@ -22,7 +22,7 @@ static const DM1_V1_D0SideRouteSpecPc34 *route_spec(
     return NULL;
 }
 
-bool M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(
+bool DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat(
     const DM1_V1_FloorOrnamentD0L2D0R2InputPc34 *input,
     DM1_V1_FloorOrnamentD0L2D0R2ResultPc34 *out)
 {
@@ -34,7 +34,7 @@ bool M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(
     out->native_bitmap_index = -1;
     out->floor_ornament_index = -1;
     out->transparent_color = DM1_V1_PC34_D0L2_D0R2_TRANSPARENT_COLOR;
-    out->source_lines = M11_GameView_FloorOrnamentD0L2D0R2SourceLockPc34();
+    out->source_lines = DM1_V1_FloorOrnamentD0L2D0R2_SourceLockPc34Compat();
     if (!input || input->floor_ornament_ordinal < 0) return false;
 
     spec = route_spec(input->route);
@@ -73,7 +73,7 @@ bool M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(
     }
 }
 
-bool M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34(
+bool DM1_V1_FloorOrnamentD0L2D0R2_ApplyPixelSlicePc34Compat(
     const DM1_V1_FloorOrnamentD0L2D0R2InputPc34 *input,
     uint8_t *viewport,
     size_t viewport_len,
@@ -83,7 +83,7 @@ bool M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34(
 {
     size_t offset;
 
-    if (!M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(input, out)) return false;
+    if (!DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat(input, out)) return false;
     if (!viewport || row < 0 || col < 0 ||
         row >= DM1_V1_PC34_D0L2_D0R2_VIEWPORT_HEIGHT ||
         col >= DM1_V1_PC34_D0L2_D0R2_VIEWPORT_WIDTH) {
@@ -96,14 +96,14 @@ bool M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34(
     out->pixel_before = viewport[offset];
     out->pixel_after_floor_slice = viewport[offset];
     if (out->calls_f0115) {
-        viewport[offset] = M11_GameView_FloorOrnamentD0L2D0R2BlendPixelPc34(
+        viewport[offset] = DM1_V1_FloorOrnamentD0L2D0R2_BlendPixelPc34Compat(
             out, viewport[offset], input->object_source_pixel);
     }
     out->pixel_after_object_slice = viewport[offset];
     return true;
 }
 
-uint8_t M11_GameView_FloorOrnamentD0L2D0R2BlendPixelPc34(
+uint8_t DM1_V1_FloorOrnamentD0L2D0R2_BlendPixelPc34Compat(
     const DM1_V1_FloorOrnamentD0L2D0R2ResultPc34 *spec,
     uint8_t destination_pixel,
     uint8_t source_pixel)
@@ -112,7 +112,7 @@ uint8_t M11_GameView_FloorOrnamentD0L2D0R2BlendPixelPc34(
     return source_pixel;
 }
 
-const char *M11_GameView_FloorOrnamentD0L2D0R2SourceLockPc34(void)
+const char *DM1_V1_FloorOrnamentD0L2D0R2_SourceLockPc34Compat(void)
 {
     return
         "Source-locked D0 side floor-ornament absence gate; ReDMCSB PC34 does "

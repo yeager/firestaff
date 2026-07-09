@@ -30,7 +30,7 @@ static void test_d0l2_corridor_routes_to_f0115_without_f0108(void)
 
     /* ReDMCSB: DUNVIEW.C F0125 line 8005 calls F0115 for D0L. */
     expect_int("d0l2.resolve",
-               M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(&in, &out) ? 1 : 0, 1);
+               DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat(&in, &out) ? 1 : 0, 1);
     /* ReDMCSB: DEFS.H lines 2587-2589 define M610_VIEW_SQUARE_D0L as 10. */
     expect_int("d0l2.view_square", out.view_square_index, 10);
     /* ReDMCSB: DEFS.H lines 4036-4038 define C714_ZONE_WALL_D0L. */
@@ -70,7 +70,7 @@ static void test_d0r2_corridor_routes_to_f0115_without_f0108(void)
 
     /* ReDMCSB: DUNVIEW.C F0126 line 8115 calls F0115 for D0R. */
     expect_int("d0r2.resolve",
-               M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(&in, &out) ? 1 : 0, 1);
+               DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat(&in, &out) ? 1 : 0, 1);
     /* ReDMCSB: DEFS.H lines 2587-2589 define M611_VIEW_SQUARE_D0R as 11. */
     expect_int("d0r2.view_square", out.view_square_index, 11);
     /* ReDMCSB: DEFS.H lines 4036-4038 define C715_ZONE_WALL_D0R. */
@@ -109,13 +109,13 @@ static void test_wall_and_stair_returns_block_f0115_and_f0108(void)
 
     /* ReDMCSB: DUNVIEW.C F0125 lines 8007-8038 wall path returns. */
     expect_int("wall.resolve",
-               M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(&wall, &out) ? 1 : 0, 1);
+               DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat(&wall, &out) ? 1 : 0, 1);
     expect_int("wall.returns", out.wall_case_returns ? 1 : 0, 1);
     expect_int("wall.no_f0115", out.calls_f0115 ? 1 : 0, 0);
     expect_int("wall.no_f0108", out.calls_f0108 ? 1 : 0, 0);
     /* ReDMCSB: DUNVIEW.C F0126 lines 8082-8092 stairs-side path returns. */
     expect_int("stair.resolve",
-               M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(&stair, &out) ? 1 : 0, 1);
+               DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat(&stair, &out) ? 1 : 0, 1);
     expect_int("stair.returns", out.stairs_case_returns ? 1 : 0, 1);
     expect_int("stair.no_f0115", out.calls_f0115 ? 1 : 0, 0);
     expect_int("stair.no_f0108", out.calls_f0108 ? 1 : 0, 0);
@@ -138,7 +138,7 @@ static void test_pit_fallthrough_and_pixel_slice(void)
 
     /* ReDMCSB: DUNVIEW.C F0125 lines 7989-8005 let PIT fall through to F0115. */
     expect_int("pit.pixel_slice",
-               M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34(
+               DM1_V1_FloorOrnamentD0L2D0R2_ApplyPixelSlicePc34Compat(
                    &in, viewport, sizeof(viewport), 66, 3, &out) ? 1 : 0, 1);
     /* ReDMCSB: DUNVIEW.C F0125 lines 7989-8005 pit path has no break before F0115. */
     expect_int("pit.fallthrough", out.pit_falls_through_to_f0115 ? 1 : 0, 1);
@@ -167,24 +167,24 @@ static void test_c10_transparency_and_invalid_inputs(void)
 
     /* ReDMCSB: DUNVIEW.C F0115 line 5181 preserves destination on C10. */
     expect_int("transparent.pixel_slice",
-               M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34(
+               DM1_V1_FloorOrnamentD0L2D0R2_ApplyPixelSlicePc34Compat(
                    &in, viewport, sizeof(viewport), 135, 223, &out) ? 1 : 0, 1);
     expect_int("transparent.floor_pixel_unchanged", out.pixel_after_floor_slice, 0x6C);
     expect_int("transparent.object_pixel_preserved", out.pixel_after_object_slice, 0x6C);
     expect_int("transparent.blend",
-               M11_GameView_FloorOrnamentD0L2D0R2BlendPixelPc34(&out, 0x44, 10), 0x44);
+               DM1_V1_FloorOrnamentD0L2D0R2_BlendPixelPc34Compat(&out, 0x44, 10), 0x44);
     expect_int("invalid.null_input",
-               M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(NULL, &out) ? 1 : 0, 0);
+               DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat(NULL, &out) ? 1 : 0, 0);
     expect_int("invalid.null_output",
-               M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34(&in, NULL) ? 1 : 0, 0);
+               DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat(&in, NULL) ? 1 : 0, 0);
     expect_int("invalid.pixel_bounds",
-               M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34(
+               DM1_V1_FloorOrnamentD0L2D0R2_ApplyPixelSlicePc34Compat(
                    &in, viewport, sizeof(viewport), 136, 0, &out) ? 1 : 0, 0);
 }
 
 static void test_source_evidence_mentions_all_anchors(void)
 {
-    const char *e = M11_GameView_FloorOrnamentD0L2D0R2SourceLockPc34();
+    const char *e = DM1_V1_FloorOrnamentD0L2D0R2_SourceLockPc34Compat();
 
     /* ReDMCSB: DUNVIEW.C F0108 lines 3940-4008. */
     expect_int("evidence.f0108", strstr(e, "3940-4008") != NULL, 1);
