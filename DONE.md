@@ -1,6 +1,6 @@
 # Firestaff DONE - Completed Work
 
-- ✅ 2026-07-09 DM1 F0215 group-slot materialization receipt: thrown sharp weapons retained by creatures now use a DM1-owned chain receipt like square materialization, so M10 applies empty/append/overflow cases from one receipt path after F0190/F0231/F0267/F0328/F0811 projectile hits. Verification: `test_dm1_v1_throw_shoot_pc34_compat` and `git diff --check` passed.
+- ✅ 2026-07-09 DM1 F0215 group-slot materialization receipt: thrown sharp weapons retained by creatures now use a DM1-owned chain receipt like square materialization, so M10 applies empty/append/overflow cases from one receipt path after F0190/F0231/F0267/F0328/F0811 projectile hits. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup boot-route receipt: CSB boot now emits a title/entrance/credits/door-opening render-route receipt with palette, HUD/menu visibility, input readiness, and the presentation render plan; M11 CSB startup drawing now consumes that route. Verification: `csb_v1_boot_runtime_handoff`, `csb_v1_startup_entrance_pointer_pc34_compat`, `csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
 
