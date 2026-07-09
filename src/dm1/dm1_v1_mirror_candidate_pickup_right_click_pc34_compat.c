@@ -19,7 +19,7 @@ enum {
     kOtherLeaderHandThing = 0x0BEEu
 };
 
-static const Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat
+static const DM1_V1_MirrorCandidatePickupRightClickEvidencePc34Compat
     s_evidence = {
         "REVIVE.C F0280:272-276 publishes G0299 and increments "
         "G0305 after a C127 mirror portrait sensor",
@@ -41,9 +41,9 @@ static const Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat
     };
 
 static void snapshot_begin(
-    const Dm1V1MirrorCandidatePickupRightClickStatePc34Compat *state,
+    const DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat *state,
     unsigned int mouseButtons,
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat *result)
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat *result)
 {
     if (!result) {
         return;
@@ -97,8 +97,8 @@ static void snapshot_begin(
 }
 
 static void snapshot_finish(
-    const Dm1V1MirrorCandidatePickupRightClickStatePc34Compat *state,
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat *result)
+    const DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -129,7 +129,7 @@ static void snapshot_finish(
 }
 
 static int resolve_row(
-    const Dm1V1MirrorCandidatePickupRightClickStatePc34Compat *state,
+    const DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat *state,
     int x,
     int y)
 {
@@ -141,7 +141,7 @@ static int resolve_row(
     for (i = 0;
          i < DM1_V1_MIRROR_CANDIDATE_PICKUP_RIGHT_CLICK_ROW_COUNT_PC34_COMPAT;
          ++i) {
-        const Dm1V1MirrorCandidatePickupRightClickRowPc34Compat *row =
+        const DM1_V1_MirrorCandidatePickupRightClickRowPc34Compat *row =
             &state->rows[i];
         if (x >= row->left && x <= row->right &&
             y >= row->top && y <= row->bottom) {
@@ -152,9 +152,9 @@ static int resolve_row(
 }
 
 static void publish_candidate(
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat *state,
-    const Dm1V1MirrorCandidatePickupRightClickRowPc34Compat *row,
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat *result)
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat *state,
+    const DM1_V1_MirrorCandidatePickupRightClickRowPc34Compat *row,
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat *result)
 {
     /* ReDMCSB: MOVESENS.C:1501-1503 reaches REVIVE.C F0280 for a C127
      * mirror portrait; REVIVE.C F0280:272-276 then publishes G0299 and
@@ -178,9 +178,9 @@ static void publish_candidate(
 }
 
 static void clear_candidate(
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat *state,
-    const Dm1V1MirrorCandidatePickupRightClickRowPc34Compat *row,
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat *result)
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat *state,
+    const DM1_V1_MirrorCandidatePickupRightClickRowPc34Compat *row,
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat *result)
 {
     (void)row;
     /* ReDMCSB: REVIVE.C F0282:744-758 clears G0299 and decrements the
@@ -209,7 +209,7 @@ static void clear_candidate(
 }
 
 void DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat *state)
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat *state)
 {
     int i;
 
@@ -232,7 +232,7 @@ void DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(
     for (i = 0;
          i < DM1_V1_MIRROR_CANDIDATE_PICKUP_RIGHT_CLICK_ROW_COUNT_PC34_COMPAT;
          ++i) {
-        Dm1V1MirrorCandidatePickupRightClickRowPc34Compat *row =
+        DM1_V1_MirrorCandidatePickupRightClickRowPc34Compat *row =
             &state->rows[i];
         row->zone =
             DM1_V1_MIRROR_CANDIDATE_PICKUP_RIGHT_CLICK_C159_ZONE_PC34_COMPAT +
@@ -248,14 +248,14 @@ void DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidatePickupRightClick_ApplyPc34Compat(
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat *state,
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat *outResult)
 {
     int rowIndex;
-    Dm1V1MirrorCandidatePickupRightClickRowPc34Compat *row;
+    DM1_V1_MirrorCandidatePickupRightClickRowPc34Compat *row;
 
     snapshot_begin(state, mouseButtons, outResult);
     if (!state || !outResult || !state->active) {
@@ -321,7 +321,7 @@ int DM1_V1_MirrorCandidatePickupRightClick_ApplyPc34Compat(
     return outResult->consumed;
 }
 
-const Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat *
+const DM1_V1_MirrorCandidatePickupRightClickEvidencePc34Compat *
 DM1_V1_MirrorCandidatePickupRightClick_EvidencePc34Compat(void)
 {
     return &s_evidence;

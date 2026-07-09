@@ -14,7 +14,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_PICKUP_RIGHT_CLICK_C159_ZONE_PC34_COMPAT 159
 #define DM1_V1_MIRROR_CANDIDATE_PICKUP_RIGHT_CLICK_THING_NONE_PC34_COMPAT 0xFFFFu
 
-typedef struct Dm1V1MirrorCandidatePickupRightClickRowPc34Compat {
+typedef struct DM1_V1_MirrorCandidatePickupRightClickRowPc34Compat {
     int zone;
     int left;
     int right;
@@ -23,9 +23,9 @@ typedef struct Dm1V1MirrorCandidatePickupRightClickRowPc34Compat {
     unsigned int championOrdinal;
     unsigned int leaderHandThing;
     int present;
-} Dm1V1MirrorCandidatePickupRightClickRowPc34Compat;
+} DM1_V1_MirrorCandidatePickupRightClickRowPc34Compat;
 
-typedef struct Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidatePickupRightClickEvidencePc34Compat {
     const char *candidatePublishAnchor;
     const char *candidateClearAnchor;
     const char *commandGateAnchor;
@@ -34,9 +34,9 @@ typedef struct Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat {
     const char *c159NameRowAnchor;
     const char *panelEmptyHandAnchor;
     const char *contractScope;
-} Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat;
+} DM1_V1_MirrorCandidatePickupRightClickEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidatePickupRightClickStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat {
     int active;
     int partyChampionCount;
     int preC040PartyChampionCount;
@@ -56,12 +56,12 @@ typedef struct Dm1V1MirrorCandidatePickupRightClickStatePc34Compat {
     int leaderHandRemoveCount;
     int leftClickCommandCount;
     int spellActionDispatchCount;
-    Dm1V1MirrorCandidatePickupRightClickRowPc34Compat
+    DM1_V1_MirrorCandidatePickupRightClickRowPc34Compat
         rows[DM1_V1_MIRROR_CANDIDATE_PICKUP_RIGHT_CLICK_ROW_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidatePickupRightClickStatePc34Compat;
+} DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidatePickupRightClickResultPc34Compat {
-    const Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat {
+    const DM1_V1_MirrorCandidatePickupRightClickEvidencePc34Compat *evidence;
     int consumed;
     int resolvedRowIndex;
     int resolvedZone;
@@ -105,19 +105,28 @@ typedef struct Dm1V1MirrorCandidatePickupRightClickResultPc34Compat {
     int leftClickCommandCountAfter;
     int spellActionDispatchCountBefore;
     int spellActionDispatchCountAfter;
-} Dm1V1MirrorCandidatePickupRightClickResultPc34Compat;
+} DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidatePickupRightClickRowPc34Compat
+    Dm1V1MirrorCandidatePickupRightClickRowPc34Compat;
+typedef DM1_V1_MirrorCandidatePickupRightClickEvidencePc34Compat
+    Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat
+    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat;
+typedef DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat
+    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat;
 
 void DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat *state);
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidatePickupRightClick_ApplyPc34Compat(
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat *state,
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat *
+const DM1_V1_MirrorCandidatePickupRightClickEvidencePc34Compat *
 DM1_V1_MirrorCandidatePickupRightClick_EvidencePc34Compat(void);
 
 #ifdef __cplusplus
