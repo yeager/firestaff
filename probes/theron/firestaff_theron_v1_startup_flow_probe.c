@@ -1285,6 +1285,7 @@ int main(void) {
                 theron_v1_startup_continue_result_init(&continue_result);
                 continue_result.source =
                     THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV;
+                continue_result.source_slot_index = 2;
                 continue_result.selected_dungeon =
                     THERON_DUNGEON_4_TOMB_OF_WOE;
                 continue_result.party_x = 9;
@@ -1305,6 +1306,12 @@ int main(void) {
                 check_str("continue receipt status",
                           continue_receipt.status,
                           "CONTINUE LOADED");
+                check_int("continue receipt source",
+                          continue_receipt.source,
+                          THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV);
+                check_int("continue receipt source slot",
+                          continue_receipt.source_slot_index,
+                          2);
                 check_str("continue receipt inspect",
                           continue_receipt.inspect_scope,
                           "STARTUP");
@@ -1328,6 +1335,53 @@ int main(void) {
                 check_contains("continue host receipt detail",
                                host_receipt.inspect_detail,
                                "chapter=1");
+                theron_v1_startup_continue_result_init(&continue_result);
+                continue_result.source =
+                    THERON_V1_STARTUP_CONTINUE_SOURCE_SRM;
+                continue_result.source_slot_index = 3;
+                continue_result.srm_import_status =
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK;
+                continue_result.selected_dungeon =
+                    THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+                continue_result.srm_current_dungeon =
+                    THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+                continue_result.srm_current_level = 2;
+                continue_result.srm_quest_mask = 0x05;
+                continue_result.srm_party_restored = 1;
+                continue_result.srm_party_champion_count = 4;
+                continue_result.srm_party_gold = 1234u;
+                check_int("continue srm receipt rc",
+                          theron_v1_startup_continue_apply_receipt(
+                              &plan,
+                              &continue_result,
+                              "continued srm slot=3 kind=PROGRESSION_PARTY dungeon=2",
+                              "chapter=3 level=2",
+                              &continue_receipt),
+                          1);
+                check_int("continue srm receipt source",
+                          continue_receipt.source,
+                          THERON_V1_STARTUP_CONTINUE_SOURCE_SRM);
+                check_int("continue srm receipt slot",
+                          continue_receipt.source_slot_index,
+                          3);
+                check_int("continue srm receipt import",
+                          continue_receipt.srm_import_status,
+                          THERON_V1_SRM_PROGRESS_IMPORT_OK);
+                check_int("continue srm receipt dungeon",
+                          continue_receipt.srm_current_dungeon,
+                          THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                check_int("continue srm receipt level",
+                          continue_receipt.srm_current_level,
+                          2);
+                check_int("continue srm receipt quest",
+                          continue_receipt.srm_quest_mask,
+                          0x05);
+                check_int("continue srm receipt party",
+                          continue_receipt.srm_party_champion_count,
+                          4);
+                check_int("continue srm receipt gold",
+                          (int)continue_receipt.srm_party_gold,
+                          1234);
                 check_int("continue availability tqsv rc",
                           theron_v1_startup_continue_availability_from_state(
                               THERON_V1_STARTUP_RESUME_TQSV,
@@ -1367,6 +1421,16 @@ int main(void) {
                               THERON_V1_SRM_PROGRESS_IMPORT_OK,
                               NULL),
                           0);
+                theron_v1_startup_continue_result_init(&continue_result);
+                continue_result.source =
+                    THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV;
+                continue_result.source_slot_index = 2;
+                continue_result.selected_dungeon =
+                    THERON_DUNGEON_4_TOMB_OF_WOE;
+                continue_result.party_x = 9;
+                continue_result.party_y = 10;
+                continue_result.party_dir = 2;
+                continue_result.tick_count = 77;
                 check_int("continue state receipt rc",
                           theron_v1_startup_continue_state_receipt_from_result(
                               &continue_result,
@@ -1411,6 +1475,12 @@ int main(void) {
                     check_int("continue combined no-source receipt",
                               continue_receipt.input_result,
                               THERON_STARTUP_INPUT_RESULT_REDRAW);
+                    check_int("continue combined no-source source",
+                              continue_receipt.source,
+                              THERON_V1_STARTUP_CONTINUE_SOURCE_NONE);
+                    check_int("continue combined no-source slot",
+                              continue_receipt.source_slot_index,
+                              -1);
                     check_contains("continue combined no-source text",
                                    continue_receipt_text,
                                    "Continue requires");
