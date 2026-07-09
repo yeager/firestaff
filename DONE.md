@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 entrance callback receipt verification: M11 DM1 entrance handoff now requires the active post-launch receipt, validates the C255/5x5/south-facing entrance state before the transition, and the startup probe verifies TITLE/PRESENTS media plus entrance receipts through callbacks. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m10`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 startup media receipt plan handoff: DM1 prelude/post-launch plans now carry the full-graphics media receipt, and M11 keeps that active through SWSH/TITLE callbacks so production startup rendering consumes the selected receipt instead of re-resolving host timing. Verification: `firestaff_m10` build, M11/test syntax checks, and `git diff --check` passed; full M11 target is blocked by unrelated DM2 header edits in the shared worktree.
 
 - ✅ 2026-07-09 DM2 boot-owned startup view model: DM2 boot now exposes a startup view-model wrapper carrying draw commands, presentation receipt, phase, animation, and title readiness, and M11 consumes that wrapper instead of defining its own DM2 startup model. Verification: clean-worktree `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.

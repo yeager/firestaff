@@ -650,11 +650,22 @@ int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
                                                      (unsigned long long)elapsedMs);
 }
 
-static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int autoEnterAfterMs) {
+static int m11_play_redmcsb_entrance_transition(
+    M11_GameViewState* gameView,
+    int autoEnterAfterMs,
+    const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt) {
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
     if (!gameView || !gameView->active) return 0;
+    if (entranceReceipt &&
+        (!entranceReceipt->valid ||
+         entranceReceipt->mapIndex != DM1_V1_ENTRANCE_MAP_INDEX_PC34 ||
+         entranceReceipt->width != DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 ||
+         entranceReceipt->height != DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 ||
+         entranceReceipt->partyDirection != DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34)) {
+        return 0;
+    }
     framebuffer = M11_Render_GetFramebuffer();
     if (!framebuffer) return 0;
     dungeonFrame = (unsigned char*)malloc((size_t)M11_FB_BYTES);
@@ -1551,13 +1562,21 @@ static int m11_dm1_handoff_play_entrance(void* user,
                                          int auto_enter_after_ms,
                                          int* out_entrance_command) {
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    const DM1_V1_EntranceFullStartRenderReceiptPc34* entrance = NULL;
     int command;
     (void)source_id;
     if (!ctx || !ctx->gameView) {
         return 0;
     }
+    if (!ctx->activePostLaunchPlanValid ||
+        !ctx->activePostLaunchPlan.entrance_full_start_receipt.valid ||
+        ctx->activePostLaunchPlan.entrance_auto_enter_ms != auto_enter_after_ms) {
+        return 0;
+    }
+    entrance = &ctx->activePostLaunchPlan.entrance_full_start_receipt;
     command = m11_play_redmcsb_entrance_transition(ctx->gameView,
-                                                   auto_enter_after_ms);
+                                                   auto_enter_after_ms,
+                                                   entrance);
     if (out_entrance_command) {
         *out_entrance_command = command;
     }
