@@ -2672,33 +2672,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               packaged_proof_from_snapshot.packaged_capture_hash ==
                   packaged_proof.packaged_capture_hash,
           "boot startup snapshot host-view consumes title capture proof");
-    CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
-              &runtime_view_receipt,
-              snapshot.title_active,
-              snapshot.title_frame,
-              snapshot.title_source_step,
-              snapshot.entrance_active,
-              snapshot.entrance_source_step,
-              snapshot.entrance_dismissed,
-              snapshot.credits_active,
-              snapshot.credits_remaining_ticks,
-              snapshot.opening_active,
-              snapshot.opening_delay_ticks,
-              snapshot.opening_step,
-              snapshot.pending_command,
-              snapshot.entrance_frame,
-              snapshot.utility_overlay_active,
-              snapshot.utility_selected_action_index,
-              snapshot.utility_imported_champion_count,
-              snapshot.utility_preview_active,
-              snapshot.utility_prompt,
-              snapshot.resume_available,
-              snapshot.resume_path,
-              snapshot.boot_profile) == 1 &&
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &snapshot,
+              &runtime_view_receipt) == 1 &&
               runtime_view_receipt.title_after_swoosh_route &&
               runtime_view_receipt.render_plan.surface ==
                   view_receipt.render_plan.surface,
-          "boot startup runtime-state render-view receipt matches post-swoosh title route");
+          "boot startup snapshot render-view receipt matches post-swoosh title route");
     CHECK(view_receipt.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
               view_receipt.title_source_step ==
@@ -3637,33 +3617,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               host_view_receipt.render_draw.render_plan.waiting_for_input,
           "boot startup host-view receipt returns packaged closed-door render plan");
-    CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
-              &runtime_view_receipt,
-              snapshot.title_active,
-              snapshot.title_frame,
-              snapshot.title_source_step,
-              snapshot.entrance_active,
-              snapshot.entrance_source_step,
-              snapshot.entrance_dismissed,
-              snapshot.credits_active,
-              snapshot.credits_remaining_ticks,
-              snapshot.opening_active,
-              snapshot.opening_delay_ticks,
-              snapshot.opening_step,
-              snapshot.pending_command,
-              snapshot.entrance_frame,
-              snapshot.utility_overlay_active,
-              snapshot.utility_selected_action_index,
-              snapshot.utility_imported_champion_count,
-              snapshot.utility_preview_active,
-              snapshot.utility_prompt,
-              snapshot.resume_available,
-              snapshot.resume_path,
-              snapshot.boot_profile) == 1 &&
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &snapshot,
+              &runtime_view_receipt) == 1 &&
               runtime_view_receipt.closed_door_menu_route &&
               runtime_view_receipt.suppress_legacy_utility_fallback &&
               runtime_view_receipt.hud_menu_receipt_ready,
-          "boot startup runtime-state render-view receipt owns closed-door HUD gate");
+          "boot startup snapshot render-view receipt owns closed-door HUD gate");
     CHECK(runtime_view_receipt.render_plan_valid &&
               runtime_view_receipt.render_plan.surface ==
                   host_view_receipt.render_draw.render_plan.surface &&
@@ -3857,32 +3817,12 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     snapshot.opening_active = 0;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 0;
-    CHECK(csb_v1_boot_startup_presentation_state_receipt_from_runtime_state_pc34(
-              &presentation_receipt,
-              snapshot.title_active,
-              snapshot.title_frame,
-              snapshot.title_source_step,
-              snapshot.entrance_active,
-              snapshot.entrance_source_step,
-              snapshot.entrance_dismissed,
-              snapshot.credits_active,
-              snapshot.credits_remaining_ticks,
-              snapshot.opening_active,
-              snapshot.opening_delay_ticks,
-              snapshot.opening_step,
-              snapshot.pending_command,
-              snapshot.entrance_frame,
-              snapshot.utility_overlay_active,
-              snapshot.utility_selected_action_index,
-              snapshot.utility_imported_champion_count,
-              snapshot.utility_preview_active,
-              snapshot.utility_prompt,
-              snapshot.resume_available,
-              snapshot.resume_path,
-              snapshot.boot_profile) == 1 &&
+    CHECK(csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
+              &snapshot,
+              &presentation_receipt) == 1 &&
               presentation_receipt.valid &&
               presentation_receipt.render_plan.waiting_for_input,
-          "boot startup presentation receipt facade accepts runtime fields");
+          "boot startup presentation receipt accepts snapshot fields");
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               2,
