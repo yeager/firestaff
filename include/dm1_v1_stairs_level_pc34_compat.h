@@ -24,36 +24,51 @@ typedef struct {
     int destX;
     int destY;
     int destFacing;
-} M11_StairDef;
+} DM1_V1_StairDefPc34;
 
-#define M11_MAX_STAIRS 32
-#define M11_MAX_LEVELS 16
+#define DM1_V1_MAX_STAIRS_PC34 32
+#define DM1_V1_MAX_LEVELS_PC34 16
 
 typedef struct {
     int width;
     int height;
     int levelIndex;
-} M11_LevelInfo;
+} DM1_V1_LevelInfoPc34;
 
 typedef struct {
-    M11_StairDef stairs[M11_MAX_STAIRS];
+    DM1_V1_StairDefPc34 stairs[DM1_V1_MAX_STAIRS_PC34];
     int stairCount;
-    M11_LevelInfo levels[M11_MAX_LEVELS];
+    DM1_V1_LevelInfoPc34 levels[DM1_V1_MAX_LEVELS_PC34];
     int levelCount;
     int currentLevel;
     int transitionActive;
     int transitionTicksLeft;
     int transitionFromLevel;
     int transitionToLevel;
-} M11_StairLevelState;
+} DM1_V1_StairLevelStatePc34;
 
-void m11_stairs_init(M11_StairLevelState* s);
-int m11_stairs_add(M11_StairLevelState* s, int x, int y, int dir, int destLevel, int destX, int destY, int destFacing);
-int m11_stairs_check(const M11_StairLevelState* s, int x, int y, M11_StairDef* out);
-int m11_stairs_use(M11_StairLevelState* s, int x, int y, int* newX, int* newY, int* newFacing);
-void m11_stairs_add_level(M11_StairLevelState* s, int width, int height);
-void m11_stairs_tick(M11_StairLevelState* s, int tickMs);
-int m11_stairs_is_transitioning(const M11_StairLevelState* s);
+void DM1_V1_Stairs_InitPc34Compat(DM1_V1_StairLevelStatePc34* s);
+int DM1_V1_Stairs_AddPc34Compat(DM1_V1_StairLevelStatePc34* s, int x, int y, int dir, int destLevel, int destX, int destY, int destFacing);
+int DM1_V1_Stairs_CheckPc34Compat(const DM1_V1_StairLevelStatePc34* s, int x, int y, DM1_V1_StairDefPc34* out);
+int DM1_V1_Stairs_UsePc34Compat(DM1_V1_StairLevelStatePc34* s, int x, int y, int* newX, int* newY, int* newFacing);
+void DM1_V1_Stairs_AddLevelPc34Compat(DM1_V1_StairLevelStatePc34* s, int width, int height);
+void DM1_V1_Stairs_TickPc34Compat(DM1_V1_StairLevelStatePc34* s, int tickMs);
+int DM1_V1_Stairs_IsTransitioningPc34Compat(const DM1_V1_StairLevelStatePc34* s);
+
+typedef DM1_V1_StairDefPc34 M11_StairDef;
+typedef DM1_V1_LevelInfoPc34 M11_LevelInfo;
+typedef DM1_V1_StairLevelStatePc34 M11_StairLevelState;
+
+#define M11_MAX_STAIRS DM1_V1_MAX_STAIRS_PC34
+#define M11_MAX_LEVELS DM1_V1_MAX_LEVELS_PC34
+
+#define m11_stairs_init DM1_V1_Stairs_InitPc34Compat
+#define m11_stairs_add DM1_V1_Stairs_AddPc34Compat
+#define m11_stairs_check DM1_V1_Stairs_CheckPc34Compat
+#define m11_stairs_use DM1_V1_Stairs_UsePc34Compat
+#define m11_stairs_add_level DM1_V1_Stairs_AddLevelPc34Compat
+#define m11_stairs_tick DM1_V1_Stairs_TickPc34Compat
+#define m11_stairs_is_transitioning DM1_V1_Stairs_IsTransitioningPc34Compat
 
 #ifdef __cplusplus
 }

@@ -1,21 +1,21 @@
 /**
  * DM1 V1 Stairs Inventory State Gate — narrow CTest gate
  *
- * Bridges the M11_StairLevelState I1/I2/I3 invariants and the
+ * Bridges the DM1_V1_StairLevelStatePc34 I1/I2/I3 invariants and the
  * DM1_V1_InventoryStatePc34 to lock down the previously-uncovered boundary
  * that the "stairs while already transitioning" path is a true no-op:
  *
- *   1. The I1 rejection path (m11_stairs_use while transitionActive==1)
- *      returns 0 AND does not mutate M11_StairLevelState, does not write
+ *   1. The I1 rejection path (DM1_V1_Stairs_UsePc34Compat while transitionActive==1)
+ *      returns 0 AND does not mutate DM1_V1_StairLevelStatePc34, does not write
  *      *newX / *newY / *newFacing, AND does not touch the caller's
  *      DM1_V1_InventoryStatePc34 (open chest, panel content, leader hand).
- *   2. The mid-tick window between m11_stairs_use returning and
- *      m11_stairs_tick consuming the full transitionTicksLeft is a
+ *   2. The mid-tick window between DM1_V1_Stairs_UsePc34Compat returning and
+ *      DM1_V1_Stairs_TickPc34Compat consuming the full transitionTicksLeft is a
  *      "datafreeze" window: every DM1_V1_InventoryStatePc34 field we care
  *      about stays byte-identical until the transition settles.
  *   3. After the rejected second call, the original transition still
  *      settles to currentLevel=1, transitionActive=0, and a follow-up
- *      m11_stairs_use on a valid stair still works.
+ *      DM1_V1_Stairs_UsePc34Compat on a valid stair still works.
  *
  * ReDMCSB references:
  *   CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142 — stairs trigger
@@ -35,7 +35,7 @@
  *     test_dm1_v1_stairs_transition_light_state_pc34_compat).
  *   - No retest of the planner's preserve_* flags (covered by
  *     test_dm1_v1_stairs_inventory_state_pc34_compat Test 1).
- *   - No retest of M11_StairLevelState invariants I2/I3/I4 in isolation
+ *   - No retest of DM1_V1_StairLevelStatePc34 invariants I2/I3/I4 in isolation
  *     (covered by test_dm1_v1_stairs_inventory_state_pc34_compat).
  *   - This test only asserts the I1 rejection path against an open
  *     chest, the mid-tick inventory freeze, and the rejected-then-
@@ -85,10 +85,10 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
      * transitionActive, and *before* writing *newX / *newY / *newFacing.
      *
      * The DM1_V1_InventoryStatePc34 lives in CHAMPION.C M516_CHAMPIONS and is
-     * independent of M11_StairLevelState, so a rejected call must not
+     * independent of DM1_V1_StairLevelStatePc34, so a rejected call must not
      * mutate either the level state or any chest / hand / load state.
      */
-    M11_StairLevelState stairs;
+    DM1_V1_StairLevelStatePc34 stairs;
     DM1_V1_InventoryStatePc34 inv;
     DM1_V1_ItemPc34 linked[8];
     int champ = 0;
@@ -96,15 +96,15 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
     int rc, i;
     int openThing = 0xA53A;
 
-    m11_stairs_init(&stairs);
-    m11_stairs_add_level(&stairs, 16, 16);
-    m11_stairs_add_level(&stairs, 16, 16);
+    DM1_V1_Stairs_InitPc34Compat(&stairs);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
     /* Two stairs: (4,4)→level 1 + (8,8)→level 2 (sentinel for the rejected call). */
     expect_int("add_stairs_first",
-               m11_stairs_add(&stairs, 4, 4, 2, 1, 4, 4, 2), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 4, 4, 2, 1, 4, 4, 2), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("add_stairs_second",
-               m11_stairs_add(&stairs, 8, 8, 2, 2, 8, 8, 2), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 8, 8, 2, 2, 8, 8, 2), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
     /* Build a fully-open chest state. */
@@ -125,7 +125,7 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
     /* Take the stairs so a transition is pending. */
     newX = newY = newFacing = -1;
     expect_int("first_stairs_use_rc",
-               m11_stairs_use(&stairs, 4, 4, &newX, &newY, &newFacing), 1,
+               DM1_V1_Stairs_UsePc34Compat(&stairs, 4, 4, &newX, &newY, &newFacing), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142; "
                "MOVESENS.C:F0267");
     expect_int("first_stairs_x", newX, 4,
@@ -174,7 +174,7 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
     newX = -77;
     newY = -77;
     newFacing = -77;
-    rc = m11_stairs_use(&stairs, 8, 8, &newX, &newY, &newFacing);
+    rc = DM1_V1_Stairs_UsePc34Compat(&stairs, 8, 8, &newX, &newY, &newFacing);
     expect_int("i1_rejected_rc", rc, 0,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:65 (I1 rejection)");
     /* ReDMCSB says the rejection path returns 0 BEFORE writing newX/Y/F,
@@ -186,7 +186,7 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
     expect_int("i1_rejected_facing_unchanged", newFacing, -77,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:65-67 (rejection no-write)");
 
-    /* M11_StairLevelState is byte-identical to the snapshot. */
+    /* DM1_V1_StairLevelStatePc34 is byte-identical to the snapshot. */
     expect_int("i1_transition_active_unchanged",
                stairs.transitionActive, transitionActiveBefore,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:65 (I1 no-mutation)");
@@ -244,8 +244,8 @@ static void test_stairs_use_during_transition_is_a_pure_no_op(void)
 static void test_inventory_is_datafreeze_during_pending_transition(void)
 {
     /*
-     * Between m11_stairs_use returning (transitionActive=1,
-     * transitionTicksLeft=500) and m11_stairs_tick consuming the full
+     * Between DM1_V1_Stairs_UsePc34Compat returning (transitionActive=1,
+     * transitionTicksLeft=500) and DM1_V1_Stairs_TickPc34Compat consuming the full
      * 500 ms, the transition is "pending".  During this window the
      * DM1_V1_InventoryStatePc34 must remain byte-identical to the pre-use
      * snapshot — neither the level state ticks (I4) nor any future
@@ -256,26 +256,26 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
      * tests settle the transition to completion; it does NOT pin the
      * mid-tick (still-pending) inventory freeze.
      */
-    M11_StairLevelState stairs;
+    DM1_V1_StairLevelStatePc34 stairs;
     DM1_V1_InventoryStatePc34 inv;
     DM1_V1_ItemPc34 linked[8];
     int champ = 0;
     int newX, newY, newFacing;
     int i, transitioning;
 
-    m11_stairs_init(&stairs);
-    m11_stairs_add_level(&stairs, 16, 16);
-    m11_stairs_add_level(&stairs, 16, 16);
-    m11_stairs_add_level(&stairs, 16, 16);
+    DM1_V1_Stairs_InitPc34Compat(&stairs);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
     /* (6,6) → level 1; (12,12) → level 2; (3,3) → level 0 (return stair). */
     expect_int("datafreeze_add_up1",
-               m11_stairs_add(&stairs, 6, 6, 0, 1, 6, 6, 0), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 6, 6, 0, 1, 6, 6, 0), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("datafreeze_add_up2",
-               m11_stairs_add(&stairs, 12, 12, 0, 2, 12, 12, 0), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 12, 12, 0, 2, 12, 12, 0), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("datafreeze_add_return",
-               m11_stairs_add(&stairs, 3, 3, 0, 0, 3, 3, 0), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 3, 3, 0, 0, 3, 3, 0), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
     DM1_V1_Inventory_InitPc34Compat(&inv, 1);
@@ -298,7 +298,7 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
 
     /* Take the stairs so a transition is pending. */
     expect_int("datafreeze_first_use_rc",
-               m11_stairs_use(&stairs, 6, 6, &newX, &newY, &newFacing), 1,
+               DM1_V1_Stairs_UsePc34Compat(&stairs, 6, 6, &newX, &newY, &newFacing), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("datafreeze_transition_active",
                stairs.transitionActive, 1,
@@ -308,9 +308,9 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:87 nominal 500ms");
 
     /* Tick once (100ms) — transition is still active, transitionTicksLeft=400. */
-    m11_stairs_tick(&stairs, 100);
+    DM1_V1_Stairs_TickPc34Compat(&stairs, 100);
     expect_int("datafreeze_one_tick_active",
-               m11_stairs_is_transitioning(&stairs), 1,
+               DM1_V1_Stairs_IsTransitioningPc34Compat(&stairs), 1,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:108-117 (I3 clamp + I4)");
     expect_int("datafreeze_one_tick_ticks_left",
                stairs.transitionTicksLeft, 400,
@@ -331,7 +331,7 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
     newY = -55;
     newFacing = -55;
     expect_int("datafreeze_rejected_mid_tick_rc",
-               m11_stairs_use(&stairs, 12, 12, &newX, &newY, &newFacing), 0,
+               DM1_V1_Stairs_UsePc34Compat(&stairs, 12, 12, &newX, &newY, &newFacing), 0,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:65 (I1 mid-tick)");
     expect_int("datafreeze_rejected_mid_tick_x", newX, -55,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:65-67 (I1 no-write)");
@@ -344,9 +344,9 @@ static void test_inventory_is_datafreeze_during_pending_transition(void)
 
     /* Tick through the rest of the transition (5 more ticks * 100ms = 500ms). */
     for (i = 0; i < 5; ++i) {
-        m11_stairs_tick(&stairs, 100);
+        DM1_V1_Stairs_TickPc34Compat(&stairs, 100);
     }
-    transitioning = m11_stairs_is_transitioning(&stairs);
+    transitioning = DM1_V1_Stairs_IsTransitioningPc34Compat(&stairs);
     expect_int("datafreeze_settled_transitioning", transitioning, 0,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:114 (settle)");
     expect_int("datafreeze_settled_panel",
@@ -364,25 +364,25 @@ static void test_rejected_call_does_not_corrupt_followup_stairs_use(void)
     /*
      * The I1 rejection path must not only be a no-op for the current
      * state but also leave the level state machine ready for the next
-     * successful m11_stairs_use.  After the rejected call, ticking the
+     * successful DM1_V1_Stairs_UsePc34Compat.  After the rejected call, ticking the
      * transition to completion, then taking the next stairs, must work
      * exactly as if the rejected call had never happened.
      */
-    M11_StairLevelState stairs;
+    DM1_V1_StairLevelStatePc34 stairs;
     DM1_V1_InventoryStatePc34 inv;
     DM1_V1_ItemPc34 linked[8];
     int champ = 0;
     int newX, newY, newFacing;
     int i, rc;
 
-    m11_stairs_init(&stairs);
-    m11_stairs_add_level(&stairs, 16, 16);
-    m11_stairs_add_level(&stairs, 16, 16);
+    DM1_V1_Stairs_InitPc34Compat(&stairs);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
+    DM1_V1_Stairs_AddLevelPc34Compat(&stairs, 16, 16);
     expect_int("followup_add_up",
-               m11_stairs_add(&stairs, 7, 7, 2, 1, 7, 7, 2), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 7, 7, 2, 1, 7, 7, 2), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("followup_add_down",
-               m11_stairs_add(&stairs, 9, 9, 2, 0, 9, 9, 2), 1,
+               DM1_V1_Stairs_AddPc34Compat(&stairs, 9, 9, 2, 0, 9, 9, 2), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
     DM1_V1_Inventory_InitPc34Compat(&inv, 1);
@@ -401,13 +401,13 @@ static void test_rejected_call_does_not_corrupt_followup_stairs_use(void)
 
     /* Take stairs up. */
     expect_int("followup_first_use_rc",
-               m11_stairs_use(&stairs, 7, 7, &newX, &newY, &newFacing), 1,
+               DM1_V1_Stairs_UsePc34Compat(&stairs, 7, 7, &newX, &newY, &newFacing), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("followup_first_current_level", stairs.currentLevel, 1,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:86 (I2 IRED)");
 
     /* Rejected call mid-transition. */
-    rc = m11_stairs_use(&stairs, 9, 9, &newX, &newY, &newFacing);
+    rc = DM1_V1_Stairs_UsePc34Compat(&stairs, 9, 9, &newX, &newY, &newFacing);
     expect_int("followup_rejected_rc", rc, 0,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:65 (I1)");
     expect_int("followup_rejected_current_level", stairs.currentLevel, 1,
@@ -415,10 +415,10 @@ static void test_rejected_call_does_not_corrupt_followup_stairs_use(void)
 
     /* Tick through to settle. */
     for (i = 0; i < 8; ++i) {
-        m11_stairs_tick(&stairs, 100);
+        DM1_V1_Stairs_TickPc34Compat(&stairs, 100);
     }
     expect_int("followup_settled_transitioning",
-               m11_stairs_is_transitioning(&stairs), 0,
+               DM1_V1_Stairs_IsTransitioningPc34Compat(&stairs), 0,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:114 (settle)");
     expect_int("followup_settled_current_level", stairs.currentLevel, 1,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:114 currentLevel preserved");
@@ -437,7 +437,7 @@ static void test_rejected_call_does_not_corrupt_followup_stairs_use(void)
 
     /* Now take the down-stairs successfully. */
     expect_int("followup_second_use_rc",
-               m11_stairs_use(&stairs, 9, 9, &newX, &newY, &newFacing), 1,
+               DM1_V1_Stairs_UsePc34Compat(&stairs, 9, 9, &newX, &newY, &newFacing), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
     expect_int("followup_second_current_level", stairs.currentLevel, 0,
                "src/dm1/dm1_v1_stairs_level_pc34_compat.c:86 (I2 IRED)");
