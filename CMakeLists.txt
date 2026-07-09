@@ -292,6 +292,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_automap_pc34_compat.c
     src/dm1/dm1_v1_combat_log_pc34_compat.c
     src/dm1/dm1_v1_custom_dungeon_loader.c
+    src/dm1/dm1_v1_champion_status_layout_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_sequence_pc34_compat.c
     src/csb/csb_v1_keyboard_commands_pc34_compat.c
@@ -8728,6 +8729,20 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_dialog_layout_pc34_compat
         COMMAND test_dm1_v1_dialog_layout_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_status_layout_pc34_compat
+        tests/test_dm1_v1_champion_status_layout_pc34_compat.c
+        src/dm1/dm1_v1_champion_status_layout_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_status_layout_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_status_layout_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_status_layout_pc34_compat
+        COMMAND test_dm1_v1_champion_status_layout_pc34_compat
     )
 
     add_executable(test_dm1_v1_endgame_layout_pc34_compat
