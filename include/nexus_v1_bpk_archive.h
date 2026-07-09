@@ -437,6 +437,35 @@ typedef struct {
                                      because capacity was hit */
 } Nexus_V1_BpkPrs3PayloadEvidenceSummary;
 
+typedef enum {
+    NEXUS_V1_BPK_PRS3_STREAM_OK = 0,
+    NEXUS_V1_BPK_PRS3_STREAM_ERR_NULL = -1,
+    NEXUS_V1_BPK_PRS3_STREAM_ERR_ARCHIVE = -2,
+    NEXUS_V1_BPK_PRS3_STREAM_ERR_NOT_PRS3 = -3,
+    NEXUS_V1_BPK_PRS3_STREAM_ERR_UNSUPPORTED_MODE = -4,
+    NEXUS_V1_BPK_PRS3_STREAM_ERR_TRUNCATED = -5
+} Nexus_V1_BpkPrs3StreamStatus;
+
+typedef struct {
+    uint32_t entry_index;
+    uint8_t mode;
+    uint16_t width;
+    uint8_t height;
+    uint32_t bpp;
+    uint32_t pixel_count;
+    uint32_t expected_output_bytes;
+    uint32_t stream_offset;       /* after PRS3 magic/version/pixel-count */
+    uint32_t stream_size;
+    uint32_t body_offset;         /* after leading stream-size word */
+    uint32_t body_size;
+    uint32_t header_first_u32;
+    uint32_t header_minus_payload;
+    int header_first_readable;
+    int header_underflow;
+    int bounded_header_candidate; /* header_minus_payload <= 16 */
+    int decode_blocked;           /* true until opcode decoder exists */
+} Nexus_V1_BpkPrs3StreamPlan;
+
 /* Walk every entry whose 20-byte prefix is complete AND whose prefix
  * mode is one of the four PRS3 pixel-mode tags (6/14/22/30). For each
  * such entry, record bounded compression evidence into
@@ -457,6 +486,14 @@ int nexus_v1_bpk_archive_prs3_payload_evidence(
     Nexus_V1_BpkPrs3PayloadEvidence *out_entries,
     uint32_t entry_capacity,
     Nexus_V1_BpkPrs3PayloadEvidenceSummary *out_summary);
+
+int nexus_v1_bpk_archive_prs3_stream_plan(
+    const uint8_t *data,
+    size_t data_size,
+    uint32_t index,
+    Nexus_V1_BpkPrs3StreamPlan *out_plan);
+
+const char *nexus_v1_bpk_prs3_stream_status_name(int status);
 
 #ifdef __cplusplus
 }
