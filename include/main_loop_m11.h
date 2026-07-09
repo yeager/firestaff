@@ -65,6 +65,8 @@ typedef struct {
     int bootProbeExpectTitleFrameMax; /* Require startupTitleFrame <= value. */
     int bootProbeExpectTitleFrameBoundary; /* Exact startupTitleFrameMax. */
     int bootProbeExpectTitleReady; /* -1 ignore, otherwise exact 0/1. */
+    int bootProbeExpectDm1HoCFullGraphics; /* Require complete DM1 HoC receipt. */
+    int bootProbeExpectDm1HoCReleaseAppCapture; /* Require launcher/release HoC route. */
     int retroAchievementsEnabled;
     int retroAchievementsHardcore;
     const char* retroAchievementsUser;

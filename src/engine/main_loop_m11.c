@@ -1961,6 +1961,8 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeExpectTitleFrameMax = -1;
     opts->bootProbeExpectTitleFrameBoundary = -1;
     opts->bootProbeExpectTitleReady = -1;
+    opts->bootProbeExpectDm1HoCFullGraphics = 0;
+    opts->bootProbeExpectDm1HoCReleaseAppCapture = 0;
     opts->retroAchievementsEnabled = 0;
     opts->retroAchievementsHardcore = 1;
     opts->retroAchievementsUser = NULL;
@@ -4384,6 +4386,52 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             "firestaff: boot-probe expected titleReady=%d but got %d\n",
                             o->bootProbeExpectTitleReady,
                             receipt.startupTitleReady);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectDm1HoCFullGraphics) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    !receipt.dm1HoCFullGraphicsReady ||
+                    !receipt.dm1HoCHostRenderPlanReady ||
+                    !receipt.dm1HoCCaptureProofPassed ||
+                    !receipt.dm1HoCRuntimeApplyReady ||
+                    !receipt.dm1HoCProductionConsumerReady ||
+                    !receipt.dm1HoCRealAssetCapture ||
+                    !receipt.dm1HoCHoCAssetCapture ||
+                    !receipt.dm1HoCOpenedEntranceFrame ||
+                    !receipt.dm1HoCHallMirrorOverlay ||
+                    !receipt.dm1HoCBlockedEnterUntilChampion ||
+                    receipt.dm1HoCRenderCommandCount != 3) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected DM1 HoC full graphics receipt but got ready=%d render=%d proof=%d apply=%d consumer=%d real=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d\n",
+                            receipt.dm1HoCFullGraphicsReady,
+                            receipt.dm1HoCHostRenderPlanReady,
+                            receipt.dm1HoCCaptureProofPassed,
+                            receipt.dm1HoCRuntimeApplyReady,
+                            receipt.dm1HoCProductionConsumerReady,
+                            receipt.dm1HoCRealAssetCapture,
+                            receipt.dm1HoCHoCAssetCapture,
+                            receipt.dm1HoCOpenedEntranceFrame,
+                            receipt.dm1HoCHallMirrorOverlay,
+                            receipt.dm1HoCBlockedEnterUntilChampion,
+                            receipt.dm1HoCRenderCommandCount);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectDm1HoCReleaseAppCapture) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    !receipt.dm1HoCMacWindowCapture ||
+                    !receipt.dm1HoCReleaseAppCapture ||
+                    !receipt.dm1HoCHostWindowCapture ||
+                    !receipt.dm1HoCHostCaptureRouteMatches ||
+                    !receipt.dm1HoCNoHostFallbackVisuals) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected DM1 HoC release-app host capture but got mac=%d release=%d hostWindow=%d route=%d noFallback=%d\n",
+                            receipt.dm1HoCMacWindowCapture,
+                            receipt.dm1HoCReleaseAppCapture,
+                            receipt.dm1HoCHostWindowCapture,
+                            receipt.dm1HoCHostCaptureRouteMatches,
+                            receipt.dm1HoCNoHostFallbackVisuals);
                     runRc = 4;
                 }
             }
