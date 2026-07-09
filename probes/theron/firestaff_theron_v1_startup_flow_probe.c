@@ -2541,9 +2541,18 @@ int main(void) {
                 check_int("runtime load host fallback source level",
                           load_result.level_loaded,
                           1);
+                check_int("runtime load host fallback route",
+                          load_result.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
                 check_int("runtime load host fallback state level",
                           load_state_receipt.level_loaded,
                           1);
+                check_int("runtime load host fallback state route set",
+                          load_state_receipt.set_runtime_level_route,
+                          1);
+                check_int("runtime load host fallback state route",
+                          load_state_receipt.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
                 check_int("runtime load host fallback state dungeon",
                           load_state_receipt.flow.selected_dungeon,
                           THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
@@ -2569,6 +2578,12 @@ int main(void) {
                 check_int("runtime load host verified Track02 result",
                           load_result.result,
                           THERON_STARTUP_ERR_LEVEL_LOAD);
+                check_int("runtime load host verified Track02 route",
+                          load_result.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED);
+                check_int("runtime load host verified Track02 fallback blocked",
+                          load_result.fallback_visuals_blocked,
+                          1);
                 check_contains("runtime load host verified Track02 status",
                                load_host_receipt.status,
                                "fallback visuals blocked");
@@ -2695,6 +2710,9 @@ int main(void) {
                 check_int("runtime wrapper state receipt level loaded",
                           state_receipt.level_loaded,
                           1);
+                check_int("runtime wrapper state receipt route",
+                          state_receipt.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
 
                 theron_v1_startup_action_init(&forcefield_action);
                 forcefield_action.kind =
@@ -2737,6 +2755,9 @@ int main(void) {
                 check_int("runtime combined state loaded",
                           state_receipt.level_loaded,
                           1);
+                check_int("runtime combined state route",
+                          state_receipt.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
 
                 theron_v1_startup_flow_init(&flow);
                 theron_v1_world_init(&world);
@@ -2775,6 +2796,9 @@ int main(void) {
                 check_int("runtime facts apply redraw",
                           runtime_apply_receipt.input_result,
                           THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_int("runtime facts state route",
+                          state_receipt.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
                 {
                     static const uint8_t verified_empty_track02[64] = {0};
                     Theron_StartupHostReceipt runtime_host_receipt;
@@ -2812,6 +2836,12 @@ int main(void) {
                               world.level_loaded[
                                   THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
                               0);
+                    check_int("runtime host verified Track02 result route",
+                              runtime_result.runtime_level_source,
+                              THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED);
+                    check_int("runtime host verified Track02 result blocked",
+                              runtime_result.fallback_visuals_blocked,
+                              1);
                     check_contains("runtime host verified Track02 receipt",
                                    runtime_receipt,
                                    "fallback visuals blocked");
