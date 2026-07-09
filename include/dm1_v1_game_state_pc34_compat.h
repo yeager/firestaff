@@ -63,7 +63,7 @@ typedef enum {
     DM1_STATE_VICTORY,              /* Game won / credits */
     DM1_STATE_RESTART,              /* Restart requested */
     DM1_STATE_COUNT
-} M11_GameStateId;
+} DM1_V1_GameStateIdPc34;
 
 /* ── Transition result ────────────────────────────────────────────── */
 typedef enum {
@@ -71,18 +71,18 @@ typedef enum {
     DM1_TRANS_INVALID,              /* Invalid transition */
     DM1_TRANS_BLOCKED,              /* Transition blocked (e.g. save in progress) */
     DM1_TRANS_SAME_STATE            /* Already in target state */
-} M11_TransitionResult;
+} DM1_V1_TransitionResultPc34;
 
 /* ── State transition callback ────────────────────────────────────── */
-typedef void (*M11_StateCallback)(M11_GameStateId prevState,
-                                  M11_GameStateId newState,
+typedef void (*DM1_V1_StateCallbackPc34)(DM1_V1_GameStateIdPc34 prevState,
+                                  DM1_V1_GameStateIdPc34 newState,
                                   void *userdata);
 
 /* ── Game state persistent data ───────────────────────────────────── */
 typedef struct {
     /* Current state */
-    M11_GameStateId currentState;
-    M11_GameStateId previousState;
+    DM1_V1_GameStateIdPc34 currentState;
+    DM1_V1_GameStateIdPc34 previousState;
 
     /* Key flags from STARTUP2.C / GAMELOOP.C */
     int newGame;                    /* G0298_B_NewGame */
@@ -99,72 +99,94 @@ typedef struct {
     uint32_t transitionCount;
 
     /* Optional callbacks */
-    M11_StateCallback onEnter;
-    M11_StateCallback onExit;
+    DM1_V1_StateCallbackPc34 onEnter;
+    DM1_V1_StateCallbackPc34 onExit;
     void *callbackUserdata;
-} M11_GameStateMachine;
+} DM1_V1_GameStateMachinePc34;
 
 /* ── Initialization ───────────────────────────────────────────────── */
 
 /* Initialize game state machine (equivalent to pre-STARTUP1 state). */
-void m11_game_state_init(M11_GameStateMachine *sm);
+void DM1_V1_GameState_InitPc34Compat(DM1_V1_GameStateMachinePc34 *sm);
 
 /* Set transition callbacks (optional). */
-void m11_game_state_set_callbacks(M11_GameStateMachine *sm,
-                                  M11_StateCallback onEnter,
-                                  M11_StateCallback onExit,
+void DM1_V1_GameState_SetCallbacksPc34Compat(DM1_V1_GameStateMachinePc34 *sm,
+                                  DM1_V1_StateCallbackPc34 onEnter,
+                                  DM1_V1_StateCallbackPc34 onExit,
                                   void *userdata);
 
 /* ── State transitions ────────────────────────────────────────────── */
 
 /* Request transition to a new state. Validates the transition. */
-M11_TransitionResult m11_game_state_transition(M11_GameStateMachine *sm,
-                                                M11_GameStateId newState);
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_TransitionPc34Compat(DM1_V1_GameStateMachinePc34 *sm,
+                                                DM1_V1_GameStateIdPc34 newState);
 
 /* Get current game state. */
-M11_GameStateId m11_game_state_current(const M11_GameStateMachine *sm);
+DM1_V1_GameStateIdPc34 DM1_V1_GameState_CurrentPc34Compat(const DM1_V1_GameStateMachinePc34 *sm);
 
 /* Get previous game state. */
-M11_GameStateId m11_game_state_previous(const M11_GameStateMachine *sm);
+DM1_V1_GameStateIdPc34 DM1_V1_GameState_PreviousPc34Compat(const DM1_V1_GameStateMachinePc34 *sm);
 
 /* Check if a transition from current state to target is valid. */
-int m11_game_state_can_transition(const M11_GameStateMachine *sm,
-                                  M11_GameStateId target);
+int DM1_V1_GameState_CanTransitionPc34Compat(const DM1_V1_GameStateMachinePc34 *sm,
+                                  DM1_V1_GameStateIdPc34 target);
 
 /* ── Convenience state setters (match STARTUP2.C patterns) ────────── */
 
 /* Start a new game (F0462_START_StartGame_CPSEF path). */
-M11_TransitionResult m11_game_state_start_new_game(M11_GameStateMachine *sm);
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_StartNewGamePc34Compat(DM1_V1_GameStateMachinePc34 *sm);
 
 /* Load a saved game (F0435_STARTEND_LoadGame path). */
-M11_TransitionResult m11_game_state_load_game(M11_GameStateMachine *sm);
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_LoadGamePc34Compat(DM1_V1_GameStateMachinePc34 *sm);
 
 /* Enter dungeon gameplay (after entrance). */
-M11_TransitionResult m11_game_state_enter_dungeon(M11_GameStateMachine *sm);
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_EnterDungeonPc34Compat(DM1_V1_GameStateMachinePc34 *sm);
 
 /* Open inventory for champion. */
-M11_TransitionResult m11_game_state_open_inventory(M11_GameStateMachine *sm,
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_OpenInventoryPc34Compat(DM1_V1_GameStateMachinePc34 *sm,
                                                     int championOrdinal);
 
 /* Close inventory, return to dungeon. */
-M11_TransitionResult m11_game_state_close_inventory(M11_GameStateMachine *sm);
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_CloseInventoryPc34Compat(DM1_V1_GameStateMachinePc34 *sm);
 
 /* Party died — transition to game over. */
-M11_TransitionResult m11_game_state_party_died(M11_GameStateMachine *sm);
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_PartyDiedPc34Compat(DM1_V1_GameStateMachinePc34 *sm);
 
 /* Game won — transition to victory/credits. */
-M11_TransitionResult m11_game_state_victory(M11_GameStateMachine *sm);
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_VictoryPc34Compat(DM1_V1_GameStateMachinePc34 *sm);
 
 /* Request game restart. */
-M11_TransitionResult m11_game_state_request_restart(M11_GameStateMachine *sm);
+DM1_V1_TransitionResultPc34 DM1_V1_GameState_RequestRestartPc34Compat(DM1_V1_GameStateMachinePc34 *sm);
 
 /* ── Query ────────────────────────────────────────────────────────── */
 
 /* Return human-readable name for a state. */
-const char *m11_game_state_name(M11_GameStateId state);
+const char *DM1_V1_GameState_NamePc34Compat(DM1_V1_GameStateIdPc34 state);
 
 /* Source evidence string. */
-const char *m11_game_state_source_evidence(void);
+const char *DM1_V1_GameState_SourceEvidencePc34Compat(void);
+
+typedef DM1_V1_GameStateIdPc34 M11_GameStateId;
+typedef DM1_V1_TransitionResultPc34 M11_TransitionResult;
+typedef DM1_V1_StateCallbackPc34 M11_StateCallback;
+typedef DM1_V1_GameStateMachinePc34 M11_GameStateMachine;
+
+#define m11_game_state_init DM1_V1_GameState_InitPc34Compat
+#define m11_game_state_set_callbacks DM1_V1_GameState_SetCallbacksPc34Compat
+#define m11_game_state_transition DM1_V1_GameState_TransitionPc34Compat
+#define m11_game_state_current DM1_V1_GameState_CurrentPc34Compat
+#define m11_game_state_previous DM1_V1_GameState_PreviousPc34Compat
+#define m11_game_state_can_transition DM1_V1_GameState_CanTransitionPc34Compat
+#define m11_game_state_start_new_game DM1_V1_GameState_StartNewGamePc34Compat
+#define m11_game_state_load_game DM1_V1_GameState_LoadGamePc34Compat
+#define m11_game_state_enter_dungeon DM1_V1_GameState_EnterDungeonPc34Compat
+#define m11_game_state_open_inventory DM1_V1_GameState_OpenInventoryPc34Compat
+#define m11_game_state_close_inventory DM1_V1_GameState_CloseInventoryPc34Compat
+#define m11_game_state_party_died DM1_V1_GameState_PartyDiedPc34Compat
+#define m11_game_state_victory DM1_V1_GameState_VictoryPc34Compat
+#define m11_game_state_request_restart DM1_V1_GameState_RequestRestartPc34Compat
+#define m11_game_state_name DM1_V1_GameState_NamePc34Compat
+#define m11_game_state_source_evidence DM1_V1_GameState_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }

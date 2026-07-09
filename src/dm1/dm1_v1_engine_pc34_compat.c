@@ -92,8 +92,8 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
     DM1_V1_Input_InitPc34Compat(&engine->input);
 
     /* 3. Game state machine → TITLE */
-    m11_game_state_init(&engine->stateMachine);
-    m11_game_state_transition(&engine->stateMachine, DM1_STATE_TITLE_SCREEN);
+    DM1_V1_GameState_InitPc34Compat(&engine->stateMachine);
+    DM1_V1_GameState_TransitionPc34Compat(&engine->stateMachine, DM1_STATE_TITLE_SCREEN);
 
     /* 4. Game loop (tick rate, vblank config) */
     DM1_V1_GameLoop_InitPc34Compat(&engine->gameLoop, config->extended_vblank);
@@ -158,7 +158,7 @@ M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs)
     result.inputProcessed = true;
 
     /* 2. Process movement pipeline (only in dungeon state) */
-    if (m11_game_state_current(&engine->stateMachine) ==
+    if (DM1_V1_GameState_CurrentPc34Compat(&engine->stateMachine) ==
         DM1_STATE_DUNGEON_VIEWPORT) {
 
         DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
@@ -178,17 +178,17 @@ M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs)
 
     /* 5. Check death / victory */
     if (engine->dungeonData.partyDead) {
-        m11_game_state_party_died(&engine->stateMachine);
+        DM1_V1_GameState_PartyDiedPc34Compat(&engine->stateMachine);
     }
     if (engine->dungeonData.gameWon) {
-        m11_game_state_victory(&engine->stateMachine);
+        DM1_V1_GameState_VictoryPc34Compat(&engine->stateMachine);
     }
 
     /* 6. Viewport draw flag (actual draw delegated to renderer) */
     result.viewportDrawn = loopResult.dungeonViewDrawn;
 
     /* 7. Fill result */
-    result.currentState  = m11_game_state_current(&engine->stateMachine);
+    result.currentState  = DM1_V1_GameState_CurrentPc34Compat(&engine->stateMachine);
     result.lastPhase     = loopResult.lastPhaseCompleted;
     result.partyDead     = loopResult.partyDead;
     result.gameWon       = engine->dungeonData.gameWon;
@@ -214,9 +214,9 @@ void m11_engine_shutdown(M11_Engine *engine)
 
 /* ── Engine queries ───────────────────────────────────────────────── */
 
-M11_GameStateId m11_engine_get_state(const M11_Engine *engine)
+DM1_V1_GameStateIdPc34 m11_engine_get_state(const M11_Engine *engine)
 {
-    return engine ? m11_game_state_current(&engine->stateMachine)
+    return engine ? DM1_V1_GameState_CurrentPc34Compat(&engine->stateMachine)
                   : DM1_STATE_NONE;
 }
 
@@ -246,8 +246,8 @@ bool m11_engine_new_game(M11_Engine *engine)
 {
     if (!engine || !engine->initialized) return false;
 
-    M11_TransitionResult tr =
-        m11_game_state_start_new_game(&engine->stateMachine);
+    DM1_V1_TransitionResultPc34 tr =
+        DM1_V1_GameState_StartNewGamePc34Compat(&engine->stateMachine);
     if (tr != DM1_TRANS_OK) return false;
 
     /* Reset dungeon to level 0 */
@@ -274,7 +274,7 @@ bool m11_engine_load_game(M11_Engine *engine, uint8_t slot)
     if (!DM1_V1_SaveLoad_LoadHeaderPc34Compat(&engine->saveLoad, slot, &header))
         return false;
 
-    m11_game_state_load_game(&engine->stateMachine);
+    DM1_V1_GameState_LoadGamePc34Compat(&engine->stateMachine);
     return true;
 }
 

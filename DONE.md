@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 game-state ownership names: state identifiers, transition results, callbacks, state machine, and transition/query helpers now expose DM1-owned API names; old m11_game_state names remain compatibility aliases. Verification: firestaff_m10/firestaff_m11 rebuild, launcher handoff 88/88, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 input/screen/loop-integration ownership names: input event/key/buffer/state, screen palette/framebuffer state, loop state/callback/timing, and related init/update/query helpers now expose DM1-owned API names; old m11_input/m11_screen/m11_gl names remain compatibility aliases. Verification: firestaff_m10/firestaff_m11 rebuild, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 dialog/fade ownership names: dialog-scroll set/message/state, message bar, queue/tick/query helpers, fade mode/color/state, palette save/get, fade in/out/overlay/swoosh/tick/cancel helpers, and DM1 engine call sites now expose DM1-owned API names; old m11_dg/m11_fade names remain compatibility aliases. Verification: firestaff_m10/firestaff_m11 rebuild, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
