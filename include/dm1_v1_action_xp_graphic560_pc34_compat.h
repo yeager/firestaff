@@ -354,6 +354,8 @@ typedef struct {
     int eventDelayTicks;
     int defenseDelta;
     int newShieldDefense;
+    int createsStatusEvent;
+    int lowManaHalvedTicks;
     int decrementsActionHandChargesOnSuccess;
 } DM1_ActionShieldPlanPc34;
 

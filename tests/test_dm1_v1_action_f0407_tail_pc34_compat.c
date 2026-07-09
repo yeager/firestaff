@@ -624,6 +624,8 @@ static void test_shield_plan(void) {
     CHECK_EQ(out.eventDelayTicks, 280, "spell shield event delay");
     CHECK_EQ(out.defenseDelta, 8, "spell shield defense");
     CHECK_EQ(out.newShieldDefense, 8, "spell shield new defense");
+    CHECK_EQ(out.createsStatusEvent, 1, "spell shield creates status event");
+    CHECK_EQ(out.lowManaHalvedTicks, 0, "spell shield keeps full ticks");
     CHECK_EQ(out.decrementsActionHandChargesOnSuccess, 1,
              "spell shield decrements charges");
 
@@ -639,6 +641,10 @@ static void test_shield_plan(void) {
     CHECK_EQ(out.remainingMana, 0, "low mana fire shield remaining mana");
     CHECK_EQ(out.statusEventType, 78, "fire shield event type");
     CHECK_EQ(out.eventDelayTicks, 140, "low mana fire shield half delay");
+    CHECK_EQ(out.createsStatusEvent, 1,
+             "low mana fire shield still creates status event");
+    CHECK_EQ(out.lowManaHalvedTicks, 1,
+             "low mana fire shield records halved ticks");
     CHECK_EQ(out.defenseDelta, 4, "low mana fire shield defense");
     CHECK_EQ(out.newShieldDefense, 4, "low mana fire shield new defense");
 
@@ -663,6 +669,10 @@ static void test_shield_plan(void) {
     CHECK_EQ(out.successful, 0, "zero mana shield fails");
     CHECK_EQ(out.eventDelayTicks, 0, "zero mana shield no event");
     CHECK_EQ(out.defenseDelta, 0, "zero mana shield no defense");
+    CHECK_EQ(out.createsStatusEvent, 0,
+             "zero mana shield returns before status event");
+    CHECK_EQ(out.lowManaHalvedTicks, 0,
+             "zero mana shield does not halve ticks");
     CHECK_EQ(out.decrementsActionHandChargesOnSuccess, 0,
              "zero mana shield no charge decrement");
 }
