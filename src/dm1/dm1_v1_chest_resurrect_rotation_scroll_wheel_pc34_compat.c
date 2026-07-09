@@ -95,7 +95,7 @@ static const DM1_V1_ChestResurrectRotationScrollWheelSpecPc34 s_spec = {
     DM1_PC34_CRR_SW_TARGET_COMMAND
 };
 
-static DM1_V1_ItemPc34 to_m11_item(CrrSwThingPc34 thing)
+static DM1_V1_ItemPc34 to_dm1_inventory_item(CrrSwThingPc34 thing)
 {
     DM1_V1_ItemPc34 item;
 
@@ -223,7 +223,7 @@ static void runtime_init(CrrSwRuntimePc34* runtime)
     for (i = 0; i < DM1_PC34_CRR_SW_SLOT_COUNT; ++i) {
         CrrSwThingPc34 thing = make_slot_thing(i);
 
-        linked[i] = to_m11_item(thing);
+        linked[i] = to_dm1_inventory_item(thing);
         runtime->quantities[runtime->openChampion][i] = thing.quantity;
     }
 

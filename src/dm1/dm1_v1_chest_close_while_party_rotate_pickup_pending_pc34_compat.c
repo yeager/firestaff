@@ -64,7 +64,7 @@ static const DM1_V1_ChestCloseWhilePartyRotatePickupSpecPc34 s_spec = {
     DM1_PC34_CLOSE_ROTATE_PICKUP_SLOT_COUNT - 1
 };
 
-static DM1_V1_ItemPc34 to_m11_item(CloseRotatePickupThingPc34 thing)
+static DM1_V1_ItemPc34 to_dm1_inventory_item(CloseRotatePickupThingPc34 thing)
 {
     DM1_V1_ItemPc34 item;
 
@@ -100,7 +100,7 @@ static void copy_linked_to_m11(const CloseRotatePickupThingPc34* linked,
     int i;
 
     for (i = 0; i < DM1_PC34_CLOSE_ROTATE_PICKUP_SLOT_COUNT; ++i) {
-        items[i] = to_m11_item(linked[i]);
+        items[i] = to_dm1_inventory_item(linked[i]);
     }
 }
 

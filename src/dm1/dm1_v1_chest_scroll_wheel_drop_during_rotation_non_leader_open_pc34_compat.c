@@ -81,7 +81,7 @@ s_spec = {
     DM1_PC34_SW_DROP_ROT_NLO_TARGET_COMMAND
 };
 
-static DM1_V1_ItemPc34 to_m11_item(DropRotateThingPc34 thing)
+static DM1_V1_ItemPc34 to_dm1_inventory_item(DropRotateThingPc34 thing)
 {
     DM1_V1_ItemPc34 item;
 
@@ -208,7 +208,7 @@ static void runtime_init(DropRotateRuntimePc34* runtime)
             continue;
         }
         runtime->linked[i] = make_stable_thing(i);
-        linked[i] = to_m11_item(runtime->linked[i]);
+        linked[i] = to_dm1_inventory_item(runtime->linked[i]);
         runtime->quantityByChampion[runtime->openChampion][i] =
             runtime->linked[i].quantity;
     }

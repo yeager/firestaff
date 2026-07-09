@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0128/chest converter ownership names: F0128 viewport readiness helpers now expose DM1-owned API names and local chest inventory item converters use DM1-owned names; old F0128 M11 names remain aliases. Verification: F0128 viewport, chest open mirror rotation, chest wheel/drop/close/rotation/deposit probes, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 door-bash feedback ownership names: door-bash resolver/action/source-lock helpers now expose DM1-owned API names and DM1 call sites use them; old M11 names remain aliases. Verification: door-bash feedback, door-bash sound/no-open gate, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 chest runtime probe ownership names: auto-close-on-leader-death and full-leader-hand drop-to-floor probes now expose DM1-owned API names; old M11 names remain aliases. Verification: auto-close leader death, drop-to-floor full hand, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

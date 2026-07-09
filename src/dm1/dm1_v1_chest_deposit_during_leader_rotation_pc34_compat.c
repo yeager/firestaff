@@ -71,7 +71,7 @@ static const DM1_V1_ChestDepositDuringLeaderRotationSpecPc34 s_spec = {
     DM1_PC34_DEPOSIT_ROTATE_C040_OFF
 };
 
-static DM1_V1_ItemPc34 to_m11_item(DepositThingPc34 thing)
+static DM1_V1_ItemPc34 to_dm1_inventory_item(DepositThingPc34 thing)
 {
     DM1_V1_ItemPc34 item;
 
@@ -195,7 +195,7 @@ static void runtime_init(DepositRuntimePc34* runtime)
         make_target_thing();
 
     for (i = 0; i < DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT; ++i) {
-        linked[i] = to_m11_item(runtime->linked[i]);
+        linked[i] = to_dm1_inventory_item(runtime->linked[i]);
         runtime->quantityByChampion[DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER][i] =
             runtime->linked[i].quantity;
     }
