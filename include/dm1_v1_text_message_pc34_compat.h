@@ -151,36 +151,49 @@ void dm1_v1_text_get_cursor(const DM1_V1_TextMessageState* state,
                             int* outColumn, int* outRow);
 int  dm1_v1_text_get_active_row_count(const DM1_V1_TextMessageState* state);
 
-/* ── Legacy compat shim (old M11_TextState API) ─────────────────────── */
+/* ── Legacy compat shim (old DM1_V1_LegacyTextStatePc34 API) ─────────────────────── */
 
-#define M11_TEXT_MAX_MESSAGES 8
-#define M11_TEXT_MAX_LENGTH   64
-#define M11_TEXT_DISPLAY_TICKS 150
+#define DM1_V1_LEGACY_TEXT_MAX_MESSAGES_PC34 8
+#define DM1_V1_LEGACY_TEXT_MAX_LENGTH_PC34   64
+#define DM1_V1_LEGACY_TEXT_DISPLAY_TICKS_PC34 150
 
 typedef struct {
-    char text[M11_TEXT_MAX_LENGTH];
+    char text[DM1_V1_LEGACY_TEXT_MAX_LENGTH_PC34];
     int  ticksRemaining;
     int  priority;
     int  x;
     int  y;
     int  color;
-} M11_TextMessage;
+} DM1_V1_LegacyTextMessagePc34;
 
 typedef struct {
-    M11_TextMessage messages[M11_TEXT_MAX_MESSAGES];
+    DM1_V1_LegacyTextMessagePc34 messages[DM1_V1_LEGACY_TEXT_MAX_MESSAGES_PC34];
     int messageCount;
     int fontWidth;
     int fontHeight;
-} M11_TextState;
+} DM1_V1_LegacyTextStatePc34;
 
-void m11_text_init(M11_TextState* s);
-void m11_text_show(M11_TextState* s, const char* text,
+void DM1_V1_LegacyText_InitPc34Compat(DM1_V1_LegacyTextStatePc34* s);
+void DM1_V1_LegacyText_ShowPc34Compat(DM1_V1_LegacyTextStatePc34* s, const char* text,
                    int x, int y, int color, int priority);
-void m11_text_show_centered(M11_TextState* s, const char* text,
+void DM1_V1_LegacyText_ShowCenteredPc34Compat(DM1_V1_LegacyTextStatePc34* s, const char* text,
                             int y, int color);
-void m11_text_tick(M11_TextState* s, int tickMs);
-int  m11_text_get_active_count(const M11_TextState* s);
-const M11_TextMessage* m11_text_get_message(const M11_TextState* s, int index);
+void DM1_V1_LegacyText_TickPc34Compat(DM1_V1_LegacyTextStatePc34* s, int tickMs);
+int  DM1_V1_LegacyText_GetActiveCountPc34Compat(const DM1_V1_LegacyTextStatePc34* s);
+const DM1_V1_LegacyTextMessagePc34* DM1_V1_LegacyText_GetMessagePc34Compat(const DM1_V1_LegacyTextStatePc34* s, int index);
+
+/* Compatibility aliases for older M11 call sites. */
+#define M11_TEXT_MAX_MESSAGES DM1_V1_LEGACY_TEXT_MAX_MESSAGES_PC34
+#define M11_TEXT_MAX_LENGTH DM1_V1_LEGACY_TEXT_MAX_LENGTH_PC34
+#define M11_TEXT_DISPLAY_TICKS DM1_V1_LEGACY_TEXT_DISPLAY_TICKS_PC34
+typedef DM1_V1_LegacyTextMessagePc34 M11_TextMessage;
+typedef DM1_V1_LegacyTextStatePc34 M11_TextState;
+#define m11_text_init DM1_V1_LegacyText_InitPc34Compat
+#define m11_text_show DM1_V1_LegacyText_ShowPc34Compat
+#define m11_text_show_centered DM1_V1_LegacyText_ShowCenteredPc34Compat
+#define m11_text_tick DM1_V1_LegacyText_TickPc34Compat
+#define m11_text_get_active_count DM1_V1_LegacyText_GetActiveCountPc34Compat
+#define m11_text_get_message DM1_V1_LegacyText_GetMessagePc34Compat
 
 #ifdef __cplusplus
 }

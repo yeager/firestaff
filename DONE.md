@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 title/portrait/wall/light/text helper ownership names: title zoom state, portrait panel state, wall ornament definitions, legacy light wrappers, and legacy text wrappers now expose DM1-owned API names; old M11 names remain aliases. Verification: intro/title cleanup, light 22/22, text 96/96, wall ornament 106/106, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 presentation/runtime helper ownership names: game-over/title state, engine aggregate/tick API, menu render, field/teleporter effects, palette/font, combat-log types, and custom-dungeon loader now expose DM1-owned API names; old M11 names remain aliases. Verification: firestaff_m10/firestaff_m11 build, field teleporter 134/134, custom dungeon import, text message 96/96, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 graphics loader ownership names: bitmap headers, decoded bitmaps, LZW state, loader state, GRAPHICS.DAT open/load/free/close, and LZW decompress helpers now expose DM1-owned API names; old M11_GFX/m11_gfx names remain aliases for CSB/engine compatibility. Verification: LZW round-trip 8/8, firestaff_m10/firestaff_m11 build, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

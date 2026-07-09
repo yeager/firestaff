@@ -421,27 +421,27 @@ int dm1_v1_text_get_active_row_count(const DM1_V1_TextMessageState* state) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
- * Legacy M11_TextState compatibility shim
+ * Legacy DM1_V1_LegacyTextStatePc34 compatibility shim
  * ══════════════════════════════════════════════════════════════════════ */
 
-void m11_text_init(M11_TextState* s) {
+void DM1_V1_LegacyText_InitPc34Compat(DM1_V1_LegacyTextStatePc34* s) {
     if (!s) return;
     memset(s, 0, sizeof(*s));
     s->fontWidth = 8;
     s->fontHeight = 8;
 }
 
-void m11_text_show(M11_TextState* s, const char* text,
+void DM1_V1_LegacyText_ShowPc34Compat(DM1_V1_LegacyTextStatePc34* s, const char* text,
                    int x, int y, int color, int priority) {
     int idx = -1;
     if (!s || !text) return;
 
-    if (s->messageCount < M11_TEXT_MAX_MESSAGES) {
+    if (s->messageCount < DM1_V1_LEGACY_TEXT_MAX_MESSAGES_PC34) {
         idx = s->messageCount;
     } else {
         int lowest = 0x7FFFFFFF;
         int i;
-        for (i = 0; i < M11_TEXT_MAX_MESSAGES; i++) {
+        for (i = 0; i < DM1_V1_LEGACY_TEXT_MAX_MESSAGES_PC34; i++) {
             if (s->messages[i].priority < lowest) {
                 lowest = s->messages[i].priority;
                 idx = i;
@@ -450,26 +450,26 @@ void m11_text_show(M11_TextState* s, const char* text,
     }
     if (idx < 0) return;
 
-    strncpy(s->messages[idx].text, text, M11_TEXT_MAX_LENGTH - 1);
-    s->messages[idx].text[M11_TEXT_MAX_LENGTH - 1] = '\0';
-    s->messages[idx].ticksRemaining = M11_TEXT_DISPLAY_TICKS;
+    strncpy(s->messages[idx].text, text, DM1_V1_LEGACY_TEXT_MAX_LENGTH_PC34 - 1);
+    s->messages[idx].text[DM1_V1_LEGACY_TEXT_MAX_LENGTH_PC34 - 1] = '\0';
+    s->messages[idx].ticksRemaining = DM1_V1_LEGACY_TEXT_DISPLAY_TICKS_PC34;
     s->messages[idx].x = x;
     s->messages[idx].y = y;
     s->messages[idx].color = color;
     s->messages[idx].priority = priority;
-    if (s->messageCount < M11_TEXT_MAX_MESSAGES) s->messageCount++;
+    if (s->messageCount < DM1_V1_LEGACY_TEXT_MAX_MESSAGES_PC34) s->messageCount++;
 }
 
-void m11_text_show_centered(M11_TextState* s, const char* text,
+void DM1_V1_LegacyText_ShowCenteredPc34Compat(DM1_V1_LegacyTextStatePc34* s, const char* text,
                             int y, int color) {
     int len, x;
     if (!s || !text) return;
     len = (int)strlen(text);
     x = (224 - len * s->fontWidth) / 2;
-    m11_text_show(s, text, x, y, color, 0);
+    DM1_V1_LegacyText_ShowPc34Compat(s, text, x, y, color, 0);
 }
 
-void m11_text_tick(M11_TextState* s, int tickMs) {
+void DM1_V1_LegacyText_TickPc34Compat(DM1_V1_LegacyTextStatePc34* s, int tickMs) {
     int w = 0, r;
     if (!s) return;
     for (r = 0; r < s->messageCount; r++) {
@@ -482,11 +482,11 @@ void m11_text_tick(M11_TextState* s, int tickMs) {
     s->messageCount = w;
 }
 
-int m11_text_get_active_count(const M11_TextState* s) {
+int DM1_V1_LegacyText_GetActiveCountPc34Compat(const DM1_V1_LegacyTextStatePc34* s) {
     return s ? s->messageCount : 0;
 }
 
-const M11_TextMessage* m11_text_get_message(const M11_TextState* s, int index) {
+const DM1_V1_LegacyTextMessagePc34* DM1_V1_LegacyText_GetMessagePc34Compat(const DM1_V1_LegacyTextStatePc34* s, int index) {
     if (!s || index < 0 || index >= s->messageCount) return NULL;
     return &s->messages[index];
 }

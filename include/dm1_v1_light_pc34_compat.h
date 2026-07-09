@@ -192,17 +192,27 @@ uint16_t dm1_light_darken_rgb444(uint16_t rgb444);
 
 /* ── Legacy API (thin wrappers for backwards compat) ────────────────── */
 
-typedef DM1_LightState M11_LightState;
-typedef DM1_TorchSlot  M11_LightSource;
+typedef DM1_LightState DM1_V1_LegacyLightStatePc34;
+typedef DM1_TorchSlot  DM1_V1_LegacyLightSourcePc34;
 
-#define M11_LIGHT_MAX_SOURCES DM1_MAX_TORCH_SLOTS
+#define DM1_V1_LEGACY_LIGHT_MAX_SOURCES_PC34 DM1_MAX_TORCH_SLOTS
 enum { DM1_LIGHT_SOURCE_TORCH = 0, DM1_LIGHT_SOURCE_SPELL, DM1_LIGHT_SOURCE_ITEM, DM1_LIGHT_SOURCE_COUNT };
 
-void m11_light_init(M11_LightState *s);
-void m11_light_tick(M11_LightState *s, int tick_ms);
-int  m11_light_get_level_at_depth(const M11_LightState *s, int view_depth);
-int  m11_light_get_darkness_mask(const M11_LightState *s, int view_depth);
-void m11_light_apply_torch(M11_LightState *s, int torch_power);
+void DM1_V1_Light_LegacyInitPc34Compat(DM1_V1_LegacyLightStatePc34 *s);
+void DM1_V1_Light_LegacyTickPc34Compat(DM1_V1_LegacyLightStatePc34 *s, int tick_ms);
+int  DM1_V1_Light_LegacyGetLevelAtDepthPc34Compat(const DM1_V1_LegacyLightStatePc34 *s, int view_depth);
+int  DM1_V1_Light_LegacyGetDarknessMaskPc34Compat(const DM1_V1_LegacyLightStatePc34 *s, int view_depth);
+void DM1_V1_Light_LegacyApplyTorchPc34Compat(DM1_V1_LegacyLightStatePc34 *s, int torch_power);
+
+/* Compatibility aliases for older M11 call sites. */
+typedef DM1_V1_LegacyLightStatePc34 M11_LightState;
+typedef DM1_V1_LegacyLightSourcePc34 M11_LightSource;
+#define M11_LIGHT_MAX_SOURCES DM1_V1_LEGACY_LIGHT_MAX_SOURCES_PC34
+#define m11_light_init DM1_V1_Light_LegacyInitPc34Compat
+#define m11_light_tick DM1_V1_Light_LegacyTickPc34Compat
+#define m11_light_get_level_at_depth DM1_V1_Light_LegacyGetLevelAtDepthPc34Compat
+#define m11_light_get_darkness_mask DM1_V1_Light_LegacyGetDarknessMaskPc34Compat
+#define m11_light_apply_torch DM1_V1_Light_LegacyApplyTorchPc34Compat
 
 #ifdef __cplusplus
 }
