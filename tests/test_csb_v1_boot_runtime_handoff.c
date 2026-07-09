@@ -1952,6 +1952,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               readiness_receipt.host_input_blocked &&
               !readiness_receipt.host_startup_input_ready &&
               !readiness_receipt.host_runtime_input_ready &&
+              readiness_receipt.host_hud_blocked &&
+              !readiness_receipt.host_startup_hud_ready &&
+              !readiness_receipt.host_runtime_hud_ready &&
               strcmp(readiness_receipt.animation, "csb-title") == 0 &&
               readiness_receipt.title_presents_visible,
           "boot startup readiness receipt owns post-FTL title-not-ready gate");
@@ -2174,6 +2177,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
               !readiness_receipt.host_input_blocked &&
               readiness_receipt.host_startup_input_ready &&
+              !readiness_receipt.host_hud_blocked &&
+              readiness_receipt.host_startup_hud_ready &&
               readiness_receipt.utility_menu_row_count ==
                   CSB_V1_UTIL_MENU_ROW_COUNT &&
               readiness_receipt.selected_utility_action_index == 0,
@@ -2239,6 +2244,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
               !readiness_receipt.host_input_blocked &&
               readiness_receipt.host_startup_input_ready &&
+              !readiness_receipt.host_hud_blocked &&
+              readiness_receipt.host_startup_hud_ready &&
               readiness_receipt.hud_menu_option_count == 4 &&
               readiness_receipt.selected_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
@@ -2269,6 +2276,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !readiness_receipt.host_input_blocked &&
               !readiness_receipt.host_startup_input_ready &&
               readiness_receipt.host_runtime_input_ready &&
+              !readiness_receipt.host_hud_blocked &&
+              !readiness_receipt.host_startup_hud_ready &&
+              readiness_receipt.host_runtime_hud_ready &&
               readiness_receipt.runtime_level_loaded == 1 &&
               readiness_receipt.runtime_map_index == 6 &&
               readiness_receipt.runtime_party_x == 12 &&
@@ -2393,6 +2403,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !view_receipt.hud_menu_receipt_ready &&
               !view_receipt.suppress_legacy_utility_fallback,
           "boot startup render-view receipt owns door-opening runtime route");
+    CHECK(csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
+              &snapshot,
+              &readiness_receipt) == 1 &&
+              readiness_receipt.valid &&
+              readiness_receipt.startup_active &&
+              !readiness_receipt.input_ready &&
+              !readiness_receipt.hud_menu_ready &&
+              readiness_receipt.host_input_blocked &&
+              readiness_receipt.host_hud_blocked &&
+              !readiness_receipt.host_startup_input_ready &&
+              !readiness_receipt.host_startup_hud_ready,
+          "boot startup readiness receipt blocks host input/HUD during door opening");
     snapshot.opening_active = 0;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 0;

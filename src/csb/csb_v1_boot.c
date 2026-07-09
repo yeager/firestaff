@@ -1950,6 +1950,10 @@ int csb_v1_boot_startup_readiness_receipt_from_view_pc34(
         out_receipt->startup_active && out_receipt->input_ready ? 1 : 0;
     out_receipt->host_input_blocked =
         out_receipt->startup_active && !out_receipt->input_ready ? 1 : 0;
+    out_receipt->host_startup_hud_ready =
+        out_receipt->startup_active && out_receipt->hud_menu_ready ? 1 : 0;
+    out_receipt->host_hud_blocked =
+        out_receipt->startup_active && !out_receipt->hud_menu_ready ? 1 : 0;
     out_receipt->suppress_legacy_utility_fallback =
         view->suppress_legacy_utility_fallback ? 1 : 0;
     snprintf(out_receipt->animation, sizeof(out_receipt->animation), "%s",
@@ -2000,6 +2004,7 @@ int csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
             out_receipt->runtime_viewport_ready = 1;
             out_receipt->runtime_hud_ready = 1;
             out_receipt->host_runtime_input_ready = 1;
+            out_receipt->host_runtime_hud_ready = 1;
             out_receipt->runtime_level_loaded =
                 snapshot->runtime_level_loaded;
             out_receipt->runtime_map_index = snapshot->runtime_map_index;
@@ -2029,6 +2034,9 @@ int csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
         out_receipt->host_input_blocked = 0;
         out_receipt->host_startup_input_ready = 0;
         out_receipt->host_runtime_input_ready = 1;
+        out_receipt->host_hud_blocked = 0;
+        out_receipt->host_startup_hud_ready = 0;
+        out_receipt->host_runtime_hud_ready = 1;
         out_receipt->runtime_level_loaded = snapshot->runtime_level_loaded;
         out_receipt->runtime_map_index = snapshot->runtime_map_index;
         out_receipt->runtime_party_x = snapshot->runtime_party_x;
