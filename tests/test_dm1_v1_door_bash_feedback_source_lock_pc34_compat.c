@@ -95,35 +95,35 @@ static void test_action_ordinal_set(void)
     /* MENU.C:1311-1316 bash group is { C030 BASH, C018 HACK, C019 BERZERK,
      * C007 KICK, C013 SWING, C002 CHOP }. */
     expect_bool("action.c030_bash",
-                M11_GameView_DoorBashActionIsBashPc34(0x30), true,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x30), true,
                 "MENU.C:1311 C030 BASH");
     expect_bool("action.c018_hack",
-                M11_GameView_DoorBashActionIsBashPc34(0x18), true,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x18), true,
                 "MENU.C:1312 C018 HACK");
     expect_bool("action.c019_berzerk",
-                M11_GameView_DoorBashActionIsBashPc34(0x13), true,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x13), true,
                 "MENU.C:1313 C019 BERZERK");
     expect_bool("action.c007_kick",
-                M11_GameView_DoorBashActionIsBashPc34(0x07), true,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x07), true,
                 "MENU.C:1314 C007 KICK");
     expect_bool("action.c013_swing",
-                M11_GameView_DoorBashActionIsBashPc34(0x0D), true,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x0D), true,
                 "MENU.C:1315 C013 SWING");
     expect_bool("action.c002_chop",
-                M11_GameView_DoorBashActionIsBashPc34(0x02), true,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x02), true,
                 "MENU.C:1316 C002 CHOP");
     /* Negative cases: ranged / spell / pickup actions are not bash. */
     expect_bool("action.negative_c006_punch",
-                M11_GameView_DoorBashActionIsBashPc34(0x06), false,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x06), false,
                 "MENU.C:1320+ melee falls through to F0402");
     expect_bool("action.negative_c015_thrust",
-                M11_GameView_DoorBashActionIsBashPc34(0x0F), false,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x0F), false,
                 "MENU.C:1320+ melee falls through to F0402");
     expect_bool("action.negative_c025_melee_other",
-                M11_GameView_DoorBashActionIsBashPc34(0x19), false,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x19), false,
                 "MENU.C:1320+ melee falls through to F0402");
     expect_bool("action.negative_c040_spit",
-                M11_GameView_DoorBashActionIsBashPc34(0x28), false,
+                DM1_V1_DoorBash_ActionIsBashPc34Compat(0x28), false,
                 "MENU.C:1299 C040_ACTION_SPIT is ranged spell");
 }
 
@@ -145,7 +145,7 @@ static void test_wooden_door_break_with_full_action_hand_strength(void)
     input.magic_attack = false;
     input.is_door_target = true;
 
-    ok = M11_GameView_DoorBashResolvePc34(&input, &result);
+    ok = DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
     expect_bool("wooden.break.resolve", ok, true, "PROJEXPL.C:1554-1600 F0232 entry");
     expect_u8("wooden.break.door_type", result.door_type,
               DM1_V1_DOOR_INFO_WOODEN_PC34, "DEFS.H:1555-1569 DOOR_INFO type");
@@ -208,7 +208,7 @@ static void test_wooden_door_bounce_below_defense(void)
     input.action_strength = 30;
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     expect_u8("wooden.bounce.disabled_ticks", result.disabled_ticks, 6,
               "MENU.C:1314 L1249_ui_ActionDisabledTicks = 6 unconditional");
@@ -245,7 +245,7 @@ static void test_iron_door_always_rejects_melee(void)
     input.action_strength = 100; /* already at the melee cap */
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     expect_u8("iron.door_type", result.door_type, DM1_V1_DOOR_INFO_IRON_PC34,
               "DEFS.H:1555-1569 DOOR_INFO type 2");
@@ -289,7 +289,7 @@ static void test_portcullis_defense_110_clamped_to_100(void)
     input.action_strength = 250;
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     expect_u8("port.door_type", result.door_type,
               DM1_V1_DOOR_INFO_PORTCULLIS_PC34,
@@ -321,7 +321,7 @@ static void test_ra_door_defense_255_always_rejects(void)
     input.action_strength = 100;
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     expect_u8("ra.door_type", result.door_type, DM1_V1_DOOR_INFO_RA_PC34,
               "DEFS.H:1555-1569 DOOR_INFO type 3");
@@ -353,7 +353,7 @@ static void test_magic_attack_bash_path_rejected(void)
     input.magic_attack = true;
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     expect_int("magic.outcome", (int)result.outcome,
                (int)DM1_V1_DOOR_BASH_OUTCOME_MELEE_REJECTED_PC34,
@@ -380,7 +380,7 @@ static void test_not_closed_door_does_not_break(void)
         input.target_element = DM1_V1_ELEMENT_DOOR_PC34;
         input.action_strength = 50;
         input.is_door_target = true;
-        (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+        (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
         expect_int("not_closed.state", (int)result.outcome,
                    (int)DM1_V1_DOOR_BASH_OUTCOME_NOT_CLOSED_PC34,
                    "MENU.C:1312 M036_DOOR_STATE != C4_DOOR_STATE_CLOSED");
@@ -403,7 +403,7 @@ static void test_no_door_target_short_circuits(void)
     input.action_strength = 50;
     input.is_door_target = false;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     expect_int("no_door.outcome", (int)result.outcome,
                (int)DM1_V1_DOOR_BASH_OUTCOME_NO_DOOR_PC34,
@@ -429,7 +429,7 @@ static void test_sound_ordinals_locked_to_known_indices(void)
     input.action_strength = 50;
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     expect_int("sounds.combat_ordinal_not_zero",
                (int)result.combat_sound_ordinal, 563,
@@ -456,7 +456,7 @@ static void test_sound_ordinals_locked_to_known_indices(void)
 
 static void test_source_evidence_mentions_required_anchors(void)
 {
-    const char *evidence = M11_GameView_DoorBashSourceLockPc34();
+    const char *evidence = DM1_V1_DoorBash_SourceLockPc34Compat();
     expect_contains("evidence.menu", k_source_lock_summary, "MENU.C:1311-1319",
                     "MENU.C closed-door bash branch anchor");
     expect_contains("evidence.f0232", k_source_lock_summary,

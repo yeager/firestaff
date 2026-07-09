@@ -144,7 +144,7 @@ static void test_no_open_wooden_strength_30(void)
     input.magic_attack = false;
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     /* --- SOUND CONTRACT (the heart of the no-open gate) --- */
     /* MENU.C:1313 swing sound */
@@ -204,7 +204,7 @@ static void test_no_open_iron_strength_100(void)
     input.magic_attack = false;
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     /* --- SOUND CONTRACT --- */
     expect_u16("iron.100.combat_ordinal", result.combat_sound_ordinal, 563,
@@ -255,7 +255,7 @@ static void test_no_open_portcullis_strength_250_clamped(void)
     input.magic_attack = false;
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     /* --- SOUND CONTRACT --- */
     expect_u16("port.250.combat_ordinal", result.combat_sound_ordinal, 563,
@@ -301,7 +301,7 @@ static void test_no_open_ra_strength_100_animated(void)
     input.magic_attack = false;
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     /* --- SOUND CONTRACT --- */
     expect_u16("ra.100.combat_ordinal", result.combat_sound_ordinal, 563,
@@ -344,7 +344,7 @@ static void test_no_open_wooden_strength_41_boundary(void)
     input.action_strength = 41;  /* one below defense 42 */
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     expect_u16("boundary.41.combat_ordinal", result.combat_sound_ordinal,
                563, "MENU.C:1313 swing on 41 < 42 boundary no-open");
@@ -378,7 +378,7 @@ static void test_wooden_strength_42_at_defense_opens(void)
     input.action_strength = 42;  /* exact defense */
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     /* The "open" path is NOT the no-open contract, but the witness
      * verifies the no-open gate is sharp at the boundary. */
@@ -451,7 +451,7 @@ static void test_sound_ordering_invariant_on_no_open(void)
         input.action_strength = cases[i].action_strength;
         input.is_door_target = true;
 
-        (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+        (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
         expect_int("ordering.outcome", (int)result.outcome,
                    (int)cases[i].expected_outcome, cases[i].label);
@@ -495,10 +495,10 @@ static void test_per_action_no_open_sound(void)
          * MENU.C:1311-1316 dispatch), but we encode it in the test as
          * documentation that the no-open contract is per-action. */
 
-        (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+        (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
         expect_bool("per_action.is_bash",
-                    M11_GameView_DoorBashActionIsBashPc34(
+                    DM1_V1_DoorBash_ActionIsBashPc34Compat(
                         k_no_open_bash_actions[i]),
                     true, "MENU.C:1311-1316 bash action in dispatch set");
         expect_u16("per_action.combat_ordinal", result.combat_sound_ordinal,
@@ -536,7 +536,7 @@ static void test_magic_attack_no_open_no_sound(void)
     input.magic_attack = true;  /* a magic spell, not a melee bash */
     input.is_door_target = true;
 
-    (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+    (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
     /* Magic attacks MUST NOT enter the closed-door bash branch. */
     expect_int("magic.outcome", (int)result.outcome,
@@ -594,7 +594,7 @@ static void test_disabled_tick_6_invariant_on_no_open(void)
         input.action_strength = cases[i].action_strength;
         input.is_door_target = true;
 
-        (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+        (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
         expect_u8("disabled.6_ticks", result.disabled_ticks, 6,
                   cases[i].label);
@@ -650,7 +650,7 @@ static void test_no_state_mutation_on_no_open(void)
         input.action_strength = cases[i].action_strength;
         input.is_door_target = true;
 
-        (void)M11_GameView_DoorBashResolvePc34(&input, &result);
+        (void)DM1_V1_DoorBash_ResolvePc34Compat(&input, &result);
 
         expect_u8("no_state.door_state_after", result.door_state_after,
                   DM1_V1_DOOR_STATE_CLOSED_PC34, cases[i].label);
@@ -670,7 +670,7 @@ static void test_no_state_mutation_on_no_open(void)
 /* ------------------------------------------------------------------ */
 static void test_source_evidence_cited(void)
 {
-    const char *evidence = M11_GameView_DoorBashSourceLockPc34();
+    const char *evidence = DM1_V1_DoorBash_SourceLockPc34Compat();
 
     /* Menu.c closed-door bash branch anchor. */
     if (strstr(evidence, "MENU.C:1311-1319") == NULL) {

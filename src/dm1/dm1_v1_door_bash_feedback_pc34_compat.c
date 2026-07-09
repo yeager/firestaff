@@ -33,7 +33,7 @@ static const uint8_t s_bash_actions[] = {
     0x02  /* C002 CHOP   */
 };
 
-bool M11_GameView_DoorBashActionIsBashPc34(uint8_t action_ordinal)
+bool DM1_V1_DoorBash_ActionIsBashPc34Compat(uint8_t action_ordinal)
 {
     size_t i;
     for (i = 0; i < sizeof(s_bash_actions) / sizeof(s_bash_actions[0]); ++i) {
@@ -42,7 +42,7 @@ bool M11_GameView_DoorBashActionIsBashPc34(uint8_t action_ordinal)
     return false;
 }
 
-bool M11_GameView_DoorBashResolvePc34(
+bool DM1_V1_DoorBash_ResolvePc34Compat(
     const DM1_V1_DoorBashInputPc34 *input,
     DM1_V1_DoorBashResultPc34 *out)
 {
@@ -205,7 +205,7 @@ bool M11_GameView_DoorBashResolvePc34(
     return true;
 }
 
-const char *M11_GameView_DoorBashSourceLockPc34(void)
+const char *DM1_V1_DoorBash_SourceLockPc34Compat(void)
 {
     return
         "DM1 V1 door-bash feedback contract (source-locked to ReDMCSB "
