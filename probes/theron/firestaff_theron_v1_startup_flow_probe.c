@@ -2755,6 +2755,9 @@ int main(void) {
                 check_int("runtime combined apply redraw",
                           runtime_apply_receipt.input_result,
                           THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_int("runtime combined apply route",
+                          runtime_apply_receipt.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
                 check_int("runtime combined state phase",
                           state_receipt.flow.phase,
                           THERON_STARTUP_PHASE_IN_DUNGEON);
@@ -2802,6 +2805,9 @@ int main(void) {
                 check_int("runtime facts apply redraw",
                           runtime_apply_receipt.input_result,
                           THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_int("runtime facts apply route",
+                          runtime_apply_receipt.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
                 check_int("runtime facts state route",
                           state_receipt.runtime_level_source,
                           THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);

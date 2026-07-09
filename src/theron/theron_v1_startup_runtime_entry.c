@@ -557,6 +557,11 @@ int theron_v1_startup_runtime_entry_apply_receipt(
         : "BOOT";
     out_receipt->status = plan->status ? plan->status : "THERON READY";
     out_receipt->inspect_scope = "READY";
+    out_receipt->runtime_level_source = result->runtime_level_source;
+    out_receipt->track02_semantic_handoff =
+        result->track02_semantic_handoff;
+    out_receipt->fallback_visuals_blocked =
+        result->fallback_visuals_blocked;
     if (runtime_receipt && runtime_receipt[0]) {
         snprintf(out_receipt->inspect_detail,
                  sizeof(out_receipt->inspect_detail),
@@ -593,6 +598,13 @@ static int theron_v1_startup_runtime_entry_failure_apply_receipt(
         : "READY";
     out_receipt->status = status;
     out_receipt->inspect_scope = "READY";
+    if (result) {
+        out_receipt->runtime_level_source = result->runtime_level_source;
+        out_receipt->track02_semantic_handoff =
+            result->track02_semantic_handoff;
+        out_receipt->fallback_visuals_blocked =
+            result->fallback_visuals_blocked;
+    }
     snprintf(out_receipt->inspect_detail,
              sizeof(out_receipt->inspect_detail),
              "%s%s%s route=%s semantic=%d fallback_blocked=%d",

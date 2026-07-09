@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron runtime apply route receipts: runtime apply receipts now carry structured route fields matching result/state receipts, so fallback-room, Track02 semantic, and Track02-blocked paths no longer require parsing inspect text. Verification: `firestaff_theron_v1_startup_flow_probe` 614/614 and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0115 static-effect layer receipt: DM1 now exposes a source-locked thing-layer receipt that separates floor items from stale dungeon C14/C15 projectile/explosion refs, so HoC phantom fireballs/effects can be suppressed while live runtime effect lists remain authoritative. Verification: `test_dm1_v1_projectile_explosion_render_pc34_compat`, `test_dm1_v1_throw_shoot_pc34_compat`, `firestaff` build, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron Track02 runtime semantic probe: the Track02 level-handoff probe now verifies the direct runtime/host/state receipt path with a sector-aligned raw US BIN synthetic fixture, and runtime host inspect receipts now expose explicit `route=track02-semantic` / `route=fallback-room` / `route=track02-blocked` names. Verification: `firestaff_theron_v1_track02_level_handoff_probe`, `firestaff_theron_v1_startup_flow_probe`, and `git diff --check` passed.
