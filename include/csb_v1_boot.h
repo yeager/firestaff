@@ -642,6 +642,7 @@ typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int closed_door_asset_draw_ready;
     int opening_frame_draw_ready;
     int fallback_text_suppressed;
+    int fallback_callbacks_stripped;
     int consumed_host_view_only;
 } CSB_V1_BootStartupHostViewDrawReceipt_PC34;
 

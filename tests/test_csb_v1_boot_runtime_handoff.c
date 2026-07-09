@@ -2651,6 +2651,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.valid &&
               host_view_draw_receipt.consumed_host_view_only &&
+              host_view_draw_receipt.fallback_callbacks_stripped &&
               host_view_draw_receipt.render_executed &&
               !host_view_draw_receipt.hud_menu_executed &&
               host_view_draw_receipt.real_asset_matched &&
@@ -3113,6 +3114,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_draw_receipt.hud_menu_kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
               host_view_draw_receipt.consumed_host_view_only &&
+              host_view_draw_receipt.fallback_callbacks_stripped &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_utility_panel_count == 1 &&
               capture_render_probe.draw_closed_doors_count == 0,
@@ -3594,6 +3596,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
               host_view_draw_receipt.suppress_legacy_utility_fallback &&
               host_view_draw_receipt.consumed_host_view_only &&
+              host_view_draw_receipt.fallback_callbacks_stripped &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_closed_doors_count == 1 &&
               capture_render_probe.draw_fallback_text_count == 0,
@@ -3607,6 +3610,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.valid &&
               capture_render_probe.draw_full_surface_count == 1 &&
+              host_view_draw_receipt.fallback_callbacks_stripped &&
               capture_render_probe.draw_closed_doors_count == 1 &&
               capture_render_probe.draw_door_fallback_count == 0 &&
               capture_render_probe.draw_fallback_text_count == 0,
@@ -3696,6 +3700,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &capture_render_executor,
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.render_executed &&
+              host_view_draw_receipt.fallback_callbacks_stripped &&
               capture_render_probe.draw_opening_frame_count == 1 &&
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
@@ -3708,6 +3713,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &capture_render_executor,
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.render_executed &&
+              host_view_draw_receipt.fallback_callbacks_stripped &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_opening_frame_count == 0 &&
               capture_render_probe.draw_closed_doors_count == 0 &&
@@ -3800,6 +3806,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &capture_render_executor,
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.render_executed &&
+              host_view_draw_receipt.fallback_callbacks_stripped &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_fallback_text_count == 0,
           "boot startup credits capture plan refuses text fallback when surface assets fail");
