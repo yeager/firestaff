@@ -1169,13 +1169,6 @@ static int csb_v1_boot_startup_facts_from_snapshot_pc34(
         snapshot->boot_profile);
 }
 
-int csb_v1_boot_startup_build_default_render_plan_pc34(
-    CSB_V1_StartupRenderPlan_PC34 *out_plan)
-{
-    return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
-                                                              out_plan);
-}
-
 int csb_v1_boot_startup_render_plan_from_runtime_state_pc34(
     CSB_V1_StartupRenderPlan_PC34 *out_plan,
     int title_active,
@@ -2630,7 +2623,7 @@ int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
      * utility, closed-door, and door-opening drawing inside the startup
      * host loop. This lets host code consume the packaged host-view receipt
      * directly instead of rebuilding capture/render-view decisions. */
-    return csb_v1_boot_startup_execute_render_plan_pc34(
+    return csb_v1_startup_execute_render_plan_pc34(
         &host_view->render_draw.render_plan,
         executor);
 }
@@ -4290,50 +4283,6 @@ int csb_v1_boot_runtime_util_render_plan_from_snapshot_pc34(
     return csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
         &view,
         out_plan);
-}
-
-int csb_v1_boot_startup_execute_render_plan_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    const CSB_V1_StartupRenderExecutor_PC34 *executor)
-{
-    return csb_v1_startup_execute_render_plan_pc34(plan, executor);
-}
-
-void csb_v1_boot_startup_execute_primitive_commands_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height)
-{
-    (void)csb_v1_startup_execute_primitive_commands_pc34(
-        plan,
-        framebuffer,
-        framebuffer_width,
-        framebuffer_height);
-}
-
-int csb_v1_boot_startup_execute_asset_commands_kind_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupAssetCommandKind_PC34 kind,
-    CSB_V1_StartupAssetExecutor_PC34 executor,
-    void *user)
-{
-    return csb_v1_startup_execute_asset_commands_kind_pc34(
-        plan,
-        kind,
-        executor,
-        user);
-}
-
-int csb_v1_boot_startup_execute_closed_door_asset_commands_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupAssetExecutor_PC34 executor,
-    void *user)
-{
-    return csb_v1_startup_execute_closed_door_asset_commands_pc34(
-        plan,
-        executor,
-        user);
 }
 
 int csb_v1_boot_startup_execute_opening_composite_pc34(

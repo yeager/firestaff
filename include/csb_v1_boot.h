@@ -758,8 +758,6 @@ int csb_v1_boot_startup_host_facts_from_runtime_state_pc34(
     int resume_available,
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile);
-int csb_v1_boot_startup_build_default_render_plan_pc34(
-    CSB_V1_StartupRenderPlan_PC34 *out_plan);
 int csb_v1_boot_startup_advance_idle_from_runtime_state_pc34(
     CSB_V1_StartupIdleReceipt_PC34 *out_receipt,
     int title_active,
@@ -1029,23 +1027,6 @@ int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
 int csb_v1_boot_runtime_util_render_plan_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_UtilRenderPlan *out_plan);
-int csb_v1_boot_startup_execute_render_plan_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    const CSB_V1_StartupRenderExecutor_PC34 *executor);
-void csb_v1_boot_startup_execute_primitive_commands_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height);
-int csb_v1_boot_startup_execute_asset_commands_kind_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupAssetCommandKind_PC34 kind,
-    CSB_V1_StartupAssetExecutor_PC34 executor,
-    void *user);
-int csb_v1_boot_startup_execute_closed_door_asset_commands_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupAssetExecutor_PC34 executor,
-    void *user);
 int csb_v1_boot_startup_execute_opening_composite_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,

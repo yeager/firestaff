@@ -2686,7 +2686,7 @@ static void m11_execute_csb_startup_primitive_commands(
     int framebufferHeight,
     const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
-    csb_v1_boot_startup_execute_primitive_commands_pc34(
+    (void)csb_v1_startup_execute_primitive_commands_pc34(
         plan,
         framebuffer,
         framebufferWidth,
@@ -2821,7 +2821,7 @@ static int m11_execute_csb_startup_asset_commands_kind(
                                        framebuffer,
                                        framebufferWidth,
                                        framebufferHeight);
-    return csb_v1_boot_startup_execute_asset_commands_kind_pc34(
+    return csb_v1_startup_execute_asset_commands_kind_pc34(
                plan,
                kind,
                m11_execute_csb_startup_asset_command,
@@ -2842,7 +2842,7 @@ static int m11_execute_csb_startup_closed_door_asset_commands(
                                        framebuffer,
                                        framebufferWidth,
                                        framebufferHeight);
-    return csb_v1_boot_startup_execute_closed_door_asset_commands_pc34(
+    return csb_v1_startup_execute_closed_door_asset_commands_pc34(
         plan,
         m11_execute_csb_startup_asset_command,
         &context);
