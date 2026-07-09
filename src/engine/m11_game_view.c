@@ -9096,34 +9096,6 @@ static int m11_creature_source_info_i34(int creatureType,
     return 1;
 }
 
-static int m11_creature_projectile_subtype_from_thing(int projectileThing) {
-    switch (projectileThing) {
-        case DM1_PROJECTILE_THING_FIREBALL:          return PROJECTILE_SUBTYPE_FIREBALL;
-        case DM1_PROJECTILE_THING_SLIME:             return PROJECTILE_SUBTYPE_SLIME;
-        case DM1_PROJECTILE_THING_LIGHTNING_BOLT:    return PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
-        case DM1_PROJECTILE_THING_HARM_NON_MATERIAL: return PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
-        case DM1_PROJECTILE_THING_OPEN_DOOR:         return PROJECTILE_SUBTYPE_OPEN_DOOR;
-        case DM1_PROJECTILE_THING_POISON_CLOUD:      return PROJECTILE_SUBTYPE_POISON_CLOUD;
-        default:                                     return -1;
-    }
-}
-
-static int m11_creature_projectile_attack_type(int subtype) {
-    switch (subtype) {
-        case PROJECTILE_SUBTYPE_FIREBALL:
-            return COMBAT_ATTACK_FIRE;
-        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:
-            return COMBAT_ATTACK_LIGHTNING;
-        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
-        case PROJECTILE_SUBTYPE_OPEN_DOOR:
-            return COMBAT_ATTACK_MAGIC;
-        case PROJECTILE_SUBTYPE_SLIME:
-        case PROJECTILE_SUBTYPE_POISON_CLOUD:
-        default:
-            return COMBAT_ATTACK_NORMAL;
-    }
-}
-
 static int m11_creature_maybe_launch_projectile(
     M11_GameViewState* state,
     unsigned short groupThing,
@@ -9136,13 +9108,13 @@ static int m11_creature_maybe_launch_projectile(
     struct DM1GroupBehaviorContext_Compat ctx;
     struct DM1ActiveGroup_Compat activeGroup;
     struct DM1CreatureProjectileAttack_Compat launch;
+    DM1_CreatureProjectileCreateRequestPc34 createReq;
     struct ProjectileCreateInput_Compat input;
     struct TimelineEvent_Compat firstMove;
     int primaryDir = 0;
     int secondaryDir = 1;
     struct DM1CreatureInfo_Compat sourceInfo;
     int attackRange;
-    int subtype;
     int slot = -1;
 
     if (!state || !group || !profile) return 0;
@@ -9208,27 +9180,22 @@ static int m11_creature_maybe_launch_projectile(
         return 0;
     }
 
-    subtype = m11_creature_projectile_subtype_from_thing(launch.projectileThing);
-    if (subtype < 0) return 0;
-
-    memset(&input, 0, sizeof(input));
-    input.category = PROJECTILE_CATEGORY_MAGICAL;
-    input.subtype = subtype;
-    input.ownerKind = PROJECTILE_OWNER_CREATURE;
-    input.ownerIndex = groupIndex;
-    input.mapIndex = state->world.party.mapIndex;
-    input.mapX = groupX;
-    input.mapY = groupY;
-    input.cell = launch.targetCell & 3;
-    input.direction = launch.direction & 3;
-    input.kineticEnergy = launch.kineticEnergy;
-    input.attack = launch.attack;
-    input.launcherStrength = launch.attack;
-    input.stepEnergy = launch.stepEnergy;
-    input.currentTick = (int)state->world.gameTick;
-    input.poisonAttack = (subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) ? launch.attack : 0;
-    input.attackTypeCode = m11_creature_projectile_attack_type(subtype);
-    input.firstMoveGraceFlag = 1;
+    memset(&createReq, 0, sizeof(createReq));
+    createReq.creatureGroupIndex = groupIndex;
+    createReq.partyMapIndex = state->world.party.mapIndex;
+    createReq.groupMapX = groupX;
+    createReq.groupMapY = groupY;
+    createReq.projectileThing = launch.projectileThing;
+    createReq.targetCell = launch.targetCell;
+    createReq.direction = launch.direction;
+    createReq.kineticEnergy = launch.kineticEnergy;
+    createReq.attack = launch.attack;
+    createReq.stepEnergy = launch.stepEnergy;
+    createReq.gameTick = (int)state->world.gameTick;
+    if (!dm1_v1_build_creature_projectile_create_input_pc34(
+            &createReq, &input)) {
+        return 0;
+    }
 
     memset(&firstMove, 0, sizeof(firstMove));
     if (!F0810_PROJECTILE_Create_Compat(&input, &state->world.projectiles,

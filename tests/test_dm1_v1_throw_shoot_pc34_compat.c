@@ -182,7 +182,9 @@ static void test_shoot_runtime_math(void) {
 
 static void test_projectile_create_input_model(void) {
     DM1_ProjectileCreateRequestPc34 req;
+    DM1_CreatureProjectileCreateRequestPc34 creatureReq;
     struct ProjectileCreateInput_Compat input;
+    int subtype;
     unsigned short potionThing =
         (unsigned short)((THING_TYPE_POTION << 10) | 5);
     memset(&req, 0, sizeof(req));
@@ -229,6 +231,64 @@ static void test_projectile_create_input_model(void) {
               "poison bolt input builds");
     ASSERT_EQ(input.poisonAttack, 44, "poison bolt uses impact attack");
     ASSERT_EQ(input.associatedThing, THING_NONE, "empty associated thing");
+
+    ASSERT_EQ(dm1_v1_projectile_subtype_from_thing_pc34(
+                  DM1_PROJECTILE_THING_LIGHTNING_BOLT, &subtype), 1,
+              "lightning thing maps");
+    ASSERT_EQ(subtype, PROJECTILE_SUBTYPE_LIGHTNING_BOLT,
+              "lightning thing subtype");
+    ASSERT_EQ(dm1_v1_projectile_attack_type_for_subtype_pc34(
+                  PROJECTILE_SUBTYPE_LIGHTNING_BOLT),
+              COMBAT_ATTACK_LIGHTNING, "lightning attack type");
+    ASSERT_EQ(dm1_v1_projectile_subtype_from_thing_pc34(0x1234, &subtype), 0,
+              "unknown projectile thing rejected");
+    ASSERT_EQ(subtype, -1, "unknown projectile subtype reset");
+
+    memset(&creatureReq, 0, sizeof(creatureReq));
+    memset(&input, 0, sizeof(input));
+    creatureReq.creatureGroupIndex = 7;
+    creatureReq.partyMapIndex = 4;
+    creatureReq.groupMapX = 8;
+    creatureReq.groupMapY = 9;
+    creatureReq.projectileThing = DM1_PROJECTILE_THING_POISON_CLOUD;
+    creatureReq.targetCell = 6;
+    creatureReq.direction = 5;
+    creatureReq.kineticEnergy = 77;
+    creatureReq.attack = 55;
+    creatureReq.stepEnergy = 0;
+    creatureReq.gameTick = 4321;
+    ASSERT_EQ(dm1_v1_build_creature_projectile_create_input_pc34(
+                  &creatureReq, &input), 1,
+              "creature projectile input builds");
+    ASSERT_EQ(input.ownerKind, PROJECTILE_OWNER_CREATURE,
+              "creature projectile owner kind");
+    ASSERT_EQ(input.ownerIndex, 7, "creature projectile owner index");
+    ASSERT_EQ(input.mapX, 8, "creature projectile map x");
+    ASSERT_EQ(input.mapY, 9, "creature projectile map y");
+    ASSERT_EQ(input.subtype, PROJECTILE_SUBTYPE_POISON_CLOUD,
+              "creature poison cloud subtype");
+    ASSERT_EQ(input.cell, 2, "creature projectile cell masked");
+    ASSERT_EQ(input.direction, 1, "creature projectile direction masked");
+    ASSERT_EQ(input.stepEnergy, 1, "creature projectile step clamp");
+    ASSERT_EQ(input.poisonAttack, 55, "creature poison attack");
+    ASSERT_EQ(input.attackTypeCode, COMBAT_ATTACK_NORMAL,
+              "creature poison attack type");
+    ASSERT_EQ(input.associatedThing, THING_NONE,
+              "creature projectile no associated thing");
+    ASSERT_EQ(input.firstMoveGraceFlag, 1,
+              "creature projectile first move grace");
+
+    creatureReq.projectileThing = DM1_PROJECTILE_THING_OPEN_DOOR;
+    creatureReq.attack = 66;
+    creatureReq.stepEnergy = 4;
+    ASSERT_EQ(dm1_v1_build_creature_projectile_create_input_pc34(
+                  &creatureReq, &input), 1,
+              "creature open door projectile input builds");
+    ASSERT_EQ(input.subtype, PROJECTILE_SUBTYPE_OPEN_DOOR,
+              "creature open door subtype");
+    ASSERT_EQ(input.poisonAttack, 0, "open door no poison attack");
+    ASSERT_EQ(input.attackTypeCode, COMBAT_ATTACK_MAGIC,
+              "open door magic attack type");
 }
 
 static void test_projectile_impact_model(void) {
