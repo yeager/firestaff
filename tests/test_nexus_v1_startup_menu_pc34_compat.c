@@ -117,6 +117,7 @@ int main(void)
     Nexus_V1_StartupMenuPresentationReceipt presentation_receipt;
     Nexus_V1_StartupTitleHandoffReceipt title_handoff_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
+    Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
@@ -2025,6 +2026,17 @@ int main(void)
                    runtime_receipt.startup_assets.startup_sfx_status ==
                        NEXUS_SFX_RUNTIME_MISSING,
                "Nexus launcher missing-data startup asset receipt stays blocked");
+        expect(nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
+                   &runtime_receipt,
+                   &launch_gate_receipt) &&
+                   launch_gate_receipt.route ==
+                       NEXUS_V1_STARTUP_LAUNCH_GATE_DATA_ERROR &&
+                   strcmp(nexus_v1_launcher_startup_launch_gate_route_name(
+                              launch_gate_receipt.route),
+                          "data-error") == 0 &&
+                   !launch_gate_receipt.engine_ready &&
+                   strcmp(launch_gate_receipt.status, "NEXUS DATA ERROR") == 0,
+               "Nexus launcher missing-data runtime emits launch gate receipt");
     }
 
     {
@@ -2078,6 +2090,23 @@ int main(void)
                                strcmp(runtime_receipt.startup_assets.startup_menu_asset_route,
                                       "blocked-menu-bpk-prs3") == 0,
                            "Nexus launcher asset gate blocks save/champion menus on PRS3");
+                    expect(nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
+                               &runtime_receipt,
+                               &launch_gate_receipt) &&
+                               launch_gate_receipt.route ==
+                                   NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_ASSET_BLOCKED &&
+                               strcmp(nexus_v1_launcher_startup_launch_gate_route_name(
+                                          launch_gate_receipt.route),
+                                      "menu-asset-blocked") == 0 &&
+                               launch_gate_receipt.engine_ready == 1 &&
+                               launch_gate_receipt.title_draw_ready == 1 &&
+                               launch_gate_receipt.real_menu_ready == 0 &&
+                               launch_gate_receipt.fallback_visuals_permitted == 0 &&
+                               strcmp(launch_gate_receipt.asset_blocker,
+                                      "menu-bpk-prs3") == 0 &&
+                               strcmp(launch_gate_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus launcher runtime emits MENU.BPK launch gate blocker");
                     nexus_v1_launcher_startup_runtime_state_clear(
                         &runtime_state);
                     runtime_state.engine = runtime_receipt.engine;

@@ -118,6 +118,33 @@ typedef struct {
     const char *boot_log_line;
 } Nexus_V1_LauncherRuntimeReceipt;
 
+typedef enum {
+    NEXUS_V1_STARTUP_LAUNCH_GATE_INVALID = 0,
+    NEXUS_V1_STARTUP_LAUNCH_GATE_DATA_ERROR = 1,
+    NEXUS_V1_STARTUP_LAUNCH_GATE_TITLE_READY = 2,
+    NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_ASSET_BLOCKED = 3,
+    NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_READY = 4
+} Nexus_V1_StartupLaunchGateRoute;
+
+typedef struct {
+    Nexus_V1_StartupLaunchGateRoute route;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_StartupHostReceipt host_receipt;
+    int engine_ready;
+    int level_loaded;
+    int title_ready;
+    int title_draw_ready;
+    int real_menu_ready;
+    int save_menu_ready;
+    int champion_menu_ready;
+    int fallback_visuals_permitted;
+    const char *asset_route;
+    const char *asset_blocker;
+    const char *status_scope;
+    const char *status;
+    const char *boot_log_line;
+} Nexus_V1_StartupLaunchGateReceipt;
+
 typedef struct {
     Nexus_V1_Engine *engine;
     Nexus_V1_StartupHostReceipt host_receipt;
@@ -137,6 +164,13 @@ void nexus_v1_launcher_boot_receipt_clear(
     Nexus_V1_LauncherBootReceipt *receipt);
 void nexus_v1_launcher_runtime_receipt_clear(
     Nexus_V1_LauncherRuntimeReceipt *receipt);
+void nexus_v1_launcher_startup_launch_gate_receipt_clear(
+    Nexus_V1_StartupLaunchGateReceipt *receipt);
+const char *nexus_v1_launcher_startup_launch_gate_route_name(
+    Nexus_V1_StartupLaunchGateRoute route);
+int nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    Nexus_V1_StartupLaunchGateReceipt *out_receipt);
 
 typedef struct {
     int title_active;
