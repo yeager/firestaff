@@ -305,6 +305,7 @@ typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     int play_swsh;
     int play_title;
     int play_entrance;
+    unsigned int swsh_vblank_ms;
     unsigned int swsh_initial_logo_hold_ms;
     unsigned int swsh_palette_wait_ms;
     unsigned int swsh_sound_wait_ms;
@@ -313,6 +314,7 @@ typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     unsigned int title_zoom_frame_delay_ms;
     unsigned int title_zoom_step_count;
     unsigned int title_post_zoom_guard_ms;
+    unsigned int title_c001_cadence_pad_ms;
     unsigned int title_source_animation_steps;
     unsigned int title_frame_bank_equivalent_steps;
     unsigned int title_menu_boundary_frame;

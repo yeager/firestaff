@@ -981,6 +981,34 @@ static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
     return 0;
 }
 
+static int m11_dm1_startup_media_receipt_for_source(
+    const char* sourceId,
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34* outReceipt) {
+    if (!outReceipt) {
+        return 0;
+    }
+    if (!dm1_v1_startup_full_graphics_media_receipt_pc34(sourceId, outReceipt)) {
+        return 0;
+    }
+    return outReceipt->handled ? 1 : 0;
+}
+
+/* ReDMCSB NECIO.C F0022 lines 3592-3609 and TITLE.C F0437 lines 319-409:
+ * DM1 startup presents SWSH palette waits and TITLE C001 palette/timing in
+ * source order.  Keep production rendering on the DM1 receipt so M11 does
+ * not infer host cadence independently from the source-locked startup route. */
+static unsigned int m11_startup_media_swsh_wait_ms(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media,
+    unsigned int vblankCount) {
+    if (!media || !media->handled || media->swsh_vblank_ms == 0U) {
+        return SWSH_Compat_GetRuntimeDelayMsForVblankCount(vblankCount);
+    }
+    if (vblankCount > (0xffffffffU / media->swsh_vblank_ms)) {
+        return SWSH_Compat_GetRuntimeDelayMsForVblankCount(vblankCount);
+    }
+    return vblankCount * media->swsh_vblank_ms;
+}
+
 static void m11_play_ftl_swoosh_for_game_if_available(
                                               const M12_StartupMenuState* menuState,
                                               const char* dataDir,
@@ -994,8 +1022,14 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     FILE* f = NULL; long fsize = 0;
     SWSH_CompatLogoPayload logoPayload;
     unsigned char swshPalette[16][3];
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
+    int hasDm1Media = 0;
     if (skipSwoosh) return;
     memset(&logoPayload, 0, sizeof(logoPayload));
+    memset(&dm1Media, 0, sizeof(dm1Media));
+    if (gameId && strcmp(gameId, "dm1") == 0) {
+        hasDm1Media = m11_dm1_startup_media_receipt_for_source(gameId, &dm1Media);
+    }
     if (!M11_SWSH_Intro_FindLogoPathForGame(menuState,
                                             dataDir,
                                             gameId,
@@ -1034,7 +1068,8 @@ static void m11_play_ftl_swoosh_for_game_if_available(
       m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
       M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
       if (m11_delay_ms_with_intro_event_pump(
-              SWSH_Compat_GetRuntimeInitialLogoHoldMs())) {
+              hasDm1Media ? dm1Media.swsh_initial_logo_hold_ms :
+                            SWSH_Compat_GetRuntimeInitialLogoHoldMs())) {
           goto cleanup;
       }
       for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
@@ -1055,8 +1090,10 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                * the WAIT_VBLANKS branch never had a palette to "re-render"
                * because every SET_PALETTE_COLOR step renders its own frame. */
               if (m11_delay_ms_with_intro_event_pump(
-                      SWSH_Compat_GetRuntimeDelayMsForVblankCount(
-                          step.vblankCount))) {
+                      hasDm1Media ?
+                          m11_startup_media_swsh_wait_ms(&dm1Media, step.vblankCount) :
+                          SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                              step.vblankCount))) {
                   break;
               }
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
@@ -1065,7 +1102,8 @@ static void m11_play_ftl_swoosh_for_game_if_available(
           }
       }
       (void)m11_delay_ms_with_intro_event_pump(
-          SWSH_Compat_GetRuntimeFinalHoldMs()); }
+          hasDm1Media ? dm1Media.swsh_final_hold_ms :
+                        SWSH_Compat_GetRuntimeFinalHoldMs()); }
 cleanup:
     SWSH_Compat_ReleaseLogoImagePayload(&logoPayload);
     if (logoImg) free(logoImg);
@@ -1092,6 +1130,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
     M11_AudioState titleAudio;
     int titleAudioInitialized = 0;
     unsigned int sourceStep;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
+    int hasDm1Media;
 
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
@@ -1116,6 +1156,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
         return 0;
     }
     timing = V1_TitleFrontend_GetSourceTimingEvidence();
+    memset(&dm1Media, 0, sizeof(dm1Media));
+    hasDm1Media = m11_dm1_startup_media_receipt_for_source("dm1", &dm1Media);
 
     memset(&titleAudio, 0, sizeof(titleAudio));
     if (M11_Audio_Init(&titleAudio)) {
@@ -1179,7 +1221,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
                                               blitPlan.transparentColor);
         } else {
             if (m11_delay_ms_with_intro_event_pump(
-                    V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
+                    hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
+                                  V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
                 break;
             }
             continue;
@@ -1194,6 +1237,12 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
          * VGA_PALETTE_PC34_SPECIAL_TITLE for every step and painted
          * the "PRESENTS" word red instead of plain white. */
         (void)V1_TitleFrontend_GetStepPalette(step.kind, &stepPalette);
+        if (hasDm1Media) {
+            stepPalette =
+                (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) ?
+                    dm1Media.title_presents_palette :
+                    dm1Media.title_zoom_palette;
+        }
         if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
@@ -1205,12 +1254,14 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
         }
         if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) {
             if (m11_delay_ms_with_intro_event_pump(
-                    V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing))) {
+                    hasDm1Media ? dm1Media.title_presents_hold_ms :
+                                  V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing))) {
                 break;
             }
         } else {
             if (m11_delay_ms_with_intro_event_pump(
-                    V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
+                    hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
+                                  V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
                 break;
             }
         }
@@ -1220,9 +1271,11 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
      * TITLE.DAT fallback below already observes this; keep the GRAPHICS.DAT
      * C001 runtime path on the same source cadence. */
     if (!m11_delay_ms_with_intro_event_pump(
-            V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing))) {
+            hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
+                          V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing))) {
         (void)m11_delay_ms_with_intro_event_pump(
-            V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&timing));
+            hasDm1Media ? dm1Media.title_c001_cadence_pad_ms :
+                          V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&timing));
     }
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
@@ -1242,6 +1295,8 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     V1_TitleFrontendSourceTiming timing;
     M11_AudioState titleAudio;
     int titleAudioInitialized = 0;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
+    int hasDm1Media;
 
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
@@ -1266,6 +1321,8 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     }
     packedScreen = packedStorage + 4U;
     timing = V1_TitleFrontend_GetSourceTimingEvidence();
+    memset(&dm1Media, 0, sizeof(dm1Media));
+    hasDm1Media = m11_dm1_startup_media_receipt_for_source("dm1", &dm1Media);
 
     memset(&titleAudio, 0, sizeof(titleAudio));
     if (M11_Audio_Init(&titleAudio)) {
@@ -1334,12 +1391,14 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
          * through the TITLE frontend helper so the observable handoff cadence
          * remains tied to the source timing evidence. */
         if (m11_delay_ms_with_intro_event_pump(
-                V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
+                hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
+                              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
             break;
         }
     }
     (void)m11_delay_ms_with_intro_event_pump(
-        V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
+        hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
+                      V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
     }
