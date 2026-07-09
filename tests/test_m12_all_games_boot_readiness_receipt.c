@@ -9,6 +9,7 @@ typedef struct {
     const char* detailLabel;
     const char* pathLabel;
     const char* contractLabel;
+    const char* captureLabel;
     int stepCount;
 } ExpectedBootReceipt;
 
@@ -48,15 +49,15 @@ static void mark_game_ready(M12_StartupMenuState* state, int slot, const char* g
 int main(void) {
     static const ExpectedBootReceipt expected[] = {
         {"dm1", "FULL START READY", "SWSH, TITLE, ENTRANCE, HOC", "DM1 FULL START",
-         "DM1 MEDIA + ENTRANCE + HOC RECEIPTS", 6},
+         "DM1 MEDIA + ENTRANCE + HOC RECEIPTS", "DM1 HOC RENDER CAPTURE PROOF", 7},
         {"csb", "BOOT READY", "SWSH, TITLE, ENTRANCE, UTILITY", "CSB BOOT PATH",
-         "CSB STARTUP CAPTURE RECEIPT", 6},
+         "CSB STARTUP CAPTURE RECEIPT", "CSB TITLE + HUD CAPTURE PROOF", 7},
         {"dm2", "START MENU READY", "TITLE, SAVE MENU, FIRST HUD", "DM2 START MENU",
-         "DM2 STARTUP HOST VIEW RECEIPT", 5},
+         "DM2 STARTUP HOST VIEW RECEIPT", "DM2 TITLE TIMING CAPTURE PROOF", 6},
         {"nexus", "TITLE MENU READY", "TITLE, WARNING, SAVE, CHAMPIONS", "NEXUS TITLE MENU",
-         "NEXUS FULL START CONSUMER RECEIPT", 6},
+         "NEXUS FULL START CONSUMER RECEIPT", "NEXUS TIMING CAPTURE PROOF", 7},
         {"theron", "TRACK 02 READY", "TRACK 02, TITLE, STAGE, SOUL ROOM", "THERON TRACK 02",
-         "THERON FULL START HOST VIEW RECEIPT", 6},
+         "THERON FULL START HOST VIEW RECEIPT", "THERON TRACK 02 REAL GRAPHICS PROOF", 7},
     };
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -79,6 +80,10 @@ int main(void) {
                     "full-start contract should be expected")) return 1;
         if (!expect(boot.startupContractReady == 1,
                     "full-start contract should be ready with verified startup")) return 1;
+        if (!expect(boot.packagedCaptureExpected == 1,
+                    "packaged capture proof should be expected")) return 1;
+        if (!expect(boot.packagedCaptureReady == 1,
+                    "packaged capture proof should be ready with verified startup")) return 1;
         if (!expect(boot.startupStepCount == expected[i].stepCount,
                     "startup step count should match the game boot path")) return 1;
         if (!expect(boot.startupStepReadyCount == expected[i].stepCount,
@@ -91,6 +96,9 @@ int main(void) {
         if (!expect(boot.startupContractLabel &&
                     strcmp(boot.startupContractLabel, expected[i].contractLabel) == 0,
                     "startup contract label should match game-owned receipt")) return 1;
+        if (!expect(boot.packagedCaptureLabel &&
+                    strcmp(boot.packagedCaptureLabel, expected[i].captureLabel) == 0,
+                    "packaged capture label should match game startup proof")) return 1;
         if (!expect(boot.statusLabel &&
                     strcmp(boot.statusLabel, expected[i].statusLabel) == 0,
                     "status label should match game startup path")) return 1;
@@ -104,8 +112,9 @@ int main(void) {
         if (!expect(gate.rendererReady == 1 && gate.presentationReady == 1,
                     "ready game launch gate should expose renderer/presentation readiness")) return 1;
         if (!expect(gate.fullStartGraphicsReady == 1 &&
-                    gate.startupContractReady == 1,
-                    "ready game launch gate should expose full-start contract readiness")) return 1;
+                    gate.startupContractReady == 1 &&
+                    gate.packagedCaptureReady == 1,
+                    "ready game launch gate should expose full-start capture readiness")) return 1;
         if (!expect(gate.boot.startupStepReadyCount == expected[i].stepCount,
                     "launch gate should carry boot receipt progress")) return 1;
         if (!expect(gate.blockedLabel &&
@@ -142,11 +151,13 @@ int main(void) {
         if (!expect(gate.canLaunch == 1 && gate.versionReady == 1,
                     "auto-version launch gate should allow verified data")) return 1;
         if (!expect(gate.fullStartGraphicsReady == 1 &&
-                    gate.startupContractReady == 1,
-                    "auto-version launch gate should publish full-start contract readiness")) return 1;
+                    gate.startupContractReady == 1 &&
+                    gate.packagedCaptureReady == 1,
+                    "auto-version launch gate should publish full-start capture readiness")) return 1;
         if (!expect(gate.boot.versionReady == 1 &&
                     gate.boot.fullStartGraphicsReady == 1 &&
-                    gate.boot.startupContractReady == 1,
+                    gate.boot.startupContractReady == 1 &&
+                    gate.boot.packagedCaptureReady == 1,
                     "auto-version launch gate should normalize full-start boot readiness")) return 1;
         if (!expect(gate.boot.startupStepReadyCount == gate.boot.startupStepCount,
                     "auto-version launch gate should complete startup progress")) return 1;

@@ -6611,6 +6611,7 @@ typedef struct {
     const char* readyDetailLabel;
     const char* pathLabel;
     const char* contractLabel;
+    const char* captureLabel;
     int stageCount;
 } M12_FullStartManifest;
 
@@ -6620,30 +6621,35 @@ static const M12_FullStartManifest kM12FullStartManifests[] = {
      "SWSH, TITLE, ENTRANCE, HOC",
      "DM1 FULL START",
      "DM1 MEDIA + ENTRANCE + HOC RECEIPTS",
+     "DM1 HOC RENDER CAPTURE PROOF",
      4},
     {"csb",
      "BOOT READY",
      "SWSH, TITLE, ENTRANCE, UTILITY",
      "CSB BOOT PATH",
      "CSB STARTUP CAPTURE RECEIPT",
+     "CSB TITLE + HUD CAPTURE PROOF",
      4},
     {"dm2",
      "START MENU READY",
      "TITLE, SAVE MENU, FIRST HUD",
      "DM2 START MENU",
      "DM2 STARTUP HOST VIEW RECEIPT",
+     "DM2 TITLE TIMING CAPTURE PROOF",
      3},
     {"nexus",
      "TITLE MENU READY",
      "TITLE, WARNING, SAVE, CHAMPIONS",
      "NEXUS TITLE MENU",
      "NEXUS FULL START CONSUMER RECEIPT",
+     "NEXUS TIMING CAPTURE PROOF",
      4},
     {"theron",
      "TRACK 02 READY",
      "TRACK 02, TITLE, STAGE, SOUL ROOM",
      "THERON TRACK 02",
      "THERON FULL START HOST VIEW RECEIPT",
+     "THERON TRACK 02 REAL GRAPHICS PROOF",
      4},
 };
 
@@ -6686,6 +6692,11 @@ static const char* m12_full_start_contract_label(const char* gameId) {
     return manifest ? manifest->contractLabel : "BOOT RECEIPT";
 }
 
+static const char* m12_full_start_capture_label(const char* gameId) {
+    const M12_FullStartManifest* manifest = m12_full_start_manifest(gameId);
+    return manifest ? manifest->captureLabel : "PACKAGED CAPTURE PROOF";
+}
+
 int M12_StartupMenu_GetBootReadiness(
     const M12_StartupMenuState* state,
     int entryIndex,
@@ -6704,6 +6715,7 @@ int M12_StartupMenu_GetBootReadiness(
     receipt.nextStepLabel = "OFFLINE";
     receipt.startupPathLabel = "BOOT PATH";
     receipt.startupContractLabel = "BOOT RECEIPT";
+    receipt.packagedCaptureLabel = "PACKAGED CAPTURE PROOF";
 
     entry = M12_StartupMenu_GetEntry(state, entryIndex);
     if (!state || !entry || entry->kind != M12_MENU_ENTRY_GAME) {
@@ -6721,11 +6733,13 @@ int M12_StartupMenu_GetBootReadiness(
         M12_AssetStatus_GameAvailable(&state->assetStatus, entry->gameId) ? 1 : 0;
     receipt.versionReady = (version && version->matched) ? 1 : 0;
     receipt.fullStartGraphicsExpected = receipt.supported;
-    receipt.startupStepCount = 2 + m12_full_start_stage_count(entry->gameId);
+    receipt.startupStepCount = 3 + m12_full_start_stage_count(entry->gameId);
     receipt.startupStepReadyCount = 0;
     receipt.startupPathLabel = m12_full_start_path_label(entry->gameId);
     receipt.startupContractExpected = receipt.fullStartGraphicsExpected;
     receipt.startupContractLabel = m12_full_start_contract_label(entry->gameId);
+    receipt.packagedCaptureExpected = receipt.fullStartGraphicsExpected;
+    receipt.packagedCaptureLabel = m12_full_start_capture_label(entry->gameId);
     if (receipt.dataReady) {
         receipt.startupStepReadyCount++;
     }
@@ -6737,7 +6751,9 @@ int M12_StartupMenu_GetBootReadiness(
         receipt.fullStartGraphicsExpected && receipt.startupMenuReady;
     receipt.startupContractReady =
         receipt.startupContractExpected && receipt.fullStartGraphicsReady;
-    if (receipt.fullStartGraphicsReady) {
+    receipt.packagedCaptureReady =
+        receipt.packagedCaptureExpected && receipt.startupContractReady;
+    if (receipt.packagedCaptureReady) {
         receipt.startupStepReadyCount = receipt.startupStepCount;
     }
 
@@ -6822,7 +6838,9 @@ static void m12_boot_readiness_mark_version_ready(M12_StartupBootReadiness* boot
         boot->fullStartGraphicsExpected && boot->startupMenuReady;
     boot->startupContractReady =
         boot->startupContractExpected && boot->fullStartGraphicsReady;
-    if (boot->fullStartGraphicsReady) {
+    boot->packagedCaptureReady =
+        boot->packagedCaptureExpected && boot->startupContractReady;
+    if (boot->packagedCaptureReady) {
         boot->startupStepReadyCount = boot->startupStepCount;
         boot->statusLabel = m12_full_start_ready_status_label(boot->gameId);
         boot->detailLabel = m12_full_start_ready_detail_label(boot->gameId);
@@ -6875,6 +6893,7 @@ int M12_StartupMenu_GetLaunchGate(
     gate.versionReady = gate.boot.versionReady;
     gate.fullStartGraphicsReady = gate.boot.fullStartGraphicsReady;
     gate.startupContractReady = gate.boot.startupContractReady;
+    gate.packagedCaptureReady = gate.boot.packagedCaptureReady;
     if (!gate.versionReady && gate.dataReady && entry->gameId) {
         gate.autoSelectedVersionIndex =
             m12_first_matched_version_index_for_game(state, entry->gameId);
@@ -6883,6 +6902,7 @@ int M12_StartupMenu_GetLaunchGate(
             m12_boot_readiness_mark_version_ready(&gate.boot);
             gate.fullStartGraphicsReady = gate.boot.fullStartGraphicsReady;
             gate.startupContractReady = gate.boot.startupContractReady;
+            gate.packagedCaptureReady = gate.boot.packagedCaptureReady;
         }
     }
 
@@ -6906,6 +6926,10 @@ int M12_StartupMenu_GetLaunchGate(
                 !gate.startupContractReady)) {
         gate.blockedLabel = "STARTUP PROOF MISSING";
         gate.blockedDetail = gate.boot.startupContractLabel;
+    } else if (gate.boot.packagedCaptureExpected &&
+               !gate.packagedCaptureReady) {
+        gate.blockedLabel = "CAPTURE PROOF MISSING";
+        gate.blockedDetail = gate.boot.packagedCaptureLabel;
     } else {
         gate.canLaunch = 1;
         gate.blockedLabel = "READY TO LAUNCH";

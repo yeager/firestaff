@@ -325,9 +325,12 @@ typedef struct {
     int startupStepReadyCount;
     int startupContractExpected;
     int startupContractReady;
+    int packagedCaptureExpected;
+    int packagedCaptureReady;
     const char* nextStepLabel;
     const char* startupPathLabel;
     const char* startupContractLabel;
+    const char* packagedCaptureLabel;
     const char* statusLabel;
     const char* detailLabel;
 } M12_StartupBootReadiness;
@@ -342,6 +345,7 @@ typedef struct {
     int versionReady;
     int fullStartGraphicsReady;
     int startupContractReady;
+    int packagedCaptureReady;
     int autoSelectedVersionIndex;
     const char* blockedLabel;
     const char* blockedDetail;
