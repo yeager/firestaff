@@ -812,6 +812,25 @@ void nexus_v1_launcher_m12_startup_package_receipt_clear(
     receipt->blocked_detail_label = "KNOWN SLOT, HASH COVERAGE STILL GROWING";
 }
 
+void nexus_v1_launcher_startup_receipt_bundle_clear(
+    Nexus_V1_StartupReceiptBundle *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    nexus_v1_launcher_startup_full_start_package_receipt_clear(
+        &receipt->package);
+    nexus_v1_launcher_m12_startup_package_receipt_clear(
+        &receipt->m12_package);
+    receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_INVALID;
+    receipt->first_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
+    receipt->route_label = "invalid";
+    receipt->first_draw_label = "none";
+    receipt->status_scope = "STARTUP";
+    receipt->status = "blocked-startup";
+}
+
 static const char *nexus_v1_launcher_m12_capture_route_label(
     Nexus_V1_StartupCaptureRoute route)
 {
@@ -3112,6 +3131,120 @@ int nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
         return 0;
     }
     return nexus_v1_launcher_startup_full_start_package_build_commands_from_runtime_state(
+        runtime,
+        &snapshot->runtime,
+        menu_input,
+        load_save,
+        load_userdata,
+        out_commands,
+        max_commands,
+        out_receipt);
+}
+
+static void nexus_v1_launcher_fill_startup_bundle(
+    Nexus_V1_StartupReceiptBundle *receipt,
+    const Nexus_V1_StartupFullStartPackageReceipt *package,
+    int command_count,
+    int max_commands)
+{
+    if (!receipt || !package) {
+        return;
+    }
+    receipt->package = *package;
+    (void)nexus_v1_launcher_m12_startup_package_from_full_start_package(
+        package,
+        &receipt->m12_package);
+    receipt->capture_route = package->capture_route;
+    receipt->first_draw_kind = package->first_capture_draw_kind;
+    receipt->command_count = command_count;
+    receipt->max_commands = max_commands;
+    receipt->copied_command_count =
+        command_count > 0 && max_commands > 0
+            ? (command_count < max_commands ? command_count : max_commands)
+            : 0;
+    receipt->timing_frame = package->title_frame;
+    receipt->timing_frame_max = package->title_frame_max;
+    receipt->timing_ready = package->title_ready;
+    receipt->warning_visible = package->warning_visible;
+    receipt->prompt_visible = package->title_prompt_visible;
+    receipt->m11_ready = package->m11_ready;
+    receipt->m12_ready = package->m12_ready;
+    receipt->capture_ready = package->capture_route_ready;
+    receipt->display_ready =
+        receipt->m12_package.packaged_capture_ready ? 1 : 0;
+    receipt->blocked =
+        receipt->display_ready && !package->blocked_draw_suppressed ? 0 : 1;
+    receipt->fallback_visuals_permitted =
+        package->fallback_visuals_permitted;
+    receipt->route_label = receipt->m12_package.capture_route_label;
+    receipt->first_draw_label = receipt->m12_package.first_capture_draw_label;
+    receipt->status_scope = package->status_scope;
+    receipt->status = package->status;
+}
+
+int nexus_v1_launcher_startup_receipt_bundle_from_runtime_state(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupReceiptBundle *out_receipt)
+{
+    Nexus_V1_StartupFullStartPackageReceipt package;
+    int copied_count;
+
+    nexus_v1_launcher_startup_receipt_bundle_clear(out_receipt);
+    memset(&package, 0, sizeof(package));
+    if (!out_receipt ||
+        !nexus_v1_launcher_startup_full_start_package_from_runtime_state(
+            runtime,
+            state,
+            menu_input,
+            load_save,
+            load_userdata,
+            &package)) {
+        if (out_commands && max_commands > 0) {
+            memset(out_commands,
+                   0,
+                   (size_t)max_commands * sizeof(out_commands[0]));
+        }
+        return 0;
+    }
+    copied_count = nexus_v1_launcher_build_full_start_package_commands(
+        state,
+        &package,
+        out_commands,
+        max_commands);
+    nexus_v1_launcher_fill_startup_bundle(out_receipt,
+                                          &package,
+                                          package.capture_command_count,
+                                          max_commands);
+    out_receipt->copied_command_count = copied_count;
+    return 1;
+}
+
+int nexus_v1_launcher_startup_receipt_bundle_from_snapshot(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupReceiptBundle *out_receipt)
+{
+    if (!snapshot) {
+        nexus_v1_launcher_startup_receipt_bundle_clear(out_receipt);
+        if (out_commands && max_commands > 0) {
+            memset(out_commands,
+                   0,
+                   (size_t)max_commands * sizeof(out_commands[0]));
+        }
+        return 0;
+    }
+    return nexus_v1_launcher_startup_receipt_bundle_from_runtime_state(
         runtime,
         &snapshot->runtime,
         menu_input,

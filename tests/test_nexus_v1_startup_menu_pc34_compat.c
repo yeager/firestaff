@@ -124,6 +124,7 @@ int main(void)
     Nexus_V1_StartupFullStartConsumerReceipt full_start_consumer_receipt;
     Nexus_V1_StartupFullStartPackageReceipt full_start_package_receipt;
     Nexus_V1_M12StartupPackageReceipt m12_package_receipt;
+    Nexus_V1_StartupReceiptBundle startup_bundle_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff_receipt;
@@ -1156,6 +1157,41 @@ int main(void)
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
            "Nexus full-start package command helper owns champion draw route");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_receipt_bundle_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               11,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &startup_bundle_receipt) &&
+               startup_bundle_receipt.m11_ready == 1 &&
+               startup_bundle_receipt.m12_ready == 1 &&
+               startup_bundle_receipt.display_ready == 1 &&
+               startup_bundle_receipt.blocked == 0 &&
+               startup_bundle_receipt.capture_ready == 1 &&
+               startup_bundle_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+               startup_bundle_receipt.first_draw_kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
+               startup_bundle_receipt.command_count > 3 &&
+               startup_bundle_receipt.copied_command_count ==
+                   startup_bundle_receipt.command_count &&
+               startup_bundle_receipt.timing_frame == -1 &&
+               startup_bundle_receipt.timing_frame_max ==
+                   nexus_v1_boot_start_ready_frames() &&
+               startup_bundle_receipt.timing_ready == 1 &&
+               strcmp(startup_bundle_receipt.route_label,
+                      "champion-menu") == 0 &&
+               strcmp(startup_bundle_receipt.first_draw_label,
+                      "title-background") == 0 &&
+               strcmp(startup_bundle_receipt.m12_package.launch_status_label,
+                      "READY TO LAUNCH") == 0 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
+           "Nexus startup receipt bundle exports champion timing capture and M12 card facts");
     runtime_snapshot.runtime = runtime_state;
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
@@ -1277,6 +1313,26 @@ int main(void)
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
            "Nexus package snapshot helper owns M11 save capture without runtime receipt");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_receipt_bundle_from_snapshot(
+               NULL,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               2,
+               &startup_bundle_receipt) &&
+               startup_bundle_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+               startup_bundle_receipt.command_count > 3 &&
+               startup_bundle_receipt.copied_command_count == 2 &&
+               startup_bundle_receipt.display_ready == 1 &&
+               strcmp(startup_bundle_receipt.route_label,
+                      "save-menu") == 0 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
+           "Nexus startup receipt bundle caps copied save commands for M11 capture buffers");
     runtime_state.save_select_active = 0;
     runtime_state.title_active = 1;
     runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
@@ -1385,6 +1441,31 @@ int main(void)
                m12_package_receipt.capture_command_count ==
                    full_start_package_receipt.capture_command_count,
            "Nexus M12 startup package consumes full-start TITLE/WARNING/GAMEOVER capture receipt");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_receipt_bundle_from_snapshot(
+               NULL,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &startup_bundle_receipt) &&
+               startup_bundle_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               startup_bundle_receipt.command_count > 0 &&
+               startup_bundle_receipt.warning_visible == 0 &&
+               startup_bundle_receipt.prompt_visible == 1 &&
+               startup_bundle_receipt.timing_ready == 1 &&
+               strcmp(startup_bundle_receipt.route_label,
+                      "title-warning") == 0 &&
+               strcmp(startup_bundle_receipt.m12_package.capture_label,
+                      "NEXUS TIMING CAPTURE PROOF") == 0 &&
+               draw_commands[0].kind ==
+                   startup_bundle_receipt.first_draw_kind &&
+               startup_bundle_receipt.first_draw_kind ==
+                   NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME,
+           "Nexus startup receipt bundle exports title warning capture timing");
     memset(package_phase, 0, sizeof(package_phase));
     memset(package_animation, 0, sizeof(package_animation));
     expect(nexus_v1_launcher_startup_full_start_package_export_presentation(
