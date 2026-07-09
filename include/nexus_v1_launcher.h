@@ -240,6 +240,9 @@ typedef struct {
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
     int runtime_ready;
+    int dgn_render_ready;
+    int hud_ready;
+    int dgn_render_blocked;
     int level_loaded;
     int party_x;
     int party_y;
