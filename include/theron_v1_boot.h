@@ -260,6 +260,9 @@ typedef struct Theron_V1_BootRuntimeStartupSnapshot {
     int srm_slot;
     int srm_import_status;
     const char *srm_root;
+    int runtime_level_source;
+    int runtime_track02_semantic_handoff;
+    int runtime_fallback_visuals_blocked;
     const char *startup_text_prompt;
     const char (*startup_roster_names)
         [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];

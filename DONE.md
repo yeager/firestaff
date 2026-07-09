@@ -54,6 +54,8 @@
 
 - ✅ 2026-07-09 Theron startup view-model state receipt: boot startup view models now emit one startup state receipt carrying title/menu flow, level-route, Continue focus, and TQSV/SRM resume facts, and snapshot+Track02 media routes can produce the same receipt without duplicate host inference. Verification: isolated `test_theron_v1_startup_save_resume_pc34` 200/200 and `git diff --check` passed; normal CMake target remains blocked by unrelated DM2 `DM2_V1_BootProfile` header errors.
 
+- ✅ 2026-07-09 Theron Track02 blocked menu route receipt: startup snapshots now carry explicit runtime route fields into the Track02/media-backed view model, and view-model state receipts report Track02-blocked/no-fallback without marking a level loaded. Verification: isolated `test_theron_v1_startup_save_resume_pc34` 202/202 and `git diff --check` passed; normal CMake target is blocked by unrelated Nexus `nexus_v1_startup_champion_execution_clear` declaration errors.
+
 - ✅ 2026-07-09 CSB startup title render route receipt: CSB render-view receipts now expose post-FTL title render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus startup asset gate receipt: launcher startup assets now separate title readiness from real save/champion menu surface readiness, blocking menu routes on MENU.BPK PRS3/truncated/no-surface states while keeping fallback visuals disallowed. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
