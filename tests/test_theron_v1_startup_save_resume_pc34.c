@@ -71,6 +71,62 @@ static void expect_true(int cond, const char *msg) {
     }
 }
 
+typedef struct TestStartupGraphicsCounters {
+    int fill_count;
+    int rect_count;
+    int pixel_count;
+} TestStartupGraphicsCounters;
+
+static void test_startup_fill_rect(void *userdata,
+                                   int x,
+                                   int y,
+                                   int w,
+                                   int h,
+                                   int color) {
+    TestStartupGraphicsCounters *counters =
+        (TestStartupGraphicsCounters *)userdata;
+    (void)x;
+    (void)y;
+    (void)w;
+    (void)h;
+    (void)color;
+    if (counters) {
+        ++counters->fill_count;
+    }
+}
+
+static void test_startup_draw_rect(void *userdata,
+                                   int x,
+                                   int y,
+                                   int w,
+                                   int h,
+                                   int color) {
+    TestStartupGraphicsCounters *counters =
+        (TestStartupGraphicsCounters *)userdata;
+    (void)x;
+    (void)y;
+    (void)w;
+    (void)h;
+    (void)color;
+    if (counters) {
+        ++counters->rect_count;
+    }
+}
+
+static void test_startup_plot_pixel(void *userdata,
+                                    int x,
+                                    int y,
+                                    int color) {
+    TestStartupGraphicsCounters *counters =
+        (TestStartupGraphicsCounters *)userdata;
+    (void)x;
+    (void)y;
+    (void)color;
+    if (counters) {
+        ++counters->pixel_count;
+    }
+}
+
 static int test_setenv(const char *name, const char *value) {
 #if defined(_WIN32) || defined(_WIN64)
     return _putenv_s(name, value ? value : "") == 0;
@@ -1389,6 +1445,8 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupInputReceipt media_input_receipt;
     Theron_StartupAction stage_input_action;
     Theron_StartupInputReceipt stage_input_receipt;
+    Theron_StartupGraphicExecutor media_graphics_executor;
+    TestStartupGraphicsCounters media_graphics_counters;
     char media_rows[THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP]
         [THERON_STARTUP_RENDER_ROW_CAPACITY];
     char exit_receipt[128];
@@ -1724,6 +1782,29 @@ static void test_startup_session_facts_wrappers(void) {
                     view_model_host_receipt.host_receipt.input_result ==
                         THERON_STARTUP_INPUT_RESULT_REDRAW,
                 "boot startup view model host route owns Soul Room Back receipt");
+    expect_true(theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
+                    &media_view_model,
+                    50,
+                    80,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.state_receipt.flow_changed &&
+                    view_model_host_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot startup view model host route owns pointer mirror receipt");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    memset(&media_graphics_executor, 0, sizeof(media_graphics_executor));
+    media_graphics_executor.userdata = &media_graphics_counters;
+    media_graphics_executor.fill_rect = test_startup_fill_rect;
+    media_graphics_executor.draw_rect = test_startup_draw_rect;
+    media_graphics_executor.plot_pixel = test_startup_plot_pixel;
+    expect_true(theron_v1_boot_startup_execute_graphics_plan_from_view_model(
+                    &media_view_model,
+                    &media_graphics_executor) &&
+                    media_graphics_counters.fill_count > 0 &&
+                    media_graphics_counters.rect_count > 0,
+                "boot startup view model render route executes graphics plan receipt");
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;

@@ -2027,6 +2027,63 @@ int theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
         out_receipt);
 }
 
+int theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
+    const Theron_V1_BootStartupViewModel *view_model,
+    int x,
+    int y,
+    Theron_StartupActionHostReceipt *out_receipt)
+{
+    Theron_StartupAction action;
+    Theron_StartupInputReceipt pointer_receipt;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!view_model || !out_receipt) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status = theron_v1_startup_result_name(
+                THERON_STARTUP_ERR_NULL);
+        }
+        return 0;
+    }
+    if (!theron_v1_boot_startup_execute_pointer_from_view_model(
+            view_model,
+            x,
+            y,
+            &action,
+            &pointer_receipt)) {
+        out_receipt->result = pointer_receipt.result;
+        out_receipt->host_receipt.input_result =
+            pointer_receipt.input_result;
+        out_receipt->host_receipt.status_scope =
+            pointer_receipt.status_scope;
+        out_receipt->host_receipt.status = pointer_receipt.status;
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_action_from_view_model_with_host_receipt(
+        view_model,
+        &action,
+        out_receipt);
+}
+
+int theron_v1_boot_startup_execute_graphics_plan_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_StartupGraphicExecutor *executor)
+{
+    Theron_StartupRenderPlan plan;
+
+    if (!theron_v1_boot_startup_render_plan_from_view_model(
+            view_model,
+            &plan)) {
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_graphics_plan(&plan, executor);
+}
+
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
