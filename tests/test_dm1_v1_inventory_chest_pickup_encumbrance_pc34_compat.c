@@ -167,7 +167,7 @@ int main(void)
            dm1_v1_inventory_chest_pickup_encumbrance_source_evidence_pc34());
 
     ok &= expect_int("probe setup",
-                     m11_inventory_pc34_probe_chest_pickup_encumbrance(&probe),
+                     DM1_V1_Inventory_Pc34ProbeChestPickupEncumbranceCompat(&probe),
                      1, f0333);
     if (ok) {
         ok &= test_probe(&probe);

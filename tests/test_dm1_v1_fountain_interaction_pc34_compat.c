@@ -44,7 +44,7 @@ static int expect_evidence(const char* evidence) {
 
 int main(void) {
     int ok = 1;
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     M11_FoodWaterState foodWater;
     DM1V1FountainClickInputPc34Compat input;
     DM1V1FountainResultPc34Compat result;
@@ -144,7 +144,7 @@ int main(void) {
      * junk; F0349 then spends one charge at a time, adding 800 to champion
      * Water and capping at the 2048 ceiling. */
     {
-        M11_Item waterskin;
+        DM1_V1_ItemPc34 waterskin;
         DM1ConsumableResultPc34 drinkResult;
         DM1ConsumableChampionPc34 champ;
         memset(&champ, 0, sizeof(champ));
@@ -203,14 +203,14 @@ int main(void) {
      * then adds 1600 and re-converts to C20_POTION_EMPTY_FLASK with Power
      * preserved). */
     {
-        M11_Item flask;
+        DM1_V1_ItemPc34 flask;
         DM1ConsumableResultPc34 drinkResult;
         DM1ConsumableChampionPc34 champ;
         memset(&champ, 0, sizeof(champ));
         champ.water = 100;
         memset(&flask, 0, sizeof(flask));
         flask.itemType = DM1_V1_ICON_POTION_EMPTY_FLASK;
-        flask.charges = 0; /* surrogate for Power in the compact M11_Item */
+        flask.charges = 0; /* surrogate for Power in the compact DM1_V1_ItemPc34 */
         flask.weight = 1;
         /* Source: empty flask weight = 1, water flask weight = 3 → +2. */
         ok &= DM1V1_Fountain_ApplyLeaderHandItemPc34Compat(&flask, 1, 3, &result);
@@ -244,7 +244,7 @@ int main(void) {
      * pre-fill icon. This locks the contract that the fountain never observes
      * a stale empty-flask icon after a successful fill. */
     {
-        M11_Item flask;
+        DM1_V1_ItemPc34 flask;
         memset(&flask, 0, sizeof(flask));
         flask.itemType = DM1_V1_ICON_POTION_EMPTY_FLASK;
         flask.weight = 1;
@@ -270,7 +270,7 @@ int main(void) {
      * routes to the front-wall sensor. The source unconditionally writes 3,
      * which our evaluator matches. */
     {
-        M11_Item waterskin;
+        DM1_V1_ItemPc34 waterskin;
         memset(&waterskin, 0, sizeof(waterskin));
         waterskin.itemType = DM1_V1_ICON_JUNK_WATERSKIN;
         waterskin.charges = DM1_V1_FOUNTAIN_FULL_CHARGES;

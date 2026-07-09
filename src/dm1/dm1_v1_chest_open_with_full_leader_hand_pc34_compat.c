@@ -62,9 +62,9 @@ const DM1_V1_ChestOpenFullLeaderHandSpecPc34
           DM1_PC34_ALLOWED_CONTAINER }
     };
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -76,7 +76,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static int copy_open_chest_items(const M11_InventoryState* state,
+static int copy_open_chest_items(const DM1_V1_InventoryStatePc34* state,
                                  int champ,
                                  int* typesOut,
                                  int* weightsOut)
@@ -87,9 +87,9 @@ static int copy_open_chest_items(const M11_InventoryState* state,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_OPEN_FULL_HAND_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, champ, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item)) {
             return 0;
         }
         typesOut[i] = item.itemType;
@@ -98,7 +98,7 @@ static int copy_open_chest_items(const M11_InventoryState* state,
     return 1;
 }
 
-static int item_list_head_type(const M11_Item* items, int count)
+static int item_list_head_type(const DM1_V1_ItemPc34* items, int count)
 {
     if (!items || count <= 0) {
         return 0;
@@ -106,7 +106,7 @@ static int item_list_head_type(const M11_Item* items, int count)
     return items[0].itemType;
 }
 
-static int item_list_tail_type(const M11_Item* items, int count)
+static int item_list_tail_type(const DM1_V1_ItemPc34* items, int count)
 {
     int i;
 
@@ -121,7 +121,7 @@ static int item_list_tail_type(const M11_Item* items, int count)
     return 0;
 }
 
-static int container_weight_from_closed_links(const M11_Item* items, int count)
+static int container_weight_from_closed_links(const DM1_V1_ItemPc34* items, int count)
 {
     int total = DM1_PC34_CHEST_OPEN_FULL_HAND_CONTAINER_BASE_WEIGHT;
     int i;
@@ -166,14 +166,14 @@ M11_GameView_ChestOpenWithFullLeaderHandSpecPc34(void)
 int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
     DM1_V1_ChestOpenFullLeaderHandProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_InventoryState state2;
-    M11_Item chestAClosed[1];
-    M11_Item chestBClosed[1];
-    M11_Item case2ChestAClosed[2];
-    M11_Item case2ChestBClosed[1];
-    M11_Item case2PreviousChestAClosed[DM1_PC34_CHEST_OPEN_FULL_HAND_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_InventoryStatePc34 state2;
+    DM1_V1_ItemPc34 chestAClosed[1];
+    DM1_V1_ItemPc34 chestBClosed[1];
+    DM1_V1_ItemPc34 case2ChestAClosed[2];
+    DM1_V1_ItemPc34 case2ChestBClosed[1];
+    DM1_V1_ItemPc34 case2PreviousChestAClosed[DM1_PC34_CHEST_OPEN_FULL_HAND_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int case2Weights[DM1_PC34_CHEST_OPEN_FULL_HAND_SLOT_COUNT];
 
     if (!out) {
@@ -206,13 +206,13 @@ int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
     out->chestBClosedWeightBefore =
         container_weight_from_closed_links(chestBClosed, 1);
 
-    m11_inventory_init(&state, out->partyChampionCount);
-    out->leaderHandSetupResult = m11_inventory_set_mouse_item(
+    DM1_V1_Inventory_InitPc34Compat(&state, out->partyChampionCount);
+    out->leaderHandSetupResult = DM1_V1_Inventory_SetMouseItemPc34Compat(
         &state, 0, DM1_PC34_CHEST_OPEN_FULL_HAND_HELMET_ITEM_TYPE,
         DM1_PC34_CHEST_OPEN_FULL_HAND_HELMET_WEIGHT, 0,
         DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER);
     if (!out->leaderHandSetupResult ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandBeforeOpenType = item.itemType;
@@ -223,13 +223,13 @@ int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
      * G0426_T_OpenChest and copying its linked list into G0425. The leader
      * hand is outside that path; CHAMPION.C F0302 lines 688-710 swaps it only
      * after an explicit slot-box click. */
-    out->chestBOpenResult = m11_inventory_open_chest(
+    out->chestBOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, out->chestBThing, chestBClosed, 1);
-    out->chestBOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->chestBOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->chestBOpenResult ||
         !copy_open_chest_items(&state, 0, out->chestBOpenTypes,
                                out->chestBOpenWeights) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterChestBOpenType = item.itemType;
@@ -274,13 +274,13 @@ int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
         out->chestBClosedWeightAfterOpen == out->chestBClosedWeightBefore ?
         1 : 0;
 
-    m11_inventory_init(&state2, out->partyChampionCount);
-    out->case2LeaderHandSetupResult = m11_inventory_set_mouse_item(
+    DM1_V1_Inventory_InitPc34Compat(&state2, out->partyChampionCount);
+    out->case2LeaderHandSetupResult = DM1_V1_Inventory_SetMouseItemPc34Compat(
         &state2, 0, DM1_PC34_CHEST_OPEN_FULL_HAND_HELMET_ITEM_TYPE,
         DM1_PC34_CHEST_OPEN_FULL_HAND_HELMET_WEIGHT, 0,
         DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER);
     if (!out->case2LeaderHandSetupResult ||
-        !m11_inventory_get_mouse_item(&state2, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state2, 0, &item)) {
         return 0;
     }
     out->case2LeaderBeforeChestAOpen = item.itemType;
@@ -297,13 +297,13 @@ int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 materializes chest A while the full
      * leader hand remains untouched because no F0302 slot-box click occurs. */
-    out->case2ChestAOpenResult = m11_inventory_open_chest(
+    out->case2ChestAOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state2, 0, out->chestAThing, case2ChestAClosed, 2);
-    out->case2ChestAOpenThing = m11_inventory_get_open_chest_thing(&state2, 0);
+    out->case2ChestAOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state2, 0);
     if (!out->case2ChestAOpenResult ||
         !copy_open_chest_items(&state2, 0, out->case2ChestAOpenTypes,
                                case2Weights) ||
-        !m11_inventory_get_mouse_item(&state2, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state2, 0, &item)) {
         return 0;
     }
     out->case2LeaderAfterChestAOpen = item.itemType;
@@ -323,17 +323,17 @@ int M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34(
     /* ReDMCSB CHEST.C F0333 lines 34-38 closes a different current chest
      * before lines 53-67 repopulate G0425 from chest B. */
     out->case2OpenChestBReplacingReturn =
-        m11_inventory_open_chest_replacing_current(
+        DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat(
             &state2, 0, out->chestBThing, case2ChestBClosed, 1,
             case2PreviousChestAClosed,
             DM1_PC34_CHEST_OPEN_FULL_HAND_SLOT_COUNT);
     if (out->case2OpenChestBReplacingReturn < 0 ||
         !copy_open_chest_items(&state2, 0, out->case2ChestBOpenTypes,
                                case2Weights) ||
-        !m11_inventory_get_mouse_item(&state2, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state2, 0, &item)) {
         return 0;
     }
-    out->case2ChestBOpenThing = m11_inventory_get_open_chest_thing(&state2, 0);
+    out->case2ChestBOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state2, 0);
     out->case2LeaderAfterChestBOpen = item.itemType;
     out->case2PreviousChestAClosedCount =
         out->case2OpenChestBReplacingReturn;

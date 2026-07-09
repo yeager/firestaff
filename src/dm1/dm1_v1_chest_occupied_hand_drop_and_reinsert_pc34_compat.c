@@ -79,9 +79,9 @@ const DM1_V1_ChestOccupiedHandDropAndReinsertSpecPc34
         s_source_summary
     };
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -91,7 +91,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static void make_sparse_chest(M11_Item* linked)
+static void make_sparse_chest(DM1_V1_ItemPc34* linked)
 {
     int i;
 
@@ -110,7 +110,7 @@ static void make_sparse_chest(M11_Item* linked)
                           11, DM1_PC34_ALLOWED_CONTAINER);
 }
 
-static int copy_open_types(const M11_InventoryState* state, int* outTypes)
+static int copy_open_types(const DM1_V1_InventoryStatePc34* state, int* outTypes)
 {
     int i;
 
@@ -118,9 +118,9 @@ static int copy_open_types(const M11_InventoryState* state, int* outTypes)
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, 0, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item)) {
             return 0;
         }
         outTypes[i] = item.itemType;
@@ -128,7 +128,7 @@ static int copy_open_types(const M11_InventoryState* state, int* outTypes)
     return 1;
 }
 
-static void copy_closed_types(const M11_Item* closed, int count, int* outTypes)
+static void copy_closed_types(const DM1_V1_ItemPc34* closed, int count, int* outTypes)
 {
     int i;
 
@@ -172,18 +172,18 @@ static int find_type_index(const int* types, int count, int itemType)
     return -1;
 }
 
-static int click_chest_slot_with_weight_gate(M11_InventoryState* state,
+static int click_chest_slot_with_weight_gate(DM1_V1_InventoryStatePc34* state,
                                              int slotIndex,
                                              int maxAcceptedWeight,
                                              int* outRejectedByWeight)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
 
     if (outRejectedByWeight) {
         *outRejectedByWeight = 0;
     }
     if (!state ||
-        !m11_inventory_get_mouse_item(state, 0, &hand) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(state, 0, &hand) ||
         slotIndex < 0 ||
         slotIndex >= DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT_COUNT) {
         return 0;
@@ -194,17 +194,17 @@ static int click_chest_slot_with_weight_gate(M11_InventoryState* state,
         }
         return 0;
     }
-    return m11_inventory_click_pc34_source_slot(
+    return DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         state, 0, DM1_PC34_SLOT_CHEST_1 + slotIndex);
 }
 
 static int run_runtime_case(
     DM1_V1_ChestOccupiedHandDropRuntimePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[6];
-    M11_Item closed[DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[6];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int compactedIndex;
 
     if (!out) {
@@ -214,13 +214,13 @@ static int run_runtime_case(
     memset(closed, 0, sizeof(closed));
     make_sparse_chest(linked);
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
 
     /* ReDMCSB CHEST.C:F0333:31-67 copies the linked chest view into G0425. */
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_CHEST_THING,
         linked, 6);
-    out->openThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->openResult || !copy_open_types(&state, out->openedTypes)) {
         return 0;
     }
@@ -229,34 +229,34 @@ static int run_runtime_case(
     out->slot5BeforeDrop =
         out->openedTypes[DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX];
 
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_LEADER_HAND_ITEM,
             11, 0, DM1_PC34_ALLOWED_CONTAINER) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandBeforeDrop = item.itemType;
     out->leaderHandCanEnterSlot5 =
-        m11_inventory_can_equip(
+        DM1_V1_Inventory_CanEquipPc34Compat(
             &item,
             DM1_PC34_SLOT_CHEST_1 +
                 DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX);
 
     /* ReDMCSB CHAMPION.C:F0302:688-710 accepts a full leader hand into an
      * empty C542/G0425 slot, leaving the leader hand empty. */
-    out->emptySlot5ClickResult = m11_inventory_click_pc34_source_slot(
+    out->emptySlot5ClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0,
         DM1_PC34_SLOT_CHEST_1 +
             DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX);
     if (!out->emptySlot5ClickResult ||
-        !m11_inventory_get_item_in_chest_slot(
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX,
             &item)) {
         return 0;
     }
     out->slot5AfterHandDrop = item.itemType;
-    if (!m11_inventory_get_mouse_item(&state, 0, &item) ||
-        !m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item) ||
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT3_INDEX,
             &linked[0])) {
         return 0;
@@ -266,24 +266,24 @@ static int run_runtime_case(
 
     /* ReDMCSB CHAMPION.C:F0300:511-514 and F0302:704-706 move the occupied
      * C540/G0425 entry into the leader hand and clear the visible slot. */
-    out->occupiedSlot3ClickResult = m11_inventory_click_pc34_source_slot(
+    out->occupiedSlot3ClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0,
         DM1_PC34_SLOT_CHEST_1 +
             DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT3_INDEX);
     if (!out->occupiedSlot3ClickResult ||
-        !m11_inventory_get_item_in_chest_slot(
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT3_INDEX,
             &item)) {
         return 0;
     }
     out->slot3AfterPickup = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX,
             &item)) {
         return 0;
     }
     out->slot5AfterPickup = item.itemType;
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterSlot3Pickup = item.itemType;
@@ -291,7 +291,7 @@ static int run_runtime_case(
     /* ReDMCSB CHEST.C:F0334:113-132 rewrites only non-empty visible slots.
      * The former hand item survives the close even though the emptied C540
      * slot is skipped by the sentinel rewrite. */
-    out->closeCount = m11_inventory_close_chest(
+    out->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed,
         DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT_COUNT);
     if (out->closeCount < 0) {
@@ -307,15 +307,15 @@ static int run_runtime_case(
     out->closedSkipsEmptySlot3 =
         out->closedContainsOriginalSlot3 ? 0 : 1;
     out->closeClearsOpenChest =
-        m11_inventory_get_open_chest_thing(&state, 0) == 0 ? 1 : 0;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == 0 ? 1 : 0;
 
     /* ReDMCSB CHEST.C:F0333:53-67 rematerializes the F0334-compacted links. */
-    out->reopenResult = m11_inventory_open_chest(
+    out->reopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_REOPEN_THING,
         closed, out->closeCount);
-    out->reopenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->reopenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->reopenResult || !copy_open_types(&state, out->reopenedTypes) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterReopen = item.itemType;
@@ -340,19 +340,19 @@ static int run_runtime_case(
 
     /* ReDMCSB CHAMPION.C:F0302:700-710 swaps the occupied compacted former
      * hand entry with the leader-hand object that originally came from C540. */
-    out->postReopenSwapClickResult = m11_inventory_click_pc34_source_slot(
+    out->postReopenSwapClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, DM1_PC34_SLOT_CHEST_1 + compactedIndex);
     if (!out->postReopenSwapClickResult ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterPostReopenSwap = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, compactedIndex, &item)) {
         return 0;
     }
     out->compactedSlotAfterPostReopenSwap = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT3_INDEX,
             &item)) {
         return 0;
@@ -363,19 +363,19 @@ static int run_runtime_case(
     /* ReDMCSB CHAMPION.C:F0302:700-710 is symmetric: a second click on the
      * same occupied compacted slot returns the former hand item to the chest
      * entry and the original C540 item to the leader hand. */
-    out->secondCycleClickResult = m11_inventory_click_pc34_source_slot(
+    out->secondCycleClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, DM1_PC34_SLOT_CHEST_1 + compactedIndex);
     if (!out->secondCycleClickResult ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterSecondCycle = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, compactedIndex, &item)) {
         return 0;
     }
     out->compactedSlotAfterSecondCycle = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT3_INDEX,
             &item)) {
         return 0;
@@ -389,47 +389,47 @@ static int run_runtime_case(
 static int run_allowed_reject_case(
     DM1_V1_ChestOccupiedHandDropAllowedSlotsRejectPc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[6];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[6];
+    DM1_V1_ItemPc34 item;
 
     if (!out) {
         return 0;
     }
     memset(out, 0, sizeof(*out));
     make_sparse_chest(linked);
-    m11_inventory_init(&state, 1);
-    if (!m11_inventory_open_chest(
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_CHEST_THING,
             linked, 6) ||
-        !m11_inventory_set_mouse_item(
+        !DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state, 0,
             DM1_PC34_CHEST_OCCUPIED_HAND_DROP_CHEST_ONLY_CONTAINER,
             50, 0, DM1_PC34_ALLOWED_HANDS) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->incompatibleLeaderHandBefore = item.itemType;
     out->incompatibleCanEnterChestSlot =
-        m11_inventory_can_equip(
+        DM1_V1_Inventory_CanEquipPc34Compat(
             &item,
             DM1_PC34_SLOT_CHEST_1 +
                 DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX);
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX,
             &item)) {
         return 0;
     }
     out->incompatibleSlot5Before = item.itemType;
-    out->incompatibleClickResult = m11_inventory_click_pc34_source_slot(
+    out->incompatibleClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0,
         DM1_PC34_SLOT_CHEST_1 +
             DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->incompatibleLeaderHandAfter = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX,
             &item)) {
         return 0;
@@ -441,24 +441,24 @@ static int run_allowed_reject_case(
 static int run_weight_reject_case(
     DM1_V1_ChestOccupiedHandDropWeightRejectPc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[6];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[6];
+    DM1_V1_ItemPc34 item;
 
     if (!out) {
         return 0;
     }
     memset(out, 0, sizeof(*out));
     make_sparse_chest(linked);
-    m11_inventory_init(&state, 1);
-    if (!m11_inventory_open_chest(
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_CHEST_THING,
             linked, 6) ||
-        !m11_inventory_set_mouse_item(
+        !DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_TOO_HEAVY_ITEM,
             DM1_PC34_CHEST_OCCUPIED_HAND_DROP_TOO_HEAVY_WEIGHT,
             0, DM1_PC34_ALLOWED_CONTAINER) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->heavyLeaderHandBefore = item.itemType;
@@ -466,11 +466,11 @@ static int run_weight_reject_case(
     out->maxAcceptedWeight =
         DM1_PC34_CHEST_OCCUPIED_HAND_DROP_MAX_ACCEPTED_WEIGHT;
     out->heavyCanEnterChestSlot =
-        m11_inventory_can_equip(
+        DM1_V1_Inventory_CanEquipPc34Compat(
             &item,
             DM1_PC34_SLOT_CHEST_1 +
                 DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX);
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX,
             &item)) {
         return 0;
@@ -480,11 +480,11 @@ static int run_weight_reject_case(
         &state, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX,
         DM1_PC34_CHEST_OCCUPIED_HAND_DROP_MAX_ACCEPTED_WEIGHT,
         &out->heavyRejectedByWeightGate);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->heavyLeaderHandAfter = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_OCCUPIED_HAND_DROP_SLOT5_INDEX,
             &item)) {
         return 0;

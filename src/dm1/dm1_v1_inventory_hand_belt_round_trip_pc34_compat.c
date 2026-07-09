@@ -49,37 +49,37 @@ static void fill_slot(DM1_V1_InventoryHandBeltRoundTripSlotPc34* out,
 {
     out->pc34Slot = pc34Slot;
     out->storageSlot =
-        m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
-    out->slotMask = m11_inventory_pc34_slot_mask(pc34Slot);
+        DM1_V1_Inventory_Pc34SourceSlotToStorageSlotCompat(pc34Slot);
+    out->slotMask = DM1_V1_Inventory_Pc34SlotMaskCompat(pc34Slot);
     out->itemType = itemType;
     out->weight = weight;
 }
 
-static int set_slot(M11_InventoryState* state,
+static int set_slot(DM1_V1_InventoryStatePc34* state,
                     int pc34Slot,
                     int itemType,
                     int weight)
 {
-    return m11_inventory_set_item_in_pc34_source_slot(
+    return DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         state, 0, pc34Slot, itemType, weight, 0, DM1_PC34_ALLOWED_ANY_SLOT);
 }
 
-static int get_type(const M11_InventoryState* state, int pc34Slot)
+static int get_type(const DM1_V1_InventoryStatePc34* state, int pc34Slot)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             state, 0, pc34Slot, &item)) {
         return -1;
     }
     return item.itemType;
 }
 
-static int get_mouse_type(const M11_InventoryState* state)
+static int get_mouse_type(const DM1_V1_InventoryStatePc34* state)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
-    if (!m11_inventory_get_mouse_item(state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(state, 0, &item)) {
         return -1;
     }
     return item.itemType;
@@ -88,7 +88,7 @@ static int get_mouse_type(const M11_InventoryState* state)
 int dm1_v1_inventory_hand_belt_round_trip_probe_pc34(
     DM1_V1_InventoryHandBeltRoundTripProbePc34* out)
 {
-    M11_InventoryState state;
+    DM1_V1_InventoryStatePc34 state;
 
     if (!out) {
         return 0;
@@ -108,7 +108,7 @@ int dm1_v1_inventory_hand_belt_round_trip_probe_pc34(
     fill_slot(&out->beltC21Slot, DM1_PC34_SLOT_BACKPACK_LINE2_9, 0, 0);
     fill_slot(&out->beltC22Slot, DM1_PC34_SLOT_BACKPACK_LINE1_2, 0, 0);
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     if (!set_slot(&state, out->readySlot.pc34Slot, out->readySlot.itemType,
                   out->readySlot.weight) ||
         !set_slot(&state, out->actionSlot.pc34Slot, out->actionSlot.itemType,
@@ -119,81 +119,81 @@ int dm1_v1_inventory_hand_belt_round_trip_probe_pc34(
                   out->beltC20Slot.itemType, out->beltC20Slot.weight)) {
         return 0;
     }
-    out->initialLoad = m11_inventory_get_load(&state, 0);
+    out->initialLoad = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB CHAMPION.C F0302 lines 688-710 swaps the leader hand with the
      * clicked source slot; DATA.C lines 1050-1051 make ready/action hands
      * any-slot destinations, so a non-empty ready hand accepts the leader
      * object and returns the old ready item to the leader hand. */
-    if (!m11_inventory_set_mouse_item(&state, 0,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0,
                                       DM1_V1_IHBRT_LEADER_HAND_ITEM, 17, 0,
                                       DM1_PC34_ALLOWED_HANDS)) {
         return 0;
     }
     out->leaderHandBeforeReadyClick = get_mouse_type(&state);
-    out->readyClickResult = m11_inventory_click_pc34_source_slot(
+    out->readyClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, out->readySlot.pc34Slot);
     out->readyAfterReadyClick = get_type(&state, out->readySlot.pc34Slot);
     out->leaderAfterReadyClick = get_mouse_type(&state);
-    out->loadAfterReadyClick = m11_inventory_get_load(&state, 0);
+    out->loadAfterReadyClick = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB DATA.C lines 1069-1072 and 1135-1138 keep C19-C22 backpack
      * source slots as ordinary inventory slots.  F0302 lines 704-709 must
      * move a non-empty belt occupant to the leader hand while inserting the
      * previous hand object into that belt slot. */
-    out->beltC19ClickResult = m11_inventory_click_pc34_source_slot(
+    out->beltC19ClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, out->beltC19Slot.pc34Slot);
     out->beltC19AfterClick = get_type(&state, out->beltC19Slot.pc34Slot);
     out->leaderAfterBeltC19Click = get_mouse_type(&state);
-    out->loadAfterBeltC19Click = m11_inventory_get_load(&state, 0);
+    out->loadAfterBeltC19Click = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
-    out->actionClickResult = m11_inventory_click_pc34_source_slot(
+    out->actionClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, out->actionSlot.pc34Slot);
     out->actionAfterClick = get_type(&state, out->actionSlot.pc34Slot);
     out->leaderAfterActionClick = get_mouse_type(&state);
-    out->loadAfterActionClick = m11_inventory_get_load(&state, 0);
+    out->loadAfterActionClick = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
-    out->beltC20ClickResult = m11_inventory_click_pc34_source_slot(
+    out->beltC20ClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, out->beltC20Slot.pc34Slot);
     out->beltC20AfterClick = get_type(&state, out->beltC20Slot.pc34Slot);
     out->leaderAfterBeltC20Click = get_mouse_type(&state);
-    out->loadAfterBeltC20Click = m11_inventory_get_load(&state, 0);
+    out->loadAfterBeltC20Click = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
-    out->beltC21EmptyClickResult = m11_inventory_click_pc34_source_slot(
+    out->beltC21EmptyClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, out->beltC21Slot.pc34Slot);
     out->beltC21AfterEmptyClick = get_type(&state, out->beltC21Slot.pc34Slot);
     out->leaderAfterBeltC21EmptyClick = get_mouse_type(&state);
-    out->loadAfterBeltC21EmptyClick = m11_inventory_get_load(&state, 0);
+    out->loadAfterBeltC21EmptyClick = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
-    out->readyPickupResult = m11_inventory_click_pc34_source_slot(
+    out->readyPickupResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, out->readySlot.pc34Slot);
     out->readyAfterPickup = get_type(&state, out->readySlot.pc34Slot);
     out->leaderAfterReadyPickup = get_mouse_type(&state);
-    out->loadAfterReadyPickup = m11_inventory_get_load(&state, 0);
+    out->loadAfterReadyPickup = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
-    out->beltC22ReinsertResult = m11_inventory_click_pc34_source_slot(
+    out->beltC22ReinsertResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, out->beltC22Slot.pc34Slot);
     out->beltC22AfterReinsert = get_type(&state, out->beltC22Slot.pc34Slot);
     out->leaderAfterBeltC22Reinsert = get_mouse_type(&state);
-    out->loadAfterBeltC22Reinsert = m11_inventory_get_load(&state, 0);
+    out->loadAfterBeltC22Reinsert = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
-    out->actionPickupResult = m11_inventory_click_pc34_source_slot(
+    out->actionPickupResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, out->actionSlot.pc34Slot);
     out->actionAfterPickup = get_type(&state, out->actionSlot.pc34Slot);
     out->leaderAfterActionPickup = get_mouse_type(&state);
-    out->loadAfterActionPickup = m11_inventory_get_load(&state, 0);
+    out->loadAfterActionPickup = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     if (!set_slot(&state, DM1_PC34_SLOT_POUCH_1,
                   DM1_V1_IHBRT_POUCH_OCCUPANT_ITEM, 7) ||
-        !m11_inventory_set_mouse_item(&state, 0,
+        !DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0,
                                       DM1_V1_IHBRT_HEAD_ONLY_ITEM, 23, 0,
                                       DM1_PC34_ALLOWED_HEAD)) {
         return 0;
     }
-    out->pouchRejectResult = m11_inventory_click_pc34_source_slot(
+    out->pouchRejectResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, DM1_PC34_SLOT_POUCH_1);
     out->pouchAfterReject = get_type(&state, DM1_PC34_SLOT_POUCH_1);
     out->leaderAfterPouchReject = get_mouse_type(&state);
-    out->loadAfterPouchReject = m11_inventory_get_load(&state, 0);
+    out->loadAfterPouchReject = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     return 1;
 }

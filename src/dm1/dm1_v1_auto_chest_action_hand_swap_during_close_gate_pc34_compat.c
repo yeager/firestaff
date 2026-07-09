@@ -14,9 +14,9 @@
  */
 
 typedef struct {
-    M11_Item chestSlots[DM1_PC34_AUTO_CHEST_ACTION_HAND_SLOT_COUNT];
-    M11_Item actionHand;
-    M11_Item closed[DM1_PC34_AUTO_CHEST_ACTION_HAND_SLOT_COUNT];
+    DM1_V1_ItemPc34 chestSlots[DM1_PC34_AUTO_CHEST_ACTION_HAND_SLOT_COUNT];
+    DM1_V1_ItemPc34 actionHand;
+    DM1_V1_ItemPc34 closed[DM1_PC34_AUTO_CHEST_ACTION_HAND_SLOT_COUNT];
     int openChestThing;
     int closeStarted;
     int closeCount;
@@ -48,9 +48,9 @@ static const DM1_V1_AutoChestActionHandSwapDuringCloseGateSpecPc34 s_spec = {
     DM1_PC34_AUTO_CHEST_ACTION_HAND_NONE
 };
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -60,19 +60,19 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static void clear_item(M11_Item* item)
+static void clear_item(DM1_V1_ItemPc34* item)
 {
     if (item) {
         memset(item, 0, sizeof(*item));
     }
 }
 
-static int item_is_empty(const M11_Item* item)
+static int item_is_empty(const DM1_V1_ItemPc34* item)
 {
     return !item || item->itemType == 0;
 }
 
-static void copy_types(const M11_Item* items, int count, int* out)
+static void copy_types(const DM1_V1_ItemPc34* items, int count, int* out)
 {
     int i;
 
@@ -81,7 +81,7 @@ static void copy_types(const M11_Item* items, int count, int* out)
     }
 }
 
-static void copy_weights(const M11_Item* items, int count, int* out)
+static void copy_weights(const DM1_V1_ItemPc34* items, int count, int* out)
 {
     int i;
 
@@ -90,7 +90,7 @@ static void copy_weights(const M11_Item* items, int count, int* out)
     }
 }
 
-static int count_visible(const M11_Item* items)
+static int count_visible(const DM1_V1_ItemPc34* items)
 {
     int count = 0;
     int i;
@@ -103,7 +103,7 @@ static int count_visible(const M11_Item* items)
     return count;
 }
 
-static int contains_type(const M11_Item* items, int count, int itemType)
+static int contains_type(const DM1_V1_ItemPc34* items, int count, int itemType)
 {
     int i;
 
@@ -118,7 +118,7 @@ static int contains_type(const M11_Item* items, int count, int itemType)
     return 0;
 }
 
-static int order_matches_input(const M11_Item* items)
+static int order_matches_input(const DM1_V1_ItemPc34* items)
 {
     int i;
 
@@ -131,7 +131,7 @@ static int order_matches_input(const M11_Item* items)
     return 1;
 }
 
-static int closed_order_uses_current_future_slot(const M11_Item* items)
+static int closed_order_uses_current_future_slot(const DM1_V1_ItemPc34* items)
 {
     int i;
 
@@ -169,7 +169,7 @@ static int all_slots_empty(const AutoCloseGateModelPc34* model)
  */
 static int press_eye_open_pc34(AutoCloseGateModelPc34* model,
                                int chestThing,
-                               const M11_Item* linkedItems,
+                               const DM1_V1_ItemPc34* linkedItems,
                                int linkedCount)
 {
     int limit;
@@ -227,7 +227,7 @@ static int close_begin_pc34(AutoCloseGateModelPc34* model)
  */
 static int close_step_pc34(AutoCloseGateModelPc34* model, int chestSlotIndex)
 {
-    M11_Item thing;
+    DM1_V1_ItemPc34 thing;
 
     if (!model || !model->closeStarted || chestSlotIndex < 0 ||
         chestSlotIndex >= DM1_PC34_AUTO_CHEST_ACTION_HAND_SLOT_COUNT) {
@@ -261,8 +261,8 @@ static int click_action_hand_on_chest_slot_pc34(
     int* putSlotInLeader,
     int* putLeaderInSlot)
 {
-    M11_Item actionHandObject;
-    M11_Item slotObject;
+    DM1_V1_ItemPc34 actionHandObject;
+    DM1_V1_ItemPc34 slotObject;
 
     if (removedLeader) {
         *removedLeader = 0;
@@ -370,8 +370,8 @@ int dm1_v1_auto_chest_action_hand_swap_during_close_gate_run_pc34(
     AutoCloseGateModelPc34 model;
     AutoCloseGateModelPc34 alreadyProcessedModel;
     AutoCloseGateModelPc34 replayModel;
-    M11_Item linked[DM1_PC34_AUTO_CHEST_ACTION_HAND_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_ItemPc34 linked[DM1_PC34_AUTO_CHEST_ACTION_HAND_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int i;
 
     if (!out) {

@@ -44,7 +44,7 @@ typedef struct {
 } DM1_V1_ChestCloseWhileCandidateOpenReopenSideEffectsSpecPc34Compat;
 
 typedef struct {
-    M11_InventoryState runtime;
+    DM1_V1_InventoryStatePc34 runtime;
     unsigned int deterministicSeed;
     int partyChampionCount;
     int inventoryChampionOrdinal;
@@ -54,8 +54,8 @@ typedef struct {
     int c040CandidateLive;
     int c040RedrawOnCloseCount;
     int c025RedrawOnReopenCount;
-    M11_Item firstLinked[DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT];
-    M11_Item secondLinked[DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT];
+    DM1_V1_ItemPc34 firstLinked[DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT];
+    DM1_V1_ItemPc34 secondLinked[DM1_PC34_CHEST_CLOSE_CANDIDATE_REOPEN_SLOT_COUNT];
     int firstLinkedCount;
     int secondLinkedCount;
 } DM1_V1_ChestCloseWhileCandidateOpenReopenSideEffectsRuntimePc34Compat;

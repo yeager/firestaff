@@ -62,9 +62,9 @@ static const DM1_V1_ChestMultiChampionCloseSpecPc34
         DM1_PC34_ALLOWED_QUIVER_LINE1
     };
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -75,7 +75,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
 }
 
 static void seed_linked_items(int championIndex,
-                              M11_Item* linked,
+                              DM1_V1_ItemPc34* linked,
                               int* outCount)
 {
     static const int weightsA[] = { 5, 7 };
@@ -111,7 +111,7 @@ static int movement_ticks_for_load(int load, int maximumLoad)
     return 4 + (((load - maximumLoad) << 2) / maximumLoad);
 }
 
-static int contains_type(const M11_Item* items, int count, int itemType)
+static int contains_type(const DM1_V1_ItemPc34* items, int count, int itemType)
 {
     int i;
 
@@ -123,7 +123,7 @@ static int contains_type(const M11_Item* items, int count, int itemType)
     return 0;
 }
 
-static void copy_closed_items(const M11_Item* closed,
+static void copy_closed_items(const DM1_V1_ItemPc34* closed,
                               int championIndex,
                               DM1_V1_ChestMultiChampionCloseProbePc34* out)
 {
@@ -136,13 +136,13 @@ static void copy_closed_items(const M11_Item* closed,
 }
 
 static int run_champion_case(
-    M11_InventoryState* state,
+    DM1_V1_InventoryStatePc34* state,
     int championIndex,
     DM1_V1_ChestMultiChampionCloseProbePc34* out)
 {
-    M11_Item linked[DM1_PC34_CHEST_MULTI_CHAMPION_SLOT_COUNT];
-    M11_Item closed[DM1_PC34_CHEST_MULTI_CHAMPION_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_MULTI_CHAMPION_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_MULTI_CHAMPION_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int linkedCount = 0;
     int targetSlot = kTargetSlots[championIndex];
     int targetIndex = targetSlot - DM1_PC34_SLOT_CHEST_1;
@@ -155,30 +155,30 @@ static int run_champion_case(
     out->targetSlotIndexes[championIndex] = targetIndex;
     out->linkedCounts[championIndex] = linkedCount;
 
-    out->openResults[championIndex] = m11_inventory_open_chest(
+    out->openResults[championIndex] = DM1_V1_Inventory_OpenChestPc34Compat(
         state, championIndex, kChestThings[championIndex], linked,
         linkedCount);
     if (!out->openResults[championIndex]) {
         return 0;
     }
     out->openThings[championIndex] =
-        m11_inventory_get_open_chest_thing(state, championIndex);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(state, championIndex);
     out->visibleWeightsAfterOpen[championIndex] =
         m11_inventory_pc34_open_chest_visible_contents_weight(
             state, championIndex);
     out->loadsAfterOpen[championIndex] =
-        m11_inventory_get_load(state, championIndex);
+        DM1_V1_Inventory_GetLoadPc34Compat(state, championIndex);
     out->movementTicksAfterOpen[championIndex] = movement_ticks_for_load(
         out->loadsAfterOpen[championIndex], kMaximumLoads[championIndex]);
 
     out->handBeforeTypes[championIndex] = kHandTypes[championIndex];
     out->handBeforeWeights[championIndex] = kHandWeights[championIndex];
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             state, championIndex, kHandTypes[championIndex],
             kHandWeights[championIndex], 0, DM1_PC34_ALLOWED_CONTAINER)) {
         return 0;
     }
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             state, championIndex, targetIndex, &item)) {
         return 0;
     }
@@ -188,16 +188,16 @@ static int run_champion_case(
     /* ReDMCSB CHAMPION.C F0302 lines 688-710 validates C537/C540/C544
      * against DATA.C G0038 slot masks, then uses F0297/F0300/F0301 weight
      * deltas while swapping the leader hand with the open G0425 chest slot. */
-    out->clickResults[championIndex] = m11_inventory_click_pc34_source_slot(
+    out->clickResults[championIndex] = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         state, championIndex, targetSlot);
     if (!out->clickResults[championIndex]) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(state, championIndex, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(state, championIndex, &item)) {
         return 0;
     }
     out->handAfterTypes[championIndex] = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             state, championIndex, targetIndex, &item)) {
         return 0;
     }
@@ -206,7 +206,7 @@ static int run_champion_case(
         m11_inventory_pc34_open_chest_visible_contents_weight(
             state, championIndex);
     out->loadsAfterClick[championIndex] =
-        m11_inventory_get_load(state, championIndex);
+        DM1_V1_Inventory_GetLoadPc34Compat(state, championIndex);
     out->movementTicksAfterClick[championIndex] = movement_ticks_for_load(
         out->loadsAfterClick[championIndex], kMaximumLoads[championIndex]);
 
@@ -223,9 +223,9 @@ static int run_champion_case(
     }
     copy_closed_items(closed, championIndex, out);
     out->openThingsAfterClose[championIndex] =
-        m11_inventory_get_open_chest_thing(state, championIndex);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(state, championIndex);
     out->loadsAfterClose[championIndex] =
-        m11_inventory_get_load(state, championIndex);
+        DM1_V1_Inventory_GetLoadPc34Compat(state, championIndex);
     out->movementTicksAfterClose[championIndex] = movement_ticks_for_load(
         out->loadsAfterClose[championIndex], kMaximumLoads[championIndex]);
     out->replacementClosedAtTarget[championIndex] =
@@ -259,8 +259,8 @@ dm1_v1_chest_multi_champion_close_spec_pc34(void)
 int dm1_v1_chest_multi_champion_close_run_pc34(
     DM1_V1_ChestMultiChampionCloseProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item staff;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 staff;
     int championIndex;
 
     if (!out) {
@@ -270,29 +270,29 @@ int dm1_v1_chest_multi_champion_close_run_pc34(
 
     out->contractOnly = 1;
     out->championCount = DM1_PC34_CHEST_MULTI_CHAMPION_COUNT;
-    out->c537Mask = m11_inventory_pc34_slot_mask(DM1_PC34_SLOT_CHEST_1);
-    out->c540Mask = m11_inventory_pc34_slot_mask(DM1_PC34_SLOT_CHEST_4);
-    out->c544Mask = m11_inventory_pc34_slot_mask(DM1_PC34_SLOT_CHEST_8);
+    out->c537Mask = DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_PC34_SLOT_CHEST_1);
+    out->c540Mask = DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_PC34_SLOT_CHEST_4);
+    out->c544Mask = DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_PC34_SLOT_CHEST_8);
     out->staffOfClawsAllowedSlots = DM1_PC34_ALLOWED_QUIVER_LINE1;
     staff = make_item(DM1_PC34_CHEST_MULTI_CHAMPION_STAFF_OF_CLAWS_INFO,
                       8, DM1_PC34_ALLOWED_QUIVER_LINE1);
     out->staffRejectedFromChest =
-        m11_inventory_can_equip(&staff, DM1_PC34_SLOT_CHEST_1) ? 0 : 1;
+        DM1_V1_Inventory_CanEquipPc34Compat(&staff, DM1_PC34_SLOT_CHEST_1) ? 0 : 1;
     out->staffAcceptedInQuiver =
-        m11_inventory_can_equip(&staff, DM1_PC34_SLOT_QUIVER_LINE1_1);
+        DM1_V1_Inventory_CanEquipPc34Compat(&staff, DM1_PC34_SLOT_QUIVER_LINE1_1);
 
-    m11_inventory_init(&state, DM1_PC34_CHEST_MULTI_CHAMPION_COUNT);
+    DM1_V1_Inventory_InitPc34Compat(&state, DM1_PC34_CHEST_MULTI_CHAMPION_COUNT);
     for (championIndex = 0;
          championIndex < DM1_PC34_CHEST_MULTI_CHAMPION_COUNT;
          ++championIndex) {
-        if (!m11_inventory_set_item_in_pc34_source_slot(
+        if (!DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
                 &state, championIndex, DM1_PC34_SLOT_BACKPACK_LINE1_1,
                 BASE_ITEM_A + championIndex, kBaseWeights[championIndex],
                 0, DM1_PC34_ALLOWED_ANY_SLOT)) {
             return 0;
         }
         out->baseLoads[championIndex] =
-            m11_inventory_get_load(&state, championIndex);
+            DM1_V1_Inventory_GetLoadPc34Compat(&state, championIndex);
     }
 
     for (championIndex = 0;

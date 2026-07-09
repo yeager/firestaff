@@ -46,9 +46,9 @@ static int run_case(DM1_V1_InventoryHandBeltQuiverSwapCasePc34* row,
                     int compatibleAllowedSlots,
                     int incompatibleAllowedSlots)
 {
-    M11_InventoryState accepted;
-    M11_InventoryState rejected;
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 accepted;
+    DM1_V1_InventoryStatePc34 rejected;
+    DM1_V1_ItemPc34 item;
 
     if (!row) {
         return 0;
@@ -56,42 +56,42 @@ static int run_case(DM1_V1_InventoryHandBeltQuiverSwapCasePc34* row,
     memset(row, 0, sizeof(*row));
     row->pc34Slot = pc34Slot;
     row->expectedStorageSlot =
-        m11_inventory_pc34_source_slot_to_storage_slot(pc34Slot);
-    row->expectedSlotMask = m11_inventory_pc34_slot_mask(pc34Slot);
+        DM1_V1_Inventory_Pc34SourceSlotToStorageSlotCompat(pc34Slot);
+    row->expectedSlotMask = DM1_V1_Inventory_Pc34SlotMaskCompat(pc34Slot);
     row->compatibleAllowedSlots = compatibleAllowedSlots;
     row->compatibleItemType = compatibleItemType;
     row->incompatibleAllowedSlots = incompatibleAllowedSlots;
     row->slotItemBefore = DM1_V1_IHBQS_EXISTING_SLOT_ITEM;
     row->mouseItemBefore = compatibleItemType;
 
-    m11_inventory_init(&accepted, 1);
-    m11_inventory_set_item_in_pc34_source_slot(
+    DM1_V1_Inventory_InitPc34Compat(&accepted, 1);
+    DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &accepted, 0, pc34Slot, row->slotItemBefore, 3, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
-    m11_inventory_set_mouse_item(&accepted, 0, compatibleItemType, 5, 0,
+    DM1_V1_Inventory_SetMouseItemPc34Compat(&accepted, 0, compatibleItemType, 5, 0,
                                  compatibleAllowedSlots);
-    row->loadBefore = m11_inventory_get_load(&accepted, 0);
+    row->loadBefore = DM1_V1_Inventory_GetLoadPc34Compat(&accepted, 0);
     row->acceptedClick =
-        m11_inventory_click_pc34_source_slot(&accepted, 0, pc34Slot);
-    m11_inventory_get_item_in_pc34_source_slot(&accepted, 0, pc34Slot, &item);
+        DM1_V1_Inventory_ClickPc34SourceSlotCompat(&accepted, 0, pc34Slot);
+    DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(&accepted, 0, pc34Slot, &item);
     row->slotItemAfterAccepted = item.itemType;
-    m11_inventory_get_mouse_item(&accepted, 0, &item);
+    DM1_V1_Inventory_GetMouseItemPc34Compat(&accepted, 0, &item);
     row->mouseItemAfterAccepted = item.itemType;
-    row->loadAfterAccepted = m11_inventory_get_load(&accepted, 0);
+    row->loadAfterAccepted = DM1_V1_Inventory_GetLoadPc34Compat(&accepted, 0);
 
-    m11_inventory_init(&rejected, 1);
-    m11_inventory_set_item_in_pc34_source_slot(
+    DM1_V1_Inventory_InitPc34Compat(&rejected, 1);
+    DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &rejected, 0, pc34Slot, row->slotItemBefore, 3, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
-    m11_inventory_set_mouse_item(&rejected, 0, DM1_V1_IHBQS_HEAD_ONLY_ITEM, 7,
+    DM1_V1_Inventory_SetMouseItemPc34Compat(&rejected, 0, DM1_V1_IHBQS_HEAD_ONLY_ITEM, 7,
                                  0, incompatibleAllowedSlots);
     row->rejectedClick =
-        m11_inventory_click_pc34_source_slot(&rejected, 0, pc34Slot);
-    m11_inventory_get_item_in_pc34_source_slot(&rejected, 0, pc34Slot, &item);
+        DM1_V1_Inventory_ClickPc34SourceSlotCompat(&rejected, 0, pc34Slot);
+    DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(&rejected, 0, pc34Slot, &item);
     row->slotItemAfterRejected = item.itemType;
-    m11_inventory_get_mouse_item(&rejected, 0, &item);
+    DM1_V1_Inventory_GetMouseItemPc34Compat(&rejected, 0, &item);
     row->mouseItemAfterRejected = item.itemType;
-    row->loadAfterRejected = m11_inventory_get_load(&rejected, 0);
+    row->loadAfterRejected = DM1_V1_Inventory_GetLoadPc34Compat(&rejected, 0);
     return 1;
 }
 
@@ -163,12 +163,12 @@ int dm1_v1_inventory_hand_belt_quiver_swap_probe_pc34(
         out->quiverLine2First.slotItemAfterRejected ==
             out->quiverLine2First.slotItemBefore;
     out->quiverLine1RejectsLine2Only =
-        !m11_inventory_can_equip(&(M11_Item){ DM1_V1_IHBQS_QUIVER_LINE2_ITEM,
+        !DM1_V1_Inventory_CanEquipPc34Compat(&(DM1_V1_ItemPc34){ DM1_V1_IHBQS_QUIVER_LINE2_ITEM,
                                              1, 0, 0, 0,
                                              DM1_PC34_ALLOWED_QUIVER_LINE2 },
                                  DM1_PC34_SLOT_QUIVER_LINE1_1);
     out->quiverLine1SecondUsesLine2Mask =
-        m11_inventory_pc34_slot_mask(DM1_PC34_SLOT_QUIVER_LINE1_2) ==
+        DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_PC34_SLOT_QUIVER_LINE1_2) ==
         DM1_PC34_ALLOWED_QUIVER_LINE2;
     return 1;
 }

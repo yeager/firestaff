@@ -20,7 +20,7 @@ typedef struct {
 } C061ThingPc34;
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     C061ThingPc34 linked[DM1_V1_CHEST_C061_DROP_ROT_SLOT_COUNT_PC34];
     int quantities[DM1_V1_CHEST_C061_DROP_ROT_CHAMPION_COUNT_PC34]
                   [DM1_V1_CHEST_C061_DROP_ROT_SLOT_COUNT_PC34];
@@ -123,9 +123,9 @@ static C061ThingPc34 make_leader_hand(void)
     return thing;
 }
 
-static M11_Item to_item(C061ThingPc34 thing)
+static DM1_V1_ItemPc34 to_item(C061ThingPc34 thing)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = thing.itemType;
@@ -153,9 +153,9 @@ static int hash_g0425(const C061DropRuntimePc34* rt)
     uint32_t hash = 2166136261u;
 
     for (i = 0; i < DM1_V1_CHEST_C061_DROP_ROT_SLOT_COUNT_PC34; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        (void)m11_inventory_get_item_in_chest_slot(&rt->inventory,
+        (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&rt->inventory,
                                                    rt->openOwner,
                                                    i,
                                                    &item);
@@ -172,9 +172,9 @@ static int hash_g0426(const C061DropRuntimePc34* rt)
     uint32_t hash = 2166136261u;
 
     hash_int(&hash, rt->openOwner);
-    hash_int(&hash, m11_inventory_get_open_chest_thing(&rt->inventory,
+    hash_int(&hash, DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt->inventory,
                                                        rt->openOwner));
-    hash_int(&hash, m11_inventory_get_panel_content_pc34(&rt->inventory));
+    hash_int(&hash, DM1_V1_Inventory_GetPanelContentPc34Compat(&rt->inventory));
     return (int)hash;
 }
 
@@ -199,9 +199,9 @@ static void record_g0425(const C061DropRuntimePc34* rt,
     int i;
 
     for (i = 0; i < DM1_V1_CHEST_C061_DROP_ROT_SLOT_COUNT_PC34; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        (void)m11_inventory_get_item_in_chest_slot(&rt->inventory,
+        (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&rt->inventory,
                                                    rt->openOwner,
                                                    i,
                                                    &item);
@@ -223,12 +223,12 @@ static void record_loads(const C061DropRuntimePc34* rt, int* loads)
 
 static void runtime_init(C061DropRuntimePc34* rt)
 {
-    M11_Item linked[DM1_V1_CHEST_C061_DROP_ROT_SLOT_COUNT_PC34];
+    DM1_V1_ItemPc34 linked[DM1_V1_CHEST_C061_DROP_ROT_SLOT_COUNT_PC34];
     C061ThingPc34 actionHand;
     int i;
 
     memset(rt, 0, sizeof(*rt));
-    m11_inventory_init(&rt->inventory,
+    DM1_V1_Inventory_InitPc34Compat(&rt->inventory,
                        DM1_V1_CHEST_C061_DROP_ROT_CHAMPION_COUNT_PC34);
     rt->currentLeader = DM1_V1_CHEST_C061_DROP_ROT_OLD_LEADER_PC34;
     rt->openOwner = DM1_V1_CHEST_C061_DROP_ROT_OPEN_OWNER_PC34;
@@ -240,13 +240,13 @@ static void runtime_init(C061DropRuntimePc34* rt)
         rt->quantities[rt->openOwner][i] = rt->linked[i].quantity;
     }
 
-    (void)m11_inventory_open_chest(&rt->inventory,
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(&rt->inventory,
                                    rt->openOwner,
                                    DM1_V1_CHEST_C061_DROP_ROT_CHEST_THING_PC34,
                                    linked,
                                    DM1_V1_CHEST_C061_DROP_ROT_SLOT_COUNT_PC34);
     actionHand = make_leader_action_hand();
-    (void)m11_inventory_set_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &rt->inventory,
         DM1_V1_CHEST_C061_DROP_ROT_OLD_LEADER_PC34,
         DM1_V1_CHEST_C061_DROP_ROT_ACTION_HAND_PC34,
@@ -257,7 +257,7 @@ static void runtime_init(C061DropRuntimePc34* rt)
     rt->leaderHand = make_leader_hand();
 
     for (i = 0; i < DM1_V1_CHEST_C061_DROP_ROT_CHAMPION_COUNT_PC34; ++i) {
-        rt->loadBytes[i] = m11_inventory_get_load(&rt->inventory, i);
+        rt->loadBytes[i] = DM1_V1_Inventory_GetLoadPc34Compat(&rt->inventory, i);
     }
     rt->loadBytes[DM1_V1_CHEST_C061_DROP_ROT_OLD_LEADER_PC34] +=
         rt->leaderHand.weight;
@@ -276,20 +276,20 @@ static int queue_rotation(C061DropRuntimePc34* rt)
 
 static int capture_c061_while_rotation_queued(C061DropRuntimePc34* rt)
 {
-    M11_Item slot;
+    DM1_V1_ItemPc34 slot;
 
     if (!rt || !rt->rotationQueued || rt->pendingC061 ||
         rt->commandQueueDepth != 1 ||
-        m11_inventory_get_panel_content_pc34(&rt->inventory) !=
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&rt->inventory) !=
             DM1_V1_CHEST_C061_DROP_ROT_PANEL_CHEST_PC34 ||
-        !m11_inventory_get_item_in_chest_slot(
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &rt->inventory,
             rt->openOwner,
             DM1_V1_CHEST_C061_DROP_ROT_TARGET_SLOT_INDEX_PC34,
             &slot) ||
         slot.itemType != 0 ||
-        !m11_inventory_can_equip(
-            &(M11_Item){ rt->leaderHand.itemType, rt->leaderHand.weight,
+        !DM1_V1_Inventory_CanEquipPc34Compat(
+            &(DM1_V1_ItemPc34){ rt->leaderHand.itemType, rt->leaderHand.weight,
                          rt->leaderHand.charges, 0, 1,
                          rt->leaderHand.allowedSlots },
             DM1_V1_CHEST_C061_DROP_ROT_TARGET_PC34_SLOT_PC34)) {
@@ -353,7 +353,7 @@ int dm1_v1_chest_c061_drop_while_leader_rotation_run_pc34(
     DM1_V1_ChestC061DropWhileLeaderRotationProbePc34* out)
 {
     C061DropRuntimePc34 rt;
-    M11_Item action;
+    DM1_V1_ItemPc34 action;
     uint32_t hash = DM1_V1_CHEST_C061_DROP_ROT_DETERMINISTIC_SEED_PC34;
     int i;
 
@@ -378,8 +378,8 @@ int dm1_v1_chest_c061_drop_while_leader_rotation_run_pc34(
     out->leaderBeforeQueue = rt.currentLeader;
     out->openOwnerBefore = rt.openOwner;
     out->openChestThingBefore =
-        m11_inventory_get_open_chest_thing(&rt.inventory, rt.openOwner);
-    out->panelBeforeRace = m11_inventory_get_panel_content_pc34(&rt.inventory);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt.inventory, rt.openOwner);
+    out->panelBeforeRace = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->g0425ByteHashBefore = hash_g0425(&rt);
     out->g0426ByteHashBefore = hash_g0426(&rt);
     record_g0425(&rt,
@@ -388,7 +388,7 @@ int dm1_v1_chest_c061_drop_while_leader_rotation_run_pc34(
                  out->g0425ChargesBefore,
                  out->g0425QuantitiesBefore);
     record_loads(&rt, out->loadBefore);
-    (void)m11_inventory_get_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
         &rt.inventory,
         DM1_V1_CHEST_C061_DROP_ROT_OLD_LEADER_PC34,
         DM1_V1_CHEST_C061_DROP_ROT_ACTION_HAND_PC34,
@@ -418,7 +418,7 @@ int dm1_v1_chest_c061_drop_while_leader_rotation_run_pc34(
     out->c061SlotBox = DM1_V1_CHEST_C061_DROP_ROT_TARGET_SLOT_BOX_PC34;
     out->c061Pc34Slot = DM1_V1_CHEST_C061_DROP_ROT_TARGET_PC34_SLOT_PC34;
     out->c061MouseRouteAccepted = out->c061CapturedWhileRotationQueued;
-    out->panelAfterCapture = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->panelAfterCapture = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->f0077Observed = rt.f0077Observed;
     out->f0078Observed = rt.f0078Observed;
     out->mouseUpdateDepthAfterCapture = rt.mouseUpdateDepth;
@@ -432,7 +432,7 @@ int dm1_v1_chest_c061_drop_while_leader_rotation_run_pc34(
     out->leaderAfterRotation = rt.currentLeader;
     out->openOwnerAfterRotation = rt.openOwner;
     out->openChestThingAfterRotation =
-        m11_inventory_get_open_chest_thing(&rt.inventory, rt.openOwner);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt.inventory, rt.openOwner);
     out->g0425ByteHashAfterRotation = hash_g0425(&rt);
     out->g0426ByteHashAfterRotation = hash_g0426(&rt);
     out->g0425ByteStableAcrossRotation =
@@ -445,7 +445,7 @@ int dm1_v1_chest_c061_drop_while_leader_rotation_run_pc34(
     out->pendingC061AfterRotation = rt.pendingC061;
     out->c061AppliedDuringRotation = 0;
     out->c061EndsInPendingQueue = rt.pendingC061;
-    out->panelAfterRotation = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->panelAfterRotation = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->panelRepaintChampionDuringRace = rt.panelRepaintChampion;
     out->leaderPanelRepaintedDuringRace =
         rt.panelRepaintChampion ==
@@ -460,7 +460,7 @@ int dm1_v1_chest_c061_drop_while_leader_rotation_run_pc34(
     out->leaderHandByteStableAcrossRotation =
         hash_item(rt.leaderHand) == hash_item(make_leader_hand());
 
-    (void)m11_inventory_get_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
         &rt.inventory,
         DM1_V1_CHEST_C061_DROP_ROT_OLD_LEADER_PC34,
         DM1_V1_CHEST_C061_DROP_ROT_ACTION_HAND_PC34,

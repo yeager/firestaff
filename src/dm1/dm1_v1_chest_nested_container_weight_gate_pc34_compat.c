@@ -5,7 +5,7 @@
 /*
  * Synthetic state machine for the DM1 V1 nested-container weight gate.
  *
- * The M11_Item representation flattens the DM1 CONTAINER struct (which
+ * The DM1_V1_ItemPc34 representation flattens the DM1 CONTAINER struct (which
  * carries a separate Slot linked-list head pointer per DEFS.H lines
  * 1485-1499) into a single stored weight value.  To pin the contract
  * that an outer take/drop does NOT perturb the inner CONTAINER's own
@@ -48,7 +48,7 @@
  */
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     int innerContentsType[DM1_PC34_NESTED_CONTAINER_INNER_SLOT_COUNT];
     int innerContentsWeight[DM1_PC34_NESTED_CONTAINER_INNER_SLOT_COUNT];
     int innerContentsCount;
@@ -126,9 +126,9 @@ dm1_v1_chest_nested_container_weight_gate_spec_pc34(void)
     return &s_spec;
 }
 
-static M11_Item make_outer_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_outer_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -138,7 +138,7 @@ static M11_Item make_outer_item(int itemType, int weight)
     return item;
 }
 
-static int visible_weight_sum(const M11_InventoryState* state)
+static int visible_weight_sum(const DM1_V1_InventoryStatePc34* state)
 {
     int sum = 0;
     int i;
@@ -168,19 +168,19 @@ static int inner_chain_weight_sum(const RuntimePc34* rt)
     return sum;
 }
 
-static int copy_inner_slot_item(const M11_InventoryState* state,
+static int copy_inner_slot_item(const DM1_V1_InventoryStatePc34* state,
                                 int slotIndex,
                                 int* outType,
                                 int* outWeight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     if (!state || slotIndex < 0 ||
         slotIndex >= DM1_PC34_CHEST_SLOT_COUNT ||
         !outType || !outWeight) {
         return 0;
     }
-    if (!m11_inventory_get_item_in_chest_slot(state, 0, slotIndex, &item)) {
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, slotIndex, &item)) {
         return 0;
     }
     *outType = item.itemType;
@@ -233,20 +233,20 @@ static int chains_match(const int* aTypes, const int* aWeights,
 }
 
 static int open_outer_chest(RuntimePc34* rt,
-                            M11_Item* visibleOut)
+                            DM1_V1_ItemPc34* visibleOut)
 {
     int innerChainSum = inner_chain_weight_sum(rt);
-    M11_Item innerContainerItem;
-    M11_Item weapon;
-    M11_Item torch;
-    M11_Item scroll;
+    DM1_V1_ItemPc34 innerContainerItem;
+    DM1_V1_ItemPc34 weapon;
+    DM1_V1_ItemPc34 torch;
+    DM1_V1_ItemPc34 scroll;
 
     memset(visibleOut, 0, sizeof(*visibleOut) *
         DM1_PC34_NESTED_CONTAINER_OUTER_SLOT_COUNT);
 
     /* ReDMCSB DUNGEON.C F0140:1114-1120 — the CONTAINER type returns
      * 50 + sum of its inner Slot object weights.  We pre-compute that
-     * recursion here because the M11_Item representation flattens
+     * recursion here because the DM1_V1_ItemPc34 representation flattens
      * it to a single stored weight value at F0333 copy time. */
     innerContainerItem.itemType =
         DM1_PC34_NESTED_CONTAINER_INNER_CONTAINER_THING;
@@ -279,7 +279,7 @@ static int open_outer_chest(RuntimePc34* rt,
     /* ReDMCSB CHEST.C F0333:53-76 copies the linked CONTENTS into
      * G0425_aT_ChestSlots for the open panel.  The synthetic M11
      * helper materializes the array we pass in. */
-    if (!m11_inventory_open_chest(
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(
             &rt->inventory,
             0,
             DM1_PC34_NESTED_CONTAINER_OUTER_CHEST_THING,
@@ -292,22 +292,22 @@ static int open_outer_chest(RuntimePc34* rt,
 }
 
 /* Models the F0302 click on a C30+ chest slot when the leader hand is
- * empty.  Routes through m11_inventory_click_pc34_source_slot which
+ * empty.  Routes through DM1_V1_Inventory_ClickPc34SourceSlotCompat which
  * implements the F0302 leader-hand snapshot + remove + put order. */
 static int f0302_pick_from_chest_slot(RuntimePc34* rt, int pc34SourceSlot)
 {
-    M11_Item mouseBefore;
-    M11_Item slotThing;
+    DM1_V1_ItemPc34 mouseBefore;
+    DM1_V1_ItemPc34 slotThing;
 
     if (!rt || pc34SourceSlot < DM1_PC34_SLOT_CHEST_1 ||
         pc34SourceSlot > DM1_PC34_SLOT_CHEST_8) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(&rt->inventory, 0, &mouseBefore) ||
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&rt->inventory, 0, &mouseBefore) ||
         mouseBefore.itemType != 0) {
         return 0;
     }
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt->inventory, 0, pc34SourceSlot, &slotThing) ||
         slotThing.itemType == 0) {
         return 0;
@@ -317,9 +317,9 @@ static int f0302_pick_from_chest_slot(RuntimePc34* rt, int pc34SourceSlot)
     /* ReDMCSB CHAMPION.C F0302:702-712 — leader hand is empty (NONE),
      * so the F0298 leader-hand remove path is skipped.  F0300 + F0297
      * fire; F0301 is skipped because the leader hand was empty.
-     * m11_inventory_click_pc34_source_slot implements this order. */
+     * DM1_V1_Inventory_ClickPc34SourceSlotCompat implements this order. */
     ++rt->f0300SlotRemoveCount;
-    if (!m11_inventory_click_pc34_source_slot(
+    if (!DM1_V1_Inventory_ClickPc34SourceSlotCompat(
             &rt->inventory, 0, pc34SourceSlot)) {
         return 0;
     }
@@ -329,21 +329,21 @@ static int f0302_pick_from_chest_slot(RuntimePc34* rt, int pc34SourceSlot)
 
 /* Models the F0302 click on a C30+ chest slot when the leader hand is
  * non-empty and the slot is empty (the drop-back-into-freed-slot path).
- * Routes through m11_inventory_click_pc34_source_slot. */
+ * Routes through DM1_V1_Inventory_ClickPc34SourceSlotCompat. */
 static int f0302_drop_to_chest_slot(RuntimePc34* rt, int pc34SourceSlot)
 {
-    M11_Item mouse;
-    M11_Item slotThing;
+    DM1_V1_ItemPc34 mouse;
+    DM1_V1_ItemPc34 slotThing;
 
     if (!rt || pc34SourceSlot < DM1_PC34_SLOT_CHEST_1 ||
         pc34SourceSlot > DM1_PC34_SLOT_CHEST_8) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(&rt->inventory, 0, &mouse) ||
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&rt->inventory, 0, &mouse) ||
         mouse.itemType == 0) {
         return 0;
     }
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &rt->inventory, 0, pc34SourceSlot, &slotThing)) {
         return 0;
     }
@@ -356,7 +356,7 @@ static int f0302_drop_to_chest_slot(RuntimePc34* rt, int pc34SourceSlot)
      * the slot is empty, so F0298 + F0301 fire without F0300. */
     ++rt->f0298RemoveLeaderHandCount;
     ++rt->f0301SlotAddCount;
-    if (!m11_inventory_click_pc34_source_slot(
+    if (!DM1_V1_Inventory_ClickPc34SourceSlotCompat(
             &rt->inventory, 0, pc34SourceSlot)) {
         return 0;
     }
@@ -364,7 +364,7 @@ static int f0302_drop_to_chest_slot(RuntimePc34* rt, int pc34SourceSlot)
 }
 
 static void close_outer_chest(RuntimePc34* rt,
-                              M11_Item* closedOut)
+                              DM1_V1_ItemPc34* closedOut)
 {
     int count;
     int i;
@@ -372,7 +372,7 @@ static void close_outer_chest(RuntimePc34* rt,
 
     memset(closedOut, 0, sizeof(*closedOut) *
         DM1_PC34_CHEST_SLOT_COUNT);
-    count = m11_inventory_close_chest(
+    count = DM1_V1_Inventory_CloseChestPc34Compat(
         &rt->inventory, 0, closedOut, DM1_PC34_CHEST_SLOT_COUNT);
     if (count < 0) {
         return;
@@ -397,8 +397,8 @@ int dm1_v1_chest_nested_container_weight_gate_run_pc34(
     DM1_V1_ChestNestedContainerWeightGateProbePc34* out)
 {
     RuntimePc34 rt;
-    M11_Item visible[DM1_PC34_NESTED_CONTAINER_OUTER_SLOT_COUNT];
-    M11_Item closed[DM1_PC34_NESTED_CONTAINER_OUTER_SLOT_COUNT];
+    DM1_V1_ItemPc34 visible[DM1_PC34_NESTED_CONTAINER_OUTER_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_NESTED_CONTAINER_OUTER_SLOT_COUNT];
     int beforeTypes[DM1_PC34_NESTED_CONTAINER_INNER_SLOT_COUNT];
     int beforeWeights[DM1_PC34_NESTED_CONTAINER_INNER_SLOT_COUNT];
     int afterTakeTypes[DM1_PC34_NESTED_CONTAINER_INNER_SLOT_COUNT];
@@ -447,7 +447,7 @@ int dm1_v1_chest_nested_container_weight_gate_run_pc34(
     out->innerContentsOrderMatchAfterDrop = 1;
     out->innerContentsOrderMatchAfterReopen = 1;
 
-    m11_inventory_init(&rt.inventory, 1);
+    DM1_V1_Inventory_InitPc34Compat(&rt.inventory, 1);
     seed_inner_chain(&rt);
 
     /* Snapshot the inner chain before any outer take/drop. */
@@ -466,7 +466,7 @@ int dm1_v1_chest_nested_container_weight_gate_run_pc34(
         DM1_PC34_NESTED_CONTAINER_CONTAINER_SHELL_WEIGHT + innerChainSum;
     out->innerContainerStoredWeight = innerContainerStoredWeight;
 
-    out->loadBeforeOpen = m11_inventory_get_load(&rt.inventory, 0);
+    out->loadBeforeOpen = DM1_V1_Inventory_GetLoadPc34Compat(&rt.inventory, 0);
 
     if (!open_outer_chest(&rt, visible)) {
         return 0;
@@ -485,7 +485,7 @@ int dm1_v1_chest_nested_container_weight_gate_run_pc34(
     out->outerVisibleContentsWeightBefore = visibleBefore;
     out->outerContainerWeightBefore =
         DM1_PC34_NESTED_CONTAINER_CONTAINER_SHELL_WEIGHT + visibleBefore;
-    out->loadAfterOpen = m11_inventory_get_load(&rt.inventory, 0);
+    out->loadAfterOpen = DM1_V1_Inventory_GetLoadPc34Compat(&rt.inventory, 0);
 
     /* Take ONE non-container item: the torch at C33 (slot 2, third
      * chest slot index).  The DM1_PC34_SLOT_CHEST_3 enum = 32 maps
@@ -508,11 +508,11 @@ int dm1_v1_chest_nested_container_weight_gate_run_pc34(
     out->outerVisibleContentsWeightAfterTake = visibleAfterTake;
     out->outerContainerWeightAfterTake =
         DM1_PC34_NESTED_CONTAINER_CONTAINER_SHELL_WEIGHT + visibleAfterTake;
-    out->loadAfterTake = m11_inventory_get_load(&rt.inventory, 0);
+    out->loadAfterTake = DM1_V1_Inventory_GetLoadPc34Compat(&rt.inventory, 0);
 
     {
-        M11_Item mouse;
-        if (m11_inventory_get_mouse_item(&rt.inventory, 0, &mouse)) {
+        DM1_V1_ItemPc34 mouse;
+        if (DM1_V1_Inventory_GetMouseItemPc34Compat(&rt.inventory, 0, &mouse)) {
             out->leaderHandAfterTakeType = mouse.itemType;
             out->leaderHandAfterTakeWeight = mouse.weight;
         }
@@ -537,11 +537,11 @@ int dm1_v1_chest_nested_container_weight_gate_run_pc34(
     out->outerVisibleContentsWeightAfterDrop = visibleAfterDrop;
     out->outerContainerWeightAfterDrop =
         DM1_PC34_NESTED_CONTAINER_CONTAINER_SHELL_WEIGHT + visibleAfterDrop;
-    out->loadAfterDrop = m11_inventory_get_load(&rt.inventory, 0);
+    out->loadAfterDrop = DM1_V1_Inventory_GetLoadPc34Compat(&rt.inventory, 0);
 
     {
-        M11_Item mouse;
-        if (m11_inventory_get_mouse_item(&rt.inventory, 0, &mouse)) {
+        DM1_V1_ItemPc34 mouse;
+        if (DM1_V1_Inventory_GetMouseItemPc34Compat(&rt.inventory, 0, &mouse)) {
             out->leaderHandAfterDropType = mouse.itemType;
             out->leaderHandAfterDropWeight = mouse.weight;
         }
@@ -551,7 +551,7 @@ int dm1_v1_chest_nested_container_weight_gate_run_pc34(
     close_outer_chest(&rt, closed);
     out->outerCloseResult = 1;
 
-    if (!m11_inventory_open_chest(
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(
             &rt.inventory,
             0,
             DM1_PC34_NESTED_CONTAINER_OUTER_CHEST_THING,
@@ -584,26 +584,26 @@ int dm1_v1_chest_nested_container_weight_gate_run_pc34(
     out->outerVisibleContentsWeightAfterReopen = visibleAfterReopen;
     out->outerContainerWeightAfterReopen =
         DM1_PC34_NESTED_CONTAINER_CONTAINER_SHELL_WEIGHT + visibleAfterReopen;
-    out->loadAfterReopen = m11_inventory_get_load(&rt.inventory, 0);
+    out->loadAfterReopen = DM1_V1_Inventory_GetLoadPc34Compat(&rt.inventory, 0);
 
     /* Reopened slot preservation: slot 0 = weapon, slot 1 = inner
      * CONTAINER, slot 2 = torch (round-tripped), slot 3 = scroll. */
     {
-        M11_Item slot0, slot1, slot2, slot3;
-        if (m11_inventory_get_item_in_chest_slot(&rt.inventory, 0, 0, &slot0)) {
+        DM1_V1_ItemPc34 slot0, slot1, slot2, slot3;
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&rt.inventory, 0, 0, &slot0)) {
             out->reopenedSlot0Preserved =
                 (slot0.itemType == DM1_PC34_NESTED_CONTAINER_OUTER_WEAPON) ? 1 : 0;
         }
-        if (m11_inventory_get_item_in_chest_slot(&rt.inventory, 0, 1, &slot1)) {
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&rt.inventory, 0, 1, &slot1)) {
             out->reopenedSlot1Preserved =
                 (slot1.itemType ==
                  DM1_PC34_NESTED_CONTAINER_INNER_CONTAINER_THING) ? 1 : 0;
         }
-        if (m11_inventory_get_item_in_chest_slot(&rt.inventory, 0, 2, &slot2)) {
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&rt.inventory, 0, 2, &slot2)) {
             out->reopenedSlot2Preserved =
                 (slot2.itemType == DM1_PC34_NESTED_CONTAINER_OUTER_TORCH) ? 1 : 0;
         }
-        if (m11_inventory_get_item_in_chest_slot(&rt.inventory, 0, 3, &slot3)) {
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&rt.inventory, 0, 3, &slot3)) {
             out->reopenedSlot3Preserved =
                 (slot3.itemType == DM1_PC34_NESTED_CONTAINER_OUTER_SCROLL) ? 1 : 0;
         }

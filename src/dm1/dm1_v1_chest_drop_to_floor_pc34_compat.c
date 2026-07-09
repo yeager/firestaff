@@ -22,9 +22,9 @@ static const DM1_V1_ChestDropToFloorSpecPc34 s_spec = {
     DM1_PC34_CHEST_DROP_TO_FLOOR_FRONT_MAP_Y
 };
 
-static M11_Item make_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -34,7 +34,7 @@ static M11_Item make_item(int itemType, int weight)
     return item;
 }
 
-static int copy_visible_types(const M11_InventoryState* state, int* typesOut)
+static int copy_visible_types(const DM1_V1_InventoryStatePc34* state, int* typesOut)
 {
     int i;
 
@@ -42,9 +42,9 @@ static int copy_visible_types(const M11_InventoryState* state, int* typesOut)
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_DROP_TO_FLOOR_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, 0, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item)) {
             return 0;
         }
         typesOut[i] = item.itemType;
@@ -52,7 +52,7 @@ static int copy_visible_types(const M11_InventoryState* state, int* typesOut)
     return 1;
 }
 
-static void copy_closed_types(const M11_Item* items, int count, int* typesOut)
+static void copy_closed_types(const DM1_V1_ItemPc34* items, int count, int* typesOut)
 {
     int i;
 
@@ -157,11 +157,11 @@ dm1_v1_chest_drop_to_floor_spec_pc34(void)
 int dm1_v1_chest_drop_to_floor_pc34_compat_run(
     DM1_V1_ChestDropToFloorProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_DROP_TO_FLOOR_INITIAL_CHEST_COUNT];
-    M11_Item handStack[DM1_PC34_CHEST_DROP_TO_FLOOR_HAND_STACK_COUNT];
-    M11_Item closed[DM1_PC34_CHEST_DROP_TO_FLOOR_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_DROP_TO_FLOOR_INITIAL_CHEST_COUNT];
+    DM1_V1_ItemPc34 handStack[DM1_PC34_CHEST_DROP_TO_FLOOR_HAND_STACK_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_DROP_TO_FLOOR_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int handIndex = 0;
     int floorIndex = 0;
     int i;
@@ -172,7 +172,7 @@ int dm1_v1_chest_drop_to_floor_pc34_compat_run(
     memset(out, 0, sizeof(*out));
     memset(closed, 0, sizeof(closed));
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < DM1_PC34_CHEST_DROP_TO_FLOOR_INITIAL_CHEST_COUNT; ++i) {
         linked[i] =
             make_item(DM1_PC34_CHEST_DROP_TO_FLOOR_FIRST_CHEST_ITEM + i,
@@ -192,10 +192,10 @@ int dm1_v1_chest_drop_to_floor_pc34_compat_run(
 
     /* ReDMCSB PANEL.C F0342 lines 1119-1133 routes a container action-hand
      * panel to CHEST.C F0333, whose lines 53-75 materialize only C30..C37. */
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_DROP_TO_FLOOR_CHEST_THING, linked,
         DM1_PC34_CHEST_DROP_TO_FLOOR_INITIAL_CHEST_COUNT);
-    out->openThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->openResult || !copy_visible_types(&state, out->openedTypes)) {
         return 0;
     }
@@ -213,16 +213,16 @@ int dm1_v1_chest_drop_to_floor_pc34_compat_run(
         int slot;
 
         for (slot = 0; slot < DM1_PC34_CHEST_DROP_TO_FLOOR_SLOT_COUNT; ++slot) {
-            if (!m11_inventory_get_item_in_chest_slot(&state, 0, slot, &item)) {
+            if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, slot, &item)) {
                 return 0;
             }
             if (item.itemType == 0) {
-                if (!m11_inventory_set_mouse_item(
+                if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
                         &state, 0, handStack[handIndex].itemType,
                         handStack[handIndex].weight,
                         handStack[handIndex].charges,
                         handStack[handIndex].allowedSlots) ||
-                    !m11_inventory_click_pc34_source_slot(
+                    !DM1_V1_Inventory_ClickPc34SourceSlotCompat(
                         &state, 0, DM1_PC34_SLOT_CHEST_1 + slot)) {
                     return 0;
                 }
@@ -240,7 +240,7 @@ int dm1_v1_chest_drop_to_floor_pc34_compat_run(
     }
 
     if (!copy_visible_types(&state, out->afterDepositTypes) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandEmptyAfterRun = item.itemType == 0 ? 1 : 0;
@@ -252,7 +252,7 @@ int dm1_v1_chest_drop_to_floor_pc34_compat_run(
     /* ReDMCSB CHEST.C F0334 lines 113-132 closes by relinking only the
      * actually deposited visible G0425 slots; overflow stays outside the
      * chest and is represented here by the F0163 MapX>=0 floor-drop list. */
-    out->closeCount = m11_inventory_close_chest(
+    out->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed, DM1_PC34_CHEST_DROP_TO_FLOOR_SLOT_COUNT);
     if (out->closeCount < 0) {
         return 0;
@@ -261,7 +261,7 @@ int dm1_v1_chest_drop_to_floor_pc34_compat_run(
     out->closedChestCount =
         count_nonempty_types(out->closedTypes,
                              DM1_PC34_CHEST_DROP_TO_FLOOR_SLOT_COUNT);
-    out->openThingAfterClose = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
 
     out->chestOrderPreserved =
         chest_prefix_order_preserved(out->closedTypes);

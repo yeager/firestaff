@@ -3,11 +3,11 @@
 #include <string.h>
 
 typedef struct {
-    M11_Item chestSlots[DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_SLOT_COUNT];
-    M11_Item closedLinks[DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_SLOT_COUNT];
-    M11_Item championHands[
+    DM1_V1_ItemPc34 chestSlots[DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_SLOT_COUNT];
+    DM1_V1_ItemPc34 closedLinks[DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_SLOT_COUNT];
+    DM1_V1_ItemPc34 championHands[
         DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_PARTY_COUNT];
-    M11_Item leaderHand;
+    DM1_V1_ItemPc34 leaderHand;
     int openChestThing;
     int leaderOrdinal;
     int inventoryChampionOrdinal;
@@ -42,9 +42,9 @@ static const char* const s_case_names[
     "weighted items preserve link order and hand load identities"
 };
 
-static M11_Item make_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -54,18 +54,18 @@ static M11_Item make_item(int itemType, int weight)
     return item;
 }
 
-static void clear_item(M11_Item* item)
+static void clear_item(DM1_V1_ItemPc34* item)
 {
     memset(item, 0, sizeof(*item));
 }
 
-static int item_is_empty(const M11_Item* item)
+static int item_is_empty(const DM1_V1_ItemPc34* item)
 {
     return !item || item->itemType == 0 ||
         item->itemType == DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_THING_NONE;
 }
 
-static void copy_item_types(const M11_Item* items, int* out)
+static void copy_item_types(const DM1_V1_ItemPc34* items, int* out)
 {
     int i;
 
@@ -76,7 +76,7 @@ static void copy_item_types(const M11_Item* items, int* out)
     }
 }
 
-static void copy_item_weights(const M11_Item* items, int* out)
+static void copy_item_weights(const DM1_V1_ItemPc34* items, int* out)
 {
     int i;
 
@@ -85,7 +85,7 @@ static void copy_item_weights(const M11_Item* items, int* out)
     }
 }
 
-static int count_visible(const M11_Item* items)
+static int count_visible(const DM1_V1_ItemPc34* items)
 {
     int i;
     int count = 0;
@@ -210,7 +210,7 @@ static void configure_context(
 
 static int open_chest_pc34(CrossChampionRuntimePc34* runtime,
                            int chestThing,
-                           const M11_Item* linkedItems,
+                           const DM1_V1_ItemPc34* linkedItems,
                            int linkedCount,
                            int* sameOpenNoop)
 {
@@ -289,8 +289,8 @@ static int swap_leader_hand_with_champion_b_pc34(
     int* putBObjectInLeaderHand,
     int* putAObjectInChampionBSlot)
 {
-    M11_Item leaderHand;
-    M11_Item championBHand;
+    DM1_V1_ItemPc34 leaderHand;
+    DM1_V1_ItemPc34 championBHand;
 
     if (removedLeaderHand) {
         *removedLeaderHand = 0;
@@ -368,7 +368,7 @@ static int close_chest_pc34(CrossChampionRuntimePc34* runtime)
 
 static void fill_items_from_context(
     const M11_GameView_ChestCrossChampionHandSwapContextPc34* context,
-    M11_Item* linkedItems)
+    DM1_V1_ItemPc34* linkedItems)
 {
     int i;
 
@@ -387,7 +387,7 @@ static int run_case(
     M11_GameView_ChestCrossChampionHandSwapCasePc34* out)
 {
     CrossChampionRuntimePc34 runtime;
-    M11_Item linkedItems[
+    DM1_V1_ItemPc34 linkedItems[
         DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_SLOT_COUNT];
     int sameOpenNoop = 0;
 

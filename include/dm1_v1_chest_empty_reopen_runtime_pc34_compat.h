@@ -11,7 +11,7 @@ enum {
     /* Source-locked sentinel values for the empty-reopen runtime probe.
      * The chest thing ids do not need to match any real DUNGEON.DAT slot;
      * they only need to be distinct, non-zero, and treated as opaque tokens
-     * by m11_inventory_open_chest / m11_inventory_close_chest. */
+     * by DM1_V1_Inventory_OpenChestPc34Compat / DM1_V1_Inventory_CloseChestPc34Compat. */
     DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_A = 0x6E10,
     DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_B = 0x6E20,
     DM1_PC34_CHEST_EMPTY_REOPEN_CHEST_C = 0x6E30,

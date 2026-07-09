@@ -2,7 +2,7 @@
  * DM1 V1 Stairs Inventory State — narrow CTest gate
  *
  * Bridges the DM1_V1_RoomTransition_BuildPlanPc34Compat module and the
- * M11_InventoryState / M11_StairLevelState modules and asserts the
+ * DM1_V1_InventoryStatePc34 / M11_StairLevelState modules and asserts the
  * ReDMCSB-derived contract that a stairs-triggered level change does NOT
  * mutate the per-champion inventory state.  Concretely:
  *
@@ -97,9 +97,9 @@ static struct Dm1V1RoomTransitionInputPc34Compat make_stairs_input(
     return in;
 }
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
     item.weight = weight;
@@ -168,18 +168,18 @@ static void test_stairs_use_leaves_open_chest_intact(void)
      * (stairs[] and levels[]) and exposes a transition counter.  Calling
      * m11_stairs_use only mutates currentLevel, transitionActive,
      * transitionTicksLeft, transitionFromLevel, and transitionToLevel.
-     * It MUST NOT touch the M11_InventoryState that the caller holds
+     * It MUST NOT touch the DM1_V1_InventoryStatePc34 that the caller holds
      * alongside it.
      *
-     * The M11_InventoryState is a *separate* struct (per-champion data
+     * The DM1_V1_InventoryStatePc34 is a *separate* struct (per-champion data
      * is in M516_CHAMPIONS, not in the level state), so the test is
      * really checking that there is no implicit shared pointer.  In the
      * PC 3.4 layout, M516 is a global array in CHAMPION.C and the level
      * state is a separate M11_StairLevelState; they are independent.
      */
     M11_StairLevelState stairs;
-    M11_InventoryState inv;
-    M11_Item linked[8];
+    DM1_V1_InventoryStatePc34 inv;
+    DM1_V1_ItemPc34 linked[8];
     int champ = 0;
     int newX, newY, newFacing;
     int openThing = 0xC457;
@@ -201,30 +201,30 @@ static void test_stairs_use_leaves_open_chest_intact(void)
                "M11_StairLevelState init");
 
     /* Build a fully-open chest state in the inventory. */
-    m11_inventory_init(&inv, 1);
+    DM1_V1_Inventory_InitPc34Compat(&inv, 1);
     for (i = 0; i < 8; ++i) {
         linked[i] = make_item(200 + i, /*weight=*/2 + i, DM1_PC34_ALLOWED_CONTAINER);
     }
     expect_int("open_chest",
-               m11_inventory_open_chest(&inv, champ, openThing, linked, 8), 1,
+               DM1_V1_Inventory_OpenChestPc34Compat(&inv, champ, openThing, linked, 8), 1,
                "CHEST.C:F0333_INVENTORY_OpenChest:30-75");
     expect_int("panel_after_open",
-               m11_inventory_get_panel_content_pc34(&inv),
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv),
                DM1_PC34_PANEL_CHEST,
                "CHEST.C:F0333_INVENTORY_OpenChest:30-75; PANEL.C:G0424_i_PanelContent");
 
     /* Place a torch in the leader's action hand. */
     inv.champions[champ].handItem = 1;
     expect_int("set_action_hand_torch",
-               m11_inventory_set_item(&inv, champ, DM1_SLOT_HAND_LEFT,
+               DM1_V1_Inventory_SetItemPc34Compat(&inv, champ, DM1_SLOT_HAND_LEFT,
                                       /*itemType=*/19 /* FLAME */,
                                       /*weight=*/1,
                                       /*charges=*/12), 1,
                "CHAMPION.C:F0301_AddObjectInSlot:587-660");
 
     /* Snapshot the inventory state we expect to survive. */
-    panelBefore = m11_inventory_get_panel_content_pc34(&inv);
-    openBefore = m11_inventory_get_open_chest_thing(&inv, champ);
+    panelBefore = DM1_V1_Inventory_GetPanelContentPc34Compat(&inv);
+    openBefore = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ);
     slotItemBefore = inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].itemType;
     slotWeightBefore = inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].weight;
     slotChargeBefore = inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].charges;
@@ -250,20 +250,20 @@ static void test_stairs_use_leaves_open_chest_intact(void)
     expect_int("stairs_transition_to_level", stairs.transitionToLevel, 1,
                "GAMELOOP.C:58-64 deferred new-party-map processing");
 
-    /* The M11_InventoryState MUST be byte-untouched for the open-chest
+    /* The DM1_V1_InventoryStatePc34 MUST be byte-untouched for the open-chest
      * fields, panel content, and leader hand torch. */
     expect_int("inv.panel_after_stairs",
-               m11_inventory_get_panel_content_pc34(&inv), panelBefore,
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv), panelBefore,
                "PANEL.C:G0424_i_PanelContent; CLIKMENU.C:F0364 does not toggle panel");
     expect_int("inv.panel_value",
-               m11_inventory_get_panel_content_pc34(&inv),
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv),
                DM1_PC34_PANEL_CHEST,
                "PANEL.C:G0424_i_PanelContent survives stairs");
     expect_int("inv.open_chest_thing",
-               m11_inventory_get_open_chest_thing(&inv, champ), openBefore,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openBefore,
                "PANEL.C:G0426_T_OpenChest; F0334_INVENTORY_CloseChest NOT called by F0364");
     expect_int("inv.open_chest_thing_value",
-               m11_inventory_get_open_chest_thing(&inv, champ), openThing,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openThing,
                "PANEL.C:G0426_T_OpenChest survives stairs");
     expect_int("inv.action_hand_item",
                inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].itemType,
@@ -281,16 +281,16 @@ static void test_stairs_use_leaves_open_chest_intact(void)
                inv.champions[champ].handItem, 1,
                "CHAMPION.C:M516.Champion[0].HandItem preserved");
     expect_int("inv.load_unchanged",
-               m11_inventory_get_load(&inv, champ),
+               DM1_V1_Inventory_GetLoadPc34Compat(&inv, champ),
                /* 1 (torch) + (2+3+4+5+6+7+8+9) = 45 */ 45,
                "CHAMPION.C:M516.Champion[0].Load preserved");
 
     /* Walk the eight chest slots and assert each item is byte-identical. */
     for (i = 0; i < 8; ++i) {
-        M11_Item got;
+        DM1_V1_ItemPc34 got;
         char id[64];
         expect_int("inv.chest_slot_has_thing",
-                   m11_inventory_get_item_in_chest_slot(&inv, champ, i, &got), 1,
+                   DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&inv, champ, i, &got), 1,
                    "PANEL.C:G0425_aT_ChestSlots[8] survives stairs");
         snprintf(id, sizeof(id), "inv.chest.%d.itemType", i);
         expect_int(id, got.itemType, 200 + i,
@@ -310,14 +310,14 @@ static void test_stairs_use_leaves_open_chest_intact(void)
                "GAMELOOP.C:58-64 deferred new-party-map processing; "
                "DUNGEON.C:F0173:2724-2740");
     expect_int("inv.open_chest_thing_after_ticks",
-               m11_inventory_get_open_chest_thing(&inv, champ), openThing,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openThing,
                "PANEL.C:G0426_T_OpenChest survives ticks of stairs transition");
     expect_int("inv.action_hand_item_after_ticks",
                inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].itemType,
                slotItemBefore,
                "CHAMPION.C:M516.Champion[0].Slots survives ticks of stairs");
     expect_int("inv.panel_after_ticks",
-               m11_inventory_get_panel_content_pc34(&inv),
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv),
                DM1_PC34_PANEL_CHEST,
                "PANEL.C:G0424_i_PanelContent survives ticks of stairs");
 }
@@ -332,7 +332,7 @@ static void test_stairs_use_with_no_chest_keeps_inventory_panel(void)
      * stairs, and no slot is touched.
      */
     M11_StairLevelState stairs;
-    M11_InventoryState inv;
+    DM1_V1_InventoryStatePc34 inv;
     int champ = 0;
     int newX, newY, newFacing;
     int panelBefore;
@@ -345,21 +345,21 @@ static void test_stairs_use_with_no_chest_keeps_inventory_panel(void)
                m11_stairs_add(&stairs, 3, 3, 0, 1, 3, 3, 0), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
-    m11_inventory_init(&inv, 1);
+    DM1_V1_Inventory_InitPc34Compat(&inv, 1);
     /* Place a non-container object in the action hand. */
     expect_int("set_action_hand_scroll",
-               m11_inventory_set_item(&inv, champ, DM1_SLOT_HAND_LEFT,
+               DM1_V1_Inventory_SetItemPc34Compat(&inv, champ, DM1_SLOT_HAND_LEFT,
                                       /*itemType=*/180 /* SCROLL */,
                                       /*weight=*/1,
                                       /*charges=*/1), 1,
                "CHAMPION.C:F0301_AddObjectInSlot:587-660");
-    panelBefore = m11_inventory_get_panel_content_pc34(&inv);
+    panelBefore = DM1_V1_Inventory_GetPanelContentPc34Compat(&inv);
     expect_int("panel_initially_inventory",
                panelBefore, DM1_PC34_PANEL_INVENTORY,
-               "M11_InventoryState init: PANEL.C:G0424_i_PanelContent");
+               "DM1_V1_InventoryStatePc34 init: PANEL.C:G0424_i_PanelContent");
 
     expect_int("no_open_chest",
-               m11_inventory_get_open_chest_thing(&inv, champ), 0,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), 0,
                "PANEL.C:G0426_T_OpenChest initially C0xFFFF_THING_NONE");
 
     expect_int("stairs_use_no_chest",
@@ -371,14 +371,14 @@ static void test_stairs_use_with_no_chest_keeps_inventory_panel(void)
                "DUNGEON.C:F0154_GetLocationAfterLevelChange");
 
     expect_int("panel_unchanged_after_stairs",
-               m11_inventory_get_panel_content_pc34(&inv), panelBefore,
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv), panelBefore,
                "PANEL.C:G0424_i_PanelContent; F0364 does not toggle panel");
     expect_int("panel_value_after_stairs",
-               m11_inventory_get_panel_content_pc34(&inv),
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv),
                DM1_PC34_PANEL_INVENTORY,
                "PANEL.C:G0424_i_PanelContent stays at INVENTORY");
     expect_int("open_chest_still_zero",
-               m11_inventory_get_open_chest_thing(&inv, champ), 0,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), 0,
                "PANEL.C:G0426_T_OpenChest stays C0xFFFF_THING_NONE");
     expect_int("action_hand_scroll_preserved",
                inv.champions[champ].slots[DM1_SLOT_HAND_LEFT].itemType, 180,
@@ -392,7 +392,7 @@ static void test_stairs_use_with_no_chest_keeps_inventory_panel(void)
         m11_stairs_tick(&stairs, 100);
     }
     expect_int("panel_unchanged_after_ticks",
-               m11_inventory_get_panel_content_pc34(&inv),
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv),
                DM1_PC34_PANEL_INVENTORY,
                "PANEL.C:G0424_i_PanelContent survives ticks of stairs");
     expect_int("action_hand_scroll_preserved_after_ticks",
@@ -415,8 +415,8 @@ static void test_two_stairs_uses_keep_open_chest_across_both(void)
      * the up- and down-stairs to be able to drive both transitions.
      */
     M11_StairLevelState stairs;
-    M11_InventoryState inv;
-    M11_Item linked[8];
+    DM1_V1_InventoryStatePc34 inv;
+    DM1_V1_ItemPc34 linked[8];
     int champ = 0;
     int newX, newY, newFacing;
     int openThing = 0xC0DE;
@@ -433,12 +433,12 @@ static void test_two_stairs_uses_keep_open_chest_across_both(void)
                m11_stairs_add(&stairs, 10, 10, 0, 0, 10, 10, 0), 1,
                "CLIKMENU.C:F0364_COMMAND_TakeStairs:124-142");
 
-    m11_inventory_init(&inv, 1);
+    DM1_V1_Inventory_InitPc34Compat(&inv, 1);
     for (i = 0; i < 8; ++i) {
         linked[i] = make_item(300 + i, 1, DM1_PC34_ALLOWED_CONTAINER);
     }
     expect_int("open_chest_for_two_stairs",
-               m11_inventory_open_chest(&inv, champ, openThing, linked, 8), 1,
+               DM1_V1_Inventory_OpenChestPc34Compat(&inv, champ, openThing, linked, 8), 1,
                "CHEST.C:F0333_INVENTORY_OpenChest:30-75");
 
     /* Stairs up. */
@@ -449,7 +449,7 @@ static void test_two_stairs_uses_keep_open_chest_across_both(void)
                "DUNGEON.C:F0154_GetLocationAfterLevelChange");
     for (i = 0; i < 16; ++i) m11_stairs_tick(&stairs, 100);
     expect_int("open_chest_after_up",
-               m11_inventory_get_open_chest_thing(&inv, champ), openThing,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openThing,
                "PANEL.C:G0426_T_OpenChest survives first stairs up");
 
     /* Stairs down. */
@@ -460,10 +460,10 @@ static void test_two_stairs_uses_keep_open_chest_across_both(void)
                "DUNGEON.C:F0154_GetLocationAfterLevelChange");
     for (i = 0; i < 16; ++i) m11_stairs_tick(&stairs, 100);
     expect_int("open_chest_after_down",
-               m11_inventory_get_open_chest_thing(&inv, champ), openThing,
+               DM1_V1_Inventory_GetOpenChestThingPc34Compat(&inv, champ), openThing,
                "PANEL.C:G0426_T_OpenChest survives second stairs down");
     expect_int("panel_after_roundtrip",
-               m11_inventory_get_panel_content_pc34(&inv),
+               DM1_V1_Inventory_GetPanelContentPc34Compat(&inv),
                DM1_PC34_PANEL_CHEST,
                "PANEL.C:G0424_i_PanelContent survives stairs roundtrip");
     /* Re-check a sample chest slot to confirm full byte stability. */

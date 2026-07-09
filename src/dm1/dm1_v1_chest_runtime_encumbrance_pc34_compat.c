@@ -2,9 +2,9 @@
 
 #include <string.h>
 
-static M11_Item make_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -14,7 +14,7 @@ static M11_Item make_item(int itemType, int weight)
 }
 
 static void copy_closed_items(
-    const M11_Item* closed,
+    const DM1_V1_ItemPc34* closed,
     DM1_V1_ChestRuntimeEncumbranceProbePc34* out)
 {
     int i;
@@ -46,9 +46,9 @@ int dm1_v1_chest_runtime_encumbrance_run_pc34(
         LEADER_PACK_ITEM = 0x4101,
         BYSTANDER_PACK_ITEM = 0x4201
     };
-    M11_InventoryState state;
-    M11_Item linked[3];
-    M11_Item closed[DM1_PC34_CHEST_RUNTIME_ENCUMBRANCE_SLOT_COUNT];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[3];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_RUNTIME_ENCUMBRANCE_SLOT_COUNT];
 
     if (!out) {
         return 0;
@@ -56,21 +56,21 @@ int dm1_v1_chest_runtime_encumbrance_run_pc34(
 
     memset(out, 0, sizeof(*out));
     memset(closed, 0, sizeof(closed));
-    m11_inventory_init(&state, 2);
+    DM1_V1_Inventory_InitPc34Compat(&state, 2);
 
     /* ReDMCSB CHAMPION.C F0301 lines 609-615 updates the per-champion Load
      * when ordinary inventory slots receive objects. */
-    out->leaderBaseSetResult = m11_inventory_set_item_in_pc34_source_slot(
+    out->leaderBaseSetResult = DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &state, LEADER, DM1_PC34_SLOT_BACKPACK_LINE1_1, LEADER_PACK_ITEM, 15,
         0, DM1_PC34_ALLOWED_ANY_SLOT);
-    out->bystanderBaseSetResult = m11_inventory_set_item_in_pc34_source_slot(
+    out->bystanderBaseSetResult = DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &state, BYSTANDER, DM1_PC34_SLOT_BACKPACK_LINE1_1,
         BYSTANDER_PACK_ITEM, 77, 0, DM1_PC34_ALLOWED_ANY_SLOT);
     if (!out->leaderBaseSetResult || !out->bystanderBaseSetResult) {
         return 0;
     }
-    out->leaderBaseLoad = m11_inventory_get_load(&state, LEADER);
-    out->bystanderLoadBeforeOpen = m11_inventory_get_load(&state, BYSTANDER);
+    out->leaderBaseLoad = DM1_V1_Inventory_GetLoadPc34Compat(&state, LEADER);
+    out->bystanderLoadBeforeOpen = DM1_V1_Inventory_GetLoadPc34Compat(&state, BYSTANDER);
 
     linked[0] = make_item(0x5101, 10);
     linked[1] = make_item(0x5102, 20);
@@ -78,18 +78,18 @@ int dm1_v1_chest_runtime_encumbrance_run_pc34(
 
     /* ReDMCSB CHEST.C F0333 lines 53-76 materializes linked chest contents
      * into the open G0425 slots that the runtime inventory path weighs. */
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, LEADER, TEST_CHEST_THING, linked, 3);
     if (!out->openResult) {
         return 0;
     }
     out->openChestThingAfterOpen =
-        m11_inventory_get_open_chest_thing(&state, LEADER);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, LEADER);
     out->visibleContentsWeight =
         m11_inventory_pc34_open_chest_visible_contents_weight(&state, LEADER);
     out->openContainerWeight =
         m11_inventory_pc34_open_chest_container_weight(&state, LEADER);
-    out->leaderLoadAfterOpen = m11_inventory_get_load(&state, LEADER);
+    out->leaderLoadAfterOpen = DM1_V1_Inventory_GetLoadPc34Compat(&state, LEADER);
 
     /* ReDMCSB CHEST.C F0334 lines 117-132 closes by compacting G0425 and
      * clearing G0426; CHAMPION.C F0300/F0301 lines 582-615 require the leader
@@ -105,9 +105,9 @@ int dm1_v1_chest_runtime_encumbrance_run_pc34(
     out->closeContainerWeightAfter =
         m11_inventory_pc34_open_chest_container_weight(&state, LEADER);
     out->openChestThingAfterClose =
-        m11_inventory_get_open_chest_thing(&state, LEADER);
-    out->leaderLoadAfterClose = m11_inventory_get_load(&state, LEADER);
-    out->bystanderLoadAfterClose = m11_inventory_get_load(&state, BYSTANDER);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, LEADER);
+    out->leaderLoadAfterClose = DM1_V1_Inventory_GetLoadPc34Compat(&state, LEADER);
+    out->bystanderLoadAfterClose = DM1_V1_Inventory_GetLoadPc34Compat(&state, BYSTANDER);
 
     return 1;
 }

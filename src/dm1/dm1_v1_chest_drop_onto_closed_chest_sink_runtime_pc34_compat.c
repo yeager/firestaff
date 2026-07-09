@@ -52,9 +52,9 @@ static const DM1_V1_ChestDropOntoClosedChestSinkSpecPc34 s_spec = {
     1
 };
 
-static M11_Item make_item(int itemType, int weight, int charges)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int charges)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -65,7 +65,7 @@ static M11_Item make_item(int itemType, int weight, int charges)
     return item;
 }
 
-static void make_initial_manifest(M11_Item* items)
+static void make_initial_manifest(DM1_V1_ItemPc34* items)
 {
     int i;
 
@@ -80,7 +80,7 @@ static void make_initial_manifest(M11_Item* items)
     }
 }
 
-static void copy_items_to_arrays(const M11_Item* items,
+static void copy_items_to_arrays(const DM1_V1_ItemPc34* items,
                                  int count,
                                  int* types,
                                  int* weights,
@@ -120,7 +120,7 @@ static void copy_items_to_arrays(const M11_Item* items,
     }
 }
 
-static int copy_open_chest(const M11_InventoryState* state,
+static int copy_open_chest(const DM1_V1_InventoryStatePc34* state,
                            int* types,
                            int* weights)
 {
@@ -130,9 +130,9 @@ static int copy_open_chest(const M11_InventoryState* state,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, 0, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item)) {
             return 0;
         }
         types[i] = item.itemType;
@@ -250,11 +250,11 @@ dm1_v1_chest_drop_onto_closed_chest_sink_spec_pc34(void)
 int dm1_v1_chest_drop_onto_closed_chest_sink_pc34(
     DM1_V1_ChestDropOntoClosedChestSinkProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item initial[DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT];
-    M11_Item closed[DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT];
-    M11_Item openClosed[DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT];
-    M11_Item hand;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 initial[DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT];
+    DM1_V1_ItemPc34 openClosed[DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT];
+    DM1_V1_ItemPc34 hand;
     int openWeights[DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT];
 
     if (!out) {
@@ -272,20 +272,20 @@ int dm1_v1_chest_drop_onto_closed_chest_sink_pc34(
                          out->initialCharges,
                          out->initialAllowedSlots);
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
 
     /* No CHEST.C F0336 drop helper exists in WIP20210206.  The closest chest
      * authority is CHEST.C F0333 lines 31-67, which makes G0426 non-NONE and
      * fills G0425, paired with F0334 lines 113-132, which clears G0426 and
      * rewrites the manifest from non-empty G0425 slots. */
-    out->setupOpenResult = m11_inventory_open_chest(
+    out->setupOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_DROP_CLOSED_SINK_CHEST_THING, initial,
         DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT);
-    out->setupOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
-    out->setupCloseCount = m11_inventory_close_chest(
+    out->setupOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
+    out->setupCloseCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed,
         DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT);
-    out->setupClosedOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->setupClosedOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     copy_items_to_arrays(closed, out->setupCloseCount,
                          out->closedBeforeTypes,
                          out->closedBeforeWeights, 0, 0);
@@ -296,13 +296,13 @@ int dm1_v1_chest_drop_onto_closed_chest_sink_pc34(
         count_nonzero(out->closedBeforeTypes) ==
         DM1_PC34_CHEST_DROP_CLOSED_SINK_INITIAL_COUNT;
     out->closedChestG0426BeforeDrop =
-        m11_inventory_get_open_chest_thing(&state, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->closedManifestHashBefore =
         hash_manifest(out->closedBeforeTypes, out->closedBeforeWeights);
 
     out->closedLeaderHandBefore =
         DM1_PC34_CHEST_DROP_CLOSED_SINK_HELD_OBJECT;
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state, 0, out->closedLeaderHandBefore, 17, 1,
             DM1_PC34_ALLOWED_CONTAINER)) {
         return 0;
@@ -310,16 +310,16 @@ int dm1_v1_chest_drop_onto_closed_chest_sink_pc34(
 
     /* CHAMPION.C F0302 lines 688-710 can only route C30..C37 through the
      * current G0425 view.  With G0426 already cleared by CHEST.C F0334
-     * lines 113-116, m11_inventory_click_open_chest_slot_for_thing rejects
+     * lines 113-116, DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat rejects
      * before the F0298 lines 270-298 leader-hand remove bridge can run. */
-    out->closedDropResult = m11_inventory_click_open_chest_slot_for_thing(
+    out->closedDropResult = DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
         &state, 0, DM1_PC34_CHEST_DROP_CLOSED_SINK_CHEST_THING,
         DM1_PC34_CHEST_DROP_CLOSED_SINK_TARGET_SLOT_INDEX);
-    if (!m11_inventory_get_mouse_item(&state, 0, &hand)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &hand)) {
         return 0;
     }
     out->closedLeaderHandAfter = hand.itemType;
-    out->closedG0426AfterDrop = m11_inventory_get_open_chest_thing(&state, 0);
+    out->closedG0426AfterDrop = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->closedManifestHashAfter =
         hash_manifest(out->closedAfterTypes, out->closedAfterWeights);
     out->closedManifestUnchanged =
@@ -343,10 +343,10 @@ int dm1_v1_chest_drop_onto_closed_chest_sink_pc34(
         out->events[0].manifestHashBefore ==
         out->events[0].manifestHashAfter;
 
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_DROP_CLOSED_SINK_CHEST_THING, closed,
         out->setupCloseCount);
-    out->openThingBeforeDrop = m11_inventory_get_open_chest_thing(&state, 0);
+    out->openThingBeforeDrop = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!copy_open_chest(&state, out->openBeforeTypes, openWeights)) {
         return 0;
     }
@@ -356,7 +356,7 @@ int dm1_v1_chest_drop_onto_closed_chest_sink_pc34(
         hash_manifest(out->openBeforeTypes, openWeights);
     out->openLeaderHandBefore =
         DM1_PC34_CHEST_DROP_CLOSED_SINK_OPEN_HELD_OBJECT;
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state, 0, out->openLeaderHandBefore, 29, 2,
             DM1_PC34_ALLOWED_CONTAINER)) {
         return 0;
@@ -366,10 +366,10 @@ int dm1_v1_chest_drop_onto_closed_chest_sink_pc34(
      * accepted by CHAMPION.C F0302 lines 697-710: the AllowedSlots mask
      * matches DATA.C lines 1080-1087, F0298 clears G4055, and F0301 writes
      * the held object into the selected G0425 cell. */
-    out->openDropResult = m11_inventory_click_open_chest_slot_for_thing(
+    out->openDropResult = DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
         &state, 0, DM1_PC34_CHEST_DROP_CLOSED_SINK_CHEST_THING,
         DM1_PC34_CHEST_DROP_CLOSED_SINK_TARGET_SLOT_INDEX);
-    if (!m11_inventory_get_mouse_item(&state, 0, &hand) ||
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &hand) ||
         !copy_open_chest(&state, out->openAfterTypes, openWeights)) {
         return 0;
     }
@@ -388,14 +388,14 @@ int dm1_v1_chest_drop_onto_closed_chest_sink_pc34(
         &out->events[1], 1, out->openDropResult,
         DM1_PC34_CHEST_DROP_CLOSED_SINK_REASON_ACCEPTED_OPEN_G0426,
         out->openLeaderHandBefore, out->openLeaderHandAfter,
-        out->openThingBeforeDrop, m11_inventory_get_open_chest_thing(&state, 0),
+        out->openThingBeforeDrop, DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0),
         out->openManifestHashBefore, out->openManifestHashAfter);
     out->openEventReason = out->events[1].reasonCode;
     out->openEventLeaderHandCleared = out->events[1].leaderHandAfter == 0;
     out->openEventManifestChanged =
         out->events[1].manifestHashBefore != out->events[1].manifestHashAfter;
 
-    out->openCloseCount = m11_inventory_close_chest(
+    out->openCloseCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, openClosed,
         DM1_PC34_CHEST_DROP_CLOSED_SINK_SLOT_COUNT);
     copy_items_to_arrays(openClosed, out->openCloseCount,

@@ -2,9 +2,9 @@
 
 #include <string.h>
 
-static M11_Item make_item_pc34(int itemType, uint32_t weight)
+static DM1_V1_ItemPc34 make_item_pc34(int itemType, uint32_t weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -123,8 +123,8 @@ int dm1_v1_inventory_chest_pickup_encumbrance_pickup_pc34(
     DM1_V1_InventoryChestPickupEncumbranceEventPc34* outEvent)
 {
     DM1_V1_InventoryChestPickupChampionPc34* champion;
-    M11_Item* chestSlot;
-    M11_Item item;
+    DM1_V1_ItemPc34* chestSlot;
+    DM1_V1_ItemPc34 item;
     int saturated = 0;
 
     if (outEvent) {
@@ -178,7 +178,7 @@ int dm1_v1_inventory_chest_pickup_encumbrance_pickup_pc34(
     return 1;
 }
 
-int m11_inventory_pc34_probe_chest_pickup_encumbrance(
+int DM1_V1_Inventory_Pc34ProbeChestPickupEncumbranceCompat(
     DM1_V1_InventoryChestPickupEncumbranceProbePc34* out)
 {
     DM1_V1_InventoryChestPickupEncumbranceStatePc34 state;

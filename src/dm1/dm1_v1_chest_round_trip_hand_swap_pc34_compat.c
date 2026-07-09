@@ -49,9 +49,9 @@ static const DM1_V1_ChestRoundTripHandSwapSpecPc34 s_spec = {
 
 static DM1_V1_ChestRoundTripHandSwapProbePc34 s_last_probe;
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -61,7 +61,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static int copy_open_slots(const M11_InventoryState* state,
+static int copy_open_slots(const DM1_V1_InventoryStatePc34* state,
                            int* typesOut,
                            int* weightsOut)
 {
@@ -71,9 +71,9 @@ static int copy_open_slots(const M11_InventoryState* state,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_ROUND_TRIP_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, 0, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item)) {
             return 0;
         }
         typesOut[i] = item.itemType;
@@ -82,7 +82,7 @@ static int copy_open_slots(const M11_InventoryState* state,
     return 1;
 }
 
-static void copy_closed_slots(const M11_Item* closed,
+static void copy_closed_slots(const DM1_V1_ItemPc34* closed,
                               int count,
                               int* typesOut,
                               int* weightsOut)
@@ -149,11 +149,11 @@ static int only_visible_slots_used(const int* types, int linkedInputCount)
     return 1;
 }
 
-static int leader_hand_weight(const M11_InventoryState* state)
+static int leader_hand_weight(const DM1_V1_InventoryStatePc34* state)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
 
-    if (!m11_inventory_get_mouse_item(state, 0, &hand)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(state, 0, &hand)) {
         return 0;
     }
     return hand.weight;
@@ -187,10 +187,10 @@ dm1_v1_chest_round_trip_hand_swap_last_probe_pc34(void)
 
 int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_ROUND_TRIP_LINKED_INPUT_COUNT];
-    M11_Item closed[DM1_PC34_CHEST_ROUND_TRIP_SLOT_COUNT];
-    M11_Item hand;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_ROUND_TRIP_LINKED_INPUT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_ROUND_TRIP_SLOT_COUNT];
+    DM1_V1_ItemPc34 hand;
     int localPassed = 0;
     int localFailed = 0;
 
@@ -210,13 +210,13 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
                           DM1_PC34_CHEST_ROUND_TRIP_TORCH_WEIGHT,
                           DM1_PC34_ALLOWED_CONTAINER);
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     s_last_probe.contractOnly = 1;
     s_last_probe.hiddenTailClaimed = 0;
     s_last_probe.originalDaggerId = linked[0].itemType;
     s_last_probe.originalTorchId = linked[1].itemType;
     s_last_probe.baseItemSetResult =
-        m11_inventory_set_item_in_pc34_source_slot(
+        DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
             &state, 0, DM1_PC34_SLOT_BACKPACK_LINE1_1,
             DM1_PC34_CHEST_ROUND_TRIP_BASE_ITEM,
             DM1_PC34_CHEST_ROUND_TRIP_BASE_WEIGHT, 0,
@@ -224,14 +224,14 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
     if (!s_last_probe.baseItemSetResult) {
         return 0;
     }
-    s_last_probe.open.loadBeforeOpen = m11_inventory_get_load(&state, 0);
+    s_last_probe.open.loadBeforeOpen = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB CHEST.C F0333:53-67 copies the two linked entries into C537
      * and C538/G0425, with C539..C544 left empty. */
-    s_last_probe.open.openResult = m11_inventory_open_chest(
+    s_last_probe.open.openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_ROUND_TRIP_CHEST_THING, linked,
         DM1_PC34_CHEST_ROUND_TRIP_LINKED_INPUT_COUNT);
-    s_last_probe.open.openThing = m11_inventory_get_open_chest_thing(&state, 0);
+    s_last_probe.open.openThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!s_last_probe.open.openResult ||
         !copy_open_slots(&state, s_last_probe.open.openedTypes,
                          s_last_probe.open.openedWeights)) {
@@ -256,7 +256,7 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
     s_last_probe.open.openContainerBaseContribution =
         s_last_probe.open.openContainerWeight -
         s_last_probe.open.openVisibleWeight;
-    s_last_probe.open.loadAfterOpen = m11_inventory_get_load(&state, 0);
+    s_last_probe.open.loadAfterOpen = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     s_last_probe.open.loadDeltaAfterOpen =
         s_last_probe.open.loadAfterOpen -
         s_last_probe.open.loadBeforeOpen;
@@ -264,10 +264,10 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
     /* ReDMCSB CHAMPION.C F0300:582-615 removes C538 from G0425 and
      * F0297:263-265 places that torch in the leader hand. */
     s_last_probe.firstSwap.firstClickResult =
-        m11_inventory_click_pc34_source_slot(
+        DM1_V1_Inventory_ClickPc34SourceSlotCompat(
             &state, 0, DM1_PC34_SLOT_CHEST_2);
     if (!s_last_probe.firstSwap.firstClickResult ||
-        !m11_inventory_get_mouse_item(&state, 0, &hand) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &hand) ||
         !copy_open_slots(&state, s_last_probe.firstSwap.afterFirstTypes,
                          s_last_probe.firstSwap.afterFirstWeights)) {
         return 0;
@@ -275,7 +275,7 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
     s_last_probe.firstSwap.leaderHandAfterFirstType = hand.itemType;
     s_last_probe.firstSwap.leaderHandAfterFirstWeight = hand.weight;
     s_last_probe.firstSwap.leaderHandAfterFirstCanEnterChest =
-        m11_inventory_can_equip(&hand, DM1_PC34_SLOT_CHEST_1);
+        DM1_V1_Inventory_CanEquipPc34Compat(&hand, DM1_PC34_SLOT_CHEST_1);
     s_last_probe.firstSwap.afterFirstVisibleCount =
         count_visible(s_last_probe.firstSwap.afterFirstTypes);
     s_last_probe.firstSwap.afterFirstC537StillDagger =
@@ -291,7 +291,7 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
         s_last_probe.firstSwap.afterFirstContainerWeight -
         s_last_probe.firstSwap.afterFirstVisibleWeight;
     s_last_probe.firstSwap.loadAfterFirstSwap =
-        m11_inventory_get_load(&state, 0);
+        DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     s_last_probe.firstSwap.loadDeltaAfterFirstSwap =
         s_last_probe.firstSwap.loadAfterFirstSwap -
         s_last_probe.open.loadAfterOpen;
@@ -304,10 +304,10 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
     /* ReDMCSB CHAMPION.C F0300/F0301:582-615 swaps C537 with the current
      * leader hand, preserving the torch in G0425 and the dagger in hand. */
     s_last_probe.secondSwap.secondClickResult =
-        m11_inventory_click_pc34_source_slot(
+        DM1_V1_Inventory_ClickPc34SourceSlotCompat(
             &state, 0, DM1_PC34_SLOT_CHEST_1);
     if (!s_last_probe.secondSwap.secondClickResult ||
-        !m11_inventory_get_mouse_item(&state, 0, &hand) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &hand) ||
         !copy_open_slots(&state, s_last_probe.secondSwap.afterSecondTypes,
                          s_last_probe.secondSwap.afterSecondWeights)) {
         return 0;
@@ -315,7 +315,7 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
     s_last_probe.secondSwap.leaderHandAfterSecondType = hand.itemType;
     s_last_probe.secondSwap.leaderHandAfterSecondWeight = hand.weight;
     s_last_probe.secondSwap.leaderHandAfterSecondCanEnterChest =
-        m11_inventory_can_equip(&hand, DM1_PC34_SLOT_CHEST_1);
+        DM1_V1_Inventory_CanEquipPc34Compat(&hand, DM1_PC34_SLOT_CHEST_1);
     s_last_probe.secondSwap.afterSecondVisibleCount =
         count_visible(s_last_probe.secondSwap.afterSecondTypes);
     s_last_probe.secondSwap.afterSecondC537Torch =
@@ -339,7 +339,7 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
         s_last_probe.secondSwap.afterSecondContainerWeight -
         s_last_probe.secondSwap.afterSecondVisibleWeight;
     s_last_probe.secondSwap.loadAfterSecondSwap =
-        m11_inventory_get_load(&state, 0);
+        DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     s_last_probe.secondSwap.loadDeltaAfterSecondSwap =
         s_last_probe.secondSwap.loadAfterSecondSwap -
         s_last_probe.firstSwap.loadAfterFirstSwap;
@@ -357,14 +357,14 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
             &state, 0, closed, DM1_PC34_CHEST_ROUND_TRIP_SLOT_COUNT,
             &s_last_probe.close.closeContainerWeightSnapshot);
     if (s_last_probe.close.closeCount < 0 ||
-        !m11_inventory_get_mouse_item(&state, 0, &hand)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &hand)) {
         return 0;
     }
     copy_closed_slots(closed, s_last_probe.close.closeCount,
                       s_last_probe.close.closedTypes,
                       s_last_probe.close.closedWeights);
     s_last_probe.close.closeClearsOpenChest =
-        m11_inventory_get_open_chest_thing(&state, 0) == 0;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == 0;
     s_last_probe.close.closedVisibleCount =
         count_visible(s_last_probe.close.closedTypes);
     s_last_probe.close.closedC537Torch =
@@ -380,7 +380,7 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
         s_last_probe.secondSwap.afterSecondVisibleWeight;
     s_last_probe.close.closeContainerWeightAfter =
         m11_inventory_pc34_open_chest_container_weight(&state, 0);
-    s_last_probe.close.loadAfterClose = m11_inventory_get_load(&state, 0);
+    s_last_probe.close.loadAfterClose = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     s_last_probe.close.loadDeltaAfterClose =
         s_last_probe.close.loadAfterClose -
         s_last_probe.open.loadBeforeOpen;
@@ -390,13 +390,13 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
     /* ReDMCSB CHEST.C F0333:53-67 rematerializes the F0334-produced link
      * array, proving C537 contains the original torch and the dagger stayed
      * in the leader hand rather than being duplicated into the chest. */
-    s_last_probe.reopen.reopenResult = m11_inventory_open_chest(
+    s_last_probe.reopen.reopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_CHEST_ROUND_TRIP_REOPEN_THING, closed,
         s_last_probe.close.closeCount);
     s_last_probe.reopen.reopenThing =
-        m11_inventory_get_open_chest_thing(&state, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!s_last_probe.reopen.reopenResult ||
-        !m11_inventory_get_mouse_item(&state, 0, &hand) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &hand) ||
         !copy_open_slots(&state, s_last_probe.reopen.reopenedTypes,
                          s_last_probe.reopen.reopenedWeights)) {
         return 0;
@@ -425,7 +425,7 @@ int dm1_v1_chest_round_trip_hand_swap_run(int* passed, int* failed)
     s_last_probe.reopen.reopenedContainerBaseContribution =
         s_last_probe.reopen.reopenedContainerWeight -
         s_last_probe.reopen.reopenedVisibleWeight;
-    s_last_probe.reopen.loadAfterReopen = m11_inventory_get_load(&state, 0);
+    s_last_probe.reopen.loadAfterReopen = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     s_last_probe.reopen.loadDeltaAfterReopen =
         s_last_probe.reopen.loadAfterReopen -
         s_last_probe.close.loadAfterClose;

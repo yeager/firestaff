@@ -58,9 +58,9 @@ const DM1_V1_ChestCloseFullLeaderHandSpecPc34
           DM1_PC34_ALLOWED_CONTAINER }
     };
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -72,7 +72,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static int copy_open_chest_types_and_masks(const M11_InventoryState* state,
+static int copy_open_chest_types_and_masks(const DM1_V1_InventoryStatePc34* state,
                                            int champ,
                                            int* typesOut,
                                            int* allowedSlotsOut)
@@ -83,9 +83,9 @@ static int copy_open_chest_types_and_masks(const M11_InventoryState* state,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, champ, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item)) {
             return 0;
         }
         typesOut[i] = item.itemType;
@@ -94,7 +94,7 @@ static int copy_open_chest_types_and_masks(const M11_InventoryState* state,
     return 1;
 }
 
-static void copy_item_types_and_weights(const M11_Item* items,
+static void copy_item_types_and_weights(const DM1_V1_ItemPc34* items,
                                         int count,
                                         int* typesOut,
                                         int* weightsOut)
@@ -151,7 +151,7 @@ static int arrays_differ(const int* left, const int* right)
     return 0;
 }
 
-static int container_weight_from_closed_links(const M11_Item* items, int count)
+static int container_weight_from_closed_links(const DM1_V1_ItemPc34* items, int count)
 {
     int total = DM1_PC34_CHEST_CLOSE_FULL_HAND_CONTAINER_BASE_WEIGHT;
     int i;
@@ -178,12 +178,12 @@ dm1_v1_chest_close_with_full_leader_hand_spec_pc34(void)
 int dm1_v1_chest_close_with_full_leader_hand_pc34(
     DM1_V1_ChestCloseFullLeaderHandProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item chestAInput[9];
-    M11_Item chestBInput[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
-    M11_Item chestAClosed[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
-    M11_Item chestBClosed[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 chestAInput[9];
+    DM1_V1_ItemPc34 chestBInput[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
+    DM1_V1_ItemPc34 chestAClosed[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
+    DM1_V1_ItemPc34 chestBClosed[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int chestAClosedSnapshot[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
     int chestBAllowedSlots[DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT];
     int i;
@@ -203,8 +203,8 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
     out->chestBCellX = DM1_PC34_FULL_HAND_CHEST_B_CELL_X;
     out->chestBCellY = DM1_PC34_FULL_HAND_CHEST_B_CELL_Y;
 
-    m11_inventory_init(&state, 1);
-    out->setupBaseLoadResult = m11_inventory_set_item_in_pc34_source_slot(
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
+    out->setupBaseLoadResult = DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &state, 0, DM1_PC34_SLOT_BACKPACK_LINE1_1,
         DM1_PC34_CHEST_CLOSE_FULL_HAND_BACKPACK_ITEM,
         DM1_PC34_CHEST_CLOSE_FULL_HAND_BASE_BACKPACK_WEIGHT,
@@ -212,7 +212,7 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
     if (!out->setupBaseLoadResult) {
         return 0;
     }
-    out->baseBackpackLoad = m11_inventory_get_load(&state, 0);
+    out->baseBackpackLoad = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     for (i = 0; i < DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT; ++i) {
         chestAInput[i] = make_item(DM1_PC34_FULL_HAND_CHEST_A_FIRST_ITEM + i,
@@ -229,9 +229,9 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 copies only the first eight linked
      * objects into G0425_aT_ChestSlots for chest A. */
-    out->chestAOpenResult = m11_inventory_open_chest(
+    out->chestAOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, out->chestAThing, chestAInput, 9);
-    out->chestAOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->chestAOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->chestAOpenResult ||
         !copy_open_chest_types_and_masks(&state, 0, out->chestAOpenTypes,
                                          out->chestAOpenAllowedSlots)) {
@@ -243,34 +243,34 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
         m11_inventory_pc34_open_chest_container_weight(&state, 0);
 
     out->leaderHandBeforeC544Click = 0;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_CLOSE_FULL_HAND_C544_INDEX, &item)) {
         return 0;
     }
     out->c544BeforePickupType = item.itemType;
     out->c544BeforePickupAllowedSlots = item.allowedSlots;
     out->c544HelmetCanLeaveChest =
-        m11_inventory_can_equip(&item, DM1_PC34_CHEST_CLOSE_FULL_HAND_C544_SLOT);
+        DM1_V1_Inventory_CanEquipPc34Compat(&item, DM1_PC34_CHEST_CLOSE_FULL_HAND_C544_SLOT);
 
     /* ReDMCSB CHAMPION.C F0302 lines 688-710 reads the empty leader hand and
      * C544, removes the slot object, and puts that chest-compatible helmet in
      * the leader hand while C544 becomes empty. */
-    out->c544ClickResult = m11_inventory_click_pc34_source_slot(
+    out->c544ClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, DM1_PC34_CHEST_CLOSE_FULL_HAND_C544_SLOT);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterC544Click = item.itemType;
     out->leaderHandAfterC544ClickAllowedSlots = item.allowedSlots;
     out->leaderHandFullAfterC544Click = item.itemType != 0 ? 1 : 0;
-    if (!m11_inventory_get_item_in_chest_slot(
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_CLOSE_FULL_HAND_C544_INDEX, &item)) {
         return 0;
     }
     out->c544AfterPickupType = item.itemType;
     out->chestAVisibleWeightAfterPickup =
         m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
-    out->loadAfterC544Pickup = m11_inventory_get_load(&state, 0);
+    out->loadAfterC544Pickup = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB CHEST.C F0334 lines 117-132 closes chest A from the visible
      * G0425 slots while the leader hand remains full. */
@@ -287,32 +287,32 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
     out->chestAHiddenTailExcludedOnClose =
         contains_type(out->chestAClosedTypes, out->chestACloseCount,
                       out->chestAHiddenTailInputType) ? 0 : 1;
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterChestAClose = item.itemType;
     out->leaderHandWeightAfterChestAClose = item.weight;
     out->leaderHandAllowedSlotsAfterChestAClose = item.allowedSlots;
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, 0, DM1_PC34_SLOT_READY_HAND, &item)) {
         return 0;
     }
     out->readyHandAfterChestAClose = item.itemType;
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, 0, DM1_PC34_SLOT_ACTION_HAND, &item)) {
         return 0;
     }
     out->actionHandAfterChestAClose = item.itemType;
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, 0, DM1_PC34_SLOT_BACKPACK_LINE1_1, &item)) {
         return 0;
     }
     out->backpackAfterChestAClose = item.itemType;
-    out->loadAfterChestAClose = m11_inventory_get_load(&state, 0);
+    out->loadAfterChestAClose = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     out->chestAReadSlotAfterCloseResult =
-        m11_inventory_get_item_in_chest_slot(
+        DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_CLOSE_FULL_HAND_C537_INDEX, &item);
-    out->chestAOpenThingAfterClose = m11_inventory_get_open_chest_thing(&state, 0);
+    out->chestAOpenThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     copy_int_array(out->chestAClosedTypes, chestAClosedSnapshot);
     out->containerAWeightAfterFirstClose =
         container_weight_from_closed_links(chestAClosed, out->chestACloseCount);
@@ -326,16 +326,16 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 opens a different chest on a different
      * cell and repopulates G0425 from chest B, independent of the full hand. */
-    out->chestBOpenResult = m11_inventory_open_chest(
+    out->chestBOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, out->chestBThing, chestBInput,
         DM1_PC34_CHEST_CLOSE_FULL_HAND_SLOT_COUNT);
-    out->chestBOpenThing = m11_inventory_get_open_chest_thing(&state, 0);
+    out->chestBOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!out->chestBOpenResult ||
         !copy_open_chest_types_and_masks(&state, 0, out->chestBOpenTypes,
                                          chestBAllowedSlots)) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterChestBOpen = item.itemType;
@@ -365,32 +365,32 @@ int dm1_v1_chest_close_with_full_leader_hand_pc34(
     copy_item_types_and_weights(chestBClosed, out->chestBCloseCount,
                                 out->chestBClosedTypes,
                                 out->chestBClosedWeights);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterChestBClose = item.itemType;
     out->leaderHandWeightAfterChestBClose = item.weight;
     out->leaderHandAllowedSlotsAfterChestBClose = item.allowedSlots;
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, 0, DM1_PC34_SLOT_READY_HAND, &item)) {
         return 0;
     }
     out->readyHandAfterChestBClose = item.itemType;
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, 0, DM1_PC34_SLOT_ACTION_HAND, &item)) {
         return 0;
     }
     out->actionHandAfterChestBClose = item.itemType;
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, 0, DM1_PC34_SLOT_BACKPACK_LINE1_1, &item)) {
         return 0;
     }
     out->backpackAfterChestBClose = item.itemType;
-    out->loadAfterChestBClose = m11_inventory_get_load(&state, 0);
+    out->loadAfterChestBClose = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
     out->chestBReadSlotAfterCloseResult =
-        m11_inventory_get_item_in_chest_slot(
+        DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state, 0, DM1_PC34_CHEST_CLOSE_FULL_HAND_C537_INDEX, &item);
-    out->chestBOpenThingAfterClose = m11_inventory_get_open_chest_thing(&state, 0);
+    out->chestBOpenThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
 
     copy_int_array(out->chestAClosedTypes, out->chestAAfterChestBCloseTypes);
     out->chestAChangedByChestBClose =

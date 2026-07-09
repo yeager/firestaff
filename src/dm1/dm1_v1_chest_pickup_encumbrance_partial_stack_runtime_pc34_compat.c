@@ -18,9 +18,9 @@
  *   lines 1082-1133 is the object-weight helper.
  */
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -30,15 +30,15 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static int stack_count(const M11_InventoryState* state, int champ)
+static int stack_count(const DM1_V1_InventoryStatePc34* state, int champ)
 {
     int count = 0;
     int i;
 
     for (i = 0; i < DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(state, champ, i, &item) &&
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item) &&
             item.itemType != 0) {
             ++count;
         }
@@ -46,21 +46,21 @@ static int stack_count(const M11_InventoryState* state, int champ)
     return count;
 }
 
-static int stack_visible_weight(const M11_InventoryState* state, int champ)
+static int stack_visible_weight(const DM1_V1_InventoryStatePc34* state, int champ)
 {
     return m11_inventory_pc34_open_chest_visible_contents_weight(state, champ);
 }
 
-static M11_Item stack_bottom(const M11_InventoryState* state, int champ)
+static DM1_V1_ItemPc34 stack_bottom(const DM1_V1_InventoryStatePc34* state, int champ)
 {
-    M11_Item empty;
+    DM1_V1_ItemPc34 empty;
     int i;
 
     memset(&empty, 0, sizeof(empty));
     for (i = 0; i < DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(state, champ, i, &item) &&
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item) &&
             item.itemType != 0) {
             return item;
         }
@@ -68,16 +68,16 @@ static M11_Item stack_bottom(const M11_InventoryState* state, int champ)
     return empty;
 }
 
-static M11_Item stack_top(const M11_InventoryState* state, int champ)
+static DM1_V1_ItemPc34 stack_top(const DM1_V1_InventoryStatePc34* state, int champ)
 {
-    M11_Item top;
+    DM1_V1_ItemPc34 top;
     int i;
 
     memset(&top, 0, sizeof(top));
     for (i = 0; i < DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(state, champ, i, &item) &&
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item) &&
             item.itemType != 0) {
             top = item;
         }
@@ -85,7 +85,7 @@ static M11_Item stack_top(const M11_InventoryState* state, int champ)
     return top;
 }
 
-static void copy_slots(const M11_InventoryState* state,
+static void copy_slots(const DM1_V1_InventoryStatePc34* state,
                        int champ,
                        int* typesOut,
                        int* weightsOut)
@@ -93,26 +93,26 @@ static void copy_slots(const M11_InventoryState* state,
     int i;
 
     for (i = 0; i < DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
         memset(&item, 0, sizeof(item));
-        (void)m11_inventory_get_item_in_chest_slot(state, champ, i, &item);
+        (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item);
         typesOut[i] = item.itemType;
         weightsOut[i] = item.weight;
     }
 }
 
-static int compact_visible_stack(M11_InventoryState* state, int champ)
+static int compact_visible_stack(DM1_V1_InventoryStatePc34* state, int champ)
 {
-    M11_Item compacted[DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT];
+    DM1_V1_ItemPc34 compacted[DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT];
     int count = 0;
     int i;
 
     memset(compacted, 0, sizeof(compacted));
     for (i = 0; i < DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, champ, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item)) {
             return 0;
         }
         if (item.itemType != 0) {
@@ -124,7 +124,7 @@ static int compact_visible_stack(M11_InventoryState* state, int champ)
      * in visible order.  Keep the synthetic stack compact for the next live
      * pickup so the K-1 remaining items are the next click source. */
     for (i = 0; i < DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT; ++i) {
-        if (!m11_inventory_set_item_in_chest_slot(
+        if (!DM1_V1_Inventory_SetItemInChestSlotPc34Compat(
                 state, champ, i, compacted[i].itemType, compacted[i].weight,
                 compacted[i].charges, compacted[i].allowedSlots)) {
             return 0;
@@ -146,18 +146,18 @@ static int slots_match(const int* a, const int* b)
 }
 
 static int pickup_bottom_with_weight_gate(
-    M11_InventoryState* state,
+    DM1_V1_InventoryStatePc34* state,
     int champ,
     int storagePc34Slot,
     int capacityN,
     int* carriedLoad,
     DM1_V1_ChestPickupEncumbrancePartialStackEventPc34* out)
 {
-    M11_Item bottom;
-    M11_Item top;
-    M11_Item handBefore;
-    M11_Item handAfter;
-    M11_Item stored;
+    DM1_V1_ItemPc34 bottom;
+    DM1_V1_ItemPc34 top;
+    DM1_V1_ItemPc34 handBefore;
+    DM1_V1_ItemPc34 handAfter;
+    DM1_V1_ItemPc34 stored;
 
     if (!state || !carriedLoad || !out) {
         return 0;
@@ -168,7 +168,7 @@ static int pickup_bottom_with_weight_gate(
     bottom = stack_bottom(state, champ);
     top = stack_top(state, champ);
     memset(&handBefore, 0, sizeof(handBefore));
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         state, DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_LEADER, &handBefore);
 
     out->championIndex = champ;
@@ -207,22 +207,22 @@ static int pickup_bottom_with_weight_gate(
         out->nextPickupSeesTopType = out->topTypeAfter;
         out->visibleWeightAfter = stack_visible_weight(state, champ);
         memset(&stored, 0, sizeof(stored));
-        (void)m11_inventory_get_item_in_pc34_source_slot(
+        (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             state, champ, storagePc34Slot, &stored);
         out->storageTypeAfter = stored.itemType;
         out->storageWeightAfter = stored.weight;
         memset(&handAfter, 0, sizeof(handAfter));
-        (void)m11_inventory_get_mouse_item(
+        (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
             state, DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_LEADER,
             &handAfter);
         out->leaderHandTypeAfter = handAfter.itemType;
         return 1;
     }
 
-    if (!m11_inventory_set_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
             state, champ, storagePc34Slot, bottom.itemType, bottom.weight,
             bottom.charges, bottom.allowedSlots) ||
-        !m11_inventory_set_item_in_chest_slot(state, champ, 0, 0, 0, 0, 0) ||
+        !DM1_V1_Inventory_SetItemInChestSlotPc34Compat(state, champ, 0, 0, 0, 0, 0) ||
         !compact_visible_stack(state, champ)) {
         return 0;
     }
@@ -240,12 +240,12 @@ static int pickup_bottom_with_weight_gate(
     out->nextPickupSeesTopType = out->topTypeAfter;
     out->visibleWeightAfter = stack_visible_weight(state, champ);
     memset(&stored, 0, sizeof(stored));
-    (void)m11_inventory_get_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
         state, champ, storagePc34Slot, &stored);
     out->storageTypeAfter = stored.itemType;
     out->storageWeightAfter = stored.weight;
     memset(&handAfter, 0, sizeof(handAfter));
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         state, DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_LEADER, &handAfter);
     out->leaderHandTypeAfter = handAfter.itemType;
 
@@ -269,13 +269,13 @@ dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_source_evidence_pc34(
 int dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_run_pc34(
     DM1_V1_ChestPickupEncumbrancePartialStackProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_K];
-    M11_Item hand;
-    M11_Item targetHand;
-    M11_Item storedFirst;
-    M11_Item storedSecond;
-    M11_Item closed[DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_K];
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 targetHand;
+    DM1_V1_ItemPc34 storedFirst;
+    DM1_V1_ItemPc34 storedSecond;
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT];
     int carriedLoad = DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_BASE_LOAD;
     int i;
 
@@ -292,9 +292,9 @@ int dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_run_pc34(
     linked[2] = make_item(DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_TOP,
                           7, DM1_PC34_ALLOWED_ANY_SLOT);
 
-    m11_inventory_init(
+    DM1_V1_Inventory_InitPc34Compat(
         &state, DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_CHAMPION_COUNT);
-    out->setupResult = m11_inventory_set_mouse_item(
+    out->setupResult = DM1_V1_Inventory_SetMouseItemPc34Compat(
         &state, DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_LEADER,
         DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_LEADER_HAND, 6, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
@@ -311,12 +311,12 @@ int dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_run_pc34(
     out->stackK = DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_K;
     out->initialCarriedLoad = carriedLoad;
 
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, out->targetChampionIndex,
         DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_CHEST_THING,
         linked, DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_K);
     out->openChestThing =
-        m11_inventory_get_open_chest_thing(&state, out->targetChampionIndex);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, out->targetChampionIndex);
     if (!out->openResult) {
         return 0;
     }
@@ -326,11 +326,11 @@ int dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_run_pc34(
     out->initialVisibleWeight =
         stack_visible_weight(&state, out->targetChampionIndex);
     memset(&hand, 0, sizeof(hand));
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state, DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_LEADER, &hand);
     out->initialLeaderHandType = hand.itemType;
     memset(&targetHand, 0, sizeof(targetHand));
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state, out->targetChampionIndex, &targetHand);
     out->initialTargetHandType = targetHand.itemType;
 
@@ -347,16 +347,16 @@ int dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_run_pc34(
 
     memset(&storedFirst, 0, sizeof(storedFirst));
     memset(&storedSecond, 0, sizeof(storedSecond));
-    (void)m11_inventory_get_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
         &state, out->targetChampionIndex, DM1_PC34_SLOT_BACKPACK_LINE1_1,
         &storedFirst);
-    (void)m11_inventory_get_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
         &state, out->targetChampionIndex, DM1_PC34_SLOT_BACKPACK_LINE1_2,
         &storedSecond);
     out->firstStoragePc34SlotTypeAfter = storedFirst.itemType;
     out->secondStoragePc34SlotTypeAfter = storedSecond.itemType;
 
-    out->cancelClosedCount = m11_inventory_close_chest(
+    out->cancelClosedCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, out->targetChampionIndex, closed,
         DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_SLOT_COUNT);
     out->cancelResult = out->cancelClosedCount >= 0 ? 1 : 0;
@@ -376,14 +376,14 @@ int dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_run_pc34(
         closed[out->cancelClosedCount - 1].itemType : 0;
 
     memset(&hand, 0, sizeof(hand));
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state, DM1_PC34_CHEST_PICKUP_ENC_PARTIAL_STACK_LEADER, &hand);
     out->cancelLeaderHandType = hand.itemType;
     out->cancelLeaderHandWeight = hand.weight;
     out->cancelLeaderHandPreserved =
         hand.itemType == out->initialLeaderHandType ? 1 : 0;
     memset(&targetHand, 0, sizeof(targetHand));
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state, out->targetChampionIndex, &targetHand);
     out->cancelTargetHandType = targetHand.itemType;
     out->cancelTargetHandPreserved =

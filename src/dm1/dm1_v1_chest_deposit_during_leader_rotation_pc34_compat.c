@@ -24,7 +24,7 @@ typedef struct {
 } DepositThingPc34;
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     DepositThingPc34 linked[DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT];
     int quantityByChampion[DM1_PC34_DEPOSIT_ROTATE_CHAMPION_COUNT]
                           [DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT];
@@ -71,9 +71,9 @@ static const DM1_V1_ChestDepositDuringLeaderRotationSpecPc34 s_spec = {
     DM1_PC34_DEPOSIT_ROTATE_C040_OFF
 };
 
-static M11_Item to_m11_item(DepositThingPc34 thing)
+static DM1_V1_ItemPc34 to_m11_item(DepositThingPc34 thing)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = thing.itemType;
@@ -120,9 +120,9 @@ static void record_stable_prefix(
     int i;
 
     for (i = 0; i < DM1_PC34_DEPOSIT_ROTATE_STABLE_PREFIX_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &runtime->inventory, champion, i, &item)) {
             types[i] = item.itemType;
             charges[i] = item.charges;
@@ -145,9 +145,9 @@ static void record_all_slots(
     int i;
 
     for (i = 0; i < DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &runtime->inventory, champion, i, &item)) {
             types[i] = item.itemType;
             charges[i] = item.charges;
@@ -178,11 +178,11 @@ static int stable_prefix_matches(const int* types,
 
 static void runtime_init(DepositRuntimePc34* runtime)
 {
-    M11_Item linked[DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT];
+    DM1_V1_ItemPc34 linked[DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT];
     int i;
 
     memset(runtime, 0, sizeof(*runtime));
-    m11_inventory_init(&runtime->inventory,
+    DM1_V1_Inventory_InitPc34Compat(&runtime->inventory,
                        DM1_PC34_DEPOSIT_ROTATE_CHAMPION_COUNT);
     runtime->currentLeader = DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER;
     runtime->queuedNewLeader = DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER;
@@ -200,7 +200,7 @@ static void runtime_init(DepositRuntimePc34* runtime)
             runtime->linked[i].quantity;
     }
 
-    (void)m11_inventory_open_chest(
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(
         &runtime->inventory, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER,
         DM1_PC34_DEPOSIT_ROTATE_CHEST_THING, linked,
         DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT);
@@ -231,7 +231,7 @@ static int click_c542_deposit(DepositRuntimePc34* runtime)
      * F0300 lines 511-515 clears it, and F0297 lines 243-298 puts that thing
      * in the still-current leader hand before COMMAND.C F0359 consumes the
      * queued leader rotation. */
-    result = m11_inventory_click_open_chest_slot_for_thing(
+    result = DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
         &runtime->inventory, runtime->currentLeader,
         DM1_PC34_DEPOSIT_ROTATE_CHEST_THING,
         DM1_PC34_DEPOSIT_ROTATE_TARGET_SLOT_INDEX);
@@ -247,8 +247,8 @@ static int click_c542_deposit(DepositRuntimePc34* runtime)
 
 static int consume_rotation(DepositRuntimePc34* runtime)
 {
-    M11_ChampionInventory* oldInv;
-    M11_ChampionInventory* newInv;
+    DM1_V1_ChampionInventoryPc34* oldInv;
+    DM1_V1_ChampionInventoryPc34* newInv;
     int i;
 
     if (!runtime || !runtime->rotationQueued || runtime->rotationConsumed) {
@@ -264,7 +264,7 @@ static int consume_rotation(DepositRuntimePc34* runtime)
     newInv->mouseItem = oldInv->mouseItem;
     runtime->handQuantity[runtime->queuedNewLeader] =
         runtime->handQuantity[runtime->currentLeader];
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &runtime->inventory, runtime->currentLeader, 0, 0, 0, 0);
     runtime->handQuantity[runtime->currentLeader] = 0;
 
@@ -283,12 +283,12 @@ static int consume_rotation(DepositRuntimePc34* runtime)
 static int close_new_leader_chest(DepositRuntimePc34* runtime,
                                   DepositThingPc34* closed)
 {
-    M11_Item items[DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT];
+    DM1_V1_ItemPc34 items[DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT];
     int count;
     int i;
 
     memset(items, 0, sizeof(items));
-    count = m11_inventory_close_chest(
+    count = DM1_V1_Inventory_CloseChestPc34Compat(
         &runtime->inventory, DM1_PC34_DEPOSIT_ROTATE_NEW_LEADER,
         items, DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT);
     if (count < 0) {
@@ -309,16 +309,16 @@ static int close_new_leader_chest(DepositRuntimePc34* runtime,
 static int count_target_copies(const DepositRuntimePc34* runtime,
                                const DepositThingPc34* closed)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
     int count = 0;
     int i;
 
-    if (m11_inventory_get_mouse_item(
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(
             &runtime->inventory, DM1_PC34_DEPOSIT_ROTATE_NEW_LEADER, &hand) &&
         hand.itemType == DM1_PC34_DEPOSIT_ROTATE_TARGET_ITEM) {
         ++count;
     }
-    if (m11_inventory_get_mouse_item(
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(
             &runtime->inventory, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER, &hand) &&
         hand.itemType == DM1_PC34_DEPOSIT_ROTATE_TARGET_ITEM) {
         ++count;
@@ -385,8 +385,8 @@ int dm1_v1_chest_deposit_during_leader_rotation_run_pc34(
 {
     DepositRuntimePc34 runtime;
     DepositThingPc34 closed[DM1_PC34_DEPOSIT_ROTATE_SLOT_COUNT];
-    M11_Item hand;
-    M11_Item target;
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 target;
     uint32_t hash = 2166136261u;
     int i;
 
@@ -402,23 +402,23 @@ int dm1_v1_chest_deposit_during_leader_rotation_run_pc34(
     out->stepTrace[out->stepCount++] =
         DM1_PC34_DEPOSIT_ROTATE_STEP_SETUP_OPEN;
     out->openResult = 1;
-    out->openChestThingBefore = m11_inventory_get_open_chest_thing(
+    out->openChestThingBefore = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER);
     out->leaderBefore = runtime.currentLeader;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER, &hand);
     out->oldLeaderHandTypeBefore = hand.itemType;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_NEW_LEADER, &hand);
     out->newLeaderHandTypeBefore = hand.itemType;
     out->c040ResurrectPendingBefore = runtime.c040ResurrectPending;
     out->panelContentBefore =
-        m11_inventory_get_panel_content_pc34(&runtime.inventory);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&runtime.inventory);
     record_stable_prefix(&runtime, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER,
                          out->stableTypesBefore,
                          out->stableChargesBefore,
                          out->stableQuantitiesBefore);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER,
         DM1_PC34_DEPOSIT_ROTATE_TARGET_SLOT_INDEX, &target);
     out->targetTypeBefore = target.itemType;
@@ -445,10 +445,10 @@ int dm1_v1_chest_deposit_during_leader_rotation_run_pc34(
     out->depositAgainstOldLeader =
         runtime.currentLeader == DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER ? 1 : 0;
     out->depositAgainstOpenChest =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER) ==
         DM1_PC34_DEPOSIT_ROTATE_CHEST_THING ? 1 : 0;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER, &hand);
     out->oldLeaderHandTypeAfterDeposit = hand.itemType;
     out->oldLeaderHandChargesAfterDeposit = hand.charges;
@@ -463,7 +463,7 @@ int dm1_v1_chest_deposit_during_leader_rotation_run_pc34(
         stable_prefix_matches(out->stableTypesAfterDeposit,
                               out->stableChargesAfterDeposit,
                               out->stableQuantitiesAfterDeposit);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER,
         DM1_PC34_DEPOSIT_ROTATE_TARGET_SLOT_INDEX, &target);
     out->targetTypeAfterDeposit = target.itemType;
@@ -479,9 +479,9 @@ int dm1_v1_chest_deposit_during_leader_rotation_run_pc34(
         out->stepTrace[3] == DM1_PC34_DEPOSIT_ROTATE_STEP_ROTATION_CONSUMED ?
         1 : 0;
     out->newLeaderOpenChestThingAfterConsume =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_NEW_LEADER);
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_NEW_LEADER, &hand);
     out->newLeaderHandTypeAfterConsume = hand.itemType;
     out->newLeaderHandChargesAfterConsume = hand.charges;
@@ -494,7 +494,7 @@ int dm1_v1_chest_deposit_during_leader_rotation_run_pc34(
         hand.weight == DM1_PC34_DEPOSIT_ROTATE_TARGET_WEIGHT &&
         out->newLeaderHandQuantityAfterConsume ==
         DM1_PC34_DEPOSIT_ROTATE_TARGET_QUANTITY ? 1 : 0;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, DM1_PC34_DEPOSIT_ROTATE_OLD_LEADER, &hand);
     out->oldLeaderHandTypeAfterConsume = hand.itemType;
     out->noResurrectPendingAfterConsume =

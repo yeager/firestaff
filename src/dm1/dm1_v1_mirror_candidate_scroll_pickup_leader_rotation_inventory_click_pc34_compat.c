@@ -74,9 +74,9 @@ static const DM1_V1_MirrorCandidateScrollPickupLeaderRotationInventoryClickPc34S
         "C040 candidate panel + F0284 rotation + inventory portrait click"
     };
 
-static M11_Item make_item(int itemType, int weight, int charges)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int charges)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -87,7 +87,7 @@ static M11_Item make_item(int itemType, int weight, int charges)
     return item;
 }
 
-static void seed_chest(M11_Item items[])
+static void seed_chest(DM1_V1_ItemPc34 items[])
 {
     int i;
 
@@ -104,7 +104,7 @@ static void seed_chest(M11_Item items[])
 }
 
 static int copy_c30_type_weight(
-    const M11_InventoryState *state,
+    const DM1_V1_InventoryStatePc34 *state,
     int champ,
     int types[],
     int weights[])
@@ -118,9 +118,9 @@ static int copy_c30_type_weight(
          i <
          DM1_V1_MIRROR_CANDIDATE_SCROLL_PICKUP_LEADER_ROTATION_INVENTORY_CLICK_SLOT_COUNT_PC34_COMPAT;
          ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, champ, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item)) {
             return 0;
         }
         types[i] = item.itemType;
@@ -232,7 +232,7 @@ static int compact_open_or_closed_order(
     return count;
 }
 
-static int compact_closed_items(const M11_Item items[], int count, int order[])
+static int compact_closed_items(const DM1_V1_ItemPc34 items[], int count, int order[])
 {
     int i;
 
@@ -292,12 +292,12 @@ int dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_simula
     DM1_V1_MirrorCandidateScrollPickupLeaderRotationInventoryClickPc34Result
         *outResult)
 {
-    M11_InventoryState state;
-    M11_Item linked[
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[
         DM1_V1_MIRROR_CANDIDATE_SCROLL_PICKUP_LEADER_ROTATION_INVENTORY_CLICK_SLOT_COUNT_PC34_COMPAT];
-    M11_Item closed[
+    DM1_V1_ItemPc34 closed[
         DM1_V1_MIRROR_CANDIDATE_SCROLL_PICKUP_LEADER_ROTATION_INVENTORY_CLICK_SLOT_COUNT_PC34_COMPAT];
-    M11_Item leaderHand;
+    DM1_V1_ItemPc34 leaderHand;
     int championIndex = kInventoryChampionIndex;
 
     if (!outResult ||
@@ -317,11 +317,11 @@ int dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_simula
     seed_rotation_arrays(outResult->championCellsBefore,
                          outResult->championDirectionsBefore);
     seed_chest(linked);
-    m11_inventory_init(&state, s_spec.partyCount);
+    DM1_V1_Inventory_InitPc34Compat(&state, s_spec.partyCount);
 
     /* ReDMCSB CHEST.C F0333:30-67 opens G0426 and publishes the first eight
      * linked objects as C30+ G0425 chest slots. */
-    outResult->chestOpenDispatched = m11_inventory_open_chest(
+    outResult->chestOpenDispatched = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, championIndex, s_spec.openChestThing, linked,
         DM1_V1_MIRROR_CANDIDATE_SCROLL_PICKUP_LEADER_ROTATION_INVENTORY_CLICK_SLOT_COUNT_PC34_COMPAT)
                                       ? true
@@ -334,7 +334,7 @@ int dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_simula
     /* ReDMCSB CHAMPION.C F0302:688-710 reads a C30+ slot through G0425, then
      * F0297:243-298 puts the occupied slot object in the leader hand. */
     outResult->scrollPickupDispatched =
-        m11_inventory_click_open_chest_slot_for_thing(
+        DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
             &state, championIndex, s_spec.openChestThing,
             s_spec.pickedChestSlotIndex)
             ? true
@@ -343,7 +343,7 @@ int dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_simula
     ++outResult->f0297PutLeaderHandCount;
     ++outResult->f0291SlotRenderCount;
     if (!outResult->scrollPickupDispatched ||
-        !m11_inventory_get_mouse_item(&state, championIndex, &leaderHand) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, championIndex, &leaderHand) ||
         !copy_c30_type_weight(&state, championIndex,
                               outResult->c30SlotTypesPre,
                               outResult->c30SlotWeightsPre)) {
@@ -365,7 +365,7 @@ int dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_simula
     /* ReDMCSB CHAMPION.C F0284:93-130 rotates the party and cascades
      * champion cell/direction updates without touching G0425 or the hand. */
     apply_rotation(outResult);
-    if (!m11_inventory_get_mouse_item(&state, championIndex, &leaderHand)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, championIndex, &leaderHand)) {
         return 0;
     }
     outResult->leaderHandTypeAfterRotation = leaderHand.itemType;
@@ -391,14 +391,14 @@ int dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_simula
             compact_open_or_closed_order(outResult->c30SlotTypesPost,
                                          outResult->chestLinkOrder);
         outResult->openChestThingAfterFinal =
-            m11_inventory_get_open_chest_thing(&state, championIndex);
+            DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, championIndex);
     } else {
         /* ReDMCSB CHEST.C F0334:113-132 closes the open G0426 chest and
          * serializes the non-empty C30+ G0425 slots; REVIVE.C F0282:744-806 is
          * not dispatched by a chest close, so the C040 candidate panel remains
          * pending. */
         outResult->chestCloseDispatched = true;
-        outResult->closedChestCount = m11_inventory_close_chest(
+        outResult->closedChestCount = DM1_V1_Inventory_CloseChestPc34Compat(
             &state, championIndex, closed,
             DM1_V1_MIRROR_CANDIDATE_SCROLL_PICKUP_LEADER_ROTATION_INVENTORY_CLICK_SLOT_COUNT_PC34_COMPAT);
         if (outResult->closedChestCount < 0) {
@@ -413,10 +413,10 @@ int dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_simula
             compact_closed_items(closed, outResult->closedChestCount,
                                  outResult->chestLinkOrder);
         outResult->openChestThingAfterFinal =
-            m11_inventory_get_open_chest_thing(&state, championIndex);
+            DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, championIndex);
     }
 
-    if (!m11_inventory_get_mouse_item(&state, championIndex, &leaderHand)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, championIndex, &leaderHand)) {
         return 0;
     }
     outResult->leaderHandTypeAfterFinal = leaderHand.itemType;

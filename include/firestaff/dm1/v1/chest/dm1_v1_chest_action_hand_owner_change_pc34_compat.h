@@ -29,7 +29,7 @@ extern "C" {
  * lane: a CONTAINER action hand landing after the close forces a fresh
  * F0333 reopen, which re-materializes the first eight linked items
  * and rewrites panelContent = M569_PANEL_CHEST. That reopen is the
- * companion piece covered by m11_inventory_open_chest_replacing_current
+ * companion piece covered by DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat
  * on the close-fresh path; this gate focuses on the
  *   CONTAINER -> NON-CONTAINER
  * action hand owner change while a G0426 chest is live, the precise

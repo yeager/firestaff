@@ -144,7 +144,7 @@
  *
  * Source-locked contract-only: no real-asset or original-DOS pixel
  * parity claim. The state model is a synthetic
- * M11_InventoryState-shaped local struct with byte-level fields, and
+ * DM1_V1_InventoryStatePc34-shaped local struct with byte-level fields, and
  * the dispatch loop is the ReDMCSB-derived contract-only runtime
  * function `dm1_v1_mirror_candidate_eye_slot_swap_run_pc34`.
  */

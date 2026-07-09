@@ -7,7 +7,7 @@
  *
  * Pins the six source-locked placement rules (hand / body / pouch /
  * quiver / backpack / container-reject) against the existing
- * m11_inventory_can_equip gate so a future change to either layer
+ * DM1_V1_Inventory_CanEquipPc34Compat gate so a future change to either layer
  * breaks the test rather than silently regressing slot routing.
  *
  * ReDMCSB anchors:

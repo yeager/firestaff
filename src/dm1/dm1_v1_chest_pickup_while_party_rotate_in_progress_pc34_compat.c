@@ -19,7 +19,7 @@ typedef struct {
 } RotatePickupThingPc34;
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     RotatePickupThingPc34 linked[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT];
     RotatePickupThingPc34 rotateBuffer[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT];
     RotatePickupThingPc34 pendingPickup;
@@ -70,9 +70,9 @@ static const DM1_V1_ChestPickupWhilePartyRotateSpecPc34 s_spec = {
     DM1_PC34_ROTATE_PICKUP_SLOT_COUNT - 1
 };
 
-static M11_Item to_m11_item(RotatePickupThingPc34 thing)
+static DM1_V1_ItemPc34 to_m11_item(RotatePickupThingPc34 thing)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = thing.itemType;
@@ -101,7 +101,7 @@ static int normalize_direction(int value)
 }
 
 static void copy_linked_to_m11(const RotatePickupThingPc34* linked,
-                               M11_Item* items,
+                               DM1_V1_ItemPc34* items,
                                int count)
 {
     int i;
@@ -111,7 +111,7 @@ static void copy_linked_to_m11(const RotatePickupThingPc34* linked,
     }
 }
 
-static void record_slots(const M11_InventoryState* inventory,
+static void record_slots(const DM1_V1_InventoryStatePc34* inventory,
                          int champion,
                          const int quantities[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT],
                          int* types,
@@ -121,9 +121,9 @@ static void record_slots(const M11_InventoryState* inventory,
     int i;
 
     for (i = 0; i < DM1_PC34_ROTATE_PICKUP_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 inventory, champion, i, &item)) {
             types[i] = item.itemType;
             charges[i] = item.charges;
@@ -190,7 +190,7 @@ static int count_type_in_slots(const int* types, int itemType)
 
 static void runtime_init(RotatePickupRuntimePc34* runtime)
 {
-    M11_Item linked[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT];
+    DM1_V1_ItemPc34 linked[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT];
     int i;
 
     memset(runtime, 0, sizeof(*runtime));
@@ -208,11 +208,11 @@ static void runtime_init(RotatePickupRuntimePc34* runtime)
             runtime->linked[i].quantity;
     }
 
-    m11_inventory_init(&runtime->inventory,
+    DM1_V1_Inventory_InitPc34Compat(&runtime->inventory,
                        DM1_PC34_ROTATE_PICKUP_CHAMPION_COUNT);
     copy_linked_to_m11(runtime->linked, linked,
                        DM1_PC34_ROTATE_PICKUP_SLOT_COUNT);
-    (void)m11_inventory_open_chest(
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(
         &runtime->inventory, runtime->oldLeaderIndex,
         DM1_PC34_ROTATE_PICKUP_CHEST_THING, linked,
         DM1_PC34_ROTATE_PICKUP_SLOT_COUNT);
@@ -237,9 +237,9 @@ static void trigger_rotate(RotatePickupRuntimePc34* runtime, int newDirection)
     }
 
     for (i = 0; i < DM1_PC34_ROTATE_PICKUP_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &runtime->inventory, runtime->oldLeaderIndex, i, &item)) {
             runtime->rotateBuffer[i].itemType = item.itemType;
             runtime->rotateBuffer[i].weight = item.weight;
@@ -256,7 +256,7 @@ static int pointer_route_queue_c537_pickup(RotatePickupRuntimePc34* runtime)
     int slotIndex = DM1_PC34_ROTATE_PICKUP_PICKED_SLOT_INDEX;
 
     if (!runtime || !runtime->rotateInProgress || runtime->queued ||
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime->inventory, runtime->oldLeaderIndex) !=
             DM1_PC34_ROTATE_PICKUP_CHEST_THING) {
         return 0;
@@ -275,8 +275,8 @@ static int pointer_route_queue_c537_pickup(RotatePickupRuntimePc34* runtime)
 
 static int commit_rotate_and_pickup(RotatePickupRuntimePc34* runtime)
 {
-    M11_Item linked[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT];
-    M11_Item picked;
+    DM1_V1_ItemPc34 linked[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT];
+    DM1_V1_ItemPc34 picked;
     int i;
 
     if (!runtime || !runtime->rotateInProgress || !runtime->queued) {
@@ -290,7 +290,7 @@ static int commit_rotate_and_pickup(RotatePickupRuntimePc34* runtime)
         runtime->quantityByChampion[runtime->newLeaderIndex][i] =
             runtime->rotateBuffer[i].quantity;
     }
-    if (!m11_inventory_open_chest(
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(
             &runtime->inventory, runtime->newLeaderIndex,
             DM1_PC34_ROTATE_PICKUP_CHEST_THING, linked,
             DM1_PC34_ROTATE_PICKUP_SLOT_COUNT)) {
@@ -300,13 +300,13 @@ static int commit_rotate_and_pickup(RotatePickupRuntimePc34* runtime)
     /* ReDMCSB: F0302 dispatches the already queued C537/C30 click after the
      * rotate commit.  The landing target is now the new leader's G0425 chain,
      * so F0300 clears that C30 slot and F0297 puts the same thing in hand. */
-    if (!m11_inventory_click_open_chest_slot_for_thing(
+    if (!DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
             &runtime->inventory, runtime->newLeaderIndex,
             DM1_PC34_ROTATE_PICKUP_CHEST_THING,
             DM1_PC34_ROTATE_PICKUP_PICKED_SLOT_INDEX)) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(
             &runtime->inventory, runtime->newLeaderIndex, &picked)) {
         return 0;
     }
@@ -326,13 +326,13 @@ static int commit_rotate_and_pickup(RotatePickupRuntimePc34* runtime)
 static int close_new_leader_chest(RotatePickupRuntimePc34* runtime,
                                   RotatePickupThingPc34* closed)
 {
-    M11_Item items[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT];
+    DM1_V1_ItemPc34 items[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT];
     int count;
     int outIndex = 0;
     int i;
 
     memset(items, 0, sizeof(items));
-    count = m11_inventory_close_chest(
+    count = DM1_V1_Inventory_CloseChestPc34Compat(
         &runtime->inventory, runtime->newLeaderIndex, items,
         DM1_PC34_ROTATE_PICKUP_SLOT_COUNT);
     if (count < 0) {
@@ -409,7 +409,7 @@ int dm1_v1_chest_pickup_while_party_rotate_in_progress_run_pc34(
 {
     RotatePickupRuntimePc34 runtime;
     RotatePickupThingPc34 closed[DM1_PC34_ROTATE_PICKUP_SLOT_COUNT];
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
     uint32_t hash = 2166136261u;
     int pickedItemType =
         DM1_PC34_ROTATE_PICKUP_FIRST_ITEM +
@@ -426,7 +426,7 @@ int dm1_v1_chest_pickup_while_party_rotate_in_progress_run_pc34(
     out->stepTrace[out->stepCount++] =
         DM1_PC34_ROTATE_PICKUP_STEP_SETUP_OPEN;
     out->openResult = 1;
-    out->openChestThingBeforeRotate = m11_inventory_get_open_chest_thing(
+    out->openChestThingBeforeRotate = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &runtime.inventory, runtime.oldLeaderIndex);
     out->leaderBeforeRotate = runtime.currentLeaderIndex;
     out->partyDirectionBefore = runtime.partyDirection;
@@ -482,7 +482,7 @@ int dm1_v1_chest_pickup_while_party_rotate_in_progress_run_pc34(
     out->newLeaderDirectionAfterCommit =
         runtime.championDirection[runtime.newLeaderIndex];
     out->newLeaderOpenChestThingAfterCommit =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &runtime.inventory, runtime.newLeaderIndex);
     out->newLeaderOpenResult =
         out->newLeaderOpenChestThingAfterCommit ==
@@ -491,7 +491,7 @@ int dm1_v1_chest_pickup_while_party_rotate_in_progress_run_pc34(
         out->commitPickupResult &&
         out->leaderAfterCommit == runtime.newLeaderIndex &&
         out->newLeaderOpenResult ? 1 : 0;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &runtime.inventory, runtime.newLeaderIndex, &hand);
     out->newLeaderHandTypeAfterCommit = hand.itemType;
     out->newLeaderHandChargesAfterCommit = hand.charges;

@@ -8,9 +8,9 @@ static const char s_source_evidence[] =
     "CHEST.C F0333:53-76 draws only the first eight C38..C45 chest slot icons, clearing empty slots with C0xFFFF_ICON_NONE\n"
     "PANEL.C F0347/F0354 route open chest panel content through the current inventory panel draw";
 
-static M11_Item make_item(int itemType)
+static DM1_V1_ItemPc34 make_item(int itemType)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -84,7 +84,7 @@ static void summarize_events(DM1_V1_ChestOpenDrawCasePc34* out)
     }
 }
 
-static void summarize_materialized_slots(const M11_InventoryState* state,
+static void summarize_materialized_slots(const DM1_V1_InventoryStatePc34* state,
                                          int champ,
                                          int linkedItemCount,
                                          DM1_V1_ChestOpenDrawCasePc34* out)
@@ -96,7 +96,7 @@ static void summarize_materialized_slots(const M11_InventoryState* state,
     }
 
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-        const M11_Item* slot = &state->champions[champ].chestSlots[i];
+        const DM1_V1_ItemPc34* slot = &state->champions[champ].chestSlots[i];
 
         if (slot->itemType != 0) {
             ++out->materializedSlotCount;
@@ -121,8 +121,8 @@ static int run_case(int linkedItemCount,
                     int sameChestBeforeOpen,
                     DM1_V1_ChestOpenDrawCasePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_OPEN_DRAW_LINKED_ITEM_MAX];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_OPEN_DRAW_LINKED_ITEM_MAX];
     int i;
 
     if (!out || linkedItemCount < 0 ||
@@ -130,7 +130,7 @@ static int run_case(int linkedItemCount,
         return 0;
     }
     memset(out, 0, sizeof(*out));
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     out->sourceLockedContractOnly = 1;
     out->openChestThing = DM1_PC34_CHEST_OPEN_DRAW_THING;
     out->pressingEye = pressingEye;
@@ -142,7 +142,7 @@ static int run_case(int linkedItemCount,
     }
 
     if (sameChestBeforeOpen) {
-        if (!m11_inventory_open_chest(&state, 0, out->openChestThing,
+        if (!DM1_V1_Inventory_OpenChestPc34Compat(&state, 0, out->openChestThing,
                                       linked, linkedItemCount)) {
             return 0;
         }
@@ -153,7 +153,7 @@ static int run_case(int linkedItemCount,
         return 1;
     }
 
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, out->openChestThing, linked, linkedItemCount);
     if (!out->openResult) {
         return 0;

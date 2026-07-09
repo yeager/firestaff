@@ -95,7 +95,7 @@ static int expected_pc34_source_slot_for_slotbox(int slotBoxIndex)
                               : DM1_PC34_SLOT_READY_HAND;
 }
 
-static int seed_party(M11_InventoryState* state, int healthyChampionCount)
+static int seed_party(DM1_V1_InventoryStatePc34* state, int healthyChampionCount)
 {
     int i;
 
@@ -103,21 +103,21 @@ static int seed_party(M11_InventoryState* state, int healthyChampionCount)
         healthyChampionCount > M11_MAX_CHAMPIONS) {
         return 0;
     }
-    m11_inventory_init(state, healthyChampionCount);
+    DM1_V1_Inventory_InitPc34Compat(state, healthyChampionCount);
     for (i = 0; i < healthyChampionCount; ++i) {
         /* Seed every champion's ready hand AND action hand so the
          * status hand row is observable end-to-end through
-         * m11_inventory_click_pc34_source_slot. The item-type / weight
+         * DM1_V1_Inventory_ClickPc34SourceSlotCompat. The item-type / weight
          * values are arbitrary contract-only payload; the open-chest
          * state only reads the action-hand container thing on the
          * active champion (champion 0), not the other champions' hands.
          * Champion 0's action hand is later overwritten with a container
          * for the open-chest state. */
-        (void)m11_inventory_set_item_in_pc34_source_slot(
+        (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
             state, i, DM1_PC34_SLOT_READY_HAND,
             DM1_V1_IPHSOC_DAGGER + (i * 11),
             3 + i, 0, DM1_PC34_ALLOWED_HANDS);
-        (void)m11_inventory_set_item_in_pc34_source_slot(
+        (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
             state, i, DM1_PC34_SLOT_ACTION_HAND,
             DM1_V1_IPHSOC_DAGGER + (i * 13),
             3 + i, 0, DM1_PC34_ALLOWED_HANDS);
@@ -125,7 +125,7 @@ static int seed_party(M11_InventoryState* state, int healthyChampionCount)
     return 1;
 }
 
-static int fill_chest(M11_Item* linked, int chestSlotCount)
+static int fill_chest(DM1_V1_ItemPc34* linked, int chestSlotCount)
 {
     int i;
     for (i = 0; i < chestSlotCount; ++i) {
@@ -140,7 +140,7 @@ static int fill_chest(M11_Item* linked, int chestSlotCount)
 }
 
 static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
-                       M11_InventoryState* state,
+                       DM1_V1_InventoryStatePc34* state,
                        int healthyChampionCount,
                        int slotBoxIndex,
                        int expectedOpenChestThing)
@@ -148,8 +148,8 @@ static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
     int championIndex = -1;
     int pc34SourceSlot = -1;
     int health[M11_MAX_CHAMPIONS] = {0};
-    M11_Item slotItem;
-    M11_Item mouseItem;
+    DM1_V1_ItemPc34 slotItem;
+    DM1_V1_ItemPc34 mouseItem;
     int i;
 
     memset(row, 0, sizeof(*row));
@@ -160,7 +160,7 @@ static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
     for (i = 0; i < healthyChampionCount; ++i) {
         health[i] = 100;
     }
-    row->resolvedReturn = m11_inventory_resolve_status_hand_slot_box(
+    row->resolvedReturn = DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(
         slotBoxIndex, healthyChampionCount,
         /*inventoryChampionOrdinal=*/0, /*candidateChampionOrdinal=*/0, health,
         &championIndex, &pc34SourceSlot);
@@ -171,10 +171,10 @@ static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
          * F0302:695-708 swap path runs, so the click is never issued. */
         return 1;
     }
-    if (m11_inventory_get_mouse_item(state, championIndex, &mouseItem)) {
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(state, championIndex, &mouseItem)) {
         row->mouseItemTypeBefore = mouseItem.itemType;
     }
-    if (m11_inventory_get_item_in_pc34_source_slot(
+    if (DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             state, championIndex, pc34SourceSlot, &slotItem)) {
         row->slotItemTypeBefore = slotItem.itemType;
     }
@@ -185,22 +185,22 @@ static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
      * uses MASK0xFFFF_ANY_SLOT so the F0302:688-710 swap accepts it
      * against ready hand (slot 0) and action hand (slot 1), both of
      * which are MASK0xFFFF_ANY_SLOT source slots. */
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         state, championIndex, DM1_V1_IPHSOC_LEADER_HAND_SCROLL, 4, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
     row->openChestThingBeforeClick =
-        m11_inventory_get_open_chest_thing(state, 0);
-    row->clickResult = m11_inventory_click_pc34_source_slot(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(state, 0);
+    row->clickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         state, championIndex, pc34SourceSlot);
     row->openChestThingAfterClick =
-        m11_inventory_get_open_chest_thing(state, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(state, 0);
     row->openChestThingPreservedByClick =
         row->openChestThingBeforeClick == expectedOpenChestThing &&
         row->openChestThingAfterClick == expectedOpenChestThing;
-    if (m11_inventory_get_mouse_item(state, championIndex, &mouseItem)) {
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(state, championIndex, &mouseItem)) {
         row->mouseItemTypeAfter = mouseItem.itemType;
     }
-    if (m11_inventory_get_item_in_pc34_source_slot(
+    if (DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             state, championIndex, pc34SourceSlot, &slotItem)) {
         row->slotItemTypeAfter = slotItem.itemType;
     }
@@ -209,7 +209,7 @@ static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
 
 static int capture_status_hand_table(
     DM1_V1_InventoryPanelStatusHandOpenChestProbePc34* out,
-    M11_InventoryState* state,
+    DM1_V1_InventoryStatePc34* state,
     int healthyChampionCount,
     int expectedOpenChestThing)
 {
@@ -236,21 +236,21 @@ static int capture_rejections_with_chest_open(
     /* Reject: candidate champion flow.  The status hand slot box route
      * in F0302:677 must reject even when a chest is open. */
     out->candidateChampionRejectedWithChestOpen =
-        m11_inventory_resolve_status_hand_slot_box(
+        DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(
             /*slotBoxIndex=*/2, /*partyChampionCount=*/4,
             /*inventoryChampionOrdinal=*/0, /*candidateChampionOrdinal=*/1,
             health, &championIndex, &pc34SourceSlot);
     /* Reject: dead champion.  F0302:681 must reject even when a chest
      * is open. */
     out->deadChampionRejectedWithChestOpen =
-        m11_inventory_resolve_status_hand_slot_box(
+        DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(
             /*slotBoxIndex=*/0, /*partyChampionCount=*/4,
             /*inventoryChampionOrdinal=*/0, /*candidateChampionOrdinal=*/0,
             deadHealth, &championIndex, &pc34SourceSlot);
     /* Reject: slot box 6 maps to champion 3, which is above the 3-champion
      * party.  F0302:677 must reject even when a chest is open. */
     out->slotbox4AbovePartyRejectedWithChestOpen =
-        m11_inventory_resolve_status_hand_slot_box(
+        DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(
             /*slotBoxIndex=*/6, /*partyChampionCount=*/3,
             /*inventoryChampionOrdinal=*/0, /*candidateChampionOrdinal=*/0,
             health, &championIndex, &pc34SourceSlot);
@@ -260,7 +260,7 @@ static int capture_rejections_with_chest_open(
      * inventoryChampionOrdinal == championIndex + 1, so for slotbox 0
      * the inventory champion ordinal must be 1. */
     out->slotbox0OpenInventoryChampionRejectedWithChestOpen =
-        m11_inventory_resolve_status_hand_slot_box(
+        DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(
             /*slotBoxIndex=*/0, /*partyChampionCount=*/4,
             /*inventoryChampionOrdinal=*/1, /*candidateChampionOrdinal=*/0,
             health, &championIndex, &pc34SourceSlot);
@@ -310,36 +310,36 @@ static int capture_action_hand_container_edges(
     int healthyChampionCount,
     int chestThing)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_SLOT_COUNT];
-    M11_Item actionHand;
-    M11_Item mouseItem;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 actionHand;
+    DM1_V1_ItemPc34 mouseItem;
 
     if (!seed_party(&state, healthyChampionCount)) {
         return 0;
     }
-    (void)m11_inventory_set_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, chestThing, 8, 0,
         DM1_PC34_ALLOWED_HANDS | DM1_PC34_ALLOWED_CONTAINER);
     if (!fill_chest(linked, DM1_PC34_CHEST_SLOT_COUNT)) {
         return 0;
     }
-    if (!m11_inventory_open_chest(&state, /*champ=*/0, chestThing, linked,
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(&state, /*champ=*/0, chestThing, linked,
                                   DM1_PC34_CHEST_SLOT_COUNT)) {
         return 0;
     }
 
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &state, /*champ=*/0, DM1_V1_IPHSOC_LEADER_HAND_SCROLL, 4, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
     /* ReDMCSB CHAMPION.C F0302 lines 677-684 routes status slot box 0
      * to champion 0 ready hand. It must not touch the open chest's
      * action-hand container or the F0291 open icon binding. */
-    if (!m11_inventory_click_pc34_source_slot(
+    if (!DM1_V1_Inventory_ClickPc34SourceSlotCompat(
             &state, /*champ=*/0, DM1_PC34_SLOT_READY_HAND)) {
         return 0;
     }
-    if (!m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, &actionHand)) {
         return 0;
     }
@@ -355,26 +355,26 @@ static int capture_action_hand_container_edges(
     if (!seed_party(&state, healthyChampionCount)) {
         return 0;
     }
-    (void)m11_inventory_set_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, chestThing, 8, 0,
         DM1_PC34_ALLOWED_HANDS | DM1_PC34_ALLOWED_CONTAINER);
-    if (!m11_inventory_open_chest(&state, /*champ=*/0, chestThing, linked,
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(&state, /*champ=*/0, chestThing, linked,
                                   DM1_PC34_CHEST_SLOT_COUNT)) {
         return 0;
     }
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &state, /*champ=*/0, DM1_V1_IPHSOC_LEADER_HAND_SCROLL, 4, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
     /* Slot box 1 targets the same action-hand slot that displayed the
      * open chest. F0302 lines 688-710 swaps the leader hand and slot
      * payloads, while CHEST.C F0333/F0334 keep G0426_T_OpenChest as the
      * independent open-panel sentinel until close. */
-    if (!m11_inventory_click_pc34_source_slot(
+    if (!DM1_V1_Inventory_ClickPc34SourceSlotCompat(
             &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND)) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(&state, /*champ=*/0, &mouseItem) ||
-        !m11_inventory_get_item_in_pc34_source_slot(
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, /*champ=*/0, &mouseItem) ||
+        !DM1_V1_Inventory_GetItemInPc34SourceSlotCompat(
             &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, &actionHand)) {
         return 0;
     }
@@ -389,15 +389,15 @@ static int capture_action_hand_container_edges(
             /*baseIconIndex=*/(unsigned int)DM1_V1_IPHSOC_CLOSED_ICON) ==
         DM1_V1_IPHSOC_CLOSED_ICON;
     out->actionHandClickPreservesOpenChestThing =
-        m11_inventory_get_open_chest_thing(&state, /*champ=*/0) == chestThing;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, /*champ=*/0) == chestThing;
     return 1;
 }
 
 int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
     DM1_V1_InventoryPanelStatusHandOpenChestProbePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item linked[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_SLOT_COUNT];
     int healthyChampionCount = DM1_V1_IPHSOC_PARTY_LIMIT;
     int chestThing;
     int openChestResult = 0;
@@ -417,7 +417,7 @@ int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
      * so the open-chest action-hand icon swap C144 -> C145 is observable
      * through the same M11 inventory the status hand click touches. */
     chestThing = (THING_TYPE_CONTAINER << 10) | 0x01;
-    (void)m11_inventory_set_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, chestThing, 8, 0,
         DM1_PC34_ALLOWED_HANDS | DM1_PC34_ALLOWED_CONTAINER);
     /* Closed action-hand icon stays C144 (CHAMDRAW.C F0291 baseline). */
@@ -428,30 +428,30 @@ int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
     out->actionHandIconBefore = actionHandIconClosed;
     out->chestOpenBefore = 0;
     out->openChestThingBefore = 0;
-    out->panelContentBeforeOpen = m11_inventory_get_panel_content_pc34(&state);
+    out->panelContentBeforeOpen = DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
     /* Open the chest in the panel. The open-chest state is owned by
      * CHEST.C F0333:43-67 and the icon swap is CHAMDRAW.C F0291:621-630.
      * The status hand slot box 0..7 routing is unaffected. */
     if (!fill_chest(linked, DM1_PC34_CHEST_SLOT_COUNT)) {
         return 0;
     }
-    openChestResult = m11_inventory_open_chest(
+    openChestResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, /*champ=*/0, chestThing, linked, DM1_PC34_CHEST_SLOT_COUNT);
     out->chestOpenAfter = openChestResult;
     openChestThingAfterOpen =
-        m11_inventory_get_open_chest_thing(&state, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     out->openChestThingAfterOpen = openChestThingAfterOpen;
-    out->panelContentAfterOpen = m11_inventory_get_panel_content_pc34(&state);
+    out->panelContentAfterOpen = DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
     /* ReDMCSB CHEST.C F0333 lines 28-32 sets M569_PANEL_CHEST before
      * returning for the same already-open G0426 chest.  Reset the synthetic
      * panel marker to prove the same-open path refreshes the panel content
      * without rebuilding G0425. */
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &state, DM1_PC34_PANEL_FOOD_WATER_POISONED);
-    out->sameOpenChestResult = m11_inventory_open_chest(
+    out->sameOpenChestResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, /*champ=*/0, chestThing, linked, DM1_PC34_CHEST_SLOT_COUNT);
     out->panelContentAfterSameOpen =
-        m11_inventory_get_panel_content_pc34(&state);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
     actionHandIconOpen = (int)INVENTORY_Compat_GetActionHandIconForOpenChest(
         /*isInventoryChampion=*/1u, /*slotIndex=*/1u,
         (unsigned int)chestThing, (unsigned int)chestThing,
@@ -470,35 +470,35 @@ int dm1_v1_inventory_panel_status_hand_open_chest_pc34(
     /* The status hand click path must leave the open-chest state
      * intact; F0302:677-684 does not own G0426_T_OpenChest. */
     out->chestStillOpenAfterChampion0ReadyHandClick =
-        m11_inventory_get_open_chest_thing(&state, 0) == chestThing;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == chestThing;
     out->chestStillOpenAfterChampion3ActionHandClick =
-        m11_inventory_get_open_chest_thing(&state, 0) == chestThing;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == chestThing;
     out->chestStillOpenAfterCandidateChampionReject =
-        m11_inventory_get_open_chest_thing(&state, 0) == chestThing;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == chestThing;
     out->chestStillOpenAfterDeadChampionReject =
-        m11_inventory_get_open_chest_thing(&state, 0) == chestThing;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0) == chestThing;
     out->openChestThingAfterAllClicks =
-        m11_inventory_get_open_chest_thing(&state, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
     if (!capture_action_hand_container_edges(out, healthyChampionCount,
                                              chestThing)) {
         return 0;
     }
 
     /* Close the chest and verify the icon reverts. */
-    (void)m11_inventory_close_chest(&state, 0, NULL, 0);
+    (void)DM1_V1_Inventory_CloseChestPc34Compat(&state, 0, NULL, 0);
     out->openChestThingAfterClose =
-        m11_inventory_get_open_chest_thing(&state, 0);
-    out->panelContentAfterClose = m11_inventory_get_panel_content_pc34(&state);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, 0);
+    out->panelContentAfterClose = DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
 
     /* ReDMCSB PANEL.C F0347:1639-1691 redraws the panel based on the current
      * action hand immediately after close/click flows. Use a non-container
      * item to verify the fallback route to food/water/poisoned. */
-    (void)m11_inventory_set_item_in_pc34_source_slot(
+    (void)DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &state, /*champ=*/0, DM1_PC34_SLOT_ACTION_HAND, DM1_V1_IPHSOC_DAGGER, 1,
         0, DM1_PC34_ALLOWED_HANDS);
-    (void)m11_inventory_apply_panel_route_after_close_pc34(&state, 0);
+    (void)DM1_V1_Inventory_ApplyPanelRouteAfterClosePc34Compat(&state, 0);
     out->panelContentAfterCloseRedraw =
-        m11_inventory_get_panel_content_pc34(&state);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
     out->actionHandIconAfterClose =
         (int)INVENTORY_Compat_GetActionHandIconForOpenChest(
             /*isInventoryChampion=*/1u, /*slotIndex=*/1u,

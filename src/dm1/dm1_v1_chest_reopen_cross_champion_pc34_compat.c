@@ -28,9 +28,9 @@ const DM1_V1_ChestReopenCrossChampionSpecPc34
         DM1_PC34_CHEST_REOPEN_CROSS_HAND_WEIGHT
     };
 
-static M11_Item make_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -40,7 +40,7 @@ static M11_Item make_item(int itemType, int weight)
     return item;
 }
 
-static void seed_chest(M11_Item* items, int count, int firstType, int firstWeight)
+static void seed_chest(DM1_V1_ItemPc34* items, int count, int firstType, int firstWeight)
 {
     int i;
 
@@ -49,7 +49,7 @@ static void seed_chest(M11_Item* items, int count, int firstType, int firstWeigh
     }
 }
 
-static int copy_open_types(const M11_InventoryState* state, int champ, int* outTypes)
+static int copy_open_types(const DM1_V1_InventoryStatePc34* state, int champ, int* outTypes)
 {
     int i;
 
@@ -57,9 +57,9 @@ static int copy_open_types(const M11_InventoryState* state, int champ, int* outT
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_REOPEN_CROSS_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, champ, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item)) {
             return 0;
         }
         outTypes[i] = item.itemType;
@@ -67,7 +67,7 @@ static int copy_open_types(const M11_InventoryState* state, int champ, int* outT
     return 1;
 }
 
-static void copy_closed_types(const M11_Item* items, int count, int* outTypes)
+static void copy_closed_types(const DM1_V1_ItemPc34* items, int count, int* outTypes)
 {
     int i;
 
@@ -132,7 +132,7 @@ static int contains_sequence_item(const int* types, int count, int firstType)
 
 static void seed_leader_switch_state(
     Dm1V1ChampionLeaderStatePc34Compat* leaderState,
-    const M11_InventoryState* inventory,
+    const DM1_V1_InventoryStatePc34* inventory,
     int handWeight)
 {
     int i;
@@ -143,7 +143,7 @@ static void seed_leader_switch_state(
     leaderState->leaderHandWeight = handWeight;
     for (i = 0; i < DM1_PC34_CHEST_REOPEN_CROSS_PARTY_COUNT; ++i) {
         leaderState->champions[i].currentHealth = 100;
-        leaderState->champions[i].load = m11_inventory_get_load(inventory, i);
+        leaderState->champions[i].load = DM1_V1_Inventory_GetLoadPc34Compat(inventory, i);
     }
     leaderState->champions[DM1_PC34_CHEST_REOPEN_CROSS_LEADER_A].load +=
         handWeight;
@@ -163,14 +163,14 @@ M11_GameView_ChestReopenCrossChampionSpecPc34(void)
 int M11_GameView_ChestReopenCrossChampionRunPc34(
     DM1_V1_ChestReopenCrossChampionProbePc34* out)
 {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     Dm1V1ChampionLeaderStatePc34Compat leaderState;
     Dm1V1ChampionLeaderSetResultPc34Compat switchResult;
-    M11_Item chestA[DM1_PC34_CHEST_REOPEN_CROSS_A_COUNT];
-    M11_Item chestB[DM1_PC34_CHEST_REOPEN_CROSS_B_COUNT];
-    M11_Item closedA[DM1_PC34_CHEST_REOPEN_CROSS_SLOT_COUNT];
-    M11_Item closedB[DM1_PC34_CHEST_REOPEN_CROSS_SLOT_COUNT];
-    M11_Item hand;
+    DM1_V1_ItemPc34 chestA[DM1_PC34_CHEST_REOPEN_CROSS_A_COUNT];
+    DM1_V1_ItemPc34 chestB[DM1_PC34_CHEST_REOPEN_CROSS_B_COUNT];
+    DM1_V1_ItemPc34 closedA[DM1_PC34_CHEST_REOPEN_CROSS_SLOT_COUNT];
+    DM1_V1_ItemPc34 closedB[DM1_PC34_CHEST_REOPEN_CROSS_SLOT_COUNT];
+    DM1_V1_ItemPc34 hand;
     int leaderA;
     int leaderB;
 
@@ -189,32 +189,32 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
     out->chestAThing = DM1_PC34_CHEST_REOPEN_CROSS_A_THING;
     out->chestBThing = DM1_PC34_CHEST_REOPEN_CROSS_B_THING;
 
-    m11_inventory_init(&inventory, DM1_PC34_CHEST_REOPEN_CROSS_PARTY_COUNT);
+    DM1_V1_Inventory_InitPc34Compat(&inventory, DM1_PC34_CHEST_REOPEN_CROSS_PARTY_COUNT);
     seed_chest(chestA, DM1_PC34_CHEST_REOPEN_CROSS_A_COUNT,
                DM1_PC34_CHEST_REOPEN_CROSS_A_FIRST, 5);
     seed_chest(chestB, DM1_PC34_CHEST_REOPEN_CROSS_B_COUNT,
                DM1_PC34_CHEST_REOPEN_CROSS_B_FIRST, 11);
 
-    out->leaderABaseSetResult = m11_inventory_set_item_in_pc34_source_slot(
+    out->leaderABaseSetResult = DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &inventory, leaderA, DM1_PC34_SLOT_BACKPACK_LINE1_1,
         DM1_PC34_CHEST_REOPEN_CROSS_A_BASE_ITEM, 17, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
-    out->leaderBBaseSetResult = m11_inventory_set_item_in_pc34_source_slot(
+    out->leaderBBaseSetResult = DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &inventory, leaderB, DM1_PC34_SLOT_BACKPACK_LINE1_1,
         DM1_PC34_CHEST_REOPEN_CROSS_B_BASE_ITEM, 23, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
     if (!out->leaderABaseSetResult || !out->leaderBBaseSetResult) {
         return 0;
     }
-    out->leaderABaseLoad = m11_inventory_get_load(&inventory, leaderA);
-    out->leaderBBaseLoad = m11_inventory_get_load(&inventory, leaderB);
+    out->leaderABaseLoad = DM1_V1_Inventory_GetLoadPc34Compat(&inventory, leaderA);
+    out->leaderBBaseLoad = DM1_V1_Inventory_GetLoadPc34Compat(&inventory, leaderB);
 
-    out->leaderAHandSetupResult = m11_inventory_set_mouse_item(
+    out->leaderAHandSetupResult = DM1_V1_Inventory_SetMouseItemPc34Compat(
         &inventory, leaderA, DM1_PC34_CHEST_REOPEN_CROSS_HAND_ITEM,
         DM1_PC34_CHEST_REOPEN_CROSS_HAND_WEIGHT, 0,
         DM1_PC34_ALLOWED_CONTAINER);
     if (!out->leaderAHandSetupResult ||
-        !m11_inventory_get_mouse_item(&inventory, leaderA, &hand)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&inventory, leaderA, &hand)) {
         return 0;
     }
     out->leaderAHandBeforeSwitchType = hand.itemType;
@@ -222,10 +222,10 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 materializes leader A's action-hand
      * chest links into G0425 while the global leader hand remains separate. */
-    out->chestAOpenResult = m11_inventory_open_chest(
+    out->chestAOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &inventory, leaderA, out->chestAThing, chestA,
         DM1_PC34_CHEST_REOPEN_CROSS_A_COUNT);
-    out->chestAOpenThing = m11_inventory_get_open_chest_thing(
+    out->chestAOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &inventory, leaderA);
     if (!out->chestAOpenResult ||
         !copy_open_types(&inventory, leaderA, out->chestAOpenedTypes)) {
@@ -235,7 +235,7 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
         m11_inventory_pc34_open_chest_visible_contents_weight(
             &inventory, leaderA);
     out->leaderAPanelLoadAfterOpen =
-        m11_inventory_get_load(&inventory, leaderA) + hand.weight;
+        DM1_V1_Inventory_GetLoadPc34Compat(&inventory, leaderA) + hand.weight;
 
     /* ReDMCSB CHEST.C F0334 lines 113-132 closes A by compacting current
      * G0425 entries; DUNGEON.C F0140 lines 1114-1120 gives the snapshot weight. */
@@ -249,7 +249,7 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
     copy_closed_types(closedA, out->chestACloseCount,
                       out->chestAClosedTypes);
     out->leaderAPanelLoadAfterClose =
-        m11_inventory_get_load(&inventory, leaderA) + hand.weight;
+        DM1_V1_Inventory_GetLoadPc34Compat(&inventory, leaderA) + hand.weight;
 
     seed_leader_switch_state(&leaderState, &inventory, hand.weight);
     /* ReDMCSB CLIKCHAM.C F0368 lines 54-72 detaches the global leader hand
@@ -266,30 +266,30 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
     out->leaderBStateLoadAfterSwitch =
         leaderState.champions[leaderB].load;
 
-    if (!m11_inventory_set_mouse_item(&inventory, leaderA, 0, 0, 0, 0) ||
-        !m11_inventory_set_mouse_item(&inventory, leaderB, hand.itemType,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&inventory, leaderA, 0, 0, 0, 0) ||
+        !DM1_V1_Inventory_SetMouseItemPc34Compat(&inventory, leaderB, hand.itemType,
                                       hand.weight, hand.charges,
                                       hand.allowedSlots) ||
-        !m11_inventory_get_mouse_item(&inventory, leaderA, &hand)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&inventory, leaderA, &hand)) {
         return 0;
     }
     out->leaderAHandAfterSwitchType = hand.itemType;
     out->leaderAHandClearedAfterSwitch = hand.itemType == 0 ? 1 : 0;
-    if (!m11_inventory_get_mouse_item(&inventory, leaderB, &hand)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&inventory, leaderB, &hand)) {
         return 0;
     }
     out->leaderBHandAfterSwitchType = hand.itemType;
     out->leaderBHandAfterSwitchWeight = hand.weight;
     out->leaderBHandOccupiedAfterSwitch = hand.itemType != 0 ? 1 : 0;
     out->leaderBPanelLoadAfterSwitch =
-        m11_inventory_get_load(&inventory, leaderB) + hand.weight;
+        DM1_V1_Inventory_GetLoadPc34Compat(&inventory, leaderB) + hand.weight;
 
     /* ReDMCSB CHEST.C F0333 lines 31-67 now rematerializes the new leader's
      * chest, so G0425 must reflect B's closed inventory snapshot rather than A's. */
-    out->chestBReopenResult = m11_inventory_open_chest(
+    out->chestBReopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &inventory, leaderB, out->chestBThing, chestB,
         DM1_PC34_CHEST_REOPEN_CROSS_B_COUNT);
-    out->chestBOpenThing = m11_inventory_get_open_chest_thing(
+    out->chestBOpenThing = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &inventory, leaderB);
     if (!out->chestBReopenResult ||
         !copy_open_types(&inventory, leaderB, out->chestBReopenedTypes)) {
@@ -309,7 +309,7 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
                                DM1_PC34_CHEST_REOPEN_CROSS_A_COUNT,
                                DM1_PC34_CHEST_REOPEN_CROSS_A_FIRST);
     out->leaderBPanelLoadAfterReopen =
-        m11_inventory_get_load(&inventory, leaderB) + hand.weight;
+        DM1_V1_Inventory_GetLoadPc34Compat(&inventory, leaderB) + hand.weight;
     out->leaderBReopenLoadDelta =
         out->leaderBPanelLoadAfterReopen - out->leaderBPanelLoadAfterSwitch;
     out->reopenDoesNotDoubleCountLinkWeights =
@@ -332,7 +332,7 @@ int M11_GameView_ChestReopenCrossChampionRunPc34(
         DM1_PC34_CHEST_EMPTY_THING_WEIGHT + out->chestBReopenedVisibleWeight ?
         1 : 0;
     out->leaderBPanelLoadAfterClose =
-        m11_inventory_get_load(&inventory, leaderB) + hand.weight;
+        DM1_V1_Inventory_GetLoadPc34Compat(&inventory, leaderB) + hand.weight;
 
     return 1;
 }

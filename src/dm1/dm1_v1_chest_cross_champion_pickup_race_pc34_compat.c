@@ -11,8 +11,8 @@
  */
 
 typedef struct {
-    M11_Item chestSlots[DM1_PC34_CHEST_PICKUP_RACE_SLOT_COUNT];
-    M11_Item leaderHands[DM1_PC34_CHEST_PICKUP_RACE_CHAMPION_COUNT];
+    DM1_V1_ItemPc34 chestSlots[DM1_PC34_CHEST_PICKUP_RACE_SLOT_COUNT];
+    DM1_V1_ItemPc34 leaderHands[DM1_PC34_CHEST_PICKUP_RACE_CHAMPION_COUNT];
     int openChestThing;
 } RaceModelPc34;
 
@@ -26,9 +26,9 @@ static const DM1_V1_ChestCrossChampionPickupRaceSpecPc34 s_spec = {
     DM1_PC34_CHEST_PICKUP_RACE_PICKED_ITEM
 };
 
-static M11_Item make_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -38,12 +38,12 @@ static M11_Item make_item(int itemType, int weight)
     return item;
 }
 
-static void clear_item(M11_Item* item)
+static void clear_item(DM1_V1_ItemPc34* item)
 {
     memset(item, 0, sizeof(*item));
 }
 
-static void copy_types(const M11_Item* items, int count, int* out)
+static void copy_types(const DM1_V1_ItemPc34* items, int count, int* out)
 {
     int i;
 
@@ -52,7 +52,7 @@ static void copy_types(const M11_Item* items, int count, int* out)
     }
 }
 
-static int count_visible(const M11_Item* items)
+static int count_visible(const DM1_V1_ItemPc34* items)
 {
     int count = 0;
     int i;
@@ -65,7 +65,7 @@ static int count_visible(const M11_Item* items)
     return count;
 }
 
-static int count_type_in_items(const M11_Item* items, int count, int itemType)
+static int count_type_in_items(const DM1_V1_ItemPc34* items, int count, int itemType)
 {
     int result = 0;
     int i;
@@ -95,7 +95,7 @@ static int count_type_in_model(const RaceModelPc34* model, int itemType)
 
 static int open_chest_pc34(RaceModelPc34* model,
                            int openChestThing,
-                           const M11_Item* linkedItems,
+                           const DM1_V1_ItemPc34* linkedItems,
                            int linkedItemCount)
 {
     int limit;
@@ -125,8 +125,8 @@ static int click_chest_slot_pc34(RaceModelPc34* model,
                                  int championIndex,
                                  int chestSlotIndex)
 {
-    M11_Item leaderHandObject;
-    M11_Item slotObject;
+    DM1_V1_ItemPc34 leaderHandObject;
+    DM1_V1_ItemPc34 slotObject;
 
     if (!model || championIndex < 0 ||
         championIndex >= DM1_PC34_CHEST_PICKUP_RACE_CHAMPION_COUNT ||
@@ -172,7 +172,7 @@ static int click_chest_slot_pc34(RaceModelPc34* model,
 }
 
 static int close_chest_pc34(RaceModelPc34* model,
-                            M11_Item* linkedItemsOut,
+                            DM1_V1_ItemPc34* linkedItemsOut,
                             int maxItemsOut)
 {
     int count = 0;
@@ -223,8 +223,8 @@ int dm1_v1_chest_cross_champion_pickup_race_run_pc34(
     DM1_V1_ChestCrossChampionPickupRaceProbePc34* out)
 {
     RaceModelPc34 model;
-    M11_Item linked[4];
-    M11_Item closed[DM1_PC34_CHEST_PICKUP_RACE_SLOT_COUNT];
+    DM1_V1_ItemPc34 linked[4];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_PICKUP_RACE_SLOT_COUNT];
     int i;
 
     if (!out) {

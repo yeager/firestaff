@@ -46,7 +46,7 @@ typedef struct {
 } DM1_V1_ChestOccupiedSlotSwapSpecPc34;
 
 typedef struct {
-    M11_InventoryState runtime;
+    DM1_V1_InventoryStatePc34 runtime;
     int g0305PartyChampionCount;
     int g0423InventoryChampionOrdinal;
     int g0426OpenChestThing;

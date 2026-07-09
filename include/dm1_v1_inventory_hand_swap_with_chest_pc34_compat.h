@@ -21,7 +21,7 @@ enum {
 };
 
 typedef struct {
-    M11_InventoryState* inventory;
+    DM1_V1_InventoryStatePc34* inventory;
     int championIndex;
     int actionHandIndex;
     int expectedOpenChestThing;
@@ -37,10 +37,10 @@ typedef struct {
     int pc34ChestSlot;
     int visibleWeightBefore;
     int visibleWeightAfter;
-    M11_Item handBefore;
-    M11_Item handAfter;
-    M11_Item originalChestOccupant;
-    M11_Item chestSlotAfter;
+    DM1_V1_ItemPc34 handBefore;
+    DM1_V1_ItemPc34 handAfter;
+    DM1_V1_ItemPc34 originalChestOccupant;
+    DM1_V1_ItemPc34 chestSlotAfter;
     int originalChestOccupantReturnedToHand;
     int previousHandStoredInChestSlot;
     int chestSlotCleared;

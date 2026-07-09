@@ -11,7 +11,7 @@ const char* dm1_inventory_chest_load_source_evidence_pc34(void)
         "CHAMPION.C:582-615 F0300/F0301 remove/add F0140 object weight from slot load";
 }
 
-int m11_inventory_pc34_open_chest_visible_contents_weight(const M11_InventoryState* s,
+int m11_inventory_pc34_open_chest_visible_contents_weight(const DM1_V1_InventoryStatePc34* s,
                                                           int champ)
 {
     int total = 0;
@@ -28,7 +28,7 @@ int m11_inventory_pc34_open_chest_visible_contents_weight(const M11_InventorySta
      * the current linked CONTENTS chain; in this synthetic panel helper the
      * visible G0425 snapshot is the source-locked chain under test. */
     for (slotIndex = 0; slotIndex < DM1_PC34_CHEST_SLOT_COUNT; ++slotIndex) {
-        const M11_Item* item = &s->champions[champ].chestSlots[slotIndex];
+        const DM1_V1_ItemPc34* item = &s->champions[champ].chestSlots[slotIndex];
         if (item->itemType != 0) {
             total += item->weight;
         }
@@ -36,7 +36,7 @@ int m11_inventory_pc34_open_chest_visible_contents_weight(const M11_InventorySta
     return total;
 }
 
-int m11_inventory_pc34_open_chest_container_weight(const M11_InventoryState* s,
+int m11_inventory_pc34_open_chest_container_weight(const DM1_V1_InventoryStatePc34* s,
                                                    int champ)
 {
     if (!s || champ < 0 || champ >= s->championCount ||
@@ -50,9 +50,9 @@ int m11_inventory_pc34_open_chest_container_weight(const M11_InventoryState* s,
            m11_inventory_pc34_open_chest_visible_contents_weight(s, champ);
 }
 
-int m11_inventory_pc34_close_chest_with_weight_snapshot(M11_InventoryState* s,
+int m11_inventory_pc34_close_chest_with_weight_snapshot(DM1_V1_InventoryStatePc34* s,
                                                         int champ,
-                                                        M11_Item* linkedItemsOut,
+                                                        DM1_V1_ItemPc34* linkedItemsOut,
                                                         int maxItemsOut,
                                                         int* outContainerWeightBeforeClose)
 {
@@ -81,5 +81,5 @@ int m11_inventory_pc34_close_chest_with_weight_snapshot(M11_InventoryState* s,
     /* ReDMCSB CHEST.C F0334 lines 117-132 rewrites the CONTENTS list from
      * non-empty G0425 slots and clears those slots, after which the champion
      * load must be recomputed without the transient open-chest contents. */
-    return m11_inventory_close_chest(s, champ, linkedItemsOut, maxItemsOut);
+    return DM1_V1_Inventory_CloseChestPc34Compat(s, champ, linkedItemsOut, maxItemsOut);
 }

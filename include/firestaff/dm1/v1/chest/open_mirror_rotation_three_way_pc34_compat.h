@@ -95,7 +95,7 @@ typedef struct {
     int assetFree;
     int noDosPixelParityClaim;
 
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     int currentLeaderIndex;
     int inventoryChampionOrdinal;
     int partyChampionCount;

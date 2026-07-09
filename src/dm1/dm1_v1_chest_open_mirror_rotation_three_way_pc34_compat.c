@@ -84,10 +84,10 @@ static DM1_V1_ChestOpenMirrorRotationThreeWayItemPc34 make_slot_item(
     return item;
 }
 
-static M11_Item to_m11_item(
+static DM1_V1_ItemPc34 to_m11_item(
     DM1_V1_ChestOpenMirrorRotationThreeWayItemPc34 item)
 {
-    M11_Item out;
+    DM1_V1_ItemPc34 out;
 
     memset(&out, 0, sizeof(out));
     out.itemType = item.type;
@@ -118,9 +118,9 @@ static void record_visible(
     int i;
 
     for (i = 0; i < DM1_PC34_COMR3_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &state->inventory, DM1_PC34_COMR3_OPEN_NON_LEADER, i,
                 &item)) {
             types[i] = item.itemType;
@@ -189,8 +189,8 @@ static void queue_wheel_and_rotation(
 static int drain_wheel(
     DM1_V1_ChestOpenMirrorRotationThreeWayStatePc34* state)
 {
-    M11_Item oldHand;
-    M11_Item oldSlot;
+    DM1_V1_ItemPc34 oldHand;
+    DM1_V1_ItemPc34 oldSlot;
     int oldHandQuantity;
     int oldSlotQuantity;
     int result;
@@ -205,13 +205,13 @@ static int drain_wheel(
         return 0;
     }
 
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state->inventory, DM1_PC34_COMR3_OPEN_NON_LEADER, &oldHand);
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &state->inventory, DM1_PC34_COMR3_OPEN_NON_LEADER,
         DM1_PC34_COMR3_TARGET_SLOT_INDEX, &oldSlot);
     if (oldHand.itemType == 0 || oldSlot.itemType == 0 ||
-        !m11_inventory_can_equip(&oldHand,
+        !DM1_V1_Inventory_CanEquipPc34Compat(&oldHand,
                                  DM1_PC34_COMR3_TARGET_PC34_SLOT)) {
         return 0;
     }
@@ -223,7 +223,7 @@ static int drain_wheel(
     oldSlotQuantity =
         state->chestQuantities[DM1_PC34_COMR3_OPEN_NON_LEADER]
                               [DM1_PC34_COMR3_TARGET_SLOT_INDEX];
-    result = m11_inventory_click_open_chest_slot_for_thing(
+    result = DM1_V1_Inventory_ClickOpenChestSlotForThingPc34Compat(
         &state->inventory, DM1_PC34_COMR3_OPEN_NON_LEADER,
         DM1_PC34_COMR3_CHEST_THING, DM1_PC34_COMR3_TARGET_SLOT_INDEX);
     if (!result) {
@@ -286,7 +286,7 @@ DM1_V1_ChestOpenMirrorRotationThreeWayStatePc34
 dm1_v1_chest_open_mirror_rotation_three_way_default_state_pc34(void)
 {
     DM1_V1_ChestOpenMirrorRotationThreeWayStatePc34 state;
-    M11_Item linked[DM1_PC34_COMR3_SLOT_COUNT];
+    DM1_V1_ItemPc34 linked[DM1_PC34_COMR3_SLOT_COUNT];
     DM1_V1_ChestOpenMirrorRotationThreeWayItemPc34 hand;
     int i;
 
@@ -320,7 +320,7 @@ dm1_v1_chest_open_mirror_rotation_three_way_default_state_pc34(void)
     state.f0280PublishCount = 1;
     state.trace[state.traceCount++] = DM1_PC34_COMR3_STEP_DEFAULT_STATE;
 
-    m11_inventory_init(&state.inventory, DM1_PC34_COMR3_CHAMPION_COUNT);
+    DM1_V1_Inventory_InitPc34Compat(&state.inventory, DM1_PC34_COMR3_CHAMPION_COUNT);
     for (i = 0; i < DM1_PC34_COMR3_SLOT_COUNT; ++i) {
         DM1_V1_ChestOpenMirrorRotationThreeWayItemPc34 item =
             make_slot_item(i);
@@ -329,10 +329,10 @@ dm1_v1_chest_open_mirror_rotation_three_way_default_state_pc34(void)
         state.chestQuantities[DM1_PC34_COMR3_OPEN_NON_LEADER][i] =
             item.quantity;
     }
-    (void)m11_inventory_open_chest(
+    (void)DM1_V1_Inventory_OpenChestPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER,
         DM1_PC34_COMR3_CHEST_THING, linked, DM1_PC34_COMR3_SLOT_COUNT);
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &state.inventory, DM1_PC34_PANEL_CHEST);
 
     memset(&hand, 0, sizeof(hand));
@@ -341,7 +341,7 @@ dm1_v1_chest_open_mirror_rotation_three_way_default_state_pc34(void)
     hand.charges = DM1_PC34_COMR3_HAND_CHARGES;
     hand.quantity = DM1_PC34_COMR3_HAND_QUANTITY;
     hand.allowedSlots = DM1_PC34_ALLOWED_CONTAINER;
-    (void)m11_inventory_set_mouse_item(
+    (void)DM1_V1_Inventory_SetMouseItemPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER, hand.type,
         hand.weight, hand.charges, hand.allowedSlots);
     state.handQuantities[DM1_PC34_COMR3_OPEN_NON_LEADER] = hand.quantity;
@@ -394,8 +394,8 @@ int dm1_v1_chest_open_mirror_rotation_three_way_run_pc34(
     DM1_V1_ChestOpenMirrorRotationThreeWayProbePc34* out)
 {
     DM1_V1_ChestOpenMirrorRotationThreeWayStatePc34 state;
-    M11_Item hand;
-    M11_Item target;
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 target;
     int beforeChain[3];
     int visibleTypesAfter[DM1_PC34_COMR3_SLOT_COUNT];
     int visibleQuantitiesAfter[DM1_PC34_COMR3_SLOT_COUNT];
@@ -420,18 +420,18 @@ int dm1_v1_chest_open_mirror_rotation_three_way_run_pc34(
     memcpy(beforeChain, state.candidateChainOrdinals, sizeof(beforeChain));
     out->candidateHandQueueDepthBefore = state.candidateHandQueueDepth;
     out->candidateHandQueueItemBefore = state.candidateHandQueueItem.type;
-    out->openChestThingBefore = m11_inventory_get_open_chest_thing(
+    out->openChestThingBefore = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER);
     out->g0426OpenBefore =
         out->openChestThingBefore == DM1_PC34_COMR3_CHEST_THING;
-    out->panelContentBefore = m11_inventory_get_panel_content_pc34(
+    out->panelContentBefore = DM1_V1_Inventory_GetPanelContentPc34Compat(
         &state.inventory);
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER, &hand);
     out->handTypeBefore = hand.itemType;
     out->handQuantityBefore =
         state.handQuantities[DM1_PC34_COMR3_OPEN_NON_LEADER];
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER,
         DM1_PC34_COMR3_TARGET_SLOT_INDEX, &target);
     out->targetSlotTypeBefore = target.itemType;
@@ -460,12 +460,12 @@ int dm1_v1_chest_open_mirror_rotation_three_way_run_pc34(
     out->f0302DispatchCountAfterWheel = state.f0302DispatchCount;
     out->f0300ClearCountAfterWheel = state.f0300ClearC30Count;
     out->f0301WriteCountAfterWheel = state.f0301WriteC30Count;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER, &hand);
     out->handTypeAfterWheel = hand.itemType;
     out->handQuantityAfterWheel =
         state.handQuantities[DM1_PC34_COMR3_OPEN_NON_LEADER];
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER,
         DM1_PC34_COMR3_TARGET_SLOT_INDEX, &target);
     out->c540TypeAfterWheel = target.itemType;
@@ -482,11 +482,11 @@ int dm1_v1_chest_open_mirror_rotation_three_way_run_pc34(
     out->g0299StableAfterWheel =
         state.g0299CandidateOrdinal == DM1_PC34_COMR3_CANDIDATE_ORDINAL;
     out->g0426StableAfterWheel =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER) ==
         DM1_PC34_COMR3_CHEST_THING;
     out->panelStillChestAfterWheel =
-        m11_inventory_get_panel_content_pc34(&state.inventory) ==
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state.inventory) ==
         DM1_PC34_PANEL_CHEST;
 
     rotationOk = drain_rotation(&state);
@@ -500,16 +500,16 @@ int dm1_v1_chest_open_mirror_rotation_three_way_run_pc34(
     out->candidateChainStableAfterRotation =
         arrays_equal(beforeChain, state.candidateChainOrdinals, 3);
     out->g0426StableAfterRotation =
-        m11_inventory_get_open_chest_thing(
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(
             &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER) ==
         DM1_PC34_COMR3_CHEST_THING;
     out->panelStillChestAfterRotation =
-        m11_inventory_get_panel_content_pc34(&state.inventory) ==
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state.inventory) ==
         DM1_PC34_PANEL_CHEST;
-    (void)m11_inventory_get_mouse_item(
+    (void)DM1_V1_Inventory_GetMouseItemPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER, &hand);
     out->handTypeAfterRotation = hand.itemType;
-    (void)m11_inventory_get_item_in_chest_slot(
+    (void)DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
         &state.inventory, DM1_PC34_COMR3_OPEN_NON_LEADER,
         DM1_PC34_COMR3_TARGET_SLOT_INDEX, &target);
     out->c540TypeAfterRotation = target.itemType;

@@ -11,9 +11,9 @@
  */
 
 typedef struct {
-    M11_Item chestSlots[DM1_PC34_CHEST_MID_CLOSE_SLOT_COUNT];
-    M11_Item leaderHand;
-    M11_Item closed[DM1_PC34_CHEST_MID_CLOSE_SLOT_COUNT];
+    DM1_V1_ItemPc34 chestSlots[DM1_PC34_CHEST_MID_CLOSE_SLOT_COUNT];
+    DM1_V1_ItemPc34 leaderHand;
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_MID_CLOSE_SLOT_COUNT];
     int openChestThing;
     int closeStarted;
     int closeCount;
@@ -39,9 +39,9 @@ static const DM1_V1_ChestMidCloseHandSwapSpecPc34 s_spec = {
     DM1_PC34_CHEST_MID_CLOSE_REPLACEMENT_ITEM
 };
 
-static M11_Item make_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -51,17 +51,17 @@ static M11_Item make_item(int itemType, int weight)
     return item;
 }
 
-static void clear_item(M11_Item* item)
+static void clear_item(DM1_V1_ItemPc34* item)
 {
     memset(item, 0, sizeof(*item));
 }
 
-static int item_is_empty(const M11_Item* item)
+static int item_is_empty(const DM1_V1_ItemPc34* item)
 {
     return !item || item->itemType == 0;
 }
 
-static void copy_types(const M11_Item* items, int count, int* out)
+static void copy_types(const DM1_V1_ItemPc34* items, int count, int* out)
 {
     int i;
 
@@ -70,7 +70,7 @@ static void copy_types(const M11_Item* items, int count, int* out)
     }
 }
 
-static void copy_weights(const M11_Item* items, int count, int* out)
+static void copy_weights(const DM1_V1_ItemPc34* items, int count, int* out)
 {
     int i;
 
@@ -79,7 +79,7 @@ static void copy_weights(const M11_Item* items, int count, int* out)
     }
 }
 
-static int count_visible(const M11_Item* items)
+static int count_visible(const DM1_V1_ItemPc34* items)
 {
     int count = 0;
     int i;
@@ -92,7 +92,7 @@ static int count_visible(const M11_Item* items)
     return count;
 }
 
-static int contains_type(const M11_Item* items, int count, int itemType)
+static int contains_type(const DM1_V1_ItemPc34* items, int count, int itemType)
 {
     int i;
 
@@ -107,7 +107,7 @@ static int contains_type(const M11_Item* items, int count, int itemType)
     return 0;
 }
 
-static int order_matches_input(const M11_Item* items)
+static int order_matches_input(const DM1_V1_ItemPc34* items)
 {
     int i;
 
@@ -120,7 +120,7 @@ static int order_matches_input(const M11_Item* items)
     return 1;
 }
 
-static int closed_order_uses_current_future_slot(const M11_Item* items)
+static int closed_order_uses_current_future_slot(const DM1_V1_ItemPc34* items)
 {
     int i;
 
@@ -151,7 +151,7 @@ static int all_slots_empty(const MidCloseModelPc34* model)
 
 static int open_chest_pc34(MidCloseModelPc34* model,
                            int chestThing,
-                           const M11_Item* linkedItems,
+                           const DM1_V1_ItemPc34* linkedItems,
                            int linkedCount)
 {
     int limit;
@@ -196,7 +196,7 @@ static int close_begin_pc34(MidCloseModelPc34* model)
 
 static int close_step_pc34(MidCloseModelPc34* model, int chestSlotIndex)
 {
-    M11_Item thing;
+    DM1_V1_ItemPc34 thing;
 
     if (!model || !model->closeStarted || chestSlotIndex < 0 ||
         chestSlotIndex >= DM1_PC34_CHEST_MID_CLOSE_SLOT_COUNT) {
@@ -225,8 +225,8 @@ static int click_chest_slot_pc34(MidCloseModelPc34* model,
                                  int* putSlotInLeader,
                                  int* putLeaderInSlot)
 {
-    M11_Item leaderHandObject;
-    M11_Item slotObject;
+    DM1_V1_ItemPc34 leaderHandObject;
+    DM1_V1_ItemPc34 slotObject;
 
     if (removedLeader) {
         *removedLeader = 0;
@@ -327,8 +327,8 @@ int dm1_v1_chest_mid_close_hand_swap_run_pc34(
 {
     MidCloseModelPc34 model;
     MidCloseModelPc34 alreadyProcessedModel;
-    M11_Item linked[DM1_PC34_CHEST_MID_CLOSE_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_MID_CLOSE_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int i;
 
     if (!out) {

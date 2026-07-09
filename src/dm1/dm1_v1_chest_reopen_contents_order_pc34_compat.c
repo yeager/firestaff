@@ -11,9 +11,9 @@ static const char s_source_evidence[] =
     "CHEST.C F0334:117-132 rewrites the container Slot/Next chain from non-empty G0425 slots\n"
     "DUNGEON.C F0163:1796-1799 clears linked item's Next before relinking; 1832-1837 appends after current tail";
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -23,7 +23,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static void clear_items(M11_Item* items, int count)
+static void clear_items(DM1_V1_ItemPc34* items, int count)
 {
     int i;
 
@@ -32,7 +32,7 @@ static void clear_items(M11_Item* items, int count)
     }
 }
 
-static int copy_open_types(const M11_InventoryState* state,
+static int copy_open_types(const DM1_V1_InventoryStatePc34* state,
                            int* typesOut)
 {
     int i;
@@ -41,9 +41,9 @@ static int copy_open_types(const M11_InventoryState* state,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(state, 0, i, &item)) {
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, 0, i, &item)) {
             return 0;
         }
         typesOut[i] = item.itemType;
@@ -51,7 +51,7 @@ static int copy_open_types(const M11_InventoryState* state,
     return 1;
 }
 
-static void copy_item_types(const M11_Item* items,
+static void copy_item_types(const DM1_V1_ItemPc34* items,
                             int count,
                             int* typesOut)
 {
@@ -133,14 +133,14 @@ static int contains_every_visible_input(
 }
 
 static int run_case(int caseIndex,
-                    const M11_Item* inputItems,
+                    const DM1_V1_ItemPc34* inputItems,
                     int inputCount,
                     int leaderHandItemType,
                     M11_GameView_ChestReopenContentsOrderCasePc34* out)
 {
-    M11_InventoryState state;
-    M11_Item closed[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int i;
 
     if (!inputItems || !out || inputCount <= 0 ||
@@ -150,7 +150,7 @@ static int run_case(int caseIndex,
 
     memset(out, 0, sizeof(*out));
     clear_items(closed, DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT);
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     out->inputCount = inputCount;
 
     for (i = 0; i < inputCount; ++i) {
@@ -166,23 +166,23 @@ static int run_case(int caseIndex,
             inputCount - 1 : DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT - 1];
 
     if (leaderHandItemType != 0 &&
-        !m11_inventory_set_mouse_item(
+        !DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state, 0, leaderHandItemType, 9, 0,
             DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER)) {
         return 0;
     }
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandBeforeOpen = item.itemType;
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 follows F0159/F0163-style linked
      * order and copies at most the first eight chest contents into G0425. */
-    out->openResult = m11_inventory_open_chest(
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_REOPEN_CHEST_THING_BASE + caseIndex,
         inputItems, inputCount);
     if (!out->openResult || !copy_open_types(&state, out->openedTypes) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterOpen = item.itemType;
@@ -190,11 +190,11 @@ static int run_case(int caseIndex,
     /* ReDMCSB CHEST.C F0334 lines 117-132 makes the first non-empty G0425
      * entry the container head and appends later entries with DUNGEON.C F0163
      * lines 1796-1799 and 1832-1837, preserving the visible order. */
-    out->closeCount = m11_inventory_close_chest(
+    out->closeCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, 0, closed,
         DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT);
     if (out->closeCount < 0 ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterClose = item.itemType;
@@ -212,11 +212,11 @@ static int run_case(int caseIndex,
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 rematerializes the F0334-produced
      * head/tail list, proving the close-rewrite to reopen round trip. */
-    out->reopenResult = m11_inventory_open_chest(
+    out->reopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, DM1_PC34_REOPEN_CHEST_THING_BASE + caseIndex,
         closed, out->closeCount);
     if (!out->reopenResult || !copy_open_types(&state, out->reopenedTypes) ||
-        !m11_inventory_get_mouse_item(&state, 0, &item)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterReopen = item.itemType;
@@ -254,11 +254,11 @@ const char* M11_GameView_ChestReopenContentsOrderSourceEvidencePc34(void)
 int M11_GameView_ChestReopenContentsOrderRunPc34(
     M11_GameView_ChestReopenContentsOrderProbePc34* out)
 {
-    M11_Item caseOne[1];
-    M11_Item caseThree[3];
-    M11_Item caseFull[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT];
-    M11_Item caseHidden[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_MAX_INPUT];
-    M11_Item caseLeader[3];
+    DM1_V1_ItemPc34 caseOne[1];
+    DM1_V1_ItemPc34 caseThree[3];
+    DM1_V1_ItemPc34 caseFull[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_SLOT_COUNT];
+    DM1_V1_ItemPc34 caseHidden[DM1_PC34_CHEST_REOPEN_CONTENTS_ORDER_MAX_INPUT];
+    DM1_V1_ItemPc34 caseLeader[3];
     int i;
 
     if (!out) {

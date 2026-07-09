@@ -37,12 +37,12 @@ const DM1_V1_ChestOccupiedSlotSwapSpecPc34
 
 static DM1_V1_ChestOccupiedSlotSwapAssertionsPc34 s_assertions;
 
-static M11_Item make_item(int itemType,
+static DM1_V1_ItemPc34 make_item(int itemType,
                           int weight,
                           int charges,
                           int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -61,9 +61,9 @@ static int copy_g0425(DM1_V1_ChestOccupiedSlotSwapRuntimePc34* state)
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (!m11_inventory_get_item_in_chest_slot(
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &state->runtime, 0, i, &item)) {
             return 0;
         }
@@ -72,8 +72,8 @@ static int copy_g0425(DM1_V1_ChestOccupiedSlotSwapRuntimePc34* state)
         state->g0425Counts[i] = item.charges;
     }
     state->g0426OpenChestThing =
-        m11_inventory_get_open_chest_thing(&state->runtime, 0);
-    state->m516LeaderLoad = m11_inventory_get_load(&state->runtime, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state->runtime, 0);
+    state->m516LeaderLoad = DM1_V1_Inventory_GetLoadPc34Compat(&state->runtime, 0);
     return 1;
 }
 
@@ -124,13 +124,13 @@ static void copy_snapshot(const DM1_V1_ChestOccupiedSlotSwapRuntimePc34* state,
 
 static int source_equivalent_load(const DM1_V1_ChestOccupiedSlotSwapRuntimePc34* state)
 {
-    M11_Item hand;
+    DM1_V1_ItemPc34 hand;
 
     if (!state ||
-        !m11_inventory_get_mouse_item(&state->runtime, 0, &hand)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state->runtime, 0, &hand)) {
         return 0;
     }
-    return m11_inventory_get_load(&state->runtime, 0) + hand.weight;
+    return DM1_V1_Inventory_GetLoadPc34Compat(&state->runtime, 0) + hand.weight;
 }
 
 static void record_check(int condition)
@@ -221,13 +221,13 @@ dm1_v1_chest_occupied_slot_swap_spec_pc34(void)
 int dm1_v1_chest_occupied_slot_swap_init_pc34(
     DM1_V1_ChestOccupiedSlotSwapRuntimePc34* state)
 {
-    M11_Item linked[3];
+    DM1_V1_ItemPc34 linked[3];
 
     if (!state) {
         return 0;
     }
     memset(state, 0, sizeof(*state));
-    m11_inventory_init(&state->runtime, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state->runtime, 1);
     state->g0305PartyChampionCount = 1;
     state->g0423InventoryChampionOrdinal = 1;
     state->m070ReadyHandSlotIndex = 0;
@@ -246,7 +246,7 @@ int dm1_v1_chest_occupied_slot_swap_init_pc34(
 
     /* ReDMCSB CHEST.C F0333 lines 43-67 sets G0426, draws the open chest,
      * then copies linked objects into G0425 C537/C538/C539. */
-    if (!m11_inventory_open_chest(
+    if (!DM1_V1_Inventory_OpenChestPc34Compat(
             &state->runtime, 0,
             DM1_PC34_CHEST_OCCUPIED_SWAP_OPEN_CHEST_THING,
             linked, 3)) {
@@ -255,7 +255,7 @@ int dm1_v1_chest_occupied_slot_swap_init_pc34(
 
     /* ReDMCSB CHAMPION.C F0297/F0298 lines 243-298 make G4055 the leader
      * hand object that F0302 later swaps with occupied C538. */
-    if (!m11_inventory_set_mouse_item(
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state->runtime, 0,
             DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_STACK,
             DM1_PC34_CHEST_OCCUPIED_SWAP_LEADER_WEIGHT,
@@ -275,9 +275,9 @@ int dm1_v1_chest_occupied_slot_swap_exercise_pc34(
     DM1_V1_ChestOccupiedSlotSwapRuntimePc34* state,
     DM1_V1_ChestOccupiedSlotSwapProbePc34* out)
 {
-    M11_Item hand;
-    M11_Item slot;
-    M11_Item closed[DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT];
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 slot;
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT];
     int i;
 
     if (!state || !out) {
@@ -303,23 +303,23 @@ int dm1_v1_chest_occupied_slot_swap_exercise_pc34(
         out->beforeWeights[DM1_PC34_CHEST_OCCUPIED_SWAP_C538_INDEX];
     out->c538BeforeCount =
         out->beforeCounts[DM1_PC34_CHEST_OCCUPIED_SWAP_C538_INDEX];
-    if (!m11_inventory_get_mouse_item(&state->runtime, 0, &hand)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state->runtime, 0, &hand)) {
         return 0;
     }
     out->leaderHandBeforeType = hand.itemType;
     out->leaderHandBeforeWeight = hand.weight;
     out->leaderHandBeforeCount = hand.charges;
     out->replacementAllowedInC538 =
-        m11_inventory_can_equip(&hand, DM1_PC34_SLOT_CHEST_2);
+        DM1_V1_Inventory_CanEquipPc34Compat(&hand, DM1_PC34_SLOT_CHEST_2);
     out->sourceEquivalentLoadBefore = source_equivalent_load(state);
 
     /* ReDMCSB CHAMPION.C F0302 lines 688-710 reads G0425[C538-C537],
      * runs F0300/F0297 on the occupied stack, then F0301 stores G4055. */
-    out->f0302Accepted = m11_inventory_click_pc34_source_slot(
+    out->f0302Accepted = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state->runtime, 0, DM1_PC34_SLOT_CHEST_2);
     if (!out->f0302Accepted ||
-        !m11_inventory_get_mouse_item(&state->runtime, 0, &hand) ||
-        !m11_inventory_get_item_in_chest_slot(
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state->runtime, 0, &hand) ||
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
             &state->runtime, 0,
             DM1_PC34_CHEST_OCCUPIED_SWAP_C538_INDEX, &slot) ||
         !copy_g0425(state)) {
@@ -360,7 +360,7 @@ int dm1_v1_chest_occupied_slot_swap_exercise_pc34(
 
     /* ReDMCSB CHEST.C F0334 lines 113-132 closes G0426 and compacts only
      * non-empty G0425 slots back into the source container chain. */
-    out->closedCount = m11_inventory_close_chest(
+    out->closedCount = DM1_V1_Inventory_CloseChestPc34Compat(
         &state->runtime, 0, closed,
         DM1_PC34_CHEST_OCCUPIED_SWAP_SLOT_COUNT);
     if (out->closedCount < 0) {
@@ -372,7 +372,7 @@ int dm1_v1_chest_occupied_slot_swap_exercise_pc34(
             i < out->closedCount ? closed[i].itemType : 0;
     }
     out->closeClearedG0426 =
-        m11_inventory_get_open_chest_thing(&state->runtime, 0) == 0 ? 1 : 0;
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state->runtime, 0) == 0 ? 1 : 0;
     out->closeRewroteVisibleOnly =
         out->closedCount == 3 &&
         out->closedTypes[0] == DM1_PC34_CHEST_OCCUPIED_SWAP_C537_STACK &&
@@ -381,7 +381,7 @@ int dm1_v1_chest_occupied_slot_swap_exercise_pc34(
 
     /* ReDMCSB CHEST.C F0333 lines 53-76 rematerializes the compacted chain
      * into C537..C544, keeping the C538 replacement visible. */
-    out->reopenResult = m11_inventory_open_chest(
+    out->reopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state->runtime, 0,
         DM1_PC34_CHEST_OCCUPIED_SWAP_OPEN_CHEST_THING,
         closed, out->closedCount);

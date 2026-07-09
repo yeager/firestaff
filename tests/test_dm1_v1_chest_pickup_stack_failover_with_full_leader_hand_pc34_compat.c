@@ -55,7 +55,7 @@ typedef struct {
 } ProbeItem;
 
 typedef struct {
-    M11_InventoryState inventory;
+    DM1_V1_InventoryStatePc34 inventory;
     ProbeItem leader[LEADER_STACK_CAPACITY];
     ProbeItem floor[FLOOR_CAPACITY];
     int floorDropSourceZone[FLOOR_CAPACITY];
@@ -91,9 +91,9 @@ typedef struct {
     int visibleWeightBeforeClick;
     int visibleWeightAfterClick;
     int containerWeightBeforeClose;
-    M11_Item chestBefore[DM1_PC34_CHEST_SLOT_COUNT];
-    M11_Item chestAfter[DM1_PC34_CHEST_SLOT_COUNT];
-    M11_Item closed[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 chestBefore[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 chestAfter[DM1_PC34_CHEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_SLOT_COUNT];
 } ProbeRuntime;
 
 static int g_assertions;
@@ -189,9 +189,9 @@ static ProbeItem make_item(int id,
     return item;
 }
 
-static M11_Item to_m11_item(ProbeItem item)
+static DM1_V1_ItemPc34 to_m11_item(ProbeItem item)
 {
-    M11_Item out;
+    DM1_V1_ItemPc34 out;
 
     memset(&out, 0, sizeof(out));
     out.itemType = item.type;
@@ -202,7 +202,7 @@ static M11_Item to_m11_item(ProbeItem item)
     return out;
 }
 
-static ProbeItem from_m11_item(M11_Item item, int id, const char* name)
+static ProbeItem from_m11_item(DM1_V1_ItemPc34 item, int id, const char* name)
 {
     return make_item(id, item.itemType, item.itemType, item.weight,
                      item.charges, item.allowedSlots, name);
@@ -234,7 +234,7 @@ static void seed_leader_hand(ProbeRuntime* rt)
 
 static int seed_open_chest(ProbeRuntime* rt)
 {
-    M11_Item linked[3];
+    DM1_V1_ItemPc34 linked[3];
     int i;
     int openResult;
 
@@ -251,18 +251,18 @@ static int seed_open_chest(ProbeRuntime* rt)
                                       DM1_PC34_ALLOWED_ANY_SLOT,
                                       "C539 stack"));
 
-    m11_inventory_init(&rt->inventory, 1);
-    openResult = m11_inventory_open_chest(&rt->inventory, 0, CHEST_THING,
+    DM1_V1_Inventory_InitPc34Compat(&rt->inventory, 1);
+    openResult = DM1_V1_Inventory_OpenChestPc34Compat(&rt->inventory, 0, CHEST_THING,
                                           linked, 3);
     rt->openThingBeforeClick =
-        m11_inventory_get_open_chest_thing(&rt->inventory, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt->inventory, 0);
     rt->visibleWeightBeforeClick =
         m11_inventory_pc34_open_chest_visible_contents_weight(&rt->inventory,
                                                               0);
     rt->f0333EarlyReturnTaken = 0;
     rt->f0333DispatchCount = openResult ? 1 : 0;
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-        if (!m11_inventory_get_item_in_chest_slot(&rt->inventory, 0, i,
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&rt->inventory, 0, i,
                                                   &rt->chestBefore[i])) {
             return 0;
         }
@@ -298,10 +298,10 @@ static int pickup_stack_failover(ProbeRuntime* rt,
                                  int leaderIndex,
                                  int sequenceIndex)
 {
-    M11_Item chestM11;
+    DM1_V1_ItemPc34 chestM11;
     ProbeItem picked;
 
-    if (!m11_inventory_get_item_in_chest_slot(&rt->inventory, 0,
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&rt->inventory, 0,
                                               chestSlotIndex, &chestM11)) {
         return 0;
     }
@@ -324,7 +324,7 @@ static int pickup_stack_failover(ProbeRuntime* rt,
     ++rt->f0301C30WriteCount;
     ++rt->f0032TypeChecks;
     ++rt->f0033IconChecks;
-    if (!m11_inventory_set_item_in_chest_slot(&rt->inventory, 0,
+    if (!DM1_V1_Inventory_SetItemInChestSlotPc34Compat(&rt->inventory, 0,
                                               chestSlotIndex, 0, 0, 0, 0)) {
         return 0;
     }
@@ -359,9 +359,9 @@ static int run_probe(ProbeRuntime* rt)
         m11_inventory_pc34_open_chest_visible_contents_weight(&rt->inventory,
                                                               0);
     rt->openThingBeforeClose =
-        m11_inventory_get_open_chest_thing(&rt->inventory, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt->inventory, 0);
     for (i = 0; i < DM1_PC34_CHEST_SLOT_COUNT; ++i) {
-        if (!m11_inventory_get_item_in_chest_slot(&rt->inventory, 0, i,
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&rt->inventory, 0, i,
                                                   &rt->chestAfter[i])) {
             return 0;
         }
@@ -371,7 +371,7 @@ static int run_probe(ProbeRuntime* rt)
             &rt->inventory, 0, rt->closed, DM1_PC34_CHEST_SLOT_COUNT,
             &rt->containerWeightBeforeClose);
     rt->openThingAfterClose =
-        m11_inventory_get_open_chest_thing(&rt->inventory, 0);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt->inventory, 0);
     return rt->f0334CloseCount >= 0;
 }
 

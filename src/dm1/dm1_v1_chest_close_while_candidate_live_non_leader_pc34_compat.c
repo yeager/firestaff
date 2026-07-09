@@ -3,10 +3,10 @@
 #include <string.h>
 
 typedef struct {
-    M11_InventoryState inventory;
-    M11_Item linked[DM1_PC34_CCLNL_SLOT_COUNT +
+    DM1_V1_InventoryStatePc34 inventory;
+    DM1_V1_ItemPc34 linked[DM1_PC34_CCLNL_SLOT_COUNT +
                     DM1_PC34_CCLNL_HIDDEN_TAIL_COUNT];
-    M11_Item closed[DM1_PC34_CCLNL_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CCLNL_SLOT_COUNT];
     int leader;
     int openChestOwner;
     int candidateOwner;
@@ -54,9 +54,9 @@ static const DM1_V1_ChestCloseWhileCandidateLiveNonLeaderSpecPc34 s_spec = {
     "Disjoint from pass710/pass711/pass728/pass731/pass732/pass735/pass736 and chest_pickup_during_resurrect_pending_non_leader: no C537 pickup is resolved, no party rotation is pending, no candidate-owner swap occurs, and the close-time C039 panel click is rejected before it can route back through F0333."
 };
 
-static M11_Item make_item(int index)
+static DM1_V1_ItemPc34 make_item(int index)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = DM1_PC34_CCLNL_FIRST_ITEM + index;
@@ -68,7 +68,7 @@ static M11_Item make_item(int index)
 }
 
 static DM1_V1_ChestCloseWhileCandidateLiveNonLeaderItemPc34
-snapshot_item(M11_Item item)
+snapshot_item(DM1_V1_ItemPc34 item)
 {
     DM1_V1_ChestCloseWhileCandidateLiveNonLeaderItemPc34 out;
 
@@ -90,7 +90,7 @@ static void hash_int(uint32_t* hash, int value)
     }
 }
 
-static uint32_t hash_item_chain(const M11_Item* items, int count)
+static uint32_t hash_item_chain(const DM1_V1_ItemPc34* items, int count)
 {
     uint32_t hash = 2166136261u;
     int i;
@@ -119,7 +119,7 @@ static void runtime_init(RuntimePc34* rt)
     int i;
 
     memset(rt, 0, sizeof(*rt));
-    m11_inventory_init(&rt->inventory, DM1_PC34_CCLNL_CHAMPION_COUNT);
+    DM1_V1_Inventory_InitPc34Compat(&rt->inventory, DM1_PC34_CCLNL_CHAMPION_COUNT);
     rt->leader = DM1_PC34_CCLNL_LEADER;
     rt->openChestOwner = DM1_PC34_CCLNL_NON_LEADER_OWNER;
     rt->candidateOwner = DM1_PC34_CCLNL_CANDIDATE_OWNER;
@@ -137,7 +137,7 @@ static void runtime_init(RuntimePc34* rt)
 
 static int open_non_leader_chest(RuntimePc34* rt)
 {
-    int ok = m11_inventory_open_chest(
+    int ok = DM1_V1_Inventory_OpenChestPc34Compat(
         &rt->inventory,
         DM1_PC34_CCLNL_NON_LEADER_OWNER,
         DM1_PC34_CCLNL_OPEN_CHEST_THING,
@@ -155,7 +155,7 @@ static void publish_c040_candidate(RuntimePc34* rt)
     rt->candidateOrdinal = DM1_PC34_CCLNL_CANDIDATE_OWNER + 1;
     rt->candidateSlot = DM1_PC34_CCLNL_CANDIDATE_OWNER;
     rt->candidateLive = 1;
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &rt->inventory, DM1_PC34_CCLNL_M568_RESURRECT_PANEL);
 }
 
@@ -182,12 +182,12 @@ static int close_non_leader_chest(RuntimePc34* rt)
     int count;
 
     memset(rt->closed, 0, sizeof(rt->closed));
-    count = m11_inventory_close_chest(
+    count = DM1_V1_Inventory_CloseChestPc34Compat(
         &rt->inventory,
         DM1_PC34_CCLNL_NON_LEADER_OWNER,
         rt->closed,
         DM1_PC34_CCLNL_SLOT_COUNT);
-    (void)m11_inventory_set_panel_content_pc34(
+    (void)DM1_V1_Inventory_SetPanelContentPc34Compat(
         &rt->inventory, DM1_PC34_CCLNL_M568_RESURRECT_PANEL);
     return count;
 }
@@ -201,7 +201,7 @@ static int closed_chain_is_visible_rewrite(const RuntimePc34* rt, int count)
         return 0;
     }
     for (i = 0; i < count; ++i) {
-        const M11_Item expected = make_item(expectedIndexes[i]);
+        const DM1_V1_ItemPc34 expected = make_item(expectedIndexes[i]);
         if (rt->closed[i].itemType != expected.itemType ||
             rt->closed[i].weight != expected.weight ||
             rt->closed[i].charges != expected.charges) {
@@ -272,7 +272,7 @@ int dm1_v1_chest_close_while_candidate_live_non_leader_run_pc34(
     DM1_V1_ChestCloseWhileCandidateLiveNonLeaderProbePc34* out)
 {
     RuntimePc34 rt;
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     int i;
 
     if (!out) {
@@ -291,10 +291,10 @@ int dm1_v1_chest_close_while_candidate_live_non_leader_run_pc34(
     out->openResult = open_non_leader_chest(&rt);
     out->stepTrace[out->stepCount++] = kStepOpenNonLeaderChest;
     out->openChestOwnerBeforeClose = rt.openChestOwner;
-    out->openChestThingBeforeClose = m11_inventory_get_open_chest_thing(
+    out->openChestThingBeforeClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &rt.inventory, DM1_PC34_CCLNL_NON_LEADER_OWNER);
     for (i = 0; i < DM1_PC34_CCLNL_SLOT_COUNT; ++i) {
-        if (m11_inventory_get_item_in_chest_slot(
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(
                 &rt.inventory,
                 DM1_PC34_CCLNL_NON_LEADER_OWNER,
                 i,
@@ -302,12 +302,12 @@ int dm1_v1_chest_close_while_candidate_live_non_leader_run_pc34(
             out->visibleBefore[i] = snapshot_item(item);
         }
     }
-    out->panelBeforeClose = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->panelBeforeClose = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->f0333OpenCount = rt.f0333OpenCount;
 
     publish_c040_candidate(&rt);
     out->stepTrace[out->stepCount++] = kStepPublishC040Candidate;
-    out->panelBeforeClose = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->panelBeforeClose = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->c038ChromeBeforeClose = rt.c038Chrome;
     out->c039ChromeBeforeClose = rt.c039Chrome;
     out->c040ChromeBeforeClose = rt.c040Chrome;
@@ -344,9 +344,9 @@ int dm1_v1_chest_close_while_candidate_live_non_leader_run_pc34(
     out->closeCount = close_non_leader_chest(&rt);
     rt.closing = 0;
     out->stepTrace[out->stepCount++] = kStepCloseNonLeaderChest;
-    out->openChestThingAfterClose = m11_inventory_get_open_chest_thing(
+    out->openChestThingAfterClose = DM1_V1_Inventory_GetOpenChestThingPc34Compat(
         &rt.inventory, DM1_PC34_CCLNL_NON_LEADER_OWNER);
-    out->panelAfterClose = m11_inventory_get_panel_content_pc34(&rt.inventory);
+    out->panelAfterClose = DM1_V1_Inventory_GetPanelContentPc34Compat(&rt.inventory);
     out->c038ChromeAfterClose = rt.c038Chrome;
     out->c039ChromeAfterClose = rt.c039Chrome;
     out->c040ChromeAfterClose = rt.c040Chrome;
@@ -372,9 +372,9 @@ int dm1_v1_chest_close_while_candidate_live_non_leader_run_pc34(
         out->hiddenTail[1].type == DM1_PC34_CCLNL_FIRST_ITEM + 9;
     out->closeClearedOnlyOwnerG0426 =
         out->openChestThingAfterClose == 0 &&
-        m11_inventory_get_open_chest_thing(&rt.inventory,
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt.inventory,
                                            DM1_PC34_CCLNL_LEADER) == 0 &&
-        m11_inventory_get_open_chest_thing(&rt.inventory,
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&rt.inventory,
                                            DM1_PC34_CCLNL_CANDIDATE_OWNER) == 0;
     out->ownerClosedOnly = out->closeClearedOnlyOwnerG0426;
     out->candidatePreservedAcrossClose =

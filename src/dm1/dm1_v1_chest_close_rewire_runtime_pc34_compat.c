@@ -4,9 +4,9 @@
 
 #include <string.h>
 
-static M11_Item make_item(int itemType, int weight, int allowedSlots)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight, int allowedSlots)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
     item.weight = weight;
@@ -14,7 +14,7 @@ static M11_Item make_item(int itemType, int weight, int allowedSlots)
     return item;
 }
 
-static int copy_visible_chest_types(const M11_InventoryState* state, int champ,
+static int copy_visible_chest_types(const DM1_V1_InventoryStatePc34* state, int champ,
                                     int* typesOut)
 {
     int i;
@@ -23,8 +23,8 @@ static int copy_visible_chest_types(const M11_InventoryState* state, int champ,
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_CLOSE_REWIRE_TEST_SLOT_COUNT; ++i) {
-        M11_Item item;
-        if (!m11_inventory_get_item_in_chest_slot(state, champ, i, &item)) {
+        DM1_V1_ItemPc34 item;
+        if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item)) {
             return 0;
         }
         typesOut[i] = item.itemType;
@@ -32,7 +32,7 @@ static int copy_visible_chest_types(const M11_InventoryState* state, int champ,
     return 1;
 }
 
-static int copy_item_types(const M11_Item* items, int count, int* typesOut)
+static int copy_item_types(const DM1_V1_ItemPc34* items, int count, int* typesOut)
 {
     int i;
 
@@ -99,10 +99,10 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
         C538_INDEX = 1,
         C544_INDEX = 7
     };
-    M11_InventoryState state;
-    M11_Item linked[9];
-    M11_Item closed[DM1_PC34_CHEST_CLOSE_REWIRE_TEST_SLOT_COUNT];
-    M11_Item item;
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 linked[9];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_CLOSE_REWIRE_TEST_SLOT_COUNT];
+    DM1_V1_ItemPc34 item;
     int i;
 
     if (!out) {
@@ -111,24 +111,24 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
     memset(out, 0, sizeof(*out));
     memset(closed, 0, sizeof(closed));
 
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
     for (i = 0; i < 9; ++i) {
         linked[i] = make_item(FIRST_VISIBLE_ITEM + i, 2 + i,
                               DM1_PC34_ALLOWED_CONTAINER);
     }
     out->hiddenTailInput = linked[8].itemType;
 
-    out->baseLoadSetResult = m11_inventory_set_item_in_pc34_source_slot(
+    out->baseLoadSetResult = DM1_V1_Inventory_SetItemInPc34SourceSlotCompat(
         &state, 0, DM1_PC34_SLOT_BACKPACK_LINE1_1, BASE_BACKPACK_ITEM, 13, 0,
         DM1_PC34_ALLOWED_ANY_SLOT);
     if (!out->baseLoadSetResult) {
         return 0;
     }
-    out->baseLoad = m11_inventory_get_load(&state, 0);
+    out->baseLoad = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 materializes the first eight visible
      * linked objects into G0425; the ninth input item remains a hidden tail. */
-    out->openResult = m11_inventory_open_chest(&state, 0, CHEST_THING, linked, 9);
+    out->openResult = DM1_V1_Inventory_OpenChestPc34Compat(&state, 0, CHEST_THING, linked, 9);
     if (!out->openResult ||
         !copy_visible_chest_types(&state, 0, out->visibleBeforeRejectTypes)) {
         return 0;
@@ -137,42 +137,42 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
         m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
     out->openContainerWeight =
         m11_inventory_pc34_open_chest_container_weight(&state, 0);
-    out->loadAfterOpen = m11_inventory_get_load(&state, 0);
+    out->loadAfterOpen = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
-    out->incompatibleSlotMask = m11_inventory_pc34_slot_mask(DM1_PC34_SLOT_CHEST_2);
+    out->incompatibleSlotMask = DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_PC34_SLOT_CHEST_2);
     item = make_item(DM1_PC34_CHEST_CLOSE_REWIRE_TEST_STAFF_OF_CLAWS_OBJECT_INFO,
                      1, DM1_PC34_ALLOWED_QUIVER_LINE1);
     out->incompatibleStaffCanEquip =
-        m11_inventory_can_equip(&item, DM1_PC34_SLOT_CHEST_2);
+        DM1_V1_Inventory_CanEquipPc34Compat(&item, DM1_PC34_SLOT_CHEST_2);
     out->incompatibleLeaderHandBefore = item.itemType;
-    if (!m11_inventory_set_mouse_item(&state, 0, item.itemType, item.weight,
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, item.itemType, item.weight,
                                       item.charges, item.allowedSlots) ||
-        !m11_inventory_get_item_in_chest_slot(&state, 0, C538_INDEX, &item)) {
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, C538_INDEX, &item)) {
         return 0;
     }
     out->incompatibleSlotBefore = item.itemType;
 
     /* ReDMCSB CHAMPION.C F0302 lines 688-699 reads the leader hand and C30+
      * G0425 slot, then rejects incompatible AllowedSlots before any mutation. */
-    out->incompatibleClickResult = m11_inventory_click_pc34_source_slot(
+    out->incompatibleClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, DM1_PC34_SLOT_CHEST_2);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->incompatibleLeaderHandAfter = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(&state, 0, C538_INDEX, &item)) {
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, C538_INDEX, &item)) {
         return 0;
     }
     out->incompatibleSlotAfter = item.itemType;
     if (!copy_visible_chest_types(&state, 0, out->visibleAfterRejectTypes)) {
         return 0;
     }
-    out->loadAfterIncompatibleAttempt = m11_inventory_get_load(&state, 0);
+    out->loadAfterIncompatibleAttempt = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     item = make_item(REPLACEMENT_ITEM, 17, DM1_PC34_ALLOWED_CONTAINER);
     out->replacementCanEquip =
-        m11_inventory_can_equip(&item, DM1_PC34_SLOT_CHEST_8);
-    if (!m11_inventory_set_mouse_item(&state, 0, item.itemType, item.weight,
+        DM1_V1_Inventory_CanEquipPc34Compat(&item, DM1_PC34_SLOT_CHEST_8);
+    if (!DM1_V1_Inventory_SetMouseItemPc34Compat(&state, 0, item.itemType, item.weight,
                                       item.charges, item.allowedSlots)) {
         return 0;
     }
@@ -180,13 +180,13 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
     /* ReDMCSB CHAMPION.C F0302 lines 700-710 performs the accepted C544 swap,
      * moving the previous final visible item to leader hand and writing the
      * replacement into G0425 before F0334 closes the chest. */
-    out->replacementClickResult = m11_inventory_click_pc34_source_slot(
+    out->replacementClickResult = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, 0, DM1_PC34_SLOT_CHEST_8);
-    if (!m11_inventory_get_mouse_item(&state, 0, &item)) {
+    if (!DM1_V1_Inventory_GetMouseItemPc34Compat(&state, 0, &item)) {
         return 0;
     }
     out->leaderHandAfterReplacement = item.itemType;
-    if (!m11_inventory_get_item_in_chest_slot(&state, 0, C544_INDEX, &item)) {
+    if (!DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, 0, C544_INDEX, &item)) {
         return 0;
     }
     out->finalSlotAfterReplacement = item.itemType;
@@ -194,7 +194,7 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
         m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
     out->replacementContainerWeight =
         m11_inventory_pc34_open_chest_container_weight(&state, 0);
-    out->loadAfterReplacement = m11_inventory_get_load(&state, 0);
+    out->loadAfterReplacement = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB CHEST.C F0334 lines 117-132 rewrites only the eight visible
      * G0425 slots and clears them; DUNGEON.C F0140 lines 1114-1120 container
@@ -211,11 +211,11 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
                                           out->hiddenTailInput);
     out->closeContainerWeightAfter =
         m11_inventory_pc34_open_chest_container_weight(&state, 0);
-    out->loadAfterClose = m11_inventory_get_load(&state, 0);
+    out->loadAfterClose = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     /* ReDMCSB CHEST.C F0333 lines 53-67 reopens from the F0334-produced link
      * order; the excluded hidden tail is not part of the visible G0425 copy. */
-    out->reopenResult = m11_inventory_open_chest(
+    out->reopenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, 0, REOPENED_CHEST_THING, closed, out->closeCount);
     if (!out->reopenResult ||
         !copy_visible_chest_types(&state, 0, out->reopenedTypes)) {
@@ -229,7 +229,7 @@ int m11_inventory_pc34_probe_chest_close_rewire_runtime(
         m11_inventory_pc34_open_chest_visible_contents_weight(&state, 0);
     out->reopenContainerWeight =
         m11_inventory_pc34_open_chest_container_weight(&state, 0);
-    out->loadAfterReopen = m11_inventory_get_load(&state, 0);
+    out->loadAfterReopen = DM1_V1_Inventory_GetLoadPc34Compat(&state, 0);
 
     return 1;
 }

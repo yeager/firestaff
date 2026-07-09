@@ -109,7 +109,7 @@ static int partial_mask_can_enter_chest_slot(
     const Dm1V1ChestPartialMaskSwapWithMirrorCandidateStatePc34 *state)
 {
     const int slotMask =
-        m11_inventory_pc34_slot_mask(DM1_V1_CPSWMC_TARGET_PC34_SLOT_PC34);
+        DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_V1_CPSWMC_TARGET_PC34_SLOT_PC34);
 
     return state &&
            (state->leaderHandAllowedMask & slotMask) == slotMask;
@@ -240,10 +240,10 @@ static void capture_before(
     result->requestedChestSlotIndex = DM1_V1_CPSWMC_TARGET_SLOT_INDEX_PC34;
     result->maskOverlap =
         DM1_V1_CPSWMC_PARTIAL_ALLOWED_MASK_PC34 &
-        m11_inventory_pc34_slot_mask(DM1_V1_CPSWMC_TARGET_PC34_SLOT_PC34);
+        DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_V1_CPSWMC_TARGET_PC34_SLOT_PC34);
     result->maskExactMatch =
         DM1_V1_CPSWMC_PARTIAL_ALLOWED_MASK_PC34 ==
-        m11_inventory_pc34_slot_mask(DM1_V1_CPSWMC_TARGET_PC34_SLOT_PC34);
+        DM1_V1_Inventory_Pc34SlotMaskCompat(DM1_V1_CPSWMC_TARGET_PC34_SLOT_PC34);
     if (!state) {
         return;
     }

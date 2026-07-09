@@ -45,7 +45,7 @@ extern "C" {
  * leader-hand item's allowedSlots mask and returns either the chosen
  * PC34 inventory slot (>=0) or -1 if no placement fits.  The probe
  * verifies each rule against the source-locked slot masks and against
- * the existing m11_inventory_can_equip/click gate so the gate is
+ * the existing DM1_V1_Inventory_CanEquipPc34Compat/click gate so the gate is
  * composable with F0302:684-710.
  */
 
@@ -165,10 +165,10 @@ dm1_v1_inventory_slot_placement_evidence_pc34(void);
  * occupancy booleans map one-to-one to the source-locked C06/C07/C08/
  * C09/C11/C12/C13..C29 PC34 slots.
  *
- * The return value is the same as the existing m11_inventory_can_equip
+ * The return value is the same as the existing DM1_V1_Inventory_CanEquipPc34Compat
  * positive side: passing the returned slot through
- * m11_inventory_click_pc34_source_slot() should accept the click
- * (m11_inventory_can_equip returns 1).
+ * DM1_V1_Inventory_ClickPc34SourceSlotCompat() should accept the click
+ * (DM1_V1_Inventory_CanEquipPc34Compat returns 1).
  */
 int dm1_v1_inventory_slot_placement_pick_pc34(int allowedSlots,
                                               int occupiedPouch1,

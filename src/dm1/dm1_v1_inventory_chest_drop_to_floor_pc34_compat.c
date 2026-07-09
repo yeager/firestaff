@@ -2,9 +2,9 @@
 
 #include <string.h>
 
-static M11_Item make_item_pc34(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item_pc34(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -17,7 +17,7 @@ static M11_Item make_item_pc34(int itemType, int weight)
 static int count_chest_items_pc34(
     const DM1_V1_InventoryChestDropToFloorStatePc34* state)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     int count = 0;
     int i;
 
@@ -25,7 +25,7 @@ static int count_chest_items_pc34(
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT; ++i) {
-        if (m11_inventory_get_item_in_chest_slot(&state->inventory, 0, i,
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state->inventory, 0, i,
                                                  &item) &&
             item.itemType != 0) {
             ++count;
@@ -37,7 +37,7 @@ static int count_chest_items_pc34(
 static int chest_load_pc34(
     const DM1_V1_InventoryChestDropToFloorStatePc34* state)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
     int load = 0;
     int i;
 
@@ -45,7 +45,7 @@ static int chest_load_pc34(
         return 0;
     }
     for (i = 0; i < DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT; ++i) {
-        if (m11_inventory_get_item_in_chest_slot(&state->inventory, 0, i,
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state->inventory, 0, i,
                                                  &item)) {
             load += item.weight;
         }
@@ -57,7 +57,7 @@ static int close_types_after_drop_pc34(
     DM1_V1_InventoryChestDropToFloorStatePc34* state,
     DM1_V1_InventoryChestDropToFloorEventPc34* event)
 {
-    M11_Item closed[DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT];
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT];
     int count;
     int i;
 
@@ -68,7 +68,7 @@ static int close_types_after_drop_pc34(
 
     /* ReDMCSB: CHEST.C F0334 lines 112-132 compacts the visible
      * G0425_aT_ChestSlots into the container links while skipping NONE. */
-    count = m11_inventory_close_chest(
+    count = DM1_V1_Inventory_CloseChestPc34Compat(
         &state->inventory, 0, closed, DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT);
     if (count < 0) {
         return 0;
@@ -85,11 +85,11 @@ static int append_mouse_to_floor_pc34(
     DM1_V1_InventoryChestDropToFloorStatePc34* state,
     DM1_V1_InventoryChestDropToFloorEventPc34* event)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     if (!state || !event ||
         state->floorCount >= DM1_PC34_CHEST_DROP_FLOOR_CELL_CAPACITY ||
-        !m11_inventory_get_mouse_item(&state->inventory, 0, &item) ||
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state->inventory, 0, &item) ||
         item.itemType == 0) {
         return 0;
     }
@@ -111,9 +111,9 @@ static int append_mouse_to_floor_pc34(
         event->floorCellType == event->slotTypeBefore &&
         event->floorCellWeight == event->slotWeightBefore;
 
-    m11_inventory_set_mouse_item(&state->inventory, 0, 0, 0, 0,
+    DM1_V1_Inventory_SetMouseItemPc34Compat(&state->inventory, 0, 0, 0, 0,
                                  DM1_PC34_ALLOWED_ANY_SLOT);
-    m11_inventory_recalc_load(&state->inventory, 0);
+    DM1_V1_Inventory_RecalcLoadPc34Compat(&state->inventory, 0);
     return 1;
 }
 
@@ -140,12 +140,12 @@ void dm1_v1_inventory_chest_drop_to_floor_init_pc34(
     memset(state, 0, sizeof(*state));
     state->mapX = DM1_PC34_CHEST_DROP_FLOOR_MAP_X;
     state->mapY = DM1_PC34_CHEST_DROP_FLOOR_MAP_Y;
-    m11_inventory_init(&state->inventory, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state->inventory, 1);
 }
 
 int dm1_v1_inventory_chest_drop_to_floor_open_pc34(
     DM1_V1_InventoryChestDropToFloorStatePc34* state,
-    const M11_Item* linkedItems,
+    const DM1_V1_ItemPc34* linkedItems,
     int linkedItemCount)
 {
     if (!state || linkedItemCount < 0 ||
@@ -155,7 +155,7 @@ int dm1_v1_inventory_chest_drop_to_floor_open_pc34(
 
     /* ReDMCSB: CHEST.C F0333 lines 53-76 copies the first eight linked
      * objects into G0425_aT_ChestSlots and fills the rest with NONE. */
-    return m11_inventory_open_chest(&state->inventory, 0,
+    return DM1_V1_Inventory_OpenChestPc34Compat(&state->inventory, 0,
                                     DM1_PC34_CHEST_DROP_FLOOR_CHEST_THING,
                                     linkedItems, linkedItemCount);
 }
@@ -165,12 +165,12 @@ int dm1_v1_inventory_chest_drop_to_floor_run_case_pc34(
     int chestSlotIndex,
     DM1_V1_InventoryChestDropToFloorEventPc34* outEvent)
 {
-    M11_Item before;
-    M11_Item leftBefore;
-    M11_Item leftAfter;
-    M11_Item rightBefore;
-    M11_Item rightAfter;
-    M11_Item mouse;
+    DM1_V1_ItemPc34 before;
+    DM1_V1_ItemPc34 leftBefore;
+    DM1_V1_ItemPc34 leftAfter;
+    DM1_V1_ItemPc34 rightBefore;
+    DM1_V1_ItemPc34 rightAfter;
+    DM1_V1_ItemPc34 mouse;
     int pc34Slot;
 
     if (outEvent) {
@@ -178,7 +178,7 @@ int dm1_v1_inventory_chest_drop_to_floor_run_case_pc34(
     }
     if (!state || !outEvent || chestSlotIndex < 0 ||
         chestSlotIndex >= DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT ||
-        !m11_inventory_get_item_in_chest_slot(&state->inventory, 0,
+        !DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state->inventory, 0,
                                               chestSlotIndex, &before) ||
         before.itemType == 0) {
         return 0;
@@ -189,21 +189,21 @@ int dm1_v1_inventory_chest_drop_to_floor_run_case_pc34(
     outEvent->pc34Slot = pc34Slot;
     outEvent->chestSlotIndex = chestSlotIndex;
     outEvent->sourceIsChestSlot =
-        m11_inventory_pc34_is_chest_source_slot(pc34Slot);
+        DM1_V1_Inventory_Pc34IsChestSourceSlotCompat(pc34Slot);
     outEvent->slotTypeBefore = before.itemType;
     outEvent->slotWeightBefore = before.weight;
-    outEvent->loadBefore = m11_inventory_get_load(&state->inventory, 0);
+    outEvent->loadBefore = DM1_V1_Inventory_GetLoadPc34Compat(&state->inventory, 0);
     outEvent->chestLoadBefore = chest_load_pc34(state);
     outEvent->nonEmptyBefore = count_chest_items_pc34(state);
     outEvent->floorCountBefore = state->floorCount;
 
     if (chestSlotIndex > 0) {
-        m11_inventory_get_item_in_chest_slot(&state->inventory, 0,
+        DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state->inventory, 0,
                                              chestSlotIndex - 1, &leftBefore);
         outEvent->adjacentLeftTypeBefore = leftBefore.itemType;
     }
     if (chestSlotIndex + 1 < DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT) {
-        m11_inventory_get_item_in_chest_slot(&state->inventory, 0,
+        DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state->inventory, 0,
                                              chestSlotIndex + 1, &rightBefore);
         outEvent->adjacentRightTypeBefore = rightBefore.itemType;
     }
@@ -212,25 +212,25 @@ int dm1_v1_inventory_chest_drop_to_floor_run_case_pc34(
      * G0425_aT_ChestSlots, removes it with F0300, and puts it in the leader
      * hand through F0297.  This single-item floor drop intentionally avoids
      * the BUG0_39 Rabbit's Foot redraw/re-shuffle path at lines 337-340. */
-    if (!m11_inventory_click_pc34_source_slot(&state->inventory, 0,
+    if (!DM1_V1_Inventory_ClickPc34SourceSlotCompat(&state->inventory, 0,
                                               pc34Slot) ||
-        !m11_inventory_get_mouse_item(&state->inventory, 0, &mouse)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state->inventory, 0, &mouse)) {
         return 0;
     }
 
-    outEvent->loadAfterPickup = m11_inventory_get_load(&state->inventory, 0);
+    outEvent->loadAfterPickup = DM1_V1_Inventory_GetLoadPc34Compat(&state->inventory, 0);
     outEvent->mouseTypeAfterPickup = mouse.itemType;
     outEvent->chestSlotCleared =
-        m11_inventory_get_item_in_chest_slot(&state->inventory, 0,
+        DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state->inventory, 0,
                                              chestSlotIndex, &before) &&
         before.itemType == 0;
 
     if (!append_mouse_to_floor_pc34(state, outEvent) ||
-        !m11_inventory_get_mouse_item(&state->inventory, 0, &mouse)) {
+        !DM1_V1_Inventory_GetMouseItemPc34Compat(&state->inventory, 0, &mouse)) {
         return 0;
     }
 
-    outEvent->loadAfterDrop = m11_inventory_get_load(&state->inventory, 0);
+    outEvent->loadAfterDrop = DM1_V1_Inventory_GetLoadPc34Compat(&state->inventory, 0);
     outEvent->chestLoadAfter = chest_load_pc34(state);
     outEvent->expectedLoadAfterDrop =
         outEvent->loadBefore - outEvent->slotWeightBefore;
@@ -238,12 +238,12 @@ int dm1_v1_inventory_chest_drop_to_floor_run_case_pc34(
     outEvent->nonEmptyAfter = count_chest_items_pc34(state);
 
     if (chestSlotIndex > 0) {
-        m11_inventory_get_item_in_chest_slot(&state->inventory, 0,
+        DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state->inventory, 0,
                                              chestSlotIndex - 1, &leftAfter);
         outEvent->adjacentLeftTypeAfter = leftAfter.itemType;
     }
     if (chestSlotIndex + 1 < DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT) {
-        m11_inventory_get_item_in_chest_slot(&state->inventory, 0,
+        DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state->inventory, 0,
                                              chestSlotIndex + 1, &rightAfter);
         outEvent->adjacentRightTypeAfter = rightAfter.itemType;
     }
@@ -273,7 +273,7 @@ static int setup_and_drop_pc34(
     int firstWeight)
 {
     DM1_V1_InventoryChestDropToFloorStatePc34 state;
-    M11_Item linked[DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT];
+    DM1_V1_ItemPc34 linked[DM1_PC34_CHEST_DROP_FLOOR_SLOT_COUNT];
     int i;
 
     dm1_v1_inventory_chest_drop_to_floor_init_pc34(&state);

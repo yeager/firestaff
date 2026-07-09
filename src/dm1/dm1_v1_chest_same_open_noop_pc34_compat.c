@@ -4,9 +4,9 @@
 
 #include <string.h>
 
-static M11_Item make_item(int itemType, int weight)
+static DM1_V1_ItemPc34 make_item(int itemType, int weight)
 {
-    M11_Item item;
+    DM1_V1_ItemPc34 item;
 
     memset(&item, 0, sizeof(item));
     item.itemType = itemType;
@@ -16,32 +16,32 @@ static M11_Item make_item(int itemType, int weight)
 }
 
 static void copy_chest_slot_types(
-    const M11_InventoryState* state,
+    const DM1_V1_InventoryStatePc34* state,
     int champ,
     int* outTypes)
 {
     int i;
 
     for (i = 0; i < DM1_PC34_CHEST_SAME_OPEN_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
         outTypes[i] = 0;
-        if (m11_inventory_get_item_in_chest_slot(state, champ, i, &item)) {
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item)) {
             outTypes[i] = item.itemType;
         }
     }
 }
 
-static int count_b_items_in_open_slots(const M11_InventoryState* state,
+static int count_b_items_in_open_slots(const DM1_V1_InventoryStatePc34* state,
                                        int champ)
 {
     int count = 0;
     int i;
 
     for (i = 0; i < DM1_PC34_CHEST_SAME_OPEN_SLOT_COUNT; ++i) {
-        M11_Item item;
+        DM1_V1_ItemPc34 item;
 
-        if (m11_inventory_get_item_in_chest_slot(state, champ, i, &item) &&
+        if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(state, champ, i, &item) &&
             item.itemType >= DM1_PC34_CHEST_SAME_OPEN_ITEM_B1 &&
             item.itemType < DM1_PC34_CHEST_SAME_OPEN_ITEM_B1 + 8) {
             ++count;
@@ -66,12 +66,12 @@ int dm1_v1_chest_same_open_noop_run_pc34(
     enum {
         CHAMPION = 0
     };
-    M11_InventoryState state;
-    M11_Item initial[4];
-    M11_Item alternate[8];
-    M11_Item hand;
-    M11_Item c538;
-    M11_Item closed[DM1_PC34_CHEST_SAME_OPEN_SLOT_COUNT];
+    DM1_V1_InventoryStatePc34 state;
+    DM1_V1_ItemPc34 initial[4];
+    DM1_V1_ItemPc34 alternate[8];
+    DM1_V1_ItemPc34 hand;
+    DM1_V1_ItemPc34 c538;
+    DM1_V1_ItemPc34 closed[DM1_PC34_CHEST_SAME_OPEN_SLOT_COUNT];
     int i;
 
     if (!out) {
@@ -80,7 +80,7 @@ int dm1_v1_chest_same_open_noop_run_pc34(
 
     memset(out, 0, sizeof(*out));
     memset(closed, 0, sizeof(closed));
-    m11_inventory_init(&state, 1);
+    DM1_V1_Inventory_InitPc34Compat(&state, 1);
 
     for (i = 0; i < 4; ++i) {
         initial[i] = make_item(DM1_PC34_CHEST_SAME_OPEN_ITEM_A1 + i,
@@ -92,13 +92,13 @@ int dm1_v1_chest_same_open_noop_run_pc34(
     }
 
     out->setupResult = 1;
-    out->firstOpenResult = m11_inventory_open_chest(
+    out->firstOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, CHAMPION, DM1_PC34_CHEST_SAME_OPEN_THING, initial, 4);
     if (!out->firstOpenResult) {
         return 0;
     }
     out->openThingAfterFirstOpen =
-        m11_inventory_get_open_chest_thing(&state, CHAMPION);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, CHAMPION);
     copy_chest_slot_types(&state, CHAMPION, out->firstOpenSlotTypes);
     out->firstOpenVisibleWeight =
         m11_inventory_pc34_open_chest_visible_contents_weight(&state,
@@ -106,29 +106,29 @@ int dm1_v1_chest_same_open_noop_run_pc34(
 
     /* ReDMCSB CHAMPION.C F0302 lines 688-710 reads the current G0425 C538
      * entry and swaps it into the leader hand, leaving a sparse open panel. */
-    out->pickupC538Result = m11_inventory_click_pc34_source_slot(
+    out->pickupC538Result = DM1_V1_Inventory_ClickPc34SourceSlotCompat(
         &state, CHAMPION, DM1_PC34_SLOT_CHEST_2);
     if (!out->pickupC538Result) {
         return 0;
     }
-    if (m11_inventory_get_mouse_item(&state, CHAMPION, &hand)) {
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(&state, CHAMPION, &hand)) {
         out->leaderHandAfterPickup = hand.itemType;
     }
-    if (m11_inventory_get_item_in_chest_slot(&state, CHAMPION, 1, &c538)) {
+    if (DM1_V1_Inventory_GetItemInChestSlotPc34Compat(&state, CHAMPION, 1, &c538)) {
         out->c538AfterPickup = c538.itemType;
     }
     out->visibleWeightAfterPickup =
         m11_inventory_pc34_open_chest_visible_contents_weight(&state,
                                                               CHAMPION);
-    out->loadAfterPickup = m11_inventory_get_load(&state, CHAMPION);
+    out->loadAfterPickup = DM1_V1_Inventory_GetLoadPc34Compat(&state, CHAMPION);
 
     /* ReDMCSB CHEST.C F0333 lines 30-32 must return before re-reading the
      * alternate chain; otherwise the sparse G0425 view is compacted/replaced. */
-    out->sameOpenResult = m11_inventory_open_chest(
+    out->sameOpenResult = DM1_V1_Inventory_OpenChestPc34Compat(
         &state, CHAMPION, DM1_PC34_CHEST_SAME_OPEN_THING, alternate, 8);
     out->openThingAfterSameOpen =
-        m11_inventory_get_open_chest_thing(&state, CHAMPION);
-    if (m11_inventory_get_mouse_item(&state, CHAMPION, &hand)) {
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, CHAMPION);
+    if (DM1_V1_Inventory_GetMouseItemPc34Compat(&state, CHAMPION, &hand)) {
         out->leaderHandAfterSameOpen = hand.itemType;
     }
     out->c537AfterSameOpen = state.champions[CHAMPION].chestSlots[0].itemType;
@@ -136,16 +136,16 @@ int dm1_v1_chest_same_open_noop_run_pc34(
     out->c539AfterSameOpen = state.champions[CHAMPION].chestSlots[2].itemType;
     out->c540AfterSameOpen = state.champions[CHAMPION].chestSlots[3].itemType;
 
-    m11_inventory_set_panel_content_pc34(&state, DM1_PC34_PANEL_SCROLL);
+    DM1_V1_Inventory_SetPanelContentPc34Compat(&state, DM1_PC34_PANEL_SCROLL);
     out->panelContentBeforeReplacingSameOpen =
-        m11_inventory_get_panel_content_pc34(&state);
-    out->replacingSameOpenResult = m11_inventory_open_chest_replacing_current(
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
+    out->replacingSameOpenResult = DM1_V1_Inventory_OpenChestReplacingCurrentPc34Compat(
         &state, CHAMPION, DM1_PC34_CHEST_SAME_OPEN_THING, alternate, 8,
         closed, DM1_PC34_CHEST_SAME_OPEN_SLOT_COUNT);
     out->panelContentAfterReplacingSameOpen =
-        m11_inventory_get_panel_content_pc34(&state);
+        DM1_V1_Inventory_GetPanelContentPc34Compat(&state);
     out->openThingAfterReplacingSameOpen =
-        m11_inventory_get_open_chest_thing(&state, CHAMPION);
+        DM1_V1_Inventory_GetOpenChestThingPc34Compat(&state, CHAMPION);
     out->c538AfterReplacingSameOpen =
         state.champions[CHAMPION].chestSlots[1].itemType;
 
@@ -154,9 +154,9 @@ int dm1_v1_chest_same_open_noop_run_pc34(
     out->visibleWeightAfterSameOpen =
         m11_inventory_pc34_open_chest_visible_contents_weight(&state,
                                                               CHAMPION);
-    out->loadAfterSameOpen = m11_inventory_get_load(&state, CHAMPION);
+    out->loadAfterSameOpen = DM1_V1_Inventory_GetLoadPc34Compat(&state, CHAMPION);
 
-    out->closeCountAfterSameOpen = m11_inventory_close_chest(
+    out->closeCountAfterSameOpen = DM1_V1_Inventory_CloseChestPc34Compat(
         &state, CHAMPION, closed, DM1_PC34_CHEST_SAME_OPEN_SLOT_COUNT);
     for (i = 0; i < DM1_PC34_CHEST_SAME_OPEN_SLOT_COUNT; ++i) {
         out->closedItemTypes[i] = closed[i].itemType;
