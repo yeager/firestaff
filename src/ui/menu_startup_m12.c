@@ -6868,6 +6868,28 @@ int M12_StartupMenu_GetLaunchGate(
     return 1;
 }
 
+const char* M12_StartupMenu_GetEntryLaunchStatusLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex) {
+    M12_StartupLaunchGate gate;
+    if (!M12_StartupMenu_GetLaunchGate(state, entryIndex, &gate) ||
+        !gate.blockedLabel) {
+        return "OFFLINE";
+    }
+    return gate.blockedLabel;
+}
+
+const char* M12_StartupMenu_GetEntryLaunchDetailLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex) {
+    M12_StartupLaunchGate gate;
+    if (!M12_StartupMenu_GetLaunchGate(state, entryIndex, &gate) ||
+        !gate.blockedDetail) {
+        return "OFFLINE";
+    }
+    return gate.blockedDetail;
+}
+
 static const char *g_game_mode_labels[M12_GAME_MODE_COUNT] = {
     _("New Game (Original)"),
     _("New Game (Original + Filters)"),
@@ -8269,7 +8291,7 @@ static void m12_draw_game_card(const M12_StartupMenuState* state,
                                 y + artH + 36,
                                 132,
                                 (entry && entry->kind == M12_MENU_ENTRY_GAME)
-                                    ? M12_StartupMenu_GetEntryBootStatusLabel(
+                                    ? M12_StartupMenu_GetEntryLaunchStatusLabel(
                                           state, entryIndex)
                                     : m12_entry_status_text(entry),
                                 m12_entry_status_fill(entry, selected),
@@ -8289,7 +8311,7 @@ static void m12_draw_game_card(const M12_StartupMenuState* state,
                   x + 8,
                   y + h - 14,
                   (entry && entry->kind == M12_MENU_ENTRY_GAME)
-                      ? M12_StartupMenu_GetEntryBootDetailLabel(state, entryIndex)
+                      ? M12_StartupMenu_GetEntryLaunchDetailLabel(state, entryIndex)
                       : m12_entry_detail_line(entry),
                   &g_textSmallMuted);
 }

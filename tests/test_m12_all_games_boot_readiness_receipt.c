@@ -94,6 +94,12 @@ int main(void) {
         if (!expect(gate.blockedLabel &&
                     strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0,
                     "ready game launch gate should report ready label")) return 1;
+        if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&state, i),
+                           "READY TO LAUNCH") == 0,
+                    "ready game launch status label should come from launch gate")) return 1;
+        if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
+                           expected[i].pathLabel) == 0,
+                    "ready game launch detail label should name boot path")) return 1;
     }
 
     puts("ok: all game launcher boot-readiness receipts expose full-start progress and labels");

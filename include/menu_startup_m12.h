@@ -559,6 +559,12 @@ int M12_StartupMenu_GetBootReadiness(const M12_StartupMenuState* state,
 int M12_StartupMenu_GetLaunchGate(const M12_StartupMenuState* state,
                                   int entryIndex,
                                   M12_StartupLaunchGate* outGate);
+const char* M12_StartupMenu_GetEntryLaunchStatusLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex);
+const char* M12_StartupMenu_GetEntryLaunchDetailLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex);
 const char* M12_StartupMenu_GetEntryBootStatusLabel(
     const M12_StartupMenuState* state,
     int entryIndex);
