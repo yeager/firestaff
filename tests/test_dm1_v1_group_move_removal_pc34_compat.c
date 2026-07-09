@@ -117,11 +117,56 @@ static void test_deferred_route_plan(void) {
     expect_int("route_chaos_y", plan.mapY, 10);
 }
 
+static void test_pit_and_chaos_subplans(void) {
+    M11_GroupPitFallSquarePlan pit;
+    M11_LordChaosAdjacentRetryPlan chaos;
+
+    expect_int("pit_open_ok",
+        m11_plan_group_pit_fall_square_f0267(
+            2, 2, 1, 0, &pit), 1);
+    expect_int("pit_open_falls", pit.shouldFall, 1);
+
+    expect_int("pit_closed_ok",
+        m11_plan_group_pit_fall_square_f0267(
+            2, 2, 0, 0, &pit), 1);
+    expect_int("pit_closed_no_fall", pit.shouldFall, 0);
+
+    expect_int("pit_imaginary_ok",
+        m11_plan_group_pit_fall_square_f0267(
+            2, 2, 1, 1, &pit), 1);
+    expect_int("pit_imaginary_no_fall", pit.shouldFall, 0);
+
+    expect_int("chaos_gate_miss_ok",
+        m11_plan_lord_chaos_adjacent_retry_f0252(
+            23, 1, 0, 10, 20, -1, -1, &chaos), 1);
+    expect_int("chaos_gate_miss_no_attempt", chaos.shouldAttempt, 0);
+
+    expect_int("chaos_candidate_ok",
+        m11_plan_lord_chaos_adjacent_retry_f0252(
+            23, 0, 1, 10, 20, -1, -1, &chaos), 1);
+    expect_int("chaos_candidate_attempt", chaos.shouldAttempt, 1);
+    expect_int("chaos_candidate_x", chaos.candidateMapX, 11);
+    expect_int("chaos_candidate_y", chaos.candidateMapY, 20);
+    expect_int("chaos_candidate_no_insert_without_accept",
+        chaos.shouldInsertAdjacent, 0);
+
+    expect_int("chaos_accept_ok",
+        m11_plan_lord_chaos_adjacent_retry_f0252(
+            23, 0, 1, 10, 20, 1, 0, &chaos), 1);
+    expect_int("chaos_accept_insert", chaos.shouldInsertAdjacent, 1);
+
+    expect_int("chaos_blocked_ok",
+        m11_plan_lord_chaos_adjacent_retry_f0252(
+            23, 0, 1, 10, 20, 1, 1, &chaos), 1);
+    expect_int("chaos_blocked_no_insert", chaos.shouldInsertAdjacent, 0);
+}
+
 int main(void) {
     test_allowed_group_keeps_move();
     test_fall_killed_group_drops_and_deletes_source();
     test_not_allowed_group_drops_without_placement_delete();
     test_deferred_route_plan();
+    test_pit_and_chaos_subplans();
     test_source_evidence();
 
     if (g_failed) return 1;
