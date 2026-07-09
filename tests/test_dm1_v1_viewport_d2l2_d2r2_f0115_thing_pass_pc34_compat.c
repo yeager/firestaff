@@ -233,6 +233,60 @@ static void test_disabled_thing_zone_bindings(void)
                -1, "invalid input guard");
 }
 
+static void test_runtime_suppress_receipts(void)
+{
+    const DM1_V1_D2L2D2R2F0115ThingPassPc34 *d2l2 =
+        dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_for_square_pc34(1);
+    const DM1_V1_D2L2D2R2F0115ThingPassPc34 *d2r2 =
+        dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_for_square_pc34(2);
+    DM1_V1_D2L2D2R2F0115RuntimeSuppressReceiptPc34 receipt;
+
+    expect_int("d2l2.runtime.receipt",
+               dm1_v1_viewport_d2l2_d2r2_f0115_runtime_suppress_receipt_pc34(
+                   d2l2, 5, 0x3421, &receipt),
+               1, "ReDMCSB DUNVIEW.C:6837-6865");
+    expect_int("d2l2.runtime.valid", receipt.input_valid, 1,
+               "fixture consumed by runtime suppress receipt");
+    expect_int("d2l2.runtime.view_square", receipt.view_square_index, 9,
+               "ReDMCSB DEFS.H:2605 C09_VIEW_SQUARE_D2L2");
+    expect_int("d2l2.runtime.reject.d2c", receipt.rejected_borrowed_d2c_order, 1,
+               "ReDMCSB DUNVIEW.C:7368 D2C 0x3421 is not D2L2");
+    expect_int("d2l2.runtime.no.f0115", receipt.f0115_call_suppressed, 1,
+               "ReDMCSB DUNVIEW.C:6837-6865 no F0115 call");
+    expect_int("d2l2.runtime.suppress.item", receipt.suppress_item, 1,
+               "ReDMCSB DUNVIEW.C:4923 unreachable item gate");
+    expect_int("d2l2.runtime.suppress.projectile", receipt.suppress_projectile, 1,
+               "ReDMCSB DUNVIEW.C:5668 negative/unreached projectile row");
+    expect_int("d2l2.runtime.suppress.payload", receipt.suppress_non_thing_payload, 1,
+               "D2L2 side lane cannot inherit HoC mirror/static payloads");
+    expect_int("d2l2.runtime.no.materialize", receipt.must_not_materialize_thing, 1,
+               "ReDMCSB DUNGEON.C:1769-1905 mutation outside draw");
+
+    expect_int("d2r2.runtime.receipt",
+               dm1_v1_viewport_d2l2_d2r2_f0115_runtime_suppress_receipt_pc34(
+                   d2r2, 14, 0, &receipt),
+               1, "ReDMCSB DUNVIEW.C:6868-6896");
+    expect_int("d2r2.runtime.reject.d2c", receipt.rejected_borrowed_d2c_order, 0,
+               "zero attempted order is still suppress-only, not D2C borrow");
+    expect_int("d2r2.runtime.suppress.creature", receipt.suppress_creature, 1,
+               "ReDMCSB DUNVIEW.C:5211-5214 negative/unreached creature row");
+    expect_int("d2r2.runtime.suppress.explosion", receipt.suppress_explosion, 1,
+               "ReDMCSB DUNVIEW.C:5920 negative/unreached explosion row");
+    expect_int("d2r2.runtime.consumes.layer", receipt.consumes_runtime_thing_layer, 1,
+               "DM1-owned receipt consumes side-lane thing layer");
+
+    expect_int("runtime.null.fixture",
+               dm1_v1_viewport_d2l2_d2r2_f0115_runtime_suppress_receipt_pc34(
+                   NULL, 5, 0x3421, &receipt),
+               1, "invalid fixture still yields host-safe suppression");
+    expect_int("runtime.null.fixture.input", receipt.input_valid, 0,
+               "invalid fixture marked invalid");
+    expect_int("runtime.null.out",
+               dm1_v1_viewport_d2l2_d2r2_f0115_runtime_suppress_receipt_pc34(
+                   d2l2, 5, 0x3421, NULL),
+               0, "runtime suppress receipt rejects NULL output");
+}
+
 static void test_field_and_d2c_non_interference(void)
 {
     const DM1_V1_D2L2D2R2F0115ThingPassPc34 *d2l2 =
@@ -355,6 +409,7 @@ int main(void)
     test_route_metadata_and_not_routes();
     test_view_square_lane_and_f0128_order();
     test_disabled_thing_zone_bindings();
+    test_runtime_suppress_receipts();
     test_field_and_d2c_non_interference();
     test_source_evidence_mentions_required_anchors();
 

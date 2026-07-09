@@ -203,6 +203,43 @@ int dm1_v1_viewport_d2l2_d2r2_f0115_explosion_zone_pc34(
     return -1;
 }
 
+int dm1_v1_viewport_d2l2_d2r2_f0115_runtime_suppress_receipt_pc34(
+    const DM1_V1_D2L2D2R2F0115ThingPassPc34 *fixture,
+    int thing_type,
+    int attempted_cell_order,
+    DM1_V1_D2L2D2R2F0115RuntimeSuppressReceiptPc34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->input_valid = fixture ? 1 : 0;
+    out_receipt->side = fixture ? fixture->side : 0;
+    out_receipt->view_square_index = fixture ? fixture->view_square_index : -1;
+    out_receipt->thing_type = thing_type;
+    out_receipt->attempted_cell_order = attempted_cell_order;
+    out_receipt->rejected_borrowed_d2c_order =
+        fixture && attempted_cell_order == fixture->d2c_normal_cell_order;
+    out_receipt->f0115_call_suppressed = fixture ? fixture->no_f0115_contract : 1;
+    out_receipt->suppress_item = 1;
+    out_receipt->suppress_projectile = 1;
+    out_receipt->suppress_creature = 1;
+    out_receipt->suppress_explosion = 1;
+    out_receipt->suppress_non_thing_payload = 1;
+    out_receipt->consumes_runtime_thing_layer = 1;
+    out_receipt->must_not_materialize_thing = 1;
+    out_receipt->source_anchor =
+        "ReDMCSB DUNVIEW.C:6837-6896 D2L2/D2R2 no F0115; "
+        "7244-7388 D2C owns F0115; 4923/5668 suppress negative rows";
+
+    /* ReDMCSB: F0678/F0679 lines 6837-6896 classify D2L2/D2R2 with
+     * F0172, then draw only wall/teleporter visuals and never call F0115.
+     * F0121 lines 7244-7388 owns the D2C F0115 orders; keeping this
+     * suppression in a DM1 receipt prevents HoC hosts from borrowing D2C
+     * thing/projectile payloads for the side lanes. */
+    return 1;
+}
+
 const char *dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_source_evidence_pc34(void)
 {
     return s_source_evidence;
