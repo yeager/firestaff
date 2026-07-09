@@ -450,6 +450,12 @@ typedef struct {
     int title_gdat_asset_h;
     int title_gdat_asset_stride;
     int fallback_title_blit_used;
+    int final_m11_draw_caller_ready;
+    int final_m11_draw_caller_consumes_ownership;
+    int packaged_draw_commands_consumed;
+    int title_timing_receipt_consumed;
+    int real_gdat_title_asset_receipt_breadth;
+    int menu_hud_startup_receipt_breadth;
     int suppress_game_hud;
     int present_first_hud_frame;
     int schedule_next_title_tick;

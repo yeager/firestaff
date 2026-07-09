@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM2 M11 startup ownership draw caller: M11 DM2 startup drawing now consumes the boot render-ownership receipt before executing GDAT title/menu commands, with receipt fields for final caller consumption, exact title timing, real GDAT title breadth, menu/HUD breadth, and no fallback title blits. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 front-mirror host draw receipt: DM1 champion-mirror receipts now own C346 asset/fallback/invariant backing and C040 panel suppression, and M11 D1C drawing consumes that receipt instead of branching on host fallback rules. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, `test_m11_overlay_command_queue_block`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus real-asset ownership receipt: launcher now exposes a Nexus-owned receipt that joins title/menu capture, BPK/PRS3 startup blockers, DGN first-render handoff, and no-fallback visual enforcement. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.

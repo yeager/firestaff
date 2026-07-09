@@ -2555,14 +2555,51 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
     }
 
     out_receipt->fallback_title_blit_used = 0;
+    out_receipt->packaged_draw_commands_consumed =
+        out_receipt->draw_command_count > 0 &&
+        out_receipt->executed_command_count ==
+            out_receipt->draw_command_count;
+    out_receipt->title_timing_receipt_consumed =
+        out_receipt->schedule_next_title_tick &&
+        out_receipt->title_frame_duration_ticks > 0 &&
+        out_receipt->title_frame_remaining_ticks > 0 &&
+        out_receipt->title_next_frame_tick >
+            out_receipt->title_animation_tick;
+    out_receipt->real_gdat_title_asset_receipt_breadth =
+        out_receipt->title_gdat_command_count == 1 &&
+        ((out_receipt->title_gdat_asset_required &&
+          out_receipt->title_gdat_asset_consumed &&
+          out_receipt->title_gdat_asset_w > 0 &&
+          out_receipt->title_gdat_asset_h > 0 &&
+          out_receipt->title_gdat_asset_stride >=
+              out_receipt->title_gdat_asset_w) ||
+         (!out_receipt->title_gdat_asset_required &&
+          package.title_gdat_asset_ready ==
+              out_receipt->title_gdat_asset_ready));
+    out_receipt->menu_hud_startup_receipt_breadth =
+        package.menu_capture_ready &&
+        package.hud_handoff_capture_ready &&
+        out_receipt->executed_rect_count >= 2 &&
+        out_receipt->executed_text_count >= package.menu_row_count &&
+        out_receipt->suppress_game_hud;
+    out_receipt->final_m11_draw_caller_ready =
+        out_receipt->consume_host_frame_receipt &&
+        out_receipt->execute_startup_draw_commands &&
+        out_receipt->packaged_draw_commands_consumed &&
+        out_receipt->title_timing_receipt_consumed &&
+        out_receipt->real_gdat_title_asset_receipt_breadth &&
+        out_receipt->menu_hud_startup_receipt_breadth &&
+        !out_receipt->fallback_title_blit_used;
+    out_receipt->final_m11_draw_caller_consumes_ownership =
+        out_receipt->final_m11_draw_caller_ready;
+
     out_receipt->valid =
         out_receipt->packaged_full_start_valid &&
         out_receipt->host_frame_valid &&
         out_receipt->consume_host_frame_receipt &&
         out_receipt->execute_startup_draw_commands &&
         out_receipt->draw_command_count > 0 &&
-        out_receipt->executed_command_count ==
-            out_receipt->draw_command_count &&
+        out_receipt->packaged_draw_commands_consumed &&
         out_receipt->title_gdat_command_count == 1 &&
         out_receipt->executed_text_count > 0 &&
         out_receipt->suppress_game_hud &&
@@ -2570,6 +2607,7 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         !out_receipt->fallback_title_blit_used &&
         (!out_receipt->title_gdat_asset_required ||
          out_receipt->title_gdat_asset_consumed) &&
+        out_receipt->final_m11_draw_caller_ready &&
         out_receipt->packaged_full_start_hash != 0u;
     return out_receipt->valid;
 }

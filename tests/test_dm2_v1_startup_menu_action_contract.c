@@ -598,6 +598,12 @@ int main(void)
               boot_render_ownership_receipt.title_gdat_asset_required == 0 &&
               boot_render_ownership_receipt.title_gdat_asset_consumed == 0 &&
               boot_render_ownership_receipt.fallback_title_blit_used == 0 &&
+              boot_render_ownership_receipt.final_m11_draw_caller_ready == 1 &&
+              boot_render_ownership_receipt.final_m11_draw_caller_consumes_ownership == 1 &&
+              boot_render_ownership_receipt.packaged_draw_commands_consumed == 1 &&
+              boot_render_ownership_receipt.title_timing_receipt_consumed == 1 &&
+              boot_render_ownership_receipt.real_gdat_title_asset_receipt_breadth == 1 &&
+              boot_render_ownership_receipt.menu_hud_startup_receipt_breadth == 1 &&
               boot_render_ownership_receipt.suppress_game_hud == 1 &&
               boot_render_ownership_receipt.present_first_hud_frame == 0 &&
               boot_render_ownership_receipt.schedule_next_title_tick == 1 &&
@@ -706,6 +712,12 @@ int main(void)
               boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
               boot_render_ownership_receipt.title_gdat_command_count == 1 &&
               boot_render_ownership_receipt.fallback_title_blit_used == 0 &&
+              boot_render_ownership_receipt.final_m11_draw_caller_ready == 1 &&
+              boot_render_ownership_receipt.final_m11_draw_caller_consumes_ownership == 1 &&
+              boot_render_ownership_receipt.packaged_draw_commands_consumed == 1 &&
+              boot_render_ownership_receipt.title_timing_receipt_consumed == 1 &&
+              boot_render_ownership_receipt.real_gdat_title_asset_receipt_breadth == 1 &&
+              boot_render_ownership_receipt.menu_hud_startup_receipt_breadth == 1 &&
               boot_render_ownership_receipt.suppress_game_hud == 1,
           "boot render-ownership receipt owns nonzero title timing and draw execution");
     check(dm2_v1_startup_menu_handle_input(
