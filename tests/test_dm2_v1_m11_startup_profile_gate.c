@@ -1153,6 +1153,8 @@ int main(void) {
                     strcmp(boot_receipt.startupAnimation,
                            "dm2-startup-menu") == 0 &&
                     boot_receipt.startupAnimationActive == 1 &&
+                    boot_receipt.startupTitleFrame == 0 &&
+                    boot_receipt.startupTitleFrameMax == 7 &&
                     boot_receipt.startupTitleReady == 0 &&
                     boot_receipt.startupInitializeV2Runtime == 1 &&
                     boot_receipt.startupInitializeHudRuntime == 1 &&
@@ -1381,6 +1383,8 @@ int main(void) {
                     strcmp(boot_receipt.startupPhase, "dm2-runtime") == 0 &&
                     strcmp(boot_receipt.startupAnimation, "dm2-runtime") == 0 &&
                     boot_receipt.startupAnimationActive == 0 &&
+                    boot_receipt.startupTitleFrame == 0 &&
+                    boot_receipt.startupTitleFrameMax == 0 &&
                     boot_receipt.startupTitleReady == 1 &&
                     boot_receipt.startupInitializeV2Runtime == 1 &&
                     boot_receipt.startupInitializeHudRuntime == 1 &&

@@ -1550,6 +1550,7 @@ int dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
     out_proof->title_frame_max = host_view->title_frame_max;
     out_proof->title_frame_duration_ticks =
         host_view->title_frame_duration_ticks;
+    out_proof->title_ready = host_view->title_ready;
     out_proof->title_cycle_ticks = host_view->title_cycle_ticks;
     out_proof->title_cycle_position_tick =
         host_view->title_cycle_position_tick;

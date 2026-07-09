@@ -277,6 +277,7 @@ typedef struct {
     int title_frame;
     int title_frame_max;
     int title_frame_duration_ticks;
+    int title_ready;
     int title_cycle_ticks;
     int title_cycle_position_tick;
     int title_frame_start_tick;
