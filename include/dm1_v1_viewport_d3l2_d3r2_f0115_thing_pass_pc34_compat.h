@@ -116,6 +116,29 @@ typedef struct {
     uint8_t destination_after;
 } DM1_V1_D3L2D3R2F0115PixelPc34;
 
+typedef struct {
+    int valid;
+    int input_valid;
+    int side;
+    int thing_type;
+    int thing_cell;
+    int view_cell;
+    int row;
+    int zone;
+    int draw_item;
+    int draw_projectile;
+    int suppress_item;
+    int suppress_projectile;
+    int suppress_non_thing_payload;
+    int consumes_runtime_thing_layer;
+    int consumes_runtime_projectile_list;
+    int draw_projectile_as_object;
+    int uses_object_creature_shift_mask;
+    int clipped_by_depth3_front_cell;
+    int must_not_materialize_thing;
+    const char *source_anchor;
+} DM1_V1_D3L2D3R2F0115RuntimeThingReceiptPc34;
+
 void dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_init_pc34(void);
 
 size_t dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_count_pc34(void);
@@ -170,6 +193,14 @@ bool dm1_v1_viewport_d3l2_d3r2_f0115_apply_pixel_pc34(
     uint8_t *viewport,
     size_t viewport_len,
     DM1_V1_D3L2D3R2F0115PixelPc34 *out);
+
+int dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
+    const DM1_V1_D3L2D3R2F0115ThingPassPc34 *fixture,
+    int thing_type,
+    int thing_cell,
+    int view_cell,
+    int square_has_projectile,
+    DM1_V1_D3L2D3R2F0115RuntimeThingReceiptPc34 *out_receipt);
 
 const char *dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_source_evidence_pc34(void);
 

@@ -23,6 +23,10 @@ enum {
     DM1_CORRIDOR_ELEMENT = 1,           /* ReDMCSB square element C01_ELEMENT_CORRIDOR */
     DM1_PIT_ELEMENT = 2,                /* ReDMCSB square element C02_ELEMENT_PIT */
     DM1_TELEPORTER_ELEMENT = 5,         /* ReDMCSB square element C05_ELEMENT_TELEPORTER */
+    DM1_THING_TYPE_WEAPON = 5,
+    DM1_THING_TYPE_JUNK = 10,
+    DM1_THING_TYPE_PROJECTILE = 14,
+    DM1_OBJECT_CREATURE_SHIFT_MASK = 0x8000,
     DM1_DOOR_SIDE_ELEMENT = 16,         /* ReDMCSB square element C16_ELEMENT_DOOR_SIDE */
     DM1_DOOR_FRONT_ELEMENT = 17,        /* ReDMCSB square element C17_ELEMENT_DOOR_FRONT */
     DM1_STAIRS_SIDE_ELEMENT = 18,       /* ReDMCSB square element C18_ELEMENT_STAIRS_SIDE */
@@ -516,6 +520,82 @@ bool dm1_v1_viewport_d3l2_d3r2_f0115_apply_pixel_pc34(
             DM1_V1_D3L2_D3R2_F0115_C10_COLOR_FLESH_PC34);
     out->destination_after = viewport[out->viewport_offset];
     return true;
+}
+
+int dm1_v1_viewport_d3l2_d3r2_f0115_runtime_thing_receipt_pc34(
+    const DM1_V1_D3L2D3R2F0115ThingPassPc34 *fixture,
+    int thing_type,
+    int thing_cell,
+    int view_cell,
+    int square_has_projectile,
+    DM1_V1_D3L2D3R2F0115RuntimeThingReceiptPc34 *out_receipt)
+{
+    int visible_cell;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->valid = 1;
+    out_receipt->input_valid = fixture ? 1 : 0;
+    out_receipt->side = fixture ? fixture->side : 0;
+    out_receipt->thing_type = thing_type;
+    out_receipt->thing_cell = thing_cell;
+    out_receipt->view_cell = view_cell;
+    out_receipt->row = -1;
+    out_receipt->zone = -1;
+    out_receipt->suppress_item = 1;
+    out_receipt->suppress_projectile = 1;
+    out_receipt->suppress_non_thing_payload = 1;
+    out_receipt->consumes_runtime_thing_layer = 1;
+    out_receipt->must_not_materialize_thing = 1;
+    out_receipt->source_anchor =
+        "ReDMCSB DUNVIEW.C:4923 depth-3 item gate; 5075 item zone; "
+        "5668-5683 projectile gate/zone";
+
+    visible_cell = dm1_v1_viewport_d3l2_d3r2_f0115_cell_visible_pc34(
+        fixture, view_cell);
+    out_receipt->clipped_by_depth3_front_cell =
+        fixture && view_cell >= 0 && view_cell <= 1 && !visible_cell;
+    if (!fixture || !visible_cell || thing_cell != view_cell) {
+        return 1;
+    }
+
+    out_receipt->row = fixture->item_projectile_row;
+    if (thing_type >= DM1_THING_TYPE_WEAPON &&
+        thing_type <= DM1_THING_TYPE_JUNK) {
+        /* ReDMCSB: DUNVIEW.C line 4923 clips depth-3 front cells before
+         * item drawing; line 5075 emits C2500|MASK0x8000 + row*4 + cell.
+         * Keep this in a DM1 receipt so HoC side-lane renderers do not
+         * reuse stale mirror/static payloads as floor things. */
+        out_receipt->draw_item = 1;
+        out_receipt->suppress_item = 0;
+        out_receipt->zone =
+            (2500 | DM1_OBJECT_CREATURE_SHIFT_MASK) +
+            (fixture->item_projectile_row * 4) + view_cell;
+        out_receipt->uses_object_creature_shift_mask = 1;
+        out_receipt->suppress_non_thing_payload = 0;
+        return 1;
+    }
+
+    if (thing_type == DM1_THING_TYPE_PROJECTILE) {
+        out_receipt->consumes_runtime_projectile_list = 1;
+        if (!square_has_projectile) {
+            return 1;
+        }
+        /* ReDMCSB: DUNVIEW.C lines 5668-5677 use the same row/depth clip
+         * for projectiles, then line 5683 emits C2900 + row*4 + cell while
+         * drawing through the object path. */
+        out_receipt->draw_projectile = 1;
+        out_receipt->draw_projectile_as_object = 1;
+        out_receipt->suppress_projectile = 0;
+        out_receipt->zone =
+            2900 + (fixture->item_projectile_row * 4) + view_cell;
+        out_receipt->suppress_non_thing_payload = 0;
+        return 1;
+    }
+
+    return 1;
 }
 
 const char *dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_source_evidence_pc34(void)
