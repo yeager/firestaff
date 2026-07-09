@@ -707,6 +707,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 hoc_capture_artifact;
     DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 hoc_capture_facts;
     DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 hoc_capture_proof;
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 hoc_runtime_apply;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1525,6 +1526,42 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_capture_proof.required_layers_present &&
                  hoc_capture_proof.input_block_matches,
              1);
+    memset(&hoc_runtime_apply, 0, sizeof(hoc_runtime_apply));
+    expect_i("DM1 HoC runtime apply receipt builds",
+             dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
+                 &hoc_capture_artifact,
+                 &hoc_capture_proof,
+                 &hoc_runtime_apply),
+             1);
+    expect_i("DM1 HoC runtime apply receipt is ready",
+             hoc_runtime_apply.handled &&
+                 hoc_runtime_apply.ready &&
+                 hoc_runtime_apply.consumed_capture_artifact &&
+                 hoc_runtime_apply.consumed_capture_proof &&
+                 hoc_runtime_apply.require_proof_passed &&
+                 hoc_runtime_apply.apply_before_hoc_input,
+             1);
+    expect_i("DM1 HoC runtime apply receipt carries commands",
+             hoc_runtime_apply.apply_opened_entrance_frame &&
+                 hoc_runtime_apply.apply_clear_champion_panel &&
+                 hoc_runtime_apply.apply_hall_mirror_overlay &&
+                 hoc_runtime_apply.suppress_title_surface &&
+                 hoc_runtime_apply.suppress_closed_door_frame &&
+                 hoc_runtime_apply.suppress_host_fallback_visuals &&
+                 hoc_runtime_apply.publish_packaged_full_graphics_proof &&
+                 hoc_runtime_apply.block_enter_until_champion_selected,
+             1);
+    expect_i("DM1 HoC runtime apply receipt carries geometry",
+             hoc_runtime_apply.map_index == DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_runtime_apply.map_width ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 &&
+                 hoc_runtime_apply.map_height ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 &&
+                 hoc_runtime_apply.entrance_door_frame_index == 9 &&
+                 hoc_runtime_apply.hall_overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 hoc_runtime_apply.render_command_count == 3,
+             1);
     expect_i("DM1 HoC capture proof rejects stale title surface",
              (hoc_capture_facts.saw_title_surface = 1,
               dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
@@ -1535,6 +1572,15 @@ static void check_dm1_launch_path_bypass_contract(void) {
                   hoc_capture_proof.ready &&
                   !hoc_capture_proof.proof_passed &&
                   !hoc_capture_proof.stale_title_absent),
+             1);
+    expect_i("DM1 HoC runtime apply rejects failed proof",
+             dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
+                 &hoc_capture_artifact,
+                 &hoc_capture_proof,
+                 &hoc_runtime_apply) &&
+                 hoc_runtime_apply.handled &&
+                 !hoc_runtime_apply.ready &&
+                 hoc_runtime_apply.require_proof_passed,
              1);
     hoc_capture_facts.saw_title_surface = 0;
     expect_i("DM1 HoC capture proof rejects NULL input",
