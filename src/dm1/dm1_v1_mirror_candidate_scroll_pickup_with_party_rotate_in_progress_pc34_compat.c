@@ -31,7 +31,7 @@ enum {
     kScrollChestSlotIndex = 2
 };
 
-static const Dm1V1MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat
+static const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat
     s_evidence = {
         1,
         "PANEL.C F0344:1895-1944 + F0345:1946-1999 panel click/cell highlight route",
@@ -88,8 +88,8 @@ static unsigned int hash_candidate_redraw(
 }
 
 static int snapshots_match(
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat *a,
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat *b)
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat *a,
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat *b)
 {
     if (!a || !b) {
         return 0;
@@ -117,7 +117,7 @@ static int normalize_direction(int direction)
 }
 
 void DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_InitPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
 {
     int i;
 
@@ -154,8 +154,8 @@ void DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_InitPc34Compat(
 }
 
 void DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_SnapshotPc34Compat(
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat *snapshot)
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat *snapshot)
 {
     if (!state || !snapshot) {
         return;
@@ -177,7 +177,7 @@ void DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_SnapshotPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_OpenCandidatePc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
 {
     if (!state || !state->contractOnly || !state->leaderHandEmpty ||
         state->partyChampionCount >= DM1_V1_MCSPPR_CHAMPION_COUNT_PC34 ||
@@ -201,7 +201,7 @@ int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_OpenCandidatePc34Compat(
 }
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_QueueTurnPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
     int turnCommand)
 {
     if (!state || !state->contractOnly ||
@@ -218,7 +218,7 @@ int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_QueueTurnPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_BeginF0380PartyRotationPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
 {
     if (!state || !state->contractOnly || !state->queuedTurnCommand ||
         state->f0380DispatchInProgress || state->partyRotationInProgress) {
@@ -232,7 +232,7 @@ int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_BeginF0380PartyRotationPc3
 }
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_ClickScrollPickupPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
 {
     if (!state || !state->contractOnly || !state->c040PanelOpen) {
         return 0;
@@ -268,7 +268,7 @@ int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_ClickScrollPickupPc34Compa
 }
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_CompletePartyRotationPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state)
 {
     if (!state || !state->contractOnly || !state->f0380DispatchInProgress ||
         !state->partyRotationInProgress || !state->queuedTurnCommand) {
@@ -291,11 +291,11 @@ int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_CompletePartyRotationPc34C
 }
 
 int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_RunPc34Compat(
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat *result)
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat *result)
 {
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat before;
-    Dm1V1MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat afterIgnore;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat before;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat afterIgnore;
     int opened;
     int queued;
     int began;
@@ -411,15 +411,15 @@ int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_RunPc34Compat(
     return result->ok;
 }
 
-const Dm1V1MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat *
+const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat *
 DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_EvidencePc34Compat(void)
 {
     return &s_evidence;
 }
 
 unsigned int DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_HashPc34Compat(
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
-    const Dm1V1MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat *result)
 {
     int i;
     unsigned int hash = 2166136261u;
