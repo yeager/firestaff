@@ -3651,6 +3651,52 @@ int nexus_v1_launcher_startup_receipt_bundle_from_snapshot(
         out_receipt);
 }
 
+static Nexus_V1_StartupRealAssetOwnershipRoute
+nexus_v1_launcher_expected_ownership_route_for_capture(
+    Nexus_V1_StartupCaptureRoute route,
+    int runtime_dgn_handoff_ready)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_CAPTURE_TITLE:
+        return NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_TITLE_CAPTURE;
+    case NEXUS_V1_STARTUP_CAPTURE_SAVE:
+        return NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_MENU_CAPTURE;
+    case NEXUS_V1_STARTUP_CAPTURE_CHAMPION:
+        return runtime_dgn_handoff_ready
+            ? NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF
+            : NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_MENU_CAPTURE;
+    case NEXUS_V1_STARTUP_CAPTURE_BLOCKED:
+        return NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS;
+    case NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE:
+    case NEXUS_V1_STARTUP_CAPTURE_INVALID:
+    default:
+        return NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_INVALID;
+    }
+}
+
+static void nexus_v1_launcher_fill_host_ownership_route_contract(
+    Nexus_V1_StartupRealAssetOwnershipReceipt *receipt)
+{
+    Nexus_V1_StartupRealAssetOwnershipRoute expected_route;
+    if (!receipt) {
+        return;
+    }
+    expected_route = nexus_v1_launcher_expected_ownership_route_for_capture(
+        receipt->capture_route,
+        receipt->runtime_dgn_handoff_ready);
+    receipt->host_ownership_route_matches_capture_route =
+        expected_route != NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_INVALID &&
+        receipt->route == expected_route;
+    receipt->package_route_consumes_host_ownership =
+        receipt->host_route_consumes_package_route &&
+        receipt->host_ownership_route_matches_capture_route;
+    receipt->dgn_route_consumes_host_ownership =
+        receipt->dgn_route_consumes_startup_package &&
+        receipt->host_ownership_route_matches_capture_route &&
+        receipt->route ==
+            NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF;
+}
+
 static void nexus_v1_launcher_fill_real_asset_ownership(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupRealAssetOwnershipReceipt *receipt)
@@ -3856,6 +3902,7 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
             receipt->startup_bundle.copied_command_count == 0;
         receipt->blocked_route_suppresses_dgn_draws =
             receipt->dgn_draw_command_count == 0;
+        nexus_v1_launcher_fill_host_ownership_route_contract(receipt);
         return;
     }
 
@@ -3876,6 +3923,7 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->status_scope = "STARTUP";
         receipt->status = "title-capture-owned";
     }
+    nexus_v1_launcher_fill_host_ownership_route_contract(receipt);
 }
 
 int nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
@@ -4092,6 +4140,12 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.dgn_route_consumes_startup_package;
     out_receipt->dgn_route_saturn_capture_exact =
         out_receipt->ownership.dgn_route_saturn_capture_exact;
+    out_receipt->host_ownership_route_matches_capture_route =
+        out_receipt->ownership.host_ownership_route_matches_capture_route;
+    out_receipt->package_route_consumes_host_ownership =
+        out_receipt->ownership.package_route_consumes_host_ownership;
+    out_receipt->dgn_route_consumes_host_ownership =
+        out_receipt->ownership.dgn_route_consumes_host_ownership;
     out_receipt->startup_bundle_consumed =
         out_receipt->ownership.startup_bundle.package
             .full_start_package_receipt_ready;
@@ -4168,6 +4222,7 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->host_runtime_dgn_ready &&
         out_receipt->host_route_consumes_package_route &&
         out_receipt->dgn_route_consumes_startup_package &&
+        out_receipt->dgn_route_consumes_host_ownership &&
         out_receipt->dgn_route_saturn_capture_exact &&
         out_receipt->host_route_capture_matrix_ready &&
         out_receipt->host_route_consumes_dungeon_capture_frame &&
