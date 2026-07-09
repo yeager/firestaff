@@ -1034,6 +1034,11 @@ int main(void)
                       "nexus-champion-select") == 0 &&
                full_start_package_receipt.capture_valid == 1 &&
                full_start_package_receipt.capture_route_ready == 1 &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+               full_start_package_receipt.champion_route_active == 1 &&
+               full_start_package_receipt.save_route_active == 0 &&
+               full_start_package_receipt.title_route_active == 0 &&
                full_start_package_receipt.champion_capture_ready == 1 &&
                full_start_package_receipt.capture_command_count > 3 &&
                full_start_package_receipt.first_capture_draw_kind ==
@@ -1100,6 +1105,11 @@ int main(void)
                full_start_package_receipt.consumer.presentation_valid == 1 &&
                full_start_package_receipt.consumer.save_route_valid == 1 &&
                full_start_package_receipt.capture_valid == 1 &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+               full_start_package_receipt.save_route_active == 1 &&
+               full_start_package_receipt.champion_route_active == 0 &&
+               full_start_package_receipt.title_route_active == 0 &&
                full_start_package_receipt.save_capture_ready == 1 &&
                full_start_package_receipt.capture_command_count > 3 &&
                full_start_package_receipt.first_capture_draw_kind ==
@@ -1164,11 +1174,34 @@ int main(void)
                       "nexus-title") == 0 &&
                full_start_package_receipt.consumer.title_handoff_valid == 1 &&
                full_start_package_receipt.capture_valid == 1 &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               full_start_package_receipt.title_route_active == 1 &&
+               full_start_package_receipt.save_route_active == 0 &&
+               full_start_package_receipt.champion_route_active == 0 &&
                full_start_package_receipt.title_capture_ready == 1 &&
                full_start_package_receipt.capture_command_count > 0 &&
                full_start_package_receipt.first_capture_draw_kind !=
                    NEXUS_V1_STARTUP_DRAW_NONE,
            "Nexus full-start package owns title startup capture proof");
+    runtime_state.title_frame = 0;
+    runtime_snapshot.runtime = runtime_state;
+    expect(nexus_v1_launcher_startup_full_start_package_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               full_start_package_receipt.warning_visible == 1 &&
+               full_start_package_receipt.first_capture_draw_kind ==
+                   NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
+               strcmp(full_start_package_receipt.animation,
+                      "nexus-title") == 0,
+           "Nexus full-start package owns warning startup capture proof");
+    runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
     runtime_state.title_active = 0;
     runtime_state.champion_select_active = 1;
     memset(dgn_commands, 0, sizeof(dgn_commands));
@@ -1361,6 +1394,8 @@ int main(void)
                strcmp(full_start_package_receipt.consumer_route,
                       "blocked-startup") == 0 &&
                full_start_package_receipt.capture_valid == 1 &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
                full_start_package_receipt.capture_route_ready == 0 &&
                full_start_package_receipt.capture_command_count == 0 &&
                full_start_package_receipt.blocked_draw_suppressed == 1 &&
@@ -1603,6 +1638,8 @@ int main(void)
                strcmp(full_start_package_receipt.consumer_route,
                       "blocked-startup") == 0 &&
                full_start_package_receipt.capture_valid == 1 &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
                full_start_package_receipt.capture_route_ready == 0 &&
                full_start_package_receipt.capture_command_count == 0 &&
                full_start_package_receipt.blocked_draw_suppressed == 1 &&
