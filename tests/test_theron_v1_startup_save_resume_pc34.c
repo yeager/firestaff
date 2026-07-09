@@ -57,6 +57,11 @@
 #define TST_SRM_ROOT        "/tmp/firestaff_tsr_unit_srm_root"
 #define TST_DUAL_TQSV_ROOT  "/tmp/firestaff_tsr_unit_dual_tqsv_root"
 #define TST_DUAL_SRM_ROOT   "/tmp/firestaff_tsr_unit_dual_srm_root"
+#define TST_THERON_FULL_START_BITMAP_ROUTES \
+    (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE | \
+     THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE | \
+     THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM | \
+     THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD)
 
 static int g_failures = 0;
 static int g_tests_run = 0;
@@ -2322,13 +2327,12 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.track02_real_media_ready &&
                     graphics_route_receipt.real_bitmap_startup_graphics_ready &&
                     graphics_route_receipt.required_bitmap_route_mask ==
-                        (THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
-                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
-                    graphics_route_receipt.required_bitmap_route_count == 2 &&
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    graphics_route_receipt.required_bitmap_route_count == 4 &&
                     graphics_route_receipt.required_bitmap_routes_ready &&
                     (graphics_route_receipt.bitmap_route_mask & 0x04u) &&
                     (graphics_route_receipt.bitmap_route_mask & 0x08u) &&
-                    graphics_route_receipt.bitmap_route_count >= 2 &&
+                    graphics_route_receipt.bitmap_route_count >= 4 &&
                     graphics_route_receipt.soul_room_bitmap_route_ready &&
                     graphics_route_receipt.forcefield_bitmap_route_ready &&
                     !graphics_route_receipt.raw_graphics_plan_consumer_required &&
@@ -2483,7 +2487,7 @@ static void test_startup_session_facts_wrappers(void) {
                     full_start_receipt.real_bitmap_startup_graphics_ready &&
                     (full_start_receipt.bitmap_route_mask & 0x04u) &&
                     (full_start_receipt.bitmap_route_mask & 0x08u) &&
-                    full_start_receipt.bitmap_route_count >= 2 &&
+                    full_start_receipt.bitmap_route_count >= 4 &&
                     full_start_receipt.soul_room_bitmap_route_ready &&
                     full_start_receipt.forcefield_bitmap_route_ready &&
                     !full_start_receipt.raw_graphics_plan_consumer_required &&
@@ -2544,7 +2548,7 @@ static void test_startup_session_facts_wrappers(void) {
                     ui_caller_receipt.real_bitmap_decode_ready &&
                     (ui_caller_receipt.bitmap_route_mask & 0x04) &&
                     (ui_caller_receipt.bitmap_route_mask & 0x08) &&
-                    ui_caller_receipt.bitmap_route_count >= 2 &&
+                    ui_caller_receipt.bitmap_route_count >= 4 &&
                     ui_caller_receipt.soul_room_bitmap_route_ready &&
                     ui_caller_receipt.forcefield_bitmap_route_ready &&
                     ui_caller_receipt.runtime_level == 0 &&
@@ -2953,7 +2957,7 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.real_bitmap_startup_graphics_ready &&
                     (graphics_route_receipt.bitmap_route_mask & 0x04u) &&
                     (graphics_route_receipt.bitmap_route_mask & 0x08u) &&
-                    graphics_route_receipt.bitmap_route_count >= 2 &&
+                    graphics_route_receipt.bitmap_route_count >= 4 &&
                     graphics_route_receipt.soul_room_bitmap_route_ready &&
                     graphics_route_receipt.forcefield_bitmap_route_ready &&
                     graphics_route_receipt.track02_startup_graphics_executed &&
@@ -3031,9 +3035,8 @@ static void test_startup_session_facts_wrappers(void) {
                             &media_graphics_executor,
                             &partial_graphics_receipt) &&
                         partial_graphics_receipt.required_bitmap_route_mask ==
-                            (THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
-                             THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
-                        partial_graphics_receipt.required_bitmap_route_count == 2 &&
+                            TST_THERON_FULL_START_BITMAP_ROUTES &&
+                        partial_graphics_receipt.required_bitmap_route_count == 4 &&
                         !partial_graphics_receipt.required_bitmap_routes_ready &&
                         !partial_graphics_receipt.real_bitmap_startup_graphics_ready &&
                         partial_graphics_receipt.raw_graphics_plan_consumer_required &&
@@ -3114,16 +3117,16 @@ static void test_startup_session_facts_wrappers(void) {
                             &media_graphics_executor,
                             &iso_graphics_receipt) &&
                         iso_graphics_receipt.required_bitmap_route_mask ==
-                            (THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
-                             THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
-                        iso_graphics_receipt.required_bitmap_routes_ready &&
-                        iso_graphics_receipt.real_bitmap_startup_graphics_ready &&
-                        iso_graphics_receipt.track02_atlas_startup_graphics_ready &&
-                        iso_graphics_receipt.track02_atlas_startup_graphics_executed &&
-                        iso_graphics_receipt.track02_startup_graphics_executed &&
-                        !iso_graphics_receipt.raw_graphics_plan_consumer_required &&
-                        !iso_graphics_receipt.fallback_startup_graphics_executed,
-                    "boot graphics route consumes partial ISO Track02 atlas for Soul Room without full-start fallback");
+                            TST_THERON_FULL_START_BITMAP_ROUTES &&
+                        iso_graphics_receipt.required_bitmap_route_count == 4 &&
+                        !iso_graphics_receipt.required_bitmap_routes_ready &&
+                        !iso_graphics_receipt.real_bitmap_startup_graphics_ready &&
+                        !iso_graphics_receipt.track02_atlas_startup_graphics_ready &&
+                        !iso_graphics_receipt.track02_atlas_startup_graphics_executed &&
+                        !iso_graphics_receipt.track02_startup_graphics_executed &&
+                        iso_graphics_receipt.raw_graphics_plan_consumer_required &&
+                        iso_graphics_receipt.fallback_startup_graphics_executed,
+                    "boot graphics route blocks partial ISO Track02 atlas as full-start fallback");
     }
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
@@ -3160,10 +3163,10 @@ static void test_startup_session_facts_wrappers(void) {
                     full_start_receipt.track02_real_media_ready &&
                     full_start_receipt.real_bitmap_startup_graphics_ready &&
                     full_start_receipt.required_bitmap_routes_ready &&
-                    full_start_receipt.required_bitmap_route_count == 2 &&
+                    full_start_receipt.required_bitmap_route_count == 4 &&
                     (full_start_receipt.bitmap_route_mask & 0x04u) &&
                     (full_start_receipt.bitmap_route_mask & 0x08u) &&
-                    full_start_receipt.bitmap_route_count >= 2 &&
+                    full_start_receipt.bitmap_route_count >= 4 &&
                     full_start_receipt.soul_room_bitmap_route_ready &&
                     full_start_receipt.forcefield_bitmap_route_ready &&
                     full_start_receipt.track02_startup_graphics_executed &&
@@ -3243,7 +3246,7 @@ static void test_startup_session_facts_wrappers(void) {
                     host_render_receipt.real_bitmap_startup_graphics_ready &&
                     (host_render_receipt.bitmap_route_mask & 0x04u) &&
                     (host_render_receipt.bitmap_route_mask & 0x08u) &&
-                    host_render_receipt.bitmap_route_count >= 2 &&
+                    host_render_receipt.bitmap_route_count >= 4 &&
                     host_render_receipt.soul_room_bitmap_route_ready &&
                     host_render_receipt.forcefield_bitmap_route_ready &&
                     host_render_receipt.track02_startup_graphics_executed &&
