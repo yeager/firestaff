@@ -4592,6 +4592,8 @@ static int orch_apply_projectile_group_action_compat(
     int originalGroupCount;
     int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
     int associatedThingMovedToGroup = 0;
+    int creatureAttributes = 0;
+    DM1_ProjectileCreatureActionPlanPc34 actionPlan;
 
     if (!world || !action || !world->things || !world->things->groups) return 0;
     if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP) return 0;
@@ -4603,12 +4605,33 @@ static int orch_apply_projectile_group_action_compat(
     }
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
     group = &world->things->groups[groupIndex];
-    creatureIndex = orch_find_group_creature_index_for_cell_compat(
-        group, action->targetCell);
-    if (creatureIndex < 0) return 0;
-    killedCell = orch_group_creature_cell_compat(group, creatureIndex);
     originalCreatureType = (int)group->creatureType;
-    originalGroupCount = (int)group->count;
+    {
+        const struct CreatureBehaviorProfile_Compat* profile =
+            CREATURE_GetProfile_Compat(originalCreatureType);
+        if (profile) creatureAttributes = profile->attributes;
+    }
+    memset(&actionPlan, 0, sizeof(actionPlan));
+    if (!dm1_v1_projectile_creature_action_plan_pc34(
+            projectile, action, group, creatureAttributes, &actionPlan) ||
+        !actionPlan.handled) {
+        return 0;
+    }
+    if (actionPlan.blockedByNonMaterial) {
+        return 1;
+    }
+    if (actionPlan.healsBlackFlame) {
+        group->health[actionPlan.slotIndex] =
+            (unsigned short)actionPlan.newHealth;
+        orch_write_raw_group_compat(world->things, groupIndex);
+        return 1;
+    }
+    if (!actionPlan.shouldApplyDamage || actionPlan.slotIndex < 0) {
+        return 0;
+    }
+    creatureIndex = actionPlan.slotIndex;
+    killedCell = actionPlan.killedCell;
+    originalGroupCount = actionPlan.originalGroupCount;
     memset(&creatureSnapshot, 0, sizeof(creatureSnapshot));
     if (!F0888_ORCH_GetCreatureSnapshot_Compat(
             world, groupIndex, creatureIndex, 0, &creatureSnapshot)) {
@@ -4621,24 +4644,8 @@ static int orch_apply_projectile_group_action_compat(
         }
     }
 
-    if (projectile &&
-        projectile->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
-        group->creatureType == ORCH_CREATURE_BLACK_FLAME_PC34) {
-        int healed;
-        /* ReDMCSB PROJEXPL.C:F0217 lines 527-531 heals Black Flame on
-         * Fireball impact up to 1000 HP and jumps to T0217044, so no
-         * normal F0190 damage, C30 reaction, explosion, or thud follows. */
-        healed = (int)group->health[creatureIndex] + action->rawAttackValue;
-        if (healed > ORCH_BLACK_FLAME_MAX_HEALTH_PC34) {
-            healed = ORCH_BLACK_FLAME_MAX_HEALTH_PC34;
-        }
-        group->health[creatureIndex] = (unsigned short)healed;
-        orch_write_raw_group_compat(world->things, groupIndex);
-        return 1;
-    }
-
     memset(&damage, 0, sizeof(damage));
-    damage.damageApplied = action->rawAttackValue;
+    damage.damageApplied = actionPlan.damageApplied;
 
     /* ReDMCSB PROJEXPL.C:F0217 lines 515-537 resolves a concrete
      * creature ordinal in the impact cell, scales attack by creature

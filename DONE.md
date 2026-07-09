@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 projectile group-action plan ownership: M10 projectile group hits now consume a DM1 F0217 action plan for target slot selection, Black Flame fireball heal priority, non-material blocking, killed-cell snapshot, original group snapshot, and damage payload. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_creature_projectile_runtime_pc34_compat` (25/25), `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 creature projectile create-input ownership: DM1 throw/shoot compat now owns creature projectile thing-to-subtype mapping, attack type, poison attack, and F0810 create-input construction for ranged group attacks. M11 supplies live group position/tick facts and schedules the returned projectile. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_creature_projectile_runtime_pc34_compat` (25/25), `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0407 projectile action descriptor ownership: DM1 action-XP compat now owns projectile-spell skill routing, verb kind, invoke-roll requirement, and poison attack transport for FIREBALL/DISPELL/LIGHTNING/SPIT/INVOKE. M11 consumes that descriptor before spawning/logging. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

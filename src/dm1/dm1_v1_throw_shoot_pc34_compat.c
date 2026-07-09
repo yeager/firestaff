@@ -828,6 +828,65 @@ int dm1_v1_projectile_creature_impact_plan_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_creature_action_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct CombatAction_Compat* action,
+    const struct DungeonGroup_Compat* group,
+    int creatureAttributes,
+    DM1_ProjectileCreatureActionPlanPc34* outPlan) {
+    int slotIndex;
+    int healed;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->slotIndex = -1;
+    outPlan->killedCell = EXPLOSION_CELL_CENTERED;
+    if (!projectile || !action || !group) return 0;
+    if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP ||
+        action->rawAttackValue <= 0) {
+        return 0;
+    }
+    outPlan->handled = 1;
+
+    slotIndex = dm1_v1_group_creature_index_for_cell_pc34(
+        group, action->targetCell);
+    if (slotIndex < 0) return 1;
+
+    outPlan->slotIndex = slotIndex;
+    outPlan->damageApplied = action->rawAttackValue;
+    outPlan->originalCreatureType = (int)group->creatureType;
+    outPlan->originalCells = (int)group->cells;
+    outPlan->originalGroupCount = (int)group->count;
+    outPlan->killedCell =
+        (group->cells == DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34)
+            ? EXPLOSION_CELL_CENTERED
+            : (int)((group->cells >> (slotIndex * 2)) & 0x03u);
+
+    if (projectile->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
+        group->creatureType == DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34) {
+        /* ReDMCSB: PROJEXPL.C F0217 lines 527-531 heals Black Flame on
+         * Fireball impact up to 1000 HP and skips F0190 damage. */
+        healed = (int)group->health[slotIndex] + action->rawAttackValue;
+        if (healed > DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34) {
+            healed = DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34;
+        }
+        outPlan->healsBlackFlame = 1;
+        outPlan->newHealth = healed;
+        return 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 532-533 lets non-material
+     * creatures ignore all projectiles except Harm Non Material after
+     * the prior Black Flame fireball-heal branch has had priority. */
+    if ((creatureAttributes & DM1_PROJECTILE_ATTR_NON_MATERIAL_PC34) &&
+        projectile->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL) {
+        outPlan->blockedByNonMaterial = 1;
+        return 1;
+    }
+
+    outPlan->shouldApplyDamage = 1;
+    return 1;
+}
+
 int dm1_v1_projectile_creature_impact_aftermath_pc34(
     const DM1_ProjectileCreatureImpactPlanPc34* plan,
     const struct ProjectileInstance_Compat* projectile,
