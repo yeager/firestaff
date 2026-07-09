@@ -899,4 +899,38 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_read_dungeon_seed_table(
 const char *theron_v1_track02_semantic_binding_status_name(
     Theron_Track02SemanticBindingStatus status);
 
+typedef struct {
+    Theron_Track02LevelHandoffStatus status;
+    size_t descriptor_offset;
+    Theron_Track02SemanticBindingStatus seed_table_status;
+    Theron_Track02SemanticBinding seed_table_binding;
+    Theron_Track02InitialCandidateBinding initial_candidate;
+    uint32_t startup_seed;
+    uint16_t startup_level_index;
+    int startup_seed_in_seed_table;
+    size_t startup_seed_table_index;
+    size_t user_data_offset;
+    int user_data_offset_valid;
+    int ready_for_runtime;
+} Theron_Track02StartupSemanticHandoff;
+
+/* Compose the bounded Track 02 startup evidence into one runtime-facing
+ * handoff summary.
+ *
+ * This does not broaden the decoder claim: the only semantic descriptor role
+ * consumed here is entry 0's DUNGEON_SEED_TABLE, and the only level payload is
+ * the hash/anchor-gated 32x27 initial startup candidate.  ready_for_runtime is
+ * true only when both gates are OK and the candidate has a logical MODE1/2048
+ * user-data offset.  startup_seed_in_seed_table is reported as diagnostic
+ * evidence only because the source-locked startup payload seed is distinct
+ * from the seven progression dungeon seeds.  Real Track 02 images may still
+ * report NO_LEVEL while the descriptor seed-window semantics are hardened.
+ */
+Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t descriptor_offset,
+    Theron_Track02StartupSemanticHandoff *out_handoff);
+
 #endif /* THERON_V1_TRACK02_H */
