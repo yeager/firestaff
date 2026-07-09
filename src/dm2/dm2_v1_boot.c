@@ -2862,6 +2862,8 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
 {
     static const int k_title_ticks[] = {0, 13, 47};
     static const int k_selected_rows[] = {0, 1, 2};
+    uint32_t menu_hashes[3];
+    int menu_hash_count = 0;
     int i;
 
     if (!profile || !base_snapshot || !out_receipt) {
@@ -2914,19 +2916,18 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
         dm2_v1_boot_gdat_image_asset_free(pixels);
     }
 
+    out_receipt->sampled_menu_composite_hash = 0x324d5348u;
     for (i = 0; i < (int)(sizeof(k_selected_rows) / sizeof(k_selected_rows[0])); ++i) {
         DM2_V1_BootStartupViewModel sample_view;
         DM2_V1_BootStartupPackagedFullStartReceipt sample_package;
         DM2_V1_BootStartupRealVisualCaptureReceipt sample_capture;
         DM2_V1_BootRuntimeStartupSnapshot sample_snapshot = *base_snapshot;
+        int hash_i;
+        int seen_hash = 0;
         sample_snapshot.selected_row = k_selected_rows[i];
-
-        const int required_rows =
-            (base_snapshot->resume_available || base_snapshot->slot_mask)
-                ? 3
-                : 1;
-        if (i >= required_rows) {
-            continue;
+        sample_snapshot.resume_available = 1;
+        if (sample_snapshot.slot_mask == 0u) {
+            sample_snapshot.slot_mask = 1u;
         }
         if (!dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
                 &sample_snapshot,
@@ -2935,7 +2936,7 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
             !dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
                 &sample_view.host_view_receipt,
                 &sample_package) ||
-            sample_package.menu_row_count < required_rows ||
+            sample_package.menu_row_count < 3 ||
             sample_package.selected_row != k_selected_rows[i] ||
             !sample_package.menu_capture_ready) {
             continue;
@@ -2958,8 +2959,25 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
             sample_capture.composite_gdat_blit_count == 2 &&
             sample_capture.composite_pixel_hash != 0u) {
             ++out_receipt->sampled_menu_composite_capture_count;
+            out_receipt->sampled_menu_composite_hash =
+                dm2_v1_boot_packaged_capture_hash_step(
+                    out_receipt->sampled_menu_composite_hash,
+                    sample_capture.composite_pixel_hash);
+            for (hash_i = 0; hash_i < menu_hash_count; ++hash_i) {
+                if (menu_hashes[hash_i] ==
+                    sample_capture.composite_pixel_hash) {
+                    seen_hash = 1;
+                    break;
+                }
+            }
+            if (!seen_hash && menu_hash_count < 3) {
+                menu_hashes[menu_hash_count++] =
+                    sample_capture.composite_pixel_hash;
+            }
         }
     }
+    out_receipt->sampled_menu_unique_composite_hash_count =
+        menu_hash_count;
 
     {
         DM2_V1_BootStartupHostViewReceipt runtime_view;
@@ -2989,13 +3007,11 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
         (out_receipt->sampled_title_frame_mask & (1 << 0)) &&
         (out_receipt->sampled_title_frame_mask & (1 << 2)) &&
         (out_receipt->sampled_title_frame_mask & (1 << 7)) &&
-        ((base_snapshot->resume_available || base_snapshot->slot_mask)
-             ? (out_receipt->sampled_menu_selection_capture_count >= 3 &&
-                out_receipt->sampled_menu_composite_capture_count >= 3 &&
-                (out_receipt->sampled_menu_selection_mask & 0x7) == 0x7)
-             : (out_receipt->sampled_menu_selection_capture_count >= 1 &&
-                out_receipt->sampled_menu_composite_capture_count >= 1 &&
-                (out_receipt->sampled_menu_selection_mask & 0x1) == 0x1)) &&
+        out_receipt->sampled_menu_selection_capture_count >= 3 &&
+        out_receipt->sampled_menu_composite_capture_count >= 3 &&
+        out_receipt->sampled_menu_unique_composite_hash_count >= 3 &&
+        out_receipt->sampled_menu_composite_hash != 0u &&
+        (out_receipt->sampled_menu_selection_mask & 0x7) == 0x7 &&
         out_receipt->sampled_runtime_hud_handoff_capture_ready;
     return out_receipt->real_gdat_capture_breadth_ready;
 }
@@ -3317,6 +3333,10 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         hash, (uint32_t)out_receipt->sampled_title_frame_mask);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->sampled_menu_selection_mask);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->sampled_menu_unique_composite_hash_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->sampled_menu_composite_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->sampled_runtime_hud_handoff_capture_ready);
     out_receipt->packaged_visual_capture_hash = hash;
