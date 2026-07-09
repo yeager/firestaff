@@ -497,6 +497,28 @@ void theron_v1_boot_startup_view_model_clear(
 int theron_v1_boot_startup_view_model_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     Theron_V1_BootStartupViewModel *out_view_model);
+int theron_v1_boot_startup_view_model_from_runtime_state(
+    Theron_V1_BootStartupViewModel *out_view_model,
+    int startup_phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int startup_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
