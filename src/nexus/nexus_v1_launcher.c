@@ -3675,6 +3675,7 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->startup_bundle.saturn_active_capture_frame;
     receipt->host_route_consumes_active_capture_frame =
         receipt->package_capture_consumed_by_host &&
+        receipt->first_host_draw_uses_package &&
         receipt->capture_route != NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
         receipt->capture_route != NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE &&
         receipt->active_capture_frame >= 0 &&
@@ -3987,6 +3988,8 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
     out_receipt->host_execute_startup_draws =
         out_receipt->suppress_fallback_visuals &&
         out_receipt->host_startup_capture_ready &&
+        (out_receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_TITLE ||
+         out_receipt->host_route_consumes_active_capture_frame) &&
         out_receipt->saturn_timing_exact &&
         out_receipt->saturn_capture_frames_exact &&
         out_receipt->copied_startup_command_count > 0;

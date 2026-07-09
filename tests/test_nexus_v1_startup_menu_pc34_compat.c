@@ -1537,6 +1537,61 @@ int main(void)
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
            "Nexus startup receipt bundle caps copied save commands for M11 capture buffers");
+    expect(nexus_v1_launcher_startup_real_asset_ownership_from_snapshot(
+               NULL,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               &real_asset_ownership_receipt) &&
+               real_asset_ownership_receipt.route ==
+                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_MENU_CAPTURE &&
+               real_asset_ownership_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+               real_asset_ownership_receipt.menu_capture_uses_real_assets == 1 &&
+               real_asset_ownership_receipt.first_host_draw_uses_package == 1 &&
+               real_asset_ownership_receipt.active_capture_frame == 102 &&
+               real_asset_ownership_receipt.saturn_active_capture_frame == 102 &&
+               real_asset_ownership_receipt.host_route_consumes_active_capture_frame == 1 &&
+               real_asset_ownership_receipt.host_route_consumes_dungeon_capture_frame == 0 &&
+               strcmp(real_asset_ownership_receipt.status,
+                      "menu-capture-owned") == 0,
+           "Nexus real-asset ownership consumes SAVE package capture route");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
+               NULL,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &host_caller_receipt) &&
+               host_caller_receipt.host_caller_ready == 1 &&
+               host_caller_receipt.host_startup_capture_ready == 1 &&
+               host_caller_receipt.host_runtime_dgn_ready == 0 &&
+               host_caller_receipt.host_execute_startup_draws == 1 &&
+               host_caller_receipt.host_execute_dgn_draws == 0 &&
+               host_caller_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+               host_caller_receipt.ownership_route ==
+                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_MENU_CAPTURE &&
+               host_caller_receipt.host_active_capture_frame == 102 &&
+               host_caller_receipt.host_saturn_active_capture_frame == 102 &&
+               host_caller_receipt.host_route_consumes_active_capture_frame == 1 &&
+               host_caller_receipt.host_route_consumes_dungeon_capture_frame == 0 &&
+               host_caller_receipt.saturn_save_capture_frame == 102 &&
+               host_caller_receipt.saturn_champion_capture_frame == -1 &&
+               host_caller_receipt.saturn_dungeon_capture_frame == -1 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
+               dgn_commands[0].kind == 0 &&
+               strcmp(host_caller_receipt.host_route,
+                      "menu-capture") == 0,
+           "Nexus host-caller consumes SAVE active capture frame before drawing");
     runtime_state.save_select_active = 0;
     runtime_state.title_active = 1;
     runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
