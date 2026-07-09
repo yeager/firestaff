@@ -2491,6 +2491,15 @@ static int csb_v1_boot_startup_capture_render_plan_pc34(
         return 1;
     }
 
+    if (capture_receipt->render_view.route_receipt.route ==
+        CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34) {
+        *out_plan = capture_receipt->render_view.render_plan;
+        /* ReDMCSB ENTRANCE.C F0442 draws Graphic5 as a full-screen credits
+         * page while startup input/HUD are blocked. Keep that surface on the
+         * packaged render path instead of treating it as a HUD/menu capture. */
+        return 1;
+    }
+
     if (!capture_receipt->host_hud_blocked &&
         capture_receipt->render_view.boot_executor_route) {
         *out_plan = capture_receipt->render_view.render_plan;
@@ -2742,6 +2751,7 @@ int csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
                     (proof->title_capture_ready ||
                      proof->hud_menu_capture_ready ||
                      proof->runtime_capture_ready ||
+                     proof->credits_route ||
                      proof->opening_door_route) &&
                     proof->packaged_capture_hash != 0u
                 ? 1
@@ -3169,6 +3179,11 @@ int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
             capture_receipt->render_view.closed_door_menu_route ? 1 : 0;
         out_proof->utility_menu_route =
             capture_receipt->render_view.utility_menu_route ? 1 : 0;
+        out_proof->credits_route =
+            capture_receipt->render_view.route_receipt.route ==
+                    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34
+                ? 1
+                : 0;
         out_proof->opening_door_route =
             capture_receipt->render_view.opening_door_route ? 1 : 0;
         out_proof->draw_opening_frame =
@@ -3266,6 +3281,9 @@ int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
     hash = csb_v1_boot_packaged_capture_hash_step_pc34(
         hash,
         (uint32_t)out_proof->utility_menu_route);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->credits_route);
     hash = csb_v1_boot_packaged_capture_hash_step_pc34(
         hash,
         (uint32_t)out_proof->opening_door_route);

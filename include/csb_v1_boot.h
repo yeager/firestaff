@@ -446,6 +446,7 @@ typedef struct CSB_V1_BootStartupPackagedCaptureProof_PC34 {
     int title_route;
     int closed_door_menu_route;
     int utility_menu_route;
+    int credits_route;
     int opening_door_route;
     int draw_closed_doors;
     int draw_utility_panel;
