@@ -923,6 +923,48 @@ int dm1_v1_startup_selected_boot_probe_source_kind_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_title_menu_eligibility_receipt_pc34(
+    const DM1_V1_StartupTitleMenuEligibilityFacts_PC34* facts,
+    DM1_V1_StartupTitleMenuEligibilityReceipt_PC34* out_receipt) {
+    DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
+    unsigned int frame_max;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.handled = 1;
+    receipt.keep_title_surface = 1;
+    receipt.next_stage = DM1_V1_STARTUP_STAGE_TITLE_LAST_FRAME_PC34;
+    receipt.reason = "title-active";
+
+    frame_max = facts->title_frame_max
+                    ? facts->title_frame_max
+                    : dm1_v1_startup_title_frame_bank_equivalent_steps_pc34();
+    if (!facts->title_handoff_ready || facts->title_frame <= frame_max) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    if (!facts->advance_requested) {
+        receipt.reason = "title-held-after-handoff";
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB TITLE.C F0437:319-409 completes PRESENTS, title zoom,
+     * STRIKES BACK, and the final VBlank guard before ENTRANCE.C F0441:
+     * 850-883 enters the entrance-wait loop.  The handoff click/key is a
+     * title/menu transition only; it must not become the first entrance
+     * command. */
+    receipt.menu_eligible = 1;
+    receipt.keep_title_surface = 0;
+    receipt.consume_pending_input = 1;
+    receipt.next_stage = DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE_PC34;
+    receipt.reason = "title-complete-menu-eligible";
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_sequence_source_order_valid_pc34(void) {
     /* ReDMCSB startup source order:
      * SWSH.C:39-47 runs START.PRG after the FTL palette program;
