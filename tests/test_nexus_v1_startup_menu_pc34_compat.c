@@ -118,8 +118,10 @@ int main(void)
     Nexus_V1_StartupMenuPresentationReceipt presentation_receipt;
     Nexus_V1_StartupTitleHandoffReceipt title_handoff_receipt;
     Nexus_V1_StartupRuntimeHandoffReceipt runtime_handoff_receipt;
+    Nexus_V1_StartupRouteProofReceipt route_proof_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
+    Nexus_V1_LauncherRuntimeReceipt synthetic_runtime_receipt;
     Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_Engine synthetic_engine;
     Nexus_V1_StartupRowKind kind;
@@ -773,11 +775,30 @@ int main(void)
     nexus_v1_champions_init(&synthetic_engine.champions);
     expect(nexus_v1_champion_recruit(&synthetic_engine.champions, 0) == 0,
            "Nexus synthetic runtime has a party for menu-to-runtime route");
+    nexus_v1_launcher_runtime_receipt_clear(&synthetic_runtime_receipt);
+    synthetic_runtime_receipt.engine = &synthetic_engine;
+    synthetic_runtime_receipt.level_loaded = 1;
+    synthetic_runtime_receipt.title_loaded = 1;
+    synthetic_runtime_receipt.party_x = synthetic_engine.game.party_x;
+    synthetic_runtime_receipt.party_y = synthetic_engine.game.party_y;
+    synthetic_runtime_receipt.party_dir = synthetic_engine.game.party_dir;
+    snprintf(synthetic_runtime_receipt.title,
+             sizeof(synthetic_runtime_receipt.title),
+             "%s",
+             NEXUS_V1_GAME_LABEL);
+    snprintf(synthetic_runtime_receipt.source_id,
+             sizeof(synthetic_runtime_receipt.source_id),
+             "%s",
+             NEXUS_V1_GAME_ID);
     nexus_v1_launcher_startup_runtime_state_clear(&runtime_state);
     runtime_state.engine = &synthetic_engine;
     runtime_state.champion_select_active = 1;
     runtime_state.champion_cursor = 0;
     runtime_state.champion_frame = 0;
+    expect(nexus_v1_launcher_startup_assets_receipt_from_runtime_state(
+               &runtime_state,
+               &synthetic_runtime_receipt.startup_assets),
+           "Nexus synthetic runtime assets build for route proof");
     memset(dgn_commands, 0, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                &runtime_state,
@@ -797,6 +818,29 @@ int main(void)
                runtime_handoff_receipt.fallback_visuals_permitted == 0 &&
                dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
            "Nexus startup handoff builds first DGN render state after champion start");
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_route_proof_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               &champion_execution,
+               NULL,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &route_proof_receipt) &&
+               route_proof_receipt.route ==
+                   NEXUS_V1_STARTUP_ROUTE_PROOF_RUNTIME_READY &&
+               strcmp(nexus_v1_launcher_startup_route_proof_route_name(
+                          route_proof_receipt.route),
+                      "runtime-ready") == 0 &&
+               route_proof_receipt.saturn_asset_boot_ready == 1 &&
+               route_proof_receipt.title_route_ready == 1 &&
+               route_proof_receipt.menu_route_ready == 1 &&
+               route_proof_receipt.runtime_route_ready == 1 &&
+               route_proof_receipt.graphics_ready == 1 &&
+               route_proof_receipt.audio_ready == 1 &&
+               route_proof_receipt.fallback_visuals_permitted == 0 &&
+               route_proof_receipt.runtime_handoff.command_count > 0,
+           "Nexus startup route proof spans Saturn assets title menu and runtime");
     memset(dgn_commands, 0, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_firestaff_input(
                &runtime_state,
@@ -846,6 +890,10 @@ int main(void)
         NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
     synthetic_engine.menu_bpk_upload_receipt.blocked_prs3_uploads = 3;
     synthetic_engine.menu_bpk_upload_receipt.blocks_real_menu_surface_render = 1;
+    expect(nexus_v1_launcher_startup_assets_receipt_from_runtime_state(
+               &runtime_state,
+               &synthetic_runtime_receipt.startup_assets),
+           "Nexus synthetic blocked runtime assets rebuild for route proof");
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                &runtime_state,
                &champion_execution,
@@ -858,6 +906,24 @@ int main(void)
                strcmp(runtime_handoff_receipt.status,
                       "blocked-menu-bpk-prs3") == 0,
            "Nexus startup handoff blocks DGN route when Saturn menu assets are blocked");
+    expect(nexus_v1_launcher_startup_route_proof_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               &champion_execution,
+               NULL,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &route_proof_receipt) &&
+               route_proof_receipt.route ==
+                   NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED &&
+               route_proof_receipt.title_route_ready == 1 &&
+               route_proof_receipt.menu_route_ready == 0 &&
+               route_proof_receipt.runtime_route_ready == 0 &&
+               route_proof_receipt.graphics_ready == 0 &&
+               route_proof_receipt.audio_ready == 1 &&
+               strcmp(route_proof_receipt.status,
+                      "blocked-menu-bpk-prs3") == 0,
+           "Nexus startup route proof exposes Saturn asset blocker before runtime");
     expect(nexus_v1_startup_champion_execution_mode_update(
                &champion_execution,
                2,

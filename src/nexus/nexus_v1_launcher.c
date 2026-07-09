@@ -550,6 +550,24 @@ void nexus_v1_launcher_startup_runtime_handoff_receipt_clear(
         &receipt->host_action_receipt);
 }
 
+void nexus_v1_launcher_startup_route_proof_receipt_clear(
+    Nexus_V1_StartupRouteProofReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->route = NEXUS_V1_STARTUP_ROUTE_PROOF_INVALID;
+    nexus_v1_launcher_startup_launch_gate_receipt_clear(
+        &receipt->launch_gate);
+    nexus_v1_launcher_startup_title_handoff_receipt_clear(
+        &receipt->title_handoff);
+    nexus_v1_launcher_startup_menu_presentation_receipt_clear(
+        &receipt->menu_presentation);
+    nexus_v1_launcher_startup_runtime_handoff_receipt_clear(
+        &receipt->runtime_handoff);
+}
+
 const char *nexus_v1_launcher_startup_runtime_handoff_route_name(
     Nexus_V1_StartupRuntimeHandoffRoute route)
 {
@@ -562,6 +580,21 @@ const char *nexus_v1_launcher_startup_runtime_handoff_route_name(
         return "dgn-blocked";
     case NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE:
         return "ready-render-state";
+    default: return "unknown";
+    }
+}
+
+const char *nexus_v1_launcher_startup_route_proof_route_name(
+    Nexus_V1_StartupRouteProofRoute route)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_ROUTE_PROOF_INVALID: return "invalid";
+    case NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED:
+        return "asset-blocked";
+    case NEXUS_V1_STARTUP_ROUTE_PROOF_TITLE_READY: return "title-ready";
+    case NEXUS_V1_STARTUP_ROUTE_PROOF_MENU_READY: return "menu-ready";
+    case NEXUS_V1_STARTUP_ROUTE_PROOF_RUNTIME_READY:
+        return "runtime-ready";
     default: return "unknown";
     }
 }
@@ -1487,6 +1520,147 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_pointer_snapshot(
         &snapshot->runtime,
         x,
         y,
+        out_commands,
+        max_commands,
+        out_receipt);
+}
+
+int nexus_v1_launcher_startup_route_proof_from_runtime_state(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_StartupRuntimeState *state,
+    const Nexus_V1_StartupChampionExecution *execution,
+    const Nexus_V1_StartupHostActionReceipt *host_action,
+    Nexus_V1_DgnRenderCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupRouteProofReceipt *out_receipt)
+{
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_StartupDrawCommand draw_commands[80];
+
+    nexus_v1_launcher_startup_route_proof_receipt_clear(out_receipt);
+    if (!out_receipt || !runtime || !state ||
+        !nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
+            runtime,
+            &out_receipt->launch_gate) ||
+        !nexus_v1_launcher_startup_assets_from_runtime_state(state,
+                                                             &assets)) {
+        return 0;
+    }
+
+    out_receipt->assets = assets;
+    out_receipt->saturn_asset_boot_ready =
+        out_receipt->launch_gate.engine_ready &&
+        out_receipt->launch_gate.level_loaded &&
+        assets.title_route_ready &&
+        assets.startup_audio_handoff_ready;
+    out_receipt->title_route_ready = assets.title_route_ready ? 1 : 0;
+    out_receipt->menu_route_ready =
+        assets.save_menu_route_ready && assets.champion_menu_route_ready;
+    out_receipt->audio_ready = assets.startup_audio_handoff_ready ? 1 : 0;
+    out_receipt->fallback_visuals_permitted =
+        assets.menu_bpk_fallback_visuals_permitted ||
+        out_receipt->launch_gate.fallback_visuals_permitted;
+    out_receipt->asset_route = assets.startup_menu_asset_route;
+    out_receipt->status_scope = out_receipt->launch_gate.status_scope;
+    out_receipt->status = out_receipt->launch_gate.status;
+
+    if (state->title_active) {
+        (void)nexus_v1_launcher_startup_title_handoff_receipt_from_runtime_state(
+            state,
+            9,
+            &out_receipt->title_handoff);
+        out_receipt->title_route =
+            nexus_v1_startup_title_route_name(
+                out_receipt->title_handoff.title_route.route);
+    }
+
+    if (state->save_select_active) {
+        if (nexus_v1_launcher_startup_save_presentation_receipt_from_runtime_state(
+                state,
+                draw_commands,
+                (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+                &out_receipt->menu_presentation)) {
+            out_receipt->menu_route = out_receipt->menu_presentation.status;
+        }
+    } else if (state->champion_select_active) {
+        if (nexus_v1_launcher_startup_champion_presentation_receipt_from_runtime_state(
+                state,
+                draw_commands,
+                (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+                &out_receipt->menu_presentation)) {
+            out_receipt->menu_route = out_receipt->menu_presentation.status;
+        }
+    }
+
+    if (execution) {
+        (void)nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
+            state,
+            execution,
+            host_action,
+            out_commands,
+            max_commands,
+            &out_receipt->runtime_handoff);
+        out_receipt->runtime_route =
+            nexus_v1_launcher_startup_runtime_handoff_route_name(
+                out_receipt->runtime_handoff.route);
+        out_receipt->runtime_route_ready =
+            out_receipt->runtime_handoff.runtime_ready;
+    }
+
+    out_receipt->graphics_ready =
+        assets.title_route_ready &&
+        assets.real_menu_surface_route_ready &&
+        (!execution || out_receipt->runtime_handoff.render_plan.plan_ready);
+
+    if (out_receipt->runtime_route_ready) {
+        out_receipt->route = NEXUS_V1_STARTUP_ROUTE_PROOF_RUNTIME_READY;
+        out_receipt->status_scope = "RUNTIME";
+        out_receipt->status = "runtime-ready";
+    } else if (out_receipt->launch_gate.route ==
+                   NEXUS_V1_STARTUP_LAUNCH_GATE_DATA_ERROR ||
+               out_receipt->launch_gate.route ==
+                   NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_ASSET_BLOCKED ||
+               !assets.title_route_ready ||
+               assets.real_menu_surface_route_blocked) {
+        out_receipt->route = NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED;
+        out_receipt->status_scope = out_receipt->launch_gate.status_scope
+            ? out_receipt->launch_gate.status_scope
+            : "ASSETS";
+        out_receipt->status = out_receipt->launch_gate.status
+            ? out_receipt->launch_gate.status
+            : (assets.startup_menu_asset_route
+                   ? assets.startup_menu_asset_route
+                   : "blocked-startup-assets");
+    } else if (out_receipt->menu_route_ready) {
+        out_receipt->route = NEXUS_V1_STARTUP_ROUTE_PROOF_MENU_READY;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "menu-ready";
+    } else if (out_receipt->title_route_ready) {
+        out_receipt->route = NEXUS_V1_STARTUP_ROUTE_PROOF_TITLE_READY;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "title-ready";
+    }
+    return 1;
+}
+
+int nexus_v1_launcher_startup_route_proof_from_snapshot(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    const Nexus_V1_StartupChampionExecution *execution,
+    const Nexus_V1_StartupHostActionReceipt *host_action,
+    Nexus_V1_DgnRenderCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupRouteProofReceipt *out_receipt)
+{
+    if (!snapshot) {
+        nexus_v1_launcher_startup_route_proof_receipt_clear(out_receipt);
+        return 0;
+    }
+    return nexus_v1_launcher_startup_route_proof_from_runtime_state(
+        runtime,
+        &snapshot->runtime,
+        execution,
+        host_action,
         out_commands,
         max_commands,
         out_receipt);

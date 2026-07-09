@@ -252,6 +252,36 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupRuntimeHandoffReceipt;
 
+typedef enum {
+    NEXUS_V1_STARTUP_ROUTE_PROOF_INVALID = 0,
+    NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED = 1,
+    NEXUS_V1_STARTUP_ROUTE_PROOF_TITLE_READY = 2,
+    NEXUS_V1_STARTUP_ROUTE_PROOF_MENU_READY = 3,
+    NEXUS_V1_STARTUP_ROUTE_PROOF_RUNTIME_READY = 4
+} Nexus_V1_StartupRouteProofRoute;
+
+typedef struct {
+    Nexus_V1_StartupRouteProofRoute route;
+    Nexus_V1_StartupLaunchGateReceipt launch_gate;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_StartupTitleHandoffReceipt title_handoff;
+    Nexus_V1_StartupMenuPresentationReceipt menu_presentation;
+    Nexus_V1_StartupRuntimeHandoffReceipt runtime_handoff;
+    int saturn_asset_boot_ready;
+    int title_route_ready;
+    int menu_route_ready;
+    int runtime_route_ready;
+    int graphics_ready;
+    int audio_ready;
+    int fallback_visuals_permitted;
+    const char *asset_route;
+    const char *title_route;
+    const char *menu_route;
+    const char *runtime_route;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupRouteProofReceipt;
+
 void nexus_v1_launcher_startup_runtime_state_clear(
     Nexus_V1_StartupRuntimeState *state);
 void nexus_v1_launcher_runtime_startup_snapshot_clear(
@@ -262,6 +292,8 @@ void nexus_v1_launcher_startup_title_handoff_receipt_clear(
     Nexus_V1_StartupTitleHandoffReceipt *receipt);
 void nexus_v1_launcher_startup_runtime_handoff_receipt_clear(
     Nexus_V1_StartupRuntimeHandoffReceipt *receipt);
+void nexus_v1_launcher_startup_route_proof_receipt_clear(
+    Nexus_V1_StartupRouteProofReceipt *receipt);
 int nexus_v1_launcher_startup_host_facts_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupHostFacts *out_facts);
@@ -446,6 +478,24 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_pointer_snapshot(
     Nexus_V1_DgnRenderCommand *out_commands,
     int max_commands,
     Nexus_V1_StartupRuntimeHandoffReceipt *out_receipt);
+const char *nexus_v1_launcher_startup_route_proof_route_name(
+    Nexus_V1_StartupRouteProofRoute route);
+int nexus_v1_launcher_startup_route_proof_from_runtime_state(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_StartupRuntimeState *state,
+    const Nexus_V1_StartupChampionExecution *execution,
+    const Nexus_V1_StartupHostActionReceipt *host_action,
+    Nexus_V1_DgnRenderCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupRouteProofReceipt *out_receipt);
+int nexus_v1_launcher_startup_route_proof_from_snapshot(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    const Nexus_V1_StartupChampionExecution *execution,
+    const Nexus_V1_StartupHostActionReceipt *host_action,
+    Nexus_V1_DgnRenderCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupRouteProofReceipt *out_receipt);
 int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupDrawCommand *out_commands,
