@@ -2,9 +2,9 @@
 #define FIRESTAFF_M11_INVENTORY_CHEST_AUTO_CLOSE_ON_LEADER_DEATH_PC34_COMPAT_H
 
 /*
- * M11 runtime helper for the DM1 V1 auto-close-chest-on-leader-
- * death contract. Mirrors CHAMPION.C F0319 (F0319_CHAMPION_Kill)
- * ordering against the live M11 inventory state:
+ * DM1 V1 auto-close-chest-on-leader-death contract. Mirrors
+ * CHAMPION.C F0319 (F0319_CHAMPION_Kill) ordering against the live
+ * inventory state:
  *
  *   (a) detect leader is the active champion and is dying
  *       (CurrentHealth reaches 0 in the active tick),
@@ -23,9 +23,9 @@
  *
  * Probe-mode caller (the regression test) sets `in_inventoryState`
  * to a synthetic DM1_V1_InventoryStatePc34 and reads the resulting
- * G0426 / G0424 / G0423 fields.  Production-mode caller sets
- * `in_inventoryState` to the live M11 game-view inventory and
- * observes the same fields via m11_inventory_get_* helpers.
+ * G0426 / G0424 / G0423 fields. Production-mode caller sets
+ * `in_inventoryState` to the live game-view inventory and observes
+ * the same fields via the DM1 inventory helpers.
  *
  * Source-locked to ReDMCSB:
  *   CHAMPION.C F0319 lines 1552-1607
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-typedef struct M11_InventoryChestAutoCloseOnLeaderDeathProbePc34_ {
+typedef struct DM1_V1_InventoryChestAutoCloseOnLeaderDeathProbePc34_ {
     /* Inputs */
     const DM1_V1_InventoryStatePc34* in_inventoryState;
     int leaderChampionIndex;
@@ -56,10 +56,16 @@ typedef struct M11_InventoryChestAutoCloseOnLeaderDeathProbePc34_ {
     int g0424EndedAtInventory;   /* panel content reaches C00_INVENTORY */
     int leaderHandClearedByF0318;
     const char* anchor;
-} M11_InventoryChestAutoCloseOnLeaderDeathProbePc34;
+} DM1_V1_InventoryChestAutoCloseOnLeaderDeathProbePc34;
 
-int m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(
-    M11_InventoryChestAutoCloseOnLeaderDeathProbePc34* out);
+int DM1_V1_InventoryChestAutoCloseOnLeaderDeath_RunPc34(
+    DM1_V1_InventoryChestAutoCloseOnLeaderDeathProbePc34* out);
+
+typedef DM1_V1_InventoryChestAutoCloseOnLeaderDeathProbePc34
+    M11_InventoryChestAutoCloseOnLeaderDeathProbePc34;
+
+#define m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run \
+    DM1_V1_InventoryChestAutoCloseOnLeaderDeath_RunPc34
 
 #ifdef __cplusplus
 }
