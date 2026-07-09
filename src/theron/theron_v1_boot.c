@@ -2564,6 +2564,35 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
     return 1;
 }
 
+static void theron_v1_boot_startup_mark_bitmap_route_ready(
+    Theron_V1_BootStartupGraphicsRouteReceipt *receipt,
+    unsigned int route_bit)
+{
+    if (!receipt || route_bit == 0u) {
+        return;
+    }
+    if ((receipt->bitmap_route_mask & route_bit) == 0u) {
+        receipt->bitmap_route_mask |= route_bit;
+        ++receipt->bitmap_route_count;
+    }
+    switch (route_bit) {
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE:
+        receipt->title_bitmap_route_ready = 1;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE:
+        receipt->stage_bitmap_route_ready = 1;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM:
+        receipt->soul_room_bitmap_route_ready = 1;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD:
+        receipt->forcefield_bitmap_route_ready = 1;
+        break;
+    default:
+        break;
+    }
+}
+
 static void theron_v1_boot_startup_mark_bitmap_routes(
     const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupRenderPlan *plan,
@@ -2571,6 +2600,7 @@ static void theron_v1_boot_startup_mark_bitmap_routes(
 {
     int i;
     unsigned int ready_mask;
+    unsigned int required_mask;
 
     if (!view_model || !plan || !receipt ||
         !view_model->startup_media_state_valid) {
@@ -2578,6 +2608,7 @@ static void theron_v1_boot_startup_mark_bitmap_routes(
     }
     ready_mask =
         view_model->startup_media_state_receipt.startup_bitmap_route_mask;
+    required_mask = plan->required_bitmap_route_mask;
     for (i = 0; i < plan->graphic_count &&
                 i < THERON_STARTUP_RENDER_GRAPHIC_CAPACITY_MAX; ++i) {
         switch (plan->graphics[i].kind) {
@@ -2585,37 +2616,61 @@ static void theron_v1_boot_startup_mark_bitmap_routes(
             if ((ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE) == 0u) {
                 break;
             }
-            receipt->bitmap_route_mask |= 1u << 0;
-            ++receipt->bitmap_route_count;
-            receipt->title_bitmap_route_ready = 1;
+            theron_v1_boot_startup_mark_bitmap_route_ready(
+                receipt,
+                THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE);
             break;
         case THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL:
             if ((ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE) == 0u) {
                 break;
             }
-            receipt->bitmap_route_mask |= 1u << 1;
-            ++receipt->bitmap_route_count;
-            receipt->stage_bitmap_route_ready = 1;
+            theron_v1_boot_startup_mark_bitmap_route_ready(
+                receipt,
+                THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE);
             break;
         case THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME:
             if ((ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) == 0u) {
                 break;
             }
-            receipt->bitmap_route_mask |= 1u << 2;
-            ++receipt->bitmap_route_count;
-            receipt->soul_room_bitmap_route_ready = 1;
+            theron_v1_boot_startup_mark_bitmap_route_ready(
+                receipt,
+                THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM);
             break;
         case THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD:
             if ((ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) == 0u) {
                 break;
             }
-            receipt->bitmap_route_mask |= 1u << 3;
-            ++receipt->bitmap_route_count;
-            receipt->forcefield_bitmap_route_ready = 1;
+            theron_v1_boot_startup_mark_bitmap_route_ready(
+                receipt,
+                THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD);
             break;
         default:
             break;
         }
+    }
+    if ((required_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE) &&
+        (ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE)) {
+        theron_v1_boot_startup_mark_bitmap_route_ready(
+            receipt,
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE);
+    }
+    if ((required_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE) &&
+        (ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE)) {
+        theron_v1_boot_startup_mark_bitmap_route_ready(
+            receipt,
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE);
+    }
+    if ((required_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
+        (ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM)) {
+        theron_v1_boot_startup_mark_bitmap_route_ready(
+            receipt,
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM);
+    }
+    if ((required_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+        (ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD)) {
+        theron_v1_boot_startup_mark_bitmap_route_ready(
+            receipt,
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD);
     }
 }
 
