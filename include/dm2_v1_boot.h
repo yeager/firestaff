@@ -542,6 +542,8 @@ typedef struct {
     int sampled_menu_selection_capture_count;
     int sampled_menu_selection_mask;
     int sampled_menu_composite_capture_count;
+    int sampled_menu_unique_composite_hash_count;
+    uint32_t sampled_menu_composite_hash;
     int sampled_runtime_hud_handoff_capture_ready;
     int real_gdat_capture_breadth_ready;
     int real_gdat_title_asset_required;
