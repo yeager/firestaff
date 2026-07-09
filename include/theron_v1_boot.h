@@ -564,6 +564,47 @@ typedef struct Theron_V1_BootStartupMenuRuntimeHandoffReceipt {
     const char *status;
 } Theron_V1_BootStartupMenuRuntimeHandoffReceipt;
 
+typedef struct Theron_V1_BootStartupUiCallerReceipt {
+    int ui_callers_ready;
+    int host_render_valid;
+    Theron_V1_BootStartupHostRenderReceipt host_render;
+    int menu_runtime_handoff_valid;
+    Theron_V1_BootStartupMenuRuntimeHandoffReceipt menu_runtime_handoff;
+    int track02_media_consumed;
+    int title_prompt_ready;
+    int roster_ready;
+    int title_menu_ready;
+    int stage_menu_ready;
+    int soul_room_menu_ready;
+    int forcefield_menu_ready;
+    int runtime_handoff_ready;
+    int track02_runtime_handoff_ready;
+    int save_resume_runtime_handoff_ready;
+    int real_graphics_handoff_ready;
+    int real_bitmap_decode_ready;
+    int bitmap_route_mask;
+    int bitmap_route_count;
+    int title_bitmap_route_ready;
+    int stage_bitmap_route_ready;
+    int soul_room_bitmap_route_ready;
+    int forcefield_bitmap_route_ready;
+    int runtime_level;
+    int runtime_level_source;
+    int runtime_track02_semantic_handoff;
+    int semantic_first_level_ready;
+    int semantic_nonzero_level_ready;
+    int semantic_level_coverage_mask;
+    int no_fallback_visuals_enforced;
+    int fallback_visuals_allowed;
+    int fallback_startup_graphics_executed;
+    int host_must_not_draw_fallback_visuals;
+    int raw_prompt_roster_required;
+    int raw_session_rebuild_required;
+    int raw_graphics_plan_consumer_required;
+    const char *status_scope;
+    const char *status;
+} Theron_V1_BootStartupUiCallerReceipt;
+
 int theron_v1_boot_prepare_startup_profile(
     Theron_V1_BootProfile *profile,
     const char *data_dir,
@@ -1018,6 +1059,50 @@ int theron_v1_boot_startup_menu_runtime_handoff_from_runtime_state_with_media_re
     int srm_slot,
     int srm_import_status,
     const char *srm_root,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    int input_code,
+    int pointer_x,
+    int pointer_y);
+void theron_v1_boot_startup_ui_caller_receipt_init(
+    Theron_V1_BootStartupUiCallerReceipt *receipt);
+int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    int input_code,
+    int pointer_x,
+    int pointer_y,
+    Theron_V1_BootStartupUiCallerReceipt *out_receipt);
+int theron_v1_boot_startup_ui_caller_from_snapshot_with_media_receipt(
+    Theron_V1_BootStartupUiCallerReceipt *out_receipt,
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    int input_code,
+    int pointer_x,
+    int pointer_y);
+int theron_v1_boot_startup_ui_caller_from_runtime_route_with_media_receipt(
+    Theron_V1_BootStartupUiCallerReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    int startup_phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int startup_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    int runtime_level_source,
+    int runtime_track02_semantic_handoff,
+    int runtime_fallback_visuals_blocked,
+    int runtime_structured_route,
+    int runtime_receipt_text_route,
     int selected_mirrors_mask,
     int companion_count,
     const int *selected_mirror_order,

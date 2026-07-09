@@ -1466,6 +1466,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootStartupFullStartReceipt full_start_receipt;
     Theron_V1_BootStartupHostRenderReceipt host_render_receipt;
     Theron_V1_BootStartupMenuRuntimeHandoffReceipt handoff_receipt;
+    Theron_V1_BootStartupUiCallerReceipt ui_caller_receipt;
     Theron_StartupAction media_pointer_action;
     Theron_StartupInputReceipt media_pointer_receipt;
     Theron_StartupAction media_input_action;
@@ -1588,6 +1589,12 @@ static void test_startup_session_facts_wrappers(void) {
     media_snapshot.startup_roster_names = NULL;
     media_snapshot.startup_roster_titles = NULL;
     media_snapshot.startup_roster_name_count = 0;
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    memset(&media_graphics_executor, 0, sizeof(media_graphics_executor));
+    media_graphics_executor.userdata = &media_graphics_counters;
+    media_graphics_executor.fill_rect = test_startup_fill_rect;
+    media_graphics_executor.draw_rect = test_startup_draw_rect;
+    media_graphics_executor.plot_pixel = test_startup_plot_pixel;
     expect_true(theron_v1_boot_startup_view_model_from_snapshot(
                     &snapshot,
                     &view_model) &&
@@ -2437,6 +2444,47 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(handoff_receipt.status,
                            "THERON RUNTIME HANDOFF NO FALLBACK") == 0,
                 "boot menu/runtime handoff package exposes Track02 runtime no-fallback handoff");
+    expect_true(theron_v1_boot_startup_ui_caller_from_full_start_receipt(
+                    &full_start_receipt,
+                    -1,
+                    -1,
+                    -1,
+                    &ui_caller_receipt) &&
+                    ui_caller_receipt.ui_callers_ready &&
+                    ui_caller_receipt.host_render_valid &&
+                    ui_caller_receipt.menu_runtime_handoff_valid &&
+                    ui_caller_receipt.track02_media_consumed &&
+                    ui_caller_receipt.title_prompt_ready &&
+                    ui_caller_receipt.roster_ready &&
+                    ui_caller_receipt.title_menu_ready &&
+                    ui_caller_receipt.stage_menu_ready &&
+                    ui_caller_receipt.soul_room_menu_ready &&
+                    ui_caller_receipt.forcefield_menu_ready &&
+                    ui_caller_receipt.runtime_handoff_ready &&
+                    ui_caller_receipt.track02_runtime_handoff_ready &&
+                    !ui_caller_receipt.save_resume_runtime_handoff_ready &&
+                    ui_caller_receipt.real_graphics_handoff_ready &&
+                    ui_caller_receipt.real_bitmap_decode_ready &&
+                    (ui_caller_receipt.bitmap_route_mask & 0x04) &&
+                    (ui_caller_receipt.bitmap_route_mask & 0x08) &&
+                    ui_caller_receipt.bitmap_route_count >= 2 &&
+                    ui_caller_receipt.soul_room_bitmap_route_ready &&
+                    ui_caller_receipt.forcefield_bitmap_route_ready &&
+                    ui_caller_receipt.runtime_level == 0 &&
+                    ui_caller_receipt.runtime_track02_semantic_handoff &&
+                    ui_caller_receipt.semantic_first_level_ready &&
+                    !ui_caller_receipt.semantic_nonzero_level_ready &&
+                    ui_caller_receipt.semantic_level_coverage_mask == 0x01 &&
+                    ui_caller_receipt.no_fallback_visuals_enforced &&
+                    !ui_caller_receipt.fallback_visuals_allowed &&
+                    !ui_caller_receipt.fallback_startup_graphics_executed &&
+                    ui_caller_receipt.host_must_not_draw_fallback_visuals &&
+                    !ui_caller_receipt.raw_prompt_roster_required &&
+                    !ui_caller_receipt.raw_session_rebuild_required &&
+                    !ui_caller_receipt.raw_graphics_plan_consumer_required &&
+                    strcmp(ui_caller_receipt.status,
+                           "THERON UI CALLERS TRACK02 READY") == 0,
+                "boot UI caller receipt consumes Track02 title/menu/bitmap/runtime handoff without fallback visuals");
     world.current_level = 1;
     world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][1] = 1;
     semantic_level_snapshot = media_snapshot;
@@ -2561,6 +2609,48 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(full_start_receipt.status,
                            "FORCEFIELD RUNTIME HANDOFF") == 0,
                 "boot runtime-route full-start receipt proves Track02 semantic level 2 no-fallback handoff");
+    expect_true(theron_v1_boot_startup_ui_caller_from_runtime_route_with_media_receipt(
+                    &ui_caller_receipt,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC,
+                    1,
+                    0,
+                    1,
+                    0,
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS,
+                    -1,
+                    -1,
+                    -1) &&
+                    ui_caller_receipt.ui_callers_ready &&
+                    ui_caller_receipt.runtime_level == 2 &&
+                    ui_caller_receipt.runtime_track02_semantic_handoff &&
+                    !ui_caller_receipt.semantic_first_level_ready &&
+                    ui_caller_receipt.semantic_nonzero_level_ready &&
+                    ui_caller_receipt.semantic_level_coverage_mask == 0x04 &&
+                    ui_caller_receipt.real_bitmap_decode_ready &&
+                    ui_caller_receipt.host_must_not_draw_fallback_visuals &&
+                    !ui_caller_receipt.fallback_visuals_allowed &&
+                    !ui_caller_receipt.fallback_startup_graphics_executed &&
+                    !ui_caller_receipt.raw_prompt_roster_required &&
+                    !ui_caller_receipt.raw_session_rebuild_required &&
+                    !ui_caller_receipt.raw_graphics_plan_consumer_required,
+                "boot UI caller wrapper covers Track02 semantic nonzero level without fallback visuals");
     world.current_level = 0;
     save_resume_snapshot = media_snapshot;
     save_resume_snapshot.runtime_level_source =
