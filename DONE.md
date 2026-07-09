@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB startup pre-render action receipt: startup action receipts now carry a full pre-input render-view receipt for title/PRESENTS, utility HUD/menu, and closed-door entrance routes, plus Back/launcher-return proof without post-render state. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus startup asset/audio route receipt: launcher boot/runtime receipts now carry title/warning/gameover/STABG, champion-face, MENU.BPK upload-plan, and level-0 SFX/CD handoff facts, so M11 can inspect main-menu readiness without reading raw engine fields. Verification: `test_nexus_v1_startup_menu_pc34_compat`, `m11_nexus_startup_gate`, `nexus_v1_boot_file_hash_scan`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 entrance full-start render receipt: HoC startup now exposes a DM1-owned ReDMCSB F0797/F0438 receipt for the C255 5x5 micro-dungeon, south-facing party view, door animation frame, rattle cadence, and entrance music request so full-graphics startup can stop reconstructing those facts in host code. Verification: `test_dm1_v1_entrance_champion_select_pc34_compat` and `git diff --check` passed.

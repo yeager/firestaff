@@ -2004,8 +2004,14 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.pre_input_route.route ==
                   CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
               boot_action_receipt.pre_input_route.draw_title &&
+              boot_action_receipt.pre_input_render_view_valid &&
+              boot_action_receipt.pre_input_render_view
+                  .title_after_swoosh_route &&
+              boot_action_receipt.pre_input_render_view
+                  .title_presents_visible &&
+              !boot_action_receipt.post_input_render_view_valid &&
               !boot_action_receipt.pre_input_route.hud_menu_state.valid,
-          "boot startup action receipt captures title route before blocked input");
+          "boot startup action receipt captures title render-view before blocked input");
     snapshot.utility_overlay_active = 1;
     snapshot.title_active = 0;
     snapshot.title_frame = 0;
@@ -2212,8 +2218,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
               boot_action_receipt.pre_input_route.hud_menu_state.valid &&
               boot_action_receipt.pre_input_route.hud_menu_state.kind ==
-                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34,
-          "boot startup action facade keeps utility priority with route proof");
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              boot_action_receipt.pre_input_render_view_valid &&
+              boot_action_receipt.pre_input_render_view.closed_door_menu_route &&
+              boot_action_receipt.pre_input_render_view.hud_menu_receipt_ready &&
+              boot_action_receipt.pre_input_render_view.route_receipt
+                      .hud_menu_state.utility_selected_action_index == 0,
+          "boot startup action facade keeps utility priority with pre-render proof");
     CHECK(boot_action_receipt.post_input_render_view_valid &&
               boot_action_receipt.input_stays_on_startup &&
               !boot_action_receipt.input_requests_launcher_return &&
@@ -2252,8 +2263,12 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
               boot_action_receipt.pre_input_route.hud_menu_state.valid &&
               boot_action_receipt.pre_input_route.hud_menu_state.kind ==
-                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34,
-          "boot startup action facade returns entrance receipt with route proof");
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              boot_action_receipt.pre_input_render_view_valid &&
+              boot_action_receipt.pre_input_render_view.closed_door_menu_route &&
+              boot_action_receipt.pre_input_render_view
+                  .suppress_legacy_utility_fallback,
+          "boot startup action facade returns entrance receipt with pre-render proof");
     CHECK(boot_action_receipt.post_input_render_view_valid &&
               boot_action_receipt.input_stays_on_startup &&
               !boot_action_receipt.input_requests_launcher_return &&
@@ -2266,6 +2281,21 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !boot_action_receipt.post_input_render_view.route_receipt
                    .accepts_input,
           "boot startup entrance input carries post-input door render route");
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
+              &snapshot,
+              10,
+              &boot_action_receipt) == 1,
+          "boot startup action facade handles entrance Back input");
+    CHECK(boot_action_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34 &&
+              boot_action_receipt.input_requests_launcher_return &&
+              !boot_action_receipt.input_stays_on_startup &&
+              !boot_action_receipt.post_input_render_view_valid &&
+              boot_action_receipt.pre_input_render_view_valid &&
+              boot_action_receipt.pre_input_render_view.closed_door_menu_route &&
+              boot_action_receipt.pre_input_render_view.route_receipt
+                  .hud_menu_state.valid,
+          "boot startup Back input carries pre-render menu and launcher return");
 
     csb_v1_boot_cleanup(&boot);
 }
