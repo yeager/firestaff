@@ -228,6 +228,10 @@ static void test_f0172_front_wall_sensor_receipt(void)
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 receipt;
     DM1_V1_ChampionMirrorRenderReceiptPc34 render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
+    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 consumer;
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 floorThing;
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 projectileThing;
+    const DM1V1D1LD1RF0115LanePc34Data *lane;
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
@@ -335,6 +339,58 @@ static void test_f0172_front_wall_sensor_receipt(void)
         "receipt suppresses mirror payload without blocking real floor objects",
         "DUNVIEW.C:4547-4581; DUNVIEW.C:5668-5683");
 
+    lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
+    CHECK_ANCHOR(
+        lane != NULL &&
+            dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                lane, 5, 1, 1, 0, &floorThing) == 1 &&
+            floorThing.valid == 1 &&
+            floorThing.input_valid == 1 &&
+            floorThing.draw_item == 1 &&
+            floorThing.suppress_item == 0,
+        "F0115 runtime receipt keeps a real floor object drawable",
+        "DUNVIEW.C:4547-4581; DUNVIEW.C:5075");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+            &boundary, &floorThing, &consumer) == 1 &&
+            consumer.valid == 1 &&
+            consumer.consumedBoundaryReceipt == 1 &&
+            consumer.consumedRuntimeThingReceipt == 1 &&
+            consumer.drawChampionPortraitAsWallOverlay == 1 &&
+            consumer.wallOverlayOnly == 1 &&
+            consumer.suppressMirrorAsFloorItem == 1 &&
+            consumer.suppressMirrorAsProjectile == 1 &&
+            consumer.suppressMirrorAsSpellEffect == 1 &&
+            consumer.drawFloorObject == 1 &&
+            consumer.drawRuntimeProjectile == 0 &&
+            consumer.thingLayerSafe == 1,
+        "consumer routes mirror to wall overlay while allowing floor object",
+        "DUNVIEW.C:3913-3928; DUNVIEW.C:4547-4581; DUNVIEW.C:5075");
+
+    CHECK_ANCHOR(
+        dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+            lane, 14, 1, 1, 1, &projectileThing) == 1 &&
+            projectileThing.valid == 1 &&
+            projectileThing.input_valid == 1 &&
+            projectileThing.draw_projectile == 1 &&
+            projectileThing.suppress_projectile == 0,
+        "F0115 runtime receipt keeps a real projectile drawable",
+        "DUNVIEW.C:4547-4581; DUNVIEW.C:5668-5683");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+            &boundary, &projectileThing, &consumer) == 1 &&
+            consumer.valid == 1 &&
+            consumer.drawChampionPortraitAsWallOverlay == 1 &&
+            consumer.suppressMirrorAsProjectile == 1 &&
+            consumer.drawFloorObject == 0 &&
+            consumer.drawRuntimeProjectile == 1 &&
+            consumer.runtimeProjectileReceiptRequired == 1 &&
+            consumer.thingLayerSafe == 1,
+        "consumer suppresses mirror projectile leak while allowing projectile",
+        "DUNVIEW.C:3913-3928; DUNVIEW.C:5668-5683");
+
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
             127, 13, 4, 1, 2, &receipt) == 1 &&
@@ -391,7 +447,13 @@ static void test_f0172_front_wall_sensor_receipt(void)
             DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
                 NULL, &boundary) == 0 &&
             DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
-                &render, NULL) == 0,
+                &render, NULL) == 0 &&
+            DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+                NULL, &floorThing, &consumer) == 0 &&
+            DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+                &boundary, NULL, &consumer) == 0 &&
+            DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+                &boundary, &floorThing, NULL) == 0,
         "render receipt rejects NULL inputs",
         "DM1 receipt guard");
 }

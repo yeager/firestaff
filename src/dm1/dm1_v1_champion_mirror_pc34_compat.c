@@ -400,6 +400,80 @@ int DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
     return 1;
 }
 
+int DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+    const DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 *boundaryReceipt,
+    const DM1V1D1LD1RF0115RuntimeThingReceiptPc34 *runtimeThingReceipt,
+    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 *outReceipt)
+{
+    if (!boundaryReceipt || !runtimeThingReceipt || !outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->sourceOrdinal = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+    outReceipt->renderIndex = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+    outReceipt->zone = -1;
+    outReceipt->row = -1;
+    outReceipt->viewCell = -1;
+    outReceipt->sourceAnchor =
+        "ReDMCSB DUNVIEW.C:3913-3928 C026 wall overlay; "
+        "DUNVIEW.C:4547-4581/5075/5668-5683 F0115 runtime thing layers";
+    if (!boundaryReceipt->valid || !runtimeThingReceipt->valid) {
+        return 1;
+    }
+
+    outReceipt->valid = 1;
+    outReceipt->consumedBoundaryReceipt = 1;
+    outReceipt->consumedRuntimeThingReceipt = 1;
+    outReceipt->sourceOrdinal = boundaryReceipt->sourceOrdinal;
+    outReceipt->renderIndex = boundaryReceipt->renderIndex;
+    outReceipt->zone = runtimeThingReceipt->zone;
+    outReceipt->row = runtimeThingReceipt->row;
+    outReceipt->viewCell = runtimeThingReceipt->view_cell;
+
+    /* ReDMCSB: DUNVIEW.C lines 3913-3928 render C026 champion portraits
+     * only through the D1C front wall overlay path.  The later F0115 pass
+     * (4547-4581, floor item zone near 5075, projectile path 5668-5683)
+     * consumes runtime thing/projectile receipts, so this DM1 receipt lets
+     * real floor objects/projectiles render without treating the mirror
+     * payload as an item, projectile, or spell effect. */
+    outReceipt->wallOverlayOnly =
+        boundaryReceipt->drawChampionPortraitAsWallOverlay ? 1 : 0;
+    outReceipt->drawChampionPortraitAsWallOverlay =
+        boundaryReceipt->drawChampionPortraitAsWallOverlay ? 1 : 0;
+    outReceipt->suppressMirrorAsFloorItem =
+        boundaryReceipt->suppressMirrorAsFloorItem ? 1 : 0;
+    outReceipt->suppressMirrorAsProjectile =
+        boundaryReceipt->suppressMirrorAsProjectile ? 1 : 0;
+    outReceipt->suppressMirrorAsSpellEffect =
+        boundaryReceipt->suppressMirrorAsSpellEffect ? 1 : 0;
+    outReceipt->suppressMaterializedItemPayload =
+        boundaryReceipt->suppressMaterializedItemPayload ? 1 : 0;
+    outReceipt->floorObjectLayerAllowed =
+        boundaryReceipt->allowIndependentFloorObjects ? 1 : 0;
+    outReceipt->runtimeProjectileReceiptRequired =
+        boundaryReceipt->requireRuntimeProjectileReceipt ? 1 : 0;
+    outReceipt->drawFloorObject =
+        outReceipt->floorObjectLayerAllowed &&
+        runtimeThingReceipt->input_valid &&
+        runtimeThingReceipt->draw_item &&
+        !runtimeThingReceipt->suppress_item;
+    outReceipt->drawRuntimeProjectile =
+        outReceipt->runtimeProjectileReceiptRequired &&
+        runtimeThingReceipt->input_valid &&
+        runtimeThingReceipt->consumes_runtime_projectile_list &&
+        runtimeThingReceipt->draw_projectile &&
+        !runtimeThingReceipt->suppress_projectile;
+    outReceipt->thingLayerSafe =
+        boundaryReceipt->thingLayerSafe &&
+        outReceipt->suppressMirrorAsFloorItem &&
+        outReceipt->suppressMirrorAsProjectile &&
+        outReceipt->suppressMirrorAsSpellEffect &&
+        (outReceipt->drawFloorObject ||
+         outReceipt->drawRuntimeProjectile ||
+         runtimeThingReceipt->suppress_non_thing_payload);
+    return 1;
+}
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
 {
     return "ReDMCSB COMMAND.C:484-488 G0455 maps C159..C162 champion-name "
@@ -413,5 +487,7 @@ const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
            "portrait ordinal; DUNVIEW.C:3913-3928 blits C026 champion "
            "portraits through G0109 {96,127,35,63}; DUNGEON.C:2558 resets "
            "G0289 when a wall square is present, preventing stale mirror "
-           "payloads from leaking into later dungeon-view layers.";
+           "payloads from leaking into later dungeon-view layers; "
+           "DUNVIEW.C:4547-4581,5075,5668-5683 keep F0115 floor items and "
+           "runtime projectiles separate from the C026 wall-overlay path.";
 }
