@@ -232,10 +232,11 @@ static void test_f0172_front_wall_sensor_receipt(void)
             127, 13, 4, 2, 2, &receipt) == 1 &&
             receipt.valid == 1 &&
             receipt.isFrontMirror == 1 &&
-            receipt.championPortraitOrdinal == 13 &&
+            receipt.championPortraitOrdinal == 14 &&
+            receipt.championPortraitRenderIndex == 13 &&
             receipt.wallOrnamentOrdinal == 4,
-        "C127 matching wall cell yields front champion mirror receipt",
-        "DUNGEON.C:2573,2608-2612");
+        "C127 matching wall cell yields source ordinal and render index",
+        "DUNGEON.C:2573,2608-2612; COMPILE.H:1038");
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
@@ -243,6 +244,8 @@ static void test_f0172_front_wall_sensor_receipt(void)
             receipt.valid == 1 &&
             receipt.isFrontMirror == 0 &&
             receipt.championPortraitOrdinal ==
+                DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT &&
+            receipt.championPortraitRenderIndex ==
                 DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT,
         "C127 on a non-visible wall face is ignored",
         "DUNGEON.C:2573");

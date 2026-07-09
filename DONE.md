@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 HoC champion mirror ordinal/render route: the DM1 F0172 mirror receipt now keeps ReDMCSB's 1-based G0289 source ordinal separate from the 0-based C026 portrait render index, and M11 consumes the render index through a HoC front-wall probe so C127 side sensors cannot draw floating portraits. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, `test_m11_overlay_command_queue_block`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron external SRM snapshot path interop: save-resume explicit-path import now accepts arbitrary external `.srm` files, decodes them through the same envelope/progression/party receipt path as `slotN.srm`, and records path-only SRM state with slot `-1` instead of dropping the runtime handoff. Verification: `test_theron_v1_startup_save_resume_pc34` 170/170, `firestaff_theron_v1_startup_save_resume_probe` 81/81, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup resume gate receipt: CSB closed-door startup HUD/menu receipts now carry resume option visibility, selection, availability, and save path, so host render/input code can consume a CSB-owned resume gate instead of inferring it from menu text. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.

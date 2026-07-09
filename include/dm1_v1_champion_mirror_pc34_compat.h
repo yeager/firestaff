@@ -55,7 +55,8 @@ typedef struct DM1_V1_ChampionMirrorClickResultPc34 {
 typedef struct DM1_V1_ChampionMirrorFrontWallReceiptPc34 {
     int valid;
     int isFrontMirror;
-    int championPortraitOrdinal;
+    int championPortraitOrdinal;       /* ReDMCSB G0289, 1-based source ordinal */
+    int championPortraitRenderIndex;   /* C026 atlas index, 0-based */
     int wallOrnamentOrdinal;
 } DM1_V1_ChampionMirrorFrontWallReceiptPc34;
 

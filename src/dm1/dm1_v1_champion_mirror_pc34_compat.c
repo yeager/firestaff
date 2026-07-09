@@ -240,18 +240,23 @@ int DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
     memset(outReceipt, 0, sizeof(*outReceipt));
     outReceipt->championPortraitOrdinal =
         DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+    outReceipt->championPortraitRenderIndex =
+        DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
 
-    /* ReDMCSB DUNGEON.C F0172/F0174: C127 champion-portrait sensors
-     * count only on the wall face currently seen by the party; then
-     * G0289 receives M000_INDEX_TO_ORDINAL(sensorData) for the D1C
-     * champion portrait route. */
+    /* ReDMCSB DUNGEON.C F0172/F0174 lines 2573,2608-2612: C127
+     * champion-portrait sensors count only on the wall face currently
+     * seen by the party, then G0289 receives
+     * M000_INDEX_TO_ORDINAL(M040_DATA(sensor)). COMPILE.H line 1038
+     * defines M000_INDEX_TO_ORDINAL(value) as value + 1; Firestaff keeps
+     * that 1-based source ordinal beside the 0-based C026 render index. */
     outReceipt->valid = 1;
     if (sensorType != 127 || thingCell != visibleWallCell) {
         return 1;
     }
 
     outReceipt->isFrontMirror = 1;
-    outReceipt->championPortraitOrdinal = sensorData;
+    outReceipt->championPortraitOrdinal = sensorData + 1;
+    outReceipt->championPortraitRenderIndex = sensorData;
     if (ornamentOrdinal > 0) {
         outReceipt->wallOrnamentOrdinal = ornamentOrdinal;
     }
@@ -266,6 +271,7 @@ const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
            "boxes only when G0299 is clear; CLIKCHAM.C:24-35 F0367 maps "
            "status/name clicks to F0368; CLIKCHAM.C:51-72 F0368 changes "
            "G0411 leader and skips redraw for the G0299 candidate; "
-           "DUNGEON.C:2573,2608-2612 F0172/F0174 map C127 front-wall "
-           "sensor data to G0289 champion portrait ordinal.";
+           "DUNGEON.C:2573,2608-2612 F0172/F0174 and COMPILE.H:1038 map "
+           "C127 front-wall sensor data to the 1-based G0289 champion "
+           "portrait ordinal.";
 }

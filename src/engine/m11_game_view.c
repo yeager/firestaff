@@ -16763,7 +16763,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                             &mirrorReceipt) &&
                         mirrorReceipt.isFrontMirror) {
                         cell.championPortraitOrdinal =
-                            mirrorReceipt.championPortraitOrdinal;
+                            mirrorReceipt.championPortraitRenderIndex;
                         if (mirrorReceipt.wallOrnamentOrdinal > 0) {
                             cell.wallOrnamentOrdinal =
                                 mirrorReceipt.wallOrnamentOrdinal;
