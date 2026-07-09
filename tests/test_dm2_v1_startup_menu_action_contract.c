@@ -62,6 +62,7 @@ int main(void)
     DM2_V1_BootRuntimeStartupSnapshot boot_snapshot;
     DM2_V1_BootStartupHostViewReceipt boot_host_view_receipt;
     DM2_V1_BootStartupFullStartReceipt boot_full_start_receipt;
+    DM2_V1_BootStartupPackagedCaptureProof boot_capture_proof;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -497,8 +498,26 @@ int main(void)
               boot_host_view_receipt.menu_panel_ready == 1 &&
               boot_host_view_receipt.startup_menu_assets_ready == 1 &&
               boot_host_view_receipt.startup_hud_handoff_ready == 1 &&
-              boot_host_view_receipt.m11_host_view_ready == 1,
+              boot_host_view_receipt.m11_host_view_ready == 1 &&
+              boot_host_view_receipt.capture_proof_valid == 1 &&
+              boot_host_view_receipt.capture_proof.valid == 1 &&
+              boot_host_view_receipt.capture_proof.title_capture_ready == 0 &&
+              boot_host_view_receipt.capture_proof.menu_capture_ready == 1 &&
+              boot_host_view_receipt.capture_proof.hud_handoff_capture_ready == 1 &&
+              boot_host_view_receipt.capture_proof.packaged_capture_hash != 0u,
           "boot host-view receipt owns exact title timing and menu asset proof");
+    check(dm2_v1_boot_startup_packaged_capture_proof_from_snapshot(
+              &boot_snapshot,
+              &boot_capture_proof) &&
+              boot_capture_proof.valid &&
+              boot_capture_proof.title_animation_tick == 0 &&
+              boot_capture_proof.title_frame_start_tick == 0 &&
+              boot_capture_proof.title_next_frame_tick == 6 &&
+              boot_capture_proof.title_frame_remaining_ticks == 6 &&
+              boot_capture_proof.menu_capture_ready == 1 &&
+              boot_capture_proof.hud_handoff_capture_ready == 1 &&
+              boot_capture_proof.m11_consumer_ready == 1,
+          "boot packaged capture proof owns startup menu timing and HUD handoff");
     check(dm2_v1_boot_startup_full_start_receipt_from_runtime_state(
               NULL,
               1,
@@ -533,8 +552,29 @@ int main(void)
               boot_host_view_receipt.title_frame == 2 &&
               boot_host_view_receipt.title_frame_elapsed_ticks == 1 &&
               boot_host_view_receipt.title_frame_remaining_ticks == 5 &&
-              boot_host_view_receipt.m11_host_view_ready == 1,
+              boot_host_view_receipt.m11_host_view_ready == 1 &&
+              boot_host_view_receipt.capture_proof_valid == 1 &&
+              boot_host_view_receipt.capture_proof.title_animation_tick == 13 &&
+              boot_host_view_receipt.capture_proof.title_frame_start_tick == 12 &&
+              boot_host_view_receipt.capture_proof.title_next_frame_tick == 18,
           "boot host-view receipt owns nonzero title tick timing for M11");
+    check(dm2_v1_boot_startup_packaged_capture_proof_from_runtime_state(
+              NULL,
+              1,
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              13,
+              &boot_capture_proof) &&
+              boot_capture_proof.valid &&
+              boot_capture_proof.title_animation_tick == 13 &&
+              boot_capture_proof.title_frame == 2 &&
+              boot_capture_proof.title_frame_elapsed_ticks == 1 &&
+              boot_capture_proof.title_frame_remaining_ticks == 5 &&
+              boot_capture_proof.menu_capture_ready == 1 &&
+              boot_capture_proof.m11_consumer_ready == 1,
+          "boot packaged capture proof owns nonzero title timing for M11");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&

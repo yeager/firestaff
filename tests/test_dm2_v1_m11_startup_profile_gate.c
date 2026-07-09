@@ -308,6 +308,7 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_BootStartupViewModel boot_view_model;
     DM2_V1_BootStartupFullStartReceipt full_start_receipt;
     DM2_V1_BootStartupHostViewReceipt host_view_receipt;
+    DM2_V1_BootStartupPackagedCaptureProof capture_proof;
     DM2_V1_StartupMenu restored_menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupViewReceipt view_receipt;
@@ -700,11 +701,28 @@ static void expect_dm2_startup_layout_contract(void) {
                     host_view_receipt.startup_hud_handoff_ready == 1 &&
                     host_view_receipt.runtime_handoff_ready == 0 &&
                     host_view_receipt.m11_host_view_ready == 1 &&
+                    host_view_receipt.capture_proof_valid == 1 &&
+                    host_view_receipt.capture_proof.valid == 1 &&
+                    host_view_receipt.capture_proof.menu_capture_ready == 1 &&
+                    host_view_receipt.capture_proof.hud_handoff_capture_ready == 1 &&
+                    host_view_receipt.capture_proof.title_capture_ready == 0 &&
+                    host_view_receipt.capture_proof.packaged_capture_hash != 0u &&
                     strcmp(host_view_receipt.status_scope, "STARTUP") == 0 &&
                     strcmp(host_view_receipt.status, "DM2 STARTUP MENU") == 0 &&
                     strcmp(host_view_receipt.log_line,
                            "T0: DM2 STARTUP MENU") == 0,
                 "DM2 boot host-view receipt lets M11 consume startup state/status without loose command-count gates");
+    expect_true(dm2_v1_boot_startup_packaged_capture_proof_from_snapshot(
+                    &boot_snapshot,
+                    &capture_proof) &&
+                    capture_proof.valid &&
+                    capture_proof.title_animation_tick == 0 &&
+                    capture_proof.title_frame_start_tick == 0 &&
+                    capture_proof.title_next_frame_tick == 6 &&
+                    capture_proof.menu_capture_ready == 1 &&
+                    capture_proof.hud_handoff_capture_ready == 1 &&
+                    capture_proof.m11_consumer_ready == 1,
+                "DM2 packaged startup capture proof lets M11 consume timing/menu/HUD as one receipt");
     boot_snapshot.startup_menu_active = 1;
     expect_true(dm2_v1_startup_presentation_receipt(
                     1,
@@ -1056,6 +1074,7 @@ int main(void) {
     M11_BootProbeReceipt boot_receipt;
     DM2_V1_BootStartupFullStartReceipt full_start_receipt;
     DM2_V1_BootStartupHostViewReceipt host_view_receipt;
+    DM2_V1_BootStartupPackagedCaptureProof capture_proof;
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
@@ -1245,6 +1264,14 @@ int main(void) {
                         host_view_receipt.hud_runtime_ready == 1 &&
                         host_view_receipt.startup_hud_handoff_ready == 1 &&
                         host_view_receipt.m11_host_view_ready == 1 &&
+                        host_view_receipt.capture_proof_valid == 1 &&
+                        host_view_receipt.capture_proof.valid == 1 &&
+                        host_view_receipt.capture_proof.title_capture_ready == 1 &&
+                        host_view_receipt.capture_proof.menu_capture_ready == 1 &&
+                        host_view_receipt.capture_proof.hud_handoff_capture_ready == 1 &&
+                        host_view_receipt.capture_proof.title_gdat_asset_w == 320 &&
+                        host_view_receipt.capture_proof.title_gdat_asset_h == 200 &&
+                        host_view_receipt.capture_proof.packaged_capture_hash != 0u &&
                         strcmp(host_view_receipt.status,
                                "DM2 STARTUP MENU") == 0 &&
                         host_view_receipt.full_start
@@ -1271,8 +1298,33 @@ int main(void) {
                         host_view_receipt.title_cycle_remaining_ticks == 35 &&
                         host_view_receipt.exact_title_timing_ready == 1 &&
                         host_view_receipt.title_gdat_asset_ready == 1 &&
-                        host_view_receipt.m11_host_view_ready == 1,
+                        host_view_receipt.m11_host_view_ready == 1 &&
+                        host_view_receipt.capture_proof_valid == 1 &&
+                        host_view_receipt.capture_proof.title_animation_tick == 13 &&
+                        host_view_receipt.capture_proof.title_frame == 2 &&
+                        host_view_receipt.capture_proof.title_capture_ready == 1,
                     "DM2 boot host-view receipt proves real GDAT title at nonzero frame tick");
+        expect_true(dm2_v1_boot_startup_packaged_capture_proof_from_runtime_state(
+                        profile,
+                        startup_snapshot.startup_menu_active,
+                        startup_snapshot.startup_save_root,
+                        startup_snapshot.resume_available,
+                        startup_snapshot.slot_mask,
+                        startup_snapshot.selected_row,
+                        13,
+                        &capture_proof) &&
+                        capture_proof.valid &&
+                        capture_proof.title_animation_tick == 13 &&
+                        capture_proof.title_frame == 2 &&
+                        capture_proof.title_frame_start_tick == 12 &&
+                        capture_proof.title_next_frame_tick == 18 &&
+                        capture_proof.title_frame_elapsed_ticks == 1 &&
+                        capture_proof.title_frame_remaining_ticks == 5 &&
+                        capture_proof.title_capture_ready == 1 &&
+                        capture_proof.menu_capture_ready == 1 &&
+                        capture_proof.hud_handoff_capture_ready == 1 &&
+                        capture_proof.m11_consumer_ready == 1,
+                    "DM2 packaged capture proof binds real title asset and nonzero timing for M11");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,
