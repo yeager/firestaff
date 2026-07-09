@@ -31,7 +31,7 @@ static int gPasses;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateChestOpenDuringPendingEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateChestOpenDuringPendingEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateChestOpenDuringPending_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,
@@ -82,7 +82,7 @@ static void test_source_lock_metadata(void)
 
 static void test_fixture_starts_with_c040_open_and_prior_chest(void)
 {
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
 
     DM1_V1_MirrorCandidateChestOpenDuringPending_InitPc34Compat(&state);
 
@@ -172,8 +172,8 @@ static void test_fixture_starts_with_c040_open_and_prior_chest(void)
 
 static void test_scenario_a_new_chest_opens_under_pending_c040(void)
 {
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat result;
     int accepted;
 
     DM1_V1_MirrorCandidateChestOpenDuringPending_InitPc34Compat(&state);
@@ -336,8 +336,8 @@ static void test_scenario_a_new_chest_opens_under_pending_c040(void)
 
 static void test_scenario_b_same_chest_early_return_under_pending_c040(void)
 {
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat result;
     int accepted;
 
     DM1_V1_MirrorCandidateChestOpenDuringPending_InitPc34Compat(&state);
@@ -466,8 +466,8 @@ static void test_scenario_b_same_chest_early_return_under_pending_c040(void)
 
 static void test_scenario_c_non_chest_cell_click_under_pending_c040(void)
 {
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat result;
     int accepted;
 
     DM1_V1_MirrorCandidateChestOpenDuringPending_InitPc34Compat(&state);

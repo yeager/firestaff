@@ -77,7 +77,7 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_CHEST_OPEN_DURING_PENDING_PRIOR_SLOT6_PC34_COMPAT (-1)
 #define DM1_V1_MIRROR_CANDIDATE_CHEST_OPEN_DURING_PENDING_PRIOR_SLOT7_PC34_COMPAT (-1)
 
-typedef struct Dm1V1MirrorCandidateChestOpenDuringPendingEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateChestOpenDuringPendingEvidencePc34Compat {
     const char *chestSameOpenGuardAnchor;
     const char *chestFirstOpenMaterializeAnchor;
     const char *commandPanelDispatchAnchor;
@@ -88,9 +88,9 @@ typedef struct Dm1V1MirrorCandidateChestOpenDuringPendingEvidencePc34Compat {
     const char *defsBindingsAnchor;
     const char *contractScope;
     const char *nonOverlapNote;
-} Dm1V1MirrorCandidateChestOpenDuringPendingEvidencePc34Compat;
+} DM1_V1_MirrorCandidateChestOpenDuringPendingEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat {
     int panelContent;
     int c040PanelOpen;
     unsigned int candidateChampionOrdinal;
@@ -115,10 +115,10 @@ typedef struct Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat {
     int f0298LeaderHandRemoveCount;
     int clickConsumedByCandidateClear;
     int clickConsumedByChestOpen;
-} Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat;
+} DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat {
-    const Dm1V1MirrorCandidateChestOpenDuringPendingEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat {
+    const DM1_V1_MirrorCandidateChestOpenDuringPendingEvidencePc34Compat *evidence;
     int clickKind;
     int clickedChestThing;
     int clickConsumed;
@@ -190,18 +190,25 @@ typedef struct Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat {
     int noChestOpened;
     int candidateCleared;
     int panelClosed;
-} Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat;
+} DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateChestOpenDuringPendingEvidencePc34Compat
+    Dm1V1MirrorCandidateChestOpenDuringPendingEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat
+    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat;
+typedef DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat
+    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat;
 
 void DM1_V1_MirrorCandidateChestOpenDuringPending_InitPc34Compat(
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat *state);
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat *state);
 
 int DM1_V1_MirrorCandidateChestOpenDuringPending_ActionHandClickPc34Compat(
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
     int clickKind,
     int clickedChestThing,
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateChestOpenDuringPendingEvidencePc34Compat *
+const DM1_V1_MirrorCandidateChestOpenDuringPendingEvidencePc34Compat *
 DM1_V1_MirrorCandidateChestOpenDuringPending_EvidencePc34Compat(void);
 
 int dm1_v1_mirror_candidate_chest_open_during_pending_run(

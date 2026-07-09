@@ -58,7 +58,7 @@ static const int kPriorChestSlotThings
     DM1_V1_MIRROR_CANDIDATE_CHEST_OPEN_DURING_PENDING_PRIOR_SLOT7_PC34_COMPAT
 };
 
-static const Dm1V1MirrorCandidateChestOpenDuringPendingEvidencePc34Compat
+static const DM1_V1_MirrorCandidateChestOpenDuringPendingEvidencePc34Compat
     s_evidence = {
         "ReDMCSB CHEST.C F0333:30-32 same G0426_T_OpenChest requests return "
         "before any first-eight G0425 materialization runs",
@@ -113,10 +113,10 @@ static int valid_click_kind(int clickKind)
 }
 
 static void capture_before(
-    const Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
     int clickKind,
     int clickedChestThing,
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat *result)
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat *result)
 {
     memset(result, 0, sizeof(*result));
     result->evidence = &s_evidence;
@@ -197,8 +197,8 @@ static void capture_before(
 }
 
 static void capture_after(
-    const Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -290,8 +290,8 @@ static void capture_after(
 }
 
 static void clear_c040_candidate_via_f0282(
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat *result)
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat *result)
 {
     if (state->candidateChampionOrdinal == 0u) {
         return;
@@ -310,9 +310,9 @@ static void clear_c040_candidate_via_f0282(
 }
 
 static void open_new_chest_via_f0333(
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
     int newChestThing,
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat *result)
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat *result)
 {
     int i;
     int firstSlotSeen = 0;
@@ -357,7 +357,7 @@ static void open_new_chest_via_f0333(
 }
 
 void DM1_V1_MirrorCandidateChestOpenDuringPending_InitPc34Compat(
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat *state)
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -381,13 +381,13 @@ void DM1_V1_MirrorCandidateChestOpenDuringPending_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateChestOpenDuringPending_ActionHandClickPc34Compat(
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat *state,
     int clickKind,
     int clickedChestThing,
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat localResult;
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat *result =
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     capture_before(state, clickKind, clickedChestThing, result);
@@ -440,7 +440,7 @@ int DM1_V1_MirrorCandidateChestOpenDuringPending_ActionHandClickPc34Compat(
     return 1;
 }
 
-const Dm1V1MirrorCandidateChestOpenDuringPendingEvidencePc34Compat *
+const DM1_V1_MirrorCandidateChestOpenDuringPendingEvidencePc34Compat *
 DM1_V1_MirrorCandidateChestOpenDuringPending_EvidencePc34Compat(void)
 {
     return &s_evidence;
@@ -459,8 +459,8 @@ int dm1_v1_mirror_candidate_chest_open_during_pending_run(
     int *passed,
     int *failed)
 {
-    Dm1V1MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
-    Dm1V1MirrorCandidateChestOpenDuringPendingResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestOpenDuringPendingResultPc34Compat result;
 
     if (!passed || !failed) {
         return 0;

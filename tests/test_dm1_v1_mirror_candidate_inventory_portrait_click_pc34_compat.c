@@ -27,7 +27,7 @@ static int gPasses;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateInventoryPortraitClick_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL, "evidence metadata is available",
@@ -68,8 +68,8 @@ static void test_source_lock_metadata(void)
 
 static void test_inventory_open_then_c040_open_fixture(void)
 {
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat state;
-    const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat state;
+    const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateInventoryPortraitClick_EvidencePc34Compat();
     int openedInventory;
     int openedPanel;
@@ -120,9 +120,9 @@ static void test_inventory_open_then_c040_open_fixture(void)
 
 static void test_c175_portrait_click_ignored_while_c040_live(void)
 {
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat state;
-    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat result;
-    const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat state;
+    DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat result;
+    const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateInventoryPortraitClick_EvidencePc34Compat();
     int returned;
 
@@ -259,9 +259,9 @@ static void test_c175_portrait_click_ignored_while_c040_live(void)
 
 static void test_c159_non_overlap_zone_is_distinct(void)
 {
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat state;
-    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat result;
-    const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat state;
+    DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat result;
+    const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateInventoryPortraitClick_EvidencePc34Compat();
     int returned;
 
@@ -313,9 +313,9 @@ static void test_c159_non_overlap_zone_is_distinct(void)
 
 static void test_c040_closed_portrait_click_switches_leader(void)
 {
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat state;
-    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat result;
-    const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat state;
+    DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat result;
+    const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateInventoryPortraitClick_EvidencePc34Compat();
     int returned;
 

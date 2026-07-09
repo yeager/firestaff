@@ -21,7 +21,7 @@ enum {
     kInitialFrontMirrorOrdinal = 1
 };
 
-static const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat
+static const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat
     s_evidence = {
         "COMMAND.C F0380:2159-2181 !G0299 guard for status-box and "
         "inventory/champion dispatch",
@@ -58,15 +58,15 @@ static int champion_index_from_portrait_zone(int zone)
 }
 
 static int inventory_is_open(
-    const Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state)
 {
     return state && state->inventoryChampionOrdinal != 0u;
 }
 
 static void begin_result(
-    const Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
     int zone,
-    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat *result)
+    DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat *result)
 {
     int championIndex;
 
@@ -122,8 +122,8 @@ static void begin_result(
 }
 
 static void finish_result(
-    const Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
-    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -152,7 +152,7 @@ static void finish_result(
 }
 
 void DM1_V1_MirrorCandidateInventoryPortraitClick_InitPc34Compat(
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state)
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -165,7 +165,7 @@ void DM1_V1_MirrorCandidateInventoryPortraitClick_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateInventoryPortraitClick_OpenInventoryPc34Compat(
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
     unsigned int championOrdinal)
 {
     if (!state || championOrdinal == 0u ||
@@ -178,7 +178,7 @@ int DM1_V1_MirrorCandidateInventoryPortraitClick_OpenInventoryPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateInventoryPortraitClick_OpenC040FromResurrectClickPc34Compat(
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
     unsigned int candidateChampionOrdinal)
 {
     if (!state || candidateChampionOrdinal == 0u ||
@@ -197,9 +197,9 @@ int DM1_V1_MirrorCandidateInventoryPortraitClick_OpenC040FromResurrectClickPc34C
 }
 
 int DM1_V1_MirrorCandidateInventoryPortraitClick_ProcessPortraitZonePc34Compat(
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat *state,
     int zone,
-    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat *outResult)
 {
     int championIndex;
 
@@ -240,7 +240,7 @@ int DM1_V1_MirrorCandidateInventoryPortraitClick_ProcessPortraitZonePc34Compat(
     return 1;
 }
 
-const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat *
+const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat *
 DM1_V1_MirrorCandidateInventoryPortraitClick_EvidencePc34Compat(void)
 {
     return &s_evidence;
@@ -259,10 +259,10 @@ int dm1_v1_mirror_candidate_inventory_portrait_click_run(
     int *passed,
     int *failed)
 {
-    Dm1V1MirrorCandidateInventoryPortraitClickStatePc34Compat state;
-    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat blocked;
-    Dm1V1MirrorCandidateInventoryPortraitClickResultPc34Compat baseline;
-    const Dm1V1MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
+    DM1_V1_MirrorCandidateInventoryPortraitClickStatePc34Compat state;
+    DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat blocked;
+    DM1_V1_MirrorCandidateInventoryPortraitClickResultPc34Compat baseline;
+    const DM1_V1_MirrorCandidateInventoryPortraitClickEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateInventoryPortraitClick_EvidencePc34Compat();
     int localPassed = 0;
     int localFailed = 0;
