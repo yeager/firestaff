@@ -73,7 +73,7 @@ typedef struct {
 /* ── Central dungeon data store ───────────────────────────────────── */
 typedef struct {
     /* ─ Dungeon structure (from dungeon_loader) ─ */
-    M11_DL_DungeonState          dungeon;
+    DM1_V1_DungeonStatePc34          dungeon;
 
     /* ─ Current map metadata ─ */
     int16_t  currentMapIndex;     /* G0271 */
@@ -115,7 +115,7 @@ void DM1_V1_DungeonData_InitPc34Compat(DM1_V1_DungeonDataPc34 *dd);
 
 /*
  * Load dungeon from DUNGEON.DAT and populate the store.
- * Calls m11_dl_load_from_file internally, sets currentMapIndex to 0.
+ * Calls DM1_V1_DungeonLoader_LoadFromFilePc34Compat internally, sets currentMapIndex to 0.
  * Returns true on success.
  */
 bool DM1_V1_DungeonData_LoadDungeonPc34Compat(DM1_V1_DungeonDataPc34 *dd, const char *dungeon_dat_path);
@@ -142,14 +142,14 @@ bool DM1_V1_DungeonData_SetCurrentMapPc34Compat(DM1_V1_DungeonDataPc34 *dd, int1
 /*
  * Get tile at (level, x, y).  Returns NULL if out of bounds.
  */
-const M11_DL_Tile *DM1_V1_DungeonData_GetTilePc34Compat(const DM1_V1_DungeonDataPc34 *dd,
+const DM1_V1_DungeonTilePc34 *DM1_V1_DungeonData_GetTilePc34Compat(const DM1_V1_DungeonDataPc34 *dd,
                                     uint8_t level, uint8_t x, uint8_t y);
 
 /*
  * Get tile on the current map at (x, y).  Returns NULL if out of bounds.
  * For out-of-bounds, squareAheadElement is set to WALL per F0151.
  */
-const M11_DL_Tile *DM1_V1_DungeonData_GetCurrentTilePc34Compat(DM1_V1_DungeonDataPc34 *dd,
+const DM1_V1_DungeonTilePc34 *DM1_V1_DungeonData_GetCurrentTilePc34Compat(DM1_V1_DungeonDataPc34 *dd,
                                             int16_t x, int16_t y);
 
 /* ── Party access ─────────────────────────────────────────────────── */
@@ -190,6 +190,7 @@ typedef DM1_V1_DungeonDataPc34 M11_DD_DungeonData;
 
 #define M11_DD_MAX_CHAMPIONS DM1_V1_DUNGEON_DATA_MAX_CHAMPIONS_PC34
 
+#ifndef FIRESTAFF_DM1_V1_DUNGEON_DECOMPRESSOR_PC34_COMPAT_H
 #define m11_dd_init DM1_V1_DungeonData_InitPc34Compat
 #define m11_dd_load_dungeon DM1_V1_DungeonData_LoadDungeonPc34Compat
 #define m11_dd_load_objects DM1_V1_DungeonData_LoadObjectsPc34Compat
@@ -205,6 +206,7 @@ typedef DM1_V1_DungeonDataPc34 M11_DD_DungeonData;
 #define m11_dd_add_event DM1_V1_DungeonData_AddEventPc34Compat
 #define m11_dd_has_expired_events DM1_V1_DungeonData_HasExpiredEventsPc34Compat
 #define m11_dd_source_evidence DM1_V1_DungeonData_SourceEvidencePc34Compat
+#endif
 
 #ifdef __cplusplus
 }

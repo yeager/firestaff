@@ -23,7 +23,7 @@
 void DM1_V1_DungeonData_InitPc34Compat(DM1_V1_DungeonDataPc34 *dd)
 {
     memset(dd, 0, sizeof(*dd));
-    m11_dl_init(&dd->dungeon);
+    DM1_V1_DungeonLoader_InitPc34Compat(&dd->dungeon);
     dm1v1_event_queue_init(&dd->events, 0);
     m11_ow_init(&dd->objects);
     dd->currentMapIndex = -1;
@@ -34,7 +34,7 @@ void DM1_V1_DungeonData_InitPc34Compat(DM1_V1_DungeonDataPc34 *dd)
 bool DM1_V1_DungeonData_LoadDungeonPc34Compat(DM1_V1_DungeonDataPc34 *dd, const char *dungeon_dat_path)
 {
     if (!dd || !dungeon_dat_path) return false;
-    if (!m11_dl_load_from_file(&dd->dungeon, dungeon_dat_path)) return false;
+    if (!DM1_V1_DungeonLoader_LoadFromFilePc34Compat(&dd->dungeon, dungeon_dat_path)) return false;
 
     /* Default to first map */
     dd->currentMapIndex = 0;
@@ -60,7 +60,7 @@ bool DM1_V1_DungeonData_LoadObjectsPc34Compat(DM1_V1_DungeonDataPc34 *dd,
 void DM1_V1_DungeonData_ShutdownPc34Compat(DM1_V1_DungeonDataPc34 *dd)
 {
     if (!dd) return;
-    m11_dl_cleanup(&dd->dungeon);
+    DM1_V1_DungeonLoader_CleanupPc34Compat(&dd->dungeon);
     dd->loaded = false;
 }
 
@@ -78,14 +78,14 @@ bool DM1_V1_DungeonData_SetCurrentMapPc34Compat(DM1_V1_DungeonDataPc34 *dd, int1
     return true;
 }
 
-const M11_DL_Tile *DM1_V1_DungeonData_GetTilePc34Compat(const DM1_V1_DungeonDataPc34 *dd,
+const DM1_V1_DungeonTilePc34 *DM1_V1_DungeonData_GetTilePc34Compat(const DM1_V1_DungeonDataPc34 *dd,
                                     uint8_t level, uint8_t x, uint8_t y)
 {
     if (!dd || !dd->loaded) return NULL;
-    return m11_dl_get_tile(&dd->dungeon, level, x, y);
+    return DM1_V1_DungeonLoader_GetTilePc34Compat(&dd->dungeon, level, x, y);
 }
 
-const M11_DL_Tile *DM1_V1_DungeonData_GetCurrentTilePc34Compat(DM1_V1_DungeonDataPc34 *dd,
+const DM1_V1_DungeonTilePc34 *DM1_V1_DungeonData_GetCurrentTilePc34Compat(DM1_V1_DungeonDataPc34 *dd,
                                             int16_t x, int16_t y)
 {
     if (!dd || !dd->loaded || dd->currentMapIndex < 0) return NULL;
@@ -96,7 +96,7 @@ const M11_DL_Tile *DM1_V1_DungeonData_GetCurrentTilePc34Compat(DM1_V1_DungeonDat
         dd->squareAheadElement = DM1_ELEMENT_WALL;
         return NULL;
     }
-    return m11_dl_get_tile(&dd->dungeon,
+    return DM1_V1_DungeonLoader_GetTilePc34Compat(&dd->dungeon,
                            (uint8_t)dd->currentMapIndex,
                            (uint8_t)x, (uint8_t)y);
 }
