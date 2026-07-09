@@ -1450,6 +1450,7 @@ static void test_melee_f0231_side_effect_plan(void) {
              "F0231 damage writes champion state");
     CHECK_EQ(out.championIndex, 1, "F0231 damage write champion");
     CHECK_EQ(out.shouldAwardXp, 1, "F0231 damage awards XP");
+    CHECK_EQ(out.xpChampionIndex, 1, "F0231 damage XP champion");
     CHECK_EQ(out.skillIndex, 6, "F0231 XP skill index");
     CHECK_EQ(out.experienceGain, 13, "F0231 XP formula");
     CHECK_EQ(out.staminaRandomModulus, 4, "F0231 damage random modulus");

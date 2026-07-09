@@ -142,6 +142,7 @@ typedef struct {
     int shouldWriteChampionState;
     int championIndex;
     int shouldAwardXp;
+    int xpChampionIndex;
     int skillIndex;
     int experienceGain;
     int staminaRandomModulus;
