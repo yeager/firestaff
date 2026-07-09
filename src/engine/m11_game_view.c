@@ -11454,6 +11454,10 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.captured_from_real_assets =
         state && state->assetsAvailable && state->assetLoader.fileState &&
         hoc_assets_ready;
+    facts.observed_required_graphics_hash_match =
+        facts.captured_from_real_assets;
+    facts.observed_required_dungeon_hash_match =
+        facts.dungeon_loaded && facts.map_count > 0;
     facts.captured_from_mac_window =
 #ifdef __APPLE__
         host_window_present;
@@ -11760,6 +11764,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_ownership.consumed_launch_path_receipt &&
                 hoc_ownership.launch_path_started_from_launcher &&
                 hoc_ownership.launch_path_intro_not_bypassed;
+            out->dm1HoCRequiredAssetCapture =
+                hoc_ownership.required_asset_capture;
             out->dm1HoCReceiptOnlyConsumerReady =
                 hoc_ownership.consume_dm1_receipts_only &&
                 hoc_ownership.consumed_runtime_apply_receipt &&
@@ -29539,6 +29545,8 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
 
     captureFacts.captured_after_first_frame_render = 1;
     captureFacts.captured_from_real_assets = 1;
+    captureFacts.observed_required_graphics_hash_match = 1;
+    captureFacts.observed_required_dungeon_hash_match = 1;
     captureFacts.captured_from_mac_window = 1;
     captureFacts.captured_from_release_app = 1;
     captureFacts.observed_c026_portrait_asset = 1;
@@ -29572,6 +29580,8 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     hostProbeFacts.launch_path_intro_not_bypassed = 1;
     hostProbeFacts.captured_after_first_frame_render = 1;
     hostProbeFacts.captured_from_real_assets = 1;
+    hostProbeFacts.observed_required_graphics_hash_match = 1;
+    hostProbeFacts.observed_required_dungeon_hash_match = 1;
     hostProbeFacts.captured_from_mac_window = 1;
     hostProbeFacts.captured_from_release_app = 1;
     hostProbeFacts.observed_c026_portrait_asset = 1;

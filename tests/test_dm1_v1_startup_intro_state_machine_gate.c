@@ -1543,6 +1543,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_capture_facts.captured_from_release_app = 1;
     hoc_capture_facts.observed_c026_portrait_asset = 1;
     hoc_capture_facts.observed_c346_mirror_backing_asset = 1;
+    hoc_capture_facts.observed_required_graphics_hash_match = 1;
+    hoc_capture_facts.observed_required_dungeon_hash_match = 1;
     hoc_capture_facts.observed_host_window_present = 1;
     hoc_capture_facts.captured_map_index = DM1_V1_ENTRANCE_MAP_INDEX_PC34;
     hoc_capture_facts.captured_map_width =
@@ -1577,6 +1579,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_capture_proof.release_app_capture &&
                  hoc_capture_proof.host_capture_route_matches &&
                  hoc_capture_proof.hoc_asset_capture &&
+                 hoc_capture_proof.required_asset_capture &&
                  hoc_capture_proof.host_window_capture &&
                  hoc_capture_proof.redmcsb_c026_asset_present &&
                  hoc_capture_proof.redmcsb_c346_asset_present &&
@@ -1736,6 +1739,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.launch_path_intro_not_bypassed = 1;
     hoc_host_probe_facts.captured_after_first_frame_render = 1;
     hoc_host_probe_facts.captured_from_real_assets = 1;
+    hoc_host_probe_facts.observed_required_graphics_hash_match = 1;
+    hoc_host_probe_facts.observed_required_dungeon_hash_match = 1;
     hoc_host_probe_facts.captured_from_mac_window = 1;
     hoc_host_probe_facts.captured_from_release_app = 1;
     hoc_host_probe_facts.observed_c026_portrait_asset = 1;
@@ -1779,10 +1784,15 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.release_app_capture &&
                  hoc_release_capture_ownership.host_capture_route_matches &&
                  hoc_release_capture_ownership.hoc_asset_capture &&
+                 hoc_release_capture_ownership.required_asset_capture &&
                  hoc_release_capture_ownership.host_window_capture &&
                  hoc_release_capture_ownership.draw_opened_entrance_frame &&
                  hoc_release_capture_ownership.render_hall_mirror_overlay &&
                  hoc_release_capture_ownership.suppress_host_fallback_visuals &&
+                 hoc_release_capture_ownership
+                     .consumed_required_graphics_asset &&
+                 hoc_release_capture_ownership
+                     .consumed_required_dungeon_asset &&
                  hoc_release_capture_ownership
                      .consumed_owned_host_draw_receipt &&
                  hoc_release_capture_ownership.host_draw_uses_owned_receipt &&
@@ -1810,6 +1820,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  !hoc_host_probe_consumer.host_capture_route_matches,
              1);
     hoc_host_probe_facts.captured_from_real_assets = 1;
+    hoc_host_probe_facts.observed_required_graphics_hash_match = 1;
+    hoc_host_probe_facts.observed_required_dungeon_hash_match = 1;
     hoc_host_probe_facts.captured_from_release_app = 0;
     expect_i("DM1 HoC host probe rejects non-release app capture route",
              dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
@@ -1823,6 +1835,20 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  !hoc_host_probe_consumer.host_capture_route_matches,
              1);
     hoc_host_probe_facts.captured_from_release_app = 1;
+    hoc_host_probe_facts.observed_required_dungeon_hash_match = 0;
+    expect_i("DM1 HoC release/app capture rejects missing DUNGEON hash asset",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 !hoc_release_capture_ownership.required_asset_capture &&
+                 hoc_release_capture_ownership
+                     .consumed_required_graphics_asset &&
+                 !hoc_release_capture_ownership
+                      .consumed_required_dungeon_asset,
+             1);
+    hoc_host_probe_facts.observed_required_dungeon_hash_match = 1;
     hoc_host_probe_facts.observed_c026_portrait_asset = 0;
     expect_i("DM1 HoC host probe rejects missing C026 real asset",
              dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(

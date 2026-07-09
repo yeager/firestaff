@@ -210,6 +210,7 @@ typedef struct {
     int dm1HoCHostCaptureRouteMatches;
     int dm1HoCReleaseCaptureOwnershipReady;
     int dm1HoCLaunchPathReady;
+    int dm1HoCRequiredAssetCapture;
     int dm1HoCReceiptOnlyConsumerReady;
     int dm1HoCLowerLevelHelpersReady;
     int dm1HoCHostDrawUsesOwnedReceipt;

@@ -6776,20 +6776,19 @@ static int m12_apply_nexus_startup_package(
     return 1;
 }
 
-static int m12_dm1_required_asset_capture_ready(
-    const M12_StartupMenuState* state) {
-    const M12_AssetRequiredFileStatus* graphics;
-    const M12_AssetRequiredFileStatus* dungeon;
+static int m12_dm1_required_asset_match_ready(
+    const M12_StartupMenuState* state,
+    unsigned int index) {
+    const M12_AssetRequiredFileStatus* required;
     if (!state) {
         return 0;
     }
-    graphics = M12_AssetStatus_GetRequiredFile(&state->assetStatus, "dm1", 0U);
-    dungeon = M12_AssetStatus_GetRequiredFile(&state->assetStatus, "dm1", 1U);
-    return
-        graphics && graphics->matched && graphics->matchedPath[0] != '\0' &&
-        graphics->matchedHash[0] != '\0' &&
-        dungeon && dungeon->matched && dungeon->matchedPath[0] != '\0' &&
-        dungeon->matchedHash[0] != '\0';
+    required = M12_AssetStatus_GetRequiredFile(&state->assetStatus,
+                                               "dm1",
+                                               index);
+    return required && required->matched &&
+           required->matchedPath[0] != '\0' &&
+           required->matchedHash[0] != '\0';
 }
 
 static int m12_apply_dm1_hoc_startup_capture_package(
@@ -6798,13 +6797,17 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
     DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 ownership;
     int realAssetReady;
+    int graphicsAssetReady;
+    int dungeonAssetReady;
 
     if (!state || !receipt || !receipt->gameId ||
         strcmp(receipt->gameId, "dm1") != 0) {
         return 0;
     }
 
-    realAssetReady = m12_dm1_required_asset_capture_ready(state);
+    graphicsAssetReady = m12_dm1_required_asset_match_ready(state, 0U);
+    dungeonAssetReady = m12_dm1_required_asset_match_ready(state, 1U);
+    realAssetReady = graphicsAssetReady && dungeonAssetReady;
     memset(&facts, 0, sizeof(facts));
     memset(&ownership, 0, sizeof(ownership));
     facts.source_id = "dm1";
@@ -6817,6 +6820,8 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     facts.launch_path_intro_not_bypassed = 1;
     facts.captured_after_first_frame_render = receipt->startupContractReady;
     facts.captured_from_real_assets = realAssetReady;
+    facts.observed_required_graphics_hash_match = graphicsAssetReady;
+    facts.observed_required_dungeon_hash_match = dungeonAssetReady;
     facts.captured_from_mac_window = 1;
     facts.captured_from_release_app = receipt->startupContractReady;
     facts.observed_c026_portrait_asset = realAssetReady;
@@ -6836,6 +6841,8 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         ownership.consumed_launch_path_receipt &&
         ownership.launch_path_started_from_launcher &&
         ownership.launch_path_intro_not_bypassed;
+    receipt->dm1HoCRequiredAssetCaptureReady =
+        ownership.required_asset_capture;
     receipt->dm1HoCReceiptOnlyConsumerReady =
         ownership.consume_dm1_receipts_only &&
         ownership.consumed_runtime_apply_receipt &&
@@ -6865,6 +6872,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         receipt->packagedCaptureExpected &&
         ownership.ready &&
         receipt->dm1HoCLaunchPathReady &&
+        receipt->dm1HoCRequiredAssetCaptureReady &&
         receipt->dm1HoCReceiptOnlyConsumerReady &&
         receipt->dm1HoCNoHostFallbackVisualsReady &&
         receipt->dm1HoCLowerLevelHelpersReady &&

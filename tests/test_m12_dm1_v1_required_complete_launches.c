@@ -129,6 +129,7 @@ static void check_dm1_v1_required_complete_launches(void) {
     M12_StartupLaunchGate gate;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
+    M12_AssetRequiredFileStatus* mutableDungeon;
 
     seed_dm1_v1_complete_required_state(&state);
 
@@ -147,6 +148,7 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(graphics && graphics->label && strcmp(graphics->label, "GRAPHICS.DAT") == 0);
     CHECK(dungeon && dungeon->matched == 1);
     CHECK(dungeon && dungeon->label && strcmp(dungeon->label, "DUNGEON.DAT") == 0);
+    mutableDungeon = &state.assetStatus.requiredFiles[kDm1GameIndex][1];
 
     /* Optional assets (title, intro, FTL) are not part of the required
      * set — originalFileCandidateFound is intentionally 0 in this
@@ -169,6 +171,7 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.dm1HoCHostCaptureRouteReady == 1);
     CHECK(boot.dm1HoCReleaseCaptureOwnershipReady == 1);
     CHECK(boot.dm1HoCLaunchPathReady == 1);
+    CHECK(boot.dm1HoCRequiredAssetCaptureReady == 1);
     CHECK(boot.dm1HoCReceiptOnlyConsumerReady == 1);
     CHECK(boot.dm1HoCNoHostFallbackVisualsReady == 1);
     CHECK(boot.dm1HoCLowerLevelHelpersReady == 1);
@@ -184,6 +187,18 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.startupMenuReady == 1);
     CHECK(boot.startupStepCount == 7);
     CHECK(boot.startupStepReadyCount == 7);
+
+    mutableDungeon->matchedHash[0] = '\0';
+    CHECK(M12_StartupMenu_GetBootReadiness(&state, kDm1GameIndex, &boot) == 1);
+    CHECK(boot.dm1HoCRequiredAssetCaptureReady == 0);
+    CHECK(boot.packagedCaptureReady == 0);
+    CHECK((boot.blockedStepMask & M12_STARTUP_BOOT_STEP_CAPTURE) != 0u);
+    snprintf(mutableDungeon->matchedHash,
+             sizeof(mutableDungeon->matchedHash),
+             "%s",
+             kDm1DungeonMd5);
+    CHECK(M12_StartupMenu_GetBootReadiness(&state, kDm1GameIndex, &boot) == 1);
+    CHECK(boot.packagedCaptureReady == 1);
     CHECK(boot.nextStepLabel && strcmp(boot.nextStepLabel, "READY") == 0);
     CHECK(boot.startupPathLabel && strcmp(boot.startupPathLabel, "DM1 FULL START") == 0);
     CHECK(boot.startupContractLabel &&
