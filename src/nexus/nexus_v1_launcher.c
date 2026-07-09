@@ -191,6 +191,49 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         engine->level_loaded &&
         receipt->startup_assets_ready &&
         receipt->startup_audio_handoff_ready;
+    receipt->title_route_ready =
+        receipt->title_screen_loaded &&
+        nexus_v1_startup_surfaces_ready(engine);
+    receipt->real_menu_surface_route_ready =
+        receipt->menu_bpk_upload_receipt_valid &&
+        receipt->menu_bpk_upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED &&
+        !receipt->menu_bpk_blocks_real_menu_surface_render;
+    receipt->real_menu_surface_route_blocked =
+        receipt->real_menu_surface_route_ready ? 0 : 1;
+    if (!nexus_v1_startup_surfaces_ready(engine)) {
+        receipt->real_menu_surface_blocker = "startup-surfaces";
+        receipt->startup_menu_asset_route = "blocked-startup-surfaces";
+    } else if (!nexus_v1_startup_faces_ready(engine)) {
+        receipt->real_menu_surface_blocker = "faces";
+        receipt->startup_menu_asset_route = "blocked-faces";
+    } else if (!receipt->menu_bpk_upload_receipt_valid) {
+        receipt->real_menu_surface_blocker = "menu-bpk";
+        receipt->startup_menu_asset_route = "blocked-menu-bpk";
+    } else if (receipt->menu_bpk_upload_route ==
+               NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3) {
+        receipt->real_menu_surface_blocker = "menu-bpk-prs3";
+        receipt->startup_menu_asset_route = "blocked-menu-bpk-prs3";
+    } else if (receipt->menu_bpk_upload_route ==
+               NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED) {
+        receipt->real_menu_surface_blocker = "menu-bpk-truncated";
+        receipt->startup_menu_asset_route = "blocked-menu-bpk-truncated";
+    } else if (receipt->menu_bpk_upload_route ==
+               NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES) {
+        receipt->real_menu_surface_blocker = "menu-bpk-no-surfaces";
+        receipt->startup_menu_asset_route = "blocked-menu-bpk-no-surfaces";
+    } else if (receipt->real_menu_surface_route_ready) {
+        receipt->real_menu_surface_blocker = "none";
+        receipt->startup_menu_asset_route = "ready-real-menu-surfaces";
+    } else {
+        receipt->real_menu_surface_blocker = "menu-bpk-invalid";
+        receipt->startup_menu_asset_route = "blocked-menu-bpk-invalid";
+    }
+    receipt->save_menu_route_ready =
+        receipt->startup_audio_handoff_ready &&
+        receipt->real_menu_surface_route_ready;
+    receipt->champion_menu_route_ready =
+        receipt->save_menu_route_ready &&
+        nexus_v1_startup_faces_ready(engine);
 }
 
 void nexus_v1_launcher_startup_runtime_state_clear(
