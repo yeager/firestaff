@@ -11,15 +11,15 @@ extern "C" {
 /* Guard for source-faithful V1 presentation mode.  Callers in V2/V3 or debug
  * presentation paths must pass a different mode and receive a no-op result.
  */
-#define M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL 1
-#define M11_V1_TURNING_PRESENTATION_MODE_OTHER    0
+#define DM1_V1_TURNING_PRESENTATION_MODE_ORIGINAL_PC34 1
+#define DM1_V1_TURNING_PRESENTATION_MODE_OTHER_PC34    0
 
-struct M11V1TurningChampionPosePc34Compat {
+typedef struct DM1_V1_TurningChampionPosePc34Compat {
     int cell;
     int direction;
-};
+} DM1_V1_TurningChampionPosePc34Compat;
 
-struct M11V1TurningPresentationResultPc34Compat {
+typedef struct DM1_V1_TurningPresentationResultPc34Compat {
     int applied;
     int command;
     int oldDirection;
@@ -35,26 +35,48 @@ struct M11V1TurningPresentationResultPc34Compat {
     int wallBlockCheck;
     int highlightLeft;
     int highlightRight;
-};
+} DM1_V1_TurningPresentationResultPc34Compat;
 
-int m11_v1_turning_is_turn_command_pc34_compat(int command);
-int m11_v1_turning_target_direction_pc34_compat(int currentDirection, int command);
+int DM1_V1_Turning_IsTurnCommandPc34Compat(int command);
+int DM1_V1_Turning_TargetDirectionPc34Compat(int currentDirection,
+                                             int command);
 
-struct M11V1TurningPresentationResultPc34Compat
-m11_v1_turning_apply_original_presentation_pc34_compat(
+DM1_V1_TurningPresentationResultPc34Compat
+DM1_V1_Turning_ApplyOriginalPresentationPc34Compat(
     int presentationMode,
     int command,
     int currentDirection,
-    struct M11V1TurningChampionPosePc34Compat* poses,
+    DM1_V1_TurningChampionPosePc34Compat* poses,
     int poseCount);
 
-struct M11V1TurningPresentationResultPc34Compat
-m11_v1_turning_apply_party_original_presentation_pc34_compat(
+DM1_V1_TurningPresentationResultPc34Compat
+DM1_V1_Turning_ApplyPartyOriginalPresentationPc34Compat(
     int presentationMode,
     int command,
     struct PartyState_Compat* party);
 
-const char* m11_v1_turning_presentation_source_evidence_pc34_compat(void);
+const char* DM1_V1_Turning_PresentationSourceEvidencePc34Compat(void);
+
+#define M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL \
+    DM1_V1_TURNING_PRESENTATION_MODE_ORIGINAL_PC34
+#define M11_V1_TURNING_PRESENTATION_MODE_OTHER \
+    DM1_V1_TURNING_PRESENTATION_MODE_OTHER_PC34
+
+typedef DM1_V1_TurningChampionPosePc34Compat
+    M11V1TurningChampionPosePc34Compat;
+typedef DM1_V1_TurningPresentationResultPc34Compat
+    M11V1TurningPresentationResultPc34Compat;
+
+#define m11_v1_turning_is_turn_command_pc34_compat \
+    DM1_V1_Turning_IsTurnCommandPc34Compat
+#define m11_v1_turning_target_direction_pc34_compat \
+    DM1_V1_Turning_TargetDirectionPc34Compat
+#define m11_v1_turning_apply_original_presentation_pc34_compat \
+    DM1_V1_Turning_ApplyOriginalPresentationPc34Compat
+#define m11_v1_turning_apply_party_original_presentation_pc34_compat \
+    DM1_V1_Turning_ApplyPartyOriginalPresentationPc34Compat
+#define m11_v1_turning_presentation_source_evidence_pc34_compat \
+    DM1_V1_Turning_PresentationSourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }
