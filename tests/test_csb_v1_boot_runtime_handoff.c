@@ -2139,6 +2139,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof;
     CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof_from_snapshot;
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view_receipt;
+    CSB_V1_BootStartupHostViewDrawReceipt_PC34 host_view_draw_receipt;
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
@@ -2417,6 +2418,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_plan_valid &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.title_draw_ready &&
+              host_view_receipt.readiness_valid &&
+              host_view_receipt.readiness.host_input_blocked &&
               host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34,
           "boot startup host-view receipt consumes title render-draw capture proof");
@@ -2430,6 +2433,24 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34,
           "boot startup host-view receipt executes title render plan directly");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
+              &host_view_receipt,
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.valid &&
+              host_view_draw_receipt.consumed_host_view_only &&
+              host_view_draw_receipt.render_executed &&
+              !host_view_draw_receipt.hud_menu_executed &&
+              host_view_draw_receipt.real_asset_matched &&
+              host_view_draw_receipt.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
+              host_view_draw_receipt.surface ==
+                  CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              capture_render_probe.clear_black_count == 1 &&
+              capture_render_probe.draw_title_count == 1,
+          "boot startup host-view draw receipt consumes title render without legacy plan/HUD split");
     CHECK(csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
               &snapshot,
               &host_view_receipt) == 1 &&
@@ -2800,6 +2821,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.hud_menu_draw_valid &&
               host_view_receipt.hud_menu_draw.draw_utility_panel &&
               host_view_receipt.hud_menu_draw.utility_render_plan_valid &&
+              host_view_receipt.readiness_valid &&
+              host_view_receipt.readiness.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
               host_view_receipt.capture_proof.utility_menu_route,
           "boot startup host-view receipt packages utility HUD render-draw receipt");
     render_probe_executor_init(&capture_render_executor,
@@ -2831,6 +2855,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup host-view receipt executes utility HUD/menu draw");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
+              &host_view_receipt,
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.valid &&
+              host_view_draw_receipt.render_executed &&
+              host_view_draw_receipt.hud_menu_executed == 1 &&
+              host_view_draw_receipt.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              host_view_draw_receipt.consumed_host_view_only &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_utility_panel_count == 1 &&
+              capture_render_probe.draw_closed_doors_count == 0,
+          "boot startup host-view draw receipt consumes utility render plus HUD without legacy split");
     CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
               &capture_receipt,
               &packaged_proof) == 1 &&
@@ -3178,6 +3218,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.hud_menu_draw_valid &&
               host_view_receipt.capture_proof.hud_menu_draw_available &&
               host_view_receipt.capture_proof.closed_door_menu_route &&
+              host_view_receipt.readiness_valid &&
+              host_view_receipt.readiness.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
               csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
                   &host_view_receipt.hud_menu_draw,
                   &readiness_receipt,
@@ -3251,6 +3294,23 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup host-view receipt executes closed-door render plan directly");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
+              &host_view_receipt,
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.valid &&
+              host_view_draw_receipt.render_executed &&
+              host_view_draw_receipt.hud_menu_executed == 2 &&
+              host_view_draw_receipt.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              host_view_draw_receipt.suppress_legacy_utility_fallback &&
+              host_view_draw_receipt.consumed_host_view_only &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_closed_doors_count == 1 &&
+              capture_render_probe.draw_fallback_text_count == 1,
+          "boot startup host-view draw receipt consumes closed-door render plus HUD without legacy split");
     CHECK(csb_v1_boot_startup_render_plan_from_snapshot_pc34(
               &snapshot,
               &snapshot_render_plan) == 1 &&
