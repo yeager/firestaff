@@ -23,6 +23,7 @@
 #include "theron_v1_startup_save_resume.h"
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_runtime_entry.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1374,6 +1375,8 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupActionHostReceipt action_receipt;
     Theron_StartupExecution execution;
     Theron_StartupHostReceipt host_receipt;
+    Theron_V1_BootRuntimeStartupSnapshot snapshot;
+    Theron_V1_BootStartupViewModel view_model;
     char exit_receipt[128];
     int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
 
@@ -1426,6 +1429,47 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(inspect_receipt.inspect_scope, "STARTUP") == 0 &&
                     strstr(inspect_receipt.inspect_detail, "STARTUP") != NULL,
                 "session facts chapter inspect wrapper emits inspect receipt");
+
+    world.current_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    world.current_level = 0;
+    world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0] = 1;
+    world.party.champion_count = 3;
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.startup_phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+    snapshot.selected_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    snapshot.world = &world;
+    snapshot.startup_cursor = 1;
+    snapshot.continue_focus = 1;
+    snapshot.resume_claim = THERON_V1_STARTUP_RESUME_DUAL;
+    snapshot.tqsv_slot = 2;
+    snapshot.srm_slot = 3;
+    snapshot.srm_import_status = THERON_V1_SRM_PROGRESS_IMPORT_OK;
+    snapshot.srm_root = "/tmp/firestaff-theron-srm";
+    snapshot.startup_text_prompt = "SELECT";
+    snapshot.selected_mirrors_mask = 0x03;
+    snapshot.companion_count = 2;
+    snapshot.selected_mirror_order = order;
+    snapshot.selected_mirror_order_count =
+        THERON_STARTUP_MAX_COMPANIONS;
+    expect_true(theron_v1_boot_startup_view_model_from_snapshot(
+                    &snapshot,
+                    &view_model) &&
+                    view_model.row_count > 0 &&
+                    view_model.render_plan_valid &&
+                    view_model.continue_focus == 1 &&
+                    view_model.resume_claim ==
+                        THERON_V1_STARTUP_RESUME_DUAL &&
+                    view_model.tqsv_slot == 2 &&
+                    view_model.srm_slot == 3 &&
+                    view_model.srm_import_status ==
+                        THERON_V1_SRM_PROGRESS_IMPORT_OK &&
+                    view_model.runtime_level == 0 &&
+                    view_model.runtime_champion_count == 3 &&
+                    view_model.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM &&
+                    view_model.runtime_track02_semantic_handoff == 0 &&
+                    view_model.runtime_fallback_visuals_blocked == 0,
+                "boot startup view model carries menu save and runtime route receipts");
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;
