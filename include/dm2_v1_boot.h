@@ -237,6 +237,13 @@ typedef struct {
     int title_gdat_asset_w;
     int title_gdat_asset_h;
     int title_gdat_asset_stride;
+    int title_cycle_ticks;
+    int menu_row_count;
+    int menu_text_count;
+    int selectable_text_count;
+    int selected_highlight_count;
+    int menu_panel_ready;
+    int startup_menu_assets_ready;
     int hud_overlay_suppressed;
     int hud_runtime_ready;
     int runtime_menu_ready;
@@ -270,6 +277,13 @@ typedef struct {
     int title_gdat_asset_h;
     int title_gdat_asset_stride;
     int full_start_real_asset_ready;
+    int title_cycle_ticks;
+    int menu_row_count;
+    int menu_text_count;
+    int selectable_text_count;
+    int selected_highlight_count;
+    int menu_panel_ready;
+    int startup_menu_assets_ready;
     int hud_overlay_suppressed;
     int hud_runtime_ready;
     int runtime_menu_ready;

@@ -535,7 +535,16 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.full_start_receipt.title_frame_max == 7 &&
                     boot_view_model.full_start_receipt
                             .title_frame_duration_ticks == 6 &&
+                    boot_view_model.full_start_receipt.title_cycle_ticks == 48 &&
                     boot_view_model.full_start_receipt.title_backdrop_ready == 1 &&
+                    boot_view_model.full_start_receipt.menu_row_count == 3 &&
+                    boot_view_model.full_start_receipt.menu_text_count == 6 &&
+                    boot_view_model.full_start_receipt.selectable_text_count == 3 &&
+                    boot_view_model.full_start_receipt
+                            .selected_highlight_count == 1 &&
+                    boot_view_model.full_start_receipt.menu_panel_ready == 1 &&
+                    boot_view_model.full_start_receipt
+                            .startup_menu_assets_ready == 1 &&
                     boot_view_model.full_start_receipt.hud_overlay_suppressed == 1 &&
                     boot_view_model.full_start_receipt.runtime_menu_ready == 1 &&
                     boot_view_model.full_start_receipt.runtime_action_ready == 0 &&
@@ -556,9 +565,16 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.host_view_receipt.title_asset_ready == 1 &&
                     boot_view_model.host_view_receipt.title_menu_ready == 1 &&
                     boot_view_model.host_view_receipt.title_animation_tick == 0 &&
+                    boot_view_model.host_view_receipt.title_cycle_ticks == 48 &&
                     boot_view_model.host_view_receipt.title_gdat_asset_ready == 0 &&
                     boot_view_model.host_view_receipt
                             .full_start_real_asset_ready == 0 &&
+                    boot_view_model.host_view_receipt.menu_row_count == 3 &&
+                    boot_view_model.host_view_receipt.menu_text_count == 6 &&
+                    boot_view_model.host_view_receipt.selectable_text_count == 3 &&
+                    boot_view_model.host_view_receipt.selected_highlight_count == 1 &&
+                    boot_view_model.host_view_receipt.menu_panel_ready == 1 &&
+                    boot_view_model.host_view_receipt.startup_menu_assets_ready == 1 &&
                     boot_view_model.host_view_receipt.hud_overlay_suppressed == 1 &&
                     boot_view_model.host_view_receipt.runtime_menu_ready == 1 &&
                     boot_view_model.host_view_receipt.runtime_action_ready == 0 &&
@@ -632,9 +648,16 @@ static void expect_dm2_startup_layout_contract(void) {
                     host_view_receipt.title_asset_ready == 1 &&
                     host_view_receipt.title_menu_ready == 1 &&
                     host_view_receipt.title_animation_tick == 0 &&
+                    host_view_receipt.title_cycle_ticks == 48 &&
                     host_view_receipt.title_frame == 0 &&
                     host_view_receipt.title_frame_max == 7 &&
                     host_view_receipt.title_frame_duration_ticks == 6 &&
+                    host_view_receipt.menu_row_count == 3 &&
+                    host_view_receipt.menu_text_count == 6 &&
+                    host_view_receipt.selectable_text_count == 3 &&
+                    host_view_receipt.selected_highlight_count == 1 &&
+                    host_view_receipt.menu_panel_ready == 1 &&
+                    host_view_receipt.startup_menu_assets_ready == 1 &&
                     host_view_receipt.hud_overlay_suppressed == 1 &&
                     host_view_receipt.hud_runtime_ready == 1 &&
                     host_view_receipt.runtime_menu_ready == 1 &&
@@ -1132,6 +1155,10 @@ int main(void) {
                         startup_view_model.full_start_receipt
                                 .title_gdat_asset_h == 200 &&
                         startup_view_model.full_start_receipt
+                                .title_cycle_ticks == 48 &&
+                        startup_view_model.full_start_receipt
+                                .startup_menu_assets_ready == 1 &&
+                        startup_view_model.full_start_receipt
                                 .full_start_real_asset_ready == 1,
                     "DM2 boot startup view model proves real GDAT title asset readiness");
         expect_true(dm2_v1_boot_startup_full_start_receipt_from_snapshot(
@@ -1140,6 +1167,9 @@ int main(void) {
                         full_start_receipt.title_gdat_asset_ready == 1 &&
                         full_start_receipt.title_gdat_asset_w == 320 &&
                         full_start_receipt.title_gdat_asset_h == 200 &&
+                        full_start_receipt.title_cycle_ticks == 48 &&
+                        full_start_receipt.menu_panel_ready == 1 &&
+                        full_start_receipt.startup_menu_assets_ready == 1 &&
                         full_start_receipt.full_start_real_asset_ready == 1,
                     "DM2 boot full-start receipt exposes real title asset readiness without command counts");
         expect_true(dm2_v1_boot_startup_host_view_receipt_from_snapshot(
@@ -1151,11 +1181,15 @@ int main(void) {
                         host_view_receipt.title_asset_ready == 1 &&
                         host_view_receipt.title_menu_ready == 1 &&
                         host_view_receipt.title_animation_tick == 0 &&
+                        host_view_receipt.title_cycle_ticks == 48 &&
                         host_view_receipt.title_gdat_asset_ready == 1 &&
                         host_view_receipt.title_gdat_asset_w == 320 &&
                         host_view_receipt.title_gdat_asset_h == 200 &&
                         host_view_receipt.title_gdat_asset_stride >= 320 &&
                         host_view_receipt.full_start_real_asset_ready == 1 &&
+                        host_view_receipt.menu_row_count >= 1 &&
+                        host_view_receipt.menu_panel_ready == 1 &&
+                        host_view_receipt.startup_menu_assets_ready == 1 &&
                         host_view_receipt.hud_overlay_suppressed == 1 &&
                         host_view_receipt.hud_runtime_ready == 1 &&
                         host_view_receipt.startup_hud_handoff_ready == 1 &&
