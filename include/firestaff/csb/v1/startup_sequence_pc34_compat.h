@@ -592,6 +592,25 @@ typedef struct CSB_V1_StartupPresentationReceipt_PC34 {
     int waiting_for_input;
     int menu_option_count;
     int render_command_count;
+    int redmcsb_source_locked;
+    const char *redmcsb_title_source;
+    const char *redmcsb_entrance_source;
+    int redmcsb_title_graphic_id;
+    int redmcsb_presents_ticks;
+    int redmcsb_chaos_zoom_ticks;
+    int redmcsb_chaos_hold_ticks;
+    int redmcsb_strikes_back_ticks;
+    int redmcsb_entrance_screen_graphic_id;
+    int redmcsb_credits_graphic_id;
+    int redmcsb_left_door_graphic_id;
+    int redmcsb_right_door_graphic_id;
+    int redmcsb_pre_open_delay_ticks;
+    int redmcsb_door_step_count;
+    int redmcsb_closed_door_left_x;
+    int redmcsb_closed_door_right_x;
+    int redmcsb_closed_door_y;
+    int redmcsb_closed_door_w;
+    int redmcsb_closed_door_h;
     CSB_V1_StartupRenderPlan_PC34 render_plan;
 } CSB_V1_StartupPresentationReceipt_PC34;
 
