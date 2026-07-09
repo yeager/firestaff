@@ -7103,6 +7103,11 @@ cmd_attack_legacy_marker:
                 break;
             }
 
+            if (receipt.rotatesChampion) {
+                world->party.champions[champIdx].direction =
+                    (unsigned char)(receipt.championDirectionAfter & 3);
+            }
+
             memset(&projectileContext, 0, sizeof(projectileContext));
             projectileContext.championIndex = champIdx;
             projectileContext.championCell =

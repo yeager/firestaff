@@ -1725,11 +1725,6 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         view_model->runtime_fallback_visuals_blocked;
     out_receipt->startup_menu_render_allowed =
         view_model->render_plan_valid ? 1 : 0;
-    out_receipt->track02_title_menu_ready =
-        view_model->startup_media_state_valid &&
-                view_model->startup_media_state_receipt.startup_media_ready
-            ? 1
-            : 0;
     out_receipt->runtime_level_render_allowed =
         view_model->runtime_level_source !=
                 THERON_V1_STARTUP_RUNTIME_LEVEL_NONE &&
@@ -1747,20 +1742,12 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     out_receipt->hud_seed_gate = (int)hud_seed_gate;
     out_receipt->hud_ready =
         hud_seed_gate == THERON_V2_HUD_SEED_V2_READY ? 1 : 0;
-    out_receipt->runtime_readiness_ready =
-        out_receipt->runtime_level_render_allowed &&
-        out_receipt->hud_ready ? 1 : 0;
-    out_receipt->title_menu_runtime_handoff_ready =
-        out_receipt->track02_title_menu_ready &&
-        out_receipt->runtime_readiness_ready ? 1 : 0;
-    out_receipt->no_fallback_visuals_enforced =
+    out_receipt->fallback_visuals_allowed =
         view_model->runtime_fallback_visuals_blocked ||
                 view_model->runtime_level_source ==
                     THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC
-            ? 1
-            : 0;
-    out_receipt->fallback_visuals_allowed =
-        out_receipt->no_fallback_visuals_enforced ? 0 : 1;
+            ? 0
+            : 1;
     out_receipt->status_scope = "STARTUP";
     out_receipt->status =
         view_model->runtime_fallback_visuals_blocked

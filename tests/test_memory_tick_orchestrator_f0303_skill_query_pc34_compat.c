@@ -136,6 +136,7 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
     champion->mana.maximum = 24;
     champion->attributes[CHAMPION_ATTR_WISDOM] = 60;
     champion->cell = 1;
+    champion->direction = 3;
     world.party.mapIndex = 2;
     world.party.mapX = 3;
     world.party.mapY = 4;
@@ -178,6 +179,7 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
     assert(world.projectiles.entries[0].mapY == 4);
     assert(world.projectiles.entries[0].direction == 1);
     assert(world.projectiles.entries[0].cell == 1);
+    assert(world.party.champions[0].direction == 1);
     assert(world.timeline.count == 1);
     assert(world.timeline.events[0].kind == TIMELINE_EVENT_PROJECTILE_MOVE);
     assert(world.timeline.events[0].aux0 == 0);
