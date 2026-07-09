@@ -504,8 +504,13 @@ static void test_startup_host_facts_from_boot_profile(void)
               0,
               &launch_receipt) == 1 &&
               launch_receipt.menu_state_receipt_valid &&
-              launch_receipt.host_receipt.status != NULL,
-          "DM2 boot builds startup launch receipt from runtime state");
+              launch_receipt.host_receipt.status != NULL &&
+              launch_receipt.runtime_handoff.valid &&
+              strcmp(launch_receipt.runtime_handoff.animation,
+                     "dm2-startup-menu") == 0 &&
+              launch_receipt.runtime_handoff.initialize_hud_runtime == 1 &&
+              launch_receipt.runtime_handoff.hud_runtime_ready == 1,
+          "DM2 boot builds startup launch receipt with menu/HUD runtime handoff");
     snapshot.startup_menu_active = 0;
     snapshot.startup_save_root = "/tmp/firestaff-dm2-menu-saves";
     CHECK(dm2_v1_boot_startup_launch_from_launch_snapshot(

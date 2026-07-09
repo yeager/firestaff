@@ -1188,6 +1188,36 @@ void dm2_v1_startup_launch_receipt_clear(
     dm2_v1_startup_menu_state_receipt_init(&receipt->menu_state_receipt);
 }
 
+static void dm2_v1_startup_runtime_handoff_receipt_set_menu(
+    DM2_V1_StartupRuntimeHandoffReceipt *receipt,
+    int startup_menu_active)
+{
+    int active;
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    active = startup_menu_active ? 1 : 0;
+    receipt->valid = 1;
+    receipt->startup_menu_active = active;
+    receipt->animation_active = active;
+    snprintf(receipt->animation,
+             sizeof(receipt->animation),
+             "%s",
+             active ? "dm2-startup-menu" : "dm2-runtime");
+    receipt->title_frame = 0;
+    receipt->title_frame_max = 0;
+    receipt->title_ready = active ? 0 : 1;
+    /* skproject/SKWIN SkWinCore startup keeps title/menu presentation and
+     * HUD/game runtime as one boot handoff; Firestaff records the same
+     * boundary here so M11 does not infer HUD/runtime init from text status. */
+    receipt->initialize_v2_runtime = 1;
+    receipt->initialize_hud_runtime = 1;
+    receipt->initialize_touch_runtime = 1;
+    receipt->hud_runtime_ready = 1;
+}
+
 void dm2_v1_startup_direct_resume_receipt_clear(
     DM2_V1_StartupDirectResumeReceipt *receipt)
 {
@@ -1229,6 +1259,9 @@ int dm2_v1_startup_launch_from_host_facts_with_receipt(
     out_receipt->host_receipt.inspect_detail =
         "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE";
     out_receipt->host_receipt.log_line = "T0: DM2 START MENU";
+    dm2_v1_startup_runtime_handoff_receipt_set_menu(
+        &out_receipt->runtime_handoff,
+        out_receipt->host_receipt.mode_update.startup_menu_active);
     return 1;
 }
 

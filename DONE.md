@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM2 startup launch runtime handoff: startup launch receipts now carry the boot/menu animation state, title readiness, and V2/HUD/touch runtime initialization flags so M11 can consume a DM2-owned startup/HUD boundary instead of inferring it from status text. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus startup asset/audio route receipt: launcher boot/runtime receipts now carry title/warning/gameover/STABG, champion-face, MENU.BPK upload-plan, and level-0 SFX/CD handoff facts, so M11 can inspect main-menu readiness without reading raw engine fields. Verification: `test_nexus_v1_startup_menu_pc34_compat`, `m11_nexus_startup_gate`, `nexus_v1_boot_file_hash_scan`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB startup input-to-render receipt: startup action receipts now carry the post-input render-view route for utility HUD/menu changes and entrance door-opening delay/frame handoff, keeping M11 from re-deriving CSB menu/door state after input. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
