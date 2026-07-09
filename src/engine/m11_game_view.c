@@ -10381,6 +10381,14 @@ static void m11_nexus_apply_startup_host_caller_receipt(
         receipt->saturn_title_ready_frame;
     state->nexusState.startup_saturn_gameover_capture_frame =
         receipt->saturn_gameover_capture_frame;
+    state->nexusState.startup_host_active_capture_frame =
+        receipt->host_active_capture_frame;
+    state->nexusState.startup_host_saturn_active_capture_frame =
+        receipt->host_saturn_active_capture_frame;
+    state->nexusState.startup_host_route_consumes_active_capture_frame =
+        receipt->host_route_consumes_active_capture_frame ? 1 : 0;
+    state->nexusState.startup_host_route_consumes_dungeon_capture_frame =
+        receipt->host_route_consumes_dungeon_capture_frame ? 1 : 0;
     state->nexusState.startup_title_timing_frame =
         receipt->title_timing_frame;
     state->nexusState.startup_title_timing_frame_max =
