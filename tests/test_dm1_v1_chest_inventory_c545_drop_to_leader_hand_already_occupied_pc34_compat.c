@@ -5,17 +5,17 @@
 int main(void)
 {
     int ok;
-    Dm1V1ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34Compat
+    DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupiedStatsPc34
         stats;
 
     printf("probe=dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat\n");
     printf("%s\n",
-           dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_source_evidence_pc34_compat());
+           DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_SourceEvidencePc34());
 
     ok =
-        run_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat_self_test();
+        DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_RunSelfTestPc34();
     stats =
-        dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_last_stats_pc34_compat();
+        DM1_V1_ChestInventoryC545DropToLeaderHandAlreadyOccupied_LastStatsPc34();
 
     if (!ok || stats.failures != 0) {
         printf("FAIL dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat assertions=%d failures=%d deterministic_hash=0x%08x\n",
