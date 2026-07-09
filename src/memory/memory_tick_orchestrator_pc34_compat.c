@@ -4079,19 +4079,15 @@ static int orch_materialize_projectile_associated_thing_compat(
     const struct ProjectileInstance_Compat* projectile,
     int associatedThingMovedToGroup)
 {
-    unsigned short associatedThing;
-    unsigned short droppedThing;
+    DM1_ProjectileMaterializationPlanPc34 plan;
 
     if (!world || !projectile || associatedThingMovedToGroup) return 1;
     if (!world->things || !world->dungeon) return 1;
-    if ((projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0) {
-        return 1;
-    }
-    associatedThing = (unsigned short)projectile->reserved1;
-    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) {
-        return 1;
-    }
-    if (THING_GET_TYPE(associatedThing) == THING_TYPE_EXPLOSION) {
+    memset(&plan, 0, sizeof(plan));
+    if (!dm1_v1_projectile_materialization_plan_pc34(
+            projectile, NULL, associatedThingMovedToGroup,
+            world->things->potionCount, &plan) ||
+        !plan.handled || !plan.shouldMaterialize) {
         return 1;
     }
 
@@ -4100,11 +4096,8 @@ static int orch_materialize_projectile_associated_thing_compat(
      * pointer for KEEP_THROWN_SHARP_WEAPONS.  F0219 lines 717-725 call
      * wall impacts before committing the destination move, so use the
      * projectile's stored square and cell here. */
-    droppedThing = orch_thing_with_cell_compat(
-        associatedThing, projectile->cell & 3);
     return orch_link_thing_to_square_tail_compat(
-        world, projectile->mapIndex, projectile->mapX,
-        projectile->mapY, droppedThing);
+        world, plan.mapIndex, plan.mapX, plan.mapY, plan.droppedThing);
 }
 
 static int orch_projectile_associated_icon_index_compat(
