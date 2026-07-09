@@ -525,6 +525,8 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.save_slot_menu_ready == 1 &&
                     boot_view_model.new_game_menu_ready == 1 &&
                     boot_view_model.full_start_graphics_ready == 1 &&
+                    boot_view_model.title_gdat_asset_ready == 0 &&
+                    boot_view_model.full_start_real_asset_ready == 0 &&
                     strcmp(boot_view_model.phase, "dm2-startup-menu") == 0 &&
                     boot_view_model.startup_active == 1 &&
                     strcmp(boot_view_model.animation,
@@ -1007,12 +1009,35 @@ int main(void) {
                 "M11 DM2 no-save startup menu keeps runtime tick frozen");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     if (profile && profile->graphics_dat) {
+        DM2_V1_BootRuntimeStartupSnapshot startup_snapshot;
+        DM2_V1_BootStartupViewModel startup_view_model;
         uint8_t *title_pixels = NULL;
         int title_w = 0;
         int title_h = 0;
         int title_stride = 0;
         int title_x = -1;
         int title_y = -1;
+        memset(&startup_snapshot, 0, sizeof(startup_snapshot));
+        startup_snapshot.profile = profile;
+        startup_snapshot.startup_menu_active =
+            view.dm2State.startup_menu_active;
+        startup_snapshot.startup_save_root =
+            view.dm2State.startup_save_root;
+        startup_snapshot.resume_available =
+            view.dm2State.startup_resume_available;
+        startup_snapshot.slot_mask = view.dm2State.startup_slot_mask;
+        startup_snapshot.selected_row =
+            view.dm2State.startup_menu_selected_row;
+        expect_true(dm2_v1_boot_startup_view_model_receipt_from_snapshot(
+                        &startup_snapshot,
+                        &startup_view_model) &&
+                        startup_view_model.title_backdrop_ready == 1 &&
+                        startup_view_model.title_gdat_asset_ready == 1 &&
+                        startup_view_model.title_gdat_asset_w == 320 &&
+                        startup_view_model.title_gdat_asset_h == 200 &&
+                        startup_view_model.title_gdat_asset_stride >= 320 &&
+                        startup_view_model.full_start_real_asset_ready == 1,
+                    "DM2 boot startup view model proves real GDAT title asset readiness");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,

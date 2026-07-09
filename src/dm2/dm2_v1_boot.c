@@ -1446,6 +1446,40 @@ int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
             out_view_model->view_receipt.render.new_game_menu_ready;
         out_view_model->full_start_graphics_ready =
             out_view_model->view_receipt.render.full_start_graphics_ready;
+        if (snapshot->profile &&
+            out_view_model->view_receipt.render.title_backdrop_ready) {
+            uint8_t *pixels = NULL;
+            int w = 0;
+            int h = 0;
+            int stride = 0;
+            const DM2_V1_StartupRenderReceipt *render =
+                &out_view_model->view_receipt.render;
+            /* skproject/SKWIN boot title/menu uses the real GDAT title
+             * bitmap. The boot profile owns the GRAPHICS.DAT cache, so M11
+             * receives an asset receipt instead of probing GDAT itself. */
+            if (dm2_v1_boot_gdat_image_asset_fetch(
+                    (DM2_V1_BootProfile *)snapshot->profile,
+                    render->title_gdat_category,
+                    render->title_gdat_index,
+                    render->title_gdat_field,
+                    &pixels,
+                    &w,
+                    &h,
+                    &stride) == 0 &&
+                pixels &&
+                w == render->title_rect.w &&
+                h == render->title_rect.h &&
+                stride >= w) {
+                out_view_model->title_gdat_asset_ready = 1;
+                out_view_model->title_gdat_asset_w = w;
+                out_view_model->title_gdat_asset_h = h;
+                out_view_model->title_gdat_asset_stride = stride;
+            }
+            dm2_v1_boot_gdat_image_asset_free(pixels);
+        }
+        out_view_model->full_start_real_asset_ready =
+            out_view_model->full_start_graphics_ready &&
+            out_view_model->title_gdat_asset_ready;
     }
     return ok;
 }

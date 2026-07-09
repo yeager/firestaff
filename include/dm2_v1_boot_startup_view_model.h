@@ -27,6 +27,11 @@ struct DM2_V1_BootStartupViewModel {
     int save_slot_menu_ready;
     int new_game_menu_ready;
     int full_start_graphics_ready;
+    int title_gdat_asset_ready;
+    int title_gdat_asset_w;
+    int title_gdat_asset_h;
+    int title_gdat_asset_stride;
+    int full_start_real_asset_ready;
 };
 
 #endif
