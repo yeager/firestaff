@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0324 explosion party-damage fanout ownership: DM1 throw/shoot compat now owns the F0324 party-square explosion fanout plan and per-champion randomized attack plan. M10 still applies live F0321 shield/defense/wound mutation, but no longer owns the F0324 attack-window math. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed. `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat` reached the explosion cases then stopped later on an existing candidate-target RNG assertion.
+
 - ✅ 2026-07-09 DM1 projectile champion poison receipt consumption: M10 now consumes the DM1 F0217/F0322 projectile champion poison plan for immediate poison damage, accumulated dose, and C75 reschedule fields instead of duplicating that source math inline. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 projectile associated-thing materialization consumption: M10 now consumes the existing DM1 F0215 projectile materialization plan for ordinary Projectile.Slot drops instead of duplicating potion/explosion/Thing guards and cell packing locally. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

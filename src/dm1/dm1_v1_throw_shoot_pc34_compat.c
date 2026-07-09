@@ -868,3 +868,51 @@ int dm1_v1_projectile_champion_party_death_check_pc34(
      * last live champion reaches zero HP. M11 owns the party-wide scan. */
     return combatKilledFlag || championCurrentHealth <= 0;
 }
+
+int dm1_v1_explosion_party_damage_fanout_plan_pc34(
+    int rawAttackValue,
+    int attackTypeCode,
+    int allowedWounds,
+    DM1_ExplosionPartyDamageFanoutPlanPc34* outPlan) {
+    int randomWindow;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    if (rawAttackValue <= 0) return 1;
+
+    /* ReDMCSB: CHAMPION.C F0324 lines 1991-2022 damages all living
+     * champions with attack randomized by +/- attack/8 before F0321. */
+    randomWindow = (rawAttackValue >> 3) + 1;
+    outPlan->handled = 1;
+    outPlan->baseAttack = rawAttackValue - randomWindow;
+    outPlan->rngModulus = randomWindow << 1;
+    outPlan->attackTypeCode = attackTypeCode;
+    outPlan->allowedWounds = allowedWounds;
+    return 1;
+}
+
+int dm1_v1_explosion_party_champion_damage_plan_pc34(
+    const DM1_ExplosionPartyDamageFanoutPlanPc34* fanoutPlan,
+    int championIndex,
+    int championPresent,
+    int championCurrentHealth,
+    int rngWindowRoll,
+    DM1_ExplosionPartyChampionDamagePlanPc34* outPlan) {
+    int attack;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->championIndex = championIndex;
+    if (!fanoutPlan || !fanoutPlan->handled ||
+        !championPresent || championCurrentHealth <= 0) {
+        return 1;
+    }
+
+    /* ReDMCSB: CHAMPION.C F0324 clamps each randomized attack to at
+     * least 1, then lets F0321 handle shield/defense/wound effects. */
+    attack = fanoutPlan->baseAttack + rngWindowRoll;
+    if (attack < 1) attack = 1;
+    outPlan->shouldAttemptDamage = 1;
+    outPlan->randomizedAttack = attack;
+    outPlan->attackTypeCode = fanoutPlan->attackTypeCode;
+    outPlan->allowedWounds = fanoutPlan->allowedWounds;
+    return 1;
+}

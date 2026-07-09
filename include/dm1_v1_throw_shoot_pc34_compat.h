@@ -126,6 +126,22 @@ typedef struct {
     int scheduleDelayTicks;
 } DM1_ProjectileChampionPoisonPlanPc34;
 
+typedef struct {
+    int handled;
+    int baseAttack;
+    int rngModulus;
+    int attackTypeCode;
+    int allowedWounds;
+} DM1_ExplosionPartyDamageFanoutPlanPc34;
+
+typedef struct {
+    int shouldAttemptDamage;
+    int championIndex;
+    int randomizedAttack;
+    int attackTypeCode;
+    int allowedWounds;
+} DM1_ExplosionPartyChampionDamagePlanPc34;
+
 enum {
     DM1_PROJECTILE_IMPACT_LOG_NONE_PC34 = 0,
     DM1_PROJECTILE_IMPACT_LOG_HIT_WALL_PC34,
@@ -288,6 +304,18 @@ int dm1_v1_projectile_champion_poison_plan_pc34(
 int dm1_v1_projectile_champion_party_death_check_pc34(
     int combatKilledFlag,
     int championCurrentHealth);
+int dm1_v1_explosion_party_damage_fanout_plan_pc34(
+    int rawAttackValue,
+    int attackTypeCode,
+    int allowedWounds,
+    DM1_ExplosionPartyDamageFanoutPlanPc34* outPlan);
+int dm1_v1_explosion_party_champion_damage_plan_pc34(
+    const DM1_ExplosionPartyDamageFanoutPlanPc34* fanoutPlan,
+    int championIndex,
+    int championPresent,
+    int championCurrentHealth,
+    int rngWindowRoll,
+    DM1_ExplosionPartyChampionDamagePlanPc34* outPlan);
 
 #ifdef __cplusplus
 }
