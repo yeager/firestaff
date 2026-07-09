@@ -88,82 +88,82 @@ static void test_fakewall_square_aspect_contract(void)
         square_of(DUNGEON_ELEMENT_FAKEWALL, 0x0c);
 
     expect_int("effective.wall",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(wall),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(wall),
                DUNGEON_ELEMENT_WALL,
                "DEFS.H:1034, DUNGEON.C:2651-2653");
     expect_int("effective.corridor",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(corridor),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(corridor),
                DUNGEON_ELEMENT_CORRIDOR,
                "DUNGEON.C:2663-2666");
     expect_int("effective.pit",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(pit),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(pit),
                DUNGEON_ELEMENT_PIT,
                "DUNVIEW.C:7198-7213");
     expect_int("effective.stairs",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(stairs),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(stairs),
                DUNGEON_ELEMENT_STAIRS,
                "DUNVIEW.C:7065-7095");
     expect_int("effective.door",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(door_open),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(door_open),
                DUNGEON_ELEMENT_DOOR,
                "DUNVIEW.C:7180-7197");
     expect_int("effective.teleporter",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(teleporter),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(teleporter),
                DUNGEON_ELEMENT_TELEPORTER,
                "DUNVIEW.C:7208-7224");
     expect_int("effective.fakewall.closed",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(fakewall_closed),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(fakewall_closed),
                DUNGEON_ELEMENT_WALL,
                "DUNGEON.C:2651-2661 closed fakewall becomes wall aspect");
     expect_int("effective.fakewall.closed_random",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(fakewall_closed_random),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(fakewall_closed_random),
                DUNGEON_ELEMENT_WALL,
                "DUNGEON.C:2655-2661 random-ornament bit stays closed wall");
     expect_int("effective.fakewall.open",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(fakewall_open),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(fakewall_open),
                DUNGEON_ELEMENT_CORRIDOR,
                "DUNGEON.C:2662-2666 open fakewall becomes corridor aspect");
     expect_int("effective.fakewall.open_random",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(fakewall_open_random),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(fakewall_open_random),
                DUNGEON_ELEMENT_CORRIDOR,
                "DUNGEON.C:2663-2666 open fakewall keeps floor route");
 
-    expect_int("wall_like.wall", M11_DM1_ViewportSquareIsWallLikePc34(wall), 1,
+    expect_int("wall_like.wall", DM1_V1_Viewport_SquareIsWallLikePc34Compat(wall), 1,
                "DUNVIEW.C:7096-7119 wall route");
     expect_int("wall_like.closed_fakewall",
-               M11_DM1_ViewportSquareIsWallLikePc34(fakewall_closed), 1,
+               DM1_V1_Viewport_SquareIsWallLikePc34Compat(fakewall_closed), 1,
                "DUNGEON.C:2651-2661, DUNVIEW.C:7096-7119");
     expect_int("wall_like.open_fakewall",
-               M11_DM1_ViewportSquareIsWallLikePc34(fakewall_open), 0,
+               DM1_V1_Viewport_SquareIsWallLikePc34Compat(fakewall_open), 0,
                "DUNGEON.C:2662-2666, DUNVIEW.C:7208-7224");
     expect_int("wall_like.corridor",
-               M11_DM1_ViewportSquareIsWallLikePc34(corridor), 0,
+               DM1_V1_Viewport_SquareIsWallLikePc34Compat(corridor), 0,
                "DUNVIEW.C:7208-7224 corridor falls through floor/item route");
-    expect_int("wall_like.door", M11_DM1_ViewportSquareIsWallLikePc34(door_open), 0,
+    expect_int("wall_like.door", DM1_V1_Viewport_SquareIsWallLikePc34Compat(door_open), 0,
                "DUNVIEW.C:7180-7197 door front route is not wall-like");
 
-    expect_int("open.wall", M11_DM1_ViewportSquareIsOpenPc34(wall), 0,
+    expect_int("open.wall", DM1_V1_Viewport_SquareIsOpenPc34Compat(wall), 0,
                "DUNVIEW.C:7096-7119 wall route returns before item pass");
     expect_int("open.closed_fakewall",
-               M11_DM1_ViewportSquareIsOpenPc34(fakewall_closed), 0,
+               DM1_V1_Viewport_SquareIsOpenPc34Compat(fakewall_closed), 0,
                "DUNGEON.C:2651-2661 closed fakewall wall aspect");
     expect_int("open.open_fakewall",
-               M11_DM1_ViewportSquareIsOpenPc34(fakewall_open), 1,
+               DM1_V1_Viewport_SquareIsOpenPc34Compat(fakewall_open), 1,
                "DUNGEON.C:2662-2666 open fakewall corridor aspect");
-    expect_int("open.corridor", M11_DM1_ViewportSquareIsOpenPc34(corridor), 1,
+    expect_int("open.corridor", DM1_V1_Viewport_SquareIsOpenPc34Compat(corridor), 1,
                "DUNVIEW.C:7208-7224 corridor route reaches F0115");
-    expect_int("open.pit", M11_DM1_ViewportSquareIsOpenPc34(pit), 1,
+    expect_int("open.pit", DM1_V1_Viewport_SquareIsOpenPc34Compat(pit), 1,
                "DUNVIEW.C:7198-7213 pit falls through to floor route");
-    expect_int("open.teleporter", M11_DM1_ViewportSquareIsOpenPc34(teleporter), 1,
+    expect_int("open.teleporter", DM1_V1_Viewport_SquareIsOpenPc34Compat(teleporter), 1,
                "DUNVIEW.C:7208-7239 teleporter route reaches field/item pass");
     expect_int("open.door_state_0",
-               M11_DM1_ViewportSquareIsOpenPc34(door_open), 1,
+               DM1_V1_Viewport_SquareIsOpenPc34Compat(door_open), 1,
                "DEFS.H:1039 C0_DOOR_STATE_OPEN");
     expect_int("open.door_state_5",
-               M11_DM1_ViewportSquareIsOpenPc34(door_destroyed), 1,
+               DM1_V1_Viewport_SquareIsOpenPc34Compat(door_destroyed), 1,
                "DEFS.H:1044 C5_DOOR_STATE_DESTROYED");
     expect_int("open.door_state_2",
-               M11_DM1_ViewportSquareIsOpenPc34(door_half), 0,
+               DM1_V1_Viewport_SquareIsOpenPc34Compat(door_half), 0,
                "DEFS.H:1041 C2_DOOR_STATE_CLOSED_HALF");
 }
 
@@ -179,28 +179,28 @@ static void test_fakewall_floor_and_blit_contract(void)
     const unsigned char fakewall_open = square_of(DUNGEON_ELEMENT_FAKEWALL, 0x04);
 
     expect_int("floor_path.wall",
-               M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(wall), 0,
+               DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(wall), 0,
                "DUNVIEW.C:7096-7119 wall route excludes F0108");
     expect_int("floor_path.closed_fakewall",
-               M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(fakewall_closed), 0,
+               DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(fakewall_closed), 0,
                "DUNGEON.C:2651-2661, DUNVIEW.C:7096-7119");
     expect_int("floor_path.open_fakewall",
-               M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(fakewall_open), 1,
+               DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(fakewall_open), 1,
                "DUNGEON.C:2663-2666, DUNVIEW.C:7210-7214");
     expect_int("floor_path.corridor",
-               M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(corridor), 1,
+               DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(corridor), 1,
                "DUNVIEW.C:7208-7214 corridor calls F0108");
     expect_int("floor_path.pit",
-               M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(pit), 1,
+               DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(pit), 1,
                "DUNVIEW.C:7198-7213 pit falls through to F0108");
     expect_int("floor_path.teleporter",
-               M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(teleporter), 1,
+               DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(teleporter), 1,
                "DUNVIEW.C:7208-7214 teleporter calls F0108");
     expect_int("floor_path.stairs",
-               M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(stairs), 0,
+               DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(stairs), 0,
                "DUNVIEW.C:7065-7095 stairs route jumps past F0108");
     expect_int("floor_path.door",
-               M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(door), 0,
+               DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(door), 0,
                "DUNVIEW.C:7180-7197 door front owns F0111 route");
 
     expect_int("c10.skip_preserves", c10_blend(0xee, 10), 0xee,
@@ -216,13 +216,13 @@ static void test_fakewall_floor_and_blit_contract(void)
     expect_int("clip.after_right", clipped_x_visible(224), 0,
                "DUNVIEW.C:3053-3059 F0100 clipped frame skips outside edge");
     expect_int("contract.closed_fakewall_no_f0111",
-               M11_DM1_ViewportSquareIsWallLikePc34(fakewall_closed), 1,
+               DM1_V1_Viewport_SquareIsWallLikePc34Compat(fakewall_closed), 1,
                "DUNVIEW.C:7180-7197 F0111 is door-front only");
     expect_int("contract.closed_fakewall_no_f0115",
-               M11_DM1_ViewportSquareIsOpenPc34(fakewall_closed), 0,
+               DM1_V1_Viewport_SquareIsOpenPc34Compat(fakewall_closed), 0,
                "DUNVIEW.C:7119-7166 wall returns before T0120029/F0115");
     expect_int("contract.closed_fakewall_no_f0108",
-               M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(fakewall_closed), 0,
+               DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(fakewall_closed), 0,
                "DUNVIEW.C:7210-7214 F0108 is open floor route");
 }
 
@@ -242,7 +242,7 @@ static void test_imaginary_fakewall_collision_viewport_split(void)
         square_of(DUNGEON_ELEMENT_FAKEWALL, 0x05);
 
     expect_int("split.real_closed.viewport_wall",
-               M11_DM1_ViewportSquareIsWallLikePc34(fakewall_real_closed), 1,
+               DM1_V1_Viewport_SquareIsWallLikePc34Compat(fakewall_real_closed), 1,
                "DUNGEON.C:2651-2661 !MASK0x0004_FAKEWALL_OPEN -> wall aspect");
     setup_one_square_dungeon(&dungeon, &map, &tiles, &square, fakewall_real_closed);
     expect_int("split.real_closed.collision_blocks",
@@ -250,10 +250,10 @@ static void test_imaginary_fakewall_collision_viewport_split(void)
                "CLIKMENU.C:280-281 !OPEN && !IMAGINARY blocks movement");
 
     expect_int("split.imaginary.viewport_still_wall",
-               M11_DM1_ViewportSquareIsWallLikePc34(fakewall_imaginary), 1,
+               DM1_V1_Viewport_SquareIsWallLikePc34Compat(fakewall_imaginary), 1,
                "DUNGEON.C:2651-2661 ignores MASK0x0001_FAKEWALL_IMAGINARY");
     expect_int("split.imaginary.viewport_not_open",
-               M11_DM1_ViewportSquareIsOpenPc34(fakewall_imaginary), 0,
+               DM1_V1_Viewport_SquareIsOpenPc34Compat(fakewall_imaginary), 0,
                "DUNGEON.C:2651-2661 imaginary-only fakewall remains wall aspect");
     setup_one_square_dungeon(&dungeon, &map, &tiles, &square, fakewall_imaginary);
     expect_int("split.imaginary.collision_passes",
@@ -261,7 +261,7 @@ static void test_imaginary_fakewall_collision_viewport_split(void)
                "CLIKMENU.C:280-281 MASK0x0001_FAKEWALL_IMAGINARY allows movement");
 
     expect_int("split.open.viewport_corridor",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(fakewall_open),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(fakewall_open),
                DUNGEON_ELEMENT_CORRIDOR,
                "DUNGEON.C:2662-2666 MASK0x0004_FAKEWALL_OPEN -> corridor aspect");
     setup_one_square_dungeon(&dungeon, &map, &tiles, &square, fakewall_open);
@@ -274,11 +274,11 @@ static void test_imaginary_fakewall_collision_viewport_split(void)
      * CLIKMENU.C:F0366 lines 286-287 allows collision through either
      * MASK0x0004_FAKEWALL_OPEN or MASK0x0001_FAKEWALL_IMAGINARY. */
     expect_int("split.open_imaginary.viewport_corridor",
-               M11_DM1_ViewportEffectiveElementForSquarePc34(fakewall_open_imaginary),
+               DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(fakewall_open_imaginary),
                DUNGEON_ELEMENT_CORRIDOR,
                "DUNGEON.C:2662-2666 OPEN wins viewport corridor aspect");
     expect_int("split.open_imaginary.viewport_open",
-               M11_DM1_ViewportSquareIsOpenPc34(fakewall_open_imaginary), 1,
+               DM1_V1_Viewport_SquareIsOpenPc34Compat(fakewall_open_imaginary), 1,
                "DUNGEON.C:2662-2666 OPEN+IMAGINARY remains open corridor");
     setup_one_square_dungeon(&dungeon, &map, &tiles, &square, fakewall_open_imaginary);
     expect_int("split.open_imaginary.collision_passes",

@@ -16934,7 +16934,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * invisible champion records paired with the C127 portrait/mirror wall
      * ornament route, whose map-local frame ordinal is the last wall
      * ornament in DM1 map 0.  Sensor ornaments keep precedence. */
-    if (M11_DM1_ViewportSquareIsWallLikePc34(cell.square) && cell.wallOrnamentOrdinal <= 0 &&
+    if (DM1_V1_Viewport_SquareIsWallLikePc34Compat(cell.square) && cell.wallOrnamentOrdinal <= 0 &&
         state->world.dungeon && state->world.things && state->world.things->textStrings &&
         state->world.party.mapIndex >= 0 &&
         state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
@@ -16971,7 +16971,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * ReDMCSB DUNGEON.C:2585-2593 sets
      * G0290_T_DungeonView_InscriptionThing when the current wall ornament
      * matches the synthetic current-map inscription ornament. */
-    if (M11_DM1_ViewportSquareIsWallLikePc34(cell.square) &&
+    if (DM1_V1_Viewport_SquareIsWallLikePc34Compat(cell.square) &&
         cell.wallOrnamentOrdinal >= 0 &&
         state->world.dungeon &&
         state->world.things &&
@@ -17185,7 +17185,7 @@ static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return 0;
     }
-    return M11_DM1_ViewportSquareIsOpenPc34(cell->square);
+    return DM1_V1_Viewport_SquareIsOpenPc34Compat(cell->square);
 }
 
 static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
@@ -17193,7 +17193,7 @@ static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return 0;
     }
-    effectiveElement = M11_DM1_ViewportEffectiveElementForSquarePc34(cell->square);
+    effectiveElement = DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(cell->square);
     /* ReDMCSB DUNGEON.C F0172: closed fakewalls become
      * DUNGEON_ELEMENT_WALL for viewport aspect, while open fakewalls become
      * corridors.  Keep the explicit DUNGEON_ELEMENT_FAKEWALL mention here so
@@ -17208,7 +17208,7 @@ static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return 0;
     }
-    effectiveElement = M11_DM1_ViewportEffectiveElementForSquarePc34(cell->square);
+    effectiveElement = DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(cell->square);
     /* ReDMCSB DUNGEON.C F0172 gives corridor, pit, and teleporter squares the
      * floor-ornament/sensor path.  Stairs are excluded there because bit 0x08
      * is orientation, not random-ornament permission. */
@@ -28415,7 +28415,7 @@ int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
         return 0;
     }
     effectiveElement =
-        M11_DM1_ViewportEffectiveElementForSquarePc34(cell.square);
+        DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(cell.square);
     if (outMapX) *outMapX = cell.mapX;
     if (outMapY) *outMapY = cell.mapY;
     if (outRawSquare) *outRawSquare = cell.square;

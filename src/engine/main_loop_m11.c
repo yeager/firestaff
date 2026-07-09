@@ -3229,7 +3229,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                      * fullscreen map overlay so we keep that key for
                      * the V1 chrome and add a dedicated export key.) */
                     if (gameView && gameView->active) {
-                        int ex = DM1_AutoMap_ExportCurrentLevel(gameView);
+                        int ex = DM1_V1_AutoMap_ExportCurrentLevelPc34Compat(gameView);
                         fprintf(stderr, "QoL: auto-map export %s\n",
                                 ex ? "ok" : "FAILED");
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
@@ -3607,7 +3607,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_NONE;
                 case SDLK_F8:
                     if (gameView && gameView->active) {
-                        int ex = DM1_AutoMap_ExportCurrentLevel(gameView);
+                        int ex = DM1_V1_AutoMap_ExportCurrentLevelPc34Compat(gameView);
                         fprintf(stderr, "QoL: auto-map export %s\n",
                                 ex ? "ok" : "FAILED");
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
@@ -4425,8 +4425,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
              * path, so keep CPU bounded by presenting only after input,
              * resize, launch, restart, or a source tick dirties the frame. */
             if (gameFrameNeedsPresent) {
-                DM1_AutoMap_RecordVisit(&gameView);
-                DM1_Minimap_Render(&gameView,
+                DM1_V1_AutoMap_RecordVisitPc34Compat(&gameView);
+                DM1_V1_Minimap_RenderPc34Compat(&gameView,
                                    M11_Render_GetFramebuffer(),
                                    M11_FB_WIDTH, M11_FB_HEIGHT);
                 DM1_CombatLog_Render(&gameView,

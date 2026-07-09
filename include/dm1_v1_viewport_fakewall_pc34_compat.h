@@ -1,9 +1,18 @@
 #ifndef FIRESTAFF_DM1_V1_VIEWPORT_FAKEWALL_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_VIEWPORT_FAKEWALL_PC34_COMPAT_H
 
-int M11_DM1_ViewportEffectiveElementForSquarePc34(unsigned char square);
-int M11_DM1_ViewportSquareIsWallLikePc34(unsigned char square);
-int M11_DM1_ViewportSquareIsOpenPc34(unsigned char square);
-int M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(unsigned char square);
+int DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(unsigned char square);
+int DM1_V1_Viewport_SquareIsWallLikePc34Compat(unsigned char square);
+int DM1_V1_Viewport_SquareIsOpenPc34Compat(unsigned char square);
+int DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(unsigned char square);
+
+#define M11_DM1_ViewportEffectiveElementForSquarePc34 \
+    DM1_V1_Viewport_EffectiveElementForSquarePc34Compat
+#define M11_DM1_ViewportSquareIsWallLikePc34 \
+    DM1_V1_Viewport_SquareIsWallLikePc34Compat
+#define M11_DM1_ViewportSquareIsOpenPc34 \
+    DM1_V1_Viewport_SquareIsOpenPc34Compat
+#define M11_DM1_ViewportSquareHasFloorOrnamentPathPc34 \
+    DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat
 
 #endif
