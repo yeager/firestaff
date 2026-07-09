@@ -1343,3 +1343,41 @@ int dm1_v1_explosion_party_champion_apply_pc34(
     outPlan->killed = killed ? 1 : 0;
     return 1;
 }
+
+int dm1_v1_explosion_group_apply_pc34(
+    const struct CombatAction_Compat* action,
+    struct DungeonGroup_Compat* group,
+    DM1_ExplosionGroupApplyPlanPc34* outPlan) {
+    int creatureIndex = 0;
+    int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->finalOutcomeCode = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+    if (!action || !group) return 0;
+    if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP) return 0;
+    outPlan->valid = 1;
+    outPlan->damage.damageApplied = action->rawAttackValue;
+    if (outPlan->damage.damageApplied <= 0) return 1;
+
+    /* ReDMCSB: PROJEXPL.C F0220 lines 857-866 applies explosion damage
+     * to a group square. F0190/F0738 then mutates the live GROUP slot and
+     * compacts killed creature entries until the group is dead or no live
+     * slots remain. */
+    outPlan->handled = 1;
+    while (creatureIndex <= (int)group->count && creatureIndex < 4) {
+        if (group->health[creatureIndex] == 0) {
+            ++creatureIndex;
+            continue;
+        }
+        if (!F0738_COMBAT_ApplyDamageToGroup_Compat(
+                &outPlan->damage, group, creatureIndex, &outcome)) {
+            return 0;
+        }
+        outPlan->appliedCount++;
+        outPlan->finalOutcomeCode = outcome;
+        if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) break;
+        if (outcome == COMBAT_OUTCOME_KILLED_NO_CREATURES) ++creatureIndex;
+    }
+    return 1;
+}
