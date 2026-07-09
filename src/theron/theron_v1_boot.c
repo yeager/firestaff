@@ -1483,10 +1483,15 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
                 : -1;
     }
     out_view_model->srm_root = effective_snapshot.srm_root;
-    out_view_model->runtime_level_source = 0;
-    out_view_model->runtime_track02_semantic_handoff = 0;
-    out_view_model->runtime_fallback_visuals_blocked = 0;
-    if (effective_snapshot.world) {
+    out_view_model->runtime_level_source =
+        effective_snapshot.runtime_level_source;
+    out_view_model->runtime_track02_semantic_handoff =
+        effective_snapshot.runtime_track02_semantic_handoff ? 1 : 0;
+    out_view_model->runtime_fallback_visuals_blocked =
+        effective_snapshot.runtime_fallback_visuals_blocked ? 1 : 0;
+    if (out_view_model->runtime_level_source ==
+            THERON_V1_STARTUP_RUNTIME_LEVEL_NONE &&
+        effective_snapshot.world) {
         const Theron_V1_World *world = effective_snapshot.world;
         int dungeon_index = world->current_dungeon - 1;
         if (dungeon_index >= 0 &&
@@ -1720,9 +1725,6 @@ int theron_v1_boot_startup_state_receipt_from_view_model(
 
     if (view_model->runtime_level_source !=
         THERON_V1_STARTUP_RUNTIME_LEVEL_NONE) {
-        out_receipt->set_level_loaded = 1;
-        out_receipt->level_loaded =
-            view_model->runtime_level >= 0 ? view_model->runtime_level : 0;
         out_receipt->set_runtime_level_route = 1;
         out_receipt->runtime_level_source =
             view_model->runtime_level_source;
@@ -1730,6 +1732,12 @@ int theron_v1_boot_startup_state_receipt_from_view_model(
             view_model->runtime_track02_semantic_handoff;
         out_receipt->runtime_fallback_visuals_blocked =
             view_model->runtime_fallback_visuals_blocked;
+        if (view_model->runtime_level_source !=
+            THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED) {
+            out_receipt->set_level_loaded = 1;
+            out_receipt->level_loaded =
+                view_model->runtime_level >= 0 ? view_model->runtime_level : 0;
+        }
     }
 
     if (view_model->resume_claim != THERON_V1_STARTUP_RESUME_NONE) {

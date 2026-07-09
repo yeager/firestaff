@@ -1434,9 +1434,11 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupHostReceipt host_receipt;
     Theron_V1_BootRuntimeStartupSnapshot snapshot;
     Theron_V1_BootRuntimeStartupSnapshot media_snapshot;
+    Theron_V1_BootRuntimeStartupSnapshot blocked_snapshot;
     Theron_V1_BootStartupViewModel view_model;
     Theron_V1_BootStartupViewModel direct_view_model;
     Theron_V1_BootStartupViewModel media_view_model;
+    Theron_V1_BootStartupViewModel blocked_view_model;
     Theron_StartupMediaStateReceipt media_receipt;
     Theron_StartupLayoutElement media_layout[THERON_V1_BOOT_STARTUP_VIEW_MODEL_LAYOUT_CAP];
     Theron_StartupRenderPlan media_plan;
@@ -1723,6 +1725,31 @@ static void test_startup_session_facts_wrappers(void) {
                     state_receipt.save_resume_srm_active_slot == 3 &&
                     state_receipt.set_runtime_level_route,
                 "boot startup snapshot media route emits same startup state receipt");
+    blocked_snapshot = media_snapshot;
+    blocked_snapshot.world = NULL;
+    blocked_snapshot.runtime_level_source =
+        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED;
+    blocked_snapshot.runtime_track02_semantic_handoff = 0;
+    blocked_snapshot.runtime_fallback_visuals_blocked = 1;
+    expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+                    &blocked_snapshot,
+                    &media_receipt,
+                    &blocked_view_model) &&
+                    blocked_view_model.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
+                    blocked_view_model.runtime_fallback_visuals_blocked == 1 &&
+                    blocked_view_model.runtime_level == -1,
+                "boot startup view model carries Track02 blocked route without fallback world");
+    memset(&state_receipt, 0, sizeof(state_receipt));
+    expect_true(theron_v1_boot_startup_state_receipt_from_view_model(
+                    &blocked_view_model,
+                    &state_receipt) &&
+                    state_receipt.set_runtime_level_route &&
+                    state_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
+                    state_receipt.runtime_fallback_visuals_blocked == 1 &&
+                    !state_receipt.set_level_loaded,
+                "boot startup state receipt blocks Track02 fallback visuals without marking a level loaded");
     media_layout_roster_found = 0;
     expect_true(theron_v1_boot_startup_layout_build_from_view_model(
                     &media_view_model,
