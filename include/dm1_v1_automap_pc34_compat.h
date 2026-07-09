@@ -22,18 +22,25 @@ extern "C" {
 #endif
 
 /* Mark the current party cell as visited in the per-level visited grid. */
-void DM1_AutoMap_RecordVisit(M11_GameViewState* gameView);
+void DM1_V1_AutoMap_RecordVisitPc34Compat(M11_GameViewState* gameView);
 
 /* Export the auto-map for the party's current level to
  * ~/.firestaff/maps/dm1-level-XX.bmp. Returns 1 on success, 0 on error. */
-int  DM1_AutoMap_ExportCurrentLevel(M11_GameViewState* gameView);
+int  DM1_V1_AutoMap_ExportCurrentLevelPc34Compat(M11_GameViewState* gameView);
 
 /* Underlying primitive used by the hotkey export. mapIndex 1-based not
  * required here; caller supplies the level index already in dungeon
  * coordinates. */
-int  DM1_AutoMap_ExportPNG(M11_GameViewState* gameView,
+int  DM1_V1_AutoMap_ExportPNGPc34Compat(M11_GameViewState* gameView,
                            int mapIndex,
                            const char* outputPath);
+
+#define DM1_AutoMap_RecordVisit \
+    DM1_V1_AutoMap_RecordVisitPc34Compat
+#define DM1_AutoMap_ExportCurrentLevel \
+    DM1_V1_AutoMap_ExportCurrentLevelPc34Compat
+#define DM1_AutoMap_ExportPNG \
+    DM1_V1_AutoMap_ExportPNGPc34Compat
 
 #ifdef __cplusplus
 }

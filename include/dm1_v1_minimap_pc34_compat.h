@@ -19,10 +19,13 @@
 extern "C" {
 #endif
 
-void DM1_Minimap_Render(M11_GameViewState* gameView,
+void DM1_V1_Minimap_RenderPc34Compat(M11_GameViewState* gameView,
                         unsigned char* framebuffer,
                         int fbWidth,
                         int fbHeight);
+
+#define DM1_Minimap_Render \
+    DM1_V1_Minimap_RenderPc34Compat
 
 #ifdef __cplusplus
 }

@@ -43,7 +43,7 @@ static void test_d1l_source_locked_spec(void)
     int scratch_x = -1;
 
     /* ReDMCSB: DUNVIEW.C:7436-7460 F0122 D1L WALL selects C03/C713 and returns. */
-    expect_int("d1l.resolve", M11_GameView_D1LD1RWallResolvePc34(&input, &spec) ? 1 : 0,
+    expect_int("d1l.resolve", DM1_V1_D1LD1RWall_ResolvePc34Compat(&input, &spec) ? 1 : 0,
                1, "DUNVIEW.C:7436-7460");
     expect_int("d1l.contract_only", spec.contract_only ? 1 : 0, 1,
                "source-lock gate only");
@@ -94,14 +94,14 @@ static void test_d1l_source_locked_spec(void)
                "DUNVIEW.C:7460 returns before thing pass");
 
     expect_int("d1l.map.left",
-               M11_GameView_D1LD1RWallMapViewportToSourcePc34(
+               DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat(
                    &spec, 9, 0, &source_x, &source_y, &scratch_x) ? 1 : 0,
                1, "DUNVIEW.C:590 left edge");
     expect_int("d1l.map.left_source_x", source_x, 192, "DUNVIEW.C:590 X=192");
     expect_int("d1l.map.left_source_y", source_y, 0, "DUNVIEW.C:590 Y=0");
     expect_int("d1l.map.left_scratch", scratch_x, 192, "native route no scratch flip");
     expect_int("d1l.map.right",
-               M11_GameView_D1LD1RWallMapViewportToSourcePc34(
+               DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat(
                    &spec, 119, 63, &source_x, &source_y, &scratch_x) ? 1 : 0,
                1, "DUNVIEW.C:590 right/bottom edge");
     expect_int("d1l.map.right_source_x", source_x, 255, "DUNVIEW.C:590 source span");
@@ -122,7 +122,7 @@ static void test_d1r_source_locked_spec_and_mirror(void)
     int scratch_x = -1;
 
     /* ReDMCSB: DUNVIEW.C:7604-7628 F0123 D1R WALL exposes C03 flipped into C714. */
-    expect_int("d1r.resolve", M11_GameView_D1LD1RWallResolvePc34(&input, &spec) ? 1 : 0,
+    expect_int("d1r.resolve", DM1_V1_D1LD1RWall_ResolvePc34Compat(&input, &spec) ? 1 : 0,
                1, "DUNVIEW.C:7604-7628");
     expect_int("d1r.depth", spec.depth, 1, "DUNVIEW.C:8528-8529");
     expect_int("d1r.lateral", spec.lateral, 1, "DUNVIEW.C:8528-8529");
@@ -154,7 +154,7 @@ static void test_d1r_source_locked_spec_and_mirror(void)
                1, "DUNVIEW.C:7627");
 
     expect_int("d1r.map.left",
-               M11_GameView_D1LD1RWallMapViewportToSourcePc34(
+               DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat(
                    &spec, 9, 160, &source_x, &source_y, &scratch_x) ? 1 : 0,
                1, "DUNVIEW.C:591 + F0105 mirror");
     expect_int("d1r.map.left_source_x", source_x, 255,
@@ -163,7 +163,7 @@ static void test_d1r_source_locked_spec_and_mirror(void)
                "DUNVIEW.C:3199 temporary flipped copy");
     expect_int("d1r.map.left_source_y", source_y, 0, "DUNVIEW.C:591");
     expect_int("d1r.map.right",
-               M11_GameView_D1LD1RWallMapViewportToSourcePc34(
+               DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat(
                    &spec, 119, 223, &source_x, &source_y, &scratch_x) ? 1 : 0,
                1, "DUNVIEW.C:591 + F0105 mirror");
     expect_int("d1r.map.right_source_x", source_x, 192,
@@ -203,7 +203,7 @@ static void test_pixels_c10_and_no_write_edges(void)
     source[110 * DM1_V1_D1L_D1R_WALL_SOURCE_WIDTH_PC34 + 192] = 0x55;
 
     expect_int("pixel.d1l.left.apply",
-               M11_GameView_D1LD1RWallApplyPixelPc34(
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
                    &d1l, source, sizeof(source), viewport, sizeof(viewport), &pixel) ? 1 : 0,
                1, "DUNVIEW.C:3048-3058 F0100");
     expect_int("pixel.d1l.left.in_clip", pixel.in_clip ? 1 : 0, 1,
@@ -216,7 +216,7 @@ static void test_pixels_c10_and_no_write_edges(void)
 
     d1l.viewport_x = 1;
     expect_int("pixel.d1l.c10.apply",
-               M11_GameView_D1LD1RWallApplyPixelPc34(
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
                    &d1l, source, sizeof(source), viewport, sizeof(viewport), &pixel) ? 1 : 0,
                1, "DEFS.H:2088 C10");
     expect_int("pixel.d1l.c10.skip", pixel.transparent_skip ? 1 : 0, 1,
@@ -228,7 +228,7 @@ static void test_pixels_c10_and_no_write_edges(void)
 
     d1r.viewport_x = 160;
     expect_int("pixel.d1r.left.apply",
-               M11_GameView_D1LD1RWallApplyPixelPc34(
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
                    &d1r, source, sizeof(source), viewport, sizeof(viewport), &pixel) ? 1 : 0,
                1, "DUNVIEW.C:7614 F0105");
     expect_int("pixel.d1r.left.source_x", pixel.source_x, 255,
@@ -240,7 +240,7 @@ static void test_pixels_c10_and_no_write_edges(void)
 
     d1r.viewport_x = 161;
     expect_int("pixel.d1r.next.apply",
-               M11_GameView_D1LD1RWallApplyPixelPc34(
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
                    &d1r, source, sizeof(source), viewport, sizeof(viewport), &pixel) ? 1 : 0,
                1, "DUNVIEW.C:7614 F0105");
     expect_int("pixel.d1r.next.source_x", pixel.source_x, 254,
@@ -250,7 +250,7 @@ static void test_pixels_c10_and_no_write_edges(void)
 
     d1r.viewport_x = 162;
     expect_int("pixel.d1r.c10.apply",
-               M11_GameView_D1LD1RWallApplyPixelPc34(
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
                    &d1r, source, sizeof(source), viewport, sizeof(viewport), &pixel) ? 1 : 0,
                1, "DUNVIEW.C:3185-3204 F0105 mirrored C10 skip");
     expect_int("pixel.d1r.c10.source_x", pixel.source_x, 253,
@@ -267,7 +267,7 @@ static void test_pixels_c10_and_no_write_edges(void)
     d1r.row = 119;
     d1r.viewport_x = 223;
     expect_int("pixel.d1r.bottom_right.apply",
-               M11_GameView_D1LD1RWallApplyPixelPc34(
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
                    &d1r, source, sizeof(source), viewport, sizeof(viewport), &pixel) ? 1 : 0,
                1, "DUNVIEW.C:591 bottom/right");
     expect_int("pixel.d1r.bottom_right.source_x", pixel.source_x, 192,
@@ -280,7 +280,7 @@ static void test_pixels_c10_and_no_write_edges(void)
     d1l.row = 8;
     d1l.viewport_x = 0;
     expect_int("pixel.before_top.apply",
-               M11_GameView_D1LD1RWallApplyPixelPc34(
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
                    &d1l, source, sizeof(source), viewport, sizeof(viewport), &pixel) ? 1 : 0,
                1, "DUNVIEW.C:590 no-write above frame");
     expect_int("pixel.before_top.no_write", pixel.no_write_metadata ? 1 : 0, 1,
@@ -291,7 +291,7 @@ static void test_pixels_c10_and_no_write_edges(void)
     d1r.row = 9;
     d1r.viewport_x = 159;
     expect_int("pixel.before_d1r.apply",
-               M11_GameView_D1LD1RWallApplyPixelPc34(
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
                    &d1r, source, sizeof(source), viewport, sizeof(viewport), &pixel) ? 1 : 0,
                1, "DUNVIEW.C:591 no-write before D1R frame");
     expect_int("pixel.before_d1r.no_write", pixel.no_write_metadata ? 1 : 0, 1,
@@ -321,35 +321,35 @@ static void test_invalid_inputs_and_blend(void)
     int source_y = -1;
     int scratch_x = -1;
 
-    expect_int("invalid.null_input", M11_GameView_D1LD1RWallResolvePc34(NULL, &spec) ? 1 : 0,
+    expect_int("invalid.null_input", DM1_V1_D1LD1RWall_ResolvePc34Compat(NULL, &spec) ? 1 : 0,
                0, "contract rejects null input");
-    expect_int("invalid.null_output", M11_GameView_D1LD1RWallResolvePc34(&input, NULL) ? 1 : 0,
+    expect_int("invalid.null_output", DM1_V1_D1LD1RWall_ResolvePc34Compat(&input, NULL) ? 1 : 0,
                0, "contract rejects null output");
-    expect_int("invalid.bad_route", M11_GameView_D1LD1RWallResolvePc34(&bad_route, &spec) ? 1 : 0,
+    expect_int("invalid.bad_route", DM1_V1_D1LD1RWall_ResolvePc34Compat(&bad_route, &spec) ? 1 : 0,
                0, "route enum guard");
     expect_int("invalid.null_pixel_out",
-               M11_GameView_D1LD1RWallApplyPixelPc34(&input, NULL, 0, NULL, 0, NULL) ? 1 : 0,
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(&input, NULL, 0, NULL, 0, NULL) ? 1 : 0,
                0, "contract rejects null pixel output");
     expect_int("invalid.map_null_spec",
-               M11_GameView_D1LD1RWallMapViewportToSourcePc34(
+               DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat(
                    NULL, 9, 0, &source_x, &source_y, &scratch_x) ? 1 : 0,
                0, "map rejects null spec");
     expect_int("invalid.map_null_x",
-               M11_GameView_D1LD1RWallMapViewportToSourcePc34(
+               DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat(
                    &spec, 9, 0, NULL, &source_y, &scratch_x) ? 1 : 0,
                0, "map rejects null source_x");
-    expect_int("blend.c10", M11_GameView_D1LD1RWallBlendPixelPc34(0x44, 10, 10),
+    expect_int("blend.c10", DM1_V1_D1LD1RWall_BlendPixelPc34Compat(0x44, 10, 10),
                0x44, "DEFS.H:2088");
-    expect_int("blend.opaque", M11_GameView_D1LD1RWallBlendPixelPc34(0x44, 0x52, 10),
+    expect_int("blend.opaque", DM1_V1_D1LD1RWall_BlendPixelPc34Compat(0x44, 0x52, 10),
                0x52, "DUNVIEW.C:3055 / 3201");
     expect_int("invalid.null_source_in_clip",
-               M11_GameView_D1LD1RWallApplyPixelPc34(&input, NULL, 0, NULL, 0, &pixel) ? 1 : 0,
+               DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(&input, NULL, 0, NULL, 0, &pixel) ? 1 : 0,
                0, "in-clip pixel needs buffers");
 }
 
 static void test_source_evidence_mentions_required_anchors(void)
 {
-    const char *e = M11_GameView_D1LD1RWallSourceLockPc34();
+    const char *e = DM1_V1_D1LD1RWall_SourceLockPc34Compat();
 
     expect_contains("evidence.contract", e, "contract_only=1", "source evidence");
     expect_contains("evidence.no_asset", e, "no_asset_parity=1", "source evidence");

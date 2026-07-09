@@ -40,7 +40,7 @@ static void test_d0l_native_route_spec(void)
     int scratch_x = -1;
 
     /* ReDMCSB: DUNVIEW.C:8007-8038 routes D0L WALL through C716 and returns. */
-    expect_int("d0l.resolve", M11_GameView_D0LD0RWallResolvePc34(&input, &spec) ? 1 : 0, 1);
+    expect_int("d0l.resolve", DM1_V1_D0LD0RWall_ResolvePc34Compat(&input, &spec) ? 1 : 0, 1);
     expect_int("d0l.view_square", spec.view_square_index, 1);
     expect_int("d0l.wall_bitmap", spec.selected_wall_bitmap_index, 1);
     expect_int("d0l.opposite_bitmap", spec.opposite_wall_bitmap_index, 0);
@@ -57,16 +57,16 @@ static void test_d0l_native_route_spec(void)
     expect_int("d0l.contract_only", strstr(spec.contract, "Source-locked contract gate only") != NULL, 1);
 
     expect_int("d0l.map.left",
-               M11_GameView_D0LD0RWallMapViewportXToSourcePc34(
+               DM1_V1_D0LD0RWall_MapViewportXToSourcePc34Compat(
                    &spec, 0, &source_x, &scratch_x) ? 1 : 0, 1);
     expect_int("d0l.map.left_source", source_x, 16);
     expect_int("d0l.map.left_scratch", scratch_x, 16);
     expect_int("d0l.map.right",
-               M11_GameView_D0LD0RWallMapViewportXToSourcePc34(
+               DM1_V1_D0LD0RWall_MapViewportXToSourcePc34Compat(
                    &spec, 47, &source_x, &scratch_x) ? 1 : 0, 1);
     expect_int("d0l.map.right_source", source_x, 63);
     expect_int("d0l.map.after_strip",
-               M11_GameView_D0LD0RWallMapViewportXToSourcePc34(
+               DM1_V1_D0LD0RWall_MapViewportXToSourcePc34Compat(
                    &spec, 48, &source_x, &scratch_x) ? 1 : 0, 0);
 }
 
@@ -92,24 +92,24 @@ static void test_d0l_pixel_slice_and_c10(void)
 
     /* ReDMCSB: DEFS.H:2088 C10_COLOR_FLESH preserves the destination pixel. */
     expect_int("d0l.pixel.c10",
-               M11_GameView_D0LD0RWallApplyPixelSlicePc34(
+               DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat(
                    &input, source, sizeof(source), viewport, sizeof(viewport), 0, &pixel) ? 1 : 0, 1);
     expect_int("d0l.pixel.c10_visible", pixel.visible, 1);
     expect_int("d0l.pixel.c10_source_x", pixel.source_x, 16);
     expect_int("d0l.pixel.c10_preserved", pixel.pixel_after, 0xee);
 
     expect_int("d0l.pixel.opaque",
-               M11_GameView_D0LD0RWallApplyPixelSlicePc34(
+               DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat(
                    &input, source, sizeof(source), viewport, sizeof(viewport), 1, &pixel) ? 1 : 0, 1);
     expect_int("d0l.pixel.opaque_source_x", pixel.source_x, 17);
     expect_int("d0l.pixel.opaque_written", pixel.pixel_after, 0x42);
     expect_int("d0l.pixel.last",
-               M11_GameView_D0LD0RWallApplyPixelSlicePc34(
+               DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat(
                    &input, source, sizeof(source), viewport, sizeof(viewport), 47, &pixel) ? 1 : 0, 1);
     expect_int("d0l.pixel.last_source_x", pixel.source_x, 63);
     expect_int("d0l.pixel.last_written", pixel.pixel_after, 0x7e);
     expect_int("d0l.pixel.after_strip",
-               M11_GameView_D0LD0RWallApplyPixelSlicePc34(
+               DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat(
                    &input, source, sizeof(source), viewport, sizeof(viewport), 48, &pixel) ? 1 : 0, 1);
     expect_int("d0l.pixel.after_strip_invisible", pixel.visible, 0);
     expect_int("d0l.pixel.after_strip_untouched",
@@ -142,7 +142,7 @@ static void test_d0r_parity_route_spec_and_pixel_slice(void)
     source[48] = 0x33;
 
     /* ReDMCSB: DUNVIEW.C:8127 uses F0105 and the parity scratch flip. */
-    expect_int("d0r.resolve", M11_GameView_D0LD0RWallResolvePc34(&input, &spec) ? 1 : 0, 1);
+    expect_int("d0r.resolve", DM1_V1_D0LD0RWall_ResolvePc34Compat(&input, &spec) ? 1 : 0, 1);
     expect_int("d0r.view_square", spec.view_square_index, 2);
     expect_int("d0r.parity_source_bitmap", spec.selected_wall_bitmap_index, 1);
     expect_int("d0r.native_partner_bitmap", spec.opposite_wall_bitmap_index, 0);
@@ -155,29 +155,29 @@ static void test_d0r_parity_route_spec_and_pixel_slice(void)
     expect_int("d0r.f0105", spec.uses_f0105_parity_scratch_flip ? 1 : 0, 1);
 
     expect_int("d0r.map.left",
-               M11_GameView_D0LD0RWallMapViewportXToSourcePc34(
+               DM1_V1_D0LD0RWall_MapViewportXToSourcePc34Compat(
                    &spec, 16, &source_x, &scratch_x) ? 1 : 0, 1);
     expect_int("d0r.map.left_source", source_x, 47);
     expect_int("d0r.map.left_scratch", scratch_x, 0);
     expect_int("d0r.map.right",
-               M11_GameView_D0LD0RWallMapViewportXToSourcePc34(
+               DM1_V1_D0LD0RWall_MapViewportXToSourcePc34Compat(
                    &spec, 63, &source_x, &scratch_x) ? 1 : 0, 1);
     expect_int("d0r.map.right_source", source_x, 0);
     expect_int("d0r.map.before_strip",
-               M11_GameView_D0LD0RWallMapViewportXToSourcePc34(
+               DM1_V1_D0LD0RWall_MapViewportXToSourcePc34Compat(
                    &spec, 15, &source_x, &scratch_x) ? 1 : 0, 0);
 
     expect_int("d0r.pixel.c10_left",
-               M11_GameView_D0LD0RWallApplyPixelSlicePc34(
+               DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat(
                    &input, source, sizeof(source), viewport, sizeof(viewport), 16, &pixel) ? 1 : 0, 1);
     expect_int("d0r.pixel.c10_preserved", pixel.pixel_after, 0xee);
     expect_int("d0r.pixel.next",
-               M11_GameView_D0LD0RWallApplyPixelSlicePc34(
+               DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat(
                    &input, source, sizeof(source), viewport, sizeof(viewport), 17, &pixel) ? 1 : 0, 1);
     expect_int("d0r.pixel.next_source_x", pixel.source_x, 46);
     expect_int("d0r.pixel.next_written", pixel.pixel_after, 0x52);
     expect_int("d0r.pixel.right",
-               M11_GameView_D0LD0RWallApplyPixelSlicePc34(
+               DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat(
                    &input, source, sizeof(source), viewport, sizeof(viewport), 63, &pixel) ? 1 : 0, 1);
     expect_int("d0r.pixel.right_source_x", pixel.source_x, 0);
     expect_int("d0r.pixel.right_written", pixel.pixel_after, 0x6e);
@@ -205,24 +205,24 @@ static void test_wall_case_excludes_other_routes_and_invalid_inputs(void)
     };
     DM1_V1_D0LD0RWallSpecPc34 spec;
 
-    expect_int("contract.resolve", M11_GameView_D0LD0RWallResolvePc34(&input, &spec) ? 1 : 0, 1);
+    expect_int("contract.resolve", DM1_V1_D0LD0RWall_ResolvePc34Compat(&input, &spec) ? 1 : 0, 1);
     expect_int("contract.wall_returns", spec.wall_case_returns ? 1 : 0, 1);
     expect_int("contract.no_f0111", spec.calls_f0111_door ? 1 : 0, 0);
     expect_int("contract.no_f0115", spec.calls_f0115_thing_pass ? 1 : 0, 0);
     expect_int("contract.no_f0108", spec.calls_f0108_floor_ornament ? 1 : 0, 0);
     expect_int("contract.blend_transparent",
-               M11_GameView_D0LD0RWallBlendPixelPc34(0x44, 10, 10), 0x44);
+               DM1_V1_D0LD0RWall_BlendPixelPc34Compat(0x44, 10, 10), 0x44);
     expect_int("contract.blend_opaque",
-               M11_GameView_D0LD0RWallBlendPixelPc34(0x44, 0x51, 10), 0x51);
-    expect_int("invalid.null_input", M11_GameView_D0LD0RWallResolvePc34(NULL, &spec) ? 1 : 0, 0);
-    expect_int("invalid.null_output", M11_GameView_D0LD0RWallResolvePc34(&input, NULL) ? 1 : 0, 0);
-    expect_int("invalid.row", M11_GameView_D0LD0RWallResolvePc34(&bad_row, &spec) ? 1 : 0, 0);
-    expect_int("invalid.route", M11_GameView_D0LD0RWallResolvePc34(&bad_route, &spec) ? 1 : 0, 0);
+               DM1_V1_D0LD0RWall_BlendPixelPc34Compat(0x44, 0x51, 10), 0x51);
+    expect_int("invalid.null_input", DM1_V1_D0LD0RWall_ResolvePc34Compat(NULL, &spec) ? 1 : 0, 0);
+    expect_int("invalid.null_output", DM1_V1_D0LD0RWall_ResolvePc34Compat(&input, NULL) ? 1 : 0, 0);
+    expect_int("invalid.row", DM1_V1_D0LD0RWall_ResolvePc34Compat(&bad_row, &spec) ? 1 : 0, 0);
+    expect_int("invalid.route", DM1_V1_D0LD0RWall_ResolvePc34Compat(&bad_route, &spec) ? 1 : 0, 0);
 }
 
 static void test_source_evidence_mentions_all_required_anchors(void)
 {
-    const char *e = M11_GameView_D0LD0RWallSourceLockPc34();
+    const char *e = DM1_V1_D0LD0RWall_SourceLockPc34Compat();
 
     expect_contains("evidence.contract_only", e, "Source-locked contract gate only");
     expect_contains("evidence.required_f0122_anchor", e, "F0122:7400-7600");

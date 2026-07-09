@@ -2,7 +2,7 @@
 
 #include "memory_dungeon_dat_pc34_compat.h"
 
-int M11_DM1_ViewportEffectiveElementForSquarePc34(unsigned char square)
+int DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(unsigned char square)
 {
     int elementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
 
@@ -16,14 +16,14 @@ int M11_DM1_ViewportEffectiveElementForSquarePc34(unsigned char square)
     return elementType;
 }
 
-int M11_DM1_ViewportSquareIsWallLikePc34(unsigned char square)
+int DM1_V1_Viewport_SquareIsWallLikePc34Compat(unsigned char square)
 {
-    return M11_DM1_ViewportEffectiveElementForSquarePc34(square) == DUNGEON_ELEMENT_WALL;
+    return DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(square) == DUNGEON_ELEMENT_WALL;
 }
 
-int M11_DM1_ViewportSquareIsOpenPc34(unsigned char square)
+int DM1_V1_Viewport_SquareIsOpenPc34Compat(unsigned char square)
 {
-    int elementType = M11_DM1_ViewportEffectiveElementForSquarePc34(square);
+    int elementType = DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(square);
     if (elementType == DUNGEON_ELEMENT_WALL) {
         return 0;
     }
@@ -34,9 +34,9 @@ int M11_DM1_ViewportSquareIsOpenPc34(unsigned char square)
     return 1;
 }
 
-int M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(unsigned char square)
+int DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(unsigned char square)
 {
-    int elementType = M11_DM1_ViewportEffectiveElementForSquarePc34(square);
+    int elementType = DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(square);
     return elementType == DUNGEON_ELEMENT_CORRIDOR ||
            elementType == DUNGEON_ELEMENT_PIT ||
            elementType == DUNGEON_ELEMENT_TELEPORTER;

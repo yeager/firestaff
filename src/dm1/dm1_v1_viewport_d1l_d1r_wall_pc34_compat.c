@@ -88,7 +88,7 @@ static const DM1_V1_D1LD1RWallRouteSpecPc34 *route_spec(
     return NULL;
 }
 
-bool M11_GameView_D1LD1RWallResolvePc34(
+bool DM1_V1_D1LD1RWall_ResolvePc34Compat(
     const DM1_V1_D1LD1RWallInputPc34 *input,
     DM1_V1_D1LD1RWallSpecPc34 *out)
 {
@@ -143,7 +143,7 @@ bool M11_GameView_D1LD1RWallResolvePc34(
     out->calls_f0111_door = false;
     out->calls_f0115_thing_pass = false;
     out->transparent_color = transparent_color;
-    out->source_lines = M11_GameView_D1LD1RWallSourceLockPc34();
+    out->source_lines = DM1_V1_D1LD1RWall_SourceLockPc34Compat();
     out->contract =
         "Source-locked contract gate only: D1L/D1R depth-1 near side-wall "
         "route, C03/C02 wall selection, D1R parity flip, C713/C714 zones, "
@@ -152,7 +152,7 @@ bool M11_GameView_D1LD1RWallResolvePc34(
     return true;
 }
 
-bool M11_GameView_D1LD1RWallMapViewportToSourcePc34(
+bool DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat(
     const DM1_V1_D1LD1RWallSpecPc34 *spec,
     int row,
     int viewport_x,
@@ -188,7 +188,7 @@ bool M11_GameView_D1LD1RWallMapViewportToSourcePc34(
     return true;
 }
 
-bool M11_GameView_D1LD1RWallApplyPixelPc34(
+bool DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
     const DM1_V1_D1LD1RWallInputPc34 *input,
     const uint8_t *source,
     size_t source_len,
@@ -203,12 +203,12 @@ bool M11_GameView_D1LD1RWallApplyPixelPc34(
 
     if (!out) return false;
     memset(out, 0, sizeof(*out));
-    if (!M11_GameView_D1LD1RWallResolvePc34(input, &spec)) return false;
+    if (!DM1_V1_D1LD1RWall_ResolvePc34Compat(input, &spec)) return false;
 
     out->spec = spec;
     out->row = input->row;
     out->viewport_x = input->viewport_x;
-    if (!M11_GameView_D1LD1RWallMapViewportToSourcePc34(
+    if (!DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat(
             &spec, input->row, input->viewport_x, &source_x, &source_y, &scratch_x)) {
         out->no_write_metadata = true;
         return true;
@@ -232,13 +232,13 @@ bool M11_GameView_D1LD1RWallApplyPixelPc34(
     out->source_pixel = source[out->source_offset];
     out->transparent_skip = out->source_pixel == spec.transparent_color;
     out->writes_pixel = !out->transparent_skip;
-    viewport[out->viewport_offset] = M11_GameView_D1LD1RWallBlendPixelPc34(
+    viewport[out->viewport_offset] = DM1_V1_D1LD1RWall_BlendPixelPc34Compat(
         viewport[out->viewport_offset], out->source_pixel, spec.transparent_color);
     out->pixel_after = viewport[out->viewport_offset];
     return true;
 }
 
-uint8_t M11_GameView_D1LD1RWallBlendPixelPc34(
+uint8_t DM1_V1_D1LD1RWall_BlendPixelPc34Compat(
     uint8_t destination_pixel,
     uint8_t source_pixel,
     uint8_t transparent_color)
@@ -247,7 +247,7 @@ uint8_t M11_GameView_D1LD1RWallBlendPixelPc34(
     return source_pixel;
 }
 
-const char *M11_GameView_D1LD1RWallSourceLockPc34(void)
+const char *DM1_V1_D1LD1RWall_SourceLockPc34Compat(void)
 {
     return
         "Source-locked contract gate only; contract_only=1; "

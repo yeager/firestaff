@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 viewport/map ownership names: D0/D1 side-wall helpers, fakewall viewport helpers, automap, and minimap now expose DM1-owned API names; old M11/DM1 names remain aliases. Verification: D0 side-wall 87/87, D1 side-wall 125/125, D0 source-lock 31/31, fakewall 62/62, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 action/inventory gate ownership names: door-bash stamina, door-bash feedback-chain, inventory hand-swap-with-chest, and champion-panel action-hand slot-priority APIs now expose DM1-owned names; old M11 names remain aliases. Verification: door-bash stamina 121/121, door-bash chain 210/210, champion-panel action-hand 106 assertions, hand-swap-with-chest 55 assertions, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 title/portrait/wall/light/text helper ownership names: title zoom state, portrait panel state, wall ornament definitions, legacy light wrappers, and legacy text wrappers now expose DM1-owned API names; old M11 names remain aliases. Verification: intro/title cleanup, light 22/22, text 96/96, wall ornament 106/106, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

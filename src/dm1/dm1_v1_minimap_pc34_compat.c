@@ -65,7 +65,7 @@ static void mm_fill_rect(unsigned char* fb,
     }
 }
 
-void DM1_Minimap_Render(M11_GameViewState* state,
+void DM1_V1_Minimap_RenderPc34Compat(M11_GameViewState* state,
                         unsigned char* fb,
                         int fbW,
                         int fbH) {

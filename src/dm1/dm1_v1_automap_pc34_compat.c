@@ -52,7 +52,7 @@ static int automap_get(int mapIdx, int x, int y) {
     return (g_store.bits[mapIdx][x] & (1U << y)) ? 1 : 0;
 }
 
-void DM1_AutoMap_RecordVisit(M11_GameViewState* state) {
+void DM1_V1_AutoMap_RecordVisitPc34Compat(M11_GameViewState* state) {
     if (!state || !state->active) return;
     if (!M11_QolRuntime_GetAutoMapEnabled()) return;
     automap_mark(state->world.party.mapIndex,
@@ -127,7 +127,7 @@ static int am_mkdir_p(const char* path) {
     return 1;
 }
 
-int DM1_AutoMap_ExportPNG(M11_GameViewState* state,
+int DM1_V1_AutoMap_ExportPNGPc34Compat(M11_GameViewState* state,
                           int mapIndex,
                           const char* outputPath) {
     const struct DungeonDatState_Compat* dungeon;
@@ -242,7 +242,7 @@ int DM1_AutoMap_ExportPNG(M11_GameViewState* state,
     return 1;
 }
 
-int DM1_AutoMap_ExportCurrentLevel(M11_GameViewState* state) {
+int DM1_V1_AutoMap_ExportCurrentLevelPc34Compat(M11_GameViewState* state) {
     char path[1024];
     const char* home;
     int idx;
@@ -252,5 +252,5 @@ int DM1_AutoMap_ExportCurrentLevel(M11_GameViewState* state) {
     if (!home || !*home) home = ".";
     snprintf(path, sizeof(path), "%s/.firestaff/maps/dm1-level-%02d.bmp",
              home, idx);
-    return DM1_AutoMap_ExportPNG(state, idx, path);
+    return DM1_V1_AutoMap_ExportPNGPc34Compat(state, idx, path);
 }

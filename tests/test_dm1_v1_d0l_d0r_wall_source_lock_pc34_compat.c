@@ -109,13 +109,13 @@ static void compose_d0_wall_row(
      */
     if (fixture->d0l_tile == DM1_V1_D0_ROW_TILE_WALL_PC34) {
         for (x = 0; x < 64; ++x) {
-            (void)M11_GameView_D0LD0RWallApplyPixelSlicePc34(
+            (void)DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat(
                 &d0l, wall_source, wall_source_len, viewport, viewport_len, x, &pixel);
         }
     }
     if (fixture->d0r_tile == DM1_V1_D0_ROW_TILE_WALL_PC34) {
         for (x = 0; x < 64; ++x) {
-            (void)M11_GameView_D0LD0RWallApplyPixelSlicePc34(
+            (void)DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat(
                 &d0r, wall_source, wall_source_len, viewport, viewport_len, x, &pixel);
         }
     }
@@ -156,10 +156,10 @@ static void test_row_fixture_metadata_and_routes(void)
     expect_int("fixture.transparent", fixture.transparent_color, 10,
                "DEFS.H:2088 C10_COLOR_FLESH");
     expect_int("d0l.resolve",
-               M11_GameView_D0LD0RWallResolvePc34(&d0l, &d0l_spec) ? 1 : 0,
+               DM1_V1_D0LD0RWall_ResolvePc34Compat(&d0l, &d0l_spec) ? 1 : 0,
                1, "DUNVIEW.C:8033 C716 F0104");
     expect_int("d0r.resolve",
-               M11_GameView_D0LD0RWallResolvePc34(&d0r, &d0r_spec) ? 1 : 0,
+               DM1_V1_D0LD0RWall_ResolvePc34Compat(&d0r, &d0r_spec) ? 1 : 0,
                1, "DUNVIEW.C:8127/8139 C717 parity/native wall path");
     expect_int("d0l.view_square", d0l_spec.view_square_index, 1,
                "DEFS.H:2597 M610_VIEW_SQUARE_D0L");
@@ -236,7 +236,7 @@ static void test_d0l_then_d0r_row_composition(void)
 
 static void test_source_evidence_mentions_required_anchors(void)
 {
-    const char *wall_evidence = M11_GameView_D0LD0RWallSourceLockPc34();
+    const char *wall_evidence = DM1_V1_D0LD0RWall_SourceLockPc34Compat();
 
     expect_contains("row_evidence.drawview", k_row_source_lock, "DRAWVIEW.C:709-722",
                     "F0097 viewport draw handoff");

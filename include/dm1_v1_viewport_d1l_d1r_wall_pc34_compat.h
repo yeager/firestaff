@@ -88,11 +88,11 @@ typedef struct {
 #define DM1_V1_D1L_D1R_WALL_SOURCE_HEIGHT_PC34 111
 #define DM1_V1_D1L_D1R_WALL_C10_COLOR_FLESH_PC34 10
 
-bool M11_GameView_D1LD1RWallResolvePc34(
+bool DM1_V1_D1LD1RWall_ResolvePc34Compat(
     const DM1_V1_D1LD1RWallInputPc34 *input,
     DM1_V1_D1LD1RWallSpecPc34 *out);
 
-bool M11_GameView_D1LD1RWallMapViewportToSourcePc34(
+bool DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat(
     const DM1_V1_D1LD1RWallSpecPc34 *spec,
     int row,
     int viewport_x,
@@ -100,7 +100,7 @@ bool M11_GameView_D1LD1RWallMapViewportToSourcePc34(
     int *source_y,
     int *scratch_x);
 
-bool M11_GameView_D1LD1RWallApplyPixelPc34(
+bool DM1_V1_D1LD1RWall_ApplyPixelPc34Compat(
     const DM1_V1_D1LD1RWallInputPc34 *input,
     const uint8_t *source,
     size_t source_len,
@@ -108,12 +108,23 @@ bool M11_GameView_D1LD1RWallApplyPixelPc34(
     size_t viewport_len,
     DM1_V1_D1LD1RWallPixelPc34 *out);
 
-uint8_t M11_GameView_D1LD1RWallBlendPixelPc34(
+uint8_t DM1_V1_D1LD1RWall_BlendPixelPc34Compat(
     uint8_t destination_pixel,
     uint8_t source_pixel,
     uint8_t transparent_color);
 
-const char *M11_GameView_D1LD1RWallSourceLockPc34(void);
+const char *DM1_V1_D1LD1RWall_SourceLockPc34Compat(void);
+
+#define M11_GameView_D1LD1RWallResolvePc34 \
+    DM1_V1_D1LD1RWall_ResolvePc34Compat
+#define M11_GameView_D1LD1RWallMapViewportToSourcePc34 \
+    DM1_V1_D1LD1RWall_MapViewportToSourcePc34Compat
+#define M11_GameView_D1LD1RWallApplyPixelPc34 \
+    DM1_V1_D1LD1RWall_ApplyPixelPc34Compat
+#define M11_GameView_D1LD1RWallBlendPixelPc34 \
+    DM1_V1_D1LD1RWall_BlendPixelPc34Compat
+#define M11_GameView_D1LD1RWallSourceLockPc34 \
+    DM1_V1_D1LD1RWall_SourceLockPc34Compat
 
 #ifdef __cplusplus
 }
