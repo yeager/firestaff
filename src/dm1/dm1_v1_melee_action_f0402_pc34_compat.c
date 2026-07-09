@@ -1444,6 +1444,37 @@ int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
+    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
+    DM1_MeleeF0190MutationDispatchPlanPc34* out) {
+    DM1_MeleeF0190MutationDispatchInputPc34 in;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!aftermathPlan || !aftermathPlan->valid) return 0;
+
+    memset(&in, 0, sizeof(in));
+    in.outcome = aftermathPlan->mutationOutcome;
+    in.groupIndex = aftermathPlan->mutationGroupIndex;
+    in.groupBehavior = aftermathPlan->mutationGroupBehavior;
+    in.killedCreatureIndex = aftermathPlan->mutationKilledCreatureIndex;
+    in.originalGroupCount = aftermathPlan->mutationOriginalGroupCount;
+    in.creatureType = aftermathPlan->mutationCreatureType;
+    in.creatureAttributes = aftermathPlan->mutationCreatureAttributes;
+    in.creatureProperties = aftermathPlan->mutationCreatureProperties;
+    in.killedCell = aftermathPlan->mutationKilledCell;
+    in.mapIndex = aftermathPlan->mutationMapIndex;
+    in.mapX = aftermathPlan->mutationMapX;
+    in.mapY = aftermathPlan->mutationMapY;
+    in.partyMapIndex = aftermathPlan->mutationPartyMapIndex;
+    in.partyMapX = aftermathPlan->mutationPartyMapX;
+    in.partyMapY = aftermathPlan->mutationPartyMapY;
+
+    /* ReDMCSB: PROJEXPL.C F0231 hands the F0190 aftermath facts directly to
+     * GROUP.C F0190.  Keep the F0231-to-F0190 transport in DM1, not M10. */
+    return dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(&in, out);
+}
+
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,

@@ -5601,31 +5601,14 @@ static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
     struct DungeonGroup_Compat* group,
     const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan)
 {
-    DM1_MeleeF0190MutationDispatchInputPc34 in;
     DM1_MeleeF0190MutationDispatchPlanPc34 plan;
     int fearTriggered = 0;
 
     if (!world || !group || !aftermathPlan) return 0;
 
-    memset(&in, 0, sizeof(in));
     memset(&plan, 0, sizeof(plan));
-    in.outcome = aftermathPlan->mutationOutcome;
-    in.groupIndex = aftermathPlan->mutationGroupIndex;
-    in.groupBehavior = aftermathPlan->mutationGroupBehavior;
-    in.killedCreatureIndex = aftermathPlan->mutationKilledCreatureIndex;
-    in.originalGroupCount = aftermathPlan->mutationOriginalGroupCount;
-    in.creatureType = aftermathPlan->mutationCreatureType;
-    in.creatureAttributes = aftermathPlan->mutationCreatureAttributes;
-    in.creatureProperties = aftermathPlan->mutationCreatureProperties;
-    in.killedCell = aftermathPlan->mutationKilledCell;
-    in.mapIndex = aftermathPlan->mutationMapIndex;
-    in.mapX = aftermathPlan->mutationMapX;
-    in.mapY = aftermathPlan->mutationMapY;
-    in.partyMapIndex = aftermathPlan->mutationPartyMapIndex;
-    in.partyMapX = aftermathPlan->mutationPartyMapX;
-    in.partyMapY = aftermathPlan->mutationPartyMapY;
-
-    if (!dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(&in, &plan) ||
+    if (!dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
+            aftermathPlan, &plan) ||
         !plan.valid) {
         return 0;
     }
