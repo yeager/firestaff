@@ -2092,6 +2092,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0231AftermathInputPc34 aftermathIn;
     DM1_MeleeF0231AftermathPlanPc34 aftermathOut;
     DM1_MeleeF0190MutationDispatchPlanPc34 aftermathDispatchOut;
+    DM1_MeleeF0190FearRollPlanPc34 fearRollOut;
+    DM1_MeleeF0190KilledSomeStatePlanPc34 fearApplyOut;
     DM1_MeleeF0188GroupSlotDropInputPc34 slotDropIn;
     DM1_MeleeF0188GroupSlotDropPlanPc34 slotDropOut;
     struct DungeonGroup_Compat fixedGroup;
@@ -2544,6 +2546,28 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 mutation dispatch evaluates fear on party map");
     CHECK_EQ(dispatchOut.shouldApplyKilledAllSideEffects, 0,
              "F0190 mutation dispatch killed-some no killed-all side effects");
+    CHECK_EQ(dm1_v1_melee_mutation_dispatch_fear_roll_plan_f0190_pc34(
+                 &dispatchOut, &fearRollOut), 1,
+             "F0190 mutation dispatch fear roll plan builds");
+    CHECK_EQ(fearRollOut.valid, 1,
+             "F0190 mutation dispatch fear roll valid");
+    CHECK_EQ(fearRollOut.shouldEvaluateFear, 1,
+             "F0190 mutation dispatch fear roll enabled");
+    CHECK_EQ(fearRollOut.originalGroupCount, 2,
+             "F0190 mutation dispatch fear roll original count");
+    CHECK_EQ(fearRollOut.fearContext.creatureInfo.properties, 0x0230,
+             "F0190 mutation dispatch fear roll properties");
+    CHECK_EQ(dm1_v1_melee_mutation_dispatch_fear_apply_plan_f0190_pc34(
+                 &dispatchOut, 1, 61, &fearApplyOut), 1,
+             "F0190 mutation dispatch fear apply plan builds");
+    CHECK_EQ(fearApplyOut.valid, 1,
+             "F0190 mutation dispatch fear apply valid");
+    CHECK_EQ(fearApplyOut.shouldApplyFear, 1,
+             "F0190 mutation dispatch fear applies");
+    CHECK_EQ(fearApplyOut.newGroupBehavior, DM1_BEHAVIOR_FLEE,
+             "F0190 mutation dispatch fear behavior");
+    CHECK_EQ(fearApplyOut.fearCounter, 61,
+             "F0190 mutation dispatch fear delay");
 
     memset(&aftermathIn, 0, sizeof(aftermathIn));
     aftermathIn.groupIndex = 9;

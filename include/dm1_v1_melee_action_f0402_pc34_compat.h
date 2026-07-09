@@ -660,6 +660,13 @@ typedef struct {
     DM1_MeleeF0190KilledAllStatePlanPc34 killedAllStatePlan;
 } DM1_MeleeF0190MutationDispatchPlanPc34;
 
+typedef struct {
+    int valid;
+    int shouldEvaluateFear;
+    int originalGroupCount;
+    struct DM1GroupBehaviorContext_Compat fearContext;
+} DM1_MeleeF0190FearRollPlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -769,6 +776,14 @@ int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
 int dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
     DM1_MeleeF0190MutationDispatchPlanPc34* out);
+int dm1_v1_melee_mutation_dispatch_fear_roll_plan_f0190_pc34(
+    const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
+    DM1_MeleeF0190FearRollPlanPc34* out);
+int dm1_v1_melee_mutation_dispatch_fear_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
+    int shouldFlee,
+    int fleeDelay,
+    DM1_MeleeF0190KilledSomeStatePlanPc34* out);
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,

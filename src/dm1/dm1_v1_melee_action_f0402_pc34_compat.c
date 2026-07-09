@@ -1475,6 +1475,48 @@ int dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
     return dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(&in, out);
 }
 
+int dm1_v1_melee_mutation_dispatch_fear_roll_plan_f0190_pc34(
+    const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
+    DM1_MeleeF0190FearRollPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!dispatchPlan || !dispatchPlan->valid ||
+        !dispatchPlan->shouldApplyKilledSomeState ||
+        !dispatchPlan->killedSomeStatePlan.valid) {
+        return 0;
+    }
+
+    out->valid = 1;
+    if (!dispatchPlan->killedSomeStatePlan.shouldEvaluateFear) return 1;
+    out->shouldEvaluateFear = 1;
+    out->originalGroupCount =
+        dispatchPlan->killedSomeStatePlan.originalGroupCount;
+    out->fearContext = dispatchPlan->killedSomeStatePlan.fearContext;
+
+    /* ReDMCSB: GROUP.C F0190 lines 873-889 evaluates fear only for the
+     * killed-some ATTACK branch.  The dispatch receipt owns that gate. */
+    return 1;
+}
+
+int dm1_v1_melee_mutation_dispatch_fear_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
+    int shouldFlee,
+    int fleeDelay,
+    DM1_MeleeF0190KilledSomeStatePlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!dispatchPlan || !dispatchPlan->valid ||
+        !dispatchPlan->shouldApplyKilledSomeState ||
+        !dispatchPlan->killedSomeStatePlan.valid) {
+        return 0;
+    }
+
+    /* ReDMCSB: GROUP.C F0190 lines 887-889 applies the fear result after the
+     * F0190 dispatch gate; M10 only materializes the returned writeback. */
+    return dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
+        &dispatchPlan->killedSomeStatePlan, shouldFlee, fleeDelay, out);
+}
+
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,

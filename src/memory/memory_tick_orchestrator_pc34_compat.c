@@ -4083,8 +4083,7 @@ static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
 static int orch_cmd_attack_apply_f0190_fear_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    int originalGroupCount,
-    const DM1_MeleeF0190KilledSomeStatePlanPc34* statePlan);
+    const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan);
 
 static int orch_materialize_projectile_associated_thing_compat(
     struct GameWorld_Compat* world,
@@ -5512,27 +5511,33 @@ static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
 static int orch_cmd_attack_apply_f0190_fear_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    int originalGroupCount,
-    const DM1_MeleeF0190KilledSomeStatePlanPc34* statePlan)
+    const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan)
 {
+    DM1_MeleeF0190FearRollPlanPc34 rollPlan;
     DM1_MeleeF0190KilledSomeStatePlanPc34 applyPlan;
     int activeIndex;
     int shouldFlee = 0;
     int fleeDelay = 0;
 
-    if (!world || !group || !statePlan ||
-        !statePlan->valid || !statePlan->shouldEvaluateFear) {
+    if (!world || !group || !dispatchPlan) {
+        return 0;
+    }
+    memset(&rollPlan, 0, sizeof(rollPlan));
+    if (!dm1_v1_melee_mutation_dispatch_fear_roll_plan_f0190_pc34(
+            dispatchPlan, &rollPlan) ||
+        !rollPlan.valid || !rollPlan.shouldEvaluateFear) {
         return 0;
     }
 
     if (!F0821_DM1_GROUP_ShouldFrighten_Compat(
-            &statePlan->fearContext, originalGroupCount, &world->masterRng,
+            &rollPlan.fearContext, rollPlan.originalGroupCount,
+            &world->masterRng,
             &shouldFlee, &fleeDelay)) {
         return 0;
     }
     memset(&applyPlan, 0, sizeof(applyPlan));
-    if (!dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
-            statePlan, shouldFlee, fleeDelay, &applyPlan) ||
+    if (!dm1_v1_melee_mutation_dispatch_fear_apply_plan_f0190_pc34(
+            dispatchPlan, shouldFlee, fleeDelay, &applyPlan) ||
         !applyPlan.valid || !applyPlan.shouldApplyFear) {
         return 0;
     }
@@ -5590,8 +5595,15 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
             plan.killedCreatureIndex);
     }
     if (plan.shouldEvaluateFear) {
+        DM1_MeleeF0190MutationDispatchPlanPc34 dispatchPlan;
+        memset(&dispatchPlan, 0, sizeof(dispatchPlan));
+        dispatchPlan.valid = 1;
+        dispatchPlan.shouldApplyKilledSomeState = 1;
+        dispatchPlan.killedSomeStatePlan = plan;
+        dispatchPlan.killedSomeStatePlan.originalGroupCount =
+            originalGroupCount;
         return orch_cmd_attack_apply_f0190_fear_compat(
-            world, group, originalGroupCount, &plan);
+            world, group, &dispatchPlan);
     }
     return 0;
 }
@@ -5627,8 +5639,7 @@ static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
         if (plan.killedSomeStatePlan.shouldEvaluateFear) {
             fearTriggered =
                 orch_cmd_attack_apply_f0190_fear_compat(
-                    world, group, aftermathPlan->mutationOriginalGroupCount,
-                    &plan.killedSomeStatePlan);
+                    world, group, &plan);
         }
     }
     if (plan.shouldApplyKilledAllSideEffects) {
