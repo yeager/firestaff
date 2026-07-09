@@ -210,7 +210,7 @@ int main(void)
            dm1_v1_inventory_hand_swap_with_chest_source_evidence_pc34());
 
     ok &= expect_int("probe setup",
-                     M11_V1_Inventory_HandSwapWithChest_RunPc34(&g_probe),
+                     DM1_V1_InventoryHandSwapWithChest_RunPc34Compat(&g_probe),
                      1, f0333);
     if (!ok) {
         printf("assertionCount=%d\n", g_assertions);

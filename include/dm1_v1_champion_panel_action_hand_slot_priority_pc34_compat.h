@@ -152,16 +152,26 @@ typedef struct {
 } dm1_v1_champion_panel_action_hand_slot_priority_result_t;
 
 dm1_v1_champion_panel_action_hand_slot_priority_input_t
-M11_GameView_ChampionPanelActionHandSlotPriority_DefaultInput(void);
+DM1_V1_ChampionPanelActionHandSlotPriority_DefaultInputPc34Compat(void);
 
 dm1_v1_champion_panel_action_hand_slot_priority_result_t
-M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch(
+DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat(
     const dm1_v1_champion_panel_action_hand_slot_priority_input_t *input);
 
 const dm1_v1_champion_panel_action_hand_slot_priority_evidence_t *
-M11_GameView_ChampionPanelActionHandSlotPriority_Evidence(void);
+DM1_V1_ChampionPanelActionHandSlotPriority_EvidencePc34Compat(void);
 
-const char *M11_GameView_ChampionPanelActionHandSlotPriority_SourceEvidence(void);
+const char *DM1_V1_ChampionPanelActionHandSlotPriority_SourceEvidencePc34Compat(void);
+
+/* Compatibility aliases for older M11 call sites. */
+#define M11_GameView_ChampionPanelActionHandSlotPriority_DefaultInput \
+    DM1_V1_ChampionPanelActionHandSlotPriority_DefaultInputPc34Compat
+#define M11_GameView_ChampionPanelActionHandSlotPriority_Dispatch \
+    DM1_V1_ChampionPanelActionHandSlotPriority_DispatchPc34Compat
+#define M11_GameView_ChampionPanelActionHandSlotPriority_Evidence \
+    DM1_V1_ChampionPanelActionHandSlotPriority_EvidencePc34Compat
+#define M11_GameView_ChampionPanelActionHandSlotPriority_SourceEvidence \
+    DM1_V1_ChampionPanelActionHandSlotPriority_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }

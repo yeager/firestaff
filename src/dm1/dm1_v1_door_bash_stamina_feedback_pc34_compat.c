@@ -72,7 +72,7 @@ static const struct {
     (sizeof(s_door_bash_stamina_table) / \
      sizeof(s_door_bash_stamina_table[0]))
 
-int16_t M11_GameView_DoorBashStaminaAdjustedStrengthPc34(
+int16_t DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(
     int16_t current_stamina,
     int16_t maximum_stamina,
     int16_t base_value)
@@ -110,7 +110,7 @@ int16_t M11_GameView_DoorBashStaminaAdjustedStrengthPc34(
     return (int16_t)value_after_stamina;
 }
 
-bool M11_GameView_DoorBashStaminaActionIsBashPc34(uint8_t action_ordinal)
+bool DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(uint8_t action_ordinal)
 {
     size_t i;
     for (i = 0;
@@ -122,7 +122,7 @@ bool M11_GameView_DoorBashStaminaActionIsBashPc34(uint8_t action_ordinal)
     return false;
 }
 
-bool M11_GameView_DoorBashStaminaActionCostPc34(
+bool DM1_V1_DoorBashStamina_ActionCostPc34Compat(
     uint8_t action_ordinal,
     uint8_t *out_cost,
     uint8_t *out_random_bit)
@@ -151,7 +151,7 @@ bool M11_GameView_DoorBashStaminaActionCostPc34(
     return false;
 }
 
-bool M11_GameView_DoorBashStaminaResolvePc34(
+bool DM1_V1_DoorBashStamina_ResolvePc34Compat(
     const DM1_V1_DoorBashStaminaInputPc34 *input,
     DM1_V1_DoorBashStaminaResultPc34 *out)
 {
@@ -170,7 +170,7 @@ bool M11_GameView_DoorBashStaminaResolvePc34(
     out->action_disabled_ticks = 0;
     out->destruction_delay_ticks = 0;
 
-    if (!M11_GameView_DoorBashStaminaActionIsBashPc34(input->action_ordinal)) {
+    if (!DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(input->action_ordinal)) {
         /*
          * ReDMCSB MENU.C:1311-1316 bash dispatch is the only caller
          * for the closed-door branch. Non-bash actions fall through
@@ -178,7 +178,7 @@ bool M11_GameView_DoorBashStaminaResolvePc34(
          * C016_ACTION_JAB, etc.) and never reach F0232 on a door.
          */
         out->strength_after_stamina =
-            M11_GameView_DoorBashStaminaAdjustedStrengthPc34(
+            DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(
                 input->current_stamina_before,
                 input->maximum_stamina,
                 input->base_strength);
@@ -187,10 +187,10 @@ bool M11_GameView_DoorBashStaminaResolvePc34(
         return true;
     }
 
-    if (!M11_GameView_DoorBashStaminaActionCostPc34(
+    if (!DM1_V1_DoorBashStamina_ActionCostPc34Compat(
             input->action_ordinal, &table_cost, &random_bit)) {
         out->strength_after_stamina =
-            M11_GameView_DoorBashStaminaAdjustedStrengthPc34(
+            DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(
                 input->current_stamina_before,
                 input->maximum_stamina,
                 input->base_strength);
@@ -223,7 +223,7 @@ bool M11_GameView_DoorBashStaminaResolvePc34(
      * is 100) and passes that into F0232.
      */
     out->strength_after_stamina =
-        M11_GameView_DoorBashStaminaAdjustedStrengthPc34(
+        DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(
             input->current_stamina_before,
             input->maximum_stamina,
             input->base_strength);
@@ -313,7 +313,7 @@ bool M11_GameView_DoorBashStaminaResolvePc34(
     return true;
 }
 
-const char *M11_GameView_DoorBashStaminaSourceLockPc34(void)
+const char *DM1_V1_DoorBashStamina_SourceLockPc34Compat(void)
 {
     return
         "DM1 V1 door-bash stamina feedback contract (source-locked to "

@@ -80,7 +80,7 @@ dm1_v1_inventory_hand_swap_with_chest_spec_pc34(void)
     return &dm1_v1_inventory_hand_swap_with_chest_pc34_spec;
 }
 
-int M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
+int DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
     const DM1_V1_InventoryHandSwapWithChestHandPc34* hand,
     const DM1_V1_InventoryHandSwapWithChestSlotPc34* chestSlot,
     DM1_V1_InventoryHandSwapWithChestResultPc34* out)
@@ -161,7 +161,7 @@ int M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
     return 1;
 }
 
-int M11_V1_Inventory_HandSwapWithChest_RunPc34(
+int DM1_V1_InventoryHandSwapWithChest_RunPc34Compat(
     DM1_V1_InventoryHandSwapWithChestProbePc34* out)
 {
     DM1_V1_InventoryStatePc34 state;
@@ -213,7 +213,7 @@ int M11_V1_Inventory_HandSwapWithChest_RunPc34(
     /* ReDMCSB CHAMPION.C F0302 lines 694-710 allows empty leader-hand pickup
      * from a C30+ chest slot and leaves the selected G0425 entry empty. */
     slot.chestSlotIndex = DM1_PC34_HAND_SWAP_WITH_CHEST_EMPTY_INDEX;
-    if (!M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
+    if (!DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
             &hand, &slot, &result)) {
         return 0;
     }
@@ -251,7 +251,7 @@ int M11_V1_Inventory_HandSwapWithChest_RunPc34(
     hand.expectedOpenChestThing = DM1_PC34_HAND_SWAP_WITH_CHEST_MAIN_THING + 1;
     slot.chestSlotIndex = DM1_PC34_HAND_SWAP_WITH_CHEST_FULL_INDEX;
     if (!out->fullHandSetupResult ||
-        !M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
+        !DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
             &hand, &slot, &result)) {
         return 0;
     }
@@ -284,7 +284,7 @@ int M11_V1_Inventory_HandSwapWithChest_RunPc34(
     /* ReDMCSB CHAMPION.C F0302 lines 688-710 applies the same C541 swap in
      * reverse, restoring the original occupant before CHEST.C F0334 closes. */
     hand.expectedOpenChestThing = DM1_PC34_HAND_SWAP_WITH_CHEST_MAIN_THING + 2;
-    if (!M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
+    if (!DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
             &hand, &slot, &result)) {
         return 0;
     }
@@ -315,7 +315,7 @@ int M11_V1_Inventory_HandSwapWithChest_RunPc34(
     if (!DM1_V1_Inventory_SetMouseItemPc34Compat(
             &state, 0, DM1_PC34_TEST_STAFF_OF_CLAWS_OBJECT_INFO,
             1, 0, DM1_PC34_ALLOWED_QUIVER_LINE1) ||
-        !M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
+        !DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
             &hand, &slot, &result)) {
         return 0;
     }
@@ -338,7 +338,7 @@ int M11_V1_Inventory_HandSwapWithChest_RunPc34(
     hand.championIndex = 1;
     hand.expectedOpenChestThing = DM1_PC34_HAND_SWAP_WITH_CHEST_OTHER_THING;
     slot.chestSlotIndex = 0;
-    if (!M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
+    if (!DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
             &hand, &slot, &result)) {
         return 0;
     }
@@ -353,12 +353,12 @@ int M11_V1_Inventory_HandSwapWithChest_RunPc34(
 
     hand.actionHandIndex = 1;
     out->nonActionHandRejected =
-        M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
+        DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
             &hand, &slot, &result) ? 0 : 1;
     hand.actionHandIndex = 0;
     hand.expectedOpenChestThing = DM1_PC34_HAND_SWAP_WITH_CHEST_OTHER_THING + 9;
     out->staleChestRejected =
-        M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
+        DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
             &hand, &slot, &result) ? 0 : 1;
     out->noDuplicateTrackedItems =
         count_type3(out->otherChampionHandAfter, out->otherChampionSlotAfter,

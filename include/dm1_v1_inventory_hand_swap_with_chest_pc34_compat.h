@@ -117,12 +117,18 @@ const char*
 dm1_v1_inventory_hand_swap_with_chest_source_evidence_pc34(void);
 const DM1_V1_InventoryHandSwapWithChestSpecPc34*
 dm1_v1_inventory_hand_swap_with_chest_spec_pc34(void);
-int M11_V1_Inventory_HandSwapWithChest_ApplyPc34(
+int DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
     const DM1_V1_InventoryHandSwapWithChestHandPc34* hand,
     const DM1_V1_InventoryHandSwapWithChestSlotPc34* chestSlot,
     DM1_V1_InventoryHandSwapWithChestResultPc34* out);
-int M11_V1_Inventory_HandSwapWithChest_RunPc34(
+int DM1_V1_InventoryHandSwapWithChest_RunPc34Compat(
     DM1_V1_InventoryHandSwapWithChestProbePc34* out);
+
+/* Compatibility aliases for older M11 call sites. */
+#define M11_V1_Inventory_HandSwapWithChest_ApplyPc34 \
+    DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat
+#define M11_V1_Inventory_HandSwapWithChest_RunPc34 \
+    DM1_V1_InventoryHandSwapWithChest_RunPc34Compat
 
 #ifdef __cplusplus
 }

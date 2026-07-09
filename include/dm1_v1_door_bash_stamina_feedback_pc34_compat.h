@@ -202,7 +202,7 @@ typedef struct {
  * Otherwise returns value unchanged. The contract pins the
  * "first operand evaluated first" interpretation called out in
  * the BUGX_XX comment at CHAMPION.C:1095. */
-int16_t M11_GameView_DoorBashStaminaAdjustedStrengthPc34(
+int16_t DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat(
     int16_t current_stamina,
     int16_t maximum_stamina,
     int16_t base_value);
@@ -212,7 +212,7 @@ int16_t M11_GameView_DoorBashStaminaAdjustedStrengthPc34(
  * action ordinal, returning true and writing the table cost + the
  * random bit roll into out_cost / out_random_bit; returns false for
  * non-bash actions or out-of-range action ordinals. */
-bool M11_GameView_DoorBashStaminaActionCostPc34(
+bool DM1_V1_DoorBashStamina_ActionCostPc34Compat(
     uint8_t action_ordinal,
     uint8_t *out_cost,
     uint8_t *out_random_bit);
@@ -224,16 +224,28 @@ bool M11_GameView_DoorBashStaminaActionCostPc34(
  * `random_bit` field on the input lets the test pin the M005_RANDOM
  * outcome without touching the global RNG; the production caller
  * passes whatever F0028_MAIN_Get1BitRandomNumber() returned. */
-bool M11_GameView_DoorBashStaminaResolvePc34(
+bool DM1_V1_DoorBashStamina_ResolvePc34Compat(
     const DM1_V1_DoorBashStaminaInputPc34 *input,
     DM1_V1_DoorBashStaminaResultPc34 *out);
 
 /* ReDMCSB MENU.C:1311-1316 bash group is
  * { C030 BASH, C018 HACK, C019 BERZERK, C007 KICK, C013 SWING,
  *   C002 CHOP }. */
-bool M11_GameView_DoorBashStaminaActionIsBashPc34(uint8_t action_ordinal);
+bool DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(uint8_t action_ordinal);
 
-const char *M11_GameView_DoorBashStaminaSourceLockPc34(void);
+const char *DM1_V1_DoorBashStamina_SourceLockPc34Compat(void);
+
+/* Compatibility aliases for older M11 call sites. */
+#define M11_GameView_DoorBashStaminaAdjustedStrengthPc34 \
+    DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat
+#define M11_GameView_DoorBashStaminaActionCostPc34 \
+    DM1_V1_DoorBashStamina_ActionCostPc34Compat
+#define M11_GameView_DoorBashStaminaResolvePc34 \
+    DM1_V1_DoorBashStamina_ResolvePc34Compat
+#define M11_GameView_DoorBashStaminaActionIsBashPc34 \
+    DM1_V1_DoorBashStamina_ActionIsBashPc34Compat
+#define M11_GameView_DoorBashStaminaSourceLockPc34 \
+    DM1_V1_DoorBashStamina_SourceLockPc34Compat
 
 #ifdef __cplusplus
 }
