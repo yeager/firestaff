@@ -76,6 +76,7 @@ typedef struct DM1_V1_ChampionMirrorFrontWallReceiptPc34 {
 typedef struct DM1_V1_ChampionMirrorRenderReceiptPc34 {
     int valid;
     int drawChampionPortrait;
+    int drawMirrorBacking;
     int suppressChampionPortrait;
     int suppressMaterializedItemPayload;
     int clearStaleChampionPortraitOrdinal;
@@ -95,6 +96,17 @@ typedef struct DM1_V1_ChampionMirrorRenderReceiptPc34 {
     int frameTop;
     int frameBottom;
     int transparentColor;
+    int backingGraphicIndex;
+    int backingSourceX;
+    int backingSourceY;
+    int backingDstX;
+    int backingDstY;
+    int backingWidth;
+    int backingHeight;
+    int backingTransparentColor;
+    int backingFlipHorizontal;
+    int backingPaletteMapValid;
+    unsigned char backingPaletteMap[16];
     const char *sourceAnchor;
 } DM1_V1_ChampionMirrorRenderReceiptPc34;
 
