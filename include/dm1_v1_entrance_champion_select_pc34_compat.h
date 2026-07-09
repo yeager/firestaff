@@ -30,6 +30,14 @@ extern "C" {
 #define DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34 2
 #define DM1_V1_ENTRANCE_ELEMENT_WALL_PC34 0
 #define DM1_V1_ENTRANCE_ELEMENT_CORRIDOR_PC34 1
+#define DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_GRAPHIC_PC34 26
+#define DM1_V1_ENTRANCE_RESURRECT_PANEL_GRAPHIC_PC34 40
+#define DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_W_PC34 32
+#define DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_H_PC34 29
+#define DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_ATLAS_COLS_PC34 8
+#define DM1_V1_ENTRANCE_WALL_PORTRAIT_X_PC34 96
+#define DM1_V1_ENTRANCE_WALL_PORTRAIT_Y_PC34 35
+#define DM1_V1_ENTRANCE_OVERLAY_COMMAND_MAX_PC34 4
 
 /* Entrance states */
 typedef enum {
@@ -50,6 +58,35 @@ typedef enum {
     DM1_V1_ENTRANCE_MENU_ROUTE_PARTY_FULL_PC34 = 4,
     DM1_V1_ENTRANCE_MENU_ROUTE_ENTER_DUNGEON_PC34 = 5
 } DM1_V1_EntranceMenuRoutePc34;
+
+typedef enum {
+    DM1_V1_ENTRANCE_OVERLAY_NONE_PC34 = 0,
+    DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 = 1,
+    DM1_V1_ENTRANCE_OVERLAY_CHAMPION_PORTRAIT_PC34 = 2,
+    DM1_V1_ENTRANCE_OVERLAY_RESURRECT_REINCARNATE_PC34 = 3,
+    DM1_V1_ENTRANCE_OVERLAY_ENTER_DUNGEON_PC34 = 4
+} DM1_V1_EntranceOverlayKindPc34;
+
+typedef struct {
+    int valid;
+    DM1_V1_EntranceOverlayKindPc34 kind;
+    int mirrorIndex;
+    int championIndex;
+    int mirrorMapX;
+    int mirrorMapY;
+    int mirrorFacing;
+    int graphicIndex;
+    int sourceX;
+    int sourceY;
+    int width;
+    int height;
+    int viewportX;
+    int viewportY;
+    int clearStalePanelFirst;
+    int suppressThingPayloads;
+    int blockEnterUntilChampionSelected;
+    const char *reason;
+} DM1_V1_EntranceRenderOverlayCommandPc34;
 
 /* Mirror slot state */
 typedef struct {
@@ -115,6 +152,9 @@ typedef struct {
     int renderEnterDungeonOverlay;
     int clearStaleChampionMirrorOverlay;
     int blockEnterUntilChampionSelected;
+    int renderOverlayCommandCount;
+    DM1_V1_EntranceRenderOverlayCommandPc34
+        renderOverlayCommands[DM1_V1_ENTRANCE_OVERLAY_COMMAND_MAX_PC34];
     int needsRedraw;
     const char *reason;
 } DM1_V1_EntranceMenuRouteReceiptPc34;
