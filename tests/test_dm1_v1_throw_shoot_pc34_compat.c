@@ -735,6 +735,16 @@ static void test_projectile_materialization_plan(void) {
               "wall materialization receipt builds");
     ASSERT_EQ(materialReceipt.valid, 1,
               "wall materialization receipt valid");
+    ASSERT_EQ(materialReceipt.shouldDeleteProjectile, 1,
+              "wall materialization receipt deletes projectile");
+    ASSERT_EQ(materialReceipt.shouldClearProjectileNext, 1,
+              "wall materialization receipt clears projectile next");
+    ASSERT_EQ(materialReceipt.projectileThing,
+              (unsigned short)((THING_TYPE_PROJECTILE << 10) |
+                               (unsigned short)(1u << 14)),
+              "wall materialization receipt carries projectile thing");
+    ASSERT_EQ(materialReceipt.projectileNextAfterDelete, THING_NONE,
+              "wall materialization receipt clears projectile list link");
     ASSERT_EQ(materialReceipt.shouldMaterialize, 1,
               "wall materialization receipt materializes");
     ASSERT_EQ(materialReceipt.mapX, 10,
@@ -791,6 +801,10 @@ static void test_projectile_materialization_plan(void) {
               "potion materialization receipt builds");
     ASSERT_EQ(materialReceipt.shouldConsumePotion, 1,
               "potion materialization receipt consumes");
+    ASSERT_EQ(materialReceipt.shouldDeleteProjectile, 1,
+              "potion materialization receipt still deletes projectile");
+    ASSERT_EQ(materialReceipt.shouldClearProjectileNext, 1,
+              "potion materialization receipt still clears projectile next");
     ASSERT_EQ(materialReceipt.shouldMaterialize, 0,
               "potion materialization receipt skips attach");
     ASSERT_EQ(materialReceipt.squareAttach.valid, 0,

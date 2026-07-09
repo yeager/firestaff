@@ -193,12 +193,16 @@ typedef struct {
 typedef struct {
     int valid;
     int handled;
+    int shouldDeleteProjectile;
+    int shouldClearProjectileNext;
     int shouldConsumePotion;
     int shouldMaterialize;
     int mapIndex;
     int mapX;
     int mapY;
     int cell;
+    unsigned short projectileThing;
+    unsigned short projectileNextAfterDelete;
     DM1_ProjectileMaterializationPlanPc34 materialization;
     DM1_ProjectileSquareAttachReceiptPc34 squareAttach;
 } DM1_ProjectileMaterializationReceiptPc34;

@@ -4061,13 +4061,26 @@ static int orch_materialize_projectile_associated_thing_compat(
         return 1;
     }
 
-    /* ReDMCSB PROJEXPL.C:F0215 lines 248-259 moves Projectile.Slot to
+    /* ReDMCSB PROJEXPL.C:F0215 lines 248-260 moves Projectile.Slot to
      * the projectile map square when F0217 does not pass a GROUP.Slot
      * pointer.  F0219 lines 687-743 can retarget champion impacts before
      * delete/materialization reaches F0215.  DUNGEON.C:F0163 lines
      * 1798-1837 owns the empty-square vs append-after-tail writeback; M10
-     * now applies DM1's combined receipt instead of rebuilding link
-     * decisions locally. */
+     * now applies DM1's combined delete/materialize receipt instead of
+     * rebuilding link or projectile-delete decisions locally. */
+    if (!receipt.shouldDeleteProjectile || !receipt.shouldClearProjectileNext) {
+        return 0;
+    }
+    if (world->things->projectiles &&
+        world->things->projectileCount > THING_GET_INDEX(receipt.projectileThing) &&
+        !orch_set_next_thing_compat(
+            world->things, receipt.projectileThing,
+            receipt.projectileNextAfterDelete)) {
+        return 0;
+    }
+    if (!receipt.shouldMaterialize) {
+        return 1;
+    }
     if (receipt.squareAttach.chainOverflow ||
         !receipt.squareAttach.shouldSetDroppedNextEnd ||
         !orch_set_next_thing_compat(

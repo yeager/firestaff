@@ -1033,15 +1033,24 @@ int dm1_v1_projectile_materialization_receipt_f0215_pc34(
 
     outReceipt->valid = 1;
     outReceipt->handled = plan.handled;
+    outReceipt->shouldDeleteProjectile = 1;
+    outReceipt->shouldClearProjectileNext = 1;
     outReceipt->shouldConsumePotion = plan.shouldConsumePotion;
     outReceipt->shouldMaterialize = plan.shouldMaterialize;
     outReceipt->mapIndex = plan.mapIndex;
     outReceipt->mapX = plan.mapX;
     outReceipt->mapY = plan.mapY;
     outReceipt->cell = plan.cell;
+    outReceipt->projectileThing =
+        (unsigned short)(((THING_TYPE_PROJECTILE << 10) |
+                          (projectile->slotIndex & 0x03ff)) |
+                         (unsigned short)((projectile->cell & 0x03) << 14));
+    outReceipt->projectileNextAfterDelete = THING_NONE;
     outReceipt->materialization = plan;
 
     if (!plan.shouldMaterialize) {
+        /* ReDMCSB: PROJEXPL.C F0215 lines 248-260 always deletes the
+         * Projectile thing after any optional Slot materialization. */
         return 1;
     }
 
@@ -1052,7 +1061,7 @@ int dm1_v1_projectile_materialization_receipt_f0215_pc34(
         return 0;
     }
 
-    /* ReDMCSB: PROJEXPL.C F0215 lines 248-259 owns the final
+    /* ReDMCSB: PROJEXPL.C F0215 lines 248-260 owns the final
      * Projectile.Slot materialization; DUNGEON.C F0163 lines 1798-1837
      * owns empty-square vs append-after-tail linking.  This receipt gives
      * M10 one DM1-owned decision packet instead of rebuilding both parts. */
