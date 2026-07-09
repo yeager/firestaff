@@ -1352,6 +1352,83 @@ int dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34* artifact,
+    const DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34* facts,
+    DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 receipt;
+
+    if (!artifact || !facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!artifact->handled) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    receipt.consumed_capture_artifact = 1;
+    receipt.consumed_capture_facts = 1;
+    receipt.capture_phase = artifact->capture_phase;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    if (!artifact->ready ||
+        !artifact->consume_full_start_production_receipt_only ||
+        !artifact->capture_manifest_ready ||
+        !facts->captured_after_first_frame_render) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB TITLE.C F0437 releases title assets before ENTRANCE.C F0797
+     * draws C255 and F0441 waits in Hall.  The capture proof is therefore a
+     * DM1-owned verdict over observed facts, not another host-side inference. */
+    receipt.geometry_matches =
+        facts->captured_map_index == artifact->expected_map_index &&
+        facts->captured_map_width == artifact->expected_map_width &&
+        facts->captured_map_height == artifact->expected_map_height;
+    receipt.entrance_frame_matches =
+        facts->captured_entrance_door_frame_index ==
+        artifact->expected_entrance_door_frame_index;
+    receipt.hall_overlay_matches =
+        facts->captured_hall_overlay_kind ==
+        artifact->expected_hall_overlay_kind;
+    receipt.command_count_matches =
+        facts->captured_hoc_render_command_count ==
+        artifact->expected_hoc_render_command_count;
+    receipt.stale_title_absent =
+        artifact->title_surface_forbidden && !facts->saw_title_surface;
+    receipt.stale_door_absent =
+        artifact->closed_door_frame_forbidden && !facts->saw_closed_door_frame;
+    receipt.host_fallback_absent =
+        artifact->host_fallback_visuals_forbidden &&
+        !facts->saw_host_fallback_visuals;
+    receipt.required_layers_present =
+        (!artifact->opened_entrance_frame_required ||
+         facts->saw_opened_entrance_frame) &&
+        (!artifact->hall_mirror_overlay_required ||
+         facts->saw_hall_mirror_overlay) &&
+        (!artifact->clear_champion_panel_required ||
+         facts->cleared_champion_panel);
+    receipt.input_block_matches =
+        artifact->block_enter_until_champion_selected ==
+        facts->blocked_enter_until_champion_selected;
+    receipt.ready = 1;
+    receipt.proof_passed =
+        receipt.geometry_matches &&
+        receipt.entrance_frame_matches &&
+        receipt.hall_overlay_matches &&
+        receipt.command_count_matches &&
+        receipt.stale_title_absent &&
+        receipt.stale_door_absent &&
+        receipt.host_fallback_absent &&
+        receipt.required_layers_present &&
+        receipt.input_block_matches;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

@@ -299,6 +299,42 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34;
 
+typedef struct DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 {
+    int captured_after_first_frame_render;
+    int captured_map_index;
+    int captured_map_width;
+    int captured_map_height;
+    int captured_entrance_door_frame_index;
+    int captured_hall_overlay_kind;
+    int captured_hoc_render_command_count;
+    int saw_title_surface;
+    int saw_closed_door_frame;
+    int saw_host_fallback_visuals;
+    int saw_opened_entrance_frame;
+    int saw_hall_mirror_overlay;
+    int cleared_champion_panel;
+    int blocked_enter_until_champion_selected;
+} DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34;
+
+typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
+    int handled;
+    int ready;
+    int proof_passed;
+    int consumed_capture_artifact;
+    int consumed_capture_facts;
+    int geometry_matches;
+    int entrance_frame_matches;
+    int hall_overlay_matches;
+    int command_count_matches;
+    int stale_title_absent;
+    int stale_door_absent;
+    int host_fallback_absent;
+    int required_layers_present;
+    int input_block_matches;
+    const char* capture_phase;
+    const char* source_evidence;
+} DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34;
+
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
     int (*begin_prelude_plan)(void* user,
@@ -648,6 +684,10 @@ int dm1_v1_startup_hoc_full_start_production_receipt_pc34(
 int dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
     const DM1_V1_StartupHoCFullStartProductionReceipt_PC34* receipt,
     DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34* out_artifact);
+int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34* artifact,
+    const DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34* facts,
+    DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34* out_receipt);
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

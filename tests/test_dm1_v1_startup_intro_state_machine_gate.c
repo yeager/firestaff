@@ -705,6 +705,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCProductionFullStartHook_PC34 hoc_production_hook;
     DM1_V1_StartupHoCFullStartProductionReceipt_PC34 hoc_production_receipt;
     DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 hoc_capture_artifact;
+    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 hoc_capture_facts;
+    DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 hoc_capture_proof;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1490,6 +1492,57 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_capture_artifact.expected_hoc_render_command_count == 3 &&
                  hoc_capture_artifact.block_enter_until_champion_selected,
              1);
+    memset(&hoc_capture_facts, 0, sizeof(hoc_capture_facts));
+    hoc_capture_facts.captured_after_first_frame_render = 1;
+    hoc_capture_facts.captured_map_index = DM1_V1_ENTRANCE_MAP_INDEX_PC34;
+    hoc_capture_facts.captured_map_width =
+        DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34;
+    hoc_capture_facts.captured_map_height =
+        DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34;
+    hoc_capture_facts.captured_entrance_door_frame_index = 9;
+    hoc_capture_facts.captured_hall_overlay_kind =
+        DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34;
+    hoc_capture_facts.captured_hoc_render_command_count = 3;
+    hoc_capture_facts.saw_opened_entrance_frame = 1;
+    hoc_capture_facts.saw_hall_mirror_overlay = 1;
+    hoc_capture_facts.cleared_champion_panel = 1;
+    hoc_capture_facts.blocked_enter_until_champion_selected = 1;
+    memset(&hoc_capture_proof, 0, sizeof(hoc_capture_proof));
+    expect_i("DM1 HoC capture proof receipt builds",
+             dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
+                 &hoc_capture_artifact,
+                 &hoc_capture_facts,
+                 &hoc_capture_proof),
+             1);
+    expect_i("DM1 HoC capture proof passes exact first frame",
+             hoc_capture_proof.handled &&
+                 hoc_capture_proof.ready &&
+                 hoc_capture_proof.proof_passed &&
+                 hoc_capture_proof.geometry_matches &&
+                 hoc_capture_proof.entrance_frame_matches &&
+                 hoc_capture_proof.hall_overlay_matches &&
+                 hoc_capture_proof.command_count_matches &&
+                 hoc_capture_proof.required_layers_present &&
+                 hoc_capture_proof.input_block_matches,
+             1);
+    expect_i("DM1 HoC capture proof rejects stale title surface",
+             (hoc_capture_facts.saw_title_surface = 1,
+              dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
+                  &hoc_capture_artifact,
+                  &hoc_capture_facts,
+                  &hoc_capture_proof) &&
+                  hoc_capture_proof.handled &&
+                  hoc_capture_proof.ready &&
+                  !hoc_capture_proof.proof_passed &&
+                  !hoc_capture_proof.stale_title_absent),
+             1);
+    hoc_capture_facts.saw_title_surface = 0;
+    expect_i("DM1 HoC capture proof rejects NULL input",
+             dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
+                 NULL,
+                 &hoc_capture_facts,
+                 &hoc_capture_proof),
+             0);
     hoc_production_receipt.packaged_proof.require_no_title_surface = 0;
     expect_i("DM1 HoC capture artifact rejects corrupt production receipt",
              dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
