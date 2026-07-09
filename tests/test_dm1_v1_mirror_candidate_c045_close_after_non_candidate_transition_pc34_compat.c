@@ -61,10 +61,10 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_evidence(void)
 {
-    const DM1_V1_MirrorCandidateC045AfterNonCandidateEvidencePc34Compat *e =
-        dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_evidence_pc34();
+    const DM1_V1_MirrorCandidateC045AfterNonCandidateEvidencePc34 *e =
+        DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_EvidencePc34();
     const char *text =
-        dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_source_evidence_pc34();
+        DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_SourceEvidencePc34();
 
     check_true(e != NULL, "evidence exists", "source lock");
     check_contains(e->chestOpenAnchor, "F0333:30-67", "F0333 anchor",
@@ -130,10 +130,10 @@ static void test_evidence(void)
 
 static void test_initial_state(void)
 {
-    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat state;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34 state;
     int i;
 
-    dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
+    DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_InitPc34(
         &state);
     check_int_eq(state.contractOnly, 1, "contract-only state",
                  "asset-free");
@@ -191,15 +191,15 @@ static void test_initial_state(void)
 
 static uint32_t run_one(int transition_kind, uint32_t expected_close_hash)
 {
-    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat state;
-    DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34Compat result;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34 state;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34 result;
     int ok;
     int i;
 
-    dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
+    DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_InitPc34(
         &state);
     state.transitionKind = transition_kind;
-    ok = dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
+    ok = DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_RunPc34(
         &state, &result);
     check_int_eq(ok, 1, "run accepted", "COMMAND.C F0359");
     check_int_eq(result.accepted, 1, "result accepted", "contract");
@@ -332,52 +332,52 @@ static void test_all_transitions(uint32_t *out_hash)
 
 static void test_rejects(void)
 {
-    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat state;
-    DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34Compat result;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34 state;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34 result;
 
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
+        DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_RunPc34(
             NULL, &result),
         0, "null state rejected", "guard");
-    dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
+    DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_InitPc34(
         &state);
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
+        DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_RunPc34(
             &state, NULL),
         0, "null result rejected", "guard");
-    dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
+    DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_InitPc34(
         &state);
     state.contractOnly = 0;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
+        DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_RunPc34(
             &state, &result),
         0, "non-contract rejected", "asset-free");
-    dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
+    DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_InitPc34(
         &state);
     state.leaderEmptyHanded = 1;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
+        DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_RunPc34(
             &state, &result),
         0, "empty leader hand rejected", "REVIVE.C F0280");
-    dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
+    DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_InitPc34(
         &state);
     state.candidateChampionOrdinal = 4;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
+        DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_RunPc34(
             &state, &result),
         0, "candidate rejected", "G0299");
-    dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
+    DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_InitPc34(
         &state);
     state.c540Zone = 541;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
+        DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_RunPc34(
             &state, &result),
         0, "wrong C540 route rejected", "C537..C544");
-    dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
+    DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_InitPc34(
         &state);
     state.g0426OpenChest = DM1_V1_MC_C045_AFTER_NC_NONE_PC34;
     check_int_eq(
-        dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
+        DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_RunPc34(
             &state, &result),
         0, "closed G0426 rejected", "G0426");
 }
@@ -388,7 +388,7 @@ int main(void)
 
     printf("probe=dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_pc34_compat\n");
     printf("%s\n",
-           dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_source_evidence_pc34());
+           DM1_V1_MirrorCandidateC045CloseAfterNonCandidateTransition_SourceEvidencePc34());
     test_evidence();
     test_initial_state();
     test_all_transitions(&hash);

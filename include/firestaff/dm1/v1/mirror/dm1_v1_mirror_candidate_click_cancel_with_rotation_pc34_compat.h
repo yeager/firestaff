@@ -20,7 +20,7 @@ typedef struct {
     const char *panelAnchor;
     const char *defsAnchor;
     const char *nonOverlap;
-} DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34Compat;
+} DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34;
 
 typedef struct {
     int championOrdinal;
@@ -29,7 +29,7 @@ typedef struct {
     int statusBoxZone;
     int championIconZone;
     int c040ChainLinked;
-} DM1_V1_MirrorCandidateClickCancelWithRotationChampionPc34Compat;
+} DM1_V1_MirrorCandidateClickCancelWithRotationChampionPc34;
 
 typedef struct {
     int contractOnly;
@@ -68,9 +68,9 @@ typedef struct {
     int resurrectPendingCount;
     uint32_t chainHash;
     uint32_t stateHash;
-    DM1_V1_MirrorCandidateClickCancelWithRotationChampionPc34Compat
+    DM1_V1_MirrorCandidateClickCancelWithRotationChampionPc34
         champions[DM1_V1_MC_CC_ROT_PARTY_COUNT_PC34];
-} DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat;
+} DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34;
 
 typedef struct {
     int accepted;
@@ -116,29 +116,47 @@ typedef struct {
     uint32_t afterCancelHash;
     uint32_t afterRotationHash;
     uint32_t deterministicHash;
-} DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34Compat;
+} DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34;
 
-typedef DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34Compat
+typedef DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34
+    DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateClickCancelWithRotationChampionPc34
+    DM1_V1_MirrorCandidateClickCancelWithRotationChampionPc34Compat;
+typedef DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat;
+typedef DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34
+    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34
     Dm1V1MirrorCandidateClickCancelWithRotationEvidencePc34Compat;
-typedef DM1_V1_MirrorCandidateClickCancelWithRotationChampionPc34Compat
+typedef DM1_V1_MirrorCandidateClickCancelWithRotationChampionPc34
     Dm1V1MirrorCandidateClickCancelWithRotationChampionPc34Compat;
-typedef DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat
+typedef DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34
     Dm1V1MirrorCandidateClickCancelWithRotationStatePc34Compat;
-typedef DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34Compat
+typedef DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34
     Dm1V1MirrorCandidateClickCancelWithRotationResultPc34Compat;
 
-void dm1_v1_mirror_candidate_click_cancel_with_rotation_init_pc34(
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state);
+void DM1_V1_MirrorCandidateClickCancelWithRotation_InitPc34(
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state);
 
-int dm1_v1_mirror_candidate_click_cancel_with_rotation_run_pc34(
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state,
-    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34Compat *result);
+int DM1_V1_MirrorCandidateClickCancelWithRotation_RunPc34(
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state,
+    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34 *result);
 
-const DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34Compat *
-dm1_v1_mirror_candidate_click_cancel_with_rotation_evidence_pc34(void);
+const DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34 *
+DM1_V1_MirrorCandidateClickCancelWithRotation_EvidencePc34(void);
 
 const char *
-dm1_v1_mirror_candidate_click_cancel_with_rotation_source_evidence_pc34(void);
+DM1_V1_MirrorCandidateClickCancelWithRotation_SourceEvidencePc34(void);
+
+#define dm1_v1_mirror_candidate_click_cancel_with_rotation_init_pc34 \
+    DM1_V1_MirrorCandidateClickCancelWithRotation_InitPc34
+#define dm1_v1_mirror_candidate_click_cancel_with_rotation_run_pc34 \
+    DM1_V1_MirrorCandidateClickCancelWithRotation_RunPc34
+#define dm1_v1_mirror_candidate_click_cancel_with_rotation_evidence_pc34 \
+    DM1_V1_MirrorCandidateClickCancelWithRotation_EvidencePc34
+#define dm1_v1_mirror_candidate_click_cancel_with_rotation_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateClickCancelWithRotation_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

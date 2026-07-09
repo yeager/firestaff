@@ -22,7 +22,7 @@ typedef struct {
     const char *commandAnchor;
     const char *defsAnchor;
     const char *disjointness;
-} DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34Compat;
+} DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34;
 
 typedef struct {
     int contractOnly;
@@ -67,7 +67,7 @@ typedef struct {
     uint32_t openHash;
     uint32_t closeHash;
     uint32_t consumeHash;
-} DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat;
+} DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34;
 
 typedef struct {
     int accepted;
@@ -97,27 +97,43 @@ typedef struct {
     uint16_t restoredChain[DM1_V1_MC_C045_FW_SLOT_COUNT_PC34];
     uint16_t g0425AfterClose[DM1_V1_MC_C045_FW_SLOT_COUNT_PC34];
     uint32_t hash;
-} DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34Compat;
+} DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34;
 
-typedef DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34Compat
+typedef DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34
+    DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat;
+typedef DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34
+    DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34
     Dm1V1MirrorCandidateC045FoodWaterCloseEvidencePc34Compat;
-typedef DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat
+typedef DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34
     Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat;
-typedef DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34Compat
+typedef DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34
     Dm1V1MirrorCandidateC045FoodWaterCloseResultPc34Compat;
 
-void dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_init_pc34(
-    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state);
+void DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_InitPc34(
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state);
 
-int dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_run_pc34(
-    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state,
-    DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34Compat *result);
+int DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_RunPc34(
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state,
+    DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34 *result);
 
-const DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34Compat *
-dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_evidence_pc34(void);
+const DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34 *
+DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_EvidencePc34(void);
 
 const char *
-dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_source_evidence_pc34(void);
+DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_SourceEvidencePc34(void);
+
+#define dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_init_pc34 \
+    DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_InitPc34
+#define dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_run_pc34 \
+    DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_RunPc34
+#define dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_evidence_pc34 \
+    DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_EvidencePc34
+#define dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

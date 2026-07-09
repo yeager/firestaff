@@ -29,7 +29,7 @@ enum {
  * own panel redraw/close. DEFS.H binds C030, C033/C034/C035, C040, C045,
  * C151..C154, C113..C116, G0299, G0420, G0423, G0425, and G0426.
  */
-static const DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34Compat
+static const DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34
     kEvidence = {
         "CHAMPION.C F0296:1208-1262 champion-panel chrome redraw and "
         "G0420 mouse-pointer hide/show",
@@ -73,7 +73,7 @@ static uint32_t fnv_step(uint32_t hash, unsigned int value)
 }
 
 static uint32_t hash_chain(
-    const DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -87,7 +87,7 @@ static uint32_t hash_chain(
 }
 
 static uint32_t hash_state(
-    const DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state)
 {
     uint32_t hash;
     int i;
@@ -136,8 +136,8 @@ static int evidence_has_required_anchors(void)
            strstr(kSourceEvidence, "G0426");
 }
 
-void dm1_v1_mirror_candidate_click_cancel_with_rotation_init_pc34(
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state)
+void DM1_V1_MirrorCandidateClickCancelWithRotation_InitPc34(
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state)
 {
     int i;
 
@@ -183,7 +183,7 @@ void dm1_v1_mirror_candidate_click_cancel_with_rotation_init_pc34(
 }
 
 static int ready(
-    const DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state)
 {
     return state && state->contractOnly &&
            state->partyChampionCount == DM1_V1_MC_CC_ROT_PARTY_COUNT_PC34 &&
@@ -202,7 +202,7 @@ static int ready(
 }
 
 static void click_c040_candidate(
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state)
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state)
 {
     ++state->f0359SelectCount;
     state->g0299CandidateOrdinal =
@@ -215,13 +215,13 @@ static void click_c040_candidate(
 }
 
 static int f0302_rotation_would_block(
-    const DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state)
 {
     return state && state->g0299CandidateOrdinal != 0;
 }
 
 static void cancel_c040_candidate(
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state)
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state)
 {
     ++state->f0359CancelCount;
     ++state->f0282CancelCount;
@@ -238,7 +238,7 @@ static void cancel_c040_candidate(
 }
 
 static void consume_rotation(
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state)
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state)
 {
     int oldLeader;
     int newLeader;
@@ -263,9 +263,9 @@ static void consume_rotation(
     state->stateHash = hash_state(state);
 }
 
-int dm1_v1_mirror_candidate_click_cancel_with_rotation_run_pc34(
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat *state,
-    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34Compat *result)
+int DM1_V1_MirrorCandidateClickCancelWithRotation_RunPc34(
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 *state,
+    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34 *result)
 {
     uint32_t chainBefore;
     int ownerBefore;
@@ -369,14 +369,14 @@ int dm1_v1_mirror_candidate_click_cancel_with_rotation_run_pc34(
     return result->accepted;
 }
 
-const DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34Compat *
-dm1_v1_mirror_candidate_click_cancel_with_rotation_evidence_pc34(void)
+const DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34 *
+DM1_V1_MirrorCandidateClickCancelWithRotation_EvidencePc34(void)
 {
     return &kEvidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_click_cancel_with_rotation_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateClickCancelWithRotation_SourceEvidencePc34(void)
 {
     return kSourceEvidence;
 }

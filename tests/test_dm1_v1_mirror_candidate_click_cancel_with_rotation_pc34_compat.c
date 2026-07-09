@@ -50,10 +50,10 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_evidence(void)
 {
-    const DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34Compat *e =
-        dm1_v1_mirror_candidate_click_cancel_with_rotation_evidence_pc34();
+    const DM1_V1_MirrorCandidateClickCancelWithRotationEvidencePc34 *e =
+        DM1_V1_MirrorCandidateClickCancelWithRotation_EvidencePc34();
     const char *text =
-        dm1_v1_mirror_candidate_click_cancel_with_rotation_source_evidence_pc34();
+        DM1_V1_MirrorCandidateClickCancelWithRotation_SourceEvidencePc34();
 
     check_true(e != NULL, "evidence accessor", "source-lock");
     check_contains(e->championPanelRedrawAnchor, "F0296:1208-1262",
@@ -117,10 +117,10 @@ static void test_evidence(void)
 
 static void test_initial_state(void)
 {
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat state;
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 state;
     int i;
 
-    dm1_v1_mirror_candidate_click_cancel_with_rotation_init_pc34(&state);
+    DM1_V1_MirrorCandidateClickCancelWithRotation_InitPc34(&state);
     check_int_eq(state.contractOnly, 1, "contract only", "runtime gate");
     check_int_eq(state.partyChampionCount, 4, "four champion party",
                  "REVIVE.C F0280:124-132");
@@ -181,14 +181,14 @@ static void test_initial_state(void)
 
 static uint32_t test_run(void)
 {
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat state;
-    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34Compat result;
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 state;
+    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34 result;
     uint32_t initialChainHash;
     int ok;
 
-    dm1_v1_mirror_candidate_click_cancel_with_rotation_init_pc34(&state);
+    DM1_V1_MirrorCandidateClickCancelWithRotation_InitPc34(&state);
     initialChainHash = state.chainHash;
-    ok = dm1_v1_mirror_candidate_click_cancel_with_rotation_run_pc34(
+    ok = DM1_V1_MirrorCandidateClickCancelWithRotation_RunPc34(
         &state, &result);
 
     check_int_eq(ok, 1, "run accepted", "contract");
@@ -336,18 +336,18 @@ static uint32_t test_run(void)
 
 static void test_null_guards(void)
 {
-    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34Compat state;
-    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34Compat result;
+    DM1_V1_MirrorCandidateClickCancelWithRotationStatePc34 state;
+    DM1_V1_MirrorCandidateClickCancelWithRotationResultPc34 result;
 
-    dm1_v1_mirror_candidate_click_cancel_with_rotation_init_pc34(&state);
-    check_int_eq(dm1_v1_mirror_candidate_click_cancel_with_rotation_run_pc34(
+    DM1_V1_MirrorCandidateClickCancelWithRotation_InitPc34(&state);
+    check_int_eq(DM1_V1_MirrorCandidateClickCancelWithRotation_RunPc34(
                      NULL, &result),
                  0, "null state rejected", "guard");
-    check_int_eq(dm1_v1_mirror_candidate_click_cancel_with_rotation_run_pc34(
+    check_int_eq(DM1_V1_MirrorCandidateClickCancelWithRotation_RunPc34(
                      &state, NULL),
                  0, "null result rejected", "guard");
     state.rotationInFlight = 0;
-    check_int_eq(dm1_v1_mirror_candidate_click_cancel_with_rotation_run_pc34(
+    check_int_eq(DM1_V1_MirrorCandidateClickCancelWithRotation_RunPc34(
                      &state, &result),
                  0, "missing rotation rejected", "non-duplicative scope");
 }

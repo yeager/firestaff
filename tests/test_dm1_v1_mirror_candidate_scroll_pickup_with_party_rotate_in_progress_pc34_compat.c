@@ -62,8 +62,8 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_evidence(void)
 {
-    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34Compat *e =
-        DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_EvidencePc34Compat();
+    const DM1_V1_MirrorCandidateScrollPickupWithPartyRotateEvidencePc34 *e =
+        DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_EvidencePc34();
 
     check_true(e != NULL, "evidence accessor returns metadata", "metadata");
     check_int_eq(e->contractOnly, 1, "contract-only marker",
@@ -128,13 +128,13 @@ static void test_evidence(void)
 
 static void test_initial_and_manual_sequence(void)
 {
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat state;
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat before;
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34Compat after;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34 state;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34 before;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateSnapshotPc34 after;
     unsigned int hashBefore;
     unsigned int hashAfter;
 
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_InitPc34Compat(&state);
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_InitPc34(&state);
     check_int_eq(state.contractOnly, 1, "initial contract-only flag",
                  "contract_only=1");
     check_int_eq(state.partyChampionCount, 3, "party starts with candidate room",
@@ -167,7 +167,7 @@ static void test_initial_and_manual_sequence(void)
                   "scroll thing is seeded in chest slot",
                   "CHAMPION.C F0302:662-713");
 
-    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_OpenCandidatePc34Compat(&state),
+    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_OpenCandidatePc34(&state),
                "candidate panel opens", "REVIVE.C F0280:124-132");
     check_int_eq(state.c040PanelOpen, 1, "C040 panel is live",
                  "DEFS.H:277 C040");
@@ -183,14 +183,14 @@ static void test_initial_and_manual_sequence(void)
                  "F0296 changed-icon draw counted",
                  "CHAMDRAW.C F0296:1185-1252");
 
-    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_QueueTurnPc34Compat(&state, DM1_V1_MCSPPR_C002_TURN_RIGHT_PC34),
+    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_QueueTurnPc34(&state, DM1_V1_MCSPPR_C002_TURN_RIGHT_PC34),
                "C002 turn is queued by F0361", "COMMAND.C F0361:1709-1813");
     check_int_eq(state.f0361QueueWriteCount, 1, "F0361 write counted",
                  "COMMAND.C F0361:1709-1813");
     check_int_eq(state.queuedTurnCommand, DM1_V1_MCSPPR_C002_TURN_RIGHT_PC34,
                  "queued turn command is right turn",
                  "COMMAND.C F0380:2045-2156");
-    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_BeginF0380PartyRotationPc34Compat(&state),
+    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_BeginF0380PartyRotationPc34(&state),
                "F0380 party rotation begins", "COMMAND.C F0380:2045-2156");
     check_int_eq(state.commandQueueLocked, 1, "queue remains locked mid-dispatch",
                  "COMMAND.C F0380:2075-2127");
@@ -204,15 +204,15 @@ static void test_initial_and_manual_sequence(void)
                  "candidate-internal rotation is not used",
                  "PANEL.C F0344/F0345");
 
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_SnapshotPc34Compat(&state, &before);
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_SnapshotPc34(&state, &before);
     hashBefore =
-        DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_HashPc34Compat(&state, NULL);
-    check_true(!DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_ClickScrollPickupPc34Compat(&state),
+        DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_HashPc34(&state, NULL);
+    check_true(!DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_ClickScrollPickupPc34(&state),
                "scroll pickup is ignored during party rotation",
                "COMMAND.C F0380:2045-2156");
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_SnapshotPc34Compat(&state, &after);
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_SnapshotPc34(&state, &after);
     hashAfter =
-        DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_HashPc34Compat(&state, NULL);
+        DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_HashPc34(&state, NULL);
     check_int_eq(state.ignoredPickupDuringPartyRotationCount, 1,
                  "ignored pickup counted once", "PANEL.C F0344/F0345");
     check_int_eq(state.f0359PanelClickCount, 1, "F0359 panel click counted",
@@ -271,7 +271,7 @@ static void test_initial_and_manual_sequence(void)
                "attempt counter changes the audit hash even though candidate state is stable",
                "PANEL.C F0344/F0345");
 
-    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_CompletePartyRotationPc34Compat(&state),
+    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_CompletePartyRotationPc34(&state),
                "party rotation completes", "COMMAND.C F0380:2150-2156");
     check_int_eq(state.partyDirection, 1, "party turns east after C002",
                  "COMMAND.C F0380:2150-2156");
@@ -287,7 +287,7 @@ static void test_initial_and_manual_sequence(void)
                  "rotation completion marker is set before pickup",
                  "COMMAND.C F0380:2150-2156");
 
-    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_ClickScrollPickupPc34Compat(&state),
+    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_ClickScrollPickupPc34(&state),
                "scroll pickup is honored after rotation completion",
                "CHAMPION.C F0302:662-713");
     check_int_eq(state.honoredPickupAfterRotationCount, 1,
@@ -318,14 +318,14 @@ static void test_initial_and_manual_sequence(void)
 
 static void test_run_result_and_hash(void)
 {
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat stateA;
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34Compat stateB;
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat resultA;
-    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34Compat resultB;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34 stateA;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateStatePc34 stateB;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34 resultA;
+    DM1_V1_MirrorCandidateScrollPickupWithPartyRotateResultPc34 resultB;
 
-    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_RunPc34Compat(&stateA, &resultA),
+    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_RunPc34(&stateA, &resultA),
                "run helper returns success", "pass764");
-    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_RunPc34Compat(&stateB, &resultB),
+    check_true(DM1_V1_MirrorCandidateScrollPickupWithPartyRotate_RunPc34(&stateB, &resultB),
                "second run helper returns success", "pass764");
     check_int_eq(resultA.ok, 1, "result ok flag", "pass764");
     check_int_eq(resultA.initialized, 1, "result initialized",
