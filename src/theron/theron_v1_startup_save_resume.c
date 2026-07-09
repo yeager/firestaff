@@ -1752,14 +1752,14 @@ int theron_v1_startup_continue_tqsv_path_apply_with_host_receipts(
     return 1;
 }
 
-int theron_v1_startup_continue_srm_apply_with_host_receipts(
+int theron_v1_startup_continue_srm_apply_with_receipts(
     Theron_V1_World *world,
     const char *srm_root,
     int slot_index,
     const Theron_StartupActionPlan *plan,
     const void *boot_profile,
     Theron_V1StartupContinueResult *out_result,
-    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_V1StartupContinueApplyReceipt *out_apply_receipt,
     Theron_StartupStateReceipt *out_state_receipt,
     char *receipt,
     size_t receipt_cap) {
@@ -1774,8 +1774,8 @@ int theron_v1_startup_continue_srm_apply_with_host_receipts(
 
     theron_v1_startup_continue_result_init(result);
     theron_v1_startup_continue_apply_receipt_init(&apply_receipt);
-    if (out_host_receipt) {
-        theron_v1_startup_host_receipt_init(out_host_receipt);
+    if (out_apply_receipt) {
+        theron_v1_startup_continue_apply_receipt_init(out_apply_receipt);
     }
     if (out_state_receipt) {
         theron_v1_startup_state_receipt_init(out_state_receipt);
@@ -1791,10 +1791,8 @@ int theron_v1_startup_continue_srm_apply_with_host_receipts(
             result,
             receipt,
             &apply_receipt);
-        if (out_host_receipt) {
-            theron_v1_startup_host_receipt_from_continue_apply(
-                &apply_receipt,
-                out_host_receipt);
+        if (out_apply_receipt) {
+            *out_apply_receipt = apply_receipt;
         }
         return 0;
     }
@@ -1834,6 +1832,46 @@ int theron_v1_startup_continue_srm_apply_with_host_receipts(
             result,
             receipt,
             &apply_receipt);
+        if (out_apply_receipt) {
+            *out_apply_receipt = apply_receipt;
+        }
+        return 0;
+    }
+    if (out_apply_receipt) {
+        *out_apply_receipt = apply_receipt;
+    }
+    return 1;
+}
+
+int theron_v1_startup_continue_srm_apply_with_host_receipts(
+    Theron_V1_World *world,
+    const char *srm_root,
+    int slot_index,
+    const Theron_StartupActionPlan *plan,
+    const void *boot_profile,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_V1StartupContinueApplyReceipt apply_receipt;
+
+    theron_v1_startup_continue_apply_receipt_init(&apply_receipt);
+    if (out_host_receipt) {
+        theron_v1_startup_host_receipt_init(out_host_receipt);
+    }
+    if (!theron_v1_startup_continue_srm_apply_with_receipts(
+            world,
+            srm_root,
+            slot_index,
+            plan,
+            boot_profile,
+            out_result,
+            &apply_receipt,
+            out_state_receipt,
+            receipt,
+            receipt_cap)) {
         if (out_host_receipt) {
             theron_v1_startup_host_receipt_from_continue_apply(
                 &apply_receipt,

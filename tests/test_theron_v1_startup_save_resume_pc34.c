@@ -886,6 +886,61 @@ static void test_srm_party_continue_restores_all_champions(void) {
                     "srm party slot emits host and state receipts");
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
+        expect_true(theron_v1_startup_continue_srm_apply_with_receipts(
+                        &world,
+                        srm_root,
+                        2,
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &apply_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) == 1 &&
+                        continue_result.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_SRM &&
+                        continue_result.source_slot_index == 2 &&
+                        apply_receipt.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_SRM &&
+                        apply_receipt.source_slot_index == 2 &&
+                        apply_receipt.srm_import_status ==
+                            THERON_V1_SRM_PROGRESS_IMPORT_OK &&
+                        apply_receipt.srm_current_dungeon ==
+                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                        apply_receipt.srm_party_champion_count ==
+                            THERON_MAX_CHAMPIONS &&
+                        apply_receipt.srm_party_gold == 777u &&
+                        state_receipt.set_save_resume &&
+                        state_receipt.save_resume_srm_active_slot == 2 &&
+                        state_receipt.save_resume_srm_current_dungeon ==
+                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                        state_receipt.save_resume_srm_party_gold == 777u,
+                    "srm party slot emits apply and state receipts");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(!theron_v1_startup_continue_srm_apply_with_receipts(
+                        &world,
+                        srm_root,
+                        4,
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &apply_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) &&
+                        apply_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        apply_receipt.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_NONE &&
+                        apply_receipt.source_slot_index == -1 &&
+                        strstr(apply_receipt.status,
+                               "SRM decode unsupported") != NULL &&
+                        strstr(apply_receipt.inspect_detail,
+                               "source=NONE") != NULL,
+                    "srm party empty slot emits apply failure receipt");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
         expect_true(!theron_v1_startup_continue_srm_apply_with_host_receipts(
                         &world,
                         srm_root,
