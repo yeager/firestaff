@@ -114,11 +114,11 @@ static int arrays_match_prefix(const int* got, const int* want, int count)
 }
 
 static void append_log(
-    M11_GameView_ChestCrossChampionHandSwapCasePc34* out,
-    M11_GameView_ChestCrossChampionHandSwapActionPc34 action,
+    DM1_V1_ChestCrossChampionHandSwapCasePc34* out,
+    DM1_V1_ChestCrossChampionHandSwapActionPc34 action,
     const CrossChampionRuntimePc34* runtime)
 {
-    M11_GameView_ChestCrossChampionHandSwapLogEntryPc34* entry;
+    DM1_V1_ChestCrossChampionHandSwapLogEntryPc34* entry;
 
     if (out->actionLog.count >=
         DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_LOG_CAPACITY) {
@@ -165,7 +165,7 @@ static void clear_runtime(CrossChampionRuntimePc34* runtime)
 }
 
 static void configure_context(
-    M11_GameView_ChestCrossChampionHandSwapCasePc34* out,
+    DM1_V1_ChestCrossChampionHandSwapCasePc34* out,
     int caseIndex,
     int linkedCount,
     int sameOpenBeforeSwap,
@@ -367,7 +367,7 @@ static int close_chest_pc34(CrossChampionRuntimePc34* runtime)
 }
 
 static void fill_items_from_context(
-    const M11_GameView_ChestCrossChampionHandSwapContextPc34* context,
+    const DM1_V1_ChestCrossChampionHandSwapContextPc34* context,
     DM1_V1_ItemPc34* linkedItems)
 {
     int i;
@@ -384,7 +384,7 @@ static void fill_items_from_context(
 }
 
 static int run_case(
-    M11_GameView_ChestCrossChampionHandSwapCasePc34* out)
+    DM1_V1_ChestCrossChampionHandSwapCasePc34* out)
 {
     CrossChampionRuntimePc34 runtime;
     DM1_V1_ItemPc34 linkedItems[
@@ -408,7 +408,7 @@ static int run_case(
     out->expected.openResult = open_chest_pc34(
         &runtime, out->context.chestThing, linkedItems,
         out->context.linkedCount, 0);
-    append_log(out, M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST,
+    append_log(out, DM1_V1_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST,
                &runtime);
     out->expected.openChestThingAfterOpen = runtime.openChestThing;
     out->expected.visibleCountAfterOpen = count_visible(runtime.chestSlots);
@@ -420,14 +420,14 @@ static int run_case(
             &runtime, out->context.chestThing, linkedItems,
             out->context.linkedCount, &sameOpenNoop);
         append_log(out,
-                   M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP,
+                   DM1_V1_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP,
                    &runtime);
     }
     out->expected.sameOpenNoopPreserved =
         out->context.sameOpenBeforeSwap ? sameOpenNoop : 1;
 
     out->expected.pickupAResult = pickup_champion_a_hand_pc34(&runtime);
-    append_log(out, M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_PICKUP_A_HAND,
+    append_log(out, DM1_V1_CHEST_CROSS_CHAMPION_ACTION_PICKUP_A_HAND,
                &runtime);
     out->expected.leaderHandAfterPickup = runtime.leaderHand.itemType;
     out->expected.championAHandAfterPickup =
@@ -438,7 +438,7 @@ static int run_case(
     if (!rotate_leader_pc34(&runtime, out->context.rotatedLeaderOrdinal)) {
         return 0;
     }
-    append_log(out, M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER,
+    append_log(out, DM1_V1_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER,
                &runtime);
     out->expected.rotationCountWhileOpen = 1;
     if (out->context.rotateTwiceWhileOpen) {
@@ -448,7 +448,7 @@ static int run_case(
             return 0;
         }
         append_log(out,
-                   M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER,
+                   DM1_V1_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER,
                    &runtime);
         out->expected.rotationCountWhileOpen = 3;
     }
@@ -468,7 +468,7 @@ static int run_case(
         &out->expected.putBObjectInLeaderHandCall,
         &out->expected.putAObjectInChampionBSlotCall);
     append_log(out,
-               M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_SWAP_WITH_B_HAND,
+               DM1_V1_CHEST_CROSS_CHAMPION_ACTION_SWAP_WITH_B_HAND,
                &runtime);
     out->expected.leaderHandAfterSwap = runtime.leaderHand.itemType;
     out->expected.championAHandAfterSwap =
@@ -479,7 +479,7 @@ static int run_case(
         runtime.championHands[1].itemType;
 
     out->expected.closeResult = close_chest_pc34(&runtime);
-    append_log(out, M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST,
+    append_log(out, DM1_V1_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST,
                &runtime);
     out->expected.closeCount = runtime.closeCount;
     out->expected.openChestThingAfterClose = runtime.openChestThing;
@@ -496,7 +496,7 @@ static int run_case(
     out->expected.reopenResult = open_chest_pc34(
         &runtime, out->context.chestThing, runtime.closedLinks,
         runtime.closeCount, 0);
-    append_log(out, M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST,
+    append_log(out, DM1_V1_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST,
                &runtime);
     out->expected.openChestThingAfterReopen = runtime.openChestThing;
     out->expected.reopenedVisibleCount = count_visible(runtime.chestSlots);
@@ -536,12 +536,12 @@ static int run_case(
 }
 
 const char*
-M11_GameView_ChestCrossChampionHandSwapSourceEvidencePc34(void)
+DM1_V1_ChestCrossChampionHandSwapSourceEvidencePc34(void)
 {
     return s_source_evidence;
 }
 
-const char* M11_GameView_ChestCrossChampionHandSwapCaseNamePc34(
+const char* DM1_V1_ChestCrossChampionHandSwapCaseNamePc34(
     int caseIndex)
 {
     if (caseIndex < 0 ||
@@ -551,9 +551,9 @@ const char* M11_GameView_ChestCrossChampionHandSwapCaseNamePc34(
     return s_case_names[caseIndex];
 }
 
-int M11_GameView_ChestCrossChampionHandSwapBuildCasePc34(
+int DM1_V1_ChestCrossChampionHandSwapBuildCasePc34(
     int caseIndex,
-    M11_GameView_ChestCrossChampionHandSwapCasePc34* out)
+    DM1_V1_ChestCrossChampionHandSwapCasePc34* out)
 {
     if (!out || caseIndex < 0 ||
         caseIndex >= DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_CASE_COUNT) {
@@ -585,8 +585,8 @@ int M11_GameView_ChestCrossChampionHandSwapBuildCasePc34(
     return run_case(out);
 }
 
-int M11_GameView_ChestCrossChampionHandSwapRunPc34(
-    M11_GameView_ChestCrossChampionHandSwapProbePc34* out)
+int DM1_V1_ChestCrossChampionHandSwapRunPc34(
+    DM1_V1_ChestCrossChampionHandSwapProbePc34* out)
 {
     int i;
 
@@ -609,7 +609,7 @@ int M11_GameView_ChestCrossChampionHandSwapRunPc34(
         DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_CASE_COUNT;
 
     for (i = 0; i < DM1_PC34_CHEST_CROSS_CHAMPION_HAND_SWAP_CASE_COUNT; ++i) {
-        if (!M11_GameView_ChestCrossChampionHandSwapBuildCasePc34(
+        if (!DM1_V1_ChestCrossChampionHandSwapBuildCasePc34(
                 i, &out->cases[i])) {
             return 0;
         }

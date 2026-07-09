@@ -31,30 +31,30 @@ enum {
 };
 
 typedef enum {
-    M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_NONE = 0,
-    M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_A,
-    M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_A,
-    M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
-    M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_B,
-    M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_B,
-    M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER_BACK,
-    M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_REOPEN_CHEST_B
-} M11_GameView_ChestReopenAfterLeaderRotationActionPc34;
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_NONE = 0,
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_A,
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_A,
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER,
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_B,
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_B,
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER_BACK,
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_REOPEN_CHEST_B
+} DM1_V1_ChestReopenAfterLeaderRotationActionPc34;
 
 typedef struct {
-    M11_GameView_ChestReopenAfterLeaderRotationActionPc34 action;
+    DM1_V1_ChestReopenAfterLeaderRotationActionPc34 action;
     int chestThing;
     int openChestThing;
     int leaderOrdinal;
     int inventoryChampionOrdinal;
     int leaderHandThing;
-} M11_GameView_ChestReopenAfterLeaderRotationLogEntryPc34;
+} DM1_V1_ChestReopenAfterLeaderRotationLogEntryPc34;
 
 typedef struct {
     int count;
-    M11_GameView_ChestReopenAfterLeaderRotationLogEntryPc34
+    DM1_V1_ChestReopenAfterLeaderRotationLogEntryPc34
         entries[DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_LOG_CAPACITY];
-} M11_GameView_ChestReopenAfterLeaderRotationActionLogPc34;
+} DM1_V1_ChestReopenAfterLeaderRotationActionLogPc34;
 
 typedef struct {
     int chestAThing;
@@ -71,7 +71,7 @@ typedef struct {
     int chestBVisibleSlots[
         DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_SLOT_COUNT];
     int chestBHiddenTail;
-} M11_GameView_ChestReopenAfterLeaderRotationContextPc34;
+} DM1_V1_ChestReopenAfterLeaderRotationContextPc34;
 
 typedef struct {
     int chestALinkHead;
@@ -95,15 +95,15 @@ typedef struct {
     int hiddenTailStaysWithLeader;
     int fullLeaderHandStillFull;
     int emptyLeaderHandNoopPreserved;
-} M11_GameView_ChestReopenAfterLeaderRotationExpectedPc34;
+} DM1_V1_ChestReopenAfterLeaderRotationExpectedPc34;
 
 typedef struct {
     int caseIndex;
     const char* caseName;
-    M11_GameView_ChestReopenAfterLeaderRotationContextPc34 context;
-    M11_GameView_ChestReopenAfterLeaderRotationActionLogPc34 actionLog;
-    M11_GameView_ChestReopenAfterLeaderRotationExpectedPc34 expected;
-} M11_GameView_ChestReopenAfterLeaderRotationCasePc34;
+    DM1_V1_ChestReopenAfterLeaderRotationContextPc34 context;
+    DM1_V1_ChestReopenAfterLeaderRotationActionLogPc34 actionLog;
+    DM1_V1_ChestReopenAfterLeaderRotationExpectedPc34 expected;
+} DM1_V1_ChestReopenAfterLeaderRotationCasePc34;
 
 typedef struct {
     int sourceLockedContractOnly;
@@ -112,19 +112,60 @@ typedef struct {
     int c544Pc34Slot;
     int chestSlotCount;
     int caseCount;
-    M11_GameView_ChestReopenAfterLeaderRotationCasePc34
+    DM1_V1_ChestReopenAfterLeaderRotationCasePc34
         cases[DM1_PC34_CHEST_REOPEN_AFTER_LEADER_ROTATION_CASE_COUNT];
-} M11_GameView_ChestReopenAfterLeaderRotationProbePc34;
+} DM1_V1_ChestReopenAfterLeaderRotationProbePc34;
 
 const char*
-M11_GameView_ChestReopenAfterLeaderRotationSourceEvidencePc34(void);
-const char* M11_GameView_ChestReopenAfterLeaderRotationCaseNamePc34(
+DM1_V1_ChestReopenAfterLeaderRotationSourceEvidencePc34(void);
+const char* DM1_V1_ChestReopenAfterLeaderRotationCaseNamePc34(
     int caseIndex);
-int M11_GameView_ChestReopenAfterLeaderRotationBuildCasePc34(
+int DM1_V1_ChestReopenAfterLeaderRotationBuildCasePc34(
     int caseIndex,
-    M11_GameView_ChestReopenAfterLeaderRotationCasePc34* out);
-int M11_GameView_ChestReopenAfterLeaderRotationRunPc34(
-    M11_GameView_ChestReopenAfterLeaderRotationProbePc34* out);
+    DM1_V1_ChestReopenAfterLeaderRotationCasePc34* out);
+int DM1_V1_ChestReopenAfterLeaderRotationRunPc34(
+    DM1_V1_ChestReopenAfterLeaderRotationProbePc34* out);
+
+typedef DM1_V1_ChestReopenAfterLeaderRotationActionPc34
+    M11_GameView_ChestReopenAfterLeaderRotationActionPc34;
+typedef DM1_V1_ChestReopenAfterLeaderRotationLogEntryPc34
+    M11_GameView_ChestReopenAfterLeaderRotationLogEntryPc34;
+typedef DM1_V1_ChestReopenAfterLeaderRotationActionLogPc34
+    M11_GameView_ChestReopenAfterLeaderRotationActionLogPc34;
+typedef DM1_V1_ChestReopenAfterLeaderRotationContextPc34
+    M11_GameView_ChestReopenAfterLeaderRotationContextPc34;
+typedef DM1_V1_ChestReopenAfterLeaderRotationExpectedPc34
+    M11_GameView_ChestReopenAfterLeaderRotationExpectedPc34;
+typedef DM1_V1_ChestReopenAfterLeaderRotationCasePc34
+    M11_GameView_ChestReopenAfterLeaderRotationCasePc34;
+typedef DM1_V1_ChestReopenAfterLeaderRotationProbePc34
+    M11_GameView_ChestReopenAfterLeaderRotationProbePc34;
+
+#define M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_NONE \
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_NONE
+#define M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_A \
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_A
+#define M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_A \
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_A
+#define M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER \
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER
+#define M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_B \
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_OPEN_CHEST_B
+#define M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_B \
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_CLOSE_CHEST_B
+#define M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER_BACK \
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_ROTATE_LEADER_BACK
+#define M11_DM1_PC34_CHEST_REOPEN_LEADER_ROTATION_ACTION_REOPEN_CHEST_B \
+    DM1_V1_CHEST_REOPEN_LEADER_ROTATION_ACTION_REOPEN_CHEST_B
+
+#define M11_GameView_ChestReopenAfterLeaderRotationSourceEvidencePc34 \
+    DM1_V1_ChestReopenAfterLeaderRotationSourceEvidencePc34
+#define M11_GameView_ChestReopenAfterLeaderRotationCaseNamePc34 \
+    DM1_V1_ChestReopenAfterLeaderRotationCaseNamePc34
+#define M11_GameView_ChestReopenAfterLeaderRotationBuildCasePc34 \
+    DM1_V1_ChestReopenAfterLeaderRotationBuildCasePc34
+#define M11_GameView_ChestReopenAfterLeaderRotationRunPc34 \
+    DM1_V1_ChestReopenAfterLeaderRotationRunPc34
 
 #ifdef __cplusplus
 }
