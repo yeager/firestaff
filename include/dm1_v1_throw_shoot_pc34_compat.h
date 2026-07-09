@@ -405,6 +405,12 @@ int dm1_v1_projectile_creature_precheck_damage_plan_pc34(
     int creatureDefense,
     int creatureAttributes,
     DM1_ProjectileCreaturePrecheckDamagePlanPc34* outPlan);
+int dm1_v1_projectile_creature_precheck_aftermath_pc34(
+    const DM1_ProjectileCreaturePrecheckDamagePlanPc34* precheckPlan,
+    const struct ProjectileInstance_Compat* projectile,
+    int creatureAttributes,
+    int associatedWeaponType,
+    DM1_ProjectileCreatureImpactAftermathPc34* outAftermath);
 int dm1_v1_projectile_champion_action_plan_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct CombatAction_Compat* action,

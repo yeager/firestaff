@@ -96,6 +96,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: M10 explosion group damage now consumes a DM1 F0220/F0190 apply helper for live-slot iteration and F0738 mutation. Remaining runtime coding work is reducing post-kill group side-effect adapters and thing-link adapters.
   - 2026-07-09 update: M10 projectile group damage now consumes a DM1 F0217/F0190 apply helper for F0738 mutation and outcome payload. Remaining runtime coding work is reducing post-kill group side-effect adapters, reaction scheduling adapters, and thing-link adapters.
   - 2026-07-09 update: M10 projectile group hits now consume a DM1 F0217 aftermath receipt for reaction scheduling and sharp thrown weapon keep decisions. Remaining runtime coding work is reducing post-kill group side-effect adapters and lower-level thing-link writes.
+  - 2026-07-09 update: M10 F0266 moving-group projectile prechecks now consume a DM1 F0217 aftermath receipt before GROUP.Slot sharp-weapon linking. Remaining runtime coding work is reducing post-kill group side-effect adapters and lower-level thing-link writes.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 

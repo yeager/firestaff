@@ -3653,10 +3653,11 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
     const struct ProjectileInstance_Compat* projectile,
     int damageOutcome);
 
-int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
+static int orch_apply_projectile_creature_precheck_with_plan_compat(
     struct DungeonGroup_Compat* group,
     int creatureIndex,
-    const struct ProjectileInstance_Compat* projectile)
+    const struct ProjectileInstance_Compat* projectile,
+    DM1_ProjectileCreaturePrecheckDamagePlanPc34* outPlan)
 {
     const struct CreatureBehaviorProfile_Compat* profile;
     int defense;
@@ -3679,7 +3680,17 @@ int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     for (i = 0; i < 4; ++i) group->health[i] = plan.newHealth[i];
     group->count = plan.newCount;
     group->cells = plan.newCells;
+    if (outPlan) *outPlan = plan;
     return plan.outcomeCode;
+}
+
+int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
+    struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    const struct ProjectileInstance_Compat* projectile)
+{
+    return orch_apply_projectile_creature_precheck_with_plan_compat(
+        group, creatureIndex, projectile, NULL);
 }
 
 static void orch_build_precheck_projectile_instance_compat(
@@ -3696,6 +3707,29 @@ static void orch_build_precheck_projectile_instance_compat(
     out->kineticEnergy = projectile->kineticEnergy;
     out->attack = projectile->attack;
     out->reserved1 = projectile->slot;
+}
+
+static int orch_projectile_associated_weapon_type_compat(
+    const struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* projectile)
+{
+    unsigned short associatedThing;
+    int weaponIndex;
+
+    if (!world || !world->things || !projectile || !world->things->weapons) {
+        return -1;
+    }
+    associatedThing = (unsigned short)projectile->reserved1;
+    if (associatedThing == THING_NONE ||
+        associatedThing == THING_ENDOFLIST ||
+        THING_GET_TYPE(associatedThing) != THING_TYPE_WEAPON) {
+        return -1;
+    }
+    weaponIndex = (int)THING_GET_INDEX(associatedThing);
+    if (weaponIndex < 0 || weaponIndex >= world->things->weaponCount) {
+        return -1;
+    }
+    return (int)world->things->weapons[weaponIndex].type;
 }
 
 static int orch_process_group_projectile_impacts_on_square_compat(
@@ -3728,12 +3762,22 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                 ordinalInCell[cell]) {
                 struct DungeonProjectile_Compat* projectile = &world->things->projectiles[index];
                 struct ProjectileInstance_Compat compatProjectile;
+                const struct CreatureBehaviorProfile_Compat* profile;
+                DM1_ProjectileCreaturePrecheckDamagePlanPc34 precheckPlan;
+                DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
                 int creatureIndex = (int)ordinalInCell[cell] - 1;
                 int outcome;
                 int combatOutcome;
+                int creatureAttributes = 0;
+                int associatedWeaponType = -1;
 
                 orch_build_precheck_projectile_instance_compat(
                     projectile, index, &compatProjectile);
+                profile = CREATURE_GetProfile_Compat((int)group->creatureType);
+                if (profile) creatureAttributes = profile->attributes;
+                associatedWeaponType =
+                    orch_projectile_associated_weapon_type_compat(
+                        world, &compatProjectile);
                 /* MOVESENS.C:F0266:292-301 calls F0217 on matching projectile
                  * cells, then F0214 deletes the projectile event and F0217/
                  * PROJEXPL.C:607-608 unlinks/deletes the projectile thing.
@@ -3742,17 +3786,24 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                 (void)orch_unlink_thing_from_square_compat(world, mapIndex, mapX, mapY, thing);
                 projectile->next = THING_NONE;
                 projectile->eventIndex = 0xFFFFu;
-                outcome = F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
-                    group, creatureIndex, &compatProjectile);
+                memset(&precheckPlan, 0, sizeof(precheckPlan));
+                outcome = orch_apply_projectile_creature_precheck_with_plan_compat(
+                    group, creatureIndex, &compatProjectile, &precheckPlan);
                 combatOutcome = (outcome == 2) ? COMBAT_OUTCOME_KILLED_ALL_CREATURES :
                     ((outcome == 1) ? COMBAT_OUTCOME_KILLED_SOME_CREATURES :
                                       COMBAT_OUTCOME_KILLED_NO_CREATURES);
-                /* ReDMCSB PROJEXPL.C:F0217 lines 540-553 can pass
-                 * GROUP.Slot to F0215 so F0266 source/destination
-                 * projectile prechecks preserve thrown sharp weapons as
-                 * group possessions when no creature is killed. */
-                (void)orch_maybe_attach_projectile_weapon_to_group_slot_compat(
-                    world, group, &compatProjectile, combatOutcome);
+                memset(&aftermath, 0, sizeof(aftermath));
+                if (dm1_v1_projectile_creature_precheck_aftermath_pc34(
+                        &precheckPlan, &compatProjectile, creatureAttributes,
+                        associatedWeaponType, &aftermath) &&
+                    aftermath.keepSharpWeaponInGroup) {
+                    /* ReDMCSB PROJEXPL.C:F0217 lines 540-553 can pass
+                     * GROUP.Slot to F0215 so F0266 source/destination
+                     * projectile prechecks preserve thrown sharp weapons as
+                     * group possessions when no creature is killed. */
+                    (void)orch_maybe_attach_projectile_weapon_to_group_slot_compat(
+                        world, group, &compatProjectile, combatOutcome);
+                }
                 if (outcome == 2) {
                     if (outKilledGroup) *outKilledGroup = 1;
                     return 1;
@@ -4548,19 +4599,8 @@ static int orch_apply_projectile_group_action_compat(
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
     group = &world->things->groups[groupIndex];
     originalCreatureType = (int)group->creatureType;
-    if (projectile) {
-        unsigned short associatedThing = (unsigned short)projectile->reserved1;
-        int weaponIndex = (int)THING_GET_INDEX(associatedThing);
-        if (associatedThing != THING_NONE &&
-            associatedThing != THING_ENDOFLIST &&
-            THING_GET_TYPE(associatedThing) == THING_TYPE_WEAPON &&
-            world->things->weapons &&
-            weaponIndex >= 0 &&
-            weaponIndex < world->things->weaponCount) {
-            associatedWeaponType =
-                (int)world->things->weapons[weaponIndex].type;
-        }
-    }
+    associatedWeaponType =
+        orch_projectile_associated_weapon_type_compat(world, projectile);
     {
         const struct CreatureBehaviorProfile_Compat* profile =
             CREATURE_GetProfile_Compat(originalCreatureType);
