@@ -160,6 +160,42 @@ int main(void)
         ok &= expect_int("blocked plan empty party no self damage", blockPlan.blockedByWallOrDoorDamageRequested, 0);
     }
 
+    {
+        struct StairsTransitionResult_Compat stairs;
+        struct Dm1V1MovementStairsApplyPlanPc34Compat stairsPlan;
+        memset(&stairs, 0, sizeof(stairs));
+        stairs.transitioned = 1;
+        stairs.fromMapIndex = 0;
+        stairs.toMapIndex = 1;
+        stairs.newMapX = 3;
+        stairs.newMapY = 4;
+        stairs.newDirection = DIR_WEST;
+        ok &= expect_int("stairs plan cross-map builds",
+            DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(&stairs, &stairsPlan), 1);
+        ok &= expect_int("stairs plan cross-map valid", stairsPlan.valid, 1);
+        ok &= expect_int("stairs plan cross-map to map", stairsPlan.toMapIndex, 1);
+        ok &= expect_int("stairs plan cross-map x", stairsPlan.newMapX, 3);
+        ok &= expect_int("stairs plan cross-map y", stairsPlan.newMapY, 4);
+        ok &= expect_int("stairs plan cross-map direction", stairsPlan.newDirection, DIR_WEST);
+        ok &= expect_int("stairs plan cross-map move ok", stairsPlan.movementResultCode, MOVE_OK);
+        ok &= expect_int("stairs plan cross-map transition", stairsPlan.stairTransitionApplied, 1);
+        ok &= expect_int("stairs plan cross-map deferred enter", stairsPlan.stairDestinationEnterDeferred, 1);
+        ok &= expect_int("stairs plan cross-map releases wait", stairsPlan.stopWaitingForPlayerInput, 1);
+        ok &= expect_int("stairs plan cross-map redraw", stairsPlan.viewportRedrawRequested, 1);
+
+        stairs.toMapIndex = stairs.fromMapIndex;
+        ok &= expect_int("stairs plan same-map builds",
+            DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(&stairs, &stairsPlan), 1);
+        ok &= expect_int("stairs plan same-map no deferred enter", stairsPlan.stairDestinationEnterDeferred, 0);
+
+        stairs.transitioned = 0;
+        ok &= expect_int("stairs plan no-transition builds empty",
+            DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(&stairs, &stairsPlan), 1);
+        ok &= expect_int("stairs plan no-transition invalid", stairsPlan.valid, 0);
+        ok &= expect_int("stairs plan null output rejected",
+            DM1_V1_MovementCommandCore_StairsApplyPlanPc34Compat(&stairs, NULL), 0);
+    }
+
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
     setup_party(&party);
