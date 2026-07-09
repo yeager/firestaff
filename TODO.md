@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 F0267/F0252 now owns open-pit fall gating and Lord Chaos adjacent retry candidate/accept planning consumed by M10. Remaining runtime coding work is deeper F0267 teleporter state receipts and full-graphics proof.
   - 2026-07-09 update: DM1 F0267 now owns deferred group-move route decisions for removal, retry, Lord Chaos adjacent insert, buzz, and normal insert; M10 consumes the route/removal receipts. Remaining runtime coding work is deeper F0267 pit/teleporter state receipts and full-graphics proof.
   - 2026-07-09 update: DM1 F0190/F0187 now owns fixed-possession drop cell order for group-death and movement-rejection paths. Remaining runtime coding work is reducing residual F0190/F0267 live mutation adapters and full-graphics proof.
   - 2026-07-09 update: M10/M11 ordinary Projectile.Slot square materialization now consumes a DM1 F0215/DUNGEON.C F0163 attach receipt for empty square heads and append-after-tail links. Remaining runtime coding work is end-to-end full-graphics proof and any residual thing-link writes outside projectile materialization.

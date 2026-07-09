@@ -220,6 +220,67 @@ int m11_plan_deferred_group_move_route_f0267(
     return 1;
 }
 
+int m11_plan_group_pit_fall_square_f0267(
+        int squareType,
+        int pitSquareType,
+        int pitOpen,
+        int pitImaginary,
+        M11_GroupPitFallSquarePlan* outPlan) {
+    M11_GroupPitFallSquarePlan plan;
+
+    if (!outPlan) return 0;
+    memset(&plan, 0, sizeof(plan));
+    plan.valid = 1;
+    plan.shouldFall =
+        squareType == pitSquareType && pitOpen && !pitImaginary;
+
+    /* ReDMCSB: MOVESENS.C F0267 lines 538-574 follows only open,
+     * non-imaginary pit squares during group movement resolution. */
+    *outPlan = plan;
+    return 1;
+}
+
+int m11_plan_lord_chaos_adjacent_retry_f0252(
+        int creatureType,
+        int randomGate,
+        int randomDirection,
+        int sourceMapX,
+        int sourceMapY,
+        int candidateAllowedSquare,
+        int candidateBlocked,
+        M11_LordChaosAdjacentRetryPlan* outPlan) {
+    M11_LordChaosAdjacentRetryPlan plan;
+
+    if (!outPlan) return 0;
+    memset(&plan, 0, sizeof(plan));
+    plan.valid = 1;
+    plan.candidateMapX = sourceMapX;
+    plan.candidateMapY = sourceMapY;
+    if (creatureType != 23 || randomGate != 0) {
+        *outPlan = plan;
+        return 1;
+    }
+
+    plan.shouldAttempt = 1;
+    switch (randomDirection & 3) {
+        case 0: plan.candidateMapX--; break;
+        case 1: plan.candidateMapX++; break;
+        case 2: plan.candidateMapY--; break;
+        case 3: plan.candidateMapY++; break;
+    }
+    if (candidateAllowedSquare < 0 || candidateBlocked < 0) {
+        *outPlan = plan;
+        return 1;
+    }
+    plan.shouldInsertAdjacent =
+        candidateAllowedSquare && !candidateBlocked;
+
+    /* ReDMCSB: TIMELINE.C F0252 lines 1536-1555 gives Lord Chaos one
+     * 1/4 random adjacent insertion attempt before retrying event60/61. */
+    *outPlan = plan;
+    return 1;
+}
+
 const char* m11_group_move_removal_source_evidence(void) {
     return "ReDMCSB WIP20210206 Toolchains/Common/Source: "
            "MOVESENS.C F0267 lines 608-624 damages falling groups and drops moving fixed possessions on partial death; "

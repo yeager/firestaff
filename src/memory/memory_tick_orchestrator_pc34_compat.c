@@ -5630,6 +5630,7 @@ static int orch_resolve_group_f0267_pit_destination_compat(
         unsigned char squareByte;
         int squareType;
         int targetMapIndex;
+        M11_GroupPitFallSquarePlan pitPlan;
 
         if (*inOutMapIndex < 0 || *inOutMapIndex >= (int)world->dungeon->header.mapCount) break;
         map = &world->dungeon->maps[*inOutMapIndex];
@@ -5639,7 +5640,15 @@ static int orch_resolve_group_f0267_pit_destination_compat(
 
         squareByte = world->dungeon->tiles[*inOutMapIndex].squareData[*inOutMapX * map->height + *inOutMapY];
         squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-        if (squareType != DUNGEON_ELEMENT_PIT || !(squareByte & 0x08) || (squareByte & 0x01)) break;
+        memset(&pitPlan, 0, sizeof(pitPlan));
+        if (!m11_plan_group_pit_fall_square_f0267(
+                squareType, DUNGEON_ELEMENT_PIT,
+                (squareByte & 0x08) != 0, (squareByte & 0x01) != 0,
+                &pitPlan) ||
+            !pitPlan.valid) {
+            return 0;
+        }
+        if (!pitPlan.shouldFall) break;
 
         targetMapIndex = orch_group_level_change_location_compat(
             world->dungeon, *inOutMapIndex, 1, inOutMapX, inOutMapY);
@@ -5724,21 +5733,39 @@ static int orch_try_lord_chaos_random_adjacent_retry_compat(
 {
     int candidateX;
     int candidateY;
+    int randomGate;
+    int randomDirection;
+    M11_LordChaosAdjacentRetryPlan plan;
 
     if (!world || !group || !ev || !outMapX || !outMapY) return 0;
-    if (group->creatureType != 23) return 0; /* C23_CREATURE_LORD_CHAOS */
-    if (F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4) != 0) return 0;
-
-    candidateX = ev->mapX;
-    candidateY = ev->mapY;
-    switch (F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4)) {
-        case 0: candidateX--; break;
-        case 1: candidateX++; break;
-        case 2: candidateY--; break;
-        case 3: candidateY++; break;
+    randomGate = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4);
+    memset(&plan, 0, sizeof(plan));
+    if (!m11_plan_lord_chaos_adjacent_retry_f0252(
+            group->creatureType, randomGate, 0,
+            ev->mapX, ev->mapY, -1, -1, &plan) ||
+        !plan.valid || !plan.shouldAttempt) {
+        return 0;
     }
-    if (!orch_is_lord_chaos_allowed_square_compat(
-            world->dungeon, ev->mapIndex, candidateX, candidateY)) {
+    randomDirection = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4);
+    memset(&plan, 0, sizeof(plan));
+    if (!m11_plan_lord_chaos_adjacent_retry_f0252(
+            group->creatureType, randomGate, randomDirection,
+            ev->mapX, ev->mapY, -1, -1, &plan) ||
+        !plan.valid || !plan.shouldAttempt) {
+        return 0;
+    }
+    candidateX = plan.candidateMapX;
+    candidateY = plan.candidateMapY;
+    memset(&plan, 0, sizeof(plan));
+    if (!m11_plan_lord_chaos_adjacent_retry_f0252(
+            group->creatureType, randomGate, randomDirection,
+            ev->mapX, ev->mapY,
+            orch_is_lord_chaos_allowed_square_compat(
+                world->dungeon, ev->mapIndex, candidateX, candidateY),
+            orch_square_has_group_or_party_compat(
+                world, ev->mapIndex, candidateX, candidateY),
+            &plan) ||
+        !plan.valid || !plan.shouldInsertAdjacent) {
         return 0;
     }
 

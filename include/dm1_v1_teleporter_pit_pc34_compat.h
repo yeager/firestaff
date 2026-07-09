@@ -85,6 +85,19 @@ typedef struct {
     int removalReason;
 } M11_GroupMoveRoutePlan;
 
+typedef struct {
+    int valid;
+    int shouldFall;
+} M11_GroupPitFallSquarePlan;
+
+typedef struct {
+    int valid;
+    int shouldAttempt;
+    int shouldInsertAdjacent;
+    int candidateMapX;
+    int candidateMapY;
+} M11_LordChaosAdjacentRetryPlan;
+
 int  m11_apply_teleporter_rotation(int thingKind,
                                    int sourceMapX,
                                    const M11_TeleporterDef* teleporter,
@@ -120,6 +133,21 @@ int  m11_plan_deferred_group_move_route_f0267(
         int chaosAdjacentMapX,
         int chaosAdjacentMapY,
         M11_GroupMoveRoutePlan* outPlan);
+int  m11_plan_group_pit_fall_square_f0267(
+        int squareType,
+        int pitSquareType,
+        int pitOpen,
+        int pitImaginary,
+        M11_GroupPitFallSquarePlan* outPlan);
+int  m11_plan_lord_chaos_adjacent_retry_f0252(
+        int creatureType,
+        int randomGate,
+        int randomDirection,
+        int sourceMapX,
+        int sourceMapY,
+        int candidateAllowedSquare,
+        int candidateBlocked,
+        M11_LordChaosAdjacentRetryPlan* outPlan);
 const char* m11_group_move_removal_source_evidence(void);
 
 #ifdef __cplusplus
