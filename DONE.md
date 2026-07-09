@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 projectile F0215 group-slot attach plan: DM1 throw/shoot compat now owns the F0215 empty-group-slot versus append-after-tail write plan for kept sharp thrown weapons. M10 still finds the live tail and writes links, but no longer owns the F0215 head/tail branch. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 projectile group-slot materialization receipt: DM1 throw/shoot compat now owns the F0217/F0215 decision for when a non-exploding sharp thrown weapon is kept in a surviving creature group's Slot chain. M10 now only supplies live weapon/profile facts and applies the returned link mutation. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0190 projectile aftermath consolidation: projectile creature-kill handling now consumes the same DM1 F0190 possession-drop, death-smoke, killed-some cleanup/fear, and killed-all unlink receipt application path as melee instead of duplicating those live side-effect branches. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_dm1_v1_combat_pc34_compat_integration` (39/39), `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

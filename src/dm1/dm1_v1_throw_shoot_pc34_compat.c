@@ -511,6 +511,37 @@ int dm1_v1_projectile_group_slot_materialization_plan_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
+    unsigned short associatedThing,
+    unsigned short groupSlotHead,
+    unsigned short tailThing,
+    DM1_ProjectileGroupSlotAttachPlanPc34* outPlan) {
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->associatedThing = associatedThing;
+    outPlan->groupSlotHead = groupSlotHead;
+    outPlan->tailThing = tailThing;
+
+    if (associatedThing == THING_NONE ||
+        associatedThing == THING_ENDOFLIST ||
+        THING_GET_TYPE(associatedThing) == THING_TYPE_EXPLOSION) {
+        return 0;
+    }
+
+    outPlan->valid = 1;
+    outPlan->shouldSetAssociatedNextEnd = 1;
+    if (groupSlotHead == THING_ENDOFLIST) {
+        outPlan->shouldSetGroupSlotHead = 1;
+    } else if (tailThing != THING_NONE && tailThing != THING_ENDOFLIST) {
+        outPlan->shouldAppendAfterTail = 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0215 lines 248-256 stores Projectile.Slot as the
+     * group Slot head when the possession list is empty; otherwise it appends
+     * through DUNGEON.C F0163 after the existing tail. */
+    return 1;
+}
+
 int dm1_v1_projectile_associated_thing_disposition_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,
