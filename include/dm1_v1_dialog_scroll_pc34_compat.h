@@ -12,46 +12,70 @@
 extern "C" {
 #endif
 
-#define DM1_DG_MAX_MSG_LEN     128
-#define DM1_DG_MSG_QUEUE_SIZE   16
-#define DM1_DG_DISPLAY_TICKS    60   /* Frames to show message */
+#define DM1_V1_DIALOG_MAX_MSG_LEN_PC34     128
+#define DM1_V1_DIALOG_MSG_QUEUE_SIZE_PC34   16
+#define DM1_V1_DIALOG_DISPLAY_TICKS_PC34    60   /* Frames to show message */
 
 /* Dialog set indices — DIALOG.C G2062 pattern */
 typedef enum {
-    M11_DG_SET_VIEWPORT = 0,    /* C0_DIALOG_SET_VIEWPORT */
-    M11_DG_SET_INVENTORY,
-    M11_DG_SET_MAP,
-    M11_DG_SET_ENTRANCE,
-    M11_DG_SET_RESURRECT,
-    M11_DG_SET_COUNT
-} M11_DG_DialogSet;
+    DM1_V1_DIALOG_SET_VIEWPORT_PC34 = 0,    /* C0_DIALOG_SET_VIEWPORT */
+    DM1_V1_DIALOG_SET_INVENTORY_PC34,
+    DM1_V1_DIALOG_SET_MAP_PC34,
+    DM1_V1_DIALOG_SET_ENTRANCE_PC34,
+    DM1_V1_DIALOG_SET_RESURRECT_PC34,
+    DM1_V1_DIALOG_SET_COUNT_PC34
+} DM1_V1_DialogSetPc34;
 
 typedef struct {
-    char     text[DM1_DG_MAX_MSG_LEN];
+    char     text[DM1_V1_DIALOG_MAX_MSG_LEN_PC34];
     uint8_t  color;
     int16_t  display_ticks;      /* Remaining display time */
     bool     active;
-} M11_DG_Message;
+} DM1_V1_DialogMessagePc34;
 
 typedef struct {
-    M11_DG_Message queue[DM1_DG_MSG_QUEUE_SIZE];
+    DM1_V1_DialogMessagePc34 queue[DM1_V1_DIALOG_MSG_QUEUE_SIZE_PC34];
     uint8_t head, tail;
     uint8_t count;
-    M11_DG_Message current;      /* Currently displayed message */
-    M11_DG_DialogSet active_set;
+    DM1_V1_DialogMessagePc34 current;      /* Currently displayed message */
+    DM1_V1_DialogSetPc34 active_set;
     int16_t bar_x, bar_y;       /* Message bar screen position */
     int16_t bar_w, bar_h;
-} M11_DG_State;
+} DM1_V1_DialogStatePc34;
 
-void m11_dg_init(M11_DG_State* state);
-void m11_dg_set_bar_position(M11_DG_State* state, int16_t x, int16_t y,
+void DM1_V1_Dialog_InitPc34Compat(DM1_V1_DialogStatePc34* state);
+void DM1_V1_Dialog_SetBarPositionPc34Compat(DM1_V1_DialogStatePc34* state, int16_t x, int16_t y,
                               int16_t w, int16_t h);
-void m11_dg_set_active(M11_DG_State* state, M11_DG_DialogSet set);
-bool m11_dg_push_message(M11_DG_State* state, const char* text, uint8_t color);
-void m11_dg_tick(M11_DG_State* state);
-bool m11_dg_has_message(const M11_DG_State* state);
-const char* m11_dg_get_current_text(const M11_DG_State* state);
-uint8_t m11_dg_get_current_color(const M11_DG_State* state);
+void DM1_V1_Dialog_SetActivePc34Compat(DM1_V1_DialogStatePc34* state, DM1_V1_DialogSetPc34 set);
+bool DM1_V1_Dialog_PushMessagePc34Compat(DM1_V1_DialogStatePc34* state, const char* text, uint8_t color);
+void DM1_V1_Dialog_TickPc34Compat(DM1_V1_DialogStatePc34* state);
+bool DM1_V1_Dialog_HasMessagePc34Compat(const DM1_V1_DialogStatePc34* state);
+const char* DM1_V1_Dialog_GetCurrentTextPc34Compat(const DM1_V1_DialogStatePc34* state);
+uint8_t DM1_V1_Dialog_GetCurrentColorPc34Compat(const DM1_V1_DialogStatePc34* state);
+
+typedef DM1_V1_DialogSetPc34 M11_DG_DialogSet;
+typedef DM1_V1_DialogMessagePc34 M11_DG_Message;
+typedef DM1_V1_DialogStatePc34 M11_DG_State;
+
+#define DM1_DG_MAX_MSG_LEN DM1_V1_DIALOG_MAX_MSG_LEN_PC34
+#define DM1_DG_MSG_QUEUE_SIZE DM1_V1_DIALOG_MSG_QUEUE_SIZE_PC34
+#define DM1_DG_DISPLAY_TICKS DM1_V1_DIALOG_DISPLAY_TICKS_PC34
+
+#define M11_DG_SET_VIEWPORT DM1_V1_DIALOG_SET_VIEWPORT_PC34
+#define M11_DG_SET_INVENTORY DM1_V1_DIALOG_SET_INVENTORY_PC34
+#define M11_DG_SET_MAP DM1_V1_DIALOG_SET_MAP_PC34
+#define M11_DG_SET_ENTRANCE DM1_V1_DIALOG_SET_ENTRANCE_PC34
+#define M11_DG_SET_RESURRECT DM1_V1_DIALOG_SET_RESURRECT_PC34
+#define M11_DG_SET_COUNT DM1_V1_DIALOG_SET_COUNT_PC34
+
+#define m11_dg_init DM1_V1_Dialog_InitPc34Compat
+#define m11_dg_set_bar_position DM1_V1_Dialog_SetBarPositionPc34Compat
+#define m11_dg_set_active DM1_V1_Dialog_SetActivePc34Compat
+#define m11_dg_push_message DM1_V1_Dialog_PushMessagePc34Compat
+#define m11_dg_tick DM1_V1_Dialog_TickPc34Compat
+#define m11_dg_has_message DM1_V1_Dialog_HasMessagePc34Compat
+#define m11_dg_get_current_text DM1_V1_Dialog_GetCurrentTextPc34Compat
+#define m11_dg_get_current_color DM1_V1_Dialog_GetCurrentColorPc34Compat
 
 #ifdef __cplusplus
 }

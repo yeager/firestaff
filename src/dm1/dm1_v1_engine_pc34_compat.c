@@ -126,8 +126,8 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
                          M11_SCREEN_W);
 
     /* 10. Dialog / message system */
-    m11_dg_init(&engine->dialog);
-    m11_dg_set_bar_position(&engine->dialog, 0, 169, 320, 7);
+    DM1_V1_Dialog_InitPc34Compat(&engine->dialog);
+    DM1_V1_Dialog_SetBarPositionPc34Compat(&engine->dialog, 0, 169, 320, 7);
 
     /* 11. Click routing + dungeon zones */
     DM1_V1_ClickRouting_InitPc34Compat(&engine->clickRouting);
@@ -173,7 +173,7 @@ M11_EngineTickResult m11_engine_tick(M11_Engine *engine, uint32_t nowMs)
     }
 
     /* 4. Update dialog / messages */
-    m11_dg_tick(&engine->dialog);
+    DM1_V1_Dialog_TickPc34Compat(&engine->dialog);
     result.dialogUpdated = true;
 
     /* 5. Check death / victory */

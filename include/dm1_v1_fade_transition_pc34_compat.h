@@ -15,53 +15,80 @@
 extern "C" {
 #endif
 
-#define DM1_FADE_STEPS       16   /* Number of fade steps (0=black, 15=full) */
-#define DM1_FADE_FRAME_MS    33   /* ~30fps per step = ~0.5s total fade */
-#define DM1_SWOOSH_STEPS     32   /* FTL swoosh palette animation steps */
-#define DM1_OVERLAY_MAX_TEXT 256
+#define DM1_V1_FADE_STEPS_PC34       16   /* Number of fade steps (0=black, 15=full) */
+#define DM1_V1_FADE_FRAME_MS_PC34    33   /* ~30fps per step = ~0.5s total fade */
+#define DM1_V1_SWOOSH_STEPS_PC34     32   /* FTL swoosh palette animation steps */
+#define DM1_V1_OVERLAY_MAX_TEXT_PC34 256
 
 typedef enum {
-    M11_FADE_NONE = 0,
-    M11_FADE_OUT,          /* Current screen → black */
-    M11_FADE_IN,           /* Black → current screen */
-    M11_FADE_TO_OVERLAY,   /* Current screen → dimmed + text overlay */
-    M11_FADE_SWOOSH        /* Palette swoosh animation (FTL logo style) */
-} M11_FadeMode;
+    DM1_V1_FADE_NONE_PC34 = 0,
+    DM1_V1_FADE_OUT_PC34,          /* Current screen → black */
+    DM1_V1_FADE_IN_PC34,           /* Black → current screen */
+    DM1_V1_FADE_TO_OVERLAY_PC34,   /* Current screen → dimmed + text overlay */
+    DM1_V1_FADE_SWOOSH_PC34        /* Palette swoosh animation (FTL logo style) */
+} DM1_V1_FadeModePc34;
 
 typedef struct {
     uint16_t rgb12;  /* 12-bit Amiga color 0x0RGB */
-} M11_FadeColor;
+} DM1_V1_FadeColorPc34;
 
 typedef struct {
-    M11_FadeMode mode;
+    DM1_V1_FadeModePc34 mode;
     int          step;          /* Current animation step */
     int          total_steps;
-    M11_FadeColor saved_palette[16]; /* Palette before fade started */
-    M11_FadeColor current_palette[16];
+    DM1_V1_FadeColorPc34 saved_palette[16]; /* Palette before fade started */
+    DM1_V1_FadeColorPc34 current_palette[16];
     float        dim_factor;    /* 0.0 = black, 1.0 = full brightness */
 
     /* Overlay text (for "Return to start menu" etc.) */
     bool         overlay_active;
-    char         overlay_text[DM1_OVERLAY_MAX_TEXT];
+    char         overlay_text[DM1_V1_OVERLAY_MAX_TEXT_PC34];
     int16_t      overlay_x;
     int16_t      overlay_y;
     uint8_t      overlay_color;
 
     bool         active;
-} M11_FadeState;
+} DM1_V1_FadeStatePc34;
 
-void m11_fade_init(M11_FadeState* state);
-void m11_fade_save_palette(M11_FadeState* state, const M11_FadeColor palette[16]);
-void m11_fade_start_out(M11_FadeState* state);
-void m11_fade_start_in(M11_FadeState* state);
-void m11_fade_start_overlay(M11_FadeState* state, const char* text,
+void DM1_V1_Fade_InitPc34Compat(DM1_V1_FadeStatePc34* state);
+void DM1_V1_Fade_SavePalettePc34Compat(DM1_V1_FadeStatePc34* state, const DM1_V1_FadeColorPc34 palette[16]);
+void DM1_V1_Fade_StartOutPc34Compat(DM1_V1_FadeStatePc34* state);
+void DM1_V1_Fade_StartInPc34Compat(DM1_V1_FadeStatePc34* state);
+void DM1_V1_Fade_StartOverlayPc34Compat(DM1_V1_FadeStatePc34* state, const char* text,
                              int16_t x, int16_t y, uint8_t color);
-void m11_fade_start_swoosh(M11_FadeState* state);
-bool m11_fade_tick(M11_FadeState* state);  /* returns true while animating */
-void m11_fade_get_palette(const M11_FadeState* state, M11_FadeColor out[16]);
-bool m11_fade_is_active(const M11_FadeState* state);
-const char* m11_fade_get_overlay_text(const M11_FadeState* state);
-void m11_fade_cancel(M11_FadeState* state);
+void DM1_V1_Fade_StartSwooshPc34Compat(DM1_V1_FadeStatePc34* state);
+bool DM1_V1_Fade_TickPc34Compat(DM1_V1_FadeStatePc34* state);  /* returns true while animating */
+void DM1_V1_Fade_GetPalettePc34Compat(const DM1_V1_FadeStatePc34* state, DM1_V1_FadeColorPc34 out[16]);
+bool DM1_V1_Fade_IsActivePc34Compat(const DM1_V1_FadeStatePc34* state);
+const char* DM1_V1_Fade_GetOverlayTextPc34Compat(const DM1_V1_FadeStatePc34* state);
+void DM1_V1_Fade_CancelPc34Compat(DM1_V1_FadeStatePc34* state);
+
+typedef DM1_V1_FadeModePc34 M11_FadeMode;
+typedef DM1_V1_FadeColorPc34 M11_FadeColor;
+typedef DM1_V1_FadeStatePc34 M11_FadeState;
+
+#define DM1_FADE_STEPS DM1_V1_FADE_STEPS_PC34
+#define DM1_FADE_FRAME_MS DM1_V1_FADE_FRAME_MS_PC34
+#define DM1_SWOOSH_STEPS DM1_V1_SWOOSH_STEPS_PC34
+#define DM1_OVERLAY_MAX_TEXT DM1_V1_OVERLAY_MAX_TEXT_PC34
+
+#define M11_FADE_NONE DM1_V1_FADE_NONE_PC34
+#define M11_FADE_OUT DM1_V1_FADE_OUT_PC34
+#define M11_FADE_IN DM1_V1_FADE_IN_PC34
+#define M11_FADE_TO_OVERLAY DM1_V1_FADE_TO_OVERLAY_PC34
+#define M11_FADE_SWOOSH DM1_V1_FADE_SWOOSH_PC34
+
+#define m11_fade_init DM1_V1_Fade_InitPc34Compat
+#define m11_fade_save_palette DM1_V1_Fade_SavePalettePc34Compat
+#define m11_fade_start_out DM1_V1_Fade_StartOutPc34Compat
+#define m11_fade_start_in DM1_V1_Fade_StartInPc34Compat
+#define m11_fade_start_overlay DM1_V1_Fade_StartOverlayPc34Compat
+#define m11_fade_start_swoosh DM1_V1_Fade_StartSwooshPc34Compat
+#define m11_fade_tick DM1_V1_Fade_TickPc34Compat
+#define m11_fade_get_palette DM1_V1_Fade_GetPalettePc34Compat
+#define m11_fade_is_active DM1_V1_Fade_IsActivePc34Compat
+#define m11_fade_get_overlay_text DM1_V1_Fade_GetOverlayTextPc34Compat
+#define m11_fade_cancel DM1_V1_Fade_CancelPc34Compat
 
 #ifdef __cplusplus
 }

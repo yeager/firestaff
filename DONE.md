@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 dialog/fade ownership names: dialog-scroll set/message/state, message bar, queue/tick/query helpers, fade mode/color/state, palette save/get, fade in/out/overlay/swoosh/tick/cancel helpers, and DM1 engine call sites now expose DM1-owned API names; old m11_dg/m11_fade names remain compatibility aliases. Verification: firestaff_m10/firestaff_m11 rebuild, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 creature viewport ownership names: creature viewport type enum, sprite info, creature/visible-entry/state structs, visibility, animation, damage, alive, and visible-count helpers now expose DM1-owned API names; old m11_cr names remain compatibility aliases. Verification: mummy viewport 34/34, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 food/water ownership names: food/water state, decay constants, init/tick/eat/drink/query/starvation helpers, tests, and fountain drink handoff now expose DM1-owned API names; old m11_fw names remain compatibility aliases. Verification: food/water 113 assertions, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
