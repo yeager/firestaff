@@ -685,6 +685,49 @@ static void test_f0115_thing_layer_receipt_filters_static_effects(void) {
     ASSERT_EQ(receipt.items, 1, "other-cell item still filtered");
 }
 
+static void test_f0115_thing_route_receipt_filters_hoc_payload_items(void) {
+    DM1_F0115ThingLayerReceiptPc34 receipt;
+    DM1_F0115ThingRouteInputPc34 things[] = {
+        { make_thing(THING_TYPE_TEXTSTRING, 7, 2), 7 },
+        { make_thing(THING_TYPE_WEAPON, 3, 2), -1 },
+        { make_thing(THING_TYPE_JUNK, 4, 2), -1 },
+        { THING_ENDOFLIST, -1 }
+    };
+
+    printf("  F0115 thing route receipt filters HoC mirror payload items...\n");
+    ASSERT_EQ(dm1_v1_f0115_thing_route_receipt_pc34(things,
+                                                    4,
+                                                    -1,
+                                                    0,
+                                                    0,
+                                                    0,
+                                                    &receipt),
+              1, "route receipt accepts HoC mirror payload");
+    ASSERT_EQ(receipt.items, 0, "HoC payload objects are not floor items");
+    ASSERT_EQ(receipt.visibleFloorItemCount, 0,
+              "HoC payload has no visible floor-item route");
+    ASSERT_EQ(receipt.ignoredHallPayloadItems, 2,
+              "HoC mirror text hides following champion payload items");
+    ASSERT_EQ(receipt.firstItemThing, THING_NONE,
+              "HoC payload exposes no first item thing");
+
+    things[0].mirrorTextStringOrdinal = -1;
+    ASSERT_EQ(dm1_v1_f0115_thing_route_receipt_pc34(things,
+                                                    4,
+                                                    -1,
+                                                    0,
+                                                    1,
+                                                    0,
+                                                    &receipt),
+              1, "route receipt accepts non-HoC items");
+    ASSERT_EQ(receipt.items, 2, "non-HoC items remain drawable");
+    ASSERT_EQ(receipt.visibleFloorItemCount, 2,
+              "non-HoC item route keeps both visible items");
+    ASSERT_EQ(receipt.visibleFloorItemThings[0],
+              make_thing(THING_TYPE_WEAPON, 3, 2),
+              "first visible route item preserved");
+}
+
 
 /* ── Test: Projectile aspect data cross-check with m11_game_view ─── */
 
@@ -1128,6 +1171,7 @@ int main(void) {
     test_explosion_sprite_blit_plan();
     test_draw_order();
     test_f0115_thing_layer_receipt_filters_static_effects();
+    test_f0115_thing_route_receipt_filters_hoc_payload_items();
     test_aspect_data_cross_check();
     test_spell_graphic_indices();
     test_projectile_travel_blockers();

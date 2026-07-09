@@ -248,6 +248,12 @@ int dm1_v1_explosion_sprite_blit_plan(DM1_ExplosionSpriteBlitPlan *out_plan,
 #define DM1_F0115_LAYER_EXPLOSIONS       4
 #define DM1_F0115_LAYER_FLUXCAGE_FIELD   5
 #define DM1_F0115_LAYER_COUNT            6
+#define DM1_F0115_MAX_RECEIPT_ITEMS      8
+
+typedef struct DM1_F0115ThingRouteInputPc34 {
+    unsigned short thing;
+    int mirrorTextStringOrdinal;
+} DM1_F0115ThingRouteInputPc34;
 
 typedef struct DM1_F0115ThingLayerReceiptPc34 {
     int valid;
@@ -263,8 +269,11 @@ typedef struct DM1_F0115ThingLayerReceiptPc34 {
     int explosions;
     int ignoredControls;
     int ignoredStaticEffects;
+    int ignoredHallPayloadItems;
     int overflow;
     unsigned short firstItemThing;
+    int visibleFloorItemCount;
+    unsigned short visibleFloorItemThings[DM1_F0115_MAX_RECEIPT_ITEMS];
     unsigned short firstProjectileThing;
     unsigned short firstExplosionThing;
 } DM1_F0115ThingLayerReceiptPc34;
@@ -275,6 +284,14 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
     int thingCount,
     int viewCell,
     int allowStaticEffectThings,
+    DM1_F0115ThingLayerReceiptPc34* outReceipt);
+int dm1_v1_f0115_thing_route_receipt_pc34(
+    const DM1_F0115ThingRouteInputPc34* things,
+    int thingCount,
+    int viewCell,
+    int allowStaticEffectThings,
+    int mapIndex,
+    int suppressHallFloorItems,
     DM1_F0115ThingLayerReceiptPc34* outReceipt);
 
 #ifdef __cplusplus
