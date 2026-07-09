@@ -337,6 +337,34 @@ int dm2_v1_startup_presentation_render_receipt(
             }
         }
     }
+    out_receipt->title_backdrop_ready =
+        out_receipt->title_gdat_found &&
+        out_receipt->title_rect.x == 0 &&
+        out_receipt->title_rect.y == 0 &&
+        out_receipt->title_rect.w == 320 &&
+        out_receipt->title_rect.h == 200;
+    for (i = 0; i < menu->row_count; ++i) {
+        DM2_V1_StartupRowKind kind = DM2_V1_STARTUP_ROW_NONE;
+        int slot = -1;
+        if (!dm2_v1_startup_menu_row_at(menu, i, &kind, &slot)) {
+            continue;
+        }
+        if (kind == DM2_V1_STARTUP_ROW_CONTINUE) {
+            out_receipt->resume_menu_ready = 1;
+        } else if (kind == DM2_V1_STARTUP_ROW_SLOT) {
+            out_receipt->save_slot_menu_ready = 1;
+        } else if (kind == DM2_V1_STARTUP_ROW_NEW_GAME) {
+            out_receipt->new_game_menu_ready = 1;
+        }
+    }
+    /* skproject/SKWIN startup holds the GDAT title/menu surface until a
+     * DM2 save/new-game action hands off to the first HUD frame. This receipt
+     * gives M11 one DM2-owned readiness bit instead of rechecking commands. */
+    out_receipt->full_start_graphics_ready =
+        out_receipt->title_backdrop_ready &&
+        out_receipt->new_game_menu_ready &&
+        out_receipt->hud_overlay_suppressed &&
+        out_receipt->selectable_text_count == menu->row_count;
     return 1;
 }
 
