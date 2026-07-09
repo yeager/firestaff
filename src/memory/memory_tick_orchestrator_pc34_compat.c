@@ -5248,11 +5248,11 @@ static int orch_apply_group_move_removal_plan_f0267_compat(
     int destinationMapX,
     int destinationMapY)
 {
-    M11_GroupMoveRemovalPlan plan;
+    DM1_V1_GroupMoveRemovalPlanPc34 plan;
 
     if (!world || !group) return 0;
     memset(&plan, 0, sizeof(plan));
-    if (!m11_plan_group_move_removal_after_pit_teleporter(
+    if (!DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
             fallKilledGroup, creatureAllowedOnDestinationMap,
             sourceMapX, sourceMapY, destinationMapX, destinationMapY,
             &plan)) {
@@ -5615,7 +5615,7 @@ static int orch_resolve_group_f0267_pit_destination_compat(
         unsigned char squareByte;
         int squareType;
         int targetMapIndex;
-        M11_GroupPitFallSquarePlan pitPlan;
+        DM1_V1_GroupPitFallSquarePlanPc34 pitPlan;
 
         if (*inOutMapIndex < 0 || *inOutMapIndex >= (int)world->dungeon->header.mapCount) break;
         map = &world->dungeon->maps[*inOutMapIndex];
@@ -5626,7 +5626,7 @@ static int orch_resolve_group_f0267_pit_destination_compat(
         squareByte = world->dungeon->tiles[*inOutMapIndex].squareData[*inOutMapX * map->height + *inOutMapY];
         squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
         memset(&pitPlan, 0, sizeof(pitPlan));
-        if (!m11_plan_group_pit_fall_square_f0267(
+        if (!DM1_V1_PlanGroupPitFallSquareF0267Pc34Compat(
                 squareType, DUNGEON_ELEMENT_PIT,
                 (squareByte & 0x08) != 0, (squareByte & 0x01) != 0,
                 &pitPlan) ||
@@ -5720,12 +5720,12 @@ static int orch_try_lord_chaos_random_adjacent_retry_compat(
     int candidateY;
     int randomGate;
     int randomDirection;
-    M11_LordChaosAdjacentRetryPlan plan;
+    DM1_V1_LordChaosAdjacentRetryPlanPc34 plan;
 
     if (!world || !group || !ev || !outMapX || !outMapY) return 0;
     randomGate = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4);
     memset(&plan, 0, sizeof(plan));
-    if (!m11_plan_lord_chaos_adjacent_retry_f0252(
+    if (!DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
             group->creatureType, randomGate, 0,
             ev->mapX, ev->mapY, -1, -1, &plan) ||
         !plan.valid || !plan.shouldAttempt) {
@@ -5733,7 +5733,7 @@ static int orch_try_lord_chaos_random_adjacent_retry_compat(
     }
     randomDirection = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4);
     memset(&plan, 0, sizeof(plan));
-    if (!m11_plan_lord_chaos_adjacent_retry_f0252(
+    if (!DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
             group->creatureType, randomGate, randomDirection,
             ev->mapX, ev->mapY, -1, -1, &plan) ||
         !plan.valid || !plan.shouldAttempt) {
@@ -5742,7 +5742,7 @@ static int orch_try_lord_chaos_random_adjacent_retry_compat(
     candidateX = plan.candidateMapX;
     candidateY = plan.candidateMapY;
     memset(&plan, 0, sizeof(plan));
-    if (!m11_plan_lord_chaos_adjacent_retry_f0252(
+    if (!DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
             group->creatureType, randomGate, randomDirection,
             ev->mapX, ev->mapY,
             orch_is_lord_chaos_allowed_square_compat(
@@ -5945,7 +5945,7 @@ static int orch_materialize_generated_group_compat(
         unsigned char movingFixedDropCells[4];
         int movingFixedDropCellCount = 0;
         struct TimelineEvent_Compat resolvedEvent = *ev;
-        M11_GroupMoveRoutePlan routePlan;
+        DM1_V1_GroupMoveRoutePlanPc34 routePlan;
 
         (void)orch_resolve_group_f0267_teleporter_destination_compat(
             world, &destMapIndex, &destMapX, &destMapY,
@@ -5967,7 +5967,7 @@ static int orch_materialize_generated_group_compat(
             orch_square_has_group_or_party_compat(
                 world, destMapIndex, destMapX, destMapY);
         memset(&routePlan, 0, sizeof(routePlan));
-        if (!m11_plan_deferred_group_move_route_f0267(
+        if (!DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
                 fallKilledGroup, creatureAllowed, destinationBlocked,
                 0, 0, world->gameTick, destMapX, destMapY, 0, 0,
                 &routePlan) ||
@@ -6056,7 +6056,7 @@ static int orch_handle_deferred_group_move_event_compat(
         int chaosAdjacentMapY = targetMapY;
         unsigned char movingFixedDropCells[4];
         int movingFixedDropCellCount = 0;
-        M11_GroupMoveRoutePlan routePlan;
+        DM1_V1_GroupMoveRoutePlanPc34 routePlan;
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &retry.mapIndex, &targetMapX, &targetMapY,
                 &fallKilledGroup, movingFixedDropCells,
@@ -6084,7 +6084,7 @@ static int orch_handle_deferred_group_move_event_compat(
             chaosAdjacentAvailable = 1;
         }
         memset(&routePlan, 0, sizeof(routePlan));
-        if (!m11_plan_deferred_group_move_route_f0267(
+        if (!DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
                 fallKilledGroup, creatureAllowed, destinationBlocked,
                 ev->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE,
                 chaosAdjacentAvailable, ev->fireAtTick, targetMapX,
@@ -6171,7 +6171,7 @@ static int orch_handle_creature_tick_group_move_compat(
     int destinationBlocked;
     struct DungeonGroup_Compat* group;
     struct TimelineEvent_Compat nextEvent;
-    M11_OrdinaryGroupMovePlan movePlan;
+    DM1_V1_OrdinaryGroupMovePlanPc34 movePlan;
     DM1_V1_OrdinaryGroupMoveApplyPlanPc34 applyPlan;
 
     (void)result;
@@ -6183,7 +6183,7 @@ static int orch_handle_creature_tick_group_move_compat(
     group = &world->things->groups[groupIndex];
     direction = world->creatureAI[activeIndex].groupDirection & 3;
     memset(&movePlan, 0, sizeof(movePlan));
-    if (!m11_plan_ordinary_group_move_f0267(
+    if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             ev->mapX, ev->mapY, direction, 1, 0, 0,
             world->gameTick, &movePlan) ||
         !movePlan.valid) {
@@ -6197,7 +6197,7 @@ static int orch_handle_creature_tick_group_move_compat(
         MOVEMENT_PASS_CTX_CREATURE);
     destinationBlocked = orch_square_has_group_or_party_compat(
         world, ev->mapIndex, destMapX, destMapY);
-    if (!m11_plan_ordinary_group_move_f0267(
+    if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             ev->mapX, ev->mapY, direction, destinationPassable,
             destinationBlocked, 0, world->gameTick, &movePlan) ||
         !movePlan.valid) {
@@ -6214,7 +6214,7 @@ static int orch_handle_creature_tick_group_move_compat(
             destMapX, destMapY, &killedByProjectile)) {
         return 0;
     }
-    if (!m11_plan_ordinary_group_move_f0267(
+    if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             ev->mapX, ev->mapY, direction, destinationPassable,
             destinationBlocked, killedByProjectile, world->gameTick,
             &movePlan) ||

@@ -18,7 +18,7 @@ static unsigned int m11_set_group_value(unsigned int packed, int creatureIndex, 
     return packed;
 }
 
-int m11_apply_group_teleporter_rotation(const M11_TeleporterDef* teleporter,
+int DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(const DM1_V1_TeleporterDefPc34* teleporter,
                                    int creatureCountMinusOne,
                                    int creatureSize,
                                    unsigned int inDirections,
@@ -67,9 +67,9 @@ int m11_apply_group_teleporter_rotation(const M11_TeleporterDef* teleporter,
     return 1;
 }
 
-int m11_apply_teleporter_rotation(int thingKind,
+int DM1_V1_ApplyTeleporterRotationF0267Pc34Compat(int thingKind,
                                    int sourceMapX,
-                                   const M11_TeleporterDef* teleporter,
+                                   const DM1_V1_TeleporterDefPc34* teleporter,
                                    int inDirection,
                                    int inCell,
                                    int* outDirection,
@@ -109,7 +109,7 @@ int m11_apply_teleporter_rotation(int thingKind,
     case M11_TELEPORTER_ROTATE_THING_GROUP: {
         unsigned int groupDirections;
         unsigned int groupCells;
-        if (!m11_apply_group_teleporter_rotation(teleporter, 0,
+        if (!DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(teleporter, 0,
                 M11_CREATURE_SIZE_QUARTER_SQUARE, (unsigned int)*outDirection,
                 (unsigned int)*outCell, &groupDirections, &groupCells)) {
             return 0;
@@ -127,15 +127,15 @@ const char* m11_teleporter_rotation_source_evidence(void) {
     return "ReDMCSB WIP20210206 Toolchains/Common/Source: MOVESENS.C:33-111 F0262 group teleporter direction/cell rotation; MOVESENS.C:120-133 F0263 projectile teleporter rotation; MOVESENS.C:316-322 F0267 source-map sentinel contract; MOVESENS.C:493-518 party absolute/relative teleporter rotation; MOVESENS.C:520-524 group audible buzz and F0262 dispatch; MOVESENS.C:526-531 projectile/object teleporter rotation and projectile-associated object exception";
 }
 
-int m11_plan_group_move_removal_after_pit_teleporter(
+int DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
         int fallKilledGroup,
         int creatureAllowedOnDestinationMap,
         int sourceMapX,
         int sourceMapY,
         int destinationMapX,
         int destinationMapY,
-        M11_GroupMoveRemovalPlan* outPlan) {
-    M11_GroupMoveRemovalPlan plan;
+        DM1_V1_GroupMoveRemovalPlanPc34* outPlan) {
+    DM1_V1_GroupMoveRemovalPlanPc34 plan;
 
     if (!outPlan) return 0;
     memset(&plan, 0, sizeof(plan));
@@ -169,7 +169,7 @@ int m11_plan_group_move_removal_after_pit_teleporter(
     return 1;
 }
 
-int m11_plan_deferred_group_move_route_f0267(
+int DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
         int fallKilledGroup,
         int creatureAllowedOnDestinationMap,
         int destinationBlocked,
@@ -180,8 +180,8 @@ int m11_plan_deferred_group_move_route_f0267(
         int destinationMapY,
         int chaosAdjacentMapX,
         int chaosAdjacentMapY,
-        M11_GroupMoveRoutePlan* outPlan) {
-    M11_GroupMoveRoutePlan plan;
+        DM1_V1_GroupMoveRoutePlanPc34* outPlan) {
+    DM1_V1_GroupMoveRoutePlanPc34 plan;
 
     if (!outPlan) return 0;
     memset(&plan, 0, sizeof(plan));
@@ -220,7 +220,7 @@ int m11_plan_deferred_group_move_route_f0267(
     return 1;
 }
 
-int m11_plan_ordinary_group_move_f0267(
+int DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
         int sourceMapX,
         int sourceMapY,
         int direction,
@@ -228,8 +228,8 @@ int m11_plan_ordinary_group_move_f0267(
         int destinationBlocked,
         int killedByProjectile,
         uint32_t currentTick,
-        M11_OrdinaryGroupMovePlan* outPlan) {
-    M11_OrdinaryGroupMovePlan plan;
+        DM1_V1_OrdinaryGroupMovePlanPc34* outPlan) {
+    DM1_V1_OrdinaryGroupMovePlanPc34 plan;
 
     if (!outPlan) return 0;
     memset(&plan, 0, sizeof(plan));
@@ -269,7 +269,7 @@ int m11_plan_ordinary_group_move_f0267(
 }
 
 int DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
-        const M11_OrdinaryGroupMovePlan* movePlan,
+        const DM1_V1_OrdinaryGroupMovePlanPc34* movePlan,
         int sourceMapIndex,
         int direction,
         int groupCells,
@@ -316,13 +316,13 @@ int DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
     return 1;
 }
 
-int m11_plan_group_pit_fall_square_f0267(
+int DM1_V1_PlanGroupPitFallSquareF0267Pc34Compat(
         int squareType,
         int pitSquareType,
         int pitOpen,
         int pitImaginary,
-        M11_GroupPitFallSquarePlan* outPlan) {
-    M11_GroupPitFallSquarePlan plan;
+        DM1_V1_GroupPitFallSquarePlanPc34* outPlan) {
+    DM1_V1_GroupPitFallSquarePlanPc34 plan;
 
     if (!outPlan) return 0;
     memset(&plan, 0, sizeof(plan));
@@ -442,7 +442,7 @@ int DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
     return 1;
 }
 
-int m11_plan_lord_chaos_adjacent_retry_f0252(
+int DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
         int creatureType,
         int randomGate,
         int randomDirection,
@@ -450,8 +450,8 @@ int m11_plan_lord_chaos_adjacent_retry_f0252(
         int sourceMapY,
         int candidateAllowedSquare,
         int candidateBlocked,
-        M11_LordChaosAdjacentRetryPlan* outPlan) {
-    M11_LordChaosAdjacentRetryPlan plan;
+        DM1_V1_LordChaosAdjacentRetryPlanPc34* outPlan) {
+    DM1_V1_LordChaosAdjacentRetryPlanPc34 plan;
 
     if (!outPlan) return 0;
     memset(&plan, 0, sizeof(plan));
