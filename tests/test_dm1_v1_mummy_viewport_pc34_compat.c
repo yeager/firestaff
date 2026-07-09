@@ -232,8 +232,8 @@ static void test_full_square_placement(void) {
 
 /* ── Test 7: Source-lock cross-reference with M11 sprite table. ── */
 static void test_m11_cross_reference(void) {
-    /* The m11_game_view.c m11_cr_setup_sprite_table places the Mummy
-     * (M11_CR_MUMMY = 0) at GRAPHICS.DAT bitmap index 225 with 4
+    /* The m11_game_view.c DM1_V1_CreatureViewport_SetupSpriteTablePc34Compat places the Mummy
+     * (DM1_V1_CREATURE_VIEWPORT_MUMMY_PC34 = 0) at GRAPHICS.DAT bitmap index 225 with 4
      * animation frames.  Each Mummy frame is a separate native bitmap
      * and the Mummy sprite atlas starts at the offset that
      * firstNativeBitmapRelativeIndex = 29 maps to.  Our computed
