@@ -347,6 +347,13 @@ typedef struct {
     int saturn_asset_boot_ready;
     int title_route_ready;
     int menu_route_ready;
+    int title_art_loaded;
+    int warning_art_loaded;
+    int startup_surfaces_real_ready;
+    int faces_real_ready;
+    int save_load_menu_route_ready;
+    int startup_ui_route_ready;
+    int full_start_graphics_ready;
     int runtime_route_ready;
     int graphics_ready;
     int audio_ready;
@@ -366,6 +373,7 @@ typedef struct {
     int script_candidate_source_bytes;
     int fallback_visuals_permitted;
     const char *asset_route;
+    const char *startup_ui_blocker;
     const char *title_route;
     const char *menu_route;
     const char *runtime_route;

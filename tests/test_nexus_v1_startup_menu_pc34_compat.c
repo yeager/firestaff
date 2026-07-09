@@ -891,6 +891,12 @@ int main(void)
                route_proof_receipt.saturn_asset_boot_ready == 1 &&
                route_proof_receipt.title_route_ready == 1 &&
                route_proof_receipt.menu_route_ready == 1 &&
+               route_proof_receipt.startup_surfaces_real_ready == 1 &&
+               route_proof_receipt.faces_real_ready == 1 &&
+               route_proof_receipt.full_start_graphics_ready == 1 &&
+               route_proof_receipt.save_load_menu_route_ready == 1 &&
+               route_proof_receipt.startup_ui_route_ready == 1 &&
+               strcmp(route_proof_receipt.startup_ui_blocker, "none") == 0 &&
                route_proof_receipt.runtime_route_ready == 1 &&
                route_proof_receipt.graphics_ready == 1 &&
                route_proof_receipt.audio_ready == 1 &&
@@ -1039,6 +1045,11 @@ int main(void)
                route_proof_receipt.audio_ready == 0 &&
                route_proof_receipt.audio_runtime_route_ready == 0 &&
                route_proof_receipt.audio_runtime_route_blocked == 1 &&
+               route_proof_receipt.full_start_graphics_ready == 1 &&
+               route_proof_receipt.save_load_menu_route_ready == 0 &&
+               route_proof_receipt.startup_ui_route_ready == 0 &&
+               strcmp(route_proof_receipt.startup_ui_blocker,
+                      "track02-sfx") == 0 &&
                route_proof_receipt.asset_handoff.audio_asset_handoff_ready == 0 &&
                route_proof_receipt.runtime_route_receipt.startup_sfx_status ==
                    NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET &&
@@ -1175,6 +1186,13 @@ int main(void)
                    NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED &&
                route_proof_receipt.title_route_ready == 1 &&
                route_proof_receipt.menu_route_ready == 0 &&
+               route_proof_receipt.startup_surfaces_real_ready == 1 &&
+               route_proof_receipt.faces_real_ready == 1 &&
+               route_proof_receipt.full_start_graphics_ready == 0 &&
+               route_proof_receipt.save_load_menu_route_ready == 0 &&
+               route_proof_receipt.startup_ui_route_ready == 0 &&
+               strcmp(route_proof_receipt.startup_ui_blocker,
+                      "menu-bpk-prs3") == 0 &&
                route_proof_receipt.runtime_route_ready == 0 &&
                route_proof_receipt.graphics_ready == 0 &&
                route_proof_receipt.audio_ready == 1 &&
