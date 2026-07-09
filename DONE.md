@@ -66,6 +66,8 @@
 
 - ✅ 2026-07-09 Theron Track02 startup render route receipt: boot startup view models now emit a render-route receipt that carries the startup menu render plan, runtime level-render eligibility, state receipt, and no-fallback Track02 blocked status so callers can render menus without falling back to fake runtime visuals. Verification: `test_theron_v1_startup_save_resume_pc34` 204/204, focused CMake target build/run, and `git diff --check` passed.
 
+- ✅ 2026-07-09 Theron Track02 first-level HUD-ready route receipt: startup render-route receipts now mark semantic Track02 level 0 as first-level render ready, seed the Theron HUD gate, and keep fallback visuals disabled for real Track02 semantic handoff. Verification: `test_theron_v1_startup_save_resume_pc34` 206/206, focused CMake target build/run, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup title render route receipt: CSB render-view receipts now expose post-FTL title render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus startup asset gate receipt: launcher startup assets now separate title readiness from real save/champion menu surface readiness, blocking menu routes on MENU.BPK PRS3/truncated/no-surface states while keeping fallback visuals disallowed. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
