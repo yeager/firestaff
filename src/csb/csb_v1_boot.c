@@ -2655,6 +2655,29 @@ static void csb_v1_boot_startup_snapshot_apply_command_state_pc34(
     snapshot->pending_command = state->pending_command;
 }
 
+static void csb_v1_boot_startup_action_capture_host_receipt_pc34(
+    CSB_V1_BootStartupActionReceipt_PC34 *receipt,
+    const CSB_V1_StartupEntranceHostActionReceipt_PC34 *entrance)
+{
+    if (!receipt || !entrance || !entrance->handled) {
+        return;
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 leaves the startup
+     * loop with C001/C200/C216 commands and source-visible host status.
+     * CSBWin keeps that menu result at the viewport/input boundary. Flatten
+     * the host receipt here so M11 can consume one CSB boot action receipt. */
+    receipt->host_receipt_valid = 1;
+    receipt->host_input_result = entrance->host_receipt.input_result;
+    receipt->host_status_scope = entrance->host_receipt.status_scope;
+    receipt->host_status = entrance->host_receipt.status;
+    receipt->host_clear_import_preview =
+        entrance->host_receipt.clear_import_preview ? 1 : 0;
+    receipt->host_bonus_requested_changed =
+        entrance->host_receipt.bonus_requested_changed ? 1 : 0;
+    receipt->host_bonus_requested =
+        entrance->host_receipt.bonus_requested ? 1 : 0;
+}
+
 static int csb_v1_boot_startup_action_capture_post_input_render_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupActionReceipt_PC34 *receipt)
@@ -2683,6 +2706,9 @@ static int csb_v1_boot_startup_action_capture_post_input_render_pc34(
         entrance = &receipt->entrance_receipt;
     }
     if (entrance && entrance->handled) {
+        csb_v1_boot_startup_action_capture_host_receipt_pc34(
+            receipt,
+            entrance);
         csb_v1_boot_startup_snapshot_apply_command_state_pc34(
             &post_snapshot,
             &entrance->state_receipt);
