@@ -40,6 +40,7 @@
 #include "asset_status_m12.h"
 #include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_media.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -180,6 +181,21 @@ static void populate_startup_chapter_summary(
         (uint32_t)marker.quest_item_total;
     receipt->startup_quest_items_collected =
         (uint32_t)marker.quest_items_collected;
+}
+
+void theron_v1_startup_receipt_apply_bitmap_art_summary(
+    Theron_V1_StartupReceipt *receipt,
+    const Theron_StartupMediaStateReceipt *media_receipt) {
+    if (!receipt) {
+        return;
+    }
+    receipt->startup_decoded_art_count = 0u;
+    if (media_receipt &&
+        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            media_receipt)) {
+        receipt->startup_decoded_art_count =
+            THERON_STARTUP_HERO_MIRROR_COUNT;
+    }
 }
 
 void theron_v1_startup_receipt_set_placeholder(Theron_V1_StartupReceipt *receipt) {
@@ -586,6 +602,17 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
                 }
             }
         }
+    }
+
+    {
+        Theron_StartupMediaStateReceipt media_receipt;
+        theron_v1_startup_media_capture_track02_state_receipt(
+            data,
+            size,
+            expected_md5,
+            &media_receipt);
+        theron_v1_startup_receipt_apply_bitmap_art_summary(receipt,
+                                                           &media_receipt);
     }
 
     {

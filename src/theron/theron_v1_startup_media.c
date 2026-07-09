@@ -411,7 +411,7 @@ int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
         receipt->startup_bitmap_atlas_route_count < 4 ||
         (receipt->startup_bitmap_atlas_route_mask & required_mask) !=
             required_mask ||
-        receipt->startup_bitmap_atlas_tile_count < 20u ||
+        receipt->startup_bitmap_atlas_tile_count < 32u ||
         receipt->startup_bitmap_atlas_nonzero_pixel_count == 0u ||
         receipt->startup_bitmap_atlas_checksum == 0u ||
         (receipt->startup_bitmap_route_mask & required_mask) !=
@@ -439,10 +439,10 @@ int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
            receipt->startup_bitmap_forcefield_checksum != 0u &&
            receipt->startup_bitmap_title_atlas_tile_count >= 8u &&
            receipt->startup_bitmap_stage_atlas_tile_count >= 8u &&
-           receipt->startup_bitmap_soul_room_atlas_tile_count >= 2u &&
-           receipt->startup_bitmap_forcefield_atlas_tile_count >= 2u &&
+           receipt->startup_bitmap_soul_room_atlas_tile_count >= 8u &&
+           receipt->startup_bitmap_forcefield_atlas_tile_count >= 8u &&
            receipt->startup_bitmap_title_atlas_width >= 64u &&
            receipt->startup_bitmap_stage_atlas_width >= 64u &&
-           receipt->startup_bitmap_soul_room_atlas_width >= 16u &&
-           receipt->startup_bitmap_forcefield_atlas_width >= 16u;
+           receipt->startup_bitmap_soul_room_atlas_width >= 64u &&
+           receipt->startup_bitmap_forcefield_atlas_width >= 64u;
 }

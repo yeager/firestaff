@@ -35,6 +35,7 @@
 
 #include "theron_v1_boot.h"
 #include "theron_v1_chapter_marker.h"
+#include "theron_v1_startup_media.h"
 #include "theron_v1_track02.h"
 
 #ifdef __cplusplus
@@ -281,6 +282,13 @@ void theron_v1_startup_receipt_set_placeholder(Theron_V1_StartupReceipt *receipt
  * The token is stable across runs given identical inputs.
  * Returns the token (also stored into receipt->session_tick_token). */
 uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *receipt);
+
+/* Promote decoded startup art only when the Track 02 bitmap receipt proves
+ * all startup bitmap routes are complete.  Partial atlas paths stay at zero
+ * so hosts keep fallback art gated. */
+void theron_v1_startup_receipt_apply_bitmap_art_summary(
+    Theron_V1_StartupReceipt *receipt,
+    const Theron_StartupMediaStateReceipt *media_receipt);
 
 /* Look up a path/MD5 pair without reading the file.
  * Returns 1 if expected_md5 matches one of the four known TQ Track 02
