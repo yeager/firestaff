@@ -116,8 +116,11 @@ int main(void)
     Nexus_V1_LauncherRuntimeStartupSnapshot runtime_snapshot;
     Nexus_V1_StartupMenuPresentationReceipt presentation_receipt;
     Nexus_V1_StartupTitleHandoffReceipt title_handoff_receipt;
+    Nexus_V1_StartupRuntimeHandoffReceipt runtime_handoff_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
+    Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_Engine synthetic_engine;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
@@ -734,6 +737,90 @@ int main(void)
                strcmp(champion_execution.status_scope, "BOOT") == 0 &&
                strcmp(champion_execution.status, "NEXUS READY") == 0,
            "Nexus champion execution resolves start-dungeon handoff");
+    memset(&synthetic_engine, 0, sizeof(synthetic_engine));
+    synthetic_engine.level_loaded = 1;
+    synthetic_engine.game.party_x = 3;
+    synthetic_engine.game.party_y = 4;
+    synthetic_engine.game.party_dir = 0;
+    synthetic_engine.ui_startup_surfaces_expected = 1;
+    synthetic_engine.ui_startup_surfaces_loaded = 1;
+    synthetic_engine.ui_faces_expected = NEXUS_MAX_CHAMPIONS;
+    synthetic_engine.ui_faces_loaded = NEXUS_MAX_CHAMPIONS;
+    synthetic_engine.menu_bpk_upload_receipt_valid = 1;
+    synthetic_engine.menu_bpk_upload_receipt.route =
+        NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
+    synthetic_engine.menu_bpk_upload_receipt.ready_uploads = 3;
+    synthetic_engine.menu_bpk_upload_receipt.planned_rows = 3;
+    synthetic_engine.sfx_runtime_receipt.status =
+        NEXUS_SFX_RUNTIME_READY_DECODED;
+    synthetic_engine.sfx_runtime_receipt.level_index = 0;
+    synthetic_engine.sfx_runtime_receipt.cd_track = 2;
+    synthetic_engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+    synthetic_engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+    synthetic_engine.current_level.geometry_info.dmweb_container = 1;
+    synthetic_engine.current_level.geometry_info.mesh_ready = 1;
+    synthetic_engine.current_level.geometry_info.geometry_offset = 0x9000;
+    synthetic_engine.current_level.geometry_info.geometry_size = 2048;
+    synthetic_engine.current_level.geometry_info.collision_ref_count = 4;
+    synthetic_engine.current_level.geometry_info.collision_ref_unique_count = 1;
+    synthetic_engine.current_level.geometry_info.max_collision_ref = 5;
+    synthetic_engine.current_level.squares[4][3] = 1;
+    synthetic_engine.current_level.squares[3][3] = 1;
+    synthetic_engine.current_level.squares[4][4] = 1;
+    synthetic_engine.current_level.collision_refs[4][3] = 0x0100;
+    synthetic_engine.current_level.collision_refs[3][3] = 0x0fff;
+    nexus_v1_launcher_startup_runtime_state_clear(&runtime_state);
+    runtime_state.engine = &synthetic_engine;
+    runtime_state.champion_select_active = 1;
+    runtime_state.champion_cursor = 0;
+    runtime_state.champion_frame = 0;
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
+               &runtime_state,
+               &champion_execution,
+               NULL,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &runtime_handoff_receipt) &&
+               runtime_handoff_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
+               strcmp(nexus_v1_launcher_startup_runtime_handoff_route_name(
+                          runtime_handoff_receipt.route),
+                      "ready-render-state") == 0 &&
+               runtime_handoff_receipt.runtime_ready == 1 &&
+               runtime_handoff_receipt.render_plan.plan_ready == 1 &&
+               runtime_handoff_receipt.command_count > 0 &&
+               runtime_handoff_receipt.fallback_visuals_permitted == 0 &&
+               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+           "Nexus startup handoff builds first DGN render state after champion start");
+    champion_execution.kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW;
+    expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
+               &runtime_state,
+               &champion_execution,
+               NULL,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &runtime_handoff_receipt) &&
+               runtime_handoff_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_NOT_START,
+           "Nexus startup handoff ignores non-start champion routes");
+    champion_execution.kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON;
+    synthetic_engine.menu_bpk_upload_receipt.route =
+        NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
+    synthetic_engine.menu_bpk_upload_receipt.blocked_prs3_uploads = 3;
+    synthetic_engine.menu_bpk_upload_receipt.blocks_real_menu_surface_render = 1;
+    expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
+               &runtime_state,
+               &champion_execution,
+               NULL,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &runtime_handoff_receipt) &&
+               runtime_handoff_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED &&
+               strcmp(runtime_handoff_receipt.status,
+                      "blocked-menu-bpk-prs3") == 0,
+           "Nexus startup handoff blocks DGN route when Saturn menu assets are blocked");
     expect(nexus_v1_startup_champion_execution_mode_update(
                &champion_execution,
                2,
