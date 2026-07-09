@@ -326,7 +326,10 @@ static void check_title_to_menu_boundary(void) {
     V1_TitleFrontendSourceAnimationStep finalGuard;
     DM1_V1_StartupTitleMenuEligibilityFacts_PC34 facts;
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
     V1_TitleFrontendSourceTiming titleTiming = V1_TitleFrontend_GetSourceTimingEvidence();
+    int expected_presents_palette = 0;
+    int expected_title_palette = 0;
     V1_TitleFrontendHandoffDecision firstTitle =
         V1_TitleFrontend_DecideTitleMenuHandoffStep(1u, 1);
     V1_TitleFrontendHandoffDecision lastTitle =
@@ -338,6 +341,13 @@ static void check_title_to_menu_boundary(void) {
 
     memset(&sourceStep, 0, sizeof(sourceStep));
     memset(&finalGuard, 0, sizeof(finalGuard));
+    memset(&media, 0, sizeof(media));
+    (void)V1_TitleFrontend_GetStepPalette(
+        V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
+        &expected_presents_palette);
+    (void)V1_TitleFrontend_GetStepPalette(
+        V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
+        &expected_title_palette);
 
     /* ReDMCSB TITLE.C F0437 lines 319-324 draw PRESENTS, lines 385-387
      * run the title zoom blits, lines 395-409 complete the post-zoom,
@@ -373,6 +383,41 @@ static void check_title_to_menu_boundary(void) {
              V1_TitleFrontend_GetSourceAnimationStep(titleTiming.sourceAnimationStepCount + 1u,
                                                      &sourceStep),
              0);
+    expect_i("DM1 full graphics media receipt builds",
+             dm1_v1_startup_full_graphics_media_receipt_pc34("dm1", &media),
+             1);
+    expect_i("DM1 full graphics media receipt handled",
+             media.handled,
+             1);
+    expect_i("DM1 full graphics media receipt plays swsh/title/entrance",
+             media.play_swsh && media.play_title && media.play_entrance,
+             1);
+    expect_u("DM1 full graphics media receipt keeps SWSH logo hold",
+             media.swsh_initial_logo_hold_ms,
+             SWSH_Compat_GetRuntimeInitialLogoHoldMs());
+    expect_u("DM1 full graphics media receipt keeps SWSH palette waits",
+             media.swsh_palette_wait_ms,
+             SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                 SWSH_COMPAT_SOURCE_PALETTE_WAIT_VBLANK_COUNT));
+    expect_u("DM1 full graphics media receipt keeps TITLE PRESENTS hold",
+             media.title_presents_hold_ms,
+             V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&titleTiming));
+    expect_u("DM1 full graphics media receipt keeps TITLE zoom delay",
+             media.title_zoom_frame_delay_ms,
+             V1_TitleFrontend_GetRuntimeFrameDelayMs(&titleTiming));
+    expect_u("DM1 full graphics media receipt menu boundary",
+             media.title_menu_boundary_frame,
+             V1_TITLE_DAT_FRAME_MAX + 1u);
+    expect_i("DM1 full graphics media receipt PRESENTS palette",
+             media.title_presents_palette,
+             expected_presents_palette);
+    expect_i("DM1 full graphics media receipt title palette",
+             media.title_zoom_palette,
+             expected_title_palette);
+    expect_i("DM1 full graphics media receipt blocks non-DM1",
+             dm1_v1_startup_full_graphics_media_receipt_pc34("csb", &media) &&
+                 media.handled == 0,
+             1);
 
     expect_u("TITLE first frame ordinal", firstTitle.title.renderFrameOrdinal, 1u);
     expect_u("TITLE first surface is title",
