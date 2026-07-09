@@ -1378,6 +1378,8 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootRuntimeStartupSnapshot snapshot;
     Theron_V1_BootStartupViewModel view_model;
     Theron_V1_BootStartupViewModel direct_view_model;
+    Theron_V1_BootStartupViewModel media_view_model;
+    Theron_StartupMediaStateReceipt media_receipt;
     char exit_receipt[128];
     int order[THERON_STARTUP_MAX_COMPANIONS] = {0, 1, 2};
 
@@ -1452,6 +1454,27 @@ static void test_startup_session_facts_wrappers(void) {
     snapshot.selected_mirror_order = order;
     snapshot.selected_mirror_order_count =
         THERON_STARTUP_MAX_COMPANIONS;
+    theron_v1_startup_media_state_receipt_init(&media_receipt);
+    media_receipt.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(media_receipt.track02_md5,
+             sizeof(media_receipt.track02_md5),
+             "%s",
+             THERON_TRACK02_MD5_US_BIN);
+    media_receipt.track02_size = 123456u;
+    media_receipt.startup_media_ready = 1;
+    media_receipt.startup_roster_name_status = THERON_TRACK02_SIGNAL_OK;
+    media_receipt.startup_roster_name_count = 8;
+    snprintf(media_receipt.startup_roster_names[0],
+             sizeof(media_receipt.startup_roster_names[0]),
+             "THERON");
+    snprintf(media_receipt.startup_roster_titles[0],
+             sizeof(media_receipt.startup_roster_titles[0]),
+             "SAVED");
+    media_receipt.startup_text_prompt_status = THERON_TRACK02_SIGNAL_OK;
+    media_receipt.startup_text_prompt_count = 1;
+    snprintf(media_receipt.startup_text_prompt,
+             sizeof(media_receipt.startup_text_prompt),
+             "GO AWAY AND RESURRECT THERON");
     expect_true(theron_v1_boot_startup_view_model_from_snapshot(
                     &snapshot,
                     &view_model) &&
@@ -1504,6 +1527,46 @@ static void test_startup_session_facts_wrappers(void) {
                         THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM &&
                     direct_view_model.runtime_champion_count == 3,
                 "boot runtime-state view model wrapper carries menu save and route receipts");
+    expect_true(theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
+                    &media_view_model,
+                    &media_receipt,
+                    THERON_STARTUP_PHASE_STAGE_SELECT,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    1,
+                    1,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    "SELECT",
+                    NULL,
+                    NULL,
+                    0,
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS) &&
+                    media_view_model.startup_media_state_valid &&
+                    media_view_model.startup_media_state_receipt
+                            .startup_media_ready == 1 &&
+                    media_view_model.startup_media_state_receipt
+                            .track02_variant ==
+                        THERON_TRACK02_VARIANT_US_BIN &&
+                    media_view_model.startup_media_state_receipt
+                            .startup_roster_name_count == 8 &&
+                    strcmp(media_view_model.startup_media_state_receipt
+                               .startup_roster_names[0],
+                           "THERON") == 0 &&
+                    strstr(media_view_model.startup_media_state_receipt
+                               .startup_text_prompt,
+                           "RESURRECT THERON") != NULL &&
+                    media_view_model.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM,
+                "boot runtime-state view model carries Track02 title/menu media receipt");
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;

@@ -1235,6 +1235,17 @@ int theron_v1_boot_startup_view_model_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     Theron_V1_BootStartupViewModel *out_view_model)
 {
+    return theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+        snapshot,
+        NULL,
+        out_view_model);
+}
+
+int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_V1_BootStartupViewModel *out_view_model)
+{
     Theron_StartupSessionFacts session;
 
     if (!out_view_model) {
@@ -1297,11 +1308,65 @@ int theron_v1_boot_startup_view_model_from_snapshot(
                 THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM;
         }
     }
+    if (startup_media_receipt) {
+        out_view_model->startup_media_state_valid = 1;
+        out_view_model->startup_media_state_receipt =
+            *startup_media_receipt;
+    }
     return 1;
 }
 
 int theron_v1_boot_startup_view_model_from_runtime_state(
     Theron_V1_BootStartupViewModel *out_view_model,
+    int startup_phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int startup_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count)
+{
+    return theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
+        out_view_model,
+        NULL,
+        startup_phase,
+        selected_dungeon,
+        boot_profile,
+        world,
+        assets,
+        startup_cursor,
+        continue_focus,
+        resume_claim,
+        tqsv_slot,
+        srm_slot,
+        srm_import_status,
+        srm_root,
+        startup_text_prompt,
+        startup_roster_names,
+        startup_roster_titles,
+        startup_roster_name_count,
+        selected_mirrors_mask,
+        companion_count,
+        selected_mirror_order,
+        selected_mirror_order_count);
+}
+
+int theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
+    Theron_V1_BootStartupViewModel *out_view_model,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
     int startup_phase,
     int selected_dungeon,
     const void *boot_profile,
@@ -1346,8 +1411,10 @@ int theron_v1_boot_startup_view_model_from_runtime_state(
     snapshot.companion_count = companion_count;
     snapshot.selected_mirror_order = selected_mirror_order;
     snapshot.selected_mirror_order_count = selected_mirror_order_count;
-    return theron_v1_boot_startup_view_model_from_snapshot(&snapshot,
-                                                           out_view_model);
+    return theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+        &snapshot,
+        startup_media_receipt,
+        out_view_model);
 }
 
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
