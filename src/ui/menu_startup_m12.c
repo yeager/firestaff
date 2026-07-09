@@ -6854,6 +6854,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         &facts, &ownership);
 
     receipt->dm1HoCRealAssetCaptureReady = ownership.real_asset_capture;
+    receipt->dm1HoCMacWindowCaptureReady = ownership.mac_window_capture;
     receipt->dm1HoCReleaseAppCaptureReady = ownership.release_app_capture;
     receipt->dm1HoCHostCaptureRouteReady =
         ownership.host_capture_route_matches;
@@ -6887,6 +6888,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         receipt->dm1HoCLowerLevelHelpersReady &&
         receipt->dm1HoCHostDrawRejectsBackingFallbackReady &&
         ownership.real_asset_capture &&
+        receipt->dm1HoCMacWindowCaptureReady &&
         ownership.release_app_capture &&
         ownership.host_capture_route_matches &&
         receipt->dm1HoCHoCAssetCaptureReady &&

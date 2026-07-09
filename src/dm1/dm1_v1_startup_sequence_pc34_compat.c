@@ -1970,14 +1970,17 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.consume_dm1_receipts_only &&
         receipt.publish_packaged_full_graphics_proof &&
         receipt.real_asset_capture &&
+        receipt.mac_window_capture &&
         receipt.release_app_capture &&
         receipt.host_capture_route_matches &&
         receipt.hoc_asset_capture &&
+        receipt.host_window_capture &&
         receipt.draw_opened_entrance_frame &&
         receipt.render_hall_mirror_overlay &&
         receipt.suppress_host_fallback_visuals &&
         receipt.lower_level_renderer_helper_owned &&
         receipt.lower_level_audio_helper_owned &&
+        receipt.block_enter_until_champion_selected &&
         receipt.render_command_count == 3;
     *out_receipt = receipt;
     return 1;
