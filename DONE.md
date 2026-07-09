@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 M11 projectile creature apply ownership: M11 creature projectile hits now consume the same DM1 F0217/F0190 action apply and aftermath receipts as M10 instead of stitching local F0738 damage and impact-plan fields. Verification: `test_m11_creature_projectile_runtime_pc34_compat` (25/25), `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0266 projectile precheck aftermath ownership: moving-group projectile prechecks now return the DM1 precheck damage plan to M10 and consume a DM1 F0217 aftermath receipt for sharp thrown weapon keep decisions before live GROUP.Slot linking. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_creature_projectile_runtime_pc34_compat` (25/25), `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 projectile creature action aftermath ownership: M10 projectile group hits now consume a DM1 F0217 aftermath receipt for non-all-kill reaction scheduling and sharp thrown weapon keep decisions after the DM1 F0190 apply step. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
