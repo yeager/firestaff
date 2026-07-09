@@ -2199,6 +2199,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               receipt_title_plan.render_command_count == 2 &&
               receipt_title_plan.source_asset_id == 1,
           "boot startup capture receipt consumes real-asset title route");
+    CHECK(csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+              &capture_receipt,
+              &snapshot_render_plan) == 1 &&
+              snapshot_render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              snapshot_render_plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              snapshot_render_plan.asset_command_count == 1 &&
+              snapshot_render_plan.render_command_count == 2,
+          "boot startup capture receipt returns full title render plan");
     CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
               &runtime_view_receipt,
               snapshot.title_active,
@@ -2505,6 +2515,14 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_receipt.hud_menu_draw.draw_utility_panel &&
               capture_receipt.hud_menu_draw.utility_render_plan_valid,
           "boot startup capture receipt packages utility HUD/menu draw");
+    CHECK(csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+              &capture_receipt,
+              &snapshot_render_plan) == 1 &&
+              snapshot_render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+              snapshot_render_plan.waiting_for_input &&
+              snapshot_render_plan.menu_option_count == 4,
+          "boot startup capture receipt returns full utility base render plan");
     memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
     hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
     CHECK(csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
@@ -2733,6 +2751,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_receipt.real_asset_receipt_valid &&
               capture_receipt.real_asset_receipt.matched,
           "boot startup capture receipt packages closed-door HUD/menu draw");
+    CHECK(csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+              &capture_receipt,
+              &snapshot_render_plan) == 1 &&
+              snapshot_render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+              snapshot_render_plan.waiting_for_input &&
+              snapshot_render_plan.menu_option_count == 4 &&
+              strstr(snapshot_render_plan.fallback_prompt_text,
+                     "PRESS ENTER") != NULL,
+          "boot startup capture receipt returns full closed-door render plan");
     CHECK(csb_v1_boot_startup_readiness_receipt_from_view_pc34(
               &view_receipt,
               &readiness_receipt) == 1 &&
@@ -2865,6 +2893,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !readiness_receipt.host_startup_input_ready &&
               !readiness_receipt.host_startup_hud_ready,
           "boot startup readiness receipt blocks host input/HUD during door opening");
+    CHECK(csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+              &snapshot,
+              &capture_receipt) == 1 &&
+              capture_receipt.valid &&
+              capture_receipt.render_view_valid &&
+              !capture_receipt.hud_menu_capture_ready &&
+              capture_receipt.host_hud_blocked &&
+              csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+                  &capture_receipt,
+                  &snapshot_render_plan) == 1 &&
+              snapshot_render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+              snapshot_render_plan.opening_step == 3,
+          "boot startup capture receipt returns full door-opening render plan");
     snapshot.opening_active = 0;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 0;

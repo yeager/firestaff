@@ -2480,6 +2480,62 @@ int csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
         out_plan);
 }
 
+int csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!capture_receipt || !capture_receipt->valid ||
+        !capture_receipt->render_view_valid ||
+        !capture_receipt->render_view.render_plan_valid ||
+        !capture_receipt->real_asset_receipt_valid ||
+        !capture_receipt->real_asset_receipt.matched) {
+        return 0;
+    }
+
+    if (capture_receipt->title_capture_ready) {
+        return csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
+            capture_receipt,
+            out_plan);
+    }
+
+    if (capture_receipt->hud_menu_capture_ready &&
+        capture_receipt->hud_menu_draw_valid &&
+        capture_receipt->hud_menu_draw.startup_render_plan_valid) {
+        if (capture_receipt->hud_menu_kind ==
+            CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34) {
+            return csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
+                &capture_receipt->render_view,
+                out_plan);
+        }
+        *out_plan = capture_receipt->hud_menu_draw.startup_render_plan;
+        /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 keeps the utility
+         * overlay in the same full startup surface as the closed entrance.
+         * Return the CSB-built base render plan so M11 can draw full startup
+         * graphics before consuming the HUD/menu draw receipt. */
+        return 1;
+    }
+
+    if (!capture_receipt->host_hud_blocked &&
+        capture_receipt->render_view.boot_executor_route) {
+        *out_plan = capture_receipt->render_view.render_plan;
+        return 1;
+    }
+
+    if (capture_receipt->render_view.opening_door_route) {
+        *out_plan = capture_receipt->render_view.render_plan;
+        /* ReDMCSB ENTRANCE.C F0806 lines 857-883 moves from title/menu into
+         * the door-open startup animation before runtime handoff. Keep that
+         * full-start graphic path available through the aggregate receipt. */
+        return 1;
+    }
+
+    return 0;
+}
+
 int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
