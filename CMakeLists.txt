@@ -8075,6 +8075,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_boot_runtime_handoff
         tests/test_csb_v1_boot_runtime_handoff.c
         src/csb/csb_v1_boot.c
+        src/csb/csb_v1_startup_real_asset_receipt.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_startup_runtime_bridge_pc34_compat.c
         src/csb/csb_v1_startup_entrance_pointer_pc34_compat.c
