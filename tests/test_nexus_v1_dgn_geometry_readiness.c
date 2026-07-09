@@ -79,6 +79,7 @@ static void test_variable_grid_and_mesh_ready(void) {
     const int structure1b_rel = 0x1a90;
     const int geometry_bytes = 256;
     Nexus_V1_DgnGeometryInfo info;
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
     Nexus_V1_Level level;
     uint8_t *structure1;
 
@@ -128,12 +129,28 @@ static void test_variable_grid_and_mesh_ready(void) {
     CHECK(level.geometry_size ==
           ((int)sizeof(dgn) - level.geometry_offset),
           "legacy level.geometry_size remains full file tail");
+    CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0,
+          "DGN renderer handoff receipt builds for mesh-ready level");
+    CHECK(handoff.status == NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH,
+          "DGN renderer handoff marks ready mesh");
+    CHECK(handoff.can_render_dgn_mesh == 1 &&
+          handoff.blocks_real_dgn_mesh_render == 0 &&
+          handoff.fallback_visuals_permitted == 0,
+          "DGN renderer handoff routes real mesh without fallback visuals");
+    CHECK(handoff.descriptor_capacity == geometry_bytes / 4 &&
+          handoff.max_collision_ref == 5,
+          "DGN renderer handoff exposes descriptor budget and max ref");
+    CHECK(strcmp(nexus_v1_dgn_renderer_handoff_status_name(handoff.status),
+                 "ready-mesh") == 0,
+          "DGN renderer handoff has stable ready route name");
 }
 
 static void test_descriptor_budget_blocks_mesh_ready(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 21];
     const int structure1b_rel = 0x40;
     Nexus_V1_DgnGeometryInfo info;
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
+    Nexus_V1_Level level;
     uint8_t *structure1;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 20,
@@ -150,12 +167,23 @@ static void test_descriptor_budget_blocks_mesh_ready(void) {
           "small-geometry span size captured");
     CHECK(info.mesh_ready == 0,
           "descriptor budget overflow does not promote mesh readiness");
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 2) == 0,
+          "small-geometry DGN still loads as a level");
+    CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0,
+          "DGN renderer handoff receipt builds for budget-blocked level");
+    CHECK(handoff.status ==
+          NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_DESCRIPTOR_BUDGET,
+          "DGN renderer handoff blocks on descriptor budget");
+    CHECK(handoff.blocks_real_dgn_mesh_render == 1 &&
+          handoff.fallback_visuals_permitted == 0,
+          "DGN budget-blocked handoff forbids fallback visuals");
 }
 
 static void test_bounds_and_legacy_non_promotion(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 21];
     uint8_t legacy[64];
     Nexus_V1_DgnGeometryInfo info;
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
     Nexus_V1_Level level;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 20, 0x40, 16) == 0,
@@ -175,6 +203,14 @@ static void test_bounds_and_legacy_non_promotion(void) {
           "legacy fallback does not promote DMWeb geometry info");
     CHECK(level.geometry_info.mesh_ready == 0,
           "legacy fallback cannot be mesh-ready");
+    CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0,
+          "legacy level still emits renderer handoff receipt");
+    CHECK(handoff.status ==
+          NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK,
+          "legacy synthetic level blocks real DGN mesh handoff");
+    CHECK(handoff.blocks_real_dgn_mesh_render == 1 &&
+          handoff.fallback_visuals_permitted == 0,
+          "legacy handoff forbids fallback visuals for real DGN route");
 }
 
 static void test_determinism(void) {

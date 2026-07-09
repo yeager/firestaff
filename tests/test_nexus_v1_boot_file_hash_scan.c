@@ -101,6 +101,7 @@ int main(void) {
     Nexus_V1_Diagnostic diags[4];
     Nexus_V1_BpkRuntimeDecodeReceipt receipt;
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
+    Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     uint8_t* data;
     int size = 0;
     int menu_bpk_copied = 0;
@@ -215,6 +216,23 @@ int main(void) {
                   "Nexus level loader accepts renamed LEV00.DGN by hash");
         check_int(strstr(game.level_path, "renamed-level-zero.payload") != NULL,
                   "Nexus level loader stores hash-resolved renamed path");
+        memset(&engine, 0, sizeof(engine));
+        check_int(nexus_v1_init(&engine, root) == 0,
+                  "Nexus init accepts renamed LEV00.DGN for runtime DGN handoff");
+        check_int(nexus_v1_load_level(&engine, 0) == 0,
+                  "Nexus runtime loads renamed LEV00.DGN by hash");
+        memset(&dgn_handoff, 0, sizeof(dgn_handoff));
+        check_int(nexus_v1_current_level_dgn_renderer_handoff_receipt(
+                      &engine,
+                      &dgn_handoff) == 0,
+                  "Nexus engine emits current-level DGN renderer handoff");
+        check_int(dgn_handoff.dmweb_container == 1 &&
+                      dgn_handoff.width == 64 &&
+                      dgn_handoff.height == 64,
+                  "Nexus DGN handoff exposes real 64x64 DMWeb route");
+        check_int(dgn_handoff.fallback_visuals_permitted == 0,
+                  "Nexus DGN handoff forbids fallback visuals");
+        nexus_v1_shutdown(&engine);
 
         check_int(FSP_JoinPath(profile_level_root, sizeof(profile_level_root), root, "profile-level-root") &&
                   FSP_JoinPath(profile_level_nexus_dir, sizeof(profile_level_nexus_dir), profile_level_root, "nexus") &&
