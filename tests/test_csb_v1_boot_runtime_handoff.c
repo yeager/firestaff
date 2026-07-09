@@ -2634,14 +2634,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "boot startup host-view receipt consumes title render-draw capture proof");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
               &host_view_receipt,
-              &capture_render_executor) == 1 &&
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.render_executed &&
               capture_render_probe.clear_black_count == 1 &&
               capture_render_probe.draw_title_count == 1 &&
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34,
-          "boot startup host-view receipt executes title render plan directly");
+          "boot startup host-view draw receipt executes title render");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
@@ -3100,14 +3102,17 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "boot startup host-view receipt packages utility HUD render-draw receipt");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
               &host_view_receipt,
-              &capture_render_executor) == 1 &&
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.render_executed &&
+              host_view_draw_receipt.hud_menu_executed == 1 &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_utility_panel_count == 1 &&
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
-          "boot startup host-view receipt executes utility render plan directly");
+          "boot startup host-view draw receipt executes utility render");
     memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
     hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
     CHECK(csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
@@ -3602,14 +3607,17 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "boot startup host-view receipt consumes closed-door HUD/menu proof");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
               &host_view_receipt,
-              &capture_render_executor) == 1 &&
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.render_executed &&
+              host_view_draw_receipt.hud_menu_executed == 1 &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_closed_doors_count == 1 &&
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
-          "boot startup host-view receipt executes closed-door render plan directly");
+          "boot startup host-view draw receipt executes closed-door render");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
@@ -3630,14 +3638,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     capture_render_probe.draw_full_surface_result = 0;
-    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
               &host_view_receipt,
-              &capture_render_executor) == 1 &&
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.valid &&
               capture_render_probe.draw_full_surface_count == 1 &&
-              capture_render_probe.draw_closed_doors_count == 0 &&
+              capture_render_probe.draw_closed_doors_count == 1 &&
               capture_render_probe.draw_door_fallback_count == 0 &&
               capture_render_probe.draw_fallback_text_count == 0,
-          "boot startup closed-door capture plan refuses fallback when surface assets fail");
+          "boot startup closed-door host-view receipt refuses fallback when surface assets fail");
     CHECK(host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.render_plan_valid &&
               host_view_receipt.render_draw.render_plan.surface ==
@@ -3760,19 +3770,23 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "boot startup host-view receipt packages door-opening render plan");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
               &host_view_receipt,
-              &capture_render_executor) == 1 &&
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.render_executed &&
               capture_render_probe.draw_opening_frame_count == 1 &&
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
-          "boot startup host-view receipt executes door-opening render plan directly");
+          "boot startup host-view draw receipt executes door-opening render");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     capture_render_probe.draw_full_surface_result = 0;
-    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
               &host_view_receipt,
-              &capture_render_executor) == 1 &&
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.render_executed &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_opening_frame_count == 0 &&
               capture_render_probe.draw_closed_doors_count == 0 &&
@@ -3860,9 +3874,11 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     capture_render_probe.draw_full_surface_result = 0;
-    CHECK(csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
               &host_view_receipt,
-              &capture_render_executor) == 1 &&
+              &capture_render_executor,
+              &host_view_draw_receipt) == 1 &&
+              host_view_draw_receipt.render_executed &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_fallback_text_count == 0,
           "boot startup credits capture plan refuses text fallback when surface assets fail");

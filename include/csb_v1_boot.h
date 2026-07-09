@@ -1046,9 +1046,6 @@ int csb_v1_boot_startup_host_input_dispatch_pointer_from_snapshot_pc34(
     int y,
     unsigned int button_mask,
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt);
-int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
-    const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view,
-    const CSB_V1_StartupRenderExecutor_PC34 *executor);
 int csb_v1_boot_startup_execute_host_view_receipt_pc34(
     const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view,
     const CSB_V1_StartupRenderExecutor_PC34 *executor,
