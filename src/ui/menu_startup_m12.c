@@ -6642,7 +6642,7 @@ static const M12_FullStartManifest kM12FullStartManifests[] = {
      "TITLE MENU READY",
      "TITLE, WARNING, SAVE, CHAMPIONS",
      "NEXUS TITLE MENU",
-     "NEXUS FULL START CONSUMER RECEIPT",
+     "NEXUS HOST-CALLER/FULL-START PACKAGE RECEIPTS",
      "NEXUS TIMING CAPTURE PROOF",
      4},
     {"theron",
