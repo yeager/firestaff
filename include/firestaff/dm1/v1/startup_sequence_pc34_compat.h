@@ -304,6 +304,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 {
     int captured_after_first_frame_render;
     int captured_from_real_assets;
     int captured_from_mac_window;
+    int observed_c026_portrait_asset;
+    int observed_c346_mirror_backing_asset;
+    int observed_host_window_present;
     int captured_map_index;
     int captured_map_width;
     int captured_map_height;
@@ -328,6 +331,10 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int host_capture_route_matches;
+    int hoc_asset_capture;
+    int host_window_capture;
+    int redmcsb_c026_asset_present;
+    int redmcsb_c346_asset_present;
     int geometry_matches;
     int entrance_frame_matches;
     int hall_overlay_matches;
@@ -350,6 +357,10 @@ typedef struct DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int host_capture_route_matches;
+    int hoc_asset_capture;
+    int host_window_capture;
+    int redmcsb_c026_asset_present;
+    int redmcsb_c346_asset_present;
     int apply_before_hoc_input;
     int apply_opened_entrance_frame;
     int apply_clear_champion_panel;
@@ -412,6 +423,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int host_capture_route_matches;
+    int hoc_asset_capture;
+    int host_window_capture;
     int execute_before_hoc_input;
     int draw_opened_entrance_frame;
     int clear_champion_panel;
@@ -448,6 +461,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int captured_after_first_frame_render;
     int captured_from_real_assets;
     int captured_from_mac_window;
+    int observed_c026_portrait_asset;
+    int observed_c346_mirror_backing_asset;
+    int observed_host_window_present;
     int observed_false_floor_item_payload_count;
     int observed_projectile_payload_count;
     int observed_spell_effect_payload_count;

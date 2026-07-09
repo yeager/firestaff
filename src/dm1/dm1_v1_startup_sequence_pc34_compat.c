@@ -1372,6 +1372,16 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
     receipt.consumed_capture_facts = 1;
     receipt.real_asset_capture = facts->captured_from_real_assets ? 1 : 0;
     receipt.mac_window_capture = facts->captured_from_mac_window ? 1 : 0;
+    receipt.redmcsb_c026_asset_present =
+        facts->observed_c026_portrait_asset ? 1 : 0;
+    receipt.redmcsb_c346_asset_present =
+        facts->observed_c346_mirror_backing_asset ? 1 : 0;
+    receipt.hoc_asset_capture =
+        receipt.real_asset_capture &&
+        receipt.redmcsb_c026_asset_present &&
+        receipt.redmcsb_c346_asset_present;
+    receipt.host_window_capture =
+        receipt.mac_window_capture && facts->observed_host_window_present;
     receipt.capture_phase = artifact->capture_phase;
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -1400,7 +1410,7 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         facts->captured_hoc_render_command_count ==
         artifact->expected_hoc_render_command_count;
     receipt.host_capture_route_matches =
-        receipt.real_asset_capture && receipt.mac_window_capture;
+        receipt.hoc_asset_capture && receipt.host_window_capture;
     receipt.stale_title_absent =
         artifact->title_surface_forbidden && !facts->saw_title_surface;
     receipt.stale_door_absent =
@@ -1424,6 +1434,8 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.entrance_frame_matches &&
         receipt.hall_overlay_matches &&
         receipt.command_count_matches &&
+        receipt.hoc_asset_capture &&
+        receipt.host_window_capture &&
         receipt.stale_title_absent &&
         receipt.stale_door_absent &&
         receipt.host_fallback_absent &&
@@ -1455,6 +1467,10 @@ int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
     receipt.real_asset_capture = proof->real_asset_capture;
     receipt.mac_window_capture = proof->mac_window_capture;
     receipt.host_capture_route_matches = proof->host_capture_route_matches;
+    receipt.hoc_asset_capture = proof->hoc_asset_capture;
+    receipt.host_window_capture = proof->host_window_capture;
+    receipt.redmcsb_c026_asset_present = proof->redmcsb_c026_asset_present;
+    receipt.redmcsb_c346_asset_present = proof->redmcsb_c346_asset_present;
     receipt.capture_phase = artifact->capture_phase;
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -1596,6 +1612,8 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.real_asset_capture = apply->real_asset_capture;
     receipt.mac_window_capture = apply->mac_window_capture;
     receipt.host_capture_route_matches = apply->host_capture_route_matches;
+    receipt.hoc_asset_capture = apply->hoc_asset_capture;
+    receipt.host_window_capture = apply->host_window_capture;
     receipt.capture_phase = apply->capture_phase;
     receipt.source_evidence =
         "ReDMCSB ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -1623,6 +1641,8 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.real_asset_capture = apply->real_asset_capture;
     receipt.mac_window_capture = apply->mac_window_capture;
     receipt.host_capture_route_matches = apply->host_capture_route_matches;
+    receipt.hoc_asset_capture = apply->hoc_asset_capture;
+    receipt.host_window_capture = apply->host_window_capture;
     receipt.execute_before_hoc_input = apply->apply_before_hoc_input;
     receipt.draw_opened_entrance_frame = apply->apply_opened_entrance_frame;
     receipt.clear_champion_panel = apply->apply_clear_champion_panel;
@@ -1642,10 +1662,12 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.publish_packaged_full_graphics_proof =
         apply->publish_packaged_full_graphics_proof;
     receipt.redmcsb_c026_portrait_overlay_ready =
-        suppression->champion_mirror_overlay_present;
+        suppression->champion_mirror_overlay_present &&
+        apply->redmcsb_c026_asset_present;
     receipt.redmcsb_c346_mirror_backing_ready =
         apply->apply_hall_mirror_overlay &&
-        apply->hall_overlay_kind == DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34;
+        apply->hall_overlay_kind == DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+        apply->redmcsb_c346_asset_present;
     receipt.redmcsb_f0115_thing_layer_suppression_ready =
         suppression->false_item_payloads_absent &&
         suppression->projectile_payloads_absent &&
@@ -1734,6 +1756,12 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
         facts->captured_from_real_assets;
     capture_facts.captured_from_mac_window =
         facts->captured_from_mac_window;
+    capture_facts.observed_c026_portrait_asset =
+        facts->observed_c026_portrait_asset;
+    capture_facts.observed_c346_mirror_backing_asset =
+        facts->observed_c346_mirror_backing_asset;
+    capture_facts.observed_host_window_present =
+        facts->observed_host_window_present;
     capture_facts.captured_map_index = artifact.expected_map_index;
     capture_facts.captured_map_width = artifact.expected_map_width;
     capture_facts.captured_map_height = artifact.expected_map_height;
@@ -1803,7 +1831,7 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
     if (out_consumer) {
         *out_consumer = consumer;
     }
-    return apply.ready && consumer.ready;
+    return apply.handled && consumer.handled;
 }
 
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
