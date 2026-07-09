@@ -3027,9 +3027,22 @@ static int m11_csb_boot_startup_input_from_readiness(
          * blocked until ENTRANCE.C F0441/F0806 lines 850-883 exposes the
          * closed-door/menu loop. M11 consumes this CSB readiness gate instead
          * of inferring input state from startup_entrance_active. */
-        return readiness.startup_active && readiness.input_ready ? 1 : 0;
+        return readiness.host_startup_input_ready ? 1 : 0;
     }
     return state->csbState.startup_entrance_active ? 1 : 0;
+}
+
+static int m11_csb_boot_host_input_blocked_from_readiness(
+    const M11_GameViewState *state)
+{
+    CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return 0;
+    }
+    if (m11_csb_boot_runtime_startup_readiness_receipt(state, &readiness)) {
+        return readiness.host_input_blocked ? 1 : 0;
+    }
+    return 0;
 }
 
 static int m11_csb_boot_runtime_startup_idle(
@@ -13852,6 +13865,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         m11_csb_boot_startup_input_from_readiness(state)) {
         return m11_csb_startup_handle_keyboard(state, input);
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        m11_csb_boot_host_input_blocked_from_readiness(state)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
 
     if (m11_source_is_csb(state)) {
         M11_GameInputResult csbResult = m11_csb_handle_source_keyboard(state, input);
@@ -14890,6 +14907,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                               x,
                                               y,
                                               (unsigned int)buttonMask);
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        m11_csb_boot_host_input_blocked_from_readiness(state) &&
+        (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
+                       ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
+        return M11_GAME_INPUT_IGNORED;
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
