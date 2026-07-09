@@ -2058,12 +2058,23 @@ int main(void)
                        "Nexus launcher asset receipt exposes level-0 audio handoff");
                 expect(runtime_receipt.startup_assets.main_menu_route_ready == 1,
                        "Nexus launcher asset receipt marks main menu route ready");
+                expect(runtime_receipt.startup_assets.title_route_ready == 1,
+                       "Nexus launcher asset gate allows title route with real startup surfaces");
                 if (runtime_receipt.startup_assets.menu_bpk_upload_receipt_valid) {
                     expect(runtime_receipt.startup_assets.menu_bpk_upload_route ==
                                NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&
                                runtime_receipt.startup_assets.menu_bpk_blocked_prs3_uploads > 0 &&
                                runtime_receipt.startup_assets.menu_bpk_blocks_real_menu_surface_render == 1,
                            "Nexus launcher asset receipt exposes MENU.BPK PRS3 blocker");
+                    expect(runtime_receipt.startup_assets.real_menu_surface_route_ready == 0 &&
+                               runtime_receipt.startup_assets.real_menu_surface_route_blocked == 1 &&
+                               runtime_receipt.startup_assets.save_menu_route_ready == 0 &&
+                               runtime_receipt.startup_assets.champion_menu_route_ready == 0 &&
+                               strcmp(runtime_receipt.startup_assets.real_menu_surface_blocker,
+                                      "menu-bpk-prs3") == 0 &&
+                               strcmp(runtime_receipt.startup_assets.startup_menu_asset_route,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus launcher asset gate blocks save/champion menus on PRS3");
                 }
                 nexus_title_free(&title_screen);
                 nexus_v1_launcher_shutdown();
