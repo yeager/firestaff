@@ -2589,27 +2589,6 @@ int csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
     return 0;
 }
 
-int csb_v1_boot_startup_execute_capture_render_plan_pc34(
-    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
-    const CSB_V1_StartupRenderExecutor_PC34 *executor)
-{
-    CSB_V1_StartupRenderPlan_PC34 plan;
-
-    if (!executor) {
-        return 0;
-    }
-    if (!csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
-            capture_receipt,
-            &plan)) {
-        return 0;
-    }
-    /* ReDMCSB TITLE.C F0437 lines 424-463 and ENTRANCE.C F0806 lines
-     * 857-883 own the visible post-FTL title/menu/door startup sequence.
-     * M11 can consume this single CSB receipt executor instead of selecting
-     * title, utility, closed-door, or opening render paths from host state. */
-    return csb_v1_boot_startup_execute_render_plan_pc34(&plan, executor);
-}
-
 int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
     const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view,
     const CSB_V1_StartupRenderExecutor_PC34 *executor)

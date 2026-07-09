@@ -2392,16 +2392,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               packaged_proof_from_snapshot.real_asset_receipt_hash ==
                   packaged_proof.real_asset_receipt_hash,
           "boot startup packaged proof snapshot wrapper is deterministic");
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_capture_render_plan_pc34(
-              &capture_receipt,
-              &capture_render_executor) == 1 &&
-              capture_render_probe.clear_black_count == 1 &&
-              capture_render_probe.draw_title_count == 1 &&
-              capture_render_probe.last_surface ==
-                  CSB_V1_STARTUP_RENDER_TITLE_PC34,
-          "boot startup capture receipt executes full title render plan");
     CHECK(packaged_title_ok &&
               strstr(packaged_proof.source_evidence, "TITLE.C") != NULL,
           "boot startup packaged capture proof binds title and real assets");
@@ -2789,16 +2779,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               snapshot_render_plan.waiting_for_input &&
               snapshot_render_plan.menu_option_count == 4,
           "boot startup capture receipt returns full utility base render plan");
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_capture_render_plan_pc34(
-              &capture_receipt,
-              &capture_render_executor) == 1 &&
-              capture_render_probe.draw_full_surface_count == 1 &&
-              capture_render_probe.draw_utility_panel_count == 1 &&
-              capture_render_probe.last_surface ==
-                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
-          "boot startup capture receipt executes full utility render plan");
     CHECK(csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
               &snapshot,
               &host_view_receipt) == 1 &&
@@ -3157,16 +3137,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strstr(snapshot_render_plan.fallback_prompt_text,
                      "PRESS ENTER") != NULL,
           "boot startup capture receipt returns full closed-door render plan");
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_capture_render_plan_pc34(
-              &capture_receipt,
-              &capture_render_executor) == 1 &&
-              capture_render_probe.draw_full_surface_count == 1 &&
-              capture_render_probe.draw_closed_doors_count == 1 &&
-              capture_render_probe.last_surface ==
-                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
-          "boot startup capture receipt executes full closed-door render plan");
     CHECK(csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
               &snapshot,
               &host_view_receipt) == 1 &&
@@ -3388,15 +3358,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
               snapshot_render_plan.opening_step == 3,
           "boot startup capture receipt returns full door-opening render plan");
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_capture_render_plan_pc34(
-              &capture_receipt,
-              &capture_render_executor) == 1 &&
-              capture_render_probe.draw_opening_frame_count == 1 &&
-              capture_render_probe.last_surface ==
-                  CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
-          "boot startup capture receipt executes full door-opening render plan");
     CHECK(csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
               &capture_receipt,
               &host_view_receipt) == 1 &&
