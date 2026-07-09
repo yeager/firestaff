@@ -731,6 +731,8 @@ int dm1_v1_melee_runtime_result_plan_f0231_pc34(
     out->groupDamageGroupIndex = -1;
     out->groupDamageCreatureIndex = -1;
     out->groupDamageFallbackOutcome = COMBAT_OUTCOME_INVALID;
+    out->emitChampionIndex = -1;
+    out->emitGroupIndex = -1;
     if (!in) return 0;
 
     out->valid = 1;
@@ -757,6 +759,9 @@ int dm1_v1_melee_runtime_result_plan_f0231_pc34(
         out->groupDamageFallbackOutcome = in->combatOutcome;
     }
     out->shouldEmitDamageDealt = 1;
+    out->emitChampionIndex = in->championIndex;
+    out->emitGroupIndex = in->groupIndex;
+    out->emitDamageApplied = in->damageApplied;
     return 1;
 }
 
@@ -1574,6 +1579,7 @@ int dm1_v1_melee_resolve_runtime_f0231_pc34(
     }
 
     memset(&runtimeIn, 0, sizeof(runtimeIn));
+    runtimeIn.championIndex = in->championIndex;
     runtimeIn.combatOutcome = out->combatResult.outcome;
     runtimeIn.damageApplied = out->combatResult.damageApplied;
     runtimeIn.groupIndex = in->groupIndex;

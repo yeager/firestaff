@@ -6827,6 +6827,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
             DM1_MeleeF0231ResolveRuntimeInputPc34 resolveRuntimeIn;
             DM1_MeleeF0231ResolveRuntimePlanPc34 resolveRuntimePlan;
+            struct CombatResult_Compat groupDamageResult;
             int targetDirection = decodePlan.targetDirection;
             int targetResolved;
             int reachBlocked = 0;
@@ -6935,6 +6936,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         &weaponProfile) &&
                     (memset(&resolveRuntimeIn, 0, sizeof(resolveRuntimeIn)),
                      memset(&resolveRuntimePlan, 0, sizeof(resolveRuntimePlan)),
+                     resolveRuntimeIn.championIndex = (int)input->commandArg1,
                      resolveRuntimeIn.groupIndex = groupIndex,
                      resolveRuntimeIn.creatureIndex = creatureIndex,
                      resolveRuntimeIn.groupCount =
@@ -6980,9 +6982,16 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         &aftermathIn, &aftermathPlan);
                     if (resolveRuntimePlan.runtimeResultPlan
                             .shouldApplyGroupDamage) {
+                        memset(&groupDamageResult, 0, sizeof(groupDamageResult));
+                        groupDamageResult.outcome =
+                            resolveRuntimePlan.runtimeResultPlan
+                                .groupDamageFallbackOutcome;
+                        groupDamageResult.damageApplied =
+                            resolveRuntimePlan.runtimeResultPlan
+                                .groupDamageApplied;
                         memset(&damageApplyPlan, 0, sizeof(damageApplyPlan));
                         (void)dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
-                            &combatResult,
+                            &groupDamageResult,
                             &world->things->groups[
                                 resolveRuntimePlan.runtimeResultPlan
                                     .groupDamageGroupIndex],
@@ -7037,8 +7046,12 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     if (resolveRuntimePlan.runtimeResultPlan
                             .shouldEmitDamageDealt) {
                         emit(result, EMIT_DAMAGE_DEALT,
-                             input->commandArg1, groupIndex,
-                             combatResult.damageApplied,
+                             resolveRuntimePlan.runtimeResultPlan
+                                 .emitChampionIndex,
+                             resolveRuntimePlan.runtimeResultPlan
+                                 .emitGroupIndex,
+                             resolveRuntimePlan.runtimeResultPlan
+                                 .emitDamageApplied,
                              aftermathPlan.outcome);
                     }
                     return 1;

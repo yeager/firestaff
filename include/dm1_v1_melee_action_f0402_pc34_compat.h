@@ -337,6 +337,7 @@ typedef struct {
 } DM1_MeleeF0231DamageGatePlanPc34;
 
 typedef struct {
+    int championIndex;
     int combatOutcome;
     int damageApplied;
     int groupIndex;
@@ -355,6 +356,9 @@ typedef struct {
     int groupDamageCreatureIndex;
     int groupDamageApplied;
     int groupDamageFallbackOutcome;
+    int emitChampionIndex;
+    int emitGroupIndex;
+    int emitDamageApplied;
 } DM1_MeleeF0231RuntimeResultPlanPc34;
 
 typedef struct {
@@ -371,6 +375,7 @@ typedef struct {
 } DM1_MeleeF0231LuckWritebackPlanPc34;
 
 typedef struct {
+    int championIndex;
     int groupIndex;
     int creatureIndex;
     int groupCount;
