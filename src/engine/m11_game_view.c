@@ -28351,6 +28351,104 @@ int M11_GameView_ProbeDm1FrontChampionPortraitReceipt(
     return 1;
 }
 
+int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
+    int* outReady,
+    int* outConsumeDm1ReceiptsOnly,
+    int* outNoM11FallbackScan,
+    int* outDrawOpenedEntranceFrame,
+    int* outClearChampionPanel,
+    int* outRenderHallMirrorOverlay,
+    int* outDrawChampionMirrorWallOverlay,
+    int* outDrawRealFloorObject,
+    int* outSuppressMirrorFloorItemPayload,
+    int* outSuppressMirrorProjectilePayload,
+    int* outSuppressMirrorSpellEffectPayload,
+    int* outMapIndex,
+    int* outEntranceDoorFrameIndex,
+    int* outHallOverlayKind,
+    int* outRenderCommandCount) {
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34 firstFrame;
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 floorThing;
+    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 thingConsumer;
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
+    const DM1V1D1LD1RF0115LanePc34Data* lane;
+
+    if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
+        !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &outcome) ||
+        !dm1_v1_startup_hoc_first_frame_receipt_pc34(
+            "dm1", &postPlan, &outcome, &firstFrame)) {
+        return 0;
+    }
+    lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
+    if (!lane ||
+        !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 2, 2, &frontWall) ||
+        !DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&frontWall, &render) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+            &render, &boundary) ||
+        !dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+            lane, 5, 1, 1, 0, &floorThing) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+            &boundary, &floorThing, &thingConsumer) ||
+        !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+            &firstFrame, &thingConsumer, &consumer)) {
+        return 0;
+    }
+
+    if (outReady) *outReady = consumer.ready;
+    if (outConsumeDm1ReceiptsOnly) {
+        *outConsumeDm1ReceiptsOnly = consumer.consume_dm1_receipts_only;
+    }
+    if (outNoM11FallbackScan) {
+        *outNoM11FallbackScan = consumer.no_m11_fallback_scan;
+    }
+    if (outDrawOpenedEntranceFrame) {
+        *outDrawOpenedEntranceFrame = consumer.draw_opened_entrance_frame;
+    }
+    if (outClearChampionPanel) {
+        *outClearChampionPanel = consumer.clear_champion_panel;
+    }
+    if (outRenderHallMirrorOverlay) {
+        *outRenderHallMirrorOverlay = consumer.render_hall_mirror_overlay;
+    }
+    if (outDrawChampionMirrorWallOverlay) {
+        *outDrawChampionMirrorWallOverlay =
+            consumer.draw_champion_mirror_wall_overlay;
+    }
+    if (outDrawRealFloorObject) {
+        *outDrawRealFloorObject = consumer.draw_real_floor_object;
+    }
+    if (outSuppressMirrorFloorItemPayload) {
+        *outSuppressMirrorFloorItemPayload =
+            consumer.suppress_mirror_floor_item_payload;
+    }
+    if (outSuppressMirrorProjectilePayload) {
+        *outSuppressMirrorProjectilePayload =
+            consumer.suppress_mirror_projectile_payload;
+    }
+    if (outSuppressMirrorSpellEffectPayload) {
+        *outSuppressMirrorSpellEffectPayload =
+            consumer.suppress_mirror_spell_effect_payload;
+    }
+    if (outMapIndex) *outMapIndex = consumer.map_index;
+    if (outEntranceDoorFrameIndex) {
+        *outEntranceDoorFrameIndex = consumer.entrance_door_frame_index;
+    }
+    if (outHallOverlayKind) {
+        *outHallOverlayKind = consumer.hall_overlay_kind;
+    }
+    if (outRenderCommandCount) {
+        *outRenderCommandCount = consumer.render_command_count;
+    }
+    return 1;
+}
+
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,

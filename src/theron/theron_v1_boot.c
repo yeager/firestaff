@@ -3260,6 +3260,18 @@ int theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
         out_receipt->render_route_valid = 1;
     }
     out_receipt->graphics_route_valid = receipt->graphics_route_valid;
+    out_receipt->graphics_executor_consumed =
+        receipt->graphics_route_valid &&
+        (receipt->full_start_graphics_executed ||
+         receipt->full_start_graphics_blocked)
+            ? 1
+            : 0;
+    out_receipt->full_start_graphics_ready =
+        receipt->full_start_graphics_ready;
+    out_receipt->full_start_graphics_executed =
+        receipt->full_start_graphics_executed;
+    out_receipt->full_start_graphics_blocked =
+        receipt->full_start_graphics_blocked;
     out_receipt->bitmap_route_mask = receipt->bitmap_route_mask;
     out_receipt->bitmap_route_count = receipt->bitmap_route_count;
     out_receipt->title_bitmap_route_ready =
@@ -3320,6 +3332,49 @@ int theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_rec
     const int *selected_mirror_order,
     int selected_mirror_order_count)
 {
+    return theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt_and_executor(
+        out_receipt,
+        startup_media_receipt,
+        NULL,
+        startup_phase,
+        selected_dungeon,
+        boot_profile,
+        world,
+        assets,
+        startup_cursor,
+        continue_focus,
+        resume_claim,
+        tqsv_slot,
+        srm_slot,
+        srm_import_status,
+        srm_root,
+        selected_mirrors_mask,
+        companion_count,
+        selected_mirror_order,
+        selected_mirror_order_count);
+}
+
+int theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt_and_executor(
+    Theron_V1_BootStartupHostRenderReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    int startup_phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int startup_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count)
+{
     Theron_V1_BootStartupFullStartReceipt full_start;
 
     if (out_receipt) {
@@ -3328,7 +3383,7 @@ int theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_rec
     if (!theron_v1_boot_startup_full_start_receipt_from_runtime_state_with_media_receipt(
             &full_start,
             startup_media_receipt,
-            NULL,
+            executor,
             startup_phase,
             selected_dungeon,
             boot_profile,
