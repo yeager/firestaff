@@ -103,6 +103,9 @@ int main(void) {
                     "ready game launch gate should allow launch")) return 1;
         if (!expect(gate.rendererReady == 1 && gate.presentationReady == 1,
                     "ready game launch gate should expose renderer/presentation readiness")) return 1;
+        if (!expect(gate.fullStartGraphicsReady == 1 &&
+                    gate.startupContractReady == 1,
+                    "ready game launch gate should expose full-start contract readiness")) return 1;
         if (!expect(gate.boot.startupStepReadyCount == expected[i].stepCount,
                     "launch gate should carry boot receipt progress")) return 1;
         if (!expect(gate.blockedLabel &&
@@ -136,6 +139,9 @@ int main(void) {
                     "launch gate should find the first matched version by hash")) return 1;
         if (!expect(gate.canLaunch == 1 && gate.versionReady == 1,
                     "auto-version launch gate should allow verified data")) return 1;
+        if (!expect(gate.fullStartGraphicsReady == 1 &&
+                    gate.startupContractReady == 1,
+                    "auto-version launch gate should publish full-start contract readiness")) return 1;
         if (!expect(gate.boot.versionReady == 1 &&
                     gate.boot.fullStartGraphicsReady == 1 &&
                     gate.boot.startupContractReady == 1,

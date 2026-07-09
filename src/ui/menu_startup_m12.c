@@ -4856,9 +4856,26 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         } else {
                             state->gameOptions[gi].versionIndex =
                                 launchGate.autoSelectedVersionIndex;
-                            state->launchRequested = 1;
-                            state->quickResumeLaunchRequested = 0;
+                            if (launchGate.canLaunch) {
+                                state->launchRequested = 1;
+                                state->quickResumeLaunchRequested = 0;
+                            } else {
+                                state->launchRequested = 0;
+                                state->quickResumeLaunchRequested = 0;
+                                m12_enter_message_view(state);
+                                state->messageLine1 = launchGate.blockedLabel;
+                                state->messageLine2 = launchGate.blockedDetail;
+                                state->messageLine3 =
+                                    m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                            }
                         }
+                    } else if (hasLaunchGate && !launchGate.canLaunch) {
+                        state->launchRequested = 0;
+                        state->quickResumeLaunchRequested = 0;
+                        m12_enter_message_view(state);
+                        state->messageLine1 = launchGate.blockedLabel;
+                        state->messageLine2 = launchGate.blockedDetail;
+                        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else {
                         state->launchRequested = 1;
                         state->quickResumeLaunchRequested = 0;
@@ -6854,12 +6871,16 @@ int M12_StartupMenu_GetLaunchGate(
     }
     gate.dataReady = gate.boot.dataReady;
     gate.versionReady = gate.boot.versionReady;
+    gate.fullStartGraphicsReady = gate.boot.fullStartGraphicsReady;
+    gate.startupContractReady = gate.boot.startupContractReady;
     if (!gate.versionReady && gate.dataReady && entry->gameId) {
         gate.autoSelectedVersionIndex =
             m12_first_matched_version_index_for_game(state, entry->gameId);
         if (gate.autoSelectedVersionIndex >= 0) {
             gate.versionReady = 1;
             m12_boot_readiness_mark_version_ready(&gate.boot);
+            gate.fullStartGraphicsReady = gate.boot.fullStartGraphicsReady;
+            gate.startupContractReady = gate.boot.startupContractReady;
         }
     }
 
@@ -6878,6 +6899,11 @@ int M12_StartupMenu_GetLaunchGate(
     } else if (!gate.versionReady) {
         gate.blockedLabel = "SELECTED VERSION NOT FOUND";
         gate.blockedDetail = m12_selected_version_label(state, gameIndex, 0);
+    } else if (!gate.fullStartGraphicsReady ||
+               (gate.boot.startupContractExpected &&
+                !gate.startupContractReady)) {
+        gate.blockedLabel = "STARTUP PROOF MISSING";
+        gate.blockedDetail = gate.boot.startupContractLabel;
     } else {
         gate.canLaunch = 1;
         gate.blockedLabel = "READY TO LAUNCH";
