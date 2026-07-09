@@ -3093,6 +3093,12 @@ int csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
     out_decision->host_input_result = receipt->host_input_result;
     out_decision->status_scope = receipt->host_status_scope;
     out_decision->status = receipt->host_status;
+    if (!out_decision->status && receipt->kind ==
+                                      CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34) {
+        out_decision->status_scope = receipt->utility_receipt.util_receipt
+                                         .status_scope;
+        out_decision->status = receipt->utility_receipt.util_receipt.status;
+    }
     out_decision->pre_render_route = receipt->pre_input_route.route;
     if (receipt->post_input_render_view_valid) {
         out_decision->post_render_route =
