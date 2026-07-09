@@ -187,6 +187,38 @@ typedef enum {
     NEXUS_V1_BPK_EXTRACT_ERR_TRUNCATED = -6
 } Nexus_V1_BpkSurfaceExtractStatus;
 
+typedef enum {
+    NEXUS_V1_BPK_SURFACE_HANDOFF_INVALID = 0,
+    NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED = 1,
+    NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3 = 2,
+    NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED = 3
+} Nexus_V1_BpkSurfaceHandoffStatus;
+
+typedef struct {
+    uint32_t entry_index;
+    Nexus_V1_BpkSurfaceHandoffStatus status;
+    uint32_t payload_offset;
+    uint32_t payload_size;
+    int extractable;
+    Nexus_V1_BpkSurfaceEntry surface;
+} Nexus_V1_BpkRuntimeSurfaceHandoff;
+
+typedef struct {
+    uint32_t archive_entries;
+    uint32_t surface_entries;
+    uint32_t ready_stored_surfaces;
+    uint32_t blocked_prs3_surfaces;
+    uint32_t blocked_truncated_surfaces;
+    uint32_t trailer_skipped;
+    uint32_t unknown_skipped;
+    uint64_t expected_surface_bytes;
+    uint64_t extractable_surface_bytes;
+    uint32_t capacity;
+    uint32_t used;
+    int requires_prs3_decoder;
+    int truncated;
+} Nexus_V1_BpkRuntimeSurfaceHandoffSummary;
+
 /* Map a 20-byte prefix mode tag to a surface class. Returns
  * NEXUS_V1_BPK_SURFACE_UNKNOWN for any byte value that is not one of the
  * four observed pixel-mode tags (6/14/22/30) or the directory trailer
@@ -234,6 +266,16 @@ int nexus_v1_bpk_archive_extract_stored_surface(
     size_t *out_written);
 
 const char *nexus_v1_bpk_surface_extract_status_name(int status);
+
+int nexus_v1_bpk_archive_runtime_surface_handoff(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkRuntimeSurfaceHandoff *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkRuntimeSurfaceHandoffSummary *out_summary);
+
+const char *nexus_v1_bpk_surface_handoff_status_name(
+    Nexus_V1_BpkSurfaceHandoffStatus status);
 
 /*
  * Parse the DM Nexus MENU.BPK BPPK/BMPD directory shape.

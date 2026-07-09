@@ -441,6 +441,120 @@ static void test_extract_stored_surface_bytes(void) {
            "stored extraction rejects directory trailer entry");
 }
 
+static void test_runtime_surface_handoff_blocks_prs3(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkRuntimeSurfaceHandoff rows[4];
+    Nexus_V1_BpkRuntimeSurfaceHandoffSummary summary;
+    int rc;
+
+    make_synthetic_4entry_bpk(data, sizeof(data));
+    memset(rows, 0, sizeof(rows));
+    memset(&summary, 0, sizeof(summary));
+
+    rc = nexus_v1_bpk_archive_runtime_surface_handoff(
+        data, sizeof(data), rows, 4U, &summary);
+    expect(rc == 0, "runtime surface handoff returns 0 for PRS3 archive");
+    expect(summary.archive_entries == 4U,
+           "runtime surface handoff sees 4 archive entries");
+    expect(summary.surface_entries == 3U,
+           "runtime surface handoff sees 3 surface entries");
+    expect(summary.ready_stored_surfaces == 0U,
+           "runtime surface handoff has 0 ready stored surfaces");
+    expect(summary.blocked_prs3_surfaces == 3U,
+           "runtime surface handoff blocks 3 PRS3 surfaces");
+    expect(summary.requires_prs3_decoder == 1,
+           "runtime surface handoff requires PRS3 decoder");
+    expect(summary.extractable_surface_bytes == 0U,
+           "runtime surface handoff exposes no extractable PRS3 bytes");
+    expect(rows[0].status == NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3,
+           "first PRS3 surface row is blocked-prs3");
+    expect(strcmp(nexus_v1_bpk_surface_handoff_status_name(rows[0].status),
+                  "blocked-prs3") == 0,
+           "blocked PRS3 handoff status name is stable");
+    expect(rows[0].extractable == 0,
+           "blocked PRS3 row is not extractable");
+}
+
+static void test_runtime_surface_handoff_ready_stored(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkRuntimeSurfaceHandoff rows[4];
+    Nexus_V1_BpkRuntimeSurfaceHandoffSummary summary;
+    int rc;
+
+    make_synthetic_stored_bpk(data, sizeof(data));
+    memset(rows, 0, sizeof(rows));
+    memset(&summary, 0, sizeof(summary));
+
+    rc = nexus_v1_bpk_archive_runtime_surface_handoff(
+        data, sizeof(data), rows, 4U, &summary);
+    expect(rc == 0, "runtime surface handoff returns 0 for stored archive");
+    expect(summary.surface_entries == 3U,
+           "stored handoff sees 3 surface entries");
+    expect(summary.ready_stored_surfaces == 3U,
+           "stored handoff has 3 ready surfaces");
+    expect(summary.blocked_prs3_surfaces == 0U,
+           "stored handoff has 0 PRS3 blockers");
+    expect(summary.blocked_truncated_surfaces == 0U,
+           "stored handoff has 0 truncated blockers");
+    expect(summary.expected_surface_bytes == 98U,
+           "stored handoff expected surface bytes = 98");
+    expect(summary.extractable_surface_bytes == 98U,
+           "stored handoff extractable surface bytes = 98");
+    expect(summary.requires_prs3_decoder == 0,
+           "stored handoff does not require PRS3 decoder");
+    expect(rows[0].entry_index == 1U &&
+               rows[0].status ==
+                   NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED &&
+               rows[0].extractable == 1 &&
+               rows[0].payload_offset ==
+                   96U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES &&
+               rows[0].surface.layout.surface_bytes == 16U,
+           "stored handoff row 0 exposes extractable entry 1 payload");
+    expect(rows[1].entry_index == 2U &&
+               rows[1].surface.layout.surface_class ==
+                   NEXUS_V1_BPK_SURFACE_RGB565 &&
+               rows[1].payload_size >= 64U,
+           "stored handoff row 1 exposes RGB565 metadata");
+    expect(strcmp(nexus_v1_bpk_surface_handoff_status_name(rows[1].status),
+                  "ready-stored") == 0,
+           "ready stored handoff status name is stable");
+}
+
+static void test_runtime_surface_handoff_truncated_and_capacity(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkRuntimeSurfaceHandoff rows[1];
+    Nexus_V1_BpkRuntimeSurfaceHandoffSummary summary;
+    int rc;
+
+    make_synthetic_4entry_bpk(data, sizeof(data));
+    memset(data + 96U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 128U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 160U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(rows, 0, sizeof(rows));
+    memset(&summary, 0, sizeof(summary));
+
+    rc = nexus_v1_bpk_archive_runtime_surface_handoff(
+        data, sizeof(data), rows, 1U, &summary);
+    expect(rc == 0, "runtime surface handoff returns 0 for truncated archive");
+    expect(summary.surface_entries == 3U,
+           "truncated handoff still counts all 3 surface entries");
+    expect(summary.blocked_truncated_surfaces == 2U,
+           "truncated handoff blocks the two short stored surfaces");
+    expect(summary.ready_stored_surfaces == 1U,
+           "truncated handoff keeps the one complete stored surface ready");
+    expect(summary.extractable_surface_bytes == 18U,
+           "truncated handoff exposes only the complete 18-byte surface");
+    expect(summary.used == 3U,
+           "truncated handoff summary counts all rows despite capacity");
+    expect(summary.truncated == 1,
+           "truncated handoff marks row output capacity hit");
+    expect(rows[0].status == NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED,
+           "first truncated stored row is blocked-truncated");
+    expect(strcmp(nexus_v1_bpk_surface_handoff_status_name(rows[0].status),
+                  "blocked-truncated") == 0,
+           "blocked truncated handoff status name is stable");
+}
+
 /* ---- Synthetic BPX3 directory-trailer entry ---- */
 
 static void test_bpx3_trailer_entry(void) {
@@ -754,6 +868,9 @@ int main(void) {
     test_runtime_render_receipt_ready_for_stored_surfaces();
     test_runtime_render_receipt_blocks_truncated_stored_surfaces();
     test_extract_stored_surface_bytes();
+    test_runtime_surface_handoff_blocks_prs3();
+    test_runtime_surface_handoff_ready_stored();
+    test_runtime_surface_handoff_truncated_and_capacity();
     test_bpx3_trailer_entry();
     test_bpx3_trailer_rejections();
     test_bpx3_prs3_span_rejections();

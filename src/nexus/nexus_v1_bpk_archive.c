@@ -599,6 +599,135 @@ const char *nexus_v1_bpk_surface_extract_status_name(int status) {
     }
 }
 
+int nexus_v1_bpk_archive_runtime_surface_handoff(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkRuntimeSurfaceHandoff *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkRuntimeSurfaceHandoffSummary *out_summary) {
+    uint32_t count;
+    uint32_t used = 0U;
+    uint32_t surface_entries = 0U;
+    uint32_t ready_stored = 0U;
+    uint32_t blocked_prs3 = 0U;
+    uint32_t blocked_truncated = 0U;
+    uint32_t trailer_skipped = 0U;
+    uint32_t unknown_skipped = 0U;
+    uint64_t expected_surface_bytes = 0U;
+    uint64_t extractable_surface_bytes = 0U;
+    int truncated = 0;
+
+    if (!out_summary) return -1;
+    memset(out_summary, 0, sizeof(*out_summary));
+    out_summary->capacity = entry_capacity;
+    if (out_entries && entry_capacity > 0U) {
+        memset(out_entries, 0,
+               (size_t)entry_capacity * sizeof(out_entries[0]));
+    }
+
+    if (read_header(data, data_size, &count) != 0) return -1;
+
+    for (uint32_t i = 0; i < count; ++i) {
+        Nexus_V1_BpkEntry entry;
+        Nexus_V1_BpkEntryPrefix prefix;
+        Nexus_V1_BpkRuntimeSurfaceHandoff row;
+        uint32_t bpp;
+        uint64_t rowstride64;
+        uint64_t surface64;
+
+        if (nexus_v1_bpk_archive_get_entry(data, data_size, i,
+                                           &entry) != 0 ||
+            nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
+                                                  &prefix) != 0) {
+            return -1;
+        }
+        if (!prefix.prefix_complete) continue;
+        if (prefix.mode == NEXUS_V1_BPK_MODE_TRAILER) {
+            ++trailer_skipped;
+            continue;
+        }
+
+        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        if (bpp == 0U) {
+            ++unknown_skipped;
+            continue;
+        }
+
+        rowstride64 = (uint64_t)prefix.width * bpp;
+        surface64 = rowstride64 * (uint64_t)prefix.height;
+        if (rowstride64 > UINT32_MAX || surface64 > UINT32_MAX) {
+            return -1;
+        }
+
+        memset(&row, 0, sizeof(row));
+        row.entry_index = i;
+        row.payload_offset = entry.payload_offset;
+        row.payload_size = entry.payload_size;
+        row.surface.entry_index = i;
+        row.surface.mode = prefix.mode;
+        row.surface.width = prefix.width;
+        row.surface.height = prefix.height;
+        row.surface.pixel_count =
+            (uint32_t)prefix.width * (uint32_t)prefix.height;
+        row.surface.layout.bpp = bpp;
+        row.surface.layout.rowstride = (uint32_t)rowstride64;
+        row.surface.layout.surface_bytes = (uint32_t)surface64;
+        row.surface.layout.surface_class =
+            nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+
+        ++surface_entries;
+        expected_surface_bytes += surface64;
+
+        if (entry.has_prs3) {
+            row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
+            ++blocked_prs3;
+        } else if ((uint64_t)entry.payload_size < surface64) {
+            row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED;
+            ++blocked_truncated;
+        } else {
+            row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED;
+            row.extractable = 1;
+            ++ready_stored;
+            extractable_surface_bytes += surface64;
+        }
+
+        if (out_entries && used < entry_capacity) {
+            out_entries[used] = row;
+        } else if (out_entries && used >= entry_capacity) {
+            truncated = 1;
+        }
+        ++used;
+    }
+
+    out_summary->archive_entries = count;
+    out_summary->surface_entries = surface_entries;
+    out_summary->ready_stored_surfaces = ready_stored;
+    out_summary->blocked_prs3_surfaces = blocked_prs3;
+    out_summary->blocked_truncated_surfaces = blocked_truncated;
+    out_summary->trailer_skipped = trailer_skipped;
+    out_summary->unknown_skipped = unknown_skipped;
+    out_summary->expected_surface_bytes = expected_surface_bytes;
+    out_summary->extractable_surface_bytes = extractable_surface_bytes;
+    out_summary->used = used;
+    out_summary->requires_prs3_decoder = (blocked_prs3 > 0U) ? 1 : 0;
+    out_summary->truncated = truncated;
+    return 0;
+}
+
+const char *nexus_v1_bpk_surface_handoff_status_name(
+    Nexus_V1_BpkSurfaceHandoffStatus status) {
+    switch (status) {
+    case NEXUS_V1_BPK_SURFACE_HANDOFF_INVALID: return "invalid";
+    case NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED:
+        return "ready-stored";
+    case NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3:
+        return "blocked-prs3";
+    case NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED:
+        return "blocked-truncated";
+    default: return "unknown";
+    }
+}
+
 /* pass1084 — bounded PRS3 compression evidence walker. Surfaces per-entry
  * structural receipts for the (still unknown) PRS3 stream format so we can
  * narrow down the algorithm family in subsequent passes. The walker is
