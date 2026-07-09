@@ -197,6 +197,9 @@ int main(void)
                m12_package_receipt.gameover_capture_surface_ready == 1 &&
                m12_package_receipt.warning_capture_frame == 0 &&
                m12_package_receipt.title_capture_frame == 48 &&
+               m12_package_receipt.save_capture_frame == -1 &&
+               m12_package_receipt.champion_capture_frame == -1 &&
+               m12_package_receipt.dungeon_capture_frame == -1 &&
                m12_package_receipt.gameover_capture_frame == 0 &&
                strcmp(m12_package_receipt.card_title_label,
                       "DM Nexus") == 0 &&
@@ -210,6 +213,9 @@ int main(void)
                       "warning-background") == 0 &&
                m12_package_receipt.saturn_warning_frame == 0 &&
                m12_package_receipt.saturn_title_capture_frame == 48 &&
+               m12_package_receipt.saturn_save_capture_frame == -1 &&
+               m12_package_receipt.saturn_champion_capture_frame == -1 &&
+               m12_package_receipt.saturn_dungeon_capture_frame == -1 &&
                m12_package_receipt.saturn_title_ready_frame == 102 &&
                m12_package_receipt.saturn_gameover_capture_frame == 0 &&
                m12_package_receipt.saturn_timing_exact == 1 &&
@@ -1183,6 +1189,19 @@ int main(void)
                strcmp(full_start_package_receipt.startup_ui_blocker,
                       "none") == 0,
            "Nexus full-start package owns champion startup capture proof");
+    expect(nexus_v1_launcher_m12_startup_package_from_full_start_package(
+               &full_start_package_receipt,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 1 &&
+               m12_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+               m12_package_receipt.save_capture_frame == -1 &&
+               m12_package_receipt.champion_capture_frame == 102 &&
+               m12_package_receipt.dungeon_capture_frame == -1 &&
+               m12_package_receipt.saturn_save_capture_frame == -1 &&
+               m12_package_receipt.saturn_champion_capture_frame == 102 &&
+               m12_package_receipt.saturn_dungeon_capture_frame == -1,
+           "Nexus M12 startup package consumes CHAMPION capture receipt");
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_runtime_state(
                &synthetic_runtime_receipt,
@@ -1439,6 +1458,19 @@ int main(void)
                full_start_package_receipt.first_capture_draw_kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
            "Nexus full-start package owns save startup capture proof");
+    expect(nexus_v1_launcher_m12_startup_package_from_full_start_package(
+               &full_start_package_receipt,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 1 &&
+               m12_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+               m12_package_receipt.save_capture_frame == 102 &&
+               m12_package_receipt.champion_capture_frame == -1 &&
+               m12_package_receipt.dungeon_capture_frame == -1 &&
+               m12_package_receipt.saturn_save_capture_frame == 102 &&
+               m12_package_receipt.saturn_champion_capture_frame == -1 &&
+               m12_package_receipt.saturn_dungeon_capture_frame == -1,
+           "Nexus M12 startup package consumes SAVE capture receipt");
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
                &synthetic_runtime_receipt,
@@ -1605,9 +1637,15 @@ int main(void)
                m12_package_receipt.gameover_capture_surface_ready == 1 &&
                m12_package_receipt.warning_capture_frame == 0 &&
                m12_package_receipt.title_capture_frame == 48 &&
+               m12_package_receipt.save_capture_frame == -1 &&
+               m12_package_receipt.champion_capture_frame == -1 &&
+               m12_package_receipt.dungeon_capture_frame == -1 &&
                m12_package_receipt.gameover_capture_frame == 0 &&
                m12_package_receipt.saturn_warning_frame == 0 &&
                m12_package_receipt.saturn_title_capture_frame == 48 &&
+               m12_package_receipt.saturn_save_capture_frame == -1 &&
+               m12_package_receipt.saturn_champion_capture_frame == -1 &&
+               m12_package_receipt.saturn_dungeon_capture_frame == -1 &&
                m12_package_receipt.saturn_title_ready_frame == 102 &&
                m12_package_receipt.saturn_gameover_capture_frame == 0 &&
                m12_package_receipt.saturn_timing_exact == 1 &&
