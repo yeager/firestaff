@@ -2581,6 +2581,7 @@ int main(void) {
                 Theron_StartupAction forcefield_action;
                 Theron_StartupActionPlan forcefield_plan;
                 Theron_V1StartupRuntimeEntryResult load_result;
+                Theron_V1StartupRuntimeEntryApplyReceipt load_apply_receipt;
                 Theron_StartupHostReceipt load_host_receipt;
                 Theron_StartupStateReceipt load_state_receipt;
 
@@ -2592,6 +2593,40 @@ int main(void) {
                               &forcefield_action,
                               &forcefield_plan),
                           1);
+                theron_v1_world_init(&world);
+                load_receipt[0] = '\0';
+                check_int("runtime load direct fallback rc",
+                          theron_v1_startup_runtime_load_initial_level_with_receipts(
+                              &world,
+                              NULL,
+                              0u,
+                              NULL,
+                              THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                              &forcefield_plan,
+                              &load_result,
+                              &load_apply_receipt,
+                              &load_state_receipt,
+                              load_receipt,
+                              sizeof(load_receipt)),
+                          1);
+                check_int("runtime load direct fallback result route",
+                          load_result.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
+                check_int("runtime load direct fallback apply route",
+                          load_apply_receipt.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
+                check_int("runtime load direct fallback apply semantic",
+                          load_apply_receipt.track02_semantic_handoff,
+                          0);
+                check_int("runtime load direct fallback state route",
+                          load_state_receipt.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
+                check_contains("runtime load direct fallback inspect",
+                               load_apply_receipt.inspect_detail,
+                               "fallback room stage=2");
+                check_contains("runtime load direct fallback route text",
+                               load_apply_receipt.inspect_detail,
+                               "route=fallback-room");
                 theron_v1_world_init(&world);
                 load_receipt[0] = '\0';
                 check_int("runtime load host fallback rc",
@@ -2632,6 +2667,44 @@ int main(void) {
                 check_contains("runtime load host fallback inspect route",
                                load_host_receipt.inspect_detail,
                                "route=fallback-room");
+                theron_v1_world_init(&world);
+                load_receipt[0] = '\0';
+                check_int("runtime load direct verified Track02 blocked rc",
+                          theron_v1_startup_runtime_load_initial_level_with_receipts(
+                              &world,
+                              fake_verified_track02,
+                              sizeof(fake_verified_track02),
+                              THERON_TRACK02_MD5_US_BIN,
+                              THERON_DUNGEON_1_HALL_OF_RECORDS,
+                              &forcefield_plan,
+                              &load_result,
+                              &load_apply_receipt,
+                              &load_state_receipt,
+                              load_receipt,
+                              sizeof(load_receipt)),
+                          0);
+                check_int("runtime load direct verified Track02 result",
+                          load_result.result,
+                          THERON_STARTUP_ERR_LEVEL_LOAD);
+                check_int("runtime load direct verified Track02 route",
+                          load_apply_receipt.runtime_level_source,
+                          THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED);
+                check_int("runtime load direct verified Track02 blocked",
+                          load_apply_receipt.fallback_visuals_blocked,
+                          1);
+                check_contains("runtime load direct verified Track02 inspect",
+                               load_apply_receipt.inspect_detail,
+                               "fallback visuals blocked");
+                check_contains("runtime load direct verified Track02 detail",
+                               load_apply_receipt.inspect_detail,
+                               "Track 02 bank signal");
+                check_contains("runtime load direct verified Track02 route text",
+                               load_apply_receipt.inspect_detail,
+                               "route=track02-blocked");
+                check_int("runtime load direct verified Track02 no level",
+                          world.level_loaded[
+                              THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                          0);
                 theron_v1_world_init(&world);
                 load_receipt[0] = '\0';
                 check_int("runtime load host verified Track02 blocked rc",
