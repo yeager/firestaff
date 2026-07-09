@@ -135,7 +135,7 @@ static int route_icon_refresh_while_open(void)
 static int route_resurrect_gate_while_open(void)
 {
     Dm1V1MirrorClickClosedStatePc34Compat state;
-    Dm1V1MirrorCandidateCommandGateResultPc34Compat gate;
+    DM1_V1_MirrorCandidateCommandGateResultPc34Compat gate;
 
     DM1_V1_MirrorClickClosed_InitPc34Compat(&state);
     state.partyChampionCount = 2;
@@ -164,7 +164,7 @@ static int route_reincarnate_gate_while_open(void)
 static int route_no_finalize_after_close(void)
 {
     Dm1V1MirrorClickClosedStatePc34Compat resurrectState;
-    Dm1V1MirrorCandidateResurrectRearmResultPc34Compat resurrect;
+    DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat resurrect;
     Dm1V1MirrorCandidateReincarnateRearmStatePc34Compat reincarnateState;
     Dm1V1MirrorCandidateReincarnateRearmResultPc34Compat reincarnate;
 

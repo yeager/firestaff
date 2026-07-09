@@ -11,25 +11,25 @@ enum {
     THING_NONE_PC34_COMPAT = -1
 };
 
-static Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat
+static DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat
     gAfterC160;
-static Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat
+static DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat
     gAfterC161;
 
 static void copy_before_to_after(
-    Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state)
+    DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state)
 {
     memcpy(state->after, state->before, sizeof(state->after));
 }
 
 void DM1_V1_MirrorCandidateResurrectReincarnateSkills_InitPc34Compat(
-    Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state)
+    DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state)
 {
     int championIndex;
     int slotIndex;
     int skillIndex;
     int statisticIndex;
-    Dm1V1MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat *candidate;
+    DM1_V1_MirrorCandidateResurrectReincarnateSkillsChampionPc34Compat *candidate;
 
     if (!state) {
         return;
@@ -99,7 +99,7 @@ void DM1_V1_MirrorCandidateResurrectReincarnateSkills_InitPc34Compat(
 }
 
 static void apply_shared_c160_c161_tail(
-    Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state)
+    DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state)
 {
     int slotIndex;
 
@@ -152,7 +152,7 @@ static void apply_shared_c160_c161_tail(
 }
 
 static void drive_command(
-    Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state,
+    DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *state,
     int command)
 {
     int statisticIndex;
@@ -203,7 +203,7 @@ static void drive_command(
     state->after[1].maximumMana >>= 1;
 }
 
-const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
+const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
 DM1_V1_MirrorCandidateResurrectReincarnateSkills_DriveC160Pc34Compat(void)
 {
     drive_command(&gAfterC160,
@@ -211,7 +211,7 @@ DM1_V1_MirrorCandidateResurrectReincarnateSkills_DriveC160Pc34Compat(void)
     return &gAfterC160;
 }
 
-const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
+const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
 DM1_V1_MirrorCandidateResurrectReincarnateSkills_DriveC161Pc34Compat(void)
 {
     drive_command(&gAfterC161,
@@ -219,7 +219,7 @@ DM1_V1_MirrorCandidateResurrectReincarnateSkills_DriveC161Pc34Compat(void)
     return &gAfterC161;
 }
 
-const Dm1V1MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
+const DM1_V1_MirrorCandidateResurrectReincarnateSkillsStatePc34Compat *
 DM1_V1_MirrorCandidateResurrectReincarnateSkills_StateAfterPc34Compat(
     int command)
 {

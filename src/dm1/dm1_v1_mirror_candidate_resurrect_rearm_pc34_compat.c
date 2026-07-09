@@ -26,7 +26,7 @@ static int front_d1c_portrait_index(
 }
 
 static void resurrect_result_init(
-    Dm1V1MirrorCandidateResurrectRearmResultPc34Compat *result,
+    DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat *result,
     const Dm1V1MirrorClickClosedStatePc34Compat *state)
 {
     int candidateIndex;
@@ -64,7 +64,7 @@ static void resurrect_result_init(
 
 int DM1_V1_MirrorCandidateResurrectRearm_ProcessResurrectPc34Compat(
     Dm1V1MirrorClickClosedStatePc34Compat *state,
-    Dm1V1MirrorCandidateResurrectRearmResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat *outResult)
 {
     int candidateIndex;
 
@@ -127,7 +127,7 @@ int DM1_V1_MirrorCandidateResurrectRearm_ProcessStatusBoxClickPc34Compat(
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1MirrorCandidateStatusBoxResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateStatusBoxResultPc34Compat *outResult)
 {
     int changed;
 
@@ -165,7 +165,7 @@ int DM1_V1_MirrorCandidateResurrectRearm_ProcessStatusBoxClickPc34Compat(
 int DM1_V1_MirrorCandidateResurrectRearm_CanProcessCommandPc34Compat(
     const Dm1V1MirrorClickClosedStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateCommandGateResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateCommandGateResultPc34Compat *outResult)
 {
     if (outResult) {
         memset(outResult, 0, sizeof(*outResult));

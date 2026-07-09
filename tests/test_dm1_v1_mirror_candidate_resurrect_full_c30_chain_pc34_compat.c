@@ -77,7 +77,7 @@ static void check_contains(const char *haystack,
 
 static void check_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateResurrectFullC30EvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateResurrectFullC30EvidencePc34Compat *e =
         dm1_v1_mirror_candidate_resurrect_full_c30_evidence_pc34_compat();
     const char *source =
         dm1_v1_mirror_candidate_resurrect_full_c30_source_evidence_pc34_compat();
@@ -141,8 +141,8 @@ static void check_source_lock_metadata(void)
 
 static void check_full_c30_rejects_cleanly(void)
 {
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat state;
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat result;
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat state;
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat result;
     int ok;
 
     dm1_v1_mirror_candidate_resurrect_full_c30_init_pc34_compat(&state);
@@ -217,8 +217,8 @@ static void check_full_c30_rejects_cleanly(void)
 
 static void check_free_slot_allows_same_resurrect_path(void)
 {
-    Dm1V1MirrorCandidateResurrectFullC30StatePc34Compat state;
-    Dm1V1MirrorCandidateResurrectFullC30ResultPc34Compat result;
+    DM1_V1_MirrorCandidateResurrectFullC30StatePc34Compat state;
+    DM1_V1_MirrorCandidateResurrectFullC30ResultPc34Compat result;
     int ok;
 
     dm1_v1_mirror_candidate_resurrect_full_c30_init_pc34_compat(&state);
