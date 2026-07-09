@@ -590,6 +590,49 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupReceiptBundle;
 
+typedef enum {
+    NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_INVALID = 0,
+    NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS = 1,
+    NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_TITLE_CAPTURE = 2,
+    NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_MENU_CAPTURE = 3,
+    NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF = 4
+} Nexus_V1_StartupRealAssetOwnershipRoute;
+
+typedef struct {
+    Nexus_V1_StartupRealAssetOwnershipRoute route;
+    Nexus_V1_StartupReceiptBundle startup_bundle;
+    Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
+    Nexus_V1_StartupRuntimeRouteReceipt runtime_route;
+    Nexus_V1_MenuBpkRendererHandoffReceipt menu_bpk_handoff;
+    Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
+    Nexus_V1_DgnRenderPlanReceipt dgn_render_plan;
+    int receipt_owner_is_nexus;
+    int title_menu_receipt_owned;
+    int capture_receipt_owned;
+    int real_asset_receipt_owned;
+    int consumes_bpk_menu_handoff;
+    int consumes_prs3_blocker;
+    int consumes_dgn_handoff;
+    int title_capture_uses_real_assets;
+    int menu_capture_uses_real_assets;
+    int runtime_dgn_handoff_ready;
+    int no_fallback_visuals_enforced;
+    int fallback_visuals_permitted;
+    int blocked_draw_suppressed;
+    int capture_ready;
+    int display_ready;
+    int startup_draw_command_count;
+    int dgn_draw_command_count;
+    Nexus_V1_StartupCaptureRoute capture_route;
+    Nexus_V1_StartupDrawKind first_startup_draw_kind;
+    Nexus_V1_DgnRenderCommandKind first_dgn_draw_kind;
+    const char *receipt_owner;
+    const char *asset_route;
+    const char *asset_blocker;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupRealAssetOwnershipReceipt;
+
 void nexus_v1_launcher_startup_runtime_state_clear(
     Nexus_V1_StartupRuntimeState *state);
 void nexus_v1_launcher_runtime_startup_snapshot_clear(
@@ -614,6 +657,10 @@ void nexus_v1_launcher_m12_startup_package_receipt_clear(
     Nexus_V1_M12StartupPackageReceipt *receipt);
 void nexus_v1_launcher_startup_receipt_bundle_clear(
     Nexus_V1_StartupReceiptBundle *receipt);
+void nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
+    Nexus_V1_StartupRealAssetOwnershipReceipt *receipt);
+const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
+    Nexus_V1_StartupRealAssetOwnershipRoute route);
 int nexus_v1_launcher_m12_startup_package_from_flags(
     int supported,
     int data_ready,
@@ -943,6 +990,20 @@ int nexus_v1_launcher_startup_receipt_bundle_from_snapshot(
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands,
     Nexus_V1_StartupReceiptBundle *out_receipt);
+int nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupRealAssetOwnershipReceipt *out_receipt);
+int nexus_v1_launcher_startup_real_asset_ownership_from_snapshot(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupRealAssetOwnershipReceipt *out_receipt);
 int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupDrawCommand *out_commands,
