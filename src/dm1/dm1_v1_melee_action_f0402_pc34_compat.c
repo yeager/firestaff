@@ -1332,6 +1332,36 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledAllStatePlanPc34* statePlan,
+    DM1_MeleeF0190KilledAllStateApplyPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!statePlan || !statePlan->valid) return 0;
+
+    out->valid = 1;
+    out->groupIndex = statePlan->groupIndex;
+    out->mapIndex = statePlan->mapIndex;
+    out->mapX = statePlan->mapX;
+    out->mapY = statePlan->mapY;
+    if (statePlan->groupIndex < 0) return 1;
+
+    out->shouldUnlinkGroupFromSquare =
+        statePlan->shouldUnlinkGroupFromSquare;
+    out->shouldClearGroupNext = statePlan->shouldClearGroupNext;
+    out->shouldRemoveActiveGroupState =
+        statePlan->shouldRemoveActiveGroupState;
+    out->groupThing = (unsigned short)(
+        ((unsigned short)THING_TYPE_GROUP << 10) |
+        ((unsigned short)statePlan->groupIndex & 0x03FFu));
+    out->clearedNextThing = THING_NONE;
+
+    /* ReDMCSB: GROUP.C F0189 lines 753-767 unlinks the GROUP thing,
+     * clears GROUP.Next, and removes the active-group entry.  DM1 owns the
+     * concrete apply receipt; M10 only performs the requested live writes. */
+    return 1;
+}
+
 static int dm1_v1_melee_event_creature_index_f0190_pc34(int eventType) {
     if (eventType >= DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
         eventType < DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
