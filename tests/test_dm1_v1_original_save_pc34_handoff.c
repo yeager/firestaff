@@ -981,6 +981,96 @@ static void test_public_fixture_builder_roundtrips_pc34_handoff(void)
           "public builder second champion imports");
 }
 
+static void test_world_roundtrip_helper_exports_verified_pc34(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char roundtrip[SAVEGAME_PC34_MAX_FILE_SIZE];
+    size_t written = 0u;
+    size_t roundtrip_written = 0u;
+    DM1OriginalSavePC34FixtureSpec spec;
+    DM1OriginalSavePC34HandoffReport import_report;
+    DM1OriginalSavePC34HandoffReport verify_report;
+    DM1OriginalSaveClassifyResult classified;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    int rc;
+
+    memset(&spec, 0, sizeof(spec));
+    spec.champion_count = 3;
+    spec.map_index = 5;
+    spec.map_x = 19;
+    spec.map_y = 23;
+    spec.direction = 2;
+    spec.active_champion_index = 1;
+    spec.current_active_group_count = 2;
+    spec.maximum_active_group_count = ORIGINAL_PC34_ACTIVE_GROUP_COUNT;
+    spec.event_count = ORIGINAL_PC34_EVENT_COUNT;
+    spec.event_maximum_count = ORIGINAL_PC34_EVENT_MAXIMUM_COUNT;
+    spec.game_time = 777888u;
+    spec.game_id = 0x52544d31u;
+
+    rc = dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
+        &spec, bytes, sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "roundtrip helper fixture build succeeds");
+
+    rc = dm1_v1_original_save_pc34_roundtrip_world_bytes(
+        bytes, written, 0x52544d32u,
+        roundtrip, sizeof(roundtrip), &roundtrip_written,
+        &import_report, &verify_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "roundtrip helper import-export-verify succeeds");
+    CHECK(roundtrip_written > SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
+          "roundtrip helper writes PC34 header plus save parts");
+    CHECK(import_report.original_game_time == 777888u,
+          "roundtrip helper import report records source game time");
+    CHECK(import_report.imported_map_index == 5 &&
+          import_report.imported_map_x == 19 &&
+          import_report.imported_map_y == 23 &&
+          import_report.imported_direction == 2,
+          "roundtrip helper import report records source party pose");
+    CHECK(import_report.active_group_runtime_imported_count == 2,
+          "roundtrip helper materializes active groups into runtime world");
+    CHECK(verify_report.classify.shape ==
+          DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34,
+          "roundtrip helper exported bytes classify as PC34");
+    CHECK(verify_report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT,
+          "roundtrip helper exported bytes verify all save-part checksums");
+    CHECK(verify_report.original_game_time == 777888u,
+          "roundtrip helper preserves GameTime through export");
+    CHECK(verify_report.original_current_active_group_count == 2,
+          "roundtrip helper preserves current active group count");
+    CHECK(verify_report.original_event_count == ORIGINAL_PC34_EVENT_COUNT,
+          "roundtrip helper preserves event count");
+
+    rc = dm1_v1_original_save_classify_bytes(
+        roundtrip, roundtrip_written, &classified);
+    CHECK(rc == 1 &&
+          classified.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 &&
+          classified.header_checksum_ok == 1,
+          "roundtrip helper exported header validates independently");
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        roundtrip, roundtrip_written, &imported, &verify_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "roundtrip helper output imports into SaveGame state");
+    CHECK(imported.party->championCount == 3 &&
+          imported.party->mapIndex == 5 &&
+          imported.party->mapX == 19 &&
+          imported.party->mapY == 23 &&
+          imported.party->direction == 2,
+          "roundtrip helper output preserves party state");
+
+    rc = dm1_v1_original_save_pc34_roundtrip_world_bytes(
+        NULL, 0u, 0u, roundtrip, sizeof(roundtrip), &roundtrip_written,
+        &import_report, &verify_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
+          "roundtrip helper rejects null source bytes");
+}
+
 static void test_strings(void)
 {
     CHECK(strcmp(dm1_v1_original_save_pc34_handoff_result_name(
@@ -1023,6 +1113,7 @@ int main(void)
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
     test_public_fixture_builder_roundtrips_pc34_handoff();
+    test_world_roundtrip_helper_exports_verified_pc34();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;
