@@ -275,6 +275,9 @@ typedef struct {
     int handled;
     int appliedCount;
     int finalOutcomeCode;
+    int finalGroupCount;
+    int finalGroupCells;
+    unsigned short finalHealth[4];
     struct CombatResult_Compat damage;
 } DM1_ExplosionGroupApplyPlanPc34;
 

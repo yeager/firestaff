@@ -1843,5 +1843,10 @@ int dm1_v1_explosion_group_apply_pc34(
         if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) break;
         if (outcome == COMBAT_OUTCOME_KILLED_NO_CREATURES) ++creatureIndex;
     }
+    outPlan->finalGroupCount = group->count;
+    outPlan->finalGroupCells = group->cells;
+    for (creatureIndex = 0; creatureIndex < 4; ++creatureIndex) {
+        outPlan->finalHealth[creatureIndex] = group->health[creatureIndex];
+    }
     return 1;
 }

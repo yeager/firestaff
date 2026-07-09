@@ -1457,6 +1457,16 @@ static void test_explosion_party_damage_plan(void) {
     ASSERT_EQ(groupApply.valid, 1, "explosion group apply valid");
     ASSERT_EQ(groupApply.handled, 1, "explosion group handled");
     ASSERT_EQ(groupApply.appliedCount, 2, "explosion group applies twice");
+    ASSERT_EQ(groupApply.finalOutcomeCode, COMBAT_OUTCOME_KILLED_NO_CREATURES,
+              "explosion group final outcome carried");
+    ASSERT_EQ(groupApply.finalGroupCount, 0,
+              "explosion group final count carried");
+    ASSERT_EQ(groupApply.finalGroupCells, group.cells,
+              "explosion group final cells carried");
+    ASSERT_EQ(groupApply.finalHealth[0], 5,
+              "explosion group final health[0] carried");
+    ASSERT_EQ(groupApply.finalHealth[1], 20,
+              "explosion group final health[1] carried");
     ASSERT_EQ(groupApply.damage.damageApplied, 15,
               "explosion group damage payload");
     ASSERT_EQ(group.count, 0, "explosion group compacts count");

@@ -4976,7 +4976,7 @@ static int orch_apply_explosion_group_action_compat(
     if (!dm1_v1_explosion_group_apply_pc34(action, group, &applyPlan)) {
         return 0;
     }
-    return applyPlan.handled;
+    return applyPlan.handled && applyPlan.appliedCount > 0;
 }
 
 
