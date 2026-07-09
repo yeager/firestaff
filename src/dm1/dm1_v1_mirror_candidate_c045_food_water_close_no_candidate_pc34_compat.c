@@ -29,7 +29,7 @@ enum {
  * COMMAND.C F0359:1985-1990, and DEFS.H C30/G0425/G0426/M070/M516/
  * C040/C045/M565/M568 bind this contract-only, asset-free regression.
  */
-static const DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34Compat
+static const DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34
     kEvidence = {
         "CHEST.C F0333:30-67 materializes the chest-bound C30/G0425 slot",
         "CHEST.C F0334:113-132 closes G0426 and rewrites the visible chain",
@@ -73,7 +73,7 @@ static uint32_t fnv_step(uint32_t hash, unsigned int value)
 }
 
 static uint32_t hash_state(
-    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -118,7 +118,7 @@ static void copy_slots(uint16_t dst[], const uint16_t src[])
 }
 
 static int all_g0425_clear(
-    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state)
 {
     int i;
 
@@ -130,8 +130,8 @@ static int all_g0425_clear(
     return 1;
 }
 
-void dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_init_pc34(
-    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+void DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_InitPc34(
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state)
 {
     int i;
 
@@ -172,7 +172,7 @@ void dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_init_pc34(
 }
 
 static int ready(
-    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state)
 {
     return state && state->contractOnly &&
            state->openChestThing != DM1_V1_MC_C045_FW_NONE_PC34 &&
@@ -187,7 +187,7 @@ static int ready(
 }
 
 static int open_food_from_c144(
-    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state)
 {
     if (!ready(state)) {
         return 0;
@@ -213,7 +213,7 @@ static int open_food_from_c144(
 }
 
 static int close_c045_panel(
-    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state)
 {
     if (!state || state->panelContent != kPanelFoodWater ||
         state->panelGraphic != kGraphicFoodWaterIconPage ||
@@ -239,7 +239,7 @@ static int close_c045_panel(
 }
 
 static int consume_after_close(
-    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state)
 {
     if (!state || state->panelOpen || !state->closeReleasedC30ToChestChain ||
         state->sourceChestChain[state->sourceChestSlotIndex] !=
@@ -255,10 +255,10 @@ static int consume_after_close(
 }
 
 static int guard_rejects(
-    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *base,
+    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *base,
     int kind)
 {
-    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat probe;
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 probe;
 
     probe = *base;
     if (kind == 0) {
@@ -272,11 +272,11 @@ static int guard_rejects(
     return !open_food_from_c144(&probe);
 }
 
-int dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_run_pc34(
-    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state,
-    DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34Compat *result)
+int DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_RunPc34(
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 *state,
+    DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34 *result)
 {
-    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat base;
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34 base;
     int opened;
     int closed;
     int consumed;
@@ -354,14 +354,14 @@ int dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_run_pc34(
     return result->accepted;
 }
 
-const DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34Compat *
-dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_evidence_pc34(void)
+const DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34 *
+DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_EvidencePc34(void)
 {
     return &kEvidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateC045FoodWaterCloseNoCandidate_SourceEvidencePc34(void)
 {
     return kSourceEvidence;
 }
