@@ -64,6 +64,7 @@ int main(void)
     DM2_V1_BootStartupPackagedFullStartReceipt boot_full_start_package;
     DM2_V1_BootStartupPackagedConsumerReceipt boot_consumer_receipt;
     DM2_V1_BootStartupHostFrameReceipt boot_host_frame_receipt;
+    DM2_V1_BootStartupRenderOwnershipReceipt boot_render_ownership_receipt;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -577,6 +578,33 @@ int main(void)
               strcmp(boot_host_frame_receipt.phase,
                      "dm2-startup-menu") == 0,
           "boot host-frame receipt owns startup title/menu/HUD decision");
+    check(dm2_v1_boot_startup_render_ownership_receipt_from_snapshot(
+              &boot_snapshot,
+              &boot_render_ownership_receipt) &&
+              boot_render_ownership_receipt.valid &&
+              boot_render_ownership_receipt.packaged_full_start_valid == 1 &&
+              boot_render_ownership_receipt.host_frame_valid == 1 &&
+              boot_render_ownership_receipt.consume_host_frame_receipt == 1 &&
+              boot_render_ownership_receipt.execute_startup_draw_commands == 1 &&
+              boot_render_ownership_receipt.draw_command_count ==
+                  boot_consumer_receipt.startup_draw_command_count &&
+              boot_render_ownership_receipt.executed_command_count ==
+                  boot_render_ownership_receipt.draw_command_count &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
+              boot_render_ownership_receipt.title_gdat_command_count == 1 &&
+              boot_render_ownership_receipt.executed_rect_count >= 2 &&
+              boot_render_ownership_receipt.executed_text_count >=
+                  boot_full_start_package.menu_row_count &&
+              boot_render_ownership_receipt.title_gdat_asset_required == 0 &&
+              boot_render_ownership_receipt.title_gdat_asset_consumed == 0 &&
+              boot_render_ownership_receipt.fallback_title_blit_used == 0 &&
+              boot_render_ownership_receipt.suppress_game_hud == 1 &&
+              boot_render_ownership_receipt.present_first_hud_frame == 0 &&
+              boot_render_ownership_receipt.schedule_next_title_tick == 1 &&
+              boot_render_ownership_receipt.next_title_tick_delta == 6 &&
+              boot_render_ownership_receipt.packaged_full_start_hash ==
+                  boot_consumer_receipt.packaged_full_start_hash,
+          "boot render-ownership receipt consumes host frame and GDAT title draw contract");
     check(dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
               NULL,
               1,
@@ -659,6 +687,27 @@ int main(void)
               boot_host_frame_receipt.title_frame_remaining_ticks == 5 &&
               boot_host_frame_receipt.title_next_frame_tick == 18,
           "boot host-frame receipt owns nonzero title tick scheduling");
+    check(dm2_v1_boot_startup_render_ownership_receipt_from_runtime_state(
+              NULL,
+              1,
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              13,
+              &boot_render_ownership_receipt) &&
+              boot_render_ownership_receipt.valid &&
+              boot_render_ownership_receipt.title_animation_tick == 13 &&
+              boot_render_ownership_receipt.title_frame == 2 &&
+              boot_render_ownership_receipt.title_frame_elapsed_ticks == 1 &&
+              boot_render_ownership_receipt.title_frame_remaining_ticks == 5 &&
+              boot_render_ownership_receipt.next_title_tick_delta == 5 &&
+              boot_render_ownership_receipt.title_next_frame_tick == 18 &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
+              boot_render_ownership_receipt.title_gdat_command_count == 1 &&
+              boot_render_ownership_receipt.fallback_title_blit_used == 0 &&
+              boot_render_ownership_receipt.suppress_game_hud == 1,
+          "boot render-ownership receipt owns nonzero title timing and draw execution");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&

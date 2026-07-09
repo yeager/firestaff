@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM2 startup render-ownership receipt: boot now consumes packaged full-start and host-frame receipts into one render ownership contract for GDAT title command execution, menu draw counts, HUD suppression, and next-title-tick scheduling without fallback title blits. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 HoC runtime mirror render receipt gate: M11 D1C champion-mirror drawing now requires the DM1 HoC render consumer receipt before drawing C346/C026 wall-overlay output, keeping mirror payload suppression and no-fallback-scan ownership in DM1. Verification: `test_m11_overlay_command_queue_block` and target rebuild passed.
 
 - ✅ 2026-07-09 Theron snapshot host-render executor receipt: snapshot host-render receipts now consume Track02 media plus the graphics executor through full-start receipts, returning executed startup graphics proof without runtime field rebuilds. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
