@@ -607,6 +607,13 @@ typedef struct {
         int startup_display_callers_use_package_receipt;
         int startup_saturn_timing_exact;
         int startup_saturn_capture_frames_exact;
+        int startup_saturn_warning_frame;
+        int startup_saturn_title_capture_frame;
+        int startup_saturn_title_ready_frame;
+        int startup_saturn_gameover_capture_frame;
+        int startup_title_timing_frame;
+        int startup_title_timing_frame_max;
+        int startup_title_timing_ready;
         int startup_copied_draw_command_count;
         int startup_copied_dgn_render_command_count;
     } nexusState;
