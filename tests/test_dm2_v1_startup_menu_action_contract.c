@@ -56,6 +56,7 @@ int main(void)
     DM2_V1_StartupRenderRow rows[4];
     DM2_V1_StartupDrawCommand commands[16];
     DM2_V1_StartupRenderReceipt render_receipt;
+    DM2_V1_StartupViewReceipt view_receipt;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -383,6 +384,32 @@ int main(void)
               render_receipt.hud_runtime_ready == 1 &&
               render_receipt.hud_overlay_suppressed == 1,
           "startup render receipt exposes title/menu/HUD handoff");
+    host_facts.startup_menu_active = 1;
+    check(dm2_v1_startup_presentation_view_receipt_from_host_facts(
+              &host_facts,
+              1,
+              commands,
+              (int)(sizeof(commands) / sizeof(commands[0])),
+              &view_receipt) &&
+              view_receipt.valid &&
+              view_receipt.command_count == view_receipt.render.command_count &&
+              view_receipt.menu_state.row_count == 3 &&
+              view_receipt.menu_state.selected_row == 1 &&
+              view_receipt.render.title_gdat_found &&
+              view_receipt.render.title_rect.w == 320 &&
+              view_receipt.render.title_rect.h == 200 &&
+              view_receipt.render.selectable_text_count == 3 &&
+              view_receipt.render.selected_highlight_count == 1 &&
+              view_receipt.render.hud_overlay_suppressed == 1 &&
+              view_receipt.runtime_handoff.valid &&
+              view_receipt.runtime_handoff.startup_menu_active == 1 &&
+              view_receipt.runtime_handoff.animation_active == 1 &&
+              strcmp(view_receipt.runtime_handoff.animation,
+                     "dm2-startup-menu") == 0 &&
+              view_receipt.runtime_handoff.title_ready == 0 &&
+              view_receipt.runtime_handoff.initialize_hud_runtime == 1 &&
+              view_receipt.runtime_handoff.hud_runtime_ready == 1,
+          "startup view receipt joins title commands, menu state, and HUD handoff");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&
