@@ -1,11 +1,9 @@
 /*
  * memory_mov05_f0284_cell_rotation_pc34_compat.c
  *
- * MOV-05 (DM1 V1 functional-divergence-report.md): the static
- * set party_direction_redmcsb_compat inside
- * memory_tick_orchestrator_pc34_compat.c rotates only Direction,
- * not Cell.  This file provides a public F0284 wrapper that
- * callers and tests can drive directly.
+ * MOV-05 (DM1 V1 functional-divergence-report.md): F0284 rotates
+ * both champion Direction and Cell. This file provides the shared
+ * public F0284 wrapper used by runtime callers and tests.
  *
  * Source-locked to ReDMCSB CHAMPION.C:117-130,
  * F0284_CHAMPION_SetPartyDirection.
@@ -22,19 +20,8 @@
 #include "memory_mov05_f0284_cell_rotation_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 
-/* F0284 cell + direction rotation, lifted out of the tick
- * orchestrator's static helper so unit tests can drive it
- * directly.  In production the orchestrator path is the
- * caller; in probe mode the regression test drives this
- * implementation via the F0284_CHAMPION_SetPartyDirection_Compat
- * probe wrapper.
- *
- * The implementation matches the in-orchestrator helper bit-for-bit
- * (same delta calc, same per-present champion Cell/Direction update).
- * Any future refactor of the
- * orchestrator helper must be mirrored here (or, better, the
- * orchestrator helper should be replaced with a call to this
- * public version, see TODO). */
+/* F0284 cell + direction rotation, shared by M10 tick orchestration,
+ * M11 turn presentation, and the MOV-05 regression probe. */
 static void mov05_rotate_party(
     struct PartyState_Compat* party, int newDirection)
 {
