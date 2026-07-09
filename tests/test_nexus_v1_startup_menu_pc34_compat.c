@@ -1182,6 +1182,9 @@ int main(void)
                full_start_package_receipt.saturn_gameover_capture_frame == 0 &&
                full_start_package_receipt.saturn_timing_exact == 1 &&
                full_start_package_receipt.saturn_capture_frames_exact == 1 &&
+               full_start_package_receipt.package_route_matches_capture_route == 1 &&
+               strcmp(full_start_package_receipt.capture_route_expected_consumer_route,
+                      "champion-menu") == 0 &&
                full_start_package_receipt.full_start_package_receipt_ready == 1 &&
                full_start_package_receipt.host_display_caller_expected == 1 &&
                full_start_package_receipt.first_capture_draw_kind ==
@@ -1286,6 +1289,8 @@ int main(void)
                real_asset_ownership_receipt.menu_capture_uses_real_assets == 1 &&
                real_asset_ownership_receipt.full_start_package_consumed == 1 &&
                real_asset_ownership_receipt.package_capture_consumed_by_host == 1 &&
+               real_asset_ownership_receipt.package_route_matches_capture_route == 1 &&
+               real_asset_ownership_receipt.host_route_consumes_package_route == 1 &&
                real_asset_ownership_receipt.title_menu_capture_route_joined == 1 &&
                real_asset_ownership_receipt.bpk_menu_route_joined == 1 &&
                real_asset_ownership_receipt.runtime_dgn_route_joined == 1 &&
@@ -1341,6 +1346,8 @@ int main(void)
                host_caller_receipt.dgn_handoff_consumed == 1 &&
                host_caller_receipt.full_start_package_consumed == 1 &&
                host_caller_receipt.package_capture_consumed_by_host == 1 &&
+               host_caller_receipt.package_route_matches_capture_route == 1 &&
+               host_caller_receipt.host_route_consumes_package_route == 1 &&
                host_caller_receipt.startup_bundle_consumed == 1 &&
                host_caller_receipt.display_callers_use_package_receipt == 1 &&
                host_caller_receipt.single_saturn_startup_owner_ready == 1 &&
@@ -1381,6 +1388,8 @@ int main(void)
                dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
                strcmp(host_caller_receipt.host_route,
                       "runtime-dgn-handoff") == 0 &&
+               strcmp(host_caller_receipt.startup_package_route,
+                      "champion-menu") == 0 &&
                strcmp(host_caller_receipt.status,
                       "runtime-handoff-owned") == 0,
            "Nexus host-caller receipt owns startup capture and DGN draw commands without fallback");
@@ -1470,6 +1479,9 @@ int main(void)
                full_start_package_receipt.saturn_save_capture_frame == 102 &&
                full_start_package_receipt.saturn_champion_capture_frame == -1 &&
                full_start_package_receipt.saturn_dungeon_capture_frame == -1 &&
+               full_start_package_receipt.package_route_matches_capture_route == 1 &&
+               strcmp(full_start_package_receipt.capture_route_expected_consumer_route,
+                      "save-menu") == 0 &&
                full_start_package_receipt.capture_command_count > 3 &&
                full_start_package_receipt.first_capture_draw_kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
@@ -1560,6 +1572,8 @@ int main(void)
                real_asset_ownership_receipt.saturn_active_capture_frame == 102 &&
                real_asset_ownership_receipt.host_route_consumes_active_capture_frame == 1 &&
                real_asset_ownership_receipt.host_route_consumes_dungeon_capture_frame == 0 &&
+               real_asset_ownership_receipt.package_route_matches_capture_route == 1 &&
+               real_asset_ownership_receipt.host_route_consumes_package_route == 1 &&
                real_asset_ownership_receipt.host_route_capture_matrix_ready == 1 &&
                real_asset_ownership_receipt.host_saturn_non_title_capture_count == 1 &&
                real_asset_ownership_receipt.host_saturn_non_title_capture_mask == 1u &&
@@ -1592,6 +1606,8 @@ int main(void)
                host_caller_receipt.host_saturn_active_capture_frame == 102 &&
                host_caller_receipt.host_route_consumes_active_capture_frame == 1 &&
                host_caller_receipt.host_route_consumes_dungeon_capture_frame == 0 &&
+               host_caller_receipt.package_route_matches_capture_route == 1 &&
+               host_caller_receipt.host_route_consumes_package_route == 1 &&
                host_caller_receipt.host_route_capture_matrix_ready == 1 &&
                host_caller_receipt.host_saturn_non_title_capture_count == 1 &&
                host_caller_receipt.host_saturn_non_title_capture_mask == 1u &&
@@ -1602,7 +1618,9 @@ int main(void)
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
                dgn_commands[0].kind == 0 &&
                strcmp(host_caller_receipt.host_route,
-                      "menu-capture") == 0,
+                      "menu-capture") == 0 &&
+               strcmp(host_caller_receipt.startup_package_route,
+                      "save-menu") == 0,
            "Nexus host-caller consumes SAVE active capture frame before drawing");
     runtime_state.save_select_active = 0;
     runtime_state.title_active = 1;
@@ -2423,6 +2441,7 @@ int main(void)
                real_asset_ownership_receipt.runtime_dgn_handoff_ready == 0 &&
                real_asset_ownership_receipt.menu_capture_uses_real_assets == 0 &&
                real_asset_ownership_receipt.package_capture_consumed_by_host == 0 &&
+               real_asset_ownership_receipt.host_route_consumes_package_route == 0 &&
                real_asset_ownership_receipt.title_menu_capture_route_joined == 0 &&
                real_asset_ownership_receipt.bpk_menu_route_joined == 0 &&
                real_asset_ownership_receipt.runtime_dgn_route_joined == 0 &&
@@ -2460,6 +2479,7 @@ int main(void)
                host_caller_receipt.host_runtime_dgn_ready == 0 &&
                host_caller_receipt.host_execute_startup_draws == 0 &&
                host_caller_receipt.host_execute_dgn_draws == 0 &&
+               host_caller_receipt.host_route_consumes_package_route == 0 &&
                host_caller_receipt.bpk_handoff_consumed == 1 &&
                host_caller_receipt.prs3_blocker_consumed == 1 &&
                host_caller_receipt.dgn_handoff_consumed == 0 &&
@@ -2481,6 +2501,8 @@ int main(void)
                draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE &&
                dgn_commands[0].kind == 0 &&
                strcmp(host_caller_receipt.host_route,
+                      "blocked-startup") == 0 &&
+               strcmp(host_caller_receipt.startup_package_route,
                       "blocked-startup") == 0 &&
                strcmp(host_caller_receipt.status,
                       "blocked-menu-bpk-prs3") == 0,
