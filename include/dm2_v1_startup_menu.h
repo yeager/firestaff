@@ -160,11 +160,26 @@ typedef struct DM2_V1_StartupSaveMenuHandoffReceipt {
     int selected_row_after;
 } DM2_V1_StartupSaveMenuHandoffReceipt;
 
+typedef struct DM2_V1_StartupInputRouteReceipt {
+    int valid;
+    int source_kind; /* 1=Firestaff menu input, 2=pointer */
+    int firestaff_menu_input;
+    DM2_V1_StartupInput startup_input;
+    int pointer_x;
+    int pointer_y;
+    int selected_row_before;
+    int selected_row_after;
+    DM2_V1_StartupActionKind action_kind;
+    int action_row;
+    int action_slot;
+} DM2_V1_StartupInputRouteReceipt;
+
 typedef struct DM2_V1_StartupHostActionReceipt {
     DM2_V1_StartupHostReceipt host_receipt;
     int menu_state_receipt_valid;
     DM2_V1_StartupMenuStateReceipt menu_state_receipt;
     DM2_V1_StartupSaveMenuHandoffReceipt save_menu_handoff;
+    DM2_V1_StartupInputRouteReceipt input_route;
 } DM2_V1_StartupHostActionReceipt;
 
 typedef struct DM2_V1_StartupIdleReceipt {

@@ -659,6 +659,17 @@ int main(void)
               host_action_receipt.host_receipt.mode_update.startup_menu_active == 0 &&
               host_action_receipt.menu_state_receipt_valid &&
               host_action_receipt.menu_state_receipt.selected_row == 2 &&
+              host_action_receipt.input_route.valid &&
+              host_action_receipt.input_route.source_kind == 1 &&
+              host_action_receipt.input_route.firestaff_menu_input == 9 &&
+              host_action_receipt.input_route.startup_input ==
+                  DM2_V1_STARTUP_INPUT_ACCEPT &&
+              host_action_receipt.input_route.selected_row_before == 2 &&
+              host_action_receipt.input_route.selected_row_after == 2 &&
+              host_action_receipt.input_route.action_kind ==
+                  DM2_V1_STARTUP_ACTION_NEW_GAME &&
+              host_action_receipt.input_route.action_row == 2 &&
+              host_action_receipt.input_route.action_slot == -1 &&
               host_action_receipt.save_menu_handoff.valid &&
               host_action_receipt.save_menu_handoff.action_kind ==
                   DM2_V1_STARTUP_ACTION_NEW_GAME &&
@@ -670,7 +681,7 @@ int main(void)
               host_action_receipt.save_menu_handoff.session_ready == 1 &&
               host_action_receipt.save_menu_handoff.return_to_launcher == 0 &&
               host_action_receipt.save_menu_handoff.selected_row_after == 2,
-          "host facts keyboard wrapper executes startup action and returns M11 save-menu handoff");
+          "host facts keyboard wrapper executes startup action and returns M11 input/save-menu handoff");
     check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               strcmp(outcome.status_scope, "STARTUP") == 0 &&
@@ -824,8 +835,18 @@ int main(void)
                   DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
               host_action_receipt.host_receipt.mode_update.set_startup_menu_active &&
               host_action_receipt.menu_state_receipt_valid &&
-              host_action_receipt.menu_state_receipt.selected_row == 2,
-          "host facts pointer wrapper executes startup action and returns M11 receipt");
+              host_action_receipt.menu_state_receipt.selected_row == 2 &&
+              host_action_receipt.input_route.valid &&
+              host_action_receipt.input_route.source_kind == 2 &&
+              host_action_receipt.input_route.pointer_x == row_rect.x + 4 &&
+              host_action_receipt.input_route.pointer_y == row_rect.y + 4 &&
+              host_action_receipt.input_route.selected_row_before == 0 &&
+              host_action_receipt.input_route.selected_row_after == 2 &&
+              host_action_receipt.input_route.action_kind ==
+                  DM2_V1_STARTUP_ACTION_NEW_GAME &&
+              host_action_receipt.input_route.action_row == 2 &&
+              host_action_receipt.input_route.action_slot == -1,
+          "host facts pointer wrapper executes startup action and returns M11 input-route receipt");
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");
