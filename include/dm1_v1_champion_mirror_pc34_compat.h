@@ -150,6 +150,40 @@ typedef struct DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 {
     const char *sourceAnchor;
 } DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34;
 
+typedef struct DM1_V1_ChampionMirrorHostDrawReceiptPc34 {
+    int valid;
+    int consumedRenderReceipt;
+    int candidatePanelOwnsCell;
+    int drawChampionPortrait;
+    int drawMirrorBackingAsset;
+    int drawMirrorBackingFallbackRect;
+    int drawInvariantBackingRect;
+    int suppressWallOrnamentAsset;
+    int suppressHostFallbackVisuals;
+    int sourceOrdinal;
+    int renderIndex;
+    int portraitGraphicIndex;
+    int portraitSourceX;
+    int portraitSourceY;
+    int portraitWidth;
+    int portraitHeight;
+    int portraitDstX;
+    int portraitDstY;
+    int portraitTransparentColor;
+    int backingGraphicIndex;
+    int backingSourceX;
+    int backingSourceY;
+    int backingDstX;
+    int backingDstY;
+    int backingWidth;
+    int backingHeight;
+    int backingTransparentColor;
+    int backingFlipHorizontal;
+    int backingPaletteMapValid;
+    unsigned char backingPaletteMap[16];
+    const char *sourceAnchor;
+} DM1_V1_ChampionMirrorHostDrawReceiptPc34;
+
 void DM1_V1_ChampionMirror_InitClickStatePc34(
     DM1_V1_ChampionMirrorClickStatePc34 *state);
 
@@ -212,6 +246,12 @@ int DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
     const DM1V1D1LD1RF0115RuntimeThingReceiptPc34 *runtimeThingReceipt,
     DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 *outReceipt);
 
+int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+    const DM1_V1_ChampionMirrorRenderReceiptPc34 *renderReceipt,
+    int candidatePanelActive,
+    int backingAssetAvailable,
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 *outReceipt);
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void);
 
 typedef DM1_V1_ChampionMirrorChampionPc34
@@ -228,6 +268,8 @@ typedef DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34
     Dm1V1ChampionMirrorThingLayerBoundaryReceiptPc34Compat;
 typedef DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34
     Dm1V1ChampionMirrorThingLayerConsumerReceiptPc34Compat;
+typedef DM1_V1_ChampionMirrorHostDrawReceiptPc34
+    Dm1V1ChampionMirrorHostDrawReceiptPc34Compat;
 
 #define DM1_V1_ChampionMirror_InitClickStatePc34Compat \
     DM1_V1_ChampionMirror_InitClickStatePc34
@@ -251,6 +293,8 @@ typedef DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34
     DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34
 #define DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34Compat \
     DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34
+#define DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34Compat \
+    DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34
 #define DM1_V1_ChampionMirror_SourceEvidencePc34Compat \
     DM1_V1_ChampionMirror_SourceEvidencePc34
 

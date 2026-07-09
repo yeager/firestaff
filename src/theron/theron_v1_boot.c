@@ -3487,8 +3487,9 @@ int theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
     out_receipt->track02_runtime_handoff_ready =
         receipt->track02_runtime_graphics_handoff ? 1 : 0;
     out_receipt->save_resume_runtime_handoff_ready =
-        receipt->save_resume_runtime_graphics_handoff ||
-        receipt->save_resume_runtime_handoff_ready ? 1 : 0;
+        !out_receipt->track02_runtime_handoff_ready &&
+        (receipt->save_resume_runtime_graphics_handoff ||
+         receipt->save_resume_runtime_handoff_ready) ? 1 : 0;
     out_receipt->real_graphics_handoff_ready =
         receipt->real_bitmap_startup_graphics_ready ||
         receipt->runtime_graphics_handoff ? 1 : 0;
@@ -3504,7 +3505,9 @@ int theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
         receipt->fallback_startup_graphics_executed ? 1 : 0;
     out_receipt->host_may_draw_fallback_visuals =
         out_receipt->fallback_visuals_allowed &&
-        !out_receipt->no_fallback_visuals_enforced ? 1 : 0;
+        !out_receipt->no_fallback_visuals_enforced &&
+        !out_receipt->track02_media_consumed &&
+        !out_receipt->real_graphics_handoff_ready ? 1 : 0;
     out_receipt->host_must_not_draw_fallback_visuals =
         out_receipt->no_fallback_visuals_enforced ||
         !out_receipt->fallback_visuals_allowed ? 1 : 0;

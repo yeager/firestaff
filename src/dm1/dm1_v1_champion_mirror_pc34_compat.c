@@ -498,6 +498,78 @@ int DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
     return 1;
 }
 
+int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+    const DM1_V1_ChampionMirrorRenderReceiptPc34 *renderReceipt,
+    int candidatePanelActive,
+    int backingAssetAvailable,
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 *outReceipt)
+{
+    int i;
+
+    if (!renderReceipt || !outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->sourceOrdinal = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+    outReceipt->renderIndex = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+    outReceipt->sourceAnchor =
+        "ReDMCSB DUNGEON.C:2608-2612 G0289; "
+        "DUNVIEW.C:3913-3928 C346/C026 front mirror draw";
+    if (!renderReceipt->valid || !renderReceipt->drawChampionPortrait) {
+        return 1;
+    }
+
+    outReceipt->valid = 1;
+    outReceipt->consumedRenderReceipt = 1;
+    outReceipt->candidatePanelOwnsCell = candidatePanelActive ? 1 : 0;
+    outReceipt->drawChampionPortrait = 1;
+    outReceipt->sourceOrdinal = renderReceipt->sourceOrdinal;
+    outReceipt->renderIndex = renderReceipt->renderIndex;
+    outReceipt->portraitGraphicIndex = renderReceipt->graphicIndex;
+    outReceipt->portraitSourceX = renderReceipt->sourceX;
+    outReceipt->portraitSourceY = renderReceipt->sourceY;
+    outReceipt->portraitWidth = renderReceipt->width;
+    outReceipt->portraitHeight = renderReceipt->height;
+    outReceipt->portraitDstX = renderReceipt->dstX;
+    outReceipt->portraitDstY = renderReceipt->dstY;
+    outReceipt->portraitTransparentColor = renderReceipt->transparentColor;
+    outReceipt->backingGraphicIndex = renderReceipt->backingGraphicIndex;
+    outReceipt->backingSourceX = renderReceipt->backingSourceX;
+    outReceipt->backingSourceY = renderReceipt->backingSourceY;
+    outReceipt->backingDstX = renderReceipt->backingDstX;
+    outReceipt->backingDstY = renderReceipt->backingDstY;
+    outReceipt->backingWidth = renderReceipt->backingWidth;
+    outReceipt->backingHeight = renderReceipt->backingHeight;
+    outReceipt->backingTransparentColor =
+        renderReceipt->backingTransparentColor;
+    outReceipt->backingFlipHorizontal = renderReceipt->backingFlipHorizontal;
+    outReceipt->backingPaletteMapValid =
+        renderReceipt->backingPaletteMapValid;
+    for (i = 0; i < 16; ++i) {
+        outReceipt->backingPaletteMap[i] = renderReceipt->backingPaletteMap[i];
+    }
+
+    /* ReDMCSB draws C346 before C026 in the front wall route.  When the C040
+     * champion panel owns the cell, the wall ornament asset is suppressed; the
+     * portrait remains the live mirror candidate.  Otherwise this DM1 receipt
+     * owns whether the host should draw the extracted C346 bitmap or the
+     * invariant backing rectangle. */
+    if (outReceipt->candidatePanelOwnsCell) {
+        outReceipt->suppressWallOrnamentAsset = 1;
+        outReceipt->suppressHostFallbackVisuals = 1;
+        return 1;
+    }
+
+    outReceipt->drawMirrorBackingAsset =
+        renderReceipt->drawMirrorBacking && backingAssetAvailable ? 1 : 0;
+    outReceipt->drawMirrorBackingFallbackRect =
+        renderReceipt->drawMirrorBacking && !backingAssetAvailable ? 1 : 0;
+    outReceipt->drawInvariantBackingRect =
+        renderReceipt->drawMirrorBacking ? 1 : 0;
+    outReceipt->suppressHostFallbackVisuals = 1;
+    return 1;
+}
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
 {
     return "ReDMCSB COMMAND.C:484-488 G0455 maps C159..C162 champion-name "

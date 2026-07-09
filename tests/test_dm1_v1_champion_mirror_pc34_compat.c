@@ -351,6 +351,51 @@ static void test_f0172_front_wall_sensor_receipt(void)
         "receipt suppresses mirror payload without blocking real floor objects",
         "DUNVIEW.C:4547-4581; DUNVIEW.C:5668-5683");
 
+    {
+        DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
+
+        CHECK_ANCHOR(
+            DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+                &render, 0, 1, &hostDraw) == 1 &&
+                hostDraw.valid == 1 &&
+                hostDraw.consumedRenderReceipt == 1 &&
+                hostDraw.drawChampionPortrait == 1 &&
+                hostDraw.drawMirrorBackingAsset == 1 &&
+                hostDraw.drawMirrorBackingFallbackRect == 0 &&
+                hostDraw.drawInvariantBackingRect == 1 &&
+                hostDraw.suppressHostFallbackVisuals == 1 &&
+                hostDraw.portraitGraphicIndex ==
+                    DM1_V1_CHAMPION_MIRROR_PORTRAIT_GRAPHIC_PC34_COMPAT &&
+                hostDraw.backingGraphicIndex == 346,
+            "host draw receipt owns normal C346+C026 mirror route",
+            "DUNVIEW.C:3913-3928");
+
+        CHECK_ANCHOR(
+            DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+                &render, 0, 0, &hostDraw) == 1 &&
+                hostDraw.valid == 1 &&
+                hostDraw.drawMirrorBackingAsset == 0 &&
+                hostDraw.drawMirrorBackingFallbackRect == 1 &&
+                hostDraw.drawInvariantBackingRect == 1 &&
+                hostDraw.suppressHostFallbackVisuals == 1,
+            "host draw receipt owns missing C346 backing fallback",
+            "DUNVIEW.C:3922-3928");
+
+        CHECK_ANCHOR(
+            DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+                &render, 1, 1, &hostDraw) == 1 &&
+                hostDraw.valid == 1 &&
+                hostDraw.candidatePanelOwnsCell == 1 &&
+                hostDraw.drawChampionPortrait == 1 &&
+                hostDraw.drawMirrorBackingAsset == 0 &&
+                hostDraw.drawMirrorBackingFallbackRect == 0 &&
+                hostDraw.drawInvariantBackingRect == 0 &&
+                hostDraw.suppressWallOrnamentAsset == 1 &&
+                hostDraw.suppressHostFallbackVisuals == 1,
+            "host draw receipt owns C040 panel mirror suppression",
+            "REVIVE.C F0280; DUNVIEW.C:3913-3928");
+    }
+
     lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
     CHECK_ANCHOR(
         lane != NULL &&
