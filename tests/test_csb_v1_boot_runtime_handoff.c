@@ -1958,6 +1958,43 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               runtime_view_receipt.render_plan.surface ==
                   view_receipt.render_plan.surface,
           "boot startup runtime-state render-view receipt matches post-swoosh title route");
+    CHECK(view_receipt.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              view_receipt.title_source_step ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              view_receipt.title_frame == 0 &&
+              view_receipt.title_frame_max ==
+                  csb_v1_startup_title_total_ticks_pc34() &&
+              view_receipt.title_presents_visible &&
+              !view_receipt.title_chaos_visible &&
+              !view_receipt.title_strikes_back_visible,
+          "boot startup render-view receipt exposes source PRESENTS title stage");
+    snapshot.title_frame = 60;
+    snapshot.title_source_step = 2;
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &snapshot,
+              &view_receipt) == 1 &&
+              view_receipt.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              view_receipt.title_source_step == 2 &&
+              view_receipt.title_chaos_visible &&
+              !view_receipt.title_presents_visible &&
+              !view_receipt.title_strikes_back_visible,
+          "boot startup render-view receipt exposes source CHAOS title stage");
+    snapshot.title_frame = 101;
+    snapshot.title_source_step =
+        CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &snapshot,
+              &view_receipt) == 1 &&
+              view_receipt.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              view_receipt.title_strikes_back_visible &&
+              !view_receipt.title_presents_visible &&
+              !view_receipt.title_chaos_visible,
+          "boot startup render-view receipt exposes source STRIKES BACK title stage");
+    snapshot.title_frame = 0;
+    snapshot.title_source_step = 1;
     snapshot.utility_overlay_active = 0;
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,

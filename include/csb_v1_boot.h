@@ -179,6 +179,13 @@ typedef struct CSB_V1_BootStartupRenderViewReceipt_PC34 {
     int render_plan_valid;
     int boot_executor_route;
     int title_after_swoosh_route;
+    int title_stage;
+    int title_source_step;
+    int title_frame;
+    int title_frame_max;
+    int title_presents_visible;
+    int title_chaos_visible;
+    int title_strikes_back_visible;
     int closed_door_menu_route;
     int opening_door_route;
     int hud_menu_receipt_ready;
