@@ -526,6 +526,7 @@ static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
     int hostWindowCapture = 0;
     int hostCaptureRoute = 0;
     int releaseOwnership = 0;
+    int ownedHostDraw = 0;
     int mapIndex = -1;
     int commandCount = 0;
 
@@ -556,6 +557,7 @@ static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
                   &hostWindowCapture,
                   &hostCaptureRoute,
                   &releaseOwnership,
+                  &ownedHostDraw,
                   &mapIndex,
                   &commandCount),
               1,
@@ -612,6 +614,8 @@ static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
               "M11 HoC ownership requires host capture route match");
     ASSERT_EQ(releaseOwnership, 1,
               "M11 HoC ownership consumes release/app ownership receipt");
+    ASSERT_EQ(ownedHostDraw, 1,
+              "M11 HoC draw consumes DM1-owned host draw receipt");
     ASSERT_EQ(mapIndex, DM1_V1_ENTRANCE_MAP_INDEX_PC34,
               "DM1 full-graphics HoC keeps entrance map");
     ASSERT_EQ(commandCount, 3,

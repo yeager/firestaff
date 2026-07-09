@@ -2883,15 +2883,12 @@ int csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
         if (!draw_receipt->startup_render_plan_valid) {
             return 0;
         }
+        if (draw_receipt->draw_fallback_text) {
+            return 0;
+        }
         if (draw_receipt->draw_closed_doors && executor->draw_closed_doors) {
             executor->draw_closed_doors(executor->user,
                                         &draw_receipt->startup_render_plan);
-            ++drew;
-        }
-        if (draw_receipt->draw_fallback_text &&
-            executor->draw_fallback_text) {
-            executor->draw_fallback_text(executor->user,
-                                         &draw_receipt->startup_render_plan);
             ++drew;
         }
         /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 keeps the

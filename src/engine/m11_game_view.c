@@ -29477,6 +29477,7 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     int* outHostWindowCapture,
     int* outHostCaptureRouteMatches,
     int* outReleaseCaptureOwnershipReady,
+    int* outOwnedHostDrawReady,
     int* outMapIndex,
     int* outRenderCommandCount) {
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
@@ -29500,12 +29501,14 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 thingConsumer;
     DM1_V1_StartupHoCRenderConsumerReceipt_PC34 renderConsumer;
     DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 ownedHostDraw;
     const DM1V1D1LD1RF0115LanePc34Data* lane;
 
     memset(&captureFacts, 0, sizeof(captureFacts));
     memset(&hostProbeFacts, 0, sizeof(hostProbeFacts));
     memset(&releaseOwnership, 0, sizeof(releaseOwnership));
     memset(&suppressionFacts, 0, sizeof(suppressionFacts));
+    memset(&ownedHostDraw, 0, sizeof(ownedHostDraw));
 
     if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
         !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
@@ -29589,12 +29592,19 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
             &firstFrame, &thingConsumer, &renderConsumer) ||
         !dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
             &productionConsumer, &renderConsumer, &ownership) ||
+        !dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
+            &ownership, &render, 0, 1, &ownedHostDraw) ||
         !dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
             &hostProbeFacts, &releaseOwnership)) {
         return 0;
     }
 
-    if (outReady) *outReady = ownership.ready && releaseOwnership.ready;
+    if (outReady) {
+        *outReady = ownership.ready && releaseOwnership.ready &&
+                    ownedHostDraw.valid &&
+                    ownedHostDraw.drawMirrorBackingAsset &&
+                    !ownedHostDraw.drawMirrorBackingFallbackRect;
+    }
     if (outConsumedProductionConsumer) {
         *outConsumedProductionConsumer =
             ownership.consumed_production_consumer_receipt;
@@ -29680,6 +29690,13 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     }
     if (outReleaseCaptureOwnershipReady) {
         *outReleaseCaptureOwnershipReady = releaseOwnership.ready;
+    }
+    if (outOwnedHostDrawReady) {
+        *outOwnedHostDrawReady =
+            ownedHostDraw.valid &&
+            ownedHostDraw.drawMirrorBackingAsset &&
+            !ownedHostDraw.drawMirrorBackingFallbackRect &&
+            ownedHostDraw.drawChampionPortrait;
     }
     if (outMapIndex) *outMapIndex = ownership.map_index;
     if (outRenderCommandCount) {
