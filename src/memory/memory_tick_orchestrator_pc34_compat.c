@@ -5941,9 +5941,12 @@ static int orch_materialize_generated_group_compat(
         int destMapX = ev->mapX;
         int destMapY = ev->mapY;
         int fallKilledGroup = 0;
+        int creatureAllowed = 0;
+        int destinationBlocked = 0;
         unsigned char movingFixedDropCells[4];
         int movingFixedDropCellCount = 0;
         struct TimelineEvent_Compat resolvedEvent = *ev;
+        M11_GroupMoveRoutePlan routePlan;
 
         (void)orch_resolve_group_f0267_teleporter_destination_compat(
             world, &destMapIndex, &destMapX, &destMapY,
@@ -5957,10 +5960,35 @@ static int orch_materialize_generated_group_compat(
         resolvedEvent.mapIndex = destMapIndex;
         resolvedEvent.mapX = destMapX;
         resolvedEvent.mapY = destMapY;
-        if (fallKilledGroup) {
+        creatureAllowed =
+            orch_is_group_creature_allowed_on_map_compat(
+                world, group, destMapIndex);
+        destinationBlocked =
+            !fallKilledGroup && creatureAllowed &&
+            orch_square_has_group_or_party_compat(
+                world, destMapIndex, destMapX, destMapY);
+        memset(&routePlan, 0, sizeof(routePlan));
+        if (!m11_plan_deferred_group_move_route_f0267(
+                fallKilledGroup, creatureAllowed, destinationBlocked,
+                0, 0, world->gameTick, destMapX, destMapY, 0, 0,
+                &routePlan) ||
+            !routePlan.valid) {
+            return 0;
+        }
+
+        if (routePlan.route == M11_GROUP_MOVE_ROUTE_REMOVE) {
+            if (!fallKilledGroup) {
+                (void)orch_drop_moving_fixed_possessions_compat(
+                    world, group->creatureType, movingFixedDropCells,
+                    movingFixedDropCellCount, destMapIndex,
+                    routePlan.mapX, routePlan.mapY);
+            }
             if (!orch_apply_group_move_removal_plan_f0267_compat(
-                    world, group, movingFixedDropCells, movingFixedDropCellCount,
-                    1, 1, -1, 0, destMapIndex, destMapX, destMapY)) {
+                    world, group,
+                    fallKilledGroup ? movingFixedDropCells : NULL,
+                    fallKilledGroup ? movingFixedDropCellCount : 0,
+                    fallKilledGroup, creatureAllowed, -1, 0,
+                    destMapIndex, routePlan.mapX, routePlan.mapY)) {
                 return 0;
             }
             if (outGroupIndex) *outGroupIndex = groupIndex;
@@ -5969,17 +5997,8 @@ static int orch_materialize_generated_group_compat(
         (void)orch_drop_moving_fixed_possessions_compat(
             world, group->creatureType, movingFixedDropCells,
             movingFixedDropCellCount, destMapIndex, destMapX, destMapY);
-        if (!orch_is_group_creature_allowed_on_map_compat(world, group, destMapIndex)) {
-            if (!orch_apply_group_move_removal_plan_f0267_compat(
-                    world, group, NULL, 0, 0, 0, -1, 0,
-                    destMapIndex, destMapX, destMapY)) {
-                return 0;
-            }
-            if (outGroupIndex) *outGroupIndex = groupIndex;
-            return 0;
-        }
 
-        if (orch_square_has_group_or_party_compat(world, destMapIndex, destMapX, destMapY)) {
+        if (routePlan.route == M11_GROUP_MOVE_ROUTE_RETRY) {
             if (!orch_schedule_deferred_group_move_compat(world, &resolvedEvent, groupIndex, 0)) {
                 return 0;
             }
@@ -5988,7 +6007,8 @@ static int orch_materialize_generated_group_compat(
         }
 
         if (!orch_link_existing_group_to_square_compat(
-                world, groupIndex, destMapIndex, destMapX, destMapY)) {
+                world, groupIndex, destMapIndex,
+                routePlan.mapX, routePlan.mapY)) {
             return 0;
         }
         if (outGroupIndex) *outGroupIndex = groupIndex;

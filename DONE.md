@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0267 generated group route ownership: C006/F0185 generated group materialization now consumes the same DM1 route plan as deferred group insertion for fall/disallowed removal, blocked retry, and normal insertion. Verification: `test_dm1_v1_group_move_removal_pc34_compat`, `test_m10_c006_generator_reenable_dispatch_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0267 ordinary group move apply ownership: C37 movement now consumes a DM1-owned apply plan for source unlink, destination link, active-state writeback, projectile-kill active removal, and next event coordinates. Verification: `test_dm1_v1_group_move_removal_pc34_compat`, `test_m10_c006_generator_reenable_dispatch_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0267 ordinary creature tick move ownership: C37 group movement now consumes a DM1-owned plan for direction-derived destination, blocked-square retry, projectile-kill removal route, successful insertion route, and next-tick scheduling. Verification: `test_dm1_v1_group_move_removal_pc34_compat`, `test_m10_c006_generator_reenable_dispatch_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, Phase A 24/24, and `git diff --check` passed.
