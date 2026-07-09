@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB snapshot-capture executor retired: CSB startup tests now consume host-view receipts for snapshot title, utility, closed-door, and door-opening proof instead of the older capture-level render executor. Verification: CSB startup tests and `git diff --check`.
+
 - ✅ 2026-07-09 pass884 DM2 packaged title/startup capture proof: boot host-view receipts now carry a packaged capture proof joining exact title frame timing, GDAT title asset receipt, menu render receipt counts, HUD suppression, and M11 consumer readiness. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass908-nexus startup package consumer helpers: Nexus full-start package receipts now export M11/M12 presentation fields and build title/warning/save/champion startup draw commands directly from the package while suppressing SFX/PRS3-blocked fallback draws. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
