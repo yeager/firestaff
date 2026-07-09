@@ -1115,6 +1115,57 @@ int dm1_v1_startup_hoc_host_render_plan_from_first_frame_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_packaged_full_graphics_proof_from_host_plan_pc34(
+    const DM1_V1_StartupHoCHostRenderPlan_PC34* plan,
+    DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34* out_proof) {
+    DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34 proof;
+
+    if (!plan || !out_proof) {
+        return 0;
+    }
+    memset(&proof, 0, sizeof(proof));
+    if (!plan->handled) {
+        *out_proof = proof;
+        return 1;
+    }
+
+    proof.handled = 1;
+    proof.capture_required = 1;
+    proof.command_count = plan->command_count;
+    proof.capture_phase = "dm1-v1-hoc-first-frame-full-graphics";
+    proof.source_evidence =
+        "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    if (!plan->ready || !plan->consume_dm1_receipt_only) {
+        *out_proof = proof;
+        return 1;
+    }
+
+    /* ReDMCSB TITLE.C F0437 has already released the title surface, while
+     * ENTRANCE.C F0797 and F0441 leave the opened C255 entrance/Hall state.
+     * Package builds can consume this proof receipt directly instead of
+     * re-inferring first-frame capture rules in the host. */
+    proof.ready = 1;
+    proof.consume_host_render_plan_only = 1;
+    proof.packaged_full_graphics_proof_ready = 1;
+    proof.expected_map_index = plan->entrance_map_index;
+    proof.expected_map_width = DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34;
+    proof.expected_map_height = DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34;
+    proof.expected_entrance_door_frame_index =
+        plan->entrance_door_frame_index;
+    proof.expected_hall_overlay_kind = plan->hall_mirror_overlay_kind;
+    proof.require_opened_entrance_frame = plan->draw_opened_entrance_frame;
+    proof.require_clear_champion_panel = plan->clear_champion_panel;
+    proof.require_hall_mirror_overlay = plan->render_hall_mirror_overlay;
+    proof.require_no_title_surface = 1;
+    proof.require_no_closed_door_frame = 1;
+    proof.require_no_host_fallback_visuals =
+        plan->suppress_host_fallback_visuals;
+    proof.block_enter_until_champion_selected =
+        plan->block_enter_until_champion_selected;
+    *out_proof = proof;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

@@ -701,6 +701,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 runtime_handoff;
     DM1_V1_StartupHoCFirstFrameReceipt_PC34 hoc_first_frame;
     DM1_V1_StartupHoCHostRenderPlan_PC34 hoc_host_plan;
+    DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34 hoc_full_graphics_proof;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1353,6 +1354,55 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_host_plan.suppress_host_fallback_visuals &&
                  hoc_host_plan.block_enter_until_champion_selected,
              1);
+    memset(&hoc_full_graphics_proof, 0, sizeof(hoc_full_graphics_proof));
+    expect_i("DM1 HoC packaged full-graphics proof builds",
+             dm1_v1_startup_hoc_packaged_full_graphics_proof_from_host_plan_pc34(
+                 &hoc_host_plan,
+                 &hoc_full_graphics_proof),
+             1);
+    expect_i("DM1 HoC packaged proof consumes host plan",
+             hoc_full_graphics_proof.handled &&
+                 hoc_full_graphics_proof.ready &&
+                 hoc_full_graphics_proof.consume_host_render_plan_only &&
+                 hoc_full_graphics_proof.capture_required &&
+                 hoc_full_graphics_proof.packaged_full_graphics_proof_ready,
+             1);
+    expect_i("DM1 HoC packaged proof carries first-frame capture fields",
+             hoc_full_graphics_proof.expected_map_index ==
+                     DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_full_graphics_proof.expected_map_width ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 &&
+                 hoc_full_graphics_proof.expected_map_height ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 &&
+                 hoc_full_graphics_proof.expected_entrance_door_frame_index ==
+                     9 &&
+                 hoc_full_graphics_proof.expected_hall_overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34,
+             1);
+    expect_i("DM1 HoC packaged proof forbids stale host visuals",
+             hoc_full_graphics_proof.require_opened_entrance_frame &&
+                 hoc_full_graphics_proof.require_clear_champion_panel &&
+                 hoc_full_graphics_proof.require_hall_mirror_overlay &&
+                 hoc_full_graphics_proof.require_no_title_surface &&
+                 hoc_full_graphics_proof.require_no_closed_door_frame &&
+                 hoc_full_graphics_proof.require_no_host_fallback_visuals &&
+                 hoc_full_graphics_proof.block_enter_until_champion_selected &&
+                 hoc_full_graphics_proof.command_count == 3,
+             1);
+    hoc_host_plan.ready = 0;
+    expect_i("DM1 HoC packaged proof rejects unready host plan",
+             dm1_v1_startup_hoc_packaged_full_graphics_proof_from_host_plan_pc34(
+                 &hoc_host_plan,
+                 &hoc_full_graphics_proof) &&
+                 hoc_full_graphics_proof.handled &&
+                 !hoc_full_graphics_proof.ready &&
+                 hoc_full_graphics_proof.capture_required,
+             1);
+    expect_i("DM1 HoC packaged proof rejects NULL input",
+             dm1_v1_startup_hoc_packaged_full_graphics_proof_from_host_plan_pc34(
+                 NULL,
+                 &hoc_full_graphics_proof),
+             0);
     hoc_first_frame.hoc_render_commands[0].kind =
         DM1_V1_STARTUP_HOC_RENDER_COMMAND_HALL_MIRRORS_PC34;
     expect_i("DM1 HoC host render plan rejects wrong command order",
