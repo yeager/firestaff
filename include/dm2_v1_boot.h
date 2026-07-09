@@ -238,6 +238,10 @@ typedef struct {
     int title_gdat_asset_h;
     int title_gdat_asset_stride;
     int title_cycle_ticks;
+    int title_frame_start_tick;
+    int title_next_frame_tick;
+    int title_cycle_remaining_ticks;
+    int exact_title_timing_ready;
     int menu_row_count;
     int menu_text_count;
     int selectable_text_count;
@@ -278,6 +282,10 @@ typedef struct {
     int title_gdat_asset_stride;
     int full_start_real_asset_ready;
     int title_cycle_ticks;
+    int title_frame_start_tick;
+    int title_next_frame_tick;
+    int title_cycle_remaining_ticks;
+    int exact_title_timing_ready;
     int menu_row_count;
     int menu_text_count;
     int selectable_text_count;
@@ -291,6 +299,7 @@ typedef struct {
     int first_hud_frame_ready;
     int startup_hud_handoff_ready;
     int runtime_handoff_ready;
+    int m11_host_view_ready;
     const char *status_scope;
     const char *status;
     const char *log_line;

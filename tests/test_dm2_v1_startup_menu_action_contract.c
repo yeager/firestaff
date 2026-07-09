@@ -482,13 +482,18 @@ int main(void)
               boot_host_view_receipt.title_frame_max == 7 &&
               boot_host_view_receipt.title_frame_duration_ticks == 6 &&
               boot_host_view_receipt.title_cycle_ticks == 48 &&
+              boot_host_view_receipt.title_frame_start_tick == 0 &&
+              boot_host_view_receipt.title_next_frame_tick == 6 &&
+              boot_host_view_receipt.title_cycle_remaining_ticks == 48 &&
+              boot_host_view_receipt.exact_title_timing_ready == 1 &&
               boot_host_view_receipt.menu_row_count == 3 &&
               boot_host_view_receipt.menu_text_count == 6 &&
               boot_host_view_receipt.selectable_text_count == 3 &&
               boot_host_view_receipt.selected_highlight_count == 1 &&
               boot_host_view_receipt.menu_panel_ready == 1 &&
               boot_host_view_receipt.startup_menu_assets_ready == 1 &&
-              boot_host_view_receipt.startup_hud_handoff_ready == 1,
+              boot_host_view_receipt.startup_hud_handoff_ready == 1 &&
+              boot_host_view_receipt.m11_host_view_ready == 1,
           "boot host-view receipt owns exact title timing and menu asset proof");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
