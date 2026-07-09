@@ -409,21 +409,23 @@ int theron_v1_startup_host_receipt_from_runtime_entry_apply(
 static void theron_v1_startup_runtime_entry_capture_result(
     const Theron_V1_World *world,
     const char *runtime_receipt,
+    int verified_track02_request,
     Theron_V1StartupRuntimeEntryResult *out_result) {
 
+    (void)runtime_receipt;
     if (!world || !out_result) {
         return;
     }
     theron_v1_startup_runtime_entry_result_init(out_result);
     out_result->result = THERON_STARTUP_OK;
     out_result->level_loaded = 1;
-    if (runtime_receipt &&
-        strstr(runtime_receipt, "Track 02 semantic initial level")) {
+    out_result->structured_runtime_route = 1;
+    out_result->runtime_receipt_text_route = 0;
+    if (verified_track02_request) {
         out_result->runtime_level_source =
             THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
         out_result->track02_semantic_handoff = 1;
-    } else if (runtime_receipt &&
-               strstr(runtime_receipt, "fallback room stage=")) {
+    } else {
         out_result->runtime_level_source =
             THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM;
     }
@@ -435,15 +437,26 @@ static void theron_v1_startup_runtime_entry_capture_result(
 
 static void theron_v1_startup_runtime_entry_capture_failure_route(
     const char *runtime_receipt,
+    int verified_track02_request,
     Theron_V1StartupRuntimeEntryResult *out_result) {
 
-    if (!out_result || !runtime_receipt) {
+    if (!out_result) {
         return;
     }
-    if (strstr(runtime_receipt, "fallback visuals blocked")) {
+    if (verified_track02_request) {
         out_result->runtime_level_source =
             THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED;
         out_result->fallback_visuals_blocked = 1;
+        out_result->structured_runtime_route = 1;
+        out_result->runtime_receipt_text_route = 0;
+        return;
+    }
+    if (runtime_receipt && strstr(runtime_receipt, "fallback visuals blocked")) {
+        out_result->runtime_level_source =
+            THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED;
+        out_result->fallback_visuals_blocked = 1;
+        out_result->structured_runtime_route = 0;
+        out_result->runtime_receipt_text_route = 1;
     }
 }
 
@@ -473,6 +486,7 @@ int theron_v1_startup_runtime_enter_from_forcefield(
 
     Theron_V1StartupRuntimeLevelLoadContext level_load_context;
     Theron_StartupResult result;
+    int verified_track02_request = 0;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -508,6 +522,11 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     level_load_context.hucard_rom = request->hucard_rom;
     level_load_context.hucard_rom_size = request->hucard_rom_size;
     level_load_context.md5_hex = request->md5_hex;
+    verified_track02_request =
+        theron_v1_startup_runtime_has_verified_track02_request(
+            request->hucard_rom,
+            request->hucard_rom_size,
+            request->md5_hex);
     result = theron_v1_startup_enter_runtime_from_forcefield(
         flow,
         world,
@@ -526,12 +545,14 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                      theron_v1_startup_result_name(result));
         }
         theron_v1_startup_runtime_entry_capture_failure_route(receipt,
+                                                              verified_track02_request,
                                                               out_result);
         return 0;
     }
 
     theron_v1_startup_runtime_entry_capture_result(world,
                                                    receipt,
+                                                   verified_track02_request,
                                                    out_result);
     return 1;
 }
@@ -562,15 +583,21 @@ int theron_v1_startup_runtime_entry_apply_receipt(
         result->track02_semantic_handoff;
     out_receipt->fallback_visuals_blocked =
         result->fallback_visuals_blocked;
+    out_receipt->structured_runtime_route =
+        result->structured_runtime_route;
+    out_receipt->runtime_receipt_text_route =
+        result->runtime_receipt_text_route;
     if (runtime_receipt && runtime_receipt[0]) {
         snprintf(out_receipt->inspect_detail,
                  sizeof(out_receipt->inspect_detail),
-                 "%s route=%s semantic=%d fallback_blocked=%d",
+                 "%s route=%s semantic=%d fallback_blocked=%d structured=%d text_route=%d",
                  runtime_receipt,
                  theron_v1_startup_runtime_level_source_name(
                      result->runtime_level_source),
                  result->track02_semantic_handoff,
-                 result->fallback_visuals_blocked);
+                 result->fallback_visuals_blocked,
+                 result->structured_runtime_route,
+                 result->runtime_receipt_text_route);
         out_receipt->log_receipt = 1;
     }
     out_receipt->log_first_line = "T0: THERON LOADED";
@@ -604,10 +631,14 @@ static int theron_v1_startup_runtime_entry_failure_apply_receipt(
             result->track02_semantic_handoff;
         out_receipt->fallback_visuals_blocked =
             result->fallback_visuals_blocked;
+        out_receipt->structured_runtime_route =
+            result->structured_runtime_route;
+        out_receipt->runtime_receipt_text_route =
+            result->runtime_receipt_text_route;
     }
     snprintf(out_receipt->inspect_detail,
              sizeof(out_receipt->inspect_detail),
-             "%s%s%s route=%s semantic=%d fallback_blocked=%d",
+             "%s%s%s route=%s semantic=%d fallback_blocked=%d structured=%d text_route=%d",
              status,
              result ? " result=" : "",
              result ? theron_v1_startup_result_name(result->result) : "",
@@ -616,7 +647,9 @@ static int theron_v1_startup_runtime_entry_failure_apply_receipt(
                        result->runtime_level_source)
                  : "none",
              result ? result->track02_semantic_handoff : 0,
-             result ? result->fallback_visuals_blocked : 0);
+             result ? result->fallback_visuals_blocked : 0,
+             result ? result->structured_runtime_route : 0,
+             result ? result->runtime_receipt_text_route : 0);
     out_receipt->log_first_line = "T0: THERON BLOCKED";
     out_receipt->log_receipt = 1;
     return 1;
@@ -669,6 +702,7 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
         out_result ? out_result : &local_result;
     Theron_V1StartupRuntimeEntryApplyReceipt apply_receipt;
     Theron_StartupFlow flow;
+    int verified_track02_request;
 
     theron_v1_startup_runtime_entry_result_init(result);
     theron_v1_startup_runtime_entry_apply_receipt_init(&apply_receipt);
@@ -680,6 +714,11 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
         theron_v1_startup_state_receipt_init(out_state_receipt);
     }
 
+    verified_track02_request =
+        theron_v1_startup_runtime_has_verified_track02_request(
+            hucard_rom,
+            hucard_rom_size,
+            md5_hex);
     if (!theron_v1_startup_runtime_load_initial_level(world,
                                                       hucard_rom,
                                                       hucard_rom_size,
@@ -689,6 +728,7 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
                                                       receipt_cap)) {
         result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
         theron_v1_startup_runtime_entry_capture_failure_route(receipt,
+                                                              verified_track02_request,
                                                               result);
         theron_v1_startup_runtime_entry_failure_apply_receipt(
             plan,
@@ -701,7 +741,10 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
         return 0;
     }
 
-    theron_v1_startup_runtime_entry_capture_result(world, receipt, result);
+    theron_v1_startup_runtime_entry_capture_result(world,
+                                                   receipt,
+                                                   verified_track02_request,
+                                                   result);
     theron_v1_startup_flow_init(&flow);
     flow.phase = THERON_STARTUP_PHASE_IN_DUNGEON;
     flow.selected_dungeon = dungeon_id;

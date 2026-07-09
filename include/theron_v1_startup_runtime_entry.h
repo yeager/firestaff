@@ -35,6 +35,8 @@ typedef struct {
     int runtime_level_source;
     int track02_semantic_handoff;
     int fallback_visuals_blocked;
+    int structured_runtime_route;
+    int runtime_receipt_text_route;
     int party_x;
     int party_y;
     int party_dir;
@@ -50,6 +52,8 @@ typedef struct {
     int runtime_level_source;
     int track02_semantic_handoff;
     int fallback_visuals_blocked;
+    int structured_runtime_route;
+    int runtime_receipt_text_route;
     const char *log_first_line;
     int log_receipt;
 } Theron_V1StartupRuntimeEntryApplyReceipt;
