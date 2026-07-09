@@ -91,6 +91,7 @@
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
 #include "dm1_v1_door_ornament_render_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
@@ -16750,24 +16751,31 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (THING_GET_TYPE(scanThing) == THING_TYPE_SENSOR) {
                 int sIdx = THING_GET_INDEX(scanThing);
                 if (sIdx >= 0 && sIdx < state->world.things->sensorCount) {
+                    DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirrorReceipt;
+                    const struct DungeonSensor_Compat* sensor =
+                        &state->world.things->sensors[sIdx];
+                    if (DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+                            (int)sensor->sensorType,
+                            (int)sensor->sensorData,
+                            (int)sensor->ornamentOrdinal,
+                            (int)THING_GET_CELL(scanThing),
+                            visibleWallCell,
+                            &mirrorReceipt) &&
+                        mirrorReceipt.isFrontMirror) {
+                        cell.championPortraitOrdinal =
+                            mirrorReceipt.championPortraitOrdinal;
+                        if (mirrorReceipt.wallOrnamentOrdinal > 0) {
+                            cell.wallOrnamentOrdinal =
+                                mirrorReceipt.wallOrnamentOrdinal;
+                        }
+                        break;
+                    }
                     if ((int)THING_GET_CELL(scanThing) != visibleWallCell) {
                         scanThing = m11_raw_next_thing(state->world.things, scanThing);
                         ++scanSafety;
                         continue;
                     }
-                    if (state->world.things->sensors[sIdx].sensorType == 127) {
-                        /* ReDMCSB DUNGEON.C:2573 maps M011_CELL(sensor) against
-                         * the view direction, DUNGEON.C:2610-2612 lets only the
-                         * front wall aspect set G0289, and DUNVIEW.C:3913-3928
-                         * blits that D1C front champion portrait. */
-                        cell.championPortraitOrdinal = (int)state->world.things->sensors[sIdx].sensorData;
-                        /* Champion mirrors also have an ornament ordinal for the
-                         * mirror frame; keep scanning or use it for the frame. */
-                        int ord = (int)state->world.things->sensors[sIdx].ornamentOrdinal;
-                        if (ord > 0) cell.wallOrnamentOrdinal = ord;
-                        break;
-                    }
-                    int ord = (int)state->world.things->sensors[sIdx].ornamentOrdinal;
+                    int ord = (int)sensor->ornamentOrdinal;
                     if (ord > 0) {
                         cell.wallOrnamentOrdinal = ord;
                         break;

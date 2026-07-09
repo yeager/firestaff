@@ -41,6 +41,7 @@ static int test_dm2_asset_fetch(void *user,
     static const uint8_t floor[4] = { 6, 7, 8, 9 };
     static const uint8_t wall[4] = { 11, 12, 13, 14 };
     static const uint8_t door_panel[4] = { 8, 9, 10, 11 };
+    static const uint8_t door_overlay[4] = { 11, 12, 13, 14 };
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
     static const uint8_t door_button[4] = { 4, 5, 6, 7 };
     static const uint8_t wall_button[4] = { 12, 13, 14, 15 };
@@ -141,6 +142,16 @@ static int test_dm2_asset_fetch(void *user,
                    DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_RELEASED &&
                DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE - gdat_index < 0x08) {
         if (out_pixels) *out_pixels = door_button;
+    } else if (gdat_index <=
+               DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE &&
+               gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE) {
+        if (out_pixels) *out_pixels = door_overlay;
+    } else if (gdat_index <=
+                   DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE -
+                       gdat_index <
+                   (0x100 << DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT)) {
+        if (out_pixels) *out_pixels = door_overlay;
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE - gdat_index <
@@ -625,10 +636,12 @@ static void test_floor_ceiling_asset_provider(void)
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D0C].door_gfx_index = 7;
+    viewport.squares[DM2_SQ_D0C].ornament_index = 2;
     viewport.squares[DM2_SQ_D0C].door_record_type = 1;
     viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
+    viewport.squares[DM2_SQ_D0C].door_state = 5;
     memset(&door_plan, 0, sizeof(door_plan));
-    CHECK("door render plan routes DB0 door type into GDAT door panel index",
+    CHECK("door render plan routes DB0 door type and overlays into GDAT indices",
           dm2_v1_viewport_build_door_render_plan(&viewport,
                                                  &door_plan) == 1 &&
               door_plan.door_count == 1 &&
@@ -637,7 +650,12 @@ static void test_floor_ceiling_asset_provider(void)
                       DM2_SQ_D0C, 7, 1) &&
               door_plan.doors[0].panel_gdat_index !=
                   dm2_v1_viewport_door_panel_graphic_index_for_square(
-                      DM2_SQ_D0C));
+                      DM2_SQ_D0C) &&
+              door_plan.doors[0].ornate_gdat_index ==
+                  dm2_v1_viewport_door_ornate_graphic_index(2, DM2_SQ_D0C) &&
+              door_plan.doors[0].destroyed_mask_gdat_index ==
+                  dm2_v1_viewport_door_destroyed_mask_graphic_index(
+                      7, DM2_SQ_D0C));
     dm2_v1_render_doors(&viewport);
     CHECK("door fallback counts when no asset provider is installed",
           viewport.asset_door_frame_drawn_count == 0 &&
