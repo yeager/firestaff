@@ -741,8 +741,6 @@ int theron_v1_startup_continue_srm_apply(
                 &party_receipt) == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
             world->progression = decoded_progression;
             world->party = decoded_party;
-            world->party.champion_count = 1;
-            world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
         }
     } else {
         world->party.champion_count = 1;
