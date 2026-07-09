@@ -147,6 +147,32 @@ typedef struct {
     int truncated;                 /* 1 if any PRS3 entry was skipped because capacity was hit */
 } Nexus_V1_BpkSurfaceEstimate;
 
+typedef enum {
+    NEXUS_V1_BPK_RUNTIME_ROUTE_INVALID = 0,
+    NEXUS_V1_BPK_RUNTIME_ROUTE_NO_SURFACES = 1,
+    NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_PRS3 = 2,
+    NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED = 3
+} Nexus_V1_BpkRuntimeRenderRoute;
+
+typedef struct {
+    uint32_t archive_entries;
+    uint32_t prs3_entries;
+    uint32_t raw_entries;
+    uint32_t surface_entries;
+    uint32_t prs3_surface_entries;
+    uint32_t stored_surface_entries;
+    uint32_t trailer_entries;
+    uint32_t unknown_mode_entries;
+    uint64_t expected_surface_bytes;
+    uint64_t packed_payload_bytes;
+    int directory_trailer_found;
+    int all_prs3_versions_match;
+    int all_prs3_pixel_counts_match;
+    int requires_prs3_decoder;
+    int fallback_visuals_permitted;
+    Nexus_V1_BpkRuntimeRenderRoute route;
+} Nexus_V1_BpkRuntimeRenderReceipt;
+
 /* Map a 20-byte prefix mode tag to a surface class. Returns
  * NEXUS_V1_BPK_SURFACE_UNKNOWN for any byte value that is not one of the
  * four observed pixel-mode tags (6/14/22/30) or the directory trailer
@@ -175,6 +201,14 @@ int nexus_v1_bpk_archive_surface_estimate(
     Nexus_V1_BpkSurfaceEntry *out_entries,
     uint32_t entry_capacity,
     Nexus_V1_BpkSurfaceEstimate *out_summary);
+
+int nexus_v1_bpk_archive_runtime_render_receipt(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkRuntimeRenderReceipt *out_receipt);
+
+const char *nexus_v1_bpk_runtime_render_route_name(
+    Nexus_V1_BpkRuntimeRenderRoute route);
 
 /*
  * Parse the DM Nexus MENU.BPK BPPK/BMPD directory shape.

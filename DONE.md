@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Nexus MENU.BPK runtime render receipt: Nexus BPK parser now emits a real-asset render route receipt that distinguishes stored render-ready surfaces from PRS3-blocked surfaces and forbids fallback visuals for PRS3-compressed MENU.BPK output. Verification: `nexus_v1_bpk_surface_class`, `nexus_v1_bpk_prs3_payload_evidence_probe`, `nexus_v1_bpk_surface_class_probe`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0190 melee mutation dispatch receipt: DM1 now owns the combined killed-some/killed-all F0190 dispatch for possession drops, killed-some event/fear cleanup, and killed-all unlink/active-state cleanup; M10 materializes the returned receipt. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0188 group-slot materialization receipt: GROUP.Slot possession drops now use a DM1-owned ReDMCSB F0188 plan for chain order, random drop cells, source-slot clear, and weapon-vs-wood thud classification; M10 only gathers live next pointers/RNG cells and links the returned dropped things. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.

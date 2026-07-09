@@ -255,6 +255,69 @@ static void test_surface_estimate_capacity_boundary(void) {
            "summary-only surface_estimate does not claim row truncation");
 }
 
+static void test_runtime_render_receipt_blocks_prs3(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkRuntimeRenderReceipt receipt;
+    int rc;
+
+    memset(&receipt, 0, sizeof(receipt));
+    make_synthetic_4entry_bpk(data, sizeof(data));
+
+    rc = nexus_v1_bpk_archive_runtime_render_receipt(
+        data, sizeof(data), &receipt);
+    expect(rc == 0, "runtime receipt returns 0 for synthetic BPK");
+    expect(receipt.route == NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_PRS3,
+           "runtime receipt blocks PRS3-compressed surfaces");
+    expect(strcmp(nexus_v1_bpk_runtime_render_route_name(receipt.route),
+                  "blocked-prs3") == 0,
+           "runtime route name is blocked-prs3");
+    expect(receipt.archive_entries == 4U, "runtime receipt: 4 entries");
+    expect(receipt.prs3_entries == 3U, "runtime receipt: 3 PRS3 entries");
+    expect(receipt.raw_entries == 1U, "runtime receipt: 1 raw trailer entry");
+    expect(receipt.surface_entries == 3U, "runtime receipt: 3 surfaces");
+    expect(receipt.prs3_surface_entries == 3U,
+           "runtime receipt: all surfaces require PRS3");
+    expect(receipt.trailer_entries == 1U, "runtime receipt: 1 trailer");
+    expect(receipt.expected_surface_bytes == 98U,
+           "runtime receipt: expected surface bytes = 98");
+    expect(receipt.directory_trailer_found == 1,
+           "runtime receipt finds directory trailer");
+    expect(receipt.all_prs3_versions_match == 1,
+           "runtime receipt: all PRS3 versions match");
+    expect(receipt.all_prs3_pixel_counts_match == 1,
+           "runtime receipt: all PRS3 pixel counts match");
+    expect(receipt.requires_prs3_decoder == 1,
+           "runtime receipt requires PRS3 decoder");
+    expect(receipt.fallback_visuals_permitted == 0,
+           "runtime receipt forbids fallback visuals for PRS3 route");
+}
+
+static void test_runtime_render_receipt_ready_for_stored_surfaces(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkRuntimeRenderReceipt receipt;
+    int rc;
+
+    make_synthetic_4entry_bpk(data, sizeof(data));
+    memset(data + 96U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 128U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 160U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_v1_bpk_archive_runtime_render_receipt(
+        data, sizeof(data), &receipt);
+    expect(rc == 0, "stored-surface runtime receipt returns 0");
+    expect(receipt.route == NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED,
+           "stored surfaces are render-ready without PRS3");
+    expect(receipt.prs3_entries == 0U, "stored receipt: 0 PRS3 entries");
+    expect(receipt.raw_entries == 4U, "stored receipt: 4 raw entries");
+    expect(receipt.stored_surface_entries == 3U,
+           "stored receipt: 3 stored surfaces");
+    expect(receipt.requires_prs3_decoder == 0,
+           "stored receipt does not require PRS3 decoder");
+    expect(receipt.fallback_visuals_permitted == 1,
+           "stored receipt permits normal render path");
+}
+
 /* ---- Synthetic BPX3 directory-trailer entry ---- */
 
 static void test_bpx3_trailer_entry(void) {
@@ -463,6 +526,7 @@ static void test_optional_local_menu_bpk(void) {
     size_t size = 0;
     Nexus_V1_BpkSurfaceEntry entries[200];
     Nexus_V1_BpkSurfaceEstimate summary;
+    Nexus_V1_BpkRuntimeRenderReceipt receipt;
     uint32_t indexed = 0U, rgb565 = 0U, rgb888 = 0U, rgba32 = 0U;
     uint64_t expected_total = 0U;
 
@@ -524,6 +588,37 @@ static void test_optional_local_menu_bpk(void) {
     expect(summary.total_surface_bytes > 0U,
            "local MENU.BPK: summary total surface bytes > 0");
 
+    memset(&receipt, 0, sizeof(receipt));
+    expect(nexus_v1_bpk_archive_runtime_render_receipt(
+               data, size, &receipt) == 0,
+           "local MENU.BPK runtime render receipt returns 0");
+    expect(receipt.route == NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_PRS3,
+           "local MENU.BPK runtime route blocks on PRS3 decoder");
+    expect(receipt.archive_entries == 163U,
+           "local MENU.BPK runtime receipt sees 163 entries");
+    expect(receipt.prs3_entries == 162U,
+           "local MENU.BPK runtime receipt sees 162 PRS3 entries");
+    expect(receipt.surface_entries == 162U,
+           "local MENU.BPK runtime receipt sees 162 surface entries");
+    expect(receipt.prs3_surface_entries == 162U,
+           "local MENU.BPK runtime receipt sees 162 PRS3 surfaces");
+    expect(receipt.trailer_entries == 1U,
+           "local MENU.BPK runtime receipt sees 1 trailer");
+    expect(receipt.unknown_mode_entries == 0U,
+           "local MENU.BPK runtime receipt sees 0 unknown modes");
+    expect(receipt.expected_surface_bytes == summary.total_surface_bytes,
+           "local MENU.BPK runtime surface total matches summary");
+    expect(receipt.directory_trailer_found == 1,
+           "local MENU.BPK runtime receipt finds directory trailer");
+    expect(receipt.all_prs3_versions_match == 1,
+           "local MENU.BPK runtime receipt validates PRS3 version words");
+    expect(receipt.all_prs3_pixel_counts_match == 1,
+           "local MENU.BPK runtime receipt validates PRS3 pixel counts");
+    expect(receipt.requires_prs3_decoder == 1,
+           "local MENU.BPK runtime receipt requires PRS3 decoder");
+    expect(receipt.fallback_visuals_permitted == 0,
+           "local MENU.BPK runtime receipt forbids fallback visuals");
+
     free(data);
 }
 
@@ -532,6 +627,8 @@ int main(void) {
     test_mode_to_bpp();
     test_synthetic_surface_estimate();
     test_surface_estimate_capacity_boundary();
+    test_runtime_render_receipt_blocks_prs3();
+    test_runtime_render_receipt_ready_for_stored_surfaces();
     test_bpx3_trailer_entry();
     test_bpx3_trailer_rejections();
     test_bpx3_prs3_span_rejections();

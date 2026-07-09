@@ -375,6 +375,125 @@ int nexus_v1_bpk_archive_surface_estimate(
     return 0;
 }
 
+int nexus_v1_bpk_archive_runtime_render_receipt(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkRuntimeRenderReceipt *out_receipt) {
+    uint32_t count;
+    uint64_t expected_surface_bytes = 0U;
+    uint64_t packed_payload_bytes = 0U;
+    uint32_t prs3_entries = 0U;
+    uint32_t raw_entries = 0U;
+    uint32_t surface_entries = 0U;
+    uint32_t prs3_surface_entries = 0U;
+    uint32_t stored_surface_entries = 0U;
+    uint32_t trailer_entries = 0U;
+    uint32_t unknown_mode_entries = 0U;
+    int directory_trailer_found = 0;
+    int all_prs3_versions_match = 1;
+    int all_prs3_pixel_counts_match = 1;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (read_header(data, data_size, &count) != 0) {
+        out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_INVALID;
+        return -1;
+    }
+
+    for (uint32_t i = 0; i < count; ++i) {
+        Nexus_V1_BpkEntry entry;
+        Nexus_V1_BpkEntryPrefix prefix;
+        uint32_t bpp;
+
+        if (nexus_v1_bpk_archive_get_entry(data, data_size, i, &entry) != 0) {
+            out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_INVALID;
+            return -1;
+        }
+        if (nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
+                                                  &prefix) != 0) {
+            out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_INVALID;
+            return -1;
+        }
+
+        if (entry.has_prs3) {
+            Nexus_V1_BpkPrs3Info prs3;
+            ++prs3_entries;
+            if (nexus_v1_bpk_archive_inspect_prs3(data, data_size, i,
+                                                  &prs3) != 0) {
+                all_prs3_versions_match = 0;
+                all_prs3_pixel_counts_match = 0;
+            } else {
+                if (!prs3.prs3_version_matches) all_prs3_versions_match = 0;
+                if (!prs3.pixel_count_matches) all_prs3_pixel_counts_match = 0;
+                packed_payload_bytes += prs3.compressed_size;
+            }
+        } else {
+            ++raw_entries;
+        }
+
+        if (!prefix.prefix_complete) continue;
+        if (prefix.mode == NEXUS_V1_BPK_MODE_TRAILER) {
+            ++trailer_entries;
+            directory_trailer_found = 1;
+            continue;
+        }
+
+        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        if (bpp == 0U) {
+            ++unknown_mode_entries;
+            continue;
+        }
+
+        ++surface_entries;
+        expected_surface_bytes +=
+            (uint64_t)prefix.width * (uint64_t)prefix.height * bpp;
+        if (entry.has_prs3) {
+            ++prs3_surface_entries;
+        } else {
+            ++stored_surface_entries;
+        }
+    }
+
+    out_receipt->archive_entries = count;
+    out_receipt->prs3_entries = prs3_entries;
+    out_receipt->raw_entries = raw_entries;
+    out_receipt->surface_entries = surface_entries;
+    out_receipt->prs3_surface_entries = prs3_surface_entries;
+    out_receipt->stored_surface_entries = stored_surface_entries;
+    out_receipt->trailer_entries = trailer_entries;
+    out_receipt->unknown_mode_entries = unknown_mode_entries;
+    out_receipt->expected_surface_bytes = expected_surface_bytes;
+    out_receipt->packed_payload_bytes = packed_payload_bytes;
+    out_receipt->directory_trailer_found = directory_trailer_found;
+    out_receipt->all_prs3_versions_match = all_prs3_versions_match;
+    out_receipt->all_prs3_pixel_counts_match = all_prs3_pixel_counts_match;
+    out_receipt->requires_prs3_decoder = (prs3_surface_entries > 0U) ? 1 : 0;
+
+    if (surface_entries == 0U) {
+        out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_NO_SURFACES;
+    } else if (prs3_surface_entries > 0U) {
+        out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_PRS3;
+    } else {
+        out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED;
+    }
+
+    out_receipt->fallback_visuals_permitted =
+        (out_receipt->route == NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED) ? 1 : 0;
+    return 0;
+}
+
+const char *nexus_v1_bpk_runtime_render_route_name(
+    Nexus_V1_BpkRuntimeRenderRoute route) {
+    switch (route) {
+    case NEXUS_V1_BPK_RUNTIME_ROUTE_INVALID:      return "invalid";
+    case NEXUS_V1_BPK_RUNTIME_ROUTE_NO_SURFACES:  return "no-surfaces";
+    case NEXUS_V1_BPK_RUNTIME_ROUTE_BLOCKED_PRS3: return "blocked-prs3";
+    case NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED: return "ready-stored";
+    default:                                      return "unknown";
+    }
+}
+
 /* pass1084 — bounded PRS3 compression evidence walker. Surfaces per-entry
  * structural receipts for the (still unknown) PRS3 stream format so we can
  * narrow down the algorithm family in subsequent passes. The walker is
