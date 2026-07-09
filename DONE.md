@@ -12,6 +12,8 @@
 
 - ✅ 2026-07-09 DM1 F0412/F0327 spell projectile launch adapter: spell-cast projectile receipts now flow into a DM1-owned F0327 launch plan and F0810 create-input builder, including weak-projectile kinetic/step adjustment, attack 90, champion-direction launch cell, magical subtype/attack mapping, and no F0328 movement-disable gate. Verification: `test_dm1_v1_throw_shoot_pc34_compat` and `git diff --check` passed.
 
+- ✅ 2026-07-09 DM1 entrance full-start render receipt: HoC startup now exposes a DM1-owned ReDMCSB F0797/F0438 receipt for the C255 5x5 micro-dungeon, south-facing party view, door animation frame, rattle cadence, and entrance music request so full-graphics startup can stop reconstructing those facts in host code. Verification: `test_dm1_v1_entrance_champion_select_pc34_compat` and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0412 runtime spell receipts: DM1 spell casting now exposes source-locked runtime receipts for spell-created projectiles, champion rotation, XP/disable ticks, light C70 event facts, and failure suppression so callers can stop deriving those facts in M10/M11. Verification: `test_dm1_v1_spell_casting_pc34_compat` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus SNDLEV SFX runtime receipt: Nexus level load now reads real `SNDLEV##.SAL/.MAP` beside DGN/SLEV, records a current-level SFX receipt with SAL/MAP size classification and CD-track route, and blocks real SFX playback until SAL/MAP decode is implemented instead of logging fallback sounds. Verification: `test_nexus_v1_sound_runtime_receipt`, `test_nexus_v1_boot_file_hash_scan`, `nexus_v1_audio_receipt` CTest, and `git diff --check` passed.

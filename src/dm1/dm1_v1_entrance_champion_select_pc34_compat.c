@@ -229,6 +229,60 @@ int DM1_V1_Entrance_GetPartyCountPc34Compat(const DM1_V1_EntranceCtxPc34 *ctx)
     return ctx->partyChampionCount;
 }
 
+int DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
+    const DM1_V1_EntranceCtxPc34 *ctx,
+    DM1_V1_EntranceFullStartRenderReceiptPc34 *outReceipt)
+{
+    int doorStep;
+
+    if (!ctx || !outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+
+    outReceipt->valid = 1;
+    outReceipt->mapIndex = DM1_V1_ENTRANCE_MAP_INDEX_PC34;
+    outReceipt->width = DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34;
+    outReceipt->height = DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34;
+    outReceipt->partyX = 2;
+    outReceipt->partyY = 0;
+    outReceipt->partyDirection = DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34;
+    outReceipt->drawFloorAndCeilingRequested = 1;
+
+    for (int i = 0; i < DM1_V1_ENTRANCE_MICRO_DUNGEON_SIZE_PC34; ++i) {
+        outReceipt->squares[i] = DM1_V1_ENTRANCE_ELEMENT_WALL_PC34;
+    }
+    for (int column = 0; column < DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34; ++column) {
+        outReceipt->squares[column + 10] = DM1_V1_ENTRANCE_ELEMENT_CORRIDOR_PC34;
+        outReceipt->corridorCount++;
+    }
+    outReceipt->squares[7] = DM1_V1_ENTRANCE_ELEMENT_CORRIDOR_PC34;
+    outReceipt->corridorCount++;
+
+    doorStep = ctx->doorAnim.animationStep;
+    if (doorStep < 0) doorStep = 0;
+    if (doorStep >= ctx->doorAnim.totalSteps) {
+        doorStep = ctx->doorAnim.totalSteps - 1;
+    }
+    if (doorStep < 0) doorStep = 0;
+
+    outReceipt->doorFrameIndex = doorStep;
+    outReceipt->doorSourceStep = doorStep;
+    outReceipt->drawDoorFrame =
+        (ctx->state == DM1_ENTRANCE_DOOR_OPENING || ctx->doorAnim.complete);
+    outReceipt->playDoorRattleSound =
+        (ctx->state == DM1_ENTRANCE_DOOR_OPENING && ((doorStep % 3) == 1));
+    outReceipt->entranceMusicRequested =
+        (ctx->state == DM1_ENTRANCE_VIEWING ||
+         ctx->state == DM1_ENTRANCE_SELECTING ||
+         ctx->state == DM1_ENTRANCE_RESURRECTING ||
+         ctx->state == DM1_ENTRANCE_REINCARNATING);
+
+    /* ReDMCSB ENTRANCE.C F0797:68-80 builds C255 entrance map as 5x5
+     * walls, opens row y=2 plus square index 7, and draws south from 2,0.
+     * F0438:142-178 advances door steps from the entrance-door bitmap list;
+     * F0438:152-166 plays door-rattle when animationStep % 3 == 1. */
+    return 1;
+}
+
 const char *DM1_V1_Entrance_SourceEvidencePc34Compat(void)
 {
     return
