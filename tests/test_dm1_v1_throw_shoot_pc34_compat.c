@@ -694,6 +694,7 @@ static void test_projectile_materialization_plan(void) {
     struct ProjectileInstance_Compat p;
     struct ProjectileTickResult_Compat r;
     DM1_ProjectileMaterializationPlanPc34 plan;
+    DM1_ProjectileMaterializationReceiptPc34 materialReceipt;
     DM1_ProjectileSquareAttachPlanPc34 attach;
     DM1_ProjectileSquareAttachReceiptPc34 receipt;
     unsigned short chain[66];
@@ -726,6 +727,23 @@ static void test_projectile_materialization_plan(void) {
     ASSERT_EQ(plan.droppedThing,
               (unsigned short)(weaponThing | (unsigned short)(1u << 14)),
               "wall materialize source-cell thing");
+    chain[0] = THING_ENDOFLIST;
+    memset(&materialReceipt, 0, sizeof(materialReceipt));
+    ASSERT_EQ(dm1_v1_projectile_materialization_receipt_f0215_pc34(
+                  &p, &r, 0, 0, THING_ENDOFLIST, chain, 1,
+                  &materialReceipt), 1,
+              "wall materialization receipt builds");
+    ASSERT_EQ(materialReceipt.valid, 1,
+              "wall materialization receipt valid");
+    ASSERT_EQ(materialReceipt.shouldMaterialize, 1,
+              "wall materialization receipt materializes");
+    ASSERT_EQ(materialReceipt.mapX, 10,
+              "wall materialization receipt map x");
+    ASSERT_EQ(materialReceipt.squareAttach.shouldSetSquareFirstThing, 1,
+              "wall materialization receipt owns empty square attach");
+    ASSERT_EQ(materialReceipt.squareAttach.droppedThing,
+              (unsigned short)(weaponThing | (unsigned short)(1u << 14)),
+              "wall materialization receipt dropped thing");
 
     r.resultKind = PROJECTILE_RESULT_HIT_CHAMPION;
     r.emittedCombatAction = 1;
@@ -743,6 +761,20 @@ static void test_projectile_materialization_plan(void) {
     ASSERT_EQ(plan.droppedThing,
               (unsigned short)(weaponThing | (unsigned short)(2u << 14)),
               "champion materialize impact-cell thing");
+    chain[0] = tailThing;
+    chain[1] = THING_ENDOFLIST;
+    memset(&materialReceipt, 0, sizeof(materialReceipt));
+    ASSERT_EQ(dm1_v1_projectile_materialization_receipt_f0215_pc34(
+                  &p, &r, 0, 0, tailThing, chain, 2, &materialReceipt), 1,
+              "champion materialization receipt builds");
+    ASSERT_EQ(materialReceipt.mapIndex, 3,
+              "champion materialization receipt impact map");
+    ASSERT_EQ(materialReceipt.cell, 2,
+              "champion materialization receipt impact cell");
+    ASSERT_EQ(materialReceipt.squareAttach.shouldAppendAfterTail, 1,
+              "champion materialization receipt appends to occupied square");
+    ASSERT_EQ(materialReceipt.squareAttach.tailThing, tailThing,
+              "champion materialization receipt tail thing");
 
     p.flags = PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT;
     p.reserved1 = (unsigned short)((THING_TYPE_POTION << 10) | 1);
@@ -752,6 +784,17 @@ static void test_projectile_materialization_plan(void) {
               "potion materialization plan builds");
     ASSERT_EQ(plan.shouldConsumePotion, 1, "potion materialization consumes");
     ASSERT_EQ(plan.shouldMaterialize, 0, "potion materialization blocked");
+    memset(&materialReceipt, 0, sizeof(materialReceipt));
+    ASSERT_EQ(dm1_v1_projectile_materialization_receipt_f0215_pc34(
+                  &p, &r, 0, 4, THING_ENDOFLIST, chain, 1,
+                  &materialReceipt), 1,
+              "potion materialization receipt builds");
+    ASSERT_EQ(materialReceipt.shouldConsumePotion, 1,
+              "potion materialization receipt consumes");
+    ASSERT_EQ(materialReceipt.shouldMaterialize, 0,
+              "potion materialization receipt skips attach");
+    ASSERT_EQ(materialReceipt.squareAttach.valid, 0,
+              "potion materialization receipt has no square attach");
 
     p.flags = 0;
     p.reserved1 = (unsigned short)((THING_TYPE_PROJECTILE << 10) | 2);
@@ -761,6 +804,13 @@ static void test_projectile_materialization_plan(void) {
     ASSERT_EQ(plan.handled, 1, "projectile thing materialization handled");
     ASSERT_EQ(plan.shouldMaterialize, 0,
               "projectile thing is not materialized into a dungeon square");
+    memset(&materialReceipt, 0, sizeof(materialReceipt));
+    ASSERT_EQ(dm1_v1_projectile_materialization_receipt_f0215_pc34(
+                  &p, &r, 0, 0, THING_ENDOFLIST, chain, 1,
+                  &materialReceipt), 1,
+              "projectile thing materialization receipt builds");
+    ASSERT_EQ(materialReceipt.shouldMaterialize, 0,
+              "projectile thing materialization receipt blocks attach");
 
     p.reserved1 = (unsigned short)((THING_TYPE_SENSOR << 10) | 1);
     ASSERT_EQ(dm1_v1_projectile_materialization_plan_pc34(

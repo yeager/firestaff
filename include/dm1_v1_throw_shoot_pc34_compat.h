@@ -191,6 +191,19 @@ typedef struct {
 } DM1_ProjectileSquareAttachReceiptPc34;
 
 typedef struct {
+    int valid;
+    int handled;
+    int shouldConsumePotion;
+    int shouldMaterialize;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int cell;
+    DM1_ProjectileMaterializationPlanPc34 materialization;
+    DM1_ProjectileSquareAttachReceiptPc34 squareAttach;
+} DM1_ProjectileMaterializationReceiptPc34;
+
+typedef struct {
     int handled;
     int championPresent;
     int championIndex;
@@ -446,6 +459,15 @@ int dm1_v1_projectile_materialization_plan_pc34(
     int associatedThingMovedToGroup,
     int potionCount,
     DM1_ProjectileMaterializationPlanPc34* outPlan);
+int dm1_v1_projectile_materialization_receipt_f0215_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    int associatedThingMovedToGroup,
+    int potionCount,
+    unsigned short squareFirstThing,
+    const unsigned short* squareChainThings,
+    int squareChainCount,
+    DM1_ProjectileMaterializationReceiptPc34* outReceipt);
 int dm1_v1_group_creature_index_for_cell_pc34(
     const struct DungeonGroup_Compat* group,
     int targetCell);
