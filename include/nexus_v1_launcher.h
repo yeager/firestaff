@@ -486,9 +486,15 @@ typedef struct {
     int gameover_capture_surface_ready;
     int warning_capture_frame;
     int title_capture_frame;
+    int save_capture_frame;
+    int champion_capture_frame;
+    int dungeon_capture_frame;
     int gameover_capture_frame;
     int saturn_warning_frame;
     int saturn_title_capture_frame;
+    int saturn_save_capture_frame;
+    int saturn_champion_capture_frame;
+    int saturn_dungeon_capture_frame;
     int saturn_title_ready_frame;
     int saturn_gameover_capture_frame;
     int saturn_timing_exact;
@@ -648,6 +654,9 @@ typedef struct {
     int blocked_route_suppresses_dgn_draws;
     int saturn_timing_exact;
     int saturn_capture_frames_exact;
+    int saturn_save_capture_frame;
+    int saturn_champion_capture_frame;
+    int saturn_dungeon_capture_frame;
     int runtime_dgn_handoff_ready;
     int no_fallback_visuals_enforced;
     int fallback_visuals_permitted;
@@ -697,6 +706,9 @@ typedef struct {
     int blocked_route_suppresses_all_draws;
     int saturn_warning_frame;
     int saturn_title_capture_frame;
+    int saturn_save_capture_frame;
+    int saturn_champion_capture_frame;
+    int saturn_dungeon_capture_frame;
     int saturn_title_ready_frame;
     int saturn_gameover_capture_frame;
     int saturn_timing_exact;

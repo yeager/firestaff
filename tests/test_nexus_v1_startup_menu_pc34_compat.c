@@ -1089,6 +1089,27 @@ int main(void)
                full_start_receipt.fallback_visuals_permitted == 0 &&
                strcmp(full_start_receipt.startup_ui_blocker, "none") == 0,
            "Nexus full-start receipt gates warning title menus audio and graphics");
+    {
+        int old_faces_loaded = synthetic_engine.ui_faces_loaded;
+        int old_faces_fallback = synthetic_engine.ui_faces_fallback;
+        synthetic_engine.ui_faces_loaded = 19;
+        synthetic_engine.ui_faces_fallback =
+            synthetic_engine.ui_faces_expected - synthetic_engine.ui_faces_loaded;
+        expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+                   &synthetic_runtime_receipt,
+                   &runtime_state,
+                   &full_start_receipt) &&
+                   full_start_receipt.faces_real_ready == 1 &&
+                   full_start_receipt.full_start_graphics_ready == 1 &&
+                   full_start_receipt.full_start_menu_ready == 1 &&
+                   full_start_receipt.m11_host_route_ready == 1 &&
+                   full_start_receipt.fallback_visuals_permitted == 0 &&
+                   strcmp(full_start_receipt.m11_host_route,
+                          "champion-menu") == 0,
+               "Nexus package route accepts real FACE coverage with handled missing rows");
+        synthetic_engine.ui_faces_loaded = old_faces_loaded;
+        synthetic_engine.ui_faces_fallback = old_faces_fallback;
+    }
     expect(nexus_v1_launcher_startup_full_start_consumer_from_runtime_state(
                &synthetic_runtime_receipt,
                &runtime_state,
@@ -1148,6 +1169,9 @@ int main(void)
                full_start_package_receipt.capture_command_count > 3 &&
                full_start_package_receipt.saturn_warning_frame == 0 &&
                full_start_package_receipt.saturn_title_capture_frame == 48 &&
+               full_start_package_receipt.saturn_champion_capture_frame == 102 &&
+               full_start_package_receipt.saturn_save_capture_frame == -1 &&
+               full_start_package_receipt.saturn_dungeon_capture_frame == -1 &&
                full_start_package_receipt.saturn_title_ready_frame == 102 &&
                full_start_package_receipt.saturn_gameover_capture_frame == 0 &&
                full_start_package_receipt.saturn_timing_exact == 1 &&
@@ -1247,6 +1271,9 @@ int main(void)
                real_asset_ownership_receipt.first_host_draw_uses_package == 1 &&
                real_asset_ownership_receipt.saturn_timing_exact == 1 &&
                real_asset_ownership_receipt.saturn_capture_frames_exact == 1 &&
+               real_asset_ownership_receipt.saturn_champion_capture_frame == 102 &&
+               real_asset_ownership_receipt.saturn_save_capture_frame == -1 &&
+               real_asset_ownership_receipt.saturn_dungeon_capture_frame == 102 &&
                real_asset_ownership_receipt.no_fallback_visuals_enforced == 1 &&
                real_asset_ownership_receipt.fallback_visuals_permitted == 0 &&
                real_asset_ownership_receipt.capture_route ==
@@ -1307,6 +1334,9 @@ int main(void)
                host_caller_receipt.title_timing_ready == 1 &&
                host_caller_receipt.saturn_warning_frame == 0 &&
                host_caller_receipt.saturn_title_capture_frame == 48 &&
+               host_caller_receipt.saturn_champion_capture_frame == 102 &&
+               host_caller_receipt.saturn_save_capture_frame == -1 &&
+               host_caller_receipt.saturn_dungeon_capture_frame == 102 &&
                host_caller_receipt.saturn_title_ready_frame == 102 &&
                host_caller_receipt.saturn_gameover_capture_frame == 0 &&
                host_caller_receipt.saturn_timing_exact == 1 &&
@@ -1402,6 +1432,9 @@ int main(void)
                full_start_package_receipt.champion_route_active == 0 &&
                full_start_package_receipt.title_route_active == 0 &&
                full_start_package_receipt.save_capture_ready == 1 &&
+               full_start_package_receipt.saturn_save_capture_frame == 102 &&
+               full_start_package_receipt.saturn_champion_capture_frame == -1 &&
+               full_start_package_receipt.saturn_dungeon_capture_frame == -1 &&
                full_start_package_receipt.capture_command_count > 3 &&
                full_start_package_receipt.first_capture_draw_kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
