@@ -280,6 +280,53 @@ static void dm1_v1_apply_stairs_transition_plan(
     outResult->viewportRedrawRequested = plan->viewportRedrawRequested;
 }
 
+int DM1_V1_MovementCommandCore_SuccessfulStepApplyPlanPc34Compat(
+    const struct MovementResult_Compat* movement,
+    struct Dm1V1MovementSuccessfulStepApplyPlanPc34Compat* outPlan)
+{
+    if (!outPlan) {
+        return 0;
+    }
+    memset(outPlan, 0, sizeof(*outPlan));
+    if (!movement || movement->resultCode != MOVE_OK) {
+        return 1;
+    }
+
+    outPlan->valid = 1;
+    outPlan->newMapIndex = movement->newMapIndex;
+    outPlan->newMapX = movement->newMapX;
+    outPlan->newMapY = movement->newMapY;
+    outPlan->newDirection = movement->newDirection;
+    outPlan->movementResultCode = MOVE_OK;
+    outPlan->stepApplied = 1;
+    outPlan->stopWaitingForPlayerInput = 1;
+    outPlan->viewportRedrawRequested = 1;
+    return 1;
+}
+
+static void dm1_v1_apply_successful_step_plan(
+    struct PartyState_Compat* party,
+    const struct Dm1V1MovementSuccessfulStepApplyPlanPc34Compat* plan,
+    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
+{
+    if (!party || !plan || !plan->valid || !outResult) {
+        return;
+    }
+
+    party->mapIndex = plan->newMapIndex;
+    party->mapX = plan->newMapX;
+    party->mapY = plan->newMapY;
+    party->direction = plan->newDirection;
+    outResult->movement.resultCode = plan->movementResultCode;
+    outResult->movement.newMapIndex = party->mapIndex;
+    outResult->movement.newMapX = party->mapX;
+    outResult->movement.newMapY = party->mapY;
+    outResult->movement.newDirection = party->direction;
+    outResult->stepApplied = plan->stepApplied;
+    outResult->stopWaitingForPlayerInput = plan->stopWaitingForPlayerInput;
+    outResult->viewportRedrawRequested = plan->viewportRedrawRequested;
+}
+
 static int dm1_v1_process_stair_walk_off_append(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
@@ -477,10 +524,12 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
             SENSOR_EVENT_WALK_OFF, &outResult->leaveEffects);
     }
 
-    party->mapIndex = outResult->movement.newMapIndex;
-    party->mapX = outResult->movement.newMapX;
-    party->mapY = outResult->movement.newMapY;
-    party->direction = outResult->movement.newDirection;
+    {
+        struct Dm1V1MovementSuccessfulStepApplyPlanPc34Compat stepPlan;
+        (void)DM1_V1_MovementCommandCore_SuccessfulStepApplyPlanPc34Compat(
+            &outResult->movement, &stepPlan);
+        dm1_v1_apply_successful_step_plan(party, &stepPlan, outResult);
+    }
 
     (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
         dungeon, things, party->mapIndex, party->mapX, party->mapY,
@@ -494,9 +543,6 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         currentGameTick,
         previousLastPartyMovementTime,
         footwearIcons);
-    outResult->stepApplied = 1;
-    outResult->stopWaitingForPlayerInput = 1;
-    outResult->viewportRedrawRequested = 1;
     return 1;
 }
 
