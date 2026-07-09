@@ -17,8 +17,8 @@ static int gPasses;
 
 static void test_right_click_c159_publishes_candidate_and_c040_panel(void)
 {
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat state;
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat result;
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat state;
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat result;
     int changed;
 
     DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(&state);
@@ -114,9 +114,9 @@ static void test_right_click_c159_publishes_candidate_and_c040_panel(void)
 
 static void test_second_right_click_clears_published_row_without_double_publish(void)
 {
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat state;
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat first;
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat second;
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat state;
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat first;
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat second;
 
     DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(&state);
     (void)DM1_V1_MirrorCandidatePickupRightClick_ApplyPc34Compat(
@@ -191,8 +191,8 @@ static void test_second_right_click_clears_published_row_without_double_publish(
 
 static void test_not_pending_gate_rejects_right_click(void)
 {
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat state;
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat result;
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat state;
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat result;
     int changed;
 
     DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(&state);
@@ -231,8 +231,8 @@ static void test_not_pending_gate_rejects_right_click(void)
 
 static void test_leader_hand_full_rejects_publish(void)
 {
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat state;
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat result;
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat state;
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat result;
     int changed;
 
     DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(&state);
@@ -269,8 +269,8 @@ static void test_leader_hand_full_rejects_publish(void)
 
 static void test_deadzone_right_click_is_noop(void)
 {
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat state;
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat result;
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat state;
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat result;
     int changed;
 
     DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(&state);
@@ -305,8 +305,8 @@ static void test_deadzone_right_click_is_noop(void)
 
 static void test_empty_row_right_click_is_noop(void)
 {
-    Dm1V1MirrorCandidatePickupRightClickStatePc34Compat state;
-    Dm1V1MirrorCandidatePickupRightClickResultPc34Compat result;
+    DM1_V1_MirrorCandidatePickupRightClickStatePc34Compat state;
+    DM1_V1_MirrorCandidatePickupRightClickResultPc34Compat result;
     int changed;
 
     DM1_V1_MirrorCandidatePickupRightClick_InitPc34Compat(&state);
@@ -340,7 +340,7 @@ static void test_empty_row_right_click_is_noop(void)
 
 static void test_source_lock_evidence(void)
 {
-    const Dm1V1MirrorCandidatePickupRightClickEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidatePickupRightClickEvidencePc34Compat *e =
         DM1_V1_MirrorCandidatePickupRightClick_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,

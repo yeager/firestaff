@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 mirror-candidate pickup-right-click ownership names: pickup-right-click row/evidence/state/result APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: pickup-right-click 64/64 assertions, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 mirror-candidate pending-hand-queue ownership names: pending-hand-queue evidence/entry/state/result APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: pending-hand-queue 305 assertions, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 mirror-candidate party-swap ownership names: party-swap evidence/state/result APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: party-swap 121/121 assertions, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

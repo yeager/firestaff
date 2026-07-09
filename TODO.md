@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 mirror-candidate pickup-right-click row/evidence/state/result API now exposes DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 mirror-candidate pending-hand-queue evidence/entry/state/result API now exposes DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 mirror-candidate party-swap evidence/state/result API now exposes DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 mirror-candidate chest-close leader-hand pickup case/evidence/context/log/result API now exposes DM1-owned names; old Dm1V1/M11 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate/chest adapter names and full-graphics proof.
