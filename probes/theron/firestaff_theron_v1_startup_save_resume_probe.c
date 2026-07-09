@@ -476,6 +476,60 @@ static void probe_continue_apply_mutates_world(void) {
 
         theron_v1_startup_action_init(&action);
         action.kind = THERON_STARTUP_ACTION_CONTINUE_SAVE;
+        check_int("continue apply srm slot receipt plan",
+                  theron_v1_startup_plan_for_action(&action, &plan),
+                  1);
+        theron_v1_world_init(&world);
+        world.object_count = 7;
+        world.timer_count = 3;
+        world.transition_pending = 1;
+        memset(receipt, 0, sizeof(receipt));
+        check_int("continue apply srm slot receipts rc",
+                  theron_v1_startup_continue_srm_apply_with_receipts(
+                      &world,
+                      srm_root,
+                      0,
+                      &plan,
+                      NULL,
+                      &continue_result,
+                      &apply_receipt,
+                      &state_receipt,
+                      receipt,
+                      sizeof(receipt)),
+                  1);
+        check_int("continue apply srm slot result source",
+                  continue_result.source,
+                  THERON_V1_STARTUP_CONTINUE_SOURCE_SRM);
+        check_int("continue apply srm slot result slot",
+                  continue_result.source_slot_index,
+                  0);
+        check_int("continue apply srm slot apply source",
+                  apply_receipt.source,
+                  THERON_V1_STARTUP_CONTINUE_SOURCE_SRM);
+        check_int("continue apply srm slot apply slot",
+                  apply_receipt.source_slot_index,
+                  0);
+        check_int("continue apply srm slot apply dungeon",
+                  apply_receipt.srm_current_dungeon,
+                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+        check_int("continue apply srm slot state slot",
+                  state_receipt.save_resume_srm_active_slot,
+                  0);
+        check_int("continue apply srm slot state dungeon",
+                  state_receipt.save_resume_srm_current_dungeon,
+                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+        check_int("continue apply srm slot object reset",
+                  world.object_count,
+                  0);
+        check_int("continue apply srm slot timer reset",
+                  world.timer_count,
+                  0);
+        check_int("continue apply srm slot transition reset",
+                  world.transition_pending,
+                  0);
+
+        theron_v1_startup_action_init(&action);
+        action.kind = THERON_STARTUP_ACTION_CONTINUE_SAVE;
         check_int("continue apply external srm plan",
                   theron_v1_startup_plan_for_action(&action, &plan),
                   1);

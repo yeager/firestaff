@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron slot SRM apply/state receipt helper: regular `slotN.srm` Continue now exposes direct apply and state receipts with SRM source, slot index, import status, dungeon, quest, party count, gold, and runtime-reset proof while the host wrapper remains a thin adapter. Verification: `test_theron_v1_startup_save_resume_pc34` 173/173, `firestaff_theron_v1_startup_save_resume_probe` 103/103, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0412 runtime spell receipts: DM1 spell casting now exposes source-locked runtime receipts for spell-created projectiles, champion rotation, XP/disable ticks, light C70 event facts, and failure suppression so callers can stop deriving those facts in M10/M11. Verification: `test_dm1_v1_spell_casting_pc34_compat` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus SNDLEV SFX runtime receipt: Nexus level load now reads real `SNDLEV##.SAL/.MAP` beside DGN/SLEV, records a current-level SFX receipt with SAL/MAP size classification and CD-track route, and blocks real SFX playback until SAL/MAP decode is implemented instead of logging fallback sounds. Verification: `test_nexus_v1_sound_runtime_receipt`, `test_nexus_v1_boot_file_hash_scan`, `nexus_v1_audio_receipt` CTest, and `git diff --check` passed.
