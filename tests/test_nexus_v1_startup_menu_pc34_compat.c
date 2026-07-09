@@ -120,12 +120,14 @@ int main(void)
     Nexus_V1_StartupRuntimeHandoffReceipt runtime_handoff_receipt;
     Nexus_V1_StartupRuntimeRouteReceipt runtime_route_receipt;
     Nexus_V1_StartupRouteProofReceipt route_proof_receipt;
+    Nexus_V1_StartupFullStartReceipt full_start_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff_receipt;
     Nexus_V1_LauncherRuntimeReceipt synthetic_runtime_receipt;
     Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_Engine synthetic_engine;
+    uint8_t synthetic_surface_pixel = 1;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
@@ -747,6 +749,14 @@ int main(void)
     synthetic_engine.game.party_x = 3;
     synthetic_engine.game.party_y = 4;
     synthetic_engine.game.party_dir = 0;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_TITLE].data =
+        &synthetic_surface_pixel;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_TITLE].w = 320;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_TITLE].h = 200;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_WARNING].data =
+        &synthetic_surface_pixel;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_WARNING].w = 320;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_WARNING].h = 200;
     synthetic_engine.ui_startup_surfaces_expected = 1;
     synthetic_engine.ui_startup_surfaces_loaded = 1;
     synthetic_engine.ui_faces_expected = NEXUS_MAX_CHAMPIONS;
@@ -935,6 +945,32 @@ int main(void)
                route_proof_receipt.fallback_visuals_permitted == 0 &&
                route_proof_receipt.runtime_handoff.command_count > 0,
            "Nexus startup route proof spans Saturn assets title menu and runtime");
+    expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               &full_start_receipt) &&
+               full_start_receipt.route ==
+                   NEXUS_V1_STARTUP_FULL_START_MENU_READY &&
+               strcmp(nexus_v1_launcher_startup_full_start_route_name(
+                          full_start_receipt.route),
+                      "menu-ready") == 0 &&
+               full_start_receipt.warning_art_loaded == 1 &&
+               full_start_receipt.title_art_loaded == 1 &&
+               full_start_receipt.boot_warning_title_ready == 1 &&
+               full_start_receipt.startup_surfaces_real_ready == 1 &&
+               full_start_receipt.faces_real_ready == 1 &&
+               full_start_receipt.menu_bpk_route_ready == 1 &&
+               full_start_receipt.save_menu_route_ready == 1 &&
+               full_start_receipt.champion_menu_route_ready == 1 &&
+               full_start_receipt.audio_track02_ready == 1 &&
+               full_start_receipt.cd_track == 2 &&
+               full_start_receipt.sfx_status ==
+                   NEXUS_SFX_RUNTIME_READY_DECODED &&
+               full_start_receipt.full_start_graphics_ready == 1 &&
+               full_start_receipt.full_start_menu_ready == 1 &&
+               full_start_receipt.fallback_visuals_permitted == 0 &&
+               strcmp(full_start_receipt.startup_ui_blocker, "none") == 0,
+           "Nexus full-start receipt gates warning title menus audio and graphics");
     memset(dgn_commands, 0, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_firestaff_input(
                &runtime_state,
@@ -1056,6 +1092,29 @@ int main(void)
                strcmp(route_proof_receipt.status,
                       "blocked-track02-sfx") == 0,
            "Nexus startup route proof exposes Track 02 SFX blocker");
+    expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               &full_start_receipt) &&
+               full_start_receipt.route ==
+                   NEXUS_V1_STARTUP_FULL_START_BLOCKED_ASSETS &&
+               full_start_receipt.warning_art_loaded == 1 &&
+               full_start_receipt.title_art_loaded == 1 &&
+               full_start_receipt.boot_warning_title_ready == 1 &&
+               full_start_receipt.full_start_graphics_ready == 1 &&
+               full_start_receipt.save_menu_route_ready == 0 &&
+               full_start_receipt.champion_menu_route_ready == 0 &&
+               full_start_receipt.audio_track02_ready == 0 &&
+               full_start_receipt.cd_track == -1 &&
+               full_start_receipt.sfx_status ==
+                   NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET &&
+               full_start_receipt.sfx_blocks_real_playback == 1 &&
+               full_start_receipt.full_start_menu_ready == 0 &&
+               strcmp(full_start_receipt.startup_ui_blocker,
+                      "track02-sfx") == 0 &&
+               strcmp(full_start_receipt.status,
+                      "blocked-track02-sfx") == 0,
+           "Nexus full-start receipt blocks on Track 02 SFX handoff");
     synthetic_engine.sfx_runtime_receipt.status =
         NEXUS_SFX_RUNTIME_READY_DECODED;
     synthetic_engine.sfx_runtime_receipt.level_index = 0;
@@ -1222,6 +1281,28 @@ int main(void)
                strcmp(route_proof_receipt.status,
                       "blocked-menu-bpk-prs3") == 0,
            "Nexus startup route proof exposes Saturn asset blocker before runtime");
+    expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               &full_start_receipt) &&
+               full_start_receipt.route ==
+                   NEXUS_V1_STARTUP_FULL_START_BLOCKED_ASSETS &&
+               full_start_receipt.warning_art_loaded == 1 &&
+               full_start_receipt.title_art_loaded == 1 &&
+               full_start_receipt.boot_warning_title_ready == 1 &&
+               full_start_receipt.startup_surfaces_real_ready == 1 &&
+               full_start_receipt.faces_real_ready == 1 &&
+               full_start_receipt.menu_bpk_route_ready == 0 &&
+               full_start_receipt.save_menu_route_ready == 0 &&
+               full_start_receipt.champion_menu_route_ready == 0 &&
+               full_start_receipt.audio_track02_ready == 1 &&
+               full_start_receipt.full_start_graphics_ready == 0 &&
+               full_start_receipt.full_start_menu_ready == 0 &&
+               strcmp(full_start_receipt.startup_ui_blocker,
+                      "menu-bpk-prs3") == 0 &&
+               strcmp(full_start_receipt.status,
+                      "blocked-menu-bpk-prs3") == 0,
+           "Nexus full-start receipt blocks save and champion menus on PRS3");
     expect(nexus_v1_startup_champion_execution_mode_update(
                &champion_execution,
                2,
