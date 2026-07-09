@@ -1370,6 +1370,8 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
     receipt.handled = 1;
     receipt.consumed_capture_artifact = 1;
     receipt.consumed_capture_facts = 1;
+    receipt.real_asset_capture = facts->captured_from_real_assets ? 1 : 0;
+    receipt.mac_window_capture = facts->captured_from_mac_window ? 1 : 0;
     receipt.capture_phase = artifact->capture_phase;
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -1397,6 +1399,8 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
     receipt.command_count_matches =
         facts->captured_hoc_render_command_count ==
         artifact->expected_hoc_render_command_count;
+    receipt.host_capture_route_matches =
+        receipt.real_asset_capture && receipt.mac_window_capture;
     receipt.stale_title_absent =
         artifact->title_surface_forbidden && !facts->saw_title_surface;
     receipt.stale_door_absent =
@@ -1448,6 +1452,9 @@ int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
     receipt.consumed_capture_artifact = 1;
     receipt.consumed_capture_proof = 1;
     receipt.require_proof_passed = 1;
+    receipt.real_asset_capture = proof->real_asset_capture;
+    receipt.mac_window_capture = proof->mac_window_capture;
+    receipt.host_capture_route_matches = proof->host_capture_route_matches;
     receipt.capture_phase = artifact->capture_phase;
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -1585,6 +1592,9 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.handled = 1;
     receipt.consumed_runtime_apply_receipt = 1;
     receipt.consumed_thing_suppression_receipt = 1;
+    receipt.real_asset_capture = apply->real_asset_capture;
+    receipt.mac_window_capture = apply->mac_window_capture;
+    receipt.host_capture_route_matches = apply->host_capture_route_matches;
     receipt.capture_phase = apply->capture_phase;
     receipt.source_evidence =
         "ReDMCSB ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -1607,6 +1617,9 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
      * contract for M11/M12/package callers. */
     receipt.ready = 1;
     receipt.consume_dm1_receipts_only = 1;
+    receipt.real_asset_capture = apply->real_asset_capture;
+    receipt.mac_window_capture = apply->mac_window_capture;
+    receipt.host_capture_route_matches = apply->host_capture_route_matches;
     receipt.execute_before_hoc_input = apply->apply_before_hoc_input;
     receipt.draw_opened_entrance_frame = apply->apply_opened_entrance_frame;
     receipt.clear_champion_panel = apply->apply_clear_champion_panel;
@@ -1704,6 +1717,10 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
      * verdicts. */
     capture_facts.captured_after_first_frame_render =
         facts->captured_after_first_frame_render;
+    capture_facts.captured_from_real_assets =
+        facts->captured_from_real_assets;
+    capture_facts.captured_from_mac_window =
+        facts->captured_from_mac_window;
     capture_facts.captured_map_index = artifact.expected_map_index;
     capture_facts.captured_map_width = artifact.expected_map_width;
     capture_facts.captured_map_height = artifact.expected_map_height;

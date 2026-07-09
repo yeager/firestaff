@@ -302,6 +302,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 {
 
 typedef struct DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 {
     int captured_after_first_frame_render;
+    int captured_from_real_assets;
+    int captured_from_mac_window;
     int captured_map_index;
     int captured_map_width;
     int captured_map_height;
@@ -323,6 +325,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int proof_passed;
     int consumed_capture_artifact;
     int consumed_capture_facts;
+    int real_asset_capture;
+    int mac_window_capture;
+    int host_capture_route_matches;
     int geometry_matches;
     int entrance_frame_matches;
     int hall_overlay_matches;
@@ -342,6 +347,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 {
     int consumed_capture_artifact;
     int consumed_capture_proof;
     int require_proof_passed;
+    int real_asset_capture;
+    int mac_window_capture;
+    int host_capture_route_matches;
     int apply_before_hoc_input;
     int apply_opened_entrance_frame;
     int apply_clear_champion_panel;
@@ -401,6 +409,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
     int consumed_runtime_apply_receipt;
     int consumed_thing_suppression_receipt;
     int consume_dm1_receipts_only;
+    int real_asset_capture;
+    int mac_window_capture;
+    int host_capture_route_matches;
     int execute_before_hoc_input;
     int draw_opened_entrance_frame;
     int clear_champion_panel;
@@ -432,6 +443,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int entrance_command;
     int title_played;
     int captured_after_first_frame_render;
+    int captured_from_real_assets;
+    int captured_from_mac_window;
     int observed_false_floor_item_payload_count;
     int observed_projectile_payload_count;
     int observed_spell_effect_payload_count;

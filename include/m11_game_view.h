@@ -200,6 +200,9 @@ typedef struct {
     int dm1HoCRuntimeApplyReady;
     int dm1HoCProductionConsumerReady;
     int dm1HoCNoHostFallbackVisuals;
+    int dm1HoCRealAssetCapture;
+    int dm1HoCMacWindowCapture;
+    int dm1HoCHostCaptureRouteMatches;
     int dm1HoCOpenedEntranceFrame;
     int dm1HoCHallMirrorOverlay;
     int dm1HoCBlockedEnterUntilChampion;
