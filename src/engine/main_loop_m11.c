@@ -1013,7 +1013,9 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                                               const M12_StartupMenuState* menuState,
                                               const char* dataDir,
                                               const char* gameId,
-                                              int skipSwoosh) {
+                                              int skipSwoosh,
+                                              const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
+                                                  dm1MediaReceipt) {
     char logoPath[FSP_PATH_MAX];
     unsigned char* logoImg = NULL;
     unsigned char* screenFbPacked = NULL;
@@ -1027,8 +1029,12 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     if (skipSwoosh) return;
     memset(&logoPayload, 0, sizeof(logoPayload));
     memset(&dm1Media, 0, sizeof(dm1Media));
-    if (gameId && strcmp(gameId, "dm1") == 0) {
-        hasDm1Media = m11_dm1_startup_media_receipt_for_source(gameId, &dm1Media);
+    if (dm1MediaReceipt && dm1MediaReceipt->handled) {
+        dm1Media = *dm1MediaReceipt;
+        hasDm1Media = 1;
+    } else if (gameId && strcmp(gameId, "dm1") == 0) {
+        hasDm1Media =
+            m11_dm1_startup_media_receipt_for_source(gameId, &dm1Media);
     }
     if (!M11_SWSH_Intro_FindLogoPathForGame(menuState,
                                             dataDir,
@@ -1115,15 +1121,20 @@ cleanup:
 
 static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
                                               const char* dataDir,
-                                              int skipSwoosh) {
+                                              int skipSwoosh,
+                                              const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
+                                                  dm1MediaReceipt) {
     m11_play_ftl_swoosh_for_game_if_available(menuState,
                                               dataDir,
                                               "dm1",
-                                              skipSwoosh);
+                                              skipSwoosh,
+                                              dm1MediaReceipt);
 }
 
-static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* gameView,
-                                                              int* outPlayedAnyFrame) {
+static int m11_play_redmcsb_title_graphic_intro_if_available(
+    M11_GameViewState* gameView,
+    int* outPlayedAnyFrame,
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* dm1MediaReceipt) {
     const M11_AssetSlot* titleGraphic;
     unsigned char* framebuffer;
     V1_TitleFrontendSourceTiming timing;
@@ -1157,7 +1168,13 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
     }
     timing = V1_TitleFrontend_GetSourceTimingEvidence();
     memset(&dm1Media, 0, sizeof(dm1Media));
-    hasDm1Media = m11_dm1_startup_media_receipt_for_source("dm1", &dm1Media);
+    if (dm1MediaReceipt && dm1MediaReceipt->handled) {
+        dm1Media = *dm1MediaReceipt;
+        hasDm1Media = 1;
+    } else {
+        hasDm1Media =
+            m11_dm1_startup_media_receipt_for_source("dm1", &dm1Media);
+    }
 
     memset(&titleAudio, 0, sizeof(titleAudio));
     if (M11_Audio_Init(&titleAudio)) {
@@ -1285,7 +1302,9 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
 
 static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
                                                       M11_GameViewState* gameView,
-                                                      int* outPlayedAnyFrame) {
+                                                      int* outPlayedAnyFrame,
+                                                      const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
+                                                          dm1MediaReceipt) {
     char titlePath[FSP_PATH_MAX];
     unsigned char* packedStorage;
     unsigned char* packedScreen;
@@ -1301,7 +1320,9 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
     }
-    if (m11_play_redmcsb_title_graphic_intro_if_available(gameView, outPlayedAnyFrame)) {
+    if (m11_play_redmcsb_title_graphic_intro_if_available(gameView,
+                                                          outPlayedAnyFrame,
+                                                          dm1MediaReceipt)) {
         return;
     }
     if (!M11_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
@@ -1322,7 +1343,13 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     packedScreen = packedStorage + 4U;
     timing = V1_TitleFrontend_GetSourceTimingEvidence();
     memset(&dm1Media, 0, sizeof(dm1Media));
-    hasDm1Media = m11_dm1_startup_media_receipt_for_source("dm1", &dm1Media);
+    if (dm1MediaReceipt && dm1MediaReceipt->handled) {
+        dm1Media = *dm1MediaReceipt;
+        hasDm1Media = 1;
+    } else {
+        hasDm1Media =
+            m11_dm1_startup_media_receipt_for_source("dm1", &dm1Media);
+    }
 
     memset(&titleAudio, 0, sizeof(titleAudio));
     if (M11_Audio_Init(&titleAudio)) {
@@ -1411,6 +1438,10 @@ typedef struct M11_DM1StartupHandoffContext {
     M11_GameViewState* gameView;
     uint32_t* idleAccumulatorMs;
     const char* dataDir;
+    DM1_V1_StartupHandoffPreludePlan_PC34 activePreludePlan;
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 activePostLaunchPlan;
+    int activePreludePlanValid;
+    int activePostLaunchPlanValid;
 } M11_DM1StartupHandoffContext;
 
 static int m11_dm1_handoff_report_source_order_failure(void* user,
@@ -1428,14 +1459,64 @@ static int m11_dm1_handoff_raise_window(void* user) {
     return 1;
 }
 
+static int m11_dm1_handoff_begin_prelude_plan(
+    void* user,
+    const DM1_V1_StartupHandoffPreludePlan_PC34* plan) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !plan) {
+        return 0;
+    }
+    ctx->activePreludePlan = *plan;
+    ctx->activePreludePlanValid = 1;
+    return 1;
+}
+
+static int m11_dm1_handoff_end_prelude_plan(void* user) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx) {
+        return 0;
+    }
+    memset(&ctx->activePreludePlan, 0, sizeof(ctx->activePreludePlan));
+    ctx->activePreludePlanValid = 0;
+    return 1;
+}
+
+static int m11_dm1_handoff_begin_post_launch_plan(
+    void* user,
+    const DM1_V1_StartupHandoffPostLaunchPlan_PC34* plan) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !plan) {
+        return 0;
+    }
+    ctx->activePostLaunchPlan = *plan;
+    ctx->activePostLaunchPlanValid = 1;
+    return 1;
+}
+
+static int m11_dm1_handoff_end_post_launch_plan(void* user) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx) {
+        return 0;
+    }
+    memset(&ctx->activePostLaunchPlan, 0, sizeof(ctx->activePostLaunchPlan));
+    ctx->activePostLaunchPlanValid = 0;
+    return 1;
+}
+
 static int m11_dm1_handoff_play_swsh(void* user,
                                      const char* game_id,
                                      int preserve_audio) {
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media = NULL;
     (void)game_id;
+    if (ctx && ctx->activePreludePlanValid &&
+        ctx->activePreludePlan.media_receipt.handled) {
+        media = &ctx->activePreludePlan.media_receipt;
+    }
     m11_play_ftl_swoosh_if_available(ctx ? ctx->menuState : NULL,
                                      ctx ? ctx->dataDir : NULL,
-                                     preserve_audio);
+                                     preserve_audio,
+                                     media);
     return 1;
 }
 
@@ -1449,13 +1530,19 @@ static int m11_dm1_handoff_play_title(void* user,
                                       const char* source_id,
                                       int* out_played_any_frame) {
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media = NULL;
     (void)source_id;
     if (!ctx) {
         return 0;
     }
+    if (ctx->activePostLaunchPlanValid &&
+        ctx->activePostLaunchPlan.media_receipt.handled) {
+        media = &ctx->activePostLaunchPlan.media_receipt;
+    }
     m11_play_redmcsb_title_intro_if_available(ctx->menuState,
                                               ctx->gameView,
-                                              out_played_any_frame);
+                                              out_played_any_frame,
+                                              media);
     return 1;
 }
 
@@ -1617,6 +1704,14 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     dm1HandoffContext.dataDir = dataDir;
     dm1HandoffContext.idleAccumulatorMs = idleAccumulatorMs;
     dm1HandoffCallbacks.user = &dm1HandoffContext;
+    dm1HandoffCallbacks.begin_prelude_plan =
+        m11_dm1_handoff_begin_prelude_plan;
+    dm1HandoffCallbacks.end_prelude_plan =
+        m11_dm1_handoff_end_prelude_plan;
+    dm1HandoffCallbacks.begin_post_launch_plan =
+        m11_dm1_handoff_begin_post_launch_plan;
+    dm1HandoffCallbacks.end_post_launch_plan =
+        m11_dm1_handoff_end_post_launch_plan;
     dm1HandoffCallbacks.report_source_order_failure =
         m11_dm1_handoff_report_source_order_failure;
     dm1HandoffCallbacks.raise_window = m11_dm1_handoff_raise_window;
@@ -1672,7 +1767,8 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             m11_play_ftl_swoosh_for_game_if_available(menuState,
                                                        dataDir,
                                                        "csb",
-                                                       0);
+                                                       0,
+                                                       NULL);
             M11_Render_DiscardPresentationTexture();
         }
         /* Theron's Quest has no source -- no intro needed. */
