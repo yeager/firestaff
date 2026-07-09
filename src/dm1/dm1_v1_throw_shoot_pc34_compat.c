@@ -1675,6 +1675,27 @@ int dm1_v1_projectile_champion_poison_apply_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_champion_poison_event_count_after_pc34(
+    const DM1_ProjectileChampionPoisonApplyPlanPc34* applyPlan,
+    int currentPoisonEventCount,
+    int* outPoisonEventCount) {
+    int nextCount;
+    if (!outPoisonEventCount) return 0;
+    nextCount = currentPoisonEventCount;
+    if (nextCount < 0) nextCount = 0;
+    if (nextCount > 255) nextCount = 255;
+    if (applyPlan && applyPlan->incrementPoisonEventCount && nextCount < 255) {
+        nextCount++;
+    }
+    *outPoisonEventCount = nextCount;
+
+    /* ReDMCSB: CHAMPION.C F0322 lines 1954-1960 queues the next C75 poison
+     * event after poison damage. Firestaff stores the active event counter in
+     * its lifecycle sidecar; keep the saturation decision with the DM1 poison
+     * receipt instead of rebuilding it in M10/M11 callers. */
+    return 1;
+}
+
 int dm1_v1_projectile_champion_party_death_check_pc34(
     int combatKilledFlag,
     int championCurrentHealth) {

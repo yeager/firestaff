@@ -1334,6 +1334,18 @@ static void test_projectile_champion_impact_plan(void) {
               "champion poison event attack");
     ASSERT_EQ(poisonApply.poisonEvent.aux4, 1,
               "champion poison event champion");
+    {
+        int nextCount = -1;
+        ASSERT_EQ(dm1_v1_projectile_champion_poison_event_count_after_pc34(
+                      &poisonApply, 0, &nextCount), 1,
+                  "champion poison event count helper builds");
+        ASSERT_EQ(nextCount, 1, "champion poison event count increments");
+        ASSERT_EQ(dm1_v1_projectile_champion_poison_event_count_after_pc34(
+                      &poisonApply, 255, &nextCount), 1,
+                  "champion poison event count helper clamps");
+        ASSERT_EQ(nextCount, 255,
+                  "champion poison event count saturates at byte max");
+    }
 
     ASSERT_EQ(dm1_v1_projectile_champion_poison_plan_pc34(
                   &impact, &p, 12, 1, 65530, 1, &poison), 1,

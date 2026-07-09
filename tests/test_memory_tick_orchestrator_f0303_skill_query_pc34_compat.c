@@ -3532,6 +3532,7 @@ static void test_orch_projectile_champion_hit_applies_poison(void) {
     world.party.champions[1].hp.maximum = 100;
     world.party.champions[1].cell = 1;
     world.party.champions[1].poisonDose = 0;
+    world.lifecycle.champions[1].poisonEventCount = 254;
     assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 3u) == 1);
 
     memset(&createIn, 0, sizeof(createIn));
@@ -3560,7 +3561,7 @@ static void test_orch_projectile_champion_hit_applies_poison(void) {
     assert(world.projectiles.count == 0);
     assert(world.party.champions[1].hp.current == 67);
     assert(world.party.champions[1].poisonDose == 12);
-    assert(world.lifecycle.champions[1].poisonEventCount == 1);
+    assert(world.lifecycle.champions[1].poisonEventCount == 255);
     assert(world.explosions.count == 1);
     assert(world.explosions.entries[0].explosionType == C007_EXPLOSION_POISON_CLOUD);
     assert(world.explosions.entries[0].attack == 20);

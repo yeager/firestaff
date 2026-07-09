@@ -4368,13 +4368,17 @@ static int orch_apply_projectile_champion_action_compat(
             return 1;
         }
         if (poisonApply.schedulePoisonEvent) {
+            int nextPoisonEventCount = 0;
             (void)F0721_TIMELINE_Schedule_Compat(
                 &world->timeline, &poisonApply.poisonEvent);
-            if (poisonApply.incrementPoisonEventCount &&
-                world->lifecycle.champions[championIndex].poisonEventCount <
-                255) {
-                world->lifecycle.champions[championIndex].poisonEventCount++;
+            if (!dm1_v1_projectile_champion_poison_event_count_after_pc34(
+                    &poisonApply,
+                    world->lifecycle.champions[championIndex].poisonEventCount,
+                    &nextPoisonEventCount)) {
+                return 0;
             }
+            world->lifecycle.champions[championIndex].poisonEventCount =
+                (uint8_t)nextPoisonEventCount;
         }
         if (poisonApply.championDown) {
             emit(result, EMIT_CHAMPION_DOWN, championIndex, 0, 0, 0);

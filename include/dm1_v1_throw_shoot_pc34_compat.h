@@ -557,6 +557,10 @@ int dm1_v1_projectile_champion_poison_apply_pc34(
     int poisonEventMapY,
     struct ChampionState_Compat* champion,
     DM1_ProjectileChampionPoisonApplyPlanPc34* outPlan);
+int dm1_v1_projectile_champion_poison_event_count_after_pc34(
+    const DM1_ProjectileChampionPoisonApplyPlanPc34* applyPlan,
+    int currentPoisonEventCount,
+    int* outPoisonEventCount);
 int dm1_v1_projectile_champion_party_death_check_pc34(
     int combatKilledFlag,
     int championCurrentHealth);
