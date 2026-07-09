@@ -2216,6 +2216,56 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "DM1 F0190 zero-damage keeps fallback outcome");
 }
 
+static void test_melee_f0231_runtime_result_plan(void) {
+    DM1_MeleeF0231RuntimeResultInputPc34 in;
+    DM1_MeleeF0231RuntimeResultPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.combatOutcome = COMBAT_OUTCOME_NO_ACTION;
+    in.damageApplied = 5;
+    in.groupIndex = 0;
+    in.groupCount = 1;
+    CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(&in, &out), 1,
+             "F0231 no-action runtime result builds");
+    CHECK_EQ(out.shouldReturnHandledNoAction, 1,
+             "F0231 no-action returns handled");
+    CHECK_EQ(out.shouldApplySideEffects, 0,
+             "F0231 no-action skips side effects");
+
+    memset(&in, 0, sizeof(in));
+    in.combatOutcome = COMBAT_OUTCOME_HIT_DAMAGE;
+    in.damageApplied = 12;
+    in.groupIndex = 0;
+    in.groupCount = 1;
+    CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(&in, &out), 1,
+             "F0231 damage runtime result builds");
+    CHECK_EQ(out.shouldWriteBackLuck, 1, "F0231 damage writes luck");
+    CHECK_EQ(out.shouldApplySideEffects, 1,
+             "F0231 damage applies side effects");
+    CHECK_EQ(out.shouldApplyGroupDamage, 1,
+             "F0231 damage applies group damage");
+    CHECK_EQ(out.shouldEmitDamageDealt, 1,
+             "F0231 damage emits damage result");
+
+    in.damageApplied = 0;
+    CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(&in, &out), 1,
+             "F0231 zero-damage runtime result builds");
+    CHECK_EQ(out.shouldApplyGroupDamage, 0,
+             "F0231 zero damage skips group damage");
+    CHECK_EQ(out.shouldApplySideEffects, 1,
+             "F0231 zero damage still applies stamina side effects");
+    CHECK_EQ(out.shouldEmitDamageDealt, 1,
+             "F0231 zero damage emits handled damage result");
+
+    in.damageApplied = 12;
+    in.groupIndex = 3;
+    in.groupCount = 1;
+    CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(&in, &out), 1,
+             "F0231 out-of-range runtime result builds");
+    CHECK_EQ(out.shouldApplyGroupDamage, 0,
+             "F0231 out-of-range skips group damage");
+}
+
 static void test_melee_f0231_damage_resolver_entrypoint(void) {
     struct CombatantChampionSnapshot_Compat attackerA;
     struct CombatantChampionSnapshot_Compat attackerB;
@@ -2314,6 +2364,7 @@ int main(void) {
     test_melee_f0231_creature_snapshot_plan();
     test_melee_f0231_aftermath_plan();
     test_melee_f0231_reaction_and_group_apply();
+    test_melee_f0231_runtime_result_plan();
     test_melee_f0231_damage_resolver_entrypoint();
     test_invalid_action();
     if (g_failures) {
