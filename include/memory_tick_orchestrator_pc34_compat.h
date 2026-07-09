@@ -141,6 +141,7 @@
 #define EMIT_PARTY_FELL       0x0B
 #define EMIT_PARTY_TELEPORTED 0x0C
 #define EMIT_SENSOR_EFFECT    0x0D  /* pass-37: party enter/leave sensor effects */
+#define EMIT_ACTION_DISABLED  0x0E  /* payload: champion, ticks, action index, slot */
 
 /* EMIT_SPELL_EFFECT payload[3] keeps the F0412 power ordinal in the
  * low byte, ReDMCSB G0487 Spell.SkillIndex in the next byte, and the
