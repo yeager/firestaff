@@ -156,10 +156,31 @@ typedef struct {
     Nexus_V1_StartupRuntimeState runtime;
 } Nexus_V1_LauncherRuntimeStartupSnapshot;
 
+typedef enum {
+    NEXUS_V1_STARTUP_MENU_PRESENTATION_INVALID = 0,
+    NEXUS_V1_STARTUP_MENU_PRESENTATION_SAVE = 1,
+    NEXUS_V1_STARTUP_MENU_PRESENTATION_CHAMPION = 2
+} Nexus_V1_StartupMenuPresentationKind;
+
+typedef struct {
+    Nexus_V1_StartupMenuPresentationKind kind;
+    int route_ready;
+    int route_blocked;
+    int draw_command_count;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_StartupHostReceipt host_receipt;
+    const char *asset_route;
+    const char *asset_blocker;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupMenuPresentationReceipt;
+
 void nexus_v1_launcher_startup_runtime_state_clear(
     Nexus_V1_StartupRuntimeState *state);
 void nexus_v1_launcher_runtime_startup_snapshot_clear(
     Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot);
+void nexus_v1_launcher_startup_menu_presentation_receipt_clear(
+    Nexus_V1_StartupMenuPresentationReceipt *receipt);
 int nexus_v1_launcher_startup_host_facts_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupHostFacts *out_facts);
@@ -290,6 +311,16 @@ int nexus_v1_launcher_startup_presentation_build_save_from_snapshot(
     const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int nexus_v1_launcher_startup_save_presentation_receipt_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupMenuPresentationReceipt *out_receipt);
+int nexus_v1_launcher_startup_save_presentation_receipt_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupMenuPresentationReceipt *out_receipt);
 int nexus_v1_launcher_startup_presentation_build_champion_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupDrawCommand *out_commands,
@@ -298,6 +329,16 @@ int nexus_v1_launcher_startup_presentation_build_champion_from_snapshot(
     const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int nexus_v1_launcher_startup_champion_presentation_receipt_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupMenuPresentationReceipt *out_receipt);
+int nexus_v1_launcher_startup_champion_presentation_receipt_from_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupMenuPresentationReceipt *out_receipt);
 int nexus_v1_launcher_startup_presentation_execute(
     const Nexus_V1_StartupDrawCommand *commands,
     int command_count,
