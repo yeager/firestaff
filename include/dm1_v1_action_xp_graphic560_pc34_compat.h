@@ -487,6 +487,11 @@ typedef struct {
     int shouldSpawnProjectile;
     int shouldClearActionHand;
     int actionEnableSlotOrdinal;
+    int disableActionTicks;
+    int projectileDisabledMovementTicks;
+    int lastProjectileDisabledMovementDirection;
+    int throwExperienceGain;
+    int throwSkillIndex;
     int throwSide;
 } DM1_ActionThrowPlanPc34;
 

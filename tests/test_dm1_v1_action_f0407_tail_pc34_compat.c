@@ -955,6 +955,8 @@ static void test_flip_and_direction_plans(void) {
              "throw pre-spawn plan builds");
     CHECK_EQ(throwOut.shouldSpawnProjectile, 1, "throw tries spawn");
     CHECK_EQ(throwOut.performed, 0, "throw pre-spawn not performed yet");
+    CHECK_EQ(throwOut.disableActionTicks, 0,
+             "throw pre-spawn no disable receipt yet");
     CHECK_EQ(throwOut.throwSide, 1, "throw side carried");
 
     throwIn.projectileSpawned = 1;
@@ -964,6 +966,16 @@ static void test_flip_and_direction_plans(void) {
     CHECK_EQ(throwOut.shouldClearActionHand, 1, "throw clears action hand");
     CHECK_EQ(throwOut.actionEnableSlotOrdinal, CHAMPION_SLOT_ACTION_HAND,
              "throw requests action-hand enable slot");
+    CHECK_EQ(throwOut.disableActionTicks, 4,
+             "throw F0328 disables action for four ticks");
+    CHECK_EQ(throwOut.projectileDisabledMovementTicks, 4,
+             "throw disables projectile movement for four ticks");
+    CHECK_EQ(throwOut.lastProjectileDisabledMovementDirection, 0,
+             "throw records party direction for projectile movement block");
+    CHECK_EQ(throwOut.throwExperienceGain, 8,
+             "throw base XP receipt");
+    CHECK_EQ(throwOut.throwSkillIndex, DM1_SKILL_IDX_THROW,
+             "throw skill XP route");
 }
 
 static void test_closed_door_melee_plan(void) {
