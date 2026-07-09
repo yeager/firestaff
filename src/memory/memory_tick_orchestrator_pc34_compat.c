@@ -19,6 +19,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
+#include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
@@ -6532,38 +6533,6 @@ static int orch_damage_group_all_creatures_compat(
     return damaged;
 }
 
-static int cmd_to_move_action(uint8_t cmd, int partyDirection, int* outSetDir) {
-    *outSetDir = -1;
-    switch (cmd) {
-        case CMD_MOVE_NORTH: return (partyDirection == DIR_NORTH) ? MOVE_FORWARD :
-                                    (partyDirection == DIR_SOUTH) ? MOVE_BACKWARD :
-                                    (partyDirection == DIR_EAST)  ? MOVE_LEFT : MOVE_RIGHT;
-        case CMD_MOVE_EAST:  return (partyDirection == DIR_EAST)  ? MOVE_FORWARD :
-                                    (partyDirection == DIR_WEST)  ? MOVE_BACKWARD :
-                                    (partyDirection == DIR_NORTH) ? MOVE_RIGHT : MOVE_LEFT;
-        case CMD_MOVE_SOUTH: return (partyDirection == DIR_SOUTH) ? MOVE_FORWARD :
-                                    (partyDirection == DIR_NORTH) ? MOVE_BACKWARD :
-                                    (partyDirection == DIR_WEST)  ? MOVE_RIGHT : MOVE_LEFT;
-        case CMD_MOVE_WEST:  return (partyDirection == DIR_WEST)  ? MOVE_FORWARD :
-                                    (partyDirection == DIR_EAST)  ? MOVE_BACKWARD :
-                                    (partyDirection == DIR_SOUTH) ? MOVE_RIGHT : MOVE_LEFT;
-        case CMD_TURN_LEFT:  return MOVE_TURN_LEFT;
-        case CMD_TURN_RIGHT: return MOVE_TURN_RIGHT;
-        default: return -1;
-    }
-}
-
-static int movement_action_absolute_direction(int partyDirection, int moveAction) {
-    partyDirection &= 3;
-    switch (moveAction) {
-        case MOVE_FORWARD:  return partyDirection;
-        case MOVE_RIGHT:    return (partyDirection + 1) & 3;
-        case MOVE_BACKWARD: return (partyDirection + 2) & 3;
-        case MOVE_LEFT:     return (partyDirection + 3) & 3;
-        default:            return -1;
-    }
-}
-
 static int redmcsb_party_move_cooldown_ticks_compat(
     const struct PartyState_Compat* party)
 {
@@ -6591,28 +6560,6 @@ static int redmcsb_party_move_cooldown_ticks_compat(
     return ticks;
 }
 
-static int movement_command_disabled_redmcsb_compat(
-    const struct GameWorld_Compat* world,
-    int moveAction)
-{
-    int absoluteDirection;
-    if (!world) return 0;
-    absoluteDirection = movement_action_absolute_direction(world->party.direction, moveAction);
-    if (absoluteDirection < 0) return 0;
-    /*
-     * ReDMCSB source-lock: COMMAND.C:2095-2100 / 2104-2110 checks only
-     * C003..C006 movement commands before dispatch.  A non-zero
-     * G0310_i_DisabledMovementTicks suppresses all movement commands; a
-     * non-zero G0311_i_ProjectileDisabledMovementTicks suppresses only the
-     * movement whose absolute direction equals
-     * G0312_i_LastProjectileDisabledMovementDirection.  GAMELOOP.C:150-155
-     * decrements both cooldowns once per game tick.
-     */
-    if (world->disabledMovementTicks > 0) return 1;
-    return world->projectileDisabledMovementTicks > 0 &&
-           ((world->lastProjectileDisabledMovementDirection & 3) == absoluteDirection);
-}
-
 int F0888_ORCH_ApplyPlayerInput_Compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
@@ -6628,13 +6575,23 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
     case CMD_MOVE_WEST:
     case CMD_TURN_LEFT:
     case CMD_TURN_RIGHT: {
-        int ignore;
-        int mv = cmd_to_move_action(input->command, world->party.direction, &ignore);
-        if (mv < 0) return 0;
-        if (movement_command_disabled_redmcsb_compat(world, mv)) return 0;
+        DM1_V1_MovementOrchestratorRoutePlanPc34Compat routePlan;
+        int mv;
+        memset(&routePlan, 0, sizeof(routePlan));
+        if (!DM1_V1_Movement_OrchestratorRoutePlanPc34Compat(
+                input->command, world->party.direction,
+                world->disabledMovementTicks,
+                world->projectileDisabledMovementTicks,
+                world->lastProjectileDisabledMovementDirection,
+                &routePlan) ||
+            !routePlan.valid) {
+            return 0;
+        }
+        if (routePlan.movementDisabledGate) return 0;
+        mv = routePlan.moveAction;
         if (!world->dungeon) {
             /* no dungeon: succeed deterministically (unit-test path) */
-            if (mv == MOVE_TURN_LEFT || mv == MOVE_TURN_RIGHT) {
+            if (routePlan.dispatchedTurn) {
                 set_party_direction_redmcsb_compat(&world->party,
                     F0700_MOVEMENT_TurnDirection_Compat(world->party.direction, mv == MOVE_TURN_RIGHT));
             }

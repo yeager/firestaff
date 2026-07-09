@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_movement_timing_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
@@ -42,6 +43,7 @@ int main(void)
 {
     struct PartyState_Compat party;
     struct Dm1V1MovementTimingResultPc34Compat timing;
+    DM1_V1_MovementOrchestratorRoutePlanPc34Compat routePlan;
     struct Dm1V1InputCommandQueuePc34Compat queue;
     struct Dm1V1InputQueueProcessResultPc34Compat queueResult;
     int footwear[CHAMPION_MAX_PARTY] = { 0, 0, LIFECYCLE_ICON_BOOT_OF_SPEED, 0 };
@@ -53,6 +55,31 @@ int main(void)
 
     printf("probe=dm1_v1_movement_timing_pc34_compat\n");
     printf("sourceEvidence=%s\n", DM1_V1_MovementTiming_SourceEvidencePc34Compat());
+
+    memset(&routePlan, 0, sizeof(routePlan));
+    ok &= expect_int("orchestrator route builds north command while east-facing",
+        DM1_V1_Movement_OrchestratorRoutePlanPc34Compat(
+            0x01, DIR_EAST, 0, 0, 0, &routePlan), 1);
+    ok &= expect_int("orchestrator north command maps to left strafe when east-facing",
+        routePlan.moveAction, MOVE_LEFT);
+    ok &= expect_int("orchestrator north command absolute direction north",
+        routePlan.absoluteDirection, DIR_NORTH);
+    ok &= expect_int("orchestrator route dispatches step",
+        routePlan.dispatchedMove, 1);
+    ok &= expect_int("orchestrator step is projectile-gated by matching absolute dir",
+        DM1_V1_Movement_OrchestratorRoutePlanPc34Compat(
+            0x01, DIR_EAST, 0, 4, DIR_NORTH, &routePlan), 1);
+    ok &= expect_int("orchestrator projectile gate set",
+        routePlan.movementDisabledGate, 1);
+    ok &= expect_int("orchestrator turn bypasses movement cadence",
+        DM1_V1_Movement_OrchestratorRoutePlanPc34Compat(
+            0x05, DIR_EAST, 7, 4, DIR_NORTH, &routePlan), 1);
+    ok &= expect_int("orchestrator turn route valid",
+        routePlan.valid, 1);
+    ok &= expect_int("orchestrator turn dispatches turn",
+        routePlan.dispatchedTurn, 1);
+    ok &= expect_int("orchestrator turn no disabled gate",
+        routePlan.movementDisabledGate, 0);
 
     ok &= expect_int("unloaded champion cadence 2 ticks",
         (int)DM1_V1_MovementTiming_ComputeChampionTicksPc34Compat(40, 100, 0, 0), 2);

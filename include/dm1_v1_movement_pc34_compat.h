@@ -63,6 +63,7 @@
 
 #include <stdint.h>
 #include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "memory_movement_pc34_compat.h"
 
 /* ── Direction enum ─────────────────────────────────────────────────
  * Maps to ReDMCSB cardinal directions (0=North, 1=East, 2=South, 3=West).
@@ -168,6 +169,23 @@ void dm1v1_movement_init(DM1_V1_MovementState *state,
 void dm1v1_command_queue_init(DM1_V1_CommandQueue *queue);
 
 int DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(int menu_input);
+
+typedef struct {
+    int valid;
+    int moveAction;
+    int absoluteDirection;
+    int dispatchedTurn;
+    int dispatchedMove;
+    int movementDisabledGate;
+} DM1_V1_MovementOrchestratorRoutePlanPc34Compat;
+
+int DM1_V1_Movement_OrchestratorRoutePlanPc34Compat(
+    int command,
+    int partyDirection,
+    int disabledMovementTicks,
+    int projectileDisabledMovementTicks,
+    int lastProjectileDisabledMovementDirection,
+    DM1_V1_MovementOrchestratorRoutePlanPc34Compat* outPlan);
 
 /*
  * dm1v1_movement_poll_input — Read input, enqueue command if valid.

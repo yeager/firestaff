@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 M10 movement route/gate ownership: M10 player movement input now consumes a DM1 movement route plan for absolute command-to-move-action mapping, turn-vs-step dispatch, disabled movement cadence, and projectile-direction lockout. Verification: `test_dm1_v1_movement_timing_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0190 M11 killed-all drop ownership: M11 group-death handling now consumes the DM1 F0190 killed-all drop gates plus shared fixed-drop cell plan before materializing fixed and GROUP.Slot possessions. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), `test_m11_creature_projectile_runtime_pc34_compat` (25/25), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0190 M11 killed-all state ownership: M11 group-death removal now consumes the DM1 F0190 killed-all state plan for square unlink, group-next clear, and active-group AI cleanup instead of applying those policy decisions inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), `test_m11_creature_projectile_runtime_pc34_compat` (25/25), Phase A 24/24, and `git diff --check` passed.
