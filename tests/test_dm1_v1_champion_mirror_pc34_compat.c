@@ -223,6 +223,45 @@ static void test_f0358_edges_and_f0368_dead_target(void)
                  "CLIKCHAM.C:51-53");
 }
 
+static void test_f0172_front_wall_sensor_receipt(void)
+{
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 receipt;
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 2, 2, &receipt) == 1 &&
+            receipt.valid == 1 &&
+            receipt.isFrontMirror == 1 &&
+            receipt.championPortraitOrdinal == 13 &&
+            receipt.wallOrnamentOrdinal == 4,
+        "C127 matching wall cell yields front champion mirror receipt",
+        "DUNGEON.C:2573,2608-2612");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 1, 2, &receipt) == 1 &&
+            receipt.valid == 1 &&
+            receipt.isFrontMirror == 0 &&
+            receipt.championPortraitOrdinal ==
+                DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT,
+        "C127 on a non-visible wall face is ignored",
+        "DUNGEON.C:2573");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            12, 13, 4, 2, 2, &receipt) == 1 &&
+            receipt.valid == 1 &&
+            receipt.isFrontMirror == 0,
+        "non-C127 sensors stay outside champion mirror receipt",
+        "DUNGEON.C:2608-2612");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 2, 2, NULL) == 0,
+        "front mirror receipt rejects NULL output",
+        "DUNGEON.C:2608-2612");
+}
+
 int main(void)
 {
     test_c159_name_route_without_candidate_panel();
@@ -230,6 +269,7 @@ int main(void)
     test_nested_c019_name_route_without_candidate_panel();
     test_nested_c019_route_blocked_while_c040_live();
     test_f0358_edges_and_f0368_dead_target();
+    test_f0172_front_wall_sensor_receipt();
 
     CHECK_ANCHOR(DM1_V1_ChampionMirror_SourceEvidencePc34() != NULL,
                  "source evidence string is available",
