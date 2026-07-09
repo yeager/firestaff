@@ -8,7 +8,7 @@ enum {
     kPartyChampionCountWithCandidate = 4
 };
 
-static const Dm1V1MirrorCandidateOccupiedHandPanelEvidencePc34Compat
+static const DM1_V1_MirrorCandidateOccupiedHandPanelEvidencePc34Compat
     s_evidence = {
         "ReDMCSB COMMAND.C F0359:1985-1990",
         "ReDMCSB COMMAND.C mouse table:508-512",
@@ -24,9 +24,9 @@ static const Dm1V1MirrorCandidateOccupiedHandPanelEvidencePc34Compat
     };
 
 static void capture_before(
-    const Dm1V1MirrorCandidateOccupiedHandPanelStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateOccupiedHandPanelStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateOccupiedHandPanelResultPc34Compat *result)
+    DM1_V1_MirrorCandidateOccupiedHandPanelResultPc34Compat *result)
 {
     memset(result, 0, sizeof(*result));
     result->evidence = &s_evidence;
@@ -64,8 +64,8 @@ static void capture_before(
 }
 
 static void capture_after(
-    const Dm1V1MirrorCandidateOccupiedHandPanelStatePc34Compat *state,
-    Dm1V1MirrorCandidateOccupiedHandPanelResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateOccupiedHandPanelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOccupiedHandPanelResultPc34Compat *result)
 {
     result->panelContentAfter = state->panelContent;
     result->c040PanelOpenAfter = state->c040PanelOpen;
@@ -108,7 +108,7 @@ static void capture_after(
 }
 
 void DM1_V1_MirrorCandidateOccupiedHandPanel_InitPc34Compat(
-    Dm1V1MirrorCandidateOccupiedHandPanelStatePc34Compat *state)
+    DM1_V1_MirrorCandidateOccupiedHandPanelStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -127,12 +127,12 @@ void DM1_V1_MirrorCandidateOccupiedHandPanel_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateOccupiedHandPanel_ClickPc34Compat(
-    Dm1V1MirrorCandidateOccupiedHandPanelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateOccupiedHandPanelStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateOccupiedHandPanelResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateOccupiedHandPanelResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateOccupiedHandPanelResultPc34Compat localResult;
-    Dm1V1MirrorCandidateOccupiedHandPanelResultPc34Compat *result =
+    DM1_V1_MirrorCandidateOccupiedHandPanelResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateOccupiedHandPanelResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     if (!state) {
@@ -181,7 +181,7 @@ int DM1_V1_MirrorCandidateOccupiedHandPanel_ClickPc34Compat(
     return 1;
 }
 
-const Dm1V1MirrorCandidateOccupiedHandPanelEvidencePc34Compat *
+const DM1_V1_MirrorCandidateOccupiedHandPanelEvidencePc34Compat *
 DM1_V1_MirrorCandidateOccupiedHandPanel_EvidencePc34Compat(void)
 {
     return &s_evidence;

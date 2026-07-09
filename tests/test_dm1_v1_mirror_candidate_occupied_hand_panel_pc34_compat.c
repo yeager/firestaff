@@ -27,7 +27,7 @@ static int gPasses;
 
 static void test_fixture_starts_after_publication_with_occupied_hand(void)
 {
-    Dm1V1MirrorCandidateOccupiedHandPanelStatePc34Compat state;
+    DM1_V1_MirrorCandidateOccupiedHandPanelStatePc34Compat state;
 
     DM1_V1_MirrorCandidateOccupiedHandPanel_InitPc34Compat(&state);
 
@@ -59,8 +59,8 @@ static void test_fixture_starts_after_publication_with_occupied_hand(void)
 static void check_occupied_hand_button_is_ignored(int command,
                                                   const char *label)
 {
-    Dm1V1MirrorCandidateOccupiedHandPanelStatePc34Compat state;
-    Dm1V1MirrorCandidateOccupiedHandPanelResultPc34Compat result;
+    DM1_V1_MirrorCandidateOccupiedHandPanelStatePc34Compat state;
+    DM1_V1_MirrorCandidateOccupiedHandPanelResultPc34Compat result;
     int accepted;
 
     DM1_V1_MirrorCandidateOccupiedHandPanel_InitPc34Compat(&state);
@@ -123,7 +123,7 @@ static void test_all_c040_buttons_are_blocked_before_f0282(void)
 
 static void test_source_lock_and_non_overlap_evidence(void)
 {
-    const Dm1V1MirrorCandidateOccupiedHandPanelEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateOccupiedHandPanelEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateOccupiedHandPanel_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,

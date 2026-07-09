@@ -13,21 +13,21 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_DOUBLE_OPEN_CLOSE_GUARD_C162_CLOSE_PC34 162
 #define DM1_V1_MIRROR_CANDIDATE_DOUBLE_OPEN_CLOSE_GUARD_C030_CHEST_SLOT_PC34 30
 
-typedef enum Dm1V1MirrorCandidateDoubleOpenCloseGuardEventKindPc34Compat {
+typedef enum DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventKindPc34Compat {
     DM1_V1_MIRROR_CANDIDATE_DOUBLE_OPEN_CLOSE_GUARD_EVENT_C040_OPEN_PC34 = 1,
     DM1_V1_MIRROR_CANDIDATE_DOUBLE_OPEN_CLOSE_GUARD_EVENT_C040_CLOSE_PC34 = 2,
     DM1_V1_MIRROR_CANDIDATE_DOUBLE_OPEN_CLOSE_GUARD_EVENT_CHEST_CLOSE_PENDING_PC34 = 3,
     DM1_V1_MIRROR_CANDIDATE_DOUBLE_OPEN_CLOSE_GUARD_EVENT_INVENTORY_PORTRAIT_CLICK_PC34 = 4
-} Dm1V1MirrorCandidateDoubleOpenCloseGuardEventKindPc34Compat;
+} DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventKindPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat {
+typedef struct DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat {
     int kind;
     int tick;
     unsigned int candidateChampionOrdinal;
     int requestedSlotIndex;
-} Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat;
+} DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat {
+typedef struct DM1_V1_MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat {
     int contractOnly;
     const char *nonDuplicateScope;
     const char *chamdrawPanelOpenAnchor;
@@ -37,9 +37,9 @@ typedef struct Dm1V1MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat {
     const char *commandPanelDispatchAnchor;
     const char *reviveCandidateClearAnchor;
     const char *defsAnchor;
-} Dm1V1MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat;
+} DM1_V1_MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat {
     int contractOnly;
     int panelContent;
     int c040PanelOpen;
@@ -73,10 +73,10 @@ typedef struct Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat {
         DM1_V1_MIRROR_CANDIDATE_DOUBLE_OPEN_CLOSE_GUARD_SLOT_COUNT_PC34];
     int usedSlotOrder[
         DM1_V1_MIRROR_CANDIDATE_DOUBLE_OPEN_CLOSE_GUARD_SLOT_COUNT_PC34];
-} Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat;
+} DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat {
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat *evidence;
+typedef struct DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat {
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat *evidence;
     int eventsProcessed;
     int panelContentBefore;
     int panelContentAfter;
@@ -123,33 +123,44 @@ typedef struct Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat {
     int inventoryClickUsedCloseSlotOrder;
     int inventoryClickDidNotUseClickSlotOrder;
     int inventoryClickDidNotDispatchF0302;
-} Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat;
+} DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat;
+
+typedef DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventKindPc34Compat
+    Dm1V1MirrorCandidateDoubleOpenCloseGuardEventKindPc34Compat;
+typedef DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat
+    Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat;
+typedef DM1_V1_MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat
+    Dm1V1MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat;
+typedef DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat
+    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat;
+typedef DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat
+    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat;
 
 void dm1_v1_mirror_candidate_double_open_close_guard_init_open_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state);
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state);
 
 void dm1_v1_mirror_candidate_double_open_close_guard_init_closed_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state);
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *state);
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_events_pc34_compat(
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *initial,
-    const Dm1V1MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *events,
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardStatePc34Compat *initial,
+    const DM1_V1_MirrorCandidateDoubleOpenCloseGuardEventPc34Compat *events,
     unsigned int eventCount,
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_double_open_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_double_close_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_close_during_pending_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
 
 int dm1_v1_mirror_candidate_double_open_close_guard_run_inventory_click_during_close_pc34_compat(
-    Dm1V1MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateDoubleOpenCloseGuardResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat *
+const DM1_V1_MirrorCandidateDoubleOpenCloseGuardEvidencePc34Compat *
 dm1_v1_mirror_candidate_double_open_close_guard_evidence_pc34_compat(void);
 
 #ifdef __cplusplus
