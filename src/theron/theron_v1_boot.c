@@ -36,6 +36,7 @@
 #include "theron_v1_boot.h"
 #include "asset_find_by_hash.h"
 #include "theron_v1_mechanics.h"
+#include "theron_v1_startup_runtime_entry.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
 #include <stdio.h>
@@ -1275,6 +1276,27 @@ int theron_v1_boot_startup_view_model_from_snapshot(
         snapshot && snapshot->world
             ? snapshot->world->party.champion_count
             : -1;
+    out_view_model->continue_focus = snapshot ? snapshot->continue_focus : 0;
+    out_view_model->resume_claim = snapshot ? snapshot->resume_claim : 0;
+    out_view_model->tqsv_slot = snapshot ? snapshot->tqsv_slot : -1;
+    out_view_model->srm_slot = snapshot ? snapshot->srm_slot : -1;
+    out_view_model->srm_import_status =
+        snapshot ? snapshot->srm_import_status : 0;
+    out_view_model->runtime_level_source = 0;
+    out_view_model->runtime_track02_semantic_handoff = 0;
+    out_view_model->runtime_fallback_visuals_blocked = 0;
+    if (snapshot && snapshot->world) {
+        const Theron_V1_World *world = snapshot->world;
+        int dungeon_index = world->current_dungeon - 1;
+        if (dungeon_index >= 0 &&
+            dungeon_index < THERON_DUNGEON_COUNT &&
+            world->current_level >= 0 &&
+            world->current_level < THERON_MAX_LEVELS_PER_DUNGEON &&
+            world->level_loaded[dungeon_index][world->current_level]) {
+            out_view_model->runtime_level_source =
+                THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM;
+        }
+    }
     return 1;
 }
 

@@ -297,6 +297,14 @@ typedef struct Theron_V1_BootStartupViewModel {
     int title_ready;
     int runtime_level;
     int runtime_champion_count;
+    int runtime_level_source;
+    int runtime_track02_semantic_handoff;
+    int runtime_fallback_visuals_blocked;
+    int continue_focus;
+    int resume_claim;
+    int tqsv_slot;
+    int srm_slot;
+    int srm_import_status;
 } Theron_V1_BootStartupViewModel;
 
 int theron_v1_boot_prepare_startup_profile(
