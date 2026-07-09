@@ -555,6 +555,61 @@ static void test_runtime_surface_handoff_truncated_and_capacity(void) {
            "blocked truncated handoff status name is stable");
 }
 
+static void test_runtime_decode_receipt_routes(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkRuntimeDecodeReceipt receipt;
+    int rc;
+
+    make_synthetic_4entry_bpk(data, sizeof(data));
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_v1_bpk_archive_runtime_decode_receipt(
+        data, sizeof(data), &receipt);
+    expect(rc == 0, "decode receipt returns 0 for PRS3 archive");
+    expect(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
+           "decode receipt routes PRS3 archive to blocked-prs3");
+    expect(strcmp(nexus_v1_bpk_runtime_decode_route_name(receipt.route),
+                  "blocked-prs3") == 0,
+           "decode receipt blocked-prs3 route name is stable");
+    expect(receipt.surface_entries == 3U &&
+               receipt.blocked_prs3_surfaces == 3U &&
+               receipt.prs3_stream_plans == 1U &&
+               receipt.prs3_stream_plan_failures == 2U &&
+               receipt.requires_prs3_decoder == 1 &&
+               receipt.decode_blocked == 1,
+           "decode receipt exposes PRS3 stream plan failure blockers");
+    expect(receipt.first_blocked_entry == 1U &&
+               receipt.first_blocked_stream_size == 0U &&
+               receipt.first_blocked_expected_output_bytes == 16U,
+           "decode receipt carries first blocked PRS3 failure facts");
+
+    make_synthetic_stored_bpk(data, sizeof(data));
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_v1_bpk_archive_runtime_decode_receipt(
+        data, sizeof(data), &receipt);
+    expect(rc == 0, "decode receipt returns 0 for stored archive");
+    expect(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED,
+           "decode receipt routes stored archive to ready-stored");
+    expect(receipt.ready_stored_surfaces == 3U &&
+               receipt.blocked_prs3_surfaces == 0U &&
+               receipt.prs3_stream_plans == 0U &&
+               receipt.decode_blocked == 0,
+           "decode receipt exposes ready stored counts");
+
+    make_synthetic_4entry_bpk(data, sizeof(data));
+    memset(data + 96U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 128U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(data + 160U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, 0, 4U);
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_v1_bpk_archive_runtime_decode_receipt(
+        data, sizeof(data), &receipt);
+    expect(rc == 0, "decode receipt returns 0 for truncated stored archive");
+    expect(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED,
+           "decode receipt routes short stored surfaces to blocked-truncated");
+    expect(receipt.blocked_truncated_surfaces == 2U &&
+               receipt.decode_blocked == 1,
+           "decode receipt exposes truncated stored blockers");
+}
+
 /* ---- Synthetic BPX3 directory-trailer entry ---- */
 
 static void test_bpx3_trailer_entry(void) {
@@ -871,6 +926,7 @@ int main(void) {
     test_runtime_surface_handoff_blocks_prs3();
     test_runtime_surface_handoff_ready_stored();
     test_runtime_surface_handoff_truncated_and_capacity();
+    test_runtime_decode_receipt_routes();
     test_bpx3_trailer_entry();
     test_bpx3_trailer_rejections();
     test_bpx3_prs3_span_rejections();

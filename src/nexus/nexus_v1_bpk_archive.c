@@ -815,6 +815,123 @@ const char *nexus_v1_bpk_prs3_stream_status_name(int status) {
     }
 }
 
+int nexus_v1_bpk_archive_runtime_decode_receipt(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkRuntimeDecodeReceipt *out_receipt) {
+    Nexus_V1_BpkRuntimeSurfaceHandoffSummary summary;
+    uint32_t count;
+    int have_first_blocked = 0;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->first_blocked_entry = UINT32_MAX;
+
+    if (nexus_v1_bpk_archive_runtime_surface_handoff(
+            data, data_size, NULL, 0U, &summary) != 0) {
+        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_INVALID;
+        return -1;
+    }
+    if (read_header(data, data_size, &count) != 0) {
+        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_INVALID;
+        return -1;
+    }
+
+    out_receipt->archive_entries = summary.archive_entries;
+    out_receipt->surface_entries = summary.surface_entries;
+    out_receipt->ready_stored_surfaces = summary.ready_stored_surfaces;
+    out_receipt->blocked_prs3_surfaces = summary.blocked_prs3_surfaces;
+    out_receipt->blocked_truncated_surfaces =
+        summary.blocked_truncated_surfaces;
+    out_receipt->requires_prs3_decoder = summary.requires_prs3_decoder;
+
+    for (uint32_t i = 0; i < count; ++i) {
+        Nexus_V1_BpkEntry entry;
+        Nexus_V1_BpkEntryPrefix prefix;
+        uint32_t bpp;
+        if (nexus_v1_bpk_archive_get_entry(data, data_size, i,
+                                           &entry) != 0 ||
+            nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
+                                                  &prefix) != 0) {
+            out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_INVALID;
+            return -1;
+        }
+        if (!entry.has_prs3 || !prefix.prefix_complete) continue;
+        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        if (bpp == 0U) continue;
+
+        {
+            Nexus_V1_BpkPrs3StreamPlan plan;
+            int rc = nexus_v1_bpk_archive_prs3_stream_plan(
+                data, data_size, i, &plan);
+            if (rc != NEXUS_V1_BPK_PRS3_STREAM_OK) {
+                ++out_receipt->prs3_stream_plan_failures;
+                if (!have_first_blocked) {
+                    out_receipt->first_blocked_entry = i;
+                    out_receipt->first_blocked_stream_offset = 0U;
+                    out_receipt->first_blocked_stream_size = 0U;
+                    out_receipt->first_blocked_expected_output_bytes =
+                        (uint32_t)prefix.width * (uint32_t)prefix.height *
+                        bpp;
+                    out_receipt->first_blocked_header_first_u32 = 0U;
+                    out_receipt->first_blocked_header_minus_payload =
+                        UINT32_MAX;
+                    have_first_blocked = 1;
+                }
+                continue;
+            }
+            ++out_receipt->prs3_stream_plans;
+            if (plan.bounded_header_candidate) {
+                ++out_receipt->prs3_bounded_header_candidates;
+            }
+            if (plan.header_underflow) {
+                ++out_receipt->prs3_header_underflows;
+            }
+            if (!have_first_blocked) {
+                out_receipt->first_blocked_entry = i;
+                out_receipt->first_blocked_stream_offset =
+                    plan.stream_offset;
+                out_receipt->first_blocked_stream_size = plan.stream_size;
+                out_receipt->first_blocked_expected_output_bytes =
+                    plan.expected_output_bytes;
+                out_receipt->first_blocked_header_first_u32 =
+                    plan.header_first_u32;
+                out_receipt->first_blocked_header_minus_payload =
+                    plan.header_minus_payload;
+                have_first_blocked = 1;
+            }
+        }
+    }
+
+    if (out_receipt->surface_entries == 0U) {
+        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES;
+    } else if (out_receipt->blocked_prs3_surfaces > 0U) {
+        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3;
+    } else if (out_receipt->blocked_truncated_surfaces > 0U) {
+        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED;
+    } else {
+        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
+    }
+    out_receipt->decode_blocked =
+        (out_receipt->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 ||
+         out_receipt->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED)
+            ? 1 : 0;
+    return 0;
+}
+
+const char *nexus_v1_bpk_runtime_decode_route_name(
+    Nexus_V1_BpkRuntimeDecodeRoute route) {
+    switch (route) {
+    case NEXUS_V1_BPK_DECODE_ROUTE_INVALID: return "invalid";
+    case NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED: return "ready-stored";
+    case NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3: return "blocked-prs3";
+    case NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED:
+        return "blocked-truncated";
+    case NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES: return "no-surfaces";
+    default: return "unknown";
+    }
+}
+
 /* pass1084 — bounded PRS3 compression evidence walker. Surfaces per-entry
  * structural receipts for the (still unknown) PRS3 stream format so we can
  * narrow down the algorithm family in subsequent passes. The walker is
