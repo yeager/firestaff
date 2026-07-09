@@ -355,6 +355,7 @@ static void run_real_data_handoff_if_available(void) {
                             (!hostWindowAvailable ||
                              (receipt.dm1HoCNoHostFallbackVisuals &&
                               receipt.dm1HoCMacWindowCapture &&
+                              receipt.dm1HoCReleaseAppCapture &&
                               receipt.dm1HoCHostWindowCapture &&
                               receipt.dm1HoCHostCaptureRouteMatches &&
                               receipt.dm1HoCOpenedEntranceFrame &&
