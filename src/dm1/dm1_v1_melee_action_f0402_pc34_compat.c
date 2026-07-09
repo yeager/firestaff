@@ -845,6 +845,10 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
     out->smokeAttack = 110;
     out->smokeCell = EXPLOSION_CELL_CENTERED;
     out->reactionEventKind = DM1_EVENT_REACTION_PARTY_IS_ADJACENT;
+    out->killNotifyGroupIndex = -1;
+    out->killNotifyCreatureIndex = -1;
+    out->killNotifyOutcome = COMBAT_OUTCOME_INVALID;
+    out->killNotifyCreatureType = -1;
     if (!in) return 0;
 
     out->valid = 1;
@@ -868,6 +872,10 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
             out->shouldDropPossessions = 1;
             out->shouldCreateDeathSmoke = 1;
             out->shouldEmitKillNotify = 1;
+            out->killNotifyGroupIndex = in->groupIndex;
+            out->killNotifyCreatureIndex = in->creatureIndex;
+            out->killNotifyOutcome = in->damageOutcome;
+            out->killNotifyCreatureType = in->creatureType;
         }
         out->shouldApplyKilledSomeState =
             in->damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES;

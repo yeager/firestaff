@@ -1931,6 +1931,7 @@ static void test_melee_f0231_aftermath_plan(void) {
 
     memset(&in, 0, sizeof(in));
     in.groupIndex = 4;
+    in.creatureIndex = 2;
     in.creatureType = 6;
     in.creatureAttributes = DM1_SIZE_FULL_SQUARE;
     in.killedCell = EXPLOSION_CELL_CENTERED;
@@ -1952,6 +1953,14 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 killed-all unlinks group");
     CHECK_EQ(out.shouldWriteRawGroup, 1, "F0231 killed-all writeback");
     CHECK_EQ(out.shouldEmitKillNotify, 1, "F0231 killed-all notifies");
+    CHECK_EQ(out.killNotifyGroupIndex, 4,
+             "F0231 killed-all notify group");
+    CHECK_EQ(out.killNotifyCreatureIndex, 2,
+             "F0231 killed-all notify creature");
+    CHECK_EQ(out.killNotifyOutcome, COMBAT_OUTCOME_KILLED_ALL_CREATURES,
+             "F0231 killed-all notify outcome");
+    CHECK_EQ(out.killNotifyCreatureType, 6,
+             "F0231 killed-all notify creature type");
     CHECK_EQ(out.shouldScheduleReaction, 0,
              "F0231 killed-all suppresses reaction");
 
@@ -1995,6 +2004,8 @@ static void test_melee_f0231_aftermath_plan(void) {
     CHECK_EQ(out.shouldCreateDeathSmoke, 0, "F0231 no-kill no smoke");
     CHECK_EQ(out.shouldWriteRawGroup, 1, "F0231 no-kill writeback");
     CHECK_EQ(out.shouldEmitKillNotify, 0, "F0231 no-kill no notify");
+    CHECK_EQ(out.killNotifyGroupIndex, -1,
+             "F0231 no-kill clears notify group");
     CHECK_EQ(out.shouldScheduleReaction, 1, "F0231 no-kill reaction");
 
     in.damageOutcome = COMBAT_OUTCOME_INVALID;

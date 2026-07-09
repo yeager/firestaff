@@ -389,6 +389,7 @@ typedef struct {
 
 typedef struct {
     int groupIndex;
+    int creatureIndex;
     int creatureType;
     int creatureAttributes;
     int killedCell;
@@ -410,6 +411,10 @@ typedef struct {
     int shouldEmitKillNotify;
     int shouldScheduleReaction;
     int reactionEventKind;
+    int killNotifyGroupIndex;
+    int killNotifyCreatureIndex;
+    int killNotifyOutcome;
+    int killNotifyCreatureType;
 } DM1_MeleeF0231AftermathPlanPc34;
 
 typedef struct {

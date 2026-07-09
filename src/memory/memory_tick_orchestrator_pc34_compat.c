@@ -6972,6 +6972,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     }
                     memset(&aftermathIn, 0, sizeof(aftermathIn));
                     aftermathIn.groupIndex = groupIndex;
+                    aftermathIn.creatureIndex = creatureIndex;
                     aftermathIn.creatureType = creatureSnapshot.creatureType;
                     aftermathIn.creatureAttributes = creatureSnapshot.attributes;
                     aftermathIn.killedCell = killedCell;
@@ -7035,8 +7036,10 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         &aftermathIn, &aftermathPlan);
                     if (aftermathPlan.shouldEmitKillNotify) {
                         emit(result, EMIT_KILL_NOTIFY,
-                             groupIndex, creatureIndex,
-                             aftermathPlan.outcome, creatureSnapshot.creatureType);
+                             aftermathPlan.killNotifyGroupIndex,
+                             aftermathPlan.killNotifyCreatureIndex,
+                             aftermathPlan.killNotifyOutcome,
+                             aftermathPlan.killNotifyCreatureType);
                     }
                     if (aftermathPlan.shouldScheduleReaction) {
                         orch_cmd_attack_schedule_f0231_reaction_compat(
