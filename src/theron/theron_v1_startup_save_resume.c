@@ -37,7 +37,6 @@
 #include "theron_v1_boot.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -52,9 +51,6 @@
  * mirror, mirroring the existing theron_v1_srm_classifier_*_pc34
  * contract. */
 #define TSR_INFLATE_BUFFER_BYTES 8192u
-#define TSR_PROGRESSION_ENVELOPE_BYTES 44u
-#define TSR_PROGRESSION_MAGIC_LEN 8u
-#define TSR_FSTQ_PROGRESSION_MAGIC "FSTQPRG1"
 
 static Theron_V1StartupSkipSafeVerdict compute_verdict(
     const Theron_V1StartupSaveResume *snap);
@@ -270,11 +266,16 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
     snap->srm_payload_probe_ran = 0;
     snap->srm_payload_size = 0u;
     snap->srm_payload_hits_fstq_magic = 0;
+    snap->srm_envelope_kind = THERON_V1_SRM_ENVELOPE_KIND_NONE;
     snap->srm_progress_import_status = THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
     snap->srm_progress_import_ran = 0;
     snap->srm_progress_current_dungeon = -1;
     snap->srm_progress_current_level = -1;
     snap->srm_progress_quest_mask = -1;
+    snap->srm_party_import_ran = 0;
+    snap->srm_party_restored = 0;
+    snap->srm_party_champion_count = 0;
+    snap->srm_party_gold = 0u;
 
     if (!snap->srm_root[0]) {
         return;
@@ -307,7 +308,6 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
         return;
     }
 
-#if FIRESTAFF_HAS_ZLIB
     char slot_path[THERON_V1_SRM_PATH_MAX];
     if (!theron_v1_srm_slot_path(snap->srm_root,
                                   snap->srm_first_recognized_slot,
@@ -315,79 +315,46 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
         return;
     }
 
-    FILE *fp = fopen(slot_path, "rb");
-    if (!fp) {
-        return;
-    }
-    if (fseek(fp, 0, SEEK_END) != 0) {
-        fclose(fp);
-        return;
-    }
-    long sz = ftell(fp);
-    if (sz < 0 || sz > 256L * 1024L * 1024L) {
-        /* Bounded: refuse to slurp anything larger than 256 MiB.
-         * Real Theron Save Disk bodies are a few KiB; this keeps the
-         * gate deterministic and skip-safe on accidental huge files. */
-        fclose(fp);
-        return;
-    }
-    if (fseek(fp, 0, SEEK_SET) != 0) {
-        fclose(fp);
-        return;
-    }
-    size_t srm_size = (size_t)sz;
-    uint8_t *srm_bytes = (uint8_t *)malloc(srm_size > 0u ? srm_size : 1u);
-    if (!srm_bytes) {
-        fclose(fp);
-        return;
-    }
-    size_t got = fread(srm_bytes, 1, srm_size, fp);
-    fclose(fp);
-    if (got != srm_size || srm_size < 10u) {
-        free(srm_bytes);
-        return;
-    }
-
+#if FIRESTAFF_HAS_ZLIB
     uint8_t payload[TSR_INFLATE_BUFFER_BYTES];
-    size_t payload_size = 0u;
-    Theron_V1SrmPayloadProbeStatus probe_status =
-        theron_v1_srm_probe_gzip_payload(
-            srm_bytes,
-            srm_size,
-            payload,
-            sizeof(payload),
-            &payload_size);
+    Theron_V1SrmEnvelopeReceipt envelope;
+    Theron_V1SrmEnvelopeKind kind;
+    memset(payload, 0, sizeof(payload));
+    memset(&envelope, 0, sizeof(envelope));
+    kind = theron_v1_srm_decode_path(slot_path,
+                                     snap->srm_first_recognized_slot,
+                                     payload,
+                                     sizeof(payload),
+                                     &envelope);
 
-    snap->srm_payload_probe_status = probe_status;
+    snap->srm_envelope_kind = kind;
+    snap->srm_payload_probe_status = envelope.inflate_status;
     snap->srm_payload_probe_ran = 1;
-    snap->srm_payload_size = payload_size;
+    snap->srm_payload_size = envelope.inflate_payload_size;
     snap->srm_payload_hits_fstq_magic =
-        (payload_size >= TSR_PROGRESSION_MAGIC_LEN &&
-         memcmp(payload, TSR_FSTQ_PROGRESSION_MAGIC,
-                TSR_PROGRESSION_MAGIC_LEN) == 0) ? 1 : 0;
+        (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
+         kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) ? 1 : 0;
 
-    if (probe_status == THERON_V1_SRM_PAYLOAD_PROBE_OK &&
-        snap->srm_payload_hits_fstq_magic) {
-        Theron_DungeonProgression prog;
-        Theron_V1SrmProgressionReceipt receipt;
-        Theron_V1SrmProgressImportStatus import_status =
-            theron_v1_srm_decode_progression_payload(
-                payload,
-                payload_size >= TSR_PROGRESSION_ENVELOPE_BYTES
-                    ? TSR_PROGRESSION_ENVELOPE_BYTES
-                    : payload_size,
-                &prog,
-                &receipt);
-        snap->srm_progress_import_status = import_status;
+    if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
+        kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
+        snap->srm_progress_import_status = envelope.decode_status;
         snap->srm_progress_import_ran = 1;
-        if (import_status == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
-            snap->srm_progress_current_dungeon = (int)receipt.current_dungeon;
-            snap->srm_progress_current_level = (int)receipt.current_level;
+        if (envelope.decode_status == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
+            snap->srm_progress_current_dungeon =
+                (int)envelope.progression.current_dungeon;
+            snap->srm_progress_current_level =
+                (int)envelope.progression.current_level;
             snap->srm_progress_quest_mask =
-                (int)receipt.quest_items_bitmask;
+                (int)envelope.progression.quest_items_bitmask;
+            if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
+                snap->srm_party_import_ran = 1;
+                snap->srm_party_restored = envelope.party.restored ? 1 : 0;
+                snap->srm_party_champion_count =
+                    (int)envelope.party.champion_count;
+                snap->srm_party_gold = envelope.party.party_gold;
+            }
         }
     }
-    free(srm_bytes);
 #else
     /* Without zlib we deliberately do not run the inflate step.
      * The verdict/claim surface is independent of zlib presence, so
@@ -1256,8 +1223,10 @@ size_t theron_v1_startup_save_resume_format(
                      "srm_present_slots:%d\n"
                      "srm_recognized:   %d\n"
                      "srm_first_recog:  %d\n"
+                     "srm_envelope:     %s\n"
                      "srm_payload_probe:%s ran=%d size=%zu fstq_magic=%d\n"
-                     "srm_prog_import:  %s ran=%d dungeon=%d level=%d quest=0x%02x\n",
+                     "srm_prog_import:  %s ran=%d dungeon=%d level=%d quest=0x%02x\n"
+                     "srm_party_import: ran=%d restored=%d champions=%d gold=%u\n",
                      snap->tqsv_root[0] ? snap->tqsv_root : "(none)",
                      snap->srm_root[0]  ? snap->srm_root  : "(none)",
                      snap->verdict_name[0] ? snap->verdict_name : "UNKNOWN",
@@ -1269,6 +1238,7 @@ size_t theron_v1_startup_save_resume_format(
                      snap->srm_present_slots,
                      snap->srm_recognized_slots,
                      snap->srm_first_recognized_slot,
+                     theron_v1_srm_envelope_kind_name(snap->srm_envelope_kind),
                      theron_v1_srm_payload_probe_status_name(snap->srm_payload_probe_status),
                      snap->srm_payload_probe_ran,
                      snap->srm_payload_size,
@@ -1278,7 +1248,11 @@ size_t theron_v1_startup_save_resume_format(
                      snap->srm_progress_current_dungeon,
                      snap->srm_progress_current_level,
                      snap->srm_progress_quest_mask >= 0
-                         ? snap->srm_progress_quest_mask : 0);
+                         ? snap->srm_progress_quest_mask : 0,
+                     snap->srm_party_import_ran,
+                     snap->srm_party_restored,
+                     snap->srm_party_champion_count,
+                     snap->srm_party_gold);
 
     if (n < 0) {
         buf[0] = '\0';
