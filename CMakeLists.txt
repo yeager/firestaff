@@ -20224,6 +20224,21 @@ if(NOT MSVC)
     )
 endif()
 
+add_executable(test_nexus_v1_sound_runtime_receipt
+    tests/test_nexus_v1_sound_runtime_receipt.c
+)
+target_link_libraries(test_nexus_v1_sound_runtime_receipt PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(test_nexus_v1_sound_runtime_receipt PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_sound_runtime_receipt PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip
