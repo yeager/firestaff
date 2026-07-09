@@ -1197,6 +1197,69 @@ int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
             ENTRANCE_Compat_GetRuntimeDelayMs(&pre_open_step);
 }
 
+int dm1_v1_startup_entrance_render_audio_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    unsigned int source_step,
+    int entrance_event_kind,
+    unsigned int delay_ticks,
+    unsigned int vblank_loop_count,
+    DM1_V1_StartupEntranceRenderAudioCommand_PC34* out_command) {
+    DM1_V1_StartupEntranceRenderAudioCommand_PC34 command;
+
+    /* ReDMCSB ENTRANCE.C F0441 lines 850-883 drives the entrance as an
+     * ordered render/wait loop before the dungeon handoff.  Keep M11 on this
+     * DM1 receipt command path so render, palette, sound marker, and delay
+     * decisions come from the same source-locked entrance step. */
+    if (!out_command || !media_receipt ||
+        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(media_receipt) ||
+        source_step == 0U ||
+        source_step > media_receipt->entrance_source_animation_steps) {
+        return 0;
+    }
+    memset(&command, 0, sizeof(command));
+    command.handled = 1;
+    command.source_step = source_step;
+    command.present_entrance_palette = 1;
+    command.delay_ms =
+        dm1_v1_startup_entrance_step_delay_ms_pc34(media_receipt,
+                                                   entrance_event_kind,
+                                                   delay_ticks,
+                                                   vblank_loop_count);
+
+    switch ((EntranceCompatSourceEventKind)entrance_event_kind) {
+        case ENTRANCE_COMPAT_SOURCE_EVENT_FADE_TO_BLACK:
+            command.render_kind =
+                DM1_V1_STARTUP_ENTRANCE_RENDER_FADE_BLACK_PC34;
+            break;
+        case ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_ENTRANCE_SCREEN:
+        case ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT:
+        case ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND:
+        case ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY:
+            command.render_kind =
+                DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34;
+            break;
+        case ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP:
+            command.render_kind =
+                DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34;
+            command.door_animation_step = source_step - 6U;
+            command.play_door_rattle_sound =
+                (command.door_animation_step > 0U &&
+                 command.door_animation_step <=
+                     media_receipt->entrance_door_step_count &&
+                 ((command.door_animation_step % 3U) == 1U));
+            break;
+        case ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_MICRO_DUNGEON:
+        case ENTRANCE_COMPAT_SOURCE_EVENT_FINAL_DUNGEON_VIEW:
+        default:
+            command.render_kind =
+                DM1_V1_STARTUP_ENTRANCE_RENDER_DUNGEON_FRAME_PC34;
+            break;
+    }
+
+    *out_command = command;
+    return 1;
+}
+
 int dm1_v1_startup_sequence_source_order_valid_pc34(void) {
     /* ReDMCSB startup source order:
      * SWSH.C:39-47 runs START.PRG after the FTL palette program;

@@ -60,6 +60,24 @@ typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
 
+typedef enum DM1_V1_StartupEntranceRenderKind_PC34 {
+    DM1_V1_STARTUP_ENTRANCE_RENDER_NONE_PC34 = 0,
+    DM1_V1_STARTUP_ENTRANCE_RENDER_DUNGEON_FRAME_PC34 = 1,
+    DM1_V1_STARTUP_ENTRANCE_RENDER_FADE_BLACK_PC34 = 2,
+    DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34 = 3,
+    DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34 = 4
+} DM1_V1_StartupEntranceRenderKind_PC34;
+
+typedef struct DM1_V1_StartupEntranceRenderAudioCommand_PC34 {
+    int handled;
+    DM1_V1_StartupEntranceRenderKind_PC34 render_kind;
+    int present_entrance_palette;
+    int play_door_rattle_sound;
+    unsigned int source_step;
+    unsigned int door_animation_step;
+    unsigned int delay_ms;
+} DM1_V1_StartupEntranceRenderAudioCommand_PC34;
+
 typedef struct DM1_V1_StartupHandoffPreludePlan_PC34 {
     int required;
     int source_order_valid;
@@ -473,6 +491,13 @@ unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     unsigned int vblank_loop_count);
 int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt);
+int dm1_v1_startup_entrance_render_audio_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    unsigned int source_step,
+    int entrance_event_kind,
+    unsigned int delay_ticks,
+    unsigned int vblank_loop_count,
+    DM1_V1_StartupEntranceRenderAudioCommand_PC34* out_command);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);

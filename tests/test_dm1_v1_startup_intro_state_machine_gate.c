@@ -383,8 +383,10 @@ static void check_title_to_menu_boundary(void) {
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 badMedia;
+    DM1_V1_StartupEntranceRenderAudioCommand_PC34 entranceCommand;
     EntranceCompatSourceAnimationStep entranceStep;
     EntranceCompatSourceAnimationStep doorStep;
+    EntranceCompatSourceAnimationStep closedStep;
     V1_TitleFrontendSourceTiming titleTiming = V1_TitleFrontend_GetSourceTimingEvidence();
     int expected_presents_palette = 0;
     int expected_title_palette = 0;
@@ -401,6 +403,8 @@ static void check_title_to_menu_boundary(void) {
     memset(&finalGuard, 0, sizeof(finalGuard));
     memset(&entranceStep, 0, sizeof(entranceStep));
     memset(&doorStep, 0, sizeof(doorStep));
+    memset(&closedStep, 0, sizeof(closedStep));
+    memset(&entranceCommand, 0, sizeof(entranceCommand));
     memset(&media, 0, sizeof(media));
     memset(&badMedia, 0, sizeof(badMedia));
     (void)V1_TitleFrontend_GetStepPalette(
@@ -504,6 +508,11 @@ static void check_title_to_menu_boundary(void) {
              ENTRANCE_Compat_GetSourceAnimationStep(7u, &doorStep) &&
                  doorStep.kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP,
              1);
+    expect_i("DM1 full graphics media receipt closed-door step exists",
+             ENTRANCE_Compat_GetSourceAnimationStep(3u, &closedStep) &&
+                 closedStep.kind ==
+                     ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_ENTRANCE_SCREEN,
+             1);
     expect_u("DM1 entrance receipt delay helper uses vblank timing",
              dm1_v1_startup_entrance_step_delay_ms_pc34(
                  &media,
@@ -527,6 +536,43 @@ static void check_title_to_menu_boundary(void) {
     badMedia.entrance_pre_open_delay_ms = 1u;
     expect_i("DM1 entrance timing validator rejects too-fast pre-open",
              dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
+             0);
+    expect_i("DM1 entrance command builds closed-door render",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media,
+                 closedStep.sourceStepOrdinal,
+                 (int)closedStep.kind,
+                 closedStep.delayTicks,
+                 closedStep.vblankLoopCount,
+                 &entranceCommand) &&
+                 entranceCommand.render_kind ==
+                     DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34 &&
+                 entranceCommand.present_entrance_palette,
+             1);
+    expect_i("DM1 entrance command builds rattle door render",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media,
+                 doorStep.sourceStepOrdinal,
+                 (int)doorStep.kind,
+                 doorStep.delayTicks,
+                 doorStep.vblankLoopCount,
+                 &entranceCommand) &&
+                 entranceCommand.render_kind ==
+                     DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34 &&
+                 entranceCommand.door_animation_step == 1u &&
+                 entranceCommand.play_door_rattle_sound &&
+                 entranceCommand.delay_ms == media.entrance_vblank_ms,
+             1);
+    badMedia = media;
+    badMedia.entrance_vblank_ms = 1u;
+    expect_i("DM1 entrance command rejects bad timing receipt",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &badMedia,
+                 doorStep.sourceStepOrdinal,
+                 (int)doorStep.kind,
+                 doorStep.delayTicks,
+                 doorStep.vblankLoopCount,
+                 &entranceCommand),
              0);
     expect_i("DM1 full graphics media receipt blocks non-DM1",
              dm1_v1_startup_full_graphics_media_receipt_pc34("csb", &media) &&
