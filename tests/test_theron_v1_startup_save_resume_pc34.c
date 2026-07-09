@@ -684,6 +684,7 @@ static void test_srm_party_continue_restores_all_champions(void) {
 
     {
         Theron_V1StartupSaveResume snap;
+        Theron_StartupStateReceipt snapshot_state_receipt;
         memset(&snap, 0, sizeof(snap));
         expect_true(theron_v1_startup_save_resume_evaluate(NULL, &snap) == 1,
                     "srm party snapshot evaluate returns 1");
@@ -705,6 +706,19 @@ static void test_srm_party_continue_restores_all_champions(void) {
                             THERON_MAX_CHAMPIONS &&
                         snap.srm_party_gold == 777u,
                     "srm party snapshot carries party body receipt");
+        memset(&snapshot_state_receipt, 0, sizeof(snapshot_state_receipt));
+        expect_true(theron_v1_startup_save_resume_state_receipt(
+                        &snap,
+                        1,
+                        &snapshot_state_receipt) == 1 &&
+                        snapshot_state_receipt.save_resume_srm_party_restored ==
+                            1 &&
+                        snapshot_state_receipt
+                                .save_resume_srm_party_champion_count ==
+                            THERON_MAX_CHAMPIONS &&
+                        snapshot_state_receipt.save_resume_srm_party_gold ==
+                            777u,
+                    "srm party snapshot state receipt carries party body");
 #else
         expect_true(snap.srm_payload_probe_ran == 0,
                     "srm party snapshot does not decode without zlib");
@@ -778,6 +792,14 @@ static void test_srm_party_continue_restores_all_champions(void) {
                         sizeof(receipt)) == 1 &&
                         continue_result.source ==
                             THERON_V1_STARTUP_CONTINUE_SOURCE_SRM &&
+                        continue_result.source_slot_index == 2 &&
+                        continue_result.srm_import_status ==
+                            THERON_V1_SRM_PROGRESS_IMPORT_OK &&
+                        continue_result.srm_current_dungeon ==
+                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                        continue_result.srm_party_champion_count ==
+                            THERON_MAX_CHAMPIONS &&
+                        continue_result.srm_party_gold == 777u &&
                         host_receipt.input_result ==
                             THERON_STARTUP_INPUT_RESULT_REDRAW &&
                         host_receipt.status &&
@@ -786,7 +808,16 @@ static void test_srm_party_continue_restores_all_champions(void) {
                                "PROGRESSION_PARTY") != NULL &&
                         state_receipt.flow_changed &&
                         state_receipt.flow.selected_dungeon ==
-                            THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                        state_receipt.set_save_resume &&
+                        state_receipt.save_resume_srm_active_slot == 2 &&
+                        state_receipt.save_resume_srm_import_status ==
+                            THERON_V1_SRM_PROGRESS_IMPORT_OK &&
+                        state_receipt.save_resume_srm_current_dungeon ==
+                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                        state_receipt.save_resume_srm_party_champion_count ==
+                            THERON_MAX_CHAMPIONS &&
+                        state_receipt.save_resume_srm_party_gold == 777u,
                     "srm party slot emits host and state receipts");
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
@@ -823,6 +854,9 @@ static void test_srm_party_continue_restores_all_champions(void) {
                         sizeof(receipt)) == 1 &&
                         continue_result.source ==
                             THERON_V1_STARTUP_CONTINUE_SOURCE_SRM &&
+                        continue_result.source_slot_index == -1 &&
+                        continue_result.srm_import_status ==
+                            THERON_V1_SRM_PROGRESS_IMPORT_OK &&
                         host_receipt.input_result ==
                             THERON_STARTUP_INPUT_RESULT_REDRAW &&
                         host_receipt.status &&
@@ -835,7 +869,10 @@ static void test_srm_party_continue_restores_all_champions(void) {
                         state_receipt.flow.selected_dungeon ==
                             THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
                         state_receipt.set_level_loaded &&
-                        state_receipt.level_loaded == 0,
+                        state_receipt.level_loaded == 0 &&
+                        state_receipt.set_save_resume &&
+                        state_receipt.save_resume_srm_active_slot == -1 &&
+                        state_receipt.save_resume_srm_party_gold == 777u,
                     "srm party custom path emits host and state receipts");
 
         theron_v1_world_init(&world);
