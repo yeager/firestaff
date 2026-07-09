@@ -133,6 +133,11 @@ typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int asset_src_w;
     int asset_src_h;
     int asset_src_stride;
+    int asset_frame_count;
+    int requested_frame_index;
+    int party_direction;
+    int relative_direction;
+    int atlas_frame_index;
     int atlas_frame_x;
     int atlas_frame_y;
     int atlas_frame_w;

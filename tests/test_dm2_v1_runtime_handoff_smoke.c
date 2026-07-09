@@ -53,6 +53,8 @@ static uint8_t s_door_frame_pixels[16 * 8];
 static uint8_t s_door_button_pixels[16 * 8];
 static uint8_t s_wall_button_pixels[16 * 8];
 static uint8_t s_creature_pixels[16 * 8];
+static uint8_t s_creature_wide_pixels[32 * 8];
+static int s_creature_asset_w = 16;
 static uint8_t s_item_pixels[16 * 8];
 static uint8_t s_projectile_pixels[16 * 8];
 static uint8_t s_hud_portrait_pixels[16 * 8];
@@ -140,10 +142,14 @@ static int synthetic_viewport_asset_fetch(void *user,
     if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
         DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
             (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) {
-        if (out_pixels) *out_pixels = s_creature_pixels;
-        if (out_w) *out_w = 16;
+        if (out_pixels) {
+            *out_pixels =
+                s_creature_asset_w == 32 ? s_creature_wide_pixels :
+                                            s_creature_pixels;
+        }
+        if (out_w) *out_w = s_creature_asset_w;
         if (out_h) *out_h = 8;
-        if (out_stride) *out_stride = 16;
+        if (out_stride) *out_stride = s_creature_asset_w;
         return 0;
     }
     if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
@@ -770,9 +776,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
         clear_creature_pool_for_door_runtime_test();
         dm2_v1_runtime_set_position(0, 1, 1, 0);
         dm2_v1_runtime_set_outdoor(0);
-        slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 1, 0, 0, 0, 8);
+        slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 1, 0, 0, 1, 8);
         memset(s_creature_pixels, 10, sizeof(s_creature_pixels));
+        memset(s_creature_wide_pixels, 10, sizeof(s_creature_wide_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
+        s_creature_asset_w = 32;
         dm2_v1_runtime_set_viewport_asset_provider(
             synthetic_viewport_asset_fetch, &fetch_count);
         CHECK(slot >= 0 &&
@@ -787,7 +795,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
               receipt.source_kind == 1 &&
               receipt.thing_handle == -1 &&
               receipt.frame_index == 0 &&
-              receipt.direction == 0 &&
+              receipt.direction == 1 &&
               receipt.hp_pct == 100 &&
               receipt.map_x == 1 &&
               receipt.map_y == 0 &&
@@ -797,18 +805,24 @@ static void test_first_tick_after_boot_profile_handoff(void)
               receipt.gdat_index ==
                   dm2_v1_viewport_creature_graphic_index(DM2_AI_CAVE_BAT, 0) &&
               receipt.asset_blit_ready == 1 &&
-              receipt.asset_src_w == 16 &&
+              receipt.asset_src_w == 32 &&
               receipt.asset_src_h == 8 &&
-              receipt.asset_src_stride == 16 &&
-              receipt.atlas_frame_x == 0 &&
+              receipt.asset_src_stride == 32 &&
+              receipt.asset_frame_count == 4 &&
+              receipt.requested_frame_index == 0 &&
+              receipt.party_direction == 0 &&
+              receipt.relative_direction == 3 &&
+              receipt.atlas_frame_index == 1 &&
+              receipt.atlas_frame_x == 8 &&
               receipt.atlas_frame_w == 8 &&
               receipt.atlas_frame_h == 8 &&
-              receipt.render_frame == 0 &&
+              receipt.render_frame == 1 &&
               receipt.asset_dst_rect.x == 108 &&
               receipt.asset_dst_rect.y == 94 &&
               receipt.asset_dst_rect.w == 8 &&
               receipt.asset_dst_rect.h == 8,
               "runtime active creature render receipt exposes live AI projection and atlas blit");
+        s_creature_asset_w = 16;
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
         clear_creature_pool_for_door_runtime_test();
     }
@@ -861,6 +875,10 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   receipt.asset_blit_ready == 1 &&
                   receipt.asset_src_w == 16 &&
                   receipt.asset_src_h == 8 &&
+                  receipt.asset_frame_count == 2 &&
+                  receipt.requested_frame_index == receipt.frame_index &&
+                  receipt.party_direction == 0 &&
+                  receipt.atlas_frame_index == receipt.render_frame &&
                   receipt.atlas_frame_w == 8 &&
                   receipt.atlas_frame_h == 8 &&
                   receipt.asset_dst_rect.w > 0 &&
