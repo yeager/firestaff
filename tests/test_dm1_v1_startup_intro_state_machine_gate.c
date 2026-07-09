@@ -1483,6 +1483,14 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  runtime_handoff.handled &&
                  runtime_handoff.full_graphics_consumed &&
                  runtime_handoff.hoc_runtime_ready &&
+                 runtime_handoff.champion_mirror_startup_handoff_ready &&
+                 runtime_handoff.champion_mirror_startup_route.handled &&
+                 runtime_handoff.champion_mirror_startup_route.route ==
+                     DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34 &&
+                 runtime_handoff.champion_mirror_startup_route.showHall &&
+                 runtime_handoff.champion_mirror_startup_route.needsRedraw &&
+                 runtime_handoff.hoc_first_frame_ready &&
+                 runtime_handoff.runtime_first_frame_ready &&
                  runtime_handoff.draw_opened_runtime &&
                  !runtime_handoff.suppress_draw_opened,
              1);
@@ -1520,6 +1528,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  &runtime_handoff) &&
                  runtime_handoff.full_graphics_consumed &&
                  runtime_handoff.resumed_runtime_ready &&
+                 !runtime_handoff.champion_mirror_startup_handoff_ready &&
+                 !runtime_handoff.hoc_first_frame_ready &&
+                 runtime_handoff.runtime_first_frame_ready &&
                  runtime_handoff.draw_opened_runtime &&
                  !runtime_handoff.hoc_runtime_ready,
              1);
@@ -1603,9 +1614,16 @@ static void check_dm1_launch_path_bypass_contract(void) {
              fake.draw_opened,
              1);
     expect_i("DM1 selected launch transaction exposes HoC handoff receipt",
-             launch_result.runtime_handoff_receipt.handled &&
+                 launch_result.runtime_handoff_receipt.handled &&
                  launch_result.runtime_handoff_receipt.full_graphics_consumed &&
                  launch_result.runtime_handoff_receipt.hoc_runtime_ready &&
+                 launch_result.runtime_handoff_receipt
+                     .champion_mirror_startup_handoff_ready &&
+                 launch_result.runtime_handoff_receipt
+                     .champion_mirror_startup_route.route ==
+                     DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34 &&
+                 launch_result.runtime_handoff_receipt.hoc_first_frame_ready &&
+                 launch_result.runtime_handoff_receipt.runtime_first_frame_ready &&
                  launch_result.runtime_handoff_receipt.draw_opened_runtime,
              1);
 
@@ -1623,6 +1641,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  &launch_callbacks,
                  &launch_result) &&
                  launch_result.host_apply_result.quit_requested &&
+                 !launch_result.runtime_handoff_receipt
+                      .champion_mirror_startup_handoff_ready &&
+                 !launch_result.runtime_handoff_receipt.runtime_first_frame_ready &&
                  launch_result.runtime_handoff_receipt.suppress_draw_opened &&
                  fake.draw_opened == 0,
              1);
