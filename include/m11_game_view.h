@@ -194,6 +194,9 @@ typedef struct {
     int startupHudMenuOptionCount;
     int startupSelectedCommandId;
     int startupUtilitySelectedActionIndex;
+    int csbStartupFullVisualSequenceReady;
+    int csbStartupNoFallbackRoutes;
+    int csbStartupSequenceCaptureHash;
     int dm1HoCFullGraphicsReady;
     int dm1HoCHostRenderPlanReady;
     int dm1HoCCaptureProofPassed;
@@ -615,6 +618,9 @@ typedef struct {
         int startup_saturn_capture_frames_exact;
         int startup_saturn_warning_frame;
         int startup_saturn_title_capture_frame;
+        int startup_saturn_save_capture_frame;
+        int startup_saturn_champion_capture_frame;
+        int startup_saturn_dungeon_capture_frame;
         int startup_saturn_title_ready_frame;
         int startup_saturn_gameover_capture_frame;
         int startup_title_timing_frame;
@@ -974,7 +980,8 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outUtilityInputDispatchReady,
     int* outTitleAssetDrawReady,
     int* outClosedDoorFallbackSuppressed,
-    int* outOpeningFrameDrawReady);
+    int* outOpeningFrameDrawReady,
+    int* outFullVisualSequenceConsumed);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,
