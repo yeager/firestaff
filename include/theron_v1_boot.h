@@ -423,6 +423,35 @@ typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
     const char *status;
 } Theron_V1_BootStartupGraphicsRouteReceipt;
 
+typedef struct Theron_V1_BootStartupFullStartReceipt {
+    int host_consumes_view_model;
+    int view_model_valid;
+    Theron_V1_BootStartupViewModel view_model;
+    int host_view_valid;
+    Theron_V1_BootStartupHostViewReceipt host_view;
+    int graphics_route_valid;
+    Theron_V1_BootStartupGraphicsRouteReceipt graphics_route;
+    int title_menu_ready;
+    int stage_menu_ready;
+    int soul_room_menu_ready;
+    int save_resume_start_ready;
+    int save_resume_runtime_handoff_ready;
+    int forcefield_menu_ready;
+    int forcefield_runtime_handoff_ready;
+    int full_start_graphics_ready;
+    int full_start_graphics_executed;
+    int full_start_graphics_blocked;
+    int no_fallback_visuals_enforced;
+    int fallback_visuals_allowed;
+    int runtime_graphics_handoff;
+    int track02_runtime_graphics_handoff;
+    int save_resume_runtime_graphics_handoff;
+    int raw_prompt_roster_required;
+    int raw_session_rebuild_required;
+    const char *status_scope;
+    const char *status;
+} Theron_V1_BootStartupFullStartReceipt;
+
 int theron_v1_boot_prepare_startup_profile(
     Theron_V1_BootProfile *profile,
     const char *data_dir,
@@ -761,6 +790,17 @@ int theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receip
     const Theron_StartupMediaStateReceipt *startup_media_receipt,
     const Theron_StartupGraphicExecutor *executor,
     Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt);
+void theron_v1_boot_startup_full_start_receipt_init(
+    Theron_V1_BootStartupFullStartReceipt *receipt);
+int theron_v1_boot_startup_full_start_receipt_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupFullStartReceipt *out_receipt);
+int theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupFullStartReceipt *out_receipt);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
