@@ -99,6 +99,46 @@ static void theron_v1_startup_media_capture_text(
     }
 }
 
+static void theron_v1_startup_media_record_bitmap_route(
+    Theron_StartupMedia *media,
+    const Theron_Track02StartupBitmapSample *sample) {
+    int *ready = NULL;
+    size_t *nonzero = NULL;
+    uint32_t *checksum = NULL;
+
+    if (!media || !sample) {
+        return;
+    }
+    switch (sample->route_bit) {
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE:
+        ready = &media->startup_bitmap_title_route_ready;
+        nonzero = &media->startup_bitmap_title_nonzero_pixel_count;
+        checksum = &media->startup_bitmap_title_checksum;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE:
+        ready = &media->startup_bitmap_stage_route_ready;
+        nonzero = &media->startup_bitmap_stage_nonzero_pixel_count;
+        checksum = &media->startup_bitmap_stage_checksum;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM:
+        ready = &media->startup_bitmap_soul_room_route_ready;
+        nonzero = &media->startup_bitmap_soul_room_nonzero_pixel_count;
+        checksum = &media->startup_bitmap_soul_room_checksum;
+        break;
+    case THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD:
+        ready = &media->startup_bitmap_forcefield_route_ready;
+        nonzero = &media->startup_bitmap_forcefield_nonzero_pixel_count;
+        checksum = &media->startup_bitmap_forcefield_checksum;
+        break;
+    default:
+        return;
+    }
+
+    *ready = 1;
+    *nonzero += sample->nonzero_pixel_count;
+    *checksum ^= sample->checksum;
+}
+
 static void theron_v1_startup_media_capture_bitmaps(
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
@@ -126,6 +166,8 @@ static void theron_v1_startup_media_capture_bitmaps(
         media->startup_bitmap_checksum ^=
             catalog.samples[i].checksum +
             (uint32_t)(catalog.samples[i].route_bit * 16777619u);
+        theron_v1_startup_media_record_bitmap_route(media,
+                                                    &catalog.samples[i]);
     }
 }
 
@@ -200,6 +242,30 @@ void theron_v1_startup_media_capture_track02_state_receipt(
         media.startup_bitmap_nonzero_pixel_count;
     out_receipt->startup_bitmap_checksum =
         media.startup_bitmap_checksum;
+    out_receipt->startup_bitmap_title_route_ready =
+        media.startup_bitmap_title_route_ready;
+    out_receipt->startup_bitmap_stage_route_ready =
+        media.startup_bitmap_stage_route_ready;
+    out_receipt->startup_bitmap_soul_room_route_ready =
+        media.startup_bitmap_soul_room_route_ready;
+    out_receipt->startup_bitmap_forcefield_route_ready =
+        media.startup_bitmap_forcefield_route_ready;
+    out_receipt->startup_bitmap_title_nonzero_pixel_count =
+        media.startup_bitmap_title_nonzero_pixel_count;
+    out_receipt->startup_bitmap_stage_nonzero_pixel_count =
+        media.startup_bitmap_stage_nonzero_pixel_count;
+    out_receipt->startup_bitmap_soul_room_nonzero_pixel_count =
+        media.startup_bitmap_soul_room_nonzero_pixel_count;
+    out_receipt->startup_bitmap_forcefield_nonzero_pixel_count =
+        media.startup_bitmap_forcefield_nonzero_pixel_count;
+    out_receipt->startup_bitmap_title_checksum =
+        media.startup_bitmap_title_checksum;
+    out_receipt->startup_bitmap_stage_checksum =
+        media.startup_bitmap_stage_checksum;
+    out_receipt->startup_bitmap_soul_room_checksum =
+        media.startup_bitmap_soul_room_checksum;
+    out_receipt->startup_bitmap_forcefield_checksum =
+        media.startup_bitmap_forcefield_checksum;
     out_receipt->startup_roster_name_status =
         media.startup_roster_name_status;
     out_receipt->startup_text_prompt_status =
