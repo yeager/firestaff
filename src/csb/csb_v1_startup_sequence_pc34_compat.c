@@ -1442,21 +1442,22 @@ static void csb_v1_startup_set_title_rect_pc34(
             V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
             &plan->title_special_palette);
         plan->special_palette = plan->title_special_palette;
-        /* ReDMCSB: TITLE.C F0437 lines 433-457 initializes
-         * CM59_NEGGRAPHIC_TITLE_CHAOS as a 320x80 source, creates 18
-         * shrinked bitmaps, then blits them in reverse order to
-         * C425_ZONE_TITLE_CHAOS. */
+        /* ReDMCSB PC TITLE.C F0437 lines 340-360 creates shrinked
+         * bitmaps from the full 320x80 title source, and lines 385-387
+         * blit those bitmaps centered on the screen.  Do not crop the
+         * source: the animation grows the full CHAOS image from 48x12 to
+         * 320x80. */
         zoom_index = 19 - plan->title_source_step;
         zoom_w = 320 - 16 * zoom_index;
         zoom_h = 80 - 4 * zoom_index;
-        plan->title_source_x = (320 - zoom_w) >> 1;
-        plan->title_source_y = (160 - zoom_h) >> 1;
-        plan->title_source_w = zoom_w;
-        plan->title_source_h = zoom_h;
-        plan->title_dest_x = 0;
-        plan->title_dest_y = 0;
-        plan->title_dest_w = 320;
-        plan->title_dest_h = 80;
+        plan->title_source_x = 0;
+        plan->title_source_y = 0;
+        plan->title_source_w = 320;
+        plan->title_source_h = 80;
+        plan->title_dest_x = (320 - zoom_w) >> 1;
+        plan->title_dest_y = (160 - zoom_h) >> 1;
+        plan->title_dest_w = zoom_w;
+        plan->title_dest_h = zoom_h;
         plan->title_blit_kind =
             CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34;
         plan->title_transparent_color = -1;
