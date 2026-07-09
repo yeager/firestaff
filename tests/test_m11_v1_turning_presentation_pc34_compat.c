@@ -81,6 +81,10 @@ int main(void)
     memset(&party, 0, sizeof(party));
     party.direction = DIR_WEST;
     party.championCount = 2;
+    party.champions[0].present = 1;
+    party.champions[1].present = 1;
+    party.champions[0].cell = DIR_NORTH;
+    party.champions[1].cell = DIR_SOUTH;
     party.champions[0].direction = DIR_NORTH;
     party.champions[1].direction = DIR_EAST;
     r = m11_v1_turning_apply_party_original_presentation_pc34_compat(
@@ -89,7 +93,9 @@ int main(void)
         &party);
     ok &= expect_int("party turn applied", r.applied, 1);
     ok &= expect_int("party direction wraps west->north", party.direction, DIR_NORTH);
+    ok &= expect_int("champion0 cell rotated", party.champions[0].cell, DIR_EAST);
     ok &= expect_int("champion0 direction rotated", party.champions[0].direction, DIR_EAST);
+    ok &= expect_int("champion1 cell rotated", party.champions[1].cell, DIR_WEST);
     ok &= expect_int("champion1 direction rotated", party.champions[1].direction, DIR_SOUTH);
 
     if (ok) {

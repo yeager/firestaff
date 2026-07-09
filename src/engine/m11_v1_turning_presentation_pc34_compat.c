@@ -1,4 +1,5 @@
 #include "m11_v1_turning_presentation_pc34_compat.h"
+#include "memory_mov05_f0284_cell_rotation_pc34_compat.h"
 
 #include <string.h>
 
@@ -97,7 +98,6 @@ m11_v1_turning_apply_party_original_presentation_pc34_compat(
 {
     struct M11V1TurningPresentationResultPc34Compat result;
     int oldDirection;
-    int i;
 
     if (!party) {
         memset(&result, 0, sizeof(result));
@@ -112,11 +112,7 @@ m11_v1_turning_apply_party_original_presentation_pc34_compat(
         return result;
     }
 
-    for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
-        party->champions[i].direction = (unsigned char)m11_normalize_direction(
-            (int)party->champions[i].direction + result.delta);
-    }
-    party->direction = result.newDirection;
+    (void)F0284_CHAMPION_SetPartyDirection_Compat(party, result.newDirection);
     return result;
 }
 

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0284 party direction ownership: M10 player turns and M11 turn presentation now share the public source-locked F0284 helper, including champion Cell and Direction rotation. Verification: `test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat`, `test_m11_v1_turning_presentation_pc34_compat`, `test_dm1_v1_movement_timing_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 M10 movement timing ownership: M10 player movement now uses DM1 movement timing helpers for successful-step cooldown assignment and per-tick movement/projectile cooldown decrement. Verification: `test_dm1_v1_movement_timing_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 M10 movement route/gate ownership: M10 player movement input now consumes a DM1 movement route plan for absolute command-to-move-action mapping, turn-vs-step dispatch, disabled movement cadence, and projectile-direction lockout. Verification: `test_dm1_v1_movement_timing_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

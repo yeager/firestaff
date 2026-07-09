@@ -28,6 +28,7 @@
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"        /* DM1_SND_BUZZ for C006 generator audio */
+#include "memory_mov05_f0284_cell_rotation_pc34_compat.h"
 
 enum {
     ORCH_CREATURE_BLACK_FLAME_PC34 = 11,
@@ -113,31 +114,6 @@ static uint32_t dungeon_file_fingerprint(const char* path) {
     return c ^ 0xFFFFFFFFu;
 }
 
-static void set_party_direction_redmcsb_compat(struct PartyState_Compat* party, int newDirection) {
-    int oldDirection;
-    int delta;
-    int i;
-    if (!party) return;
-    newDirection &= 3;
-    oldDirection = party->direction & 3;
-    if (newDirection == oldDirection) {
-        party->direction = newDirection;
-        return;
-    }
-    /* ReDMCSB CHAMPION.C:117-130, F0284_CHAMPION_SetPartyDirection:
-     * if direction changes, delta = new - old normalized to [0..3], then
-     * every party champion Cell and Direction are rotated by delta before
-     * G0308_i_PartyDirection is updated. */
-    delta = newDirection - oldDirection;
-    if (delta < 0) delta += 4;
-    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
-        if (party->champions[i].present) {
-            party->champions[i].cell = (unsigned char)((party->champions[i].cell + delta) & 3);
-            party->champions[i].direction = (unsigned char)((party->champions[i].direction + delta) & 3);
-        }
-    }
-    party->direction = newDirection;
-}
 
 /* Emit a single emission into the result, ignoring overflow. */
 static void emit(struct TickResult_Compat* r, uint8_t kind,
@@ -948,7 +924,7 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
     outWorld->party.mapIndex = 0;
     outWorld->party.mapX = px;
     outWorld->party.mapY = py;
-    set_party_direction_redmcsb_compat(&outWorld->party, direction);
+    (void)F0284_CHAMPION_SetPartyDirection_Compat(&outWorld->party, direction);
     outWorld->partyMapIndex = 0;
 
     /* Schedule an initial watchdog / generator-placeholder event at tick 1
@@ -6566,7 +6542,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         if (!world->dungeon) {
             /* no dungeon: succeed deterministically (unit-test path) */
             if (routePlan.dispatchedTurn) {
-                set_party_direction_redmcsb_compat(&world->party,
+                (void)F0284_CHAMPION_SetPartyDirection_Compat(&world->party,
                     F0700_MOVEMENT_TurnDirection_Compat(world->party.direction, mv == MOVE_TURN_RIGHT));
             }
             return 1;
@@ -6593,7 +6569,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                  * F0284_CHAMPION_SetPartyDirection(M021_NORMALIZE(...)).
                  * A turn therefore mutates G0308_i_PartyDirection without
                  * requiring map-coordinate movement. */
-                set_party_direction_redmcsb_compat(&world->party, mr.newDirection);
+                (void)F0284_CHAMPION_SetPartyDirection_Compat(&world->party, mr.newDirection);
                 emit(result, EMIT_PARTY_MOVED,
                      world->party.mapX, world->party.mapY,
                      world->party.direction, world->party.mapIndex);
@@ -6621,7 +6597,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
 
                 world->party.mapX = postMove.finalMapX;
                 world->party.mapY = postMove.finalMapY;
-                set_party_direction_redmcsb_compat(&world->party, postMove.finalDirection);
+                (void)F0284_CHAMPION_SetPartyDirection_Compat(&world->party, postMove.finalDirection);
                 world->party.mapIndex = postMove.finalMapIndex;
                 for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
                     if (postMove.championFallDamage[i] > 0 &&

@@ -327,11 +327,12 @@ int F0885_ORCH_RunNTicks_Compat(
  * effect of scheduling the M010 / watchdog-tick events).
  *
  * Returns 1 if the direction actually changed, 0 if it was a
- * no-op (newDirection == oldDirection).  Idempotent.
+ * no-op (newDirection == oldDirection).  Idempotent.  This is the
+ * shared runtime entry point used by M10 and M11 turn presentation.
  *
  * Source: ReDMCSB CHAMPION.C:117-130, F0284_CHAMPION_SetPartyDirection. */
 int F0284_CHAMPION_SetPartyDirection_Compat(
-    struct GameWorld_Compat* world,
+    struct PartyState_Compat* party,
     int newDirection);
 
 int F0886_ORCH_RunUntilCondition_Compat(
