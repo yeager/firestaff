@@ -6804,6 +6804,17 @@ const char* M12_StartupMenu_GetEntryBootDetailLabel(
     return receipt.detailLabel;
 }
 
+const char* M12_StartupMenu_GetEntryCaptureProofLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex) {
+    M12_StartupBootReadiness receipt;
+    if (!M12_StartupMenu_GetBootReadiness(state, entryIndex, &receipt) ||
+        !receipt.packagedCaptureLabel) {
+        return "PACKAGED CAPTURE PROOF";
+    }
+    return receipt.packagedCaptureLabel;
+}
+
 static int m12_first_matched_version_index_for_game(
     const M12_StartupMenuState* state,
     const char* gameId) {
