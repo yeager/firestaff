@@ -527,6 +527,20 @@ static void test_projectile_associated_thing_disposition(void) {
                   &p, NULL, 0, 0, &d), 1,
               "empty disposition builds");
     ASSERT_EQ(d.shouldMaterialize, 0, "empty not materialized");
+
+    p.reserved1 = (unsigned short)((THING_TYPE_PROJECTILE << 10) | 2);
+    ASSERT_EQ(dm1_v1_projectile_associated_thing_disposition_pc34(
+                  &p, NULL, 0, 0, &d), 1,
+              "projectile-associated disposition builds");
+    ASSERT_EQ(d.shouldMaterialize, 0,
+              "projectile-associated thing is not materialized as floor item");
+
+    p.reserved1 = (unsigned short)((THING_TYPE_GROUP << 10) | 1);
+    ASSERT_EQ(dm1_v1_projectile_associated_thing_disposition_pc34(
+                  &p, NULL, 0, 0, &d), 1,
+              "group-associated disposition builds");
+    ASSERT_EQ(d.shouldMaterialize, 0,
+              "group-associated thing is not materialized as floor item");
 }
 
 static void test_projectile_materialization_plan(void) {
@@ -591,6 +605,22 @@ static void test_projectile_materialization_plan(void) {
               "potion materialization plan builds");
     ASSERT_EQ(plan.shouldConsumePotion, 1, "potion materialization consumes");
     ASSERT_EQ(plan.shouldMaterialize, 0, "potion materialization blocked");
+
+    p.flags = 0;
+    p.reserved1 = (unsigned short)((THING_TYPE_PROJECTILE << 10) | 2);
+    ASSERT_EQ(dm1_v1_projectile_materialization_plan_pc34(
+                  &p, &r, 0, 0, &plan), 1,
+              "projectile thing materialization plan builds");
+    ASSERT_EQ(plan.handled, 1, "projectile thing materialization handled");
+    ASSERT_EQ(plan.shouldMaterialize, 0,
+              "projectile thing is not materialized into a dungeon square");
+
+    p.reserved1 = (unsigned short)((THING_TYPE_SENSOR << 10) | 1);
+    ASSERT_EQ(dm1_v1_projectile_materialization_plan_pc34(
+                  &p, &r, 0, 0, &plan), 1,
+              "sensor thing materialization plan builds");
+    ASSERT_EQ(plan.shouldMaterialize, 0,
+              "sensor thing is not materialized into a dungeon square");
 
     ASSERT_EQ(dm1_v1_projectile_square_attach_plan_f0215_pc34(
                   droppedThing, THING_ENDOFLIST, THING_NONE, &attach), 1,

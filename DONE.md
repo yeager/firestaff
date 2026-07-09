@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 projectile materialization guard: F0215/F0811 thrown-object materialization now only allows real carried object types. C14 projectile, group, sensor, and other structural thing refs are ignored instead of being linked into dungeon square item lists, preventing stale HoC fireballs/phantom objects from becoming floor items. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB boot presentation handoff: boot now exposes full startup presentation receipts from runtime fields and snapshots, carrying phase, animation, render plan, menu counts, and input readiness behind the CSB facade. Verification: `csb_v1_boot_runtime_handoff`, `csb_v1_startup_entrance_pointer_pc34_compat`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 original-save file roundtrip wrappers: PC34 save files can now run through file -> Firestaff world -> PC34 export and file -> export -> reload report helpers, giving real corpus saves a direct DM1-owned runtime verification entrypoint. Verification: `dm1_v1_original_save_pc34_handoff` and `git diff --check` passed.
