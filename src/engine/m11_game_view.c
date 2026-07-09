@@ -3002,6 +3002,36 @@ static int m11_csb_boot_runtime_startup_readiness_receipt(
         out_receipt);
 }
 
+static int m11_csb_boot_startup_active_from_readiness(
+    const M11_GameViewState *state)
+{
+    CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return 0;
+    }
+    if (m11_csb_boot_runtime_startup_readiness_receipt(state, &readiness)) {
+        return readiness.startup_active ? 1 : 0;
+    }
+    return state->csbState.startup_entrance_active ? 1 : 0;
+}
+
+static int m11_csb_boot_startup_input_from_readiness(
+    const M11_GameViewState *state)
+{
+    CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return 0;
+    }
+    if (m11_csb_boot_runtime_startup_readiness_receipt(state, &readiness)) {
+        /* ReDMCSB TITLE.C F0437 lines 424-463 keeps post-FTL title input
+         * blocked until ENTRANCE.C F0441/F0806 lines 850-883 exposes the
+         * closed-door/menu loop. M11 consumes this CSB readiness gate instead
+         * of inferring input state from startup_entrance_active. */
+        return readiness.startup_active && readiness.input_ready ? 1 : 0;
+    }
+    return state->csbState.startup_entrance_active ? 1 : 0;
+}
+
 static int m11_csb_boot_runtime_startup_idle(
     const M11_GameViewState *state,
     CSB_V1_StartupIdleReceipt_PC34 *out_receipt)
@@ -3753,7 +3783,7 @@ static M11_GameInputResult m11_csb_startup_handle_pointer(
     CSB_V1_BootStartupActionReceipt_PC34 receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !state->csbState.startup_entrance_active) {
+        !m11_csb_boot_startup_input_from_readiness(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (!m11_csb_boot_runtime_startup_pointer(
@@ -3774,7 +3804,7 @@ static M11_GameInputResult m11_csb_startup_handle_keyboard(
     CSB_V1_BootStartupActionReceipt_PC34 receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !state->csbState.startup_entrance_active) {
+        !m11_csb_boot_startup_input_from_readiness(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (!m11_csb_boot_runtime_startup_keyboard(
@@ -12341,7 +12371,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (!state->csbBootProfile) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
-        if (state->csbState.startup_entrance_active) {
+        if (m11_csb_boot_startup_active_from_readiness(state)) {
             CSB_V1_StartupIdleReceipt_PC34 startup_receipt;
             M11_GameInputResult idle_result;
             (void)m11_csb_boot_runtime_startup_idle(
@@ -13824,7 +13854,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        state->csbState.startup_entrance_active) {
+        m11_csb_boot_startup_input_from_readiness(state)) {
         return m11_csb_startup_handle_keyboard(state, input);
     }
 
@@ -14858,7 +14888,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        state->csbState.startup_entrance_active &&
+        m11_csb_boot_startup_input_from_readiness(state) &&
         (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
                        ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
         return m11_csb_startup_handle_pointer(state,
