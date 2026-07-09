@@ -434,6 +434,67 @@ static int test_stubbed_opcodes_return_unknown(void) {
     return 1;
 }
 
+/* ── Program decode/run ───────────────────────────────────────── */
+
+static int test_decode_program_walk_shoot_spell_halt(void) {
+    const uint8_t bytes[] = {
+        0x00,
+        0x0D, 44, 2,
+        0x15, 16, 5, 7,
+        0xFF
+    };
+    DM2_V1_CCMProgram program;
+    int rc = dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program);
+    return rc == (int)DM2_CCM_RESULT_OK
+        && program.count == 4
+        && program.ops[0].opcode == 0x00
+        && program.ops[1].opcode == 0x0D
+        && program.ops[1].arg_count == 2
+        && program.ops[1].args[0] == 44
+        && program.ops[1].args[1] == 2
+        && program.ops[2].opcode == 0x15
+        && program.ops[2].arg_count == 3
+        && program.ops[2].args[2] == 7
+        && program.ops[3].opcode == 0xFF;
+}
+
+static int test_run_program_walk_shoot_spell_halt(void) {
+    const uint8_t bytes[] = {
+        0x00,
+        0x0D, 44, 2,
+        0x15, 16, 5, 7,
+        0xFF
+    };
+    DM2_V1_CCMProgram program;
+    DM2_V1_CCMState s;
+    int v;
+    if (dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) !=
+        (int)DM2_CCM_RESULT_OK) return 0;
+    dm2_v1_ccm_init_state(&s);
+    int rc = dm2_v1_ccm_run_program(&s, &program, 1234);
+    if (rc != (int)DM2_CCM_RESULT_HALTED) return 0;
+    if (!s.halted || s.flags[0] != 1 || s.flags[5] != 1 || s.flags[8] != 1) return 0;
+    if (s.target_x != 5 || s.target_y != 7 || s.last_opcode != 0x15) return 0;
+    if (s.stack_top != 2) return 0;
+    if (!dm2_v1_ccm_stack_pop(&s, &v) || v != 2) return 0;
+    if (!dm2_v1_ccm_stack_pop(&s, &v) || v != 44) return 0;
+    return 1;
+}
+
+static int test_decode_program_rejects_truncated_args(void) {
+    const uint8_t bytes[] = { 0x15, 16, 5 };
+    DM2_V1_CCMProgram program;
+    return dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) ==
+           (int)DM2_CCM_RESULT_BAD_ARG;
+}
+
+static int test_decode_program_rejects_stubbed_opcode(void) {
+    const uint8_t bytes[] = { 0x03 };
+    DM2_V1_CCMProgram program;
+    return dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) ==
+           (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -511,6 +572,12 @@ int main(void) {
 
     /* Stubbed */
     TEST(stubbed_opcodes_return_unknown);
+
+    /* Program decode/run */
+    TEST(decode_program_walk_shoot_spell_halt);
+    TEST(run_program_walk_shoot_spell_halt);
+    TEST(decode_program_rejects_truncated_args);
+    TEST(decode_program_rejects_stubbed_opcode);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;

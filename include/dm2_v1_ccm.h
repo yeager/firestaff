@@ -52,6 +52,8 @@ extern "C" {
 #define DM2_CCM_MAX_OPCODES        32    /* implemented opcodes */
 #define DM2_CCM_STACK_SIZE         16    /* operand stack depth */
 #define DM2_CCM_FLAG_COUNT         16    /* flag registers */
+#define DM2_CCM_MAX_PROGRAM_OPS    64    /* bounded imported CCM bytecode */
+#define DM2_CCM_MAX_PROGRAM_ARGS    3    /* current max operand width */
 
 /* CCM opcodes (subset) */
 typedef enum {
@@ -107,6 +109,17 @@ typedef struct {
     int   stubbed;      /* 1 = not implemented, returns UNKNOWN_OPCODE */
 } DM2_V1_CCMOpcodeDef;
 
+typedef struct {
+    uint8_t opcode;
+    uint8_t arg_count;
+    int args[DM2_CCM_MAX_PROGRAM_ARGS];
+} DM2_V1_CCMProgramOp;
+
+typedef struct {
+    DM2_V1_CCMProgramOp ops[DM2_CCM_MAX_PROGRAM_OPS];
+    int count;
+} DM2_V1_CCMProgram;
+
 /* ── Catalog ────────────────────────────────────────────────────── */
 int  dm2_v1_ccm_get_opcode_count(void);
 const DM2_V1_CCMOpcodeDef *dm2_v1_ccm_get_opcode_def(int opcode);
@@ -126,6 +139,11 @@ int  dm2_v1_ccm_stack_size(const DM2_V1_CCMState *state);
 int  dm2_v1_ccm_step(DM2_V1_CCMState *state, int opcode,
                      const int *args, int arg_count, int now_ms);
 int  dm2_v1_ccm_run(DM2_V1_CCMState *state, int now_ms);
+int  dm2_v1_ccm_decode_program(const uint8_t *bytes, size_t byte_count,
+                               DM2_V1_CCMProgram *out_program);
+int  dm2_v1_ccm_run_program(DM2_V1_CCMState *state,
+                             const DM2_V1_CCMProgram *program,
+                             int now_ms);
 
 /* ── Flags ──────────────────────────────────────────────────────── */
 int  dm2_v1_ccm_flag_get(const DM2_V1_CCMState *state, int flag_id);

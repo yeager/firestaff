@@ -258,6 +258,66 @@ int dm2_v1_ccm_run(DM2_V1_CCMState *state, int now_ms) {
     return rc;
 }
 
+int dm2_v1_ccm_decode_program(const uint8_t *bytes, size_t byte_count,
+                              DM2_V1_CCMProgram *out_program)
+{
+    size_t cursor = 0;
+    int count = 0;
+
+    if (!bytes || !out_program) return (int)DM2_CCM_RESULT_BAD_ARG;
+    memset(out_program, 0, sizeof(*out_program));
+
+    /* skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM dispatches the
+     * creature b_1a command byte, then consumes opcode-specific operands
+     * before choosing the next b_1a state.  This bounded decoder gives the
+     * runtime a real imported command stream instead of treating pc as the
+     * opcode number. */
+    while (cursor < byte_count) {
+        const uint8_t opcode = bytes[cursor++];
+        const DM2_V1_CCMOpcodeDef *def = dm2_v1_ccm_get_opcode_def(opcode);
+        DM2_V1_CCMProgramOp *op;
+        int i;
+
+        if (count >= DM2_CCM_MAX_PROGRAM_OPS) return (int)DM2_CCM_RESULT_STACK_OVERFLOW;
+        if (!def || def->stubbed) return (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
+        if (def->arg_count > DM2_CCM_MAX_PROGRAM_ARGS) return (int)DM2_CCM_RESULT_BAD_ARG;
+        if (cursor + (size_t)def->arg_count > byte_count) return (int)DM2_CCM_RESULT_BAD_ARG;
+
+        op = &out_program->ops[count++];
+        op->opcode = opcode;
+        op->arg_count = (uint8_t)def->arg_count;
+        for (i = 0; i < def->arg_count; ++i) {
+            op->args[i] = (int)bytes[cursor++];
+        }
+        if (opcode == DM2_CCM_OP_HALT) break;
+    }
+
+    out_program->count = count;
+    return (int)DM2_CCM_RESULT_OK;
+}
+
+int dm2_v1_ccm_run_program(DM2_V1_CCMState *state,
+                            const DM2_V1_CCMProgram *program,
+                            int now_ms)
+{
+    int rc = (int)DM2_CCM_RESULT_OK;
+
+    if (!state || !program || program->count < 0 ||
+        program->count > DM2_CCM_MAX_PROGRAM_OPS) {
+        return (int)DM2_CCM_RESULT_BAD_ARG;
+    }
+    if (state->halted) return (int)DM2_CCM_RESULT_HALTED;
+
+    while (!state->halted && state->pc >= 0 && state->pc < program->count) {
+        const DM2_V1_CCMProgramOp *op = &program->ops[state->pc];
+        rc = dispatch_opcode(state, op->opcode, op->args, op->arg_count, now_ms);
+        state->last_result = rc;
+        if (rc != (int)DM2_CCM_RESULT_OK) return rc;
+    }
+
+    return rc;
+}
+
 /* ── Observability ──────────────────────────────────────────────── */
 int dm2_v1_ccm_total_steps(void) { return s_total_steps; }
 int dm2_v1_ccm_total_unknown(void) { return s_total_unknown; }
