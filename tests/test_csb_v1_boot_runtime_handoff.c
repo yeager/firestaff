@@ -2134,6 +2134,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupRenderViewReceipt_PC34 runtime_view_receipt;
     CSB_V1_BootStartupReadinessReceipt_PC34 readiness_receipt;
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_draw_receipt;
+    CSB_V1_BootStartupInputGateReceipt_PC34 input_gate_receipt;
     CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
     CSB_V1_BootStartupCaptureReceipt_PC34 snapshot_execute_receipt;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
@@ -2581,6 +2582,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               input_render_receipt.host_decision.blocked_by_title &&
               input_render_receipt.pre_input_readiness.post_ftl_title_active,
           "boot startup input/render receipt owns title input block");
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
+              &snapshot,
+              9,
+              &input_gate_receipt) == 1 &&
+              input_gate_receipt.valid &&
+              input_gate_receipt.startup_active &&
+              !input_gate_receipt.startup_input_ready &&
+              input_gate_receipt.host_input_blocked &&
+              !input_gate_receipt.should_dispatch_input &&
+              input_gate_receipt.should_ignore_input &&
+              input_gate_receipt.input_render_valid &&
+              input_gate_receipt.input_render.host_decision.blocked_by_title,
+          "boot startup input gate owns title-block decision");
     snapshot.utility_overlay_active = 1;
     snapshot.title_active = 0;
     snapshot.title_frame = 0;
@@ -3261,6 +3275,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               input_render_receipt.post_input_readiness.hud_menu_kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34,
           "boot startup input/render receipt owns utility redraw HUD path");
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
+              &snapshot,
+              2,
+              &input_gate_receipt) == 1 &&
+              input_gate_receipt.valid &&
+              input_gate_receipt.startup_active &&
+              input_gate_receipt.startup_input_ready &&
+              !input_gate_receipt.host_input_blocked &&
+              input_gate_receipt.should_dispatch_input &&
+              !input_gate_receipt.should_ignore_input &&
+              input_gate_receipt.input_render_valid &&
+              input_gate_receipt.input_render.startup_hud_draw_ready,
+          "boot startup input gate owns utility HUD redraw decision");
     (void)csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
         &snapshot,
         72,
@@ -3324,6 +3351,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
               input_render_receipt.post_input_readiness.host_hud_blocked,
           "boot startup input/render receipt owns pointer door-opening handoff");
+    CHECK(csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
+              &snapshot,
+              enter_menu_x,
+              enter_menu_y,
+              ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
+              &input_gate_receipt) == 1 &&
+              input_gate_receipt.valid &&
+              input_gate_receipt.input_is_pointer &&
+              input_gate_receipt.pointer_button_relevant &&
+              input_gate_receipt.should_dispatch_input &&
+              input_gate_receipt.input_render_valid &&
+              input_gate_receipt.input_render.host_decision.routed_to_entrance,
+          "boot startup pointer gate owns entrance command dispatch");
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               9,
@@ -3442,6 +3482,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !input_render_receipt.startup_hud_draw_ready &&
               input_render_receipt.host_decision.return_to_launcher,
           "boot startup input/render receipt owns launcher-return handoff");
+    CHECK(csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
+              &snapshot,
+              enter_menu_x,
+              enter_menu_y,
+              0U,
+              &input_gate_receipt) == 1 &&
+              input_gate_receipt.valid &&
+              input_gate_receipt.startup_active &&
+              !input_gate_receipt.pointer_button_relevant &&
+              !input_gate_receipt.should_dispatch_input &&
+              !input_gate_receipt.should_ignore_input &&
+              !input_gate_receipt.input_render_valid,
+          "boot startup pointer gate ignores irrelevant buttons at CSB boundary");
 
     csb_v1_boot_cleanup(&boot);
 }
