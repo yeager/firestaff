@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 champion status layout ownership: DM1 now owns status box, hand, name, bar, shield, poison, and damage geometry/graphic decisions behind DM1 API names; M11 wrappers delegate to that module. Verification: status layout 142/142, champion status slotbox invariant PASS, status hand slot pixels PASS, damage indicator 957/957, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 dialog layout ownership: DM1 now owns V1 version text, choice patch, message, choice text, and choice hit-zone geometry; M11 wrappers delegate to the DM1 dialog layout module. Verification: dialog layout 131/131, dialog overlay fit 131/131, font-scale probe 89/89, runtime overlay probe 24/24, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 endgame layout ownership: DM1 now owns THE END, champion mirror/portrait/name/skill, restart, and quit geometry; M11 wrappers delegate to the DM1 endgame layout module. Verification: endgame layout 146/146, existing endgame box tests 6 gates passed, action-area geometry 148/148, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

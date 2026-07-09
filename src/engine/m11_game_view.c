@@ -83,6 +83,7 @@
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
 #include "dm1_v1_dialog_layout_pc34_compat.h"
 #include "dm1_v1_endgame_layout_pc34_compat.h"
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
@@ -32516,7 +32517,7 @@ static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compa
 }
 
 int M11_GameView_GetV1StatusBoxZoneId(int championSlot) {
-    return CHAMPION_Compat_StatusBoxZoneId(championSlot);
+    return dm1_v1_champion_status_box_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1StatusBoxZone(int championSlot,
@@ -32524,8 +32525,8 @@ int M11_GameView_GetV1StatusBoxZone(int championSlot,
                                     int* outY,
                                     int* outW,
                                     int* outH) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_StatusBoxZone(championSlot, &rect)) return 0;
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_box_rect_pc34(championSlot, &rect)) return 0;
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     if (outW) *outW = rect.w;
@@ -32534,16 +32535,17 @@ int M11_GameView_GetV1StatusBoxZone(int championSlot,
 }
 
 int M11_GameView_GetV1StatusBarGraphZoneId(int championSlot) {
-    return CHAMPION_Compat_StatusBarGraphZoneId(championSlot);
+    return dm1_v1_champion_status_bar_graph_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1StatusBarZoneId(int statIndex) {
-    return CHAMPION_Compat_StatusBarZoneId(statIndex);
+    return dm1_v1_champion_status_bar_zone_id_pc34(statIndex);
 }
 
 int M11_GameView_GetV1StatusBarValueZoneId(int championSlot,
                                            int statIndex) {
-    return CHAMPION_Compat_StatusBarValueZoneId(championSlot, statIndex);
+    return dm1_v1_champion_status_bar_value_zone_id_pc34(championSlot,
+                                                         statIndex);
 }
 
 int M11_GameView_GetV1StatusBarZone(int championSlot,
@@ -32552,8 +32554,8 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int* outY,
                                     int* outW,
                                     int* outH) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_StatusBarZone(championSlot, statIndex, &rect)) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_bar_rect_pc34(championSlot, statIndex, &rect)) {
         return 0;
     }
     if (outX) *outX = rect.x;
@@ -32564,12 +32566,12 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
 }
 
 int M11_GameView_GetV1StatusHandParentZoneId(int championSlot) {
-    return CHAMPION_Compat_StatusHandParentZoneId(championSlot);
+    return dm1_v1_champion_status_hand_parent_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1StatusHandZoneId(int championSlot,
                                        int handIndex) {
-    return CHAMPION_Compat_StatusHandZoneId(championSlot, handIndex);
+    return dm1_v1_champion_status_hand_zone_id_pc34(championSlot, handIndex);
 }
 
 int M11_GameView_GetV1StatusHandZone(int championSlot,
@@ -32578,8 +32580,9 @@ int M11_GameView_GetV1StatusHandZone(int championSlot,
                                      int* outY,
                                      int* outW,
                                      int* outH) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_StatusHandZone(championSlot, handIndex, &rect)) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_hand_rect_pc34(championSlot, handIndex,
+                                               &rect)) {
         return 0;
     }
     if (outX) *outX = rect.x;
@@ -32595,8 +32598,9 @@ int M11_GameView_GetV1StatusHandIconZone(int championSlot,
                                          int* outY,
                                          int* outW,
                                          int* outH) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_StatusHandIconZone(championSlot, handIndex, &rect)) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_hand_icon_rect_pc34(championSlot, handIndex,
+                                                    &rect)) {
         return 0;
     }
     if (outX) *outX = rect.x;
@@ -32612,9 +32616,10 @@ int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
                                             int* outY,
                                             int* outW,
                                             int* outH) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_StatusHandSlotBoxZone(championSlot, handIndex,
-                                               &rect)) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_hand_slot_box_rect_pc34(championSlot,
+                                                        handIndex,
+                                                        &rect)) {
         return 0;
     }
     if (outX) *outX = rect.x;
@@ -32647,7 +32652,7 @@ int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
     }
     champ = &state->world.party.champions[championSlot];
     if (!champ->present || champ->hp.current == 0) return 0;
-    return DM1_ChampionPanel_SlotBoxGraphic(
+    return dm1_v1_champion_status_hand_slot_graphic_pc34(
         handIndex,
         (uint16_t)champ->wounds,
         (handIndex == DM1_SLOT_ACTION_HAND &&
@@ -32663,26 +32668,26 @@ int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
         return -1;
     }
     champ = &state->world.party.champions[championSlot];
-    return CHAMPION_Compat_StatusNameColor(
+    return dm1_v1_champion_status_name_color_pc34(
         (int)champ->present,
         (int)champ->hp.current,
         championSlot == state->world.party.activeChampionIndex);
 }
 
 int M11_GameView_GetV1StatusNameClearColor(void) {
-    return CHAMPION_Compat_StatusNameClearColor();
+    return dm1_v1_champion_status_name_clear_color_pc34();
 }
 
 int M11_GameView_GetV1StatusBoxFillColor(void) {
-    return CHAMPION_Compat_StatusBoxFillColor();
+    return dm1_v1_champion_status_box_fill_color_pc34();
 }
 
 int M11_GameView_GetV1StatusNameClearZoneId(int championSlot) {
-    return CHAMPION_Compat_StatusNameClearZoneId(championSlot);
+    return dm1_v1_champion_status_name_clear_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1StatusNameTextZoneId(int championSlot) {
-    return CHAMPION_Compat_StatusNameTextZoneId(championSlot);
+    return dm1_v1_champion_status_name_text_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1StatusNameZone(int championSlot,
@@ -32690,8 +32695,10 @@ int M11_GameView_GetV1StatusNameZone(int championSlot,
                                      int* outY,
                                      int* outW,
                                      int* outH) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_StatusNameZone(championSlot, &rect)) return 0;
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_name_rect_pc34(championSlot, &rect)) {
+        return 0;
+    }
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     if (outW) *outW = rect.w;
@@ -32704,8 +32711,10 @@ int M11_GameView_GetV1StatusNameTextZone(int championSlot,
                                          int* outY,
                                          int* outW,
                                          int* outH) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_StatusNameTextZone(championSlot, &rect)) return 0;
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_name_text_rect_pc34(championSlot, &rect)) {
+        return 0;
+    }
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     if (outW) *outW = rect.w;
@@ -32760,11 +32769,11 @@ int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
 }
 
 int M11_GameView_GetV1StatusBoxGraphicId(void) {
-    return CHAMPION_Compat_StatusBoxGraphicId();
+    return dm1_v1_champion_status_box_graphic_pc34();
 }
 
 int M11_GameView_GetV1DeadStatusBoxGraphicId(void) {
-    return CHAMPION_Compat_DeadStatusBoxGraphicId();
+    return dm1_v1_champion_dead_status_box_graphic_pc34();
 }
 
 int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
@@ -32775,7 +32784,7 @@ int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
         return 0;
     }
     champ = &state->world.party.champions[championSlot];
-    return CHAMPION_Compat_StatusBoxBaseGraphic(
+    return dm1_v1_champion_status_box_base_graphic_pc34(
         (int)champ->present,
         (int)champ->hp.current);
 }
@@ -32799,7 +32808,7 @@ static int m11_collect_v1_status_shield_border_graphics(
     (void)championSlot;
     if (!state) return 0;
 
-    return CHAMPION_Compat_StatusShieldBorderGraphics(
+    return dm1_v1_champion_status_shield_border_graphics_pc34(
         (int)state->world.magic.fireShieldDefense,
         (int)state->world.magic.spellShieldDefense,
         (int)state->world.magic.partyShieldDefense,
@@ -32857,8 +32866,16 @@ int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
                                              int* outY,
                                              int* outW,
                                              int* outH) {
-    return M11_GameView_GetV1StatusBoxZone(championSlot,
-                                           outX, outY, outW, outH);
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_shield_border_rect_pc34(championSlot,
+                                                        &rect)) {
+        return 0;
+    }
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
 }
 
 int M11_GameView_GetV1PoisonLabelZone(int championSlot,
@@ -32868,21 +32885,22 @@ int M11_GameView_GetV1PoisonLabelZone(int championSlot,
                                       int* outY,
                                       int* outW,
                                       int* outH) {
-    int boxX, boxY, boxW, boxH;
-    if (labelW <= 0 || labelH <= 0) return 0;
-    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
-                                         &boxX, &boxY, &boxW, &boxH)) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_poison_label_rect_pc34(championSlot,
+                                                labelW,
+                                                labelH,
+                                                &rect)) {
         return 0;
     }
-    if (outX) *outX = boxX + (boxW - labelW) / 2;
-    if (outY) *outY = boxY + boxH;
-    if (outW) *outW = labelW;
-    if (outH) *outH = labelH;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1DamageIndicatorZoneId(int championSlot) {
-    return CHAMPION_Compat_DamageIndicatorZoneId(championSlot);
+    return dm1_v1_champion_damage_indicator_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
@@ -32892,9 +32910,11 @@ int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
                                           int* outY,
                                           int* outW,
                                           int* outH) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_DamageIndicatorZone(championSlot, indicatorW,
-                                             indicatorH, &rect)) return 0;
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_damage_indicator_rect_pc34(championSlot,
+                                                    indicatorW,
+                                                    indicatorH,
+                                                    &rect)) return 0;
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     if (outW) *outW = rect.w;
@@ -32903,7 +32923,8 @@ int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
 }
 
 int M11_GameView_GetV1InventoryDamageIndicatorZoneId(int championSlot) {
-    return CHAMPION_Compat_InventoryDamageIndicatorZoneId(championSlot);
+    return dm1_v1_champion_inventory_damage_indicator_zone_id_pc34(
+        championSlot);
 }
 
 int M11_GameView_GetV1InventoryDamageIndicatorZone(int championSlot,
@@ -32913,11 +32934,11 @@ int M11_GameView_GetV1InventoryDamageIndicatorZone(int championSlot,
                                                    int* outY,
                                                    int* outW,
                                                    int* outH) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_InventoryDamageIndicatorZone(championSlot,
-                                                      indicatorW,
-                                                      indicatorH,
-                                                      &rect)) return 0;
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_inventory_damage_indicator_rect_pc34(championSlot,
+                                                              indicatorW,
+                                                              indicatorH,
+                                                              &rect)) return 0;
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     if (outW) *outW = rect.w;
@@ -32928,8 +32949,10 @@ int M11_GameView_GetV1InventoryDamageIndicatorZone(int championSlot,
 int M11_GameView_GetV1DamageNumberOrigin(int championSlot,
                                          int* outX,
                                          int* outY) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_DamageNumberOrigin(championSlot, &rect)) return 0;
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_damage_number_origin_pc34(championSlot, &rect)) {
+        return 0;
+    }
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     return 1;
@@ -32940,11 +32963,11 @@ int M11_GameView_GetV1DamageNumberOriginPc34(int championSlot,
                                              int inventoryChampion,
                                              int* outX,
                                              int* outY) {
-    ChampionStatusRectCompat rect;
-    if (!CHAMPION_Compat_DamageNumberOriginPc34(championSlot,
-                                                damageAmount,
-                                                inventoryChampion,
-                                                &rect)) return 0;
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_damage_number_origin_variant_pc34(championSlot,
+                                                           damageAmount,
+                                                           inventoryChampion,
+                                                           &rect)) return 0;
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     return 1;
