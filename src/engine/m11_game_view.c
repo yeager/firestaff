@@ -11327,8 +11327,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->startupTitleFrame = readiness.title_frame;
             out->startupTitleFrameMax = readiness.title_frame_max;
             out->startupTitleReady = readiness.title_ready;
-            out->startupInputReady = readiness.input_ready;
-            out->startupHudMenuReady = readiness.hud_menu_ready;
+            out->startupInputReady = readiness.host_startup_input_ready;
+            out->startupHudMenuReady = readiness.host_startup_hud_ready;
             out->startupHudMenuKind = readiness.hud_menu_kind;
             out->startupHudMenuOptionCount =
                 readiness.hud_menu_option_count;
@@ -11336,7 +11336,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 readiness.selected_command_id;
             out->startupUtilitySelectedActionIndex =
                 readiness.selected_utility_action_index;
-            out->startupHudRuntimeReady = readiness.runtime_hud_ready;
+            out->startupHudRuntimeReady = readiness.host_runtime_hud_ready;
             if (readiness.runtime_handoff_ready) {
                 out->levelLoaded = readiness.runtime_level_loaded;
                 out->mapIndex = readiness.runtime_map_index;

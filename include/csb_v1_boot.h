@@ -244,6 +244,9 @@ typedef struct CSB_V1_BootStartupReadinessReceipt_PC34 {
     int host_input_blocked;
     int host_startup_input_ready;
     int host_runtime_input_ready;
+    int host_hud_blocked;
+    int host_startup_hud_ready;
+    int host_runtime_hud_ready;
     CSB_V1_BootStartupHudMenuKind_PC34 hud_menu_kind;
     int hud_menu_option_count;
     int utility_menu_row_count;
