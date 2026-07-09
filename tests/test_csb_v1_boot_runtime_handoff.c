@@ -1976,12 +1976,15 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               route_receipt.hud_menu_state.valid &&
               route_receipt.hud_menu_state.kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              route_receipt.hud_menu_visible &&
+              !route_receipt.draw_utility_panel &&
+              !route_receipt.utility_plan_valid &&
               route_receipt.hud_menu_state.selected_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
               route_receipt.hud_menu_state.option_count == 4 &&
               strstr(route_receipt.hud_menu_state.prompt, "PRESS ENTER") !=
                   NULL,
-          "boot startup route receipt owns closed entrance HUD/menu state");
+          "boot startup route receipt owns closed entrance HUD/menu state without utility fallback");
     snapshot.utility_overlay_active = 1;
     snapshot.opening_active = 1;
     snapshot.opening_delay_ticks = 0;
