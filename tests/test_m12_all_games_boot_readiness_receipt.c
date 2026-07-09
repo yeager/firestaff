@@ -1,4 +1,5 @@
 #include "menu_startup_m12.h"
+#include "nexus_v1_launcher.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -55,13 +56,19 @@ int main(void) {
         {"dm2", "START MENU READY", "TITLE, SAVE MENU, FIRST HUD", "DM2 START MENU",
          "DM2 STARTUP HOST VIEW RECEIPT", "DM2 TITLE TIMING CAPTURE PROOF", 6},
         {"nexus", "TITLE MENU READY", "TITLE, WARNING, SAVE, CHAMPIONS", "NEXUS TITLE MENU",
-         "NEXUS FULL START CONSUMER RECEIPT", "NEXUS TIMING CAPTURE PROOF", 7},
+         "NEXUS FULL START PACKAGE RECEIPT", "NEXUS TIMING CAPTURE PROOF", 7},
         {"theron", "TRACK 02 READY", "TRACK 02, TITLE, STAGE, SOUL ROOM", "THERON TRACK 02",
          "THERON FULL START HOST VIEW RECEIPT", "THERON TRACK 02 REAL GRAPHICS PROOF", 7},
     };
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
     int i;
+    const unsigned int fullMask = M12_STARTUP_BOOT_STEP_DATA |
+                                  M12_STARTUP_BOOT_STEP_VERSION |
+                                  M12_STARTUP_BOOT_STEP_STARTUP_MENU |
+                                  M12_STARTUP_BOOT_STEP_FULL_GRAPHICS |
+                                  M12_STARTUP_BOOT_STEP_CONTRACT |
+                                  M12_STARTUP_BOOT_STEP_CAPTURE;
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     state.view = M12_MENU_VIEW_MAIN;
@@ -84,6 +91,12 @@ int main(void) {
                     "packaged capture proof should be expected")) return 1;
         if (!expect(boot.packagedCaptureReady == 1,
                     "packaged capture proof should be ready with verified startup")) return 1;
+        if (!expect(boot.expectedStepMask == fullMask,
+                    "boot receipt should expose the full expected startup proof mask")) return 1;
+        if (!expect(boot.readyStepMask == fullMask,
+                    "boot receipt should expose the full ready startup proof mask")) return 1;
+        if (!expect(boot.blockedStepMask == 0u,
+                    "ready boot receipt should have no blocked startup proof steps")) return 1;
         if (!expect(boot.startupStepCount == expected[i].stepCount,
                     "startup step count should match the game boot path")) return 1;
         if (!expect(boot.startupStepReadyCount == expected[i].stepCount,
@@ -99,6 +112,9 @@ int main(void) {
         if (!expect(boot.packagedCaptureLabel &&
                     strcmp(boot.packagedCaptureLabel, expected[i].captureLabel) == 0,
                     "packaged capture label should match game startup proof")) return 1;
+        if (!expect(boot.activeProofLabel &&
+                    strcmp(boot.activeProofLabel, expected[i].captureLabel) == 0,
+                    "active proof label should name packaged capture when ready")) return 1;
         if (!expect(strcmp(M12_StartupMenu_GetEntryCaptureProofLabel(&state, i),
                            expected[i].captureLabel) == 0,
                     "public capture proof label should match game startup proof")) return 1;
@@ -108,6 +124,21 @@ int main(void) {
         if (!expect(boot.detailLabel &&
                     strcmp(boot.detailLabel, expected[i].detailLabel) == 0,
                     "detail label should match game startup chain")) return 1;
+        if (strcmp(expected[i].gameId, "nexus") == 0) {
+            if (!expect(boot.packagedCaptureRoute ==
+                            NEXUS_V1_STARTUP_CAPTURE_TITLE,
+                        "Nexus M12 boot receipt should expose package capture route")) return 1;
+            if (!expect(boot.packagedCaptureFirstDrawKind ==
+                            NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND,
+                        "Nexus M12 boot receipt should expose first capture draw kind")) return 1;
+            if (!expect(boot.packagedCaptureCommandCount == 1,
+                        "Nexus M12 boot receipt should expose capture command count")) return 1;
+            if (!expect(boot.packagedCaptureWarningFrames == 48 &&
+                        boot.packagedCaptureTitleReadyFrame == 102 &&
+                        boot.packagedCaptureTitleFrameMax == 102 &&
+                        boot.packagedCaptureTitlePromptVisible == 1,
+                        "Nexus M12 boot receipt should expose title/warning timing")) return 1;
+        }
         if (!expect(M12_StartupMenu_GetLaunchGate(&state, i, &gate) == 1,
                     "launch gate should build")) return 1;
         if (!expect(gate.canLaunch == 1,
@@ -147,6 +178,15 @@ int main(void) {
                     "selected missing-version boot receipt should build")) return 1;
         if (!expect(boot.versionReady == 0 && boot.fullStartGraphicsReady == 0,
                     "raw boot receipt should report selected missing version")) return 1;
+        if (!expect((boot.readyStepMask & M12_STARTUP_BOOT_STEP_DATA) != 0u &&
+                    (boot.readyStepMask & M12_STARTUP_BOOT_STEP_VERSION) == 0u,
+                    "raw boot receipt should expose data-ready/version-blocked mask")) return 1;
+        if (!expect((boot.blockedStepMask & M12_STARTUP_BOOT_STEP_VERSION) != 0u &&
+                    (boot.blockedStepMask & M12_STARTUP_BOOT_STEP_CAPTURE) != 0u,
+                    "raw boot receipt should expose blocked version/capture proof bits")) return 1;
+        if (!expect(boot.activeProofLabel &&
+                    strcmp(boot.activeProofLabel, "SELECTED VERSION") == 0,
+                    "raw boot receipt active proof should name selected version")) return 1;
         if (!expect(M12_StartupMenu_GetLaunchGate(&state, 0, &gate) == 1,
                     "auto-version launch gate should build")) return 1;
         if (!expect(gate.autoSelectedVersionIndex == 0,
@@ -164,6 +204,9 @@ int main(void) {
                     "auto-version launch gate should normalize full-start boot readiness")) return 1;
         if (!expect(gate.boot.startupStepReadyCount == gate.boot.startupStepCount,
                     "auto-version launch gate should complete startup progress")) return 1;
+        if (!expect(gate.boot.readyStepMask == fullMask &&
+                    gate.boot.blockedStepMask == 0u,
+                    "auto-version launch gate should normalize startup proof masks")) return 1;
         intent = M12_StartupMenu_GetLaunchIntent(&state);
         if (!expect(intent.valid == 1 && intent.options.versionIndex == 0,
                     "launch intent should use the auto-selected matched version")) return 1;

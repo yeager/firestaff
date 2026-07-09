@@ -123,6 +123,7 @@ int main(void)
     Nexus_V1_StartupFullStartReceipt full_start_receipt;
     Nexus_V1_StartupFullStartConsumerReceipt full_start_consumer_receipt;
     Nexus_V1_StartupFullStartPackageReceipt full_start_package_receipt;
+    Nexus_V1_M12StartupPackageReceipt m12_package_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff_receipt;
@@ -153,6 +154,44 @@ int main(void)
         return 1;
     }
     snprintf(save_dir, sizeof(save_dir), "%s/saves", root);
+
+    nexus_v1_launcher_m12_startup_package_receipt_clear(&m12_package_receipt);
+    expect(m12_package_receipt.capture_route ==
+               NEXUS_V1_STARTUP_CAPTURE_INVALID &&
+               m12_package_receipt.first_capture_draw_kind ==
+                   NEXUS_V1_STARTUP_DRAW_NONE,
+           "Nexus M12 startup package clear resets capture fields");
+    expect(nexus_v1_launcher_m12_startup_package_from_flags(
+               1,
+               1,
+               1,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 1 &&
+               m12_package_receipt.startup_step_count == 7 &&
+               m12_package_receipt.startup_step_ready_count == 7 &&
+               m12_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               m12_package_receipt.capture_command_count == 1 &&
+               m12_package_receipt.first_capture_draw_kind ==
+                   NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
+               m12_package_receipt.boot_warning_frames == 48 &&
+               m12_package_receipt.boot_start_ready_frames == 102 &&
+               m12_package_receipt.title_frame_max == 102 &&
+               m12_package_receipt.title_prompt_visible == 1 &&
+               strcmp(m12_package_receipt.contract_label,
+                      "NEXUS FULL START PACKAGE RECEIPT") == 0,
+           "Nexus M12 startup package owns ready card timing/capture facts");
+    expect(nexus_v1_launcher_m12_startup_package_from_flags(
+               1,
+               1,
+               0,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 0 &&
+               m12_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+               strcmp(m12_package_receipt.next_step_label,
+                      "SELECTED VERSION") == 0,
+           "Nexus M12 startup package blocks capture before version proof");
 
     memset(&empty_champions, 0, sizeof(empty_champions));
     expect(nexus_v1_startup_input_from_firestaff_menu_code(0) ==

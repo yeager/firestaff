@@ -18,6 +18,7 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "nexus_v1_launcher.h"
 #include "nexus_v1_save.h"
 #include "render_sdl_m11.h"
 #include "theron_v1_save_load.h"
@@ -6697,6 +6698,82 @@ static const char* m12_full_start_capture_label(const char* gameId) {
     return manifest ? manifest->captureLabel : "PACKAGED CAPTURE PROOF";
 }
 
+static int m12_apply_nexus_startup_package(
+    M12_StartupBootReadiness* receipt) {
+    Nexus_V1_M12StartupPackageReceipt package;
+    if (!receipt || !receipt->gameId ||
+        strcmp(receipt->gameId, "nexus") != 0 ||
+        !nexus_v1_launcher_m12_startup_package_from_flags(
+            receipt->supported,
+            receipt->dataReady,
+            receipt->versionReady,
+            &package)) {
+        return 0;
+    }
+    receipt->startupMenuReady = package.startup_menu_ready;
+    receipt->fullStartGraphicsExpected = package.packaged_capture_expected;
+    receipt->fullStartGraphicsReady = package.full_start_graphics_ready;
+    receipt->startupContractExpected = package.packaged_capture_expected;
+    receipt->startupContractReady = package.startup_contract_ready;
+    receipt->packagedCaptureExpected = package.packaged_capture_expected;
+    receipt->packagedCaptureReady = package.packaged_capture_ready;
+    receipt->startupStepCount = package.startup_step_count;
+    receipt->startupStepReadyCount = package.startup_step_ready_count;
+    receipt->startupPathLabel = package.path_label;
+    receipt->startupContractLabel = package.contract_label;
+    receipt->packagedCaptureLabel = package.capture_label;
+    receipt->nextStepLabel = package.next_step_label;
+    receipt->activeProofLabel = package.packaged_capture_ready
+                                    ? package.capture_label
+                                    : package.next_step_label;
+    receipt->statusLabel = package.status_label;
+    receipt->detailLabel = package.detail_label;
+    receipt->packagedCaptureRoute = (int)package.capture_route;
+    receipt->packagedCaptureCommandCount = package.capture_command_count;
+    receipt->packagedCaptureFirstDrawKind =
+        (int)package.first_capture_draw_kind;
+    receipt->packagedCaptureWarningFrames = package.boot_warning_frames;
+    receipt->packagedCaptureTitleReadyFrame =
+        package.boot_start_ready_frames;
+    receipt->packagedCaptureTitleFrameMax = package.title_frame_max;
+    receipt->packagedCaptureTitlePromptVisible =
+        package.title_prompt_visible;
+    receipt->expectedStepMask = M12_STARTUP_BOOT_STEP_DATA |
+                                M12_STARTUP_BOOT_STEP_VERSION;
+    if (receipt->fullStartGraphicsExpected) {
+        receipt->expectedStepMask |= M12_STARTUP_BOOT_STEP_STARTUP_MENU |
+                                     M12_STARTUP_BOOT_STEP_FULL_GRAPHICS;
+    }
+    if (receipt->startupContractExpected) {
+        receipt->expectedStepMask |= M12_STARTUP_BOOT_STEP_CONTRACT;
+    }
+    if (receipt->packagedCaptureExpected) {
+        receipt->expectedStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
+    }
+    receipt->readyStepMask = 0u;
+    if (receipt->dataReady) {
+        receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_DATA;
+    }
+    if (receipt->versionReady) {
+        receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_VERSION;
+    }
+    if (receipt->startupMenuReady) {
+        receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_STARTUP_MENU;
+    }
+    if (receipt->fullStartGraphicsReady) {
+        receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_FULL_GRAPHICS;
+    }
+    if (receipt->startupContractReady) {
+        receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_CONTRACT;
+    }
+    if (receipt->packagedCaptureReady) {
+        receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
+    }
+    receipt->blockedStepMask =
+        receipt->expectedStepMask & ~receipt->readyStepMask;
+    return 1;
+}
+
 int M12_StartupMenu_GetBootReadiness(
     const M12_StartupMenuState* state,
     int entryIndex,
@@ -6713,6 +6790,7 @@ int M12_StartupMenu_GetBootReadiness(
     receipt.statusLabel = "OFFLINE";
     receipt.detailLabel = "OFFLINE";
     receipt.nextStepLabel = "OFFLINE";
+    receipt.activeProofLabel = "OFFLINE";
     receipt.startupPathLabel = "BOOT PATH";
     receipt.startupContractLabel = "BOOT RECEIPT";
     receipt.packagedCaptureLabel = "PACKAGED CAPTURE PROOF";
@@ -6733,6 +6811,8 @@ int M12_StartupMenu_GetBootReadiness(
         M12_AssetStatus_GameAvailable(&state->assetStatus, entry->gameId) ? 1 : 0;
     receipt.versionReady = (version && version->matched) ? 1 : 0;
     receipt.fullStartGraphicsExpected = receipt.supported;
+    receipt.expectedStepMask = M12_STARTUP_BOOT_STEP_DATA |
+                               M12_STARTUP_BOOT_STEP_VERSION;
     receipt.startupStepCount = 3 + m12_full_start_stage_count(entry->gameId);
     receipt.startupStepReadyCount = 0;
     receipt.startupPathLabel = m12_full_start_path_label(entry->gameId);
@@ -6740,42 +6820,80 @@ int M12_StartupMenu_GetBootReadiness(
     receipt.startupContractLabel = m12_full_start_contract_label(entry->gameId);
     receipt.packagedCaptureExpected = receipt.fullStartGraphicsExpected;
     receipt.packagedCaptureLabel = m12_full_start_capture_label(entry->gameId);
+    if (receipt.fullStartGraphicsExpected) {
+        receipt.expectedStepMask |= M12_STARTUP_BOOT_STEP_STARTUP_MENU |
+                                    M12_STARTUP_BOOT_STEP_FULL_GRAPHICS;
+    }
+    if (receipt.startupContractExpected) {
+        receipt.expectedStepMask |= M12_STARTUP_BOOT_STEP_CONTRACT;
+    }
+    if (receipt.packagedCaptureExpected) {
+        receipt.expectedStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
+    }
     if (receipt.dataReady) {
         receipt.startupStepReadyCount++;
+        receipt.readyStepMask |= M12_STARTUP_BOOT_STEP_DATA;
     }
     if (receipt.versionReady) {
         receipt.startupStepReadyCount++;
+        receipt.readyStepMask |= M12_STARTUP_BOOT_STEP_VERSION;
     }
     receipt.startupMenuReady = receipt.dataReady && receipt.versionReady;
+    if (receipt.startupMenuReady) {
+        receipt.readyStepMask |= M12_STARTUP_BOOT_STEP_STARTUP_MENU;
+    }
     receipt.fullStartGraphicsReady =
         receipt.fullStartGraphicsExpected && receipt.startupMenuReady;
+    if (receipt.fullStartGraphicsReady) {
+        receipt.readyStepMask |= M12_STARTUP_BOOT_STEP_FULL_GRAPHICS;
+    }
     receipt.startupContractReady =
         receipt.startupContractExpected && receipt.fullStartGraphicsReady;
+    if (receipt.startupContractReady) {
+        receipt.readyStepMask |= M12_STARTUP_BOOT_STEP_CONTRACT;
+    }
     receipt.packagedCaptureReady =
         receipt.packagedCaptureExpected && receipt.startupContractReady;
     if (receipt.packagedCaptureReady) {
+        receipt.readyStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
+    }
+    receipt.blockedStepMask = receipt.expectedStepMask & ~receipt.readyStepMask;
+    if (receipt.packagedCaptureReady) {
         receipt.startupStepReadyCount = receipt.startupStepCount;
+    }
+
+    if (m12_apply_nexus_startup_package(&receipt)) {
+        *outReadiness = receipt;
+        return 1;
     }
 
     if (!receipt.supported) {
         receipt.statusLabel = "UNSUPPORTED";
         receipt.detailLabel = "RUNTIME NOT WIRED";
         receipt.nextStepLabel = "SUPPORTED RUNTIME";
+        receipt.activeProofLabel = receipt.nextStepLabel;
         receipt.startupStepReadyCount = 0;
+        receipt.readyStepMask = 0u;
+        receipt.blockedStepMask = receipt.expectedStepMask;
     } else if (!receipt.dataReady) {
         receipt.statusLabel = "DATA MISSING";
         receipt.detailLabel = M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)
                                   ? "HASHED, BUT FILES ARE MISSING"
                                   : "KNOWN SLOT, HASH COVERAGE STILL GROWING";
         receipt.nextStepLabel = "REQUIRED GAME DATA";
+        receipt.activeProofLabel = receipt.nextStepLabel;
     } else if (!receipt.versionReady) {
         receipt.statusLabel = "VERSION MISSING";
         receipt.detailLabel = "SELECTED VERSION IS NOT VERIFIED";
         receipt.nextStepLabel = "SELECTED VERSION";
+        receipt.activeProofLabel = receipt.nextStepLabel;
     } else {
         receipt.statusLabel = m12_full_start_ready_status_label(entry->gameId);
         receipt.detailLabel = m12_full_start_ready_detail_label(entry->gameId);
         receipt.nextStepLabel = "READY";
+        receipt.activeProofLabel = receipt.packagedCaptureReady
+                                       ? receipt.packagedCaptureLabel
+                                       : receipt.startupContractLabel;
     }
 
     *outReadiness = receipt;
@@ -6841,21 +6959,36 @@ static void m12_boot_readiness_mark_version_ready(M12_StartupBootReadiness* boot
         return;
     }
     boot->versionReady = 1;
+    boot->readyStepMask |= M12_STARTUP_BOOT_STEP_VERSION;
     if (boot->startupStepReadyCount < boot->startupStepCount) {
         boot->startupStepReadyCount++;
     }
     boot->startupMenuReady = boot->dataReady && boot->versionReady;
+    if (boot->startupMenuReady) {
+        boot->readyStepMask |= M12_STARTUP_BOOT_STEP_STARTUP_MENU;
+    }
     boot->fullStartGraphicsReady =
         boot->fullStartGraphicsExpected && boot->startupMenuReady;
+    if (boot->fullStartGraphicsReady) {
+        boot->readyStepMask |= M12_STARTUP_BOOT_STEP_FULL_GRAPHICS;
+    }
     boot->startupContractReady =
         boot->startupContractExpected && boot->fullStartGraphicsReady;
+    if (boot->startupContractReady) {
+        boot->readyStepMask |= M12_STARTUP_BOOT_STEP_CONTRACT;
+    }
     boot->packagedCaptureReady =
         boot->packagedCaptureExpected && boot->startupContractReady;
+    if (boot->packagedCaptureReady) {
+        boot->readyStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
+    }
+    boot->blockedStepMask = boot->expectedStepMask & ~boot->readyStepMask;
     if (boot->packagedCaptureReady) {
         boot->startupStepReadyCount = boot->startupStepCount;
         boot->statusLabel = m12_full_start_ready_status_label(boot->gameId);
         boot->detailLabel = m12_full_start_ready_detail_label(boot->gameId);
         boot->nextStepLabel = "READY";
+        boot->activeProofLabel = boot->packagedCaptureLabel;
     }
 }
 

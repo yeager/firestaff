@@ -498,6 +498,40 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupFullStartPackageReceipt;
 
+typedef struct {
+    int handled;
+    int supported;
+    int data_ready;
+    int version_ready;
+    int startup_menu_ready;
+    int full_start_graphics_ready;
+    int startup_contract_ready;
+    int packaged_capture_expected;
+    int packaged_capture_ready;
+    int startup_step_count;
+    int startup_step_ready_count;
+    int boot_warning_frames;
+    int boot_start_ready_frames;
+    int title_frame_max;
+    int title_frames_until_ready;
+    int title_hold_frame;
+    int title_prompt_visible;
+    int title_reveal_y0;
+    int title_reveal_y1;
+    int title_reveal_h;
+    int capture_command_count;
+    Nexus_V1_StartupCaptureRoute capture_route;
+    Nexus_V1_StartupDrawKind first_capture_draw_kind;
+    const char *ready_status_label;
+    const char *ready_detail_label;
+    const char *path_label;
+    const char *contract_label;
+    const char *capture_label;
+    const char *next_step_label;
+    const char *status_label;
+    const char *detail_label;
+} Nexus_V1_M12StartupPackageReceipt;
+
 void nexus_v1_launcher_startup_runtime_state_clear(
     Nexus_V1_StartupRuntimeState *state);
 void nexus_v1_launcher_runtime_startup_snapshot_clear(
@@ -518,6 +552,13 @@ void nexus_v1_launcher_startup_full_start_consumer_receipt_clear(
     Nexus_V1_StartupFullStartConsumerReceipt *receipt);
 void nexus_v1_launcher_startup_full_start_package_receipt_clear(
     Nexus_V1_StartupFullStartPackageReceipt *receipt);
+void nexus_v1_launcher_m12_startup_package_receipt_clear(
+    Nexus_V1_M12StartupPackageReceipt *receipt);
+int nexus_v1_launcher_m12_startup_package_from_flags(
+    int supported,
+    int data_ready,
+    int version_ready,
+    Nexus_V1_M12StartupPackageReceipt *out_receipt);
 int nexus_v1_launcher_startup_host_facts_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupHostFacts *out_facts);

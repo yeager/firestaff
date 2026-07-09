@@ -327,13 +327,33 @@ typedef struct {
     int startupContractReady;
     int packagedCaptureExpected;
     int packagedCaptureReady;
+    int packagedCaptureRoute;
+    int packagedCaptureCommandCount;
+    int packagedCaptureFirstDrawKind;
+    int packagedCaptureWarningFrames;
+    int packagedCaptureTitleReadyFrame;
+    int packagedCaptureTitleFrameMax;
+    int packagedCaptureTitlePromptVisible;
+    unsigned int expectedStepMask;
+    unsigned int readyStepMask;
+    unsigned int blockedStepMask;
     const char* nextStepLabel;
+    const char* activeProofLabel;
     const char* startupPathLabel;
     const char* startupContractLabel;
     const char* packagedCaptureLabel;
     const char* statusLabel;
     const char* detailLabel;
 } M12_StartupBootReadiness;
+
+enum {
+    M12_STARTUP_BOOT_STEP_DATA = 1u << 0,
+    M12_STARTUP_BOOT_STEP_VERSION = 1u << 1,
+    M12_STARTUP_BOOT_STEP_STARTUP_MENU = 1u << 2,
+    M12_STARTUP_BOOT_STEP_FULL_GRAPHICS = 1u << 3,
+    M12_STARTUP_BOOT_STEP_CONTRACT = 1u << 4,
+    M12_STARTUP_BOOT_STEP_CAPTURE = 1u << 5
+};
 
 typedef struct {
     int handled;

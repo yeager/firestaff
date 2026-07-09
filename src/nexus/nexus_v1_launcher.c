@@ -779,6 +779,99 @@ void nexus_v1_launcher_startup_full_start_package_receipt_clear(
     receipt->consumer_route = "blocked-startup";
 }
 
+void nexus_v1_launcher_m12_startup_package_receipt_clear(
+    Nexus_V1_M12StartupPackageReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_INVALID;
+    receipt->first_capture_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
+    receipt->ready_status_label = "TITLE MENU READY";
+    receipt->ready_detail_label = "TITLE, WARNING, SAVE, CHAMPIONS";
+    receipt->path_label = "NEXUS TITLE MENU";
+    receipt->contract_label = "NEXUS FULL START PACKAGE RECEIPT";
+    receipt->capture_label = "NEXUS TIMING CAPTURE PROOF";
+    receipt->next_step_label = "REQUIRED GAME DATA";
+    receipt->status_label = "DATA MISSING";
+    receipt->detail_label = "KNOWN SLOT, HASH COVERAGE STILL GROWING";
+}
+
+int nexus_v1_launcher_m12_startup_package_from_flags(
+    int supported,
+    int data_ready,
+    int version_ready,
+    Nexus_V1_M12StartupPackageReceipt *out_receipt)
+{
+    Nexus_V1_TitleFrame title;
+
+    nexus_v1_launcher_m12_startup_package_receipt_clear(out_receipt);
+    if (!out_receipt) {
+        return 0;
+    }
+    out_receipt->handled = 1;
+    out_receipt->supported = supported ? 1 : 0;
+    out_receipt->data_ready = data_ready ? 1 : 0;
+    out_receipt->version_ready = version_ready ? 1 : 0;
+    out_receipt->packaged_capture_expected = out_receipt->supported;
+    out_receipt->startup_step_count = 7;
+    out_receipt->boot_warning_frames = nexus_v1_boot_warning_frames();
+    out_receipt->boot_start_ready_frames = nexus_v1_boot_start_ready_frames();
+    if (nexus_v1_title_frame(out_receipt->boot_start_ready_frames,
+                             NEXUS_FB_H,
+                             &title)) {
+        out_receipt->title_frame_max = out_receipt->boot_start_ready_frames;
+        out_receipt->title_frames_until_ready = title.frames_until_ready;
+        out_receipt->title_hold_frame = title.hold_frame;
+        out_receipt->title_prompt_visible = title.prompt_visible;
+        out_receipt->title_reveal_y0 = title.reveal_y0;
+        out_receipt->title_reveal_y1 = title.reveal_y1;
+        out_receipt->title_reveal_h = title.reveal_h;
+    }
+
+    if (!out_receipt->supported) {
+        out_receipt->status_label = "UNSUPPORTED";
+        out_receipt->detail_label = "RUNTIME NOT WIRED";
+        out_receipt->next_step_label = "SUPPORTED RUNTIME";
+        return 1;
+    }
+    if (out_receipt->data_ready) {
+        out_receipt->startup_step_ready_count++;
+    }
+    if (out_receipt->version_ready) {
+        out_receipt->startup_step_ready_count++;
+    }
+    out_receipt->startup_menu_ready =
+        out_receipt->data_ready && out_receipt->version_ready;
+    out_receipt->full_start_graphics_ready =
+        out_receipt->packaged_capture_expected &&
+        out_receipt->startup_menu_ready;
+    out_receipt->startup_contract_ready =
+        out_receipt->full_start_graphics_ready;
+    out_receipt->packaged_capture_ready =
+        out_receipt->startup_contract_ready;
+    if (!out_receipt->data_ready) {
+        out_receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
+    } else if (!out_receipt->version_ready) {
+        out_receipt->status_label = "VERSION MISSING";
+        out_receipt->detail_label = "SELECTED VERSION IS NOT VERIFIED";
+        out_receipt->next_step_label = "SELECTED VERSION";
+        out_receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
+    } else {
+        out_receipt->startup_step_ready_count =
+            out_receipt->startup_step_count;
+        out_receipt->status_label = out_receipt->ready_status_label;
+        out_receipt->detail_label = out_receipt->ready_detail_label;
+        out_receipt->next_step_label = "READY";
+        out_receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_TITLE;
+        out_receipt->capture_command_count = 1;
+        out_receipt->first_capture_draw_kind =
+            NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND;
+    }
+    return 1;
+}
+
 const char *nexus_v1_launcher_startup_runtime_handoff_route_name(
     Nexus_V1_StartupRuntimeHandoffRoute route)
 {
