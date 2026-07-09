@@ -2034,63 +2034,6 @@ static int dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
            out_view_model->host_view_receipt.valid;
 }
 
-int dm2_v1_boot_startup_full_start_receipt_from_snapshot(
-    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
-    DM2_V1_BootStartupFullStartReceipt *out_receipt)
-{
-    DM2_V1_BootStartupViewModel view_model;
-
-    if (out_receipt) {
-        dm2_v1_boot_startup_full_start_receipt_clear(out_receipt);
-    }
-    if (!snapshot || !out_receipt ||
-        !dm2_v1_boot_startup_view_model_receipt_from_snapshot(
-            snapshot,
-            &view_model) ||
-        !view_model.full_start_receipt.valid) {
-        return 0;
-    }
-    *out_receipt = view_model.full_start_receipt;
-    return 1;
-}
-
-int dm2_v1_boot_startup_full_start_receipt_from_runtime_state(
-    const DM2_V1_BootProfile *profile,
-    int startup_menu_active,
-    const char *startup_save_root,
-    int resume_available,
-    unsigned int slot_mask,
-    int selected_row,
-    int title_animation_tick,
-    DM2_V1_BootStartupFullStartReceipt *out_receipt)
-{
-    DM2_V1_BootRuntimeStartupSnapshot snapshot;
-    DM2_V1_BootStartupViewModel view_model;
-
-    if (out_receipt) {
-        dm2_v1_boot_startup_full_start_receipt_clear(out_receipt);
-    }
-    if (!out_receipt) {
-        return 0;
-    }
-    memset(&snapshot, 0, sizeof(snapshot));
-    snapshot.profile = profile;
-    snapshot.startup_menu_active = startup_menu_active;
-    snapshot.startup_save_root = startup_save_root;
-    snapshot.resume_available = resume_available;
-    snapshot.slot_mask = slot_mask;
-    snapshot.selected_row = selected_row;
-    if (!dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
-            &snapshot,
-            title_animation_tick,
-            &view_model) ||
-        !view_model.full_start_receipt.valid) {
-        return 0;
-    }
-    *out_receipt = view_model.full_start_receipt;
-    return 1;
-}
-
 int dm2_v1_boot_startup_host_view_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupHostViewReceipt *out_receipt)
@@ -2146,54 +2089,6 @@ int dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
     }
     *out_receipt = view_model.host_view_receipt;
     return 1;
-}
-
-int dm2_v1_boot_startup_packaged_capture_proof_from_snapshot(
-    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
-    DM2_V1_BootStartupPackagedCaptureProof *out_proof)
-{
-    DM2_V1_BootStartupHostViewReceipt host_view;
-
-    dm2_v1_boot_startup_packaged_capture_proof_init(out_proof);
-    if (!snapshot || !out_proof ||
-        !dm2_v1_boot_startup_host_view_receipt_from_snapshot(
-            snapshot,
-            &host_view)) {
-        return 0;
-    }
-    return dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
-        &host_view,
-        out_proof);
-}
-
-int dm2_v1_boot_startup_packaged_capture_proof_from_runtime_state(
-    const DM2_V1_BootProfile *profile,
-    int startup_menu_active,
-    const char *startup_save_root,
-    int resume_available,
-    unsigned int slot_mask,
-    int selected_row,
-    int title_animation_tick,
-    DM2_V1_BootStartupPackagedCaptureProof *out_proof)
-{
-    DM2_V1_BootStartupHostViewReceipt host_view;
-
-    dm2_v1_boot_startup_packaged_capture_proof_init(out_proof);
-    if (!out_proof ||
-        !dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
-            profile,
-            startup_menu_active,
-            startup_save_root,
-            resume_available,
-            slot_mask,
-            selected_row,
-            title_animation_tick,
-            &host_view)) {
-        return 0;
-    }
-    return dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
-        &host_view,
-        out_proof);
 }
 
 int dm2_v1_boot_startup_packaged_full_start_receipt_from_snapshot(

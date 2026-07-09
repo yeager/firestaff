@@ -596,18 +596,6 @@ void dm2_v1_boot_startup_view_model_clear(
 int dm2_v1_boot_startup_view_model_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupViewModel *out_view_model);
-int dm2_v1_boot_startup_full_start_receipt_from_snapshot(
-    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
-    DM2_V1_BootStartupFullStartReceipt *out_receipt);
-int dm2_v1_boot_startup_full_start_receipt_from_runtime_state(
-    const DM2_V1_BootProfile *profile,
-    int startup_menu_active,
-    const char *startup_save_root,
-    int resume_available,
-    unsigned int slot_mask,
-    int selected_row,
-    int title_animation_tick,
-    DM2_V1_BootStartupFullStartReceipt *out_receipt);
 int dm2_v1_boot_startup_host_view_receipt_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupHostViewReceipt *out_receipt);
@@ -624,18 +612,6 @@ void dm2_v1_boot_startup_packaged_capture_proof_init(
     DM2_V1_BootStartupPackagedCaptureProof *proof);
 int dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
     const DM2_V1_BootStartupHostViewReceipt *host_view,
-    DM2_V1_BootStartupPackagedCaptureProof *out_proof);
-int dm2_v1_boot_startup_packaged_capture_proof_from_snapshot(
-    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
-    DM2_V1_BootStartupPackagedCaptureProof *out_proof);
-int dm2_v1_boot_startup_packaged_capture_proof_from_runtime_state(
-    const DM2_V1_BootProfile *profile,
-    int startup_menu_active,
-    const char *startup_save_root,
-    int resume_available,
-    unsigned int slot_mask,
-    int selected_row,
-    int title_animation_tick,
     DM2_V1_BootStartupPackagedCaptureProof *out_proof);
 void dm2_v1_boot_startup_packaged_full_start_receipt_init(
     DM2_V1_BootStartupPackagedFullStartReceipt *receipt);

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass887 DM2 full-start compatibility cleanup: DM2 host/startup tests now consume the packaged full-start receipt instead of separate full-start and capture helper queries, and the old public wrappers were removed from the boot API. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 M12 active capture launch detail: ready launch gates now publish the active packaged capture proof as their detail label instead of a generic boot-path label, so DM1 HoC, CSB HUD/title, DM2 timing, Nexus capture, and Theron Track02 cards/status consumers stay receipt-driven. Verification: `test_m12_all_games_boot_readiness_receipt`, `test_csb_v1_launch_blocker_m12`, `test_m12_dm1_v1_required_complete_launches`, and `git diff --check`.
 
 - ✅ 2026-07-09 pass911 Nexus package display labels: Nexus M12 startup package receipts now own ready/blocked launcher display labels, active proof labels, capture-route names, and first draw-kind names so callers do not need generic manifest or loose startup text for Nexus status/card display. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
