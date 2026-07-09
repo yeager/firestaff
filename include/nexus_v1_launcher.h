@@ -522,6 +522,10 @@ typedef struct {
     int capture_command_count;
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupDrawKind first_capture_draw_kind;
+    const char *game_id;
+    const char *card_title_label;
+    const char *card_subtitle_label;
+    const char *timing_summary_label;
     const char *ready_status_label;
     const char *ready_detail_label;
     const char *path_label;

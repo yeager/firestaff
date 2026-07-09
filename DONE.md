@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass912 Nexus card display package labels: Nexus M12 startup package receipts now also own the game id, card title, card subtitle, and timing summary labels, closing the remaining Nexus-owned launcher/status display text gap after pass911. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
+
 - ✅ 2026-07-09 pass897 Theron render export cleanup: removed old Track 02 media layout/row/render-plan compatibility exports and moved tests to the full-start host-render receipt, keeping no raw prompt/roster arrays and no raw graphics-plan consumer proof. Verification: `test_theron_v1_startup_save_resume_pc34`, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass896 DM1 mirror floor-item consumer receipt: champion mirror rendering now exposes a DM1-owned consumer that combines the C026 wall-overlay boundary with F0115 runtime thing receipts, proving mirror payload suppression while real floor objects/projectiles remain drawable. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, target rebuild, and `git diff --check` passed.
