@@ -123,7 +123,8 @@ int main(void) {
                         boot.dm1HoCReleaseCaptureOwnershipReady == 1 &&
                         boot.dm1HoCReceiptOnlyConsumerReady == 1 &&
                         boot.dm1HoCNoHostFallbackVisualsReady == 1 &&
-                        boot.dm1HoCLowerLevelHelpersReady == 1,
+                        boot.dm1HoCLowerLevelHelpersReady == 1 &&
+                        boot.dm1HoCHostDrawRejectsBackingFallbackReady == 1,
                         "DM1 M12 boot readiness should consume HoC release/app capture ownership receipt")) return 1;
         }
         if (!expect(boot.expectedStepMask == fullMask,
