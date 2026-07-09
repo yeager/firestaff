@@ -8,12 +8,12 @@ extern "C" {
 #endif
 
 /* Per-tick decay rates — ReDMCSB: ~3 food and ~3 water per game tick */
-#define M11_FOOD_DECAY_PER_TICK  3
-#define M11_WATER_DECAY_PER_TICK 3
+#define DM1_V1_FOOD_DECAY_PER_TICK_PC34  3
+#define DM1_V1_WATER_DECAY_PER_TICK_PC34 3
 
-#define M11_MAX_CHAMPIONS 4
-#define M11_FOOD_DECAY_MS 60000  /* lose 1 food per minute in-game */
-#define M11_WATER_DECAY_MS 45000 /* lose 1 water per 45s */
+#define DM1_V1_FOOD_WATER_MAX_CHAMPIONS_PC34 4
+#define DM1_V1_FOOD_DECAY_MS_PC34 60000  /* lose 1 food per minute in-game */
+#define DM1_V1_WATER_DECAY_MS_PC34 45000 /* lose 1 water per 45s */
 
 typedef struct {
     int food;
@@ -22,22 +22,43 @@ typedef struct {
     int lastDrinkMs;
     int starved;
     int thirsty;
-} M11_FoodWater;
+} DM1_V1_FoodWaterPc34;
 
 typedef struct {
-    M11_FoodWater champions[M11_MAX_CHAMPIONS];
+    DM1_V1_FoodWaterPc34 champions[DM1_V1_FOOD_WATER_MAX_CHAMPIONS_PC34];
     int count;
-} M11_FoodWaterState;
+} DM1_V1_FoodWaterStatePc34;
 
-void m11_fw_init(M11_FoodWaterState* s, int count);
-void m11_fw_tick(M11_FoodWaterState* s, int nowMs);
-int m11_fw_eat(M11_FoodWaterState* s, int champ, int foodAmt, int nowMs);
-int m11_fw_drink(M11_FoodWaterState* s, int champ, int waterAmt, int nowMs);
-int m11_fw_get_food(const M11_FoodWaterState* s, int champ);
-int m11_fw_get_water(const M11_FoodWaterState* s, int champ);
-int m11_fw_is_starved(const M11_FoodWaterState* s, int champ);
-int m11_fw_is_thirsty(const M11_FoodWaterState* s, int champ);
-int m11_fw_starvation_damage(const M11_FoodWaterState* s, int champ);
+void DM1_V1_FoodWater_InitPc34Compat(DM1_V1_FoodWaterStatePc34* s, int count);
+void DM1_V1_FoodWater_TickPc34Compat(DM1_V1_FoodWaterStatePc34* s, int nowMs);
+int DM1_V1_FoodWater_EatPc34Compat(DM1_V1_FoodWaterStatePc34* s, int champ, int foodAmt, int nowMs);
+int DM1_V1_FoodWater_DrinkPc34Compat(DM1_V1_FoodWaterStatePc34* s, int champ, int waterAmt, int nowMs);
+int DM1_V1_FoodWater_GetFoodPc34Compat(const DM1_V1_FoodWaterStatePc34* s, int champ);
+int DM1_V1_FoodWater_GetWaterPc34Compat(const DM1_V1_FoodWaterStatePc34* s, int champ);
+int DM1_V1_FoodWater_IsStarvedPc34Compat(const DM1_V1_FoodWaterStatePc34* s, int champ);
+int DM1_V1_FoodWater_IsThirstyPc34Compat(const DM1_V1_FoodWaterStatePc34* s, int champ);
+int DM1_V1_FoodWater_StarvationDamagePc34Compat(const DM1_V1_FoodWaterStatePc34* s, int champ);
+
+typedef DM1_V1_FoodWaterPc34 M11_FoodWater;
+typedef DM1_V1_FoodWaterStatePc34 M11_FoodWaterState;
+
+#define M11_FOOD_DECAY_PER_TICK DM1_V1_FOOD_DECAY_PER_TICK_PC34
+#define M11_WATER_DECAY_PER_TICK DM1_V1_WATER_DECAY_PER_TICK_PC34
+#ifndef M11_MAX_CHAMPIONS
+#define M11_MAX_CHAMPIONS DM1_V1_FOOD_WATER_MAX_CHAMPIONS_PC34
+#endif
+#define M11_FOOD_DECAY_MS DM1_V1_FOOD_DECAY_MS_PC34
+#define M11_WATER_DECAY_MS DM1_V1_WATER_DECAY_MS_PC34
+
+#define m11_fw_init DM1_V1_FoodWater_InitPc34Compat
+#define m11_fw_tick DM1_V1_FoodWater_TickPc34Compat
+#define m11_fw_eat DM1_V1_FoodWater_EatPc34Compat
+#define m11_fw_drink DM1_V1_FoodWater_DrinkPc34Compat
+#define m11_fw_get_food DM1_V1_FoodWater_GetFoodPc34Compat
+#define m11_fw_get_water DM1_V1_FoodWater_GetWaterPc34Compat
+#define m11_fw_is_starved DM1_V1_FoodWater_IsStarvedPc34Compat
+#define m11_fw_is_thirsty DM1_V1_FoodWater_IsThirstyPc34Compat
+#define m11_fw_starvation_damage DM1_V1_FoodWater_StarvationDamagePc34Compat
 
 #ifdef __cplusplus
 }

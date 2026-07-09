@@ -54,7 +54,7 @@ int DM1V1_Fountain_ApplyLeaderHandItemPc34Compat(DM1_V1_ItemPc34* leaderHandItem
                                                  int facingFountain,
                                                  int weightAfter,
                                                  DM1V1FountainResultPc34Compat* outResult);
-int DM1V1_Fountain_ApplyDrinkPc34Compat(M11_FoodWaterState* state,
+int DM1V1_Fountain_ApplyDrinkPc34Compat(DM1_V1_FoodWaterStatePc34* state,
                                         int championIndex,
                                         int facingFountain,
                                         DM1V1FountainResultPc34Compat* outResult);
