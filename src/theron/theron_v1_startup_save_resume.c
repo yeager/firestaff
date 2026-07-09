@@ -855,6 +855,20 @@ int theron_v1_startup_host_receipt_from_continue_apply(
     return 1;
 }
 
+static const char *theron_v1_startup_continue_source_name(
+    Theron_V1StartupContinueSource source) {
+
+    switch (source) {
+    case THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV:
+        return "TQSV";
+    case THERON_V1_STARTUP_CONTINUE_SOURCE_SRM:
+        return "SRM";
+    case THERON_V1_STARTUP_CONTINUE_SOURCE_NONE:
+    default:
+        return "NONE";
+    }
+}
+
 void theron_v1_startup_continue_availability_init(
     Theron_V1StartupContinueAvailability *availability) {
 
@@ -1027,6 +1041,38 @@ int theron_v1_startup_continue_apply_receipt(
     return 1;
 }
 
+static int theron_v1_startup_continue_failure_apply_receipt(
+    const Theron_StartupActionPlan *plan,
+    const Theron_V1StartupContinueResult *result,
+    const char *continue_receipt,
+    Theron_V1StartupContinueApplyReceipt *out_receipt) {
+
+    const char *status;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_continue_apply_receipt_init(out_receipt);
+    status = (continue_receipt && continue_receipt[0])
+        ? continue_receipt
+        : (plan && plan->failure_status ? plan->failure_status
+                                        : "CONTINUE FAILED");
+    out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+    out_receipt->status_scope = (plan && plan->status_scope)
+        ? plan->status_scope
+        : "STARTUP";
+    out_receipt->status = status;
+    out_receipt->inspect_scope = "STARTUP";
+    snprintf(out_receipt->inspect_detail,
+             sizeof(out_receipt->inspect_detail),
+             "%s%s%s",
+             status,
+             result ? " source=" : "",
+             result ? theron_v1_startup_continue_source_name(result->source)
+                    : "");
+    return 1;
+}
+
 int theron_v1_startup_continue_state_receipt_from_result(
     const Theron_V1StartupContinueResult *result,
     Theron_StartupStateReceipt *out_receipt) {
@@ -1087,6 +1133,13 @@ int theron_v1_startup_continue_apply_request_with_receipts(
                                                   result,
                                                   receipt,
                                                   receipt_cap)) {
+        if (out_apply_receipt) {
+            theron_v1_startup_continue_failure_apply_receipt(
+                plan,
+                result,
+                receipt,
+                out_apply_receipt);
+        }
         return 0;
     }
     if (out_state_receipt &&
@@ -1221,6 +1274,11 @@ int theron_v1_startup_continue_apply_facts_with_host_receipts(
             out_state_receipt,
             receipt,
             receipt_cap)) {
+        if (out_host_receipt) {
+            theron_v1_startup_host_receipt_from_continue_apply(
+                &apply_receipt,
+                out_host_receipt);
+        }
         return 0;
     }
     if (out_host_receipt &&
@@ -1250,9 +1308,23 @@ int theron_v1_startup_continue_apply_boot_profile_with_host_receipts(
     const Theron_V1_BootProfile *profile =
         (const Theron_V1_BootProfile *)boot_profile;
 
+    if (out_result) {
+        theron_v1_startup_continue_result_init(out_result);
+    }
     if (!profile) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap, "missing Theron boot profile");
+        }
+        if (out_host_receipt) {
+            Theron_V1StartupContinueApplyReceipt apply_receipt;
+            theron_v1_startup_continue_failure_apply_receipt(
+                plan,
+                out_result,
+                receipt,
+                &apply_receipt);
+            theron_v1_startup_host_receipt_from_continue_apply(
+                &apply_receipt,
+                out_host_receipt);
         }
         return 0;
     }

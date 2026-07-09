@@ -1410,7 +1410,7 @@ int main(void) {
                               THERON_V1_STARTUP_CONTINUE_SOURCE_NONE);
                     check_int("continue combined no-source receipt",
                               continue_receipt.input_result,
-                              THERON_STARTUP_INPUT_RESULT_IGNORED);
+                              THERON_STARTUP_INPUT_RESULT_REDRAW);
                     check_contains("continue combined no-source text",
                                    continue_receipt_text,
                                    "Continue requires");
@@ -1436,7 +1436,59 @@ int main(void) {
                               THERON_V1_STARTUP_CONTINUE_SOURCE_NONE);
                     check_int("continue facts no-source receipt",
                               continue_receipt.input_result,
-                              THERON_STARTUP_INPUT_RESULT_IGNORED);
+                              THERON_STARTUP_INPUT_RESULT_REDRAW);
+                    theron_v1_startup_host_receipt_init(&host_receipt);
+                    continue_receipt_text[0] = '\0';
+                    check_int("continue facts host no-source rc",
+                              theron_v1_startup_continue_apply_facts_with_host_receipts(
+                                  &world,
+                                  THERON_V1_STARTUP_RESUME_NONE,
+                                  -1,
+                                  NULL,
+                                  -1,
+                                  THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT,
+                                  NULL,
+                                  &plan,
+                                  NULL,
+                                  &continue_result,
+                                  &host_receipt,
+                                  &state_receipt,
+                                  continue_receipt_text,
+                                  sizeof(continue_receipt_text)),
+                              0);
+                    check_contains("continue facts host no-source status",
+                                   host_receipt.status,
+                                   "Continue requires");
+                    check_contains("continue facts host no-source inspect",
+                                   host_receipt.inspect_detail,
+                                   "source=NONE");
+                    check_int("continue facts host no-source redraw",
+                              host_receipt.input_result,
+                              THERON_STARTUP_INPUT_RESULT_REDRAW);
+                    theron_v1_startup_host_receipt_init(&host_receipt);
+                    continue_receipt_text[0] = '\0';
+                    check_int("continue boot host missing profile rc",
+                              theron_v1_startup_continue_apply_boot_profile_with_host_receipts(
+                                  &world,
+                                  THERON_V1_STARTUP_RESUME_SRM,
+                                  -1,
+                                  NULL,
+                                  0,
+                                  THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                                  "/tmp/firestaff-missing-srm",
+                                  &plan,
+                                  &continue_result,
+                                  &host_receipt,
+                                  &state_receipt,
+                                  continue_receipt_text,
+                                  sizeof(continue_receipt_text)),
+                              0);
+                    check_contains("continue boot host missing profile status",
+                                   host_receipt.status,
+                                   "missing Theron boot profile");
+                    check_contains("continue boot host missing profile inspect",
+                                   host_receipt.inspect_detail,
+                                   "missing Theron boot profile");
                 }
             }
 
