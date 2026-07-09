@@ -2581,6 +2581,7 @@ static int csb_v1_boot_startup_utility_receipt_handled_pc34(
 
 static int csb_v1_boot_startup_action_capture_pre_input_route_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
     CSB_V1_BootStartupActionReceipt_PC34 *receipt)
 {
     int captured;
@@ -2593,6 +2594,13 @@ static int csb_v1_boot_startup_action_capture_pre_input_route_pc34(
      * that HUD/menu routing in the viewport layer, so every boot action
      * receipt captures the pre-input render route before utility/entrance
      * dispatch mutates startup state. */
+    receipt->menu_input = menu_input;
+    receipt->startup_input =
+        csb_v1_startup_input_from_firestaff_menu_code_pc34(menu_input);
+    receipt->entrance_command_id =
+        csb_v1_startup_entrance_command_for_input_pc34(
+            snapshot->credits_active,
+            receipt->startup_input);
     captured = csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
         snapshot,
         &receipt->pre_input_route);
@@ -2603,6 +2611,16 @@ static int csb_v1_boot_startup_action_capture_pre_input_route_pc34(
         csb_v1_boot_startup_render_view_receipt_from_route_pc34(
             &receipt->pre_input_route,
             &receipt->pre_input_render_view);
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 maps input to C001/C200
+     * startup commands only while the entrance wait loop accepts input.
+     * TITLE.C F0437 keeps the post-FTL title/PRESENTS animation noninteractive.
+     * Store the source input and command boundary with the render receipt so
+     * host code does not re-run CSB input routing for title/menu decisions. */
+    receipt->input_blocked_by_title =
+        receipt->pre_input_render_view.title_after_swoosh_route &&
+                !receipt->pre_input_route.accepts_input
+            ? 1
+            : 0;
     return captured;
 }
 
@@ -2695,6 +2713,7 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     }
     if (!csb_v1_boot_startup_action_capture_pre_input_route_pc34(
             snapshot,
+            menu_input,
             out_receipt) ||
         !snapshot->entrance_active) {
         return 0;
@@ -2707,6 +2726,7 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
             &utility_receipt)) {
         out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34;
         out_receipt->handled = 1;
+        out_receipt->input_routed_to_utility = 1;
         out_receipt->utility_receipt = utility_receipt;
         (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
             snapshot,
@@ -2728,6 +2748,7 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     }
     out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34;
     out_receipt->handled = 1;
+    out_receipt->input_routed_to_entrance = 1;
     out_receipt->entrance_receipt = entrance_receipt;
     (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
         snapshot,
@@ -2751,6 +2772,7 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     }
     if (!csb_v1_boot_startup_action_capture_pre_input_route_pc34(
             snapshot,
+            0,
             out_receipt) ||
         !snapshot->entrance_active) {
         return 0;
@@ -2765,6 +2787,7 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
             &utility_receipt)) {
         out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34;
         out_receipt->handled = 1;
+        out_receipt->input_routed_to_utility = 1;
         out_receipt->utility_receipt = utility_receipt;
         (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
             snapshot,
@@ -2788,6 +2811,7 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     }
     out_receipt->kind = CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34;
     out_receipt->handled = 1;
+    out_receipt->input_routed_to_entrance = 1;
     out_receipt->entrance_receipt = entrance_receipt;
     (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
         snapshot,
