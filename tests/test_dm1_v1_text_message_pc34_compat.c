@@ -302,6 +302,41 @@ static void test_scroll_layout_source_lock(void) {
     ASSERT_EQ(encoded[3], 'a', "scroll glyph lowercase unchanged");
 }
 
+static void test_log_render_plan(void) {
+    const char* texts[6];
+    int colors[6];
+    DM1_V1_MessageRenderPlanPc34Compat plan;
+
+    texts[0] = "T42: YOU SEE A SCROLL";
+    colors[0] = DM1_V1_COLOR_WHITE;
+    texts[1] = "SPELL PANEL OPENED";
+    colors[1] = DM1_V1_COLOR_CYAN;
+    texts[2] = "A DOOR OPENS";
+    colors[2] = DM1_V1_COLOR_RED;
+    texts[3] = "PARTY MOVED";
+    colors[3] = DM1_V1_COLOR_CYAN;
+    texts[4] = "THE WALL READS RUN";
+    colors[4] = DM1_V1_COLOR_WHITE;
+    texts[5] = "CAST SPELL #17";
+    colors[5] = DM1_V1_COLOR_RED;
+
+    ASSERT_STR_EQ(DM1_V1_TextMessage_StripTickPrefixPc34Compat(texts[0]),
+                  "YOU SEE A SCROLL", "strip tick prefix");
+    ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat("SPELL PANEL OPENED"),
+              0, "suppress debug spell panel");
+    ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat("A DOOR OPENS"),
+              1, "accept player-facing message");
+
+    DM1_V1_TextMessage_BuildLogRenderPlanPc34Compat(texts, colors, 6, &plan);
+    ASSERT_EQ(plan.rowCount, 3, "render plan accepted count");
+    ASSERT_EQ(plan.lineHeight, DM1_V1_TEXT_LINE_HEIGHT, "render line height");
+    ASSERT_EQ(plan.characterWidth, DM1_V1_TEXT_CHARACTER_WIDTH, "render char width");
+    ASSERT_STR_EQ(plan.rows[3].text, "YOU SEE A SCROLL", "newest visible on bottom");
+    ASSERT_EQ(plan.rows[3].color, DM1_V1_COLOR_WHITE, "newest color kept");
+    ASSERT_STR_EQ(plan.rows[2].text, "A DOOR OPENS", "second visible above");
+    ASSERT_STR_EQ(plan.rows[1].text, "THE WALL READS RUN", "third visible above");
+}
+
 /* ── Test: Damage indicators ────────────────────────────────────────── */
 static void test_damage_indicators(void) {
     DM1_V1_TextMessageState state;
@@ -428,6 +463,7 @@ int main(void) {
     test_tick();
     test_scroll_text();
     test_scroll_layout_source_lock();
+    test_log_render_plan();
     test_damage_indicators();
     test_multiple_messages_scroll();
     test_legacy_compat();

@@ -420,6 +420,99 @@ int dm1_v1_text_get_active_row_count(const DM1_V1_TextMessageState* state) {
     return count;
 }
 
+const char* DM1_V1_TextMessage_StripTickPrefixPc34Compat(const char* text) {
+    const char* p;
+    if (!text || text[0] != 'T') {
+        return text;
+    }
+    p = text + 1;
+    if (*p < '0' || *p > '9') {
+        return text;
+    }
+    while (*p >= '0' && *p <= '9') {
+        ++p;
+    }
+    if (p[0] == ':' && p[1] == ' ') {
+        return p + 2;
+    }
+    return text;
+}
+
+int DM1_V1_TextMessage_IsPlayerFacingPc34Compat(const char* stripped) {
+    static const char* const kSuppress[] = {
+        "DUNGEON MASTER LOADED",
+        "CHAOS STRIKES BACK LOADED",
+        "DUNGEON MASTER II LOADED",
+        "PARTY MOVED TO",
+        "PARTY MOVED",
+        "SPELL PANEL OPENED",
+        "SPELL CLEARED",
+        "RUNE ",
+        "DOOR STATE CHANGED",
+        "IDLE TICK",
+        "GAME VIEW NOT STARTED",
+        "GAME DATA LOADED",
+        "FACING UPDATED",
+        "TURN IGNORED",
+        "MOVEMENT BLOCKED",
+        "STRIKE COMMITTED",
+        "SPELL COMMITTED",
+        " FADES",
+        " OUT OF BOUNDS",
+        " COLLIDES IN FLIGHT",
+        " HIT BY ",
+        "LAUNCHES PROJECTILE",
+        "REACHES THE PARTY",
+        "CAST SPELL #",
+        NULL
+    };
+    int i;
+    if (!stripped || stripped[0] == '\0') {
+        return 0;
+    }
+    for (i = 0; kSuppress[i] != NULL; ++i) {
+        if (strstr(stripped, kSuppress[i]) != NULL) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+void DM1_V1_TextMessage_BuildLogRenderPlanPc34Compat(
+    const char* const* newestFirstTexts,
+    const int* newestFirstColors,
+    int count,
+    DM1_V1_MessageRenderPlanPc34Compat* outPlan) {
+    int i;
+    int visibleCount = 0;
+    if (!outPlan) {
+        return;
+    }
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->lineHeight = DM1_V1_TEXT_LINE_HEIGHT;
+    outPlan->characterWidth = DM1_V1_TEXT_CHARACTER_WIDTH;
+    outPlan->textTopAdjust = 0;
+    if (!newestFirstTexts || !newestFirstColors || count <= 0) {
+        return;
+    }
+
+    /* ReDMCSB: TEXT.C/DRAWMSGA.C owns the four bottom rows. Firestaff's
+     * runtime log is newest-first, so place accepted entries bottom-up. */
+    for (i = 0; i < count && visibleCount < DM1_V1_MESSAGE_AREA_ROW_COUNT; ++i) {
+        const char* text =
+            DM1_V1_TextMessage_StripTickPrefixPc34Compat(newestFirstTexts[i]);
+        int rowIndex;
+        if (!DM1_V1_TextMessage_IsPlayerFacingPc34Compat(text)) {
+            continue;
+        }
+        rowIndex = DM1_V1_MESSAGE_AREA_ROW_COUNT - 1 - visibleCount;
+        outPlan->rows[rowIndex].text = text;
+        outPlan->rows[rowIndex].color = newestFirstColors[i];
+        ++visibleCount;
+    }
+    outPlan->rowCount = visibleCount;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Legacy DM1_V1_LegacyTextStatePc34 compatibility shim
  * ══════════════════════════════════════════════════════════════════════ */
@@ -505,4 +598,3 @@ const DM1_V1_LegacyTextMessagePc34* DM1_V1_LegacyText_GetMessagePc34Compat(const
  *   TEXT.C:2002 F1001_JAPANESE_L
  *   TEXT.C:112 F1029_I
  * ══════════════════════════════════════════════════════════════════════ */
-

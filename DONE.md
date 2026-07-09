@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 V1 message-area render ownership: DM1 text/message code now owns tick-prefix stripping, player-facing filtering, four-row render-plan selection, and row metrics; M11 only renders the returned plan. Verification: text/message 106/106, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 turning presentation ownership names: V1 turning presentation now exposes DM1-owned type/function/mode names; old M11 names remain aliases. Verification: turning presentation, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0128/chest converter ownership names: F0128 viewport readiness helpers now expose DM1-owned API names and local chest inventory item converters use DM1-owned names; old F0128 M11 names remain aliases. Verification: F0128 viewport, chest open mirror rotation, chest wheel/drop/close/rotation/deposit probes, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

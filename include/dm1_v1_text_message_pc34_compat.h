@@ -98,6 +98,19 @@ typedef struct {
 #define DM1_V1_DAMAGE_DISPLAY_TICKS  30
 
 typedef struct {
+    const char* text;
+    int color;
+} DM1_V1_MessageRenderRowPc34Compat;
+
+typedef struct {
+    DM1_V1_MessageRenderRowPc34Compat rows[DM1_V1_MESSAGE_AREA_ROW_COUNT];
+    int rowCount;
+    int lineHeight;
+    int characterWidth;
+    int textTopAdjust;
+} DM1_V1_MessageRenderPlanPc34Compat;
+
+typedef struct {
     DM1_V1_MessageRow rows[DM1_V1_MESSAGE_AREA_ROW_COUNT];
     int cursorRow;
     int cursorColumn;
@@ -150,6 +163,14 @@ const DM1_V1_MessageRow* dm1_v1_text_get_row(
 void dm1_v1_text_get_cursor(const DM1_V1_TextMessageState* state,
                             int* outColumn, int* outRow);
 int  dm1_v1_text_get_active_row_count(const DM1_V1_TextMessageState* state);
+
+const char* DM1_V1_TextMessage_StripTickPrefixPc34Compat(const char* text);
+int DM1_V1_TextMessage_IsPlayerFacingPc34Compat(const char* stripped);
+void DM1_V1_TextMessage_BuildLogRenderPlanPc34Compat(
+    const char* const* newestFirstTexts,
+    const int* newestFirstColors,
+    int count,
+    DM1_V1_MessageRenderPlanPc34Compat* outPlan);
 
 /* ── Legacy compat shim (old DM1_V1_LegacyTextStatePc34 API) ─────────────────────── */
 
