@@ -1012,6 +1012,53 @@ int dm1_v1_projectile_materialization_plan_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_materialization_receipt_f0215_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    int associatedThingMovedToGroup,
+    int potionCount,
+    unsigned short squareFirstThing,
+    const unsigned short* squareChainThings,
+    int squareChainCount,
+    DM1_ProjectileMaterializationReceiptPc34* outReceipt) {
+    DM1_ProjectileMaterializationPlanPc34 plan;
+
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!dm1_v1_projectile_materialization_plan_pc34(
+            projectile, result, associatedThingMovedToGroup, potionCount,
+            &plan)) {
+        return 0;
+    }
+
+    outReceipt->valid = 1;
+    outReceipt->handled = plan.handled;
+    outReceipt->shouldConsumePotion = plan.shouldConsumePotion;
+    outReceipt->shouldMaterialize = plan.shouldMaterialize;
+    outReceipt->mapIndex = plan.mapIndex;
+    outReceipt->mapX = plan.mapX;
+    outReceipt->mapY = plan.mapY;
+    outReceipt->cell = plan.cell;
+    outReceipt->materialization = plan;
+
+    if (!plan.shouldMaterialize) {
+        return 1;
+    }
+
+    if (!dm1_v1_projectile_square_attach_receipt_f0215_pc34(
+            plan.droppedThing, squareFirstThing, squareChainThings,
+            squareChainCount, &outReceipt->squareAttach)) {
+        outReceipt->valid = 0;
+        return 0;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0215 lines 248-259 owns the final
+     * Projectile.Slot materialization; DUNGEON.C F0163 lines 1798-1837
+     * owns empty-square vs append-after-tail linking.  This receipt gives
+     * M10 one DM1-owned decision packet instead of rebuilding both parts. */
+    return 1;
+}
+
 int dm1_v1_group_creature_index_for_cell_pc34(
     const struct DungeonGroup_Compat* group,
     int targetCell) {
