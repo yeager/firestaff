@@ -471,6 +471,46 @@ int dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(int weaponType) {
            weaponType == 32;     /* C32_WEAPON_THROWING_STAR */
 }
 
+int dm1_v1_projectile_group_slot_materialization_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    int damageOutcome,
+    int creatureAttributes,
+    int associatedWeaponType,
+    DM1_ProjectileGroupSlotMaterializationPlanPc34* outPlan) {
+    unsigned short associatedThing;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->associatedThing = THING_NONE;
+    outPlan->weaponType = -1;
+    if (!projectile) return 0;
+
+    outPlan->valid = 1;
+    associatedThing = (unsigned short)projectile->reserved1;
+    outPlan->associatedThing = associatedThing;
+    outPlan->weaponType = associatedWeaponType;
+
+    if (damageOutcome != COMBAT_OUTCOME_KILLED_NO_CREATURES) return 1;
+    if ((projectile->flags & PROJECTILE_FLAG_CREATES_EXPLOSION) != 0) return 1;
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) {
+        return 1;
+    }
+    if (THING_GET_TYPE(associatedThing) != THING_TYPE_WEAPON) return 1;
+    if ((creatureAttributes & DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34) == 0) {
+        return 1;
+    }
+    if (!dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(
+            associatedWeaponType)) {
+        return 1;
+    }
+
+    outPlan->shouldAttachToGroupSlot = 1;
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 540-553 passes GROUP.Slot to F0215
+     * only for non-exploding sharp weapon projectiles that hit, but do not
+     * kill, creatures with MASK0x0400_KEEP_THROWN_SHARP_WEAPONS. */
+    return 1;
+}
+
 int dm1_v1_projectile_associated_thing_disposition_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,

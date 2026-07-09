@@ -88,6 +88,13 @@ typedef struct {
 } DM1_ProjectileCreatureImpactAftermathPc34;
 
 typedef struct {
+    int valid;
+    int shouldAttachToGroupSlot;
+    unsigned short associatedThing;
+    int weaponType;
+} DM1_ProjectileGroupSlotMaterializationPlanPc34;
+
+typedef struct {
     int handled;
     int championPresent;
     int championIndex;
@@ -209,6 +216,12 @@ int dm1_v1_projectile_impact_log_plan_pc34(
     const struct ProjectileTickResult_Compat* result,
     DM1_ProjectileImpactLogPlanPc34* outPlan);
 int dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(int weaponType);
+int dm1_v1_projectile_group_slot_materialization_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    int damageOutcome,
+    int creatureAttributes,
+    int associatedWeaponType,
+    DM1_ProjectileGroupSlotMaterializationPlanPc34* outPlan);
 int dm1_v1_projectile_associated_thing_disposition_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,

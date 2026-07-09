@@ -350,6 +350,50 @@ static void test_projectile_impact_model(void) {
               "ordinary weapon not kept");
 }
 
+static void test_projectile_group_slot_materialization_plan(void) {
+    struct ProjectileInstance_Compat p;
+    DM1_ProjectileGroupSlotMaterializationPlanPc34 plan;
+    unsigned short weaponThing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
+    memset(&p, 0, sizeof(p));
+    memset(&plan, 0, sizeof(plan));
+
+    p.reserved1 = weaponThing;
+    ASSERT_EQ(dm1_v1_projectile_group_slot_materialization_plan_pc34(
+                  &p, COMBAT_OUTCOME_KILLED_NO_CREATURES,
+                  DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34,
+                  8, &plan), 1,
+              "group slot materialization plan builds");
+    ASSERT_EQ(plan.valid, 1, "group slot materialization valid");
+    ASSERT_EQ(plan.shouldAttachToGroupSlot, 1,
+              "dagger attaches to keep-sharp group slot");
+    ASSERT_EQ(plan.associatedThing, weaponThing,
+              "group slot materialization keeps thing");
+    ASSERT_EQ(plan.weaponType, 8, "group slot materialization weapon type");
+
+    ASSERT_EQ(dm1_v1_projectile_group_slot_materialization_plan_pc34(
+                  &p, COMBAT_OUTCOME_KILLED_SOME_CREATURES,
+                  DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34,
+                  8, &plan), 1,
+              "killed creature group slot materialization builds");
+    ASSERT_EQ(plan.shouldAttachToGroupSlot, 0,
+              "killed creature does not keep projectile weapon");
+
+    ASSERT_EQ(dm1_v1_projectile_group_slot_materialization_plan_pc34(
+                  &p, COMBAT_OUTCOME_KILLED_NO_CREATURES,
+                  DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34,
+                  9, &plan), 1,
+              "ordinary weapon group slot materialization builds");
+    ASSERT_EQ(plan.shouldAttachToGroupSlot, 0,
+              "ordinary weapon does not attach to group slot");
+
+    ASSERT_EQ(dm1_v1_projectile_group_slot_materialization_plan_pc34(
+                  &p, COMBAT_OUTCOME_KILLED_NO_CREATURES, 0, 8, &plan), 1,
+              "no keep attr group slot materialization builds");
+    ASSERT_EQ(plan.shouldAttachToGroupSlot, 0,
+              "creature without keep attr does not attach");
+}
+
 static void test_projectile_associated_thing_disposition(void) {
     struct ProjectileInstance_Compat p;
     struct ProjectileTickResult_Compat r;
@@ -658,6 +702,7 @@ int main(void) {
     test_shoot_runtime_math();
     test_projectile_create_input_model();
     test_projectile_impact_model();
+    test_projectile_group_slot_materialization_plan();
     test_projectile_associated_thing_disposition();
     test_projectile_materialization_plan();
     test_black_flame_heal_and_group_cell();
