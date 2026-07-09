@@ -7,17 +7,17 @@
 #include <stdio.h>
 #include <string.h>
 
-uint8_t m11_sl_source_runtime_slot_count(void) {
+uint8_t DM1_V1_SaveLoad_SourceRuntimeSlotCountPc34Compat(void) {
     return DM1_SL_SOURCE_RUNTIME_SLOT_COUNT;
 }
 
-bool m11_sl_source_runtime_slot_supported(uint8_t slot) {
+bool DM1_V1_SaveLoad_SourceRuntimeSlotSupportedPc34Compat(uint8_t slot) {
     return slot == DM1_SL_SOURCE_RUNTIME_SLOT;
 }
 
-void m11_sl_init(M11_SL_State* state, const char* save_dir) {
+void DM1_V1_SaveLoad_InitPc34Compat(DM1_V1_SaveLoadStatePc34* state, const char* save_dir) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_SL_State));
+    memset(state, 0, sizeof(DM1_V1_SaveLoadStatePc34));
     if (save_dir && save_dir[0] != 0) {
         size_t len = strlen(save_dir);
         if (len >= sizeof(state->save_dir)) len = sizeof(state->save_dir) - 1;
@@ -30,11 +30,11 @@ void m11_sl_init(M11_SL_State* state, const char* save_dir) {
     state->initialized = true;
 }
 
-static void slot_path(const M11_SL_State* state, uint8_t slot, char* buf, size_t bufsz) {
+static void slot_path(const DM1_V1_SaveLoadStatePc34* state, uint8_t slot, char* buf, size_t bufsz) {
     snprintf(buf, bufsz, "%s/save_%02u.dat", state->save_dir, (unsigned)slot);
 }
 
-bool m11_sl_scan_slots(M11_SL_State* state) {
+bool DM1_V1_SaveLoad_ScanSlotsPc34Compat(DM1_V1_SaveLoadStatePc34* state) {
     if (!state || !state->initialized) return false;
 
     state->slot_count = 0;
@@ -51,7 +51,7 @@ bool m11_sl_scan_slots(M11_SL_State* state) {
             continue;
         }
 
-        M11_SL_SaveHeader hdr;
+        DM1_V1_SaveLoadHeaderPc34 hdr;
         if (fread(&hdr, sizeof(hdr), 1, f) == 1 && hdr.magic == DM1_SL_SAVE_MAGIC) {
             state->slots[i].occupied = true;
             state->slots[i].header = hdr;
@@ -69,8 +69,8 @@ bool m11_sl_scan_slots(M11_SL_State* state) {
     return true;
 }
 
-bool m11_sl_save(M11_SL_State* state, uint8_t slot,
-                  const M11_SL_SaveHeader* header,
+bool DM1_V1_SaveLoad_SavePc34Compat(DM1_V1_SaveLoadStatePc34* state, uint8_t slot,
+                  const DM1_V1_SaveLoadHeaderPc34* header,
                   const uint8_t* data, size_t data_size) {
     if (!state || !state->initialized || !header) return false;
     if (data_size > 0 && !data) return false;
@@ -82,7 +82,7 @@ bool m11_sl_save(M11_SL_State* state, uint8_t slot,
     FILE* f = fopen(path, "wb");
     if (!f) return false;
 
-    M11_SL_SaveHeader hdr = *header;
+    DM1_V1_SaveLoadHeaderPc34 hdr = *header;
     hdr.magic = DM1_SL_SAVE_MAGIC;
     hdr.data_size = (uint32_t)data_size;
 
@@ -104,8 +104,8 @@ bool m11_sl_save(M11_SL_State* state, uint8_t slot,
     return ok;
 }
 
-bool m11_sl_load_header(M11_SL_State* state, uint8_t slot,
-                         M11_SL_SaveHeader* header) {
+bool DM1_V1_SaveLoad_LoadHeaderPc34Compat(DM1_V1_SaveLoadStatePc34* state, uint8_t slot,
+                         DM1_V1_SaveLoadHeaderPc34* header) {
     if (!state || !state->initialized || !header) return false;
     if (slot >= DM1_SL_MAX_SLOTS) return false;
 
@@ -121,7 +121,7 @@ bool m11_sl_load_header(M11_SL_State* state, uint8_t slot,
     return ok;
 }
 
-bool m11_sl_load_data(M11_SL_State* state, uint8_t slot,
+bool DM1_V1_SaveLoad_LoadDataPc34Compat(DM1_V1_SaveLoadStatePc34* state, uint8_t slot,
                        uint8_t* data, size_t max_size, size_t* actual_size) {
     if (!state || !state->initialized || !data) return false;
     if (slot >= DM1_SL_MAX_SLOTS) return false;
@@ -132,7 +132,7 @@ bool m11_sl_load_data(M11_SL_State* state, uint8_t slot,
     FILE* f = fopen(path, "rb");
     if (!f) return false;
 
-    M11_SL_SaveHeader hdr;
+    DM1_V1_SaveLoadHeaderPc34 hdr;
     if (fread(&hdr, sizeof(hdr), 1, f) != 1 || hdr.magic != DM1_SL_SAVE_MAGIC) {
         fclose(f);
         return false;
@@ -152,7 +152,7 @@ bool m11_sl_load_data(M11_SL_State* state, uint8_t slot,
     return (got == to_read);
 }
 
-bool m11_sl_delete(M11_SL_State* state, uint8_t slot) {
+bool DM1_V1_SaveLoad_DeletePc34Compat(DM1_V1_SaveLoadStatePc34* state, uint8_t slot) {
     if (!state || !state->initialized) return false;
     if (slot >= DM1_SL_MAX_SLOTS) return false;
 
@@ -162,7 +162,7 @@ bool m11_sl_delete(M11_SL_State* state, uint8_t slot) {
     if (remove(path) == 0) {
         bool was_occupied = state->slots[slot].occupied;
         state->slots[slot].occupied = false;
-        memset(&state->slots[slot].header, 0, sizeof(M11_SL_SaveHeader));
+        memset(&state->slots[slot].header, 0, sizeof(DM1_V1_SaveLoadHeaderPc34));
         state->slots[slot].label[0] = 0;
         state->slots[slot].timestamp = 0;
         if (was_occupied && state->slot_count > 0) {
@@ -173,7 +173,7 @@ bool m11_sl_delete(M11_SL_State* state, uint8_t slot) {
     return false;
 }
 
-bool m11_sl_slot_occupied(const M11_SL_State* state, uint8_t slot) {
+bool DM1_V1_SaveLoad_SlotOccupiedPc34Compat(const DM1_V1_SaveLoadStatePc34* state, uint8_t slot) {
     if (!state || slot >= DM1_SL_MAX_SLOTS) return false;
     return state->slots[slot].occupied;
 }
