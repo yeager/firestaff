@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 projectile champion poison receipt consumption: M10 now consumes the DM1 F0217/F0322 projectile champion poison plan for immediate poison damage, accumulated dose, and C75 reschedule fields instead of duplicating that source math inline. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 projectile associated-thing materialization consumption: M10 now consumes the existing DM1 F0215 projectile materialization plan for ordinary Projectile.Slot drops instead of duplicating potion/explosion/Thing guards and cell packing locally. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 projectile F0215 group-slot attach plan: DM1 throw/shoot compat now owns the F0215 empty-group-slot versus append-after-tail write plan for kept sharp thrown weapons. M10 still finds the live tail and writes links, but no longer owns the F0215 head/tail branch. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

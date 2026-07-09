@@ -81,6 +81,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: DM1 projectile keep-thrown-sharp-weapon group-slot materialization is now a DM1-owned F0217/F0215 receipt consumed by M10. Remaining runtime coding work is reducing lower-level thing-link allocation/materialization adapters.
   - 2026-07-09 update: DM1 projectile F0215 group-slot attach now owns the empty-head vs append-after-tail write plan consumed by M10. Remaining runtime coding work is reducing lower-level map-square thing-link materialization adapters.
   - 2026-07-09 update: M10 ordinary projectile associated-thing materialization now consumes the existing DM1 F0215 materialization plan instead of duplicating potion/explosion/Thing guards and cell packing. Remaining runtime coding work is reducing lower-level map-square thing-link materialization adapters.
+  - 2026-07-09 update: M10 champion projectile poison now consumes the existing DM1 F0217/F0322 poison receipt instead of duplicating damage, dose, and C75 schedule math. Remaining runtime coding work is reducing lower-level map-square thing-link materialization adapters and explosion/champion receipts.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 

@@ -4395,6 +4395,7 @@ static int orch_apply_projectile_champion_action_compat(
     int scaledAttack = 0;
     int selectedWounds = 0;
     int killed = 0;
+    DM1_ProjectileChampionImpactPlanPc34 impactPlan;
 
     if (!world || !action) return 0;
     if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_CHAMPION) return 0;
@@ -4442,40 +4443,46 @@ static int orch_apply_projectile_champion_action_compat(
     if (killed) {
         emit(result, EMIT_CHAMPION_DOWN, championIndex, 0, 0, 0);
     }
-    /* ReDMCSB PROJEXPL.C:F0217 lines 557-558 gates projectile poison
-     * through F0322 only after champion damage was applied, poison attack
-     * exists, and RANDOM(2) passes.  CHAMPION.C:F0322 lines 1949-1960
-     * applies immediate max(1, attack >> 6) damage and schedules C75. */
-    if (!killed && projectile && projectile->poisonAttack > 0 &&
-        F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2) != 0) {
-        int poisonDamage = projectile->poisonAttack >> 6;
-        int nextAttack;
-        unsigned int dose;
+    memset(&impactPlan, 0, sizeof(impactPlan));
+    impactPlan.handled = 1;
+    impactPlan.championPresent = 1;
+    impactPlan.championIndex = championIndex;
+    impactPlan.impactMapIndex = action->targetMapIndex;
+    impactPlan.impactMapX = action->targetMapX;
+    impactPlan.impactMapY = action->targetMapY;
+    impactPlan.impactCell = action->targetCell;
+    impactPlan.attackTypeCode = action->attackTypeCode;
+    impactPlan.rawAttackValue = action->rawAttackValue;
+    impactPlan.allowedWounds = action->allowedWounds;
+
+    if (!killed && projectile && projectile->poisonAttack > 0) {
+        DM1_ProjectileChampionPoisonPlanPc34 poisonPlan;
         struct TimelineEvent_Compat poisonEvent;
 
-        if (poisonDamage < 1) poisonDamage = 1;
-        if (poisonDamage > (int)champion->hp.current) {
-            poisonDamage = (int)champion->hp.current;
+        if (!dm1_v1_projectile_champion_poison_plan_pc34(
+                &impactPlan, projectile, damage.damageApplied,
+                champion->hp.current, champion->poisonDose,
+                F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2),
+                &poisonPlan)) {
+            return 0;
+        }
+        if (!poisonPlan.shouldApply) {
+            return 1;
         }
         champion->hp.current =
-            (unsigned short)((int)champion->hp.current - poisonDamage);
-
-        dose = (unsigned int)champion->poisonDose +
-               (unsigned int)projectile->poisonAttack;
-        if (dose > 0xFFFFu) dose = 0xFFFFu;
-        champion->poisonDose = (unsigned short)dose;
-
-        nextAttack = projectile->poisonAttack - 1;
-        if (nextAttack > 0) {
+            (unsigned short)((int)champion->hp.current -
+                             poisonPlan.poisonDamage);
+        champion->poisonDose = (unsigned short)poisonPlan.newPoisonDose;
+        if (poisonPlan.nextAttack > 0) {
             memset(&poisonEvent, 0, sizeof(poisonEvent));
             poisonEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
             poisonEvent.fireAtTick = world->gameTick +
-                (uint32_t)LIFECYCLE_POISON_RESCHEDULE_TICKS;
+                (uint32_t)poisonPlan.scheduleDelayTicks;
             poisonEvent.mapIndex = world->partyMapIndex;
             poisonEvent.mapX = world->party.mapX;
             poisonEvent.mapY = world->party.mapY;
             poisonEvent.aux0 = LIFECYCLE_STATUS_POISON;
-            poisonEvent.aux1 = nextAttack;
+            poisonEvent.aux1 = poisonPlan.nextAttack;
             poisonEvent.aux4 = championIndex;
             (void)F0721_TIMELINE_Schedule_Compat(
                 &world->timeline, &poisonEvent);
