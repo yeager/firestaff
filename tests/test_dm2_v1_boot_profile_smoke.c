@@ -432,8 +432,14 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_hud_asset_portrait_count >= 4 &&
               render_receipt.runtime_hud_fallback_portrait_count == 0 &&
               render_receipt.runtime_hud_frame_hash != 0u &&
-              render_receipt.runtime_hud_frame_pixel_count == 320u * 200u,
-          "boot runtime render owns V2 callback, V1 fallback, and real GDAT HUD readiness receipt");
+              render_receipt.runtime_hud_frame_pixel_count == 320u * 200u &&
+              render_receipt.runtime_render_real_asset_ready == 1 &&
+              render_receipt.runtime_render_asset_floor_ceiling_count >= 2 &&
+              render_receipt.runtime_render_fallback_floor_ceiling_count == 0 &&
+              render_receipt.runtime_render_asset_wall_count > 0 &&
+              render_receipt.runtime_render_fallback_wall_count == 0 &&
+              render_receipt.runtime_render_no_core_fallbacks == 1,
+          "boot runtime render owns V2 callback, V1 fallback, and real GDAT frame/HUD receipt");
     memset(&hud_capture, 0, sizeof(hud_capture));
     CHECK(dm2_v1_boot_runtime_hud_capture_receipt(
               launch.profile,
@@ -444,9 +450,15 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.sampled_direction_mask == 0x0f &&
               hud_capture.min_asset_portrait_count >= 4 &&
               hud_capture.total_fallback_portrait_count == 0 &&
+              hud_capture.min_asset_floor_ceiling_count >= 2 &&
+              hud_capture.min_asset_wall_count > 0 &&
+              hud_capture.total_fallback_floor_ceiling_count == 0 &&
+              hud_capture.total_fallback_wall_count == 0 &&
+              hud_capture.no_core_render_fallbacks == 1 &&
               hud_capture.no_fallback_portraits == 1 &&
               hud_capture.first_runtime_hud_ready == 1 &&
               hud_capture.real_gdat_portrait_ready == 1 &&
+              hud_capture.real_gdat_core_render_ready == 1 &&
               hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,

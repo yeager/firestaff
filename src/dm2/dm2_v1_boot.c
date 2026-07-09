@@ -3796,6 +3796,22 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_hud_capture_ready =
             out_receipt->startup_render_ready &&
             out_receipt->runtime_hud_real_asset_ready;
+        out_receipt->runtime_render_asset_floor_ceiling_count =
+            dm2_v1_runtime_last_asset_floor_ceiling_count();
+        out_receipt->runtime_render_fallback_floor_ceiling_count =
+            dm2_v1_runtime_last_fallback_floor_ceiling_count();
+        out_receipt->runtime_render_asset_wall_count =
+            dm2_v1_runtime_last_asset_wall_count();
+        out_receipt->runtime_render_fallback_wall_count =
+            dm2_v1_runtime_last_fallback_wall_count();
+        out_receipt->runtime_render_no_core_fallbacks =
+            out_receipt->runtime_render_asset_floor_ceiling_count >= 2 &&
+            out_receipt->runtime_render_fallback_floor_ceiling_count == 0 &&
+            out_receipt->runtime_render_asset_wall_count > 0 &&
+            out_receipt->runtime_render_fallback_wall_count == 0;
+        out_receipt->runtime_render_real_asset_ready =
+            out_receipt->runtime_hud_capture_ready &&
+            out_receipt->runtime_render_no_core_fallbacks;
     }
     return rendered == 0;
 }
@@ -3825,6 +3841,8 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     out_receipt->graphics_dat_ready = profile->graphics_dat ? 1 : 0;
     out_receipt->runtime_ready = 1;
     out_receipt->min_asset_portrait_count = 9999;
+    out_receipt->min_asset_floor_ceiling_count = 9999;
+    out_receipt->min_asset_wall_count = 9999;
 
     /* skproject/SKWIN T560 renders the same right-side runtime HUD from
      * party state while the dungeon view changes by direction. Sampling all
@@ -3857,10 +3875,28 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             frame_receipt.runtime_hud_asset_portrait_count;
         out_receipt->total_fallback_portrait_count +=
             frame_receipt.runtime_hud_fallback_portrait_count;
+        out_receipt->total_asset_floor_ceiling_count +=
+            frame_receipt.runtime_render_asset_floor_ceiling_count;
+        out_receipt->total_fallback_floor_ceiling_count +=
+            frame_receipt.runtime_render_fallback_floor_ceiling_count;
+        out_receipt->total_asset_wall_count +=
+            frame_receipt.runtime_render_asset_wall_count;
+        out_receipt->total_fallback_wall_count +=
+            frame_receipt.runtime_render_fallback_wall_count;
         if (frame_receipt.runtime_hud_asset_portrait_count <
             out_receipt->min_asset_portrait_count) {
             out_receipt->min_asset_portrait_count =
                 frame_receipt.runtime_hud_asset_portrait_count;
+        }
+        if (frame_receipt.runtime_render_asset_floor_ceiling_count <
+            out_receipt->min_asset_floor_ceiling_count) {
+            out_receipt->min_asset_floor_ceiling_count =
+                frame_receipt.runtime_render_asset_floor_ceiling_count;
+        }
+        if (frame_receipt.runtime_render_asset_wall_count <
+            out_receipt->min_asset_wall_count) {
+            out_receipt->min_asset_wall_count =
+                frame_receipt.runtime_render_asset_wall_count;
         }
         if (frame_receipt.runtime_hud_asset_portrait_count >
             out_receipt->max_asset_portrait_count) {
@@ -3875,6 +3911,12 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             (uint32_t)frame_receipt.runtime_hud_asset_portrait_count);
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
+            (uint32_t)frame_receipt.runtime_render_asset_floor_ceiling_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            (uint32_t)frame_receipt.runtime_render_asset_wall_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
             (uint32_t)frame_receipt.runtime.party_dir);
         out_receipt->combined_pixel_count +=
             frame_receipt.runtime_hud_frame_pixel_count;
@@ -3886,21 +3928,38 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     if (out_receipt->min_asset_portrait_count == 9999) {
         out_receipt->min_asset_portrait_count = 0;
     }
+    if (out_receipt->min_asset_floor_ceiling_count == 9999) {
+        out_receipt->min_asset_floor_ceiling_count = 0;
+    }
+    if (out_receipt->min_asset_wall_count == 9999) {
+        out_receipt->min_asset_wall_count = 0;
+    }
     out_receipt->combined_frame_hash = combined_hash;
     out_receipt->no_fallback_portraits =
         out_receipt->total_asset_portrait_count > 0 &&
         out_receipt->total_fallback_portrait_count == 0;
+    out_receipt->no_core_render_fallbacks =
+        out_receipt->total_asset_floor_ceiling_count > 0 &&
+        out_receipt->total_fallback_floor_ceiling_count == 0 &&
+        out_receipt->total_asset_wall_count > 0 &&
+        out_receipt->total_fallback_wall_count == 0;
     out_receipt->first_runtime_hud_ready =
         out_receipt->first_frame.runtime_hud_capture_ready;
     out_receipt->real_gdat_portrait_ready =
         out_receipt->graphics_dat_ready &&
         out_receipt->min_asset_portrait_count >= 4 &&
         out_receipt->no_fallback_portraits;
+    out_receipt->real_gdat_core_render_ready =
+        out_receipt->graphics_dat_ready &&
+        out_receipt->min_asset_floor_ceiling_count >= 2 &&
+        out_receipt->min_asset_wall_count > 0 &&
+        out_receipt->no_core_render_fallbacks;
     out_receipt->real_gdat_runtime_hud_breadth_ready =
         out_receipt->render_sample_count == 4 &&
         out_receipt->render_success_count == 4 &&
         out_receipt->sampled_direction_mask == 0x0f &&
         out_receipt->real_gdat_portrait_ready &&
+        out_receipt->real_gdat_core_render_ready &&
         out_receipt->combined_frame_hash != 0u &&
         out_receipt->combined_pixel_count == 4u * 320u * 200u;
     out_receipt->valid =

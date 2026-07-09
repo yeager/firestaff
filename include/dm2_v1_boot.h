@@ -226,6 +226,12 @@ typedef struct {
     int runtime_hud_no_fallback_portraits;
     uint32_t runtime_hud_frame_hash;
     uint32_t runtime_hud_frame_pixel_count;
+    int runtime_render_real_asset_ready;
+    int runtime_render_asset_floor_ceiling_count;
+    int runtime_render_fallback_floor_ceiling_count;
+    int runtime_render_asset_wall_count;
+    int runtime_render_fallback_wall_count;
+    int runtime_render_no_core_fallbacks;
 } DM2_V1_BootRuntimeRenderReceipt;
 
 typedef struct {
@@ -241,8 +247,16 @@ typedef struct {
     int min_asset_portrait_count;
     int max_asset_portrait_count;
     int no_fallback_portraits;
+    int total_asset_floor_ceiling_count;
+    int total_fallback_floor_ceiling_count;
+    int total_asset_wall_count;
+    int total_fallback_wall_count;
+    int min_asset_floor_ceiling_count;
+    int min_asset_wall_count;
+    int no_core_render_fallbacks;
     int first_runtime_hud_ready;
     int real_gdat_portrait_ready;
+    int real_gdat_core_render_ready;
     int real_gdat_runtime_hud_breadth_ready;
     uint32_t combined_frame_hash;
     uint32_t combined_pixel_count;
