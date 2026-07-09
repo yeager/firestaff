@@ -1439,6 +1439,9 @@ static void test_melee_f0231_side_effect_plan(void) {
     in.actionSkillIndex = 6;
     in.damageApplied = 32;
     in.creatureProperties = 0x0500;
+    in.mapDifficulty = 7;
+    in.currentTick = 1234u;
+    in.lastCreatureAttackTime = 1200u;
     in.currentStamina = 100;
     in.maximumStamina = 200;
     in.currentHealth = 50;
@@ -1453,6 +1456,10 @@ static void test_melee_f0231_side_effect_plan(void) {
     CHECK_EQ(out.xpChampionIndex, 1, "F0231 damage XP champion");
     CHECK_EQ(out.skillIndex, 6, "F0231 XP skill index");
     CHECK_EQ(out.experienceGain, 13, "F0231 XP formula");
+    CHECK_EQ(out.xpMapDifficulty, 7, "F0231 XP map difficulty receipt");
+    CHECK_EQ((int)out.xpCurrentTick, 1234, "F0231 XP current tick receipt");
+    CHECK_EQ((int)out.xpLastCreatureAttackTime, 1200,
+             "F0231 XP last creature attack receipt");
     CHECK_EQ(out.staminaRandomModulus, 4, "F0231 damage random modulus");
     CHECK_EQ(out.staminaBaseCost, 4, "F0231 damage stamina base");
     CHECK_EQ(out.staminaCost, 7, "F0231 damage stamina cost");

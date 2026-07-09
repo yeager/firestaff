@@ -131,6 +131,9 @@ typedef struct {
     int actionSkillIndex;
     int damageApplied;
     int creatureProperties;
+    int mapDifficulty;
+    unsigned int currentTick;
+    unsigned int lastCreatureAttackTime;
     int currentStamina;
     int maximumStamina;
     int currentHealth;
@@ -145,6 +148,9 @@ typedef struct {
     int xpChampionIndex;
     int skillIndex;
     int experienceGain;
+    int xpMapDifficulty;
+    unsigned int xpCurrentTick;
+    unsigned int xpLastCreatureAttackTime;
     int staminaRandomModulus;
     int staminaBaseCost;
     int staminaCost;
