@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-void m11_gfx_init(M11_GFX_LoaderState* state) {
+void DM1_V1_GFX_InitPc34Compat(DM1_V1_GFX_LoaderStatePc34* state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_GFX_LoaderState));
+    memset(state, 0, sizeof(DM1_V1_GFX_LoaderStatePc34));
 }
 
 /* --- LZW decompressor (ReDMCSB LZW.C pattern) --- */
@@ -35,7 +35,7 @@ void m11_gfx_init(M11_GFX_LoaderState* state) {
  * because the stale refill grabbed bytes from the middle of
  * the input; the post-fix decoder returns 3 bytes 'A','B','C').
  */
-static void lzw_reset_dict(M11_GFX_LZWState* lzw) {
+static void lzw_reset_dict(DM1_V1_GFX_LZWStatePc34* lzw) {
     lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
     lzw->code_bits = 9;
     /* NOTE: deliberately do NOT touch byte_pos, chunk_bit_idx,
@@ -46,10 +46,10 @@ static void lzw_reset_dict(M11_GFX_LZWState* lzw) {
 
 /*
  * Full stream-and-dict initialization. Called once at the
- * start of m11_gfx_lzw_decompress. Resets byte_pos to 0 so
+ * start of DM1_V1_GFX_LzwDecompressPc34Compat. Resets byte_pos to 0 so
  * reading begins at the start of the input buffer.
  */
-static void lzw_init(M11_GFX_LZWState* lzw) {
+static void lzw_init(DM1_V1_GFX_LZWStatePc34* lzw) {
     lzw->flushed = true;
     lzw->byte_pos = 0;
     lzw->chunk_bit_idx = 0;
@@ -65,7 +65,7 @@ static void lzw_init(M11_GFX_LZWState* lzw) {
  * This is NOT a continuous bitstream — it re-reads a new chunk
  * every time the chunk is exhausted or code width changes. */
 
-static int lzw_read_code(M11_GFX_LZWState* lzw,
+static int lzw_read_code(DM1_V1_GFX_LZWStatePc34* lzw,
                           const uint8_t* input, size_t in_size,
                           size_t* bit_pos_unused, uint8_t code_bits) {
     static const uint8_t lsb_masks[9] = {0x00,0x01,0x03,0x07,0x0F,0x1F,0x3F,0x7F,0xFF};
@@ -110,7 +110,7 @@ static int lzw_read_code(M11_GFX_LZWState* lzw,
 }
 
 /* Decode a code to bytes, pushing onto decode_stack; return count */
-static int lzw_decode_string(M11_GFX_LZWState* lzw, uint16_t code) {
+static int lzw_decode_string(DM1_V1_GFX_LZWStatePc34* lzw, uint16_t code) {
     int count = 0;
     while (code >= DM1_GFX_LZW_FIRST_CODE && count < DM1_GFX_LZW_MAX_CODE) {
         lzw->decode_stack[count++] = lzw->dict_append[code];
@@ -120,7 +120,7 @@ static int lzw_decode_string(M11_GFX_LZWState* lzw, uint16_t code) {
     return count;
 }
 
-int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
+int DM1_V1_GFX_LzwDecompressPc34Compat(DM1_V1_GFX_LZWStatePc34* lzw,
                             const uint8_t* input, size_t in_size,
                             uint8_t* output, size_t out_size) {
     size_t out_pos = 0;
@@ -225,7 +225,7 @@ int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
 
 /* --- GRAPHICS.DAT file operations --- */
 
-bool m11_gfx_open_dat(M11_GFX_LoaderState* state, const char* path) {
+bool DM1_V1_GFX_OpenDatPc34Compat(DM1_V1_GFX_LoaderStatePc34* state, const char* path) {
     if (!state || !path) return false;
 
     state->dat_file = fopen(path, "rb");
@@ -264,12 +264,12 @@ bool m11_gfx_open_dat(M11_GFX_LoaderState* state, const char* path) {
     return true;
 }
 
-bool m11_gfx_load_bitmap(M11_GFX_LoaderState* state, uint16_t index,
-                          M11_GFX_Bitmap* out) {
+bool DM1_V1_GFX_LoadBitmapPc34Compat(DM1_V1_GFX_LoaderStatePc34* state, uint16_t index,
+                          DM1_V1_GFX_BitmapPc34* out) {
     if (!state || !out || !state->loaded || !state->dat_file) return false;
     if (index >= state->bitmap_count) return false;
 
-    M11_GFX_BitmapHeader* hdr = &state->headers[index];
+    DM1_V1_GFX_BitmapHeaderPc34* hdr = &state->headers[index];
     uint16_t bw = (hdr->width + 7) / 8;
     size_t decompressed_size = (size_t)bw * hdr->height * 4; /* 4 bitplanes */
 
@@ -292,7 +292,7 @@ bool m11_gfx_load_bitmap(M11_GFX_LoaderState* state, uint16_t index,
     }
 
     /* Decompress */
-    int result = m11_gfx_lzw_decompress(&state->lzw, compressed,
+    int result = DM1_V1_GFX_LzwDecompressPc34Compat(&state->lzw, compressed,
                                          hdr->compressed_size,
                                          pixels, decompressed_size);
     free(compressed);
@@ -310,15 +310,15 @@ bool m11_gfx_load_bitmap(M11_GFX_LoaderState* state, uint16_t index,
     return true;
 }
 
-void m11_gfx_free_bitmap(M11_GFX_Bitmap* bmp) {
+void DM1_V1_GFX_FreeBitmapPc34Compat(DM1_V1_GFX_BitmapPc34* bmp) {
     if (!bmp) return;
     if (bmp->allocated && bmp->data) {
         free(bmp->data);
     }
-    memset(bmp, 0, sizeof(M11_GFX_Bitmap));
+    memset(bmp, 0, sizeof(DM1_V1_GFX_BitmapPc34));
 }
 
-void m11_gfx_close(M11_GFX_LoaderState* state) {
+void DM1_V1_GFX_ClosePc34Compat(DM1_V1_GFX_LoaderStatePc34* state) {
     if (!state) return;
     if (state->dat_file) {
         fclose(state->dat_file);

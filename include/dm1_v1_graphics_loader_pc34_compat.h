@@ -27,7 +27,7 @@ typedef struct {
     uint16_t height;
     uint32_t compressed_size;
     uint32_t offset;        /* file offset to compressed data */
-} M11_GFX_BitmapHeader;
+} DM1_V1_GFX_BitmapHeaderPc34;
 
 /* Decoded bitmap */
 typedef struct {
@@ -36,7 +36,7 @@ typedef struct {
     uint16_t height;
     uint16_t byte_width;    /* (width + 7) / 8 per bitplane */
     bool     allocated;
-} M11_GFX_Bitmap;
+} DM1_V1_GFX_BitmapPc34;
 
 /* LZW decompressor state — ReDMCSB LZW.C pattern */
 typedef struct {
@@ -51,26 +51,38 @@ typedef struct {
     int      chunk_bit_count;
     size_t   byte_pos;
     int      needs_refill;
-} M11_GFX_LZWState;
+} DM1_V1_GFX_LZWStatePc34;
 
 /* Graphics loader state */
 typedef struct {
     FILE*               dat_file;
-    M11_GFX_BitmapHeader headers[DM1_GFX_MAX_BITMAPS];
+    DM1_V1_GFX_BitmapHeaderPc34 headers[DM1_GFX_MAX_BITMAPS];
     uint16_t            bitmap_count;
-    M11_GFX_LZWState   lzw;
+    DM1_V1_GFX_LZWStatePc34   lzw;
     bool                loaded;
-} M11_GFX_LoaderState;
+} DM1_V1_GFX_LoaderStatePc34;
 
-void m11_gfx_init(M11_GFX_LoaderState* state);
-bool m11_gfx_open_dat(M11_GFX_LoaderState* state, const char* path);
-bool m11_gfx_load_bitmap(M11_GFX_LoaderState* state, uint16_t index,
-                          M11_GFX_Bitmap* out);
-void m11_gfx_free_bitmap(M11_GFX_Bitmap* bmp);
-int  m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
+void DM1_V1_GFX_InitPc34Compat(DM1_V1_GFX_LoaderStatePc34* state);
+bool DM1_V1_GFX_OpenDatPc34Compat(DM1_V1_GFX_LoaderStatePc34* state, const char* path);
+bool DM1_V1_GFX_LoadBitmapPc34Compat(DM1_V1_GFX_LoaderStatePc34* state, uint16_t index,
+                          DM1_V1_GFX_BitmapPc34* out);
+void DM1_V1_GFX_FreeBitmapPc34Compat(DM1_V1_GFX_BitmapPc34* bmp);
+int  DM1_V1_GFX_LzwDecompressPc34Compat(DM1_V1_GFX_LZWStatePc34* lzw,
                              const uint8_t* input, size_t in_size,
                              uint8_t* output, size_t out_size);
-void m11_gfx_close(M11_GFX_LoaderState* state);
+void DM1_V1_GFX_ClosePc34Compat(DM1_V1_GFX_LoaderStatePc34* state);
+
+typedef DM1_V1_GFX_BitmapHeaderPc34 M11_GFX_BitmapHeader;
+typedef DM1_V1_GFX_BitmapPc34 M11_GFX_Bitmap;
+typedef DM1_V1_GFX_LZWStatePc34 M11_GFX_LZWState;
+typedef DM1_V1_GFX_LoaderStatePc34 M11_GFX_LoaderState;
+
+#define m11_gfx_init DM1_V1_GFX_InitPc34Compat
+#define m11_gfx_open_dat DM1_V1_GFX_OpenDatPc34Compat
+#define m11_gfx_load_bitmap DM1_V1_GFX_LoadBitmapPc34Compat
+#define m11_gfx_free_bitmap DM1_V1_GFX_FreeBitmapPc34Compat
+#define m11_gfx_lzw_decompress DM1_V1_GFX_LzwDecompressPc34Compat
+#define m11_gfx_close DM1_V1_GFX_ClosePc34Compat
 
 #ifdef __cplusplus
 }

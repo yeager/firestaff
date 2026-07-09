@@ -3,7 +3,7 @@
  *
  * Round-trip tests for the DM1 V1 graphics LZW decompressor
  * (src/dm1/dm1_v1_graphics_loader_pc34_compat.c,
- *  function m11_gfx_lzw_decompress).
+ *  function DM1_V1_GFX_LzwDecompressPc34Compat).
  *
  * The decompressor is the only one currently in production;
  * no encoder exists. To test it without real Atari ST assets,
@@ -201,9 +201,9 @@ static int round_trip(const uint8_t* input, size_t in_size,
     uint8_t* decompressed = (uint8_t*)malloc(in_size + 16);
     ASSERT_TRUE(decompressed != NULL);
 
-    M11_GFX_LZWState lzw;
+    DM1_V1_GFX_LZWStatePc34 lzw;
     memset(&lzw, 0, sizeof(lzw));
-    int out_n = m11_gfx_lzw_decompress(&lzw, compressed, compressed_size,
+    int out_n = DM1_V1_GFX_LzwDecompressPc34Compat(&lzw, compressed, compressed_size,
                                          decompressed, in_size + 16);
     ASSERT_TRUE(out_n == (int)in_size);
     ASSERT_TRUE(memcmp(decompressed, input, in_size) == 0);
@@ -216,10 +216,10 @@ static int round_trip(const uint8_t* input, size_t in_size,
 
 static int test_empty_input(void) {
     /* Decoding an empty stream should yield 0 bytes, no crash. */
-    M11_GFX_LZWState lzw;
+    DM1_V1_GFX_LZWStatePc34 lzw;
     memset(&lzw, 0, sizeof(lzw));
     uint8_t out[16] = {0};
-    int n = m11_gfx_lzw_decompress(&lzw, NULL, 0, out, sizeof(out));
+    int n = DM1_V1_GFX_LzwDecompressPc34Compat(&lzw, NULL, 0, out, sizeof(out));
     ASSERT_TRUE(n == -1 || n == 0); /* either is acceptable for empty */
     return 1;
 }
@@ -283,9 +283,9 @@ static int test_dictionary_growth_to_12_bits(void) {
     ASSERT_TRUE(rc == 0);
 
     uint8_t* out = (uint8_t*)malloc(sizeof(in) + 64);
-    M11_GFX_LZWState lzw;
+    DM1_V1_GFX_LZWStatePc34 lzw;
     memset(&lzw, 0, sizeof(lzw));
-    int n = m11_gfx_lzw_decompress(&lzw, compressed, compressed_size,
+    int n = DM1_V1_GFX_LzwDecompressPc34Compat(&lzw, compressed, compressed_size,
                                      out, sizeof(in) + 64);
     ASSERT_TRUE(n > 0);
     /* Should decode at least half the input even with a small dict. */
@@ -309,9 +309,9 @@ static int test_early_end_code(void) {
     size_t csz = (bw.bit_pos + 7) / 8;
 
     uint8_t out[16] = {0};
-    M11_GFX_LZWState lzw;
+    DM1_V1_GFX_LZWStatePc34 lzw;
     memset(&lzw, 0, sizeof(lzw));
-    int n = m11_gfx_lzw_decompress(&lzw, bw.buf, csz, out, sizeof(out));
+    int n = DM1_V1_GFX_LzwDecompressPc34Compat(&lzw, bw.buf, csz, out, sizeof(out));
     ASSERT_TRUE(n == 3);
     ASSERT_TRUE(out[0] == 'A');
     ASSERT_TRUE(out[1] == 'B');
