@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM2 M11 startup host-route consumption: M11 DM2 startup input now consumes the DM2-owned host route receipt for redraw, close-menu, return-to-launcher, status, and post-action selected row instead of interpreting host receipt/menu state itself. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup title receipt consumption: M11 CSB startup title drawing now consumes a CSB-built render-view title plan for post-FTL PRESENTS, CHAOS zoom, and STRIKES BACK instead of relying on stale host plan rectangles. Verification: `test_csb_v1_boot_runtime_handoff`, `firestaff` build, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 M11/M12 startup host route receipt: host action receipts now expose ready-made consume/redraw/close/return/apply-session/rescan route flags and post-action selected row, so host code can stop interpreting DM2 menu state and execution kinds. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
