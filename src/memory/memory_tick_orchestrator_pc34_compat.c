@@ -2362,7 +2362,7 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
     }
     if (plan.shouldAwardXp) {
         (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
-            &world->lifecycle.champions[championIndex],
+            &world->lifecycle.champions[plan.xpChampionIndex],
             plan.skillIndex,
             plan.experienceGain,
             orch_cmd_attack_map_difficulty_compat(world),

@@ -316,6 +316,7 @@ int dm1_v1_melee_side_effect_plan_f0231_pc34(
     if (in->damageApplied > 0) {
         int creatureExperience = (in->creatureProperties >> 8) & 0x000F;
         out->shouldAwardXp = in->actionSkillIndex >= 0;
+        out->xpChampionIndex = in->championIndex;
         out->skillIndex = in->actionSkillIndex;
         out->experienceGain =
             ((in->damageApplied * creatureExperience) >> 4) + 3;
@@ -339,7 +340,8 @@ int dm1_v1_melee_side_effect_plan_f0231_pc34(
     /* ReDMCSB: PROJEXPL.C F0231 lines 1534-1539 awards damage XP, then
      * decrements stamina by M004_RANDOM(4)+4 on damage, or
      * M005_RANDOM(2)+2 on the miss/no-damage tail.  DM1 also carries the
-     * champion-state writeback receipt; M10 only writes the returned fields. */
+     * champion-state/XP writeback receipts; M10 only writes the returned
+     * fields. */
     stamina = (int16_t)in->currentStamina;
     pendingDamage = dm1_needs_decrement_stamina(
         &stamina, (int16_t)in->maximumStamina, (int16_t)out->staminaCost);

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0231 XP award writeback receipt: DM1 now carries the champion index for post-melee XP awards in the same side-effect receipt as stamina/HP, so M10 applies XP from returned DM1 fields. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM2 CCM byteprogram runtime slice: DM2 CCM can now decode a bounded imported command byte stream with opcode-specific operands and run it through the existing walk/shoot/spell/halt dispatch instead of treating `pc` as the opcode. Verification: `dm2_v1_ccm_pc34_compat` and focused build passed.
 
 - ✅ 2026-07-09 DM1 F0231 champion side-effect writeback receipt: DM1 now marks which champion state writeback belongs to the post-melee stamina/HP side-effect plan, so M10 applies returned champion-index/stamina/health fields instead of loose local writes. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
