@@ -320,10 +320,12 @@ static void test_tqsv_only_resume_claim(void) {
     /* Build a synthetic .tqsv via the existing save_to_slot API so
      * the unit test does not duplicate the obfuscated format. */
     char tqsv_root[THERON_V1_SRM_PATH_MAX];
+    char custom_path[THERON_V1_SRM_PATH_MAX];
     if (!make_temp_save_root(tqsv_root)) {
         printf("SKIP: mkdtemp failed for tqsv-only test\n");
         return;
     }
+    memset(custom_path, 0, sizeof(custom_path));
 
     uint8_t champion_data[THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
     Theron_V1_Party party;
@@ -350,6 +352,13 @@ static void test_tqsv_only_resume_claim(void) {
         &prog,
         "after dungeon 2");
     expect_true(save_rc == 0, "save_to_slot returns 0");
+    snprintf(custom_path,
+             sizeof(custom_path),
+             "%s%cexternal_continue.tqsv",
+             tqsv_root,
+             TEST_PATH_SEP);
+    expect_true(theron_v1_save_export_slot(tqsv_root, 2, custom_path) == 0,
+                "tqsv-only external export returns 0");
 
     char saved_srm[THERON_V1_SRM_PATH_MAX] = {0};
     const char *prev = getenv("FIRESTAFF_THERON_SRM_DIR");
@@ -450,8 +459,53 @@ static void test_tqsv_only_resume_claim(void) {
                         strstr(host_receipt.inspect_detail,
                                "source=NONE") != NULL,
                     "tqsv-only empty slot emits host failure receipt");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(theron_v1_startup_continue_tqsv_path_apply_with_host_receipts(
+                        &world,
+                        custom_path,
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) == 1 &&
+                        continue_result.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strcmp(host_receipt.status, "CONTINUE LOADED") == 0 &&
+                        strstr(host_receipt.inspect_detail,
+                               "after dungeon 2") != NULL &&
+                        state_receipt.flow_changed &&
+                        state_receipt.flow.selected_dungeon ==
+                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    "tqsv-only external path emits host and state receipts");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(!theron_v1_startup_continue_tqsv_path_apply_with_host_receipts(
+                        &world,
+                        "",
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strstr(host_receipt.status,
+                               "Continue requires a .tqsv path") != NULL &&
+                        strstr(host_receipt.inspect_detail,
+                               "source=NONE") != NULL,
+                    "tqsv-only external path failure emits host receipt");
     }
 
+    test_unlink(custom_path);
     cleanup_tqsv_root(tqsv_root);
     if (had) {
         test_setenv("FIRESTAFF_THERON_SRM_DIR", saved_srm);

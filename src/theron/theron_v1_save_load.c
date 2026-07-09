@@ -518,6 +518,55 @@ int theron_v1_save_load_from_slot(const char *save_root,
     return result;
 }
 
+int theron_v1_save_load_from_path(const char *save_path,
+                                  void *champion_data,
+                                  size_t champion_data_size,
+                                  void *dungeon_progression,
+                                  size_t dungeon_progression_size,
+                                  Theron_SaveSlot *out_slot_info) {
+    if (!save_path || !save_path[0]) return -1;
+    if (!file_exists(save_path)) return -1;
+
+    FILE *fp = fopen(save_path, "rb");
+    if (!fp) return -1;
+
+    struct stat st;
+    if (fstat(fileno(fp), &st) != 0) {
+        fclose(fp);
+        return -1;
+    }
+    size_t file_size = (size_t)st.st_size;
+    if (file_size == 0u) {
+        fclose(fp);
+        return -1;
+    }
+
+    uint8_t *image = (uint8_t *)malloc(file_size);
+    if (!image) {
+        fclose(fp);
+        return -1;
+    }
+
+    size_t n = fread(image, 1, file_size, fp);
+    fclose(fp);
+
+    if (n != file_size) {
+        free(image);
+        return -1;
+    }
+
+    int result = parse_save_image(image, file_size,
+                                  champion_data, champion_data_size,
+                                  dungeon_progression,
+                                  dungeon_progression_size,
+                                  out_slot_info);
+    if (result == 0 && out_slot_info) {
+        out_slot_info->slot_index = -1;
+    }
+    free(image);
+    return result;
+}
+
 int theron_v1_save_delete_slot(const char *save_root, int slot_index) {
     if (slot_index < 0 || slot_index >= THERON_SAVE_SLOT_COUNT) return -1;
 

@@ -629,6 +629,66 @@ int theron_v1_startup_continue_tqsv_apply(
     return 1;
 }
 
+int theron_v1_startup_continue_tqsv_path_apply(
+    Theron_V1_World *world,
+    const char *save_path,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_SaveSlot slot_info;
+    Theron_DungeonProgression loaded_progression;
+    unsigned char champion_data[
+        THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (!world || !save_path || save_path[0] == '\0') {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "Continue requires a .tqsv path");
+        }
+        return 0;
+    }
+
+    memset(&slot_info, 0, sizeof(slot_info));
+    memset(&loaded_progression, 0, sizeof(loaded_progression));
+    memset(champion_data, 0, sizeof(champion_data));
+    if (theron_v1_save_load_from_path(save_path,
+                                      champion_data,
+                                      sizeof(champion_data),
+                                      &loaded_progression,
+                                      sizeof(loaded_progression),
+                                      &slot_info) != 0 ||
+        !slot_info.valid) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "Continue TQSV path failed");
+        }
+        return 0;
+    }
+
+    world->progression = loaded_progression;
+    theron_v1_startup_continue_reset_world_runtime(world);
+    if (theron_v1_party_unpack(&world->party,
+                               champion_data,
+                               sizeof(champion_data)) != 0) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "Continue party decode failed");
+        }
+        return 0;
+    }
+    world->party.champion_count = 1;
+    world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
+
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 "continued tqsv path dungeon=%d label=%s",
+                 (int)loaded_progression.current_dungeon,
+                 slot_info.label[0] ? slot_info.label : "TQSV");
+    }
+    return 1;
+}
+
 static int theron_v1_startup_continue_srm_envelope_apply(
     Theron_V1_World *world,
     const Theron_V1SrmEnvelopeReceipt *envelope,
@@ -1379,6 +1439,100 @@ int theron_v1_startup_continue_tqsv_apply_with_host_receipts(
                                                slot_index,
                                                receipt,
                                                receipt_cap)) {
+        theron_v1_startup_continue_failure_apply_receipt(
+            plan,
+            result,
+            receipt,
+            &apply_receipt);
+        if (out_host_receipt) {
+            theron_v1_startup_host_receipt_from_continue_apply(
+                &apply_receipt,
+                out_host_receipt);
+        }
+        return 0;
+    }
+
+    theron_v1_startup_continue_capture_result(
+        world,
+        THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV,
+        result);
+    if (out_state_receipt &&
+        !theron_v1_startup_continue_state_receipt_from_result(
+            result,
+            out_state_receipt)) {
+        return 0;
+    }
+
+    theron_v1_startup_chapter_inspect_receipt_init(&inspect_receipt);
+    memset(&inspect_request, 0, sizeof(inspect_request));
+    inspect_request.boot_profile = boot_profile;
+    inspect_request.world = world;
+    inspect_request.prefix = receipt;
+    if (boot_profile &&
+        theron_v1_startup_chapter_inspect_receipt_from_request(
+            &inspect_request,
+            &inspect_receipt) &&
+        inspect_receipt.marker_line[0] != '\0') {
+        chapter_marker_line = inspect_receipt.marker_line;
+    }
+    if (!theron_v1_startup_continue_apply_receipt(plan,
+                                                  result,
+                                                  receipt,
+                                                  chapter_marker_line,
+                                                  &apply_receipt)) {
+        theron_v1_startup_continue_failure_apply_receipt(
+            plan,
+            result,
+            receipt,
+            &apply_receipt);
+        if (out_host_receipt) {
+            theron_v1_startup_host_receipt_from_continue_apply(
+                &apply_receipt,
+                out_host_receipt);
+        }
+        return 0;
+    }
+    if (out_host_receipt &&
+        !theron_v1_startup_host_receipt_from_continue_apply(
+            &apply_receipt,
+            out_host_receipt)) {
+        return 0;
+    }
+    return 1;
+}
+
+int theron_v1_startup_continue_tqsv_path_apply_with_host_receipts(
+    Theron_V1_World *world,
+    const char *save_path,
+    const Theron_StartupActionPlan *plan,
+    const void *boot_profile,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_V1StartupContinueResult local_result;
+    Theron_V1StartupContinueResult *result =
+        out_result ? out_result : &local_result;
+    Theron_V1StartupContinueApplyReceipt apply_receipt;
+    Theron_StartupChapterInspectReceipt inspect_receipt;
+    Theron_StartupChapterInspectRequest inspect_request;
+    const char *chapter_marker_line = NULL;
+
+    theron_v1_startup_continue_result_init(result);
+    theron_v1_startup_continue_apply_receipt_init(&apply_receipt);
+    if (out_host_receipt) {
+        theron_v1_startup_host_receipt_init(out_host_receipt);
+    }
+    if (out_state_receipt) {
+        theron_v1_startup_state_receipt_init(out_state_receipt);
+    }
+
+    if (!theron_v1_startup_continue_tqsv_path_apply(world,
+                                                    save_path,
+                                                    receipt,
+                                                    receipt_cap)) {
         theron_v1_startup_continue_failure_apply_receipt(
             plan,
             result,
