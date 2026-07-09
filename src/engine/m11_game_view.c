@@ -5406,46 +5406,6 @@ void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
     if (outBottomY) *outBottomY = (int)s_creatureFrontCoordSets[depthIndex][coordSet][pointIndex][1];
 }
 
-static int m11_dm1_hall_candidate_payload_item(const M11_GameViewState* state,
-                                               unsigned short firstThing,
-                                               unsigned short itemThing) {
-    unsigned short scanThing;
-    int scanSafety = 0;
-    int seenCandidateControl = 0;
-
-    if (!state || !state->world.things || state->world.party.mapIndex != 0) {
-        return 0;
-    }
-
-    scanThing = firstThing;
-    while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE &&
-           scanSafety++ < 64) {
-        int type = THING_GET_TYPE(scanThing);
-        int index = THING_GET_INDEX(scanThing);
-        int mirrorOrdinal = -1;
-        if (scanThing == itemThing) {
-            return seenCandidateControl;
-        }
-        if (type == THING_TYPE_TEXTSTRING &&
-            state->mirrorCatalogAvailable &&
-            state->world.things->textStrings &&
-            index >= 0 &&
-            index < state->world.things->textStringCount) {
-            mirrorOrdinal =
-                F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                    &state->mirrorCatalog, index);
-        }
-        if (dm1_v1_hall_candidate_payload_control_thing_pc34(
-                state->world.party.mapIndex,
-                type,
-                mirrorOrdinal)) {
-            seenCandidateControl = 1;
-        }
-        scanThing = m11_raw_next_thing(state->world.things, scanThing);
-    }
-    return 0;
-}
-
 static int m11_projectile_instance_active(
     const struct ProjectileInstance_Compat* p) {
     return p && p->slotIndex >= 0 && p->reserved3 != 0;
@@ -16555,38 +16515,70 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * alcove.  Non-wall squares still use the flagged first-thing path below
      * so dense-index chains cannot leak into ordinary floor rendering. */
     if (cell.summary.items > 0 && state->world.things) {
-        unsigned short itemFirstThing = firstThing;
+        DM1_F0115ThingRouteInputPc34 routeThings[32];
+        DM1_F0115ThingLayerReceiptPc34 itemReceipt;
+        unsigned short routeFirstThing = viewportStaticFirstThing;
+        unsigned short scanThing;
+        int routeThingCount = 0;
+        int suppressHallFloorItems =
+            state->world.party.mapIndex == 0 &&
+            cell.elementType != DUNGEON_ELEMENT_WALL;
         int scanSafety = 0;
-        int hiddenCandidatePayloadItems = 0;
+
         if (cell.elementType != DUNGEON_ELEMENT_WALL) {
-            if (state->world.party.mapIndex == 0) {
-                /* ReDMCSB REVIVE.C F0280 owns the Hall of Champions
-                 * candidate/mirror payload objects.  The source DM1 Hall
-                 * has no loose visible floor loot; compact map-0 object
-                 * chains are data payload, not DUNVIEW.C floor pickups.
-                 * Do not render them as floating fireball-like artifacts. */
-                itemFirstThing = THING_ENDOFLIST;
-            } else {
-                itemFirstThing = m11_get_flagged_square_first_thing(&state->world,
-                                                                    state->world.party.mapIndex,
-                                                                    mapX,
-                                                                    mapY);
-            }
+            routeFirstThing = m11_get_flagged_square_first_thing(
+                &state->world,
+                state->world.party.mapIndex,
+                mapX,
+                mapY);
         }
-        if (itemFirstThing != THING_ENDOFLIST && itemFirstThing != THING_NONE) {
-            unsigned short scanThing = itemFirstThing;
-            while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE &&
-                   scanSafety < 64 && cell.floorItemCount < M11_MAX_CELL_ITEMS) {
-                int tType = THING_GET_TYPE(scanThing);
-                int tIdx = THING_GET_INDEX(scanThing);
-                if (dm1_v1_thing_type_is_floor_item_pc34(tType)) {
-                    int itemSubtype = -1;
-                    if (m11_dm1_hall_candidate_payload_item(state, itemFirstThing, scanThing)) {
-                        hiddenCandidatePayloadItems++;
-                        scanThing = m11_raw_next_thing(state->world.things, scanThing);
-                        ++scanSafety;
-                        continue;
-                    }
+        scanThing = routeFirstThing;
+        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE &&
+               routeThingCount < (int)(sizeof(routeThings) /
+                                       sizeof(routeThings[0])) &&
+               scanSafety++ < 64) {
+            int type = THING_GET_TYPE(scanThing);
+            int index = THING_GET_INDEX(scanThing);
+            int mirrorOrdinal = -1;
+            if (type == THING_TYPE_TEXTSTRING &&
+                state->mirrorCatalogAvailable &&
+                state->world.things->textStrings &&
+                index >= 0 &&
+                index < state->world.things->textStringCount) {
+                mirrorOrdinal =
+                    F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+                        &state->mirrorCatalog, index);
+            }
+            routeThings[routeThingCount].thing = scanThing;
+            routeThings[routeThingCount].mirrorTextStringOrdinal = mirrorOrdinal;
+            ++routeThingCount;
+            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+        }
+
+        memset(&itemReceipt, 0, sizeof(itemReceipt));
+        if (dm1_v1_f0115_thing_route_receipt_pc34(
+                routeThings,
+                routeThingCount,
+                -1,
+                0,
+                state->world.party.mapIndex,
+                suppressHallFloorItems,
+                &itemReceipt) &&
+            itemReceipt.valid) {
+            int ri;
+            /* ReDMCSB DUNVIEW.C F0115 lines 4547-4581 draws floor
+             * objects from the F0115 thing pass. REVIVE.C F0280 lines
+             * 297-349 consumes HoC mirror payload objects from the same
+             * chain, so M11 must use the DM1 route receipt instead of a
+             * second raw scan that can leak champion payload as loot. */
+            for (ri = 0;
+                 ri < itemReceipt.visibleFloorItemCount &&
+                 cell.floorItemCount < M11_MAX_CELL_ITEMS;
+                 ++ri) {
+                unsigned short itemThing = itemReceipt.visibleFloorItemThings[ri];
+                int tType = THING_GET_TYPE(itemThing);
+                int tIdx = THING_GET_INDEX(itemThing);
+                int itemSubtype = -1;
                     switch (tType) {
                         case THING_TYPE_WEAPON:
                             if (state->world.things->weapons && tIdx >= 0 && tIdx < state->world.things->weaponCount)
@@ -16621,26 +16613,18 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                     }
                     cell.floorItemTypes[cell.floorItemCount] = tType;
                     cell.floorItemSubtypes[cell.floorItemCount] = itemSubtype;
-                    cell.floorItemCells[cell.floorItemCount] = (((int)(scanThing >> 14)) - state->world.party.direction) & 3;
+                    cell.floorItemCells[cell.floorItemCount] =
+                        (((int)(itemThing >> 14)) -
+                         state->world.party.direction) & 3;
                     cell.floorItemCount++;
-                }
-                scanThing = m11_raw_next_thing(state->world.things, scanThing);
-                ++scanSafety;
             }
-            if (hiddenCandidatePayloadItems > 0) {
-                cell.summary.items = cell.floorItemCount;
-            }
-        }
-        if (cell.elementType != DUNGEON_ELEMENT_WALL) {
-            /* ReDMCSB: DUNGEON.C F0160/F0161 stores SquareFirstThings as a
-             * compact list indexed only by squares whose thing-list flag is
-             * set.  The source-locked floor-item path above uses
-             * F0511_DUNGEON_GetSquareFirstThing_Compat for non-wall squares,
-             * but the older summary helper still has a dense fallback for
-             * synthetic probes and debug labels.  Do not let that stale
-             * summary drive side-pane fallback object marks on Hall floor
-             * cells that have no flagged source chain. */
             cell.summary.items = cell.floorItemCount;
+            if (cell.summary.total > cell.floorItemCount) {
+                cell.summary.total -= itemReceipt.ignoredHallPayloadItems;
+                if (cell.summary.total < cell.floorItemCount) {
+                    cell.summary.total = cell.floorItemCount;
+                }
+            }
         }
     }
 

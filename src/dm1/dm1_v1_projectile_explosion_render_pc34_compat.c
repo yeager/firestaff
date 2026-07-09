@@ -506,21 +506,54 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
     int viewCell,
     int allowStaticEffectThings,
     DM1_F0115ThingLayerReceiptPc34* outReceipt) {
+    DM1_F0115ThingRouteInputPc34 routeThings[32];
     int i;
+
+    if (!thingRefs || thingCount < 0) {
+        if (outReceipt) {
+            memset(outReceipt, 0, sizeof(*outReceipt));
+        }
+        return 0;
+    }
+    if (thingCount > (int)(sizeof(routeThings) / sizeof(routeThings[0]))) {
+        thingCount = (int)(sizeof(routeThings) / sizeof(routeThings[0]));
+    }
+    for (i = 0; i < thingCount; ++i) {
+        routeThings[i].thing = thingRefs[i];
+        routeThings[i].mirrorTextStringOrdinal = -1;
+    }
+    return dm1_v1_f0115_thing_route_receipt_pc34(
+        routeThings, thingCount, viewCell, allowStaticEffectThings,
+        -1, 0, outReceipt);
+}
+
+int dm1_v1_f0115_thing_route_receipt_pc34(
+    const DM1_F0115ThingRouteInputPc34* things,
+    int thingCount,
+    int viewCell,
+    int allowStaticEffectThings,
+    int mapIndex,
+    int suppressHallFloorItems,
+    DM1_F0115ThingLayerReceiptPc34* outReceipt) {
+    int i;
+    int seenHallPayloadControl = 0;
 
     if (!outReceipt) return 0;
     memset(outReceipt, 0, sizeof(*outReceipt));
     outReceipt->firstItemThing = THING_NONE;
     outReceipt->firstProjectileThing = THING_NONE;
     outReceipt->firstExplosionThing = THING_NONE;
+    for (i = 0; i < DM1_F0115_MAX_RECEIPT_ITEMS; ++i) {
+        outReceipt->visibleFloorItemThings[i] = THING_NONE;
+    }
 
-    if (!thingRefs || thingCount < 0) {
+    if (!things || thingCount < 0) {
         return 0;
     }
 
     outReceipt->valid = 1;
     for (i = 0; i < thingCount; ++i) {
-        unsigned short thing = thingRefs[i];
+        unsigned short thing = things[i].thing;
         int type;
 
         if (thing == THING_NONE || thing == THING_ENDOFLIST) {
@@ -533,6 +566,10 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
 
         ++outReceipt->total;
         type = (int)THING_GET_TYPE(thing);
+        if (dm1_v1_hall_candidate_payload_control_thing_pc34(
+                mapIndex, type, things[i].mirrorTextStringOrdinal)) {
+            seenHallPayloadControl = 1;
+        }
         switch (type) {
             case THING_TYPE_DOOR:
                 ++outReceipt->doors;
@@ -578,10 +615,22 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
                 break;
             default:
                 if (dm1_v1_thing_type_is_floor_item_pc34(type)) {
+                    if ((mapIndex == 0 && suppressHallFloorItems) ||
+                        seenHallPayloadControl) {
+                        ++outReceipt->ignoredHallPayloadItems;
+                        break;
+                    }
                     ++outReceipt->items;
                     ++outReceipt->drawableTotal;
                     if (outReceipt->firstItemThing == THING_NONE) {
                         outReceipt->firstItemThing = thing;
+                    }
+                    if (outReceipt->visibleFloorItemCount <
+                        DM1_F0115_MAX_RECEIPT_ITEMS) {
+                        outReceipt->visibleFloorItemThings
+                            [outReceipt->visibleFloorItemCount++] = thing;
+                    } else {
+                        outReceipt->overflow = 1;
                     }
                 } else {
                     ++outReceipt->ignoredControls;
@@ -590,8 +639,8 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
         }
     }
     if (i >= thingCount && thingCount > 0 &&
-        thingRefs[thingCount - 1] != THING_NONE &&
-        thingRefs[thingCount - 1] != THING_ENDOFLIST) {
+        things[thingCount - 1].thing != THING_NONE &&
+        things[thingCount - 1].thing != THING_ENDOFLIST) {
         outReceipt->overflow = 1;
     }
 
@@ -601,6 +650,9 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
      * for runtime DM1 rendering because F0219/F0220 effects are represented
      * by live runtime lists; stale dungeon C14/C15 refs must not drive HoC
      * floor/effect sprites. drawableTotal carries only F0115 drawable
-     * layers, so callers do not keep false content counts after suppression. */
+     * layers, so callers do not keep false content counts after suppression.
+     * REVIVE.C F0280 lines 297-349 consumes Hall mirror candidate payloads
+     * from the same square chain; those C02/C03 controls mark following
+     * objects as champion data, not DUNVIEW floor items. */
     return 1;
 }
