@@ -2457,6 +2457,29 @@ int csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
     return 1;
 }
 
+int csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
+    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!capture_receipt || !capture_receipt->valid ||
+        !capture_receipt->title_capture_ready ||
+        !capture_receipt->render_view_valid ||
+        !capture_receipt->real_asset_receipt_valid ||
+        !capture_receipt->real_asset_receipt.matched) {
+        return 0;
+    }
+    /* ReDMCSB TITLE.C F0437 lines 424-463 owns the post-FTL PRESENTS,
+     * CHAOS, and STRIKES BACK draw route. Require the aggregate capture's
+     * verified asset proof before exposing a title render plan to M11. */
+    return csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
+        &capture_receipt->render_view,
+        out_plan);
+}
+
 int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
