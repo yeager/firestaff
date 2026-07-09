@@ -189,7 +189,7 @@ static ProbeItem make_item(int id,
     return item;
 }
 
-static DM1_V1_ItemPc34 to_m11_item(ProbeItem item)
+static DM1_V1_ItemPc34 to_dm1_inventory_item(ProbeItem item)
 {
     DM1_V1_ItemPc34 out;
 
@@ -238,15 +238,15 @@ static int seed_open_chest(ProbeRuntime* rt)
     int i;
     int openResult;
 
-    linked[0] = to_m11_item(make_item(200, ITEM_C137_CHEST_SENTINEL,
+    linked[0] = to_dm1_inventory_item(make_item(200, ITEM_C137_CHEST_SENTINEL,
                                       ITEM_C137_CHEST_SENTINEL, 5, 0,
                                       DM1_PC34_ALLOWED_CONTAINER,
                                       "C537 retained item"));
-    linked[1] = to_m11_item(make_item(201, ITEM_C042_SCROLL_STACK,
+    linked[1] = to_dm1_inventory_item(make_item(201, ITEM_C042_SCROLL_STACK,
                                       ITEM_C042_SCROLL_STACK, 1, 2,
                                       DM1_PC34_ALLOWED_ANY_SLOT,
                                       "C538 stack"));
-    linked[2] = to_m11_item(make_item(202, ITEM_C042_SCROLL_STACK,
+    linked[2] = to_dm1_inventory_item(make_item(202, ITEM_C042_SCROLL_STACK,
                                       ITEM_C042_SCROLL_STACK, 1, 3,
                                       DM1_PC34_ALLOWED_ANY_SLOT,
                                       "C539 stack"));

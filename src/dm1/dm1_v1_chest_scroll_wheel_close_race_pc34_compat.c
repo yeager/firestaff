@@ -74,7 +74,7 @@ static const DM1_V1_ChestScrollWheelCloseRaceSpecPc34 s_spec = {
     DM1_PC34_SCROLL_CLOSE_VISIBLE_COUNT
 };
 
-static DM1_V1_ItemPc34 to_m11_item(ScrollCloseThingPc34 thing)
+static DM1_V1_ItemPc34 to_dm1_inventory_item(ScrollCloseThingPc34 thing)
 {
     DM1_V1_ItemPc34 item;
 
@@ -160,7 +160,7 @@ static void runtime_init(ScrollCloseRuntimePc34* runtime)
         if (i < DM1_PC34_SCROLL_CLOSE_VISIBLE_COUNT) {
             runtime->linked[i] = make_thing(i);
             runtime->quantityBySlot[i] = runtime->linked[i].quantity;
-            linked[i] = to_m11_item(runtime->linked[i]);
+            linked[i] = to_dm1_inventory_item(runtime->linked[i]);
         } else {
             memset(&linked[i], 0, sizeof(linked[i]));
         }

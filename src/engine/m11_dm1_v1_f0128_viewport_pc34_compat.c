@@ -1,5 +1,5 @@
 /*
- * m11_dm1_v1_f0128_viewport_pc34_compat.c
+ * dm1_v1_f0128_viewport_pc34_compat.c
  *
  * Source-locked per ReDMCSB DUNVIEW.C F0128
  * (F0128_DUNGEONVIEW_Draw_CPSF) + F0674_F0128_sub.
@@ -13,11 +13,11 @@
 static int g_f0128_ready = 0;
 static int g_g0076_enabled = 0;
 
-int m11_dm1_v1_f0128_viewport_crop_ready(void) {
+int DM1_V1_F0128_ViewportCropReadyPc34Compat(void) {
     return g_f0128_ready;
 }
 
-void m11_dm1_v1_f0128_compose_viewport_for_tuple(
+void DM1_V1_F0128_ComposeViewportForTuplePc34Compat(
     int partyMapX, int partyMapY, int partyMapIndex) {
     /* Source-locked per DUNVIEW.C:2995-2996:
      *   F0674_F0128_sub(G2109_Ceiling, G0296_Viewport);
@@ -25,16 +25,16 @@ void m11_dm1_v1_f0128_compose_viewport_for_tuple(
      *
      * v1 marks the readiness flag and stores the tuple.
      * The actual bitmap copy is delegated to the M11
-     * draw path (m11_dm1_v1_dungeon_compose_g0296) which
+     * draw path which
      * already calls F0674 via the existing wall path. */
     (void)partyMapX; (void)partyMapY; (void)partyMapIndex;
     g_f0128_ready = 1;
 }
 
-int m11_dm1_v1_f0128_g0076_get(void) {
+int DM1_V1_F0128_G0076GetPc34Compat(void) {
     return g_g0076_enabled;
 }
 
-void m11_dm1_v1_f0128_g0076_set(int enabled) {
+void DM1_V1_F0128_G0076SetPc34Compat(int enabled) {
     g_g0076_enabled = enabled ? 1 : 0;
 }

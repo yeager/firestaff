@@ -1,5 +1,5 @@
 /*
- * m11_dm1_v1_f0128_viewport_pc34_compat.h
+ * dm1_v1_f0128_viewport_pc34_compat.h
  *
  * DM1 V1 BUG-118 — Viewport Occlusion Gate Chain Root
  * Failure.  Source-locked per ReDMCSB DUNVIEW.C F0128
@@ -14,14 +14,14 @@
  * G0296 viewport surface — the entry point that the
  * original test cascade expects.  v1 keeps the existing
  * M11_DRAW_ComposeViewport path (which already calls
- * F0674 via m11_dm1_v1_dungeon_compose_g0296) and exposes
+ * F0674 via the DM1 dungeon compose path) and exposes
  * the bounded readiness signal so pass434 passes.
  *
  * v1 (2026-06-14): bounded implementation that returns 1
- * (viewport ready) when the M11 compose path has been
+ * (viewport ready) when the DM1 compose path has been
  * driven at least once after the party tuple is final.
  * 0 means the crop is not yet ready.  G0076 flip
- * alternation is delegated to the existing M11 wall
+ * alternation is delegated to the existing DM1 wall
  * path (no need to re-implement the alternation here).
  */
 #ifndef REDMCSB_M11_DM1_V1_F0128_VIEWPORT_PC34_COMPAT_H
@@ -34,10 +34,10 @@ extern "C" {
 /* Source-locked: returns 1 when the F0128 viewport has
  * been composed for the current party tuple.  Called by
  * pass434_dm1_v1_original_viewport_crop_readiness_gate
- * to root the gate chain.  The M11 caller must drive
- * m11_dm1_v1_f0128_compose_viewport_for_tuple() after
+ * to root the gate chain.  The caller must drive
+ * DM1_V1_F0128_ComposeViewportForTuplePc34Compat() after
  * every party-tuple change. */
-int  m11_dm1_v1_f0128_viewport_crop_ready(void);
+int  DM1_V1_F0128_ViewportCropReadyPc34Compat(void);
 
 /* Drive the F0128 composition.  Pass the current
  * party tuple coordinates.  Internally calls
@@ -52,7 +52,7 @@ int  m11_dm1_v1_f0128_viewport_crop_ready(void);
  * The function is a no-op when the bitmap pointers are
  * NULL (defensive envelope for tests that don't set up
  * the full viewport surface). */
-void m11_dm1_v1_f0128_compose_viewport_for_tuple(
+void DM1_V1_F0128_ComposeViewportForTuplePc34Compat(
     int partyMapX, int partyMapY, int partyMapIndex);
 
 /* Returns the source-locked G0076_B_UseFlippedWallAnd
@@ -60,8 +60,17 @@ void m11_dm1_v1_f0128_compose_viewport_for_tuple(
  * G0076 is set per ReDMCSB DUNVIEW.C:12352 (alternates
  * horizontal flip between ceiling and floor when the
  * party is facing N/E vs S/W). */
-int  m11_dm1_v1_f0128_g0076_get(void);
-void m11_dm1_v1_f0128_g0076_set(int enabled);
+int  DM1_V1_F0128_G0076GetPc34Compat(void);
+void DM1_V1_F0128_G0076SetPc34Compat(int enabled);
+
+#define m11_dm1_v1_f0128_viewport_crop_ready \
+    DM1_V1_F0128_ViewportCropReadyPc34Compat
+#define m11_dm1_v1_f0128_compose_viewport_for_tuple \
+    DM1_V1_F0128_ComposeViewportForTuplePc34Compat
+#define m11_dm1_v1_f0128_g0076_get \
+    DM1_V1_F0128_G0076GetPc34Compat
+#define m11_dm1_v1_f0128_g0076_set \
+    DM1_V1_F0128_G0076SetPc34Compat
 
 #ifdef __cplusplus
 }

@@ -84,7 +84,7 @@ static DM1_V1_ChestOpenMirrorRotationThreeWayItemPc34 make_slot_item(
     return item;
 }
 
-static DM1_V1_ItemPc34 to_m11_item(
+static DM1_V1_ItemPc34 to_dm1_inventory_item(
     DM1_V1_ChestOpenMirrorRotationThreeWayItemPc34 item)
 {
     DM1_V1_ItemPc34 out;
@@ -325,7 +325,7 @@ dm1_v1_chest_open_mirror_rotation_three_way_default_state_pc34(void)
         DM1_V1_ChestOpenMirrorRotationThreeWayItemPc34 item =
             make_slot_item(i);
 
-        linked[i] = to_m11_item(item);
+        linked[i] = to_dm1_inventory_item(item);
         state.chestQuantities[DM1_PC34_COMR3_OPEN_NON_LEADER][i] =
             item.quantity;
     }
