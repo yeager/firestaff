@@ -443,6 +443,16 @@ typedef struct Theron_V1_BootStartupFullStartReceipt {
     int full_start_graphics_blocked;
     int no_fallback_visuals_enforced;
     int fallback_visuals_allowed;
+    int runtime_readiness_ready;
+    int runtime_level_render_allowed;
+    int runtime_level;
+    int runtime_champion_count;
+    int runtime_level_source;
+    int runtime_track02_semantic_handoff;
+    int runtime_fallback_visuals_blocked;
+    int runtime_structured_route;
+    int runtime_receipt_text_route;
+    int hud_ready;
     int runtime_graphics_handoff;
     int track02_runtime_graphics_handoff;
     int save_resume_runtime_graphics_handoff;
