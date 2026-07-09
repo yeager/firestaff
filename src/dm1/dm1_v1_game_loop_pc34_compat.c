@@ -23,19 +23,19 @@
 
 /* ── Initialization ───────────────────────────────────────────────── */
 
-void m11_game_loop_init(M11_GameLoopState *state, int extendedVBlankWait)
+void DM1_V1_GameLoop_InitPc34Compat(DM1_V1_GameLoopStatePc34 *state, int extendedVBlankWait)
 {
     memset(state, 0, sizeof(*state));
     state->loopStatus = DM1_LOOP_INIT;
     state->timerActive = 1; /* G2586_TimerActive = true by default */
     state->waitForInputMaxVBlankCount = extendedVBlankWait
-        ? M11_VBLANK_WAIT_MAX_EXTENDED
-        : M11_VBLANK_WAIT_MAX_DEFAULT;
+        ? DM1_V1_VBLANK_WAIT_MAX_EXTENDED_PC34
+        : DM1_V1_VBLANK_WAIT_MAX_DEFAULT_PC34;
     state->newPartyMapIndex = -1;
-    state->targetFrameTimeUs = 1000000u / M11_FRAME_RATE_HZ; /* 20000us */
+    state->targetFrameTimeUs = 1000000u / DM1_V1_FRAME_RATE_HZ_PC34; /* 20000us */
 }
 
-void m11_game_loop_set_tick_rate(M11_GameLoopState *state, int hz)
+void DM1_V1_GameLoop_SetTickRatePc34Compat(DM1_V1_GameLoopStatePc34 *state, int hz)
 {
     if (hz < 1) hz = 1;
     if (hz > 1000) hz = 1000;
@@ -44,7 +44,7 @@ void m11_game_loop_set_tick_rate(M11_GameLoopState *state, int hz)
 
 /* ── VBlank interrupt simulation (F0577) ──────────────────────────── */
 
-void m11_game_loop_vblank_tick(M11_GameLoopState *state)
+void DM1_V1_GameLoop_VBlankTickPc34Compat(DM1_V1_GameLoopStatePc34 *state)
 {
     /*
      * F0577_VerticalBlank_Handler_CPSDF:
@@ -64,9 +64,9 @@ void m11_game_loop_vblank_tick(M11_GameLoopState *state)
 
 /* ── Core game loop tick (F0002) ──────────────────────────────────── */
 
-M11_GameLoopTickResult m11_game_loop_tick(M11_GameLoopState *state, uint32_t nowMs)
+DM1_V1_GameLoopTickResultPc34 DM1_V1_GameLoop_TickPc34Compat(DM1_V1_GameLoopStatePc34 *state, uint32_t nowMs)
 {
-    M11_GameLoopTickResult result;
+    DM1_V1_GameLoopTickResultPc34 result;
     memset(&result, 0, sizeof(result));
     result.newMapIndex = -1;
 
@@ -152,13 +152,13 @@ M11_GameLoopTickResult m11_game_loop_tick(M11_GameLoopState *state, uint32_t now
 
 /* ── Pause/resume (G2586_TimerActive) ─────────────────────────────── */
 
-void m11_game_loop_pause(M11_GameLoopState *state)
+void DM1_V1_GameLoop_PausePc34Compat(DM1_V1_GameLoopStatePc34 *state)
 {
     state->timerActive = 0;
     state->loopStatus = DM1_LOOP_PAUSED;
 }
 
-void m11_game_loop_resume(M11_GameLoopState *state)
+void DM1_V1_GameLoop_ResumePc34Compat(DM1_V1_GameLoopStatePc34 *state)
 {
     state->timerActive = 1;
     if (state->loopStatus == DM1_LOOP_PAUSED) {
@@ -166,48 +166,48 @@ void m11_game_loop_resume(M11_GameLoopState *state)
     }
 }
 
-int m11_game_loop_is_paused(const M11_GameLoopState *state)
+int DM1_V1_GameLoop_IsPausedPc34Compat(const DM1_V1_GameLoopStatePc34 *state)
 {
     return !state->timerActive;
 }
 
 /* ── State mutation ───────────────────────────────────────────────── */
 
-void m11_game_loop_request_new_map(M11_GameLoopState *state, int newMapIndex)
+void DM1_V1_GameLoop_RequestNewMapPc34Compat(DM1_V1_GameLoopStatePc34 *state, int newMapIndex)
 {
     state->newPartyMapIndex = newMapIndex;
 }
 
-void m11_game_loop_set_party_dead(M11_GameLoopState *state)
+void DM1_V1_GameLoop_SetPartyDeadPc34Compat(DM1_V1_GameLoopStatePc34 *state)
 {
     state->partyDead = 1;
 }
 
-void m11_game_loop_set_inventory(M11_GameLoopState *state, int championOrdinal)
+void DM1_V1_GameLoop_SetInventoryPc34Compat(DM1_V1_GameLoopStatePc34 *state, int championOrdinal)
 {
     state->inventoryChampionOrdinal = championOrdinal;
 }
 
-void m11_game_loop_set_resting(M11_GameLoopState *state, int resting)
+void DM1_V1_GameLoop_SetRestingPc34Compat(DM1_V1_GameLoopStatePc34 *state, int resting)
 {
     state->partyResting = resting;
 }
 
-void m11_game_loop_request_exit(M11_GameLoopState *state)
+void DM1_V1_GameLoop_RequestExitPc34Compat(DM1_V1_GameLoopStatePc34 *state)
 {
     state->exitGameImmediately = 1;
     state->loopStatus = DM1_LOOP_STOPPED;
 }
 
-int m11_game_loop_should_continue(const M11_GameLoopState *state)
+int DM1_V1_GameLoop_ShouldContinuePc34Compat(const DM1_V1_GameLoopStatePc34 *state)
 {
     return !state->partyDead && !state->exitGameImmediately;
 }
 
 /* ── Frame budget monitoring ──────────────────────────────────────── */
 
-void m11_game_loop_record_phase_time(M11_GameLoopState *state,
-                                     M11_GameLoopPhase phase,
+void DM1_V1_GameLoop_RecordPhaseTimePc34Compat(DM1_V1_GameLoopStatePc34 *state,
+                                     DM1_V1_GameLoopPhasePc34 phase,
                                      uint32_t elapsedUs)
 {
     (void)phase; /* Individual phase tracking could be added later */
@@ -232,19 +232,19 @@ void m11_game_loop_record_phase_time(M11_GameLoopState *state,
     }
 }
 
-M11_FrameTimingStats m11_game_loop_get_frame_stats(const M11_GameLoopState *state)
+DM1_V1_FrameTimingStatsPc34 DM1_V1_GameLoop_GetFrameStatsPc34Compat(const DM1_V1_GameLoopStatePc34 *state)
 {
     return state->frameStats;
 }
 
-void m11_game_loop_reset_frame_stats(M11_GameLoopState *state)
+void DM1_V1_GameLoop_ResetFrameStatsPc34Compat(DM1_V1_GameLoopStatePc34 *state)
 {
     memset(&state->frameStats, 0, sizeof(state->frameStats));
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */
 
-const char *m11_game_loop_source_evidence(void)
+const char *DM1_V1_GameLoop_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206\n"
