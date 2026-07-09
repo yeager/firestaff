@@ -1801,6 +1801,14 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             m11_set_launch_failed_message(menuState);
             return 0;
         }
+        if (dm1SelectedLaunchResult.runtime_handoff_receipt.handled) {
+            return (dm1SelectedLaunchResult.runtime_handoff_receipt
+                        .runtime_first_frame_ready ||
+                    dm1SelectedLaunchResult.runtime_handoff_receipt
+                        .return_to_launcher)
+                       ? 1
+                       : 0;
+        }
         return dm1SelectedLaunchResult.opened ? 1 : 0;
     }
     {

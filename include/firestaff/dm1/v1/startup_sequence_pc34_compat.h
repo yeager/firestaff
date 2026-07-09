@@ -130,11 +130,15 @@ typedef struct DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 {
     int full_graphics_consumed;
     int hoc_runtime_ready;
     int resumed_runtime_ready;
+    int champion_mirror_startup_handoff_ready;
+    int hoc_first_frame_ready;
+    int runtime_first_frame_ready;
     int draw_opened_runtime;
     int suppress_draw_opened;
     int return_to_launcher;
     int entrance_command;
     DM1_V1_StartupHandoffAction_PC34 action;
+    DM1_V1_EntranceMenuRouteReceiptPc34 champion_mirror_startup_route;
     const char* status;
 } DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34;
 

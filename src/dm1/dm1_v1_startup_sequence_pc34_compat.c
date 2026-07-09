@@ -743,6 +743,7 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* out_receipt) {
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 receipt;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    DM1_V1_EntranceCtxPc34 entrance_ctx;
 
     if (!out_receipt || !outcome || !host_result) {
         return 0;
@@ -797,8 +798,35 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
         outcome->action == DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34 &&
         host_result->resume_loaded &&
         !receipt.return_to_launcher;
+    if (receipt.hoc_runtime_ready) {
+        DM1_V1_Entrance_InitPc34Compat(&entrance_ctx);
+        entrance_ctx.state = DM1_ENTRANCE_VIEWING;
+        if (!DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
+                &entrance_ctx,
+                &receipt.champion_mirror_startup_route)) {
+            return 0;
+        }
+        /* ReDMCSB ENTRANCE.C F0441 lines 850-883 enters the Hall of
+         * Champions route before mirror selection.  REVIVE.C F0280 later owns
+         * the candidate champion route after a mirror is selected.  The first
+         * runtime frame must therefore start from the DM1-owned Hall route,
+         * not from stale entrance/title host state. */
+        receipt.champion_mirror_startup_handoff_ready =
+            (receipt.champion_mirror_startup_route.handled &&
+             receipt.champion_mirror_startup_route.route ==
+                 DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34 &&
+             receipt.champion_mirror_startup_route.showHall &&
+             receipt.champion_mirror_startup_route.needsRedraw)
+                ? 1
+                : 0;
+    }
+    receipt.hoc_first_frame_ready =
+        receipt.hoc_runtime_ready &&
+        receipt.champion_mirror_startup_handoff_ready;
+    receipt.runtime_first_frame_ready =
+        (receipt.hoc_first_frame_ready || receipt.resumed_runtime_ready) ? 1 : 0;
     receipt.draw_opened_runtime =
-        (receipt.hoc_runtime_ready || receipt.resumed_runtime_ready) ? 1 : 0;
+        receipt.runtime_first_frame_ready ? 1 : 0;
     receipt.suppress_draw_opened = receipt.draw_opened_runtime ? 0 : 1;
     *out_receipt = receipt;
     return 1;

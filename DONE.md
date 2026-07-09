@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 champion-mirror startup handoff: HoC first-frame readiness now requires a DM1-built Hall champion-mirror menu-route receipt, so the first runtime frame starts from the Hall route instead of stale title/entrance host state. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 HoC first-frame readiness handoff: full-graphics runtime handoff receipts now distinguish HoC first-frame readiness from resume runtime readiness, and M11 consumes the receipt instead of returning from the selected launch on `opened` alone. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 full-graphics runtime handoff receipt: selected DM1 launch now produces a DM1-owned receipt from SWSH/PRESENTS/TITLE/entrance into HoC/runtime draw, including enter, resume, quit, and draw-suppression decisions. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
