@@ -1413,6 +1413,21 @@ static void dm2_v1_boot_startup_host_view_receipt_clear(
     }
 }
 
+static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
+                                                       uint32_t value)
+{
+    hash ^= value + 0x9e3779b9u + (hash << 6) + (hash >> 2);
+    return hash ? hash : 1u;
+}
+
+void dm2_v1_boot_startup_packaged_capture_proof_init(
+    DM2_V1_BootStartupPackagedCaptureProof *proof)
+{
+    if (proof) {
+        memset(proof, 0, sizeof(*proof));
+    }
+}
+
 static int dm2_v1_boot_startup_fill_full_start_receipt(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     DM2_V1_BootStartupViewModel *view_model)
@@ -1511,6 +1526,141 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
      * this receipt directly instead of combining command counts and flags. */
     (void)snapshot;
     return 1;
+}
+
+int dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
+    const DM2_V1_BootStartupHostViewReceipt *host_view,
+    DM2_V1_BootStartupPackagedCaptureProof *out_proof)
+{
+    uint32_t hash = 0x324d3255u;
+    const DM2_V1_BootStartupFullStartReceipt *full_start;
+
+    dm2_v1_boot_startup_packaged_capture_proof_init(out_proof);
+    if (!host_view || !out_proof || !host_view->valid) {
+        return 0;
+    }
+    full_start = &host_view->full_start;
+    out_proof->host_view_valid = host_view->valid;
+    out_proof->full_start_valid = full_start->valid;
+    out_proof->draw_startup_menu = host_view->draw_startup_menu;
+    out_proof->command_count = host_view->command_count;
+    out_proof->selected_row = host_view->selected_row;
+    out_proof->title_animation_tick = host_view->title_animation_tick;
+    out_proof->title_frame = host_view->title_frame;
+    out_proof->title_frame_max = host_view->title_frame_max;
+    out_proof->title_frame_duration_ticks =
+        host_view->title_frame_duration_ticks;
+    out_proof->title_cycle_ticks = host_view->title_cycle_ticks;
+    out_proof->title_cycle_position_tick =
+        host_view->title_cycle_position_tick;
+    out_proof->title_frame_start_tick = host_view->title_frame_start_tick;
+    out_proof->title_next_frame_tick = host_view->title_next_frame_tick;
+    out_proof->title_frame_elapsed_ticks =
+        host_view->title_frame_elapsed_ticks;
+    out_proof->title_frame_remaining_ticks =
+        host_view->title_frame_remaining_ticks;
+    out_proof->title_cycle_remaining_ticks =
+        host_view->title_cycle_remaining_ticks;
+    out_proof->exact_title_timing_ready =
+        host_view->exact_title_timing_ready;
+    out_proof->title_gdat_category = full_start->title_gdat_category;
+    out_proof->title_gdat_index = full_start->title_gdat_index;
+    out_proof->title_gdat_field = full_start->title_gdat_field;
+    out_proof->title_gdat_asset_ready =
+        host_view->title_gdat_asset_ready;
+    out_proof->title_gdat_asset_w = host_view->title_gdat_asset_w;
+    out_proof->title_gdat_asset_h = host_view->title_gdat_asset_h;
+    out_proof->title_gdat_asset_stride =
+        host_view->title_gdat_asset_stride;
+    out_proof->menu_row_count = host_view->menu_row_count;
+    out_proof->menu_text_count = host_view->menu_text_count;
+    out_proof->selectable_text_count = host_view->selectable_text_count;
+    out_proof->selected_highlight_count =
+        host_view->selected_highlight_count;
+    out_proof->menu_panel_ready = host_view->menu_panel_ready;
+    out_proof->startup_menu_assets_ready =
+        host_view->startup_menu_assets_ready;
+    out_proof->hud_overlay_suppressed = host_view->hud_overlay_suppressed;
+    out_proof->hud_runtime_ready = host_view->hud_runtime_ready;
+    out_proof->first_hud_frame_ready = host_view->first_hud_frame_ready;
+    out_proof->status_scope = host_view->status_scope;
+    out_proof->status = host_view->status;
+    out_proof->title_capture_ready =
+        host_view->exact_title_timing_ready &&
+        full_start->title_backdrop_ready &&
+        host_view->title_gdat_asset_ready &&
+        host_view->title_gdat_asset_w > 0 &&
+        host_view->title_gdat_asset_h > 0 &&
+        host_view->title_gdat_asset_stride >=
+            host_view->title_gdat_asset_w;
+    out_proof->menu_capture_ready =
+        host_view->startup_menu_assets_ready &&
+        host_view->menu_row_count > 0 &&
+        host_view->menu_text_count >= host_view->menu_row_count &&
+        host_view->selectable_text_count == host_view->menu_row_count &&
+        host_view->selected_highlight_count == 1;
+    out_proof->hud_handoff_capture_ready =
+        host_view->startup_hud_handoff_ready;
+    out_proof->runtime_handoff_capture_ready =
+        host_view->runtime_handoff_ready;
+    out_proof->m11_consumer_ready =
+        host_view->m11_host_view_ready &&
+        ((host_view->draw_startup_menu &&
+          out_proof->exact_title_timing_ready &&
+          out_proof->menu_capture_ready &&
+          out_proof->hud_handoff_capture_ready) ||
+         out_proof->runtime_handoff_capture_ready);
+
+    /* skproject/SKWIN startup title capture is one package: exact title
+     * timing, GDAT title bitmap, menu panel/text, and HUD/runtime handoff.
+     * The hash gives M11/tests a stable receipt without reading loose fields. */
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->draw_startup_menu);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->command_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->selected_row);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_animation_tick);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_frame);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_frame_duration_ticks);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_cycle_position_tick);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_frame_start_tick);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_next_frame_tick);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_frame_elapsed_ticks);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_frame_remaining_ticks);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_gdat_category);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_gdat_index);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_gdat_field);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_gdat_asset_w);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_gdat_asset_h);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->menu_row_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->menu_text_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->hud_overlay_suppressed);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->hud_runtime_ready);
+    out_proof->packaged_capture_hash = hash;
+    out_proof->valid =
+        out_proof->host_view_valid &&
+        out_proof->full_start_valid &&
+        out_proof->m11_consumer_ready &&
+        out_proof->packaged_capture_hash != 0u;
+    return out_proof->valid;
 }
 
 static int dm2_v1_boot_startup_fill_host_view_receipt(
@@ -1617,6 +1767,10 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
         receipt->draw_startup_menu ? "T0: DM2 STARTUP MENU"
                                    : "T0: DM2 RUNTIME";
     receipt->full_start = *full_start;
+    receipt->capture_proof_valid =
+        dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
+            receipt,
+            &receipt->capture_proof);
     /* M11 host consumption contract: callers gate startup drawing and probe
      * state on this receipt, not on ad-hoc command-count/HUD flag checks. */
     return 1;
@@ -1877,6 +2031,54 @@ int dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
     }
     *out_receipt = view_model.host_view_receipt;
     return 1;
+}
+
+int dm2_v1_boot_startup_packaged_capture_proof_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupPackagedCaptureProof *out_proof)
+{
+    DM2_V1_BootStartupHostViewReceipt host_view;
+
+    dm2_v1_boot_startup_packaged_capture_proof_init(out_proof);
+    if (!snapshot || !out_proof ||
+        !dm2_v1_boot_startup_host_view_receipt_from_snapshot(
+            snapshot,
+            &host_view)) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
+        &host_view,
+        out_proof);
+}
+
+int dm2_v1_boot_startup_packaged_capture_proof_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupPackagedCaptureProof *out_proof)
+{
+    DM2_V1_BootStartupHostViewReceipt host_view;
+
+    dm2_v1_boot_startup_packaged_capture_proof_init(out_proof);
+    if (!out_proof ||
+        !dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
+            profile,
+            startup_menu_active,
+            startup_save_root,
+            resume_available,
+            slot_mask,
+            selected_row,
+            title_animation_tick,
+            &host_view)) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
+        &host_view,
+        out_proof);
 }
 
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
