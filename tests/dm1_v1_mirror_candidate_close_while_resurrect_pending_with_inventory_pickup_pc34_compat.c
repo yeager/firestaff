@@ -23,10 +23,10 @@ static int gFailures;
 
 static void check_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCwrpipEvidencePc34Compat *e =
-        dm1_v1_mirror_candidate_cwrpip_evidence_pc34_compat();
+    const DM1_V1_MirrorCandidateCwrpipEvidencePc34Compat *e =
+        DM1_V1_MirrorCandidateCwrpip_EvidencePc34Compat();
     const char *source =
-        dm1_v1_mirror_candidate_cwrpip_source_evidence_pc34_compat();
+        DM1_V1_MirrorCandidateCwrpip_SourceEvidencePc34Compat();
 
     CHECK_TRUE(e != NULL && e->contractOnly == 1,
                "evidence metadata is available",
@@ -76,12 +76,12 @@ static void check_source_lock_metadata(void)
 
 static void check_manual_close_while_pending_flow(void)
 {
-    Dm1V1MirrorCwrpipStatePc34Compat state;
-    Dm1V1MirrorCwrpipResultPc34Compat pickup;
-    Dm1V1MirrorCwrpipResultPc34Compat close;
-    Dm1V1MirrorCwrpipResultPc34Compat reopen;
+    DM1_V1_MirrorCandidateCwrpipStatePc34Compat state;
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat pickup;
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat close;
+    DM1_V1_MirrorCandidateCwrpipResultPc34Compat reopen;
 
-    dm1_v1_mirror_candidate_cwrpip_init_pc34_compat(&state);
+    DM1_V1_MirrorCandidateCwrpip_InitPc34Compat(&state);
 
     CHECK_TRUE(state.currentStep ==
                    DM1_V1_MIRROR_CWRPIP_STEP_RESURRECT_CANDIDATE_PENDING_PC34_COMPAT,
@@ -99,7 +99,7 @@ static void check_manual_close_while_pending_flow(void)
                "CHAMPION.C F0302:662-713");
 
     CHECK_TRUE(
-        dm1_v1_mirror_candidate_cwrpip_c537_pickup_before_close_pc34_compat(
+        DM1_V1_MirrorCandidateCwrpip_C537PickupBeforeClosePc34Compat(
             &state, &pickup) == 1,
         "C537 pickup fires before C040 close",
         "CHAMPION.C F0302:662-713");
@@ -119,7 +119,7 @@ static void check_manual_close_while_pending_flow(void)
                "REVIVE.C F0282:744-806");
 
     CHECK_TRUE(
-        dm1_v1_mirror_candidate_cwrpip_c040_close_while_pending_pc34_compat(
+        DM1_V1_MirrorCandidateCwrpip_C040CloseWhilePendingPc34Compat(
             &state, &close) == 1,
         "C040 close is driven after pickup while candidate is pending",
         "COMMAND.C F0359:1985-1990");
@@ -143,7 +143,7 @@ static void check_manual_close_while_pending_flow(void)
                "PANEL.C F0346/F0347:1619-1657");
 
     CHECK_TRUE(
-        dm1_v1_mirror_candidate_cwrpip_next_open_refire_pc34_compat(
+        DM1_V1_MirrorCandidateCwrpip_NextOpenRefirePc34Compat(
             &state, &reopen) == 1,
         "next mirror-candidate open is driven",
         "REVIVE.C F0280:124-132");
@@ -170,10 +170,10 @@ int main(void)
     check_source_lock_metadata();
     check_manual_close_while_pending_flow();
 
-    ok = dm1_v1_mirror_candidate_cwrpip_run_self_test_pc34_compat();
-    selfAssertions = dm1_v1_mirror_candidate_cwrpip_assertions_pc34_compat();
-    selfFailures = dm1_v1_mirror_candidate_cwrpip_failures_pc34_compat();
-    hash = dm1_v1_mirror_candidate_cwrpip_hash_pc34_compat();
+    ok = DM1_V1_MirrorCandidateCwrpip_RunSelfTestPc34Compat();
+    selfAssertions = DM1_V1_MirrorCandidateCwrpip_AssertionsPc34Compat();
+    selfFailures = DM1_V1_MirrorCandidateCwrpip_FailuresPc34Compat();
+    hash = DM1_V1_MirrorCandidateCwrpip_HashPc34Compat();
 
     CHECK_TRUE(ok == 1 && selfFailures == 0,
                "library self-test passes",
