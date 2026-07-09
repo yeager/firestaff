@@ -2291,6 +2291,22 @@ int csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
                 out_receipt->readiness.suppress_legacy_utility_fallback
             ? 1
             : 0;
+    if (out_receipt->hud_menu_draw_valid) {
+        out_receipt->hud_menu_kind = out_receipt->hud_menu_draw.kind;
+        if (out_receipt->hud_menu_draw.kind ==
+            CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34) {
+            out_receipt->selected_command_id =
+                out_receipt->hud_menu_draw.selected_command_id;
+        } else if (out_receipt->hud_menu_draw.kind ==
+                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34) {
+            out_receipt->selected_utility_action_index =
+                out_receipt->hud_menu_draw.selected_utility_action_index;
+        }
+        out_receipt->suppress_legacy_utility_fallback =
+            out_receipt->hud_menu_draw.suppress_legacy_utility_fallback
+                ? 1
+                : out_receipt->suppress_legacy_utility_fallback;
+    }
     /* ReDMCSB TITLE.C F0437 lines 424-463 owns the post-FTL title draw,
      * and ENTRANCE.C F0441/F0806 lines 850-883 owns the closed-door
      * input/HUD loop. This aggregate receipt is the CSB-owned capture

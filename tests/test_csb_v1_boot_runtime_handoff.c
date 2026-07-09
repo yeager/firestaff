@@ -2684,7 +2684,12 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_receipt.hud_menu_kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
               capture_receipt.selected_utility_action_index == 0 &&
+              capture_receipt.selected_utility_action_index ==
+                  capture_receipt.hud_menu_draw
+                      .selected_utility_action_index &&
               capture_receipt.hud_menu_draw.draw_utility_panel &&
+              capture_receipt.hud_menu_draw.option_count ==
+                  CSB_V1_UTIL_MENU_ROW_COUNT &&
               capture_receipt.hud_menu_draw.utility_render_plan_valid,
           "boot startup capture receipt packages utility HUD/menu draw");
     CHECK(csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
@@ -2945,6 +2950,11 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_receipt.hud_menu_draw_valid &&
               capture_receipt.hud_menu_draw.draw_closed_doors &&
               capture_receipt.hud_menu_draw.draw_fallback_text &&
+              capture_receipt.selected_command_id ==
+                  capture_receipt.hud_menu_draw.selected_command_id &&
+              capture_receipt.suppress_legacy_utility_fallback ==
+                  capture_receipt.hud_menu_draw
+                      .suppress_legacy_utility_fallback &&
               capture_receipt.real_asset_receipt_valid &&
               capture_receipt.real_asset_receipt.matched,
           "boot startup capture receipt packages closed-door HUD/menu draw");
