@@ -1567,6 +1567,77 @@ int dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* apply,
+    const DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34* suppression,
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 receipt;
+
+    if (!apply || !suppression || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!apply->handled || !suppression->handled) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    receipt.consumed_runtime_apply_receipt = 1;
+    receipt.consumed_thing_suppression_receipt = 1;
+    receipt.capture_phase = apply->capture_phase;
+    receipt.source_evidence =
+        "ReDMCSB ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    if (!apply->ready ||
+        !suppression->ready ||
+        !suppression->proof_passed ||
+        !suppression->walk_capture_safe ||
+        !suppression->champion_mirror_overlay_present ||
+        !suppression->false_item_payloads_absent ||
+        !suppression->projectile_payloads_absent ||
+        !suppression->spell_effect_payloads_absent ||
+        !suppression->mirror_payload_thing_absent) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB ENTRANCE.C F0797/F0441 leaves one legal production frame before
+     * HoC input: opened entrance plus Hall mirror overlay, with no dungeon
+     * thing/effect payloads.  This receipt is the final DM1-owned consumer
+     * contract for M11/M12/package callers. */
+    receipt.ready = 1;
+    receipt.consume_dm1_receipts_only = 1;
+    receipt.execute_before_hoc_input = apply->apply_before_hoc_input;
+    receipt.draw_opened_entrance_frame = apply->apply_opened_entrance_frame;
+    receipt.clear_champion_panel = apply->apply_clear_champion_panel;
+    receipt.render_hall_mirror_overlay = apply->apply_hall_mirror_overlay;
+    receipt.suppress_title_surface = apply->suppress_title_surface;
+    receipt.suppress_closed_door_frame = apply->suppress_closed_door_frame;
+    receipt.suppress_host_fallback_visuals =
+        apply->suppress_host_fallback_visuals;
+    receipt.suppress_false_item_payloads =
+        suppression->false_item_payloads_absent;
+    receipt.suppress_projectile_payloads =
+        suppression->projectile_payloads_absent;
+    receipt.suppress_spell_effect_payloads =
+        suppression->spell_effect_payloads_absent;
+    receipt.suppress_mirror_payload_things =
+        suppression->mirror_payload_thing_absent;
+    receipt.publish_packaged_full_graphics_proof =
+        apply->publish_packaged_full_graphics_proof;
+    receipt.block_enter_until_champion_selected =
+        apply->block_enter_until_champion_selected;
+    receipt.map_index = apply->map_index;
+    receipt.map_width = apply->map_width;
+    receipt.map_height = apply->map_height;
+    receipt.entrance_door_frame_index = apply->entrance_door_frame_index;
+    receipt.hall_overlay_kind = apply->hall_overlay_kind;
+    receipt.render_command_count = apply->render_command_count;
+    receipt.walk_capture_safe = suppression->walk_capture_safe;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

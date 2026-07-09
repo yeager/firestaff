@@ -394,6 +394,36 @@ typedef struct DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
+    int handled;
+    int ready;
+    int consumed_runtime_apply_receipt;
+    int consumed_thing_suppression_receipt;
+    int consume_dm1_receipts_only;
+    int execute_before_hoc_input;
+    int draw_opened_entrance_frame;
+    int clear_champion_panel;
+    int render_hall_mirror_overlay;
+    int suppress_title_surface;
+    int suppress_closed_door_frame;
+    int suppress_host_fallback_visuals;
+    int suppress_false_item_payloads;
+    int suppress_projectile_payloads;
+    int suppress_spell_effect_payloads;
+    int suppress_mirror_payload_things;
+    int publish_packaged_full_graphics_proof;
+    int block_enter_until_champion_selected;
+    int map_index;
+    int map_width;
+    int map_height;
+    int entrance_door_frame_index;
+    int hall_overlay_kind;
+    int render_command_count;
+    int walk_capture_safe;
+    const char* capture_phase;
+    const char* source_evidence;
+} DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34;
+
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
     int (*begin_prelude_plan)(void* user,
@@ -755,6 +785,10 @@ int dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
     const DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* apply,
     const DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34* facts,
     DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* apply,
+    const DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34* suppression,
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_receipt);
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
