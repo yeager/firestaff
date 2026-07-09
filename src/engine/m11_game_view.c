@@ -5462,39 +5462,27 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                                         int mapY,
                                         M11_SquareThingSummary* outSummary) {
     M11_SquareThingSummary summary;
+    DM1_F0115ThingLayerReceiptPc34 receipt;
+    unsigned short thingRefs[32];
     unsigned short thing = m11_get_viewport_static_first_thing(world, mapIndex, mapX, mapY);
+    int thingRefCount = 0;
 
     memset(&summary, 0, sizeof(summary));
-    while (thing != THING_ENDOFLIST && thing != THING_NONE && summary.total < 32) {
-        int thingType = THING_GET_TYPE(thing);
-        ++summary.total;
-        switch (thingType) {
-            case THING_TYPE_DOOR:
-                ++summary.doors;
-                break;
-            case THING_TYPE_TELEPORTER:
-                ++summary.teleporters;
-                break;
-            case THING_TYPE_TEXTSTRING:
-                ++summary.textStrings;
-                break;
-            case THING_TYPE_SENSOR:
-                ++summary.sensors;
-                break;
-            case THING_TYPE_GROUP:
-                ++summary.groups;
-                break;
-            case THING_TYPE_PROJECTILE:
-                break;
-            case THING_TYPE_EXPLOSION:
-                break;
-            default:
-                if (dm1_v1_thing_type_is_floor_item_pc34(thingType)) {
-                    ++summary.items;
-                }
-                break;
-        }
+    while (thing != THING_ENDOFLIST && thing != THING_NONE &&
+           thingRefCount < (int)(sizeof(thingRefs) / sizeof(thingRefs[0]))) {
+        thingRefs[thingRefCount++] = thing;
         thing = m11_raw_next_thing(world->things, thing);
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (dm1_v1_f0115_thing_layer_receipt_pc34(
+            thingRefs, thingRefCount, -1, 0, &receipt) && receipt.valid) {
+        summary.total = receipt.total;
+        summary.doors = receipt.doors;
+        summary.teleporters = receipt.teleporters;
+        summary.textStrings = receipt.textStrings;
+        summary.sensors = receipt.sensors;
+        summary.groups = receipt.groups;
+        summary.items = receipt.items;
     }
 
     /* V1 projectile-cycle visibility: projectile/explosion sprites are

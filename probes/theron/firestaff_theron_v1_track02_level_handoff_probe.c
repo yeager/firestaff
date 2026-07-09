@@ -14,6 +14,7 @@
  */
 
 #include "asset_status_m12.h"
+#include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -478,10 +479,40 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     Theron_Track02StartupRuntimeReceipt loaded_startup_receipt;
     Theron_Track02LevelHandoff loaded_level_handoff;
     Theron_V1_Level loaded_level;
+    Theron_V1_World runtime_world;
+    Theron_StartupAction runtime_action;
+    Theron_StartupActionPlan runtime_plan;
+    Theron_V1StartupRuntimeEntryResult runtime_result;
+    Theron_StartupHostReceipt runtime_host_receipt;
+    Theron_StartupStateReceipt runtime_state_receipt;
+    char runtime_receipt[512];
+    uint8_t *runtime_track = NULL;
+    const size_t runtime_candidate_offset = 0x7015b4u;
+    const size_t runtime_descriptor_base_offset = 0x70be06u - 0x1584u;
+    const size_t runtime_seed_table_offset =
+        runtime_descriptor_base_offset + 0x20u;
+    const size_t runtime_track_size =
+        ((0x712840u + 44u + THERON_TRACK02_RAW_SECTOR_BYTES - 1u) /
+         THERON_TRACK02_RAW_SECTOR_BYTES) *
+        THERON_TRACK02_RAW_SECTOR_BYTES;
     size_t copied_size = 0u;
     size_t copied_user_offset = 0u;
     static const uint32_t progression_seeds[THERON_TRACK02_DUNGEON_COUNT] = {
         313u, 414u, 527u, 632u, 749u, 856u, 967u
+    };
+    static const size_t runtime_descriptor_offsets[3] = {
+        0x70be06u, 0x70e2c6u, 0x710904u
+    };
+    static const size_t runtime_span_offsets[3] = {
+        0x2d53e0u, 0x47d040u, 0x712840u
+    };
+    static const uint8_t runtime_post_boundary_span[44] = {
+        0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+        0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80,
+        0x45, 0x80, 0x52, 0x80, 0x5f, 0x80, 0x6c, 0x80,
+        0x79, 0x80, 0x86, 0x80, 0xa0, 0x80, 0xa5, 0x80,
+        0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
+        0x93, 0x80, 0x00, 0x3f
     };
 
     memset(track, 0, sizeof(track));
@@ -645,6 +676,98 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     check_int("synthetic startup semantic level load start y",
               loaded_level.start_y,
               1);
+    runtime_track = (uint8_t *)calloc(1u, runtime_track_size);
+    check_int("synthetic startup semantic raw-US runtime fixture alloc",
+              runtime_track != NULL,
+              1);
+    if (runtime_track) {
+        for (size_t i = 0u; i < 3u; ++i) {
+            memcpy(runtime_track + runtime_descriptor_offsets[i],
+                   g_canonical_descriptor,
+                   sizeof(g_canonical_descriptor));
+            memcpy(runtime_track + runtime_span_offsets[i],
+                   runtime_post_boundary_span,
+                   sizeof(runtime_post_boundary_span));
+        }
+        for (size_t i = 0u; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
+            write_le32(runtime_track + runtime_seed_table_offset + i * 4u,
+                       progression_seeds[i]);
+        }
+        write_initial_candidate_fixture(runtime_track + runtime_candidate_offset,
+                                        candidate_width,
+                                        candidate_height);
+        {
+            Theron_Track02StartupSemanticHandoff runtime_handoff;
+            status = theron_v1_track02_bind_startup_semantic_handoff(
+                runtime_track,
+                runtime_track_size,
+                THERON_TRACK02_MD5_US_BIN,
+                runtime_descriptor_offsets[0],
+                &runtime_handoff);
+            check_int("synthetic startup semantic raw-US bind status",
+                      status,
+                      THERON_TRACK02_LEVEL_HANDOFF_OK);
+            check_int("synthetic startup semantic raw-US seed status",
+                      runtime_handoff.seed_table_status,
+                      THERON_TRACK02_SEMANTIC_BINDING_OK);
+        }
+        theron_v1_world_init(&runtime_world);
+        theron_v1_startup_action_init(&runtime_action);
+        runtime_action.kind = THERON_STARTUP_ACTION_ENTER_FORCEFIELD;
+        check_int("synthetic startup semantic runtime plan",
+                  theron_v1_startup_plan_for_action(&runtime_action,
+                                                     &runtime_plan),
+                  1);
+        memset(runtime_receipt, 0, sizeof(runtime_receipt));
+        check_int(
+            "synthetic startup semantic runtime route rc",
+            theron_v1_startup_runtime_load_initial_level_with_host_receipts(
+                &runtime_world,
+                runtime_track,
+                runtime_track_size,
+                THERON_TRACK02_MD5_US_BIN,
+                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                &runtime_plan,
+                &runtime_result,
+                &runtime_host_receipt,
+                &runtime_state_receipt,
+                runtime_receipt,
+                sizeof(runtime_receipt)),
+            1);
+        if (runtime_result.runtime_level_source !=
+            THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC) {
+            printf("synthetic startup semantic runtime receipt: %s\n",
+                   runtime_receipt);
+        }
+        check_int("synthetic startup semantic runtime route source",
+                  runtime_result.runtime_level_source,
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC);
+        check_int("synthetic startup semantic runtime handoff flag",
+                  runtime_result.track02_semantic_handoff,
+                  1);
+        check_int("synthetic startup semantic runtime no blocked fallback",
+                  runtime_result.fallback_visuals_blocked,
+                  0);
+        check_int("synthetic startup semantic runtime state route",
+                  runtime_state_receipt.runtime_level_source,
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC);
+        check_int("synthetic startup semantic runtime state handoff",
+                  runtime_state_receipt.runtime_track02_semantic_handoff,
+                  1);
+        check_int("synthetic startup semantic runtime receipt text",
+                  strstr(runtime_receipt,
+                         "Track 02 semantic initial level") != NULL,
+                  1);
+        check_int("synthetic startup semantic runtime host text",
+                  strstr(runtime_host_receipt.inspect_detail,
+                         "Track 02 semantic initial level") != NULL,
+                  1);
+        check_int("synthetic startup semantic runtime host route",
+                  strstr(runtime_host_receipt.inspect_detail,
+                         "route=track02-semantic") != NULL,
+                  1);
+        free(runtime_track);
+    }
     status = theron_v1_track02_copy_initial_level_user_data_window(
         track,
         sizeof(track),

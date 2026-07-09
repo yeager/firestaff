@@ -2559,6 +2559,9 @@ int main(void) {
                 check_contains("runtime load host fallback inspect",
                                load_host_receipt.inspect_detail,
                                "fallback room stage=2");
+                check_contains("runtime load host fallback inspect route",
+                               load_host_receipt.inspect_detail,
+                               "route=fallback-room");
                 theron_v1_world_init(&world);
                 load_receipt[0] = '\0';
                 check_int("runtime load host verified Track02 blocked rc",
@@ -2593,6 +2596,9 @@ int main(void) {
                 check_contains("runtime load host verified Track02 detail",
                                load_host_receipt.inspect_detail,
                                "Track 02 bank signal");
+                check_contains("runtime load host verified Track02 route text",
+                               load_host_receipt.inspect_detail,
+                               "route=track02-blocked");
                 check_int("runtime load host verified Track02 no level",
                           world.level_loaded[
                               THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
@@ -2854,6 +2860,9 @@ int main(void) {
                     check_contains("runtime host verified Track02 detail",
                                    runtime_host_receipt.inspect_detail,
                                    "Track 02 bank signal");
+                    check_contains("runtime host verified Track02 route text",
+                                   runtime_host_receipt.inspect_detail,
+                                   "route=track02-blocked");
                     check_int("runtime host verified Track02 redraw",
                               runtime_host_receipt.input_result,
                               THERON_STARTUP_INPUT_RESULT_REDRAW);

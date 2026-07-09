@@ -249,7 +249,32 @@ int dm1_v1_explosion_sprite_blit_plan(DM1_ExplosionSpriteBlitPlan *out_plan,
 #define DM1_F0115_LAYER_FLUXCAGE_FIELD   5
 #define DM1_F0115_LAYER_COUNT            6
 
+typedef struct DM1_F0115ThingLayerReceiptPc34 {
+    int valid;
+    int total;
+    int doors;
+    int teleporters;
+    int textStrings;
+    int sensors;
+    int groups;
+    int items;
+    int projectiles;
+    int explosions;
+    int ignoredControls;
+    int ignoredStaticEffects;
+    int overflow;
+    unsigned short firstItemThing;
+    unsigned short firstProjectileThing;
+    unsigned short firstExplosionThing;
+} DM1_F0115ThingLayerReceiptPc34;
+
 int dm1_v1_verify_f0115_draw_order(const int* order, int count);
+int dm1_v1_f0115_thing_layer_receipt_pc34(
+    const unsigned short* thingRefs,
+    int thingCount,
+    int viewCell,
+    int allowStaticEffectThings,
+    DM1_F0115ThingLayerReceiptPc34* outReceipt);
 
 #ifdef __cplusplus
 }

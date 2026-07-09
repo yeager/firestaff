@@ -214,11 +214,11 @@ typedef enum {
  * Source: docs/dm2_actuators.md "Door Actuator Control"
  *         SKULL.ASM T560 door state transitions */
 typedef enum {
-    DM2_DOOR_CLOSED  = 0,
-    DM2_DOOR_OPENING = 1,   /* DoorBit09=1, animates open */
-    DM2_DOOR_OPEN    = 2,
-    DM2_DOOR_CLOSING = 3,   /* DoorBit09=0, animates closed */
-} DM2_DoorState;
+    DM2_RUNTIME_DOOR_CLOSED  = 0,
+    DM2_RUNTIME_DOOR_OPENING = 1,   /* DoorBit09=1, animates open */
+    DM2_RUNTIME_DOOR_OPEN    = 2,
+    DM2_RUNTIME_DOOR_CLOSING = 3,   /* DoorBit09=0, animates closed */
+} DM2_RuntimeDoorMotionState;
 
 /* Attempt to open or close the door at (level, x, y, facing_dir).
  * Returns 0 on success, -1 if no door at that location. */

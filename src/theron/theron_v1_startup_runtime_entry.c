@@ -447,6 +447,22 @@ static void theron_v1_startup_runtime_entry_capture_failure_route(
     }
 }
 
+static const char *theron_v1_startup_runtime_level_source_name(
+    int runtime_level_source) {
+
+    switch (runtime_level_source) {
+    case THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM:
+        return "fallback-room";
+    case THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC:
+        return "track02-semantic";
+    case THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED:
+        return "track02-blocked";
+    case THERON_V1_STARTUP_RUNTIME_LEVEL_NONE:
+    default:
+        return "none";
+    }
+}
+
 int theron_v1_startup_runtime_enter_from_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_World *world,
@@ -544,8 +560,12 @@ int theron_v1_startup_runtime_entry_apply_receipt(
     if (runtime_receipt && runtime_receipt[0]) {
         snprintf(out_receipt->inspect_detail,
                  sizeof(out_receipt->inspect_detail),
-                 "%s",
-                 runtime_receipt);
+                 "%s route=%s semantic=%d fallback_blocked=%d",
+                 runtime_receipt,
+                 theron_v1_startup_runtime_level_source_name(
+                     result->runtime_level_source),
+                 result->track02_semantic_handoff,
+                 result->fallback_visuals_blocked);
         out_receipt->log_receipt = 1;
     }
     out_receipt->log_first_line = "T0: THERON LOADED";
@@ -575,10 +595,16 @@ static int theron_v1_startup_runtime_entry_failure_apply_receipt(
     out_receipt->inspect_scope = "READY";
     snprintf(out_receipt->inspect_detail,
              sizeof(out_receipt->inspect_detail),
-             "%s%s%s",
+             "%s%s%s route=%s semantic=%d fallback_blocked=%d",
              status,
              result ? " result=" : "",
-             result ? theron_v1_startup_result_name(result->result) : "");
+             result ? theron_v1_startup_result_name(result->result) : "",
+             result
+                 ? theron_v1_startup_runtime_level_source_name(
+                       result->runtime_level_source)
+                 : "none",
+             result ? result->track02_semantic_handoff : 0,
+             result ? result->fallback_visuals_blocked : 0);
     out_receipt->log_first_line = "T0: THERON BLOCKED";
     out_receipt->log_receipt = 1;
     return 1;
