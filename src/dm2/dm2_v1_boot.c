@@ -4343,6 +4343,22 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_hud_no_fallback_portraits =
             out_receipt->runtime_hud_asset_portrait_count > 0 &&
             out_receipt->runtime_hud_fallback_portrait_count == 0;
+        out_receipt->runtime_hud_raw_gdat_capture_ready =
+            dm2_v1_boot_runtime_raw_gdat_hud_probe(
+                profile,
+                &out_receipt->runtime_hud_raw_portrait_count,
+                &out_receipt->runtime_hud_raw_portrait_hash,
+                &out_receipt->runtime_hud_raw_portrait_byte_count,
+                &out_receipt->runtime_hud_raw_core_hash,
+                &out_receipt->runtime_hud_raw_core_byte_count);
+        out_receipt->runtime_hud_decoded_gdat_capture_ready =
+            dm2_v1_boot_runtime_decoded_gdat_hud_probe(
+                profile,
+                &out_receipt->runtime_hud_decoded_portrait_count,
+                &out_receipt->runtime_hud_decoded_portrait_hash,
+                &out_receipt->runtime_hud_decoded_portrait_pixel_count,
+                &out_receipt->runtime_hud_decoded_core_hash,
+                &out_receipt->runtime_hud_decoded_core_pixel_count);
         out_receipt->runtime_hud_frame_hash =
             dm2_v1_boot_runtime_hud_hash_frame(framebuffer,
                                                fb_stride,
@@ -4353,6 +4369,8 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_hud_real_asset_ready =
             profile->graphics_dat &&
             out_receipt->runtime_hud_no_fallback_portraits &&
+            out_receipt->runtime_hud_raw_gdat_capture_ready &&
+            out_receipt->runtime_hud_decoded_gdat_capture_ready &&
             out_receipt->runtime_hud_frame_hash != 0u;
         out_receipt->runtime_hud_capture_ready =
             out_receipt->startup_render_ready &&

@@ -431,6 +431,18 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_hud_real_asset_ready == 1 &&
               render_receipt.runtime_hud_asset_portrait_count >= 4 &&
               render_receipt.runtime_hud_fallback_portrait_count == 0 &&
+              render_receipt.runtime_hud_raw_gdat_capture_ready == 1 &&
+              render_receipt.runtime_hud_raw_portrait_count >= 4 &&
+              render_receipt.runtime_hud_raw_portrait_hash != 0u &&
+              render_receipt.runtime_hud_raw_portrait_byte_count > 0u &&
+              render_receipt.runtime_hud_raw_core_hash != 0u &&
+              render_receipt.runtime_hud_raw_core_byte_count > 0u &&
+              render_receipt.runtime_hud_decoded_gdat_capture_ready == 1 &&
+              render_receipt.runtime_hud_decoded_portrait_count >= 4 &&
+              render_receipt.runtime_hud_decoded_portrait_hash != 0u &&
+              render_receipt.runtime_hud_decoded_portrait_pixel_count > 0u &&
+              render_receipt.runtime_hud_decoded_core_hash != 0u &&
+              render_receipt.runtime_hud_decoded_core_pixel_count > 0u &&
               render_receipt.runtime_hud_frame_hash != 0u &&
               render_receipt.runtime_hud_frame_pixel_count == 320u * 200u &&
               render_receipt.runtime_render_real_asset_ready == 1 &&
