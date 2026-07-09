@@ -595,6 +595,13 @@ int theron_v1_boot_startup_render_rows_from_view_model(
 int theron_v1_boot_startup_render_plan_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_StartupRenderPlan *out_plan);
+int theron_v1_boot_startup_state_receipt_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupStateReceipt *out_receipt);
+int theron_v1_boot_startup_state_receipt_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_StartupStateReceipt *out_receipt);
 int theron_v1_boot_startup_execute_pointer_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     int x,

@@ -1687,6 +1687,97 @@ int theron_v1_boot_startup_render_plan_from_view_model(
     return 1;
 }
 
+int theron_v1_boot_startup_state_receipt_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupStateReceipt *out_receipt)
+{
+    int i;
+
+    if (out_receipt) {
+        theron_v1_startup_state_receipt_init(out_receipt);
+    }
+    if (!view_model || !out_receipt) {
+        return 0;
+    }
+
+    out_receipt->flow_changed = 1;
+    out_receipt->flow.phase = (Theron_StartupPhase)view_model->startup_phase;
+    out_receipt->flow.selected_dungeon =
+        (Theron_DungeonID)view_model->selected_dungeon;
+    out_receipt->flow.selected_mirrors_mask =
+        (uint8_t)view_model->selected_mirrors_mask;
+    out_receipt->flow.companion_count =
+        (uint8_t)view_model->companion_count;
+    for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
+        out_receipt->flow.selected_mirror_order[i] =
+            view_model->selected_mirror_order[i];
+    }
+
+    out_receipt->set_startup_cursor = 1;
+    out_receipt->startup_cursor = view_model->startup_cursor;
+    out_receipt->set_continue_focus = 1;
+    out_receipt->continue_focus = view_model->continue_focus;
+
+    if (view_model->runtime_level_source !=
+        THERON_V1_STARTUP_RUNTIME_LEVEL_NONE) {
+        out_receipt->set_level_loaded = 1;
+        out_receipt->level_loaded =
+            view_model->runtime_level >= 0 ? view_model->runtime_level : 0;
+        out_receipt->set_runtime_level_route = 1;
+        out_receipt->runtime_level_source =
+            view_model->runtime_level_source;
+        out_receipt->runtime_track02_semantic_handoff =
+            view_model->runtime_track02_semantic_handoff;
+        out_receipt->runtime_fallback_visuals_blocked =
+            view_model->runtime_fallback_visuals_blocked;
+    }
+
+    if (view_model->resume_claim != THERON_V1_STARTUP_RESUME_NONE) {
+        out_receipt->set_save_resume = 1;
+        out_receipt->save_resume_claim = view_model->resume_claim;
+        out_receipt->save_resume_active_slot = view_model->tqsv_slot;
+        out_receipt->save_resume_srm_active_slot = view_model->srm_slot;
+        out_receipt->save_resume_srm_import_status =
+            view_model->srm_import_status;
+        out_receipt->save_resume_srm_current_dungeon =
+            view_model->selected_dungeon;
+        out_receipt->save_resume_srm_current_level =
+            view_model->runtime_level;
+        out_receipt->save_resume_srm_party_restored =
+            view_model->runtime_champion_count > 0 ? 1 : 0;
+        out_receipt->save_resume_srm_party_champion_count =
+            view_model->runtime_champion_count;
+        if (view_model->srm_root) {
+            snprintf(out_receipt->save_resume_srm_root,
+                     sizeof(out_receipt->save_resume_srm_root),
+                     "%s",
+                     view_model->srm_root);
+        }
+    }
+    return 1;
+}
+
+int theron_v1_boot_startup_state_receipt_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_StartupStateReceipt *out_receipt)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        if (out_receipt) {
+            theron_v1_startup_state_receipt_init(out_receipt);
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_state_receipt_from_view_model(
+        &view_model,
+        out_receipt);
+}
+
 static void tqr_boot_startup_input_receipt_clear(
     Theron_StartupInputReceipt *receipt)
 {

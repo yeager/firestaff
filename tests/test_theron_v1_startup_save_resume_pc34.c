@@ -1687,6 +1687,42 @@ static void test_startup_session_facts_wrappers(void) {
                     media_plan.text_count ==
                         media_view_model.render_plan.text_count,
                 "boot startup render-plan consumer uses view model receipt");
+    memset(&state_receipt, 0, sizeof(state_receipt));
+    expect_true(theron_v1_boot_startup_state_receipt_from_view_model(
+                    &media_view_model,
+                    &state_receipt) &&
+                    state_receipt.flow_changed &&
+                    state_receipt.flow.phase ==
+                        THERON_STARTUP_PHASE_READY &&
+                    state_receipt.flow.selected_dungeon ==
+                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                    state_receipt.set_level_loaded &&
+                    state_receipt.level_loaded == 0 &&
+                    state_receipt.set_runtime_level_route &&
+                    state_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM &&
+                    state_receipt.set_save_resume &&
+                    state_receipt.save_resume_claim ==
+                        THERON_V1_STARTUP_RESUME_DUAL &&
+                    state_receipt.save_resume_active_slot == 2 &&
+                    state_receipt.save_resume_srm_active_slot == 3 &&
+                    state_receipt.save_resume_srm_current_dungeon ==
+                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                    strcmp(state_receipt.save_resume_srm_root,
+                           "/tmp/firestaff-theron-srm") == 0,
+                "boot startup view model emits unified startup route/save state receipt");
+    memset(&state_receipt, 0, sizeof(state_receipt));
+    expect_true(theron_v1_boot_startup_state_receipt_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    &state_receipt) &&
+                    state_receipt.flow_changed &&
+                    state_receipt.flow.phase ==
+                        THERON_STARTUP_PHASE_READY &&
+                    state_receipt.set_save_resume &&
+                    state_receipt.save_resume_srm_active_slot == 3 &&
+                    state_receipt.set_runtime_level_route,
+                "boot startup snapshot media route emits same startup state receipt");
     media_layout_roster_found = 0;
     expect_true(theron_v1_boot_startup_layout_build_from_view_model(
                     &media_view_model,
