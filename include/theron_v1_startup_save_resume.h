@@ -155,6 +155,8 @@ typedef struct {
 
 typedef struct {
     Theron_V1StartupContinueSource source;
+    int source_slot_index;
+    Theron_V1SrmProgressImportStatus srm_import_status;
     Theron_DungeonID selected_dungeon;
     int level_loaded;
     int startup_cursor;
@@ -162,6 +164,12 @@ typedef struct {
     int party_x;
     int party_y;
     int party_dir;
+    int srm_current_dungeon;
+    int srm_current_level;
+    int srm_quest_mask;
+    int srm_party_restored;
+    int srm_party_champion_count;
+    uint32_t srm_party_gold;
     int tick_count;
 } Theron_V1StartupContinueResult;
 

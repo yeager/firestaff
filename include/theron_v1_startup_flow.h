@@ -103,6 +103,9 @@ typedef struct {
     int save_resume_srm_current_dungeon;
     int save_resume_srm_current_level;
     int save_resume_srm_quest_mask;
+    int save_resume_srm_party_restored;
+    int save_resume_srm_party_champion_count;
+    uint32_t save_resume_srm_party_gold;
     int save_resume_tqsv_slots;
     int save_resume_srm_slots;
     char save_resume_srm_root[512];

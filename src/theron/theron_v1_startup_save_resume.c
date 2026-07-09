@@ -518,6 +518,12 @@ int theron_v1_startup_save_resume_state_receipt(
         (snapshot_ready && snapshot) ? snapshot->srm_progress_current_level : -1;
     out_receipt->save_resume_srm_quest_mask =
         (snapshot_ready && snapshot) ? snapshot->srm_progress_quest_mask : -1;
+    out_receipt->save_resume_srm_party_restored =
+        (snapshot_ready && snapshot) ? snapshot->srm_party_restored : 0;
+    out_receipt->save_resume_srm_party_champion_count =
+        (snapshot_ready && snapshot) ? snapshot->srm_party_champion_count : 0;
+    out_receipt->save_resume_srm_party_gold =
+        (snapshot_ready && snapshot) ? snapshot->srm_party_gold : 0u;
     out_receipt->set_continue_focus = 1;
     out_receipt->continue_focus = 0;
     out_receipt->save_resume_tqsv_slots =
@@ -881,9 +887,14 @@ void theron_v1_startup_continue_result_init(
     }
     memset(result, 0, sizeof(*result));
     result->source = THERON_V1_STARTUP_CONTINUE_SOURCE_NONE;
+    result->source_slot_index = -1;
+    result->srm_import_status = THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
     result->selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
     result->startup_cursor = 0;
     result->continue_focus = 0;
+    result->srm_current_dungeon = -1;
+    result->srm_current_level = -1;
+    result->srm_quest_mask = -1;
 }
 
 void theron_v1_startup_continue_apply_receipt_init(
@@ -969,6 +980,8 @@ int theron_v1_startup_continue_availability_from_state(
 static void theron_v1_startup_continue_capture_result(
     const Theron_V1_World *world,
     Theron_V1StartupContinueSource source,
+    int source_slot_index,
+    Theron_V1SrmProgressImportStatus srm_import_status,
     Theron_V1StartupContinueResult *out_result) {
 
     if (!world || !out_result) {
@@ -976,6 +989,8 @@ static void theron_v1_startup_continue_capture_result(
     }
     theron_v1_startup_continue_result_init(out_result);
     out_result->source = source;
+    out_result->source_slot_index = source_slot_index;
+    out_result->srm_import_status = srm_import_status;
     out_result->selected_dungeon = world->progression.current_dungeon;
     out_result->level_loaded = 0;
     out_result->startup_cursor = 0;
@@ -983,6 +998,18 @@ static void theron_v1_startup_continue_capture_result(
     out_result->party_x = world->party.leader_x;
     out_result->party_y = world->party.leader_y;
     out_result->party_dir = world->party.leader_dir;
+    if (source == THERON_V1_STARTUP_CONTINUE_SOURCE_SRM) {
+        out_result->srm_current_dungeon =
+            (int)world->progression.current_dungeon;
+        out_result->srm_current_level =
+            (int)world->progression.current_level;
+        out_result->srm_quest_mask =
+            (int)world->progression.quest_items_collected;
+        out_result->srm_party_restored = world->party.champion_count > 0;
+        out_result->srm_party_champion_count =
+            (int)world->party.champion_count;
+        out_result->srm_party_gold = world->party.gold;
+    }
     out_result->tick_count = (int)world->world_tick;
 }
 
@@ -1028,6 +1055,8 @@ int theron_v1_startup_continue_apply_request(
         theron_v1_startup_continue_capture_result(
             world,
             THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV,
+            request->tqsv_slot_index,
+            THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT,
             out_result);
         return 1;
     }
@@ -1043,6 +1072,8 @@ int theron_v1_startup_continue_apply_request(
         theron_v1_startup_continue_capture_result(
             world,
             THERON_V1_STARTUP_CONTINUE_SOURCE_SRM,
+            request->srm_slot_index,
+            request->srm_import_status,
             out_result);
         return 1;
     }
@@ -1163,6 +1194,26 @@ int theron_v1_startup_continue_state_receipt_from_result(
     out_receipt->party_dir = result->party_dir;
     out_receipt->set_tick_count = 1;
     out_receipt->tick_count = result->tick_count;
+    if (result->source == THERON_V1_STARTUP_CONTINUE_SOURCE_SRM) {
+        out_receipt->set_save_resume = 1;
+        out_receipt->save_resume_claim = THERON_V1_STARTUP_RESUME_SRM;
+        out_receipt->save_resume_srm_active_slot =
+            result->source_slot_index;
+        out_receipt->save_resume_srm_import_status =
+            (int)result->srm_import_status;
+        out_receipt->save_resume_srm_current_dungeon =
+            result->srm_current_dungeon;
+        out_receipt->save_resume_srm_current_level =
+            result->srm_current_level;
+        out_receipt->save_resume_srm_quest_mask =
+            result->srm_quest_mask;
+        out_receipt->save_resume_srm_party_restored =
+            result->srm_party_restored;
+        out_receipt->save_resume_srm_party_champion_count =
+            result->srm_party_champion_count;
+        out_receipt->save_resume_srm_party_gold =
+            result->srm_party_gold;
+    }
     return 1;
 }
 
@@ -1498,6 +1549,8 @@ int theron_v1_startup_continue_tqsv_apply_with_host_receipts(
     theron_v1_startup_continue_capture_result(
         world,
         THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV,
+        slot_index,
+        THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT,
         result);
     if (out_state_receipt &&
         !theron_v1_startup_continue_state_receipt_from_result(
@@ -1592,6 +1645,8 @@ int theron_v1_startup_continue_tqsv_path_apply_with_host_receipts(
     theron_v1_startup_continue_capture_result(
         world,
         THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV,
+        -1,
+        THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT,
         result);
     if (out_state_receipt &&
         !theron_v1_startup_continue_state_receipt_from_result(
@@ -1688,6 +1743,8 @@ int theron_v1_startup_continue_srm_apply_with_host_receipts(
     theron_v1_startup_continue_capture_result(
         world,
         THERON_V1_STARTUP_CONTINUE_SOURCE_SRM,
+        slot_index,
+        THERON_V1_SRM_PROGRESS_IMPORT_OK,
         result);
     if (out_state_receipt &&
         !theron_v1_startup_continue_state_receipt_from_result(
@@ -1782,6 +1839,8 @@ int theron_v1_startup_continue_srm_path_apply_with_host_receipts(
     theron_v1_startup_continue_capture_result(
         world,
         THERON_V1_STARTUP_CONTINUE_SOURCE_SRM,
+        -1,
+        THERON_V1_SRM_PROGRESS_IMPORT_OK,
         result);
     if (out_state_receipt &&
         !theron_v1_startup_continue_state_receipt_from_result(
