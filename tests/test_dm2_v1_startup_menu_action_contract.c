@@ -61,6 +61,7 @@ int main(void)
     DM2_V1_StartupRuntimeHandoffReceipt runtime_handoff;
     DM2_V1_BootRuntimeStartupSnapshot boot_snapshot;
     DM2_V1_BootStartupHostViewReceipt boot_host_view_receipt;
+    DM2_V1_BootStartupFullStartReceipt boot_full_start_receipt;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
@@ -482,8 +483,11 @@ int main(void)
               boot_host_view_receipt.title_frame_max == 7 &&
               boot_host_view_receipt.title_frame_duration_ticks == 6 &&
               boot_host_view_receipt.title_cycle_ticks == 48 &&
+              boot_host_view_receipt.title_cycle_position_tick == 0 &&
               boot_host_view_receipt.title_frame_start_tick == 0 &&
               boot_host_view_receipt.title_next_frame_tick == 6 &&
+              boot_host_view_receipt.title_frame_elapsed_ticks == 0 &&
+              boot_host_view_receipt.title_frame_remaining_ticks == 6 &&
               boot_host_view_receipt.title_cycle_remaining_ticks == 48 &&
               boot_host_view_receipt.exact_title_timing_ready == 1 &&
               boot_host_view_receipt.menu_row_count == 3 &&
@@ -495,6 +499,42 @@ int main(void)
               boot_host_view_receipt.startup_hud_handoff_ready == 1 &&
               boot_host_view_receipt.m11_host_view_ready == 1,
           "boot host-view receipt owns exact title timing and menu asset proof");
+    check(dm2_v1_boot_startup_full_start_receipt_from_runtime_state(
+              NULL,
+              1,
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              13,
+              &boot_full_start_receipt) &&
+              boot_full_start_receipt.valid &&
+              boot_full_start_receipt.title_animation_tick == 13 &&
+              boot_full_start_receipt.title_frame == 2 &&
+              boot_full_start_receipt.title_cycle_position_tick == 13 &&
+              boot_full_start_receipt.title_frame_start_tick == 12 &&
+              boot_full_start_receipt.title_next_frame_tick == 18 &&
+              boot_full_start_receipt.title_frame_elapsed_ticks == 1 &&
+              boot_full_start_receipt.title_frame_remaining_ticks == 5 &&
+              boot_full_start_receipt.title_cycle_remaining_ticks == 35 &&
+              boot_full_start_receipt.exact_title_timing_ready == 1,
+          "boot full-start receipt owns nonzero title tick timing");
+    check(dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
+              NULL,
+              1,
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              13,
+              &boot_host_view_receipt) &&
+              boot_host_view_receipt.valid &&
+              boot_host_view_receipt.title_animation_tick == 13 &&
+              boot_host_view_receipt.title_frame == 2 &&
+              boot_host_view_receipt.title_frame_elapsed_ticks == 1 &&
+              boot_host_view_receipt.title_frame_remaining_ticks == 5 &&
+              boot_host_view_receipt.m11_host_view_ready == 1,
+          "boot host-view receipt owns nonzero title tick timing for M11");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_CONTINUE &&

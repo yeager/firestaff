@@ -541,6 +541,12 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.full_start_receipt
                             .title_next_frame_tick == 6 &&
                     boot_view_model.full_start_receipt
+                            .title_cycle_position_tick == 0 &&
+                    boot_view_model.full_start_receipt
+                            .title_frame_elapsed_ticks == 0 &&
+                    boot_view_model.full_start_receipt
+                            .title_frame_remaining_ticks == 6 &&
+                    boot_view_model.full_start_receipt
                             .title_cycle_remaining_ticks == 48 &&
                     boot_view_model.full_start_receipt
                             .exact_title_timing_ready == 1 &&
@@ -576,6 +582,12 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.host_view_receipt.title_cycle_ticks == 48 &&
                     boot_view_model.host_view_receipt.title_frame_start_tick == 0 &&
                     boot_view_model.host_view_receipt.title_next_frame_tick == 6 &&
+                    boot_view_model.host_view_receipt
+                            .title_cycle_position_tick == 0 &&
+                    boot_view_model.host_view_receipt
+                            .title_frame_elapsed_ticks == 0 &&
+                    boot_view_model.host_view_receipt
+                            .title_frame_remaining_ticks == 6 &&
                     boot_view_model.host_view_receipt
                             .title_cycle_remaining_ticks == 48 &&
                     boot_view_model.host_view_receipt
@@ -666,6 +678,9 @@ static void expect_dm2_startup_layout_contract(void) {
                     host_view_receipt.title_cycle_ticks == 48 &&
                     host_view_receipt.title_frame_start_tick == 0 &&
                     host_view_receipt.title_next_frame_tick == 6 &&
+                    host_view_receipt.title_cycle_position_tick == 0 &&
+                    host_view_receipt.title_frame_elapsed_ticks == 0 &&
+                    host_view_receipt.title_frame_remaining_ticks == 6 &&
                     host_view_receipt.title_cycle_remaining_ticks == 48 &&
                     host_view_receipt.exact_title_timing_ready == 1 &&
                     host_view_receipt.title_frame == 0 &&
@@ -1192,6 +1207,9 @@ int main(void) {
                         full_start_receipt.title_cycle_ticks == 48 &&
                         full_start_receipt.title_frame_start_tick == 0 &&
                         full_start_receipt.title_next_frame_tick == 6 &&
+                        full_start_receipt.title_cycle_position_tick == 0 &&
+                        full_start_receipt.title_frame_elapsed_ticks == 0 &&
+                        full_start_receipt.title_frame_remaining_ticks == 6 &&
                         full_start_receipt.title_cycle_remaining_ticks == 48 &&
                         full_start_receipt.exact_title_timing_ready == 1 &&
                         full_start_receipt.menu_panel_ready == 1 &&
@@ -1210,6 +1228,9 @@ int main(void) {
                         host_view_receipt.title_cycle_ticks == 48 &&
                         host_view_receipt.title_frame_start_tick == 0 &&
                         host_view_receipt.title_next_frame_tick == 6 &&
+                        host_view_receipt.title_cycle_position_tick == 0 &&
+                        host_view_receipt.title_frame_elapsed_ticks == 0 &&
+                        host_view_receipt.title_frame_remaining_ticks == 6 &&
                         host_view_receipt.title_cycle_remaining_ticks == 48 &&
                         host_view_receipt.exact_title_timing_ready == 1 &&
                         host_view_receipt.title_gdat_asset_ready == 1 &&
@@ -1231,6 +1252,27 @@ int main(void) {
                         host_view_receipt.full_start
                                 .full_start_real_asset_ready == 1,
                     "DM2 boot host-view receipt carries real title asset proof for M11");
+        expect_true(dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
+                        profile,
+                        startup_snapshot.startup_menu_active,
+                        startup_snapshot.startup_save_root,
+                        startup_snapshot.resume_available,
+                        startup_snapshot.slot_mask,
+                        startup_snapshot.selected_row,
+                        13,
+                        &host_view_receipt) &&
+                        host_view_receipt.title_animation_tick == 13 &&
+                        host_view_receipt.title_frame == 2 &&
+                        host_view_receipt.title_cycle_position_tick == 13 &&
+                        host_view_receipt.title_frame_start_tick == 12 &&
+                        host_view_receipt.title_next_frame_tick == 18 &&
+                        host_view_receipt.title_frame_elapsed_ticks == 1 &&
+                        host_view_receipt.title_frame_remaining_ticks == 5 &&
+                        host_view_receipt.title_cycle_remaining_ticks == 35 &&
+                        host_view_receipt.exact_title_timing_ready == 1 &&
+                        host_view_receipt.title_gdat_asset_ready == 1 &&
+                        host_view_receipt.m11_host_view_ready == 1,
+                    "DM2 boot host-view receipt proves real GDAT title at nonzero frame tick");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,
