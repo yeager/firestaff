@@ -55,7 +55,7 @@ static const char s_source_evidence[] =
     "C10_COLOR_FLESH, 2200/2205 C040/C045, 2999-3008 M565/M568, "
     "3906-3914 C537..C545, 5694 G0299.";
 
-static const Dm1V1MirrorCandidateC545AcceptDuringRotationEvidencePc34
+static const DM1_V1_MirrorCandidateC545AcceptDuringRotationEvidencePc34
     s_evidence = {
         "ReDMCSB REVIVE.C F0280:124-132 candidate publication gate",
         "ReDMCSB REVIVE.C F0282:744-806 accept clear and candidate-chain removal",
@@ -104,7 +104,7 @@ static int int_arrays_equal(const int a[], const int b[], int count)
 }
 
 static uint32_t hash_state(
-    const Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
+    const DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -161,8 +161,8 @@ static int source_anchors_present(void)
            strstr(s_source_evidence, "5694 G0299") != NULL;
 }
 
-void dm1_v1_mirror_candidate_c545_accept_during_rotation_init_pc34(
-    Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
+void DM1_V1_MirrorCandidateC545AcceptDuringRotation_InitPc34(
+    DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
 {
     int i;
 
@@ -221,7 +221,7 @@ void dm1_v1_mirror_candidate_c545_accept_during_rotation_init_pc34(
 }
 
 static int ready(
-    const Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
+    const DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
 {
     return state && state->contractOnly && state->noDosPixelParityClaim &&
            state->partyChampionCount == 3 &&
@@ -241,7 +241,7 @@ static int ready(
 }
 
 static int attempt_c545_accept(
-    Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
+    DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
 {
     if (!state || state->g0299CandidateOrdinal != kCandidateOrdinal ||
         !state->c045CandidateOpen ||
@@ -283,7 +283,7 @@ static int attempt_c545_accept(
 }
 
 static int close_c040(
-    Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
+    DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
 {
     if (!state || !state->c040PanelOpen || !state->c040CloseQueued) {
         return 0;
@@ -298,7 +298,7 @@ static int close_c040(
 }
 
 static int drain_rotation(
-    Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
+    DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 *state)
 {
     int oldLeader;
 
@@ -319,11 +319,11 @@ static int drain_rotation(
 }
 
 static int guard_rejects(
-    const Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 *base,
+    const DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 *base,
     int kind)
 {
-    Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 probe = *base;
-    Dm1V1MirrorCandidateC545AcceptDuringRotationResultPc34 result;
+    DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 probe = *base;
+    DM1_V1_MirrorCandidateC545AcceptDuringRotationResultPc34 result;
 
     if (kind == 0) {
         probe.contractOnly = 0;
@@ -337,15 +337,15 @@ static int guard_rejects(
     } else {
         probe.c040CloseQueued = 0;
     }
-    return dm1_v1_mirror_candidate_c545_accept_during_rotation_run_pc34(
+    return DM1_V1_MirrorCandidateC545AcceptDuringRotation_RunPc34(
                &probe, &result) == 0;
 }
 
-int dm1_v1_mirror_candidate_c545_accept_during_rotation_run_pc34(
-    Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 *state,
-    Dm1V1MirrorCandidateC545AcceptDuringRotationResultPc34 *result)
+int DM1_V1_MirrorCandidateC545AcceptDuringRotation_RunPc34(
+    DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 *state,
+    DM1_V1_MirrorCandidateC545AcceptDuringRotationResultPc34 *result)
 {
-    Dm1V1MirrorCandidateC545AcceptDuringRotationStatePc34 base;
+    DM1_V1_MirrorCandidateC545AcceptDuringRotationStatePc34 base;
     int rejectedC040;
     int closed;
     int rejectedRotation;
@@ -476,10 +476,10 @@ int dm1_v1_mirror_candidate_c545_accept_during_rotation_run_pc34(
         state->champions[state->leaderIndex].handThing == 0x7002u;
     result->sourceAnchorsPresent = source_anchors_present();
     result->guardRejectsNullState =
-        dm1_v1_mirror_candidate_c545_accept_during_rotation_run_pc34(
+        DM1_V1_MirrorCandidateC545AcceptDuringRotation_RunPc34(
             NULL, result) == 0;
     result->guardRejectsNullResult =
-        dm1_v1_mirror_candidate_c545_accept_during_rotation_run_pc34(
+        DM1_V1_MirrorCandidateC545AcceptDuringRotation_RunPc34(
             &base, NULL) == 0;
     result->guardRejectsNonContract = guard_rejects(&base, 0);
     result->guardRejectsNoCandidate = guard_rejects(&base, 1);
@@ -510,14 +510,14 @@ int dm1_v1_mirror_candidate_c545_accept_during_rotation_run_pc34(
     return result->accepted;
 }
 
-const Dm1V1MirrorCandidateC545AcceptDuringRotationEvidencePc34 *
-dm1_v1_mirror_candidate_c545_accept_during_rotation_evidence_pc34(void)
+const DM1_V1_MirrorCandidateC545AcceptDuringRotationEvidencePc34 *
+DM1_V1_MirrorCandidateC545AcceptDuringRotation_EvidencePc34(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_c545_accept_during_rotation_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateC545AcceptDuringRotation_SourceEvidencePc34(void)
 {
     return s_source_evidence;
 }

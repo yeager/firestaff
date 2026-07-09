@@ -25,7 +25,7 @@ typedef struct {
     const char *mouseWheelAnchor;
     const char *defsAnchor;
     const char *nonOverlap;
-} Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34;
+} DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34;
 
 typedef struct {
     int championOrdinal;
@@ -33,7 +33,7 @@ typedef struct {
     int leader;
     int c040ChainLinked;
     int load;
-} Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceChampionPc34;
+} DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceChampionPc34;
 
 typedef struct {
     int partyChampionCount;
@@ -76,9 +76,9 @@ typedef struct {
     uint32_t chainHash;
     uint32_t chestHash;
     uint32_t stateHash;
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceChampionPc34
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceChampionPc34
         champions[DM1_V1_MC_C040_PICKUP_ROTATE_PARTY_COUNT_PC34];
-} Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34;
+} DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34;
 
 typedef struct {
     int accepted;
@@ -141,22 +141,40 @@ typedef struct {
     uint32_t afterRotationHash;
     uint32_t afterClickHash;
     uint32_t deterministicHash;
-} Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34;
+} DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34;
 
-void dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_init_pc34(
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state);
+typedef DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34
+    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34;
+typedef DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceChampionPc34
+    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceChampionPc34;
+typedef DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34
+    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34;
+typedef DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34
+    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34;
 
-int dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_run_pc34(
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state,
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result);
+void DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_InitPc34(
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state);
 
-const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34 *
-dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_evidence_pc34(
+int DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_RunPc34(
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state,
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result);
+
+const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34 *
+DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_EvidencePc34(
     void);
 
 const char *
-dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_source_evidence_pc34(
+DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_SourceEvidencePc34(
     void);
+
+#define dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_init_pc34 \
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_InitPc34
+#define dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_run_pc34 \
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_RunPc34
+#define dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_evidence_pc34 \
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_EvidencePc34
+#define dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

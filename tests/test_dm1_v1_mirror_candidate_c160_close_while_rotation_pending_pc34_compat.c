@@ -61,10 +61,10 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_source_evidence(void)
 {
-    const Dm1V1MirrorCandidateC160CloseWhileRotationPendingEvidencePc34 *e =
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_evidence_pc34();
+    const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingEvidencePc34 *e =
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_EvidencePc34();
     const char *text =
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_source_evidence_pc34();
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_SourceEvidencePc34();
 
     check_true(e != NULL, "evidence accessor", "source-lock");
     check_contains(e->panelFoodWaterAnchor, "PANEL.C F0344:1493-1561",
@@ -144,8 +144,8 @@ static void test_source_evidence(void)
 
 static void test_non_overlap(void)
 {
-    const Dm1V1MirrorCandidateC160CloseWhileRotationPendingEvidencePc34 *e =
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_evidence_pc34();
+    const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingEvidencePc34 *e =
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_EvidencePc34();
     const char *siblings[] = {
         "live C040 mirror-candidate",
         "fresh C160 close click",
@@ -174,10 +174,10 @@ static void test_non_overlap(void)
 
 static void test_initial_state(void)
 {
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 state;
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 state;
     int i;
 
-    dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_InitPc34(
         &state, UINT32_C(0x786c160));
     check_int_eq(state.contractOnly, 1, "contract-only flag",
                  "contract-only source-lock");
@@ -264,17 +264,17 @@ static void test_initial_state(void)
 }
 
 static uint32_t run_one(
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result,
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result,
     uint32_t seed)
 {
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 state;
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 state;
     int accepted;
     int i;
 
-    dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_InitPc34(
         &state, seed);
     accepted =
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
             &state, result);
     check_int_eq(accepted, 1, "runtime accepted",
                  "C160 rotation-pending runtime regression");
@@ -465,49 +465,49 @@ static uint32_t run_one(
 
 static void test_guards(void)
 {
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 state;
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34 result;
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 state;
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34 result;
 
-    dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_InitPc34(
         &state, UINT32_C(0x160));
     check_int_eq(
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
             NULL, &result),
         0, "null state rejected", "guard");
     check_int_eq(
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
             &state, NULL),
         0, "null result rejected", "guard");
 
-    dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_InitPc34(
         &state, UINT32_C(0x160));
     state.g0299CandidateOrdinal = 0;
     check_int_eq(
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
             &state, &result),
         0, "no candidate rejected", "DEFS.H G0299");
 
-    dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_InitPc34(
         &state, UINT32_C(0x160));
     state.pendingLeaderIndex = -1;
     check_int_eq(
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
             &state, &result),
         0, "no pending rotation rejected", "CHAMPION.C F0302");
 
-    dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_InitPc34(
         &state, UINT32_C(0x160));
     state.panelContent = 565;
     check_int_eq(
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
             &state, &result),
         0, "wrong panel rejected", "PANEL.C F0345/F0346");
 }
 
 int main(void)
 {
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34 first;
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34 second;
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34 first;
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34 second;
     uint32_t firstHash;
     uint32_t secondHash;
 

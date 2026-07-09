@@ -24,7 +24,7 @@ typedef struct {
     const char *defsAnchor;
     const char *closeLandingAnchor;
     const char *nonOverlap;
-} Dm1V1MirrorCandidateC160CloseWhileRotationPendingEvidencePc34;
+} DM1_V1_MirrorCandidateC160CloseWhileRotationPendingEvidencePc34;
 
 typedef struct {
     int championOrdinal;
@@ -32,7 +32,7 @@ typedef struct {
     int leader;
     int rotationPending;
     int c040CandidateOwner;
-} Dm1V1MirrorCandidateC160CloseWhileRotationPendingChampionPc34;
+} DM1_V1_MirrorCandidateC160CloseWhileRotationPendingChampionPc34;
 
 typedef struct {
     int contractOnly;
@@ -87,9 +87,9 @@ typedef struct {
     uint32_t afterF0302PendingHash;
     uint32_t afterCloseHash;
     uint32_t afterRotationCommitHash;
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingChampionPc34
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingChampionPc34
         champions[DM1_V1_MC_C160_ROTATION_PARTY_COUNT_PC34];
-} Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34;
+} DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34;
 
 typedef struct {
     int accepted;
@@ -167,22 +167,40 @@ typedef struct {
     uint32_t afterCloseHash;
     uint32_t afterRotationCommitHash;
     uint32_t deterministicHash;
-} Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34;
+} DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34;
 
-void dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34(
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
+typedef DM1_V1_MirrorCandidateC160CloseWhileRotationPendingEvidencePc34
+    Dm1V1MirrorCandidateC160CloseWhileRotationPendingEvidencePc34;
+typedef DM1_V1_MirrorCandidateC160CloseWhileRotationPendingChampionPc34
+    Dm1V1MirrorCandidateC160CloseWhileRotationPendingChampionPc34;
+typedef DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34
+    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34;
+typedef DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34
+    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34;
+
+void DM1_V1_MirrorCandidateC160CloseWhileRotationPending_InitPc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
     uint32_t seed);
 
-int dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result);
+int DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result);
 
-const Dm1V1MirrorCandidateC160CloseWhileRotationPendingEvidencePc34 *
-dm1_v1_mirror_candidate_c160_close_while_rotation_pending_evidence_pc34(void);
+const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingEvidencePc34 *
+DM1_V1_MirrorCandidateC160CloseWhileRotationPending_EvidencePc34(void);
 
 const char *
-dm1_v1_mirror_candidate_c160_close_while_rotation_pending_source_evidence_pc34(
+DM1_V1_MirrorCandidateC160CloseWhileRotationPending_SourceEvidencePc34(
     void);
+
+#define dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34 \
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_InitPc34
+#define dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34 \
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34
+#define dm1_v1_mirror_candidate_c160_close_while_rotation_pending_evidence_pc34 \
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_EvidencePc34
+#define dm1_v1_mirror_candidate_c160_close_while_rotation_pending_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPending_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

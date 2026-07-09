@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 mirror-candidate rotation/resurrect ownership names: C160 close-while-rotation, C545 accept-during-rotation, and C040 panel browse pickup/rotate race APIs now expose DM1-owned type and function names; old names remain aliases. Verification: C160 close-while-rotation 333/333, C545 accept-during-rotation 155/155, C040 panel browse pickup/rotate race 324/324, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 mirror-candidate resurrect switch ownership names: cross-candidate-clear and champion-switch-reopen APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: cross-candidate-clear, champion-switch-reopen, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 mirror-candidate click/rotation ownership names: click-cancel, C159 click rotation combo, keyboard rotation combo, keyrot inventory-click combo, and inventory-click-during-rotation APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Verification: click-cancel, C159 combo, keyboard rotation combo, keyrot inventory-click combo, inventory-click-during-rotation, double-open-close, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
