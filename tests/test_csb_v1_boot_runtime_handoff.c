@@ -1811,6 +1811,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupActionReceipt_PC34 boot_action_receipt;
+    CSB_V1_UtilRenderPlan receipt_utility_plan;
     CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
     CSB_V1_BootStartupRenderViewReceipt_PC34 view_receipt;
@@ -2124,6 +2125,35 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                      "CHAOS STRIKES BACK READY") != NULL &&
               route_receipt.accepts_input,
           "boot startup route receipt owns closed entrance utility HUD/menu plan route");
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &snapshot,
+              &view_receipt) == 1 &&
+              view_receipt.utility_menu_route &&
+              view_receipt.utility_menu_row_count ==
+                  CSB_V1_UTIL_MENU_ROW_COUNT &&
+              view_receipt.utility_selected_action_index == 0 &&
+              strstr(view_receipt.utility_prompt,
+                     "CHAOS STRIKES BACK READY") != NULL,
+          "boot startup render-view receipt owns utility HUD/menu route");
+    poisoned_view_receipt = view_receipt;
+    poisoned_view_receipt.route_receipt.utility_plan.menu_row_count = 1;
+    poisoned_view_receipt.route_receipt.utility_plan.menu_rows[0].selected = 0;
+    poisoned_view_receipt.route_receipt.utility_plan.menu_rows[1].selected = 1;
+    poisoned_view_receipt.route_receipt.utility_plan.has_prompt_row = 0;
+    poisoned_view_receipt.route_receipt.utility_plan.prompt_row.text[0] = '\0';
+    poisoned_view_receipt.route_receipt.utility_plan.preview_active = 1;
+    CHECK(csb_v1_boot_startup_utility_render_plan_from_view_receipt_pc34(
+              &poisoned_view_receipt,
+              &receipt_utility_plan) == 1 &&
+              receipt_utility_plan.menu_row_count ==
+                  CSB_V1_UTIL_MENU_ROW_COUNT &&
+              receipt_utility_plan.menu_rows[0].selected &&
+              !receipt_utility_plan.menu_rows[1].selected &&
+              receipt_utility_plan.has_prompt_row &&
+              strstr(receipt_utility_plan.prompt_row.text,
+                     "CHAOS STRIKES BACK READY") != NULL &&
+              !receipt_utility_plan.preview_active,
+          "boot startup utility HUD/menu plan consumes render-view receipt fields");
     snapshot.utility_overlay_active = 0;
     CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
               &snapshot,

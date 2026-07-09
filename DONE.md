@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB utility HUD/menu receipt plan: CSB render-view receipts now carry utility-menu route facts, selected row, preview state, and prompt, with a receipt-built utility render plan that ignores stale host plan fields. Verification: `test_csb_v1_boot_runtime_handoff` 346/346 and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 full-graphics startup media receipt: DM1 startup now exposes one source-locked receipt for SWSH logo/palette waits, TITLE PRESENTS/zoom/guard timing, palette phases, menu boundary, and entrance handoff. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 startup view receipt: startup presentation now emits one DM2-owned view receipt joining GDAT title commands, normalized menu state, render proof, and HUD/runtime handoff for host startup consumers. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
