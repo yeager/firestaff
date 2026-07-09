@@ -1912,6 +1912,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !route_receipt.hud_menu_visible &&
               strcmp(route_receipt.presentation.animation, "csb-title") == 0,
           "boot startup route receipt owns title animation route");
+    snapshot.utility_overlay_active = 0;
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
+              &snapshot,
+              9,
+              &boot_action_receipt) == 0 &&
+              boot_action_receipt.pre_input_route.valid &&
+              boot_action_receipt.pre_input_route.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
+              boot_action_receipt.pre_input_route.draw_title &&
+              !boot_action_receipt.pre_input_route.hud_menu_state.valid,
+          "boot startup action receipt captures title route before blocked input");
+    snapshot.utility_overlay_active = 1;
     snapshot.title_active = 0;
     snapshot.title_frame = 0;
     snapshot.title_source_step = 0;
@@ -2024,8 +2036,24 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CHECK(boot_action_receipt.kind ==
                   CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34 &&
               boot_action_receipt.utility_receipt.util_receipt.result ==
-                  CSB_V1_UTIL_APPLY_REDRAW,
-          "boot startup action facade keeps utility priority");
+                  CSB_V1_UTIL_APPLY_REDRAW &&
+              boot_action_receipt.pre_input_route.valid &&
+              boot_action_receipt.pre_input_route.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+              boot_action_receipt.pre_input_route.hud_menu_state.valid &&
+              boot_action_receipt.pre_input_route.hud_menu_state.kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34,
+          "boot startup action facade keeps utility priority with route proof");
+    (void)csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
+        &snapshot,
+        72,
+        126,
+        1U,
+        &boot_action_receipt);
+    CHECK(boot_action_receipt.pre_input_route.valid &&
+              boot_action_receipt.pre_input_route.hud_menu_state.kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34,
+          "boot startup pointer action carries utility route proof");
 
     snapshot.utility_overlay_active = 0;
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
@@ -2035,8 +2063,14 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "boot startup action facade falls back to entrance input");
     CHECK(boot_action_receipt.kind ==
                   CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34 &&
-              boot_action_receipt.entrance_receipt.handled,
-          "boot startup action facade returns entrance receipt");
+              boot_action_receipt.entrance_receipt.handled &&
+              boot_action_receipt.pre_input_route.valid &&
+              boot_action_receipt.pre_input_route.route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+              boot_action_receipt.pre_input_route.hud_menu_state.valid &&
+              boot_action_receipt.pre_input_route.hud_menu_state.kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34,
+          "boot startup action facade returns entrance receipt with route proof");
 
     csb_v1_boot_cleanup(&boot);
 }

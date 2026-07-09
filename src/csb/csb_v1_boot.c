@@ -2098,6 +2098,8 @@ void csb_v1_boot_startup_action_receipt_init_pc34(
         return;
     }
     memset(receipt, 0, sizeof(*receipt));
+    csb_v1_boot_startup_presentation_route_receipt_init_pc34(
+        &receipt->pre_input_route);
     csb_v1_runtime_util_startup_host_action_receipt_init_pc34(
         &receipt->utility_receipt);
     csb_v1_startup_entrance_host_action_receipt_init_pc34(
@@ -2256,6 +2258,23 @@ static int csb_v1_boot_startup_utility_receipt_handled_pc34(
            receipt->util_state_receipt.preview_active_changed;
 }
 
+static int csb_v1_boot_startup_action_capture_pre_input_route_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupActionReceipt_PC34 *receipt)
+{
+    if (!snapshot || !receipt) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 dispatches input from
+     * the same entrance wait loop that owns the visible screen. CSBWin keeps
+     * that HUD/menu routing in the viewport layer, so every boot action
+     * receipt captures the pre-input render route before utility/entrance
+     * dispatch mutates startup state. */
+    return csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+        snapshot,
+        &receipt->pre_input_route);
+}
+
 int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
@@ -2265,7 +2284,13 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
 
     csb_v1_boot_startup_action_receipt_init_pc34(out_receipt);
-    if (!snapshot || !out_receipt || !snapshot->entrance_active) {
+    if (!snapshot || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_boot_startup_action_capture_pre_input_route_pc34(
+            snapshot,
+            out_receipt) ||
+        !snapshot->entrance_active) {
         return 0;
     }
     if (csb_v1_boot_runtime_util_apply_firestaff_input_from_snapshot_pc34(
@@ -2309,7 +2334,13 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
 
     csb_v1_boot_startup_action_receipt_init_pc34(out_receipt);
-    if (!snapshot || !out_receipt || !snapshot->entrance_active) {
+    if (!snapshot || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_boot_startup_action_capture_pre_input_route_pc34(
+            snapshot,
+            out_receipt) ||
+        !snapshot->entrance_active) {
         return 0;
     }
     if ((button_mask & ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT) &&
