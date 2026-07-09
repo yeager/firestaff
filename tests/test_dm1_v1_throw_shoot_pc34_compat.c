@@ -908,6 +908,86 @@ static void test_projectile_materialization_plan(void) {
               "F0215 explosion square receipt is rejected");
 }
 
+static void test_projectile_flight_relink_receipt(void) {
+    struct ProjectileInstance_Compat before;
+    struct ProjectileInstance_Compat after;
+    struct ProjectileTickResult_Compat result;
+    DM1_ProjectileFlightRelinkReceiptPc34 receipt;
+
+    memset(&before, 0, sizeof(before));
+    memset(&after, 0, sizeof(after));
+    memset(&result, 0, sizeof(result));
+    before.slotIndex = 6;
+    before.mapIndex = 1;
+    before.mapX = 4;
+    before.mapY = 5;
+    before.cell = 1;
+    after = before;
+    after.mapX = 5;
+    after.cell = 2;
+    after.direction = 3;
+    after.kineticEnergy = 14;
+    after.attack = 9;
+    result.resultKind = PROJECTILE_RESULT_FLEW;
+    result.newMapIndex = after.mapIndex;
+    result.newMapX = after.mapX;
+    result.newMapY = after.mapY;
+    result.newCell = after.cell;
+    result.newDirection = after.direction;
+    result.newKineticEnergy = after.kineticEnergy;
+    result.newAttack = after.attack;
+    result.newFirstMoveGraceFlag = 0;
+
+    ASSERT_EQ(dm1_v1_projectile_flight_relink_receipt_f0219_pc34(
+                  &before, &after, &result, &receipt), 1,
+              "F0219 flight relink receipt builds");
+    ASSERT_EQ(receipt.valid, 1, "F0219 flight relink receipt valid");
+    ASSERT_EQ(receipt.shouldApply, 1, "F0219 flight relink applies");
+    ASSERT_EQ(receipt.shouldUnlinkSourceSquare, 1,
+              "F0219 relink unlinks source square");
+    ASSERT_EQ(receipt.shouldLinkDestinationSquare, 1,
+              "F0219 relink links destination square");
+    ASSERT_EQ(receipt.shouldWriteProjectileState, 1,
+              "F0219 relink writes projectile state");
+    ASSERT_EQ(receipt.shouldScheduleNextMove, 1,
+              "F0219 relink schedules next move");
+    ASSERT_EQ(receipt.sourceProjectileThing,
+              (unsigned short)((THING_TYPE_PROJECTILE << 10) |
+                               6u | (unsigned short)(1u << 14)),
+              "F0219 source projectile thing keeps source cell");
+    ASSERT_EQ(receipt.destinationProjectileThing,
+              (unsigned short)((THING_TYPE_PROJECTILE << 10) |
+                               6u | (unsigned short)(2u << 14)),
+              "F0219 destination projectile thing keeps destination cell");
+    ASSERT_EQ(receipt.destinationMapX, 5,
+              "F0219 destination x carried");
+    ASSERT_EQ(receipt.destinationCell, 2,
+              "F0219 destination cell carried");
+
+    before.mapX = 4;
+    before.cell = 2;
+    after = before;
+    after.kineticEnergy = 7;
+    result.newMapX = before.mapX;
+    result.newCell = before.cell;
+    result.newDirection = after.direction;
+    result.newKineticEnergy = after.kineticEnergy;
+    result.newAttack = after.attack;
+    result.newFirstMoveGraceFlag = after.firstMoveGraceFlag;
+    ASSERT_EQ(dm1_v1_projectile_flight_relink_receipt_f0219_pc34(
+                  &before, &after, &result, &receipt), 1,
+              "F0219 same-cell flight relink receipt builds");
+    ASSERT_EQ(receipt.shouldUnlinkSourceSquare, 0,
+              "F0219 same-cell flight skips source unlink");
+    ASSERT_EQ(receipt.shouldLinkDestinationSquare, 0,
+              "F0219 same-cell flight skips destination link");
+
+    result.despawn = 1;
+    ASSERT_EQ(dm1_v1_projectile_flight_relink_receipt_f0219_pc34(
+                  &before, &after, &result, &receipt), 0,
+              "F0219 despawn does not build flight relink receipt");
+}
+
 static void test_black_flame_heal_and_group_cell(void) {
     struct DungeonGroup_Compat group;
     struct ProjectileInstance_Compat p;
@@ -1499,6 +1579,7 @@ int main(void) {
     test_projectile_group_slot_materialization_plan();
     test_projectile_associated_thing_disposition();
     test_projectile_materialization_plan();
+    test_projectile_flight_relink_receipt();
     test_black_flame_heal_and_group_cell();
     test_projectile_creature_impact_plan();
     test_projectile_champion_impact_plan();

@@ -4244,6 +4244,7 @@ static int orch_handle_projectile_move_event_compat(
     struct ProjectileInstance_Compat newState;
     struct ProjectileTickResult_Compat tickResult;
     struct CellContentDigest_Compat digest;
+    DM1_ProjectileFlightRelinkReceiptPc34 relinkReceipt;
     int projectileIndex;
     int associatedThingMovedToGroup = 0;
 
@@ -4365,10 +4366,40 @@ static int orch_handle_projectile_move_event_compat(
         return 1;
     }
 
-    *projectile = newState;
-    projectile->scheduledAtTick = (int)tickResult.outNextTick.fireAtTick;
-    (void)F0721_TIMELINE_Schedule_Compat(&world->timeline,
-                                         &tickResult.outNextTick);
+    memset(&relinkReceipt, 0, sizeof(relinkReceipt));
+    if (!dm1_v1_projectile_flight_relink_receipt_f0219_pc34(
+            projectile, &newState, &tickResult, &relinkReceipt) ||
+        !relinkReceipt.valid || !relinkReceipt.shouldApply) {
+        return 0;
+    }
+    if (relinkReceipt.shouldUnlinkSourceSquare) {
+        (void)orch_unlink_thing_from_square_compat(
+            world,
+            relinkReceipt.sourceMapIndex,
+            relinkReceipt.sourceMapX,
+            relinkReceipt.sourceMapY,
+            relinkReceipt.sourceProjectileThing);
+    }
+    if (relinkReceipt.shouldLinkDestinationSquare) {
+        (void)orch_link_thing_to_square_tail_compat(
+            world,
+            relinkReceipt.destinationMapIndex,
+            relinkReceipt.destinationMapX,
+            relinkReceipt.destinationMapY,
+            relinkReceipt.destinationProjectileThing);
+    }
+    if (relinkReceipt.shouldWriteProjectileState) {
+        /* ReDMCSB PROJEXPL.C:F0219 lines 735-762 commits the live
+         * projectile's moved cell/square/direction/energy fields before
+         * requeueing its C48/C49 move event.  The field set is now selected
+         * by the DM1 flight relink receipt rather than by this M10 adapter. */
+        *projectile = newState;
+        projectile->scheduledAtTick = (int)tickResult.outNextTick.fireAtTick;
+    }
+    if (relinkReceipt.shouldScheduleNextMove) {
+        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline,
+                                             &tickResult.outNextTick);
+    }
     return 1;
 }
 
