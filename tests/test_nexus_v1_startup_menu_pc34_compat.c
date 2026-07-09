@@ -935,6 +935,12 @@ int main(void)
                runtime_route_receipt.consumed_by_nexus == 1 &&
                runtime_route_receipt.runtime_route_ready == 1 &&
                runtime_route_receipt.runtime_route_blocked == 0 &&
+               runtime_route_receipt.startup_sfx_status ==
+                   NEXUS_SFX_RUNTIME_READY_DECODED &&
+               runtime_route_receipt.startup_sfx_level_index == 0 &&
+               runtime_route_receipt.startup_cd_track == 2 &&
+               runtime_route_receipt.startup_audio_handoff_ready == 1 &&
+               runtime_route_receipt.startup_sfx_blocks_real_playback == 0 &&
                runtime_route_receipt.fallback_visuals_permitted == 0 &&
                runtime_route_receipt.runtime_handoff.asset_handoff
                        .real_asset_route_ready == 1 &&
@@ -1021,6 +1027,12 @@ int main(void)
                runtime_route_receipt.consumed_by_nexus == 1 &&
                runtime_route_receipt.runtime_route_ready == 0 &&
                runtime_route_receipt.runtime_route_blocked == 1 &&
+               runtime_route_receipt.startup_sfx_status ==
+                   NEXUS_SFX_RUNTIME_READY_DECODED &&
+               runtime_route_receipt.startup_sfx_level_index == 0 &&
+               runtime_route_receipt.startup_cd_track == 2 &&
+               runtime_route_receipt.startup_audio_handoff_ready == 1 &&
+               runtime_route_receipt.startup_sfx_blocks_real_playback == 0 &&
                runtime_route_receipt.fallback_visuals_permitted == 0 &&
                runtime_route_receipt.runtime_handoff.asset_handoff
                        .menu_bpk_prs3_blocks_real_menu_route == 1 &&
