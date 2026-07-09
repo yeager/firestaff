@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 dungeon loader/decompressor ownership names: dungeon thing types, level descriptors, headers, tiles, loader state/load/query/step/cleanup helpers, and decompressor file/level/tile/creature/state/load/decompress/query helpers now expose DM1-owned API names; old m11_dl/m11_dd names remain compatibility aliases. Verification: firestaff_m10/firestaff_m11 rebuild, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 central dungeon-data ownership names: party position, champion slot, dungeon-data state, current-map/tile/party/time/event/source helpers, and DM1 engine call sites now expose DM1-owned API names; old central m11_dd names remain compatibility aliases. Verification: firestaff_m10/firestaff_m11 rebuild, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 save/load and object ownership names: save headers, slot info, save-load state, scan/save/load/delete/runtime-slot helpers, world object/floor/object-state, spawn/pickup/drop/use/throw/activate/examine/query/remove/type helpers now expose DM1-owned API names; old M11 names remain compatibility aliases. Verification: `test_dm1_v1_save_load` (14/14), `test_dm1_v1_save_load_slots`, `test_dm1_v1_object_interaction_pc34_compat` (8/8), movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

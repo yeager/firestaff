@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 
-void m11_dl_init(M11_DL_DungeonState *state) {
+void DM1_V1_DungeonLoader_InitPc34Compat(DM1_V1_DungeonStatePc34 *state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_DL_DungeonState));
+    memset(state, 0, sizeof(DM1_V1_DungeonStatePc34));
     state->step_east[0] = 0; state->step_east[1] = 1; state->step_east[2] = 0; state->step_east[3] = -1;
     state->step_north[0] = -1; state->step_north[1] = 0; state->step_north[2] = 1; state->step_north[3] = 0;
     state->thing_byte_count[0] = 4; state->thing_byte_count[1] = 6; state->thing_byte_count[2] = 4;
@@ -16,12 +16,12 @@ void m11_dl_init(M11_DL_DungeonState *state) {
     state->loaded = false;
 }
 
-bool m11_dl_load_from_file(M11_DL_DungeonState *state, const char *path) {
+bool DM1_V1_DungeonLoader_LoadFromFilePc34Compat(DM1_V1_DungeonStatePc34 *state, const char *path) {
     if (!state || !path) return false;
     FILE *f = fopen(path, "rb");
     if (!f) return false;
 
-    if (fread(&state->header, sizeof(M11_DL_DungeonHeader), 1, f) != 1) {
+    if (fread(&state->header, sizeof(DM1_V1_DungeonHeaderPc34), 1, f) != 1) {
         fclose(f);
         return false;
     }
@@ -39,7 +39,7 @@ bool m11_dl_load_from_file(M11_DL_DungeonState *state, const char *path) {
             return false;
         }
         size_t tile_count = (size_t)w * h;
-        if (fread(state->tiles[lvl], sizeof(M11_DL_Tile), tile_count, f) != tile_count) {
+        if (fread(state->tiles[lvl], sizeof(DM1_V1_DungeonTilePc34), tile_count, f) != tile_count) {
             fclose(f);
             return false;
         }
@@ -53,14 +53,14 @@ bool m11_dl_load_from_file(M11_DL_DungeonState *state, const char *path) {
     return true;
 }
 
-const M11_DL_Tile *m11_dl_get_tile(const M11_DL_DungeonState *state, uint8_t level, uint8_t x, uint8_t y) {
+const DM1_V1_DungeonTilePc34 *DM1_V1_DungeonLoader_GetTilePc34Compat(const DM1_V1_DungeonStatePc34 *state, uint8_t level, uint8_t x, uint8_t y) {
     if (!state || !state->loaded || level >= DM1_MAX_LEVELS || x >= DM1_MAX_MAP_W || y >= DM1_MAX_MAP_H) {
         return NULL;
     }
-    return (const M11_DL_Tile *)&state->tiles[level][x][y];
+    return (const DM1_V1_DungeonTilePc34 *)&state->tiles[level][x][y];
 }
 
-void m11_dl_step_forward(int *x, int *y, uint8_t dir) {
+void DM1_V1_DungeonLoader_StepForwardPc34Compat(int *x, int *y, uint8_t dir) {
     if (!x || !y) return;
     if (dir > 3) return;
     static const int8_t step_east[4] = {0, 1, 0, -1};
@@ -69,10 +69,10 @@ void m11_dl_step_forward(int *x, int *y, uint8_t dir) {
     *y += step_north[dir];
 }
 
-void m11_dl_cleanup(M11_DL_DungeonState *state) {
+void DM1_V1_DungeonLoader_CleanupPc34Compat(DM1_V1_DungeonStatePc34 *state) {
     if (state) {
         state->loaded = false;
-        memset(&state->header, 0, sizeof(M11_DL_DungeonHeader));
+        memset(&state->header, 0, sizeof(DM1_V1_DungeonHeaderPc34));
         memset(state->tiles, 0, sizeof(state->tiles));
     }
 }

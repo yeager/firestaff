@@ -8,13 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-void m11_dd_init(M11_DD_State* state) {
+void DM1_V1_DungeonDecompressor_InitPc34Compat(DM1_V1_DungeonDecompressorStatePc34* state) {
     if (!state) return;
-    memset(state, 0, sizeof(M11_DD_State));
+    memset(state, 0, sizeof(DM1_V1_DungeonDecompressorStatePc34));
 }
 
 /* Parse file header — mirrors G0525-G0528 assignment in DECOMPDU.C */
-static bool parse_header(M11_DD_State* state, const uint8_t* data, size_t size) {
+static bool parse_header(DM1_V1_DungeonDecompressorStatePc34* state, const uint8_t* data, size_t size) {
     if (size < 16) return false;
 
     /* DECOMPDU.C reads: GameID(4), DungeonID(2), Platform(2), Format(2) */
@@ -32,13 +32,13 @@ static bool parse_header(M11_DD_State* state, const uint8_t* data, size_t size) 
 }
 
 /* Parse level headers from data following file header */
-static bool parse_level_headers(M11_DD_State* state, const uint8_t* data,
+static bool parse_level_headers(DM1_V1_DungeonDecompressorStatePc34* state, const uint8_t* data,
                                  size_t size, size_t offset) {
     for (uint16_t i = 0; i < state->header.level_count; i++) {
         size_t pos = offset + (size_t)i * 16;
         if (pos + 16 > size) return false;
 
-        M11_DD_LevelHeader* lh = &state->levels[i];
+        DM1_V1_DungeonDecompressorLevelHeaderPc34* lh = &state->levels[i];
         memcpy(&lh->width, data + pos, 2);
         memcpy(&lh->height, data + pos + 2, 2);
         memcpy(&lh->difficulty, data + pos + 4, 2);
@@ -53,7 +53,7 @@ static bool parse_level_headers(M11_DD_State* state, const uint8_t* data,
     return true;
 }
 
-bool m11_dd_load_file(M11_DD_State* state, const uint8_t* data, size_t size) {
+bool DM1_V1_DungeonDecompressor_LoadFilePc34Compat(DM1_V1_DungeonDecompressorStatePc34* state, const uint8_t* data, size_t size) {
     if (!state || !data || size < 16) return false;
 
     if (!parse_header(state, data, size)) return false;
@@ -69,18 +69,18 @@ bool m11_dd_load_file(M11_DD_State* state, const uint8_t* data, size_t size) {
     return true;
 }
 
-uint16_t m11_dd_get_level_count(const M11_DD_State* state) {
+uint16_t DM1_V1_DungeonDecompressor_GetLevelCountPc34Compat(const DM1_V1_DungeonDecompressorStatePc34* state) {
     if (!state || !state->loaded) return 0;
     return state->header.level_count;
 }
 
 /* F0455 pattern: decompress level data into tile map */
-bool m11_dd_decompress_level(M11_DD_State* state, int level,
+bool DM1_V1_DungeonDecompressor_DecompressLevelPc34Compat(DM1_V1_DungeonDecompressorStatePc34* state, int level,
                               uint8_t* output, size_t out_size) {
     if (!state || !state->loaded) return false;
     if (level < 0 || level >= (int)state->header.level_count) return false;
 
-    const M11_DD_LevelHeader* lh = &state->levels[level];
+    const DM1_V1_DungeonDecompressorLevelHeaderPc34* lh = &state->levels[level];
     uint32_t off = lh->data_offset;
     uint32_t sz = lh->data_size;
 
@@ -94,7 +94,7 @@ bool m11_dd_decompress_level(M11_DD_State* state, int level,
     size_t tile_offset = 0;
     for (uint16_t x = 0; x < lh->width && tile_offset + 4 <= sz; x++) {
         for (uint16_t y = 0; y < lh->height && tile_offset + 4 <= sz; y++) {
-            M11_DD_Tile* t = &state->tile_map[level][y][x];
+            DM1_V1_DungeonDecompressorTilePc34* t = &state->tile_map[level][y][x];
             t->type = ldata[tile_offset];
             t->attributes = ldata[tile_offset + 1];
             t->thing_index = (uint16_t)(ldata[tile_offset + 2] |
@@ -109,24 +109,24 @@ bool m11_dd_decompress_level(M11_DD_State* state, int level,
     return true;
 }
 
-const M11_DD_LevelHeader* m11_dd_get_level_header(const M11_DD_State* state, int level) {
+const DM1_V1_DungeonDecompressorLevelHeaderPc34* DM1_V1_DungeonDecompressor_GetLevelHeaderPc34Compat(const DM1_V1_DungeonDecompressorStatePc34* state, int level) {
     if (!state || !state->loaded) return NULL;
     if (level < 0 || level >= (int)state->header.level_count) return NULL;
     return &state->levels[level];
 }
 
-const M11_DD_Tile* m11_dd_get_tile(const M11_DD_State* state, int level,
+const DM1_V1_DungeonDecompressorTilePc34* DM1_V1_DungeonDecompressor_GetTilePc34Compat(const DM1_V1_DungeonDecompressorStatePc34* state, int level,
                                     int16_t x, int16_t y) {
     if (!state || !state->loaded) return NULL;
     if (level < 0 || level >= (int)state->header.level_count) return NULL;
     if (!state->level_loaded[level]) return NULL;
-    const M11_DD_LevelHeader* lh = &state->levels[level];
+    const DM1_V1_DungeonDecompressorLevelHeaderPc34* lh = &state->levels[level];
     if (x < 0 || x >= (int16_t)lh->width || y < 0 || y >= (int16_t)lh->height)
         return NULL;
     return &state->tile_map[level][y][x];
 }
 
-const M11_DD_Creature* m11_dd_get_creature(const M11_DD_State* state, int level,
+const DM1_V1_DungeonDecompressorCreaturePc34* DM1_V1_DungeonDecompressor_GetCreaturePc34Compat(const DM1_V1_DungeonDecompressorStatePc34* state, int level,
                                             int16_t x, int16_t y) {
     if (!state || !state->loaded) return NULL;
     if (level < 0 || level >= (int)state->header.level_count) return NULL;
@@ -139,7 +139,7 @@ const M11_DD_Creature* m11_dd_get_creature(const M11_DD_State* state, int level,
     return NULL;
 }
 
-void m11_dd_close(M11_DD_State* state) {
+void DM1_V1_DungeonDecompressor_ClosePc34Compat(DM1_V1_DungeonDecompressorStatePc34* state) {
     if (!state) return;
     if (state->decomp_buffer) {
         free(state->decomp_buffer);

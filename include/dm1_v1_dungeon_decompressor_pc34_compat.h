@@ -31,7 +31,7 @@ typedef struct {
     int16_t  format;            /* G0528_i_Format */
     uint16_t level_count;
     uint32_t total_size;
-} M11_DD_FileHeader;
+} DM1_V1_DungeonDecompressorFileHeaderPc34;
 
 /* Level header parsed from dungeon data */
 typedef struct {
@@ -42,7 +42,7 @@ typedef struct {
     uint16_t room_count;        /* Number of rooms/areas */
     uint32_t data_offset;       /* Offset to tile data in decompressed buffer */
     uint32_t data_size;         /* Size of level data */
-} M11_DD_LevelHeader;
+} DM1_V1_DungeonDecompressorLevelHeaderPc34;
 
 /* Tile at position */
 typedef struct {
@@ -51,7 +51,7 @@ typedef struct {
     uint16_t thing_index;       /* Index to first thing on tile */
     uint8_t  wall_ornament;     /* Wall ornament index (0=none) */
     uint8_t  floor_ornament;    /* Floor ornament index (0=none) */
-} M11_DD_Tile;
+} DM1_V1_DungeonDecompressorTilePc34;
 
 /* Creature entry from dungeon data */
 typedef struct {
@@ -59,14 +59,14 @@ typedef struct {
     int16_t  x, y;
     uint8_t  facing;
     uint16_t hit_points;
-} M11_DD_Creature;
+} DM1_V1_DungeonDecompressorCreaturePc34;
 
 /* Decompressor state — G0530-G0532 pattern */
 typedef struct {
-    M11_DD_FileHeader header;
-    M11_DD_LevelHeader levels[DM1_DD_MAX_LEVELS];
-    M11_DD_Tile tile_map[DM1_DD_MAX_LEVELS][DM1_DD_MAX_MAP_DIM][DM1_DD_MAX_MAP_DIM];
-    M11_DD_Creature creatures[DM1_DD_MAX_LEVELS * 64]; /* Up to 64 per level */
+    DM1_V1_DungeonDecompressorFileHeaderPc34 header;
+    DM1_V1_DungeonDecompressorLevelHeaderPc34 levels[DM1_DD_MAX_LEVELS];
+    DM1_V1_DungeonDecompressorTilePc34 tile_map[DM1_DD_MAX_LEVELS][DM1_DD_MAX_MAP_DIM][DM1_DD_MAX_MAP_DIM];
+    DM1_V1_DungeonDecompressorCreaturePc34 creatures[DM1_DD_MAX_LEVELS * 64]; /* Up to 64 per level */
     uint16_t creature_offsets[DM1_DD_MAX_LEVELS]; /* Start index per level */
     uint16_t creature_counts[DM1_DD_MAX_LEVELS];
     bool     level_loaded[DM1_DD_MAX_LEVELS];
@@ -74,19 +74,36 @@ typedef struct {
     uint8_t* decomp_buffer;     /* G0531 pattern */
     size_t   decomp_remaining;  /* G0532 pattern */
     bool     loaded;
-} M11_DD_State;
+} DM1_V1_DungeonDecompressorStatePc34;
 
-void          m11_dd_init(M11_DD_State* state);
-bool          m11_dd_load_file(M11_DD_State* state, const uint8_t* data, size_t size);
-uint16_t      m11_dd_get_level_count(const M11_DD_State* state);
-bool          m11_dd_decompress_level(M11_DD_State* state, int level,
+void          DM1_V1_DungeonDecompressor_InitPc34Compat(DM1_V1_DungeonDecompressorStatePc34* state);
+bool          DM1_V1_DungeonDecompressor_LoadFilePc34Compat(DM1_V1_DungeonDecompressorStatePc34* state, const uint8_t* data, size_t size);
+uint16_t      DM1_V1_DungeonDecompressor_GetLevelCountPc34Compat(const DM1_V1_DungeonDecompressorStatePc34* state);
+bool          DM1_V1_DungeonDecompressor_DecompressLevelPc34Compat(DM1_V1_DungeonDecompressorStatePc34* state, int level,
                                        uint8_t* output, size_t out_size);
-const M11_DD_LevelHeader* m11_dd_get_level_header(const M11_DD_State* state, int level);
-const M11_DD_Tile*        m11_dd_get_tile(const M11_DD_State* state, int level,
+const DM1_V1_DungeonDecompressorLevelHeaderPc34* DM1_V1_DungeonDecompressor_GetLevelHeaderPc34Compat(const DM1_V1_DungeonDecompressorStatePc34* state, int level);
+const DM1_V1_DungeonDecompressorTilePc34*        DM1_V1_DungeonDecompressor_GetTilePc34Compat(const DM1_V1_DungeonDecompressorStatePc34* state, int level,
                                            int16_t x, int16_t y);
-const M11_DD_Creature*    m11_dd_get_creature(const M11_DD_State* state, int level,
+const DM1_V1_DungeonDecompressorCreaturePc34*    DM1_V1_DungeonDecompressor_GetCreaturePc34Compat(const DM1_V1_DungeonDecompressorStatePc34* state, int level,
                                                int16_t x, int16_t y);
-void          m11_dd_close(M11_DD_State* state);
+void          DM1_V1_DungeonDecompressor_ClosePc34Compat(DM1_V1_DungeonDecompressorStatePc34* state);
+
+typedef DM1_V1_DungeonDecompressorFileHeaderPc34 M11_DD_FileHeader;
+typedef DM1_V1_DungeonDecompressorLevelHeaderPc34 M11_DD_LevelHeader;
+typedef DM1_V1_DungeonDecompressorTilePc34 M11_DD_Tile;
+typedef DM1_V1_DungeonDecompressorCreaturePc34 M11_DD_Creature;
+typedef DM1_V1_DungeonDecompressorStatePc34 M11_DD_State;
+
+#ifndef FIRESTAFF_DM1_V1_DUNGEON_DATA_PC34_COMPAT_H
+#define m11_dd_init DM1_V1_DungeonDecompressor_InitPc34Compat
+#define m11_dd_load_file DM1_V1_DungeonDecompressor_LoadFilePc34Compat
+#define m11_dd_get_level_count DM1_V1_DungeonDecompressor_GetLevelCountPc34Compat
+#define m11_dd_decompress_level DM1_V1_DungeonDecompressor_DecompressLevelPc34Compat
+#define m11_dd_get_level_header DM1_V1_DungeonDecompressor_GetLevelHeaderPc34Compat
+#define m11_dd_get_tile DM1_V1_DungeonDecompressor_GetTilePc34Compat
+#define m11_dd_get_creature DM1_V1_DungeonDecompressor_GetCreaturePc34Compat
+#define m11_dd_close DM1_V1_DungeonDecompressor_ClosePc34Compat
+#endif
 
 #ifdef __cplusplus
 }
