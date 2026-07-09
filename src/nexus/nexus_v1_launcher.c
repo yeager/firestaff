@@ -3678,6 +3678,8 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
     Nexus_V1_StartupRealAssetOwnershipReceipt *receipt)
 {
     Nexus_V1_StartupRealAssetOwnershipRoute expected_route;
+    int non_title_capture_route_complete;
+    int dungeon_route_complete;
     if (!receipt) {
         return;
     }
@@ -3695,6 +3697,43 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
         receipt->host_ownership_route_matches_capture_route &&
         receipt->route ==
             NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF;
+    non_title_capture_route_complete =
+        receipt->no_fallback_visuals_enforced &&
+        !receipt->fallback_visuals_permitted &&
+        !receipt->blocked_draw_suppressed &&
+        (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE ||
+         receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION) &&
+        receipt->package_route_matches_capture_route &&
+        receipt->host_route_consumes_package_route &&
+        receipt->host_ownership_route_matches_capture_route &&
+        receipt->package_route_consumes_host_ownership &&
+        receipt->host_route_consumes_capture_matrix &&
+        receipt->host_route_capture_matrix_ready &&
+        receipt->host_route_capture_matrix_exact &&
+        receipt->saturn_timing_exact &&
+        receipt->saturn_capture_frames_exact &&
+        receipt->host_saturn_expected_capture_mask != 0u &&
+        receipt->host_saturn_non_title_capture_mask ==
+            receipt->host_saturn_expected_capture_mask;
+    dungeon_route_complete =
+        non_title_capture_route_complete &&
+        receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+        receipt->runtime_dgn_handoff_ready &&
+        receipt->runtime_dgn_route_joined &&
+        receipt->dgn_route_consumes_startup_package &&
+        receipt->dgn_route_consumes_host_ownership &&
+        receipt->dgn_route_saturn_capture_exact &&
+        receipt->host_route_consumes_dungeon_capture_frame &&
+        receipt->dgn_draw_command_count > 0;
+    receipt->non_title_saturn_capture_route_complete =
+        non_title_capture_route_complete ? 1 : 0;
+    receipt->dungeon_startup_route_consumption_complete =
+        dungeon_route_complete ? 1 : 0;
+    receipt->startup_route_consumption_complete =
+        non_title_capture_route_complete &&
+        (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE ||
+         !receipt->runtime_dgn_handoff_ready ||
+         dungeon_route_complete);
 }
 
 static void nexus_v1_launcher_fill_real_asset_ownership(
@@ -4146,6 +4185,12 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.package_route_consumes_host_ownership;
     out_receipt->dgn_route_consumes_host_ownership =
         out_receipt->ownership.dgn_route_consumes_host_ownership;
+    out_receipt->startup_route_consumption_complete =
+        out_receipt->ownership.startup_route_consumption_complete;
+    out_receipt->non_title_saturn_capture_route_complete =
+        out_receipt->ownership.non_title_saturn_capture_route_complete;
+    out_receipt->dungeon_startup_route_consumption_complete =
+        out_receipt->ownership.dungeon_startup_route_consumption_complete;
     out_receipt->startup_bundle_consumed =
         out_receipt->ownership.startup_bundle.package
             .full_start_package_receipt_ready;
@@ -4213,7 +4258,7 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         (out_receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_TITLE ||
          out_receipt->host_route_consumes_active_capture_frame) &&
         (out_receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_TITLE ||
-         out_receipt->host_route_consumes_capture_matrix) &&
+         out_receipt->startup_route_consumption_complete) &&
         out_receipt->saturn_timing_exact &&
         out_receipt->saturn_capture_frames_exact &&
         out_receipt->copied_startup_command_count > 0;
@@ -4221,11 +4266,7 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->suppress_fallback_visuals &&
         out_receipt->host_runtime_dgn_ready &&
         out_receipt->host_route_consumes_package_route &&
-        out_receipt->dgn_route_consumes_startup_package &&
-        out_receipt->dgn_route_consumes_host_ownership &&
-        out_receipt->dgn_route_saturn_capture_exact &&
-        out_receipt->host_route_capture_matrix_ready &&
-        out_receipt->host_route_consumes_dungeon_capture_frame &&
+        out_receipt->dungeon_startup_route_consumption_complete &&
         out_receipt->copied_dgn_command_count > 0;
     out_receipt->single_saturn_startup_owner_ready =
         out_receipt->receipt_owner_is_nexus &&
