@@ -1574,6 +1574,215 @@ int nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
     return 1;
 }
 
+void nexus_v1_startup_save_route_receipt_clear(
+    Nexus_V1_StartupSaveRouteReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->route = NEXUS_V1_STARTUP_SAVE_ROUTE_INVALID;
+    receipt->selected_row = -1;
+    receipt->selected_slot = -1;
+    nexus_v1_startup_menu_state_receipt_init(&receipt->save_state_receipt);
+}
+
+const char *nexus_v1_startup_save_route_name(
+    Nexus_V1_StartupSaveRoute route)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_SAVE_ROUTE_INVALID: return "invalid";
+    case NEXUS_V1_STARTUP_SAVE_ROUTE_NAVIGATE: return "navigate";
+    case NEXUS_V1_STARTUP_SAVE_ROUTE_LOAD_SLOT: return "load-slot";
+    case NEXUS_V1_STARTUP_SAVE_ROUTE_NEW_GAME: return "new-game";
+    case NEXUS_V1_STARTUP_SAVE_ROUTE_BACK_TO_TITLE: return "back-to-title";
+    case NEXUS_V1_STARTUP_SAVE_ROUTE_POINTER_MISS: return "pointer-miss";
+    default: return "unknown";
+    }
+}
+
+static Nexus_V1_StartupSaveRoute nexus_v1_startup_save_route_from_execution(
+    Nexus_V1_StartupSaveExecutionKind kind)
+{
+    switch (kind) {
+    case NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT:
+        return NEXUS_V1_STARTUP_SAVE_ROUTE_LOAD_SLOT;
+    case NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_CHAMPIONS:
+        return NEXUS_V1_STARTUP_SAVE_ROUTE_NEW_GAME;
+    case NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_TITLE:
+        return NEXUS_V1_STARTUP_SAVE_ROUTE_BACK_TO_TITLE;
+    case NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW:
+        return NEXUS_V1_STARTUP_SAVE_ROUTE_NAVIGATE;
+    case NEXUS_V1_STARTUP_SAVE_EXEC_IGNORE:
+    default:
+        return NEXUS_V1_STARTUP_SAVE_ROUTE_INVALID;
+    }
+}
+
+static void nexus_v1_startup_save_route_fill_from_action_receipt(
+    Nexus_V1_StartupSaveRouteReceipt *receipt,
+    const Nexus_V1_StartupHostFacts *facts,
+    const Nexus_V1_StartupHostActionReceipt *action_receipt,
+    const Nexus_V1_StartupSaveExecution *execution,
+    Nexus_V1_StartupSaveRoute fallback_route)
+{
+    Nexus_V1_StartupDrawCommand commands[80];
+    Nexus_V1_StartupMenuSnapshot snapshot;
+    Nexus_V1_StartupRowKind row_kind = NEXUS_V1_STARTUP_ROW_NONE;
+    int slot = -1;
+
+    if (!receipt || !facts || !action_receipt || !execution) {
+        return;
+    }
+    receipt->handled = 1;
+    receipt->action_kind = NEXUS_V1_STARTUP_ACTION_NONE;
+    receipt->execution_kind = execution->kind;
+    receipt->host_input_result = action_receipt->host_receipt.input_result;
+    receipt->status_scope = action_receipt->host_receipt.status_scope;
+    receipt->status = action_receipt->host_receipt.status;
+    receipt->set_save_select_active =
+        action_receipt->host_receipt.mode_update.set_save_select_active;
+    receipt->save_select_active =
+        action_receipt->host_receipt.mode_update.save_select_active;
+    receipt->set_title_active =
+        action_receipt->host_receipt.mode_update.set_title_active;
+    receipt->title_active =
+        action_receipt->host_receipt.mode_update.title_active;
+    receipt->set_champion_select_active =
+        action_receipt->host_receipt.mode_update.set_champion_select_active;
+    receipt->champion_select_active =
+        action_receipt->host_receipt.mode_update.champion_select_active;
+
+    if (action_receipt->save_state_receipt_valid) {
+        receipt->save_state_receipt = action_receipt->save_state_receipt;
+        receipt->save_state_receipt_valid = 1;
+    } else {
+        (void)nexus_v1_startup_menu_state_receipt_from_facts(
+            &receipt->save_state_receipt,
+            facts->save_dir,
+            facts->slot_mask,
+            facts->save_selected_row);
+        receipt->save_state_receipt_valid = 1;
+    }
+    receipt->row_count = receipt->save_state_receipt.row_count;
+    receipt->selected_row = receipt->save_state_receipt.selected_row;
+    receipt->slot_mask = (int)receipt->save_state_receipt.slot_mask;
+    memset(&snapshot, 0, sizeof(snapshot));
+    snprintf(snapshot.save_dir,
+             sizeof(snapshot.save_dir),
+             "%s",
+             receipt->save_state_receipt.save_dir);
+    snapshot.slot_mask = receipt->save_state_receipt.slot_mask;
+    snapshot.row_count = receipt->save_state_receipt.row_count;
+    snapshot.selected_row = receipt->save_state_receipt.selected_row;
+    if (nexus_v1_startup_menu_snapshot_row_at(
+            &snapshot,
+            receipt->selected_row,
+            &row_kind,
+            &slot)) {
+        receipt->selected_slot = slot;
+    }
+    receipt->draw_command_count =
+        nexus_v1_startup_presentation_build_save_from_facts(
+            receipt->save_state_receipt.save_dir,
+            receipt->save_state_receipt.slot_mask,
+            receipt->save_state_receipt.selected_row,
+            commands,
+            (int)(sizeof(commands) / sizeof(commands[0])));
+    receipt->route =
+        nexus_v1_startup_save_route_from_execution(execution->kind);
+    if (receipt->route == NEXUS_V1_STARTUP_SAVE_ROUTE_INVALID) {
+        receipt->route = fallback_route;
+    }
+}
+
+int nexus_v1_startup_save_route_receipt_from_host_facts_input(
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveRouteReceipt *out_receipt)
+{
+    Nexus_V1_StartupSaveExecution execution;
+    Nexus_V1_StartupHostActionReceipt action_receipt;
+
+    nexus_v1_startup_save_route_receipt_clear(out_receipt);
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (!nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
+            facts,
+            menu_input,
+            load_save,
+            load_userdata,
+            &execution,
+            &action_receipt)) {
+        return 0;
+    }
+    nexus_v1_startup_save_route_fill_from_action_receipt(
+        out_receipt,
+        facts,
+        &action_receipt,
+        &execution,
+        NEXUS_V1_STARTUP_SAVE_ROUTE_NAVIGATE);
+    return 1;
+}
+
+int nexus_v1_startup_save_route_receipt_from_host_facts_pointer(
+    const Nexus_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveRouteReceipt *out_receipt)
+{
+    Nexus_V1_StartupSaveExecution execution;
+    Nexus_V1_StartupHostActionReceipt action_receipt;
+    Nexus_V1_StartupDrawCommand commands[80];
+
+    nexus_v1_startup_save_route_receipt_clear(out_receipt);
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (!nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
+            facts,
+            x,
+            y,
+            load_save,
+            load_userdata,
+            &execution,
+            &action_receipt)) {
+        if (nexus_v1_startup_menu_state_receipt_from_facts(
+                &out_receipt->save_state_receipt,
+                facts->save_dir,
+                facts->slot_mask,
+                facts->save_selected_row)) {
+            out_receipt->save_state_receipt_valid = 1;
+            out_receipt->row_count = out_receipt->save_state_receipt.row_count;
+            out_receipt->selected_row =
+                out_receipt->save_state_receipt.selected_row;
+            out_receipt->slot_mask =
+                (int)out_receipt->save_state_receipt.slot_mask;
+            out_receipt->draw_command_count =
+                nexus_v1_startup_presentation_build_save_from_facts(
+                    out_receipt->save_state_receipt.save_dir,
+                    out_receipt->save_state_receipt.slot_mask,
+                    out_receipt->save_state_receipt.selected_row,
+                    commands,
+                    (int)(sizeof(commands) / sizeof(commands[0])));
+        }
+        out_receipt->route = NEXUS_V1_STARTUP_SAVE_ROUTE_POINTER_MISS;
+        return 1;
+    }
+    nexus_v1_startup_save_route_fill_from_action_receipt(
+        out_receipt,
+        facts,
+        &action_receipt,
+        &execution,
+        NEXUS_V1_STARTUP_SAVE_ROUTE_POINTER_MISS);
+    return 1;
+}
+
 int nexus_v1_startup_apply_receipt_from_title_execution(
     const Nexus_V1_StartupTitleExecution *execution,
     Nexus_V1_StartupApplyReceipt *out_receipt)

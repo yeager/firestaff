@@ -219,6 +219,38 @@ typedef struct {
     Nexus_V1_StartupHostReceipt host_receipt;
 } Nexus_V1_StartupHostActionReceipt;
 
+typedef enum {
+    NEXUS_V1_STARTUP_SAVE_ROUTE_INVALID = 0,
+    NEXUS_V1_STARTUP_SAVE_ROUTE_NAVIGATE = 1,
+    NEXUS_V1_STARTUP_SAVE_ROUTE_LOAD_SLOT = 2,
+    NEXUS_V1_STARTUP_SAVE_ROUTE_NEW_GAME = 3,
+    NEXUS_V1_STARTUP_SAVE_ROUTE_BACK_TO_TITLE = 4,
+    NEXUS_V1_STARTUP_SAVE_ROUTE_POINTER_MISS = 5
+} Nexus_V1_StartupSaveRoute;
+
+typedef struct {
+    Nexus_V1_StartupSaveRoute route;
+    int handled;
+    int draw_command_count;
+    int row_count;
+    int selected_row;
+    int selected_slot;
+    int slot_mask;
+    int save_state_receipt_valid;
+    Nexus_V1_StartupMenuStateReceipt save_state_receipt;
+    Nexus_V1_StartupActionKind action_kind;
+    Nexus_V1_StartupSaveExecutionKind execution_kind;
+    Nexus_V1_StartupHostInputResult host_input_result;
+    int set_save_select_active;
+    int save_select_active;
+    int set_title_active;
+    int title_active;
+    int set_champion_select_active;
+    int champion_select_active;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupSaveRouteReceipt;
+
 typedef struct {
     Nexus_V1_StartupHostReceipt host_receipt;
 } Nexus_V1_StartupIdleReceipt;
@@ -516,6 +548,23 @@ int nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
     void *load_userdata,
     Nexus_V1_StartupSaveExecution *out_execution,
     Nexus_V1_StartupHostActionReceipt *out_receipt);
+void nexus_v1_startup_save_route_receipt_clear(
+    Nexus_V1_StartupSaveRouteReceipt *receipt);
+const char *nexus_v1_startup_save_route_name(
+    Nexus_V1_StartupSaveRoute route);
+int nexus_v1_startup_save_route_receipt_from_host_facts_input(
+    const Nexus_V1_StartupHostFacts *facts,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveRouteReceipt *out_receipt);
+int nexus_v1_startup_save_route_receipt_from_host_facts_pointer(
+    const Nexus_V1_StartupHostFacts *facts,
+    int x,
+    int y,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveRouteReceipt *out_receipt);
 int nexus_v1_startup_execute_champion_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupChampionExecution *out_execution);
