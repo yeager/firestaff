@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0231 champion side-effect writeback receipt: DM1 now marks which champion state writeback belongs to the post-melee stamina/HP side-effect plan, so M10 applies returned champion-index/stamina/health fields instead of loose local writes. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0231 luck writeback receipt: DM1 now owns the post-melee Luck writeback gate and byte clamp after F0308 mutates champion luck; M10 only writes the returned receipt into lifecycle state. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus MENU.BPK runtime render receipt: Nexus BPK parser now emits a real-asset render route receipt that distinguishes stored render-ready surfaces from PRS3-blocked surfaces and forbids fallback visuals for PRS3-compressed MENU.BPK output. Verification: `nexus_v1_bpk_surface_class`, `nexus_v1_bpk_prs3_payload_evidence_probe`, `nexus_v1_bpk_surface_class_probe`, and `git diff --check` passed.

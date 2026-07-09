@@ -1446,6 +1446,9 @@ static void test_melee_f0231_side_effect_plan(void) {
     CHECK_EQ(dm1_v1_melee_side_effect_plan_f0231_pc34(&in, &out), 1,
              "F0231 damage side-effect plan builds");
     CHECK_EQ(out.valid, 1, "F0231 damage side-effect valid");
+    CHECK_EQ(out.shouldWriteChampionState, 1,
+             "F0231 damage writes champion state");
+    CHECK_EQ(out.championIndex, 1, "F0231 damage write champion");
     CHECK_EQ(out.shouldAwardXp, 1, "F0231 damage awards XP");
     CHECK_EQ(out.skillIndex, 6, "F0231 XP skill index");
     CHECK_EQ(out.experienceGain, 13, "F0231 XP formula");
@@ -1479,6 +1482,10 @@ static void test_melee_f0231_side_effect_plan(void) {
     CHECK_EQ(out.currentStaminaAfter, 0, "F0231 underflow stamina clamps");
     CHECK_EQ(out.pendingHealthDamage, 1, "F0231 underflow health damage");
     CHECK_EQ(out.currentHealthAfter, 1, "F0231 underflow health after");
+
+    in.championIndex = CHAMPION_MAX_PARTY;
+    CHECK_EQ(dm1_v1_melee_side_effect_plan_f0231_pc34(&in, &out), 0,
+             "F0231 side-effect rejects invalid champion");
 }
 
 static void test_melee_f0402_weapon_availability_and_preflight(void) {
