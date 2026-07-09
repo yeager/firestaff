@@ -2075,6 +2075,53 @@ int main(void)
                                strcmp(runtime_receipt.startup_assets.startup_menu_asset_route,
                                       "blocked-menu-bpk-prs3") == 0,
                            "Nexus launcher asset gate blocks save/champion menus on PRS3");
+                    nexus_v1_launcher_startup_runtime_state_clear(
+                        &runtime_state);
+                    runtime_state.engine = runtime_receipt.engine;
+                    runtime_state.save_select_active = 1;
+                    runtime_state.save_dir = save_dir;
+                    runtime_state.slot_mask = menu.slot_mask;
+                    runtime_state.save_selected_row = 0;
+                    runtime_state.save_row_count = menu.row_count;
+                    load_calls = 0;
+                    expect(nexus_v1_launcher_startup_save_pointer_route_receipt_from_runtime_state(
+                               &runtime_state,
+                               20,
+                               44,
+                               startup_load_success,
+                               &load_calls,
+                               &save_route_receipt) &&
+                               save_route_receipt.route ==
+                                   NEXUS_V1_STARTUP_SAVE_ROUTE_ASSET_BLOCKED &&
+                               strcmp(nexus_v1_startup_save_route_name(
+                                          save_route_receipt.route),
+                                      "asset-blocked") == 0 &&
+                               save_route_receipt.host_input_result ==
+                                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                               strcmp(save_route_receipt.status_scope,
+                                      "ASSETS") == 0 &&
+                               strcmp(save_route_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0 &&
+                               load_calls == 0,
+                           "Nexus launcher blocks save-slot route on MENU.BPK PRS3");
+                    runtime_state.champion_select_active = 1;
+                    runtime_state.champion_cursor = 0;
+                    runtime_state.champion_frame = 0;
+                    expect(nexus_v1_launcher_startup_execute_champion_firestaff_input_from_runtime_state(
+                               &runtime_state,
+                               9,
+                               &champion_execution,
+                               &host_action_receipt) &&
+                               champion_execution.kind ==
+                                   NEXUS_V1_STARTUP_CHAMPION_EXEC_IGNORE &&
+                               host_action_receipt.champion_state_receipt_valid &&
+                               host_action_receipt.host_receipt.input_result ==
+                                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                               strcmp(host_action_receipt.host_receipt.status_scope,
+                                      "ASSETS") == 0 &&
+                               strcmp(host_action_receipt.host_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus launcher blocks champion route on MENU.BPK PRS3");
                 }
                 nexus_title_free(&title_screen);
                 nexus_v1_launcher_shutdown();
