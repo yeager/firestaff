@@ -466,6 +466,35 @@ typedef struct {
     int decode_blocked;           /* true until opcode decoder exists */
 } Nexus_V1_BpkPrs3StreamPlan;
 
+typedef enum {
+    NEXUS_V1_BPK_DECODE_ROUTE_INVALID = 0,
+    NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED = 1,
+    NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 = 2,
+    NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED = 3,
+    NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES = 4
+} Nexus_V1_BpkRuntimeDecodeRoute;
+
+typedef struct {
+    uint32_t archive_entries;
+    uint32_t surface_entries;
+    uint32_t ready_stored_surfaces;
+    uint32_t blocked_prs3_surfaces;
+    uint32_t blocked_truncated_surfaces;
+    uint32_t prs3_stream_plans;
+    uint32_t prs3_stream_plan_failures;
+    uint32_t prs3_bounded_header_candidates;
+    uint32_t prs3_header_underflows;
+    uint32_t first_blocked_entry;
+    uint32_t first_blocked_stream_offset;
+    uint32_t first_blocked_stream_size;
+    uint32_t first_blocked_expected_output_bytes;
+    uint32_t first_blocked_header_first_u32;
+    uint32_t first_blocked_header_minus_payload;
+    int requires_prs3_decoder;
+    int decode_blocked;
+    Nexus_V1_BpkRuntimeDecodeRoute route;
+} Nexus_V1_BpkRuntimeDecodeReceipt;
+
 /* Walk every entry whose 20-byte prefix is complete AND whose prefix
  * mode is one of the four PRS3 pixel-mode tags (6/14/22/30). For each
  * such entry, record bounded compression evidence into
@@ -494,6 +523,14 @@ int nexus_v1_bpk_archive_prs3_stream_plan(
     Nexus_V1_BpkPrs3StreamPlan *out_plan);
 
 const char *nexus_v1_bpk_prs3_stream_status_name(int status);
+
+int nexus_v1_bpk_archive_runtime_decode_receipt(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkRuntimeDecodeReceipt *out_receipt);
+
+const char *nexus_v1_bpk_runtime_decode_route_name(
+    Nexus_V1_BpkRuntimeDecodeRoute route);
 
 #ifdef __cplusplus
 }
