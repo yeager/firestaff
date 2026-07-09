@@ -130,6 +130,7 @@ typedef enum CSB_V1_BootStartupRenderRouteKind_PC34 {
 } CSB_V1_BootStartupRenderRouteKind_PC34;
 
 #define CSB_V1_BOOT_STARTUP_HUD_PROMPT_CAP_PC34 192
+#define CSB_V1_BOOT_STARTUP_RESUME_PATH_CAP_PC34 512
 
 typedef enum CSB_V1_BootStartupHudMenuKind_PC34 {
     CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34 = 0,
@@ -143,6 +144,10 @@ typedef struct CSB_V1_BootStartupHudMenuStateReceipt_PC34 {
     int option_count;
     int selected_command_id;
     int resume_enabled;
+    int resume_available;
+    int resume_option_visible;
+    int resume_option_selected;
+    char resume_path[CSB_V1_BOOT_STARTUP_RESUME_PATH_CAP_PC34];
     int utility_selected_action_index;
     int utility_preview_active;
     int utility_menu_row_count;

@@ -55,6 +55,7 @@ static const char *const g_csb_boot_fast_scan_subdirs[] = {
 
 static void csb_v1_boot_startup_route_from_presentation_pc34(
     const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
+    const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt);
 static void csb_v1_boot_startup_hud_menu_state_init_pc34(
     CSB_V1_BootStartupHudMenuStateReceipt_PC34 *state);
@@ -1597,6 +1598,7 @@ int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
         return 0;
     }
     csb_v1_boot_startup_route_from_presentation_pc34(&presentation,
+                                                     &facts,
                                                      out_receipt);
     /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 keeps input waiting
      * inside the entrance loop; CSBWin/Viewport.cpp mirrors CSB HUD/menu
@@ -2157,6 +2159,7 @@ csb_v1_boot_startup_route_for_surface_pc34(
 
 static void csb_v1_boot_startup_hud_menu_from_presentation_pc34(
     const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
+    const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_BootStartupHudMenuStateReceipt_PC34 *out_state)
 {
     int i;
@@ -2179,10 +2182,25 @@ static void csb_v1_boot_startup_hud_menu_from_presentation_pc34(
         if (option->command_id ==
             CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34) {
             out_state->resume_enabled = option->enabled ? 1 : 0;
+            out_state->resume_option_visible = 1;
         }
         if (option->selected) {
             out_state->selected_command_id = option->command_id;
         }
+    }
+    out_state->resume_option_selected =
+        out_state->selected_command_id ==
+            CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34
+            ? 1
+            : 0;
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 gates the RESUME
+     * command inside the entrance wait loop; CSBWin SaveGame.cpp:927/1711/2111
+     * keeps resume as a save-load gate. Carry the loadable path in this CSB
+     * receipt so host render/input code does not infer it from menu text. */
+    if (facts) {
+        out_state->resume_available = facts->resume_available ? 1 : 0;
+        snprintf(out_state->resume_path, sizeof(out_state->resume_path), "%s",
+                 facts->resume_path ? facts->resume_path : "");
     }
     snprintf(out_state->prompt, sizeof(out_state->prompt), "%s",
              presentation->render_plan.fallback_prompt_text
@@ -2192,6 +2210,7 @@ static void csb_v1_boot_startup_hud_menu_from_presentation_pc34(
 
 static void csb_v1_boot_startup_route_from_presentation_pc34(
     const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
+    const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt)
 {
     if (!presentation || !out_receipt || !presentation->valid) {
@@ -2207,6 +2226,7 @@ static void csb_v1_boot_startup_route_from_presentation_pc34(
     out_receipt->menu_option_count = presentation->menu_option_count;
     csb_v1_boot_startup_hud_menu_from_presentation_pc34(
         presentation,
+        facts,
         &out_receipt->hud_menu_state);
 
     /* ReDMCSB TITLE.C F0437 lines 424-463 draws PRESENTS, CHAOS zoom,
