@@ -1759,6 +1759,24 @@ void csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
         &receipt->host_decision);
 }
 
+void csb_v1_boot_startup_input_render_receipt_init_pc34(
+    CSB_V1_BootStartupInputRenderReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_boot_startup_action_receipt_init_pc34(&receipt->action);
+    csb_v1_boot_startup_host_decision_receipt_init_pc34(
+        &receipt->host_decision);
+    csb_v1_boot_startup_readiness_receipt_init_pc34(
+        &receipt->pre_input_readiness);
+    csb_v1_boot_startup_readiness_receipt_init_pc34(
+        &receipt->post_input_readiness);
+    csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
+        &receipt->hud_menu_draw);
+}
+
 void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt)
 {
@@ -2553,6 +2571,96 @@ int csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
     }
 
     return 0;
+}
+
+static int csb_v1_boot_startup_input_render_receipt_from_action_pc34(
+    const CSB_V1_BootStartupActionReceipt_PC34 *action,
+    CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_BootStartupReadinessReceipt_PC34 *draw_readiness = NULL;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_input_render_receipt_init_pc34(out_receipt);
+    if (!action || (!action->pre_input_render_view_valid &&
+                    !action->post_input_render_view_valid &&
+                    !action->input_blocked_by_title &&
+                    !action->handled)) {
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->action_valid = 1;
+    out_receipt->action = *action;
+    out_receipt->pre_input_readiness_valid =
+        action->pre_input_render_view_valid &&
+        csb_v1_boot_startup_readiness_receipt_from_view_pc34(
+            &action->pre_input_render_view,
+            &out_receipt->pre_input_readiness);
+    out_receipt->post_input_readiness_valid =
+        action->post_input_render_view_valid &&
+        csb_v1_boot_startup_readiness_receipt_from_view_pc34(
+            &action->post_input_render_view,
+            &out_receipt->post_input_readiness);
+    out_receipt->host_decision_valid =
+        csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
+            action,
+            &out_receipt->host_decision);
+    out_receipt->hud_menu_draw_valid =
+        csb_v1_boot_startup_hud_menu_draw_receipt_from_action_pc34(
+            action,
+            1,
+            &out_receipt->hud_menu_draw);
+    out_receipt->draw_from_post_input =
+        out_receipt->hud_menu_draw_valid &&
+                out_receipt->hud_menu_draw.from_post_input_render_view
+            ? 1
+            : 0;
+    out_receipt->input_consumed =
+        out_receipt->host_decision_valid &&
+                out_receipt->host_decision.consumed_input
+            ? 1
+            : 0;
+    out_receipt->startup_redraw =
+        out_receipt->host_decision_valid &&
+                out_receipt->host_decision.redraw_startup
+            ? 1
+            : 0;
+    out_receipt->runtime_handoff_ready =
+        out_receipt->post_input_readiness_valid &&
+                out_receipt->post_input_readiness.runtime_handoff_ready
+            ? 1
+            : 0;
+    out_receipt->return_to_launcher =
+        out_receipt->host_decision_valid &&
+                out_receipt->host_decision.return_to_launcher
+            ? 1
+            : 0;
+    if (out_receipt->return_to_launcher) {
+        out_receipt->hud_menu_draw_valid = 0;
+        csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
+            &out_receipt->hud_menu_draw);
+    }
+    draw_readiness = out_receipt->draw_from_post_input
+                         ? &out_receipt->post_input_readiness
+                         : &out_receipt->pre_input_readiness;
+    out_receipt->startup_hud_draw_ready =
+        out_receipt->hud_menu_draw_valid &&
+                ((out_receipt->draw_from_post_input &&
+                  out_receipt->post_input_readiness_valid) ||
+                 (!out_receipt->draw_from_post_input &&
+                  out_receipt->pre_input_readiness_valid)) &&
+                draw_readiness->hud_menu_ready &&
+                !draw_readiness->host_hud_blocked
+            ? 1
+            : 0;
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 keeps input,
+     * host decision, redraw, and HUD/menu readiness in one startup loop.
+     * This receipt is the CSB-owned M11 handoff boundary, so callers no
+     * longer combine action, decision, readiness, and HUD draw routes by
+     * reinterpreting raw startup fields. */
+    return 1;
 }
 
 int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
@@ -3446,6 +3554,30 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     return 1;
 }
 
+int csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootStartupActionReceipt_PC34 action;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_action_receipt_init_pc34(&action);
+    csb_v1_boot_startup_input_render_receipt_init_pc34(out_receipt);
+    if (!csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
+            snapshot,
+            menu_input,
+            &action) &&
+        !action.input_blocked_by_title) {
+        return 0;
+    }
+    return csb_v1_boot_startup_input_render_receipt_from_action_pc34(
+        &action,
+        out_receipt);
+}
+
 int csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
     const CSB_V1_BootStartupActionReceipt_PC34 *receipt,
     CSB_V1_BootStartupHostDecisionReceipt_PC34 *out_decision)
@@ -3595,6 +3727,34 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
         snapshot,
         out_receipt);
     return 1;
+}
+
+int csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootStartupActionReceipt_PC34 action;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_action_receipt_init_pc34(&action);
+    csb_v1_boot_startup_input_render_receipt_init_pc34(out_receipt);
+    if (!csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
+            snapshot,
+            x,
+            y,
+            button_mask,
+            &action) &&
+        !action.input_blocked_by_title) {
+        return 0;
+    }
+    return csb_v1_boot_startup_input_render_receipt_from_action_pc34(
+        &action,
+        out_receipt);
 }
 
 int csb_v1_boot_runtime_save_game_to_path_pc34(

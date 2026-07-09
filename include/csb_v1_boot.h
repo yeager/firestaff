@@ -362,12 +362,34 @@ typedef struct CSB_V1_BootStartupHudMenuDrawReceipt_PC34 {
     CSB_V1_BootStartupHostDecisionReceipt_PC34 host_decision;
 } CSB_V1_BootStartupHudMenuDrawReceipt_PC34;
 
+typedef struct CSB_V1_BootStartupInputRenderReceipt_PC34 {
+    int valid;
+    int action_valid;
+    CSB_V1_BootStartupActionReceipt_PC34 action;
+    int host_decision_valid;
+    CSB_V1_BootStartupHostDecisionReceipt_PC34 host_decision;
+    int pre_input_readiness_valid;
+    CSB_V1_BootStartupReadinessReceipt_PC34 pre_input_readiness;
+    int post_input_readiness_valid;
+    CSB_V1_BootStartupReadinessReceipt_PC34 post_input_readiness;
+    int hud_menu_draw_valid;
+    CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_menu_draw;
+    int draw_from_post_input;
+    int input_consumed;
+    int startup_redraw;
+    int startup_hud_draw_ready;
+    int runtime_handoff_ready;
+    int return_to_launcher;
+} CSB_V1_BootStartupInputRenderReceipt_PC34;
+
 void csb_v1_boot_startup_action_receipt_init_pc34(
     CSB_V1_BootStartupActionReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_decision_receipt_init_pc34(
     CSB_V1_BootStartupHostDecisionReceipt_PC34 *receipt);
 void csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *receipt);
+void csb_v1_boot_startup_input_render_receipt_init_pc34(
+    CSB_V1_BootStartupInputRenderReceipt_PC34 *receipt);
 void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *receipt);
 void csb_v1_boot_startup_render_view_receipt_init_pc34(
@@ -855,6 +877,10 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
     CSB_V1_BootStartupActionReceipt_PC34 *out_receipt);
+int csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
     const CSB_V1_BootStartupActionReceipt_PC34 *receipt,
     CSB_V1_BootStartupHostDecisionReceipt_PC34 *out_decision);
@@ -864,6 +890,12 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     int y,
     unsigned int button_mask,
     CSB_V1_BootStartupActionReceipt_PC34 *out_receipt);
+int csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_save_game_to_path_pc34(
     const CSB_V1_BootProfile *profile,
     const char *path,
