@@ -1384,6 +1384,10 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupRenderPlan media_plan;
     Theron_StartupAction media_pointer_action;
     Theron_StartupInputReceipt media_pointer_receipt;
+    Theron_StartupAction media_input_action;
+    Theron_StartupInputReceipt media_input_receipt;
+    Theron_StartupAction stage_input_action;
+    Theron_StartupInputReceipt stage_input_receipt;
     char media_rows[THERON_V1_BOOT_STARTUP_VIEW_MODEL_ROW_CAP]
         [THERON_STARTUP_RENDER_ROW_CAPACITY];
     char exit_receipt[128];
@@ -1643,6 +1647,48 @@ static void test_startup_session_facts_wrappers(void) {
                     media_pointer_receipt.input_result ==
                         THERON_STARTUP_INPUT_RESULT_REDRAW,
                 "boot startup pointer consumer routes through view model layout receipt");
+    expect_true(theron_v1_boot_startup_execute_input_from_view_model(
+                    &direct_view_model,
+                    THERON_STARTUP_INPUT_ACCEPT,
+                    &stage_input_action,
+                    &stage_input_receipt) &&
+                    stage_input_action.kind ==
+                        THERON_STARTUP_ACTION_CONTINUE_SAVE &&
+                    stage_input_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot startup input consumer routes Continue from view model receipt");
+    expect_true(theron_v1_boot_startup_execute_input_from_view_model(
+                    &direct_view_model,
+                    THERON_STARTUP_INPUT_DOWN,
+                    &stage_input_action,
+                    &stage_input_receipt) &&
+                    stage_input_action.kind ==
+                        THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR &&
+                    stage_input_action.continue_focus == 0 &&
+                    stage_input_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot startup input consumer moves stage focus from view model receipt");
+    expect_true(theron_v1_boot_startup_execute_input_from_view_model(
+                    &media_view_model,
+                    THERON_STARTUP_INPUT_ACCEPT,
+                    &media_input_action,
+                    &media_input_receipt) &&
+                    media_input_action.kind ==
+                        THERON_STARTUP_ACTION_TOGGLE_MIRROR &&
+                    media_input_action.mirror_index == 1 &&
+                    media_input_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot startup input consumer toggles Track02 roster mirror from view model receipt");
+    expect_true(theron_v1_boot_startup_execute_input_from_view_model(
+                    &media_view_model,
+                    THERON_STARTUP_INPUT_BACK,
+                    &media_input_action,
+                    &media_input_receipt) &&
+                    media_input_action.kind ==
+                        THERON_STARTUP_ACTION_SHOW_STAGE_SELECT &&
+                    media_input_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot startup input consumer routes Back from Soul Room view model receipt");
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;

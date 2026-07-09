@@ -1526,6 +1526,152 @@ int theron_v1_boot_startup_render_plan_from_view_model(
     return 1;
 }
 
+static void tqr_boot_startup_input_receipt_clear(
+    Theron_StartupInputReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->result = THERON_STARTUP_OK;
+    receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
+}
+
+static void tqr_boot_startup_input_receipt_null(
+    Theron_StartupInputReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    tqr_boot_startup_input_receipt_clear(receipt);
+    receipt->result = THERON_STARTUP_ERR_NULL;
+    receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+    receipt->status_scope = "STARTUP";
+    receipt->status = theron_v1_startup_result_name(
+        THERON_STARTUP_ERR_NULL);
+}
+
+static const Theron_StartupLayoutElement *
+tqr_boot_startup_view_model_focused_element(
+    const Theron_V1_BootStartupViewModel *view_model)
+{
+    int i;
+
+    if (!view_model || view_model->layout_count <= 0) {
+        return NULL;
+    }
+    for (i = 0; i < view_model->layout_count; ++i) {
+        if (view_model->layout[i].cursor) {
+            return &view_model->layout[i];
+        }
+    }
+    for (i = 0; i < view_model->layout_count; ++i) {
+        if (view_model->layout[i].selected &&
+            (view_model->layout[i].kind ==
+                 THERON_STARTUP_LAYOUT_ELEMENT_STAGE ||
+             view_model->layout[i].kind ==
+                 THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE)) {
+            return &view_model->layout[i];
+        }
+    }
+    return &view_model->layout[0];
+}
+
+static const Theron_StartupLayoutElement *
+tqr_boot_startup_view_model_first_element(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupLayoutElementKind kind)
+{
+    int i;
+
+    if (!view_model) {
+        return NULL;
+    }
+    for (i = 0; i < view_model->layout_count; ++i) {
+        if (view_model->layout[i].kind == kind &&
+            view_model->layout[i].enabled) {
+            return &view_model->layout[i];
+        }
+    }
+    return NULL;
+}
+
+static const Theron_StartupLayoutElement *
+tqr_boot_startup_view_model_move_stage_focus(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_StartupLayoutElement *focused,
+    int delta,
+    int *out_continue_focus)
+{
+    int i;
+    int focused_index = -1;
+    const Theron_StartupLayoutElement *continue_element = NULL;
+    const Theron_StartupLayoutElement *first_stage = NULL;
+    const Theron_StartupLayoutElement *last_stage = NULL;
+
+    if (out_continue_focus) {
+        *out_continue_focus = 0;
+    }
+    if (!view_model || !focused) {
+        return NULL;
+    }
+    for (i = 0; i < view_model->layout_count; ++i) {
+        const Theron_StartupLayoutElement *element = &view_model->layout[i];
+        if (element == focused) {
+            focused_index = i;
+        }
+        if (element->kind == THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE &&
+            element->enabled) {
+            continue_element = element;
+        }
+        if (element->kind == THERON_STARTUP_LAYOUT_ELEMENT_STAGE &&
+            element->enabled) {
+            if (!first_stage) {
+                first_stage = element;
+            }
+            last_stage = element;
+        }
+    }
+    if (focused->kind == THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE) {
+        return first_stage;
+    }
+    if (focused_index < 0) {
+        return first_stage;
+    }
+    if (delta < 0) {
+        for (i = focused_index - 1; i >= 0; --i) {
+            const Theron_StartupLayoutElement *element =
+                &view_model->layout[i];
+            if (element->kind == THERON_STARTUP_LAYOUT_ELEMENT_STAGE &&
+                element->enabled) {
+                return element;
+            }
+            if (element->kind == THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE &&
+                element->enabled) {
+                if (out_continue_focus) {
+                    *out_continue_focus = 1;
+                }
+                return focused;
+            }
+        }
+        if (continue_element) {
+            if (out_continue_focus) {
+                *out_continue_focus = 1;
+            }
+            return focused;
+        }
+        return first_stage ? first_stage : focused;
+    }
+    for (i = focused_index + 1; i < view_model->layout_count; ++i) {
+        const Theron_StartupLayoutElement *element = &view_model->layout[i];
+        if (element->kind == THERON_STARTUP_LAYOUT_ELEMENT_STAGE &&
+            element->enabled) {
+            return element;
+        }
+    }
+    return last_stage ? last_stage : focused;
+}
+
 int theron_v1_boot_startup_execute_pointer_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     int x,
@@ -1541,19 +1687,10 @@ int theron_v1_boot_startup_execute_pointer_from_view_model(
         theron_v1_startup_action_init(out_action);
     }
     if (out_receipt) {
-        out_receipt->result = THERON_STARTUP_OK;
-        out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
-        out_receipt->status_scope = NULL;
-        out_receipt->status = NULL;
+        tqr_boot_startup_input_receipt_clear(out_receipt);
     }
     if (!view_model || !out_action || !out_receipt) {
-        if (out_receipt) {
-            out_receipt->result = THERON_STARTUP_ERR_NULL;
-            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
-            out_receipt->status_scope = "STARTUP";
-            out_receipt->status = theron_v1_startup_result_name(
-                THERON_STARTUP_ERR_NULL);
-        }
+        tqr_boot_startup_input_receipt_null(out_receipt);
         return 0;
     }
 
@@ -1600,6 +1737,137 @@ int theron_v1_boot_startup_execute_pointer_from_view_model(
     default:
         return 0;
     }
+}
+
+int theron_v1_boot_startup_execute_input_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt)
+{
+    const Theron_StartupLayoutElement *focused;
+    Theron_StartupPhase phase = THERON_STARTUP_PHASE_TITLE;
+    int continue_focus = 0;
+
+    if (out_action) {
+        theron_v1_startup_action_init(out_action);
+    }
+    tqr_boot_startup_input_receipt_clear(out_receipt);
+    if (!view_model || !out_action || !out_receipt) {
+        tqr_boot_startup_input_receipt_null(out_receipt);
+        return 0;
+    }
+    focused = tqr_boot_startup_view_model_focused_element(view_model);
+    if (focused) {
+        phase = focused->phase;
+    }
+    if (input == THERON_STARTUP_INPUT_NONE) {
+        return 1;
+    }
+    if (input == THERON_STARTUP_INPUT_BACK) {
+        out_action->kind =
+            (phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
+             phase == THERON_STARTUP_PHASE_READY)
+                ? THERON_STARTUP_ACTION_SHOW_STAGE_SELECT
+                : THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER;
+        out_receipt->input_result =
+            out_action->kind == THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER
+                ? THERON_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER
+                : THERON_STARTUP_INPUT_RESULT_REDRAW;
+        return 1;
+    }
+    if (phase == THERON_STARTUP_PHASE_TITLE) {
+        if (input == THERON_STARTUP_INPUT_ACCEPT ||
+            input == THERON_STARTUP_INPUT_ACTION) {
+            out_action->kind = THERON_STARTUP_ACTION_SHOW_STAGE_SELECT;
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+        }
+        return 1;
+    }
+    if (phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
+        const Theron_StartupLayoutElement *target = focused;
+        if (input == THERON_STARTUP_INPUT_UP ||
+            input == THERON_STARTUP_INPUT_DOWN) {
+            target = tqr_boot_startup_view_model_move_stage_focus(
+                view_model,
+                focused,
+                input == THERON_STARTUP_INPUT_UP ? -1 : 1,
+                &continue_focus);
+            out_action->kind = THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR;
+            out_action->continue_focus = continue_focus;
+            if (target &&
+                target->kind == THERON_STARTUP_LAYOUT_ELEMENT_STAGE) {
+                out_action->selected_dungeon = target->dungeon_id;
+            }
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            return 1;
+        }
+        if (input == THERON_STARTUP_INPUT_ACCEPT ||
+            input == THERON_STARTUP_INPUT_ACTION) {
+            if (focused &&
+                focused->kind == THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE) {
+                out_action->kind = THERON_STARTUP_ACTION_CONTINUE_SAVE;
+            } else {
+                target = focused && focused->kind ==
+                                      THERON_STARTUP_LAYOUT_ELEMENT_STAGE
+                             ? focused
+                             : tqr_boot_startup_view_model_first_element(
+                                   view_model,
+                                   THERON_STARTUP_LAYOUT_ELEMENT_STAGE);
+                out_action->kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
+                if (target) {
+                    out_action->selected_dungeon = target->dungeon_id;
+                }
+            }
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+        }
+        return 1;
+    }
+    if (phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
+        phase == THERON_STARTUP_PHASE_READY) {
+        int cursor = 0;
+        if (focused &&
+            focused->kind == THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD) {
+            cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
+        } else if (focused &&
+                   focused->kind == THERON_STARTUP_LAYOUT_ELEMENT_MIRROR) {
+            cursor = focused->mirror_index;
+        }
+        if (input == THERON_STARTUP_INPUT_LEFT ||
+            input == THERON_STARTUP_INPUT_UP) {
+            out_action->kind = THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR;
+            out_action->cursor =
+                (cursor + THERON_STARTUP_HERO_MIRROR_COUNT) %
+                (THERON_STARTUP_HERO_MIRROR_COUNT + 1);
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            return 1;
+        }
+        if (input == THERON_STARTUP_INPUT_RIGHT ||
+            input == THERON_STARTUP_INPUT_DOWN) {
+            out_action->kind = THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR;
+            out_action->cursor =
+                (cursor + 1) % (THERON_STARTUP_HERO_MIRROR_COUNT + 1);
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            return 1;
+        }
+        if (input == THERON_STARTUP_INPUT_ACCEPT &&
+            cursor < THERON_STARTUP_HERO_MIRROR_COUNT) {
+            out_action->kind = THERON_STARTUP_ACTION_TOGGLE_MIRROR;
+            out_action->cursor = cursor;
+            out_action->mirror_index = cursor;
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            return 1;
+        }
+        if ((input == THERON_STARTUP_INPUT_ACCEPT &&
+             cursor == THERON_STARTUP_HERO_MIRROR_COUNT) ||
+            input == THERON_STARTUP_INPUT_ACTION) {
+            out_action->kind = THERON_STARTUP_ACTION_ENTER_FORCEFIELD;
+            out_action->cursor = cursor;
+            out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            return 1;
+        }
+    }
+    return 1;
 }
 
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(

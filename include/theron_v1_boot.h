@@ -565,6 +565,11 @@ int theron_v1_boot_startup_execute_pointer_from_view_model(
     int y,
     Theron_StartupAction *out_action,
     Theron_StartupInputReceipt *out_receipt);
+int theron_v1_boot_startup_execute_input_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action,
+    Theron_StartupInputReceipt *out_receipt);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
