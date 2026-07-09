@@ -575,6 +575,38 @@ int theron_v1_startup_runtime_entry_apply_receipt(
     return 1;
 }
 
+static int theron_v1_startup_runtime_entry_failure_apply_receipt(
+    const Theron_StartupActionPlan *plan,
+    const Theron_V1StartupRuntimeEntryResult *result,
+    const char *runtime_receipt,
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_receipt) {
+
+    const char *status;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_runtime_entry_apply_receipt_init(out_receipt);
+    status = (runtime_receipt && runtime_receipt[0])
+        ? runtime_receipt
+        : "THERON RUNTIME ENTRY FAILED";
+    out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+    out_receipt->status_scope = (plan && plan->status_scope)
+        ? plan->status_scope
+        : "READY";
+    out_receipt->status = status;
+    out_receipt->inspect_scope = "READY";
+    snprintf(out_receipt->inspect_detail,
+             sizeof(out_receipt->inspect_detail),
+             "%s%s%s",
+             status,
+             result ? " result=" : "",
+             result ? theron_v1_startup_result_name(result->result) : "");
+    out_receipt->log_first_line = "T0: THERON BLOCKED";
+    out_receipt->log_receipt = 1;
+    return 1;
+}
+
 int theron_v1_startup_runtime_entry_state_receipt_from_result(
     const Theron_StartupFlow *flow,
     const Theron_V1StartupRuntimeEntryResult *result,
@@ -627,6 +659,13 @@ int theron_v1_startup_runtime_enter_from_forcefield_with_receipts(
                                                          result,
                                                          receipt,
                                                          receipt_cap)) {
+        if (out_apply_receipt) {
+            theron_v1_startup_runtime_entry_failure_apply_receipt(
+                plan,
+                result,
+                receipt,
+                out_apply_receipt);
+        }
         return 0;
     }
     if (out_state_receipt &&
@@ -731,6 +770,11 @@ int theron_v1_startup_runtime_enter_from_forcefield_facts_with_host_receipts(
             out_state_receipt,
             receipt,
             receipt_cap)) {
+        if (out_host_receipt) {
+            theron_v1_startup_host_receipt_from_runtime_entry_apply(
+                &apply_receipt,
+                out_host_receipt);
+        }
         return 0;
     }
     if (out_host_receipt &&

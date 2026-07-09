@@ -2644,6 +2644,56 @@ int main(void) {
                 check_int("runtime facts apply redraw",
                           runtime_apply_receipt.input_result,
                           THERON_STARTUP_INPUT_RESULT_REDRAW);
+                {
+                    static const uint8_t verified_empty_track02[64] = {0};
+                    Theron_StartupHostReceipt runtime_host_receipt;
+
+                    theron_v1_startup_flow_init(&flow);
+                    theron_v1_world_init(&world);
+                    runtime_receipt[0] = '\0';
+                    check_int("runtime host blocked choose rc",
+                              theron_v1_startup_choose_stage(
+                                  &flow,
+                                  &progression,
+                                  THERON_DUNGEON_1_HALL_OF_RECORDS),
+                              THERON_STARTUP_OK);
+                    check_int("runtime host blocked mirror rc",
+                              theron_v1_startup_select_mirror(&flow, 0),
+                              THERON_STARTUP_OK);
+                    theron_v1_startup_host_receipt_init(&runtime_host_receipt);
+                    check_int("runtime host verified Track02 blocked rc",
+                              theron_v1_startup_runtime_enter_from_forcefield_facts_with_host_receipts(
+                                  &flow,
+                                  &world,
+                                  verified_empty_track02,
+                                  sizeof(verified_empty_track02),
+                                  THERON_TRACK02_MD5_US_BIN,
+                                  fixed_roster,
+                                  (int)THERON_STARTUP_MEDIA_ROSTER_CAPACITY,
+                                  &forcefield_plan,
+                                  &runtime_result,
+                                  &runtime_host_receipt,
+                                  &state_receipt,
+                                  runtime_receipt,
+                                  sizeof(runtime_receipt)),
+                              0);
+                    check_int("runtime host verified Track02 no level",
+                              world.level_loaded[
+                                  THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                              0);
+                    check_contains("runtime host verified Track02 receipt",
+                                   runtime_receipt,
+                                   "fallback visuals blocked");
+                    check_contains("runtime host verified Track02 status",
+                                   runtime_host_receipt.status,
+                                   "fallback visuals blocked");
+                    check_contains("runtime host verified Track02 inspect",
+                                   runtime_host_receipt.inspect_detail,
+                                   "fallback visuals blocked");
+                    check_int("runtime host verified Track02 redraw",
+                              runtime_host_receipt.input_result,
+                              THERON_STARTUP_INPUT_RESULT_REDRAW);
+                }
             }
         }
         theron_v1_startup_flow_init(&flow);
