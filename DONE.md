@@ -42,6 +42,8 @@
 
 - ✅ 2026-07-09 Theron pointer/render host routes from view-model: boot now exposes pointer-to-host receipt and graphics-plan execution directly from the Track 02 startup view model, so click routing and title/menu rendering can consume the same receipt without rebuilding raw session/media state. Verification: `test_theron_v1_startup_save_resume_pc34` 192/192 and `git diff --check` passed.
 
+- ✅ 2026-07-09 Theron snapshot media receipt routes: boot snapshot render rows, layout, render plan, input host, and pointer host routes now accept a Track 02 startup media receipt and delegate through the Theron startup view model, eliminating duplicated prompt/roster/session inference for snapshot callers. Verification: manual isolated `test_theron_v1_startup_save_resume_pc34` 198/198 and `git diff --check` passed; the normal CMake target is currently blocked by unrelated DM2 `DM2_V1_BootProfile` header errors.
+
 - ✅ 2026-07-09 CSB startup title render route receipt: CSB render-view receipts now expose post-FTL title render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus startup asset gate receipt: launcher startup assets now separate title readiness from real save/champion menu surface readiness, blocking menu routes on MENU.BPK PRS3/truncated/no-surface states while keeping fallback visuals disallowed. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
