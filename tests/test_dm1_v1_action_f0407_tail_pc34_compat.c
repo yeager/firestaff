@@ -1928,6 +1928,7 @@ static void test_melee_f0231_damage_gate_plan(void) {
 static void test_melee_f0231_aftermath_plan(void) {
     DM1_MeleeF0231AftermathInputPc34 in;
     DM1_MeleeF0231AftermathPlanPc34 out;
+    DM1_MeleeF0231RawGroupWritebackPlanPc34 rawWritebackOut;
 
     memset(&in, 0, sizeof(in));
     in.groupIndex = 4;
@@ -1980,6 +1981,15 @@ static void test_melee_f0231_aftermath_plan(void) {
     CHECK_EQ(out.mutationPartyMapX, 7,
              "F0231 killed-all mutation party x");
     CHECK_EQ(out.shouldWriteRawGroup, 1, "F0231 killed-all writeback");
+    CHECK_EQ(dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
+                 &out, &rawWritebackOut), 1,
+             "F0231 killed-all raw writeback receipt builds");
+    CHECK_EQ(rawWritebackOut.valid, 1,
+             "F0231 killed-all raw writeback valid");
+    CHECK_EQ(rawWritebackOut.shouldWriteRawGroup, 1,
+             "F0231 killed-all raw writeback enabled");
+    CHECK_EQ(rawWritebackOut.groupIndex, 4,
+             "F0231 killed-all raw writeback group");
     CHECK_EQ(out.shouldEmitKillNotify, 1, "F0231 killed-all notifies");
     CHECK_EQ(out.killNotifyGroupIndex, 4,
              "F0231 killed-all notify group");
@@ -2055,6 +2065,13 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 no-kill clears mutation group");
     CHECK_EQ(out.shouldCreateDeathSmoke, 0, "F0231 no-kill no smoke");
     CHECK_EQ(out.shouldWriteRawGroup, 1, "F0231 no-kill writeback");
+    CHECK_EQ(dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
+                 &out, &rawWritebackOut), 1,
+             "F0231 no-kill raw writeback receipt builds");
+    CHECK_EQ(rawWritebackOut.shouldWriteRawGroup, 1,
+             "F0231 no-kill raw writeback enabled");
+    CHECK_EQ(rawWritebackOut.groupIndex, 4,
+             "F0231 no-kill raw writeback uses reaction group");
     CHECK_EQ(out.shouldEmitKillNotify, 0, "F0231 no-kill no notify");
     CHECK_EQ(out.killNotifyGroupIndex, -1,
              "F0231 no-kill clears notify group");
@@ -2068,6 +2085,11 @@ static void test_melee_f0231_aftermath_plan(void) {
     CHECK_EQ(out.shouldDropPossessions, 0, "F0231 miss no drops");
     CHECK_EQ(out.shouldCreateDeathSmoke, 0, "F0231 miss no smoke");
     CHECK_EQ(out.shouldWriteRawGroup, 0, "F0231 miss no writeback");
+    CHECK_EQ(dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
+                 &out, &rawWritebackOut), 1,
+             "F0231 miss raw writeback receipt builds");
+    CHECK_EQ(rawWritebackOut.shouldWriteRawGroup, 0,
+             "F0231 miss raw writeback disabled");
     CHECK_EQ(out.shouldEmitKillNotify, 0, "F0231 miss no notify");
     CHECK_EQ(out.shouldScheduleReaction, 1, "F0231 miss reaction");
 }

@@ -6816,6 +6816,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             DM1_MeleeF0190GroupDamageApplyPlanPc34 damageApplyPlan;
             DM1_MeleeF0231AftermathInputPc34 aftermathIn;
             DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
+            DM1_MeleeF0231RawGroupWritebackPlanPc34 rawGroupWritebackPlan;
             DM1_MeleeF0231ResolveRuntimeInputPc34 resolveRuntimeIn;
             DM1_MeleeF0231ResolveRuntimePlanPc34 resolveRuntimePlan;
             struct CombatResult_Compat groupDamageResult;
@@ -7031,12 +7032,15 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                     world, &world->things->groups[groupIndex],
                                     &aftermathPlan);
                         }
-                        if (aftermathPlan.shouldWriteRawGroup) {
-                            /* ReDMCSB GROUP.C:F0190 lines 892-917 compacts or
-                             * unlinks the damaged group after F0231/F0738 melee
-                             * damage.  Keep the raw DUNGEON.DAT group record
-                             * synchronized with the decoded group state. */
-                            orch_write_raw_group_compat(world->things, groupIndex);
+                        memset(&rawGroupWritebackPlan, 0,
+                               sizeof(rawGroupWritebackPlan));
+                        if (dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
+                                &aftermathPlan, &rawGroupWritebackPlan) &&
+                            rawGroupWritebackPlan.valid &&
+                            rawGroupWritebackPlan.shouldWriteRawGroup) {
+                            orch_write_raw_group_compat(
+                                world->things,
+                                rawGroupWritebackPlan.groupIndex);
                         }
                     }
                     aftermathIn.killedCell = killedCell;
