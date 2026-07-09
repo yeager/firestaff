@@ -3,15 +3,15 @@
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
 #include <string.h>
 
-static int m11_normalize_direction_or_cell(int value) {
+static int dm1_v1_normalize_direction_or_cell_pc34(int value) {
     return value & 3;
 }
 
-static unsigned int m11_get_group_value(unsigned int packed, int creatureIndex) {
+static unsigned int dm1_v1_get_group_value_pc34(unsigned int packed, int creatureIndex) {
     return (packed >> (creatureIndex * 2)) & 3u;
 }
 
-static unsigned int m11_set_group_value(unsigned int packed, int creatureIndex, unsigned int value) {
+static unsigned int dm1_v1_set_group_value_pc34(unsigned int packed, int creatureIndex, unsigned int value) {
     unsigned int shift = (unsigned int)(creatureIndex * 2);
     packed &= ~(3u << shift);
     packed |= (value & 3u) << shift;
@@ -33,31 +33,31 @@ int DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(const DM1_V1_TeleporterDe
 
     if (!teleporter || !outDirections || !outCells || creatureCountMinusOne < 0) return 0;
 
-    rotation = m11_normalize_direction_or_cell(teleporter->destFacing);
+    rotation = dm1_v1_normalize_direction_or_cell_pc34(teleporter->destFacing);
     absoluteRotation = teleporter->absoluteRotation != 0;
     directions = inDirections;
     cells = inCells;
 
     for (i = 0; i <= creatureCountMinusOne; ++i) {
-        int oldDirection = (int)m11_get_group_value(inDirections, i);
+        int oldDirection = (int)dm1_v1_get_group_value_pc34(inDirections, i);
         int newDirection = absoluteRotation
             ? rotation
-            : m11_normalize_direction_or_cell(oldDirection + rotation);
-        directions = m11_set_group_value(directions, i, (unsigned int)newDirection);
+            : dm1_v1_normalize_direction_or_cell_pc34(oldDirection + rotation);
+        directions = dm1_v1_set_group_value_pc34(directions, i, (unsigned int)newDirection);
 
-        if (inCells != M11_GROUP_CELL_SINGLE_CENTERED) {
+        if (inCells != DM1_V1_GROUP_CELL_SINGLE_CENTERED_PC34) {
             int cellRotation = 0;
-            if (creatureSize == M11_CREATURE_SIZE_QUARTER_SQUARE) {
+            if (creatureSize == DM1_V1_CREATURE_SIZE_QUARTER_SQUARE_PC34) {
                 cellRotation = absoluteRotation ? 0 : rotation;
             } else {
                 cellRotation = absoluteRotation
-                    ? m11_normalize_direction_or_cell(rotation - oldDirection)
+                    ? dm1_v1_normalize_direction_or_cell_pc34(rotation - oldDirection)
                     : rotation;
             }
             if (cellRotation) {
-                int oldCell = (int)m11_get_group_value(inCells, i);
-                cells = m11_set_group_value(cells, i,
-                    (unsigned int)m11_normalize_direction_or_cell(oldCell + cellRotation));
+                int oldCell = (int)dm1_v1_get_group_value_pc34(inCells, i);
+                cells = dm1_v1_set_group_value_pc34(cells, i,
+                    (unsigned int)dm1_v1_normalize_direction_or_cell_pc34(oldCell + cellRotation));
             }
         }
     }
@@ -79,43 +79,43 @@ int DM1_V1_ApplyTeleporterRotationF0267Pc34Compat(int thingKind,
 
     if (!teleporter || !outDirection || !outCell) return 0;
 
-    rotation = m11_normalize_direction_or_cell(teleporter->destFacing);
-    singleCenteredCell = (inCell == M11_GROUP_CELL_SINGLE_CENTERED);
-    *outDirection = m11_normalize_direction_or_cell(inDirection);
-    *outCell = singleCenteredCell ? M11_GROUP_CELL_SINGLE_CENTERED : m11_normalize_direction_or_cell(inCell);
+    rotation = dm1_v1_normalize_direction_or_cell_pc34(teleporter->destFacing);
+    singleCenteredCell = (inCell == DM1_V1_GROUP_CELL_SINGLE_CENTERED_PC34);
+    *outDirection = dm1_v1_normalize_direction_or_cell_pc34(inDirection);
+    *outCell = singleCenteredCell ? DM1_V1_GROUP_CELL_SINGLE_CENTERED_PC34 : dm1_v1_normalize_direction_or_cell_pc34(inCell);
 
     switch (thingKind) {
-    case M11_TELEPORTER_ROTATE_THING_PARTY:
+    case DM1_V1_TELEPORTER_ROTATE_THING_PARTY_PC34:
         if (teleporter->absoluteRotation) {
             *outDirection = rotation;
         } else {
-            *outDirection = m11_normalize_direction_or_cell(*outDirection + rotation);
+            *outDirection = dm1_v1_normalize_direction_or_cell_pc34(*outDirection + rotation);
         }
         return 1;
-    case M11_TELEPORTER_ROTATE_THING_PROJECTILE:
+    case DM1_V1_TELEPORTER_ROTATE_THING_PROJECTILE_PC34:
         if (teleporter->absoluteRotation) {
             *outDirection = rotation;
         } else {
-            *outDirection = m11_normalize_direction_or_cell(*outDirection + rotation);
-            *outCell = m11_normalize_direction_or_cell(*outCell + rotation);
+            *outDirection = dm1_v1_normalize_direction_or_cell_pc34(*outDirection + rotation);
+            *outCell = dm1_v1_normalize_direction_or_cell_pc34(*outCell + rotation);
         }
         return 1;
-    case M11_TELEPORTER_ROTATE_THING_OBJECT:
+    case DM1_V1_TELEPORTER_ROTATE_THING_OBJECT_PC34:
         if (!teleporter->absoluteRotation &&
-            sourceMapX != M11_MAPX_PROJECTILE_ASSOCIATED_OBJECT) {
-            *outCell = m11_normalize_direction_or_cell(*outCell + rotation);
+            sourceMapX != DM1_V1_MAPX_PROJECTILE_ASSOCIATED_OBJECT_PC34) {
+            *outCell = dm1_v1_normalize_direction_or_cell_pc34(*outCell + rotation);
         }
         return 1;
-    case M11_TELEPORTER_ROTATE_THING_GROUP: {
+    case DM1_V1_TELEPORTER_ROTATE_THING_GROUP_PC34: {
         unsigned int groupDirections;
         unsigned int groupCells;
         if (!DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(teleporter, 0,
-                M11_CREATURE_SIZE_QUARTER_SQUARE, (unsigned int)*outDirection,
+                DM1_V1_CREATURE_SIZE_QUARTER_SQUARE_PC34, (unsigned int)*outDirection,
                 (unsigned int)*outCell, &groupDirections, &groupCells)) {
             return 0;
         }
         *outDirection = (int)(groupDirections & 3u);
-        *outCell = singleCenteredCell ? M11_GROUP_CELL_SINGLE_CENTERED : (int)(groupCells & 3u);
+        *outCell = singleCenteredCell ? DM1_V1_GROUP_CELL_SINGLE_CENTERED_PC34 : (int)(groupCells & 3u);
         return 1;
     }
     default:
@@ -123,7 +123,7 @@ int DM1_V1_ApplyTeleporterRotationF0267Pc34Compat(int thingKind,
     }
 }
 
-const char* m11_teleporter_rotation_source_evidence(void) {
+const char* DM1_V1_TeleporterRotation_SourceEvidencePc34Compat(void) {
     return "ReDMCSB WIP20210206 Toolchains/Common/Source: MOVESENS.C:33-111 F0262 group teleporter direction/cell rotation; MOVESENS.C:120-133 F0263 projectile teleporter rotation; MOVESENS.C:316-322 F0267 source-map sentinel contract; MOVESENS.C:493-518 party absolute/relative teleporter rotation; MOVESENS.C:520-524 group audible buzz and F0262 dispatch; MOVESENS.C:526-531 projectile/object teleporter rotation and projectile-associated object exception";
 }
 
@@ -139,7 +139,7 @@ int DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
 
     if (!outPlan) return 0;
     memset(&plan, 0, sizeof(plan));
-    plan.reason = M11_GROUP_MOVE_REMOVAL_REASON_NONE;
+    plan.reason = DM1_V1_GROUP_MOVE_REMOVAL_REASON_NONE_PC34;
     plan.dropGroupPossessionsSoundMode = -1;
     plan.dropMapX = destinationMapX;
     plan.dropMapY = destinationMapY;
@@ -158,11 +158,11 @@ int DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
      * group only when it came from a square, and reports move prevented. */
     plan.movePrevented = 1;
     plan.reason = fallKilledGroup
-        ? M11_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED
-        : M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED;
+        ? DM1_V1_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED_PC34
+        : DM1_V1_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED_PC34;
     plan.dropMovingCreatureFixedPossessions = 1;
     plan.dropGroupPossessions = 1;
-    plan.dropGroupPossessionsSoundMode = M11_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER;
+    plan.dropGroupPossessionsSoundMode = DM1_V1_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER_PC34;
     plan.deleteSourceGroup = (sourceMapX >= 0);
 
     *outPlan = plan;
@@ -190,23 +190,23 @@ int DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
     plan.mapY = destinationMapY;
 
     if (fallKilledGroup || !creatureAllowedOnDestinationMap) {
-        plan.route = M11_GROUP_MOVE_ROUTE_REMOVE;
+        plan.route = DM1_V1_GROUP_MOVE_ROUTE_REMOVE_PC34;
         plan.shouldEmitAudibleBuzz = audibleEvent ? 1 : 0;
         plan.removalReason = fallKilledGroup
-            ? M11_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED
-            : M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED;
+            ? DM1_V1_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED_PC34
+            : DM1_V1_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED_PC34;
         *outPlan = plan;
         return 1;
     }
 
     if (destinationBlocked) {
         if (chaosAdjacentAvailable) {
-            plan.route = M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT;
+            plan.route = DM1_V1_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT_PC34;
             plan.shouldEmitAudibleBuzz = audibleEvent ? 1 : 0;
             plan.mapX = chaosAdjacentMapX;
             plan.mapY = chaosAdjacentMapY;
         } else {
-            plan.route = M11_GROUP_MOVE_ROUTE_RETRY;
+            plan.route = DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34;
             plan.shouldScheduleRetry = 1;
             plan.retryFireAtTick = currentFireAtTick + 5u;
         }
@@ -214,7 +214,7 @@ int DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
         return 1;
     }
 
-    plan.route = M11_GROUP_MOVE_ROUTE_INSERT;
+    plan.route = DM1_V1_GROUP_MOVE_ROUTE_INSERT_PC34;
     plan.shouldEmitAudibleBuzz = audibleEvent ? 1 : 0;
     *outPlan = plan;
     return 1;
@@ -238,25 +238,25 @@ int DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
     plan.destinationMapY = sourceMapY;
 
     switch (direction & 3) {
-        case M11_DIRECTION_NORTH: plan.destinationMapY--; break;
-        case M11_DIRECTION_EAST:  plan.destinationMapX++; break;
-        case M11_DIRECTION_SOUTH: plan.destinationMapY++; break;
-        case M11_DIRECTION_WEST:  plan.destinationMapX--; break;
+        case DM1_V1_DIRECTION_NORTH_PC34: plan.destinationMapY--; break;
+        case DM1_V1_DIRECTION_EAST_PC34:  plan.destinationMapX++; break;
+        case DM1_V1_DIRECTION_SOUTH_PC34: plan.destinationMapY++; break;
+        case DM1_V1_DIRECTION_WEST_PC34:  plan.destinationMapX--; break;
     }
 
     if (!destinationPassable || destinationBlocked) {
-        plan.route = M11_GROUP_MOVE_ROUTE_RETRY;
+        plan.route = DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34;
         plan.retryFireAtTick = currentTick + 1u;
         *outPlan = plan;
         return 1;
     }
     if (killedByProjectile) {
-        plan.route = M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE;
+        plan.route = DM1_V1_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE_PC34;
         *outPlan = plan;
         return 1;
     }
 
-    plan.route = M11_GROUP_MOVE_ROUTE_INSERT;
+    plan.route = DM1_V1_GROUP_MOVE_ROUTE_INSERT_PC34;
     plan.retryFireAtTick = currentTick + 1u;
 
     /* ReDMCSB GROUP.C F0209 lines 1928/2175 enters MOVESENS.C F0267
@@ -289,20 +289,20 @@ int DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
     plan.nextEventMapX = movePlan->destinationMapX;
     plan.nextEventMapY = movePlan->destinationMapY;
 
-    if (movePlan->route == M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE) {
+    if (movePlan->route == DM1_V1_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE_PC34) {
         plan.shouldUnlinkSource = 1;
         plan.shouldRemoveActiveGroup = 1;
         *outPlan = plan;
         return 1;
     }
-    if (movePlan->route == M11_GROUP_MOVE_ROUTE_INSERT) {
+    if (movePlan->route == DM1_V1_GROUP_MOVE_ROUTE_INSERT_PC34) {
         plan.shouldUnlinkSource = 1;
         plan.shouldLinkDestination = 1;
         plan.shouldRequeue = 1;
         *outPlan = plan;
         return 1;
     }
-    if (movePlan->route == M11_GROUP_MOVE_ROUTE_RETRY) {
+    if (movePlan->route == DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34) {
         plan.shouldRequeue = 1;
         plan.nextEventMapX = movePlan->destinationMapX;
         plan.nextEventMapY = movePlan->destinationMapY;
@@ -361,7 +361,7 @@ int DM1_V1_PlanGroupTeleporterDestinationF0267Pc34Compat(
     plan.targetMapY = sourceMapY;
 
     if (squareType != teleporterSquareType || !teleporterOpen ||
-        !teleporterFound || !(teleporterScope & M11_TELEPORTER_SCOPE_CREATURES)) {
+        !teleporterFound || !(teleporterScope & DM1_V1_TELEPORTER_SCOPE_CREATURES_PC34)) {
         *outPlan = plan;
         return 1;
     }
@@ -418,14 +418,14 @@ int DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
     plan.wanderMapY = mapY;
     plan.wanderGroupIndex = groupIndex;
     plan.wanderCreatureType = creatureType;
-    plan.wanderEventType = M11_AI_STATE_WANDER;
+    plan.wanderEventType = DM1_V1_AI_STATE_WANDER_PC34;
 
     if (mapIndex == partyMapIndex && activeGroupCapacity > 0 && activeGroupCount >= 0) {
         if (activeGroupCount >= activeGroupCapacity) {
             return 0;
         }
         plan.shouldCreateActiveState = 1;
-        plan.activeStateKind = M11_AI_STATE_WANDER;
+        plan.activeStateKind = DM1_V1_AI_STATE_WANDER_PC34;
         plan.activeCreatureType = creatureType;
         plan.activeMapIndex = mapIndex;
         plan.activeMapX = mapX;
@@ -483,7 +483,7 @@ int DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
     return 1;
 }
 
-const char* m11_group_move_removal_source_evidence(void) {
+const char* DM1_V1_GroupMoveRemoval_SourceEvidencePc34Compat(void) {
     return "ReDMCSB WIP20210206 Toolchains/Common/Source: "
            "MOVESENS.C F0267 lines 608-624 damages falling groups and drops moving fixed possessions on partial death; "
            "MOVESENS.C F0267 lines 656-663 handles fall-killed or destination-map-disallowed group removal via F0187/F0188/F0189; "

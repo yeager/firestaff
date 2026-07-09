@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 teleporter/pit ownership names: teleporter/pit constants, direction/cell packing helpers, source-evidence helpers, and group route tests now expose DM1-owned names; old M11 constants/evidence names remain compatibility aliases. Verification: group move removal, generator reenable/audio dispatch, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 viewport-click ownership names: click zones, view cells, grabbable state, resolver results, hit-test/setup helpers, and grabbable pile-top helpers now expose DM1-owned API names; old m11_click/m11_viewport names remain compatibility aliases. Verification: viewport-click source-lock, room transition 50/50, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 game-state ownership names: state identifiers, transition results, callbacks, state machine, and transition/query helpers now expose DM1-owned API names; old m11_game_state names remain compatibility aliases. Verification: firestaff_m10/firestaff_m11 rebuild, launcher handoff 88/88, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

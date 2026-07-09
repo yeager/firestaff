@@ -26,38 +26,38 @@ extern "C" {
  *                                          — MOVESENS.C F0267 + GROUP.C
  *                                            F0187/F0188/F0189 group
  *                                            removal/drop plan
- *     m11_teleporter_rotation_source_evidence
- *     m11_group_move_removal_source_evidence
+ *     DM1_V1_TeleporterRotation_SourceEvidencePc34Compat
+ *     DM1_V1_GroupMoveRemoval_SourceEvidencePc34Compat
  */
 
-#define M11_MAPX_PROJECTILE_ASSOCIATED_OBJECT (-2)
+#define DM1_V1_MAPX_PROJECTILE_ASSOCIATED_OBJECT_PC34 (-2)
 
-#define M11_TELEPORTER_ROTATE_THING_PARTY      0
-#define M11_TELEPORTER_ROTATE_THING_PROJECTILE 1
-#define M11_TELEPORTER_ROTATE_THING_OBJECT     2
-#define M11_TELEPORTER_ROTATE_THING_GROUP      3
+#define DM1_V1_TELEPORTER_ROTATE_THING_PARTY_PC34      0
+#define DM1_V1_TELEPORTER_ROTATE_THING_PROJECTILE_PC34 1
+#define DM1_V1_TELEPORTER_ROTATE_THING_OBJECT_PC34     2
+#define DM1_V1_TELEPORTER_ROTATE_THING_GROUP_PC34      3
 
-#define M11_GROUP_MOVE_REMOVAL_REASON_NONE          0
-#define M11_GROUP_CELL_SINGLE_CENTERED              0xFF
-#define M11_CREATURE_SIZE_QUARTER_SQUARE            0
-#define M11_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED   1
-#define M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED   2
-#define M11_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER 2
+#define DM1_V1_GROUP_MOVE_REMOVAL_REASON_NONE_PC34          0
+#define DM1_V1_GROUP_CELL_SINGLE_CENTERED_PC34              0xFF
+#define DM1_V1_CREATURE_SIZE_QUARTER_SQUARE_PC34            0
+#define DM1_V1_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED_PC34   1
+#define DM1_V1_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED_PC34   2
+#define DM1_V1_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER_PC34 2
 
-#define M11_GROUP_MOVE_ROUTE_INSERT                 1
-#define M11_GROUP_MOVE_ROUTE_REMOVE                 2
-#define M11_GROUP_MOVE_ROUTE_RETRY                  3
-#define M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT  4
-#define M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE   5
+#define DM1_V1_GROUP_MOVE_ROUTE_INSERT_PC34                 1
+#define DM1_V1_GROUP_MOVE_ROUTE_REMOVE_PC34                 2
+#define DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34                  3
+#define DM1_V1_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT_PC34  4
+#define DM1_V1_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE_PC34   5
 
-#define M11_TELEPORTER_SCOPE_CREATURES              0x01
+#define DM1_V1_TELEPORTER_SCOPE_CREATURES_PC34              0x01
 
-#define M11_DIRECTION_NORTH                         0
-#define M11_DIRECTION_EAST                          1
-#define M11_DIRECTION_SOUTH                         2
-#define M11_DIRECTION_WEST                          3
+#define DM1_V1_DIRECTION_NORTH_PC34                         0
+#define DM1_V1_DIRECTION_EAST_PC34                          1
+#define DM1_V1_DIRECTION_SOUTH_PC34                         2
+#define DM1_V1_DIRECTION_WEST_PC34                          3
 
-#define M11_AI_STATE_WANDER                         1
+#define DM1_V1_AI_STATE_WANDER_PC34                         1
 
 typedef struct {
     int x;
@@ -192,7 +192,7 @@ int  DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(const DM1_V1_TeleporterD
                                    unsigned int inCells,
                                    unsigned int* outDirections,
                                    unsigned int* outCells);
-const char* m11_teleporter_rotation_source_evidence(void);
+const char* DM1_V1_TeleporterRotation_SourceEvidencePc34Compat(void);
 int  DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
         int fallKilledGroup,
         int creatureAllowedOnDestinationMap,
@@ -272,8 +272,34 @@ int  DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
         int candidateAllowedSquare,
         int candidateBlocked,
         DM1_V1_LordChaosAdjacentRetryPlanPc34* outPlan);
-const char* m11_group_move_removal_source_evidence(void);
+const char* DM1_V1_GroupMoveRemoval_SourceEvidencePc34Compat(void);
 
+#define M11_MAPX_PROJECTILE_ASSOCIATED_OBJECT DM1_V1_MAPX_PROJECTILE_ASSOCIATED_OBJECT_PC34
+#define M11_TELEPORTER_ROTATE_THING_PARTY DM1_V1_TELEPORTER_ROTATE_THING_PARTY_PC34
+#define M11_TELEPORTER_ROTATE_THING_PROJECTILE DM1_V1_TELEPORTER_ROTATE_THING_PROJECTILE_PC34
+#define M11_TELEPORTER_ROTATE_THING_OBJECT DM1_V1_TELEPORTER_ROTATE_THING_OBJECT_PC34
+#define M11_TELEPORTER_ROTATE_THING_GROUP DM1_V1_TELEPORTER_ROTATE_THING_GROUP_PC34
+#define M11_GROUP_MOVE_REMOVAL_REASON_NONE DM1_V1_GROUP_MOVE_REMOVAL_REASON_NONE_PC34
+#define M11_GROUP_CELL_SINGLE_CENTERED DM1_V1_GROUP_CELL_SINGLE_CENTERED_PC34
+#define M11_CREATURE_SIZE_QUARTER_SQUARE DM1_V1_CREATURE_SIZE_QUARTER_SQUARE_PC34
+#define M11_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED DM1_V1_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED_PC34
+#define M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED DM1_V1_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED_PC34
+#define M11_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER DM1_V1_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER_PC34
+#define M11_GROUP_MOVE_ROUTE_INSERT DM1_V1_GROUP_MOVE_ROUTE_INSERT_PC34
+#define M11_GROUP_MOVE_ROUTE_REMOVE DM1_V1_GROUP_MOVE_ROUTE_REMOVE_PC34
+#define M11_GROUP_MOVE_ROUTE_RETRY DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34
+#define M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT DM1_V1_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT_PC34
+#define M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE DM1_V1_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE_PC34
+#define M11_TELEPORTER_SCOPE_CREATURES DM1_V1_TELEPORTER_SCOPE_CREATURES_PC34
+#define M11_DIRECTION_NORTH DM1_V1_DIRECTION_NORTH_PC34
+#define M11_DIRECTION_EAST DM1_V1_DIRECTION_EAST_PC34
+#define M11_DIRECTION_SOUTH DM1_V1_DIRECTION_SOUTH_PC34
+#define M11_DIRECTION_WEST DM1_V1_DIRECTION_WEST_PC34
+#define M11_AI_STATE_WANDER DM1_V1_AI_STATE_WANDER_PC34
+#define m11_teleporter_rotation_source_evidence \
+    DM1_V1_TeleporterRotation_SourceEvidencePc34Compat
+#define m11_group_move_removal_source_evidence \
+    DM1_V1_GroupMoveRemoval_SourceEvidencePc34Compat
 #define m11_apply_teleporter_rotation \
     DM1_V1_ApplyTeleporterRotationF0267Pc34Compat
 #define m11_apply_group_teleporter_rotation \
