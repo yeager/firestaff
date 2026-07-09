@@ -3288,7 +3288,7 @@ static int m11_execute_csb_entrance_opening_composite(
                                        framebufferWidth,
                                        framebufferHeight);
     context.dungeonFrame = dungeonFrame;
-    return csb_v1_boot_startup_execute_opening_composite_pc34(
+    return csb_v1_startup_execute_opening_composite_pc34(
         plan,
         m11_draw_csb_entrance_opening_frame_asset,
         &context);
@@ -21245,26 +21245,6 @@ static void m11_draw_dm1_front_mirror_backing(unsigned char* framebuffer,
                    M11_COLOR_GRAY);
 }
 
-static int m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
-    const DM1_V1_ChampionMirrorRenderReceiptPc34* receipt,
-    int candidatePanelActive,
-    int backingAssetAvailable,
-    DM1_V1_ChampionMirrorHostDrawReceiptPc34* outReceipt) {
-    if (!DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
-            receipt,
-            candidatePanelActive,
-            backingAssetAvailable,
-            outReceipt) ||
-        !outReceipt->valid) {
-        return 0;
-    }
-    if (outReceipt->candidatePanelOwnsCell) {
-        return 1;
-    }
-    return outReceipt->drawMirrorBackingAsset &&
-           !outReceipt->drawMirrorBackingFallbackRect;
-}
-
 static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             const M11_ViewportCell* frontCell,
                                             unsigned char* framebuffer,
@@ -21272,6 +21252,8 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             int fbH) {
     DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 drawReceipt;
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
+    DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
     M11_DM1ZoneBlit backingBlit;
     const M11_AssetSlot* slot;
     M11_ViewportCell mirrorCell;
@@ -21289,23 +21271,19 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         !receipt.drawChampionPortrait) {
         return;
     }
-    {
-        DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
-        DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
-        if (!m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
-                &mirrorCell, &receipt, &consumer) ||
-            !m11_build_dm1_hoc_full_graphics_ownership_receipt(
-                state, &consumer, &receipt, &ownership) ||
-            !ownership.ready ||
-            !ownership.consume_dm1_receipts_only ||
-            !ownership.draw_champion_mirror_wall_overlay ||
-            !ownership.suppress_false_item_payloads ||
-            !ownership.suppress_projectile_payloads ||
-            !ownership.suppress_spell_effect_payloads ||
-            !ownership.suppress_materialized_item_payload ||
-            !ownership.no_m11_fallback_scan) {
-            return;
-        }
+    if (!m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
+            &mirrorCell, &receipt, &consumer) ||
+        !m11_build_dm1_hoc_full_graphics_ownership_receipt(
+            state, &consumer, &receipt, &ownership) ||
+        !ownership.ready ||
+        !ownership.consume_dm1_receipts_only ||
+        !ownership.draw_champion_mirror_wall_overlay ||
+        !ownership.suppress_false_item_payloads ||
+        !ownership.suppress_projectile_payloads ||
+        !ownership.suppress_spell_effect_payloads ||
+        !ownership.suppress_materialized_item_payload ||
+        !ownership.no_m11_fallback_scan) {
+        return;
     }
     /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
      * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
@@ -21318,11 +21296,13 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     backingAssetAvailable =
         slot && slot->loaded && slot->pixels && slot->width > 0 &&
         slot->height > 0;
-    if (!m11_dm1_hoc_build_host_draw_receipt_no_backing_fallback(
+    if (!dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
+            &ownership,
             &receipt,
             state->candidateMirrorPanelActive,
             backingAssetAvailable,
-            &drawReceipt)) {
+            &drawReceipt) ||
+        !drawReceipt.valid) {
         return;
     }
 

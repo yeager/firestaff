@@ -878,10 +878,6 @@ int csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
     int menu_input,
     const CSB_V1_StartupRenderExecutor_PC34 *executor,
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 *out_receipt);
-int csb_v1_boot_startup_execute_opening_composite_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,
-    void *user);
 int csb_v1_boot_runtime_util_apply_pointer_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int x,

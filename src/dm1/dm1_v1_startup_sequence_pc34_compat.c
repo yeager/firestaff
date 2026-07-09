@@ -2227,6 +2227,56 @@ int dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
+    const DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34* ownership,
+    const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
+    int candidate_panel_active,
+    int backing_asset_available,
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34* out_receipt) {
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!ownership || !render) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!ownership->ready ||
+        !ownership->consume_dm1_receipts_only ||
+        !ownership->no_m11_fallback_scan ||
+        !ownership->render_hall_mirror_overlay ||
+        !ownership->draw_champion_mirror_wall_overlay ||
+        !ownership->redmcsb_c026_portrait_overlay_ready ||
+        !ownership->redmcsb_c346_mirror_backing_ready ||
+        !ownership->redmcsb_f0115_thing_layer_suppression_ready ||
+        !ownership->suppress_host_fallback_visuals) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    /* ReDMCSB DUNVIEW.C:3913-3928 draws C346/C026 from the wall-overlay
+     * route.  M11 may execute this host draw only through the DM1 HoC
+     * ownership receipt; missing backing assets must stop the draw rather
+     * than reopening the old host fallback rectangle path. */
+    if (!DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+            render,
+            candidate_panel_active ? 1 : 0,
+            backing_asset_available ? 1 : 0,
+            &receipt) ||
+        !receipt.valid) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!receipt.candidatePanelOwnsCell &&
+        (!receipt.drawMirrorBackingAsset ||
+         receipt.drawMirrorBackingFallbackRect)) {
+        memset(&receipt, 0, sizeof(receipt));
+    }
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
