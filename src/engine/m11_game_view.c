@@ -27933,8 +27933,8 @@ static int m11_build_explosion_digest(
 
 /* Apply the per-frame combat actions that F0822 emitted for this
  * explosion advance.  Mirrors the bounded V1 damage path used for
- * projectile impacts: champion HP direct write for party hits,
- * F0738_COMBAT_ApplyDamageToGroup_Compat for creature-group hits.
+ * projectile impacts: champion HP direct write for party hits and the DM1
+ * F0220 group-apply receipt for creature-group hits.
  * Pure data mutation, no M10 edits. */
 static void m11_explosion_apply_tick_result(
     M11_GameViewState* state,
@@ -27975,18 +27975,10 @@ static void m11_explosion_apply_tick_result(
             int gIdx = THING_GET_INDEX(groupThing);
             if (gIdx >= 0 && gIdx < state->world.things->groupCount) {
                 struct DungeonGroup_Compat* g = &state->world.things->groups[gIdx];
-                struct CombatResult_Compat res;
-                int outcome = 0;
-                int slotI;
-                memset(&res, 0, sizeof(res));
-                res.damageApplied = r->outActionGroup.rawAttackValue;
-                for (slotI = 0; slotI < 4; ++slotI) {
-                    if (g->health[slotI] > 0) {
-                        F0738_COMBAT_ApplyDamageToGroup_Compat(
-                            &res, g, slotI, &outcome);
-                        break;
-                    }
-                }
+                DM1_ExplosionGroupApplyPlanPc34 applyPlan;
+                memset(&applyPlan, 0, sizeof(applyPlan));
+                (void)dm1_v1_explosion_group_apply_pc34(
+                    &r->outActionGroup, g, &applyPlan);
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s SEARS %s",
                               (unsigned int)state->world.gameTick,
