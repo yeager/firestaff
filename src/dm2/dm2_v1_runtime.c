@@ -961,6 +961,15 @@ static int dm2_runtime_creature_frame_from_instance(
     return tick_count & 1;
 }
 
+static int dm2_runtime_creature_frame_source_from_instance(
+    const DM2_V1_CreatureInstance *inst)
+{
+    if (!inst) return 0;
+    if (inst->b_1a == DM2_CCM_CREATURE_ATTACKS_PARTY) return 2;
+    if (inst->attack_cooldown > 0) return 1;
+    return 0;
+}
+
 static void dm2_runtime_append_creature_instance_sprite(
     DM2_V1_ViewportState *viewport,
     const DM2_V1_CreatureInstance *inst,
@@ -1000,6 +1009,11 @@ static void dm2_runtime_append_creature_instance_sprite(
     g_dm2_last_creature_render.frame_index = dst->frame_index;
     g_dm2_last_creature_render.direction = dst->direction;
     g_dm2_last_creature_render.hp_pct = hp_pct;
+    g_dm2_last_creature_render.ccm_primary_state = inst->b_1a;
+    g_dm2_last_creature_render.ccm_secondary_state = inst->b_17;
+    g_dm2_last_creature_render.attack_cooldown = inst->attack_cooldown;
+    g_dm2_last_creature_render.frame_source =
+        dm2_runtime_creature_frame_source_from_instance(inst);
     g_dm2_last_creature_render.map_x = inst->world_x;
     g_dm2_last_creature_render.map_y = inst->world_y;
     g_dm2_last_creature_render.screen_x = placement->screen_x;
