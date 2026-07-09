@@ -2000,6 +2000,10 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 killed-all apply smoke");
     CHECK_EQ(applyOut.shouldApplyMutationDispatch, 1,
              "F0231 killed-all apply mutation dispatch");
+    CHECK_EQ(applyOut.mutationDispatchPlan.valid, 1,
+             "F0231 killed-all apply mutation dispatch valid");
+    CHECK_EQ(applyOut.mutationDispatchPlan.shouldApplyKilledAllSideEffects, 1,
+             "F0231 killed-all apply mutation killed-all side effects");
     CHECK_EQ(applyOut.shouldWriteRawGroup, 1,
              "F0231 killed-all apply raw writeback");
     CHECK_EQ(applyOut.rawGroupWritebackPlan.groupIndex, 4,
@@ -2097,6 +2101,8 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 no-kill apply no smoke");
     CHECK_EQ(applyOut.shouldApplyMutationDispatch, 0,
              "F0231 no-kill apply no mutation dispatch");
+    CHECK_EQ(applyOut.mutationDispatchPlan.valid, 0,
+             "F0231 no-kill apply no mutation plan");
     CHECK_EQ(applyOut.shouldWriteRawGroup, 1,
              "F0231 no-kill apply raw writeback");
     CHECK_EQ(applyOut.shouldScheduleReaction, 1,
