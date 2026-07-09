@@ -1246,13 +1246,42 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
     const Theron_StartupMediaStateReceipt *startup_media_receipt,
     Theron_V1_BootStartupViewModel *out_view_model)
 {
+    Theron_V1_BootRuntimeStartupSnapshot effective_snapshot;
     Theron_StartupSessionFacts session;
 
     if (!out_view_model) {
         return 0;
     }
     theron_v1_boot_startup_view_model_clear(out_view_model);
-    if (!theron_v1_boot_startup_session_from_snapshot(&session, snapshot)) {
+    if (!snapshot) {
+        return 0;
+    }
+    effective_snapshot = *snapshot;
+    if (startup_media_receipt) {
+        if ((!effective_snapshot.startup_text_prompt ||
+             effective_snapshot.startup_text_prompt[0] == '\0') &&
+            startup_media_receipt->startup_text_prompt_status ==
+                THERON_TRACK02_SIGNAL_OK &&
+            startup_media_receipt->startup_text_prompt[0] != '\0') {
+            effective_snapshot.startup_text_prompt =
+                startup_media_receipt->startup_text_prompt;
+        }
+        if (!effective_snapshot.startup_roster_names &&
+            startup_media_receipt->startup_roster_name_status ==
+                THERON_TRACK02_SIGNAL_OK &&
+            startup_media_receipt->startup_roster_name_count > 0) {
+            effective_snapshot.startup_roster_names =
+                startup_media_receipt->startup_roster_names;
+            effective_snapshot.startup_roster_titles =
+                startup_media_receipt->startup_roster_titles;
+            effective_snapshot.startup_roster_name_count =
+                startup_media_receipt->startup_roster_name_count;
+        }
+    }
+
+    if (!theron_v1_boot_startup_session_from_snapshot(
+            &session,
+            &effective_snapshot)) {
         return 0;
     }
 
@@ -1282,22 +1311,22 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
         &out_view_model->title_frame_max,
         &out_view_model->title_ready);
     out_view_model->runtime_level =
-        snapshot && snapshot->world ? snapshot->world->current_level : -1;
+        effective_snapshot.world ? effective_snapshot.world->current_level : -1;
     out_view_model->runtime_champion_count =
-        snapshot && snapshot->world
-            ? snapshot->world->party.champion_count
+        effective_snapshot.world
+            ? effective_snapshot.world->party.champion_count
             : -1;
-    out_view_model->continue_focus = snapshot ? snapshot->continue_focus : 0;
-    out_view_model->resume_claim = snapshot ? snapshot->resume_claim : 0;
-    out_view_model->tqsv_slot = snapshot ? snapshot->tqsv_slot : -1;
-    out_view_model->srm_slot = snapshot ? snapshot->srm_slot : -1;
+    out_view_model->continue_focus = effective_snapshot.continue_focus;
+    out_view_model->resume_claim = effective_snapshot.resume_claim;
+    out_view_model->tqsv_slot = effective_snapshot.tqsv_slot;
+    out_view_model->srm_slot = effective_snapshot.srm_slot;
     out_view_model->srm_import_status =
-        snapshot ? snapshot->srm_import_status : 0;
+        effective_snapshot.srm_import_status;
     out_view_model->runtime_level_source = 0;
     out_view_model->runtime_track02_semantic_handoff = 0;
     out_view_model->runtime_fallback_visuals_blocked = 0;
-    if (snapshot && snapshot->world) {
-        const Theron_V1_World *world = snapshot->world;
+    if (effective_snapshot.world) {
+        const Theron_V1_World *world = effective_snapshot.world;
         int dungeon_index = world->current_dungeon - 1;
         if (dungeon_index >= 0 &&
             dungeon_index < THERON_DUNGEON_COUNT &&
