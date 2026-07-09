@@ -76,7 +76,7 @@ static void check_source_evidence(void)
 }
 
 static void check_step_shape(
-    const Dm1V1MirrorCandidateRccStepPc34Compat *steps,
+    const DM1_V1_MirrorCandidateRccStepPc34Compat *steps,
     int stepCount)
 {
     CHECK_EQ(stepCount, 5, "driver emits five cross-candidate steps");
@@ -104,7 +104,7 @@ static void check_step_shape(
 }
 
 static void check_seed_stale_b(
-    const Dm1V1MirrorCandidateRccStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRccStepPc34Compat *step)
 {
     CHECK_EQ(step->candidateOrdinalBefore, 0,
              "seed starts without a global candidate");
@@ -139,7 +139,7 @@ static void check_seed_stale_b(
 }
 
 static void check_close_stale_b(
-    const Dm1V1MirrorCandidateRccStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRccStepPc34Compat *step)
 {
     CHECK_EQ(step->candidateOrdinalBefore, 2,
              "close starts with stale B candidate ordinal");
@@ -168,7 +168,7 @@ static void check_close_stale_b(
 }
 
 static void check_queue_fresh_a(
-    const Dm1V1MirrorCandidateRccStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRccStepPc34Compat *step)
 {
     CHECK_EQ(step->candidateOrdinalBefore, 0,
              "fresh queue starts after stale clear");
@@ -215,7 +215,7 @@ static void check_queue_fresh_a(
 }
 
 static void check_resurrect_a(
-    const Dm1V1MirrorCandidateRccStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRccStepPc34Compat *step)
 {
     CHECK_EQ(step->candidateOrdinalBefore, 1,
              "resurrect starts with A candidate ordinal");
@@ -262,7 +262,7 @@ static void check_resurrect_a(
 }
 
 static void check_settle_panel(
-    const Dm1V1MirrorCandidateRccStepPc34Compat *step)
+    const DM1_V1_MirrorCandidateRccStepPc34Compat *step)
 {
     CHECK_EQ(step->candidateOrdinalBefore, 0,
              "settle starts with no pending candidate");
@@ -295,7 +295,7 @@ static void check_settle_panel(
 }
 
 static void check_final_state(
-    const Dm1V1MirrorCandidateRccStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateRccStatePc34Compat *state)
 {
     int championIndex;
     int slotIndex;
@@ -427,8 +427,8 @@ static void check_final_state(
 
 int main(void)
 {
-    Dm1V1MirrorCandidateRccStatePc34Compat state;
-    Dm1V1MirrorCandidateRccStepPc34Compat steps[5];
+    DM1_V1_MirrorCandidateRccStatePc34Compat state;
+    DM1_V1_MirrorCandidateRccStepPc34Compat steps[5];
     int stepCount;
 
     check_source_evidence();

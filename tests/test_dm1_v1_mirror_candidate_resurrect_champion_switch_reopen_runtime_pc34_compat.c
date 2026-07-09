@@ -56,8 +56,8 @@ static void check_source_evidence(void)
 }
 
 static void check_regression_steps(
-    const Dm1V1MirrorCandidateRcsrStatePc34Compat *state,
-    const Dm1V1MirrorCandidateRcsrStepPc34Compat *steps,
+    const DM1_V1_MirrorCandidateRcsrStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateRcsrStepPc34Compat *steps,
     int stepCount)
 {
     int i;
@@ -201,7 +201,7 @@ static void check_regression_steps(
 }
 
 static void check_panel_chrome_and_slots(
-    const Dm1V1MirrorCandidateRcsrStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateRcsrStatePc34Compat *state)
 {
     int i;
 
@@ -257,8 +257,8 @@ static void check_panel_chrome_and_slots(
 
 int main(void)
 {
-    Dm1V1MirrorCandidateRcsrStatePc34Compat state;
-    Dm1V1MirrorCandidateRcsrStepPc34Compat steps[4];
+    DM1_V1_MirrorCandidateRcsrStatePc34Compat state;
+    DM1_V1_MirrorCandidateRcsrStepPc34Compat steps[4];
     int stepCount;
 
     check_source_evidence();
