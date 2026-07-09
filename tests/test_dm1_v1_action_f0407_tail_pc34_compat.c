@@ -1973,6 +1973,7 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190PossessionDropPlanPc34 dropOut;
     DM1_MeleeF0190KilledSomeStateInputPc34 stateIn;
     DM1_MeleeF0190KilledSomeStatePlanPc34 stateOut;
+    DM1_MeleeF0190KilledSomeStatePlanPc34 stateApplyOut;
     DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
     DM1_MeleeF0190KilledAllStatePlanPc34 killedAllOut;
     DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
@@ -2142,6 +2143,17 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     CHECK_EQ(stateOut.newAiStateKind, AI_STATE_FLEE,
              "F0190 fear ai state");
     CHECK_EQ(stateOut.fearCounter, 44, "F0190 fear delay");
+    CHECK_EQ(dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
+                 &stateOut, 1, 55, &stateApplyOut), 1,
+             "F0190 fear apply from state plan builds");
+    CHECK_EQ(stateApplyOut.shouldApplyFear, 1,
+             "F0190 fear from state applies");
+    CHECK_EQ(stateApplyOut.groupIndex, stateOut.groupIndex,
+             "F0190 fear from state keeps group");
+    CHECK_EQ(stateApplyOut.killedCreatureIndex, stateOut.killedCreatureIndex,
+             "F0190 fear from state keeps killed creature");
+    CHECK_EQ(stateApplyOut.fearCounter, 55,
+             "F0190 fear from state uses new delay");
 
     stateIn.partyMapIndex = 2;
     CHECK_EQ(dm1_v1_melee_killed_some_state_plan_f0190_pc34(

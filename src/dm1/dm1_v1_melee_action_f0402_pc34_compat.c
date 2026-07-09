@@ -972,6 +972,23 @@ int dm1_v1_melee_killed_some_fear_apply_plan_f0190_pc34(
     if (!dm1_v1_melee_killed_some_state_plan_f0190_pc34(in, out)) {
         return 0;
     }
+    return dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
+        out, shouldFlee, fleeDelay, out);
+}
+
+int dm1_v1_melee_killed_some_fear_apply_from_state_plan_f0190_pc34(
+    const DM1_MeleeF0190KilledSomeStatePlanPc34* statePlan,
+    int shouldFlee,
+    int fleeDelay,
+    DM1_MeleeF0190KilledSomeStatePlanPc34* out) {
+    if (!out) return 0;
+    if (!statePlan) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (out != statePlan) {
+        *out = *statePlan;
+    }
     if (!out->valid || !out->shouldEvaluateFear || !shouldFlee) return 1;
 
     out->shouldApplyFear = 1;
