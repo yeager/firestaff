@@ -5,7 +5,6 @@
 #include "dm1_v1_movement_timing_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "memory_sensor_execution_pc34_compat.h"
-#include "m11_v1_turning_presentation_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,11 +31,23 @@ extern "C" {
  *   walks party leave/enter sensors; GAMELOOP.C:90 and DRAWVIEW.C:709-724 redraw
  *   and present the viewport from the mutated party state on the next loop.
  */
+struct Dm1V1MovementTurnReceiptPc34Compat {
+    int applied;
+    int command;
+    int oldDirection;
+    int newDirection;
+    int delta;
+    int stopWaitingForPlayerInput;
+    int wallBlockCheck;
+    int highlightLeft;
+    int highlightRight;
+};
+
 struct Dm1V1MovementCommandCoreResultPc34Compat {
     struct Dm1V1InputQueueProcessResultPc34Compat queue;
     struct MovementResult_Compat movement;
     struct Dm1V1MovementTimingResultPc34Compat timing;
-    struct M11V1TurningPresentationResultPc34Compat turning;
+    struct Dm1V1MovementTurnReceiptPc34Compat turning;
     struct SensorEffectList_Compat leaveEffects;
     struct SensorEffectList_Compat enterEffects;
     int staminaCost[CHAMPION_MAX_PARTY];

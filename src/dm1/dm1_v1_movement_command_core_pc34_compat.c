@@ -1,4 +1,5 @@
 #include "dm1_v1_movement_command_core_pc34_compat.h"
+#include "memory_mov05_f0284_cell_rotation_pc34_compat.h"
 
 #include <string.h>
 
@@ -15,6 +16,54 @@ static int dm1_v1_is_turn_command(int command)
 static int dm1_v1_is_step_command(int command)
 {
     return command >= DM1_V1_COMMAND_MOVE_FORWARD && command <= DM1_V1_COMMAND_MOVE_LEFT;
+}
+
+static int dm1_v1_turn_target_direction(int currentDirection, int command)
+{
+    if (command == DM1_V1_COMMAND_TURN_RIGHT) {
+        return (currentDirection + 1) & 3;
+    }
+    if (command == DM1_V1_COMMAND_TURN_LEFT) {
+        return (currentDirection + 3) & 3;
+    }
+    return currentDirection & 3;
+}
+
+static void dm1_v1_apply_party_turn_receipt(
+    struct PartyState_Compat* party,
+    int command,
+    struct Dm1V1MovementTurnReceiptPc34Compat* outReceipt)
+{
+    int oldDirection;
+    int newDirection;
+    int delta;
+
+    if (!party || !outReceipt) {
+        return;
+    }
+
+    oldDirection = party->direction & 3;
+    newDirection = dm1_v1_turn_target_direction(oldDirection, command);
+    delta = newDirection - oldDirection;
+    if (delta < 0) {
+        delta += 4;
+    }
+
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->applied = 1;
+    outReceipt->command = command;
+    outReceipt->oldDirection = oldDirection;
+    outReceipt->newDirection = newDirection;
+    outReceipt->delta = delta;
+    outReceipt->stopWaitingForPlayerInput = 1;
+    outReceipt->wallBlockCheck = 0;
+    outReceipt->highlightLeft = (command == DM1_V1_COMMAND_TURN_LEFT);
+    outReceipt->highlightRight = (command == DM1_V1_COMMAND_TURN_RIGHT);
+
+    /* ReDMCSB CHAMPION.C F0284 lines 117-130: F0365 applies a
+     * direction delta through F0284, rotating each present champion's
+     * Cell and Direction before storing G0308_i_PartyDirection. */
+    (void)F0284_CHAMPION_SetPartyDirection_Compat(party, newDirection);
 }
 
 static int dm1_v1_normalize_cell(int cell)
@@ -239,11 +288,10 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
             SENSOR_EVENT_WALK_OFF, &outResult->leaveEffects);
-        /* CHAMPION.C:117-130 rotates champion Cell/Direction and stores party direction. */
-        outResult->turning = m11_v1_turning_apply_party_original_presentation_pc34_compat(
-            M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL,
+        dm1_v1_apply_party_turn_receipt(
+            party,
             outResult->queue.command,
-            party);
+            &outResult->turning);
         (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
             SENSOR_EVENT_WALK_ON, &outResult->enterEffects);
@@ -391,4 +439,3 @@ const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
  *   CLIKMENU.C:58 F0006_MAIN_H
  *   CLIKMENU.C:366 F0277_CPSE_I
  * ══════════════════════════════════════════════════════════════════════ */
-
