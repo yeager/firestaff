@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 mouse route ownership: DM1 now owns the G0447/G0448/G0449/G0456 route tables and generic hit-test loop; M11 supplies zone rectangles and viewport origin only. Verification: mouse routes 47/47, inventory panel mouse routes 299/299, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 inventory slotbox zone ownership: inventory slot placement now owns C507..C536 inventory/equipment/backpack and C537..C544 chest slotbox zone tables; M11 wrapper functions delegate to the DM1 contract. Verification: slot placement 147/147, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 champion needs food/water render ownership: champion-needs code now owns food/water panel bar width, red/yellow/normal color thresholds, shadow rect, and fill rect command construction; M11 only paints returned rects. Verification: champion needs 61/61, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

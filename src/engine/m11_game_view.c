@@ -82,6 +82,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
+#include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
@@ -31215,30 +31216,14 @@ int M11_GameView_GetV1ChestSlotBoxZone(int chestOrdinal,
     return 1;
 }
 
-typedef struct M11_V1MouseRoute_ {
-    int command;
-    int coordinateSpace;
-    int zoneId;
-    int buttonMask;
-} M11_V1MouseRoute;
-
-static int m11_source_rect_contains_inclusive(int x,
-                                              int y,
-                                              int rx,
-                                              int ry,
-                                              int rw,
-                                              int rh) {
-    return rw > 0 && rh > 0 && x >= rx && y >= ry &&
-           x <= rx + rw - 1 && y <= ry + rh - 1;
-}
-
-static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
+static int m11_v1_mouse_route_zone_rect(int zoneId,
+                                        void* user,
                                         int* outX,
                                         int* outY,
                                         int* outW,
                                         int* outH) {
-    if (!route) return 0;
-    switch (route->zoneId) {
+    (void)user;
+    switch (zoneId) {
         case 2:
             return M11_GameView_GetV1ScreenZone(outX, outY, outW, outH);
         case 7:
@@ -31251,20 +31236,20 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
             break;
     }
 
-    if (route->zoneId >= 151 && route->zoneId <= 154) {
-        return M11_GameView_GetV1StatusBoxZone(route->zoneId - 151,
+    if (zoneId >= 151 && zoneId <= 154) {
+        return M11_GameView_GetV1StatusBoxZone(zoneId - 151,
                                                outX, outY, outW, outH);
     }
-    if (route->zoneId >= 211 && route->zoneId <= 218) {
-        const int slotBox = route->zoneId - 211;
+    if (zoneId >= 211 && zoneId <= 218) {
+        const int slotBox = zoneId - 211;
         const int championSlot = slotBox >> 1;
         const int handSlot = slotBox & 1;
         return M11_GameView_GetV1StatusHandZone(championSlot, handSlot,
                                                 outX, outY, outW, outH);
     }
-    if (route->zoneId >= 187 && route->zoneId <= 190) {
+    if (zoneId >= 187 && zoneId <= 190) {
         ChampionStatusRectCompat rect;
-        if (!CHAMPION_Compat_StatusBarGraphRegionZone(route->zoneId - 187,
+        if (!CHAMPION_Compat_StatusBarGraphRegionZone(zoneId - 187,
                                                       &rect)) return 0;
         if (outX) *outX = rect.x;
         if (outY) *outY = rect.y;
@@ -31272,33 +31257,27 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
         if (outH) *outH = rect.h;
         return 1;
     }
-    if (route->zoneId >= 68 && route->zoneId <= 73) {
-        return M11_GameView_GetV1MovementArrowZone(route->zoneId - 68,
+    if (zoneId >= 68 && zoneId <= 73) {
+        return M11_GameView_GetV1MovementArrowZone(zoneId - 68,
                                                    outX, outY, outW, outH);
     }
-    if (route->zoneId >= 113 && route->zoneId <= 116) {
-        return M11_GameView_GetV1ChampionIconZone(route->zoneId - 113,
+    if (zoneId >= 113 && zoneId <= 116) {
+        return M11_GameView_GetV1ChampionIconZone(zoneId - 113,
                                                   outX, outY, outW, outH);
     }
-    if (route->zoneId >= 507 && route->zoneId <= 536) {
-        return M11_GameView_GetV1InventorySourceSlotBoxZone(route->zoneId - 499,
+    if (zoneId >= 507 && zoneId <= 536) {
+        return M11_GameView_GetV1InventorySourceSlotBoxZone(zoneId - 499,
                                                             outX, outY, outW, outH);
     }
-    if (route->zoneId >= 537 && route->zoneId <= 544) {
-        return M11_GameView_GetV1ChestSlotBoxZone(route->zoneId - 537,
+    if (zoneId >= 537 && zoneId <= 544) {
+        return M11_GameView_GetV1ChestSlotBoxZone(zoneId - 537,
                                                   outX, outY, outW, outH);
     }
-    if (route->zoneId == 101) {
-        /* ReDMCSB COMMAND.C G0449 lines 419-451 keeps C081_CLICK_IN_PANEL
-         * as the broad C101 panel route after the inventory slot boxes.
-         * F0378 then re-dispatches M569_PANEL_CHEST clicks through G0456,
-         * so the route must remain lower priority than C537..C544. */
+    if (zoneId == 101) {
         return M11_GameView_GetV1InventoryPanelZone(outX, outY, outW, outH);
     }
-    if (route->zoneId == 545 || route->zoneId == 546) {
-        /* ReDMCSB COMMAND.C G0449 routes inventory mouth/eye clicks through
-         * viewport-relative C545/C546 zones; COMMAND.C absolute y=46 becomes y=13 inside the DM1 viewport at screen y=33. */
-        if (outX) *outX = (route->zoneId == 545) ? 56 : 12;
+    if (zoneId == 545 || zoneId == 546) {
+        if (outX) *outX = (zoneId == 545) ? 56 : 12;
         if (outY) *outY = 13;
         if (outW) *outW = 16;
         if (outH) *outH = 16;
@@ -31307,169 +31286,23 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
     return 0;
 }
 
-static int m11_v1_mouse_route_matches(const M11_V1MouseRoute* route,
-                                      int screenX,
-                                      int screenY,
-                                      int buttonMask) {
-    int x;
-    int y;
-    int w;
-    int h;
-    int testX = screenX;
-    int testY = screenY;
-    if (!route || !(buttonMask & route->buttonMask)) {
-        return 0;
-    }
-    if (!m11_v1_mouse_route_zone_rect(route, &x, &y, &w, &h)) {
-        return 0;
-    }
-    if (route->coordinateSpace == M11_DM1_MOUSE_SPACE_VIEWPORT) {
-        testX -= M11_VIEWPORT_X;
-        testY -= M11_VIEWPORT_Y;
-    }
-    return m11_source_rect_contains_inclusive(testX, testY, x, y, w, h);
-}
-
 int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
                                            int screenX,
                                            int screenY,
                                            int buttonMask,
                                            int* outCoordinateSpace,
                                            int* outZoneId) {
-    static const M11_V1MouseRoute interfaceRoutes[] = {
-        /* ReDMCSB COMMAND.C G0447_as_Graphic561_PrimaryMouseInput_Interface
-         * plus the focused G0455 champion name/hand rows needed by the
-         * bounded status-panel resolver.  C020..C027 must precede the
-         * broader C012..C015 status-box routes so hand clicks keep their
-         * source command identity. */
-        { 20,  M11_DM1_MOUSE_SPACE_SCREEN, 211, M11_DM1_MOUSE_MASK_LEFT  },
-        { 21,  M11_DM1_MOUSE_SPACE_SCREEN, 212, M11_DM1_MOUSE_MASK_LEFT  },
-        { 22,  M11_DM1_MOUSE_SPACE_SCREEN, 213, M11_DM1_MOUSE_MASK_LEFT  },
-        { 23,  M11_DM1_MOUSE_SPACE_SCREEN, 214, M11_DM1_MOUSE_MASK_LEFT  },
-        { 24,  M11_DM1_MOUSE_SPACE_SCREEN, 215, M11_DM1_MOUSE_MASK_LEFT  },
-        { 25,  M11_DM1_MOUSE_SPACE_SCREEN, 216, M11_DM1_MOUSE_MASK_LEFT  },
-        { 26,  M11_DM1_MOUSE_SPACE_SCREEN, 217, M11_DM1_MOUSE_MASK_LEFT  },
-        { 27,  M11_DM1_MOUSE_SPACE_SCREEN, 218, M11_DM1_MOUSE_MASK_LEFT  },
-        { 7,   M11_DM1_MOUSE_SPACE_SCREEN, 151, M11_DM1_MOUSE_MASK_RIGHT },
-        { 8,   M11_DM1_MOUSE_SPACE_SCREEN, 152, M11_DM1_MOUSE_MASK_RIGHT },
-        { 9,   M11_DM1_MOUSE_SPACE_SCREEN, 153, M11_DM1_MOUSE_MASK_RIGHT },
-        { 10,  M11_DM1_MOUSE_SPACE_SCREEN, 154, M11_DM1_MOUSE_MASK_RIGHT },
-        { 7,   M11_DM1_MOUSE_SPACE_SCREEN, 187, M11_DM1_MOUSE_MASK_LEFT  },
-        { 8,   M11_DM1_MOUSE_SPACE_SCREEN, 188, M11_DM1_MOUSE_MASK_LEFT  },
-        { 9,   M11_DM1_MOUSE_SPACE_SCREEN, 189, M11_DM1_MOUSE_MASK_LEFT  },
-        { 10,  M11_DM1_MOUSE_SPACE_SCREEN, 190, M11_DM1_MOUSE_MASK_LEFT  },
-        { 12,  M11_DM1_MOUSE_SPACE_SCREEN, 151, M11_DM1_MOUSE_MASK_LEFT  },
-        { 13,  M11_DM1_MOUSE_SPACE_SCREEN, 152, M11_DM1_MOUSE_MASK_LEFT  },
-        { 14,  M11_DM1_MOUSE_SPACE_SCREEN, 153, M11_DM1_MOUSE_MASK_LEFT  },
-        { 15,  M11_DM1_MOUSE_SPACE_SCREEN, 154, M11_DM1_MOUSE_MASK_LEFT  },
-        { 125, M11_DM1_MOUSE_SPACE_SCREEN, 113, M11_DM1_MOUSE_MASK_LEFT  },
-        { 126, M11_DM1_MOUSE_SPACE_SCREEN, 114, M11_DM1_MOUSE_MASK_LEFT  },
-        { 127, M11_DM1_MOUSE_SPACE_SCREEN, 115, M11_DM1_MOUSE_MASK_LEFT  },
-        { 128, M11_DM1_MOUSE_SPACE_SCREEN, 116, M11_DM1_MOUSE_MASK_LEFT  },
-        { 100, M11_DM1_MOUSE_SPACE_SCREEN,  13, M11_DM1_MOUSE_MASK_LEFT  },
-        { 111, M11_DM1_MOUSE_SPACE_SCREEN,  11, M11_DM1_MOUSE_MASK_LEFT  }
-    };
-    static const M11_V1MouseRoute movementRoutes[] = {
-        /* ReDMCSB COMMAND.C G0448_as_Graphic561_SecondaryMouseInput_Movement. */
-        { 1,  M11_DM1_MOUSE_SPACE_SCREEN, 68, M11_DM1_MOUSE_MASK_LEFT  },
-        { 3,  M11_DM1_MOUSE_SPACE_SCREEN, 70, M11_DM1_MOUSE_MASK_LEFT  },
-        { 2,  M11_DM1_MOUSE_SPACE_SCREEN, 69, M11_DM1_MOUSE_MASK_LEFT  },
-        { 6,  M11_DM1_MOUSE_SPACE_SCREEN, 73, M11_DM1_MOUSE_MASK_LEFT  },
-        { 5,  M11_DM1_MOUSE_SPACE_SCREEN, 72, M11_DM1_MOUSE_MASK_LEFT  },
-        { 4,  M11_DM1_MOUSE_SPACE_SCREEN, 71, M11_DM1_MOUSE_MASK_LEFT  },
-        { 80, M11_DM1_MOUSE_SPACE_SCREEN, 7,  M11_DM1_MOUSE_MASK_LEFT  },
-        { 83, M11_DM1_MOUSE_SPACE_SCREEN, 2,  M11_DM1_MOUSE_MASK_RIGHT }
-    };
-    static const M11_V1MouseRoute inventoryRoutes[] = {
-        /* ReDMCSB COMMAND.C G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory,
-         * plus CLIKCHAM.C F0367 line 32 / CHAMPION.C F0302 lines 677-683
-         * status-hand C020..C027 dispatch while the inventory is open. */
-        { 20, M11_DM1_MOUSE_SPACE_SCREEN,   211, M11_DM1_MOUSE_MASK_LEFT },
-        { 21, M11_DM1_MOUSE_SPACE_SCREEN,   212, M11_DM1_MOUSE_MASK_LEFT },
-        { 22, M11_DM1_MOUSE_SPACE_SCREEN,   213, M11_DM1_MOUSE_MASK_LEFT },
-        { 23, M11_DM1_MOUSE_SPACE_SCREEN,   214, M11_DM1_MOUSE_MASK_LEFT },
-        { 24, M11_DM1_MOUSE_SPACE_SCREEN,   215, M11_DM1_MOUSE_MASK_LEFT },
-        { 25, M11_DM1_MOUSE_SPACE_SCREEN,   216, M11_DM1_MOUSE_MASK_LEFT },
-        { 26, M11_DM1_MOUSE_SPACE_SCREEN,   217, M11_DM1_MOUSE_MASK_LEFT },
-        { 27, M11_DM1_MOUSE_SPACE_SCREEN,   218, M11_DM1_MOUSE_MASK_LEFT },
-        { 11, M11_DM1_MOUSE_SPACE_SCREEN,   2, M11_DM1_MOUSE_MASK_RIGHT },
-        { 28, M11_DM1_MOUSE_SPACE_VIEWPORT, 507, M11_DM1_MOUSE_MASK_LEFT },
-        { 29, M11_DM1_MOUSE_SPACE_VIEWPORT, 508, M11_DM1_MOUSE_MASK_LEFT },
-        { 30, M11_DM1_MOUSE_SPACE_VIEWPORT, 509, M11_DM1_MOUSE_MASK_LEFT },
-        { 31, M11_DM1_MOUSE_SPACE_VIEWPORT, 510, M11_DM1_MOUSE_MASK_LEFT },
-        { 32, M11_DM1_MOUSE_SPACE_VIEWPORT, 511, M11_DM1_MOUSE_MASK_LEFT },
-        { 33, M11_DM1_MOUSE_SPACE_VIEWPORT, 512, M11_DM1_MOUSE_MASK_LEFT },
-        { 34, M11_DM1_MOUSE_SPACE_VIEWPORT, 513, M11_DM1_MOUSE_MASK_LEFT },
-        { 70, M11_DM1_MOUSE_SPACE_VIEWPORT, 545, M11_DM1_MOUSE_MASK_LEFT },
-        { 71, M11_DM1_MOUSE_SPACE_VIEWPORT, 546, M11_DM1_MOUSE_MASK_LEFT },
-        { 35, M11_DM1_MOUSE_SPACE_VIEWPORT, 514, M11_DM1_MOUSE_MASK_LEFT },
-        { 36, M11_DM1_MOUSE_SPACE_VIEWPORT, 515, M11_DM1_MOUSE_MASK_LEFT },
-        { 37, M11_DM1_MOUSE_SPACE_VIEWPORT, 516, M11_DM1_MOUSE_MASK_LEFT },
-        { 38, M11_DM1_MOUSE_SPACE_VIEWPORT, 517, M11_DM1_MOUSE_MASK_LEFT },
-        { 39, M11_DM1_MOUSE_SPACE_VIEWPORT, 518, M11_DM1_MOUSE_MASK_LEFT },
-        { 40, M11_DM1_MOUSE_SPACE_VIEWPORT, 519, M11_DM1_MOUSE_MASK_LEFT },
-        { 41, M11_DM1_MOUSE_SPACE_VIEWPORT, 520, M11_DM1_MOUSE_MASK_LEFT },
-        { 42, M11_DM1_MOUSE_SPACE_VIEWPORT, 521, M11_DM1_MOUSE_MASK_LEFT },
-        { 43, M11_DM1_MOUSE_SPACE_VIEWPORT, 522, M11_DM1_MOUSE_MASK_LEFT },
-        { 44, M11_DM1_MOUSE_SPACE_VIEWPORT, 523, M11_DM1_MOUSE_MASK_LEFT },
-        { 45, M11_DM1_MOUSE_SPACE_VIEWPORT, 524, M11_DM1_MOUSE_MASK_LEFT },
-        { 46, M11_DM1_MOUSE_SPACE_VIEWPORT, 525, M11_DM1_MOUSE_MASK_LEFT },
-        { 47, M11_DM1_MOUSE_SPACE_VIEWPORT, 526, M11_DM1_MOUSE_MASK_LEFT },
-        { 48, M11_DM1_MOUSE_SPACE_VIEWPORT, 527, M11_DM1_MOUSE_MASK_LEFT },
-        { 49, M11_DM1_MOUSE_SPACE_VIEWPORT, 528, M11_DM1_MOUSE_MASK_LEFT },
-        { 50, M11_DM1_MOUSE_SPACE_VIEWPORT, 529, M11_DM1_MOUSE_MASK_LEFT },
-        { 51, M11_DM1_MOUSE_SPACE_VIEWPORT, 530, M11_DM1_MOUSE_MASK_LEFT },
-        { 52, M11_DM1_MOUSE_SPACE_VIEWPORT, 531, M11_DM1_MOUSE_MASK_LEFT },
-        { 53, M11_DM1_MOUSE_SPACE_VIEWPORT, 532, M11_DM1_MOUSE_MASK_LEFT },
-        { 54, M11_DM1_MOUSE_SPACE_VIEWPORT, 533, M11_DM1_MOUSE_MASK_LEFT },
-        { 55, M11_DM1_MOUSE_SPACE_VIEWPORT, 534, M11_DM1_MOUSE_MASK_LEFT },
-        { 56, M11_DM1_MOUSE_SPACE_VIEWPORT, 535, M11_DM1_MOUSE_MASK_LEFT },
-        { 57, M11_DM1_MOUSE_SPACE_VIEWPORT, 536, M11_DM1_MOUSE_MASK_LEFT },
-        /* ReDMCSB COMMAND.C G0456 panel-chest route is active while the
-         * inventory panel shows an open chest.  Keeping the routes in the
-         * inventory list lets the runtime gate execution on v1OpenChestThing. */
-        { 58, M11_DM1_MOUSE_SPACE_VIEWPORT, 537, M11_DM1_MOUSE_MASK_LEFT },
-        { 59, M11_DM1_MOUSE_SPACE_VIEWPORT, 538, M11_DM1_MOUSE_MASK_LEFT },
-        { 60, M11_DM1_MOUSE_SPACE_VIEWPORT, 539, M11_DM1_MOUSE_MASK_LEFT },
-        { 61, M11_DM1_MOUSE_SPACE_VIEWPORT, 540, M11_DM1_MOUSE_MASK_LEFT },
-        { 62, M11_DM1_MOUSE_SPACE_VIEWPORT, 541, M11_DM1_MOUSE_MASK_LEFT },
-        { 63, M11_DM1_MOUSE_SPACE_VIEWPORT, 542, M11_DM1_MOUSE_MASK_LEFT },
-        { 64, M11_DM1_MOUSE_SPACE_VIEWPORT, 543, M11_DM1_MOUSE_MASK_LEFT },
-        { 65, M11_DM1_MOUSE_SPACE_VIEWPORT, 544, M11_DM1_MOUSE_MASK_LEFT },
-        { 81, M11_DM1_MOUSE_SPACE_VIEWPORT, 101, M11_DM1_MOUSE_MASK_LEFT }
-    };
-    const M11_V1MouseRoute* routes = NULL;
-    int count = 0;
-    int i;
-
-    if (outCoordinateSpace) *outCoordinateSpace = M11_DM1_MOUSE_SPACE_NONE;
-    if (outZoneId) *outZoneId = 0;
-
-    switch (mouseInputList) {
-        case M11_DM1_MOUSE_LIST_INTERFACE:
-            routes = interfaceRoutes;
-            count = (int)(sizeof(interfaceRoutes) / sizeof(interfaceRoutes[0]));
-            break;
-        case M11_DM1_MOUSE_LIST_MOVEMENT:
-            routes = movementRoutes;
-            count = (int)(sizeof(movementRoutes) / sizeof(movementRoutes[0]));
-            break;
-        case M11_DM1_MOUSE_LIST_INVENTORY:
-            routes = inventoryRoutes;
-            count = (int)(sizeof(inventoryRoutes) / sizeof(inventoryRoutes[0]));
-            break;
-        default:
-            return 0;
-    }
-
-    for (i = 0; i < count; ++i) {
-        if (m11_v1_mouse_route_matches(&routes[i], screenX, screenY, buttonMask)) {
-            if (outCoordinateSpace) *outCoordinateSpace = routes[i].coordinateSpace;
-            if (outZoneId) *outZoneId = routes[i].zoneId;
-            return routes[i].command;
-        }
-    }
-    return 0;
+    return DM1_V1_MouseRoutes_CommandForPointPc34Compat(
+        mouseInputList,
+        screenX,
+        screenY,
+        buttonMask,
+        M11_VIEWPORT_X,
+        M11_VIEWPORT_Y,
+        m11_v1_mouse_route_zone_rect,
+        NULL,
+        outCoordinateSpace,
+        outZoneId);
 }
 
 int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot) {
