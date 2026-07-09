@@ -74,6 +74,16 @@ static void set_collision_ref(uint8_t *structure1,
     cell[7] = (uint8_t)(ref & 0xff);
 }
 
+static void set_square_type(uint8_t *structure1,
+                            int structure1b_rel,
+                            int x,
+                            int y,
+                            int type) {
+    uint8_t *cell = cell_at(structure1, structure1b_rel, x, y);
+    cell[6] = (uint8_t)(type & 0x0f);
+    cell[7] = 0;
+}
+
 static void test_variable_grid_and_mesh_ready(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 25];
     const int structure1b_rel = 0x1a90;
@@ -126,6 +136,8 @@ static void test_variable_grid_and_mesh_ready(void) {
           "level carries mesh readiness info");
     CHECK(level.geometry_info.geometry_size == geometry_bytes,
           "level carries bounded Structure1 geometry span");
+    CHECK(nexus_v1_level_get_collision_ref(&level, 3, 2) == 5,
+          "level keeps Structure1B collision refs for renderer route");
     CHECK(level.geometry_size ==
           ((int)sizeof(dgn) - level.geometry_offset),
           "legacy level.geometry_size remains full file tail");
@@ -143,6 +155,66 @@ static void test_variable_grid_and_mesh_ready(void) {
     CHECK(strcmp(nexus_v1_dgn_renderer_handoff_status_name(handoff.status),
                  "ready-mesh") == 0,
           "DGN renderer handoff has stable ready route name");
+}
+
+static void test_dgn_view_render_plan_from_structure1b(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    const int structure1b_rel = 0x40;
+    const int geometry_bytes = 2048;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnRenderPlanReceipt receipt;
+    uint8_t *structure1;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
+                          structure1b_rel, geometry_bytes) == 0,
+          "render-plan DGN fixture builds");
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    set_square_type(structure1, structure1b_rel, 3, 4, 1);
+    set_square_type(structure1, structure1b_rel, 4, 4, 1);
+    set_square_type(structure1, structure1b_rel, 3, 3, 1);
+    set_collision_ref(structure1, structure1b_rel, 2, 4, 0x0fff);
+    set_collision_ref(structure1, structure1b_rel, 2, 3, 0x0fff);
+    set_collision_ref(structure1, structure1b_rel, 4, 3, 0x0fff);
+    set_collision_ref(structure1, structure1b_rel, 3, 2, 0x0fff);
+
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 4) == 0,
+          "render-plan level loads from DMWeb DGN");
+    memset(commands, 0, sizeof(commands));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_v1_level_build_dgn_view_render_plan(
+              &level,
+              3,
+              4,
+              0,
+              commands,
+              NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+              &receipt) == 0,
+          "DGN view render plan builds");
+    CHECK(receipt.status == NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
+          receipt.plan_ready == 1 &&
+          receipt.blocks_real_dgn_mesh_render == 0 &&
+          receipt.fallback_visuals_permitted == 0,
+          "DGN view render plan is ready without fallback visuals");
+    CHECK(receipt.command_count == 7 &&
+          receipt.floor_count == 3 &&
+          receipt.wall_count == 4,
+          "DGN view render plan emits bounded floor/wall commands");
+    CHECK(commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
+          commands[0].x == 3 &&
+          commands[0].y == 4 &&
+          commands[0].collision_ref == 0x0100,
+          "DGN render plan first command is real party cell floor");
+    CHECK(commands[2].kind == NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT &&
+          commands[2].wall_dir == 3 &&
+          commands[2].x == 3 &&
+          commands[2].y == 4,
+          "DGN render plan emits left wall from adjacent Structure1B wall");
+    CHECK(receipt.first_blocking_depth == 2 &&
+          receipt.first_blocking_x == 3 &&
+          receipt.first_blocking_y == 2 &&
+          commands[6].kind == NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT,
+          "DGN render plan stops at first front wall");
 }
 
 static void test_descriptor_budget_blocks_mesh_ready(void) {
@@ -235,6 +307,7 @@ static void test_determinism(void) {
 
 int main(void) {
     test_variable_grid_and_mesh_ready();
+    test_dgn_view_render_plan_from_structure1b();
     test_descriptor_budget_blocks_mesh_ready();
     test_bounds_and_legacy_non_promotion();
     test_determinism();

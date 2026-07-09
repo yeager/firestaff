@@ -33,6 +33,58 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         nexus_camera_init(&vp->cam, cam_pos, pdir);
     }
 
+    if (engine->current_level.geometry_info.dmweb_container) {
+        Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+        Nexus_V1_DgnRenderPlanReceipt receipt;
+        int i;
+
+        /* Real Nexus DGN path: draw only commands derived from Structure1B.
+         * If this route blocks, do not fall through to synthetic legacy
+         * visuals. */
+        if (nexus_v1_level_build_dgn_view_render_plan(
+                &engine->current_level,
+                px,
+                py,
+                pdir,
+                commands,
+                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+                &receipt) != 0 ||
+            !receipt.plan_ready) {
+            return;
+        }
+
+        for (i = 0; i < receipt.command_count; ++i) {
+            const Nexus_V1_DgnRenderCommand *command = &commands[i];
+            switch (command->kind) {
+            case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
+                nexus_draw_floor(&vp->fb, &vp->cam,
+                                 (float)command->x,
+                                 (float)command->y,
+                                 8,
+                                 9);
+                break;
+            case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
+                nexus_draw_wall_simple(&vp->fb, &vp->cam,
+                                       (float)command->x,
+                                       (float)command->y,
+                                       command->wall_dir,
+                                       (uint8_t)(5 + (command->depth % 3)));
+                break;
+            case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
+            case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
+                nexus_draw_wall_simple(&vp->fb, &vp->cam,
+                                       (float)command->x,
+                                       (float)command->y,
+                                       command->wall_dir,
+                                       6);
+                break;
+            default:
+                break;
+            }
+        }
+        return;
+    }
+
     /* Render squares in view cone: D0 (closest) to D3 (farthest) */
     for (d = 0; d < NEXUS_VIEW_DISTANCE; d++) {
         int cx = px + dir_dx[pdir] * d;
@@ -88,4 +140,3 @@ void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out) {
         rgba_out[i] = vp->fb.palette[vp->fb.color_buffer[i]];
     }
 }
-

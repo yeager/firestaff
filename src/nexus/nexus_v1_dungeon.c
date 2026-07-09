@@ -172,7 +172,9 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                     int off = info.structure1b_offset +
                               ((y * NEXUS_MAX_MAP_SIZE + x) *
                                NEXUS_DGN_STRUCTURE1B_CELL_BYTES);
+                    int ref = nexus_v1_decode_structure1b_collision_ref(data + off);
                     level->squares[y][x] = (uint8_t)nexus_v1_decode_structure1b_cell(data + off);
+                    level->collision_refs[y][x] = (uint16_t)ref;
                 }
             }
             level->has_3d_geometry = 1;
@@ -241,6 +243,12 @@ int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y) {
     return level->squares[y][x];
 }
 
+int nexus_v1_level_get_collision_ref(const Nexus_V1_Level *level, int x, int y) {
+    if (!level || x < 0 || x >= level->width || y < 0 || y >= level->height)
+        return 0x0fff;
+    return (int)level->collision_refs[y][x];
+}
+
 int nexus_v1_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt) {
@@ -305,4 +313,188 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
         return "blocked-legacy-fallback";
     default: return "unknown";
     }
+}
+
+static int nexus_v1_dgn_plan_push(
+    Nexus_V1_DgnRenderCommand *commands,
+    int max_commands,
+    Nexus_V1_DgnRenderPlanReceipt *receipt,
+    Nexus_V1_DgnRenderCommand command) {
+    if (!receipt) {
+        return -1;
+    }
+    if (!commands || receipt->command_count >= max_commands) {
+        receipt->blocks_real_dgn_mesh_render = 1;
+        receipt->plan_ready = 0;
+        return -1;
+    }
+    commands[receipt->command_count++] = command;
+    receipt->source_cell_count++;
+    if (command.kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR) {
+        receipt->floor_count++;
+    } else {
+        receipt->wall_count++;
+    }
+    return 0;
+}
+
+static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnRenderCommandKind kind,
+    int x,
+    int y,
+    int depth,
+    int lateral,
+    int wall_dir) {
+    Nexus_V1_DgnRenderCommand command;
+    memset(&command, 0, sizeof(command));
+    command.kind = kind;
+    command.x = x;
+    command.y = y;
+    command.depth = depth;
+    command.lateral = lateral;
+    command.square_type = nexus_v1_level_get_square(level, x, y);
+    command.wall_dir = wall_dir & 3;
+    command.collision_ref =
+        (uint16_t)nexus_v1_level_get_collision_ref(level, x, y);
+    return command;
+}
+
+int nexus_v1_level_build_dgn_view_render_plan(
+    const Nexus_V1_Level *level,
+    int party_x,
+    int party_y,
+    int party_dir,
+    Nexus_V1_DgnRenderCommand *commands,
+    int max_commands,
+    Nexus_V1_DgnRenderPlanReceipt *out_receipt) {
+    static const int dir_dx[4] = {0, 1, 0, -1};
+    static const int dir_dy[4] = {-1, 0, 1, 0};
+    static const int left_dx[4] = {-1, 0, 1, 0};
+    static const int left_dy[4] = {0, -1, 0, 1};
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
+    Nexus_V1_DgnRenderPlanReceipt receipt;
+    int pdir;
+    int depth;
+
+    if (!out_receipt) {
+        return -1;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+    receipt.first_blocking_x = -1;
+    receipt.first_blocking_y = -1;
+    receipt.first_blocking_depth = -1;
+    receipt.fallback_visuals_permitted = 0;
+    if (commands && max_commands > 0) {
+        memset(commands, 0,
+               (size_t)max_commands * sizeof(Nexus_V1_DgnRenderCommand));
+    }
+
+    if (!level || max_commands < NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS) {
+        receipt.blocks_real_dgn_mesh_render = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (nexus_v1_level_dgn_renderer_handoff_receipt(level, &handoff) != 0) {
+        receipt.blocks_real_dgn_mesh_render = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.status = handoff.status;
+    if (handoff.status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH ||
+        !handoff.can_render_dgn_mesh) {
+        receipt.blocks_real_dgn_mesh_render = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    pdir = party_dir & 3;
+    for (depth = 0; depth < NEXUS_V1_DGN_VIEW_DISTANCE; ++depth) {
+        int cx = party_x + dir_dx[pdir] * depth;
+        int cy = party_y + dir_dy[pdir] * depth;
+        int lx = cx + left_dx[pdir];
+        int ly = cy + left_dy[pdir];
+        int rx = cx - left_dx[pdir];
+        int ry = cy - left_dy[pdir];
+        int sq = nexus_v1_level_get_square(level, cx, cy);
+        int sq_l = nexus_v1_level_get_square(level, lx, ly);
+        int sq_r = nexus_v1_level_get_square(level, rx, ry);
+
+        if (sq != 0) {
+            if (nexus_v1_dgn_plan_push(
+                    commands,
+                    max_commands,
+                    &receipt,
+                    nexus_v1_dgn_plan_command(
+                        level,
+                        NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+                        cx, cy, depth, 0, pdir)) != 0) {
+                break;
+            }
+            if (sq_l != 0) {
+                (void)nexus_v1_dgn_plan_push(
+                    commands,
+                    max_commands,
+                    &receipt,
+                    nexus_v1_dgn_plan_command(
+                        level,
+                        NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+                        lx, ly, depth, -1, pdir));
+            }
+            if (sq_r != 0) {
+                (void)nexus_v1_dgn_plan_push(
+                    commands,
+                    max_commands,
+                    &receipt,
+                    nexus_v1_dgn_plan_command(
+                        level,
+                        NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+                        rx, ry, depth, 1, pdir));
+            }
+            if (sq_l == 0) {
+                (void)nexus_v1_dgn_plan_push(
+                    commands,
+                    max_commands,
+                    &receipt,
+                    nexus_v1_dgn_plan_command(
+                        level,
+                        NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT,
+                        cx, cy, depth, -1, (pdir + 3) & 3));
+            }
+            if (sq_r == 0) {
+                (void)nexus_v1_dgn_plan_push(
+                    commands,
+                    max_commands,
+                    &receipt,
+                    nexus_v1_dgn_plan_command(
+                        level,
+                        NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT,
+                        cx, cy, depth, 1, (pdir + 1) & 3));
+            }
+        } else {
+            if (nexus_v1_dgn_plan_push(
+                    commands,
+                    max_commands,
+                    &receipt,
+                    nexus_v1_dgn_plan_command(
+                        level,
+                        NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT,
+                        cx, cy, depth, 0, (pdir + 2) & 3)) == 0) {
+                receipt.first_blocking_x = cx;
+                receipt.first_blocking_y = cy;
+                receipt.first_blocking_depth = depth;
+            }
+            break;
+        }
+        if (receipt.blocks_real_dgn_mesh_render) {
+            break;
+        }
+    }
+
+    if (!receipt.blocks_real_dgn_mesh_render) {
+        receipt.plan_ready = receipt.command_count > 0 ? 1 : 0;
+    }
+    *out_receipt = receipt;
+    return 0;
 }
