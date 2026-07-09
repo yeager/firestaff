@@ -1448,6 +1448,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupRenderPlan media_plan;
     Theron_StartupRenderPlan legacy_plan;
     Theron_V1_BootStartupRenderRouteReceipt render_route_receipt;
+    Theron_V1_BootStartupHostViewReceipt host_view_receipt;
     Theron_StartupAction media_pointer_action;
     Theron_StartupInputReceipt media_pointer_receipt;
     Theron_StartupAction media_input_action;
@@ -1848,6 +1849,46 @@ static void test_startup_session_facts_wrappers(void) {
                     media_plan.text_count ==
                         media_view_model.render_plan.text_count,
                 "boot startup render-plan consumer uses view model receipt");
+    expect_true(theron_v1_boot_startup_host_view_receipt_from_view_model(
+                    &media_view_model,
+                    &host_view_receipt) &&
+                    host_view_receipt.host_consumes_view_model &&
+                    host_view_receipt.view_model_valid &&
+                    host_view_receipt.layout_count ==
+                        media_view_model.layout_count &&
+                    host_view_receipt.row_count ==
+                        media_view_model.row_count &&
+                    host_view_receipt.render_plan_valid &&
+                    host_view_receipt.presentation_ready &&
+                    host_view_receipt.render_route_valid &&
+                    host_view_receipt.state_receipt_valid &&
+                    host_view_receipt.track02_media_consumed &&
+                    !host_view_receipt.raw_prompt_roster_required &&
+                    !host_view_receipt.raw_session_rebuild_required &&
+                    strcmp(host_view_receipt.view_model
+                               .startup_media_state_receipt
+                               .startup_roster_names[4],
+                           "HAKAR-MEDIA") == 0 &&
+                    strstr(host_view_receipt.view_model
+                               .startup_media_state_receipt
+                               .startup_text_prompt,
+                           "RESURRECT THERON") != NULL,
+                "boot startup host-view receipt consumes Track02 media view model without raw rebuild");
+    expect_true(theron_v1_boot_startup_host_view_receipt_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    &host_view_receipt) &&
+                    host_view_receipt.host_consumes_view_model &&
+                    host_view_receipt.render_route_valid &&
+                    host_view_receipt.state_receipt_valid &&
+                    host_view_receipt.track02_media_consumed &&
+                    !host_view_receipt.raw_prompt_roster_required &&
+                    !host_view_receipt.raw_session_rebuild_required &&
+                    host_view_receipt.render_route.track02_title_menu_ready &&
+                    host_view_receipt.render_route.save_resume_start_ready &&
+                    strcmp(host_view_receipt.status,
+                           "THERON RUNTIME READY") == 0,
+                "boot snapshot host-view receipt replaces raw prompt roster session rebuild");
     expect_true(theron_v1_boot_startup_render_route_receipt_from_view_model(
                     &media_view_model,
                     &render_route_receipt) &&

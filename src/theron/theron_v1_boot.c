@@ -1827,6 +1827,100 @@ int theron_v1_boot_startup_render_route_receipt_from_snapshot_with_media_receipt
         out_receipt);
 }
 
+void theron_v1_boot_startup_host_view_receipt_init(
+    Theron_V1_BootStartupHostViewReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->status_scope = "STARTUP";
+    receipt->status = "NO HOST VIEW";
+}
+
+int theron_v1_boot_startup_host_view_receipt_from_view_model(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_V1_BootStartupHostViewReceipt *out_receipt)
+{
+    if (out_receipt) {
+        theron_v1_boot_startup_host_view_receipt_init(out_receipt);
+    }
+    if (!view_model || !out_receipt) {
+        return 0;
+    }
+
+    out_receipt->host_consumes_view_model = 1;
+    out_receipt->view_model_valid = 1;
+    out_receipt->view_model = *view_model;
+    out_receipt->layout_count = view_model->layout_count;
+    out_receipt->row_count = view_model->row_count;
+    out_receipt->render_plan_valid = view_model->render_plan_valid;
+    out_receipt->presentation_ready = 1;
+    snprintf(out_receipt->phase,
+             sizeof(out_receipt->phase),
+             "%s",
+             view_model->phase);
+    out_receipt->startup_active = view_model->startup_active;
+    snprintf(out_receipt->animation,
+             sizeof(out_receipt->animation),
+             "%s",
+             view_model->animation);
+    out_receipt->animation_active = view_model->animation_active;
+    out_receipt->title_frame = view_model->title_frame;
+    out_receipt->title_frame_max = view_model->title_frame_max;
+    out_receipt->title_ready = view_model->title_ready;
+    if (theron_v1_boot_startup_render_route_receipt_from_view_model(
+            view_model,
+            &out_receipt->render_route)) {
+        out_receipt->render_route_valid = 1;
+        out_receipt->status_scope = out_receipt->render_route.status_scope;
+        out_receipt->status = out_receipt->render_route.status;
+    }
+    if (theron_v1_boot_startup_state_receipt_from_view_model(
+            view_model,
+            &out_receipt->state_receipt)) {
+        out_receipt->state_receipt_valid = 1;
+    }
+    out_receipt->track02_media_consumed =
+        view_model->startup_media_state_valid &&
+        (view_model->startup_media_state_receipt.startup_media_ready ||
+         view_model->startup_media_state_receipt.startup_text_prompt_status ==
+             THERON_TRACK02_SIGNAL_OK ||
+         view_model->startup_media_state_receipt.startup_roster_name_status ==
+             THERON_TRACK02_SIGNAL_OK)
+            ? 1
+            : 0;
+    out_receipt->raw_prompt_roster_required =
+        out_receipt->track02_media_consumed ? 0 : 1;
+    out_receipt->raw_session_rebuild_required = 0;
+    if (!out_receipt->render_route_valid) {
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "HOST VIEW READY";
+    }
+    return 1;
+}
+
+int theron_v1_boot_startup_host_view_receipt_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    Theron_V1_BootStartupHostViewReceipt *out_receipt)
+{
+    Theron_V1_BootStartupViewModel view_model;
+
+    if (!theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
+            snapshot,
+            startup_media_receipt,
+            &view_model)) {
+        if (out_receipt) {
+            theron_v1_boot_startup_host_view_receipt_init(out_receipt);
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_host_view_receipt_from_view_model(
+        &view_model,
+        out_receipt);
+}
+
 int theron_v1_boot_startup_state_receipt_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_StartupStateReceipt *out_receipt)
