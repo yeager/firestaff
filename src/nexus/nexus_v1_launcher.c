@@ -788,6 +788,9 @@ void nexus_v1_launcher_m12_startup_package_receipt_clear(
     memset(receipt, 0, sizeof(*receipt));
     receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_INVALID;
     receipt->first_capture_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
+    receipt->warning_capture_frame = 0;
+    receipt->title_capture_frame = nexus_v1_boot_warning_frames();
+    receipt->gameover_capture_frame = 0;
     receipt->game_id = "nexus";
     receipt->card_title_label = "DM Nexus";
     receipt->card_subtitle_label = "Saturn boot, title, save, champions";
@@ -896,6 +899,15 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
     out_receipt->startup_step_count = 7;
     out_receipt->boot_warning_frames = nexus_v1_boot_warning_frames();
     out_receipt->boot_start_ready_frames = nexus_v1_boot_start_ready_frames();
+    out_receipt->warning_surface_loaded = out_receipt->data_ready;
+    out_receipt->title_surface_loaded = out_receipt->data_ready;
+    out_receipt->gameover_surface_loaded = out_receipt->data_ready;
+    out_receipt->warning_capture_surface_ready =
+        out_receipt->data_ready && out_receipt->version_ready;
+    out_receipt->title_capture_surface_ready =
+        out_receipt->data_ready && out_receipt->version_ready;
+    out_receipt->gameover_capture_surface_ready =
+        out_receipt->data_ready && out_receipt->version_ready;
     if (nexus_v1_title_frame(out_receipt->boot_start_ready_frames,
                              NEXUS_FB_H,
                              &title)) {
@@ -948,6 +960,73 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
         out_receipt->first_capture_draw_kind =
             NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND;
     }
+    nexus_v1_launcher_m12_finalize_startup_display(out_receipt);
+    return 1;
+}
+
+int nexus_v1_launcher_m12_startup_package_from_full_start_package(
+    const Nexus_V1_StartupFullStartPackageReceipt *package,
+    Nexus_V1_M12StartupPackageReceipt *out_receipt)
+{
+    nexus_v1_launcher_m12_startup_package_receipt_clear(out_receipt);
+    if (!package || !out_receipt) {
+        return 0;
+    }
+
+    out_receipt->handled = 1;
+    out_receipt->supported = 1;
+    out_receipt->data_ready =
+        package->warning_surface_loaded &&
+        package->title_surface_loaded &&
+        package->gameover_surface_loaded;
+    out_receipt->version_ready = out_receipt->data_ready;
+    out_receipt->startup_menu_ready = package->m12_ready;
+    out_receipt->full_start_graphics_ready = package->graphics_ready;
+    out_receipt->startup_contract_ready = package->m11_ready;
+    out_receipt->packaged_capture_expected = package->capture_valid;
+    out_receipt->packaged_capture_ready =
+        package->capture_valid &&
+        package->capture_route_ready &&
+        !package->fallback_visuals_permitted;
+    out_receipt->startup_step_count = 7;
+    out_receipt->startup_step_ready_count =
+        out_receipt->packaged_capture_ready ? 7 : 3;
+    out_receipt->boot_warning_frames = package->boot_warning_frames;
+    out_receipt->boot_start_ready_frames =
+        package->boot_start_ready_frames;
+    out_receipt->title_frame_max = package->title_frame_max;
+    out_receipt->title_frames_until_ready =
+        package->title_frames_until_ready;
+    out_receipt->title_hold_frame = package->title_hold_frame;
+    out_receipt->title_prompt_visible = package->title_prompt_visible;
+    out_receipt->title_reveal_y0 = package->title_reveal_y0;
+    out_receipt->title_reveal_y1 = package->title_reveal_y1;
+    out_receipt->title_reveal_h = package->title_reveal_h;
+    out_receipt->warning_surface_loaded = package->warning_surface_loaded;
+    out_receipt->title_surface_loaded = package->title_surface_loaded;
+    out_receipt->gameover_surface_loaded = package->gameover_surface_loaded;
+    out_receipt->warning_capture_surface_ready =
+        package->warning_capture_surface_ready;
+    out_receipt->title_capture_surface_ready =
+        package->title_capture_surface_ready;
+    out_receipt->gameover_capture_surface_ready =
+        package->gameover_capture_surface_ready;
+    out_receipt->warning_capture_frame = package->warning_capture_frame;
+    out_receipt->title_capture_frame = package->title_capture_frame;
+    out_receipt->gameover_capture_frame = package->gameover_capture_frame;
+    out_receipt->capture_command_count = package->capture_command_count;
+    out_receipt->capture_route = package->capture_route;
+    out_receipt->first_capture_draw_kind =
+        package->first_capture_draw_kind;
+    out_receipt->status_label = package->status
+        ? package->status
+        : out_receipt->status_label;
+    out_receipt->detail_label = package->startup_ui_blocker
+        ? package->startup_ui_blocker
+        : out_receipt->detail_label;
+    out_receipt->next_step_label =
+        out_receipt->packaged_capture_ready ? "READY" : "NEXUS STARTUP";
+
     nexus_v1_launcher_m12_finalize_startup_display(out_receipt);
     return 1;
 }
@@ -2424,6 +2503,14 @@ int nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
     out_receipt->assets = assets;
     out_receipt->warning_art_loaded = assets.warning_surface_loaded ? 1 : 0;
     out_receipt->title_art_loaded = assets.title_surface_loaded ? 1 : 0;
+    out_receipt->gameover_art_loaded =
+        assets.gameover_surface_loaded ? 1 : 0;
+    out_receipt->warning_capture_surface_ready =
+        out_receipt->warning_art_loaded;
+    out_receipt->title_capture_surface_ready =
+        out_receipt->title_art_loaded && assets.title_route_ready;
+    out_receipt->gameover_capture_surface_ready =
+        out_receipt->gameover_art_loaded;
     out_receipt->warning_status_ready = out_receipt->warning_art_loaded;
     out_receipt->title_status_ready =
         out_receipt->title_art_loaded && assets.title_route_ready;
@@ -2832,6 +2919,21 @@ int nexus_v1_launcher_startup_full_start_package_from_runtime_state(
         out_receipt->consumer.full_start.champion_status_ready;
     out_receipt->fallback_visuals_permitted =
         out_receipt->consumer.full_start.fallback_visuals_permitted;
+    out_receipt->warning_surface_loaded =
+        out_receipt->consumer.full_start.warning_art_loaded;
+    out_receipt->title_surface_loaded =
+        out_receipt->consumer.full_start.title_art_loaded;
+    out_receipt->gameover_surface_loaded =
+        out_receipt->consumer.full_start.gameover_art_loaded;
+    out_receipt->warning_capture_surface_ready =
+        out_receipt->consumer.full_start.warning_capture_surface_ready;
+    out_receipt->title_capture_surface_ready =
+        out_receipt->consumer.full_start.title_capture_surface_ready;
+    out_receipt->gameover_capture_surface_ready =
+        out_receipt->consumer.full_start.gameover_capture_surface_ready;
+    out_receipt->warning_capture_frame = 0;
+    out_receipt->title_capture_frame = nexus_v1_boot_warning_frames();
+    out_receipt->gameover_capture_frame = 0;
     out_receipt->consumer_route = out_receipt->consumer.consumer_route;
     out_receipt->asset_route = out_receipt->consumer.full_start.asset_route;
     out_receipt->startup_ui_blocker =
