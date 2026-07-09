@@ -2667,6 +2667,179 @@ int dm2_v1_boot_startup_render_ownership_receipt_from_runtime_state(
         out_receipt);
 }
 
+void dm2_v1_boot_startup_real_visual_capture_receipt_init(
+    DM2_V1_BootStartupRealVisualCaptureReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+    }
+}
+
+int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+    DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupRealVisualCaptureReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
+    DM2_V1_BootStartupViewModel view_model;
+    DM2_V1_BootStartupPackagedFullStartReceipt package;
+    DM2_V1_BootStartupRenderOwnershipReceipt ownership;
+    uint8_t *title_pixels = NULL;
+    int title_w = 0;
+    int title_h = 0;
+    int title_stride = 0;
+    uint32_t hash = 0x32475643u;
+    int i;
+
+    dm2_v1_boot_startup_real_visual_capture_receipt_init(out_receipt);
+    if (!profile || !out_receipt) {
+        return 0;
+    }
+
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.profile = profile;
+    snapshot.startup_menu_active = startup_menu_active;
+    snapshot.startup_save_root = startup_save_root;
+    snapshot.resume_available = resume_available;
+    snapshot.slot_mask = slot_mask;
+    snapshot.selected_row = selected_row;
+
+    if (!dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
+            &snapshot,
+            title_animation_tick,
+            &view_model) ||
+        !dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
+            &view_model.host_view_receipt,
+            &package) ||
+        !dm2_v1_boot_startup_render_ownership_from_view_model(
+            &snapshot,
+            &view_model,
+            &ownership)) {
+        return 0;
+    }
+
+    out_receipt->profile_ready = profile->assets_verified ? 1 : 0;
+    out_receipt->graphics_dat_ready = profile->graphics_dat ? 1 : 0;
+    out_receipt->packaged_full_start_valid = package.valid;
+    out_receipt->render_ownership_valid = ownership.valid;
+    out_receipt->real_gdat_title_asset_required = 1;
+    out_receipt->title_gdat_category = package.title_gdat_category;
+    out_receipt->title_gdat_index = package.title_gdat_index;
+    out_receipt->title_gdat_field = package.title_gdat_field;
+    out_receipt->menu_capture_ready = package.menu_capture_ready;
+    out_receipt->menu_command_count = view_model.command_count;
+    out_receipt->menu_row_count = package.menu_row_count;
+    out_receipt->selected_highlight_count =
+        package.selected_highlight_count;
+    out_receipt->hud_handoff_capture_ready =
+        package.hud_handoff_capture_ready;
+    out_receipt->suppress_game_hud = ownership.suppress_game_hud;
+    out_receipt->present_first_hud_frame = ownership.present_first_hud_frame;
+    out_receipt->exact_title_timing_ready =
+        package.exact_title_timing_ready;
+    out_receipt->title_animation_tick = package.title_animation_tick;
+    out_receipt->title_frame = package.title_frame;
+    out_receipt->title_frame_remaining_ticks =
+        package.title_frame_remaining_ticks;
+    out_receipt->no_fallback_title_blit =
+        ownership.fallback_title_blit_used ? 0 : 1;
+    out_receipt->status_scope = package.status_scope;
+    out_receipt->status = package.status;
+
+    for (i = 0; i < view_model.command_count; ++i) {
+        const DM2_V1_StartupDrawCommand *command = &view_model.commands[i];
+        if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE) {
+            ++out_receipt->menu_gdat_command_count;
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT ||
+                   command->kind == DM2_V1_STARTUP_DRAW_OUTLINE_RECT) {
+            ++out_receipt->menu_rect_command_count;
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_TEXT) {
+            ++out_receipt->menu_text_command_count;
+        }
+    }
+
+    if (dm2_v1_boot_gdat_image_asset_fetch(profile,
+                                           package.title_gdat_category,
+                                           package.title_gdat_index,
+                                           package.title_gdat_field,
+                                           &title_pixels,
+                                           &title_w,
+                                           &title_h,
+                                           &title_stride) == 0 &&
+        title_pixels &&
+        title_w == 320 &&
+        title_h == 200 &&
+        title_stride >= title_w) {
+        size_t row;
+        uint32_t pixel_hash = 0x32544954u;
+        out_receipt->real_gdat_title_asset_consumed = 1;
+        out_receipt->title_gdat_asset_w = title_w;
+        out_receipt->title_gdat_asset_h = title_h;
+        out_receipt->title_gdat_asset_stride = title_stride;
+        out_receipt->title_pixel_count =
+            (uint32_t)(title_w * title_h);
+        for (row = 0; row < (size_t)title_h; ++row) {
+            const uint8_t *src =
+                title_pixels + row * (size_t)title_stride;
+            int x;
+            for (x = 0; x < title_w; ++x) {
+                pixel_hash = dm2_v1_boot_packaged_capture_hash_step(
+                    pixel_hash,
+                    src[x]);
+            }
+        }
+        out_receipt->title_pixel_hash = pixel_hash;
+    }
+    dm2_v1_boot_gdat_image_asset_free(title_pixels);
+
+    out_receipt->title_capture_ready =
+        out_receipt->real_gdat_title_asset_consumed &&
+        out_receipt->title_pixel_hash != 0u &&
+        out_receipt->title_pixel_count == 64000u;
+
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, package.packaged_full_start_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, ownership.packaged_full_start_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->title_pixel_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->menu_command_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->menu_text_command_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->hud_handoff_capture_ready);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->suppress_game_hud);
+    out_receipt->packaged_visual_capture_hash = hash;
+
+    /* skproject/SKWIN startup draws the real title GDAT surface, menu
+     * commands, and HUD handoff as one package. This receipt proves that
+     * Firestaff consumed real GRAPHICS.DAT pixels instead of accepting the
+     * synthetic ownership path alone. */
+    out_receipt->valid =
+        out_receipt->profile_ready &&
+        out_receipt->graphics_dat_ready &&
+        out_receipt->packaged_full_start_valid &&
+        out_receipt->render_ownership_valid &&
+        out_receipt->title_capture_ready &&
+        out_receipt->menu_capture_ready &&
+        out_receipt->menu_gdat_command_count == 1 &&
+        out_receipt->menu_rect_command_count >= 2 &&
+        out_receipt->menu_text_command_count >= out_receipt->menu_row_count &&
+        out_receipt->hud_handoff_capture_ready &&
+        out_receipt->suppress_game_hud &&
+        out_receipt->exact_title_timing_ready &&
+        out_receipt->no_fallback_title_blit &&
+        out_receipt->packaged_visual_capture_hash != 0u;
+    return out_receipt->valid;
+}
+
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,
