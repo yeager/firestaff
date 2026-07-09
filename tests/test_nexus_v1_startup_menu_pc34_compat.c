@@ -1291,6 +1291,9 @@ int main(void)
                real_asset_ownership_receipt.package_capture_consumed_by_host == 1 &&
                real_asset_ownership_receipt.package_route_matches_capture_route == 1 &&
                real_asset_ownership_receipt.host_route_consumes_package_route == 1 &&
+               real_asset_ownership_receipt.host_route_consumes_capture_matrix == 1 &&
+               real_asset_ownership_receipt.dgn_route_consumes_startup_package == 1 &&
+               real_asset_ownership_receipt.dgn_route_saturn_capture_exact == 1 &&
                real_asset_ownership_receipt.title_menu_capture_route_joined == 1 &&
                real_asset_ownership_receipt.bpk_menu_route_joined == 1 &&
                real_asset_ownership_receipt.runtime_dgn_route_joined == 1 &&
@@ -1348,6 +1351,9 @@ int main(void)
                host_caller_receipt.package_capture_consumed_by_host == 1 &&
                host_caller_receipt.package_route_matches_capture_route == 1 &&
                host_caller_receipt.host_route_consumes_package_route == 1 &&
+               host_caller_receipt.host_route_consumes_capture_matrix == 1 &&
+               host_caller_receipt.dgn_route_consumes_startup_package == 1 &&
+               host_caller_receipt.dgn_route_saturn_capture_exact == 1 &&
                host_caller_receipt.startup_bundle_consumed == 1 &&
                host_caller_receipt.display_callers_use_package_receipt == 1 &&
                host_caller_receipt.single_saturn_startup_owner_ready == 1 &&
@@ -1574,6 +1580,9 @@ int main(void)
                real_asset_ownership_receipt.host_route_consumes_dungeon_capture_frame == 0 &&
                real_asset_ownership_receipt.package_route_matches_capture_route == 1 &&
                real_asset_ownership_receipt.host_route_consumes_package_route == 1 &&
+               real_asset_ownership_receipt.host_route_consumes_capture_matrix == 1 &&
+               real_asset_ownership_receipt.dgn_route_consumes_startup_package == 0 &&
+               real_asset_ownership_receipt.dgn_route_saturn_capture_exact == 0 &&
                real_asset_ownership_receipt.host_route_capture_matrix_ready == 1 &&
                real_asset_ownership_receipt.host_saturn_non_title_capture_count == 1 &&
                real_asset_ownership_receipt.host_saturn_non_title_capture_mask == 1u &&
@@ -1608,6 +1617,9 @@ int main(void)
                host_caller_receipt.host_route_consumes_dungeon_capture_frame == 0 &&
                host_caller_receipt.package_route_matches_capture_route == 1 &&
                host_caller_receipt.host_route_consumes_package_route == 1 &&
+               host_caller_receipt.host_route_consumes_capture_matrix == 1 &&
+               host_caller_receipt.dgn_route_consumes_startup_package == 0 &&
+               host_caller_receipt.dgn_route_saturn_capture_exact == 0 &&
                host_caller_receipt.host_route_capture_matrix_ready == 1 &&
                host_caller_receipt.host_saturn_non_title_capture_count == 1 &&
                host_caller_receipt.host_saturn_non_title_capture_mask == 1u &&
@@ -2442,6 +2454,9 @@ int main(void)
                real_asset_ownership_receipt.menu_capture_uses_real_assets == 0 &&
                real_asset_ownership_receipt.package_capture_consumed_by_host == 0 &&
                real_asset_ownership_receipt.host_route_consumes_package_route == 0 &&
+               real_asset_ownership_receipt.host_route_consumes_capture_matrix == 0 &&
+               real_asset_ownership_receipt.dgn_route_consumes_startup_package == 0 &&
+               real_asset_ownership_receipt.dgn_route_saturn_capture_exact == 0 &&
                real_asset_ownership_receipt.title_menu_capture_route_joined == 0 &&
                real_asset_ownership_receipt.bpk_menu_route_joined == 0 &&
                real_asset_ownership_receipt.runtime_dgn_route_joined == 0 &&
@@ -2480,6 +2495,9 @@ int main(void)
                host_caller_receipt.host_execute_startup_draws == 0 &&
                host_caller_receipt.host_execute_dgn_draws == 0 &&
                host_caller_receipt.host_route_consumes_package_route == 0 &&
+               host_caller_receipt.host_route_consumes_capture_matrix == 0 &&
+               host_caller_receipt.dgn_route_consumes_startup_package == 0 &&
+               host_caller_receipt.dgn_route_saturn_capture_exact == 0 &&
                host_caller_receipt.bpk_handoff_consumed == 1 &&
                host_caller_receipt.prs3_blocker_consumed == 1 &&
                host_caller_receipt.dgn_handoff_consumed == 0 &&
