@@ -2452,6 +2452,7 @@ void theron_v1_boot_startup_graphics_route_receipt_init(
 }
 
 static void theron_v1_boot_startup_mark_bitmap_routes(
+    const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupRenderPlan *plan,
     Theron_V1_BootStartupGraphicsRouteReceipt *receipt);
 static void theron_v1_boot_startup_capture_track02_graphic_receipt(
@@ -2517,10 +2518,15 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
     out_receipt->status = render_route.status;
     out_receipt->real_bitmap_startup_graphics_ready =
         out_receipt->track02_real_media_ready &&
+                view_model->startup_media_state_receipt.
+                    startup_bitmap_decode_status == THERON_TRACK02_SIGNAL_OK &&
+                view_model->startup_media_state_receipt.
+                    startup_bitmap_route_mask != 0u &&
                 render_route.render_plan_valid
             ? 1
             : 0;
     theron_v1_boot_startup_mark_bitmap_routes(
+        view_model,
         &render_route.render_plan,
         out_receipt);
     theron_v1_boot_startup_capture_track02_graphic_receipt(
@@ -2535,33 +2541,50 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
 }
 
 static void theron_v1_boot_startup_mark_bitmap_routes(
+    const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupRenderPlan *plan,
     Theron_V1_BootStartupGraphicsRouteReceipt *receipt)
 {
     int i;
+    unsigned int ready_mask;
 
-    if (!plan || !receipt) {
+    if (!view_model || !plan || !receipt ||
+        !view_model->startup_media_state_valid) {
         return;
     }
+    ready_mask =
+        view_model->startup_media_state_receipt.startup_bitmap_route_mask;
     for (i = 0; i < plan->graphic_count &&
                 i < THERON_STARTUP_RENDER_GRAPHIC_CAPACITY_MAX; ++i) {
         switch (plan->graphics[i].kind) {
         case THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK:
+            if ((ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE) == 0u) {
+                break;
+            }
             receipt->bitmap_route_mask |= 1u << 0;
             ++receipt->bitmap_route_count;
             receipt->title_bitmap_route_ready = 1;
             break;
         case THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL:
+            if ((ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE) == 0u) {
+                break;
+            }
             receipt->bitmap_route_mask |= 1u << 1;
             ++receipt->bitmap_route_count;
             receipt->stage_bitmap_route_ready = 1;
             break;
         case THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME:
+            if ((ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) == 0u) {
+                break;
+            }
             receipt->bitmap_route_mask |= 1u << 2;
             ++receipt->bitmap_route_count;
             receipt->soul_room_bitmap_route_ready = 1;
             break;
         case THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD:
+            if ((ready_mask & THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) == 0u) {
+                break;
+            }
             receipt->bitmap_route_mask |= 1u << 3;
             ++receipt->bitmap_route_count;
             receipt->forcefield_bitmap_route_ready = 1;
@@ -2661,10 +2684,16 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status = render_route.status;
         out_receipt->real_bitmap_startup_graphics_ready =
             out_receipt->track02_real_media_ready &&
+                    view_model->startup_media_state_receipt.
+                        startup_bitmap_decode_status ==
+                            THERON_TRACK02_SIGNAL_OK &&
+                    view_model->startup_media_state_receipt.
+                        startup_bitmap_route_mask != 0u &&
                     render_route.render_plan_valid
                 ? 1
                 : 0;
         theron_v1_boot_startup_mark_bitmap_routes(
+            view_model,
             &render_route.render_plan,
             out_receipt);
         theron_v1_boot_startup_capture_track02_graphic_receipt(

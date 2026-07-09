@@ -18,6 +18,11 @@ typedef struct {
     char track02_md5[33];
     size_t track02_size;
     int startup_media_ready;
+    int startup_bitmap_decode_status;
+    int startup_bitmap_sample_count;
+    unsigned int startup_bitmap_route_mask;
+    size_t startup_bitmap_nonzero_pixel_count;
+    uint32_t startup_bitmap_checksum;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
@@ -34,6 +39,11 @@ typedef struct {
     char track02_md5[33];
     size_t track02_size;
     int startup_media_ready;
+    int startup_bitmap_decode_status;
+    int startup_bitmap_sample_count;
+    unsigned int startup_bitmap_route_mask;
+    size_t startup_bitmap_nonzero_pixel_count;
+    uint32_t startup_bitmap_checksum;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]

@@ -72,6 +72,11 @@ static void expect_true(int cond, const char *msg) {
     }
 }
 
+static void wr16le_test(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+}
+
 typedef struct TestStartupGraphicsCounters {
     int fill_count;
     int rect_count;
@@ -1583,6 +1588,15 @@ static void test_startup_session_facts_wrappers(void) {
     snprintf(media_receipt.startup_text_prompt,
              sizeof(media_receipt.startup_text_prompt),
              "GO AWAY AND RESURRECT THERON");
+    media_receipt.startup_bitmap_decode_status = THERON_TRACK02_SIGNAL_OK;
+    media_receipt.startup_bitmap_sample_count = 4;
+    media_receipt.startup_bitmap_route_mask =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    media_receipt.startup_bitmap_nonzero_pixel_count = 96u;
+    media_receipt.startup_bitmap_checksum = 0x71f02u;
     media_snapshot = snapshot;
     media_snapshot.startup_phase = THERON_STARTUP_PHASE_READY;
     media_snapshot.startup_text_prompt = NULL;
@@ -3382,6 +3396,81 @@ static void test_startup_session_facts_wrappers(void) {
     }
 }
 
+static void test_track02_startup_bitmap_decode_receipt(void) {
+    static const size_t descriptor_offsets[3] = {
+        0x70be06u, 0x70e2c6u, 0x710904u
+    };
+    static const size_t span_offsets[3] = {
+        0x2d53e0u, 0x47d040u, 0x712840u
+    };
+    static const uint8_t post_boundary_span[44] = {
+        0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+        0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80,
+        0x45, 0x80, 0x52, 0x80, 0x5f, 0x80, 0x6c, 0x80,
+        0x79, 0x80, 0x86, 0x80, 0xa0, 0x80, 0xa5, 0x80,
+        0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
+        0x93, 0x80, 0x00, 0x3f
+    };
+    const size_t track02_size =
+        ((span_offsets[2] + sizeof(post_boundary_span) +
+          THERON_TRACK02_RAW_SECTOR_BYTES - 1u) /
+         THERON_TRACK02_RAW_SECTOR_BYTES) *
+        THERON_TRACK02_RAW_SECTOR_BYTES;
+    uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
+    Theron_Track02StartupBitmapCatalog catalog;
+    Theron_StartupMediaStateReceipt receipt;
+
+    expect_true(track02 != NULL,
+                "Track02 startup bitmap sparse fixture allocates");
+    if (!track02) {
+        return;
+    }
+
+    for (size_t anchor = 0u; anchor < 3u; ++anchor) {
+        size_t descriptor = descriptor_offsets[anchor];
+        for (size_t i = 0u; i < 9u; ++i) {
+            wr16le_test(track02 + descriptor + i * 2u,
+                        (uint16_t)(0x0020u + i * 0x0400u));
+        }
+        memcpy(track02 + span_offsets[anchor],
+               post_boundary_span,
+               sizeof(post_boundary_span));
+    }
+
+    expect_true(theron_v1_track02_catalog_startup_bitmap_samples(
+                    track02,
+                    track02_size,
+                    THERON_TRACK02_MD5_US_BIN,
+                    &catalog) == THERON_TRACK02_SIGNAL_OK &&
+                    catalog.sample_count == 4u &&
+                    (catalog.route_mask &
+                     THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
+                    (catalog.route_mask &
+                     THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                    catalog.samples[0].nonzero_pixel_count > 0u &&
+                    catalog.samples[0].checksum != 0u,
+                "Track02 startup bitmap catalog decodes real 4bpp samples from raw-sector graphics spans");
+
+    theron_v1_startup_media_capture_track02_state_receipt(
+        track02,
+        track02_size,
+        THERON_TRACK02_MD5_US_BIN,
+        &receipt);
+    expect_true(receipt.startup_media_ready &&
+                    receipt.startup_bitmap_decode_status ==
+                        THERON_TRACK02_SIGNAL_OK &&
+                    receipt.startup_bitmap_sample_count == 4 &&
+                    (receipt.startup_bitmap_route_mask &
+                     THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
+                    (receipt.startup_bitmap_route_mask &
+                     THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                    receipt.startup_bitmap_nonzero_pixel_count > 0u &&
+                    receipt.startup_bitmap_checksum != 0u,
+                "startup media receipt carries Track02 bitmap decode proof without text/roster fallback");
+
+    free(track02);
+}
+
 static void test_boot_startup_launch_detach_runtime_receipt(void) {
     Theron_V1_BootStartupLaunch launch;
     Theron_V1_BootStartupRuntimeReceipt receipt;
@@ -3725,6 +3814,7 @@ int main(void) {
     test_boot_runtime_render_frame_facade();
     test_boot_runtime_release_facade();
     test_startup_session_facts_wrappers();
+    test_track02_startup_bitmap_decode_receipt();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d)\n",
