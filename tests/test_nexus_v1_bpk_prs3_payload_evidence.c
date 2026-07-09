@@ -96,6 +96,7 @@ static void build_archive(void) {
 static void test_evidence_walker(void) {
     Nexus_V1_BpkPrs3PayloadEvidence rows[8];
     Nexus_V1_BpkPrs3PayloadEvidenceSummary summary;
+    Nexus_V1_BpkPrs3StreamPlan plan;
     int rc;
 
     build_archive();
@@ -172,6 +173,44 @@ static void test_evidence_walker(void) {
     expect(summary.total_payload == 36U,
            "summary.total_payload == 36 (32+4)");
     expect(summary.truncated == 0, "no truncation (capacity not hit)");
+
+    memset(&plan, 0, sizeof(plan));
+    rc = nexus_v1_bpk_archive_prs3_stream_plan(
+        archive, sizeof(archive), 1U, &plan);
+    expect(rc == NEXUS_V1_BPK_PRS3_STREAM_OK,
+           "stream plan returns OK for PRS3 entry 1");
+    expect(strcmp(nexus_v1_bpk_prs3_stream_status_name(rc), "ok") == 0,
+           "stream plan status name is ok");
+    expect(plan.entry_index == 1U &&
+               plan.mode == NEXUS_V1_BPK_MODE_16BPP &&
+               plan.width == 16U &&
+               plan.height == 15U &&
+               plan.bpp == 2U &&
+               plan.pixel_count == 240U &&
+               plan.expected_output_bytes == 480U,
+           "stream plan carries surface dimensions and output byte count");
+    expect(plan.stream_size == 32U &&
+               plan.body_size == 28U &&
+               plan.body_offset == plan.stream_offset + 4U,
+           "stream plan separates leading word from body bytes");
+    expect(plan.header_first_u32 == 0x83U &&
+               plan.header_minus_payload == 99U &&
+               plan.header_underflow == 0 &&
+               plan.bounded_header_candidate == 0 &&
+               plan.decode_blocked == 1,
+           "stream plan records oversized synthetic header word and blocks decode");
+
+    memset(&plan, 0, sizeof(plan));
+    rc = nexus_v1_bpk_archive_prs3_stream_plan(
+        archive, sizeof(archive), 2U, &plan);
+    expect(rc == NEXUS_V1_BPK_PRS3_STREAM_OK,
+           "stream plan returns OK for PRS3 entry 2");
+    expect(plan.stream_size == 4U &&
+               plan.body_size == 0U &&
+               plan.header_first_u32 == 0x07U &&
+               plan.header_minus_payload == 3U &&
+               plan.bounded_header_candidate == 1,
+           "stream plan accepts a bounded 4-byte header-only stream");
 }
 
 static void test_capacity_exhaustion(void) {
@@ -220,6 +259,7 @@ static void test_zero_sample(void) {
 static void test_rejections(void) {
     Nexus_V1_BpkPrs3PayloadEvidence rows[1];
     Nexus_V1_BpkPrs3PayloadEvidenceSummary summary;
+    Nexus_V1_BpkPrs3StreamPlan plan;
     int rc;
 
     build_archive();
@@ -237,6 +277,20 @@ static void test_rejections(void) {
         archive, sizeof(archive), 32U, rows, 1U, &summary);
     expect(rc != 0, "bad BPPK magic is rejected");
     archive[0] = 'B';
+
+    memset(&plan, 0, sizeof(plan));
+    rc = nexus_v1_bpk_archive_prs3_stream_plan(
+        archive, sizeof(archive), 0U, &plan);
+    expect(rc == NEXUS_V1_BPK_PRS3_STREAM_ERR_NOT_PRS3,
+           "stream plan rejects directory trailer as not-prs3");
+    expect(strcmp(nexus_v1_bpk_prs3_stream_status_name(rc),
+                  "not-prs3") == 0,
+           "stream plan not-prs3 status name is stable");
+
+    rc = nexus_v1_bpk_archive_prs3_stream_plan(
+        archive, sizeof(archive), 1U, NULL);
+    expect(rc == NEXUS_V1_BPK_PRS3_STREAM_ERR_NULL,
+           "stream plan rejects NULL output");
 }
 
 static void test_optional_local_menumenu_bpk(void) {
@@ -282,6 +336,20 @@ static void test_optional_local_menumenu_bpk(void) {
            "local MENU.BPK compressed bytes < uncompressed bytes");
     expect(summary.truncated == 0,
            "local MENU.BPK capacity not exhausted (162 <= 256)");
+
+    {
+        Nexus_V1_BpkPrs3StreamPlan plan;
+        memset(&plan, 0, sizeof(plan));
+        rc = nexus_v1_bpk_archive_prs3_stream_plan(data, size, 1U, &plan);
+        expect(rc == NEXUS_V1_BPK_PRS3_STREAM_OK,
+               "local MENU.BPK entry[1] stream plan returns ok");
+        expect(plan.header_first_readable == 1 &&
+                   plan.header_first_u32 == 0x95U &&
+                   plan.header_minus_payload <= 16U &&
+                   plan.bounded_header_candidate == 1 &&
+                   plan.decode_blocked == 1,
+               "local MENU.BPK entry[1] stream plan locks bounded PRS3 header");
+    }
 
     free(rows);
     free(data);

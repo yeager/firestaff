@@ -728,6 +728,93 @@ const char *nexus_v1_bpk_surface_handoff_status_name(
     }
 }
 
+int nexus_v1_bpk_archive_prs3_stream_plan(
+    const uint8_t *data,
+    size_t data_size,
+    uint32_t index,
+    Nexus_V1_BpkPrs3StreamPlan *out_plan) {
+    Nexus_V1_BpkEntry entry;
+    Nexus_V1_BpkEntryPrefix prefix;
+    Nexus_V1_BpkPrs3Info prs3;
+    uint32_t bpp;
+    uint32_t stream_offset;
+    uint32_t stream_size;
+    uint64_t output_bytes;
+
+    if (!out_plan) return NEXUS_V1_BPK_PRS3_STREAM_ERR_NULL;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!data) return NEXUS_V1_BPK_PRS3_STREAM_ERR_NULL;
+
+    if (nexus_v1_bpk_archive_get_entry(data, data_size, index,
+                                       &entry) != 0 ||
+        nexus_v1_bpk_archive_get_entry_prefix(data, data_size, index,
+                                              &prefix) != 0 ||
+        nexus_v1_bpk_archive_inspect_prs3(data, data_size, index,
+                                          &prs3) != 0) {
+        return NEXUS_V1_BPK_PRS3_STREAM_ERR_ARCHIVE;
+    }
+    if (!entry.has_prs3 || !prs3.has_prs3) {
+        return NEXUS_V1_BPK_PRS3_STREAM_ERR_NOT_PRS3;
+    }
+    bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+    if (bpp == 0U) {
+        return NEXUS_V1_BPK_PRS3_STREAM_ERR_UNSUPPORTED_MODE;
+    }
+
+    stream_offset = entry.offset + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES +
+                    NEXUS_V1_BPK_PRS3_HEADER_BYTES;
+    if (stream_offset > entry.next_offset) {
+        return NEXUS_V1_BPK_PRS3_STREAM_ERR_TRUNCATED;
+    }
+    stream_size = entry.next_offset - stream_offset;
+    if (stream_size < 4U) {
+        return NEXUS_V1_BPK_PRS3_STREAM_ERR_TRUNCATED;
+    }
+
+    output_bytes = (uint64_t)prefix.width * (uint64_t)prefix.height * bpp;
+    if (output_bytes > UINT32_MAX) {
+        return NEXUS_V1_BPK_PRS3_STREAM_ERR_ARCHIVE;
+    }
+
+    out_plan->entry_index = index;
+    out_plan->mode = prefix.mode;
+    out_plan->width = prefix.width;
+    out_plan->height = prefix.height;
+    out_plan->bpp = bpp;
+    out_plan->pixel_count = (uint32_t)prefix.width * (uint32_t)prefix.height;
+    out_plan->expected_output_bytes = (uint32_t)output_bytes;
+    out_plan->stream_offset = stream_offset;
+    out_plan->stream_size = stream_size;
+    out_plan->body_offset = stream_offset + 4U;
+    out_plan->body_size = stream_size - 4U;
+    out_plan->header_first_u32 = rd32_be(data + stream_offset);
+    out_plan->header_first_readable = 1;
+    if (out_plan->header_first_u32 >= stream_size) {
+        out_plan->header_minus_payload =
+            out_plan->header_first_u32 - stream_size;
+        out_plan->bounded_header_candidate =
+            (out_plan->header_minus_payload <= 16U) ? 1 : 0;
+    } else {
+        out_plan->header_underflow = 1;
+        out_plan->header_minus_payload = UINT32_MAX;
+    }
+    out_plan->decode_blocked = 1;
+    return NEXUS_V1_BPK_PRS3_STREAM_OK;
+}
+
+const char *nexus_v1_bpk_prs3_stream_status_name(int status) {
+    switch (status) {
+    case NEXUS_V1_BPK_PRS3_STREAM_OK: return "ok";
+    case NEXUS_V1_BPK_PRS3_STREAM_ERR_NULL: return "null";
+    case NEXUS_V1_BPK_PRS3_STREAM_ERR_ARCHIVE: return "archive";
+    case NEXUS_V1_BPK_PRS3_STREAM_ERR_NOT_PRS3: return "not-prs3";
+    case NEXUS_V1_BPK_PRS3_STREAM_ERR_UNSUPPORTED_MODE:
+        return "unsupported-mode";
+    case NEXUS_V1_BPK_PRS3_STREAM_ERR_TRUNCATED: return "truncated";
+    default: return "unknown";
+    }
+}
+
 /* pass1084 — bounded PRS3 compression evidence walker. Surfaces per-entry
  * structural receipts for the (still unknown) PRS3 stream format so we can
  * narrow down the algorithm family in subsequent passes. The walker is
