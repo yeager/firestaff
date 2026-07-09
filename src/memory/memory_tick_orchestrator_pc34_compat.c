@@ -2467,23 +2467,20 @@ static void orch_cmd_attack_schedule_f0231_reaction_compat(
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &reaction);
 }
 
-static void orch_cmd_attack_apply_group_kill_side_effects_compat(
+static void orch_cmd_attack_apply_group_kill_side_effects_at_square_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
-    int targetDirection,
+    int mapIndex,
+    int mapX,
+    int mapY,
     int outcome)
 {
     DM1_MeleeF0190KilledAllStateInputPc34 in;
     DM1_MeleeF0190KilledAllStatePlanPc34 plan;
-    int mapIndex;
-    int mapX;
-    int mapY;
 
     if (!world || !world->things || groupIndex < 0) return;
     if (outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) return;
 
-    orch_cmd_attack_target_square_compat(
-        world, targetDirection, &mapIndex, &mapX, &mapY);
     memset(&in, 0, sizeof(in));
     memset(&plan, 0, sizeof(plan));
     in.outcome = outcome;
@@ -2509,30 +2506,35 @@ static void orch_cmd_attack_apply_group_kill_side_effects_compat(
     }
 }
 
-static int orch_cmd_attack_f0190_smoke_attack_compat(
-    const struct CombatantCreatureSnapshot_Compat* creature)
+static void orch_cmd_attack_apply_group_kill_side_effects_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    int targetDirection,
+    int outcome)
 {
-    int size;
-    if (!creature) return 110;
-    size = creature->attributes & DM1_ATTR_SIZE_MASK;
-    if (size == DM1_SIZE_FULL_SQUARE) return 255;
-    if (size == DM1_SIZE_HALF_SQUARE) return 190;
-    return 110;
+    int mapIndex;
+    int mapX;
+    int mapY;
+
+    if (!world) return;
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
+    orch_cmd_attack_apply_group_kill_side_effects_at_square_compat(
+        world, groupIndex, mapIndex, mapX, mapY, outcome);
 }
 
-static void orch_cmd_attack_create_f0190_death_smoke_compat(
+static void orch_create_f0190_death_smoke_from_plan_at_square_compat(
     struct GameWorld_Compat* world,
     const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
-    int targetDirection,
+    int mapIndex,
+    int mapX,
+    int mapY,
     int outcome)
 {
     DM1_MeleeF0190DeathSmokeInputPc34 in;
     DM1_MeleeF0190DeathSmokePlanPc34 smokePlan;
     struct TimelineEvent_Compat advance;
     int slotIndex = -1;
-    int mapIndex;
-    int mapX;
-    int mapY;
 
     if (!world || !aftermathPlan) return;
     if (outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES &&
@@ -2540,8 +2542,6 @@ static void orch_cmd_attack_create_f0190_death_smoke_compat(
         return;
     }
 
-    orch_cmd_attack_target_square_compat(
-        world, targetDirection, &mapIndex, &mapX, &mapY);
     memset(&in, 0, sizeof(in));
     memset(&smokePlan, 0, sizeof(smokePlan));
     in.shouldCreate = 1;
@@ -2561,6 +2561,23 @@ static void orch_cmd_attack_create_f0190_death_smoke_compat(
     }
 }
 
+static void orch_cmd_attack_create_f0190_death_smoke_compat(
+    struct GameWorld_Compat* world,
+    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
+    int targetDirection,
+    int outcome)
+{
+    int mapIndex;
+    int mapX;
+    int mapY;
+
+    if (!world) return;
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
+    orch_create_f0190_death_smoke_from_plan_at_square_compat(
+        world, aftermathPlan, mapIndex, mapX, mapY, outcome);
+}
+
 static void orch_create_f0190_death_smoke_at_square_compat(
     struct GameWorld_Compat* world,
     int creatureType,
@@ -2571,9 +2588,8 @@ static void orch_create_f0190_death_smoke_at_square_compat(
 {
     const struct CreatureBehaviorProfile_Compat* profile;
     struct CombatantCreatureSnapshot_Compat creature;
-    struct ExplosionCreateInput_Compat create;
-    struct TimelineEvent_Compat advance;
-    int slotIndex = -1;
+    DM1_MeleeF0231AftermathInputPc34 aftermathIn;
+    DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
 
     if (!world) return;
     profile = CREATURE_GetProfile_Compat(creatureType);
@@ -2581,23 +2597,19 @@ static void orch_create_f0190_death_smoke_at_square_compat(
     creature.creatureType = creatureType;
     creature.attributes = profile ? profile->attributes : 0;
 
-    memset(&create, 0, sizeof(create));
-    create.explosionType = C040_EXPLOSION_SMOKE;
-    create.attack = orch_cmd_attack_f0190_smoke_attack_compat(&creature);
-    create.mapIndex = mapIndex;
-    create.mapX = mapX;
-    create.mapY = mapY;
-    create.cell = (killedCell == EXPLOSION_CELL_CENTERED)
-        ? EXPLOSION_CELL_CENTERED : (killedCell & 3);
-    create.centered = (create.cell == EXPLOSION_CELL_CENTERED) ? 1 : 0;
-    create.currentTick = (int)world->gameTick;
-    create.ownerKind = PROJECTILE_OWNER_CHAMPION;
-    create.ownerIndex = -1;
-    create.creatorProjectileSlot = -1;
-
-    if (F0821_EXPLOSION_Create_Compat(
-            &create, &world->explosions, &slotIndex, &advance)) {
-        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &advance);
+    memset(&aftermathIn, 0, sizeof(aftermathIn));
+    memset(&aftermathPlan, 0, sizeof(aftermathPlan));
+    aftermathIn.creatureType = creature.creatureType;
+    aftermathIn.creatureAttributes = creature.attributes;
+    aftermathIn.killedCell = killedCell;
+    aftermathIn.damageOutcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    aftermathIn.fallbackCombatOutcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    if (dm1_v1_melee_aftermath_plan_f0231_pc34(
+            &aftermathIn, &aftermathPlan) &&
+        aftermathPlan.valid && aftermathPlan.shouldCreateDeathSmoke) {
+        orch_create_f0190_death_smoke_from_plan_at_square_compat(
+            world, &aftermathPlan, mapIndex, mapX, mapY,
+            COMBAT_OUTCOME_KILLED_SOME_CREATURES);
     }
 }
 
@@ -4023,6 +4035,26 @@ static int orch_drop_group_slot_possessions_compat(
     int mapIndex,
     int mapX,
     int mapY);
+static void orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int killedCell,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int outcome);
+static int orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int groupIndex,
+    int killedCreatureIndex,
+    int originalGroupCount,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int outcome);
 static int orch_link_thing_to_square_tail_compat(
     struct GameWorld_Compat* world,
     int mapIndex,
@@ -4582,7 +4614,6 @@ static int orch_apply_projectile_group_action_compat(
     int killedCell;
     int originalCreatureType;
     int originalGroupCount;
-    int creatureSnapshotReady;
     int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
     int associatedThingMovedToGroup = 0;
 
@@ -4602,8 +4633,17 @@ static int orch_apply_projectile_group_action_compat(
     killedCell = orch_group_creature_cell_compat(group, creatureIndex);
     originalCreatureType = (int)group->creatureType;
     originalGroupCount = (int)group->count;
-    creatureSnapshotReady = F0888_ORCH_GetCreatureSnapshot_Compat(
-        world, groupIndex, creatureIndex, 0, &creatureSnapshot);
+    memset(&creatureSnapshot, 0, sizeof(creatureSnapshot));
+    if (!F0888_ORCH_GetCreatureSnapshot_Compat(
+            world, groupIndex, creatureIndex, 0, &creatureSnapshot)) {
+        const struct CreatureBehaviorProfile_Compat* profile =
+            CREATURE_GetProfile_Compat(originalCreatureType);
+        creatureSnapshot.creatureType = originalCreatureType;
+        if (profile) {
+            creatureSnapshot.attributes = profile->attributes;
+            creatureSnapshot.properties = profile->properties;
+        }
+    }
 
     if (projectile &&
         projectile->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
@@ -4637,22 +4677,18 @@ static int orch_apply_projectile_group_action_compat(
     if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
         /* ReDMCSB PROJEXPL.C:F0217 lines 535-539 receives the F0190
          * damage outcome; GROUP.C:F0190 lines 907-917 creates death
-         * smoke, and all-kill removes the group from the square. */
+         * smoke, and all-kill removes the group from the square.  Route the
+         * projectile path through the same DM1 F0190 receipts as melee. */
         orch_create_f0190_death_smoke_at_square_compat(
             world, originalCreatureType, killedCell,
             action->targetMapIndex, action->targetMapX, action->targetMapY);
-        (void)orch_drop_group_fixed_possessions_compat(
-            world, group, action->targetMapIndex,
-            action->targetMapX, action->targetMapY);
-        (void)orch_drop_group_slot_possessions_compat(
-            world, group, action->targetMapIndex,
-            action->targetMapX, action->targetMapY);
-        (void)orch_unlink_thing_from_square_compat(
-            world, action->targetMapIndex, action->targetMapX,
-            action->targetMapY,
-            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
-        group->next = THING_NONE;
-        orch_remove_active_group_state_compat(world, groupIndex);
+        orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
+            world, group, &creatureSnapshot, killedCell,
+            action->targetMapIndex, action->targetMapX, action->targetMapY,
+            outcome);
+        orch_cmd_attack_apply_group_kill_side_effects_at_square_compat(
+            world, groupIndex, action->targetMapIndex, action->targetMapX,
+            action->targetMapY, outcome);
         emit(result, EMIT_KILL_NOTIFY, groupIndex, creatureIndex,
              outcome, originalCreatureType);
     } else {
@@ -4662,44 +4698,14 @@ static int orch_apply_projectile_group_action_compat(
              * the surviving group, compacts the group, and creates death smoke.
              * F0738 already compacted the live group; the orchestrator owns the
              * surrounding map/timeline side effects. */
-            if (creatureSnapshotReady &&
-                (creatureSnapshot.attributes & DM1_ATTR_DROP_FIXED_POSS)) {
-                (void)orch_drop_creature_fixed_possessions_compat(
-                    world, originalCreatureType, killedCell,
-                    action->targetMapIndex, action->targetMapX,
-                    action->targetMapY);
-            }
-            if (creatureSnapshotReady && group->behavior == DM1_BEHAVIOR_ATTACK) {
-                DM1_MeleeF0190KilledSomeStateInputPc34 stateIn;
-                DM1_MeleeF0190KilledSomeStatePlanPc34 statePlan;
-                memset(&stateIn, 0, sizeof(stateIn));
-                memset(&statePlan, 0, sizeof(statePlan));
-                stateIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
-                stateIn.groupBehavior = group->behavior;
-                stateIn.groupIndex = groupIndex;
-                stateIn.killedCreatureIndex = creatureIndex;
-                stateIn.originalGroupCount = originalGroupCount;
-                stateIn.mapIndex = action->targetMapIndex;
-                stateIn.mapX = action->targetMapX;
-                stateIn.mapY = action->targetMapY;
-                stateIn.partyMapIndex = world->partyMapIndex;
-                stateIn.partyMapX = world->party.mapX;
-                stateIn.partyMapY = world->party.mapY;
-                stateIn.creatureType = creatureSnapshot.creatureType;
-                stateIn.creatureProperties = creatureSnapshot.properties;
-                if (dm1_v1_melee_killed_some_state_plan_f0190_pc34(
-                        &stateIn, &statePlan) && statePlan.valid) {
-                    if (statePlan.shouldCleanupCreatureEvents) {
-                        orch_cmd_attack_cleanup_f0190_creature_events_compat(
-                            world, statePlan.mapIndex, statePlan.mapX,
-                            statePlan.mapY, statePlan.killedCreatureIndex);
-                    }
-                    if (statePlan.shouldEvaluateFear) {
-                        (void)orch_cmd_attack_apply_f0190_fear_compat(
-                            world, group, originalGroupCount, &statePlan);
-                    }
-                }
-            }
+            orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
+                world, group, &creatureSnapshot, killedCell,
+                action->targetMapIndex, action->targetMapX, action->targetMapY,
+                outcome);
+            (void)orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
+                world, group, &creatureSnapshot, groupIndex, creatureIndex,
+                originalGroupCount, action->targetMapIndex,
+                action->targetMapX, action->targetMapY, outcome);
             orch_create_f0190_death_smoke_at_square_compat(
                 world, originalCreatureType, killedCell,
                 action->targetMapIndex, action->targetMapX, action->targetMapY);
@@ -5346,19 +5352,18 @@ static int orch_drop_group_slot_possessions_compat(
     return safety < 64;
 }
 
-static void orch_cmd_attack_apply_f0190_possession_drops_compat(
+static void orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
     const struct CombatantCreatureSnapshot_Compat* creature,
     int killedCell,
-    int targetDirection,
+    int mapIndex,
+    int mapX,
+    int mapY,
     int outcome)
 {
     DM1_MeleeF0190PossessionDropInputPc34 dropIn;
     DM1_MeleeF0190PossessionDropPlanPc34 dropPlan;
-    int mapIndex;
-    int mapX;
-    int mapY;
 
     if (!world || !group || !creature) return;
     if (outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES &&
@@ -5366,8 +5371,6 @@ static void orch_cmd_attack_apply_f0190_possession_drops_compat(
         return;
     }
 
-    orch_cmd_attack_target_square_compat(
-        world, targetDirection, &mapIndex, &mapX, &mapY);
     memset(&dropIn, 0, sizeof(dropIn));
     memset(&dropPlan, 0, sizeof(dropPlan));
     dropIn.outcome = outcome;
@@ -5395,6 +5398,25 @@ static void orch_cmd_attack_apply_f0190_possession_drops_compat(
             world, dropPlan.creatureType, dropPlan.creatureCell,
             dropPlan.mapIndex, dropPlan.mapX, dropPlan.mapY);
     }
+}
+
+static void orch_cmd_attack_apply_f0190_possession_drops_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int killedCell,
+    int targetDirection,
+    int outcome)
+{
+    int mapIndex;
+    int mapX;
+    int mapY;
+
+    if (!world) return;
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
+    orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
+        world, group, creature, killedCell, mapIndex, mapX, mapY, outcome);
 }
 
 static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
@@ -5484,27 +5506,24 @@ static int orch_cmd_attack_apply_f0190_fear_compat(
     return 1;
 }
 
-static int orch_cmd_attack_apply_f0190_killed_some_state_compat(
+static int orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
     const struct CombatantCreatureSnapshot_Compat* creature,
     int groupIndex,
     int killedCreatureIndex,
     int originalGroupCount,
-    int targetDirection,
+    int mapIndex,
+    int mapX,
+    int mapY,
     int outcome)
 {
     DM1_MeleeF0190KilledSomeStateInputPc34 in;
     DM1_MeleeF0190KilledSomeStatePlanPc34 plan;
-    int mapIndex;
-    int mapX;
-    int mapY;
 
     if (!world || !group || !creature) return 0;
     if (outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES) return 0;
 
-    orch_cmd_attack_target_square_compat(
-        world, targetDirection, &mapIndex, &mapX, &mapY);
     memset(&in, 0, sizeof(in));
     memset(&plan, 0, sizeof(plan));
     in.outcome = outcome;
@@ -5534,6 +5553,28 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_compat(
             world, group, originalGroupCount, &plan);
     }
     return 0;
+}
+
+static int orch_cmd_attack_apply_f0190_killed_some_state_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int groupIndex,
+    int killedCreatureIndex,
+    int originalGroupCount,
+    int targetDirection,
+    int outcome)
+{
+    int mapIndex;
+    int mapX;
+    int mapY;
+
+    if (!world) return 0;
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
+    return orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
+        world, group, creature, groupIndex, killedCreatureIndex,
+        originalGroupCount, mapIndex, mapX, mapY, outcome);
 }
 
 static int orch_resolve_group_f0267_pit_destination_compat(
