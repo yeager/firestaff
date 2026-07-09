@@ -2056,6 +2056,17 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(graphics_route_receipt.status,
                            "TRACK02 GRAPHICS BLOCKED") == 0,
                 "boot graphics route receipt blocks Track02 fallback visuals before execution");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(!theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
+                    &blocked_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &graphics_route_receipt) &&
+                    graphics_route_receipt.graphics_blocked &&
+                    graphics_route_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
+                    media_graphics_counters.fill_count == 0,
+                "boot snapshot graphics route blocks Track02 fallback visuals without UI rebuild");
     semantic_snapshot = media_snapshot;
     semantic_snapshot.runtime_level_source =
         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
@@ -2141,6 +2152,17 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(graphics_route_receipt.status,
                            "TRACK02 RUNTIME GRAPHICS HANDOFF") == 0,
                 "boot graphics route receipt hands Track02 semantic route to runtime without fallback startup draw");
+    expect_true(!theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
+                    &semantic_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &graphics_route_receipt) &&
+                    graphics_route_receipt.runtime_readiness_ready &&
+                    graphics_route_receipt.runtime_track02_semantic_handoff &&
+                    graphics_route_receipt.graphics_blocked &&
+                    strcmp(graphics_route_receipt.status,
+                           "TRACK02 RUNTIME GRAPHICS HANDOFF") == 0,
+                "boot snapshot graphics route hands semantic Track02 route to runtime");
     media_layout_roster_found = 0;
     expect_true(theron_v1_boot_startup_layout_build_from_view_model(
                     &media_view_model,
@@ -2281,6 +2303,18 @@ static void test_startup_session_facts_wrappers(void) {
                     media_graphics_counters.fill_count > 0 &&
                     media_graphics_counters.rect_count > 0,
                 "boot graphics route receipt executes startup graphics from view model");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
+                    &media_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    &graphics_route_receipt) &&
+                    graphics_route_receipt.host_consumes_view_model &&
+                    graphics_route_receipt.render_route_valid &&
+                    graphics_route_receipt.graphics_executed &&
+                    graphics_route_receipt.startup_menu_render_allowed &&
+                    media_graphics_counters.fill_count > 0,
+                "boot snapshot graphics route consumes Track02 media receipt without raw UI adapter");
     expect_true(theron_v1_boot_startup_render_rows_from_snapshot_with_media_receipt(
                     &media_snapshot,
                     &media_receipt,

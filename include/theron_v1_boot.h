@@ -750,6 +750,11 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
     const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupGraphicExecutor *executor,
     Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt);
+int theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,

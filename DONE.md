@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron snapshot graphics route receipt: snapshot+Track02-media graphics execution now delegates through the Theron-owned startup view model and graphics route receipt, covering normal startup draw, Track02-blocked no-fallback, and semantic runtime handoff without a raw UI adapter. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron startup graphics route receipt: boot startup graphics execution now goes through a Theron-owned route receipt, executes normal/semantic routes from the startup view model, and blocks Track02-blocked routes before drawing fallback visuals. Verification: scoped Theron source/test syntax checks and `git diff --check` passed; linked CMake target remains blocked by unrelated Nexus startup declaration error.
 
 - ✅ 2026-07-09 DM1 HoC mirror stale-clear receipt: champion-mirror render receipts now expose wall-square consumption and stale portrait/materialized-payload clear flags from ReDMCSB G0289 behavior, so hosts can avoid leaking old mirror payloads into thing layers. Verification: `test_dm1_v1_champion_mirror_pc34_compat` 40/40, target rebuild, and `git diff --check` passed.
