@@ -2044,6 +2044,9 @@ static void test_startup_session_facts_wrappers(void) {
                     !host_view_receipt.save_resume_runtime_handoff_ready &&
                     host_view_receipt.no_fallback_visuals_enforced &&
                     !host_view_receipt.fallback_visuals_allowed &&
+                    !host_view_receipt.runtime_graphics_handoff &&
+                    !host_view_receipt.track02_runtime_graphics_handoff &&
+                    !host_view_receipt.save_resume_runtime_graphics_handoff &&
                     strcmp(host_view_receipt.status,
                            "TRACK02 RUNTIME BLOCKED") == 0,
                 "boot host-view receipt exposes Track02 blocked route without status fallback parsing");
@@ -2064,6 +2067,10 @@ static void test_startup_session_facts_wrappers(void) {
                     !graphics_route_receipt.runtime_receipt_text_route &&
                     graphics_route_receipt.no_fallback_visuals_enforced &&
                     !graphics_route_receipt.fallback_visuals_allowed &&
+                    !graphics_route_receipt.runtime_graphics_handoff &&
+                    !graphics_route_receipt.track02_runtime_graphics_handoff &&
+                    !graphics_route_receipt
+                         .save_resume_runtime_graphics_handoff &&
                     media_graphics_counters.fill_count == 0 &&
                     media_graphics_counters.rect_count == 0 &&
                     strcmp(graphics_route_receipt.status,
@@ -2144,6 +2151,9 @@ static void test_startup_session_facts_wrappers(void) {
                     host_view_receipt.save_resume_track02_no_fallback_ready &&
                     host_view_receipt.no_fallback_visuals_enforced &&
                     !host_view_receipt.fallback_visuals_allowed &&
+                    host_view_receipt.runtime_graphics_handoff &&
+                    host_view_receipt.track02_runtime_graphics_handoff &&
+                    !host_view_receipt.save_resume_runtime_graphics_handoff &&
                     host_view_receipt.hud_ready &&
                     strcmp(host_view_receipt.status,
                            "TRACK02 RUNTIME READY") == 0,
@@ -2161,6 +2171,10 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.runtime_track02_semantic_handoff &&
                     graphics_route_receipt.no_fallback_visuals_enforced &&
                     !graphics_route_receipt.fallback_visuals_allowed &&
+                    graphics_route_receipt.runtime_graphics_handoff &&
+                    graphics_route_receipt.track02_runtime_graphics_handoff &&
+                    !graphics_route_receipt
+                         .save_resume_runtime_graphics_handoff &&
                     media_graphics_counters.fill_count == 0 &&
                     strcmp(graphics_route_receipt.status,
                            "TRACK02 RUNTIME GRAPHICS HANDOFF") == 0,
@@ -2172,6 +2186,10 @@ static void test_startup_session_facts_wrappers(void) {
                     &graphics_route_receipt) &&
                     graphics_route_receipt.runtime_readiness_ready &&
                     graphics_route_receipt.runtime_track02_semantic_handoff &&
+                    graphics_route_receipt.runtime_graphics_handoff &&
+                    graphics_route_receipt.track02_runtime_graphics_handoff &&
+                    !graphics_route_receipt
+                         .save_resume_runtime_graphics_handoff &&
                     graphics_route_receipt.graphics_blocked &&
                     strcmp(graphics_route_receipt.status,
                            "TRACK02 RUNTIME GRAPHICS HANDOFF") == 0,
@@ -2207,6 +2225,21 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(render_route_receipt.status,
                            "SAVE RESUME RUNTIME READY") == 0,
                 "boot render route receipt hands save-resume route to runtime without fallback visuals");
+    expect_true(theron_v1_boot_startup_host_view_receipt_from_snapshot_with_media_receipt(
+                    &save_resume_snapshot,
+                    &media_receipt,
+                    &host_view_receipt) &&
+                    host_view_receipt.runtime_readiness_ready &&
+                    host_view_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME &&
+                    host_view_receipt.no_fallback_visuals_enforced &&
+                    !host_view_receipt.fallback_visuals_allowed &&
+                    host_view_receipt.runtime_graphics_handoff &&
+                    !host_view_receipt.track02_runtime_graphics_handoff &&
+                    host_view_receipt.save_resume_runtime_graphics_handoff &&
+                    strcmp(host_view_receipt.status,
+                           "SAVE RESUME RUNTIME READY") == 0,
+                "boot host-view receipt exposes save-resume runtime graphics handoff without status parsing");
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(!theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
                     &save_resume_snapshot,
@@ -2219,6 +2252,10 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.graphics_blocked &&
                     graphics_route_receipt.no_fallback_visuals_enforced &&
                     !graphics_route_receipt.fallback_visuals_allowed &&
+                    graphics_route_receipt.runtime_graphics_handoff &&
+                    !graphics_route_receipt.track02_runtime_graphics_handoff &&
+                    graphics_route_receipt
+                        .save_resume_runtime_graphics_handoff &&
                     media_graphics_counters.fill_count == 0 &&
                     strcmp(graphics_route_receipt.status,
                            "SAVE RESUME RUNTIME GRAPHICS HANDOFF") == 0,

@@ -1902,6 +1902,21 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
             out_receipt->render_route.fallback_visuals_allowed;
         out_receipt->runtime_level_source =
             out_receipt->render_route.runtime_level_source;
+        out_receipt->runtime_graphics_handoff =
+            out_receipt->runtime_readiness_ready &&
+            out_receipt->no_fallback_visuals_enforced ? 1 : 0;
+        out_receipt->track02_runtime_graphics_handoff =
+            out_receipt->runtime_graphics_handoff &&
+                    out_receipt->runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC
+                ? 1
+                : 0;
+        out_receipt->save_resume_runtime_graphics_handoff =
+            out_receipt->runtime_graphics_handoff &&
+                    out_receipt->runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME
+                ? 1
+                : 0;
         out_receipt->runtime_track02_semantic_handoff =
             out_receipt->render_route.runtime_track02_semantic_handoff;
         out_receipt->runtime_fallback_visuals_blocked =
@@ -2626,6 +2641,21 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
             render_route.fallback_visuals_allowed;
         out_receipt->runtime_level_source =
             render_route.runtime_level_source;
+        out_receipt->runtime_graphics_handoff =
+            out_receipt->runtime_readiness_ready &&
+            out_receipt->no_fallback_visuals_enforced ? 1 : 0;
+        out_receipt->track02_runtime_graphics_handoff =
+            out_receipt->runtime_graphics_handoff &&
+                    out_receipt->runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC
+                ? 1
+                : 0;
+        out_receipt->save_resume_runtime_graphics_handoff =
+            out_receipt->runtime_graphics_handoff &&
+                    out_receipt->runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME
+                ? 1
+                : 0;
         out_receipt->runtime_track02_semantic_handoff =
             render_route.runtime_track02_semantic_handoff;
         out_receipt->runtime_fallback_visuals_blocked =
