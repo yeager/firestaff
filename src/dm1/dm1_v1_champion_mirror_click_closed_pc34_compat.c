@@ -2,15 +2,15 @@
 
 #include <string.h>
 
-typedef struct Dm1V1MirrorClickClosedNameZonePc34Compat {
+typedef struct DM1_V1_MirrorClickClosedNameZonePc34 {
     int command;
     int left;
     int right;
     int top;
     int bottom;
-} Dm1V1MirrorClickClosedNameZonePc34Compat;
+} DM1_V1_MirrorClickClosedNameZonePc34;
 
-static const Dm1V1MirrorClickClosedNameZonePc34Compat kNameZones[] = {
+static const DM1_V1_MirrorClickClosedNameZonePc34 kNameZones[] = {
     { 16,   0,  42, 0, 6 },
     { 17,  69, 111, 0, 6 },
     { 18, 138, 180, 0, 6 },
@@ -23,8 +23,8 @@ static int valid_champion_index(int championIndex)
            championIndex < DM1_V1_MIRROR_CLICK_CLOSED_CHAMPION_COUNT_PC34_COMPAT;
 }
 
-static void result_init(Dm1V1MirrorClickClosedResultPc34Compat *result,
-                        const Dm1V1MirrorClickClosedStatePc34Compat *state)
+static void result_init(DM1_V1_MirrorClickClosedResultPc34 *result,
+                        const DM1_V1_MirrorClickClosedStatePc34 *state)
 {
     if (!result) {
         return;
@@ -43,8 +43,8 @@ static void result_init(Dm1V1MirrorClickClosedResultPc34Compat *result,
     }
 }
 
-void DM1_V1_MirrorClickClosed_InitPc34Compat(
-    Dm1V1MirrorClickClosedStatePc34Compat *state)
+void DM1_V1_MirrorClickClosed_InitPc34(
+    DM1_V1_MirrorClickClosedStatePc34 *state)
 {
     int i;
 
@@ -79,7 +79,7 @@ static int command_from_name_zone(int x, int y, unsigned int mouseButtons)
 }
 
 static int draw_front_d1c_mirror_portrait(
-    const Dm1V1MirrorClickClosedStatePc34Compat *state)
+    const DM1_V1_MirrorClickClosedStatePc34 *state)
 {
     int championIndex;
 
@@ -95,9 +95,9 @@ static int draw_front_d1c_mirror_portrait(
     return state->champions[championIndex].portraitOrdinal;
 }
 
-static int set_leader(Dm1V1MirrorClickClosedStatePc34Compat *state,
+static int set_leader(DM1_V1_MirrorClickClosedStatePc34 *state,
                       int championIndex,
-                      Dm1V1MirrorClickClosedResultPc34Compat *result)
+                      DM1_V1_MirrorClickClosedResultPc34 *result)
 {
     if (!state || !result || !valid_champion_index(championIndex)) {
         return 0;
@@ -119,12 +119,12 @@ static int set_leader(Dm1V1MirrorClickClosedStatePc34Compat *state,
 }
 
 static int process_status_box_inner(
-    Dm1V1MirrorClickClosedStatePc34Compat *state,
+    DM1_V1_MirrorClickClosedStatePc34 *state,
     int clickedChampionIndex,
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1MirrorClickClosedResultPc34Compat *result)
+    DM1_V1_MirrorClickClosedResultPc34 *result)
 {
     int nestedCommand;
     int targetLeaderIndex;
@@ -154,13 +154,13 @@ static int process_status_box_inner(
     return 0;
 }
 
-int DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34Compat(
-    Dm1V1MirrorClickClosedStatePc34Compat *state,
+int DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34(
+    DM1_V1_MirrorClickClosedStatePc34 *state,
     int command,
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1MirrorClickClosedResultPc34Compat *outResult)
+    DM1_V1_MirrorClickClosedResultPc34 *outResult)
 {
     int clickedChampionIndex;
     int changed;
@@ -195,7 +195,7 @@ int DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34Compat(
     return changed;
 }
 
-const char *DM1_V1_MirrorClickClosed_SourceEvidencePc34Compat(void)
+const char *DM1_V1_MirrorClickClosed_SourceEvidencePc34(void)
 {
     return "ReDMCSB COMMAND.C:484-488 G0455 maps C159..C162 name rows to "
            "C016..C019; COMMAND.C:2158-2162 dispatches C012..C015 only for "

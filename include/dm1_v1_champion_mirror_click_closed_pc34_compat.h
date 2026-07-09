@@ -13,23 +13,23 @@ extern "C" {
 #define DM1_V1_MIRROR_CLICK_CLOSED_STATUS_BOX_0_PC34_COMPAT 12
 #define DM1_V1_MIRROR_CLICK_CLOSED_SET_LEADER_0_PC34_COMPAT 16
 
-typedef struct Dm1V1MirrorClickClosedChampionPc34Compat {
+typedef struct DM1_V1_MirrorClickClosedChampionPc34 {
     int currentHealth;
     int portraitOrdinal;
     unsigned int attributes;
-} Dm1V1MirrorClickClosedChampionPc34Compat;
+} DM1_V1_MirrorClickClosedChampionPc34;
 
-typedef struct Dm1V1MirrorClickClosedStatePc34Compat {
+typedef struct DM1_V1_MirrorClickClosedStatePc34 {
     int partyChampionCount;
     unsigned int candidateChampionOrdinal;
     unsigned int inventoryChampionOrdinal;
     int leaderIndex;
     int frontD1cMirrorChampionOrdinal;
-    Dm1V1MirrorClickClosedChampionPc34Compat
+    DM1_V1_MirrorClickClosedChampionPc34
         champions[DM1_V1_MIRROR_CLICK_CLOSED_CHAMPION_COUNT_PC34_COMPAT];
-} Dm1V1MirrorClickClosedStatePc34Compat;
+} DM1_V1_MirrorClickClosedStatePc34;
 
-typedef struct Dm1V1MirrorClickClosedResultPc34Compat {
+typedef struct DM1_V1_MirrorClickClosedResultPc34 {
     int clickedChampionIndex;
     int nestedCommand;
     int targetLeaderIndex;
@@ -42,20 +42,34 @@ typedef struct Dm1V1MirrorClickClosedResultPc34Compat {
     int frontD1cPortraitIndex;
     unsigned int candidateChampionOrdinalBefore;
     unsigned int candidateChampionOrdinalAfter;
-} Dm1V1MirrorClickClosedResultPc34Compat;
+} DM1_V1_MirrorClickClosedResultPc34;
 
-void DM1_V1_MirrorClickClosed_InitPc34Compat(
-    Dm1V1MirrorClickClosedStatePc34Compat *state);
+void DM1_V1_MirrorClickClosed_InitPc34(
+    DM1_V1_MirrorClickClosedStatePc34 *state);
 
-int DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34Compat(
-    Dm1V1MirrorClickClosedStatePc34Compat *state,
+int DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34(
+    DM1_V1_MirrorClickClosedStatePc34 *state,
     int command,
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1MirrorClickClosedResultPc34Compat *outResult);
+    DM1_V1_MirrorClickClosedResultPc34 *outResult);
 
-const char *DM1_V1_MirrorClickClosed_SourceEvidencePc34Compat(void);
+const char *DM1_V1_MirrorClickClosed_SourceEvidencePc34(void);
+
+typedef DM1_V1_MirrorClickClosedChampionPc34
+    Dm1V1MirrorClickClosedChampionPc34Compat;
+typedef DM1_V1_MirrorClickClosedStatePc34
+    Dm1V1MirrorClickClosedStatePc34Compat;
+typedef DM1_V1_MirrorClickClosedResultPc34
+    Dm1V1MirrorClickClosedResultPc34Compat;
+
+#define DM1_V1_MirrorClickClosed_InitPc34Compat \
+    DM1_V1_MirrorClickClosed_InitPc34
+#define DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34Compat \
+    DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34
+#define DM1_V1_MirrorClickClosed_SourceEvidencePc34Compat \
+    DM1_V1_MirrorClickClosed_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

@@ -24,20 +24,20 @@ extern "C" {
 #define DM1_V1_COMMAND_SET_LEADER_3_PC34_COMPAT 19
 #define DM1_V1_COMMAND_NONE_PC34_COMPAT 0
 
-typedef struct Dm1V1ChampionMirrorChampionPc34Compat {
+typedef struct DM1_V1_ChampionMirrorChampionPc34 {
     int currentHealth;
-} Dm1V1ChampionMirrorChampionPc34Compat;
+} DM1_V1_ChampionMirrorChampionPc34;
 
-typedef struct Dm1V1ChampionMirrorClickStatePc34Compat {
+typedef struct DM1_V1_ChampionMirrorClickStatePc34 {
     int partyChampionCount;
     unsigned int candidateChampionOrdinal;
     unsigned int inventoryChampionOrdinal;
     int leaderIndex;
-    Dm1V1ChampionMirrorChampionPc34Compat
+    DM1_V1_ChampionMirrorChampionPc34
         champions[DM1_V1_CHAMPION_MIRROR_COUNT_PC34_COMPAT];
-} Dm1V1ChampionMirrorClickStatePc34Compat;
+} DM1_V1_ChampionMirrorClickStatePc34;
 
-typedef struct Dm1V1ChampionMirrorClickResultPc34Compat {
+typedef struct DM1_V1_ChampionMirrorClickResultPc34 {
     int previousLeaderIndex;
     int newLeaderIndex;
     int clickedChampionIndex;
@@ -50,45 +50,67 @@ typedef struct Dm1V1ChampionMirrorClickResultPc34Compat {
     int leaderChanged;
     int ignoredSameLeader;
     int ignoredDeadTarget;
-} Dm1V1ChampionMirrorClickResultPc34Compat;
+} DM1_V1_ChampionMirrorClickResultPc34;
 
-void DM1_V1_ChampionMirror_InitClickStatePc34Compat(
-    Dm1V1ChampionMirrorClickStatePc34Compat *state);
+void DM1_V1_ChampionMirror_InitClickStatePc34(
+    DM1_V1_ChampionMirrorClickStatePc34 *state);
 
-int DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34Compat(
+int DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34(
     int x,
     int y,
     unsigned int mouseButtons);
 
-int DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34Compat(
+int DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34(
     int command,
     int partyChampionCount,
     unsigned int candidateChampionOrdinal,
     int *outChampionIndex,
-    Dm1V1ChampionMirrorClickResultPc34Compat *outResult);
+    DM1_V1_ChampionMirrorClickResultPc34 *outResult);
 
-int DM1_V1_ChampionMirror_F0368SetLeaderPc34Compat(
-    Dm1V1ChampionMirrorClickStatePc34Compat *state,
+int DM1_V1_ChampionMirror_F0368SetLeaderPc34(
+    DM1_V1_ChampionMirrorClickStatePc34 *state,
     int targetChampionIndex,
-    Dm1V1ChampionMirrorClickResultPc34Compat *ioResult);
+    DM1_V1_ChampionMirrorClickResultPc34 *ioResult);
 
-int DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34Compat(
-    Dm1V1ChampionMirrorClickStatePc34Compat *state,
+int DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34(
+    DM1_V1_ChampionMirrorClickStatePc34 *state,
     int clickedChampionIndex,
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1ChampionMirrorClickResultPc34Compat *outResult);
+    DM1_V1_ChampionMirrorClickResultPc34 *outResult);
 
-int DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat(
-    Dm1V1ChampionMirrorClickStatePc34Compat *state,
+int DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34(
+    DM1_V1_ChampionMirrorClickStatePc34 *state,
     int command,
     int x,
     int y,
     unsigned int mouseButtons,
-    Dm1V1ChampionMirrorClickResultPc34Compat *outResult);
+    DM1_V1_ChampionMirrorClickResultPc34 *outResult);
 
-const char *DM1_V1_ChampionMirror_SourceEvidencePc34Compat(void);
+const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void);
+
+typedef DM1_V1_ChampionMirrorChampionPc34
+    Dm1V1ChampionMirrorChampionPc34Compat;
+typedef DM1_V1_ChampionMirrorClickStatePc34
+    Dm1V1ChampionMirrorClickStatePc34Compat;
+typedef DM1_V1_ChampionMirrorClickResultPc34
+    Dm1V1ChampionMirrorClickResultPc34Compat;
+
+#define DM1_V1_ChampionMirror_InitClickStatePc34Compat \
+    DM1_V1_ChampionMirror_InitClickStatePc34
+#define DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34Compat \
+    DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34
+#define DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34Compat \
+    DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34
+#define DM1_V1_ChampionMirror_F0368SetLeaderPc34Compat \
+    DM1_V1_ChampionMirror_F0368SetLeaderPc34
+#define DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34Compat \
+    DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34
+#define DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat \
+    DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34
+#define DM1_V1_ChampionMirror_SourceEvidencePc34Compat \
+    DM1_V1_ChampionMirror_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

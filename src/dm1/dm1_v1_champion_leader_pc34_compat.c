@@ -6,8 +6,8 @@ static int valid_champion_index(int championIndex)
     return championIndex >= 0 && championIndex < DM1_V1_CHAMPION_LEADER_COUNT_PC34_COMPAT;
 }
 
-void DM1_V1_ChampionLeader_InitPc34Compat(
-    Dm1V1ChampionLeaderStatePc34Compat *state)
+void DM1_V1_ChampionLeader_InitPc34(
+    DM1_V1_ChampionLeaderStatePc34 *state)
 {
     if (!state) {
         return;
@@ -16,12 +16,12 @@ void DM1_V1_ChampionLeader_InitPc34Compat(
     state->leaderIndex = DM1_V1_CHAMPION_LEADER_NONE_PC34_COMPAT;
 }
 
-int DM1_V1_ChampionLeader_SetPc34Compat(
-    Dm1V1ChampionLeaderStatePc34Compat *state,
+int DM1_V1_ChampionLeader_SetPc34(
+    DM1_V1_ChampionLeaderStatePc34 *state,
     int championIndex,
-    Dm1V1ChampionLeaderSetResultPc34Compat *outResult)
+    DM1_V1_ChampionLeaderSetResultPc34 *outResult)
 {
-    Dm1V1ChampionLeaderSetResultPc34Compat result;
+    DM1_V1_ChampionLeaderSetResultPc34 result;
     int oldLeader;
 
     memset(&result, 0, sizeof(result));
@@ -93,7 +93,7 @@ int DM1_V1_ChampionLeader_SetPc34Compat(
     return 1;
 }
 
-const char *DM1_V1_ChampionLeader_SourceEvidencePc34Compat(void)
+const char *DM1_V1_ChampionLeader_SourceEvidencePc34(void)
 {
     return "ReDMCSB CLIKCHAM.C:24-35 F0367 status-box nested G0455 dispatch; "
            "CLIKCHAM.C:51-72 F0368 set-leader state transition; "
