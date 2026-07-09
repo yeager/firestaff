@@ -131,6 +131,9 @@ typedef struct DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 {
     int hoc_runtime_ready;
     int resumed_runtime_ready;
     int champion_mirror_startup_handoff_ready;
+    int champion_mirror_startup_input_ready;
+    int champion_mirror_startup_panel_clear;
+    int champion_mirror_startup_blocks_enter;
     int hoc_first_frame_ready;
     int runtime_first_frame_ready;
     int draw_opened_runtime;

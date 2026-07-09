@@ -1703,10 +1703,20 @@ static void test_startup_session_facts_wrappers(void) {
                         media_view_model.render_plan.text_count &&
                     render_route_receipt.state_receipt_valid &&
                     render_route_receipt.runtime_level_render_allowed &&
+                    render_route_receipt.save_resume_start_ready &&
+                    render_route_receipt.save_resume_runtime_handoff_ready &&
+                    !render_route_receipt
+                         .save_resume_track02_no_fallback_ready &&
+                    render_route_receipt.save_resume_claim ==
+                        THERON_V1_STARTUP_RESUME_DUAL &&
+                    render_route_receipt.save_resume_tqsv_slot == 2 &&
+                    render_route_receipt.save_resume_srm_slot == 3 &&
+                    render_route_receipt.save_resume_srm_import_status ==
+                        THERON_V1_SRM_PROGRESS_IMPORT_OK &&
                     render_route_receipt.fallback_visuals_allowed &&
                     strcmp(render_route_receipt.status,
                            "THERON RUNTIME READY") == 0,
-                "boot startup render route receipt carries startup menu and runtime-ready facts");
+                "boot startup render route receipt carries startup menu save-resume and runtime-ready facts");
     memset(&state_receipt, 0, sizeof(state_receipt));
     expect_true(theron_v1_boot_startup_state_receipt_from_view_model(
                     &media_view_model,
@@ -1781,6 +1791,14 @@ static void test_startup_session_facts_wrappers(void) {
                     !render_route_receipt.runtime_level_render_allowed &&
                     !render_route_receipt.runtime_readiness_ready &&
                     !render_route_receipt.title_menu_runtime_handoff_ready &&
+                    render_route_receipt.save_resume_start_ready &&
+                    !render_route_receipt.save_resume_runtime_handoff_ready &&
+                    !render_route_receipt
+                         .save_resume_track02_no_fallback_ready &&
+                    render_route_receipt.save_resume_claim ==
+                        THERON_V1_STARTUP_RESUME_DUAL &&
+                    render_route_receipt.save_resume_tqsv_slot == 2 &&
+                    render_route_receipt.save_resume_srm_slot == 3 &&
                     render_route_receipt.track02_title_menu_ready &&
                     render_route_receipt.no_fallback_visuals_enforced &&
                     !render_route_receipt.fallback_visuals_allowed &&
@@ -1814,6 +1832,16 @@ static void test_startup_session_facts_wrappers(void) {
                         THERON_V2_HUD_SEED_V2_READY &&
                     render_route_receipt.runtime_readiness_ready &&
                     render_route_receipt.title_menu_runtime_handoff_ready &&
+                    render_route_receipt.save_resume_start_ready &&
+                    render_route_receipt.save_resume_runtime_handoff_ready &&
+                    render_route_receipt
+                        .save_resume_track02_no_fallback_ready &&
+                    render_route_receipt.save_resume_claim ==
+                        THERON_V1_STARTUP_RESUME_DUAL &&
+                    render_route_receipt.save_resume_tqsv_slot == 2 &&
+                    render_route_receipt.save_resume_srm_slot == 3 &&
+                    render_route_receipt.save_resume_srm_import_status ==
+                        THERON_V1_SRM_PROGRESS_IMPORT_OK &&
                     render_route_receipt.no_fallback_visuals_enforced &&
                     !render_route_receipt.fallback_visuals_allowed &&
                     render_route_receipt.runtime_track02_semantic_handoff == 1 &&

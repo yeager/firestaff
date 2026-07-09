@@ -145,6 +145,30 @@ typedef struct {
     const char *boot_log_line;
 } Nexus_V1_StartupLaunchGateReceipt;
 
+typedef enum {
+    NEXUS_V1_STARTUP_ASSET_HANDOFF_INVALID = 0,
+    NEXUS_V1_STARTUP_ASSET_HANDOFF_DATA_ERROR = 1,
+    NEXUS_V1_STARTUP_ASSET_HANDOFF_TITLE_READY = 2,
+    NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED = 3,
+    NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY = 4
+} Nexus_V1_StartupAssetHandoffRoute;
+
+typedef struct {
+    Nexus_V1_StartupAssetHandoffRoute route;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
+    int title_asset_handoff_ready;
+    int real_menu_asset_handoff_ready;
+    int audio_asset_handoff_ready;
+    int main_menu_route_ready;
+    int blocks_main_menu_route;
+    int fallback_visuals_permitted;
+    const char *title_asset_route;
+    const char *menu_asset_route;
+    const char *audio_asset_route;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupAssetHandoffReceipt;
+
 typedef struct {
     Nexus_V1_Engine *engine;
     Nexus_V1_StartupHostReceipt host_receipt;
@@ -166,11 +190,18 @@ void nexus_v1_launcher_runtime_receipt_clear(
     Nexus_V1_LauncherRuntimeReceipt *receipt);
 void nexus_v1_launcher_startup_launch_gate_receipt_clear(
     Nexus_V1_StartupLaunchGateReceipt *receipt);
+void nexus_v1_launcher_startup_asset_handoff_receipt_clear(
+    Nexus_V1_StartupAssetHandoffReceipt *receipt);
 const char *nexus_v1_launcher_startup_launch_gate_route_name(
     Nexus_V1_StartupLaunchGateRoute route);
+const char *nexus_v1_launcher_startup_asset_handoff_route_name(
+    Nexus_V1_StartupAssetHandoffRoute route);
 int nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
     const Nexus_V1_LauncherRuntimeReceipt *runtime,
     Nexus_V1_StartupLaunchGateReceipt *out_receipt);
+int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    Nexus_V1_StartupAssetHandoffReceipt *out_receipt);
 
 typedef struct {
     int title_active;

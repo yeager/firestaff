@@ -218,8 +218,10 @@ typedef struct DM2_V1_StartupRuntimeHandoffReceipt {
     int startup_menu_active;
     int animation_active;
     char animation[32];
+    int title_animation_tick;
     int title_frame;
     int title_frame_max;
+    int title_frame_duration_ticks;
     int title_ready;
     int initialize_v2_runtime;
     int initialize_hud_runtime;
@@ -474,6 +476,11 @@ int dm2_v1_startup_runtime_handoff_receipt_from_state(
     DM2_V1_StartupRuntimeHandoffReceipt *out_receipt,
     int startup_menu_active,
     int hud_runtime_ready);
+int dm2_v1_startup_runtime_handoff_receipt_from_tick(
+    DM2_V1_StartupRuntimeHandoffReceipt *out_receipt,
+    int startup_menu_active,
+    int hud_runtime_ready,
+    int animation_tick);
 int dm2_v1_startup_launch_from_host_facts_with_receipt(
     const DM2_V1_StartupHostFacts *facts,
     DM2_V1_StartupLaunchReceipt *out_receipt);

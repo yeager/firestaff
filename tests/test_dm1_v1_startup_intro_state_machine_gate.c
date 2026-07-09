@@ -1489,6 +1489,14 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34 &&
                  runtime_handoff.champion_mirror_startup_route.showHall &&
                  runtime_handoff.champion_mirror_startup_route.needsRedraw &&
+                 runtime_handoff.champion_mirror_startup_input_ready &&
+                 runtime_handoff.champion_mirror_startup_panel_clear &&
+                 runtime_handoff.champion_mirror_startup_blocks_enter &&
+                 runtime_handoff.champion_mirror_startup_route
+                         .selectedMirrorIndex < 0 &&
+                 !runtime_handoff.champion_mirror_startup_route
+                      .showChampionPanel &&
+                 !runtime_handoff.champion_mirror_startup_route.canEnterDungeon &&
                  runtime_handoff.hoc_first_frame_ready &&
                  runtime_handoff.runtime_first_frame_ready &&
                  runtime_handoff.draw_opened_runtime &&
@@ -1529,6 +1537,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  runtime_handoff.full_graphics_consumed &&
                  runtime_handoff.resumed_runtime_ready &&
                  !runtime_handoff.champion_mirror_startup_handoff_ready &&
+                 !runtime_handoff.champion_mirror_startup_input_ready &&
+                 !runtime_handoff.champion_mirror_startup_panel_clear &&
+                 !runtime_handoff.champion_mirror_startup_blocks_enter &&
                  !runtime_handoff.hoc_first_frame_ready &&
                  runtime_handoff.runtime_first_frame_ready &&
                  runtime_handoff.draw_opened_runtime &&
@@ -1622,6 +1633,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  launch_result.runtime_handoff_receipt
                      .champion_mirror_startup_route.route ==
                      DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34 &&
+                 launch_result.runtime_handoff_receipt
+                     .champion_mirror_startup_input_ready &&
+                 launch_result.runtime_handoff_receipt
+                     .champion_mirror_startup_panel_clear &&
+                 launch_result.runtime_handoff_receipt
+                     .champion_mirror_startup_blocks_enter &&
                  launch_result.runtime_handoff_receipt.hoc_first_frame_ready &&
                  launch_result.runtime_handoff_receipt.runtime_first_frame_ready &&
                  launch_result.runtime_handoff_receipt.draw_opened_runtime,

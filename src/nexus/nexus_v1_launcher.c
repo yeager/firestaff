@@ -110,6 +110,16 @@ void nexus_v1_launcher_startup_launch_gate_receipt_clear(
     nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
 }
 
+void nexus_v1_launcher_startup_asset_handoff_receipt_clear(
+    Nexus_V1_StartupAssetHandoffReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_INVALID;
+}
+
 const char *nexus_v1_launcher_startup_launch_gate_route_name(
     Nexus_V1_StartupLaunchGateRoute route)
 {
@@ -120,6 +130,21 @@ const char *nexus_v1_launcher_startup_launch_gate_route_name(
     case NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_ASSET_BLOCKED:
         return "menu-asset-blocked";
     case NEXUS_V1_STARTUP_LAUNCH_GATE_MENU_READY: return "menu-ready";
+    default: return "unknown";
+    }
+}
+
+const char *nexus_v1_launcher_startup_asset_handoff_route_name(
+    Nexus_V1_StartupAssetHandoffRoute route)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_ASSET_HANDOFF_INVALID: return "invalid";
+    case NEXUS_V1_STARTUP_ASSET_HANDOFF_DATA_ERROR: return "data-error";
+    case NEXUS_V1_STARTUP_ASSET_HANDOFF_TITLE_READY: return "title-ready";
+    case NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED:
+        return "menu-blocked";
+    case NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY:
+        return "main-menu-ready";
     default: return "unknown";
     }
 }
@@ -209,6 +234,75 @@ int nexus_v1_launcher_startup_launch_gate_from_runtime_receipt(
         NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
     out_receipt->host_receipt.status_scope = out_receipt->status_scope;
     out_receipt->host_receipt.status = out_receipt->status;
+    return 1;
+}
+
+int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    Nexus_V1_StartupAssetHandoffReceipt *out_receipt)
+{
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets;
+
+    nexus_v1_launcher_startup_asset_handoff_receipt_clear(out_receipt);
+    if (!out_receipt || !runtime) {
+        return 0;
+    }
+
+    assets = &runtime->startup_assets;
+    out_receipt->assets = *assets;
+    out_receipt->title_asset_handoff_ready =
+        runtime->engine && runtime->title_loaded && assets->title_route_ready;
+    out_receipt->real_menu_asset_handoff_ready =
+        assets->real_menu_surface_route_ready ? 1 : 0;
+    out_receipt->audio_asset_handoff_ready =
+        assets->startup_audio_handoff_ready ? 1 : 0;
+    out_receipt->main_menu_route_ready =
+        runtime->engine &&
+        runtime->level_loaded &&
+        out_receipt->title_asset_handoff_ready &&
+        out_receipt->audio_asset_handoff_ready &&
+        out_receipt->real_menu_asset_handoff_ready;
+    out_receipt->blocks_main_menu_route =
+        out_receipt->main_menu_route_ready ? 0 : 1;
+    out_receipt->fallback_visuals_permitted =
+        assets->menu_bpk_fallback_visuals_permitted ? 1 : 0;
+    out_receipt->title_asset_route =
+        out_receipt->title_asset_handoff_ready
+            ? "ready-title-assets"
+            : "blocked-title-assets";
+    out_receipt->menu_asset_route = assets->startup_menu_asset_route;
+    out_receipt->audio_asset_route =
+        out_receipt->audio_asset_handoff_ready
+            ? "ready-track02-sfx"
+            : "blocked-track02-sfx";
+
+    if (!runtime->engine || !runtime->level_loaded) {
+        out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_DATA_ERROR;
+        out_receipt->status_scope = "BOOT";
+        out_receipt->status = runtime->startup_receipt.host_receipt.status
+            ? runtime->startup_receipt.host_receipt.status
+            : "NEXUS DATA ERROR";
+    } else if (!out_receipt->title_asset_handoff_ready) {
+        out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_TITLE_READY;
+        out_receipt->status_scope = "ASSETS";
+        out_receipt->status = "blocked-title-assets";
+    } else if (!out_receipt->real_menu_asset_handoff_ready) {
+        out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED;
+        out_receipt->status_scope = "ASSETS";
+        out_receipt->status = assets->startup_menu_asset_route
+            ? assets->startup_menu_asset_route
+            : "blocked-menu-assets";
+    } else if (out_receipt->main_menu_route_ready) {
+        out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "main-menu-ready";
+    } else {
+        out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_TITLE_READY;
+        out_receipt->status_scope = "ASSETS";
+        out_receipt->status = out_receipt->audio_asset_handoff_ready
+            ? "title-ready"
+            : "blocked-track02-sfx";
+    }
     return 1;
 }
 

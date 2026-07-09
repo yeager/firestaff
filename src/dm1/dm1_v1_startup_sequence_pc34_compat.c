@@ -819,10 +819,33 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
              receipt.champion_mirror_startup_route.needsRedraw)
                 ? 1
                 : 0;
+        receipt.champion_mirror_startup_input_ready =
+            (receipt.champion_mirror_startup_handoff_ready &&
+             receipt.champion_mirror_startup_route.state ==
+                 DM1_ENTRANCE_VIEWING &&
+             receipt.champion_mirror_startup_route.selectedMirrorIndex < 0)
+                ? 1
+                : 0;
+        receipt.champion_mirror_startup_panel_clear =
+            (receipt.champion_mirror_startup_handoff_ready &&
+             !receipt.champion_mirror_startup_route.showChampionPanel &&
+             !receipt.champion_mirror_startup_route
+                  .showResurrectReincarnateChoices)
+                ? 1
+                : 0;
+        receipt.champion_mirror_startup_blocks_enter =
+            (receipt.champion_mirror_startup_handoff_ready &&
+             receipt.champion_mirror_startup_route.partyChampionCount == 0 &&
+             !receipt.champion_mirror_startup_route.canEnterDungeon)
+                ? 1
+                : 0;
     }
     receipt.hoc_first_frame_ready =
         receipt.hoc_runtime_ready &&
-        receipt.champion_mirror_startup_handoff_ready;
+        receipt.champion_mirror_startup_handoff_ready &&
+        receipt.champion_mirror_startup_input_ready &&
+        receipt.champion_mirror_startup_panel_clear &&
+        receipt.champion_mirror_startup_blocks_enter;
     receipt.runtime_first_frame_ready =
         (receipt.hoc_first_frame_ready || receipt.resumed_runtime_ready) ? 1 : 0;
     receipt.draw_opened_runtime =
