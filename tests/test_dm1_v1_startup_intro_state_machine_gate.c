@@ -712,6 +712,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_suppression_facts;
     DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34
         hoc_suppression_receipt;
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
+        hoc_production_consumer;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1600,6 +1602,50 @@ static void check_dm1_launch_path_bypass_contract(void) {
              hoc_suppression_receipt.command_count_matches &&
                  hoc_suppression_receipt.enter_block_matches,
              1);
+    memset(&hoc_production_consumer, 0, sizeof(hoc_production_consumer));
+    expect_i("DM1 HoC production consumer receipt builds",
+             dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
+                 &hoc_runtime_apply,
+                 &hoc_suppression_receipt,
+                 &hoc_production_consumer),
+             1);
+    expect_i("DM1 HoC production consumer is ready",
+             hoc_production_consumer.handled &&
+                 hoc_production_consumer.ready &&
+                 hoc_production_consumer.consumed_runtime_apply_receipt &&
+                 hoc_production_consumer.consumed_thing_suppression_receipt &&
+                 hoc_production_consumer.consume_dm1_receipts_only &&
+                 hoc_production_consumer.execute_before_hoc_input,
+             1);
+    expect_i("DM1 HoC production consumer carries render commands",
+             hoc_production_consumer.draw_opened_entrance_frame &&
+                 hoc_production_consumer.clear_champion_panel &&
+                 hoc_production_consumer.render_hall_mirror_overlay &&
+                 hoc_production_consumer.suppress_title_surface &&
+                 hoc_production_consumer.suppress_closed_door_frame &&
+                 hoc_production_consumer.suppress_host_fallback_visuals &&
+                 hoc_production_consumer.publish_packaged_full_graphics_proof &&
+                 hoc_production_consumer.block_enter_until_champion_selected,
+             1);
+    expect_i("DM1 HoC production consumer suppresses false payloads",
+             hoc_production_consumer.suppress_false_item_payloads &&
+                 hoc_production_consumer.suppress_projectile_payloads &&
+                 hoc_production_consumer.suppress_spell_effect_payloads &&
+                 hoc_production_consumer.suppress_mirror_payload_things &&
+                 hoc_production_consumer.walk_capture_safe,
+             1);
+    expect_i("DM1 HoC production consumer carries geometry",
+             hoc_production_consumer.map_index ==
+                     DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_production_consumer.map_width ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 &&
+                 hoc_production_consumer.map_height ==
+                     DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 &&
+                 hoc_production_consumer.entrance_door_frame_index == 9 &&
+                 hoc_production_consumer.hall_overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 hoc_production_consumer.render_command_count == 3,
+             1);
     expect_i("DM1 HoC thing suppression rejects projectile leak",
              (hoc_suppression_facts.observed_projectile_payload_count = 1,
               dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
@@ -1611,6 +1657,14 @@ static void check_dm1_launch_path_bypass_contract(void) {
                   !hoc_suppression_receipt.proof_passed &&
                   !hoc_suppression_receipt.projectile_payloads_absent &&
                   !hoc_suppression_receipt.walk_capture_safe),
+             1);
+    expect_i("DM1 HoC production consumer rejects failed suppression",
+             dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
+                 &hoc_runtime_apply,
+                 &hoc_suppression_receipt,
+                 &hoc_production_consumer) &&
+                 hoc_production_consumer.handled &&
+                 !hoc_production_consumer.ready,
              1);
     hoc_suppression_facts.observed_projectile_payload_count = 0;
     expect_i("DM1 HoC thing suppression rejects false floor item leak",
@@ -1642,6 +1696,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  NULL,
                  &hoc_suppression_facts,
                  &hoc_suppression_receipt),
+             0);
+    expect_i("DM1 HoC production consumer rejects NULL input",
+             dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
+                 NULL,
+                 &hoc_suppression_receipt,
+                 &hoc_production_consumer),
              0);
     expect_i("DM1 HoC capture proof rejects stale title surface",
              (hoc_capture_facts.saw_title_surface = 1,

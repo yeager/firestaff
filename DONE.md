@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 pass889 DM1 HoC production consumer receipt: startup HoC render proof now exposes one DM1-owned caller contract that consumes runtime apply plus thing-suppression receipts, carrying opened entrance, Hall mirror overlay, stale-surface suppression, false payload suppression, geometry, and input blocking for M11/M12/package callers. Verification: DM1 startup intro state-machine test, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 pass885 DM2 packaged startup proof M11 consumer: M11 DM2 boot-probe and startup draw gates now read packaged capture proof fields for title frames, menu capture readiness, HUD handoff, and startup draw command count instead of loose host-view timing/render fields. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB snapshot-capture executor retired: CSB startup tests now consume host-view receipts for snapshot title, utility, closed-door, and door-opening proof instead of the older capture-level render executor. Verification: CSB startup tests and `git diff --check`.
