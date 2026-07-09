@@ -1181,6 +1181,38 @@ static void test_reaction_apply_plan_no_event_and_wander_default(void) {
               "reaction_apply_no_type: zero type suppresses schedule");
 }
 
+static void test_reaction_schedule_plan_owns_c30_insert_fields(void) {
+    struct DM1BehaviorResult_Compat behavior;
+    struct DM1BehaviorReactionSchedulePlan_Compat plan;
+
+    memset(&behavior, 0, sizeof(behavior));
+    memset(&plan, 0, sizeof(plan));
+    behavior.nextEventDelayTicks = 4;
+    behavior.nextEventType = DM1_EVENT_REACTION_HIT_BY_PROJECTILE;
+
+    EXPECT_EQ(F0810c_DM1_GROUP_PlanReactionSchedule_Compat(
+                  &behavior, 55, 14, 3, 6, 7, 100u, &plan),
+              1, "reaction_schedule: helper succeeds");
+    EXPECT_EQ(plan.shouldSchedule, 1,
+              "reaction_schedule: positive delay/type schedules");
+    EXPECT_EQ((int)plan.fireAtTick, 104,
+              "reaction_schedule: fire tick adds source delay");
+    EXPECT_EQ(plan.mapIndex, 3, "reaction_schedule: map index");
+    EXPECT_EQ(plan.mapX, 6, "reaction_schedule: map x");
+    EXPECT_EQ(plan.mapY, 7, "reaction_schedule: map y");
+    EXPECT_EQ(plan.groupIndex, 55, "reaction_schedule: group index");
+    EXPECT_EQ(plan.creatureType, 14, "reaction_schedule: creature type");
+    EXPECT_EQ(plan.eventType, DM1_EVENT_REACTION_HIT_BY_PROJECTILE,
+              "reaction_schedule: concrete C30 event type");
+
+    behavior.nextEventDelayTicks = 0;
+    EXPECT_EQ(F0810c_DM1_GROUP_PlanReactionSchedule_Compat(
+                  &behavior, 55, 14, 3, 6, 7, 100u, &plan),
+              1, "reaction_schedule_no_delay: helper succeeds");
+    EXPECT_EQ(plan.shouldSchedule, 0,
+              "reaction_schedule_no_delay: zero delay suppresses schedule");
+}
+
 int main(void) {
     printf("DM1 V1 Creature AI Behavior CTest Gate\n");
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");
@@ -1222,6 +1254,7 @@ int main(void) {
     test_batch3_per_type_dispatch_coverage();
     test_reaction_apply_plan_schedules_next_event();
     test_reaction_apply_plan_no_event_and_wander_default();
+    test_reaction_schedule_plan_owns_c30_insert_fields();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

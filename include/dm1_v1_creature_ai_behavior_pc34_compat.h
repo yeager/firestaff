@@ -362,6 +362,17 @@ struct DM1BehaviorReactionApplyPlan_Compat {
     int nextEventType;
 };
 
+struct DM1BehaviorReactionSchedulePlan_Compat {
+    int shouldSchedule;
+    uint32_t fireAtTick;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int groupIndex;
+    int creatureType;
+    int eventType;
+};
+
 /* ==========================================================
  *  API — Behavior Type Dispatch
  *
@@ -397,6 +408,16 @@ int F0810b_DM1_GROUP_PlanReactionApply_Compat(
     int aiStateFlee,
     uint32_t currentTick,
     struct DM1BehaviorReactionApplyPlan_Compat* out);
+
+int F0810c_DM1_GROUP_PlanReactionSchedule_Compat(
+    const struct DM1BehaviorResult_Compat* behavior,
+    int groupIndex,
+    int creatureType,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    uint32_t currentTick,
+    struct DM1BehaviorReactionSchedulePlan_Compat* out);
 
 /* ==========================================================
  *  API — Movement Decision

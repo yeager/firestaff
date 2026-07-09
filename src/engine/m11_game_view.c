@@ -27461,12 +27461,14 @@ static void m11_schedule_creature_reaction_f0209(
     struct DM1GroupBehaviorContext_Compat ctx;
     struct DM1ActiveGroup_Compat activeGroup;
     struct DM1BehaviorResult_Compat behavior;
+    struct DM1BehaviorReactionSchedulePlan_Compat schedulePlan;
     struct TimelineEvent_Compat reaction;
     if (!state || !group || groupIndex < 0) return;
 
     memset(&ctx, 0, sizeof(ctx));
     memset(&activeGroup, 0, sizeof(activeGroup));
     memset(&behavior, 0, sizeof(behavior));
+    memset(&schedulePlan, 0, sizeof(schedulePlan));
 
     aiIndex = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
     profile = CREATURE_GetProfile_Compat((int)group->creatureType);
@@ -27506,20 +27508,22 @@ static void m11_schedule_creature_reaction_f0209(
             &ctx, &activeGroup, &state->world.masterRng, &behavior)) {
         return;
     }
-    if (behavior.nextEventDelayTicks <= 0 || behavior.nextEventType <= 0) {
+    if (!F0810c_DM1_GROUP_PlanReactionSchedule_Compat(
+            &behavior, groupIndex, (int)group->creatureType,
+            mapIndex, mapX, mapY, state->world.gameTick, &schedulePlan) ||
+        !schedulePlan.shouldSchedule) {
         return;
     }
 
     memset(&reaction, 0, sizeof(reaction));
     reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
-    reaction.fireAtTick = state->world.gameTick +
-        (uint32_t)behavior.nextEventDelayTicks;
-    reaction.mapIndex = mapIndex;
-    reaction.mapX = mapX;
-    reaction.mapY = mapY;
-    reaction.aux0 = groupIndex;
-    reaction.aux1 = (int)group->creatureType;
-    reaction.aux2 = behavior.nextEventType;
+    reaction.fireAtTick = schedulePlan.fireAtTick;
+    reaction.mapIndex = schedulePlan.mapIndex;
+    reaction.mapX = schedulePlan.mapX;
+    reaction.mapY = schedulePlan.mapY;
+    reaction.aux0 = schedulePlan.groupIndex;
+    reaction.aux1 = schedulePlan.creatureType;
+    reaction.aux2 = schedulePlan.eventType;
     (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &reaction);
 }
 
