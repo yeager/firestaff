@@ -225,6 +225,10 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe title-frame boundary expectation is opt-in");
     expect_true(opts.bootProbeExpectTitleReady == -1,
                 "boot-probe title-ready expectation is opt-in");
+    expect_true(opts.bootProbeExpectDm1HoCFullGraphics == 0,
+                "boot-probe DM1 HoC full graphics expectation is opt-in");
+    expect_true(opts.bootProbeExpectDm1HoCReleaseAppCapture == 0,
+                "boot-probe DM1 HoC release-app expectation is opt-in");
     opts.bootProbe = 1;
     opts.gameId = "dm1";
     opts.dataDir = empty_dir;
@@ -431,6 +435,8 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectPartyY = 3;
                 opts.bootProbeExpectPartyDir = 2;
                 opts.bootProbeExpectChampionCount = 0;
+                opts.bootProbeExpectDm1HoCFullGraphics = 1;
+                opts.bootProbeExpectDm1HoCReleaseAppCapture = 1;
             } else if (strcmp(kCases[i].gameId, "dm2") == 0) {
                 opts.script = "key:enter";
                 opts.bootProbeExpectPhase = "dm2-runtime";
