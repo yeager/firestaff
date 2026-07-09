@@ -527,9 +527,16 @@ typedef struct {
     const char *path_label;
     const char *contract_label;
     const char *capture_label;
+    const char *capture_route_label;
+    const char *first_capture_draw_label;
     const char *next_step_label;
+    const char *active_proof_label;
     const char *status_label;
     const char *detail_label;
+    const char *launch_status_label;
+    const char *launch_detail_label;
+    const char *blocked_status_label;
+    const char *blocked_detail_label;
 } Nexus_V1_M12StartupPackageReceipt;
 
 void nexus_v1_launcher_startup_runtime_state_clear(
