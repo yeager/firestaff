@@ -2690,16 +2690,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               input_gate_receipt.input_render_valid &&
               input_gate_receipt.input_render.host_decision.blocked_by_title,
           "boot startup input gate owns title-block decision");
-    CHECK(csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
-              &input_gate_receipt,
+    CHECK(csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
+              &snapshot,
+              9,
               &host_input_dispatch) == 1 &&
               host_input_dispatch.valid &&
               host_input_dispatch.startup_active &&
+              !host_input_dispatch.startup_input_ready &&
+              host_input_dispatch.host_input_blocked &&
               !host_input_dispatch.should_dispatch_input &&
               host_input_dispatch.should_ignore_input &&
               host_input_dispatch.input_render_valid &&
               host_input_dispatch.input_render.host_decision.blocked_by_title,
-          "boot startup host input dispatch receipt consumes title input gate");
+          "boot startup host input dispatch receipt owns title-block snapshot");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
@@ -3634,17 +3637,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               input_gate_receipt.input_render_valid &&
               input_gate_receipt.input_render.startup_hud_draw_ready,
           "boot startup input gate owns utility HUD redraw decision");
-    CHECK(csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
-              &input_gate_receipt,
+    CHECK(csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
+              &snapshot,
+              2,
               &host_input_dispatch) == 1 &&
               host_input_dispatch.valid &&
               host_input_dispatch.startup_active &&
+              host_input_dispatch.startup_input_ready &&
+              !host_input_dispatch.host_input_blocked &&
               host_input_dispatch.should_dispatch_input &&
               !host_input_dispatch.should_ignore_input &&
               host_input_dispatch.input_render_valid &&
               host_input_dispatch.input_render.host_decision.routed_to_utility &&
               host_input_dispatch.input_render.startup_hud_draw_ready,
-          "boot startup host input dispatch receipt consumes utility redraw gate");
+          "boot startup host input dispatch receipt owns utility redraw snapshot");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
@@ -3743,17 +3749,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               input_gate_receipt.input_render_valid &&
               input_gate_receipt.input_render.host_decision.routed_to_entrance,
           "boot startup pointer gate owns entrance command dispatch");
-    CHECK(csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
-              &input_gate_receipt,
+    CHECK(csb_v1_boot_startup_host_input_dispatch_pointer_from_snapshot_pc34(
+              &snapshot,
+              enter_menu_x,
+              enter_menu_y,
+              ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
               &host_input_dispatch) == 1 &&
               host_input_dispatch.valid &&
               host_input_dispatch.input_is_pointer &&
               host_input_dispatch.pointer_button_relevant &&
               host_input_dispatch.startup_active &&
+              host_input_dispatch.startup_input_ready &&
+              !host_input_dispatch.host_input_blocked &&
               host_input_dispatch.should_dispatch_input &&
               host_input_dispatch.input_render_valid &&
               host_input_dispatch.input_render.host_decision.routed_to_entrance,
-          "boot startup host input dispatch receipt consumes pointer entrance gate");
+          "boot startup host input dispatch receipt owns pointer entrance snapshot");
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               9,

@@ -2904,35 +2904,35 @@ static void m11_csb_boot_runtime_startup_snapshot(
     out_snapshot->runtime_tick_count = state->csbState.tick_count;
 }
 
-static int m11_csb_boot_runtime_startup_keyboard_gate(
+static int m11_csb_boot_runtime_startup_keyboard_dispatch(
     const M11_GameViewState *state,
     int menu_input,
-    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt)
+    CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt)
 {
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || !out_receipt) {
         return 0;
     }
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
-    return csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
+    return csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
         &snapshot,
         menu_input,
         out_receipt);
 }
 
-static int m11_csb_boot_runtime_startup_pointer_gate(
+static int m11_csb_boot_runtime_startup_pointer_dispatch(
     const M11_GameViewState *state,
     int x,
     int y,
     unsigned int button_mask,
-    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt)
+    CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt)
 {
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     if (!state || !out_receipt) {
         return 0;
     }
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
-    return csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
+    return csb_v1_boot_startup_host_input_dispatch_pointer_from_snapshot_pc34(
         &snapshot,
         x,
         y,
@@ -13693,14 +13693,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_BootStartupInputGateReceipt_PC34 gate_receipt;
         CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
-        if (m11_csb_boot_runtime_startup_keyboard_gate(
+        if (m11_csb_boot_runtime_startup_keyboard_dispatch(
                 state,
                 (int)input,
-                &gate_receipt) &&
-            csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
-                &gate_receipt,
                 &dispatch_receipt) &&
             dispatch_receipt.valid &&
             dispatch_receipt.startup_active) {
@@ -14740,16 +14736,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_BootStartupInputGateReceipt_PC34 gate_receipt;
         CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
-        if (m11_csb_boot_runtime_startup_pointer_gate(
+        if (m11_csb_boot_runtime_startup_pointer_dispatch(
                 state,
                 x,
                 y,
                 (unsigned int)buttonMask,
-                &gate_receipt) &&
-            csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
-                &gate_receipt,
                 &dispatch_receipt) &&
             dispatch_receipt.valid &&
             dispatch_receipt.startup_active &&
