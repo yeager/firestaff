@@ -57,6 +57,8 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-title-frame-max <n> Fail unless title frame is at most n\n"
             "  --boot-probe-expect-title-frame-boundary <n> Fail unless title frame max matches n\n"
             "  --boot-probe-expect-title-ready <0|1> Fail unless title-ready flag matches\n"
+            "  --boot-probe-expect-dm1-hoc-full-graphics Fail unless DM1 HoC full graphics receipt is ready\n"
+            "  --boot-probe-expect-dm1-hoc-release-app-capture Fail unless DM1 HoC release/app capture is ready\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -313,6 +315,14 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--boot-probe-expect-title-ready") == 0 &&
             i + 1 < argc) {
             opts.bootProbeExpectTitleReady = atoi(argv[++i]) ? 1 : 0;
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-dm1-hoc-full-graphics") == 0) {
+            opts.bootProbeExpectDm1HoCFullGraphics = 1;
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-dm1-hoc-release-app-capture") == 0) {
+            opts.bootProbeExpectDm1HoCReleaseAppCapture = 1;
             continue;
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {
