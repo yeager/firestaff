@@ -48,6 +48,7 @@ static uint8_t s_ceiling_pixels[16 * 8];
 static uint8_t s_floor_pixels[16 * 8];
 static uint8_t s_wall_pixels[16 * 8];
 static uint8_t s_door_panel_pixels[16 * 8];
+static uint8_t s_door_overlay_pixels[16 * 8];
 static uint8_t s_door_frame_pixels[16 * 8];
 static uint8_t s_door_button_pixels[16 * 8];
 static uint8_t s_wall_button_pixels[16 * 8];
@@ -141,6 +142,25 @@ static int synthetic_viewport_asset_fetch(void *user,
         (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
           DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) <= 0x10) {
         if (out_pixels) *out_pixels = s_projectile_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index <=
+        DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE &&
+        gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE) {
+        if (out_pixels) *out_pixels = s_door_overlay_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index <=
+            DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE &&
+        DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE - gdat_index <
+            (0x100 << DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT)) {
+        if (out_pixels) *out_pixels = s_door_overlay_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
@@ -242,7 +262,8 @@ static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
     put16le(buf + column_base + 2, 0);
     put16le(buf + sft_base, 0x0800);
     put16le(buf + door_base, 0xfffe);
-    door_bits = (uint16_t)((1u << 6) | (1u << 11) | (1u << 5) | 1u);
+    door_bits = (uint16_t)((1u << 6) | (1u << 11) | (1u << 5) |
+                           (2u << 1) | 1u);
     put16le(buf + door_base + 2, door_bits);
     put16le(buf + text_base, 0x0000);
     put16le(buf + text_base + 2, 0x0000);
@@ -875,6 +896,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
         memset(s_door_panel_pixels, 8, sizeof(s_door_panel_pixels));
+        memset(s_door_overlay_pixels, 11, sizeof(s_door_overlay_pixels));
         memset(s_door_frame_pixels, 15, sizeof(s_door_frame_pixels));
         memset(s_door_button_pixels, 4, sizeof(s_door_button_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
@@ -935,6 +957,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
                           dm2_v1_viewport_door_panel_graphic_index_for_record(
                               DM2_SQ_D0C, 7, 1),
                       "runtime DB0 door type selects level door-set GDAT panel");
+                CHECK(dm2_v1_runtime_last_asset_door_overlay_count() == 1,
+                      "runtime DB0 ornate draws through door overlay asset");
                 CHECK(set_door_state_preserve_tile(
                           (DM2_V1_DungeonData *)profile.dungeon_data,
                           0, 1, 0, 1) == 0 &&
@@ -1018,8 +1042,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
                           0, 1, 1, framebuffer, 320, 320, 200) == 0,
                       "runtime renders DB0 destroyed door state");
                 CHECK(dm2_v1_runtime_last_asset_door_panel_count() == 0 &&
+                      dm2_v1_runtime_last_asset_door_overlay_count() == 2 &&
                       dm2_v1_runtime_last_asset_door_frame_count() == 1,
-                      "runtime DB0 destroyed door skips panel and keeps frame receipt");
+                      "runtime DB0 destroyed door skips panel and draws overlay masks");
                 dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
             } else {
                 CHECK(0, "runtime door-record fixture loads");

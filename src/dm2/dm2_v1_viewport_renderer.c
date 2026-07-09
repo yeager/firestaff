@@ -835,6 +835,37 @@ int dm2_v1_viewport_door_panel_graphic_index_for_record(int view_square,
     return DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE - record_field;
 }
 
+int dm2_v1_viewport_door_ornate_graphic_index(int door_ornate_index,
+                                              int view_square)
+{
+    int field = dm2_v1_viewport_door_panel_field_for_square(view_square);
+    int packed;
+    if (field < 0 || door_ornate_index <= 0) return 0;
+    if (door_ornate_index > 0xff) door_ornate_index = 0xff;
+    /* skproject SKWIN/SkWinCore.cpp lines 46477-46510 draws Door::OrnateIndex()
+     * through GDAT_CATEGORY_DOOR_GFX after the base door panel. */
+    packed = ((door_ornate_index & 0xff) <<
+              DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT) |
+             (field & DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_FIELD_MASK);
+    return DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE - packed;
+}
+
+int dm2_v1_viewport_door_destroyed_mask_graphic_index(int door_gfx_index,
+                                                      int view_square)
+{
+    int field = dm2_v1_viewport_door_panel_field_for_square(view_square);
+    int packed;
+    if (field < 0) return 0;
+    if (door_gfx_index < 0) door_gfx_index = 0;
+    if (door_gfx_index > 0xff) door_gfx_index = 0xff;
+    /* skproject SKWIN/SkWinCore.cpp lines 46513-46535 overlays the destroyed
+     * mask from GDAT_CATEGORY_DOORS when tile door state is 5. */
+    packed = ((door_gfx_index & 0xff) <<
+              DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT) |
+             (field & DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_FIELD_MASK);
+    return DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE - packed;
+}
+
 int dm2_v1_viewport_door_button_field_for_state(int pushed)
 {
     /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES line ~46342 calls
@@ -1315,6 +1346,16 @@ int dm2_v1_viewport_build_door_render_plan(
         row->frame_gdat_index =
             dm2_v1_viewport_door_frame_graphic_index_for_square(square);
         row->door_open_pct = vs->door_open_pct;
+        row->door_state = vs->door_state;
+        row->ornate_gdat_index =
+            dm2_v1_viewport_door_ornate_graphic_index(vs->ornament_index,
+                                                      square);
+        if (vs->door_state == 5) {
+            row->destroyed_mask_gdat_index =
+                dm2_v1_viewport_door_destroyed_mask_graphic_index(
+                    vs->door_gfx_index,
+                    square);
+        }
         row->fallback_color = 10;
         row->panel_rect = panel_rect;
         row->panel_visible_rect =
@@ -2703,6 +2744,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
     int door_panel_asset_count = 0;
+    int door_overlay_asset_count = 0;
     int door_asset_count = 0;
     int door_button_asset_count = 0;
     int door_fallback_count = 0;
@@ -2772,6 +2814,52 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                                      &door->panel_visible_rect,
                                                      door->fallback_color);
                 ++door_fallback_count;
+            }
+        }
+        {
+            const int overlay_indices[2] = {
+                door->ornate_gdat_index,
+                door->destroyed_mask_gdat_index
+            };
+            for (int overlay_i = 0; overlay_i < 2; ++overlay_i) {
+                const uint8_t *overlay_pixels = NULL;
+                int overlay_w = 0;
+                int overlay_h = 0;
+                int overlay_stride = 0;
+                if (overlay_indices[overlay_i] != 0 &&
+                    door->panel_rect.w > 0 && door->panel_rect.h > 0 &&
+                    dm2_v1_fetch_viewport_asset(s,
+                                                overlay_indices[overlay_i],
+                                                &overlay_pixels,
+                                                &overlay_w,
+                                                &overlay_h,
+                                                &overlay_stride) == 0 &&
+                    overlay_pixels && overlay_w > 0 && overlay_h > 0) {
+                    DM2_V1_DoorAssetBlit blit;
+                    if (dm2_v1_viewport_full_rect_asset_blit(
+                            overlay_indices[overlay_i],
+                            &door->panel_rect,
+                            overlay_w,
+                            overlay_h,
+                            overlay_stride,
+                            &blit)) {
+                        dm2_v1_blit_scaled_bitmap_region(
+                            vp,
+                            stride,
+                            blit.dst_rect.x,
+                            blit.dst_rect.y,
+                            blit.dst_rect.w,
+                            blit.dst_rect.h,
+                            overlay_pixels,
+                            blit.src_rect.x,
+                            blit.src_rect.y,
+                            blit.src_rect.w,
+                            blit.src_rect.h,
+                            blit.src_stride,
+                            blit.transparent_color);
+                        ++door_overlay_asset_count;
+                    }
+                }
             }
         }
         if (door->frame_rect.w > 0 && door->frame_rect.h > 0) {
@@ -2861,6 +2949,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
         }
     }
     s->asset_door_panel_drawn_count += door_panel_asset_count;
+    s->asset_door_overlay_drawn_count += door_overlay_asset_count;
     s->asset_door_frame_drawn_count += door_asset_count;
     s->asset_door_button_drawn_count += door_button_asset_count;
     if (door_asset_count == 0 && door_panel_asset_count == 0 &&
@@ -3483,6 +3572,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->asset_wall_drawn_count = 0;
     s->fallback_wall_drawn_count = 0;
     s->asset_door_panel_drawn_count = 0;
+    s->asset_door_overlay_drawn_count = 0;
     s->asset_door_frame_drawn_count = 0;
     s->asset_door_button_drawn_count = 0;
     s->fallback_door_drawn_count = 0;

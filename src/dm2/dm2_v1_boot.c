@@ -42,6 +42,7 @@
 #define DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT 0x20
 #define DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT 0x04
 #define DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT 0x08
+#define DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT 8
 #define DM2_GDAT_WALL_BUTTON_CACHE_LIMIT 8
 #define DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT 16
 #define DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT 8
@@ -83,6 +84,10 @@ typedef struct {
     uint8_t *door_button_pixels[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
     int door_button_w[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
     int door_button_h[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
+    int door_overlay_keys[DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT];
+    uint8_t *door_overlay_pixels[DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT];
+    int door_overlay_w[DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT];
+    int door_overlay_h[DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT];
     int wall_button_keys[DM2_GDAT_WALL_BUTTON_CACHE_LIMIT];
     uint8_t *wall_button_pixels[DM2_GDAT_WALL_BUTTON_CACHE_LIMIT];
     int wall_button_w[DM2_GDAT_WALL_BUTTON_CACHE_LIMIT];
@@ -247,6 +252,9 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     }
     for (int i = 0; i < DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->door_button_pixels[i]);
+    }
+    for (int i = 0; i < DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT; ++i) {
+        dm2_v1_asset_free_pixels(gfx->door_overlay_pixels[i]);
     }
     for (int i = 0; i < DM2_GDAT_WALL_BUTTON_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->wall_button_pixels[i]);
@@ -2033,7 +2041,8 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_h = &gfx->hud_portrait_h[index];
         category = DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET;
     } else if (gdat_index <=
-               DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE) {
+                   DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE &&
+               gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE) {
         int packed =
             DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE - gdat_index;
         /* skproject SKWIN/SkWinCore.cpp lines 46405-46457 load door panels
@@ -2056,6 +2065,74 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_w = &gfx->door_panel_w[field];
         cache_h = &gfx->door_panel_h[field];
         gfx->door_panel_keys[field] = gdat_index;
+        category = DM2_GDAT_CATEGORY_DOORS;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE &&
+               gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE) {
+        int packed = DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE - gdat_index;
+        int slot = -1;
+        if (packed < 0 ||
+            packed >= (0x100 << DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT)) {
+            return -1;
+        }
+        index = (packed >> DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT) & 0xff;
+        field = packed & DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_FIELD_MASK;
+        for (int i = 0; i < DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT; ++i) {
+            if (gfx->door_overlay_pixels[i] &&
+                gfx->door_overlay_keys[i] == gdat_index) {
+                slot = i;
+                break;
+            }
+            if (slot < 0 && !gfx->door_overlay_pixels[i]) {
+                slot = i;
+            }
+        }
+        if (slot < 0) {
+            slot = (index + field) % DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT;
+            dm2_v1_asset_free_pixels(gfx->door_overlay_pixels[slot]);
+            gfx->door_overlay_pixels[slot] = NULL;
+            gfx->door_overlay_w[slot] = 0;
+            gfx->door_overlay_h[slot] = 0;
+        }
+        cache_pixels = &gfx->door_overlay_pixels[slot];
+        cache_w = &gfx->door_overlay_w[slot];
+        cache_h = &gfx->door_overlay_h[slot];
+        gfx->door_overlay_keys[slot] = gdat_index;
+        category = DM2_GDAT_CATEGORY_DOOR_GFX;
+    } else if (gdat_index <=
+                   DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE -
+                       gdat_index <
+                   (0x100 << DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT)) {
+        int packed =
+            DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE - gdat_index;
+        int slot = -1;
+        if (packed < 0 ||
+            packed >= (0x100 << DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT)) {
+            return -1;
+        }
+        index = (packed >> DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT) & 0xff;
+        field = packed & DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_FIELD_MASK;
+        for (int i = 0; i < DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT; ++i) {
+            if (gfx->door_overlay_pixels[i] &&
+                gfx->door_overlay_keys[i] == gdat_index) {
+                slot = i;
+                break;
+            }
+            if (slot < 0 && !gfx->door_overlay_pixels[i]) {
+                slot = i;
+            }
+        }
+        if (slot < 0) {
+            slot = (index + field) % DM2_GDAT_DOOR_OVERLAY_CACHE_LIMIT;
+            dm2_v1_asset_free_pixels(gfx->door_overlay_pixels[slot]);
+            gfx->door_overlay_pixels[slot] = NULL;
+            gfx->door_overlay_w[slot] = 0;
+            gfx->door_overlay_h[slot] = 0;
+        }
+        cache_pixels = &gfx->door_overlay_pixels[slot];
+        cache_w = &gfx->door_overlay_w[slot];
+        cache_h = &gfx->door_overlay_h[slot];
+        gfx->door_overlay_keys[slot] = gdat_index;
         category = DM2_GDAT_CATEGORY_DOORS;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE) {
         int packed = DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index;
