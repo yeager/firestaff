@@ -3948,6 +3948,7 @@ static void nexus_v1_launcher_fill_menu_presentation_receipt(
     Nexus_V1_StartupMenuPresentationReceipt *receipt,
     Nexus_V1_StartupMenuPresentationKind kind,
     const Nexus_V1_LauncherStartupAssetsReceipt *assets,
+    const Nexus_V1_StartupFullStartReceipt *full_start,
     int route_ready,
     int command_count)
 {
@@ -3962,14 +3963,36 @@ static void nexus_v1_launcher_fill_menu_presentation_receipt(
     receipt->draw_command_count = route_ready ? command_count : 0;
     receipt->asset_route = assets->startup_menu_asset_route;
     receipt->asset_blocker = assets->real_menu_surface_blocker;
-    receipt->status_scope = route_ready ? "STARTUP" : "ASSETS";
-    receipt->status = route_ready
-        ? (kind == NEXUS_V1_STARTUP_MENU_PRESENTATION_SAVE
-               ? "NEXUS SAVE SELECT"
-               : "NEXUS CHAMPIONS")
-        : (assets->startup_menu_asset_route
-               ? assets->startup_menu_asset_route
-               : "blocked-startup-assets");
+    if (full_start) {
+        receipt->host_caller_valid = 1;
+        receipt->package_capture_consumed_by_host =
+            route_ready &&
+                    full_start->m11_host_route_ready &&
+                    full_start->full_start_graphics_ready
+                ? 1
+                : 0;
+        receipt->display_callers_use_package_receipt =
+            receipt->package_capture_consumed_by_host;
+        receipt->suppress_fallback_visuals =
+            full_start->fallback_visuals_permitted ? 0 : 1;
+        receipt->blocked_route_suppresses_all_draws =
+            !route_ready && receipt->suppress_fallback_visuals;
+        receipt->status_scope = full_start->host_receipt.status_scope
+            ? full_start->host_receipt.status_scope
+            : full_start->status_scope;
+        receipt->status = full_start->host_receipt.status
+            ? full_start->host_receipt.status
+            : full_start->status;
+    } else {
+        receipt->status_scope = route_ready ? "STARTUP" : "ASSETS";
+        receipt->status = route_ready
+            ? (kind == NEXUS_V1_STARTUP_MENU_PRESENTATION_SAVE
+                   ? "NEXUS SAVE SELECT"
+                   : "NEXUS CHAMPIONS")
+            : (assets->startup_menu_asset_route
+                   ? assets->startup_menu_asset_route
+                   : "blocked-startup-assets");
+    }
     receipt->host_receipt.input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
     receipt->host_receipt.status_scope = receipt->status_scope;
     receipt->host_receipt.status = receipt->status;
@@ -3982,7 +4005,10 @@ int nexus_v1_launcher_startup_save_presentation_receipt_from_runtime_state(
     Nexus_V1_StartupMenuPresentationReceipt *out_receipt)
 {
     Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_LauncherRuntimeReceipt derived_runtime;
+    Nexus_V1_StartupFullStartReceipt full_start;
     int command_count = 0;
+    int full_start_valid = 0;
 
     nexus_v1_launcher_startup_menu_presentation_receipt_clear(out_receipt);
     if (!out_receipt ||
@@ -3990,6 +4016,15 @@ int nexus_v1_launcher_startup_save_presentation_receipt_from_runtime_state(
                                                              &assets)) {
         return 0;
     }
+    nexus_v1_launcher_runtime_receipt_clear(&derived_runtime);
+    full_start_valid =
+        nexus_v1_launcher_build_runtime_receipt_from_startup_state(
+            state,
+            &derived_runtime) &&
+        nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+            &derived_runtime,
+            state,
+            &full_start);
     if (assets.save_menu_route_ready) {
         command_count =
             nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
@@ -4001,6 +4036,7 @@ int nexus_v1_launcher_startup_save_presentation_receipt_from_runtime_state(
         out_receipt,
         NEXUS_V1_STARTUP_MENU_PRESENTATION_SAVE,
         &assets,
+        full_start_valid ? &full_start : NULL,
         assets.save_menu_route_ready,
         command_count);
     return 1;
@@ -4061,7 +4097,10 @@ int nexus_v1_launcher_startup_champion_presentation_receipt_from_runtime_state(
     Nexus_V1_StartupMenuPresentationReceipt *out_receipt)
 {
     Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_LauncherRuntimeReceipt derived_runtime;
+    Nexus_V1_StartupFullStartReceipt full_start;
     int command_count = 0;
+    int full_start_valid = 0;
 
     nexus_v1_launcher_startup_menu_presentation_receipt_clear(out_receipt);
     if (!out_receipt ||
@@ -4069,6 +4108,15 @@ int nexus_v1_launcher_startup_champion_presentation_receipt_from_runtime_state(
                                                              &assets)) {
         return 0;
     }
+    nexus_v1_launcher_runtime_receipt_clear(&derived_runtime);
+    full_start_valid =
+        nexus_v1_launcher_build_runtime_receipt_from_startup_state(
+            state,
+            &derived_runtime) &&
+        nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+            &derived_runtime,
+            state,
+            &full_start);
     if (assets.champion_menu_route_ready) {
         command_count =
             nexus_v1_launcher_startup_presentation_build_champion_from_runtime_state(
@@ -4080,6 +4128,7 @@ int nexus_v1_launcher_startup_champion_presentation_receipt_from_runtime_state(
         out_receipt,
         NEXUS_V1_STARTUP_MENU_PRESENTATION_CHAMPION,
         &assets,
+        full_start_valid ? &full_start : NULL,
         assets.champion_menu_route_ready,
         command_count);
     return 1;

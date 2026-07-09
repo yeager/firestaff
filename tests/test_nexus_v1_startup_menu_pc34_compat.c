@@ -3933,6 +3933,11 @@ int main(void)
                                presentation_receipt.route_blocked == 1 &&
                                presentation_receipt.route_ready == 0 &&
                                presentation_receipt.draw_command_count == 0 &&
+                               presentation_receipt.host_caller_valid == 1 &&
+                               presentation_receipt.package_capture_consumed_by_host == 0 &&
+                               presentation_receipt.display_callers_use_package_receipt == 0 &&
+                               presentation_receipt.suppress_fallback_visuals == 1 &&
+                               presentation_receipt.blocked_route_suppresses_all_draws == 1 &&
                                presentation_receipt.assets
                                    .menu_bpk_blocks_real_menu_surface_render == 1 &&
                                strcmp(presentation_receipt.status_scope,
@@ -3951,6 +3956,11 @@ int main(void)
                                    NEXUS_V1_STARTUP_MENU_PRESENTATION_CHAMPION &&
                                presentation_receipt.route_blocked == 1 &&
                                presentation_receipt.draw_command_count == 0 &&
+                               presentation_receipt.host_caller_valid == 1 &&
+                               presentation_receipt.package_capture_consumed_by_host == 0 &&
+                               presentation_receipt.display_callers_use_package_receipt == 0 &&
+                               presentation_receipt.suppress_fallback_visuals == 1 &&
+                               presentation_receipt.blocked_route_suppresses_all_draws == 1 &&
                                strcmp(presentation_receipt.asset_blocker,
                                       "menu-bpk-prs3") == 0 &&
                                strcmp(presentation_receipt.host_receipt.status,
