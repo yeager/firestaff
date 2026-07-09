@@ -167,5 +167,8 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     Nexus_V1_MenuBpkRendererHandoffReceipt *out_receipt);
 const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
     Nexus_V1_MenuBpkRendererHandoffStatus status);
+int nexus_v1_current_level_dgn_renderer_handoff_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnRendererHandoffReceipt *out_receipt);
 
 #endif /* NEXUS_V1_ENGINE_H */

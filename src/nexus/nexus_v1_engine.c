@@ -29,6 +29,7 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"FACE.BIN", "bd9ca16ea68043984e2804067b6cd66f"},
     {"FONT256.S2D", "427735a9997e692d85f2d81158dba423"},
     {"MENU.BPK", "c2776768ff25287c79013a1452253ca0"},
+    {"LEV00.DGN", "603ec9c531a92539babdda84ab09e78e"},
     {NULL, NULL}
 };
 
@@ -672,4 +673,19 @@ const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
     case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID: return "invalid";
     default: return "unknown";
     }
+}
+
+int nexus_v1_current_level_dgn_renderer_handoff_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnRendererHandoffReceipt *out_receipt) {
+    if (!out_receipt) {
+        return -1;
+    }
+    if (!engine || !engine->level_loaded) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+        return 0;
+    }
+    return nexus_v1_level_dgn_renderer_handoff_receipt(&engine->current_level,
+                                                       out_receipt);
 }

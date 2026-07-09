@@ -240,3 +240,69 @@ int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y) {
         return 0; /* wall */
     return level->squares[y][x];
 }
+
+int nexus_v1_level_dgn_renderer_handoff_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnRendererHandoffReceipt *out_receipt) {
+    const Nexus_V1_DgnGeometryInfo *info;
+
+    if (!out_receipt) {
+        return -1;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+    out_receipt->fallback_visuals_permitted = 0;
+
+    if (!level || level->width <= 0 || level->height <= 0) {
+        return 0;
+    }
+
+    info = &level->geometry_info;
+    out_receipt->width = level->width;
+    out_receipt->height = level->height;
+    out_receipt->dmweb_container = info->dmweb_container;
+    out_receipt->mesh_ready = info->mesh_ready;
+    out_receipt->geometry_offset = info->geometry_offset;
+    out_receipt->geometry_size = info->geometry_size;
+    out_receipt->collision_ref_count = info->collision_ref_count;
+    out_receipt->collision_ref_unique_count =
+        info->collision_ref_unique_count;
+    out_receipt->max_collision_ref = info->max_collision_ref;
+    out_receipt->descriptor_capacity =
+        info->geometry_size > 0
+            ? info->geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES
+            : 0;
+
+    if (!info->dmweb_container) {
+        out_receipt->status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK;
+    } else if (info->mesh_ready) {
+        out_receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH;
+        out_receipt->can_render_dgn_mesh = 1;
+    } else if (info->geometry_size <= 0) {
+        out_receipt->status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_NO_GEOMETRY;
+    } else {
+        out_receipt->status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_DESCRIPTOR_BUDGET;
+    }
+
+    out_receipt->blocks_real_dgn_mesh_render =
+        out_receipt->can_render_dgn_mesh ? 0 : 1;
+    return 0;
+}
+
+const char *nexus_v1_dgn_renderer_handoff_status_name(
+    Nexus_V1_DgnRendererHandoffStatus status) {
+    switch (status) {
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING: return "missing";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH: return "ready-mesh";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_NO_GEOMETRY:
+        return "blocked-no-geometry";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_DESCRIPTOR_BUDGET:
+        return "blocked-descriptor-budget";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK:
+        return "blocked-legacy-fallback";
+    default: return "unknown";
+    }
+}

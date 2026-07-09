@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Nexus DGN renderer handoff receipt: Structure1B/geometry decode now emits a renderer/runtime receipt for real DGN mesh readiness, descriptor-budget blockers, and legacy fallback blockers, with fallback visuals forbidden on blocked real-DGN routes. `LEV00.DGN` is also hash-resolved in Nexus runtime level load. Verification: `test_nexus_v1_dgn_geometry_readiness`, `test_nexus_v1_boot_file_hash_scan`, Nexus BPK focused CTests, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron Continue apply SRM receipts: Continue apply receipts now carry structured source, slot, SRM import, dungeon/level, quest mask, party restored/count, and gold fields for TQSV/SRM/no-source paths, so runtime/host handoff can avoid parsing inspect text when applying real `.srm` progress. Verification: `firestaff_theron_v1_startup_flow_probe` 627/627, `test_theron_v1_startup_save_resume_pc34` 162/162, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 door-record passability slice: DM2 runtime passability now treats DB0 door records as door squares even when the square type alone is not enough, and destroyed doors report fully open render state. Verification: `test_dm2_v1_runtime_handoff_smoke` 120/120, `test_dm2_v1_creature_ccm_runtime_pc34_compat` 72/72, and `git diff --check` passed.

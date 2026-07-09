@@ -42,10 +42,40 @@ typedef struct {
     Nexus_V1_DgnGeometryInfo geometry_info;
 } Nexus_V1_Level;
 
+typedef enum {
+    NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING = 0,
+    NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH = 1,
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_NO_GEOMETRY = 2,
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_DESCRIPTOR_BUDGET = 3,
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK = 4
+} Nexus_V1_DgnRendererHandoffStatus;
+
+typedef struct {
+    Nexus_V1_DgnRendererHandoffStatus status;
+    int dmweb_container;
+    int mesh_ready;
+    int can_render_dgn_mesh;
+    int blocks_real_dgn_mesh_render;
+    int fallback_visuals_permitted;
+    int width;
+    int height;
+    int geometry_offset;
+    int geometry_size;
+    int collision_ref_count;
+    int collision_ref_unique_count;
+    int max_collision_ref;
+    int descriptor_capacity;
+} Nexus_V1_DgnRendererHandoffReceipt;
+
 int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, int level_index);
 int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y);
 int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
                                const uint8_t *data,
                                int size);
+int nexus_v1_level_dgn_renderer_handoff_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnRendererHandoffReceipt *out_receipt);
+const char *nexus_v1_dgn_renderer_handoff_status_name(
+    Nexus_V1_DgnRendererHandoffStatus status);
 
 #endif
