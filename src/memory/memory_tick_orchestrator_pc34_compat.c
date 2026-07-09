@@ -4190,21 +4190,10 @@ static int orch_materialize_projectile_tick_explosion_compat(
 
     if (!world || !tickResult || !tickResult->emittedExplosion) return 0;
 
-    memset(&explosionIn, 0, sizeof(explosionIn));
-    explosionIn.explosionType =
-        tickResult->outExplosion.explosionType;
-    explosionIn.attack = tickResult->outExplosion.attack;
-    explosionIn.mapIndex = tickResult->outExplosion.mapIndex;
-    explosionIn.mapX = tickResult->outExplosion.mapX;
-    explosionIn.mapY = tickResult->outExplosion.mapY;
-    explosionIn.cell = tickResult->outExplosion.cell;
-    explosionIn.centered = tickResult->outExplosion.centered;
-    explosionIn.poisonAttack = tickResult->outExplosion.poisonAttack;
-    explosionIn.currentTick = (int)world->gameTick;
-    explosionIn.ownerKind = tickResult->outExplosion.ownerKind;
-    explosionIn.ownerIndex = tickResult->outExplosion.ownerIndex;
-    explosionIn.creatorProjectileSlot =
-        tickResult->outExplosion.creatorProjectileSlot;
+    if (!dm1_v1_projectile_explosion_create_input_pc34(
+            tickResult, (int)world->gameTick, &explosionIn)) {
+        return 0;
+    }
     if (F0821_EXPLOSION_Create_Compat(
             &explosionIn, &world->explosions, &explosionSlot,
             &firstExplosionAdvance)) {
