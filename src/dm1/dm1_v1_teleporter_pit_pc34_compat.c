@@ -169,11 +169,63 @@ int m11_plan_group_move_removal_after_pit_teleporter(
     return 1;
 }
 
+int m11_plan_deferred_group_move_route_f0267(
+        int fallKilledGroup,
+        int creatureAllowedOnDestinationMap,
+        int destinationBlocked,
+        int audibleEvent,
+        int chaosAdjacentAvailable,
+        uint32_t currentFireAtTick,
+        int destinationMapX,
+        int destinationMapY,
+        int chaosAdjacentMapX,
+        int chaosAdjacentMapY,
+        M11_GroupMoveRoutePlan* outPlan) {
+    M11_GroupMoveRoutePlan plan;
+
+    if (!outPlan) return 0;
+    memset(&plan, 0, sizeof(plan));
+    plan.valid = 1;
+    plan.mapX = destinationMapX;
+    plan.mapY = destinationMapY;
+
+    if (fallKilledGroup || !creatureAllowedOnDestinationMap) {
+        plan.route = M11_GROUP_MOVE_ROUTE_REMOVE;
+        plan.shouldEmitAudibleBuzz = audibleEvent ? 1 : 0;
+        plan.removalReason = fallKilledGroup
+            ? M11_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED
+            : M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED;
+        *outPlan = plan;
+        return 1;
+    }
+
+    if (destinationBlocked) {
+        if (chaosAdjacentAvailable) {
+            plan.route = M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT;
+            plan.shouldEmitAudibleBuzz = audibleEvent ? 1 : 0;
+            plan.mapX = chaosAdjacentMapX;
+            plan.mapY = chaosAdjacentMapY;
+        } else {
+            plan.route = M11_GROUP_MOVE_ROUTE_RETRY;
+            plan.shouldScheduleRetry = 1;
+            plan.retryFireAtTick = currentFireAtTick + 5u;
+        }
+        *outPlan = plan;
+        return 1;
+    }
+
+    plan.route = M11_GROUP_MOVE_ROUTE_INSERT;
+    plan.shouldEmitAudibleBuzz = audibleEvent ? 1 : 0;
+    *outPlan = plan;
+    return 1;
+}
+
 const char* m11_group_move_removal_source_evidence(void) {
     return "ReDMCSB WIP20210206 Toolchains/Common/Source: "
            "MOVESENS.C F0267 lines 608-624 damages falling groups and drops moving fixed possessions on partial death; "
            "MOVESENS.C F0267 lines 656-663 handles fall-killed or destination-map-disallowed group removal via F0187/F0188/F0189; "
            "GROUP.C F0187 lines 648-674 drops moving creature fixed possessions; "
            "GROUP.C F0188 lines 676-737 drops group possessions with caller sound mode; "
-           "GROUP.C F0189 lines 739-762 deletes the group from the source square";
+           "GROUP.C F0189 lines 739-762 deletes the group from the source square; "
+           "TIMELINE.C F0252 lines 1527-1567 inserts event60/61 groups, tries Lord Chaos adjacent placement, or retries at +5 ticks";
 }
