@@ -700,6 +700,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupRuntimeReadyReceipt_PC34 ready_receipt;
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 runtime_handoff;
     DM1_V1_StartupHoCFirstFrameReceipt_PC34 hoc_first_frame;
+    DM1_V1_StartupHoCHostRenderPlan_PC34 hoc_host_plan;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1326,6 +1327,46 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_first_frame.hoc_render_commands[2]
                      .suppress_host_fallback_visuals,
              1);
+    memset(&hoc_host_plan, 0, sizeof(hoc_host_plan));
+    expect_i("DM1 HoC host render plan builds",
+             dm1_v1_startup_hoc_host_render_plan_from_first_frame_pc34(
+                 &hoc_first_frame,
+                 &hoc_host_plan),
+             1);
+    expect_i("DM1 HoC host render plan is ready",
+             hoc_host_plan.handled &&
+                 hoc_host_plan.ready &&
+                 hoc_host_plan.consume_dm1_receipt_only &&
+                 hoc_host_plan.command_count == 3,
+             1);
+    expect_i("DM1 HoC host render plan carries opened entrance frame",
+             hoc_host_plan.draw_opened_entrance_frame &&
+                 hoc_host_plan.entrance_map_index ==
+                     DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_host_plan.entrance_door_frame_index == 9,
+             1);
+    expect_i("DM1 HoC host render plan carries Hall overlay",
+             hoc_host_plan.clear_champion_panel &&
+                 hoc_host_plan.render_hall_mirror_overlay &&
+                 hoc_host_plan.hall_mirror_overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 hoc_host_plan.suppress_host_fallback_visuals &&
+                 hoc_host_plan.block_enter_until_champion_selected,
+             1);
+    hoc_first_frame.hoc_render_commands[0].kind =
+        DM1_V1_STARTUP_HOC_RENDER_COMMAND_HALL_MIRRORS_PC34;
+    expect_i("DM1 HoC host render plan rejects wrong command order",
+             dm1_v1_startup_hoc_host_render_plan_from_first_frame_pc34(
+                 &hoc_first_frame,
+                 &hoc_host_plan) &&
+                 hoc_host_plan.handled &&
+                 !hoc_host_plan.ready,
+             1);
+    expect_i("DM1 HoC host render plan rejects NULL input",
+             dm1_v1_startup_hoc_host_render_plan_from_first_frame_pc34(
+                 NULL,
+                 &hoc_host_plan),
+             0);
     expect_i("DM1 HoC first-frame no-op for CSB",
              dm1_v1_startup_hoc_first_frame_receipt_pc34(
                  "csb",
