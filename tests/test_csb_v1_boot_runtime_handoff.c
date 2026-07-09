@@ -73,6 +73,68 @@ typedef struct {
     int code_bits;
 } TestLZW;
 
+typedef struct {
+    int utility_panel_count;
+    int closed_doors_count;
+    int fallback_text_count;
+    int last_waiting_for_input;
+    int last_menu_option_count;
+    int last_surface;
+} TestHudMenuDrawProbe;
+
+static void hud_probe_draw_utility_panel(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestHudMenuDrawProbe *probe = (TestHudMenuDrawProbe *)user;
+    if (!probe || !plan) {
+        return;
+    }
+    ++probe->utility_panel_count;
+    probe->last_waiting_for_input = plan->waiting_for_input;
+    probe->last_menu_option_count = plan->menu_option_count;
+    probe->last_surface = (int)plan->surface;
+}
+
+static void hud_probe_draw_closed_doors(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestHudMenuDrawProbe *probe = (TestHudMenuDrawProbe *)user;
+    if (!probe || !plan) {
+        return;
+    }
+    ++probe->closed_doors_count;
+    probe->last_waiting_for_input = plan->waiting_for_input;
+    probe->last_menu_option_count = plan->menu_option_count;
+    probe->last_surface = (int)plan->surface;
+}
+
+static void hud_probe_draw_fallback_text(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    TestHudMenuDrawProbe *probe = (TestHudMenuDrawProbe *)user;
+    if (!probe || !plan) {
+        return;
+    }
+    ++probe->fallback_text_count;
+    probe->last_waiting_for_input = plan->waiting_for_input;
+    probe->last_menu_option_count = plan->menu_option_count;
+    probe->last_surface = (int)plan->surface;
+}
+
+static void hud_probe_executor_init(
+    CSB_V1_StartupRenderExecutor_PC34 *executor,
+    TestHudMenuDrawProbe *probe)
+{
+    memset(executor, 0, sizeof(*executor));
+    executor->user = probe;
+    executor->draw_utility_panel = hud_probe_draw_utility_panel;
+    executor->draw_closed_doors = hud_probe_draw_closed_doors;
+    executor->draw_fallback_text = hud_probe_draw_fallback_text;
+}
+
 static void write_le16(uint8_t *buf, size_t off, uint16_t value)
 {
     buf[off] = (uint8_t)(value & 0xffu);
@@ -1820,6 +1882,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupRenderViewReceipt_PC34 runtime_view_receipt;
     CSB_V1_BootStartupReadinessReceipt_PC34 readiness_receipt;
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_draw_receipt;
+    CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
+    TestHudMenuDrawProbe hud_draw_probe;
     CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
     CSB_V1_StartupRenderPlan_PC34 receipt_closed_door_plan;
     CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
@@ -2243,7 +2307,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_receipt.kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
               hud_draw_receipt.utility_render_plan_valid &&
-              !hud_draw_receipt.startup_render_plan_valid &&
+              hud_draw_receipt.startup_render_plan_valid &&
+              hud_draw_receipt.startup_render_plan.waiting_for_input &&
               hud_draw_receipt.draw_utility_panel &&
               hud_draw_receipt.option_count == CSB_V1_UTIL_MENU_ROW_COUNT &&
               hud_draw_receipt.selected_utility_action_index == 0 &&
@@ -2252,6 +2317,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strstr(hud_draw_receipt.prompt,
                      "CHAOS STRIKES BACK READY") != NULL,
           "boot startup HUD/menu draw receipt consumes utility render-view receipt");
+    memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
+    hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
+    CHECK(csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
+              &hud_draw_receipt,
+              &readiness_receipt,
+              &hud_draw_executor) == 1 &&
+              hud_draw_probe.utility_panel_count == 1 &&
+              hud_draw_probe.closed_doors_count == 0 &&
+              hud_draw_probe.fallback_text_count == 0 &&
+              hud_draw_probe.last_waiting_for_input &&
+              hud_draw_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
+          "boot startup HUD/menu executor draws utility panel from readiness-gated receipt");
     snapshot.utility_overlay_active = 0;
     CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
               &snapshot,
@@ -2389,6 +2467,28 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_receipt.startup_render_plan.menu_options[0].selected &&
               strstr(hud_draw_receipt.prompt, "PRESS ENTER") != NULL,
           "boot startup HUD/menu draw receipt consumes closed-door render-view receipt");
+    CHECK(csb_v1_boot_startup_readiness_receipt_from_view_pc34(
+              &view_receipt,
+              &readiness_receipt) == 1 &&
+              readiness_receipt.valid &&
+              readiness_receipt.hud_menu_ready &&
+              readiness_receipt.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34,
+          "boot startup HUD/menu executor receives closed-door readiness receipt");
+    memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
+    hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
+    CHECK(csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
+              &hud_draw_receipt,
+              &readiness_receipt,
+              &hud_draw_executor) == 2 &&
+              hud_draw_probe.utility_panel_count == 0 &&
+              hud_draw_probe.closed_doors_count == 1 &&
+              hud_draw_probe.fallback_text_count == 1 &&
+              hud_draw_probe.last_waiting_for_input &&
+              hud_draw_probe.last_menu_option_count == 4 &&
+              hud_draw_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
+          "boot startup HUD/menu executor draws closed-door HUD from readiness-gated receipt");
     CHECK(csb_v1_boot_startup_render_plan_from_snapshot_pc34(
               &snapshot,
               &snapshot_render_plan) == 1 &&
