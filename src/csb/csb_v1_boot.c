@@ -1581,19 +1581,32 @@ int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt)
 {
+    CSB_V1_StartupHostFacts_PC34 facts;
     CSB_V1_StartupPresentationReceipt_PC34 presentation;
 
     if (!out_receipt) {
         return 0;
     }
     csb_v1_boot_startup_presentation_route_receipt_init_pc34(out_receipt);
-    if (!csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
-            snapshot,
+    if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot) ||
+        !csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+            &facts,
             &presentation)) {
         return 0;
     }
     csb_v1_boot_startup_route_from_presentation_pc34(&presentation,
                                                      out_receipt);
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 keeps input waiting
+     * inside the entrance loop; CSBWin/Viewport.cpp mirrors CSB HUD/menu
+     * ownership in the CSB view layer.  Export the utility render plan in
+     * the same route receipt so M11 does not rebuild startup menu state. */
+    if (out_receipt->draw_utility_panel &&
+        facts.utility_overlay_active &&
+        csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
+            &facts,
+            &out_receipt->utility_plan)) {
+        out_receipt->utility_plan_valid = 1;
+    }
     return out_receipt->valid;
 }
 
