@@ -753,6 +753,8 @@ int dm1_v1_action_shield_plan_f0403_pc34(
     out->eventDelayTicks = 0;
     out->defenseDelta = 0;
     out->newShieldDefense = in->currentShieldDefense;
+    out->createsStatusEvent = 0;
+    out->lowManaHalvedTicks = 0;
     out->decrementsActionHandChargesOnSuccess = 0;
     if (in->baseTicks <= 0) return 0;
     ticks = in->baseTicks;
@@ -776,6 +778,7 @@ int dm1_v1_action_shield_plan_f0403_pc34(
         }
         if (mana < 4) {
             ticks >>= 1;
+            out->lowManaHalvedTicks = 1;
             out->manaCost = mana;
             out->remainingMana = 0;
             out->successful = 0;
@@ -791,6 +794,7 @@ int dm1_v1_action_shield_plan_f0403_pc34(
     out->eventDelayTicks = ticks;
     out->defenseDelta = defense;
     out->newShieldDefense = currentDefense + defense;
+    out->createsStatusEvent = 1;
     return 1;
 }
 
