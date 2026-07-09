@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 graphic-id catalog now owns common C006/C014..C020/C023/C026/C028..C039/C346 wrapper constants; M11 delegates V1 graphic-id accessors. Remaining runtime coding work is reducing residual viewport/render graphic ownership and full-graphics proof.
   - 2026-07-09 update: DM1 layout-zones now owns screen, viewport, message, dialog, champion-icon, inventory-panel, and object-description C002/C004/C005/C006/C007/C015/C017/C101/C113..C116/C503..C506/C556 geometry; M11 wrappers only expose legacy API. Remaining runtime coding work is reducing residual render state mutation and full-graphics proof.
   - 2026-07-09 update: DM1 mouse-route code now owns G0447/G0448/G0449/G0456 route tables and hit-test iteration; M11 supplies only zone rectangles and viewport origin. Remaining runtime coding work is reducing residual route side effects and full-graphics proof.
   - 2026-07-09 update: DM1 inventory slot placement now owns C507..C536 inventory/equipment/backpack and C537..C544 chest slotbox zone tables; M11 wrapper functions delegate to the DM1 contract. Remaining runtime coding work is moving more mouse-route dispatch out of M11 and full-graphics proof.

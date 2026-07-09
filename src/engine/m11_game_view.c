@@ -81,6 +81,7 @@
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_mouse_routes_pc34_compat.h"
@@ -30911,11 +30912,11 @@ int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void) {
 }
 
 int M11_GameView_GetV1ChampionPortraitGraphicId(void) {
-    return M11_GFX_CHAMPION_PORTRAITS;
+    return dm1_v1_graphic_champion_portraits_pc34();
 }
 
 int M11_GameView_GetV1ChampionIconGraphicId(void) {
-    return DM1_GFX_CHAMPION_ICONS;
+    return dm1_v1_graphic_champion_icons_pc34();
 }
 
 int M11_GameView_GetV1ChampionIconZoneId(int championSlot) {
@@ -30968,16 +30969,15 @@ int M11_GameView_GetV1ChampionIconSourceIndex(const M11_GameViewState* state,
 }
 
 int M11_GameView_GetV1InventoryPanelGraphicId(void) {
-    return M11_GFX_PANEL_EMPTY;
+    return dm1_v1_graphic_panel_empty_pc34();
 }
 
 int M11_GameView_GetV1OpenScrollPanelGraphicId(void) {
-    return M11_GFX_PANEL_OPEN_SCROLL;
+    return dm1_v1_graphic_panel_open_scroll_pc34();
 }
 
 int M11_GameView_GetV1InventoryBackdropGraphicId(void) {
-    /* DEFS.H C017_GRAPHIC_INVENTORY, 224x136 viewport-replacement graphic. */
-    return M11_GFX_DIALOG_BOX;
+    return dm1_v1_graphic_inventory_backdrop_pc34();
 }
 
 int M11_GameView_GetV1InventoryBackdropZone(int* outX,
@@ -31010,12 +31010,11 @@ int M11_GameView_GetV1InventoryPanelZone(int* outX,
 }
 
 int M11_GameView_GetV1ObjectDescriptionPanelGraphicId(void) {
-    /* PANEL.C F0342 uses C020_GRAPHIC_PANEL_EMPTY before object details. */
-    return M11_GFX_PANEL_EMPTY;
+    return dm1_v1_graphic_panel_empty_pc34();
 }
 
 int M11_GameView_GetV1ObjectDescriptionCircleGraphicId(void) {
-    return M11_GFX_OBJECT_DESCRIPTION_CIRCLE;
+    return dm1_v1_graphic_object_description_circle_pc34();
 }
 
 int M11_GameView_GetV1ObjectDescriptionCircleZoneId(void) {
@@ -31067,8 +31066,7 @@ int M11_GameView_GetV1ArrowOrEyeZone(int* outX,
 }
 
 int M11_GameView_GetV1ArrowOrEyeGraphicId(int pressingEye) {
-    return pressingEye ? M11_GFX_PANEL_EYE_FOR_OBJECT_DESCRIPTION
-                       : M11_GFX_PANEL_ARROW_FOR_CHEST_CONTENT;
+    return dm1_v1_graphic_arrow_or_eye_pc34(pressingEye);
 }
 
 int M11_GameView_GetV1ObjectDescriptionNameZoneId(void) {
@@ -32127,7 +32125,7 @@ static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
 }
 
 int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
-    return 6;
+    return dm1_v1_graphic_the_end_pc34();
 }
 
 int M11_GameView_GetV1EndgameTheEndZone(int* outX,
@@ -32145,7 +32143,7 @@ int M11_GameView_GetV1EndgameTheEndZone(int* outX,
 }
 
 int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void) {
-    return 346;
+    return dm1_v1_graphic_endgame_champion_mirror_pc34();
 }
 
 int M11_GameView_GetV1EndgameChampionMirrorZoneId(int championSlot) {
@@ -32233,7 +32231,7 @@ int M11_GameView_GetV1EndgameQuitBox(int inner,
 }
 
 int M11_GameView_GetV1DialogBackdropGraphicId(void) {
-    return M11_GFX_DIALOG_BOX;
+    return dm1_v1_graphic_dialog_box_pc34();
 }
 
 int M11_GameView_GetV1DialogVersionTextOrigin(int* outX, int* outY) {
@@ -32271,11 +32269,11 @@ int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
 }
 
 int M11_GameView_GetV1FoodLabelGraphicId(void) {
-    return DM1_GFX_FOOD_LABEL;
+    return dm1_v1_graphic_food_label_pc34();
 }
 
 int M11_GameView_GetV1WaterLabelGraphicId(void) {
-    return DM1_GFX_WATER_LABEL;
+    return dm1_v1_graphic_water_label_pc34();
 }
 
 int M11_GameView_GetV1FoodBarZoneId(void) {
@@ -32764,15 +32762,15 @@ int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
 }
 
 int M11_GameView_GetV1SlotBoxNormalGraphicId(void) {
-    return DM1_GFX_SLOT_NORMAL;
+    return dm1_v1_graphic_slot_box_normal_pc34();
 }
 
 int M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
-    return DM1_GFX_SLOT_WOUNDED;
+    return dm1_v1_graphic_slot_box_wounded_pc34();
 }
 
 int M11_GameView_GetV1SlotBoxActingHandGraphicId(void) {
-    return DM1_GFX_SLOT_ACTING;
+    return dm1_v1_graphic_slot_box_acting_hand_pc34();
 }
 
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
@@ -32920,15 +32918,15 @@ int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
 }
 
 int M11_GameView_GetV1PartyShieldBorderGraphicId(void) {
-    return M11_GFX_BORDER_PARTY_SHIELD;
+    return dm1_v1_graphic_party_shield_border_pc34();
 }
 
 int M11_GameView_GetV1FireShieldBorderGraphicId(void) {
-    return M11_GFX_BORDER_PARTY_FIRESHIELD;
+    return dm1_v1_graphic_fire_shield_border_pc34();
 }
 
 int M11_GameView_GetV1SpellShieldBorderGraphicId(void) {
-    return M11_GFX_BORDER_PARTY_SPELLSHIELD;
+    return dm1_v1_graphic_spell_shield_border_pc34();
 }
 
 static int m11_collect_v1_status_shield_border_graphics(
@@ -32976,19 +32974,19 @@ int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) 
 }
 
 int M11_GameView_GetV1PoisonLabelGraphicId(void) {
-    return DM1_GFX_POISONED_LABEL;
+    return dm1_v1_graphic_poisoned_label_pc34();
 }
 
 int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
-    return M11_GFX_DAMAGE_TO_CHAMPION_SMALL;
+    return dm1_v1_graphic_champion_damage_small_pc34();
 }
 
 int M11_GameView_GetV1ChampionBigDamageGraphicId(void) {
-    return M11_GFX_DAMAGE_TO_CHAMPION_BIG;
+    return dm1_v1_graphic_champion_damage_big_pc34();
 }
 
 int M11_GameView_GetV1CreatureDamageGraphicId(void) {
-    return M11_GFX_DAMAGE_TO_CREATURE;
+    return dm1_v1_graphic_creature_damage_pc34();
 }
 
 int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
