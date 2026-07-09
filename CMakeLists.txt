@@ -162,6 +162,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_csbgraphics_dat_real_scan.c
     src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
     src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
+    src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_csbwin_512_xor_pad_classify.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
     src/csb/csb_v1_utility_flow_pc34.c
