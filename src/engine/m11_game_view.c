@@ -2477,62 +2477,61 @@ static int m11_csb_boot_runtime_util_render_plan(
     const M11_GameViewState *state,
     CSB_V1_UtilRenderPlan *out_plan);
 
-static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
-                                               unsigned char *framebuffer,
-                                               int framebufferWidth,
-                                               int framebufferHeight)
+static void m11_draw_csb_startup_utility_render_plan(
+    const CSB_V1_UtilRenderPlan *plan,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
 {
-    CSB_V1_UtilRenderPlan plan;
     int i;
 
-    if (!state || !state->csbState.startup_import_available) {
+    if (!plan || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0) {
         return;
     }
-
-    if (!m11_csb_boot_runtime_util_render_plan(state, &plan)) {
-        return;
-    }
-    if (plan.panel.fill_visible) {
+    if (plan->panel.fill_visible) {
         m11_fill_rect(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
-                      plan.panel.x,
-                      plan.panel.y,
-                      plan.panel.w,
-                      plan.panel.h,
-                      (unsigned char)plan.panel.fill_color);
+                      plan->panel.x,
+                      plan->panel.y,
+                      plan->panel.w,
+                      plan->panel.h,
+                      (unsigned char)plan->panel.fill_color);
     }
-    if (plan.panel.border_visible) {
+    if (plan->panel.border_visible) {
         m11_draw_rect(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
-                      plan.panel.x,
-                      plan.panel.y,
-                      plan.panel.w,
-                      plan.panel.h,
-                      (unsigned char)plan.panel.border_color);
+                      plan->panel.x,
+                      plan->panel.y,
+                      plan->panel.w,
+                      plan->panel.h,
+                      (unsigned char)plan->panel.border_color);
     }
-    if (plan.has_status_row) {
+    if (plan->has_status_row) {
         m11_draw_text(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
-                      plan.status_row.x,
-                      plan.status_row.y,
-                      plan.status_row.text,
-                      m11_csb_startup_text_style(plan.status_row.text_style));
+                      plan->status_row.x,
+                      plan->status_row.y,
+                      plan->status_row.text,
+                      m11_csb_startup_text_style(
+                          plan->status_row.text_style));
     }
-    if (plan.has_prompt_row) {
+    if (plan->has_prompt_row) {
         m11_draw_text(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
-                      plan.prompt_row.x,
-                      plan.prompt_row.y,
-                      plan.prompt_row.text,
-                      m11_csb_startup_text_style(plan.prompt_row.text_style));
+                      plan->prompt_row.x,
+                      plan->prompt_row.y,
+                      plan->prompt_row.text,
+                      m11_csb_startup_text_style(
+                          plan->prompt_row.text_style));
     }
 
-    for (i = 0; i < plan.menu_row_count; ++i) {
-        const CSB_V1_UtilRenderRow *menuRow = &plan.menu_rows[i];
+    for (i = 0; i < plan->menu_row_count; ++i) {
+        const CSB_V1_UtilRenderRow *menuRow = &plan->menu_rows[i];
         if (menuRow->selected) {
             m11_fill_rect(framebuffer,
                           framebufferWidth,
@@ -2551,18 +2550,38 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                        menuRow->text_style,
                                        menuRow->label);
     }
-    if (plan.preview_active) {
-        for (i = 0; i < plan.preview_row_count; ++i) {
+    if (plan->preview_active) {
+        for (i = 0; i < plan->preview_row_count; ++i) {
             m11_draw_text(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          plan.preview_rows[i].x,
-                          plan.preview_rows[i].y,
-                          plan.preview_rows[i].text,
+                          plan->preview_rows[i].x,
+                          plan->preview_rows[i].y,
+                          plan->preview_rows[i].text,
                           m11_csb_startup_text_style(
-                              plan.preview_rows[i].text_style));
+                              plan->preview_rows[i].text_style));
         }
     }
+}
+
+static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
+                                               unsigned char *framebuffer,
+                                               int framebufferWidth,
+                                               int framebufferHeight)
+{
+    CSB_V1_UtilRenderPlan plan;
+
+    if (!state || !state->csbState.startup_import_available) {
+        return;
+    }
+
+    if (!m11_csb_boot_runtime_util_render_plan(state, &plan)) {
+        return;
+    }
+    m11_draw_csb_startup_utility_render_plan(&plan,
+                                             framebuffer,
+                                             framebufferWidth,
+                                             framebufferHeight);
 }
 
 static void m11_execute_csb_startup_primitive_commands(
@@ -3154,6 +3173,7 @@ static int m11_execute_csb_entrance_opening_composite(
 
 typedef struct M11_CSBStartupRenderExecutorContext {
     const M11_GameViewState *state;
+    const CSB_V1_BootStartupPresentationRouteReceipt_PC34 *route_receipt;
     unsigned char *framebuffer;
     int framebufferWidth;
     int framebufferHeight;
@@ -3299,6 +3319,15 @@ static void m11_csb_startup_executor_draw_utility_panel(
     if (!context) {
         return;
     }
+    if (context->route_receipt &&
+        context->route_receipt->utility_plan_valid) {
+        m11_draw_csb_startup_utility_render_plan(
+            &context->route_receipt->utility_plan,
+            context->framebuffer,
+            context->framebufferWidth,
+            context->framebufferHeight);
+        return;
+    }
     m11_draw_csb_startup_utility_panel(context->state,
                                        context->framebuffer,
                                        context->framebufferWidth,
@@ -3325,6 +3354,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     plan = &route_receipt.presentation.render_plan;
 
     context.state = state;
+    context.route_receipt = &route_receipt;
     context.framebuffer = framebuffer;
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;

@@ -154,6 +154,8 @@ typedef struct CSB_V1_BootStartupPresentationRouteReceipt_PC34 {
     int draw_utility_panel;
     int hud_menu_visible;
     int menu_option_count;
+    int utility_plan_valid;
+    CSB_V1_UtilRenderPlan utility_plan;
     int accepts_input;
     int waiting_for_input;
     CSB_V1_StartupPresentationReceipt_PC34 presentation;
