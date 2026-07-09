@@ -142,6 +142,10 @@ static int dm2_runtime_has_door_record_at(const DM2_V1_DungeonData *dd,
     return dm2_v1_dungeon_find_thing_of_type(dd, (uint16_t)thing, 0, 8) >= 0;
 }
 
+/* skproject SKWIN/SkWinCore.cpp lines 10351-10358 and 16927-16931
+ * route DB0 door records through tile state; state 0/open and
+ * state 5/destroyed remain passable/render-open even when the raw low
+ * bits no longer match the closed-door sentinel. */
 static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
                                   int level,
                                   int x,
