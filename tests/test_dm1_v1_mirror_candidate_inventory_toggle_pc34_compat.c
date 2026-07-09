@@ -23,15 +23,15 @@ static int gPasses;
     } \
 } while (0)
 
-static Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat probe(
+static DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat probe(
     int command,
     unsigned int candidateOrdinal,
     unsigned int partyChampionCount,
     int inventoryOrdinal,
     int *returnValue)
 {
-    Dm1V1MirrorCandidateInventoryToggleInputPc34Compat input;
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat output;
+    DM1_V1_MirrorCandidateInventoryToggleInputPc34Compat input;
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat output;
 
     input.command = command;
     input.candidate_champion_ordinal = candidateOrdinal;
@@ -46,7 +46,7 @@ static Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat probe(
 static void test_c007_in_range_no_candidate_dispatches(void)
 {
     int returned;
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat out =
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat out =
         probe(7, 0u, 1u, 0, &returned);
     const char *anchor = out.evidence->commandGateAnchor;
 
@@ -70,7 +70,7 @@ static void test_c007_in_range_no_candidate_dispatches(void)
 static void test_c011_close_no_candidate_dispatches(void)
 {
     int returned;
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat out =
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat out =
         probe(11, 0u, 0u, 3, &returned);
     const char *anchor = out.evidence->commandGateAnchor;
 
@@ -95,7 +95,7 @@ static void test_c011_close_no_candidate_dispatches(void)
 static void test_c007_out_of_range_no_candidate_blocks(void)
 {
     int returned;
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat out =
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat out =
         probe(7, 0u, 0u, 1, &returned);
     const char *anchor = out.evidence->commandGateAnchor;
 
@@ -116,7 +116,7 @@ static void test_c007_out_of_range_no_candidate_blocks(void)
 static void test_c007_in_range_g0299_blocks(void)
 {
     int returned;
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat out =
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat out =
         probe(7, 2u, 1u, 1, &returned);
     const char *anchor = out.evidence->commandGateAnchor;
 
@@ -133,7 +133,7 @@ static void test_c007_in_range_g0299_blocks(void)
 static void test_c011_close_g0299_blocks(void)
 {
     int returned;
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat out =
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat out =
         probe(11, 4u, 0u, 2, &returned);
     const char *anchor = out.evidence->commandGateAnchor;
 
@@ -152,7 +152,7 @@ static void test_c011_close_g0299_blocks(void)
 static void test_party_count_boundaries(void)
 {
     int returned;
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat inBoundary =
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat inBoundary =
         probe(10, 0u, 4u, 4, &returned);
     const char *anchor = inBoundary.evidence->commandGateAnchor;
 
@@ -164,7 +164,7 @@ static void test_party_count_boundaries(void)
                       DM1_V1_MIRROR_CANDIDATE_INVENTORY_TOGGLE_DISPATCHED_PARTY_CHAMPION_PC34_COMPAT,
                   "G0305 - 1 boundary uses party champion route", anchor);
 
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat outBoundary =
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat outBoundary =
         probe(10, 0u, 3u, 4, &returned);
     CHECK_REDMCSB(returned == 0, "C010 boundary blocks at championIndex == G0305", anchor);
     CHECK_REDMCSB(outBoundary.computed_champion_index == 3 &&
@@ -178,7 +178,7 @@ static void test_party_count_boundaries(void)
 static void test_commands_outside_range_are_not_this_route(void)
 {
     int returned;
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat below =
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat below =
         probe(6, 0u, 4u, 0, &returned);
     const char *anchor = below.evidence->commandGateAnchor;
 
@@ -192,7 +192,7 @@ static void test_commands_outside_range_are_not_this_route(void)
                       DM1_V1_MIRROR_CANDIDATE_INVENTORY_TOGGLE_NOT_IN_INVENTORY_TOGGLE_RANGE_PC34_COMPAT,
                   "below-range command is not marked blocked", anchor);
 
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat above =
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat above =
         probe(12, 3u, 4u, 0, &returned);
     CHECK_REDMCSB(returned == 0, "C012 is not the inventory-toggle route", anchor);
     CHECK_REDMCSB(above.command_in_inventory_toggle_range == 0,
@@ -204,7 +204,7 @@ static void test_commands_outside_range_are_not_this_route(void)
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateInventoryToggleEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateInventoryToggleEvidencePc34Compat *e =
         dm1_v1_mirror_candidate_inventory_toggle_pc34_compat_evidence();
 
     CHECK_REDMCSB(e != NULL,
