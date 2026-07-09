@@ -1809,6 +1809,10 @@ int dm2_v1_boot_runtime_render_frame(
     }
     if (out_receipt) {
         out_receipt->runtime = runtime;
+        out_receipt->startup_title_ready = 1;
+        out_receipt->startup_profile_verified =
+            profile->assets_verified ? 1 : 0;
+        out_receipt->startup_hud_runtime_ready = 1;
     }
     if (v2_render) {
         if (out_receipt) {
@@ -1843,6 +1847,12 @@ int dm2_v1_boot_runtime_render_frame(
     }
     if (out_receipt) {
         out_receipt->render_result = rendered;
+        out_receipt->startup_render_ready =
+            rendered == 0 &&
+            out_receipt->runtime.runtime_ready &&
+            out_receipt->startup_title_ready &&
+            out_receipt->startup_profile_verified &&
+            out_receipt->startup_hud_runtime_ready;
     }
     return rendered == 0;
 }

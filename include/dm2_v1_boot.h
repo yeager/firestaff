@@ -215,6 +215,10 @@ typedef struct {
     int v2_succeeded;
     int v1_attempted;
     int v1_succeeded;
+    int startup_title_ready;
+    int startup_profile_verified;
+    int startup_hud_runtime_ready;
+    int startup_render_ready;
 } DM2_V1_BootRuntimeRenderReceipt;
 
 enum {

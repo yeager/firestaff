@@ -421,8 +421,12 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.v2_attempted == 1 &&
               render_receipt.v1_attempted == 1 &&
               render_receipt.v1_succeeded == 1 &&
-              render_receipt.render_result == 0,
-          "boot runtime render owns V2 callback plus V1 fallback receipt");
+              render_receipt.render_result == 0 &&
+              render_receipt.startup_title_ready == 1 &&
+              render_receipt.startup_profile_verified == 1 &&
+              render_receipt.startup_hud_runtime_ready == 1 &&
+              render_receipt.startup_render_ready == 1,
+          "boot runtime render owns V2 callback, V1 fallback, and first HUD readiness receipt");
     memset(&action, 0, sizeof(action));
     CHECK(dm2_v1_boot_runtime_action_front_cell(
               launch.profile,
