@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB startup input-to-render receipt: startup action receipts now carry the post-input render-view route for utility HUD/menu changes and entrance door-opening delay/frame handoff, keeping M11 from re-deriving CSB menu/door state after input. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus MENU.BPK upload-plan receipt: Nexus BPK now emits a bounded runtime upload plan for MENU.BPK surfaces, exposing stored-ready uploads versus PRS3/truncated blockers, first PRS3 stream facts, no-fallback render blocking, and an engine-level M11 handoff API. Verification: `test_nexus_v1_bpk_surface_class`, `test_nexus_v1_boot_file_hash_scan`, focused Nexus CTests, and `git diff --check` passed.
 
 

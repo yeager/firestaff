@@ -204,6 +204,10 @@ typedef struct CSB_V1_BootStartupActionReceipt_PC34 {
     CSB_V1_BootStartupActionKind_PC34 kind;
     int handled;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 pre_input_route;
+    int post_input_render_view_valid;
+    CSB_V1_BootStartupRenderViewReceipt_PC34 post_input_render_view;
+    int input_stays_on_startup;
+    int input_requests_launcher_return;
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 utility_receipt;
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
 } CSB_V1_BootStartupActionReceipt_PC34;

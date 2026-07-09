@@ -2214,6 +2214,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.pre_input_route.hud_menu_state.kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34,
           "boot startup action facade keeps utility priority with route proof");
+    CHECK(boot_action_receipt.post_input_render_view_valid &&
+              boot_action_receipt.input_stays_on_startup &&
+              !boot_action_receipt.input_requests_launcher_return &&
+              boot_action_receipt.post_input_render_view.closed_door_menu_route &&
+              boot_action_receipt.post_input_render_view.route_receipt.valid &&
+              boot_action_receipt.post_input_render_view.route_receipt
+                      .hud_menu_state.valid &&
+              boot_action_receipt.post_input_render_view.route_receipt
+                      .hud_menu_state.kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              boot_action_receipt.post_input_render_view.route_receipt
+                      .hud_menu_state.utility_selected_action_index == 1,
+          "boot startup utility input carries post-input render/HUD route");
     (void)csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
         &snapshot,
         72,
@@ -2241,6 +2254,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.pre_input_route.hud_menu_state.kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34,
           "boot startup action facade returns entrance receipt with route proof");
+    CHECK(boot_action_receipt.post_input_render_view_valid &&
+              boot_action_receipt.input_stays_on_startup &&
+              !boot_action_receipt.input_requests_launcher_return &&
+              boot_action_receipt.post_input_render_view.opening_door_route &&
+              boot_action_receipt.post_input_render_view.route_receipt.valid &&
+              boot_action_receipt.post_input_render_view.route_receipt.route !=
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+              boot_action_receipt.post_input_render_view.route_receipt
+                  .draw_closed_doors &&
+              !boot_action_receipt.post_input_render_view.route_receipt
+                   .accepts_input,
+          "boot startup entrance input carries post-input door render route");
 
     csb_v1_boot_cleanup(&boot);
 }
