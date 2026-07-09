@@ -312,6 +312,16 @@ int theron_v1_startup_continue_apply_request_with_receipts(
     Theron_StartupStateReceipt *out_state_receipt,
     char *receipt,
     size_t receipt_cap);
+int theron_v1_startup_continue_apply_request_with_host_receipts(
+    Theron_V1_World *world,
+    const Theron_V1StartupContinueRequest *request,
+    const Theron_StartupActionPlan *plan,
+    const char *chapter_marker_line,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_StartupHostReceipt *out_host_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap);
 int theron_v1_startup_continue_apply_request_with_inspect_receipts(
     Theron_V1_World *world,
     const Theron_V1StartupContinueRequest *request,
