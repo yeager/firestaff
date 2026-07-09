@@ -443,6 +443,7 @@ static void test_dm1_hoc_startup_render_consumer_is_m11_ready(void)
     int doorFrame = -1;
     int overlayKind = -1;
     int commandCount = 0;
+    int runtimeRouteUsesReceipt = 0;
 
     ASSERT_EQ(M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
                   &ready,
@@ -459,7 +460,8 @@ static void test_dm1_hoc_startup_render_consumer_is_m11_ready(void)
                   &mapIndex,
                   &doorFrame,
                   &overlayKind,
-                  &commandCount),
+                  &commandCount,
+                  &runtimeRouteUsesReceipt),
               1,
               "M11 exposes DM1 HoC startup render consumer receipt");
     ASSERT_EQ(ready, 1,
@@ -492,6 +494,8 @@ static void test_dm1_hoc_startup_render_consumer_is_m11_ready(void)
               "DM1 receipt carries Hall mirror overlay kind");
     ASSERT_EQ(commandCount, 3,
               "DM1 receipt carries ordered HoC render commands");
+    ASSERT_EQ(runtimeRouteUsesReceipt, 1,
+              "M11 runtime front mirror route consumes DM1 HoC receipt");
 }
 
 static void test_candidate_panel_blocks_direct_object_helpers(void)

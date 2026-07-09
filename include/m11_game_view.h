@@ -882,7 +882,8 @@ int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
     int* outMapIndex,
     int* outEntranceDoorFrameIndex,
     int* outHallOverlayKind,
-    int* outRenderCommandCount);
+    int* outRenderCommandCount,
+    int* outRuntimeRouteUsesReceipt);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,
