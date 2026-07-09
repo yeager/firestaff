@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 HoC first-frame render command plan: the full-graphics startup first-frame receipt now emits ordered DM1-owned commands for opened C255 entrance frame, stale champion-panel clear, and Hall mirror overlay, suppressing host fallback visuals. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM2 real GDAT title asset receipt: boot startup view models now verify the real 320x200 GDAT title bitmap through the boot-owned GRAPHICS.DAT cache and expose full-start real-asset readiness for M11/menu consumers. Verification: `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 HoC first-frame startup receipt: full-graphics startup now has a DM1-owned first-frame receipt that binds TITLE/menu release, entrance wait consumption, opened C255 entrance rendering, entrance music, hall mirror route, stale champion-panel clear, and enter-blocking before champion selection. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.
@@ -7,6 +9,8 @@
 - ✅ 2026-07-09 DM1 D3L2/D3R2 HoC wall-route receipt: D3 side wall routes now expose a DM1-owned wall/alcove receipt for wall bitmap zone, side/front F0107 ornament checks, plain-wall return before F0115, and stale mirror/thing-layer clearing. Verification: `test_dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat` 397/397, target rebuild, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 D3L2/D3R2 HoC thing-layer runtime receipt: D3 side lanes now expose a DM1-owned runtime receipt for item/projectile draw vs suppress, depth-3 front-cell clipping, C2500|MASK0x8000/C2900 zones, and projectile-as-object routing so stale mirror/static payloads cannot leak into side-lane rendering. Verification: `test_dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat` 379/379, target rebuild, CMake configure, and `git diff --check` passed.
+
+- ✅ 2026-07-09 Theron full-start input/pointer routing: full-start receipts now route startup menu input and pointer actions for title/stage/Soul Room callers without rebuilding session/layout state outside Theron boot. Verification: `test_theron_v1_startup_save_resume_pc34` 235/235 and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron full-start startup/menu receipt: boot now exposes one full-start receipt joining title, stage, Soul Room, save/resume, startup graphics, and forcefield runtime handoff readiness, including no-fallback Track02 semantic handoff proof. Verification: `test_theron_v1_startup_save_resume_pc34` 231/231 and `git diff --check` passed.
 

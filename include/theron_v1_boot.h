@@ -801,6 +801,15 @@ int theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
     const Theron_StartupMediaStateReceipt *startup_media_receipt,
     const Theron_StartupGraphicExecutor *executor,
     Theron_V1_BootStartupFullStartReceipt *out_receipt);
+int theron_v1_boot_startup_execute_input_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    Theron_StartupInput input,
+    Theron_StartupActionHostReceipt *out_receipt);
+int theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    int x,
+    int y,
+    Theron_StartupActionHostReceipt *out_receipt);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
