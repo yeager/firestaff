@@ -2403,6 +2403,56 @@ static void test_melee_f0231_damage_resolver_entrypoint(void) {
              "DM1 F0231 RNG count mirrors F0735");
     CHECK_EQ(attackerA.statisticLuck, attackerB.statisticLuck,
              "DM1 F0231 luck mutation mirrors F0735");
+
+    for (unsigned int seed = 1; seed < 96; ++seed) {
+        memset(&attackerA, 0, sizeof(attackerA));
+        memset(&defender, 0, sizeof(defender));
+        memset(&weapon, 0, sizeof(weapon));
+        memset(&outA, 0, sizeof(outA));
+        memset(&outB, 0, sizeof(outB));
+        attackerA.championIndex = 0;
+        attackerA.currentHealth = 100;
+        attackerA.dexterity = (seed & 1u) ? 0 : 255;
+        attackerA.strengthActionHand = (seed & 2u) ? 1 : 100;
+        attackerA.skillLevelAction = (int)(seed & 15u);
+        attackerA.statisticLuck = (seed & 4u) ? 0 : 80;
+        attackerA.statisticLuckMax = 100;
+        attackerA.statisticLuckMin = 0;
+        attackerA.actionHandIcon =
+            (seed & 8u) ? COMBAT_ICON_VORPAL_BLADE : 0;
+        attackerB = attackerA;
+
+        defender.creatureType = CREATURE_TYPE_GIANT_SCORPION;
+        defender.defense = (seed & 2u) ? 200 : 0;
+        defender.dexterity = (seed & 1u) ? 80 : 0;
+        defender.attributes = (seed & 16u) ? 0x0040 : 0;
+        defender.doubledMapDifficulty = (seed & 1u) ? 30 : 0;
+        defender.healthBefore = 200;
+
+        weapon.hitProbability =
+            (seed & 16u) ? (0x8000 | 50) : (int)(seed & 63u);
+        weapon.damageFactor = (seed & 2u) ? 1 : 32;
+        CHECK_EQ(F0730_COMBAT_RngInit_Compat(&rngA, seed), 1,
+                 "DM1 F0231 mirror rng A init");
+        CHECK_EQ(F0730_COMBAT_RngInit_Compat(&rngB, seed), 1,
+                 "DM1 F0231 mirror rng B init");
+        CHECK_EQ(dm1_v1_melee_resolve_damage_f0231_pc34(
+                     &attackerA, &weapon, &defender, &rngA, &outA), 1,
+                 "DM1 F0231 mirror resolver builds");
+        CHECK_EQ(F0735_COMBAT_ResolveChampionMelee_Compat(
+                     &attackerB, &weapon, &defender, &rngB, &outB), 1,
+                 "shared F0735 mirror resolver builds");
+        CHECK_EQ(outA.outcome, outB.outcome,
+                 "DM1 F0231 mirror outcome");
+        CHECK_EQ(outA.damageApplied, outB.damageApplied,
+                 "DM1 F0231 mirror damage");
+        CHECK_EQ(outA.rngCallCount, outB.rngCallCount,
+                 "DM1 F0231 mirror rng count");
+        CHECK_EQ(outA.luckyHit, outB.luckyHit,
+                 "DM1 F0231 mirror lucky hit");
+        CHECK_EQ(attackerA.statisticLuck, attackerB.statisticLuck,
+                 "DM1 F0231 mirror luck mutation");
+    }
 }
 
 static void test_invalid_action(void) {
