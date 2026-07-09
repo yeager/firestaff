@@ -1631,6 +1631,64 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+int dm1_v1_original_save_pc34_roundtrip_world_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    uint32_t game_id,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size,
+    DM1OriginalSavePC34HandoffReport *import_report,
+    DM1OriginalSavePC34HandoffReport *verify_report)
+{
+    struct GameWorld_Compat world;
+    struct DM1_EventQueue_V1 event_queue;
+    struct SaveGame_Compat verify_state;
+    int written = 0;
+    int result;
+
+    if (!bytes || !out_bytes || !out_size) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    *out_size = 0u;
+    if (size > (size_t)((int)0x7fffffff) ||
+        out_capacity > (size_t)((int)0x7fffffff)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+
+    memset(&world, 0, sizeof(world));
+    memset(&event_queue, 0, sizeof(event_queue));
+
+    result = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, size, &world, &event_queue, import_report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&world);
+        return result;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 materializes GLOBAL_DATA, ACTIVE_GROUP,
+     * PARTY, EVENT/TIMELINE, and optional dungeon bytes before runtime
+     * resumes; F0433 then writes those same save parts back through
+     * READWRIT.C F0420. This helper pins that import-export-import
+     * contract for Firestaff's bounded DM1 world handoff. */
+    result = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, game_id, out_bytes, (int)out_capacity, &written);
+    F0883_WORLD_Free_Compat(&world);
+    if (result != SAVEGAME_PC34_OK) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+
+    memset(&verify_state, 0, sizeof(verify_state));
+    result = dm1_v1_original_save_pc34_handoff_bytes(
+        out_bytes, (size_t)written, &verify_state, verify_report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
+    }
+
+    *out_size = (size_t)written;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 const char *dm1_v1_original_save_pc34_handoff_result_name(int result)
 {
     switch (result) {

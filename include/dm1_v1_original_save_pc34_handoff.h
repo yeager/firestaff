@@ -150,6 +150,30 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
     struct DM1_EventQueue_V1 *event_queue,
     DM1OriginalSavePC34HandoffReport *out_report);
 
+/* Import a ReDMCSB PC34-shaped save into a bounded DM1 runtime world,
+ * immediately export that world back through the PC34 exporter, and
+ * validate the exported bytes through the same handoff reader.
+ *
+ * This is a verification/export bridge, not an in-place byte copier:
+ * header noise and Firestaff-only manifest bytes may differ, while
+ * GLOBAL_DATA/ACTIVE_GROUP/PARTY/EVENT/TIMELINE plus any materialized
+ * dungeon tail must remain handoff-readable.
+ *
+ * Source-lock:
+ *   ReDMCSB LOADSAVE.C F0435 load order and F0433 save-part order;
+ *   READWRIT.C F0417/F0419/F0420 checksum/obfuscation; F0433 dungeon
+ *   tail write and F0435 dungeon tail read.
+ */
+int dm1_v1_original_save_pc34_roundtrip_world_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    uint32_t game_id,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size,
+    DM1OriginalSavePC34HandoffReport *import_report,
+    DM1OriginalSavePC34HandoffReport *verify_report);
+
 /* Builds a bounded ReDMCSB PC34-shaped original-save byte stream for
  * importer/export handoff verification. This is not a full user save
  * exporter: it writes a deterministic GLOBAL_DATA/ACTIVE_GROUP/PARTY/
