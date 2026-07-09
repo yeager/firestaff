@@ -10300,6 +10300,30 @@ static void m11_nexus_runtime_startup_snapshot(
     snapshot->runtime.champion_frame = state->nexusState.champion_select_frame;
 }
 
+static void m11_nexus_apply_runtime_handoff_receipt(
+    M11_GameViewState *state,
+    const Nexus_V1_StartupRuntimeHandoffReceipt *receipt)
+{
+    if (!state || !receipt) {
+        return;
+    }
+    state->nexusState.startup_runtime_handoff_ready =
+        receipt->runtime_ready ? 1 : 0;
+    state->nexusState.startup_dgn_render_ready =
+        receipt->route ==
+            NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
+        receipt->render_plan.plan_ready &&
+        !receipt->render_plan.blocks_real_dgn_mesh_render;
+    state->nexusState.startup_hud_ready =
+        state->nexusState.startup_dgn_render_ready &&
+        receipt->level_loaded;
+    state->nexusState.startup_dgn_render_command_count =
+        receipt->command_count;
+    state->nexusState.startup_dgn_render_blocked =
+        receipt->route == NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED ||
+        receipt->route == NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED;
+}
+
 static int m11_path_has_extension(const char* path, const char* ext) {
     size_t pathLen;
     size_t extLen;
@@ -13836,6 +13860,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
             Nexus_V1_StartupChampionExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
+            Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+            Nexus_V1_StartupRuntimeHandoffReceipt runtime_receipt;
+            M11_GameInputResult result;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
             if (!nexus_v1_launcher_startup_execute_champion_firestaff_input_from_snapshot(
                     &snapshot,
@@ -13844,7 +13871,25 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     &receipt)) {
                 return M11_GAME_INPUT_IGNORED;
             }
-            return m11_nexus_apply_startup_action_receipt(state, &receipt);
+            result = m11_nexus_apply_startup_action_receipt(
+                state,
+                &receipt);
+            if (execution.kind ==
+                NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
+                m11_nexus_runtime_startup_snapshot(state, &snapshot);
+                if (nexus_v1_launcher_startup_runtime_handoff_from_champion_execution_snapshot(
+                        &snapshot,
+                        &execution,
+                        &receipt,
+                        commands,
+                        (int)(sizeof(commands) / sizeof(commands[0])),
+                        &runtime_receipt)) {
+                    m11_nexus_apply_runtime_handoff_receipt(
+                        state,
+                        &runtime_receipt);
+                }
+            }
+            return result;
         }
         if (input == M12_MENU_INPUT_BACK) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
@@ -14579,6 +14624,9 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
         Nexus_V1_StartupChampionExecution execution;
         Nexus_V1_StartupHostActionReceipt receipt;
+        Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+        Nexus_V1_StartupRuntimeHandoffReceipt runtime_receipt;
+        M11_GameInputResult result;
         m11_nexus_runtime_startup_snapshot(state, &snapshot);
         if (!nexus_v1_launcher_startup_execute_champion_pointer_from_snapshot(
                 &snapshot,
@@ -14588,7 +14636,24 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 &receipt)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        return m11_nexus_apply_startup_action_receipt(state, &receipt);
+        result = m11_nexus_apply_startup_action_receipt(
+            state,
+            &receipt);
+        if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
+            m11_nexus_runtime_startup_snapshot(state, &snapshot);
+            if (nexus_v1_launcher_startup_runtime_handoff_from_champion_execution_snapshot(
+                    &snapshot,
+                    &execution,
+                    &receipt,
+                    commands,
+                    (int)(sizeof(commands) / sizeof(commands[0])),
+                    &runtime_receipt)) {
+                m11_nexus_apply_runtime_handoff_receipt(
+                    state,
+                    &runtime_receipt);
+            }
+        }
+        return result;
     }
     return M11_GAME_INPUT_IGNORED;
 }

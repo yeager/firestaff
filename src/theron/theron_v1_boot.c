@@ -1708,8 +1708,6 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     Theron_V1_BootStartupRenderRouteReceipt *out_receipt)
 {
     Theron_StartupStateReceipt state_receipt;
-    Theron_V2_HudOverlay hud_overlay;
-    Theron_V2_HudSeedGate hud_seed_gate;
 
     if (out_receipt) {
         theron_v1_boot_startup_render_route_receipt_init(out_receipt);
@@ -1725,6 +1723,8 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         view_model->runtime_fallback_visuals_blocked;
     out_receipt->startup_menu_render_allowed =
         view_model->render_plan_valid ? 1 : 0;
+    out_receipt->fallback_visuals_allowed =
+        view_model->runtime_fallback_visuals_blocked ? 0 : 1;
     out_receipt->runtime_level_render_allowed =
         view_model->runtime_level_source !=
                 THERON_V1_STARTUP_RUNTIME_LEVEL_NONE &&
@@ -1732,32 +1732,13 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
                 THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED
             ? 1
             : 0;
-    out_receipt->first_level_render_ready =
-        out_receipt->runtime_level_render_allowed &&
-        view_model->runtime_level == 0 ? 1 : 0;
-    hud_seed_gate = theron_v2_hud_seed_from_v1_world(
-        &hud_overlay,
-        view_model->world,
-        out_receipt->first_level_render_ready);
-    out_receipt->hud_seed_gate = (int)hud_seed_gate;
-    out_receipt->hud_ready =
-        hud_seed_gate == THERON_V2_HUD_SEED_V2_READY ? 1 : 0;
-    out_receipt->fallback_visuals_allowed =
-        view_model->runtime_fallback_visuals_blocked ||
-                view_model->runtime_level_source ==
-                    THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC
-            ? 0
-            : 1;
     out_receipt->status_scope = "STARTUP";
     out_receipt->status =
         view_model->runtime_fallback_visuals_blocked
             ? "TRACK02 RUNTIME BLOCKED"
-            : (view_model->runtime_level_source ==
-                       THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC
-                   ? "TRACK02 RUNTIME READY"
-                   : (out_receipt->runtime_level_render_allowed
-                          ? "THERON RUNTIME READY"
-                          : "THERON STARTUP MENU"));
+            : (out_receipt->runtime_level_render_allowed
+                   ? "THERON RUNTIME READY"
+                   : "THERON STARTUP MENU");
     if (theron_v1_boot_startup_render_plan_from_view_model(
             view_model,
             &out_receipt->render_plan)) {
