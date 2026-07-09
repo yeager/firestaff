@@ -1018,11 +1018,11 @@ const char* dm1_creature_type_name(int creatureType) {
  * Legacy backward-compat wrappers
  * ═══════════════════════════════════════════════════════════════════════ */
 
-void m11_creature_render_init(DM1_CreatureRenderList* list) {
+void DM1_V1_CreatureRender_InitPc34Compat(DM1_CreatureRenderList* list) {
     dm1_creature_render_init(list);
 }
 
-void m11_creature_render_collect(DM1_CreatureRenderList* list,
+void DM1_V1_CreatureRender_CollectPc34Compat(DM1_CreatureRenderList* list,
                                   int partyX, int partyY, int partyDir,
                                   const void* dungeonData) {
     /* Stub: actual collection requires dungeon square iteration.
@@ -1034,11 +1034,11 @@ void m11_creature_render_collect(DM1_CreatureRenderList* list,
     (void)partyX; (void)partyY; (void)partyDir; (void)dungeonData;
 }
 
-void m11_creature_render_sort(DM1_CreatureRenderList* list) {
+void DM1_V1_CreatureRender_SortPc34Compat(DM1_CreatureRenderList* list) {
     dm1_creature_render_sort(list);
 }
 
-int m11_creature_get_graphic(int creatureType, int attacking, int animFrame) {
+int DM1_V1_CreatureRender_GetGraphicPc34Compat(int creatureType, int attacking, int animFrame) {
     /* Source-locked: resolve pose through GraphicInfo flags, matching
      * ReDMCSB F0115 which checks MASK_ATTACK before selecting attack pose.
      * Direction delta 2 (facing party) is assumed for this legacy API. */
@@ -1050,7 +1050,7 @@ int m11_creature_get_graphic(int creatureType, int attacking, int animFrame) {
     return (int)dm1_creature_native_bitmap_index(creatureType, pose);
 }
 
-const char* m11_creature_type_name(int creatureType) {
+const char* DM1_V1_CreatureRender_TypeNamePc34Compat(int creatureType) {
     return dm1_creature_type_name(creatureType);
 }
 

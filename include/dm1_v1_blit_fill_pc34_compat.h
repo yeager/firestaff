@@ -34,35 +34,47 @@ typedef struct {
     uint16_t byte_width;       /* Bytes per row per bitplane */
     uint8_t  bitplanes;
     uint8_t  trans_color;  /* transparency color (default 0, walls use 10/C10_COLOR_FLESH) */
-} M11_BF_BlitSource;
+} DM1_V1_BlitSourcePc34;
 
 /* Screen region for fill/blit target */
 typedef struct {
     int16_t x, y;
     int16_t w, h;
-} M11_BF_Rect;
+} DM1_V1_BlitRectPc34;
 
 /* Framebuffer reference */
 typedef struct {
     uint8_t* pixels;           /* 320x200 indexed framebuffer */
     uint16_t width, height;
     uint16_t pitch;            /* Bytes per row */
-} M11_BF_Framebuffer;
+} DM1_V1_BlitFramebufferPc34;
 
-void m11_bf_fill_rect(M11_BF_Framebuffer* fb, const M11_BF_Rect* rect,
+void DM1_V1_BlitFillRectPc34Compat(DM1_V1_BlitFramebufferPc34* fb, const DM1_V1_BlitRectPc34* rect,
                        uint8_t color);
-void m11_bf_clear(M11_BF_Framebuffer* fb, uint8_t color);
-void m11_bf_blit(M11_BF_Framebuffer* fb, const M11_BF_BlitSource* src,
+void DM1_V1_BlitClearPc34Compat(DM1_V1_BlitFramebufferPc34* fb, uint8_t color);
+void DM1_V1_BlitPc34Compat(DM1_V1_BlitFramebufferPc34* fb, const DM1_V1_BlitSourcePc34* src,
                   int16_t dst_x, int16_t dst_y, uint8_t flags);
-void m11_bf_blit_scaled(M11_BF_Framebuffer* fb, const M11_BF_BlitSource* src,
+void DM1_V1_BlitScaledPc34Compat(DM1_V1_BlitFramebufferPc34* fb, const DM1_V1_BlitSourcePc34* src,
                          int16_t dst_x, int16_t dst_y,
                          int16_t dst_w, int16_t dst_h, uint8_t flags);
-void m11_bf_hline(M11_BF_Framebuffer* fb, int16_t x1, int16_t x2,
+void DM1_V1_BlitHLinePc34Compat(DM1_V1_BlitFramebufferPc34* fb, int16_t x1, int16_t x2,
                    int16_t y, uint8_t color);
-void m11_bf_vline(M11_BF_Framebuffer* fb, int16_t x, int16_t y1,
+void DM1_V1_BlitVLinePc34Compat(DM1_V1_BlitFramebufferPc34* fb, int16_t x, int16_t y1,
                    int16_t y2, uint8_t color);
-void m11_bf_copy_region(M11_BF_Framebuffer* dst, const M11_BF_Framebuffer* src,
-                         const M11_BF_Rect* region);
+void DM1_V1_BlitCopyRegionPc34Compat(DM1_V1_BlitFramebufferPc34* dst, const DM1_V1_BlitFramebufferPc34* src,
+                         const DM1_V1_BlitRectPc34* region);
+
+typedef DM1_V1_BlitSourcePc34 M11_BF_BlitSource;
+typedef DM1_V1_BlitRectPc34 M11_BF_Rect;
+typedef DM1_V1_BlitFramebufferPc34 M11_BF_Framebuffer;
+
+#define m11_bf_fill_rect DM1_V1_BlitFillRectPc34Compat
+#define m11_bf_clear DM1_V1_BlitClearPc34Compat
+#define m11_bf_blit DM1_V1_BlitPc34Compat
+#define m11_bf_blit_scaled DM1_V1_BlitScaledPc34Compat
+#define m11_bf_hline DM1_V1_BlitHLinePc34Compat
+#define m11_bf_vline DM1_V1_BlitVLinePc34Compat
+#define m11_bf_copy_region DM1_V1_BlitCopyRegionPc34Compat
 
 #ifdef __cplusplus
 }

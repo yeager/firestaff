@@ -311,13 +311,19 @@ typedef DM1_CreatureRenderEntry M11_CreatureRenderEntry;
 typedef DM1_CreatureRenderList  M11_CreatureRenderList;
 #define M11_CREATURE_RENDER_MAX DM1_CREATURE_RENDER_MAX
 
-void m11_creature_render_init(DM1_CreatureRenderList* list);
-void m11_creature_render_collect(DM1_CreatureRenderList* list,
+void DM1_V1_CreatureRender_InitPc34Compat(DM1_CreatureRenderList* list);
+void DM1_V1_CreatureRender_CollectPc34Compat(DM1_CreatureRenderList* list,
                                   int partyX, int partyY, int partyDir,
                                   const void* dungeonData);
-void m11_creature_render_sort(DM1_CreatureRenderList* list);
-int  m11_creature_get_graphic(int creatureType, int attacking, int animFrame);
-const char* m11_creature_type_name(int creatureType);
+void DM1_V1_CreatureRender_SortPc34Compat(DM1_CreatureRenderList* list);
+int  DM1_V1_CreatureRender_GetGraphicPc34Compat(int creatureType, int attacking, int animFrame);
+const char* DM1_V1_CreatureRender_TypeNamePc34Compat(int creatureType);
+
+#define m11_creature_render_init DM1_V1_CreatureRender_InitPc34Compat
+#define m11_creature_render_collect DM1_V1_CreatureRender_CollectPc34Compat
+#define m11_creature_render_sort DM1_V1_CreatureRender_SortPc34Compat
+#define m11_creature_get_graphic DM1_V1_CreatureRender_GetGraphicPc34Compat
+#define m11_creature_type_name DM1_V1_CreatureRender_TypeNamePc34Compat
 
 #ifdef __cplusplus
 }
