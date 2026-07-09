@@ -278,6 +278,7 @@ static int test_ccm_walk_field_door_writeback(void) {
     CHECK("door pct helper clamps render state",
           dm2_v1_creature_door_open_pct_from_state(-2) == 100 &&
               dm2_v1_creature_door_open_pct_from_state(2) == 50 &&
+              dm2_v1_creature_door_open_pct_from_state(5) == 100 &&
               dm2_v1_creature_door_open_pct_from_state(7) == 0);
 
     dm2_v1_creature_reset_field_runtime();
