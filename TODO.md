@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 champion needs now owns food/water panel bar width, color threshold, shadow, and fill render-command construction; M11 only paints the returned rects. Remaining runtime coding work is reducing residual inventory/chrome render adapters and full-graphics proof.
   - 2026-07-09 update: DM1 V1 message-area render planning now owns tick-prefix stripping, player-facing filtering, four-row selection, and row metrics; M11 only draws the returned plan. Remaining runtime coding work is reducing residual chrome/render adapters and full-graphics proof.
   - 2026-07-09 update: DM1 V1 turning presentation now exposes DM1-owned type/function/mode names; old M11 names remain aliases. Remaining runtime coding work is reducing residual input/presentation adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 F0128 viewport readiness API and local chest inventory item converters now expose/use DM1-owned names; old F0128 M11 names remain aliases. Remaining runtime coding work is reducing residual viewport/chest adapter names and full-graphics proof.

@@ -31,6 +31,9 @@ extern "C" {
 #define DM1_NEEDS_MAX_HEALTH         999
 #define DM1_NEEDS_MAX_STAMINA       9999
 #define DM1_NEEDS_MAX_MANA           900
+#define DM1_V1_NEEDS_BAR_COLOR_BLACK  0
+#define DM1_V1_NEEDS_BAR_COLOR_RED    8
+#define DM1_V1_NEEDS_BAR_COLOR_YELLOW 11
 
 /* ── Champion stat snapshot for needs processing ──────────────────── */
 typedef struct {
@@ -70,6 +73,20 @@ typedef struct {
     int     starvation_damage;
 } DM1_NeedsTickResult;
 
+typedef struct {
+    int draw;
+    int x;
+    int y;
+    int width;
+    int height;
+    int shadowX;
+    int shadowY;
+    int shadowWidth;
+    int shadowHeight;
+    int shadowColor;
+    int fillColor;
+} DM1_V1_NeedsBarRenderCommandPc34Compat;
+
 void dm1_needs_apply_time_effects(
     const DM1_ChampionNeeds *champ,
     const DM1_NeedsTickContext *ctx,
@@ -84,6 +101,13 @@ int dm1_needs_compute_health_gain(int max_health, int is_resting,
 int dm1_needs_decrement_stamina(int16_t *current_stamina,
                                  int16_t max_stamina,
                                  int16_t decrement);
+
+int DM1_V1_Needs_BarWidthPc34Compat(int amount, int fullWidth);
+int DM1_V1_Needs_BarColorPc34Compat(int amount, int normalColor);
+int DM1_V1_Needs_BuildBarRenderCommandPc34Compat(
+    int x, int y, int width, int height, int shadowOffset,
+    int amount, int normalColor,
+    DM1_V1_NeedsBarRenderCommandPc34Compat* outCommand);
 
 #ifdef __cplusplus
 }

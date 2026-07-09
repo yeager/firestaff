@@ -107,6 +107,42 @@ static void test_decrement_stamina(void) {
     ASSERT_EQ(dmg, 0, "no damage");
 }
 
+static void test_food_water_bar_render_command(void) {
+    DM1_V1_NeedsBarRenderCommandPc34Compat cmd;
+
+    ASSERT_EQ(DM1_V1_Needs_BarWidthPc34Compat(-1024, 96), 0,
+              "minimum need has zero width");
+    ASSERT_EQ(DM1_V1_Needs_BarWidthPc34Compat(2048, 96), 95,
+              "maximum need keeps source 3071/3072 cap");
+    ASSERT_EQ(DM1_V1_Needs_BarWidthPc34Compat(512, 96), 48,
+              "middle need scales linearly");
+    ASSERT_EQ(DM1_V1_Needs_BarColorPc34Compat(-600, 5),
+              DM1_V1_NEEDS_BAR_COLOR_RED, "starving red");
+    ASSERT_EQ(DM1_V1_Needs_BarColorPc34Compat(-1, 5),
+              DM1_V1_NEEDS_BAR_COLOR_YELLOW, "hungry yellow");
+    ASSERT_EQ(DM1_V1_Needs_BarColorPc34Compat(0, 5),
+              5, "positive normal color");
+
+    ASSERT_EQ(DM1_V1_Needs_BuildBarRenderCommandPc34Compat(
+                  10, 20, 96, 3, 1, 512, 14, &cmd),
+              1, "render command builds");
+    ASSERT_EQ(cmd.draw, 1, "render command draws");
+    ASSERT_EQ(cmd.x, 10, "fill x");
+    ASSERT_EQ(cmd.y, 20, "fill y");
+    ASSERT_EQ(cmd.width, 48, "fill width");
+    ASSERT_EQ(cmd.height, 3, "fill height");
+    ASSERT_EQ(cmd.shadowX, 11, "shadow x");
+    ASSERT_EQ(cmd.shadowY, 21, "shadow y");
+    ASSERT_EQ(cmd.shadowWidth, 48, "shadow width");
+    ASSERT_EQ(cmd.shadowColor, DM1_V1_NEEDS_BAR_COLOR_BLACK, "shadow black");
+    ASSERT_EQ(cmd.fillColor, 14, "normal fill color");
+
+    ASSERT_EQ(DM1_V1_Needs_BuildBarRenderCommandPc34Compat(
+                  10, 20, 96, 3, 1, -1024, 14, &cmd),
+              1, "empty render command builds");
+    ASSERT_EQ(cmd.draw, 0, "empty render command does not draw");
+}
+
 /* ── Test: food depletes each tick ────────────────────────────────── */
 static void test_food_depletes(void) {
     DM1_ChampionNeeds c = make_champion();
@@ -324,6 +360,7 @@ int main(void) {
     test_stamina_amount();
     test_health_gain();
     test_decrement_stamina();
+    test_food_water_bar_render_command();
     test_food_depletes();
     test_starvation_stamina_loss();
     test_starvation_stamina_underflow_adds_pending_hp_damage();
