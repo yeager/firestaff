@@ -1132,6 +1132,38 @@ static void test_f0412_receipt_to_spell_effect(void) {
     printf("    PASS\n");
 }
 
+static void test_f0412_potion_receipt_to_spell_effect(void) {
+    printf("  [35] F0412 potion receipt -> M10 effect adapter...\n");
+
+    DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
+    DM1_SpellF0412RuntimeReceipt receipt;
+    struct SpellEffect_Compat effect;
+
+    stats.skillLevels[DM1_SKILL_HEAL] = 10;
+    assert(dm1_spell_f0412PotionReceiptForTableIndex(
+               16, 2, 0, &stats, 0x0001, 0x000Bu, 1, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(receipt.spellKind == DM1_SPELL_KIND_POTION);
+    assert(receipt.spellType == 11);
+    assert(receipt.potionType == 11);
+    assert(receipt.potionPower == 91);
+    assert(dm1_spell_f0412ReceiptToSpellEffectPc34(
+               &receipt, 0, &effect) == 1);
+    assert(effect.castResult == SPELL_CAST_SUCCESS);
+    assert(effect.spellKind == C1_SPELL_KIND_POTION_COMPAT);
+    assert(effect.spellType == 11);
+    assert(effect.powerOrdinal == 2);
+    assert(effect.kineticEnergy == 91);
+
+    memset(&receipt, 0, sizeof(receipt));
+    assert(dm1_spell_f0412PotionReceiptForTableIndex(
+               16, 2, 0, &stats, 0x0001, 0x000Bu, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_FAILURE_NEEDS_FLASK);
+    assert(receipt.failureType == DM1_FAILURE_NEEDS_FLASK_IN_HAND);
+
+    printf("    PASS\n");
+}
+
 /* ═══════════════════════════════════════════════════════════════════ */
 int main(void) {
     printf("DM1 V1 Spell Casting — CTest gate\n");
@@ -1173,7 +1205,8 @@ int main(void) {
     test_f0412_runtime_receipt_light_event();
     test_f0412_runtime_receipt_status_durations();
     test_f0412_receipt_to_spell_effect();
+    test_f0412_potion_receipt_to_spell_effect();
 
-    printf("\nAll 36 tests PASSED.\n");
+    printf("\nAll 37 tests PASSED.\n");
     return 0;
 }
