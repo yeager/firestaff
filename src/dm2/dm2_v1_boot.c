@@ -3334,6 +3334,18 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
             runtime_hud.render_sample_count;
         out_receipt->runtime_hud_unique_frame_hash_count =
             runtime_hud.unique_frame_hash_count;
+        out_receipt->runtime_hud_min_asset_portrait_count =
+            runtime_hud.min_asset_portrait_count;
+        out_receipt->runtime_hud_total_fallback_portrait_count =
+            runtime_hud.total_fallback_portrait_count;
+        out_receipt->runtime_hud_min_asset_floor_ceiling_count =
+            runtime_hud.min_asset_floor_ceiling_count;
+        out_receipt->runtime_hud_total_fallback_floor_ceiling_count =
+            runtime_hud.total_fallback_floor_ceiling_count;
+        out_receipt->runtime_hud_min_asset_wall_count =
+            runtime_hud.min_asset_wall_count;
+        out_receipt->runtime_hud_total_fallback_wall_count =
+            runtime_hud.total_fallback_wall_count;
         out_receipt->runtime_hud_frame_hash =
             runtime_hud.combined_frame_hash;
         out_receipt->runtime_hud_pixel_count =
@@ -3400,6 +3412,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->runtime_hud_sample_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud_min_asset_portrait_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud_min_asset_floor_ceiling_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud_min_asset_wall_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud_frame_hash);
     out_receipt->packaged_visual_capture_hash = hash;
 
@@ -3423,6 +3441,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->runtime_hud_direction_mask == 0x0f &&
         out_receipt->runtime_hud_sample_count == 4 &&
         out_receipt->runtime_hud_unique_frame_hash_count > 0 &&
+        out_receipt->runtime_hud_min_asset_portrait_count >= 4 &&
+        out_receipt->runtime_hud_total_fallback_portrait_count == 0 &&
+        out_receipt->runtime_hud_min_asset_floor_ceiling_count >= 2 &&
+        out_receipt->runtime_hud_total_fallback_floor_ceiling_count == 0 &&
+        out_receipt->runtime_hud_min_asset_wall_count > 0 &&
+        out_receipt->runtime_hud_total_fallback_wall_count == 0 &&
         out_receipt->runtime_hud_frame_hash != 0u &&
         out_receipt->runtime_hud_pixel_count == 4u * 320u * 200u &&
         out_receipt->full_title_frame_capture_ready &&

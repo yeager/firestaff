@@ -796,6 +796,12 @@ int main(void)
                       boot_real_visual_capture.runtime_hud_direction_mask == 0x0f &&
                       boot_real_visual_capture.runtime_hud_sample_count == 4 &&
                       boot_real_visual_capture.runtime_hud_unique_frame_hash_count > 0 &&
+                      boot_real_visual_capture.runtime_hud_min_asset_portrait_count >= 4 &&
+                      boot_real_visual_capture.runtime_hud_total_fallback_portrait_count == 0 &&
+                      boot_real_visual_capture.runtime_hud_min_asset_floor_ceiling_count >= 2 &&
+                      boot_real_visual_capture.runtime_hud_total_fallback_floor_ceiling_count == 0 &&
+                      boot_real_visual_capture.runtime_hud_min_asset_wall_count > 0 &&
+                      boot_real_visual_capture.runtime_hud_total_fallback_wall_count == 0 &&
                       boot_real_visual_capture.runtime_hud_frame_hash != 0u &&
                       boot_real_visual_capture.runtime_hud_pixel_count == 4u * 320u * 200u &&
                       boot_real_visual_capture.real_gdat_capture_breadth_ready == 1 &&
