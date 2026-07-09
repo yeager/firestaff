@@ -857,6 +857,22 @@ void nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
     receipt->status = "blocked-startup";
 }
 
+void nexus_v1_launcher_startup_host_caller_receipt_clear(
+    Nexus_V1_StartupHostCallerReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
+        &receipt->ownership);
+    receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_INVALID;
+    receipt->ownership_route = NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_INVALID;
+    receipt->host_route = "blocked-startup";
+    receipt->status_scope = "STARTUP";
+    receipt->status = "blocked-startup";
+}
+
 const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
     Nexus_V1_StartupRealAssetOwnershipRoute route)
 {
@@ -3469,6 +3485,196 @@ int nexus_v1_launcher_startup_real_asset_ownership_from_snapshot(
         menu_input,
         load_save,
         load_userdata,
+        out_receipt);
+}
+
+static void nexus_v1_launcher_zero_startup_commands(
+    Nexus_V1_StartupDrawCommand *commands,
+    int max_commands)
+{
+    if (commands && max_commands > 0) {
+        memset(commands, 0, (size_t)max_commands * sizeof(commands[0]));
+    }
+}
+
+static void nexus_v1_launcher_zero_dgn_commands(
+    Nexus_V1_DgnRenderCommand *commands,
+    int max_commands)
+{
+    if (commands && max_commands > 0) {
+        memset(commands, 0, (size_t)max_commands * sizeof(commands[0]));
+    }
+}
+
+static const char *nexus_v1_launcher_host_route_from_ownership(
+    Nexus_V1_StartupRealAssetOwnershipRoute route)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_TITLE_CAPTURE:
+        return "title-capture";
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_MENU_CAPTURE:
+        return "menu-capture";
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF:
+        return "runtime-dgn-handoff";
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS:
+        return "blocked-startup";
+    case NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_INVALID:
+    default:
+        return "invalid";
+    }
+}
+
+int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupDrawCommand *out_startup_commands,
+    int max_startup_commands,
+    Nexus_V1_DgnRenderCommand *out_dgn_commands,
+    int max_dgn_commands,
+    Nexus_V1_StartupHostCallerReceipt *out_receipt)
+{
+    Nexus_V1_StartupReceiptBundle bundle;
+    Nexus_V1_StartupRuntimeRouteReceipt runtime_route;
+    int startup_copied;
+    int dgn_copied = 0;
+
+    nexus_v1_launcher_startup_host_caller_receipt_clear(out_receipt);
+    nexus_v1_launcher_zero_startup_commands(out_startup_commands,
+                                            max_startup_commands);
+    nexus_v1_launcher_zero_dgn_commands(out_dgn_commands, max_dgn_commands);
+    if (!out_receipt || !state) {
+        return 0;
+    }
+
+    if (!nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
+            runtime,
+            state,
+            menu_input,
+            load_save,
+            load_userdata,
+            &out_receipt->ownership)) {
+        return 0;
+    }
+
+    nexus_v1_launcher_startup_receipt_bundle_clear(&bundle);
+    if (nexus_v1_launcher_startup_receipt_bundle_from_runtime_state(
+            runtime,
+            state,
+            menu_input,
+            load_save,
+            load_userdata,
+            out_startup_commands,
+            max_startup_commands,
+            &bundle)) {
+        startup_copied = bundle.copied_command_count;
+    } else {
+        startup_copied = 0;
+    }
+
+    nexus_v1_launcher_startup_runtime_route_receipt_clear(&runtime_route);
+    if (state->champion_select_active &&
+        nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
+            state,
+            menu_input,
+            out_dgn_commands,
+            max_dgn_commands,
+            &runtime_route)) {
+        dgn_copied = runtime_route.dgn_render_command_count;
+        if (dgn_copied > max_dgn_commands) {
+            dgn_copied = max_dgn_commands > 0 ? max_dgn_commands : 0;
+        }
+    }
+
+    out_receipt->receipt_owner_is_nexus =
+        out_receipt->ownership.receipt_owner_is_nexus;
+    out_receipt->host_startup_capture_ready =
+        out_receipt->ownership.capture_ready &&
+        out_receipt->ownership.display_ready;
+    out_receipt->host_runtime_dgn_ready =
+        out_receipt->ownership.runtime_dgn_handoff_ready;
+    out_receipt->bpk_handoff_consumed =
+        out_receipt->ownership.consumes_bpk_menu_handoff;
+    out_receipt->prs3_blocker_consumed =
+        out_receipt->ownership.consumes_prs3_blocker;
+    out_receipt->dgn_handoff_consumed =
+        out_receipt->ownership.consumes_dgn_handoff;
+    out_receipt->no_fallback_visuals_enforced =
+        out_receipt->ownership.no_fallback_visuals_enforced;
+    out_receipt->suppress_fallback_visuals =
+        out_receipt->ownership.no_fallback_visuals_enforced &&
+        !out_receipt->ownership.fallback_visuals_permitted;
+    out_receipt->suppress_legacy_placeholder_visuals =
+        out_receipt->suppress_fallback_visuals;
+    out_receipt->startup_command_count =
+        out_receipt->ownership.startup_draw_command_count;
+    out_receipt->copied_startup_command_count = startup_copied;
+    out_receipt->dgn_command_count =
+        out_receipt->ownership.dgn_draw_command_count;
+    out_receipt->copied_dgn_command_count = dgn_copied;
+    out_receipt->title_timing_frame =
+        out_receipt->ownership.startup_bundle.timing_frame;
+    out_receipt->title_timing_frame_max =
+        out_receipt->ownership.startup_bundle.timing_frame_max;
+    out_receipt->title_timing_ready =
+        out_receipt->ownership.startup_bundle.timing_ready;
+    out_receipt->capture_route = out_receipt->ownership.capture_route;
+    out_receipt->ownership_route = out_receipt->ownership.route;
+    out_receipt->host_route =
+        nexus_v1_launcher_host_route_from_ownership(out_receipt->ownership.route);
+    out_receipt->status_scope = out_receipt->ownership.status_scope;
+    out_receipt->status = out_receipt->ownership.status;
+
+    out_receipt->host_execute_startup_draws =
+        out_receipt->suppress_fallback_visuals &&
+        out_receipt->host_startup_capture_ready &&
+        out_receipt->copied_startup_command_count > 0;
+    out_receipt->host_execute_dgn_draws =
+        out_receipt->suppress_fallback_visuals &&
+        out_receipt->host_runtime_dgn_ready &&
+        out_receipt->copied_dgn_command_count > 0;
+    out_receipt->host_caller_ready =
+        out_receipt->receipt_owner_is_nexus &&
+        out_receipt->suppress_fallback_visuals &&
+        (out_receipt->host_execute_startup_draws ||
+         out_receipt->host_execute_dgn_draws ||
+         out_receipt->ownership.route ==
+             NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS);
+    return 1;
+}
+
+int nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupDrawCommand *out_startup_commands,
+    int max_startup_commands,
+    Nexus_V1_DgnRenderCommand *out_dgn_commands,
+    int max_dgn_commands,
+    Nexus_V1_StartupHostCallerReceipt *out_receipt)
+{
+    if (!snapshot) {
+        nexus_v1_launcher_startup_host_caller_receipt_clear(out_receipt);
+        nexus_v1_launcher_zero_startup_commands(out_startup_commands,
+                                                max_startup_commands);
+        nexus_v1_launcher_zero_dgn_commands(out_dgn_commands,
+                                            max_dgn_commands);
+        return 0;
+    }
+    return nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+        runtime,
+        &snapshot->runtime,
+        menu_input,
+        load_save,
+        load_userdata,
+        out_startup_commands,
+        max_startup_commands,
+        out_dgn_commands,
+        max_dgn_commands,
         out_receipt);
 }
 
