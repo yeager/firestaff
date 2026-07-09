@@ -791,6 +791,36 @@ int nexus_v1_launcher_startup_full_start_package_from_snapshot(
     Nexus_V1_StartupLoadSaveFn load_save,
     void *load_userdata,
     Nexus_V1_StartupFullStartPackageReceipt *out_receipt);
+int nexus_v1_launcher_startup_full_start_package_export_presentation(
+    const Nexus_V1_StartupFullStartPackageReceipt *package,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready);
+int nexus_v1_launcher_startup_full_start_package_build_commands_from_runtime_state(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupFullStartPackageReceipt *out_receipt);
+int nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+    const Nexus_V1_LauncherRuntimeReceipt *runtime,
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupFullStartPackageReceipt *out_receipt);
 int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupDrawCommand *out_commands,

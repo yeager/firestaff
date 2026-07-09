@@ -138,6 +138,14 @@ int main(void)
     int draw_count;
     int portrait_draws;
     int load_calls;
+    char package_phase[32];
+    char package_animation[32];
+    int package_startup_active;
+    int package_startup_frame;
+    int package_animation_active;
+    int package_title_frame;
+    int package_title_frame_max;
+    int package_title_ready;
     Nexus_V1_ChampionPool empty_champions;
 
     if (!make_temp_root(root, sizeof(root))) {
@@ -1046,6 +1054,23 @@ int main(void)
                strcmp(full_start_package_receipt.startup_ui_blocker,
                       "none") == 0,
            "Nexus full-start package owns champion startup capture proof");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               11,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+               full_start_package_receipt.capture_command_count > 3 &&
+               full_start_package_receipt.fallback_visuals_permitted == 0 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
+           "Nexus full-start package command helper owns champion draw route");
     runtime_state.champion_select_active = 0;
     runtime_state.save_select_active = 1;
     expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
@@ -1115,6 +1140,23 @@ int main(void)
                full_start_package_receipt.first_capture_draw_kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
            "Nexus full-start package owns save startup capture proof");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               2,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+               full_start_package_receipt.capture_command_count > 3 &&
+               full_start_package_receipt.fallback_visuals_permitted == 0 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
+           "Nexus full-start package command helper owns save draw route");
     runtime_state.save_select_active = 0;
     runtime_state.title_active = 1;
     runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
@@ -1194,6 +1236,48 @@ int main(void)
                full_start_package_receipt.first_capture_draw_kind !=
                    NEXUS_V1_STARTUP_DRAW_NONE,
            "Nexus full-start package owns title startup capture proof");
+    memset(package_phase, 0, sizeof(package_phase));
+    memset(package_animation, 0, sizeof(package_animation));
+    expect(nexus_v1_launcher_startup_full_start_package_export_presentation(
+               &full_start_package_receipt,
+               package_phase,
+               (int)sizeof(package_phase),
+               &package_startup_active,
+               &package_startup_frame,
+               package_animation,
+               (int)sizeof(package_animation),
+               &package_animation_active,
+               &package_title_frame,
+               &package_title_frame_max,
+               &package_title_ready) &&
+               strcmp(package_phase, full_start_package_receipt.phase) == 0 &&
+               strcmp(package_animation, "nexus-title") == 0 &&
+               package_startup_active ==
+                   full_start_package_receipt.startup_active &&
+               package_startup_frame ==
+                   full_start_package_receipt.startup_frame &&
+               package_animation_active ==
+                   full_start_package_receipt.animation_active &&
+               package_title_frame == full_start_package_receipt.title_frame &&
+               package_title_frame_max ==
+                   full_start_package_receipt.title_frame_max &&
+               package_title_ready == full_start_package_receipt.title_ready,
+           "Nexus full-start package exports M11 presentation fields");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               9,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               full_start_package_receipt.capture_command_count > 0 &&
+               draw_commands[0].kind != NEXUS_V1_STARTUP_DRAW_NONE,
+           "Nexus full-start package command helper owns title draw route");
     runtime_state.title_frame = 0;
     runtime_snapshot.runtime = runtime_state;
     expect(nexus_v1_launcher_startup_full_start_package_from_snapshot(
@@ -1215,6 +1299,23 @@ int main(void)
                strcmp(full_start_package_receipt.animation,
                       "nexus-title") == 0,
            "Nexus full-start package owns warning startup capture proof");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               full_start_package_receipt.warning_visible == 1 &&
+               full_start_package_receipt.capture_command_count == 1 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND,
+           "Nexus full-start package command helper owns warning draw route");
     runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
     runtime_state.title_active = 0;
     runtime_state.champion_select_active = 1;
@@ -1418,6 +1519,22 @@ int main(void)
                strcmp(full_start_package_receipt.startup_ui_blocker,
                       "track02-sfx") == 0,
            "Nexus full-start package blocks startup capture proof on SFX");
+    memset(draw_commands, 0x7f, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               11,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+               full_start_package_receipt.capture_command_count == 0 &&
+               full_start_package_receipt.blocked_draw_suppressed == 1 &&
+               draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE,
+           "Nexus full-start package command helper blocks SFX fallback draw");
     synthetic_engine.sfx_runtime_receipt.status =
         NEXUS_SFX_RUNTIME_READY_DECODED;
     synthetic_engine.sfx_runtime_receipt.level_index = 0;
@@ -1662,6 +1779,23 @@ int main(void)
                strcmp(full_start_package_receipt.startup_ui_blocker,
                       "menu-bpk-prs3") == 0,
            "Nexus full-start package blocks startup capture proof on PRS3");
+    memset(draw_commands, 0x7f, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               11,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+               full_start_package_receipt.capture_command_count == 0 &&
+               full_start_package_receipt.blocked_draw_suppressed == 1 &&
+               full_start_package_receipt.fallback_visuals_permitted == 0 &&
+               draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE,
+           "Nexus full-start package command helper blocks PRS3 fallback draw");
     expect(nexus_v1_startup_champion_execution_mode_update(
                &champion_execution,
                2,
