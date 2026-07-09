@@ -938,6 +938,12 @@ static void test_srm_party_continue_restores_all_champions(void) {
                             THERON_V1_SRM_PROGRESS_IMPORT_OK &&
                         state_receipt.save_resume_srm_current_dungeon ==
                             THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                        state_receipt.set_runtime_level_route &&
+                        state_receipt.runtime_level_source ==
+                            THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME &&
+                        state_receipt.runtime_structured_route &&
+                        !state_receipt.runtime_receipt_text_route &&
+                        !state_receipt.runtime_fallback_visuals_blocked &&
                         state_receipt.save_resume_srm_party_champion_count ==
                             THERON_MAX_CHAMPIONS &&
                         state_receipt.save_resume_srm_party_gold == 777u,
@@ -1050,6 +1056,11 @@ static void test_srm_party_continue_restores_all_champions(void) {
                         state_receipt.level_loaded == 0 &&
                         state_receipt.set_save_resume &&
                         state_receipt.save_resume_srm_active_slot == -1 &&
+                        state_receipt.set_runtime_level_route &&
+                        state_receipt.runtime_level_source ==
+                            THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME &&
+                        state_receipt.runtime_structured_route &&
+                        !state_receipt.runtime_receipt_text_route &&
                         state_receipt.save_resume_srm_party_gold == 777u,
                     "srm party custom path emits host and state receipts");
         theron_v1_world_init(&world);
