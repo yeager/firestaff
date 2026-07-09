@@ -34659,11 +34659,14 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                      DM2_V1_BootStartupHostViewReceipt
                                          *out_host_receipt,
                                      DM2_V1_BootStartupRenderOwnershipReceipt
-                                         *out_ownership_receipt)
+                                         *out_ownership_receipt,
+                                     DM2_V1_BootStartupRealVisualCaptureReceipt
+                                         *out_visual_capture_receipt)
 {
     DM2_V1_BootStartupViewModel view_model;
     DM2_V1_BootRuntimeStartupSnapshot snapshot;
     DM2_V1_BootStartupRenderOwnershipReceipt ownership_receipt;
+    DM2_V1_BootStartupRealVisualCaptureReceipt visual_capture_receipt;
     DM2_V1_StartupDrawExecutor executor;
     M11_DM2StartupDrawContext context;
 
@@ -34672,6 +34675,10 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     }
     if (out_ownership_receipt) {
         memset(out_ownership_receipt, 0, sizeof(*out_ownership_receipt));
+    }
+    if (out_visual_capture_receipt) {
+        memset(out_visual_capture_receipt, 0,
+               sizeof(*out_visual_capture_receipt));
     }
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
         return 0;
@@ -34692,11 +34699,31 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
         ownership_receipt.draw_command_count != view_model.command_count) {
         return 0;
     }
+    if (!dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+            (DM2_V1_BootProfile *)snapshot.profile,
+            snapshot.startup_menu_active,
+            snapshot.startup_save_root,
+            snapshot.resume_available,
+            snapshot.slot_mask,
+            snapshot.selected_row,
+            view_model.host_view_receipt.title_animation_tick,
+            &visual_capture_receipt) ||
+        !visual_capture_receipt.valid ||
+        !visual_capture_receipt.title_menu_hud_visual_proof_ready ||
+        !visual_capture_receipt.no_fallback_title_blit ||
+        visual_capture_receipt.menu_command_count !=
+            ownership_receipt.draw_command_count ||
+        visual_capture_receipt.packaged_visual_capture_hash == 0u) {
+        return 0;
+    }
     if (out_host_receipt) {
         *out_host_receipt = view_model.host_view_receipt;
     }
     if (out_ownership_receipt) {
         *out_ownership_receipt = ownership_receipt;
+    }
+    if (out_visual_capture_receipt) {
+        *out_visual_capture_receipt = visual_capture_receipt;
     }
     context.state = state;
     context.framebuffer = framebuffer;
@@ -38637,9 +38664,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int rendered = -1;
         DM2_V1_BootStartupHostViewReceipt startup_host_receipt;
         DM2_V1_BootStartupRenderOwnershipReceipt startup_ownership_receipt;
+        DM2_V1_BootStartupRealVisualCaptureReceipt startup_visual_receipt;
         int startup_menu_drawn = 0;
         memset(&startup_host_receipt, 0, sizeof(startup_host_receipt));
         memset(&startup_ownership_receipt, 0, sizeof(startup_ownership_receipt));
+        memset(&startup_visual_receipt, 0, sizeof(startup_visual_receipt));
         if (state->dm2World) {
             DM2_V1_BootRuntimeRenderReceipt receipt;
             (void)dm2_v1_boot_runtime_render_frame(
@@ -38669,13 +38698,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             framebufferWidth,
             framebufferHeight,
             &startup_host_receipt,
-            &startup_ownership_receipt);
+            &startup_ownership_receipt,
+            &startup_visual_receipt);
         if (startup_menu_drawn) {
-            if (startup_ownership_receipt.status_scope &&
-                startup_ownership_receipt.status) {
+            if (startup_visual_receipt.status_scope &&
+                startup_visual_receipt.status) {
                 m11_set_status((M11_GameViewState *)state,
-                               startup_ownership_receipt.status_scope,
-                               startup_ownership_receipt.status);
+                               startup_visual_receipt.status_scope,
+                               startup_visual_receipt.status);
             }
         }
         m11_draw_dm2_shop_panel(state, framebuffer,
