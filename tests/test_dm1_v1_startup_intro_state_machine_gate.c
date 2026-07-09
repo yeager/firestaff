@@ -1769,12 +1769,15 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.release_app_capture &&
                  hoc_release_capture_ownership.host_capture_route_matches &&
                  hoc_release_capture_ownership.hoc_asset_capture &&
+                 hoc_release_capture_ownership.host_window_capture &&
                  hoc_release_capture_ownership.draw_opened_entrance_frame &&
                  hoc_release_capture_ownership.render_hall_mirror_overlay &&
                  hoc_release_capture_ownership.suppress_host_fallback_visuals &&
                  hoc_release_capture_ownership
                      .lower_level_renderer_helper_owned &&
                  hoc_release_capture_ownership.lower_level_audio_helper_owned &&
+                 hoc_release_capture_ownership
+                     .block_enter_until_champion_selected &&
                  hoc_release_capture_ownership.render_command_count == 3,
              1);
     hoc_host_probe_facts.captured_from_real_assets = 0;
@@ -1826,6 +1829,28 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  !hoc_host_probe_consumer.host_window_capture &&
                  !hoc_host_probe_consumer.host_capture_route_matches,
              1);
+    expect_i("DM1 HoC release/app ownership rejects missing Mac host window",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership.mac_window_capture &&
+                 !hoc_release_capture_ownership.host_window_capture &&
+                 !hoc_release_capture_ownership.host_capture_route_matches,
+             1);
+    hoc_host_probe_facts.observed_host_window_present = 1;
+    hoc_host_probe_facts.captured_from_mac_window = 0;
+    expect_i("DM1 HoC release/app ownership rejects non-Mac capture",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 !hoc_release_capture_ownership.mac_window_capture &&
+                 !hoc_release_capture_ownership.host_capture_route_matches,
+             1);
+    hoc_host_probe_facts.captured_from_mac_window = 1;
     hoc_lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
     expect_i("DM1 HoC render consumer prepares mirror wall receipt",
              hoc_lane != NULL &&

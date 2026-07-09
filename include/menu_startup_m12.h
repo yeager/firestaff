@@ -335,6 +335,7 @@ typedef struct {
     int packagedCaptureTitleFrameMax;
     int packagedCaptureTitlePromptVisible;
     int dm1HoCRealAssetCaptureReady;
+    int dm1HoCMacWindowCaptureReady;
     int dm1HoCReleaseAppCaptureReady;
     int dm1HoCHostCaptureRouteReady;
     int dm1HoCReleaseCaptureOwnershipReady;

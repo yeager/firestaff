@@ -118,6 +118,7 @@ int main(void) {
                     "packaged capture proof should be ready with verified startup")) return 1;
         if (strcmp(expected[i].gameId, "dm1") == 0) {
             if (!expect(boot.dm1HoCRealAssetCaptureReady == 1 &&
+                        boot.dm1HoCMacWindowCaptureReady == 1 &&
                         boot.dm1HoCReleaseAppCaptureReady == 1 &&
                         boot.dm1HoCHostCaptureRouteReady == 1 &&
                         boot.dm1HoCReleaseCaptureOwnershipReady == 1 &&
