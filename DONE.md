@@ -2,21 +2,19 @@
 
 - ✅ 2026-07-09 DM1 full-graphics startup media receipt: DM1 startup now exposes one source-locked receipt for SWSH logo/palette waits, TITLE PRESENTS/zoom/guard timing, palette phases, menu boundary, and entrance handoff. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
 
-- ✅ 2026-07-09 CSB closed-door HUD/menu receipt plan: CSB render-view receipts now carry closed-door render/menu counts, selected command, resume state, and prompt, with a receipt-built render plan that ignores stale host plan fields. Verification: `test_csb_v1_boot_runtime_handoff` 344/344 and `git diff --check` passed.
-
 - ✅ 2026-07-09 DM2 startup view receipt: startup presentation now emits one DM2-owned view receipt joining GDAT title commands, normalized menu state, render proof, and HUD/runtime handoff for host startup consumers. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_boot_profile_smoke`, and `git diff --check` passed.
 
-- ✅ 2026-07-09 DM1 HoC menu route M11 handoff: M11 now exposes and consumes the DM1 HoC champion menu route receipt for live C040 panel input ownership, so keyboard/pointer/object routes block through DM1-owned hall/live-panel facts instead of raw M11 flag checks. Verification: `test_m11_overlay_command_queue_block`, `test_dm1_v1_entrance_champion_select_pc34_compat`, and `git diff --check` passed.
-
-- ✅ 2026-07-09 Nexus startup menu presentation handoff receipts: launcher save/champion presentation now emits asset-gated handoff receipts that carry MENU.BPK/face readiness, ASSETS blocker status, and zero draw commands when real menu surfaces are blocked, so M11 does not infer fallback rendering. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
+- ✅ 2026-07-09 CSB closed-door HUD/menu receipt plan: CSB render-view receipts now carry closed-door render/menu counts, selected command, resume state, and prompt, with a receipt-built render plan that ignores stale host plan fields. Verification: `test_csb_v1_boot_runtime_handoff` 344/344 and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 M11 startup host-route consumption: M11 DM2 startup input now consumes the DM2-owned host route receipt for redraw, close-menu, return-to-launcher, status, and post-action selected row instead of interpreting host receipt/menu state itself. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
 
+- ✅ 2026-07-09 DM1 HoC menu route M11 handoff: M11 now exposes and consumes the DM1 HoC champion menu route receipt for live C040 panel input ownership, so keyboard/pointer/object routes block through DM1-owned hall/live-panel facts instead of raw M11 flag checks. Verification: `test_m11_overlay_command_queue_block`, `test_dm1_v1_entrance_champion_select_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup title receipt consumption: M11 CSB startup title drawing now consumes a CSB-built render-view title plan for post-FTL PRESENTS, CHAOS zoom, and STRIKES BACK instead of relying on stale host plan rectangles. Verification: `test_csb_v1_boot_runtime_handoff`, `firestaff` build, and `git diff --check` passed.
 
-- ✅ 2026-07-09 DM2 M11/M12 startup host route receipt: host action receipts now expose ready-made consume/redraw/close/return/apply-session/rescan route flags and post-action selected row, so host code can stop interpreting DM2 menu state and execution kinds. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
+- ✅ 2026-07-09 DM1 projectile materialization receipt: F0215 projectile slot materialization now exposes one DM1-owned receipt that combines consume/materialize routing with square-chain append decisions, so M10 can stop rebuilding the F0215/F0163 link policy locally. Verification: `test_dm1_v1_throw_shoot_pc34_compat` and `git diff --check` passed.
 
-- ✅ 2026-07-09 Nexus startup menu route asset gate: launcher save-slot and champion routes now consult startup asset gates before routing, returning explicit `asset-blocked`/ASSETS receipts when MENU.BPK PRS3, missing faces, or other real-menu blockers would require fallback visuals. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
+- ✅ 2026-07-09 DM2 M11/M12 startup host route receipt: host action receipts now expose ready-made consume/redraw/close/return/apply-session/rescan route flags and post-action selected row, so host code can stop interpreting DM2 menu state and execution kinds. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron Track02 title/menu media view-model handoff: boot startup view models can now carry the Track 02 startup media receipt, including variant, MD5, byte size, roster name/title status, prompt status, and decoded prompt text, so title/menu callers can consume one Theron-owned model without re-reading Track 02 media state. Verification: `test_theron_v1_startup_save_resume_pc34` 176/176 and `git diff --check` passed.
 

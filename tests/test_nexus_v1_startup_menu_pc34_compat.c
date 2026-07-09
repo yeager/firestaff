@@ -115,6 +115,8 @@ int main(void)
     Nexus_V1_StartupRuntimeState runtime_state;
     Nexus_V1_LauncherRuntimeStartupSnapshot runtime_snapshot;
     Nexus_V1_StartupMenuPresentationReceipt presentation_receipt;
+    Nexus_V1_StartupTitleHandoffReceipt title_handoff_receipt;
+    Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
@@ -2079,9 +2081,80 @@ int main(void)
                     nexus_v1_launcher_startup_runtime_state_clear(
                         &runtime_state);
                     runtime_state.engine = runtime_receipt.engine;
+                    runtime_state.title_active = 1;
+                    runtime_state.title_frame =
+                        nexus_v1_boot_start_ready_frames();
+                    runtime_state.slot_mask = menu.slot_mask;
+                    expect(nexus_v1_launcher_startup_assets_receipt_from_runtime_state(
+                               &runtime_state,
+                               &startup_assets_receipt) &&
+                               startup_assets_receipt.title_route_ready ==
+                                   runtime_receipt.startup_assets.title_route_ready &&
+                               startup_assets_receipt.save_menu_route_ready == 0 &&
+                               startup_assets_receipt.champion_menu_route_ready == 0 &&
+                               strcmp(startup_assets_receipt.startup_menu_asset_route,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus launcher runtime state exposes startup asset gate");
+                    nexus_v1_launcher_runtime_startup_snapshot_clear(
+                        &runtime_snapshot);
+                    runtime_snapshot.runtime = runtime_state;
+                    expect(nexus_v1_launcher_startup_assets_receipt_from_snapshot(
+                               &runtime_snapshot,
+                               &startup_assets_receipt) &&
+                               startup_assets_receipt
+                                   .menu_bpk_blocks_real_menu_surface_render == 1 &&
+                               strcmp(startup_assets_receipt.real_menu_surface_blocker,
+                                      "menu-bpk-prs3") == 0,
+                           "Nexus launcher snapshot exposes startup asset gate");
+                    expect(nexus_v1_launcher_startup_title_handoff_receipt_from_runtime_state(
+                               &runtime_state,
+                               9,
+                               &title_handoff_receipt) &&
+                               title_handoff_receipt.title_route.route ==
+                                   NEXUS_V1_STARTUP_TITLE_ROUTE_SAVE_SELECT &&
+                               title_handoff_receipt.route_ready == 0 &&
+                               title_handoff_receipt.route_blocked == 1 &&
+                               title_handoff_receipt.title_draw_ready == 1 &&
+                               title_handoff_receipt.save_menu_ready == 0 &&
+                               title_handoff_receipt.host_receipt.input_result ==
+                                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                               !title_handoff_receipt.host_receipt.mode_update
+                                    .set_save_select_active &&
+                               strcmp(title_handoff_receipt.status_scope,
+                                      "ASSETS") == 0 &&
+                               strcmp(title_handoff_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus launcher title handoff blocks save route on MENU.BPK PRS3");
+                    runtime_state.slot_mask = 0u;
+                    expect(nexus_v1_launcher_startup_title_handoff_receipt_from_runtime_state(
+                               &runtime_state,
+                               11,
+                               &title_handoff_receipt) &&
+                               title_handoff_receipt.title_route.route ==
+                                   NEXUS_V1_STARTUP_TITLE_ROUTE_CHAMPION_SELECT &&
+                               title_handoff_receipt.route_blocked == 1 &&
+                               title_handoff_receipt.champion_menu_ready == 0 &&
+                               !title_handoff_receipt.host_receipt.mode_update
+                                    .set_champion_select_active &&
+                               strcmp(title_handoff_receipt.status,
+                                      "blocked-menu-bpk-prs3") == 0,
+                           "Nexus launcher title handoff blocks champion route on MENU.BPK PRS3");
+                    runtime_state.slot_mask = menu.slot_mask;
+                    runtime_state.title_frame = 30;
+                    expect(nexus_v1_launcher_startup_title_pointer_handoff_receipt_from_runtime_state(
+                               &runtime_state,
+                               &title_handoff_receipt) &&
+                               title_handoff_receipt.title_route.route ==
+                                   NEXUS_V1_STARTUP_TITLE_ROUTE_HOLD &&
+                               title_handoff_receipt.route_ready == 1 &&
+                               title_handoff_receipt.route_blocked == 0 &&
+                               strcmp(title_handoff_receipt.status,
+                                      "NEXUS TITLE") == 0,
+                           "Nexus launcher title handoff keeps title hold route drawable");
+                    runtime_state.title_frame =
+                        nexus_v1_boot_start_ready_frames();
                     runtime_state.save_select_active = 1;
                     runtime_state.save_dir = save_dir;
-                    runtime_state.slot_mask = menu.slot_mask;
                     runtime_state.save_selected_row = 0;
                     runtime_state.save_row_count = menu.row_count;
                     load_calls = 0;
