@@ -1010,6 +1010,24 @@ static unsigned int nexus_v1_launcher_saturn_non_title_capture_mask(
     return mask;
 }
 
+static unsigned int nexus_v1_launcher_expected_non_title_capture_mask(
+    Nexus_V1_StartupCaptureRoute route,
+    int runtime_dgn_handoff_ready)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_CAPTURE_SAVE:
+        return 1u;
+    case NEXUS_V1_STARTUP_CAPTURE_CHAMPION:
+        return runtime_dgn_handoff_ready ? 6u : 2u;
+    case NEXUS_V1_STARTUP_CAPTURE_TITLE:
+    case NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE:
+    case NEXUS_V1_STARTUP_CAPTURE_BLOCKED:
+    case NEXUS_V1_STARTUP_CAPTURE_INVALID:
+    default:
+        return 0u;
+    }
+}
+
 static int nexus_v1_launcher_capture_mask_count(unsigned int mask)
 {
     int count = 0;
@@ -3782,11 +3800,19 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
             receipt->saturn_save_capture_frame,
             receipt->saturn_champion_capture_frame,
             receipt->saturn_dungeon_capture_frame);
+    receipt->host_saturn_expected_capture_mask =
+        nexus_v1_launcher_expected_non_title_capture_mask(
+            receipt->capture_route,
+            receipt->runtime_dgn_handoff_ready);
     receipt->host_saturn_non_title_capture_count =
         nexus_v1_launcher_capture_mask_count(
             receipt->host_saturn_non_title_capture_mask);
+    receipt->host_route_capture_matrix_exact =
+        receipt->host_saturn_non_title_capture_mask ==
+        receipt->host_saturn_expected_capture_mask;
     receipt->host_route_capture_matrix_ready =
         receipt->host_route_consumes_active_capture_frame &&
+        receipt->host_route_capture_matrix_exact &&
         ((receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE &&
           (receipt->host_saturn_non_title_capture_mask & 1u)) ||
          (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
@@ -3798,6 +3824,7 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->host_route_consumes_package_route &&
         receipt->saturn_timing_exact &&
         receipt->saturn_capture_frames_exact &&
+        receipt->host_route_capture_matrix_exact &&
         receipt->host_route_capture_matrix_ready;
     receipt->dgn_route_saturn_capture_exact =
         receipt->runtime_dgn_handoff_ready &&
@@ -4106,10 +4133,14 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.host_route_consumes_dungeon_capture_frame;
     out_receipt->host_route_capture_matrix_ready =
         out_receipt->ownership.host_route_capture_matrix_ready;
+    out_receipt->host_route_capture_matrix_exact =
+        out_receipt->ownership.host_route_capture_matrix_exact;
     out_receipt->host_saturn_non_title_capture_count =
         out_receipt->ownership.host_saturn_non_title_capture_count;
     out_receipt->host_saturn_non_title_capture_mask =
         out_receipt->ownership.host_saturn_non_title_capture_mask;
+    out_receipt->host_saturn_expected_capture_mask =
+        out_receipt->ownership.host_saturn_expected_capture_mask;
     out_receipt->capture_route = out_receipt->ownership.capture_route;
     out_receipt->ownership_route = out_receipt->ownership.route;
     out_receipt->host_route =
@@ -4127,6 +4158,8 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
           out_receipt->ownership.title_capture_uses_real_assets)) &&
         (out_receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_TITLE ||
          out_receipt->host_route_consumes_active_capture_frame) &&
+        (out_receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_TITLE ||
+         out_receipt->host_route_consumes_capture_matrix) &&
         out_receipt->saturn_timing_exact &&
         out_receipt->saturn_capture_frames_exact &&
         out_receipt->copied_startup_command_count > 0;

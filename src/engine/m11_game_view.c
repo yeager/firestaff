@@ -10390,10 +10390,14 @@ static void m11_nexus_apply_startup_host_caller_receipt(
         receipt->host_route_consumes_dungeon_capture_frame ? 1 : 0;
     state->nexusState.startup_host_route_capture_matrix_ready =
         receipt->host_route_capture_matrix_ready ? 1 : 0;
+    state->nexusState.startup_host_route_capture_matrix_exact =
+        receipt->host_route_capture_matrix_exact ? 1 : 0;
     state->nexusState.startup_host_saturn_non_title_capture_count =
         receipt->host_saturn_non_title_capture_count;
     state->nexusState.startup_host_saturn_non_title_capture_mask =
         receipt->host_saturn_non_title_capture_mask;
+    state->nexusState.startup_host_saturn_expected_capture_mask =
+        receipt->host_saturn_expected_capture_mask;
     state->nexusState.startup_title_timing_frame =
         receipt->title_timing_frame;
     state->nexusState.startup_title_timing_frame_max =
