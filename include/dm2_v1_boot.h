@@ -501,6 +501,11 @@ typedef struct {
     uint32_t startup_hud_raw_gdat_portrait_byte_count;
     uint32_t startup_hud_raw_gdat_core_hash;
     uint32_t startup_hud_raw_gdat_core_byte_count;
+    int startup_title_menu_decoded_gdat_capture_ready;
+    uint32_t startup_title_decoded_gdat_hash;
+    uint32_t startup_title_decoded_gdat_pixel_count;
+    uint32_t startup_menu_decoded_gdat_hash;
+    uint32_t startup_menu_decoded_gdat_pixel_count;
     int startup_draw_ready;
     int startup_draw_command_count;
     int startup_draw_menu_capture_ready;
@@ -559,6 +564,11 @@ typedef struct {
     uint32_t startup_hud_raw_gdat_portrait_byte_count;
     uint32_t startup_hud_raw_gdat_core_hash;
     uint32_t startup_hud_raw_gdat_core_byte_count;
+    int startup_title_menu_decoded_gdat_capture_ready;
+    uint32_t startup_title_decoded_gdat_hash;
+    uint32_t startup_title_decoded_gdat_pixel_count;
+    uint32_t startup_menu_decoded_gdat_hash;
+    uint32_t startup_menu_decoded_gdat_pixel_count;
     int runtime_menu_ready;
     int runtime_action_ready;
     int first_hud_frame_ready;
@@ -595,6 +605,11 @@ typedef struct {
     int real_gdat_title_asset_receipt_breadth;
     int menu_hud_startup_receipt_breadth;
     int startup_hud_raw_gdat_receipt_consumed;
+    int startup_title_menu_decoded_gdat_receipt_consumed;
+    uint32_t startup_title_decoded_gdat_hash;
+    uint32_t startup_title_decoded_gdat_pixel_count;
+    uint32_t startup_menu_decoded_gdat_hash;
+    uint32_t startup_menu_decoded_gdat_pixel_count;
     int suppress_game_hud;
     int present_first_hud_frame;
     int schedule_next_title_tick;
