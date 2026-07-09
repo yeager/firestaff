@@ -766,6 +766,9 @@ int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
 int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
     const DM1_MeleeF0190MutationDispatchInputPc34* in,
     DM1_MeleeF0190MutationDispatchPlanPc34* out);
+int dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
+    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
+    DM1_MeleeF0190MutationDispatchPlanPc34* out);
 int dm1_v1_melee_resolve_damage_f0231_pc34(
     struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,

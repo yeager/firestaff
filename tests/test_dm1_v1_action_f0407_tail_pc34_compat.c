@@ -2089,6 +2089,9 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190FixedDropCellsPlanPc34 fixedCellsOut;
     DM1_MeleeF0190MutationDispatchInputPc34 dispatchIn;
     DM1_MeleeF0190MutationDispatchPlanPc34 dispatchOut;
+    DM1_MeleeF0231AftermathInputPc34 aftermathIn;
+    DM1_MeleeF0231AftermathPlanPc34 aftermathOut;
+    DM1_MeleeF0190MutationDispatchPlanPc34 aftermathDispatchOut;
     DM1_MeleeF0188GroupSlotDropInputPc34 slotDropIn;
     DM1_MeleeF0188GroupSlotDropPlanPc34 slotDropOut;
     struct DungeonGroup_Compat fixedGroup;
@@ -2541,6 +2544,57 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 mutation dispatch evaluates fear on party map");
     CHECK_EQ(dispatchOut.shouldApplyKilledAllSideEffects, 0,
              "F0190 mutation dispatch killed-some no killed-all side effects");
+
+    memset(&aftermathIn, 0, sizeof(aftermathIn));
+    aftermathIn.groupIndex = 9;
+    aftermathIn.creatureIndex = 1;
+    aftermathIn.creatureType = 12;
+    aftermathIn.creatureAttributes = DM1_ATTR_DROP_FIXED_POSS;
+    aftermathIn.creatureProperties = 0x0230;
+    aftermathIn.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    aftermathIn.originalGroupCount = 2;
+    aftermathIn.partyMapIndex = 2;
+    aftermathIn.partyMapX = 12;
+    aftermathIn.partyMapY = 14;
+    aftermathIn.targetMapIndex = 2;
+    aftermathIn.targetMapX = 13;
+    aftermathIn.targetMapY = 14;
+    aftermathIn.killedCell = 6;
+    aftermathIn.damageOutcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    aftermathIn.fallbackCombatOutcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    CHECK_EQ(dm1_v1_melee_aftermath_plan_f0231_pc34(
+                 &aftermathIn, &aftermathOut), 1,
+             "F0231 aftermath for F0190 dispatch builds");
+    CHECK_EQ(dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
+                 &aftermathOut, &aftermathDispatchOut), 1,
+             "F0231 aftermath maps to F0190 dispatch");
+    CHECK_EQ(aftermathDispatchOut.shouldDropPossessions, 1,
+             "F0231 aftermath dispatch keeps possession drops");
+    CHECK_EQ(aftermathDispatchOut.possessionDropPlan.creatureCell, 2,
+             "F0231 aftermath dispatch keeps killed cell mask");
+    CHECK_EQ(aftermathDispatchOut.shouldApplyKilledSomeState, 1,
+             "F0231 aftermath dispatch keeps killed-some state");
+    CHECK_EQ(aftermathDispatchOut.killedSomeStatePlan.shouldEvaluateFear, 1,
+             "F0231 aftermath dispatch keeps fear evaluation");
+    CHECK_EQ(aftermathDispatchOut.killedSomeStatePlan.originalGroupCount, 2,
+             "F0231 aftermath dispatch keeps original count");
+
+    aftermathIn.damageOutcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+    aftermathIn.fallbackCombatOutcome = COMBAT_OUTCOME_HIT_DAMAGE;
+    CHECK_EQ(dm1_v1_melee_aftermath_plan_f0231_pc34(
+                 &aftermathIn, &aftermathOut), 1,
+             "F0231 no-kill aftermath for F0190 dispatch builds");
+    CHECK_EQ(dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
+                 &aftermathOut, &aftermathDispatchOut), 1,
+             "F0231 no-kill aftermath maps to empty F0190 dispatch");
+    CHECK_EQ(aftermathDispatchOut.valid, 1,
+             "F0231 no-kill dispatch receipt valid");
+    CHECK_EQ(aftermathDispatchOut.shouldDropPossessions, 0,
+             "F0231 no-kill dispatch drops nothing");
+    CHECK_EQ(aftermathDispatchOut.shouldApplyKilledSomeState, 0,
+             "F0231 no-kill dispatch skips killed-some state");
+    CHECK_EQ(aftermathDispatchOut.shouldApplyKilledAllSideEffects, 0,
+             "F0231 no-kill dispatch skips killed-all state");
 
     memset(&resultA, 0, sizeof(resultA));
     resultA.damageApplied = 30;
