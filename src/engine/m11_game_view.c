@@ -895,6 +895,35 @@ static void m11_dm2_boot_probe_receipt_from_startup_view_model(
     if (!view_model || !out) {
         return;
     }
+    if (view_model->host_view_receipt.valid) {
+        snprintf(out->startupPhase,
+                 sizeof(out->startupPhase),
+                 "%s",
+                 view_model->phase);
+        out->startupActive =
+            view_model->host_view_receipt.draw_startup_menu;
+        snprintf(out->startupAnimation,
+                 sizeof(out->startupAnimation),
+                 "%s",
+                 view_model->animation);
+        out->startupAnimationActive =
+            view_model->host_view_receipt.startup_hud_handoff_ready;
+        out->startupTitleFrame =
+            view_model->host_view_receipt.title_frame;
+        out->startupTitleFrameMax =
+            view_model->host_view_receipt.title_frame_max;
+        out->startupTitleReady =
+            view_model->host_view_receipt.title_ready;
+        out->startupInitializeV2Runtime =
+            view_model->initialize_v2_runtime;
+        out->startupInitializeHudRuntime =
+            view_model->initialize_hud_runtime;
+        out->startupInitializeTouchRuntime =
+            view_model->initialize_touch_runtime;
+        out->startupHudRuntimeReady =
+            view_model->host_view_receipt.hud_runtime_ready;
+        return;
+    }
     if (view_model->view_receipt.valid &&
         view_model->view_receipt.runtime_handoff.valid) {
         handoff = &view_model->view_receipt.runtime_handoff;
@@ -11131,16 +11160,32 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 capture_receipt.readiness.title_frame_max;
             out->startupTitleReady = capture_receipt.readiness.title_ready;
             out->startupInputReady =
-                capture_receipt.readiness.host_startup_input_ready;
+                capture_receipt.startup_input_ready;
             out->startupHudMenuReady =
-                capture_receipt.readiness.host_startup_hud_ready;
-            out->startupHudMenuKind = capture_receipt.readiness.hud_menu_kind;
+                capture_receipt.startup_hud_ready;
+            out->startupHudMenuKind = capture_receipt.hud_menu_kind;
             out->startupHudMenuOptionCount =
                 capture_receipt.readiness.hud_menu_option_count;
             out->startupSelectedCommandId =
-                capture_receipt.readiness.selected_command_id;
+                capture_receipt.selected_command_id;
             out->startupUtilitySelectedActionIndex =
-                capture_receipt.readiness.selected_utility_action_index;
+                capture_receipt.selected_utility_action_index;
+            if (capture_receipt.hud_menu_capture_ready &&
+                capture_receipt.hud_menu_draw_valid) {
+                /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns the
+                 * visible entrance/utility HUD menu inside the startup loop.
+                 * M11 boot probes consume the CSB draw receipt here instead
+                 * of re-reading host-side menu rows. */
+                out->startupHudMenuKind =
+                    capture_receipt.hud_menu_draw.kind;
+                out->startupHudMenuOptionCount =
+                    capture_receipt.hud_menu_draw.option_count;
+                out->startupSelectedCommandId =
+                    capture_receipt.hud_menu_draw.selected_command_id;
+                out->startupUtilitySelectedActionIndex =
+                    capture_receipt.hud_menu_draw
+                        .selected_utility_action_index;
+            }
             out->startupHudRuntimeReady =
                 capture_receipt.readiness.host_runtime_hud_ready;
             if (capture_receipt.readiness.runtime_handoff_ready) {
@@ -33437,23 +33482,32 @@ static void m11_dm2_startup_exec_text(
                   style);
 }
 
-static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
-                                      unsigned char *framebuffer,
-                                      int framebufferWidth,
-                                      int framebufferHeight)
+static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
+                                     unsigned char *framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     DM2_V1_BootStartupHostViewReceipt
+                                         *out_host_receipt)
 {
     DM2_V1_BootStartupViewModel view_model;
     DM2_V1_StartupDrawExecutor executor;
     M11_DM2StartupDrawContext context;
 
+    if (out_host_receipt) {
+        memset(out_host_receipt, 0, sizeof(*out_host_receipt));
+    }
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
-        return;
+        return 0;
     }
     if (!m11_dm2_boot_runtime_startup_view_model(state, &view_model) ||
-        !view_model.view_receipt.valid ||
-        view_model.view_receipt.render.command_count <= 0 ||
-        view_model.view_receipt.render.hud_overlay_suppressed != 1) {
-        return;
+        !view_model.host_view_receipt.valid ||
+        !view_model.host_view_receipt.draw_startup_menu ||
+        !view_model.host_view_receipt.render_commands_ready ||
+        !view_model.host_view_receipt.startup_hud_handoff_ready) {
+        return 0;
+    }
+    if (out_host_receipt) {
+        *out_host_receipt = view_model.host_view_receipt;
     }
     context.state = state;
     context.framebuffer = framebuffer;
@@ -33466,8 +33520,9 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     executor.draw_text = m11_dm2_startup_exec_text;
     (void)dm2_v1_boot_startup_execute_draw_commands(
         view_model.commands,
-        view_model.view_receipt.render.command_count,
+        view_model.host_view_receipt.command_count,
         &executor);
+    return 1;
 }
 
 typedef struct M11_NexusStartupDrawContext {
@@ -37351,6 +37406,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * dm2_v2_runtime_render_frame(), SKULL.ASM T560/T600 render split. */
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int rendered = -1;
+        DM2_V1_BootStartupHostViewReceipt startup_host_receipt;
+        int startup_menu_drawn = 0;
+        memset(&startup_host_receipt, 0, sizeof(startup_host_receipt));
         if (state->dm2World) {
             DM2_V1_BootRuntimeRenderReceipt receipt;
             (void)dm2_v1_boot_runtime_render_frame(
@@ -37374,8 +37432,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           18, 36, boot_status, &g_text_shadow);
         }
-        m11_draw_dm2_startup_menu(state, framebuffer,
-                                  framebufferWidth, framebufferHeight);
+        startup_menu_drawn = m11_draw_dm2_startup_menu(
+            state,
+            framebuffer,
+            framebufferWidth,
+            framebufferHeight,
+            &startup_host_receipt);
+        if (startup_menu_drawn) {
+            if (startup_host_receipt.status_scope &&
+                startup_host_receipt.status) {
+                m11_set_status((M11_GameViewState *)state,
+                               startup_host_receipt.status_scope,
+                               startup_host_receipt.status);
+            }
+        }
         m11_draw_dm2_shop_panel(state, framebuffer,
                                 framebufferWidth, framebufferHeight);
         if (state->inventoryPanelActive) {
