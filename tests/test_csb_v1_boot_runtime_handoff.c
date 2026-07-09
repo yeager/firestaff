@@ -1812,6 +1812,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupActionReceipt_PC34 boot_action_receipt;
     CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
+    const char *resume_path = "/tmp/firestaff-csb-resume.dat";
 
     csb_v1_boot_profile_init(&boot);
     memset(&facts, 0, sizeof(facts));
@@ -1896,6 +1897,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     snapshot.utility_selected_action_index = 0;
     snapshot.utility_imported_champion_count = 2;
     snapshot.utility_prompt = facts.utility_prompt;
+    snapshot.resume_available = 1;
+    snapshot.resume_path = resume_path;
     snapshot.boot_profile = &boot;
     snapshot.title_active = 1;
     snapshot.title_frame = 0;
@@ -1982,9 +1985,15 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               route_receipt.hud_menu_state.selected_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
               route_receipt.hud_menu_state.option_count == 4 &&
+              route_receipt.hud_menu_state.resume_option_visible &&
+              route_receipt.hud_menu_state.resume_enabled &&
+              route_receipt.hud_menu_state.resume_available &&
+              !route_receipt.hud_menu_state.resume_option_selected &&
+              strcmp(route_receipt.hud_menu_state.resume_path, resume_path) ==
+                  0 &&
               strstr(route_receipt.hud_menu_state.prompt, "PRESS ENTER") !=
                   NULL,
-          "boot startup route receipt owns closed entrance HUD/menu state without utility fallback");
+          "boot startup route receipt owns closed entrance HUD/menu state and resume gate without utility fallback");
     snapshot.utility_overlay_active = 1;
     snapshot.opening_active = 1;
     snapshot.opening_delay_ticks = 0;
