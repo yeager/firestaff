@@ -2763,6 +2763,36 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     if (!dm2_v1_viewport_build_door_render_plan(s, &plan)) {
         return;
     }
+    s->last_door_panel_asset_blit_valid = 0;
+    s->last_door_ornate_asset_blit_valid = 0;
+    s->last_door_destroyed_mask_asset_blit_valid = 0;
+    s->last_door_frame_asset_blit_valid = 0;
+    s->last_door_button_asset_blit_valid = 0;
+    s->last_door_panel_asset_src_w = 0;
+    s->last_door_panel_asset_src_h = 0;
+    s->last_door_panel_asset_src_stride = 0;
+    s->last_door_ornate_asset_src_w = 0;
+    s->last_door_ornate_asset_src_h = 0;
+    s->last_door_ornate_asset_src_stride = 0;
+    s->last_door_destroyed_mask_asset_src_w = 0;
+    s->last_door_destroyed_mask_asset_src_h = 0;
+    s->last_door_destroyed_mask_asset_src_stride = 0;
+    s->last_door_frame_asset_src_w = 0;
+    s->last_door_frame_asset_src_h = 0;
+    s->last_door_frame_asset_src_stride = 0;
+    s->last_door_button_asset_src_w = 0;
+    s->last_door_button_asset_src_h = 0;
+    s->last_door_button_asset_src_stride = 0;
+    memset(&s->last_door_panel_asset_blit, 0,
+           sizeof(s->last_door_panel_asset_blit));
+    memset(&s->last_door_ornate_asset_blit, 0,
+           sizeof(s->last_door_ornate_asset_blit));
+    memset(&s->last_door_destroyed_mask_asset_blit, 0,
+           sizeof(s->last_door_destroyed_mask_asset_blit));
+    memset(&s->last_door_frame_asset_blit, 0,
+           sizeof(s->last_door_frame_asset_blit));
+    memset(&s->last_door_button_asset_blit, 0,
+           sizeof(s->last_door_button_asset_blit));
 
     for (int i = 0; i < plan.door_count; i++) {
         const DM2_V1_DoorRender *door = &plan.doors[i];
@@ -2806,6 +2836,12 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         blit.src_stride,
                         blit.transparent_color);
                     ++door_panel_asset_count;
+                    s->last_door_panel_asset_blit_valid = 1;
+                    s->last_door_panel_asset_blit = blit;
+                    s->last_door_panel_asset_src_w = panel_w;
+                    s->last_door_panel_asset_src_h = panel_h;
+                    s->last_door_panel_asset_src_stride =
+                        panel_stride > 0 ? panel_stride : panel_w;
                 }
             } else {
                 dm2_v1_draw_door_panel_fallback_rect(vp,
@@ -2855,9 +2891,28 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                             blit.src_rect.y,
                             blit.src_rect.w,
                             blit.src_rect.h,
-                            blit.src_stride,
-                            blit.transparent_color);
+                        blit.src_stride,
+                        blit.transparent_color);
                         ++door_overlay_asset_count;
+                        if (overlay_i == 0) {
+                            s->last_door_ornate_asset_blit_valid = 1;
+                            s->last_door_ornate_asset_blit = blit;
+                            s->last_door_ornate_asset_src_w = overlay_w;
+                            s->last_door_ornate_asset_src_h = overlay_h;
+                            s->last_door_ornate_asset_src_stride =
+                                overlay_stride > 0 ? overlay_stride :
+                                                     overlay_w;
+                        } else {
+                            s->last_door_destroyed_mask_asset_blit_valid = 1;
+                            s->last_door_destroyed_mask_asset_blit = blit;
+                            s->last_door_destroyed_mask_asset_src_w =
+                                overlay_w;
+                            s->last_door_destroyed_mask_asset_src_h =
+                                overlay_h;
+                            s->last_door_destroyed_mask_asset_src_stride =
+                                overlay_stride > 0 ? overlay_stride :
+                                                     overlay_w;
+                        }
                     }
                 }
             }
@@ -2901,6 +2956,12 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         blit.src_stride,
                         blit.transparent_color);
                     ++door_asset_count;
+                    s->last_door_frame_asset_blit_valid = 1;
+                    s->last_door_frame_asset_blit = blit;
+                    s->last_door_frame_asset_src_w = door_w;
+                    s->last_door_frame_asset_src_h = door_h;
+                    s->last_door_frame_asset_src_stride =
+                        door_stride > 0 ? door_stride : door_w;
                 }
             }
         }
@@ -2944,6 +3005,12 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         blit.src_stride,
                         blit.transparent_color);
                     ++door_button_asset_count;
+                    s->last_door_button_asset_blit_valid = 1;
+                    s->last_door_button_asset_blit = blit;
+                    s->last_door_button_asset_src_w = button_w;
+                    s->last_door_button_asset_src_h = button_h;
+                    s->last_door_button_asset_src_stride =
+                        button_stride > 0 ? button_stride : button_w;
                 }
             }
         }
