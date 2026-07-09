@@ -150,6 +150,26 @@ typedef struct DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 {
     const char* status;
 } DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34;
 
+typedef enum DM1_V1_StartupHoCRenderCommandKind_PC34 {
+    DM1_V1_STARTUP_HOC_RENDER_COMMAND_NONE_PC34 = 0,
+    DM1_V1_STARTUP_HOC_RENDER_COMMAND_ENTRANCE_OPEN_FRAME_PC34 = 1,
+    DM1_V1_STARTUP_HOC_RENDER_COMMAND_HALL_MIRRORS_PC34 = 2,
+    DM1_V1_STARTUP_HOC_RENDER_COMMAND_CLEAR_CHAMPION_PANEL_PC34 = 3
+} DM1_V1_StartupHoCRenderCommandKind_PC34;
+
+typedef struct DM1_V1_StartupHoCRenderCommand_PC34 {
+    int valid;
+    DM1_V1_StartupHoCRenderCommandKind_PC34 kind;
+    int map_index;
+    int door_frame_index;
+    int overlay_kind;
+    int overlay_command_index;
+    int clear_stale_panel_first;
+    int suppress_host_fallback_visuals;
+    int block_enter_until_champion_selected;
+    const char* source_evidence;
+} DM1_V1_StartupHoCRenderCommand_PC34;
+
 typedef struct DM1_V1_StartupHoCFirstFrameReceipt_PC34 {
     int handled;
     int full_graphics_required;
@@ -170,6 +190,8 @@ typedef struct DM1_V1_StartupHoCFirstFrameReceipt_PC34 {
     int block_enter_until_champion_selected;
     int suppress_host_fallback_visuals;
     int runtime_first_frame_ready;
+    int hoc_render_command_count;
+    DM1_V1_StartupHoCRenderCommand_PC34 hoc_render_commands[4];
     DM1_V1_EntranceFullStartRenderReceiptPc34 entrance_full_start_receipt;
     DM1_V1_EntranceMenuRouteReceiptPc34 champion_select_route;
     const char* source_evidence;

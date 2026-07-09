@@ -1005,6 +1005,45 @@ int dm1_v1_startup_hoc_first_frame_receipt_pc34(
         receipt.block_enter_until_champion_selected;
     receipt.suppress_host_fallback_visuals =
         receipt.runtime_first_frame_ready ? 1 : 0;
+    if (receipt.runtime_first_frame_ready) {
+        DM1_V1_StartupHoCRenderCommand_PC34* command;
+
+        /* ReDMCSB ENTRANCE.C F0797 draws the C255 micro-dungeon behind the
+         * fully opened doors, then ENTRANCE.C F0441 leaves the Hall route in
+         * VIEWING state.  Expose the exact first-frame draw plan here so the
+         * host cannot fall back to stale TITLE/door/panel visuals. */
+        command = &receipt.hoc_render_commands[receipt.hoc_render_command_count++];
+        command->valid = 1;
+        command->kind =
+            DM1_V1_STARTUP_HOC_RENDER_COMMAND_ENTRANCE_OPEN_FRAME_PC34;
+        command->map_index = receipt.entrance_full_start_receipt.mapIndex;
+        command->door_frame_index =
+            receipt.entrance_full_start_receipt.doorFrameIndex;
+        command->suppress_host_fallback_visuals = 1;
+        command->source_evidence =
+            "ReDMCSB ENTRANCE.C:68-80 F0797 C255 entrance draw";
+
+        command = &receipt.hoc_render_commands[receipt.hoc_render_command_count++];
+        command->valid = 1;
+        command->kind = DM1_V1_STARTUP_HOC_RENDER_COMMAND_CLEAR_CHAMPION_PANEL_PC34;
+        command->clear_stale_panel_first = 1;
+        command->suppress_host_fallback_visuals = 1;
+        command->source_evidence =
+            "ReDMCSB ENTRANCE.C:850-883 starts Hall before mirror selection";
+
+        command = &receipt.hoc_render_commands[receipt.hoc_render_command_count++];
+        command->valid = 1;
+        command->kind = DM1_V1_STARTUP_HOC_RENDER_COMMAND_HALL_MIRRORS_PC34;
+        command->overlay_kind = receipt.render_overlay_commands[0].kind;
+        command->overlay_command_index = 0;
+        command->clear_stale_panel_first =
+            receipt.render_overlay_commands[0].clearStalePanelFirst;
+        command->suppress_host_fallback_visuals = 1;
+        command->block_enter_until_champion_selected =
+            receipt.render_overlay_commands[0].blockEnterUntilChampionSelected;
+        command->source_evidence =
+            "ReDMCSB ENTRANCE.C:850-883 Hall waits for champion choice";
+    }
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:850-883; ENTRANCE.C:68-80";
     *out_receipt = receipt;
