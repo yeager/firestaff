@@ -14,7 +14,7 @@
  * COMMAND.C:2302-2311 is the sibling spell/action !G0299 gate.
  */
 
-static const Dm1V1MirrorCandidateInventoryToggleEvidencePc34Compat
+static const DM1_V1_MirrorCandidateInventoryToggleEvidencePc34Compat
     s_evidence = {
         "COMMAND.C F0380 inventory-toggle gate:2180-2184",
         "DEFS.H C007..C011 command constants:244-248",
@@ -34,15 +34,15 @@ static const Dm1V1MirrorCandidateInventoryToggleEvidencePc34Compat
         "dm1_v1_champion_mirror_pc34_compat"
     };
 
-const Dm1V1MirrorCandidateInventoryToggleEvidencePc34Compat *
+const DM1_V1_MirrorCandidateInventoryToggleEvidencePc34Compat *
 dm1_v1_mirror_candidate_inventory_toggle_pc34_compat_evidence(void)
 {
     return &s_evidence;
 }
 
 int dm1_v1_mirror_candidate_inventory_toggle_pc34_compat_probe(
-    const Dm1V1MirrorCandidateInventoryToggleInputPc34Compat *input,
-    Dm1V1MirrorCandidateInventoryToggleOutputPc34Compat *output)
+    const DM1_V1_MirrorCandidateInventoryToggleInputPc34Compat *input,
+    DM1_V1_MirrorCandidateInventoryToggleOutputPc34Compat *output)
 {
     int championIndex;
 
