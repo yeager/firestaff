@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0231 damage-gate ownership: DM1 melee compat now owns the pre-RNG F0231 damage gates for invalid/dead champions, candidate-panel no-action, dexterity-255 miss, and non-material creature blocking without MASK0x8000. The DM1 damage wrapper resolves those cases before shared arithmetic. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0231 runtime result gates: DM1 melee compat now owns F0231 NO_ACTION handling, luck writeback gate, XP/stamina side-effect gate, positive-damage group-apply gate, and damage-emission gate. M10 now consumes those receipts around live luck/group/timeline mutation. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0177 target-creature selection receipt: DM1 melee compat now owns the F0177/F0176 target creature selection plan for CMD_ATTACK, including single-centered groups, first-living fallback, ordered attack-cell scanning, and half-square occupancy. M10 now supplies live group/profile/champion facts and consumes the selected creature index. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
