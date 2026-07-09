@@ -27,6 +27,8 @@
 extern "C" {
 #endif
 
+struct SpellEffect_Compat;
+
 /* ── Symbol step indices (DEFS.H:632 SymbolStep values 0..3) ──── */
 #define DM1_SYMBOL_STEP_POWER    0
 #define DM1_SYMBOL_STEP_ELEMENT  1
@@ -396,6 +398,16 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
     int partyDirection,
     int partyShieldDefense,
     DM1_SpellF0412RuntimeReceipt* outReceipt);
+
+/**
+ * Convert a DM1-owned F0412 receipt into the generic M10 spell-effect shape.
+ * M10 callers should consume this adapter instead of rebuilding OTHER spell
+ * light/status/shield facts from spell-table metadata.
+ */
+int dm1_spell_f0412ReceiptToSpellEffectPc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    int currentFireShieldDefense,
+    struct SpellEffect_Compat* outEffect);
 
 /** Get the name string for a symbol character. */
 const char* dm1_spell_symbolName(char sym);

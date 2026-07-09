@@ -7085,17 +7085,10 @@ cmd_attack_legacy_marker:
                 return 0;
             }
 
-            effect.castResult =
-                (receipt.castResult == DM1_SPELL_CAST_SUCCESS)
-                    ? SPELL_CAST_SUCCESS
-                    : SPELL_CAST_FAILURE;
-            effect.failureReason = receipt.failureType;
-            effect.spellKind = C2_SPELL_KIND_PROJECTILE_COMPAT;
-            effect.spellType = receipt.spellType;
-            effect.powerOrdinal = receipt.powerOrdinal;
-            effect.impactAttack = 90;
-            effect.kineticEnergy = receipt.projectileKineticEnergy;
-            effect.followupEventKind = TIMELINE_EVENT_INVALID;
+            if (!dm1_spell_f0412ReceiptToSpellEffectPc34(
+                    &receipt, world->magic.fireShieldDefense, &effect)) {
+                return 0;
+            }
             receiptExperience = receipt.experience;
 
             if (receipt.castResult != DM1_SPELL_CAST_SUCCESS ||
@@ -7127,10 +7120,26 @@ cmd_attack_legacy_marker:
             F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove);
             break;
         }
-        case C3_SPELL_KIND_OTHER_COMPAT:
-            F0757_MAGIC_ProduceOtherEffect_Compat(
-                &spell, powerOrd, &world->magic, &effect);
+        case C3_SPELL_KIND_OTHER_COMPAT: {
+            DM1_ChampionSpellStats dm1Stats;
+            DM1_SpellF0412RuntimeReceipt receipt;
+
+            if (!orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
+                    world, champIdx, &dm1Stats) ||
+                !dm1_spell_f0412RuntimeReceiptForTableIndex(
+                    tableIdx, powerOrd, champIdx, &dm1Stats,
+                    (uint16_t)(spellRngRaw & 0xFFFFu),
+                    world->party.champions[champIdx].direction,
+                    world->party.direction,
+                    world->magic.partyShieldDefense,
+                    &receipt) ||
+                !dm1_spell_f0412ReceiptToSpellEffectPc34(
+                    &receipt, world->magic.fireShieldDefense, &effect)) {
+                return 0;
+            }
+            receiptExperience = receipt.experience;
             break;
+        }
         case C1_SPELL_KIND_POTION_COMPAT:
             F0758_MAGIC_ProducePotionEffect_Compat(
                 &spell, powerOrd, emptyFlaskSlot >= 0, &world->masterRng, &effect);

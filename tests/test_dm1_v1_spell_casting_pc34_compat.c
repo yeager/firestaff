@@ -10,6 +10,7 @@
  * - Experience per MENU.C F0412
  */
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "memory_magic_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -1068,6 +1069,69 @@ static void test_f0412_runtime_receipt_light_event(void) {
     printf("    PASS\n");
 }
 
+static void test_f0412_runtime_receipt_status_durations(void) {
+    printf("  [33] F0412 runtime receipt — status durations...\n");
+
+    DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
+    DM1_SpellF0412RuntimeReceipt receipt;
+
+    stats.skillLevels[DM1_SKILL_EARTH] = 10;
+    stats.skillLevels[DM1_SKILL_AIR] = 10;
+
+    /* ReDMCSB MENU.C F0412:1945-1982 uses the shared L1267 alias:
+     * Thieve's Eye shifts spellPower right once, then T0412032 squares it;
+     * Invisibility shifts spellPower left three and schedules it directly. */
+    assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+               4, 3, 0, &stats, 0x0001, 0, 0, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(receipt.spellType == DM1_SPELL_TYPE_OTHER_THIEVES_EYE);
+    assert(receipt.eventType == DM1_SPELL_EVENT_THIEVES_EYE_PC34);
+    assert(receipt.eventTicks == 64);
+
+    assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+               2, 3, 0, &stats, 0x0001, 0, 0, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(receipt.spellType == DM1_SPELL_TYPE_OTHER_INVISIBILITY);
+    assert(receipt.eventType == DM1_SPELL_EVENT_INVISIBILITY_PC34);
+    assert(receipt.eventTicks == 128);
+
+    printf("    PASS\n");
+}
+
+static void test_f0412_receipt_to_spell_effect(void) {
+    printf("  [34] F0412 receipt -> M10 effect adapter...\n");
+
+    DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
+    DM1_SpellF0412RuntimeReceipt receipt;
+    struct SpellEffect_Compat effect;
+
+    stats.skillLevels[DM1_SKILL_AIR] = 10;
+    assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+               6, 3, 0, &stats, 0x0001, 0, 0, 0, &receipt) == 1);
+    assert(dm1_spell_f0412ReceiptToSpellEffectPc34(
+               &receipt, 0, &effect) == 1);
+    assert(effect.castResult == SPELL_CAST_SUCCESS);
+    assert(effect.spellKind == C3_SPELL_KIND_OTHER_COMPAT);
+    assert(effect.spellType == C0_SPELL_TYPE_OTHER_LIGHT_COMPAT);
+    assert(effect.durationTicks == 14096);
+    assert(effect.magicStateDelta[3] == 51);
+    assert(effect.followupEventKind == TIMELINE_EVENT_MAGIC_LIGHT_DECAY);
+    assert(effect.followupEventAux0 == -7);
+
+    memset(&effect, 0, sizeof(effect));
+    stats.skillLevels[DM1_SKILL_EARTH] = 10;
+    assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+               4, 3, 0, &stats, 0x0001, 0, 0, 0, &receipt) == 1);
+    assert(dm1_spell_f0412ReceiptToSpellEffectPc34(
+               &receipt, 0, &effect) == 1);
+    assert(effect.durationTicks == 64);
+    assert(effect.magicStateDelta[5] == 1);
+    assert(effect.followupEventKind == TIMELINE_EVENT_STATUS_TIMEOUT);
+    assert(effect.followupEventAux0 == TIMELINE_AUX_THIEVES_EYE);
+
+    printf("    PASS\n");
+}
+
 /* ═══════════════════════════════════════════════════════════════════ */
 int main(void) {
     printf("DM1 V1 Spell Casting — CTest gate\n");
@@ -1107,7 +1171,9 @@ int main(void) {
     test_f0412_runtime_receipt_projectile_open_door();
     test_f0412_runtime_receipt_needs_practice_no_projectile();
     test_f0412_runtime_receipt_light_event();
+    test_f0412_runtime_receipt_status_durations();
+    test_f0412_receipt_to_spell_effect();
 
-    printf("\nAll 34 tests PASSED.\n");
+    printf("\nAll 36 tests PASSED.\n");
     return 0;
 }
