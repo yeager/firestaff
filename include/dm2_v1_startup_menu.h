@@ -174,12 +174,26 @@ typedef struct DM2_V1_StartupInputRouteReceipt {
     int action_slot;
 } DM2_V1_StartupInputRouteReceipt;
 
+typedef struct DM2_V1_StartupHostMenuRouteReceipt {
+    int valid;
+    int consume_input;
+    int redraw_startup_menu;
+    int close_startup_menu;
+    int return_to_launcher;
+    int apply_session;
+    int rescan_saves;
+    int selected_row_after;
+    const char *status_scope;
+    const char *status;
+} DM2_V1_StartupHostMenuRouteReceipt;
+
 typedef struct DM2_V1_StartupHostActionReceipt {
     DM2_V1_StartupHostReceipt host_receipt;
     int menu_state_receipt_valid;
     DM2_V1_StartupMenuStateReceipt menu_state_receipt;
     DM2_V1_StartupSaveMenuHandoffReceipt save_menu_handoff;
     DM2_V1_StartupInputRouteReceipt input_route;
+    DM2_V1_StartupHostMenuRouteReceipt host_menu_route;
 } DM2_V1_StartupHostActionReceipt;
 
 typedef struct DM2_V1_StartupIdleReceipt {
