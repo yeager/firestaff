@@ -477,6 +477,8 @@ typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
     int title_frame;
     int title_frame_max;
     int title_ready;
+    int route;
+    int special_palette;
     int startup_input_ready;
     int startup_hud_menu_ready;
     int startup_hud_runtime_ready;
@@ -492,6 +494,12 @@ typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
     int runtime_party_dir;
     int runtime_champion_count;
     int runtime_tick_count;
+    int render_plan_valid;
+    CSB_V1_StartupRenderPlan_PC34 render_plan;
+    int title_render_plan_valid;
+    CSB_V1_StartupRenderPlan_PC34 title_render_plan;
+    int hud_menu_draw_valid;
+    CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_menu_draw;
     int capture_proof_valid;
     CSB_V1_BootStartupPackagedCaptureProof_PC34 capture_proof;
 } CSB_V1_BootStartupHostViewReceipt_PC34;
@@ -869,6 +877,9 @@ int csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
 int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
     const CSB_V1_BootStartupInputGateReceipt_PC34 *gate_receipt,
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor);
 int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);

@@ -2610,6 +2610,23 @@ int csb_v1_boot_startup_execute_capture_render_plan_pc34(
     return csb_v1_boot_startup_execute_render_plan_pc34(&plan, executor);
 }
 
+int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
+    const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor)
+{
+    if (!host_view || !host_view->valid || !host_view->render_plan_valid ||
+        !executor) {
+        return 0;
+    }
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep title,
+     * utility, closed-door, and door-opening drawing inside the startup
+     * host loop. This lets host code consume the packaged host-view receipt
+     * directly instead of rebuilding capture/render-view decisions. */
+    return csb_v1_boot_startup_execute_render_plan_pc34(
+        &host_view->render_plan,
+        executor);
+}
+
 int csb_v1_boot_startup_execute_snapshot_capture_render_plan_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     const CSB_V1_StartupRenderExecutor_PC34 *executor,
@@ -3201,6 +3218,8 @@ int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
             capture_receipt->route.presentation.title_frame_max;
         out_receipt->title_ready =
             capture_receipt->route.presentation.title_ready ? 1 : 0;
+        out_receipt->route = (int)capture_receipt->route.route;
+        out_receipt->special_palette = capture_receipt->route.special_palette;
     }
 
     if (capture_receipt->readiness_valid) {
@@ -3249,6 +3268,8 @@ int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
     if (capture_receipt->hud_menu_capture_ready &&
         capture_receipt->hud_menu_draw_valid) {
         hud = &capture_receipt->hud_menu_draw;
+        out_receipt->hud_menu_draw_valid = 1;
+        out_receipt->hud_menu_draw = *hud;
         out_receipt->hud_menu_kind = hud->kind;
         out_receipt->hud_menu_option_count = hud->option_count;
         out_receipt->selected_command_id = hud->selected_command_id;
@@ -3256,6 +3277,14 @@ int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
             hud->selected_utility_action_index;
     }
 
+    out_receipt->render_plan_valid =
+        csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
+            capture_receipt,
+            &out_receipt->render_plan);
+    out_receipt->title_render_plan_valid =
+        csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
+            capture_receipt,
+            &out_receipt->title_render_plan);
     out_receipt->capture_proof_valid =
         csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
             capture_receipt,
@@ -3935,6 +3964,8 @@ void csb_v1_boot_startup_host_view_receipt_init_pc34(
     receipt->title_frame = -1;
     receipt->title_frame_max = -1;
     receipt->title_ready = 1;
+    receipt->route = CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+    receipt->special_palette = -1;
     receipt->runtime_map_index = -1;
     receipt->runtime_party_x = -1;
     receipt->runtime_party_y = -1;
@@ -3943,6 +3974,8 @@ void csb_v1_boot_startup_host_view_receipt_init_pc34(
     receipt->selected_command_id =
         CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
     receipt->selected_utility_action_index = -1;
+    csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
+        &receipt->hud_menu_draw);
     csb_v1_boot_startup_packaged_capture_proof_init_pc34(
         &receipt->capture_proof);
 }

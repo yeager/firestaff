@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB host-view title/HUD consumption: M11 now reads CSB host-view receipts for special palette and full startup rendering, with host-input dispatch used directly for keyboard/pointer startup routing. Verification: CSB startup tests and `git diff --check`.
+
 - ✅ 2026-07-09 pass908-nexus startup package consumer helpers: Nexus full-start package receipts now export M11/M12 presentation fields and build title/warning/save/champion startup draw commands directly from the package while suppressing SFX/PRS3-blocked fallback draws. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
 
 - ✅ 2026-07-09 pass886 DM1 HoC full-graphics thing suppression receipt: startup HoC capture now has a DM1-owned receipt proving Hall mirror overlay while rejecting false floor item, projectile, spell-effect, mirror-payload, stale title/door, and host fallback visual leaks before HoC walk/capture. Verification: DM1 startup intro state-machine test, target rebuild, and `git diff --check` passed.
