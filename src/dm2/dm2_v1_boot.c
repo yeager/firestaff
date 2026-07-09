@@ -2425,6 +2425,210 @@ int dm2_v1_boot_startup_host_frame_receipt_from_runtime_state(
         out_receipt);
 }
 
+void dm2_v1_boot_startup_render_ownership_receipt_init(
+    DM2_V1_BootStartupRenderOwnershipReceipt *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+    }
+}
+
+static int dm2_v1_boot_startup_render_ownership_from_view_model(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    const DM2_V1_BootStartupViewModel *view_model,
+    DM2_V1_BootStartupRenderOwnershipReceipt *out_receipt)
+{
+    DM2_V1_BootStartupPackagedFullStartReceipt package;
+    DM2_V1_BootStartupPackagedConsumerReceipt consumer;
+    DM2_V1_BootStartupHostFrameReceipt host_frame;
+    int i;
+
+    dm2_v1_boot_startup_render_ownership_receipt_init(out_receipt);
+    if (!snapshot || !view_model || !out_receipt ||
+        !view_model->host_view_receipt.valid ||
+        !dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
+            &view_model->host_view_receipt,
+            &package) ||
+        !dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
+            &package,
+            &consumer) ||
+        !dm2_v1_boot_startup_host_frame_receipt_from_consumer(
+            &consumer,
+            &host_frame)) {
+        return 0;
+    }
+
+    /* skproject/SKWIN keeps startup rendering owned by the boot/title/menu
+     * path: GDAT title blit, menu commands, HUD suppression, and next title
+     * tick are consumed together before runtime HUD drawing can take over. */
+    out_receipt->packaged_full_start_valid = package.valid;
+    out_receipt->host_frame_valid = host_frame.valid;
+    out_receipt->consume_host_frame_receipt =
+        host_frame.consume_startup_package;
+    out_receipt->execute_startup_draw_commands =
+        host_frame.render_startup_title &&
+        host_frame.render_startup_menu &&
+        host_frame.suppress_game_hud;
+    out_receipt->draw_command_count = view_model->command_count;
+    out_receipt->suppress_game_hud = host_frame.suppress_game_hud;
+    out_receipt->present_first_hud_frame =
+        host_frame.present_first_hud_frame;
+    out_receipt->schedule_next_title_tick =
+        host_frame.schedule_next_title_tick;
+    out_receipt->next_title_tick_delta =
+        host_frame.next_title_tick_delta;
+    out_receipt->title_animation_tick =
+        host_frame.title_animation_tick;
+    out_receipt->title_frame = host_frame.title_frame;
+    out_receipt->title_frame_max = host_frame.title_frame_max;
+    out_receipt->title_frame_duration_ticks =
+        host_frame.title_frame_duration_ticks;
+    out_receipt->title_frame_elapsed_ticks =
+        host_frame.title_frame_elapsed_ticks;
+    out_receipt->title_frame_remaining_ticks =
+        host_frame.title_frame_remaining_ticks;
+    out_receipt->title_next_frame_tick =
+        host_frame.title_next_frame_tick;
+    out_receipt->runtime_menu_ready = host_frame.runtime_menu_ready;
+    out_receipt->runtime_action_ready = host_frame.runtime_action_ready;
+    out_receipt->first_hud_frame_ready = host_frame.first_hud_frame_ready;
+    out_receipt->packaged_full_start_hash =
+        host_frame.packaged_full_start_hash;
+    out_receipt->phase = host_frame.phase;
+    out_receipt->animation = host_frame.animation;
+    out_receipt->status_scope = host_frame.status_scope;
+    out_receipt->status = host_frame.status;
+
+    for (i = 0; i < view_model->command_count; ++i) {
+        const DM2_V1_StartupDrawCommand *command =
+            &view_model->commands[i];
+        if (command->kind == DM2_V1_STARTUP_DRAW_NONE) {
+            continue;
+        }
+        ++out_receipt->executed_command_count;
+        if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE) {
+            ++out_receipt->executed_gdat_image_count;
+            if (command->gdat_category == DM2_GDAT_CATEGORY_TITLE) {
+                ++out_receipt->title_gdat_command_count;
+                out_receipt->title_gdat_asset_ready =
+                    package.title_gdat_asset_ready;
+                out_receipt->title_gdat_asset_w =
+                    package.title_gdat_asset_w;
+                out_receipt->title_gdat_asset_h =
+                    package.title_gdat_asset_h;
+                out_receipt->title_gdat_asset_stride =
+                    package.title_gdat_asset_stride;
+                if (snapshot->profile) {
+                    uint8_t *pixels = NULL;
+                    int w = 0;
+                    int h = 0;
+                    int stride = 0;
+                    out_receipt->title_gdat_asset_required = 1;
+                    if (dm2_v1_boot_gdat_image_asset_fetch(
+                            (DM2_V1_BootProfile *)snapshot->profile,
+                            command->gdat_category,
+                            command->gdat_index,
+                            command->gdat_field,
+                            &pixels,
+                            &w,
+                            &h,
+                            &stride) == 0 &&
+                        pixels &&
+                        w == command->rect.w &&
+                        h == command->rect.h &&
+                        stride >= w) {
+                        out_receipt->title_gdat_asset_consumed = 1;
+                        out_receipt->title_gdat_asset_ready = 1;
+                        out_receipt->title_gdat_asset_w = w;
+                        out_receipt->title_gdat_asset_h = h;
+                        out_receipt->title_gdat_asset_stride = stride;
+                    }
+                    dm2_v1_boot_gdat_image_asset_free(pixels);
+                }
+            }
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT ||
+                   command->kind == DM2_V1_STARTUP_DRAW_OUTLINE_RECT) {
+            ++out_receipt->executed_rect_count;
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_TEXT) {
+            ++out_receipt->executed_text_count;
+        }
+    }
+
+    out_receipt->fallback_title_blit_used = 0;
+    out_receipt->valid =
+        out_receipt->packaged_full_start_valid &&
+        out_receipt->host_frame_valid &&
+        out_receipt->consume_host_frame_receipt &&
+        out_receipt->execute_startup_draw_commands &&
+        out_receipt->draw_command_count > 0 &&
+        out_receipt->executed_command_count ==
+            out_receipt->draw_command_count &&
+        out_receipt->title_gdat_command_count == 1 &&
+        out_receipt->executed_text_count > 0 &&
+        out_receipt->suppress_game_hud &&
+        out_receipt->schedule_next_title_tick &&
+        !out_receipt->fallback_title_blit_used &&
+        (!out_receipt->title_gdat_asset_required ||
+         out_receipt->title_gdat_asset_consumed) &&
+        out_receipt->packaged_full_start_hash != 0u;
+    return out_receipt->valid;
+}
+
+int dm2_v1_boot_startup_render_ownership_receipt_from_snapshot(
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_BootStartupRenderOwnershipReceipt *out_receipt)
+{
+    DM2_V1_BootStartupViewModel view_model;
+
+    dm2_v1_boot_startup_render_ownership_receipt_init(out_receipt);
+    if (!snapshot || !out_receipt ||
+        !dm2_v1_boot_startup_view_model_receipt_from_snapshot(
+            snapshot,
+            &view_model)) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_render_ownership_from_view_model(
+        snapshot,
+        &view_model,
+        out_receipt);
+}
+
+int dm2_v1_boot_startup_render_ownership_receipt_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_BootStartupRenderOwnershipReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
+    DM2_V1_BootStartupViewModel view_model;
+
+    dm2_v1_boot_startup_render_ownership_receipt_init(out_receipt);
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.profile = profile;
+    snapshot.startup_menu_active = startup_menu_active;
+    snapshot.startup_save_root = startup_save_root;
+    snapshot.resume_available = resume_available;
+    snapshot.slot_mask = slot_mask;
+    snapshot.selected_row = selected_row;
+    if (!dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
+            &snapshot,
+            title_animation_tick,
+            &view_model)) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_render_ownership_from_view_model(
+        &snapshot,
+        &view_model,
+        out_receipt);
+}
+
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,
