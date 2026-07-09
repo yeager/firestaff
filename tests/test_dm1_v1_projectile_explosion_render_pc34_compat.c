@@ -268,6 +268,8 @@ static void test_f0115_thing_layer_receipt(void) {
     ASSERT_EQ(receipt.valid, 1, "runtime-only F0115 receipt valid");
     ASSERT_EQ(receipt.items, 1, "runtime-only receipt counts floor item");
     ASSERT_EQ(receipt.groups, 1, "runtime-only receipt counts group");
+    ASSERT_EQ(receipt.drawableTotal, 2,
+              "runtime-only receipt drawable total excludes controls/effects");
     ASSERT_EQ(receipt.sensors, 1, "runtime-only receipt reports sensor");
     ASSERT_EQ(receipt.projectiles, 0,
               "runtime-only receipt ignores static projectile refs");
@@ -286,6 +288,8 @@ static void test_f0115_thing_layer_receipt(void) {
               "source F0115 receipt counts projectile layer");
     ASSERT_EQ(receipt.explosions, 1,
               "source F0115 receipt counts explosion layer");
+    ASSERT_EQ(receipt.drawableTotal, 4,
+              "source F0115 receipt drawable total includes static effects");
     ASSERT_EQ(receipt.firstProjectileThing, chain[2],
               "source F0115 receipt first projectile thing");
     ASSERT_EQ(receipt.firstExplosionThing, chain[3],
@@ -297,6 +301,8 @@ static void test_f0115_thing_layer_receipt(void) {
               "view-cell F0115 receipt builds");
     ASSERT_EQ(receipt.total, 1,
               "view-cell receipt filters to matching cell");
+    ASSERT_EQ(receipt.drawableTotal, 1,
+              "view-cell drawable total follows matching effect");
     ASSERT_EQ(receipt.explosions, 1,
               "view-cell receipt keeps matching explosion");
 }
@@ -645,6 +651,8 @@ static void test_f0115_thing_layer_receipt_filters_static_effects(void) {
               1, "receipt accepts thing list");
     ASSERT_EQ(receipt.valid, 1, "receipt valid");
     ASSERT_EQ(receipt.total, 4, "cell-filtered total");
+    ASSERT_EQ(receipt.drawableTotal, 1,
+              "drawable total excludes door and static effects");
     ASSERT_EQ(receipt.doors, 1, "door counted as control");
     ASSERT_EQ(receipt.items, 1, "weapon counted as floor item");
     ASSERT_EQ(receipt.projectiles, 0, "static projectile suppressed");
@@ -666,6 +674,8 @@ static void test_f0115_thing_layer_receipt_filters_static_effects(void) {
               1, "receipt accepts static effects when requested");
     ASSERT_EQ(receipt.projectiles, 1, "projectile counted when allowed");
     ASSERT_EQ(receipt.explosions, 1, "explosion counted when allowed");
+    ASSERT_EQ(receipt.drawableTotal, 3,
+              "drawable total includes allowed static effects");
     ASSERT_EQ(receipt.firstProjectileThing,
               make_thing(THING_TYPE_PROJECTILE, 3, 1),
               "first projectile thing preserved");

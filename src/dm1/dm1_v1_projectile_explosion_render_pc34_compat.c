@@ -552,10 +552,12 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
                 break;
             case THING_TYPE_GROUP:
                 ++outReceipt->groups;
+                ++outReceipt->drawableTotal;
                 break;
             case THING_TYPE_PROJECTILE:
                 if (allowStaticEffectThings) {
                     ++outReceipt->projectiles;
+                    ++outReceipt->drawableTotal;
                     if (outReceipt->firstProjectileThing == THING_NONE) {
                         outReceipt->firstProjectileThing = thing;
                     }
@@ -566,6 +568,7 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
             case THING_TYPE_EXPLOSION:
                 if (allowStaticEffectThings) {
                     ++outReceipt->explosions;
+                    ++outReceipt->drawableTotal;
                     if (outReceipt->firstExplosionThing == THING_NONE) {
                         outReceipt->firstExplosionThing = thing;
                     }
@@ -576,6 +579,7 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
             default:
                 if (dm1_v1_thing_type_is_floor_item_pc34(type)) {
                     ++outReceipt->items;
+                    ++outReceipt->drawableTotal;
                     if (outReceipt->firstItemThing == THING_NONE) {
                         outReceipt->firstItemThing = thing;
                     }
@@ -596,6 +600,7 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
      * 5668-5683 and 5916-5933. Firestaff passes allowStaticEffectThings=0
      * for runtime DM1 rendering because F0219/F0220 effects are represented
      * by live runtime lists; stale dungeon C14/C15 refs must not drive HoC
-     * floor/effect sprites. */
+     * floor/effect sprites. drawableTotal carries only F0115 drawable
+     * layers, so callers do not keep false content counts after suppression. */
     return 1;
 }

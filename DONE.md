@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 runtime projectile render source: M11 no longer chooses projectile/explosion sprite data from static dungeon C14/C15 links when DM1 runtime effect lists are authoritative, preventing HoC stale fireball/spell refs from overriding live thrown-object/projectile visuals. Verification: `test_m11_overlay_command_queue_block`, `test_dm1_v1_projectile_explosion_render_pc34_compat`, `firestaff` build, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus DGN renderer handoff receipt: Structure1B/geometry decode now emits a renderer/runtime receipt for real DGN mesh readiness, descriptor-budget blockers, and legacy fallback blockers, with fallback visuals forbidden on blocked real-DGN routes. `LEV00.DGN` is also hash-resolved in Nexus runtime level load. Verification: `test_nexus_v1_dgn_geometry_readiness`, `test_nexus_v1_boot_file_hash_scan`, Nexus BPK focused CTests, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron Continue apply SRM receipts: Continue apply receipts now carry structured source, slot, SRM import, dungeon/level, quest mask, party restored/count, and gold fields for TQSV/SRM/no-source paths, so runtime/host handoff can avoid parsing inspect text when applying real `.srm` progress. Verification: `firestaff_theron_v1_startup_flow_probe` 627/627, `test_theron_v1_startup_save_resume_pc34` 162/162, and `git diff --check` passed.

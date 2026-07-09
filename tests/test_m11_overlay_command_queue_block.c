@@ -7,6 +7,7 @@
  */
 
 #include "m11_game_view.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -726,6 +727,7 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     struct DungeonMapDesc_Compat map;
     struct DungeonMapTiles_Compat tiles;
     struct DungeonThings_Compat things;
+    struct DungeonProjectile_Compat projectiles[1];
     unsigned char squareData[1];
     unsigned short squareFirstThings[1];
     unsigned char projectileRaw[8];
@@ -741,6 +743,7 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     memset(&map, 0, sizeof(map));
     memset(&tiles, 0, sizeof(tiles));
     memset(&things, 0, sizeof(things));
+    memset(projectiles, 0, sizeof(projectiles));
     memset(projectileRaw, 0, sizeof(projectileRaw));
     memset(explosionRaw, 0, sizeof(explosionRaw));
 
@@ -763,6 +766,8 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     things.squareFirstThingCount = 1;
     things.rawThingData[THING_TYPE_PROJECTILE] = projectileRaw;
     things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.projectiles = projectiles;
+    things.projectileCount = 1;
     things.rawThingData[THING_TYPE_EXPLOSION] = explosionRaw;
     things.thingCounts[THING_TYPE_EXPLOSION] = 1;
     world.dungeon = &dungeon;
@@ -853,6 +858,8 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
 
     state.world.projectiles.entries[0].reserved3 = 1;
     state.world.explosions.entries[0].reserved0 = 1;
+    squareFirstThings[0] = make_thing(THING_TYPE_PROJECTILE, 0);
+    projectiles[0].slot = PROJECTILE_SUBTYPE_FIREBALL;
     projectileCount = -1;
     explosionCount = -1;
     firstProjectileGfx = -2;
@@ -867,6 +874,14 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
               "runtime projectile with resolved graphic remains visible");
     ASSERT_EQ(firstProjectileGfx >= 0, 1,
               "runtime projectile exposes drawable graphic");
+    ASSERT_EQ(firstProjectileGfx,
+              dm1_v1_projectile_graphic_index(0, 0),
+              "runtime projectile graphic wins over stale static fireball");
+    ASSERT_EQ(firstProjectileGfx !=
+                  dm1_v1_projectile_subtype_graphic_index(
+                      PROJECTILE_SUBTYPE_FIREBALL),
+              1,
+              "stale static fireball graphic is not selected");
     ASSERT_EQ(explosionCount, 0,
               "runtime explosion without drawable type is suppressed");
     ASSERT_EQ(firstExplosionType, -1,
