@@ -2809,6 +2809,10 @@ static void test_startup_session_facts_wrappers(void) {
                         full_start_receipt.view_model.render_plan.graphic_count &&
                     host_render_receipt.render_route_valid &&
                     host_render_receipt.graphics_route_valid &&
+                    host_render_receipt.graphics_executor_consumed &&
+                    host_render_receipt.full_start_graphics_ready &&
+                    host_render_receipt.full_start_graphics_executed &&
+                    !host_render_receipt.full_start_graphics_blocked &&
                     host_render_receipt.track02_real_media_ready &&
                     host_render_receipt.real_bitmap_startup_graphics_ready &&
                     (host_render_receipt.bitmap_route_mask & 0x04u) &&
@@ -2825,6 +2829,41 @@ static void test_startup_session_facts_wrappers(void) {
                     !host_render_receipt.raw_session_rebuild_required &&
                     !host_render_receipt.raw_graphics_plan_consumer_required,
                 "boot host render receipt packages Track02 bitmap routes without raw prompt roster or render-plan consumer");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    theron_v1_boot_startup_host_render_receipt_init(&host_render_receipt);
+    expect_true(theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt_and_executor(
+                    &host_render_receipt,
+                    &media_receipt,
+                    &media_graphics_executor,
+                    media_snapshot.startup_phase,
+                    media_snapshot.selected_dungeon,
+                    media_snapshot.boot_profile,
+                    media_snapshot.world,
+                    media_snapshot.assets,
+                    media_snapshot.startup_cursor,
+                    media_snapshot.continue_focus,
+                    media_snapshot.resume_claim,
+                    media_snapshot.tqsv_slot,
+                    media_snapshot.srm_slot,
+                    media_snapshot.srm_import_status,
+                    media_snapshot.srm_root,
+                    media_snapshot.selected_mirrors_mask,
+                    media_snapshot.companion_count,
+                    media_snapshot.selected_mirror_order,
+                    media_snapshot.selected_mirror_order_count) &&
+                    host_render_receipt.host_consumes_full_start_receipt &&
+                    host_render_receipt.graphics_executor_consumed &&
+                    host_render_receipt.full_start_graphics_ready &&
+                    host_render_receipt.full_start_graphics_executed &&
+                    !host_render_receipt.full_start_graphics_blocked &&
+                    host_render_receipt.track02_startup_graphics_executed &&
+                    host_render_receipt
+                        .track02_startup_graphic_receipt_valid &&
+                    host_render_receipt.track02_startup_graphic_receipt.kind ==
+                        THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME &&
+                    media_graphics_counters.fill_count > 0 &&
+                    media_graphics_counters.rect_count > 0,
+                "boot runtime-state host render receipt consumes executor and returns full-start graphics proof");
     theron_v1_boot_startup_host_render_receipt_init(&host_render_receipt);
     expect_true(theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt(
                     &host_render_receipt,

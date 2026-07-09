@@ -867,6 +867,22 @@ int M11_GameView_ProbeDm1FrontChampionPortraitReceipt(
     int* outDstY,
     int* outTransparentColor,
     int* outConsumedWallSquareReceipt);
+int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
+    int* outReady,
+    int* outConsumeDm1ReceiptsOnly,
+    int* outNoM11FallbackScan,
+    int* outDrawOpenedEntranceFrame,
+    int* outClearChampionPanel,
+    int* outRenderHallMirrorOverlay,
+    int* outDrawChampionMirrorWallOverlay,
+    int* outDrawRealFloorObject,
+    int* outSuppressMirrorFloorItemPayload,
+    int* outSuppressMirrorProjectilePayload,
+    int* outSuppressMirrorSpellEffectPayload,
+    int* outMapIndex,
+    int* outEntranceDoorFrameIndex,
+    int* outHallOverlayKind,
+    int* outRenderCommandCount);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,

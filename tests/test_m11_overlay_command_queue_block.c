@@ -426,6 +426,74 @@ static void test_candidate_panel_uses_dm1_hoc_menu_route_receipt(void)
                                 "receipt-routed C040 does not tick");
 }
 
+static void test_dm1_hoc_startup_render_consumer_is_m11_ready(void)
+{
+    int ready = 0;
+    int consumeReceiptsOnly = 0;
+    int noFallbackScan = 0;
+    int drawOpenedEntrance = 0;
+    int clearPanel = 0;
+    int renderMirrors = 0;
+    int drawWallOverlay = 0;
+    int drawFloorObject = 0;
+    int suppressFloorPayload = 0;
+    int suppressProjectilePayload = 0;
+    int suppressSpellPayload = 0;
+    int mapIndex = -1;
+    int doorFrame = -1;
+    int overlayKind = -1;
+    int commandCount = 0;
+
+    ASSERT_EQ(M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
+                  &ready,
+                  &consumeReceiptsOnly,
+                  &noFallbackScan,
+                  &drawOpenedEntrance,
+                  &clearPanel,
+                  &renderMirrors,
+                  &drawWallOverlay,
+                  &drawFloorObject,
+                  &suppressFloorPayload,
+                  &suppressProjectilePayload,
+                  &suppressSpellPayload,
+                  &mapIndex,
+                  &doorFrame,
+                  &overlayKind,
+                  &commandCount),
+              1,
+              "M11 exposes DM1 HoC startup render consumer receipt");
+    ASSERT_EQ(ready, 1,
+              "DM1 HoC startup render consumer is ready");
+    ASSERT_EQ(consumeReceiptsOnly, 1,
+              "M11 HoC startup render consumes DM1 receipts only");
+    ASSERT_EQ(noFallbackScan, 1,
+              "M11 HoC startup render does not use fallback scan");
+    ASSERT_EQ(drawOpenedEntrance, 1,
+              "DM1 receipt draws opened entrance frame");
+    ASSERT_EQ(clearPanel, 1,
+              "DM1 receipt clears stale champion panel");
+    ASSERT_EQ(renderMirrors, 1,
+              "DM1 receipt renders Hall mirrors");
+    ASSERT_EQ(drawWallOverlay, 1,
+              "DM1 receipt draws champion mirror wall overlay");
+    ASSERT_EQ(drawFloorObject, 1,
+              "DM1 receipt allows real floor object");
+    ASSERT_EQ(suppressFloorPayload, 1,
+              "DM1 receipt suppresses mirror floor payload");
+    ASSERT_EQ(suppressProjectilePayload, 1,
+              "DM1 receipt suppresses mirror projectile payload");
+    ASSERT_EQ(suppressSpellPayload, 1,
+              "DM1 receipt suppresses mirror spell payload");
+    ASSERT_EQ(mapIndex, DM1_V1_ENTRANCE_MAP_INDEX_PC34,
+              "DM1 receipt carries HoC entrance map");
+    ASSERT_EQ(doorFrame, 9,
+              "DM1 receipt carries opened door frame");
+    ASSERT_EQ(overlayKind, DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34,
+              "DM1 receipt carries Hall mirror overlay kind");
+    ASSERT_EQ(commandCount, 3,
+              "DM1 receipt carries ordered HoC render commands");
+}
+
 static void test_candidate_panel_blocks_direct_object_helpers(void)
 {
     M11_GameViewState state;
@@ -1565,6 +1633,7 @@ int main(void)
     test_candidate_panel_blocks_direct_inventory_toggle();
     test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_uses_dm1_hoc_menu_route_receipt();
+    test_dm1_hoc_startup_render_consumer_is_m11_ready();
     test_candidate_panel_blocks_direct_object_helpers();
     test_candidate_panel_blocks_direct_leader_hand_chest_helpers();
     test_candidate_panel_blocks_direct_quickload_only();
