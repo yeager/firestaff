@@ -6745,6 +6745,12 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 preflightIn.targetResolved = targetResolved;
                 preflightIn.reachBlocked = reachBlocked;
                 preflightIn.disruptBlocked = disruptBlocked;
+                preflightIn.candidateInvulnerable =
+                    targetResolved &&
+                    world->candidateAttackInvulnerableEnabled &&
+                    world->candidateAttackInvulnerableGroupIndex == groupIndex &&
+                    world->candidateAttackInvulnerableCreatureIndex ==
+                        creatureIndex;
                 preflightIn.championSnapshotReady = targetResolved;
                 preflightIn.creatureSnapshotReady = targetResolved;
                 (void)dm1_v1_melee_preflight_plan_f0402_pc34(
