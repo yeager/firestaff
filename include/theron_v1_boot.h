@@ -915,6 +915,11 @@ void theron_v1_boot_startup_host_render_receipt_init(
 int theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
     const Theron_V1_BootStartupFullStartReceipt *receipt,
     Theron_V1_BootStartupHostRenderReceipt *out_receipt);
+int theron_v1_boot_startup_host_render_receipt_from_snapshot_with_media_receipt_and_executor(
+    Theron_V1_BootStartupHostRenderReceipt *out_receipt,
+    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_StartupGraphicExecutor *executor);
 int theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt(
     Theron_V1_BootStartupHostRenderReceipt *out_receipt,
     const Theron_StartupMediaStateReceipt *startup_media_receipt,

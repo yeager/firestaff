@@ -2864,6 +2864,26 @@ static void test_startup_session_facts_wrappers(void) {
                     media_graphics_counters.fill_count > 0 &&
                     media_graphics_counters.rect_count > 0,
                 "boot runtime-state host render receipt consumes executor and returns full-start graphics proof");
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    theron_v1_boot_startup_host_render_receipt_init(&host_render_receipt);
+    expect_true(theron_v1_boot_startup_host_render_receipt_from_snapshot_with_media_receipt_and_executor(
+                    &host_render_receipt,
+                    &media_snapshot,
+                    &media_receipt,
+                    &media_graphics_executor) &&
+                    host_render_receipt.host_consumes_full_start_receipt &&
+                    host_render_receipt.graphics_executor_consumed &&
+                    host_render_receipt.full_start_graphics_ready &&
+                    host_render_receipt.full_start_graphics_executed &&
+                    host_render_receipt.track02_real_media_ready &&
+                    host_render_receipt.real_bitmap_startup_graphics_ready &&
+                    host_render_receipt.track02_startup_graphics_executed &&
+                    !host_render_receipt.raw_prompt_roster_required &&
+                    !host_render_receipt.raw_session_rebuild_required &&
+                    !host_render_receipt.raw_graphics_plan_consumer_required &&
+                    media_graphics_counters.fill_count > 0 &&
+                    media_graphics_counters.rect_count > 0,
+                "boot snapshot host-render receipt consumes Track02 media executor without runtime field rebuild");
     theron_v1_boot_startup_host_render_receipt_init(&host_render_receipt);
     expect_true(theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt(
                     &host_render_receipt,
