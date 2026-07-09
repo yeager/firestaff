@@ -1504,6 +1504,7 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
         receipt->title_timing_ready &&
         receipt->title_asset_ready &&
         receipt->new_game_menu_ready;
+    receipt->title_animation_tick = full_start->title_animation_tick;
     receipt->draw_startup_menu =
         full_start->startup_menu_active &&
         full_start->full_start_graphics_ready &&
@@ -1513,6 +1514,12 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
     receipt->title_frame_duration_ticks =
         full_start->title_frame_duration_ticks;
     receipt->title_ready = full_start->title_ready;
+    receipt->title_gdat_asset_ready = full_start->title_gdat_asset_ready;
+    receipt->title_gdat_asset_w = full_start->title_gdat_asset_w;
+    receipt->title_gdat_asset_h = full_start->title_gdat_asset_h;
+    receipt->title_gdat_asset_stride = full_start->title_gdat_asset_stride;
+    receipt->full_start_real_asset_ready =
+        full_start->full_start_real_asset_ready;
     receipt->hud_overlay_suppressed = full_start->hud_overlay_suppressed;
     receipt->hud_runtime_ready = full_start->hud_runtime_ready;
     receipt->runtime_menu_ready = full_start->runtime_menu_ready;
