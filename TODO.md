@@ -17,6 +17,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: DB0 door render receipts now expose the chosen render-plan row with panel, ornate, destroyed-mask, frame, and button GDAT indices. Remaining DM2 work is exact GDAT animation-table decoding, more CCM opcodes, real save corpus handoff, and exact GDAT mask/list parity.
 
 - 🔧 2026-07-09 CSB startup route follow-up: title/PRESENTS render-view receipts now carry render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Remaining CSB work is moving M11 title drawing to consume this receipt directly, then packaged capture proof.
+  - 2026-07-09 update: M11 title drawing now consumes a CSB-built title plan from the render-view receipt, including stale-plan protection for post-FTL PRESENTS/CHAOS/STRIKES routes. Remaining CSB work is packaged capture proof and moving the next HUD/menu draw path behind receipt-only input.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
   - 2026-07-09 update: DM1 champion mirror receipt now separates ReDMCSB's 1-based G0289 source ordinal from the 0-based C026 render index, and M11 has a HoC front-wall probe. Remaining viewport coding work is replacing the last mirror fallback scans with DM1-owned route receipts.

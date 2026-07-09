@@ -1814,7 +1814,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
     CSB_V1_BootStartupRenderViewReceipt_PC34 view_receipt;
+    CSB_V1_BootStartupRenderViewReceipt_PC34 poisoned_view_receipt;
     CSB_V1_BootStartupRenderViewReceipt_PC34 runtime_view_receipt;
+    CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
     CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
     CSB_V1_StartupRenderPlan_PC34 runtime_render_plan;
     int enter_menu_x = 244;
@@ -2007,6 +2009,25 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !view_receipt.title_presents_visible &&
               !view_receipt.title_strikes_back_visible,
           "boot startup render-view receipt exposes source CHAOS title render route");
+    poisoned_view_receipt = view_receipt;
+    poisoned_view_receipt.render_plan.asset_commands[0].source_y = 1;
+    poisoned_view_receipt.render_plan.asset_commands[0].dest_h = 1;
+    poisoned_view_receipt.render_plan.title_source_y = 1;
+    poisoned_view_receipt.render_plan.title_dest_h = 1;
+    CHECK(csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
+              &poisoned_view_receipt,
+              &receipt_title_plan) == 1 &&
+              receipt_title_plan.asset_command_count == 1 &&
+              receipt_title_plan.asset_commands[0].kind ==
+                  CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34 &&
+              receipt_title_plan.asset_commands[0].source_y == 78 &&
+              receipt_title_plan.asset_commands[0].dest_h == 80 &&
+              receipt_title_plan.title_source_y == 78 &&
+              receipt_title_plan.title_dest_h == 80 &&
+              receipt_title_plan.render_command_count == 1 &&
+              receipt_title_plan.render_commands[0].kind ==
+                  CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
+          "boot startup title draw handoff consumes render-view receipt fields");
     snapshot.title_frame = 101;
     snapshot.title_source_step =
         CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
