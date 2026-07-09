@@ -2830,16 +2830,23 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "boot startup host-view receipt executes utility render plan directly");
     memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
     hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
-    CHECK(csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
-              &capture_receipt,
-              &hud_draw_executor) == 1 &&
+    CHECK(csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
+              &snapshot,
+              &readiness_receipt) == 1 &&
+              csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
+                  &host_view_receipt.hud_menu_draw,
+                  &readiness_receipt,
+                  &hud_draw_executor) == 1 &&
+              host_view_receipt.hud_menu_draw_valid &&
+              host_view_receipt.capture_proof.hud_menu_draw_available &&
+              host_view_receipt.capture_proof.utility_menu_route &&
               hud_draw_probe.utility_panel_count == 1 &&
               hud_draw_probe.closed_doors_count == 0 &&
               hud_draw_probe.fallback_text_count == 0 &&
               hud_draw_probe.last_waiting_for_input &&
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
-          "boot startup capture receipt executes utility HUD/menu draw");
+          "boot startup host-view receipt executes utility HUD/menu draw");
     CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
               &capture_receipt,
               &packaged_proof) == 1 &&
@@ -3193,9 +3200,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "boot startup HUD/menu executor draws closed-door HUD from readiness-gated receipt");
     memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
     hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
-    CHECK(csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
+    CHECK(csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
               &capture_receipt,
-              &hud_draw_executor) == 2 &&
+              &host_view_receipt) == 1 &&
+              host_view_receipt.hud_menu_draw_valid &&
+              host_view_receipt.capture_proof.hud_menu_draw_available &&
+              host_view_receipt.capture_proof.closed_door_menu_route &&
+              csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
+                  &host_view_receipt.hud_menu_draw,
+                  &readiness_receipt,
+                  &hud_draw_executor) == 2 &&
               hud_draw_probe.utility_panel_count == 0 &&
               hud_draw_probe.closed_doors_count == 1 &&
               hud_draw_probe.fallback_text_count == 1 &&
@@ -3203,7 +3217,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_probe.last_menu_option_count == 4 &&
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
-          "boot startup capture receipt executes closed-door HUD/menu draw");
+          "boot startup host-view receipt executes closed-door HUD/menu draw");
     CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
               &capture_receipt,
               &packaged_proof) == 1 &&

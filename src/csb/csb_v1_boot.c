@@ -2909,25 +2909,6 @@ int csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
     return 0;
 }
 
-int csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
-    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
-    const CSB_V1_StartupRenderExecutor_PC34 *executor)
-{
-    if (!capture_receipt || !capture_receipt->valid ||
-        !capture_receipt->hud_menu_capture_ready ||
-        !capture_receipt->hud_menu_draw_valid ||
-        !capture_receipt->readiness_valid) {
-        return 0;
-    }
-    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns the closed-door
-     * wait/menu loop. Consuming the aggregate capture receipt here keeps
-     * HUD draw and readiness paired inside the CSB boot boundary. */
-    return csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
-        &capture_receipt->hud_menu_draw,
-        &capture_receipt->readiness,
-        executor);
-}
-
 int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *out_proof)
