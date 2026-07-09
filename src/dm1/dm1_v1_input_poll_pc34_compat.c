@@ -37,7 +37,7 @@
 
 /* ── Initialization ───────────────────────────────────────────────── */
 
-void m11_input_init(M11_InputState *state)
+void DM1_V1_Input_InitPc34Compat(DM1_V1_InputStatePc34 *state)
 {
     memset(state, 0, sizeof(*state));
     /* Default screen bounds: PC34 logical resolution */
@@ -51,22 +51,22 @@ void m11_input_init(M11_InputState *state)
     state->initialized = 1;
 }
 
-void m11_input_deinit(M11_InputState *state)
+void DM1_V1_Input_DeinitPc34Compat(DM1_V1_InputStatePc34 *state)
 {
     state->initialized = 0;
 }
 
 /* ── Key buffer operations (F1097/F1098/F1099) ────────────────────── */
 
-int m11_input_store_key(M11_InputState *state, uint16_t keyCode)
+int DM1_V1_Input_StoreKeyPc34Compat(DM1_V1_InputStatePc34 *state, uint16_t keyCode)
 {
     /*
      * F1097_StoreKeyInBuffer:
      *   L2626 = (G3174 + 1) & 0x3F
      *   if L2626 != G3175: buffer[G3174] = key; G3174 = L2626
      */
-    M11_KeyBuffer *kb = &state->keyBuffer;
-    int nextWrite = (kb->writeIndex + 1) & (M11_KEY_BUFFER_SIZE - 1);
+    DM1_V1_InputKeyBufferPc34 *kb = &state->keyBuffer;
+    int nextWrite = (kb->writeIndex + 1) & (DM1_V1_INPUT_KEY_BUFFER_SIZE_PC34 - 1);
     if (nextWrite == kb->readIndex) {
         return 0; /* Buffer full */
     }
@@ -75,29 +75,29 @@ int m11_input_store_key(M11_InputState *state, uint16_t keyCode)
     return 1;
 }
 
-uint16_t m11_input_get_key(M11_InputState *state)
+uint16_t DM1_V1_Input_GetKeyPc34Compat(DM1_V1_InputStatePc34 *state)
 {
     /*
      * F1098_GetFirstKeyFromBuffer:
      *   key = buffer[G3175]; G3175 = (G3175 + 1) & 0x3F
      */
-    M11_KeyBuffer *kb = &state->keyBuffer;
+    DM1_V1_InputKeyBufferPc34 *kb = &state->keyBuffer;
     if (kb->readIndex == kb->writeIndex) {
         return 0; /* Buffer empty */
     }
     uint16_t key = kb->buffer[kb->readIndex];
-    kb->readIndex = (kb->readIndex + 1) & (M11_KEY_BUFFER_SIZE - 1);
+    kb->readIndex = (kb->readIndex + 1) & (DM1_V1_INPUT_KEY_BUFFER_SIZE_PC34 - 1);
     return key;
 }
 
-int m11_input_key_available(const M11_InputState *state)
+int DM1_V1_Input_KeyAvailablePc34Compat(const DM1_V1_InputStatePc34 *state)
 {
     /* F1099: G3174 != G3175 */
-    const M11_KeyBuffer *kb = &state->keyBuffer;
+    const DM1_V1_InputKeyBufferPc34 *kb = &state->keyBuffer;
     return kb->readIndex != kb->writeIndex;
 }
 
-void m11_input_discard_all(M11_InputState *state)
+void DM1_V1_Input_DiscardAllPc34Compat(DM1_V1_InputStatePc34 *state)
 {
     state->keyBuffer.readIndex = 0;
     state->keyBuffer.writeIndex = 0;
@@ -109,7 +109,7 @@ void m11_input_discard_all(M11_InputState *state)
 
 /* ── Mouse event processing ───────────────────────────────────────── */
 
-void m11_input_mouse_move(M11_InputState *state, int16_t dx, int16_t dy)
+void DM1_V1_Input_MouseMovePc34Compat(DM1_V1_InputStatePc34 *state, int16_t dx, int16_t dy)
 {
     /*
      * F0543 IECLASS_RAWMOUSE:
@@ -128,7 +128,7 @@ void m11_input_mouse_move(M11_InputState *state, int16_t dx, int16_t dy)
     if (state->mouseY > state->screenMaxY) state->mouseY = state->screenMaxY;
 }
 
-void m11_input_mouse_set_position(M11_InputState *state, int16_t x, int16_t y)
+void DM1_V1_Input_MouseSetPositionPc34Compat(DM1_V1_InputStatePc34 *state, int16_t x, int16_t y)
 {
     state->mouseX = x;
     state->mouseY = y;
@@ -139,7 +139,7 @@ void m11_input_mouse_set_position(M11_InputState *state, int16_t x, int16_t y)
     if (state->mouseY > state->screenMaxY) state->mouseY = state->screenMaxY;
 }
 
-uint16_t m11_input_mouse_button_down(M11_InputState *state, int isLeft)
+uint16_t DM1_V1_Input_MouseButtonDownPc34Compat(DM1_V1_InputStatePc34 *state, int isLeft)
 {
     /*
      * F0543: IECODE_LBUTTON / IECODE_RBUTTON
@@ -160,7 +160,7 @@ uint16_t m11_input_mouse_button_down(M11_InputState *state, int isLeft)
     return state->mouseButtons;
 }
 
-uint16_t m11_input_mouse_button_up(M11_InputState *state, int isLeft)
+uint16_t DM1_V1_Input_MouseButtonUpPc34Compat(DM1_V1_InputStatePc34 *state, int isLeft)
 {
     /*
      * F0543: IECODE_LBUTTON+UP / IECODE_RBUTTON+UP
@@ -178,7 +178,7 @@ uint16_t m11_input_mouse_button_up(M11_InputState *state, int isLeft)
     return state->mouseButtons;
 }
 
-void m11_input_mouse_get_position(const M11_InputState *state,
+void DM1_V1_Input_MouseGetPositionPc34Compat(const DM1_V1_InputStatePc34 *state,
                                   int16_t *x, int16_t *y)
 {
     if (x) *x = state->mouseX;
@@ -187,7 +187,7 @@ void m11_input_mouse_get_position(const M11_InputState *state,
 
 /* ── Numpad remap (A3x path from F0543) ───────────────────────────── */
 
-uint16_t m11_input_numpad_to_movement(uint16_t normalizedCode)
+uint16_t DM1_V1_Input_NumpadToMovementPc34Compat(uint16_t normalizedCode)
 {
     /*
      * F0543 switch statement (A3x):
@@ -213,7 +213,7 @@ uint16_t m11_input_numpad_to_movement(uint16_t normalizedCode)
 
 /* ── Raw key processing ───────────────────────────────────────────── */
 
-uint16_t m11_input_process_raw_key(M11_InputState *state,
+uint16_t DM1_V1_Input_ProcessRawKeyPc34Compat(DM1_V1_InputStatePc34 *state,
                                    uint16_t rawScanCode,
                                    int isKeyUp,
                                    int capsLock,
@@ -243,17 +243,17 @@ uint16_t m11_input_process_raw_key(M11_InputState *state,
     }
 
     /* Numpad remap */
-    normalized = m11_input_numpad_to_movement(normalized);
+    normalized = DM1_V1_Input_NumpadToMovementPc34Compat(normalized);
 
     /* Store in buffer */
-    m11_input_store_key(state, normalized);
+    DM1_V1_Input_StoreKeyPc34Compat(state, normalized);
 
     return normalized;
 }
 
 /* ── Joystick support ─────────────────────────────────────────────── */
 
-uint16_t m11_input_joystick_axis(M11_InputState *state,
+uint16_t DM1_V1_Input_JoystickAxisPc34Compat(DM1_V1_InputStatePc34 *state,
                                  int16_t axisX, int16_t axisY)
 {
     /*
@@ -275,7 +275,7 @@ uint16_t m11_input_joystick_axis(M11_InputState *state,
 
 /* ── Polling ──────────────────────────────────────────────────────── */
 
-int m11_input_any_activity(M11_InputState *state)
+int DM1_V1_Input_AnyActivityPc34Compat(DM1_V1_InputStatePc34 *state)
 {
     /* F0541: G1044_B_MouseOrKeyboardInput check + clear */
     int activity = state->mouseOrKeyboardInput;
@@ -283,17 +283,17 @@ int m11_input_any_activity(M11_InputState *state)
     return activity;
 }
 
-int m11_input_wait_for_activity(const M11_InputState *state)
+int DM1_V1_Input_WaitForActivityPc34Compat(const DM1_V1_InputStatePc34 *state)
 {
     /* Non-blocking check: any keys or mouse activity pending? */
     return state->mouseOrKeyboardInput ||
-           m11_input_key_available(state) ||
+           DM1_V1_Input_KeyAvailablePc34Compat(state) ||
            state->mouseButtons != 0;
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */
 
-const char *m11_input_poll_source_evidence(void)
+const char *DM1_V1_Input_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206 INPUT.C\n"

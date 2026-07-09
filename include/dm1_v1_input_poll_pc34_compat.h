@@ -67,7 +67,7 @@ typedef enum {
     DM1_INPUT_MOUSE_RIGHT_UP,
     DM1_INPUT_JOYSTICK_AXIS,
     DM1_INPUT_JOYSTICK_BUTTON
-} M11_InputEventType;
+} DM1_V1_InputEventTypePc34;
 
 /* ── DM1 PC34 key codes (DOS int 16h scan codes, normalized) ──────── */
 typedef enum {
@@ -95,7 +95,7 @@ typedef enum {
     DM1_KEY_ESCAPE          = 0x001B,  /* Menu */
     DM1_KEY_BACKSPACE       = 0x0008,  /* Delete spell symbol */
     DM1_KEY_DELETE           = 0x007F   /* Shift+DEL */
-} M11_DM1KeyCode;
+} DM1_V1_InputKeyCodePc34;
 
 /* ── Mouse button masks (from G0588 bitmask) ─────────────────────── */
 #define DM1_MOUSE_LEFT_BUTTON    0x0002  /* MASK0x0002_MOUSE_LEFT_BUTTON */
@@ -105,23 +105,23 @@ typedef enum {
 
 /* ── Input event structure ────────────────────────────────────────── */
 typedef struct {
-    M11_InputEventType type;
+    DM1_V1_InputEventTypePc34 type;
     uint16_t keyCode;       /* Normalized DM1 key code */
     int16_t  mouseX;        /* G1038_i_MouseX (logical: 0–319) */
     int16_t  mouseY;        /* G1039_i_MouseY (logical: 0–199) */
     uint16_t buttonMask;    /* G0588_i_MouseButtonsStatus */
     int16_t  joystickAxis;  /* Axis value (-1, 0, +1) */
     int16_t  joystickId;    /* Axis/button identifier */
-} M11_InputEvent;
+} DM1_V1_InputEventPc34;
 
 /* ── Key buffer (ring buffer, matches F1097/F1098/F1099) ──────────── */
-#define M11_KEY_BUFFER_SIZE  64  /* 64-entry ring from G3174/G3175 mask 0x3F */
+#define DM1_V1_INPUT_KEY_BUFFER_SIZE_PC34  64  /* 64-entry ring from G3174/G3175 mask 0x3F */
 
 typedef struct {
-    uint16_t buffer[M11_KEY_BUFFER_SIZE];
+    uint16_t buffer[DM1_V1_INPUT_KEY_BUFFER_SIZE_PC34];
     int      writeIndex;    /* G3174_i_LastKeyIndex */
     int      readIndex;     /* G3175_i_FirstKeyIndex */
-} M11_KeyBuffer;
+} DM1_V1_InputKeyBufferPc34;
 
 /* ── Input system state ───────────────────────────────────────────── */
 typedef struct {
@@ -138,7 +138,7 @@ typedef struct {
     int16_t  screenMaxY;   /* 199 (logical) or 399 (raw Amiga) */
 
     /* Key buffer */
-    M11_KeyBuffer keyBuffer;
+    DM1_V1_InputKeyBufferPc34 keyBuffer;
 
     /* Keyboard alt/amiga emulation flags */
     int leftAmigaAltDown;       /* G1046_B_LeftAmigaAndLeftAltDown */
@@ -153,78 +153,103 @@ typedef struct {
 
     /* Initialization state */
     int initialized;
-} M11_InputState;
+} DM1_V1_InputStatePc34;
 
 /* ── Initialization ───────────────────────────────────────────────── */
 
 /* Initialize input system (F0536_INPUT_Initialize path). */
-void m11_input_init(M11_InputState *state);
+void DM1_V1_Input_InitPc34Compat(DM1_V1_InputStatePc34 *state);
 
 /* Deinitialize input system (F0538_INPUT_Deinitialize). */
-void m11_input_deinit(M11_InputState *state);
+void DM1_V1_Input_DeinitPc34Compat(DM1_V1_InputStatePc34 *state);
 
 /* ── Key buffer operations (F1097/F1098/F1099) ────────────────────── */
 
 /* Store a key code in the ring buffer. Returns 1 if stored, 0 if full. */
-int m11_input_store_key(M11_InputState *state, uint16_t keyCode);
+int DM1_V1_Input_StoreKeyPc34Compat(DM1_V1_InputStatePc34 *state, uint16_t keyCode);
 
 /* Get first key from buffer. Returns 0 if empty. */
-uint16_t m11_input_get_key(M11_InputState *state);
+uint16_t DM1_V1_Input_GetKeyPc34Compat(DM1_V1_InputStatePc34 *state);
 
 /* Check if key buffer is not empty. */
-int m11_input_key_available(const M11_InputState *state);
+int DM1_V1_Input_KeyAvailablePc34Compat(const DM1_V1_InputStatePc34 *state);
 
 /* Discard all buffered input (F0357_COMMAND_DiscardAllInput equivalent). */
-void m11_input_discard_all(M11_InputState *state);
+void DM1_V1_Input_DiscardAllPc34Compat(DM1_V1_InputStatePc34 *state);
 
 /* ── Mouse event processing (from F0543 IECLASS_RAWMOUSE handler) ── */
 
 /* Process a mouse movement delta. Clamps to screen bounds. */
-void m11_input_mouse_move(M11_InputState *state, int16_t dx, int16_t dy);
+void DM1_V1_Input_MouseMovePc34Compat(DM1_V1_InputStatePc34 *state, int16_t dx, int16_t dy);
 
 /* Set absolute mouse position. */
-void m11_input_mouse_set_position(M11_InputState *state, int16_t x, int16_t y);
+void DM1_V1_Input_MouseSetPositionPc34Compat(DM1_V1_InputStatePc34 *state, int16_t x, int16_t y);
 
 /* Process mouse button down. Returns the button mask set. */
-uint16_t m11_input_mouse_button_down(M11_InputState *state, int isLeft);
+uint16_t DM1_V1_Input_MouseButtonDownPc34Compat(DM1_V1_InputStatePc34 *state, int isLeft);
 
 /* Process mouse button up. Returns the button mask cleared. */
-uint16_t m11_input_mouse_button_up(M11_InputState *state, int isLeft);
+uint16_t DM1_V1_Input_MouseButtonUpPc34Compat(DM1_V1_InputStatePc34 *state, int isLeft);
 
 /* Get current mouse position. */
-void m11_input_mouse_get_position(const M11_InputState *state,
+void DM1_V1_Input_MouseGetPositionPc34Compat(const DM1_V1_InputStatePc34 *state,
                                   int16_t *x, int16_t *y);
 
 /* ── Keyboard event processing (from F0543 IECLASS_RAWKEY handler) ── */
 
 /* Process a raw key event. Normalizes and stores in buffer.
  * Returns the normalized key code, or 0 if swallowed. */
-uint16_t m11_input_process_raw_key(M11_InputState *state,
+uint16_t DM1_V1_Input_ProcessRawKeyPc34Compat(DM1_V1_InputStatePc34 *state,
                                    uint16_t rawScanCode,
                                    int isKeyUp,
                                    int capsLock,
                                    int shiftHeld);
 
 /* Map a numpad scan code to movement key code (A3x numpad remap). */
-uint16_t m11_input_numpad_to_movement(uint16_t normalizedCode);
+uint16_t DM1_V1_Input_NumpadToMovementPc34Compat(uint16_t normalizedCode);
 
 /* ── Joystick support (optional, from F0376) ──────────────────────── */
 
 /* Process joystick axis. Maps to movement direction. */
-uint16_t m11_input_joystick_axis(M11_InputState *state,
+uint16_t DM1_V1_Input_JoystickAxisPc34Compat(DM1_V1_InputStatePc34 *state,
                                  int16_t axisX, int16_t axisY);
 
 /* ── Polling ──────────────────────────────────────────────────────── */
 
 /* Check if any input has occurred since last check (F0539 equivalent).
  * Clears the flag after checking. */
-int m11_input_any_activity(M11_InputState *state);
+int DM1_V1_Input_AnyActivityPc34Compat(DM1_V1_InputStatePc34 *state);
 
 /* Wait for keyboard or mouse activity (F0541 equivalent — non-blocking poll). */
-int m11_input_wait_for_activity(const M11_InputState *state);
+int DM1_V1_Input_WaitForActivityPc34Compat(const DM1_V1_InputStatePc34 *state);
 
 /* ── Source evidence ──────────────────────────────────────────────── */
-const char *m11_input_poll_source_evidence(void);
+const char *DM1_V1_Input_SourceEvidencePc34Compat(void);
+
+typedef DM1_V1_InputEventTypePc34 M11_InputEventType;
+typedef DM1_V1_InputKeyCodePc34 M11_DM1KeyCode;
+typedef DM1_V1_InputEventPc34 M11_InputEvent;
+typedef DM1_V1_InputKeyBufferPc34 M11_KeyBuffer;
+typedef DM1_V1_InputStatePc34 M11_InputState;
+
+#define M11_KEY_BUFFER_SIZE DM1_V1_INPUT_KEY_BUFFER_SIZE_PC34
+#define m11_input_init DM1_V1_Input_InitPc34Compat
+#define m11_input_deinit DM1_V1_Input_DeinitPc34Compat
+#define m11_input_store_key DM1_V1_Input_StoreKeyPc34Compat
+#define m11_input_get_key DM1_V1_Input_GetKeyPc34Compat
+#define m11_input_key_available DM1_V1_Input_KeyAvailablePc34Compat
+#define m11_input_discard_all DM1_V1_Input_DiscardAllPc34Compat
+#define m11_input_mouse_move DM1_V1_Input_MouseMovePc34Compat
+#define m11_input_mouse_set_position DM1_V1_Input_MouseSetPositionPc34Compat
+#define m11_input_mouse_button_down DM1_V1_Input_MouseButtonDownPc34Compat
+#define m11_input_mouse_button_up DM1_V1_Input_MouseButtonUpPc34Compat
+#define m11_input_mouse_get_position DM1_V1_Input_MouseGetPositionPc34Compat
+#define m11_input_process_raw_key DM1_V1_Input_ProcessRawKeyPc34Compat
+#define m11_input_numpad_to_movement DM1_V1_Input_NumpadToMovementPc34Compat
+#define m11_input_joystick_axis DM1_V1_Input_JoystickAxisPc34Compat
+#define m11_input_any_activity DM1_V1_Input_AnyActivityPc34Compat
+#define m11_input_wait_for_activity DM1_V1_Input_WaitForActivityPc34Compat
+#define m11_input_poll_source_evidence DM1_V1_Input_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }

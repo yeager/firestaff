@@ -97,15 +97,15 @@ typedef struct {
     /* ── Subsystem states ── */
     M11_GameStateMachine              stateMachine;
     DM1_V1_GameLoopStatePc34                 gameLoop;
-    M11_GL_State                      loopIntegration;
-    M11_InputState                    input;
+    DM1_V1_LoopIntegrationStatePc34                      loopIntegration;
+    DM1_V1_InputStatePc34                    input;
     DM1_V1_DungeonDataPc34                dungeonData;
     DM1_Viewport3DState               viewport3d;
     struct Dm1V1MovementPipelinePc34Compat movementPipeline;
     DM1_V1_DialogStatePc34                      dialog;
     DM1_V1_ClickRoutingStatePc34                      clickRouting;
     DM1_V1_SaveLoadStatePc34                      saveLoad;
-    M11_ScreenState                   screen;
+    DM1_V1_ScreenStatePc34                   screen;
 
     /* ── Engine metadata ── */
     M11_EngineConfig                  config;
@@ -171,10 +171,10 @@ M11_GameStateId m11_engine_get_state(const M11_Engine *engine);
 DM1_V1_DungeonDataPc34 *m11_engine_get_dungeon_data(M11_Engine *engine);
 
 /* Get pointer to input state (for feeding external events). */
-M11_InputState *m11_engine_get_input(M11_Engine *engine);
+DM1_V1_InputStatePc34 *m11_engine_get_input(M11_Engine *engine);
 
 /* Get pointer to screen state (for presentation). */
-M11_ScreenState *m11_engine_get_screen(M11_Engine *engine);
+DM1_V1_ScreenStatePc34 *m11_engine_get_screen(M11_Engine *engine);
 
 /* Get pointer to save/load state. */
 DM1_V1_SaveLoadStatePc34 *m11_engine_get_save_load(M11_Engine *engine);

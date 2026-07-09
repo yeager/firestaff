@@ -23,94 +23,114 @@
 extern "C" {
 #endif
 
-#define M11_SCREEN_W       320
-#define M11_SCREEN_H       200
-#define M11_PALETTE_SIZE    16
+#define DM1_V1_SCREEN_W_PC34       320
+#define DM1_V1_SCREEN_H_PC34       200
+#define DM1_V1_PALETTE_SIZE_PC34    16
 
 /* Palette entry — 6-bit RGB per channel (0-63, Atari ST/Amiga style) */
 typedef struct {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-} M11_PaletteEntry;
+} DM1_V1_PaletteEntryPc34;
 
 /* Screen state — double-buffered framebuffer */
 typedef struct {
-    uint8_t frontBuffer[M11_SCREEN_H][M11_SCREEN_W];
-    uint8_t backBuffer[M11_SCREEN_H][M11_SCREEN_W];
-    M11_PaletteEntry palette[M11_PALETTE_SIZE];
+    uint8_t frontBuffer[DM1_V1_SCREEN_H_PC34][DM1_V1_SCREEN_W_PC34];
+    uint8_t backBuffer[DM1_V1_SCREEN_H_PC34][DM1_V1_SCREEN_W_PC34];
+    DM1_V1_PaletteEntryPc34 palette[DM1_V1_PALETTE_SIZE_PC34];
     int dirty;                  /* back buffer has unswapped changes */
     int32_t lastPresentMs;      /* timestamp of last present */
     int presentCount;           /* total presents */
-} M11_ScreenState;
+} DM1_V1_ScreenStatePc34;
 
 /*
  * Initialize screen state. Clears both buffers, loads default DM1 palette.
  */
-void m11_screen_init(M11_ScreenState *s);
+void DM1_V1_Screen_InitPc34Compat(DM1_V1_ScreenStatePc34 *s);
 
 /*
  * Get pointer to back buffer (for drawing into).
  */
-uint8_t *m11_screen_get_back_buffer(M11_ScreenState *s);
+uint8_t *DM1_V1_Screen_GetBackBufferPc34Compat(DM1_V1_ScreenStatePc34 *s);
 
 /*
  * Get pointer to front buffer (for display).
  */
-const uint8_t *m11_screen_get_front_buffer(const M11_ScreenState *s);
+const uint8_t *DM1_V1_Screen_GetFrontBufferPc34Compat(const DM1_V1_ScreenStatePc34 *s);
 
 /*
  * Swap buffers: copy back → front.
  */
-void m11_screen_swap_buffers(M11_ScreenState *s);
+void DM1_V1_Screen_SwapBuffersPc34Compat(DM1_V1_ScreenStatePc34 *s);
 
 /*
  * Present: swap buffers, clear dirty flag, update timestamp.
  */
-void m11_screen_present(M11_ScreenState *s, int32_t nowMs);
+void DM1_V1_Screen_PresentPc34Compat(DM1_V1_ScreenStatePc34 *s, int32_t nowMs);
 
 /*
  * Set a single palette entry (F0093).
  */
-void m11_screen_set_palette(M11_ScreenState *s, int idx,
+void DM1_V1_Screen_SetPalettePc34Compat(DM1_V1_ScreenStatePc34 *s, int idx,
                             uint8_t r, uint8_t g, uint8_t b);
 
 /*
  * Set a block of palette entries (F0094).
  */
-void m11_screen_set_palette_block(M11_ScreenState *s, int startIdx,
-                                  const M11_PaletteEntry *entries, int count);
+void DM1_V1_Screen_SetPaletteBlockPc34Compat(DM1_V1_ScreenStatePc34 *s, int startIdx,
+                                  const DM1_V1_PaletteEntryPc34 *entries, int count);
 
 /*
  * Get a palette entry.
  */
-M11_PaletteEntry m11_screen_get_palette(const M11_ScreenState *s, int idx);
+DM1_V1_PaletteEntryPc34 DM1_V1_Screen_GetPalettePc34Compat(const DM1_V1_ScreenStatePc34 *s, int idx);
 
 /*
  * Clear back buffer to a color.
  */
-void m11_screen_clear_back(M11_ScreenState *s, uint8_t color);
+void DM1_V1_Screen_ClearBackPc34Compat(DM1_V1_ScreenStatePc34 *s, uint8_t color);
 
 /*
  * Mark back buffer as dirty (needs present).
  */
-void m11_screen_mark_dirty(M11_ScreenState *s);
+void DM1_V1_Screen_MarkDirtyPc34Compat(DM1_V1_ScreenStatePc34 *s);
 
 /*
  * Check if back buffer is dirty.
  */
-int m11_screen_is_dirty(const M11_ScreenState *s);
+int DM1_V1_Screen_IsDirtyPc34Compat(const DM1_V1_ScreenStatePc34 *s);
 
 /*
  * Copy a region within the back buffer (for scrolling, etc.).
  */
-void m11_screen_copy_region(M11_ScreenState *s,
+void DM1_V1_Screen_CopyRegionPc34Compat(DM1_V1_ScreenStatePc34 *s,
                             int sx, int sy, int dx, int dy, int w, int h);
 
 /*
  * Source evidence string.
  */
-const char *m11_screen_source_evidence(void);
+const char *DM1_V1_Screen_SourceEvidencePc34Compat(void);
+
+typedef DM1_V1_PaletteEntryPc34 M11_PaletteEntry;
+typedef DM1_V1_ScreenStatePc34 M11_ScreenState;
+
+#define M11_SCREEN_W DM1_V1_SCREEN_W_PC34
+#define M11_SCREEN_H DM1_V1_SCREEN_H_PC34
+#define M11_PALETTE_SIZE DM1_V1_PALETTE_SIZE_PC34
+#define m11_screen_init DM1_V1_Screen_InitPc34Compat
+#define m11_screen_get_back_buffer DM1_V1_Screen_GetBackBufferPc34Compat
+#define m11_screen_get_front_buffer DM1_V1_Screen_GetFrontBufferPc34Compat
+#define m11_screen_swap_buffers DM1_V1_Screen_SwapBuffersPc34Compat
+#define m11_screen_present DM1_V1_Screen_PresentPc34Compat
+#define m11_screen_set_palette DM1_V1_Screen_SetPalettePc34Compat
+#define m11_screen_set_palette_block DM1_V1_Screen_SetPaletteBlockPc34Compat
+#define m11_screen_get_palette DM1_V1_Screen_GetPalettePc34Compat
+#define m11_screen_clear_back DM1_V1_Screen_ClearBackPc34Compat
+#define m11_screen_mark_dirty DM1_V1_Screen_MarkDirtyPc34Compat
+#define m11_screen_is_dirty DM1_V1_Screen_IsDirtyPc34Compat
+#define m11_screen_copy_region DM1_V1_Screen_CopyRegionPc34Compat
+#define m11_screen_source_evidence DM1_V1_Screen_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }

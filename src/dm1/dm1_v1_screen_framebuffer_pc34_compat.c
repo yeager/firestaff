@@ -14,7 +14,7 @@
  */
 
 /* Default DM1 Atari ST palette (approximation, 6-bit per channel) */
-static const M11_PaletteEntry s_defaultPalette[M11_PALETTE_SIZE] = {
+static const DM1_V1_PaletteEntryPc34 s_defaultPalette[DM1_V1_PALETTE_SIZE_PC34] = {
     { 0,  0,  0},  /*  0: black */
     { 4,  4,  4},  /*  1: dark gray */
     { 8,  8,  8},  /*  2: medium gray */
@@ -33,79 +33,79 @@ static const M11_PaletteEntry s_defaultPalette[M11_PALETTE_SIZE] = {
     {63, 63, 63},  /* 15: white */
 };
 
-void m11_screen_init(M11_ScreenState *s)
+void DM1_V1_Screen_InitPc34Compat(DM1_V1_ScreenStatePc34 *s)
 {
     memset(s, 0, sizeof(*s));
     memcpy(s->palette, s_defaultPalette, sizeof(s_defaultPalette));
 }
 
-uint8_t *m11_screen_get_back_buffer(M11_ScreenState *s)
+uint8_t *DM1_V1_Screen_GetBackBufferPc34Compat(DM1_V1_ScreenStatePc34 *s)
 {
     return &s->backBuffer[0][0];
 }
 
-const uint8_t *m11_screen_get_front_buffer(const M11_ScreenState *s)
+const uint8_t *DM1_V1_Screen_GetFrontBufferPc34Compat(const DM1_V1_ScreenStatePc34 *s)
 {
     return &s->frontBuffer[0][0];
 }
 
-void m11_screen_swap_buffers(M11_ScreenState *s)
+void DM1_V1_Screen_SwapBuffersPc34Compat(DM1_V1_ScreenStatePc34 *s)
 {
     memcpy(s->frontBuffer, s->backBuffer, sizeof(s->frontBuffer));
 }
 
-void m11_screen_present(M11_ScreenState *s, int32_t nowMs)
+void DM1_V1_Screen_PresentPc34Compat(DM1_V1_ScreenStatePc34 *s, int32_t nowMs)
 {
-    m11_screen_swap_buffers(s);
+    DM1_V1_Screen_SwapBuffersPc34Compat(s);
     s->dirty = 0;
     s->lastPresentMs = nowMs;
     s->presentCount++;
 }
 
-void m11_screen_set_palette(M11_ScreenState *s, int idx,
+void DM1_V1_Screen_SetPalettePc34Compat(DM1_V1_ScreenStatePc34 *s, int idx,
                             uint8_t r, uint8_t g, uint8_t b)
 {
-    if (idx < 0 || idx >= M11_PALETTE_SIZE) return;
+    if (idx < 0 || idx >= DM1_V1_PALETTE_SIZE_PC34) return;
     s->palette[idx].r = r;
     s->palette[idx].g = g;
     s->palette[idx].b = b;
 }
 
-void m11_screen_set_palette_block(M11_ScreenState *s, int startIdx,
-                                  const M11_PaletteEntry *entries, int count)
+void DM1_V1_Screen_SetPaletteBlockPc34Compat(DM1_V1_ScreenStatePc34 *s, int startIdx,
+                                  const DM1_V1_PaletteEntryPc34 *entries, int count)
 {
     for (int i = 0; i < count; i++) {
-        m11_screen_set_palette(s, startIdx + i,
+        DM1_V1_Screen_SetPalettePc34Compat(s, startIdx + i,
                                entries[i].r, entries[i].g, entries[i].b);
     }
 }
 
-M11_PaletteEntry m11_screen_get_palette(const M11_ScreenState *s, int idx)
+DM1_V1_PaletteEntryPc34 DM1_V1_Screen_GetPalettePc34Compat(const DM1_V1_ScreenStatePc34 *s, int idx)
 {
-    if (idx < 0 || idx >= M11_PALETTE_SIZE) {
-        M11_PaletteEntry empty = {0, 0, 0};
+    if (idx < 0 || idx >= DM1_V1_PALETTE_SIZE_PC34) {
+        DM1_V1_PaletteEntryPc34 empty = {0, 0, 0};
         return empty;
     }
     return s->palette[idx];
 }
 
-void m11_screen_clear_back(M11_ScreenState *s, uint8_t color)
+void DM1_V1_Screen_ClearBackPc34Compat(DM1_V1_ScreenStatePc34 *s, uint8_t color)
 {
     memset(s->backBuffer, color, sizeof(s->backBuffer));
     s->dirty = 1;
 }
 
-void m11_screen_mark_dirty(M11_ScreenState *s)
+void DM1_V1_Screen_MarkDirtyPc34Compat(DM1_V1_ScreenStatePc34 *s)
 {
     s->dirty = 1;
 }
 
-int m11_screen_is_dirty(const M11_ScreenState *s)
+int DM1_V1_Screen_IsDirtyPc34Compat(const DM1_V1_ScreenStatePc34 *s)
 {
     return s->dirty;
 }
 
-void m11_screen_copy_region(M11_ScreenState *s,
+void DM1_V1_Screen_CopyRegionPc34Compat(DM1_V1_ScreenStatePc34 *s,
                             int sx, int sy, int dx, int dy, int w, int h)
 {
     /* Clip to buffer bounds */
@@ -113,10 +113,10 @@ void m11_screen_copy_region(M11_ScreenState *s,
     if (sy < 0) { h += sy; dy -= sy; sy = 0; }
     if (dx < 0) { w += dx; sx -= dx; dx = 0; }
     if (dy < 0) { h += dy; sy -= dy; dy = 0; }
-    if (sx + w > M11_SCREEN_W) w = M11_SCREEN_W - sx;
-    if (sy + h > M11_SCREEN_H) h = M11_SCREEN_H - sy;
-    if (dx + w > M11_SCREEN_W) w = M11_SCREEN_W - dx;
-    if (dy + h > M11_SCREEN_H) h = M11_SCREEN_H - dy;
+    if (sx + w > DM1_V1_SCREEN_W_PC34) w = DM1_V1_SCREEN_W_PC34 - sx;
+    if (sy + h > DM1_V1_SCREEN_H_PC34) h = DM1_V1_SCREEN_H_PC34 - sy;
+    if (dx + w > DM1_V1_SCREEN_W_PC34) w = DM1_V1_SCREEN_W_PC34 - dx;
+    if (dy + h > DM1_V1_SCREEN_H_PC34) h = DM1_V1_SCREEN_H_PC34 - dy;
     if (w <= 0 || h <= 0) return;
 
     /* Use memmove for overlapping regions */
@@ -134,7 +134,7 @@ void m11_screen_copy_region(M11_ScreenState *s,
     s->dirty = 1;
 }
 
-const char *m11_screen_source_evidence(void)
+const char *DM1_V1_Screen_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206\n"

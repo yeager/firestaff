@@ -86,10 +86,10 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
     engine->config = *config;
 
     /* 1. Screen / framebuffer */
-    m11_screen_init(&engine->screen);
+    DM1_V1_Screen_InitPc34Compat(&engine->screen);
 
     /* 2. Input */
-    m11_input_init(&engine->input);
+    DM1_V1_Input_InitPc34Compat(&engine->input);
 
     /* 3. Game state machine → TITLE */
     m11_game_state_init(&engine->stateMachine);
@@ -101,7 +101,7 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
         DM1_V1_GameLoop_SetTickRatePc34Compat(&engine->gameLoop, config->tick_rate_hz);
 
     /* 5. Game loop integration */
-    m11_gl_init(&engine->loopIntegration);
+    DM1_V1_LoopIntegration_InitPc34Compat(&engine->loopIntegration);
 
     /* 6. Central dungeon data */
     DM1_V1_DungeonData_InitPc34Compat(&engine->dungeonData);
@@ -123,7 +123,7 @@ bool m11_engine_init(M11_Engine *engine, const M11_EngineConfig *config)
     /* 9. Viewport 3D (wired to screen back buffer) */
     dm1_viewport_3d_init(&engine->viewport3d,
                          &engine->screen.backBuffer[0][0],
-                         M11_SCREEN_W);
+                         DM1_V1_SCREEN_W_PC34);
 
     /* 10. Dialog / message system */
     DM1_V1_Dialog_InitPc34Compat(&engine->dialog);
@@ -205,7 +205,7 @@ void m11_engine_shutdown(M11_Engine *engine)
     if (!engine) return;
 
     if (engine->initialized) {
-        m11_input_deinit(&engine->input);
+        DM1_V1_Input_DeinitPc34Compat(&engine->input);
         DM1_V1_DungeonData_ShutdownPc34Compat(&engine->dungeonData);
     }
 
@@ -225,12 +225,12 @@ DM1_V1_DungeonDataPc34 *m11_engine_get_dungeon_data(M11_Engine *engine)
     return engine ? &engine->dungeonData : NULL;
 }
 
-M11_InputState *m11_engine_get_input(M11_Engine *engine)
+DM1_V1_InputStatePc34 *m11_engine_get_input(M11_Engine *engine)
 {
     return engine ? &engine->input : NULL;
 }
 
-M11_ScreenState *m11_engine_get_screen(M11_Engine *engine)
+DM1_V1_ScreenStatePc34 *m11_engine_get_screen(M11_Engine *engine)
 {
     return engine ? &engine->screen : NULL;
 }
