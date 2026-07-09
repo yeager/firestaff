@@ -1166,6 +1166,65 @@ int dm1_v1_startup_hoc_packaged_full_graphics_proof_from_host_plan_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
+    const DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34* proof,
+    DM1_V1_StartupHoCProductionFullStartHook_PC34* out_hook) {
+    DM1_V1_StartupHoCProductionFullStartHook_PC34 hook;
+
+    if (!proof || !out_hook) {
+        return 0;
+    }
+    memset(&hook, 0, sizeof(hook));
+    if (!proof->handled) {
+        *out_hook = hook;
+        return 1;
+    }
+
+    hook.handled = 1;
+    hook.capture_phase = proof->capture_phase;
+    hook.source_evidence =
+        "ReDMCSB TITLE.C:385-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    if (!proof->ready || !proof->consume_host_render_plan_only ||
+        !proof->packaged_full_graphics_proof_ready ||
+        !proof->capture_required ||
+        proof->expected_map_index != DM1_V1_ENTRANCE_MAP_INDEX_PC34 ||
+        proof->expected_map_width != DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 ||
+        proof->expected_map_height != DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 ||
+        !proof->require_opened_entrance_frame ||
+        !proof->require_clear_champion_panel ||
+        !proof->require_hall_mirror_overlay ||
+        !proof->require_no_title_surface ||
+        !proof->require_no_closed_door_frame ||
+        !proof->require_no_host_fallback_visuals) {
+        *out_hook = hook;
+        return 1;
+    }
+
+    /* ReDMCSB TITLE.C F0437 finishes/freezes title work before ENTRANCE.C
+     * F0797/F0441 enters Hall.  This is the production hook consumed by
+     * Firestaff packaging/capture: render the DM1-owned HoC first frame, then
+     * capture and publish proof, before accepting Hall input. */
+    hook.ready = 1;
+    hook.consume_dm1_startup_receipts_only = 1;
+    hook.run_before_hoc_input = 1;
+    hook.draw_opened_entrance_frame = 1;
+    hook.clear_champion_panel = 1;
+    hook.render_hall_mirror_overlay = 1;
+    hook.suppress_host_fallback_visuals = 1;
+    hook.capture_after_first_frame_render = 1;
+    hook.publish_packaged_full_graphics_proof = 1;
+    hook.expected_map_index = proof->expected_map_index;
+    hook.expected_map_width = proof->expected_map_width;
+    hook.expected_map_height = proof->expected_map_height;
+    hook.expected_entrance_door_frame_index =
+        proof->expected_entrance_door_frame_index;
+    hook.expected_hall_overlay_kind = proof->expected_hall_overlay_kind;
+    hook.block_enter_until_champion_selected =
+        proof->block_enter_until_champion_selected;
+    *out_hook = hook;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
