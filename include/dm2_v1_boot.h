@@ -7,6 +7,7 @@
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
 typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
 typedef struct DM2_V1_StartupDrawCommand DM2_V1_StartupDrawCommand;
+typedef struct DM2_V1_StartupViewReceipt DM2_V1_StartupViewReceipt;
 struct DM2_V1_StartupHostReceipt;
 struct DM2_V1_SessionState;
 struct DM2_V1_StartupExecution;
@@ -386,6 +387,7 @@ int dm2_v1_boot_startup_view_model_from_snapshot(
     void *out_commands,
     int max_commands,
     int *out_command_count,
+    DM2_V1_StartupViewReceipt *out_view_receipt,
     char *out_phase,
     int out_phase_size,
     int *out_startup_active,

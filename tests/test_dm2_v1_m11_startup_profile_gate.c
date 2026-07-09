@@ -303,8 +303,10 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_StartupMenu menu;
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupHostFacts host_facts;
+    DM2_V1_BootRuntimeStartupSnapshot boot_snapshot;
     DM2_V1_StartupMenu restored_menu;
     DM2_V1_StartupAction action;
+    DM2_V1_StartupViewReceipt view_receipt;
     DM2_V1_StartupRowKind row_kind = DM2_V1_STARTUP_ROW_NONE;
     DM2_V1_StartupDrawCommand commands[16];
     DM2_V1_StartupDrawExecutor executor;
@@ -465,6 +467,40 @@ static void expect_dm2_startup_layout_contract(void) {
                     commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
                     strcmp(commands[8].text, "NEW GAME") == 0,
                 "DM2 startup presentation builds from host facts");
+    memset(&boot_snapshot, 0, sizeof(boot_snapshot));
+    boot_snapshot.startup_menu_active = 1;
+    boot_snapshot.startup_save_root = "/tmp/firestaff-dm2-test-saves";
+    boot_snapshot.resume_available = 1;
+    boot_snapshot.slot_mask = (1u << 3);
+    boot_snapshot.selected_row = 9;
+    memset(&view_receipt, 0, sizeof(view_receipt));
+    command_count = 0;
+    expect_true(dm2_v1_boot_startup_view_model_from_snapshot(
+                    &boot_snapshot,
+                    commands,
+                    (int)(sizeof(commands) / sizeof(commands[0])),
+                    &command_count,
+                    &view_receipt,
+                    phase,
+                    (int)sizeof(phase),
+                    &startup_active,
+                    animation,
+                    (int)sizeof(animation),
+                    &animation_active,
+                    &title_frame,
+                    &title_frame_max,
+                    &title_ready) &&
+                    command_count == 10 &&
+                    view_receipt.valid &&
+                    view_receipt.command_count == command_count &&
+                    view_receipt.render.command_count == command_count &&
+                    view_receipt.menu_state.selected_row == 2 &&
+                    view_receipt.render.title_gdat_found &&
+                    view_receipt.render.hud_overlay_suppressed == 1 &&
+                    view_receipt.runtime_handoff.startup_menu_active == 1 &&
+                    strcmp(view_receipt.runtime_handoff.animation,
+                           "dm2-startup-menu") == 0,
+                "DM2 boot startup view model carries the presentation view receipt");
     expect_true(dm2_v1_startup_presentation_receipt(
                     1,
                     phase,

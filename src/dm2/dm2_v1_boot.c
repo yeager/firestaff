@@ -1260,6 +1260,7 @@ int dm2_v1_boot_startup_view_model_from_snapshot(
     void *out_commands,
     int max_commands,
     int *out_command_count,
+    DM2_V1_StartupViewReceipt *out_view_receipt,
     char *out_phase,
     int out_phase_size,
     int *out_startup_active,
@@ -1274,14 +1275,37 @@ int dm2_v1_boot_startup_view_model_from_snapshot(
     if (out_command_count) {
         *out_command_count = 0;
     }
+    if (out_view_receipt) {
+        memset(out_view_receipt, 0, sizeof(*out_view_receipt));
+    }
     if (!snapshot) {
         return 0;
     }
     if (out_commands && max_commands > 0) {
-        command_count = dm2_v1_boot_startup_presentation_build_from_snapshot(
-            snapshot,
-            (DM2_V1_StartupDrawCommand *)out_commands,
-            max_commands);
+        if (out_view_receipt) {
+            DM2_V1_StartupHostFacts facts;
+            if (dm2_v1_boot_startup_host_facts_from_runtime_state(
+                    snapshot->profile,
+                    snapshot->startup_menu_active,
+                    snapshot->startup_save_root,
+                    snapshot->resume_available,
+                    snapshot->slot_mask,
+                    snapshot->selected_row,
+                    &facts)) {
+                (void)dm2_v1_startup_presentation_view_receipt_from_host_facts(
+                    &facts,
+                    1,
+                    (DM2_V1_StartupDrawCommand *)out_commands,
+                    max_commands,
+                    out_view_receipt);
+                command_count = out_view_receipt->command_count;
+            }
+        } else {
+            command_count = dm2_v1_boot_startup_presentation_build_from_snapshot(
+                snapshot,
+                (DM2_V1_StartupDrawCommand *)out_commands,
+                max_commands);
+        }
         if (out_command_count) {
             *out_command_count = command_count;
         }
