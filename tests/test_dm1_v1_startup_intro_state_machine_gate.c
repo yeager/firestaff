@@ -1298,6 +1298,34 @@ static void check_dm1_launch_path_bypass_contract(void) {
              hoc_first_frame.runtime_first_frame_ready &&
                  hoc_first_frame.suppress_host_fallback_visuals,
              1);
+    expect_i("DM1 HoC first-frame emits render command plan",
+             hoc_first_frame.hoc_render_command_count == 3 &&
+                 hoc_first_frame.hoc_render_commands[0].valid &&
+                 hoc_first_frame.hoc_render_commands[0].kind ==
+                     DM1_V1_STARTUP_HOC_RENDER_COMMAND_ENTRANCE_OPEN_FRAME_PC34 &&
+                 hoc_first_frame.hoc_render_commands[0].map_index ==
+                     DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_first_frame.hoc_render_commands[0].door_frame_index == 9,
+             1);
+    expect_i("DM1 HoC first-frame clears panel before mirrors",
+             hoc_first_frame.hoc_render_commands[1].valid &&
+                 hoc_first_frame.hoc_render_commands[1].kind ==
+                     DM1_V1_STARTUP_HOC_RENDER_COMMAND_CLEAR_CHAMPION_PANEL_PC34 &&
+                 hoc_first_frame.hoc_render_commands[1].clear_stale_panel_first &&
+                 hoc_first_frame.hoc_render_commands[1]
+                     .suppress_host_fallback_visuals,
+             1);
+    expect_i("DM1 HoC first-frame renders hall mirrors after clear",
+             hoc_first_frame.hoc_render_commands[2].valid &&
+                 hoc_first_frame.hoc_render_commands[2].kind ==
+                     DM1_V1_STARTUP_HOC_RENDER_COMMAND_HALL_MIRRORS_PC34 &&
+                 hoc_first_frame.hoc_render_commands[2].overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 hoc_first_frame.hoc_render_commands[2]
+                     .block_enter_until_champion_selected &&
+                 hoc_first_frame.hoc_render_commands[2]
+                     .suppress_host_fallback_visuals,
+             1);
     expect_i("DM1 HoC first-frame no-op for CSB",
              dm1_v1_startup_hoc_first_frame_receipt_pc34(
                  "csb",
