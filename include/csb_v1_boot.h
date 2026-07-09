@@ -1024,32 +1024,6 @@ int csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
     int menu_input,
     const CSB_V1_StartupRenderExecutor_PC34 *executor,
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 *out_receipt);
-int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
-    CSB_V1_UtilRenderPlan *out_plan,
-    int title_active,
-    int title_frame,
-    int title_source_step,
-    int entrance_active,
-    int entrance_source_step,
-    int entrance_dismissed,
-    int credits_active,
-    int credits_remaining_ticks,
-    int opening_active,
-    int opening_delay_ticks,
-    int opening_step,
-    int pending_command,
-    int entrance_frame,
-    int utility_overlay_active,
-    int utility_selected_action_index,
-    int utility_imported_champion_count,
-    int utility_preview_active,
-    const char *utility_prompt,
-    int resume_available,
-    const char *resume_path,
-    const CSB_V1_BootProfile *boot_profile);
-int csb_v1_boot_runtime_util_render_plan_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    CSB_V1_UtilRenderPlan *out_plan);
 int csb_v1_boot_startup_execute_opening_composite_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,

@@ -3232,9 +3232,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup HUD/menu executor draws utility panel from readiness-gated receipt");
-    CHECK(csb_v1_boot_runtime_util_render_plan_from_snapshot_pc34(
-              &snapshot,
-              &receipt_utility_plan) == 1 &&
+    CHECK(hud_draw_receipt.utility_render_plan_valid &&
+              (receipt_utility_plan =
+                   hud_draw_receipt.utility_render_plan,
+               1) &&
               receipt_utility_plan.menu_row_count ==
                   CSB_V1_UTIL_MENU_ROW_COUNT &&
               receipt_utility_plan.menu_rows[0].selected &&
@@ -3242,33 +3243,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               receipt_utility_plan.has_prompt_row &&
               strstr(receipt_utility_plan.prompt_row.text,
                      "CHAOS STRIKES BACK READY") != NULL,
-          "boot startup utility snapshot facade consumes render-view receipt");
-    CHECK(csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
-              &receipt_utility_plan,
-              snapshot.title_active,
-              snapshot.title_frame,
-              snapshot.title_source_step,
-              snapshot.entrance_active,
-              snapshot.entrance_source_step,
-              snapshot.entrance_dismissed,
-              snapshot.credits_active,
-              snapshot.credits_remaining_ticks,
-              snapshot.opening_active,
-              snapshot.opening_delay_ticks,
-              snapshot.opening_step,
-              snapshot.pending_command,
-              snapshot.entrance_frame,
-              snapshot.utility_overlay_active,
-              snapshot.utility_selected_action_index,
-              snapshot.utility_imported_champion_count,
-              snapshot.utility_preview_active,
-              snapshot.utility_prompt,
-              snapshot.resume_available,
-              snapshot.resume_path,
-              snapshot.boot_profile) == 1 &&
-              receipt_utility_plan.menu_rows[0].selected &&
+          "boot startup utility render plan is owned by HUD/menu draw receipt");
+    CHECK(csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
+              &snapshot,
+              &host_view_receipt) == 1 &&
+              host_view_receipt.valid &&
+              host_view_receipt.hud_menu_draw_valid &&
+              host_view_receipt.hud_menu_draw.utility_render_plan_valid &&
+              host_view_receipt.hud_menu_draw.utility_render_plan
+                  .menu_rows[0]
+                  .selected &&
+              !host_view_receipt.hud_menu_draw.utility_render_plan
+                   .preview_active &&
               !receipt_utility_plan.preview_active,
-          "boot startup utility runtime-state facade consumes render-view receipt");
+          "boot startup host-view receipt owns utility render plan without runtime-state facade");
     snapshot.utility_overlay_active = 0;
     CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
               &snapshot,
