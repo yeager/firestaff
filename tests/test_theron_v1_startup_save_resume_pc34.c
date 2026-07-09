@@ -1250,8 +1250,13 @@ static void test_boot_forcefield_pointer_snapshot_enters_runtime(void) {
                     46 + 77,
                     160 + 5,
                     &receipt);
-        expect_true(ok == 1,
-                    "boot snapshot forcefield pointer enters Theron runtime");
+        expect_true(ok == 1 &&
+                        receipt.result == THERON_STARTUP_ERR_DUNGEON_ENTRY &&
+                        receipt.host_receipt.status &&
+                        strstr(receipt.host_receipt.status,
+                               "fallback visuals blocked") != NULL &&
+                        world.level_loaded[0][0] == 0,
+                    "boot snapshot forcefield blocks invalid verified Track 02 fallback");
     }
 }
 
