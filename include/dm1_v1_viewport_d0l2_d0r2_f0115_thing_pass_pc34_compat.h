@@ -13,6 +13,50 @@ typedef enum {
     DM1_V1_D0L2_D0R2_F0115_SIDE_D0R2_PC34 = 2
 } DM1_V1_D0L2D0R2F0115ThingPassSidePc34;
 
+typedef enum {
+    DM1_V1_D0L2D0R2_F0115_RENDER_NONE_PC34 = 0,
+    DM1_V1_D0L2D0R2_F0115_RENDER_SUPPRESS_ITEM_PC34 = 1,
+    DM1_V1_D0L2D0R2_F0115_RENDER_SUPPRESS_PROJECTILE_PC34 = 2,
+    DM1_V1_D0L2D0R2_F0115_RENDER_CREATURE_PC34 = 3,
+    DM1_V1_D0L2D0R2_F0115_RENDER_CENTER_EXPLOSION_PC34 = 4,
+    DM1_V1_D0L2D0R2_F0115_RENDER_SIDE_EXPLOSION_PC34 = 5,
+    DM1_V1_D0L2D0R2_F0115_RENDER_FLUXCAGE_FIELD_PC34 = 6
+} DM1_V1_D0L2D0R2F0115RenderKindPc34;
+
+#define DM1_V1_D0L2D0R2_F0115_RENDER_COMMAND_MAX_PC34 6
+
+typedef struct {
+    int valid;
+    DM1_V1_D0L2D0R2F0115RenderKindPc34 kind;
+    int view_cell;
+    int zone;
+    int row;
+    int suppressed;
+    int must_not_materialize_thing;
+    int consumes_runtime_projectile_list;
+    int after_explosion_pass;
+    const char *reason;
+} DM1_V1_D0L2D0R2F0115RenderCommandPc34;
+
+typedef struct {
+    int valid;
+    int side;
+    int view_square_index;
+    int view_depth;
+    int view_lane;
+    unsigned int cell_order;
+    int first_cell;
+    int item_projectile_row;
+    int item_payload_suppressed;
+    int projectile_payload_suppressed;
+    int stale_static_payload_suppressed;
+    int draw_mutates_thing_list;
+    int command_count;
+    DM1_V1_D0L2D0R2F0115RenderCommandPc34
+        commands[DM1_V1_D0L2D0R2_F0115_RENDER_COMMAND_MAX_PC34];
+    const char *source_anchor;
+} DM1_V1_D0L2D0R2F0115RenderRouteReceiptPc34;
+
 typedef struct {
     int side;
     const char *lane_name;
@@ -125,6 +169,15 @@ int dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(
     const DM1_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
     int door_front_pass,
     int endgame_suppressed);
+
+int dm1_v1_viewport_d0l2_d0r2_f0115_render_route_receipt_pc34(
+    const DM1_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    int include_center_explosion,
+    int include_side_explosions,
+    int include_fluxcage,
+    int door_front_pass,
+    int endgame_suppressed,
+    DM1_V1_D0L2D0R2F0115RenderRouteReceiptPc34 *out_receipt);
 
 const char *dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_evidence_pc34(void);
 

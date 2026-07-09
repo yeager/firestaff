@@ -350,6 +350,155 @@ int dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(
     return DM1_FLUXCAGE_FIELD_ZONE_BASE + fixture->field_aspect_index;
 }
 
+static void dm1_v1_viewport_d0l2_d0r2_f0115_append_render_command_pc34(
+    DM1_V1_D0L2D0R2F0115RenderRouteReceiptPc34 *receipt,
+    DM1_V1_D0L2D0R2F0115RenderKindPc34 kind,
+    int view_cell,
+    int zone,
+    int row,
+    int suppressed,
+    const char *reason)
+{
+    DM1_V1_D0L2D0R2F0115RenderCommandPc34 *command;
+
+    if (!receipt ||
+        receipt->command_count >=
+            DM1_V1_D0L2D0R2_F0115_RENDER_COMMAND_MAX_PC34) {
+        return;
+    }
+
+    command = &receipt->commands[receipt->command_count++];
+    command->valid = 1;
+    command->kind = kind;
+    command->view_cell = view_cell;
+    command->zone = zone;
+    command->row = row;
+    command->suppressed = suppressed;
+    command->must_not_materialize_thing = suppressed ? 1 : 0;
+    command->consumes_runtime_projectile_list =
+        kind == DM1_V1_D0L2D0R2_F0115_RENDER_SUPPRESS_PROJECTILE_PC34 ? 1 : 0;
+    command->after_explosion_pass =
+        kind == DM1_V1_D0L2D0R2_F0115_RENDER_FLUXCAGE_FIELD_PC34 ? 1 : 0;
+    command->reason = reason;
+}
+
+int dm1_v1_viewport_d0l2_d0r2_f0115_render_route_receipt_pc34(
+    const DM1_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    int include_center_explosion,
+    int include_side_explosions,
+    int include_fluxcage,
+    int door_front_pass,
+    int endgame_suppressed,
+    DM1_V1_D0L2D0R2F0115RenderRouteReceiptPc34 *out_receipt)
+{
+    int zone;
+
+    if (!fixture || !out_receipt) return -1;
+    *out_receipt = (DM1_V1_D0L2D0R2F0115RenderRouteReceiptPc34){0};
+
+    out_receipt->valid = 1;
+    out_receipt->side = fixture->side;
+    out_receipt->view_square_index = fixture->view_square_index;
+    out_receipt->view_depth = fixture->view_depth;
+    out_receipt->view_lane = fixture->view_lane;
+    out_receipt->cell_order = fixture->f0115_cell_order;
+    out_receipt->first_cell = fixture->f0115_first_cell;
+    out_receipt->item_projectile_row = fixture->item_projectile_row;
+    out_receipt->item_payload_suppressed =
+        fixture->item_projectile_row < 0 ? 1 : 0;
+    out_receipt->projectile_payload_suppressed =
+        fixture->item_projectile_row < 0 ? 1 : 0;
+    out_receipt->stale_static_payload_suppressed =
+        out_receipt->item_payload_suppressed &&
+        out_receipt->projectile_payload_suppressed;
+    out_receipt->draw_mutates_thing_list =
+        dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_is_draw_mutating_pc34(
+            fixture);
+    out_receipt->source_anchor =
+        "ReDMCSB DUNVIEW.C F0115:4923,5668-5671; "
+        "DUNGEON.C F0163/F0164 draw-mutation guard";
+
+    dm1_v1_viewport_d0l2_d0r2_f0115_append_render_command_pc34(
+        out_receipt,
+        DM1_V1_D0L2D0R2_F0115_RENDER_SUPPRESS_ITEM_PC34,
+        fixture->f0115_first_cell,
+        -1,
+        fixture->item_projectile_row,
+        out_receipt->item_payload_suppressed,
+        "negative-G2028-suppresses-static-item-payload");
+
+    dm1_v1_viewport_d0l2_d0r2_f0115_append_render_command_pc34(
+        out_receipt,
+        DM1_V1_D0L2D0R2_F0115_RENDER_SUPPRESS_PROJECTILE_PC34,
+        fixture->f0115_first_cell,
+        -1,
+        fixture->item_projectile_row,
+        out_receipt->projectile_payload_suppressed,
+        "negative-G2028-suppresses-static-projectile-payload");
+
+    zone = dm1_v1_viewport_d0l2_d0r2_f0115_creature_zone_pc34(
+        fixture, fixture->f0115_first_cell);
+    if (zone >= 0) {
+        dm1_v1_viewport_d0l2_d0r2_f0115_append_render_command_pc34(
+            out_receipt,
+            DM1_V1_D0L2D0R2_F0115_RENDER_CREATURE_PC34,
+            fixture->f0115_first_cell,
+            zone,
+            fixture->creature_row,
+            0,
+            "quarter-creature-cell-route");
+    }
+
+    if (include_center_explosion) {
+        dm1_v1_viewport_d0l2_d0r2_f0115_append_render_command_pc34(
+            out_receipt,
+            DM1_V1_D0L2D0R2_F0115_RENDER_CENTER_EXPLOSION_PC34,
+            fixture->f0115_first_cell,
+            dm1_v1_viewport_d0l2_d0r2_f0115_centered_explosion_zone_pc34(
+                fixture),
+            fixture->explosion_row,
+            0,
+            "center-explosion-route");
+    }
+
+    if (include_side_explosions) {
+        zone = dm1_v1_viewport_d0l2_d0r2_f0115_side_explosion_zone_pc34(
+            fixture, DM1_CELL_FRONT_LEFT);
+        if (zone >= 0) {
+            dm1_v1_viewport_d0l2_d0r2_f0115_append_render_command_pc34(
+                out_receipt,
+                DM1_V1_D0L2D0R2_F0115_RENDER_SIDE_EXPLOSION_PC34,
+                DM1_CELL_FRONT_LEFT,
+                zone,
+                fixture->explosion_row,
+                0,
+                "front-left-side-explosion-route");
+        }
+    }
+
+    if (include_fluxcage) {
+        zone = dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(
+            fixture, door_front_pass, endgame_suppressed);
+        if (zone >= 0) {
+            dm1_v1_viewport_d0l2_d0r2_f0115_append_render_command_pc34(
+                out_receipt,
+                DM1_V1_D0L2D0R2_F0115_RENDER_FLUXCAGE_FIELD_PC34,
+                fixture->f0115_first_cell,
+                zone,
+                fixture->field_aspect_index,
+                0,
+                "fluxcage-field-after-explosions");
+        }
+    }
+
+    /* ReDMCSB: DUNVIEW.C F0115 lines 4923 and 5668-5671 share the
+     * negative G2028 row gate for D0L/D0R item and projectile drawing;
+     * DUNGEON.C F0163/F0164 remain mutation-only helpers and are not part of
+     * the draw route. Keep these decisions in this DM1 receipt so HoC side
+     * cells cannot materialize stale fireball/item payloads in host code. */
+    return 0;
+}
+
 const char *dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_evidence_pc34(void)
 {
     return s_source_evidence;

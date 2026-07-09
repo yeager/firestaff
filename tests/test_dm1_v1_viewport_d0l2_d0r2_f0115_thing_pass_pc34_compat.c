@@ -338,6 +338,104 @@ static void test_explosion_and_field_metadata(void)
                "ReDMCSB DUNVIEW.C:8150-8159 after 8115");
 }
 
+static void test_render_route_receipt_suppresses_static_payloads(void)
+{
+    const DM1_V1_D0L2D0R2F0115ThingPassPc34 *d0l2 =
+        dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_for_square_pc34(1);
+    const DM1_V1_D0L2D0R2F0115ThingPassPc34 *d0r2 =
+        dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_for_square_pc34(2);
+    DM1_V1_D0L2D0R2F0115RenderRouteReceiptPc34 route;
+
+    expect_int("route.d0l2.ok",
+               dm1_v1_viewport_d0l2_d0r2_f0115_render_route_receipt_pc34(
+                   d0l2, 1, 1, 1, 0, 0, &route),
+               0, "ReDMCSB DUNVIEW.C:4923/5668-5671 negative G2028 receipt");
+    expect_int("route.d0l2.valid", route.valid, 1,
+               "DM1-owned F0115 render route receipt");
+    expect_int("route.d0l2.side", route.side, 1,
+               "ReDMCSB DUNVIEW.C:8005 D0L F0115 route");
+    expect_int("route.d0l2.first_cell", route.first_cell, 2,
+               "ReDMCSB DEFS.H:2644 BACKRIGHT");
+    expect_int("route.d0l2.item_suppressed", route.item_payload_suppressed, 1,
+               "ReDMCSB DUNVIEW.C:4923 negative G2028 item gate");
+    expect_int("route.d0l2.projectile_suppressed", route.projectile_payload_suppressed, 1,
+               "ReDMCSB DUNVIEW.C:5668-5671 negative G2028 projectile gate");
+    expect_int("route.d0l2.stale_suppressed", route.stale_static_payload_suppressed, 1,
+               "DM1 receipt blocks stale HoC item/projectile payloads");
+    expect_int("route.d0l2.no_draw_mutation", route.draw_mutates_thing_list, 0,
+               "ReDMCSB DUNGEON.C F0163/F0164 not called by draw");
+    expect_int("route.d0l2.command_count", route.command_count, 6,
+               "item/projectile suppress + creature + center + side + flux");
+    expect_int("route.d0l2.cmd0.kind", route.commands[0].kind,
+               DM1_V1_D0L2D0R2_F0115_RENDER_SUPPRESS_ITEM_PC34,
+               "ReDMCSB DUNVIEW.C:4923 item suppression command");
+    expect_int("route.d0l2.cmd0.suppressed", route.commands[0].suppressed, 1,
+               "negative G2028 suppresses item row");
+    expect_int("route.d0l2.cmd0.no_materialize",
+               route.commands[0].must_not_materialize_thing, 1,
+               "HoC phantom item guard");
+    expect_int("route.d0l2.cmd1.kind", route.commands[1].kind,
+               DM1_V1_D0L2D0R2_F0115_RENDER_SUPPRESS_PROJECTILE_PC34,
+               "ReDMCSB DUNVIEW.C:5668-5671 projectile suppression command");
+    expect_int("route.d0l2.cmd1.runtime_projectile_list",
+               route.commands[1].consumes_runtime_projectile_list, 1,
+               "projectiles must come from runtime list, not stale static thing row");
+    expect_int("route.d0l2.cmd2.kind", route.commands[2].kind,
+               DM1_V1_D0L2D0R2_F0115_RENDER_CREATURE_PC34,
+               "ReDMCSB DUNVIEW.C:5295/5615-5617 creature command");
+    expect_int("route.d0l2.cmd2.zone", route.commands[2].zone,
+               (0x8000 | (3200 + 11 * 5 + 2)),
+               "ReDMCSB DUNVIEW.C:5615-5617 creature zone");
+    expect_int("route.d0l2.cmd3.kind", route.commands[3].kind,
+               DM1_V1_D0L2D0R2_F0115_RENDER_CENTER_EXPLOSION_PC34,
+               "ReDMCSB DUNVIEW.C:6107 centered explosion command");
+    expect_int("route.d0l2.cmd3.zone", route.commands[3].zone, 3014 + 15,
+               "ReDMCSB DUNVIEW.C:6107 centered explosion zone");
+    expect_int("route.d0l2.cmd4.kind", route.commands[4].kind,
+               DM1_V1_D0L2D0R2_F0115_RENDER_SIDE_EXPLOSION_PC34,
+               "ReDMCSB DUNVIEW.C:6110-6122 side explosion command");
+    expect_int("route.d0l2.cmd5.kind", route.commands[5].kind,
+               DM1_V1_D0L2D0R2_F0115_RENDER_FLUXCAGE_FIELD_PC34,
+               "ReDMCSB DUNVIEW.C:6199-6219 fluxcage field command");
+    expect_int("route.d0l2.cmd5.after_explosions",
+               route.commands[5].after_explosion_pass, 1,
+               "ReDMCSB DUNVIEW.C:6199-6219 field after explosions");
+
+    expect_int("route.d0r2.ok",
+               dm1_v1_viewport_d0l2_d0r2_f0115_render_route_receipt_pc34(
+                   d0r2, 1, 0, 1, 0, 0, &route),
+               0, "ReDMCSB DUNVIEW.C:8115 D0R receipt");
+    expect_int("route.d0r2.side", route.side, 2,
+               "ReDMCSB DUNVIEW.C:8115 D0R F0115 route");
+    expect_int("route.d0r2.first_cell", route.first_cell, 3,
+               "ReDMCSB DEFS.H:2645 BACKLEFT");
+    expect_int("route.d0r2.command_count", route.command_count, 5,
+               "item/projectile suppress + creature + center + flux");
+    expect_int("route.d0r2.creature.zone", route.commands[2].zone,
+               (0x8000 | (3200 + 12 * 5 + 3)),
+               "ReDMCSB DUNVIEW.C:5615-5617 D0R creature zone");
+    expect_int("route.d0r2.center.zone", route.commands[3].zone, 3014 + 16,
+               "ReDMCSB DUNVIEW.C:6107 D0R centered explosion zone");
+    expect_int("route.d0r2.flux.zone", route.commands[4].zone, 717,
+               "ReDMCSB DUNVIEW.C:6219 D0R fluxcage field zone");
+
+    expect_int("route.flux.door_pass_suppressed",
+               dm1_v1_viewport_d0l2_d0r2_f0115_render_route_receipt_pc34(
+                   d0l2, 0, 0, 1, 1, 0, &route),
+               0, "ReDMCSB DUNVIEW.C:6199-6203 door pass suppresses field");
+    expect_int("route.flux.door_pass.command_count", route.command_count, 3,
+               "suppression commands + creature only; no fluxcage command");
+
+    expect_int("route.null.fixture",
+               dm1_v1_viewport_d0l2_d0r2_f0115_render_route_receipt_pc34(
+                   NULL, 0, 0, 0, 0, 0, &route),
+               -1, "invalid input guard");
+    expect_int("route.null.out",
+               dm1_v1_viewport_d0l2_d0r2_f0115_render_route_receipt_pc34(
+                   d0l2, 0, 0, 0, 0, 0, NULL),
+               -1, "invalid input guard");
+}
+
 static void test_f0108_f0115_composition_and_mutation_guard(void)
 {
     const DM1_V1_D0L2D0R2F0115ThingPassPc34 *d0l2 =
@@ -487,6 +585,7 @@ int main(void)
     test_view_square_lane_order_metadata();
     test_zone_bindings_and_disabled_item_projectile_rows();
     test_explosion_and_field_metadata();
+    test_render_route_receipt_suppresses_static_payloads();
     test_f0108_f0115_composition_and_mutation_guard();
     test_source_evidence_mentions_required_anchors();
 
