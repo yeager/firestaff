@@ -177,6 +177,8 @@ static int m11_projectile_aspect_flip_flags(int aspectIndex,
                                             int relativeCell,
                                             int mapX,
                                             int mapY);
+static int m11_dm1_hoc_menu_route_blocks_normal_input(
+    const M11_GameViewState* state);
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -7482,7 +7484,7 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
     if (!state || !state->active || state->partyDead) {
         return 0;
     }
-    if (state->candidateMirrorPanelActive) {
+    if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
         /* ReDMCSB: COMMAND.C F0380 lines 2159, 2180, 2303,
          * 2309, 2338, and 2367 route normal status, inventory,
          * spell, action, rest, and save commands around
@@ -7562,7 +7564,7 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
     if (!state || !state->active || state->partyDead) {
         return 0;
     }
-    if (state->candidateMirrorPanelActive) {
+    if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
         /* ReDMCSB: COMMAND.C F0380 lines 2159, 2180, 2303,
          * 2309, 2338, and 2367 keep the C040 candidate panel
          * as the active command surface through
@@ -9627,7 +9629,7 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
     if (!state || !state->active || state->partyDead) {
         return 0;
     }
-    if (state->candidateMirrorPanelActive) {
+    if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
         /* ReDMCSB: COMMAND.C F0380 lines 2159, 2180, 2303,
          * 2309, 2338, and 2367 keep C040 candidate-panel input
          * isolated from normal inventory/object command effects. */
@@ -12019,7 +12021,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     if (!state || !state->active) {
         return 0;
     }
-    if (state->candidateMirrorPanelActive) {
+    if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
         /* ReDMCSB COMMAND.C F0380 keeps normal command surfaces out while
          * G0299_ui_CandidateChampionOrdinal owns the C040 panel.  QuickSave
          * is intentionally allowed to persist live C040 state, but direct
@@ -12942,6 +12944,56 @@ int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
 
 int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state) {
     return m11_front_cell_mirror_ordinal(state);
+}
+
+int M11_GameView_GetDm1HocMenuRouteReceipt(
+    const M11_GameViewState* state,
+    DM1_V1_EntranceMenuRouteReceiptPc34* outReceipt) {
+    DM1_V1_EntranceCtxPc34 ctx;
+    int mirrorOrdinal;
+    int slotIndex;
+
+    if (!state || !outReceipt) {
+        return 0;
+    }
+
+    DM1_V1_Entrance_InitPc34Compat(&ctx);
+    ctx.partyChampionCount = state->world.party.championCount;
+    ctx.state = DM1_ENTRANCE_VIEWING;
+
+    if (state->candidateMirrorPanelActive) {
+        mirrorOrdinal = state->candidateMirrorOrdinal >= 0
+                            ? state->candidateMirrorOrdinal
+                            : m11_front_cell_mirror_ordinal(state);
+        if (mirrorOrdinal < 0) {
+            mirrorOrdinal = 0;
+        }
+        slotIndex = DM1_V1_Entrance_AddMirrorPc34Compat(
+            &ctx, mirrorOrdinal, state->world.party.mapX,
+            state->world.party.mapY, state->world.party.direction, 0);
+        if (slotIndex < 0) {
+            return 0;
+        }
+        ctx.selectedMirrorIndex = slotIndex;
+        ctx.state = DM1_ENTRANCE_SELECTING;
+    }
+
+    /* ReDMCSB ENTRANCE.C F0441 lines 850-883 keeps entrance drawing/input
+     * in the entrance loop, and REVIVE.C F0280 lines 127-130/272 rejects
+     * party overflow before publishing G0299_ui_CandidateChampionOrdinal.
+     * This adapter lets M11/M12 consume the DM1-owned HoC route receipt
+     * instead of branching directly on candidateMirrorPanelActive. */
+    return DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(&ctx, outReceipt);
+}
+
+static int m11_dm1_hoc_menu_route_blocks_normal_input(
+    const M11_GameViewState* state) {
+    DM1_V1_EntranceMenuRouteReceiptPc34 receipt;
+    if (!M11_GameView_GetDm1HocMenuRouteReceipt(state, &receipt)) {
+        return 0;
+    }
+    return (receipt.showChampionPanel ||
+            receipt.showResurrectReincarnateChoices) ? 1 : 0;
 }
 
 int M11_GameView_CsbF0282ChampionPanelGateActive(
@@ -14066,7 +14118,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
      * C160/C161/C162 through the resurrect/reincarnate/cancel panel.
      * M11 maps ACTION/ACCEPT to the default resurrect choice for now
      * and BACK to cancel; the public confirm API keeps probes explicit. */
-    if (state->candidateMirrorPanelActive) {
+    if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
         if (state->candidateMirrorRenameActive) {
             if (input == M12_MENU_INPUT_BACK) {
                 return M11_GameView_ApplyMirrorCandidateRenameCommand(
@@ -14727,7 +14779,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * behind COMMAND.C 231..238 and 509..511).  Handle them before the
      * generic viewport hit test so x=130/y=115 and x=186/y=115 do not
      * get reinterpreted as movement/inspect clicks. */
-    if (state->candidateMirrorPanelActive) {
+    if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
         if (state->candidateMirrorRenameActive) {
             return M11_GameView_HandleMirrorCandidateRenameClick(state, x, y)
                        ? M11_GAME_INPUT_REDRAW
