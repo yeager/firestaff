@@ -50,6 +50,7 @@ static int dm1_v1_startup_hoc_host_draw_rejects_backing_fallback_pc34(
 static int dm1_v1_startup_hoc_host_draw_uses_owned_receipt_pc34(
     const DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34*
         production,
+    int backing_asset_available,
     int* out_consumed_owned_host_draw_receipt) {
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 post_plan;
     DM1_V1_StartupHandoffOutcome_PC34 outcome;
@@ -101,7 +102,7 @@ static int dm1_v1_startup_hoc_host_draw_uses_owned_receipt_pc34(
         !dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
             production, &render_consumer, &ownership) ||
         !dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
-            &ownership, &render, 0, 1, &host_draw)) {
+            &ownership, &render, 0, backing_asset_available, &host_draw)) {
         return 0;
     }
     consumed =
@@ -2048,8 +2049,10 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
 
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0797/F0441 define the release
      * app capture boundary: title is gone, C255 Hall is open, and HoC mirrors
-     * are drawn before input.  M11/M12 consume this single DM1-owned receipt
-     * instead of each rebuilding a host-side capture verdict. */
+     * are drawn before input.  DUNVIEW.C:3913-3928 draws C346/C026 through the
+     * wall-overlay route, so M11/M12 must feed the observed backing asset into
+     * this DM1-owned receipt instead of letting a host fallback rectangle stand
+     * in for the Mac/app capture. */
     receipt.handled = 1;
     receipt.consumed_host_probe_facts = 1;
     receipt.consumed_launch_path_receipt =
@@ -2084,6 +2087,7 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     receipt.host_draw_uses_owned_receipt =
         dm1_v1_startup_hoc_host_draw_uses_owned_receipt_pc34(
             &consumer,
+            facts->observed_c346_mirror_backing_asset ? 1 : 0,
             &receipt.consumed_owned_host_draw_receipt);
     receipt.host_draw_rejects_backing_fallback =
         dm1_v1_startup_hoc_host_draw_rejects_backing_fallback_pc34(
