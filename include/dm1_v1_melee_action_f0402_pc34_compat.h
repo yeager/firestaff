@@ -192,6 +192,23 @@ typedef struct {
 } DM1_MeleeF0402CommandDecodePlanPc34;
 
 typedef struct {
+    int groupCount;
+    int groupCells;
+    int groupDirection;
+    int creatureSize;
+    int creatureHealth[4];
+    int championCell;
+    int targetDirection;
+} DM1_MeleeF0177TargetCreatureInputPc34;
+
+typedef struct {
+    int valid;
+    int firstLivingCreatureIndex;
+    int selectedCreatureIndex;
+    int singleCenteredGroup;
+} DM1_MeleeF0177TargetCreaturePlanPc34;
+
+typedef struct {
     int requestedAutoTarget;
     int hasLiveActionIndex;
     int hasLiveGroupTable;
@@ -486,6 +503,9 @@ int dm1_v1_melee_weapon_availability_plan_f0402_pc34(
 int dm1_v1_melee_command_decode_plan_f0402_pc34(
     const DM1_MeleeF0402CommandDecodeInputPc34* in,
     DM1_MeleeF0402CommandDecodePlanPc34* out);
+int dm1_v1_melee_target_creature_plan_f0177_pc34(
+    const DM1_MeleeF0177TargetCreatureInputPc34* in,
+    DM1_MeleeF0177TargetCreaturePlanPc34* out);
 int dm1_v1_melee_preflight_plan_f0402_pc34(
     const DM1_MeleeF0402PreflightInputPc34* in,
     DM1_MeleeF0402PreflightPlanPc34* out);

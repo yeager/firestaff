@@ -21,6 +21,40 @@ static int dm1_v1_group_creature_cell_f0190_pc34(
     return (group->cells >> (creatureIndex << 1)) & 0x03;
 }
 
+static const unsigned char s_dm1_f0177_ordered_cells_pc34[8][4] = {
+    { 0, 1, 3, 2 },
+    { 1, 0, 2, 3 },
+    { 1, 2, 0, 3 },
+    { 2, 1, 3, 0 },
+    { 3, 2, 0, 1 },
+    { 2, 3, 1, 0 },
+    { 0, 3, 1, 2 },
+    { 3, 0, 2, 1 }
+};
+
+static int dm1_v1_f0176_creature_occupies_cell_pc34(
+    const DM1_MeleeF0177TargetCreatureInputPc34* in,
+    int creatureIndex,
+    int cell) {
+    int creatureCell;
+    int queryCell;
+    if (!in) return 0;
+    if (creatureIndex < 0 || creatureIndex > in->groupCount ||
+        creatureIndex >= 4) {
+        return 0;
+    }
+    creatureCell = (in->groupCells >> (creatureIndex << 1)) & 0x03;
+    queryCell = cell & 3;
+    if ((in->creatureSize & 3) == DM1_CREATURE_SIZE_HALF_SQUARE) {
+        if (((in->groupDirection & 1) == (queryCell & 1))) {
+            queryCell = (queryCell + 3) & 3;
+        }
+        return creatureCell == queryCell ||
+               creatureCell == ((queryCell + 1) & 3);
+    }
+    return creatureCell == queryCell;
+}
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out) {
@@ -410,6 +444,67 @@ int dm1_v1_melee_command_decode_plan_f0402_pc34(
      * Firestaff CMD_ATTACK transport stores those source facts in arg/reserved2
      * fields; DM1 owns the decode/default policy, M10 supplies the raw tick and
      * later resolves live thing-list data. */
+    return 1;
+}
+
+int dm1_v1_melee_target_creature_plan_f0177_pc34(
+    const DM1_MeleeF0177TargetCreatureInputPc34* in,
+    DM1_MeleeF0177TargetCreaturePlanPc34* out) {
+    unsigned int cellSource;
+    unsigned int tableIndex;
+    const unsigned char* row;
+    int i;
+    int c;
+    int groupCount;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->firstLivingCreatureIndex = -1;
+    out->selectedCreatureIndex = -1;
+    if (!in) return 0;
+    if (in->groupCount < 0) return 0;
+
+    out->valid = 1;
+    groupCount = in->groupCount;
+    if (groupCount >= 4) groupCount = 3;
+    for (i = 0; i <= groupCount; ++i) {
+        if (out->firstLivingCreatureIndex < 0 &&
+            in->creatureHealth[i] > 0) {
+            out->firstLivingCreatureIndex = i;
+        }
+    }
+
+    /* ReDMCSB: GROUP.C F0177 lines 109-158 builds the ordered target cells
+     * through F0229, then calls F0176 lines 69-107.  F0176 treats a
+     * C0xFF single-centered group as occupying all cells; otherwise it scans
+     * creatures from Count down to 0 and applies the half-square two-cell
+     * occupancy rule before returning an ordinal. */
+    if (in->groupCells == DM1_GROUP_CELLS_SINGLE_CENTERED) {
+        out->singleCenteredGroup = 1;
+        out->selectedCreatureIndex = out->firstLivingCreatureIndex;
+        return 1;
+    }
+
+    cellSource = (unsigned int)(in->championCell & 3);
+    if (((in->targetDirection & 1) == 0) && ((in->targetDirection & 3) < 4)) {
+        cellSource = (cellSource + 1) & 3;
+    }
+    tableIndex = ((unsigned int)(in->targetDirection & 3) << 1) |
+                 ((cellSource >> 1) & 1u);
+    if (tableIndex > 7u) tableIndex = 0u;
+
+    row = s_dm1_f0177_ordered_cells_pc34[tableIndex];
+    for (c = 0; c < 4; ++c) {
+        int want = (int)row[c];
+        for (i = groupCount; i >= 0; --i) {
+            if (dm1_v1_f0176_creature_occupies_cell_pc34(in, i, want)) {
+                out->selectedCreatureIndex = i;
+                return 1;
+            }
+        }
+    }
+    if (out->selectedCreatureIndex < 0) {
+        out->selectedCreatureIndex = out->firstLivingCreatureIndex;
+    }
     return 1;
 }
 
