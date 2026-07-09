@@ -276,6 +276,7 @@ int main(void)
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
     CSB_V1_StartupHostReceipt_PC34 host_receipt;
     CSB_V1_StartupEntranceHostActionReceipt_PC34 host_action_receipt;
+    CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
     CSB_V1_StartupHostFacts_PC34 host_facts;
     CSB_V1_StartupSessionOptionsInput_PC34 session_input;
     CSB_V1_StartupSessionOptions_PC34 session_options;
@@ -2469,6 +2470,37 @@ int main(void)
                       plan.menu_options[1].enabled &&
                       strcmp(plan.menu_options[1].label, "RESUME") == 0,
                   "startup render plan host facts enable resume menu option");
+            memset(&presentation_receipt, 0x7f,
+                   sizeof(presentation_receipt));
+            check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+                      &menu_facts,
+                      &presentation_receipt) &&
+                      presentation_receipt.valid &&
+                      strcmp(presentation_receipt.phase,
+                             "csb-entrance-4") == 0 &&
+                      strcmp(presentation_receipt.animation,
+                             "csb-entrance") == 0 &&
+                      !presentation_receipt.animation_active &&
+                      presentation_receipt.title_ready &&
+                      presentation_receipt.accepts_input &&
+                      presentation_receipt.waiting_for_input &&
+                      presentation_receipt.menu_option_count == 4 &&
+                      presentation_receipt.render_command_count == 5 &&
+                      presentation_receipt.render_plan.surface ==
+                          CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+                      presentation_receipt.render_plan.menu_options[1]
+                          .enabled,
+                  "startup presentation receipt owns entrance render/menu/input contract");
+            memset(&presentation_receipt, 0x7f,
+                   sizeof(presentation_receipt));
+            check(!csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+                      NULL,
+                      &presentation_receipt) &&
+                      !presentation_receipt.valid &&
+                      presentation_receipt.title_ready &&
+                      presentation_receipt.title_frame ==
+                          csb_v1_startup_title_total_ticks_pc34(),
+                  "startup presentation receipt rejects NULL facts cleanly");
         }
         memset(animation, 0, sizeof(animation));
         animation_active = -1;

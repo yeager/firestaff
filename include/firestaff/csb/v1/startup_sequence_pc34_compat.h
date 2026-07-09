@@ -574,6 +574,26 @@ typedef struct CSB_V1_StartupHostFacts_PC34 {
     const void *boot_profile;
 } CSB_V1_StartupHostFacts_PC34;
 
+#define CSB_V1_STARTUP_PHASE_CAP_PC34 64
+#define CSB_V1_STARTUP_ANIMATION_CAP_PC34 64
+
+typedef struct CSB_V1_StartupPresentationReceipt_PC34 {
+    int valid;
+    char phase[CSB_V1_STARTUP_PHASE_CAP_PC34];
+    int startup_active;
+    int startup_frame;
+    char animation[CSB_V1_STARTUP_ANIMATION_CAP_PC34];
+    int animation_active;
+    int title_frame;
+    int title_frame_max;
+    int title_ready;
+    int accepts_input;
+    int waiting_for_input;
+    int menu_option_count;
+    int render_command_count;
+    CSB_V1_StartupRenderPlan_PC34 render_plan;
+} CSB_V1_StartupPresentationReceipt_PC34;
+
 void csb_v1_startup_host_facts_init_pc34(
     CSB_V1_StartupHostFacts_PC34 *facts);
 int csb_v1_startup_host_facts_from_runtime_state_pc34(
@@ -1020,6 +1040,11 @@ int csb_v1_startup_receipt_presentation_from_host_facts_pc34(
     int *out_title_frame,
     int *out_title_frame_max,
     int *out_title_ready);
+void csb_v1_startup_presentation_receipt_init_pc34(
+    CSB_V1_StartupPresentationReceipt_PC34 *receipt);
+int csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    CSB_V1_StartupPresentationReceipt_PC34 *out_receipt);
 int csb_v1_startup_sequence_source_order_valid_pc34(void);
 const char* csb_v1_startup_sequence_source_evidence_pc34(void);
 

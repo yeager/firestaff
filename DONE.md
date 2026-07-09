@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB startup presentation receipt: CSB boot now emits one host-facts receipt carrying phase, animation, render plan, menu option count, render command count, and input readiness for title/entrance HUD/menu consumers. Verification: `csb_v1_startup_entrance_pointer_pc34_compat` and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0267 ordinary group move apply receipt now carries source-square mutation fields and owns retry scheduling, so M10 consumes one DM1 apply path for retry/kill/insert. Verification: `dm1_v1_group_move_removal_pc34_compat` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron Track02 semantic-only runtime startup: verified Track02 runtime level load no longer accepts the older non-semantic initial-candidate or descriptor-window scans; runtime entry now loads only the semantic startup handoff and otherwise blocks fallback visuals through the existing host/state receipt path. Verification: `firestaff_theron_v1_startup_flow_probe` 596/596, `firestaff_theron_v1_track02_level_handoff_probe`, and `git diff --check` passed.
