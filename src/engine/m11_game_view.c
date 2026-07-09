@@ -27032,58 +27032,52 @@ static int m11_attach_projectile_associated_thing_to_group(
     struct DungeonGroup_Compat* group,
     const struct ProjectileInstance_Compat* projectile) {
     unsigned short associatedThing;
-    DM1_ProjectileGroupSlotAttachPlanPc34 attachPlan;
+    DM1_ProjectileGroupSlotAttachReceiptPc34 attachReceipt;
+    unsigned short chainThings[64];
+    unsigned short current;
+    int chainCount = 0;
     if (!state || !group || !projectile || !state->world.things) return 0;
     associatedThing = (unsigned short)projectile->reserved1;
     if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return 0;
 
     /* ReDMCSB PROJEXPL.C:F0217 lines 540-553 selects GROUP.Slot as the
      * projectile-delete target. F0215 lines 248-256 then delegates existing
-     * possession lists to DUNGEON.C:F0163 lines 1798-1837, which appends at
-     * the tail instead of replacing the head. */
-    if (group->slot == THING_NONE || group->slot == THING_ENDOFLIST) {
-        memset(&attachPlan, 0, sizeof(attachPlan));
-        if (!dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
-                associatedThing, group->slot, THING_NONE, &attachPlan) ||
-            !attachPlan.valid ||
-            !attachPlan.shouldSetAssociatedNextEnd ||
-            !attachPlan.shouldSetGroupSlotHead) {
-            return 0;
+     * possession lists to DUNGEON.C:F0163 lines 1798-1837. M11 now consumes
+     * the same DM1 receipt as M10 instead of duplicating tail-link policy. */
+    current = group->slot;
+    while (current != THING_NONE &&
+           current != THING_ENDOFLIST &&
+           chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+        current = m11_get_raw_next_thing(state->world.things, current);
+        if (current == THING_NONE || current == THING_ENDOFLIST) {
+            current = m11_get_decoded_next_thing(
+                state->world.things, chainThings[chainCount - 1]);
         }
-        m11_set_next_thing(state->world.things, attachPlan.associatedThing,
-                           THING_ENDOFLIST);
-        group->slot = attachPlan.associatedThing;
+    }
+    if (chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+    }
+
+    memset(&attachReceipt, 0, sizeof(attachReceipt));
+    if (!dm1_v1_projectile_group_slot_attach_receipt_f0215_pc34(
+            associatedThing, group->slot, chainThings, chainCount,
+            &attachReceipt) ||
+        !attachReceipt.valid ||
+        !attachReceipt.shouldSetAssociatedNextEnd ||
+        attachReceipt.chainOverflow) {
+        return 0;
+    }
+    m11_set_next_thing(state->world.things, attachReceipt.associatedThing,
+                       THING_ENDOFLIST);
+    if (attachReceipt.shouldSetGroupSlotHead) {
+        group->slot = attachReceipt.associatedThing;
         return 1;
     }
-    {
-        unsigned short tail = group->slot;
-        int safety = 0;
-        while (tail != THING_NONE && tail != THING_ENDOFLIST &&
-               safety++ < 64) {
-            unsigned short next = m11_get_raw_next_thing(
-                state->world.things, tail);
-            if (next == THING_NONE || next == THING_ENDOFLIST) {
-                next = m11_get_decoded_next_thing(state->world.things, tail);
-            }
-            if (next == THING_NONE || next == THING_ENDOFLIST) {
-                memset(&attachPlan, 0, sizeof(attachPlan));
-                if (!dm1_v1_projectile_group_slot_attach_plan_f0215_pc34(
-                        associatedThing, group->slot, tail, &attachPlan) ||
-                    !attachPlan.valid ||
-                    !attachPlan.shouldSetAssociatedNextEnd ||
-                    !attachPlan.shouldAppendAfterTail) {
-                    return 0;
-                }
-                m11_set_next_thing(
-                    state->world.things, attachPlan.associatedThing,
-                    THING_ENDOFLIST);
-                m11_set_next_thing(
-                    state->world.things, attachPlan.tailThing,
-                    attachPlan.associatedThing);
-                return 1;
-            }
-            tail = next;
-        }
+    if (attachReceipt.shouldAppendAfterTail && attachReceipt.foundTail) {
+        m11_set_next_thing(state->world.things, attachReceipt.tailThing,
+                           attachReceipt.associatedThing);
+        return 1;
     }
     return 0;
 }
@@ -27121,9 +27115,10 @@ static int m11_link_projectile_thing_to_square_tail(
     int base;
     const struct DungeonMapDesc_Compat* map;
     int squareIndex;
-    DM1_ProjectileSquareAttachPlanPc34 attachPlan;
+    DM1_ProjectileSquareAttachReceiptPc34 attachReceipt;
+    unsigned short chainThings[64];
     unsigned short current;
-    int safety = 0;
+    int chainCount = 0;
 
     if (!world || !world->dungeon || !world->things ||
         !world->things->squareFirstThings) {
@@ -27145,46 +27140,43 @@ static int m11_link_projectile_thing_to_square_tail(
         return 0;
     }
 
-    memset(&attachPlan, 0, sizeof(attachPlan));
-    if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
-            thing, world->things->squareFirstThings[squareIndex], THING_NONE,
-            &attachPlan) ||
-        !attachPlan.valid ||
-        !attachPlan.shouldSetDroppedNextEnd) {
+    current = world->things->squareFirstThings[squareIndex];
+    while (current != THING_NONE &&
+           current != THING_ENDOFLIST &&
+           chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+        current = m11_get_raw_next_thing(world->things, current);
+        if (current == THING_NONE || current == THING_ENDOFLIST) {
+            current = m11_get_decoded_next_thing(
+                world->things, chainThings[chainCount - 1]);
+        }
+    }
+    if (chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+    }
+
+    memset(&attachReceipt, 0, sizeof(attachReceipt));
+    if (!dm1_v1_projectile_square_attach_receipt_f0215_pc34(
+            thing, world->things->squareFirstThings[squareIndex],
+            chainThings, chainCount, &attachReceipt) ||
+        !attachReceipt.valid ||
+        !attachReceipt.shouldSetDroppedNextEnd ||
+        attachReceipt.chainOverflow) {
         return 0;
     }
-    m11_set_object_drop_next(world->things, attachPlan.baseThing, THING_ENDOFLIST);
-    m11_set_next_thing(world->things, attachPlan.baseThing, THING_ENDOFLIST);
-    current = attachPlan.squareFirstThing;
-    if (attachPlan.shouldSetSquareFirstThing) {
-        world->things->squareFirstThings[squareIndex] = attachPlan.droppedThing;
+    m11_set_object_drop_next(world->things, attachReceipt.baseThing,
+                             THING_ENDOFLIST);
+    m11_set_next_thing(world->things, attachReceipt.baseThing,
+                       THING_ENDOFLIST);
+    if (attachReceipt.shouldSetSquareFirstThing) {
+        world->things->squareFirstThings[squareIndex] =
+            attachReceipt.droppedThing;
         return 1;
     }
-    while (current != THING_NONE && current != THING_ENDOFLIST &&
-           safety++ < 64) {
-        unsigned short next = m11_get_raw_next_thing(world->things, current);
-        if (next == THING_NONE || next == THING_ENDOFLIST) {
-            next = m11_get_decoded_next_thing(world->things, current);
-        }
-        if (next == THING_NONE || next == THING_ENDOFLIST) {
-            memset(&attachPlan, 0, sizeof(attachPlan));
-            if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
-                    thing, world->things->squareFirstThings[squareIndex],
-                    current, &attachPlan) ||
-                !attachPlan.valid ||
-                !attachPlan.shouldAppendAfterTail ||
-                !attachPlan.shouldSetDroppedNextEnd) {
-                return 0;
-            }
-            m11_set_next_thing(
-                world->things, attachPlan.tailThing, attachPlan.droppedThing);
-            m11_set_object_drop_next(
-                world->things, attachPlan.baseThing, THING_ENDOFLIST);
-            m11_set_next_thing(
-                world->things, attachPlan.baseThing, THING_ENDOFLIST);
-            return 1;
-        }
-        current = next;
+    if (attachReceipt.shouldAppendAfterTail && attachReceipt.foundTail) {
+        m11_set_next_thing(world->things, attachReceipt.tailThing,
+                           attachReceipt.droppedThing);
+        return 1;
     }
     return 0;
 }
