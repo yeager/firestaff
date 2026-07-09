@@ -334,6 +334,9 @@ typedef struct {
     int packagedCaptureTitleReadyFrame;
     int packagedCaptureTitleFrameMax;
     int packagedCaptureTitlePromptVisible;
+    int dm1HoCRealAssetCaptureReady;
+    int dm1HoCReleaseAppCaptureReady;
+    int dm1HoCHostCaptureRouteReady;
     unsigned int expectedStepMask;
     unsigned int readyStepMask;
     unsigned int blockedStepMask;

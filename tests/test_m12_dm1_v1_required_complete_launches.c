@@ -163,6 +163,9 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.startupContractReady == 1);
     CHECK(boot.packagedCaptureExpected == 1);
     CHECK(boot.packagedCaptureReady == 1);
+    CHECK(boot.dm1HoCRealAssetCaptureReady == 1);
+    CHECK(boot.dm1HoCReleaseAppCaptureReady == 1);
+    CHECK(boot.dm1HoCHostCaptureRouteReady == 1);
     CHECK(boot.startupMenuReady == 1);
     CHECK(boot.startupStepCount == 7);
     CHECK(boot.startupStepReadyCount == 7);

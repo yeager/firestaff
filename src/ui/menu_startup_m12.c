@@ -16,6 +16,8 @@
 #include "config_m12.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "entrance_frontend_pc34_compat.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "nexus_v1_launcher.h"
@@ -6774,6 +6776,86 @@ static int m12_apply_nexus_startup_package(
     return 1;
 }
 
+static int m12_dm1_required_asset_capture_ready(
+    const M12_StartupMenuState* state) {
+    const M12_AssetRequiredFileStatus* graphics;
+    const M12_AssetRequiredFileStatus* dungeon;
+    if (!state) {
+        return 0;
+    }
+    graphics = M12_AssetStatus_GetRequiredFile(&state->assetStatus, "dm1", 0U);
+    dungeon = M12_AssetStatus_GetRequiredFile(&state->assetStatus, "dm1", 1U);
+    return
+        graphics && graphics->matched && graphics->matchedPath[0] != '\0' &&
+        graphics->matchedHash[0] != '\0' &&
+        dungeon && dungeon->matched && dungeon->matchedPath[0] != '\0' &&
+        dungeon->matchedHash[0] != '\0';
+}
+
+static int m12_apply_dm1_hoc_startup_capture_package(
+    const M12_StartupMenuState* state,
+    M12_StartupBootReadiness* receipt) {
+    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 apply;
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 consumer;
+    int realAssetReady;
+
+    if (!state || !receipt || !receipt->gameId ||
+        strcmp(receipt->gameId, "dm1") != 0) {
+        return 0;
+    }
+
+    realAssetReady = m12_dm1_required_asset_capture_ready(state);
+    memset(&facts, 0, sizeof(facts));
+    memset(&apply, 0, sizeof(apply));
+    memset(&consumer, 0, sizeof(consumer));
+    facts.source_id = "dm1";
+    facts.dungeon_loaded = receipt->dataReady && receipt->versionReady;
+    facts.map_count = facts.dungeon_loaded ? 1 : 0;
+    facts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
+    facts.title_played = receipt->startupContractReady;
+    facts.captured_after_first_frame_render = receipt->startupContractReady;
+    facts.captured_from_real_assets = realAssetReady;
+    facts.captured_from_mac_window = 1;
+    facts.captured_from_release_app = receipt->startupContractReady;
+    facts.observed_c026_portrait_asset = realAssetReady;
+    facts.observed_c346_mirror_backing_asset = realAssetReady;
+    facts.observed_host_window_present = 1;
+
+    (void)dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
+        &facts, &apply, &consumer);
+
+    receipt->dm1HoCRealAssetCaptureReady = consumer.real_asset_capture;
+    receipt->dm1HoCReleaseAppCaptureReady = consumer.release_app_capture;
+    receipt->dm1HoCHostCaptureRouteReady = consumer.host_capture_route_matches;
+    receipt->packagedCaptureReady =
+        receipt->packagedCaptureExpected &&
+        consumer.ready &&
+        consumer.real_asset_capture &&
+        consumer.release_app_capture &&
+        consumer.host_capture_route_matches &&
+        consumer.hoc_asset_capture &&
+        consumer.draw_opened_entrance_frame &&
+        consumer.render_hall_mirror_overlay &&
+        consumer.suppress_host_fallback_visuals &&
+        consumer.render_command_count == 3;
+    if (receipt->packagedCaptureReady) {
+        receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
+        receipt->startupStepReadyCount = receipt->startupStepCount;
+        receipt->nextStepLabel = "READY";
+        receipt->activeProofLabel = receipt->packagedCaptureLabel;
+        receipt->statusLabel = m12_full_start_ready_status_label(receipt->gameId);
+        receipt->detailLabel = m12_full_start_ready_detail_label(receipt->gameId);
+    } else {
+        receipt->readyStepMask &= ~M12_STARTUP_BOOT_STEP_CAPTURE;
+        receipt->blockedStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
+        receipt->nextStepLabel = "DM1 HOC RELEASE APP CAPTURE";
+        receipt->activeProofLabel = receipt->nextStepLabel;
+    }
+    receipt->blockedStepMask = receipt->expectedStepMask & ~receipt->readyStepMask;
+    return 1;
+}
+
 int M12_StartupMenu_GetBootReadiness(
     const M12_StartupMenuState* state,
     int entryIndex,
@@ -6866,6 +6948,7 @@ int M12_StartupMenu_GetBootReadiness(
         *outReadiness = receipt;
         return 1;
     }
+    (void)m12_apply_dm1_hoc_startup_capture_package(state, &receipt);
 
     if (!receipt.supported) {
         receipt.statusLabel = "UNSUPPORTED";
@@ -6983,6 +7066,17 @@ static void m12_boot_readiness_mark_version_ready(M12_StartupBootReadiness* boot
         boot->readyStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
     }
     boot->blockedStepMask = boot->expectedStepMask & ~boot->readyStepMask;
+    /* DM1 cannot use the generic package shortcut: HoC capture readiness must
+     * come from the DM1 HoC release/app capture receipt.  The caller rebuilds
+     * the full boot receipt after auto-selecting a version, so leave this
+     * helper conservative for DM1. */
+    if (boot->gameId && strcmp(boot->gameId, "dm1") == 0) {
+        boot->packagedCaptureReady = 0;
+        boot->readyStepMask &= ~M12_STARTUP_BOOT_STEP_CAPTURE;
+        boot->blockedStepMask = boot->expectedStepMask & ~boot->readyStepMask;
+        return;
+    }
+    boot->blockedStepMask = boot->expectedStepMask & ~boot->readyStepMask;
     if (boot->packagedCaptureReady) {
         boot->startupStepReadyCount = boot->startupStepCount;
         boot->statusLabel = m12_full_start_ready_status_label(boot->gameId);
@@ -7044,6 +7138,8 @@ int M12_StartupMenu_GetLaunchGate(
         if (gate.autoSelectedVersionIndex >= 0) {
             gate.versionReady = 1;
             m12_boot_readiness_mark_version_ready(&gate.boot);
+            (void)m12_apply_dm1_hoc_startup_capture_package(state,
+                                                            &gate.boot);
             gate.fullStartGraphicsReady = gate.boot.fullStartGraphicsReady;
             gate.startupContractReady = gate.boot.startupContractReady;
             gate.packagedCaptureReady = gate.boot.packagedCaptureReady;
