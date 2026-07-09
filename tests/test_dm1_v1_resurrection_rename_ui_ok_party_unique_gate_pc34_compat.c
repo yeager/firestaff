@@ -5,8 +5,8 @@
  * MEDIA009 mouse path's (197..215, 147..155) OK button.
  *
  * Source-locked behaviour:
- *   - C166 OK rejects when in TITLE field with character_index == 0
- *     (F0281:425-428)
+ *   - C166 OK commits when in TITLE field even with character_index == 0,
+ *     and rejects only empty NAME field (F0281:425-428)
  *   - C166 OK takes a backup of Name + character_index BEFORE trim
  *     (F0281:430 + L0821_ac_ChampionNameBackupString[8])
  *   - C166 OK trims trailing spaces from Name (F0281:435-440)
@@ -194,11 +194,22 @@ test_ok_trims_trailing_spaces_before_compare(void)
 }
 
 static void
-test_ok_rejects_title_empty_and_backspace_walkback(void)
+test_ok_accepts_empty_title_rejects_empty_name_and_backspace_walkback(void)
 {
     DM1_V1_RenameUiOkPartyUniqueGatePc34Compat state;
     const char *party[1] = {"HALK"};
     int i;
+
+    dm1_v1_rename_ui_ok_party_unique_gate_init_pc34(&state);
+    dm1_v1_rename_ui_ok_party_unique_gate_set_party_pc34(&state, 1, party);
+    CHECK_REDMCSB(dm1_v1_rename_ui_ok_party_unique_gate_apply_command_pc34(
+                      &state,
+                      DM1_V1_RENAME_UI_OK_PARTY_OK_COMMAND_PC34_COMPAT) == 0,
+                  "REVIVE.C F0281:425-428 empty NAME rejects OK");
+    CHECK_REDMCSB(state.titleModeRejectionCount == 1,
+                  "REVIVE.C F0281:425-428 OK precondition reject count");
+    CHECK_REDMCSB(state.committed == 0 && state.returned == 0,
+                  "REVIVE.C F0281:425-428 empty NAME stays live");
 
     dm1_v1_rename_ui_ok_party_unique_gate_init_pc34(&state);
     dm1_v1_rename_ui_ok_party_unique_gate_set_party_pc34(&state, 1, party);
@@ -218,15 +229,26 @@ test_ok_rejects_title_empty_and_backspace_walkback(void)
     CHECK_REDMCSB(state.characterIndex == 0,
                   "REVIVE.C F0281:541-545 character_index reset");
 
-    /* Now in TITLE field with empty title. C166 OK should reject. */
+    /* Now in TITLE field with empty title. C166 OK should still commit:
+     * ReDMCSB F0281 gates OK on TITLE mode OR non-empty NAME. */
     CHECK_REDMCSB(dm1_v1_rename_ui_ok_party_unique_gate_apply_command_pc34(
                       &state,
-                      DM1_V1_RENAME_UI_OK_PARTY_OK_COMMAND_PC34_COMPAT) == 0,
-                  "REVIVE.C F0281:425-428 title-empty OK rejected");
-    CHECK_REDMCSB(state.titleModeRejectionCount == 1,
-                  "REVIVE.C F0281:425-428 title mode rejection count");
-    CHECK_REDMCSB(state.committed == 0 && state.keptLive == 0,
-                  "REVIVE.C F0281:425-428 no commit");
+                      DM1_V1_RENAME_UI_OK_PARTY_OK_COMMAND_PC34_COMPAT) == 1,
+                  "REVIVE.C F0281:425-428 title-empty OK commits");
+    CHECK_REDMCSB(state.committed == 1 && state.returned == 1,
+                  "REVIVE.C F0281:451 commit from TITLE field");
+    CHECK_REDMCSB(strcmp(state.name, "ABCDEFG") == 0,
+                  "REVIVE.C F0281:430-445 name preserved on title commit");
+
+    /* Recreate the title-empty state for the backspace walkback guard. */
+    dm1_v1_rename_ui_ok_party_unique_gate_init_pc34(&state);
+    dm1_v1_rename_ui_ok_party_unique_gate_set_party_pc34(&state, 1, party);
+    for (i = 0; i < DM1_V1_RENAME_UI_OK_PARTY_NAME_MAX_PC34_COMPAT; ++i) {
+        CHECK_REDMCSB(dm1_v1_rename_ui_ok_party_unique_gate_apply_command_pc34(
+                          &state,
+                          DM1_V1_RENAME_UI_OK_PARTY_A_COMMAND_PC34_COMPAT + i) == 1,
+                      "REVIVE.C F0281:526-530 NAME_MAX chars");
+    }
 
     /* Backspace from TITLE with character_index == 0 walks back to NAME
      * field. */
@@ -445,7 +467,7 @@ main(void)
     test_ok_commits_unique_name();
     test_ok_keeps_duplicate_name_live();
     test_ok_trims_trailing_spaces_before_compare();
-    test_ok_rejects_title_empty_and_backspace_walkback();
+    test_ok_accepts_empty_title_rejects_empty_name_and_backspace_walkback();
     test_mouse_ok_button_routes_to_c166();
     test_party_roster_excludes_candidate_slot();
     test_source_evidence_and_self_test();

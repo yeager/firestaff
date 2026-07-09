@@ -13,8 +13,9 @@
  * Source-locked behaviour covered:
  *   - REVIVE.C F0281:425-445 (C166 OK handler precondition:
  *     title field OR non-empty name required) — `apply_command_ok`
- *     returns 0 while in title mode with character_index == 0 and 1
- *     when the precondition holds.
+ *     returns 0 only while still in the NAME field with
+ *     character_index == 0, and 1 when the source predicate holds
+ *     (including TITLE field with an empty title).
  *   - REVIVE.C F0281:430-444 (trailing-space trim before the
  *     duplicate-name check, with the 8-byte
  *     L0821_ac_ChampionNameBackupString backup first and strcpy back
@@ -128,7 +129,7 @@ typedef struct DM1_V1_RenameUiOkPartyUniqueGatePc34Compat {
     int backupCharacterIndex;
     int mouseOkClickCount;
     int mouseOkOutsideButtonCount;
-    int titleModeRejectionCount; /* OK in title field with empty name */
+    int titleModeRejectionCount; /* Historical name: OK precondition rejects */
     char name[DM1_V1_RENAME_UI_OK_PARTY_NAME_MAX_PC34_COMPAT + 1];
     char backupName[DM1_V1_RENAME_UI_OK_PARTY_NAME_MAX_PC34_COMPAT + 1];
     char title[DM1_V1_RENAME_UI_OK_PARTY_TITLE_MAX_PC34_COMPAT + 1];
