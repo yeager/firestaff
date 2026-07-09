@@ -999,6 +999,22 @@ int csb_v1_boot_startup_launch_detach_runtime_pc34(
         launch->profile->graphics_path[0] != '\0';
     out_receipt->load_original_font_from_graphics =
         out_receipt->bind_graphics_to_m11_asset_loader;
+    out_receipt->real_asset_receipt_valid =
+        csb_v1_startup_real_receipt_from_profile_fields(
+            launch->profile->asset_root,
+            launch->profile->graphics_path,
+            launch->profile->dungeon_path,
+            launch->profile->graphics_md5,
+            launch->profile->dungeon_md5,
+            0u,
+            0u,
+            launch->profile->variant_id,
+            launch->profile->graphics_kind,
+            4,
+            launch->profile->assets_verified,
+            launch->profile->graphics_verified,
+            launch->profile->dungeon_verified,
+            &out_receipt->real_asset_receipt);
     snprintf(out_receipt->graphics_path,
              sizeof(out_receipt->graphics_path),
              "%s",

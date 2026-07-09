@@ -6,6 +6,7 @@
 
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_startup_real_asset_receipt.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
@@ -23,7 +24,7 @@ typedef enum {
     CSB_V1_BOOT_STATE_RUNTIME_READY
 } CSB_V1_BootState;
 
-typedef struct {
+typedef struct CSB_V1_BootProfile {
     char game_id[8];
     CSB_V1_BootState state;
     CSB_V1_VariantId variant_id;
@@ -91,6 +92,8 @@ typedef struct CSB_V1_BootStartupRuntimeReceipt_PC34 {
     char source_id[32];
     int bind_graphics_to_m11_asset_loader;
     int load_original_font_from_graphics;
+    int real_asset_receipt_valid;
+    CSB_V1_StartupRealReceipt real_asset_receipt;
     char graphics_path[512];
     char dungeon_path[512];
 } CSB_V1_BootStartupRuntimeReceipt_PC34;

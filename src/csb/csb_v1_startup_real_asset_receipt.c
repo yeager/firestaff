@@ -139,6 +139,65 @@ void csb_v1_startup_real_receipt_init(CSB_V1_StartupRealReceipt *receipt)
     receipt->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
 }
 
+int csb_v1_startup_real_receipt_from_profile_fields(
+    const char *asset_root,
+    const char *graphics_path,
+    const char *dungeon_path,
+    const char *graphics_md5,
+    const char *dungeon_md5,
+    uint64_t graphics_size_bytes,
+    uint64_t dungeon_size_bytes,
+    CSB_V1_VariantId variant_id,
+    CSB_V1_AssetGfxArchiveType graphics_kind,
+    int max_depth,
+    int assets_verified,
+    int graphics_verified,
+    int dungeon_verified,
+    CSB_V1_StartupRealReceipt *receipt)
+{
+    if (!receipt) {
+        return 0;
+    }
+    csb_v1_startup_real_receipt_init(receipt);
+    receipt->max_depth = max_depth;
+    csb_v1_startup_real_copy(receipt->asset_root,
+                             sizeof(receipt->asset_root),
+                             asset_root);
+    if (!assets_verified || !graphics_verified || !dungeon_verified ||
+        !graphics_path || graphics_path[0] == '\0' ||
+        !dungeon_path || dungeon_path[0] == '\0' ||
+        !graphics_md5 || graphics_md5[0] == '\0' ||
+        !dungeon_md5 || dungeon_md5[0] == '\0') {
+        return 0;
+    }
+    csb_v1_startup_real_copy(receipt->graphics_path,
+                             sizeof(receipt->graphics_path),
+                             graphics_path);
+    csb_v1_startup_real_copy(receipt->dungeon_path,
+                             sizeof(receipt->dungeon_path),
+                             dungeon_path);
+    csb_v1_startup_real_copy(receipt->graphics_md5,
+                             sizeof(receipt->graphics_md5),
+                             graphics_md5);
+    csb_v1_startup_real_copy(receipt->dungeon_md5,
+                             sizeof(receipt->dungeon_md5),
+                             dungeon_md5);
+    receipt->graphics_size_bytes = graphics_size_bytes;
+    receipt->dungeon_size_bytes = dungeon_size_bytes;
+    receipt->variant_id = variant_id;
+    receipt->graphics_kind = graphics_kind;
+    receipt->assets_verified = assets_verified ? 1 : 0;
+    receipt->graphics_verified = graphics_verified ? 1 : 0;
+    receipt->dungeon_verified = dungeon_verified ? 1 : 0;
+    receipt->matched = 1;
+    csb_v1_startup_real_store_hash(receipt);
+    /* ReDMCSB ENTRANCE.C F0806 line 440 selects the CSB palette/media
+     * path, then LOADSAVE.C F0435 line 2192 enters the dungeon load path.
+     * Detach-time M11 receipts use the already verified boot profile
+     * fields here, instead of repeating filename/path inference. */
+    return 1;
+}
+
 int csb_v1_startup_real_scan_and_receipt(
     const char *data_dir,
     int max_depth,
@@ -183,27 +242,21 @@ int csb_v1_startup_real_scan_and_receipt(
         return CSB_V1_STARTUP_REAL_ERR_BOOT_SCAN;
     }
 
-    csb_v1_startup_real_copy(receipt->graphics_path,
-                             sizeof(receipt->graphics_path),
-                             profile.graphics_path);
-    csb_v1_startup_real_copy(receipt->dungeon_path,
-                             sizeof(receipt->dungeon_path),
-                             profile.dungeon_path);
-    csb_v1_startup_real_copy(receipt->graphics_md5,
-                             sizeof(receipt->graphics_md5),
-                             profile.graphics_md5);
-    csb_v1_startup_real_copy(receipt->dungeon_md5,
-                             sizeof(receipt->dungeon_md5),
-                             profile.dungeon_md5);
-    receipt->graphics_size_bytes = graphics_size;
-    receipt->dungeon_size_bytes = dungeon_size;
-    receipt->variant_id = profile.variant_id;
-    receipt->graphics_kind = profile.graphics_kind;
-    receipt->assets_verified = profile.assets_verified ? 1 : 0;
-    receipt->graphics_verified = profile.graphics_verified ? 1 : 0;
-    receipt->dungeon_verified = profile.dungeon_verified ? 1 : 0;
-    receipt->matched = 1;
-    csb_v1_startup_real_store_hash(receipt);
+    (void)csb_v1_startup_real_receipt_from_profile_fields(
+        profile.asset_root,
+        profile.graphics_path,
+        profile.dungeon_path,
+        profile.graphics_md5,
+        profile.dungeon_md5,
+        graphics_size,
+        dungeon_size,
+        profile.variant_id,
+        profile.graphics_kind,
+        max_depth,
+        profile.assets_verified,
+        profile.graphics_verified,
+        profile.dungeon_verified,
+        receipt);
     /* ReDMCSB ENTRANCE.C F0806 lines 409-441 selects the CSB media path
      * before LOADSAVE.C F0435 loads map 0. This receipt packages that
      * hash-verified startup capture so M11/probes do not infer it from
