@@ -53,6 +53,33 @@ int nexus_v1_launcher_load_level(int level);
 Nexus_V1_Engine *nexus_v1_launcher_get_engine(void);
 
 typedef struct {
+    int title_surface_loaded;
+    int warning_surface_loaded;
+    int gameover_surface_loaded;
+    int status_bg_surface_loaded;
+    int title_screen_loaded;
+    int startup_surfaces_loaded;
+    int startup_surfaces_expected;
+    int startup_surfaces_fallback;
+    int faces_loaded;
+    int faces_expected;
+    int faces_fallback;
+    int menu_bpk_upload_receipt_valid;
+    Nexus_V1_BpkRuntimeUploadRoute menu_bpk_upload_route;
+    int menu_bpk_planned_rows;
+    int menu_bpk_blocked_prs3_uploads;
+    int menu_bpk_blocks_real_menu_surface_render;
+    int menu_bpk_fallback_visuals_permitted;
+    Nexus_SfxRuntimeStatus startup_sfx_status;
+    int startup_sfx_level_index;
+    int startup_cd_track;
+    int startup_sfx_blocks_real_playback;
+    int startup_assets_ready;
+    int startup_audio_handoff_ready;
+    int main_menu_route_ready;
+} Nexus_V1_LauncherStartupAssetsReceipt;
+
+typedef struct {
     Nexus_V1_Engine *engine;
     int level_loaded;
     int party_x;
@@ -62,6 +89,7 @@ typedef struct {
     int title_loaded;
     char dungeon_path[512];
     Nexus_V1_StartupLaunchReceipt startup_receipt;
+    Nexus_V1_LauncherStartupAssetsReceipt startup_assets;
 } Nexus_V1_LauncherBootReceipt;
 
 typedef struct {
@@ -79,6 +107,7 @@ typedef struct {
     char dungeon_path[512];
     Nexus_V1_StartupLaunchReceipt startup_receipt;
     Nexus_V1_StartupHostReceipt boot_status_receipt;
+    Nexus_V1_LauncherStartupAssetsReceipt startup_assets;
     const char *boot_log_line;
 } Nexus_V1_LauncherRuntimeReceipt;
 

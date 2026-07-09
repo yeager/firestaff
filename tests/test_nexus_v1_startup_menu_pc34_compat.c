@@ -66,6 +66,16 @@ static int make_temp_root(char *out, size_t out_size)
     return 0;
 }
 
+static int local_file_exists(const char *path)
+{
+    FILE *fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+    fclose(fp);
+    return 1;
+}
+
 static void build_world(Nexus_V1_World *world)
 {
     nexus_v1_world_init(world);
@@ -1787,6 +1797,60 @@ int main(void)
                    strcmp(runtime_receipt.startup_receipt.host_receipt.status,
                           "NEXUS DATA ERROR") == 0,
                "Nexus launcher runtime receipt owns M11 identity and failure status");
+        expect(runtime_receipt.startup_assets.main_menu_route_ready == 0 &&
+                   runtime_receipt.startup_assets.startup_audio_handoff_ready == 0 &&
+                   runtime_receipt.startup_assets.menu_bpk_upload_route ==
+                       NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID &&
+                   runtime_receipt.startup_assets.startup_sfx_status ==
+                       NEXUS_SFX_RUNTIME_MISSING,
+               "Nexus launcher missing-data startup asset receipt stays blocked");
+    }
+
+    {
+        const char *home = getenv("HOME");
+        char nexus_dir[512];
+        char dm_bin[512];
+        char lev00[512];
+        Nexus_TitleScreen title_screen;
+        Nexus_V1_LauncherRuntimeReceipt runtime_receipt;
+        if (!home || !home[0]) {
+            puts("SKIP: HOME unset; no local Nexus launcher asset receipt check");
+        } else {
+            snprintf(nexus_dir, sizeof(nexus_dir),
+                     "%s/.firestaff/data/nexus", home);
+            snprintf(dm_bin, sizeof(dm_bin), "%s/DM.BIN", nexus_dir);
+            snprintf(lev00, sizeof(lev00), "%s/LEV00.DGN", nexus_dir);
+            if (!local_file_exists(dm_bin) || !local_file_exists(lev00)) {
+                puts("SKIP: local Nexus DM.BIN/LEV00.DGN not present for launcher asset receipt");
+            } else {
+                memset(&title_screen, 0, sizeof(title_screen));
+                nexus_v1_launcher_runtime_receipt_clear(&runtime_receipt);
+                expect(nexus_v1_launcher_boot_level0_runtime_startup(
+                           nexus_dir,
+                           &title_screen,
+                           &runtime_receipt),
+                       "Nexus launcher runtime startup boots local real data");
+                expect(runtime_receipt.startup_assets.title_screen_loaded == 1 &&
+                           runtime_receipt.startup_assets.startup_surfaces_expected >= 1 &&
+                           runtime_receipt.startup_assets.faces_expected == NEXUS_MAX_CHAMPIONS,
+                       "Nexus launcher asset receipt exposes title/startup/face route");
+                expect(runtime_receipt.startup_assets.startup_sfx_level_index == 0 &&
+                           runtime_receipt.startup_assets.startup_cd_track == 2 &&
+                           runtime_receipt.startup_assets.startup_audio_handoff_ready == 1,
+                       "Nexus launcher asset receipt exposes level-0 audio handoff");
+                expect(runtime_receipt.startup_assets.main_menu_route_ready == 1,
+                       "Nexus launcher asset receipt marks main menu route ready");
+                if (runtime_receipt.startup_assets.menu_bpk_upload_receipt_valid) {
+                    expect(runtime_receipt.startup_assets.menu_bpk_upload_route ==
+                               NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&
+                               runtime_receipt.startup_assets.menu_bpk_blocked_prs3_uploads > 0 &&
+                               runtime_receipt.startup_assets.menu_bpk_blocks_real_menu_surface_render == 1,
+                           "Nexus launcher asset receipt exposes MENU.BPK PRS3 blocker");
+                }
+                nexus_title_free(&title_screen);
+                nexus_v1_launcher_shutdown();
+            }
+        }
     }
 
     snprintf(path, sizeof(path), "%s/nexus_save_03.dat", save_dir);
