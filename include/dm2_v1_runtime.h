@@ -117,6 +117,8 @@ int dm2_v1_runtime_last_fallback_carried_item_count(void);
 typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int valid;
     int instance_id;
+    int thing_handle;
+    int source_kind;       /* 1=live CCM instance, 2=DB4 dungeon record */
     int creature_type;
     int frame_index;
     int direction;
@@ -126,6 +128,17 @@ typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int screen_x;
     int screen_y;
     int depth;
+    int gdat_index;
+    int asset_blit_ready;
+    int asset_src_w;
+    int asset_src_h;
+    int asset_src_stride;
+    int atlas_frame_x;
+    int atlas_frame_y;
+    int atlas_frame_w;
+    int atlas_frame_h;
+    int render_frame;
+    DM2_V1_ViewportRect asset_dst_rect;
 } DM2_V1_RuntimeCreatureRenderReceipt;
 int dm2_v1_runtime_last_creature_render_receipt(
     DM2_V1_RuntimeCreatureRenderReceipt *out_receipt);

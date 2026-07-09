@@ -2977,6 +2977,14 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
     if (!dm2_v1_viewport_build_creature_render_plan(s, &plan)) {
         return;
     }
+    s->last_creature_asset_blit_valid = 0;
+    memset(&s->last_creature_asset_render, 0,
+           sizeof(s->last_creature_asset_render));
+    memset(&s->last_creature_asset_blit, 0,
+           sizeof(s->last_creature_asset_blit));
+    s->last_creature_asset_src_w = 0;
+    s->last_creature_asset_src_h = 0;
+    s->last_creature_asset_src_stride = 0;
 
     for (int i = 0; i < plan.creature_count; i++) {
         const DM2_V1_CreatureRender *c = &plan.creatures[i];
@@ -3015,6 +3023,13 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                         blit.src_stride,
                         blit.transparent_color);
                     ++s->asset_creature_drawn_count;
+                    s->last_creature_asset_blit_valid = 1;
+                    s->last_creature_asset_render = *c;
+                    s->last_creature_asset_blit = blit;
+                    s->last_creature_asset_src_w = src_w;
+                    s->last_creature_asset_src_h = src_h;
+                    s->last_creature_asset_src_stride =
+                        src_stride > 0 ? src_stride : src_w;
                     drawn_asset = 1;
                 }
             }

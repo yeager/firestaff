@@ -646,6 +646,12 @@ typedef struct {
     int fallback_door_drawn_count;
     int asset_creature_drawn_count;
     int fallback_creature_drawn_count;
+    int last_creature_asset_blit_valid;
+    int last_creature_asset_src_w;
+    int last_creature_asset_src_h;
+    int last_creature_asset_src_stride;
+    DM2_V1_CreatureRender last_creature_asset_render;
+    DM2_V1_CreatureAssetBlit last_creature_asset_blit;
     int asset_item_drawn_count;
     int fallback_item_drawn_count;
     int asset_creature_possession_item_drawn_count;

@@ -784,6 +784,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
               "runtime active creature instance uses GDAT creature map-chip receipt");
         CHECK(dm2_v1_runtime_last_creature_render_receipt(&receipt) == 1 &&
               receipt.creature_type == DM2_AI_CAVE_BAT &&
+              receipt.source_kind == 1 &&
+              receipt.thing_handle == -1 &&
               receipt.frame_index == 0 &&
               receipt.direction == 0 &&
               receipt.hp_pct == 100 &&
@@ -791,8 +793,22 @@ static void test_first_tick_after_boot_profile_handoff(void)
               receipt.map_y == 0 &&
               receipt.screen_x == 112 &&
               receipt.screen_y == 98 &&
-              receipt.depth == 0,
-              "runtime active creature render receipt exposes live AI projection");
+              receipt.depth == 0 &&
+              receipt.gdat_index ==
+                  dm2_v1_viewport_creature_graphic_index(DM2_AI_CAVE_BAT, 0) &&
+              receipt.asset_blit_ready == 1 &&
+              receipt.asset_src_w == 16 &&
+              receipt.asset_src_h == 8 &&
+              receipt.asset_src_stride == 16 &&
+              receipt.atlas_frame_x == 0 &&
+              receipt.atlas_frame_w == 8 &&
+              receipt.atlas_frame_h == 8 &&
+              receipt.render_frame == 0 &&
+              receipt.asset_dst_rect.x == 108 &&
+              receipt.asset_dst_rect.y == 94 &&
+              receipt.asset_dst_rect.w == 8 &&
+              receipt.asset_dst_rect.h == 8,
+              "runtime active creature render receipt exposes live AI projection and atlas blit");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
         clear_creature_pool_for_door_runtime_test();
     }
@@ -805,6 +821,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
             (DM2_V1_DungeonData *)calloc(1, sizeof(*replacement));
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
+        DM2_V1_RuntimeCreatureRenderReceipt receipt;
 
         CHECK(fixture_size > 0 && replacement != NULL,
               "runtime creature-possession fixture allocates");
@@ -831,6 +848,24 @@ static void test_first_tick_after_boot_profile_handoff(void)
             CHECK(dm2_v1_runtime_last_asset_creature_count() == 1 &&
                   dm2_v1_runtime_last_fallback_creature_count() == 0,
                   "runtime DB4 creature draws through creature GDAT map-chip path");
+            CHECK(dm2_v1_runtime_last_creature_render_receipt(&receipt) == 1 &&
+                  receipt.source_kind == 2 &&
+                  receipt.instance_id == -1 &&
+                  receipt.thing_handle >= 0 &&
+                  receipt.creature_type > 0 &&
+                  receipt.gdat_index ==
+                      dm2_v1_viewport_creature_graphic_index(
+                          receipt.creature_type, receipt.frame_index) &&
+                  receipt.map_x == 1 &&
+                  receipt.map_y == 0 &&
+                  receipt.asset_blit_ready == 1 &&
+                  receipt.asset_src_w == 16 &&
+                  receipt.asset_src_h == 8 &&
+                  receipt.atlas_frame_w == 8 &&
+                  receipt.atlas_frame_h == 8 &&
+                  receipt.asset_dst_rect.w > 0 &&
+                  receipt.asset_dst_rect.h > 0,
+                  "runtime DB4 creature receipt exposes GDAT sprite atlas blit");
             CHECK(dm2_v1_runtime_last_asset_creature_possession_item_count() == 2 &&
                   dm2_v1_runtime_last_fallback_creature_possession_item_count() == 0,
                   "runtime records asset-backed creature possession item draws");

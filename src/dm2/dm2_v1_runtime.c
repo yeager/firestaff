@@ -893,6 +893,9 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport,
 
 static void dm2_runtime_append_creature_sprite(
     DM2_V1_ViewportState *viewport,
+    uint16_t thing,
+    int map_x,
+    int map_y,
     int screen_x,
     int screen_y,
     int depth,
@@ -919,6 +922,28 @@ static void dm2_runtime_append_creature_sprite(
     if (record_size >= 8) {
         dst->direction = (uint8_t)(record[7] & 3u);
     }
+
+    memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
+    /* skproject SKWIN/DME.h Creature::CreatureType() plus
+     * SkWinCore.cpp DRAW_TEMP_PICST/QUERY_DUNGEON_MAP_CHIP_PICT is the DB4
+     * record-to-GDAT sprite route. The render pass appends the atlas blit
+     * fields once asset dimensions are known. */
+    g_dm2_last_creature_render.valid = 1;
+    g_dm2_last_creature_render.instance_id = -1;
+    g_dm2_last_creature_render.thing_handle = thing;
+    g_dm2_last_creature_render.source_kind = 2;
+    g_dm2_last_creature_render.creature_type = dst->creature_type;
+    g_dm2_last_creature_render.frame_index = dst->frame_index;
+    g_dm2_last_creature_render.direction = dst->direction;
+    g_dm2_last_creature_render.hp_pct = 100;
+    g_dm2_last_creature_render.map_x = map_x;
+    g_dm2_last_creature_render.map_y = map_y;
+    g_dm2_last_creature_render.screen_x = screen_x;
+    g_dm2_last_creature_render.screen_y = screen_y;
+    g_dm2_last_creature_render.depth = depth;
+    g_dm2_last_creature_render.gdat_index =
+        dm2_v1_viewport_creature_graphic_index(dst->creature_type,
+                                               dst->frame_index);
 }
 
 static int dm2_runtime_creature_frame_from_instance(
@@ -969,6 +994,8 @@ static void dm2_runtime_append_creature_instance_sprite(
     memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
     g_dm2_last_creature_render.valid = 1;
     g_dm2_last_creature_render.instance_id = inst->instance_id;
+    g_dm2_last_creature_render.thing_handle = -1;
+    g_dm2_last_creature_render.source_kind = 1;
     g_dm2_last_creature_render.creature_type = dst->creature_type;
     g_dm2_last_creature_render.frame_index = dst->frame_index;
     g_dm2_last_creature_render.direction = dst->direction;
@@ -978,6 +1005,35 @@ static void dm2_runtime_append_creature_instance_sprite(
     g_dm2_last_creature_render.screen_x = placement->screen_x;
     g_dm2_last_creature_render.screen_y = placement->screen_y;
     g_dm2_last_creature_render.depth = placement->depth;
+    g_dm2_last_creature_render.gdat_index =
+        dm2_v1_viewport_creature_graphic_index(dst->creature_type,
+                                               dst->frame_index);
+}
+
+static void dm2_runtime_finish_creature_render_receipt(
+    const DM2_V1_ViewportState *viewport)
+{
+    const DM2_V1_CreatureAssetBlit *blit;
+
+    if (!viewport || !g_dm2_last_creature_render.valid ||
+        !viewport->last_creature_asset_blit_valid) {
+        return;
+    }
+    blit = &viewport->last_creature_asset_blit;
+    g_dm2_last_creature_render.gdat_index = blit->gdat_index;
+    g_dm2_last_creature_render.asset_blit_ready = 1;
+    g_dm2_last_creature_render.asset_src_w =
+        viewport->last_creature_asset_src_w;
+    g_dm2_last_creature_render.asset_src_h =
+        viewport->last_creature_asset_src_h;
+    g_dm2_last_creature_render.asset_src_stride =
+        viewport->last_creature_asset_src_stride;
+    g_dm2_last_creature_render.atlas_frame_x = blit->frame_x;
+    g_dm2_last_creature_render.atlas_frame_y = blit->frame_y;
+    g_dm2_last_creature_render.atlas_frame_w = blit->frame_w;
+    g_dm2_last_creature_render.atlas_frame_h = blit->frame_h;
+    g_dm2_last_creature_render.render_frame = blit->render_frame;
+    g_dm2_last_creature_render.asset_dst_rect = blit->dst_rect;
 }
 
 static void dm2_runtime_populate_active_creature_instances(
@@ -1058,6 +1114,9 @@ static void dm2_runtime_populate_creatures(
                 if (type == 4 && size >= 5) {
                     dm2_runtime_append_creature_sprite(
                         viewport,
+                        (uint16_t)thing,
+                        map_x,
+                        map_y,
                         placement.screen_x,
                         placement.screen_y,
                         placement.depth,
@@ -1428,6 +1487,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
+    dm2_runtime_finish_creature_render_receipt(&viewport);
     g_dm2_last_asset_floor_ceiling_count =
         viewport.asset_floor_ceiling_drawn_count;
     g_dm2_last_fallback_floor_ceiling_count =
