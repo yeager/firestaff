@@ -1434,6 +1434,12 @@ int main(void) {
                         real_visual_capture.runtime_hud_direction_mask == 0x0f &&
                         real_visual_capture.runtime_hud_sample_count == 4 &&
                         real_visual_capture.runtime_hud_unique_frame_hash_count > 0 &&
+                        real_visual_capture.runtime_hud_min_asset_portrait_count >= 4 &&
+                        real_visual_capture.runtime_hud_total_fallback_portrait_count == 0 &&
+                        real_visual_capture.runtime_hud_min_asset_floor_ceiling_count >= 2 &&
+                        real_visual_capture.runtime_hud_total_fallback_floor_ceiling_count == 0 &&
+                        real_visual_capture.runtime_hud_min_asset_wall_count > 0 &&
+                        real_visual_capture.runtime_hud_total_fallback_wall_count == 0 &&
                         real_visual_capture.runtime_hud_frame_hash != 0u &&
                         real_visual_capture.runtime_hud_pixel_count == 4u * 320u * 200u &&
                         real_visual_capture.real_gdat_capture_breadth_ready == 1 &&

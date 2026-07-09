@@ -552,6 +552,12 @@ typedef struct {
     int runtime_hud_direction_mask;
     int runtime_hud_sample_count;
     int runtime_hud_unique_frame_hash_count;
+    int runtime_hud_min_asset_portrait_count;
+    int runtime_hud_total_fallback_portrait_count;
+    int runtime_hud_min_asset_floor_ceiling_count;
+    int runtime_hud_total_fallback_floor_ceiling_count;
+    int runtime_hud_min_asset_wall_count;
+    int runtime_hud_total_fallback_wall_count;
     uint32_t runtime_hud_frame_hash;
     uint32_t runtime_hud_pixel_count;
     int real_gdat_capture_breadth_ready;
