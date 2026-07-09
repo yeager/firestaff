@@ -24,6 +24,7 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 #include "nexus_v1_creatures.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_bpk_archive.h"
+#include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
 #include <stdint.h>
 
@@ -104,6 +105,11 @@ struct Nexus_V1_Engine {
     int menu_bpk_decode_receipt_attempted;
     Nexus_V1_BpkRuntimeDecodeReceipt menu_bpk_decode_receipt;
 
+    /* Per-level trigger/script runtime. SLEV*.BIN is real candidate data;
+     * dispatch remains blocked until a source-locked parser exists. */
+    Nexus_ScriptVM script_vm;
+    Nexus_ScriptRuntimeReceipt script_runtime_receipt;
+
     /* Creature manager */
     Nexus_V1_CreatureManager creatures;
 
@@ -170,5 +176,8 @@ const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
 int nexus_v1_current_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt);
+int nexus_v1_current_level_script_runtime_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_ScriptRuntimeReceipt *out_receipt);
 
 #endif /* NEXUS_V1_ENGINE_H */

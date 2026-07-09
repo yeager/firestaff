@@ -92,6 +92,8 @@ int main(void) {
     char profile_dm_bin_dst[FSP_PATH_MAX];
     char level_src[FSP_PATH_MAX];
     char level_dst[FSP_PATH_MAX];
+    char slev00_src[FSP_PATH_MAX];
+    char slev00_dst[FSP_PATH_MAX];
     char profile_level_root[FSP_PATH_MAX];
     char profile_level_nexus_dir[FSP_PATH_MAX];
     char profile_level_dst[FSP_PATH_MAX];
@@ -102,9 +104,11 @@ int main(void) {
     Nexus_V1_BpkRuntimeDecodeReceipt receipt;
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
+    Nexus_ScriptRuntimeReceipt script_receipt;
     uint8_t* data;
     int size = 0;
     int menu_bpk_copied = 0;
+    int slev00_copied = 0;
 
     if (!home || !home[0]) {
         puts("SKIP: HOME unset");
@@ -204,6 +208,13 @@ int main(void) {
         local_file_exists(level_src) &&
         FSP_JoinPath(level_dst, sizeof(level_dst), root, "renamed-level-zero.payload") &&
         copy_file_bytes(level_src, level_dst)) {
+        if (FSP_JoinPath(slev00_src, sizeof(slev00_src), home, ".firestaff/data/nexus/SLEV00.BIN") &&
+            local_file_exists(slev00_src) &&
+            FSP_JoinPath(slev00_dst, sizeof(slev00_dst), root, "SLEV00.BIN") &&
+            copy_file_bytes(slev00_src, slev00_dst)) {
+            slev00_copied = 1;
+        }
+
         memset(&engine, 0, sizeof(engine));
         check_int(nexus_v1_init(&engine, root) == 0,
                   "Nexus init accepts renamed LEV00.DGN marker by hash");
@@ -232,6 +243,28 @@ int main(void) {
                   "Nexus DGN handoff exposes real 64x64 DMWeb route");
         check_int(dgn_handoff.fallback_visuals_permitted == 0,
                   "Nexus DGN handoff forbids fallback visuals");
+        memset(&script_receipt, 0, sizeof(script_receipt));
+        check_int(nexus_v1_current_level_script_runtime_receipt(
+                      &engine,
+                      &script_receipt) == 0,
+                  "Nexus engine emits current-level script runtime receipt");
+        if (slev00_copied) {
+            check_int(script_receipt.candidate_source_loaded == 1 &&
+                          script_receipt.candidate_source_bytes > 0,
+                      "Nexus script receipt sees real SLEV00 candidate bytes");
+            check_int(script_receipt.status ==
+                          NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT,
+                      "Nexus script receipt blocks unsupported real SLEV format");
+            check_int(script_receipt.dispatch_enabled == 0 &&
+                          script_receipt.fallback_visuals_permitted == 0,
+                      "Nexus script receipt forbids fallback dispatch");
+            check_int(strcmp(nexus_script_runtime_status_name(
+                                 script_receipt.status),
+                             "blocked-unsupported-format") == 0,
+                      "Nexus script receipt has stable blocked route name");
+        } else {
+            puts("SKIP: local Nexus SLEV00.BIN not present for script runtime receipt");
+        }
         nexus_v1_shutdown(&engine);
 
         check_int(FSP_JoinPath(profile_level_root, sizeof(profile_level_root), root, "profile-level-root") &&

@@ -373,7 +373,10 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
      * Fires ON_XY rules when party steps on a scripted square.
      * Source: nexus_v1_script_vm.c nexus_script_on_party_move(). */
     if (needs_redraw) {
-        nexus_script_on_party_move(NULL, st->party_x, st->party_y, st->map_index);
+        nexus_script_on_party_move(&engine->script_vm,
+                                   st->party_x,
+                                   st->party_y,
+                                   st->map_index);
     }
 
     /* Gold pickup — only if party is alive.
