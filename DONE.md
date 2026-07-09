@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron full-start UI consumers: boot full-start receipts now provide copy-only layout, render rows, render plan, and host-view consumers plus title/stage/Soul Room action routing, so UI/M11 callers do not rebuild startup session/layout state. Verification: `test_theron_v1_startup_save_resume_pc34` 243/243 and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB snapshot capture render handoff: M11 startup drawing now consumes CSB's snapshot -> capture receipt -> render executor path for post-FTL title, utility, closed-door, and opening graphics. Verification: CSB boot runtime handoff, CSB M11 launcher handoff, CSB startup entrance pointer test, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 HoC host render plan receipt: added a DM1-owned first-frame host render plan helper that validates opened entrance frame, stale panel clear, and Hall mirror overlay command order so M11/M12 can consume one receipt instead of loose fields. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, target rebuild, and `git diff --check` passed.

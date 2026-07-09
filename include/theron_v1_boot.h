@@ -810,6 +810,20 @@ int theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
     int x,
     int y,
     Theron_StartupActionHostReceipt *out_receipt);
+int theron_v1_boot_startup_layout_build_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    Theron_StartupLayoutElement *elements,
+    int max_elements);
+int theron_v1_boot_startup_render_rows_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows);
+int theron_v1_boot_startup_render_plan_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    Theron_StartupRenderPlan *out_plan);
+int theron_v1_boot_startup_host_view_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    Theron_V1_BootStartupHostViewReceipt *out_receipt);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,

@@ -2913,6 +2913,71 @@ int theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
         out_receipt);
 }
 
+int theron_v1_boot_startup_layout_build_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    Theron_StartupLayoutElement *elements,
+    int max_elements)
+{
+    if (!receipt || !receipt->view_model_valid) {
+        if (elements && max_elements > 0) {
+            memset(elements, 0, (size_t)max_elements * sizeof(elements[0]));
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_layout_build_from_view_model(
+        &receipt->view_model,
+        elements,
+        max_elements);
+}
+
+int theron_v1_boot_startup_render_rows_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows)
+{
+    if (!receipt || !receipt->view_model_valid) {
+        if (rows && max_rows > 0) {
+            memset(rows,
+                   0,
+                   (size_t)max_rows * THERON_STARTUP_RENDER_ROW_CAPACITY);
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_render_rows_from_view_model(
+        &receipt->view_model,
+        rows,
+        max_rows);
+}
+
+int theron_v1_boot_startup_render_plan_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    Theron_StartupRenderPlan *out_plan)
+{
+    if (!receipt || !receipt->view_model_valid) {
+        if (out_plan) {
+            memset(out_plan, 0, sizeof(*out_plan));
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_render_plan_from_view_model(
+        &receipt->view_model,
+        out_plan);
+}
+
+int theron_v1_boot_startup_host_view_from_full_start_receipt(
+    const Theron_V1_BootStartupFullStartReceipt *receipt,
+    Theron_V1_BootStartupHostViewReceipt *out_receipt)
+{
+    if (out_receipt) {
+        theron_v1_boot_startup_host_view_receipt_init(out_receipt);
+    }
+    if (!receipt || !receipt->host_view_valid || !out_receipt) {
+        return 0;
+    }
+    *out_receipt = receipt->host_view;
+    return 1;
+}
+
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,
