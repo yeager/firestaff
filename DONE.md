@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 HoC runtime mirror render receipt gate: M11 D1C champion-mirror drawing now requires the DM1 HoC render consumer receipt before drawing C346/C026 wall-overlay output, keeping mirror payload suppression and no-fallback-scan ownership in DM1. Verification: `test_m11_overlay_command_queue_block` and target rebuild passed.
+
 - ✅ 2026-07-09 Theron snapshot host-render executor receipt: snapshot host-render receipts now consume Track02 media plus the graphics executor through full-start receipts, returning executed startup graphics proof without runtime field rebuilds. Verification: `test_theron_v1_startup_save_resume_pc34` and `git diff --check` passed.
 
 - ✅ 2026-07-09 M11 DM1 HoC startup render consumer probe: M11 now exposes a DM1-built HoC startup render consumer receipt proving opened entrance, stale-panel clear, Hall mirror overlay, C026 wall overlay, real floor object allowance, mirror payload suppression, and no fallback scan at the host boundary. Verification: `test_m11_overlay_command_queue_block`, `test_dm1_v1_startup_intro_state_machine_gate`, and `git diff --check` passed.
