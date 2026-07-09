@@ -1932,6 +1932,57 @@ static void test_startup_session_facts_wrappers(void) {
                     view_model_host_receipt.state_receipt.flow.phase ==
                         THERON_STARTUP_PHASE_STAGE_SELECT,
                 "boot runtime-state full-start receipt routes Soul Room Back without raw session rebuild");
+    expect_true(theron_v1_boot_startup_execute_input_from_runtime_state_with_media_receipt(
+                    &view_model_host_receipt,
+                    &media_receipt,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS,
+                    10) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.state_receipt.flow.phase ==
+                        THERON_STARTUP_PHASE_STAGE_SELECT,
+                "boot runtime-state input wrapper consumes Track02 media receipt without raw session rebuild");
+    expect_true(theron_v1_boot_startup_execute_pointer_from_runtime_state_with_media_receipt(
+                    &view_model_host_receipt,
+                    &media_receipt,
+                    THERON_STARTUP_PHASE_READY,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    NULL,
+                    &world,
+                    NULL,
+                    THERON_STARTUP_HERO_MIRROR_COUNT,
+                    0,
+                    THERON_V1_STARTUP_RESUME_DUAL,
+                    2,
+                    3,
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "/tmp/firestaff-theron-srm",
+                    0x03,
+                    2,
+                    order,
+                    THERON_STARTUP_MAX_COMPANIONS,
+                    50,
+                    80) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot runtime-state pointer wrapper consumes Track02 media receipt without raw layout rebuild");
     expect_true(theron_v1_boot_startup_host_view_receipt_from_snapshot_with_media_receipt(
                     &media_snapshot,
                     &media_receipt,

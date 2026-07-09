@@ -915,6 +915,67 @@ int theron_v1_boot_startup_execute_input_from_runtime_state(
         out_receipt);
 }
 
+int theron_v1_boot_startup_execute_input_from_runtime_state_with_media_receipt(
+    Theron_StartupActionHostReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    int startup_phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int startup_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    int input)
+{
+    Theron_V1_BootStartupFullStartReceipt full_start;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!theron_v1_boot_startup_full_start_receipt_from_runtime_state_with_media_receipt(
+            &full_start,
+            startup_media_receipt,
+            NULL,
+            startup_phase,
+            selected_dungeon,
+            boot_profile,
+            world,
+            assets,
+            startup_cursor,
+            continue_focus,
+            resume_claim,
+            tqsv_slot,
+            srm_slot,
+            srm_import_status,
+            srm_root,
+            selected_mirrors_mask,
+            companion_count,
+            selected_mirror_order,
+            selected_mirror_order_count)) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status = "FULL START RECEIPT MISSING";
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_input_from_full_start_receipt(
+        &full_start,
+        theron_v1_startup_input_from_firestaff_menu_code(input),
+        out_receipt);
+}
+
 int theron_v1_boot_startup_execute_input_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     int input,
@@ -1018,6 +1079,69 @@ int theron_v1_boot_startup_execute_pointer_from_runtime_state(
     }
     return theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
         &view_model,
+        x,
+        y,
+        out_receipt);
+}
+
+int theron_v1_boot_startup_execute_pointer_from_runtime_state_with_media_receipt(
+    Theron_StartupActionHostReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    int startup_phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const void *assets,
+    int startup_cursor,
+    int continue_focus,
+    int resume_claim,
+    int tqsv_slot,
+    int srm_slot,
+    int srm_import_status,
+    const char *srm_root,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    int x,
+    int y)
+{
+    Theron_V1_BootStartupFullStartReceipt full_start;
+
+    if (out_receipt) {
+        theron_v1_startup_action_host_receipt_init(out_receipt);
+    }
+    if (!theron_v1_boot_startup_full_start_receipt_from_runtime_state_with_media_receipt(
+            &full_start,
+            startup_media_receipt,
+            NULL,
+            startup_phase,
+            selected_dungeon,
+            boot_profile,
+            world,
+            assets,
+            startup_cursor,
+            continue_focus,
+            resume_claim,
+            tqsv_slot,
+            srm_slot,
+            srm_import_status,
+            srm_root,
+            selected_mirrors_mask,
+            companion_count,
+            selected_mirror_order,
+            selected_mirror_order_count)) {
+        if (out_receipt) {
+            out_receipt->result = THERON_STARTUP_ERR_NULL;
+            out_receipt->host_receipt.input_result =
+                THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_receipt->host_receipt.status_scope = "STARTUP";
+            out_receipt->host_receipt.status = "FULL START RECEIPT MISSING";
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
+        &full_start,
         x,
         y,
         out_receipt);

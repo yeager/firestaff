@@ -22,6 +22,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: full-start receipt input/pointer wrappers now expose missing-receipt failures as Theron startup host receipts. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
   - 2026-07-09 update: full-start receipts now provide copy-only layout, render rows, render plan, and host-view consumers for title/stage/Soul Room UI callers. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
   - 2026-07-09 update: runtime-state full-start receipts can now consume Track 02 media receipts directly without raw prompt/roster arrays. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+  - 2026-07-09 update: runtime-state input/pointer wrappers now route through full-start media receipts, so callers no longer need raw prompt/roster arrays for those host actions. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
 
 - 🔧 2026-07-09 DM2 runtime/render follow-up: DB0 door records now hand level door-set GDAT panel identity into the render plan. Remaining DM2 work is broader GDAT door masks/ornates, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
   - 2026-07-09 update: DM2 boot view models now prove the real GDAT title bitmap dimensions from the boot-owned GRAPHICS.DAT cache for full-start graphics. Remaining boot/start work is exact original title timing and broader menu asset receipts.
