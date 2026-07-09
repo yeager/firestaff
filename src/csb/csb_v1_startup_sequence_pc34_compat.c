@@ -10,14 +10,12 @@ enum {
     CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 60,
     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
     CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 20,
-    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
-    CSB_V1_TITLE_FINAL_DELAY_TICKS_PC34 = 2,
+    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 2,
     CSB_V1_TITLE_TOTAL_TICKS_PC34 =
         CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
         CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
         CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 +
-        CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 +
-        CSB_V1_TITLE_FINAL_DELAY_TICKS_PC34,
+        CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34,
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
@@ -153,11 +151,12 @@ int csb_v1_startup_title_stage_for_frame_pc34(int frame)
 
 unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
 {
-    /* ReDMCSB: TITLE.C F0437 lines 425-461 uses the CSB title path:
+    /* ReDMCSB: TITLE.C F0437 lines 425-463 uses the CSB title path:
      * CM58 PRESENTS is blitted, then TITLE.C waits until
-     * G0317_i_WaitForInputVerticalBlankCount + 60 before the CHAOS zoom.
-     * Firestaff keeps that post-swoosh PRESENTS frame visible instead of
-     * advancing straight into the shared C001 zoom plan. */
+     * G0317_i_WaitForInputVerticalBlankCount + 60 before the 20-frame
+     * CHAOS zoom, holds for F0022_MAIN_Delay(20), then draws STRIKES BACK
+     * for F0022_MAIN_Delay(2). Firestaff keeps those exact visible phases
+     * after the FTL swoosh instead of adding a synthetic extra title tick. */
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return 1u;
     }

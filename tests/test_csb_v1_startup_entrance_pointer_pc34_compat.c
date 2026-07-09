@@ -724,14 +724,15 @@ int main(void)
     }
 
     check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
-              csb_v1_startup_title_total_ticks_pc34() == 103 &&
+              csb_v1_startup_title_total_ticks_pc34() == 102 &&
               csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
               csb_v1_startup_title_source_step_for_frame_pc34(60) == 2 &&
               csb_v1_startup_title_source_step_for_frame_pc34(79) == 21 &&
               csb_v1_startup_title_source_step_for_frame_pc34(99) == 21 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(101) == 22 &&
               csb_v1_startup_title_stage_for_frame_pc34(100) ==
                   CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
-          "startup title timing preserves CSB PRESENTS hold before CHAOS zoom");
+          "startup title timing preserves CSB PRESENTS/CHAOS/STRIKES timing");
 
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34();
