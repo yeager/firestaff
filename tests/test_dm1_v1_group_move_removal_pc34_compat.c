@@ -119,6 +119,7 @@ static void test_deferred_route_plan(void) {
 
 static void test_ordinary_group_move_plan(void) {
     M11_OrdinaryGroupMovePlan plan;
+    M11_OrdinaryGroupMoveApplyPlan apply;
 
     expect_int("ordinary_east_ok",
         m11_plan_ordinary_group_move_f0267(
@@ -150,6 +151,31 @@ static void test_ordinary_group_move_plan(void) {
         M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE);
     expect_int("ordinary_projectile_kill_x", plan.destinationMapX, 4);
     expect_int("ordinary_projectile_kill_y", plan.destinationMapY, 6);
+
+    expect_int("ordinary_apply_insert_ok",
+        m11_plan_ordinary_group_move_apply_f0267(
+            &plan, 2, M11_DIRECTION_SOUTH, 0x44, 400u, &apply), 1);
+    expect_int("ordinary_apply_kill_unlink", apply.shouldUnlinkSource, 1);
+    expect_int("ordinary_apply_kill_remove", apply.shouldRemoveActiveGroup, 1);
+    expect_int("ordinary_apply_kill_no_link", apply.shouldLinkDestination, 0);
+
+    expect_int("ordinary_apply_move_plan_ok",
+        m11_plan_ordinary_group_move_f0267(
+            4, 5, M11_DIRECTION_EAST, 1, 0, 0, 500u, &plan), 1);
+    expect_int("ordinary_apply_insert_plan_ok",
+        m11_plan_ordinary_group_move_apply_f0267(
+            &plan, 3, M11_DIRECTION_EAST, 0x12, 500u, &apply), 1);
+    expect_int("ordinary_apply_insert_unlink", apply.shouldUnlinkSource, 1);
+    expect_int("ordinary_apply_insert_link", apply.shouldLinkDestination, 1);
+    expect_int("ordinary_apply_insert_requeue", apply.shouldRequeue, 1);
+    expect_int("ordinary_apply_insert_dir", apply.groupDirection, M11_DIRECTION_EAST);
+    expect_int("ordinary_apply_insert_map", apply.activeMapIndex, 3);
+    expect_int("ordinary_apply_insert_x", apply.activeMapX, 5);
+    expect_int("ordinary_apply_insert_y", apply.activeMapY, 5);
+    expect_int("ordinary_apply_insert_cells", apply.activeCells, 0x12);
+    expect_int("ordinary_apply_insert_tick", (int)apply.nextFireAtTick, 501);
+    expect_int("ordinary_apply_insert_event_x", apply.nextEventMapX, 5);
+    expect_int("ordinary_apply_insert_event_y", apply.nextEventMapY, 5);
 }
 
 static void test_pit_and_chaos_subplans(void) {

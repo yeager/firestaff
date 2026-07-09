@@ -6153,6 +6153,7 @@ static int orch_handle_creature_tick_group_move_compat(
     struct DungeonGroup_Compat* group;
     struct TimelineEvent_Compat nextEvent;
     M11_OrdinaryGroupMovePlan movePlan;
+    M11_OrdinaryGroupMoveApplyPlan applyPlan;
 
     (void)result;
     if (!world || !ev || !world->things || !world->dungeon) return 0;
@@ -6201,7 +6202,14 @@ static int orch_handle_creature_tick_group_move_compat(
         !movePlan.valid) {
         return 0;
     }
-    if (movePlan.route == M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE) {
+    memset(&applyPlan, 0, sizeof(applyPlan));
+    if (!m11_plan_ordinary_group_move_apply_f0267(
+            &movePlan, ev->mapIndex, direction, group->cells,
+            world->gameTick, &applyPlan) ||
+        !applyPlan.valid) {
+        return 0;
+    }
+    if (applyPlan.shouldRemoveActiveGroup) {
         (void)orch_unlink_thing_from_square_compat(
             world, ev->mapIndex, ev->mapX, ev->mapY,
             orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
@@ -6210,26 +6218,30 @@ static int orch_handle_creature_tick_group_move_compat(
         return 1;
     }
 
-    if (!orch_unlink_thing_from_square_compat(
-            world, ev->mapIndex, ev->mapX, ev->mapY,
-            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
+    if (applyPlan.shouldUnlinkSource &&
+        !orch_unlink_thing_from_square_compat(
+                world, ev->mapIndex, ev->mapX, ev->mapY,
+                orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
         return 0;
     }
-    group->direction = (unsigned char)direction;
-    if (!orch_link_existing_group_to_square_head_only_compat(
-            world, groupIndex, ev->mapIndex, destMapX, destMapY)) {
+    group->direction = (unsigned char)applyPlan.groupDirection;
+    if (applyPlan.shouldLinkDestination &&
+        !orch_link_existing_group_to_square_head_only_compat(
+                world, groupIndex, applyPlan.activeMapIndex,
+                applyPlan.activeMapX, applyPlan.activeMapY)) {
         return 0;
     }
 
-    world->creatureAI[activeIndex].groupMapIndex = ev->mapIndex;
-    world->creatureAI[activeIndex].groupMapX = destMapX;
-    world->creatureAI[activeIndex].groupMapY = destMapY;
-    world->creatureAI[activeIndex].groupCells = group->cells;
+    world->creatureAI[activeIndex].groupMapIndex = applyPlan.activeMapIndex;
+    world->creatureAI[activeIndex].groupMapX = applyPlan.activeMapX;
+    world->creatureAI[activeIndex].groupMapY = applyPlan.activeMapY;
+    world->creatureAI[activeIndex].groupCells = applyPlan.activeCells;
 
+    if (!applyPlan.shouldRequeue) return 1;
     nextEvent = *ev;
-    nextEvent.fireAtTick = movePlan.retryFireAtTick;
-    nextEvent.mapX = movePlan.destinationMapX;
-    nextEvent.mapY = movePlan.destinationMapY;
+    nextEvent.fireAtTick = applyPlan.nextFireAtTick;
+    nextEvent.mapX = applyPlan.nextEventMapX;
+    nextEvent.mapY = applyPlan.nextEventMapY;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
 }
 

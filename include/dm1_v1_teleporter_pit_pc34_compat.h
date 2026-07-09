@@ -103,6 +103,22 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int shouldUnlinkSource;
+    int shouldLinkDestination;
+    int shouldRemoveActiveGroup;
+    int shouldRequeue;
+    int groupDirection;
+    int activeMapIndex;
+    int activeMapX;
+    int activeMapY;
+    int activeCells;
+    uint32_t nextFireAtTick;
+    int nextEventMapX;
+    int nextEventMapY;
+} M11_OrdinaryGroupMoveApplyPlan;
+
+typedef struct {
+    int valid;
     int shouldFall;
 } M11_GroupPitFallSquarePlan;
 
@@ -168,6 +184,13 @@ int  m11_plan_ordinary_group_move_f0267(
         int killedByProjectile,
         uint32_t currentTick,
         M11_OrdinaryGroupMovePlan* outPlan);
+int  m11_plan_ordinary_group_move_apply_f0267(
+        const M11_OrdinaryGroupMovePlan* movePlan,
+        int sourceMapIndex,
+        int direction,
+        int groupCells,
+        uint32_t currentTick,
+        M11_OrdinaryGroupMoveApplyPlan* outPlan);
 int  m11_plan_group_pit_fall_square_f0267(
         int squareType,
         int pitSquareType,
