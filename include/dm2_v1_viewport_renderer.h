@@ -230,6 +230,9 @@ typedef struct {
     int destroyed_mask_gdat_index;
     int frame_gdat_index;
     int button_gdat_index;
+    int button_source_kind; /* 1=default door button, 2=wall-gfx button */
+    int wall_button_index;
+    int wall_button_field;
     DM2_V1_ViewportRect panel_rect;
     DM2_V1_ViewportRect panel_visible_rect;
     DM2_V1_ViewportRect frame_rect;

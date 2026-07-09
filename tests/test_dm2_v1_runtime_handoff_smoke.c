@@ -1157,6 +1157,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
                               DM2_SQ_D0C) &&
                       door_receipt.button_gdat_index ==
                           dm2_v1_viewport_door_button_graphic_index_for_state(1) &&
+                      door_receipt.button_source_kind == 1 &&
+                      door_receipt.wall_button_index == 0 &&
+                      door_receipt.wall_button_field == 0 &&
                       door_receipt.panel_blit_ready == 1 &&
                       door_receipt.ornate_blit_ready == 1 &&
                       door_receipt.destroyed_mask_blit_ready == 0 &&
@@ -1350,6 +1353,20 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
                       dm2_v1_runtime_last_asset_door_button_count() == 1,
                       "runtime text wall-gfx metadata drives custom button draw");
+                {
+                    DM2_V1_RuntimeDoorRenderReceipt door_receipt;
+                    CHECK(dm2_v1_runtime_last_door_render_receipt(
+                              &door_receipt) == 1 &&
+                          door_receipt.button_source_kind == 2 &&
+                          door_receipt.wall_button_index == 0x2a &&
+                          door_receipt.wall_button_field > 0 &&
+                          door_receipt.button_gdat_index ==
+                              dm2_v1_viewport_wall_button_graphic_index(
+                                  door_receipt.wall_button_index,
+                                  door_receipt.wall_button_field) &&
+                          door_receipt.button_asset_drawn == 1,
+                          "runtime custom wall-button receipt exposes wall-gfx source row");
+                }
                 dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
             } else {
                 CHECK(0, "runtime custom wall-button fixture loads");
@@ -1396,6 +1413,20 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
                       dm2_v1_runtime_last_asset_door_button_count() == 1,
                       "runtime actuator wall-gfx list drives custom button draw");
+                {
+                    DM2_V1_RuntimeDoorRenderReceipt door_receipt;
+                    CHECK(dm2_v1_runtime_last_door_render_receipt(
+                              &door_receipt) == 1 &&
+                          door_receipt.button_source_kind == 2 &&
+                          door_receipt.wall_button_index == 0x2a &&
+                          door_receipt.wall_button_field > 0 &&
+                          door_receipt.button_gdat_index ==
+                              dm2_v1_viewport_wall_button_graphic_index(
+                                  door_receipt.wall_button_index,
+                                  door_receipt.wall_button_field) &&
+                          door_receipt.button_asset_drawn == 1,
+                          "runtime actuator custom-button receipt exposes wall-gfx list row");
+                }
                 dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
                 (void)dm2_v1_runtime_set_map_wall_gfx_list(NULL, 0);
             } else {
@@ -1438,6 +1469,20 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
                       dm2_v1_runtime_last_asset_door_button_count() == 1,
                       "runtime auto-loads map wall-gfx list for actuator buttons");
+                {
+                    DM2_V1_RuntimeDoorRenderReceipt door_receipt;
+                    CHECK(dm2_v1_runtime_last_door_render_receipt(
+                              &door_receipt) == 1 &&
+                          door_receipt.button_source_kind == 2 &&
+                          door_receipt.wall_button_index == 0x2a &&
+                          door_receipt.wall_button_field > 0 &&
+                          door_receipt.button_gdat_index ==
+                              dm2_v1_viewport_wall_button_graphic_index(
+                                  door_receipt.wall_button_index,
+                                  door_receipt.wall_button_field) &&
+                          door_receipt.button_asset_drawn == 1,
+                          "runtime map-list custom-button receipt exposes auto-loaded wall-gfx row");
+                }
                 dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
             } else {
                 CHECK(0, "runtime map-list actuator wall-button fixture loads");
