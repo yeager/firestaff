@@ -2010,6 +2010,12 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.pre_input_render_view
                   .title_presents_visible &&
               !boot_action_receipt.post_input_render_view_valid &&
+              boot_action_receipt.menu_input == 9 &&
+              boot_action_receipt.startup_input ==
+                  CSB_V1_STARTUP_INPUT_ACCEPT_PC34 &&
+              boot_action_receipt.entrance_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              boot_action_receipt.input_blocked_by_title &&
               !boot_action_receipt.pre_input_route.hud_menu_state.valid,
           "boot startup action receipt captures title render-view before blocked input");
     snapshot.utility_overlay_active = 1;
@@ -2219,6 +2225,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.pre_input_route.hud_menu_state.valid &&
               boot_action_receipt.pre_input_route.hud_menu_state.kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              boot_action_receipt.menu_input == 2 &&
+              boot_action_receipt.startup_input ==
+                  CSB_V1_STARTUP_INPUT_NONE_PC34 &&
+              boot_action_receipt.entrance_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34 &&
+              boot_action_receipt.input_routed_to_utility &&
+              !boot_action_receipt.input_routed_to_entrance &&
               boot_action_receipt.pre_input_render_view_valid &&
               boot_action_receipt.pre_input_render_view.closed_door_menu_route &&
               boot_action_receipt.pre_input_render_view.hud_menu_receipt_ready &&
@@ -2264,6 +2277,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.pre_input_route.hud_menu_state.valid &&
               boot_action_receipt.pre_input_route.hud_menu_state.kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              boot_action_receipt.menu_input == 9 &&
+              boot_action_receipt.startup_input ==
+                  CSB_V1_STARTUP_INPUT_ACCEPT_PC34 &&
+              boot_action_receipt.entrance_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              !boot_action_receipt.input_routed_to_utility &&
+              boot_action_receipt.input_routed_to_entrance &&
               boot_action_receipt.pre_input_render_view_valid &&
               boot_action_receipt.pre_input_render_view.closed_door_menu_route &&
               boot_action_receipt.pre_input_render_view
@@ -2291,6 +2311,12 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.input_requests_launcher_return &&
               !boot_action_receipt.input_stays_on_startup &&
               !boot_action_receipt.post_input_render_view_valid &&
+              boot_action_receipt.menu_input == 10 &&
+              boot_action_receipt.startup_input ==
+                  CSB_V1_STARTUP_INPUT_BACK_PC34 &&
+              boot_action_receipt.entrance_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34 &&
+              boot_action_receipt.input_routed_to_entrance &&
               boot_action_receipt.pre_input_render_view_valid &&
               boot_action_receipt.pre_input_render_view.closed_door_menu_route &&
               boot_action_receipt.pre_input_render_view.route_receipt

@@ -203,6 +203,12 @@ typedef enum CSB_V1_BootStartupActionKind_PC34 {
 typedef struct CSB_V1_BootStartupActionReceipt_PC34 {
     CSB_V1_BootStartupActionKind_PC34 kind;
     int handled;
+    int menu_input;
+    CSB_V1_StartupInput_PC34 startup_input;
+    int entrance_command_id;
+    int input_blocked_by_title;
+    int input_routed_to_utility;
+    int input_routed_to_entrance;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 pre_input_route;
     int pre_input_render_view_valid;
     CSB_V1_BootStartupRenderViewReceipt_PC34 pre_input_render_view;
