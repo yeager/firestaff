@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "dm2_v1_startup_presentation.h"
-
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
 typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
+typedef struct DM2_V1_StartupDrawCommand DM2_V1_StartupDrawCommand;
+typedef struct DM2_V1_StartupViewReceipt DM2_V1_StartupViewReceipt;
 struct DM2_V1_StartupHostReceipt;
 struct DM2_V1_SessionState;
 struct DM2_V1_StartupExecution;
@@ -112,6 +112,8 @@ typedef struct {
     void   *dungeon_data;      /* DM2_V1_DungeonData* — parsed dungeon */
     void   *graphics_dat;      /* graphics data handle */
 } DM2_V1_BootProfile;
+
+#include "dm2_v1_startup_presentation.h"
 
 typedef enum {
     DM2_V1_BOOT_STARTUP_PREPARE_OK = 0,
