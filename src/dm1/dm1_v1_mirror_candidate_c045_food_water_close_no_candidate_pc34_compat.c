@@ -29,7 +29,7 @@ enum {
  * COMMAND.C F0359:1985-1990, and DEFS.H C30/G0425/G0426/M070/M516/
  * C040/C045/M565/M568 bind this contract-only, asset-free regression.
  */
-static const Dm1V1MirrorCandidateC045FoodWaterCloseEvidencePc34Compat
+static const DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34Compat
     kEvidence = {
         "CHEST.C F0333:30-67 materializes the chest-bound C30/G0425 slot",
         "CHEST.C F0334:113-132 closes G0426 and rewrites the visible chain",
@@ -73,7 +73,7 @@ static uint32_t fnv_step(uint32_t hash, unsigned int value)
 }
 
 static uint32_t hash_state(
-    const Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -118,7 +118,7 @@ static void copy_slots(uint16_t dst[], const uint16_t src[])
 }
 
 static int all_g0425_clear(
-    const Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
 {
     int i;
 
@@ -131,7 +131,7 @@ static int all_g0425_clear(
 }
 
 void dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_init_pc34(
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
 {
     int i;
 
@@ -172,7 +172,7 @@ void dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_init_pc34(
 }
 
 static int ready(
-    const Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
 {
     return state && state->contractOnly &&
            state->openChestThing != DM1_V1_MC_C045_FW_NONE_PC34 &&
@@ -187,7 +187,7 @@ static int ready(
 }
 
 static int open_food_from_c144(
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
 {
     if (!ready(state)) {
         return 0;
@@ -213,7 +213,7 @@ static int open_food_from_c144(
 }
 
 static int close_c045_panel(
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
 {
     if (!state || state->panelContent != kPanelFoodWater ||
         state->panelGraphic != kGraphicFoodWaterIconPage ||
@@ -239,7 +239,7 @@ static int close_c045_panel(
 }
 
 static int consume_after_close(
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state)
 {
     if (!state || state->panelOpen || !state->closeReleasedC30ToChestChain ||
         state->sourceChestChain[state->sourceChestSlotIndex] !=
@@ -255,10 +255,10 @@ static int consume_after_close(
 }
 
 static int guard_rejects(
-    const Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat *base,
+    const DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *base,
     int kind)
 {
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat probe;
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat probe;
 
     probe = *base;
     if (kind == 0) {
@@ -273,10 +273,10 @@ static int guard_rejects(
 }
 
 int dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_run_pc34(
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat *state,
-    Dm1V1MirrorCandidateC045FoodWaterCloseResultPc34Compat *result)
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat *state,
+    DM1_V1_MirrorCandidateC045FoodWaterCloseResultPc34Compat *result)
 {
-    Dm1V1MirrorCandidateC045FoodWaterCloseStatePc34Compat base;
+    DM1_V1_MirrorCandidateC045FoodWaterCloseStatePc34Compat base;
     int opened;
     int closed;
     int consumed;
@@ -354,7 +354,7 @@ int dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_run_pc34(
     return result->accepted;
 }
 
-const Dm1V1MirrorCandidateC045FoodWaterCloseEvidencePc34Compat *
+const DM1_V1_MirrorCandidateC045FoodWaterCloseEvidencePc34Compat *
 dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_evidence_pc34(void)
 {
     return &kEvidence;

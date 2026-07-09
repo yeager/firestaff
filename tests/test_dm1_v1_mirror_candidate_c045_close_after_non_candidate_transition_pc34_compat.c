@@ -61,7 +61,7 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_evidence(void)
 {
-    const Dm1V1MirrorCandidateC045AfterNonCandidateEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateC045AfterNonCandidateEvidencePc34Compat *e =
         dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_evidence_pc34();
     const char *text =
         dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_source_evidence_pc34();
@@ -130,7 +130,7 @@ static void test_evidence(void)
 
 static void test_initial_state(void)
 {
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat state;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat state;
     int i;
 
     dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
@@ -191,8 +191,8 @@ static void test_initial_state(void)
 
 static uint32_t run_one(int transition_kind, uint32_t expected_close_hash)
 {
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat state;
-    Dm1V1MirrorCandidateC045AfterNonCandidateResultPc34Compat result;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat state;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34Compat result;
     int ok;
     int i;
 
@@ -332,8 +332,8 @@ static void test_all_transitions(uint32_t *out_hash)
 
 static void test_rejects(void)
 {
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat state;
-    Dm1V1MirrorCandidateC045AfterNonCandidateResultPc34Compat result;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat state;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34Compat result;
 
     check_int_eq(
         dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(

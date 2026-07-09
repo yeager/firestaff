@@ -44,7 +44,7 @@ enum {
  * occupied leader-hand C30 thing and the C540 visible slot route survive the
  * transition and the close; no F0333/F0334/F0280/F0282 path may be used.
  */
-static const Dm1V1MirrorCandidateC045AfterNonCandidateEvidencePc34Compat
+static const DM1_V1_MirrorCandidateC045AfterNonCandidateEvidencePc34Compat
     kEvidence = {
         "CHEST.C F0333:30-67 materializes G0425 from the open chest chain",
         "CHEST.C F0334:113-132 clears G0426 and relinks visible slots",
@@ -82,7 +82,7 @@ static uint32_t hash_step(uint32_t hash, unsigned int value)
 }
 
 static uint32_t hash_close_surface(
-    const Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -111,7 +111,7 @@ static uint32_t hash_close_surface(
 }
 
 static uint32_t hash_transition_surface(
-    const Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
 {
     uint32_t hash = hash_close_surface(state);
 
@@ -156,7 +156,7 @@ static int slots_equal(const uint16_t lhs[], const uint16_t rhs[])
 }
 
 void dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34(
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -192,7 +192,7 @@ void dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_init_pc34
 }
 
 static int ready(
-    const Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
 {
     return state && state->contractOnly && !state->leaderEmptyHanded &&
            state->leaderHandC30Thing !=
@@ -208,7 +208,7 @@ static int ready(
 }
 
 static int apply_non_candidate_transition(
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
 {
     if (!ready(state)) {
         return 0;
@@ -255,7 +255,7 @@ static int apply_non_candidate_transition(
 }
 
 static int close_c045_after_transition(
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *state)
 {
     if (!ready(state)) {
         return 0;
@@ -277,9 +277,9 @@ static int close_c045_after_transition(
 }
 
 static uint32_t baseline_no_transition_close_hash(
-    const Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *base)
+    const DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *base)
 {
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat probe = *base;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat probe = *base;
 
     probe.transitionKind = DM1_V1_MC_C045_AFTER_NC_TRANSITION_NONE_PC34;
     probe.transitionApplied = 0;
@@ -291,11 +291,11 @@ static uint32_t baseline_no_transition_close_hash(
 }
 
 static int guard_rejects(
-    const Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *base,
+    const DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *base,
     int kind)
 {
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat probe = *base;
-    Dm1V1MirrorCandidateC045AfterNonCandidateResultPc34Compat result;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat probe = *base;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34Compat result;
 
     if (kind == 0) {
         probe.leaderEmptyHanded = 1;
@@ -312,10 +312,10 @@ static int guard_rejects(
 }
 
 int dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat *state,
-    Dm1V1MirrorCandidateC045AfterNonCandidateResultPc34Compat *result)
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat *state,
+    DM1_V1_MirrorCandidateC045AfterNonCandidateResultPc34Compat *result)
 {
-    Dm1V1MirrorCandidateC045AfterNonCandidateStatePc34Compat base;
+    DM1_V1_MirrorCandidateC045AfterNonCandidateStatePc34Compat base;
     int transitioned;
     int closed;
 
@@ -409,7 +409,7 @@ int dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_run_pc34(
     return result->accepted;
 }
 
-const Dm1V1MirrorCandidateC045AfterNonCandidateEvidencePc34Compat *
+const DM1_V1_MirrorCandidateC045AfterNonCandidateEvidencePc34Compat *
 dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_evidence_pc34(void)
 {
     return &kEvidence;
