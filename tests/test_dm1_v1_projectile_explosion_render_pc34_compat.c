@@ -6,12 +6,19 @@
  */
 
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 static int g_failures = 0;
+
+static unsigned short make_thing(int type, int index, int cell) {
+    return (unsigned short)(((cell & 3) << 14) |
+                            ((type & 15) << 10) |
+                            (index & 0x03ff));
+}
 
 #define ASSERT_EQ(actual, expected, label) do { \
     int _a = (actual), _e = (expected); \
@@ -238,6 +245,60 @@ static void test_projectile_renderable_and_effect_particle(void) {
               1, "fireball/default effect particle");
     ASSERT_EQ((int)color, (int)0xffaa00ffu, "fireball/default effect color");
     ASSERT_EQ((int)(size * 10.0f), 20, "fireball/default effect size");
+}
+
+static void test_f0115_thing_layer_receipt(void) {
+    DM1_F0115ThingLayerReceiptPc34 receipt;
+    unsigned short chain[] = {
+        (unsigned short)((THING_TYPE_SENSOR << 10) | 2),
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 7),
+        (unsigned short)((THING_TYPE_PROJECTILE << 10) | 3),
+        (unsigned short)(((THING_TYPE_EXPLOSION << 10) | 1) |
+                         (unsigned short)(2u << 14)),
+        (unsigned short)((THING_TYPE_GROUP << 10) | 4),
+        THING_ENDOFLIST
+    };
+
+    printf("  F0115 thing layer receipt...\n");
+
+    memset(&receipt, 0, sizeof(receipt));
+    ASSERT_EQ(dm1_v1_f0115_thing_layer_receipt_pc34(
+                  chain, 6, -1, 0, &receipt), 1,
+              "runtime-only F0115 receipt builds");
+    ASSERT_EQ(receipt.valid, 1, "runtime-only F0115 receipt valid");
+    ASSERT_EQ(receipt.items, 1, "runtime-only receipt counts floor item");
+    ASSERT_EQ(receipt.groups, 1, "runtime-only receipt counts group");
+    ASSERT_EQ(receipt.sensors, 1, "runtime-only receipt reports sensor");
+    ASSERT_EQ(receipt.projectiles, 0,
+              "runtime-only receipt ignores static projectile refs");
+    ASSERT_EQ(receipt.explosions, 0,
+              "runtime-only receipt ignores static explosion refs");
+    ASSERT_EQ(receipt.ignoredStaticEffects, 2,
+              "runtime-only receipt reports ignored static effects");
+    ASSERT_EQ(receipt.firstItemThing, chain[1],
+              "runtime-only receipt first item thing");
+
+    memset(&receipt, 0, sizeof(receipt));
+    ASSERT_EQ(dm1_v1_f0115_thing_layer_receipt_pc34(
+                  chain, 6, -1, 1, &receipt), 1,
+              "source F0115 static-effect receipt builds");
+    ASSERT_EQ(receipt.projectiles, 1,
+              "source F0115 receipt counts projectile layer");
+    ASSERT_EQ(receipt.explosions, 1,
+              "source F0115 receipt counts explosion layer");
+    ASSERT_EQ(receipt.firstProjectileThing, chain[2],
+              "source F0115 receipt first projectile thing");
+    ASSERT_EQ(receipt.firstExplosionThing, chain[3],
+              "source F0115 receipt first explosion thing");
+
+    memset(&receipt, 0, sizeof(receipt));
+    ASSERT_EQ(dm1_v1_f0115_thing_layer_receipt_pc34(
+                  chain, 6, 2, 1, &receipt), 1,
+              "view-cell F0115 receipt builds");
+    ASSERT_EQ(receipt.total, 1,
+              "view-cell receipt filters to matching cell");
+    ASSERT_EQ(receipt.explosions, 1,
+              "view-cell receipt keeps matching explosion");
 }
 
 static void test_projectile_sprite_blit_plan(void) {
@@ -562,6 +623,56 @@ static void test_draw_order(void) {
         int partial[] = {1, 2, 3};
         ASSERT_EQ(dm1_v1_verify_f0115_draw_order(partial, 3), 1, "partial order");
     }
+}
+
+static void test_f0115_thing_layer_receipt_filters_static_effects(void) {
+    DM1_F0115ThingLayerReceiptPc34 receipt;
+    unsigned short things[] = {
+        make_thing(THING_TYPE_DOOR, 0, 1),
+        make_thing(THING_TYPE_WEAPON, 2, 1),
+        make_thing(THING_TYPE_PROJECTILE, 3, 1),
+        make_thing(THING_TYPE_EXPLOSION, 4, 1),
+        make_thing(THING_TYPE_SCROLL, 5, 2),
+        THING_ENDOFLIST
+    };
+
+    printf("  F0115 thing layer receipt filters static effects...\n");
+    ASSERT_EQ(dm1_v1_f0115_thing_layer_receipt_pc34(things,
+                                                    6,
+                                                    1,
+                                                    0,
+                                                    &receipt),
+              1, "receipt accepts thing list");
+    ASSERT_EQ(receipt.valid, 1, "receipt valid");
+    ASSERT_EQ(receipt.total, 4, "cell-filtered total");
+    ASSERT_EQ(receipt.doors, 1, "door counted as control");
+    ASSERT_EQ(receipt.items, 1, "weapon counted as floor item");
+    ASSERT_EQ(receipt.projectiles, 0, "static projectile suppressed");
+    ASSERT_EQ(receipt.explosions, 0, "static explosion suppressed");
+    ASSERT_EQ(receipt.ignoredStaticEffects, 2, "static effects ignored");
+    ASSERT_EQ(receipt.firstItemThing,
+              make_thing(THING_TYPE_WEAPON, 2, 1),
+              "first item thing preserved");
+    ASSERT_EQ(receipt.firstProjectileThing, THING_NONE,
+              "no static projectile thing exposed");
+    ASSERT_EQ(receipt.firstExplosionThing, THING_NONE,
+              "no static explosion thing exposed");
+
+    ASSERT_EQ(dm1_v1_f0115_thing_layer_receipt_pc34(things,
+                                                    6,
+                                                    1,
+                                                    1,
+                                                    &receipt),
+              1, "receipt accepts static effects when requested");
+    ASSERT_EQ(receipt.projectiles, 1, "projectile counted when allowed");
+    ASSERT_EQ(receipt.explosions, 1, "explosion counted when allowed");
+    ASSERT_EQ(receipt.firstProjectileThing,
+              make_thing(THING_TYPE_PROJECTILE, 3, 1),
+              "first projectile thing preserved");
+    ASSERT_EQ(receipt.firstExplosionThing,
+              make_thing(THING_TYPE_EXPLOSION, 4, 1),
+              "first explosion thing preserved");
+    ASSERT_EQ(receipt.items, 1, "other-cell item still filtered");
 }
 
 
@@ -995,6 +1106,7 @@ int main(void) {
     test_projectile_scale();
     test_projectile_d4_far_box();
     test_projectile_renderable_and_effect_particle();
+    test_f0115_thing_layer_receipt();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();
@@ -1005,6 +1117,7 @@ int main(void) {
     test_smoke_detection();
     test_explosion_sprite_blit_plan();
     test_draw_order();
+    test_f0115_thing_layer_receipt_filters_static_effects();
     test_aspect_data_cross_check();
     test_spell_graphic_indices();
     test_projectile_travel_blockers();

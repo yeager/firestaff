@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0115 static-effect layer receipt: DM1 now exposes a source-locked thing-layer receipt that separates floor items from stale dungeon C14/C15 projectile/explosion refs, so HoC phantom fireballs/effects can be suppressed while live runtime effect lists remain authoritative. Verification: `test_dm1_v1_projectile_explosion_render_pc34_compat`, `test_dm1_v1_throw_shoot_pc34_compat`, `firestaff` build, and `git diff --check` passed.
+
+- ✅ 2026-07-09 Theron Track02 runtime semantic probe: the Track02 level-handoff probe now verifies the direct runtime/host/state receipt path with a sector-aligned raw US BIN synthetic fixture, and runtime host inspect receipts now expose explicit `route=track02-semantic` / `route=fallback-room` / `route=track02-blocked` names. Verification: `firestaff_theron_v1_track02_level_handoff_probe`, `firestaff_theron_v1_startup_flow_probe`, and `git diff --check` passed.
+
+- ✅ 2026-07-09 DM2 door-state header collision fix: DM2 runtime door-motion enum no longer collides with the source-style six-state door mechanics enum. Verification: `test_dm2_v1_creature_ccm_runtime_pc34_compat` and focused build passed.
+
 - ✅ 2026-07-09 CSB startup HUD/menu state receipt: closed-door startup route receipts now carry entrance and utility HUD/menu state, including selected command, resume availability, utility row count, preview flag, and prompt text. Verification: `csb_v1_boot_runtime_handoff`, `csb_v1_startup_entrance_pointer_pc34_compat`, `csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus MENU.BPK engine decode receipt: Nexus engine init now reads hash-resolved `MENU.BPK`, records the bounded PRS3 decode-status receipt, and exposes it through Nexus-owned API for startup/renderer handoff. Verification: `test_nexus_v1_boot_file_hash_scan`, Nexus BPK focused CTests, and `git diff --check` passed.

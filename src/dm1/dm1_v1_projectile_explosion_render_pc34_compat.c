@@ -9,6 +9,8 @@
 
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 #include <string.h>
@@ -495,5 +497,105 @@ int dm1_v1_verify_f0115_draw_order(const int* order, int count) {
     for (i = 1; i < count; ++i) {
         if (order[i] <= order[i - 1]) return 0;
     }
+    return 1;
+}
+
+int dm1_v1_f0115_thing_layer_receipt_pc34(
+    const unsigned short* thingRefs,
+    int thingCount,
+    int viewCell,
+    int allowStaticEffectThings,
+    DM1_F0115ThingLayerReceiptPc34* outReceipt) {
+    int i;
+
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->firstItemThing = THING_NONE;
+    outReceipt->firstProjectileThing = THING_NONE;
+    outReceipt->firstExplosionThing = THING_NONE;
+
+    if (!thingRefs || thingCount < 0) {
+        return 0;
+    }
+
+    outReceipt->valid = 1;
+    for (i = 0; i < thingCount; ++i) {
+        unsigned short thing = thingRefs[i];
+        int type;
+
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+            break;
+        }
+        if (viewCell >= 0 && viewCell <= 3 &&
+            (int)THING_GET_CELL(thing) != viewCell) {
+            continue;
+        }
+
+        ++outReceipt->total;
+        type = (int)THING_GET_TYPE(thing);
+        switch (type) {
+            case THING_TYPE_DOOR:
+                ++outReceipt->doors;
+                ++outReceipt->ignoredControls;
+                break;
+            case THING_TYPE_TELEPORTER:
+                ++outReceipt->teleporters;
+                ++outReceipt->ignoredControls;
+                break;
+            case THING_TYPE_TEXTSTRING:
+                ++outReceipt->textStrings;
+                ++outReceipt->ignoredControls;
+                break;
+            case THING_TYPE_SENSOR:
+                ++outReceipt->sensors;
+                ++outReceipt->ignoredControls;
+                break;
+            case THING_TYPE_GROUP:
+                ++outReceipt->groups;
+                break;
+            case THING_TYPE_PROJECTILE:
+                if (allowStaticEffectThings) {
+                    ++outReceipt->projectiles;
+                    if (outReceipt->firstProjectileThing == THING_NONE) {
+                        outReceipt->firstProjectileThing = thing;
+                    }
+                } else {
+                    ++outReceipt->ignoredStaticEffects;
+                }
+                break;
+            case THING_TYPE_EXPLOSION:
+                if (allowStaticEffectThings) {
+                    ++outReceipt->explosions;
+                    if (outReceipt->firstExplosionThing == THING_NONE) {
+                        outReceipt->firstExplosionThing = thing;
+                    }
+                } else {
+                    ++outReceipt->ignoredStaticEffects;
+                }
+                break;
+            default:
+                if (dm1_v1_thing_type_is_floor_item_pc34(type)) {
+                    ++outReceipt->items;
+                    if (outReceipt->firstItemThing == THING_NONE) {
+                        outReceipt->firstItemThing = thing;
+                    }
+                } else {
+                    ++outReceipt->ignoredControls;
+                }
+                break;
+        }
+    }
+    if (i >= thingCount && thingCount > 0 &&
+        thingRefs[thingCount - 1] != THING_NONE &&
+        thingRefs[thingCount - 1] != THING_ENDOFLIST) {
+        outReceipt->overflow = 1;
+    }
+
+    /* ReDMCSB: DUNVIEW.C F0115 lines 4547-4581 walks the thing list by
+     * layer, then restarts for projectile and explosion passes at lines
+     * 5668-5683 and 5916-5933. Firestaff passes allowStaticEffectThings=0
+     * for runtime DM1 rendering because F0219/F0220 effects are represented
+     * by live runtime lists; stale dungeon C14/C15 refs must not drive HoC
+     * floor/effect sprites. */
     return 1;
 }
