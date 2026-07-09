@@ -25337,18 +25337,6 @@ static int m11_spawn_f0190_death_smoke(
     return F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &eFirst);
 }
 
-static int m11_f0190_event_creature_index(int eventType) {
-    if (eventType >= DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
-        eventType < DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
-        return eventType - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
-    }
-    if (eventType >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
-        eventType <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
-        return eventType - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
-    }
-    return -1;
-}
-
 static void m11_cleanup_f0190_creature_events(
     M11_GameViewState* state,
     int mapIndex,
@@ -25361,20 +25349,27 @@ static void m11_cleanup_f0190_creature_events(
     if (!state || killedCreatureIndex < 0 || killedCreatureIndex > 3) return;
 
     oldCount = state->world.timeline.count;
-    /* ReDMCSB GROUP.C F0190 lines 848-872 deletes C33-C36/C38-C41
-     * events for the killed creature and decrements event types for
-     * creature ordinals shifted down by group compaction. */
     for (readIndex = 0; readIndex < oldCount; ++readIndex) {
         struct TimelineEvent_Compat ev = state->world.timeline.events[readIndex];
-        if (ev.kind == TIMELINE_EVENT_CREATURE_REACTION &&
-            ev.mapIndex == mapIndex && ev.mapX == mapX && ev.mapY == mapY) {
-            int eventCreatureIndex = m11_f0190_event_creature_index(ev.aux2);
-            if (eventCreatureIndex == killedCreatureIndex) {
-                continue;
-            }
-            if (eventCreatureIndex > killedCreatureIndex) {
-                ev.aux2--;
-            }
+        DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
+        DM1_MeleeF0190TimelineCleanupPlanPc34 cleanupPlan;
+
+        memset(&cleanupIn, 0, sizeof(cleanupIn));
+        memset(&cleanupPlan, 0, sizeof(cleanupPlan));
+        cleanupIn.eventKind = ev.kind;
+        cleanupIn.eventMapIndex = ev.mapIndex;
+        cleanupIn.eventMapX = ev.mapX;
+        cleanupIn.eventMapY = ev.mapY;
+        cleanupIn.eventType = ev.aux2;
+        cleanupIn.targetMapIndex = mapIndex;
+        cleanupIn.targetMapX = mapX;
+        cleanupIn.targetMapY = mapY;
+        cleanupIn.killedCreatureIndex = killedCreatureIndex;
+        if (dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+                &cleanupIn, &cleanupPlan) &&
+            cleanupPlan.valid) {
+            if (!cleanupPlan.shouldKeepEvent) continue;
+            ev.aux2 = cleanupPlan.newEventType;
         }
         state->world.timeline.events[writeIndex++] = ev;
     }
