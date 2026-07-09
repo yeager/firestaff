@@ -323,7 +323,10 @@ int main(void)
               launch_receipt.runtime_handoff.initialize_v2_runtime == 1 &&
               launch_receipt.runtime_handoff.initialize_hud_runtime == 1 &&
               launch_receipt.runtime_handoff.initialize_touch_runtime == 1 &&
-              launch_receipt.runtime_handoff.hud_runtime_ready == 1,
+              launch_receipt.runtime_handoff.hud_runtime_ready == 1 &&
+              launch_receipt.runtime_handoff.runtime_menu_ready == 1 &&
+              launch_receipt.runtime_handoff.runtime_action_ready == 0 &&
+              launch_receipt.runtime_handoff.first_hud_frame_ready == 0,
           "launch receipt owns DM2 startup session, save scan, active menu, inspect, log, and runtime handoff");
     check(!dm2_v1_startup_launch_from_host_facts_with_receipt(
               NULL,
@@ -408,7 +411,10 @@ int main(void)
                      "dm2-startup-menu") == 0 &&
               view_receipt.runtime_handoff.title_ready == 0 &&
               view_receipt.runtime_handoff.initialize_hud_runtime == 1 &&
-              view_receipt.runtime_handoff.hud_runtime_ready == 1,
+              view_receipt.runtime_handoff.hud_runtime_ready == 1 &&
+              view_receipt.runtime_handoff.runtime_menu_ready == 1 &&
+              view_receipt.runtime_handoff.runtime_action_ready == 0 &&
+              view_receipt.runtime_handoff.first_hud_frame_ready == 0,
           "startup view receipt joins title commands, menu state, and HUD handoff");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACCEPT, &action) &&

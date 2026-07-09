@@ -401,6 +401,9 @@ int dm2_v1_startup_presentation_view_receipt_from_host_facts(
     out_receipt->runtime_handoff.initialize_hud_runtime = 1;
     out_receipt->runtime_handoff.initialize_touch_runtime = 1;
     out_receipt->runtime_handoff.hud_runtime_ready = hud_runtime_ready ? 1 : 0;
+    out_receipt->runtime_handoff.runtime_menu_ready = active;
+    out_receipt->runtime_handoff.runtime_action_ready = 0;
+    out_receipt->runtime_handoff.first_hud_frame_ready = active ? 0 : 1;
     out_receipt->valid = 1;
     out_receipt->command_count = command_count;
     return 1;
