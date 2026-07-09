@@ -2330,7 +2330,8 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
     int championIndex,
     int actionSkillIndex,
     const struct CombatantCreatureSnapshot_Compat* creature,
-    int damageApplied)
+    int damageApplied,
+    struct TickResult_Compat* result)
 {
     struct ChampionState_Compat* champion;
     DM1_MeleeF0231SideEffectInputPc34 in;
@@ -2379,6 +2380,11 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
             (unsigned short)plan.currentStaminaAfter;
         world->party.champions[plan.championIndex].hp.current =
             (int16_t)plan.currentHealthAfter;
+        if (plan.currentHealthAfter <= 0) {
+            /* ReDMCSB CHAMPION.C F0319 is reached when F0325/F0231 stamina
+             * underflow drains the last HP; keep the M10 event stream aligned. */
+            emit(result, EMIT_CHAMPION_DOWN, plan.championIndex, 0, 0, 0);
+        }
     }
 }
 
@@ -6840,7 +6846,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     if (runtimeApplyPlan.shouldApplySideEffects) {
                         orch_cmd_attack_apply_f0231_side_effects_compat(
                             world, (int)input->commandArg1, actionSkillIndex,
-                            &creatureSnapshot, combatResult.damageApplied);
+                            &creatureSnapshot, combatResult.damageApplied,
+                            result);
                     }
                     memset(&aftermathIn, 0, sizeof(aftermathIn));
                     aftermathIn.groupIndex = groupIndex;

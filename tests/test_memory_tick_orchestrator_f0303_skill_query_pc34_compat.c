@@ -5448,6 +5448,63 @@ static void test_orch_cmd_attack_spends_f0231_miss_stamina_without_xp(void) {
     assert(xpAfter == xpBefore);
 }
 
+static void test_orch_cmd_attack_f0231_stamina_underflow_emits_down(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonGroup_Compat groups[1];
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct ChampionState_Compat* champion;
+    int sawDown = 0;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u) == 1);
+    world.gameTick = 20;
+    world.lifecycle.lastCreatureAttackTime = 20;
+
+    weapons[0].type = 8;
+    champion = &world.party.champions[0];
+    champion->inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    champion->hp.current = 1;
+    champion->hp.maximum = 100;
+    champion->stamina.current = 0;
+    champion->stamina.maximum = 100;
+    champion->attributes[CHAMPION_ATTR_STRENGTH] = 0;
+    champion->attributes[CHAMPION_ATTR_DEXTERITY] = 0;
+    champion->attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    memset(groups, 0, sizeof(groups));
+    groups[0].creatureType = 9;
+    groups[0].count = 0;
+    groups[0].health[0] = 200;
+    things.groups = groups;
+    things.groupCount = 1;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    input.command = CMD_ATTACK;
+    input.commandArg1 = 0;
+    input.commandArg2 = 0;
+    input.reserved = 0;
+    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        (unsigned int)DM1_ACTION_SWING;
+
+    assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+    assert(champion->hp.current == 0);
+    assert(champion->stamina.current == 0);
+    for (i = 0; i < result.emissionCount; ++i) {
+        if (result.emissions[i].kind == EMIT_CHAMPION_DOWN &&
+            result.emissions[i].payload[0] == 0) {
+            sawDown = 1;
+        }
+    }
+    assert(sawDown == 1);
+}
+
 static int run_live_cmd_attack_f0312_strength_attempt(
     unsigned int seed,
     int weakenedActionHand,
@@ -7400,6 +7457,7 @@ int main(void) {
     test_orch_cmd_attack_applies_live_group_damage();
     test_orch_cmd_attack_awards_f0231_xp_and_hit_stamina();
     test_orch_cmd_attack_spends_f0231_miss_stamina_without_xp();
+    test_orch_cmd_attack_f0231_stamina_underflow_emits_down();
     test_orch_cmd_attack_uses_f0312_weight_stamina_wound_strength();
     test_orch_cmd_attack_f0407_closed_door_attack();
     test_orch_cmd_attack_schedules_f0231_adjacent_reaction();
