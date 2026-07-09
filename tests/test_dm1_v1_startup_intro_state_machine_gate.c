@@ -547,6 +547,10 @@ static void check_title_to_menu_boundary(void) {
                  &entranceCommand) &&
                  entranceCommand.render_kind ==
                      DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34 &&
+                 entranceCommand.consume_media_receipt_only &&
+                 entranceCommand.source_timing_receipt_consumed &&
+                 entranceCommand.lower_level_renderer_helper_owned &&
+                 entranceCommand.lower_level_audio_helper_owned &&
                  entranceCommand.present_entrance_palette,
              1);
     expect_i("DM1 entrance command builds rattle door render",
@@ -559,6 +563,8 @@ static void check_title_to_menu_boundary(void) {
                  &entranceCommand) &&
                  entranceCommand.render_kind ==
                      DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34 &&
+                 entranceCommand.lower_level_renderer_helper_owned &&
+                 entranceCommand.lower_level_audio_helper_owned &&
                  entranceCommand.door_animation_step == 1u &&
                  entranceCommand.play_door_rattle_sound &&
                  entranceCommand.delay_ms == media.entrance_vblank_ms,
@@ -1416,6 +1422,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_full_graphics_proof.require_no_title_surface &&
                  hoc_full_graphics_proof.require_no_closed_door_frame &&
                  hoc_full_graphics_proof.require_no_host_fallback_visuals &&
+                 hoc_full_graphics_proof
+                     .require_lower_level_renderer_helper &&
+                 hoc_full_graphics_proof.require_lower_level_audio_helper &&
                  hoc_full_graphics_proof.block_enter_until_champion_selected &&
                  hoc_full_graphics_proof.command_count == 3,
              1);
@@ -1438,6 +1447,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_production_hook.clear_champion_panel &&
                  hoc_production_hook.render_hall_mirror_overlay &&
                  hoc_production_hook.suppress_host_fallback_visuals &&
+                 hoc_production_hook.lower_level_renderer_helper_owned &&
+                 hoc_production_hook.lower_level_audio_helper_owned &&
                  hoc_production_hook.expected_map_index ==
                      DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
                  hoc_production_hook.expected_map_width ==
@@ -1462,6 +1473,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_production_receipt.ready &&
                  hoc_production_receipt.consumed_post_launch_plan &&
                  hoc_production_receipt.consumed_handoff_outcome &&
+                 hoc_production_receipt.consumed_title_menu_plan &&
+                 hoc_production_receipt.consumed_entrance_full_start_plan &&
                  hoc_production_receipt.first_frame_ready &&
                  hoc_production_receipt.host_render_plan_ready &&
                  hoc_production_receipt.packaged_full_graphics_proof_ready &&
@@ -1477,7 +1490,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_production_receipt.production_hook
                      .publish_packaged_full_graphics_proof &&
                  hoc_production_receipt.host_render_plan
-                         .entrance_door_frame_index == 9 &&
+                         .entrance_door_frame_index ==
+                     DM1_V1_ENTRANCE_DOOR_OPEN_FRAME_INDEX_PC34 &&
                  hoc_production_receipt.packaged_proof
                          .expected_hall_overlay_kind ==
                      DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34,
@@ -1497,9 +1511,11 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_capture_artifact.publish_packaged_full_graphics_proof,
              1);
     expect_i("DM1 HoC capture artifact forbids stale surfaces",
-             hoc_capture_artifact.title_surface_forbidden &&
+                 hoc_capture_artifact.title_surface_forbidden &&
                  hoc_capture_artifact.closed_door_frame_forbidden &&
                  hoc_capture_artifact.host_fallback_visuals_forbidden &&
+                 hoc_capture_artifact.lower_level_renderer_helper_owned &&
+                 hoc_capture_artifact.lower_level_audio_helper_owned &&
                  hoc_capture_artifact.opened_entrance_frame_required &&
                  hoc_capture_artifact.hall_mirror_overlay_required &&
                  hoc_capture_artifact.clear_champion_panel_required,
@@ -1591,6 +1607,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_runtime_apply.suppress_title_surface &&
                  hoc_runtime_apply.suppress_closed_door_frame &&
                  hoc_runtime_apply.suppress_host_fallback_visuals &&
+                 hoc_runtime_apply.lower_level_renderer_helper_owned &&
+                 hoc_runtime_apply.lower_level_audio_helper_owned &&
                  hoc_runtime_apply.publish_packaged_full_graphics_proof &&
                  hoc_runtime_apply.block_enter_until_champion_selected,
              1);
@@ -1666,6 +1684,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_production_consumer.suppress_title_surface &&
                  hoc_production_consumer.suppress_closed_door_frame &&
                  hoc_production_consumer.suppress_host_fallback_visuals &&
+                 hoc_production_consumer.lower_level_renderer_helper_owned &&
+                 hoc_production_consumer.lower_level_audio_helper_owned &&
                  hoc_production_consumer.publish_packaged_full_graphics_proof &&
                  hoc_production_consumer.block_enter_until_champion_selected,
              1);
@@ -2043,6 +2063,19 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_capture_artifact.handled &&
                  !hoc_capture_artifact.ready,
              1);
+    expect_i("DM1 HoC production receipt rejects corrupt post-launch entrance plan",
+             (post.entrance_full_start_receipt.doorFrameIndex = 3,
+              dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+                  "dm1",
+                  &post,
+                  &outcome,
+                  &hoc_production_receipt) &&
+                  hoc_production_receipt.handled &&
+                  !hoc_production_receipt.ready &&
+                  !hoc_production_receipt.consumed_entrance_full_start_plan),
+             1);
+    post.entrance_full_start_receipt.doorFrameIndex =
+        DM1_V1_ENTRANCE_DOOR_OPEN_FRAME_INDEX_PC34;
     expect_i("DM1 HoC capture artifact rejects NULL input",
              dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
                  NULL,
@@ -2064,6 +2097,24 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  &outcome,
                  NULL),
              0);
+    hoc_full_graphics_proof.require_lower_level_renderer_helper = 0;
+    expect_i("DM1 HoC production hook rejects missing renderer helper ownership",
+             dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
+                 &hoc_full_graphics_proof,
+                 &hoc_production_hook) &&
+                 hoc_production_hook.handled &&
+                 !hoc_production_hook.ready,
+             1);
+    hoc_full_graphics_proof.require_lower_level_renderer_helper = 1;
+    hoc_full_graphics_proof.require_lower_level_audio_helper = 0;
+    expect_i("DM1 HoC production hook rejects missing audio helper ownership",
+             dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
+                 &hoc_full_graphics_proof,
+                 &hoc_production_hook) &&
+                 hoc_production_hook.handled &&
+                 !hoc_production_hook.ready,
+             1);
+    hoc_full_graphics_proof.require_lower_level_audio_helper = 1;
     hoc_full_graphics_proof.expected_map_width = 4;
     expect_i("DM1 HoC production hook rejects corrupt proof metadata",
              dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(

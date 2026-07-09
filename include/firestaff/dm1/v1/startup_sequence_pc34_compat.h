@@ -31,6 +31,10 @@ typedef enum DM1_V1_StartupHandoffAction_PC34 {
     DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34 = 4
 } DM1_V1_StartupHandoffAction_PC34;
 
+enum {
+    DM1_V1_ENTRANCE_DOOR_OPEN_FRAME_INDEX_PC34 = 9
+};
+
 typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     int handled;
     int play_swsh;
@@ -71,6 +75,10 @@ typedef enum DM1_V1_StartupEntranceRenderKind_PC34 {
 
 typedef struct DM1_V1_StartupEntranceRenderAudioCommand_PC34 {
     int handled;
+    int consume_media_receipt_only;
+    int lower_level_renderer_helper_owned;
+    int lower_level_audio_helper_owned;
+    int source_timing_receipt_consumed;
     DM1_V1_StartupEntranceRenderKind_PC34 render_kind;
     int present_entrance_palette;
     int play_door_rattle_sound;
@@ -231,6 +239,8 @@ typedef struct DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34 {
     int require_no_title_surface;
     int require_no_closed_door_frame;
     int require_no_host_fallback_visuals;
+    int require_lower_level_renderer_helper;
+    int require_lower_level_audio_helper;
     int block_enter_until_champion_selected;
     int command_count;
     const char* capture_phase;
@@ -246,6 +256,8 @@ typedef struct DM1_V1_StartupHoCProductionFullStartHook_PC34 {
     int clear_champion_panel;
     int render_hall_mirror_overlay;
     int suppress_host_fallback_visuals;
+    int lower_level_renderer_helper_owned;
+    int lower_level_audio_helper_owned;
     int capture_after_first_frame_render;
     int publish_packaged_full_graphics_proof;
     int expected_map_index;
@@ -263,6 +275,8 @@ typedef struct DM1_V1_StartupHoCFullStartProductionReceipt_PC34 {
     int ready;
     int consumed_post_launch_plan;
     int consumed_handoff_outcome;
+    int consumed_title_menu_plan;
+    int consumed_entrance_full_start_plan;
     int first_frame_ready;
     int host_render_plan_ready;
     int packaged_full_graphics_proof_ready;
@@ -286,6 +300,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 {
     int title_surface_forbidden;
     int closed_door_frame_forbidden;
     int host_fallback_visuals_forbidden;
+    int lower_level_renderer_helper_owned;
+    int lower_level_audio_helper_owned;
     int opened_entrance_frame_required;
     int hall_mirror_overlay_required;
     int clear_champion_panel_required;
@@ -368,6 +384,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 {
     int suppress_title_surface;
     int suppress_closed_door_frame;
     int suppress_host_fallback_visuals;
+    int lower_level_renderer_helper_owned;
+    int lower_level_audio_helper_owned;
     int publish_packaged_full_graphics_proof;
     int block_enter_until_champion_selected;
     int map_index;
@@ -432,6 +450,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
     int suppress_title_surface;
     int suppress_closed_door_frame;
     int suppress_host_fallback_visuals;
+    int lower_level_renderer_helper_owned;
+    int lower_level_audio_helper_owned;
     int suppress_false_item_payloads;
     int suppress_projectile_payloads;
     int suppress_spell_effect_payloads;

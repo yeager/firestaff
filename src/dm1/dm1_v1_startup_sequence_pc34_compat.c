@@ -419,6 +419,10 @@ int dm1_v1_startup_handoff_post_launch_plan_pc34(
             return 0;
         }
         DM1_V1_Entrance_InitPc34Compat(&entrance_ctx);
+        entrance_ctx.state = DM1_ENTRANCE_VIEWING;
+        entrance_ctx.doorAnim.complete = 1;
+        entrance_ctx.doorAnim.animationStep =
+            DM1_V1_ENTRANCE_DOOR_OPEN_FRAME_INDEX_PC34;
         if (!DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
                 &entrance_ctx,
                 &out_plan->entrance_full_start_receipt)) {
@@ -886,7 +890,6 @@ int dm1_v1_startup_hoc_first_frame_receipt_pc34(
     const DM1_V1_StartupHandoffOutcome_PC34* outcome,
     DM1_V1_StartupHoCFirstFrameReceipt_PC34* out_receipt) {
     DM1_V1_StartupHoCFirstFrameReceipt_PC34 receipt;
-    DM1_V1_EntranceCtxPc34 entrance_ctx;
 
     if (!out_receipt || !post_plan || !outcome) {
         return 0;
@@ -913,17 +916,20 @@ int dm1_v1_startup_hoc_first_frame_receipt_pc34(
             ? 1
             : 0;
 
-    DM1_V1_Entrance_InitPc34Compat(&entrance_ctx);
-    entrance_ctx.state = DM1_ENTRANCE_VIEWING;
-    entrance_ctx.doorAnim.complete = 1;
-    entrance_ctx.doorAnim.animationStep = entrance_ctx.doorAnim.totalSteps - 1;
-    if (!DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
-            &entrance_ctx,
-            &receipt.entrance_full_start_receipt) ||
-        !DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
+    receipt.entrance_full_start_receipt =
+        post_plan->entrance_full_start_receipt;
+    {
+        DM1_V1_EntranceCtxPc34 entrance_ctx;
+        DM1_V1_Entrance_InitPc34Compat(&entrance_ctx);
+        entrance_ctx.state = DM1_ENTRANCE_VIEWING;
+        entrance_ctx.doorAnim.complete = 1;
+        entrance_ctx.doorAnim.animationStep =
+            entrance_ctx.doorAnim.totalSteps - 1;
+        if (!DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
             &entrance_ctx,
             &receipt.champion_select_route)) {
-        return 0;
+            return 0;
+        }
     }
 
     /* ReDMCSB TITLE.C F0437:319-409 releases the title surface only after
@@ -948,7 +954,7 @@ int dm1_v1_startup_hoc_first_frame_receipt_pc34(
     receipt.entrance_door_open_frame_ready =
         (receipt.entrance_full_start_receipt.drawDoorFrame &&
          receipt.entrance_full_start_receipt.doorFrameIndex ==
-             entrance_ctx.doorAnim.totalSteps - 1)
+             DM1_V1_ENTRANCE_DOOR_OPEN_FRAME_INDEX_PC34)
             ? 1
             : 0;
     receipt.hoc_menu_route_ready =
@@ -1160,6 +1166,8 @@ int dm1_v1_startup_hoc_packaged_full_graphics_proof_from_host_plan_pc34(
     proof.require_no_closed_door_frame = 1;
     proof.require_no_host_fallback_visuals =
         plan->suppress_host_fallback_visuals;
+    proof.require_lower_level_renderer_helper = 1;
+    proof.require_lower_level_audio_helper = 1;
     proof.block_enter_until_champion_selected =
         plan->block_enter_until_champion_selected;
     *out_proof = proof;
@@ -1195,7 +1203,9 @@ int dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
         !proof->require_hall_mirror_overlay ||
         !proof->require_no_title_surface ||
         !proof->require_no_closed_door_frame ||
-        !proof->require_no_host_fallback_visuals) {
+        !proof->require_no_host_fallback_visuals ||
+        !proof->require_lower_level_renderer_helper ||
+        !proof->require_lower_level_audio_helper) {
         *out_hook = hook;
         return 1;
     }
@@ -1211,6 +1221,10 @@ int dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
     hook.clear_champion_panel = 1;
     hook.render_hall_mirror_overlay = 1;
     hook.suppress_host_fallback_visuals = 1;
+    hook.lower_level_renderer_helper_owned =
+        proof->require_lower_level_renderer_helper;
+    hook.lower_level_audio_helper_owned =
+        proof->require_lower_level_audio_helper;
     hook.capture_after_first_frame_render = 1;
     hook.publish_packaged_full_graphics_proof = 1;
     hook.expected_map_index = proof->expected_map_index;
@@ -1250,6 +1264,29 @@ int dm1_v1_startup_hoc_full_start_production_receipt_pc34(
     receipt.handled = 1;
     receipt.consumed_post_launch_plan = post_plan ? 1 : 0;
     receipt.consumed_handoff_outcome = outcome ? 1 : 0;
+    receipt.consumed_title_menu_plan =
+        (post_plan &&
+         post_plan->required &&
+         post_plan->title_menu_eligible &&
+         !post_plan->title_keep_surface &&
+         post_plan->title_consume_pending_input &&
+         post_plan->entrance_wait_stage ==
+             DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34)
+            ? 1
+            : 0;
+    receipt.consumed_entrance_full_start_plan =
+        (post_plan &&
+         post_plan->entrance_full_start_receipt.valid &&
+         post_plan->entrance_full_start_receipt.mapIndex ==
+             DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+         post_plan->entrance_full_start_receipt.width ==
+             DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 &&
+         post_plan->entrance_full_start_receipt.height ==
+             DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 &&
+         post_plan->entrance_full_start_receipt.doorFrameIndex ==
+             DM1_V1_ENTRANCE_DOOR_OPEN_FRAME_INDEX_PC34)
+            ? 1
+            : 0;
     receipt.title_surface_released = receipt.first_frame.title_surface_released;
     receipt.entrance_wait_consumed = receipt.first_frame.entrance_wait_consumed;
     receipt.first_frame_ready = receipt.first_frame.runtime_first_frame_ready;
@@ -1276,6 +1313,8 @@ int dm1_v1_startup_hoc_full_start_production_receipt_pc34(
     receipt.packaged_full_graphics_proof_ready = receipt.packaged_proof.ready;
     receipt.production_hook_ready = receipt.production_hook.ready;
     receipt.ready = receipt.first_frame_ready &&
+                    receipt.consumed_title_menu_plan &&
+                    receipt.consumed_entrance_full_start_plan &&
                     receipt.host_render_plan_ready &&
                     receipt.packaged_full_graphics_proof_ready &&
                     receipt.production_hook_ready;
@@ -1311,9 +1350,13 @@ int dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
         !receipt->production_hook.consume_dm1_startup_receipts_only ||
         !receipt->production_hook.capture_after_first_frame_render ||
         !receipt->production_hook.publish_packaged_full_graphics_proof ||
+        !receipt->production_hook.lower_level_renderer_helper_owned ||
+        !receipt->production_hook.lower_level_audio_helper_owned ||
         !receipt->packaged_proof.require_no_title_surface ||
         !receipt->packaged_proof.require_no_closed_door_frame ||
         !receipt->packaged_proof.require_no_host_fallback_visuals ||
+        !receipt->packaged_proof.require_lower_level_renderer_helper ||
+        !receipt->packaged_proof.require_lower_level_audio_helper ||
         receipt->first_frame.hoc_render_command_count != 3) {
         *out_artifact = artifact;
         return 1;
@@ -1331,6 +1374,10 @@ int dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
     artifact.title_surface_forbidden = 1;
     artifact.closed_door_frame_forbidden = 1;
     artifact.host_fallback_visuals_forbidden = 1;
+    artifact.lower_level_renderer_helper_owned =
+        receipt->production_hook.lower_level_renderer_helper_owned;
+    artifact.lower_level_audio_helper_owned =
+        receipt->production_hook.lower_level_audio_helper_owned;
     artifact.opened_entrance_frame_required =
         receipt->production_hook.draw_opened_entrance_frame;
     artifact.hall_mirror_overlay_required =
@@ -1479,6 +1526,8 @@ int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
         !proof->proof_passed ||
         !artifact->consume_full_start_production_receipt_only ||
         !artifact->capture_manifest_ready ||
+        !artifact->lower_level_renderer_helper_owned ||
+        !artifact->lower_level_audio_helper_owned ||
         !artifact->publish_packaged_full_graphics_proof) {
         *out_receipt = receipt;
         return 1;
@@ -1499,6 +1548,10 @@ int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
     receipt.suppress_closed_door_frame = artifact->closed_door_frame_forbidden;
     receipt.suppress_host_fallback_visuals =
         artifact->host_fallback_visuals_forbidden;
+    receipt.lower_level_renderer_helper_owned =
+        artifact->lower_level_renderer_helper_owned;
+    receipt.lower_level_audio_helper_owned =
+        artifact->lower_level_audio_helper_owned;
     receipt.publish_packaged_full_graphics_proof =
         artifact->publish_packaged_full_graphics_proof;
     receipt.block_enter_until_champion_selected =
@@ -1627,6 +1680,8 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
         !suppression->spell_effect_payloads_absent ||
         !suppression->mirror_payload_thing_absent ||
         !apply->apply_hall_mirror_overlay ||
+        !apply->lower_level_renderer_helper_owned ||
+        !apply->lower_level_audio_helper_owned ||
         apply->hall_overlay_kind != DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34) {
         *out_receipt = receipt;
         return 1;
@@ -1651,6 +1706,10 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.suppress_closed_door_frame = apply->suppress_closed_door_frame;
     receipt.suppress_host_fallback_visuals =
         apply->suppress_host_fallback_visuals;
+    receipt.lower_level_renderer_helper_owned =
+        apply->lower_level_renderer_helper_owned;
+    receipt.lower_level_audio_helper_owned =
+        apply->lower_level_audio_helper_owned;
     receipt.suppress_false_item_payloads =
         suppression->false_item_payloads_absent;
     receipt.suppress_projectile_payloads =
@@ -2526,6 +2585,10 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
     }
     memset(&command, 0, sizeof(command));
     command.handled = 1;
+    command.consume_media_receipt_only = 1;
+    command.source_timing_receipt_consumed = 1;
+    command.lower_level_renderer_helper_owned = 1;
+    command.lower_level_audio_helper_owned = 1;
     command.source_step = source_step;
     command.present_entrance_palette = 1;
     command.delay_ms =
