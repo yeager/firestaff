@@ -32,6 +32,10 @@ extern "C" {
 #define DM1_V1_ENTRANCE_ELEMENT_CORRIDOR_PC34 1
 #define DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_GRAPHIC_PC34 26
 #define DM1_V1_ENTRANCE_RESURRECT_PANEL_GRAPHIC_PC34 40
+#define DM1_V1_ENTRANCE_DOOR_ANIMATION_GRAPHIC_PC34 562
+#define DM1_V1_ENTRANCE_SCREEN_GRAPHIC_PC34 563
+#define DM1_V1_ENTRANCE_SCREEN_W_PC34 320
+#define DM1_V1_ENTRANCE_SCREEN_H_PC34 200
 #define DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_W_PC34 32
 #define DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_H_PC34 29
 #define DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_ATLAS_COLS_PC34 8
@@ -85,6 +89,9 @@ typedef struct {
     int clearStalePanelFirst;
     int suppressThingPayloads;
     int blockEnterUntilChampionSelected;
+    int realAssetCaptureProof;
+    int requiresGraphicsDat;
+    int noHostRenderInference;
     const char *reason;
 } DM1_V1_EntranceRenderOverlayCommandPc34;
 
@@ -124,6 +131,13 @@ typedef struct {
     int drawDoorFrame;
     int playDoorRattleSound;
     int entranceMusicRequested;
+    int realAssetCaptureProof;
+    int entranceScreenGraphicIndex;
+    int doorAnimationGraphicIndex;
+    int doorFrameCount;
+    int requiresGraphicsDat;
+    int noHostRenderInference;
+    const char *captureProofReason;
 } DM1_V1_EntranceFullStartRenderReceiptPc34;
 
 typedef struct {

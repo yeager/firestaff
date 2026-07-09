@@ -243,6 +243,7 @@ static int check_m11_ts_state_cleanup(void) {
      * the M11 fallback path will leak 320*200 screen buffers into the
      * entrance surface. */
     DM1_V1_TitleStatePc34 state;
+    DM1_V1_TitleRealAssetCaptureReceiptPc34 receipt;
     uint8_t fakeBitmap[64];
     uint8_t fakeBitmapAgain[64];
     int i;
@@ -286,6 +287,27 @@ static int check_m11_ts_state_cleanup(void) {
     if (!DM1_V1_Title_AnimateZoomPc34Compat(&state, DM1_TITLE_ZOOM_STEPS - 1u)) {
         printf("FAIL animate_zoom(last): rejected on a freshly-loaded state\n");
         g_failures++;
+    }
+    if (!DM1_V1_Title_BuildRealAssetCaptureReceiptPc34Compat(&state, 0u, &receipt)) {
+        printf("FAIL title real asset receipt: builder rejected loaded state\n");
+        g_failures++;
+    } else {
+        expect_signed("title real asset receipt valid", receipt.valid, 1);
+        expect_signed("title real asset receipt initialized", receipt.initialized, 1);
+        expect_signed("title real asset graphic",
+                      receipt.graphicIndex,
+                      DM1_V1_TITLE_GRAPHIC_TITLE_PRESENTS_PC34);
+        expect_u("title real asset byte size", receipt.loadedByteSize, (unsigned)sizeof(fakeBitmap));
+        expect_signed("title real asset zoom step count", receipt.zoomStepCount, DM1_TITLE_ZOOM_STEPS);
+        expect_signed("title real asset frame", receipt.zoomFrameIndex, 0);
+        expect_signed("title real asset viewport x", receipt.viewportX, 136);
+        expect_signed("title real asset viewport y", receipt.viewportY, 94);
+        expect_signed("title real asset viewport w", receipt.viewportW, 48);
+        expect_signed("title real asset viewport h", receipt.viewportH, 12);
+        expect_signed("title real asset byte coords", receipt.usesByteCoordinates, 1);
+        expect_signed("title real asset requires graphics", receipt.requiresGraphicsDat, 1);
+        expect_signed("title real asset no host inference", receipt.noHostRenderInference, 1);
+        expect_truth("title real asset reason", receipt.reason != 0, 1);
     }
     DM1_V1_Title_DrawPc34Compat(&state);
     DM1_V1_Title_SetCreditsPalettePc34Compat(&state);
