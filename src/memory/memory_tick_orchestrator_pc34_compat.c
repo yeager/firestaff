@@ -4353,8 +4353,8 @@ static int orch_apply_projectile_champion_action_compat(
         if (!dm1_v1_projectile_champion_poison_apply_pc34(
                 &impactPlan, projectile, damagePlan.damage.damageApplied,
                 F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2),
-                world->gameTick, world->partyMapIndex,
-                world->party.mapX, world->party.mapY,
+                world->gameTick, impactPlan.impactMapIndex,
+                impactPlan.impactMapX, impactPlan.impactMapY,
                 champion, &poisonApply)) {
             return 0;
         }
