@@ -5466,46 +5466,42 @@ static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
     int mapY,
     int killedCreatureIndex)
 {
-    int readIndex;
-    int writeIndex = 0;
-    int oldCount;
-    int compactedCount;
+    DM1_MeleeF0190TimelineCleanupBatchInputPc34 cleanupIn;
+    DM1_MeleeF0190TimelineCleanupBatchPlanPc34 cleanupPlan;
+    int i;
 
     if (!world) return;
     if (killedCreatureIndex < 0 || killedCreatureIndex > 3) return;
-    oldCount = world->timeline.count;
 
-    for (readIndex = 0; readIndex < oldCount; ++readIndex) {
-        struct TimelineEvent_Compat ev = world->timeline.events[readIndex];
-        DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
-        DM1_MeleeF0190TimelineCleanupPlanPc34 cleanupPlan;
+    memset(&cleanupIn, 0, sizeof(cleanupIn));
+    memset(&cleanupPlan, 0, sizeof(cleanupPlan));
+    cleanupIn.eventCount = world->timeline.count;
+    if (cleanupIn.eventCount < 0 ||
+        cleanupIn.eventCount > TIMELINE_QUEUE_CAPACITY) {
+        return;
+    }
+    for (i = 0; i < cleanupIn.eventCount; ++i) {
+        cleanupIn.events[i] = world->timeline.events[i];
+    }
+    cleanupIn.targetMapIndex = mapIndex;
+    cleanupIn.targetMapX = mapX;
+    cleanupIn.targetMapY = mapY;
+    cleanupIn.killedCreatureIndex = killedCreatureIndex;
 
-        memset(&cleanupIn, 0, sizeof(cleanupIn));
-        memset(&cleanupPlan, 0, sizeof(cleanupPlan));
-        cleanupIn.eventKind = ev.kind;
-        cleanupIn.eventMapIndex = ev.mapIndex;
-        cleanupIn.eventMapX = ev.mapX;
-        cleanupIn.eventMapY = ev.mapY;
-        cleanupIn.eventType = ev.aux2;
-        cleanupIn.targetMapIndex = mapIndex;
-        cleanupIn.targetMapX = mapX;
-        cleanupIn.targetMapY = mapY;
-        cleanupIn.killedCreatureIndex = killedCreatureIndex;
-        if (dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
-                &cleanupIn, &cleanupPlan) &&
-            cleanupPlan.valid) {
-            if (!cleanupPlan.shouldKeepEvent) continue;
-            ev.aux2 = cleanupPlan.newEventType;
-        }
-        world->timeline.events[writeIndex++] = ev;
+    if (!dm1_v1_melee_timeline_cleanup_batch_plan_f0190_pc34(
+            &cleanupIn, &cleanupPlan) ||
+        !cleanupPlan.valid) {
+        return;
     }
-    compactedCount = writeIndex;
-    while (writeIndex < oldCount) {
-        memset(&world->timeline.events[writeIndex], 0,
-               sizeof(world->timeline.events[writeIndex]));
-        ++writeIndex;
+    for (i = 0; i < cleanupPlan.newEventCount; ++i) {
+        world->timeline.events[i] = cleanupPlan.events[i];
     }
-    world->timeline.count = compactedCount;
+    while (i < cleanupPlan.oldEventCount) {
+        memset(&world->timeline.events[i], 0,
+               sizeof(world->timeline.events[i]));
+        ++i;
+    }
+    world->timeline.count = cleanupPlan.newEventCount;
 }
 
 static int orch_cmd_attack_apply_f0190_fear_compat(

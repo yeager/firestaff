@@ -2086,6 +2086,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190KilledAllStatePlanPc34 killedAllOut;
     DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
     DM1_MeleeF0190TimelineCleanupPlanPc34 cleanupOut;
+    DM1_MeleeF0190TimelineCleanupBatchInputPc34 cleanupBatchIn;
+    DM1_MeleeF0190TimelineCleanupBatchPlanPc34 cleanupBatchOut;
     DM1_MeleeF0190FixedDropCellsPlanPc34 fixedCellsOut;
     DM1_MeleeF0190MutationDispatchInputPc34 dispatchIn;
     DM1_MeleeF0190MutationDispatchPlanPc34 dispatchOut;
@@ -2463,6 +2465,54 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 cleanup other kind builds");
     CHECK_EQ(cleanupOut.shouldKeepEvent, 1,
              "F0190 cleanup keeps other kind");
+
+    memset(&cleanupBatchIn, 0, sizeof(cleanupBatchIn));
+    cleanupBatchIn.eventCount = 4;
+    cleanupBatchIn.targetMapIndex = 1;
+    cleanupBatchIn.targetMapX = 10;
+    cleanupBatchIn.targetMapY = 11;
+    cleanupBatchIn.killedCreatureIndex = 1;
+    cleanupBatchIn.events[0].kind = TIMELINE_EVENT_CREATURE_REACTION;
+    cleanupBatchIn.events[0].mapIndex = 1;
+    cleanupBatchIn.events[0].mapX = 10;
+    cleanupBatchIn.events[0].mapY = 11;
+    cleanupBatchIn.events[0].aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 0;
+    cleanupBatchIn.events[1].kind = TIMELINE_EVENT_CREATURE_REACTION;
+    cleanupBatchIn.events[1].mapIndex = 1;
+    cleanupBatchIn.events[1].mapX = 10;
+    cleanupBatchIn.events[1].mapY = 11;
+    cleanupBatchIn.events[1].aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 1;
+    cleanupBatchIn.events[2].kind = TIMELINE_EVENT_CREATURE_REACTION;
+    cleanupBatchIn.events[2].mapIndex = 1;
+    cleanupBatchIn.events[2].mapX = 10;
+    cleanupBatchIn.events[2].mapY = 11;
+    cleanupBatchIn.events[2].aux2 = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 3;
+    cleanupBatchIn.events[3].kind = TIMELINE_EVENT_CREATURE_TICK;
+    cleanupBatchIn.events[3].mapIndex = 1;
+    cleanupBatchIn.events[3].mapX = 10;
+    cleanupBatchIn.events[3].mapY = 11;
+    cleanupBatchIn.events[3].aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 1;
+    CHECK_EQ(dm1_v1_melee_timeline_cleanup_batch_plan_f0190_pc34(
+                 &cleanupBatchIn, &cleanupBatchOut), 1,
+             "F0190 cleanup batch builds");
+    CHECK_EQ(cleanupBatchOut.valid, 1, "F0190 cleanup batch valid");
+    CHECK_EQ(cleanupBatchOut.oldEventCount, 4,
+             "F0190 cleanup batch old count");
+    CHECK_EQ(cleanupBatchOut.newEventCount, 3,
+             "F0190 cleanup batch compacts count");
+    CHECK_EQ(cleanupBatchOut.deletedEventCount, 1,
+             "F0190 cleanup batch deleted killed event");
+    CHECK_EQ(cleanupBatchOut.events[0].aux2,
+             DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 0,
+             "F0190 cleanup batch keeps earlier event");
+    CHECK_EQ(cleanupBatchOut.events[1].aux2,
+             DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 2,
+             "F0190 cleanup batch shifts later behavior event");
+    CHECK_EQ(cleanupBatchOut.events[2].kind, TIMELINE_EVENT_CREATURE_TICK,
+             "F0190 cleanup batch keeps other event kind");
+    CHECK_EQ(cleanupBatchOut.events[2].aux2,
+             DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 1,
+             "F0190 cleanup batch leaves other event kind type");
 
     memset(&killedAllIn, 0, sizeof(killedAllIn));
     killedAllIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;

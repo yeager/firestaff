@@ -633,6 +633,23 @@ typedef struct {
 } DM1_MeleeF0190TimelineCleanupPlanPc34;
 
 typedef struct {
+    int eventCount;
+    struct TimelineEvent_Compat events[TIMELINE_QUEUE_CAPACITY];
+    int targetMapIndex;
+    int targetMapX;
+    int targetMapY;
+    int killedCreatureIndex;
+} DM1_MeleeF0190TimelineCleanupBatchInputPc34;
+
+typedef struct {
+    int valid;
+    int oldEventCount;
+    int newEventCount;
+    int deletedEventCount;
+    struct TimelineEvent_Compat events[TIMELINE_QUEUE_CAPACITY];
+} DM1_MeleeF0190TimelineCleanupBatchPlanPc34;
+
+typedef struct {
     int outcome;
     int groupIndex;
     int groupBehavior;
@@ -770,6 +787,9 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
 int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
     const DM1_MeleeF0190TimelineCleanupInputPc34* in,
     DM1_MeleeF0190TimelineCleanupPlanPc34* out);
+int dm1_v1_melee_timeline_cleanup_batch_plan_f0190_pc34(
+    const DM1_MeleeF0190TimelineCleanupBatchInputPc34* in,
+    DM1_MeleeF0190TimelineCleanupBatchPlanPc34* out);
 int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
     const DM1_MeleeF0190MutationDispatchInputPc34* in,
     DM1_MeleeF0190MutationDispatchPlanPc34* out);

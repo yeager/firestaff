@@ -1363,6 +1363,60 @@ int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_timeline_cleanup_batch_plan_f0190_pc34(
+    const DM1_MeleeF0190TimelineCleanupBatchInputPc34* in,
+    DM1_MeleeF0190TimelineCleanupBatchPlanPc34* out) {
+    int readIndex;
+    int writeIndex = 0;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+    if (in->eventCount < 0 || in->eventCount > TIMELINE_QUEUE_CAPACITY) {
+        return 0;
+    }
+    if (in->killedCreatureIndex < 0 || in->killedCreatureIndex > 3) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->oldEventCount = in->eventCount;
+    for (readIndex = 0; readIndex < in->eventCount; ++readIndex) {
+        struct TimelineEvent_Compat ev = in->events[readIndex];
+        DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
+        DM1_MeleeF0190TimelineCleanupPlanPc34 cleanupPlan;
+
+        memset(&cleanupIn, 0, sizeof(cleanupIn));
+        memset(&cleanupPlan, 0, sizeof(cleanupPlan));
+        cleanupIn.eventKind = ev.kind;
+        cleanupIn.eventMapIndex = ev.mapIndex;
+        cleanupIn.eventMapX = ev.mapX;
+        cleanupIn.eventMapY = ev.mapY;
+        cleanupIn.eventType = ev.aux2;
+        cleanupIn.targetMapIndex = in->targetMapIndex;
+        cleanupIn.targetMapX = in->targetMapX;
+        cleanupIn.targetMapY = in->targetMapY;
+        cleanupIn.killedCreatureIndex = in->killedCreatureIndex;
+
+        if (dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
+                &cleanupIn, &cleanupPlan) &&
+            cleanupPlan.valid) {
+            if (!cleanupPlan.shouldKeepEvent) {
+                ++out->deletedEventCount;
+                continue;
+            }
+            ev.aux2 = cleanupPlan.newEventType;
+        }
+        out->events[writeIndex++] = ev;
+    }
+    out->newEventCount = writeIndex;
+
+    /* ReDMCSB: GROUP.C F0190 lines 848-872 compacts the timeline after
+     * deleting/shifting killed-creature aspect/behavior events.  DM1 owns the
+     * compacted event list; M10 only copies it back to the queue. */
+    return 1;
+}
+
 int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
     const DM1_MeleeF0190MutationDispatchInputPc34* in,
     DM1_MeleeF0190MutationDispatchPlanPc34* out) {
