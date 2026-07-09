@@ -258,8 +258,34 @@ typedef struct CSB_V1_BootStartupActionReceipt_PC34 {
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
 } CSB_V1_BootStartupActionReceipt_PC34;
 
+typedef struct CSB_V1_BootStartupHostDecisionReceipt_PC34 {
+    int valid;
+    int menu_input;
+    int input_is_pointer;
+    int pointer_left_button;
+    int consumed_input;
+    int blocked_by_title;
+    int routed_to_utility;
+    int routed_to_entrance;
+    int redraw_startup;
+    int stays_on_startup;
+    int return_to_launcher;
+    int clear_import_preview;
+    int bonus_requested_changed;
+    int bonus_requested;
+    int utility_selected_action_index;
+    int entrance_command_id;
+    CSB_V1_StartupEntranceInputResult_PC34 host_input_result;
+    CSB_V1_BootStartupRenderRouteKind_PC34 pre_render_route;
+    CSB_V1_BootStartupRenderRouteKind_PC34 post_render_route;
+    const char *status_scope;
+    const char *status;
+} CSB_V1_BootStartupHostDecisionReceipt_PC34;
+
 void csb_v1_boot_startup_action_receipt_init_pc34(
     CSB_V1_BootStartupActionReceipt_PC34 *receipt);
+void csb_v1_boot_startup_host_decision_receipt_init_pc34(
+    CSB_V1_BootStartupHostDecisionReceipt_PC34 *receipt);
 void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *receipt);
 void csb_v1_boot_startup_render_view_receipt_init_pc34(
@@ -728,6 +754,9 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
     CSB_V1_BootStartupActionReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
+    const CSB_V1_BootStartupActionReceipt_PC34 *receipt,
+    CSB_V1_BootStartupHostDecisionReceipt_PC34 *out_decision);
 int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int x,

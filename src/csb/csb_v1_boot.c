@@ -1727,6 +1727,22 @@ void csb_v1_boot_startup_render_view_receipt_init_pc34(
         &receipt->route_receipt);
 }
 
+void csb_v1_boot_startup_host_decision_receipt_init_pc34(
+    CSB_V1_BootStartupHostDecisionReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->utility_selected_action_index = -1;
+    receipt->entrance_command_id =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    receipt->pre_render_route =
+        CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+    receipt->post_render_route =
+        CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+}
+
 static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
     const CSB_V1_BootStartupPresentationRouteReceipt_PC34 *route,
     CSB_V1_BootStartupRenderViewReceipt_PC34 *out_receipt)
@@ -3039,6 +3055,78 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     (void)csb_v1_boot_startup_action_capture_post_input_render_pc34(
         snapshot,
         out_receipt);
+    return 1;
+}
+
+int csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
+    const CSB_V1_BootStartupActionReceipt_PC34 *receipt,
+    CSB_V1_BootStartupHostDecisionReceipt_PC34 *out_decision)
+{
+    if (!out_decision) {
+        return 0;
+    }
+    csb_v1_boot_startup_host_decision_receipt_init_pc34(out_decision);
+    if (!receipt || (!receipt->pre_input_route.valid &&
+                     !receipt->pre_input_render_view_valid &&
+                     !receipt->handled &&
+                     !receipt->input_blocked_by_title)) {
+        return 0;
+    }
+
+    out_decision->valid = 1;
+    out_decision->menu_input = receipt->menu_input;
+    out_decision->input_is_pointer = receipt->input_is_pointer;
+    out_decision->pointer_left_button = receipt->pointer_left_button;
+    out_decision->blocked_by_title = receipt->input_blocked_by_title;
+    out_decision->routed_to_utility = receipt->input_routed_to_utility;
+    out_decision->routed_to_entrance = receipt->input_routed_to_entrance;
+    out_decision->consumed_input =
+        receipt->handled || receipt->input_blocked_by_title ? 1 : 0;
+    out_decision->stays_on_startup = receipt->input_stays_on_startup;
+    out_decision->return_to_launcher =
+        receipt->input_requests_launcher_return;
+    out_decision->clear_import_preview = receipt->host_clear_import_preview;
+    out_decision->bonus_requested_changed =
+        receipt->host_bonus_requested_changed;
+    out_decision->bonus_requested = receipt->host_bonus_requested;
+    out_decision->entrance_command_id = receipt->entrance_command_id;
+    out_decision->host_input_result = receipt->host_input_result;
+    out_decision->status_scope = receipt->host_status_scope;
+    out_decision->status = receipt->host_status;
+    out_decision->pre_render_route = receipt->pre_input_route.route;
+    if (receipt->post_input_render_view_valid) {
+        out_decision->post_render_route =
+            receipt->post_input_render_view.route_receipt.route;
+    }
+    if (receipt->pre_input_render_view.utility_menu_route) {
+        out_decision->utility_selected_action_index =
+            receipt->pre_input_render_view.utility_selected_action_index;
+    }
+    if (receipt->post_input_render_view_valid &&
+        receipt->post_input_render_view.utility_menu_route) {
+        out_decision->utility_selected_action_index =
+            receipt->post_input_render_view.utility_selected_action_index;
+    }
+    out_decision->redraw_startup =
+        out_decision->stays_on_startup ||
+                receipt->post_input_render_view_valid ||
+                receipt->host_input_result ==
+                    CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 ||
+                receipt->utility_receipt.util_receipt.result ==
+                    CSB_V1_UTIL_APPLY_REDRAW
+            ? 1
+            : 0;
+    if (receipt->host_input_result ==
+        CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34) {
+        out_decision->return_to_launcher = 1;
+        out_decision->redraw_startup = 0;
+        out_decision->stays_on_startup = 0;
+    }
+
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 routes all startup
+     * input through the CSB entrance loop. Flatten the M11-facing decision
+     * here so host code can consume redraw/close/status/route facts without
+     * reinterpreting utility and entrance receipts. */
     return 1;
 }
 

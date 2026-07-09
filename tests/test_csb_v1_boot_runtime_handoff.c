@@ -1811,6 +1811,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupActionReceipt_PC34 boot_action_receipt;
+    CSB_V1_BootStartupHostDecisionReceipt_PC34 host_decision;
     CSB_V1_UtilRenderPlan receipt_utility_plan;
     CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
@@ -2079,6 +2080,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.input_blocked_by_title &&
               !boot_action_receipt.pre_input_route.hud_menu_state.valid,
           "boot startup action receipt captures title render-view before blocked input");
+    CHECK(csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
+              &boot_action_receipt,
+              &host_decision) == 1 &&
+              host_decision.valid &&
+              host_decision.consumed_input &&
+              host_decision.blocked_by_title &&
+              !host_decision.redraw_startup &&
+              host_decision.pre_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
+              host_decision.post_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34,
+          "boot startup host decision consumes title-block receipt");
     snapshot.utility_overlay_active = 1;
     snapshot.title_active = 0;
     snapshot.title_frame = 0;
@@ -2367,6 +2380,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.post_input_render_view.route_receipt
                       .hud_menu_state.utility_selected_action_index == 1,
           "boot startup utility input carries post-input render/HUD route");
+    CHECK(csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
+              &boot_action_receipt,
+              &host_decision) == 1 &&
+              host_decision.valid &&
+              host_decision.consumed_input &&
+              host_decision.routed_to_utility &&
+              !host_decision.routed_to_entrance &&
+              host_decision.redraw_startup &&
+              host_decision.stays_on_startup &&
+              !host_decision.return_to_launcher &&
+              host_decision.utility_selected_action_index == 1 &&
+              host_decision.pre_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+              host_decision.post_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34,
+          "boot startup host decision consumes utility redraw receipt");
     (void)csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
         &snapshot,
         72,
@@ -2455,6 +2484,26 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !boot_action_receipt.post_input_render_view.route_receipt
                    .accepts_input,
           "boot startup entrance input carries post-input door render route");
+    CHECK(csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
+              &boot_action_receipt,
+              &host_decision) == 1 &&
+              host_decision.valid &&
+              host_decision.consumed_input &&
+              !host_decision.routed_to_utility &&
+              host_decision.routed_to_entrance &&
+              host_decision.redraw_startup &&
+              host_decision.stays_on_startup &&
+              host_decision.host_input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              host_decision.entrance_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              host_decision.post_render_route ==
+                  boot_action_receipt.post_input_render_view
+                      .route_receipt.route &&
+              host_decision.post_render_route !=
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+              strcmp(host_decision.status, "CSB DOORS") == 0,
+          "boot startup host decision consumes entrance redraw receipt");
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               10,
@@ -2481,6 +2530,20 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.pre_input_render_view.route_receipt
                   .hud_menu_state.valid,
           "boot startup Back input carries pre-render menu and launcher return");
+    CHECK(csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
+              &boot_action_receipt,
+              &host_decision) == 1 &&
+              host_decision.valid &&
+              host_decision.consumed_input &&
+              host_decision.return_to_launcher &&
+              !host_decision.stays_on_startup &&
+              !host_decision.redraw_startup &&
+              host_decision.host_input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34 &&
+              host_decision.post_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 &&
+              strcmp(host_decision.status, "BACK TO LAUNCHER") == 0,
+          "boot startup host decision consumes launcher-return receipt");
 
     csb_v1_boot_cleanup(&boot);
 }
