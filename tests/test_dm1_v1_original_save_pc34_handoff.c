@@ -990,6 +990,7 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
     DM1OriginalSavePC34FixtureSpec spec;
     DM1OriginalSavePC34HandoffReport import_report;
     DM1OriginalSavePC34HandoffReport verify_report;
+    DM1OriginalSavePC34RoundtripReport roundtrip_report;
     DM1OriginalSaveClassifyResult classified;
     struct SaveGame_Compat imported;
     struct PartyState_Compat party;
@@ -1064,11 +1065,59 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
           imported.party->direction == 2,
           "roundtrip helper output preserves party state");
 
+    memset(roundtrip, 0, sizeof(roundtrip));
+    roundtrip_written = 0u;
+    memset(&roundtrip_report, 0, sizeof(roundtrip_report));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, written, 0x52544d33u,
+        roundtrip, sizeof(roundtrip), &roundtrip_written,
+        &roundtrip_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "roundtrip reload helper imports exported bytes into runtime world");
+    CHECK(roundtrip_report.core_state_matches == 1,
+          "roundtrip reload helper reports matching core state");
+    CHECK(roundtrip_report.source_champion_count == 3 &&
+          roundtrip_report.exported_champion_count == 3 &&
+          roundtrip_report.reloaded_champion_count == 3,
+          "roundtrip reload helper preserves champion count");
+    CHECK(roundtrip_report.source_map_index == 5 &&
+          roundtrip_report.exported_map_index == 5 &&
+          roundtrip_report.reloaded_map_index == 5,
+          "roundtrip reload helper preserves map index");
+    CHECK(roundtrip_report.source_map_x == 19 &&
+          roundtrip_report.exported_map_x == 19 &&
+          roundtrip_report.reloaded_map_x == 19 &&
+          roundtrip_report.source_map_y == 23 &&
+          roundtrip_report.exported_map_y == 23 &&
+          roundtrip_report.reloaded_map_y == 23,
+          "roundtrip reload helper preserves party coordinates");
+    CHECK(roundtrip_report.source_direction == 2 &&
+          roundtrip_report.exported_direction == 2 &&
+          roundtrip_report.reloaded_direction == 2,
+          "roundtrip reload helper preserves direction");
+    CHECK(roundtrip_report.source_game_time == 777888u &&
+          roundtrip_report.exported_game_time == 777888u &&
+          roundtrip_report.reloaded_game_time == 777888u,
+          "roundtrip reload helper preserves game time");
+    CHECK(roundtrip_report.source_event_count == ORIGINAL_PC34_EVENT_COUNT &&
+          roundtrip_report.exported_event_count == ORIGINAL_PC34_EVENT_COUNT &&
+          roundtrip_report.reloaded_event_count == ORIGINAL_PC34_EVENT_COUNT,
+          "roundtrip reload helper preserves event queue count");
+    CHECK(roundtrip_report.source_active_group_count == 2 &&
+          roundtrip_report.exported_active_group_count == 2 &&
+          roundtrip_report.reloaded_active_group_count == 2,
+          "roundtrip reload helper preserves active group count");
+
     rc = dm1_v1_original_save_pc34_roundtrip_world_bytes(
         NULL, 0u, 0u, roundtrip, sizeof(roundtrip), &roundtrip_written,
         &import_report, &verify_report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
           "roundtrip helper rejects null source bytes");
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        NULL, 0u, 0u, roundtrip, sizeof(roundtrip), &roundtrip_written,
+        &roundtrip_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
+          "roundtrip reload helper rejects null source bytes");
 }
 
 static void test_strings(void)
