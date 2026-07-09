@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 M12 launch gate full-start contract block: launch-gate receipts now expose full-start graphics and startup-contract readiness directly, and the launch button only proceeds through `canLaunch`, so future missing startup proof cannot fall through to a ready launch. Verification: `test_m12_all_games_boot_readiness_receipt`, `test_csb_v1_launch_blocker_m12`, `test_m12_dm1_v1_required_complete_launches`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB packaged startup capture proof: boot now emits a compact packaged capture proof tying real-asset receipt hash, title/HUD/runtime route, render-plan availability, HUD draw availability, and ReDMCSB title/entrance source evidence together for packaged startup validation. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 M12 auto-version full-start gate: launch-gate receipts now normalize boot-readiness/full-start progress when a selected missing version is replaced by a hash-matched auto-selected version, and launch intents use that version. Verification: `test_m12_all_games_boot_readiness_receipt` and `git diff --check` passed.

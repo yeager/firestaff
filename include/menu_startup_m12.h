@@ -340,6 +340,8 @@ typedef struct {
     int presentationReady;
     int dataReady;
     int versionReady;
+    int fullStartGraphicsReady;
+    int startupContractReady;
     int autoSelectedVersionIndex;
     const char* blockedLabel;
     const char* blockedDetail;
