@@ -2862,7 +2862,9 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
 {
     static const int k_title_ticks[] = {0, 13, 47};
     static const int k_selected_rows[] = {0, 1, 2};
+    uint32_t title_hashes[3];
     uint32_t menu_hashes[3];
+    int title_hash_count = 0;
     int menu_hash_count = 0;
     int i;
 
@@ -2873,6 +2875,7 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
     /* skproject/SKWIN title/menu startup is ticked and re-entered while the
      * HUD is suppressed. Sample separate title ticks and menu selections so
      * the real-data receipt proves more than the single current host frame. */
+    out_receipt->sampled_title_pixel_hash = 0x32545348u;
     for (i = 0; i < (int)(sizeof(k_title_ticks) / sizeof(k_title_ticks[0])); ++i) {
         DM2_V1_BootStartupViewModel sample_view;
         DM2_V1_BootStartupPackagedFullStartReceipt sample_package;
@@ -2882,6 +2885,9 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
         int w = 0;
         int h = 0;
         int stride = 0;
+        uint32_t pixel_hash = 0x32544954u;
+        int hash_i;
+        int seen_hash = 0;
 
         if (!dm2_v1_boot_startup_view_model_receipt_from_snapshot_tick(
                 &sample_snapshot,
@@ -2911,10 +2917,35 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
             w == 320 &&
             h == 200 &&
             stride >= w) {
+            int y;
             ++out_receipt->sampled_title_pixel_capture_count;
+            for (y = 0; y < h; ++y) {
+                int x;
+                const uint8_t *src = pixels + (size_t)y * (size_t)stride;
+                for (x = 0; x < w; ++x) {
+                    pixel_hash = dm2_v1_boot_packaged_capture_hash_step(
+                        pixel_hash,
+                        src[x]);
+                }
+            }
+            out_receipt->sampled_title_pixel_hash =
+                dm2_v1_boot_packaged_capture_hash_step(
+                    out_receipt->sampled_title_pixel_hash,
+                    pixel_hash);
+            for (hash_i = 0; hash_i < title_hash_count; ++hash_i) {
+                if (title_hashes[hash_i] == pixel_hash) {
+                    seen_hash = 1;
+                    break;
+                }
+            }
+            if (!seen_hash && title_hash_count < 3) {
+                title_hashes[title_hash_count++] = pixel_hash;
+            }
         }
         dm2_v1_boot_gdat_image_asset_free(pixels);
     }
+    out_receipt->sampled_title_unique_pixel_hash_count =
+        title_hash_count;
 
     out_receipt->sampled_menu_composite_hash = 0x324d5348u;
     for (i = 0; i < (int)(sizeof(k_selected_rows) / sizeof(k_selected_rows[0])); ++i) {
@@ -3004,6 +3035,8 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
     out_receipt->real_gdat_capture_breadth_ready =
         out_receipt->sampled_title_timing_capture_count >= 3 &&
         out_receipt->sampled_title_pixel_capture_count >= 3 &&
+        out_receipt->sampled_title_unique_pixel_hash_count >= 1 &&
+        out_receipt->sampled_title_pixel_hash != 0u &&
         (out_receipt->sampled_title_frame_mask & (1 << 0)) &&
         (out_receipt->sampled_title_frame_mask & (1 << 2)) &&
         (out_receipt->sampled_title_frame_mask & (1 << 7)) &&
@@ -3350,6 +3383,10 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         hash, out_receipt->real_visual_status_consumer_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->sampled_title_frame_mask);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->sampled_title_unique_pixel_hash_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->sampled_title_pixel_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->sampled_menu_selection_mask);
     hash = dm2_v1_boot_packaged_capture_hash_step(

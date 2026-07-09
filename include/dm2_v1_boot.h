@@ -539,6 +539,8 @@ typedef struct {
     int sampled_title_timing_capture_count;
     int sampled_title_frame_mask;
     int sampled_title_pixel_capture_count;
+    int sampled_title_unique_pixel_hash_count;
+    uint32_t sampled_title_pixel_hash;
     int sampled_menu_selection_capture_count;
     int sampled_menu_selection_mask;
     int sampled_menu_composite_capture_count;
