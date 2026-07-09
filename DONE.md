@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB snapshot render-plan facade cleanup: removed the public `csb_v1_boot_startup_render_plan_from_snapshot_pc34` compatibility helper and moved the closed-door startup proof to host-view packaged render receipts. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_boot_profile_smoke`, and `git diff --check` passed; M11-adjacent CSB target build is currently blocked by an unrelated DM2 `startup_title_animation_tick` compile error in `src/engine/m11_game_view.c`.
+
 - ✅ 2026-07-09 M11 startup host-render integration sweep: DM1 boot probe now exposes HoC full-graphics host-render/capture readiness from DM1 receipts, and Nexus M11 startup now consumes real TITLE.CG host facts/draw assets so title reveal and accept transition work without blank/fallback frames. Verification: `firestaff_m11_phase_a_probe`, DM1 startup/HoC tests, `test_csb_v1_boot_runtime_handoff`, `test_dm2_v1_m11_startup_profile_gate`, `test_theron_v1_startup_save_resume_pc34`, `test_nexus_v1_m11_launcher_handoff_boundary`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 projectile F0215 delete/materialize ownership: DM1 throw/shoot receipts now carry projectile-delete, Projectile.Next clear, potion-consume, and optional square-chain materialization decisions; M10 consumes that receipt instead of owning the delete/apply branch locally. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.

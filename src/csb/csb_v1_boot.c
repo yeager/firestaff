@@ -3625,25 +3625,6 @@ static int csb_v1_boot_startup_input_render_receipt_from_action_pc34(
     return 1;
 }
 
-int csb_v1_boot_startup_render_plan_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan)
-{
-    CSB_V1_BootStartupRenderViewReceipt_PC34 receipt;
-
-    if (!out_plan) {
-        return 0;
-    }
-    memset(out_plan, 0, sizeof(*out_plan));
-    if (!csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
-            snapshot,
-            &receipt)) {
-        return 0;
-    }
-    *out_plan = receipt.render_plan;
-    return receipt.render_plan_valid;
-}
-
 int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     CSB_V1_UtilRenderPlan *out_plan,
     int title_active,
