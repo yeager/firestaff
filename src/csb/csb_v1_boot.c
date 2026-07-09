@@ -1793,6 +1793,28 @@ void csb_v1_boot_startup_input_render_receipt_init_pc34(
         &receipt->hud_menu_draw);
 }
 
+void csb_v1_boot_startup_capture_receipt_init_pc34(
+    CSB_V1_BootStartupCaptureReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_boot_startup_presentation_route_receipt_init_pc34(
+        &receipt->route);
+    csb_v1_boot_startup_render_view_receipt_init_pc34(
+        &receipt->render_view);
+    csb_v1_boot_startup_readiness_receipt_init_pc34(
+        &receipt->readiness);
+    csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
+        &receipt->hud_menu_draw);
+    receipt->render_route = CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+    receipt->hud_menu_kind = CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34;
+    receipt->selected_command_id =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    receipt->selected_utility_action_index = -1;
+}
+
 void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt)
 {
@@ -2135,6 +2157,115 @@ int csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
         out_receipt->runtime_tick_count = snapshot->runtime_tick_count;
     }
     return receipt_valid;
+}
+
+int csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupCaptureReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_capture_receipt_init_pc34(out_receipt);
+    if (!snapshot) {
+        return 0;
+    }
+    out_receipt->route_valid =
+        csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+            snapshot,
+            &out_receipt->route);
+    out_receipt->render_view_valid =
+        csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+            snapshot,
+            &out_receipt->render_view);
+    out_receipt->readiness_valid =
+        csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
+            snapshot,
+            &out_receipt->readiness);
+    if (!out_receipt->route_valid && !out_receipt->render_view_valid &&
+        !out_receipt->readiness_valid) {
+        return 0;
+    }
+    if (out_receipt->render_view_valid) {
+        out_receipt->hud_menu_draw_valid =
+            csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
+                &out_receipt->render_view,
+                &out_receipt->hud_menu_draw);
+    }
+    out_receipt->valid = 1;
+    out_receipt->render_route =
+        out_receipt->readiness_valid
+            ? out_receipt->readiness.route
+            : (out_receipt->route_valid
+                   ? out_receipt->route.route
+                   : CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34);
+    out_receipt->hud_menu_kind =
+        out_receipt->readiness_valid
+            ? out_receipt->readiness.hud_menu_kind
+            : CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34;
+    out_receipt->title_capture_ready =
+        out_receipt->render_view_valid &&
+                out_receipt->render_view.title_after_swoosh_route
+            ? 1
+            : 0;
+    out_receipt->hud_menu_capture_ready =
+        out_receipt->readiness_valid && out_receipt->hud_menu_draw_valid &&
+                out_receipt->readiness.hud_menu_ready &&
+                !out_receipt->readiness.host_hud_blocked
+            ? 1
+            : 0;
+    out_receipt->runtime_capture_ready =
+        out_receipt->readiness_valid &&
+                out_receipt->readiness.runtime_handoff_ready &&
+                out_receipt->readiness.host_runtime_hud_ready
+            ? 1
+            : 0;
+    out_receipt->host_input_blocked =
+        out_receipt->readiness_valid &&
+                out_receipt->readiness.host_input_blocked
+            ? 1
+            : 0;
+    out_receipt->host_hud_blocked =
+        out_receipt->readiness_valid && out_receipt->readiness.host_hud_blocked
+            ? 1
+            : 0;
+    out_receipt->startup_input_ready =
+        out_receipt->readiness_valid &&
+                out_receipt->readiness.host_startup_input_ready
+            ? 1
+            : 0;
+    out_receipt->startup_hud_ready =
+        out_receipt->readiness_valid &&
+                out_receipt->readiness.host_startup_hud_ready
+            ? 1
+            : 0;
+    out_receipt->title_stage =
+        out_receipt->render_view_valid ? out_receipt->render_view.title_stage : 0;
+    out_receipt->title_frame =
+        out_receipt->render_view_valid ? out_receipt->render_view.title_frame : 0;
+    out_receipt->title_source_step =
+        out_receipt->render_view_valid
+            ? out_receipt->render_view.title_source_step
+            : 0;
+    out_receipt->selected_command_id =
+        out_receipt->readiness_valid
+            ? out_receipt->readiness.selected_command_id
+            : CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    out_receipt->selected_utility_action_index =
+        out_receipt->readiness_valid
+            ? out_receipt->readiness.selected_utility_action_index
+            : -1;
+    out_receipt->suppress_legacy_utility_fallback =
+        out_receipt->readiness_valid &&
+                out_receipt->readiness.suppress_legacy_utility_fallback
+            ? 1
+            : 0;
+    /* ReDMCSB TITLE.C F0437 lines 424-463 owns the post-FTL title draw,
+     * and ENTRANCE.C F0441/F0806 lines 850-883 owns the closed-door
+     * input/HUD loop. This aggregate receipt is the CSB-owned capture
+     * package for M11/probes, so callers consume route, render-view,
+     * readiness, and HUD/menu draw gates together. */
+    return 1;
 }
 
 int csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(

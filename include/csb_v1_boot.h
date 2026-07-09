@@ -385,6 +385,33 @@ typedef struct CSB_V1_BootStartupInputRenderReceipt_PC34 {
     int return_to_launcher;
 } CSB_V1_BootStartupInputRenderReceipt_PC34;
 
+typedef struct CSB_V1_BootStartupCaptureReceipt_PC34 {
+    int valid;
+    int route_valid;
+    CSB_V1_BootStartupPresentationRouteReceipt_PC34 route;
+    int render_view_valid;
+    CSB_V1_BootStartupRenderViewReceipt_PC34 render_view;
+    int readiness_valid;
+    CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
+    int hud_menu_draw_valid;
+    CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_menu_draw;
+    int title_capture_ready;
+    int hud_menu_capture_ready;
+    int runtime_capture_ready;
+    int host_input_blocked;
+    int host_hud_blocked;
+    int startup_input_ready;
+    int startup_hud_ready;
+    int render_route;
+    int hud_menu_kind;
+    int title_stage;
+    int title_frame;
+    int title_source_step;
+    int selected_command_id;
+    int selected_utility_action_index;
+    int suppress_legacy_utility_fallback;
+} CSB_V1_BootStartupCaptureReceipt_PC34;
+
 void csb_v1_boot_startup_action_receipt_init_pc34(
     CSB_V1_BootStartupActionReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_decision_receipt_init_pc34(
@@ -393,6 +420,8 @@ void csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *receipt);
 void csb_v1_boot_startup_input_render_receipt_init_pc34(
     CSB_V1_BootStartupInputRenderReceipt_PC34 *receipt);
+void csb_v1_boot_startup_capture_receipt_init_pc34(
+    CSB_V1_BootStartupCaptureReceipt_PC34 *receipt);
 void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *receipt);
 void csb_v1_boot_startup_render_view_receipt_init_pc34(
@@ -683,6 +712,9 @@ int csb_v1_boot_startup_readiness_receipt_from_view_pc34(
 int csb_v1_boot_startup_readiness_receipt_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupReadinessReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupCaptureReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
