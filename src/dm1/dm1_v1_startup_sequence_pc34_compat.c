@@ -1225,6 +1225,64 @@ int dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffPostLaunchPlan_PC34* post_plan,
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    DM1_V1_StartupHoCFullStartProductionReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCFullStartProductionReceipt_PC34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_hoc_first_frame_receipt_pc34(source_id,
+                                                     post_plan,
+                                                     outcome,
+                                                     &receipt.first_frame)) {
+        return 0;
+    }
+    if (!receipt.first_frame.handled) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    receipt.consumed_post_launch_plan = post_plan ? 1 : 0;
+    receipt.consumed_handoff_outcome = outcome ? 1 : 0;
+    receipt.title_surface_released = receipt.first_frame.title_surface_released;
+    receipt.entrance_wait_consumed = receipt.first_frame.entrance_wait_consumed;
+    receipt.first_frame_ready = receipt.first_frame.runtime_first_frame_ready;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+
+    if (!dm1_v1_startup_hoc_host_render_plan_from_first_frame_pc34(
+            &receipt.first_frame,
+            &receipt.host_render_plan) ||
+        !dm1_v1_startup_hoc_packaged_full_graphics_proof_from_host_plan_pc34(
+            &receipt.host_render_plan,
+            &receipt.packaged_proof) ||
+        !dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
+            &receipt.packaged_proof,
+            &receipt.production_hook)) {
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 hands off only after title/PRESENTS are complete;
+     * ENTRANCE.C F0797/F0441 then owns the first Hall frame.  Keep that full
+     * production chain behind one DM1 receipt so M11/M12/package capture do
+     * not mix title, entrance, and HoC overlay decisions independently. */
+    receipt.host_render_plan_ready = receipt.host_render_plan.ready;
+    receipt.packaged_full_graphics_proof_ready = receipt.packaged_proof.ready;
+    receipt.production_hook_ready = receipt.production_hook.ready;
+    receipt.ready = receipt.first_frame_ready &&
+                    receipt.host_render_plan_ready &&
+                    receipt.packaged_full_graphics_proof_ready &&
+                    receipt.production_hook_ready;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,

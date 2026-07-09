@@ -703,6 +703,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCHostRenderPlan_PC34 hoc_host_plan;
     DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34 hoc_full_graphics_proof;
     DM1_V1_StartupHoCProductionFullStartHook_PC34 hoc_production_hook;
+    DM1_V1_StartupHoCFullStartProductionReceipt_PC34 hoc_production_receipt;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1420,6 +1421,55 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
                  hoc_production_hook.block_enter_until_champion_selected,
              1);
+    memset(&hoc_production_receipt, 0, sizeof(hoc_production_receipt));
+    expect_i("DM1 HoC full-start production receipt builds",
+             dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+                 "dm1",
+                 &post,
+                 &outcome,
+                 &hoc_production_receipt),
+             1);
+    expect_i("DM1 HoC full-start production receipt is ready",
+             hoc_production_receipt.handled &&
+                 hoc_production_receipt.ready &&
+                 hoc_production_receipt.consumed_post_launch_plan &&
+                 hoc_production_receipt.consumed_handoff_outcome &&
+                 hoc_production_receipt.first_frame_ready &&
+                 hoc_production_receipt.host_render_plan_ready &&
+                 hoc_production_receipt.packaged_full_graphics_proof_ready &&
+                 hoc_production_receipt.production_hook_ready,
+             1);
+    expect_i("DM1 HoC production receipt owns title/entrance/Hall handoff",
+             hoc_production_receipt.title_surface_released &&
+                 hoc_production_receipt.entrance_wait_consumed &&
+                 hoc_production_receipt.production_hook
+                     .consume_dm1_startup_receipts_only &&
+                 hoc_production_receipt.production_hook
+                     .capture_after_first_frame_render &&
+                 hoc_production_receipt.production_hook
+                     .publish_packaged_full_graphics_proof &&
+                 hoc_production_receipt.host_render_plan
+                         .entrance_door_frame_index == 9 &&
+                 hoc_production_receipt.packaged_proof
+                         .expected_hall_overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34,
+             1);
+    expect_i("DM1 HoC full-start production receipt no-ops for CSB",
+             dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+                 "csb",
+                 &post,
+                 &outcome,
+                 &hoc_production_receipt) &&
+                 !hoc_production_receipt.handled &&
+                 !hoc_production_receipt.ready,
+             1);
+    expect_i("DM1 HoC full-start production receipt rejects NULL output",
+             dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+                 "dm1",
+                 &post,
+                 &outcome,
+                 NULL),
+             0);
     hoc_full_graphics_proof.expected_map_width = 4;
     expect_i("DM1 HoC production hook rejects corrupt proof metadata",
              dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(

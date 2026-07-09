@@ -257,6 +257,24 @@ typedef struct DM1_V1_StartupHoCProductionFullStartHook_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCProductionFullStartHook_PC34;
 
+typedef struct DM1_V1_StartupHoCFullStartProductionReceipt_PC34 {
+    int handled;
+    int ready;
+    int consumed_post_launch_plan;
+    int consumed_handoff_outcome;
+    int first_frame_ready;
+    int host_render_plan_ready;
+    int packaged_full_graphics_proof_ready;
+    int production_hook_ready;
+    int title_surface_released;
+    int entrance_wait_consumed;
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34 first_frame;
+    DM1_V1_StartupHoCHostRenderPlan_PC34 host_render_plan;
+    DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34 packaged_proof;
+    DM1_V1_StartupHoCProductionFullStartHook_PC34 production_hook;
+    const char* source_evidence;
+} DM1_V1_StartupHoCFullStartProductionReceipt_PC34;
+
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
     int (*begin_prelude_plan)(void* user,
@@ -598,6 +616,11 @@ int dm1_v1_startup_hoc_packaged_full_graphics_proof_from_host_plan_pc34(
 int dm1_v1_startup_hoc_production_full_start_hook_from_proof_pc34(
     const DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34* proof,
     DM1_V1_StartupHoCProductionFullStartHook_PC34* out_hook);
+int dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+    const char* source_id,
+    const DM1_V1_StartupHandoffPostLaunchPlan_PC34* post_plan,
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    DM1_V1_StartupHoCFullStartProductionReceipt_PC34* out_receipt);
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
