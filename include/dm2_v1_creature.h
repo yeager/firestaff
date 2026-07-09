@@ -156,7 +156,10 @@ int  dm2_v1_creature_ai_index_count(void);
 const char *dm2_v1_creature_ai_name(int ai_index);
 const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type);
 int  dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader);
+int  dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
+                                                  int field);
 void dm2_v1_creature_reset_ai_table(void);
+void dm2_v1_creature_reset_ccm_programs(void);
 int  dm2_v1_creature_attacks_party(int ai_index, int distance);
 int  dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags);
 const char *dm2_v1_creature_source_evidence(void);
@@ -213,6 +216,9 @@ typedef struct {
     int ccm_stack_top;
     int ccm_stack_value0;
     int ccm_stack_value1;
+    int imported_program;
+    int program_pc_before;
+    int program_pc_after;
     int attack_cooldown_before;
     int attack_cooldown_after;
 } DM2_V1_CreatureCCMTickObserver;

@@ -134,6 +134,66 @@ static int test_explode_or_summon_opcode_writeback(void) {
     return 1;
 }
 
+static int test_gdat_imported_ccm_program_drives_ticks(void) {
+    static const uint8_t program_bytes[] = {
+        DM2_CCM_STEAL_ITEM, 3,
+        DM2_CCM_SHOOT_ITEM, 44, 2,
+        DM2_CCM_CAST_SPELL, 16, 5, 7
+    };
+    uint32_t raw_offsets[1] = { 0 };
+    uint32_t raw_sizes[1] = { (uint32_t)sizeof(program_bytes) };
+    DM2_V1_GdatEntry entries[1];
+    DM2_V1_AssetLoader loader;
+    DM2_V1_CreatureCCMTickObserver obs;
+    int slot;
+
+    memset(entries, 0, sizeof(entries));
+    entries[0].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
+    entries[0].cls2 = DM2_AI_CAVE_BAT;
+    entries[0].cls4 = 1;
+    entries[0].data_index = 0;
+    memset(&loader, 0, sizeof(loader));
+    loader.data = program_bytes;
+    loader.data_size = sizeof(program_bytes);
+    loader.loaded = 1;
+    loader.raw_data_count = 1;
+    loader.raw_offsets = raw_offsets;
+    loader.raw_sizes = raw_sizes;
+    loader.entries = entries;
+    loader.entry_count = 1;
+
+    install_mobile_melee_ai();
+    dm2_v1_creature_reset_ccm_programs();
+    CHECK("load imported ccm", dm2_v1_creature_load_ccm_programs_from_gdat(&loader, 1) == 1);
+
+    slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 14, 15, 0, 2, 8);
+    CHECK("spawn imported", slot >= 0);
+
+    dm2_v1_creature_tick();
+    CHECK("import observer 0", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("imported flag 0", obs.imported_program == 1);
+    CHECK("import pc 0", obs.program_pc_before == 0 && obs.program_pc_after == 1);
+    CHECK("import steal", obs.ccm_opcode == DM2_CCM_STEAL_ITEM && obs.ccm_target_id == 3);
+
+    dm2_v1_creature_tick();
+    CHECK("import observer 1", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("import pc 1", obs.program_pc_before == 1 && obs.program_pc_after == 2);
+    CHECK("import shoot", obs.ccm_opcode == DM2_CCM_SHOOT_ITEM &&
+                          obs.ccm_stack_top == 2 &&
+                          obs.ccm_stack_value0 == 44 &&
+                          obs.ccm_stack_value1 == 2);
+
+    dm2_v1_creature_tick();
+    CHECK("import observer 2", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("import pc reset", obs.program_pc_before == 2 && obs.program_pc_after == 0);
+    CHECK("import cast", obs.ccm_opcode == DM2_CCM_CAST_SPELL &&
+                         obs.ccm_target_x == 5 &&
+                         obs.ccm_target_y == 7);
+
+    dm2_v1_creature_reset_ccm_programs();
+    return 1;
+}
+
 int main(void) {
     printf("DM2 V1 creature CCM runtime bridge\n");
     if (!test_walk_tick_enters_attack_state()) return 1;
@@ -142,6 +202,7 @@ int main(void) {
     if (!test_shoot_opcode_writeback()) return 1;
     if (!test_cast_spell_opcode_writeback()) return 1;
     if (!test_explode_or_summon_opcode_writeback()) return 1;
+    if (!test_gdat_imported_ccm_program_drives_ticks()) return 1;
     printf("%d/%d checks passed\n", g_pass, g_run);
     return 0;
 }

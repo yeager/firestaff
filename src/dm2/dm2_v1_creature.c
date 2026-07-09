@@ -104,6 +104,8 @@ static const char *const g_ai_names[DM2_AI_TABLE_SIZE] = {
  * Stub shows field offsets consistent with DME.h:1505-1545. */
 static DM2_AIDefinition g_ai_table[DM2_AI_TABLE_SIZE];
 static uint8_t g_ai_table_loaded[DM2_AI_TABLE_SIZE];
+static DM2_V1_CCMProgram g_ccm_programs[DM2_AI_TABLE_SIZE];
+static uint8_t g_ccm_program_loaded[DM2_AI_TABLE_SIZE];
 
 int dm2_v1_creature_ai_index_count(void) {
     return DM2_AI_TABLE_SIZE;
@@ -129,6 +131,11 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
 void dm2_v1_creature_reset_ai_table(void) {
     memset(g_ai_table, 0, sizeof(g_ai_table));
     memset(g_ai_table_loaded, 0, sizeof(g_ai_table_loaded));
+}
+
+void dm2_v1_creature_reset_ccm_programs(void) {
+    memset(g_ccm_programs, 0, sizeof(g_ccm_programs));
+    memset(g_ccm_program_loaded, 0, sizeof(g_ccm_program_loaded));
 }
 
 static void dm2_v1_creature_decode_ai_spec(const uint8_t *raw,
@@ -175,6 +182,37 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
         if (!raw || raw_size < sizeof(DM2_AIDefinition)) continue;
         dm2_v1_creature_decode_ai_spec(raw, &g_ai_table[i]);
         g_ai_table_loaded[i] = 1;
+        ++loaded;
+    }
+
+    return loaded;
+}
+
+int dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
+                                                int field) {
+    int loaded = 0;
+    int i;
+
+    if (!loader || !loader->loaded || field < 0 || field > 0xff) return -1;
+    dm2_v1_creature_reset_ccm_programs();
+
+    /* skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM consumes a
+     * per-creature command byte stream. Firestaff stores imported streams
+     * beside the AI table, addressed by the same CREATURE_AI category index.
+     * Field 0 remains the 36-byte AIDefinition row; callers pass the GDAT
+     * field that contains the command byteprogram for the current asset set. */
+    for (i = 0; i < DM2_AI_TABLE_SIZE; ++i) {
+        size_t raw_size = 0;
+        const uint8_t *raw = dm2_v1_asset_load_sized(
+            loader, DM2_GDAT_CATEGORY_CREATURE_AI, i, field, &raw_size);
+        DM2_V1_CCMProgram program;
+        if (!raw || raw_size == 0) continue;
+        if (dm2_v1_ccm_decode_program(raw, raw_size, &program) !=
+            (int)DM2_CCM_RESULT_OK) {
+            continue;
+        }
+        g_ccm_programs[i] = program;
+        g_ccm_program_loaded[i] = 1;
         ++loaded;
     }
 
@@ -523,6 +561,23 @@ static void dm2_v1_creature_make_ccm_args(const DM2_V1_CreatureInstance *c,
     }
 }
 
+static const DM2_V1_CCMProgramOp *dm2_v1_creature_imported_ccm_op(
+    const DM2_V1_CreatureInstance *c,
+    int *out_pc) {
+    const DM2_V1_CCMProgram *program;
+    int pc;
+
+    if (out_pc) *out_pc = -1;
+    if (!c || c->ai_index < 0 || c->ai_index >= DM2_AI_TABLE_SIZE) return NULL;
+    if (!g_ccm_program_loaded[c->ai_index]) return NULL;
+    program = &g_ccm_programs[c->ai_index];
+    if (program->count <= 0 || program->count > DM2_CCM_MAX_PROGRAM_OPS) return NULL;
+    pc = (int)c->b_17;
+    if (pc < 0 || pc >= program->count) pc = 0;
+    if (out_pc) *out_pc = pc;
+    return &program->ops[pc];
+}
+
 static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
                                          int slot) {
     DM2_V1_CCMState state;
@@ -530,18 +585,33 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     int opcode;
     int argc;
     int before_cooldown;
+    int imported_pc = -1;
+    const DM2_V1_CCMProgramOp *imported_op;
     int rc;
 
     if (!c) return;
     opcode = (int)c->b_1a;
     before_cooldown = c->attack_cooldown;
+    imported_op = dm2_v1_creature_imported_ccm_op(c, &imported_pc);
+    if (imported_op) {
+        opcode = (int)imported_op->opcode;
+    }
     dm2_v1_ccm_init_state(&state);
     state.target_id = c->instance_id;
     state.target_x = c->target_x;
     state.target_y = c->target_y;
     state.target_level = c->map_index;
-    dm2_v1_creature_make_ccm_args(c, opcode, args);
-    argc = dm2_v1_creature_ccm_argc(opcode);
+    if (imported_op) {
+        int i;
+        argc = imported_op->arg_count;
+        memset(args, 0, sizeof(args));
+        for (i = 0; i < argc && i < DM2_CCM_MAX_PROGRAM_ARGS; ++i) {
+            args[i] = imported_op->args[i];
+        }
+    } else {
+        dm2_v1_creature_make_ccm_args(c, opcode, args);
+        argc = dm2_v1_creature_ccm_argc(opcode);
+    }
     rc = dm2_v1_ccm_step(&state, opcode, args, argc, g_tick_counter);
 
     memset(&g_last_ccm_tick, 0, sizeof(g_last_ccm_tick));
@@ -563,6 +633,8 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     g_last_ccm_tick.ccm_stack_top = state.stack_top;
     if (state.stack_top > 0) g_last_ccm_tick.ccm_stack_value0 = state.stack[0];
     if (state.stack_top > 1) g_last_ccm_tick.ccm_stack_value1 = state.stack[1];
+    g_last_ccm_tick.imported_program = imported_op ? 1 : 0;
+    g_last_ccm_tick.program_pc_before = imported_pc;
     g_last_ccm_tick.attack_cooldown_before = before_cooldown;
 
     if (rc == (int)DM2_CCM_RESULT_OK) {
@@ -579,6 +651,18 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
                    dm2_v1_creature_attacks_party(c->ai_index, 1)) {
             c->b_1a = DM2_CCM_CREATURE_ATTACKS_PARTY;
         }
+    }
+
+    if (imported_op) {
+        int next_pc = imported_pc + 1;
+        if (rc != (int)DM2_CCM_RESULT_OK ||
+            next_pc >= g_ccm_programs[c->ai_index].count) {
+            next_pc = 0;
+        }
+        c->b_17 = (uint8_t)next_pc;
+        g_last_ccm_tick.program_pc_after = next_pc;
+    } else {
+        g_last_ccm_tick.program_pc_after = -1;
     }
 
     g_last_ccm_tick.after_b_1a = c->b_1a;
