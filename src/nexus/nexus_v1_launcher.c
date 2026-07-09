@@ -701,6 +701,8 @@ void nexus_v1_launcher_startup_runtime_route_receipt_clear(
     receipt->startup_sfx_status = NEXUS_SFX_RUNTIME_MISSING;
     receipt->startup_sfx_level_index = -1;
     receipt->startup_cd_track = -1;
+    receipt->dgn_handoff_status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+    receipt->dgn_render_plan_status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
     nexus_v1_startup_host_action_receipt_clear(&receipt->host_action_receipt);
     nexus_v1_launcher_startup_runtime_handoff_receipt_clear(
         &receipt->runtime_handoff);
@@ -1708,6 +1710,7 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
     const Nexus_V1_StartupChampionExecution *execution,
     const Nexus_V1_StartupHostActionReceipt *host_action,
     const Nexus_V1_StartupRuntimeHandoffReceipt *handoff,
+    const Nexus_V1_DgnRenderCommand *commands,
     Nexus_V1_StartupRuntimeRouteReceipt *out_receipt)
 {
     if (!out_receipt || !handoff) {
@@ -1735,6 +1738,19 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->assets.startup_audio_handoff_ready ? 1 : 0;
     out_receipt->startup_sfx_blocks_real_playback =
         handoff->assets.startup_sfx_blocks_real_playback ? 1 : 0;
+    out_receipt->dgn_handoff_status = handoff->dgn_handoff.status;
+    out_receipt->dgn_render_plan_status = handoff->render_plan.status;
+    out_receipt->dgn_render_plan_ready =
+        handoff->render_plan.plan_ready ? 1 : 0;
+    out_receipt->dgn_render_command_count =
+        handoff->render_plan.command_count;
+    out_receipt->dgn_render_floor_count = handoff->render_plan.floor_count;
+    out_receipt->dgn_render_wall_count = handoff->render_plan.wall_count;
+    out_receipt->dgn_blocks_real_mesh_render =
+        handoff->render_plan.blocks_real_dgn_mesh_render ? 1 : 0;
+    if (commands && handoff->render_plan.command_count > 0) {
+        out_receipt->first_dgn_render_command_kind = commands[0].kind;
+    }
     out_receipt->consumed_by_nexus =
         handoff->route != NEXUS_V1_STARTUP_RUNTIME_HANDOFF_INVALID;
     out_receipt->fallback_visuals_permitted =
@@ -1767,6 +1783,7 @@ int nexus_v1_launcher_startup_runtime_route_from_champion_execution(
         execution,
         host_action,
         &handoff,
+        out_commands,
         out_receipt);
     return 1;
 }
