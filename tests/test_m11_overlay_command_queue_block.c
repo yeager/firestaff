@@ -498,6 +498,102 @@ static void test_dm1_hoc_startup_render_consumer_is_m11_ready(void)
               "M11 runtime front mirror route consumes DM1 HoC receipt");
 }
 
+static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)
+{
+    int ready = 0;
+    int consumedProduction = 0;
+    int consumedRender = 0;
+    int consumeReceiptsOnly = 0;
+    int noFallbackScan = 0;
+    int beforeInput = 0;
+    int publishProof = 0;
+    int suppressTitle = 0;
+    int suppressDoor = 0;
+    int suppressFallback = 0;
+    int suppressFalseItems = 0;
+    int suppressProjectiles = 0;
+    int suppressSpells = 0;
+    int suppressMirrorThings = 0;
+    int suppressMaterialized = 0;
+    int drawEntrance = 0;
+    int clearPanel = 0;
+    int renderHall = 0;
+    int drawMirrorWall = 0;
+    int walkSafe = 0;
+    int mapIndex = -1;
+    int commandCount = 0;
+
+    ASSERT_EQ(M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
+                  &ready,
+                  &consumedProduction,
+                  &consumedRender,
+                  &consumeReceiptsOnly,
+                  &noFallbackScan,
+                  &beforeInput,
+                  &publishProof,
+                  &suppressTitle,
+                  &suppressDoor,
+                  &suppressFallback,
+                  &suppressFalseItems,
+                  &suppressProjectiles,
+                  &suppressSpells,
+                  &suppressMirrorThings,
+                  &suppressMaterialized,
+                  &drawEntrance,
+                  &clearPanel,
+                  &renderHall,
+                  &drawMirrorWall,
+                  &walkSafe,
+                  &mapIndex,
+                  &commandCount),
+              1,
+              "M11 exposes DM1 HoC full-graphics ownership receipt");
+    ASSERT_EQ(ready, 1,
+              "DM1 full-graphics ownership receipt is ready");
+    ASSERT_EQ(consumedProduction, 1,
+              "M11 consumes DM1 production consumer receipt");
+    ASSERT_EQ(consumedRender, 1,
+              "M11 consumes DM1 render consumer receipt");
+    ASSERT_EQ(consumeReceiptsOnly, 1,
+              "M11 full-graphics HoC consumes DM1 receipts only");
+    ASSERT_EQ(noFallbackScan, 1,
+              "M11 full-graphics HoC avoids fallback scan");
+    ASSERT_EQ(beforeInput, 1,
+              "DM1 full-graphics HoC executes before HoC input");
+    ASSERT_EQ(publishProof, 1,
+              "DM1 full-graphics HoC publishes packaged proof");
+    ASSERT_EQ(suppressTitle, 1,
+              "DM1 full-graphics HoC suppresses stale title surface");
+    ASSERT_EQ(suppressDoor, 1,
+              "DM1 full-graphics HoC suppresses closed door frame");
+    ASSERT_EQ(suppressFallback, 1,
+              "DM1 full-graphics HoC suppresses host fallback visuals");
+    ASSERT_EQ(suppressFalseItems, 1,
+              "DM1 full-graphics HoC suppresses false item payloads");
+    ASSERT_EQ(suppressProjectiles, 1,
+              "DM1 full-graphics HoC suppresses projectile payloads");
+    ASSERT_EQ(suppressSpells, 1,
+              "DM1 full-graphics HoC suppresses spell payloads");
+    ASSERT_EQ(suppressMirrorThings, 1,
+              "DM1 full-graphics HoC suppresses mirror thing payloads");
+    ASSERT_EQ(suppressMaterialized, 1,
+              "DM1 full-graphics HoC suppresses materialized mirror payloads");
+    ASSERT_EQ(drawEntrance, 1,
+              "DM1 full-graphics HoC draws opened entrance");
+    ASSERT_EQ(clearPanel, 1,
+              "DM1 full-graphics HoC clears champion panel");
+    ASSERT_EQ(renderHall, 1,
+              "DM1 full-graphics HoC renders Hall overlay");
+    ASSERT_EQ(drawMirrorWall, 1,
+              "DM1 full-graphics HoC draws mirror wall overlay");
+    ASSERT_EQ(walkSafe, 1,
+              "DM1 full-graphics HoC capture is walk-safe");
+    ASSERT_EQ(mapIndex, DM1_V1_ENTRANCE_MAP_INDEX_PC34,
+              "DM1 full-graphics HoC keeps entrance map");
+    ASSERT_EQ(commandCount, 3,
+              "DM1 full-graphics HoC keeps command count");
+}
+
 static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
 {
     int titleReceiptReady = 0;
@@ -513,6 +609,9 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
     int openingDrawExecuted = 0;
     int consumedHostViewOnly = 0;
     int suppressLegacyUtilityFallback = 0;
+    int packagedVisualCaptureReady = 0;
+    int inputConsumesReceiptOnly = 0;
+    int utilityInputDispatchReady = 0;
 
     ASSERT_EQ(M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                   &titleReceiptReady,
@@ -527,7 +626,10 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
                   &openingReceiptReady,
                   &openingDrawExecuted,
                   &consumedHostViewOnly,
-                  &suppressLegacyUtilityFallback),
+                  &suppressLegacyUtilityFallback,
+                  &packagedVisualCaptureReady,
+                  &inputConsumesReceiptOnly,
+                  &utilityInputDispatchReady),
               1,
               "M11 exposes CSB startup host-view draw receipt");
     ASSERT_EQ(titleReceiptReady, 1,
@@ -556,6 +658,12 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
               "M11 CSB startup draw consumes host-view receipt only");
     ASSERT_EQ(suppressLegacyUtilityFallback, 1,
               "CSB receipt suppresses legacy utility fallback");
+    ASSERT_EQ(packagedVisualCaptureReady, 1,
+              "CSB packaged visual capture proof feeds M11 draw");
+    ASSERT_EQ(inputConsumesReceiptOnly, 1,
+              "M11 CSB startup input consumes dispatch receipt only");
+    ASSERT_EQ(utilityInputDispatchReady, 1,
+              "CSB utility input dispatch redraws HUD/menu through receipt");
 }
 
 static void test_candidate_panel_blocks_direct_object_helpers(void)
@@ -1698,6 +1806,7 @@ int main(void)
     test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_uses_dm1_hoc_menu_route_receipt();
     test_dm1_hoc_startup_render_consumer_is_m11_ready();
+    test_dm1_hoc_full_graphics_ownership_is_m11_ready();
     test_csb_startup_host_view_draw_receipt_is_m11_ready();
     test_candidate_panel_blocks_direct_object_helpers();
     test_candidate_panel_blocks_direct_leader_hand_chest_helpers();

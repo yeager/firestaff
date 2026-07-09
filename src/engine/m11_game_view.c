@@ -3382,8 +3382,8 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           int framebufferWidth,
                                           int framebufferHeight)
 {
-    CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
-    CSB_V1_BootStartupHostViewDrawReceipt_PC34 draw_receipt;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 ownership;
     M11_CSBStartupRenderExecutorContext context;
     CSB_V1_StartupRenderExecutor_PC34 executor;
 
@@ -3391,14 +3391,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         framebufferHeight <= 0) {
         return;
     }
-    csb_v1_boot_startup_host_view_receipt_init_pc34(&host_view);
-    if (!m11_csb_boot_runtime_startup_host_view_receipt(state,
-                                                        &host_view)) {
-        return;
-    }
-
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    csb_v1_boot_startup_host_ownership_receipt_init_pc34(&ownership);
     context.state = state;
-    context.host_view = &host_view;
+    context.host_view = &ownership.host_view;
     context.framebuffer = framebuffer;
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;
@@ -3415,17 +3411,12 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         m11_csb_startup_executor_draw_fallback_text;
     executor.draw_utility_panel =
         m11_csb_startup_executor_draw_utility_panel;
-    if (csb_v1_boot_startup_execute_host_view_receipt_pc34(
-            &host_view,
-            &executor,
-            &draw_receipt)) {
-        return;
-    }
-    if (host_view.render_plan_valid) {
-        (void)csb_v1_boot_startup_execute_render_plan_pc34(
-            &host_view.render_plan,
-            &executor);
-    }
+    (void)csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+        &snapshot,
+        0,
+        0,
+        &executor,
+        &ownership);
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(
@@ -28633,6 +28624,190 @@ int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
     return 1;
 }
 
+int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
+    int* outReady,
+    int* outConsumedProductionConsumer,
+    int* outConsumedRenderConsumer,
+    int* outConsumeDm1ReceiptsOnly,
+    int* outNoM11FallbackScan,
+    int* outExecuteBeforeHocInput,
+    int* outPublishPackagedProof,
+    int* outSuppressTitleSurface,
+    int* outSuppressClosedDoorFrame,
+    int* outSuppressHostFallbackVisuals,
+    int* outSuppressFalseItemPayloads,
+    int* outSuppressProjectilePayloads,
+    int* outSuppressSpellEffectPayloads,
+    int* outSuppressMirrorPayloadThings,
+    int* outSuppressMaterializedItemPayload,
+    int* outDrawOpenedEntranceFrame,
+    int* outClearChampionPanel,
+    int* outRenderHallMirrorOverlay,
+    int* outDrawChampionMirrorWallOverlay,
+    int* outWalkCaptureSafe,
+    int* outMapIndex,
+    int* outRenderCommandCount) {
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34 firstFrame;
+    DM1_V1_StartupHoCFullStartProductionReceipt_PC34 production;
+    DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 artifact;
+    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 captureFacts;
+    DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 captureProof;
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 runtimeApply;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34 suppressionFacts;
+    DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34 suppression;
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
+        productionConsumer;
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 floorThing;
+    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 thingConsumer;
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 renderConsumer;
+    DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
+    const DM1V1D1LD1RF0115LanePc34Data* lane;
+
+    memset(&captureFacts, 0, sizeof(captureFacts));
+    memset(&suppressionFacts, 0, sizeof(suppressionFacts));
+
+    if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
+        !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &outcome) ||
+        !dm1_v1_startup_hoc_first_frame_receipt_pc34(
+            "dm1", &postPlan, &outcome, &firstFrame) ||
+        !dm1_v1_startup_hoc_full_start_production_receipt_pc34(
+            "dm1", &postPlan, &outcome, &production) ||
+        !dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
+            &production, &artifact)) {
+        return 0;
+    }
+
+    captureFacts.captured_after_first_frame_render = 1;
+    captureFacts.captured_map_index = artifact.expected_map_index;
+    captureFacts.captured_map_width = artifact.expected_map_width;
+    captureFacts.captured_map_height = artifact.expected_map_height;
+    captureFacts.captured_entrance_door_frame_index =
+        artifact.expected_entrance_door_frame_index;
+    captureFacts.captured_hall_overlay_kind =
+        artifact.expected_hall_overlay_kind;
+    captureFacts.captured_hoc_render_command_count =
+        artifact.expected_hoc_render_command_count;
+    captureFacts.saw_opened_entrance_frame = 1;
+    captureFacts.saw_hall_mirror_overlay = 1;
+    captureFacts.cleared_champion_panel = 1;
+    captureFacts.blocked_enter_until_champion_selected =
+        artifact.block_enter_until_champion_selected;
+
+    if (!dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
+            &artifact, &captureFacts, &captureProof) ||
+        !dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
+            &artifact, &captureProof, &runtimeApply)) {
+        return 0;
+    }
+
+    suppressionFacts.observed_hall_mirror_overlay = 1;
+    suppressionFacts.observed_enter_blocked_until_champion_selected =
+        runtimeApply.block_enter_until_champion_selected;
+    suppressionFacts.observed_hoc_render_command_count =
+        runtimeApply.render_command_count;
+
+    lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
+    if (!lane ||
+        !dm1_v1_startup_hoc_full_graphics_thing_suppression_receipt_pc34(
+            &runtimeApply, &suppressionFacts, &suppression) ||
+        !dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
+            &runtimeApply, &suppression, &productionConsumer) ||
+        !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 2, 2, &frontWall) ||
+        !DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&frontWall, &render) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+            &render, &boundary) ||
+        !dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+            lane, 5, 1, 1, 0, &floorThing) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+            &boundary, &floorThing, &thingConsumer) ||
+        !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+            &firstFrame, &thingConsumer, &renderConsumer) ||
+        !dm1_v1_startup_hoc_fallback_draw_ownership_receipt_pc34(
+            &productionConsumer, &renderConsumer, &ownership)) {
+        return 0;
+    }
+
+    if (outReady) *outReady = ownership.ready;
+    if (outConsumedProductionConsumer) {
+        *outConsumedProductionConsumer =
+            ownership.consumed_production_consumer_receipt;
+    }
+    if (outConsumedRenderConsumer) {
+        *outConsumedRenderConsumer = ownership.consumed_render_consumer_receipt;
+    }
+    if (outConsumeDm1ReceiptsOnly) {
+        *outConsumeDm1ReceiptsOnly = ownership.consume_dm1_receipts_only;
+    }
+    if (outNoM11FallbackScan) {
+        *outNoM11FallbackScan = ownership.no_m11_fallback_scan;
+    }
+    if (outExecuteBeforeHocInput) {
+        *outExecuteBeforeHocInput = ownership.execute_before_hoc_input;
+    }
+    if (outPublishPackagedProof) {
+        *outPublishPackagedProof =
+            productionConsumer.publish_packaged_full_graphics_proof;
+    }
+    if (outSuppressTitleSurface) {
+        *outSuppressTitleSurface = ownership.suppress_title_surface;
+    }
+    if (outSuppressClosedDoorFrame) {
+        *outSuppressClosedDoorFrame = ownership.suppress_closed_door_frame;
+    }
+    if (outSuppressHostFallbackVisuals) {
+        *outSuppressHostFallbackVisuals =
+            ownership.suppress_host_fallback_visuals;
+    }
+    if (outSuppressFalseItemPayloads) {
+        *outSuppressFalseItemPayloads =
+            ownership.suppress_false_item_payloads;
+    }
+    if (outSuppressProjectilePayloads) {
+        *outSuppressProjectilePayloads =
+            ownership.suppress_projectile_payloads;
+    }
+    if (outSuppressSpellEffectPayloads) {
+        *outSuppressSpellEffectPayloads =
+            ownership.suppress_spell_effect_payloads;
+    }
+    if (outSuppressMirrorPayloadThings) {
+        *outSuppressMirrorPayloadThings =
+            ownership.suppress_mirror_payload_things;
+    }
+    if (outSuppressMaterializedItemPayload) {
+        *outSuppressMaterializedItemPayload =
+            ownership.suppress_materialized_item_payload;
+    }
+    if (outDrawOpenedEntranceFrame) {
+        *outDrawOpenedEntranceFrame = ownership.draw_opened_entrance_frame;
+    }
+    if (outClearChampionPanel) {
+        *outClearChampionPanel = ownership.clear_champion_panel;
+    }
+    if (outRenderHallMirrorOverlay) {
+        *outRenderHallMirrorOverlay = ownership.render_hall_mirror_overlay;
+    }
+    if (outDrawChampionMirrorWallOverlay) {
+        *outDrawChampionMirrorWallOverlay =
+            ownership.draw_champion_mirror_wall_overlay;
+    }
+    if (outWalkCaptureSafe) {
+        *outWalkCaptureSafe = ownership.walk_capture_safe;
+    }
+    if (outMapIndex) *outMapIndex = ownership.map_index;
+    if (outRenderCommandCount) {
+        *outRenderCommandCount = ownership.render_command_count;
+    }
+    return 1;
+}
+
 typedef struct M11_CSBStartupHostViewProbe {
     int clearBlackCount;
     int drawTitleCount;
@@ -28790,22 +28965,20 @@ static void m11_csb_startup_probe_boot_profile(
 
 static int m11_csb_startup_probe_execute_snapshot(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    CSB_V1_BootStartupHostViewDrawReceipt_PC34 *draw_receipt,
+    int include_menu_input,
+    int menu_input,
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 *ownership_receipt,
     M11_CSBStartupHostViewProbe *probe)
 {
-    CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
     CSB_V1_StartupRenderExecutor_PC34 executor;
 
     m11_csb_startup_probe_executor_init(&executor, probe);
-    if (!csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
-            snapshot,
-            &host_view)) {
-        return 0;
-    }
-    return csb_v1_boot_startup_execute_host_view_receipt_pc34(
-        &host_view,
+    return csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+        snapshot,
+        include_menu_input,
+        menu_input,
         &executor,
-        draw_receipt);
+        ownership_receipt);
 }
 
 int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
@@ -28821,55 +28994,68 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outOpeningReceiptReady,
     int* outOpeningDrawExecuted,
     int* outConsumedHostViewOnly,
-    int* outSuppressLegacyUtilityFallback)
+    int* outSuppressLegacyUtilityFallback,
+    int* outPackagedVisualCaptureReady,
+    int* outInputConsumesReceiptOnly,
+    int* outUtilityInputDispatchReady)
 {
     CSB_V1_BootProfile boot;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
-    CSB_V1_BootStartupHostViewDrawReceipt_PC34 title_draw;
-    CSB_V1_BootStartupHostViewDrawReceipt_PC34 closed_draw;
-    CSB_V1_BootStartupHostViewDrawReceipt_PC34 utility_draw;
-    CSB_V1_BootStartupHostViewDrawReceipt_PC34 opening_draw;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 title_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 closed_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 utility_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 opening_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 input_ownership;
     M11_CSBStartupHostViewProbe title_probe;
     M11_CSBStartupHostViewProbe closed_probe;
     M11_CSBStartupHostViewProbe utility_probe;
     M11_CSBStartupHostViewProbe opening_probe;
+    M11_CSBStartupHostViewProbe input_probe;
 
     m11_csb_startup_probe_boot_profile(&boot);
     memset(&snapshot, 0, sizeof(snapshot));
     snapshot.boot_profile = &boot;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = 4;
+    snapshot.resume_available = 1;
+    snapshot.resume_path = "/tmp/firestaff-csb-resume.dat";
     snapshot.title_active = 1;
     snapshot.title_frame = 0;
     snapshot.title_source_step = 1;
-    snapshot.entrance_active = 1;
-    snapshot.entrance_source_step = 0;
-    if (!m11_csb_startup_probe_execute_snapshot(&snapshot,
-                                                &title_draw,
-                                                &title_probe)) {
-        return 0;
-    }
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 0,
+                                                 0,
+                                                 &title_ownership,
+                                                 &title_probe);
 
     snapshot.title_active = 0;
     snapshot.title_frame = csb_v1_startup_title_total_ticks_pc34();
     snapshot.title_source_step = 0;
     snapshot.entrance_source_step = 4;
-    snapshot.resume_available = 1;
-    snapshot.resume_path = "/tmp/firestaff-csb-resume.dat";
-    if (!m11_csb_startup_probe_execute_snapshot(&snapshot,
-                                                &closed_draw,
-                                                &closed_probe)) {
-        return 0;
-    }
+    snapshot.utility_overlay_active = 0;
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 0,
+                                                 0,
+                                                 &closed_ownership,
+                                                 &closed_probe);
 
     snapshot.utility_overlay_active = 1;
     snapshot.utility_selected_action_index = 0;
     snapshot.utility_imported_champion_count = 2;
     snapshot.utility_preview_active = 0;
     snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
-    if (!m11_csb_startup_probe_execute_snapshot(&snapshot,
-                                                &utility_draw,
-                                                &utility_probe)) {
-        return 0;
-    }
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 0,
+                                                 0,
+                                                 &utility_ownership,
+                                                 &utility_probe);
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 1,
+                                                 2,
+                                                 &input_ownership,
+                                                 &input_probe);
 
     snapshot.utility_overlay_active = 0;
     snapshot.opening_active = 1;
@@ -28877,62 +29063,79 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     snapshot.opening_step = 1;
     snapshot.pending_command =
         CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
-    if (!m11_csb_startup_probe_execute_snapshot(&snapshot,
-                                                &opening_draw,
-                                                &opening_probe)) {
-        return 0;
-    }
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 0,
+                                                 0,
+                                                 &opening_ownership,
+                                                 &opening_probe);
 
     if (outTitleReceiptReady) {
-        *outTitleReceiptReady = title_draw.valid;
+        *outTitleReceiptReady = title_ownership.valid;
     }
     if (outTitleDrawExecuted) {
         *outTitleDrawExecuted =
-            title_draw.render_executed && title_probe.drawTitleCount == 1;
+            title_ownership.render_executed && title_probe.drawTitleCount == 1;
     }
     if (outTitleHudExecuted) {
-        *outTitleHudExecuted = title_draw.hud_menu_executed;
+        *outTitleHudExecuted = title_ownership.hud_menu_executed;
     }
     if (outClosedDoorReceiptReady) {
-        *outClosedDoorReceiptReady = closed_draw.valid;
+        *outClosedDoorReceiptReady = closed_ownership.valid;
     }
     if (outClosedDoorDrawExecuted) {
         *outClosedDoorDrawExecuted =
-            closed_draw.render_executed &&
+            closed_ownership.render_executed &&
             closed_probe.drawFullSurfaceCount == 1;
     }
     if (outClosedDoorHudExecuted) {
-        *outClosedDoorHudExecuted = closed_draw.hud_menu_executed;
+        *outClosedDoorHudExecuted = closed_ownership.hud_menu_executed;
     }
     if (outUtilityReceiptReady) {
-        *outUtilityReceiptReady = utility_draw.valid;
+        *outUtilityReceiptReady = utility_ownership.valid;
     }
     if (outUtilityDrawExecuted) {
         *outUtilityDrawExecuted =
-            utility_draw.render_executed &&
+            utility_ownership.render_executed &&
             utility_probe.drawFullSurfaceCount == 1;
     }
     if (outUtilityHudExecuted) {
-        *outUtilityHudExecuted = utility_draw.hud_menu_executed;
+        *outUtilityHudExecuted = utility_ownership.hud_menu_executed;
     }
     if (outOpeningReceiptReady) {
-        *outOpeningReceiptReady = opening_draw.valid;
+        *outOpeningReceiptReady = opening_ownership.valid;
     }
     if (outOpeningDrawExecuted) {
         *outOpeningDrawExecuted =
-            opening_draw.render_executed &&
+            opening_ownership.render_executed &&
             opening_probe.drawOpeningFrameCount == 1;
     }
     if (outConsumedHostViewOnly) {
         *outConsumedHostViewOnly =
-            title_draw.consumed_host_view_only &&
-            closed_draw.consumed_host_view_only &&
-            utility_draw.consumed_host_view_only &&
-            opening_draw.consumed_host_view_only;
+            title_ownership.draw_consumes_receipt_only &&
+            closed_ownership.draw_consumes_receipt_only &&
+            utility_ownership.draw_consumes_receipt_only &&
+            opening_ownership.draw_consumes_receipt_only;
     }
     if (outSuppressLegacyUtilityFallback) {
         *outSuppressLegacyUtilityFallback =
-            closed_draw.suppress_legacy_utility_fallback;
+            closed_ownership.suppress_legacy_utility_fallback;
+    }
+    if (outPackagedVisualCaptureReady) {
+        *outPackagedVisualCaptureReady =
+            title_ownership.packaged_visual_capture_ready &&
+            closed_ownership.packaged_visual_capture_ready &&
+            utility_ownership.packaged_visual_capture_ready &&
+            opening_ownership.packaged_visual_capture_ready;
+    }
+    if (outInputConsumesReceiptOnly) {
+        *outInputConsumesReceiptOnly =
+            input_ownership.input_consumes_receipt_only;
+    }
+    if (outUtilityInputDispatchReady) {
+        *outUtilityInputDispatchReady =
+            input_ownership.host_input_dispatch_valid &&
+            input_ownership.should_dispatch_input &&
+            input_ownership.input_redraws_hud_menu;
     }
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep post-swoosh
      * title, closed-door HUD/menu, utility menu, and door opening inside the
@@ -34141,17 +34344,17 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                      DM2_V1_BootStartupRenderOwnershipReceipt
                                          *out_ownership_receipt)
 {
+    DM2_V1_BootStartupViewModel view_model;
     DM2_V1_BootRuntimeStartupSnapshot snapshot;
     DM2_V1_BootStartupRenderOwnershipReceipt ownership_receipt;
-    DM2_V1_BootStartupViewModel view_model;
     DM2_V1_StartupDrawExecutor executor;
     M11_DM2StartupDrawContext context;
 
     if (out_host_receipt) {
         memset(out_host_receipt, 0, sizeof(*out_host_receipt));
+    }
     if (out_ownership_receipt) {
         memset(out_ownership_receipt, 0, sizeof(*out_ownership_receipt));
-    }
     }
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
         return 0;
@@ -34174,9 +34377,9 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     }
     if (out_host_receipt) {
         *out_host_receipt = view_model.host_view_receipt;
+    }
     if (out_ownership_receipt) {
         *out_ownership_receipt = ownership_receipt;
-    }
     }
     context.state = state;
     context.framebuffer = framebuffer;
