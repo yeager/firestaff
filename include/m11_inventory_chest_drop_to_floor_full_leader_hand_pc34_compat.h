@@ -6,15 +6,15 @@ extern "C" {
 #endif
 
 enum {
-    M11_DM1_V1_CHEST_DROP_TO_FLOOR_FULL_LEADER_HAND_SLOT_COUNT = 8
+    DM1_V1_CHEST_DROP_TO_FLOOR_FULL_LEADER_HAND_SLOT_COUNT = 8
 };
 
-typedef struct M11_InventoryChestDropToFloorFullLeaderHandProbePc34_ {
+typedef struct DM1_V1_InventoryChestDropToFloorFullLeaderHandProbePc34_ {
     unsigned short leaderHandBefore;
     unsigned short leaderHandBeforeEye;
     unsigned short leaderHandAfterEye;
     unsigned short chestContentsBefore[
-        M11_DM1_V1_CHEST_DROP_TO_FLOOR_FULL_LEADER_HAND_SLOT_COUNT];
+        DM1_V1_CHEST_DROP_TO_FLOOR_FULL_LEADER_HAND_SLOT_COUNT];
     int actionType;
     unsigned short expectedLeaderHandAfter;
     int expectedFloorState;
@@ -23,10 +23,21 @@ typedef struct M11_InventoryChestDropToFloorFullLeaderHandProbePc34_ {
     int chestVisibleSlotCountAfterClose;
     int hiddenNinthTailPresentAfterClose;
     const char* anchor;
-} M11_InventoryChestDropToFloorFullLeaderHandProbePc34;
+} DM1_V1_InventoryChestDropToFloorFullLeaderHandProbePc34;
 
-int m11_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat_run(
-    M11_InventoryChestDropToFloorFullLeaderHandProbePc34* out);
+int DM1_V1_InventoryChestDropToFloorFullLeaderHand_RunPc34(
+    DM1_V1_InventoryChestDropToFloorFullLeaderHandProbePc34* out);
+
+enum {
+    M11_DM1_V1_CHEST_DROP_TO_FLOOR_FULL_LEADER_HAND_SLOT_COUNT =
+        DM1_V1_CHEST_DROP_TO_FLOOR_FULL_LEADER_HAND_SLOT_COUNT
+};
+
+typedef DM1_V1_InventoryChestDropToFloorFullLeaderHandProbePc34
+    M11_InventoryChestDropToFloorFullLeaderHandProbePc34;
+
+#define m11_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat_run \
+    DM1_V1_InventoryChestDropToFloorFullLeaderHand_RunPc34
 
 #ifdef __cplusplus
 }

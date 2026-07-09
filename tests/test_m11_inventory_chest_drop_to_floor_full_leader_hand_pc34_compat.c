@@ -1,5 +1,5 @@
 /*
- * DM1 V1 M11 chest full leader-hand drop-to-floor runtime gate.
+ * DM1 V1 chest full leader-hand drop-to-floor runtime gate.
  *
  * This intentionally sits beyond the C537..C544-only chest gates:
  * an occupied C539 click with a full leader hand is followed through
@@ -273,8 +273,8 @@ static int click_front_floor_drop(M11_GameViewState* state)
                                       1) == M11_GAME_INPUT_REDRAW;
 }
 
-int m11_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat_run(
-    M11_InventoryChestDropToFloorFullLeaderHandProbePc34* out)
+int DM1_V1_InventoryChestDropToFloorFullLeaderHand_RunPc34(
+    DM1_V1_InventoryChestDropToFloorFullLeaderHandProbePc34* out)
 {
     enum {
         WEAPON_COUNT = 10,
@@ -359,11 +359,11 @@ int m11_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat_run(
 
 static void test_full_leader_hand_c539_eye_then_floor_drop(void)
 {
-    M11_InventoryChestDropToFloorFullLeaderHandProbePc34 probe;
+    DM1_V1_InventoryChestDropToFloorFullLeaderHandProbePc34 probe;
 
     memset(&probe, 0, sizeof(probe));
     expect_ulong("probe run",
-                 (unsigned long)m11_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat_run(&probe),
+                 (unsigned long)DM1_V1_InventoryChestDropToFloorFullLeaderHand_RunPc34(&probe),
                  1, A_F0333);
     expect_ulong("action type", (unsigned long)probe.actionType,
                  ACTION_C539_THEN_C071_THEN_FLOOR_DROP, A_F0302);
@@ -431,7 +431,7 @@ static void test_empty_hand_eye_does_not_populate_floor(void)
 
 int main(void)
 {
-    printf("=== M11 DM1 V1 Chest Full Leader-Hand Floor-Drop Gate ===\n");
+    printf("=== DM1 V1 Chest Full Leader-Hand Floor-Drop Gate ===\n");
     printf("ReDMCSB: CHEST.C F0333:30-32; F0334:117-132; ");
     printf("CHAMPION.C F0302:688-710; CLIKVIEW.C F0374:170-171\n");
 

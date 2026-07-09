@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 chest runtime probe ownership names: auto-close-on-leader-death and full-leader-hand drop-to-floor probes now expose DM1-owned API names; old M11 names remain aliases. Verification: auto-close leader death, drop-to-floor full hand, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 chest edge-case ownership names: C545 drop-to-occupied-leader-hand and pickup-at-capacity APIs now expose DM1-owned type/function names; old names remain aliases. Verification: C545 occupied 152/152, pickup-at-capacity 51/51, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 champion mirror/leader ownership names: champion mirror, mirror-click-closed, and champion leader APIs now expose DM1-owned type/function names; old names remain aliases. Verification: champion mirror 29/29, champion leader 60/60, mirror-click-closed 11/11, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

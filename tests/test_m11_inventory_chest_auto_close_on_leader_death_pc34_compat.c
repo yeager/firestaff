@@ -1,5 +1,5 @@
 /*
- * test_m11_inventory_chest_auto_close_on_leader_death_pc34_compat.c
+ * test_dm1_v1_inventory_chest_auto_close_on_leader_death_pc34_compat.c
  *
  * Source-locked to ReDMCSB:
  *   CHAMPION.C F0319 lines 1552-1607 (F0319_CHAMPION_Kill)
@@ -12,7 +12,7 @@
  *    test contract, not by runtime helper."
  *
  * This file provides a runtime helper
- * `m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run`
+ * `DM1_V1_InventoryChestAutoCloseOnLeaderDeath_RunPc34`
  * that exercises the F0319 ordering against a live DM1_V1_InventoryStatePc34
  * (or a synthetic one in probe mode).  Pins:
  *
@@ -88,8 +88,8 @@ static void probe_drop_hand(DM1_V1_InventoryStatePc34* inv, int champ) {
  * no-op (leader not dying, leader not the inventory panel owner,
  * or no chest was open), -1 on bad args.
  */
-int m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(
-    M11_InventoryChestAutoCloseOnLeaderDeathProbePc34* out)
+int DM1_V1_InventoryChestAutoCloseOnLeaderDeath_RunPc34(
+    DM1_V1_InventoryChestAutoCloseOnLeaderDeathProbePc34* out)
 {
     if (!out || !out->in_inventoryState) return -1;
     if (out->leaderChampionIndex < 0) return -1;
@@ -103,8 +103,8 @@ int m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(
     out->leaderHandClearedByF0318 = 0;
     out->anchor = "F0319/F0355/F0334/F0318 chain";
 
-    /* Step (a): leader must be the inventory panel owner.  In
-     * M11 the active champion IS the inventory panel owner. */
+    /* Step (a): leader must be the inventory panel owner. Firestaff treats
+     * the active champion as the inventory panel owner. */
     out->f0319Observed = 1;
 
     /* Step (b): if a chest is open, dispatch F0355 -> F0334. */
@@ -140,7 +140,7 @@ int m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(
 
 int main(void) {
     DM1_V1_InventoryStatePc34 inv;
-    M11_InventoryChestAutoCloseOnLeaderDeathProbePc34 probe;
+    DM1_V1_InventoryChestAutoCloseOnLeaderDeathProbePc34 probe;
 
     /* Initialize a synthetic inventory state. */
     memset(&inv, 0, sizeof(inv));
@@ -157,7 +157,7 @@ int main(void) {
     probe.in_inventoryState = &inv;
     probe.leaderChampionIndex = 0;
     probe.chestWasOpen = 1;
-    int r = m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(&probe);
+    int r = DM1_V1_InventoryChestAutoCloseOnLeaderDeath_RunPc34(&probe);
     CHECK(r == 1, "scenario 1: returns 1");
     CHECK(probe.f0319Observed == 1, "scenario 1: F0319 ran");
     CHECK(probe.f0355Observed == 1, "scenario 1: F0355 ran");
@@ -182,7 +182,7 @@ int main(void) {
     probe.in_inventoryState = &inv;
     probe.leaderChampionIndex = 0;
     probe.chestWasOpen = 0;
-    r = m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(&probe);
+    r = DM1_V1_InventoryChestAutoCloseOnLeaderDeath_RunPc34(&probe);
     CHECK(r == 1, "scenario 2: returns 1 (F0318 still runs)");
     CHECK(probe.f0319Observed == 1, "scenario 2: F0319 ran");
     CHECK(probe.f0355Observed == 0, "scenario 2: F0355 NOT dispatched");
@@ -193,9 +193,9 @@ int main(void) {
     memset(&probe, 0, sizeof(probe));
     probe.in_inventoryState = &inv;
     probe.leaderChampionIndex = -1;
-    r = m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run(&probe);
+    r = DM1_V1_InventoryChestAutoCloseOnLeaderDeath_RunPc34(&probe);
     CHECK(r == -1, "scenario 3: bad leader -> -1");
 
-    printf("PASS: M11 chest auto-close-on-leader-death runtime helper\n");
+    printf("PASS: DM1 chest auto-close-on-leader-death runtime helper\n");
     return 0;
 }
