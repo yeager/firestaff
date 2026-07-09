@@ -107,6 +107,53 @@ int dm1_needs_decrement_stamina(int16_t *current_stamina,
     return damage;
 }
 
+int DM1_V1_Needs_BarWidthPc34Compat(int amount, int fullWidth) {
+    int scaled;
+    if (fullWidth <= 0) return 0;
+    scaled = amount + 1024;
+    if (scaled <= 0) return 0;
+    if (scaled >= 3072) scaled = 3071;
+    return (scaled * fullWidth) / 3072;
+}
+
+int DM1_V1_Needs_BarColorPc34Compat(int amount, int normalColor) {
+    if (amount < DM1_NEEDS_STARVATION_THRESH) {
+        return DM1_V1_NEEDS_BAR_COLOR_RED;
+    }
+    if (amount < 0) {
+        return DM1_V1_NEEDS_BAR_COLOR_YELLOW;
+    }
+    return normalColor;
+}
+
+int DM1_V1_Needs_BuildBarRenderCommandPc34Compat(
+    int x, int y, int width, int height, int shadowOffset,
+    int amount, int normalColor,
+    DM1_V1_NeedsBarRenderCommandPc34Compat* outCommand) {
+    int drawWidth;
+    if (!outCommand) return 0;
+    outCommand->draw = 0;
+    outCommand->x = x;
+    outCommand->y = y;
+    outCommand->width = 0;
+    outCommand->height = height;
+    outCommand->shadowX = x + shadowOffset;
+    outCommand->shadowY = y + shadowOffset;
+    outCommand->shadowWidth = 0;
+    outCommand->shadowHeight = height;
+    outCommand->shadowColor = DM1_V1_NEEDS_BAR_COLOR_BLACK;
+    outCommand->fillColor = DM1_V1_Needs_BarColorPc34Compat(amount, normalColor);
+
+    drawWidth = DM1_V1_Needs_BarWidthPc34Compat(amount, width);
+    if (drawWidth <= 0 || height <= 0) {
+        return 1;
+    }
+    outCommand->draw = 1;
+    outCommand->width = drawWidth;
+    outCommand->shadowWidth = drawWidth;
+    return 1;
+}
+
 /* ── dm1_needs_apply_time_effects ─────────────────────────────────── */
 void dm1_needs_apply_time_effects(
     const DM1_ChampionNeeds *champ,

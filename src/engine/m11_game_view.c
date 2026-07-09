@@ -36181,21 +36181,6 @@ static int m11_draw_v1_inventory_object_description_panel(
     return 1;
 }
 
-static int m11_v1_food_water_bar_color(int amount, int sourceColor) {
-    if (amount < -512) return M11_COLOR_RED;
-    if (amount < 0) return M11_COLOR_YELLOW;
-    return sourceColor;
-}
-
-static int m11_v1_food_water_bar_width(int amount, int fullWidth) {
-    int scaled;
-    if (fullWidth <= 0) return 0;
-    scaled = amount + 1024;
-    if (scaled <= 0) return 0;
-    if (scaled >= 3072) scaled = 3071;
-    return (scaled * fullWidth) / 3072;
-}
-
 static void m11_draw_v1_food_water_bar(unsigned char* framebuffer,
                                        int framebufferWidth,
                                        int framebufferHeight,
@@ -36206,13 +36191,18 @@ static void m11_draw_v1_food_water_bar(unsigned char* framebuffer,
                                        int shadowOffset,
                                        int amount,
                                        int sourceColor) {
-    int drawW = m11_v1_food_water_bar_width(amount, w);
-    int color = m11_v1_food_water_bar_color(amount, sourceColor);
-    if (drawW <= 0) return;
+    DM1_V1_NeedsBarRenderCommandPc34Compat cmd;
+    if (!DM1_V1_Needs_BuildBarRenderCommandPc34Compat(
+            x, y, w, h, shadowOffset, amount, sourceColor, &cmd) ||
+        !cmd.draw) {
+        return;
+    }
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x + shadowOffset, y + shadowOffset, drawW, h, M11_COLOR_BLACK);
+                  cmd.shadowX, cmd.shadowY, cmd.shadowWidth, cmd.shadowHeight,
+                  (unsigned char)cmd.shadowColor);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x, y, drawW, h, color);
+                  cmd.x, cmd.y, cmd.width, cmd.height,
+                  (unsigned char)cmd.fillColor);
 }
 
 static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state,

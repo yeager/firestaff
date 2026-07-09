@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 champion needs food/water render ownership: champion-needs code now owns food/water panel bar width, red/yellow/normal color thresholds, shadow rect, and fill rect command construction; M11 only paints returned rects. Verification: champion needs 61/61, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 V1 message-area render ownership: DM1 text/message code now owns tick-prefix stripping, player-facing filtering, four-row render-plan selection, and row metrics; M11 only renders the returned plan. Verification: text/message 106/106, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 turning presentation ownership names: V1 turning presentation now exposes DM1-owned type/function/mode names; old M11 names remain aliases. Verification: turning presentation, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
