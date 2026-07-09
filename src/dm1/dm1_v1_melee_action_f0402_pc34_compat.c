@@ -714,6 +714,33 @@ int dm1_v1_melee_creature_snapshot_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_runtime_result_plan_f0231_pc34(
+    const DM1_MeleeF0231RuntimeResultInputPc34* in,
+    DM1_MeleeF0231RuntimeResultPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!in) return 0;
+
+    out->valid = 1;
+    if (in->combatOutcome == COMBAT_OUTCOME_NO_ACTION) {
+        out->shouldReturnHandledNoAction = 1;
+        return 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1531-1547 applies champion luck,
+     * XP, and stamina side effects after the attack resolves, calls
+     * GROUP.C F0190 only when damage is positive, and still treats zero
+     * damage as a handled melee result before F0209 reaction scheduling. */
+    out->shouldWriteBackLuck = 1;
+    out->shouldApplySideEffects = 1;
+    out->shouldApplyGroupDamage =
+        in->damageApplied > 0 &&
+        in->groupIndex >= 0 &&
+        in->groupIndex < in->groupCount;
+    out->shouldEmitDamageDealt = 1;
+    return 1;
+}
+
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out) {

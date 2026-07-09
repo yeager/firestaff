@@ -308,6 +308,22 @@ typedef struct {
 } DM1_MeleeF0231CreatureSnapshotPlanPc34;
 
 typedef struct {
+    int combatOutcome;
+    int damageApplied;
+    int groupIndex;
+    int groupCount;
+} DM1_MeleeF0231RuntimeResultInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldReturnHandledNoAction;
+    int shouldWriteBackLuck;
+    int shouldApplySideEffects;
+    int shouldApplyGroupDamage;
+    int shouldEmitDamageDealt;
+} DM1_MeleeF0231RuntimeResultPlanPc34;
+
+typedef struct {
     int groupIndex;
     int creatureType;
     int creatureAttributes;
@@ -518,6 +534,9 @@ int dm1_v1_melee_champion_snapshot_plan_f0231_pc34(
 int dm1_v1_melee_creature_snapshot_plan_f0231_pc34(
     const DM1_MeleeF0231CreatureSnapshotInputPc34* in,
     DM1_MeleeF0231CreatureSnapshotPlanPc34* out);
+int dm1_v1_melee_runtime_result_plan_f0231_pc34(
+    const DM1_MeleeF0231RuntimeResultInputPc34* in,
+    DM1_MeleeF0231RuntimeResultPlanPc34* out);
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out);
