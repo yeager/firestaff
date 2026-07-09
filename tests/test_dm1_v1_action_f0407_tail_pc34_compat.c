@@ -2530,6 +2530,7 @@ static void test_melee_f0231_runtime_result_plan(void) {
 
     memset(&in, 0, sizeof(in));
     in.combatOutcome = COMBAT_OUTCOME_NO_ACTION;
+    in.championIndex = 1;
     in.damageApplied = 5;
     in.groupIndex = 0;
     in.groupCount = 1;
@@ -2541,6 +2542,7 @@ static void test_melee_f0231_runtime_result_plan(void) {
              "F0231 no-action skips side effects");
 
     memset(&in, 0, sizeof(in));
+    in.championIndex = 1;
     in.combatOutcome = COMBAT_OUTCOME_HIT_DAMAGE;
     in.damageApplied = 12;
     in.groupIndex = 0;
@@ -2563,6 +2565,12 @@ static void test_melee_f0231_runtime_result_plan(void) {
              "F0231 damage carries group damage fallback outcome");
     CHECK_EQ(out.shouldEmitDamageDealt, 1,
              "F0231 damage emits damage result");
+    CHECK_EQ(out.emitChampionIndex, 1,
+             "F0231 damage emit carries champion");
+    CHECK_EQ(out.emitGroupIndex, 0,
+             "F0231 damage emit carries group");
+    CHECK_EQ(out.emitDamageApplied, 12,
+             "F0231 damage emit carries damage");
 
     in.damageApplied = 0;
     CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(&in, &out), 1,
@@ -2686,6 +2694,7 @@ static void test_melee_f0231_damage_resolver_entrypoint(void) {
         memset(&separateRuntimeIn, 0, sizeof(separateRuntimeIn));
         memset(&separateRuntimeOut, 0, sizeof(separateRuntimeOut));
         memset(&separateResult, 0, sizeof(separateResult));
+        runtimeIn.championIndex = 1;
         runtimeIn.groupIndex = 0;
         runtimeIn.creatureIndex = 0;
         runtimeIn.groupCount = 1;
@@ -2702,6 +2711,7 @@ static void test_melee_f0231_damage_resolver_entrypoint(void) {
                      &separateResult), 1,
                  "DM1 F0231 separate damage builds");
         separateRuntimeIn.combatOutcome = separateResult.outcome;
+        separateRuntimeIn.championIndex = runtimeIn.championIndex;
         separateRuntimeIn.damageApplied = separateResult.damageApplied;
         separateRuntimeIn.groupIndex = runtimeIn.groupIndex;
         separateRuntimeIn.creatureIndex = runtimeIn.creatureIndex;
