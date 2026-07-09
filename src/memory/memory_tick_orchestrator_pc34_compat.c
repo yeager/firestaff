@@ -6886,6 +6886,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             DM1_MeleeF0231RawGroupWritebackPlanPc34 rawGroupWritebackPlan;
             DM1_MeleeF0231ResolveRuntimeInputPc34 resolveRuntimeIn;
             DM1_MeleeF0231ResolveRuntimePlanPc34 resolveRuntimePlan;
+            DM1_MeleeF0231RuntimeApplyPlanPc34 runtimeApplyPlan;
             struct CombatResult_Compat groupDamageResult;
             int targetDirection = decodePlan.targetDirection;
             int targetResolved;
@@ -7009,8 +7010,14 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         !resolveRuntimePlan.runtimeResultPlan.valid) {
                         return 1;
                     }
-                    if (resolveRuntimePlan.runtimeResultPlan
-                            .shouldReturnHandledNoAction) {
+                    memset(&runtimeApplyPlan, 0, sizeof(runtimeApplyPlan));
+                    if (!dm1_v1_melee_runtime_apply_plan_f0231_pc34(
+                            &resolveRuntimePlan.runtimeResultPlan,
+                            &runtimeApplyPlan) ||
+                        !runtimeApplyPlan.valid) {
+                        return 1;
+                    }
+                    if (runtimeApplyPlan.shouldReturnHandledNoAction) {
                         /* ReDMCSB CLIKCHAM.C F0368 lines 69-71 keeps the
                          * live candidate champion panel from being redrawn
                          * as a normal champion state.  Firestaff carries
@@ -7019,12 +7026,11 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                          * with stamina, reaction, or damage emissions. */
                         return 1;
                     }
-                    if (resolveRuntimePlan.runtimeResultPlan.shouldWriteBackLuck) {
+                    if (runtimeApplyPlan.shouldWriteBackLuck) {
                         orch_writeback_cmd_attack_luck_compat(
                             world, (int)input->commandArg1, &championSnapshot);
                     }
-                    if (resolveRuntimePlan.runtimeResultPlan
-                            .shouldApplySideEffects) {
+                    if (runtimeApplyPlan.shouldApplySideEffects) {
                         orch_cmd_attack_apply_f0231_side_effects_compat(
                             world, (int)input->commandArg1, actionSkillIndex,
                             &creatureSnapshot, combatResult.damageApplied);
@@ -7053,23 +7059,18 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     aftermathIn.fearTriggered = fearTriggered;
                     (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
                         &aftermathIn, &aftermathPlan);
-                    if (resolveRuntimePlan.runtimeResultPlan
-                            .shouldApplyGroupDamage) {
+                    if (runtimeApplyPlan.shouldApplyGroupDamage) {
                         memset(&groupDamageResult, 0, sizeof(groupDamageResult));
                         groupDamageResult.outcome =
-                            resolveRuntimePlan.runtimeResultPlan
-                                .groupDamageFallbackOutcome;
+                            runtimeApplyPlan.groupDamageFallbackOutcome;
                         groupDamageResult.damageApplied =
-                            resolveRuntimePlan.runtimeResultPlan
-                                .groupDamageApplied;
+                            runtimeApplyPlan.groupDamageApplied;
                         memset(&damageApplyPlan, 0, sizeof(damageApplyPlan));
                         (void)dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
                             &groupDamageResult,
                             &world->things->groups[
-                                resolveRuntimePlan.runtimeResultPlan
-                                    .groupDamageGroupIndex],
-                            resolveRuntimePlan.runtimeResultPlan
-                                .groupDamageCreatureIndex,
+                                runtimeApplyPlan.groupDamageGroupIndex],
+                            runtimeApplyPlan.groupDamageCreatureIndex,
                             &damageApplyPlan);
                         originalGroupCount = damageApplyPlan.originalGroupCount;
                         killedCell = damageApplyPlan.killedCell;
@@ -7136,15 +7137,11 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         (void)F0721_TIMELINE_Schedule_Compat(
                             &world->timeline, &reaction);
                     }
-                    if (resolveRuntimePlan.runtimeResultPlan
-                            .shouldEmitDamageDealt) {
+                    if (runtimeApplyPlan.shouldEmitDamageDealt) {
                         emit(result, EMIT_DAMAGE_DEALT,
-                             resolveRuntimePlan.runtimeResultPlan
-                                 .emitChampionIndex,
-                             resolveRuntimePlan.runtimeResultPlan
-                                 .emitGroupIndex,
-                             resolveRuntimePlan.runtimeResultPlan
-                                 .emitDamageApplied,
+                             runtimeApplyPlan.emitChampionIndex,
+                             runtimeApplyPlan.emitGroupIndex,
+                             runtimeApplyPlan.emitDamageApplied,
                              aftermathPlan.outcome);
                     }
                     return 1;

@@ -2823,6 +2823,7 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
 static void test_melee_f0231_runtime_result_plan(void) {
     DM1_MeleeF0231RuntimeResultInputPc34 in;
     DM1_MeleeF0231RuntimeResultPlanPc34 out;
+    DM1_MeleeF0231RuntimeApplyPlanPc34 applyOut;
     DM1_MeleeF0231LuckWritebackInputPc34 luckIn;
     DM1_MeleeF0231LuckWritebackPlanPc34 luckOut;
 
@@ -2869,6 +2870,19 @@ static void test_melee_f0231_runtime_result_plan(void) {
              "F0231 damage emit carries group");
     CHECK_EQ(out.emitDamageApplied, 12,
              "F0231 damage emit carries damage");
+    CHECK_EQ(dm1_v1_melee_runtime_apply_plan_f0231_pc34(&out, &applyOut), 1,
+             "F0231 runtime apply receipt builds");
+    CHECK_EQ(applyOut.valid, 1, "F0231 runtime apply valid");
+    CHECK_EQ(applyOut.shouldWriteBackLuck, 1,
+             "F0231 runtime apply writes luck");
+    CHECK_EQ(applyOut.shouldApplySideEffects, 1,
+             "F0231 runtime apply side effects");
+    CHECK_EQ(applyOut.shouldApplyGroupDamage, 1,
+             "F0231 runtime apply group damage");
+    CHECK_EQ(applyOut.groupDamageApplied, 12,
+             "F0231 runtime apply damage amount");
+    CHECK_EQ(applyOut.shouldEmitDamageDealt, 1,
+             "F0231 runtime apply emits damage");
 
     in.damageApplied = 0;
     CHECK_EQ(dm1_v1_melee_runtime_result_plan_f0231_pc34(&in, &out), 1,

@@ -362,6 +362,22 @@ typedef struct {
 } DM1_MeleeF0231RuntimeResultPlanPc34;
 
 typedef struct {
+    int valid;
+    int shouldReturnHandledNoAction;
+    int shouldWriteBackLuck;
+    int shouldApplySideEffects;
+    int shouldApplyGroupDamage;
+    int shouldEmitDamageDealt;
+    int groupDamageGroupIndex;
+    int groupDamageCreatureIndex;
+    int groupDamageApplied;
+    int groupDamageFallbackOutcome;
+    int emitChampionIndex;
+    int emitGroupIndex;
+    int emitDamageApplied;
+} DM1_MeleeF0231RuntimeApplyPlanPc34;
+
+typedef struct {
     int championIndex;
     int snapshotLuck;
     int championCount;
@@ -793,6 +809,9 @@ int dm1_v1_melee_damage_gate_plan_f0231_pc34(
 int dm1_v1_melee_runtime_result_plan_f0231_pc34(
     const DM1_MeleeF0231RuntimeResultInputPc34* in,
     DM1_MeleeF0231RuntimeResultPlanPc34* out);
+int dm1_v1_melee_runtime_apply_plan_f0231_pc34(
+    const DM1_MeleeF0231RuntimeResultPlanPc34* runtimePlan,
+    DM1_MeleeF0231RuntimeApplyPlanPc34* out);
 int dm1_v1_melee_luck_writeback_plan_f0231_pc34(
     const DM1_MeleeF0231LuckWritebackInputPc34* in,
     DM1_MeleeF0231LuckWritebackPlanPc34* out);
