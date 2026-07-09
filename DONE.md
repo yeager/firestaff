@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0267 group-move plan ownership names: ordinary group move apply, group teleporter destination, and generated group placement plans now expose DM1-owned API names consumed by M10; old M11 names remain compatibility aliases. Verification: `test_dm1_v1_group_move_removal_pc34_compat`, `test_m10_c006_generator_reenable_dispatch_pc34_compat`, `test_dm1_v1_movement_pipeline_pc34_compat` (400/400), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 movement pre-step stamina apply ownership: DM1 movement command core now consumes a tested pre-step stamina apply plan for F0366 living-champion stamina cost, stamina clamp, HP underflow damage, flash, and dirty-mask receipts. Verification: `test_dm1_v1_movement_command_core_pc34_compat`, `test_dm1_v1_command_movement_sensor_timing_pc34_compat`, `test_dm1_v1_movement_pipeline_pc34_compat` (400/400), `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 movement successful-step apply ownership: DM1 movement command core now consumes a tested successful-step apply plan for normal F0366 party position writeback, step receipt, input release, and viewport redraw. Verification: `test_dm1_v1_movement_command_core_pc34_compat`, `test_dm1_v1_command_movement_sensor_timing_pc34_compat`, `test_dm1_v1_movement_pipeline_pc34_compat` (400/400), `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
