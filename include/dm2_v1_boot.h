@@ -503,6 +503,11 @@ typedef struct {
     int menu_text_command_count;
     int menu_row_count;
     int selected_highlight_count;
+    int resume_menu_ready;
+    int save_slot_menu_ready;
+    int new_game_menu_ready;
+    int exact_selected_highlight_ready;
+    int startup_title_menu_hud_breadth_ready;
     int hud_handoff_capture_ready;
     int title_menu_hud_visual_proof_ready;
     int suppress_game_hud;

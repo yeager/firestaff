@@ -2736,6 +2736,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     out_receipt->menu_row_count = package.menu_row_count;
     out_receipt->selected_highlight_count =
         package.selected_highlight_count;
+    out_receipt->resume_menu_ready =
+        view_model.view_receipt.render.resume_menu_ready;
+    out_receipt->save_slot_menu_ready =
+        view_model.view_receipt.render.save_slot_menu_ready;
+    out_receipt->new_game_menu_ready =
+        view_model.view_receipt.render.new_game_menu_ready;
     out_receipt->hud_handoff_capture_ready =
         package.hud_handoff_capture_ready;
     out_receipt->suppress_game_hud = ownership.suppress_game_hud;
@@ -2813,6 +2819,17 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->menu_rect_command_count >= 2 &&
         out_receipt->menu_text_command_count >= out_receipt->menu_row_count &&
         out_receipt->selected_highlight_count >= 1;
+    out_receipt->exact_selected_highlight_ready =
+        out_receipt->selected_highlight_count == 1;
+    out_receipt->startup_title_menu_hud_breadth_ready =
+        out_receipt->menu_title_composite_capture_ready &&
+        out_receipt->resume_menu_ready &&
+        out_receipt->save_slot_menu_ready &&
+        out_receipt->new_game_menu_ready &&
+        out_receipt->exact_selected_highlight_ready &&
+        out_receipt->hud_handoff_capture_ready &&
+        out_receipt->suppress_game_hud &&
+        !out_receipt->present_first_hud_frame;
     out_receipt->title_menu_hud_visual_proof_ready =
         out_receipt->menu_title_composite_capture_ready &&
         out_receipt->hud_handoff_capture_ready &&
@@ -2830,6 +2847,8 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         hash, out_receipt->menu_command_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->menu_text_command_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->startup_title_menu_hud_breadth_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->hud_handoff_capture_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
