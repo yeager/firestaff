@@ -24,6 +24,7 @@
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"

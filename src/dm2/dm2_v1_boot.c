@@ -19,6 +19,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_game.h"
