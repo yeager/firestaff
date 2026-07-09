@@ -578,6 +578,54 @@ static void catalog_add_startup_bitmap_sample(
     catalog->route_mask |= route_bit;
 }
 
+static Theron_Track02SignalStatus catalog_add_startup_bitmap_sample_from_offset(
+    Theron_Track02StartupBitmapCatalog *catalog,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    unsigned int route_bit,
+    size_t raw_offset)
+{
+    uint8_t tile[THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES];
+    uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_PIXELS];
+    size_t user_offset = 0u;
+    size_t nonzero_pixels = 0u;
+    uint32_t checksum = 0u;
+    Theron_Track02SignalStatus status;
+
+    if (!catalog || !track02_data || !md5_hex || route_bit == 0u) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = track02_copy_startup_bitmap_bytes(
+        track02_data,
+        track02_size,
+        md5_hex,
+        raw_offset,
+        sizeof(tile),
+        tile,
+        sizeof(tile),
+        &user_offset);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+    status = theron_v1_track02_decode_4bpp_tile(tile,
+                                                 sizeof(tile),
+                                                 pixels,
+                                                 &nonzero_pixels,
+                                                 &checksum);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+    catalog_add_startup_bitmap_sample(catalog,
+                                      route_bit,
+                                      raw_offset,
+                                      user_offset,
+                                      pixels,
+                                      nonzero_pixels,
+                                      checksum);
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 static int bytes_find(const uint8_t *data,
                       size_t data_size,
                       const uint8_t *needle,
@@ -1138,6 +1186,19 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
           TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 44u }
     };
+    const struct {
+        unsigned int route_bit;
+        size_t span_delta;
+    } iso_tail_sample_specs[] = {
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 48u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 52u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 56u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 60u }
+    };
 
     if (out_catalog) {
         memset(out_catalog, 0, sizeof(*out_catalog));
@@ -1162,11 +1223,6 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
     }
 
     for (size_t i = 0u; i < sizeof(sample_specs) / sizeof(sample_specs[0]); ++i) {
-        uint8_t tile[THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES];
-        uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_PIXELS];
-        size_t user_offset = 0u;
-        size_t nonzero_pixels = 0u;
-        uint32_t checksum = 0u;
         size_t raw_offset;
 
         if (sample_specs[i].anchor_index >= signal.anchor_count) {
@@ -1175,33 +1231,13 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
         raw_offset =
             signal.post_boundary_span_offsets[sample_specs[i].anchor_index] +
             sample_specs[i].span_delta;
-        status = track02_copy_startup_bitmap_bytes(
+        (void)catalog_add_startup_bitmap_sample_from_offset(
+            out_catalog,
             track02_data,
             track02_size,
             md5_hex,
-            raw_offset,
-            sizeof(tile),
-            tile,
-            sizeof(tile),
-            &user_offset);
-        if (status != THERON_TRACK02_SIGNAL_OK) {
-            continue;
-        }
-        status = theron_v1_track02_decode_4bpp_tile(tile,
-                                                     sizeof(tile),
-                                                     pixels,
-                                                     &nonzero_pixels,
-                                                     &checksum);
-        if (status != THERON_TRACK02_SIGNAL_OK) {
-            continue;
-        }
-        catalog_add_startup_bitmap_sample(out_catalog,
-                                          sample_specs[i].route_bit,
-                                          raw_offset,
-                                          user_offset,
-                                          pixels,
-                                          nonzero_pixels,
-                                          checksum);
+            sample_specs[i].route_bit,
+            raw_offset);
     }
 
     if (variant == THERON_TRACK02_VARIANT_US_ISO &&
@@ -1210,11 +1246,6 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
              i < sizeof(iso_extended_sample_specs) /
                      sizeof(iso_extended_sample_specs[0]);
              ++i) {
-            uint8_t tile[THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES];
-            uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_PIXELS];
-            size_t user_offset = 0u;
-            size_t nonzero_pixels = 0u;
-            uint32_t checksum = 0u;
             size_t raw_offset =
                 signal.post_boundary_span_offsets[0] +
                 iso_extended_sample_specs[i].span_delta;
@@ -1226,34 +1257,30 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
                     continue;
                 }
             }
-            status = track02_copy_startup_bitmap_bytes(
+            (void)catalog_add_startup_bitmap_sample_from_offset(
+                out_catalog,
                 track02_data,
                 track02_size,
                 md5_hex,
-                raw_offset,
-                sizeof(tile),
-                tile,
-                sizeof(tile),
-                &user_offset);
-            if (status != THERON_TRACK02_SIGNAL_OK) {
-                continue;
-            }
-            status = theron_v1_track02_decode_4bpp_tile(tile,
-                                                         sizeof(tile),
-                                                         pixels,
-                                                         &nonzero_pixels,
-                                                         &checksum);
-            if (status != THERON_TRACK02_SIGNAL_OK) {
-                continue;
-            }
-            catalog_add_startup_bitmap_sample(
-                out_catalog,
                 iso_extended_sample_specs[i].route_bit,
-                raw_offset,
-                user_offset,
-                pixels,
-                nonzero_pixels,
-                checksum);
+                raw_offset);
+        }
+        for (size_t i = 0u;
+             i < sizeof(iso_tail_sample_specs) /
+                     sizeof(iso_tail_sample_specs[0]);
+             ++i) {
+            size_t raw_offset;
+
+            raw_offset =
+                signal.post_boundary_span_offsets[0] +
+                iso_tail_sample_specs[i].span_delta;
+            (void)catalog_add_startup_bitmap_sample_from_offset(
+                out_catalog,
+                track02_data,
+                track02_size,
+                md5_hex,
+                iso_tail_sample_specs[i].route_bit,
+                raw_offset);
         }
     }
 
