@@ -131,7 +131,7 @@ static int dm2_runtime_square_type_at(const DM2_V1_DungeonData *dd,
     return raw & DM2_SQUARE_TYPE_MASK;
 }
 
-static int dm2_runtime_has_door_record_at(DM2_V1_DungeonData *dd,
+static int dm2_runtime_has_door_record_at(const DM2_V1_DungeonData *dd,
                                           int level,
                                           int x,
                                           int y) {
@@ -149,8 +149,7 @@ static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
                                   int raw) {
     int square_type = dm2_runtime_square_type_at(dd, level, x, y, raw);
     return square_type == DM2_SQUARE_DOOR ||
-           dm2_runtime_has_door_record_at((DM2_V1_DungeonData *)dd,
-                                          level, x, y) ||
+           dm2_runtime_has_door_record_at(dd, level, x, y) ||
            dm2_runtime_raw_is_door_square((uint16_t)raw);
 }
 
@@ -329,8 +328,7 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
         int type;
         if (raw < 0) continue;
         type = raw & DM2_SQUARE_TYPE_MASK;
-        if (dm2_runtime_raw_is_door_square((uint16_t)raw) ||
-            square_type == 4) {
+        if (dm2_runtime_is_door_at(dd, rt->dungeon_level, map_x, map_y, raw)) {
             DM2_ViewSquare *door = &viewport->squares[center_doors[i].square];
             door->square_type =
                 (uint8_t)(square_type >= 0 ? square_type : type);
