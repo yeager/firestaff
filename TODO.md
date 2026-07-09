@@ -9,6 +9,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: boot pointer host receipts and graphics execution can now consume the startup view model directly. Remaining work is replacing final UI render/click callers that still rebuild layout/session state outside the view model.
   - 2026-07-09 update: snapshot render/input/pointer callers can now pass Track 02 media receipts and route through the startup view model. Remaining work is final UI/M11 hook replacement where callers still use raw prompt/roster arrays.
   - 2026-07-09 update: snapshot routes now cover media-receipt input, pointer, layout, rows, and render-plan handoff through the startup view model. Remaining work is wiring final UI/M11 hooks to these receipt-aware calls.
+  - 2026-07-09 update: startup view models now emit unified state receipts for title/menu flow, level-route, Continue focus, and TQSV/SRM facts. Remaining work is wiring final UI/M11 save/startup consumers to this receipt instead of reading raw fields.
 
 - 🔧 2026-07-09 DM2 runtime/render follow-up: DB0 door records now hand level door-set GDAT panel identity into the render plan. Remaining DM2 work is broader GDAT door masks/ornates, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
   - 2026-07-09 update: DM2 boot now owns the startup view-model wrapper consumed by M11, including draw commands, presentation receipt, phase, animation, and title readiness. Remaining boot/start work is exact title timing and broader real title asset proof.
