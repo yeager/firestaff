@@ -991,6 +991,7 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     int* outRenderHallMirrorOverlay,
     int* outDrawChampionMirrorWallOverlay,
     int* outWalkCaptureSafe,
+    int* outHostDrawRejectsBackingFallback,
     int* outMapIndex,
     int* outRenderCommandCount);
 int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
