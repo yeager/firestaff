@@ -701,11 +701,6 @@ int theron_v1_boot_startup_layout_build_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     Theron_StartupLayoutElement *elements,
     int max_elements);
-int theron_v1_boot_startup_layout_build_from_snapshot_with_media_receipt(
-    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    Theron_StartupLayoutElement *elements,
-    int max_elements);
 int theron_v1_boot_startup_render_rows_from_runtime_state(
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows,
@@ -733,11 +728,6 @@ int theron_v1_boot_startup_render_rows_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows);
-int theron_v1_boot_startup_render_rows_from_snapshot_with_media_receipt(
-    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
-    int max_rows);
 int theron_v1_boot_startup_render_plan_from_runtime_state(
     Theron_StartupRenderPlan *out_plan,
     int startup_phase,
@@ -762,10 +752,6 @@ int theron_v1_boot_startup_render_plan_from_runtime_state(
     int selected_mirror_order_count);
 int theron_v1_boot_startup_render_plan_from_snapshot(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
-    Theron_StartupRenderPlan *out_plan);
-int theron_v1_boot_startup_render_plan_from_snapshot_with_media_receipt(
-    const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
     Theron_StartupRenderPlan *out_plan);
 void theron_v1_boot_startup_view_model_clear(
     Theron_V1_BootStartupViewModel *view_model);
@@ -951,65 +937,6 @@ int theron_v1_boot_startup_full_start_receipt_from_runtime_route_with_media_rece
     int companion_count,
     const int *selected_mirror_order,
     int selected_mirror_order_count);
-int theron_v1_boot_startup_layout_build_from_runtime_state_with_media_receipt(
-    Theron_StartupLayoutElement *elements,
-    int max_elements,
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    int startup_phase,
-    int selected_dungeon,
-    const void *boot_profile,
-    const Theron_V1_World *world,
-    const void *assets,
-    int startup_cursor,
-    int continue_focus,
-    int resume_claim,
-    int tqsv_slot,
-    int srm_slot,
-    int srm_import_status,
-    const char *srm_root,
-    int selected_mirrors_mask,
-    int companion_count,
-    const int *selected_mirror_order,
-    int selected_mirror_order_count);
-int theron_v1_boot_startup_render_rows_from_runtime_state_with_media_receipt(
-    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
-    int max_rows,
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    int startup_phase,
-    int selected_dungeon,
-    const void *boot_profile,
-    const Theron_V1_World *world,
-    const void *assets,
-    int startup_cursor,
-    int continue_focus,
-    int resume_claim,
-    int tqsv_slot,
-    int srm_slot,
-    int srm_import_status,
-    const char *srm_root,
-    int selected_mirrors_mask,
-    int companion_count,
-    const int *selected_mirror_order,
-    int selected_mirror_order_count);
-int theron_v1_boot_startup_render_plan_from_runtime_state_with_media_receipt(
-    Theron_StartupRenderPlan *out_plan,
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    int startup_phase,
-    int selected_dungeon,
-    const void *boot_profile,
-    const Theron_V1_World *world,
-    const void *assets,
-    int startup_cursor,
-    int continue_focus,
-    int resume_claim,
-    int tqsv_slot,
-    int srm_slot,
-    int srm_import_status,
-    const char *srm_root,
-    int selected_mirrors_mask,
-    int companion_count,
-    const int *selected_mirror_order,
-    int selected_mirror_order_count);
 int theron_v1_boot_startup_host_view_from_runtime_state_with_media_receipt(
     Theron_V1_BootStartupHostViewReceipt *out_receipt,
     const Theron_StartupMediaStateReceipt *startup_media_receipt,
@@ -1046,9 +973,6 @@ int theron_v1_boot_startup_render_rows_from_full_start_receipt(
     const Theron_V1_BootStartupFullStartReceipt *receipt,
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows);
-int theron_v1_boot_startup_render_plan_from_full_start_receipt(
-    const Theron_V1_BootStartupFullStartReceipt *receipt,
-    Theron_StartupRenderPlan *out_plan);
 int theron_v1_boot_startup_host_view_from_full_start_receipt(
     const Theron_V1_BootStartupFullStartReceipt *receipt,
     Theron_V1_BootStartupHostViewReceipt *out_receipt);
