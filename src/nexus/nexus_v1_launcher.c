@@ -2354,6 +2354,34 @@ int nexus_v1_launcher_startup_full_start_receipt_from_snapshot(
         out_receipt);
 }
 
+static int nexus_v1_launcher_build_runtime_receipt_from_startup_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_LauncherRuntimeReceipt *out_receipt)
+{
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    nexus_v1_launcher_runtime_receipt_clear(out_receipt);
+    out_receipt->engine = state->engine;
+    out_receipt->level_loaded =
+        state->engine ? state->engine->level_loaded : 0;
+    out_receipt->title_loaded =
+        state->title_active ||
+        nexus_v1_surface_loaded(state->engine, NEXUS_SURFACE_TITLE);
+    out_receipt->startup_receipt.host_receipt.status_scope = "STARTUP";
+    out_receipt->startup_receipt.host_receipt.status = "NEXUS STARTUP";
+    if (!nexus_v1_launcher_startup_assets_from_runtime_state(
+            state,
+            &out_receipt->startup_assets)) {
+        return 0;
+    }
+    out_receipt->boot_log_line =
+        out_receipt->startup_assets.title_route_ready
+            ? "T0: NEXUS TITLE LOADED"
+            : "T0: NEXUS TITLE BLOCKED";
+    return 1;
+}
+
 static void nexus_v1_launcher_fill_full_start_consumer_status(
     Nexus_V1_StartupFullStartConsumerReceipt *receipt)
 {
@@ -2384,12 +2412,20 @@ int nexus_v1_launcher_startup_full_start_consumer_from_runtime_state(
     void *load_userdata,
     Nexus_V1_StartupFullStartConsumerReceipt *out_receipt)
 {
+    Nexus_V1_LauncherRuntimeReceipt derived_runtime;
+    const Nexus_V1_LauncherRuntimeReceipt *runtime_source = runtime;
     Nexus_V1_StartupDrawCommand draw_commands[80];
 
     nexus_v1_launcher_startup_full_start_consumer_receipt_clear(out_receipt);
-    if (!out_receipt || !runtime || !state ||
+    if (!runtime_source &&
+        nexus_v1_launcher_build_runtime_receipt_from_startup_state(
+            state,
+            &derived_runtime)) {
+        runtime_source = &derived_runtime;
+    }
+    if (!out_receipt || !runtime_source || !state ||
         !nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
-            runtime,
+            runtime_source,
             state,
             &out_receipt->full_start)) {
         return 0;
@@ -2579,7 +2615,7 @@ int nexus_v1_launcher_startup_full_start_package_from_runtime_state(
     char animation[32];
 
     nexus_v1_launcher_startup_full_start_package_receipt_clear(out_receipt);
-    if (!out_receipt || !runtime || !state ||
+    if (!out_receipt || !state ||
         !nexus_v1_launcher_startup_full_start_consumer_from_runtime_state(
             runtime,
             state,

@@ -11214,19 +11214,28 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             : -1;
         out->runtimeTick = state->nexusState.tick_count;
         Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
+        Nexus_V1_StartupFullStartPackageReceipt package_receipt;
         m11_nexus_runtime_startup_snapshot(state, &snapshot);
-        (void)nexus_v1_launcher_startup_presentation_receipt_from_snapshot(
-            &snapshot,
-            out->startupPhase,
-            (int)sizeof(out->startupPhase),
-            &out->startupActive,
-            &out->startupFrame,
-            out->startupAnimation,
-            (int)sizeof(out->startupAnimation),
-            &out->startupAnimationActive,
-            &out->startupTitleFrame,
-            &out->startupTitleFrameMax,
-            &out->startupTitleReady);
+        if (nexus_v1_launcher_startup_full_start_package_from_snapshot(
+                NULL,
+                &snapshot,
+                M12_MENU_INPUT_NONE,
+                m11_nexus_startup_load_save_callback,
+                (void *)state,
+                &package_receipt)) {
+            (void)nexus_v1_launcher_startup_full_start_package_export_presentation(
+                &package_receipt,
+                out->startupPhase,
+                (int)sizeof(out->startupPhase),
+                &out->startupActive,
+                &out->startupFrame,
+                out->startupAnimation,
+                (int)sizeof(out->startupAnimation),
+                &out->startupAnimationActive,
+                &out->startupTitleFrame,
+                &out->startupTitleFrameMax,
+                &out->startupTitleReady);
+        }
         return 1;
     }
 
@@ -37315,47 +37324,29 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int copyH = framebufferHeight < NEXUS_FB_H ? framebufferHeight : NEXUS_FB_H;
         int directDraw = 0;
         nexus_fb_init(&nexusFb);
-        if (state->nexusState.title_active) {
-            Nexus_V1_StartupDrawCommand commands[4];
-            int command_count;
-            directDraw = 1;
-            command_count = nexus_v1_startup_presentation_build_title(
-                state->nexusState.title_frame,
-                commands,
-                (int)(sizeof(commands) / sizeof(commands[0])));
-            m11_draw_nexus_startup_commands(state,
-                                            framebuffer,
-                                            framebufferWidth,
-                                            framebufferHeight,
-                                            commands,
-                                            command_count);
-        } else if (state->nexusState.startup_save_select_active) {
+        if (state->nexusState.title_active ||
+            state->nexusState.startup_save_select_active ||
+            (state->nexusState.champion_select_active &&
+             state->nexusEngine)) {
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
-            Nexus_V1_StartupDrawCommand commands[48];
-            int command_count;
-            directDraw = 1;
-            m11_nexus_runtime_startup_snapshot(state, &snapshot);
-            command_count = nexus_v1_launcher_startup_presentation_build_save_from_snapshot(
-                &snapshot,
-                commands,
-                (int)(sizeof(commands) / sizeof(commands[0])));
-            m11_draw_nexus_startup_commands(state,
-                                            framebuffer,
-                                            framebufferWidth,
-                                            framebufferHeight,
-                                            commands,
-                                            command_count);
-        } else if (state->nexusState.champion_select_active &&
-                   state->nexusEngine) {
-            Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
+            Nexus_V1_StartupFullStartPackageReceipt package_receipt;
             Nexus_V1_StartupDrawCommand commands[80];
             int command_count;
             directDraw = 1;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
-            command_count = nexus_v1_launcher_startup_presentation_build_champion_from_snapshot(
-                &snapshot,
-                commands,
-                (int)(sizeof(commands) / sizeof(commands[0])));
+            if (nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+                    NULL,
+                    &snapshot,
+                    M12_MENU_INPUT_NONE,
+                    m11_nexus_startup_load_save_callback,
+                    (void *)state,
+                    commands,
+                    (int)(sizeof(commands) / sizeof(commands[0])),
+                    &package_receipt)) {
+                command_count = package_receipt.capture_command_count;
+            } else {
+                command_count = 0;
+            }
             m11_draw_nexus_startup_commands(state,
                                             framebuffer,
                                             framebufferWidth,
@@ -37377,9 +37368,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
         if (!state->nexusEngine) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 18, "DUNGEON MASTER NEXUS", &g_text_title);
+                          18, 18, "DUNGEON MASTER NEXUS",
+                          &g_text_title);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 36, "NEXUS RUNTIME NOT READY", &g_text_shadow);
+                          18, 36, "NEXUS RUNTIME NOT READY",
+                          &g_text_shadow);
         }
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                             framebufferHeight);
