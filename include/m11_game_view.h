@@ -202,6 +202,7 @@ typedef struct {
     int dm1HoCNoHostFallbackVisuals;
     int dm1HoCRealAssetCapture;
     int dm1HoCMacWindowCapture;
+    int dm1HoCReleaseAppCapture;
     int dm1HoCHostCaptureRouteMatches;
     int dm1HoCHoCAssetCapture;
     int dm1HoCHostWindowCapture;
