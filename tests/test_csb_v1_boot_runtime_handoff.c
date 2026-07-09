@@ -1810,6 +1810,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupActionReceipt_PC34 boot_action_receipt;
+    CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
 
     csb_v1_boot_profile_init(&boot);
     memset(&facts, 0, sizeof(facts));
@@ -1895,6 +1896,46 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     snapshot.utility_imported_champion_count = 2;
     snapshot.utility_prompt = facts.utility_prompt;
     snapshot.boot_profile = &boot;
+    CHECK(csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
+              &snapshot,
+              &presentation_receipt) == 1,
+          "boot startup presentation receipt facade accepts snapshot");
+    CHECK(presentation_receipt.valid &&
+              strcmp(presentation_receipt.phase, "csb-entrance-4") == 0 &&
+              strcmp(presentation_receipt.animation, "csb-entrance") == 0 &&
+              presentation_receipt.accepts_input &&
+              presentation_receipt.waiting_for_input &&
+              presentation_receipt.menu_option_count == 4 &&
+              presentation_receipt.render_command_count == 5 &&
+              presentation_receipt.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
+          "boot startup presentation receipt owns render/menu/input snapshot");
+    CHECK(csb_v1_boot_startup_presentation_state_receipt_from_runtime_state_pc34(
+              &presentation_receipt,
+              snapshot.title_active,
+              snapshot.title_frame,
+              snapshot.title_source_step,
+              snapshot.entrance_active,
+              snapshot.entrance_source_step,
+              snapshot.entrance_dismissed,
+              snapshot.credits_active,
+              snapshot.credits_remaining_ticks,
+              snapshot.opening_active,
+              snapshot.opening_delay_ticks,
+              snapshot.opening_step,
+              snapshot.pending_command,
+              snapshot.entrance_frame,
+              snapshot.utility_overlay_active,
+              snapshot.utility_selected_action_index,
+              snapshot.utility_imported_champion_count,
+              snapshot.utility_preview_active,
+              snapshot.utility_prompt,
+              snapshot.resume_available,
+              snapshot.resume_path,
+              snapshot.boot_profile) == 1 &&
+              presentation_receipt.valid &&
+              presentation_receipt.render_plan.waiting_for_input,
+          "boot startup presentation receipt facade accepts runtime fields");
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               2,
