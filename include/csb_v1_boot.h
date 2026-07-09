@@ -322,6 +322,29 @@ int csb_v1_boot_startup_presentation_receipt_from_runtime_state_pc34(
     int resume_available,
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile);
+int csb_v1_boot_startup_presentation_state_receipt_from_runtime_state_pc34(
+    CSB_V1_StartupPresentationReceipt_PC34 *out_receipt,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile);
 int csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     char *out_phase,
@@ -334,6 +357,9 @@ int csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
     int *out_title_frame,
     int *out_title_frame_max,
     int *out_title_ready);
+int csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_StartupPresentationReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     CSB_V1_UtilRenderPlan *out_plan,
     int title_active,

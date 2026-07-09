@@ -1389,8 +1389,91 @@ int csb_v1_boot_startup_presentation_receipt_from_runtime_state_pc34(
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile)
 {
+    CSB_V1_StartupPresentationReceipt_PC34 receipt;
+
+    if (!csb_v1_boot_startup_presentation_state_receipt_from_runtime_state_pc34(
+            &receipt,
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            entrance_frame,
+            utility_overlay_active,
+            utility_selected_action_index,
+            utility_imported_champion_count,
+            utility_preview_active,
+            utility_prompt,
+            resume_available,
+            resume_path,
+            boot_profile)) {
+        return 0;
+    }
+    if (out_phase && out_phase_size > 0) {
+        snprintf(out_phase, (size_t)out_phase_size, "%s", receipt.phase);
+    }
+    if (out_startup_active) {
+        *out_startup_active = receipt.startup_active;
+    }
+    if (out_startup_frame) {
+        *out_startup_frame = receipt.startup_frame;
+    }
+    if (out_animation && out_animation_size > 0) {
+        snprintf(out_animation, (size_t)out_animation_size, "%s",
+                 receipt.animation);
+    }
+    if (out_animation_active) {
+        *out_animation_active = receipt.animation_active;
+    }
+    if (out_title_frame) {
+        *out_title_frame = receipt.title_frame;
+    }
+    if (out_title_frame_max) {
+        *out_title_frame_max = receipt.title_frame_max;
+    }
+    if (out_title_ready) {
+        *out_title_ready = receipt.title_ready;
+    }
+    return 1;
+}
+
+int csb_v1_boot_startup_presentation_state_receipt_from_runtime_state_pc34(
+    CSB_V1_StartupPresentationReceipt_PC34 *out_receipt,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    int utility_overlay_active,
+    int utility_selected_action_index,
+    int utility_imported_champion_count,
+    int utility_preview_active,
+    const char *utility_prompt,
+    int resume_available,
+    const char *resume_path,
+    const CSB_V1_BootProfile *boot_profile)
+{
     CSB_V1_StartupHostFacts_PC34 facts;
 
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_startup_presentation_receipt_init_pc34(out_receipt);
     if (!csb_v1_boot_startup_runtime_facts_pc34(
             &facts,
             title_active,
@@ -1416,18 +1499,12 @@ int csb_v1_boot_startup_presentation_receipt_from_runtime_state_pc34(
             boot_profile)) {
         return 0;
     }
-    return csb_v1_startup_receipt_presentation_from_host_facts_pc34(
+    /* ReDMCSB TITLE.C F0437 / ENTRANCE.C F0441/F0806: keep the startup
+     * phase, animation, render plan, and input/menu readiness behind the
+     * CSB boot facade so M11 consumes one source-owned handoff receipt. */
+    return csb_v1_startup_presentation_receipt_from_host_facts_pc34(
         &facts,
-        out_phase,
-        out_phase_size,
-        out_startup_active,
-        out_startup_frame,
-        out_animation,
-        out_animation_size,
-        out_animation_active,
-        out_title_frame,
-        out_title_frame_max,
-        out_title_ready);
+        out_receipt);
 }
 
 int csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
@@ -1443,23 +1520,57 @@ int csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
     int *out_title_frame_max,
     int *out_title_ready)
 {
+    CSB_V1_StartupPresentationReceipt_PC34 receipt;
+
+    if (!csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
+            snapshot,
+            &receipt)) {
+        return 0;
+    }
+    if (out_phase && out_phase_size > 0) {
+        snprintf(out_phase, (size_t)out_phase_size, "%s", receipt.phase);
+    }
+    if (out_startup_active) {
+        *out_startup_active = receipt.startup_active;
+    }
+    if (out_startup_frame) {
+        *out_startup_frame = receipt.startup_frame;
+    }
+    if (out_animation && out_animation_size > 0) {
+        snprintf(out_animation, (size_t)out_animation_size, "%s",
+                 receipt.animation);
+    }
+    if (out_animation_active) {
+        *out_animation_active = receipt.animation_active;
+    }
+    if (out_title_frame) {
+        *out_title_frame = receipt.title_frame;
+    }
+    if (out_title_frame_max) {
+        *out_title_frame_max = receipt.title_frame_max;
+    }
+    if (out_title_ready) {
+        *out_title_ready = receipt.title_ready;
+    }
+    return 1;
+}
+
+int csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_StartupPresentationReceipt_PC34 *out_receipt)
+{
     CSB_V1_StartupHostFacts_PC34 facts;
 
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_startup_presentation_receipt_init_pc34(out_receipt);
     if (!csb_v1_boot_startup_facts_from_snapshot_pc34(&facts, snapshot)) {
         return 0;
     }
-    return csb_v1_startup_receipt_presentation_from_host_facts_pc34(
+    return csb_v1_startup_presentation_receipt_from_host_facts_pc34(
         &facts,
-        out_phase,
-        out_phase_size,
-        out_startup_active,
-        out_startup_frame,
-        out_animation,
-        out_animation_size,
-        out_animation_active,
-        out_title_frame,
-        out_title_frame_max,
-        out_title_ready);
+        out_receipt);
 }
 
 int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
