@@ -834,6 +834,7 @@ static void test_srm_party_continue_restores_all_champions(void) {
         Theron_StartupAction action;
         Theron_StartupActionPlan plan;
         Theron_V1StartupContinueResult continue_result;
+        Theron_V1StartupContinueApplyReceipt apply_receipt;
         Theron_StartupHostReceipt host_receipt;
         Theron_StartupStateReceipt state_receipt;
 
@@ -938,6 +939,32 @@ static void test_srm_party_continue_restores_all_champions(void) {
                         state_receipt.save_resume_srm_active_slot == -1 &&
                         state_receipt.save_resume_srm_party_gold == 777u,
                     "srm party custom path emits host and state receipts");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(theron_v1_startup_continue_srm_path_apply_with_receipts(
+                        &world,
+                        custom_path,
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &apply_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) == 1 &&
+                        continue_result.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_SRM &&
+                        continue_result.source_slot_index == -1 &&
+                        apply_receipt.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_SRM &&
+                        apply_receipt.source_slot_index == -1 &&
+                        apply_receipt.srm_import_status ==
+                            THERON_V1_SRM_PROGRESS_IMPORT_OK &&
+                        apply_receipt.srm_party_champion_count ==
+                            THERON_MAX_CHAMPIONS &&
+                        apply_receipt.srm_party_gold == 777u &&
+                        state_receipt.save_resume_srm_active_slot == -1 &&
+                        state_receipt.save_resume_srm_party_gold == 777u,
+                    "srm party custom path emits apply and state receipts");
 
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
