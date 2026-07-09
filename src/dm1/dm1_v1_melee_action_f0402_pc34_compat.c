@@ -1082,6 +1082,47 @@ int dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_possession_drop_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190PossessionDropPlanPc34* dropPlan,
+    const struct DungeonGroup_Compat* group,
+    DM1_MeleeF0190PossessionDropApplyPlanPc34* out) {
+    DM1_MeleeF0190FixedDropCellsPlanPc34 fixedCells;
+    int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!dropPlan || !dropPlan->valid) return 0;
+
+    out->valid = 1;
+    out->mapIndex = dropPlan->mapIndex;
+    out->mapX = dropPlan->mapX;
+    out->mapY = dropPlan->mapY;
+    out->creatureType = dropPlan->creatureType;
+    out->creatureCell = dropPlan->creatureCell;
+    out->shouldDropCreatureFixedPossessions =
+        dropPlan->shouldDropCreatureFixedPossessions;
+    out->shouldDropGroupSlotPossessions =
+        dropPlan->shouldDropGroupSlotPossessions;
+    if (dropPlan->shouldDropGroupFixedPossessions) {
+        memset(&fixedCells, 0, sizeof(fixedCells));
+        if (!dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
+                group, &fixedCells) ||
+            !fixedCells.valid) {
+            return 0;
+        }
+        out->shouldDropGroupFixedPossessions = 1;
+        out->groupFixedCellCount = fixedCells.dropCellCount;
+        for (i = 0; i < fixedCells.dropCellCount && i < 4; ++i) {
+            out->groupFixedCells[i] = fixedCells.dropCells[i];
+        }
+    }
+
+    /* ReDMCSB: GROUP.C F0190 lines 824-847 and F0188 lines 716-736 order
+     * group fixed cells before GROUP.Slot and killed-creature fixed drops.
+     * M10 materializes things, but DM1 owns the ordered drop receipt. */
+    return 1;
+}
+
 int dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
     const unsigned char* movingFixedDropCells,
     int movingFixedDropCellCount,

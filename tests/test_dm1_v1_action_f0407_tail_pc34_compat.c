@@ -2079,6 +2079,7 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190DeathSmokePlanPc34 smokeOut;
     DM1_MeleeF0190PossessionDropInputPc34 dropIn;
     DM1_MeleeF0190PossessionDropPlanPc34 dropOut;
+    DM1_MeleeF0190PossessionDropApplyPlanPc34 dropApplyOut;
     DM1_MeleeF0190KilledSomeStateInputPc34 stateIn;
     DM1_MeleeF0190KilledSomeStatePlanPc34 stateOut;
     DM1_MeleeF0190KilledSomeStatePlanPc34 stateApplyOut;
@@ -2212,6 +2213,25 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     CHECK_EQ(dropOut.mapIndex, 4, "F0190 drop map");
     CHECK_EQ(dropOut.mapX, 5, "F0190 drop x");
     CHECK_EQ(dropOut.mapY, 6, "F0190 drop y");
+    memset(&fixedGroup, 0, sizeof(fixedGroup));
+    fixedGroup.creatureType = 12;
+    fixedGroup.count = 2;
+    fixedGroup.cells = (unsigned char)((3u << 4) | (2u << 2) | 1u);
+    CHECK_EQ(dm1_v1_melee_possession_drop_apply_plan_f0190_pc34(
+                 &dropOut, &fixedGroup, &dropApplyOut), 1,
+             "F0190 killed-all drop apply receipt builds");
+    CHECK_EQ(dropApplyOut.valid, 1, "F0190 killed-all drop apply valid");
+    CHECK_EQ(dropApplyOut.shouldDropGroupFixedPossessions, 1,
+             "F0190 killed-all apply drops group fixed");
+    CHECK_EQ(dropApplyOut.shouldDropGroupSlotPossessions, 1,
+             "F0190 killed-all apply drops group slot");
+    CHECK_EQ(dropApplyOut.groupFixedCellCount, 3,
+             "F0190 killed-all apply group cell count");
+    CHECK_EQ(dropApplyOut.groupFixedCells[0], 3,
+             "F0190 killed-all apply first group cell");
+    CHECK_EQ(dropApplyOut.groupFixedCells[2], 1,
+             "F0190 killed-all apply last group cell");
+    CHECK_EQ(dropApplyOut.mapX, 5, "F0190 killed-all apply map x");
 
     dropIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
     dropIn.killedCell = 7;
@@ -2226,6 +2246,15 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 killed-some drops creature fixed");
     CHECK_EQ(dropOut.creatureType, 12, "F0190 killed-some creature type");
     CHECK_EQ(dropOut.creatureCell, 3, "F0190 killed-some cell mask");
+    CHECK_EQ(dm1_v1_melee_possession_drop_apply_plan_f0190_pc34(
+                 &dropOut, &fixedGroup, &dropApplyOut), 1,
+             "F0190 killed-some drop apply receipt builds");
+    CHECK_EQ(dropApplyOut.shouldDropCreatureFixedPossessions, 1,
+             "F0190 killed-some apply drops creature fixed");
+    CHECK_EQ(dropApplyOut.shouldDropGroupFixedPossessions, 0,
+             "F0190 killed-some apply skips group fixed");
+    CHECK_EQ(dropApplyOut.creatureCell, 3,
+             "F0190 killed-some apply keeps creature cell");
 
     dropIn.creatureAttributes = 0;
     CHECK_EQ(dm1_v1_melee_possession_drop_plan_f0190_pc34(

@@ -520,6 +520,20 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int shouldDropGroupFixedPossessions;
+    int shouldDropGroupSlotPossessions;
+    int shouldDropCreatureFixedPossessions;
+    int groupFixedCellCount;
+    int groupFixedCells[4];
+    int creatureType;
+    int creatureCell;
+    int mapIndex;
+    int mapX;
+    int mapY;
+} DM1_MeleeF0190PossessionDropApplyPlanPc34;
+
+typedef struct {
+    int valid;
     int dropCellCount;
     int dropCells[4];
 } DM1_MeleeF0190FixedDropCellsPlanPc34;
@@ -758,6 +772,10 @@ int dm1_v1_melee_death_smoke_attack_f0190_pc34(int creatureAttributes);
 int dm1_v1_melee_possession_drop_plan_f0190_pc34(
     const DM1_MeleeF0190PossessionDropInputPc34* in,
     DM1_MeleeF0190PossessionDropPlanPc34* out);
+int dm1_v1_melee_possession_drop_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190PossessionDropPlanPc34* dropPlan,
+    const struct DungeonGroup_Compat* group,
+    DM1_MeleeF0190PossessionDropApplyPlanPc34* out);
 int dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
     const struct DungeonGroup_Compat* group,
     DM1_MeleeF0190FixedDropCellsPlanPc34* out);

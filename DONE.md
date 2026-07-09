@@ -14,6 +14,7 @@
 - ✅ 2026-07-09 pass818 DM1 F0231 aftermath ownership now maps directly to the F0190 mutation-dispatch plan, so M10 consumes a DM1 API instead of assembling dispatch input fields.
 - ✅ 2026-07-09 pass819 DM1 F0190 mutation-dispatch ownership now carries fear-roll and fear-apply receipts, so M10 asks DM1 for the frightened-group writeback instead of reading killed-some internals directly.
 - ✅ 2026-07-09 pass820 DM1 F0190 timeline cleanup ownership now carries a batch compaction receipt for killed-some creature event deletion/shifts, so M10 copies back the DM1 event list instead of owning the cleanup loop.
+- ✅ 2026-07-09 pass821 DM1 F0190 possession-drop ownership now carries ordered apply receipts for group fixed cells, group slot drops, and killed-creature fixed drops, so M10 consumes the DM1 drop order instead of interpreting drop flags directly.
 
 - ✅ 2026-07-09 Theron SRM envelope startup receipt proof: Theron startup save/resume probe now asserts the decoded SRM envelope kind, so staged gzip SRM data proves the same typed progression handoff used by Continue. Verification: `theron_v1_startup_save_resume_probe`, `theron_v1_startup_save_resume_pc34`, and focused build passed.
 

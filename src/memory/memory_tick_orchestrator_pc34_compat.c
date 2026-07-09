@@ -5443,19 +5443,31 @@ static void orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
     struct DungeonGroup_Compat* group,
     const DM1_MeleeF0190PossessionDropPlanPc34* dropPlan)
 {
+    DM1_MeleeF0190PossessionDropApplyPlanPc34 applyPlan;
+    int i;
+
     if (!world || !group || !dropPlan || !dropPlan->valid) return;
-    if (dropPlan->shouldDropGroupFixedPossessions) {
-        (void)orch_drop_group_fixed_possessions_compat(
-            world, group, dropPlan->mapIndex, dropPlan->mapX, dropPlan->mapY);
+    memset(&applyPlan, 0, sizeof(applyPlan));
+    if (!dm1_v1_melee_possession_drop_apply_plan_f0190_pc34(
+            dropPlan, group, &applyPlan) ||
+        !applyPlan.valid) {
+        return;
     }
-    if (dropPlan->shouldDropGroupSlotPossessions) {
+    if (applyPlan.shouldDropGroupFixedPossessions) {
+        for (i = 0; i < applyPlan.groupFixedCellCount; ++i) {
+            (void)orch_drop_creature_fixed_possessions_compat(
+                world, group->creatureType, applyPlan.groupFixedCells[i],
+                applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
+        }
+    }
+    if (applyPlan.shouldDropGroupSlotPossessions) {
         (void)orch_drop_group_slot_possessions_compat(
-            world, group, dropPlan->mapIndex, dropPlan->mapX, dropPlan->mapY);
+            world, group, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
     }
-    if (dropPlan->shouldDropCreatureFixedPossessions) {
+    if (applyPlan.shouldDropCreatureFixedPossessions) {
         (void)orch_drop_creature_fixed_possessions_compat(
-            world, dropPlan->creatureType, dropPlan->creatureCell,
-            dropPlan->mapIndex, dropPlan->mapX, dropPlan->mapY);
+            world, applyPlan.creatureType, applyPlan.creatureCell,
+            applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
     }
 }
 
