@@ -1808,6 +1808,7 @@ void csb_v1_boot_startup_capture_receipt_init_pc34(
         &receipt->readiness);
     csb_v1_boot_startup_hud_menu_draw_receipt_init_pc34(
         &receipt->hud_menu_draw);
+    csb_v1_startup_real_receipt_init(&receipt->real_asset_receipt);
     receipt->render_route = CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
     receipt->hud_menu_kind = CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34;
     receipt->selected_command_id =
@@ -2192,6 +2193,24 @@ int csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
                 &out_receipt->render_view,
                 &out_receipt->hud_menu_draw);
     }
+    if (snapshot->boot_profile) {
+        out_receipt->real_asset_receipt_valid =
+            csb_v1_startup_real_receipt_from_profile_fields(
+                snapshot->boot_profile->asset_root,
+                snapshot->boot_profile->graphics_path,
+                snapshot->boot_profile->dungeon_path,
+                snapshot->boot_profile->graphics_md5,
+                snapshot->boot_profile->dungeon_md5,
+                0u,
+                0u,
+                snapshot->boot_profile->variant_id,
+                snapshot->boot_profile->graphics_kind,
+                4,
+                snapshot->boot_profile->assets_verified,
+                snapshot->boot_profile->graphics_verified,
+                snapshot->boot_profile->dungeon_verified,
+                &out_receipt->real_asset_receipt);
+    }
     out_receipt->valid = 1;
     out_receipt->render_route =
         out_receipt->readiness_valid
@@ -2264,7 +2283,7 @@ int csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
      * and ENTRANCE.C F0441/F0806 lines 850-883 owns the closed-door
      * input/HUD loop. This aggregate receipt is the CSB-owned capture
      * package for M11/probes, so callers consume route, render-view,
-     * readiness, and HUD/menu draw gates together. */
+     * readiness, real-asset proof, and HUD/menu draw gates together. */
     return 1;
 }
 
@@ -2718,6 +2737,25 @@ int csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
     }
 
     return 0;
+}
+
+int csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
+    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor)
+{
+    if (!capture_receipt || !capture_receipt->valid ||
+        !capture_receipt->hud_menu_capture_ready ||
+        !capture_receipt->hud_menu_draw_valid ||
+        !capture_receipt->readiness_valid) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns the closed-door
+     * wait/menu loop. Consuming the aggregate capture receipt here keeps
+     * HUD draw and readiness paired inside the CSB boot boundary. */
+    return csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
+        &capture_receipt->hud_menu_draw,
+        &capture_receipt->readiness,
+        executor);
 }
 
 static int csb_v1_boot_startup_input_render_receipt_from_action_pc34(
