@@ -2105,6 +2105,7 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190KilledSomeStateInputPc34 stateIn;
     DM1_MeleeF0190KilledSomeStatePlanPc34 stateOut;
     DM1_MeleeF0190KilledSomeStatePlanPc34 stateApplyOut;
+    DM1_MeleeF0190KilledSomeStateApplyPlanPc34 killedSomeApplyOut;
     DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
     DM1_MeleeF0190KilledAllStatePlanPc34 killedAllOut;
     DM1_MeleeF0190KilledAllStateApplyPlanPc34 killedAllApplyOut;
@@ -2436,6 +2437,23 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 fear from state keeps killed creature");
     CHECK_EQ(stateApplyOut.fearCounter, 55,
              "F0190 fear from state uses new delay");
+    CHECK_EQ(dm1_v1_melee_killed_some_state_apply_plan_f0190_pc34(
+                 &stateApplyOut, &killedSomeApplyOut), 1,
+             "F0190 killed-some apply receipt builds");
+    CHECK_EQ(killedSomeApplyOut.valid, 1,
+             "F0190 killed-some apply receipt valid");
+    CHECK_EQ(killedSomeApplyOut.shouldCleanupCreatureEvents, 1,
+             "F0190 killed-some apply cleans events");
+    CHECK_EQ(killedSomeApplyOut.shouldApplyFear, 1,
+             "F0190 killed-some apply fear write");
+    CHECK_EQ(killedSomeApplyOut.groupIndex, 3,
+             "F0190 killed-some apply group");
+    CHECK_EQ(killedSomeApplyOut.killedCreatureIndex, 2,
+             "F0190 killed-some apply killed index");
+    CHECK_EQ(killedSomeApplyOut.newGroupBehavior, DM1_BEHAVIOR_FLEE,
+             "F0190 killed-some apply behavior");
+    CHECK_EQ(killedSomeApplyOut.fearCounter, 55,
+             "F0190 killed-some apply fear delay");
 
     stateIn.partyMapIndex = 2;
     CHECK_EQ(dm1_v1_melee_killed_some_state_plan_f0190_pc34(
