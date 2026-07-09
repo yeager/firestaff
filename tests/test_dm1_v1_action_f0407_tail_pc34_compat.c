@@ -1304,6 +1304,10 @@ static void test_melee_pre_f0231_gates(void) {
              "back-row reach gate builds");
     CHECK_EQ(reachOut.valid, 1, "back-row reach gate valid");
     CHECK_EQ(reachOut.blocked, 1, "front champion blocks back-row melee");
+    CHECK_EQ(reachOut.sourceFixedBackRowGate, 1,
+             "PC34 uses fixed back-row reach gate");
+    CHECK_EQ(reachOut.scannedFrontCell, 1,
+             "back-row reach scans front cell");
     CHECK_EQ(reachOut.relativeCell, 2, "back-right relative cell");
     CHECK_EQ(reachOut.blockingCell, 1, "blocking front cell");
     CHECK_EQ(reachOut.blockingChampionIndex, 1, "blocking champion index");
@@ -1315,6 +1319,26 @@ static void test_melee_pre_f0231_gates(void) {
                  &reachIn, &reachOut), 1,
              "unblocked back-row reach gate builds");
     CHECK_EQ(reachOut.blocked, 0, "empty front cell allows F0231");
+
+    reachIn.otherChampionPresent[1] = 1;
+    reachIn.otherChampionCurrentHealth[1] = 0;
+    CHECK_EQ(dm1_v1_melee_reach_gate_plan_f0402_pc34(
+                 &reachIn, &reachOut), 1,
+             "dead front champion reach gate builds");
+    CHECK_EQ(reachOut.blocked, 0,
+             "dead front champion does not block F0402 reach");
+    CHECK_EQ(reachOut.scannedFrontCell, 1,
+             "dead front champion still proves source front-cell scan");
+
+    reachIn.otherChampionCurrentHealth[1] = 100;
+    reachIn.championCell = 3;
+    reachIn.otherChampionCell[1] = 0;
+    CHECK_EQ(dm1_v1_melee_reach_gate_plan_f0402_pc34(
+                 &reachIn, &reachOut), 1,
+             "back-left reach gate builds");
+    CHECK_EQ(reachOut.blocked, 1, "front-left champion blocks back-left");
+    CHECK_EQ(reachOut.relativeCell, 3, "back-left relative cell");
+    CHECK_EQ(reachOut.blockingCell, 0, "back-left blocking front cell");
 
     reachIn.championCell = 0;
     CHECK_EQ(dm1_v1_melee_reach_gate_plan_f0402_pc34(

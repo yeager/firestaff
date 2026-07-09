@@ -88,6 +88,8 @@ typedef struct {
 typedef struct {
     int valid;
     int blocked;
+    int sourceFixedBackRowGate;
+    int scannedFrontCell;
     int relativeCell;
     int blockingCell;
     int blockingChampionIndex;
