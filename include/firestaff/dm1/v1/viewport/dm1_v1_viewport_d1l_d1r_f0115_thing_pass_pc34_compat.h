@@ -77,6 +77,27 @@ typedef struct {
     const char *redmcsb_f0115_anchor;
 } DM1V1D1LD1RF0115LanePc34Data;
 
+typedef struct {
+    int valid;
+    int input_valid;
+    int thing_type;
+    int thing_cell;
+    int view_cell;
+    int row;
+    int zone;
+    int draw_item;
+    int draw_projectile;
+    int suppress_item;
+    int suppress_projectile;
+    int suppress_non_thing_payload;
+    int consumes_runtime_thing_layer;
+    int consumes_runtime_projectile_list;
+    int draw_projectile_as_object;
+    int uses_object_creature_shift_mask;
+    int must_not_materialize_thing;
+    const char *source_anchor;
+} DM1V1D1LD1RF0115RuntimeThingReceiptPc34;
+
 void dm1_v1_viewport_d1l_d1r_f0115_thing_pass_init_pc34(void);
 
 size_t dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_count_pc34(void);
@@ -118,6 +139,14 @@ int dm1_v1_viewport_d1l_d1r_f0115_thing_pass_strip_door_order_pc34(
 int dm1_v1_viewport_d1l_d1r_f0115_thing_pass_first_thing_slot_pc34(
     const DM1V1D1LD1RF0115LanePc34Data *lane,
     int view_cell);
+
+int dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+    const DM1V1D1LD1RF0115LanePc34Data *lane,
+    int thing_type,
+    int thing_cell,
+    int view_cell,
+    int square_has_projectile,
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 *out_receipt);
 
 uint32_t dm1_v1_viewport_d1l_d1r_f0115_thing_pass_hash_pc34(void);
 
