@@ -545,6 +545,13 @@ typedef struct {
     int sampled_menu_unique_composite_hash_count;
     uint32_t sampled_menu_composite_hash;
     int sampled_runtime_hud_handoff_capture_ready;
+    int runtime_hud_capture_consumed;
+    int runtime_hud_real_gdat_ready;
+    int runtime_hud_direction_mask;
+    int runtime_hud_sample_count;
+    int runtime_hud_unique_frame_hash_count;
+    uint32_t runtime_hud_frame_hash;
+    uint32_t runtime_hud_pixel_count;
     int real_gdat_capture_breadth_ready;
     int real_gdat_title_asset_required;
     int real_gdat_title_asset_consumed;

@@ -3032,6 +3032,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     DM2_V1_BootStartupPackagedConsumerReceipt consumer;
     DM2_V1_BootStartupHostFrameReceipt host_frame;
     DM2_V1_BootStartupRenderOwnershipReceipt ownership;
+    DM2_V1_BootRuntimeHudCaptureReceipt runtime_hud;
     uint8_t *title_pixels = NULL;
     uint8_t *menu_pixels = NULL;
     int title_w = 0;
@@ -3288,6 +3289,23 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     (void)dm2_v1_boot_startup_real_visual_breadth_probe(profile,
                                                         &snapshot,
                                                         out_receipt);
+    dm2_v1_boot_runtime_hud_capture_receipt_init(&runtime_hud);
+    if (dm2_v1_boot_runtime_hud_capture_receipt(profile, &runtime_hud) &&
+        runtime_hud.valid &&
+        runtime_hud.real_gdat_runtime_hud_breadth_ready) {
+        out_receipt->runtime_hud_capture_consumed = 1;
+        out_receipt->runtime_hud_real_gdat_ready = 1;
+        out_receipt->runtime_hud_direction_mask =
+            runtime_hud.runtime_direction_mask;
+        out_receipt->runtime_hud_sample_count =
+            runtime_hud.render_sample_count;
+        out_receipt->runtime_hud_unique_frame_hash_count =
+            runtime_hud.unique_frame_hash_count;
+        out_receipt->runtime_hud_frame_hash =
+            runtime_hud.combined_frame_hash;
+        out_receipt->runtime_hud_pixel_count =
+            runtime_hud.combined_pixel_count;
+    }
     out_receipt->real_visual_status_consumer_ready =
         out_receipt->real_visual_capture_consumes_package &&
         out_receipt->real_visual_capture_consumes_host_frame &&
@@ -3295,7 +3313,8 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->packaged_startup_phase_consumed &&
         out_receipt->packaged_hud_suppression_consumed &&
         out_receipt->title_menu_hud_visual_proof_ready &&
-        out_receipt->real_gdat_capture_breadth_ready;
+        out_receipt->real_gdat_capture_breadth_ready &&
+        out_receipt->runtime_hud_capture_consumed;
 
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, package.packaged_full_start_hash);
@@ -3339,6 +3358,12 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         hash, out_receipt->sampled_menu_composite_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->sampled_runtime_hud_handoff_capture_ready);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud_direction_mask);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud_sample_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud_frame_hash);
     out_receipt->packaged_visual_capture_hash = hash;
 
     /* skproject/SKWIN startup draws the real title GDAT surface, menu
@@ -3356,6 +3381,13 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->real_visual_capture_consumes_host_frame &&
         out_receipt->real_visual_status_consumer_ready &&
         out_receipt->real_gdat_capture_breadth_ready &&
+        out_receipt->runtime_hud_capture_consumed &&
+        out_receipt->runtime_hud_real_gdat_ready &&
+        out_receipt->runtime_hud_direction_mask == 0x0f &&
+        out_receipt->runtime_hud_sample_count == 4 &&
+        out_receipt->runtime_hud_unique_frame_hash_count > 0 &&
+        out_receipt->runtime_hud_frame_hash != 0u &&
+        out_receipt->runtime_hud_pixel_count == 4u * 320u * 200u &&
         out_receipt->full_title_frame_capture_ready &&
         out_receipt->menu_title_composite_capture_ready &&
         out_receipt->full_visual_composite_capture_ready &&
