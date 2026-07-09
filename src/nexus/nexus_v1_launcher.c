@@ -2956,10 +2956,6 @@ static void nexus_v1_launcher_fill_full_start_package_capture(
     receipt->capture_valid = 1;
     receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
     receipt->first_capture_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
-    if (!receipt->consumer.full_start.full_start_menu_ready) {
-        receipt->blocked_draw_suppressed = 1;
-        return;
-    }
     if (state->title_active &&
         receipt->consumer.full_start.title_status_ready) {
         command_count = nexus_v1_startup_presentation_build_title(
@@ -2969,6 +2965,9 @@ static void nexus_v1_launcher_fill_full_start_package_capture(
         receipt->title_capture_ready = command_count > 0;
         receipt->title_route_active = 1;
         receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_TITLE;
+    } else if (!receipt->consumer.full_start.full_start_menu_ready) {
+        receipt->blocked_draw_suppressed = 1;
+        return;
     } else if (state->save_select_active &&
                receipt->consumer.presentation_valid &&
                receipt->consumer.presentation.kind ==
@@ -3750,7 +3749,11 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.receipt_owner_is_nexus;
     out_receipt->host_startup_capture_ready =
         out_receipt->ownership.capture_ready &&
-        out_receipt->ownership.display_ready;
+        (out_receipt->ownership.display_ready ||
+         (state->title_active &&
+          out_receipt->ownership.title_capture_uses_real_assets &&
+          out_receipt->ownership.saturn_timing_exact &&
+          out_receipt->ownership.saturn_capture_frames_exact));
     out_receipt->host_runtime_dgn_ready =
         out_receipt->ownership.runtime_dgn_handoff_ready;
     out_receipt->bpk_handoff_consumed =
@@ -3820,6 +3823,8 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
     out_receipt->host_execute_startup_draws =
         out_receipt->suppress_fallback_visuals &&
         out_receipt->host_startup_capture_ready &&
+        out_receipt->saturn_timing_exact &&
+        out_receipt->saturn_capture_frames_exact &&
         out_receipt->copied_startup_command_count > 0;
     out_receipt->host_execute_dgn_draws =
         out_receipt->suppress_fallback_visuals &&
