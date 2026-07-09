@@ -6605,6 +6605,128 @@ static const char* m12_game_select_game_id(int index) {
     return gameIds[index];
 }
 
+static const char* m12_full_start_ready_status_label(const char* gameId) {
+    if (!gameId) {
+        return "READY";
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return "FULL START READY";
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return "BOOT READY";
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return "START MENU READY";
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        return "TITLE MENU READY";
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return "TRACK 02 READY";
+    }
+    return "READY";
+}
+
+static const char* m12_full_start_ready_detail_label(const char* gameId) {
+    if (!gameId) {
+        return "VERIFIED DATA READY";
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return "SWSH, TITLE, ENTRANCE, HOC";
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return "SWSH, TITLE, ENTRANCE, UTILITY";
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return "TITLE, SAVE MENU, FIRST HUD";
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        return "TITLE, WARNING, SAVE, CHAMPIONS";
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return "TRACK 02, TITLE, STAGE, SOUL ROOM";
+    }
+    return "VERIFIED DATA READY";
+}
+
+int M12_StartupMenu_GetBootReadiness(
+    const M12_StartupMenuState* state,
+    int entryIndex,
+    M12_StartupBootReadiness* outReadiness) {
+    M12_StartupBootReadiness receipt;
+    const M12_MenuEntry* entry;
+    const M12_AssetVersionStatus* version;
+    int gameIndex;
+
+    if (!outReadiness) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.statusLabel = "OFFLINE";
+    receipt.detailLabel = "OFFLINE";
+
+    entry = M12_StartupMenu_GetEntry(state, entryIndex);
+    if (!state || !entry || entry->kind != M12_MENU_ENTRY_GAME) {
+        *outReadiness = receipt;
+        return 1;
+    }
+
+    gameIndex = m12_game_slot_from_id(entry->gameId);
+    version = m12_selected_version_status(state, gameIndex);
+
+    receipt.handled = 1;
+    receipt.gameId = entry->gameId;
+    receipt.supported = m12_game_supported(entry->gameId) ? 1 : 0;
+    receipt.dataReady =
+        M12_AssetStatus_GameAvailable(&state->assetStatus, entry->gameId) ? 1 : 0;
+    receipt.versionReady = (version && version->matched) ? 1 : 0;
+    receipt.fullStartGraphicsExpected = receipt.supported;
+    receipt.startupMenuReady = receipt.dataReady && receipt.versionReady;
+    receipt.fullStartGraphicsReady =
+        receipt.fullStartGraphicsExpected && receipt.startupMenuReady;
+
+    if (!receipt.supported) {
+        receipt.statusLabel = "UNSUPPORTED";
+        receipt.detailLabel = "RUNTIME NOT WIRED";
+    } else if (!receipt.dataReady) {
+        receipt.statusLabel = "DATA MISSING";
+        receipt.detailLabel = M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)
+                                  ? "HASHED, BUT FILES ARE MISSING"
+                                  : "KNOWN SLOT, HASH COVERAGE STILL GROWING";
+    } else if (!receipt.versionReady) {
+        receipt.statusLabel = "VERSION MISSING";
+        receipt.detailLabel = "SELECTED VERSION IS NOT VERIFIED";
+    } else {
+        receipt.statusLabel = m12_full_start_ready_status_label(entry->gameId);
+        receipt.detailLabel = m12_full_start_ready_detail_label(entry->gameId);
+    }
+
+    *outReadiness = receipt;
+    return 1;
+}
+
+const char* M12_StartupMenu_GetEntryBootStatusLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex) {
+    M12_StartupBootReadiness receipt;
+    if (!M12_StartupMenu_GetBootReadiness(state, entryIndex, &receipt) ||
+        !receipt.statusLabel) {
+        return "OFFLINE";
+    }
+    return receipt.statusLabel;
+}
+
+const char* M12_StartupMenu_GetEntryBootDetailLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex) {
+    M12_StartupBootReadiness receipt;
+    if (!M12_StartupMenu_GetBootReadiness(state, entryIndex, &receipt) ||
+        !receipt.detailLabel) {
+        return "OFFLINE";
+    }
+    return receipt.detailLabel;
+}
+
 static const char *g_game_mode_labels[M12_GAME_MODE_COUNT] = {
     _("New Game (Original)"),
     _("New Game (Original + Filters)"),
@@ -8004,8 +8126,11 @@ static void m12_draw_game_card(const M12_StartupMenuState* state,
                                 framebufferHeight,
                                 x + 8,
                                 y + artH + 36,
-                                64,
-                                m12_entry_status_text(entry),
+                                132,
+                                (entry && entry->kind == M12_MENU_ENTRY_GAME)
+                                    ? M12_StartupMenu_GetEntryBootStatusLabel(
+                                          state, entryIndex)
+                                    : m12_entry_status_text(entry),
                                 m12_entry_status_fill(entry, selected),
                                 M12_COLOR_BLACK,
                                 m12_entry_status_text_color(entry, selected));
@@ -8022,7 +8147,9 @@ static void m12_draw_game_card(const M12_StartupMenuState* state,
                   framebufferHeight,
                   x + 8,
                   y + h - 14,
-                  m12_entry_detail_line(entry),
+                  (entry && entry->kind == M12_MENU_ENTRY_GAME)
+                      ? M12_StartupMenu_GetEntryBootDetailLabel(state, entryIndex)
+                      : m12_entry_detail_line(entry),
                   &g_textSmallMuted);
 }
 

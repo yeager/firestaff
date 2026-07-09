@@ -312,6 +312,19 @@ typedef struct {
     const char* csbImportDm1SavePath; /* Non-NULL when CSB utility-imports a DM1 save */
 } M12_LaunchIntent;
 
+typedef struct {
+    int handled;
+    const char* gameId;
+    int supported;
+    int dataReady;
+    int versionReady;
+    int fullStartGraphicsExpected;
+    int fullStartGraphicsReady;
+    int startupMenuReady;
+    const char* statusLabel;
+    const char* detailLabel;
+} M12_StartupBootReadiness;
+
 
 /* ── Redesigned main menu items (pass604) ─────────────────────────── */
 typedef enum {
@@ -522,6 +535,15 @@ const char* M12_StartupMenu_GetDataStatusValue(const M12_StartupMenuState* state
 const char* M12_StartupMenu_GetRetroAchievementsStatusValue(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRetroAchievementsTokenValue(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRetroAchievementsEndpointValue(const M12_StartupMenuState* state);
+int M12_StartupMenu_GetBootReadiness(const M12_StartupMenuState* state,
+                                     int entryIndex,
+                                     M12_StartupBootReadiness* outReadiness);
+const char* M12_StartupMenu_GetEntryBootStatusLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex);
+const char* M12_StartupMenu_GetEntryBootDetailLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex);
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir);
 int M12_StartupMenu_ExportQuickResumeDM1PC34(M12_StartupMenuState* state,
