@@ -5086,6 +5086,7 @@ static int orch_link_thing_to_square_tail_compat(
     unsigned short thing)
 {
     int sftIndex;
+    DM1_ProjectileSquareAttachPlanPc34 attachPlan;
     unsigned short current;
     int safety = 0;
 
@@ -5095,18 +5096,41 @@ static int orch_link_thing_to_square_tail_compat(
         world->dungeon, mapIndex, mapX, mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
 
-    if (!orch_set_next_thing_compat(world->things, thing, THING_ENDOFLIST)) {
+    memset(&attachPlan, 0, sizeof(attachPlan));
+    if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
+            thing, world->things->squareFirstThings[sftIndex], THING_NONE,
+            &attachPlan) ||
+        !attachPlan.valid ||
+        !attachPlan.shouldSetDroppedNextEnd) {
         return 0;
     }
-    current = world->things->squareFirstThings[sftIndex];
-    if (current == THING_NONE || current == THING_ENDOFLIST) {
-        world->things->squareFirstThings[sftIndex] = thing;
+    if (!orch_set_next_thing_compat(
+            world->things, attachPlan.baseThing, THING_ENDOFLIST)) {
+        return 0;
+    }
+    current = attachPlan.squareFirstThing;
+    if (attachPlan.shouldSetSquareFirstThing) {
+        world->things->squareFirstThings[sftIndex] = attachPlan.droppedThing;
         return 1;
     }
     while (current != THING_NONE && current != THING_ENDOFLIST && safety++ < 64) {
         unsigned short next = orch_next_thing_compat(world->things, current);
         if (next == THING_NONE || next == THING_ENDOFLIST) {
-            return orch_set_next_thing_compat(world->things, current, thing);
+            memset(&attachPlan, 0, sizeof(attachPlan));
+            if (!dm1_v1_projectile_square_attach_plan_f0215_pc34(
+                    thing, world->things->squareFirstThings[sftIndex],
+                    current, &attachPlan) ||
+                !attachPlan.valid ||
+                !attachPlan.shouldAppendAfterTail ||
+                !attachPlan.shouldSetDroppedNextEnd) {
+                return 0;
+            }
+            if (!orch_set_next_thing_compat(
+                    world->things, attachPlan.baseThing, THING_ENDOFLIST)) {
+                return 0;
+            }
+            return orch_set_next_thing_compat(
+                world->things, attachPlan.tailThing, attachPlan.droppedThing);
         }
         current = next;
     }
