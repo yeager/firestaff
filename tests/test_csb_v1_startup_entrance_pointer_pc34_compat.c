@@ -905,8 +905,28 @@ int main(void)
               plan.asset_commands[1].asset_id == 2 &&
               plan.asset_commands[2].kind ==
                   CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34 &&
-              plan.asset_commands[2].asset_id == 3,
-          "startup render plan owns closed entrance prompt, fallback rows, door boxes, asset blits, and primitive frame");
+              plan.asset_commands[2].asset_id == 3 &&
+              plan.menu_option_count == 4 &&
+              plan.menu_options[0].command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              plan.menu_options[0].enabled &&
+              plan.menu_options[0].selected &&
+              strcmp(plan.menu_options[0].label, "ENTER DUNGEON") == 0 &&
+              plan.menu_options[1].command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
+              !plan.menu_options[1].enabled &&
+              strcmp(plan.menu_options[1].label, "RESUME") == 0 &&
+              strcmp(plan.menu_options[1].unavailable_label,
+                     "RESUME UNAVAILABLE") == 0 &&
+              plan.menu_options[2].command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34 &&
+              plan.menu_options[2].enabled &&
+              strcmp(plan.menu_options[2].label, "CREDITS") == 0 &&
+              plan.menu_options[3].command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34 &&
+              plan.menu_options[3].enabled &&
+              strcmp(plan.menu_options[3].label, "QUIT") == 0,
+          "startup render plan owns closed entrance prompt, fallback rows, menu options, door boxes, asset blits, and primitive frame");
     check(plan.render_command_count == 5 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
@@ -975,8 +995,11 @@ int main(void)
               plan.fallback_text_rows[1].visible &&
               !plan.fallback_text_rows[2].visible &&
               !plan.fallback_text_rows[3].visible &&
-              plan.fallback_text_rows[4].visible,
-          "startup render plan suppresses fallback status rows behind utility overlay");
+              plan.fallback_text_rows[4].visible &&
+              plan.menu_option_count == 4 &&
+              plan.menu_options[1].command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
+          "startup render plan suppresses fallback status rows behind utility overlay without dropping menu options");
 
     render_state.utility_overlay_active = 0;
     render_state.entrance_frame = 12;
@@ -2426,6 +2449,27 @@ int main(void)
                   strcmp(facts.resume_path, "/tmp/csb-save.dat") == 0 &&
                   facts.boot_profile == (const void *)0x1234,
               "startup host facts wrapper owns M11 runtime-state copy contract");
+        {
+            CSB_V1_StartupHostFacts_PC34 menu_facts = facts;
+            menu_facts.title_active = 0;
+            menu_facts.entrance_source_step =
+                csb_v1_startup_entrance_wait_stage_pc34();
+            menu_facts.credits_active = 0;
+            menu_facts.opening_active = 0;
+            menu_facts.utility_overlay_active = 0;
+            menu_facts.boot_profile = NULL;
+            check(csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
+                      &menu_facts,
+                      &plan) &&
+                      plan.surface ==
+                          CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+                      plan.menu_option_count == 4 &&
+                      plan.menu_options[1].command_id ==
+                          CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
+                      plan.menu_options[1].enabled &&
+                      strcmp(plan.menu_options[1].label, "RESUME") == 0,
+                  "startup render plan host facts enable resume menu option");
+        }
         memset(animation, 0, sizeof(animation));
         animation_active = -1;
         title_frame = -1;

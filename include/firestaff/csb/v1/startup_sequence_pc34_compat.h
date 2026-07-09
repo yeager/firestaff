@@ -176,6 +176,7 @@ typedef enum CSB_V1_StartupTitleBlitKind_PC34 {
 #define CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34 5
 #define CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34 4
 #define CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34 4
+#define CSB_V1_STARTUP_MENU_OPTION_CAP_PC34 4
 
 typedef enum CSB_V1_StartupAssetCommandKind_PC34 {
     CSB_V1_STARTUP_ASSET_NONE_PC34 = 0,
@@ -228,6 +229,16 @@ typedef struct CSB_V1_StartupPrimitiveCommand_PC34 {
     int visible;
 } CSB_V1_StartupPrimitiveCommand_PC34;
 
+typedef struct CSB_V1_StartupMenuOption_PC34 {
+    int command_id;
+    int enabled;
+    int selected;
+    int x;
+    int y;
+    const char *label;
+    const char *unavailable_label;
+} CSB_V1_StartupMenuOption_PC34;
+
 #define CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34 8
 
 typedef enum CSB_V1_StartupRenderCommandKind_PC34 {
@@ -257,6 +268,7 @@ typedef struct CSB_V1_StartupRenderState_PC34 {
     int opening_delay_ticks;
     int opening_step;
     int utility_overlay_active;
+    int resume_available;
     int runtime_start_valid;
     int runtime_start_x;
     int runtime_start_y;
@@ -380,6 +392,9 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int primitive_command_count;
     CSB_V1_StartupPrimitiveCommand_PC34 primitive_commands[
         CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34];
+    int menu_option_count;
+    CSB_V1_StartupMenuOption_PC34 menu_options[
+        CSB_V1_STARTUP_MENU_OPTION_CAP_PC34];
     int render_command_count;
     CSB_V1_StartupRenderCommand_PC34 render_commands[
         CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34];
@@ -527,6 +542,7 @@ typedef struct CSB_V1_StartupRenderPlanRequest_PC34 {
     int pending_command;
     int entrance_frame;
     int utility_overlay_active;
+    int resume_available;
     int runtime_start_valid;
     int runtime_start_x;
     int runtime_start_y;

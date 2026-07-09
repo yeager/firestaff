@@ -349,6 +349,101 @@ static void csb_v1_startup_clear_primitive_commands_pc34(
     }
 }
 
+static void csb_v1_startup_clear_menu_options_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int i;
+    if (!plan) {
+        return;
+    }
+    plan->menu_option_count = 0;
+    for (i = 0; i < CSB_V1_STARTUP_MENU_OPTION_CAP_PC34; ++i) {
+        plan->menu_options[i].command_id =
+            CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+        plan->menu_options[i].enabled = 0;
+        plan->menu_options[i].selected = 0;
+        plan->menu_options[i].x = 0;
+        plan->menu_options[i].y = 0;
+        plan->menu_options[i].label = NULL;
+        plan->menu_options[i].unavailable_label = NULL;
+    }
+}
+
+static void csb_v1_startup_add_menu_option_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan,
+    int command_id,
+    int enabled,
+    int selected,
+    int x,
+    int y,
+    const char *label,
+    const char *unavailable_label)
+{
+    CSB_V1_StartupMenuOption_PC34 *option;
+    if (!plan || !label || label[0] == '\0' ||
+        plan->menu_option_count >= CSB_V1_STARTUP_MENU_OPTION_CAP_PC34) {
+        return;
+    }
+    option = &plan->menu_options[plan->menu_option_count++];
+    option->command_id = command_id;
+    option->enabled = enabled ? 1 : 0;
+    option->selected = selected ? 1 : 0;
+    option->x = x;
+    option->y = y;
+    option->label = label;
+    option->unavailable_label = unavailable_label;
+}
+
+static void csb_v1_startup_set_entrance_menu_options_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan,
+    int resume_available)
+{
+    if (!plan) {
+        return;
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 waits on the entrance
+     * command loop, with C001/C000/C203/C216-style command exits.  This
+     * table exposes that menu contract to M11/HUD consumers without moving
+     * command execution out of the CSB startup module. */
+    csb_v1_startup_clear_menu_options_pc34(plan);
+    csb_v1_startup_add_menu_option_pc34(
+        plan,
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+        1,
+        1,
+        38,
+        108,
+        "ENTER DUNGEON",
+        NULL);
+    csb_v1_startup_add_menu_option_pc34(
+        plan,
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
+        resume_available,
+        0,
+        38,
+        120,
+        "RESUME",
+        "RESUME UNAVAILABLE");
+    csb_v1_startup_add_menu_option_pc34(
+        plan,
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34,
+        1,
+        0,
+        38,
+        132,
+        "CREDITS",
+        NULL);
+    csb_v1_startup_add_menu_option_pc34(
+        plan,
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34,
+        1,
+        0,
+        38,
+        144,
+        "QUIT",
+        NULL);
+}
+
 static void csb_v1_startup_clear_asset_commands_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
@@ -1748,6 +1843,7 @@ int csb_v1_startup_render_state_from_command_state_pc34(
     out_state->opening_delay_ticks = command_state->opening_delay_ticks;
     out_state->opening_step = command_state->opening_step;
     out_state->utility_overlay_active = utility_overlay_active ? 1 : 0;
+    out_state->resume_available = 0;
     out_state->runtime_start_valid = runtime_start_valid ? 1 : 0;
     out_state->runtime_start_x = runtime_start_x;
     out_state->runtime_start_y = runtime_start_y;
@@ -1799,6 +1895,7 @@ int csb_v1_startup_build_render_plan_from_request_pc34(
             &render_state)) {
         return 0;
     }
+    render_state.resume_available = request->resume_available ? 1 : 0;
     return csb_v1_startup_build_render_plan_pc34(&render_state, out_plan);
 }
 
@@ -1840,6 +1937,7 @@ int csb_v1_startup_build_render_plan_from_facts_pc34(
     request.pending_command = pending_command;
     request.entrance_frame = entrance_frame;
     request.utility_overlay_active = utility_overlay_active;
+    request.resume_available = 0;
     request.runtime_start_valid = runtime_start_valid;
     request.runtime_start_x = runtime_start_x;
     request.runtime_start_y = runtime_start_y;
@@ -1906,27 +2004,38 @@ int csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
     const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
+    CSB_V1_StartupRenderPlanRequest_PC34 request;
+
     if (!facts) {
         return csb_v1_startup_build_render_plan_from_request_pc34(NULL,
                                                                   out_plan);
     }
-    return csb_v1_startup_build_render_plan_from_host_facts_pc34(
-        facts->title_active,
-        facts->title_frame,
-        facts->title_source_step,
-        facts->entrance_active,
-        facts->entrance_source_step,
-        facts->entrance_dismissed,
-        facts->credits_active,
-        facts->credits_remaining_ticks,
-        facts->opening_active,
-        facts->opening_delay_ticks,
-        facts->opening_step,
-        facts->pending_command,
-        facts->entrance_frame,
-        facts->utility_overlay_active,
-        facts->boot_profile,
-        out_plan);
+    memset(&request, 0, sizeof(request));
+    request.title_active = facts->title_active;
+    request.title_frame = facts->title_frame;
+    request.title_source_step = facts->title_source_step;
+    request.entrance_active = facts->entrance_active;
+    request.entrance_source_step = facts->entrance_source_step;
+    request.entrance_dismissed = facts->entrance_dismissed;
+    request.credits_active = facts->credits_active;
+    request.credits_remaining_ticks = facts->credits_remaining_ticks;
+    request.opening_active = facts->opening_active;
+    request.opening_delay_ticks = facts->opening_delay_ticks;
+    request.opening_step = facts->opening_step;
+    request.pending_command = facts->pending_command;
+    request.entrance_frame = facts->entrance_frame;
+    request.utility_overlay_active = facts->utility_overlay_active;
+    request.resume_available = facts->resume_available;
+    if (facts->boot_profile) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)facts->boot_profile;
+        request.runtime_start_valid = 1;
+        request.runtime_start_x = profile->runtime.party_x;
+        request.runtime_start_y = profile->runtime.party_y;
+        request.runtime_start_dir = profile->runtime.party_dir;
+    }
+    return csb_v1_startup_build_render_plan_from_request_pc34(&request,
+                                                              out_plan);
 }
 
 int csb_v1_startup_command_state_from_request_pc34(
@@ -2192,6 +2301,7 @@ int csb_v1_startup_build_render_plan_pc34(
     csb_v1_startup_clear_fallback_text_pc34(&plan);
     csb_v1_startup_clear_asset_commands_pc34(&plan);
     csb_v1_startup_clear_primitive_commands_pc34(&plan);
+    csb_v1_startup_clear_menu_options_pc34(&plan);
     csb_v1_startup_clear_render_commands_pc34(&plan);
     plan.blink_prompt_visible = 0;
     plan.opening_step = 0;
@@ -2268,6 +2378,9 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
     csb_v1_startup_set_closed_door_rects_pc34(&plan);
     csb_v1_startup_set_entrance_fallback_text_pc34(&plan);
+    csb_v1_startup_set_entrance_menu_options_pc34(
+        &plan,
+        state->resume_available);
     plan.fallback_status_visible = !state->utility_overlay_active;
     if (state->runtime_start_valid) {
         plan.fallback_detail_visible = !state->utility_overlay_active;
