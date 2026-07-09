@@ -171,6 +171,12 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.dm1HoCNoHostFallbackVisualsReady == 1);
     CHECK(boot.dm1HoCLowerLevelHelpersReady == 1);
     CHECK(boot.dm1HoCHostDrawRejectsBackingFallbackReady == 1);
+    CHECK(boot.dm1HoCHoCAssetCaptureReady == 1);
+    CHECK(boot.dm1HoCHostWindowCaptureReady == 1);
+    CHECK(boot.dm1HoCOpenedEntranceFrameReady == 1);
+    CHECK(boot.dm1HoCHallMirrorOverlayReady == 1);
+    CHECK(boot.dm1HoCBlockedEnterUntilChampionReady == 1);
+    CHECK(boot.dm1HoCRenderCommandCount == 3);
     CHECK(boot.startupMenuReady == 1);
     CHECK(boot.startupStepCount == 7);
     CHECK(boot.startupStepReadyCount == 7);
