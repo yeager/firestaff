@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0412 runtime spell receipts: DM1 spell casting now exposes source-locked runtime receipts for spell-created projectiles, champion rotation, XP/disable ticks, light C70 event facts, and failure suppression so callers can stop deriving those facts in M10/M11. Verification: `test_dm1_v1_spell_casting_pc34_compat` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus SNDLEV SFX runtime receipt: Nexus level load now reads real `SNDLEV##.SAL/.MAP` beside DGN/SLEV, records a current-level SFX receipt with SAL/MAP size classification and CD-track route, and blocks real SFX playback until SAL/MAP decode is implemented instead of logging fallback sounds. Verification: `test_nexus_v1_sound_runtime_receipt`, `test_nexus_v1_boot_file_hash_scan`, `nexus_v1_audio_receipt` CTest, and `git diff --check` passed.
 
 - ✅ 2026-07-09 CSB runtime-state render-view adapter: CSB boot now exposes the post-FTL title, closed-door HUD/menu, utility fallback, and door-opening render-view receipt directly from runtime-state fields, and the old render-plan adapter now routes through that CSB-owned receipt. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
