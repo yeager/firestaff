@@ -56,6 +56,8 @@ static const char *const g_csb_boot_fast_scan_subdirs[] = {
 static void csb_v1_boot_startup_route_from_presentation_pc34(
     const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt);
+static void csb_v1_boot_startup_hud_menu_state_init_pc34(
+    CSB_V1_BootStartupHudMenuStateReceipt_PC34 *state);
 
 /* ── DM1-assumption rejection strings ────────────────────────────────────
  *
@@ -1606,6 +1608,23 @@ int csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
             &facts,
             &out_receipt->utility_plan)) {
         out_receipt->utility_plan_valid = 1;
+        out_receipt->hud_menu_state.valid = 1;
+        out_receipt->hud_menu_state.kind =
+            CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34;
+        out_receipt->hud_menu_state.utility_selected_action_index =
+            facts.utility_selected_action_index;
+        out_receipt->hud_menu_state.utility_preview_active =
+            facts.utility_preview_active ? 1 : 0;
+        out_receipt->hud_menu_state.utility_menu_row_count =
+            out_receipt->utility_plan.menu_row_count;
+        out_receipt->hud_menu_state.option_count =
+            out_receipt->utility_plan.menu_row_count;
+        snprintf(out_receipt->hud_menu_state.prompt,
+                 sizeof(out_receipt->hud_menu_state.prompt),
+                 "%s",
+                 out_receipt->utility_plan.has_prompt_row
+                     ? out_receipt->utility_plan.prompt_row.text
+                     : "");
     }
     return out_receipt->valid;
 }
@@ -2095,6 +2114,18 @@ void csb_v1_boot_startup_presentation_route_receipt_init_pc34(
     receipt->special_palette = -1;
     csb_v1_startup_presentation_receipt_init_pc34(
         &receipt->presentation);
+    csb_v1_boot_startup_hud_menu_state_init_pc34(
+        &receipt->hud_menu_state);
+}
+
+static void csb_v1_boot_startup_hud_menu_state_init_pc34(
+    CSB_V1_BootStartupHudMenuStateReceipt_PC34 *state)
+{
+    if (!state) {
+        return;
+    }
+    memset(state, 0, sizeof(*state));
+    state->selected_command_id = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
 }
 
 static CSB_V1_BootStartupRenderRouteKind_PC34
@@ -2120,6 +2151,41 @@ csb_v1_boot_startup_route_for_surface_pc34(
     }
 }
 
+static void csb_v1_boot_startup_hud_menu_from_presentation_pc34(
+    const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
+    CSB_V1_BootStartupHudMenuStateReceipt_PC34 *out_state)
+{
+    int i;
+    /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns the entrance
+     * wait/input loop; CSBWin/Viewport.cpp keeps CSB HUD/menu state as
+     * viewport-owned presentation data. Export the selected startup menu
+     * command here so runtime consumers do not reconstruct it. */
+    if (!presentation || !out_state || !presentation->waiting_for_input ||
+        presentation->menu_option_count <= 0) {
+        return;
+    }
+    csb_v1_boot_startup_hud_menu_state_init_pc34(out_state);
+    out_state->valid = 1;
+    out_state->kind = CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34;
+    out_state->option_count = presentation->menu_option_count;
+    for (i = 0; i < presentation->render_plan.menu_option_count &&
+                i < CSB_V1_STARTUP_MENU_OPTION_CAP_PC34; ++i) {
+        const CSB_V1_StartupMenuOption_PC34 *option =
+            &presentation->render_plan.menu_options[i];
+        if (option->command_id ==
+            CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34) {
+            out_state->resume_enabled = option->enabled ? 1 : 0;
+        }
+        if (option->selected) {
+            out_state->selected_command_id = option->command_id;
+        }
+    }
+    snprintf(out_state->prompt, sizeof(out_state->prompt), "%s",
+             presentation->render_plan.fallback_prompt_text
+                 ? presentation->render_plan.fallback_prompt_text
+                 : "");
+}
+
 static void csb_v1_boot_startup_route_from_presentation_pc34(
     const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 *out_receipt)
@@ -2135,6 +2201,9 @@ static void csb_v1_boot_startup_route_from_presentation_pc34(
     out_receipt->accepts_input = presentation->accepts_input;
     out_receipt->waiting_for_input = presentation->waiting_for_input;
     out_receipt->menu_option_count = presentation->menu_option_count;
+    csb_v1_boot_startup_hud_menu_from_presentation_pc34(
+        presentation,
+        &out_receipt->hud_menu_state);
 
     /* ReDMCSB TITLE.C F0437 lines 424-463 draws PRESENTS, CHAOS zoom,
      * and STRIKES BACK; ENTRANCE.C F0441/F0806 lines 409-447 and

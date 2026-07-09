@@ -142,6 +142,26 @@ typedef enum CSB_V1_BootStartupRenderRouteKind_PC34 {
     CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34 = 6
 } CSB_V1_BootStartupRenderRouteKind_PC34;
 
+#define CSB_V1_BOOT_STARTUP_HUD_PROMPT_CAP_PC34 192
+
+typedef enum CSB_V1_BootStartupHudMenuKind_PC34 {
+    CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34 = 0,
+    CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 = 1,
+    CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 = 2
+} CSB_V1_BootStartupHudMenuKind_PC34;
+
+typedef struct CSB_V1_BootStartupHudMenuStateReceipt_PC34 {
+    int valid;
+    CSB_V1_BootStartupHudMenuKind_PC34 kind;
+    int option_count;
+    int selected_command_id;
+    int resume_enabled;
+    int utility_selected_action_index;
+    int utility_preview_active;
+    int utility_menu_row_count;
+    char prompt[CSB_V1_BOOT_STARTUP_HUD_PROMPT_CAP_PC34];
+} CSB_V1_BootStartupHudMenuStateReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupPresentationRouteReceipt_PC34 {
     int valid;
     CSB_V1_BootStartupRenderRouteKind_PC34 route;
@@ -156,6 +176,7 @@ typedef struct CSB_V1_BootStartupPresentationRouteReceipt_PC34 {
     int menu_option_count;
     int utility_plan_valid;
     CSB_V1_UtilRenderPlan utility_plan;
+    CSB_V1_BootStartupHudMenuStateReceipt_PC34 hud_menu_state;
     int accepts_input;
     int waiting_for_input;
     CSB_V1_StartupPresentationReceipt_PC34 presentation;

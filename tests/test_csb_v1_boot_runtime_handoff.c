@@ -1947,8 +1947,30 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_UTIL_MENU_ROW_COUNT &&
               strstr(route_receipt.utility_plan.prompt_row.text,
                      "CHAOS STRIKES BACK READY") != NULL &&
+              route_receipt.hud_menu_state.valid &&
+              route_receipt.hud_menu_state.kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              route_receipt.hud_menu_state.utility_selected_action_index == 0 &&
+              route_receipt.hud_menu_state.utility_menu_row_count ==
+                  CSB_V1_UTIL_MENU_ROW_COUNT &&
+              strstr(route_receipt.hud_menu_state.prompt,
+                     "CHAOS STRIKES BACK READY") != NULL &&
               route_receipt.accepts_input,
-          "boot startup route receipt owns closed entrance HUD/menu plan route");
+          "boot startup route receipt owns closed entrance utility HUD/menu plan route");
+    snapshot.utility_overlay_active = 0;
+    CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
+              &snapshot,
+              &route_receipt) == 1 &&
+              route_receipt.hud_menu_state.valid &&
+              route_receipt.hud_menu_state.kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              route_receipt.hud_menu_state.selected_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              route_receipt.hud_menu_state.option_count == 4 &&
+              strstr(route_receipt.hud_menu_state.prompt, "PRESS ENTER") !=
+                  NULL,
+          "boot startup route receipt owns closed entrance HUD/menu state");
+    snapshot.utility_overlay_active = 1;
     snapshot.opening_active = 1;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 3;
