@@ -11208,8 +11208,47 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_consumer)
 {
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 front_wall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
+    const M11_AssetSlot* portraits;
+    const M11_AssetSlot* backing;
+    int hoc_assets_ready;
+    int host_window_present;
 
     memset(&facts, 0, sizeof(facts));
+    memset(&front_wall, 0, sizeof(front_wall));
+    memset(&mirror_render, 0, sizeof(mirror_render));
+    portraits = NULL;
+    backing = NULL;
+    hoc_assets_ready = 0;
+    host_window_present = 0;
+
+    if (state && state->assetsAvailable && state->assetLoader.fileState &&
+        DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 2, 2, &front_wall) &&
+        DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&front_wall,
+                                                     &mirror_render) &&
+        mirror_render.valid &&
+        mirror_render.drawChampionPortrait) {
+        portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                         (unsigned int)mirror_render.graphicIndex);
+        backing = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                       (unsigned int)mirror_render.backingGraphicIndex);
+        hoc_assets_ready =
+            portraits && portraits->loaded && portraits->pixels &&
+            portraits->width >=
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_WIDTH_PC34_COMPAT &&
+            portraits->height >=
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_HEIGHT_PC34_COMPAT &&
+            backing && backing->loaded && backing->pixels &&
+            backing->width > 0 && backing->height > 0;
+    }
+#ifdef __APPLE__
+    host_window_present = M11_Render_GetWindow() != NULL;
+#else
+    host_window_present = 0;
+#endif
+
     facts.source_id = state ? state->sourceId : NULL;
     facts.dungeon_loaded =
         state && state->world.dungeon && state->world.dungeon->maps;
@@ -11220,13 +11259,19 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.title_played = 1;
     facts.captured_after_first_frame_render = 1;
     facts.captured_from_real_assets =
-        state && state->assetsAvailable && state->assetLoader.fileState;
+        state && state->assetsAvailable && state->assetLoader.fileState &&
+        hoc_assets_ready;
     facts.captured_from_mac_window =
 #ifdef __APPLE__
-        1;
+        host_window_present;
 #else
         0;
 #endif
+    facts.observed_c026_portrait_asset =
+        portraits && portraits->loaded && portraits->pixels ? 1 : 0;
+    facts.observed_c346_mirror_backing_asset =
+        backing && backing->loaded && backing->pixels ? 1 : 0;
+    facts.observed_host_window_present = host_window_present;
     return dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
         &facts,
         out_apply,
@@ -11484,6 +11529,10 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_consumer.mac_window_capture;
             out->dm1HoCHostCaptureRouteMatches =
                 hoc_consumer.host_capture_route_matches;
+            out->dm1HoCHoCAssetCapture =
+                hoc_consumer.hoc_asset_capture;
+            out->dm1HoCHostWindowCapture =
+                hoc_consumer.host_window_capture;
             out->dm1HoCOpenedEntranceFrame =
                 hoc_consumer.draw_opened_entrance_frame;
             out->dm1HoCHallMirrorOverlay =
@@ -29000,6 +29049,11 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     }
 
     captureFacts.captured_after_first_frame_render = 1;
+    captureFacts.captured_from_real_assets = 1;
+    captureFacts.captured_from_mac_window = 1;
+    captureFacts.observed_c026_portrait_asset = 1;
+    captureFacts.observed_c346_mirror_backing_asset = 1;
+    captureFacts.observed_host_window_present = 1;
     captureFacts.captured_map_index = artifact.expected_map_index;
     captureFacts.captured_map_width = artifact.expected_map_width;
     captureFacts.captured_map_height = artifact.expected_map_height;

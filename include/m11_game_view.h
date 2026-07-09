@@ -203,6 +203,8 @@ typedef struct {
     int dm1HoCRealAssetCapture;
     int dm1HoCMacWindowCapture;
     int dm1HoCHostCaptureRouteMatches;
+    int dm1HoCHoCAssetCapture;
+    int dm1HoCHostWindowCapture;
     int dm1HoCOpenedEntranceFrame;
     int dm1HoCHallMirrorOverlay;
     int dm1HoCBlockedEnterUntilChampion;

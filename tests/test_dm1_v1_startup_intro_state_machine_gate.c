@@ -1521,6 +1521,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_capture_facts.captured_after_first_frame_render = 1;
     hoc_capture_facts.captured_from_real_assets = 1;
     hoc_capture_facts.captured_from_mac_window = 1;
+    hoc_capture_facts.observed_c026_portrait_asset = 1;
+    hoc_capture_facts.observed_c346_mirror_backing_asset = 1;
+    hoc_capture_facts.observed_host_window_present = 1;
     hoc_capture_facts.captured_map_index = DM1_V1_ENTRANCE_MAP_INDEX_PC34;
     hoc_capture_facts.captured_map_width =
         DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34;
@@ -1552,6 +1555,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_capture_proof.real_asset_capture &&
                  hoc_capture_proof.mac_window_capture &&
                  hoc_capture_proof.host_capture_route_matches &&
+                 hoc_capture_proof.hoc_asset_capture &&
+                 hoc_capture_proof.host_window_capture &&
+                 hoc_capture_proof.redmcsb_c026_asset_present &&
+                 hoc_capture_proof.redmcsb_c346_asset_present &&
                  hoc_capture_proof.required_layers_present &&
                  hoc_capture_proof.input_block_matches,
              1);
@@ -1571,6 +1578,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_runtime_apply.real_asset_capture &&
                  hoc_runtime_apply.mac_window_capture &&
                  hoc_runtime_apply.host_capture_route_matches &&
+                 hoc_runtime_apply.hoc_asset_capture &&
+                 hoc_runtime_apply.host_window_capture &&
+                 hoc_runtime_apply.redmcsb_c026_asset_present &&
+                 hoc_runtime_apply.redmcsb_c346_asset_present &&
                  hoc_runtime_apply.apply_before_hoc_input,
              1);
     expect_i("DM1 HoC runtime apply receipt carries commands",
@@ -1644,6 +1655,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_production_consumer.real_asset_capture &&
                  hoc_production_consumer.mac_window_capture &&
                  hoc_production_consumer.host_capture_route_matches &&
+                 hoc_production_consumer.hoc_asset_capture &&
+                 hoc_production_consumer.host_window_capture &&
                  hoc_production_consumer.execute_before_hoc_input,
              1);
     expect_i("DM1 HoC production consumer carries render commands",
@@ -1692,6 +1705,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.captured_after_first_frame_render = 1;
     hoc_host_probe_facts.captured_from_real_assets = 1;
     hoc_host_probe_facts.captured_from_mac_window = 1;
+    hoc_host_probe_facts.observed_c026_portrait_asset = 1;
+    hoc_host_probe_facts.observed_c346_mirror_backing_asset = 1;
+    hoc_host_probe_facts.observed_host_window_present = 1;
     expect_i("DM1 HoC host probe carries real Mac asset capture route",
              dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
                  &hoc_host_probe_facts,
@@ -1702,6 +1718,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_host_probe_consumer.ready &&
                  hoc_host_probe_consumer.real_asset_capture &&
                  hoc_host_probe_consumer.mac_window_capture &&
+                 hoc_host_probe_consumer.hoc_asset_capture &&
+                 hoc_host_probe_consumer.host_window_capture &&
                  hoc_host_probe_consumer.host_capture_route_matches,
              1);
     hoc_host_probe_facts.captured_from_real_assets = 0;
@@ -1710,9 +1728,34 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  &hoc_host_probe_facts,
                  &hoc_host_probe_apply,
                  &hoc_host_probe_consumer) &&
-                 hoc_host_probe_consumer.ready &&
+                 !hoc_host_probe_consumer.ready &&
                  !hoc_host_probe_consumer.real_asset_capture &&
+                 !hoc_host_probe_consumer.hoc_asset_capture &&
                  hoc_host_probe_consumer.mac_window_capture &&
+                 !hoc_host_probe_consumer.host_capture_route_matches,
+             1);
+    hoc_host_probe_facts.captured_from_real_assets = 1;
+    hoc_host_probe_facts.observed_c026_portrait_asset = 0;
+    expect_i("DM1 HoC host probe rejects missing C026 real asset",
+             dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_host_probe_apply,
+                 &hoc_host_probe_consumer) &&
+                 !hoc_host_probe_consumer.ready &&
+                 hoc_host_probe_consumer.real_asset_capture &&
+                 !hoc_host_probe_consumer.hoc_asset_capture &&
+                 !hoc_host_probe_consumer.host_capture_route_matches,
+             1);
+    hoc_host_probe_facts.observed_c026_portrait_asset = 1;
+    hoc_host_probe_facts.observed_host_window_present = 0;
+    expect_i("DM1 HoC host probe records missing Mac host window separately",
+             dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_host_probe_apply,
+                 &hoc_host_probe_consumer) &&
+                 !hoc_host_probe_consumer.ready &&
+                 hoc_host_probe_consumer.mac_window_capture &&
+                 !hoc_host_probe_consumer.host_window_capture &&
                  !hoc_host_probe_consumer.host_capture_route_matches,
              1);
     hoc_lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);

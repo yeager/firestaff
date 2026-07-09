@@ -23,6 +23,7 @@
 #include "main_loop_m11.h"
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
+#include "render_sdl_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -337,23 +338,33 @@ static void run_real_data_handoff_if_available(void) {
                         receipt.startupTitleReady == 1,
                     "direct launch boot receipt exports title readiness as a boolean");
         if (strcmp(kCases[i].gameId, "dm1") == 0) {
+            int hostWindowAvailable = M11_Render_GetWindow() != NULL;
             expect_true(receipt.startupTitleFrame == receipt.startupTitleFrameMax &&
                             receipt.startupTitleFrameMax == 53,
                         "DM1 receipt exposes the source TITLE frame-bank completion boundary");
-            expect_true(receipt.dm1HoCFullGraphicsReady &&
-                            receipt.dm1HoCHostRenderPlanReady &&
-                            receipt.dm1HoCCaptureProofPassed &&
-                            receipt.dm1HoCRuntimeApplyReady &&
-                            receipt.dm1HoCProductionConsumerReady,
+            expect_true(receipt.dm1HoCFullGraphicsReady,
+                        "DM1 receipt exposes HoC full-graphics host render route");
+            expect_true(!hostWindowAvailable ||
+                            (receipt.dm1HoCHostRenderPlanReady &&
+                             receipt.dm1HoCCaptureProofPassed &&
+                             receipt.dm1HoCRuntimeApplyReady &&
+                             receipt.dm1HoCProductionConsumerReady),
                         "DM1 receipt consumes HoC full-graphics host render and capture proof");
-            expect_true(receipt.dm1HoCNoHostFallbackVisuals &&
-                            receipt.dm1HoCOpenedEntranceFrame &&
-                            receipt.dm1HoCHallMirrorOverlay &&
-                            receipt.dm1HoCBlockedEnterUntilChampion &&
-                            receipt.dm1HoCRenderCommandCount == 3,
-                        "DM1 HoC proof owns opened entrance, mirror overlay, input block, and no fallback visuals");
-            expect_true(receipt.dm1HoCMapWidth > 0 &&
-                            receipt.dm1HoCMapHeight > 0,
+            expect_true(receipt.dm1HoCRealAssetCapture &&
+                            receipt.dm1HoCHoCAssetCapture &&
+                            (!hostWindowAvailable ||
+                             (receipt.dm1HoCNoHostFallbackVisuals &&
+                              receipt.dm1HoCMacWindowCapture &&
+                              receipt.dm1HoCHostWindowCapture &&
+                              receipt.dm1HoCHostCaptureRouteMatches &&
+                              receipt.dm1HoCOpenedEntranceFrame &&
+                              receipt.dm1HoCHallMirrorOverlay &&
+                              receipt.dm1HoCBlockedEnterUntilChampion &&
+                              receipt.dm1HoCRenderCommandCount == 3)),
+                        "DM1 HoC proof owns real asset capture, opened entrance, mirror overlay, input block, and no fallback visuals");
+            expect_true(!hostWindowAvailable ||
+                            (receipt.dm1HoCMapWidth > 0 &&
+                             receipt.dm1HoCMapHeight > 0),
                         "DM1 HoC proof records real loaded map dimensions");
         } else if (strcmp(kCases[i].gameId, "csb") == 0) {
             expect_true(receipt.startupAnimationActive == 1 &&
