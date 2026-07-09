@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 front-mirror host draw receipt: DM1 champion-mirror receipts now own C346 asset/fallback/invariant backing and C040 panel suppression, and M11 D1C drawing consumes that receipt instead of branching on host fallback rules. Verification: `test_dm1_v1_champion_mirror_pc34_compat`, `test_m11_overlay_command_queue_block`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus real-asset ownership receipt: launcher now exposes a Nexus-owned receipt that joins title/menu capture, BPK/PRS3 startup blockers, DGN first-render handoff, and no-fallback visual enforcement. Verification: `test_nexus_v1_startup_menu_pc34_compat` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron menu/runtime handoff package: boot now exposes a Track02 media-owned package for host render, optional input/pointer routing, real-graphics runtime handoff, and no-fallback visual policy. Verification: `firestaff_theron`, Theron test object build, and `git diff --check` passed; full test target is blocked by an existing non-Theron M11/CSB type-name compile error.
