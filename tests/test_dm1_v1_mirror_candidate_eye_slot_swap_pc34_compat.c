@@ -42,9 +42,9 @@ int main(void)
 {
     DM1_V1_MirrorCandidateEyeSlotSwapResultPc34 result;
     const DM1_V1_MirrorCandidateEyeSlotSwapSpecPc34 *spec =
-        dm1_v1_mirror_candidate_eye_slot_swap_spec_pc34();
-    const char *source = dm1_v1_mirror_candidate_eye_slot_swap_source_evidence_pc34();
-    const char *nonoverlap = dm1_v1_mirror_candidate_eye_slot_swap_non_overlap_pc34();
+        DM1_V1_MirrorCandidateEyeSlotSwap_SpecPc34();
+    const char *source = DM1_V1_MirrorCandidateEyeSlotSwap_SourceEvidencePc34();
+    const char *nonoverlap = DM1_V1_MirrorCandidateEyeSlotSwap_NonOverlapPc34();
 
     check_true(spec != NULL, "spec is available",
                "PANEL.C F0352:2111-2159");
@@ -98,7 +98,7 @@ int main(void)
     check_int(spec->c09ThingTypeContainer, 9, "C09 container type id",
               spec->f0342Anchor);
 
-    check_true(dm1_v1_mirror_candidate_eye_slot_swap_run_pc34(&result) == 1,
+    check_true(DM1_V1_MirrorCandidateEyeSlotSwap_RunPc34(&result) == 1,
                "runtime contract returns accepted",
                "PANEL.C F0353:2162-2192");
 

@@ -65,24 +65,24 @@ static const DM1_V1_MirrorCandidateEyeSlotSwapSpecPc34 s_spec = {
 };
 
 const DM1_V1_MirrorCandidateEyeSlotSwapSpecPc34 *
-dm1_v1_mirror_candidate_eye_slot_swap_spec_pc34(void)
+DM1_V1_MirrorCandidateEyeSlotSwap_SpecPc34(void)
 {
     return &s_spec;
 }
 
 const char *
-dm1_v1_mirror_candidate_eye_slot_swap_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateEyeSlotSwap_SourceEvidencePc34(void)
 {
     return s_spec.sourceEvidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_eye_slot_swap_non_overlap_pc34(void)
+DM1_V1_MirrorCandidateEyeSlotSwap_NonOverlapPc34(void)
 {
     return s_spec.nonOverlap;
 }
 
-void dm1_v1_mirror_candidate_eye_slot_swap_init_pc34(
+void DM1_V1_MirrorCandidateEyeSlotSwap_InitPc34(
     DM1_V1_MirrorCandidateEyeSlotSwapStatePc34 *state)
 {
     int i;
@@ -243,7 +243,7 @@ static void release_eye_f0353(
     state->ignoreMouseMovements = 0;
 }
 
-int dm1_v1_mirror_candidate_eye_slot_swap_run_pc34(
+int DM1_V1_MirrorCandidateEyeSlotSwap_RunPc34(
     DM1_V1_MirrorCandidateEyeSlotSwapResultPc34 *out)
 {
     DM1_V1_MirrorCandidateEyeSlotSwapStatePc34 state;
@@ -261,7 +261,7 @@ int dm1_v1_mirror_candidate_eye_slot_swap_run_pc34(
         return 0;
     }
     memset(out, 0, sizeof(*out));
-    dm1_v1_mirror_candidate_eye_slot_swap_init_pc34(&state);
+    DM1_V1_MirrorCandidateEyeSlotSwap_InitPc34(&state);
     leaderHandBefore = state.leaderHandThing;
     c09IconBefore = state.c09ActionHandIcon;
     eyeIconBefore = state.eyeIconGraphic;

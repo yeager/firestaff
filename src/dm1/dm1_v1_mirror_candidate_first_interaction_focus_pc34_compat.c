@@ -36,18 +36,18 @@ static const DM1_V1_MirrorCandidateFirstInteractionFocusSpecPc34 s_spec = {
 };
 
 const DM1_V1_MirrorCandidateFirstInteractionFocusSpecPc34 *
-dm1_v1_mirror_candidate_first_interaction_focus_spec_pc34(void)
+DM1_V1_MirrorCandidateFirstInteractionFocus_SpecPc34(void)
 {
     return &s_spec;
 }
 
 const char *
-dm1_v1_mirror_candidate_first_interaction_focus_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateFirstInteractionFocus_SourceEvidencePc34(void)
 {
     return s_spec.sourceEvidence;
 }
 
-void dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(
+void DM1_V1_MirrorCandidateFirstInteractionFocus_InitPc34(
     DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 *state)
 {
     if (!state) {
@@ -119,17 +119,17 @@ static void dispatch_guarded_input_focus_probe(
     ++state->blockedActionAreaCount;
 }
 
-int dm1_v1_mirror_candidate_first_interaction_focus_run_pc34(
+int DM1_V1_MirrorCandidateFirstInteractionFocus_RunPc34(
     DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 *out)
 {
     DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 state;
 
-    dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(&state);
-    return dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(&state,
+    DM1_V1_MirrorCandidateFirstInteractionFocus_InitPc34(&state);
+    return DM1_V1_MirrorCandidateFirstInteractionFocus_TryPc34(&state,
                                                                     out);
 }
 
-int dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(
+int DM1_V1_MirrorCandidateFirstInteractionFocus_TryPc34(
     DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 *state,
     DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 *out)
 {
