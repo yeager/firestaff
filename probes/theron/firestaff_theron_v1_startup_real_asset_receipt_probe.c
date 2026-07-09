@@ -170,6 +170,56 @@ static void check_startup_mirror_summary(const Theron_V1_StartupReceipt *r,
              prefix);
     check(r->startup_decoded_art_count <= THERON_STARTUP_HERO_MIRROR_COUNT,
           name);
+    snprintf(name, sizeof(name), "%s bitmap required route mask is stable",
+             prefix);
+    check(r->startup_bitmap_required_route_mask ==
+              (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+               THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+               THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+               THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD),
+          name);
+}
+
+static void check_real_bitmap_routes_complete(
+    const Theron_V1_StartupReceipt *r,
+    const char *prefix) {
+    char name[160];
+    unsigned int required_mask =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+
+    snprintf(name, sizeof(name), "%s bitmap decode status OK", prefix);
+    check(r->startup_bitmap_decode_status == THERON_TRACK02_SIGNAL_OK, name);
+    snprintf(name, sizeof(name), "%s bitmap route mask covers all startup routes",
+             prefix);
+    check((r->startup_bitmap_route_mask & required_mask) == required_mask,
+          name);
+    snprintf(name, sizeof(name), "%s bitmap atlas mask covers all startup routes",
+             prefix);
+    check((r->startup_bitmap_atlas_route_mask & required_mask) == required_mask,
+          name);
+    snprintf(name, sizeof(name), "%s bitmap atlas has four routes", prefix);
+    check(r->startup_bitmap_atlas_route_count >= 4u, name);
+    snprintf(name, sizeof(name), "%s bitmap atlas has at least 32 tiles",
+             prefix);
+    check(r->startup_bitmap_atlas_tile_count >= 32u, name);
+    snprintf(name, sizeof(name), "%s bitmap atlas has real pixels", prefix);
+    check(r->startup_bitmap_atlas_nonzero_pixel_count > 0u &&
+              r->startup_bitmap_atlas_checksum != 0u,
+          name);
+    snprintf(name, sizeof(name), "%s title/stage/soul/forcefield atlas tiles",
+             prefix);
+    check(r->startup_bitmap_title_atlas_tile_count >= 8u &&
+              r->startup_bitmap_stage_atlas_tile_count >= 8u &&
+              r->startup_bitmap_soul_room_atlas_tile_count >= 8u &&
+              r->startup_bitmap_forcefield_atlas_tile_count >= 8u,
+          name);
+    snprintf(name, sizeof(name), "%s real bitmap routes complete", prefix);
+    check(r->startup_bitmap_real_routes_complete == 1 &&
+              r->startup_bitmap_fallback_routes_allowed == 0,
+          name);
 }
 
 static void check_startup_chapter_placeholder(
@@ -247,7 +297,7 @@ static void check_placeholder_determinism(void) {
 
 static void check_placeholder_fields(void) {
     Theron_V1_StartupReceipt r;
-    char line[2048];
+    char line[4096];
     size_t n;
 
     theron_v1_startup_receipt_set_placeholder(&r);
@@ -319,6 +369,10 @@ static void check_placeholder_fields(void) {
           "placeholder leaves startup roster-name catalog empty");
     check_startup_mirror_summary(&r, "placeholder startup");
     check_startup_chapter_placeholder(&r, "placeholder startup");
+    check(r.startup_bitmap_real_routes_complete == 0 &&
+              r.startup_bitmap_fallback_routes_allowed == 1 &&
+              r.startup_decoded_art_count == 0u,
+          "placeholder keeps bitmap fallback route active");
 
     n = theron_v1_startup_receipt_to_line(&r, line, sizeof(line));
     check(n > 0u && n < sizeof(line),
@@ -337,6 +391,10 @@ static void check_placeholder_fields(void) {
                        "rendered line contains decoded mirror label count");
     check_str_contains(line, "mirror_decoded_art=0",
                        "rendered line contains decoded mirror art count");
+    check_str_contains(line, "bitmap_real_routes=0",
+                       "rendered line marks no real bitmap routes");
+    check_str_contains(line, "bitmap_fallback=1",
+                       "rendered line marks bitmap fallback");
     check_str_contains(line, "chapter=\"Chapter ?",
                        "rendered line contains startup chapter marker");
     check_str_contains(line, "quest_total=7",
@@ -586,6 +644,7 @@ static void check_real_asset_path(void) {
          * variants.  JP Rev 1 ISO is a documented zero-fill so the
          * offsets stay zero. */
         if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_REV1_ISO) != 0) {
+            check_real_bitmap_routes_complete(&r, "real receipt startup");
             check(r.descriptor_offset != 0u,
                   "real receipt has non-zero descriptor_offset");
             check(r.descriptor_size != 0u,
@@ -615,12 +674,18 @@ static void check_real_asset_path(void) {
                       THERON_TRACK02_DESCRIPTOR_WINDOW_UNKNOWN,
                   "real receipt semantic binding reports a window kind");
             {
-                char line[2048];
+                char line[4096];
                 theron_v1_startup_receipt_to_line(&r, line, sizeof(line));
                 check_str_contains(line, "semantic_role=dungeon-seed-table",
                                    "real receipt line names semantic role");
                 check_str_contains(line, "semantic_name=",
                                    "real receipt line names semantic status");
+                check_str_contains(line, "bitmap_real_routes=1",
+                                   "real receipt line names real bitmap route completion");
+                check_str_contains(line, "bitmap_fallback=0",
+                                   "real receipt line suppresses bitmap fallback");
+                check_str_contains(line, "bitmap_atlas_routes=4",
+                                   "real receipt line names bitmap atlas route count");
             }
             if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0 ||
                 strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
@@ -734,7 +799,7 @@ static void check_real_asset_path(void) {
                       "JP raw Track 02 initial candidate user-data offset is locked");
             }
             {
-                char line[2048];
+                char line[4096];
                 theron_v1_startup_receipt_to_line(&r, line, sizeof(line));
                 check_str_contains(line, "initial_bind_name=ok",
                                    "raw Track 02 rendered line names bind status");

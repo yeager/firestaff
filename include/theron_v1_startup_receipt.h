@@ -233,6 +233,21 @@ typedef struct {
     uint32_t startup_fallback_label_count;
     uint32_t startup_decoded_label_count;
     uint32_t startup_decoded_art_count;
+    int32_t  startup_bitmap_decode_status;
+    uint32_t startup_bitmap_sample_count;
+    uint32_t startup_bitmap_route_mask;
+    uint32_t startup_bitmap_required_route_mask;
+    int      startup_bitmap_real_routes_complete;
+    int      startup_bitmap_fallback_routes_allowed;
+    uint32_t startup_bitmap_atlas_route_count;
+    uint32_t startup_bitmap_atlas_route_mask;
+    uint32_t startup_bitmap_atlas_tile_count;
+    uint64_t startup_bitmap_atlas_nonzero_pixel_count;
+    uint32_t startup_bitmap_atlas_checksum;
+    uint32_t startup_bitmap_title_atlas_tile_count;
+    uint32_t startup_bitmap_stage_atlas_tile_count;
+    uint32_t startup_bitmap_soul_room_atlas_tile_count;
+    uint32_t startup_bitmap_forcefield_atlas_tile_count;
 
     /* ── startup chapter/progression summary ─────────────────── */
     char     startup_chapter_label[THERON_CHAPTER_MARKER_LABEL_MAX];

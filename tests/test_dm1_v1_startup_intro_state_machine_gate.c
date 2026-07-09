@@ -1861,6 +1861,21 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  !hoc_host_probe_consumer.host_capture_route_matches,
              1);
     hoc_host_probe_facts.observed_c026_portrait_asset = 1;
+    hoc_host_probe_facts.observed_c346_mirror_backing_asset = 0;
+    expect_i("DM1 HoC release/app ownership rejects missing C346 backing asset",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership.hoc_asset_capture == 0 &&
+                 hoc_release_capture_ownership.host_draw_consumes_backing_asset &&
+                 !hoc_release_capture_ownership
+                      .host_draw_uses_owned_receipt &&
+                 !hoc_release_capture_ownership
+                      .consumed_owned_host_draw_receipt,
+             1);
+    hoc_host_probe_facts.observed_c346_mirror_backing_asset = 1;
     hoc_host_probe_facts.observed_host_window_present = 0;
     expect_i("DM1 HoC host probe records missing Mac host window separately",
              dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
