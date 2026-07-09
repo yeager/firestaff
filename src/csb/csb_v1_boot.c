@@ -1761,6 +1761,33 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
                 strcmp(route->presentation.animation, "csb-title") == 0
             ? 1
             : 0;
+    if (out_receipt->title_after_swoosh_route) {
+        out_receipt->title_stage = route->presentation.render_plan.title_stage;
+        out_receipt->title_source_step =
+            route->presentation.render_plan.title_source_step;
+        out_receipt->title_frame = route->presentation.title_frame;
+        out_receipt->title_frame_max = route->presentation.title_frame_max;
+        /* ReDMCSB TITLE.C F0437 lines 424-463 draws CM58 PRESENTS for 60
+         * ticks, animates CM59 CHAOS through source steps 2..21, holds CHAOS,
+         * then blits C426 STRIKES BACK. CSBWin/Viewport.cpp keeps the active
+         * title/HUD surface as view-owned state. Publish the exact stage bits
+         * here so M11 does not derive PRESENTS/CHAOS/STRIKES from frame math. */
+        out_receipt->title_presents_visible =
+            out_receipt->title_stage ==
+                    CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34
+                ? 1
+                : 0;
+        out_receipt->title_chaos_visible =
+            out_receipt->title_stage ==
+                    CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34
+                ? 1
+                : 0;
+        out_receipt->title_strikes_back_visible =
+            out_receipt->title_stage ==
+                    CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34
+                ? 1
+                : 0;
+    }
     out_receipt->closed_door_menu_route =
         route->route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
                 route->draw_closed_doors && route->hud_menu_visible
