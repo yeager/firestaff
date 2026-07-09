@@ -104,6 +104,7 @@ int main(void)
     Nexus_V1_StartupSaveRouteReceipt save_route_receipt;
     Nexus_V1_StartupTitleRouteReceipt title_route_receipt;
     Nexus_V1_StartupHit hit;
+    Nexus_V1_StartupRect footer_rect;
     Nexus_V1_StartupSaveRenderRow save_rows[4];
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
     Nexus_V1_StartupChampionFooterRender champion_footer;
@@ -769,6 +770,9 @@ int main(void)
     synthetic_engine.current_level.squares[4][4] = 1;
     synthetic_engine.current_level.collision_refs[4][3] = 0x0100;
     synthetic_engine.current_level.collision_refs[3][3] = 0x0fff;
+    nexus_v1_champions_init(&synthetic_engine.champions);
+    expect(nexus_v1_champion_recruit(&synthetic_engine.champions, 0) == 0,
+           "Nexus synthetic runtime has a party for menu-to-runtime route");
     nexus_v1_launcher_startup_runtime_state_clear(&runtime_state);
     runtime_state.engine = &synthetic_engine;
     runtime_state.champion_select_active = 1;
@@ -793,6 +797,39 @@ int main(void)
                runtime_handoff_receipt.fallback_visuals_permitted == 0 &&
                dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
            "Nexus startup handoff builds first DGN render state after champion start");
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_firestaff_input(
+               &runtime_state,
+               11,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &runtime_handoff_receipt) &&
+               runtime_handoff_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
+               runtime_handoff_receipt.champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON &&
+               runtime_handoff_receipt.host_action_receipt
+                       .champion_state_receipt_valid &&
+               runtime_handoff_receipt.command_count > 0 &&
+               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+           "Nexus startup Action input routes menu directly to first DGN render state");
+    expect(nexus_v1_startup_champion_footer_rect(&footer_rect),
+           "Nexus champion footer rect builds for pointer route");
+    runtime_snapshot.runtime = runtime_state;
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_pointer_snapshot(
+               &runtime_snapshot,
+               footer_rect.x + 1,
+               footer_rect.y + 1,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &runtime_handoff_receipt) &&
+               runtime_handoff_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
+               runtime_handoff_receipt.command_count > 0 &&
+               strcmp(runtime_handoff_receipt.status,
+                      "ready-render-state") == 0,
+           "Nexus startup footer pointer routes menu directly to first DGN render state");
     champion_execution.kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW;
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                &runtime_state,
