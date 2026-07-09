@@ -4532,8 +4532,10 @@ static int orch_apply_projectile_group_action_compat(
     int originalGroupCount;
     int associatedThingMovedToGroup = 0;
     int creatureAttributes = 0;
+    int associatedWeaponType = -1;
     DM1_ProjectileCreatureActionPlanPc34 actionPlan;
     DM1_ProjectileCreatureActionApplyPlanPc34 applyPlan;
+    DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
 
     if (!world || !action || !world->things || !world->things->groups) return 0;
     if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP) return 0;
@@ -4546,6 +4548,19 @@ static int orch_apply_projectile_group_action_compat(
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
     group = &world->things->groups[groupIndex];
     originalCreatureType = (int)group->creatureType;
+    if (projectile) {
+        unsigned short associatedThing = (unsigned short)projectile->reserved1;
+        int weaponIndex = (int)THING_GET_INDEX(associatedThing);
+        if (associatedThing != THING_NONE &&
+            associatedThing != THING_ENDOFLIST &&
+            THING_GET_TYPE(associatedThing) == THING_TYPE_WEAPON &&
+            world->things->weapons &&
+            weaponIndex >= 0 &&
+            weaponIndex < world->things->weaponCount) {
+            associatedWeaponType =
+                (int)world->things->weapons[weaponIndex].type;
+        }
+    }
     {
         const struct CreatureBehaviorProfile_Compat* profile =
             CREATURE_GetProfile_Compat(originalCreatureType);
@@ -4589,6 +4604,12 @@ static int orch_apply_projectile_group_action_compat(
         !applyPlan.handled) {
         return 0;
     }
+    memset(&aftermath, 0, sizeof(aftermath));
+    if (!dm1_v1_projectile_creature_action_aftermath_pc34(
+            &actionPlan, projectile, creatureAttributes, (int)group->behavior,
+            applyPlan.outcomeCode, associatedWeaponType, &aftermath)) {
+        return 0;
+    }
     if (applyPlan.outcomeCode == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
         /* ReDMCSB PROJEXPL.C:F0217 lines 535-539 receives the F0190
          * damage outcome; GROUP.C:F0190 lines 907-917 creates death
@@ -4627,14 +4648,16 @@ static int orch_apply_projectile_group_action_compat(
                 action->targetMapIndex, action->targetMapX, action->targetMapY);
             emit(result, EMIT_KILL_NOTIFY, groupIndex, creatureIndex,
                  applyPlan.outcomeCode, originalCreatureType);
-        } else {
+        } else if (aftermath.keepSharpWeaponInGroup) {
             if (orch_maybe_attach_projectile_weapon_to_group_slot_compat(
                     world, group, projectile, applyPlan.outcomeCode)) {
                 associatedThingMovedToGroup = 1;
             }
         }
-        orch_schedule_projectile_hit_group_reaction_compat(
-            world, groupIndex, group, action);
+        if (aftermath.scheduleReaction) {
+            orch_schedule_projectile_hit_group_reaction_compat(
+                world, groupIndex, group, action);
+        }
     }
     /* ReDMCSB GROUP.C:F0190 lines 892-917 mutates the live group record
      * after projectile damage: surviving groups carry compacted HP/cells and
