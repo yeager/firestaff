@@ -1291,21 +1291,10 @@ int dm2_v1_boot_startup_view_model_from_snapshot(
             out_view_receipt->render.valid = 1;
             out_view_receipt->render.hud_runtime_ready = 1;
             out_view_receipt->render.hud_overlay_suppressed = 0;
-            handoff->valid = 1;
-            handoff->startup_menu_active = 0;
-            handoff->animation_active = 0;
-            snprintf(handoff->animation,
-                     sizeof(handoff->animation),
-                     "%s",
-                     "dm2-runtime");
-            handoff->title_ready = 1;
-            handoff->initialize_v2_runtime = 1;
-            handoff->initialize_hud_runtime = 1;
-            handoff->initialize_touch_runtime = 1;
-            handoff->hud_runtime_ready = 1;
-            handoff->runtime_menu_ready = 0;
-            handoff->runtime_action_ready = 1;
-            handoff->first_hud_frame_ready = 1;
+            (void)dm2_v1_startup_runtime_handoff_receipt_from_state(
+                handoff,
+                0,
+                1);
         }
         if (out_command_count) {
             *out_command_count = 0;

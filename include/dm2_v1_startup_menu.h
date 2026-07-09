@@ -470,6 +470,10 @@ void dm2_v1_startup_launch_receipt_clear(
     DM2_V1_StartupLaunchReceipt *receipt);
 void dm2_v1_startup_direct_resume_receipt_clear(
     DM2_V1_StartupDirectResumeReceipt *receipt);
+int dm2_v1_startup_runtime_handoff_receipt_from_state(
+    DM2_V1_StartupRuntimeHandoffReceipt *out_receipt,
+    int startup_menu_active,
+    int hud_runtime_ready);
 int dm2_v1_startup_launch_from_host_facts_with_receipt(
     const DM2_V1_StartupHostFacts *facts,
     DM2_V1_StartupLaunchReceipt *out_receipt);
