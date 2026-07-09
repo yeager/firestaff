@@ -307,8 +307,20 @@ int main(void)
                      "DM2 V1 ASSETS VERIFIED") != NULL &&
               launch_receipt.host_receipt.log_line &&
               strcmp(launch_receipt.host_receipt.log_line,
-                     "T0: DM2 START MENU") == 0,
-          "launch receipt owns DM2 startup session, save scan, active menu, inspect, and log");
+                     "T0: DM2 START MENU") == 0 &&
+              launch_receipt.runtime_handoff.valid &&
+              launch_receipt.runtime_handoff.startup_menu_active == 1 &&
+              launch_receipt.runtime_handoff.animation_active == 1 &&
+              strcmp(launch_receipt.runtime_handoff.animation,
+                     "dm2-startup-menu") == 0 &&
+              launch_receipt.runtime_handoff.title_frame == 0 &&
+              launch_receipt.runtime_handoff.title_frame_max == 0 &&
+              launch_receipt.runtime_handoff.title_ready == 0 &&
+              launch_receipt.runtime_handoff.initialize_v2_runtime == 1 &&
+              launch_receipt.runtime_handoff.initialize_hud_runtime == 1 &&
+              launch_receipt.runtime_handoff.initialize_touch_runtime == 1 &&
+              launch_receipt.runtime_handoff.hud_runtime_ready == 1,
+          "launch receipt owns DM2 startup session, save scan, active menu, inspect, log, and runtime handoff");
     check(!dm2_v1_startup_launch_from_host_facts_with_receipt(
               NULL,
               &launch_receipt) &&
