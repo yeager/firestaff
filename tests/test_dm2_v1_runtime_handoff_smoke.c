@@ -1023,8 +1023,23 @@ static void test_first_tick_after_boot_profile_handoff(void)
                           dm2_v1_viewport_door_frame_graphic_index_for_square(
                               DM2_SQ_D0C) &&
                       door_receipt.button_gdat_index ==
-                          dm2_v1_viewport_door_button_graphic_index_for_state(1),
-                      "runtime DB0 closed door render receipt exposes GDAT table row");
+                          dm2_v1_viewport_door_button_graphic_index_for_state(1) &&
+                      door_receipt.panel_blit_ready == 1 &&
+                      door_receipt.ornate_blit_ready == 1 &&
+                      door_receipt.destroyed_mask_blit_ready == 0 &&
+                      door_receipt.frame_blit_ready == 1 &&
+                      door_receipt.button_blit_ready == 1 &&
+                      door_receipt.panel_rect.w > 0 &&
+                      door_receipt.panel_rect.h > 0 &&
+                      door_receipt.panel_visible_rect.w > 0 &&
+                      door_receipt.panel_visible_rect.h > 0 &&
+                      door_receipt.overlay_rect.w == door_receipt.panel_rect.w &&
+                      door_receipt.overlay_rect.h == door_receipt.panel_rect.h &&
+                      door_receipt.frame_rect.w > 0 &&
+                      door_receipt.frame_rect.h > 0 &&
+                      door_receipt.button_rect.w > 0 &&
+                      door_receipt.button_rect.h > 0,
+                      "runtime DB0 closed door render receipt exposes GDAT table row and blit intent");
                 CHECK(dm2_v1_runtime_last_asset_door_overlay_count() == 1,
                       "runtime DB0 ornate draws through door overlay asset");
                 CHECK(set_door_state_preserve_tile(
@@ -1120,8 +1135,16 @@ static void test_first_tick_after_boot_profile_handoff(void)
                           dm2_v1_viewport_door_ornate_graphic_index(2, DM2_SQ_D0C) &&
                       door_receipt.destroyed_mask_gdat_index ==
                           dm2_v1_viewport_door_destroyed_mask_graphic_index(
-                              7, DM2_SQ_D0C),
-                      "runtime DB0 destroyed door render receipt exposes mask row");
+                              7, DM2_SQ_D0C) &&
+                      door_receipt.panel_blit_ready == 0 &&
+                      door_receipt.ornate_blit_ready == 1 &&
+                      door_receipt.destroyed_mask_blit_ready == 1 &&
+                      door_receipt.frame_blit_ready == 1 &&
+                      door_receipt.button_blit_ready == 1 &&
+                      door_receipt.panel_visible_rect.h == 0 &&
+                      door_receipt.overlay_rect.w == door_receipt.panel_rect.w &&
+                      door_receipt.overlay_rect.h == door_receipt.panel_rect.h,
+                      "runtime DB0 destroyed door render receipt exposes mask row and blit intent");
                 dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
             } else {
                 CHECK(0, "runtime door-record fixture loads");

@@ -379,6 +379,7 @@ static void dm2_runtime_capture_door_render_receipt(
     const DM2_V1_ViewportState *viewport)
 {
     DM2_V1_DoorRenderPlan plan;
+    const DM2_V1_DoorRender *door;
 
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
     if (!viewport ||
@@ -386,26 +387,53 @@ static void dm2_runtime_capture_door_render_receipt(
         plan.door_count <= 0) {
         return;
     }
+    door = &plan.doors[0];
 
     /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_TILE routes the populated
      * center-cell DB0 door facts into panel, frame, button, ornate, and
-     * destroyed-mask GDAT lookups.  This receipt captures the first bounded
-     * render-row chosen by Firestaff immediately before the draw pass. */
+     * destroyed-mask GDAT lookups; DRAW_DOOR_FRAMES consumes the same cell
+     * geometry. This receipt captures the first bounded render-row chosen by
+     * Firestaff immediately before the draw pass. */
     g_dm2_last_door_render.valid = 1;
-    g_dm2_last_door_render.view_square = plan.doors[0].view_square;
-    g_dm2_last_door_render.skproject_cell = plan.doors[0].skproject_cell;
-    g_dm2_last_door_render.door_state = plan.doors[0].door_state;
-    g_dm2_last_door_render.door_open_pct = plan.doors[0].door_open_pct;
+    g_dm2_last_door_render.view_square = door->view_square;
+    g_dm2_last_door_render.skproject_cell = door->skproject_cell;
+    g_dm2_last_door_render.door_state = door->door_state;
+    g_dm2_last_door_render.door_open_pct = door->door_open_pct;
     g_dm2_last_door_render.panel_gdat_index =
-        plan.doors[0].panel_gdat_index;
+        door->panel_gdat_index;
     g_dm2_last_door_render.ornate_gdat_index =
-        plan.doors[0].ornate_gdat_index;
+        door->ornate_gdat_index;
     g_dm2_last_door_render.destroyed_mask_gdat_index =
-        plan.doors[0].destroyed_mask_gdat_index;
+        door->destroyed_mask_gdat_index;
     g_dm2_last_door_render.frame_gdat_index =
-        plan.doors[0].frame_gdat_index;
+        door->frame_gdat_index;
     g_dm2_last_door_render.button_gdat_index =
-        plan.doors[0].button_gdat_index;
+        door->button_gdat_index;
+    g_dm2_last_door_render.panel_blit_ready =
+        door->panel_gdat_index != 0 &&
+        door->panel_visible_rect.w > 0 &&
+        door->panel_visible_rect.h > 0;
+    g_dm2_last_door_render.ornate_blit_ready =
+        door->ornate_gdat_index != 0 &&
+        door->panel_rect.w > 0 &&
+        door->panel_rect.h > 0;
+    g_dm2_last_door_render.destroyed_mask_blit_ready =
+        door->destroyed_mask_gdat_index != 0 &&
+        door->panel_rect.w > 0 &&
+        door->panel_rect.h > 0;
+    g_dm2_last_door_render.frame_blit_ready =
+        door->frame_gdat_index != 0 &&
+        door->frame_rect.w > 0 &&
+        door->frame_rect.h > 0;
+    g_dm2_last_door_render.button_blit_ready =
+        door->button_gdat_index != 0 &&
+        door->button_rect.w > 0 &&
+        door->button_rect.h > 0;
+    g_dm2_last_door_render.panel_rect = door->panel_rect;
+    g_dm2_last_door_render.panel_visible_rect = door->panel_visible_rect;
+    g_dm2_last_door_render.overlay_rect = door->panel_rect;
+    g_dm2_last_door_render.frame_rect = door->frame_rect;
+    g_dm2_last_door_render.button_rect = door->button_rect;
 }
 
 static int dm2_runtime_set_target_door_state(DM2_V1_RuntimeState *rt,
