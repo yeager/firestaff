@@ -956,21 +956,58 @@ int main(void)
                       "menu-ready") == 0 &&
                full_start_receipt.warning_art_loaded == 1 &&
                full_start_receipt.title_art_loaded == 1 &&
+               full_start_receipt.warning_status_ready == 1 &&
+               full_start_receipt.title_status_ready == 1 &&
                full_start_receipt.boot_warning_title_ready == 1 &&
                full_start_receipt.startup_surfaces_real_ready == 1 &&
                full_start_receipt.faces_real_ready == 1 &&
                full_start_receipt.menu_bpk_route_ready == 1 &&
                full_start_receipt.save_menu_route_ready == 1 &&
                full_start_receipt.champion_menu_route_ready == 1 &&
+               full_start_receipt.save_status_ready == 1 &&
+               full_start_receipt.champion_status_ready == 1 &&
                full_start_receipt.audio_track02_ready == 1 &&
                full_start_receipt.cd_track == 2 &&
                full_start_receipt.sfx_status ==
                    NEXUS_SFX_RUNTIME_READY_DECODED &&
                full_start_receipt.full_start_graphics_ready == 1 &&
                full_start_receipt.full_start_menu_ready == 1 &&
+               full_start_receipt.m11_host_route_ready == 1 &&
+               strcmp(full_start_receipt.m11_host_route,
+                      "champion-menu") == 0 &&
+               full_start_receipt.host_receipt.input_result ==
+                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+               strcmp(full_start_receipt.host_receipt.status,
+                      "NEXUS CHAMPIONS") == 0 &&
                full_start_receipt.fallback_visuals_permitted == 0 &&
                strcmp(full_start_receipt.startup_ui_blocker, "none") == 0,
            "Nexus full-start receipt gates warning title menus audio and graphics");
+    runtime_state.champion_select_active = 0;
+    runtime_state.save_select_active = 1;
+    expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               &full_start_receipt) &&
+               full_start_receipt.m11_host_route_ready == 1 &&
+               strcmp(full_start_receipt.m11_host_route,
+                      "save-menu") == 0 &&
+               strcmp(full_start_receipt.host_receipt.status,
+                      "NEXUS SAVE SELECT") == 0,
+           "Nexus full-start receipt owns save-menu host route");
+    runtime_state.save_select_active = 0;
+    runtime_state.title_active = 1;
+    expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               &full_start_receipt) &&
+               full_start_receipt.m11_host_route_ready == 1 &&
+               strcmp(full_start_receipt.m11_host_route,
+                      "title-warning") == 0 &&
+               strcmp(full_start_receipt.host_receipt.status,
+                      "NEXUS TITLE") == 0,
+           "Nexus full-start receipt owns title/warning host route");
+    runtime_state.title_active = 0;
+    runtime_state.champion_select_active = 1;
     memset(dgn_commands, 0, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_firestaff_input(
                &runtime_state,
@@ -1110,6 +1147,11 @@ int main(void)
                    NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET &&
                full_start_receipt.sfx_blocks_real_playback == 1 &&
                full_start_receipt.full_start_menu_ready == 0 &&
+               full_start_receipt.m11_host_route_ready == 0 &&
+               strcmp(full_start_receipt.m11_host_route,
+                      "blocked-startup") == 0 &&
+               full_start_receipt.host_receipt.input_result ==
+                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
                strcmp(full_start_receipt.startup_ui_blocker,
                       "track02-sfx") == 0 &&
                strcmp(full_start_receipt.status,
@@ -1298,6 +1340,11 @@ int main(void)
                full_start_receipt.audio_track02_ready == 1 &&
                full_start_receipt.full_start_graphics_ready == 0 &&
                full_start_receipt.full_start_menu_ready == 0 &&
+               full_start_receipt.m11_host_route_ready == 0 &&
+               strcmp(full_start_receipt.m11_host_route,
+                      "blocked-startup") == 0 &&
+               full_start_receipt.host_receipt.input_result ==
+                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
                strcmp(full_start_receipt.startup_ui_blocker,
                       "menu-bpk-prs3") == 0 &&
                strcmp(full_start_receipt.status,

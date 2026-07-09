@@ -394,8 +394,13 @@ typedef struct {
     Nexus_V1_StartupLaunchGateReceipt launch_gate;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_StartupHostReceipt host_receipt;
     int warning_art_loaded;
     int title_art_loaded;
+    int title_status_ready;
+    int warning_status_ready;
+    int save_status_ready;
+    int champion_status_ready;
     int boot_warning_title_ready;
     int startup_surfaces_real_ready;
     int faces_real_ready;
@@ -408,7 +413,9 @@ typedef struct {
     int sfx_blocks_real_playback;
     int full_start_graphics_ready;
     int full_start_menu_ready;
+    int m11_host_route_ready;
     int fallback_visuals_permitted;
+    const char *m11_host_route;
     const char *startup_ui_blocker;
     const char *asset_route;
     const char *status_scope;
