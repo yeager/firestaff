@@ -53,7 +53,7 @@ typedef enum {
     DM1_V1_MC_CAPS_COMMAND_TURN_RIGHT_PC34 = 1,
     DM1_V1_MC_CAPS_COMMAND_TURN_LEFT_PC34 = 2,
     DM1_V1_MC_CAPS_COMMAND_C160_YES_PC34 = 160
-} Dm1V1MirrorCandidateCloseAfterPartyShuffleCommandPc34;
+} DM1_V1_MirrorCandidateCloseAfterPartyShuffleCommandPc34;
 
 typedef struct {
     int contractOnly;
@@ -74,9 +74,9 @@ typedef struct {
     int c159ChampionIconByte;
     int m568PanelResurrectReincarnate;
     int m070PanelOwnerOrdinal;
-    Dm1V1MirrorCandidateCloseAfterPartyShuffleCommandPc34
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffleCommandPc34
         queuedCommands[DM1_V1_MC_CAPS_COMMAND_COUNT_PC34];
-    Dm1V1MirrorCandidateCloseAfterPartyShuffleCommandPc34
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffleCommandPc34
         dispatchOrder[DM1_V1_MC_CAPS_COMMAND_COUNT_PC34];
     int commandQueueDepth;
     int queueWriteCountF0361Turn;
@@ -97,7 +97,7 @@ typedef struct {
     int directionPreservedAfterClose;
     int cellPreservedAfterClose;
     int trace[DM1_V1_MC_CAPS_TRACE_COUNT_PC34];
-} Dm1V1MirrorCandidateCloseAfterPartyShuffleStatePc34;
+} DM1_V1_MirrorCandidateCloseAfterPartyShuffleStatePc34;
 
 typedef struct {
     int shuffledFirst;
@@ -141,20 +141,36 @@ typedef struct {
     uint32_t afterYesHash;
     uint32_t afterCloseHash;
     uint32_t hash;
-} Dm1V1MirrorCandidateCloseAfterPartyShuffleResultPc34;
+} DM1_V1_MirrorCandidateCloseAfterPartyShuffleResultPc34;
 
-Dm1V1MirrorCandidateCloseAfterPartyShuffleStatePc34
-dm1_v1_mirror_candidate_close_after_party_shuffle_default_state_pc34(void);
+typedef DM1_V1_MirrorCandidateCloseAfterPartyShuffleCommandPc34
+    Dm1V1MirrorCandidateCloseAfterPartyShuffleCommandPc34;
+typedef DM1_V1_MirrorCandidateCloseAfterPartyShuffleStatePc34
+    Dm1V1MirrorCandidateCloseAfterPartyShuffleStatePc34;
+typedef DM1_V1_MirrorCandidateCloseAfterPartyShuffleResultPc34
+    Dm1V1MirrorCandidateCloseAfterPartyShuffleResultPc34;
 
-int dm1_v1_mirror_candidate_close_after_party_shuffle_run_pc34(
-    Dm1V1MirrorCandidateCloseAfterPartyShuffleStatePc34 *state,
-    Dm1V1MirrorCandidateCloseAfterPartyShuffleResultPc34 *result);
+DM1_V1_MirrorCandidateCloseAfterPartyShuffleStatePc34
+DM1_V1_MirrorCandidateCloseAfterPartyShuffle_DefaultStatePc34(void);
 
-uint32_t dm1_v1_mirror_candidate_close_after_party_shuffle_hash_pc34(
-    const Dm1V1MirrorCandidateCloseAfterPartyShuffleStatePc34 *state);
+int DM1_V1_MirrorCandidateCloseAfterPartyShuffle_RunPc34(
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffleStatePc34 *state,
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffleResultPc34 *result);
+
+uint32_t DM1_V1_MirrorCandidateCloseAfterPartyShuffle_HashPc34(
+    const DM1_V1_MirrorCandidateCloseAfterPartyShuffleStatePc34 *state);
 
 const char *
-dm1_v1_mirror_candidate_close_after_party_shuffle_source_evidence_pc34(void);
+DM1_V1_MirrorCandidateCloseAfterPartyShuffle_SourceEvidencePc34(void);
+
+#define dm1_v1_mirror_candidate_close_after_party_shuffle_default_state_pc34 \
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffle_DefaultStatePc34
+#define dm1_v1_mirror_candidate_close_after_party_shuffle_run_pc34 \
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffle_RunPc34
+#define dm1_v1_mirror_candidate_close_after_party_shuffle_hash_pc34 \
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffle_HashPc34
+#define dm1_v1_mirror_candidate_close_after_party_shuffle_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffle_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

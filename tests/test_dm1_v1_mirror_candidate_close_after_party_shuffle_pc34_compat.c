@@ -51,7 +51,7 @@ static int contains(const char *haystack, const char *needle)
 static void test_source_evidence(void)
 {
     const char *evidence =
-        dm1_v1_mirror_candidate_close_after_party_shuffle_source_evidence_pc34();
+        DM1_V1_MirrorCandidateCloseAfterPartyShuffle_SourceEvidencePc34();
 
     PROBE_ASSERT("evidence.present", evidence != 0);
     PROBE_ASSERT("evidence.f0284",
@@ -85,8 +85,8 @@ static void test_source_evidence(void)
 
 static void test_default_state(void)
 {
-    Dm1V1MirrorCandidateCloseAfterPartyShuffleStatePc34 state =
-        dm1_v1_mirror_candidate_close_after_party_shuffle_default_state_pc34();
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffleStatePc34 state =
+        DM1_V1_MirrorCandidateCloseAfterPartyShuffle_DefaultStatePc34();
 
     PROBE_ASSERT_EQ("default.contract_only", state.contractOnly, 1);
     PROBE_ASSERT_EQ("default.no_assets", state.noAssetReads, 1);
@@ -128,18 +128,18 @@ static void test_default_state(void)
                     0);
     PROBE_ASSERT_EQ("default.drain", state.dispatchDrainCountF0380, 0);
     PROBE_ASSERT("default.hash.nonzero",
-                 dm1_v1_mirror_candidate_close_after_party_shuffle_hash_pc34(
+                 DM1_V1_MirrorCandidateCloseAfterPartyShuffle_HashPc34(
                      &state) != 0);
 }
 
 static void test_ordered_regression(uint32_t *out_hash)
 {
-    Dm1V1MirrorCandidateCloseAfterPartyShuffleStatePc34 state =
-        dm1_v1_mirror_candidate_close_after_party_shuffle_default_state_pc34();
-    Dm1V1MirrorCandidateCloseAfterPartyShuffleResultPc34 result;
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffleStatePc34 state =
+        DM1_V1_MirrorCandidateCloseAfterPartyShuffle_DefaultStatePc34();
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffleResultPc34 result;
     int ok;
 
-    ok = dm1_v1_mirror_candidate_close_after_party_shuffle_run_pc34(&state,
+    ok = DM1_V1_MirrorCandidateCloseAfterPartyShuffle_RunPc34(&state,
                                                                      &result);
     PROBE_ASSERT_EQ("run.ok", ok, 1);
     PROBE_ASSERT_EQ("result.shuffledFirst", result.shuffledFirst, 1);
@@ -251,43 +251,43 @@ static void test_ordered_regression(uint32_t *out_hash)
                  result.afterCloseHash != result.afterYesHash);
     PROBE_ASSERT_U32(
         "hash.result_matches", result.hash,
-        dm1_v1_mirror_candidate_close_after_party_shuffle_hash_pc34(&state));
+        DM1_V1_MirrorCandidateCloseAfterPartyShuffle_HashPc34(&state));
     *out_hash = result.hash;
 }
 
 static void test_guards(void)
 {
-    Dm1V1MirrorCandidateCloseAfterPartyShuffleStatePc34 state =
-        dm1_v1_mirror_candidate_close_after_party_shuffle_default_state_pc34();
-    Dm1V1MirrorCandidateCloseAfterPartyShuffleResultPc34 result;
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffleStatePc34 state =
+        DM1_V1_MirrorCandidateCloseAfterPartyShuffle_DefaultStatePc34();
+    DM1_V1_MirrorCandidateCloseAfterPartyShuffleResultPc34 result;
 
     PROBE_ASSERT_EQ("guard.null_state",
-                    dm1_v1_mirror_candidate_close_after_party_shuffle_run_pc34(
+                    DM1_V1_MirrorCandidateCloseAfterPartyShuffle_RunPc34(
                         0, &result),
                     0);
     PROBE_ASSERT_EQ("guard.null_result",
-                    dm1_v1_mirror_candidate_close_after_party_shuffle_run_pc34(
+                    DM1_V1_MirrorCandidateCloseAfterPartyShuffle_RunPc34(
                         &state, 0),
                     0);
     state =
-        dm1_v1_mirror_candidate_close_after_party_shuffle_default_state_pc34();
+        DM1_V1_MirrorCandidateCloseAfterPartyShuffle_DefaultStatePc34();
     state.contractOnly = 0;
     PROBE_ASSERT_EQ("guard.non_contract",
-                    dm1_v1_mirror_candidate_close_after_party_shuffle_run_pc34(
+                    DM1_V1_MirrorCandidateCloseAfterPartyShuffle_RunPc34(
                         &state, &result),
                     0);
     state =
-        dm1_v1_mirror_candidate_close_after_party_shuffle_default_state_pc34();
+        DM1_V1_MirrorCandidateCloseAfterPartyShuffle_DefaultStatePc34();
     state.c040PanelOpen = 0;
     PROBE_ASSERT_EQ("guard.panel_closed",
-                    dm1_v1_mirror_candidate_close_after_party_shuffle_run_pc34(
+                    DM1_V1_MirrorCandidateCloseAfterPartyShuffle_RunPc34(
                         &state, &result),
                     0);
     state =
-        dm1_v1_mirror_candidate_close_after_party_shuffle_default_state_pc34();
+        DM1_V1_MirrorCandidateCloseAfterPartyShuffle_DefaultStatePc34();
     state.g0299CandidateOrdinal = 0;
     PROBE_ASSERT_EQ("guard.no_candidate",
-                    dm1_v1_mirror_candidate_close_after_party_shuffle_run_pc34(
+                    DM1_V1_MirrorCandidateCloseAfterPartyShuffle_RunPc34(
                         &state, &result),
                     0);
 }
