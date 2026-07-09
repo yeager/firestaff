@@ -533,6 +533,39 @@ void nexus_v1_launcher_startup_title_handoff_receipt_clear(
     nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
 }
 
+void nexus_v1_launcher_startup_runtime_handoff_receipt_clear(
+    Nexus_V1_StartupRuntimeHandoffReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_INVALID;
+    receipt->dgn_handoff.status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+    receipt->render_plan.status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
+    receipt->party_x = -1;
+    receipt->party_y = -1;
+    receipt->party_dir = -1;
+    nexus_v1_startup_host_action_receipt_clear(
+        &receipt->host_action_receipt);
+}
+
+const char *nexus_v1_launcher_startup_runtime_handoff_route_name(
+    Nexus_V1_StartupRuntimeHandoffRoute route)
+{
+    switch (route) {
+    case NEXUS_V1_STARTUP_RUNTIME_HANDOFF_INVALID: return "invalid";
+    case NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED:
+        return "asset-blocked";
+    case NEXUS_V1_STARTUP_RUNTIME_HANDOFF_NOT_START: return "not-start";
+    case NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED:
+        return "dgn-blocked";
+    case NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE:
+        return "ready-render-state";
+    default: return "unknown";
+    }
+}
+
 int nexus_v1_launcher_startup_host_facts_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     Nexus_V1_StartupHostFacts *out_facts)
@@ -1239,6 +1272,123 @@ int nexus_v1_launcher_startup_execute_champion_pointer_from_snapshot(
         x,
         y,
         out_execution,
+        out_receipt);
+}
+
+int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
+    const Nexus_V1_StartupRuntimeState *state,
+    const Nexus_V1_StartupChampionExecution *execution,
+    const Nexus_V1_StartupHostActionReceipt *host_action,
+    Nexus_V1_DgnRenderCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupRuntimeHandoffReceipt *out_receipt)
+{
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
+    Nexus_V1_DgnRenderPlanReceipt render_plan;
+    Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
+
+    nexus_v1_launcher_startup_runtime_handoff_receipt_clear(out_receipt);
+    if (!state || !execution || !out_receipt ||
+        !nexus_v1_launcher_startup_assets_from_runtime_state(state,
+                                                             &assets)) {
+        return 0;
+    }
+
+    out_receipt->champion_execution = *execution;
+    if (host_action) {
+        out_receipt->host_action_receipt = *host_action;
+    }
+    out_receipt->assets = assets;
+    out_receipt->asset_route = assets.startup_menu_asset_route;
+    out_receipt->fallback_visuals_permitted =
+        assets.menu_bpk_fallback_visuals_permitted;
+
+    if (!assets.champion_menu_route_ready) {
+        out_receipt->route =
+            NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED;
+        out_receipt->status_scope = "ASSETS";
+        out_receipt->status = assets.startup_menu_asset_route
+            ? assets.startup_menu_asset_route
+            : "blocked-startup-assets";
+        return 1;
+    }
+
+    if (execution->kind != NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
+        out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_NOT_START;
+        out_receipt->status_scope = execution->status_scope;
+        out_receipt->status = execution->status;
+        return 1;
+    }
+
+    out_receipt->level_loaded = state->engine && state->engine->level_loaded;
+    if (!state->engine || !state->engine->level_loaded ||
+        nexus_v1_current_level_dgn_renderer_handoff_receipt(
+            state->engine,
+            &dgn_handoff) != 0) {
+        out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
+        out_receipt->status_scope = "DGN";
+        out_receipt->status = "missing-dgn-runtime";
+        return 1;
+    }
+
+    out_receipt->dgn_handoff = dgn_handoff;
+    out_receipt->dgn_route =
+        nexus_v1_dgn_renderer_handoff_status_name(dgn_handoff.status);
+    memset(&render_plan, 0, sizeof(render_plan));
+    if (nexus_v1_level_build_dgn_view_render_plan(
+            &state->engine->current_level,
+            state->engine->game.party_x,
+            state->engine->game.party_y,
+            state->engine->game.party_dir,
+            out_commands,
+            max_commands,
+            &render_plan) != 0 ||
+        !render_plan.plan_ready ||
+        render_plan.blocks_real_dgn_mesh_render) {
+        out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
+        out_receipt->render_plan = render_plan;
+        out_receipt->fallback_visuals_permitted =
+            render_plan.fallback_visuals_permitted;
+        out_receipt->status_scope = "DGN";
+        out_receipt->status = out_receipt->dgn_route
+            ? out_receipt->dgn_route
+            : "blocked-dgn-render";
+        return 1;
+    }
+
+    out_receipt->route =
+        NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE;
+    out_receipt->render_plan = render_plan;
+    out_receipt->runtime_ready = 1;
+    out_receipt->party_x = state->engine->game.party_x;
+    out_receipt->party_y = state->engine->game.party_y;
+    out_receipt->party_dir = state->engine->game.party_dir;
+    out_receipt->command_count = render_plan.command_count;
+    out_receipt->fallback_visuals_permitted =
+        render_plan.fallback_visuals_permitted;
+    out_receipt->status_scope = "DGN";
+    out_receipt->status = "ready-render-state";
+    return 1;
+}
+
+int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution_snapshot(
+    const Nexus_V1_LauncherRuntimeStartupSnapshot *snapshot,
+    const Nexus_V1_StartupChampionExecution *execution,
+    const Nexus_V1_StartupHostActionReceipt *host_action,
+    Nexus_V1_DgnRenderCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupRuntimeHandoffReceipt *out_receipt)
+{
+    if (!snapshot) {
+        nexus_v1_launcher_startup_runtime_handoff_receipt_clear(out_receipt);
+        return 0;
+    }
+    return nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
+        &snapshot->runtime,
+        execution,
+        host_action,
+        out_commands,
+        max_commands,
         out_receipt);
 }
 
