@@ -24,29 +24,29 @@ extern "C" {
 #endif
 
 /* Spell symbol steps — 4 steps of 6 symbols each = 24 total */
-#define M11_SPELL_SYMBOL_STEPS    4
-#define M11_SYMBOLS_PER_STEP      6
-#define M11_MAX_SPELL_SYMBOLS    24
-#define M11_MAX_SPELL_LENGTH      4  /* max symbols in one spell */
+#define DM1_V1_SPELL_SYMBOL_STEPS_PC34    4
+#define DM1_V1_SYMBOLS_PER_STEP_PC34      6
+#define DM1_V1_MAX_SPELL_SYMBOLS_PC34    24
+#define DM1_V1_MAX_SPELL_LENGTH_PC34      4  /* max symbols in one spell */
 
 /* Spell area layout constants */
-#define M11_SPELL_AREA_X        233
-#define M11_SPELL_AREA_Y          2
-#define M11_SPELL_AREA_W         85
-#define M11_SPELL_AREA_H         70
-#define M11_SPELL_SYMBOL_W       14
-#define M11_SPELL_SYMBOL_H       12
+#define DM1_V1_SPELL_AREA_X_PC34        233
+#define DM1_V1_SPELL_AREA_Y_PC34          2
+#define DM1_V1_SPELL_AREA_W_PC34         85
+#define DM1_V1_SPELL_AREA_H_PC34         70
+#define DM1_V1_SPELL_SYMBOL_W_PC34       14
+#define DM1_V1_SPELL_SYMBOL_H_PC34       12
 
 /* Spell casting state for rendering */
 typedef struct {
     int casterChampionIndex;     /* -1 if no one is casting */
     int currentSymbolStep;       /* 0-3: which set of 6 symbols is shown */
-    int selectedSymbols[M11_MAX_SPELL_LENGTH]; /* symbol indices, -1 = empty */
+    int selectedSymbols[DM1_V1_MAX_SPELL_LENGTH_PC34]; /* symbol indices, -1 = empty */
     int selectedCount;           /* how many symbols chosen so far */
     int spellValid;              /* current combination is a known spell */
     int castingInProgress;       /* animation/cooldown active */
     uint32_t castStartMs;
-} M11_SpellRenderState;
+} DM1_V1_SpellRenderStatePc34;
 
 /* Per-champion casting indicator */
 typedef struct {
@@ -54,7 +54,7 @@ typedef struct {
     int currentHealth;
     int canCast;                 /* health > 0 */
     int isActiveCaster;          /* this champion is the current caster */
-} M11_SpellChampionInfo;
+} DM1_V1_SpellChampionInfoPc34;
 
 /* Result from drawing spell area */
 typedef struct {
@@ -62,17 +62,17 @@ typedef struct {
     int symbolsDrawn;            /* number of available symbols drawn */
     int championHighlightsDrawn; /* number of champion zones highlighted */
     int spellLineRedrawn;        /* the selected-spell line was updated */
-} M11_SpellRenderResult;
+} DM1_V1_SpellRenderResultPc34;
 
 /*
  * Initialize spell render state.
  */
-void m11_spell_render_init(M11_SpellRenderState *s);
+void DM1_V1_SpellRender_InitPc34Compat(DM1_V1_SpellRenderStatePc34 *s);
 
 /*
  * Set the active caster and reset spell selection.
  */
-void m11_spell_render_set_caster(M11_SpellRenderState *s,
+void DM1_V1_SpellRender_SetCasterPc34Compat(DM1_V1_SpellRenderStatePc34 *s,
                                   int championIndex);
 
 /*
@@ -80,46 +80,71 @@ void m11_spell_render_set_caster(M11_SpellRenderState *s,
  * symbolIndex: 0-5 within the current step.
  * Returns 1 if added, 0 if spell is full.
  */
-int m11_spell_render_add_symbol(M11_SpellRenderState *s, int symbolIndex);
+int DM1_V1_SpellRender_AddSymbolPc34Compat(DM1_V1_SpellRenderStatePc34 *s, int symbolIndex);
 
 /*
  * Remove the last symbol (backspace).
  * Returns 1 if removed, 0 if nothing to remove.
  */
-int m11_spell_render_remove_symbol(M11_SpellRenderState *s);
+int DM1_V1_SpellRender_RemoveSymbolPc34Compat(DM1_V1_SpellRenderStatePc34 *s);
 
 /*
  * Clear spell selection entirely.
  */
-void m11_spell_render_clear(M11_SpellRenderState *s);
+void DM1_V1_SpellRender_ClearPc34Compat(DM1_V1_SpellRenderStatePc34 *s);
 
 /*
  * Draw spell area controls (F0393).
  * champInfo: array of 4 champion casting infos.
  * Returns rendering result.
  */
-M11_SpellRenderResult m11_spell_render_draw_controls(
-    const M11_SpellRenderState *s,
-    const M11_SpellChampionInfo champInfo[4],
+DM1_V1_SpellRenderResultPc34 DM1_V1_SpellRender_DrawControlsPc34Compat(
+    const DM1_V1_SpellRenderStatePc34 *s,
+    const DM1_V1_SpellChampionInfoPc34 champInfo[4],
     int partyChampionCount);
 
 /*
  * Draw available symbols for the current step (F0397).
  * Returns number of symbols drawn (always 6 if step is valid).
  */
-int m11_spell_render_draw_symbols(const M11_SpellRenderState *s);
+int DM1_V1_SpellRender_DrawSymbolsPc34Compat(const DM1_V1_SpellRenderStatePc34 *s);
 
 /*
  * Get the global symbol index for a local index in the current step.
  * localIndex: 0-5, step: 0-3.
  * Returns: 96 + 6*step + localIndex (the character code used in original).
  */
-int m11_spell_render_symbol_code(int step, int localIndex);
+int DM1_V1_SpellRender_SymbolCodePc34Compat(int step, int localIndex);
 
 /*
  * Source evidence string.
  */
-const char *m11_spell_render_source_evidence(void);
+const char *DM1_V1_SpellRender_SourceEvidencePc34Compat(void);
+
+typedef DM1_V1_SpellRenderStatePc34 M11_SpellRenderState;
+typedef DM1_V1_SpellChampionInfoPc34 M11_SpellChampionInfo;
+typedef DM1_V1_SpellRenderResultPc34 M11_SpellRenderResult;
+
+#define M11_SPELL_SYMBOL_STEPS DM1_V1_SPELL_SYMBOL_STEPS_PC34
+#define M11_SYMBOLS_PER_STEP DM1_V1_SYMBOLS_PER_STEP_PC34
+#define M11_MAX_SPELL_SYMBOLS DM1_V1_MAX_SPELL_SYMBOLS_PC34
+#define M11_MAX_SPELL_LENGTH DM1_V1_MAX_SPELL_LENGTH_PC34
+#define M11_SPELL_AREA_X DM1_V1_SPELL_AREA_X_PC34
+#define M11_SPELL_AREA_Y DM1_V1_SPELL_AREA_Y_PC34
+#define M11_SPELL_AREA_W DM1_V1_SPELL_AREA_W_PC34
+#define M11_SPELL_AREA_H DM1_V1_SPELL_AREA_H_PC34
+#define M11_SPELL_SYMBOL_W DM1_V1_SPELL_SYMBOL_W_PC34
+#define M11_SPELL_SYMBOL_H DM1_V1_SPELL_SYMBOL_H_PC34
+
+#define m11_spell_render_init DM1_V1_SpellRender_InitPc34Compat
+#define m11_spell_render_set_caster DM1_V1_SpellRender_SetCasterPc34Compat
+#define m11_spell_render_add_symbol DM1_V1_SpellRender_AddSymbolPc34Compat
+#define m11_spell_render_remove_symbol DM1_V1_SpellRender_RemoveSymbolPc34Compat
+#define m11_spell_render_clear DM1_V1_SpellRender_ClearPc34Compat
+#define m11_spell_render_draw_controls DM1_V1_SpellRender_DrawControlsPc34Compat
+#define m11_spell_render_draw_symbols DM1_V1_SpellRender_DrawSymbolsPc34Compat
+#define m11_spell_render_symbol_code DM1_V1_SpellRender_SymbolCodePc34Compat
+#define m11_spell_render_source_evidence DM1_V1_SpellRender_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }
