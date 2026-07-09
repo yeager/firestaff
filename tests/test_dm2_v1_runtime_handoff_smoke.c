@@ -194,6 +194,15 @@ static int set_door_state_preserve_tile(DM2_V1_DungeonData *d,
         d, level, x, y, (uint16_t)((raw & ~0x0007u) | (state & 0x0007)));
 }
 
+static void clear_creature_pool_for_door_runtime_test(void)
+{
+    for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; ++i) {
+        (void)dm2_v1_creature_deal_damage(i, 999999);
+    }
+    dm2_v1_runtime_tick();
+    dm2_v1_creature_reset_ccm_tick_observer();
+}
+
 static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
 {
     const size_t header_size = 44;
@@ -923,9 +932,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                     DM2_V1_CreatureCCMTickObserver obs;
                     const DM2_V1_CreatureInstance *inst;
 
-#ifdef FIRESTAFF_DM2_CREATURE_TESTING
-                    dm2_v1_creature_test_reset_instances();
-#endif
+                    clear_creature_pool_for_door_runtime_test();
                     CHECK(set_door_state_preserve_tile(
                               (DM2_V1_DungeonData *)profile.dungeon_data,
                               0, 1, 0, 3) == 0,
@@ -965,9 +972,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                               (DM2_V1_DungeonData *)profile.dungeon_data,
                               0, 1, 0, 5) == 0,
                           "runtime DB0 door state 5 seeds destroyed pass");
-#ifdef FIRESTAFF_DM2_CREATURE_TESTING
-                    dm2_v1_creature_test_reset_instances();
-#endif
+                    clear_creature_pool_for_door_runtime_test();
                     slot = dm2_v1_creature_spawn(0, 1, 1, 0, 0, 8);
                     dm2_v1_creature_reset_ccm_tick_observer();
                     dm2_v1_runtime_tick();
