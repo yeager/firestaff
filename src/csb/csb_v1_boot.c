@@ -2985,6 +2985,55 @@ int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
         csb_v1_boot_startup_render_plan_from_capture_receipt_pc34(
             capture_receipt,
             &render_plan);
+    if (capture_receipt->render_view_valid) {
+        out_proof->boot_executor_route =
+            capture_receipt->render_view.boot_executor_route ? 1 : 0;
+        out_proof->title_route =
+            capture_receipt->render_view.title_after_swoosh_route ? 1 : 0;
+        out_proof->closed_door_menu_route =
+            capture_receipt->render_view.closed_door_menu_route ? 1 : 0;
+        out_proof->utility_menu_route =
+            capture_receipt->render_view.utility_menu_route ? 1 : 0;
+        out_proof->opening_door_route =
+            capture_receipt->render_view.opening_door_route ? 1 : 0;
+        out_proof->draw_opening_frame =
+            capture_receipt->render_view.route_receipt.draw_opening_frame
+                ? 1
+                : 0;
+    }
+    if (capture_receipt->hud_menu_draw_valid) {
+        out_proof->draw_closed_doors =
+            capture_receipt->hud_menu_draw.draw_closed_doors ? 1 : 0;
+        out_proof->draw_utility_panel =
+            capture_receipt->hud_menu_draw.draw_utility_panel ? 1 : 0;
+        out_proof->draw_fallback_text =
+            capture_receipt->hud_menu_draw.draw_fallback_text ? 1 : 0;
+        out_proof->hud_menu_option_count =
+            capture_receipt->hud_menu_draw.option_count;
+        out_proof->resume_available =
+            capture_receipt->hud_menu_draw.resume_available ? 1 : 0;
+        out_proof->resume_option_visible =
+            capture_receipt->hud_menu_draw.resume_option_visible ? 1 : 0;
+        out_proof->suppress_legacy_utility_fallback =
+            capture_receipt->hud_menu_draw.suppress_legacy_utility_fallback
+                ? 1
+                : 0;
+    } else if (capture_receipt->readiness_valid) {
+        out_proof->hud_menu_option_count =
+            capture_receipt->readiness.hud_menu_option_count;
+    }
+    if (capture_receipt->readiness_valid) {
+        out_proof->host_input_blocked =
+            capture_receipt->readiness.host_input_blocked ? 1 : 0;
+        out_proof->host_hud_blocked =
+            capture_receipt->readiness.host_hud_blocked ? 1 : 0;
+        out_proof->startup_input_ready =
+            capture_receipt->readiness.host_startup_input_ready ? 1 : 0;
+        out_proof->startup_hud_ready =
+            capture_receipt->readiness.host_startup_hud_ready ? 1 : 0;
+        out_proof->utility_menu_row_count =
+            capture_receipt->readiness.utility_menu_row_count;
+    }
     out_proof->title_stage = capture_receipt->title_stage;
     out_proof->title_frame = capture_receipt->title_frame;
     out_proof->selected_command_id = capture_receipt->selected_command_id;
@@ -3030,12 +3079,67 @@ int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
     hash = csb_v1_boot_packaged_capture_hash_step_pc34(
         hash,
         (uint32_t)(out_proof->selected_utility_action_index + 1));
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->boot_executor_route);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->title_route);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->closed_door_menu_route);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->utility_menu_route);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->opening_door_route);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->draw_closed_doors);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->draw_utility_panel);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->draw_fallback_text);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->draw_opening_frame);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->host_input_blocked);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->host_hud_blocked);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->startup_input_ready);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->startup_hud_ready);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)(out_proof->hud_menu_option_count + 1));
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)(out_proof->utility_menu_row_count + 1));
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->resume_available);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->resume_option_visible);
+    hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        hash,
+        (uint32_t)out_proof->suppress_legacy_utility_fallback);
     out_proof->packaged_capture_hash = hash ? hash : 1u;
     /* ReDMCSB TITLE.C F0437 lines 424-463 and ENTRANCE.C F0441/F0806
      * lines 850-883 define the visible startup package. This proof is a
      * compact CSB-owned receipt for M11/tests: asset hash, render route,
-     * title/HUD/runtime capture flags, and draw availability are bound
-     * together instead of inferred by a host consumer. */
+     * title/HUD/runtime capture flags, draw availability, route consumer
+     * selection, menu counts, Resume gating, and host input/HUD blockers are
+     * bound together instead of inferred by a host consumer. */
     return out_proof->valid;
 }
 
