@@ -316,13 +316,18 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
         case DM1_ENTRANCE_VIEWING:
             receipt.route = DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34;
             receipt.showHall = 1;
+            receipt.renderHallMirrorOverlay = 1;
+            receipt.clearStaleChampionMirrorOverlay = 1;
             receipt.canEnterDungeon = ctx->partyChampionCount > 0 ? 1 : 0;
+            receipt.blockEnterUntilChampionSelected =
+                receipt.canEnterDungeon ? 0 : 1;
             receipt.reason = receipt.canEnterDungeon
                                  ? "hall-enter-ready"
                                  : "hall-needs-champion";
             break;
         case DM1_ENTRANCE_SELECTING:
             receipt.showChampionPanel = slot ? 1 : 0;
+            receipt.renderChampionMirrorOverlay = receipt.showChampionPanel;
             receipt.canCancelSelection = slot ? 1 : 0;
             receipt.canRecruit =
                 (slot && !slot->selected && !slot->dead && !receipt.partyFull)
@@ -339,8 +344,11 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
         case DM1_ENTRANCE_REINCARNATING:
             receipt.route = DM1_V1_ENTRANCE_MENU_ROUTE_DEAD_CHAMPION_PC34;
             receipt.showChampionPanel = slot ? 1 : 0;
+            receipt.renderChampionMirrorOverlay = receipt.showChampionPanel;
             receipt.showResurrectReincarnateChoices =
                 (slot && slot->dead) ? 1 : 0;
+            receipt.renderResurrectReincarnateOverlay =
+                receipt.showResurrectReincarnateChoices;
             receipt.canResurrect = receipt.showResurrectReincarnateChoices;
             receipt.canReincarnate = receipt.showResurrectReincarnateChoices;
             receipt.canCancelSelection = slot ? 1 : 0;
@@ -351,6 +359,7 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
         case DM1_ENTRANCE_DONE:
             receipt.route = DM1_V1_ENTRANCE_MENU_ROUTE_ENTER_DUNGEON_PC34;
             receipt.canEnterDungeon = 1;
+            receipt.renderEnterDungeonOverlay = 1;
             receipt.reason = "enter-dungeon";
             break;
         default:
@@ -359,16 +368,20 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
     }
 
     receipt.needsRedraw =
-        (receipt.showHall || receipt.showChampionPanel ||
-         receipt.route == DM1_V1_ENTRANCE_MENU_ROUTE_ENTER_DUNGEON_PC34)
+        (receipt.renderHallMirrorOverlay ||
+         receipt.renderChampionMirrorOverlay ||
+         receipt.renderResurrectReincarnateOverlay ||
+         receipt.renderEnterDungeonOverlay)
             ? 1
             : 0;
 
     /* ReDMCSB ENTRANCE.C F0441:850-883 redraws entrance, discards stale
      * input, and waits in entrance mode. REVIVE.C F0280:127-130 blocks party
      * overflow, then F0280:272 publishes the candidate ordinal after a valid
-     * mirror champion joins. This receipt keeps those HoC menu routes DM1-owned
-     * for M11/M12. */
+     * mirror champion joins. PANEL.C/F0282 later owns the C040 candidate panel.
+     * Keep Hall, champion-panel, resurrect/reincarnate, enter-dungeon, and
+     * stale-panel-clear overlay choices on this DM1 receipt so M11/M12 do not
+     * infer HoC render state from loose host flags. */
     *outReceipt = receipt;
     return 1;
 }

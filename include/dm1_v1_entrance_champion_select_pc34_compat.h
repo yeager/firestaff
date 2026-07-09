@@ -109,6 +109,12 @@ typedef struct {
     int canReincarnate;
     int canCancelSelection;
     int canEnterDungeon;
+    int renderHallMirrorOverlay;
+    int renderChampionMirrorOverlay;
+    int renderResurrectReincarnateOverlay;
+    int renderEnterDungeonOverlay;
+    int clearStaleChampionMirrorOverlay;
+    int blockEnterUntilChampionSelected;
     int needsRedraw;
     const char *reason;
 } DM1_V1_EntranceMenuRouteReceiptPc34;
