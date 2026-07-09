@@ -1886,6 +1886,11 @@ static void test_startup_session_facts_wrappers(void) {
                     !host_view_receipt.raw_session_rebuild_required &&
                     host_view_receipt.render_route.track02_title_menu_ready &&
                     host_view_receipt.render_route.save_resume_start_ready &&
+                    host_view_receipt.runtime_readiness_ready &&
+                    host_view_receipt.runtime_level_render_allowed &&
+                    host_view_receipt.title_menu_runtime_handoff_ready &&
+                    host_view_receipt.save_resume_runtime_handoff_ready &&
+                    host_view_receipt.fallback_visuals_allowed &&
                     strcmp(host_view_receipt.status,
                            "THERON RUNTIME READY") == 0,
                 "boot snapshot host-view receipt replaces raw prompt roster session rebuild");
@@ -2008,6 +2013,26 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(render_route_receipt.status,
                            "TRACK02 RUNTIME BLOCKED") == 0,
                 "boot startup render route receipt blocks Track02 level fallback visuals");
+    expect_true(theron_v1_boot_startup_host_view_receipt_from_snapshot_with_media_receipt(
+                    &blocked_snapshot,
+                    &media_receipt,
+                    &host_view_receipt) &&
+                    host_view_receipt.host_consumes_view_model &&
+                    host_view_receipt.render_route_valid &&
+                    host_view_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
+                    host_view_receipt.runtime_fallback_visuals_blocked == 1 &&
+                    host_view_receipt.runtime_structured_route == 1 &&
+                    host_view_receipt.runtime_receipt_text_route == 0 &&
+                    !host_view_receipt.runtime_level_render_allowed &&
+                    !host_view_receipt.runtime_readiness_ready &&
+                    !host_view_receipt.title_menu_runtime_handoff_ready &&
+                    !host_view_receipt.save_resume_runtime_handoff_ready &&
+                    host_view_receipt.no_fallback_visuals_enforced &&
+                    !host_view_receipt.fallback_visuals_allowed &&
+                    strcmp(host_view_receipt.status,
+                           "TRACK02 RUNTIME BLOCKED") == 0,
+                "boot host-view receipt exposes Track02 blocked route without status fallback parsing");
     semantic_snapshot = media_snapshot;
     semantic_snapshot.runtime_level_source =
         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
@@ -2054,6 +2079,28 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(render_route_receipt.status,
                            "TRACK02 RUNTIME READY") == 0,
                 "boot startup render route receipt marks Track02 semantic first level HUD-ready without fallback visuals");
+    expect_true(theron_v1_boot_startup_host_view_receipt_from_snapshot_with_media_receipt(
+                    &semantic_snapshot,
+                    &media_receipt,
+                    &host_view_receipt) &&
+                    host_view_receipt.host_consumes_view_model &&
+                    host_view_receipt.render_route_valid &&
+                    host_view_receipt.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
+                    host_view_receipt.runtime_track02_semantic_handoff == 1 &&
+                    host_view_receipt.runtime_structured_route == 1 &&
+                    host_view_receipt.runtime_receipt_text_route == 0 &&
+                    host_view_receipt.runtime_level_render_allowed &&
+                    host_view_receipt.runtime_readiness_ready &&
+                    host_view_receipt.title_menu_runtime_handoff_ready &&
+                    host_view_receipt.save_resume_runtime_handoff_ready &&
+                    host_view_receipt.save_resume_track02_no_fallback_ready &&
+                    host_view_receipt.no_fallback_visuals_enforced &&
+                    !host_view_receipt.fallback_visuals_allowed &&
+                    host_view_receipt.hud_ready &&
+                    strcmp(host_view_receipt.status,
+                           "TRACK02 RUNTIME READY") == 0,
+                "boot host-view receipt exposes Track02 semantic runtime handoff without fallback adapters");
     media_layout_roster_found = 0;
     expect_true(theron_v1_boot_startup_layout_build_from_view_model(
                     &media_view_model,

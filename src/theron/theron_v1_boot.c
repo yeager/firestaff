@@ -1881,6 +1881,31 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
             view_model,
             &out_receipt->render_route)) {
         out_receipt->render_route_valid = 1;
+        out_receipt->runtime_readiness_ready =
+            out_receipt->render_route.runtime_readiness_ready;
+        out_receipt->runtime_level_render_allowed =
+            out_receipt->render_route.runtime_level_render_allowed;
+        out_receipt->title_menu_runtime_handoff_ready =
+            out_receipt->render_route.title_menu_runtime_handoff_ready;
+        out_receipt->save_resume_runtime_handoff_ready =
+            out_receipt->render_route.save_resume_runtime_handoff_ready;
+        out_receipt->save_resume_track02_no_fallback_ready =
+            out_receipt->render_route.save_resume_track02_no_fallback_ready;
+        out_receipt->no_fallback_visuals_enforced =
+            out_receipt->render_route.no_fallback_visuals_enforced;
+        out_receipt->fallback_visuals_allowed =
+            out_receipt->render_route.fallback_visuals_allowed;
+        out_receipt->runtime_level_source =
+            out_receipt->render_route.runtime_level_source;
+        out_receipt->runtime_track02_semantic_handoff =
+            out_receipt->render_route.runtime_track02_semantic_handoff;
+        out_receipt->runtime_fallback_visuals_blocked =
+            out_receipt->render_route.runtime_fallback_visuals_blocked;
+        out_receipt->runtime_structured_route =
+            out_receipt->render_route.runtime_structured_route;
+        out_receipt->runtime_receipt_text_route =
+            out_receipt->render_route.runtime_receipt_text_route;
+        out_receipt->hud_ready = out_receipt->render_route.hud_ready;
         out_receipt->status_scope = out_receipt->render_route.status_scope;
         out_receipt->status = out_receipt->render_route.status;
     }
