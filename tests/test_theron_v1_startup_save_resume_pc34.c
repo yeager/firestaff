@@ -3741,32 +3741,40 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &catalog) == THERON_TRACK02_SIGNAL_OK &&
-                    catalog.sample_count == 20u &&
+                    catalog.sample_count == 24u &&
                     catalog.overflow_count == 0u &&
                     (catalog.route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
                     (catalog.route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                    catalog.samples[20].raw_offset == span_offsets[0] + 16u &&
+                    catalog.samples[21].raw_offset == span_offsets[0] + 20u &&
+                    catalog.samples[22].raw_offset == span_offsets[0] + 24u &&
+                    catalog.samples[23].raw_offset == span_offsets[0] + 28u &&
                     catalog.samples[0].nonzero_pixel_count > 0u &&
                     catalog.samples[0].checksum != 0u,
-                "Track02 startup bitmap catalog decodes real 4bpp samples from raw-sector graphics spans");
+                "Track02 startup bitmap catalog decodes wider real 4bpp samples from raw-sector graphics spans");
     expect_true(theron_v1_track02_build_startup_bitmap_atlas(
                     &catalog,
                     &atlas) == THERON_TRACK02_SIGNAL_OK &&
                     atlas.route_count == 4u &&
-                    atlas.total_tile_count == 20u &&
+                    atlas.total_tile_count == 24u &&
                     atlas.route_mask ==
                         (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
-                    atlas.routes[0].width == 16u &&
+                    atlas.routes[0].width == 32u &&
                     atlas.routes[0].height == 8u &&
                     atlas.routes[0].raw_offsets[0] == span_offsets[0] &&
                     atlas.routes[0].raw_offsets[1] == span_offsets[0] + 4u &&
-                    atlas.routes[1].width == 16u &&
+                    atlas.routes[0].raw_offsets[2] == span_offsets[0] + 16u &&
+                    atlas.routes[0].raw_offsets[3] == span_offsets[0] + 20u &&
+                    atlas.routes[1].width == 32u &&
                     atlas.routes[1].raw_offsets[0] == span_offsets[0] + 8u &&
                     atlas.routes[1].raw_offsets[1] == span_offsets[0] + 12u &&
+                    atlas.routes[1].raw_offsets[2] == span_offsets[0] + 24u &&
+                    atlas.routes[1].raw_offsets[3] == span_offsets[0] + 28u &&
                     atlas.routes[2].width == 64u &&
                     atlas.routes[2].raw_offsets[0] == span_offsets[1] &&
                     atlas.routes[2].raw_offsets[7] == span_offsets[1] + 28u &&
@@ -3785,7 +3793,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
     expect_true(receipt.startup_media_ready &&
                     receipt.startup_bitmap_decode_status ==
                         THERON_TRACK02_SIGNAL_OK &&
-                    receipt.startup_bitmap_sample_count == 20 &&
+                    receipt.startup_bitmap_sample_count == 24 &&
                     (receipt.startup_bitmap_route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE) &&
                     (receipt.startup_bitmap_route_mask &
@@ -3805,26 +3813,26 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
-                    receipt.startup_bitmap_atlas_tile_count == 20u &&
+                    receipt.startup_bitmap_atlas_tile_count == 24u &&
                     receipt.startup_bitmap_atlas_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_atlas_checksum != 0u &&
                     receipt.startup_bitmap_atlas.route_count == 4u &&
-                    receipt.startup_bitmap_atlas.total_tile_count == 20u &&
-                    receipt.startup_bitmap_atlas.routes[0].width == 16u &&
+                    receipt.startup_bitmap_atlas.total_tile_count == 24u &&
+                    receipt.startup_bitmap_atlas.routes[0].width == 32u &&
                     receipt.startup_bitmap_atlas.routes[2].width == 64u &&
                     receipt.startup_bitmap_atlas.routes[3].width == 64u &&
                     receipt.startup_bitmap_title_atlas_tile_count == 8u &&
                     receipt.startup_bitmap_stage_atlas_tile_count == 8u &&
-                    receipt.startup_bitmap_soul_room_atlas_tile_count == 2u &&
-                    receipt.startup_bitmap_forcefield_atlas_tile_count == 2u &&
+                    receipt.startup_bitmap_soul_room_atlas_tile_count == 4u &&
+                    receipt.startup_bitmap_forcefield_atlas_tile_count == 4u &&
                     receipt.startup_bitmap_title_atlas_width == 64u &&
                     receipt.startup_bitmap_stage_atlas_width == 64u &&
-                    receipt.startup_bitmap_soul_room_atlas_width == 16u &&
-                    receipt.startup_bitmap_forcefield_atlas_width == 16u &&
+                    receipt.startup_bitmap_soul_room_atlas_width == 32u &&
+                    receipt.startup_bitmap_forcefield_atlas_width == 32u &&
                     receipt.startup_bitmap_title_sample_count == 8 &&
                     receipt.startup_bitmap_stage_sample_count == 8 &&
-                    receipt.startup_bitmap_soul_room_sample_count == 2 &&
-                    receipt.startup_bitmap_forcefield_sample_count == 2 &&
+                    receipt.startup_bitmap_soul_room_sample_count == 4 &&
+                    receipt.startup_bitmap_forcefield_sample_count == 4 &&
                     receipt.startup_bitmap_title_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_stage_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_soul_room_nonzero_pixel_count > 0u &&
