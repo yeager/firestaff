@@ -1969,9 +1969,21 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               view_receipt.title_frame_max ==
                   csb_v1_startup_title_total_ticks_pc34() &&
               view_receipt.title_presents_visible &&
+              view_receipt.title_render_command_count == 1 &&
+              view_receipt.title_blit_kind ==
+                  CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34 &&
+              view_receipt.title_transparent_color == -1 &&
+              view_receipt.title_source_x == 0 &&
+              view_receipt.title_source_y == 137 &&
+              view_receipt.title_source_w == 320 &&
+              view_receipt.title_source_h == 16 &&
+              view_receipt.title_dest_x == 0 &&
+              view_receipt.title_dest_y == 90 &&
+              view_receipt.title_dest_w == 320 &&
+              view_receipt.title_dest_h == 16 &&
               !view_receipt.title_chaos_visible &&
               !view_receipt.title_strikes_back_visible,
-          "boot startup render-view receipt exposes source PRESENTS title stage");
+          "boot startup render-view receipt exposes source PRESENTS title render route");
     snapshot.title_frame = 60;
     snapshot.title_source_step = 2;
     CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
@@ -1980,10 +1992,21 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               view_receipt.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
               view_receipt.title_source_step == 2 &&
+              view_receipt.title_render_command_count == 1 &&
+              view_receipt.title_blit_kind ==
+                  CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 &&
+              view_receipt.title_source_x == 152 &&
+              view_receipt.title_source_y == 78 &&
+              view_receipt.title_source_w == 16 &&
+              view_receipt.title_source_h == 4 &&
+              view_receipt.title_dest_x == 0 &&
+              view_receipt.title_dest_y == 0 &&
+              view_receipt.title_dest_w == 320 &&
+              view_receipt.title_dest_h == 80 &&
               view_receipt.title_chaos_visible &&
               !view_receipt.title_presents_visible &&
               !view_receipt.title_strikes_back_visible,
-          "boot startup render-view receipt exposes source CHAOS title stage");
+          "boot startup render-view receipt exposes source CHAOS title render route");
     snapshot.title_frame = 101;
     snapshot.title_source_step =
         CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
@@ -1992,10 +2015,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &view_receipt) == 1 &&
               view_receipt.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              view_receipt.title_render_command_count == 1 &&
+              view_receipt.title_blit_kind ==
+                  CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34 &&
+              view_receipt.title_transparent_color == 0 &&
+              view_receipt.title_source_x == 0 &&
+              view_receipt.title_source_y == 80 &&
+              view_receipt.title_source_w == 320 &&
+              view_receipt.title_source_h == 57 &&
+              view_receipt.title_dest_x == 0 &&
+              view_receipt.title_dest_y == 118 &&
+              view_receipt.title_dest_w == 320 &&
+              view_receipt.title_dest_h == 57 &&
               view_receipt.title_strikes_back_visible &&
               !view_receipt.title_presents_visible &&
               !view_receipt.title_chaos_visible,
-          "boot startup render-view receipt exposes source STRIKES BACK title stage");
+          "boot startup render-view receipt exposes source STRIKES BACK title render route");
     snapshot.title_frame = 0;
     snapshot.title_source_step = 1;
     snapshot.utility_overlay_active = 0;

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB startup title render route receipt: CSB render-view receipts now expose post-FTL title render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
+
 - ✅ 2026-07-09 Nexus startup asset gate receipt: launcher startup assets now separate title readiness from real save/champion menu surface readiness, blocking menu routes on MENU.BPK PRS3/truncated/no-surface states while keeping fallback visuals disallowed. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 HoC champion menu route receipt: entrance/champion-select now exposes a DM1-owned route receipt for hall, live champion panel, dead champion resurrect/reincarnate choices, party-full blocking, and enter-dungeon readiness so M11/M12 can stop inferring HoC menu state from raw entrance fields. Verification: `test_dm1_v1_entrance_champion_select_pc34_compat` and `git diff --check` passed.
