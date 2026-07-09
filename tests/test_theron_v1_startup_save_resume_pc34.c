@@ -593,6 +593,52 @@ static void test_srm_party_continue_restores_all_champions(void) {
                     "srm party custom path host plan");
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
+        expect_true(theron_v1_startup_continue_srm_apply_with_host_receipts(
+                        &world,
+                        srm_root,
+                        2,
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) == 1 &&
+                        continue_result.source ==
+                            THERON_V1_STARTUP_CONTINUE_SOURCE_SRM &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strcmp(host_receipt.status, "CONTINUE LOADED") == 0 &&
+                        strstr(host_receipt.inspect_detail,
+                               "PROGRESSION_PARTY") != NULL &&
+                        state_receipt.flow_changed &&
+                        state_receipt.flow.selected_dungeon ==
+                            THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                    "srm party slot emits host and state receipts");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(!theron_v1_startup_continue_srm_apply_with_host_receipts(
+                        &world,
+                        srm_root,
+                        4,
+                        &plan,
+                        NULL,
+                        &continue_result,
+                        &host_receipt,
+                        &state_receipt,
+                        receipt,
+                        sizeof(receipt)) &&
+                        host_receipt.input_result ==
+                            THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                        host_receipt.status &&
+                        strstr(host_receipt.status,
+                               "SRM decode unsupported") != NULL &&
+                        strstr(host_receipt.inspect_detail,
+                               "source=NONE") != NULL,
+                    "srm party empty slot emits host failure receipt");
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
         expect_true(theron_v1_startup_continue_srm_path_apply_with_host_receipts(
                         &world,
                         custom_path,

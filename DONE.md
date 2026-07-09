@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Theron `.srm` slot Continue receipts: slot-based `.srm` Continue now has host/state receipt coverage for success and host failure receipts for unsupported/empty slots. Verification: `test_theron_v1_startup_save_resume_pc34` 152/152 and `git diff --check` passed.
+
 - ✅ 2026-07-09 Theron direct runtime level-load receipts: direct Track02 initial-level runtime load now has host/state receipts and preserves the verified-Track02 fallback block reason when semantic handoff is missing. Verification: `firestaff_theron_v1_startup_flow_probe` 596/596 and `git diff --check` passed.
 
 - ✅ 2026-07-09 Theron external `.srm` path Continue receipts: arbitrary staged `.srm` path resumes now have a host/state receipt wrapper, including failure receipts for missing paths. Verification: `test_theron_v1_startup_save_resume_pc34` 150/150 and `git diff --check` passed.
