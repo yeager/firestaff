@@ -190,6 +190,7 @@ static void theron_v1_startup_media_capture_bitmaps(
         media->startup_bitmap_atlas_nonzero_pixel_count =
             atlas.total_nonzero_pixel_count;
         media->startup_bitmap_atlas_checksum = atlas.checksum;
+        media->startup_bitmap_atlas = atlas;
     }
 }
 
@@ -284,6 +285,7 @@ void theron_v1_startup_media_capture_track02_state_receipt(
         media.startup_bitmap_atlas_nonzero_pixel_count;
     out_receipt->startup_bitmap_atlas_checksum =
         media.startup_bitmap_atlas_checksum;
+    out_receipt->startup_bitmap_atlas = media.startup_bitmap_atlas;
     out_receipt->startup_bitmap_title_sample_count =
         media.startup_bitmap_title_sample_count;
     out_receipt->startup_bitmap_stage_sample_count =

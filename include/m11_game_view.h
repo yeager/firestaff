@@ -17,6 +17,7 @@
 #include "firestaff_retroachievements.h"
 #include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include "theron_v1_track02.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -671,6 +672,34 @@ typedef struct {
         int startup_media_track02_variant;
         char startup_media_track02_md5[33];
         size_t startup_media_track02_size;
+        int startup_bitmap_decode_status;
+        int startup_bitmap_sample_count;
+        unsigned int startup_bitmap_route_mask;
+        size_t startup_bitmap_nonzero_pixel_count;
+        uint32_t startup_bitmap_checksum;
+        int startup_bitmap_title_route_ready;
+        int startup_bitmap_stage_route_ready;
+        int startup_bitmap_soul_room_route_ready;
+        int startup_bitmap_forcefield_route_ready;
+        int startup_bitmap_atlas_ready;
+        int startup_bitmap_atlas_route_count;
+        unsigned int startup_bitmap_atlas_route_mask;
+        size_t startup_bitmap_atlas_tile_count;
+        size_t startup_bitmap_atlas_nonzero_pixel_count;
+        uint32_t startup_bitmap_atlas_checksum;
+        Theron_Track02StartupBitmapAtlas startup_bitmap_atlas;
+        int startup_bitmap_title_sample_count;
+        int startup_bitmap_stage_sample_count;
+        int startup_bitmap_soul_room_sample_count;
+        int startup_bitmap_forcefield_sample_count;
+        size_t startup_bitmap_title_nonzero_pixel_count;
+        size_t startup_bitmap_stage_nonzero_pixel_count;
+        size_t startup_bitmap_soul_room_nonzero_pixel_count;
+        size_t startup_bitmap_forcefield_nonzero_pixel_count;
+        uint32_t startup_bitmap_title_checksum;
+        uint32_t startup_bitmap_stage_checksum;
+        uint32_t startup_bitmap_soul_room_checksum;
+        uint32_t startup_bitmap_forcefield_checksum;
         char startup_roster_names[8][16];
         char startup_roster_titles[8][32];
         int startup_text_prompt_count;

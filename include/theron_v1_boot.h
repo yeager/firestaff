@@ -409,6 +409,12 @@ typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
     int graphics_blocked;
     int track02_real_media_ready;
     int real_bitmap_startup_graphics_ready;
+    int track02_atlas_startup_graphics_ready;
+    int track02_atlas_startup_graphics_executed;
+    unsigned int track02_atlas_graphics_route_mask;
+    int track02_atlas_graphics_route_count;
+    size_t track02_atlas_graphics_pixel_count;
+    uint32_t track02_atlas_graphics_checksum;
     int track02_startup_graphics_executed;
     int track02_startup_graphic_receipt_valid;
     Theron_StartupRenderGraphicCommand track02_startup_graphic_receipt;
@@ -460,6 +466,12 @@ typedef struct Theron_V1_BootStartupFullStartReceipt {
     int full_start_graphics_blocked;
     int track02_real_media_ready;
     int real_bitmap_startup_graphics_ready;
+    int track02_atlas_startup_graphics_ready;
+    int track02_atlas_startup_graphics_executed;
+    unsigned int track02_atlas_graphics_route_mask;
+    int track02_atlas_graphics_route_count;
+    size_t track02_atlas_graphics_pixel_count;
+    uint32_t track02_atlas_graphics_checksum;
     int track02_startup_graphics_executed;
     int track02_startup_graphic_receipt_valid;
     Theron_StartupRenderGraphicCommand track02_startup_graphic_receipt;
@@ -522,6 +534,12 @@ typedef struct Theron_V1_BootStartupHostRenderReceipt {
     int forcefield_bitmap_route_ready;
     int track02_real_media_ready;
     int real_bitmap_startup_graphics_ready;
+    int track02_atlas_startup_graphics_ready;
+    int track02_atlas_startup_graphics_executed;
+    unsigned int track02_atlas_graphics_route_mask;
+    int track02_atlas_graphics_route_count;
+    size_t track02_atlas_graphics_pixel_count;
+    uint32_t track02_atlas_graphics_checksum;
     int track02_startup_graphics_executed;
     int track02_startup_graphic_receipt_valid;
     Theron_StartupRenderGraphicCommand track02_startup_graphic_receipt;

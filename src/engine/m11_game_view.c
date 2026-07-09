@@ -11852,6 +11852,62 @@ static void m11_theron_apply_startup_media_state_receipt(
              sizeof(state->theronState.startup_media_track02_md5),
              "%s",
              receipt->track02_md5);
+    state->theronState.startup_bitmap_decode_status =
+        receipt->startup_bitmap_decode_status;
+    state->theronState.startup_bitmap_sample_count =
+        receipt->startup_bitmap_sample_count;
+    state->theronState.startup_bitmap_route_mask =
+        receipt->startup_bitmap_route_mask;
+    state->theronState.startup_bitmap_nonzero_pixel_count =
+        receipt->startup_bitmap_nonzero_pixel_count;
+    state->theronState.startup_bitmap_checksum =
+        receipt->startup_bitmap_checksum;
+    state->theronState.startup_bitmap_title_route_ready =
+        receipt->startup_bitmap_title_route_ready;
+    state->theronState.startup_bitmap_stage_route_ready =
+        receipt->startup_bitmap_stage_route_ready;
+    state->theronState.startup_bitmap_soul_room_route_ready =
+        receipt->startup_bitmap_soul_room_route_ready;
+    state->theronState.startup_bitmap_forcefield_route_ready =
+        receipt->startup_bitmap_forcefield_route_ready;
+    state->theronState.startup_bitmap_atlas_ready =
+        receipt->startup_bitmap_atlas_ready;
+    state->theronState.startup_bitmap_atlas_route_count =
+        receipt->startup_bitmap_atlas_route_count;
+    state->theronState.startup_bitmap_atlas_route_mask =
+        receipt->startup_bitmap_atlas_route_mask;
+    state->theronState.startup_bitmap_atlas_tile_count =
+        receipt->startup_bitmap_atlas_tile_count;
+    state->theronState.startup_bitmap_atlas_nonzero_pixel_count =
+        receipt->startup_bitmap_atlas_nonzero_pixel_count;
+    state->theronState.startup_bitmap_atlas_checksum =
+        receipt->startup_bitmap_atlas_checksum;
+    state->theronState.startup_bitmap_atlas =
+        receipt->startup_bitmap_atlas;
+    state->theronState.startup_bitmap_title_sample_count =
+        receipt->startup_bitmap_title_sample_count;
+    state->theronState.startup_bitmap_stage_sample_count =
+        receipt->startup_bitmap_stage_sample_count;
+    state->theronState.startup_bitmap_soul_room_sample_count =
+        receipt->startup_bitmap_soul_room_sample_count;
+    state->theronState.startup_bitmap_forcefield_sample_count =
+        receipt->startup_bitmap_forcefield_sample_count;
+    state->theronState.startup_bitmap_title_nonzero_pixel_count =
+        receipt->startup_bitmap_title_nonzero_pixel_count;
+    state->theronState.startup_bitmap_stage_nonzero_pixel_count =
+        receipt->startup_bitmap_stage_nonzero_pixel_count;
+    state->theronState.startup_bitmap_soul_room_nonzero_pixel_count =
+        receipt->startup_bitmap_soul_room_nonzero_pixel_count;
+    state->theronState.startup_bitmap_forcefield_nonzero_pixel_count =
+        receipt->startup_bitmap_forcefield_nonzero_pixel_count;
+    state->theronState.startup_bitmap_title_checksum =
+        receipt->startup_bitmap_title_checksum;
+    state->theronState.startup_bitmap_stage_checksum =
+        receipt->startup_bitmap_stage_checksum;
+    state->theronState.startup_bitmap_soul_room_checksum =
+        receipt->startup_bitmap_soul_room_checksum;
+    state->theronState.startup_bitmap_forcefield_checksum =
+        receipt->startup_bitmap_forcefield_checksum;
     state->theronState.startup_roster_name_status =
         receipt->startup_roster_name_status;
     memset(state->theronState.startup_roster_names,
@@ -12131,6 +12187,62 @@ static void m11_theron_boot_runtime_startup_media_receipt(
              sizeof(out_receipt->track02_md5),
              "%s",
              state->theronState.startup_media_track02_md5);
+    out_receipt->startup_bitmap_decode_status =
+        state->theronState.startup_bitmap_decode_status;
+    out_receipt->startup_bitmap_sample_count =
+        state->theronState.startup_bitmap_sample_count;
+    out_receipt->startup_bitmap_route_mask =
+        state->theronState.startup_bitmap_route_mask;
+    out_receipt->startup_bitmap_nonzero_pixel_count =
+        state->theronState.startup_bitmap_nonzero_pixel_count;
+    out_receipt->startup_bitmap_checksum =
+        state->theronState.startup_bitmap_checksum;
+    out_receipt->startup_bitmap_title_route_ready =
+        state->theronState.startup_bitmap_title_route_ready;
+    out_receipt->startup_bitmap_stage_route_ready =
+        state->theronState.startup_bitmap_stage_route_ready;
+    out_receipt->startup_bitmap_soul_room_route_ready =
+        state->theronState.startup_bitmap_soul_room_route_ready;
+    out_receipt->startup_bitmap_forcefield_route_ready =
+        state->theronState.startup_bitmap_forcefield_route_ready;
+    out_receipt->startup_bitmap_atlas_ready =
+        state->theronState.startup_bitmap_atlas_ready;
+    out_receipt->startup_bitmap_atlas_route_count =
+        state->theronState.startup_bitmap_atlas_route_count;
+    out_receipt->startup_bitmap_atlas_route_mask =
+        state->theronState.startup_bitmap_atlas_route_mask;
+    out_receipt->startup_bitmap_atlas_tile_count =
+        state->theronState.startup_bitmap_atlas_tile_count;
+    out_receipt->startup_bitmap_atlas_nonzero_pixel_count =
+        state->theronState.startup_bitmap_atlas_nonzero_pixel_count;
+    out_receipt->startup_bitmap_atlas_checksum =
+        state->theronState.startup_bitmap_atlas_checksum;
+    out_receipt->startup_bitmap_atlas =
+        state->theronState.startup_bitmap_atlas;
+    out_receipt->startup_bitmap_title_sample_count =
+        state->theronState.startup_bitmap_title_sample_count;
+    out_receipt->startup_bitmap_stage_sample_count =
+        state->theronState.startup_bitmap_stage_sample_count;
+    out_receipt->startup_bitmap_soul_room_sample_count =
+        state->theronState.startup_bitmap_soul_room_sample_count;
+    out_receipt->startup_bitmap_forcefield_sample_count =
+        state->theronState.startup_bitmap_forcefield_sample_count;
+    out_receipt->startup_bitmap_title_nonzero_pixel_count =
+        state->theronState.startup_bitmap_title_nonzero_pixel_count;
+    out_receipt->startup_bitmap_stage_nonzero_pixel_count =
+        state->theronState.startup_bitmap_stage_nonzero_pixel_count;
+    out_receipt->startup_bitmap_soul_room_nonzero_pixel_count =
+        state->theronState.startup_bitmap_soul_room_nonzero_pixel_count;
+    out_receipt->startup_bitmap_forcefield_nonzero_pixel_count =
+        state->theronState.startup_bitmap_forcefield_nonzero_pixel_count;
+    out_receipt->startup_bitmap_title_checksum =
+        state->theronState.startup_bitmap_title_checksum;
+    out_receipt->startup_bitmap_stage_checksum =
+        state->theronState.startup_bitmap_stage_checksum;
+    out_receipt->startup_bitmap_soul_room_checksum =
+        state->theronState.startup_bitmap_soul_room_checksum;
+    out_receipt->startup_bitmap_forcefield_checksum =
+        state->theronState.startup_bitmap_forcefield_checksum;
     out_receipt->startup_text_prompt_status =
         state->theronState.startup_text_prompt_status;
     out_receipt->startup_text_prompt_count =
