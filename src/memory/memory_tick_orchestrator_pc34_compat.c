@@ -2499,23 +2499,6 @@ static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
     }
 }
 
-static void orch_cmd_attack_apply_group_kill_side_effects_compat(
-    struct GameWorld_Compat* world,
-    int groupIndex,
-    int targetDirection,
-    int outcome)
-{
-    int mapIndex;
-    int mapX;
-    int mapY;
-
-    if (!world) return;
-    orch_cmd_attack_target_square_compat(
-        world, targetDirection, &mapIndex, &mapX, &mapY);
-    orch_cmd_attack_apply_group_kill_side_effects_at_square_compat(
-        world, groupIndex, mapIndex, mapX, mapY, outcome);
-}
-
 static void orch_create_f0190_death_smoke_from_plan_at_square_compat(
     struct GameWorld_Compat* world,
     const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
@@ -5464,25 +5447,6 @@ static void orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
     }
 }
 
-static void orch_cmd_attack_apply_f0190_possession_drops_compat(
-    struct GameWorld_Compat* world,
-    struct DungeonGroup_Compat* group,
-    const struct CombatantCreatureSnapshot_Compat* creature,
-    int killedCell,
-    int targetDirection,
-    int outcome)
-{
-    int mapIndex;
-    int mapX;
-    int mapY;
-
-    if (!world) return;
-    orch_cmd_attack_target_square_compat(
-        world, targetDirection, &mapIndex, &mapX, &mapY);
-    orch_cmd_attack_apply_f0190_possession_drops_at_square_compat(
-        world, group, creature, killedCell, mapIndex, mapX, mapY, outcome);
-}
-
 static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
     struct GameWorld_Compat* world,
     int mapIndex,
@@ -5617,28 +5581,6 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
             world, group, originalGroupCount, &plan);
     }
     return 0;
-}
-
-static int orch_cmd_attack_apply_f0190_killed_some_state_compat(
-    struct GameWorld_Compat* world,
-    struct DungeonGroup_Compat* group,
-    const struct CombatantCreatureSnapshot_Compat* creature,
-    int groupIndex,
-    int killedCreatureIndex,
-    int originalGroupCount,
-    int targetDirection,
-    int outcome)
-{
-    int mapIndex;
-    int mapX;
-    int mapY;
-
-    if (!world) return 0;
-    orch_cmd_attack_target_square_compat(
-        world, targetDirection, &mapIndex, &mapX, &mapY);
-    return orch_cmd_attack_apply_f0190_killed_some_state_at_square_compat(
-        world, group, creature, groupIndex, killedCreatureIndex,
-        originalGroupCount, mapIndex, mapX, mapY, outcome);
 }
 
 static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(

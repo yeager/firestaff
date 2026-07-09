@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0190 melee mutation dispatch receipt: DM1 now owns the combined killed-some/killed-all F0190 dispatch for possession drops, killed-some event/fear cleanup, and killed-all unlink/active-state cleanup; M10 materializes the returned receipt. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0188 group-slot materialization receipt: GROUP.Slot possession drops now use a DM1-owned ReDMCSB F0188 plan for chain order, random drop cells, source-slot clear, and weapon-vs-wood thud classification; M10 only gathers live next pointers/RNG cells and links the returned dropped things. Verification: `dm1_v1_action_f0407_tail_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 projectile square-link receipt ownership: DM1 throw/shoot compat now owns the full F0215/DUNGEON.C F0163 empty-vs-tail square attach receipt from a supplied thing-chain snapshot; M10 only gathers the current chain and applies the returned link writes. Verification: `dm1_v1_throw_shoot_pc34_compat`, `memory_tick_orchestrator_f0303_skill_query_pc34_compat`, syntax checks, and `git diff --check` passed.

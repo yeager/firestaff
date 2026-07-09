@@ -2009,6 +2009,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     DM1_MeleeF0190TimelineCleanupInputPc34 cleanupIn;
     DM1_MeleeF0190TimelineCleanupPlanPc34 cleanupOut;
     DM1_MeleeF0190FixedDropCellsPlanPc34 fixedCellsOut;
+    DM1_MeleeF0190MutationDispatchInputPc34 dispatchIn;
+    DM1_MeleeF0190MutationDispatchPlanPc34 dispatchOut;
     DM1_MeleeF0188GroupSlotDropInputPc34 slotDropIn;
     DM1_MeleeF0188GroupSlotDropPlanPc34 slotDropOut;
     struct DungeonGroup_Compat fixedGroup;
@@ -2408,6 +2410,59 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0190 killed-some killed-all state plan builds");
     CHECK_EQ(killedAllOut.shouldUnlinkGroupFromSquare, 0,
              "F0190 killed-some no unlink");
+
+    memset(&dispatchIn, 0, sizeof(dispatchIn));
+    dispatchIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    dispatchIn.groupIndex = 9;
+    dispatchIn.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    dispatchIn.killedCreatureIndex = 1;
+    dispatchIn.originalGroupCount = 2;
+    dispatchIn.creatureType = 12;
+    dispatchIn.creatureAttributes = DM1_ATTR_DROP_FIXED_POSS;
+    dispatchIn.creatureProperties = 0x0230;
+    dispatchIn.killedCell = EXPLOSION_CELL_CENTERED;
+    dispatchIn.mapIndex = 2;
+    dispatchIn.mapX = 13;
+    dispatchIn.mapY = 14;
+    dispatchIn.partyMapIndex = 2;
+    dispatchIn.partyMapX = 12;
+    dispatchIn.partyMapY = 14;
+    CHECK_EQ(dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
+                 &dispatchIn, &dispatchOut), 1,
+             "F0190 mutation dispatch killed-all builds");
+    CHECK_EQ(dispatchOut.valid, 1, "F0190 mutation dispatch valid");
+    CHECK_EQ(dispatchOut.shouldDropPossessions, 1,
+             "F0190 mutation dispatch killed-all drops");
+    CHECK_EQ(dispatchOut.possessionDropPlan.shouldDropGroupFixedPossessions, 1,
+             "F0190 mutation dispatch group fixed drop");
+    CHECK_EQ(dispatchOut.possessionDropPlan.shouldDropGroupSlotPossessions, 1,
+             "F0190 mutation dispatch group slot drop");
+    CHECK_EQ(dispatchOut.shouldApplyKilledAllSideEffects, 1,
+             "F0190 mutation dispatch killed-all side effects");
+    CHECK_EQ(dispatchOut.killedAllStatePlan.groupIndex, 9,
+             "F0190 mutation dispatch killed-all group");
+    CHECK_EQ(dispatchOut.shouldApplyKilledSomeState, 0,
+             "F0190 mutation dispatch killed-all no killed-some cleanup");
+
+    dispatchIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    dispatchIn.killedCell = 6;
+    CHECK_EQ(dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
+                 &dispatchIn, &dispatchOut), 1,
+             "F0190 mutation dispatch killed-some builds");
+    CHECK_EQ(dispatchOut.shouldDropPossessions, 1,
+             "F0190 mutation dispatch killed-some fixed drops");
+    CHECK_EQ(dispatchOut.possessionDropPlan.shouldDropCreatureFixedPossessions,
+             1, "F0190 mutation dispatch killed-some creature drop");
+    CHECK_EQ(dispatchOut.possessionDropPlan.creatureCell, 2,
+             "F0190 mutation dispatch killed-some cell mask");
+    CHECK_EQ(dispatchOut.shouldApplyKilledSomeState, 1,
+             "F0190 mutation dispatch killed-some cleanup/fear");
+    CHECK_EQ(dispatchOut.killedSomeStatePlan.shouldCleanupCreatureEvents, 1,
+             "F0190 mutation dispatch cleanup events");
+    CHECK_EQ(dispatchOut.killedSomeStatePlan.shouldEvaluateFear, 1,
+             "F0190 mutation dispatch evaluates fear on party map");
+    CHECK_EQ(dispatchOut.shouldApplyKilledAllSideEffects, 0,
+             "F0190 mutation dispatch killed-some no killed-all side effects");
 
     memset(&resultA, 0, sizeof(resultA));
     resultA.damageApplied = 30;
