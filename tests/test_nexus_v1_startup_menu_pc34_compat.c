@@ -755,6 +755,12 @@ int main(void)
         NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
     synthetic_engine.menu_bpk_upload_receipt.ready_uploads = 3;
     synthetic_engine.menu_bpk_upload_receipt.planned_rows = 3;
+    synthetic_engine.menu_bpk_decode_receipt_valid = 1;
+    synthetic_engine.menu_bpk_decode_receipt_attempted = 1;
+    synthetic_engine.menu_bpk_decode_receipt.route =
+        NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
+    synthetic_engine.menu_bpk_decode_receipt.surface_entries = 3;
+    synthetic_engine.menu_bpk_decode_receipt.ready_stored_surfaces = 3;
     synthetic_engine.sfx_runtime_receipt.status =
         NEXUS_SFX_RUNTIME_READY_DECODED;
     synthetic_engine.sfx_runtime_receipt.level_index = 0;
@@ -814,6 +820,10 @@ int main(void)
                asset_handoff_receipt.main_menu_route_ready == 1 &&
                asset_handoff_receipt.saturn_asset_handoff_ready == 1 &&
                asset_handoff_receipt.real_asset_route_ready == 1 &&
+               asset_handoff_receipt.menu_bpk_renderer_handoff_valid == 1 &&
+               asset_handoff_receipt.menu_bpk_renderer_handoff.status ==
+                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
+               asset_handoff_receipt.menu_bpk_prs3_blocks_real_menu_route == 0 &&
                asset_handoff_receipt.blocks_main_menu_route == 0 &&
                asset_handoff_receipt.fallback_visuals_permitted == 0 &&
                strcmp(asset_handoff_receipt.title_asset_route,
@@ -2370,6 +2380,15 @@ int main(void)
                                asset_handoff_receipt.main_menu_route_ready == 0 &&
                                asset_handoff_receipt.saturn_asset_handoff_ready == 1 &&
                                asset_handoff_receipt.real_asset_route_ready == 0 &&
+                               asset_handoff_receipt.menu_bpk_renderer_handoff_valid == 1 &&
+                               asset_handoff_receipt.menu_bpk_renderer_handoff.status ==
+                                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
+                               asset_handoff_receipt.menu_bpk_renderer_handoff
+                                       .blocked_prs3_surfaces > 0 &&
+                               asset_handoff_receipt.menu_bpk_renderer_handoff
+                                       .fallback_visuals_permitted == 0 &&
+                               asset_handoff_receipt
+                                       .menu_bpk_prs3_blocks_real_menu_route == 1 &&
                                asset_handoff_receipt.blocks_main_menu_route == 1 &&
                                strcmp(asset_handoff_receipt.title_asset_route,
                                       "ready-title-assets") == 0 &&

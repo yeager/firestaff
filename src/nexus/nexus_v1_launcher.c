@@ -242,6 +242,7 @@ int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
     Nexus_V1_StartupAssetHandoffReceipt *out_receipt)
 {
     const Nexus_V1_LauncherStartupAssetsReceipt *assets;
+    Nexus_V1_MenuBpkRendererHandoffReceipt renderer_handoff;
 
     nexus_v1_launcher_startup_asset_handoff_receipt_clear(out_receipt);
     if (!out_receipt || !runtime) {
@@ -250,10 +251,23 @@ int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
 
     assets = &runtime->startup_assets;
     out_receipt->assets = *assets;
+    memset(&renderer_handoff, 0, sizeof(renderer_handoff));
+    if (runtime->engine &&
+        nexus_v1_menu_bpk_renderer_handoff_receipt(runtime->engine,
+                                                   &renderer_handoff) == 0) {
+        out_receipt->menu_bpk_renderer_handoff = renderer_handoff;
+        out_receipt->menu_bpk_renderer_handoff_valid =
+            renderer_handoff.receipt_valid ? 1 : 0;
+        out_receipt->menu_bpk_prs3_blocks_real_menu_route =
+            renderer_handoff.status ==
+            NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3;
+    }
     out_receipt->title_asset_handoff_ready =
         runtime->engine && runtime->title_loaded && assets->title_route_ready;
     out_receipt->real_menu_asset_handoff_ready =
-        assets->real_menu_surface_route_ready ? 1 : 0;
+        assets->real_menu_surface_route_ready &&
+        (!out_receipt->menu_bpk_renderer_handoff_valid ||
+         renderer_handoff.can_render_stored_surfaces) ? 1 : 0;
     out_receipt->audio_asset_handoff_ready =
         assets->startup_audio_handoff_ready ? 1 : 0;
     out_receipt->main_menu_route_ready =
@@ -263,7 +277,10 @@ int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
         out_receipt->audio_asset_handoff_ready &&
         out_receipt->real_menu_asset_handoff_ready;
     out_receipt->fallback_visuals_permitted =
-        assets->menu_bpk_fallback_visuals_permitted ? 1 : 0;
+        assets->menu_bpk_fallback_visuals_permitted ||
+        (out_receipt->menu_bpk_renderer_handoff_valid &&
+         renderer_handoff.blocks_real_menu_surface_render &&
+         renderer_handoff.fallback_visuals_permitted) ? 1 : 0;
     out_receipt->saturn_asset_handoff_ready =
         out_receipt->title_asset_handoff_ready &&
         out_receipt->audio_asset_handoff_ready;
@@ -292,6 +309,10 @@ int nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
         out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_TITLE_READY;
         out_receipt->status_scope = "ASSETS";
         out_receipt->status = "blocked-title-assets";
+    } else if (out_receipt->menu_bpk_prs3_blocks_real_menu_route) {
+        out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED;
+        out_receipt->status_scope = "ASSETS";
+        out_receipt->status = "blocked-menu-bpk-prs3";
     } else if (!out_receipt->real_menu_asset_handoff_ready) {
         out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED;
         out_receipt->status_scope = "ASSETS";
