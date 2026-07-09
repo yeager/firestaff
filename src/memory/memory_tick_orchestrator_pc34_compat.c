@@ -4897,11 +4897,8 @@ static int orch_apply_explosion_party_action_compat(
      * the live F0321 shield/defense/wound mutation. */
     for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
         DM1_ExplosionPartyChampionDamagePlanPc34 championPlan;
-        struct CombatResult_Compat damage;
+        DM1_ExplosionPartyChampionApplyPlanPc34 applyPlan;
         struct CombatantChampionSnapshot_Compat defender;
-        int killed = 0;
-        int scaledAttack = 0;
-        int selectedWounds = 0;
         struct ChampionState_Compat* champion = &world->party.champions[i];
 
         if (!champion->present || champion->hp.current == 0) {
@@ -4918,26 +4915,15 @@ static int orch_apply_explosion_party_action_compat(
 
         if (!orch_build_defender_champion_snapshot_compat(
                 world, i, championPlan.attackTypeCode, &defender) ||
-            !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
-                championPlan.attackTypeCode, championPlan.randomizedAttack,
-                championPlan.allowedWounds, &defender, &world->masterRng,
-                &scaledAttack, NULL) ||
-            scaledAttack <= 0) {
+            !dm1_v1_explosion_party_champion_apply_pc34(
+                &championPlan, &defender, &world->masterRng, champion,
+                &applyPlan) ||
+            applyPlan.scaledAttack <= 0) {
             continue;
         }
-        if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
-                scaledAttack, championPlan.allowedWounds, &defender,
-                &world->masterRng, &selectedWounds, NULL)) {
-            continue;
-        }
-
-        memset(&damage, 0, sizeof(damage));
-        damage.damageApplied = scaledAttack;
-        damage.woundMaskAdded = selectedWounds;
-        if (F0737_COMBAT_ApplyDamageToChampion_Compat(
-                &damage, champion, &killed)) {
+        if (applyPlan.valid) {
             applied++;
-            if (killed) emit(result, EMIT_CHAMPION_DOWN, i, 0, 0, 0);
+            if (applyPlan.killed) emit(result, EMIT_CHAMPION_DOWN, i, 0, 0, 0);
         }
     }
     return applied > 0;

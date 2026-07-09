@@ -979,8 +979,16 @@ static void test_projectile_champion_impact_plan(void) {
 static void test_explosion_party_damage_plan(void) {
     DM1_ExplosionPartyDamageFanoutPlanPc34 fanout;
     DM1_ExplosionPartyChampionDamagePlanPc34 champion;
+    DM1_ExplosionPartyChampionApplyPlanPc34 apply;
+    struct CombatantChampionSnapshot_Compat defender;
+    struct ChampionState_Compat championState;
+    struct RngState_Compat rng;
     memset(&fanout, 0, sizeof(fanout));
     memset(&champion, 0, sizeof(champion));
+    memset(&apply, 0, sizeof(apply));
+    memset(&defender, 0, sizeof(defender));
+    memset(&championState, 0, sizeof(championState));
+    memset(&rng, 0, sizeof(rng));
 
     ASSERT_EQ(dm1_v1_explosion_party_damage_fanout_plan_pc34(
                   40, COMBAT_ATTACK_FIRE,
@@ -1007,6 +1015,23 @@ static void test_explosion_party_damage_plan(void) {
     ASSERT_EQ(champion.allowedWounds,
               COMBAT_WOUND_READY_HAND | COMBAT_WOUND_HEAD,
               "explosion champion wounds");
+
+    champion.attackTypeCode = COMBAT_ATTACK_NORMAL;
+    champion.allowedWounds = COMBAT_WOUND_NONE;
+    defender.currentHealth = 100;
+    defender.statisticVitality = 64;
+    championState.present = 1;
+    championState.hp.current = 100;
+    rng.seed = 1u;
+    ASSERT_EQ(dm1_v1_explosion_party_champion_apply_pc34(
+                  &champion, &defender, &rng, &championState, &apply), 1,
+              "explosion champion apply builds");
+    ASSERT_EQ(apply.valid, 1, "explosion champion apply valid");
+    ASSERT_EQ(apply.championIndex, 2, "explosion champion apply index");
+    ASSERT_EQ(apply.scaledAttack, 41, "explosion champion apply damage");
+    ASSERT_EQ(apply.selectedWounds, 0, "explosion champion apply wounds");
+    ASSERT_EQ(apply.killed, 0, "explosion champion apply killed");
+    ASSERT_EQ(championState.hp.current, 59, "explosion champion hp applied");
 
     ASSERT_EQ(dm1_v1_explosion_party_champion_damage_plan_pc34(
                   &fanout, 1, 0, 80, 7, &champion), 1,
