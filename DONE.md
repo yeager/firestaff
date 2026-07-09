@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 projectile associated-thing materialization consumption: M10 now consumes the existing DM1 F0215 projectile materialization plan for ordinary Projectile.Slot drops instead of duplicating potion/explosion/Thing guards and cell packing locally. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 projectile F0215 group-slot attach plan: DM1 throw/shoot compat now owns the F0215 empty-group-slot versus append-after-tail write plan for kept sharp thrown weapons. M10 still finds the live tail and writes links, but no longer owns the F0215 head/tail branch. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 projectile group-slot materialization receipt: DM1 throw/shoot compat now owns the F0217/F0215 decision for when a non-exploding sharp thrown weapon is kept in a surviving creature group's Slot chain. M10 now only supplies live weapon/profile facts and applies the returned link mutation. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
