@@ -20,10 +20,10 @@ static void expect_contains(const char* name, const char* haystack, const char* 
 }
 
 static void test_allowed_group_keeps_move(void) {
-    M11_GroupMoveRemovalPlan plan;
+    DM1_V1_GroupMoveRemovalPlanPc34 plan;
 
     expect_int("allowed_plan_ok",
-        m11_plan_group_move_removal_after_pit_teleporter(
+        DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
             0, 1, 4, 5, 7, 8, &plan), 1);
     expect_int("allowed_move_not_prevented", plan.movePrevented, 0);
     expect_int("allowed_reason_none", plan.reason, M11_GROUP_MOVE_REMOVAL_REASON_NONE);
@@ -33,10 +33,10 @@ static void test_allowed_group_keeps_move(void) {
 }
 
 static void test_fall_killed_group_drops_and_deletes_source(void) {
-    M11_GroupMoveRemovalPlan plan;
+    DM1_V1_GroupMoveRemovalPlanPc34 plan;
 
     expect_int("fall_killed_plan_ok",
-        m11_plan_group_move_removal_after_pit_teleporter(
+        DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
             1, 1, 4, 5, 7, 8, &plan), 1);
     expect_int("fall_killed_move_prevented", plan.movePrevented, 1);
     expect_int("fall_killed_reason", plan.reason, M11_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED);
@@ -52,10 +52,10 @@ static void test_fall_killed_group_drops_and_deletes_source(void) {
 }
 
 static void test_not_allowed_group_drops_without_placement_delete(void) {
-    M11_GroupMoveRemovalPlan plan;
+    DM1_V1_GroupMoveRemovalPlanPc34 plan;
 
     expect_int("not_allowed_plan_ok",
-        m11_plan_group_move_removal_after_pit_teleporter(
+        DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
             0, 0, -1, 0, 3, 2, &plan), 1);
     expect_int("not_allowed_move_prevented", plan.movePrevented, 1);
     expect_int("not_allowed_reason", plan.reason, M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED);
@@ -80,10 +80,10 @@ static void test_source_evidence(void) {
 }
 
 static void test_deferred_route_plan(void) {
-    M11_GroupMoveRoutePlan plan;
+    DM1_V1_GroupMoveRoutePlanPc34 plan;
 
     expect_int("route_insert_ok",
-        m11_plan_deferred_group_move_route_f0267(
+        DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
             0, 1, 0, 1, 0, 100u, 7, 8, 0, 0, &plan), 1);
     expect_int("route_insert", plan.route, M11_GROUP_MOVE_ROUTE_INSERT);
     expect_int("route_insert_buzz", plan.shouldEmitAudibleBuzz, 1);
@@ -91,7 +91,7 @@ static void test_deferred_route_plan(void) {
     expect_int("route_insert_y", plan.mapY, 8);
 
     expect_int("route_remove_ok",
-        m11_plan_deferred_group_move_route_f0267(
+        DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
             0, 0, 0, 1, 0, 100u, 3, 4, 0, 0, &plan), 1);
     expect_int("route_remove", plan.route, M11_GROUP_MOVE_ROUTE_REMOVE);
     expect_int("route_remove_reason", plan.removalReason,
@@ -99,7 +99,7 @@ static void test_deferred_route_plan(void) {
     expect_int("route_remove_buzz", plan.shouldEmitAudibleBuzz, 1);
 
     expect_int("route_retry_ok",
-        m11_plan_deferred_group_move_route_f0267(
+        DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
             0, 1, 1, 0, 0, 100u, 5, 6, 0, 0, &plan), 1);
     expect_int("route_retry", plan.route, M11_GROUP_MOVE_ROUTE_RETRY);
     expect_int("route_retry_scheduled", plan.shouldScheduleRetry, 1);
@@ -108,7 +108,7 @@ static void test_deferred_route_plan(void) {
     expect_int("route_retry_y", plan.mapY, 6);
 
     expect_int("route_chaos_ok",
-        m11_plan_deferred_group_move_route_f0267(
+        DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat(
             0, 1, 1, 1, 1, 100u, 5, 6, 9, 10, &plan), 1);
     expect_int("route_chaos", plan.route,
         M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT);
@@ -118,11 +118,11 @@ static void test_deferred_route_plan(void) {
 }
 
 static void test_ordinary_group_move_plan(void) {
-    M11_OrdinaryGroupMovePlan plan;
+    DM1_V1_OrdinaryGroupMovePlanPc34 plan;
     DM1_V1_OrdinaryGroupMoveApplyPlanPc34 apply;
 
     expect_int("ordinary_east_ok",
-        m11_plan_ordinary_group_move_f0267(
+        DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             4, 5, M11_DIRECTION_EAST, 1, 0, 0, 100u, &plan), 1);
     expect_int("ordinary_east_route", plan.route, M11_GROUP_MOVE_ROUTE_INSERT);
     expect_int("ordinary_east_x", plan.destinationMapX, 5);
@@ -130,7 +130,7 @@ static void test_ordinary_group_move_plan(void) {
     expect_int("ordinary_east_next_tick", (int)plan.retryFireAtTick, 101);
 
     expect_int("ordinary_blocked_ok",
-        m11_plan_ordinary_group_move_f0267(
+        DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             4, 5, M11_DIRECTION_NORTH, 1, 1, 0, 200u, &plan), 1);
     expect_int("ordinary_blocked_route", plan.route, M11_GROUP_MOVE_ROUTE_RETRY);
     expect_int("ordinary_blocked_x", plan.destinationMapX, 4);
@@ -138,14 +138,14 @@ static void test_ordinary_group_move_plan(void) {
     expect_int("ordinary_blocked_tick", (int)plan.retryFireAtTick, 201);
 
     expect_int("ordinary_wall_ok",
-        m11_plan_ordinary_group_move_f0267(
+        DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             4, 5, M11_DIRECTION_WEST, 0, 0, 0, 300u, &plan), 1);
     expect_int("ordinary_wall_route", plan.route, M11_GROUP_MOVE_ROUTE_RETRY);
     expect_int("ordinary_wall_x", plan.destinationMapX, 3);
     expect_int("ordinary_wall_y", plan.destinationMapY, 5);
 
     expect_int("ordinary_projectile_kill_ok",
-        m11_plan_ordinary_group_move_f0267(
+        DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             4, 5, M11_DIRECTION_SOUTH, 1, 0, 1, 400u, &plan), 1);
     expect_int("ordinary_projectile_kill_route", plan.route,
         M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE);
@@ -160,7 +160,7 @@ static void test_ordinary_group_move_plan(void) {
     expect_int("ordinary_apply_kill_no_link", apply.shouldLinkDestination, 0);
 
     expect_int("ordinary_apply_move_plan_ok",
-        m11_plan_ordinary_group_move_f0267(
+        DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             4, 5, M11_DIRECTION_EAST, 1, 0, 0, 500u, &plan), 1);
     expect_int("ordinary_apply_insert_plan_ok",
         DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
@@ -179,31 +179,31 @@ static void test_ordinary_group_move_plan(void) {
 }
 
 static void test_pit_and_chaos_subplans(void) {
-    M11_GroupPitFallSquarePlan pit;
-    M11_LordChaosAdjacentRetryPlan chaos;
+    DM1_V1_GroupPitFallSquarePlanPc34 pit;
+    DM1_V1_LordChaosAdjacentRetryPlanPc34 chaos;
 
     expect_int("pit_open_ok",
-        m11_plan_group_pit_fall_square_f0267(
+        DM1_V1_PlanGroupPitFallSquareF0267Pc34Compat(
             2, 2, 1, 0, &pit), 1);
     expect_int("pit_open_falls", pit.shouldFall, 1);
 
     expect_int("pit_closed_ok",
-        m11_plan_group_pit_fall_square_f0267(
+        DM1_V1_PlanGroupPitFallSquareF0267Pc34Compat(
             2, 2, 0, 0, &pit), 1);
     expect_int("pit_closed_no_fall", pit.shouldFall, 0);
 
     expect_int("pit_imaginary_ok",
-        m11_plan_group_pit_fall_square_f0267(
+        DM1_V1_PlanGroupPitFallSquareF0267Pc34Compat(
             2, 2, 1, 1, &pit), 1);
     expect_int("pit_imaginary_no_fall", pit.shouldFall, 0);
 
     expect_int("chaos_gate_miss_ok",
-        m11_plan_lord_chaos_adjacent_retry_f0252(
+        DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
             23, 1, 0, 10, 20, -1, -1, &chaos), 1);
     expect_int("chaos_gate_miss_no_attempt", chaos.shouldAttempt, 0);
 
     expect_int("chaos_candidate_ok",
-        m11_plan_lord_chaos_adjacent_retry_f0252(
+        DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
             23, 0, 1, 10, 20, -1, -1, &chaos), 1);
     expect_int("chaos_candidate_attempt", chaos.shouldAttempt, 1);
     expect_int("chaos_candidate_x", chaos.candidateMapX, 11);
@@ -212,12 +212,12 @@ static void test_pit_and_chaos_subplans(void) {
         chaos.shouldInsertAdjacent, 0);
 
     expect_int("chaos_accept_ok",
-        m11_plan_lord_chaos_adjacent_retry_f0252(
+        DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
             23, 0, 1, 10, 20, 1, 0, &chaos), 1);
     expect_int("chaos_accept_insert", chaos.shouldInsertAdjacent, 1);
 
     expect_int("chaos_blocked_ok",
-        m11_plan_lord_chaos_adjacent_retry_f0252(
+        DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
             23, 0, 1, 10, 20, 1, 1, &chaos), 1);
     expect_int("chaos_blocked_no_insert", chaos.shouldInsertAdjacent, 0);
 }
