@@ -239,6 +239,11 @@ typedef struct {
     int draw_command_count;
     Nexus_V1_LauncherStartupAssetsReceipt assets;
     Nexus_V1_StartupHostReceipt host_receipt;
+    int host_caller_valid;
+    int package_capture_consumed_by_host;
+    int display_callers_use_package_receipt;
+    int suppress_fallback_visuals;
+    int blocked_route_suppresses_all_draws;
     const char *asset_route;
     const char *asset_blocker;
     const char *status_scope;
