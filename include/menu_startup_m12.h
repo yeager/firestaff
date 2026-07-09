@@ -329,6 +329,20 @@ typedef struct {
     const char* detailLabel;
 } M12_StartupBootReadiness;
 
+typedef struct {
+    int handled;
+    int entryIndex;
+    int canLaunch;
+    int rendererReady;
+    int presentationReady;
+    int dataReady;
+    int versionReady;
+    int autoSelectedVersionIndex;
+    const char* blockedLabel;
+    const char* blockedDetail;
+    M12_StartupBootReadiness boot;
+} M12_StartupLaunchGate;
+
 
 /* ── Redesigned main menu items (pass604) ─────────────────────────── */
 typedef enum {
@@ -542,6 +556,9 @@ const char* M12_StartupMenu_GetRetroAchievementsEndpointValue(const M12_StartupM
 int M12_StartupMenu_GetBootReadiness(const M12_StartupMenuState* state,
                                      int entryIndex,
                                      M12_StartupBootReadiness* outReadiness);
+int M12_StartupMenu_GetLaunchGate(const M12_StartupMenuState* state,
+                                  int entryIndex,
+                                  M12_StartupLaunchGate* outGate);
 const char* M12_StartupMenu_GetEntryBootStatusLabel(
     const M12_StartupMenuState* state,
     int entryIndex);

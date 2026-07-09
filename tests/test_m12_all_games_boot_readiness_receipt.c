@@ -59,6 +59,7 @@ int main(void) {
     state.view = M12_MENU_VIEW_MAIN;
     for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
         M12_StartupBootReadiness boot;
+        M12_StartupLaunchGate gate;
         mark_game_ready(&state, i, expected[i].gameId);
         if (!expect(M12_StartupMenu_GetBootReadiness(&state, i, &boot) == 1,
                     "boot readiness receipt should build")) return 1;
@@ -82,6 +83,17 @@ int main(void) {
         if (!expect(boot.detailLabel &&
                     strcmp(boot.detailLabel, expected[i].detailLabel) == 0,
                     "detail label should match game startup chain")) return 1;
+        if (!expect(M12_StartupMenu_GetLaunchGate(&state, i, &gate) == 1,
+                    "launch gate should build")) return 1;
+        if (!expect(gate.canLaunch == 1,
+                    "ready game launch gate should allow launch")) return 1;
+        if (!expect(gate.rendererReady == 1 && gate.presentationReady == 1,
+                    "ready game launch gate should expose renderer/presentation readiness")) return 1;
+        if (!expect(gate.boot.startupStepReadyCount == expected[i].stepCount,
+                    "launch gate should carry boot receipt progress")) return 1;
+        if (!expect(gate.blockedLabel &&
+                    strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0,
+                    "ready game launch gate should report ready label")) return 1;
     }
 
     puts("ok: all game launcher boot-readiness receipts expose full-start progress and labels");
