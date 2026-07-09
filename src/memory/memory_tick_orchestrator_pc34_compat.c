@@ -5687,6 +5687,7 @@ static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
     const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan)
 {
     DM1_MeleeF0190MutationDispatchPlanPc34 plan;
+    DM1_MeleeF0190MutationDispatchApplyPlanPc34 applyPlan;
     int fearTriggered = 0;
 
     if (!world || !group || !aftermathPlan) return 0;
@@ -5697,22 +5698,28 @@ static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
         !plan.valid) {
         return 0;
     }
-    if (plan.shouldDropPossessions) {
-        orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
-            world, group, &plan.possessionDropPlan);
+    memset(&applyPlan, 0, sizeof(applyPlan));
+    if (!dm1_v1_melee_mutation_dispatch_apply_plan_f0190_pc34(
+            &plan, &applyPlan) ||
+        !applyPlan.valid) {
+        return 0;
     }
-    if (plan.shouldApplyKilledSomeState) {
+    if (applyPlan.shouldDropPossessions) {
+        orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
+            world, group, &applyPlan.possessionDropPlan);
+    }
+    if (applyPlan.shouldApplyKilledSomeState) {
         (void)orch_cmd_attack_apply_killed_some_receipt_compat(
-            world, group, &plan.killedSomeStatePlan);
-        if (plan.killedSomeStatePlan.shouldEvaluateFear) {
+            world, group, &applyPlan.killedSomeStatePlan);
+        if (applyPlan.shouldEvaluateFear) {
             fearTriggered =
                 orch_cmd_attack_apply_f0190_fear_compat(
                     world, group, &plan);
         }
     }
-    if (plan.shouldApplyKilledAllSideEffects) {
+    if (applyPlan.shouldApplyKilledAllSideEffects) {
         orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
-            world, &plan.killedAllStatePlan);
+            world, &applyPlan.killedAllStatePlan);
     }
     return fearTriggered;
 }

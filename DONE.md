@@ -28,6 +28,7 @@
 - ✅ 2026-07-09 pass822 DM1 F0231 aftermath ownership now carries raw group writeback receipts, so M10 writes decoded group records from a DM1-returned group index instead of reading aftermath flags directly.
 - ✅ 2026-07-09 pass823 DM1 F0190 killed-all state ownership now carries unlink, GROUP.Next clear, and active-state removal apply receipts, so M10 no longer interprets killed-all state flags directly.
 - ✅ 2026-07-09 pass824 DM1 F0190 killed-some state ownership now carries event-cleanup and fear writeback apply receipts, so M10 materializes returned DM1 fields instead of reading killed-some state flags directly.
+- ✅ 2026-07-09 pass825 DM1 F0190 mutation-dispatch ownership now carries one combined apply receipt for possession drops, killed-some cleanup/fear gate, and killed-all side effects, reducing M10 dispatch flag reads.
 
 - ✅ 2026-07-09 Theron SRM envelope startup receipt proof: Theron startup save/resume probe now asserts the decoded SRM envelope kind, so staged gzip SRM data proves the same typed progression handoff used by Continue. Verification: `theron_v1_startup_save_resume_probe`, `theron_v1_startup_save_resume_pc34`, and focused build passed.
 

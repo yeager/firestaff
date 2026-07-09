@@ -1650,6 +1650,34 @@ int dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
     return dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(&in, out);
 }
 
+int dm1_v1_melee_mutation_dispatch_apply_plan_f0190_pc34(
+    const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
+    DM1_MeleeF0190MutationDispatchApplyPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!dispatchPlan || !dispatchPlan->valid) return 0;
+
+    out->valid = 1;
+    out->shouldDropPossessions = dispatchPlan->shouldDropPossessions;
+    out->shouldApplyKilledSomeState =
+        dispatchPlan->shouldApplyKilledSomeState;
+    out->shouldApplyKilledAllSideEffects =
+        dispatchPlan->shouldApplyKilledAllSideEffects;
+    out->possessionDropPlan = dispatchPlan->possessionDropPlan;
+    out->killedSomeStatePlan = dispatchPlan->killedSomeStatePlan;
+    out->killedAllStatePlan = dispatchPlan->killedAllStatePlan;
+    if (out->shouldApplyKilledSomeState &&
+        out->killedSomeStatePlan.valid &&
+        out->killedSomeStatePlan.shouldEvaluateFear) {
+        out->shouldEvaluateFear = 1;
+    }
+
+    /* ReDMCSB: GROUP.C F0190 lines 824-917 owns the ordered mutation
+     * materialization gates after damage.  DM1 returns one dispatch apply
+     * receipt so M10 no longer reads the raw dispatch booleans directly. */
+    return 1;
+}
+
 int dm1_v1_melee_mutation_dispatch_fear_roll_plan_f0190_pc34(
     const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
     DM1_MeleeF0190FearRollPlanPc34* out) {
