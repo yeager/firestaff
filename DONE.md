@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 inventory slotbox zone ownership: inventory slot placement now owns C507..C536 inventory/equipment/backpack and C537..C544 chest slotbox zone tables; M11 wrapper functions delegate to the DM1 contract. Verification: slot placement 147/147, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 champion needs food/water render ownership: champion-needs code now owns food/water panel bar width, red/yellow/normal color thresholds, shadow rect, and fill rect command construction; M11 only paints returned rects. Verification: champion needs 61/61, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 V1 message-area render ownership: DM1 text/message code now owns tick-prefix stripping, player-facing filtering, four-row render-plan selection, and row metrics; M11 only renders the returned plan. Verification: text/message 106/106, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

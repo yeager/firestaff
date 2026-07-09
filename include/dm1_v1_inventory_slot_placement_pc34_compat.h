@@ -118,6 +118,14 @@ typedef struct {
 } DM1_V1_InventorySlotPlacementCasePc34;
 
 typedef struct {
+    int zoneId;
+    int x;
+    int y;
+    int w;
+    int h;
+} DM1_V1_InventorySlotBoxZonePc34;
+
+typedef struct {
     int contractOnly;
     int assertionBudget;
     DM1_V1_InventorySlotPlacementCasePc34 handEmptyReady;
@@ -183,6 +191,30 @@ int dm1_v1_inventory_slot_placement_rule_for_pc34(int allowedSlots);
 
 int dm1_v1_inventory_slot_placement_probe_pc34(
     DM1_V1_InventorySlotPlacementProbePc34* out);
+
+int dm1_v1_inventory_source_slot_box_zone_count_pc34(void);
+int dm1_v1_inventory_source_slot_box_zone_id_pc34(int sourceSlotBoxIndex);
+int dm1_v1_inventory_source_slot_box_zone_pc34(
+    int sourceSlotBoxIndex,
+    DM1_V1_InventorySlotBoxZonePc34* outZone);
+
+int dm1_v1_inventory_equipment_slot_zone_count_pc34(void);
+int dm1_v1_inventory_equipment_slot_zone_id_pc34(int equipmentOrdinal);
+int dm1_v1_inventory_equipment_slot_zone_pc34(
+    int equipmentOrdinal,
+    DM1_V1_InventorySlotBoxZonePc34* outZone);
+
+int dm1_v1_inventory_backpack_slot_zone_count_pc34(void);
+int dm1_v1_inventory_backpack_slot_zone_id_pc34(int backpackOrdinal);
+int dm1_v1_inventory_backpack_slot_zone_pc34(
+    int backpackOrdinal,
+    DM1_V1_InventorySlotBoxZonePc34* outZone);
+
+int dm1_v1_inventory_chest_slot_box_zone_count_pc34(void);
+int dm1_v1_inventory_chest_slot_box_zone_id_pc34(int chestOrdinal);
+int dm1_v1_inventory_chest_slot_box_zone_pc34(
+    int chestOrdinal,
+    DM1_V1_InventorySlotBoxZonePc34* outZone);
 
 #ifdef __cplusplus
 }
