@@ -61,7 +61,7 @@ static const char s_source_evidence[] =
     "Close landing: F0098_DUNGEONVIEW_DrawFloorAndCeiling and "
     "F0326_B_RefreshMousePointerInMainLoop.";
 
-static const Dm1V1MirrorCandidateC160CloseWhileRotationPendingEvidencePc34
+static const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingEvidencePc34
     s_evidence = {
         "ReDMCSB PANEL.C F0344:1493-1561 and F0345:1563-1617 food/water panel chain",
         "ReDMCSB PANEL.C F0346:1619-1637 and F0347:1639-1693 C040 resurrect reroute",
@@ -89,7 +89,7 @@ static uint32_t hash_step(uint32_t hash, unsigned int value)
 }
 
 static uint32_t hash_chest(
-    const Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
+    const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -103,7 +103,7 @@ static uint32_t hash_chest(
 }
 
 static uint32_t hash_state(
-    const Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
+    const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -159,8 +159,8 @@ static int source_anchors_present(void)
            strstr(s_source_evidence, "F0326_B_RefreshMousePointerInMainLoop") != NULL;
 }
 
-void dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34(
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
+void DM1_V1_MirrorCandidateC160CloseWhileRotationPending_InitPc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
     uint32_t seed)
 {
     int i;
@@ -208,7 +208,7 @@ void dm1_v1_mirror_candidate_c160_close_while_rotation_pending_init_pc34(
 }
 
 static int ready(
-    const Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
+    const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
 {
     return state && state->contractOnly && state->noGameDataRequired &&
            state->partyChampionCount == DM1_V1_MC_C160_ROTATION_PARTY_COUNT_PC34 &&
@@ -226,7 +226,7 @@ static int ready(
 }
 
 static int enter_f0302_rotation_pending(
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
 {
     if (!ready(state)) {
         return 0;
@@ -240,7 +240,7 @@ static int enter_f0302_rotation_pending(
 }
 
 static int dispatch_fresh_c160_close(
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
 {
     if (!state || !state->f0302RotationInFlight ||
         state->f0302RotationCommitted || state->g0299CandidateOrdinal == 0 ||
@@ -272,7 +272,7 @@ static int dispatch_fresh_c160_close(
 }
 
 static int commit_leader_rotation_after_close(
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state)
 {
     int oldLeader;
     int newLeader;
@@ -301,8 +301,8 @@ static int commit_leader_rotation_after_close(
 }
 
 static void snapshot_before_close(
-    const Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result)
+    const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result)
 {
     int i;
 
@@ -326,8 +326,8 @@ static void snapshot_before_close(
 }
 
 static void snapshot_after_close(
-    const Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result)
+    const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result)
 {
     result->leaderIndexDuringClose = state->leaderIndex;
     result->pendingLeaderIndexAfterClose = state->pendingLeaderIndex;
@@ -368,8 +368,8 @@ static void snapshot_after_close(
 }
 
 static void snapshot_after_commit(
-    const Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result)
+    const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result)
 {
     int i;
 
@@ -390,9 +390,9 @@ static void snapshot_after_commit(
     }
 }
 
-int dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
-    Dm1V1MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result)
+int DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingStatePc34 *state,
+    DM1_V1_MirrorCandidateC160CloseWhileRotationPendingResultPc34 *result)
 {
     int i;
 
@@ -460,10 +460,10 @@ int dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
     }
     result->sourceLockAnchorsPresent = source_anchors_present();
     result->guardRejectsNullState =
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
             NULL, result) == 0;
     result->guardRejectsNullResult =
-        dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
+        DM1_V1_MirrorCandidateC160CloseWhileRotationPending_RunPc34(
             state, NULL) == 0;
     result->accepted =
         result->contractOnly &&
@@ -489,14 +489,14 @@ int dm1_v1_mirror_candidate_c160_close_while_rotation_pending_run_pc34(
     return result->accepted;
 }
 
-const Dm1V1MirrorCandidateC160CloseWhileRotationPendingEvidencePc34 *
-dm1_v1_mirror_candidate_c160_close_while_rotation_pending_evidence_pc34(void)
+const DM1_V1_MirrorCandidateC160CloseWhileRotationPendingEvidencePc34 *
+DM1_V1_MirrorCandidateC160CloseWhileRotationPending_EvidencePc34(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_c160_close_while_rotation_pending_source_evidence_pc34(
+DM1_V1_MirrorCandidateC160CloseWhileRotationPending_SourceEvidencePc34(
     void)
 {
     return s_source_evidence;

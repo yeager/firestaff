@@ -52,7 +52,7 @@ static const char s_source_evidence[] =
     "MOUSE.C F0077:97-126 and F0078:128-168 are Firestaff wheel queue lineage; local ReDMCSB Common/Source exposes F0077/F0078 prototypes at DEFS.H:6886-6895\n"
     "DEFS.H:2088 C10; 253-302 C016..C065; 338-340 C160..C162; 5875-5881 G0420/G0423/G0425/G0426; 8217-8235 F0359/F0361; 8305-8309 F0380";
 
-static const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34
+static const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34
     s_evidence = {
         "ReDMCSB CHEST.C F0333:30-67 G0426 open and G0425/C537..C544 materialization",
         "ReDMCSB CHEST.C F0334:113-132 G0426 close/relink path must remain untouched",
@@ -80,7 +80,7 @@ static uint32_t fnv_step(uint32_t hash, unsigned int value)
 }
 
 static uint32_t hash_chain(
-    const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
+    const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -96,7 +96,7 @@ static uint32_t hash_chain(
 }
 
 static uint32_t hash_chest(
-    const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
+    const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -110,7 +110,7 @@ static uint32_t hash_chest(
 }
 
 static uint32_t hash_state(
-    const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
+    const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
 {
     uint32_t hash;
     int i;
@@ -159,8 +159,8 @@ static int source_anchors_present(void)
            strstr(s_source_evidence, "G0425/G0426");
 }
 
-void dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_init_pc34(
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
+void DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_InitPc34(
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
 {
     int i;
 
@@ -210,7 +210,7 @@ void dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_init_pc34(
 }
 
 static int ready(
-    const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
+    const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
 {
     return state &&
            state->partyChampionCount ==
@@ -228,8 +228,8 @@ static int ready(
 }
 
 static void snapshot_before(
-    const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state,
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result)
+    const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state,
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result)
 {
     int i;
 
@@ -253,7 +253,7 @@ static void snapshot_before(
 }
 
 static void queue_same_tick_window(
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
 {
     state->sameTickWindow = 1;
     state->f0077WheelQueueWriteCount = 1;
@@ -267,7 +267,7 @@ static void queue_same_tick_window(
 }
 
 static void consume_wheel_rotation(
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
 {
     int oldLeader = state->leaderIndex;
     int newLeader = state->pendingLeaderIndex;
@@ -285,7 +285,7 @@ static void consume_wheel_rotation(
 }
 
 static void route_chest_click_through_c040_panel(
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state)
 {
     state->f0378PanelRouteCount = 1;
     if (state->panelContent == kPanelResurrect &&
@@ -305,8 +305,8 @@ static void route_chest_click_through_c040_panel(
 }
 
 static void snapshot_after(
-    const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state,
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result)
+    const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state,
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result)
 {
     int i;
 
@@ -345,9 +345,9 @@ static void snapshot_after(
     }
 }
 
-int dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_run_pc34(
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state,
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result)
+int DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_RunPc34(
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 *state,
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result)
 {
     int i;
 
@@ -431,15 +431,15 @@ int dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_run_pc34(
     return result->accepted;
 }
 
-const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34 *
-dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_evidence_pc34(
+const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34 *
+DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_EvidencePc34(
     void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_source_evidence_pc34(
+DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_SourceEvidencePc34(
     void)
 {
     return s_source_evidence;

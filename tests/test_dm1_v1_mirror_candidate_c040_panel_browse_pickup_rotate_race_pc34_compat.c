@@ -61,10 +61,10 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_source_evidence(void)
 {
-    const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34 *e =
-        dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_evidence_pc34();
+    const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34 *e =
+        DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_EvidencePc34();
     const char *text =
-        dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_source_evidence_pc34();
+        DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_SourceEvidencePc34();
 
     check_true(e != NULL, "evidence accessor", "source-lock");
     check_contains(e->chestOpenAnchor, "CHEST.C F0333:30-67",
@@ -141,8 +141,8 @@ static void test_source_evidence(void)
 
 static void test_non_overlap(void)
 {
-    const Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34 *e =
-        dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_evidence_pc34();
+    const DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceEvidencePc34 *e =
+        DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_EvidencePc34();
     const char *siblings[] = {
         "mirror_candidate_click_cancel_with_rotation",
         "click_cancel",
@@ -191,10 +191,10 @@ static void test_non_overlap(void)
 
 static void test_initial_state(void)
 {
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 state;
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 state;
     int i;
 
-    dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_init_pc34(
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_InitPc34(
         &state);
     check_int_eq(state.partyChampionCount, 4, "party count",
                  "REVIVE.C F0280:124-132");
@@ -280,16 +280,16 @@ static void test_initial_state(void)
 }
 
 static uint32_t run_one(
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result)
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 *result)
 {
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 state;
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 state;
     int accepted;
     int i;
 
-    dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_init_pc34(
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_InitPc34(
         &state);
     accepted =
-        dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_run_pc34(
+        DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_RunPc34(
             &state, result);
     check_int_eq(accepted, 1, "runtime accepted",
                  "pass768 runtime regression");
@@ -464,30 +464,30 @@ static uint32_t run_one(
 
 static void test_null_guards(void)
 {
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 state;
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 result;
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceStatePc34 state;
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 result;
 
-    dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_init_pc34(
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_InitPc34(
         &state);
     check_int_eq(
-        dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_run_pc34(
+        DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_RunPc34(
             NULL, &result),
         0, "null state rejected", "guard");
     check_int_eq(
-        dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_run_pc34(
+        DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_RunPc34(
             &state, NULL),
         0, "null result rejected", "guard");
     state.c040PanelOpen = 0;
     check_int_eq(
-        dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_run_pc34(
+        DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRace_RunPc34(
             &state, &result),
         0, "missing C040 panel rejected", "non-overlap");
 }
 
 int main(void)
 {
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 first;
-    Dm1V1MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 second;
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 first;
+    DM1_V1_MirrorCandidateC040PanelBrowsePickupRotateRaceResultPc34 second;
     uint32_t firstHash;
     uint32_t secondHash;
 
