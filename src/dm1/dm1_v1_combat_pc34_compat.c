@@ -865,6 +865,7 @@ static int dm1_group_creature_occupies_cell_pc34(const DM1_CreatureGroup* group,
 
     if (!group) return 0;
     if (creatureIdx < 0 || creatureIdx > group->count) return 0;
+    if (group->creatures[creatureIdx].health <= 0) return 0;
 
     /* ReDMCSB GROUP.C F0176 lines 86-88: a group-cell byte of
      * C0xFF_SINGLE_CENTERED_CREATURE means one centered creature is
@@ -873,6 +874,9 @@ static int dm1_group_creature_occupies_cell_pc34(const DM1_CreatureGroup* group,
      * decoded group-cell sentinel on creature slot 0. */
     if (group->creatures[0].cell == DM1_GROUP_CELLS_SINGLE_CENTERED) {
         return creatureIdx == 0;
+    }
+    if ((group->creatures[creatureIdx].cell & ~3) != 0) {
+        return 0;
     }
 
     creatureCell = group->creatures[creatureIdx].cell & 3;
