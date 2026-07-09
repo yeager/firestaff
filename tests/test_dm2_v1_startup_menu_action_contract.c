@@ -784,6 +784,13 @@ int main(void)
                       boot_real_visual_capture.title_pixel_hash != 0u &&
                       boot_real_visual_capture.menu_pixel_count == 64000u &&
                       boot_real_visual_capture.menu_pixel_hash != 0u &&
+                      boot_real_visual_capture.full_visual_composite_capture_ready == 1 &&
+                      boot_real_visual_capture.composite_gdat_blit_count == 2 &&
+                      boot_real_visual_capture.composite_rect_count >= 2 &&
+                      boot_real_visual_capture.composite_text_zone_count >=
+                          boot_real_visual_capture.menu_row_count &&
+                      boot_real_visual_capture.composite_pixel_count == 64000u &&
+                      boot_real_visual_capture.composite_pixel_hash != 0u &&
                       boot_real_visual_capture.menu_capture_ready == 1 &&
                       boot_real_visual_capture.menu_gdat_command_count == 2 &&
                       boot_real_visual_capture.menu_rect_command_count >= 2 &&
@@ -795,6 +802,7 @@ int main(void)
                       boot_real_visual_capture.exact_selected_highlight_ready == 1 &&
                       boot_real_visual_capture.startup_title_menu_hud_breadth_ready == 1 &&
                       boot_real_visual_capture.hud_handoff_capture_ready == 1 &&
+                      boot_real_visual_capture.hud_suppressed_capture_ready == 1 &&
                       boot_real_visual_capture.suppress_game_hud == 1 &&
                       boot_real_visual_capture.no_fallback_title_blit == 1 &&
                       boot_real_visual_capture.packaged_visual_capture_hash != 0u,

@@ -512,6 +512,13 @@ typedef struct {
     int menu_gdat_asset_stride;
     uint32_t menu_pixel_hash;
     uint32_t menu_pixel_count;
+    int full_visual_composite_capture_ready;
+    int composite_gdat_blit_count;
+    int composite_rect_count;
+    int composite_text_zone_count;
+    uint32_t composite_pixel_hash;
+    uint32_t composite_pixel_count;
+    int hud_suppressed_capture_ready;
     int menu_capture_ready;
     int menu_title_composite_capture_ready;
     int menu_command_count;
