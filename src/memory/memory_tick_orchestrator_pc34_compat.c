@@ -2347,6 +2347,9 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
     in.actionSkillIndex = actionSkillIndex;
     in.damageApplied = damageApplied;
     in.creatureProperties = creature ? creature->properties : 0;
+    in.mapDifficulty = orch_cmd_attack_map_difficulty_compat(world);
+    in.currentTick = world->gameTick;
+    in.lastCreatureAttackTime = world->lifecycle.lastCreatureAttackTime;
     in.currentStamina = champion->stamina.current;
     in.maximumStamina = champion->stamina.maximum;
     in.currentHealth = champion->hp.current;
@@ -2365,9 +2368,9 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
             &world->lifecycle.champions[plan.xpChampionIndex],
             plan.skillIndex,
             plan.experienceGain,
-            orch_cmd_attack_map_difficulty_compat(world),
-            world->gameTick,
-            world->lifecycle.lastCreatureAttackTime,
+            plan.xpMapDifficulty,
+            plan.xpCurrentTick,
+            plan.xpLastCreatureAttackTime,
             0,
             0);
     }
