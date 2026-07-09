@@ -98,11 +98,27 @@ static void fill_view(M11_GameViewState *view, Nexus_V1_Engine *engine)
     view->nexusState.champion_select_frame = 0;
 }
 
+static int count_nonzero_pixels(const unsigned char *pixels, int count)
+{
+    int i;
+    int nonzero = 0;
+    if (!pixels || count <= 0) {
+        return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        if (pixels[i] != 0u) {
+            ++nonzero;
+        }
+    }
+    return nonzero;
+}
+
 int main(void)
 {
     Nexus_V1_Engine engine;
     M11_GameViewState view;
     M11_GameInputResult result;
+    unsigned char framebuffer[320 * 200];
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
@@ -193,6 +209,25 @@ int main(void)
                     view.nexusState.startup_copied_draw_command_count == 0 &&
                     view.nexusState.startup_copied_dgn_render_command_count == 0,
                 "M11 Nexus blocked startup suppresses fallback through host-caller receipt");
+
+    fill_ready_engine(&engine);
+    fill_view(&view, &engine);
+    view.nexusState.title_active = 1;
+    view.nexusState.champion_select_active = 0;
+    engine.menu_bpk_upload_receipt.route =
+        NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
+    engine.menu_bpk_upload_receipt.blocked_prs3_uploads = 3;
+    engine.menu_bpk_upload_receipt.blocks_real_menu_surface_render = 1;
+    engine.menu_bpk_decode_receipt.route =
+        NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3;
+    engine.menu_bpk_decode_receipt.blocked_prs3_surfaces = 3;
+    engine.menu_bpk_decode_receipt.prs3_stream_plans = 3;
+    engine.menu_bpk_decode_receipt.requires_prs3_decoder = 1;
+    engine.menu_bpk_decode_receipt.decode_blocked = 1;
+    memset(framebuffer, 0x7f, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) > 0,
+                "M11 Nexus draw uses real title capture before blocked menu fallback");
 
     if (g_failures) {
         fprintf(stderr,

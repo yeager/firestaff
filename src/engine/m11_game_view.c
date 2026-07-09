@@ -38617,6 +38617,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             Nexus_V1_StartupDrawCommand commands[80];
             Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
             int command_count;
+            int host_caller_ready = 0;
+            int suppress_legacy_startup_fallback = 0;
             directDraw = 1;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
             memset(&runtime_receipt, 0, sizeof(runtime_receipt));
@@ -38633,8 +38635,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     dgn_commands,
                     (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
                     &host_caller_receipt)) {
+                host_caller_ready = host_caller_receipt.host_caller_ready ? 1 : 0;
+                suppress_legacy_startup_fallback =
+                    host_caller_receipt.suppress_legacy_placeholder_visuals ? 1 : 0;
                 command_count =
-                    host_caller_receipt.copied_startup_command_count;
+                    host_caller_receipt.host_execute_startup_draws
+                        ? host_caller_receipt.copied_startup_command_count
+                        : 0;
             } else {
                 command_count = 0;
             }
@@ -38644,7 +38651,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                             framebufferHeight,
                                             commands,
                                             command_count);
-            if (command_count <= 0 && state->nexusState.title_active) {
+            if (command_count <= 0 &&
+                state->nexusState.title_active &&
+                (!host_caller_ready || !suppress_legacy_startup_fallback)) {
                 (void)m11_draw_nexus_title_from_real_assets(state,
                                                             framebuffer,
                                                             framebufferWidth,
