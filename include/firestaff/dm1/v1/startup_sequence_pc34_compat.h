@@ -275,6 +275,30 @@ typedef struct DM1_V1_StartupHoCFullStartProductionReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCFullStartProductionReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 {
+    int handled;
+    int ready;
+    int consume_full_start_production_receipt_only;
+    int capture_manifest_ready;
+    int capture_after_first_frame_render;
+    int publish_packaged_full_graphics_proof;
+    int title_surface_forbidden;
+    int closed_door_frame_forbidden;
+    int host_fallback_visuals_forbidden;
+    int opened_entrance_frame_required;
+    int hall_mirror_overlay_required;
+    int clear_champion_panel_required;
+    int block_enter_until_champion_selected;
+    int expected_map_index;
+    int expected_map_width;
+    int expected_map_height;
+    int expected_entrance_door_frame_index;
+    int expected_hall_overlay_kind;
+    int expected_hoc_render_command_count;
+    const char* capture_phase;
+    const char* source_evidence;
+} DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34;
+
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
     int (*begin_prelude_plan)(void* user,
@@ -621,6 +645,9 @@ int dm1_v1_startup_hoc_full_start_production_receipt_pc34(
     const DM1_V1_StartupHandoffPostLaunchPlan_PC34* post_plan,
     const DM1_V1_StartupHandoffOutcome_PC34* outcome,
     DM1_V1_StartupHoCFullStartProductionReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_full_graphics_capture_artifact_from_production_pc34(
+    const DM1_V1_StartupHoCFullStartProductionReceipt_PC34* receipt,
+    DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34* out_artifact);
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
