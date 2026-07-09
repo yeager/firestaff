@@ -1597,6 +1597,7 @@ const char *nexus_v1_startup_save_route_name(
     case NEXUS_V1_STARTUP_SAVE_ROUTE_NEW_GAME: return "new-game";
     case NEXUS_V1_STARTUP_SAVE_ROUTE_BACK_TO_TITLE: return "back-to-title";
     case NEXUS_V1_STARTUP_SAVE_ROUTE_POINTER_MISS: return "pointer-miss";
+    case NEXUS_V1_STARTUP_SAVE_ROUTE_ASSET_BLOCKED: return "asset-blocked";
     default: return "unknown";
     }
 }
