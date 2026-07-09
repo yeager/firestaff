@@ -1471,8 +1471,8 @@ int main(void) {
                         "M11 DM2 startup menu draws the original GDAT menu surface");
             expect_true(strcmp(view.lastAction, "STARTUP") == 0 &&
                             strcmp(view.lastOutcome,
-                                   "DM2 STARTUP MENU") == 0,
-                        "M11 DM2 startup draw consumes packaged real-visual capture receipt status");
+                                   "DM2 STARTUP GDAT") == 0,
+                        "M11 DM2 startup draw consumes real-GDAT draw receipt status");
         }
         dm2_v1_boot_gdat_image_asset_free(menu_pixels);
     }

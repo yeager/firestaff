@@ -576,6 +576,14 @@ typedef struct {
     int composite_text_zone_count;
     uint32_t composite_pixel_hash;
     uint32_t composite_pixel_count;
+    int m11_draw_consumption_ready;
+    int m11_draw_executed_command_count;
+    int m11_draw_gdat_blit_count;
+    int m11_draw_rect_count;
+    int m11_draw_text_count;
+    int m11_draw_matches_real_visual_receipt;
+    uint32_t m11_draw_frame_hash;
+    uint32_t m11_draw_frame_pixel_count;
     int hud_suppressed_capture_ready;
     int menu_capture_ready;
     int menu_title_composite_capture_ready;

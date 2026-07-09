@@ -35038,7 +35038,26 @@ typedef struct M11_DM2StartupDrawContext {
     unsigned char *framebuffer;
     int framebufferWidth;
     int framebufferHeight;
+    int gdat_blit_count;
+    int rect_count;
+    int text_count;
 } M11_DM2StartupDrawContext;
+
+static uint32_t m11_dm2_startup_frame_hash(const unsigned char *framebuffer,
+                                           int width,
+                                           int height)
+{
+    uint32_t hash = 0x4d324453u;
+    int i;
+    if (!framebuffer || width <= 0 || height <= 0) {
+        return 0u;
+    }
+    for (i = 0; i < width * height; ++i) {
+        hash ^= (uint32_t)framebuffer[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
 
 static int m11_dm2_startup_exec_gdat_image(
     void *userdata,
@@ -35102,6 +35121,7 @@ static int m11_dm2_startup_exec_gdat_image(
         }
     }
     dm2_v1_boot_gdat_image_asset_free(pixels);
+    ++context->gdat_blit_count;
     return 1;
 }
 
@@ -35126,6 +35146,7 @@ static void m11_dm2_startup_exec_fill_rect(
                   command->rect.w,
                   command->rect.h,
                   color);
+    ++context->rect_count;
 }
 
 static void m11_dm2_startup_exec_outline_rect(
@@ -35145,6 +35166,7 @@ static void m11_dm2_startup_exec_outline_rect(
                   command->rect.w,
                   command->rect.h,
                   M11_COLOR_WHITE);
+    ++context->rect_count;
 }
 
 static void m11_dm2_startup_exec_text(
@@ -35168,6 +35190,7 @@ static void m11_dm2_startup_exec_text(
                   command->y,
                   command->text,
                   style);
+    ++context->text_count;
 }
 
 static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
@@ -35247,15 +35270,54 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     context.framebuffer = framebuffer;
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;
+    context.gdat_blit_count = 0;
+    context.rect_count = 0;
+    context.text_count = 0;
     executor.userdata = &context;
     executor.draw_gdat_image = m11_dm2_startup_exec_gdat_image;
     executor.fill_rect = m11_dm2_startup_exec_fill_rect;
     executor.outline_rect = m11_dm2_startup_exec_outline_rect;
     executor.draw_text = m11_dm2_startup_exec_text;
-    (void)dm2_v1_boot_startup_execute_draw_commands(
-        view_model.commands,
-        ownership_receipt.draw_command_count,
-        &executor);
+    if (!dm2_v1_boot_startup_execute_draw_commands(
+            view_model.commands,
+            ownership_receipt.draw_command_count,
+            &executor)) {
+        return 0;
+    }
+    visual_capture_receipt.m11_draw_executed_command_count =
+        ownership_receipt.draw_command_count;
+    visual_capture_receipt.m11_draw_gdat_blit_count =
+        context.gdat_blit_count;
+    visual_capture_receipt.m11_draw_rect_count = context.rect_count;
+    visual_capture_receipt.m11_draw_text_count = context.text_count;
+    visual_capture_receipt.m11_draw_frame_hash =
+        m11_dm2_startup_frame_hash(framebuffer,
+                                   framebufferWidth,
+                                   framebufferHeight);
+    visual_capture_receipt.m11_draw_frame_pixel_count =
+        (uint32_t)(framebufferWidth * framebufferHeight);
+    visual_capture_receipt.m11_draw_matches_real_visual_receipt =
+        visual_capture_receipt.m11_draw_executed_command_count ==
+            ownership_receipt.draw_command_count &&
+        visual_capture_receipt.m11_draw_gdat_blit_count ==
+            visual_capture_receipt.composite_gdat_blit_count &&
+        visual_capture_receipt.m11_draw_rect_count ==
+            visual_capture_receipt.composite_rect_count &&
+        visual_capture_receipt.m11_draw_text_count ==
+            visual_capture_receipt.composite_text_zone_count &&
+        visual_capture_receipt.m11_draw_frame_hash != 0u &&
+        visual_capture_receipt.m11_draw_frame_pixel_count ==
+            (uint32_t)(framebufferWidth * framebufferHeight);
+    visual_capture_receipt.m11_draw_consumption_ready =
+        visual_capture_receipt.m11_draw_matches_real_visual_receipt &&
+        visual_capture_receipt.title_menu_hud_visual_proof_ready &&
+        visual_capture_receipt.hud_suppressed_capture_ready;
+    if (!visual_capture_receipt.m11_draw_consumption_ready) {
+        return 0;
+    }
+    if (out_visual_capture_receipt) {
+        *out_visual_capture_receipt = visual_capture_receipt;
+    }
     return 1;
 }
 
@@ -39252,7 +39314,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             &startup_ownership_receipt,
             &startup_visual_receipt);
         if (startup_menu_drawn) {
-            if (startup_visual_receipt.status_scope &&
+            if (startup_visual_receipt.m11_draw_consumption_ready) {
+                m11_set_status((M11_GameViewState *)state,
+                               "STARTUP",
+                               "DM2 STARTUP GDAT");
+            } else if (startup_visual_receipt.status_scope &&
                 startup_visual_receipt.status) {
                 m11_set_status((M11_GameViewState *)state,
                                startup_visual_receipt.status_scope,
