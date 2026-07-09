@@ -3659,56 +3659,27 @@ int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     const struct ProjectileInstance_Compat* projectile)
 {
     const struct CreatureBehaviorProfile_Compat* profile;
-    int impactAttack;
     int defense;
-    int damage;
     int i;
+    DM1_ProjectileCreaturePrecheckDamagePlanPc34 plan;
 
     if (!group || !projectile || creatureIndex < 0 || creatureIndex > 3) return 0;
     profile = CREATURE_GetProfile_Compat(group->creatureType);
     if (profile && (profile->attributes & CREATURE_ATTR_MASK_ARCHENEMY)) return 0;
 
-    impactAttack = projectile->attack ? projectile->attack : projectile->kineticEnergy;
-
-    /* ReDMCSB PROJEXPL.C:F0217 heals Black Flame on fireball impact
-     * and then skips the normal damage branch. */
-    if (projectile->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
-        group->creatureType == ORCH_CREATURE_BLACK_FLAME_PC34) {
-        int healed = (int)group->health[creatureIndex] + impactAttack;
-        if (healed > ORCH_BLACK_FLAME_MAX_HEALTH_PC34) {
-            healed = ORCH_BLACK_FLAME_MAX_HEALTH_PC34;
-        }
-        group->health[creatureIndex] = (unsigned short)healed;
-        return 0;
-    }
-
-    /* PROJEXPL.C:F0217 scales projectile impact attack by creature defense
-     * before calling GROUP.C:F0190.  The compat projectile record already
-     * stores the resolved impact attack/energy, so this keeps the same
-     * source-shaped branch without recreating every associated-object case. */
     defense = (profile && profile->baseDefense > 0) ? profile->baseDefense : 64;
-    damage = (impactAttack << 6) / defense;
-    if (damage <= 0) return 0;
-
-    if (group->health[creatureIndex] > (unsigned int)damage) {
-        group->health[creatureIndex] = (unsigned short)(group->health[creatureIndex] - damage);
+    memset(&plan, 0, sizeof(plan));
+    if (!dm1_v1_projectile_creature_precheck_damage_plan_pc34(
+            projectile, group, creatureIndex, defense,
+            profile ? profile->attributes : 0, &plan) ||
+        !plan.valid || !plan.handled) {
         return 0;
     }
-
-    group->health[creatureIndex] = 0;
-    if (group->count == 0) return 2;
-
-    for (i = creatureIndex; i < (int)group->count && i < 3; ++i) {
-        group->health[i] = group->health[i + 1];
-        if (group->cells != 0xFFu) {
-            group->cells = (unsigned char)orch_group_set_creature_cell_compat(
-                group->cells, i, orch_group_creature_cell_compat(group, i + 1));
-        }
-    }
-    group->health[group->count] = 0;
-    if (group->cells != 0xFFu) group->cells = (unsigned char)(group->cells & 0x3Fu);
-    group->count--;
-    return 1;
+    if (!plan.shouldWriteGroup) return 0;
+    for (i = 0; i < 4; ++i) group->health[i] = plan.newHealth[i];
+    group->count = plan.newCount;
+    group->cells = plan.newCells;
+    return plan.outcomeCode;
 }
 
 static void orch_build_precheck_projectile_instance_compat(
