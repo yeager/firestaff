@@ -318,8 +318,12 @@ typedef struct {
 typedef struct {
     int valid;
     int magicalLightAmountDelta;
+    int createsLightEvent;
+    int eventType;
+    int eventPriority;
     int eventLightPower;
     int eventDelayTicks;
+    int refreshesDungeonViewPalette;
     int decrementsActionHandCharges;
 } DM1_ActionLightPlanPc34;
 

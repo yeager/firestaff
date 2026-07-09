@@ -693,13 +693,19 @@ int dm1_v1_action_heal_plan_f0407_pc34(
 
 int dm1_v1_action_light_plan_f0407_pc34(DM1_ActionLightPlanPc34* out) {
     if (!out) return 0;
+    memset(out, 0, sizeof(*out));
     out->valid = 1;
-    /* ReDMCSB: MENU.C F0407 C038_ACTION_LIGHT adds
-     * G0039_ai_Graphic562_LightPowerToLightAmount[2] then calls
-     * F0404_MENUS_CreateEvent70_Light(-2, 2500) and F0405. */
+    /* ReDMCSB: MENU.C F0407 lines 1607-1611 adds
+     * G0039_ai_Graphic562_LightPowerToLightAmount[2], calls F0404(-2,2500),
+     * then F0405.  MENU.C F0404 lines 1135-1140 schedules C70 priority 0 and
+     * refreshes the dungeon-view palette immediately. */
     out->magicalLightAmountDelta = 12;
+    out->createsLightEvent = 1;
+    out->eventType = 70;
+    out->eventPriority = 0;
     out->eventLightPower = -2;
     out->eventDelayTicks = 2500;
+    out->refreshesDungeonViewPalette = 1;
     out->decrementsActionHandCharges = 1;
     return 1;
 }
