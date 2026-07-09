@@ -100,6 +100,7 @@ int main(void) {
     Nexus_V1_BootProfile profile;
     Nexus_V1_Diagnostic diags[4];
     Nexus_V1_BpkRuntimeDecodeReceipt receipt;
+    Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
     uint8_t* data;
     int size = 0;
     int menu_bpk_copied = 0;
@@ -155,6 +156,24 @@ int main(void) {
                       "Nexus MENU.BPK receipt preserves PRS3 surface blocker count");
             check_int(receipt.first_blocked_entry == 1U,
                       "Nexus MENU.BPK receipt exposes first blocked surface entry");
+            memset(&handoff, 0, sizeof(handoff));
+            check_int(nexus_v1_menu_bpk_renderer_handoff_receipt(
+                          &engine,
+                          &handoff) == 0,
+                      "Nexus engine emits MENU.BPK renderer handoff receipt");
+            check_int(handoff.status ==
+                          NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3,
+                      "Nexus MENU.BPK renderer handoff blocks on PRS3");
+            check_int(handoff.blocks_real_menu_surface_render == 1 &&
+                          handoff.fallback_visuals_permitted == 0,
+                      "Nexus MENU.BPK handoff forbids fallback when real PRS3 surfaces block");
+            check_int(handoff.surface_entries == 162U &&
+                          handoff.first_blocked_entry == 1U,
+                      "Nexus MENU.BPK handoff exposes blocked surface counts to renderer");
+            check_int(strcmp(nexus_v1_menu_bpk_renderer_handoff_status_name(
+                                 handoff.status),
+                             "blocked-prs3") == 0,
+                      "Nexus MENU.BPK handoff status has stable route name");
         } else {
             puts("SKIP: local Nexus MENU.BPK not present for engine decode receipt");
         }

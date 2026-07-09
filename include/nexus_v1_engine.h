@@ -37,6 +37,36 @@ typedef enum {
     NEXUS_SRC_EXTRACTED    /* Reading from extracted files on disk */
 } Nexus_DataSource;
 
+typedef enum {
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_MISSING = 0,
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED = 1,
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 = 2,
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_TRUNCATED = 3,
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_NO_SURFACES = 4,
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID = 5
+} Nexus_V1_MenuBpkRendererHandoffStatus;
+
+typedef struct {
+    Nexus_V1_MenuBpkRendererHandoffStatus status;
+    Nexus_V1_BpkRuntimeDecodeRoute decode_route;
+    int attempted;
+    int receipt_valid;
+    int can_render_stored_surfaces;
+    int blocks_real_menu_surface_render;
+    int fallback_visuals_permitted;
+    uint32_t archive_entries;
+    uint32_t surface_entries;
+    uint32_t ready_stored_surfaces;
+    uint32_t blocked_prs3_surfaces;
+    uint32_t blocked_truncated_surfaces;
+    uint32_t prs3_stream_plans;
+    uint32_t prs3_stream_plan_failures;
+    uint32_t first_blocked_entry;
+    uint32_t first_blocked_stream_offset;
+    uint32_t first_blocked_stream_size;
+    uint32_t first_blocked_expected_output_bytes;
+} Nexus_V1_MenuBpkRendererHandoffReceipt;
+
 /* ── Main engine struct ─────────────────────────────────────────────── */
 struct Nexus_V1_Engine {
     /* Data source */
@@ -132,5 +162,10 @@ int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
 int nexus_v1_menu_bpk_decode_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_BpkRuntimeDecodeReceipt *out_receipt);
+int nexus_v1_menu_bpk_renderer_handoff_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_MenuBpkRendererHandoffReceipt *out_receipt);
+const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
+    Nexus_V1_MenuBpkRendererHandoffStatus status);
 
 #endif /* NEXUS_V1_ENGINE_H */
