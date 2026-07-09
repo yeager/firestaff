@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 projectile F0215 delete/materialize ownership: DM1 throw/shoot receipts now carry projectile-delete, Projectile.Next clear, potion-consume, and optional square-chain materialization decisions; M10 consumes that receipt instead of owning the delete/apply branch locally. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB host ownership startup receipt: boot now packages real-asset visual capture, host-view draw, and startup input dispatch into one receipt for title/PRESENTS, closed-door HUD/menu, utility HUD/menu, and door opening; M11 startup draw consumes it without raw render-plan fallback. Verification: `test_csb_v1_boot_runtime_handoff`, `test_m11_overlay_command_queue_block`, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM2 M11 startup ownership draw caller: M11 DM2 startup drawing now consumes the boot render-ownership receipt before executing GDAT title/menu commands, with receipt fields for final caller consumption, exact title timing, real GDAT title breadth, menu/HUD breadth, and no fallback title blits. Verification: `test_dm2_v1_startup_menu_action_contract`, `test_dm2_v1_m11_startup_profile_gate`, and `git diff --check` passed.
