@@ -39,39 +39,20 @@ int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
     nexus_script_vm_unload(vm);
 
     vm->current_level = level_index;
+    vm->candidate_source_loaded = (data && size > 0) ? 1 : 0;
+    vm->candidate_source_bytes = vm->candidate_source_loaded ? size : 0;
+    vm->parser_supported = 0;
+    vm->dispatch_enabled = 0;
 
-    /* STUB: no real parsing yet.
-     * The Nexus trigger owner/format is unknown.
-     * We register minimal placeholder rules that allow
-     * the script VM interface to function.
-     * TODO: actual bytecode parsing when SLEV*.BIN/DGN trigger records
-     * are source-locked.
+    /* No synthetic fallback rules here: real SLEV*.BIN/DGN trigger bytes are
+     * routed into a receipt until the real parser is source-locked.
      *
      * Evidence so far:
      * - docs/nexus_triggers.md: SDDRVS.TSK is the 26,610-byte sound driver.
      * - Per-level SLEV*.BIN files (2-12 KB) remain plausible event/script data. */
 
-    /* For now: register a default level-transition placeholder. Future real
-     * rules must come from source-locked SLEV*.BIN/DGN trigger evidence. */
-    if (vm->rule_count < NEXUS_SCRIPT_MAX_RULES) {
-        /* Level 0: party starts at entrance */
-        /* Level 15: exit reached → end game */
-        Nexus_ScriptRule *r = &vm->rules[vm->rule_count++];
-        memset(r, 0, sizeof(*r));
-        r->rule_id = vm->rule_count;
-        r->enabled = 1;
-        r->once_only = 0;
-        /* Level 15 exit: NEXUS_OP_WHEN_PARTY_ON_XY at (15,15) → NEXUS_OP_END_GAME */
-        r->cond.opcode = NEXUS_OP_WHEN_PARTY_ON_XY;
-        r->cond.x = 15; r->cond.y = 15;
-        r->cond.value = 15; /* level 15 */
-        r->action.opcode = NEXUS_OP_END_GAME;
-        r->action.x = 15; r->action.y = 15;
-    }
-
-    printf("Nexus script VM: loaded level %d (%d bytes, provisional dispatch only)\n",
-        level_index, size);
-    (void)data;
+    printf("Nexus script VM: level %d source=%d bytes=%d parser=pending\n",
+        level_index, vm->candidate_source_loaded, vm->candidate_source_bytes);
     return 0;
 }
 
@@ -79,6 +60,50 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
     if (!vm) return;
     vm->rule_count = 0;
     vm->current_level = -1;
+    vm->candidate_source_loaded = 0;
+    vm->candidate_source_bytes = 0;
+    vm->parser_supported = 0;
+    vm->dispatch_enabled = 0;
+}
+
+int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
+                                    Nexus_ScriptRuntimeReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_SCRIPT_RUNTIME_MISSING;
+    out_receipt->level_index = -1;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!vm || !vm->initialized) return 0;
+
+    out_receipt->level_index = vm->current_level;
+    out_receipt->candidate_source_loaded = vm->candidate_source_loaded;
+    out_receipt->candidate_source_bytes = vm->candidate_source_bytes;
+    out_receipt->parser_supported = vm->parser_supported;
+    out_receipt->dispatch_enabled = vm->dispatch_enabled;
+    out_receipt->rules_loaded = vm->rule_count;
+
+    if (!vm->candidate_source_loaded) {
+        out_receipt->status = NEXUS_SCRIPT_RUNTIME_NO_SOURCE;
+    } else if (!vm->parser_supported) {
+        out_receipt->status =
+            NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT;
+        out_receipt->blocks_real_script_dispatch = 1;
+    } else {
+        out_receipt->status = NEXUS_SCRIPT_RUNTIME_READY_PARSED;
+    }
+    return 0;
+}
+
+const char *nexus_script_runtime_status_name(
+    Nexus_ScriptRuntimeStatus status) {
+    switch (status) {
+    case NEXUS_SCRIPT_RUNTIME_MISSING: return "missing";
+    case NEXUS_SCRIPT_RUNTIME_READY_PARSED: return "ready-parsed";
+    case NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT:
+        return "blocked-unsupported-format";
+    case NEXUS_SCRIPT_RUNTIME_NO_SOURCE: return "no-source";
+    default: return "unknown";
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

@@ -63,9 +63,32 @@ typedef struct {
     uint8_t flags[NEXUS_SCRIPT_MAX_FLAGS];
     int initialized;
     int current_level;
+    int candidate_source_loaded;
+    int candidate_source_bytes;
+    int parser_supported;
+    int dispatch_enabled;
     Nexus_ScriptActionHandler handler;
     void *handler_data;
 } Nexus_ScriptVM;
+
+typedef enum {
+    NEXUS_SCRIPT_RUNTIME_MISSING = 0,
+    NEXUS_SCRIPT_RUNTIME_READY_PARSED = 1,
+    NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT = 2,
+    NEXUS_SCRIPT_RUNTIME_NO_SOURCE = 3
+} Nexus_ScriptRuntimeStatus;
+
+typedef struct {
+    Nexus_ScriptRuntimeStatus status;
+    int level_index;
+    int candidate_source_loaded;
+    int candidate_source_bytes;
+    int parser_supported;
+    int dispatch_enabled;
+    int rules_loaded;
+    int blocks_real_script_dispatch;
+    int fallback_visuals_permitted;
+} Nexus_ScriptRuntimeReceipt;
 
 /* Init script VM (call at game start) */
 void nexus_script_vm_init(Nexus_ScriptVM *vm);
@@ -78,6 +101,10 @@ void nexus_script_vm_init(Nexus_ScriptVM *vm);
  * Source: docs/nexus_triggers.md unresolved SLEV*.BIN/DGN trigger owner. */
 int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
                                 const uint8_t *data, int size);
+int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
+                                    Nexus_ScriptRuntimeReceipt *out_receipt);
+const char *nexus_script_runtime_status_name(
+    Nexus_ScriptRuntimeStatus status);
 
 /* Unload scripts for current level */
 void nexus_script_vm_unload(Nexus_ScriptVM *vm);

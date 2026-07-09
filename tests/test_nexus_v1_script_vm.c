@@ -189,10 +189,43 @@ static void test_once_only_manual_fire_and_unload(void) {
           "manual fire misses unloaded rule");
 }
 
+static void test_runtime_receipts_block_unparsed_real_source(void) {
+    static const uint8_t fake_slev[] = { 'S', 'L', 'E', 'V', 0, 1, 2, 3 };
+    Nexus_ScriptVM vm;
+    Nexus_ScriptRuntimeReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    nexus_script_vm_init(&vm);
+    CHECK(nexus_script_vm_runtime_receipt(&vm, &receipt) == 0,
+          "empty script VM emits runtime receipt");
+    CHECK(receipt.status == NEXUS_SCRIPT_RUNTIME_NO_SOURCE &&
+          receipt.fallback_visuals_permitted == 0,
+          "empty script VM does not allow fallback dispatch");
+
+    CHECK(nexus_script_vm_load_level(&vm, 2, fake_slev, (int)sizeof(fake_slev)) == 0,
+          "script VM accepts bounded real candidate bytes");
+    CHECK(nexus_script_vm_runtime_receipt(&vm, &receipt) == 0,
+          "script VM emits receipt after candidate load");
+    CHECK(receipt.status == NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT,
+          "unparsed real script source is blocked");
+    CHECK(receipt.candidate_source_loaded == 1 &&
+          receipt.candidate_source_bytes == (int)sizeof(fake_slev) &&
+          receipt.rules_loaded == 0 &&
+          receipt.dispatch_enabled == 0,
+          "script receipt preserves source bytes without synthetic rules");
+    CHECK(receipt.blocks_real_script_dispatch == 1 &&
+          receipt.fallback_visuals_permitted == 0,
+          "script receipt forbids fallback dispatch for unsupported real source");
+    CHECK(strcmp(nexus_script_runtime_status_name(receipt.status),
+                 "blocked-unsupported-format") == 0,
+          "script receipt has stable blocked status name");
+}
+
 int main(void) {
     test_vm_local_handlers();
     test_event_operand_matching();
     test_once_only_manual_fire_and_unload();
+    test_runtime_receipts_block_unparsed_real_source();
 
     if (g_failures) {
         fprintf(stderr, "test_nexus_v1_script_vm: %d failure(s)\n", g_failures);

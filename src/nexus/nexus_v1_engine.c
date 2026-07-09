@@ -353,6 +353,9 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
 
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
+    nexus_script_vm_init(&engine->script_vm);
+    (void)nexus_script_vm_runtime_receipt(&engine->script_vm,
+                                          &engine->script_runtime_receipt);
 
     /* Load font */
     {
@@ -401,8 +404,11 @@ uint8_t *nexus_v1_read_file(Nexus_V1_Engine *engine, const char *name, int *out_
 
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     char name[32];
+    char script_name[32];
     int size = 0;
+    int script_size = 0;
     uint8_t *data;
+    uint8_t *script_data;
 
     if (!engine || level < 0 || level > 15) return -1;
     snprintf(name, sizeof(name), "LEV%02d.DGN", level);
@@ -419,6 +425,16 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
 
     engine->level_loaded = 1;
     engine->game.current_level = level;
+
+    snprintf(script_name, sizeof(script_name), "SLEV%02d.BIN", level);
+    script_data = nexus_v1_read_file(engine, script_name, &script_size);
+    (void)nexus_script_vm_load_level(&engine->script_vm,
+                                     level,
+                                     script_data,
+                                     script_size);
+    (void)nexus_script_vm_runtime_receipt(&engine->script_vm,
+                                          &engine->script_runtime_receipt);
+    free(script_data);
 
     /* Update CD audio track */
     int new_track = nexus_v1_cd_track_for_level(level);
@@ -688,4 +704,20 @@ int nexus_v1_current_level_dgn_renderer_handoff_receipt(
     }
     return nexus_v1_level_dgn_renderer_handoff_receipt(&engine->current_level,
                                                        out_receipt);
+}
+
+int nexus_v1_current_level_script_runtime_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_ScriptRuntimeReceipt *out_receipt) {
+    if (!out_receipt) {
+        return -1;
+    }
+    if (!engine || !engine->level_loaded) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->status = NEXUS_SCRIPT_RUNTIME_MISSING;
+        out_receipt->level_index = -1;
+        return 0;
+    }
+    *out_receipt = engine->script_runtime_receipt;
+    return 0;
 }
