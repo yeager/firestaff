@@ -9,6 +9,9 @@
 =======
 =======
 =======
+=======
+- ✅ 2026-07-09 DM1 HoC champion menu route receipt: entrance/champion-select now exposes a DM1-owned route receipt for hall, live champion panel, dead champion resurrect/reincarnate choices, party-full blocking, and enter-dungeon readiness so M11/M12 can stop inferring HoC menu state from raw entrance fields. Verification: `test_dm1_v1_entrance_champion_select_pc34_compat` and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM2 startup HUD/menu input-route receipt: host action receipts now carry Firestaff keyboard input or pointer coordinates, translated DM2 startup input, before/after selected row, and resolved action row/slot so M11 can consume DM2-owned menu routing. Verification: `test_dm2_v1_startup_menu_action_contract` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus launcher startup route receipts: launcher/runtime-state and snapshot paths now expose save-route and title-route receipts directly for keyboard, pointer, save-slot, pointer-miss, and title-return handoff without M11 rebuilding host facts. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.
