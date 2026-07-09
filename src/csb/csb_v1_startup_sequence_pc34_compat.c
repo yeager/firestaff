@@ -3706,6 +3706,37 @@ void csb_v1_startup_presentation_receipt_init_pc34(
     receipt->title_frame = title_max;
     receipt->title_frame_max = title_max;
     receipt->title_ready = 1;
+    receipt->redmcsb_source_locked = 1;
+    receipt->redmcsb_title_source =
+        "ReDMCSB TITLE.C F0437 lines 424-463";
+    receipt->redmcsb_entrance_source =
+        "ReDMCSB ENTRANCE.C F0441/F0806 lines 409-447,850-883";
+    receipt->redmcsb_title_graphic_id = CSB_V1_GRAPHIC_TITLE_PC34;
+    receipt->redmcsb_presents_ticks =
+        CSB_V1_TITLE_PRESENTS_TICKS_PC34;
+    receipt->redmcsb_chaos_zoom_ticks =
+        CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34;
+    receipt->redmcsb_chaos_hold_ticks =
+        CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34;
+    receipt->redmcsb_strikes_back_ticks =
+        CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34;
+    receipt->redmcsb_entrance_screen_graphic_id =
+        CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
+    receipt->redmcsb_credits_graphic_id =
+        CSB_V1_GRAPHIC_ENTRANCE_CREDITS_PC34;
+    receipt->redmcsb_left_door_graphic_id =
+        CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR_PC34;
+    receipt->redmcsb_right_door_graphic_id =
+        CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR_PC34;
+    receipt->redmcsb_pre_open_delay_ticks =
+        CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34;
+    receipt->redmcsb_door_step_count =
+        CSB_V1_ENTRANCE_DOOR_STEP_COUNT_PC34;
+    receipt->redmcsb_closed_door_left_x = 0;
+    receipt->redmcsb_closed_door_right_x = 128;
+    receipt->redmcsb_closed_door_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
+    receipt->redmcsb_closed_door_w = 128;
+    receipt->redmcsb_closed_door_h = 161;
 }
 
 int csb_v1_startup_presentation_receipt_from_host_facts_pc34(

@@ -2353,6 +2353,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_plan.asset_command_count == 1 &&
               host_view_receipt.render_plan.render_command_count == 2,
           "boot startup host-view receipt returns full title render plan");
+    CHECK(route_receipt.presentation.redmcsb_source_locked &&
+              route_receipt.presentation.redmcsb_title_graphic_id == 1 &&
+              route_receipt.presentation.redmcsb_presents_ticks == 60 &&
+              route_receipt.presentation.redmcsb_chaos_zoom_ticks == 18 &&
+              route_receipt.presentation.redmcsb_chaos_hold_ticks == 2 &&
+              route_receipt.presentation.redmcsb_strikes_back_ticks == 1 &&
+              route_receipt.presentation.redmcsb_entrance_screen_graphic_id ==
+                  4 &&
+              route_receipt.presentation.redmcsb_credits_graphic_id == 5 &&
+              strstr(route_receipt.presentation.redmcsb_title_source,
+                     "TITLE.C F0437") != NULL,
+          "boot startup presentation receipt carries ReDMCSB title source lock");
     packaged_title_ok =
         csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
             &capture_receipt,
@@ -2740,6 +2752,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               presentation_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup presentation receipt owns render/menu/input snapshot");
+    CHECK(presentation_receipt.redmcsb_source_locked &&
+              presentation_receipt.redmcsb_left_door_graphic_id == 2 &&
+              presentation_receipt.redmcsb_right_door_graphic_id == 3 &&
+              presentation_receipt.redmcsb_pre_open_delay_ticks == 20 &&
+              presentation_receipt.redmcsb_door_step_count == 31 &&
+              presentation_receipt.redmcsb_closed_door_left_x == 0 &&
+              presentation_receipt.redmcsb_closed_door_right_x == 128 &&
+              presentation_receipt.redmcsb_closed_door_y == 28 &&
+              presentation_receipt.redmcsb_closed_door_w == 128 &&
+              presentation_receipt.redmcsb_closed_door_h == 161 &&
+              strstr(presentation_receipt.redmcsb_entrance_source,
+                     "ENTRANCE.C F0441") != NULL,
+          "boot startup presentation receipt carries ReDMCSB entrance source lock");
     CHECK(csb_v1_boot_startup_presentation_route_receipt_from_snapshot_pc34(
               &snapshot,
               &route_receipt) == 1,
