@@ -89,6 +89,18 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int handled;
+    int shouldWriteGroup;
+    int outcomeCode;
+    int damageApplied;
+    int killedCell;
+    unsigned short newHealth[4];
+    unsigned char newCount;
+    unsigned char newCells;
+} DM1_ProjectileCreaturePrecheckDamagePlanPc34;
+
+typedef struct {
+    int valid;
     int shouldAttachToGroupSlot;
     unsigned short associatedThing;
     int weaponType;
@@ -288,6 +300,13 @@ int dm1_v1_projectile_creature_impact_aftermath_pc34(
     int damageOutcome,
     int associatedWeaponType,
     DM1_ProjectileCreatureImpactAftermathPc34* outAftermath);
+int dm1_v1_projectile_creature_precheck_damage_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    int creatureDefense,
+    int creatureAttributes,
+    DM1_ProjectileCreaturePrecheckDamagePlanPc34* outPlan);
 int dm1_v1_projectile_champion_impact_plan_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,

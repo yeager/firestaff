@@ -787,6 +787,96 @@ int dm1_v1_projectile_creature_impact_aftermath_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_creature_precheck_damage_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct DungeonGroup_Compat* group,
+    int creatureIndex,
+    int creatureDefense,
+    int creatureAttributes,
+    DM1_ProjectileCreaturePrecheckDamagePlanPc34* outPlan) {
+    int i;
+    int impactAttack;
+    int defense;
+    int damage;
+    int killedCell;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->killedCell = EXPLOSION_CELL_CENTERED;
+    if (!projectile || !group || creatureIndex < 0 || creatureIndex > 3) {
+        return 0;
+    }
+    if (creatureIndex > (int)group->count) return 0;
+    for (i = 0; i < 4; ++i) outPlan->newHealth[i] = group->health[i];
+    outPlan->newCount = group->count;
+    outPlan->newCells = group->cells;
+    outPlan->valid = 1;
+    outPlan->handled = 1;
+
+    impactAttack = projectile->attack ? projectile->attack
+                                      : projectile->kineticEnergy;
+    if (projectile->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
+        group->creatureType == DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34) {
+        int healed = (int)group->health[creatureIndex] + impactAttack;
+        if (healed > DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34) {
+            healed = DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34;
+        }
+        /* ReDMCSB: PROJEXPL.C F0217 lines 527-531 heals Black Flame on
+         * fireball impact and skips normal F0190 creature damage. */
+        outPlan->shouldWriteGroup = 1;
+        outPlan->newHealth[creatureIndex] = (unsigned short)healed;
+        return 1;
+    }
+
+    if ((creatureAttributes & DM1_PROJECTILE_ATTR_NON_MATERIAL_PC34) &&
+        projectile->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL) {
+        return 1;
+    }
+
+    defense = creatureDefense > 0 ? creatureDefense : 64;
+    damage = (impactAttack << 6) / defense;
+    if (damage <= 0) return 1;
+
+    outPlan->shouldWriteGroup = 1;
+    outPlan->damageApplied = damage;
+    killedCell =
+        (group->cells == DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34)
+            ? EXPLOSION_CELL_CENTERED
+            : (int)((group->cells >> (creatureIndex * 2)) & 0x03u);
+    outPlan->killedCell = killedCell;
+    if (group->health[creatureIndex] > (unsigned int)damage) {
+        outPlan->newHealth[creatureIndex] =
+            (unsigned short)(group->health[creatureIndex] - damage);
+        return 1;
+    }
+
+    outPlan->newHealth[creatureIndex] = 0;
+    if (group->count == 0) {
+        outPlan->outcomeCode = 2;
+        return 1;
+    }
+    for (i = creatureIndex; i < (int)group->count && i < 3; ++i) {
+        outPlan->newHealth[i] = group->health[i + 1];
+        if (outPlan->newCells !=
+            DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34) {
+            int shift = i * 2;
+            int nextCell = (group->cells >> ((i + 1) * 2)) & 0x03u;
+            outPlan->newCells =
+                (unsigned char)((outPlan->newCells & ~(0x03u << shift)) |
+                                ((nextCell & 0x03u) << shift));
+        }
+    }
+    outPlan->newHealth[group->count] = 0;
+    if (outPlan->newCells != DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34) {
+        outPlan->newCells = (unsigned char)(outPlan->newCells & 0x3Fu);
+    }
+    outPlan->newCount = (unsigned char)(group->count - 1u);
+    outPlan->outcomeCode = 1;
+    /* ReDMCSB: MOVESENS.C F0266 lines 292-301 invokes F0217 during group
+     * movement projectile prechecks; F0217 then resolves Black Flame,
+     * non-material, defense scaling, and F0190-style slot compaction. */
+    return 1;
+}
+
 int dm1_v1_projectile_champion_impact_plan_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,

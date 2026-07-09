@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0266 projectile precheck damage receipt: moving-group projectile prechecks now consume a DM1 F0217/F0190 damage receipt for Black Flame healing, non-material gating, defense scaling, killed-cell capture, and killed-some group compaction. M10 applies the returned group writeback only. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_creature_projectile_runtime_pc34_compat` (25/25), `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 candidate-panel preflight gate: M10 now feeds live candidate-panel invulnerability into the first DM1 F0402 preflight pass, so panel-owned champion candidates return before F0312/F0231 RNG, stamina, emissions, or group damage. Verification: `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`, `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0324 explosion party-damage fanout ownership: DM1 throw/shoot compat now owns the F0324 party-square explosion fanout plan and per-champion randomized attack plan. M10 still applies live F0321 shield/defense/wound mutation, but no longer owns the F0324 attack-window math. Verification: `test_dm1_v1_throw_shoot_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.

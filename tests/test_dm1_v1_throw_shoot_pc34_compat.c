@@ -580,6 +580,7 @@ static void test_projectile_creature_impact_plan(void) {
     struct ProjectileTickResult_Compat r;
     DM1_ProjectileCreatureImpactPlanPc34 plan;
     DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
+    DM1_ProjectileCreaturePrecheckDamagePlanPc34 precheck;
     unsigned short weaponThing =
         (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
     memset(&group, 0, sizeof(group));
@@ -587,6 +588,7 @@ static void test_projectile_creature_impact_plan(void) {
     memset(&r, 0, sizeof(r));
     memset(&plan, 0, sizeof(plan));
     memset(&aftermath, 0, sizeof(aftermath));
+    memset(&precheck, 0, sizeof(precheck));
 
     group.creatureType = 6;
     group.count = 2;
@@ -654,6 +656,49 @@ static void test_projectile_creature_impact_plan(void) {
               "harm non-material plan builds");
     ASSERT_EQ(plan.blockedByNonMaterial, 0, "harm non-material bypasses block");
     ASSERT_EQ(plan.shouldApplyDamage, 1, "harm non-material damages");
+
+    memset(&group, 0, sizeof(group));
+    memset(&p, 0, sizeof(p));
+    group.creatureType = 6;
+    group.count = 1;
+    group.cells = (1 << 0) | (3 << 2);
+    group.health[0] = 4;
+    group.health[1] = 20;
+    p.projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    p.attack = 64;
+    ASSERT_EQ(dm1_v1_projectile_creature_precheck_damage_plan_pc34(
+                  &p, &group, 0, 64, 0, &precheck), 1,
+              "F0266 precheck damage plan builds");
+    ASSERT_EQ(precheck.valid, 1, "F0266 precheck valid");
+    ASSERT_EQ(precheck.shouldWriteGroup, 1, "F0266 precheck writes group");
+    ASSERT_EQ(precheck.outcomeCode, 1, "F0266 precheck killed some");
+    ASSERT_EQ(precheck.damageApplied, 64, "F0266 precheck damage");
+    ASSERT_EQ(precheck.killedCell, 1, "F0266 precheck killed cell");
+    ASSERT_EQ(precheck.newCount, 0, "F0266 precheck compacts count");
+    ASSERT_EQ(precheck.newHealth[0], 20, "F0266 precheck shifts health");
+    ASSERT_EQ(precheck.newHealth[1], 0, "F0266 precheck clears tail");
+
+    ASSERT_EQ(dm1_v1_projectile_creature_precheck_damage_plan_pc34(
+                  &p, &group, 0, 64,
+                  DM1_PROJECTILE_ATTR_NON_MATERIAL_PC34, &precheck), 1,
+              "F0266 precheck non-material builds");
+    ASSERT_EQ(precheck.shouldWriteGroup, 0,
+              "F0266 precheck non-material blocks ordinary projectile");
+
+    group.creatureType = DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34;
+    group.count = 0;
+    group.cells = DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34;
+    group.health[0] = 990;
+    p.projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+    p.attack = 80;
+    ASSERT_EQ(dm1_v1_projectile_creature_precheck_damage_plan_pc34(
+                  &p, &group, 0, 64, 0, &precheck), 1,
+              "F0266 black flame precheck builds");
+    ASSERT_EQ(precheck.shouldWriteGroup, 1,
+              "F0266 black flame precheck writes group");
+    ASSERT_EQ(precheck.newHealth[0], DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34,
+              "F0266 black flame heal caps");
+    ASSERT_EQ(precheck.outcomeCode, 0, "F0266 black flame no kill outcome");
 }
 
 static void test_projectile_champion_impact_plan(void) {
