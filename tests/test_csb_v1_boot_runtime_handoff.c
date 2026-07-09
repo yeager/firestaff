@@ -1942,8 +1942,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               route_receipt.draw_utility_panel &&
               route_receipt.hud_menu_visible &&
               route_receipt.menu_option_count == 4 &&
+              route_receipt.utility_plan_valid &&
+              route_receipt.utility_plan.menu_row_count ==
+                  CSB_V1_UTIL_MENU_ROW_COUNT &&
+              strstr(route_receipt.utility_plan.prompt_row.text,
+                     "CHAOS STRIKES BACK READY") != NULL &&
               route_receipt.accepts_input,
-          "boot startup route receipt owns closed entrance HUD/menu route");
+          "boot startup route receipt owns closed entrance HUD/menu plan route");
     snapshot.opening_active = 1;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 3;
