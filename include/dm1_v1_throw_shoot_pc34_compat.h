@@ -382,6 +382,14 @@ int dm1_v1_projectile_creature_action_apply_pc34(
     const DM1_ProjectileCreatureActionPlanPc34* actionPlan,
     struct DungeonGroup_Compat* group,
     DM1_ProjectileCreatureActionApplyPlanPc34* outPlan);
+int dm1_v1_projectile_creature_action_aftermath_pc34(
+    const DM1_ProjectileCreatureActionPlanPc34* actionPlan,
+    const struct ProjectileInstance_Compat* projectile,
+    int creatureAttributes,
+    int groupBehaviorAfterDamage,
+    int damageOutcome,
+    int associatedWeaponType,
+    DM1_ProjectileCreatureImpactAftermathPc34* outAftermath);
 int dm1_v1_projectile_creature_impact_aftermath_pc34(
     const DM1_ProjectileCreatureImpactPlanPc34* plan,
     const struct ProjectileInstance_Compat* projectile,

@@ -708,6 +708,38 @@ static void test_projectile_creature_impact_plan(void) {
     ASSERT_EQ(group.health[1], 3, "creature action apply mutates hp");
     group.health[1] = 20;
 
+    ASSERT_EQ(dm1_v1_projectile_creature_action_aftermath_pc34(
+                  &actionPlan, &p,
+                  DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34,
+                  DM1_BEHAVIOR_ATTACK,
+                  COMBAT_OUTCOME_KILLED_NO_CREATURES,
+                  27,
+                  &aftermath), 1,
+              "creature action aftermath builds");
+    ASSERT_EQ(aftermath.scheduleReaction, 1,
+              "creature action surviving group reacts");
+    ASSERT_EQ(aftermath.keepSharpWeaponInGroup, 1,
+              "creature action sharp weapon kept");
+    ASSERT_EQ(aftermath.spawnDeathSmoke, 0,
+              "creature action no death smoke without kill");
+
+    ASSERT_EQ(dm1_v1_projectile_creature_action_aftermath_pc34(
+                  &actionPlan, &p,
+                  DM1_PROJECTILE_ATTR_DROP_FIXED_POSSESSION_PC34,
+                  DM1_BEHAVIOR_ATTACK,
+                  COMBAT_OUTCOME_KILLED_SOME_CREATURES,
+                  27,
+                  &aftermath), 1,
+              "creature action killed-some aftermath builds");
+    ASSERT_EQ(aftermath.cleanupEventsAndFear, 1,
+              "creature action partial kill cleans attack events");
+    ASSERT_EQ(aftermath.dropFixedPossessions, 1,
+              "creature action partial kill drops fixed possessions");
+    ASSERT_EQ(aftermath.spawnDeathSmoke, 1,
+              "creature action partial kill smoke");
+    ASSERT_EQ(aftermath.keepSharpWeaponInGroup, 0,
+              "creature action killing hit does not keep sharp weapon");
+
     ASSERT_EQ(dm1_v1_projectile_creature_impact_aftermath_pc34(
                   &plan, &p,
                   DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34,

@@ -919,6 +919,51 @@ int dm1_v1_projectile_creature_action_apply_pc34(
     return 1;
 }
 
+int dm1_v1_projectile_creature_action_aftermath_pc34(
+    const DM1_ProjectileCreatureActionPlanPc34* actionPlan,
+    const struct ProjectileInstance_Compat* projectile,
+    int creatureAttributes,
+    int groupBehaviorAfterDamage,
+    int damageOutcome,
+    int associatedWeaponType,
+    DM1_ProjectileCreatureImpactAftermathPc34* outAftermath) {
+    if (!outAftermath) return 0;
+    memset(outAftermath, 0, sizeof(*outAftermath));
+    if (!actionPlan || !projectile ||
+        !actionPlan->handled || !actionPlan->shouldApplyDamage) {
+        return 0;
+    }
+
+    if (damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+        outAftermath->cleanupEventsAndFear =
+            groupBehaviorAfterDamage == DM1_BEHAVIOR_ATTACK;
+        outAftermath->dropFixedPossessions =
+            (creatureAttributes &
+             DM1_PROJECTILE_ATTR_DROP_FIXED_POSSESSION_PC34) != 0;
+    }
+    if (damageOutcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES ||
+        damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+        outAftermath->spawnDeathSmoke = 1;
+    }
+    if (actionPlan->damageApplied > 0 &&
+        damageOutcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        /* ReDMCSB: PROJEXPL.C F0217 lines 535-537 schedules F0209 hit
+         * reaction for damaged groups that were not fully destroyed. */
+        outAftermath->scheduleReaction = 1;
+    }
+    if (damageOutcome == COMBAT_OUTCOME_KILLED_NO_CREATURES &&
+        projectile->projectileCategory == PROJECTILE_CATEGORY_KINETIC &&
+        (creatureAttributes &
+         DM1_PROJECTILE_ATTR_KEEP_THROWN_SHARP_WEAPONS_PC34) &&
+        dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(
+            associatedWeaponType)) {
+        /* ReDMCSB: PROJEXPL.C F0217 lines 540-553 keeps selected sharp
+         * thrown weapons in GROUP.Slot only when no creature died. */
+        outAftermath->keepSharpWeaponInGroup = 1;
+    }
+    return 1;
+}
+
 int dm1_v1_projectile_creature_impact_aftermath_pc34(
     const DM1_ProjectileCreatureImpactPlanPc34* plan,
     const struct ProjectileInstance_Compat* projectile,
