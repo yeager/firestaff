@@ -3573,6 +3573,72 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
     free(track02);
 }
 
+static void test_track02_startup_bitmap_decode_iso_receipt(void) {
+    static const uint8_t descriptor[18] = {
+        0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
+        0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
+    };
+    static const uint8_t post_boundary_span[44] = {
+        0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+        0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80,
+        0x45, 0x80, 0x52, 0x80, 0x5f, 0x80, 0x6c, 0x80,
+        0x79, 0x80, 0x86, 0x80, 0xa0, 0x80, 0xa5, 0x80,
+        0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
+        0x93, 0x80, 0x00, 0x3f
+    };
+    const size_t track02_size = 0x3000u + sizeof(post_boundary_span);
+    uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
+    Theron_Track02StartupBitmapCatalog catalog;
+    Theron_StartupMediaStateReceipt receipt;
+
+    expect_true(track02 != NULL,
+                "Track02 startup bitmap sparse ISO fixture allocates");
+    if (!track02) {
+        return;
+    }
+    memcpy(track02 + 0x1584u, descriptor, sizeof(descriptor));
+    memcpy(track02 + 0x3000u, post_boundary_span, sizeof(post_boundary_span));
+
+    expect_true(theron_v1_track02_catalog_startup_bitmap_samples(
+                    track02,
+                    track02_size,
+                    THERON_TRACK02_MD5_US_ISO,
+                    &catalog) == THERON_TRACK02_SIGNAL_OK &&
+                    catalog.variant == THERON_TRACK02_VARIANT_US_ISO &&
+                    catalog.sample_count == 2u &&
+                    catalog.overflow_count == 0u &&
+                    (catalog.route_mask &
+                     THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
+                    (catalog.route_mask &
+                     THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                    catalog.samples[0].raw_offset == 0x3000u &&
+                    catalog.samples[0].user_data_offset == 0x3000u &&
+                    catalog.samples[1].raw_offset == 0x300cu &&
+                    catalog.samples[1].user_data_offset == 0x300cu &&
+                    catalog.samples[0].nonzero_pixel_count > 0u &&
+                    catalog.samples[1].checksum != 0u,
+                "Track02 startup bitmap catalog decodes bounded ISO startup bitmap samples");
+
+    theron_v1_startup_media_capture_track02_state_receipt(
+        track02,
+        track02_size,
+        THERON_TRACK02_MD5_US_ISO,
+        &receipt);
+    expect_true(receipt.startup_media_ready &&
+                    receipt.startup_bitmap_decode_status ==
+                        THERON_TRACK02_SIGNAL_OK &&
+                    receipt.startup_bitmap_sample_count == 2 &&
+                    (receipt.startup_bitmap_route_mask &
+                     THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
+                    (receipt.startup_bitmap_route_mask &
+                     THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                    !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+                        &receipt),
+                "startup media receipt accepts bounded ISO bitmaps without claiming full route coverage");
+
+    free(track02);
+}
+
 static void test_boot_startup_launch_detach_runtime_receipt(void) {
     Theron_V1_BootStartupLaunch launch;
     Theron_V1_BootStartupRuntimeReceipt receipt;
@@ -3917,6 +3983,7 @@ int main(void) {
     test_boot_runtime_release_facade();
     test_startup_session_facts_wrappers();
     test_track02_startup_bitmap_decode_receipt();
+    test_track02_startup_bitmap_decode_iso_receipt();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d)\n",
