@@ -1361,7 +1361,7 @@ static void draw_card(M12_ModernCanvas* c,
         if (boot.handled && boot.startupStepCount > 0) {
             char progress[96];
             const char* next = (hasGate && gate.handled)
-                                   ? (gate.canLaunch ? gate.boot.startupPathLabel
+                                   ? (gate.canLaunch ? gate.boot.packagedCaptureLabel
                                                      : gate.blockedDetail)
                                    : (boot.fullStartGraphicsReady ? boot.startupPathLabel
                                                                   : boot.nextStepLabel);

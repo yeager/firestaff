@@ -580,6 +580,9 @@ const char* M12_StartupMenu_GetEntryBootStatusLabel(
 const char* M12_StartupMenu_GetEntryBootDetailLabel(
     const M12_StartupMenuState* state,
     int entryIndex);
+const char* M12_StartupMenu_GetEntryCaptureProofLabel(
+    const M12_StartupMenuState* state,
+    int entryIndex);
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir);
 int M12_StartupMenu_ExportQuickResumeDM1PC34(M12_StartupMenuState* state,

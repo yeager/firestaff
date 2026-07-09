@@ -99,6 +99,9 @@ int main(void) {
         if (!expect(boot.packagedCaptureLabel &&
                     strcmp(boot.packagedCaptureLabel, expected[i].captureLabel) == 0,
                     "packaged capture label should match game startup proof")) return 1;
+        if (!expect(strcmp(M12_StartupMenu_GetEntryCaptureProofLabel(&state, i),
+                           expected[i].captureLabel) == 0,
+                    "public capture proof label should match game startup proof")) return 1;
         if (!expect(boot.statusLabel &&
                     strcmp(boot.statusLabel, expected[i].statusLabel) == 0,
                     "status label should match game startup path")) return 1;
