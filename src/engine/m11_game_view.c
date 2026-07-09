@@ -8790,6 +8790,8 @@ static int m11_dm1_kill_notify_plan(
 static void m11_apply_kill_notify_plan(
     M11_GameViewState* state,
     const DM1_MeleeKillNotifyPlanPc34* plan);
+static void m11_remove_creature_ai_for_group_f0446(M11_GameViewState* state,
+                                                   int groupIndex);
 
 static int m11_check_group_death_and_drop(
     M11_GameViewState* state,
@@ -8801,6 +8803,8 @@ static int m11_check_group_death_and_drop(
     struct DungeonGroup_Compat* g;
     int anyAlive = 0;
     int slotI;
+    DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
+    DM1_MeleeF0190KilledAllStatePlanPc34 killedAllPlan;
 
     if (!state || !state->world.things ||
         groupThing == THING_NONE || groupThing == THING_ENDOFLIST) {
@@ -8819,6 +8823,19 @@ static int m11_check_group_death_and_drop(
         }
     }
     if (anyAlive) return 0;
+
+    memset(&killedAllIn, 0, sizeof(killedAllIn));
+    memset(&killedAllPlan, 0, sizeof(killedAllPlan));
+    killedAllIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    killedAllIn.groupIndex = gIdx;
+    killedAllIn.targetMapIndex = groupMapIndex;
+    killedAllIn.targetMapX = groupMapX;
+    killedAllIn.targetMapY = groupMapY;
+    if (!dm1_v1_melee_killed_all_state_plan_f0190_pc34(
+            &killedAllIn, &killedAllPlan) ||
+        !killedAllPlan.valid) {
+        return 0;
+    }
 
     /* ReDMCSB GROUP.C:F0188:716-721 calls F0186 once for each
      * creature slot before dropping the group possession chain. */
@@ -8868,12 +8885,18 @@ static int m11_check_group_death_and_drop(
         }
     }
 
-    /* Remove the group from the square's thing list and return its slot
-     * to the fixed source pool, matching GROUP.C F0189:759-761. */
-    (void)m11_unlink_thing_from_square(&state->world, groupMapIndex, groupMapX,
-                                       groupMapY, groupThing);
-    m11_set_raw_next_thing(state->world.things, groupThing, THING_NONE);
-    g->next = THING_NONE;
+    if (killedAllPlan.shouldUnlinkGroupFromSquare) {
+        (void)m11_unlink_thing_from_square(
+            &state->world, killedAllPlan.mapIndex, killedAllPlan.mapX,
+            killedAllPlan.mapY, groupThing);
+    }
+    if (killedAllPlan.shouldClearGroupNext) {
+        m11_set_raw_next_thing(state->world.things, groupThing, THING_NONE);
+        g->next = THING_NONE;
+    }
+    if (killedAllPlan.shouldRemoveActiveGroupState) {
+        m11_remove_creature_ai_for_group_f0446(state, killedAllPlan.groupIndex);
+    }
     return 1;
 }
 

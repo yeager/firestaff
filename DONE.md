@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0190 M11 killed-all state ownership: M11 group-death removal now consumes the DM1 F0190 killed-all state plan for square unlink, group-next clear, and active-group AI cleanup instead of applying those policy decisions inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), `test_m11_creature_projectile_runtime_pc34_compat` (25/25), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0190 M11 possession-drop ownership: M11 projectile killed-some fixed possession drops now consume the DM1 F0190 possession-drop plan for outcome, creature attributes, killed cell, and map coordinates before materializing drops. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), `test_m11_creature_projectile_runtime_pc34_compat` (25/25), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0190 M11 timeline-cleanup ownership: M11 projectile killed-some cleanup now consumes the DM1 F0190 timeline cleanup plan for C33-C36/C38-C41 removal and ordinal decrement instead of duplicating event-type decoding locally. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), `test_m11_creature_projectile_runtime_pc34_compat` (25/25), Phase A 24/24, and `git diff --check` passed.
