@@ -634,6 +634,13 @@ typedef struct {
     int title_capture_uses_real_assets;
     int menu_capture_uses_real_assets;
     int full_start_package_consumed;
+    int package_capture_consumed_by_host;
+    int title_menu_capture_route_joined;
+    int bpk_menu_route_joined;
+    int runtime_dgn_route_joined;
+    int first_host_draw_uses_package;
+    int blocked_route_suppresses_startup_draws;
+    int blocked_route_suppresses_dgn_draws;
     int saturn_timing_exact;
     int saturn_capture_frames_exact;
     int runtime_dgn_handoff_ready;
@@ -676,8 +683,13 @@ typedef struct {
     int title_timing_frame_max;
     int title_timing_ready;
     int full_start_package_consumed;
+    int package_capture_consumed_by_host;
     int startup_bundle_consumed;
     int display_callers_use_package_receipt;
+    int single_saturn_startup_owner_ready;
+    int title_menu_capture_route_joined;
+    int runtime_dgn_route_joined;
+    int blocked_route_suppresses_all_draws;
     int saturn_warning_frame;
     int saturn_title_capture_frame;
     int saturn_title_ready_frame;
