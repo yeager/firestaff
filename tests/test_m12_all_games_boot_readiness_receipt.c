@@ -125,6 +125,7 @@ int main(void) {
                         boot.dm1HoCReceiptOnlyConsumerReady == 1 &&
                         boot.dm1HoCNoHostFallbackVisualsReady == 1 &&
                         boot.dm1HoCLowerLevelHelpersReady == 1 &&
+                        boot.dm1HoCHostDrawConsumesBackingAssetReady == 1 &&
                         boot.dm1HoCHostDrawRejectsBackingFallbackReady == 1 &&
                         boot.dm1HoCHoCAssetCaptureReady == 1 &&
                         boot.dm1HoCHostWindowCaptureReady == 1 &&

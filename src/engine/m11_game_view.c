@@ -11752,6 +11752,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->dm1HoCLowerLevelHelpersReady =
                 hoc_ownership.lower_level_renderer_helper_owned &&
                 hoc_ownership.lower_level_audio_helper_owned;
+            out->dm1HoCHostDrawConsumesBackingAsset =
+                hoc_ownership.host_draw_consumes_backing_asset;
             out->dm1HoCHostDrawRejectsBackingFallback =
                 hoc_ownership.host_draw_rejects_backing_fallback;
             out->dm1HoCHoCAssetCapture =
