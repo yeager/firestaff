@@ -874,6 +874,8 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
         out->shouldWriteRawGroup = 1;
         if (in->damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES ||
             in->damageOutcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+            DM1_MeleeF0190DeathSmokeInputPc34 smokeIn;
+            DM1_MeleeF0190DeathSmokePlanPc34 smokeOut;
             out->shouldDropPossessions = 1;
             out->shouldCreateDeathSmoke = 1;
             out->shouldEmitKillNotify = 1;
@@ -881,6 +883,21 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
             out->killNotifyCreatureIndex = in->creatureIndex;
             out->killNotifyOutcome = in->damageOutcome;
             out->killNotifyCreatureType = in->creatureType;
+            memset(&smokeIn, 0, sizeof(smokeIn));
+            memset(&smokeOut, 0, sizeof(smokeOut));
+            smokeIn.shouldCreate = 1;
+            smokeIn.smokeAttack = out->smokeAttack;
+            smokeIn.smokeCell = out->smokeCell;
+            smokeIn.mapIndex = in->targetMapIndex;
+            smokeIn.mapX = in->targetMapX;
+            smokeIn.mapY = in->targetMapY;
+            smokeIn.currentTick = (int)in->currentTick;
+            if (dm1_v1_melee_death_smoke_plan_f0190_pc34(&smokeIn, &smokeOut) &&
+                smokeOut.valid && smokeOut.shouldCreate) {
+                out->smokeCreateInput = smokeOut.createInput;
+            } else {
+                out->shouldCreateDeathSmoke = 0;
+            }
         }
         out->shouldApplyKilledSomeState =
             in->damageOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES;

@@ -1951,6 +1951,16 @@ static void test_melee_f0231_aftermath_plan(void) {
     CHECK_EQ(out.smokeAttack, 255, "F0231 full-square smoke attack");
     CHECK_EQ(out.smokeCell, EXPLOSION_CELL_CENTERED,
              "F0231 centered smoke cell");
+    CHECK_EQ(out.smokeCreateInput.attack, 255,
+             "F0231 killed-all smoke create attack");
+    CHECK_EQ(out.smokeCreateInput.mapIndex, 3,
+             "F0231 killed-all smoke create map");
+    CHECK_EQ(out.smokeCreateInput.mapX, 8,
+             "F0231 killed-all smoke create x");
+    CHECK_EQ(out.smokeCreateInput.mapY, 9,
+             "F0231 killed-all smoke create y");
+    CHECK_EQ(out.smokeCreateInput.currentTick, 77,
+             "F0231 killed-all smoke create tick");
     CHECK_EQ(out.shouldApplyKilledSomeState, 0,
              "F0231 killed-all skips killed-some state");
     CHECK_EQ(out.shouldApplyKilledAllSideEffects, 1,
@@ -1978,6 +1988,8 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 killed-some outcome");
     CHECK_EQ(out.smokeAttack, 190, "F0231 half-square smoke attack");
     CHECK_EQ(out.smokeCell, 2, "F0231 smoke cell masked");
+    CHECK_EQ(out.smokeCreateInput.cell, 2,
+             "F0231 killed-some smoke create cell");
     CHECK_EQ(out.shouldDropPossessions, 1, "F0231 killed-some drops");
     CHECK_EQ(out.shouldCreateDeathSmoke, 1, "F0231 killed-some smoke");
     CHECK_EQ(out.shouldApplyKilledSomeState, 1,

@@ -7013,9 +7013,17 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
                             &aftermathIn, &aftermathPlan);
                         if (aftermathPlan.shouldCreateDeathSmoke) {
-                            orch_cmd_attack_create_f0190_death_smoke_compat(
-                                world, &aftermathPlan, targetDirection,
-                                applyOutcome);
+                            struct TimelineEvent_Compat advance;
+                            int slotIndex = -1;
+                            memset(&advance, 0, sizeof(advance));
+                            if (F0821_EXPLOSION_Create_Compat(
+                                    &aftermathPlan.smokeCreateInput,
+                                    &world->explosions,
+                                    &slotIndex,
+                                    &advance)) {
+                                (void)F0721_TIMELINE_Schedule_Compat(
+                                    &world->timeline, &advance);
+                            }
                         }
                         if (aftermathPlan.shouldDropPossessions ||
                             aftermathPlan.shouldApplyKilledSomeState ||
