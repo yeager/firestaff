@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 CSB runtime-state render-view adapter: CSB boot now exposes the post-FTL title, closed-door HUD/menu, utility fallback, and door-opening render-view receipt directly from runtime-state fields, and the old render-plan adapter now routes through that CSB-owned receipt. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.
+
 
 - ✅ 2026-07-09 DM2 active creature render receipt: the V1 runtime now exposes the last live active-creature render handoff with instance id, GDAT creature type, frame, direction, HP percent, map position, projected viewport position, and depth. Verification: `test_dm2_v1_runtime_handoff_smoke`, `test_dm2_v1_lighting_falloff_boundary`, `test_dm2_v1_creature_ccm_runtime_pc34_compat`, and `git diff --check` passed.
 - ✅ 2026-07-09 Theron external SRM apply/state receipt helper: external `.srm` Continue paths now expose apply and state receipts directly, carrying source SRM, path-only slot `-1`, import status, dungeon, quest, party count, and gold without forcing callers to parse host inspect text. Verification: `test_theron_v1_startup_save_resume_pc34` 171/171, `firestaff_theron_v1_startup_save_resume_probe` 91/91, and `git diff --check` passed.
