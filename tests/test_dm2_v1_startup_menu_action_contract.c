@@ -778,6 +778,16 @@ int main(void)
                       boot_real_visual_capture.packaged_status_consumed == 1 &&
                       boot_real_visual_capture.packaged_startup_phase_consumed == 1 &&
                       boot_real_visual_capture.packaged_hud_suppression_consumed == 1 &&
+                      boot_real_visual_capture.sampled_title_timing_capture_count >= 3 &&
+                      boot_real_visual_capture.sampled_title_pixel_capture_count >= 3 &&
+                      (boot_real_visual_capture.sampled_title_frame_mask &
+                       ((1 << 0) | (1 << 2) | (1 << 7))) ==
+                          ((1 << 0) | (1 << 2) | (1 << 7)) &&
+                      boot_real_visual_capture.sampled_menu_selection_capture_count >= 3 &&
+                      boot_real_visual_capture.sampled_menu_composite_capture_count >= 3 &&
+                      (boot_real_visual_capture.sampled_menu_selection_mask & 0x7) == 0x7 &&
+                      boot_real_visual_capture.sampled_runtime_hud_handoff_capture_ready == 1 &&
+                      boot_real_visual_capture.real_gdat_capture_breadth_ready == 1 &&
                       boot_real_visual_capture.packaged_full_start_hash != 0u &&
                       boot_real_visual_capture.packaged_consumer_hash ==
                           boot_real_visual_capture.packaged_full_start_hash &&
@@ -827,7 +837,7 @@ int main(void)
                       boot_real_visual_capture.suppress_game_hud == 1 &&
                       boot_real_visual_capture.no_fallback_title_blit == 1 &&
                       boot_real_visual_capture.packaged_visual_capture_hash != 0u,
-                  "boot real visual capture consumes local GRAPHICS.DAT title/menu/HUD package");
+                  "boot real visual capture consumes broad local GRAPHICS.DAT title/menu/HUD package");
         } else {
             printf("SKIP boot real visual capture: no verified DM2 data in %s\n",
                    real_data_dir);
