@@ -1469,15 +1469,16 @@ static int dm1_v1_melee_champion_is_lucky_f0308_pc34(
             lucky = r > (unsigned int)percentage;
         }
         luckNew = lucky ? luckCur - 2 : luckCur + 2;
-        if (luckMax > 0 && luckNew > luckMax) luckNew = luckMax;
-        if (luckMin < 0 && luckNew < luckMin) luckNew = luckMin;
+        if (luckNew > luckMax) luckNew = luckMax;
+        if (luckNew < luckMin) luckNew = luckMin;
         if (luckNew < 0) luckNew = 0;
         champ->statisticLuck = luckNew;
     }
     if (outRngCalls) *outRngCalls = rngCalls;
 
     /* ReDMCSB: CHAMPION.C F0308 lines 1120-1155 uses the same two-stage
-     * random/luck mutation path that F0231 calls after failed dex/random hit. */
+     * random/luck mutation path that F0231 calls after failed dex/random hit,
+     * then F0026-bounds current luck to [minimum, maximum]. */
     return lucky;
 }
 

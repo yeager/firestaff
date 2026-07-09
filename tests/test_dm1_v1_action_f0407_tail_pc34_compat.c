@@ -3194,6 +3194,49 @@ static void test_melee_f0231_damage_resolver_entrypoint(void) {
     }
 }
 
+static void test_melee_f0231_luck_maximum_zero_clamp(void) {
+    int sawLuckBranch = 0;
+    unsigned int seed;
+
+    for (seed = 1; seed < 512 && !sawLuckBranch; ++seed) {
+        struct CombatantChampionSnapshot_Compat attacker;
+        struct CombatantCreatureSnapshot_Compat creature;
+        struct WeaponProfile_Compat weapon;
+        struct CombatResult_Compat out;
+        struct RngState_Compat rng;
+
+        memset(&attacker, 0, sizeof(attacker));
+        memset(&creature, 0, sizeof(creature));
+        memset(&weapon, 0, sizeof(weapon));
+        memset(&out, 0, sizeof(out));
+        attacker.championIndex = 0;
+        attacker.currentHealth = 100;
+        attacker.dexterity = 0;
+        attacker.strengthActionHand = 1;
+        attacker.statisticLuck = 0;
+        attacker.statisticLuckMax = 0;
+        attacker.statisticLuckMin = 0;
+        creature.creatureType = CREATURE_TYPE_GIANT_SCORPION;
+        creature.dexterity = 254;
+        creature.defense = 255;
+        creature.healthBefore = 200;
+        weapon.hitProbability = 0;
+        weapon.damageFactor = 1;
+
+        CHECK_EQ(F0730_COMBAT_RngInit_Compat(&rng, seed), 1,
+                 "DM1 F0231 max-zero luck rng init");
+        CHECK_EQ(dm1_v1_melee_resolve_damage_f0231_pc34(
+                     &attacker, &weapon, &creature, &rng, &out), 1,
+                 "DM1 F0231 max-zero luck resolve builds");
+        if (out.rngCallCount == 3) {
+            sawLuckBranch = 1;
+            CHECK_EQ(attacker.statisticLuck, 0,
+                     "F0308 bounds luck to zero maximum");
+        }
+    }
+    CHECK_EQ(sawLuckBranch, 1, "F0308 max-zero luck branch covered");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -3237,6 +3280,7 @@ int main(void) {
     test_melee_f0231_reaction_and_group_apply();
     test_melee_f0231_runtime_result_plan();
     test_melee_f0231_damage_resolver_entrypoint();
+    test_melee_f0231_luck_maximum_zero_clamp();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",
