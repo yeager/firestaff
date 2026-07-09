@@ -69,6 +69,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: M10 closed-door melee now consumes the existing DM1 F0407 closed-door branch plan instead of duplicating the BASH/HACK/BERZERK/KICK/SWING/CHOP action switch and F0232 delay. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
   - 2026-07-09 update: DM1 F0402 melee command decode now also owns auto/direct target mode, auto-creature marker decode, direct group/creature indexes, and target-square calculation for CMD_ATTACK. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
   - 2026-07-09 update: DM1 F0190 melee apply receipt now owns the F0231->F0190 damage-apply gate, original group count, killed cell, damage amount, and returned outcome consumed by M10. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+  - 2026-07-09 update: DM1 F0232 closed-door destruction plan now owns the closed-state, melee-destructible, attack-vs-defense, delay, and destroyed-state scheduling decision used by M10. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 

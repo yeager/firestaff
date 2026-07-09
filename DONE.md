@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0232 closed-door destruction plan: DM1 action-XP compat now owns the closed-door F0232 destruction decision for closed state, melee-destructible gate, attack-vs-defense, delay, fire tick, target square, and destroyed door state. M10 still supplies live door lookup/strength/defense data and schedules the returned event. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0190 group damage apply receipt: DM1 melee compat now owns the F0231-to-F0190 damage-apply receipt, including apply gate, original group count, killed cell, damage amount, and returned outcome. M10 now consumes those DM1 facts instead of deriving them around the shared group mutator. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0402 target decode ownership: DM1 melee compat now owns CMD_ATTACK auto/direct target mode, auto-creature marker decode, direct group/creature indexes, and target-square calculation. M10 now consumes the DM1 decoded target map square and keeps only live thing-list lookup/F0177 selection. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat`, `test_m11_action_stamina_runtime_pc34_compat` (1310/1310), Phase A 24/24, and `git diff --check` passed.
