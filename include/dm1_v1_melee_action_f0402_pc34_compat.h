@@ -742,6 +742,29 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int shouldCreateDeathSmoke;
+    int shouldApplyMutationDispatch;
+    int shouldWriteRawGroup;
+    int shouldEmitKillNotify;
+    int shouldScheduleReaction;
+    struct ExplosionCreateInput_Compat smokeCreateInput;
+    DM1_MeleeF0190MutationDispatchPlanPc34 mutationDispatchPlan;
+    DM1_MeleeF0231RawGroupWritebackPlanPc34 rawGroupWritebackPlan;
+    int killNotifyGroupIndex;
+    int killNotifyCreatureIndex;
+    int killNotifyOutcome;
+    int killNotifyCreatureType;
+    unsigned int reactionFireAtTick;
+    int reactionMapIndex;
+    int reactionMapX;
+    int reactionMapY;
+    int reactionGroupIndex;
+    int reactionCreatureType;
+    int reactionEventKind;
+} DM1_MeleeF0231AftermathApplyPlanPc34;
+
+typedef struct {
+    int valid;
     int shouldDropPossessions;
     int shouldApplyKilledSomeState;
     int shouldEvaluateFear;
@@ -828,6 +851,9 @@ int dm1_v1_melee_aftermath_plan_f0231_pc34(
 int dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
     DM1_MeleeF0231RawGroupWritebackPlanPc34* out);
+int dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
+    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
+    DM1_MeleeF0231AftermathApplyPlanPc34* out);
 int dm1_v1_melee_reaction_plan_f0231_pc34(
     const DM1_MeleeF0231ReactionInputPc34* in,
     DM1_MeleeF0231ReactionPlanPc34* out);

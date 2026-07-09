@@ -34,6 +34,7 @@
 - ✅ 2026-07-09 pass824 DM1 F0190 killed-some state ownership now carries event-cleanup and fear writeback apply receipts, so M10 materializes returned DM1 fields instead of reading killed-some state flags directly.
 - ✅ 2026-07-09 pass825 DM1 F0190 mutation-dispatch ownership now carries one combined apply receipt for possession drops, killed-some cleanup/fear gate, and killed-all side effects, reducing M10 dispatch flag reads.
 - ✅ 2026-07-09 pass826 DM1 F0231 runtime-result ownership now carries post-resolve apply receipts for luck, side effects, group damage, and damage emission, reducing M10 runtime-result flag reads.
+- ✅ 2026-07-09 pass827 DM1 F0231 aftermath ownership now carries a combined apply receipt for death smoke, mutation dispatch, raw group writeback, kill notify, and reaction scheduling, reducing M10 aftermath flag reads.
 
 - ✅ 2026-07-09 Theron SRM envelope startup receipt proof: Theron startup save/resume probe now asserts the decoded SRM envelope kind, so staged gzip SRM data proves the same typed progression handoff used by Continue. Verification: `theron_v1_startup_save_resume_probe`, `theron_v1_startup_save_resume_pc34`, and focused build passed.
 

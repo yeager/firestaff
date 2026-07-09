@@ -1684,6 +1684,74 @@ int dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
     return dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(&in, out);
 }
 
+int dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
+    const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
+    DM1_MeleeF0231AftermathApplyPlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->killNotifyGroupIndex = -1;
+    out->killNotifyCreatureIndex = -1;
+    out->reactionGroupIndex = -1;
+    if (!aftermathPlan || !aftermathPlan->valid) return 0;
+
+    out->valid = 1;
+    out->shouldCreateDeathSmoke = aftermathPlan->shouldCreateDeathSmoke;
+    if (out->shouldCreateDeathSmoke) {
+        out->smokeCreateInput = aftermathPlan->smokeCreateInput;
+    }
+
+    if (aftermathPlan->shouldDropPossessions ||
+        aftermathPlan->shouldApplyKilledSomeState ||
+        aftermathPlan->shouldApplyKilledAllSideEffects) {
+        if (!dm1_v1_melee_aftermath_mutation_dispatch_plan_f0231_pc34(
+                aftermathPlan, &out->mutationDispatchPlan)) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        out->shouldApplyMutationDispatch =
+            out->mutationDispatchPlan.valid &&
+            (out->mutationDispatchPlan.shouldDropPossessions ||
+             out->mutationDispatchPlan.shouldApplyKilledSomeState ||
+             out->mutationDispatchPlan.shouldApplyKilledAllSideEffects);
+    }
+
+    if (!dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
+            aftermathPlan, &out->rawGroupWritebackPlan)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    out->shouldWriteRawGroup =
+        out->rawGroupWritebackPlan.valid &&
+        out->rawGroupWritebackPlan.shouldWriteRawGroup;
+
+    out->shouldEmitKillNotify = aftermathPlan->shouldEmitKillNotify;
+    if (out->shouldEmitKillNotify) {
+        out->killNotifyGroupIndex = aftermathPlan->killNotifyGroupIndex;
+        out->killNotifyCreatureIndex =
+            aftermathPlan->killNotifyCreatureIndex;
+        out->killNotifyOutcome = aftermathPlan->killNotifyOutcome;
+        out->killNotifyCreatureType =
+            aftermathPlan->killNotifyCreatureType;
+    }
+
+    out->shouldScheduleReaction = aftermathPlan->shouldScheduleReaction;
+    if (out->shouldScheduleReaction) {
+        out->reactionFireAtTick = aftermathPlan->reactionFireAtTick;
+        out->reactionMapIndex = aftermathPlan->reactionMapIndex;
+        out->reactionMapX = aftermathPlan->reactionMapX;
+        out->reactionMapY = aftermathPlan->reactionMapY;
+        out->reactionGroupIndex = aftermathPlan->reactionGroupIndex;
+        out->reactionCreatureType = aftermathPlan->reactionCreatureType;
+        out->reactionEventKind = aftermathPlan->reactionEventKind;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1534-1549 and GROUP.C F0190 lines
+     * 824-917 pair death smoke, mutation dispatch, raw group writeback, kill
+     * notification, and reaction scheduling after melee damage.  DM1 owns
+     * the combined apply receipt; M10 only materializes it. */
+    return 1;
+}
+
 int dm1_v1_melee_mutation_dispatch_apply_plan_f0190_pc34(
     const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
     DM1_MeleeF0190MutationDispatchApplyPlanPc34* out) {
