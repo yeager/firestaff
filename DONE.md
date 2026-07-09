@@ -26,6 +26,8 @@
 
 - ✅ 2026-07-09 Theron save/start input view-model route: boot now routes title, Continue, stage focus, Soul Room mirror, and Back inputs from the Theron-owned startup view model, so callers can consume the same Track 02 title/menu receipt for keyboard routing without re-reading raw media or startup state. Verification: `test_theron_v1_startup_save_resume_pc34` 187/187 and `git diff --check` passed.
 
+- ✅ 2026-07-09 Theron startup host receipts from view-model: startup view models now retain the selected stage, cursor, mirror order, save slots/root, world/profile pointers, and Track 02 media receipt so input/action host receipts for Continue failure, Soul Room mirror toggle, and Back-to-stage routing can execute from the view model without rebuilding raw media/startup state. Verification: `test_theron_v1_startup_save_resume_pc34` 190/190 and `git diff --check` passed.
+
 - ✅ 2026-07-09 CSB startup title render route receipt: CSB render-view receipts now expose post-FTL title render command count, blit kind, palette, transparency, and source/destination rectangles for PRESENTS, CHAOS zoom, and STRIKES BACK. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-09 Nexus startup asset gate receipt: launcher startup assets now separate title readiness from real save/champion menu surface readiness, blocking menu routes on MENU.BPK PRS3/truncated/no-surface states while keeping fallback visuals disallowed. Verification: `test_nexus_v1_startup_menu_pc34_compat`, focused Nexus startup CTest, and `git diff --check` passed.

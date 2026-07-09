@@ -295,6 +295,17 @@ typedef struct Theron_V1_BootStartupViewModel {
     int title_frame;
     int title_frame_max;
     int title_ready;
+    int startup_phase;
+    int selected_dungeon;
+    const void *boot_profile;
+    const Theron_V1_World *world;
+    const void *assets;
+    int startup_cursor;
+    int selected_mirrors_mask;
+    int companion_count;
+    int selected_mirror_order[THERON_STARTUP_MAX_COMPANIONS];
+    int selected_mirror_order_count;
+    const char *srm_root;
     int runtime_level;
     int runtime_champion_count;
     int runtime_level_source;
@@ -570,6 +581,14 @@ int theron_v1_boot_startup_execute_input_from_view_model(
     Theron_StartupInput input,
     Theron_StartupAction *out_action,
     Theron_StartupInputReceipt *out_receipt);
+int theron_v1_boot_startup_execute_action_from_view_model_with_host_receipt(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_StartupAction *action,
+    Theron_StartupActionHostReceipt *out_receipt);
+int theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
+    const Theron_V1_BootStartupViewModel *view_model,
+    Theron_StartupInput input,
+    Theron_StartupActionHostReceipt *out_receipt);
 int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     char *out_phase,
     int out_phase_size,

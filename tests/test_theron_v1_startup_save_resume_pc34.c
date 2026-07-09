@@ -1373,6 +1373,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_StartupActionPlan plan;
     Theron_StartupAction action;
     Theron_StartupActionHostReceipt action_receipt;
+    Theron_StartupActionHostReceipt view_model_host_receipt;
     Theron_StartupExecution execution;
     Theron_StartupHostReceipt host_receipt;
     Theron_V1_BootRuntimeStartupSnapshot snapshot;
@@ -1689,6 +1690,40 @@ static void test_startup_session_facts_wrappers(void) {
                     media_input_receipt.input_result ==
                         THERON_STARTUP_INPUT_RESULT_REDRAW,
                 "boot startup input consumer routes Back from Soul Room view model receipt");
+    expect_true(theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
+                    &direct_view_model,
+                    THERON_STARTUP_INPUT_ACCEPT,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result ==
+                        THERON_STARTUP_ERR_NULL &&
+                    view_model_host_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                    strcmp(view_model_host_receipt.host_receipt.status,
+                           "CONTINUE FAILED") == 0,
+                "boot startup view model host route owns Continue save failure receipt");
+    expect_true(theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
+                    &media_view_model,
+                    THERON_STARTUP_INPUT_ACCEPT,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.state_receipt.flow_changed &&
+                    view_model_host_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                    strcmp(view_model_host_receipt.host_receipt.status,
+                           "HERO RELEASED") == 0,
+                "boot startup view model host route owns Track02 mirror toggle receipt");
+    expect_true(theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
+                    &media_view_model,
+                    THERON_STARTUP_INPUT_BACK,
+                    &view_model_host_receipt) &&
+                    view_model_host_receipt.result == THERON_STARTUP_OK &&
+                    view_model_host_receipt.state_receipt_valid &&
+                    view_model_host_receipt.state_receipt.flow.phase ==
+                        THERON_STARTUP_PHASE_STAGE_SELECT &&
+                    view_model_host_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW,
+                "boot startup view model host route owns Soul Room Back receipt");
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;
