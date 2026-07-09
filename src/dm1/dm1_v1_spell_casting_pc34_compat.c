@@ -155,6 +155,21 @@ static int championSpellSkillLevel(const DM1_ChampionSpellStats* stats,
     return stats->skillLevels[skillIndex];
 }
 
+static int spellIndexFromPointer(const DM1_Spell* spell) {
+    if (!spell) return -1;
+    if (spell < dm1_spells || spell >= dm1_spells + DM1_SPELL_COUNT) return -1;
+    return (int)(spell - dm1_spells);
+}
+
+static int dm1_lightAmountFromPower(int lightPower) {
+    static const int lightPowerToLightAmount[16] = {
+        0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100
+    };
+
+    if (lightPower < 0) lightPower = -lightPower;
+    return lightPowerToLightAmount[boundedValue(0, lightPower, 15)];
+}
+
 /* ═══════════════════════════════════════════════════════════════════
  * Core API implementation
  * ═══════════════════════════════════════════════════════════════════ */
@@ -603,6 +618,201 @@ uint16_t dm1_spell_experience(int powerOrdinal, int baseRequiredSkill, int rng8)
             + (((powerOrdinal - 1) * baseRequiredSkill) << 3)
             + (required * required);
     return (uint16_t)exp;
+}
+
+int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
+                                  int champIdx,
+                                  const DM1_ChampionSpellStats* stats,
+                                  uint16_t rng16,
+                                  int championDirection,
+                                  int partyDirection,
+                                  int partyShieldDefense,
+                                  DM1_SpellF0412RuntimeReceipt* outReceipt)
+{
+    DM1_SpellF0412RuntimeReceipt receipt;
+    const DM1_Spell* spell;
+    const DM1_ChampionSpellInput* inp;
+    int powerOrdinal;
+    int requiredSkillLevel;
+    int skillLevel;
+    int kind;
+    int spellType;
+    int spellPower;
+
+    if (!outReceipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.castResult = DM1_SPELL_CAST_FAILURE;
+    receipt.failureType = -1;
+    receipt.spellIndex = -1;
+    receipt.spellKind = -1;
+    receipt.spellType = -1;
+    receipt.skillIndex = -1;
+    receipt.projectileThing = DM1_SPELL_THING_NONE_PC34;
+    receipt.championDirectionBefore = championDirection;
+    receipt.championDirectionAfter = championDirection;
+    receipt.eventType = -1;
+    receipt.shieldDefenseBefore = partyShieldDefense;
+    receipt.shieldDefenseAfter = partyShieldDefense;
+
+    if (!s || !stats || champIdx < 0 || champIdx >= 4) {
+        *outReceipt = receipt;
+        return 0;
+    }
+
+    inp = &s->input[champIdx];
+    if (stats->currentHealth <= 0) {
+        receipt.symbolsCleared = dm1_spell_castClearsSymbolsForResult(receipt.castResult);
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    spell = dm1_spell_lookup(s, champIdx);
+    if (!spell) {
+        receipt.failureType = DM1_FAILURE_MEANINGLESS_SPELL;
+        receipt.symbolsCleared = dm1_spell_castClearsSymbolsForResult(receipt.castResult);
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    powerOrdinal = (int)(unsigned char)inp->symbols[0] - 95;
+    requiredSkillLevel = spell->baseRequiredSkillLevel + powerOrdinal;
+    skillLevel = championSpellSkillLevel(stats, spell->skillIndex);
+    kind = DM1_SPELL_KIND(spell);
+    spellType = DM1_SPELL_TYPE(spell);
+
+    receipt.spellIndex = spellIndexFromPointer(spell);
+    receipt.spellKind = kind;
+    receipt.spellType = spellType;
+    receipt.skillIndex = spell->skillIndex;
+    receipt.powerOrdinal = powerOrdinal;
+    receipt.requiredSkillLevel = requiredSkillLevel;
+    receipt.skillLevel = skillLevel;
+    receipt.experience = dm1_spell_experience(powerOrdinal,
+                                              spell->baseRequiredSkillLevel,
+                                              (int)(rng16 & 0x0007u));
+    receipt.disabledTicks = DM1_SPELL_DISABLED_TICKS(spell);
+
+    if (skillLevel < requiredSkillLevel) {
+        int missingLevels = requiredSkillLevel - skillLevel;
+        int threshold = minVal(stats->wisdom + 15, 115);
+        for (int i = 0; i < missingLevels; ++i) {
+            int rngVal = (rng16 >> (i * 4)) & 0x7F;
+            if (rngVal > threshold) {
+                receipt.failureType = DM1_FAILURE_NEEDS_MORE_PRACTICE;
+                receipt.partialExperience =
+                    receipt.experience >> (requiredSkillLevel - skillLevel);
+                receipt.symbolsCleared =
+                    dm1_spell_castClearsSymbolsForResult(receipt.castResult);
+                *outReceipt = receipt;
+                return 1;
+            }
+        }
+    }
+
+    if (kind == DM1_SPELL_KIND_POTION) {
+        receipt.castResult = DM1_SPELL_CAST_FAILURE_NEEDS_FLASK;
+        receipt.failureType = DM1_FAILURE_NEEDS_FLASK_IN_HAND;
+        receipt.symbolsCleared = dm1_spell_castClearsSymbolsForResult(receipt.castResult);
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    if (kind == DM1_SPELL_KIND_MAGIC_MAP) {
+        receipt.castResult = DM1_SPELL_CAST_FAILURE_NEEDS_MAGIC_MAP;
+        receipt.failureType = DM1_FAILURE_NEEDS_MAGIC_MAP_IN_HAND;
+        receipt.symbolsCleared = dm1_spell_castClearsSymbolsForResult(receipt.castResult);
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    receipt.castResult = DM1_SPELL_CAST_SUCCESS;
+    receipt.symbolsCleared = dm1_spell_castClearsSymbolsForResult(receipt.castResult);
+
+    if (kind == DM1_SPELL_KIND_PROJECTILE) {
+        /* ReDMCSB MENU.C F0412:1861-1870 rotates the champion to party
+         * direction, then calls F0327 with spellType + C0xFF80 and bounded
+         * kinetic energy; arg4 required mana is 0 for spell-created missiles. */
+        receipt.rotatesChampion = championDirection != partyDirection;
+        receipt.championDirectionAfter = partyDirection;
+        receipt.redrawChampionState = receipt.rotatesChampion;
+        receipt.createsProjectile = 1;
+        receipt.projectileThing =
+            (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 + spellType);
+        receipt.projectileKineticEnergy =
+            dm1_spell_projectileKineticEnergy(powerOrdinal, skillLevel, spellType);
+        receipt.projectileStepEnergy =
+            dm1_spell_projectileStepEnergy(stats->maximumMana);
+        receipt.projectileRequiredMana = 0;
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    if (kind != DM1_SPELL_KIND_OTHER) {
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB MENU.C F0412:1922-2030 keeps OTHER spell side effects in the
+     * spell system: light/darkness use C70, timed buffs add events, Zokathra
+     * creates junk, and fire shield routes to the party spell helper. */
+    spellPower = (powerOrdinal + 1) << 2;
+    switch (spellType) {
+        case DM1_SPELL_TYPE_OTHER_LIGHT:
+            receipt.lightPower = (spellPower >> 1) - 1;
+            receipt.lightAmountDelta = dm1_lightAmountFromPower(receipt.lightPower);
+            receipt.createsEvent = 1;
+            receipt.eventType = DM1_SPELL_EVENT_LIGHT_PC34;
+            receipt.eventTicks = 10000 + ((spellPower - 8) << 9);
+            break;
+        case DM1_SPELL_TYPE_OTHER_MAGIC_TORCH:
+            receipt.lightPower = (spellPower >> 2) + 1;
+            receipt.lightAmountDelta = dm1_lightAmountFromPower(receipt.lightPower);
+            receipt.createsEvent = 1;
+            receipt.eventType = DM1_SPELL_EVENT_LIGHT_PC34;
+            receipt.eventTicks = 2000 + ((spellPower - 3) << 7);
+            break;
+        case DM1_SPELL_TYPE_OTHER_DARKNESS:
+            receipt.lightPower = spellPower >> 2;
+            receipt.lightAmountDelta = -dm1_lightAmountFromPower(receipt.lightPower);
+            receipt.createsEvent = 1;
+            receipt.eventType = DM1_SPELL_EVENT_LIGHT_PC34;
+            receipt.eventTicks = 98;
+            break;
+        case DM1_SPELL_TYPE_OTHER_THIEVES_EYE:
+            receipt.createsEvent = 1;
+            receipt.eventType = DM1_SPELL_EVENT_THIEVES_EYE_PC34;
+            receipt.eventTicks = (spellPower >> 1) * spellPower;
+            break;
+        case DM1_SPELL_TYPE_OTHER_INVISIBILITY:
+            receipt.createsEvent = 1;
+            receipt.eventType = DM1_SPELL_EVENT_INVISIBILITY_PC34;
+            receipt.eventTicks = (spellPower << 3) * spellPower;
+            break;
+        case DM1_SPELL_TYPE_OTHER_PARTY_SHIELD:
+            receipt.createsEvent = 1;
+            receipt.eventType = DM1_SPELL_EVENT_PARTY_SHIELD_PC34;
+            receipt.eventDefense = (partyShieldDefense > 50) ? (spellPower >> 2) : spellPower;
+            receipt.shieldDefenseDelta = receipt.eventDefense;
+            receipt.shieldDefenseAfter = partyShieldDefense + receipt.eventDefense;
+            receipt.eventTicks = spellPower * spellPower;
+            break;
+        case DM1_SPELL_TYPE_OTHER_FOOTPRINTS:
+            receipt.createsEvent = 1;
+            receipt.eventType = DM1_SPELL_EVENT_FOOTPRINTS_PC34;
+            receipt.eventTicks = spellPower * spellPower;
+            break;
+        case DM1_SPELL_TYPE_OTHER_ZOKATHRA:
+            receipt.createsZokathraJunk = 1;
+            break;
+        case DM1_SPELL_TYPE_OTHER_FIRESHIELD:
+            receipt.fireShieldPower = (spellPower * spellPower) + 100;
+            break;
+        default:
+            break;
+    }
+
+    *outReceipt = receipt;
+    return 1;
 }
 
 const char* dm1_spell_symbolName(char sym) {

@@ -108,6 +108,14 @@ extern "C" {
 #define DM1_SPELL_THING_NONE_PC34       0xFFFFu
 #define DM1_SPELL_ICON_EMPTY_FLASK_PC34 195
 #define DM1_SPELL_POTION_EMPTY_FLASK_PC34 20
+#define DM1_SPELL_THING_FIRST_EXPLOSION_PC34 0xFF80u
+
+/* ── Timeline event ids used by F0412 non-projectile spell receipts ─── */
+#define DM1_SPELL_EVENT_LIGHT_PC34        70
+#define DM1_SPELL_EVENT_INVISIBILITY_PC34 71
+#define DM1_SPELL_EVENT_THIEVES_EYE_PC34  73
+#define DM1_SPELL_EVENT_PARTY_SHIELD_PC34 74
+#define DM1_SPELL_EVENT_FOOTPRINTS_PC34   79
 
 typedef struct {
     int failureType;
@@ -216,6 +224,47 @@ typedef struct {
     int symbolsCleared;
 } DM1_SpellPotionCastResult;
 
+typedef struct {
+    int castResult;
+    int failureType;
+    int spellIndex;
+    int spellKind;
+    int spellType;
+    int skillIndex;
+    int powerOrdinal;
+    int requiredSkillLevel;
+    int skillLevel;
+    int experience;
+    int partialExperience;
+    int disabledTicks;
+    int symbolsCleared;
+
+    int rotatesChampion;
+    int championDirectionBefore;
+    int championDirectionAfter;
+    int redrawChampionState;
+
+    int createsProjectile;
+    uint16_t projectileThing;
+    int projectileKineticEnergy;
+    int projectileStepEnergy;
+    int projectileRequiredMana;
+
+    int createsEvent;
+    int eventType;
+    int eventTicks;
+    int eventPriority;
+    int eventDefense;
+
+    int lightPower;
+    int lightAmountDelta;
+    int shieldDefenseBefore;
+    int shieldDefenseDelta;
+    int shieldDefenseAfter;
+    int createsZokathraJunk;
+    int fireShieldPower;
+} DM1_SpellF0412RuntimeReceipt;
+
 /* ── Symbol encoding helpers ───────────────────────────────────── */
 
 /** Encode a symbol step + index into the stored character (SYMBOL.C:36). */
@@ -323,6 +372,20 @@ int dm1_spell_projectileStepEnergy(int16_t maximumMana);
  * Compute the experience gained from a spell cast (source: MENU.C F0412).
  */
 uint16_t dm1_spell_experience(int powerOrdinal, int baseRequiredSkill, int rng8);
+
+/**
+ * Build a source-locked F0412 runtime receipt without mutating spell input.
+ * The receipt owns projectile materialization facts and common spell side-effect
+ * metadata so callers do not derive them in M11/M10.
+ */
+int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
+                                  int champIdx,
+                                  const DM1_ChampionSpellStats* stats,
+                                  uint16_t rng16,
+                                  int championDirection,
+                                  int partyDirection,
+                                  int partyShieldDefense,
+                                  DM1_SpellF0412RuntimeReceipt* outReceipt);
 
 /** Get the name string for a symbol character. */
 const char* dm1_spell_symbolName(char sym);

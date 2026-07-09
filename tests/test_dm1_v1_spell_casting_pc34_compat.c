@@ -926,6 +926,137 @@ static void test_spell_cast_click_cleanup_predicate(void) {
     printf("    PASS\n");
 }
 
+static void test_f0412_runtime_receipt_projectile_fireball(void) {
+    printf("  [29] F0412 runtime receipt — fireball projectile...\n");
+
+    DM1_SpellCastingState s;
+    DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
+    DM1_SpellF0412RuntimeReceipt receipt;
+
+    dm1_spell_init(&s);
+    stats.skillLevels[DM1_SKILL_FIRE] = 5;
+
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR) == 1);
+
+    /* ReDMCSB MENU.C F0412:1861-1870 owns projectile type/materialization:
+     * fireball -> C0xFF80 explosion thing, bounded kinetic energy, no extra mana. */
+    assert(dm1_spell_f0412RuntimeReceipt(&s, 0, &stats, 0x0005,
+                                         1, 2, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(receipt.failureType == -1);
+    assert(receipt.spellIndex == 8);
+    assert(receipt.spellKind == DM1_SPELL_KIND_PROJECTILE);
+    assert(receipt.spellType == 0);
+    assert(receipt.powerOrdinal == 3);
+    assert(receipt.requiredSkillLevel == 6);
+    assert(receipt.skillLevel == 5);
+    assert(receipt.experience == 185);
+    assert(receipt.disabledTicks == 42);
+    assert(receipt.symbolsCleared == 1);
+    assert(receipt.rotatesChampion == 1);
+    assert(receipt.championDirectionBefore == 1);
+    assert(receipt.championDirectionAfter == 2);
+    assert(receipt.redrawChampionState == 1);
+    assert(receipt.createsProjectile == 1);
+    assert(receipt.projectileThing == DM1_SPELL_THING_FIRST_EXPLOSION_PC34);
+    assert(receipt.projectileKineticEnergy == 70);
+    assert(receipt.projectileStepEnergy == 2);
+    assert(receipt.projectileRequiredMana == 0);
+    assert(s.input[0].symbols[0] != '\0');
+
+    printf("    PASS\n");
+}
+
+static void test_f0412_runtime_receipt_projectile_open_door(void) {
+    printf("  [30] F0412 runtime receipt — open door projectile...\n");
+
+    DM1_SpellCastingState s;
+    DM1_ChampionSpellStats stats = makeStats(200, 24, 50, 60);
+    DM1_SpellF0412RuntimeReceipt receipt;
+
+    dm1_spell_init(&s);
+    stats.skillLevels[DM1_SKILL_AIR] = 5;
+
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_ZO) == 1);
+
+    assert(dm1_spell_f0412RuntimeReceipt(&s, 0, &stats, 0x0000,
+                                         3, 3, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(receipt.spellIndex == 14);
+    assert(receipt.spellType == DM1_SPELL_TYPE_PROJ_OPEN_DOOR);
+    assert(receipt.rotatesChampion == 0);
+    assert(receipt.projectileThing ==
+           (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 + DM1_SPELL_TYPE_PROJ_OPEN_DOOR));
+    assert(receipt.projectileKineticEnergy == 120);
+    assert(receipt.projectileStepEnergy == 7);
+
+    printf("    PASS\n");
+}
+
+static void test_f0412_runtime_receipt_needs_practice_no_projectile(void) {
+    printf("  [31] F0412 runtime receipt — failure suppresses projectile...\n");
+
+    DM1_SpellCastingState s;
+    DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 0);
+    DM1_SpellF0412RuntimeReceipt receipt;
+
+    dm1_spell_init(&s);
+    stats.skillLevels[DM1_SKILL_FIRE] = 0;
+
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR) == 1);
+
+    assert(dm1_spell_f0412RuntimeReceipt(&s, 0, &stats, 0x7FFF,
+                                         1, 2, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_FAILURE);
+    assert(receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE);
+    assert(receipt.spellIndex == 8);
+    assert(receipt.partialExperience == (receipt.experience >> 6));
+    assert(receipt.createsProjectile == 0);
+    assert(receipt.projectileThing == DM1_SPELL_THING_NONE_PC34);
+    assert(receipt.symbolsCleared == 1);
+
+    printf("    PASS\n");
+}
+
+static void test_f0412_runtime_receipt_light_event(void) {
+    printf("  [32] F0412 runtime receipt — light event...\n");
+
+    DM1_SpellCastingState s;
+    DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
+    DM1_SpellF0412RuntimeReceipt receipt;
+
+    dm1_spell_init(&s);
+    stats.skillLevels[DM1_SKILL_AIR] = 10;
+
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_OH) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ALIGN_RA) == 1);
+
+    /* ReDMCSB MENU.C F0412:1926-1938 maps Light to C70 with
+     * G0039 light amount table and power-derived duration. */
+    assert(dm1_spell_f0412RuntimeReceipt(&s, 0, &stats, 0x0001,
+                                         0, 0, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(receipt.spellIndex == 6);
+    assert(receipt.spellKind == DM1_SPELL_KIND_OTHER);
+    assert(receipt.spellType == DM1_SPELL_TYPE_OTHER_LIGHT);
+    assert(receipt.createsProjectile == 0);
+    assert(receipt.createsEvent == 1);
+    assert(receipt.eventType == DM1_SPELL_EVENT_LIGHT_PC34);
+    assert(receipt.lightPower == 7);
+    assert(receipt.lightAmountDelta == 51);
+    assert(receipt.eventTicks == 14096);
+    assert(receipt.disabledTicks == 22);
+
+    printf("    PASS\n");
+}
+
 /* ═══════════════════════════════════════════════════════════════════ */
 int main(void) {
     printf("DM1 V1 Spell Casting — CTest gate\n");
@@ -961,7 +1092,11 @@ int main(void) {
     test_spell_cast_uses_live_f0303_skill_override();
     test_spell_failure_feedback_metadata();
     test_spell_cast_click_cleanup_predicate();
+    test_f0412_runtime_receipt_projectile_fireball();
+    test_f0412_runtime_receipt_projectile_open_door();
+    test_f0412_runtime_receipt_needs_practice_no_projectile();
+    test_f0412_runtime_receipt_light_event();
 
-    printf("\nAll 30 tests PASSED.\n");
+    printf("\nAll 34 tests PASSED.\n");
     return 0;
 }
