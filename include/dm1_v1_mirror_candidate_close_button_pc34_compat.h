@@ -24,14 +24,14 @@ extern "C" {
 #define DM1_V1_MIRROR_CANDIDATE_CLOSE_BUTTON_FIELD_G0289_PC34_COMPAT \
     "G0289_i_DungeonView_ChampionPortraitOrdinal"
 
-typedef struct Dm1V1MirrorCandidateCloseButtonChampionPc34Compat {
+typedef struct DM1_V1_MirrorCandidateCloseButtonChampionPc34Compat {
     unsigned int championOrdinal;
     int currentHealth;
     int portraitOrdinal;
     int present;
-} Dm1V1MirrorCandidateCloseButtonChampionPc34Compat;
+} DM1_V1_MirrorCandidateCloseButtonChampionPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateCloseButtonStatePc34Compat {
+typedef struct DM1_V1_MirrorCandidateCloseButtonStatePc34Compat {
     int active;
     int partyChampionCount;
     int preC040PartyChampionCount;
@@ -45,11 +45,11 @@ typedef struct Dm1V1MirrorCandidateCloseButtonStatePc34Compat {
     int panelContent;
     int c040PanelOpen;
     int c040PanelPixelsDrawn;
-    Dm1V1MirrorCandidateCloseButtonChampionPc34Compat
+    DM1_V1_MirrorCandidateCloseButtonChampionPc34Compat
         party[DM1_V1_MIRROR_CANDIDATE_CLOSE_BUTTON_CHAMPION_COUNT_PC34_COMPAT];
-} Dm1V1MirrorCandidateCloseButtonStatePc34Compat;
+} DM1_V1_MirrorCandidateCloseButtonStatePc34Compat;
 
-typedef struct Dm1V1MirrorCandidateCloseButtonResultPc34Compat {
+typedef struct DM1_V1_MirrorCandidateCloseButtonResultPc34Compat {
     int command;
     int validCloseButtonCommand;
     int closedPanel;
@@ -90,9 +90,9 @@ typedef struct Dm1V1MirrorCandidateCloseButtonResultPc34Compat {
     int c040PanelPixelsBefore;
     int c040PanelPixelsAfter;
     int actionAreaGateOpenAfterClose;
-} Dm1V1MirrorCandidateCloseButtonResultPc34Compat;
+} DM1_V1_MirrorCandidateCloseButtonResultPc34Compat;
 
-typedef struct Dm1V1MirrorCandidateCloseButtonSpecPc34Compat {
+typedef struct DM1_V1_MirrorCandidateCloseButtonSpecTypePc34Compat {
     const char *name;
     int c040PanelGraphic;
     int c040PanelContent;
@@ -100,20 +100,29 @@ typedef struct Dm1V1MirrorCandidateCloseButtonSpecPc34Compat {
     int sourceCancelCommand;
     const char *contractMarker;
     const char *sourceEvidence;
-} Dm1V1MirrorCandidateCloseButtonSpecPc34Compat;
+} DM1_V1_MirrorCandidateCloseButtonSpecTypePc34Compat;
 
-extern const Dm1V1MirrorCandidateCloseButtonSpecPc34Compat
+typedef DM1_V1_MirrorCandidateCloseButtonChampionPc34Compat
+    Dm1V1MirrorCandidateCloseButtonChampionPc34Compat;
+typedef DM1_V1_MirrorCandidateCloseButtonStatePc34Compat
+    Dm1V1MirrorCandidateCloseButtonStatePc34Compat;
+typedef DM1_V1_MirrorCandidateCloseButtonResultPc34Compat
+    Dm1V1MirrorCandidateCloseButtonResultPc34Compat;
+typedef DM1_V1_MirrorCandidateCloseButtonSpecTypePc34Compat
+    Dm1V1MirrorCandidateCloseButtonSpecPc34Compat;
+
+extern const DM1_V1_MirrorCandidateCloseButtonSpecTypePc34Compat
     DM1_V1_MirrorCandidateCloseButtonSpecPc34Compat;
 
 void dm1_v1_mirror_candidate_close_button_init_pc34(
-    Dm1V1MirrorCandidateCloseButtonStatePc34Compat *state);
+    DM1_V1_MirrorCandidateCloseButtonStatePc34Compat *state);
 
 int dm1_v1_mirror_candidate_close_button_pc34(
-    Dm1V1MirrorCandidateCloseButtonStatePc34Compat *state,
+    DM1_V1_MirrorCandidateCloseButtonStatePc34Compat *state,
     int command,
-    Dm1V1MirrorCandidateCloseButtonResultPc34Compat *outResult);
+    DM1_V1_MirrorCandidateCloseButtonResultPc34Compat *outResult);
 
-const Dm1V1MirrorCandidateCloseButtonSpecPc34Compat *
+const DM1_V1_MirrorCandidateCloseButtonSpecTypePc34Compat *
 dm1_v1_mirror_candidate_close_button_spec_pc34(void);
 
 const char *dm1_v1_mirror_candidate_close_button_source_evidence_pc34(void);

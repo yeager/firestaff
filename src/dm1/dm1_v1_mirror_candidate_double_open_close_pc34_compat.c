@@ -188,8 +188,8 @@ static int route_no_finalize_after_close(void)
 
 static int route_close_button(void)
 {
-    Dm1V1MirrorCandidateCloseButtonStatePc34Compat state;
-    Dm1V1MirrorCandidateCloseButtonResultPc34Compat result;
+    DM1_V1_MirrorCandidateCloseButtonStatePc34Compat state;
+    DM1_V1_MirrorCandidateCloseButtonResultPc34Compat result;
 
     dm1_v1_mirror_candidate_close_button_init_pc34(&state);
     (void)dm1_v1_mirror_candidate_close_button_pc34(

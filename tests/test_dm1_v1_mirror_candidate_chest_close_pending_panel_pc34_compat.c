@@ -25,7 +25,7 @@ static int gPasses;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateChestClosePendingPanelEvidencePc34Compat *e =
+    const DM1_V1_MirrorCandidateChestClosePendingPanelEvidencePc34Compat *e =
         DM1_V1_MirrorCandidateChestClosePendingPanel_EvidencePc34Compat();
 
     CHECK_REDMCSB(e != NULL,
@@ -60,7 +60,7 @@ static void test_source_lock_metadata(void)
 
 static void test_fixture_starts_with_c040_and_open_chest(void)
 {
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat state;
 
     DM1_V1_MirrorCandidateChestClosePendingPanel_InitPc34Compat(&state);
 
@@ -111,8 +111,8 @@ static void test_fixture_starts_with_c040_and_open_chest(void)
 
 static void test_c011_inventory_close_does_not_close_open_chest(void)
 {
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat state;
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat result;
     int accepted;
 
     DM1_V1_MirrorCandidateChestClosePendingPanel_InitPc34Compat(&state);
@@ -180,8 +180,8 @@ static void test_c011_inventory_close_does_not_close_open_chest(void)
 
 static void test_f0302_chest_slot_swap_while_c040_pending(void)
 {
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat state;
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat result;
     int accepted;
 
     DM1_V1_MirrorCandidateChestClosePendingPanel_InitPc34Compat(&state);
@@ -251,8 +251,8 @@ static void test_f0302_chest_slot_swap_while_c040_pending(void)
 
 static void test_c162_cancel_closes_and_relinks_chest_once(void)
 {
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat state;
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat result;
     int accepted;
 
     DM1_V1_MirrorCandidateChestClosePendingPanel_InitPc34Compat(&state);

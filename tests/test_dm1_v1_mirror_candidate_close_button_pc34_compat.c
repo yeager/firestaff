@@ -17,8 +17,8 @@ static int gPasses;
 
 static void test_close_button_clears_panel_without_resurrecting(void)
 {
-    Dm1V1MirrorCandidateCloseButtonStatePc34Compat state;
-    Dm1V1MirrorCandidateCloseButtonResultPc34Compat result;
+    DM1_V1_MirrorCandidateCloseButtonStatePc34Compat state;
+    DM1_V1_MirrorCandidateCloseButtonResultPc34Compat result;
     int changed;
     int party0OrdinalBefore;
     int party1OrdinalBefore;
@@ -218,8 +218,8 @@ static void test_close_button_clears_panel_without_resurrecting(void)
 
 static void test_non_close_button_is_ignored(void)
 {
-    Dm1V1MirrorCandidateCloseButtonStatePc34Compat state;
-    Dm1V1MirrorCandidateCloseButtonResultPc34Compat result;
+    DM1_V1_MirrorCandidateCloseButtonStatePc34Compat state;
+    DM1_V1_MirrorCandidateCloseButtonResultPc34Compat result;
     int changed;
 
     dm1_v1_mirror_candidate_close_button_init_pc34(&state);
@@ -239,7 +239,7 @@ static void test_non_close_button_is_ignored(void)
 
 static void test_spec_and_source_evidence(void)
 {
-    const Dm1V1MirrorCandidateCloseButtonSpecPc34Compat *spec =
+    const DM1_V1_MirrorCandidateCloseButtonSpecTypePc34Compat *spec =
         dm1_v1_mirror_candidate_close_button_spec_pc34();
     const char *evidence =
         dm1_v1_mirror_candidate_close_button_source_evidence_pc34();

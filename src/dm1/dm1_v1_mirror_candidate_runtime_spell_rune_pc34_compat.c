@@ -50,8 +50,8 @@ static int nested_spell_symbol_command(int x, int y)
 }
 
 static void capture_result_before(
-    const Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat *result)
 {
     int casterIndex;
 
@@ -71,8 +71,8 @@ static void capture_result_before(
 }
 
 static void capture_result_after(
-    const Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat *result)
 {
     int casterIndex = state->magicCasterChampionIndex;
 
@@ -87,7 +87,7 @@ static void capture_result_after(
 }
 
 void DM1_V1_MirrorCandidateRuntimeSpellRune_InitPc34Compat(
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state)
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -106,7 +106,7 @@ void DM1_V1_MirrorCandidateRuntimeSpellRune_InitPc34Compat(
 }
 
 void DM1_V1_MirrorCandidateRuntimeSpellRune_ClearCandidatePc34Compat(
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state)
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -115,10 +115,10 @@ void DM1_V1_MirrorCandidateRuntimeSpellRune_ClearCandidatePc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRuntimeSpellRune_ClickSpellAreaPc34Compat(
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
     int x,
     int y,
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult)
 {
     struct Dm1V1InputQueueProcessResultPc34Compat queueResult;
     int nestedCommand;
@@ -190,8 +190,8 @@ int DM1_V1_MirrorCandidateRuntimeSpellRune_ClickSpellAreaPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateRuntimeSpellRune_CancelPc34Compat(
-    Dm1V1MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
-    Dm1V1MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateRuntimeSpellRuneStatePc34Compat *state,
+    DM1_V1_MirrorCandidateRuntimeSpellRuneResultPc34Compat *outResult)
 {
     int casterIndex;
 

@@ -18,7 +18,7 @@ enum {
     kLeaderIndex = 0
 };
 
-static const Dm1V1MirrorCandidateChestClosePendingPanelEvidencePc34Compat
+static const DM1_V1_MirrorCandidateChestClosePendingPanelEvidencePc34Compat
     s_evidence = {
         "ReDMCSB COMMAND.C F0380:2180-2183 C007..C011 inventory toggle "
         "guarded by !G0299",
@@ -69,10 +69,10 @@ static int valid_slot_index(int chestSlotIndex)
 }
 
 static void capture_before(
-    const Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
+    const DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
     int command,
     int requestedChestSlotIndex,
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *result)
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *result)
 {
     memset(result, 0, sizeof(*result));
     result->evidence = &s_evidence;
@@ -136,7 +136,7 @@ static void capture_before(
 }
 
 static int first_non_empty_slot(
-    const Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state)
+    const DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state)
 {
     int i;
 
@@ -153,7 +153,7 @@ static int first_non_empty_slot(
 }
 
 static void close_chest_via_f0334(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state)
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state)
 {
     int i;
     int firstIndex;
@@ -189,7 +189,7 @@ static void close_chest_via_f0334(
 }
 
 static void close_inventory_via_f0355(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state)
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state)
 {
     ++state->f0355ToggleCount;
     if (state->inventoryChampionOrdinal != 0u) {
@@ -199,8 +199,8 @@ static void close_inventory_via_f0355(
 }
 
 static void capture_after(
-    const Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *result)
+    const DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *result)
 {
     if (!state || !result) {
         return;
@@ -264,7 +264,7 @@ static void capture_after(
 }
 
 void DM1_V1_MirrorCandidateChestClosePendingPanel_InitPc34Compat(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state)
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state)
 {
     if (!state) {
         return;
@@ -287,11 +287,11 @@ void DM1_V1_MirrorCandidateChestClosePendingPanel_InitPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateChestClosePendingPanel_AttemptInventoryClosePc34Compat(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat localResult;
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *result =
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     capture_before(
@@ -320,12 +320,12 @@ int DM1_V1_MirrorCandidateChestClosePendingPanel_AttemptInventoryClosePc34Compat
 }
 
 int DM1_V1_MirrorCandidateChestClosePendingPanel_SwapChestSlotPc34Compat(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
     int chestSlotIndex,
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat localResult;
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *result =
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *result =
         outResult ? outResult : &localResult;
     int slotThing;
 
@@ -362,11 +362,11 @@ int DM1_V1_MirrorCandidateChestClosePendingPanel_SwapChestSlotPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateChestClosePendingPanel_CancelC040Pc34Compat(
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult)
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat *state,
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *outResult)
 {
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat localResult;
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat *result =
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat localResult;
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat *result =
         outResult ? outResult : &localResult;
 
     capture_before(
@@ -398,7 +398,7 @@ int DM1_V1_MirrorCandidateChestClosePendingPanel_CancelC040Pc34Compat(
     return 1;
 }
 
-const Dm1V1MirrorCandidateChestClosePendingPanelEvidencePc34Compat *
+const DM1_V1_MirrorCandidateChestClosePendingPanelEvidencePc34Compat *
 DM1_V1_MirrorCandidateChestClosePendingPanel_EvidencePc34Compat(void)
 {
     return &s_evidence;
@@ -417,8 +417,8 @@ int dm1_v1_mirror_candidate_chest_close_pending_panel_run(
     int *passed,
     int *failed)
 {
-    Dm1V1MirrorCandidateChestClosePendingPanelStatePc34Compat state;
-    Dm1V1MirrorCandidateChestClosePendingPanelResultPc34Compat result;
+    DM1_V1_MirrorCandidateChestClosePendingPanelStatePc34Compat state;
+    DM1_V1_MirrorCandidateChestClosePendingPanelResultPc34Compat result;
 
     if (!passed || !failed) {
         return 0;
