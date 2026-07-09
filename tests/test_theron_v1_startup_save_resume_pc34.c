@@ -2267,6 +2267,10 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.runtime_fallback_visuals_blocked &&
                     graphics_route_receipt.runtime_structured_route &&
                     !graphics_route_receipt.runtime_receipt_text_route &&
+                    graphics_route_receipt.track02_real_media_ready &&
+                    graphics_route_receipt.real_bitmap_startup_graphics_ready &&
+                    graphics_route_receipt.no_fallback_startup_graphics_proof &&
+                    !graphics_route_receipt.fallback_startup_graphics_executed &&
                     graphics_route_receipt.no_fallback_visuals_enforced &&
                     !graphics_route_receipt.fallback_visuals_allowed &&
                     !graphics_route_receipt.runtime_graphics_handoff &&
@@ -2412,6 +2416,10 @@ static void test_startup_session_facts_wrappers(void) {
                     full_start_receipt.full_start_graphics_ready &&
                     !full_start_receipt.full_start_graphics_executed &&
                     full_start_receipt.full_start_graphics_blocked &&
+                    full_start_receipt.track02_real_media_ready &&
+                    full_start_receipt.real_bitmap_startup_graphics_ready &&
+                    full_start_receipt.no_fallback_startup_graphics_proof &&
+                    !full_start_receipt.fallback_startup_graphics_executed &&
                     full_start_receipt.no_fallback_visuals_enforced &&
                     !full_start_receipt.fallback_visuals_allowed &&
                     full_start_receipt.runtime_graphics_handoff &&
@@ -2477,6 +2485,10 @@ static void test_startup_session_facts_wrappers(void) {
                     full_start_receipt.hud_ready &&
                     full_start_receipt.full_start_graphics_ready &&
                     full_start_receipt.full_start_graphics_blocked &&
+                    full_start_receipt.track02_real_media_ready &&
+                    full_start_receipt.real_bitmap_startup_graphics_ready &&
+                    full_start_receipt.no_fallback_startup_graphics_proof &&
+                    !full_start_receipt.fallback_startup_graphics_executed &&
                     full_start_receipt.no_fallback_visuals_enforced &&
                     !full_start_receipt.fallback_visuals_allowed &&
                     full_start_receipt.runtime_graphics_handoff &&
@@ -2528,6 +2540,10 @@ static void test_startup_session_facts_wrappers(void) {
                     !full_start_receipt.runtime_receipt_text_route &&
                     full_start_receipt.full_start_graphics_ready &&
                     full_start_receipt.full_start_graphics_blocked &&
+                    full_start_receipt.track02_real_media_ready &&
+                    full_start_receipt.real_bitmap_startup_graphics_ready &&
+                    full_start_receipt.no_fallback_startup_graphics_proof &&
+                    !full_start_receipt.fallback_startup_graphics_executed &&
                     full_start_receipt.no_fallback_visuals_enforced &&
                     !full_start_receipt.fallback_visuals_allowed &&
                     full_start_receipt.runtime_graphics_handoff &&
@@ -2741,6 +2757,10 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.graphics_plan_valid &&
                     graphics_route_receipt.graphics_executed &&
                     !graphics_route_receipt.graphics_blocked &&
+                    graphics_route_receipt.track02_real_media_ready &&
+                    graphics_route_receipt.real_bitmap_startup_graphics_ready &&
+                    !graphics_route_receipt.no_fallback_startup_graphics_proof &&
+                    graphics_route_receipt.fallback_startup_graphics_executed &&
                     graphics_route_receipt.startup_menu_render_allowed &&
                     graphics_route_receipt.fallback_visuals_allowed &&
                     media_graphics_counters.fill_count > 0 &&
@@ -2778,6 +2798,10 @@ static void test_startup_session_facts_wrappers(void) {
                     full_start_receipt.full_start_graphics_ready &&
                     full_start_receipt.full_start_graphics_executed &&
                     !full_start_receipt.full_start_graphics_blocked &&
+                    full_start_receipt.track02_real_media_ready &&
+                    full_start_receipt.real_bitmap_startup_graphics_ready &&
+                    !full_start_receipt.no_fallback_startup_graphics_proof &&
+                    full_start_receipt.fallback_startup_graphics_executed &&
                     full_start_receipt.fallback_visuals_allowed &&
                     !full_start_receipt.raw_prompt_roster_required &&
                     !full_start_receipt.raw_session_rebuild_required &&

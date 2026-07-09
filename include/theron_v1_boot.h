@@ -407,6 +407,10 @@ typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
     int graphics_plan_valid;
     int graphics_executed;
     int graphics_blocked;
+    int track02_real_media_ready;
+    int real_bitmap_startup_graphics_ready;
+    int no_fallback_startup_graphics_proof;
+    int fallback_startup_graphics_executed;
     int startup_menu_render_allowed;
     int runtime_readiness_ready;
     int no_fallback_visuals_enforced;
@@ -441,6 +445,10 @@ typedef struct Theron_V1_BootStartupFullStartReceipt {
     int full_start_graphics_ready;
     int full_start_graphics_executed;
     int full_start_graphics_blocked;
+    int track02_real_media_ready;
+    int real_bitmap_startup_graphics_ready;
+    int no_fallback_startup_graphics_proof;
+    int fallback_startup_graphics_executed;
     int no_fallback_visuals_enforced;
     int fallback_visuals_allowed;
     int runtime_readiness_ready;
