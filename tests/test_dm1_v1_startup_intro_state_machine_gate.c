@@ -714,6 +714,15 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_suppression_receipt;
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
         hoc_production_consumer;
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirror_front_wall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
+    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 mirror_boundary;
+    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 mirror_thing_consumer;
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 hoc_floor_thing;
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 hoc_projectile_thing;
+    const DM1V1D1LD1RF0115LanePc34Data* hoc_lane;
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 hoc_render_consumer;
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34 bad_hoc_first_frame;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -1645,6 +1654,111 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_production_consumer.hall_overlay_kind ==
                      DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
                  hoc_production_consumer.render_command_count == 3,
+             1);
+    hoc_lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
+    expect_i("DM1 HoC render consumer prepares mirror wall receipt",
+             hoc_lane != NULL &&
+                 DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+                     127, 13, 4, 2, 2, &mirror_front_wall) &&
+                 DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
+                     &mirror_front_wall, &mirror_render) &&
+                 DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+                     &mirror_render, &mirror_boundary),
+             1);
+    expect_i("DM1 HoC render consumer prepares floor thing receipt",
+             dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                 hoc_lane, 5, 1, 1, 0, &hoc_floor_thing) &&
+                 hoc_floor_thing.valid &&
+                 hoc_floor_thing.draw_item &&
+                 !hoc_floor_thing.suppress_item,
+             1);
+    expect_i("DM1 HoC render consumer consumes floor mirror receipt",
+             DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+                 &mirror_boundary,
+                 &hoc_floor_thing,
+                 &mirror_thing_consumer) &&
+                 mirror_thing_consumer.valid &&
+                 mirror_thing_consumer.drawChampionPortraitAsWallOverlay &&
+                 mirror_thing_consumer.drawFloorObject &&
+                 !mirror_thing_consumer.drawRuntimeProjectile,
+             1);
+    memset(&hoc_render_consumer, 0, sizeof(hoc_render_consumer));
+    expect_i("DM1 HoC render consumer builds floor production hook",
+             dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+                 &hoc_first_frame,
+                 &mirror_thing_consumer,
+                 &hoc_render_consumer),
+             1);
+    expect_i("DM1 HoC render consumer is M11-callsite ready for floor item",
+             hoc_render_consumer.handled &&
+                 hoc_render_consumer.ready &&
+                 hoc_render_consumer.consumed_hoc_first_frame_receipt &&
+                 hoc_render_consumer.consumed_mirror_thing_layer_consumer &&
+                 hoc_render_consumer.consume_dm1_receipts_only &&
+                 hoc_render_consumer.no_m11_fallback_scan &&
+                 hoc_render_consumer.execute_before_hoc_input,
+             1);
+    expect_i("DM1 HoC render consumer returns wall plus floor decisions",
+             hoc_render_consumer.draw_opened_entrance_frame &&
+                 hoc_render_consumer.clear_champion_panel &&
+                 hoc_render_consumer.render_hall_mirror_overlay &&
+                 hoc_render_consumer.draw_champion_mirror_wall_overlay &&
+                 hoc_render_consumer.draw_real_floor_object &&
+                 !hoc_render_consumer.draw_real_projectile,
+             1);
+    expect_i("DM1 HoC render consumer suppresses mirror spell fallback",
+             hoc_render_consumer.require_runtime_spell_effect_receipt &&
+                 hoc_render_consumer.suppress_mirror_floor_item_payload &&
+                 hoc_render_consumer.suppress_mirror_projectile_payload &&
+                 hoc_render_consumer.suppress_mirror_spell_effect_payload &&
+                 hoc_render_consumer.suppress_materialized_item_payload &&
+                 hoc_render_consumer.suppress_host_fallback_visuals,
+             1);
+    expect_i("DM1 HoC render consumer carries floor geometry",
+             hoc_render_consumer.map_index == DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+                 hoc_render_consumer.entrance_door_frame_index == 9 &&
+                 hoc_render_consumer.hall_overlay_kind ==
+                     DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
+                 hoc_render_consumer.render_command_count == 3 &&
+                 hoc_render_consumer.zone == hoc_floor_thing.zone &&
+                 hoc_render_consumer.row == hoc_floor_thing.row &&
+                 hoc_render_consumer.view_cell == hoc_floor_thing.view_cell,
+             1);
+    expect_i("DM1 HoC render consumer prepares projectile receipt",
+             dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                 hoc_lane, 14, 1, 1, 1, &hoc_projectile_thing) &&
+                 hoc_projectile_thing.valid &&
+                 hoc_projectile_thing.draw_projectile &&
+                 !hoc_projectile_thing.suppress_projectile &&
+                 DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+                     &mirror_boundary,
+                     &hoc_projectile_thing,
+                     &mirror_thing_consumer),
+             1);
+    memset(&hoc_render_consumer, 0, sizeof(hoc_render_consumer));
+    expect_i("DM1 HoC render consumer returns projectile decisions",
+             dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+                 &hoc_first_frame,
+                 &mirror_thing_consumer,
+                 &hoc_render_consumer) &&
+                 hoc_render_consumer.ready &&
+                 hoc_render_consumer.no_m11_fallback_scan &&
+                 hoc_render_consumer.draw_champion_mirror_wall_overlay &&
+                 !hoc_render_consumer.draw_real_floor_object &&
+                 hoc_render_consumer.draw_real_projectile &&
+                 hoc_render_consumer.suppress_mirror_projectile_payload &&
+                 hoc_render_consumer.suppress_mirror_spell_effect_payload,
+             1);
+    bad_hoc_first_frame = hoc_first_frame;
+    bad_hoc_first_frame.suppress_host_fallback_visuals = 0;
+    expect_i("DM1 HoC render consumer rejects fallback-scan frame",
+             dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+                 &bad_hoc_first_frame,
+                 &mirror_thing_consumer,
+                 &hoc_render_consumer) &&
+                 hoc_render_consumer.handled &&
+                 !hoc_render_consumer.ready &&
+                 !hoc_render_consumer.no_m11_fallback_scan,
              1);
     expect_i("DM1 HoC thing suppression rejects projectile leak",
              (hoc_suppression_facts.observed_projectile_payload_count = 1,

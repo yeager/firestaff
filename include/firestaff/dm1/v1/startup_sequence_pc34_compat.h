@@ -2,6 +2,7 @@
 #define FIRESTAFF_DM1_V1_STARTUP_SEQUENCE_PC34_COMPAT_H
 
 #include "dm1_v1_entrance_champion_select_pc34_compat.h"
+#include "dm1_v1_champion_mirror_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -424,6 +425,37 @@ typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCRenderConsumerReceipt_PC34 {
+    int handled;
+    int ready;
+    int consumed_hoc_first_frame_receipt;
+    int consumed_mirror_thing_layer_consumer;
+    int consume_dm1_receipts_only;
+    int no_m11_fallback_scan;
+    int execute_before_hoc_input;
+    int draw_opened_entrance_frame;
+    int clear_champion_panel;
+    int render_hall_mirror_overlay;
+    int draw_champion_mirror_wall_overlay;
+    int draw_real_floor_object;
+    int draw_real_projectile;
+    int require_runtime_spell_effect_receipt;
+    int suppress_mirror_floor_item_payload;
+    int suppress_mirror_projectile_payload;
+    int suppress_mirror_spell_effect_payload;
+    int suppress_materialized_item_payload;
+    int suppress_host_fallback_visuals;
+    int block_enter_until_champion_selected;
+    int map_index;
+    int entrance_door_frame_index;
+    int hall_overlay_kind;
+    int render_command_count;
+    int zone;
+    int row;
+    int view_cell;
+    const char* source_evidence;
+} DM1_V1_StartupHoCRenderConsumerReceipt_PC34;
+
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
     int (*begin_prelude_plan)(void* user,
@@ -789,6 +821,10 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     const DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* apply,
     const DM1_V1_StartupHoCFullGraphicsThingSuppressionReceipt_PC34* suppression,
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+    const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
+    const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34* out_receipt);
 int dm1_v1_startup_execute_handoff_post_launch_and_apply_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* handoff_callbacks,
