@@ -3295,6 +3295,7 @@ typedef struct M11_CSBStartupRenderExecutorContext {
     const M11_GameViewState *state;
     const CSB_V1_BootStartupPresentationRouteReceipt_PC34 *route_receipt;
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *render_view_receipt;
+    const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt;
     unsigned char *framebuffer;
     int framebufferWidth;
     int framebufferHeight;
@@ -3311,7 +3312,13 @@ static int m11_csb_startup_executor_draw_title(
     if (!context) {
         return 0;
     }
-    if (csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
+    if (context->capture_receipt &&
+        csb_v1_boot_startup_title_render_plan_from_capture_receipt_pc34(
+            context->capture_receipt,
+            &receipt_plan)) {
+        title_plan = &receipt_plan;
+    } else if (
+        csb_v1_boot_startup_title_render_plan_from_view_receipt_pc34(
             context->render_view_receipt,
             &receipt_plan)) {
         title_plan = &receipt_plan;
@@ -3447,6 +3454,16 @@ static void m11_csb_startup_executor_draw_utility_panel(
     if (!context) {
         return;
     }
+    if (context->capture_receipt &&
+        context->capture_receipt->hud_menu_draw_valid &&
+        context->capture_receipt->hud_menu_draw.utility_render_plan_valid) {
+        m11_draw_csb_startup_utility_render_plan(
+            &context->capture_receipt->hud_menu_draw.utility_render_plan,
+            context->framebuffer,
+            context->framebufferWidth,
+            context->framebufferHeight);
+        return;
+    }
     if (context->route_receipt &&
         context->route_receipt->utility_plan_valid) {
         m11_draw_csb_startup_utility_render_plan(
@@ -3469,8 +3486,8 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 {
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
     CSB_V1_BootStartupRenderViewReceipt_PC34 render_view_receipt;
+    CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
-    const CSB_V1_StartupRenderPlan_PC34 *plan;
     M11_CSBStartupRenderExecutorContext context;
     CSB_V1_StartupRenderExecutor_PC34 executor;
 
@@ -3482,15 +3499,13 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         return;
     }
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
-    (void)csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
-        &snapshot,
-        &render_view_receipt);
-    plan = &route_receipt.presentation.render_plan;
+    csb_v1_boot_startup_render_view_receipt_init_pc34(&render_view_receipt);
+    csb_v1_boot_startup_capture_receipt_init_pc34(&capture_receipt);
 
     context.state = state;
     context.route_receipt = &route_receipt;
-    context.render_view_receipt =
-        render_view_receipt.valid ? &render_view_receipt : NULL;
+    context.render_view_receipt = NULL;
+    context.capture_receipt = &capture_receipt;
     context.framebuffer = framebuffer;
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;
@@ -3507,7 +3522,24 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         m11_csb_startup_executor_draw_fallback_text;
     executor.draw_utility_panel =
         m11_csb_startup_executor_draw_utility_panel;
-    (void)csb_v1_boot_startup_execute_render_plan_pc34(plan, &executor);
+    if (csb_v1_boot_startup_execute_snapshot_capture_render_plan_pc34(
+            &snapshot,
+            &executor,
+            &capture_receipt)) {
+        context.render_view_receipt =
+            capture_receipt.render_view_valid
+                ? &capture_receipt.render_view
+                : NULL;
+        return;
+    }
+    if (csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+            &snapshot,
+            &render_view_receipt)) {
+        context.render_view_receipt = &render_view_receipt;
+    }
+    (void)csb_v1_boot_startup_execute_render_plan_pc34(
+        &route_receipt.presentation.render_plan,
+        &executor);
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(

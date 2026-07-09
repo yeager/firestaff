@@ -2135,6 +2135,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupReadinessReceipt_PC34 readiness_receipt;
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_draw_receipt;
     CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
+    CSB_V1_BootStartupCaptureReceipt_PC34 snapshot_execute_receipt;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2353,6 +2354,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34,
           "boot startup capture receipt executes full title render plan");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_snapshot_capture_render_plan_pc34(
+              &snapshot,
+              &capture_render_executor,
+              &snapshot_execute_receipt) == 1 &&
+              snapshot_execute_receipt.valid &&
+              snapshot_execute_receipt.title_capture_ready &&
+              capture_render_probe.clear_black_count == 1 &&
+              capture_render_probe.draw_title_count == 1 &&
+              capture_render_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_TITLE_PC34,
+          "boot startup snapshot executor consumes title capture receipt");
     CHECK(csb_v1_boot_startup_render_view_receipt_from_runtime_state_pc34(
               &runtime_view_receipt,
               snapshot.title_active,
@@ -2677,6 +2691,21 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup capture receipt executes full utility render plan");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_snapshot_capture_render_plan_pc34(
+              &snapshot,
+              &capture_render_executor,
+              &snapshot_execute_receipt) == 1 &&
+              snapshot_execute_receipt.valid &&
+              snapshot_execute_receipt.hud_menu_capture_ready &&
+              snapshot_execute_receipt.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_utility_panel_count == 1 &&
+              capture_render_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
+          "boot startup snapshot executor consumes utility capture receipt");
     memset(&hud_draw_probe, 0, sizeof(hud_draw_probe));
     hud_probe_executor_init(&hud_draw_executor, &hud_draw_probe);
     CHECK(csb_v1_boot_startup_execute_capture_hud_menu_draw_receipt_pc34(
@@ -2925,6 +2954,21 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup capture receipt executes full closed-door render plan");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_snapshot_capture_render_plan_pc34(
+              &snapshot,
+              &capture_render_executor,
+              &snapshot_execute_receipt) == 1 &&
+              snapshot_execute_receipt.valid &&
+              snapshot_execute_receipt.hud_menu_capture_ready &&
+              snapshot_execute_receipt.hud_menu_kind ==
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_ENTRANCE_PC34 &&
+              capture_render_probe.draw_full_surface_count == 1 &&
+              capture_render_probe.draw_closed_doors_count == 1 &&
+              capture_render_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
+          "boot startup snapshot executor consumes closed-door capture receipt");
     CHECK(csb_v1_boot_startup_readiness_receipt_from_view_pc34(
               &view_receipt,
               &readiness_receipt) == 1 &&
@@ -3080,6 +3124,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
           "boot startup capture receipt executes full door-opening render plan");
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_snapshot_capture_render_plan_pc34(
+              &snapshot,
+              &capture_render_executor,
+              &snapshot_execute_receipt) == 1 &&
+              snapshot_execute_receipt.valid &&
+              snapshot_execute_receipt.render_view_valid &&
+              snapshot_execute_receipt.render_view.opening_door_route &&
+              capture_render_probe.draw_opening_frame_count == 1 &&
+              capture_render_probe.last_surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
+          "boot startup snapshot executor consumes door-opening capture receipt");
     snapshot.opening_active = 0;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 0;

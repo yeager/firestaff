@@ -2557,6 +2557,35 @@ int csb_v1_boot_startup_execute_capture_render_plan_pc34(
     return csb_v1_boot_startup_execute_render_plan_pc34(&plan, executor);
 }
 
+int csb_v1_boot_startup_execute_snapshot_capture_render_plan_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor,
+    CSB_V1_BootStartupCaptureReceipt_PC34 *out_capture_receipt)
+{
+    CSB_V1_BootStartupCaptureReceipt_PC34 capture_receipt;
+
+    if (out_capture_receipt) {
+        csb_v1_boot_startup_capture_receipt_init_pc34(out_capture_receipt);
+    }
+    if (!snapshot || !executor ||
+        !csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
+            snapshot,
+            &capture_receipt)) {
+        return 0;
+    }
+    if (out_capture_receipt) {
+        *out_capture_receipt = capture_receipt;
+    }
+    /* ReDMCSB TITLE.C F0437 lines 424-463 and ENTRANCE.C F0441/F0806
+     * lines 850-883 keep title, utility/menu, closed-door, and opening
+     * rendering in one startup loop. This snapshot entry point lets M11 pass
+     * raw state once and consume the CSB-owned capture receipt/executor
+     * instead of re-selecting the title->utility/entrance draw path. */
+    return csb_v1_boot_startup_execute_capture_render_plan_pc34(
+        &capture_receipt,
+        executor);
+}
+
 int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc34(
     const CSB_V1_BootStartupRenderViewReceipt_PC34 *receipt,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
