@@ -106,6 +106,8 @@ int main(void) {
     Nexus_V1_BootProfile profile;
     Nexus_V1_Diagnostic diags[4];
     Nexus_V1_BpkRuntimeDecodeReceipt receipt;
+    Nexus_V1_BpkRuntimeUploadReceipt upload_receipt;
+    Nexus_V1_BpkRuntimeUploadRow upload_rows[4];
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_ScriptRuntimeReceipt script_receipt;
@@ -167,6 +169,30 @@ int main(void) {
                       "Nexus MENU.BPK receipt preserves PRS3 surface blocker count");
             check_int(receipt.first_blocked_entry == 1U,
                       "Nexus MENU.BPK receipt exposes first blocked surface entry");
+            memset(&upload_receipt, 0, sizeof(upload_receipt));
+            memset(upload_rows, 0, sizeof(upload_rows));
+            check_int(nexus_v1_menu_bpk_upload_plan_receipt(
+                          &engine,
+                          &upload_receipt) == 0,
+                      "Nexus engine exposes MENU.BPK upload plan receipt");
+            check_int(upload_receipt.route ==
+                          NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3,
+                      "Nexus MENU.BPK upload plan blocks on PRS3");
+            check_int(upload_receipt.blocked_prs3_uploads == 162U &&
+                          upload_receipt.planned_rows == 162U,
+                      "Nexus MENU.BPK upload plan preserves blocker counts");
+            check_int(upload_receipt.fallback_visuals_permitted == 0,
+                      "Nexus MENU.BPK upload plan forbids fallback visuals");
+            check_int(nexus_v1_menu_bpk_upload_plan_rows(
+                          &engine,
+                          upload_rows,
+                          (int)(sizeof(upload_rows) /
+                                sizeof(upload_rows[0]))) > 0,
+                      "Nexus engine exposes bounded MENU.BPK upload rows");
+            check_int(upload_rows[0].entry_index == 1U &&
+                          upload_rows[0].decode_blocked == 1 &&
+                          upload_rows[0].stream_offset > 0U,
+                      "Nexus MENU.BPK upload row carries PRS3 stream blocker");
             memset(&handoff, 0, sizeof(handoff));
             check_int(nexus_v1_menu_bpk_renderer_handoff_receipt(
                           &engine,

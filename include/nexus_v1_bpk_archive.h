@@ -495,6 +495,53 @@ typedef struct {
     Nexus_V1_BpkRuntimeDecodeRoute route;
 } Nexus_V1_BpkRuntimeDecodeReceipt;
 
+#define NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS 8U
+
+typedef enum {
+    NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID = 0,
+    NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED = 1,
+    NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 = 2,
+    NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED = 3,
+    NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES = 4
+} Nexus_V1_BpkRuntimeUploadRoute;
+
+typedef struct {
+    uint32_t entry_index;
+    Nexus_V1_BpkSurfaceHandoffStatus status;
+    Nexus_V1_BpkSurfaceClass surface_class;
+    uint8_t mode;
+    uint16_t width;
+    uint8_t height;
+    uint32_t bpp;
+    uint32_t expected_output_bytes;
+    uint32_t payload_offset;
+    uint32_t payload_size;
+    uint32_t stream_offset;
+    uint32_t stream_size;
+    uint32_t body_offset;
+    uint32_t body_size;
+    uint32_t header_first_u32;
+    uint32_t header_minus_payload;
+    int decode_blocked;
+    int upload_ready;
+} Nexus_V1_BpkRuntimeUploadRow;
+
+typedef struct {
+    Nexus_V1_BpkRuntimeUploadRoute route;
+    uint32_t archive_entries;
+    uint32_t surface_entries;
+    uint32_t ready_uploads;
+    uint32_t blocked_prs3_uploads;
+    uint32_t blocked_truncated_uploads;
+    uint32_t planned_rows;
+    uint32_t capacity;
+    int truncated;
+    uint64_t expected_upload_bytes;
+    uint64_t extractable_upload_bytes;
+    int blocks_real_menu_surface_render;
+    int fallback_visuals_permitted;
+} Nexus_V1_BpkRuntimeUploadReceipt;
+
 /* Walk every entry whose 20-byte prefix is complete AND whose prefix
  * mode is one of the four PRS3 pixel-mode tags (6/14/22/30). For each
  * such entry, record bounded compression evidence into
@@ -531,6 +578,16 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
 
 const char *nexus_v1_bpk_runtime_decode_route_name(
     Nexus_V1_BpkRuntimeDecodeRoute route);
+
+int nexus_v1_bpk_archive_runtime_upload_plan(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkRuntimeUploadRow *out_rows,
+    uint32_t row_capacity,
+    Nexus_V1_BpkRuntimeUploadReceipt *out_receipt);
+
+const char *nexus_v1_bpk_runtime_upload_route_name(
+    Nexus_V1_BpkRuntimeUploadRoute route);
 
 #ifdef __cplusplus
 }

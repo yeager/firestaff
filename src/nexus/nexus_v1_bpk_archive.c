@@ -815,6 +815,143 @@ const char *nexus_v1_bpk_prs3_stream_status_name(int status) {
     }
 }
 
+int nexus_v1_bpk_archive_runtime_upload_plan(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkRuntimeUploadRow *out_rows,
+    uint32_t row_capacity,
+    Nexus_V1_BpkRuntimeUploadReceipt *out_receipt) {
+    Nexus_V1_BpkRuntimeSurfaceHandoffSummary handoff;
+    uint32_t count;
+    uint32_t planned = 0U;
+    int truncated = 0;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+    out_receipt->capacity = row_capacity;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (out_rows && row_capacity > 0U) {
+        memset(out_rows, 0, (size_t)row_capacity * sizeof(out_rows[0]));
+    }
+
+    if (nexus_v1_bpk_archive_runtime_surface_handoff(
+            data, data_size, NULL, 0U, &handoff) != 0 ||
+        read_header(data, data_size, &count) != 0) {
+        return -1;
+    }
+
+    out_receipt->archive_entries = handoff.archive_entries;
+    out_receipt->surface_entries = handoff.surface_entries;
+    out_receipt->ready_uploads = handoff.ready_stored_surfaces;
+    out_receipt->blocked_prs3_uploads = handoff.blocked_prs3_surfaces;
+    out_receipt->blocked_truncated_uploads =
+        handoff.blocked_truncated_surfaces;
+    out_receipt->expected_upload_bytes = handoff.expected_surface_bytes;
+    out_receipt->extractable_upload_bytes =
+        handoff.extractable_surface_bytes;
+
+    for (uint32_t i = 0; i < count; ++i) {
+        Nexus_V1_BpkEntry entry;
+        Nexus_V1_BpkEntryPrefix prefix;
+        Nexus_V1_BpkRuntimeUploadRow row;
+        uint32_t bpp;
+        uint64_t expected;
+
+        if (nexus_v1_bpk_archive_get_entry(data, data_size, i, &entry) != 0 ||
+            nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
+                                                  &prefix) != 0) {
+            out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+            return -1;
+        }
+        if (!prefix.prefix_complete ||
+            prefix.mode == NEXUS_V1_BPK_MODE_TRAILER) {
+            continue;
+        }
+        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        if (bpp == 0U) continue;
+        expected = (uint64_t)prefix.width * (uint64_t)prefix.height * bpp;
+        if (expected > UINT32_MAX) {
+            out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+            return -1;
+        }
+
+        memset(&row, 0, sizeof(row));
+        row.entry_index = i;
+        row.surface_class = nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+        row.mode = prefix.mode;
+        row.width = prefix.width;
+        row.height = prefix.height;
+        row.bpp = bpp;
+        row.expected_output_bytes = (uint32_t)expected;
+        row.payload_offset = entry.payload_offset;
+        row.payload_size = entry.payload_size;
+
+        if (entry.has_prs3) {
+            Nexus_V1_BpkPrs3StreamPlan plan;
+            int rc;
+            row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
+            row.decode_blocked = 1;
+            rc = nexus_v1_bpk_archive_prs3_stream_plan(
+                data, data_size, i, &plan);
+            if (rc == NEXUS_V1_BPK_PRS3_STREAM_OK) {
+                row.stream_offset = plan.stream_offset;
+                row.stream_size = plan.stream_size;
+                row.body_offset = plan.body_offset;
+                row.body_size = plan.body_size;
+                row.header_first_u32 = plan.header_first_u32;
+                row.header_minus_payload = plan.header_minus_payload;
+            } else {
+                row.header_minus_payload = UINT32_MAX;
+            }
+        } else if ((uint64_t)entry.payload_size < expected) {
+            row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED;
+        } else {
+            row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED;
+            row.upload_ready = 1;
+        }
+
+        if (out_rows && planned < row_capacity) {
+            out_rows[planned] = row;
+        } else if (out_rows && planned >= row_capacity) {
+            truncated = 1;
+        }
+        ++planned;
+    }
+
+    out_receipt->planned_rows = planned;
+    out_receipt->truncated = truncated;
+    if (out_receipt->surface_entries == 0U) {
+        out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES;
+    } else if (out_receipt->blocked_prs3_uploads > 0U) {
+        out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
+    } else if (out_receipt->blocked_truncated_uploads > 0U) {
+        out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED;
+    } else {
+        out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
+    }
+    out_receipt->blocks_real_menu_surface_render =
+        (out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 ||
+         out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED)
+            ? 1 : 0;
+    out_receipt->fallback_visuals_permitted =
+        out_receipt->blocks_real_menu_surface_render ? 0 : 1;
+    return 0;
+}
+
+const char *nexus_v1_bpk_runtime_upload_route_name(
+    Nexus_V1_BpkRuntimeUploadRoute route) {
+    switch (route) {
+    case NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID: return "invalid";
+    case NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED: return "ready-stored";
+    case NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3: return "blocked-prs3";
+    case NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED:
+        return "blocked-truncated";
+    case NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES: return "no-surfaces";
+    default: return "unknown";
+    }
+}
+
 int nexus_v1_bpk_archive_runtime_decode_receipt(
     const uint8_t *data,
     size_t data_size,

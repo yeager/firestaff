@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 Nexus MENU.BPK upload-plan receipt: Nexus BPK now emits a bounded runtime upload plan for MENU.BPK surfaces, exposing stored-ready uploads versus PRS3/truncated blockers, first PRS3 stream facts, no-fallback render blocking, and an engine-level M11 handoff API. Verification: `test_nexus_v1_bpk_surface_class`, `test_nexus_v1_boot_file_hash_scan`, focused Nexus CTests, and `git diff --check` passed.
+
 
 - ✅ 2026-07-09 DM2 DB0 door render receipt: runtime now exposes the first door render-plan row with view square, skproject cell, state/open percent, panel/ornate/destroyed-mask/frame/button GDAT indices, so DB0 door-table handoff is inspectable without reading framebuffer pixels. Verification: `test_dm2_v1_runtime_handoff_smoke`, `test_dm2_v1_lighting_falloff_boundary`, and `git diff --check` passed.
 - ✅ 2026-07-09 CSB title stage render receipt: CSB startup render-view receipts now expose post-FTL title stage, source step, frame bounds, and PRESENTS/CHAOS/STRIKES BACK visibility bits from the ReDMCSB title sequence. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_startup_resume_gate`, and `git diff --check` passed.

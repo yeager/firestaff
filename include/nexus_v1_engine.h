@@ -104,6 +104,11 @@ struct Nexus_V1_Engine {
     int menu_bpk_decode_receipt_valid;
     int menu_bpk_decode_receipt_attempted;
     Nexus_V1_BpkRuntimeDecodeReceipt menu_bpk_decode_receipt;
+    int menu_bpk_upload_receipt_valid;
+    Nexus_V1_BpkRuntimeUploadReceipt menu_bpk_upload_receipt;
+    Nexus_V1_BpkRuntimeUploadRow
+        menu_bpk_upload_rows[NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS];
+    int menu_bpk_upload_row_count;
 
     /* Per-level trigger/script runtime. SLEV*.BIN is real candidate data;
      * dispatch remains blocked until a source-locked parser exists. */
@@ -169,6 +174,13 @@ int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
 int nexus_v1_menu_bpk_decode_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_BpkRuntimeDecodeReceipt *out_receipt);
+int nexus_v1_menu_bpk_upload_plan_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_BpkRuntimeUploadReceipt *out_receipt);
+int nexus_v1_menu_bpk_upload_plan_rows(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_BpkRuntimeUploadRow *out_rows,
+    int max_rows);
 int nexus_v1_menu_bpk_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_MenuBpkRendererHandoffReceipt *out_receipt);
