@@ -1799,6 +1799,87 @@ static void test_melee_f0231_creature_snapshot_plan(void) {
              "F0231 creature snapshot rejects absent group slot");
 }
 
+static void test_melee_f0231_damage_gate_plan(void) {
+    DM1_MeleeF0231DamageGateInputPc34 in;
+    DM1_MeleeF0231DamageGatePlanPc34 out;
+    struct CombatantChampionSnapshot_Compat attacker;
+    struct CombatantCreatureSnapshot_Compat defender;
+    struct WeaponProfile_Compat weapon;
+    struct CombatResult_Compat result;
+    struct RngState_Compat rng;
+
+    memset(&in, 0, sizeof(in));
+    in.championIndex = 0;
+    in.championCurrentHealth = 10;
+    in.creatureType = 1;
+    in.creatureDexterity = 20;
+    in.creatureAttributes = 0;
+    in.actionHitProbability = 0x8055;
+    CHECK_EQ(dm1_v1_melee_damage_gate_plan_f0231_pc34(&in, &out), 1,
+             "F0231 damage gate builds");
+    CHECK_EQ(out.canEnterDamageBlock, 1, "F0231 damage gate enters RNG block");
+    CHECK_EQ(out.normalizedHitProbability, 0x55,
+             "F0231 damage gate normalizes hit probability");
+    CHECK_EQ(out.actionHitsNonMaterial, 1,
+             "F0231 damage gate detects non-material flag");
+
+    in.isCandidateInvulnerable = 1;
+    CHECK_EQ(dm1_v1_melee_damage_gate_plan_f0231_pc34(&in, &out), 1,
+             "F0231 candidate gate builds");
+    CHECK_EQ(out.shouldReturnResolved, 1,
+             "F0231 candidate gate resolves before RNG");
+    CHECK_EQ(out.resolvedOutcome, COMBAT_OUTCOME_NO_ACTION,
+             "F0231 candidate gate returns no-action");
+
+    in.isCandidateInvulnerable = 0;
+    in.creatureDexterity = 255;
+    CHECK_EQ(dm1_v1_melee_damage_gate_plan_f0231_pc34(&in, &out), 1,
+             "F0231 dexterity-255 gate builds");
+    CHECK_EQ(out.shouldReturnResolved, 1,
+             "F0231 dexterity-255 gate resolves before RNG");
+    CHECK_EQ(out.resolvedOutcome, COMBAT_OUTCOME_MISS,
+             "F0231 dexterity-255 gate returns miss");
+
+    in.creatureDexterity = 20;
+    in.creatureAttributes = 0x0040;
+    in.actionHitProbability = 0x0030;
+    CHECK_EQ(dm1_v1_melee_damage_gate_plan_f0231_pc34(&in, &out), 1,
+             "F0231 non-material gate builds");
+    CHECK_EQ(out.creatureIsNonMaterial, 1,
+             "F0231 non-material gate detects creature attribute");
+    CHECK_EQ(out.shouldReturnResolved, 1,
+             "F0231 non-material gate resolves before RNG");
+
+    memset(&attacker, 0, sizeof(attacker));
+    memset(&defender, 0, sizeof(defender));
+    memset(&weapon, 0, sizeof(weapon));
+    memset(&result, 0, sizeof(result));
+    attacker.championIndex = 0;
+    attacker.currentHealth = 10;
+    defender.creatureType = 1;
+    defender.dexterity = 255;
+    weapon.hitProbability = 50;
+    CHECK_EQ(F0730_COMBAT_RngInit_Compat(&rng, 0x1234u), 1,
+             "F0231 gate rng init");
+    CHECK_EQ(dm1_v1_melee_resolve_damage_f0231_pc34(
+                 &attacker, &weapon, &defender, &rng, &result), 1,
+             "F0231 DM1 wrapper resolves dexterity-255");
+    CHECK_EQ(result.outcome, COMBAT_OUTCOME_MISS,
+             "F0231 DM1 wrapper returns dexterity-255 miss");
+    CHECK_EQ(result.rngCallCount, 0,
+             "F0231 DM1 wrapper dexterity-255 consumes no RNG");
+
+    defender.dexterity = 20;
+    defender.attributes = 0x0040;
+    CHECK_EQ(dm1_v1_melee_resolve_damage_f0231_pc34(
+                 &attacker, &weapon, &defender, &rng, &result), 1,
+             "F0231 DM1 wrapper resolves non-material block");
+    CHECK_EQ(result.outcome, COMBAT_OUTCOME_MISS,
+             "F0231 DM1 wrapper returns non-material miss");
+    CHECK_EQ(result.rngCallCount, 0,
+             "F0231 DM1 wrapper non-material block consumes no RNG");
+}
+
 static void test_melee_f0231_aftermath_plan(void) {
     DM1_MeleeF0231AftermathInputPc34 in;
     DM1_MeleeF0231AftermathPlanPc34 out;
@@ -2362,6 +2443,7 @@ int main(void) {
     test_melee_f0312_strength_plan();
     test_melee_f0231_champion_snapshot_plan();
     test_melee_f0231_creature_snapshot_plan();
+    test_melee_f0231_damage_gate_plan();
     test_melee_f0231_aftermath_plan();
     test_melee_f0231_reaction_and_group_apply();
     test_melee_f0231_runtime_result_plan();

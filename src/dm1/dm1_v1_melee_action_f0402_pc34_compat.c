@@ -741,6 +741,49 @@ int dm1_v1_melee_runtime_result_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_damage_gate_plan_f0231_pc34(
+    const DM1_MeleeF0231DamageGateInputPc34* in,
+    DM1_MeleeF0231DamageGatePlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->resolvedOutcome = COMBAT_OUTCOME_MISS;
+    if (!in) return 0;
+
+    out->valid = 1;
+    out->normalizedHitProbability = in->actionHitProbability & 0x00FF;
+    out->creatureIsNonMaterial =
+        (in->creatureAttributes & DM1_MELEE_CREATURE_ATTR_NON_MATERIAL_PC34) != 0;
+    out->actionHitsNonMaterial =
+        (in->actionHitProbability & 0x8000) != 0;
+
+    if (in->championIndex < 0 || in->championIndex >= CHAMPION_MAX_PARTY ||
+        in->championCurrentHealth <= 0 ||
+        in->creatureType < 0 ||
+        in->creatureType > DUNGEON_CREATURE_TYPE_MAX) {
+        out->shouldReturnResolved = 1;
+        return 1;
+    }
+    if (in->isCandidateInvulnerable) {
+        out->shouldReturnResolved = 1;
+        out->resolvedOutcome = COMBAT_OUTCOME_NO_ACTION;
+        return 1;
+    }
+    if (in->creatureDexterity == 255) {
+        out->shouldReturnResolved = 1;
+        return 1;
+    }
+    if (out->creatureIsNonMaterial && !out->actionHitsNonMaterial) {
+        out->shouldReturnResolved = 1;
+        return 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1459-1481 rejects invalid/dead
+     * champions, candidate-panel creatures, dexterity-255 creatures, and
+     * non-material targets without MASK0x8000 before the damage RNG block. */
+    out->canEnterDamageBlock = 1;
+    return 1;
+}
+
 int dm1_v1_melee_aftermath_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathInputPc34* in,
     DM1_MeleeF0231AftermathPlanPc34* out) {
@@ -1025,6 +1068,31 @@ int dm1_v1_melee_resolve_damage_f0231_pc34(
     const struct CombatantCreatureSnapshot_Compat* defender,
     struct RngState_Compat* rng,
     struct CombatResult_Compat* out) {
+    DM1_MeleeF0231DamageGateInputPc34 gateIn;
+    DM1_MeleeF0231DamageGatePlanPc34 gatePlan;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->outcome = COMBAT_OUTCOME_MISS;
+    out->creatureSlotRemoved = -1;
+    out->followupEventKind = TIMELINE_EVENT_CREATURE_TICK;
+    if (!attacker || !weapon || !defender || !rng) return 0;
+
+    memset(&gateIn, 0, sizeof(gateIn));
+    memset(&gatePlan, 0, sizeof(gatePlan));
+    gateIn.championIndex = attacker->championIndex;
+    gateIn.championCurrentHealth = attacker->currentHealth;
+    gateIn.creatureType = defender->creatureType;
+    gateIn.creatureDexterity = defender->dexterity;
+    gateIn.creatureAttributes = defender->attributes;
+    gateIn.isCandidateInvulnerable = defender->isCandidateInvulnerable;
+    gateIn.actionHitProbability = weapon->hitProbability;
+    (void)dm1_v1_melee_damage_gate_plan_f0231_pc34(&gateIn, &gatePlan);
+    if (!gatePlan.valid) return 0;
+    if (gatePlan.shouldReturnResolved) {
+        out->outcome = gatePlan.resolvedOutcome;
+        return 1;
+    }
+
     /* ReDMCSB: PROJEXPL.C F0231 lines 1416-1546 owns the champion melee
      * hit gate, damage RNG, weak-damage recovery, Vorpal/non-material
      * handling, skill critical bonus, and final damage value before F0190.

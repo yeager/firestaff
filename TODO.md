@@ -72,6 +72,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: DM1 F0232 closed-door destruction plan now owns the closed-state, melee-destructible, attack-vs-defense, delay, and destroyed-state scheduling decision used by M10. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
   - 2026-07-09 update: DM1 F0177 target-creature plan now owns single-centered groups, first-living fallback, ordered attack-cell scan, and half-square F0176 occupancy for CMD_ATTACK. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
   - 2026-07-09 update: DM1 F0231 runtime result plan now owns NO_ACTION handling, luck/side-effect gates, positive-damage group-apply gate, and damage-emission gate consumed by M10. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+  - 2026-07-09 update: DM1 F0231 damage-gate plan now owns invalid/dead champion, candidate-panel no-action, dexterity-255 miss, and non-material-without-MASK0x8000 miss before the shared damage arithmetic. Remaining runtime coding work is deeper F0231 damage arithmetic receipts and reducing remaining M10 mutation adapters.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
