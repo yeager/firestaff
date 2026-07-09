@@ -21,7 +21,7 @@ typedef struct {
     const char *defsAnchor;
     const char *contractScope;
     const char *nonOverlap;
-} Dm1V1ChestC040CancelReopenPickupEvidencePc34;
+} DM1_V1_ChestC040CancelReopenPickupEvidencePc34;
 
 typedef struct {
     int panelContent;
@@ -50,7 +50,7 @@ typedef struct {
     int trace[DM1_V1_C040_CANCEL_REOPEN_PICKUP_TRACE_COUNT_PC34];
     uint32_t chestHash;
     uint32_t stateHash;
-} Dm1V1ChestC040CancelReopenPickupStatePc34;
+} DM1_V1_ChestC040CancelReopenPickupStatePc34;
 
 typedef struct {
     int accepted;
@@ -103,20 +103,36 @@ typedef struct {
     uint32_t chestHashAfterReopen;
     uint32_t chestHashAfterPickup;
     uint32_t deterministicHash;
-} Dm1V1ChestC040CancelReopenPickupResultPc34;
+} DM1_V1_ChestC040CancelReopenPickupResultPc34;
 
-void dm1_v1_chest_c040_cancel_reopen_pickup_init_pc34(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state);
+void DM1_V1_ChestC040CancelReopenPickup_InitPc34(
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state);
 
-int dm1_v1_chest_c040_cancel_reopen_pickup_run_pc34(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state,
-    Dm1V1ChestC040CancelReopenPickupResultPc34 *result);
+int DM1_V1_ChestC040CancelReopenPickup_RunPc34(
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state,
+    DM1_V1_ChestC040CancelReopenPickupResultPc34 *result);
 
-const Dm1V1ChestC040CancelReopenPickupEvidencePc34 *
-dm1_v1_chest_c040_cancel_reopen_pickup_evidence_pc34(void);
+const DM1_V1_ChestC040CancelReopenPickupEvidencePc34 *
+DM1_V1_ChestC040CancelReopenPickup_EvidencePc34(void);
 
 const char *
-dm1_v1_chest_c040_cancel_reopen_pickup_source_evidence_pc34(void);
+DM1_V1_ChestC040CancelReopenPickup_SourceEvidencePc34(void);
+
+typedef DM1_V1_ChestC040CancelReopenPickupEvidencePc34
+    Dm1V1ChestC040CancelReopenPickupEvidencePc34;
+typedef DM1_V1_ChestC040CancelReopenPickupStatePc34
+    Dm1V1ChestC040CancelReopenPickupStatePc34;
+typedef DM1_V1_ChestC040CancelReopenPickupResultPc34
+    Dm1V1ChestC040CancelReopenPickupResultPc34;
+
+#define dm1_v1_chest_c040_cancel_reopen_pickup_init_pc34 \
+    DM1_V1_ChestC040CancelReopenPickup_InitPc34
+#define dm1_v1_chest_c040_cancel_reopen_pickup_run_pc34 \
+    DM1_V1_ChestC040CancelReopenPickup_RunPc34
+#define dm1_v1_chest_c040_cancel_reopen_pickup_evidence_pc34 \
+    DM1_V1_ChestC040CancelReopenPickup_EvidencePc34
+#define dm1_v1_chest_c040_cancel_reopen_pickup_source_evidence_pc34 \
+    DM1_V1_ChestC040CancelReopenPickup_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

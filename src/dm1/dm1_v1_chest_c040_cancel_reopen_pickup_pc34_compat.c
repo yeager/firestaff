@@ -45,7 +45,7 @@ static const char s_source_evidence[] =
     "CHAMPION.C F0302:688-710 reads C30+ chest slots from G0425 and swaps with the leader hand\n"
     "DEFS.H C040/M568, M569, C028..C065, C030, G0299, G0423, G0425, G0426";
 
-static const Dm1V1ChestC040CancelReopenPickupEvidencePc34 s_evidence = {
+static const DM1_V1_ChestC040CancelReopenPickupEvidencePc34 s_evidence = {
     "ReDMCSB CHEST.C F0333:30-67 G0426 open and G0425/C537..C544 materialization",
     "ReDMCSB CHEST.C F0334:113-132 G0426 clear and visible slot relink",
     "ReDMCSB PANEL.C F0355:2299-2318 inventory close calls F0334",
@@ -69,7 +69,7 @@ static uint32_t fnv_step(uint32_t hash, unsigned int value)
 }
 
 static uint32_t hash_chest(
-    const Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+    const DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     uint32_t hash = UINT32_C(2166136261);
     int i;
@@ -84,7 +84,7 @@ static uint32_t hash_chest(
 }
 
 static uint32_t hash_state(
-    const Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+    const DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     uint32_t hash;
     int i;
@@ -118,8 +118,8 @@ static int source_anchors_present(void)
            strstr(s_source_evidence, "G0426") != 0;
 }
 
-void dm1_v1_chest_c040_cancel_reopen_pickup_init_pc34(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+void DM1_V1_ChestC040CancelReopenPickup_InitPc34(
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     int i;
 
@@ -147,14 +147,14 @@ void dm1_v1_chest_c040_cancel_reopen_pickup_init_pc34(
     state->stateHash = hash_state(state);
 }
 
-static void refresh_hashes(Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+static void refresh_hashes(DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     state->chestHash = hash_chest(state);
     state->stateHash = hash_state(state);
 }
 
 static void close_chest_via_f0334(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     int first = 1;
     int i;
@@ -179,7 +179,7 @@ static void close_chest_via_f0334(
 }
 
 static void enter_cancel_via_f0282(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     ++state->f0282CancelCount;
     state->cancelMidF0355 = 1;
@@ -192,7 +192,7 @@ static void enter_cancel_via_f0282(
 }
 
 static void reject_pickup_while_mid_cancel(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     if (state->cancelMidF0355 &&
         state->chestSlots[state->requestedPickupSlot] == kThingNone &&
@@ -204,7 +204,7 @@ static void reject_pickup_while_mid_cancel(
 }
 
 static void finish_cancel_via_f0282(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     state->g0299CandidateOrdinal = 0;
     state->c040PanelOpen = 0;
@@ -217,7 +217,7 @@ static void finish_cancel_via_f0282(
 }
 
 static void reopen_chest_via_f0333(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     int i;
 
@@ -232,7 +232,7 @@ static void reopen_chest_via_f0333(
 }
 
 static void pickup_slot_via_f0302(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state)
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state)
 {
     int slot = state->requestedPickupSlot;
 
@@ -251,9 +251,9 @@ static void pickup_slot_via_f0302(
     refresh_hashes(state);
 }
 
-int dm1_v1_chest_c040_cancel_reopen_pickup_run_pc34(
-    Dm1V1ChestC040CancelReopenPickupStatePc34 *state,
-    Dm1V1ChestC040CancelReopenPickupResultPc34 *result)
+int DM1_V1_ChestC040CancelReopenPickup_RunPc34(
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 *state,
+    DM1_V1_ChestC040CancelReopenPickupResultPc34 *result)
 {
     uint32_t hashAfterQueue;
 
@@ -350,14 +350,14 @@ int dm1_v1_chest_c040_cancel_reopen_pickup_run_pc34(
            result->sourceAnchorsPresent;
 }
 
-const Dm1V1ChestC040CancelReopenPickupEvidencePc34 *
-dm1_v1_chest_c040_cancel_reopen_pickup_evidence_pc34(void)
+const DM1_V1_ChestC040CancelReopenPickupEvidencePc34 *
+DM1_V1_ChestC040CancelReopenPickup_EvidencePc34(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_chest_c040_cancel_reopen_pickup_source_evidence_pc34(void)
+DM1_V1_ChestC040CancelReopenPickup_SourceEvidencePc34(void)
 {
     return s_source_evidence;
 }

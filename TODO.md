@@ -3,6 +3,7 @@
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+  - 2026-07-09 update: DM1 C040 lower-arrow state and chest cancel/reopen pickup APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror/chest adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 mirror-candidate inventory-exit panel redraw and HUD restore APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 mirror-candidate C045 food/water close, C045 close-after-non-candidate transition, click-cancel-with-rotation, and scroll-pickup party-rotation APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
   - 2026-07-09 update: DM1 mirror-candidate C045 accept guards, C040 resurrect rotation save/load, and reopen-after-save-load APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
