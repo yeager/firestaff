@@ -1812,6 +1812,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupActionReceipt_PC34 boot_action_receipt;
     CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
+    CSB_V1_BootStartupRenderViewReceipt_PC34 view_receipt;
+    CSB_V1_StartupRenderPlan_PC34 snapshot_render_plan;
     const char *resume_path = "/tmp/firestaff-csb-resume.dat";
 
     csb_v1_boot_profile_init(&boot);
@@ -1915,6 +1917,18 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !route_receipt.hud_menu_visible &&
               strcmp(route_receipt.presentation.animation, "csb-title") == 0,
           "boot startup route receipt owns title animation route");
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &snapshot,
+              &view_receipt) == 1 &&
+              view_receipt.valid &&
+              view_receipt.title_after_swoosh_route &&
+              view_receipt.boot_executor_route &&
+              view_receipt.render_plan_valid &&
+              view_receipt.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              view_receipt.route_receipt.draw_title &&
+              !view_receipt.hud_menu_receipt_ready,
+          "boot startup render-view receipt owns post-swoosh CSB title route");
     snapshot.utility_overlay_active = 0;
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
@@ -1994,6 +2008,23 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strstr(route_receipt.hud_menu_state.prompt, "PRESS ENTER") !=
                   NULL,
           "boot startup route receipt owns closed entrance HUD/menu state and resume gate without utility fallback");
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &snapshot,
+              &view_receipt) == 1 &&
+              view_receipt.closed_door_menu_route &&
+              view_receipt.hud_menu_receipt_ready &&
+              view_receipt.suppress_legacy_utility_fallback &&
+              view_receipt.route_receipt.hud_menu_state.resume_available &&
+              strcmp(view_receipt.route_receipt.hud_menu_state.resume_path,
+                     resume_path) == 0,
+          "boot startup render-view receipt owns closed-door HUD/menu and utility fallback gate");
+    CHECK(csb_v1_boot_startup_render_plan_from_snapshot_pc34(
+              &snapshot,
+              &snapshot_render_plan) == 1 &&
+              snapshot_render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+              snapshot_render_plan.waiting_for_input,
+          "boot startup render-plan facade returns CSB-owned closed-door plan");
     snapshot.utility_overlay_active = 1;
     snapshot.opening_active = 1;
     snapshot.opening_delay_ticks = 0;
@@ -2011,6 +2042,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !route_receipt.hud_menu_visible &&
               !route_receipt.accepts_input,
           "boot startup route receipt owns door-opening render route");
+    CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &snapshot,
+              &view_receipt) == 1 &&
+              view_receipt.opening_door_route &&
+              !view_receipt.hud_menu_receipt_ready &&
+              !view_receipt.suppress_legacy_utility_fallback,
+          "boot startup render-view receipt owns door-opening runtime route");
     snapshot.opening_active = 0;
     snapshot.opening_delay_ticks = 0;
     snapshot.opening_step = 0;
