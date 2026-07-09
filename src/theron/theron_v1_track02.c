@@ -1089,6 +1089,31 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE, 2u, 8u },
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE, 2u, 12u }
     };
+    const struct {
+        unsigned int route_bit;
+        size_t span_delta;
+    } iso_extended_sample_specs[] = {
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM, 0u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM, 4u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD, 8u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD, 12u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 0u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 4u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 8u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 12u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 16u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 20u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 24u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+          TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES + 28u }
+    };
 
     if (out_catalog) {
         memset(out_catalog, 0, sizeof(*out_catalog));
@@ -1153,6 +1178,59 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
                                           pixels,
                                           nonzero_pixels,
                                           checksum);
+    }
+
+    if (variant == THERON_TRACK02_VARIANT_US_ISO &&
+        signal.anchor_count == 1u) {
+        for (size_t i = 0u;
+             i < sizeof(iso_extended_sample_specs) /
+                     sizeof(iso_extended_sample_specs[0]);
+             ++i) {
+            uint8_t tile[THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES];
+            uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_PIXELS];
+            size_t user_offset = 0u;
+            size_t nonzero_pixels = 0u;
+            uint32_t checksum = 0u;
+            size_t raw_offset =
+                signal.post_boundary_span_offsets[0] +
+                iso_extended_sample_specs[i].span_delta;
+
+            if (out_catalog->route_mask &
+                iso_extended_sample_specs[i].route_bit) {
+                if (iso_extended_sample_specs[i].span_delta <
+                    TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES) {
+                    continue;
+                }
+            }
+            status = track02_copy_startup_bitmap_bytes(
+                track02_data,
+                track02_size,
+                md5_hex,
+                raw_offset,
+                sizeof(tile),
+                tile,
+                sizeof(tile),
+                &user_offset);
+            if (status != THERON_TRACK02_SIGNAL_OK) {
+                continue;
+            }
+            status = theron_v1_track02_decode_4bpp_tile(tile,
+                                                         sizeof(tile),
+                                                         pixels,
+                                                         &nonzero_pixels,
+                                                         &checksum);
+            if (status != THERON_TRACK02_SIGNAL_OK) {
+                continue;
+            }
+            catalog_add_startup_bitmap_sample(
+                out_catalog,
+                iso_extended_sample_specs[i].route_bit,
+                raw_offset,
+                user_offset,
+                pixels,
+                nonzero_pixels,
+                checksum);
+        }
     }
 
     return out_catalog->sample_count > 0u ? THERON_TRACK02_SIGNAL_OK
