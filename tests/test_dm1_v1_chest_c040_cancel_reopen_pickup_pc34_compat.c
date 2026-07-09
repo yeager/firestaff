@@ -50,10 +50,10 @@ static void check_contains(const char *haystack, const char *needle,
 
 static void test_source_evidence(void)
 {
-    const Dm1V1ChestC040CancelReopenPickupEvidencePc34 *e =
-        dm1_v1_chest_c040_cancel_reopen_pickup_evidence_pc34();
+    const DM1_V1_ChestC040CancelReopenPickupEvidencePc34 *e =
+        DM1_V1_ChestC040CancelReopenPickup_EvidencePc34();
     const char *source =
-        dm1_v1_chest_c040_cancel_reopen_pickup_source_evidence_pc34();
+        DM1_V1_ChestC040CancelReopenPickup_SourceEvidencePc34();
 
     check_true(e != NULL, "evidence exists", "source-lock");
     check_contains(e->chestOpenAnchor, "CHEST.C F0333:30-67",
@@ -106,10 +106,10 @@ static void test_source_evidence(void)
 
 static void test_initial_fixture(void)
 {
-    Dm1V1ChestC040CancelReopenPickupStatePc34 state;
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 state;
     int i;
 
-    dm1_v1_chest_c040_cancel_reopen_pickup_init_pc34(&state);
+    DM1_V1_ChestC040CancelReopenPickup_InitPc34(&state);
 
     check_int_eq(state.panelContent, 568, "fixture starts on C040 panel",
                  "COMMAND.C F0378:1985-1990");
@@ -150,12 +150,12 @@ static void test_initial_fixture(void)
 
 static void test_c040_cancel_reopen_pickup_contract(void)
 {
-    Dm1V1ChestC040CancelReopenPickupStatePc34 state;
-    Dm1V1ChestC040CancelReopenPickupResultPc34 result;
+    DM1_V1_ChestC040CancelReopenPickupStatePc34 state;
+    DM1_V1_ChestC040CancelReopenPickupResultPc34 result;
     int ok;
 
-    dm1_v1_chest_c040_cancel_reopen_pickup_init_pc34(&state);
-    ok = dm1_v1_chest_c040_cancel_reopen_pickup_run_pc34(&state, &result);
+    DM1_V1_ChestC040CancelReopenPickup_InitPc34(&state);
+    ok = DM1_V1_ChestC040CancelReopenPickup_RunPc34(&state, &result);
 
     check_int_eq(ok, 1, "contract run accepted",
                  "CHEST.C F0333:30-67 + REVIVE.C F0282:744-783");
@@ -309,7 +309,7 @@ int main(void)
 {
     printf("probe=dm1_v1_chest_c040_cancel_reopen_pickup_pc34_compat\n");
     printf("sourceEvidence=%s\n",
-           dm1_v1_chest_c040_cancel_reopen_pickup_source_evidence_pc34());
+           DM1_V1_ChestC040CancelReopenPickup_SourceEvidencePc34());
 
     test_source_evidence();
     test_initial_fixture();

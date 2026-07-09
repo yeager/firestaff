@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 C040 lower-arrow/chest ownership names: mirror-candidate lower-arrow state and chest C040 cancel/reopen pickup APIs now expose DM1-owned type/function names; old names remain aliases. Verification: lower-arrow state 208/208, chest C040 cancel/reopen pickup 110/110, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 mirror-candidate inventory-exit ownership names: panel redraw after inventory exit and auto mirror-candidate inventory-exit HUD restore APIs now expose DM1-owned type/function names; old names remain aliases. Verification: panel redraw 171/171, HUD restore 281/281, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 mirror-candidate C045/rotation ownership names: C045 food/water close, C045 close-after-non-candidate transition, click-cancel-with-rotation, and scroll-pickup party-rotation APIs now expose DM1-owned type/function names; old names remain aliases. Verification: C045 close 153/153, C045 transition 445/445, click-cancel rotation 152/152, scroll-pickup rotation 124/124, movement pipeline 400/400, Phase A 24/24, and `git diff --check` passed.

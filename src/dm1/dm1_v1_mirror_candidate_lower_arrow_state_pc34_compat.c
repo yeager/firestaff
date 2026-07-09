@@ -61,7 +61,7 @@ static uint32_t mix32(uint32_t x)
     return x;
 }
 
-static uint32_t fingerprint_chest(const Dm1V1MirrorCandidateLowerArrowStateStatePc34 *s)
+static uint32_t fingerprint_chest(const DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *s)
 {
     uint32_t h = 0x811C9DC5u;
     h = mix32(h ^ (uint32_t)s->g0426OpenChest);
@@ -72,7 +72,7 @@ static uint32_t fingerprint_chest(const Dm1V1MirrorCandidateLowerArrowStateState
 }
 
 static uint32_t fingerprint_owner_chain(
-    const Dm1V1MirrorCandidateLowerArrowStateStatePc34 *s)
+    const DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *s)
 {
     uint32_t h = 0x01000193u;
     for (int i = 0; i < DM1_V1_MC_LAS_PARTY_COUNT_PC34; ++i) {
@@ -83,7 +83,7 @@ static uint32_t fingerprint_owner_chain(
 }
 
 static uint32_t fingerprint_c040_panel(
-    const Dm1V1MirrorCandidateLowerArrowStateStatePc34 *s)
+    const DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *s)
 {
     uint32_t h = 0xCBF29CE484222325ull & 0xFFFFFFFFu;
     h = mix32(h ^ (uint32_t)s->c040PanelOpen);
@@ -99,7 +99,7 @@ static uint32_t fingerprint_c040_panel(
 }
 
 static uint32_t fingerprint_candidate_chain(
-    const Dm1V1MirrorCandidateLowerArrowStateStatePc34 *s)
+    const DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *s)
 {
     uint32_t h = 0xDEADBEEFu;
     h = mix32(h ^ (uint32_t)s->candidateOrdinal);
@@ -111,7 +111,7 @@ static uint32_t fingerprint_candidate_chain(
 }
 
 static uint32_t fingerprint_leader_hand(
-    const Dm1V1MirrorCandidateLowerArrowStateStatePc34 *s)
+    const DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *s)
 {
     uint32_t h = 0xA5A5A5A5u;
     h = mix32(h ^ (uint32_t)s->leaderHandEmpty);
@@ -121,7 +121,7 @@ static uint32_t fingerprint_leader_hand(
 }
 
 static void recompute_fingerprints(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *s)
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *s)
 {
     s->c030OwnerHash = fingerprint_owner_chain(s);
     s->c040PanelHash = fingerprint_c040_panel(s);
@@ -197,7 +197,7 @@ static const char s_source_evidence[] =
     "DrawDisabledMenus post-rest orchestrator, or the F0283_CHAMPION_"
     "ViAltarRebirth / F0281_CHAMPION_Rename paths.";
 
-static const Dm1V1MirrorCandidateLowerArrowStateEvidencePc34 s_evidence = {
+static const DM1_V1_MirrorCandidateLowerArrowStateEvidencePc34 s_evidence = {
     "COMMAND.C:107-112 G0448_SecondaryMouseInput_Movement lower row "
     "y=147-167 -> C006_COMMAND_MOVE_LEFT / C005_COMMAND_MOVE_BACKWARD / "
     "C004_COMMAND_MOVE_RIGHT",
@@ -237,8 +237,8 @@ static const Dm1V1MirrorCandidateLowerArrowStateEvidencePc34 s_evidence = {
     "claimed"
 };
 
-void dm1_v1_mirror_candidate_lower_arrow_state_init_pc34(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *state)
+void DM1_V1_MirrorCandidateLowerArrowState_InitPc34(
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *state)
 {
     if (!state) {
         return;
@@ -281,8 +281,8 @@ void dm1_v1_mirror_candidate_lower_arrow_state_init_pc34(
     recompute_fingerprints(state);
 }
 
-int dm1_v1_mirror_candidate_lower_arrow_state_publish_candidate_pc34(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *state)
+int DM1_V1_MirrorCandidateLowerArrowState_PublishCandidatePc34(
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *state)
 {
     if (!state || !state->contractOnly || !state->noGameDataRequired) {
         return 0;
@@ -339,8 +339,8 @@ static int is_chest_panel_command(int command)
 }
 
 static void record_c040_live_baseline(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *state,
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 *result)
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *state,
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 *result)
 {
     result->panelStayedC040 = (state->c040PanelOpen == 1);
     result->panelContentStayedM568 =
@@ -394,9 +394,9 @@ static void record_c040_live_baseline(
 }
 
 static void dispatch_lower_movement_arrow(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *state,
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *state,
     int command,
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 *result)
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 *result)
 {
     /* F0380_COMMAND_ProcessQueue_CPSC drain step: COMMAND.C F0380:2151-2156
      * routes the C003..C006 range to F0366_COMMAND_ProcessTypes3To6_MoveParty
@@ -420,10 +420,10 @@ static void dispatch_lower_movement_arrow(
      * We intentionally do not mutate the candidate chain here. */
 }
 
-int dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *state,
+int DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *state,
     int command,
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 *result)
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 *result)
 {
     if (!state || !result || !state->contractOnly ||
         !state->noGameDataRequired) {
@@ -656,14 +656,14 @@ int dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
     return 1;
 }
 
-const Dm1V1MirrorCandidateLowerArrowStateEvidencePc34 *
-dm1_v1_mirror_candidate_lower_arrow_state_evidence_pc34(void)
+const DM1_V1_MirrorCandidateLowerArrowStateEvidencePc34 *
+DM1_V1_MirrorCandidateLowerArrowState_EvidencePc34(void)
 {
     return &s_evidence;
 }
 
 const char *
-dm1_v1_mirror_candidate_lower_arrow_state_source_evidence_pc34(void)
+DM1_V1_MirrorCandidateLowerArrowState_SourceEvidencePc34(void)
 {
     return s_source_evidence;
 }

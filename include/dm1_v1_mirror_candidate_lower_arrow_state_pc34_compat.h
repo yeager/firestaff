@@ -182,7 +182,7 @@ typedef struct {
     const char *defsChestListAnchor;
     const char *movementArrowRowYAnchor;
     const char *contractScope;
-} Dm1V1MirrorCandidateLowerArrowStateEvidencePc34;
+} DM1_V1_MirrorCandidateLowerArrowStateEvidencePc34;
 
 typedef struct {
     int contractOnly;
@@ -245,7 +245,7 @@ typedef struct {
     int disjointFromResurrectCancelContract;
     int disjointFromChestOpenContract;
     int disjointFromChestCloseContract;
-} Dm1V1MirrorCandidateLowerArrowStateDisjointPc34;
+} DM1_V1_MirrorCandidateLowerArrowStateDisjointPc34;
 
 typedef struct {
     int contractOnly;
@@ -311,7 +311,7 @@ typedef struct {
     uint32_t leaderHandHash;
     uint32_t deterministicSeed;
     uint32_t lastAcceptedLowerArrowCommand;
-} Dm1V1MirrorCandidateLowerArrowStateStatePc34;
+} DM1_V1_MirrorCandidateLowerArrowStateStatePc34;
 
 typedef struct {
     int accepted;
@@ -372,26 +372,46 @@ typedef struct {
     int noF0334VisibleRewriteOnLowerArrow;
     int f0359FreshClickCountRecorded;
     int f0360PendingReplayCountRecorded;
-    Dm1V1MirrorCandidateLowerArrowStateDisjointPc34 disjoint;
+    DM1_V1_MirrorCandidateLowerArrowStateDisjointPc34 disjoint;
     uint32_t deterministicHash;
-} Dm1V1MirrorCandidateLowerArrowStateResultPc34;
+} DM1_V1_MirrorCandidateLowerArrowStateResultPc34;
 
-void dm1_v1_mirror_candidate_lower_arrow_state_init_pc34(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *state);
+void DM1_V1_MirrorCandidateLowerArrowState_InitPc34(
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *state);
 
-int dm1_v1_mirror_candidate_lower_arrow_state_publish_candidate_pc34(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *state);
+int DM1_V1_MirrorCandidateLowerArrowState_PublishCandidatePc34(
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *state);
 
-int dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *state,
+int DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *state,
     int command,
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 *result);
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 *result);
 
-const Dm1V1MirrorCandidateLowerArrowStateEvidencePc34 *
-dm1_v1_mirror_candidate_lower_arrow_state_evidence_pc34(void);
+const DM1_V1_MirrorCandidateLowerArrowStateEvidencePc34 *
+DM1_V1_MirrorCandidateLowerArrowState_EvidencePc34(void);
 
 const char *
-dm1_v1_mirror_candidate_lower_arrow_state_source_evidence_pc34(void);
+DM1_V1_MirrorCandidateLowerArrowState_SourceEvidencePc34(void);
+
+typedef DM1_V1_MirrorCandidateLowerArrowStateEvidencePc34
+    Dm1V1MirrorCandidateLowerArrowStateEvidencePc34;
+typedef DM1_V1_MirrorCandidateLowerArrowStateDisjointPc34
+    Dm1V1MirrorCandidateLowerArrowStateDisjointPc34;
+typedef DM1_V1_MirrorCandidateLowerArrowStateStatePc34
+    Dm1V1MirrorCandidateLowerArrowStateStatePc34;
+typedef DM1_V1_MirrorCandidateLowerArrowStateResultPc34
+    Dm1V1MirrorCandidateLowerArrowStateResultPc34;
+
+#define dm1_v1_mirror_candidate_lower_arrow_state_init_pc34 \
+    DM1_V1_MirrorCandidateLowerArrowState_InitPc34
+#define dm1_v1_mirror_candidate_lower_arrow_state_publish_candidate_pc34 \
+    DM1_V1_MirrorCandidateLowerArrowState_PublishCandidatePc34
+#define dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34 \
+    DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34
+#define dm1_v1_mirror_candidate_lower_arrow_state_evidence_pc34 \
+    DM1_V1_MirrorCandidateLowerArrowState_EvidencePc34
+#define dm1_v1_mirror_candidate_lower_arrow_state_source_evidence_pc34 \
+    DM1_V1_MirrorCandidateLowerArrowState_SourceEvidencePc34
 
 #ifdef __cplusplus
 }

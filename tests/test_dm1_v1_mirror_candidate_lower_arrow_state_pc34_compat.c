@@ -42,10 +42,10 @@ static int gPasses;
 
 static void test_source_lock_metadata(void)
 {
-    const Dm1V1MirrorCandidateLowerArrowStateEvidencePc34 *e =
-        dm1_v1_mirror_candidate_lower_arrow_state_evidence_pc34();
+    const DM1_V1_MirrorCandidateLowerArrowStateEvidencePc34 *e =
+        DM1_V1_MirrorCandidateLowerArrowState_EvidencePc34();
     const char *src =
-        dm1_v1_mirror_candidate_lower_arrow_state_source_evidence_pc34();
+        DM1_V1_MirrorCandidateLowerArrowState_SourceEvidencePc34();
 
     CHECK(e != NULL, "evidence accessor returns non-NULL",
           "static evidence table");
@@ -175,13 +175,13 @@ static void test_source_lock_metadata(void)
 }
 
 static void publish_live_candidate(
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 *state)
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 *state)
 {
     int published;
 
-    dm1_v1_mirror_candidate_lower_arrow_state_init_pc34(state);
+    DM1_V1_MirrorCandidateLowerArrowState_InitPc34(state);
     published =
-        dm1_v1_mirror_candidate_lower_arrow_state_publish_candidate_pc34(
+        DM1_V1_MirrorCandidateLowerArrowState_PublishCandidatePc34(
             state);
 
     CHECK(published == 1,
@@ -209,12 +209,12 @@ static void publish_live_candidate(
 
 static void test_lower_arrow_c004_keeps_c040_state(void)
 {
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 state;
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 result;
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 state;
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 result;
     int ok;
 
     publish_live_candidate(&state);
-    ok = dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
+    ok = DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
         &state, 4 /* C004_COMMAND_MOVE_RIGHT */, &result);
 
     CHECK(ok == 1, "C004 lower arrow click is accepted by F0380",
@@ -421,12 +421,12 @@ static void test_lower_arrow_c004_keeps_c040_state(void)
 
 static void test_lower_arrow_c005_keeps_c040_state(void)
 {
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 state;
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 result;
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 state;
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 result;
     int ok;
 
     publish_live_candidate(&state);
-    ok = dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
+    ok = DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
         &state, 5 /* C005_COMMAND_MOVE_BACKWARD */, &result);
 
     CHECK(ok == 1, "C005 lower arrow click is accepted by F0380",
@@ -459,12 +459,12 @@ static void test_lower_arrow_c005_keeps_c040_state(void)
 
 static void test_lower_arrow_c006_keeps_c040_state(void)
 {
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 state;
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 result;
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 state;
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 result;
     int ok;
 
     publish_live_candidate(&state);
-    ok = dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
+    ok = DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
         &state, 6 /* C006_COMMAND_MOVE_LEFT */, &result);
 
     CHECK(ok == 1, "C006 lower arrow click is accepted by F0380",
@@ -488,12 +488,12 @@ static void test_lower_arrow_c006_keeps_c040_state(void)
 
 static void test_upper_arrow_c003_still_dispatches_without_c040_change(void)
 {
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 state;
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 result;
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 state;
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 result;
     int ok;
 
     publish_live_candidate(&state);
-    ok = dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
+    ok = DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
         &state, 3 /* C003_COMMAND_MOVE_FORWARD */, &result);
 
     CHECK(ok == 1, "C003 forward arrow click is accepted by F0380",
@@ -519,12 +519,12 @@ static void test_upper_arrow_c003_still_dispatches_without_c040_change(void)
 
 static void test_inventory_toggle_blocked_by_g0299(void)
 {
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 state;
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 result;
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 state;
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 result;
     int ok;
 
     publish_live_candidate(&state);
-    ok = dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
+    ok = DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
         &state, 7 /* C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0 */, &result);
 
     CHECK(ok == 1,
@@ -546,12 +546,12 @@ static void test_inventory_toggle_blocked_by_g0299(void)
 
 static void test_close_inventory_c011_path(void)
 {
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 state;
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 result;
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 state;
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 result;
     int ok;
 
     publish_live_candidate(&state);
-    ok = dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
+    ok = DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
         &state, 11 /* C011_COMMAND_CLOSE_INVENTORY */, &result);
 
     CHECK(ok == 1, "C011 close-inventory drain is recorded",
@@ -566,12 +566,12 @@ static void test_close_inventory_c011_path(void)
 
 static void test_panel_command_c160_path(void)
 {
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 state;
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 result;
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 state;
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 result;
     int ok;
 
     publish_live_candidate(&state);
-    ok = dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
+    ok = DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
         &state, 160 /* C160_COMMAND_CLICK_IN_PANEL_RESURRECT */, &result);
 
     CHECK(ok == 1, "C160 panel command drain is recorded",
@@ -593,12 +593,12 @@ static void test_panel_command_c160_path(void)
 
 static void test_baseline_without_c040_returns_zero(void)
 {
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 state;
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 result;
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 state;
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 result;
     int ok;
 
-    dm1_v1_mirror_candidate_lower_arrow_state_init_pc34(&state);
-    ok = dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
+    DM1_V1_MirrorCandidateLowerArrowState_InitPc34(&state);
+    ok = DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
         &state, 4 /* C004_COMMAND_MOVE_RIGHT */, &result);
 
     CHECK(ok == 0,
@@ -614,15 +614,15 @@ static void test_baseline_without_c040_returns_zero(void)
 
 static void test_three_lower_arrows_in_sequence(void)
 {
-    Dm1V1MirrorCandidateLowerArrowStateStatePc34 state;
-    Dm1V1MirrorCandidateLowerArrowStateResultPc34 result;
+    DM1_V1_MirrorCandidateLowerArrowStateStatePc34 state;
+    DM1_V1_MirrorCandidateLowerArrowStateResultPc34 result;
     int ok;
 
     publish_live_candidate(&state);
     /* Three lower-arrow clicks in sequence: C004, C005, C006. */
     for (int i = 0; i < 3; ++i) {
         int command = 4 + i;
-        ok = dm1_v1_mirror_candidate_lower_arrow_state_dispatch_pc34(
+        ok = DM1_V1_MirrorCandidateLowerArrowState_DispatchPc34(
             &state, command, &result);
         CHECK(ok == 1, "lower-arrow sequence click is accepted by F0380",
               "COMMAND.C F0380:2151-2156");
