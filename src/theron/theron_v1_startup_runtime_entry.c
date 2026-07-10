@@ -70,16 +70,6 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         }
         return 0;
     }
-    if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track 02 initial candidate pending for stage %d",
-                     (int)dungeon_id);
-        }
-        return 0;
-    }
-
     signal_status = theron_v1_track02_find_bank_signal(hucard_rom,
                                                        hucard_rom_size,
                                                        md5_hex,
@@ -181,21 +171,22 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
             identity.checksum = identity.audio_bank_id ^
                 (uint32_t)identity.bank_descriptor_offset ^
                 ((uint32_t)identity.bank_first_value << 16) ^ identity.bank_last_value;
-            world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+            world->current_dungeon = dungeon_id;
             world->current_level = 0;
-            world->levels[0][0] = semantic_level;
-            world->level_loaded[0][0] = 1;
+            world->levels[(int)dungeon_id - 1][0] = semantic_level;
+            world->level_loaded[(int)dungeon_id - 1][0] = 1;
             theron_v1_party_place(world,
-                                  world->levels[0][0].start_x,
-                                  world->levels[0][0].start_y,
-                                  world->levels[0][0].start_dir);
+                                  world->levels[(int)dungeon_id - 1][0].start_x,
+                                  world->levels[(int)dungeon_id - 1][0].start_y,
+                                  world->levels[(int)dungeon_id - 1][0].start_dir);
             if (!theron_v1_world_runtime_media_set_identity(world, &identity)) {
                 return 0;
             }
             if (receipt && receipt_cap > 0u) {
                 snprintf(receipt,
                          receipt_cap,
-                         "Track 02 semantic initial level anchor=%zu offset=0x%zx user_valid=%d user=0x%zx seed_status=%s startup_seed=0x%08x startup_level=0x%04x header=%ux%u start=(%d,%d,%d)",
+                         "Track 02 semantic initial level stage=%d anchor=%zu offset=0x%zx user_valid=%d user=0x%zx seed_status=%s startup_seed=0x%08x startup_level=0x%04x header=%ux%u start=(%d,%d,%d)",
+                         (int)dungeon_id,
                          anchor,
                          semantic_level_handoff.absolute_offset,
                          semantic_handoff.user_data_offset_valid,
@@ -206,9 +197,9 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
                          (unsigned)semantic_handoff.startup_level_index,
                          (unsigned)semantic_level_handoff.header_width,
                          (unsigned)semantic_level_handoff.header_height,
-                         (int)world->levels[0][0].start_x,
-                         (int)world->levels[0][0].start_y,
-                         (int)world->levels[0][0].start_dir);
+                         (int)world->levels[(int)dungeon_id - 1][0].start_x,
+                         (int)world->levels[(int)dungeon_id - 1][0].start_y,
+                         (int)world->levels[(int)dungeon_id - 1][0].start_dir);
             }
             return 1;
         }
