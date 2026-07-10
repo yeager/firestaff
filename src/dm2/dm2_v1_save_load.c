@@ -13,6 +13,7 @@
  */
 
 #include "dm2_v1_save_load.h"
+#include "dm2_v1_new_game.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -257,6 +258,70 @@ static void dm2_sksave_corpus_accept(DM2_SKSaveCorpusReceipt *receipt,
     receipt->total_payload_size += payload_size;
     if (payload_size > receipt->largest_payload_size) {
         receipt->largest_payload_size = payload_size;
+    }
+}
+
+static void dm2_sksave_corpus_classify_payload(
+    DM2_SKSaveCorpusReceipt *receipt,
+    const char *path,
+    size_t payload_size)
+{
+    FILE *f;
+    uint8_t *payload;
+    DM2_V1_SaveCandidate candidate;
+    int status = 0;
+
+    if (!receipt || !path || payload_size == 0u ||
+        payload_size > (size_t)DM2_SESSION_MAX_SIZE) {
+        if (receipt) receipt->import_rejected_candidate_count++;
+        return;
+    }
+
+    f = dm2_sl_open_valid_payload(path, &status);
+    if (!f) {
+        receipt->import_rejected_candidate_count++;
+        return;
+    }
+    payload = (uint8_t *)malloc(payload_size);
+    if (!payload) {
+        fclose(f);
+        receipt->import_rejected_candidate_count++;
+        return;
+    }
+    if (fread(payload, 1, payload_size, f) != payload_size ||
+        dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                            payload_size) != 0) {
+        free(payload);
+        fclose(f);
+        receipt->import_rejected_candidate_count++;
+        return;
+    }
+    free(payload);
+    fclose(f);
+
+    receipt->importable_candidate_count++;
+    receipt->total_importable_payload_size += payload_size;
+    if (payload_size > receipt->largest_importable_payload_size) {
+        receipt->largest_importable_payload_size = payload_size;
+    }
+    if (receipt->first_importable_path[0] == '\0') {
+        snprintf(receipt->first_importable_path,
+                 sizeof(receipt->first_importable_path), "%s", path);
+    }
+    switch (candidate.kind) {
+        case DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION:
+            receipt->firestaff_session_candidate_count++;
+            break;
+        case DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE:
+            receipt->original_envelope_candidate_count++;
+            break;
+        case DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW:
+            receipt->original_raw_candidate_count++;
+            break;
+        default:
+            receipt->import_rejected_candidate_count++;
+            receipt->importable_candidate_count--;
+            break;
     }
 }
 
@@ -550,6 +615,7 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
     if (status == DM2_SK_CORPUS_VALID) {
         out_receipt->has_last_session = true;
         dm2_sksave_corpus_accept(out_receipt, path, payload_size);
+        dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size);
     } else if (status == DM2_SK_CORPUS_INVALID) {
         out_receipt->invalid_candidate_count++;
     }
@@ -563,6 +629,7 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
             out_receipt->last_session_uses_backup = true;
         }
         dm2_sksave_corpus_accept(out_receipt, path, payload_size);
+        dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size);
     } else if (status == DM2_SK_CORPUS_INVALID) {
         out_receipt->invalid_candidate_count++;
     }
@@ -576,6 +643,7 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
             out_receipt->valid_slot_count++;
             out_receipt->valid_slot_mask |= (uint16_t)(1u << slot);
             dm2_sksave_corpus_accept(out_receipt, path, payload_size);
+            dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size);
         } else if (status == DM2_SK_CORPUS_INVALID) {
             out_receipt->invalid_candidate_count++;
         }
