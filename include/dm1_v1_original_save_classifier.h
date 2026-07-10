@@ -35,6 +35,7 @@ extern "C" {
 #define DM1_ORIGINAL_SAVE_MIN_BYTES    512u
 #define DM1_ORIGINAL_SAVE_PATH_MAX     512u
 #define DM1_ORIGINAL_SAVE_DEFAULT_CANDIDATE_COUNT 4u
+#define DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP 32u
 
 typedef enum {
     DM1_ORIGINAL_SAVE_SHAPE_ABSENT = 0,
@@ -65,12 +66,15 @@ typedef struct {
     uint16_t dungeon_id;
     uint16_t save_part_key_count_nonzero;
     uint16_t save_part_checksum_count_nonzero;
+    uint16_t save_part_loader_envelope_ok_count;
+    uint32_t save_part_loader_envelope_payload_bytes;
     uint16_t header_expected_checksum;
     uint16_t header_actual_checksum;
     uint32_t prefix_checksum32;
     int header_checksum_ok;
     int import_blocked_until_roundtrip;
     int pc34_importer_candidate;
+    int pc34_loader_part_envelope_candidate;
     char reason[96];
 } DM1OriginalSaveClassifyResult;
 
@@ -82,10 +86,30 @@ typedef struct {
     int original_dm1_count;
     int original_dm1_pc34_count;
     int pc34_importer_candidate_count;
+    int pc34_loader_part_envelope_count;
     int firestaff_native_count;
     DM1OriginalSaveClassifyResult results[DM1_ORIGINAL_SAVE_DEFAULT_CANDIDATE_COUNT];
     char paths[DM1_ORIGINAL_SAVE_DEFAULT_CANDIDATE_COUNT][DM1_ORIGINAL_SAVE_PATH_MAX];
 } DM1OriginalSaveManifest;
+
+typedef struct {
+    char root[DM1_ORIGINAL_SAVE_PATH_MAX];
+    int candidate_capacity;
+    int scanned_file_count;
+    int present_count;
+    int classified_count;
+    int original_dm1_count;
+    int original_dm1_pc34_count;
+    int pc34_importer_candidate_count;
+    int pc34_loader_part_envelope_count;
+    int firestaff_native_count;
+    int rejected_count;
+    int truncated_count;
+    DM1OriginalSaveClassifyResult
+        results[DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP];
+    char paths[DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP]
+              [DM1_ORIGINAL_SAVE_PATH_MAX];
+} DM1OriginalSaveCorpusManifest;
 
 int dm1_v1_original_save_default_root(char out_root[DM1_ORIGINAL_SAVE_PATH_MAX]);
 int dm1_v1_original_save_candidate_path(
@@ -105,6 +129,10 @@ int dm1_v1_original_save_classify_file(
 int dm1_v1_original_save_classify_root(
     const char *root,
     DM1OriginalSaveManifest *out_manifest);
+
+int dm1_v1_original_save_classify_corpus_root(
+    const char *root,
+    DM1OriginalSaveCorpusManifest *out_manifest);
 
 const char *dm1_v1_original_save_shape_name(DM1OriginalSaveShape shape);
 const char *dm1_v1_original_save_readiness_name(DM1OriginalSaveReadiness readiness);
