@@ -758,9 +758,6 @@ int csb_v1_startup_execute_opening_composite_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,
     void *user);
-int csb_v1_startup_execute_render_plan_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    const CSB_V1_StartupRenderExecutor_PC34 *executor);
 int csb_v1_startup_command_state_from_request_pc34(
     const CSB_V1_StartupCommandStateRequest_PC34 *request,
     CSB_V1_StartupCommandState_PC34 *out_state);
