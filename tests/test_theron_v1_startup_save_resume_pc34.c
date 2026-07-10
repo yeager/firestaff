@@ -3187,7 +3187,7 @@ static void test_startup_session_facts_wrappers(void) {
                         2,
                         order,
                         THERON_STARTUP_MAX_COMPANIONS) &&
-                        theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                        !theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
                             &unpackaged_view_model,
                             &media_graphics_executor,
                             &unpackaged_graphics_receipt) &&
@@ -3196,6 +3196,9 @@ static void test_startup_session_facts_wrappers(void) {
                         !unpackaged_graphics_receipt.real_bitmap_startup_graphics_ready &&
                         unpackaged_graphics_receipt
                             .raw_graphics_plan_consumer_required &&
+                        unpackaged_graphics_receipt.graphics_blocked &&
+                        unpackaged_graphics_receipt
+                            .no_fallback_startup_graphics_proof &&
                         !unpackaged_graphics_receipt
                              .track02_startup_graphics_executed,
                     "boot graphics route blocks real readiness without raw Track02 package proof");
