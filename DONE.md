@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 original PC34 roundtrip receipt: save/load now exposes a host-facing receipt that validates an original PC34 save, imports it through the ReDMCSB-shaped handoff, exports it back to PC34, reloads it, and reports core champion/map/time/event/active-group preservation for launcher/UI consumers. Verification: `test_dm1_v1_save_load` passed 15/15.
+
 - ✅ 2026-07-10 CSB runtime host-gate ownership breadth: runtime host-capture gates now carry per-route host-ownership summaries and packaged hashes for title/PRESENTS/CHAOS/STRIKES, closed-door HUD/menu, utility HUD/menu, and door opening, so full capture proof no longer depends on separate wrapper checks. Verification: `test_csb_v1_boot_runtime_handoff` passed.
 
 - ✅ 2026-07-09 DM2 real-GDAT startup breadth receipt: real visual capture receipts now carry Continue/save-slot/New Game row readiness, exact selected-highlight proof, and a separate broad startup/title/menu/HUD readiness bit while keeping live no-save M11 startup draws on the general real GDAT title/menu/HUD proof. Verification: `FIRESTAFF_DM2_REAL_DATA_DIR="$HOME/.firestaff/data/dm2" ctest --test-dir build -R 'dm2_v1_startup_menu_action_contract|dm2_v1_m11_startup_profile_gate' --output-on-failure` and `git diff --check` passed.

@@ -1333,6 +1333,124 @@ static int test_pc34_writeback_path(void) {
     return 1;
 }
 
+static int test_pc34_roundtrip_receipt(void) {
+    const char* path = "/tmp/dm1_pc34_roundtrip_receipt.sav";
+    const char* badPath = "/tmp/dm1_pc34_roundtrip_receipt_bad.sav";
+    uint8_t bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    uint8_t garbage[128];
+    size_t size = 0u;
+    DM1OriginalSavePC34FixtureSpec spec;
+    struct DM1OriginalPC34RoundtripReceipt receipt;
+    FILE* file;
+    int rc;
+    int ok = 1;
+
+    remove(path);
+    remove(badPath);
+    memset(&spec, 0, sizeof(spec));
+    memset(bytes, 0, sizeof(bytes));
+    spec.champion_count = 3;
+    spec.map_index = 2;
+    spec.map_x = 17;
+    spec.map_y = 23;
+    spec.direction = DIR_WEST;
+    spec.active_champion_index = 1;
+    spec.current_active_group_count = 2;
+    spec.maximum_active_group_count = 3;
+    spec.event_count = 3;
+    spec.event_maximum_count = 4;
+    spec.game_time = 43210u;
+    spec.game_id = 0x11223344u;
+
+    rc = dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
+        &spec, bytes, sizeof(bytes), &size);
+    if (rc != SAVEGAME_PC34_OK || size == 0u) {
+        printf("  FAIL: could not build PC34 receipt fixture rc=%d\n", rc);
+        return 0;
+    }
+
+    file = fopen(path, "wb");
+    if (!file) {
+        printf("  SKIP: cannot create PC34 receipt temp file\n");
+        return 1;
+    }
+    if (fwrite(bytes, 1u, size, file) != size || fclose(file) != 0) {
+        printf("  FAIL: could not write PC34 receipt fixture\n");
+        remove(path);
+        return 0;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    ok &= expect_int_eq("pc34 receipt build",
+                        DM1_BuildOriginalPC34RoundtripReceipt(
+                            path, 0x55667788u, &receipt),
+                        1);
+    ok &= expect_int_eq("pc34 receipt readable", receipt.readable, 1);
+    ok &= expect_int_eq("pc34 receipt roundtrip",
+                        receipt.roundtripSucceeded, 1);
+    ok &= expect_int_eq("pc34 receipt core match",
+                        receipt.coreStateMatches, 1);
+    ok &= expect_int_eq("pc34 receipt validate ok",
+                        receipt.validateResult, DM1_SAVE_OK);
+    ok &= expect_int_eq("pc34 receipt handoff ok",
+                        receipt.handoffResult,
+                        DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK);
+    ok &= expect_int_eq("pc34 receipt source champions",
+                        receipt.sourceChampionCount, spec.champion_count);
+    ok &= expect_int_eq("pc34 receipt exported champions",
+                        receipt.exportedChampionCount, spec.champion_count);
+    ok &= expect_int_eq("pc34 receipt reloaded champions",
+                        receipt.reloadedChampionCount, spec.champion_count);
+    ok &= expect_int_eq("pc34 receipt source map",
+                        receipt.sourceMapIndex, spec.map_index);
+    ok &= expect_int_eq("pc34 receipt reloaded x",
+                        receipt.reloadedMapX, spec.map_x);
+    ok &= expect_int_eq("pc34 receipt reloaded y",
+                        receipt.reloadedMapY, spec.map_y);
+    ok &= expect_u32_eq("pc34 receipt source time",
+                        receipt.sourceGameTime, spec.game_time);
+    ok &= expect_u32_eq("pc34 receipt reloaded time",
+                        receipt.reloadedGameTime, spec.game_time);
+    ok &= expect_int_eq("pc34 receipt events",
+                        receipt.reloadedEventCount, spec.event_count);
+    ok &= expect_int_eq("pc34 receipt active groups",
+                        receipt.reloadedActiveGroupCount,
+                        spec.current_active_group_count);
+    ok &= expect_int_eq("pc34 receipt title",
+                        strcmp(receipt.statusTitle, "PC34 SAVE READY"), 0);
+    ok &= expect_int_eq("pc34 receipt exported bytes",
+                        receipt.exportedByteCount > SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
+                        1);
+
+    memset(garbage, 0x42, sizeof(garbage));
+    file = fopen(badPath, "wb");
+    if (!file) {
+        printf("  SKIP: cannot create bad PC34 receipt temp file\n");
+    } else {
+        fwrite(garbage, 1u, sizeof(garbage), file);
+        fclose(file);
+        memset(&receipt, 0, sizeof(receipt));
+        ok &= expect_int_eq("bad pc34 receipt build",
+                            DM1_BuildOriginalPC34RoundtripReceipt(
+                                badPath, 0x55667788u, &receipt),
+                            1);
+        ok &= expect_int_eq("bad pc34 receipt readable",
+                            receipt.readable, 0);
+        ok &= expect_int_eq("bad pc34 receipt roundtrip",
+                            receipt.roundtripSucceeded, 0);
+        ok &= expect_int_eq("bad pc34 receipt validate",
+                            receipt.validateResult,
+                            DM1_SAVE_ERROR_BAD_MAGIC);
+    }
+
+    remove(path);
+    remove(badPath);
+
+    if (!ok) return 0;
+    printf("  PASS: original PC34 roundtrip receipt\n");
+    return 1;
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -1354,6 +1472,7 @@ int main(void) {
     if (test_resume_receipt_contract()) pass++; else fail++;
     if (test_party_state_save_resume_gate()) pass++; else fail++;
     if (test_pc34_writeback_path()) pass++; else fail++;
+    if (test_pc34_roundtrip_receipt()) pass++; else fail++;
 
     printf("\n=== Results: %d passed, %d failed ===\n", pass, fail);
     return (fail > 0) ? 1 : 0;
