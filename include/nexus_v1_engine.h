@@ -79,6 +79,7 @@ typedef struct {
     int party_y;
     int party_dir;
     uint32_t generation;
+    uint32_t geometry_generation;
     uint32_t rebuild_count;
     uint32_t cache_hit_count;
     uint32_t invalidation_count;
@@ -171,6 +172,12 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level);
 const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     Nexus_V1_Engine *engine, int party_x, int party_y, int party_dir);
 void nexus_v1_invalidate_dgn_material_plan(Nexus_V1_Engine *engine);
+/* Commit a party pose originating from champion start, save resume or live
+ * movement. Any pose change invalidates the viewport material plan before it
+ * can be reused against a different cell geometry. */
+void nexus_v1_sync_dgn_runtime_pose(Nexus_V1_Engine *engine,
+                                    int level, int party_x, int party_y,
+                                    int party_dir);
 
 /* Load a 3D creature model by filename (e.g. "SCORPION.MNS").
  * Returns model index (>=0) on success, -1 on failure. */

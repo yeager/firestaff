@@ -5080,7 +5080,8 @@ int nexus_v1_launcher_boot_level0_startup(
     /* New selected-entry boots always start from Nexus defaults; save
      * resume applies persisted party/tick state in the M11 resume path. */
     nexus_v1_game_init(&engine->game, engine->data_dir);
-    engine->game.current_level = 0;
+    nexus_v1_sync_dgn_runtime_pose(engine, 0, engine->game.party_x,
+                                   engine->game.party_y, engine->game.party_dir);
     nexus_v1_champions_init(&engine->champions);
     if (engine->mechanics) {
         nexus_mechanics_init(engine->mechanics,
@@ -5259,10 +5260,8 @@ int nexus_v1_launcher_resume_from_save_path(
     }
 
     engine->champions = champions;
-    engine->game.current_level = level;
-    engine->game.party_x = world.party_x;
-    engine->game.party_y = world.party_y;
-    engine->game.party_dir = world.party_dir;
+    nexus_v1_sync_dgn_runtime_pose(engine, level, world.party_x,
+                                   world.party_y, world.party_dir);
     engine->game.tick_count = (int)header.game_time;
     if (engine->mechanics) {
         engine->mechanics->map_index = level;

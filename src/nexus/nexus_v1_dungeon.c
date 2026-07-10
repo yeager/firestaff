@@ -314,6 +314,107 @@ int nexus_v1_level_get_material_ref(const Nexus_V1_Level *level, int x, int y,
     return level->wall_material_refs[y][x][wall_dir & 3];
 }
 
+int nexus_v1_level_get_cell_geometry(const Nexus_V1_Level *level, int x, int y,
+                                     Nexus_V1_DgnCellGeometry *out_cell) {
+    Nexus_V1_DgnCellGeometry cell;
+    int corner;
+
+    if (!out_cell) return -1;
+    memset(out_cell, 0, sizeof(*out_cell));
+    if (!level || x < 0 || x >= level->width || y < 0 || y >= level->height)
+        return -1;
+
+    memset(&cell, 0, sizeof(cell));
+    cell.square_type = level->squares[y][x];
+    cell.collision_ref = level->collision_refs[y][x];
+    cell.mesh_ref = level->mesh_refs[y][x];
+    cell.floor_material_ref = level->floor_material_refs[y][x];
+    cell.ceiling_material_ref = level->ceiling_material_refs[y][x];
+    memcpy(cell.wall_material_refs, level->wall_material_refs[y][x],
+           sizeof(cell.wall_material_refs));
+    cell.floor_slope = level->floor_slopes[y][x];
+    cell.floor_rotation = level->floor_rotations[y][x];
+    for (corner = 0; corner < 4; ++corner)
+        cell.floor_height[corner] = level->floor_heights[y][x];
+    if (cell.floor_slope == 2U && x + 1 < level->width) {
+        cell.floor_height[1] = cell.floor_height[2] =
+            level->floor_heights[y][x + 1];
+    } else if (cell.floor_slope == 3U && y + 1 < level->height) {
+        cell.floor_height[2] = cell.floor_height[3] =
+            level->floor_heights[y + 1][x];
+    }
+    for (corner = 0; corner < 4; ++corner)
+        cell.ceiling_height[corner] = (int8_t)(cell.floor_height[corner] + 32);
+    if (cell.collision_ref < NEXUS_DGN_MAX_COLLISION_SECTORS)
+        cell.collision_sector = level->collision_sectors[cell.collision_ref];
+    *out_cell = cell;
+    return 0;
+}
+
+static int nexus_v1_dgn_sign(int value) {
+    return (value > 0) - (value < 0);
+}
+
+static int nexus_v1_dgn_segments_intersect(int ax, int ay, int bx, int by,
+                                           int cx, int cy, int dx, int dy) {
+    int ab_c = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+    int ab_d = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
+    int cd_a = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx);
+    int cd_b = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx);
+    return nexus_v1_dgn_sign(ab_c) != nexus_v1_dgn_sign(ab_d) &&
+           nexus_v1_dgn_sign(cd_a) != nexus_v1_dgn_sign(cd_b);
+}
+
+static int nexus_v1_dgn_circle_blocks_step(const Nexus_V1_DgnCollisionSector *sector,
+                                           int start_x, int start_y) {
+    int radius = sector->x2 < 0 ? -sector->x2 : sector->x2;
+    int dx = -start_x;
+    int dy = -start_y;
+    int length_sq = dx * dx + dy * dy;
+    int t_num = (sector->x1 - start_x) * dx + (sector->y1 - start_y) * dy;
+    int closest_x;
+    int closest_y;
+    if (radius == 0) return 0;
+    if (t_num <= 0) {
+        closest_x = start_x;
+        closest_y = start_y;
+    } else if (t_num >= length_sq) {
+        closest_x = 0;
+        closest_y = 0;
+    } else {
+        closest_x = start_x + (dx * t_num) / length_sq;
+        closest_y = start_y + (dy * t_num) / length_sq;
+    }
+    dx = sector->x1 - closest_x;
+    dy = sector->y1 - closest_y;
+    return dx * dx + dy * dy <= radius * radius;
+}
+
+int nexus_v1_level_move_allowed(const Nexus_V1_Level *level,
+                                int from_x, int from_y,
+                                int to_x, int to_y) {
+    Nexus_V1_DgnCellGeometry cell;
+    int start_x;
+    int start_y;
+
+    if (nexus_v1_level_get_cell_geometry(level, to_x, to_y, &cell) != 0 ||
+        cell.square_type == 0 || cell.collision_ref == 0x0fffU)
+        return 0;
+    if (!level->geometry_info.dmweb_container || !cell.collision_sector.valid)
+        return 1;
+
+    start_x = (from_x - to_x) * 128;
+    start_y = (from_y - to_y) * 128;
+    if (cell.collision_sector.circle)
+        return !nexus_v1_dgn_circle_blocks_step(&cell.collision_sector,
+                                                start_x, start_y);
+    return !nexus_v1_dgn_segments_intersect(start_x, start_y, 0, 0,
+                                             cell.collision_sector.x1,
+                                             cell.collision_sector.y1,
+                                             cell.collision_sector.x2,
+                                             cell.collision_sector.y2);
+}
+
 int nexus_v1_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt) {
@@ -421,29 +522,18 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
     command.y = y;
     command.depth = depth;
     command.lateral = lateral;
-    command.square_type = nexus_v1_level_get_square(level, x, y);
+    Nexus_V1_DgnCellGeometry cell;
+    (void)nexus_v1_level_get_cell_geometry(level, x, y, &cell);
+    command.square_type = cell.square_type;
     command.wall_dir = wall_dir & 3;
-    command.collision_ref =
-        (uint16_t)nexus_v1_level_get_collision_ref(level, x, y);
-    command.mesh_ref = level->mesh_refs[y][x];
-    if (command.collision_ref < NEXUS_DGN_MAX_COLLISION_SECTORS)
-        command.collision_sector =
-            level->collision_sectors[command.collision_ref];
-    command.floor_rotation = level->floor_rotations[y][x];
-    command.floor_slope = level->floor_slopes[y][x];
-    command.floor_height[0] = command.floor_height[1] =
-        command.floor_height[2] = command.floor_height[3] =
-            level->floor_heights[y][x];
-    if (command.floor_slope == 2U && x + 1 < level->width) {
-        command.floor_height[1] = command.floor_height[2] =
-            level->floor_heights[y][x + 1];
-    } else if (command.floor_slope == 3U && y + 1 < level->height) {
-        command.floor_height[2] = command.floor_height[3] =
-            level->floor_heights[y + 1][x];
-    }
-    for (int corner = 0; corner < 4; ++corner)
-        command.ceiling_height[corner] =
-            (int8_t)(command.floor_height[corner] + 32);
+    command.collision_ref = cell.collision_ref;
+    command.mesh_ref = cell.mesh_ref;
+    command.collision_sector = cell.collision_sector;
+    command.floor_rotation = cell.floor_rotation;
+    command.floor_slope = cell.floor_slope;
+    memcpy(command.floor_height, cell.floor_height, sizeof(command.floor_height));
+    memcpy(command.ceiling_height, cell.ceiling_height,
+           sizeof(command.ceiling_height));
     command.material_id = (uint8_t)nexus_v1_level_get_material_ref(
         level, x, y, kind, wall_dir);
     switch (kind) {
