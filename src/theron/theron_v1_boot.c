@@ -2962,6 +2962,62 @@ static int theron_v1_boot_startup_execute_atlas_graphics_plan(
     return executed;
 }
 
+/* A Track 02 image can expose only a subset of the startup surfaces (the
+ * derived US ISO is the important case).  Keep the decoded surfaces on the
+ * real-media path and use the established command renderer only for the
+ * missing commands.  Do not collapse the whole startup screen back to the
+ * synthetic path merely because one unrelated route is absent. */
+static int theron_v1_boot_startup_execute_hybrid_graphics_plan(
+    const Theron_StartupRenderPlan *plan,
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupGraphicsRouteReceipt *receipt)
+{
+    int i;
+    int executed = 0;
+
+    if (!plan || !media_receipt || !executor || !receipt) {
+        return 0;
+    }
+    for (i = 0; i < plan->graphic_count &&
+                i < THERON_STARTUP_RENDER_GRAPHIC_CAPACITY_MAX; ++i) {
+        const Theron_StartupRenderGraphicCommand *command =
+            &plan->graphics[i];
+        unsigned int route_bit =
+            theron_v1_boot_startup_graphic_route_bit(command->kind);
+        const Theron_Track02StartupBitmapAtlasRoute *route =
+            theron_v1_boot_startup_atlas_find_route(
+                &media_receipt->startup_bitmap_atlas, route_bit);
+
+        if (route && theron_v1_boot_startup_media_route_has_dense_bitmap(
+                         media_receipt, route_bit)) {
+            theron_v1_boot_startup_draw_atlas_route(command, route, executor);
+            if (!receipt->track02_startup_graphic_receipt_valid) {
+                receipt->track02_startup_graphic_receipt = *command;
+                receipt->track02_startup_graphic_receipt_valid = 1;
+            }
+            receipt->track02_atlas_graphics_route_mask |= route_bit;
+            ++receipt->track02_atlas_graphics_route_count;
+            receipt->track02_atlas_graphics_pixel_count +=
+                route->nonzero_pixel_count;
+            receipt->track02_atlas_graphics_checksum ^=
+                route->checksum + (uint32_t)(route_bit * 2654435761u);
+            executed = 1;
+        } else {
+            Theron_StartupRenderPlan command_plan;
+
+            memset(&command_plan, 0, sizeof(command_plan));
+            command_plan.graphics[0] = *command;
+            command_plan.graphic_count = 1;
+            if (theron_v1_boot_startup_execute_graphics_plan(&command_plan,
+                                                              executor)) {
+                executed = 1;
+            }
+        }
+    }
+    return executed;
+}
+
 int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
     const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupGraphicExecutor *executor,
@@ -3111,6 +3167,18 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
                 : 0;
         out_receipt->track02_atlas_startup_graphics_executed =
             out_receipt->graphics_executed ? 1 : 0;
+    } else if (out_receipt->track02_real_media_ready &&
+               view_model->startup_media_state_receipt.startup_bitmap_atlas_ready) {
+        out_receipt->graphics_executed =
+            theron_v1_boot_startup_execute_hybrid_graphics_plan(
+                &plan,
+                &view_model->startup_media_state_receipt,
+                executor,
+                out_receipt)
+                ? 1
+                : 0;
+        out_receipt->track02_atlas_startup_graphics_executed =
+            out_receipt->track02_atlas_graphics_route_mask != 0u ? 1 : 0;
     } else {
         out_receipt->graphics_executed =
             theron_v1_boot_startup_execute_graphics_plan(&plan, executor)
@@ -3119,8 +3187,7 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
     }
     out_receipt->track02_startup_graphics_executed =
         out_receipt->graphics_executed &&
-                out_receipt->real_bitmap_startup_graphics_ready &&
-                out_receipt->required_bitmap_routes_ready &&
+                out_receipt->track02_atlas_startup_graphics_executed &&
                 out_receipt->track02_startup_graphic_receipt_valid
             ? 1
             : 0;
