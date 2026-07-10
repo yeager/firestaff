@@ -1845,6 +1845,22 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &g_dm2_frame_ownership,
             g_dm2_last_door_render.panel_gdat_index);
     }
+    if (g_dm2_last_door_render.ornate_asset_drawn &&
+        g_dm2_last_door_render.ornate_gdat_index != 0) {
+        /* skproject DRAW_DOOR renders the Door::OrnateIndex() overlay from
+         * GDAT_CATEGORY_DOOR_GFX after the decoded base panel. */
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            g_dm2_last_door_render.ornate_gdat_index);
+    }
+    if (g_dm2_last_door_render.destroyed_mask_asset_drawn &&
+        g_dm2_last_door_render.destroyed_mask_gdat_index != 0) {
+        /* skproject DRAW_DOOR overlays the destroyed-door mask only after
+         * the matching GDAT image has reached the viewport blitter. */
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            g_dm2_last_door_render.destroyed_mask_gdat_index);
+    }
     if (viewport.asset_creature_drawn_count > 0 &&
         g_dm2_last_creature_render.gdat_index != 0) {
         dm2_runtime_add_viewport_asset_evidence(
