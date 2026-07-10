@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM2 skproject map-chip category proof: runtime HUD/dungeon capture now records separate raw/decoded readiness, byte/pixel counts, and hashes for skproject `DRAW_MAP_CHIP` categories `GRAPHICSSET`, `WALL_GFX`, and `FLOOR_GFX`. DM2 complete-support now requires all three category proofs instead of only the aggregate dungeon map-chip hash. Verification: `test_dm2_v1_boot_profile_smoke` passed 79/79, `firestaff_m11` built, and `git diff --check` passed.
+
 - ✅ 2026-07-11 DM1 legacy M11 alias cleanup: removed unused M11 compatibility aliases from the DM1 fakewall, chest reopen contents-order, D0L2/D0R2 floor-ornament, legacy text, portrait-panel, and draw-primitive headers. The public surface now exposes the DM1/ReDMCSB-owned names directly for those non-combat runtime/render helpers. Verification: `firestaff_m11` built, `test_dm1_v1_viewport_3d_pc34_compat` passed, alias `rg` check passed, and `git diff --check` passed.
 
 - ✅ 2026-07-11 CSB runtime asset-frame route proof: `CSB_V1_StartupRuntimeAssetFrame_PC34` now carries real-asset, full title-sequence, entrance, door, no-wrapper, title-phase-mask, and deterministic frame-route hash proof from the verified startup asset session. This moves CSB title/PRESENTS/CHAOS/STRIKES and entrance frame consumers away from loose session fields. Verification: `test_csb_v1_boot_title_import_ui_gate_pc34_compat` passed 116/116, `test_csb_v1_boot_runtime_handoff` passed 444/444, `firestaff_m11` built, and `git diff --check` passed.
