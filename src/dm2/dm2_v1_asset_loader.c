@@ -72,7 +72,6 @@ static const uint8_t DM2_PC_EN_GRAPHICS_MD5[16] DM2_MAYBE_UNUSED = {
 #define DM2_PC_GDAT_CONTAINER_WORD 0x8005u
 #define DM2_PC_GDAT_ENT1_WORD 0x8001u
 #define DM2_GDAT_ENTRY_TYPE_MAX 0x0e
-#define DM2_GDAT_TYPE_IMAGE 0x01u
 #define DM2_IMG3_HEADER_SIZE 10u
 #define DM2_IMG_LOCAL_PALETTE_SIZE 16u
 
@@ -726,6 +725,21 @@ const uint8_t *dm2_v1_asset_load_sized(const DM2_V1_AssetLoader *loader,
     return NULL;
 }
 
+const uint8_t *dm2_v1_asset_load_typed_sized(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    size_t *out_size)
+{
+    const DM2_V1_GdatEntry *entry;
+
+    if (out_size) *out_size = 0;
+    entry = dm2_gdat_find_entry(loader, category, index, type, field);
+    return dm2_gdat_raw_from_entry(loader, entry, out_size);
+}
+
 uint8_t *dm2_v1_asset_load_image(const DM2_V1_AssetLoader *loader,
                                    int category, int index,
                                    int *out_width, int *out_height,
@@ -760,7 +774,7 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
     entry = dm2_gdat_find_entry(loader,
                                 category,
                                 index,
-                                DM2_GDAT_TYPE_IMAGE,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE,
                                 field);
     raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return NULL;
