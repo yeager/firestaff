@@ -77,25 +77,6 @@ void csb_v2_hud_runtime_trigger_hit_flash(void);
 /* Chaos magic indicator (CSB-specific DSA active + power runes) */
 void csb_v2_hud_runtime_set_chaos_active(bool active, int power_rune_count);
 
-/* Atomic per-frame projection of the CSB V1 runtime.  This owns no game
- * state; it only keeps the presentation overlay from observing a mixture of
- * two ticks.  ReDMCSB PANEL.C F0354 refreshes champion boxes as one panel. */
-typedef struct CSB_V2_HudRuntimeFrame {
-    int direction;
-    int current_level;
-    int max_level;
-    int party_gold;
-    int champion_count;
-    int hp_pct[4];
-    int stamina_pct[4];
-    int mana_pct[4];
-    int leader_index;
-    int chaos_active;
-    int power_rune_count;
-} CSB_V2_HudRuntimeFrame;
-
-void csb_v2_hud_runtime_apply_frame(const CSB_V2_HudRuntimeFrame *frame);
-
 /* ── HUD toggle ────────────────────────────────────────────────── */
 void csb_v2_hud_runtime_toggle(void);
 void csb_v2_hud_runtime_set_opacity(uint8_t val);

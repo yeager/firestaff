@@ -184,6 +184,41 @@ typedef struct DM1_V1_ChampionMirrorHostDrawReceiptPc34 {
     const char *sourceAnchor;
 } DM1_V1_ChampionMirrorHostDrawReceiptPc34;
 
+/*
+ * Runtime hand-off for the HoC D1C mirror path.  M11 supplies the already
+ * decoded F0172/F0115 facts; DM1 owns the resulting wall, item, projectile
+ * and materialized-payload decisions.
+ */
+typedef struct DM1_V1_ChampionMirrorRuntimeRenderInputPc34 {
+    int wallSquareVisible;
+    int sensorType;
+    int sensorData;
+    int ornamentOrdinal;
+    int thingCell;
+    int visibleWallCell;
+    int candidatePanelActive;
+    int backingAssetAvailable;
+    const DM1V1D1LD1RF0115RuntimeThingReceiptPc34 *runtimeThingReceipt;
+} DM1_V1_ChampionMirrorRuntimeRenderInputPc34;
+
+typedef struct DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 {
+    int valid;
+    int consumedF0172Sensor;
+    int consumedF0115ThingReceipt;
+    int drawChampionPortraitAsWallOverlay;
+    int drawFloorObject;
+    int drawRuntimeProjectile;
+    int suppressMaterializedItemPayload;
+    int suppressMirrorAsFloorItem;
+    int suppressMirrorAsProjectile;
+    int suppressMirrorAsSpellEffect;
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 thingBoundary;
+    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 thingConsumer;
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
+} DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34;
+
 void DM1_V1_ChampionMirror_InitClickStatePc34(
     DM1_V1_ChampionMirrorClickStatePc34 *state);
 
@@ -251,6 +286,10 @@ int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
     int candidatePanelActive,
     int backingAssetAvailable,
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 *outReceipt);
+
+int DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+    const DM1_V1_ChampionMirrorRuntimeRenderInputPc34 *input,
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 *outDecision);
 
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void);
 

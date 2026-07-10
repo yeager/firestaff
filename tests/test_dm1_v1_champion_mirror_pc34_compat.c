@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 static int gTests;
 static int gPasses;
@@ -447,6 +448,54 @@ static void test_f0172_front_wall_sensor_receipt(void)
             consumer.thingLayerSafe == 1,
         "consumer suppresses mirror projectile leak while allowing projectile",
         "DUNVIEW.C:3913-3928; DUNVIEW.C:5668-5683");
+
+    {
+        DM1_V1_ChampionMirrorRuntimeRenderInputPc34 runtimeInput;
+        DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 runtimeDecision;
+
+        memset(&runtimeInput, 0, sizeof(runtimeInput));
+        runtimeInput.wallSquareVisible = 1;
+        runtimeInput.sensorType = 127;
+        runtimeInput.sensorData = 13;
+        runtimeInput.ornamentOrdinal = 4;
+        runtimeInput.thingCell = 2;
+        runtimeInput.visibleWallCell = 2;
+        runtimeInput.backingAssetAvailable = 1;
+        runtimeInput.runtimeThingReceipt = &floorThing;
+        CHECK_ANCHOR(
+            DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+                &runtimeInput, &runtimeDecision) == 1 &&
+                runtimeDecision.valid == 1 &&
+                runtimeDecision.consumedF0172Sensor == 1 &&
+                runtimeDecision.consumedF0115ThingReceipt == 1 &&
+                runtimeDecision.drawChampionPortraitAsWallOverlay == 1 &&
+                runtimeDecision.drawFloorObject == 1 &&
+                runtimeDecision.drawRuntimeProjectile == 0 &&
+                runtimeDecision.suppressMaterializedItemPayload == 1 &&
+                runtimeDecision.hostDraw.drawMirrorBackingAsset == 1,
+            "DM1 runtime decision keeps materialized floor object separate from HoC mirror",
+            "DUNGEON.C:2608-2612; DUNVIEW.C:3913-3928,5075");
+
+        runtimeInput.runtimeThingReceipt = &projectileThing;
+        CHECK_ANCHOR(
+            DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+                &runtimeInput, &runtimeDecision) == 1 &&
+                runtimeDecision.drawChampionPortraitAsWallOverlay == 1 &&
+                runtimeDecision.drawFloorObject == 0 &&
+                runtimeDecision.drawRuntimeProjectile == 1 &&
+                runtimeDecision.suppressMirrorAsProjectile == 1 &&
+                runtimeDecision.hostDraw.drawMirrorBackingAsset == 1,
+            "DM1 runtime decision allows a live projectile without reclassifying mirror payload",
+            "DUNVIEW.C:3913-3928,5668-5683");
+
+        CHECK_ANCHOR(
+            DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+                NULL, &runtimeDecision) == 0 &&
+                DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+                    &runtimeInput, NULL) == 0,
+            "runtime decision rejects incomplete hand-off",
+            "DM1 runtime render guard");
+    }
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
