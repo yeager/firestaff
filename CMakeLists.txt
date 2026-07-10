@@ -17911,6 +17911,7 @@ if(BUILD_TESTING)
     # remapping, transparent texel clipping and no-flat-fallback behavior.
     add_executable(test_nexus_v1_dgn_material_raster
         tests/test_nexus_v1_dgn_material_raster.c
+        src/shared/asset_find_by_hash.c
     )
     target_link_libraries(test_nexus_v1_dgn_material_raster PRIVATE
         firestaff_nexus m

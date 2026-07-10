@@ -10,6 +10,17 @@ void nexus_viewport_init(Nexus_Viewport *vp) {
     memcpy(vp->base_palette, vp->fb.palette, sizeof(vp->base_palette));
 }
 
+static int viewport_count_written_pixels(const Nexus_Framebuffer *fb)
+{
+    int i;
+    int count = 0;
+    if (!fb) return 0;
+    for (i = 0; i < NEXUS_FB_W * NEXUS_FB_H; ++i) {
+        if (fb->z_buffer[i] < 1e30f) ++count;
+    }
+    return count;
+}
+
 static const Nexus_DMDFTextureSurface *viewport_plan_surface(
     const Nexus_V1_Engine *engine, const Nexus_V1_DgnRenderCommand *command)
 {
@@ -95,6 +106,8 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
     int left_dy[4] = {0, -1, 0, 1};
 
     if (!vp || !engine || !engine->level_loaded) return;
+    memset(&vp->last_dgn_render_receipt, 0,
+           sizeof(vp->last_dgn_render_receipt));
 
     /* Clear framebuffer */
     nexus_fb_clear(&vp->fb);
@@ -117,11 +130,29 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         /* Real Nexus DGN path: draw only commands derived from Structure1B.
          * If this route blocks, do not fall through to synthetic legacy
          * visuals. */
+        vp->last_dgn_render_receipt.attempted = 1;
+        vp->last_dgn_render_receipt.used_real_dgn_route = 1;
+        vp->last_dgn_render_receipt.fallback_visuals_permitted = 0;
+        vp->last_dgn_render_receipt.party_x = px;
+        vp->last_dgn_render_receipt.party_y = py;
+        vp->last_dgn_render_receipt.party_dir = pdir;
         plan = nexus_v1_prepare_dgn_material_plan(engine, px, py, pdir);
         if (!plan) {
+            vp->last_dgn_render_receipt.blocked = 1;
             return;
         }
-        if (!viewport_sync_dgn_material_palette(vp, engine, plan)) return;
+        vp->last_dgn_render_receipt.command_count =
+            plan->receipt.command_count;
+        vp->last_dgn_render_receipt.floor_count = plan->receipt.floor_count;
+        vp->last_dgn_render_receipt.wall_count = plan->receipt.wall_count;
+        vp->last_dgn_render_receipt.ceiling_count =
+            plan->receipt.command_count - plan->receipt.floor_count -
+            plan->receipt.wall_count;
+        if (!viewport_sync_dgn_material_palette(vp, engine, plan)) {
+            vp->last_dgn_render_receipt.blocked = 1;
+            return;
+        }
+        vp->last_dgn_render_receipt.palette_synced = 1;
 
         for (i = 0; i < plan->receipt.command_count; ++i) {
             const Nexus_V1_DgnRenderCommand *command = &plan->commands[i];
@@ -129,6 +160,9 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
             uint8_t *texel_map;
             surface = viewport_plan_surface(engine, command);
             texel_map = viewport_plan_palette_map(vp, command);
+            if (surface && surface->valid) {
+                vp->last_dgn_render_receipt.material_surface_count++;
+            }
             switch (command->kind) {
             case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
                 nexus_draw_floor_tex_mapped_heights(&vp->fb, &vp->cam,
@@ -138,6 +172,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                                      command->floor_rotation,
                                      surface->pixels, surface->width,
                                      surface->height, surface->palette, texel_map);
+                vp->last_dgn_render_receipt.rasterized_command_count++;
                 break;
             case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
                 nexus_draw_ceiling_tex_mapped_heights(&vp->fb, &vp->cam,
@@ -147,6 +182,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                                        command->floor_rotation,
                                        surface->pixels, surface->width,
                                        surface->height, surface->palette, texel_map);
+                vp->last_dgn_render_receipt.rasterized_command_count++;
                 break;
             case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
             case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
@@ -156,13 +192,25 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                                            command->wall_dir, surface->pixels,
                                            surface->width, surface->height,
                                            surface->palette, texel_map);
+                vp->last_dgn_render_receipt.rasterized_command_count++;
                 break;
             default:
                 break;
             }
         }
+        vp->last_dgn_render_receipt.written_pixels =
+            viewport_count_written_pixels(&vp->fb);
+        vp->last_dgn_render_receipt.ready =
+            vp->last_dgn_render_receipt.command_count > 0 &&
+            vp->last_dgn_render_receipt.command_count ==
+                vp->last_dgn_render_receipt.material_surface_count &&
+            vp->last_dgn_render_receipt.command_count ==
+                vp->last_dgn_render_receipt.rasterized_command_count &&
+            vp->last_dgn_render_receipt.written_pixels > 0;
         return;
     }
+
+    vp->last_dgn_render_receipt.fallback_visuals_permitted = 1;
 
     /* Render squares in view cone: D0 (closest) to D3 (farthest) */
     for (d = 0; d < NEXUS_VIEW_DISTANCE; d++) {
@@ -218,4 +266,13 @@ void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out) {
     for (i = 0; i < NEXUS_FB_W * NEXUS_FB_H; i++) {
         rgba_out[i] = vp->fb.palette[vp->fb.color_buffer[i]];
     }
+}
+
+int nexus_viewport_last_dgn_render_receipt(
+    const Nexus_Viewport *vp,
+    Nexus_V1_DgnViewportRenderReceipt *out_receipt)
+{
+    if (!vp || !out_receipt) return -1;
+    *out_receipt = vp->last_dgn_render_receipt;
+    return 0;
 }
