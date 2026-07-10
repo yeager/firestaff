@@ -358,6 +358,29 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_game_init(&engine->game, data_dir);
     engine->audio_enabled = 1;
 
+    /* DGN Structure1B references are material indices. These banks retain
+     * only decoded DMDF BITM/PLTB surfaces; an absent or malformed archive
+     * leaves the real DGN viewport blank instead of fabricating colours. */
+    {
+        int material_size = 0;
+        uint8_t *material_data = nexus_v1_read_file(engine, "FLOORS.DMDF",
+                                                     &material_size);
+        if (material_data) {
+            (void)nexus_v1_dmdf_decode_material_bank(material_data,
+                                                      material_size,
+                                                      &engine->floor_materials);
+            free(material_data);
+        }
+        material_data = nexus_v1_read_file(engine, "WALLS.DMDF",
+                                            &material_size);
+        if (material_data) {
+            (void)nexus_v1_dmdf_decode_material_bank(material_data,
+                                                      material_size,
+                                                      &engine->wall_materials);
+            free(material_data);
+        }
+    }
+
     /* Init champion pool */
     nexus_v1_champions_init(&engine->champions);
 
@@ -591,6 +614,8 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
         nexus_v1_dmdf_free(&engine->models[i]);
     nexus_ui_manager_free(&engine->ui);
     nexus_v1_font_free(&engine->font);
+    nexus_v1_dmdf_free_material_bank(&engine->floor_materials);
+    nexus_v1_dmdf_free_material_bank(&engine->wall_materials);
     if (engine->source == NEXUS_SRC_ISO)
         nexus_iso_close(&engine->iso);
     memset(engine, 0, sizeof(*engine));

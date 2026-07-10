@@ -275,6 +275,30 @@ static void test_embedded_scan_and_raw_tail(void) {
           "short scan window does not overread partial BITM");
 }
 
+static void test_material_decode(void) {
+    uint8_t buf[768];
+    int texture_off = 0;
+    int total = 0;
+    Nexus_DMDFMaterialBank bank;
+
+    memset(&bank, 0, sizeof(bank));
+    CHECK(build_synthetic_dmdf(buf, (int)sizeof(buf), &texture_off, &total),
+          "material decode DMDF fixture built");
+    CHECK(nexus_v1_dmdf_decode_material_bank(buf, total, &bank) == 1,
+          "BITM and PLTB decode into a material bank");
+    CHECK(bank.valid == 1 && bank.surface_count == 1 &&
+          bank.surfaces[0].valid == 1,
+          "decoded material bank exposes its first surface");
+    CHECK(bank.surfaces[0].width == 16 && bank.surfaces[0].height == 8 &&
+          bank.surfaces[0].pixels[0] == 2 && bank.surfaces[0].pixels[1] == 2,
+          "packed 4bpp texels resolve through the BITM palette slot");
+    CHECK(bank.surfaces[0].palette[2] == 0xff200000U,
+          "PLTB BGR555 entry becomes the raster palette colour");
+    nexus_v1_dmdf_free_material_bank(&bank);
+    CHECK(bank.valid == 0 && bank.surface_count == 0,
+          "material bank free clears owned raster surfaces");
+}
+
 static void test_optional_real_mns(void) {
     const char *path = getenv("FIRESTAFF_NEXUS_MNS");
     char fallback[1024];
@@ -323,6 +347,7 @@ int main(void) {
     test_bitmap_block_happy_path();
     test_bitmap_block_rejections();
     test_embedded_scan_and_raw_tail();
+    test_material_decode();
     test_optional_real_mns();
 
     printf("\nResults: %d PASS, %d FAIL\n", g_pass, g_fail);

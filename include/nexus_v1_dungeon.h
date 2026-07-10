@@ -38,6 +38,8 @@ typedef struct {
     int width, height;
     uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint16_t collision_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint8_t floor_material_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint8_t wall_material_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE][4];
     int thing_count;
     int creature_count;
     int has_3d_geometry;
@@ -114,6 +116,9 @@ typedef struct {
 int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, int level_index);
 int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y);
 int nexus_v1_level_get_collision_ref(const Nexus_V1_Level *level, int x, int y);
+int nexus_v1_level_get_material_ref(const Nexus_V1_Level *level, int x, int y,
+                                    Nexus_V1_DgnRenderCommandKind kind,
+                                    int wall_dir);
 int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
                                const uint8_t *data,
                                int size);

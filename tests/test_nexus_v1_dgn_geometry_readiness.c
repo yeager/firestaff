@@ -172,6 +172,9 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
     structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
     set_square_type(structure1, structure1b_rel, 3, 4, 1);
     cell_at(structure1, structure1b_rel, 3, 4)[7] = 5;
+    cell_at(structure1, structure1b_rel, 3, 4)[2] = 21;
+    cell_at(structure1, structure1b_rel, 3, 4)[3] = 31;
+    cell_at(structure1, structure1b_rel, 3, 4)[4] = 41;
     set_square_type(structure1, structure1b_rel, 4, 4, 1);
     set_square_type(structure1, structure1b_rel, 3, 3, 1);
     set_collision_ref(structure1, structure1b_rel, 2, 4, 0x0fff);
@@ -205,18 +208,19 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           commands[0].x == 3 &&
           commands[0].y == 4 &&
           commands[0].collision_ref == 0x0105 &&
-          commands[0].material_id == 5 &&
-          commands[0].palette_index == 9 &&
+          commands[0].material_id == 21 &&
+          commands[0].palette_index == 21 &&
           commands[0].quad_y[0] > commands[0].quad_y[2],
           "DGN render plan projects and materials the real party floor");
     CHECK(commands[1].kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING &&
-          commands[1].palette_index == 5 &&
+          commands[1].material_id == 21 && commands[1].palette_index == 21 &&
           commands[1].quad_y[0] < commands[1].quad_y[1],
           "DGN render plan emits the paired projected ceiling material");
     CHECK(commands[4].kind == NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT &&
           commands[4].wall_dir == 3 &&
           commands[4].x == 3 &&
           commands[4].y == 4 &&
+          commands[4].material_id == 41 &&
           commands[4].quad_x[0] < commands[4].quad_x[1],
           "DGN render plan projects the left wall from Structure1B visibility");
     CHECK(receipt.first_blocking_depth == 2 &&
