@@ -24,23 +24,31 @@ static uint8_t nexus_v1_decode_structure1b_wall_material(
     return cell[(wall_dir & 3) < 2 ? 3 : 4];
 }
 
+static uint16_t nexus_v1_decode_structure1b_mesh_ref(const uint8_t *cell) {
+    return (uint16_t)((((unsigned)cell[5] << 4) |
+                       ((unsigned)cell[6] >> 4)) & 0x0fffU);
+}
+
+static uint8_t nexus_v1_decode_structure1b_floor_material(const uint8_t *cell) {
+    return (uint8_t)((rb16(cell) >> 7) & 0x1fU);
+}
+
+static uint8_t nexus_v1_decode_structure1b_ceiling_material(
+    const uint8_t *header, const uint8_t *cell) {
+    unsigned selection = (rb16(cell) >> 1) & 3U;
+    return selection == 0U ? 0U : header[8 + selection];
+}
+
 static int nexus_v1_decode_structure1b_cell(const uint8_t *cell) {
     uint16_t flags;
-    unsigned square_type;
     unsigned collision;
     if (!cell) {
         return 0;
     }
     flags = rb16(cell);
-    square_type = (unsigned)(cell[6] & 0x1FU);
     collision = (unsigned)nexus_v1_decode_structure1b_collision_ref(cell);
     if (collision == 0x0FFFU) {
         return 0; /* wall / cannot enter */
-    }
-    if (square_type == 0U || square_type == 1U ||
-        (square_type >= 2U && square_type <= 14U) ||
-        square_type == 21U || square_type == 22U) {
-        return (int)square_type;
     }
     if ((flags & 0x0001U) != 0) {
         return 8; /* door present */
@@ -183,7 +191,11 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                     int ref = nexus_v1_decode_structure1b_collision_ref(data + off);
                     level->squares[y][x] = (uint8_t)nexus_v1_decode_structure1b_cell(data + off);
                     level->collision_refs[y][x] = (uint16_t)ref;
-                    level->floor_material_refs[y][x] = data[off + 2];
+                    level->floor_material_refs[y][x] =
+                        nexus_v1_decode_structure1b_floor_material(data + off);
+                    level->ceiling_material_refs[y][x] =
+                        nexus_v1_decode_structure1b_ceiling_material(
+                            data + info.structure1_offset, data + off);
                     level->wall_material_refs[y][x][0] =
                         nexus_v1_decode_structure1b_wall_material(data + off, 0);
                     level->wall_material_refs[y][x][1] =
@@ -192,6 +204,28 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                         nexus_v1_decode_structure1b_wall_material(data + off, 2);
                     level->wall_material_refs[y][x][3] =
                         nexus_v1_decode_structure1b_wall_material(data + off, 3);
+                    level->floor_heights[y][x] = (int8_t)data[off + 3];
+                    level->floor_slopes[y][x] =
+                        (uint8_t)((rb16(data + off) >> 4) & 3U);
+                    level->floor_rotations[y][x] =
+                        (uint8_t)(rb16(data + off) >> 14);
+                    level->mesh_refs[y][x] =
+                        nexus_v1_decode_structure1b_mesh_ref(data + off);
+                }
+            }
+            {
+                const uint8_t *sectors = data + info.geometry_offset;
+                int sector_count = sectors[0] > 0 ? sectors[0] - 1 : 0;
+                if (sector_count > NEXUS_DGN_MAX_COLLISION_SECTORS - 1)
+                    sector_count = NEXUS_DGN_MAX_COLLISION_SECTORS - 1;
+                for (int sector = 1; sector <= sector_count; ++sector) {
+                    const uint8_t *src = sectors + sector * 4;
+                    Nexus_V1_DgnCollisionSector *dst =
+                        &level->collision_sectors[sector];
+                    dst->valid = 1;
+                    dst->x1 = (int8_t)src[0]; dst->y1 = (int8_t)src[1];
+                    dst->x2 = (int8_t)src[2]; dst->y2 = (int8_t)src[3];
+                    dst->circle = src[3] == 0x80U;
                 }
             }
             level->has_3d_geometry = 1;
@@ -272,8 +306,11 @@ int nexus_v1_level_get_material_ref(const Nexus_V1_Level *level, int x, int y,
     if (!level || x < 0 || x >= level->width || y < 0 || y >= level->height)
         return -1;
     if (kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
-        kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
+        kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING) {
+        if (kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
+            return level->ceiling_material_refs[y][x];
         return level->floor_material_refs[y][x];
+    }
     return level->wall_material_refs[y][x][wall_dir & 3];
 }
 
@@ -388,6 +425,25 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
     command.wall_dir = wall_dir & 3;
     command.collision_ref =
         (uint16_t)nexus_v1_level_get_collision_ref(level, x, y);
+    command.mesh_ref = level->mesh_refs[y][x];
+    if (command.collision_ref < NEXUS_DGN_MAX_COLLISION_SECTORS)
+        command.collision_sector =
+            level->collision_sectors[command.collision_ref];
+    command.floor_rotation = level->floor_rotations[y][x];
+    command.floor_slope = level->floor_slopes[y][x];
+    command.floor_height[0] = command.floor_height[1] =
+        command.floor_height[2] = command.floor_height[3] =
+            level->floor_heights[y][x];
+    if (command.floor_slope == 2U && x + 1 < level->width) {
+        command.floor_height[1] = command.floor_height[2] =
+            level->floor_heights[y][x + 1];
+    } else if (command.floor_slope == 3U && y + 1 < level->height) {
+        command.floor_height[2] = command.floor_height[3] =
+            level->floor_heights[y + 1][x];
+    }
+    for (int corner = 0; corner < 4; ++corner)
+        command.ceiling_height[corner] =
+            (int8_t)(command.floor_height[corner] + 32);
     command.material_id = (uint8_t)nexus_v1_level_get_material_ref(
         level, x, y, kind, wall_dir);
     switch (kind) {

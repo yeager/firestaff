@@ -131,16 +131,20 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
             texel_map = viewport_plan_palette_map(vp, command);
             switch (command->kind) {
             case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
-                nexus_draw_floor_tex_mapped(&vp->fb, &vp->cam,
+                nexus_draw_floor_tex_mapped_heights(&vp->fb, &vp->cam,
                                      (float)command->x,
                                      (float)command->y,
+                                     command->floor_height,
+                                     command->floor_rotation,
                                      surface->pixels, surface->width,
                                      surface->height, surface->palette, texel_map);
                 break;
             case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
-                nexus_draw_ceiling_tex_mapped(&vp->fb, &vp->cam,
+                nexus_draw_ceiling_tex_mapped_heights(&vp->fb, &vp->cam,
                                        (float)command->x,
                                        (float)command->y,
+                                       command->ceiling_height,
+                                       command->floor_rotation,
                                        surface->pixels, surface->width,
                                        surface->height, surface->palette, texel_map);
                 break;
