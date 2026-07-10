@@ -12,6 +12,7 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_failures;
 static unsigned char g_surface_pixel = 7u;
+static uint8_t g_material_pixel = 1u;
 
 static void expect_true(int condition, const char *message)
 {
@@ -78,6 +79,20 @@ static void fill_ready_engine(Nexus_V1_Engine *engine)
     engine->current_level.squares[4][4] = 1;
     engine->current_level.collision_refs[4][3] = 0x0100;
     engine->current_level.collision_refs[3][3] = 0x0fff;
+    engine->floor_materials.valid = 1;
+    engine->floor_materials.surface_count = 1;
+    engine->floor_materials.surfaces[0].pixels = &g_material_pixel;
+    engine->floor_materials.surfaces[0].width = 1;
+    engine->floor_materials.surfaces[0].height = 1;
+    engine->floor_materials.surfaces[0].palette[1] = 0xffffffffU;
+    engine->floor_materials.surfaces[0].valid = 1;
+    engine->wall_materials.valid = 1;
+    engine->wall_materials.surface_count = 1;
+    engine->wall_materials.surfaces[0].pixels = &g_material_pixel;
+    engine->wall_materials.surfaces[0].width = 1;
+    engine->wall_materials.surfaces[0].height = 1;
+    engine->wall_materials.surfaces[0].palette[1] = 0xffffffffU;
+    engine->wall_materials.surfaces[0].valid = 1;
     nexus_v1_champions_init(&engine->champions);
     (void)nexus_v1_champion_recruit(&engine->champions, 0);
 }
@@ -200,6 +215,16 @@ int main(void)
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) > 0,
                 "M11 Nexus runtime consumes cached DGN commands");
+
+    fill_ready_engine(&engine);
+    fill_view(&view, &engine);
+    memset(&engine.floor_materials, 0, sizeof(engine.floor_materials));
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
+    expect_true(result == M11_GAME_INPUT_REDRAW &&
+                    view.nexusState.startup_runtime_handoff_ready == 0 &&
+                    view.nexusState.startup_dgn_render_ready == 0 &&
+                    view.nexusState.startup_dgn_render_blocked == 1,
+                "M11 Nexus champion start blocks DGN geometry without decoded floor textures");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);

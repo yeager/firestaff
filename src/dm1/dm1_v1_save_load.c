@@ -191,6 +191,41 @@ static int dm1_try_load_original_pc34_game(
     return DM1_SAVE_OK;
 }
 
+static int dm1_try_validate_original_pc34_game(
+    const char* path,
+    struct DM1SaveHeader* outHeader)
+{
+    struct GameWorld_Compat world;
+    DM1OriginalSavePC34HandoffReport report;
+    int rc;
+
+    if (!path || !outHeader) return DM1_SAVE_ERROR_NULL_ARG;
+
+    memset(&world, 0, sizeof(world));
+    memset(&report, 0, sizeof(report));
+
+    /* ReDMCSB LOADSAVE.C F0435 validates the header, then reads and
+     * deobfuscates each SAVE_PART before allowing the runtime to resume.
+     * Keep validation on that same bounded PC34 import path so a caller
+     * cannot advertise an original save that DM1_LoadGame would reject. */
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_file(
+        path, &world, NULL, &report);
+    if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        dm1_fill_header_from_original_pc34(&world, &report, outHeader);
+        F0883_WORLD_Free_Compat(&world);
+        return DM1_SAVE_OK;
+    }
+
+    F0883_WORLD_Free_Compat(&world);
+    if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE) {
+        return DM1_SAVE_ERROR_FILE_READ;
+    }
+    if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34) {
+        return DM1_SAVE_ERROR_BAD_MAGIC;
+    }
+    return DM1_SAVE_ERROR_DESERIALIZE;
+}
+
 /* ── Save game ────────────────────────────────────────────────── */
 
 /*
@@ -558,7 +593,10 @@ int DM1_ValidateSaveFile(const char* path,
 
     dm1_deserialize_header(headerBuf, &hdr);
 
-    if (memcmp(hdr.magic, DM1_SAVE_MAGIC, 8) != 0) { fclose(file); return DM1_SAVE_ERROR_BAD_MAGIC; }
+    if (memcmp(hdr.magic, DM1_SAVE_MAGIC, 8) != 0) {
+        fclose(file);
+        return dm1_try_validate_original_pc34_game(path, outHeader);
+    }
     if (hdr.formatVersion < DM1_SAVE_FORMAT_VERSION_MIN ||
         hdr.formatVersion > DM1_SAVE_FORMAT_VERSION) {
         fclose(file);

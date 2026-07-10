@@ -663,6 +663,24 @@ static int test_original_pc34_runtime_load_fallback(void) {
 
     F0883_WORLD_Free_Compat(&world);
 
+    memset(&hdr, 0, sizeof(hdr));
+    rc = DM1_ValidateSaveFile(path, &hdr);
+    if (rc != DM1_SAVE_OK) {
+        printf("  FAIL: ValidateSaveFile original PC34 returned %d (%s)\n",
+               rc, DM1_SaveLoadErrorString(rc));
+        ok = 0;
+    } else {
+        ok &= expect_u32_eq("original PC34 validate header tick",
+                            hdr.gameTick, 7777u);
+        ok &= expect_int_eq("original PC34 validate header map",
+                            hdr.partyMapIndex, 4);
+        ok &= expect_int_eq("original PC34 validate header champions",
+                            hdr.championCount, 1);
+        ok &= expect_int_eq("original PC34 validate header format",
+                            hdr.formatID,
+                            SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC);
+    }
+
     if (!write_original_pc34_dm1_save_file(backup)) {
         printf("  FAIL: could not write original PC34 backup fixture\n");
         remove(path);
@@ -1287,6 +1305,22 @@ static int test_pc34_writeback_path(void) {
                             loaded.creatureAICount, 1);
         ok &= expect_int_eq("pc34 writeback load active group cells",
                             loaded.creatureAI[0].groupCells, 0xa5);
+    }
+
+    memset(&hdr, 0, sizeof(hdr));
+    rc = DM1_ValidateSaveFile(path, &hdr);
+    if (rc != DM1_SAVE_OK) {
+        printf("  FAIL: ValidateSaveFile rejected SaveGamePC34 file rc=%d (%s)\n",
+               rc, DM1_SaveLoadErrorString(rc));
+        ok = 0;
+    } else {
+        ok &= expect_int_eq("pc34 writeback validate format",
+                            hdr.formatID,
+                            SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC);
+        ok &= expect_u32_eq("pc34 writeback validate tick",
+                            hdr.gameTick, before.gameTick);
+        ok &= expect_int_eq("pc34 writeback validate champions",
+                            hdr.championCount, before.party.championCount);
     }
 
     remove(path);

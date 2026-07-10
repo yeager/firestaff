@@ -2165,6 +2165,7 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
+    const Nexus_V1_DgnMaterialPlan *material_plan;
     Nexus_ScriptRuntimeReceipt script_receipt;
 
     nexus_v1_launcher_startup_runtime_handoff_receipt_clear(out_receipt);
@@ -2228,28 +2229,32 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     out_receipt->dgn_handoff = dgn_handoff;
     out_receipt->dgn_route =
         nexus_v1_dgn_renderer_handoff_status_name(dgn_handoff.status);
-    memset(&render_plan, 0, sizeof(render_plan));
-    if (nexus_v1_level_build_dgn_view_render_plan(
-            &state->engine->current_level,
-            state->engine->game.party_x,
-            state->engine->game.party_y,
-            state->engine->game.party_dir,
-            out_commands,
-            max_commands,
-            &render_plan) != 0 ||
-        !render_plan.plan_ready ||
-        render_plan.blocks_real_dgn_mesh_render) {
+    /* The runtime handoff must share the viewport's material-validated DGN
+     * plan. Geometry alone is not a renderable Saturn dungeon frame. */
+    material_plan = nexus_v1_prepare_dgn_material_plan(
+        state->engine,
+        state->engine->game.party_x,
+        state->engine->game.party_y,
+        state->engine->game.party_dir);
+    render_plan = state->engine->dgn_material_plan.receipt;
+    if (!material_plan || !render_plan.plan_ready ||
+        render_plan.blocks_real_dgn_mesh_render || !out_commands ||
+        max_commands < render_plan.command_count) {
         out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
         out_receipt->render_plan = render_plan;
         out_receipt->dgn_render_blocked = 1;
         out_receipt->fallback_visuals_permitted =
             render_plan.fallback_visuals_permitted;
         out_receipt->status_scope = "DGN";
-        out_receipt->status = out_receipt->dgn_route
+        out_receipt->status = !material_plan
+            ? "blocked-dgn-material"
+            : out_receipt->dgn_route
             ? out_receipt->dgn_route
             : "blocked-dgn-render";
         return 1;
     }
+    memcpy(out_commands, material_plan->commands,
+           (size_t)render_plan.command_count * sizeof(*out_commands));
 
     out_receipt->route =
         NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE;

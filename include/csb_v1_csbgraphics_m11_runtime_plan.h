@@ -34,8 +34,9 @@
 extern "C" {
 #endif
 
-#define CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_MAX_ENTRIES 16
+#define CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_MAX_ENTRIES 20
 #define CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS 32
+#define CSB_V1_CSBGRAPHICS_STARTUP_PACKAGE_MAX_ASSETS 6
 
 typedef enum {
     CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK = 0,
@@ -54,6 +55,56 @@ typedef enum {
     CSB_V1_CSBGRAPHICS_M11_CUSTOM_BACKGROUND_LAYER_NEAR = 2
 } CSB_V1_CSBGraphicsM11CustomBackgroundLayer;
 
+/* CSBWin's override index deliberately has no fixed public entry numbers for
+ * title / entrance art.  Package data therefore supplies those indices
+ * explicitly, while this contract pins the source-locked geometry. ReDMCSB
+ * ENTRANCE.C F0806 loads C002/C003 into the C430/C431 105x161 door zones and
+ * draws the C429 entrance screen behind them. */
+typedef enum {
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE = 0,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_SCREEN,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_RIGHT_DOOR,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_RESURRECT_PANEL,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT
+} CSB_V1_CSBGraphicsStartupAssetRole;
+
+typedef struct {
+    CSB_V1_CSBGraphicsStartupAssetRole role;
+    uint32_t entry_index;
+    uint16_t width;
+    uint16_t height;
+} CSB_V1_CSBGraphicsStartupPackageSpec;
+
+typedef struct {
+    CSB_V1_CSBGraphicsStartupAssetRole role;
+    uint32_t entry_index;
+    uint16_t width;
+    uint16_t height;
+    uint16_t decompressed_size;
+    int present;
+} CSB_V1_CSBGraphicsStartupPackageAsset;
+
+typedef struct {
+    int valid;
+    int startup_ready;
+    int door_pair_ready;
+    int hud_ready;
+    uint32_t asset_count;
+    CSB_V1_CSBGraphicsStartupPackageAsset
+        assets[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT];
+} CSB_V1_CSBGraphicsStartupPackage;
+
+typedef struct {
+    uint8_t *pixels;
+    uint16_t width;
+    uint16_t height;
+    uint32_t entry_index;
+    CSB_V1_CSBGraphicsStartupAssetRole role;
+    int valid;
+} CSB_V1_CSBGraphicsStartupDecodedSurface;
+
 typedef struct {
     uint32_t entry_index;
     uint32_t mask_entry_index;
@@ -67,6 +118,8 @@ typedef struct {
     int needs_hud_redraw;
     int needs_custom_background_composite;
     int deferred_masked_composite;
+    int needs_startup_redraw;
+    CSB_V1_CSBGraphicsStartupAssetRole startup_role;
     CSB_V1_CSBGraphicsM11CustomBackgroundLayer custom_background_layer;
 } CSB_V1_CSBGraphicsM11RuntimePlanEntry;
 
@@ -98,6 +151,30 @@ int csb_v1_csbgraphics_m11_runtime_plan_add_explicit_entry(
     uint16_t expected_width,
     uint16_t expected_height,
     CSB_V1_CSBGraphicsM11RuntimePlan *plan);
+
+/* Validate a caller-owned CSBgraphics package manifest and append its known
+ * HUD entries to `plan`. Startup entries remain a CSB-owned decoded-surface
+ * handoff; no M11 game-view integration is implied.  Core startup art is
+ * title + entrance screen + the C430/C431 door pair. HUD entries are
+ * optional, but only their source-locked geometry is accepted. */
+void csb_v1_csbgraphics_startup_package_init(
+    CSB_V1_CSBGraphicsStartupPackage *package);
+int csb_v1_csbgraphics_m11_runtime_plan_add_startup_package(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsStartupPackageSpec *specs,
+    size_t spec_count,
+    CSB_V1_CSBGraphicsM11RuntimePlan *plan,
+    CSB_V1_CSBGraphicsStartupPackage *out_package);
+
+/* Decode one validated package asset into an owned 8-bit indexed surface.
+ * Release it with csb_v1_csbgraphics_startup_decoded_surface_release(). */
+int csb_v1_csbgraphics_startup_package_decode_surface(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsStartupPackage *package,
+    CSB_V1_CSBGraphicsStartupAssetRole role,
+    CSB_V1_CSBGraphicsStartupDecodedSurface *out_surface);
+void csb_v1_csbgraphics_startup_decoded_surface_release(
+    CSB_V1_CSBGraphicsStartupDecodedSurface *surface);
 
 int csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
     const CSB_V1_CSBGraphicsDatRealCache *cache,
