@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 CSB direct verified launch save-root binding: `csb_v1_boot_enter_game` now binds the default CSB save root when a verified profile is launched without going through the scanner, so save/import receipts and CSBWin resume import stay valid in direct/runtime tests. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_launcher_handoff_boundary`, and `git diff --check` passed.
+
+- ✅ 2026-07-10 CSB M11 startup fallback suppression: the production CSB startup host executor now suppresses door/text fallback callbacks instead of drawing legacy synthetic doors or fallback text over receipt-owned title/HUD/opening frames. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_launcher_handoff_boundary`, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 original-save corpus scan: added a bounded `dm1_v1_original_save_classify_corpus_root` API that scans arbitrary regular save filenames in the selected root, not only the four legacy DMSAVE/DMGAME candidate names. This gives the DM1 original-save route a stronger real user-save corpus boundary while leaving existing fixed-name callers untouched. Verification: `test_dm1_v1_original_save_classifier_pc34`, `test_save_browser_export_import_m12`, and `test_dm1_v1_startup_intro_state_machine_gate` passed.
 
 - ✅ 2026-07-10 CSB title/entrance visual regression: `test_csb_v1_m11_launcher_handoff_boundary` now captures real CSB PRESENTS, CHAOS, closed-entrance, and opening-entrance frames and verifies title phase changes plus visible door-opening movement. Verification: `test_csb_v1_m11_launcher_handoff_boundary`, `test_csb_v1_m11_startup_resume_gate`, `test_dm1_v1_startup_intro_state_machine_gate`, `test_title_frontend_step_palette_v1_pc34_compat`, and `test_title_frontend_c001_fallback_gate_pc34_compat` passed.
