@@ -150,6 +150,8 @@ static void theron_v1_startup_media_record_atlas_route(
     const Theron_Track02StartupBitmapAtlasRoute *route) {
     size_t *tile_count = NULL;
     uint16_t *width = NULL;
+    size_t min_wide_tiles = 12u;
+    uint16_t min_wide_width = 96u;
 
     if (!media || !route) {
         return;
@@ -176,6 +178,14 @@ static void theron_v1_startup_media_record_atlas_route(
     }
     *tile_count = route->tile_count;
     *width = route->width;
+    if (route->tile_count >= min_wide_tiles &&
+        route->width >= min_wide_width &&
+        route->nonzero_pixel_count > 0u &&
+        (media->startup_bitmap_wide_route_mask & route->route_bit) == 0u) {
+        media->startup_bitmap_wide_route_mask |= route->route_bit;
+        ++media->startup_bitmap_wide_route_count;
+        media->startup_bitmap_wide_atlas_tile_count += route->tile_count;
+    }
 }
 
 static void theron_v1_startup_media_capture_bitmaps(
@@ -363,6 +373,12 @@ void theron_v1_startup_media_capture_track02_state_receipt(
         media.startup_bitmap_soul_room_atlas_width;
     out_receipt->startup_bitmap_forcefield_atlas_width =
         media.startup_bitmap_forcefield_atlas_width;
+    out_receipt->startup_bitmap_wide_route_mask =
+        media.startup_bitmap_wide_route_mask;
+    out_receipt->startup_bitmap_wide_route_count =
+        media.startup_bitmap_wide_route_count;
+    out_receipt->startup_bitmap_wide_atlas_tile_count =
+        media.startup_bitmap_wide_atlas_tile_count;
     out_receipt->startup_roster_name_status =
         media.startup_roster_name_status;
     out_receipt->startup_text_prompt_status =
