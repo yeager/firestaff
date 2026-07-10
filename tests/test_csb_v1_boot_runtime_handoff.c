@@ -2209,8 +2209,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootProfile boot;
     CSB_V1_StartupHostFacts_PC34 facts;
     CSB_V1_UtilRenderPlan plan;
-    CSB_V1_UtilApplyReceipt receipt;
-    CSB_V1_UtilStateReceipt state_receipt;
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 action_receipt;
     CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
@@ -2578,26 +2576,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                      "CHAOS STRIKES BACK READY") != NULL,
           "runtime utility render wrapper owns M11 utility facts");
 
-    CHECK(csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
-              &facts,
-              2,
-              &receipt,
-              &state_receipt) == 1,
-          "runtime utility keyboard wrapper accepts startup host facts");
-    CHECK(state_receipt.selected_action_index == 1 &&
-              receipt.result == CSB_V1_UTIL_APPLY_REDRAW,
-          "runtime utility keyboard wrapper owns M11 utility facts");
-
-    CHECK(csb_v1_runtime_util_apply_point_from_startup_host_facts_pc34(
-              &facts,
-              72,
-              126,
-              &receipt,
-              &state_receipt) == 1,
-          "runtime utility pointer wrapper accepts startup host facts");
-    CHECK(state_receipt.selected_action_index >= 0,
-          "runtime utility pointer wrapper owns M11 utility facts");
-
     facts.utility_selected_action_index = 0;
     CHECK(csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
               &facts,
@@ -2608,6 +2586,17 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               action_receipt.util_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
               !action_receipt.entrance_receipt_valid,
           "runtime utility keyboard action wrapper owns redraw receipt");
+
+    CHECK(csb_v1_runtime_util_apply_point_from_startup_host_facts_with_action_receipt_pc34(
+              &facts,
+              72,
+              126,
+              &action_receipt) == 1,
+          "runtime utility pointer action wrapper accepts startup host facts");
+    CHECK(action_receipt.util_receipt.result ==
+              CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+              action_receipt.entrance_receipt_valid,
+          "runtime utility pointer action wrapper owns M11 utility facts");
 
     facts.utility_selected_action_index = 1;
     CHECK(csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(

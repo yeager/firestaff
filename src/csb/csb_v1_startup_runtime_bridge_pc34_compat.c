@@ -302,7 +302,7 @@ int csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
         out_plan);
 }
 
-int csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
+static int csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
     int selected_action_index,
     int imported_champion_count,
     const void *boot_profile,
@@ -332,7 +332,7 @@ int csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
         out_state_receipt);
 }
 
-int csb_v1_runtime_util_apply_point_from_startup_host_facts_pc34(
+static int csb_v1_runtime_util_apply_point_from_startup_host_facts_pc34(
     const CSB_V1_StartupHostFacts_PC34 *facts,
     int x,
     int y,
@@ -356,7 +356,7 @@ int csb_v1_runtime_util_apply_point_from_startup_host_facts_pc34(
         out_state_receipt);
 }
 
-int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts_pc34(
+static int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts_pc34(
     int selected_action_index,
     int imported_champion_count,
     const void *boot_profile,
@@ -384,7 +384,7 @@ int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts
         out_state_receipt);
 }
 
-int csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
+static int csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
     const CSB_V1_StartupHostFacts_PC34 *facts,
     int menu_input,
     CSB_V1_UtilApplyReceipt *out_receipt,

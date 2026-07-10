@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 CSB utility startup action-wrapper cleanup: removed public non-action utility keyboard/pointer startup wrappers from the runtime header and kept the implementation internal behind action receipts. Tests now verify keyboard and pointer utility startup through the same action receipt path that chains entrance/runtime consumption. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_startup_entrance_pointer_pc34_compat`, focused `-Wall -Wextra -Werror` syntax checks, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 M12 HoC capture consumer gate: M12 now derives host-render, M11 boot-probe, and M12 startup capture consumers from the DM1 HoC presented-capture receipt mask instead of hardcoding host/M12 consumers. The DM1 V1 required-launch test now proves missing host-render or M12 consumer bits block packaged HoC capture readiness, and skips screenshot-gallery scanning so local image files cannot hang this gate. Verification: `cmake --build build --target test_m12_dm1_v1_required_complete_launches`, `./build/test_m12_dm1_v1_required_complete_launches`, `./build/test_dm1_v1_startup_intro_state_machine_gate`, and focused test-source syntax check passed.
 
 
