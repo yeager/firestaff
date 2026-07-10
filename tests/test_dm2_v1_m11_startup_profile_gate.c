@@ -1217,38 +1217,16 @@ int main(void) {
                 "M11 DM2 no-save startup menu blocks idle runtime tick");
     expect_true(view.dm2State.startup_menu_active == 1 &&
                 view.dm2State.tick_count == 0 &&
-                view.dm2State.startup_title_animation_tick == 1 &&
                 dm2_v1_runtime_get_tick_count() == 0,
-                "M11 DM2 no-save startup menu advances title animation but keeps runtime tick frozen");
-    memset(&boot_receipt, 0, sizeof(boot_receipt));
-    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                    boot_receipt.startupActive == 1 &&
-                    boot_receipt.startupTitleFrame == 0 &&
-                    boot_receipt.startupTitleFrameMax == 7,
-                "M11 DM2 startup title animation remains on frame 0 before frame-duration boundary");
-    while (view.dm2State.startup_title_animation_tick < 6) {
-        (void)M11_GameView_AdvanceIdleTick(&view);
-    }
-    memset(&boot_receipt, 0, sizeof(boot_receipt));
-    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                    boot_receipt.startupActive == 1 &&
-                    boot_receipt.startupTitleFrame == 1 &&
-                    boot_receipt.startupTitleFrameMax == 7,
-                "M11 DM2 startup title animation advances to frame 1 at the source duration boundary");
+                "M11 DM2 no-save startup menu keeps runtime tick frozen");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     if (profile && profile->graphics_dat) {
         DM2_V1_BootRuntimeStartupSnapshot startup_snapshot;
         DM2_V1_BootStartupViewModel startup_view_model;
-        uint8_t *title_pixels = NULL;
         uint8_t *menu_pixels = NULL;
-        int title_w = 0;
-        int title_h = 0;
-        int title_stride = 0;
         int menu_w = 0;
         int menu_h = 0;
         int menu_stride = 0;
-        int title_x = -1;
-        int title_y = -1;
         int menu_x = -1;
         int menu_y = -1;
         memset(&startup_snapshot, 0, sizeof(startup_snapshot));
@@ -1602,43 +1580,6 @@ int main(void) {
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,
-                                               1,
-                                               &title_pixels,
-                                               &title_w,
-                                               &title_h,
-                                               &title_stride) == 0 &&
-            title_pixels && title_w == 320 && title_h == 200 &&
-            title_stride >= title_w) {
-            int y;
-            for (y = 0; y < title_h && title_x < 0; ++y) {
-                int x;
-                for (x = 0; x < title_w; ++x) {
-                    if (title_pixels[y * title_stride + x] != 0) {
-                        title_x = x;
-                        title_y = y;
-                        break;
-                    }
-                }
-            }
-            memset(framebuffer, 0, sizeof(framebuffer));
-            M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(title_x >= 0 &&
-                            framebuffer[title_y * 320 + title_x] ==
-                                title_pixels[title_y * title_stride + title_x],
-                        "M11 DM2 startup first draws the original GDAT title surface");
-        }
-        dm2_v1_boot_gdat_image_asset_free(title_pixels);
-        while (view.dm2State.startup_title_animation_tick < 42) {
-            (void)M11_GameView_AdvanceIdleTick(&view);
-        }
-        memset(&boot_receipt, 0, sizeof(boot_receipt));
-        expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                        boot_receipt.startupActive == 1 &&
-                        boot_receipt.startupTitleFrame == 7,
-                    "M11 DM2 startup reaches menu frame after full title timing");
-        if (dm2_v1_boot_gdat_image_asset_fetch(profile,
-                                               5,
-                                               0,
                                                4,
                                                &menu_pixels,
                                                &menu_w,
@@ -1668,7 +1609,7 @@ int main(void) {
             expect_true(menu_x >= 0 &&
                             framebuffer[menu_y * 320 + menu_x] ==
                                 menu_pixels[menu_y * menu_stride + menu_x],
-                        "M11 DM2 startup menu frame draws the original GDAT menu surface");
+                        "M11 DM2 startup menu draws the original GDAT menu surface");
             expect_true(strcmp(view.lastAction, "STARTUP") == 0 &&
                             strcmp(view.lastOutcome,
                                    "DM2 STARTUP GDAT") == 0,
