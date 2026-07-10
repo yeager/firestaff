@@ -9,6 +9,7 @@
 #if defined(_WIN32) || defined(_WIN64)
 #define DM1OS_PATH_SEP '\\'
 #else
+#include <dirent.h>
 #define DM1OS_PATH_SEP '/'
 #endif
 
@@ -142,6 +143,45 @@ static void set_reason(DM1OriginalSaveClassifyResult *out, const char *reason) {
     if (n >= sizeof(out->reason)) n = sizeof(out->reason) - 1u;
     memcpy(out->reason, reason, n);
     out->reason[n] = '\0';
+}
+
+static void copy_path(char *dst, size_t cap, const char *src) {
+    size_t n;
+    if (!dst || cap == 0u) return;
+    dst[0] = '\0';
+    if (!src) return;
+    n = strlen(src);
+    if (n >= cap) n = cap - 1u;
+    memcpy(dst, src, n);
+    dst[n] = '\0';
+}
+
+static void dm1_original_save_corpus_count_result(
+    DM1OriginalSaveCorpusManifest *manifest,
+    const DM1OriginalSaveClassifyResult *result) {
+    if (!manifest || !result) return;
+    if (result->shape != DM1_ORIGINAL_SAVE_SHAPE_ABSENT) {
+        manifest->present_count++;
+    }
+    if (result->readiness == DM1_ORIGINAL_SAVE_READY_CLASSIFIED_HEADER_ONLY) {
+        manifest->classified_count++;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1) {
+        manifest->original_dm1_count++;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34) {
+        manifest->original_dm1_count++;
+        manifest->original_dm1_pc34_count++;
+    }
+    if (result->pc34_importer_candidate) {
+        manifest->pc34_importer_candidate_count++;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_FIRESTAFF_NATIVE) {
+        manifest->firestaff_native_count++;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_REJECTED) {
+        manifest->rejected_count++;
+    }
 }
 
 static int classify_original_header_with_endian(
@@ -442,6 +482,110 @@ int dm1_v1_original_save_classify_root(
     }
 
     return 1;
+}
+
+static int corpus_add_classified_file(
+    DM1OriginalSaveCorpusManifest *manifest,
+    const char *path) {
+    DM1OriginalSaveClassifyResult *result;
+    int slot;
+
+    if (!manifest || !path || !path[0]) return 0;
+    manifest->scanned_file_count++;
+    if (manifest->present_count >=
+        (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP) {
+        manifest->truncated_count++;
+        return 1;
+    }
+    slot = manifest->present_count;
+    result = &manifest->results[slot];
+    if (!dm1_v1_original_save_classify_file(path, result)) {
+        return 0;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_ABSENT) {
+        return 1;
+    }
+    copy_path(manifest->paths[slot],
+              sizeof(manifest->paths[slot]),
+              path);
+    dm1_original_save_corpus_count_result(manifest, result);
+    return 1;
+}
+
+int dm1_v1_original_save_classify_corpus_root(
+    const char *root,
+    DM1OriginalSaveCorpusManifest *out_manifest) {
+    if (!out_manifest) return 0;
+    memset(out_manifest, 0, sizeof(*out_manifest));
+    out_manifest->candidate_capacity =
+        (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP;
+
+    if (root && root[0]) {
+        copy_path(out_manifest->root, sizeof(out_manifest->root), root);
+    } else if (!dm1_v1_original_save_default_root(out_manifest->root)) {
+        return 0;
+    }
+
+#if defined(_WIN32) || defined(_WIN64)
+    {
+        DM1OriginalSaveManifest fixed;
+        if (!dm1_v1_original_save_classify_root(out_manifest->root, &fixed)) {
+            return 0;
+        }
+        for (int i = 0; i < fixed.candidate_count; ++i) {
+            if (fixed.results[i].shape == DM1_ORIGINAL_SAVE_SHAPE_ABSENT) {
+                continue;
+            }
+            if (out_manifest->present_count >=
+                (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP) {
+                out_manifest->truncated_count++;
+                break;
+            }
+            out_manifest->results[out_manifest->present_count] =
+                fixed.results[i];
+            copy_path(out_manifest->paths[out_manifest->present_count],
+                      sizeof(out_manifest->paths[out_manifest->present_count]),
+                      fixed.paths[i]);
+            out_manifest->scanned_file_count++;
+            dm1_original_save_corpus_count_result(
+                out_manifest,
+                &out_manifest->results[out_manifest->present_count]);
+        }
+        return 1;
+    }
+#else
+    {
+        DIR *dir = opendir(out_manifest->root);
+        struct dirent *entry;
+        if (!dir) {
+            return 1;
+        }
+        while ((entry = readdir(dir)) != NULL) {
+            char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+            struct stat st;
+            int n;
+            if (entry->d_name[0] == '.') {
+                continue;
+            }
+            n = snprintf(path, sizeof(path), "%s%c%s",
+                         out_manifest->root, DM1OS_PATH_SEP,
+                         entry->d_name);
+            if (n <= 0 || (size_t)n >= sizeof(path)) {
+                out_manifest->truncated_count++;
+                continue;
+            }
+            if (stat(path, &st) != 0 || !S_ISREG(st.st_mode)) {
+                continue;
+            }
+            if (!corpus_add_classified_file(out_manifest, path)) {
+                closedir(dir);
+                return 0;
+            }
+        }
+        closedir(dir);
+        return 1;
+    }
+#endif
 }
 
 const char *dm1_v1_original_save_shape_name(DM1OriginalSaveShape shape) {
