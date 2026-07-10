@@ -75,6 +75,15 @@ typedef enum {
     DM2_GDAT_CATEGORY_JAPANESE_FONT      = 0x1C,
 } DM2_GDAT_Category;
 
+typedef enum {
+    DM2_GDAT_ENTRY_TYPE_IMAGE        = 0x01,
+    DM2_GDAT_ENTRY_TYPE_RAW6         = 0x06,
+    DM2_GDAT_ENTRY_TYPE_RAW7         = 0x07,
+    DM2_GDAT_ENTRY_TYPE_RAW8         = 0x08,
+    DM2_GDAT_ENTRY_TYPE_PAL_IRGB     = 0x09,
+    DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET = 0x0D,
+} DM2_GDAT_EntryType;
+
 /* Viewport image fields used by the boot/runtime GDAT bridge.
  * skproject/SKWIN/defines.h GRAPHICSSET and map-chip field identifiers. */
 #define DM2_GDAT_GFXSET_FLOOR 0x00
@@ -136,6 +145,17 @@ const uint8_t *dm2_v1_asset_load(const DM2_V1_AssetLoader *loader,
 const uint8_t *dm2_v1_asset_load_sized(const DM2_V1_AssetLoader *loader,
                                         int category, int index, int field,
                                         size_t *out_size);
+
+/* Load raw asset by exact skproject GDAT type (cls3) plus
+ * category/index/field.  This mirrors QUERY_GDAT_ENTRY_DATA_PTR(cls1, cls2,
+ * cls3, cls4) and avoids conflating typed data with dtImage. */
+const uint8_t *dm2_v1_asset_load_typed_sized(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    size_t *out_size);
 
 /* Load image asset and decode to pixel buffer.
  * out_width, out_height set dimensions, out_format sets format.

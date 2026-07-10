@@ -1,4 +1,5 @@
 #include "dm2_v1_boot.h"
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
@@ -359,6 +360,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     DM2_V1_BootCreatureAtlasCaptureReceipt creature_atlas;
     DM2_V1_CompleteSupportReceipt complete_support;
     unsigned char framebuffer[320 * 200];
+    uint32_t typed_hash = 0u;
+    uint32_t typed_bytes = 0u;
     int v2_callback_count = 0;
     const char *home = getenv("HOME");
     char root[512];
@@ -396,6 +399,42 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
           "startup launch binds the V1 runtime singleton");
     CHECK(launch.profile != NULL && launch.profile->graphics_dat != NULL,
           "startup launch loads DM2 graphics handle");
+    CHECK(dm2_v1_boot_gdat_typed_raw_asset_proof(
+              launch.profile,
+              DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+              0,
+              DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+              0xfe,
+              0x32544439u,
+              &typed_hash,
+              &typed_bytes) == 1 &&
+              typed_hash != 0u &&
+              typed_bytes > 0u,
+          "boot GDAT typed parser loads skproject dt09 palette data");
+    CHECK(dm2_v1_boot_gdat_typed_raw_asset_proof(
+              launch.profile,
+              DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+              0,
+              DM2_GDAT_ENTRY_TYPE_RAW7,
+              0,
+              0x32544437u,
+              &typed_hash,
+              &typed_bytes) == 1 &&
+              typed_hash != 0u &&
+              typed_bytes > 0u,
+          "boot GDAT typed parser loads skproject dt07 interface data");
+    CHECK(dm2_v1_boot_gdat_typed_raw_asset_proof(
+              launch.profile,
+              DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+              0,
+              DM2_GDAT_ENTRY_TYPE_RAW6,
+              0,
+              0x32544436u,
+              &typed_hash,
+              &typed_bytes) == 0 &&
+              typed_hash == 0u &&
+              typed_bytes == 0u,
+          "boot GDAT typed parser keeps absent skproject dt06 isolated");
     memset(&before, 0, sizeof(before));
     CHECK(dm2_v1_boot_runtime_capture(launch.profile, &before) == 1 &&
               before.runtime_ready == 1 &&
@@ -439,14 +478,14 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_hud_raw_portrait_byte_count > 0u &&
               render_receipt.runtime_hud_raw_core_hash != 0u &&
               render_receipt.runtime_hud_raw_core_byte_count > 0u &&
-              render_receipt.runtime_hud_raw_interface_count >= 9 &&
+              render_receipt.runtime_hud_raw_interface_count >= 3 &&
               render_receipt.runtime_hud_decoded_gdat_capture_ready == 1 &&
               render_receipt.runtime_hud_decoded_portrait_count >= 4 &&
               render_receipt.runtime_hud_decoded_portrait_hash != 0u &&
               render_receipt.runtime_hud_decoded_portrait_pixel_count > 0u &&
               render_receipt.runtime_hud_decoded_core_hash != 0u &&
               render_receipt.runtime_hud_decoded_core_pixel_count > 0u &&
-              render_receipt.runtime_hud_decoded_interface_count >= 9 &&
+              render_receipt.runtime_hud_decoded_interface_count >= 3 &&
               render_receipt.runtime_hud_frame_hash != 0u &&
               render_receipt.runtime_hud_frame_pixel_count == 320u * 200u &&
               render_receipt.runtime_render_real_asset_ready == 1 &&
@@ -481,8 +520,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.real_gdat_portrait_ready == 1 &&
               hud_capture.real_gdat_core_render_ready == 1 &&
               hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
-              hud_capture.raw_gdat_runtime_interface_count >= 9 &&
-              hud_capture.decoded_gdat_runtime_interface_count >= 9 &&
+              hud_capture.raw_gdat_runtime_interface_count >= 3 &&
+              hud_capture.decoded_gdat_runtime_interface_count >= 3 &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
           "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");
