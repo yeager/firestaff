@@ -1,4 +1,5 @@
 #include "menu_startup_m12.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "nexus_v1_launcher.h"
 
 #include <stdio.h>
@@ -141,6 +142,11 @@ int main(void) {
                         boot.dm1HoCPresentedCapturePixelsReady == 1 &&
                         boot.dm1HoCPresentedCaptureBytes == 320 * 200 * 4 &&
                         boot.dm1HoCPresentedCaptureHash != 0u &&
+                        boot.dm1HoCPresentedCaptureChainReady == 1 &&
+                        boot.dm1HoCPresentedCaptureConsumerMask ==
+                            (DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+                             DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34) &&
+                        boot.dm1HoCPresentedCaptureChainHash != 0u &&
                         boot.dm1HoCOpenedEntranceFrameReady == 1 &&
                         boot.dm1HoCHallMirrorOverlayReady == 1 &&
                         boot.dm1HoCBlockedEnterUntilChampionReady == 1 &&

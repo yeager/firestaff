@@ -11555,6 +11555,16 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.presented_capture_height = presented_height;
     facts.presented_capture_byte_count = presented_byte_count;
     facts.presented_capture_hash = presented_hash;
+    facts.presented_capture_consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34;
+    facts.presented_capture_chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            facts.presented_capture_width,
+            facts.presented_capture_height,
+            facts.presented_capture_byte_count,
+            facts.presented_capture_hash,
+            facts.presented_capture_consumer_mask);
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
     if (out_ownership) {
@@ -11886,6 +11896,12 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_ownership.presented_capture_byte_count;
             out->dm1HoCPresentedCaptureHash =
                 hoc_ownership.presented_capture_hash;
+            out->dm1HoCPresentedCaptureChainReady =
+                hoc_ownership.presented_capture_chain_ready;
+            out->dm1HoCPresentedCaptureConsumerMask =
+                hoc_ownership.presented_capture_consumer_mask;
+            out->dm1HoCPresentedCaptureChainHash =
+                hoc_ownership.presented_capture_chain_hash;
             out->dm1HoCOpenedEntranceFrame =
                 hoc_consumer.draw_opened_entrance_frame;
             out->dm1HoCHallMirrorOverlay =
@@ -21257,6 +21273,15 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     captureFacts.presented_capture_height = presented_height;
     captureFacts.presented_capture_byte_count = presented_byte_count;
     captureFacts.presented_capture_hash = presented_hash;
+    captureFacts.presented_capture_consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34;
+    captureFacts.presented_capture_chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            captureFacts.presented_capture_width,
+            captureFacts.presented_capture_height,
+            captureFacts.presented_capture_byte_count,
+            captureFacts.presented_capture_hash,
+            captureFacts.presented_capture_consumer_mask);
     captureFacts.captured_map_index = renderReceipt->map_index;
     captureFacts.captured_map_width =
         productionStart.packaged_proof.expected_map_width;
@@ -29686,6 +29711,15 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     captureFacts.presented_capture_height = 200;
     captureFacts.presented_capture_byte_count = 320 * 200 * 4;
     captureFacts.presented_capture_hash = 0x4d314843u;
+    captureFacts.presented_capture_consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34;
+    captureFacts.presented_capture_chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            captureFacts.presented_capture_width,
+            captureFacts.presented_capture_height,
+            captureFacts.presented_capture_byte_count,
+            captureFacts.presented_capture_hash,
+            captureFacts.presented_capture_consumer_mask);
     captureFacts.captured_map_index = artifact.expected_map_index;
     captureFacts.captured_map_width = artifact.expected_map_width;
     captureFacts.captured_map_height = artifact.expected_map_height;
@@ -29726,6 +29760,16 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     hostProbeFacts.presented_capture_height = 200;
     hostProbeFacts.presented_capture_byte_count = 320 * 200 * 4;
     hostProbeFacts.presented_capture_hash = 0x4d314843u;
+    hostProbeFacts.presented_capture_consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34;
+    hostProbeFacts.presented_capture_chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            hostProbeFacts.presented_capture_width,
+            hostProbeFacts.presented_capture_height,
+            hostProbeFacts.presented_capture_byte_count,
+            hostProbeFacts.presented_capture_hash,
+            hostProbeFacts.presented_capture_consumer_mask);
     hostProbeFacts.consumed_hoc_host_render_receipt = 1;
     hostProbeFacts.consumed_m11_boot_probe_consumer = 1;
 

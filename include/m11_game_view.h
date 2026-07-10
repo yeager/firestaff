@@ -227,6 +227,9 @@ typedef struct {
     int dm1HoCPresentedCapturePixels;
     int dm1HoCPresentedCaptureBytes;
     unsigned int dm1HoCPresentedCaptureHash;
+    int dm1HoCPresentedCaptureChainReady;
+    unsigned int dm1HoCPresentedCaptureConsumerMask;
+    unsigned int dm1HoCPresentedCaptureChainHash;
     int dm1HoCOpenedEntranceFrame;
     int dm1HoCHallMirrorOverlay;
     int dm1HoCBlockedEnterUntilChampion;
