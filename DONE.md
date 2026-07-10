@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 projectile live-effect resume handoff: restored DM1 worlds now retain original-save or quicksave provenance through F0172/F0115 live projectile/effect materialization, with no M11 fallback selection. F0328 launch documentation now reflects the active F0811 movement, collision and F0215 landing path.
+
 - ✅ 2026-07-09 DM2 real-GDAT startup breadth receipt: real visual capture receipts now carry Continue/save-slot/New Game row readiness, exact selected-highlight proof, and a separate broad startup/title/menu/HUD readiness bit while keeping live no-save M11 startup draws on the general real GDAT title/menu/HUD proof. Verification: `FIRESTAFF_DM2_REAL_DATA_DIR="$HOME/.firestaff/data/dm2" ctest --test-dir build -R 'dm2_v1_startup_menu_action_contract|dm2_v1_m11_startup_profile_gate' --output-on-failure` and `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 projectile F0219 live-flight relink receipt: added a DM1-owned flight relink receipt for live projectile source unlink, destination link, projectile state writeback, and next C48/C49 scheduling. M10 projectile move events now consume the receipt instead of owning that live mutation decision locally. Verification: `test_dm1_v1_throw_shoot_pc34_compat` direct and CTest passed; nearby `dm1_v1_projectile_wall_impact_sound_gate_pc34_compat` and `dm1_v1_projectile_side_cell_damage_handoff_pc34_compat` passed. Existing `dm1_v1_projectile_side_wall_impact_pc34_compat` remains red in direct F0811 wall-impact expectations unrelated to this receipt path.
