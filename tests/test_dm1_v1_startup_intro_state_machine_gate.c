@@ -727,6 +727,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_host_probe_consumer;
     DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34
         hoc_release_capture_ownership;
+    DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34
+        hoc_save_capture_readiness;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirror_front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 mirror_boundary;
@@ -1726,6 +1728,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     memset(&hoc_host_probe_consumer, 0, sizeof(hoc_host_probe_consumer));
     memset(&hoc_release_capture_ownership, 0,
            sizeof(hoc_release_capture_ownership));
+    memset(&hoc_save_capture_readiness, 0,
+           sizeof(hoc_save_capture_readiness));
     hoc_host_probe_facts.source_id = "dm1";
     hoc_host_probe_facts.dungeon_loaded = 1;
     hoc_host_probe_facts.map_count = 1;
@@ -2554,6 +2558,36 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  runtime_handoff.draw_opened_runtime &&
                  !runtime_handoff.suppress_draw_opened,
              1);
+    expect_i("DM1 HoC/save capture readiness consumes release ownership",
+             dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
+                 &runtime_handoff,
+                 &apply_result,
+                 &hoc_release_capture_ownership,
+                 &hoc_save_capture_readiness) &&
+                 hoc_save_capture_readiness.handled &&
+                 hoc_save_capture_readiness.ready &&
+                 hoc_save_capture_readiness
+                     .consumed_runtime_handoff_receipt &&
+                 hoc_save_capture_readiness
+                     .consumed_release_app_capture_ownership &&
+                 hoc_save_capture_readiness.consume_dm1_receipts_only &&
+                 hoc_save_capture_readiness.enter_route_ready &&
+                 hoc_save_capture_readiness.save_capture_ready &&
+                 !hoc_save_capture_readiness.original_save_capture_ready &&
+                 hoc_save_capture_readiness.real_asset_capture &&
+                 hoc_save_capture_readiness.mac_window_capture &&
+                 hoc_save_capture_readiness.release_app_capture &&
+                 hoc_save_capture_readiness.host_capture_route_matches &&
+                 hoc_save_capture_readiness.hoc_asset_capture &&
+                 hoc_save_capture_readiness.host_window_capture &&
+                 hoc_save_capture_readiness.draw_opened_entrance_frame &&
+                 hoc_save_capture_readiness.render_hall_mirror_overlay &&
+                 hoc_save_capture_readiness.suppress_host_fallback_visuals &&
+                 hoc_save_capture_readiness.host_draw_uses_owned_receipt &&
+                 hoc_save_capture_readiness
+                     .block_enter_until_champion_selected &&
+                 hoc_save_capture_readiness.render_command_count == 3,
+             1);
 
     memset(&fake, 0, sizeof(fake));
     fake.entrance_command = 2;
@@ -2596,6 +2630,24 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  runtime_handoff.runtime_first_frame_ready &&
                  runtime_handoff.draw_opened_runtime &&
                  !runtime_handoff.hoc_runtime_ready,
+             1);
+    expect_i("DM1 original-save capture readiness consumes resume handoff",
+             dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
+                 &runtime_handoff,
+                 &apply_result,
+                 &hoc_release_capture_ownership,
+                 &hoc_save_capture_readiness) &&
+                 hoc_save_capture_readiness.handled &&
+                 hoc_save_capture_readiness.ready &&
+                 hoc_save_capture_readiness.resume_route_ready &&
+                 hoc_save_capture_readiness.original_save_capture_ready &&
+                 !hoc_save_capture_readiness.enter_route_ready &&
+                 !hoc_save_capture_readiness.save_capture_ready &&
+                 hoc_save_capture_readiness.resumed_runtime_ready &&
+                 hoc_save_capture_readiness.resume_loaded &&
+                 hoc_save_capture_readiness.resume_path_present &&
+                 strcmp(hoc_save_capture_readiness.resume_path,
+                        "/tmp/combined.sav") == 0,
              1);
 
     memset(&fake, 0, sizeof(fake));

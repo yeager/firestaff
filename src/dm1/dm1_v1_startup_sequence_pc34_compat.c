@@ -2105,6 +2105,108 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* handoff,
+    const DM1_V1_StartupHostApplyResult_PC34* host_apply,
+    const DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* ownership,
+    DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!handoff || !host_apply || !ownership) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!handoff->handled || !ownership->handled) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB ENTRANCE.C F0441 returns either ENTER or RESUME after the
+     * source-visible startup path.  COMMAND.C M566/F0796 then owns saved-game
+     * load/import.  Keep Firestaff's host/app capture decision behind one
+     * DM1 receipt so M11 does not separately accept HoC rendering and
+     * original-save resume as unrelated host-side states. */
+    receipt.handled = 1;
+    receipt.consumed_runtime_handoff_receipt = 1;
+    receipt.consumed_release_app_capture_ownership = 1;
+    receipt.consume_dm1_receipts_only = ownership->consume_dm1_receipts_only;
+    receipt.enter_route_ready =
+        handoff->hoc_runtime_ready &&
+        handoff->hoc_first_frame_ready &&
+        handoff->runtime_first_frame_ready &&
+        ownership->ready;
+    receipt.resume_route_ready =
+        handoff->resumed_runtime_ready &&
+        host_apply->resume_requested &&
+        host_apply->resume_loaded &&
+        !handoff->return_to_launcher;
+    receipt.real_asset_capture = ownership->real_asset_capture;
+    receipt.mac_window_capture = ownership->mac_window_capture;
+    receipt.release_app_capture = ownership->release_app_capture;
+    receipt.host_capture_route_matches =
+        ownership->host_capture_route_matches;
+    receipt.hoc_asset_capture = ownership->hoc_asset_capture;
+    receipt.host_window_capture = ownership->host_window_capture;
+    receipt.draw_opened_entrance_frame =
+        ownership->draw_opened_entrance_frame;
+    receipt.render_hall_mirror_overlay =
+        ownership->render_hall_mirror_overlay;
+    receipt.suppress_host_fallback_visuals =
+        ownership->suppress_host_fallback_visuals;
+    receipt.host_draw_uses_owned_receipt =
+        ownership->host_draw_uses_owned_receipt;
+    receipt.block_enter_until_champion_selected =
+        ownership->block_enter_until_champion_selected;
+    receipt.resumed_runtime_ready = handoff->resumed_runtime_ready;
+    receipt.resume_loaded = host_apply->resume_loaded;
+    receipt.resume_used_backup = host_apply->resume_used_backup;
+    if (host_apply->resume_path[0] != '\0') {
+        receipt.resume_path_present = 1;
+        snprintf(receipt.resume_path,
+                 sizeof(receipt.resume_path),
+                 "%s",
+                 host_apply->resume_path);
+    }
+    receipt.map_index = ownership->map_index;
+    receipt.map_width = ownership->map_width;
+    receipt.map_height = ownership->map_height;
+    receipt.entrance_door_frame_index =
+        ownership->entrance_door_frame_index;
+    receipt.hall_overlay_kind = ownership->hall_overlay_kind;
+    receipt.render_command_count = ownership->render_command_count;
+    receipt.capture_phase = ownership->capture_phase;
+    receipt.source_evidence =
+        "ReDMCSB ENTRANCE.C:850-883; COMMAND.C M566; SAVEGAME.C F0796";
+    receipt.save_capture_ready =
+        receipt.enter_route_ready &&
+        receipt.consume_dm1_receipts_only &&
+        receipt.real_asset_capture &&
+        receipt.mac_window_capture &&
+        receipt.release_app_capture &&
+        receipt.host_capture_route_matches &&
+        receipt.hoc_asset_capture &&
+        receipt.host_window_capture &&
+        receipt.draw_opened_entrance_frame &&
+        receipt.render_hall_mirror_overlay &&
+        receipt.suppress_host_fallback_visuals &&
+        receipt.host_draw_uses_owned_receipt &&
+        receipt.block_enter_until_champion_selected &&
+        receipt.render_command_count == 3;
+    receipt.original_save_capture_ready =
+        receipt.resume_route_ready &&
+        receipt.resume_path_present &&
+        receipt.resumed_runtime_ready &&
+        receipt.resume_loaded;
+    receipt.ready =
+        receipt.save_capture_ready || receipt.original_save_capture_ready;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
