@@ -24,6 +24,47 @@ typedef enum {
     CSB_V1_BOOT_STATE_RUNTIME_READY
 } CSB_V1_BootState;
 
+/* ReDMCSB TITLE.C F0437 loads C001 and uses three zones from that one
+ * bitmap; ENTRANCE.C F0806 loads C002-C005 for the entrance.  Keep those
+ * original-data identities separate from Firestaff's transient asset slots. */
+typedef enum CSB_V1_StartupAssetRole_PC34 {
+    CSB_V1_STARTUP_ASSET_ROLE_NONE_PC34 = 0,
+    CSB_V1_STARTUP_ASSET_ROLE_TITLE_PRESENTS_PC34,
+    CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34,
+    CSB_V1_STARTUP_ASSET_ROLE_TITLE_STRIKES_BACK_PC34,
+    CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_LEFT_DOOR_PC34,
+    CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_RIGHT_DOOR_PC34,
+    CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_SCREEN_PC34,
+    CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_CREDITS_PC34,
+    CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34,
+    CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34,
+    CSB_V1_STARTUP_ASSET_ROLE_COUNT_PC34
+} CSB_V1_StartupAssetRole_PC34;
+
+typedef enum CSB_V1_StartupAssetSource_PC34 {
+    CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34 = 0,
+    CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+    CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34,
+    CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34
+} CSB_V1_StartupAssetSource_PC34;
+
+typedef struct CSB_V1_StartupAssetBinding_PC34 {
+    CSB_V1_StartupAssetRole_PC34 role;
+    CSB_V1_StartupAssetSource_PC34 source;
+    uint32_t graphic_index;
+    int verified;
+    int rejects_generic_or_test_asset;
+    char path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+} CSB_V1_StartupAssetBinding_PC34;
+
+typedef struct CSB_V1_StartupAssetSelection_PC34 {
+    int real_graphics_available;
+    int csbgraphics_available;
+    int reject_generic_or_test_assets;
+    CSB_V1_StartupAssetBinding_PC34
+        bindings[CSB_V1_STARTUP_ASSET_ROLE_COUNT_PC34];
+} CSB_V1_StartupAssetSelection_PC34;
+
 typedef struct CSB_V1_BootProfile {
     char game_id[8];
     CSB_V1_BootState state;
@@ -67,6 +108,7 @@ typedef struct CSB_V1_BootProfile {
     size_t csbgraphics_skin_def_word_count;
     CSB_V1_CSBGraphicsDatRealCache csbgraphics_cache;
     CSB_V1_CSBGraphicsM11RuntimePlan csbgraphics_m11_plan;
+    CSB_V1_StartupAssetSelection_PC34 startup_assets;
 
     CSB_V1_RuntimeProfile runtime;
 } CSB_V1_BootProfile;
@@ -762,6 +804,21 @@ void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt);
 void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir);
+
+/* Resolve startup artwork from a verified CSB boot profile. Original
+ * GRAPHICS.DAT supplies C001-C005; a validated CSBgraphics.dat may replace
+ * only the known HUD entries (17/40). CSB render-receipt consumers use this
+ * CSB-owned selection to reject generic/test artwork for a real profile. */
+void csb_v1_boot_startup_assets_resolve_pc34(CSB_V1_BootProfile *profile);
+const CSB_V1_StartupAssetBinding_PC34 *
+csb_v1_boot_startup_asset_binding_pc34(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_StartupAssetRole_PC34 role);
+int csb_v1_boot_startup_render_plan_uses_real_assets_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupRenderPlan_PC34 *plan);
+const char *csb_v1_boot_startup_asset_source_name_pc34(
+    CSB_V1_StartupAssetSource_PC34 source);
 int csb_v1_boot_probe_available(const char *data_dir);
 void csb_v1_boot_set_save_root(CSB_V1_BootProfile *profile, const char *save_dir);
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
