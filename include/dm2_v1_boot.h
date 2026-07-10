@@ -331,6 +331,12 @@ typedef struct {
     uint32_t raw_gdat_byte_count;
     uint32_t decoded_gdat_hash;
     uint32_t decoded_gdat_pixel_count;
+    int animation_attribution_count;
+    int animation_info_sequence_count;
+    int animation_frame_sequence_count;
+    uint32_t animation_table_hash;
+    uint32_t animation_table_byte_count;
+    int animation_table_ready;
     uint32_t frame_parity_hash;
     uint32_t atlas_material_hash;
 } DM2_V1_BootCreatureAtlasCaptureReceipt;
