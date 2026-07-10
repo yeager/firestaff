@@ -186,6 +186,9 @@ int main(void)
                     view.nexusState.startup_save_route_saturn_capture_exact == 0 &&
                     view.nexusState.startup_champion_route_saturn_capture_exact == 1 &&
                     view.nexusState.startup_dungeon_route_saturn_capture_exact == 1 &&
+                    view.nexusState.startup_save_host_package_route_complete == 0 &&
+                    view.nexusState.startup_champion_host_package_route_complete == 1 &&
+                    view.nexusState.startup_dungeon_host_package_route_complete == 1 &&
                     view.nexusState.startup_single_saturn_owner_ready == 1 &&
                     view.nexusState.startup_title_menu_capture_route_joined == 1 &&
                     view.nexusState.startup_runtime_dgn_route_joined == 1 &&
@@ -234,6 +237,9 @@ int main(void)
                     view.nexusState.startup_save_route_saturn_capture_exact == 1 &&
                     view.nexusState.startup_champion_route_saturn_capture_exact == 0 &&
                     view.nexusState.startup_dungeon_route_saturn_capture_exact == 0 &&
+                    view.nexusState.startup_save_host_package_route_complete == 1 &&
+                    view.nexusState.startup_champion_host_package_route_complete == 0 &&
+                    view.nexusState.startup_dungeon_host_package_route_complete == 0 &&
                     view.nexusState.startup_copied_draw_command_count > 0,
                 "M11 Nexus save startup route consumes Saturn save capture receipt");
 
@@ -285,7 +291,10 @@ int main(void)
                     view.nexusState.startup_dungeon_route_consumes_package_capture == 0 &&
                     view.nexusState.startup_save_route_saturn_capture_exact == 0 &&
                     view.nexusState.startup_champion_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_dungeon_route_saturn_capture_exact == 0,
+                    view.nexusState.startup_dungeon_route_saturn_capture_exact == 0 &&
+                    view.nexusState.startup_save_host_package_route_complete == 0 &&
+                    view.nexusState.startup_champion_host_package_route_complete == 0 &&
+                    view.nexusState.startup_dungeon_host_package_route_complete == 0,
                 "M11 Nexus PRS3 startup consumes blocker without legacy fallback");
 
     fill_ready_engine(&engine);
