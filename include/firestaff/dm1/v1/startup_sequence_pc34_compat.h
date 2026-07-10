@@ -516,6 +516,8 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int consumed_hoc_host_render_receipt;
     int consumed_m11_boot_probe_consumer;
     int consumed_m12_startup_capture_consumer;
+    unsigned int named_consumer_mask;
+    unsigned int named_consumer_hash;
     int consumed_launch_path_receipt;
     int consumed_runtime_apply_receipt;
     int consumed_production_consumer_receipt;

@@ -1774,6 +1774,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      .consumed_hoc_host_render_receipt &&
                  hoc_release_capture_ownership
                      .consumed_m11_boot_probe_consumer &&
+                 hoc_release_capture_ownership.named_consumer_mask == 0x3u &&
+                 hoc_release_capture_ownership.named_consumer_hash != 0u &&
                  hoc_release_capture_ownership
                      .consumed_runtime_apply_receipt &&
                  hoc_release_capture_ownership
@@ -1836,9 +1838,22 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership
                      .consumed_hoc_host_render_receipt &&
                  !hoc_release_capture_ownership
-                      .consumed_m11_boot_probe_consumer,
+                      .consumed_m11_boot_probe_consumer &&
+                 hoc_release_capture_ownership.named_consumer_mask == 0x1u,
              1);
     hoc_host_probe_facts.consumed_m11_boot_probe_consumer = 1;
+    hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 1;
+    expect_i("DM1 HoC release/app ownership accepts named M12 capture consumer",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership
+                     .consumed_m12_startup_capture_consumer &&
+                 hoc_release_capture_ownership.named_consumer_mask == 0x7u &&
+                 hoc_release_capture_ownership.named_consumer_hash != 0u,
+             1);
+    hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 0;
     hoc_host_probe_facts.captured_from_real_assets = 0;
     expect_i("DM1 HoC host probe exposes missing real-asset capture route",
              dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(

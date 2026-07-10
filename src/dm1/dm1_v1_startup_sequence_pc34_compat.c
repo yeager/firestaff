@@ -13,6 +13,21 @@
 #define DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34 1u
 #define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 55u
 
+#define DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 0x1u
+#define DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 0x2u
+#define DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34 0x4u
+
+static unsigned int dm1_v1_startup_hoc_capture_consumer_hash_pc34(
+    unsigned int mask) {
+    unsigned int hash = 2166136261u;
+    hash ^= mask;
+    hash *= 16777619u;
+    hash ^= (mask << 8);
+    hash *= 16777619u;
+    hash ^= 0xD1C0u;
+    return hash ? hash : 1u;
+}
+
 static int dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
     const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
     int backing_asset_available,
@@ -2061,6 +2076,21 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         facts->consumed_m11_boot_probe_consumer ? 1 : 0;
     receipt.consumed_m12_startup_capture_consumer =
         facts->consumed_m12_startup_capture_consumer ? 1 : 0;
+    if (receipt.consumed_hoc_host_render_receipt) {
+        receipt.named_consumer_mask |=
+            DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34;
+    }
+    if (receipt.consumed_m11_boot_probe_consumer) {
+        receipt.named_consumer_mask |=
+            DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34;
+    }
+    if (receipt.consumed_m12_startup_capture_consumer) {
+        receipt.named_consumer_mask |=
+            DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
+    }
+    receipt.named_consumer_hash =
+        dm1_v1_startup_hoc_capture_consumer_hash_pc34(
+            receipt.named_consumer_mask);
     receipt.consumed_launch_path_receipt =
         facts->consumed_launch_path_receipt ? 1 : 0;
     receipt.consumed_runtime_apply_receipt = apply.handled ? 1 : 0;
@@ -2123,6 +2153,12 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.consumed_hoc_host_render_receipt &&
         (receipt.consumed_m11_boot_probe_consumer ||
          receipt.consumed_m12_startup_capture_consumer) &&
+        (receipt.named_consumer_mask &
+         DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34) &&
+        (receipt.named_consumer_mask &
+         (DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+          DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34)) &&
+        receipt.named_consumer_hash != 0u &&
         receipt.consumed_runtime_apply_receipt &&
         receipt.consumed_production_consumer_receipt &&
         receipt.consumed_launch_path_receipt &&
