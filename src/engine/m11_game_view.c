@@ -23,7 +23,6 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
-#include "csb_v2_hud_runtime.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_game.h"
@@ -53,6 +52,7 @@
 #include "m11_v2_vertical_slice_assets.h"
 #include "m11_game_text_utf8_decoder_pc34_compat.h"
 #include "render_sdl_m11.h"
+#include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
 #include "m11_high_contrast_overlay_pc34_compat.h"
 #include "champion_status_slotbox_pc34_compat.h"
@@ -1361,49 +1361,6 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     }
     m11_csb_runtime_overlay_stats_apply(state, &draw_counts);
     return 1;
-}
-
-static int m11_csb_percent(unsigned short current, unsigned short maximum)
-{
-    if (maximum == 0u) return current > 0u ? 100 : 0;
-    return (int)(((unsigned int)current * 100u) / (unsigned int)maximum);
-}
-
-static void m11_draw_csb_runtime_hud(const M11_GameViewState *state,
-                                     unsigned char *framebuffer,
-                                     int framebufferWidth,
-                                     int framebufferHeight)
-{
-    CSB_V2_PhaseGateConfig gate;
-    CSB_V2_HudRuntimeFrame frame;
-    int i;
-
-    if (!state || !framebuffer || framebufferWidth < 320 ||
-        framebufferHeight < 200 ||
-        state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) return;
-    memset(&gate, 0, sizeof(gate));
-    gate.v2PresentationEnabled = 1;
-    memset(&frame, 0, sizeof(frame));
-    frame.direction = state->csbState.party_dir;
-    frame.current_level = state->csbState.current_level + 1;
-    frame.max_level = frame.current_level > 1 ? frame.current_level : 1;
-    frame.champion_count = state->world.party.championCount;
-    frame.leader_index = state->world.party.activeChampionIndex;
-    for (i = 0; i < 4; ++i) {
-        const struct ChampionState_Compat *champion =
-            &state->world.party.champions[i];
-        frame.hp_pct[i] = m11_csb_percent(champion->hp.current,
-                                           champion->hp.maximum);
-        frame.stamina_pct[i] = m11_csb_percent(champion->stamina.current,
-                                                champion->stamina.maximum);
-        frame.mana_pct[i] = m11_csb_percent(champion->mana.current,
-                                             champion->mana.maximum);
-    }
-    /* ReDMCSB PANEL.C F0354 owns the status snapshot; this V2 pass only
-     * projects it after the source-locked viewport has completed. */
-    csb_v2_hud_runtime_set_gate_config(&gate);
-    csb_v2_hud_runtime_apply_frame(&frame);
-    csb_v2_hud_runtime_render(framebuffer, framebufferWidth, framebufferHeight);
 }
 
 static void m11_apply_csb_runtime_m11_mirror_receipt(
@@ -3102,6 +3059,7 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        int framebufferHeight,
                                        const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
+    int drew_title = 0;
     const M11_AssetSlot *title_graphic = NULL;
 
     if (!state || !framebuffer || !plan || framebufferWidth <= 0 ||
@@ -3112,52 +3070,92 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                                framebufferWidth,
                                                framebufferHeight,
                                                plan);
-    /* ReDMCSB TITLE.C F0437: CSB owns C001 and the C424/C425/C426
-     * zones.  Consume its CSB plan directly; do not route title frames
-     * through the older shared title frontend or textual fallback path. */
-    if (!state->assetsAvailable || plan->source_asset_id != 1 ||
-        plan->title_source_step <= 0 || plan->title_source_w <= 0 ||
-        plan->title_source_h <= 0) {
+    /* ReDMCSB TITLE.C F0437 uses C001_GRAPHIC_TITLE: PRESENTS is blitted
+     * from source y=137 to screen y=90, then C425/C426 title strips are
+     * rendered before ENTRANCE.C F0806/F0441 takes over. */
+    if (state->assetsAvailable && plan->source_asset_id == 1 &&
+        plan->title_source_step > 0) {
+        V1_TitleFrontendSourceAnimationStep step;
+        V1_TitleFrontendC001BlitPlan blit_plan;
+
+        title_graphic = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&state->assetLoader,
+            1u);
+        if (title_graphic) {
+            V1_TitleFrontendRuntimeSourceDecision source_decision =
+                V1_TitleFrontend_SelectRuntimeSource(
+                    1,
+                    title_graphic->width,
+                    title_graphic->height,
+                    0);
+            if (source_decision.source ==
+                    V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001 &&
+                V1_TitleFrontend_GetSourceAnimationStep(
+                    (unsigned int)plan->title_source_step,
+                    &step) &&
+                V1_TitleFrontend_GetC001BlitPlanForStep(&step,
+                                                        &blit_plan)) {
+                if (blit_plan.clearBeforeBlit) {
+                    memset(framebuffer,
+                           0,
+                           (size_t)framebufferWidth *
+                               (size_t)framebufferHeight);
+                }
+                if (blit_plan.kind == V1_TITLE_FRONTEND_C001_BLIT_REGION) {
+                    M11_AssetLoader_BlitRegion(title_graphic,
+                                               (int)blit_plan.srcX,
+                                               (int)blit_plan.srcY,
+                                               (int)blit_plan.srcW,
+                                               (int)blit_plan.srcH,
+                                               framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight,
+                                               (int)blit_plan.dstX,
+                                               (int)blit_plan.dstY,
+                                               blit_plan.transparentColor);
+                    drew_title = 1;
+                } else if (blit_plan.kind ==
+                           V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION) {
+                    M11_AssetLoader_BlitSubRectScaled(
+                        title_graphic,
+                        framebuffer,
+                        framebufferWidth,
+                        framebufferHeight,
+                        (int)blit_plan.srcX,
+                        (int)blit_plan.srcY,
+                        (int)blit_plan.srcW,
+                        (int)blit_plan.srcH,
+                        (int)blit_plan.dstX,
+                        (int)blit_plan.dstY,
+                        (int)blit_plan.dstW,
+                        (int)blit_plan.dstH,
+                        blit_plan.transparentColor);
+                    drew_title = 1;
+                } else {
+                    drew_title = 1;
+                }
+            }
+        }
+    }
+    if (drew_title) {
         return;
     }
-    title_graphic = M11_AssetLoader_Load(
-        (M11_AssetLoader *)&state->assetLoader, 1u);
-    if (!title_graphic ||
-        title_graphic->width < (unsigned int)(plan->title_source_x +
-                                               plan->title_source_w) ||
-        title_graphic->height < (unsigned int)(plan->title_source_y +
-                                                plan->title_source_h)) {
+    drew_title = m11_execute_csb_startup_asset_commands_kind(
+        state,
+        framebuffer,
+        framebufferWidth,
+        framebufferHeight,
+        plan,
+        CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34);
+    drew_title |= m11_execute_csb_startup_asset_commands_kind(
+        state,
+        framebuffer,
+        framebufferWidth,
+        framebufferHeight,
+        plan,
+        CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34);
+    if (drew_title) {
         return;
-    }
-    memset(framebuffer, 0,
-           (size_t)framebufferWidth * (size_t)framebufferHeight);
-    if (plan->title_blit_kind == CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34) {
-        M11_AssetLoader_BlitRegion(title_graphic,
-                                   plan->title_source_x,
-                                   plan->title_source_y,
-                                   plan->title_source_w,
-                                   plan->title_source_h,
-                                   framebuffer,
-                                   framebufferWidth,
-                                   framebufferHeight,
-                                   plan->title_dest_x,
-                                   plan->title_dest_y,
-                                   plan->title_transparent_color);
-    } else if (plan->title_blit_kind ==
-               CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34) {
-        M11_AssetLoader_BlitSubRectScaled(title_graphic,
-                                          framebuffer,
-                                          framebufferWidth,
-                                          framebufferHeight,
-                                          plan->title_source_x,
-                                          plan->title_source_y,
-                                          plan->title_source_w,
-                                          plan->title_source_h,
-                                          plan->title_dest_x,
-                                          plan->title_dest_y,
-                                          plan->title_dest_w,
-                                          plan->title_dest_h,
-                                          plan->title_transparent_color);
     }
 }
 
@@ -3194,38 +3192,6 @@ static void m11_draw_csb_startup_plan_text(
                   y,
                   text,
                   m11_csb_startup_text_style(style));
-}
-
-static int m11_csb_copy_startup_rect(const unsigned char *source,
-                                     unsigned int sourceWidth,
-                                     unsigned int sourceHeight,
-                                     int sourceX,
-                                     int sourceY,
-                                     unsigned char *destination,
-                                     int destinationWidth,
-                                     int destinationHeight,
-                                     int destinationX,
-                                     int destinationY,
-                                     int width,
-                                     int height)
-{
-    int y;
-    if (!source || !destination || sourceX < 0 || sourceY < 0 ||
-        destinationX < 0 || destinationY < 0 || width <= 0 || height <= 0 ||
-        sourceX + width > (int)sourceWidth ||
-        sourceY + height > (int)sourceHeight ||
-        destinationX + width > destinationWidth ||
-        destinationY + height > destinationHeight) {
-        return 0;
-    }
-    for (y = 0; y < height; ++y) {
-        memcpy(destination + (size_t)(destinationY + y) *
-                              (size_t)destinationWidth + (size_t)destinationX,
-               source + (size_t)(sourceY + y) * (size_t)sourceWidth +
-                            (size_t)sourceX,
-               (size_t)width);
-    }
-    return 1;
 }
 
 static int m11_draw_csb_entrance_opening_frame_asset(
@@ -3268,37 +3234,37 @@ static int m11_draw_csb_entrance_opening_frame_asset(
     if (!entranceScreen || !leftDoor || !rightDoor) {
         return 0;
     }
-    /* ReDMCSB ENTRANCE.C F0806 lines 175-231: C004 is the background,
-     * the runtime viewport fills the aperture, then C002/C003 strips move.
-     * This is intentionally local to the CSB route, with no DM1 wrapper. */
-    return m11_csb_copy_startup_rect(entranceScreen->pixels,
-                                     entranceScreen->width,
-                                     entranceScreen->height,
-                                     0, 0, framebuffer, framebufferWidth,
-                                     framebufferHeight, 0, 0, 320, 200) &&
-           m11_csb_copy_startup_rect(context->dungeonFrame,
-                                     (unsigned int)framebufferWidth,
-                                     (unsigned int)framebufferHeight,
-                                     48, 33, framebuffer, framebufferWidth,
-                                     framebufferHeight, 48, 33, 224, 136) &&
-           m11_csb_copy_startup_rect(leftDoor->pixels, leftDoor->width,
-                                     leftDoor->height,
-                                     composite->left_source_x,
-                                     composite->left_box_y, framebuffer,
-                                     framebufferWidth, framebufferHeight,
-                                     composite->left_box_x,
-                                     28 + composite->left_box_y,
-                                     composite->left_box_w,
-                                     composite->left_box_h) &&
-           m11_csb_copy_startup_rect(rightDoor->pixels, rightDoor->width,
-                                     rightDoor->height,
-                                     composite->right_source_x,
-                                     composite->right_box_y, framebuffer,
-                                     framebufferWidth, framebufferHeight,
-                                     composite->right_box_x,
-                                     28 + composite->right_box_y,
-                                     composite->right_box_w,
-                                     composite->right_box_h);
+    memset(&pixels, 0, sizeof(pixels));
+    pixels.entranceScreen = entranceScreen->pixels;
+    pixels.entranceWidth = entranceScreen->width;
+    pixels.entranceHeight = entranceScreen->height;
+    pixels.dungeonFrame = context->dungeonFrame;
+    pixels.dungeonFrameWidth = (unsigned int)framebufferWidth;
+    pixels.dungeonFrameHeight = (unsigned int)framebufferHeight;
+    pixels.leftDoor = leftDoor->pixels;
+    pixels.leftDoorWidth = leftDoor->width;
+    pixels.leftDoorHeight = leftDoor->height;
+    pixels.rightDoor = rightDoor->pixels;
+    pixels.rightDoorWidth = rightDoor->width;
+    pixels.rightDoorHeight = rightDoor->height;
+    memset(&door, 0, sizeof(door));
+    door.animationStep = (unsigned int)composite->animation_step;
+    door.leftBoxX = (unsigned int)composite->left_box_x;
+    door.leftBoxY = (unsigned int)composite->left_box_y;
+    door.leftBoxW = (unsigned int)composite->left_box_w;
+    door.leftBoxH = (unsigned int)composite->left_box_h;
+    door.rightBoxX = (unsigned int)composite->right_box_x;
+    door.rightBoxY = (unsigned int)composite->right_box_y;
+    door.rightBoxW = (unsigned int)composite->right_box_w;
+    door.rightBoxH = (unsigned int)composite->right_box_h;
+    door.leftSourceX = (unsigned int)composite->left_source_x;
+    door.rightSourceX = (unsigned int)composite->right_source_x;
+    return ENTRANCE_Compat_CompositeDoorOpeningFrame(
+        framebuffer,
+        (unsigned int)framebufferWidth,
+        (unsigned int)framebufferHeight,
+        &pixels,
+        &door);
 }
 
 static int m11_execute_csb_entrance_opening_composite(
@@ -18644,77 +18610,21 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
 
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
     M11_ViewportCell frontCell;
-    unsigned short thing;
 
     if (!state || !state->active || !state->mirrorCatalogAvailable ||
-        !m11_get_front_cell(state, &frontCell) || !frontCell.valid ||
-        !state->world.things || !state->world.things->sensors) {
+        !m11_get_front_cell(state, &frontCell) || !frontCell.valid) {
         return -1;
     }
 
-    if (m11_viewport_cell_is_wall_like(&frontCell) &&
-        frontCell.championPortraitOrdinal >= 0 &&
+    if (frontCell.championPortraitOrdinal >= 0 &&
         frontCell.championPortraitOrdinal < state->mirrorCatalog.count) {
         /* ReDMCSB DUNGEON.C F0172 lines 2591-2612 computes the visible
          * wall side and stores C127 sensorData in G0289 only for
          * M552_FRONT_WALL_ORNAMENT_ORDINAL.  m11_sample_viewport_cell()
-         * already mirrors that source-aspect pass, so use its result first;
-         * a second raw-chain lookup can miss the source-selected wall route
-         * and leave HoC mirrors invisible. */
+         * already mirrors that source-aspect pass.  Do not re-scan the host
+         * thing chain here: that duplicate route can re-materialize HoC
+         * payloads after DM1 selected the wall/object/projectile layers. */
         return frontCell.championPortraitOrdinal;
-    }
-
-    /* ReDMCSB DUNGEON.C:2573 / MOVESENS.C:1501-1503 / REVIVE.C F0280:
-     * a C127 sensor on the front square carries the champion-portrait
-     * ordinal in its sensorData.  DUNGEON.C:2608-2612 stores that
-     * ordinal in G0289 and F0280 materializes the candidate from it.
-     * For PC34/I34E, DUNGEON.C:2573 computes
-     * normalize(M011_CELL(sensor) - partyDirection) + 3 and only lets
-     * M552_FRONT_WALL_ORNAMENT_ORDINAL (DEFS.H:2552, value 5) set
-     * G0289, so the source-visible wall cell is direction+2.
-     * The TextString is the candidate's stats anchor on the corridor
-     * floor (DUNGEON.C:2570-2584) and is not required to be present on
-     * the front wall square.
-     *
-     * PC 3.4 Hall of Champions also has front-facing C127 mirror sensors
-     * on corridor carrier squares.  DUNGEON.C F0172 lines 2665-2681 routes
-     * ordinary corridor sensors through floor-ornament ordinal state, but
-     * MOVESENS.C still uses the C127 sensorData for REVIVE.C F0280.  Accept
-     * only the concrete front-facing C127 + valid catalog ordinal here; do
-     * not promote arbitrary corridor ornaments or payload objects. */
-    thing = m11_get_viewport_static_first_thing(&state->world,
-                                                state->world.party.mapIndex,
-                                                frontCell.mapX,
-                                                frontCell.mapY);
-    while (thing != THING_ENDOFLIST && thing != THING_NONE) {
-        int thingType = THING_GET_TYPE(thing);
-        int thingIndex = THING_GET_INDEX(thing);
-        if (thingType == THING_TYPE_SENSOR &&
-            thingIndex >= 0 && thingIndex < state->world.things->sensorCount &&
-            state->world.things->sensors[thingIndex].sensorType == 127) {
-            int sensorData;
-            int ordinal;
-            /* ReDMCSB stores SquareFirstThings as a compact table keyed by
-             * MASK0x0010_THING_LIST_PRESENT squares.  Use the same source
-             * lookup as the HoC viewport path; dense map indexing can miss
-             * the real C127 carrier or read unrelated payload data. */
-            /* sensorData is a 0-based portrait ordinal within the C026
-             * graphic (24 portraits, 8 cols x 3 rows).  Clamp to a
-             * valid catalog range. */
-            sensorData = (int)state->world.things->sensors[thingIndex].sensorData;
-            ordinal = dm1_v1_front_mirror_c127_ordinal_pc34(
-                state->world.party.mapIndex,
-                state->world.party.direction,
-                (int)THING_GET_CELL(thing),
-                (int)state->world.things->sensors[thingIndex].sensorType,
-                sensorData,
-                state->mirrorCatalog.count,
-                m11_viewport_cell_is_wall_like(&frontCell));
-            if (ordinal >= 0) {
-                return ordinal;
-            }
-        }
-        thing = m11_raw_next_thing(state->world.things, thing);
     }
     return -1;
 }
@@ -21010,10 +20920,12 @@ static int m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
     DM1_V1_StartupHandoffOutcome_PC34 outcome;
     DM1_V1_StartupHoCFirstFrameReceipt_PC34 firstFrame;
-    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
     DM1V1D1LD1RF0115RuntimeThingReceiptPc34 floorThing;
-    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 thingConsumer;
+    DM1_V1_ChampionMirrorRuntimeRenderInputPc34 runtimeInput;
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 runtimeDecision;
     const DM1V1D1LD1RF0115LanePc34Data* lane;
+    int thingType;
+    int squareHasProjectile;
     if (!frontCell || !renderReceipt || !outReceipt) {
         return 0;
     }
@@ -21025,23 +20937,38 @@ static int m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
         return 1;
     }
     lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
+    thingType = frontCell->floorItemCount > 0 ?
+        frontCell->firstItemThingType : THING_TYPE_PROJECTILE;
+    squareHasProjectile = frontCell->summary.projectiles > 0;
     if (!lane ||
         !dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
         !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
             ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &outcome) ||
         !dm1_v1_startup_hoc_first_frame_receipt_pc34(
             "dm1", &postPlan, &outcome, &firstFrame) ||
-        !DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
-            renderReceipt, &boundary) ||
         /* ReDMCSB DUNVIEW.C F0115 uses C01_VIEW_CELL_FRONT_RIGHT for the
          * D1 front mirror/item lane proven by the DM1 D1L/D1R receipt.
          * Keep M11 on that DM1 receipt instead of deriving a host cell. */
         !dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
-            lane, 5, 1, 1, 0, &floorThing) ||
-        !DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
-            &boundary, &floorThing, &thingConsumer) ||
+            lane, thingType, 1, 1, squareHasProjectile, &floorThing)) {
+        memset(outReceipt, 0, sizeof(*outReceipt));
+        outReceipt->zone = -1;
+        outReceipt->row = -1;
+        outReceipt->view_cell = -1;
+        return 0;
+    }
+    memset(&runtimeInput, 0, sizeof(runtimeInput));
+    runtimeInput.wallSquareVisible = 1;
+    runtimeInput.sensorType = 127;
+    runtimeInput.sensorData = renderReceipt->renderIndex;
+    runtimeInput.ornamentOrdinal = renderReceipt->backingGraphicIndex;
+    runtimeInput.thingCell = 2;
+    runtimeInput.visibleWallCell = 2;
+    runtimeInput.runtimeThingReceipt = &floorThing;
+    if (!DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+            &runtimeInput, &runtimeDecision) ||
         !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
-            &firstFrame, &thingConsumer, outReceipt)) {
+            &firstFrame, &runtimeDecision.thingConsumer, outReceipt)) {
         memset(outReceipt, 0, sizeof(*outReceipt));
         outReceipt->zone = -1;
         outReceipt->row = -1;
@@ -39363,9 +39290,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           &g_text_title);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           18, 36, boot_status, &g_text_shadow);
-        } else {
-            m11_draw_csb_runtime_hud(state, framebuffer,
-                                     framebufferWidth, framebufferHeight);
         }
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                             framebufferHeight);

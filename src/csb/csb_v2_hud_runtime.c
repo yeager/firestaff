@@ -103,23 +103,6 @@ void csb_v2_hud_runtime_set_chaos_active(bool active, int power_rune_count) {
     csb_v2_hud_set_chaos_active(&s_hud, active, power_rune_count);
 }
 
-void csb_v2_hud_runtime_apply_frame(const CSB_V2_HudRuntimeFrame *frame) {
-    int i;
-    if (!frame) return;
-    ensure_init();
-    csb_v2_hud_set_direction(&s_hud, frame->direction);
-    csb_v2_hud_set_level(&s_hud, frame->current_level, frame->max_level);
-    csb_v2_hud_set_gold(&s_hud, frame->party_gold);
-    for (i = 0; i < 4; ++i) {
-        csb_v2_hud_set_champion_bar(&s_hud, i,
-            frame->hp_pct[i], frame->stamina_pct[i], frame->mana_pct[i],
-            i < frame->champion_count && i == frame->leader_index, false);
-    }
-    csb_v2_hud_set_chaos_active(&s_hud,
-                                 frame->chaos_active != 0,
-                                 frame->power_rune_count);
-}
-
 /* ── HUD toggle ─────────────────────────────────────────────────── */
 void csb_v2_hud_runtime_toggle(void) {
     ensure_init();
