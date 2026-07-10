@@ -2151,6 +2151,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof;
     CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof_from_snapshot;
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view_receipt;
+    CSB_V1_BootStartupM11PresentationReceipt_PC34 m11_presentation_receipt;
     CSB_V1_BootStartupHostViewDrawReceipt_PC34 host_view_draw_receipt;
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 host_ownership;
@@ -2586,6 +2587,21 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_draw.render_plan.render_command_count == 2 &&
               host_view_receipt.render_draw.render_plan.source_asset_id == 1,
           "boot startup host-view render-draw receipt consumes real-asset title route");
+    CHECK(csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
+              &snapshot,
+              &m11_presentation_receipt) == 1 &&
+              m11_presentation_receipt.valid &&
+              m11_presentation_receipt.startup_render_plan_valid &&
+              m11_presentation_receipt.startup_render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              !m11_presentation_receipt.utility_render_plan_valid &&
+              !m11_presentation_receipt.hud_menu_draw_valid &&
+              m11_presentation_receipt.capture_proof_valid &&
+              m11_presentation_receipt.capture_proof.title_route &&
+              !m11_presentation_receipt.input_ready &&
+              !m11_presentation_receipt.hud_ready &&
+              !m11_presentation_receipt.runtime_ready,
+          "M11 presentation receipt owns title plan and capture gate without facade chaining");
     CHECK(host_view_receipt.render_plan_valid &&
               host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
@@ -3100,6 +3116,23 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_draw.hud_menu_draw_ready &&
               host_view_receipt.hud_menu_draw_valid,
           "boot startup snapshot host-view consumes utility render-draw receipt");
+    CHECK(csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
+              &snapshot,
+              &m11_presentation_receipt) == 1 &&
+              m11_presentation_receipt.valid &&
+              m11_presentation_receipt.startup_render_plan_valid &&
+              m11_presentation_receipt.startup_render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+              m11_presentation_receipt.hud_menu_draw_valid &&
+              m11_presentation_receipt.hud_menu_draw.draw_utility_panel &&
+              m11_presentation_receipt.utility_render_plan_valid &&
+              m11_presentation_receipt.utility_render_plan.menu_row_count ==
+                  CSB_V1_UTIL_MENU_ROW_COUNT &&
+              m11_presentation_receipt.input_ready &&
+              m11_presentation_receipt.hud_ready &&
+              !m11_presentation_receipt.runtime_ready &&
+              m11_presentation_receipt.capture_proof.utility_menu_route,
+          "M11 presentation receipt owns utility HUD plan and readiness together");
     CHECK(csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
               &capture_receipt,
               &host_view_receipt) == 1 &&
