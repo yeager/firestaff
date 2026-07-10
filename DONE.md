@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 Game-specific launch asset scan: launching a selected game now calls the targeted `M12_AssetStatus_ScanGame` path from startup, and that path resolves only the selected game's version hashes, required files, and launch cache instead of scanning all games. Verification: direct `test_asset_status_scan_metrics` rebuild/run with V2.2 stubs, focused syntax checks, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 TODO audit: verified the current DM1 HoC/render startup ownership row against the existing ReDMCSB complete-support gate and DONE entries. TODO now keeps only the remaining real Mac/release pixel-promotion work instead of reopening verified host ownership code. Verification: `git diff --check -- TODO.md DONE.md` passed.
 
 - ✅ 2026-07-10 TODO/DONE audit pass 1: verified the clearest open TODO rows against existing DONE.md and git history, then narrowed stale Theron, DM2, CSB, and high-contrast TODO wording so completed receipt/gate work is no longer described as open. Removed two completed TODO-only duplicates for Nexus save-slot coverage and the DM1 MacBook Q/E/HoC artifact fix; their open follow-ups remain in TODO. No code changes. Verification: `git diff --check -- TODO.md DONE.md` passed.

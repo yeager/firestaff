@@ -2889,7 +2889,20 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
 void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
                               const char* requestedDataDir,
                               const char* gameId) {
+    char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
+    char containerParent[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* effectiveRequestedDataDir = requestedDataDir;
+    size_t rootCount;
+    int gameIndex;
+    int dataDirResolvedToMatchedRoot = 0;
+    int reqMatch;
+    int i;
     if (!status) {
+        return;
+    }
+    gameIndex = m12_game_index_from_id(gameId);
+    if (gameIndex < 0) {
+        M12_AssetStatus_Scan(status, requestedDataDir);
         return;
     }
     if (gameId && strcmp(gameId, "theron") == 0) {
@@ -2905,7 +2918,61 @@ void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
             return;
         }
     }
-    M12_AssetStatus_Scan(status, requestedDataDir);
+    if (FSP_FileExists(requestedDataDir) &&
+        !FSP_DirExists(requestedDataDir) &&
+        FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
+        effectiveRequestedDataDir = containerParent;
+    }
+
+    memset(status, 0, sizeof(*status));
+    FirestaffTheronMedia_Init(&status->theronMedia);
+    m12_scan_progress_init(&status->scanProgress);
+    rootCount = m12_build_search_roots(roots,
+                                       effectiveRequestedDataDir,
+                                       status->legacyFallbackDir);
+    if (effectiveRequestedDataDir && effectiveRequestedDataDir[0] != '\0') {
+        m12_copy_string(status->dataDir,
+                        sizeof(status->dataDir),
+                        effectiveRequestedDataDir);
+    } else if (rootCount > 0U) {
+        m12_copy_string(status->dataDir, sizeof(status->dataDir), roots[0]);
+    }
+    for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        m12_copy_string(status->runtimeDataDirs[i],
+                        sizeof(status->runtimeDataDirs[i]),
+                        status->dataDir);
+    }
+    m12_init_version_metadata(status);
+    for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        m12_init_required_file_metadata(status, i);
+    }
+
+    /* Direct game launch must not scan all known games.  The visible start
+     * menu uses M12_AssetStatus_Scan() for cross-game availability; this
+     * path is only for `--game`/selected launch and resolves the selected
+     * game's source hashes and required runtime files. */
+    m12_fill_game_versions(status,
+                           gameIndex,
+                           roots,
+                           rootCount,
+                           &dataDirResolvedToMatchedRoot,
+                           (requestedDataDir && requestedDataDir[0] != '\0'));
+    reqMatch = m12_fill_required_files(status, gameIndex, roots, rootCount);
+    m12_apply_required_game_availability(status, gameIndex, reqMatch);
+    if (reqMatch) {
+        status->originalFileCandidateFound = 1;
+    }
+    if (!m12_materialize_runtime_cache_for_game(status, gameIndex)) {
+        m12_apply_required_game_availability(status, gameIndex, 0);
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        m12_refresh_theron_media_status(status, roots, rootCount);
+    } else if (strcmp(gameId, "nexus") == 0) {
+        m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
+    } else if (strcmp(gameId, "dm1") == 0) {
+        m12_refresh_v22_modern_asset_status(status);
+    }
+    m12_scan_progress_finish(status, 1, 0);
 }
 
 const M12_AssetScanProgress* M12_AssetStatus_GetScanProgress(
