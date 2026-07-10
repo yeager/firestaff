@@ -2479,6 +2479,11 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               release_app_capture.closed_door_release_app_capture_ready &&
               release_app_capture.utility_release_app_capture_ready &&
               release_app_capture.door_opening_release_app_capture_ready &&
+              release_app_capture.title_host_consumer_ready &&
+              release_app_capture.closed_door_host_consumer_ready &&
+              release_app_capture.utility_host_consumer_ready &&
+              release_app_capture.door_opening_host_consumer_ready &&
+              release_app_capture.route_specific_host_consumers_ready &&
               release_app_capture.title_phase_route_complete &&
               release_app_capture.runtime_host_routes_ready &&
               release_app_capture.draw_consumes_receipt_only &&
@@ -2512,6 +2517,15 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !release_app_capture.valid &&
               !release_app_capture.door_opening_release_app_capture_ready,
           "CSB release/app capture gate rejects partial door-opening package");
+    partial_complete_support = complete_support;
+    partial_complete_support.host_capture_gate.utility_host_draw_consumes_receipt_only = 0;
+    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+              &partial_complete_support,
+              &release_app_capture) == 0 &&
+              !release_app_capture.valid &&
+              !release_app_capture.utility_host_consumer_ready &&
+              !release_app_capture.route_specific_host_consumers_ready,
+          "CSB release/app capture gate rejects utility HUD host wrappers");
     runtime_host_gate.title_chaos_hold_runtime_captured = 0;
     CHECK(csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
               &full_runtime,

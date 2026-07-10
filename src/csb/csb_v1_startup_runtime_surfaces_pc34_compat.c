@@ -470,6 +470,41 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
                 host_gate->door_opening_packaged_capture_hash != 0u
             ? 1
             : 0;
+    out_receipt->title_host_consumer_ready =
+        host_gate->title_host_ownership_valid &&
+                host_gate->title_host_draw_consumes_receipt_only &&
+                host_gate->title_host_input_consumes_receipt_only &&
+                host_gate->title_packaged_capture_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->closed_door_host_consumer_ready =
+        host_gate->closed_door_host_ownership_valid &&
+                host_gate->closed_door_host_draw_consumes_receipt_only &&
+                host_gate->closed_door_host_input_consumes_receipt_only &&
+                host_gate->closed_door_packaged_capture_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->utility_host_consumer_ready =
+        host_gate->utility_host_ownership_valid &&
+                host_gate->utility_host_draw_consumes_receipt_only &&
+                host_gate->utility_host_input_consumes_receipt_only &&
+                host_gate->utility_packaged_capture_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->door_opening_host_consumer_ready =
+        host_gate->door_opening_host_ownership_valid &&
+                host_gate->door_opening_host_draw_consumes_receipt_only &&
+                host_gate->door_opening_host_input_consumes_receipt_only &&
+                host_gate->door_opening_packaged_capture_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->route_specific_host_consumers_ready =
+        out_receipt->title_host_consumer_ready &&
+                out_receipt->closed_door_host_consumer_ready &&
+                out_receipt->utility_host_consumer_ready &&
+                out_receipt->door_opening_host_consumer_ready
+            ? 1
+            : 0;
     out_receipt->runtime_host_gate_hash =
         complete_support->runtime_host_gate_hash;
     out_receipt->complete_support_hash =
@@ -494,6 +529,8 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
     hash ^= (uint32_t)out_receipt->host_route_wrappers_retired;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->no_loose_render_plan_exports;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->route_specific_host_consumers_ready;
     out_receipt->release_app_capture_hash = hash ? hash : 1u;
     out_receipt->release_app_capture_ready =
         out_receipt->complete_support_valid &&
@@ -506,6 +543,7 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
                 out_receipt->runtime_host_routes_ready &&
                 out_receipt->draw_consumes_receipt_only &&
                 out_receipt->input_consumes_receipt_only &&
+                out_receipt->route_specific_host_consumers_ready &&
                 out_receipt->no_fallback_callbacks &&
                 out_receipt->no_wrapper_fallback_routes &&
                 out_receipt->host_route_wrappers_retired &&
@@ -516,9 +554,10 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
             : 0;
     out_receipt->valid = out_receipt->release_app_capture_ready;
     /* ReDMCSB keeps title, entrance HUD and opening-door presentation under
-     * TITLE.C F0437 plus ENTRANCE.C F0441/F0580/F0581.  The release app
-     * capture gate consumes the same packaged title/HUD/opening hashes instead
-     * of accepting partial or fallback host routes. */
+     * TITLE.C F0437 lines 424-463, ENTRANCE.C F0441 lines 620-950 and
+     * F0580/F0581 lines 1123-1165.  DUNVIEW.C wall/door tables around
+     * lines 150-240 keep door/HUD ownership data-driven, so release capture
+     * now requires each host route to consume its own receipt-owned package. */
     return out_receipt->valid;
 }
 
