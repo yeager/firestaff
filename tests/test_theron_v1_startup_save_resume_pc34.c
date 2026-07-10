@@ -2614,6 +2614,19 @@ static void test_startup_session_facts_wrappers(void) {
         (1u << THERON_DUNGEON_COUNT) - 1u;
     semantic_snapshot.exact_level_semantics_ready = 1;
     semantic_snapshot.exact_object_semantics_ready = 1;
+    semantic_snapshot.no_fallback_semantic_role_mask =
+        (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE) |
+        (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE);
+    semantic_snapshot.object_table_no_fallback_ready = 1;
+    semantic_snapshot.object_table_blocked_anchor_mask = 0x07u;
+    semantic_snapshot.object_table_blocked_anchor_count = 3;
+    semantic_snapshot.nonstartup_level_no_fallback_ready = 1;
+    semantic_snapshot.nonstartup_level_blocked_anchor_mask = 0x07u;
+    semantic_snapshot.nonstartup_level_blocked_anchor_count = 3;
+    semantic_snapshot.startup_level_blocked_anchor_mask = 0x06u;
+    semantic_snapshot.startup_level_blocked_anchor_count = 2;
+    semantic_snapshot.object_table_route_hash = 0x12345678u;
+    semantic_snapshot.level_route_hash = 0x23456789u;
     expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
                     &semantic_snapshot,
                     &media_receipt,
@@ -2621,6 +2634,10 @@ static void test_startup_session_facts_wrappers(void) {
                     semantic_view_model.runtime_level_source ==
                         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
                     semantic_view_model.runtime_track02_semantic_handoff == 1 &&
+                    semantic_view_model.object_table_no_fallback_ready &&
+                    semantic_view_model.object_table_blocked_anchor_mask == 0x07u &&
+                    semantic_view_model.nonstartup_level_no_fallback_ready &&
+                    semantic_view_model.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     semantic_view_model.runtime_level == 0,
                 "boot startup view model carries Track02 semantic first-level route");
     expect_true(theron_v1_boot_startup_render_route_receipt_from_view_model(
@@ -2657,6 +2674,15 @@ static void test_startup_session_facts_wrappers(void) {
                         ((1u << THERON_DUNGEON_COUNT) - 1u) &&
                     render_route_receipt.exact_level_semantics_ready &&
                     render_route_receipt.exact_object_semantics_ready &&
+                    render_route_receipt.object_table_no_fallback_ready &&
+                    render_route_receipt.object_table_blocked_anchor_mask == 0x07u &&
+                    render_route_receipt.nonstartup_level_no_fallback_ready &&
+                    render_route_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
+                    render_route_receipt.startup_level_blocked_anchor_mask == 0x06u &&
+                    render_route_receipt.object_table_route_hash ==
+                        semantic_snapshot.object_table_route_hash &&
+                    render_route_receipt.level_route_hash ==
+                        semantic_snapshot.level_route_hash &&
                     strcmp(render_route_receipt.status,
                            "TRACK02 RUNTIME READY") == 0,
                 "boot startup render route receipt marks Track02 semantic first level HUD-ready without fallback visuals");
@@ -2676,6 +2702,10 @@ static void test_startup_session_facts_wrappers(void) {
                         THERON_DUNGEON_COUNT &&
                     host_view_receipt.exact_level_semantics_ready &&
                     host_view_receipt.exact_object_semantics_ready &&
+                    host_view_receipt.object_table_no_fallback_ready &&
+                    host_view_receipt.object_table_blocked_anchor_mask == 0x07u &&
+                    host_view_receipt.nonstartup_level_no_fallback_ready &&
+                    host_view_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     host_view_receipt.runtime_level_render_allowed &&
                     host_view_receipt.runtime_readiness_ready &&
                     host_view_receipt.title_menu_runtime_handoff_ready &&
@@ -2761,6 +2791,14 @@ static void test_startup_session_facts_wrappers(void) {
                         THERON_DUNGEON_COUNT &&
                     full_start_receipt.exact_level_semantics_ready &&
                     full_start_receipt.exact_object_semantics_ready &&
+                    full_start_receipt.object_table_no_fallback_ready &&
+                    full_start_receipt.object_table_blocked_anchor_mask == 0x07u &&
+                    full_start_receipt.nonstartup_level_no_fallback_ready &&
+                    full_start_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
+                    full_start_receipt.object_table_route_hash ==
+                        semantic_snapshot.object_table_route_hash &&
+                    full_start_receipt.level_route_hash ==
+                        semantic_snapshot.level_route_hash &&
                     !full_start_receipt.save_resume_runtime_graphics_handoff &&
                     !full_start_receipt.raw_prompt_roster_required &&
                     !full_start_receipt.raw_session_rebuild_required &&
@@ -2832,6 +2870,14 @@ static void test_startup_session_facts_wrappers(void) {
                         ((1u << THERON_DUNGEON_COUNT) - 1u) &&
                     ui_caller_receipt.exact_level_semantics_ready &&
                     ui_caller_receipt.exact_object_semantics_ready &&
+                    ui_caller_receipt.object_table_no_fallback_ready &&
+                    ui_caller_receipt.object_table_blocked_anchor_mask == 0x07u &&
+                    ui_caller_receipt.nonstartup_level_no_fallback_ready &&
+                    ui_caller_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
+                    ui_caller_receipt.object_table_route_hash ==
+                        semantic_snapshot.object_table_route_hash &&
+                    ui_caller_receipt.level_route_hash ==
+                        semantic_snapshot.level_route_hash &&
                     ui_caller_receipt.complete_runtime_support_ready &&
                     ui_caller_receipt.no_fallback_visuals_enforced &&
                     !ui_caller_receipt.fallback_visuals_allowed &&
@@ -2858,6 +2904,18 @@ static void test_startup_session_facts_wrappers(void) {
         (1u << THERON_DUNGEON_COUNT) - 1u;
     semantic_level_snapshot.exact_level_semantics_ready = 1;
     semantic_level_snapshot.exact_object_semantics_ready = 1;
+    semantic_level_snapshot.no_fallback_semantic_role_mask =
+        semantic_snapshot.no_fallback_semantic_role_mask;
+    semantic_level_snapshot.object_table_no_fallback_ready = 1;
+    semantic_level_snapshot.object_table_blocked_anchor_mask = 0x07u;
+    semantic_level_snapshot.object_table_blocked_anchor_count = 3;
+    semantic_level_snapshot.nonstartup_level_no_fallback_ready = 1;
+    semantic_level_snapshot.nonstartup_level_blocked_anchor_mask = 0x07u;
+    semantic_level_snapshot.nonstartup_level_blocked_anchor_count = 3;
+    semantic_level_snapshot.startup_level_blocked_anchor_mask = 0x06u;
+    semantic_level_snapshot.startup_level_blocked_anchor_count = 2;
+    semantic_level_snapshot.object_table_route_hash = 0x12345678u;
+    semantic_level_snapshot.level_route_hash = 0x23456789u;
     expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
                     &semantic_level_snapshot,
                     &media_receipt,
