@@ -628,6 +628,76 @@ static void test_runtime_surface_materializer_rejects_unopened_source(void)
     csb_v1_boot_cleanup(&p);
 }
 
+static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
+{
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    unsigned char title_pixels[4] = {0};
+    unsigned char presents_pixels[4] = {0};
+    unsigned char chaos_pixels[4] = {0};
+    unsigned char strikes_pixels[4] = {0};
+    unsigned char left_pixels[4] = {0};
+    unsigned char right_pixels[4] = {0};
+    unsigned char entrance_pixels[4] = {0};
+    unsigned char credits_pixels[4] = {0};
+
+    /* This is a decoded-session unit test: the loader is covered at the
+     * GRAPHICS.DAT boundary elsewhere.  The frame resolver must never
+     * replace these verified source pointers with fallback artwork. */
+    csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
+    session.valid = 1;
+    session.real_asset_matched = 1;
+    session.hud_assets_bound = 1;
+    session.generation = 9u;
+    session.surfaces.valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels = title_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].pixels = presents_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].pixels = chaos_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].pixels = strikes_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].pixels = left_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].pixels = right_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].pixels = entrance_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34].pixels = credits_pixels;
+
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
+    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
+    plan.title_source_step = 1;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 41u, &frame) == 1 && frame.valid &&
+              frame.title_surface->pixels == presents_pixels &&
+              frame.left_door_surface->pixels == left_pixels &&
+              frame.uses_verified_hud_bindings && frame.source_tick == 41u &&
+              frame.session_generation == 9u,
+          "asset session keeps PRESENTS, HUD, and door source surfaces stable");
+    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 42u, &frame) == 1 &&
+              frame.title_surface->pixels == chaos_pixels &&
+              frame.left_door_surface->pixels == left_pixels,
+          "asset session advances CHAOS timing without reopening door pixels");
+    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 43u, &frame) == 1 &&
+              frame.title_surface->pixels == strikes_pixels,
+          "asset session selects STRIKES BACK from the original title session");
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 44u, &frame) == 1 &&
+              frame.entrance_surface->pixels == credits_pixels &&
+              frame.right_door_surface->pixels == right_pixels,
+          "asset session carries the same verified doors into entrance credits");
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_boot_source_evidence();
@@ -653,6 +723,7 @@ int main(void)
     test_real_startup_asset_selection_rejects_generic_paths();
     test_runtime_asset_gate_binds_session_and_owned_artwork();
     test_runtime_surface_materializer_rejects_unopened_source();
+    test_runtime_asset_session_frame_keeps_verified_surfaces_alive();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
