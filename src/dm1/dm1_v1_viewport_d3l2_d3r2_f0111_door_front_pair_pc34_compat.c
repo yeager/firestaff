@@ -234,6 +234,69 @@ bool dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_compose_pixel_pc34(
     return true;
 }
 
+bool dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
+    const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34 *spec,
+    DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 *out_plan)
+{
+    if (!out_plan) return false;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!spec) return false;
+
+    /* ReDMCSB DUNVIEW.C F0676/F0677 pass the shared
+     * G0693_ai_DoorNativeBitmapIndex_Front_D3LCR bitmap to F0111, and
+     * F0111:4244-4334 copies the native GRAPHICS.DAT bitmap to the
+     * temporary door surface before the final C10 transparent blit. */
+    out_plan->spec = spec;
+    out_plan->ready = true;
+    out_plan->bitmap_id = spec->f0111_front_bitmap_id;
+    out_plan->door_zone = spec->f0111_door_zone;
+    out_plan->x = spec->door_frame_x_first;
+    out_plan->y = spec->door_frame_y_first;
+    out_plan->width = spec->door_frame_x_last - spec->door_frame_x_first + 1;
+    out_plan->height = spec->door_frame_y_last - spec->door_frame_y_first + 1;
+    out_plan->source_stride_bytes = (out_plan->width + 1) / 2;
+    out_plan->expanded_pixel_count = out_plan->width * out_plan->height;
+    out_plan->transparent_color = spec->transparent_color;
+    out_plan->source_anchor =
+        "ReDMCSB DUNVIEW.C F0111:4244-4334 native door bitmap copy, "
+        "ornament, state frame, and C10 transparent blit";
+    return true;
+}
+
+bool dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_expand_4bpp_row_pc34(
+    const uint8_t *packed_row,
+    size_t packed_row_size,
+    int width,
+    uint8_t *out_pixels,
+    size_t out_pixel_count)
+{
+    int x;
+
+    if (!packed_row || !out_pixels || width <= 0) return false;
+    if (packed_row_size < (size_t)((width + 1) / 2)) return false;
+    if (out_pixel_count < (size_t)width) return false;
+    for (x = 0; x < width; ++x) {
+        uint8_t packed = packed_row[x >> 1];
+        out_pixels[x] = (uint8_t)((x & 1) ? (packed & 0x0fU)
+                                          : ((packed >> 4) & 0x0fU));
+    }
+    return true;
+}
+
+bool dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_materialize_row_pc34(
+    const DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 *plan,
+    const uint8_t *packed_row,
+    size_t packed_row_size,
+    uint8_t *out_pixels,
+    size_t out_pixel_count)
+{
+    if (!plan || !plan->ready) return false;
+    if (plan->width <= 0 || plan->source_stride_bytes <= 0) return false;
+    if ((size_t)plan->source_stride_bytes > packed_row_size) return false;
+    return dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_expand_4bpp_row_pc34(
+        packed_row, packed_row_size, plan->width, out_pixels, out_pixel_count);
+}
+
 const char *
 dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_source_evidence_pc34(void)
 {

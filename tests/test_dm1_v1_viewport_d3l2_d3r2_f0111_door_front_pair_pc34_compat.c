@@ -266,6 +266,68 @@ static void test_pixel_composition(void)
     check_composition_one(d3r2, 208, 207);
 }
 
+static void test_materialization_plan(void)
+{
+    const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34 *d3l2 =
+        dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_for_side_pc34(1);
+    const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34 *d3r2 =
+        dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_for_side_pc34(2);
+    DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 plan;
+    uint8_t packed[8] = { 0x12, 0x3a, 0xbc, 0xde, 0xf0, 0x45, 0x67, 0x89 };
+    uint8_t pixels[16];
+
+    CHECK_EQ("material.null.plan",
+             dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
+                 d3l2, NULL),
+             0, "material plan null guard");
+    CHECK_EQ("material.null.spec",
+             dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
+                 NULL, &plan),
+             0, "material plan null spec guard");
+    CHECK_EQ("material.d3l2.plan",
+             dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
+                 d3l2, &plan),
+             1, "DUNVIEW.C F0676:6272 F0111 D3L2 door-front");
+    CHECK_EQ("material.d3l2.bitmap", plan.bitmap_id, 693,
+             "G0693_ai_DoorNativeBitmapIndex_Front_D3LCR");
+    CHECK_EQ("material.d3l2.zone", plan.door_zone, 3700,
+             "C3700_ZONE_DOOR_D3L2");
+    CHECK_EQ("material.d3l2.x", plan.x, 0,
+             "D3L2 clipped x");
+    CHECK_EQ("material.d3l2.width", plan.width, 16,
+             "D3 door-front clipped width");
+    CHECK_EQ("material.d3l2.height", plan.height, 49,
+             "D3 door-front clipped height");
+    CHECK_EQ("material.d3l2.stride", plan.source_stride_bytes, 8,
+             "16 indexed pixels from 8 GRAPHICS.DAT 4bpp bytes");
+    CHECK_EQ("material.d3l2.count", plan.expanded_pixel_count, 784,
+             "16x49 indexed pixels");
+    CHECK_EQ("material.d3r2.plan",
+             dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
+                 d3r2, &plan),
+             1, "DUNVIEW.C F0677:6339 F0111 D3R2 door-front");
+    CHECK_EQ("material.d3r2.zone", plan.door_zone, 3710,
+             "C3710_ZONE_DOOR_D3R2");
+    CHECK_EQ("material.d3r2.x", plan.x, 208,
+             "D3R2 clipped x");
+    CHECK_EQ("expand.row",
+             dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_materialize_row_pc34(
+                 &plan, packed, sizeof(packed), pixels, sizeof(pixels)),
+             1, "F0111 GRAPHICS.DAT 4bpp row materialization");
+    CHECK_EQ("expand.p0", pixels[0], 0x1, "high nibble first");
+    CHECK_EQ("expand.p1", pixels[1], 0x2, "low nibble second");
+    CHECK_EQ("expand.p3", pixels[3], 0xa, "C10 survives as indexed color");
+    CHECK_EQ("expand.p15", pixels[15], 0x9, "last low nibble");
+    CHECK_EQ("expand.short",
+             dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_materialize_row_pc34(
+                 &plan, packed, 7, pixels, sizeof(pixels)),
+             0, "short packed GRAPHICS.DAT row rejected");
+    CHECK_EQ("expand.small_out",
+             dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_materialize_row_pc34(
+                 &plan, packed, sizeof(packed), pixels, 15),
+             0, "short expanded row rejected");
+}
+
 static void test_source_evidence(void)
 {
     const char *e =
@@ -311,6 +373,7 @@ int main(void)
     test_specs();
     test_f0107_and_orders();
     test_pixel_composition();
+    test_materialization_plan();
     test_source_evidence();
 
     if (g_failures) {
