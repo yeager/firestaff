@@ -4,6 +4,7 @@
 #include "title_frontend_v1.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -50,78 +51,6 @@ static void expect_stage_after(const char* label,
                dm1_v1_startup_stage_name_pc34(later),
                dm1_v1_startup_stage_name_pc34(earlier));
         g_failures++;
-    }
-}
-
-static void wr16le_test(uint8_t *p, uint16_t v) {
-    p[0] = (uint8_t)(v & 0xffu);
-    p[1] = (uint8_t)(v >> 8);
-}
-
-static void wr32le_test(uint8_t *p, uint32_t v) {
-    p[0] = (uint8_t)(v & 0xffu);
-    p[1] = (uint8_t)((v >> 8) & 0xffu);
-    p[2] = (uint8_t)((v >> 16) & 0xffu);
-    p[3] = (uint8_t)((v >> 24) & 0xffu);
-}
-
-static uint16_t rd16le_test(const uint8_t *p) {
-    return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
-}
-
-static uint16_t dm1_save_checksum_first_half_test(const uint8_t *header) {
-    uint16_t acc = 0;
-    for (size_t i = 0; i < 32u; ++i) {
-        acc = (uint16_t)(acc + rd16le_test(header + (i * 8u) + 0u));
-        acc = (uint16_t)(acc ^ rd16le_test(header + (i * 8u) + 2u));
-        acc = (uint16_t)(acc - rd16le_test(header + (i * 8u) + 4u));
-        acc = (uint16_t)(acc ^ rd16le_test(header + (i * 8u) + 6u));
-    }
-    return acc;
-}
-
-static uint16_t dm1_save_checksum_second_half_test(const uint8_t *header) {
-    uint16_t sum = 0;
-    for (size_t i = 128u; i < 256u; ++i) {
-        sum = (uint16_t)(sum + rd16le_test(header + (i * 2u)));
-    }
-    return sum;
-}
-
-static void build_pc34_original_save_header_test(uint8_t *header) {
-    memset(header, 0, DM1_ORIGINAL_SAVE_HEADER_BYTES);
-    for (size_t i = 0; i < 127u; ++i) {
-        wr16le_test(header + (i * 2u),
-                    (uint16_t)(0x1111u + (uint16_t)(i * 37u)));
-    }
-    wr16le_test(header + (10u * 2u), 0x2468u);
-    header[298] = 1u;
-    header[299] = 5u;
-    wr32le_test(header + 300u, 0x01020304u);
-    wr16le_test(header + 304u, 1u);
-    wr32le_test(header + 306u, 0x34345043u);
-    for (size_t i = 0; i < 16u; ++i) {
-        wr16le_test(header + 310u + (i * 2u), (uint16_t)(0x2000u + i));
-        wr16le_test(header + 342u + (i * 2u),
-                    (uint16_t)(0x3000u + (i * 3u)));
-    }
-    wr16le_test(header + 374u, 9u);
-    wr16le_test(header + 376u, 10u);
-    {
-        uint16_t second_sum = dm1_save_checksum_second_half_test(header);
-        uint16_t first_before_last = dm1_save_checksum_first_half_test(header);
-        uint16_t last = (uint16_t)(rd16le_test(header + 254u) ^
-                                   first_before_last ^ second_sum);
-        wr16le_test(header + 254u, last);
-    }
-    {
-        uint16_t rolling_key = rd16le_test(header + (10u * 2u));
-        for (size_t i = 128u; i < 256u; ++i) {
-            uint8_t *word = header + (i * 2u);
-            uint16_t v = rd16le_test(word);
-            wr16le_test(word, (uint16_t)(v ^ rolling_key));
-            rolling_key = (uint16_t)(rolling_key + 128u);
-        }
     }
 }
 
@@ -834,7 +763,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     char corpus_dir[128];
     char corpus_save_path[256];
     char corpus_bad_path[256];
-    uint8_t corpus_save_bytes[800];
+    uint8_t corpus_save_bytes[4096];
+    size_t corpus_save_size = 0u;
     int corpus_ready = 0;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirror_front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
@@ -3138,6 +3068,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     save_resume_facts.observed_user_save_corpus_files = 3;
     save_resume_facts.observed_user_save_corpus_classified = 2;
     save_resume_facts.observed_user_save_corpus_pc34 = 1;
+    save_resume_facts.observed_user_save_corpus_part_envelope = 1;
     save_resume_facts.observed_user_save_corpus_rejected = 1;
     save_resume_facts.observed_user_save_corpus_truncated = 0;
     save_resume_facts.observed_user_save_corpus_first_pc34_path =
@@ -3172,9 +3103,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  save_resume_capture.observed_champion_portrait_count == 4 &&
                  save_resume_capture.user_save_corpus_scan_consumed &&
                  save_resume_capture.user_save_corpus_files == 3 &&
-                 save_resume_capture.user_save_corpus_classified == 2 &&
-                 save_resume_capture.user_save_corpus_pc34 == 1 &&
-                 save_resume_capture.user_save_corpus_rejected == 1 &&
+                save_resume_capture.user_save_corpus_classified == 2 &&
+                save_resume_capture.user_save_corpus_pc34 == 1 &&
+                save_resume_capture.user_save_corpus_part_envelope == 1 &&
+                save_resume_capture.user_save_corpus_rejected == 1 &&
                  save_resume_capture.user_save_corpus_truncated == 0 &&
                  strcmp(save_resume_capture.user_save_corpus_first_pc34_path,
                         "/tmp/combined.sav") == 0 &&
@@ -3258,6 +3190,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  complete_support.redmcsb_save_part_corpus_ready &&
                  complete_support.user_save_corpus_scan_consumed &&
                  complete_support.user_save_corpus_pc34_ready &&
+                 complete_support.user_save_corpus_part_envelope_ready &&
                  complete_support.user_save_corpus_rejected == 1 &&
                  complete_support.user_save_corpus_truncated == 0 &&
                  strcmp(complete_support.user_save_corpus_first_pc34_path,
@@ -3301,7 +3234,26 @@ static void check_dm1_launch_path_bypass_contract(void) {
     snprintf(corpus_dir, sizeof(corpus_dir), "%s", corpus_dir_template);
     if (mkdtemp(corpus_dir)) {
         FILE *fp;
-        build_pc34_original_save_header_test(corpus_save_bytes);
+        DM1OriginalSavePC34FixtureSpec fixture;
+        memset(&fixture, 0, sizeof(fixture));
+        fixture.champion_count = 2;
+        fixture.map_index = 0;
+        fixture.map_x = 4;
+        fixture.map_y = 6;
+        fixture.direction = 1;
+        fixture.active_champion_index = 0;
+        fixture.current_active_group_count = 1;
+        fixture.maximum_active_group_count = 3;
+        fixture.event_count = 3;
+        fixture.event_maximum_count = 4;
+        fixture.game_time = 1234u;
+        fixture.game_id = 0x534c4f54u;
+        corpus_ready =
+            dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
+                &fixture,
+                corpus_save_bytes,
+                sizeof(corpus_save_bytes),
+                &corpus_save_size) == 0;
         snprintf(corpus_save_path,
                  sizeof(corpus_save_path),
                  "%s/slot-seven-real-save.bin",
@@ -3309,8 +3261,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
         fp = fopen(corpus_save_path, "wb");
         if (fp) {
             corpus_ready =
-                fwrite(corpus_save_bytes, 1u, sizeof(corpus_save_bytes), fp) ==
-                sizeof(corpus_save_bytes);
+                corpus_ready &&
+                fwrite(corpus_save_bytes, 1u, corpus_save_size, fp) ==
+                corpus_save_size;
             fclose(fp);
         }
         snprintf(corpus_bad_path,
@@ -3351,6 +3304,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_full_graphics.complete_support
                      .user_save_corpus_pc34_ready &&
                  hoc_boot_full_graphics.complete_support
+                     .user_save_corpus_part_envelope_ready &&
+                 hoc_boot_full_graphics.complete_support
                      .user_save_corpus_rejected == 1 &&
                  hoc_boot_full_graphics.complete_support
                      .user_save_corpus_truncated == 0 &&
@@ -3377,6 +3332,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_summary.complete_support_ready &&
                  hoc_boot_summary.complete_host_app_capture_route &&
                  hoc_boot_summary.user_save_corpus_pc34_ready &&
+                 hoc_boot_summary.user_save_corpus_part_envelope_ready &&
                  hoc_boot_summary.user_save_corpus_rejected == 1 &&
                  hoc_boot_summary.user_save_corpus_truncated == 0 &&
                  strstr(hoc_boot_summary.user_save_corpus_first_pc34_path,
@@ -3453,6 +3409,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     save_resume_facts.observed_user_save_corpus_files = 0;
     save_resume_facts.observed_user_save_corpus_classified = 0;
     save_resume_facts.observed_user_save_corpus_pc34 = 0;
+    save_resume_facts.observed_user_save_corpus_part_envelope = 0;
     save_resume_facts.observed_user_save_corpus_rejected = 0;
     save_resume_facts.observed_user_save_corpus_truncated = 0;
     save_resume_facts.observed_user_save_corpus_first_pc34_path = NULL;
