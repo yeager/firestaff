@@ -3106,6 +3106,8 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
     const M11_AssetSlot *title_graphic = NULL;
+    int i;
+    int visible = 0;
 
     if (!state || !framebuffer || !plan || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
@@ -3121,6 +3123,13 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
     if (!state->assetsAvailable || plan->source_asset_id != 1 ||
         plan->title_source_step <= 0 || plan->title_source_w <= 0 ||
         plan->title_source_h <= 0) {
+        /* The CSB receipt owns this fallback label. It keeps the first
+         * PRESENTS frame visible while the C001 title bitmap is unavailable. */
+        if (plan->fallback_title_text && plan->fallback_title_text[0]) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          104, 90, plan->fallback_title_text,
+                          &g_text_title);
+        }
         return;
     }
     title_graphic = M11_AssetLoader_Load(
@@ -3130,6 +3139,11 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                                plan->title_source_w) ||
         title_graphic->height < (unsigned int)(plan->title_source_y +
                                                 plan->title_source_h)) {
+        if (plan->fallback_title_text && plan->fallback_title_text[0]) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          104, 90, plan->fallback_title_text,
+                          &g_text_title);
+        }
         return;
     }
     memset(framebuffer, 0,
@@ -3161,6 +3175,17 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                           plan->title_dest_w,
                                           plan->title_dest_h,
                                           plan->title_transparent_color);
+    }
+    for (i = 0; i < framebufferWidth * framebufferHeight; ++i) {
+        if (framebuffer[i] != M11_COLOR_BLACK) {
+            visible = 1;
+            break;
+        }
+    }
+    if (!visible && plan->fallback_title_text &&
+        plan->fallback_title_text[0]) {
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      104, 90, plan->fallback_title_text, &g_text_title);
     }
 }
 
