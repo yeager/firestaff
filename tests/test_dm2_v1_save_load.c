@@ -2,14 +2,15 @@
  *
  * Tests:
  *   1. SUPPRESS codec encode/decode round-trip
- *   2. SUPPRESS decode fill=1 vs fill=0 modes
- *   3. Slot header encoding (0xBEEF/0xDEAD magic, name, slot+0x30)
- *   4. Slot scan: occupied vs empty detection
- *   5. Save + load round-trip (stateless path)
- *   6. Backup fallback on load
- *   7. Cross-version diagnostics: DM2/DM1/unknown/null-fill detection
- *   8. SUPPRESS codec self-test
- *   9. Champion record SUPPRESS mask (261 bytes, low nibbles only)
+ *   2. SKProject bit-mask order and cross-section carry corpus vectors
+ *   3. SUPPRESS decode fill=1 vs fill=0 modes
+ *   4. Slot header encoding (0xBEEF/0xDEAD magic, name, slot+0x30)
+ *   5. Slot scan: occupied vs empty detection
+ *   6. Save + load round-trip (stateless path)
+ *   7. Backup fallback on load
+ *   8. Cross-version diagnostics: DM2/DM1/unknown/null-fill detection
+ *   9. SUPPRESS codec self-test
+ *  10. Champion record SUPPRESS mask (261 bytes, source-bit selectors)
  *  10. DB handle identity (make + resolve round-trip)
  *  11. Invalid slot-header rejection + backup recovery
  *  12. Stale session metadata mismatch (fixture guard)
@@ -101,10 +102,10 @@ static int write_bad_slot_file(const char *dir, uint8_t slot)
 
 static int test_suppress_all1_roundtrip(void)
 {
-    printf("  SUPPRESS all-1s mask round-trip...\n");
-    /* mask[0..7] = 0x11 → nbits=1 for all 8 bytes */
+    printf("  SUPPRESS bit-0 mask round-trip...\n");
+    /* SKProject masks select source bit positions, not a bit count. */
     uint8_t data[8] = { 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00 };
-    uint8_t mask[8] = { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 };
+    uint8_t mask[8] = { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 };
     uint8_t enc[64];
     uint8_t dec[8];
 
@@ -125,7 +126,56 @@ static int test_suppress_all1_roundtrip(void)
     return 1;
 }
 
-/* ── Test 2: SUPPRESS fill modes ──────────────────────────────── */
+/* ── Test 2: SUPPRESS source bit order + section carry ─────────── */
+
+static int test_suppress_skproject_corpus_vectors(void)
+{
+    uint8_t data[3] = { 0x81, 0x00, 0xD2 };
+    uint8_t mask[3] = { 0x81, 0x42, 0xFF };
+    uint8_t encoded[8] = { 0 };
+    uint8_t decoded[3] = { 0 };
+    const uint8_t expected[] = { 0xCD, 0x20 };
+    DM2_SuppressWriter writer;
+    DM2_SuppressReader reader;
+    size_t written = 0;
+    size_t flushed = 0;
+    uint8_t first_data = 0x80, first_mask = 0xC0, first_out = 0;
+    uint8_t second_data = 0x0F, second_mask = 0x0F, second_out = 0;
+
+    printf("  SKProject SUPPRESS bit order and section carry...\n");
+    if (dm2_suppress_encode(data, mask, 3, encoded, sizeof(encoded)) != 2 ||
+        memcmp(encoded, expected, sizeof(expected)) != 0 ||
+        dm2_suppress_decode(encoded, sizeof(expected), mask, 3, decoded, 0) != 2 ||
+        memcmp(data, decoded, sizeof(data)) != 0) {
+        printf("    FAIL: source-order vector did not produce CD 20\n");
+        return 0;
+    }
+
+    dm2_suppress_writer_init(&writer);
+    if (dm2_suppress_writer_write(&writer, &first_data, &first_mask, 1,
+                                  encoded, sizeof(encoded), &written) != 0 ||
+        written != 0 ||
+        dm2_suppress_writer_write(&writer, &second_data, &second_mask, 1,
+                                  encoded, sizeof(encoded), &written) != 0 ||
+        written != 0 ||
+        dm2_suppress_writer_flush(&writer, encoded, sizeof(encoded), &flushed) != 0 ||
+        flushed != 1 || encoded[0] != 0xBC) {
+        printf("    FAIL: adjacent sections did not retain SUPPRESS carry\n");
+        return 0;
+    }
+
+    dm2_suppress_reader_init(&reader, encoded, 1);
+    if (dm2_suppress_reader_read(&reader, &first_mask, 1, &first_out, 0) != 0 ||
+        dm2_suppress_reader_read(&reader, &second_mask, 1, &second_out, 0) != 0 ||
+        first_out != first_data || second_out != second_data || reader.position != 1) {
+        printf("    FAIL: section reader did not preserve pending source bits\n");
+        return 0;
+    }
+    printf("    PASS: source bit masks, MSB order, and section carry match SKProject\n");
+    return 1;
+}
+
+/* ── Test 3: SUPPRESS fill modes ──────────────────────────────── */
 
 static int test_suppress_fill_mode(void)
 {
@@ -423,19 +473,19 @@ static int test_suppress_self_test(void)
 
 static int test_champion_mask(void)
 {
-    printf("  Champion SUPPRESS mask (261 bytes, valid nibbles)...\n");
+    printf("  Champion SUPPRESS mask (261 bytes, source-bit selectors)...\n");
     uint8_t mask[261];
     dm2_suppress_champion_mask(mask);
     for (size_t i = 0; i < 261; i++) {
-        if ((mask[i] & 0xF0) != 0) {
-            printf("    FAIL: mask[%zu]=0x%02X has high nibble\n", i, mask[i]);
+        if (mask[i] != 0 && mask[i] != 0xFF) {
+            printf("    FAIL: mask[%zu]=0x%02X is not a full source-bit selector\n", i, mask[i]);
             return 0;
         }
     }
     /* Verify name block and inventory region are non-zero */
     if (mask[0] == 0 || mask[7] == 0) { printf("    FAIL: name block zero\n"); return 0; }
     if (mask[91] == 0) { printf("    FAIL: inventory[0] mask zero\n"); return 0; }
-    printf("    PASS: mask table valid (261 bytes, low nibbles only)\n");
+    printf("    PASS: mask table preserves modeled source bytes\n");
     return 1;
 }
 
@@ -1762,23 +1812,24 @@ int main(void)
     } while (0)
 
     RUN(1,  test_suppress_all1_roundtrip);
-    RUN(2,  test_suppress_fill_mode);
-    RUN(3,  test_slot_header_encoding);
-    RUN(4,  test_slot_scan);
-    RUN(5,  test_save_load_roundtrip);
-    RUN(6,  test_backup_fallback);
-    RUN(7,  test_last_session_backup_fallback);
-    RUN(8,  test_cross_version_diagnostics);
-    RUN(9,  test_suppress_self_test);
-    RUN(10, test_champion_mask);
-    RUN(11, test_db_handle_roundtrip);
-    RUN(12, test_invalid_slot_header_rejected);
-    RUN(13, test_stale_fixture_metadata_guard);
-    RUN(14, test_resume_smoke_gate_position_facing_inventory);
-    RUN(15, test_raw_sksave_resume_import);
-    RUN(16, test_champion_death_permanence_source_lock);
-    RUN(17, test_live_runtime_state_roundtrip);
-    RUN(18, test_original_save_candidate_live_restore);
+    RUN(2,  test_suppress_skproject_corpus_vectors);
+    RUN(3,  test_suppress_fill_mode);
+    RUN(4,  test_slot_header_encoding);
+    RUN(5,  test_slot_scan);
+    RUN(6,  test_save_load_roundtrip);
+    RUN(7,  test_backup_fallback);
+    RUN(8,  test_last_session_backup_fallback);
+    RUN(9,  test_cross_version_diagnostics);
+    RUN(10, test_suppress_self_test);
+    RUN(11, test_champion_mask);
+    RUN(12, test_db_handle_roundtrip);
+    RUN(13, test_invalid_slot_header_rejected);
+    RUN(14, test_stale_fixture_metadata_guard);
+    RUN(15, test_resume_smoke_gate_position_facing_inventory);
+    RUN(16, test_raw_sksave_resume_import);
+    RUN(17, test_champion_death_permanence_source_lock);
+    RUN(18, test_live_runtime_state_roundtrip);
+    RUN(19, test_original_save_candidate_live_restore);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

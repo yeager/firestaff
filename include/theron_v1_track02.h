@@ -706,7 +706,10 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
  * payload with seed 0x0108e938 and level index 0x0026.  The handoff first
  * validates the descriptor table at `descriptor_offset`, then scans Track 02
  * for exactly one matching startup candidate before handing those bytes to
- * theron_v1_level_load().
+ * theron_v1_level_load().  JP/US raw BINs are MODE1/2352 images, so an
+ * anchor-verified candidate that crosses a sector user-data boundary is
+ * reconstructed through the logical MODE1/2048 stream rather than rejected
+ * for containing sector framing bytes.
  *
  * This is narrower than a full dungeon parser: it promotes one real startup
  * candidate and keeps all other Track 02 map/object semantics unclaimed.

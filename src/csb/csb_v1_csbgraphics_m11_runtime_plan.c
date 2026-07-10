@@ -244,6 +244,212 @@ static int cache_ready(const CSB_V1_CSBGraphicsDatRealCache *cache)
 }
 
 static void copy_cache_metadata(const CSB_V1_CSBGraphicsDatRealCache *cache,
+                                CSB_V1_CSBGraphicsM11RuntimePlan *plan);
+
+static int startup_role_geometry(CSB_V1_CSBGraphicsStartupAssetRole role,
+                                 uint16_t *out_width,
+                                 uint16_t *out_height,
+                                 CSB_V1_CSBGraphicsM11Route *out_route)
+{
+    if (!out_width || !out_height || !out_route) {
+        return 0;
+    }
+    *out_route = CSB_V1_CSBGRAPHICS_M11_ROUTE_NONE;
+    switch (role) {
+    case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE:
+    case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_SCREEN:
+        *out_width = CSB_V1_CSBGRAPHICS_M11_SOURCE_W;
+        *out_height = CSB_V1_CSBGRAPHICS_M11_SOURCE_H;
+        return 1;
+    case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR:
+    case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_RIGHT_DOOR:
+        *out_width = 105u;
+        *out_height = 161u;
+        return 1;
+    case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY:
+        *out_width = CSB_V1_CSBGRAPHICS_M11_VIEWPORT_W;
+        *out_height = CSB_V1_CSBGRAPHICS_M11_VIEWPORT_H;
+        *out_route = CSB_V1_CSBGRAPHICS_M11_ROUTE_HUD_INVENTORY;
+        return 1;
+    case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_RESURRECT_PANEL:
+        *out_width = CSB_V1_CSBGRAPHICS_M11_C040_PANEL_W;
+        *out_height = CSB_V1_CSBGRAPHICS_M11_C040_PANEL_H;
+        *out_route = CSB_V1_CSBGRAPHICS_M11_ROUTE_HUD_RESURRECT_PANEL;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+void csb_v1_csbgraphics_startup_package_init(
+    CSB_V1_CSBGraphicsStartupPackage *package)
+{
+    if (package) {
+        memset(package, 0, sizeof(*package));
+    }
+}
+
+static int startup_package_add_hud_entry(
+    CSB_V1_CSBGraphicsM11RuntimePlan *plan,
+    const CSB_V1_CSBGraphicsEntrySpan *span,
+    uint16_t width,
+    uint16_t height,
+    CSB_V1_CSBGraphicsStartupAssetRole role,
+    CSB_V1_CSBGraphicsM11Route route)
+{
+    int rc = append_entry(plan, span, width, height, route, 1);
+    if (rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+        CSB_V1_CSBGraphicsM11RuntimePlanEntry *entry =
+            &plan->entries[plan->planned_count - 1u];
+        entry->needs_startup_redraw = 1;
+        entry->startup_role = role;
+    }
+    return rc;
+}
+
+int csb_v1_csbgraphics_m11_runtime_plan_add_startup_package(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsStartupPackageSpec *specs,
+    size_t spec_count,
+    CSB_V1_CSBGraphicsM11RuntimePlan *plan,
+    CSB_V1_CSBGraphicsStartupPackage *out_package)
+{
+    CSB_V1_CSBGraphicsStartupPackage local_package;
+    CSB_V1_CSBGraphicsStartupPackage *package =
+        out_package ? out_package : &local_package;
+    CSB_V1_CSBGraphicsM11RuntimePlan original_plan;
+    size_t i;
+    int result = CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+
+    csb_v1_csbgraphics_startup_package_init(package);
+    if (!cache_ready(cache) || !specs || !plan || spec_count == 0u ||
+        spec_count > CSB_V1_CSBGRAPHICS_STARTUP_PACKAGE_MAX_ASSETS) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+    original_plan = *plan;
+    copy_cache_metadata(cache, plan);
+
+    for (i = 0u; i < spec_count; ++i) {
+        const CSB_V1_CSBGraphicsStartupPackageSpec *spec = &specs[i];
+        CSB_V1_CSBGraphicsEntrySpan span;
+        CSB_V1_CSBGraphicsM11Route route;
+        uint16_t width;
+        uint16_t height;
+        int rc;
+
+        if (spec->role >= CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT ||
+            package->assets[spec->role].present ||
+            !startup_role_geometry(spec->role, &width, &height, &route) ||
+            spec->width != width || spec->height != height) {
+            result = CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY;
+            goto fail;
+        }
+        rc = csb_v1_csbgraphics_dat_entry_span(cache->file_buffer,
+                                               cache->file_size,
+                                               spec->entry_index,
+                                               &span);
+        if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+            span.compressed_size == 0u ||
+            span.decompressed_size != (uint32_t)width * height) {
+            result = CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY;
+            goto fail;
+        }
+        package->assets[spec->role].role = spec->role;
+        package->assets[spec->role].entry_index = spec->entry_index;
+        package->assets[spec->role].width = width;
+        package->assets[spec->role].height = height;
+        package->assets[spec->role].decompressed_size =
+            (uint16_t)span.decompressed_size;
+        package->assets[spec->role].present = 1;
+        ++package->asset_count;
+
+        if (route != CSB_V1_CSBGRAPHICS_M11_ROUTE_NONE) {
+            rc = startup_package_add_hud_entry(plan, &span, width, height,
+                                               spec->role, route);
+            if (rc != CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+                result = rc;
+                goto fail;
+            }
+            ++plan->supported_present_count;
+        }
+    }
+
+    package->door_pair_ready =
+        package->assets[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR].present &&
+        package->assets[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_RIGHT_DOOR].present;
+    package->startup_ready =
+        package->assets[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE].present &&
+        package->assets[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_SCREEN].present &&
+        package->door_pair_ready;
+    package->hud_ready =
+        package->assets[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY].present &&
+        package->assets[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_RESURRECT_PANEL].present;
+    package->valid = package->startup_ready;
+    if (!package->valid) {
+        result = CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+        goto fail;
+    }
+    return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+
+fail:
+    *plan = original_plan;
+    csb_v1_csbgraphics_startup_package_init(package);
+    return result;
+}
+
+int csb_v1_csbgraphics_startup_package_decode_surface(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsStartupPackage *package,
+    CSB_V1_CSBGraphicsStartupAssetRole role,
+    CSB_V1_CSBGraphicsStartupDecodedSurface *out_surface)
+{
+    const CSB_V1_CSBGraphicsStartupPackageAsset *asset;
+    size_t written = 0u;
+    int rc;
+
+    if (out_surface) {
+        memset(out_surface, 0, sizeof(*out_surface));
+    }
+    if (!cache_ready(cache) || !package || !package->valid || !out_surface ||
+        role >= CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT ||
+        !package->assets[role].present) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+    asset = &package->assets[role];
+    out_surface->pixels = (uint8_t *)malloc(asset->decompressed_size);
+    if (!out_surface->pixels) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+    rc = csb_v1_csbgraphics_dat_decode_entry(cache->file_buffer,
+                                             cache->file_size,
+                                             asset->entry_index,
+                                             out_surface->pixels,
+                                             asset->decompressed_size,
+                                             &written);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        written != asset->decompressed_size) {
+        csb_v1_csbgraphics_startup_decoded_surface_release(out_surface);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+    out_surface->width = asset->width;
+    out_surface->height = asset->height;
+    out_surface->entry_index = asset->entry_index;
+    out_surface->role = role;
+    out_surface->valid = 1;
+    return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+}
+
+void csb_v1_csbgraphics_startup_decoded_surface_release(
+    CSB_V1_CSBGraphicsStartupDecodedSurface *surface)
+{
+    if (!surface) {
+        return;
+    }
+    free(surface->pixels);
+    memset(surface, 0, sizeof(*surface));
+}
+
+static void copy_cache_metadata(const CSB_V1_CSBGraphicsDatRealCache *cache,
                                 CSB_V1_CSBGraphicsM11RuntimePlan *plan)
 {
     plan->cache_loaded = cache && cache->loaded ? 1 : 0;

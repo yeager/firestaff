@@ -267,7 +267,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     status = theron_v1_track02_bind_initial_level_candidate(
         track,
         sizeof(track),
-        THERON_TRACK02_MD5_US_BIN,
+        THERON_TRACK02_MD5_US_ISO,
         descriptor_offset,
         &binding);
     check_int("synthetic initial candidate binding status",
@@ -292,7 +292,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     status = theron_v1_track02_load_initial_level_candidate(
         track,
         sizeof(track),
-        THERON_TRACK02_MD5_US_BIN,
+        THERON_TRACK02_MD5_US_ISO,
         descriptor_offset,
         THERON_DUNGEON_1_HALL_OF_RECORDS,
         0,
@@ -361,7 +361,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     status = theron_v1_track02_load_initial_level_candidate(
         track,
         sizeof(track),
-        THERON_TRACK02_MD5_US_BIN,
+        THERON_TRACK02_MD5_US_ISO,
         descriptor_offset,
         THERON_DUNGEON_1_HALL_OF_RECORDS,
         0,
@@ -453,6 +453,93 @@ static void write_initial_candidate_fixture(uint8_t *candidate,
     candidate[12 + 1u * candidate_width + 1u] = THERON_SQUARE_FLOOR;
     candidate[12 + 1u * candidate_width + 2u] = THERON_SQUARE_FLOOR;
     candidate[12 + 2u * candidate_width + 2u] = THERON_SQUARE_EXIT;
+}
+
+static void write_raw_user_data_range(uint8_t *track,
+                                      size_t raw_offset,
+                                      const uint8_t *bytes,
+                                      size_t byte_count) {
+    size_t copied = 0u;
+
+    while (copied < byte_count) {
+        const size_t sector = raw_offset / THERON_TRACK02_RAW_SECTOR_BYTES;
+        const size_t within = raw_offset % THERON_TRACK02_RAW_SECTOR_BYTES;
+        const size_t user_end = THERON_TRACK02_RAW_USER_DATA_OFFSET +
+            THERON_TRACK02_RAW_USER_DATA_BYTES;
+        size_t chunk = user_end - within;
+
+        if (chunk > byte_count - copied) {
+            chunk = byte_count - copied;
+        }
+        memcpy(track + raw_offset, bytes + copied, chunk);
+        copied += chunk;
+        if (copied < byte_count) {
+            raw_offset = (sector + 1u) * THERON_TRACK02_RAW_SECTOR_BYTES +
+                THERON_TRACK02_RAW_USER_DATA_OFFSET;
+        }
+    }
+}
+
+static void probe_split_raw_initial_candidate_semantic_handoff(void) {
+    static const char *const md5s[] = {
+        THERON_TRACK02_MD5_US_BIN,
+        THERON_TRACK02_MD5_JP_BIN
+    };
+    static const size_t candidate_offsets[] = { 0x076cu, 0x0740u };
+    enum {
+        raw_sector_count = 24u,
+        candidate_width = 32u,
+        candidate_height = 27u,
+        candidate_size = 12u + candidate_width * candidate_height
+    };
+    size_t layout;
+
+    for (layout = 0u; layout < sizeof(md5s) / sizeof(md5s[0]); ++layout) {
+        uint8_t track[raw_sector_count * THERON_TRACK02_RAW_SECTOR_BYTES];
+        uint8_t candidate[candidate_size];
+        const size_t descriptor_offset = candidate_offsets[layout] + 0xa852u;
+        const size_t seed_table_offset = descriptor_offset - 0x1584u + 0x20u;
+        Theron_Track02StartupSemanticHandoff semantic;
+        Theron_Track02StartupRuntimeReceipt receipt;
+        Theron_Track02LevelHandoff level_handoff;
+        Theron_Track02LevelHandoffStatus status;
+        Theron_V1_Level level;
+        size_t i;
+
+        memset(track, 0, sizeof(track));
+        memset(candidate, 0, sizeof(candidate));
+        write_initial_candidate_fixture(candidate, candidate_width,
+                                        candidate_height);
+        write_raw_user_data_range(track, candidate_offsets[layout], candidate,
+                                  sizeof(candidate));
+        memcpy(track + descriptor_offset, g_canonical_descriptor,
+               sizeof(g_canonical_descriptor));
+        for (i = 0u; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
+            write_le32(track + seed_table_offset + i * 4u,
+                       313u + (uint32_t)(i * 101u));
+        }
+
+        status = theron_v1_track02_load_startup_semantic_level(
+            track, sizeof(track), md5s[layout], descriptor_offset,
+            THERON_DUNGEON_1_HALL_OF_RECORDS, 0, &level, &semantic,
+            &level_handoff);
+        check_int("split raw semantic level status", status,
+                  THERON_TRACK02_LEVEL_HANDOFF_OK);
+        check_int("split raw semantic level ready", semantic.ready_for_runtime,
+                  1);
+        check_int("split raw semantic level loaded", level_handoff.loaded, 1);
+        check_size("split raw semantic raw offset",
+                   level_handoff.absolute_offset, candidate_offsets[layout]);
+        check_int("split raw semantic level width", level.width,
+                  (int)candidate_width);
+        check_int("split raw semantic level start x", level.start_x, 1);
+        check_int("split raw semantic level start y", level.start_y, 1);
+        check_int("split raw semantic receipt valid",
+                  theron_v1_track02_startup_runtime_receipt_from_handoff(
+                      &semantic, &receipt), 1);
+        check_int("split raw semantic receipt blocks fallback visuals",
+                  receipt.fallback_visuals_allowed, 0);
+    }
 }
 
 static void probe_synthetic_initial_candidate_user_data_offsets(void) {
@@ -1287,6 +1374,7 @@ int main(void) {
     probe_synthetic_positive_handoff();
     probe_synthetic_initial_candidate_handoff();
     probe_synthetic_initial_candidate_wrong_anchor_rejected();
+    probe_split_raw_initial_candidate_semantic_handoff();
     probe_synthetic_initial_candidate_user_data_offsets();
     probe_synthetic_multiple_initial_candidates_rejected();
     probe_negative_handoffs();
