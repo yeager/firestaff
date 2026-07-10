@@ -727,6 +727,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_host_probe_consumer;
     DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34
         hoc_release_capture_ownership;
+    DM1_V1_StartupHoCPresentedCapturePublishFacts_PC34
+        hoc_presented_publish_facts;
+    DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34
+        hoc_presented_publish;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirror_front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 mirror_boundary;
@@ -1922,6 +1926,29 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      .presented_capture_consumer_mask == 0x7u &&
                  hoc_release_capture_ownership.presented_capture_chain_ready &&
                  hoc_release_capture_ownership.named_consumer_hash != 0u,
+             1);
+    memset(&hoc_presented_publish_facts, 0,
+           sizeof(hoc_presented_publish_facts));
+    memset(&hoc_presented_publish, 0, sizeof(hoc_presented_publish));
+    hoc_presented_publish_facts.source_id = "dm1";
+    hoc_presented_publish_facts.presented_capture_ready = 1;
+    hoc_presented_publish_facts.host_window_present = 1;
+    hoc_presented_publish_facts.captured_from_mac_window = 1;
+    hoc_presented_publish_facts.captured_from_release_app = 1;
+    hoc_presented_publish_facts.width = 320;
+    hoc_presented_publish_facts.height = 200;
+    hoc_presented_publish_facts.byte_count = 320 * 200 * 4;
+    hoc_presented_publish_facts.framebuffer_hash = 0x4d314843u;
+    expect_i("DM1 HoC presented capture publish receipt owns M11/M12 chain",
+             dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
+                 &hoc_presented_publish_facts,
+                 &hoc_presented_publish) &&
+                 hoc_presented_publish.handled &&
+                 hoc_presented_publish.ready &&
+                 hoc_presented_publish.consumer_mask == 0x7u &&
+                 hoc_presented_publish.chain_hash ==
+                     dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+                         320, 200, 320 * 200 * 4, 0x4d314843u, 0x7u),
              1);
     hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 0;
     hoc_host_probe_facts.presented_capture_consumer_mask =

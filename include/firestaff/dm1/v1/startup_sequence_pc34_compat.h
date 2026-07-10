@@ -592,6 +592,37 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCPresentedCapturePublishFacts_PC34 {
+    const char* source_id;
+    int presented_capture_ready;
+    int host_window_present;
+    int captured_from_mac_window;
+    int captured_from_release_app;
+    int width;
+    int height;
+    int byte_count;
+    unsigned int framebuffer_hash;
+    unsigned int required_consumer_mask;
+} DM1_V1_StartupHoCPresentedCapturePublishFacts_PC34;
+
+typedef struct DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34 {
+    int handled;
+    int ready;
+    int presented_capture_ready;
+    int host_window_present;
+    int captured_from_mac_window;
+    int captured_from_release_app;
+    int geometry_matches;
+    int pixels_present;
+    int width;
+    int height;
+    int byte_count;
+    unsigned int framebuffer_hash;
+    unsigned int consumer_mask;
+    unsigned int chain_hash;
+    const char* source_evidence;
+} DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34;
+
 typedef struct DM1_V1_StartupHoCRenderConsumerReceipt_PC34 {
     int handled;
     int ready;
@@ -1042,6 +1073,9 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
 int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
     DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
+    const DM1_V1_StartupHoCPresentedCapturePublishFacts_PC34* facts,
+    DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34* out_receipt);
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,

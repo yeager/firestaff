@@ -6845,6 +6845,9 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     facts.presented_capture_consumer_mask = presented->consumerMask;
     facts.presented_capture_chain_hash = presented->chainHash;
     facts.consumed_hoc_host_render_receipt = 1;
+    facts.consumed_m11_boot_probe_consumer =
+        (presented->consumerMask &
+         DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34) ? 1 : 0;
     facts.consumed_m12_startup_capture_consumer = 1;
 
     (void)dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
@@ -6970,6 +6973,7 @@ int M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(
         return 1;
     }
     expectedMask = DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+                   DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
                    DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
     expectedHash =
         dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
