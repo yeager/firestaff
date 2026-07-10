@@ -17,6 +17,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
@@ -455,9 +456,32 @@ static size_t build_skproject_square_actuator_fixture(uint8_t *buf,
 
 static void test_first_tick_after_boot_profile_handoff(void)
 {
+    DM2_V1_BootViewportAssetEvidence evidence;
     DM2_V1_BootProfile profile;
     DM2_V1_GameState *state;
     DM2_V1_SessionState session;
+
+    CHECK(dm2_v1_boot_viewport_asset_evidence(
+              NULL, DM2_V1_VIEWPORT_GFX_FLOOR, &evidence) == 0 &&
+              evidence.category == DM2_GDAT_CATEGORY_GRAPHICSSET &&
+              evidence.entry_index == 0 &&
+              evidence.field == DM2_GDAT_GFXSET_FLOOR,
+          "viewport floor material resolves to its raw GDAT address before decode");
+    CHECK(dm2_v1_boot_viewport_asset_evidence(
+              NULL,
+              dm2_v1_viewport_door_panel_graphic_index_for_record(
+                  DM2_SQ_D0C, 7, 1),
+              &evidence) == 0 &&
+              evidence.category == DM2_GDAT_CATEGORY_DOORS &&
+              evidence.entry_index == 7 && evidence.field == 0,
+          "viewport door panel resolves map-local GDAT record before decode");
+    CHECK(dm2_v1_boot_viewport_asset_evidence(
+              NULL, dm2_v1_viewport_creature_graphic_index(0x12, 0),
+              &evidence) == 0 &&
+              evidence.category == DM2_GDAT_CATEGORY_CREATURES &&
+              evidence.entry_index == 0x12 &&
+              evidence.field == DM2_GDAT_IMG_MAP_CHIP,
+          "viewport creature sprite resolves map-chip GDAT record before decode");
 
     make_synthetic_verified_profile(&profile);
     CHECK(dm2_v1_boot_enter_game(&profile) == 0,
