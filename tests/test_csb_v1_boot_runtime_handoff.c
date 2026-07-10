@@ -2566,64 +2566,86 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     facts.utility_imported_champion_count = 2;
     facts.utility_preview_active = 0;
     facts.utility_prompt = "CHAOS STRIKES BACK READY";
+    facts.entrance_active = 1;
+    facts.entrance_source_step = 4;
+    facts.resume_available = 1;
+    facts.resume_path = resume_path;
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.boot_profile = &boot;
+    snapshot.entrance_active = facts.entrance_active;
+    snapshot.entrance_source_step = facts.entrance_source_step;
+    snapshot.utility_overlay_active = facts.utility_overlay_active;
+    snapshot.utility_selected_action_index =
+        facts.utility_selected_action_index;
+    snapshot.utility_imported_champion_count =
+        facts.utility_imported_champion_count;
+    snapshot.utility_prompt = facts.utility_prompt;
+    snapshot.resume_available = facts.resume_available;
+    snapshot.resume_path = facts.resume_path;
 
-    CHECK(csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
-              &facts,
+    CHECK(csb_v1_runtime_util_render_plan_from_boot_profile_facts_pc34(
+              facts.utility_selected_action_index,
+              facts.utility_imported_champion_count,
+              facts.boot_profile,
+              facts.utility_prompt,
+              facts.utility_preview_active,
               &plan) == 1,
-          "runtime utility render wrapper accepts startup host facts");
+          "runtime utility render wrapper accepts boot profile facts");
     CHECK(plan.menu_row_count == CSB_V1_UTIL_MENU_ROW_COUNT &&
               strstr(plan.prompt_row.text,
                      "CHAOS STRIKES BACK READY") != NULL,
-          "runtime utility render wrapper owns M11 utility facts");
+          "runtime utility render wrapper owns boot utility facts");
 
     facts.utility_selected_action_index = 0;
-    CHECK(csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
-              &facts,
+    snapshot.utility_selected_action_index = facts.utility_selected_action_index;
+    CHECK(csb_v1_boot_runtime_util_apply_firestaff_input_from_snapshot_pc34(
+              &snapshot,
               2,
               &action_receipt) == 1,
-          "runtime utility keyboard action wrapper accepts startup host facts");
+          "boot utility keyboard action wrapper accepts startup snapshot");
     CHECK(action_receipt.util_state_receipt.selected_action_index == 1 &&
               action_receipt.util_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
               !action_receipt.entrance_receipt_valid,
-          "runtime utility keyboard action wrapper owns redraw receipt");
+          "boot utility keyboard action wrapper owns redraw receipt");
 
-    CHECK(csb_v1_runtime_util_apply_point_from_startup_host_facts_with_action_receipt_pc34(
-              &facts,
+    CHECK(csb_v1_boot_runtime_util_apply_pointer_from_snapshot_pc34(
+              &snapshot,
               72,
               126,
               &action_receipt) == 1,
-          "runtime utility pointer action wrapper accepts startup host facts");
+          "boot utility pointer action wrapper accepts startup snapshot");
     CHECK(action_receipt.util_receipt.result ==
               CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
               action_receipt.entrance_receipt_valid,
-          "runtime utility pointer action wrapper owns M11 utility facts");
+          "boot utility pointer action wrapper owns M11 utility facts");
 
     facts.utility_selected_action_index = 1;
-    CHECK(csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_with_action_receipt_pc34(
-              &facts,
+    snapshot.utility_selected_action_index = facts.utility_selected_action_index;
+    CHECK(csb_v1_boot_runtime_util_apply_firestaff_input_from_snapshot_pc34(
+              &snapshot,
               9,
               &action_receipt) == 1,
-          "runtime utility keyboard action wrapper handles accept");
+          "boot utility keyboard action wrapper handles accept");
     CHECK(action_receipt.util_receipt.result ==
               CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
               action_receipt.entrance_receipt_valid,
-          "runtime utility keyboard action wrapper chains entrance receipt");
+          "boot utility keyboard action wrapper chains entrance receipt");
 
-    CHECK(csb_v1_runtime_execute_startup_entrance_firestaff_input_from_host_facts_with_receipts_pc34(
-              &facts,
+    CHECK(csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_snapshot_pc34(
+              &snapshot,
               2,
               &entrance_receipt) == 1,
-          "runtime entrance keyboard action wrapper accepts startup host facts");
+          "boot entrance keyboard action wrapper accepts startup snapshot");
     CHECK(!entrance_receipt.handled,
-          "runtime entrance keyboard action wrapper ignores navigation input");
+          "boot entrance keyboard action wrapper ignores navigation input");
 
-    CHECK(csb_v1_runtime_execute_startup_entrance_firestaff_input_from_host_facts_with_receipts_pc34(
-              &facts,
+    CHECK(csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_snapshot_pc34(
+              &snapshot,
               9,
               &entrance_receipt) == 1,
-          "runtime entrance keyboard action wrapper handles accept input");
+          "boot entrance keyboard action wrapper handles accept input");
     CHECK(entrance_receipt.handled,
-          "runtime entrance keyboard action wrapper chains command receipt");
+          "boot entrance keyboard action wrapper chains command receipt");
 
     memset(&snapshot, 0, sizeof(snapshot));
     snapshot.entrance_active = 1;
@@ -2826,6 +2848,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_plan_valid &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.title_draw_ready &&
+              strstr(host_view_receipt.render_draw.source_evidence,
+                     "TITLE.C F0437") != NULL &&
+              strstr(host_view_receipt.render_draw.source_evidence,
+                     "ENTRANCE.C F0441") != NULL &&
               host_view_receipt.render_draw.primitive_commands_ready &&
               host_view_receipt.render_draw.title_asset_commands_ready &&
               host_view_receipt.readiness_valid &&
@@ -2857,6 +2883,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_draw_receipt.render_executed &&
               !host_view_draw_receipt.hud_menu_executed &&
               host_view_draw_receipt.real_asset_matched &&
+              strstr(host_view_draw_receipt.source_evidence,
+                     "ENTRANCE.C F0580") != NULL &&
               host_view_draw_receipt.primitive_commands_consumed &&
               host_view_draw_receipt.title_asset_commands_consumed &&
               !host_view_draw_receipt.closed_door_asset_commands_consumed &&
