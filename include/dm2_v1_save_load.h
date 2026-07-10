@@ -101,9 +101,17 @@ typedef struct {
     bool     has_last_session_backup;
     bool     last_session_uses_backup;
     uint8_t  invalid_candidate_count;
+    uint8_t  importable_candidate_count;
+    uint8_t  import_rejected_candidate_count;
+    uint8_t  firestaff_session_candidate_count;
+    uint8_t  original_envelope_candidate_count;
+    uint8_t  original_raw_candidate_count;
     size_t   largest_payload_size;
     size_t   total_payload_size;
+    size_t   largest_importable_payload_size;
+    size_t   total_importable_payload_size;
     char     first_valid_path[256];
+    char     first_importable_path[256];
 } DM2_SKSaveCorpusReceipt;
 
 /* Initialise slot manager with save base directory (NULL = cwd). */
@@ -162,8 +170,9 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base);
 
 /* Scan a directory containing original-style SKSave.dat/SKSave.bak and
  * SKSave%02u.dat files. This is a lightweight real-save corpus hook: it
- * validates the DM2 42-byte slot header, records which candidates are usable,
- * and reports payload byte totals without importing the full session. */
+ * validates the DM2 42-byte slot header, classifies payloads through the
+ * same Firestaff/original/raw importer used by runtime resume, and reports
+ * byte totals without mutating live runtime state. */
 bool dm2_v1_sksave_corpus_scan(const char *save_base,
                                DM2_SKSaveCorpusReceipt *out_receipt);
 

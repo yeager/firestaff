@@ -1345,11 +1345,64 @@ static int test_sksave_corpus_scan_receipt(void)
 {
     printf("  Real SKSave corpus scan receipt...\n");
     char tmpdir[256];
-    uint8_t payload_a[5] = { 1, 2, 3, 4, 5 };
-    uint8_t payload_b[9] = { 9, 8, 7, 6, 5, 4, 3, 2, 1 };
-    uint8_t payload_c[3] = { 0xAA, 0xBB, 0xCC };
+    uint8_t payload_a[2048];
+    uint8_t payload_b[2048];
+    uint8_t payload_c[4096];
+    size_t payload_a_size = 0u;
+    size_t payload_b_size = 0u;
+    size_t largest_payload_size = 0u;
+    size_t enc_gs_size = 0u;
+    size_t enc_champ_size = 0u;
+    int payload_c_size;
+    DM2_TestGameStateStorage gs_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_ChampionRecord champion;
+    DM2_V1_SessionState session;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
+    uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
     DM2_SKSaveCorpusReceipt receipt;
     int r;
+
+    memset(&gs_store, 0, sizeof(gs_store));
+    memset(&champion, 0, sizeof(champion));
+    gs->dwGameTick = 0x55u;
+    gs->dwRandomSeed = 0x66u;
+    gs->wChampionsCount = 1;
+    gs->wPlayerPosX = 2;
+    gs->wPlayerPosY = 3;
+    gs->wPlayerDir = 1;
+    gs->wPlayerMap = 0;
+    gs->wChampionLeader = 0;
+    memcpy(champion.first_name, "SK", 2);
+    champion.absolute_direction = 1;
+    champion.cur_hp = 42;
+    champion.max_hp = 50;
+    dm2_v1_session_new(&session);
+    session.game_tick = 0x1234u;
+    payload_c_size = dm2_v1_session_serialize(&session, payload_c,
+                                              sizeof(payload_c));
+    if (payload_c_size <= 0 ||
+        !build_resume_payload(gs, &champion, global_flags, global_bytes,
+                              global_words, spell_effects, NULL, 0,
+                              payload_b, sizeof(payload_b), &payload_b_size,
+                              &enc_gs_size, &enc_champ_size) ||
+        !build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
+                                  global_words, spell_effects, NULL, 0,
+                                  inventory, 0u, payload_a,
+                                  sizeof(payload_a), &payload_a_size)) {
+        printf("    FAIL: could not build SKSave corpus importer fixtures\n");
+        return 0;
+    }
+    largest_payload_size = payload_a_size;
+    if (payload_b_size > largest_payload_size) {
+        largest_payload_size = payload_b_size;
+    }
+    if ((size_t)payload_c_size > largest_payload_size) {
+        largest_payload_size = (size_t)payload_c_size;
+    }
 
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_sksave_corpus_%d",
              FS_GETPID());
@@ -1362,27 +1415,29 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.has_last_session ||
         receipt.has_last_session_backup ||
         receipt.invalid_candidate_count != 0 ||
+        receipt.importable_candidate_count != 0 ||
+        receipt.import_rejected_candidate_count != 0 ||
         receipt.total_payload_size != 0) {
         printf("    FAIL: empty corpus did not produce an empty receipt\n");
         cleanup_slot_dir(tmpdir);
         return 0;
     }
 
-    r = dm2_sl_save(tmpdir, 3, "Slot3", payload_c, sizeof(payload_c));
+    r = dm2_sl_save(tmpdir, 3, "Slot3", payload_c, (size_t)payload_c_size);
     if (r != 0) {
         printf("    FAIL: could not write slot corpus save (%d)\n", r);
         cleanup_slot_dir(tmpdir);
         return 0;
     }
     r = dm2_sl_save_last_session(tmpdir, "LastA",
-                                 payload_a, sizeof(payload_a));
+                                 payload_a, payload_a_size);
     if (r != 0) {
         printf("    FAIL: could not write first last-session save (%d)\n", r);
         cleanup_slot_dir(tmpdir);
         return 0;
     }
     r = dm2_sl_save_last_session(tmpdir, "LastB",
-                                 payload_b, sizeof(payload_b));
+                                 payload_b, payload_b_size);
     if (r != 0) {
         printf("    FAIL: could not rotate last-session backup (%d)\n", r);
         cleanup_slot_dir(tmpdir);
@@ -1402,11 +1457,34 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.valid_slot_count != 1 ||
         receipt.valid_slot_mask != (uint16_t)(1u << 3) ||
         receipt.invalid_candidate_count != 1 ||
-        receipt.largest_payload_size != sizeof(payload_b) ||
+        receipt.importable_candidate_count != 2 ||
+        receipt.import_rejected_candidate_count != 1 ||
+        receipt.firestaff_session_candidate_count != 1 ||
+        receipt.original_envelope_candidate_count != 1 ||
+        receipt.original_raw_candidate_count != 0 ||
+        receipt.total_importable_payload_size !=
+            payload_b_size + (size_t)payload_c_size ||
+        receipt.largest_payload_size != largest_payload_size ||
         receipt.total_payload_size !=
-            sizeof(payload_a) + sizeof(payload_b) + sizeof(payload_c) ||
+            payload_a_size + payload_b_size + (size_t)payload_c_size ||
+        strstr(receipt.first_importable_path, "SKSave.dat") == NULL ||
         strstr(receipt.first_valid_path, "SKSave.dat") == NULL) {
-        printf("    FAIL: mixed corpus receipt did not match expected fields\n");
+        printf("    FAIL: mixed corpus receipt did not match expected fields "
+               "(valid=%u mask=0x%04X invalid=%u importable=%u rejected=%u "
+               "fs=%u env=%u raw=%u largest=%zu/%zu total=%zu/%zu "
+               "first=%s import_first=%s)\n",
+               receipt.valid_slot_count, receipt.valid_slot_mask,
+               receipt.invalid_candidate_count,
+               receipt.importable_candidate_count,
+               receipt.import_rejected_candidate_count,
+               receipt.firestaff_session_candidate_count,
+               receipt.original_envelope_candidate_count,
+               receipt.original_raw_candidate_count,
+               receipt.largest_payload_size, largest_payload_size,
+               receipt.total_payload_size,
+               payload_a_size + payload_b_size + (size_t)payload_c_size,
+               receipt.first_valid_path,
+               receipt.first_importable_path);
         cleanup_slot_dir(tmpdir);
         return 0;
     }
@@ -1423,6 +1501,12 @@ static int test_sksave_corpus_scan_receipt(void)
         !receipt.last_session_uses_backup ||
         receipt.valid_slot_count != 1 ||
         receipt.invalid_candidate_count != 2 ||
+        receipt.importable_candidate_count != 1 ||
+        receipt.import_rejected_candidate_count != 1 ||
+        receipt.firestaff_session_candidate_count != 1 ||
+        receipt.original_envelope_candidate_count != 0 ||
+        receipt.original_raw_candidate_count != 0 ||
+        strstr(receipt.first_importable_path, "SKSave03.dat") == NULL ||
         strstr(receipt.first_valid_path, "SKSave.bak") == NULL) {
         printf("    FAIL: backup-selected corpus receipt did not match "
                "expected fields\n");
@@ -1430,8 +1514,8 @@ static int test_sksave_corpus_scan_receipt(void)
         return 0;
     }
 
-    printf("    PASS: corpus scan reports last-session, backup, slot mask, "
-           "payload sizes and invalid saves\n");
+    printf("    PASS: corpus scan reports resume order, slot mask, importable "
+           "Firestaff/envelope saves, payload sizes and invalid saves\n");
     cleanup_slot_dir(tmpdir);
     return 1;
 }
