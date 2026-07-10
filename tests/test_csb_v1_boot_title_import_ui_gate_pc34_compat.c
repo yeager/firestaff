@@ -698,6 +698,93 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
           "asset session carries the same verified doors into entrance credits");
 }
 
+static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
+{
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupAudioAction_PC34 audio_action;
+    unsigned char title_pixels[4] = {0};
+    unsigned char presents_pixels[4] = {0};
+    unsigned char chaos_pixels[4] = {0};
+    unsigned char strikes_pixels[4] = {0};
+    unsigned char left_pixels[4] = {0};
+    unsigned char right_pixels[4] = {0};
+    unsigned char entrance_pixels[4] = {0};
+    unsigned char credits_pixels[4] = {0};
+
+    csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
+    session.valid = 1;
+    session.real_asset_matched = 1;
+    session.title_assets_ready = 1;
+    session.entrance_assets_ready = 1;
+    session.hud_assets_bound = 1;
+    session.surfaces.valid = 1;
+    session.surfaces.title_regions_ready = 1;
+    session.surfaces.opening_frame_ready = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels = title_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].pixels = presents_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].pixels = chaos_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].pixels = strikes_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].pixels = left_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].pixels = right_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].pixels = entrance_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34].pixels = credits_pixels;
+
+    CHECK(csb_v1_boot_startup_playback_begin_pc34(&session, &audio_action) == 1 &&
+              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_FTL_SWOOSH_PC34 &&
+              session.playback.no_fallback_routes,
+          "verified session begins FTL swoosh with fallback routes closed");
+    CHECK(csb_v1_boot_startup_playback_complete_swoosh_pc34(&session, &audio_action) == 1 &&
+              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_RELEASE_FTL_SWOOSH_PC34,
+          "swoosh release enters the original title transaction");
+    CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 0, &plan, &audio_action) == 1 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              plan.title_source_step == 1 &&
+              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_NONE_PC34,
+          "PRESENTS keeps its original 60-vblank route");
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 1u, &frame) == 1 &&
+              frame.title_surface->pixels == presents_pixels,
+          "PRESENTS render plan retains the resident verified title surface");
+    CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 60, &plan, &audio_action) == 1 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              plan.title_source_step == 2,
+          "CHAOS enters through the original first zoom step");
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 2u, &frame) == 1 &&
+              frame.title_surface->pixels == chaos_pixels,
+          "CHAOS render plan retains the resident verified title surface");
+    CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 80, &plan, &audio_action) == 1 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              plan.title_source_step == 20,
+          "STRIKES BACK follows the CHAOS hold without a synthetic frame");
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 3u, &frame) == 1 &&
+              frame.title_surface->pixels == strikes_pixels,
+          "STRIKES BACK render plan retains the resident verified title surface");
+    CHECK(csb_v1_boot_startup_playback_title_frame_pc34(
+              &session, csb_v1_startup_title_total_ticks_pc34(), &plan,
+              &audio_action) == 1 &&
+              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34 &&
+              session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34,
+          "title completion hands original entrance music to the owned entrance session");
+    CHECK(csb_v1_boot_startup_playback_enter_hud_pc34(&session) == 1 &&
+              session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
+          "entrance hands the same verified session to the runtime HUD");
+    session.hud_assets_bound = 0;
+    CHECK(csb_v1_boot_startup_playback_begin_pc34(&session, &audio_action) == 0,
+          "fallback or unowned HUD state cannot open a replacement startup route");
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_boot_source_evidence();
@@ -724,6 +811,7 @@ int main(void)
     test_runtime_asset_gate_binds_session_and_owned_artwork();
     test_runtime_surface_materializer_rejects_unopened_source();
     test_runtime_asset_session_frame_keeps_verified_surfaces_alive();
+    test_verified_session_owns_swoosh_title_audio_and_hud_handoff();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

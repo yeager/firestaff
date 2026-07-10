@@ -752,6 +752,33 @@ typedef struct CSB_V1_StartupRuntimeSurfaceSet_PC34 {
         surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_COUNT_PC34];
 } CSB_V1_StartupRuntimeSurfaceSet_PC34;
 
+/* Startup playback remains with the verified asset owner.  The host consumes
+ * the emitted audio action, but cannot substitute a synthetic title, entrance
+ * or HUD route once a real CSB session has started. */
+typedef enum CSB_V1_StartupPlaybackStage_PC34 {
+    CSB_V1_STARTUP_PLAYBACK_STAGE_NONE_PC34 = 0,
+    CSB_V1_STARTUP_PLAYBACK_STAGE_FTL_SWOOSH_PC34,
+    CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34,
+    CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34,
+    CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34
+} CSB_V1_StartupPlaybackStage_PC34;
+
+typedef enum CSB_V1_StartupAudioAction_PC34 {
+    CSB_V1_STARTUP_AUDIO_ACTION_NONE_PC34 = 0,
+    CSB_V1_STARTUP_AUDIO_ACTION_PLAY_FTL_SWOOSH_PC34,
+    CSB_V1_STARTUP_AUDIO_ACTION_RELEASE_FTL_SWOOSH_PC34,
+    CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34
+} CSB_V1_StartupAudioAction_PC34;
+
+typedef struct CSB_V1_StartupPlaybackState_PC34 {
+    CSB_V1_StartupPlaybackStage_PC34 stage;
+    CSB_V1_StartupStage_PC34 title_stage;
+    int title_frame;
+    int swoosh_active;
+    int entrance_music_active;
+    int no_fallback_routes;
+} CSB_V1_StartupPlaybackState_PC34;
+
 /* One verified startup session owns every source image for the complete
  * FTL -> title -> entrance -> HUD handoff.  ReDMCSB keeps C001 resident
  * while TITLE.C changes zones, then keeps C002-C005 resident through the
@@ -768,6 +795,7 @@ typedef struct CSB_V1_StartupRuntimeAssetSession_PC34 {
     CSB_V1_StartupAssetBinding_PC34 hud_inventory_binding;
     CSB_V1_StartupAssetBinding_PC34 hud_resurrect_binding;
     CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
+    CSB_V1_StartupPlaybackState_PC34 playback;
 } CSB_V1_StartupRuntimeAssetSession_PC34;
 
 /* A non-owning frame view into a startup asset session.  The source pointers
@@ -952,6 +980,21 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     uint32_t source_tick,
     CSB_V1_StartupRuntimeAssetFrame_PC34 *out_frame);
+/* ReDMCSB SWSH.C F0909/F0910 owns the pre-title sound, TITLE.C F0437 owns
+ * the title timing, and ENTRANCE.C F0806 starts C0_MUSIC_ENTRANCE. */
+int csb_v1_boot_startup_playback_begin_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupAudioAction_PC34 *out_audio_action);
+int csb_v1_boot_startup_playback_complete_swoosh_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupAudioAction_PC34 *out_audio_action);
+int csb_v1_boot_startup_playback_title_frame_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    int title_frame,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan,
+    CSB_V1_StartupAudioAction_PC34 *out_audio_action);
+int csb_v1_boot_startup_playback_enter_hud_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session);
 const char *csb_v1_boot_startup_asset_source_name_pc34(
     CSB_V1_StartupAssetSource_PC34 source);
 int csb_v1_boot_probe_available(const char *data_dir);
