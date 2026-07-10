@@ -16,6 +16,10 @@ typedef struct {
     Nexus_Framebuffer fb;
     Nexus_Camera cam;
     int render_wireframe;  /* debug mode */
+    const Nexus_V1_Engine *material_engine;
+    uint32_t material_generation;
+    uint32_t base_palette[256];
+    int material_palette_valid;
 } Nexus_Viewport;
 
 void nexus_viewport_init(Nexus_Viewport *vp);
@@ -27,4 +31,3 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine);
 void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out);
 
 #endif
-

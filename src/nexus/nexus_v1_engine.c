@@ -59,6 +59,78 @@ static int nexus_path_is_file(const char *path) {
     return path && stat(path, &st) == 0 && (st.st_mode & S_IFMT) != S_IFDIR;
 }
 
+static const Nexus_DMDFTextureSurface *nexus_v1_plan_surface(
+    const Nexus_V1_Engine *engine, const Nexus_V1_DgnRenderCommand *command)
+{
+    const Nexus_DMDFMaterialBank *bank;
+    if (!engine || !command) return NULL;
+    bank = (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
+            command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
+        ? &engine->floor_materials : &engine->wall_materials;
+    if (!bank->valid) {
+        return NULL;
+    }
+    return bank->surfaces[command->material_id].valid
+        ? &bank->surfaces[command->material_id] : NULL;
+}
+
+void nexus_v1_invalidate_dgn_material_plan(Nexus_V1_Engine *engine) {
+    Nexus_V1_DgnMaterialPlan *plan;
+    if (!engine) return;
+    plan = &engine->dgn_material_plan;
+    plan->generation++;
+    plan->invalidation_count++;
+    plan->valid = 0;
+    plan->receipt.plan_ready = 0;
+}
+
+const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
+    Nexus_V1_Engine *engine, int party_x, int party_y, int party_dir)
+{
+    Nexus_V1_DgnMaterialPlan *plan;
+    int i;
+
+    if (!engine || !engine->level_loaded ||
+        !engine->current_level.geometry_info.dmweb_container) return NULL;
+    plan = &engine->dgn_material_plan;
+    party_dir &= 3;
+    if (plan->valid && plan->level == engine->game.current_level &&
+        plan->party_x == party_x && plan->party_y == party_y &&
+        plan->party_dir == party_dir) {
+        plan->cache_hit_count++;
+        return plan;
+    }
+
+    memset(plan->commands, 0, sizeof(plan->commands));
+    memset(&plan->receipt, 0, sizeof(plan->receipt));
+    plan->level = engine->game.current_level;
+    plan->party_x = party_x;
+    plan->party_y = party_y;
+    plan->party_dir = party_dir;
+    plan->valid = 0;
+    plan->generation++;
+    plan->rebuild_count++;
+    if (nexus_v1_level_build_dgn_view_render_plan(
+            &engine->current_level, party_x, party_y, party_dir,
+            plan->commands, NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+            &plan->receipt) != 0 || !plan->receipt.plan_ready) {
+        return NULL;
+    }
+
+    for (i = 0; i < plan->receipt.command_count; ++i) {
+        if (!nexus_v1_plan_surface(engine, &plan->commands[i])) {
+            /* DMWeb DGN structure selects IDs; DMDF/BPK decoding proves the
+             * matching source surface. PRS3 remains non-renderable here. */
+            plan->receipt.plan_ready = 0;
+            plan->receipt.blocks_real_dgn_mesh_render = 1;
+            plan->receipt.fallback_visuals_permitted = 0;
+            return NULL;
+        }
+    }
+    plan->valid = 1;
+    return plan;
+}
+
 static uint8_t *nexus_read_host_file(const char *path, int *out_size) {
     uint8_t *buf = NULL;
     FILE *fp;
@@ -483,6 +555,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         return -1;
     }
 
+    nexus_v1_invalidate_dgn_material_plan(engine);
     int r = nexus_v1_level_load(&engine->current_level, data, size, level);
     free(data);
     if (r < 0) return -1;
