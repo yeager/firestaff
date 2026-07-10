@@ -1004,7 +1004,7 @@ int csb_v1_startup_execute_render_plan_pc34(
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34:
                 if (plan->waiting_for_input && executor->draw_utility_panel) {
-                    executor->draw_utility_panel(executor->user, plan);
+                    executor->draw_utility_panel(executor->user, plan, NULL);
                 }
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_NONE_PC34:

@@ -227,10 +227,12 @@ static void render_probe_draw_fallback_text(
 
 static void render_probe_draw_utility_panel(
     void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_UtilRenderPlan *utility_plan)
 {
     RenderExecutorProbe *probe = (RenderExecutorProbe *)user;
     (void)plan;
+    (void)utility_plan;
     if (probe) {
         ++probe->draw_utility_panel_count;
     }

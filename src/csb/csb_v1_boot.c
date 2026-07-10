@@ -2880,7 +2880,8 @@ int csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
             return 0;
         }
         executor->draw_utility_panel(executor->user,
-                                     &draw_receipt->startup_render_plan);
+                                     &draw_receipt->startup_render_plan,
+                                     &draw_receipt->utility_render_plan);
         return 1;
     }
 
