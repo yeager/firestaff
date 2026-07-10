@@ -4383,6 +4383,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
     uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
     Theron_StartupMediaStateReceipt media_receipt;
     Theron_Track02ObjectTableRouteReceipt object_route_receipt;
+    Theron_Track02SemanticBinding descriptor_semantic;
     Theron_V1StartupAllDungeonRouteReceipt receipt;
     Theron_V1_World selected_world;
     char runtime_receipt[320];
@@ -4462,12 +4463,29 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt.descriptor_anchor_mask == 0x07u &&
                     object_route_receipt.descriptor_entries_bound ==
                         3u * THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES &&
+                    object_route_receipt.descriptor_table_semantic_count == 3u &&
                     object_route_receipt.object_table_candidate_count == 0u &&
                     !object_route_receipt.object_table_decode_ready &&
                     object_route_receipt.blocked_for_missing_real_object_evidence &&
                     !object_route_receipt.fallback_visuals_allowed &&
                     object_route_receipt.route_hash != 0u,
                 "Theron Track02 object-table route receipt blocks fallback when real object evidence is missing");
+    expect_true(theron_v1_track02_bind_semantic_descriptor(
+                    track02,
+                    track02_size,
+                    descriptor_offsets[0],
+                    5u,
+                    &descriptor_semantic) ==
+                    THERON_TRACK02_SEMANTIC_BINDING_OK &&
+                    descriptor_semantic.role ==
+                        THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE &&
+                    descriptor_semantic.window_kind ==
+                        THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE &&
+                    descriptor_semantic.absolute_offset <= descriptor_offsets[0] &&
+                    descriptor_semantic.absolute_offset +
+                            descriptor_semantic.byte_count >=
+                        descriptor_offsets[0] + 18u,
+                "Theron Track02 descriptor-table semantic entry binds without object-table fallback");
 
     for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
          dungeon_id <= THERON_DUNGEON_COUNT;
