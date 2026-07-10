@@ -94,6 +94,7 @@
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
+#include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
 #include "dm1_v1_door_ornament_render_pc34_compat.h"
@@ -16145,8 +16146,10 @@ typedef struct M11_ViewportCell {
      * cloud and smoke decay this per frame; the burst renderer uses it
      * to fade the cloud as it dissipates. */
     int firstExplosionAttack;
-    /* DM1 owns the D1C HoC layer choice.  This is populated once from the
-     * sampled F0172/F0115 facts and consumed by every visible M11 layer. */
+    /* DM1 owns every visible F0172/F0115 materialization choice.  D1C also
+     * carries the HoC wall-overlay specialization below. */
+    int dm1MaterializationDecisionReady;
+    DM1_V1_ViewportRuntimeMaterializationDecisionPc34 dm1MaterializationDecision;
     int dm1RuntimeRenderDecisionReady;
     DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 dm1RuntimeRenderDecision;
     M11_SquareThingSummary summary;
@@ -16176,6 +16179,31 @@ static int m11_build_dm1_hoc_front_mirror_runtime_decision(
     const M11_GameViewState* state,
     const M11_ViewportCell* frontCell,
     DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* outDecision);
+
+static int m11_build_dm1_viewport_materialization_decision(
+    const M11_ViewportCell* cell,
+    DM1_V1_ViewportRuntimeMaterializationDecisionPc34* outDecision)
+{
+    DM1_V1_ViewportRuntimeMaterializationInputPc34 input;
+    if (!cell || !outDecision) {
+        return 0;
+    }
+    memset(&input, 0, sizeof(input));
+    input.relativeForward = cell->relForward;
+    input.relativeSide = cell->relSide;
+    input.elementType = cell->elementType;
+    input.floorItemCount = cell->floorItemCount;
+    input.projectileCount = cell->summary.projectiles;
+    input.projectileCell = cell->firstProjectileCell;
+    input.hasVisibleChampionMirrorPayload =
+        cell->relForward == 1 && cell->relSide == 0 &&
+        cell->championPortraitOrdinal >= 0;
+    /* ReDMCSB rebuilds F0172/F0115 view state after every entrance or save
+     * handoff. The receipt is deliberately independent of that provenance. */
+    input.runtimeOrigin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
+    return dm1_v1_viewport_runtime_materialization_decide_pc34(&input,
+                                                                 outDecision);
+}
 
 static void m11_dm1_v2_effect_point_for_cell(const M11_ViewportCell* cell,
                                              float* outX,
@@ -19182,9 +19210,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
     /* Layer 1: Floor items (lowest physical objects — on the ground).
      * Skip wall squares — items on walls are in alcoves, rendered
      * separately by m11_draw_dm1_alcove_wall_items. */
-    if (cell->floorItemCount > 0 &&
-        (!cell->dm1RuntimeRenderDecisionReady ||
-         cell->dm1RuntimeRenderDecision.drawFloorObject) &&
+    if (cell->floorItemCount > 0 && cell->dm1MaterializationDecisionReady &&
+        cell->dm1MaterializationDecision.drawFloorItems &&
         cell->elementType != DUNGEON_ELEMENT_WALL) {
         int ii;
         int itemsToShow = cell->floorItemCount;
@@ -19255,8 +19282,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
     }
 
     /* Layer 3: Projectiles and explosions (in flight, topmost) */
-    if (!cell->dm1RuntimeRenderDecisionReady ||
-        cell->dm1RuntimeRenderDecision.drawRuntimeProjectile) {
+    if (cell->dm1MaterializationDecisionReady &&
+        cell->dm1MaterializationDecision.drawRuntimeProjectiles) {
         m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
                             faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell,
                             depthIndex, sourceZoneRow);
@@ -23376,7 +23403,9 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                                         depth + 1, side);
             }
 
-            if (cell->floorItemCount > 0) {
+            if (cell->floorItemCount > 0 &&
+                cell->dm1MaterializationDecisionReady &&
+                cell->dm1MaterializationDecision.drawFloorItems) {
                 int ii;
                 int itemArea = paneH / 3;
                 int itemBaseY = paneY + paneH - itemArea - 2;
@@ -23434,7 +23463,9 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                 }
             }
 
-            if (m11_viewport_cell_has_renderable_projectile(cell)) {
+            if (cell->dm1MaterializationDecisionReady &&
+                cell->dm1MaterializationDecision.drawRuntimeProjectiles &&
+                m11_viewport_cell_has_renderable_projectile(cell)) {
                 int projArea = paneH / 3;
                 int projY;
                 if (projArea < 6) projArea = 6;
@@ -23531,8 +23562,8 @@ static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
         !m11_viewport_cell_has_renderable_explosion(cell)) {
         return;
     }
-    if (cell->dm1RuntimeRenderDecisionReady &&
-        cell->dm1RuntimeRenderDecision.suppressMirrorAsSpellEffect) {
+    if (!cell->dm1MaterializationDecisionReady ||
+        !cell->dm1MaterializationDecision.drawDeferredSpellEffects) {
         return;
     }
     inset = 6 + depthIndex * 4;
@@ -23563,6 +23594,8 @@ static void m11_draw_dm1_deferred_side_explosion(unsigned char* framebuffer,
     int expArea;
     int expY;
     if (!outer || !inner || !m11_viewport_cell_is_open(cell) ||
+        !cell->dm1MaterializationDecisionReady ||
+        !cell->dm1MaterializationDecision.drawDeferredSpellEffects ||
         !m11_viewport_cell_has_renderable_explosion(cell)) {
         return;
     }
@@ -36468,6 +36501,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         int side;
         for (side = 0; side < 3; ++side) {
             (void)m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side]);
+            cells[depth][side].dm1MaterializationDecisionReady =
+                m11_build_dm1_viewport_materialization_decision(
+                    &cells[depth][side],
+                    &cells[depth][side].dm1MaterializationDecision);
         }
     }
     /* ReDMCSB DUNGEON.C F0172 (2608-2612) publishes the visible HoC
