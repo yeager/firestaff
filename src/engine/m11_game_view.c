@@ -35478,6 +35478,8 @@ typedef struct M11_DM2StartupDrawContext {
     int framebufferWidth;
     int framebufferHeight;
     int gdat_blit_count;
+    int title_gdat_blit_count;
+    int menu_gdat_blit_count;
     int rect_count;
     int text_count;
 } M11_DM2StartupDrawContext;
@@ -35561,6 +35563,11 @@ static int m11_dm2_startup_exec_gdat_image(
     }
     dm2_v1_boot_gdat_image_asset_free(pixels);
     ++context->gdat_blit_count;
+    if (command->frame_owner == DM2_V1_FRAME_OWNER_STARTUP_TITLE) {
+        ++context->title_gdat_blit_count;
+    } else if (command->frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU) {
+        ++context->menu_gdat_blit_count;
+    }
     return 1;
 }
 
@@ -35710,6 +35717,8 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;
     context.gdat_blit_count = 0;
+    context.title_gdat_blit_count = 0;
+    context.menu_gdat_blit_count = 0;
     context.rect_count = 0;
     context.text_count = 0;
     executor.userdata = &context;
