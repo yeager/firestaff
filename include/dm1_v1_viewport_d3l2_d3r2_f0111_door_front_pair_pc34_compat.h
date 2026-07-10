@@ -75,6 +75,21 @@ typedef struct {
     uint8_t after_pass2;
 } DM1_V1_D3L2D3R2F0111DoorFrontPixelPc34;
 
+typedef struct {
+    const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34 *spec;
+    int ready;
+    int bitmap_id;
+    int door_zone;
+    int x;
+    int y;
+    int width;
+    int height;
+    int source_stride_bytes;
+    int expanded_pixel_count;
+    int transparent_color;
+    const char *source_anchor;
+} DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34;
+
 size_t dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_count_pc34(void);
 
 const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34 *
@@ -106,6 +121,24 @@ bool dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_compose_pixel_pc34(
     uint8_t door_pixel,
     uint8_t pass2_pixel,
     DM1_V1_D3L2D3R2F0111DoorFrontPixelPc34 *out);
+
+bool dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
+    const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34 *spec,
+    DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 *out_plan);
+
+bool dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_expand_4bpp_row_pc34(
+    const uint8_t *packed_row,
+    size_t packed_row_size,
+    int width,
+    uint8_t *out_pixels,
+    size_t out_pixel_count);
+
+bool dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_materialize_row_pc34(
+    const DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 *plan,
+    const uint8_t *packed_row,
+    size_t packed_row_size,
+    uint8_t *out_pixels,
+    size_t out_pixel_count);
 
 const char *
 dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_source_evidence_pc34(void);
