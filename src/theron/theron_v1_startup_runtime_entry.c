@@ -384,6 +384,47 @@ void theron_v1_startup_runtime_entry_apply_receipt_init(
     receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
 }
 
+static void theron_v1_startup_runtime_entry_apply_receipt_copy_media_spans(
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *media_receipt) {
+
+    if (!out_receipt || !media_receipt) {
+        return;
+    }
+    out_receipt->track02_media_title_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_first_raw_offset;
+    out_receipt->track02_media_title_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_last_raw_offset;
+    out_receipt->track02_media_title_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_first_user_data_offset;
+    out_receipt->track02_media_title_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_last_user_data_offset;
+    out_receipt->track02_media_stage_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_first_raw_offset;
+    out_receipt->track02_media_stage_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_last_raw_offset;
+    out_receipt->track02_media_stage_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_first_user_data_offset;
+    out_receipt->track02_media_stage_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_last_user_data_offset;
+    out_receipt->track02_media_soul_room_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_first_raw_offset;
+    out_receipt->track02_media_soul_room_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_last_raw_offset;
+    out_receipt->track02_media_soul_room_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_first_user_data_offset;
+    out_receipt->track02_media_soul_room_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_last_user_data_offset;
+    out_receipt->track02_media_forcefield_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_first_raw_offset;
+    out_receipt->track02_media_forcefield_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_last_raw_offset;
+    out_receipt->track02_media_forcefield_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_first_user_data_offset;
+    out_receipt->track02_media_forcefield_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_last_user_data_offset;
+}
+
 int theron_v1_startup_host_receipt_from_runtime_entry_apply(
     const Theron_V1StartupRuntimeEntryApplyReceipt *apply_receipt,
     Theron_StartupHostReceipt *out_receipt) {
@@ -909,6 +950,9 @@ int theron_v1_startup_runtime_entry_apply_receipt(
         result->track02_media.startup_bitmap_atlas_route_mask;
     out_receipt->track02_media_checksum =
         result->track02_media.startup_bitmap_atlas_checksum;
+    theron_v1_startup_runtime_entry_apply_receipt_copy_media_spans(
+        out_receipt,
+        &result->track02_media);
     out_receipt->fallback_visuals_blocked =
         result->fallback_visuals_blocked;
     out_receipt->structured_runtime_route =
@@ -991,6 +1035,14 @@ static int theron_v1_startup_runtime_entry_failure_apply_receipt(
         out_receipt->runtime_level_source = result->runtime_level_source;
         out_receipt->track02_semantic_handoff =
             result->track02_semantic_handoff;
+        out_receipt->track02_media_route = result->track02_media_route;
+        out_receipt->track02_media_route_mask =
+            result->track02_media.startup_bitmap_atlas_route_mask;
+        out_receipt->track02_media_checksum =
+            result->track02_media.startup_bitmap_atlas_checksum;
+        theron_v1_startup_runtime_entry_apply_receipt_copy_media_spans(
+            out_receipt,
+            &result->track02_media);
         out_receipt->fallback_visuals_blocked =
             result->fallback_visuals_blocked;
         out_receipt->structured_runtime_route =
