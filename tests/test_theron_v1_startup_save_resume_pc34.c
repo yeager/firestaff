@@ -4382,6 +4382,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
         THERON_TRACK02_RAW_SECTOR_BYTES;
     uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
     Theron_StartupMediaStateReceipt media_receipt;
+    Theron_Track02ObjectTableRouteReceipt object_route_receipt;
     Theron_V1StartupAllDungeonRouteReceipt receipt;
     Theron_V1_World selected_world;
     char runtime_receipt[320];
@@ -4449,6 +4450,24 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     receipt.object_route_hash != 0u &&
                     receipt.route_hash != 0u,
                 "Theron Track02 all seven dungeon selections have inspectable real-data level/object capture");
+    expect_true(theron_v1_track02_capture_object_table_route_receipt(
+                    track02,
+                    track02_size,
+                    THERON_TRACK02_MD5_US_BIN,
+                    &object_route_receipt) &&
+                    object_route_receipt.valid &&
+                    object_route_receipt.verified_track02 &&
+                    object_route_receipt.descriptor_route_ready &&
+                    object_route_receipt.descriptor_anchor_count == 3u &&
+                    object_route_receipt.descriptor_anchor_mask == 0x07u &&
+                    object_route_receipt.descriptor_entries_bound ==
+                        3u * THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES &&
+                    object_route_receipt.object_table_candidate_count == 0u &&
+                    !object_route_receipt.object_table_decode_ready &&
+                    object_route_receipt.blocked_for_missing_real_object_evidence &&
+                    !object_route_receipt.fallback_visuals_allowed &&
+                    object_route_receipt.route_hash != 0u,
+                "Theron Track02 object-table route receipt blocks fallback when real object evidence is missing");
 
     for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
          dungeon_id <= THERON_DUNGEON_COUNT;

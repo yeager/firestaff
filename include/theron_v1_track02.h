@@ -1024,6 +1024,23 @@ typedef struct {
     int fallback_visuals_allowed;
 } Theron_Track02StartupRuntimeReceipt;
 
+typedef struct {
+    int valid;
+    int verified_track02;
+    Theron_Track02SignalStatus signal_status;
+    Theron_Track02Variant variant;
+    int descriptor_route_ready;
+    size_t descriptor_anchor_count;
+    unsigned int descriptor_anchor_mask;
+    size_t descriptor_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t descriptor_entries_bound;
+    size_t object_table_candidate_count;
+    int object_table_decode_ready;
+    int blocked_for_missing_real_object_evidence;
+    int fallback_visuals_allowed;
+    uint32_t route_hash;
+} Theron_Track02ObjectTableRouteReceipt;
+
 /* Compose the bounded Track 02 startup evidence into one runtime-facing
  * handoff summary.
  *
@@ -1046,6 +1063,24 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff
 int theron_v1_track02_startup_runtime_receipt_from_handoff(
     const Theron_Track02StartupSemanticHandoff *handoff,
     Theron_Track02StartupRuntimeReceipt *out_receipt);
+
+void theron_v1_track02_object_table_route_receipt_init(
+    Theron_Track02ObjectTableRouteReceipt *receipt);
+
+/* Descriptor-anchored object-table route evidence.
+ *
+ * This receipt is deliberately a no-fallback blocker today: hash-verified
+ * Track 02 descriptor anchors are decoded and bound, but no descriptor entry
+ * is yet promoted to THERON_TRACK02_SEMANTIC_OBJECT_TABLE.  For verified
+ * Track 02 media, valid==1 with object_table_decode_ready==0 means callers
+ * have enough evidence to block synthetic object-table/runtime visuals
+ * instead of silently falling back.
+ */
+int theron_v1_track02_capture_object_table_route_receipt(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02ObjectTableRouteReceipt *out_receipt);
 
 /* Runtime-facing semantic startup level load.
  *

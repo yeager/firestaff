@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 Theron Track02 object-table no-fallback route receipt: added a descriptor-anchored object-table route receipt that verifies all Track02 descriptor anchors, records bound descriptor entries and route hash, reports missing real object-table evidence, and forbids fallback visuals for verified Track02 instead of inventing object-table data. Verification: `test_theron_v1_startup_save_resume_pc34` 304/304 and `git diff --check` passed.
+
 - ✅ 2026-07-10 CSB startup no-wrapper host-route gate: CSB runtime host-capture and complete-support receipts now require host-route wrapper retirement and no loose render-plan export for title/PRESENTS/CHAOS/STRIKES, closed-door HUD, utility HUD, and opening-door routes. Verification: `cmake --build build --target test_csb_v1_boot_runtime_handoff --parallel 2`, direct `./build/test_csb_v1_boot_runtime_handoff` PASS 448/448, syntax checks for touched CSB sources, and `git diff --check` passed.
 
 - ✅ 2026-07-10 Theron all-dungeon object route receipt: Track02 all-dungeon startup capture now records per-dungeon object counts, object capture mask, total, and object-route hash alongside the exact-object semantic gate, so the current empty startup object route is inspectable instead of bool-only. Verification: `firestaff_theron`, manual focused relink/run of `test_theron_v1_startup_save_resume_pc34` 303/303, test-source syntax check, and `git diff --check` passed; normal CMake test target is blocked by unrelated CSB/M11 compile errors.
