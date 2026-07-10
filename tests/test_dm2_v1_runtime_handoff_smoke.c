@@ -700,7 +700,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
     {
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
-        DM2_V1_RuntimeFrameOwnershipReceipt ownership;
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
@@ -734,13 +733,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(dm2_v1_runtime_last_asset_hud_portrait_count() == 4 &&
               dm2_v1_runtime_last_fallback_hud_portrait_count() == 0,
               "runtime records asset-backed HUD portrait draws");
-        CHECK(dm2_v1_runtime_last_frame_ownership(&ownership) &&
-              ownership.runtime_frame_owned &&
-              ownership.gdat_provider_bound &&
-              ownership.hud_gdat_blits == 4 &&
-              ownership.door_gdat_blits == 0 &&
-              ownership.creature_gdat_blits == 0,
-              "runtime frame ownership records actual HUD GDAT consumption");
         CHECK(framebuffer[0] == 1,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);

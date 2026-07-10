@@ -3678,9 +3678,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                                 &portrait_pixels,
                                                 &portrait_w,
                                                 &portrait_h,
-                                                &portrait_stride) == 0 &&
-                    portrait_pixels && portrait_w > 0 && portrait_h > 0 &&
-                    portrait_stride >= portrait_w) {
+                                                &portrait_stride) == 0) {
                     dm2_v1_blit_scaled_bitmap(vp,
                                               stride,
                                               plan.champion_slots[slot].portrait_rect.x,
