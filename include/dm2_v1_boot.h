@@ -523,6 +523,11 @@ typedef struct {
     uint32_t startup_hud_raw_gdat_portrait_byte_count;
     uint32_t startup_hud_raw_gdat_core_hash;
     uint32_t startup_hud_raw_gdat_core_byte_count;
+    int startup_title_menu_raw_gdat_capture_ready;
+    uint32_t startup_title_raw_gdat_hash;
+    uint32_t startup_title_raw_gdat_byte_count;
+    uint32_t startup_menu_raw_gdat_hash;
+    uint32_t startup_menu_raw_gdat_byte_count;
     int startup_title_menu_decoded_gdat_capture_ready;
     uint32_t startup_title_decoded_gdat_hash;
     uint32_t startup_title_decoded_gdat_pixel_count;
@@ -586,6 +591,11 @@ typedef struct {
     uint32_t startup_hud_raw_gdat_portrait_byte_count;
     uint32_t startup_hud_raw_gdat_core_hash;
     uint32_t startup_hud_raw_gdat_core_byte_count;
+    int startup_title_menu_raw_gdat_capture_ready;
+    uint32_t startup_title_raw_gdat_hash;
+    uint32_t startup_title_raw_gdat_byte_count;
+    uint32_t startup_menu_raw_gdat_hash;
+    uint32_t startup_menu_raw_gdat_byte_count;
     int startup_title_menu_decoded_gdat_capture_ready;
     uint32_t startup_title_decoded_gdat_hash;
     uint32_t startup_title_decoded_gdat_pixel_count;
@@ -627,6 +637,11 @@ typedef struct {
     int real_gdat_title_asset_receipt_breadth;
     int menu_hud_startup_receipt_breadth;
     int startup_hud_raw_gdat_receipt_consumed;
+    int startup_title_menu_raw_gdat_receipt_consumed;
+    uint32_t startup_title_raw_gdat_hash;
+    uint32_t startup_title_raw_gdat_byte_count;
+    uint32_t startup_menu_raw_gdat_hash;
+    uint32_t startup_menu_raw_gdat_byte_count;
     int startup_title_menu_decoded_gdat_receipt_consumed;
     uint32_t startup_title_decoded_gdat_hash;
     uint32_t startup_title_decoded_gdat_pixel_count;
@@ -1228,6 +1243,16 @@ int dm2_v1_boot_gdat_image_asset_fetch(
     int *out_w,
     int *out_h,
     int *out_stride);
+
+/* Prove the exact bounded raw GDAT payload selected for an M11 blit. */
+int dm2_v1_boot_gdat_raw_asset_proof(
+    DM2_V1_BootProfile *profile,
+    int category,
+    int index,
+    int field,
+    uint32_t seed,
+    uint32_t *out_hash,
+    uint32_t *out_byte_count);
 
 void dm2_v1_boot_gdat_image_asset_free(uint8_t *pixels);
 
