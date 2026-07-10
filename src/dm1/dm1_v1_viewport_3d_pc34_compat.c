@@ -12,6 +12,7 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include <string.h>
 #include <stdlib.h>
@@ -2431,6 +2432,9 @@ static int dm1_viewport_3d_d3_back_wall_side_slot(DM1_ViewSquareIndex square)
     return -1;
 }
 
+static int dm1_viewport_3d_floor_ornament_side_for_square(
+    DM1_ViewSquareIndex square);
+
 DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(
     const DM1_Viewport3DState *state,
     DM1_ViewSquareIndex square,
@@ -2443,8 +2447,20 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
     if (!state || slot < 0) return receipt;
 
     if (receipt.floor_ornament_before_rear_pass) {
+        DM1_FloorOrnamentRenderPlanPc34 plan;
+        int rel_side = dm1_viewport_3d_floor_ornament_side_for_square(square);
         receipt.floor_ornament_asset_index = state->floor_ornament_indices[slot];
         receipt.floor_ornament_asset_bound = receipt.floor_ornament_asset_index != 0;
+        if (rel_side != 0 &&
+            dm1_v1_floor_ornament_source_zone_pc34(3, rel_side, &plan)) {
+            receipt.floor_ornament_blit_plan_bound = true;
+            receipt.floor_ornament_graphic_index =
+                receipt.floor_ornament_asset_index;
+            receipt.floor_ornament_dst_x = (int16_t)plan.blit.dstX;
+            receipt.floor_ornament_dst_y = (int16_t)plan.blit.dstY;
+            receipt.floor_ornament_width = (int16_t)plan.blit.width;
+            receipt.floor_ornament_height = (int16_t)plan.blit.height;
+        }
     }
 
     if (receipt.door_front_between_passes) {
@@ -2643,61 +2659,62 @@ static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
  *   6270-6271 (D3L2 corridor/teleporter) · 6337-6351 (D3R2 corridor/teleporter);
  *   6849-6865 F0678 (D2L2) · 6877-6896 F0679 (D2R2)
  * ──────────────────────────────────────────────────────────────────────── */
-static void dm1_viewport_3d_draw_floor_ornament_simple(DM1_Viewport3DState *state,
-                                                       DM1_ViewSquareIndex square,
-                                                       int floor_ornament_index)
+static int dm1_viewport_3d_floor_ornament_side_for_square(
+    DM1_ViewSquareIndex square)
 {
-    if (!state || !state->viewport_pixels) return;
+    if (square == DM1_VIEW_SQUARE_D3L2) return -1;
+    if (square == DM1_VIEW_SQUARE_D3R2) return 1;
+    return 0;
+}
 
-    /* Floor ornament zone positions for back/near wall squares.
-     * These are derived from the D3L2/D3R2/D2L2/D2R2 frame coordinates
-     * in s_csb_back_wall_frames and s_csb_near_wall_frames.
-     * The floor ornament is rendered in the lower portion of the wall frame. */
-    int dst_x = 0, dst_y = 0;
-    switch (square) {
-    case DM1_VIEW_SQUARE_D3L2:
-        /* D3L2 floor ornament: centered in lower wall, x=2, y=50, 12×12 */
-        dst_x = 2; dst_y = 50;
-        break;
-    case DM1_VIEW_SQUARE_D3R2:
-        /* D3R2 floor ornament: centered in lower wall, x=210, y=50, 12×12 */
-        dst_x = 210; dst_y = 50;
-        break;
-    case DM1_VIEW_SQUARE_D2L2:
-        /* D2L2 floor ornament: lower portion, x=5, y=65, 16×16 */
-        dst_x = 5; dst_y = 65;
-        break;
-    case DM1_VIEW_SQUARE_D2R2:
-        /* D2R2 floor ornament: lower portion, x=200, y=65, 16×16 */
-        dst_x = 200; dst_y = 65;
-        break;
-    default:
-        return;
+static int dm1_viewport_3d_draw_floor_ornament_plan(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int floor_ornament_index)
+{
+    DM1_FloorOrnamentRenderPlanPc34 plan;
+    int rel_side;
+    int color;
+    int max_x;
+    int max_y;
+    uint8_t *vp;
+    int stride;
+
+    if (!state || !state->viewport_pixels) return 0;
+    if (floor_ornament_index <= 0) return 0;
+
+    rel_side = dm1_viewport_3d_floor_ornament_side_for_square(square);
+    if (rel_side == 0 ||
+        !dm1_v1_floor_ornament_source_zone_pc34(3, rel_side, &plan)) {
+        return 0;
     }
 
-    /* Guard: no ornament index means nothing to draw */
-    if (floor_ornament_index <= 0) return;
+    max_x = plan.blit.dstX + plan.blit.width;
+    max_y = plan.blit.dstY + plan.blit.height;
+    if (plan.blit.dstX < 0 || plan.blit.dstY < 0 ||
+        max_x > DM1_VIEWPORT_WIDTH || max_y > DM1_VIEWPORT_HEIGHT ||
+        plan.blit.width <= 0 || plan.blit.height <= 0) {
+        return 0;
+    }
 
-    /* Draw a colored diamond placeholder (green) at the floor ornament zone.
-     * The color varies with the ornament index for visual differentiation.
-     * A full implementation would blit the actual floor ornament bitmap. */
-    uint8_t *vp = state->viewport_pixels;
-    int stride = state->viewport_stride;
-    int size = 6;  /* half-size of diamond */
-    int color_base = (floor_ornament_index & 3) + 2; /* 2-5 green range */
+    color = floor_ornament_index & 0x3f;
+    if (color == 0 || color == COLOR_TRANSPARENT) {
+        color = 11;
+    }
+    vp = state->viewport_pixels;
+    stride = state->viewport_stride;
 
-    for (int dy = -size; dy <= size; dy++) {
-        int sy = dst_y + dy;
-        if ((unsigned)sy >= (unsigned)DM1_VIEWPORT_HEIGHT) continue;
-        for (int dx = -size; dx <= size; dx++) {
-            int sx = dst_x + dx;
-            if ((unsigned)sx >= (unsigned)DM1_VIEWPORT_WIDTH) continue;
-            if (abs(dx) + abs(dy) <= size) {
-                vp[sy * stride + sx] = (uint8_t)color_base;
-            }
+    /* ReDMCSB F0108 DUNVIEW.C:3959-3989 resolves the G0206 zone before
+     * the transparent floor-ornament blit.  This bounded helper now draws
+     * through that source-locked zone instead of the old hand-placed diamond;
+     * GRAPHICS.DAT pixel expansion can plug into the same plan later. */
+    for (int y = 0; y < plan.blit.height; ++y) {
+        uint8_t *row = vp + (plan.blit.dstY + y) * stride + plan.blit.dstX;
+        for (int x = 0; x < plan.blit.width; ++x) {
+            row[x] = (uint8_t)color;
         }
     }
-    (void)floor_ornament_index; /* used for color variation; full blit is TODO */
+    return 1;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -2881,7 +2898,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
         case DM1_VIEW_SQUARE_D3R2: fo_idx = state->floor_ornament_indices[1]; break;
         default: break;
         }
-        dm1_viewport_3d_draw_floor_ornament_simple(state, square, fo_idx);
+        (void)dm1_viewport_3d_draw_floor_ornament_plan(state, square, fo_idx);
 
         /* F0115 creature/item/projectile/explosion pass receipt.
          * ReDMCSB calls F0115 here with 0x3421/0x4312 for open cells, 0x0321/
