@@ -2153,6 +2153,19 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
                          320, 200, 320 * 200 * 4, 0x4d314843u, 0x7u),
              1);
+    hoc_presented_publish_facts.required_consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 | 0x80u;
+    expect_i("DM1 HoC presented capture publish rejects extra consumers",
+             dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
+                 &hoc_presented_publish_facts,
+                 &hoc_presented_publish) &&
+                 hoc_presented_publish.handled &&
+                 !hoc_presented_publish.ready &&
+                 hoc_presented_publish.consumer_mask !=
+                     DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34,
+             1);
+    hoc_presented_publish_facts.required_consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
     hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 0;
     hoc_host_probe_facts.presented_capture_consumer_mask =
         DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;

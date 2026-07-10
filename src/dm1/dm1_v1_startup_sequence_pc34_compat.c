@@ -2725,12 +2725,7 @@ int dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
         receipt.captured_from_release_app &&
         receipt.geometry_matches &&
         receipt.pixels_present &&
-        (receipt.consumer_mask &
-         DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34) &&
-        (receipt.consumer_mask &
-         DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34) &&
-        (receipt.consumer_mask &
-         DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34) &&
+        receipt.consumer_mask == DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
         receipt.chain_hash != 0U;
     *out_receipt = receipt;
     return 1;
