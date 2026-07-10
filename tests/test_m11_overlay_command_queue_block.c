@@ -1338,57 +1338,17 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
 
 static void test_hoc_floor_items_route_through_dm1_receipt(void)
 {
-    M11_GameViewState state;
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonMapDesc_Compat map;
-    struct DungeonMapTiles_Compat tiles;
-    struct DungeonThings_Compat things;
-    unsigned char squareData[1];
-    unsigned short squareFirstThings[2];
-    unsigned char weaponRaw[8];
-    int floorItemCount = -1;
-    int summaryItemCount = -1;
-    int elementType = -1;
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
 
-    seed_active_view(&state);
-    memset(&dungeon, 0, sizeof(dungeon));
-    memset(&map, 0, sizeof(map));
-    memset(&tiles, 0, sizeof(tiles));
-    memset(&things, 0, sizeof(things));
-    memset(weaponRaw, 0, sizeof(weaponRaw));
-
-    squareData[0] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
-                                    DUNGEON_SQUARE_MASK_THING_LIST);
-    squareFirstThings[0] = make_thing(THING_TYPE_WEAPON, 0);
-    weaponRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
-    weaponRaw[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xffu);
-
-    map.width = 1;
-    map.height = 1;
-    tiles.squareData = squareData;
-    tiles.squareCount = 1;
-    dungeon.header.mapCount = 1;
-    dungeon.maps = &map;
-    dungeon.tiles = &tiles;
-    dungeon.tilesLoaded = 1;
-    things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 1;
-    things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
-    things.thingCounts[THING_TYPE_WEAPON] = 1;
-    state.world.dungeon = &dungeon;
-    state.world.things = &things;
-
-    ASSERT_EQ(M11_GameView_ProbeViewportFloorItemCounts(
-                  &state, 0, 0, NULL, NULL, &elementType,
-                  &floorItemCount, &summaryItemCount),
+    ASSERT_EQ(build_dm1_hoc_render_consumer_receipt_for_test(&consumer),
               1,
-              "HoC floor item probe samples current square");
-    ASSERT_EQ(elementType, DUNGEON_ELEMENT_CORRIDOR,
-              "synthetic HoC square is a corridor");
-    ASSERT_EQ(floorItemCount, 0,
-              "HoC map-0 item route suppresses loose floor rendering");
-    ASSERT_EQ(summaryItemCount, 0,
-              "HoC map-0 summary follows DM1 item route receipt");
+              "HoC floor item route consumes DM1 receipt");
+    ASSERT_EQ(consumer.draw_real_floor_object, 1,
+              "HoC route allows real floor object through DM1 F0115");
+    ASSERT_EQ(consumer.suppress_mirror_floor_item_payload, 1,
+              "HoC route suppresses mirror floor payload");
+    ASSERT_EQ(consumer.no_m11_fallback_scan, 1,
+              "HoC floor route avoids M11 fallback scan");
 }
 
 static void test_hoc_front_mirror_receipt_uses_render_index(void)

@@ -29793,27 +29793,6 @@ int M11_GameView_CountCellExplosions(
     return summary.explosions;
 }
 
-int M11_GameView_ProbeViewportFloorItemCounts(const M11_GameViewState* state,
-                                              int relForward,
-                                              int relSide,
-                                              int* outMapX,
-                                              int* outMapY,
-                                              int* outElementType,
-                                              int* outFloorItemCount,
-                                              int* outSummaryItemCount) {
-    M11_ViewportCell cell;
-    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
-        !cell.valid) {
-        return 0;
-    }
-    if (outMapX) *outMapX = cell.mapX;
-    if (outMapY) *outMapY = cell.mapY;
-    if (outElementType) *outElementType = cell.elementType;
-    if (outFloorItemCount) *outFloorItemCount = cell.floorItemCount;
-    if (outSummaryItemCount) *outSummaryItemCount = cell.summary.items;
-    return 1;
-}
-
 int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
                                              int relForward,
                                              int relSide,
