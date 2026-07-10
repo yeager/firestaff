@@ -3370,6 +3370,26 @@ int M12_StartupMenu_TextEditActive(const M12_StartupMenuState* state) {
     return state && state->textEditActive;
 }
 
+int M12_StartupMenu_TextInputHostReceipt(const M12_StartupMenuState* state,
+                                         int hostTextInputActive,
+                                         M12_StartupTextInputHostReceipt* out) {
+    int active = 0;
+    int validRow = 0;
+    if (!out) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    active = M12_StartupMenu_TextEditActive(state);
+    validRow = active && state && m12_ra_text_row_capacity(state->textEditRow) > 0;
+    out->handled = 1;
+    out->textEditActive = active ? 1 : 0;
+    out->startTextInput = (validRow && !hostTextInputActive) ? 1 : 0;
+    out->stopTextInput = (!active && hostTextInputActive) ? 1 : 0;
+    out->physicalKeyboardValid = validRow ? 1 : 0;
+    out->onscreenKeyboardValid = validRow ? 1 : 0;
+    return 1;
+}
+
 int M12_StartupMenu_ConsumeTextInput(M12_StartupMenuState* state,
                                      const char* text) {
     size_t len;

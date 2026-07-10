@@ -27,6 +27,7 @@ static int g_fail = 0;
 
 int main(void) {
     M12_StartupMenuState state;
+    M12_StartupTextInputHostReceipt textInputReceipt;
     M12_MouseHit hit;
     int tabW = (1920 - 2 * (1920 / 30)) / M12_SETTINGS_TAB_COUNT;
     const int settingsRowXRight = 96 + 36 + (1920 - 2 * 96 - 2 * 36) - 20;
@@ -149,10 +150,18 @@ int main(void) {
     (void)M12_ModernMenu_ApplyHit(&state, hit);
     CHECK(M12_StartupMenu_TextEditActive(&state),
           "RA Username click starts text edit");
+    CHECK(M12_StartupMenu_TextInputHostReceipt(&state, 0, &textInputReceipt) == 1 &&
+          textInputReceipt.startTextInput &&
+          textInputReceipt.physicalKeyboardValid &&
+          textInputReceipt.onscreenKeyboardValid,
+          "RA Username requests host text input for keyboard and screen keyboard");
     CHECK(M12_StartupMenu_ConsumeTextInput(&state, "yeager") == 1,
           "RA Username accepts text input");
     CHECK(M12_StartupMenu_TextEditCommit(&state) == 1,
           "RA Username commit succeeds");
+    CHECK(M12_StartupMenu_TextInputHostReceipt(&state, 1, &textInputReceipt) == 1 &&
+          textInputReceipt.stopTextInput,
+          "RA Username commit requests host text input stop");
     CHECK(strcmp(state.settings.retroAchievementsUsername, "yeager") == 0,
           "RA Username stored in menu settings");
 
@@ -166,13 +175,18 @@ int main(void) {
     (void)M12_ModernMenu_ApplyHit(&state, hit);
     CHECK(M12_StartupMenu_TextEditActive(&state),
           "RA Token click starts text edit");
-    CHECK(M12_StartupMenu_ConsumeTextInput(&state, "secret") == 1,
-          "RA Token accepts text input");
+    CHECK(M12_StartupMenu_TextInputHostReceipt(&state, 0, &textInputReceipt) == 1 &&
+          textInputReceipt.startTextInput &&
+          textInputReceipt.physicalKeyboardValid &&
+          textInputReceipt.onscreenKeyboardValid,
+          "RA Token requests host text input for keyboard and screen keyboard");
+    CHECK(M12_StartupMenu_ConsumeTextInput(&state, "secret-API_123") == 1,
+          "RA Token accepts keyboard token characters");
     CHECK(M12_StartupMenu_TextEditBackspace(&state) == 1,
           "RA Token supports backspace");
     CHECK(M12_StartupMenu_TextEditCommit(&state) == 1,
           "RA Token commit succeeds");
-    CHECK(strcmp(state.settings.retroAchievementsToken, "secre") == 0,
+    CHECK(strcmp(state.settings.retroAchievementsToken, "secret-API_12") == 0,
           "RA Token stored without displaying raw token");
     CHECK(!M12_StartupMenu_TextEditActive(&state),
           "RA Token commit exits text edit");

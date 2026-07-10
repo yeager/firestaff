@@ -431,6 +431,48 @@ static void m11_apply_persisted_window_size(M11_PhaseA_Options* opts) {
     }
 }
 
+static void m11_sync_startup_text_input(const M12_StartupMenuState* menuState,
+                                        int launcherOwnsInput,
+                                        int* hostTextInputActive) {
+    M12_StartupTextInputHostReceipt receipt;
+    int active;
+    if (!hostTextInputActive) {
+        return;
+    }
+    active = *hostTextInputActive;
+    if (!launcherOwnsInput) {
+        if (active) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            (void)SDL_StopTextInput(M11_Render_GetWindow());
+#else
+            SDL_StopTextInput();
+#endif
+            *hostTextInputActive = 0;
+        }
+        return;
+    }
+    if (!M12_StartupMenu_TextInputHostReceipt(menuState, active, &receipt)) {
+        return;
+    }
+    if (receipt.startTextInput) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        if (SDL_StartTextInput(M11_Render_GetWindow())) {
+            *hostTextInputActive = 1;
+        }
+#else
+        SDL_StartTextInput();
+        *hostTextInputActive = 1;
+#endif
+    } else if (receipt.stopTextInput) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        (void)SDL_StopTextInput(M11_Render_GetWindow());
+#else
+        SDL_StopTextInput();
+#endif
+        *hostTextInputActive = 0;
+    }
+}
+
 static void m11_sync_and_save_window_size(M12_StartupMenuState* menuState) {
     if (!menuState || !M11_Render_IsInitialized()) {
         return;
@@ -4154,6 +4196,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int exitAfterLaunch = getenv("FIRESTAFF_EXIT_AFTER_LAUNCH") != NULL;
     int failIfNoLaunch = getenv("FIRESTAFF_FAIL_IF_NO_LAUNCH") != NULL;
     int runRc = 0;
+    int startupTextInputActive = 0;
     M11_ApplyStartupMenuRuntime(&menuState);
     firestaff_ra_runtime_init(&raRuntime);
     if (o->retroAchievementsEnabled ||
@@ -4669,6 +4712,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         &quitRequested,
                                         &menuPointerChanged);
         }
+        m11_sync_startup_text_input(&menuState,
+                                    useModern && !gameView.active,
+                                    &startupTextInputActive);
         if (quitRequested) {
             break;
         }
@@ -4823,6 +4869,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         input = M12_MENU_INPUT_NONE;
                     }
                     M12_StartupMenu_HandleInput(&menuState, input);
+                    m11_sync_startup_text_input(&menuState,
+                                                useModern && !gameView.active,
+                                                &startupTextInputActive);
                     if (menuState.shouldExit) {
                         break;
                     }
@@ -4888,6 +4937,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         runRc = 3;
     }
 cleanup:
+    m11_sync_startup_text_input(&menuState, 0, &startupTextInputActive);
     M12_StartupMenu_Destroy(&menuState);
     m11_write_autotest_screenshot(getenv("FIRESTAFF_AUTOTEST_SCREENSHOT_DIR"));
     m11_write_autotest_presented_screenshot(getenv("FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR"));

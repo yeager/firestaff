@@ -594,7 +594,19 @@ int M12_StartupMenu_SessionTimerRemainingSeconds(const M12_StartupMenuState* sta
                                                  int elapsedSeconds);
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input);
+typedef struct M12_StartupTextInputHostReceipt {
+    int handled;
+    int textEditActive;
+    int startTextInput;
+    int stopTextInput;
+    int physicalKeyboardValid;
+    int onscreenKeyboardValid;
+} M12_StartupTextInputHostReceipt;
+
 int M12_StartupMenu_TextEditActive(const M12_StartupMenuState* state);
+int M12_StartupMenu_TextInputHostReceipt(const M12_StartupMenuState* state,
+                                         int hostTextInputActive,
+                                         M12_StartupTextInputHostReceipt* out);
 int M12_StartupMenu_ConsumeTextInput(M12_StartupMenuState* state,
                                      const char* text);
 int M12_StartupMenu_TextEditBackspace(M12_StartupMenuState* state);
