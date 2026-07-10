@@ -570,6 +570,18 @@ const Theron_RuntimeMediaSurface *theron_v1_world_runtime_media_for_level(
     return NULL;
 }
 
+int theron_v1_world_runtime_media_set_identity(
+    Theron_V1_World *world,
+    const Theron_RuntimeMediaIdentity *identity) {
+
+    if (!world || !identity || !identity->ready ||
+        identity->track02_variant == 0 || identity->bank_stride == 0u) {
+        return 0;
+    }
+    world->runtime_media.identity = *identity;
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Deterministic world-state hashing (FNV-1a 64-bit)
  *

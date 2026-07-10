@@ -164,6 +164,23 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
             semantic_handoff.user_data_offset_valid;
         last_user_data_offset = semantic_handoff.user_data_offset;
         if (semantic_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
+            Theron_RuntimeMediaIdentity identity;
+
+            memset(&identity, 0, sizeof(identity));
+            identity.ready = 1;
+            identity.track02_variant = (int)signal.variant;
+            identity.bank_anchor_index = anchor;
+            identity.bank_descriptor_offset = signal.descriptor_offsets[anchor];
+            identity.bank_first_value = signal.first_value;
+            identity.bank_last_value = signal.last_value;
+            identity.bank_stride = signal.stride;
+            identity.audio_frame_ready = signal.audio_bank_id_recognized[anchor] ? 1 : 0;
+            identity.audio_bank_id = signal.audio_bank_id[anchor];
+            identity.audio_bank_id_offset = signal.audio_bank_id_offsets[anchor];
+            identity.audio_bank_prefix_offset = signal.audio_bank_prefix_offsets[anchor];
+            identity.checksum = identity.audio_bank_id ^
+                (uint32_t)identity.bank_descriptor_offset ^
+                ((uint32_t)identity.bank_first_value << 16) ^ identity.bank_last_value;
             world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
             world->current_level = 0;
             world->levels[0][0] = semantic_level;
@@ -172,6 +189,9 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
                                   world->levels[0][0].start_x,
                                   world->levels[0][0].start_y,
                                   world->levels[0][0].start_dir);
+            if (!theron_v1_world_runtime_media_set_identity(world, &identity)) {
+                return 0;
+            }
             if (receipt && receipt_cap > 0u) {
                 snprintf(receipt,
                          receipt_cap,
@@ -411,11 +431,19 @@ static void theron_v1_startup_runtime_entry_capture_result(
     out_result->level_loaded = 1;
     out_result->structured_runtime_route = 1;
     out_result->runtime_receipt_text_route = 0;
-    if (!semantic_handoff && verified_track02_request && media_receipt &&
+    if (verified_track02_request && media_receipt &&
         theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
             media_receipt)) {
         out_result->track02_media_route = 1;
         out_result->track02_media = *media_receipt;
+        if (world->runtime_media.identity.ready) {
+            out_result->track02_media.runtime_media_identity =
+                world->runtime_media.identity;
+        }
+    }
+    if (!semantic_handoff && verified_track02_request && media_receipt &&
+        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            media_receipt)) {
         out_result->fallback_visuals_blocked = 1;
     }
     if (semantic_handoff) {
