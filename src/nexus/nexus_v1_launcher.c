@@ -1038,6 +1038,52 @@ static int nexus_v1_launcher_capture_mask_count(unsigned int mask)
     return count;
 }
 
+#define NEXUS_V1_HOST_ROUTE_STARTUP_BIT  1u
+#define NEXUS_V1_HOST_ROUTE_TITLE_BIT    2u
+#define NEXUS_V1_HOST_ROUTE_SAVE_BIT     4u
+#define NEXUS_V1_HOST_ROUTE_CHAMPION_BIT 8u
+#define NEXUS_V1_HOST_ROUTE_DUNGEON_BIT  16u
+
+static int nexus_v1_launcher_startup_base_saturn_capture_exact(
+    const Nexus_V1_StartupFullStartPackageReceipt *package)
+{
+    if (!package) {
+        return 0;
+    }
+    return package->saturn_timing_exact &&
+           package->saturn_capture_frames_exact &&
+           package->saturn_warning_frame == 0 &&
+           package->saturn_title_capture_frame ==
+               nexus_v1_boot_warning_frames() &&
+           package->saturn_title_ready_frame ==
+               nexus_v1_boot_start_ready_frames() &&
+           package->saturn_gameover_capture_frame == 0;
+}
+
+static unsigned int nexus_v1_launcher_expected_all_route_mask(
+    Nexus_V1_StartupCaptureRoute route,
+    int runtime_dgn_handoff_ready)
+{
+    unsigned int mask = NEXUS_V1_HOST_ROUTE_STARTUP_BIT;
+    switch (route) {
+    case NEXUS_V1_STARTUP_CAPTURE_TITLE:
+        return mask | NEXUS_V1_HOST_ROUTE_TITLE_BIT;
+    case NEXUS_V1_STARTUP_CAPTURE_SAVE:
+        return mask | NEXUS_V1_HOST_ROUTE_SAVE_BIT;
+    case NEXUS_V1_STARTUP_CAPTURE_CHAMPION:
+        mask |= NEXUS_V1_HOST_ROUTE_CHAMPION_BIT;
+        if (runtime_dgn_handoff_ready) {
+            mask |= NEXUS_V1_HOST_ROUTE_DUNGEON_BIT;
+        }
+        return mask;
+    case NEXUS_V1_STARTUP_CAPTURE_MENU_IDLE:
+    case NEXUS_V1_STARTUP_CAPTURE_BLOCKED:
+    case NEXUS_V1_STARTUP_CAPTURE_INVALID:
+    default:
+        return 0u;
+    }
+}
+
 static const char *nexus_v1_launcher_expected_consumer_route_for_capture(
     Nexus_V1_StartupCaptureRoute route)
 {
@@ -3697,6 +3743,23 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
         receipt->host_ownership_route_matches_capture_route &&
         receipt->route ==
             NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF;
+    receipt->startup_route_saturn_capture_exact =
+        nexus_v1_launcher_startup_base_saturn_capture_exact(
+            &receipt->startup_bundle.package);
+    receipt->startup_route_consumes_package_capture =
+        receipt->full_start_package_consumed &&
+        receipt->package_capture_consumed_by_host &&
+        receipt->host_route_consumes_package_route &&
+        receipt->startup_route_saturn_capture_exact;
+    receipt->title_route_consumes_package_capture =
+        receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+        receipt->package_route_consumes_host_ownership &&
+        receipt->host_route_consumes_active_capture_frame &&
+        receipt->title_capture_uses_real_assets &&
+        receipt->saturn_active_capture_frame ==
+            receipt->startup_bundle.package.saturn_title_capture_frame &&
+        receipt->startup_bundle.package.saturn_title_capture_frame ==
+            nexus_v1_boot_warning_frames();
     receipt->save_route_consumes_package_capture =
         receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE &&
         receipt->package_route_consumes_host_ownership &&
@@ -3720,6 +3783,10 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
         receipt->saturn_dungeon_capture_frame ==
             receipt->startup_bundle.package.boot_start_ready_frames &&
         (receipt->host_saturn_non_title_capture_mask & 4u);
+    receipt->title_route_saturn_capture_exact =
+        receipt->title_route_consumes_package_capture &&
+        receipt->startup_bundle.package.saturn_title_capture_frame ==
+            nexus_v1_boot_warning_frames();
     receipt->save_route_saturn_capture_exact =
         receipt->save_route_consumes_package_capture &&
         receipt->saturn_save_capture_frame ==
@@ -3732,6 +3799,21 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
         receipt->dungeon_route_consumes_package_capture &&
         receipt->saturn_dungeon_capture_frame ==
             receipt->startup_bundle.package.boot_start_ready_frames;
+    receipt->startup_host_package_route_complete =
+        receipt->startup_route_consumes_package_capture &&
+        receipt->startup_route_saturn_capture_exact &&
+        receipt->startup_bundle.package.full_start_package_receipt_ready &&
+        receipt->startup_bundle.package.host_display_caller_expected;
+    receipt->title_host_package_route_complete =
+        receipt->title_route_consumes_package_capture &&
+        receipt->title_route_saturn_capture_exact &&
+        strcmp(receipt->startup_bundle.package.consumer_route,
+               "title-warning") == 0 &&
+        strcmp(receipt->startup_bundle.package
+                   .capture_route_expected_consumer_route,
+               "title-warning") == 0 &&
+        receipt->route ==
+            NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_TITLE_CAPTURE;
     receipt->save_host_package_route_complete =
         receipt->save_route_consumes_package_capture &&
         receipt->save_route_saturn_capture_exact &&
@@ -3796,6 +3878,68 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
     receipt->host_package_route_timing_matrix_complete =
         receipt->host_package_route_matrix_complete &&
         receipt->host_saturn_route_timing_matrix_complete &&
+        receipt->host_route_capture_matrix_ready &&
+        receipt->host_route_capture_matrix_exact;
+    receipt->host_all_route_complete_mask = 0u;
+    if (receipt->startup_host_package_route_complete) {
+        receipt->host_all_route_complete_mask |=
+            NEXUS_V1_HOST_ROUTE_STARTUP_BIT;
+    }
+    if (receipt->title_host_package_route_complete) {
+        receipt->host_all_route_complete_mask |=
+            NEXUS_V1_HOST_ROUTE_TITLE_BIT;
+    }
+    if (receipt->save_host_package_route_complete) {
+        receipt->host_all_route_complete_mask |=
+            NEXUS_V1_HOST_ROUTE_SAVE_BIT;
+    }
+    if (receipt->champion_host_package_route_complete) {
+        receipt->host_all_route_complete_mask |=
+            NEXUS_V1_HOST_ROUTE_CHAMPION_BIT;
+    }
+    if (receipt->dungeon_host_package_route_complete) {
+        receipt->host_all_route_complete_mask |=
+            NEXUS_V1_HOST_ROUTE_DUNGEON_BIT;
+    }
+    receipt->host_all_route_expected_mask =
+        nexus_v1_launcher_expected_all_route_mask(
+            receipt->capture_route,
+            receipt->runtime_dgn_handoff_ready);
+    receipt->host_all_route_matrix_complete =
+        receipt->host_all_route_expected_mask != 0u &&
+        receipt->host_all_route_complete_mask ==
+            receipt->host_all_route_expected_mask;
+    receipt->host_saturn_all_exact_capture_mask = 0u;
+    if (receipt->startup_route_saturn_capture_exact) {
+        receipt->host_saturn_all_exact_capture_mask |=
+            NEXUS_V1_HOST_ROUTE_STARTUP_BIT;
+    }
+    if (receipt->title_route_saturn_capture_exact) {
+        receipt->host_saturn_all_exact_capture_mask |=
+            NEXUS_V1_HOST_ROUTE_TITLE_BIT;
+    }
+    if (receipt->save_route_saturn_capture_exact) {
+        receipt->host_saturn_all_exact_capture_mask |=
+            NEXUS_V1_HOST_ROUTE_SAVE_BIT;
+    }
+    if (receipt->champion_route_saturn_capture_exact) {
+        receipt->host_saturn_all_exact_capture_mask |=
+            NEXUS_V1_HOST_ROUTE_CHAMPION_BIT;
+    }
+    if (receipt->dungeon_route_saturn_capture_exact) {
+        receipt->host_saturn_all_exact_capture_mask |=
+            NEXUS_V1_HOST_ROUTE_DUNGEON_BIT;
+    }
+    receipt->host_saturn_all_expected_capture_mask =
+        receipt->host_all_route_expected_mask;
+    receipt->host_saturn_all_route_timing_matrix_complete =
+        receipt->host_saturn_all_expected_capture_mask != 0u &&
+        receipt->host_saturn_all_exact_capture_mask ==
+            receipt->host_saturn_all_expected_capture_mask;
+    receipt->host_all_route_timing_matrix_complete =
+        receipt->host_all_route_matrix_complete &&
+        receipt->host_saturn_all_route_timing_matrix_complete &&
+        receipt->startup_route_saturn_capture_exact &&
         receipt->host_route_capture_matrix_ready &&
         receipt->host_route_capture_matrix_exact;
     non_title_capture_route_complete =
@@ -4006,7 +4150,10 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
     receipt->host_route_capture_matrix_ready =
         receipt->host_route_consumes_active_capture_frame &&
         receipt->host_route_capture_matrix_exact &&
-        ((receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+        ((receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+          receipt->title_capture_uses_real_assets &&
+          nexus_v1_launcher_startup_base_saturn_capture_exact(package)) ||
+         (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE &&
           (receipt->host_saturn_non_title_capture_mask & 1u)) ||
          (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
           (receipt->host_saturn_non_title_capture_mask & 2u) &&
@@ -4299,18 +4446,30 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.non_title_saturn_capture_route_complete;
     out_receipt->dungeon_startup_route_consumption_complete =
         out_receipt->ownership.dungeon_startup_route_consumption_complete;
+    out_receipt->startup_route_consumes_package_capture =
+        out_receipt->ownership.startup_route_consumes_package_capture;
+    out_receipt->title_route_consumes_package_capture =
+        out_receipt->ownership.title_route_consumes_package_capture;
     out_receipt->save_route_consumes_package_capture =
         out_receipt->ownership.save_route_consumes_package_capture;
     out_receipt->champion_route_consumes_package_capture =
         out_receipt->ownership.champion_route_consumes_package_capture;
     out_receipt->dungeon_route_consumes_package_capture =
         out_receipt->ownership.dungeon_route_consumes_package_capture;
+    out_receipt->startup_route_saturn_capture_exact =
+        out_receipt->ownership.startup_route_saturn_capture_exact;
+    out_receipt->title_route_saturn_capture_exact =
+        out_receipt->ownership.title_route_saturn_capture_exact;
     out_receipt->save_route_saturn_capture_exact =
         out_receipt->ownership.save_route_saturn_capture_exact;
     out_receipt->champion_route_saturn_capture_exact =
         out_receipt->ownership.champion_route_saturn_capture_exact;
     out_receipt->dungeon_route_saturn_capture_exact =
         out_receipt->ownership.dungeon_route_saturn_capture_exact;
+    out_receipt->startup_host_package_route_complete =
+        out_receipt->ownership.startup_host_package_route_complete;
+    out_receipt->title_host_package_route_complete =
+        out_receipt->ownership.title_host_package_route_complete;
     out_receipt->save_host_package_route_complete =
         out_receipt->ownership.save_host_package_route_complete;
     out_receipt->champion_host_package_route_complete =
@@ -4329,6 +4488,20 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.host_saturn_route_timing_matrix_complete;
     out_receipt->host_package_route_timing_matrix_complete =
         out_receipt->ownership.host_package_route_timing_matrix_complete;
+    out_receipt->host_all_route_complete_mask =
+        out_receipt->ownership.host_all_route_complete_mask;
+    out_receipt->host_all_route_expected_mask =
+        out_receipt->ownership.host_all_route_expected_mask;
+    out_receipt->host_all_route_matrix_complete =
+        out_receipt->ownership.host_all_route_matrix_complete;
+    out_receipt->host_saturn_all_exact_capture_mask =
+        out_receipt->ownership.host_saturn_all_exact_capture_mask;
+    out_receipt->host_saturn_all_expected_capture_mask =
+        out_receipt->ownership.host_saturn_all_expected_capture_mask;
+    out_receipt->host_saturn_all_route_timing_matrix_complete =
+        out_receipt->ownership.host_saturn_all_route_timing_matrix_complete;
+    out_receipt->host_all_route_timing_matrix_complete =
+        out_receipt->ownership.host_all_route_timing_matrix_complete;
     out_receipt->startup_bundle_consumed =
         out_receipt->ownership.startup_bundle.package
             .full_start_package_receipt_ready;

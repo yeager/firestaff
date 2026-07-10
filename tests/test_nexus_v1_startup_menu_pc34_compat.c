@@ -1314,12 +1314,18 @@ int main(void)
                real_asset_ownership_receipt.host_ownership_route_matches_capture_route == 1 &&
                real_asset_ownership_receipt.package_route_consumes_host_ownership == 1 &&
                real_asset_ownership_receipt.dgn_route_consumes_host_ownership == 1 &&
+               real_asset_ownership_receipt.startup_route_consumes_package_capture == 1 &&
+               real_asset_ownership_receipt.title_route_consumes_package_capture == 0 &&
                real_asset_ownership_receipt.save_route_consumes_package_capture == 0 &&
                real_asset_ownership_receipt.champion_route_consumes_package_capture == 1 &&
                real_asset_ownership_receipt.dungeon_route_consumes_package_capture == 1 &&
+               real_asset_ownership_receipt.startup_route_saturn_capture_exact == 1 &&
+               real_asset_ownership_receipt.title_route_saturn_capture_exact == 0 &&
                real_asset_ownership_receipt.save_route_saturn_capture_exact == 0 &&
                real_asset_ownership_receipt.champion_route_saturn_capture_exact == 1 &&
                real_asset_ownership_receipt.dungeon_route_saturn_capture_exact == 1 &&
+               real_asset_ownership_receipt.startup_host_package_route_complete == 1 &&
+               real_asset_ownership_receipt.title_host_package_route_complete == 0 &&
                real_asset_ownership_receipt.save_host_package_route_complete == 0 &&
                real_asset_ownership_receipt.champion_host_package_route_complete == 1 &&
                real_asset_ownership_receipt.dungeon_host_package_route_complete == 1 &&
@@ -1329,6 +1335,13 @@ int main(void)
                real_asset_ownership_receipt.host_saturn_exact_capture_mask == 6u &&
                real_asset_ownership_receipt.host_saturn_route_timing_matrix_complete == 1 &&
                real_asset_ownership_receipt.host_package_route_timing_matrix_complete == 1 &&
+               real_asset_ownership_receipt.host_all_route_complete_mask == 25u &&
+               real_asset_ownership_receipt.host_all_route_expected_mask == 25u &&
+               real_asset_ownership_receipt.host_all_route_matrix_complete == 1 &&
+               real_asset_ownership_receipt.host_saturn_all_exact_capture_mask == 25u &&
+               real_asset_ownership_receipt.host_saturn_all_expected_capture_mask == 25u &&
+               real_asset_ownership_receipt.host_saturn_all_route_timing_matrix_complete == 1 &&
+               real_asset_ownership_receipt.host_all_route_timing_matrix_complete == 1 &&
                real_asset_ownership_receipt.startup_route_consumption_complete == 1 &&
                real_asset_ownership_receipt.non_title_saturn_capture_route_complete == 1 &&
                real_asset_ownership_receipt.dungeon_startup_route_consumption_complete == 1 &&
@@ -1397,12 +1410,18 @@ int main(void)
                host_caller_receipt.host_ownership_route_matches_capture_route == 1 &&
                host_caller_receipt.package_route_consumes_host_ownership == 1 &&
                host_caller_receipt.dgn_route_consumes_host_ownership == 1 &&
+               host_caller_receipt.startup_route_consumes_package_capture == 1 &&
+               host_caller_receipt.title_route_consumes_package_capture == 0 &&
                host_caller_receipt.save_route_consumes_package_capture == 0 &&
                host_caller_receipt.champion_route_consumes_package_capture == 1 &&
                host_caller_receipt.dungeon_route_consumes_package_capture == 1 &&
+               host_caller_receipt.startup_route_saturn_capture_exact == 1 &&
+               host_caller_receipt.title_route_saturn_capture_exact == 0 &&
                host_caller_receipt.save_route_saturn_capture_exact == 0 &&
                host_caller_receipt.champion_route_saturn_capture_exact == 1 &&
                host_caller_receipt.dungeon_route_saturn_capture_exact == 1 &&
+               host_caller_receipt.startup_host_package_route_complete == 1 &&
+               host_caller_receipt.title_host_package_route_complete == 0 &&
                host_caller_receipt.save_host_package_route_complete == 0 &&
                host_caller_receipt.champion_host_package_route_complete == 1 &&
                host_caller_receipt.dungeon_host_package_route_complete == 1 &&
@@ -1412,6 +1431,13 @@ int main(void)
                host_caller_receipt.host_saturn_exact_capture_mask == 6u &&
                host_caller_receipt.host_saturn_route_timing_matrix_complete == 1 &&
                host_caller_receipt.host_package_route_timing_matrix_complete == 1 &&
+               host_caller_receipt.host_all_route_complete_mask == 25u &&
+               host_caller_receipt.host_all_route_expected_mask == 25u &&
+               host_caller_receipt.host_all_route_matrix_complete == 1 &&
+               host_caller_receipt.host_saturn_all_exact_capture_mask == 25u &&
+               host_caller_receipt.host_saturn_all_expected_capture_mask == 25u &&
+               host_caller_receipt.host_saturn_all_route_timing_matrix_complete == 1 &&
+               host_caller_receipt.host_all_route_timing_matrix_complete == 1 &&
                host_caller_receipt.startup_route_consumption_complete == 1 &&
                host_caller_receipt.non_title_saturn_capture_route_complete == 1 &&
                host_caller_receipt.dungeon_startup_route_consumption_complete == 1 &&
@@ -1666,12 +1692,18 @@ int main(void)
                real_asset_ownership_receipt.host_ownership_route_matches_capture_route == 1 &&
                real_asset_ownership_receipt.package_route_consumes_host_ownership == 1 &&
                real_asset_ownership_receipt.dgn_route_consumes_host_ownership == 0 &&
+               real_asset_ownership_receipt.startup_route_consumes_package_capture == 1 &&
+               real_asset_ownership_receipt.title_route_consumes_package_capture == 0 &&
                real_asset_ownership_receipt.save_route_consumes_package_capture == 1 &&
                real_asset_ownership_receipt.champion_route_consumes_package_capture == 0 &&
                real_asset_ownership_receipt.dungeon_route_consumes_package_capture == 0 &&
+               real_asset_ownership_receipt.startup_route_saturn_capture_exact == 1 &&
+               real_asset_ownership_receipt.title_route_saturn_capture_exact == 0 &&
                real_asset_ownership_receipt.save_route_saturn_capture_exact == 1 &&
                real_asset_ownership_receipt.champion_route_saturn_capture_exact == 0 &&
                real_asset_ownership_receipt.dungeon_route_saturn_capture_exact == 0 &&
+               real_asset_ownership_receipt.startup_host_package_route_complete == 1 &&
+               real_asset_ownership_receipt.title_host_package_route_complete == 0 &&
                real_asset_ownership_receipt.save_host_package_route_complete == 1 &&
                real_asset_ownership_receipt.champion_host_package_route_complete == 0 &&
                real_asset_ownership_receipt.dungeon_host_package_route_complete == 0 &&
@@ -1681,6 +1713,13 @@ int main(void)
                real_asset_ownership_receipt.host_saturn_exact_capture_mask == 1u &&
                real_asset_ownership_receipt.host_saturn_route_timing_matrix_complete == 1 &&
                real_asset_ownership_receipt.host_package_route_timing_matrix_complete == 1 &&
+               real_asset_ownership_receipt.host_all_route_complete_mask == 5u &&
+               real_asset_ownership_receipt.host_all_route_expected_mask == 5u &&
+               real_asset_ownership_receipt.host_all_route_matrix_complete == 1 &&
+               real_asset_ownership_receipt.host_saturn_all_exact_capture_mask == 5u &&
+               real_asset_ownership_receipt.host_saturn_all_expected_capture_mask == 5u &&
+               real_asset_ownership_receipt.host_saturn_all_route_timing_matrix_complete == 1 &&
+               real_asset_ownership_receipt.host_all_route_timing_matrix_complete == 1 &&
                real_asset_ownership_receipt.startup_route_consumption_complete == 1 &&
                real_asset_ownership_receipt.non_title_saturn_capture_route_complete == 1 &&
                real_asset_ownership_receipt.dungeon_startup_route_consumption_complete == 0 &&
@@ -1726,12 +1765,18 @@ int main(void)
                host_caller_receipt.host_ownership_route_matches_capture_route == 1 &&
                host_caller_receipt.package_route_consumes_host_ownership == 1 &&
                host_caller_receipt.dgn_route_consumes_host_ownership == 0 &&
+               host_caller_receipt.startup_route_consumes_package_capture == 1 &&
+               host_caller_receipt.title_route_consumes_package_capture == 0 &&
                host_caller_receipt.save_route_consumes_package_capture == 1 &&
                host_caller_receipt.champion_route_consumes_package_capture == 0 &&
                host_caller_receipt.dungeon_route_consumes_package_capture == 0 &&
+               host_caller_receipt.startup_route_saturn_capture_exact == 1 &&
+               host_caller_receipt.title_route_saturn_capture_exact == 0 &&
                host_caller_receipt.save_route_saturn_capture_exact == 1 &&
                host_caller_receipt.champion_route_saturn_capture_exact == 0 &&
                host_caller_receipt.dungeon_route_saturn_capture_exact == 0 &&
+               host_caller_receipt.startup_host_package_route_complete == 1 &&
+               host_caller_receipt.title_host_package_route_complete == 0 &&
                host_caller_receipt.save_host_package_route_complete == 1 &&
                host_caller_receipt.champion_host_package_route_complete == 0 &&
                host_caller_receipt.dungeon_host_package_route_complete == 0 &&
@@ -1741,6 +1786,13 @@ int main(void)
                host_caller_receipt.host_saturn_exact_capture_mask == 1u &&
                host_caller_receipt.host_saturn_route_timing_matrix_complete == 1 &&
                host_caller_receipt.host_package_route_timing_matrix_complete == 1 &&
+               host_caller_receipt.host_all_route_complete_mask == 5u &&
+               host_caller_receipt.host_all_route_expected_mask == 5u &&
+               host_caller_receipt.host_all_route_matrix_complete == 1 &&
+               host_caller_receipt.host_saturn_all_exact_capture_mask == 5u &&
+               host_caller_receipt.host_saturn_all_expected_capture_mask == 5u &&
+               host_caller_receipt.host_saturn_all_route_timing_matrix_complete == 1 &&
+               host_caller_receipt.host_all_route_timing_matrix_complete == 1 &&
                host_caller_receipt.startup_route_consumption_complete == 1 &&
                host_caller_receipt.non_title_saturn_capture_route_complete == 1 &&
                host_caller_receipt.dungeon_startup_route_consumption_complete == 0 &&
@@ -1947,6 +1999,103 @@ int main(void)
                startup_bundle_receipt.first_draw_kind ==
                    NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME,
            "Nexus startup receipt bundle exports title warning capture timing");
+    expect(nexus_v1_launcher_startup_real_asset_ownership_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               &real_asset_ownership_receipt) &&
+               real_asset_ownership_receipt.route ==
+                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_TITLE_CAPTURE &&
+               real_asset_ownership_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               real_asset_ownership_receipt.title_capture_uses_real_assets == 1 &&
+               real_asset_ownership_receipt.full_start_package_consumed == 1 &&
+               real_asset_ownership_receipt.package_capture_consumed_by_host == 1 &&
+               real_asset_ownership_receipt.host_route_consumes_package_route == 1 &&
+               real_asset_ownership_receipt.host_route_consumes_capture_matrix == 1 &&
+               real_asset_ownership_receipt.host_ownership_route_matches_capture_route == 1 &&
+               real_asset_ownership_receipt.package_route_consumes_host_ownership == 1 &&
+               real_asset_ownership_receipt.startup_route_consumes_package_capture == 1 &&
+               real_asset_ownership_receipt.title_route_consumes_package_capture == 1 &&
+               real_asset_ownership_receipt.save_route_consumes_package_capture == 0 &&
+               real_asset_ownership_receipt.champion_route_consumes_package_capture == 0 &&
+               real_asset_ownership_receipt.dungeon_route_consumes_package_capture == 0 &&
+               real_asset_ownership_receipt.startup_route_saturn_capture_exact == 1 &&
+               real_asset_ownership_receipt.title_route_saturn_capture_exact == 1 &&
+               real_asset_ownership_receipt.save_route_saturn_capture_exact == 0 &&
+               real_asset_ownership_receipt.champion_route_saturn_capture_exact == 0 &&
+               real_asset_ownership_receipt.dungeon_route_saturn_capture_exact == 0 &&
+               real_asset_ownership_receipt.startup_host_package_route_complete == 1 &&
+               real_asset_ownership_receipt.title_host_package_route_complete == 1 &&
+               real_asset_ownership_receipt.save_host_package_route_complete == 0 &&
+               real_asset_ownership_receipt.champion_host_package_route_complete == 0 &&
+               real_asset_ownership_receipt.dungeon_host_package_route_complete == 0 &&
+               real_asset_ownership_receipt.host_package_route_complete_mask == 0u &&
+               real_asset_ownership_receipt.host_package_route_expected_mask == 0u &&
+               real_asset_ownership_receipt.host_package_route_matrix_complete == 0 &&
+               real_asset_ownership_receipt.host_all_route_complete_mask == 3u &&
+               real_asset_ownership_receipt.host_all_route_expected_mask == 3u &&
+               real_asset_ownership_receipt.host_all_route_matrix_complete == 1 &&
+               real_asset_ownership_receipt.host_saturn_all_exact_capture_mask == 3u &&
+               real_asset_ownership_receipt.host_saturn_all_expected_capture_mask == 3u &&
+               real_asset_ownership_receipt.host_saturn_all_route_timing_matrix_complete == 1 &&
+               real_asset_ownership_receipt.host_all_route_timing_matrix_complete == 1 &&
+               real_asset_ownership_receipt.host_route_consumes_active_capture_frame == 1 &&
+               real_asset_ownership_receipt.host_route_capture_matrix_ready == 1 &&
+               real_asset_ownership_receipt.host_route_capture_matrix_exact == 1 &&
+               real_asset_ownership_receipt.active_capture_frame == 48 &&
+               real_asset_ownership_receipt.saturn_active_capture_frame == 48 &&
+               strcmp(real_asset_ownership_receipt.status,
+                      "title-capture-owned") == 0,
+           "Nexus title route consumes startup package and host capture route");
+    memset(draw_commands, 0, sizeof(draw_commands));
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
+               &synthetic_runtime_receipt,
+               &runtime_snapshot,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &host_caller_receipt) &&
+               host_caller_receipt.host_caller_ready == 1 &&
+               host_caller_receipt.host_execute_startup_draws == 1 &&
+               host_caller_receipt.host_execute_dgn_draws == 0 &&
+               host_caller_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               host_caller_receipt.ownership_route ==
+                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_TITLE_CAPTURE &&
+               host_caller_receipt.startup_route_consumes_package_capture == 1 &&
+               host_caller_receipt.title_route_consumes_package_capture == 1 &&
+               host_caller_receipt.startup_route_saturn_capture_exact == 1 &&
+               host_caller_receipt.title_route_saturn_capture_exact == 1 &&
+               host_caller_receipt.startup_host_package_route_complete == 1 &&
+               host_caller_receipt.title_host_package_route_complete == 1 &&
+               host_caller_receipt.host_all_route_complete_mask == 3u &&
+               host_caller_receipt.host_all_route_expected_mask == 3u &&
+               host_caller_receipt.host_all_route_matrix_complete == 1 &&
+               host_caller_receipt.host_saturn_all_exact_capture_mask == 3u &&
+               host_caller_receipt.host_saturn_all_expected_capture_mask == 3u &&
+               host_caller_receipt.host_saturn_all_route_timing_matrix_complete == 1 &&
+               host_caller_receipt.host_all_route_timing_matrix_complete == 1 &&
+               host_caller_receipt.host_route_consumes_active_capture_frame == 1 &&
+               host_caller_receipt.host_route_capture_matrix_ready == 1 &&
+               host_caller_receipt.host_route_capture_matrix_exact == 1 &&
+               host_caller_receipt.host_active_capture_frame == 48 &&
+               host_caller_receipt.host_saturn_active_capture_frame == 48 &&
+               draw_commands[0].kind ==
+                   NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME &&
+               dgn_commands[0].kind == 0 &&
+               strcmp(host_caller_receipt.host_route,
+                      "title-capture") == 0 &&
+               strcmp(host_caller_receipt.startup_package_route,
+                      "title-warning") == 0,
+           "Nexus host-caller consumes TITLE package route before drawing");
     memset(package_phase, 0, sizeof(package_phase));
     memset(package_animation, 0, sizeof(package_animation));
     expect(nexus_v1_launcher_startup_full_start_package_export_presentation(
