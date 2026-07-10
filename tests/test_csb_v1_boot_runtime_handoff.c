@@ -2942,6 +2942,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_draw_receipt.consumed_host_view_only &&
               host_view_draw_receipt.render_draw_receipt_consumed &&
               host_view_draw_receipt.capture_proof_consumed &&
+              host_view_draw_receipt.route_capture_proof_consumed &&
               host_view_draw_receipt.readiness_receipt_consumed &&
               host_view_draw_receipt.no_legacy_plan_fallback &&
               host_view_draw_receipt.fallback_callbacks_stripped &&
@@ -3921,6 +3922,21 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.draw_full_surface_count == 0 &&
               capture_render_probe.draw_closed_doors_count == 0,
           "boot startup host-view draw rejects HUD fallback without render-draw receipt");
+    poisoned_host_view_receipt = host_view_receipt;
+    poisoned_host_view_receipt.capture_proof.closed_door_menu_route = 0;
+    poisoned_host_view_receipt.capture_proof.utility_menu_route = 0;
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
+              &poisoned_host_view_receipt,
+              &capture_render_executor,
+              &host_view_draw_receipt) == 0 &&
+              !host_view_draw_receipt.valid &&
+              !host_view_draw_receipt.route_capture_proof_consumed &&
+              !host_view_draw_receipt.no_legacy_plan_fallback &&
+              capture_render_probe.draw_full_surface_count == 0 &&
+              capture_render_probe.draw_closed_doors_count == 0,
+          "boot startup host-view draw rejects mismatched HUD capture proof");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     capture_render_probe.draw_full_surface_result = 0;

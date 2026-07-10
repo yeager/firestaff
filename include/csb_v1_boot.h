@@ -1044,6 +1044,7 @@ typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int consumed_host_view_only;
     int render_draw_receipt_consumed;
     int capture_proof_consumed;
+    int route_capture_proof_consumed;
     int readiness_receipt_consumed;
     int no_legacy_plan_fallback;
     const char *source_evidence;
