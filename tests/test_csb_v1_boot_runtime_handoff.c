@@ -2224,6 +2224,17 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   visual_sequence.sequence_capture_hash &&
               runtime_visual.runtime_capture_hash != 0u &&
               runtime_visual.title_runtime_consumed &&
+              runtime_visual.title_runtime_sample_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              runtime_visual.title_runtime_all_stages_consumed &&
+              runtime_visual.title_runtime_sample_hashes[0] ==
+                  visual_sequence.title_sample_hashes[0] &&
+              runtime_visual.title_runtime_sample_hashes[1] ==
+                  visual_sequence.title_sample_hashes[1] &&
+              runtime_visual.title_runtime_sample_hashes[2] ==
+                  visual_sequence.title_sample_hashes[2] &&
+              runtime_visual.title_runtime_sample_hashes[3] ==
+                  visual_sequence.title_sample_hashes[3] &&
               runtime_visual.closed_door_hud_runtime_consumed &&
               runtime_visual.utility_hud_runtime_consumed &&
               runtime_visual.door_opening_delay_runtime_consumed &&

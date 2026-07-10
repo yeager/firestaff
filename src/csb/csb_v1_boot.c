@@ -3466,8 +3466,16 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
 {
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 ownership;
+    static const int title_source_steps[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34] = {
+        1,
+        2,
+        19,
+        20
+    };
+    int title_frames[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34];
     uint32_t runtime_hash = 2166136261u;
     int fallback_callbacks_stripped = 1;
+    int title_i;
 
     if (!out_receipt) {
         return 0;
@@ -3482,6 +3490,12 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
         !out_receipt->visual_sequence.valid) {
         return 0;
     }
+    title_frames[0] = 0;
+    title_frames[1] = out_receipt->visual_sequence.source_title_presents_ticks;
+    title_frames[2] =
+        out_receipt->visual_sequence.source_title_presents_ticks +
+        out_receipt->visual_sequence.source_title_chaos_zoom_ticks;
+    title_frames[3] = csb_v1_startup_title_total_ticks_pc34() - 1;
 
     out_receipt->visual_sequence_valid = 1;
     out_receipt->real_asset_matched =
@@ -3489,23 +3503,45 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     out_receipt->sequence_capture_hash =
         out_receipt->visual_sequence.sequence_capture_hash;
 
-    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
-    snapshot.title_active = 1;
-    snapshot.title_frame = 0;
-    snapshot.title_source_step = 1;
-    if (csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
-            &snapshot,
-            executor,
-            &ownership,
-            &runtime_hash) &&
-        ownership.title_capture_ready &&
-        ownership.title_draw_ready) {
-        out_receipt->title_runtime_consumed = 1;
-        out_receipt->title_draw_consumed = 1;
-        fallback_callbacks_stripped =
-            fallback_callbacks_stripped &&
-            ownership.host_draw.fallback_callbacks_stripped;
+    for (title_i = 0;
+         title_i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+         ++title_i) {
+        csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
+        snapshot.title_active = 1;
+        snapshot.title_frame = title_frames[title_i];
+        snapshot.title_source_step = title_source_steps[title_i];
+        if (csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
+                &snapshot,
+                executor,
+                &ownership,
+                &runtime_hash) &&
+            ownership.title_capture_ready &&
+            ownership.title_draw_ready &&
+            ownership.host_view.capture_proof.title_stage ==
+                (title_i == 0
+                     ? CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34
+                     : (title_i == 3
+                            ? CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34
+                            : CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34)) &&
+            ownership.host_view.capture_proof.packaged_capture_hash ==
+                out_receipt->visual_sequence.title_sample_hashes[title_i]) {
+            out_receipt->title_runtime_sample_hashes[title_i] =
+                ownership.host_view.capture_proof.packaged_capture_hash;
+            ++out_receipt->title_runtime_sample_count;
+            fallback_callbacks_stripped =
+                fallback_callbacks_stripped &&
+                ownership.host_draw.fallback_callbacks_stripped;
+        }
     }
+    out_receipt->title_runtime_all_stages_consumed =
+        out_receipt->title_runtime_sample_count ==
+                CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34
+            ? 1
+            : 0;
+    out_receipt->title_runtime_consumed =
+        out_receipt->title_runtime_all_stages_consumed;
+    out_receipt->title_draw_consumed =
+        out_receipt->title_runtime_all_stages_consumed;
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
     snapshot.utility_overlay_active = 0;
@@ -3600,6 +3636,7 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     out_receipt->runtime_capture_hash = runtime_hash ? runtime_hash : 1u;
     out_receipt->no_fallback_callbacks =
         out_receipt->title_runtime_consumed &&
+                out_receipt->title_runtime_all_stages_consumed &&
                 out_receipt->closed_door_hud_runtime_consumed &&
                 out_receipt->utility_hud_runtime_consumed &&
                 out_receipt->door_opening_delay_runtime_consumed &&
@@ -3617,9 +3654,10 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
         out_receipt->no_fallback_callbacks ? 1 : 0;
     out_receipt->input_consumes_receipt_only = 1;
     out_receipt->valid =
-        out_receipt->visual_sequence_valid &&
+                out_receipt->visual_sequence_valid &&
                 out_receipt->real_asset_matched &&
                 out_receipt->title_runtime_consumed &&
+                out_receipt->title_runtime_all_stages_consumed &&
                 out_receipt->closed_door_hud_runtime_consumed &&
                 out_receipt->utility_hud_runtime_consumed &&
                 out_receipt->door_opening_delay_runtime_consumed &&
@@ -3633,7 +3671,8 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806/F0438 are consumed
      * here through the same CSB host-view executor path used by M11. This
      * closes the old proof gap where title/HUD/door-opening capture could be
-     * asserted without actually executing the real runtime draw receipt. */
+     * asserted after only the PRESENTS title frame, without executing the
+     * CHAOS zoom/hold and STRIKES BACK runtime draw receipts. */
     return out_receipt->valid;
 }
 
