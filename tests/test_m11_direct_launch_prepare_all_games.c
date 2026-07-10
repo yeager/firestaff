@@ -410,8 +410,13 @@ static void run_real_data_handoff_if_available(void) {
                               receipt.dm1HoCHostWindowCapture &&
                               receipt.dm1HoCPresentedCapture &&
                               receipt.dm1HoCPresentedCaptureGeometry &&
+                              receipt.dm1HoCPresentedCapturePixels &&
                               receipt.dm1HoCPresentedCaptureWidth >= 320 &&
                               receipt.dm1HoCPresentedCaptureHeight >= 200 &&
+                              receipt.dm1HoCPresentedCaptureBytes >=
+                                  receipt.dm1HoCPresentedCaptureWidth *
+                                  receipt.dm1HoCPresentedCaptureHeight * 4 &&
+                              receipt.dm1HoCPresentedCaptureHash != 0u &&
                               receipt.dm1HoCHostCaptureRouteMatches &&
                               receipt.dm1HoCReleaseCaptureOwnershipReady &&
                               receipt.dm1HoCReceiptOnlyConsumerReady &&
