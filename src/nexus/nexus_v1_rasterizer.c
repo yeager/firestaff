@@ -464,6 +464,55 @@ void nexus_draw_ceiling_tex_mapped(Nexus_Framebuffer *fb,
         tex_data, tex_w, tex_h, tex_palette, texel_map);
 }
 
+static void dgn_surface_uv(Nexus_RasterVertex v[4], uint8_t rotation,
+                           int ceiling) {
+    static const Vec2 uv[4] = {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
+    for (int i = 0; i < 4; ++i) {
+        int source = ceiling ? 3 - i : i;
+        v[i].uv = uv[(source + (rotation & 3U)) & 3];
+        v[i].color = 0;
+    }
+}
+
+static void dgn_surface_positions(Nexus_RasterVertex v[4], float x, float z,
+                                  const int8_t heights[4], int ceiling) {
+    static const float dx[4] = {0, 1, 1, 0};
+    static const float dz[4] = {0, 0, 1, 1};
+    for (int i = 0; i < 4; ++i) {
+        int source = ceiling ? 3 - i : i;
+        v[i].position = (Vec3){x + dx[source],
+            (float)heights[source] / 32.0f, z + dz[source]};
+    }
+}
+
+void nexus_draw_floor_tex_mapped_heights(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z, const int8_t heights[4],
+    uint8_t rotation, const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256])
+{
+    Nexus_RasterVertex v[4];
+    if (!fb || !cam || !heights || !tex_data || !tex_palette || !texel_map ||
+        tex_w <= 0 || tex_h <= 0) return;
+    dgn_surface_positions(v, x, z, heights, 0);
+    dgn_surface_uv(v, rotation, 0);
+    nexus_raster_quad_tex_mapped(fb, v[0], v[1], v[2], v[3], cam,
+        tex_data, tex_w, tex_h, tex_palette, texel_map);
+}
+
+void nexus_draw_ceiling_tex_mapped_heights(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z, const int8_t heights[4],
+    uint8_t rotation, const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256])
+{
+    Nexus_RasterVertex v[4];
+    if (!fb || !cam || !heights || !tex_data || !tex_palette || !texel_map ||
+        tex_w <= 0 || tex_h <= 0) return;
+    dgn_surface_positions(v, x, z, heights, 1);
+    dgn_surface_uv(v, rotation, 1);
+    nexus_raster_quad_tex_mapped(fb, v[0], v[1], v[2], v[3], cam,
+        tex_data, tex_w, tex_h, tex_palette, texel_map);
+}
+
 /* ── Door rendering ───────────────────────────────────────────────── */
 void nexus_draw_door(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z, int facing, int door_state,

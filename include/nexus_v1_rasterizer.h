@@ -133,6 +133,17 @@ void nexus_draw_ceiling_tex_mapped(Nexus_Framebuffer *fb,
     const Nexus_Camera *cam, float x, float z,
     const uint8_t *tex_data, int tex_w, int tex_h,
     const uint32_t *tex_palette, const uint8_t texel_map[256]);
+
+/* DGN Structure1B supplies one signed floor height per cell and optional
+ * X/Y slopes. Heights use 1/32 of a world unit; ceiling is parallel. */
+void nexus_draw_floor_tex_mapped_heights(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z, const int8_t heights[4],
+    uint8_t rotation, const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256]);
+void nexus_draw_ceiling_tex_mapped_heights(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z, const int8_t heights[4],
+    uint8_t rotation, const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256]);
 void nexus_draw_wall_tex_mapped(Nexus_Framebuffer *fb,
     const Nexus_Camera *cam, float x, float z, int wall_dir,
     const uint8_t *tex_data, int tex_w, int tex_h,
