@@ -29793,65 +29793,6 @@ int M11_GameView_CountCellExplosions(
     return summary.explosions;
 }
 
-int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
-    const M11_GameViewState* state,
-    int* outObjectSpriteCount,
-    int* outObjectIconCount,
-    int* outObjectMarkerCount,
-    int* outGroupSpriteCount,
-    int* outGroupMarkerCount,
-    int* outProjectileSpriteCount,
-    int* outProjectileMaterialCount,
-    int* outProjectileMarkerCount,
-    int* outExplosionSpriteCount,
-    int* outExplosionMarkerCount)
-{
-    if (!state) {
-        return 0;
-    }
-    if (outObjectSpriteCount) {
-        *outObjectSpriteCount =
-            state->csbState.runtime_object_sprite_drawn_count;
-    }
-    if (outObjectIconCount) {
-        *outObjectIconCount =
-            state->csbState.runtime_object_icon_drawn_count;
-    }
-    if (outObjectMarkerCount) {
-        *outObjectMarkerCount =
-            state->csbState.runtime_object_marker_drawn_count;
-    }
-    if (outGroupSpriteCount) {
-        *outGroupSpriteCount =
-            state->csbState.runtime_group_sprite_drawn_count;
-    }
-    if (outGroupMarkerCount) {
-        *outGroupMarkerCount =
-            state->csbState.runtime_group_marker_drawn_count;
-    }
-    if (outProjectileSpriteCount) {
-        *outProjectileSpriteCount =
-            state->csbState.runtime_projectile_sprite_drawn_count;
-    }
-    if (outProjectileMaterialCount) {
-        *outProjectileMaterialCount =
-            state->csbState.runtime_projectile_material_resolved_count;
-    }
-    if (outProjectileMarkerCount) {
-        *outProjectileMarkerCount =
-            state->csbState.runtime_projectile_marker_drawn_count;
-    }
-    if (outExplosionSpriteCount) {
-        *outExplosionSpriteCount =
-            state->csbState.runtime_explosion_sprite_drawn_count;
-    }
-    if (outExplosionMarkerCount) {
-        *outExplosionMarkerCount =
-            state->csbState.runtime_explosion_marker_drawn_count;
-    }
-    return 1;
-}
-
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
                                                int relativeCell) {
     return dm1_v1_projectile_scale_units(depthIndex, relativeCell);
