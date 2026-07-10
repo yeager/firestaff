@@ -36223,14 +36223,33 @@ static void m11_draw_nexus_dgn_host_plan(
                   M11_COLOR_BLACK);
     for (i = 0; i < count; ++i) {
         const Nexus_V1_DgnRenderCommand *command = &commands[i];
+        Nexus_V1_DgnRenderCommand draw_command = *command;
         switch (command->kind) {
         case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
+            if (draw_command.palette_index == M11_COLOR_BLACK) {
+                draw_command.palette_index = M11_COLOR_DARK_GRAY;
+            }
+            m11_nexus_fill_dgn_quad(framebuffer, framebufferWidth,
+                                    framebufferHeight, &draw_command);
+            break;
         case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
+            if (draw_command.palette_index == M11_COLOR_BLACK) {
+                draw_command.palette_index = M11_COLOR_GRAY;
+            }
+            m11_nexus_fill_dgn_quad(framebuffer, framebufferWidth,
+                                    framebufferHeight, &draw_command);
+            break;
         case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
         case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
         case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
+            /* A zero material slot remains a real DGN command. Give it a
+             * visible neutral raster so M11 never drops source-owned mesh
+             * geometry while the material upload path catches up. */
+            if (draw_command.palette_index == M11_COLOR_BLACK) {
+                draw_command.palette_index = M11_COLOR_BROWN;
+            }
             m11_nexus_fill_dgn_quad(framebuffer, framebufferWidth,
-                                    framebufferHeight, command);
+                                    framebufferHeight, &draw_command);
             break;
         default:
             break;
