@@ -45,7 +45,7 @@ extern "C" {
 /* Decoded Track 02 bitmap surfaces retained by the live world.  These are
  * deliberately copies, rather than pointers into the launch asset, so a
  * Continue route retains its level media for the lifetime of the world. */
-#define THERON_RUNTIME_MEDIA_MAX_WIDTH 64u
+#define THERON_RUNTIME_MEDIA_MAX_WIDTH 256u
 #define THERON_RUNTIME_MEDIA_HEIGHT    8u
 #define THERON_RUNTIME_MEDIA_PIXELS \
     (THERON_RUNTIME_MEDIA_MAX_WIDTH * THERON_RUNTIME_MEDIA_HEIGHT)

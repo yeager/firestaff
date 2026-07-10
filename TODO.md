@@ -2,6 +2,7 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 2026-07-09 Theron boot/title follow-up: Track 02 media receipts now feed prompt and roster fallback rows in startup view-model builders. Remaining work is wiring any final UI callers to stop passing duplicate media arrays once they already hold the receipt.
+  - 2026-07-10 update: Track02 bitmap completeness now requires wide 96px+/12-tile coverage for title, stage, Soul Room, and forcefield, runtime media can retain 256px route atlases, and semantic startup loading is no longer hard-gated to dungeon 1. Remaining Theron work is real-data Mac capture across all seven dungeon selections and exact non-startup dungeon-record/object semantics.
   - 2026-07-10 update: Track02 startup bitmap atlas can now promote wider real 4bpp tile runs per title/stage/Soul Room/forcefield route. Remaining work is broader semantic dungeon-window coverage beyond the initial startup level.
   - 2026-07-09 update: render-route receipts now carry Track02 title/menu readiness, runtime/HUD readiness, title-menu-to-runtime handoff readiness, and explicit no-fallback-visuals policy. Remaining work is final UI/M11 render consumption and broader semantic Track02 level routes.
   - 2026-07-09 update: boot layout/render/pointer consumers can now operate from the startup view model directly. Remaining work is replacing final host UI call sites that still pass raw prompt/roster/state fields instead of the view model.
