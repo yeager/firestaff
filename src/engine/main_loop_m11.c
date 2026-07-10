@@ -322,11 +322,7 @@ static void m11_publish_dm1_hoc_presented_capture_to_m12(
 
     if (!gameView || !menuState ||
         !M11_GameView_GetBootProbeReceipt(gameView, &boot) ||
-        strcmp(boot.sourceId, "dm1") != 0 ||
-        !boot.dm1HoCPresentedCapture ||
-        !boot.dm1HoCPresentedCaptureGeometry ||
-        !boot.dm1HoCPresentedCapturePixels ||
-        boot.dm1HoCPresentedCaptureHash == 0u) {
+        strcmp(boot.sourceId, "dm1") != 0) {
         return;
     }
 
