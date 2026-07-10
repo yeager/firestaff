@@ -6827,6 +6827,8 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     facts.observed_c026_portrait_asset = realAssetReady;
     facts.observed_c346_mirror_backing_asset = realAssetReady;
     facts.observed_host_window_present = 1;
+    facts.consumed_hoc_host_render_receipt = 1;
+    facts.consumed_m12_startup_capture_consumer = 1;
 
     (void)dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         &facts, &ownership);
@@ -6837,6 +6839,10 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     receipt->dm1HoCHostCaptureRouteReady =
         ownership.host_capture_route_matches;
     receipt->dm1HoCReleaseCaptureOwnershipReady = ownership.ready;
+    receipt->dm1HoCHostRenderConsumerReady =
+        ownership.consumed_hoc_host_render_receipt;
+    receipt->dm1HoCM12CaptureConsumerReady =
+        ownership.consumed_m12_startup_capture_consumer;
     receipt->dm1HoCLaunchPathReady =
         ownership.consumed_launch_path_receipt &&
         ownership.launch_path_started_from_launcher &&
@@ -6871,6 +6877,8 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     receipt->packagedCaptureReady =
         receipt->packagedCaptureExpected &&
         ownership.ready &&
+        receipt->dm1HoCHostRenderConsumerReady &&
+        receipt->dm1HoCM12CaptureConsumerReady &&
         receipt->dm1HoCLaunchPathReady &&
         receipt->dm1HoCRequiredAssetCaptureReady &&
         receipt->dm1HoCReceiptOnlyConsumerReady &&

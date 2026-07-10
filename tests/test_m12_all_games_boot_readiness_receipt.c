@@ -122,6 +122,8 @@ int main(void) {
                         boot.dm1HoCReleaseAppCaptureReady == 1 &&
                         boot.dm1HoCHostCaptureRouteReady == 1 &&
                         boot.dm1HoCReleaseCaptureOwnershipReady == 1 &&
+                        boot.dm1HoCHostRenderConsumerReady == 1 &&
+                        boot.dm1HoCM12CaptureConsumerReady == 1 &&
                         boot.dm1HoCLaunchPathReady == 1 &&
                         boot.dm1HoCRequiredAssetCaptureReady == 1 &&
                         boot.dm1HoCReceiptOnlyConsumerReady == 1 &&

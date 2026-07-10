@@ -2055,6 +2055,12 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
      * in for the Mac/app capture. */
     receipt.handled = 1;
     receipt.consumed_host_probe_facts = 1;
+    receipt.consumed_hoc_host_render_receipt =
+        facts->consumed_hoc_host_render_receipt ? 1 : 0;
+    receipt.consumed_m11_boot_probe_consumer =
+        facts->consumed_m11_boot_probe_consumer ? 1 : 0;
+    receipt.consumed_m12_startup_capture_consumer =
+        facts->consumed_m12_startup_capture_consumer ? 1 : 0;
     receipt.consumed_launch_path_receipt =
         facts->consumed_launch_path_receipt ? 1 : 0;
     receipt.consumed_runtime_apply_receipt = apply.handled ? 1 : 0;
@@ -2107,9 +2113,16 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     receipt.capture_phase = consumer.capture_phase;
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
+    /* ReDMCSB ENTRANCE.C F0438/F0797 composes the entrance frame before
+     * DRAWVIEW.C F0097 publishes the viewport and owns the C346/C026
+     * mirror overlay.  Keep readiness tied to a named M11/M12 host-render
+     * consumer so generic capture flags cannot substitute for that draw path. */
     receipt.ready =
         apply.ready &&
         consumer.ready &&
+        receipt.consumed_hoc_host_render_receipt &&
+        (receipt.consumed_m11_boot_probe_consumer ||
+         receipt.consumed_m12_startup_capture_consumer) &&
         receipt.consumed_runtime_apply_receipt &&
         receipt.consumed_production_consumer_receipt &&
         receipt.consumed_launch_path_receipt &&
