@@ -1704,12 +1704,11 @@ int M12_SaveBrowser_ExportSelected(const M12_SaveBrowserState* state,
     return 0;
 }
 
-int M12_SaveBrowser_ExportSelectedAsDM1PC34(
-    const M12_SaveBrowserState* state,
+static int save_browser_export_entry_as_dm1_pc34(
+    const M12_SaveBrowserEntry* entry,
     const char* exportDir,
     char* outPath,
     int outPathSize) {
-    const M12_SaveBrowserEntry* entry;
     struct GameWorld_Compat world;
     struct DM1SaveHeader hdr;
     struct DM1OriginalPC34RoundtripReceipt receipt;
@@ -1719,7 +1718,6 @@ int M12_SaveBrowser_ExportSelectedAsDM1PC34(
     int rc;
 
     if (outPath && outPathSize > 0) outPath[0] = '\0';
-    entry = M12_SaveBrowser_GetSelected(state);
     if (!entry || !exportDir || !*exportDir || !file_exists(entry->fullPath)) {
         return -1;
     }
@@ -1742,10 +1740,10 @@ int M12_SaveBrowser_ExportSelectedAsDM1PC34(
     }
 
     /*
-     * ReDMCSB LOADSAVE.C F0433 writes the original GLOBAL_DATA,
-     * ACTIVE_GROUP, PARTY, EVENTS, and TIMELINE save parts; F0435 reads
-     * the same parts back. DM1_SaveGamePC34 owns that PC 3.4-shaped
-     * write-back from Firestaff's bounded GameWorld_Compat state.
+     * ReDMCSB SAVEHEAD.C F0430 lines ~57-109 writes the obfuscated header
+     * and CEDTINCD.C F7057 lines ~266-294 validates the five save parts on
+     * read.  Corpus export keeps the same per-entry PC34 roundtrip gate as
+     * selected export before advertising a file as exportable.
      */
     gameID = hdr.gameID != 0u ? hdr.gameID : 0x44534D31u;
     rc = DM1_SaveGamePC34(&world, dst, gameID);
@@ -1764,6 +1762,55 @@ int M12_SaveBrowser_ExportSelectedAsDM1PC34(
 
     if (outPath && outPathSize > 0) {
         snprintf(outPath, (size_t)outPathSize, "%s", dst);
+    }
+    return 0;
+}
+
+int M12_SaveBrowser_ExportSelectedAsDM1PC34(
+    const M12_SaveBrowserState* state,
+    const char* exportDir,
+    char* outPath,
+    int outPathSize) {
+    const M12_SaveBrowserEntry* entry;
+
+    if (outPath && outPathSize > 0) outPath[0] = '\0';
+    entry = M12_SaveBrowser_GetSelected(state);
+    return save_browser_export_entry_as_dm1_pc34(
+        entry, exportDir, outPath, outPathSize);
+}
+
+int M12_SaveBrowser_ExportDM1PC34Corpus(
+    const M12_SaveBrowserState* state,
+    const char* exportDir,
+    int* outExportedCount,
+    int* outSkippedCount) {
+    int exported = 0;
+    int skipped = 0;
+    int i;
+
+    if (outExportedCount) *outExportedCount = 0;
+    if (outSkippedCount) *outSkippedCount = 0;
+    if (!state || !exportDir || !*exportDir) {
+        return -1;
+    }
+
+    for (i = 0; i < state->entryCount; ++i) {
+        const M12_SaveBrowserEntry* entry = &state->entries[i];
+        if (strcmp(entry->gameId, "dm1") != 0 || !entry->valid) {
+            continue;
+        }
+        if (save_browser_export_entry_as_dm1_pc34(
+                entry, exportDir, NULL, 0) == 0) {
+            ++exported;
+        } else {
+            ++skipped;
+        }
+    }
+
+    if (outExportedCount) *outExportedCount = exported;
+    if (outSkippedCount) *outSkippedCount = skipped;
+    if (exported <= 0) {
+        return -1;
     }
     return 0;
 }

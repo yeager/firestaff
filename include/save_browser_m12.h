@@ -86,6 +86,16 @@ int M12_SaveBrowser_ExportSelectedAsDM1PC34(
     char* outPath,
     int outPathSize);
 
+/* Export every load-ready DM1 entry in the browser as original PC 3.4-shaped
+ * save files. Entries that are not DM1, are not load-ready, or would overwrite
+ * an existing destination are counted as skipped. Returns 0 when at least one
+ * DM1 save was exported. */
+int M12_SaveBrowser_ExportDM1PC34Corpus(
+    const M12_SaveBrowserState* state,
+    const char* exportDir,
+    int* outExportedCount,
+    int* outSkippedCount);
+
 /* Import a launcher-visible save into dataDir. Firestaff names are copied
  * by basename; known original/CSBWin CSB basenames first pass the CSBWin
  * loader-boundary classifier and then validate through the CSB runtime
