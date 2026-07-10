@@ -1348,6 +1348,27 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
         effective_snapshot.exact_level_semantics_ready ? 1 : 0;
     out_view_model->exact_object_semantics_ready =
         effective_snapshot.exact_object_semantics_ready ? 1 : 0;
+    out_view_model->no_fallback_semantic_role_mask =
+        effective_snapshot.no_fallback_semantic_role_mask;
+    out_view_model->object_table_no_fallback_ready =
+        effective_snapshot.object_table_no_fallback_ready ? 1 : 0;
+    out_view_model->object_table_blocked_anchor_mask =
+        effective_snapshot.object_table_blocked_anchor_mask;
+    out_view_model->object_table_blocked_anchor_count =
+        effective_snapshot.object_table_blocked_anchor_count;
+    out_view_model->nonstartup_level_no_fallback_ready =
+        effective_snapshot.nonstartup_level_no_fallback_ready ? 1 : 0;
+    out_view_model->nonstartup_level_blocked_anchor_mask =
+        effective_snapshot.nonstartup_level_blocked_anchor_mask;
+    out_view_model->nonstartup_level_blocked_anchor_count =
+        effective_snapshot.nonstartup_level_blocked_anchor_count;
+    out_view_model->startup_level_blocked_anchor_mask =
+        effective_snapshot.startup_level_blocked_anchor_mask;
+    out_view_model->startup_level_blocked_anchor_count =
+        effective_snapshot.startup_level_blocked_anchor_count;
+    out_view_model->object_table_route_hash =
+        effective_snapshot.object_table_route_hash;
+    out_view_model->level_route_hash = effective_snapshot.level_route_hash;
     if (out_view_model->runtime_level_source ==
             THERON_V1_STARTUP_RUNTIME_LEVEL_NONE &&
         effective_snapshot.world) {
@@ -1601,6 +1622,27 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         view_model->exact_level_semantics_ready;
     out_receipt->exact_object_semantics_ready =
         view_model->exact_object_semantics_ready;
+    out_receipt->no_fallback_semantic_role_mask =
+        view_model->no_fallback_semantic_role_mask;
+    out_receipt->object_table_no_fallback_ready =
+        view_model->object_table_no_fallback_ready;
+    out_receipt->object_table_blocked_anchor_mask =
+        view_model->object_table_blocked_anchor_mask;
+    out_receipt->object_table_blocked_anchor_count =
+        view_model->object_table_blocked_anchor_count;
+    out_receipt->nonstartup_level_no_fallback_ready =
+        view_model->nonstartup_level_no_fallback_ready;
+    out_receipt->nonstartup_level_blocked_anchor_mask =
+        view_model->nonstartup_level_blocked_anchor_mask;
+    out_receipt->nonstartup_level_blocked_anchor_count =
+        view_model->nonstartup_level_blocked_anchor_count;
+    out_receipt->startup_level_blocked_anchor_mask =
+        view_model->startup_level_blocked_anchor_mask;
+    out_receipt->startup_level_blocked_anchor_count =
+        view_model->startup_level_blocked_anchor_count;
+    out_receipt->object_table_route_hash =
+        view_model->object_table_route_hash;
+    out_receipt->level_route_hash = view_model->level_route_hash;
     out_receipt->startup_menu_render_allowed =
         view_model->render_plan_valid ? 1 : 0;
     out_receipt->track02_title_menu_ready =
@@ -1805,6 +1847,28 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
             out_receipt->render_route.exact_level_semantics_ready;
         out_receipt->exact_object_semantics_ready =
             out_receipt->render_route.exact_object_semantics_ready;
+        out_receipt->no_fallback_semantic_role_mask =
+            out_receipt->render_route.no_fallback_semantic_role_mask;
+        out_receipt->object_table_no_fallback_ready =
+            out_receipt->render_route.object_table_no_fallback_ready;
+        out_receipt->object_table_blocked_anchor_mask =
+            out_receipt->render_route.object_table_blocked_anchor_mask;
+        out_receipt->object_table_blocked_anchor_count =
+            out_receipt->render_route.object_table_blocked_anchor_count;
+        out_receipt->nonstartup_level_no_fallback_ready =
+            out_receipt->render_route.nonstartup_level_no_fallback_ready;
+        out_receipt->nonstartup_level_blocked_anchor_mask =
+            out_receipt->render_route.nonstartup_level_blocked_anchor_mask;
+        out_receipt->nonstartup_level_blocked_anchor_count =
+            out_receipt->render_route.nonstartup_level_blocked_anchor_count;
+        out_receipt->startup_level_blocked_anchor_mask =
+            out_receipt->render_route.startup_level_blocked_anchor_mask;
+        out_receipt->startup_level_blocked_anchor_count =
+            out_receipt->render_route.startup_level_blocked_anchor_count;
+        out_receipt->object_table_route_hash =
+            out_receipt->render_route.object_table_route_hash;
+        out_receipt->level_route_hash =
+            out_receipt->render_route.level_route_hash;
         out_receipt->hud_ready = out_receipt->render_route.hud_ready;
         out_receipt->status_scope = out_receipt->render_route.status_scope;
         out_receipt->status = out_receipt->render_route.status;
@@ -2568,6 +2632,37 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
         render_route.runtime_structured_route;
     out_receipt->runtime_receipt_text_route =
         render_route.runtime_receipt_text_route;
+    out_receipt->all_dungeon_real_data_capture_ready =
+        render_route.all_dungeon_real_data_capture_ready;
+    out_receipt->all_dungeon_capture_count =
+        render_route.all_dungeon_capture_count;
+    out_receipt->all_dungeon_capture_mask =
+        render_route.all_dungeon_capture_mask;
+    out_receipt->exact_level_semantics_ready =
+        render_route.exact_level_semantics_ready;
+    out_receipt->exact_object_semantics_ready =
+        render_route.exact_object_semantics_ready;
+    out_receipt->no_fallback_semantic_role_mask =
+        render_route.no_fallback_semantic_role_mask;
+    out_receipt->object_table_no_fallback_ready =
+        render_route.object_table_no_fallback_ready;
+    out_receipt->object_table_blocked_anchor_mask =
+        render_route.object_table_blocked_anchor_mask;
+    out_receipt->object_table_blocked_anchor_count =
+        render_route.object_table_blocked_anchor_count;
+    out_receipt->nonstartup_level_no_fallback_ready =
+        render_route.nonstartup_level_no_fallback_ready;
+    out_receipt->nonstartup_level_blocked_anchor_mask =
+        render_route.nonstartup_level_blocked_anchor_mask;
+    out_receipt->nonstartup_level_blocked_anchor_count =
+        render_route.nonstartup_level_blocked_anchor_count;
+    out_receipt->startup_level_blocked_anchor_mask =
+        render_route.startup_level_blocked_anchor_mask;
+    out_receipt->startup_level_blocked_anchor_count =
+        render_route.startup_level_blocked_anchor_count;
+    out_receipt->object_table_route_hash =
+        render_route.object_table_route_hash;
+    out_receipt->level_route_hash = render_route.level_route_hash;
     out_receipt->status_scope = render_route.status_scope;
     out_receipt->status = render_route.status;
     out_receipt->real_bitmap_startup_graphics_ready =
@@ -3119,6 +3214,37 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
             render_route.runtime_structured_route;
         out_receipt->runtime_receipt_text_route =
             render_route.runtime_receipt_text_route;
+        out_receipt->all_dungeon_real_data_capture_ready =
+            render_route.all_dungeon_real_data_capture_ready;
+        out_receipt->all_dungeon_capture_count =
+            render_route.all_dungeon_capture_count;
+        out_receipt->all_dungeon_capture_mask =
+            render_route.all_dungeon_capture_mask;
+        out_receipt->exact_level_semantics_ready =
+            render_route.exact_level_semantics_ready;
+        out_receipt->exact_object_semantics_ready =
+            render_route.exact_object_semantics_ready;
+        out_receipt->no_fallback_semantic_role_mask =
+            render_route.no_fallback_semantic_role_mask;
+        out_receipt->object_table_no_fallback_ready =
+            render_route.object_table_no_fallback_ready;
+        out_receipt->object_table_blocked_anchor_mask =
+            render_route.object_table_blocked_anchor_mask;
+        out_receipt->object_table_blocked_anchor_count =
+            render_route.object_table_blocked_anchor_count;
+        out_receipt->nonstartup_level_no_fallback_ready =
+            render_route.nonstartup_level_no_fallback_ready;
+        out_receipt->nonstartup_level_blocked_anchor_mask =
+            render_route.nonstartup_level_blocked_anchor_mask;
+        out_receipt->nonstartup_level_blocked_anchor_count =
+            render_route.nonstartup_level_blocked_anchor_count;
+        out_receipt->startup_level_blocked_anchor_mask =
+            render_route.startup_level_blocked_anchor_mask;
+        out_receipt->startup_level_blocked_anchor_count =
+            render_route.startup_level_blocked_anchor_count;
+        out_receipt->object_table_route_hash =
+            render_route.object_table_route_hash;
+        out_receipt->level_route_hash = render_route.level_route_hash;
         out_receipt->status_scope = render_route.status_scope;
         out_receipt->status = render_route.status;
         out_receipt->real_bitmap_startup_graphics_ready =
@@ -3349,6 +3475,28 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
             out_receipt->host_view.exact_level_semantics_ready;
         out_receipt->exact_object_semantics_ready =
             out_receipt->host_view.exact_object_semantics_ready;
+        out_receipt->no_fallback_semantic_role_mask =
+            out_receipt->host_view.no_fallback_semantic_role_mask;
+        out_receipt->object_table_no_fallback_ready =
+            out_receipt->host_view.object_table_no_fallback_ready;
+        out_receipt->object_table_blocked_anchor_mask =
+            out_receipt->host_view.object_table_blocked_anchor_mask;
+        out_receipt->object_table_blocked_anchor_count =
+            out_receipt->host_view.object_table_blocked_anchor_count;
+        out_receipt->nonstartup_level_no_fallback_ready =
+            out_receipt->host_view.nonstartup_level_no_fallback_ready;
+        out_receipt->nonstartup_level_blocked_anchor_mask =
+            out_receipt->host_view.nonstartup_level_blocked_anchor_mask;
+        out_receipt->nonstartup_level_blocked_anchor_count =
+            out_receipt->host_view.nonstartup_level_blocked_anchor_count;
+        out_receipt->startup_level_blocked_anchor_mask =
+            out_receipt->host_view.startup_level_blocked_anchor_mask;
+        out_receipt->startup_level_blocked_anchor_count =
+            out_receipt->host_view.startup_level_blocked_anchor_count;
+        out_receipt->object_table_route_hash =
+            out_receipt->host_view.object_table_route_hash;
+        out_receipt->level_route_hash =
+            out_receipt->host_view.level_route_hash;
         out_receipt->hud_ready = out_receipt->host_view.hud_ready;
         out_receipt->runtime_graphics_handoff =
             out_receipt->host_view.runtime_graphics_handoff;
@@ -4338,11 +4486,33 @@ int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
         receipt->exact_level_semantics_ready ? 1 : 0;
     out_receipt->exact_object_semantics_ready =
         receipt->exact_object_semantics_ready ? 1 : 0;
+    out_receipt->no_fallback_semantic_role_mask =
+        receipt->no_fallback_semantic_role_mask;
+    out_receipt->object_table_no_fallback_ready =
+        receipt->object_table_no_fallback_ready ? 1 : 0;
+    out_receipt->object_table_blocked_anchor_mask =
+        receipt->object_table_blocked_anchor_mask;
+    out_receipt->object_table_blocked_anchor_count =
+        receipt->object_table_blocked_anchor_count;
+    out_receipt->nonstartup_level_no_fallback_ready =
+        receipt->nonstartup_level_no_fallback_ready ? 1 : 0;
+    out_receipt->nonstartup_level_blocked_anchor_mask =
+        receipt->nonstartup_level_blocked_anchor_mask;
+    out_receipt->nonstartup_level_blocked_anchor_count =
+        receipt->nonstartup_level_blocked_anchor_count;
+    out_receipt->startup_level_blocked_anchor_mask =
+        receipt->startup_level_blocked_anchor_mask;
+    out_receipt->startup_level_blocked_anchor_count =
+        receipt->startup_level_blocked_anchor_count;
+    out_receipt->object_table_route_hash = receipt->object_table_route_hash;
+    out_receipt->level_route_hash = receipt->level_route_hash;
     out_receipt->complete_runtime_support_ready =
         out_receipt->all_dungeon_real_data_capture_ready &&
         out_receipt->all_dungeon_capture_count == THERON_DUNGEON_COUNT &&
         out_receipt->exact_level_semantics_ready &&
-        out_receipt->exact_object_semantics_ready
+        out_receipt->exact_object_semantics_ready &&
+        out_receipt->object_table_no_fallback_ready &&
+        out_receipt->nonstartup_level_no_fallback_ready
             ? 1
             : 0;
     out_receipt->no_fallback_visuals_enforced =
