@@ -42,6 +42,41 @@ extern "C" {
 #define THERON_MAX_TIMERS              16
 #define THERON_TICK_MS                 55  /* ~18.2 Hz world tick (matches DM1) */
 
+/* Decoded Track 02 bitmap surfaces retained by the live world.  These are
+ * deliberately copies, rather than pointers into the launch asset, so a
+ * Continue route retains its level media for the lifetime of the world. */
+#define THERON_RUNTIME_MEDIA_MAX_WIDTH 64u
+#define THERON_RUNTIME_MEDIA_HEIGHT    8u
+#define THERON_RUNTIME_MEDIA_PIXELS \
+    (THERON_RUNTIME_MEDIA_MAX_WIDTH * THERON_RUNTIME_MEDIA_HEIGHT)
+
+typedef enum {
+    THERON_RUNTIME_MEDIA_SURFACE_NONE = 0,
+    THERON_RUNTIME_MEDIA_SURFACE_STAGE,
+    THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD
+} Theron_RuntimeMediaSurfaceKind;
+
+typedef struct {
+    int ready;
+    unsigned int route_bit;
+    uint16_t width;
+    uint16_t height;
+    size_t tile_count;
+    size_t nonzero_pixel_count;
+    uint32_t checksum;
+    uint8_t pixels[THERON_RUNTIME_MEDIA_PIXELS];
+} Theron_RuntimeMediaSurface;
+
+typedef struct {
+    int restored;
+    unsigned int route_mask;
+    uint32_t checksum;
+    /* A later (non-zero) level uses the decoded stage surface.  A gameplay
+     * forcefield explicitly selects the decoded forcefield surface. */
+    Theron_RuntimeMediaSurface stage;
+    Theron_RuntimeMediaSurface forcefield;
+} Theron_RuntimeLevelMedia;
+
 /* ── Square tile types ────────────────────────────────────────────── */
 #define THERON_SQUARE_WALL           0
 #define THERON_SQUARE_FLOOR          1
@@ -202,6 +237,9 @@ typedef struct {
     /* Entry guard */
     int entry_reset_applied;
 
+    /* Track 02 visual state restored together with a resumed world. */
+    Theron_RuntimeLevelMedia runtime_media;
+
     /* Deterministic state hash */
     uint64_t state_hash;
 } Theron_V1_World;
@@ -258,6 +296,24 @@ int theron_v1_transition_execute(Theron_V1_World *world);
 
 /* ── World tick ───────────────────────────────────────────────────── */
 void theron_v1_world_tick(Theron_V1_World *world);
+
+/* ── Decoded Track 02 runtime media ───────────────────────────────── */
+void theron_v1_world_runtime_media_clear(Theron_V1_World *world);
+int theron_v1_world_runtime_media_set_surface(
+    Theron_V1_World *world,
+    Theron_RuntimeMediaSurfaceKind kind,
+    unsigned int route_bit,
+    uint16_t width,
+    uint16_t height,
+    size_t tile_count,
+    size_t nonzero_pixel_count,
+    uint32_t checksum,
+    const uint8_t *pixels,
+    size_t pixel_count);
+const Theron_RuntimeMediaSurface *theron_v1_world_runtime_media_for_level(
+    const Theron_V1_World *world,
+    int level_index,
+    int forcefield_active);
 
 /* ── Deterministic world hash (FNV-1a 64-bit) ─────────────────────── */
 #define THERON_HASH_SEED_PARTY   0x50415254UL  /* 'PART' */

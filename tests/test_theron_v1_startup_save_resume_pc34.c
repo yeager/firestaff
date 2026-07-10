@@ -77,6 +77,67 @@ static void expect_true(int cond, const char *msg) {
     }
 }
 
+static void make_complete_track02_media_receipt(
+    Theron_StartupMediaStateReceipt *media) {
+    const unsigned int route_bits[4] = {
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD
+    };
+
+    memset(media, 0, sizeof(*media));
+    media->startup_media_ready = 1;
+    media->startup_bitmap_decode_status = THERON_TRACK02_SIGNAL_OK;
+    media->startup_bitmap_sample_count = 24;
+    media->startup_bitmap_route_mask = TST_THERON_FULL_START_BITMAP_ROUTES;
+    media->startup_bitmap_nonzero_pixel_count = 128u;
+    media->startup_bitmap_checksum = 0x134679acu;
+    media->startup_bitmap_title_route_ready = 1;
+    media->startup_bitmap_stage_route_ready = 1;
+    media->startup_bitmap_soul_room_route_ready = 1;
+    media->startup_bitmap_forcefield_route_ready = 1;
+    media->startup_bitmap_atlas_ready = 1;
+    media->startup_bitmap_atlas_route_count = 4;
+    media->startup_bitmap_atlas_route_mask = TST_THERON_FULL_START_BITMAP_ROUTES;
+    media->startup_bitmap_atlas_tile_count = 32u;
+    media->startup_bitmap_atlas_nonzero_pixel_count = 128u;
+    media->startup_bitmap_atlas_checksum = 0x2468ace1u;
+    media->startup_bitmap_title_sample_count = 8;
+    media->startup_bitmap_stage_sample_count = 8;
+    media->startup_bitmap_soul_room_sample_count = 4;
+    media->startup_bitmap_forcefield_sample_count = 4;
+    media->startup_bitmap_title_nonzero_pixel_count = 32u;
+    media->startup_bitmap_stage_nonzero_pixel_count = 32u;
+    media->startup_bitmap_soul_room_nonzero_pixel_count = 32u;
+    media->startup_bitmap_forcefield_nonzero_pixel_count = 32u;
+    media->startup_bitmap_title_checksum = 1u;
+    media->startup_bitmap_stage_checksum = 2u;
+    media->startup_bitmap_soul_room_checksum = 3u;
+    media->startup_bitmap_forcefield_checksum = 4u;
+    media->startup_bitmap_title_atlas_tile_count = 8u;
+    media->startup_bitmap_stage_atlas_tile_count = 8u;
+    media->startup_bitmap_soul_room_atlas_tile_count = 8u;
+    media->startup_bitmap_forcefield_atlas_tile_count = 8u;
+    media->startup_bitmap_title_atlas_width = 64u;
+    media->startup_bitmap_stage_atlas_width = 64u;
+    media->startup_bitmap_soul_room_atlas_width = 64u;
+    media->startup_bitmap_forcefield_atlas_width = 64u;
+    media->startup_bitmap_atlas.route_count = 4u;
+    media->startup_bitmap_atlas.route_mask = TST_THERON_FULL_START_BITMAP_ROUTES;
+    for (size_t i = 0u; i < 4u; ++i) {
+        Theron_Track02StartupBitmapAtlasRoute *route =
+            &media->startup_bitmap_atlas.routes[i];
+        route->route_bit = route_bits[i];
+        route->tile_count = 8u;
+        route->width = 64u;
+        route->height = 8u;
+        route->nonzero_pixel_count = 32u;
+        route->checksum = (uint32_t)(0x100u + i);
+        memset(route->pixels, (int)(i + 1u), 64u * 8u);
+    }
+}
+
 static void wr16le_test(uint8_t *p, uint16_t v) {
     p[0] = (uint8_t)(v & 0xffu);
     p[1] = (uint8_t)((v >> 8) & 0xffu);
@@ -473,6 +534,7 @@ static void test_tqsv_only_resume_claim(void) {
         Theron_StartupActionPlan plan;
         Theron_V1StartupContinueResult continue_result;
         Theron_V1StartupContinueRequest continue_request;
+        Theron_StartupMediaStateReceipt media_receipt;
         Theron_StartupHostReceipt host_receipt;
         Theron_StartupStateReceipt state_receipt;
         Theron_V1_World world;
@@ -486,6 +548,8 @@ static void test_tqsv_only_resume_claim(void) {
         continue_request.resume_claim = THERON_V1_STARTUP_RESUME_TQSV;
         continue_request.tqsv_slot_index = 2;
         continue_request.tqsv_root = tqsv_root;
+        make_complete_track02_media_receipt(&media_receipt);
+        continue_request.track02_media_receipt = &media_receipt;
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
         expect_true(theron_v1_startup_continue_apply_request_with_host_receipts(
@@ -507,8 +571,15 @@ static void test_tqsv_only_resume_claim(void) {
                         strstr(host_receipt.inspect_detail,
                                "chapter=2") != NULL &&
                         state_receipt.flow.selected_dungeon ==
-                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
-                    "tqsv-only request emits host and state receipts");
+                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                        world.runtime_media.restored &&
+                        theron_v1_world_runtime_media_for_level(
+                            &world, 1, 0) == &world.runtime_media.stage &&
+                        theron_v1_world_runtime_media_for_level(
+                            &world, 1, 1) == &world.runtime_media.forcefield &&
+                        world.runtime_media.stage.pixels[0] == 2u &&
+                        world.runtime_media.forcefield.pixels[0] == 4u,
+                    "tqsv Continue restores Track 02 later-level and forcefield media with world");
         theron_v1_startup_continue_request_init(&continue_request);
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
