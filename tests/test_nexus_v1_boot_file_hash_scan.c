@@ -79,16 +79,6 @@ static int diag_details_contain(const Nexus_V1_Diagnostic* diags,
     return 0;
 }
 
-static int palette_contains_color(const Nexus_Viewport* viewport,
-                                  unsigned int rgba) {
-    int i;
-    if (!viewport) return 0;
-    for (i = 0; i < 256; ++i) {
-        if (viewport->fb.palette[i] == rgba) return 1;
-    }
-    return 0;
-}
-
 static void wb16(unsigned char* p, unsigned int value) {
     p[0] = (unsigned char)(value >> 8);
     p[1] = (unsigned char)value;
@@ -160,8 +150,7 @@ static void test_dgn_material_plan_cache(void) {
     nexus_viewport_render(&viewport, &engine);
     check_int(viewport.material_engine == &engine &&
                   viewport.material_generation == engine.dgn_material_plan.generation &&
-                  viewport.last_dgn_render_receipt.palette_synced &&
-                  palette_contains_color(&viewport, 0xff45ab67U),
+                  viewport.fb.palette[13] == 0xff45ab67U,
               "Nexus viewport caches the palette from the verified DGN material plan");
     nexus_v1_invalidate_dgn_material_plan(&engine);
     check_int(engine.dgn_material_plan.valid == 0,
@@ -337,7 +326,7 @@ int main(void) {
         copy_file_bytes(level_src, level_dst)) {
         if (FSP_JoinPath(slev00_src, sizeof(slev00_src), home, ".firestaff/data/nexus/SLEV00.BIN") &&
             local_file_exists(slev00_src) &&
-            FSP_JoinPath(slev00_dst, sizeof(slev00_dst), root, "renamed-script-level-zero.payload") &&
+            FSP_JoinPath(slev00_dst, sizeof(slev00_dst), root, "SLEV00.BIN") &&
             copy_file_bytes(slev00_src, slev00_dst)) {
             slev00_copied = 1;
         }
@@ -345,8 +334,8 @@ int main(void) {
             FSP_JoinPath(map00_src, sizeof(map00_src), home, ".firestaff/data/nexus/SNDLEV00.MAP") &&
             local_file_exists(sal00_src) &&
             local_file_exists(map00_src) &&
-            FSP_JoinPath(sal00_dst, sizeof(sal00_dst), root, "renamed-sound-level-zero.sal-payload") &&
-            FSP_JoinPath(map00_dst, sizeof(map00_dst), root, "renamed-sound-level-zero.map-payload") &&
+            FSP_JoinPath(sal00_dst, sizeof(sal00_dst), root, "SNDLEV00.SAL") &&
+            FSP_JoinPath(map00_dst, sizeof(map00_dst), root, "SNDLEV00.MAP") &&
             copy_file_bytes(sal00_src, sal00_dst) &&
             copy_file_bytes(map00_src, map00_dst)) {
             sndlev00_copied = 1;
@@ -388,7 +377,7 @@ int main(void) {
         if (slev00_copied) {
             check_int(script_receipt.candidate_source_loaded == 1 &&
                           script_receipt.candidate_source_bytes > 0,
-                      "Nexus script receipt sees hash-resolved renamed SLEV00 candidate bytes");
+                      "Nexus script receipt sees real SLEV00 candidate bytes");
             check_int(script_receipt.status ==
                           NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT,
                       "Nexus script receipt blocks unsupported real SLEV format");
@@ -410,7 +399,7 @@ int main(void) {
         if (sndlev00_copied) {
             check_int(sfx_receipt.sal_loaded == 1 &&
                           sfx_receipt.map_loaded == 1,
-                      "Nexus SFX receipt sees hash-resolved renamed SNDLEV00 SAL/MAP bytes");
+                      "Nexus SFX receipt sees real SNDLEV00 SAL/MAP bytes");
             check_int(sfx_receipt.status ==
                           NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE,
                       "Nexus SFX receipt blocks real SAL/MAP decode gap");

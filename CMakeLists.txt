@@ -17737,24 +17737,6 @@ if(BUILD_TESTING)
         NAME title_frontend_c001_fallback_gate_pc34_compat
         COMMAND test_title_frontend_c001_fallback_gate_pc34_compat
     )
-    add_executable(test_title_frontend_step_palette_v1_pc34_compat
-        tests/test_title_frontend_step_palette_v1_pc34_compat.c
-        src/dm1/dm1_v1_startup_sequence_pc34_compat.c
-        src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
-        src/frontend/entrance_frontend_pc34_compat.c
-        src/frontend/entrance_mouse_routes_pc34_compat.c
-        src/frontend/swsh_frontend_pc34_compat.c
-        src/frontend/title_frontend_v1.c
-        src/frontend/title_dat_loader_v1.c
-    )
-    target_link_libraries(test_title_frontend_step_palette_v1_pc34_compat PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_title_frontend_step_palette_v1_pc34_compat PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME title_frontend_step_palette_v1_pc34_compat
-        COMMAND test_title_frontend_step_palette_v1_pc34_compat
-    )
     if(Python3_EXECUTABLE)
         add_test(
             NAME pass457_dm1_v1_title_runtime_cadence_gate

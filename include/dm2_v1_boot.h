@@ -314,6 +314,23 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int profile_ready;
+    int graphics_dat_ready;
+    int sampled_creature_index_count;
+    int materialized_creature_index_count;
+    int min_frame_count;
+    int max_frame_count;
+    uint32_t sampled_creature_mask_low;
+    uint32_t sampled_creature_mask_high;
+    uint32_t raw_gdat_hash;
+    uint32_t raw_gdat_byte_count;
+    uint32_t decoded_gdat_hash;
+    uint32_t decoded_gdat_pixel_count;
+    uint32_t atlas_material_hash;
+} DM2_V1_BootCreatureAtlasCaptureReceipt;
+
+typedef struct {
+    int valid;
     int startup_menu_active;
     int title_animation_tick;
     int title_frame;
@@ -803,11 +820,13 @@ typedef struct {
     int valid;
     DM2_V1_BootStartupRealVisualCaptureReceipt startup_visual;
     DM2_V1_BootRuntimeHudCaptureReceipt runtime_hud;
+    DM2_V1_BootCreatureAtlasCaptureReceipt creature_atlas;
     int skproject_gdat_queries_ready;
     int startup_title_menu_complete;
     int startup_hud_handoff_complete;
     int runtime_gdat_hud_complete;
     int runtime_gdat_dungeon_complete;
+    int runtime_creature_atlas_complete;
     int runtime_gdat_direction_breadth_complete;
     int no_fallback_title_or_runtime_visuals;
     int raw_gdat_capture_complete;
@@ -1152,6 +1171,11 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     int selected_row,
     int title_animation_tick,
     DM2_V1_BootStartupRealVisualCaptureReceipt *out_receipt);
+void dm2_v1_boot_creature_atlas_capture_receipt_init(
+    DM2_V1_BootCreatureAtlasCaptureReceipt *receipt);
+int dm2_v1_boot_creature_atlas_capture_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_BootCreatureAtlasCaptureReceipt *out_receipt);
 void dm2_v1_boot_complete_support_receipt_init(
     DM2_V1_CompleteSupportReceipt *receipt);
 int dm2_v1_boot_complete_support_receipt_from_runtime_state(
@@ -1293,6 +1317,9 @@ typedef struct {
     int field;
     uint32_t raw_hash;
     uint32_t raw_byte_count;
+    int decoded_w;
+    int decoded_h;
+    int decoded_stride;
     uint32_t decoded_hash;
     uint32_t decoded_pixel_count;
 } DM2_V1_BootViewportAssetEvidence;
