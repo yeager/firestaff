@@ -913,6 +913,80 @@ static void test_file_runtime_world_loader(void)
           "world loader reports missing file");
 }
 
+static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat start_dungeon;
+    struct DungeonThings_Compat start_things;
+    struct DungeonGroup_Compat groups[4];
+    DM1OriginalSavePC34HoCResumeState hoc;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "runtime materializer fixture build succeeds");
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "runtime materializer fixture write succeeds");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&start_dungeon, 0, sizeof(start_dungeon));
+    memset(&start_things, 0, sizeof(start_things));
+    memset(groups, 0, sizeof(groups));
+    groups[1].creatureType = 15;
+    groups[2].creatureType = 16;
+    start_things.groups = groups;
+    start_things.groupCount = 4;
+    start_world.dungeon = &start_dungeon;
+    start_world.things = &start_things;
+
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, NULL);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "runtime materializer imports original save");
+    CHECK(loaded_world.dungeon == &start_dungeon,
+          "tail-less original save reuses start dungeon");
+    CHECK(loaded_world.things == &start_things,
+          "tail-less original save reuses start things");
+    CHECK(loaded_world.ownsDungeon == 0,
+          "borrowed start dungeon keeps original owner");
+    CHECK(dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
+              &start_world, &loaded_world) == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "DM1 handoff adopts materialized runtime world");
+    CHECK(start_world.dungeon == &start_dungeon &&
+          start_world.things == &start_things,
+          "adopted world retains the shared DM1 start materialization");
+
+    memset(&hoc, 0, sizeof(hoc));
+    hoc.candidate_mirror_ordinal = 7;
+    hoc.candidate_party_index = 1;
+    hoc.candidate_panel_active = 1;
+    dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
+        &start_world, &hoc);
+    CHECK(hoc.candidate_panel_active == 1,
+          "valid HoC candidate remains materialized after resume");
+    CHECK(hoc.inventory_panel_active == 1,
+          "valid HoC candidate reopens inventory panel");
+
+    hoc.candidate_party_index = CHAMPION_MAX_PARTY;
+    dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
+        &start_world, &hoc);
+    CHECK(hoc.candidate_panel_active == 0,
+          "invalid HoC candidate is cleared after resume");
+    CHECK(hoc.candidate_mirror_ordinal == -1 && hoc.candidate_party_index == -1,
+          "invalid HoC candidate resets both source indices");
+    F0883_WORLD_Free_Compat(&start_world);
+}
+
 static void test_public_fixture_builder_roundtrips_pc34_handoff(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -1211,6 +1285,7 @@ int main(void)
     test_pc34_handoff_imports_party_state();
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
+    test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
     test_strings();

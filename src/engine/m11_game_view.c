@@ -1,5 +1,6 @@
 #include "m11_game_view.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
 #include "nexus_v1_engine.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
@@ -2033,6 +2034,7 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
     FILE *file;
     size_t readCount;
     uint32_t version;
+    DM1OriginalSavePC34HoCResumeState hocResume;
 
     if (!state || !path || !path[0]) {
         return 0;
@@ -2069,26 +2071,23 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
     state->leaderHandObjectName[0] = '\0';
     state->v1OpenChestThing = (unsigned short)m11_read_u32_le(buf + 20);
     state->v1OpenChestOpenedByEye = m11_read_u32_le(buf + 24) ? 1 : 0;
+    memset(&hocResume, 0, sizeof(hocResume));
+    hocResume.candidate_mirror_ordinal = -1;
+    hocResume.candidate_party_index = -1;
     if (version >= 2U) {
-        state->candidateMirrorOrdinal = (int)(int32_t)m11_read_u32_le(buf + 28);
-        state->candidateMirrorPartyIndex = (int)(int32_t)m11_read_u32_le(buf + 32);
-        state->candidateMirrorPanelActive = m11_read_u32_le(buf + 36) ? 1 : 0;
-        state->inventoryPanelActive = m11_read_u32_le(buf + 40) ? 1 : 0;
-        if (state->candidateMirrorPanelActive) {
-            if (state->candidateMirrorPartyIndex < 0 ||
-                state->candidateMirrorPartyIndex >= state->world.party.championCount) {
-                state->candidateMirrorPanelActive = 0;
-                state->candidateMirrorOrdinal = -1;
-                state->candidateMirrorPartyIndex = -1;
-            } else {
-                state->inventoryPanelActive = 1;
-            }
-        }
-    } else {
-        state->candidateMirrorOrdinal = -1;
-        state->candidateMirrorPartyIndex = -1;
-        state->candidateMirrorPanelActive = 0;
+        hocResume.candidate_mirror_ordinal =
+            (int)(int32_t)m11_read_u32_le(buf + 28);
+        hocResume.candidate_party_index =
+            (int)(int32_t)m11_read_u32_le(buf + 32);
+        hocResume.candidate_panel_active = m11_read_u32_le(buf + 36) ? 1 : 0;
+        hocResume.inventory_panel_active = m11_read_u32_le(buf + 40) ? 1 : 0;
     }
+    dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
+        &state->world, &hocResume);
+    state->candidateMirrorOrdinal = hocResume.candidate_mirror_ordinal;
+    state->candidateMirrorPartyIndex = hocResume.candidate_party_index;
+    state->candidateMirrorPanelActive = hocResume.candidate_panel_active;
+    state->inventoryPanelActive = hocResume.inventory_panel_active;
     if (version >= 3U) {
         state->lastPartyMovementTick = m11_read_u32_le(buf + 44);
     } else {
@@ -4825,27 +4824,6 @@ static void m11_set_status(M11_GameViewState* state,
 static void m11_refresh_hash(M11_GameViewState* state);
 static void m11_mark_explored(M11_GameViewState* state);
 
-static void m11_game_view_adopt_loaded_world(M11_GameViewState* state,
-                                             struct GameWorld_Compat* loadedWorld)
-{
-    if (!state || !loadedWorld) {
-        return;
-    }
-    /* ReDMCSB F0898_WORLD_Deserialize_Compat preserves pointer fields that
-     * are not part of the serialized runtime state.  Firestaff M11 also needs
-     * original PC34 saves to inherit the already loaded DUNGEON.DAT tables, so
-     * both quicksave and original-save fallback share this ownership transfer. */
-    loadedWorld->dungeon = state->world.dungeon;
-    loadedWorld->things  = state->world.things;
-    loadedWorld->ownsDungeon = state->world.ownsDungeon;
-    state->world.dungeon = NULL;
-    state->world.things = NULL;
-    state->world.ownsDungeon = 0;
-    F0883_WORLD_Free_Compat(&state->world);
-    state->world = *loadedWorld;
-    memset(loadedWorld, 0, sizeof(*loadedWorld));
-}
-
 int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
                                  const char* path,
                                  int* outUsedBackup)
@@ -4854,6 +4832,7 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     struct DM1SaveHeader saveHeader;
     struct DM1SaveResumeRequest resumeRequest;
     struct DM1SaveResumeReceipt resumeReceipt;
+    DM1OriginalSaveClassifyResult originalSave;
     int usedBackup = 0;
     int rc;
 
@@ -4868,16 +4847,29 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     }
 
     memset(&loadedWorld, 0, sizeof(loadedWorld));
-    loadedWorld.dungeon = state->world.dungeon;
-    loadedWorld.things = state->world.things;
-    loadedWorld.ownsDungeon = 0;
-    rc = DM1_LoadGameWithBackup(path, &loadedWorld, &saveHeader, &usedBackup);
+    memset(&originalSave, 0, sizeof(originalSave));
+    if (dm1_v1_original_save_classify_file(path, &originalSave) &&
+        originalSave.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 &&
+        originalSave.pc34_importer_candidate) {
+        rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+            path, &state->world, &loadedWorld, NULL, NULL);
+        if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+            memset(&saveHeader, 0, sizeof(saveHeader));
+        }
+    } else {
+        rc = DM1_LoadGameWithBackup(path, &loadedWorld, &saveHeader,
+                                    &usedBackup);
+    }
     if (rc != DM1_SAVE_OK) {
         F0883_WORLD_Free_Compat(&loadedWorld);
         return 0;
     }
 
-    m11_game_view_adopt_loaded_world(state, &loadedWorld);
+    if (dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
+            &state->world, &loadedWorld) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_refresh_hash(state);
     m11_mark_explored(state);
@@ -12867,7 +12859,12 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     }
     free(blob);
 
-    m11_game_view_adopt_loaded_world(state, &loadedWorld);
+    if (dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
+            &state->world, &loadedWorld) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        m11_set_status(state, "LOAD", "SAVE ADOPTION FAILED");
+        return 0;
+    }
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_refresh_hash(state);
     (void)m11_load_quicksave_explored_bits(state, path);
