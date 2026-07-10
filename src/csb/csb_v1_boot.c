@@ -2715,6 +2715,11 @@ static int csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_BootStartupRenderDrawReceipt_PC34 *out_receipt)
 {
+    int i;
+    int title_asset_count = 0;
+    int closed_left_count = 0;
+    int closed_right_count = 0;
+    int opening_frame_command_count = 0;
     if (!out_receipt) {
         return 0;
     }
@@ -2747,6 +2752,37 @@ static int csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
                 capture_receipt->render_view.opening_door_route
             ? 1
             : 0;
+    out_receipt->primitive_commands_ready =
+        out_receipt->render_plan.primitive_command_count > 0 ? 1 : 0;
+    for (i = 0; i < out_receipt->render_plan.asset_command_count &&
+                i < CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34; ++i) {
+        const CSB_V1_StartupAssetCommand_PC34 *cmd =
+            &out_receipt->render_plan.asset_commands[i];
+        if (!cmd->visible || cmd->asset_id <= 0) {
+            continue;
+        }
+        if (cmd->kind == CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 ||
+            cmd->kind == CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34) {
+            ++title_asset_count;
+        } else if (cmd->kind == CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34) {
+            ++closed_left_count;
+        } else if (cmd->kind == CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34) {
+            ++closed_right_count;
+        }
+    }
+    out_receipt->title_asset_commands_ready =
+        title_asset_count > 0 ? 1 : 0;
+    out_receipt->closed_door_asset_commands_ready =
+        closed_left_count > 0 && closed_right_count > 0 ? 1 : 0;
+    for (i = 0; i < out_receipt->render_plan.render_command_count &&
+                i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
+        if (out_receipt->render_plan.render_commands[i].kind ==
+            CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34) {
+            ++opening_frame_command_count;
+        }
+    }
+    out_receipt->opening_frame_command_ready =
+        opening_frame_command_count > 0 ? 1 : 0;
     /* ReDMCSB TITLE.C F0437 lines 424-463 and ENTRANCE.C F0441/F0806
      * lines 850-883 own CSB startup title/HUD/opening draws. This receipt
      * is the M11-facing draw boundary: callers consume the CSB capture's
@@ -2837,6 +2873,26 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
                     host_view->capture_proof_valid &&
                     host_view->capture_proof.opening_door_route &&
                     host_view->capture_proof.real_asset_matched
+                ? 1
+                : 0;
+        out_receipt->primitive_commands_consumed =
+            host_view->render_draw_valid &&
+                    host_view->render_draw.primitive_commands_ready
+                ? 1
+                : 0;
+        out_receipt->title_asset_commands_consumed =
+            host_view->render_draw_valid &&
+                    host_view->render_draw.title_asset_commands_ready
+                ? 1
+                : 0;
+        out_receipt->closed_door_asset_commands_consumed =
+            host_view->render_draw_valid &&
+                    host_view->render_draw.closed_door_asset_commands_ready
+                ? 1
+                : 0;
+        out_receipt->opening_frame_command_consumed =
+            host_view->render_draw_valid &&
+                    host_view->render_draw.opening_frame_command_ready
                 ? 1
                 : 0;
         out_receipt->fallback_text_suppressed =

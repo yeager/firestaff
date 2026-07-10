@@ -686,6 +686,10 @@ typedef struct CSB_V1_BootStartupRenderDrawReceipt_PC34 {
     int title_draw_ready;
     int hud_menu_draw_ready;
     int opening_draw_ready;
+    int primitive_commands_ready;
+    int title_asset_commands_ready;
+    int closed_door_asset_commands_ready;
+    int opening_frame_command_ready;
     int real_asset_matched;
     CSB_V1_StartupRenderPlan_PC34 render_plan;
 } CSB_V1_BootStartupRenderDrawReceipt_PC34;
@@ -989,6 +993,10 @@ typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int title_asset_draw_ready;
     int closed_door_asset_draw_ready;
     int opening_frame_draw_ready;
+    int primitive_commands_consumed;
+    int title_asset_commands_consumed;
+    int closed_door_asset_commands_consumed;
+    int opening_frame_command_consumed;
     int fallback_text_suppressed;
     int fallback_callbacks_stripped;
     int consumed_host_view_only;
