@@ -1499,6 +1499,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### Build and CI Health
 
 - 🔧 Watchdog parity-evidence manifests: parity-evidence files are refreshed by automated watchdog passes on every regression run. Manifests may report transient `FAIL` on gates whose line number has shifted (see the line-drift bullets above) or where a recent change has altered the test binary output; verify against the current source before treating any one FAIL as a real regression.
+- 🔧 2026-07-10 release follow-up: GitHub Actions release run `29111129206` for `v3.0.71` is in progress after the tag push. Confirm all platform package jobs finish and that the published GitHub Release has the expected artifacts.
 
 ## Known Bugs
 
